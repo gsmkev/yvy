@@ -1,0 +1,23 @@
+# Backup semanal de D1 a R2 (anexo §4.10). D1 Time Travel cubre 7 días; esto guarda historia más larga.
+name: Backup D1
+on:
+  schedule: [{ cron: "20 6 * * 0" }]
+  workflow_dispatch:
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: apps/api } }
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: |
+          f="yvy-$(date -u +%Y-%m-%d).sql"
+          npx wrangler d1 export yvy --remote --output "$f"
+          gzip "$f"
+          npx wrangler r2 object put "yvy-media/backups/$f.gz" --file "$f.gz" --remote

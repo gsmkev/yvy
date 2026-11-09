@@ -58,9 +58,18 @@ class IngestClient:
     def farm_geometry(self, farm_id: str) -> dict[str, Any]:
         return self._call("GET", f"/ingest/farms/{farm_id}/geometry")
 
-    def scene(self, source: str, item_id: str, acquired_at: int, cloud_pct: float | None) -> str:
-        r = self._call("POST", "/ingest/scenes", {"source": source, "itemId": item_id, "acquiredAt": acquired_at, "cloudPct": cloud_pct})
-        return r["id"]
+    def scene(self, source: str, item_id: str, acquired_at: int, cloud_pct: float | None) -> dict[str, Any]:
+        """Registra la escena; devuelve {id, processed}."""
+        return self._call("POST", "/ingest/scenes", {"source": source, "itemId": item_id, "acquiredAt": acquired_at, "cloudPct": cloud_pct})
+
+    def scene_processed(self, scene_id: str) -> None:
+        self._call("POST", f"/ingest/scenes/{scene_id}/processed", {})
+
+    def climatology(self, rows: Iterable[dict[str, Any]]) -> int:
+        return sum(self._call("POST", "/ingest/climatology", {"rows": b})["written"] for b in chunks(rows))
+
+    def fire_alert(self, **alert: Any) -> dict[str, Any]:
+        return self._call("POST", "/ingest/fire-alerts", alert)
 
     def plot_index_stats(self, rows: Iterable[dict[str, Any]]) -> int:
         return sum(self._call("POST", "/ingest/plot-index-stats", {"rows": b})["written"] for b in chunks(rows))

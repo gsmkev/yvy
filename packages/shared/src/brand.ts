@@ -18,3 +18,14 @@ export const SYNC_BORDER = {
 } as const;
 
 export const MIN_TOUCH_TARGET_PX = 56;
+
+/** Colores de series de gráficos, validados (contraste y daltonismo) con la paleta de marca. */
+export const CHART = {
+  primary: "#7A9A3F", // soja: el lote / la serie principal
+  comparison: "#3B78B8", // azul: promedio del campo, lluvia satelital, mínimas
+  warm: "#B5562E", // máximas
+  gauge: "#D9A93A", // trigo: pluviómetro
+  grid: "#E4E0D3",
+  axis: "#6B6F63",
+  text: "#1E2419",
+} as const;

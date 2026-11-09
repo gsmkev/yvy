@@ -67,7 +67,12 @@ ingest.post("/scenes", async (c) => {
     }),
     json(c.var.body),
   );
-  return c.json({ id: await c.var.sys.upsertScene(b) });
+  return c.json(await c.var.sys.upsertScene(b));
+});
+
+ingest.post("/scenes/:id/processed", async (c) => {
+  await c.var.sys.markSceneProcessed(c.req.param("id"));
+  return c.json({ ok: true });
 });
 
 ingest.post("/plot-index-stats", async (c) => {

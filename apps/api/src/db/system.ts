@@ -2,7 +2,7 @@
  * Acceso de sistema (sin usuario): /ingest firmado por HMAC y crons. Única excepción a scopedDb.
  * Cada escritura deriva organization_id de la fila padre (lote o estancia), nunca del request.
  */
-import { and, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import { newId } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { upsertAlert } from "../jobs/alerts";
@@ -23,6 +23,8 @@ export class SystemDb {
         minLat: s.farms.minLat,
         maxLon: s.farms.maxLon,
         maxLat: s.farms.maxLat,
+        hasClimatology: sql<boolean>`EXISTS (SELECT 1 FROM climatology c WHERE c.farm_id = farms.id)`,
+        hasBasemap: sql<boolean>`EXISTS (SELECT 1 FROM farm_layers l WHERE l.farm_id = farms.id AND l.layer = 'true_color' AND l.deleted_at IS NULL)`,
       })
       .from(s.farms)
       .where(isNull(s.farms.deletedAt));
@@ -39,18 +41,23 @@ export class SystemDb {
       .limit(1);
   }
 
+  /** Registra la escena. `processed` indica si ya se cargaron sus estadísticas. */
   async upsertScene(x: {
     source: string;
     itemId: string;
     acquiredAt: number;
     cloudPct: number | null;
-  }): Promise<string> {
+  }): Promise<{ id: string; processed: boolean }> {
     const [row] = await this.db
       .insert(s.scenes)
-      .values({ id: newId(), ...x, processedAt: Date.now() })
-      .onConflictDoUpdate({ target: [s.scenes.source, s.scenes.itemId], set: { processedAt: Date.now() } })
-      .returning({ id: s.scenes.id });
-    return row!.id;
+      .values({ id: newId(), ...x })
+      .onConflictDoUpdate({ target: [s.scenes.source, s.scenes.itemId], set: { cloudPct: sql`excluded.cloud_pct` } })
+      .returning({ id: s.scenes.id, processedAt: s.scenes.processedAt });
+    return { id: row!.id, processed: row!.processedAt !== null };
+  }
+
+  async markSceneProcessed(id: string): Promise<void> {
+    await this.db.update(s.scenes).set({ processedAt: Date.now() }).where(eq(s.scenes.id, id));
   }
 
   async upsertIndexStats(
@@ -201,14 +208,39 @@ export class SystemDb {
         ),
       );
     }
+    // RF-70: alto si el viento pronosticado sopla desde el foco hacia la estancia a > 25 km/h.
+    let severity = x.severity;
+    let windTowardsFarm = !!x.windTowardsFarm;
+    const [wind] = await this.db
+      .select({
+        kmh: s.forecasts.windKmh,
+        dir: s.forecasts.windDirDeg,
+        lon: s.farms.centroidLon,
+        lat: s.farms.centroidLat,
+      })
+      .from(s.forecasts)
+      .innerJoin(s.farms, eq(s.farms.id, s.forecasts.farmId))
+      .where(and(eq(s.forecasts.farmId, x.farmId), eq(s.forecasts.validDate, x.date)))
+      .orderBy(desc(s.forecasts.runAt))
+      .limit(1);
+    if (wind?.kmh && wind.dir !== null && wind.kmh > 25 && x.hotspots.length) {
+      const h = x.hotspots[0]!;
+      // El viento "viene de" wind.dir: sopla hacia la estancia si el foco está en esa dirección.
+      const toHotspot = bearing(wind.lon, wind.lat, h.lon, h.lat);
+      const diff = Math.abs(((toHotspot - wind.dir + 540) % 360) - 180);
+      if (diff <= 45) {
+        windTowardsFarm = true;
+        severity = "warning";
+      }
+    }
     return upsertAlert(this.db, farm, {
       kind: "fire",
-      severity: x.severity,
+      severity,
       probability: null,
       validFrom: x.date,
       validTo: x.date,
-      summary: `Foco de calor a ${x.minDistanceKm.toFixed(1)} km de la estancia${x.windTowardsFarm ? ", con viento hacia el campo" : ""}`,
-      details: { minDistanceKm: x.minDistanceKm, windTowardsFarm: !!x.windTowardsFarm, hotspots: x.hotspots.length },
+      summary: `Foco de calor a ${x.minDistanceKm.toFixed(1)} km de la estancia${windTowardsFarm ? ", con viento hacia el campo" : ""}`,
+      details: { minDistanceKm: x.minDistanceKm, windTowardsFarm, hotspots: x.hotspots.length },
     });
   }
 
@@ -227,4 +259,13 @@ export class SystemDb {
         ),
     ]);
   }
+}
+
+const rad = (d: number) => (d * Math.PI) / 180;
+/** Rumbo inicial de 1 a 2 en grados desde el norte. */
+export function bearing(lon1: number, lat1: number, lon2: number, lat2: number): number {
+  const y = Math.sin(rad(lon2 - lon1)) * Math.cos(rad(lat2));
+  const x =
+    Math.cos(rad(lat1)) * Math.sin(rad(lat2)) - Math.sin(rad(lat1)) * Math.cos(rad(lat2)) * Math.cos(rad(lon2 - lon1));
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }

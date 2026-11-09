@@ -1,0 +1,52 @@
+# Jobs satelitales y climáticos (PRD-cloudflare §4.6). Minutos estimados: ~640/mes para 20 estancias.
+name: Jobs de datos
+on:
+  schedule:
+    - cron: "15 13 * * *" # s2_ingest diario (después del paso de Sentinel-2 por Paraguay)
+    - cron: "30 10 * * *" # chirps_daily
+    - cron: "40 */3 * * *" # firms_hotspots cada 3 h
+    - cron: "0 4 * * 0" # semanal: climatología y mapa base de estancias nuevas
+    - cron: "0 5 1 */3 *" # mapa base de todas cada 3 meses
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Job
+        type: choice
+        options: [s2_ingest, s2_basemap, chirps_daily, firms_hotspots, climatology_build]
+      farm:
+        description: Id de estancia (opcional)
+        required: false
+concurrency: { group: jobs-${{ github.event.schedule || inputs.job }}, cancel-in-progress: false }
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults: { run: { working-directory: workers-py } }
+    env:
+      YVY_API_URL: ${{ secrets.YVY_API_URL }}
+      YVY_INGEST_SECRET: ${{ secrets.YVY_INGEST_SECRET }}
+      FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with: { enable-cache: true }
+      - name: Elegir job
+        id: pick
+        run: |
+          case "${{ github.event.schedule }}" in
+            "15 13 * * *") echo "cmd=s2_ingest" >> $GITHUB_OUTPUT ;;
+            "30 10 * * *") echo "cmd=chirps_daily" >> $GITHUB_OUTPUT ;;
+            "40 */3 * * *") echo "cmd=firms_hotspots" >> $GITHUB_OUTPUT ;;
+            "0 4 * * 0") echo "cmd=weekly" >> $GITHUB_OUTPUT ;;
+            "0 5 1 */3 *") echo "cmd=s2_basemap" >> $GITHUB_OUTPUT ;;
+            *) echo "cmd=${{ inputs.job }}" >> $GITHUB_OUTPUT ;;
+          esac
+      - if: steps.pick.outputs.cmd == 'weekly'
+        run: |
+          uv run --frozen python -m yvy_workers climatology_build --only-missing
+          uv run --frozen python -m yvy_workers s2_basemap --only-missing
+      - if: steps.pick.outputs.cmd != 'weekly'
+        run: uv run --frozen python -m yvy_workers ${{ steps.pick.outputs.cmd }} ${{ inputs.farm && format('--farm {0}', inputs.farm) || '' }}

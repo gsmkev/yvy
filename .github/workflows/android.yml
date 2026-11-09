@@ -15,11 +15,11 @@ jobs:
       EXPO_PUBLIC_API_URL: ${{ vars.APP_URL }}
       EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with: { distribution: temurin, java-version: 17 }
       - run: pnpm install --frozen-lockfile
       - name: Prebuild
@@ -43,7 +43,7 @@ jobs:
           "$BT/apksigner" verify --print-certs yvy.apk | head -3
           rm yvy.keystore
           ls -la yvy.apk
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: yvy-apk, path: apps/mobile/android/app/build/outputs/apk/release/yvy.apk }
       - name: Publicar en R2
         if: ${{ inputs.publish }}

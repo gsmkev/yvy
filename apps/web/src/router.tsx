@@ -10,6 +10,7 @@ import { RecordsPage } from "./routes/records";
 import { TasksPage } from "./routes/tasks";
 import { TeamPage } from "./routes/team";
 import { AlertsPage } from "./routes/alerts";
+import { InternalPage } from "./routes/internal";
 
 const rootRoute = createRootRoute();
 
@@ -44,10 +45,11 @@ const records = createRoute({ getParentRoute: () => appRoute, path: "/registros"
 const tasks = createRoute({ getParentRoute: () => appRoute, path: "/tareas", component: TasksPage });
 const team = createRoute({ getParentRoute: () => appRoute, path: "/equipo", component: TeamPage });
 const alerts = createRoute({ getParentRoute: () => appRoute, path: "/avisos", component: AlertsPage });
+const internal = createRoute({ getParentRoute: () => appRoute, path: "/interno", component: InternalPage });
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
-  appRoute.addChildren([home, newFarm, farmRoute, reportRoute, records, tasks, team, alerts]),
+  appRoute.addChildren([home, newFarm, farmRoute, reportRoute, records, tasks, team, alerts, internal]),
 ]);
 
 export const router = createRouter({ routeTree, defaultPreload: "intent" });

@@ -54,6 +54,15 @@ export function Layout() {
               {t(n.label)}
             </Link>
           ))}
+          {me.data?.isStaff && (
+            <Link
+              to="/interno"
+              className="rounded-md px-2.5 py-1.5 text-lino/80 hover:bg-white/10"
+              activeProps={{ className: "bg-white/15 text-lino" }}
+            >
+              {t("ui.navInternal")}
+            </Link>
+          )}
         </nav>
         <div className="ml-auto flex items-center gap-3 text-sm">
           <span className="hidden text-lino/70 sm:inline">{me.data?.organization.name}</span>

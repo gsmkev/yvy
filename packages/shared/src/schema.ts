@@ -545,6 +545,18 @@ export const reports = sqliteTable(
 
 // ---------- Operación ----------
 
+/** Un registro por usuario y día con actividad (métricas del PRD §4; 1 escritura por día). */
+export const activityDaily = sqliteTable(
+  "activity_daily",
+  {
+    userId: text("user_id").notNull(),
+    organizationId: text("organization_id").notNull(),
+    day: text("day").notNull(),
+    role: text("role").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.day] }), index("activity_daily_org_idx").on(t.organizationId, t.day)],
+);
+
 export const usageDaily = sqliteTable(
   "usage_daily",
   {

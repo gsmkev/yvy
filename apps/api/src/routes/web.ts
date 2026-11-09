@@ -25,6 +25,7 @@ import {
   updateTask,
 } from "../db/queries";
 import { parse, readJson } from "../lib/http";
+import { touchActivity } from "../auth/plan";
 import type { AppEnv } from "../types";
 
 export const web = new Hono<AppEnv>();
@@ -35,6 +36,7 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 /** Perfil y sesión actual. */
 web.get("/me", async (c) => {
   const sdb = c.var.sdb;
+  await touchActivity(sdb.db, c.var.auth);
   const [user] = await sdb.db
     .select({
       id: s.users.id,
@@ -56,7 +58,14 @@ web.get("/me", async (c) => {
     .from(s.organizations)
     .where(eq(s.organizations.id, sdb.auth.orgId))
     .limit(1);
-  return c.json({ user, organization: org, role: sdb.auth.role, tilesBaseUrl: c.env.TILES_PUBLIC_URL });
+  const admins = (c.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase());
+  return c.json({
+    user,
+    organization: org,
+    role: sdb.auth.role,
+    tilesBaseUrl: c.env.TILES_PUBLIC_URL,
+    isStaff: !!user?.email && admins.includes(user.email.toLowerCase()),
+  });
 });
 
 web.get("/org/farms", async (c) => c.json(await farmSummaries(c.var.sdb)));

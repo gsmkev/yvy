@@ -64,4 +64,6 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `usage_daily` (\n\t`day` text NOT NULL,\n\t`metric` text NOT NULL,\n\t`value` real NOT NULL,\n\t`limit` real,\n\tPRIMARY KEY(`day`, `metric`)\n);",
   "CREATE TABLE `users` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`email` text,\n\t`full_name` text NOT NULL,\n\t`phone` text,\n\t`locale` text DEFAULT 'es-PY' NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL\n);",
   "CREATE UNIQUE INDEX `users_email_uq` ON `users` (`email`);",
+  "CREATE TABLE `activity_daily` (\n\t`user_id` text NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`day` text NOT NULL,\n\t`role` text NOT NULL,\n\tPRIMARY KEY(`user_id`, `day`)\n);",
+  "CREATE INDEX `activity_daily_org_idx` ON `activity_daily` (`organization_id`,`day`);",
 ];

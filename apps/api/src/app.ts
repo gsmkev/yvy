@@ -8,6 +8,8 @@ import { media } from "./routes/media";
 import { org } from "./routes/org";
 import { sync } from "./routes/sync";
 import { web } from "./routes/web";
+import { admin } from "./routes/admin";
+import { readOnlyWhenExpired } from "./auth/plan";
 import type { AppEnv } from "./types";
 
 export const app = new Hono<AppEnv>();
@@ -21,13 +23,17 @@ app.onError((err, c) => {
 });
 
 app.get("/health", (c) => c.json({ ok: true }));
+/** APK firmado en el bucket público (anexo §4.10: distribución directa sin Play Store). */
+app.get("/descargar-app", (c) => c.redirect(`${c.env.TILES_PUBLIC_URL.replace(/\/$/, "")}/app/yvy.apk`, 302));
 app.route("/auth", auth);
 app.route("/ingest", ingest as unknown as Hono<AppEnv>);
 
 const authed = new Hono<AppEnv>();
 authed.use("*", requireAuth);
+authed.use("/org/*", readOnlyWhenExpired);
 authed.route("/sync", sync);
 authed.route("/org", org);
 authed.route("/media", media);
 authed.route("/", web);
+authed.route("/admin", admin);
 app.route("/", authed);

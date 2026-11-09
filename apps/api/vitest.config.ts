@@ -11,6 +11,7 @@ export default defineConfig(async () => {
           bindings: {
             TEST_MIGRATIONS: migrations,
             JWT_SECRET: "test-jwt-secret-0123456789abcdef",
+            ADMIN_EMAILS: "staff@yvy.test",
             INGEST_SECRET: "test-ingest-secret",
             RESEND_API_KEY: "",
             R2_ACCOUNT_ID: "acct",

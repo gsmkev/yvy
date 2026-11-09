@@ -5,6 +5,7 @@ export interface Me {
   organization: { id: string; name: string; plan: string; trialEndsAt: number | null };
   role: "owner" | "admin" | "agronomist" | "worker";
   tilesBaseUrl: string;
+  isStaff: boolean;
 }
 
 export interface FarmSummary {

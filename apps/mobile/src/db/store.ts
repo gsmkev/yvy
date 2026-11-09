@@ -28,8 +28,6 @@ import type { SyncStore } from "@yvy/sync";
 import { SERVER_SCHEMA } from "./schema-sql";
 import { LOCAL_SCHEMA, type Param, type Sql } from "./sql";
 
-const SCHEMA_VERSION = 1;
-
 const TABLES: Record<PullTable, SQLiteTable> = {
   farms: s.farms,
   plots: s.plots,
@@ -91,12 +89,13 @@ export class LocalDb implements SyncStore {
     private readonly now: () => number = Date.now,
   ) {}
 
+  /** Incremental: user_version guarda cuántas sentencias del esquema del servidor ya se aplicaron. */
   migrate(): void {
-    const v = this.sql.get<{ user_version: number }>("PRAGMA user_version")?.user_version ?? 0;
-    if (v >= SCHEMA_VERSION) return;
+    const applied = this.sql.get<{ user_version: number }>("PRAGMA user_version")?.user_version ?? 0;
     this.sql.tx(() => {
-      for (const stmt of [...SERVER_SCHEMA, ...LOCAL_SCHEMA]) this.sql.run(stmt);
-      this.sql.run(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+      for (const stmt of SERVER_SCHEMA.slice(applied)) this.sql.run(stmt);
+      for (const stmt of LOCAL_SCHEMA) this.sql.run(stmt);
+      if (SERVER_SCHEMA.length > applied) this.sql.run(`PRAGMA user_version = ${SERVER_SCHEMA.length}`);
     });
   }
 

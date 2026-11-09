@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { BRAND } from "@yvy/shared";
 import { FarmMap } from "../components/FarmMap";
-import { Button, Card, Empty, ErrorBox, Spinner } from "../components/ui";
+import { Button, Card, ErrorBox, Spinner } from "../components/ui";
 import { fmtDate, fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useFarms, useMe } from "../lib/queries";
@@ -46,7 +46,20 @@ export function HomePage() {
         </div>
         {farms.isLoading && <Spinner />}
         {farms.error && <ErrorBox error={farms.error} />}
-        {farms.data && !list.length && <Empty>{t("ui.drawFarm")}</Empty>}
+        {farms.data && list.length === 0 && (
+          <Card>
+            <h2 className="mb-2 font-semibold">{t("ui.onboardingTitle")}</h2>
+            <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-sm">
+              <li>{t("ui.onboarding1")}</li>
+              <li>{t("ui.onboarding2")}</li>
+              <li>{t("ui.onboarding3")}</li>
+              <li>{t("ui.onboarding4")}</li>
+            </ol>
+            <a href="/descargar-app" className="mt-3 inline-block text-sm font-medium text-soja-dark underline">
+              ⤓ {t("ui.downloadApp")}
+            </a>
+          </Card>
+        )}
         {list.map((f) => (
           <Link key={f.id} to="/estancias/$farmId" params={{ farmId: f.id }}>
             <Card className="transition hover:ring-soja/40">

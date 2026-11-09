@@ -1,12 +1,16 @@
 import { Hono } from "hono";
 import { pullRequest, pushRequest } from "@yvy/shared";
 import { applyPush } from "../db/push";
+import { touchActivity } from "../auth/plan";
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
 
 export const sync = new Hono<AppEnv>();
 
-sync.get("/state", async (c) => c.json(await c.var.sdb.syncState()));
+sync.get("/state", async (c) => {
+  await touchActivity(c.var.sdb.db, c.var.auth);
+  return c.json(await c.var.sdb.syncState());
+});
 
 sync.post("/push", async (c) => {
   const body = parse(pushRequest, await readJson(c.req));

@@ -6,7 +6,9 @@ from rasterio.io import MemoryFile
 from rasterio.transform import from_origin
 
 from yvy_workers.geo import bearing_deg, distance_km, load
-from yvy_workers.jobs.chirps import farm_mean
+from datetime import date
+
+from yvy_workers.jobs.chirps import farm_mean, missing_dates
 from yvy_workers.jobs.climatology import doy_table
 from yvy_workers.jobs.firms import confident, evaluate_farm, parse_csv
 from yvy_workers.jobs.s2 import compute_ndvi, make_grid, plot_stats
@@ -97,3 +99,10 @@ def test_geo():
     assert distance_km(load(FARM), -55.99, -27.18) == pytest.approx(3.96, abs=0.1)
     assert bearing_deg(0, 0, 0, 1) == pytest.approx(0)
     assert bearing_deg(0, 0, 1, 0) == pytest.approx(90)
+
+
+def test_chirps_solo_fechas_faltantes():
+    need = missing_dates({("a", "chirps_prelim"): "2026-11-03"}, ["a", "b"], "chirps_prelim", date(2026, 11, 1), date(2026, 11, 5))
+    assert need[date(2026, 11, 4)] == ["a", "b"]
+    assert need[date(2026, 11, 2)] == ["b"]
+    assert date(2026, 10, 31) not in need

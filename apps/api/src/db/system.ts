@@ -160,6 +160,18 @@ export class SystemDb {
     return { id };
   }
 
+  climateLatest() {
+    return this.db
+      .select({
+        farmId: s.climateDaily.farmId,
+        source: s.climateDaily.source,
+        latest: sql<string>`max(${s.climateDaily.date})`,
+      })
+      .from(s.climateDaily)
+      .where(eq(s.climateDaily.plotId, ""))
+      .groupBy(s.climateDaily.farmId, s.climateDaily.source);
+  }
+
   async upsertClimatology(rows: (typeof s.climatology.$inferInsert)[]): Promise<number> {
     const stmts = chunkForParams(rows, 8).map((chunk) =>
       this.db

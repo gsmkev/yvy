@@ -51,6 +51,9 @@ ingest.use("*", verify);
 
 ingest.get("/farms", async (c) => c.json(await c.var.sys.activeFarms()));
 
+/** Última fecha cargada por estancia y fuente (para que los jobs bajen solo lo que falta). */
+ingest.get("/climate-latest", async (c) => c.json(await c.var.sys.climateLatest()));
+
 ingest.get("/farms/:id/geometry", async (c) => {
   const [row] = await c.var.sys.farmGeometry(c.req.param("id"));
   if (!row) throw new HTTPException(404);

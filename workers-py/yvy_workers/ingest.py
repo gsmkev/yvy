@@ -65,6 +65,9 @@ class IngestClient:
     def scene_processed(self, scene_id: str) -> None:
         self._call("POST", f"/ingest/scenes/{scene_id}/processed", {})
 
+    def climate_latest(self) -> list[dict[str, Any]]:
+        return self._call("GET", "/ingest/climate-latest")
+
     def climatology(self, rows: Iterable[dict[str, Any]]) -> int:
         return sum(self._call("POST", "/ingest/climatology", {"rows": b})["written"] for b in chunks(rows))
 

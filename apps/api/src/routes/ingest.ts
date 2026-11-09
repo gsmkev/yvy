@@ -135,3 +135,57 @@ ingest.post("/farm-layers", async (c) => {
   if (!res) throw new HTTPException(404, { message: "Estancia inexistente" });
   return c.json(res, 201);
 });
+
+/** Climatología 1991-2020 por día del año (job climatology_build). */
+ingest.post("/climatology", async (c) => {
+  const b = parse(
+    z.object({
+      rows: z
+        .array(
+          z.object({
+            farmId: uuid,
+            plotId: z.string().default(""),
+            dayOfYear: z.number().int().min(1).max(366),
+            variable: z.enum(["precip", "soil_top", "soil_root", "tmin"]),
+            p20: z.number().nullable(),
+            p50: z.number().nullable(),
+            p80: z.number().nullable(),
+            mean: z.number().nullable(),
+          }),
+        )
+        .min(1)
+        .max(max),
+    }),
+    json(c.var.body),
+  );
+  return c.json({ written: await c.var.sys.upsertClimatology(b.rows) });
+});
+
+/** Aviso de fuego calculado por el job de FIRMS (anexo §4.8). */
+ingest.post("/fire-alerts", async (c) => {
+  const b = parse(
+    z.object({
+      farmId: uuid,
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      severity: z.enum(["watch", "warning"]),
+      minDistanceKm: z.number().min(0),
+      windTowardsFarm: z.boolean().optional(),
+      hotspots: z
+        .array(
+          z.object({
+            lon: z.number(),
+            lat: z.number(),
+            acquiredAt: z.number().int(),
+            confidence: z.string().nullable(),
+            frp: z.number().nullable(),
+            source: z.string(),
+          }),
+        )
+        .max(max),
+    }),
+    json(c.var.body),
+  );
+  const res = await c.var.sys.fireAlert(b);
+  if (!res) throw new HTTPException(404, { message: "Estancia inexistente" });
+  return c.json(res);
+});

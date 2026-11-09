@@ -70,4 +70,27 @@ describe("/ingest", () => {
     });
     expect(await pullAll(owner.token, "plot_index_stats")).toHaveLength(2);
   });
+
+  it("aviso de fuego desde FIRMS, deduplicado por día", async () => {
+    const owner = await createOrgWithOwner();
+    const { farmId } = await createFarmWithPlots(owner.token, 1);
+    const hotspot = {
+      lon: -55.85,
+      lat: -27.25,
+      acquiredAt: Date.now(),
+      confidence: "h",
+      frp: 12.5,
+      source: "VIIRS_SNPP_NRT",
+    };
+    const send = async (severity: string) => {
+      const body = JSON.stringify({ farmId, date: "2026-08-15", severity, minDistanceKm: 3.2, hotspots: [hotspot] });
+      return call("POST", "/ingest/fire-alerts", { body, headers: await signed("POST", "/ingest/fire-alerts", body) });
+    };
+    expect((await send("watch")).body.notified).toBe(true);
+    expect((await send("watch")).body.notified).toBe(false);
+    expect((await send("warning")).body.notified).toBe(true);
+    const alerts = await pullAll(owner.token, "alerts");
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]).toMatchObject({ kind: "fire", severity: "warning" });
+  });
 });

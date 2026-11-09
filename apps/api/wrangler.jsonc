@@ -38,6 +38,8 @@
     "EMAIL_FROM": "Yvy <ingreso@yvy.example>",
     "MEDIA_BUCKET_NAME": "yvy-media",
     "MET_USER_AGENT": "Yvy/1.0 koeti.com.py",
-    "TILES_PUBLIC_URL": "https://pub-REEMPLAZAR.r2.dev"
+    "TILES_PUBLIC_URL": "https://pub-REEMPLAZAR.r2.dev",
+    "APP_URL": "http://localhost:8787",
+    "OPS_EMAIL": ""
   }
 }

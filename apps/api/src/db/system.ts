@@ -5,6 +5,7 @@
 import { and, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import { newId } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
+import { upsertAlert } from "../jobs/alerts";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type DB, type Stmt } from "./client";
 
 export class SystemDb {
@@ -150,6 +151,65 @@ export class SystemDb {
         .where(eq(s.farms.id, x.farmId)),
     ]);
     return { id };
+  }
+
+  async upsertClimatology(rows: (typeof s.climatology.$inferInsert)[]): Promise<number> {
+    const stmts = chunkForParams(rows, 8).map((chunk) =>
+      this.db
+        .insert(s.climatology)
+        .values(chunk)
+        .onConflictDoUpdate({
+          target: [s.climatology.farmId, s.climatology.plotId, s.climatology.dayOfYear, s.climatology.variable],
+          set: { p20: sql`excluded.p20`, p50: sql`excluded.p50`, p80: sql`excluded.p80`, mean: sql`excluded.mean` },
+        }),
+    );
+    await runBatch(this.db, stmts);
+    return rows.length;
+  }
+
+  async fireAlert(x: {
+    farmId: string;
+    date: string;
+    severity: "watch" | "warning";
+    minDistanceKm: number;
+    windTowardsFarm?: boolean;
+    hotspots: {
+      lon: number;
+      lat: number;
+      acquiredAt: number;
+      confidence: string | null;
+      frp: number | null;
+      source: string;
+    }[];
+  }) {
+    const [farm] = await this.db
+      .select({ id: s.farms.id, organizationId: s.farms.organizationId })
+      .from(s.farms)
+      .where(and(eq(s.farms.id, x.farmId), isNull(s.farms.deletedAt)))
+      .limit(1);
+    if (!farm) return null;
+    if (x.hotspots.length) {
+      await runBatch(
+        this.db,
+        chunkForParams(x.hotspots, 7).map((chunk) =>
+          this.db
+            .insert(s.fireHotspots)
+            .values(
+              chunk.map((h) => ({ ...h, id: `${h.source}:${h.acquiredAt}:${h.lon.toFixed(4)}:${h.lat.toFixed(4)}` })),
+            )
+            .onConflictDoNothing(),
+        ),
+      );
+    }
+    return upsertAlert(this.db, farm, {
+      kind: "fire",
+      severity: x.severity,
+      probability: null,
+      validFrom: x.date,
+      validTo: x.date,
+      summary: `Foco de calor a ${x.minDistanceKm.toFixed(1)} km de la estancia${x.windTowardsFarm ? ", con viento hacia el campo" : ""}`,
+      details: { minDistanceKm: x.minDistanceKm, windTowardsFarm: !!x.windTowardsFarm, hotspots: x.hotspots.length },
+    });
   }
 
   /** Mantenimiento diario: borra códigos y tokens vencidos. */

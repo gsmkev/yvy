@@ -9,8 +9,8 @@
   },
   "scripts": {
     "typecheck": "tsc -p .",
-    "test": "vitest run --passWithNoTests",
-    "lint": "eslint src"
+    "test": "vitest run",
+    "lint": "eslint src test"
   },
   "dependencies": {
     "drizzle-orm": "0.45.4",

@@ -5,6 +5,9 @@
 import { and, count, eq, getTableColumns, inArray, isNull, sql } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import {
+  localDate,
+  nextDueDate,
+  nextOccurrenceId,
   parseRecordData,
   RECORD_SCHEMA_VERSION,
   LIMITS,
@@ -111,13 +114,9 @@ export async function applyPush(
         : empty,
       taskIds.size
         ? db
-            .select({
-              id: s.tasks.id,
-              organizationId: s.tasks.organizationId,
-              assigneeId: s.tasks.assigneeId,
-              status: s.tasks.status,
-            })
+            .select({ task: s.tasks, tz: s.farms.timezone })
             .from(s.tasks)
+            .innerJoin(s.farms, eq(s.farms.id, s.tasks.farmId))
             .where(inArray(s.tasks.id, ids(taskIds)))
         : empty,
       farmIds.size
@@ -156,7 +155,7 @@ export async function applyPush(
   const seen = new Set(seenRows.map((r) => r.id));
   const records = new Map<string, RecordState>(recRows.map((r) => [r.id, r]));
   const attachments = new Map(attRows.map((r) => [r.id, r]));
-  const tasks = new Map(taskRows.map((r) => [r.id, r]));
+  const tasks = new Map(taskRows.map((r) => [r.task.id, { ...r.task, tz: r.tz }]));
   const farms = new Set(farmRows.map((r) => r.id));
   const plots = new Map(plotRows.map((r) => [r.id, r.farmId]));
   const pois = new Map(poiRows.map((r) => [r.id, r.farmId]));
@@ -375,6 +374,31 @@ export async function applyPush(
               })
               .where(and(eq(s.tasks.id, t.id), eq(s.tasks.organizationId, org))),
           );
+          // Fase 3: al completar una tarea recurrente nace la siguiente, con el mismo id que crea el celular.
+          const next = done ? nextDueDate(t.dueDate, t.recurrence, localDate(m.row.completedAt ?? now, t.tz)) : null;
+          if (next && t.status !== "done") {
+            taskUpdates.push(
+              db
+                .insert(s.tasks)
+                .values({
+                  id: nextOccurrenceId(t.id),
+                  organizationId: org,
+                  farmId: t.farmId,
+                  plotId: t.plotId,
+                  assigneeId: t.assigneeId,
+                  title: t.title,
+                  kind: t.kind,
+                  dueDate: next,
+                  recurrence: t.recurrence,
+                  status: "open",
+                  createdBy: t.createdBy,
+                  createdAt: now,
+                  updatedAt: now,
+                  version: currentVersion,
+                })
+                .onConflictDoNothing(),
+            );
+          }
           t.status = m.row.status;
         }
         accept(m, t.id);

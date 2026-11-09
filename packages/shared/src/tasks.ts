@@ -1,0 +1,71 @@
+/**
+ * Tareas recurrentes (PRD RF-20/21, Fase 3). Al completar una tarea diaria o semanal se crea la siguiente.
+ * El celular la crea localmente sin red y el servidor la crea al recibir el push: las dos usan el mismo
+ * id determinístico, así que nunca se duplica.
+ */
+export const DEFAULT_TZ = "America/Asuncion";
+
+/** Fecha de calendario "YYYY-MM-DD" en la zona horaria dada. */
+export const localDate = (ms: number, tz: string = DEFAULT_TZ): string => {
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(new Date(ms));
+    const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+    return `${get("year")}-${get("month")}-${get("day")}`;
+  } catch {
+    // Paraguay usa UTC-3 todo el año desde 2024.
+    return new Date(ms - 3 * 3_600_000).toISOString().slice(0, 10);
+  }
+};
+
+export const addDays = (date: string, days: number): string => {
+  const d = new Date(`${date}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+
+/** Próxima fecha: avanza el intervalo hasta quedar después del día en que se completó. */
+export const nextDueDate = (
+  dueDate: string,
+  recurrence: "none" | "daily" | "weekly",
+  completedOn: string,
+): string | null => {
+  if (recurrence === "none") return null;
+  const step = recurrence === "daily" ? 1 : 7;
+  let next = addDays(dueDate, step);
+  while (next <= completedOn) next = addDays(next, step);
+  return next;
+};
+
+/** Hash de 128 bits (cyrb128) → UUID con formato v8. Determinístico y sin crypto (corre en Hermes). */
+export const deterministicUuid = (input: string): string => {
+  let h1 = 1779033703,
+    h2 = 3144134277,
+    h3 = 1013904242,
+    h4 = 2773480762;
+  for (let i = 0; i < input.length; i++) {
+    const k = input.charCodeAt(i);
+    h1 = h2 ^ Math.imul(h1 ^ k, 597399067);
+    h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+    h3 = h4 ^ Math.imul(h3 ^ k, 951274213);
+    h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+  }
+  h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
+  h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+  h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
+  h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+  const hex = [h1 ^ h2 ^ h3 ^ h4, h2 ^ h1, h3 ^ h1, h4 ^ h1]
+    .map((h) => (h >>> 0).toString(16).padStart(8, "0"))
+    .join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-8${hex.slice(13, 16)}-${((parseInt(hex[16]!, 16) & 0x3) | 0x8).toString(16)}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+};
+
+export const nextOccurrenceId = (taskId: string): string => deterministicUuid(`next:${taskId}`);
+
+/** Tareas visibles en "Hoy": abiertas con fecha ≤ hoy. */
+export const isDueToday = (t: { status: string; dueDate: string; deletedAt?: number | null }, today: string): boolean =>
+  t.status === "open" && !t.deletedAt && t.dueDate <= today;

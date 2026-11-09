@@ -42,15 +42,13 @@ auth.post("/signup", async (c) => {
   const orgId = newId();
   const userId = newId();
   await runBatch(db, [
-    db
-      .insert(s.organizations)
-      .values({
-        id: orgId,
-        name: body.organizationName,
-        trialEndsAt: ts + 60 * 86_400_000,
-        createdAt: ts,
-        updatedAt: ts,
-      }),
+    db.insert(s.organizations).values({
+      id: orgId,
+      name: body.organizationName,
+      trialEndsAt: ts + 60 * 86_400_000,
+      createdAt: ts,
+      updatedAt: ts,
+    }),
     db.insert(s.users).values({ id: userId, email: body.email, fullName: body.fullName, createdAt: ts, updatedAt: ts }),
     db
       .insert(s.memberships)

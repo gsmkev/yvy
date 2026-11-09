@@ -7,6 +7,7 @@ import { ingest } from "./routes/ingest";
 import { media } from "./routes/media";
 import { org } from "./routes/org";
 import { sync } from "./routes/sync";
+import { web } from "./routes/web";
 import type { AppEnv } from "./types";
 
 export const app = new Hono<AppEnv>();
@@ -28,4 +29,5 @@ authed.use("*", requireAuth);
 authed.route("/sync", sync);
 authed.route("/org", org);
 authed.route("/media", media);
+authed.route("/", web);
 app.route("/", authed);

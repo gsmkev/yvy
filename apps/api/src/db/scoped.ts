@@ -87,7 +87,7 @@ export class ScopedDb {
   constructor(
     readonly db: DB,
     readonly auth: AuthCtx,
-    private readonly now: () => number = Date.now,
+    readonly now: () => number = Date.now,
   ) {}
 
   get isWorker(): boolean {
@@ -113,16 +113,16 @@ export class ScopedDb {
     return sql`(SELECT plot_id FROM plot_assignments WHERE user_id = ${this.auth.userId} AND organization_id = ${this.auth.orgId} AND deleted_at IS NULL)`;
   }
 
-  private workerFarmsSql(): SQL {
+  workerFarmsSql(): SQL {
     return sql`(SELECT farm_id FROM plots WHERE id IN ${this.assignedPlotsSql()})`;
   }
 
   /** Empleado: registros de sus lotes, o propios (incluye los sin lote). */
-  private recordsVisibleSql(): SQL {
+  recordsVisibleSql(): SQL {
     return sql`(records.plot_id IN ${this.assignedPlotsSql()} OR records.author_id = ${this.auth.userId})`;
   }
 
-  private workerFilter(table: PullTable): SQL | undefined {
+  workerFilter(table: PullTable): SQL | undefined {
     if (!this.isWorker) return undefined;
     switch (table) {
       case "farms":
@@ -388,16 +388,14 @@ export class ScopedDb {
     const ts = this.now();
     await runBatch(this.db, [
       bumpVersion(this.db),
-      this.db
-        .insert(s.farms)
-        .values({
-          ...input,
-          id,
-          organizationId: this.auth.orgId,
-          createdAt: ts,
-          updatedAt: ts,
-          version: currentVersion,
-        }),
+      this.db.insert(s.farms).values({
+        ...input,
+        id,
+        organizationId: this.auth.orgId,
+        createdAt: ts,
+        updatedAt: ts,
+        version: currentVersion,
+      }),
     ]);
     return { id };
   }
@@ -445,16 +443,14 @@ export class ScopedDb {
     const ts = this.now();
     await runBatch(this.db, [
       bumpVersion(this.db),
-      this.db
-        .insert(s.pointsOfInterest)
-        .values({
-          ...input,
-          id,
-          organizationId: this.auth.orgId,
-          createdAt: ts,
-          updatedAt: ts,
-          version: currentVersion,
-        }),
+      this.db.insert(s.pointsOfInterest).values({
+        ...input,
+        id,
+        organizationId: this.auth.orgId,
+        createdAt: ts,
+        updatedAt: ts,
+        version: currentVersion,
+      }),
     ]);
     return { id };
   }

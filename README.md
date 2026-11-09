@@ -11,7 +11,11 @@ pnpm --filter api dev      # http://localhost:8787
 pnpm test
 ```
 
-## Puesta en Cloudflare (una vez)
+Web: `pnpm --filter web dev` (http://localhost:5173, usa la API local). App: `pnpm --filter mobile start`.
+
+Producción: ver **[docs/DEPLOY.md](docs/DEPLOY.md)**. Decisiones: `docs/adr/`.
+
+## Puesta en Cloudflare (resumen)
 
 ```bash
 cd apps/api

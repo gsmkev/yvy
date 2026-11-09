@@ -3,8 +3,8 @@
 Mapa vivo del campo que funciona sin señal. PRD en docs/PRD.md; docs/PRD-cloudflare.md tiene prioridad (stack 100 % gratis en Cloudflare). Decisiones que se apartan de ambos: docs/adr/.
 
 ## Estructura
-- apps/mobile     Expo + Expo Router + expo-sqlite + Drizzle + MapLibre RN (pendiente)
-- apps/web        Vite + React + TanStack Router/Query + Tailwind + MapLibre GL JS + pmtiles + terra-draw (pendiente)
+- apps/mobile     Expo 58 + Expo Router + expo-sqlite (mismo esquema que D1, ver scripts/gen-schema.mjs) + MapLibre RN 11
+- apps/web        Vite + React + TanStack Router/Query + Tailwind 4 + MapLibre GL JS 6 + pmtiles + terra-draw; compila a apps/api/public
 - apps/api        Cloudflare Worker: Hono + Drizzle (D1) + R2 + Queues + Cron
 - packages/shared Esquema Drizzle compartido (D1 y app), esquemas Zod de registros y del protocolo de sync, límites, tokens de marca, i18n es-PY
 - packages/sync   Motor de sincronización (TS puro, sin React Native)
@@ -17,6 +17,10 @@ Mapa vivo del campo que funciona sin señal. PRD en docs/PRD.md; docs/PRD-cloudf
 - pnpm --filter api db:generate (tras cambiar packages/shared/src/schema.ts) y pnpm --filter api db:migrate:local
 - pnpm --filter api seed (organización de prueba; ingreso con dueno@yvy.test, el código sale en la consola)
 - cd workers-py && uv run pytest
+- pnpm --filter web e2e (Playwright contra `wrangler dev`; E2E_DEV_LOG=<log de wrangler dev>)
+- pnpm --filter mobile test (YVY_E2E_API + E2E_DEV_LOG para correr también la prueba contra el Worker real)
+- Tras cambiar el esquema: pnpm --filter api db:generate && node apps/mobile/scripts/gen-schema.mjs
+- Deploy: docs/DEPLOY.md
 
 ## Reglas
 - Plan gratis de Cloudflare: 10 ms de CPU por request. Nada de bcrypt/scrypt ni parseo grande en el Worker; lo pesado va a workers-py.

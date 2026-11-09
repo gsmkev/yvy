@@ -1,0 +1,9 @@
+{
+  "rules": [
+    {
+      "allowed": { "origins": ["APP_ORIGIN"], "methods": ["GET", "PUT", "HEAD"], "headers": ["content-type"] },
+      "exposeHeaders": ["ETag"],
+      "maxAgeSeconds": 3600
+    }
+  ]
+}

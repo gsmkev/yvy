@@ -1,41 +1,69 @@
-import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { RECORD_KINDS, t } from "@yvy/shared";
-import { KIND_ICON } from "../../src/lib/forms";
-import { H1, styles as k } from "../../src/ui/kit";
+import { RECORD_ICON } from "../../src/ui/icons";
+import { Header, styles as k } from "../../src/ui/kit";
 import { C, TOUCH } from "../../src/ui/theme";
 
+/** Siete botones grandes: el registro arranca con un toque (PRD §7: ≤ 4 toques más la foto). */
 export default function NewRecord() {
   return (
-    <ScrollView style={k.screen} contentContainerStyle={[k.pad, s.grid]}>
-      <H1>{t("app.chooseKind")}</H1>
-      {RECORD_KINDS.map((kind) => (
-        <Pressable
-          key={kind}
-          accessibilityRole="button"
-          accessibilityLabel={t(`recordKinds.${kind}`)}
-          style={({ pressed }) => [s.tile, pressed && { opacity: 0.8 }]}
-          onPress={() => router.push({ pathname: "/record/[kind]", params: { kind } })}
-        >
-          <Text style={s.icon}>{KIND_ICON[kind]}</Text>
-          <Text style={s.label}>{t(`recordKinds.${kind}`)}</Text>
-        </Pressable>
-      ))}
+    <ScrollView style={k.screen} contentContainerStyle={k.pad}>
+      <Header eyebrow={t("app.newRecord")} title={t("app.chooseKind")} />
+      <View style={s.grid}>
+        {RECORD_KINDS.map((kind) => {
+          const Icon = RECORD_ICON[kind];
+          return (
+            <Pressable
+              key={kind}
+              accessibilityRole="button"
+              accessibilityLabel={t(`recordKinds.${kind}`)}
+              style={({ pressed }) => [
+                s.tile,
+                kind === "note" && s.wide,
+                pressed && { transform: [{ scale: 0.97 }], backgroundColor: C.papel },
+              ]}
+              onPress={() => router.push({ pathname: "/record/[kind]", params: { kind } })}
+            >
+              <View style={s.iconBox}>
+                <Icon size={28} color={C.accion} strokeWidth={2} />
+              </View>
+              <Text style={s.label}>{t(`recordKinds.${kind}`)}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </ScrollView>
   );
 }
 
 const s = StyleSheet.create({
-  grid: { gap: 10 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   tile: {
-    minHeight: TOUCH + 16,
+    width: "48.5%",
+    minHeight: TOUCH * 2.2,
+    justifyContent: "space-between",
+    backgroundColor: C.white,
+    borderWidth: 1,
+    borderColor: C.linea,
+    borderRadius: 14,
+    padding: 16,
+  },
+  wide: {
+    width: "100%",
+    minHeight: TOUCH + 24,
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
-    backgroundColor: C.white,
-    borderRadius: 14,
-    paddingHorizontal: 18,
+    justifyContent: "flex-start",
+    gap: 14,
   },
-  icon: { fontSize: 30 },
-  label: { fontSize: 20, fontWeight: "600", color: C.surco },
+  iconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: "#E7EDD9",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  label: { fontSize: 17, fontWeight: "600", color: C.surco, marginTop: 10 },
 });

@@ -6,13 +6,14 @@ import { RecordsList } from "../components/RecordsList";
 import { Button, ErrorBox, Field, Input, Select } from "../components/ui";
 import { recordsToExcel } from "../lib/exports";
 import { t, tk } from "../lib/i18n";
-import { fetchAllRecords, useFarms, useMembers, type RecordFilters } from "../lib/queries";
+import { fetchAllRecords, useFarms, useMe, useMembers, type RecordFilters } from "../lib/queries";
 import type { RecordRow } from "../lib/types";
 
 const toMs = (d: string, end = false) => (d ? Date.parse(`${d}T${end ? "23:59:59" : "00:00:00"}-03:00`) : undefined);
 
 export function RecordsPage() {
   const farms = useFarms();
+  const me = useMe();
   const members = useMembers();
   const [f, setF] = useState({ farmId: "", authorId: "", kind: "", from: "", to: "" });
   const [rows, setRows] = useState<RecordRow[]>([]);
@@ -54,6 +55,13 @@ export function RecordsPage() {
     <div className="grid h-full lg:grid-cols-[minmax(0,1fr)_480px]">
       <div className="h-72 lg:h-full">
         <FarmMap
+          farms={(farms.data ?? []).map((f) => ({
+            id: f.id,
+            name: f.name,
+            geometry: f.geometry,
+            basemapPath: f.basemapPath,
+          }))}
+          tilesBaseUrl={me.data?.tilesBaseUrl}
           points={pts.map((r) => ({ id: r.id, lon: r.lon!, lat: r.lat!, color: BRAND.trigo }))}
           bounds={bounds}
         />

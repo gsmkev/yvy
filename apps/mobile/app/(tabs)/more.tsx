@@ -1,3 +1,4 @@
+import { CheckCircle2, Download, LogOut, RefreshCw } from "lucide-react-native";
 import { useState } from "react";
 import { Alert, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { router } from "expo-router";
@@ -7,7 +8,7 @@ import { downloadPack, isWifi, packStatus } from "../../src/lib/offline";
 import { api, getSession, setSession } from "../../src/lib/session";
 import { localChanged, syncNow } from "../../src/lib/sync";
 import { useLocal } from "../../src/lib/useLocal";
-import { Button, H1, Muted, styles as k } from "../../src/ui/kit";
+import { Button, Header, Muted, styles as k } from "../../src/ui/kit";
 import { C } from "../../src/ui/theme";
 
 export default function More() {
@@ -44,9 +45,8 @@ export default function More() {
 
   return (
     <ScrollView style={k.screen} contentContainerStyle={[k.pad, { gap: 14 }]}>
-      <H1>{session?.user.fullName}</H1>
-      <Muted>{session?.organization.name}</Muted>
-      <Button title={t("app.syncNow")} icon="↻" onPress={syncNow} />
+      <Header eyebrow={session?.organization.name} title={session?.user.fullName ?? ""} />
+      <Button title={t("app.syncNow")} icon={RefreshCw} onPress={syncNow} />
 
       {rejected.map((r) => (
         <View key={r.mutationId} style={s.card}>
@@ -54,7 +54,7 @@ export default function More() {
           <Text>{t(`rejectReasons.${r.reason}` as never, { max: 3 })}</Text>
           <Button
             title={t("app.dismiss")}
-            variant="ghost"
+            variant="secondary"
             onPress={() => (getDb().dismissRejected(r.mutationId), localChanged())}
           />
         </View>
@@ -70,14 +70,21 @@ export default function More() {
             {!st.layers.length ? (
               <Muted>{t("app.offlinePackNone")}</Muted>
             ) : st.upToDate ? (
-              <Text style={{ color: C.soja, fontWeight: "600" }}>✔ {t("app.offlinePackReady")}</Text>
+              <View style={s.row}>
+                <CheckCircle2 size={18} color={C.accion} />
+                <Text style={{ color: C.accion, fontWeight: "600" }}>{t("app.offlinePackReady")}</Text>
+              </View>
             ) : (
               <>
-                <Muted>{t("app.offlinePackSize", { mb: (st.missingBytes / 1e6).toFixed(1) })}</Muted>
+                <Muted>
+                  {t("app.offlinePackSize", {
+                    mb: (st.missingBytes / 1e6).toLocaleString("es-PY", { maximumFractionDigits: 1 }),
+                  })}
+                </Muted>
                 {p !== undefined ? (
                   <Text style={s.progress}>{Math.round(p * 100)} %</Text>
                 ) : (
-                  <Button title={t("app.offlinePackDownload")} icon="⤓" onPress={() => download(f.id)} />
+                  <Button title={t("app.offlinePackDownload")} icon={Download} onPress={() => download(f.id)} />
                 )}
               </>
             )}
@@ -94,7 +101,7 @@ export default function More() {
         />
       </View>
 
-      <Button title={t("app.logout")} variant="ghost" onPress={logout} />
+      <Button title={t("app.logout")} variant="danger" icon={LogOut} onPress={logout} />
       <Muted>
         {t("attribution.metNorway")} · {t("attribution.copernicus")} · {t("attribution.chirps")} ·{" "}
         {t("attribution.firms")}
@@ -104,9 +111,16 @@ export default function More() {
 }
 
 const s = StyleSheet.create({
-  h2: { fontSize: 18, fontWeight: "700", color: C.surco, marginTop: 8 },
-  card: { backgroundColor: C.white, borderRadius: 12, padding: 14, gap: 8 },
+  h2: {
+    fontSize: 11,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    fontFamily: "monospace",
+    color: C.tinta2,
+    marginTop: 12,
+  },
+  card: { backgroundColor: C.white, borderWidth: 1, borderColor: C.linea, borderRadius: 12, padding: 14, gap: 10 },
   row: { flexDirection: "row", alignItems: "center" },
   farm: { fontSize: 17, fontWeight: "700", color: C.surco },
-  progress: { fontSize: 22, fontWeight: "700", color: C.soja },
+  progress: { fontSize: 22, fontWeight: "700", color: C.accion },
 });

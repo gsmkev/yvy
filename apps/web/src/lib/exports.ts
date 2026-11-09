@@ -1,4 +1,5 @@
 /** Exportaciones generadas en el navegador (anexo §4.9): Excel de registros (RF-82) y KML de lotes (RF-15). */
+import { describeRecord } from "@yvy/shared";
 import { tk } from "./i18n";
 import { fmtDateTime } from "./format";
 import type { Plot, RecordRow } from "./types";
@@ -11,22 +12,7 @@ export function download(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 
-export const describeData = (kind: string, d: Record<string, unknown>): string => {
-  const parts: string[] = [];
-  for (const [k, v] of Object.entries(d)) {
-    if (v === undefined || v === null || v === "" || k === "readAt") continue;
-    parts.push(
-      k === "mm"
-        ? `${v} mm`
-        : k === "heightCm"
-          ? `${v} cm`
-          : typeof v === "boolean"
-            ? `${k}: ${v ? "sí" : "no"}`
-            : String(v),
-    );
-  }
-  return parts.join(" · ") || tk(`recordKinds.${kind}`);
-};
+export const describeData = (kind: string, d: Record<string, unknown>): string => describeRecord(kind, d);
 
 export async function recordsToExcel(rows: RecordRow[], filename: string) {
   const ExcelJS = (await import("exceljs")).default;

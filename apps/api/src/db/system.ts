@@ -251,7 +251,7 @@ export class SystemDb {
       probability: null,
       validFrom: x.date,
       validTo: x.date,
-      summary: `Foco de calor a ${x.minDistanceKm.toFixed(1)} km de la estancia${windTowardsFarm ? ", con viento hacia el campo" : ""}`,
+      summary: `Foco de calor a ${x.minDistanceKm.toFixed(1).replace(".", ",")} km de la estancia${windTowardsFarm ? ", con viento hacia el campo" : ""}`,
       details: { minDistanceKm: x.minDistanceKm, windTowardsFarm, hotspots: x.hotspots.length },
     });
   }

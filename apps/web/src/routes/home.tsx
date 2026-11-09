@@ -87,7 +87,7 @@ export function HomePage() {
 
         {list.length > 0 && (
           <div>
-            <SectionHead title={t("ui.navHome")} count={list.length} />
+            <SectionHead title={t("ui.farmsTitle")} count={list.length} />
             <ul className="divide-y divide-linea">
               {list.map((f) => (
                 <li key={f.id}>
@@ -110,7 +110,8 @@ export function HomePage() {
                       </p>
                       {f.activeAlerts > 0 && (
                         <p className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-peligro">
-                          <AlertTriangle size={13} aria-hidden /> {f.activeAlerts} {t("ui.activeAlerts").toLowerCase()}
+                          <AlertTriangle size={13} aria-hidden />{" "}
+                          {t(f.activeAlerts === 1 ? "ui.alertsCountOne" : "ui.alertsCountMany", { n: f.activeAlerts })}
                         </p>
                       )}
                     </div>

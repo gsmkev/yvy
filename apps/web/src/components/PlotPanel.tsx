@@ -114,7 +114,7 @@ export function PlotPanel({
                       ) : (
                         <Minus size={16} aria-hidden />
                       )}
-                      {fmtPct(delta)}
+                      {Math.abs(delta) < 0.5 ? t("ui.sameAsFarm") : fmtPct(delta)}
                     </span>
                   </div>
                 )}

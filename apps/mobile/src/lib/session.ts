@@ -1,6 +1,6 @@
 /** Sesión en SecureStore: access JWT de 1 h + refresh de 90 días que se renueva al sincronizar. */
 import Constants from "expo-constants";
-import * as SecureStore from "expo-secure-store";
+import { secureDel, secureGet, secureSet } from "./secure";
 import { useSyncExternalStore } from "react";
 
 export const API_URL: string = (Constants.expoConfig?.extra?.apiUrl as string) ?? "http://10.0.2.2:8787";
@@ -22,7 +22,7 @@ const emit = () => listeners.forEach((l) => l());
 
 export async function loadSession(): Promise<Session | null> {
   if (!loaded) {
-    const raw = await SecureStore.getItemAsync(KEY);
+    const raw = await secureGet(KEY);
     session = raw ? (JSON.parse(raw) as Session) : null;
     loaded = true;
     emit();
@@ -32,8 +32,8 @@ export async function loadSession(): Promise<Session | null> {
 
 export async function setSession(s: Session | null) {
   session = s;
-  if (s) await SecureStore.setItemAsync(KEY, JSON.stringify(s));
-  else await SecureStore.deleteItemAsync(KEY);
+  if (s) await secureSet(KEY, JSON.stringify(s));
+  else await secureDel(KEY);
   emit();
 }
 

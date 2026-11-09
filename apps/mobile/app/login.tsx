@@ -1,5 +1,7 @@
+import campo from "../assets/campo-itapua.webp";
+import { QrCode } from "lucide-react-native";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
+import { ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
 import { router } from "expo-router";
 import { t } from "@yvy/shared";
 import { api, setSession, type Session } from "../src/lib/session";
@@ -29,13 +31,17 @@ export default function Login() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={s.root}>
+      <ImageBackground source={campo} resizeMode="cover" style={s.photo} imageStyle={{ opacity: 0.85 }}>
+        <View style={s.shade} />
+        <Text style={s.credit}>Itapúa · Sentinel-2 · {t("attribution.copernicus")}</Text>
+      </ImageBackground>
       <Text style={s.logo}>Yvy</Text>
       <Text style={s.tag}>{t("ui.tagline")}</Text>
       <View style={s.box}>
         {mode === "choose" && (
           <>
-            <Button title={t("app.loginQr")} icon="▦" onPress={() => router.push("/scan")} />
-            <Button title={t("app.loginEmail")} variant="ghost" onPress={() => setMode("email")} />
+            <Button title={t("app.loginQr")} icon={QrCode} onPress={() => router.push("/scan")} />
+            <Button title={t("app.loginEmail")} variant="secondary" onPress={() => setMode("email")} />
           </>
         )}
         {mode === "email" && (
@@ -97,10 +103,13 @@ export default function Login() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.surco, justifyContent: "center", padding: 24 },
+  root: { flex: 1, backgroundColor: C.surco, justifyContent: "flex-end", padding: 24, paddingBottom: 40 },
+  photo: { position: "absolute", top: 0, left: 0, right: 0, height: "58%", justifyContent: "flex-end" },
+  shade: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(30,36,25,0.25)" },
+  credit: { color: C.lino, opacity: 0.75, fontSize: 10, fontFamily: "monospace", padding: 12 },
   logo: { color: C.lino, fontSize: 44, fontWeight: "800" },
   tag: { color: C.lino, opacity: 0.7, fontSize: 16, marginBottom: 24 },
-  box: { backgroundColor: C.lino, borderRadius: 16, padding: 18, gap: 12 },
+  box: { backgroundColor: C.lino, borderRadius: 14, padding: 16, gap: 12 },
   label: { fontWeight: "600", color: C.surco },
   help: { color: C.surco },
   input: {

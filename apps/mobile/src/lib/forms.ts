@@ -61,14 +61,3 @@ export const FORMS: Record<RecordKind, FieldSpec[]> = {
   ],
   note: [{ key: "text", type: "text", multiline: true, required: true }],
 };
-
-/** Iconos simples para los botones grandes (accesibilidad: siempre con texto). */
-export const KIND_ICON: Record<RecordKind, string> = {
-  scouting: "👣",
-  pest: "🐛",
-  crop_status: "🌱",
-  pasture_status: "🌾",
-  rain: "🌧",
-  water: "💧",
-  note: "📝",
-};

@@ -1,3 +1,4 @@
+import { Camera, MapPin } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -5,7 +6,7 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import { LIMITS, parseRecordData, t, type RecordKind } from "@yvy/shared";
 import type { LocalPhoto } from "../../src/db/store";
 import { getDb } from "../../src/lib/db";
-import { FORMS, KIND_ICON, type FieldSpec } from "../../src/lib/forms";
+import { FORMS, type FieldSpec } from "../../src/lib/forms";
 import { currentFix, detectPlot, type Fix } from "../../src/lib/location";
 import { processPhoto } from "../../src/lib/photos";
 import { useSession } from "../../src/lib/session";
@@ -88,11 +89,11 @@ export default function RecordForm() {
 
   return (
     <>
-      <Stack.Screen options={{ title: `${KIND_ICON[kind]} ${t(`recordKinds.${kind}`)}` }} />
+      <Stack.Screen options={{ title: t(`recordKinds.${kind}`) }} />
       <ScrollView style={k.screen} contentContainerStyle={[k.pad, { gap: 16, paddingBottom: 40 }]}>
         <View style={s.gps}>
+          <MapPin size={18} color={fix && fix !== "searching" ? C.accion : C.tinta2} />
           <Text style={s.gpsText}>
-            📍{" "}
             {fix === "searching"
               ? t("app.gpsSearching")
               : fix
@@ -128,7 +129,7 @@ export default function RecordForm() {
             ))}
           </View>
           {photos.length < LIMITS.photos.maxPerRecord && (
-            <Button title={t("app.takePhoto")} icon="📷" variant="ghost" onPress={() => setCamera(true)} />
+            <Button title={t("app.takePhoto")} icon={Camera} variant="secondary" onPress={() => setCamera(true)} />
           )}
         </View>
         {error && <Text style={{ color: C.alerta, fontSize: 16 }}>{error}</Text>}
@@ -236,14 +237,14 @@ function PhotoCamera({ onDone }: { onDone: (p: LocalPhoto | null) => void }) {
       <View style={[k.screen, k.pad, { justifyContent: "center", gap: 12 }]}>
         <Muted>{t("app.cameraDenied")}</Muted>
         <Button title={t("app.allowCamera")} onPress={request} />
-        <Button title={t("ui.cancel")} variant="ghost" onPress={() => onDone(null)} />
+        <Button title={t("ui.cancel")} variant="secondary" onPress={() => onDone(null)} />
       </View>
     );
   return (
     <View style={{ flex: 1, backgroundColor: "black" }}>
       <CameraView ref={setRef} style={{ flex: 1 }} facing="back" />
       <View style={s.shutterRow}>
-        <Button title={t("ui.cancel")} variant="ghost" onPress={() => onDone(null)} />
+        <Button title={t("ui.cancel")} variant="secondary" onPress={() => onDone(null)} />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t("app.takePhoto")}
@@ -267,7 +268,16 @@ function PhotoCamera({ onDone }: { onDone: (p: LocalPhoto | null) => void }) {
 }
 
 const s = StyleSheet.create({
-  gps: { backgroundColor: C.white, borderRadius: 10, padding: 10 },
+  gps: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: C.white,
+    borderWidth: 1,
+    borderColor: C.linea,
+    borderRadius: 10,
+    padding: 12,
+  },
   gpsText: { color: C.surco, fontSize: 15 },
   label: { fontSize: 16, fontWeight: "700", color: C.surco, marginBottom: 8 },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
@@ -282,7 +292,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  chipOn: { backgroundColor: C.soja, borderColor: C.soja },
+  chipOn: { backgroundColor: C.accion, borderColor: C.accion },
   chipText: { fontSize: 17, fontWeight: "600", color: C.surco },
   input: {
     backgroundColor: C.white,
@@ -303,5 +313,5 @@ const s = StyleSheet.create({
     padding: 20,
     backgroundColor: "black",
   },
-  shutter: { width: 76, height: 76, borderRadius: 38, borderWidth: 6, borderColor: C.white, backgroundColor: C.soja },
+  shutter: { width: 76, height: 76, borderRadius: 38, borderWidth: 6, borderColor: C.white, backgroundColor: C.accion },
 });

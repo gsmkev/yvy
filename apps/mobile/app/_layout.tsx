@@ -1,15 +1,24 @@
 import "../src/lib/polyfills";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { dbReady } from "../src/lib/db";
 import { loadSession } from "../src/lib/session";
 import { C } from "../src/ui/theme";
 
 export default function RootLayout() {
+  const [ready, setReady] = useState(false);
   useEffect(() => {
-    loadSession();
+    Promise.all([dbReady(), loadSession()]).then(() => setReady(true));
   }, []);
+  if (!ready)
+    return (
+      <View style={{ flex: 1, backgroundColor: C.surco, justifyContent: "center" }}>
+        <ActivityIndicator color={C.lino} />
+      </View>
+    );
   return (
     <SafeAreaProvider>
       <StatusBar style="light" />
@@ -17,6 +26,7 @@ export default function RootLayout() {
         screenOptions={{
           headerStyle: { backgroundColor: C.surco },
           headerTintColor: C.lino,
+          headerTitleStyle: { fontWeight: "600" },
           contentStyle: { backgroundColor: C.lino },
         }}
       >

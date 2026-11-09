@@ -77,4 +77,11 @@ describe("auth por código de email", () => {
     expect((await call("GET", "/sync/state")).status).toBe(401);
     expect(env.JWT_SECRET).toBeTruthy();
   });
+
+  it("las pantallas de la web no exigen sesión; la API sí", async () => {
+    expect((await call("GET", "/me")).status).toBe(401);
+    expect((await call("GET", "/org/farms")).status).toBe(401);
+    const page = await call("GET", "/ingresar").catch(() => ({ status: 0 }));
+    expect(page.status).not.toBe(401);
+  });
 });

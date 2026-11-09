@@ -50,7 +50,7 @@ export function evaluateFrost(runs: DailyForecast[][], today: string): AlertDraf
     probability,
     validFrom: cold[0]!.date,
     validTo: cold[cold.length - 1]!.date,
-    summary: `Posible helada: mínima de ${minT.toFixed(1)} °C`,
+    summary: `Posible helada: mínima de ${minT.toFixed(1).replace(".", ",")} °C`,
     details: {
       days: cold.map((d) => ({ date: d.date, tminC: d.tminC })),
       runsConfirming: confirming,

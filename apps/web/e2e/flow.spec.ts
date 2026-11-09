@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 
 const LOG = process.env.E2E_DEV_LOG ?? "";
-const lastCode = () => [...readFileSync(LOG, "utf8").matchAll(/código es (\d{6})/g)].at(-1)?.[1];
+const codes = () => [...readFileSync(LOG, "utf8").matchAll(/código es (\d{6})/g)].map((m) => m[1]!);
 
 test("dueño: registro, estancia, importación de 20 lotes y empleado", async ({ page }) => {
   const errors: string[] = [];
@@ -19,10 +19,11 @@ test("dueño: registro, estancia, importación de 20 lotes y empleado", async ({
   await page.getByLabel("Nombre de la organización").fill("Agro E2E");
   await page.getByLabel("Tu nombre").fill("Dueña E2E");
   await page.getByLabel("Tu email").fill(email);
+  const before = codes().length;
   await page.getByRole("button", { name: "Mandame el código" }).click();
   await expect(page.getByText(/Te mandamos un código/)).toBeVisible();
-  await expect.poll(lastCode).toMatch(/^\d{6}$/);
-  await page.getByLabel("Código de 6 dígitos").fill(lastCode()!);
+  await expect.poll(() => codes().length).toBeGreaterThan(before); // el código de este ingreso, no uno anterior
+  await page.getByLabel("Código de 6 dígitos").fill(codes().at(-1)!);
   await page.getByRole("button", { name: "Ingresar" }).click();
   await expect(page.getByRole("heading", { name: "Tus estancias" })).toBeVisible();
 
@@ -72,7 +73,7 @@ test("dueño: registro, estancia, importación de 20 lotes y empleado", async ({
 
   // Estancia: Ramón figura en el lote, clima y parte semanal
   await page.getByRole("link", { name: "Inicio" }).click();
-  await page.getByText("Estancia E2E").click();
+  await page.getByRole("link", { name: /Estancia E2E/ }).click();
   await page
     .getByRole("button", { name: /^Lote 1\b/ })
     .first()

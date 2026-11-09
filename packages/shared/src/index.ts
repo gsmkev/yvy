@@ -19,3 +19,4 @@ export {
   type RecordKind,
 } from "./schema";
 export * from "./tasks";
+export * from "./describe";

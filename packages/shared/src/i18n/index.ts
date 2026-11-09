@@ -13,3 +13,13 @@ export const t = (key: MessageKey, vars: Record<string, string | number> = {}, l
   for (const part of key.split(".")) node = (node as Record<string, unknown>)[part];
   return String(node).replace(/\{\{(\w+)\}\}/g, (_, k: string) => String(vars[k] ?? `{{${k}}}`));
 };
+
+/** ¿Existe la clave? Para textos armados dinámicamente (valores de registros). */
+export const hasKey = (key: string, locale: Locale = "es-PY"): boolean => {
+  let node: unknown = locales[locale];
+  for (const part of key.split(".")) {
+    if (node === null || typeof node !== "object") return false;
+    node = (node as Record<string, unknown>)[part];
+  }
+  return typeof node === "string";
+};

@@ -1,0 +1,9 @@
+# Copiar a .dev.vars para `wrangler dev`. En producción: `wrangler secret put <NOMBRE>`.
+JWT_SECRET=cambiar-por-32-bytes-aleatorios
+INGEST_SECRET=cambiar-por-otro-secreto
+# Vacío en desarrollo: los códigos de ingreso se imprimen en la consola.
+RESEND_API_KEY=
+# Credenciales S3 de R2 para URLs firmadas (R2 → Manage API tokens)
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=

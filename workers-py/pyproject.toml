@@ -1,0 +1,17 @@
+[project]
+name = "yvy-workers"
+version = "0.1.0"
+description = "Jobs geoespaciales de Yvy (corren en GitHub Actions)"
+requires-python = ">=3.12"
+dependencies = ["httpx>=0.28"]
+
+[project.optional-dependencies]
+# Se agregan en la Fase 4/5: pystac-client, rasterio, rio-tiler, exactextract, geopandas, xarray
+geo = []
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -1,0 +1,25 @@
+{
+  "name": "@yvy/geo",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "vitest run",
+    "lint": "eslint src test"
+  },
+  "dependencies": {
+    "@turf/area": "7.4.0",
+    "@turf/bbox": "7.4.0",
+    "@turf/boolean-point-in-polygon": "7.4.0",
+    "@turf/kinks": "7.4.0",
+    "@turf/helpers": "7.4.0",
+    "@turf/centroid": "7.4.0"
+  },
+  "devDependencies": {
+    "vitest": "4.1.12",
+    "@types/geojson": "7946.0.16"
+  }
+}

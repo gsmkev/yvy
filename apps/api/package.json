@@ -1,0 +1,31 @@
+{
+  "name": "api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply yvy --local",
+    "db:migrate:remote": "wrangler d1 migrations apply yvy --remote",
+    "test": "vitest run",
+    "typecheck": "tsc -p .",
+    "lint": "eslint src test",
+    "seed": "wrangler d1 execute yvy --local --file=seed/seed.sql"
+  },
+  "dependencies": {
+    "@yvy/geo": "workspace:*",
+    "@yvy/shared": "workspace:*",
+    "aws4fetch": "1.0.20",
+    "drizzle-orm": "0.45.4",
+    "hono": "4.13.17",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.6.1",
+    "drizzle-kit": "0.31.11",
+    "vitest": "4.1.12",
+    "wrangler": "4.159.0",
+    "@types/geojson": "7946.0.16"
+  }
+}

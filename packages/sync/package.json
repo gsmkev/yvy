@@ -1,0 +1,19 @@
+{
+  "name": "@yvy/sync",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "vitest run",
+    "lint": "eslint src test"
+  },
+  "dependencies": {
+    "@yvy/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "4.1.12"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "yvy-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "observability": { "enabled": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "yvy",
+      // Reemplazar por el id que devuelve `wrangler d1 create yvy`
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    { "binding": "MEDIA", "bucket_name": "yvy-media" },
+    { "binding": "TILES", "bucket_name": "yvy-tiles" }
+  ],
+  "queues": {
+    "producers": [{ "binding": "JOBS", "queue": "yvy-jobs" }],
+    "consumers": [{ "queue": "yvy-jobs", "max_batch_size": 1, "max_retries": 3 }]
+  },
+  // Plan gratis: 5 cron triggers por cuenta (docs/PRD-cloudflare.md §4.8)
+  "triggers": {
+    "crons": ["0 */3 * * *", "0 11 * * *", "*/15 * * * *", "0 10 * * 1", "0 3 * * *"]
+  },
+  "vars": {
+    "APP_ENV": "development",
+    "ALLOW_SIGNUP": "true",
+    "EMAIL_FROM": "Yvy <ingreso@yvy.example>",
+    "MEDIA_BUCKET_NAME": "yvy-media",
+    "MET_USER_AGENT": "Yvy/1.0 koeti.com.py"
+  }
+}

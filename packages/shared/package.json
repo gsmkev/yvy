@@ -1,0 +1,23 @@
+{
+  "name": "@yvy/shared",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts",
+    "./limits": "./src/limits.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.45.4",
+    "zod": "4.6.7",
+    "uuidv7": "1.2.1"
+  },
+  "devDependencies": {
+    "vitest": "4.1.12"
+  }
+}

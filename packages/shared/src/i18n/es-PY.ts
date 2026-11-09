@@ -35,6 +35,7 @@ export const esPY = {
   },
   ui: {
     appName: "Yvy",
+    name: "Nombre",
     tagline: "El mapa vivo de tu campo, aunque no haya señal",
     loading: "Cargando…",
     save: "Guardar",
@@ -147,6 +148,7 @@ export const esPY = {
     role_worker: "Empleado",
     phone: "Teléfono",
     linkDevice: "Vincular celular",
+    expires: "Vence: {{date}}",
     linkHelp: "El empleado abre la app Yvy y escanea este código. Sirve una sola vez y vence en 24 h.",
     assignPlots: "Lotes asignados",
     removeMember: "Dar de baja",

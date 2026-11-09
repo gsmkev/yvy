@@ -1,0 +1,184 @@
+import { useState } from "react";
+import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
+import { QRCodeSVG } from "qrcode.react";
+import { ROLES } from "@yvy/shared";
+import { Button, Card, ErrorBox, Field, Input, Modal, Select, Spinner } from "../components/ui";
+import { del, get, post, put } from "../lib/api";
+import { fmtDateTime, fmtHa } from "../lib/format";
+import { t, tk } from "../lib/i18n";
+import { useFarms, useMe, useMembers } from "../lib/queries";
+import type { FarmDetail, Member } from "../lib/types";
+
+export function TeamPage() {
+  const me = useMe();
+  const members = useMembers();
+  const qc = useQueryClient();
+  const [adding, setAdding] = useState(false);
+  const [qr, setQr] = useState<{ member: Member; qr: string; expiresAt: number } | null>(null);
+  const [assigning, setAssigning] = useState<Member | null>(null);
+  const canManage = me.data?.role === "owner" || me.data?.role === "admin";
+  const link = useMutation({
+    mutationFn: (m: Member) =>
+      post<{ qr: string; expiresAt: number }>("/auth/link", { userId: m.userId }).then((r) => ({ member: m, ...r })),
+    onSuccess: setQr,
+  });
+  const remove = useMutation({
+    mutationFn: (m: Member) => del(`/org/members/${m.userId}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["members"] }),
+  });
+
+  if (members.isLoading) return <Spinner />;
+  if (members.error) return <ErrorBox error={members.error} />;
+  return (
+    <div className="mx-auto flex max-w-3xl flex-col gap-3 p-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold">{t("ui.teamTitle")}</h1>
+        {canManage && <Button onClick={() => setAdding(true)}>+ {t("ui.addMember")}</Button>}
+      </div>
+      {link.error && <ErrorBox error={link.error} />}
+      {members.data!.map((m) => (
+        <Card key={m.userId} className="flex flex-wrap items-center gap-3">
+          <div className="flex-1">
+            <div className="font-semibold">{m.fullName}</div>
+            <div className="text-sm text-surco/60">
+              {tk(`ui.role_${m.role}`)} {m.email ? `· ${m.email}` : ""} {m.phone ? `· ${m.phone}` : ""}
+            </div>
+          </div>
+          <Button variant="ghost" onClick={() => setAssigning(m)}>
+            {t("ui.assignPlots")}
+          </Button>
+          {canManage && m.role === "worker" && <Button onClick={() => link.mutate(m)}>▦ {t("ui.linkDevice")}</Button>}
+          {canManage && m.userId !== me.data?.user.id && (
+            <Button
+              variant="ghost"
+              onClick={() => confirm(t("ui.confirmDelete", { name: m.fullName })) && remove.mutate(m)}
+            >
+              {t("ui.removeMember")}
+            </Button>
+          )}
+        </Card>
+      ))}
+      {adding && <AddMember canAddAdmins={me.data?.role === "owner"} onClose={() => setAdding(false)} />}
+      {assigning && <AssignPlots member={assigning} onClose={() => setAssigning(null)} />}
+      {qr && (
+        <Modal title={`${t("ui.linkDevice")} · ${qr.member.fullName}`} onClose={() => setQr(null)}>
+          <div className="flex flex-col items-center gap-3">
+            <div className="rounded-xl bg-white p-4">
+              <QRCodeSVG value={qr.qr} size={240} />
+            </div>
+            <p className="text-center text-sm text-surco/70">{t("ui.linkHelp")}</p>
+            <p className="text-xs text-surco/50">{t("ui.expires", { date: fmtDateTime(qr.expiresAt) })}</p>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+function AddMember({ canAddAdmins, onClose }: { canAddAdmins: boolean; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [f, setF] = useState({ fullName: "", email: "", phone: "", role: "worker" });
+  const add = useMutation({
+    mutationFn: () =>
+      post("/org/members", { fullName: f.fullName, email: f.email || null, phone: f.phone || null, role: f.role }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["members"] });
+      onClose();
+    },
+  });
+  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
+  const roles = ROLES.filter((r) => canAddAdmins || r === "worker");
+  return (
+    <Modal title={t("ui.addMember")} onClose={onClose}>
+      <form
+        className="flex flex-col gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          add.mutate();
+        }}
+      >
+        <Field label={t("ui.fullName")}>
+          <Input required value={f.fullName} onChange={set("fullName")} />
+        </Field>
+        <Field label={t("ui.role")}>
+          <Select
+            value={f.role}
+            onChange={set("role")}
+            options={roles.map((r) => ({ value: r, label: tk(`ui.role_${r}`) }))}
+          />
+        </Field>
+        <Field label={t("auth.emailLabel")}>
+          <Input type="email" required={f.role !== "worker"} value={f.email} onChange={set("email")} />
+        </Field>
+        <Field label={t("ui.phone")}>
+          <Input type="tel" value={f.phone} onChange={set("phone")} />
+        </Field>
+        {add.error && <ErrorBox error={add.error} />}
+        <Button type="submit" disabled={add.isPending}>
+          {t("ui.save")}
+        </Button>
+      </form>
+    </Modal>
+  );
+}
+
+function AssignPlots({ member, onClose }: { member: Member; onClose: () => void }) {
+  const qc = useQueryClient();
+  const farms = useFarms();
+  const details = useQueries({
+    queries: (farms.data ?? []).map((f) => ({
+      queryKey: ["farm", f.id],
+      queryFn: () => get<FarmDetail>(`/org/farms/${f.id}`),
+    })),
+  });
+  const loaded = details.every((d) => d.data);
+  const initial = new Set(
+    details.flatMap((d) => d.data?.assignments.filter((a) => a.userId === member.userId).map((a) => a.plotId) ?? []),
+  );
+  const [chosen, setChosen] = useState<Set<string> | null>(null);
+  const current = chosen ?? initial;
+  const save = useMutation({
+    mutationFn: () => put(`/org/members/${member.userId}/plots`, { plotIds: [...current] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["farm"] });
+      qc.invalidateQueries({ queryKey: ["farms"] });
+      onClose();
+    },
+  });
+  const toggle = (id: string) => {
+    const next = new Set(current);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setChosen(next);
+  };
+  return (
+    <Modal title={`${t("ui.assignPlots")} · ${member.fullName}`} onClose={onClose}>
+      {!loaded ? (
+        <Spinner />
+      ) : (
+        <div className="flex flex-col gap-3">
+          {details.map(({ data }) => (
+            <div key={data!.farm.id}>
+              <h3 className="mb-1 text-sm font-semibold">{data!.farm.name}</h3>
+              <ul className="grid grid-cols-2 gap-1">
+                {data!.plots.map((p) => (
+                  <li key={p.id}>
+                    <label className="flex items-center gap-2 rounded-lg bg-white p-2 text-sm">
+                      <input type="checkbox" checked={current.has(p.id)} onChange={() => toggle(p.id)} />
+                      <span className="flex-1">{p.name}</span>
+                      <span className="text-xs text-surco/60">{fmtHa(p.areaHa)}</span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+          {save.error && <ErrorBox error={save.error} />}
+          <Button onClick={() => save.mutate()} disabled={save.isPending}>
+            {t("ui.save")}
+          </Button>
+        </div>
+      )}
+    </Modal>
+  );
+}

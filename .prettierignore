@@ -2,3 +2,12 @@ pnpm-lock.yaml
 **/migrations/**
 **/worker-configuration.d.ts
 docs/
+workers-py/
+**/.pytest_cache/
+apps/api/public/
+apps/web/public/maplibre/
+apps/mobile/src/db/schema-sql.ts
+**/test/fixtures/
+**/.expo/
+**/test-results/
+apps/web/e2e/*.kml

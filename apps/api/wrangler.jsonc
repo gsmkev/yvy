@@ -9,7 +9,18 @@
     "directory": "./public",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/auth/*", "/sync/*", "/org/*", "/media/*", "/ingest/*", "/admin/*", "/me", "/devices", "/health", "/descargar-app"]
+    "run_worker_first": [
+      "/auth/*",
+      "/sync/*",
+      "/org/*",
+      "/media/*",
+      "/ingest/*",
+      "/admin/*",
+      "/me",
+      "/devices",
+      "/health",
+      "/descargar-app",
+    ],
   },
   "d1_databases": [
     {
@@ -17,20 +28,20 @@
       "database_name": "yvy",
       // Reemplazar por el id que devuelve `wrangler d1 create yvy`
       "database_id": "00000000-0000-0000-0000-000000000000",
-      "migrations_dir": "migrations"
-    }
+      "migrations_dir": "migrations",
+    },
   ],
   "r2_buckets": [
     { "binding": "MEDIA", "bucket_name": "yvy-media" },
-    { "binding": "TILES", "bucket_name": "yvy-tiles" }
+    { "binding": "TILES", "bucket_name": "yvy-tiles" },
   ],
   "queues": {
     "producers": [{ "binding": "JOBS", "queue": "yvy-jobs" }],
-    "consumers": [{ "queue": "yvy-jobs", "max_batch_size": 1, "max_retries": 3 }]
+    "consumers": [{ "queue": "yvy-jobs", "max_batch_size": 1, "max_retries": 3 }],
   },
   // Plan gratis: 5 cron triggers por cuenta (docs/PRD-cloudflare.md §4.8)
   "triggers": {
-    "crons": ["0 */3 * * *", "0 11 * * *", "*/15 * * * *", "0 10 * * 1", "0 3 * * *"]
+    "crons": ["0 */3 * * *", "0 11 * * *", "*/15 * * * *", "0 10 * * 1", "0 3 * * *"],
   },
   "vars": {
     "APP_ENV": "development",
@@ -42,6 +53,6 @@
     "APP_URL": "http://localhost:8787",
     "OPS_EMAIL": "",
     // Emails del equipo de Yvy con acceso al panel interno (separados por coma)
-    "ADMIN_EMAILS": ""
-  }
+    "ADMIN_EMAILS": "",
+  },
 }

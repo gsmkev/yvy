@@ -64,16 +64,14 @@ describe("Fase 8 · prueba gratis y panel interno", () => {
     await db()
       .insert(s.users)
       .values({ id: staffId, email: "staff@yvy.test", fullName: "Equipo", createdAt: ts, updatedAt: ts });
-    await db()
-      .insert(s.memberships)
-      .values({
-        id: newId(),
-        organizationId: owner.orgId,
-        userId: staffId,
-        role: "admin",
-        createdAt: ts,
-        updatedAt: ts,
-      });
+    await db().insert(s.memberships).values({
+      id: newId(),
+      organizationId: owner.orgId,
+      userId: staffId,
+      role: "admin",
+      createdAt: ts,
+      updatedAt: ts,
+    });
     const staff = await issueSession(db(), env.JWT_SECRET, staffId);
     const m = await call("GET", "/admin/metrics", { token: staff!.accessToken });
     expect(m.status).toBe(200);

@@ -5,4 +5,5 @@ import { dirname, join } from "node:path";
 
 const dist = join(dirname(createRequire(import.meta.url).resolve("maplibre-gl/package.json")), "dist");
 mkdirSync("public/maplibre", { recursive: true });
-for (const f of ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs"]) copyFileSync(join(dist, f), join("public/maplibre", f));
+for (const f of ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs"])
+  copyFileSync(join(dist, f), join("public/maplibre", f));

@@ -1,14 +1,31 @@
 @import "tailwindcss";
 
+/*
+ * Tokens de Yvy. Contrastes verificados (WCAG AA):
+ * tinta sobre lino 13,7:1 · tinta-2 sobre lino 6,1:1 · blanco sobre accion 6,1:1 · blanco sobre peligro 5,9:1.
+ * El soja original (#7A9A3F) solo se usa en marcas gráficas (mapa, gráficos), nunca con texto blanco encima.
+ */
 @theme {
   --color-lino: #f1eee4;
+  --color-papel: #fbfaf6;
   --color-surco: #1e2419;
+  --color-tinta-2: #545a4d;
+  --color-linea: #d9d4c4;
   --color-soja: #7a9a3f;
-  --color-soja-dark: #5c7a2c;
+  --color-accion: #4e6b24;
+  --color-accion-2: #3f581c;
   --color-trigo: #d9a93a;
+  --color-trigo-texto: #7a5b0e;
   --color-cielo: #8db3c7;
   --color-alerta: #d2462b;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-peligro: #b5391f;
+
+  --font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
 }
 
 html,
@@ -19,7 +36,48 @@ body,
 body {
   background: var(--color-lino);
   color: var(--color-surco);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+/* Datos: siempre cifras tabulares para que las columnas no bailen */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+/* Etiquetas de sección en versalitas mono, como el indicador de señal de la app */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-tinta-2);
+}
+:focus-visible {
+  outline: 2px solid var(--color-accion);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 .maplibregl-ctrl-attrib {
   font-size: 10px;
+  font-family: var(--font-mono);
+}
+.plot-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: #fff;
+  background: rgb(30 36 25 / 0.72);
+  padding: 1px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  pointer-events: none;
 }

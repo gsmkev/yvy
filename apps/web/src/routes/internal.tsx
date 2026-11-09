@@ -40,14 +40,14 @@ export function InternalPage() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {d.usage.map((u) => (
           <Card key={u.metric}>
-            <div className="text-xs text-surco/60">{u.metric}</div>
+            <div className="eyebrow">{u.metric}</div>
             <div className="text-xl font-semibold">{u.limit ? pct((100 * u.value) / u.limit) : fmtNum(u.value)}</div>
           </Card>
         ))}
       </div>
-      <div className="overflow-auto rounded-xl bg-white">
+      <div className="overflow-auto rounded-lg border border-linea bg-papel">
         <table className="w-full text-sm">
-          <thead className="bg-lino text-left text-xs text-surco/70">
+          <thead className="eyebrow bg-lino text-left">
             <tr>
               {[
                 "Organización",

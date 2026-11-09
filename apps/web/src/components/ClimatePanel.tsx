@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { addDays, CHART, localDate, t as _t } from "@yvy/shared";
 import { get } from "../lib/api";
-import { fmtIsoDate } from "../lib/format";
+import { fmtIsoDate, fmtNum } from "../lib/format";
 import { t } from "../lib/i18n";
 import { LineChart, RainChart } from "./charts";
-import { Card, Empty, ErrorBox, Spinner } from "./ui";
+import { CloudRain, CloudSun } from "lucide-react";
+import { Empty, ErrorBox, Spinner, Stat } from "./ui";
 
 interface Climate {
   daily: {
@@ -65,28 +66,29 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
   const soil = [...c.daily].reverse().find((d) => d.soilMoisture0_7 !== null);
   const hasRain = rainByDate.size > 0;
 
+  const wd = new Intl.DateTimeFormat("es-PY", { weekday: "short", timeZone: "UTC" });
   return (
-    <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        <Card>
-          <div className="text-xs text-surco/60">{t("ui.rain30")}</div>
-          <div className="text-2xl font-semibold">{hasRain ? `${Math.round(rain30)} mm` : "—"}</div>
-          {normal30 > 0 && hasRain && (
-            <div className="text-xs text-surco/60">
-              {t("ui.rainNormal")}: {Math.round(normal30)} mm ({Math.round((rain30 / normal30) * 100)} %)
-            </div>
-          )}
-        </Card>
-        <Card>
-          <div className="text-xs text-surco/60">{t("ui.soilMoisture")}</div>
-          <div className="text-2xl font-semibold">
-            {soil?.soilMoisture0_7 != null ? `${Math.round(soil.soilMoisture0_7 * 100)} %` : "—"}
-          </div>
-          <div className="text-xs text-surco/60">{_t("attribution.nasaPower")}</div>
-        </Card>
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-2 gap-4 border-b border-linea pb-5">
+        <Stat
+          label={t("ui.rain30")}
+          value={hasRain ? Math.round(rain30) : "—"}
+          unit={hasRain ? "mm" : undefined}
+          note={
+            normal30 > 0 && hasRain
+              ? `${t("ui.rainNormal")} ${Math.round(normal30)} mm · ${Math.round((rain30 / normal30) * 100)} %`
+              : _t("attribution.chirps")
+          }
+        />
+        <Stat
+          label={t("ui.soilMoisture")}
+          value={soil?.soilMoisture0_7 != null ? Math.round(soil.soilMoisture0_7 * 100) : "—"}
+          unit={soil?.soilMoisture0_7 != null ? "%" : undefined}
+          note={_t("attribution.nasaPower")}
+        />
       </div>
-      <Card>
-        <h3 className="mb-2 text-sm font-semibold">{t("ui.rain30")} · 60 días</h3>
+      <div>
+        <h3 className="eyebrow mb-2">{t("ui.rain30")} · 60 días</h3>
         {hasRain ? (
           <RainChart
             days={days}
@@ -95,11 +97,11 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
             ariaLabel={t("ui.rain30")}
           />
         ) : (
-          <Empty>{t("ui.noClimate")}</Empty>
+          <Empty icon={CloudRain}>{t("ui.noClimate")}</Empty>
         )}
-      </Card>
-      <Card>
-        <h3 className="mb-2 text-sm font-semibold">{t("ui.forecast")}</h3>
+      </div>
+      <div>
+        <h3 className="eyebrow mb-2">{t("ui.forecast")}</h3>
         {c.forecast.length ? (
           <>
             <LineChart
@@ -120,30 +122,49 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
                 },
               ]}
             />
-            <table className="mt-3 w-full text-xs">
-              <tbody>
-                <tr className="text-surco/60">
-                  {c.forecast.map((f) => (
-                    <td key={f.validDate} className="text-center">
-                      {fmtIsoDate(f.validDate).slice(0, 5)}
-                    </td>
+            <div className="mt-3 overflow-x-auto">
+              <table className="num w-full text-xs">
+                <thead>
+                  <tr className="text-tinta-2">
+                    <th className="pr-2 text-left font-normal" />
+                    {c.forecast.map((f) => (
+                      <th key={f.validDate} className="px-1 pb-1 text-center font-normal capitalize">
+                        {wd.format(new Date(`${f.validDate}T12:00:00Z`)).replace(".", "")}
+                        <span className="block">{fmtIsoDate(f.validDate).slice(0, 2)}</span>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="border-t border-linea">
+                  {[
+                    [
+                      t("ui.tmax"),
+                      (f: (typeof c.forecast)[number]) => (f.tmaxC === null ? "—" : `${Math.round(f.tmaxC)}°`),
+                    ],
+                    [
+                      t("ui.tmin"),
+                      (f: (typeof c.forecast)[number]) => (f.tminC === null ? "—" : `${Math.round(f.tminC)}°`),
+                    ],
+                    [t("ui.rainMm"), (f: (typeof c.forecast)[number]) => (f.precipMm ? fmtNum(f.precipMm) : "·")],
+                  ].map(([label, fn]) => (
+                    <tr key={label as string}>
+                      <th className="py-1 pr-2 text-left font-normal text-tinta-2">{label as string}</th>
+                      {c.forecast.map((f) => (
+                        <td key={f.validDate} className="px-1 py-1 text-center">
+                          {(fn as (x: typeof f) => string)(f)}
+                        </td>
+                      ))}
+                    </tr>
                   ))}
-                </tr>
-                <tr>
-                  {c.forecast.map((f) => (
-                    <td key={f.validDate} className="text-center">
-                      💧 {Math.round(f.precipMm ?? 0)}
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-            <p className="mt-2 text-xs text-surco/60">{_t("attribution.metNorway")}</p>
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-2 text-[11px] text-tinta-2">{_t("attribution.metNorway")}</p>
           </>
         ) : (
-          <Empty>{t("ui.noClimate")}</Empty>
+          <Empty icon={CloudSun}>{t("ui.noClimate")}</Empty>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

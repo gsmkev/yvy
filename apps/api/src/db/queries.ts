@@ -20,6 +20,7 @@ export async function farmSummaries(sdb: ScopedDb) {
       name: s.farms.name,
       department: s.farms.department,
       areaHa: s.farms.areaHa,
+      geometry: s.farms.geometry,
       centroidLon: s.farms.centroidLon,
       centroidLat: s.farms.centroidLat,
       minLon: s.farms.minLon,
@@ -32,6 +33,10 @@ export async function farmSummaries(sdb: ScopedDb) {
       lastRecordAt: sql<
         number | null
       >`(SELECT max(captured_at) FROM records r WHERE r.farm_id = farms.id AND r.deleted_at IS NULL)`,
+      basemapPath: sql<
+        string | null
+      >`(SELECT pmtiles_path FROM farm_layers l WHERE l.farm_id = farms.id AND l.layer = 'true_color' AND l.deleted_at IS NULL ORDER BY acquired_at DESC LIMIT 1)`,
+      records7d: sql<number>`(SELECT count(*) FROM records r WHERE r.farm_id = farms.id AND r.deleted_at IS NULL AND r.captured_at >= ${now - 7 * 86_400_000})`,
     })
     .from(s.farms)
     .where(and(eq(s.farms.organizationId, org), isNull(s.farms.deletedAt), sdb.workerFilter("farms")))

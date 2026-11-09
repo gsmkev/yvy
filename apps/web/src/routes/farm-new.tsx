@@ -1,3 +1,4 @@
+import { PenLine, Upload, X } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -86,14 +87,15 @@ export function NewFarmPage() {
             <Input value={district} onChange={(e) => setDistrict(e.target.value)} />
           </Field>
         </div>
-        <p className="text-sm text-surco/70">{t("ui.drawFarm")}</p>
+        <p className="text-sm text-tinta-2">{t("ui.drawFarm")}</p>
         <div className="flex flex-wrap gap-2">
-          <Button variant="ghost" onClick={() => setDrawing(!drawing)}>
-            {drawing ? t("ui.cancel") : `✎ ${t("ui.draw")}`}
+          <Button icon={drawing ? X : PenLine} onClick={() => setDrawing(!drawing)}>
+            {drawing ? t("ui.cancel") : t("ui.draw")}
           </Button>
           <label className="cursor-pointer">
-            <span className="inline-flex rounded-lg bg-white/60 px-3.5 py-2 text-sm font-medium ring-1 ring-surco/15 hover:bg-white">
-              ⇪ {t("ui.importFile")}
+            <span className="inline-flex h-9 items-center gap-2 rounded-md border border-linea bg-papel px-3.5 text-sm font-medium hover:bg-white">
+              <Upload size={16} aria-hidden />
+              {t("ui.importShort")}
             </span>
             <input
               type="file"

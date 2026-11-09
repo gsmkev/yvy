@@ -1,3 +1,4 @@
+import { FileDown } from "lucide-react";
 import { useState } from "react";
 import { useParams, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -100,22 +101,22 @@ export function ReportPage() {
         <Field label={t("ui.to")}>
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
         </Field>
-        <Button onClick={generate} disabled={busy}>
-          ⤓ {t("ui.downloadPdf")}
+        <Button variant="primary" icon={FileDown} onClick={generate} disabled={busy}>
+          {t("ui.downloadPdf")}
         </Button>
       </div>
       {error ? <ErrorBox error={error} /> : null}
       <div className="grid grid-cols-3 gap-3">
         <Card>
-          <div className="text-xs text-surco/60">{t("ui.navRecords")}</div>
+          <div className="eyebrow">{t("ui.navRecords")}</div>
           <div className="text-2xl font-semibold">{rows.length}</div>
         </Card>
         <Card>
-          <div className="text-xs text-surco/60">{t("ui.rainWeek")}</div>
+          <div className="eyebrow">{t("ui.rainWeek")}</div>
           <div className="text-2xl font-semibold">{weekRain === null ? "—" : `${Math.round(weekRain)} mm`}</div>
         </Card>
         <Card>
-          <div className="text-xs text-surco/60">{t("ui.alertsTitle")}</div>
+          <div className="eyebrow">{t("ui.alertsTitle")}</div>
           <div className="text-2xl font-semibold">{periodAlerts.length}</div>
         </Card>
       </div>

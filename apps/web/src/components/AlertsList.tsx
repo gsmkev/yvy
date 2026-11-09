@@ -3,7 +3,9 @@ import { post } from "../lib/api";
 import { fmtDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useAlerts } from "../lib/queries";
-import { Button, Card, Empty, ErrorBox, SeverityBadge, Spinner } from "./ui";
+import { AlertTriangle, Check, ShieldCheck, ThumbsDown, ThumbsUp } from "lucide-react";
+import { ALERT_ICON } from "../lib/icons";
+import { Button, Empty, ErrorBox, SeverityBadge, Spinner } from "./ui";
 
 export function AlertsList({ farmId, farmNames }: { farmId?: string; farmNames?: Record<string, string> }) {
   const q = useAlerts({ farmId, active: true });
@@ -14,42 +16,69 @@ export function AlertsList({ farmId, farmNames }: { farmId?: string; farmNames?:
   });
   if (q.isLoading) return <Spinner />;
   if (q.error) return <ErrorBox error={q.error} />;
-  if (!q.data?.length) return <Empty>{t("ui.noAlerts")}</Empty>;
+  if (!q.data?.length) return <Empty icon={ShieldCheck} title={t("ui.noAlerts")} />;
   return (
-    <div className="flex flex-col gap-3">
-      {q.data.map((a) => (
-        <Card key={a.id} className={a.severity === "warning" ? "ring-2 ring-alerta/40" : ""}>
-          <div className="flex flex-wrap items-center gap-2">
-            <SeverityBadge severity={a.severity} />
-            <span className="font-semibold">{tk(`ui.alertKind_${a.kind}`)}</span>
-            {farmNames?.[a.farmId] && <span className="text-sm text-surco/60">· {farmNames[a.farmId]}</span>}
-            <span className="ml-auto text-xs text-surco/60">
-              {fmtDate(a.validFrom)}
-              {a.validTo && a.validTo - a.validFrom > 86_400_000 ? ` – ${fmtDate(a.validTo)}` : ""}
-            </span>
-          </div>
-          <p className="mt-2 text-sm">{a.summary}</p>
-          <p className="mt-1 text-xs text-surco/60">
-            {a.probability ? `${tk(`ui.probability_${a.probability}`)} · ` : ""}
-            {t("ui.orientative", { source: a.source })} · {a.plotIds.length} {t("ui.plots").toLowerCase()}
-          </p>
-          <div className="mt-3 flex items-center gap-2 text-sm">
-            {a.useful === null ? (
-              <>
-                <span className="text-surco/70">{t("ui.useful")}</span>
-                <Button variant="ghost" onClick={() => feedback.mutate({ id: a.id, useful: true })}>
-                  👍 {t("ui.yes")}
-                </Button>
-                <Button variant="ghost" onClick={() => feedback.mutate({ id: a.id, useful: false })}>
-                  👎 {t("ui.no")}
-                </Button>
-              </>
-            ) : (
-              <span className="text-surco/60">{t("ui.thanks")}</span>
-            )}
-          </div>
-        </Card>
-      ))}
-    </div>
+    <ul className="flex flex-col gap-3">
+      {q.data.map((a) => {
+        const Icon = ALERT_ICON[a.kind] ?? AlertTriangle;
+        return (
+          <li
+            key={a.id}
+            className={`rounded-lg border bg-papel p-4 ${a.severity === "warning" ? "border-peligro/50 border-l-4" : "border-linea"}`}
+          >
+            <div className="flex items-start gap-3">
+              <span
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${a.severity === "warning" ? "bg-peligro text-white" : "bg-trigo/20 text-trigo-texto"}`}
+              >
+                <Icon size={18} aria-hidden />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold">{tk(`ui.alertKind_${a.kind}`)}</span>
+                  <SeverityBadge severity={a.severity} />
+                  {farmNames?.[a.farmId] && <span className="text-sm text-tinta-2">{farmNames[a.farmId]}</span>}
+                  <span className="num ml-auto text-xs text-tinta-2">
+                    {fmtDate(a.validFrom)}
+                    {a.validTo && a.validTo - a.validFrom > 86_400_000 ? ` – ${fmtDate(a.validTo)}` : ""}
+                  </span>
+                </div>
+                <p className="mt-1.5 text-[15px]">{a.summary}</p>
+                <p className="mt-1 text-xs text-tinta-2">
+                  {a.probability ? `${tk(`ui.probability_${a.probability}`)} · ` : ""}
+                  {a.plotIds.length} {t("ui.plots").toLowerCase()} · {t("ui.orientative", { source: a.source })}
+                </p>
+                <div className="mt-3 flex items-center gap-2 text-sm">
+                  {a.useful === null ? (
+                    <>
+                      <span className="mr-1 text-tinta-2">{t("ui.useful")}</span>
+                      <Button
+                        variant="secondary"
+                        icon={ThumbsUp}
+                        className="h-8"
+                        onClick={() => feedback.mutate({ id: a.id, useful: true })}
+                      >
+                        {t("ui.yes")}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        icon={ThumbsDown}
+                        className="h-8"
+                        onClick={() => feedback.mutate({ id: a.id, useful: false })}
+                      >
+                        {t("ui.no")}
+                      </Button>
+                    </>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-tinta-2">
+                      <Check size={14} aria-hidden /> {t("ui.thanks")}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

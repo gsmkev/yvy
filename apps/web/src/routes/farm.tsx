@@ -2,8 +2,9 @@ import { useMemo, useState } from "react";
 import { Link, useParams } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Polygon } from "geojson";
+import { FileDown, FileText, MapPinPlus, PenLine, Upload, X } from "lucide-react";
 import { areaHa } from "@yvy/geo";
-import { BRAND, POI_KINDS } from "@yvy/shared";
+import { BRAND, NDVI_RAMP, POI_KINDS } from "@yvy/shared";
 import { AlertsList } from "../components/AlertsList";
 import { ClimatePanel } from "../components/ClimatePanel";
 import { boundsOf, FarmMap } from "../components/FarmMap";
@@ -11,12 +12,13 @@ import { ImportPlots } from "../components/ImportPlots";
 import { PlotPanel } from "../components/PlotPanel";
 import { RecordsList } from "../components/RecordsList";
 import { TasksPanel } from "../components/TasksPanel";
-import { Button, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs } from "../components/ui";
+import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs } from "../components/ui";
 import { post } from "../lib/api";
 import { download, plotsToKml } from "../lib/exports";
-import { fmtHa } from "../lib/format";
+import { fmtDate, fmtHa, fmtNum } from "../lib/format";
+import { POI_ICON } from "../lib/icons";
 import { t, tk } from "../lib/i18n";
-import { useFarm, useMe, useMembers } from "../lib/queries";
+import { useAlerts, useFarm, useMe, useMembers } from "../lib/queries";
 import type { RecordRow } from "../lib/types";
 
 type Tab = "plots" | "records" | "tasks" | "climate" | "alerts";
@@ -27,27 +29,40 @@ export function FarmPage() {
   const me = useMe();
   const canEdit = !!me.data && me.data.role !== "worker";
   const members = useMembers(canEdit);
+  const alerts = useAlerts({ farmId, active: true });
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>("plots");
   const [selected, setSelected] = useState<string | null>(null);
   const [mode, setMode] = useState<"none" | "draw" | "poi" | "import">("none");
   const [drawn, setDrawn] = useState<Polygon | null>(null);
   const [poiAt, setPoiAt] = useState<[number, number] | null>(null);
-  const [showNdvi, setShowNdvi] = useState(false);
+  const [layer, setLayer] = useState<"satellite" | "ndvi">("satellite");
   const [records, setRecords] = useState<RecordRow[]>([]);
 
   const bounds = useMemo(() => (farm.data ? boundsOf(farm.data.farm) : null), [farm.data?.farm.id]);
-  if (farm.isLoading) return <Spinner />;
-  if (farm.error) return <ErrorBox error={farm.error} />;
+  if (farm.isLoading)
+    return (
+      <div className="p-6">
+        <Spinner />
+      </div>
+    );
+  if (farm.error)
+    return (
+      <div className="p-6">
+        <ErrorBox error={farm.error} />
+      </div>
+    );
   const d = farm.data!;
   const plot = d.plots.find((p) => p.id === selected);
   const workersOf = (plotId: string) =>
     (members.data ?? []).filter((m) => d.assignments.some((a) => a.plotId === plotId && a.userId === m.userId));
-  const hasNdvi = d.layers.some((l) => l.layer === "ndvi");
+  const ndviLayer = d.layers.filter((l) => l.layer === "ndvi").sort((a, b) => b.acquiredAt - a.acquiredAt)[0];
   const hasBasemap = d.layers.some((l) => l.layer === "true_color");
+  const cropHa = d.plots.filter((p) => p.kind === "crop").reduce((a, p) => a + p.areaHa, 0);
+  const pastureHa = d.plots.filter((p) => p.kind === "pasture").reduce((a, p) => a + p.areaHa, 0);
 
   return (
-    <div className="grid h-full lg:grid-cols-[minmax(0,1fr)_460px]">
+    <div className="grid h-full lg:grid-cols-[minmax(0,1fr)_480px]">
       <div className="relative h-80 lg:h-full">
         <FarmMap
           outline={d.farm.geometry}
@@ -55,7 +70,7 @@ export function FarmPage() {
           pois={d.pois}
           layers={d.layers}
           tilesBaseUrl={me.data?.tilesBaseUrl}
-          showNdvi={showNdvi}
+          showNdvi={layer === "ndvi"}
           selectedPlotId={selected}
           bounds={bounds}
           points={
@@ -76,50 +91,89 @@ export function FarmPage() {
           }}
           onMapClick={(lon, lat) => mode === "poi" && (setPoiAt([lon, lat]), setMode("none"))}
         />
-        <div className="absolute left-3 top-3 flex flex-col gap-1 rounded-lg bg-white/90 p-2 text-xs shadow">
-          <span className="font-semibold">{t("ui.layers")}</span>
-          <label className="flex items-center gap-1.5">
-            <input type="checkbox" checked readOnly /> {t("ui.layerSatellite")}
-          </label>
-          <label className={`flex items-center gap-1.5 ${hasNdvi ? "" : "opacity-40"}`}>
-            <input
-              type="checkbox"
-              disabled={!hasNdvi}
-              checked={showNdvi}
-              onChange={(e) => setShowNdvi(e.target.checked)}
-            />{" "}
-            {t("ui.layerNdvi")}
-          </label>
-          {!hasBasemap && <span className="max-w-40 text-surco/60">{t("ui.noBasemap")}</span>}
+        {/* Capas: control segmentado compacto, con leyenda cuando corresponde */}
+        <div className="absolute top-3 left-3 flex flex-col gap-2">
+          <div
+            role="radiogroup"
+            aria-label={t("ui.layers")}
+            className="flex rounded-md border border-white/15 bg-surco/85 p-0.5 text-xs font-medium text-lino backdrop-blur"
+          >
+            {(["satellite", "ndvi"] as const).map((l) => (
+              <button
+                key={l}
+                role="radio"
+                aria-checked={layer === l}
+                disabled={l === "ndvi" && !ndviLayer}
+                onClick={() => setLayer(l)}
+                className={`cursor-pointer rounded px-3 py-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${layer === l ? "bg-lino text-surco" : "hover:bg-white/10"}`}
+              >
+                {l === "satellite" ? t("ui.layerSatellite") : t("ui.layerNdvi")}
+              </button>
+            ))}
+          </div>
+          {layer === "ndvi" && ndviLayer && (
+            <div className="w-56 rounded-md border border-white/15 bg-surco/85 p-2.5 text-[11px] text-lino backdrop-blur">
+              <div
+                className="h-2 rounded-sm"
+                style={{ background: `linear-gradient(90deg, ${NDVI_RAMP.join(",")})` }}
+              />
+              <div className="num mt-1 flex justify-between text-lino/70">
+                <span>{t("ui.ndviLegendLow")}</span>
+                <span>{t("ui.ndviLegendHigh")}</span>
+              </div>
+              <p className="num mt-1.5 text-lino/70">
+                {t("ui.imageDate", { date: fmtDate(ndviLayer.acquiredAt) })} · Sentinel-2
+              </p>
+            </div>
+          )}
+          {!hasBasemap && (
+            <p className="w-56 rounded-md bg-surco/85 p-2.5 text-[11px] text-lino/80">{t("ui.noBasemap")}</p>
+          )}
         </div>
-        {mode === "poi" && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-lg bg-surco px-3 py-2 text-sm text-lino">
-            {t("ui.clickMapForPoi")}
+        {mode !== "none" && mode !== "import" && (
+          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-md bg-surco px-4 py-2.5 text-sm text-lino shadow-lg">
+            {mode === "poi" ? t("ui.clickMapForPoi") : t("ui.drawHint")}
+            <button
+              aria-label={t("ui.cancel")}
+              className="cursor-pointer rounded p-0.5 hover:bg-white/10"
+              onClick={() => setMode("none")}
+            >
+              <X size={16} aria-hidden />
+            </button>
           </div>
         )}
       </div>
 
-      <section className="flex min-h-0 flex-col gap-3 overflow-auto p-4 *:shrink-0">
-        <div>
-          <h1 className="text-xl font-semibold">{d.farm.name}</h1>
-          <p className="text-sm text-surco/70">
+      <section className="flex min-h-0 flex-col gap-5 overflow-auto border-l border-linea p-6 *:shrink-0">
+        <header>
+          <p className="eyebrow">{[d.farm.department, d.farm.district].filter(Boolean).join(" · ") || t("ui.farm")}</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight">{d.farm.name}</h1>
+          <p className="num mt-1.5 text-sm text-tinta-2">
             {fmtHa(d.farm.areaHa)} · {d.plots.length} {t("ui.plots").toLowerCase()}
-            {d.farm.department ? ` · ${d.farm.department}` : ""}
+            {cropHa > 0 && ` · ${fmtNum(cropHa)} ha ${t("ui.crop").toLowerCase()}`}
+            {pastureHa > 0 && ` · ${fmtNum(pastureHa)} ha ${t("ui.pasture").toLowerCase()}`}
           </p>
-        </div>
+        </header>
+
         {canEdit && (
-          <div className="flex flex-wrap gap-2">
-            <Button variant="ghost" onClick={() => setMode(mode === "draw" ? "none" : "draw")}>
-              ✎ {mode === "draw" ? t("ui.cancel") : t("ui.newPlot")}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="primary" icon={PenLine} onClick={() => setMode(mode === "draw" ? "none" : "draw")}>
+              {t("ui.newPlot")}
             </Button>
-            <Button variant="ghost" onClick={() => setMode("import")}>
-              ⇪ {t("ui.importFile").split(" ")[0]}
+            <Button icon={Upload} onClick={() => setMode("import")}>
+              {t("ui.importShort")}
             </Button>
-            <Button variant="ghost" onClick={() => setMode(mode === "poi" ? "none" : "poi")}>
-              ◎ {t("ui.addPoi")}
+            <Button icon={MapPinPlus} onClick={() => setMode(mode === "poi" ? "none" : "poi")}>
+              {t("ui.addPoi")}
             </Button>
+            <Link to="/estancias/$farmId/parte" params={{ farmId }} search={{ desde: undefined, hasta: undefined }}>
+              <Button variant="quiet" icon={FileText}>
+                {t("ui.tabReport")}
+              </Button>
+            </Link>
             <Button
-              variant="ghost"
+              variant="quiet"
+              icon={FileDown}
               onClick={() =>
                 download(
                   new Blob([plotsToKml(d.plots, d.farm.name)], { type: "application/vnd.google-earth.kml+xml" }),
@@ -127,24 +181,23 @@ export function FarmPage() {
                 )
               }
             >
-              {t("ui.exportKml")}
+              KML
             </Button>
-            <Link to="/estancias/$farmId/parte" params={{ farmId }} search={{ desde: undefined, hasta: undefined }}>
-              <Button variant="ghost">📄 {t("ui.tabReport")}</Button>
-            </Link>
           </div>
         )}
+
         <Tabs<Tab>
           value={tab}
           onChange={setTab}
           tabs={[
-            { id: "plots", label: t("ui.tabPlots") },
+            { id: "plots", label: t("ui.tabPlots"), count: d.plots.length },
             { id: "records", label: t("ui.tabRecords") },
             { id: "tasks", label: t("ui.tabTasks") },
             { id: "climate", label: t("ui.tabClimate") },
-            { id: "alerts", label: t("ui.tabAlerts") },
+            { id: "alerts", label: t("ui.tabAlerts"), count: alerts.data?.length || undefined },
           ]}
         />
+
         {tab === "plots" &&
           (plot ? (
             <PlotPanel
@@ -154,34 +207,60 @@ export function FarmPage() {
               canEdit={canEdit}
               onClose={() => setSelected(null)}
             />
+          ) : d.plots.length === 0 ? (
+            <Empty title={t("ui.noPlots")} />
           ) : (
-            <ul className="divide-y divide-surco/10 rounded-xl bg-white">
-              {d.plots.map((p) => (
-                <li key={p.id}>
-                  <button
-                    className="flex w-full items-center justify-between p-3 text-left text-sm hover:bg-lino/60"
-                    onClick={() => setSelected(p.id)}
-                  >
-                    <span>
-                      <span
-                        className="mr-2 inline-block h-2.5 w-2.5 rounded-full"
-                        style={{ background: p.color ?? (p.kind === "pasture" ? BRAND.trigo : BRAND.soja) }}
-                      />
-                      {p.name}
-                      <span className="ml-2 text-xs text-surco/60">
-                        {p.crop ?? (p.kind === "pasture" ? t("ui.pasture") : "")}
-                      </span>
-                    </span>
-                    <span className="text-surco/70">{fmtHa(p.areaHa)}</span>
-                  </button>
-                </li>
-              ))}
-              {d.pois.map((p) => (
-                <li key={p.id} className="p-3 text-sm text-surco/70">
-                  ◎ {p.name} · {tk(`ui.poiKinds_${p.kind}`)}
-                </li>
-              ))}
-            </ul>
+            <div>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="eyebrow text-left">
+                    <th className="pb-2 font-medium">{t("ui.plot")}</th>
+                    <th className="pb-2 font-medium">{t("ui.kind")}</th>
+                    <th className="pb-2 text-right font-medium">ha</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-linea border-t border-linea">
+                  {d.plots.map((p) => (
+                    <tr key={p.id} className="cursor-pointer hover:bg-surco/[0.03]" onClick={() => setSelected(p.id)}>
+                      <td className="py-2.5">
+                        <button
+                          className="flex cursor-pointer items-center gap-2.5 text-left font-medium"
+                          aria-label={p.name}
+                        >
+                          <span
+                            className="h-3 w-3 shrink-0 rounded-sm"
+                            style={{ background: p.color ?? (p.kind === "pasture" ? BRAND.trigo : BRAND.soja) }}
+                          />
+                          {p.name}
+                        </button>
+                      </td>
+                      <td className="py-2.5 text-tinta-2">
+                        {p.kind === "pasture" ? t("ui.pasture") : (p.crop ?? t("ui.crop"))}
+                      </td>
+                      <td className="num py-2.5 text-right">{fmtNum(p.areaHa)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="mt-3 text-xs text-tinta-2">{t("ui.selectPlotHint")}</p>
+              {d.pois.length > 0 && (
+                <>
+                  <h3 className="eyebrow mt-6 mb-2">{t("ui.pois")}</h3>
+                  <ul className="flex flex-col gap-1.5 text-sm">
+                    {d.pois.map((p) => {
+                      const Icon = POI_ICON[p.kind] ?? POI_ICON.other!;
+                      return (
+                        <li key={p.id} className="flex items-center gap-2.5">
+                          <Icon size={16} className="text-tinta-2" aria-hidden />
+                          {p.name}
+                          <span className="text-xs text-tinta-2">{tk(`ui.poiKinds_${p.kind}`)}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              )}
+            </div>
           ))}
         {tab === "records" && <RecordsList filters={{ farmId }} onRows={setRecords} />}
         {tab === "tasks" && <TasksPanel farmId={farmId} plots={d.plots} />}
@@ -233,14 +312,14 @@ function NewPlotModal({
   return (
     <Modal title={t("ui.newPlot")} onClose={onClose}>
       <form
-        className="flex flex-col gap-3"
+        className="flex flex-col gap-4"
         onSubmit={(e) => {
           e.preventDefault();
           save.mutate();
         }}
       >
         <p className="text-sm">
-          {t("ui.area")}: <strong>{fmtHa(areaHa(geometry))}</strong>
+          {t("ui.area")}: <strong className="num">{fmtHa(areaHa(geometry))}</strong>
         </p>
         <Field label={t("ui.plot")}>
           <Input required autoFocus value={name} onChange={(e) => setName(e.target.value)} />
@@ -256,7 +335,7 @@ function NewPlotModal({
           />
         </Field>
         {save.error && <ErrorBox error={save.error} />}
-        <Button type="submit" disabled={save.isPending}>
+        <Button type="submit" variant="primary" disabled={save.isPending}>
           {t("ui.save")}
         </Button>
       </form>
@@ -287,7 +366,7 @@ function NewPoiModal({
   return (
     <Modal title={t("ui.addPoi")} onClose={onClose}>
       <form
-        className="flex flex-col gap-3"
+        className="flex flex-col gap-4"
         onSubmit={(e) => {
           e.preventDefault();
           save.mutate();
@@ -304,7 +383,7 @@ function NewPoiModal({
           <Input required autoFocus value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
         {save.error && <ErrorBox error={save.error} />}
-        <Button type="submit" disabled={save.isPending}>
+        <Button type="submit" variant="primary" disabled={save.isPending}>
           {t("ui.save")}
         </Button>
       </form>

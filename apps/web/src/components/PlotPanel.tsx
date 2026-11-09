@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CHART, CROPS, PLOT_KINDS, SEASONS } from "@yvy/shared";
 import { del, get, patch } from "../lib/api";
-import { fmtDate, fmtHa } from "../lib/format";
+import { fmtDate, fmtDay, fmtHa, fmtNdvi, fmtPct } from "../lib/format";
+import { ArrowLeft, Minus, Pencil, Satellite, Trash2, TrendingDown, TrendingUp, Users } from "lucide-react";
 import { t, tk } from "../lib/i18n";
 import type { Member, Plot } from "../lib/types";
 import { LineChart } from "./charts";
-import { Button, Card, Empty, ErrorBox, Field, Input, Select } from "./ui";
+import { Button, Empty, ErrorBox, Field, Input, Select, Spinner, Stat } from "./ui";
 
 interface Ndvi {
   series: { acquiredAt: number; mean: number; p10: number; p90: number; validPct: number }[];
@@ -65,47 +66,66 @@ export function PlotPanel({
   });
   const set = (k: keyof typeof form) => (e: { target: { value: string } }) => setForm({ ...form, [k]: e.target.value });
 
+  const delta = ndvi.data?.deltaVsFarmPct ?? null;
   return (
-    <Card className="flex flex-col gap-3">
-      <div className="flex items-start justify-between">
+    <div className="flex flex-col gap-5">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">{plot.name}</h2>
-          <p className="text-sm text-surco/70">
-            {fmtHa(plot.areaHa)} ·{" "}
-            {plot.kind === "crop" ? `${t("ui.crop")}${plot.crop ? `: ${plot.crop}` : ""}` : t("ui.pasture")}
+          <p className="eyebrow">{plot.kind === "crop" ? t("ui.crop") : t("ui.pasture")}</p>
+          <h2 className="mt-0.5 text-xl font-semibold">{plot.name}</h2>
+          <p className="num mt-1 text-sm text-tinta-2">
+            {fmtHa(plot.areaHa)}
+            {plot.crop ? ` · ${plot.crop}` : ""}
             {plot.season ? ` · ${plot.season}` : ""}
           </p>
-          {workers.length > 0 && <p className="text-xs text-surco/60">{workers.map((w) => w.fullName).join(", ")}</p>}
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-tinta-2">
+            <Users size={13} aria-hidden />
+            {workers.length
+              ? `${t("ui.assignedTo")} ${workers.map((w) => w.fullName).join(", ")}`
+              : t("ui.nobodyAssigned")}
+          </p>
         </div>
-        <button aria-label={t("ui.close")} onClick={onClose} className="text-surco/50 hover:text-surco">
-          ✕
-        </button>
+        <Button variant="quiet" icon={ArrowLeft} onClick={onClose} aria-label={t("ui.close")}>
+          {t("ui.plots")}
+        </Button>
       </div>
 
+      {canEdit && ndvi.isLoading && <Spinner />}
       {canEdit && ndvi.data && (
-        <div>
+        <div className="border-t border-linea pt-4">
           {ndvi.data.current ? (
             <>
-              <div className="flex items-baseline gap-3">
-                <span className="text-3xl font-semibold">{ndvi.data.current.mean.toFixed(2)}</span>
-                <span className="text-sm text-surco/70">
-                  {t("ui.ndviCurrent")} · {fmtDate(ndvi.data.current.acquiredAt)}
-                </span>
+              <div className="flex items-end gap-6">
+                <Stat
+                  label={t("ui.ndviCurrent")}
+                  value={fmtNdvi(ndvi.data.current.mean)}
+                  note={fmtDate(ndvi.data.current.acquiredAt)}
+                />
+                {delta !== null && (
+                  <div className="flex flex-col gap-0.5 pb-0.5">
+                    <span className="eyebrow">{t("ui.farmAverage")}</span>
+                    <span
+                      className={`num flex items-center gap-1 text-base font-medium ${delta < -5 ? "text-peligro" : ""}`}
+                    >
+                      {delta < -0.5 ? (
+                        <TrendingDown size={16} aria-hidden />
+                      ) : delta > 0.5 ? (
+                        <TrendingUp size={16} aria-hidden />
+                      ) : (
+                        <Minus size={16} aria-hidden />
+                      )}
+                      {fmtPct(delta)}
+                    </span>
+                  </div>
+                )}
               </div>
-              {ndvi.data.deltaVsFarmPct !== null && (
-                <p className={`text-sm ${ndvi.data.deltaVsFarmPct < -5 ? "text-alerta" : "text-surco/70"}`}>
-                  {t("ui.ndviVsFarm", {
-                    pct: `${ndvi.data.deltaVsFarmPct >= 0 ? "+" : ""}${Math.round(ndvi.data.deltaVsFarmPct)}`,
-                  })}
-                </p>
-              )}
-              <h3 className="mt-3 text-sm font-semibold">{t("ui.ndviCurve")}</h3>
+              <h3 className="eyebrow mt-5 mb-1">{t("ui.ndviCurve")}</h3>
               <LineChart
                 ariaLabel={t("ui.ndviCurve")}
                 yLabel="NDVI"
                 yDomain={[0, 1]}
-                formatX={(x) => fmtDate(x).slice(0, 5)}
-                formatY={(y) => y.toFixed(2)}
+                formatX={(x) => fmtDay(x)}
+                formatY={(y) => fmtNdvi(y)}
                 series={[
                   {
                     name: plot.name,
@@ -113,29 +133,30 @@ export function PlotPanel({
                     points: ndvi.data.series.map((p) => ({ x: p.acquiredAt, y: p.mean })),
                   },
                   {
-                    name: "Promedio del campo",
+                    name: t("ui.farmAverage"),
                     color: CHART.comparison,
                     dashed: true,
                     points: ndvi.data.farmAvg.map((p) => ({ x: p.acquiredAt, y: p.mean })),
                   },
                 ]}
               />
-              <p className="text-xs text-surco/60">{t("attribution.copernicus")}</p>
+              <p className="mt-1 text-[11px] text-tinta-2">{t("attribution.copernicus")}</p>
             </>
           ) : (
-            <Empty>{t("ui.noNdvi")}</Empty>
+            <Empty icon={Satellite}>{t("ui.noNdvi")}</Empty>
           )}
         </div>
       )}
       {ndvi.error && <ErrorBox error={ndvi.error} />}
 
       {canEdit && !editing && (
-        <div className="flex gap-2">
-          <Button variant="ghost" onClick={() => setEditing(true)}>
+        <div className="flex gap-2 border-t border-linea pt-4">
+          <Button icon={Pencil} onClick={() => setEditing(true)}>
             {t("ui.edit")}
           </Button>
           <Button
-            variant="ghost"
+            variant="danger"
+            icon={Trash2}
             onClick={() => confirm(t("ui.confirmDelete", { name: plot.name })) && remove.mutate()}
           >
             {t("ui.delete")}
@@ -144,7 +165,7 @@ export function PlotPanel({
       )}
       {editing && (
         <form
-          className="flex flex-col gap-2"
+          className="flex flex-col gap-3 border-t border-linea pt-4"
           onSubmit={(e) => {
             e.preventDefault();
             save.mutate();
@@ -161,7 +182,7 @@ export function PlotPanel({
             />
           </Field>
           {form.kind === "crop" ? (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <Field label={t("ui.crop")}>
                 <Select
                   value={form.crop}
@@ -187,16 +208,16 @@ export function PlotPanel({
           )}
           {save.error && <ErrorBox error={save.error} />}
           <div className="flex gap-2">
-            <Button type="submit" disabled={save.isPending}>
+            <Button type="submit" variant="primary" disabled={save.isPending}>
               {t("ui.save")}
             </Button>
-            <Button variant="ghost" onClick={() => setEditing(false)}>
+            <Button variant="quiet" onClick={() => setEditing(false)}>
               {t("ui.cancel")}
             </Button>
           </div>
         </form>
       )}
-    </Card>
+    </div>
   );
 }
 

@@ -1,84 +1,130 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { BRAND } from "@yvy/shared";
+import { AlertTriangle, ChevronRight, Download, Plus, Tractor } from "lucide-react";
 import { FarmMap } from "../components/FarmMap";
-import { Button, Card, ErrorBox, Spinner } from "../components/ui";
-import { fmtDate, fmtHa } from "../lib/format";
+import { Button, Empty, ErrorBox, SectionHead, Spinner, Stat } from "../components/ui";
+import { fmtDate, fmtNum } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useFarms, useMe } from "../lib/queries";
 
+/** Inicio multi estancia (RF-90). */
 export function HomePage() {
   const farms = useFarms();
   const me = useMe();
   const navigate = useNavigate();
   const canEdit = me.data && me.data.role !== "worker";
   const list = farms.data ?? [];
+  const pad = 0.01;
   const bounds: [number, number, number, number] | null = list.length
     ? [
-        Math.min(...list.map((f) => f.minLon)),
-        Math.min(...list.map((f) => f.minLat)),
-        Math.max(...list.map((f) => f.maxLon)),
-        Math.max(...list.map((f) => f.maxLat)),
+        Math.min(...list.map((f) => f.minLon)) - pad,
+        Math.min(...list.map((f) => f.minLat)) - pad,
+        Math.max(...list.map((f) => f.maxLon)) + pad,
+        Math.max(...list.map((f) => f.maxLat)) + pad,
       ]
     : null;
+  const totalHa = list.reduce((a, f) => a + f.areaHa, 0);
+  const alerts = list.reduce((a, f) => a + f.activeAlerts, 0);
+  const records = list.reduce((a, f) => a + f.records7d, 0);
 
   return (
-    <div className="grid h-full lg:grid-cols-[minmax(0,1fr)_420px]">
-      <div className="h-72 lg:h-full">
+    <div className="grid h-full lg:grid-cols-[minmax(0,1fr)_440px]">
+      <div className="relative h-72 lg:h-full">
         <FarmMap
-          points={list.map((f) => ({
+          farms={list.map((f) => ({
             id: f.id,
-            lon: f.centroidLon,
-            lat: f.centroidLat,
-            color: f.activeAlerts ? BRAND.alerta : BRAND.trigo,
+            name: f.name,
+            geometry: f.geometry,
+            basemapPath: f.basemapPath,
+            alert: f.activeAlerts > 0,
           }))}
+          tilesBaseUrl={me.data?.tilesBaseUrl}
           bounds={bounds}
+          onMapClick={() => {}}
           onPointClick={(id) => navigate({ to: "/estancias/$farmId", params: { farmId: id } })}
         />
       </div>
-      <section className="flex flex-col gap-3 overflow-auto p-4 *:shrink-0">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold">{t("ui.homeTitle")}</h1>
+      <section className="flex flex-col gap-6 overflow-auto border-l border-linea p-6 *:shrink-0">
+        <header className="flex items-start justify-between gap-4">
+          <div>
+            <p className="eyebrow">{me.data?.organization.name}</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight">{t("ui.homeTitle")}</h1>
+          </div>
           {canEdit && (
             <Link to="/estancias/nueva">
-              <Button>+ {t("ui.newFarm")}</Button>
+              <Button variant="primary" icon={Plus}>
+                {t("ui.newFarm")}
+              </Button>
             </Link>
           )}
-        </div>
+        </header>
+
+        {list.length > 0 && (
+          <div className="grid grid-cols-3 gap-4 border-y border-linea py-4">
+            <Stat label={t("ui.area")} value={fmtNum(totalHa)} unit="ha" />
+            <Stat label={t("ui.records7d")} value={records} />
+            <Stat label={t("ui.activeAlerts")} value={alerts} tone={alerts ? "danger" : undefined} />
+          </div>
+        )}
+
         {farms.isLoading && <Spinner />}
         {farms.error && <ErrorBox error={farms.error} />}
         {farms.data && list.length === 0 && (
-          <Card>
-            <h2 className="mb-2 font-semibold">{t("ui.onboardingTitle")}</h2>
-            <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-sm">
+          <Empty icon={Tractor} title={t("ui.onboardingTitle")}>
+            <ol className="mt-1 flex list-decimal flex-col gap-1.5 pl-5">
               <li>{t("ui.onboarding1")}</li>
               <li>{t("ui.onboarding2")}</li>
               <li>{t("ui.onboarding3")}</li>
               <li>{t("ui.onboarding4")}</li>
             </ol>
-            <a href="/descargar-app" className="mt-3 inline-block text-sm font-medium text-soja-dark underline">
-              ⤓ {t("ui.downloadApp")}
+            <a
+              href="/descargar-app"
+              className="mt-3 inline-flex items-center gap-1.5 font-medium text-accion hover:underline"
+            >
+              <Download size={16} aria-hidden /> {t("ui.downloadApp")}
             </a>
-          </Card>
+          </Empty>
         )}
-        {list.map((f) => (
-          <Link key={f.id} to="/estancias/$farmId" params={{ farmId: f.id }}>
-            <Card className="transition hover:ring-soja/40">
-              <div className="flex items-baseline justify-between">
-                <h2 className="font-semibold">{f.name}</h2>
-                <span className="text-sm text-surco/60">{fmtHa(f.areaHa)}</span>
-              </div>
-              <p className="mt-1 text-sm text-surco/70">
-                {f.plots} {t("ui.plots").toLowerCase()} · {f.workers} {t("ui.workers").toLowerCase()} ·{" "}
-                {f.lastRecordAt ? `${t("ui.lastRecord")}: ${fmtDate(f.lastRecordAt)}` : t("ui.neverRecorded")}
-              </p>
-              {f.activeAlerts > 0 && (
-                <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-alerta px-2 py-0.5 text-xs font-semibold text-white">
-                  ▲ {f.activeAlerts} {t("ui.activeAlerts").toLowerCase()}
-                </p>
-              )}
-            </Card>
-          </Link>
-        ))}
+
+        {list.length > 0 && (
+          <div>
+            <SectionHead title={t("ui.navHome")} count={list.length} />
+            <ul className="divide-y divide-linea">
+              {list.map((f) => (
+                <li key={f.id}>
+                  <Link
+                    to="/estancias/$farmId"
+                    params={{ farmId: f.id }}
+                    className="group flex items-center gap-4 py-4"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline gap-2">
+                        <h2 className="truncate font-semibold group-hover:underline">{f.name}</h2>
+                        {f.department && <span className="text-sm text-tinta-2">{f.department}</span>}
+                      </div>
+                      <p className="num mt-1 text-xs text-tinta-2">
+                        {fmtNum(f.areaHa)} ha · {f.plots} {t("ui.plots").toLowerCase()} · {f.workers}{" "}
+                        {t("ui.workers").toLowerCase()} ·{" "}
+                        {f.lastRecordAt
+                          ? `${t("ui.lastRecord").toLowerCase()} ${fmtDate(f.lastRecordAt)}`
+                          : t("ui.neverRecorded").toLowerCase()}
+                      </p>
+                      {f.activeAlerts > 0 && (
+                        <p className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-peligro">
+                          <AlertTriangle size={13} aria-hidden /> {f.activeAlerts} {t("ui.activeAlerts").toLowerCase()}
+                        </p>
+                      )}
+                    </div>
+                    <ChevronRight
+                      size={18}
+                      className="text-tinta-2 transition-transform group-hover:translate-x-0.5"
+                      aria-hidden
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
     </div>
   );

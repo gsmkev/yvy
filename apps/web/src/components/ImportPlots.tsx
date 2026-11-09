@@ -1,3 +1,4 @@
+import { Upload } from "lucide-react";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { post } from "../lib/api";
@@ -48,8 +49,9 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
   return (
     <Modal title={t("ui.importFile")} onClose={onClose}>
       {!items ? (
-        <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-surco/20 p-8 text-sm text-surco/70 hover:border-soja">
-          ⇪ {t("ui.importFile")}
+        <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-linea p-8 text-sm text-surco/70 hover:border-soja">
+          <Upload size={22} aria-hidden />
+          {t("ui.importFile")}
           <input
             type="file"
             accept=".kml,.kmz,.geojson,.json,.zip"
@@ -70,7 +72,7 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
             {items.map((p, i) => (
               <li
                 key={p.index}
-                className={`flex items-center gap-2 rounded-lg bg-white p-2 text-sm ${p.error ? "opacity-50" : ""}`}
+                className={`flex items-center gap-2 rounded-md border border-linea bg-papel p-2 text-sm ${p.error ? "opacity-50" : ""}`}
               >
                 <input
                   type="checkbox"
@@ -88,7 +90,7 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
                     { value: "pasture", label: t("ui.pasture") },
                   ]}
                 />
-                <span className="w-20 text-right text-surco/70">{p.error ? p.error : fmtHa(p.areaHa)}</span>
+                <span className="num w-20 text-right text-tinta-2">{p.error ? p.error : fmtHa(p.areaHa)}</span>
               </li>
             ))}
           </ul>

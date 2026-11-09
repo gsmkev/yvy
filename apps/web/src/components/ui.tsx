@@ -1,36 +1,47 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
+import { AlertTriangle, CircleAlert, Info, X, type LucideIcon } from "lucide-react";
 import { t, tk } from "../lib/i18n";
 
+type Variant = "primary" | "secondary" | "quiet" | "danger";
+
+const VARIANT: Record<Variant, string> = {
+  primary: "bg-accion text-white hover:bg-accion-2 border border-accion",
+  secondary: "bg-papel text-surco border border-linea hover:border-tinta-2/40 hover:bg-white",
+  quiet: "text-tinta-2 hover:text-surco hover:bg-surco/5 border border-transparent",
+  danger: "bg-papel text-peligro border border-peligro/40 hover:bg-peligro hover:text-white",
+};
+
 export function Button({
-  variant = "primary",
+  variant = "secondary",
+  icon: Icon,
   className = "",
+  children,
   ...p
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "ghost" | "danger" }) {
-  const v = {
-    primary: "bg-soja text-white hover:bg-soja-dark disabled:opacity-50",
-    ghost: "bg-white/60 text-surco ring-1 ring-surco/15 hover:bg-white disabled:opacity-50",
-    danger: "bg-alerta text-white hover:opacity-90 disabled:opacity-50",
-  }[variant];
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; icon?: LucideIcon }) {
   return (
     <button
       type="button"
       {...p}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition ${v} ${className}`}
-    />
+      className={`inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-md px-3.5 text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45 ${VARIANT[variant]} ${className}`}
+    >
+      {Icon && <Icon size={16} strokeWidth={2} aria-hidden />}
+      {children}
+    </button>
   );
 }
 
-export function Field({ label, children }: { label: string; children: ReactNode }) {
+export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium text-surco/80">{label}</span>
+    <label className="flex flex-col gap-1.5 text-sm">
+      <span className="font-medium">{label}</span>
       {children}
+      {hint && <span className="text-xs text-tinta-2">{hint}</span>}
     </label>
   );
 }
 
 const inputCls =
-  "rounded-lg border border-surco/20 bg-white px-3 py-2 text-sm outline-none focus:border-soja focus:ring-2 focus:ring-soja/30";
+  "h-10 rounded-md border border-linea bg-papel px-3 text-[15px] outline-none transition-colors placeholder:text-tinta-2/60 focus:border-accion focus:ring-2 focus:ring-accion/20";
 
 export const Input = (p: InputHTMLAttributes<HTMLInputElement>) => (
   <input {...p} className={`${inputCls} ${p.className ?? ""}`} />
@@ -40,7 +51,7 @@ export const Select = ({
   options,
   ...p
 }: SelectHTMLAttributes<HTMLSelectElement> & { options: { value: string; label: string }[] }) => (
-  <select {...p} className={`${inputCls} ${p.className ?? ""}`}>
+  <select {...p} className={`${inputCls} cursor-pointer pr-8 ${p.className ?? ""}`}>
     {options.map((o) => (
       <option key={o.value} value={o.value}>
         {o.label}
@@ -49,53 +60,123 @@ export const Select = ({
   </select>
 );
 
+/** Superficie con borde fino. Sin sombras: la jerarquía la dan el espacio y la tipografía. */
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-xl bg-white p-4 shadow-sm ring-1 ring-surco/5 ${className}`}>{children}</div>;
+  return <div className={`rounded-lg border border-linea bg-papel p-4 ${className}`}>{children}</div>;
+}
+
+export function SectionHead({ title, count, action }: { title: string; count?: number | string; action?: ReactNode }) {
+  return (
+    <div className="flex items-end justify-between gap-3 border-b border-linea pb-2">
+      <h2 className="eyebrow">
+        {title}
+        {count !== undefined && <span className="ml-1.5 text-surco">{count}</span>}
+      </h2>
+      {action}
+    </div>
+  );
+}
+
+export function Stat({
+  label,
+  value,
+  unit,
+  note,
+  tone,
+}: {
+  label: string;
+  value: ReactNode;
+  unit?: string;
+  note?: ReactNode;
+  tone?: "danger";
+}) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="eyebrow">{label}</span>
+      <span className={`num text-[26px] leading-tight font-medium ${tone === "danger" ? "text-peligro" : ""}`}>
+        {value}
+        {unit && <span className="ml-1 text-sm text-tinta-2">{unit}</span>}
+      </span>
+      {note && <span className="text-xs text-tinta-2">{note}</span>}
+    </div>
+  );
 }
 
 export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-surco/50 p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-surco/55 p-4 backdrop-blur-[2px]"
+      onClick={onClose}
+    >
       <div
         role="dialog"
+        aria-modal="true"
         aria-label={title}
-        className="max-h-[90vh] w-full max-w-lg overflow-auto rounded-2xl bg-lino p-5 shadow-xl"
+        className="max-h-[90vh] w-full max-w-lg overflow-auto rounded-lg border border-linea bg-lino shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          <button aria-label={t("ui.close")} className="rounded p-1 text-surco/60 hover:bg-surco/10" onClick={onClose}>
-            ✕
+        <div className="sticky top-0 flex items-center justify-between border-b border-linea bg-lino px-5 py-3.5">
+          <h2 className="text-base font-semibold">{title}</h2>
+          <button
+            aria-label={t("ui.close")}
+            className="cursor-pointer rounded p-1.5 text-tinta-2 hover:bg-surco/5 hover:text-surco"
+            onClick={onClose}
+          >
+            <X size={18} aria-hidden />
           </button>
         </div>
-        {children}
+        <div className="p-5">{children}</div>
       </div>
     </div>
   );
 }
 
-export const Spinner = () => <div className="p-6 text-sm text-surco/60">{t("ui.loading")}</div>;
-export const Empty = ({ children }: { children: ReactNode }) => (
-  <div className="rounded-xl border border-dashed border-surco/20 p-6 text-center text-sm text-surco/60">
-    {children}
+export const Spinner = () => (
+  <div className="flex flex-col gap-2 p-1" aria-busy="true" aria-label={t("ui.loading")}>
+    {[0, 1, 2].map((i) => (
+      <div key={i} className="h-12 animate-pulse rounded-md bg-surco/[0.06]" />
+    ))}
   </div>
 );
+
+export function Empty({
+  icon: Icon = Info,
+  title,
+  children,
+}: {
+  icon?: LucideIcon;
+  title?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-start gap-1.5 rounded-lg border border-dashed border-linea px-5 py-6 text-sm text-tinta-2">
+      <Icon size={20} aria-hidden className="text-tinta-2/70" />
+      {title && <p className="font-medium text-surco">{title}</p>}
+      {children}
+    </div>
+  );
+}
+
 export const ErrorBox = ({ error }: { error: unknown }) => (
-  <div role="alert" className="rounded-lg bg-alerta/10 p-3 text-sm text-alerta">
+  <div role="alert" className="flex gap-2 rounded-md border border-peligro/30 bg-peligro/5 p-3 text-sm text-peligro">
+    <CircleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />
     {t("ui.error", { message: error instanceof Error ? error.message : String(error) })}
   </div>
 );
 
 const SEV = {
-  info: "bg-cielo/30 text-surco",
-  watch: "bg-trigo/30 text-surco",
-  warning: "bg-alerta text-white",
+  info: "border-cielo text-surco bg-cielo/15",
+  watch: "border-trigo text-trigo-texto bg-trigo/15",
+  warning: "border-peligro bg-peligro text-white",
 } as const;
+
+/** Severidad siempre con ícono + texto, nunca solo color. */
 export function SeverityBadge({ severity }: { severity: keyof typeof SEV }) {
-  const icon = severity === "warning" ? "▲" : severity === "watch" ? "●" : "i";
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${SEV[severity]}`}>
-      <span aria-hidden>{icon}</span>
+    <span
+      className={`inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-xs font-semibold ${SEV[severity]}`}
+    >
+      <AlertTriangle size={12} aria-hidden />
       {tk(`ui.severity_${severity}`)}
     </span>
   );
@@ -106,20 +187,21 @@ export const Tabs = <T extends string>({
   value,
   onChange,
 }: {
-  tabs: { id: T; label: string }[];
+  tabs: { id: T; label: string; count?: number }[];
   value: T;
   onChange: (v: T) => void;
 }) => (
-  <div role="tablist" className="flex shrink-0 gap-1 overflow-x-auto border-b border-surco/10">
+  <div role="tablist" className="flex shrink-0 gap-5 overflow-x-auto border-b border-linea">
     {tabs.map((tb) => (
       <button
         key={tb.id}
         role="tab"
         aria-selected={value === tb.id}
         onClick={() => onChange(tb.id)}
-        className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium ${value === tb.id ? "border-soja text-surco" : "border-transparent text-surco/60 hover:text-surco"}`}
+        className={`-mb-px cursor-pointer border-b-2 pt-1 pb-2.5 text-sm font-medium whitespace-nowrap transition-colors ${value === tb.id ? "border-surco text-surco" : "border-transparent text-tinta-2 hover:text-surco"}`}
       >
         {tb.label}
+        {tb.count !== undefined && <span className="num ml-1.5 text-xs text-tinta-2">{tb.count}</span>}
       </button>
     ))}
   </div>

@@ -1,3 +1,4 @@
+import { MapPinned, QrCode, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
@@ -33,24 +34,32 @@ export function TeamPage() {
     <div className="mx-auto flex max-w-3xl flex-col gap-3 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">{t("ui.teamTitle")}</h1>
-        {canManage && <Button onClick={() => setAdding(true)}>+ {t("ui.addMember")}</Button>}
+        {canManage && (
+          <Button variant="primary" icon={UserPlus} onClick={() => setAdding(true)}>
+            {t("ui.addMember")}
+          </Button>
+        )}
       </div>
       {link.error && <ErrorBox error={link.error} />}
       {members.data!.map((m) => (
         <Card key={m.userId} className="flex flex-wrap items-center gap-3">
           <div className="flex-1">
             <div className="font-semibold">{m.fullName}</div>
-            <div className="text-sm text-surco/60">
+            <div className="text-sm text-tinta-2">
               {tk(`ui.role_${m.role}`)} {m.email ? `· ${m.email}` : ""} {m.phone ? `· ${m.phone}` : ""}
             </div>
           </div>
-          <Button variant="ghost" onClick={() => setAssigning(m)}>
+          <Button icon={MapPinned} onClick={() => setAssigning(m)}>
             {t("ui.assignPlots")}
           </Button>
-          {canManage && m.role === "worker" && <Button onClick={() => link.mutate(m)}>▦ {t("ui.linkDevice")}</Button>}
+          {canManage && m.role === "worker" && (
+            <Button icon={QrCode} onClick={() => link.mutate(m)}>
+              {t("ui.linkDevice")}
+            </Button>
+          )}
           {canManage && m.userId !== me.data?.user.id && (
             <Button
-              variant="ghost"
+              variant="danger"
               onClick={() => confirm(t("ui.confirmDelete", { name: m.fullName })) && remove.mutate(m)}
             >
               {t("ui.removeMember")}
@@ -63,11 +72,11 @@ export function TeamPage() {
       {qr && (
         <Modal title={`${t("ui.linkDevice")} · ${qr.member.fullName}`} onClose={() => setQr(null)}>
           <div className="flex flex-col items-center gap-3">
-            <div className="rounded-xl bg-white p-4">
+            <div className="rounded-lg border border-linea bg-white p-4">
               <QRCodeSVG value={qr.qr} size={240} />
             </div>
-            <p className="text-center text-sm text-surco/70">{t("ui.linkHelp")}</p>
-            <p className="text-xs text-surco/50">{t("ui.expires", { date: fmtDateTime(qr.expiresAt) })}</p>
+            <p className="text-center text-sm text-tinta-2">{t("ui.linkHelp")}</p>
+            <p className="num text-xs text-tinta-2">{t("ui.expires", { date: fmtDateTime(qr.expiresAt) })}</p>
           </div>
         </Modal>
       )}
@@ -163,10 +172,10 @@ function AssignPlots({ member, onClose }: { member: Member; onClose: () => void 
               <ul className="grid grid-cols-2 gap-1">
                 {data!.plots.map((p) => (
                   <li key={p.id}>
-                    <label className="flex items-center gap-2 rounded-lg bg-white p-2 text-sm">
+                    <label className="flex cursor-pointer items-center gap-2 rounded-md border border-linea bg-papel p-2 text-sm hover:border-tinta-2/40">
                       <input type="checkbox" checked={current.has(p.id)} onChange={() => toggle(p.id)} />
                       <span className="flex-1">{p.name}</span>
-                      <span className="text-xs text-surco/60">{fmtHa(p.areaHa)}</span>
+                      <span className="num text-xs text-tinta-2">{fmtHa(p.areaHa)}</span>
                     </label>
                   </li>
                 ))}

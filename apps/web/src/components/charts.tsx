@@ -33,7 +33,7 @@ function niceTicks(min: number, max: number, n = 4): number[] {
 function Legend({ series }: { series: { name: string; color: string; dashed?: boolean; dot?: boolean }[] }) {
   if (series.length < 2) return null;
   return (
-    <div className="mb-1 flex flex-wrap gap-4 text-xs text-surco/70">
+    <div className="mb-1 flex flex-wrap gap-4 text-xs text-tinta-2">
       {series.map((s) => (
         <span key={s.name} className="flex items-center gap-1.5">
           {s.dot ? (

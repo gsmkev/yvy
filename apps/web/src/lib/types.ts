@@ -23,10 +23,12 @@ export interface FarmSummary {
   workers: number;
   activeAlerts: number;
   lastRecordAt: number | null;
+  records7d: number;
+  geometry: string;
+  basemapPath: string | null;
 }
 
 export interface Farm extends FarmSummary {
-  geometry: string;
   district: string | null;
   timezone: string;
 }

@@ -6,6 +6,7 @@ import { fmtIsoDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useFarms, useMembers, useTasks } from "../lib/queries";
 import type { Plot, Task } from "../lib/types";
+import { AlertTriangle, CheckCircle2, Circle, ListChecks, Plus } from "lucide-react";
 import { Button, Card, Empty, ErrorBox, Field, Input, Modal, Select, Spinner } from "./ui";
 
 export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] }) {
@@ -35,9 +36,11 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
   return (
     <div className="flex flex-col gap-3">
       <div>
-        <Button onClick={() => setCreating(true)}>+ {t("ui.newTask")}</Button>
+        <Button variant="primary" icon={Plus} onClick={() => setCreating(true)}>
+          {t("ui.newTask")}
+        </Button>
       </div>
-      {!visible.length && <Empty>—</Empty>}
+      {!visible.length && <Empty icon={ListChecks} title={t("ui.noTasks")} />}
       {[...byAssignee.entries()].map(([name, list]) => {
         const overdue = list.filter((x) => x.status === "open" && x.dueDate < today).length;
         return (
@@ -45,8 +48,8 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
             <h3 className="mb-2 flex items-center gap-2 font-semibold">
               {name}
               {overdue > 0 && (
-                <span className="rounded-full bg-alerta px-2 py-0.5 text-xs text-white">
-                  ▲ {overdue} {t("ui.overdue").toLowerCase()}
+                <span className="rounded-sm bg-peligro px-1.5 py-0.5 text-xs font-semibold text-white">
+                  <AlertTriangle size={12} className="inline" aria-hidden /> {overdue} {t("ui.overdue").toLowerCase()}
                 </span>
               )}
             </h3>
@@ -54,13 +57,17 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
               {list.map((x) => (
                 <li key={x.id} className="flex items-center gap-2 text-sm">
                   <span
-                    className={x.status === "done" ? "text-soja" : x.dueDate < today ? "text-alerta" : "text-surco/50"}
+                    className={x.status === "done" ? "text-soja" : x.dueDate < today ? "text-peligro" : "text-tinta-2"}
                   >
-                    {x.status === "done" ? "✔" : "○"}
+                    {x.status === "done" ? (
+                      <CheckCircle2 size={18} aria-label={t("ui.status_done")} />
+                    ) : (
+                      <Circle size={18} aria-label={t("ui.status_open")} />
+                    )}
                   </span>
-                  <span className={`flex-1 ${x.status === "done" ? "text-surco/50 line-through" : ""}`}>
+                  <span className={`flex-1 ${x.status === "done" ? "text-tinta-2 line-through" : ""}`}>
                     {x.title}
-                    <span className="block text-xs text-surco/60">
+                    <span className="block text-xs text-tinta-2">
                       {fmtIsoDate(x.dueDate)} · {tk(`ui.recurrence_${x.recurrence}`)}
                       {x.plotName ? ` · ${x.plotName}` : ""}
                       {x.kind ? ` · ${t("ui.opensRecord")}: ${tk(`recordKinds.${x.kind}`)}` : ""}
@@ -68,7 +75,7 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
                   </span>
                   {x.status === "open" && (
                     <button
-                      className="text-xs text-surco/50 hover:text-alerta"
+                      className="text-xs text-tinta-2 hover:text-peligro"
                       onClick={() => (x.recurrence === "none" ? remove.mutate(x.id) : cancel.mutate(x.id))}
                     >
                       {t("ui.delete")}
@@ -179,7 +186,7 @@ function NewTaskModal({
           />
         </Field>
         {create.error && <ErrorBox error={create.error} />}
-        <Button type="submit" disabled={create.isPending}>
+        <Button type="submit" variant="primary" disabled={create.isPending}>
           {t("ui.save")}
         </Button>
       </form>

@@ -1,3 +1,4 @@
+import { FileSpreadsheet } from "lucide-react";
 import { useMemo, useState } from "react";
 import { BRAND, RECORD_KINDS } from "@yvy/shared";
 import { FarmMap } from "../components/FarmMap";
@@ -60,8 +61,8 @@ export function RecordsPage() {
       <section className="flex min-h-0 flex-col gap-3 overflow-auto p-4 *:shrink-0">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">{t("ui.navRecords")}</h1>
-          <Button variant="ghost" onClick={exportExcel} disabled={exporting}>
-            ⤓ {t("ui.exportExcel")}
+          <Button icon={FileSpreadsheet} onClick={exportExcel} disabled={exporting}>
+            {t("ui.exportExcel")}
           </Button>
         </div>
         <div className="grid grid-cols-2 gap-2">

@@ -38,6 +38,8 @@ export interface FarmMapProps {
   plots?: Plot[];
   pois?: Poi[];
   points?: MapPoint[];
+  /** Varias estancias a la vez (inicio): perímetro, nombre y fondo satelital propio. */
+  farms?: { id: string; name: string; geometry: string; basemapPath?: string | null; alert?: boolean }[];
   layers?: Layer[];
   tilesBaseUrl?: string;
   showNdvi?: boolean;
@@ -57,6 +59,7 @@ export function FarmMap(props: FarmMapProps) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const drawRef = useRef<TerraDraw | null>(null);
+  const labelsRef = useRef<maplibregl.Marker[]>([]);
   const cb = useRef(props);
   cb.current = props;
 
@@ -99,7 +102,10 @@ export function FarmMap(props: FarmMapProps) {
         id: "outline",
         type: "line",
         source: "outline",
-        paint: { "line-color": BRAND.lino, "line-width": 2.5 },
+        paint: {
+          "line-color": ["case", ["boolean", ["get", "alert"], false], BRAND.alerta, BRAND.lino],
+          "line-width": 2.5,
+        },
       });
       map.addLayer({
         id: "plots-fill",
@@ -172,8 +178,27 @@ export function FarmMap(props: FarmMapProps) {
     if (!map) return;
     const p = cb.current;
     (map.getSource("outline") as GeoJSONSource).setData(
-      fc(p.outline ? [{ type: "Feature", properties: {}, geometry: JSON.parse(p.outline) }] : []),
+      fc([
+        ...(p.outline ? [{ type: "Feature" as const, properties: {}, geometry: JSON.parse(p.outline) }] : []),
+        ...(p.farms ?? []).map((f) => ({
+          type: "Feature" as const,
+          properties: { id: f.id, alert: !!f.alert },
+          geometry: JSON.parse(f.geometry),
+        })),
+      ]),
     );
+    // Nombres sobre el mapa (marcadores HTML: no dependen de un servidor de fuentes)
+    for (const m of labelsRef.current) m.remove();
+    const labels = [
+      ...(p.plots ?? []).map((pl) => ({ name: pl.name, geometry: pl.geometry })),
+      ...(p.farms ?? []).map((f) => ({ name: f.name, geometry: f.geometry })),
+    ];
+    labelsRef.current = labels.map(({ name, geometry }) => {
+      const el = document.createElement("div");
+      el.className = "plot-label";
+      el.textContent = name;
+      return new maplibregl.Marker({ element: el }).setLngLat(centerOf(JSON.parse(geometry))).addTo(map);
+    });
     (map.getSource("plots") as GeoJSONSource).setData(
       fc(
         (p.plots ?? []).map((pl) => ({
@@ -212,6 +237,7 @@ export function FarmMap(props: FarmMapProps) {
 
   useEffect(sync, [
     props.outline,
+    props.farms,
     props.plots,
     props.pois,
     props.points,
@@ -270,6 +296,15 @@ function syncRasters(map: MlMap, p: FarmMapProps) {
     if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
   };
   set("basemap", latest("true_color"), true, "outline");
+  for (const f of p.farms ?? []) {
+    if (f.basemapPath)
+      set(
+        `basemap-${f.id}`,
+        { id: f.id, layer: "true_color", acquiredAt: 0, pmtilesPath: f.basemapPath, bytes: 0, bounds: "" },
+        true,
+        "outline",
+      );
+  }
   set("ndvi", latest("ndvi"), !!p.showNdvi, "outline");
 }
 
@@ -279,3 +314,15 @@ export const boundsOf = (o: {
   maxLon: number;
   maxLat: number;
 }): [number, number, number, number] => [o.minLon, o.minLat, o.maxLon, o.maxLat];
+
+function centerOf(g: { type: string; coordinates: unknown }): [number, number] {
+  const pts: number[][] = [];
+  const walk = (c: unknown): void => {
+    if (Array.isArray(c) && typeof c[0] === "number") pts.push(c as number[]);
+    else if (Array.isArray(c)) c.forEach(walk);
+  };
+  walk(g.coordinates);
+  const xs = pts.map((p) => p[0]!);
+  const ys = pts.map((p) => p[1]!);
+  return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
+}

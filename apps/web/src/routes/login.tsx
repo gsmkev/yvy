@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { ApiError, post, setSession, type Session } from "../lib/api";
 import { t } from "../lib/i18n";
+import { Logo } from "../components/Layout";
 import { Button, ErrorBox, Field, Input } from "../components/ui";
 
 export function LoginPage() {
@@ -48,81 +49,103 @@ export function LoginPage() {
     });
 
   return (
-    <div className="flex min-h-full items-center justify-center bg-surco p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-lino p-6 shadow-xl">
-        <div className="mb-5 flex items-center gap-3">
-          <img src="/favicon.svg" alt="" className="h-10 w-10" />
-          <div>
-            <h1 className="text-xl font-semibold">{t(mode === "login" ? "ui.loginTitle" : "ui.signupTitle")}</h1>
-            <p className="text-sm text-surco/60">{t("ui.tagline")}</p>
-          </div>
+    <div className="grid min-h-full bg-lino lg:grid-cols-[1.1fr_1fr]">
+      <div className="relative hidden overflow-hidden bg-surco lg:block">
+        <img src="/campo-itapua.webp" alt="" className="absolute inset-0 h-full w-full object-cover opacity-90" />
+        <div className="absolute inset-0 bg-gradient-to-t from-surco via-surco/20 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 p-10 text-lino">
+          <p className="max-w-md text-[28px] leading-tight font-semibold tracking-tight">{t("ui.tagline")}.</p>
+          <p className="num mt-3 text-xs text-lino/60">
+            Itapúa · Sentinel-2 L2A, compuesto de 90 días · {t("attribution.copernicus")}
+          </p>
         </div>
-        <form
-          className="flex flex-col gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (step === "email") sendCode();
-            else verify();
-          }}
-        >
-          {step === "email" ? (
-            <>
-              {mode === "signup" && (
-                <>
-                  <Field label={t("ui.orgName")}>
-                    <Input required minLength={2} value={orgName} onChange={(e) => setOrgName(e.target.value)} />
-                  </Field>
-                  <Field label={t("ui.fullName")}>
-                    <Input required minLength={2} value={fullName} onChange={(e) => setFullName(e.target.value)} />
-                  </Field>
-                </>
-              )}
-              <Field label={t("auth.emailLabel")}>
-                <Input
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </Field>
-              <Button type="submit" disabled={busy}>
-                {t("auth.sendCode")}
-              </Button>
-              <button
-                type="button"
-                className="text-sm text-soja-dark underline"
-                onClick={() => setMode(mode === "login" ? "signup" : "login")}
-              >
-                {t(mode === "login" ? "ui.signupLink" : "ui.loginLink")}
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="text-sm text-surco/70">{t("auth.codeSent", { email })}</p>
-              <Field label={t("auth.codeLabel")}>
-                <Input
-                  inputMode="numeric"
-                  pattern="\d{6}"
-                  maxLength={6}
-                  required
-                  autoFocus
-                  autoComplete="one-time-code"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                  className="text-center text-2xl tracking-[0.4em]"
-                />
-              </Field>
-              <Button type="submit" disabled={busy || code.length !== 6}>
-                {t("ui.verify")}
-              </Button>
-              <button type="button" className="text-sm text-soja-dark underline" onClick={() => setStep("email")}>
-                {t("ui.resend")}
-              </button>
-            </>
-          )}
-          {error ? <ErrorBox error={error} /> : null}
-        </form>
+      </div>
+      <div className="flex items-center justify-center p-6">
+        <div className="w-full max-w-sm">
+          <div className="mb-8 flex items-center gap-3">
+            <Logo className="h-10 w-10" />
+            <span className="text-2xl font-semibold tracking-tight">Yvy</span>
+          </div>
+          <h1 className="text-xl font-semibold">{t(mode === "login" ? "ui.loginTitle" : "ui.signupTitle")}</h1>
+          <p className="mt-1 mb-6 text-sm text-tinta-2">
+            {step === "email" ? t("ui.loginHelp") : t("auth.codeSent", { email })}
+          </p>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (step === "email") sendCode();
+              else verify();
+            }}
+          >
+            {step === "email" ? (
+              <>
+                {mode === "signup" && (
+                  <>
+                    <Field label={t("ui.orgName")}>
+                      <Input required minLength={2} value={orgName} onChange={(e) => setOrgName(e.target.value)} />
+                    </Field>
+                    <Field label={t("ui.fullName")}>
+                      <Input
+                        required
+                        minLength={2}
+                        autoComplete="name"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                      />
+                    </Field>
+                  </>
+                )}
+                <Field label={t("auth.emailLabel")}>
+                  <Input
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </Field>
+                <Button type="submit" variant="primary" disabled={busy} className="h-11">
+                  {t("auth.sendCode")}
+                </Button>
+                <button
+                  type="button"
+                  className="cursor-pointer text-left text-sm text-accion underline-offset-4 hover:underline"
+                  onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                >
+                  {t(mode === "login" ? "ui.signupLink" : "ui.loginLink")}
+                </button>
+              </>
+            ) : (
+              <>
+                <Field label={t("auth.codeLabel")}>
+                  <Input
+                    inputMode="numeric"
+                    pattern="\d{6}"
+                    maxLength={6}
+                    required
+                    autoFocus
+                    autoComplete="one-time-code"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                    className="num h-14 text-center text-2xl tracking-[0.5em]"
+                  />
+                </Field>
+                <Button type="submit" variant="primary" disabled={busy || code.length !== 6} className="h-11">
+                  {t("ui.verify")}
+                </Button>
+                <button
+                  type="button"
+                  className="cursor-pointer text-left text-sm text-accion underline-offset-4 hover:underline"
+                  onClick={() => setStep("email")}
+                >
+                  {t("ui.resend")}
+                </button>
+              </>
+            )}
+            {error ? <ErrorBox error={error} /> : null}
+          </form>
+        </div>
       </div>
     </div>
   );

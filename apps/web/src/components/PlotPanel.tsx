@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CHART, CROPS, PLOT_KINDS, SEASONS } from "@yvy/shared";
 import { del, get, patch } from "../lib/api";
 import { fmtDate, fmtDay, fmtHa, fmtNdvi, fmtPct } from "../lib/format";
-import { ArrowLeft, Minus, Pencil, Satellite, Trash2, TrendingDown, TrendingUp, Users } from "lucide-react";
+import { Minus, Pencil, Satellite, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { t, tk } from "../lib/i18n";
 import type { Member, Plot } from "../lib/types";
 import { LineChart } from "./charts";
@@ -69,25 +69,23 @@ export function PlotPanel({
   const delta = ndvi.data?.deltaVsFarmPct ?? null;
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="eyebrow">{plot.kind === "crop" ? t("ui.crop") : t("ui.pasture")}</p>
-          <h2 className="mt-0.5 text-xl font-semibold">{plot.name}</h2>
-          <p className="num mt-1 text-sm text-tinta-2">
-            {fmtHa(plot.areaHa)}
-            {plot.crop ? ` · ${plot.crop}` : ""}
-            {plot.season ? ` · ${plot.season}` : ""}
-          </p>
-          <p className="mt-1 flex items-center gap-1.5 text-xs text-tinta-2">
-            <Users size={13} aria-hidden />
-            {workers.length
-              ? `${t("ui.assignedTo")} ${workers.map((w) => w.fullName).join(", ")}`
-              : t("ui.nobodyAssigned")}
-          </p>
-        </div>
-        <Button variant="quiet" icon={ArrowLeft} onClick={onClose} aria-label={t("ui.close")}>
-          {t("ui.plots")}
-        </Button>
+      <div>
+        <button
+          onClick={onClose}
+          className="cursor-pointer text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
+        >
+          ← {t("ui.allPlots")}
+        </button>
+        <h2 className="mt-3 font-serif text-[24px] leading-tight font-semibold">{plot.name}</h2>
+        <p className="num mt-1 text-sm text-tinta-2">
+          {plot.kind === "pasture" ? t("ui.pasture") : (plot.crop ?? t("ui.crop"))} · {fmtHa(plot.areaHa)}
+          {plot.season ? ` · ${plot.season}` : ""}
+        </p>
+        <p className="mt-1 text-sm text-tinta-2">
+          {workers.length
+            ? `${t("ui.assignedTo")} ${workers.map((w) => w.fullName).join(", ")}`
+            : t("ui.nobodyAssigned")}
+        </p>
       </div>
 
       {canEdit && ndvi.isLoading && <Spinner />}

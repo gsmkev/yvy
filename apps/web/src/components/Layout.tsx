@@ -1,28 +1,29 @@
 import { useEffect } from "react";
-import { Link, Outlet, useNavigate } from "@tanstack/react-router";
+import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bell, ClipboardList, Gauge, LayoutGrid, ListChecks, LogOut, Users, type LucideIcon } from "lucide-react";
 import { getSession, onSession, post, setSession } from "../lib/api";
 import { fmtDate } from "../lib/format";
 import { t, type MessageKey } from "../lib/i18n";
-import { useMe } from "../lib/queries";
+import { useAlerts, useMe } from "../lib/queries";
 
-const NAV: { to: string; label: MessageKey; icon: LucideIcon }[] = [
-  { to: "/", label: "ui.navHome", icon: LayoutGrid },
-  { to: "/registros", label: "ui.navRecords", icon: ClipboardList },
-  { to: "/tareas", label: "ui.navTasks", icon: ListChecks },
-  { to: "/avisos", label: "ui.navAlerts", icon: Bell },
-  { to: "/equipo", label: "ui.navTeam", icon: Users },
+const NAV: { to: string; label: MessageKey }[] = [
+  { to: "/", label: "ui.navMap" },
+  { to: "/registros", label: "ui.navRecords" },
+  { to: "/tareas", label: "ui.navTasks" },
+  { to: "/avisos", label: "ui.navAlerts" },
+  { to: "/equipo", label: "ui.navTeam" },
 ];
 
 export function Logo({ className = "h-7 w-7" }: { className?: string }) {
   return <img src="/favicon.svg" alt="" className={className} />;
 }
 
+/** Barra superior fina: la pantalla es del mapa y los datos, no de la navegación. */
 export function Layout() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const me = useMe();
+  const alerts = useAlerts({ active: true });
   useEffect(() => {
     const off = onSession((s) => {
       if (!s) {
@@ -40,45 +41,49 @@ export function Layout() {
     setSession(null);
   };
   const trial = me.data?.organization.plan === "trial" && me.data.organization.trialEndsAt;
-  const items = me.data?.isStaff
-    ? [...NAV, { to: "/interno", label: "ui.navInternal" as MessageKey, icon: Gauge }]
-    : NAV;
-  const link =
-    "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-lino/70 transition-colors hover:bg-white/[0.06] hover:text-lino";
+  const items = me.data?.isStaff ? [...NAV, { to: "/interno", label: "ui.navInternal" as MessageKey }] : NAV;
+  const nAlerts = alerts.data?.length ?? 0;
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const onMap = path === "/" || path.startsWith("/estancias");
 
   return (
-    <div className="flex h-full flex-col lg:flex-row">
-      <aside className="flex shrink-0 items-center gap-2 bg-surco px-3 py-2 text-lino lg:w-56 lg:flex-col lg:items-stretch lg:px-3 lg:py-4">
-        <Link to="/" className="flex items-center gap-2.5 px-2 lg:mb-6">
-          <Logo />
-          <span className="text-lg font-semibold tracking-tight">{t("ui.appName")}</span>
+    <div className="flex h-full flex-col">
+      <header className="flex h-14 shrink-0 items-center gap-6 border-b border-linea bg-lino px-4 lg:px-6">
+        <Link to="/" className="font-serif text-[22px] leading-none font-semibold tracking-tight">
+          {t("ui.appName")}
         </Link>
-        <nav aria-label="Principal" className="flex flex-1 gap-1 overflow-x-auto lg:flex-col">
+        <nav aria-label="Principal" className="flex h-full flex-1 gap-5 overflow-x-auto">
           {items.map((n) => (
             <Link
               key={n.to}
               to={n.to}
-              className={link}
-              activeProps={{ className: "!bg-white/10 !text-lino font-medium" }}
-              activeOptions={{ exact: n.to === "/" }}
+              className={`-mb-px flex items-center border-b-2 text-[15px] whitespace-nowrap transition-colors hover:text-surco ${
+                n.to === "/" && onMap ? "border-surco font-medium text-surco" : "border-transparent text-tinta-2"
+              }`}
+              activeProps={n.to === "/" ? {} : { className: "!border-surco !text-surco font-medium" }}
             >
-              <n.icon size={18} aria-hidden />
-              <span className="hidden sm:inline">{t(n.label)}</span>
+              {t(n.label)}
+              {n.to === "/avisos" && nAlerts > 0 && (
+                <span className="num ml-1.5 rounded-full bg-peligro px-1.5 text-xs leading-5 font-semibold text-white">
+                  {nAlerts}
+                </span>
+              )}
             </Link>
           ))}
         </nav>
-        <div className="hidden border-t border-white/10 pt-3 lg:block">
-          <p className="truncate px-3 text-sm font-medium">{me.data?.organization.name}</p>
-          <p className="truncate px-3 text-xs text-lino/55">{me.data?.user.fullName}</p>
-          {trial && (
-            <p className="num mt-2 px-3 text-[11px] text-trigo">{t("ui.trialEnds", { date: fmtDate(trial) })}</p>
-          )}
+        <div className="hidden text-right text-sm leading-tight md:block">
+          <p className="font-medium">{me.data?.organization.name}</p>
+          <p className="text-xs text-tinta-2">
+            {trial ? t("ui.trialEnds", { date: fmtDate(trial) }) : me.data?.user.fullName}
+          </p>
         </div>
-        <button onClick={logout} className={`${link} cursor-pointer lg:mt-2`} aria-label={t("ui.logout")}>
-          <LogOut size={18} aria-hidden />
-          <span className="hidden lg:inline">{t("ui.logout")}</span>
+        <button
+          onClick={logout}
+          className="cursor-pointer text-sm whitespace-nowrap text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
+        >
+          {t("ui.logout")}
         </button>
-      </aside>
+      </header>
       <main id="main" className="min-h-0 min-w-0 flex-1 overflow-auto">
         <Outlet />
       </main>

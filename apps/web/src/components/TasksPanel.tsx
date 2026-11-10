@@ -6,8 +6,8 @@ import { fmtIsoDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useFarms, useMembers, useTasks } from "../lib/queries";
 import type { Plot, Task } from "../lib/types";
-import { AlertTriangle, CheckCircle2, Circle, ListChecks, Plus } from "lucide-react";
-import { Button, Card, Empty, ErrorBox, Field, Input, Modal, Select, Spinner } from "./ui";
+import { CheckCircle2, Circle, Plus } from "lucide-react";
+import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner } from "./ui";
 
 export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] }) {
   const tasks = useTasks({ farmId });
@@ -40,16 +40,16 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
           {t("ui.newTask")}
         </Button>
       </div>
-      {!visible.length && <Empty icon={ListChecks} title={t("ui.noTasks")} />}
+      {!visible.length && <Empty title={t("ui.noTasks")} />}
       {[...byAssignee.entries()].map(([name, list]) => {
         const overdue = list.filter((x) => x.status === "open" && x.dueDate < today).length;
         return (
-          <Card key={name}>
-            <h3 className="mb-2 flex items-center gap-2 font-semibold">
+          <section key={name} className="border-t border-linea pt-3">
+            <h3 className="mb-2 flex items-baseline justify-between gap-2 font-semibold">
               {name}
               {overdue > 0 && (
-                <span className="rounded-sm bg-peligro px-1.5 py-0.5 text-xs font-semibold text-white">
-                  <AlertTriangle size={12} className="inline" aria-hidden /> {overdue} {t("ui.overdue").toLowerCase()}
+                <span className="text-sm font-medium text-peligro">
+                  {overdue} {t("ui.overdue").toLowerCase()}
                 </span>
               )}
             </h3>
@@ -84,7 +84,7 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
                 </li>
               ))}
             </ul>
-          </Card>
+          </section>
         );
       })}
       {creating && (

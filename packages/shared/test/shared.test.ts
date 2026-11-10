@@ -31,7 +31,7 @@ describe("registros", () => {
 
 describe("i18n", () => {
   it("interpola", () => {
-    expect(t("sync.offline", { count: 3 })).toBe("SIN SEÑAL · 3 PENDIENTES");
+    expect(t("sync.offline", { count: 3 })).toBe("Sin señal · 3 anotaciones por mandar");
   });
 });
 

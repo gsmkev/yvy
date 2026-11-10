@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
-import { AlertTriangle, CircleAlert, Info, X, type LucideIcon } from "lucide-react";
+import { AlertTriangle, CircleAlert, X, type LucideIcon } from "lucide-react";
 import { t, tk } from "../lib/i18n";
 
 type Variant = "primary" | "secondary" | "quiet" | "danger";
@@ -22,9 +22,10 @@ export function Button({
     <button
       type="button"
       {...p}
-      className={`inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-md px-3.5 text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45 ${VARIANT[variant]} ${className}`}
+      className={`inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md px-3.5 text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45 ${VARIANT[variant]} ${className}`}
     >
-      {Icon && <Icon size={16} strokeWidth={2} aria-hidden />}
+      {/* Ícono solo en botones sin texto: con texto, el texto alcanza */}
+      {Icon && !children && <Icon size={16} strokeWidth={2} aria-hidden />}
       {children}
     </button>
   );
@@ -93,7 +94,9 @@ export function Stat({
   return (
     <div className="flex flex-col gap-0.5">
       <span className="eyebrow">{label}</span>
-      <span className={`num text-[26px] leading-tight font-medium ${tone === "danger" ? "text-peligro" : ""}`}>
+      <span
+        className={`num font-serif text-[28px] leading-tight font-semibold ${tone === "danger" ? "text-peligro" : ""}`}
+      >
         {value}
         {unit && <span className="ml-1 text-sm text-tinta-2">{unit}</span>}
       </span>
@@ -112,11 +115,11 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="max-h-[90vh] w-full max-w-lg overflow-auto rounded-lg border border-linea bg-lino shadow-2xl"
+        className="max-h-[90vh] w-full max-w-lg overflow-auto rounded-xl bg-lino shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 flex items-center justify-between border-b border-linea bg-lino px-5 py-3.5">
-          <h2 className="text-base font-semibold">{title}</h2>
+          <h2 className="font-serif text-xl font-semibold">{title}</h2>
           <button
             aria-label={t("ui.close")}
             className="cursor-pointer rounded p-1.5 text-tinta-2 hover:bg-surco/5 hover:text-surco"
@@ -140,17 +143,16 @@ export const Spinner = () => (
 );
 
 export function Empty({
-  icon: Icon = Info,
   title,
   children,
 }: {
+  /** Se acepta por compatibilidad; los vacíos no llevan ícono decorativo. */
   icon?: LucideIcon;
   title?: string;
   children?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-start gap-1.5 rounded-lg border border-dashed border-linea px-5 py-6 text-sm text-tinta-2">
-      <Icon size={20} aria-hidden className="text-tinta-2/70" />
+    <div className="flex flex-col items-start gap-1.5 py-6 text-sm text-tinta-2">
       {title && <p className="font-medium text-surco">{title}</p>}
       {children}
     </div>

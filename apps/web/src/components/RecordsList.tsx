@@ -6,8 +6,7 @@ import { fmtDateTime } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { fetchRecordsPage, type RecordFilters } from "../lib/queries";
 import type { RecordRow } from "../lib/types";
-import { Camera, ClipboardList, Clock, NotebookPen } from "lucide-react";
-import { RECORD_ICON } from "../lib/icons";
+import { Clock } from "lucide-react";
 import { Button, Empty, ErrorBox, Modal, Spinner } from "./ui";
 
 export function useRecords(filters: RecordFilters) {
@@ -26,33 +25,28 @@ export function RecordsList({ filters, onRows }: { filters: RecordFilters; onRow
   useEffect(() => onRows?.(rows), [q.data]);
   if (q.isLoading) return <Spinner />;
   if (q.error) return <ErrorBox error={q.error} />;
-  if (!rows.length) return <Empty icon={ClipboardList} title={t("ui.noRecords")} />;
+  if (!rows.length) return <Empty title={t("ui.noRecords")} />;
   return (
     <div className="flex flex-col gap-3">
       <ul className="divide-y divide-linea border-y border-linea">
         {rows.map((r) => {
-          const Icon = RECORD_ICON[r.kind] ?? NotebookPen;
           return (
             <li key={r.id}>
               <button
-                className="flex w-full cursor-pointer items-start gap-3 py-3 text-left hover:bg-surco/[0.03]"
+                className="flex w-full cursor-pointer items-start gap-3 py-3.5 text-left hover:bg-surco/[0.03]"
                 onClick={() => setOpen(r)}
               >
-                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-soja/15 text-accion">
-                  <Icon size={16} aria-hidden />
-                </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-baseline justify-between gap-3">
-                    <span className="text-sm font-medium">{tk(`recordKinds.${r.kind}`)}</span>
+                    <span className="truncate text-[15px] font-medium">{describeData(r.kind, r.data)}</span>
                     <span className="num shrink-0 text-xs text-tinta-2">{fmtDateTime(r.capturedAt)}</span>
                   </span>
-                  <span className="block truncate text-sm text-tinta-2">{describeData(r.kind, r.data)}</span>
-                  <span className="mt-0.5 flex items-center gap-2 text-xs text-tinta-2">
-                    {r.authorName ?? "—"}
+                  <span className="mt-0.5 flex items-center gap-2 text-sm text-tinta-2">
+                    {tk(`recordKinds.${r.kind}`)} · {r.authorName ?? "—"}
                     {r.plotName && <span>· {r.plotName}</span>}
                     {r.attachments.length > 0 && (
-                      <span className="inline-flex items-center gap-1">
-                        · <Camera size={12} aria-hidden /> {r.attachments.length}
+                      <span>
+                        · {t(r.attachments.length === 1 ? "ui.photoOne" : "ui.photosMany", { n: r.attachments.length })}
                       </span>
                     )}
                   </span>

@@ -72,8 +72,9 @@ test("dueño: registro, estancia, importación de 20 lotes y empleado", async ({
   await expect(page.getByText(/Todos los días/)).toBeVisible();
 
   // Estancia: Ramón figura en el lote, clima y parte semanal
-  await page.getByRole("link", { name: "Inicio" }).click();
-  await page.getByRole("link", { name: /Estancia E2E/ }).click();
+  // Con una sola estancia, "Mapa" abre esa estancia directamente
+  await page.getByRole("link", { name: "Mapa" }).click();
+  await expect(page.getByRole("heading", { name: "Estancia E2E" })).toBeVisible();
   await page
     .getByRole("button", { name: /^Lote 1\b/ })
     .first()

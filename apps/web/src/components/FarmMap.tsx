@@ -84,7 +84,7 @@ export function FarmMap(props: FarmMapProps) {
             }
           : {},
         layers: [
-          { id: "bg", type: "background", paint: { "background-color": BRAND.surco } },
+          { id: "bg", type: "background", paint: { "background-color": "#141a12" } },
           ...(DEV_BASEMAP ? [{ id: "esri", type: "raster" as const, source: "esri" }] : []),
         ],
       },
@@ -103,8 +103,8 @@ export function FarmMap(props: FarmMapProps) {
         type: "line",
         source: "outline",
         paint: {
-          "line-color": ["case", ["boolean", ["get", "alert"], false], BRAND.alerta, BRAND.lino],
-          "line-width": 2.5,
+          "line-color": ["case", ["boolean", ["get", "alert"], false], BRAND.alerta, "rgba(255,255,255,0.9)"],
+          "line-width": 2,
         },
       });
       map.addLayer({
@@ -112,8 +112,8 @@ export function FarmMap(props: FarmMapProps) {
         type: "fill",
         source: "plots",
         paint: {
-          "fill-color": ["coalesce", ["get", "color"], ["match", ["get", "kind"], "pasture", BRAND.trigo, BRAND.soja]],
-          "fill-opacity": ["case", ["boolean", ["get", "selected"], false], 0.45, 0.18],
+          "fill-color": ["coalesce", ["get", "color"], "#ffffff"],
+          "fill-opacity": ["case", ["boolean", ["get", "selected"], false], 0.28, 0.04],
         },
       });
       map.addLayer({
@@ -121,7 +121,12 @@ export function FarmMap(props: FarmMapProps) {
         type: "line",
         source: "plots",
         paint: {
-          "line-color": ["case", ["boolean", ["get", "selected"], false], BRAND.lino, BRAND.soja],
+          "line-color": [
+            "case",
+            ["boolean", ["get", "selected"], false],
+            "#ffffff",
+            ["coalesce", ["get", "color"], "rgba(255,255,255,0.7)"],
+          ],
           "line-width": ["case", ["boolean", ["get", "selected"], false], 3, 1.5],
         },
       });

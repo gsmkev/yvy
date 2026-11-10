@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useParams } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Polygon } from "geojson";
-import { FileDown, FileText, MapPinPlus, PenLine, Upload, X } from "lucide-react";
+import { MapPinPlus, PenLine, Upload, X } from "lucide-react";
 import { areaHa } from "@yvy/geo";
 import { BRAND, NDVI_RAMP, POI_KINDS } from "@yvy/shared";
 import { AlertsList } from "../components/AlertsList";
@@ -16,9 +16,8 @@ import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs } f
 import { post } from "../lib/api";
 import { download, plotsToKml } from "../lib/exports";
 import { fmtDate, fmtHa, fmtNum } from "../lib/format";
-import { POI_ICON } from "../lib/icons";
 import { t, tk } from "../lib/i18n";
-import { useAlerts, useFarm, useMe, useMembers } from "../lib/queries";
+import { useAlerts, useFarm, useFarms, useMe, useMembers } from "../lib/queries";
 import type { RecordRow } from "../lib/types";
 
 type Tab = "plots" | "records" | "tasks" | "climate" | "alerts";
@@ -26,6 +25,7 @@ type Tab = "plots" | "records" | "tasks" | "climate" | "alerts";
 export function FarmPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId" });
   const farm = useFarm(farmId);
+  const farms = useFarms();
   const me = useMe();
   const canEdit = !!me.data && me.data.role !== "worker";
   const members = useMembers(canEdit);
@@ -144,11 +144,29 @@ export function FarmPage() {
         )}
       </div>
 
-      <section className="flex min-h-0 flex-col gap-5 overflow-auto border-l border-linea p-6 *:shrink-0">
+      <section className="flex min-h-0 flex-col gap-5 overflow-auto border-l border-linea bg-lino p-6 *:shrink-0">
         <header>
-          <p className="eyebrow">{[d.farm.department, d.farm.district].filter(Boolean).join(" · ") || t("ui.farm")}</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">{d.farm.name}</h1>
-          <p className="num mt-1.5 text-sm text-tinta-2">
+          <div className="flex items-baseline justify-between gap-3">
+            <h1 className="text-[28px] leading-tight">{d.farm.name}</h1>
+            <span className="flex shrink-0 gap-4 text-sm">
+              {(farms.data?.length ?? 0) > 1 && (
+                <Link to="/" className="text-tinta-2 underline-offset-4 hover:text-surco hover:underline">
+                  {t("ui.allFarms")}
+                </Link>
+              )}
+              {canEdit && (
+                <Link
+                  to="/estancias/nueva"
+                  className="text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
+                >
+                  {t("ui.newFarm")}
+                </Link>
+              )}
+            </span>
+          </div>
+          <p className="num mt-1 text-sm text-tinta-2">
+            {[d.farm.district, d.farm.department].filter(Boolean).join(", ")}
+            {(d.farm.district || d.farm.department) && " · "}
             {fmtHa(d.farm.areaHa)} · {d.plots.length} {t("ui.plots").toLowerCase()}
             {cropHa > 0 && ` · ${fmtNum(cropHa)} ha ${t("ui.crop").toLowerCase()}`}
             {pastureHa > 0 && ` · ${fmtNum(pastureHa)} ha ${t("ui.pasture").toLowerCase()}`}
@@ -156,7 +174,7 @@ export function FarmPage() {
         </header>
 
         {canEdit && (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 border-b border-linea pb-5">
             <Button variant="primary" icon={PenLine} onClick={() => setMode(mode === "draw" ? "none" : "draw")}>
               {t("ui.newPlot")}
             </Button>
@@ -167,13 +185,10 @@ export function FarmPage() {
               {t("ui.addPoi")}
             </Button>
             <Link to="/estancias/$farmId/parte" params={{ farmId }} search={{ desde: undefined, hasta: undefined }}>
-              <Button variant="quiet" icon={FileText}>
-                {t("ui.tabReport")}
-              </Button>
+              <Button variant="quiet">{t("ui.tabReport")}</Button>
             </Link>
             <Button
               variant="quiet"
-              icon={FileDown}
               onClick={() =>
                 download(
                   new Blob([plotsToKml(d.plots, d.farm.name)], { type: "application/vnd.google-earth.kml+xml" }),
@@ -213,7 +228,7 @@ export function FarmPage() {
             <div>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="eyebrow text-left">
+                  <tr className="text-left text-xs text-tinta-2">
                     <th className="pb-2 font-medium">{t("ui.plot")}</th>
                     <th className="pb-2 font-medium">{t("ui.kind")}</th>
                     <th className="pb-2 text-right font-medium">ha</th>
@@ -248,10 +263,8 @@ export function FarmPage() {
                   <h3 className="eyebrow mt-6 mb-2">{t("ui.pois")}</h3>
                   <ul className="flex flex-col gap-1.5 text-sm">
                     {d.pois.map((p) => {
-                      const Icon = POI_ICON[p.kind] ?? POI_ICON.other!;
                       return (
-                        <li key={p.id} className="flex items-center gap-2.5">
-                          <Icon size={16} className="text-tinta-2" aria-hidden />
+                        <li key={p.id} className="flex items-baseline justify-between gap-2.5">
                           {p.name}
                           <span className="text-xs text-tinta-2">{tk(`ui.poiKinds_${p.kind}`)}</span>
                         </li>

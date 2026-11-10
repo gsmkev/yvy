@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { ApiError, post, setSession, type Session } from "../lib/api";
 import { t } from "../lib/i18n";
-import { Logo } from "../components/Layout";
 import { Button, ErrorBox, Field, Input } from "../components/ui";
 
 export function LoginPage() {
@@ -54,19 +53,16 @@ export function LoginPage() {
         <img src="/campo-itapua.webp" alt="" className="absolute inset-0 h-full w-full object-cover opacity-90" />
         <div className="absolute inset-0 bg-gradient-to-t from-surco via-surco/20 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 p-10 text-lino">
-          <p className="max-w-md text-[28px] leading-tight font-semibold tracking-tight">{t("ui.tagline")}.</p>
-          <p className="num mt-3 text-xs text-lino/60">
+          <p className="max-w-md font-serif text-[34px] leading-tight font-semibold">{t("ui.tagline")}.</p>
+          <p className="mt-3 text-xs text-lino/60">
             Itapúa · Sentinel-2 L2A, compuesto de 90 días · {t("attribution.copernicus")}
           </p>
         </div>
       </div>
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
-          <div className="mb-8 flex items-center gap-3">
-            <Logo className="h-10 w-10" />
-            <span className="text-2xl font-semibold tracking-tight">Yvy</span>
-          </div>
-          <h1 className="text-xl font-semibold">{t(mode === "login" ? "ui.loginTitle" : "ui.signupTitle")}</h1>
+          <p className="mb-10 font-serif text-[28px] leading-none font-semibold">Yvy</p>
+          <h1 className="text-[26px] leading-tight">{t(mode === "login" ? "ui.loginTitle" : "ui.signupTitle")}</h1>
           <p className="mt-1 mb-6 text-sm text-tinta-2">
             {step === "email" ? t("ui.loginHelp") : t("auth.codeSent", { email })}
           </p>

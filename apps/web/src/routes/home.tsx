@@ -1,5 +1,6 @@
+import { useEffect } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, ChevronRight, Download, Plus, Tractor } from "lucide-react";
+import { AlertTriangle, ChevronRight, Plus } from "lucide-react";
 import { FarmMap } from "../components/FarmMap";
 import { Button, Empty, ErrorBox, SectionHead, Spinner, Stat } from "../components/ui";
 import { fmtDate, fmtNum } from "../lib/format";
@@ -13,6 +14,11 @@ export function HomePage() {
   const navigate = useNavigate();
   const canEdit = me.data && me.data.role !== "worker";
   const list = farms.data ?? [];
+  // Con una sola estancia, el mapa de esa estancia es el inicio
+  const only = list.length === 1 ? list[0]!.id : null;
+  useEffect(() => {
+    if (only) navigate({ to: "/estancias/$farmId", params: { farmId: only }, replace: true });
+  }, [only]);
   const pad = 0.01;
   const bounds: [number, number, number, number] | null = list.length
     ? [
@@ -46,8 +52,7 @@ export function HomePage() {
       <section className="flex flex-col gap-6 overflow-auto border-l border-linea p-6 *:shrink-0">
         <header className="flex items-start justify-between gap-4">
           <div>
-            <p className="eyebrow">{me.data?.organization.name}</p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight">{t("ui.homeTitle")}</h1>
+            <h1 className="text-[28px] leading-tight">{t("ui.homeTitle")}</h1>
           </div>
           {canEdit && (
             <Link to="/estancias/nueva">
@@ -69,7 +74,7 @@ export function HomePage() {
         {farms.isLoading && <Spinner />}
         {farms.error && <ErrorBox error={farms.error} />}
         {farms.data && list.length === 0 && (
-          <Empty icon={Tractor} title={t("ui.onboardingTitle")}>
+          <Empty title={t("ui.onboardingTitle")}>
             <ol className="mt-1 flex list-decimal flex-col gap-1.5 pl-5">
               <li>{t("ui.onboarding1")}</li>
               <li>{t("ui.onboarding2")}</li>
@@ -80,7 +85,7 @@ export function HomePage() {
               href="/descargar-app"
               className="mt-3 inline-flex items-center gap-1.5 font-medium text-accion hover:underline"
             >
-              <Download size={16} aria-hidden /> {t("ui.downloadApp")}
+              {t("ui.downloadApp")}
             </a>
           </Empty>
         )}

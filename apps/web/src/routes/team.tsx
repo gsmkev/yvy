@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
 import { ROLES } from "@yvy/shared";
-import { Button, Card, ErrorBox, Field, Input, Modal, Select, Spinner } from "../components/ui";
+import { Button, ErrorBox, Field, Input, Modal, Select, Spinner } from "../components/ui";
 import { del, get, post, put } from "../lib/api";
 import { fmtDateTime, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -42,7 +42,7 @@ export function TeamPage() {
       </div>
       {link.error && <ErrorBox error={link.error} />}
       {members.data!.map((m) => (
-        <Card key={m.userId} className="flex flex-wrap items-center gap-3">
+        <div key={m.userId} className="flex flex-wrap items-center gap-3 border-b border-linea py-4">
           <div className="flex-1">
             <div className="font-semibold">{m.fullName}</div>
             <div className="text-sm text-tinta-2">
@@ -65,7 +65,7 @@ export function TeamPage() {
               {t("ui.removeMember")}
             </Button>
           )}
-        </Card>
+        </div>
       ))}
       {adding && <AddMember canAddAdmins={me.data?.role === "owner"} onClose={() => setAdding(false)} />}
       {assigning && <AssignPlots member={assigning} onClose={() => setAssigning(null)} />}

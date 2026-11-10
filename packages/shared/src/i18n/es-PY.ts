@@ -552,6 +552,7 @@ export const esPY = {
     searchMembers: "Equipo",
     searchPois: "Puntos de interés",
     searchRecords: "Registros recientes",
+    searchShortcutHint: "Atajo: / o Ctrl+K",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

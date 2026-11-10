@@ -157,6 +157,7 @@ export function GlobalSearch({ inputRef }: { inputRef: React.RefObject<HTMLInput
         aria-expanded={active}
         aria-controls="search-results"
         aria-label={t("ui.searchLabel")}
+        title={t("ui.searchShortcutHint")}
         placeholder={t("ui.searchPlaceholder")}
         value={q}
         onChange={(e) => {

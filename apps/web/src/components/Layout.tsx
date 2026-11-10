@@ -39,6 +39,21 @@ export function Layout() {
       off();
     };
   }, []);
+  // "/" o Ctrl/Cmd+K enfocan el buscador (salvo que ya se esté escribiendo en otro campo)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const typing = !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+      const k = e.key.toLowerCase();
+      if ((k === "k" && (e.ctrlKey || e.metaKey)) || (k === "/" && !typing && !e.ctrlKey && !e.metaKey && !e.altKey)) {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
   const logout = async () => {
     const s = getSession();
     if (s) await post("/auth/logout", { refreshToken: s.refreshToken }).catch(() => {});

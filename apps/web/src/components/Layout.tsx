@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { getSession, onSession, post, setSession } from "../lib/api";
@@ -6,6 +6,7 @@ import { FEATURES } from "../lib/features";
 import { fmtDate } from "../lib/format";
 import { t, type MessageKey } from "../lib/i18n";
 import { useAlerts, useMe } from "../lib/queries";
+import { GlobalSearch } from "./GlobalSearch";
 
 const NAV: { to: string; label: MessageKey }[] = [
   { to: "/", label: "ui.navMap" },
@@ -26,6 +27,7 @@ export function Layout() {
   const qc = useQueryClient();
   const me = useMe();
   const alerts = useAlerts({ active: true });
+  const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const off = onSession((s) => {
       if (!s) {
@@ -73,6 +75,7 @@ export function Layout() {
             </Link>
           ))}
         </nav>
+        <GlobalSearch inputRef={searchRef} />
         <div className="hidden text-right text-sm leading-tight md:block">
           <p className="font-medium">{me.data?.organization.name}</p>
           <p className="text-xs text-tinta-2">

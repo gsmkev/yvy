@@ -33,6 +33,9 @@ const newFarm = createRoute({
 export const farmRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/estancias/$farmId",
+  validateSearch: (s: Record<string, unknown>): { lote?: string } => ({
+    lote: typeof s.lote === "string" ? s.lote : undefined,
+  }),
   component: lazyRouteComponent(() => import("./routes/farm"), "FarmPage"),
 });
 export const reportRoute = createRoute({

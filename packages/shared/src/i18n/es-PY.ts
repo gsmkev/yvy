@@ -542,6 +542,16 @@ export const esPY = {
     labsSummaryText:
       "Esta semana se registraron 14 tareas en 6 lotes. Llovieron 38 mm el martes y el jueves, lo que frenó la aplicación en Sur 2 hasta el viernes. Se sembró soja en Norte 1 y Norte 2, 212 ha en total. Quedó abierto un aviso de calor para el fin de semana y dos tareas vencidas, ambas de mantenimiento de alambrado.",
     labsSummaryDraft: "Borrador generado",
+    // web-a
+    searchLabel: "Buscar",
+    searchPlaceholder: "Buscar estancias, lotes, gente…",
+    searchNoResults: "No encontramos nada con ese texto",
+    searching: "Buscando…",
+    searchFarms: "Estancias",
+    searchPlots: "Lotes",
+    searchMembers: "Equipo",
+    searchPois: "Puntos de interés",
+    searchRecords: "Registros recientes",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

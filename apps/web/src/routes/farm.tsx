@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link, useParams } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Polygon } from "geojson";
 import { MapPinPlus, PenLine, Upload, X } from "lucide-react";
@@ -32,7 +32,15 @@ export function FarmPage() {
   const alerts = useAlerts({ farmId, active: true });
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>("plots");
-  const [selected, setSelected] = useState<string | null>(null);
+  const { lote } = useSearch({ from: "/app/estancias/$farmId" });
+  const [selected, setSelected] = useState<string | null>(lote ?? null);
+  // Llegar desde el buscador con ?lote= elige ese lote
+  useEffect(() => {
+    if (lote) {
+      setSelected(lote);
+      setTab("plots");
+    }
+  }, [lote]);
   const [mode, setMode] = useState<"none" | "draw" | "poi" | "import">("none");
   const [drawn, setDrawn] = useState<Polygon | null>(null);
   const [poiAt, setPoiAt] = useState<[number, number] | null>(null);

@@ -45,6 +45,12 @@ export interface Plot {
   sowingDate: string | null;
   pastureType: string | null;
   color: string | null;
+  /** Última y penúltima pasada NDVI (media y fecha) y última visita; null si no hay. */
+  ndviMean: number | null;
+  ndviAt: number | null;
+  ndviPrevMean: number | null;
+  ndviPrevAt: number | null;
+  lastRecordAt: number | null;
 }
 
 export interface Poi {

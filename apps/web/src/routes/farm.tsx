@@ -10,6 +10,7 @@ import { ClimatePanel } from "../components/ClimatePanel";
 import { boundsOf, FarmMap } from "../components/FarmMap";
 import { ImportPlots } from "../components/ImportPlots";
 import { PlotPanel } from "../components/PlotPanel";
+import { PlotsTable } from "../components/PlotsTable";
 import { RecordsList } from "../components/RecordsList";
 import { TasksPanel } from "../components/TasksPanel";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs } from "../components/ui";
@@ -243,37 +244,7 @@ export function FarmPage() {
             <Empty title={t("ui.noPlots")} />
           ) : (
             <div>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs text-tinta-2">
-                    <th className="pb-2 font-medium">{t("ui.plot")}</th>
-                    <th className="pb-2 font-medium">{t("ui.kind")}</th>
-                    <th className="pb-2 text-right font-medium">ha</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-linea border-t border-linea">
-                  {d.plots.map((p) => (
-                    <tr key={p.id} className="cursor-pointer hover:bg-surco/[0.03]" onClick={() => setSelected(p.id)}>
-                      <td className="py-2.5">
-                        <button
-                          className="flex cursor-pointer items-center gap-2.5 text-left font-medium"
-                          aria-label={p.name}
-                        >
-                          <span
-                            className="h-3 w-3 shrink-0 rounded-sm"
-                            style={{ background: p.color ?? (p.kind === "pasture" ? BRAND.trigo : BRAND.soja) }}
-                          />
-                          {p.name}
-                        </button>
-                      </td>
-                      <td className="py-2.5 text-tinta-2">
-                        {p.kind === "pasture" ? t("ui.pasture") : (p.crop ?? t("ui.crop"))}
-                      </td>
-                      <td className="num py-2.5 text-right">{fmtNum(p.areaHa)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <PlotsTable plots={d.plots} onSelect={setSelected} />
               <p className="mt-3 text-xs text-tinta-2">{t("ui.selectPlotHint")}</p>
               {d.pois.length > 0 && (
                 <>

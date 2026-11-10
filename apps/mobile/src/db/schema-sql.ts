@@ -67,5 +67,6 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `activity_daily` (\n\t`user_id` text NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`day` text NOT NULL,\n\t`role` text NOT NULL,\n\tPRIMARY KEY(`user_id`, `day`)\n);",
   "CREATE INDEX `activity_daily_org_idx` ON `activity_daily` (`organization_id`,`day`);",
   "ALTER TABLE `email_codes` ADD `ip` text;",
-  "CREATE INDEX `email_codes_ip_idx` ON `email_codes` (`ip`,`created_at`);"
+  "CREATE INDEX `email_codes_ip_idx` ON `email_codes` (`ip`,`created_at`);",
+  "CREATE TABLE `farm_imagery` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`status` text DEFAULT 'pending' NOT NULL,\n\t`requested_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL\n);"
 ];

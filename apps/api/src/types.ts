@@ -7,6 +7,9 @@ export interface Secrets {
   R2_ACCOUNT_ID: string;
   R2_ACCESS_KEY_ID: string;
   R2_SECRET_ACCESS_KEY: string;
+  /** Opcionales: sin ellos no se disparan los jobs al crear estancias (docs/DEPLOY.md). */
+  GITHUB_DISPATCH_TOKEN?: string;
+  GITHUB_REPO?: string;
 }
 
 export type Bindings = Env & Secrets;

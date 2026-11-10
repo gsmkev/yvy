@@ -1,8 +1,9 @@
 /** Historial: 30 días agrupados por día. Lo pendiente de mandar se distingue por el color del punto. */
-import { SectionList, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { Camera } from "lucide-react-native";
-import { describeRecord, t } from "@yvy/shared";
+import { describeRecord, t, type RecordKind } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
 import { useLocal } from "../../src/lib/useLocal";
@@ -24,8 +25,13 @@ export default function History() {
   const { farmId } = useFarmChoice();
   const records = useLocal(() => byFarm(getDb().records(), farmId), [farmId]);
   const plots = useLocal(() => getDb().plots());
+  const [filter, setFilter] = useState<RecordKind | "all">("all");
+  // Solo se ofrecen los tipos que hay en el historial.
+  const kinds = [...new Set(records.map((r) => r.kind))];
+  const active = filter !== "all" && kinds.includes(filter) ? filter : "all";
+  const shown = active === "all" ? records : records.filter((r) => r.kind === active);
   const sections = Object.entries(
-    records.reduce<Record<string, typeof records>>((acc, r) => {
+    shown.reduce<Record<string, typeof records>>((acc, r) => {
       (acc[dayKey(r.capturedAt)] ??= []).push(r);
       return acc;
     }, {}),
@@ -38,7 +44,26 @@ export default function History() {
       sections={sections}
       keyExtractor={(r) => r.id}
       stickySectionHeadersEnabled={false}
-      ListHeaderComponent={<Text style={[T.display, { marginBottom: 8 }]}>{t("app.history")}</Text>}
+      ListHeaderComponent={
+        <View>
+          <Text style={[T.display, { marginBottom: 8 }]}>{t("app.history")}</Text>
+          {kinds.length > 1 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={st.filters} contentContainerStyle={{ gap: 22 }}>
+              {(["all", ...kinds] as const).map((kd) => (
+                <Pressable
+                  key={kd}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active === kd }}
+                  onPress={() => setFilter(kd)}
+                  style={[st.filter, active === kd && st.filterActive]}
+                >
+                  <Text style={[T.bodyMedium, { color: active === kd ? C.tinta : C.tinta2 }]}>{kd === "all" ? t("app.filterAll") : t(`recordKinds.${kd}`)}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      }
       ListEmptyComponent={
         <View style={{ paddingVertical: 32 }}>
           <Text style={T.heading}>{t("app.noRecordsYet")}</Text>
@@ -70,5 +95,8 @@ export default function History() {
 
 const st = StyleSheet.create({
   day: { fontFamily: F.sansSemi, fontSize: 15, color: C.tinta2, marginTop: 28, marginBottom: 4 },
+  filters: { marginHorizontal: -20, paddingHorizontal: 20, flexGrow: 0 },
+  filter: { minHeight: 48, justifyContent: "center", borderBottomWidth: 3, borderBottomColor: "transparent" },
+  filterActive: { borderBottomColor: C.tinta },
   dot: { width: 12, height: 12, borderRadius: 6 },
 });

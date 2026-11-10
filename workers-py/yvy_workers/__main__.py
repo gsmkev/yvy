@@ -9,7 +9,7 @@ import sys
 from .ingest import IngestClient
 from .jobs.constants import BACKFILL_DAYS, BASEMAP_DAYS, DAILY_DAYS
 
-JOBS = ["s2_ingest", "s2_basemap", "chirps_daily", "firms_hotspots", "climatology_build"]
+JOBS = ["s2_ingest", "s2_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "new_farm"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -34,6 +34,9 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     log = logging.getLogger("yvy_workers")
 
+    if args.job == "new_farm" and not args.farm:
+        build_parser().error("new_farm necesita --farm <id>")
+
     api = IngestClient()
     farms = api.farms()
     if args.farm:
@@ -42,6 +45,9 @@ def main(argv: list[str] | None = None) -> int:
         key = "hasClimatology" if args.job == "climatology_build" else "hasBasemap"
         farms = [f for f in farms if not f.get(key)]
     failures = 0
+    if args.job == "new_farm" and not farms:
+        log.error("estancia %s inexistente", args.farm)
+        return 1
 
     if args.job == "chirps_daily":
         from .jobs.chirps import chirps_daily
@@ -54,7 +60,11 @@ def main(argv: list[str] | None = None) -> int:
     else:
         for f in farms:
             try:
-                if args.job == "s2_ingest":
+                if args.job == "new_farm":
+                    from .jobs.new_farm import new_farm
+
+                    failures += new_farm(api, f)
+                elif args.job == "s2_ingest":
                     from .jobs.s2 import s2_ingest
 
                     log.info("%s: %s", f["name"], s2_ingest(api, f, days=ingest_days(args)))

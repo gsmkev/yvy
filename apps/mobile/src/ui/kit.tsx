@@ -2,7 +2,9 @@ import type { ReactNode } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { CloudOff } from "lucide-react-native";
 import { t } from "@yvy/shared";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { syncNow, useSyncStatus } from "../lib/sync";
+import { useToast } from "../lib/toast";
 import { C, F, GUTTER, RADIUS, T, TOUCH } from "./theme";
 
 /** Botón: `primary` solo uno por pantalla. `secondary` para alternativas. `text` para salir sin hacer nada. */
@@ -131,6 +133,18 @@ export function SyncBar() {
   );
 }
 
+/** Confirmación breve al pie de cualquier pantalla (se monta una sola vez, en el layout raíz). */
+export function Toast() {
+  const toast = useToast();
+  const insets = useSafeAreaInsets();
+  if (!toast) return null;
+  return (
+    <View pointerEvents="none" accessibilityLiveRegion="polite" style={[s.toast, { paddingBottom: 14 + insets.bottom }]}>
+      <Text style={[T.bodyMedium, { color: C.blanco }]}>{toast.text}</Text>
+    </View>
+  );
+}
+
 export const Title = ({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) => (
   <Text style={[T.title, style as never]}>{children}</Text>
 );
@@ -163,5 +177,6 @@ export const s = StyleSheet.create({
   rowLeft: { width: 32, alignItems: "center" },
   rowRight: { alignItems: "flex-end" },
   bar: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 8, paddingHorizontal: GUTTER },
+  toast: { position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: C.tinta, paddingHorizontal: GUTTER, paddingTop: 14 },
   divider: { height: 1, backgroundColor: C.linea, marginVertical: 16 },
 });

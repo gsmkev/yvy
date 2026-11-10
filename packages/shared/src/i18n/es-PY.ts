@@ -231,6 +231,7 @@ export const esPY = {
     toastSavedPending: "Guardado · se manda cuando haya señal",
     toastSavedSent: "Guardado y enviado",
     quickRain: "Anotar lluvia",
+    gpsSlowHint: "Buscando satélites… al aire libre tarda menos. No necesita internet.",
     outboxTitle: "Para mandar",
     outboxEmpty: "No hay nada pendiente.",
     outboxRecordDelete: "Borrado de un registro",

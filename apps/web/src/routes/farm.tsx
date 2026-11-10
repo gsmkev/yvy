@@ -48,6 +48,11 @@ export function FarmPage() {
   const [poiAt, setPoiAt] = useState<[number, number] | null>(null);
   const [layer, setLayer] = useState<"satellite" | "ndvi">("satellite");
   const [records, setRecords] = useState<RecordRow[]>([]);
+  // Bajo lg no entran el mapa y el panel juntos: se alterna entre uno y otro.
+  const [view, setView] = useState<"map" | "list">("map");
+  useEffect(() => {
+    if (mode === "draw" || mode === "poi") setView("map");
+  }, [mode]);
 
   // Con un lote elegido el mapa encuadra el lote; sin selección, la estancia entera.
   const selectedGeometry = farm.data?.plots.find((p) => p.id === selected)?.geometry;
@@ -81,8 +86,24 @@ export function FarmPage() {
   const pastureHa = d.plots.filter((p) => p.kind === "pasture").reduce((a, p) => a + p.areaHa, 0);
 
   return (
-    <div className="grid h-full lg:grid-cols-[minmax(0,1fr)_480px]">
-      <div className="relative h-80 lg:h-full">
+    <div className="flex h-full flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_480px]">
+      <div
+        role="group"
+        aria-label={t("ui.viewSwitch")}
+        className="flex gap-6 border-b border-linea bg-lino px-4 py-2.5 text-sm lg:hidden"
+      >
+        {(["map", "list"] as const).map((v) => (
+          <button
+            key={v}
+            aria-pressed={view === v}
+            onClick={() => setView(v)}
+            className={`cursor-pointer underline-offset-4 ${view === v ? "font-medium text-surco underline" : "text-tinta-2"}`}
+          >
+            {v === "map" ? t("ui.viewMap") : t("ui.viewList")}
+          </button>
+        ))}
+      </div>
+      <div className={`relative min-h-0 flex-1 lg:h-full ${view === "list" ? "max-lg:hidden" : ""}`}>
         <FarmMap
           outline={d.farm.geometry}
           plots={d.plots}
@@ -107,6 +128,7 @@ export function FarmPage() {
           onPlotClick={(id) => {
             setSelected(id);
             setTab("plots");
+            if (window.matchMedia("(max-width: 1023px)").matches) setView("list");
           }}
           onMapClick={(lon, lat) => mode === "poi" && (setPoiAt([lon, lat]), setMode("none"))}
         />
@@ -163,7 +185,9 @@ export function FarmPage() {
         )}
       </div>
 
-      <section className="flex min-h-0 flex-col gap-5 overflow-auto border-l border-linea bg-lino p-6 *:shrink-0">
+      <section
+        className={`flex min-h-0 flex-1 flex-col gap-5 overflow-auto border-l border-linea bg-lino p-4 *:shrink-0 lg:p-6 ${view === "map" ? "max-lg:hidden" : ""}`}
+      >
         <header>
           <div className="flex items-baseline justify-between gap-3">
             <h1 className="text-[28px] leading-tight">{d.farm.name}</h1>

@@ -59,6 +59,16 @@ const team = createRoute({
   path: "/equipo",
   component: lazyRouteComponent(() => import("./routes/team"), "TeamPage"),
 });
+const labs = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/laboratorio",
+  component: lazyRouteComponent(() => import("./routes/labs"), "LabsPage"),
+});
+const labsTool = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/laboratorio/$tool",
+  component: lazyRouteComponent(() => import("./routes/labs"), "LabsToolPage"),
+});
 const alerts = createRoute({
   getParentRoute: () => appRoute,
   path: "/avisos",
@@ -72,7 +82,7 @@ const internal = createRoute({
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
-  appRoute.addChildren([home, newFarm, farmRoute, reportRoute, records, tasks, team, alerts, internal]),
+  appRoute.addChildren([home, newFarm, farmRoute, reportRoute, records, tasks, team, labs, labsTool, alerts, internal]),
 ]);
 
 export const router = createRouter({

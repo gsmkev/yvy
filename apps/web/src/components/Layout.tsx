@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { getSession, onSession, post, setSession } from "../lib/api";
+import { FEATURES } from "../lib/features";
 import { fmtDate } from "../lib/format";
 import { t, type MessageKey } from "../lib/i18n";
 import { useAlerts, useMe } from "../lib/queries";
@@ -12,6 +13,7 @@ const NAV: { to: string; label: MessageKey }[] = [
   { to: "/tareas", label: "ui.navTasks" },
   { to: "/avisos", label: "ui.navAlerts" },
   { to: "/equipo", label: "ui.navTeam" },
+  ...(FEATURES.labs ? [{ to: "/laboratorio", label: "ui.navLabs" as MessageKey }] : []),
 ];
 
 export function Logo({ className = "h-7 w-7" }: { className?: string }) {

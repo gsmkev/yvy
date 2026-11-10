@@ -91,6 +91,11 @@ const alerts = createRoute({
   path: "/avisos",
   component: lazyRouteComponent(() => import("./routes/alerts"), "AlertsPage"),
 });
+const account = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/cuenta",
+  component: lazyRouteComponent(() => import("./routes/public/account"), "AccountPage"),
+});
 const internal = createRoute({
   getParentRoute: () => appRoute,
   path: "/interno",
@@ -101,7 +106,20 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   termsRoute,
   privacyRoute,
-  appRoute.addChildren([home, newFarm, farmRoute, reportRoute, records, tasks, team, labs, labsTool, alerts, internal]),
+  appRoute.addChildren([
+    home,
+    newFarm,
+    farmRoute,
+    reportRoute,
+    records,
+    tasks,
+    team,
+    labs,
+    labsTool,
+    alerts,
+    account,
+    internal,
+  ]),
 ]);
 
 export const router = createRouter({

@@ -83,22 +83,36 @@ export function PastureIllustration({ size = 280 }: { size?: number }) {
 
 /** Silueta de vaca de costado. */
 export function CowIllustration({ size = 280 }: { size?: number }) {
+  // Vaca de costado (como se saca la foto) con los puntos que mira la condición corporal marcados en trigo.
   return (
     <Svg width={size} height={size} viewBox="0 0 240 240" accessibilityLabel="Silueta de vaca de ejemplo">
       <Rect width="240" height="240" fill={LINO} />
-      <Rect x="0" y="200" width="240" height="40" fill={SOJA} />
+      <Rect x="0" y="198" width="240" height="42" fill={SOJA} />
       <G fill={SURCO}>
-        <Rect x="54" y="90" width="124" height="64" rx="26" />
-        <Rect x="66" y="140" width="12" height="62" rx="4" />
-        <Rect x="92" y="140" width="12" height="62" rx="4" />
-        <Rect x="134" y="140" width="12" height="62" rx="4" />
-        <Rect x="158" y="140" width="12" height="62" rx="4" />
-        <Path d="M172 96 L206 78 L216 100 L200 128 L170 130 Z" />
-        <Path d="M204 78 L212 62 L218 80 Z" />
-        <Path d="M54 104 Q38 112 42 150" stroke={SURCO} strokeWidth="5" fill="none" strokeLinecap="round" />
+        {/* Cuerpo, cuello y cabeza en una sola silueta */}
+        <Path d="M50 104 Q54 90 72 88 L150 86 Q166 86 178 96 L200 100 Q212 104 216 122 Q218 132 208 134 L196 132 Q186 130 180 138 Q176 150 166 154 L82 156 Q62 156 54 142 Q48 126 50 104 Z" />
+        {/* Patas */}
+        <Rect x="62" y="146" width="11" height="54" rx="4" />
+        <Rect x="80" y="148" width="11" height="52" rx="4" />
+        <Rect x="146" y="148" width="11" height="52" rx="4" />
+        <Rect x="162" y="146" width="11" height="54" rx="4" />
+        {/* Oreja y cuerno */}
+        <Path d="M188 100 L176 92 L192 96 Z" />
+        <Path d="M196 99 Q198 90 206 88 Q200 94 200 100 Z" />
       </G>
-      <Ellipse cx="124" cy="118" rx="22" ry="12" fill={LINO} />
-      <Circle cx="204" cy="94" r="3" fill={LINO} />
+      {/* Cola con mechón */}
+      <Path d="M52 100 Q40 120 44 160" stroke={SURCO} strokeWidth="4" fill="none" strokeLinecap="round" />
+      <Ellipse cx="44" cy="166" rx="5" ry="8" fill={SURCO} />
+      {/* Costillas apenas marcadas */}
+      <Path d="M104 112 Q108 128 104 142 M116 112 Q120 128 116 142 M128 112 Q132 128 128 142" stroke={LINO} strokeOpacity="0.35" strokeWidth="2" fill="none" />
+      {/* Ojo */}
+      <Circle cx="202" cy="112" r="2.5" fill={LINO} />
+      {/* Puntos que evalúa: base de la cola, cadera, costillas cortas */}
+      <G stroke={TRIGO} strokeWidth="2.5" fill="none">
+        <Circle cx="56" cy="98" r="9" />
+        <Circle cx="76" cy="100" r="9" />
+        <Circle cx="116" cy="104" r="9" />
+      </G>
     </Svg>
   );
 }

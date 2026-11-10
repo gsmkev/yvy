@@ -8,7 +8,7 @@ import { Camera, Map, type CameraRef, type StyleSpecification } from "@maplibre/
 import { router, useFocusEffect } from "expo-router";
 import { LocateFixed, X } from "lucide-react-native";
 import { BRAND, describeRecord, t } from "@yvy/shared";
-import { containsPoint, type Area } from "@yvy/geo";
+import { centroidOf, containsPoint, type Area } from "@yvy/geo";
 import { useRef } from "react";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
@@ -199,6 +199,15 @@ export default function MapScreen() {
             </Text>
           ))}
           <Button big title={t("app.annotateIn", { plot: plot.name })} onPress={() => router.push({ pathname: "/annotate", params: { plotId: plot.id } })} style={{ marginTop: 16 }} />
+          <Button
+            kind="text"
+            title={t("app.gotoButton")}
+            onPress={() => {
+              const c = centroidOf(JSON.parse(plot.geometry) as Area);
+              router.push({ pathname: "/goto", params: { lon: String(c.lon), lat: String(c.lat), name: plot.name } });
+            }}
+            style={{ marginTop: 4 }}
+          />
         </View>
       )}
     </View>

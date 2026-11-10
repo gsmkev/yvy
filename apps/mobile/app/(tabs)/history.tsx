@@ -1,9 +1,8 @@
 /** Historial: 30 días agrupados por día. Lo pendiente de mandar se distingue por el color del punto. */
 import { useState } from "react";
-import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, SectionList, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
-import { Camera } from "lucide-react-native";
-import { describeRecord, t, type RecordKind } from "@yvy/shared";
+import { describeRecord, LIMITS, t, type RecordKind } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
 import { useLocal } from "../../src/lib/useLocal";
@@ -25,6 +24,7 @@ export default function History() {
   const { farmId } = useFarmChoice();
   const records = useLocal(() => byFarm(getDb().records(), farmId), [farmId]);
   const plots = useLocal(() => getDb().plots());
+  const thumbs = useLocal(() => getDb().firstThumbByRecord());
   const [filter, setFilter] = useState<RecordKind | "all">("all");
   // Solo se ofrecen los tipos que hay en el historial.
   const kinds = [...new Set(records.map((r) => r.kind))];
@@ -81,9 +81,9 @@ export default function History() {
             r.rejected ? (
               <Text style={[T.small, { color: C.peligro }]}>{t("app.rejected")}</Text>
             ) : r.photos > 0 ? (
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                <Camera size={16} color={C.tinta3} />
-                <Text style={T.small}>{r.photos}</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                {r.photos > 1 && <Text style={T.small}>{r.photos}</Text>}
+                {thumbs.get(r.id) ? <Image source={{ uri: thumbs.get(r.id)! }} style={st.thumb} accessibilityLabel={t("app.photosCount", { n: r.photos, max: LIMITS.photos.maxPerRecord })} /> : <Text style={T.small}>{r.photos}</Text>}
               </View>
             ) : undefined
           }
@@ -98,5 +98,6 @@ const st = StyleSheet.create({
   filters: { marginHorizontal: -20, paddingHorizontal: 20, flexGrow: 0 },
   filter: { minHeight: 48, justifyContent: "center", borderBottomWidth: 3, borderBottomColor: "transparent" },
   filterActive: { borderBottomColor: C.tinta },
+  thumb: { width: 48, height: 48, borderRadius: 8 },
   dot: { width: 12, height: 12, borderRadius: 6 },
 });

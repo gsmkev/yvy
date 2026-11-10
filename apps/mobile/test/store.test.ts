@@ -52,6 +52,15 @@ const rec = {
 const photo = { photoUri: "file:///p.webp", thumbUri: "file:///t.webp", width: 1280, height: 960, bytes: 120_000 };
 
 describe("LocalDb", () => {
+  it("miniatura del Historial: la primera foto local de cada registro", () => {
+    const db = setup();
+    const withPhotos = db.saveRecord(USER, ORG, rec, [{ ...photo, thumbUri: "file:///a_t.webp" }, { ...photo, thumbUri: "file:///b_t.webp" }]);
+    const without = db.saveRecord(USER, ORG, rec);
+    const thumbs = db.firstThumbByRecord();
+    expect(thumbs.get(withPhotos)).toBe("file:///a_t.webp");
+    expect(thumbs.has(without)).toBe(false);
+  });
+
   it("guardar registro con fotos: fila local + mutaciones en orden, pendiente", async () => {
     const db = setup();
     const id = db.saveRecord(USER, ORG, rec, [photo, photo]);

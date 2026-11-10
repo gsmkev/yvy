@@ -1,6 +1,6 @@
 import { createRootRoute, createRoute, createRouter, lazyRouteComponent, redirect } from "@tanstack/react-router";
 import { getSession } from "./lib/api";
-import { Layout } from "./components/Layout";
+import { RootGate } from "./routes/public/RootGate";
 import { Spinner } from "./components/ui";
 
 const rootRoute = createRootRoute();
@@ -9,14 +9,17 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/ingresar",
   component: lazyRouteComponent(() => import("./routes/login"), "LoginPage"),
+  validateSearch: (s: Record<string, unknown>): { modo?: "registro" } =>
+    s.modo === "registro" ? { modo: "registro" } : {},
 });
 
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: "app",
-  component: Layout,
-  beforeLoad: () => {
-    if (!getSession()) throw redirect({ to: "/ingresar" });
+  // En "/" sin sesión RootGate muestra la landing pública; el resto de la app exige sesión.
+  component: RootGate,
+  beforeLoad: ({ location }) => {
+    if (!getSession() && location.pathname !== "/") throw redirect({ to: "/ingresar" });
   },
 });
 

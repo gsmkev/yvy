@@ -46,6 +46,11 @@ export default function RootLayout() {
         <Stack.Screen name="scan" options={{ title: "" }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="record/[id]" options={{ title: "" }} />
+        <Stack.Screen name="labs/roya" options={{ title: "" }} />
+        <Stack.Screen name="labs/chinches" options={{ title: "" }} />
+        <Stack.Screen name="labs/pasto" options={{ title: "" }} />
+        <Stack.Screen name="labs/vaca" options={{ title: "" }} />
+        <Stack.Screen name="labs/voz" options={{ title: "" }} />
         <Stack.Screen name="annotate/index" options={{ title: "", presentation: "modal" }} />
       </Stack>
     </SafeAreaProvider>

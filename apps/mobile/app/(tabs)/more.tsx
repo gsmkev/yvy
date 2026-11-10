@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Alert, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { router } from "expo-router";
 import { t } from "@yvy/shared";
+import { FEATURES } from "../../src/lib/features";
 import { getDb } from "../../src/lib/db";
 import { downloadPack, isWifi, packStatus } from "../../src/lib/offline";
 import { api, getSession, setSession } from "../../src/lib/session";
@@ -78,6 +79,17 @@ export default function More() {
         <Text style={[T.body, { flex: 1 }]}>{t("app.photosWifiOnly")}</Text>
         <Switch value={wifiOnly} onValueChange={(v) => (setWifiOnly(v), getDb().setKv("photos_wifi_only", v ? "1" : "0"))} trackColor={{ true: C.accion }} />
       </View>
+
+      {FEATURES.labs && (
+        <>
+          <Text style={st.section}>{t("app.labsSection")}</Text>
+          <Row title={t("app.labsRustTitle")} subtitle={t("app.labsRustRow")} onPress={() => router.push("/labs/roya")} />
+          <Row title={t("app.labsBugsTitle")} subtitle={t("app.labsBugsRow")} onPress={() => router.push("/labs/chinches")} />
+          <Row title={t("app.labsGrassTitle")} subtitle={t("app.labsGrassRow")} onPress={() => router.push("/labs/pasto")} />
+          <Row title={t("app.labsCowTitle")} subtitle={t("app.labsCowRow")} onPress={() => router.push("/labs/vaca")} />
+          <Row title={t("app.labsVoiceTitle")} subtitle={t("app.labsVoiceRow")} onPress={() => router.push("/labs/voz")} />
+        </>
+      )}
 
       <Button kind="danger" title={t("app.logout")} onPress={logout} style={{ marginTop: 32 }} />
       <Text style={[T.small, { marginTop: 28, color: C.tinta3 }]}>

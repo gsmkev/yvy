@@ -757,6 +757,13 @@ export const esPY = {
     accountDeleteConfirmButton: "Sí, pedir la baja",
     accountDeleteSent: "Recibimos tu pedido. Te escribimos para confirmar la baja y coordinar la copia de tus datos.",
     // web-c
+    importZipNoShp: "El .zip no trae un archivo .shp. Para un shapefile necesitamos .shp, .dbf y .prj juntos.",
+    importCrsUnsupported:
+      "El shapefile usa un sistema de coordenadas que todavía no sabemos leer. Exportalo desde tu programa en WGS84 o en UTM zona 20S o 21S.",
+    importCrsUnknown:
+      "El shapefile no trae .prj y sus coordenadas no son grados. Agregá el .prj o exportalo en WGS84.",
+    importKmzNoKml: "El KMZ no tiene un archivo KML adentro.",
+    importUnsupported: "No conocemos ese formato. Usá KML, KMZ, GeoJSON o un shapefile en .zip.",
     importFixed: "Corregimos {{count}} vértices repetidos o espigas sin superficie.",
   },
   attribution: {

@@ -7,6 +7,7 @@ import { fmtDate } from "../lib/format";
 import { t, type MessageKey } from "../lib/i18n";
 import { useAlerts, useMe } from "../lib/queries";
 import { GlobalSearch } from "./GlobalSearch";
+import { OrgSwitcher } from "./OrgSwitcher";
 
 const NAV: { to: string; label: MessageKey }[] = [
   { to: "/", label: "ui.navMap" },
@@ -91,12 +92,10 @@ export function Layout() {
           ))}
         </nav>
         <GlobalSearch inputRef={searchRef} />
-        <div className="hidden text-right text-sm leading-tight md:block">
-          <p className="font-medium">{me.data?.organization.name}</p>
-          <p className="text-xs text-tinta-2">
-            {trial ? t("ui.trialEnds", { date: fmtDate(trial) }) : me.data?.user.fullName}
-          </p>
-        </div>
+        <OrgSwitcher
+          name={me.data?.organization.name}
+          sub={trial ? t("ui.trialEnds", { date: fmtDate(trial) }) : me.data?.user.fullName}
+        />
         <button
           onClick={logout}
           className="cursor-pointer text-sm whitespace-nowrap text-tinta-2 underline-offset-4 hover:text-surco hover:underline"

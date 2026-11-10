@@ -219,6 +219,7 @@ export const esPY = {
     farmChange: "Estancia {{name}} · cambiar",
     ndviDate: "Imagen del {{date}}",
     ndviNone: "Todavía no hay imagen de vigor",
+    thanks: "Gracias",
   },
   fields: {
     condition: "Estado general",

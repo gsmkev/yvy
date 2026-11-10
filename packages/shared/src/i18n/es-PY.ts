@@ -638,6 +638,64 @@ export const esPY = {
     publicDemoNotice: "Estás viendo una estancia de ejemplo.",
     publicDemoCreate: "Crear mi cuenta",
     publicDemoReadOnly: "La demo es de solo lectura: podés mirar todo, pero no se guardan cambios.",
+    legalDraft: "Borrador: falta revisión legal",
+    legalBack: "Volver al inicio",
+    termsTitle: "Términos de uso",
+    termsIntro: "Estas son las reglas para usar Yvy. Están escritas en simple, para que las puedas leer de corrido.",
+    privacyTitle: "Política de privacidad",
+    privacyIntro: "Acá te contamos qué datos guardamos, dónde y para qué.",
+    termsS1Title: "Qué es Yvy",
+    termsS1Text:
+      "Yvy es un mapa del campo que funciona sin señal. Dibujás tus lotes, tu equipo carga registros y fotos desde el celular y, cuando vuelve la red, todo se sincroniza. Además cruzamos tus lotes con datos satelitales y climáticos abiertos para mostrarte el estado de cada uno y mandarte avisos.",
+    termsS2Title: "Tu cuenta",
+    termsS2Text:
+      "Quien crea la cuenta es el dueño de la organización y responde por ella. El dueño invita a administradores, agrónomos y empleados, y decide qué lotes ve cada uno. Tenés que cuidar el acceso: no compartas tu código de ingreso ni el QR de vinculación de un empleado.",
+    termsS3Title: "Prueba gratis y precio",
+    termsS3Text:
+      "Tenés 60 días gratis para probar Yvy con tus propios lotes. Después, el precio es de US$ 0,80 por hectárea al año en agricultura y US$ 0,30 por hectárea al año en ganadería, con un mínimo de US$ 40 por mes. Antes de que termine la prueba te escribimos para acordar la activación. Si no la activás, tu cuenta queda en solo lectura: podés seguir viendo tus datos y los empleados siguen sincronizando lo que cargan en el campo, pero no se pueden hacer cambios de gestión.",
+    termsS4Title: "De quién son los datos",
+    termsS4Text:
+      "Los datos que cargás en Yvy (lotes, registros, fotos, tareas, reportes) son tuyos. Los usamos solo para darte el servicio y no los vendemos ni los compartimos con terceros para otros fines. Nos das permiso para guardarlos y procesarlos con ese único objetivo.",
+    termsS5Title: "Datos satelitales, clima y avisos",
+    termsS5Text:
+      "Los índices, la lluvia, el pronóstico y los avisos salen de fuentes públicas (Sentinel-2, CHIRPS, NASA POWER, NASA FIRMS y MET Norway). Son una ayuda para decidir, no una garantía: un satélite puede no ver por las nubes y un pronóstico puede fallar. Las decisiones sobre tu campo siguen siendo tuyas.",
+    termsS6Title: "Uso aceptable",
+    termsS6Text:
+      "No uses Yvy para cargar contenido ilegal, para intentar entrar a cuentas ajenas ni para sobrecargar el servicio. Si lo hacés, podemos suspender la cuenta.",
+    termsS7Title: "Disponibilidad y cambios",
+    termsS7Text:
+      "Hacemos lo posible para que Yvy esté siempre disponible, pero no podemos prometer que no haya interrupciones. Si cambiamos estos términos o los precios, te avisamos con anticipación por email.",
+    termsS8Title: "Baja y exportación",
+    termsS8Text:
+      "Podés pedir en cualquier momento una copia de tus datos o la baja de tu cuenta. El dueño puede pedir la baja desde la sección Cuenta de la web, y también podés escribirnos. Cuando damos de baja una cuenta, borramos sus datos.",
+    termsS9Title: "Contacto",
+    termsS9Text: "Para cualquier consulta, escribinos por WhatsApp desde la página de inicio.",
+    privacyS1Title: "Qué datos guardamos",
+    privacyS1Text:
+      "De cada persona guardamos el nombre y el email o teléfono con el que ingresa. De cada organización guardamos sus estancias, lotes y potreros dibujados, tareas, registros de campo (recorridas, plagas, lluvia, estado del cultivo o del pasto, notas), fotos, reportes y avisos.",
+    privacyS2Title: "Dónde se guardan",
+    privacyS2Text:
+      "Los datos viven en Cloudflare: la base de datos, las fotos en su almacenamiento de objetos (R2) y los trabajos programados en sus colas. Además, cada celular guarda en el aparato una copia de lo que necesita para trabajar sin señal.",
+    privacyS3Title: "Ubicación GPS",
+    privacyS3Text:
+      "El celular toma la ubicación solamente cuando el empleado carga un registro o una foto, para anotar dónde se hizo. No seguimos a nadie en segundo plano ni guardamos recorridos continuos.",
+    privacyS4Title: "Emails",
+    privacyS4Text:
+      "Mandamos emails con el servicio Resend: el código de ingreso, los avisos y los reportes. Para eso Resend recibe la dirección de email y el texto del mensaje.",
+    privacyS5Title: "Quién puede ver tus datos",
+    privacyS5Text:
+      "Cada persona ve solo lo que le corresponde según su rol: el dueño y los administradores ven toda la organización y los empleados ven solo sus lotes asignados. El equipo de Yvy puede ver datos de la cuenta para dar soporte y para medir el uso del servicio. No vendemos tus datos.",
+    privacyS6Title: "Fuentes públicas",
+    privacyS6Text:
+      "Para el clima y el pronóstico consultamos fuentes públicas con las coordenadas aproximadas de tus estancias. Esas fuentes no reciben tu nombre ni tus registros.",
+    privacyS7Title: "Tus derechos",
+    privacyS7Text:
+      "Podés pedir una copia de tus datos, corregirlos o pedir la baja de tu cuenta y el borrado de la información. El dueño puede pedir la baja desde la sección Cuenta de la web. También podés escribirnos y lo resolvemos.",
+    privacyS8Title: "Cambios en esta política",
+    privacyS8Text:
+      "Si cambiamos algo importante, te avisamos por email. La fecha de la última revisión legal se va a indicar acá cuando esté hecha.",
+    privacyS9Title: "Contacto",
+    privacyS9Text: "Para cualquier consulta sobre tus datos, escribinos por WhatsApp desde la página de inicio.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

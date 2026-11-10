@@ -18,8 +18,22 @@ export function PublicShell({ children }: { children: ReactNode }) {
       <footer className="border-t border-linea">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-2 px-4 py-6 text-sm text-tinta-2 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p>{t("ui.publicFooterRights")}</p>
+          <LegalLinks />
         </div>
       </footer>
     </div>
+  );
+}
+
+export function LegalLinks({ className = "" }: { className?: string }) {
+  return (
+    <nav aria-label="Legal" className={`flex gap-5 ${className}`}>
+      <Link to="/terminos" className="underline-offset-4 hover:text-surco hover:underline">
+        {t("ui.publicFooterTerms")}
+      </Link>
+      <Link to="/privacidad" className="underline-offset-4 hover:text-surco hover:underline">
+        {t("ui.publicFooterPrivacy")}
+      </Link>
+    </nav>
   );
 }

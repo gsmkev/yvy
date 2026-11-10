@@ -1,21 +1,40 @@
-import { useEffect, useMemo, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { Camera, Map, type StyleSpecification } from "@maplibre/maplibre-react-native";
-import { BRAND, t } from "@yvy/shared";
+/**
+ * Mapa: satélite propio de la estancia (PMTiles local si se descargó), lotes, últimas anotaciones y "dónde estoy".
+ * Tocar un lote abre su ficha abajo; desde ahí se anota en ese lote.
+ */
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Camera, Map, type CameraRef, type StyleSpecification } from "@maplibre/maplibre-react-native";
+import { router, useFocusEffect } from "expo-router";
+import { LocateFixed, X } from "lucide-react-native";
+import { BRAND, describeRecord, t } from "@yvy/shared";
 import { containsPoint, type Area } from "@yvy/geo";
+import { useRef } from "react";
 import { getDb } from "../../src/lib/db";
+import { currentFix, type Fix } from "../../src/lib/location";
 import { packStatus, tilesBaseUrl } from "../../src/lib/offline";
+import { setFabHidden } from "../../src/lib/fab";
 import { useLocal } from "../../src/lib/useLocal";
-import { Muted } from "../../src/ui/kit";
-import { C } from "../../src/ui/theme";
+import { Button } from "../../src/ui/kit";
+import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
+
+const daysAgo = (ms: number) => Math.floor((Date.now() - ms) / 86_400_000);
 
 export default function MapScreen() {
   const farms = useLocal(() => getDb().farms());
   const plots = useLocal(() => getDb().plots());
-  const pois = useLocal(() => getDb().pois());
   const records = useLocal(() => getDb().records(300));
+  const lastVisit = useLocal(() => getDb().lastVisitByPlot());
   const [remoteBase, setRemoteBase] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      setFabHidden(!!selected);
+      return () => setFabHidden(false);
+    }, [selected]),
+  );
+  const [me, setMe] = useState<Fix | null>(null);
+  const camera = useRef<CameraRef>(null);
   const farm = farms[0];
   useEffect(() => {
     tilesBaseUrl().then(setRemoteBase, () => setRemoteBase(null));
@@ -23,50 +42,24 @@ export default function MapScreen() {
 
   const style = useMemo<StyleSpecification>(() => {
     const sources: StyleSpecification["sources"] = {};
-    const layers: StyleSpecification["layers"] = [
-      { id: "bg", type: "background", paint: { "background-color": BRAND.surco } },
-    ];
+    const layers: StyleSpecification["layers"] = [{ id: "bg", type: "background", paint: { "background-color": "#141a12" } }];
     for (const f of farms) {
       const pack = packStatus(f.id);
       const local = pack.localUri("true_color");
       const remote = pack.layers.find((l) => l.layer === "true_color");
-      const url = local
-        ? `pmtiles://${local}`
-        : remote && remoteBase
-          ? `pmtiles://${remoteBase.replace(/\/$/, "")}/${remote.pmtilesPath}`
-          : null;
+      const url = local ? `pmtiles://${local}` : remote && remoteBase ? `pmtiles://${remoteBase.replace(/\/$/, "")}/${remote.pmtilesPath}` : null;
       if (url) {
         sources[`base-${f.id}`] = { type: "raster", url, tileSize: 256 };
         layers.push({ id: `base-${f.id}`, type: "raster", source: `base-${f.id}` });
       }
     }
-    sources.farms = {
-      type: "geojson",
-      data: {
-        type: "FeatureCollection",
-        features: farms.map((f) => ({ type: "Feature", properties: {}, geometry: JSON.parse(f.geometry) })),
-      },
-    };
+    const feature = (geometry: string, properties: Record<string, unknown> = {}) => ({ type: "Feature" as const, properties, geometry: JSON.parse(geometry) });
+    sources.farms = { type: "geojson", data: { type: "FeatureCollection", features: farms.map((f) => feature(f.geometry)) } };
     sources.plots = {
       type: "geojson",
       data: {
         type: "FeatureCollection",
-        features: plots.map((p) => ({
-          type: "Feature",
-          properties: { id: p.id, sel: p.id === selected ? 1 : 0, kind: p.kind },
-          geometry: JSON.parse(p.geometry),
-        })),
-      },
-    };
-    sources.pois = {
-      type: "geojson",
-      data: {
-        type: "FeatureCollection",
-        features: pois.map((p) => ({
-          type: "Feature",
-          properties: {},
-          geometry: { type: "Point", coordinates: [p.lon, p.lat] },
-        })),
+        features: plots.map((p) => feature(p.geometry, { sel: p.id === selected ? 1 : 0, stale: (lastVisit.get(p.id) ? daysAgo(lastVisit.get(p.id)!) : 99) >= 7 ? 1 : 0 })),
       },
     };
     sources.records = {
@@ -75,108 +68,101 @@ export default function MapScreen() {
         type: "FeatureCollection",
         features: records
           .filter((r) => r.lat !== null)
-          .map((r) => ({
-            type: "Feature",
-            properties: { pending: r.pending ? 1 : 0 },
-            geometry: { type: "Point", coordinates: [r.lon!, r.lat!] },
-          })),
+          .map((r) => ({ type: "Feature" as const, properties: { pending: r.pending ? 1 : 0 }, geometry: { type: "Point" as const, coordinates: [r.lon!, r.lat!] } })),
       },
     };
+    if (me) sources.me = { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: [me.lon, me.lat] } } };
     layers.push(
-      { id: "farms", type: "line", source: "farms", paint: { "line-color": BRAND.lino, "line-width": 2.5 } },
-      {
-        id: "plots-fill",
-        type: "fill",
-        source: "plots",
-        paint: {
-          "fill-color": ["match", ["get", "kind"], "pasture", BRAND.trigo, BRAND.soja],
-          "fill-opacity": ["case", ["==", ["get", "sel"], 1], 0.45, 0.2],
-        },
-      },
+      { id: "farms", type: "line", source: "farms", paint: { "line-color": "rgba(255,255,255,0.9)", "line-width": 2 } },
+      { id: "plots-fill", type: "fill", source: "plots", paint: { "fill-color": "#ffffff", "fill-opacity": ["case", ["==", ["get", "sel"], 1], 0.28, 0.04] } },
       {
         id: "plots-line",
         type: "line",
         source: "plots",
-        paint: { "line-color": ["case", ["==", ["get", "sel"], 1], BRAND.lino, BRAND.soja], "line-width": 2 },
-      },
-      {
-        id: "pois",
-        type: "circle",
-        source: "pois",
         paint: {
-          "circle-radius": 7,
-          "circle-color": BRAND.cielo,
-          "circle-stroke-width": 2,
-          "circle-stroke-color": BRAND.surco,
+          "line-color": ["case", ["==", ["get", "sel"], 1], "#ffffff", ["==", ["get", "stale"], 1], BRAND.trigo, "rgba(255,255,255,0.7)"],
+          "line-width": ["case", ["==", ["get", "sel"], 1], 3, 1.5],
         },
       },
-      {
-        id: "records",
-        type: "circle",
-        source: "records",
-        paint: {
-          "circle-radius": 6,
-          "circle-color": ["case", ["==", ["get", "pending"], 1], BRAND.trigo, BRAND.soja],
-          "circle-stroke-width": 1.5,
-          "circle-stroke-color": BRAND.lino,
-        },
-      },
+      { id: "records", type: "circle", source: "records", paint: { "circle-radius": 5, "circle-color": ["case", ["==", ["get", "pending"], 1], BRAND.trigo, BRAND.lino], "circle-stroke-width": 1.5, "circle-stroke-color": "#141a12" } },
     );
+    if (me) {
+      layers.push(
+        { id: "me-halo", type: "circle", source: "me", paint: { "circle-radius": 18, "circle-color": BRAND.cielo, "circle-opacity": 0.3 } },
+        { id: "me", type: "circle", source: "me", paint: { "circle-radius": 7, "circle-color": BRAND.cielo, "circle-stroke-width": 2.5, "circle-stroke-color": "#ffffff" } },
+      );
+    }
     return { version: 8, sources, layers };
-  }, [farms, plots, pois, records, remoteBase, selected]);
+  }, [farms, plots, records, remoteBase, selected, me, lastVisit]);
 
-  if (!farm)
+  if (!farm) {
     return (
-      <View style={s.empty}>
-        <Muted>{t("ui.loading")}</Muted>
+      <View style={[st.center, { backgroundColor: C.papel }]}>
+        <Text style={T.body}>{t("ui.loading")}</Text>
       </View>
     );
+  }
   const plot = plots.find((p) => p.id === selected);
+  const plotRecords = plot ? records.filter((r) => r.plotId === plot.id).slice(0, 3) : [];
+
+  const locate = async () => {
+    const f = await currentFix(8000);
+    if (!f) return;
+    setMe(f);
+    camera.current?.flyTo({ center: [f.lon, f.lat], zoom: 15, duration: 800 });
+  };
+
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "#141a12" }}>
       <Map
         style={{ flex: 1 }}
         mapStyle={style}
         attribution={false}
         logo={false}
+        compass={false}
         onPress={(e) => {
           const [lon, lat] = e.nativeEvent.lngLat as unknown as [number, number];
           setSelected(plots.find((p) => containsPoint(JSON.parse(p.geometry) as Area, lon, lat))?.id ?? null);
         }}
       >
-        <Camera
-          initialViewState={{
-            bounds: [farm.minLon, farm.minLat, farm.maxLon, farm.maxLat],
-            padding: { top: 30, bottom: 30, left: 30, right: 30 },
-          }}
-        />
+        <Camera ref={camera} initialViewState={{ bounds: [farm.minLon, farm.minLat, farm.maxLon, farm.maxLat], padding: { top: 40, bottom: 40, left: 24, right: 24 } }} />
       </Map>
+      <Text style={st.attr}>Sentinel-2 · Copernicus</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel={t("app.whereAmI")} onPress={locate} style={st.locate}>
+        <LocateFixed size={22} color={C.tinta} strokeWidth={2} />
+      </Pressable>
+
       {plot && (
-        <View style={s.sheet}>
-          <Text style={s.title}>{plot.name}</Text>
-          <Text style={s.sub}>
-            {t("ui.ha", { value: plot.areaHa.toFixed(1) })} ·{" "}
-            {plot.kind === "crop" ? (plot.crop ?? t("ui.crop")) : t("ui.pasture")}
-          </Text>
+        <View style={st.sheet}>
+          <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+            <View style={{ flex: 1 }}>
+              <Text style={T.title}>{plot.name}</Text>
+              <Text style={[T.small, { marginTop: 2 }]}>
+                {plot.kind === "pasture" ? t("ui.pasture") : (plot.crop ?? t("ui.crop"))} · {t("ui.ha", { value: plot.areaHa.toLocaleString("es-PY", { maximumFractionDigits: 0 }) })}
+                {lastVisit.get(plot.id)
+                  ? ` · ${daysAgo(lastVisit.get(plot.id)!) === 0 ? t("app.lastVisitToday").toLowerCase() : t("app.lastVisit", { days: daysAgo(lastVisit.get(plot.id)!) }).toLowerCase()}`
+                  : ` · ${t("app.noVisits").toLowerCase()}`}
+              </Text>
+            </View>
+            <Pressable onPress={() => setSelected(null)} hitSlop={12} accessibilityLabel={t("ui.close")}>
+              <X size={22} color={C.tinta2} />
+            </Pressable>
+          </View>
+          {plotRecords.map((r) => (
+            <Text key={r.id} style={[T.small, { marginTop: 8 }]} numberOfLines={1}>
+              {new Date(r.capturedAt).toLocaleDateString("es-PY", { day: "numeric", month: "short" })} · {describeRecord(r.kind, JSON.parse(r.data))}
+            </Text>
+          ))}
+          <Button big title={t("app.annotateIn", { plot: plot.name })} onPress={() => router.push({ pathname: "/annotate", params: { plotId: plot.id } })} style={{ marginTop: 16 }} />
         </View>
       )}
-      <Text style={s.attr}>{t("attribution.copernicus")}</Text>
     </View>
   );
 }
 
-const s = StyleSheet.create({
-  empty: { flex: 1, alignItems: "center", justifyContent: "center" },
-  sheet: {
-    position: "absolute",
-    left: 12,
-    right: 12,
-    bottom: 12,
-    backgroundColor: C.white,
-    borderRadius: 14,
-    padding: 16,
-  },
-  title: { fontSize: 20, fontWeight: "700", color: C.surco },
-  sub: { color: C.muted, marginTop: 2, fontSize: 15 },
-  attr: { position: "absolute", top: 6, right: 8, fontSize: 9, color: C.lino, opacity: 0.8 },
+const st = StyleSheet.create({
+  center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  sheet: { position: "absolute", left: 12, right: 12, bottom: 12, backgroundColor: C.papel, borderRadius: RADIUS + 4, padding: GUTTER, elevation: 8, shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } },
+  locate: { position: "absolute", top: 16, right: 16, width: 48, height: 48, borderRadius: 24, backgroundColor: C.papel, alignItems: "center", justifyContent: "center", elevation: 4, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
+  attr: { position: "absolute", top: 20, left: 16, fontFamily: F.sans, fontSize: 11, color: "rgba(255,255,255,0.7)" },
 });

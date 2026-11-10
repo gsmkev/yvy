@@ -1,4 +1,3 @@
-import { CheckCircle2, Download, LogOut, RefreshCw } from "lucide-react-native";
 import { useState } from "react";
 import { Alert, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { router } from "expo-router";
@@ -6,17 +5,19 @@ import { t } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { downloadPack, isWifi, packStatus } from "../../src/lib/offline";
 import { api, getSession, setSession } from "../../src/lib/session";
-import { localChanged, syncNow } from "../../src/lib/sync";
+import { localChanged, syncNow, useSyncStatus } from "../../src/lib/sync";
 import { useLocal } from "../../src/lib/useLocal";
-import { Button, Header, Muted, styles as k } from "../../src/ui/kit";
-import { C } from "../../src/ui/theme";
+import { Button, Row, s as k } from "../../src/ui/kit";
+import { C, F, T } from "../../src/ui/theme";
 
 export default function More() {
   const farms = useLocal(() => getDb().farms());
   const rejected = useLocal(() => getDb().rejected());
+  const sync = useSyncStatus();
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [wifiOnly, setWifiOnly] = useState(getDb().getKv("photos_wifi_only") === "1");
   const session = getSession();
+  const lastSync = sync.lastSyncAt ? new Date(sync.lastSyncAt).toLocaleString("es-PY", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }) : "—";
 
   const download = async (farmId: string) => {
     if (!(await isWifi())) return Alert.alert(t("app.offlinePackNeedsWifi"));
@@ -44,83 +45,49 @@ export default function More() {
   };
 
   return (
-    <ScrollView style={k.screen} contentContainerStyle={[k.pad, { gap: 14 }]}>
-      <Header eyebrow={session?.organization.name} title={session?.user.fullName ?? ""} />
-      <Button title={t("app.syncNow")} icon={RefreshCw} onPress={syncNow} />
+    <ScrollView style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 120 }]}>
+      <Text style={T.small}>{session?.organization.name}</Text>
+      <Text style={[T.display, { marginTop: 2 }]}>{session?.user.fullName}</Text>
 
+      <Text style={st.section}>{t("app.syncTitle")}</Text>
+      <Row title={t("app.lastSyncAt", { when: lastSync })} subtitle={sync.pending > 0 ? t("app.pendingCount", { n: sync.pending }) : t("app.allSent")} onPress={syncNow} />
       {rejected.map((r) => (
-        <View key={r.mutationId} style={s.card}>
-          <Text style={{ color: C.alerta, fontWeight: "700" }}>{t("app.rejected")}</Text>
-          <Text>{t(`rejectReasons.${r.reason}` as never, { max: 3 })}</Text>
-          <Button
-            title={t("app.dismiss")}
-            variant="secondary"
-            onPress={() => (getDb().dismissRejected(r.mutationId), localChanged())}
-          />
+        <View key={r.mutationId} style={st.rejected}>
+          <Text style={[T.bodyMedium, { color: C.peligro }]}>{t("app.rejected")}</Text>
+          <Text style={[T.small, { marginTop: 2 }]}>{t(`rejectReasons.${r.reason}` as never, { max: 3 })}</Text>
+          <Button kind="text" title={t("app.dismiss")} onPress={() => (getDb().dismissRejected(r.mutationId), localChanged())} style={{ alignSelf: "flex-start", marginTop: 4 }} />
         </View>
       ))}
 
-      <Text style={s.h2}>{t("app.offlinePack")}</Text>
+      <Text style={st.section}>{t("app.offlinePack")}</Text>
       {farms.map((f) => {
-        const st = packStatus(f.id);
-        const p = progress[f.id];
-        return (
-          <View key={f.id} style={s.card}>
-            <Text style={s.farm}>{f.name}</Text>
-            {!st.layers.length ? (
-              <Muted>{t("app.offlinePackNone")}</Muted>
-            ) : st.upToDate ? (
-              <View style={s.row}>
-                <CheckCircle2 size={18} color={C.accion} />
-                <Text style={{ color: C.accion, fontWeight: "600" }}>{t("app.offlinePackReady")}</Text>
-              </View>
-            ) : (
-              <>
-                <Muted>
-                  {t("app.offlinePackSize", {
-                    mb: (st.missingBytes / 1e6).toLocaleString("es-PY", { maximumFractionDigits: 1 }),
-                  })}
-                </Muted>
-                {p !== undefined ? (
-                  <Text style={s.progress}>{Math.round(p * 100)} %</Text>
-                ) : (
-                  <Button title={t("app.offlinePackDownload")} icon={Download} onPress={() => download(f.id)} />
-                )}
-              </>
-            )}
-          </View>
-        );
+        const p = packStatus(f.id);
+        const pct = progress[f.id];
+        const subtitle = !p.layers.length
+          ? t("app.offlinePackNone")
+          : p.upToDate
+            ? t("app.offlinePackReady")
+            : pct !== undefined
+              ? `${Math.round(pct * 100)} %`
+              : t("app.offlinePackSize", { mb: (p.missingBytes / 1e6).toLocaleString("es-PY", { maximumFractionDigits: 1 }) });
+        return <Row key={f.id} title={f.name} subtitle={subtitle} onPress={p.layers.length && !p.upToDate && pct === undefined ? () => download(f.id) : undefined} right={p.layers.length && !p.upToDate && pct === undefined ? <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{t("app.download")}</Text> : undefined} />;
       })}
 
-      <View style={[s.card, s.row]}>
-        <Text style={{ flex: 1, fontSize: 16 }}>{t("app.photosWifiOnly")}</Text>
-        <Switch
-          value={wifiOnly}
-          onValueChange={(v) => (setWifiOnly(v), getDb().setKv("photos_wifi_only", v ? "1" : "0"))}
-          trackColor={{ true: C.soja }}
-        />
+      <View style={[st.switchRow]}>
+        <Text style={[T.body, { flex: 1 }]}>{t("app.photosWifiOnly")}</Text>
+        <Switch value={wifiOnly} onValueChange={(v) => (setWifiOnly(v), getDb().setKv("photos_wifi_only", v ? "1" : "0"))} trackColor={{ true: C.accion }} />
       </View>
 
-      <Button title={t("app.logout")} variant="danger" icon={LogOut} onPress={logout} />
-      <Muted>
-        {t("attribution.metNorway")} · {t("attribution.copernicus")} · {t("attribution.chirps")} ·{" "}
-        {t("attribution.firms")}
-      </Muted>
+      <Button kind="danger" title={t("app.logout")} onPress={logout} style={{ marginTop: 32 }} />
+      <Text style={[T.small, { marginTop: 28, color: C.tinta3 }]}>
+        {t("attribution.metNorway")} · {t("attribution.copernicus")} · {t("attribution.chirps")} · {t("attribution.firms")}
+      </Text>
     </ScrollView>
   );
 }
 
-const s = StyleSheet.create({
-  h2: {
-    fontSize: 11,
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    fontFamily: "monospace",
-    color: C.tinta2,
-    marginTop: 12,
-  },
-  card: { backgroundColor: C.white, borderWidth: 1, borderColor: C.linea, borderRadius: 12, padding: 14, gap: 10 },
-  row: { flexDirection: "row", alignItems: "center" },
-  farm: { fontSize: 17, fontWeight: "700", color: C.surco },
-  progress: { fontSize: 22, fontWeight: "700", color: C.accion },
+const st = StyleSheet.create({
+  section: { fontFamily: F.sansSemi, fontSize: 15, color: C.tinta2, marginTop: 32, marginBottom: 4 },
+  rejected: { backgroundColor: C.peligroSuave, borderRadius: 12, padding: 16, marginTop: 12 },
+  switchRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.linea },
 });

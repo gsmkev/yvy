@@ -1,0 +1,440 @@
+/**
+ * Anotar: lote → qué → una pregunta por pantalla → foto → resultado.
+ * Pensado para usarse con una mano, al sol, sin señal. Nunca más de un dato por pantalla.
+ */
+import { useEffect, useMemo, useRef, useState, type ElementRef } from "react";
+import { Image, Keyboard, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInput as TextInputRef } from "react-native";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import { router, Stack, useLocalSearchParams } from "expo-router";
+import { ArrowLeft, Check, X } from "lucide-react-native";
+import { describeRecord, LIMITS, parseRecordData, t, type MessageKey, type RecordKind } from "@yvy/shared";
+import type { LocalPhoto, Plot } from "../../src/db/store";
+import { getDb } from "../../src/lib/db";
+import { FLOWS, KINDS_FOR, type Step } from "../../src/lib/annotate";
+import { currentFix, guessPlots, type Fix, type PlotGuess } from "../../src/lib/location";
+import { processPhoto } from "../../src/lib/photos";
+import { useSession } from "../../src/lib/session";
+import { localChanged, syncNow, useSyncStatus } from "../../src/lib/sync";
+import { Button, Row, s as k } from "../../src/ui/kit";
+import { C, F, GUTTER, RADIUS, T, TOUCH } from "../../src/ui/theme";
+
+const tr = (key: string, vars?: Record<string, string | number>) => t(key as MessageKey, vars);
+
+type Phase = { name: "plot" } | { name: "kind" } | { name: "step"; i: number } | { name: "photo" } | { name: "done"; recordId: string };
+
+export default function Annotate() {
+  const params = useLocalSearchParams<{ plotId?: string; kind?: RecordKind; taskId?: string }>();
+  const session = useSession()!;
+  const db = getDb();
+  const plots = useMemo(() => db.plots(), []);
+  const [fix, setFix] = useState<Fix | null | "searching">("searching");
+  const [guesses, setGuesses] = useState<PlotGuess[]>([]);
+  const [plot, setPlot] = useState<Plot | null>(() => plots.find((p) => p.id === params.plotId) ?? null);
+  const [kind, setKind] = useState<RecordKind | null>(params.kind ?? null);
+  const [values, setValues] = useState<Record<string, unknown>>({});
+  const [photos, setPhotos] = useState<LocalPhoto[]>([]);
+  const [phase, setPhase] = useState<Phase>(() =>
+    params.kind === "rain" || params.plotId ? (params.kind ? { name: "step", i: 0 } : { name: "kind" }) : { name: "plot" },
+  );
+  const [camera, setCamera] = useState(false);
+
+  useEffect(() => {
+    currentFix().then((f) => {
+      setFix(f);
+      const g = guessPlots(plots, f);
+      setGuesses(g);
+      // Un solo candidato seguro: se elige solo y pasamos a "qué".
+      if (!params.plotId && g.length === 1 && g[0]!.confidence === "sure") {
+        setPlot(g[0]!.plot);
+        setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+      }
+    });
+  }, []);
+
+  const steps = kind ? FLOWS[kind] : [];
+  const stepIndex = phase.name === "step" ? phase.i : -1;
+
+  const back = () => {
+    Keyboard.dismiss();
+    if (phase.name === "step" && phase.i > 0) return setPhase({ name: "step", i: phase.i - 1 });
+    if (phase.name === "step") return params.kind ? router.back() : setPhase({ name: "kind" });
+    if (phase.name === "kind") return params.plotId ? router.back() : setPhase({ name: "plot" });
+    if (phase.name === "photo") return setPhase({ name: "step", i: steps.length - 1 });
+    router.back();
+  };
+
+  const advance = (next: Record<string, unknown> = values) => {
+    Keyboard.dismiss();
+    setValues(next);
+    if (stepIndex < steps.length - 1) setPhase({ name: "step", i: stepIndex + 1 });
+    else setPhase({ name: "photo" });
+  };
+
+  const save = () => {
+    if (!kind) return;
+    const data: Record<string, unknown> = { ...values };
+    if (kind === "rain") data.readAt = Date.now();
+    const parsed = parseRecordData(kind, data);
+    if (!parsed.success) return setPhase({ name: "step", i: 0 });
+    const f = fix === "searching" ? null : fix;
+    const farmId = plot?.farmId ?? db.farms()[0]?.id;
+    if (!farmId) return;
+    const recordId = db.saveRecord(
+      session.user.id,
+      session.organization.id,
+      {
+        farmId,
+        plotId: plot?.id ?? null,
+        poiId: null,
+        kind,
+        data: parsed.data as Record<string, unknown>,
+        lon: f?.lon ?? null,
+        lat: f?.lat ?? null,
+        gpsAccuracyM: f?.accuracy ?? null,
+        capturedAt: Date.now(),
+      },
+      photos,
+    );
+    if (params.taskId) db.completeTask(params.taskId, recordId);
+    localChanged();
+    syncNow();
+    setPhase({ name: "done", recordId });
+  };
+
+  if (camera) {
+    return (
+      <PhotoCamera
+        onDone={(p) => {
+          if (p) setPhotos((ps) => [...ps, p]);
+          setCamera(false);
+        }}
+      />
+    );
+  }
+
+  const header = (
+    <Stack.Screen
+      options={{
+        headerShown: phase.name !== "done",
+        title: plot ? plot.name : t("app.annotate"),
+        headerLeft: () => (
+          <Pressable onPress={back} hitSlop={12} accessibilityLabel={t("ui.cancel")} style={{ paddingHorizontal: 8 }}>
+            <ArrowLeft size={24} color={C.tinta} />
+          </Pressable>
+        ),
+        headerRight: () => (
+          <Pressable onPress={() => router.back()} hitSlop={12} accessibilityLabel={t("ui.cancel")} style={{ paddingHorizontal: 8 }}>
+            <X size={22} color={C.tinta2} />
+          </Pressable>
+        ),
+      }}
+    />
+  );
+
+  // ---------- 1. Lote ----------
+  if (phase.name === "plot") {
+    const sure = guesses.filter((g) => g.confidence === "sure");
+    const near = guesses.filter((g) => g.confidence === "near");
+    const showAll = guesses.length === 0 && fix !== "searching";
+    return (
+      <View style={k.screen}>
+        {header}
+        <ScrollView contentContainerStyle={k.pad} keyboardShouldPersistTaps="handled">
+          <Text style={T.title}>{t("app.whichPlot")}</Text>
+          <Text style={[T.small, { marginTop: 6, marginBottom: 20 }]}>
+            {fix === "searching" ? t("app.gpsSearching") : guesses.length ? t("app.detectedByGps") : fix ? t("app.noPlotNearby") : t("app.gpsNone")}
+          </Text>
+          {[...sure, ...near].map((g) => (
+            <Row
+              key={g.plot.id}
+              title={g.plot.name}
+              subtitle={g.confidence === "near" ? t("app.nearBorder") : plotSubtitle(g.plot)}
+              onPress={() => {
+                setPlot(g.plot);
+                setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+              }}
+            />
+          ))}
+          {guesses.length > 0 && (
+            <Text style={[T.smallMedium, { marginTop: 24, marginBottom: 8 }]}>{t("app.changePlot")}</Text>
+          )}
+          {(showAll || guesses.length > 0) &&
+            plots
+              .filter((p) => !guesses.some((g) => g.plot.id === p.id))
+              .map((p) => (
+                <Row
+                  key={p.id}
+                  title={p.name}
+                  subtitle={plotSubtitle(p)}
+                  onPress={() => {
+                    setPlot(p);
+                    setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+                  }}
+                />
+              ))}
+          <View style={{ height: 12 }} />
+          <Button
+            kind="text"
+            title={t("app.noPlot")}
+            onPress={() => {
+              setPlot(null);
+              setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+            }}
+          />
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // ---------- 2. Qué ----------
+  if (phase.name === "kind") {
+    const rain = plot ? db.rainThisMonth(plot.farmId) : 0;
+    return (
+      <View style={k.screen}>
+        {header}
+        <ScrollView contentContainerStyle={k.pad}>
+          <Text style={T.title}>{t("app.whatHappened")}</Text>
+          {plot && rain > 0 && <Text style={[T.small, { marginTop: 6 }]}>{t("app.rainMonth", { mm: Math.round(rain) })}</Text>}
+          <View style={{ height: 16 }} />
+          {KINDS_FOR(plot?.kind ?? null).map((kd) => (
+            <Row
+              key={kd}
+              title={t(`recordKinds.${kd}`)}
+              onPress={() => {
+                setKind(kd);
+                setValues({});
+                setPhase({ name: "step", i: 0 });
+              }}
+            />
+          ))}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // ---------- 3. Pasos ----------
+  if (phase.name === "step") {
+    const step = steps[phase.i]!;
+    return (
+      <View style={k.screen}>
+        {header}
+        <Progress i={phase.i} n={steps.length + 1} />
+        <StepScreen key={`${kind}-${step.key}`} step={step} value={values[step.key]} onAnswer={(v) => advance({ ...values, [step.key]: v })} />
+      </View>
+    );
+  }
+
+  // ---------- 4. Foto ----------
+  if (phase.name === "photo") {
+    return (
+      <View style={k.screen}>
+        {header}
+        <Progress i={steps.length} n={steps.length + 1} />
+        <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]}>
+          <Text style={T.title}>{t("app.addPhoto")}</Text>
+          <Text style={[T.small, { marginTop: 6 }]}>{t("app.photosCount", { n: photos.length, max: LIMITS.photos.maxPerRecord })}</Text>
+          <View style={st.photos}>
+            {photos.map((p, i) => (
+              <View key={p.thumbUri}>
+                <Image source={{ uri: p.thumbUri }} style={st.thumb} />
+                <Pressable
+                  accessibilityLabel={t("ui.delete")}
+                  onPress={() => setPhotos(photos.filter((_, j) => j !== i))}
+                  style={st.thumbX}
+                  hitSlop={8}
+                >
+                  <X size={14} color={C.blanco} />
+                </Pressable>
+              </View>
+            ))}
+          </View>
+          <View style={{ flex: 1 }} />
+          {photos.length < LIMITS.photos.maxPerRecord && (
+            <Button kind="secondary" big title={t("app.takePhoto")} onPress={() => setCamera(true)} style={{ marginBottom: 12 }} />
+          )}
+          <Button big title={photos.length ? t("app.done") : t("app.skipPhoto")} onPress={save} />
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // ---------- 5. Listo ----------
+  return <Done plot={plot} kind={kind!} values={values} />;
+}
+
+function plotSubtitle(p: Plot) {
+  const last = getDb().lastVisitByPlot().get(p.id);
+  if (!last) return t("app.noVisits");
+  const days = Math.floor((Date.now() - last) / 86_400_000);
+  return days === 0 ? t("app.lastVisitToday") : t("app.lastVisit", { days });
+}
+
+function Progress({ i, n }: { i: number; n: number }) {
+  return (
+    <View style={st.progress} accessibilityLabel={`${i + 1} / ${n}`}>
+      {Array.from({ length: n }, (_, j) => (
+        <View key={j} style={[st.progressDot, j <= i && { backgroundColor: C.accion }]} />
+      ))}
+    </View>
+  );
+}
+
+function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onAnswer: (v: unknown) => void }) {
+  const [text, setText] = useState(value === undefined ? "" : String(value));
+  const input = useRef<ElementRef<typeof TextInputRef>>(null);
+  useEffect(() => {
+    const id = setTimeout(() => input.current?.focus(), 350);
+    return () => clearTimeout(id);
+  }, []);
+
+  if (step.kind === "choice") {
+    return (
+      <ScrollView contentContainerStyle={k.pad}>
+        <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
+        {step.options.map((o) => (
+          <Row key={o.value} title={tr(o.label)} selected={value === o.value} onPress={() => onAnswer(o.value)} />
+        ))}
+        {step.optional && <Button kind="text" title={t("app.skip")} onPress={() => onAnswer(undefined)} style={{ marginTop: 12 }} />}
+      </ScrollView>
+    );
+  }
+  if (step.kind === "yesno") {
+    return (
+      <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]}>
+        <Text style={T.title}>{tr(step.question)}</Text>
+        <View style={{ flex: 1 }} />
+        <View style={{ flexDirection: "row", gap: 12 }}>
+          <Button big kind="secondary" title={t("app.no")} onPress={() => onAnswer(false)} style={{ flex: 1 }} />
+          <Button big title={t("app.yes")} onPress={() => onAnswer(true)} style={{ flex: 1 }} />
+        </View>
+      </ScrollView>
+    );
+  }
+  if (step.kind === "number") {
+    const n = Number(text.replace(",", "."));
+    const ok = text !== "" && Number.isFinite(n) && n >= 0 && n <= step.max;
+    return (
+      <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
+        <Text style={T.title}>{tr(step.question)}</Text>
+        {step.hint && <Text style={[T.small, { marginTop: 6 }]}>{tr(step.hint)}</Text>}
+        <View style={st.numberRow}>
+          <TextInput
+            ref={input}
+            value={text}
+            onChangeText={(v) => setText(v.replace(/[^0-9.,]/g, "").slice(0, 6))}
+            keyboardType="decimal-pad"
+            style={st.numberInput}
+            placeholder="0"
+            placeholderTextColor={C.tinta3}
+            accessibilityLabel={tr(step.question)}
+            onSubmitEditing={() => ok && onAnswer(n)}
+          />
+          <Text style={st.unit}>{step.unit}</Text>
+        </View>
+        <View style={{ flex: 1 }} />
+        <Button big title={t("app.next")} disabled={!ok} onPress={() => onAnswer(n)} />
+      </ScrollView>
+    );
+  }
+  return (
+    <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
+      <Text style={T.title}>{tr(step.question)}</Text>
+      <TextInput
+        ref={input}
+        value={text}
+        onChangeText={setText}
+        multiline
+        style={st.textInput}
+        accessibilityLabel={tr(step.question)}
+        placeholder={step.optional ? t("app.optional") : undefined}
+        placeholderTextColor={C.tinta3}
+      />
+      <View style={{ flex: 1 }} />
+      {step.optional && !text.trim() ? (
+        <Button big kind="secondary" title={t("app.skip")} onPress={() => onAnswer(undefined)} />
+      ) : (
+        <Button big title={t("app.next")} disabled={!text.trim()} onPress={() => onAnswer(text.trim())} />
+      )}
+    </ScrollView>
+  );
+}
+
+function Done({ plot, kind, values }: { plot: Plot | null; kind: RecordKind; values: Record<string, unknown> }) {
+  const st2 = useSyncStatus();
+  const db = getDb();
+  const rain = plot ? db.rainThisMonth(plot.farmId) : 0;
+  const offline = !st2.online || st2.pending > 0;
+  return (
+    <View style={[k.screen, { justifyContent: "center", paddingHorizontal: GUTTER }]}>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={st.doneMark}>
+        <Check size={36} color={C.blanco} strokeWidth={3} />
+      </View>
+      <Text style={[T.title, { marginTop: 24 }]}>{plot ? t("app.savedTitle", { plot: plot.name }) : t(`recordKinds.${kind}`)}</Text>
+      <Text style={[T.body, { marginTop: 8 }]}>{describeRecord(kind, values)}</Text>
+      {kind === "rain" && rain > 0 && <Text style={[T.heading, { marginTop: 20, color: C.accionOscuro }]}>{t("app.rainMonth", { mm: Math.round(rain) })}</Text>}
+      <Text style={[T.small, { marginTop: 20 }]}>{offline ? t("app.savedOffline") : t("app.savedOnline")}</Text>
+      <View style={{ height: 40 }} />
+      <Button big title={t("app.annotateAgain")} onPress={() => router.replace({ pathname: "/annotate", params: plot ? { plotId: plot.id } : {} })} />
+      <Button kind="text" title={t("app.backToToday")} onPress={() => router.replace("/(tabs)")} style={{ marginTop: 8 }} />
+    </View>
+  );
+}
+
+function PhotoCamera({ onDone }: { onDone: (p: LocalPhoto | null) => void }) {
+  const [perm, request] = useCameraPermissions();
+  const [ref, setRef] = useState<CameraView | null>(null);
+  const [busy, setBusy] = useState(false);
+  if (!perm) return null;
+  if (!perm.granted)
+    return (
+      <View style={[k.screen, k.pad, { justifyContent: "center", gap: 12 }]}>
+        <Text style={T.body}>{t("app.cameraDenied")}</Text>
+        <Button title={t("app.allowCamera")} onPress={request} />
+        <Button kind="text" title={t("ui.cancel")} onPress={() => onDone(null)} />
+      </View>
+    );
+  return (
+    <View style={{ flex: 1, backgroundColor: "#000" }}>
+      <Stack.Screen options={{ headerShown: false }} />
+      <CameraView ref={setRef} style={{ flex: 1 }} facing="back" />
+      <View style={st.shutterRow}>
+        <Pressable onPress={() => onDone(null)} accessibilityLabel={t("ui.cancel")} hitSlop={12} style={{ width: 64 }}>
+          <Text style={[T.bodyMedium, { color: C.blanco }]}>{t("ui.cancel")}</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t("app.takePhoto")}
+          disabled={busy}
+          style={[st.shutter, busy && { opacity: 0.5 }]}
+          onPress={async () => {
+            if (!ref) return;
+            setBusy(true);
+            try {
+              const pic = await ref.takePictureAsync({ quality: 0.9 });
+              onDone(await processPhoto(pic.uri, pic.width, pic.height));
+            } catch {
+              setBusy(false);
+            }
+          }}
+        />
+        <View style={{ width: 64 }} />
+      </View>
+    </View>
+  );
+}
+
+const st = StyleSheet.create({
+  progress: { flexDirection: "row", gap: 6, paddingHorizontal: GUTTER, paddingTop: 12 },
+  progressDot: { flex: 1, height: 4, borderRadius: 2, backgroundColor: C.linea },
+  numberRow: { flexDirection: "row", alignItems: "baseline", gap: 10, marginTop: 28, borderBottomWidth: 2, borderBottomColor: C.tinta, paddingBottom: 6 },
+  numberInput: { ...T.number, flex: 1, flexBasis: 0, minWidth: 0, width: 0, padding: 0, minHeight: 72, borderWidth: 0, backgroundColor: "transparent", ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : {}) },
+  unit: { fontFamily: F.serifLight, fontSize: 28, color: C.tinta2 },
+  textInput: { ...T.body, ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : {}), minHeight: 140, marginTop: 20, textAlignVertical: "top", borderWidth: 1.5, borderColor: C.lineaFuerte, borderRadius: RADIUS, padding: 14, backgroundColor: C.blanco },
+  photos: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 20 },
+  thumb: { width: 104, height: 104, borderRadius: RADIUS },
+  thumbX: { position: "absolute", top: 6, right: 6, width: 26, height: 26, borderRadius: 13, backgroundColor: "rgba(30,36,25,0.75)", alignItems: "center", justifyContent: "center" },
+  doneMark: { width: 72, height: 72, borderRadius: 36, backgroundColor: C.accion, alignItems: "center", justifyContent: "center" },
+  shutterRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 28, paddingVertical: 24, backgroundColor: "#000" },
+  shutter: { width: TOUCH + 20, height: TOUCH + 20, borderRadius: (TOUCH + 20) / 2, borderWidth: 6, borderColor: C.blanco, backgroundColor: C.accion },
+});

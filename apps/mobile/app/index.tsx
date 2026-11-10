@@ -8,8 +8,8 @@ export default function Index() {
   const session = useSession();
   if (!loaded)
     return (
-      <View style={{ flex: 1, backgroundColor: C.surco, justifyContent: "center" }}>
-        <ActivityIndicator color={C.lino} />
+      <View style={{ flex: 1, backgroundColor: C.papel, justifyContent: "center" }}>
+        <ActivityIndicator color={C.accion} />
       </View>
     );
   return <Redirect href={session ? "/(tabs)" : "/login"} />;

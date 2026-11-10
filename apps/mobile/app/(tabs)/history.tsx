@@ -1,83 +1,70 @@
-import { FlatList, StyleSheet, Text, View } from "react-native";
-import { Camera, ClipboardList, CloudOff, CheckCircle2, XCircle } from "lucide-react-native";
+/** Historial: 30 días agrupados por día. Lo pendiente de mandar se distingue por el color del punto. */
+import { SectionList, StyleSheet, Text, View } from "react-native";
+import { Camera } from "lucide-react-native";
 import { describeRecord, t } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { useLocal } from "../../src/lib/useLocal";
-import { RECORD_ICON } from "../../src/ui/icons";
-import { EmptyState, Header, Muted, SyncCard, styles as k } from "../../src/ui/kit";
-import { C, MONO } from "../../src/ui/theme";
+import { Row, s as k } from "../../src/ui/kit";
+import { C, F, T } from "../../src/ui/theme";
 
-/** Últimos 30 días (RF-40), con la firma visual punteado → sólido (RF-33). */
+const dayKey = (ms: number) => new Date(ms - 3 * 3_600_000).toISOString().slice(0, 10);
+const dayTitle = (key: string) => {
+  const today = dayKey(Date.now());
+  if (key === today) return t("app.today");
+  if (key === dayKey(Date.now() - 86_400_000)) return t("app.yesterday").replace(/^./, (c) => c.toUpperCase());
+  const d = new Date(`${key}T12:00:00-03:00`);
+  const txt = d.toLocaleDateString("es-PY", { weekday: "long", day: "numeric", month: "long" });
+  return txt.charAt(0).toUpperCase() + txt.slice(1);
+};
+const hhmm = (ms: number) => new Date(ms).toLocaleTimeString("es-PY", { hour: "2-digit", minute: "2-digit", hour12: false });
+
 export default function History() {
   const records = useLocal(() => getDb().records());
   const plots = useLocal(() => getDb().plots());
+  const sections = Object.entries(
+    records.reduce<Record<string, typeof records>>((acc, r) => {
+      (acc[dayKey(r.capturedAt)] ??= []).push(r);
+      return acc;
+    }, {}),
+  ).map(([key, data]) => ({ title: dayTitle(key), data }));
+
   return (
-    <FlatList
+    <SectionList
       style={k.screen}
-      contentContainerStyle={k.pad}
-      data={records}
+      contentContainerStyle={[k.pad, { paddingBottom: 120 }]}
+      sections={sections}
       keyExtractor={(r) => r.id}
-      ListHeaderComponent={<Header eyebrow="30 días" title={t("app.history")} />}
+      stickySectionHeadersEnabled={false}
+      ListHeaderComponent={<Text style={[T.display, { marginBottom: 8 }]}>{t("app.history")}</Text>}
       ListEmptyComponent={
-        <EmptyState icon={ClipboardList} title={t("app.noRecordsYet")} text={t("app.noRecordsHint")} />
+        <View style={{ paddingVertical: 32 }}>
+          <Text style={T.heading}>{t("app.noRecordsYet")}</Text>
+          <Text style={[T.small, { marginTop: 4 }]}>{t("app.noRecordsHint")}</Text>
+        </View>
       }
-      renderItem={({ item: r }) => {
-        const Icon = RECORD_ICON[r.kind];
-        return (
-          <SyncCard pending={r.pending}>
-            <View style={s.row}>
-              <Icon size={20} color={C.accion} />
-              <Text style={s.kind}>{t(`recordKinds.${r.kind}`)}</Text>
-              <View style={s.state}>
-                {r.rejected ? (
-                  <XCircle size={16} color={C.peligro} />
-                ) : r.pending ? (
-                  <CloudOff size={16} color={C.trigoTexto} />
-                ) : (
-                  <CheckCircle2 size={16} color={C.accion} />
-                )}
-                <Text style={[s.stateText, { color: r.rejected ? C.peligro : r.pending ? C.trigoTexto : C.accion }]}>
-                  {r.rejected ? t("app.rejected") : r.pending ? t("app.pending") : t("app.synced")}
-                </Text>
+      renderSectionHeader={({ section }) => <Text style={st.day}>{section.title}</Text>}
+      renderItem={({ item: r }) => (
+        <Row
+          title={describeRecord(r.kind, JSON.parse(r.data))}
+          subtitle={[t(`recordKinds.${r.kind}`), plots.find((p) => p.id === r.plotId)?.name, hhmm(r.capturedAt)].filter(Boolean).join(" · ")}
+          left={<View style={[st.dot, { backgroundColor: r.rejected ? C.peligro : r.pending ? C.trigo : C.accion }]} />}
+          right={
+            r.rejected ? (
+              <Text style={[T.small, { color: C.peligro }]}>{t("app.rejected")}</Text>
+            ) : r.photos > 0 ? (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                <Camera size={16} color={C.tinta3} />
+                <Text style={T.small}>{r.photos}</Text>
               </View>
-            </View>
-            <Text style={s.text}>{describeRecord(r.kind, JSON.parse(r.data))}</Text>
-            <View style={s.meta}>
-              <Muted>
-                {new Date(r.capturedAt).toLocaleString("es-PY", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: false,
-                })}
-                {r.plotId ? ` · ${plots.find((p) => p.id === r.plotId)?.name ?? ""}` : ""}
-              </Muted>
-              {r.photos > 0 && (
-                <View style={s.photos}>
-                  <Camera size={14} color={C.tinta2} />
-                  <Muted>{r.photos}</Muted>
-                </View>
-              )}
-            </View>
-            {r.rejected && (
-              <Text style={{ color: C.peligro, marginTop: 4 }}>
-                {t(`rejectReasons.${r.rejected}` as never, { max: 3 })}
-              </Text>
-            )}
-          </SyncCard>
-        );
-      }}
+            ) : undefined
+          }
+        />
+      )}
     />
   );
 }
 
-const s = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "center", gap: 8 },
-  kind: { fontSize: 17, fontWeight: "700", color: C.surco, flex: 1 },
-  state: { flexDirection: "row", alignItems: "center", gap: 4 },
-  stateText: { ...MONO, fontSize: 11, fontWeight: "700", textTransform: "uppercase" },
-  text: { fontSize: 16, color: C.surco, marginVertical: 6 },
-  meta: { flexDirection: "row", alignItems: "center", gap: 10 },
-  photos: { flexDirection: "row", alignItems: "center", gap: 4 },
+const st = StyleSheet.create({
+  day: { fontFamily: F.sansSemi, fontSize: 15, color: C.tinta2, marginTop: 28, marginBottom: 4 },
+  dot: { width: 12, height: 12, borderRadius: 6 },
 });

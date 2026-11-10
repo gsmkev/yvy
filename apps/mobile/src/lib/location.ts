@@ -1,4 +1,4 @@
-/** GPS solo al crear un registro (PRD §7: sin tracking continuo). */
+/** GPS solo al anotar (PRD §7: sin seguimiento continuo). */
 import * as Location from "expo-location";
 import { containsPoint, type Area } from "@yvy/geo";
 import type { Plot } from "../db/store";
@@ -9,7 +9,7 @@ export interface Fix {
   accuracy: number | null;
 }
 
-export async function currentFix(timeoutMs = 15_000): Promise<Fix | null> {
+export async function currentFix(timeoutMs = 12_000): Promise<Fix | null> {
   const perm = await Location.requestForegroundPermissionsAsync();
   if (perm.status !== "granted") return null;
   try {
@@ -25,17 +25,48 @@ export async function currentFix(timeoutMs = 15_000): Promise<Fix | null> {
   }
 }
 
-/** RF-31: el lote se detecta si el punto cae dentro de un lote asignado. */
-export function detectPlot(plots: Plot[], fix: Fix | null): Plot | null {
-  if (!fix) return null;
-  return (
-    plots.find(
-      (p) =>
-        fix.lon >= p.minLon &&
-        fix.lon <= p.maxLon &&
-        fix.lat >= p.minLat &&
-        fix.lat <= p.maxLat &&
-        containsPoint(JSON.parse(p.geometry) as Area, fix.lon, fix.lat),
-    ) ?? null
-  );
+const M_PER_DEG_LAT = 111_320;
+
+/** Distancia aproximada (m) de un punto al borde de un bbox; 0 si está adentro. Alcanza para decidir si preguntar. */
+function metersToBboxEdge(p: Plot, lon: number, lat: number): number {
+  const mLon = M_PER_DEG_LAT * Math.cos((lat * Math.PI) / 180);
+  const dx = Math.max(p.minLon - lon, 0, lon - p.maxLon) * mLon;
+  const dy = Math.max(p.minLat - lat, 0, lat - p.maxLat) * M_PER_DEG_LAT;
+  return Math.hypot(dx, dy);
 }
+
+export interface PlotGuess {
+  plot: Plot;
+  /** "sure": adentro y lejos del borde. "near": adentro pero el error del GPS llega al borde, o a menos de 50 m afuera. */
+  confidence: "sure" | "near";
+}
+
+/**
+ * Lotes candidatos para la posición actual, mejores primero (RF-31).
+ * Devuelve varios cuando el punto cae en lotes superpuestos o cerca de un límite.
+ */
+export function guessPlots(plots: Plot[], fix: Fix | null): PlotGuess[] {
+  if (!fix) return [];
+  const err = fix.accuracy ?? 30;
+  const out: PlotGuess[] = [];
+  for (const p of plots) {
+    const geometry = JSON.parse(p.geometry) as Area;
+    const inside = containsPoint(geometry, fix.lon, fix.lat);
+    if (inside) {
+      // Si el error del GPS supera la distancia al borde interior, no estamos seguros.
+      const insideMargin = Math.min(
+        (fix.lon - p.minLon) * M_PER_DEG_LAT * Math.cos((fix.lat * Math.PI) / 180),
+        (p.maxLon - fix.lon) * M_PER_DEG_LAT * Math.cos((fix.lat * Math.PI) / 180),
+        (fix.lat - p.minLat) * M_PER_DEG_LAT,
+        (p.maxLat - fix.lat) * M_PER_DEG_LAT,
+      );
+      out.push({ plot: p, confidence: insideMargin > err ? "sure" : "near" });
+    } else if (metersToBboxEdge(p, fix.lon, fix.lat) <= Math.max(50, err)) {
+      out.push({ plot: p, confidence: "near" });
+    }
+  }
+  return out.sort((a, b) => (a.confidence === b.confidence ? 0 : a.confidence === "sure" ? -1 : 1));
+}
+
+/** Compatibilidad: el mejor candidato seguro, o null. */
+export const detectPlot = (plots: Plot[], fix: Fix | null): Plot | null => guessPlots(plots, fix).find((g) => g.confidence === "sure")?.plot ?? null;

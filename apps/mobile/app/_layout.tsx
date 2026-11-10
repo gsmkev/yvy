@@ -4,37 +4,41 @@ import { ActivityIndicator, View } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { useFonts, Fraunces_400Regular, Fraunces_600SemiBold } from "@expo-google-fonts/fraunces";
+import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from "@expo-google-fonts/inter";
 import { dbReady } from "../src/lib/db";
 import { loadSession } from "../src/lib/session";
-import { C } from "../src/ui/theme";
+import { C, F } from "../src/ui/theme";
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
+  const [fontsReady] = useFonts({ Fraunces_400Regular, Fraunces_600SemiBold, Inter_400Regular, Inter_500Medium, Inter_600SemiBold });
   useEffect(() => {
     Promise.all([dbReady(), loadSession()]).then(() => setReady(true));
   }, []);
-  if (!ready)
+  if (!ready || !fontsReady)
     return (
-      <View style={{ flex: 1, backgroundColor: C.surco, justifyContent: "center" }}>
-        <ActivityIndicator color={C.lino} />
+      <View style={{ flex: 1, backgroundColor: C.papel, justifyContent: "center" }}>
+        <ActivityIndicator color={C.accion} />
       </View>
     );
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: C.surco },
-          headerTintColor: C.lino,
-          headerTitleStyle: { fontWeight: "600" },
-          contentStyle: { backgroundColor: C.lino },
+          headerStyle: { backgroundColor: C.papel },
+          headerShadowVisible: false,
+          headerTintColor: C.tinta,
+          headerTitleStyle: { fontFamily: F.sansSemi, fontSize: 18 },
+          contentStyle: { backgroundColor: C.papel },
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="scan" options={{ title: "" }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="record/[kind]" options={{ title: "" }} />
+        <Stack.Screen name="annotate/index" options={{ title: "", presentation: "modal" }} />
       </Stack>
     </SafeAreaProvider>
   );

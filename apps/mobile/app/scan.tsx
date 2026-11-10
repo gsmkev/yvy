@@ -7,7 +7,7 @@ import { registerDevice } from "../src/lib/push";
 import { api, setSession, type Session } from "../src/lib/session";
 import { deviceId } from "../src/lib/sync";
 import { Button } from "../src/ui/kit";
-import { C } from "../src/ui/theme";
+import { C, T } from "../src/ui/theme";
 
 /** Vinculación del empleado con el QR que genera el administrador (anexo §4.2). */
 export default function Scan() {
@@ -60,9 +60,9 @@ export default function Scan() {
 }
 
 const s = StyleSheet.create({
-  center: { flex: 1, justifyContent: "center", padding: 24, gap: 16, backgroundColor: C.lino },
-  overlay: { position: "absolute", bottom: 0, left: 0, right: 0, padding: 20, backgroundColor: "rgba(30,36,25,0.85)" },
-  title: { color: C.lino, fontSize: 20, fontWeight: "700" },
-  text: { color: C.lino, fontSize: 16 },
-  error: { color: "#FFB4A6", marginTop: 8 },
+  center: { flex: 1, justifyContent: "center", padding: 24, gap: 16, backgroundColor: C.papel },
+  overlay: { position: "absolute", bottom: 0, left: 0, right: 0, padding: 24, backgroundColor: "rgba(20,26,18,0.85)" },
+  title: { ...T.title, color: C.papel },
+  text: { ...T.body, color: C.papel },
+  error: { ...T.small, color: "#FFB4A6", marginTop: 8 },
 });

@@ -48,7 +48,10 @@
     "@expo/metro-runtime": "~58.0.17",
     "sql.js": "1.15.2",
     "maplibre-gl": "6.17.0",
-    "pmtiles": "4.5.0"
+    "pmtiles": "4.5.0",
+    "@expo-google-fonts/fraunces": "0.4.1",
+    "@expo-google-fonts/inter": "0.4.2",
+    "expo-font": "~58.0.11"
   },
   "devDependencies": {
     "@types/react": "~19.3.0",

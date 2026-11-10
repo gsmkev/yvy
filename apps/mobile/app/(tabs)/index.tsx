@@ -1,127 +1,115 @@
-import { ScrollView, StyleSheet, Text, View, Pressable } from "react-native";
+/**
+ * Hoy: lo que el recorredor tiene que saber y hacer, en orden. Avisos primero (si hay), después tareas,
+ * después lo que ya anotó. Sin secciones vacías: si no hay nada, lo dice una sola vez.
+ */
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
-import { AlertTriangle, CheckCircle2, ChevronRight, Circle, ListChecks } from "lucide-react-native";
-import { t } from "@yvy/shared";
+import { Check } from "lucide-react-native";
+import { describeRecord, t } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { useSession } from "../../src/lib/session";
 import { localChanged } from "../../src/lib/sync";
 import { useLocal } from "../../src/lib/useLocal";
-import { ALERT_ICON, RECORD_ICON } from "../../src/ui/icons";
-import { EmptyState, Eyebrow, Header, Muted, styles as k } from "../../src/ui/kit";
-import { C, MONO, TOUCH } from "../../src/ui/theme";
+import { Row, s as k } from "../../src/ui/kit";
+import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
 
-const today = () => new Date().toLocaleDateString("es-PY", { weekday: "long", day: "numeric", month: "long" });
+const dayLabel = () => {
+  const d = new Date();
+  const txt = d.toLocaleDateString("es-PY", { weekday: "long", day: "numeric", month: "long" });
+  return txt.charAt(0).toUpperCase() + txt.slice(1);
+};
+const hhmm = (ms: number) => new Date(ms).toLocaleTimeString("es-PY", { hour: "2-digit", minute: "2-digit", hour12: false });
 
-/** "Hoy" del empleado (RF-21): avisos de sus lotes y tareas, que se completan sin señal. */
 export default function Today() {
   const session = useSession();
   const userId = session?.user.id ?? "";
   const tasks = useLocal(() => getDb().tasksToday(userId), [userId]);
   const alerts = useLocal(() => getDb().activeAlerts());
   const plots = useLocal(() => getDb().plots());
-  const plotName = (id: string | null) => plots.find((p) => p.id === id)?.name;
-  const open = tasks.filter((x) => x.status === "open").length;
-
-  const complete = (task: (typeof tasks)[number]) => {
-    if (task.kind)
-      router.push({
-        pathname: "/record/[kind]",
-        params: { kind: task.kind, taskId: task.id, plotId: task.plotId ?? "" },
-      });
-    else {
-      getDb().completeTask(task.id, null);
-      localChanged();
-    }
-  };
+  const todayRecords = useLocal(() => {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    return getDb()
+      .records(100)
+      .filter((r) => r.capturedAt >= start.getTime());
+  });
+  const plotName = (id: string | null) => plots.find((p) => p.id === id)?.name ?? "";
+  const open = tasks.filter((x) => x.status === "open");
+  const done = tasks.filter((x) => x.status === "done");
+  const empty = alerts.length === 0 && tasks.length === 0 && todayRecords.length === 0;
 
   return (
-    <ScrollView style={k.screen} contentContainerStyle={k.pad}>
-      <Header eyebrow={today()} title={`${t("app.today")}, ${session?.user.fullName.split(" ")[0] ?? ""}`} />
+    <ScrollView style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 120 }]}>
+      <Text style={T.small}>{dayLabel()}</Text>
+      <Text style={[T.display, { marginTop: 2, marginBottom: 24 }]}>{session?.user.fullName.split(" ")[0]}</Text>
 
-      {alerts.length > 0 && (
-        <View style={{ marginBottom: 20 }}>
-          <Eyebrow>{t("app.alertsActive")}</Eyebrow>
-          {alerts.map((a) => {
-            const Icon = ALERT_ICON[a.kind] ?? AlertTriangle;
-            const strong = a.severity === "warning";
-            return (
-              <View key={a.id} style={[s.alert, strong ? s.alertStrong : s.alertSoft]}>
-                <Icon size={22} color={strong ? C.white : C.trigoTexto} strokeWidth={2.2} />
-                <View style={{ flex: 1 }}>
-                  <Text style={[s.alertTitle, { color: strong ? C.white : C.surco }]}>
-                    {t(`ui.alertKind_${a.kind}` as never)} · {t(`ui.severity_${a.severity}` as never)}
-                  </Text>
-                  <Text style={[s.alertText, { color: strong ? C.white : C.surco }]}>{a.summary}</Text>
-                  <Text style={[s.alertSmall, { color: strong ? C.lino : C.tinta2 }]}>
-                    {t("ui.orientative", { source: a.source })}
-                  </Text>
-                </View>
-              </View>
-            );
-          })}
+      {alerts.map((a) => {
+        const strong = a.severity === "warning";
+        return (
+          <View key={a.id} style={[st.alert, strong ? st.alertStrong : st.alertSoft]}>
+            <Text style={[T.heading, { color: strong ? C.blanco : C.atencion }]}>
+              {t(`ui.alertKind_${a.kind}` as never)}
+              {a.probability ? ` · ${t(`ui.probability_${a.probability}` as never).toLowerCase()}` : ""}
+            </Text>
+            <Text style={[T.body, { color: strong ? C.blanco : C.tinta, marginTop: 4 }]}>{a.summary}</Text>
+            <Text style={[T.small, { color: strong ? "rgba(255,255,255,0.8)" : C.tinta2, marginTop: 8 }]}>{t("ui.orientative", { source: a.source })}</Text>
+          </View>
+        );
+      })}
+
+      {empty && (
+        <View style={st.empty}>
+          <Text style={T.heading}>{t("app.nothingToday")}</Text>
+          <Text style={[T.small, { marginTop: 4 }]}>{t("app.nothingTodayHint")}</Text>
         </View>
       )}
 
-      <Eyebrow>
-        {t("app.tasksToday")} · {open}
-      </Eyebrow>
-      {tasks.length === 0 && <EmptyState icon={ListChecks} title={t("app.noTasks")} text={t("app.noTasksHint")} />}
-      {tasks.map((task) => {
-        const done = task.status === "done";
-        const KindIcon = task.kind ? RECORD_ICON[task.kind] : null;
-        return (
-          <Pressable
-            key={task.id}
-            disabled={done}
-            onPress={() => complete(task)}
-            accessibilityRole="button"
-            accessibilityLabel={`${task.title}. ${done ? t("ui.status_done") : t("app.taskDone")}`}
-            style={({ pressed }) => [s.task, done && s.done, pressed && { opacity: 0.85 }]}
-          >
-            {done ? (
-              <CheckCircle2 size={28} color={C.soja} strokeWidth={2} />
-            ) : (
-              <Circle size={28} color={C.tinta2} strokeWidth={1.75} />
-            )}
-            <View style={{ flex: 1 }}>
-              <Text style={[s.taskTitle, done && s.strike]}>{task.title}</Text>
-              <View style={s.meta}>
-                {KindIcon && <KindIcon size={14} color={C.tinta2} />}
-                <Muted>
-                  {task.kind ? t(`recordKinds.${task.kind}`) : ""}
-                  {task.plotId ? ` · ${plotName(task.plotId)}` : ""}
-                </Muted>
-              </View>
-            </View>
-            {!done && <ChevronRight size={22} color={C.tinta2} />}
-          </Pressable>
-        );
-      })}
+      {open.length > 0 && (
+        <>
+          <Text style={st.section}>{t("app.tasksToday")}</Text>
+          {open.map((task) => (
+            <Row
+              key={task.id}
+              title={task.title}
+              subtitle={[task.kind ? t(`recordKinds.${task.kind}`) : null, task.plotId ? plotName(task.plotId) : null].filter(Boolean).join(" · ")}
+              onPress={() => {
+                if (task.kind) router.push({ pathname: "/annotate", params: { kind: task.kind, taskId: task.id, plotId: task.plotId ?? "" } });
+                else {
+                  getDb().completeTask(task.id, null);
+                  localChanged();
+                }
+              }}
+              right={<View style={st.circle} />}
+            />
+          ))}
+        </>
+      )}
+
+      {(todayRecords.length > 0 || done.length > 0) && (
+        <>
+          <Text style={st.section}>{t("app.yourDay")}</Text>
+          {done.map((task) => (
+            <Row key={task.id} title={task.title} subtitle={t("ui.status_done")} left={<Check size={20} color={C.accion} strokeWidth={2.5} />} />
+          ))}
+          {todayRecords.map((r) => (
+            <Row
+              key={r.id}
+              title={describeRecord(r.kind, JSON.parse(r.data))}
+              subtitle={[t(`recordKinds.${r.kind}`), plotName(r.plotId), hhmm(r.capturedAt)].filter(Boolean).join(" · ")}
+              right={r.pending ? <Text style={[T.small, { color: C.atencion }]}>{t("app.pending")}</Text> : undefined}
+            />
+          ))}
+        </>
+      )}
     </ScrollView>
   );
 }
 
-const s = StyleSheet.create({
-  task: {
-    minHeight: TOUCH + 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    backgroundColor: C.white,
-    borderWidth: 1,
-    borderColor: C.linea,
-    borderRadius: 12,
-    padding: 14,
-    marginTop: 10,
-  },
-  done: { backgroundColor: C.papel },
-  taskTitle: { fontSize: 18, fontWeight: "600", color: C.surco },
-  strike: { textDecorationLine: "line-through", color: C.tinta2 },
-  meta: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
-  alert: { flexDirection: "row", gap: 12, borderRadius: 12, padding: 14, marginTop: 10 },
+const st = StyleSheet.create({
+  section: { fontFamily: F.sansSemi, fontSize: 15, color: C.tinta2, marginTop: 28, marginBottom: 4 },
+  alert: { borderRadius: RADIUS, padding: GUTTER, marginBottom: 12 },
   alertStrong: { backgroundColor: C.peligro },
-  alertSoft: { backgroundColor: "#F6EBCB", borderWidth: 1, borderColor: C.trigo },
-  alertTitle: { fontWeight: "800", fontSize: 15 },
-  alertText: { fontSize: 16, marginTop: 2 },
-  alertSmall: { ...MONO, fontSize: 11, marginTop: 6 },
+  alertSoft: { backgroundColor: C.atencionSuave },
+  empty: { paddingVertical: 32 },
+  circle: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.lineaFuerte },
 });

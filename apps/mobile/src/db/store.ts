@@ -394,6 +394,30 @@ export class LocalDb implements SyncStore {
       }));
   }
 
+  /** Últimas anotaciones de un lote (ficha del lote y pantalla Anotar). */
+  recordsOfPlot(plotId: string, limit = 20): RecordRow[] {
+    return this.records(500).filter((r) => r.plotId === plotId).slice(0, limit);
+  }
+
+  /** Lluvia del mes en curso según el pluviómetro (mm), para mostrar al terminar de anotar. */
+  rainThisMonth(farmId: string, now = this.now()): number {
+    const d = new Date(now - 3 * 3_600_000);
+    const from = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1) + 3 * 3_600_000;
+    const rows = this.sql.all<{ data: string }>(
+      "SELECT data FROM records WHERE farm_id = ? AND kind = 'rain' AND deleted_at IS NULL AND captured_at >= ?",
+      [farmId, from],
+    );
+    return rows.reduce((a, r) => a + (Number((JSON.parse(r.data) as { mm?: number }).mm) || 0), 0);
+  }
+
+  /** Último registro por lote, para saber qué lotes hace días que nadie recorre. */
+  lastVisitByPlot(): Map<string, number> {
+    const rows = this.sql.all<{ plot_id: string; last: number }>(
+      "SELECT plot_id, max(captured_at) AS last FROM records WHERE plot_id IS NOT NULL AND deleted_at IS NULL GROUP BY plot_id",
+    );
+    return new Map(rows.map((r) => [r.plot_id, r.last]));
+  }
+
   activeAlerts(): Alert[] {
     return this.sql
       .all(

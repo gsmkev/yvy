@@ -19,6 +19,7 @@ export async function farmSummaries(sdb: ScopedDb) {
       id: s.farms.id,
       name: s.farms.name,
       department: s.farms.department,
+      timezone: s.farms.timezone,
       areaHa: s.farms.areaHa,
       geometry: s.farms.geometry,
       centroidLon: s.farms.centroidLon,

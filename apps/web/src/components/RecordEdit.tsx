@@ -123,7 +123,7 @@ export function RecordEditForm({
           schemaVersion: RECORD_SCHEMA_VERSION,
           lon: r.lon,
           lat: r.lat,
-          gpsAccuracyM: null,
+          gpsAccuracyM: r.gpsAccuracyM ?? null,
           capturedAt: r.capturedAt,
         },
       });

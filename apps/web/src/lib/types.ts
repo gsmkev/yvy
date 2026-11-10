@@ -26,11 +26,11 @@ export interface FarmSummary {
   records7d: number;
   geometry: string;
   basemapPath: string | null;
+  timezone: string;
 }
 
 export interface Farm extends FarmSummary {
   district: string | null;
-  timezone: string;
 }
 
 export interface Plot {
@@ -85,6 +85,7 @@ export interface RecordRow {
   data: Record<string, unknown>;
   lon: number | null;
   lat: number | null;
+  gpsAccuracyM: number | null;
   capturedAt: number;
   attachments: { id: string; uploadStatus: string }[];
 }

@@ -7,7 +7,7 @@ import { Button, ErrorBox, Field, Input, Select } from "../components/ui";
 import { recordsToExcel } from "../lib/exports";
 import { DEFAULT_TZ, dayToMs } from "../lib/format";
 import { t, tk } from "../lib/i18n";
-import { fetchAllRecords, useFarm, useFarms, useMe, useMembers, type RecordFilters } from "../lib/queries";
+import { fetchAllRecords, useFarms, useMe, useMembers, type RecordFilters } from "../lib/queries";
 import type { RecordRow } from "../lib/types";
 
 export function RecordsPage() {
@@ -16,8 +16,8 @@ export function RecordsPage() {
   const members = useMembers();
   const [f, setF] = useState({ farmId: "", authorId: "", kind: "", from: "", to: "" });
   // Zona horaria de la estancia elegida (el listado no la trae: se lee del detalle).
-  const selectedFarm = useFarm(f.farmId, !!f.farmId);
-  const tz = selectedFarm.data?.farm.timezone ?? DEFAULT_TZ;
+  // Huso de la estancia elegida; con "Todas", el de Paraguay
+  const tz = farms.data?.find((x) => x.id === f.farmId)?.timezone ?? DEFAULT_TZ;
   const [rows, setRows] = useState<RecordRow[]>([]);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<unknown>(null);

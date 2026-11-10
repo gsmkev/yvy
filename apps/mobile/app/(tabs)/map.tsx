@@ -12,6 +12,8 @@ import { containsPoint, type Area } from "@yvy/geo";
 import { useRef } from "react";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
+import { copyText } from "../../src/lib/copy";
+import { fixCoords, formatFix } from "../../src/lib/coords";
 import { currentFix, type Fix } from "../../src/lib/location";
 import { layerSource, tilesBaseUrl, type MapLayer } from "../../src/lib/offline";
 import { setFabHidden } from "../../src/lib/fab";
@@ -44,6 +46,7 @@ export default function MapScreen() {
     getDb().setKv("map_layer", m);
   };
   const [me, setMe] = useState<Fix | null>(null);
+  const [copied, setCopied] = useState(false);
   const camera = useRef<CameraRef>(null);
   const farm = current ?? farms[0];
   const firstFarm = useRef(true);
@@ -123,6 +126,14 @@ export default function MapScreen() {
   const plot = plots.find((p) => p.id === selected);
   const plotRecords = plot ? records.filter((r) => r.plotId === plot.id).slice(0, 3) : [];
 
+  const copyMe = async () => {
+    if (!me) return;
+    if (await copyText(fixCoords(me))) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   const locate = async () => {
     const f = await currentFix(8000);
     if (!f) return;
@@ -148,6 +159,11 @@ export default function MapScreen() {
       <View style={st.topLeft} pointerEvents="box-none">
         <FarmLine style={st.panel} />
         <LayerSwitch value={mode} onChange={setMode} />
+        {me && (
+          <Pressable accessibilityRole="button" accessibilityLabel={`${formatFix(me)}. ${t("app.coordsCopy")}`} onPress={copyMe} style={st.coords}>
+            <Text style={T.small}>{copied ? t("app.copied") : formatFix(me)}</Text>
+          </Pressable>
+        )}
         {mode === "ndvi" && <NdviLegend acquiredAt={ndvi?.acquiredAt ?? null} missing={!ndvi} />}
       </View>
       <Text style={st.attr}>Sentinel-2 · Copernicus</Text>
@@ -188,6 +204,7 @@ const st = StyleSheet.create({
   sheet: { position: "absolute", left: 12, right: 12, bottom: 12, backgroundColor: C.papel, borderRadius: RADIUS + 4, padding: GUTTER, elevation: 8, shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } },
   locate: { position: "absolute", top: 16, right: 16, width: 48, height: 48, borderRadius: 24, backgroundColor: C.papel, alignItems: "center", justifyContent: "center", elevation: 4, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
   topLeft: { position: "absolute", top: 12, left: 12, right: 76, gap: 8 },
+  coords: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14, minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
   panel: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14 },
   attr: { position: "absolute", bottom: 6, left: 12, fontFamily: F.sans, fontSize: 11, color: "rgba(255,255,255,0.7)" },
 });

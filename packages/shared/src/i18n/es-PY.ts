@@ -222,6 +222,10 @@ export const esPY = {
     thanks: "Gracias",
     plotSearch: "Buscar lote",
     plotSearchNone: "Ningún lote se llama así",
+    coordsAccuracy: "{{coords}} · ± {{m}} m",
+    coordsNoAccuracy: "{{coords}} · sin precisión",
+    coordsCopy: "Tocá para copiar",
+    copied: "Copiado",
   },
   fields: {
     condition: "Estado general",

@@ -220,6 +220,8 @@ export const esPY = {
     ndviDate: "Imagen del {{date}}",
     ndviNone: "Todavía no hay imagen de vigor",
     thanks: "Gracias",
+    plotSearch: "Buscar lote",
+    plotSearchNone: "Ningún lote se llama así",
   },
   fields: {
     condition: "Estado general",

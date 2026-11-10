@@ -411,14 +411,57 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 
 ---
 
-## 15. Inteligencia artificial (opcional)
+## 15. Inteligencia artificial
 
-Tiene costo por uso y no entra en el plan gratis. Conviene después de tener clientes pagando.
+Dos familias. **IA local**: el modelo corre en el celular o en el job de Python, sin costo por uso y, en la app,
+sin señal. **IA en la nube**: modelos de lenguaje con costo por uso; conviene cuando haya clientes pagando.
 
-| ID | Qué | Prio | Esf | Estado |
-|---|---|---|---|---|
-| X-01 | Resumen semanal en lenguaje natural por estancia | P3 | M | Falta |
-| X-02 | Identificar plaga o enfermedad a partir de la foto, como sugerencia | P3 | L | Falta |
-| X-03 | Transcribir y ordenar notas de voz del empleado (ver F-09) | P3 | M | Falta |
-| X-04 | Preguntas al campo ("¿qué lotes no se recorrieron este mes?") | P3 | L | Falta |
-| X-05 | Detectar registros raros (lluvia de 300 mm, fecha imposible) para revisar | P3 | S | Falta |
+Hoy existe solo la **maqueta** de algunas (pantallas "Laboratorio" en la web y en la app, con ejemplos ilustrativos
+y el aviso de que están en desarrollo). Ninguna analiza datos reales todavía.
+
+**Cómo se haría la IA local**
+
+- **App:** modelos chicos cuantizados (TensorFlow Lite o ONNX Runtime Mobile, de 5 a 20 MB) que se bajan junto
+  con el mapa sin conexión. La inferencia corre en el celular en menos de 2 segundos en gama baja.
+- **Web y drones:** el ortomosaico se sube a R2 y un job de Python (GitHub Actions, sin GPU) lo procesa por
+  teselas con un detector tipo YOLO. Ortomosaicos grandes necesitan un runner con más memoria.
+- **Datos para entrenar:** fotos etiquetadas por agrónomos de los pilotos (consentimiento en los términos),
+  más bases públicas de enfermedades de soja. Cada modelo necesita su ADR con licencia, precisión medida y
+  qué pasa cuando se equivoca.
+- **Regla de producto:** la IA sugiere, no decide. Todo resultado dice su nivel de confianza, pide confirmación
+  humana y se guarda como registro normal solo cuando el usuario lo acepta.
+
+**App (en el celular, sin señal)**
+
+| ID | Qué | Por qué | Prio | Esf | Estado |
+|---|---|---|---|---|---|
+| X-01 | Detector de roya asiática y otras enfermedades de la hoja de soja por foto, con severidad estimada | Detectar temprano la enfermedad que más cuesta | P2 | L | Maqueta |
+| X-02 | Conteo de chinches y orugas en el paño vertical por foto, comparado con el umbral de daño | Monitoreo más rápido y parejo | P2 | L | Maqueta |
+| X-03 | Cobertura y altura estimada del pasto por foto | Oferta forrajera sin regla | P2 | M | Maqueta |
+| X-04 | Condición corporal de la vaca por foto (escala 1 a 5) | Manejo del rodeo de cría | P3 | L | Maqueta |
+| X-05 | Nota de voz que se convierte en registro (reconocimiento de voz en el celular) | El peón prefiere hablar | P2 | M | Maqueta |
+| X-06 | Identificación de malezas por foto (capín, buva, amargo) con sugerencia de control | Malezas resistentes | P3 | L | Falta |
+| X-07 | Lectura de caravanas visuales y de etiquetas de productos por foto | Carga sin tipear | P3 | M | Falta |
+| X-08 | Estado fenológico de la soja o el maíz por foto | Fenología sin experto | P3 | L | Falta |
+| X-09 | Calidad de la foto antes de guardar (desenfocada, oscura, muy lejos) | Mejores datos para todo lo demás | P2 | S | Falta |
+
+**Web y drones (procesamiento en jobs)**
+
+| ID | Qué | Por qué | Prio | Esf | Estado |
+|---|---|---|---|---|---|
+| X-20 | Conteo de animales por dron, por potrero | Recuento sin arrear | P2 | L | Maqueta |
+| X-21 | Fallas de siembra por dron: plantas por metro y huecos | Decidir resiembra | P2 | L | Maqueta |
+| X-22 | Mapa de malezas por dron con prescripción de aplicación localizada | Ahorro de herbicida | P3 | L | Maqueta |
+| X-23 | Daño por granizo o viento a partir de dron o satélite, para el seguro | Cobrar el seguro | P3 | L | Falta |
+| X-24 | Detección de alambrados caídos, tajamares secos y caminos cortados en imágenes | Mantenimiento | P3 | L | Falta |
+| X-25 | Rinde estimado por lote a partir de vigor, clima e historia | Planificar ventas | P3 | L | Falta |
+| X-26 | Registros raros para revisar (lluvia de 300 mm, plaga fuera de época) | Calidad de datos, sin costo | P2 | S | Falta |
+
+**Nube (modelos de lenguaje, con costo por uso)**
+
+| ID | Qué | Por qué | Prio | Esf | Estado |
+|---|---|---|---|---|---|
+| X-40 | Resumen semanal escrito por estancia | El dueño lee en un minuto | P3 | M | Maqueta |
+| X-41 | "Preguntale al campo": preguntas sobre registros, lotes y clima | Acceso a los datos sin filtros | P3 | L | Maqueta |
+| X-42 | Recomendación del agrónomo redactada a partir de la recorrida | Ahorra tiempo al asesor | P3 | M | Falta |
+| X-43 | Traducción automática de notas entre español y guaraní | Equipos mixtos | P3 | M | Falta |

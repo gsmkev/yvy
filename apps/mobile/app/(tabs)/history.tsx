@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import { Camera } from "lucide-react-native";
 import { describeRecord, t } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
+import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
 import { useLocal } from "../../src/lib/useLocal";
 import { Row, s as k } from "../../src/ui/kit";
 import { C, F, T } from "../../src/ui/theme";
@@ -20,7 +21,8 @@ const dayTitle = (key: string) => {
 const hhmm = (ms: number) => new Date(ms).toLocaleTimeString("es-PY", { hour: "2-digit", minute: "2-digit", hour12: false });
 
 export default function History() {
-  const records = useLocal(() => getDb().records());
+  const { farmId } = useFarmChoice();
+  const records = useLocal(() => byFarm(getDb().records(), farmId), [farmId]);
   const plots = useLocal(() => getDb().plots());
   const sections = Object.entries(
     records.reduce<Record<string, typeof records>>((acc, r) => {

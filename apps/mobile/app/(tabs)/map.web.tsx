@@ -1,6 +1,7 @@
 // Vista previa web del mapa de la app: MapLibre GL JS con el mismo estilo que MapLibre Native.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { router, useFocusEffect } from "expo-router";
+import { FarmLine } from "../../src/ui/FarmLine";
 import { Button } from "../../src/ui/kit";
 import { StyleSheet, Text, View } from "react-native";
 import * as maplibregl from "maplibre-gl";
@@ -9,18 +10,20 @@ import { Protocol } from "pmtiles";
 import { BRAND, t } from "@yvy/shared";
 import { containsPoint, type Area } from "@yvy/geo";
 import { getDb } from "../../src/lib/db";
+import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
 import { tilesBaseUrl } from "../../src/lib/offline";
 import { setFabHidden } from "../../src/lib/fab";
 import { useLocal } from "../../src/lib/useLocal";
-import { C, T } from "../../src/ui/theme";
+import { C, RADIUS, T } from "../../src/ui/theme";
 
 let protocol = false;
 
 export default function MapScreen() {
   const ref = useRef<HTMLDivElement | null>(null);
-  const farms = useLocal(() => getDb().farms());
-  const plots = useLocal(() => getDb().plots());
-  const records = useLocal(() => getDb().records(300));
+  const { farmId, current } = useFarmChoice();
+  const farms = useLocal(() => byFarm(getDb().farms().map((f) => ({ ...f, farmId: f.id })), farmId), [farmId]);
+  const plots = useLocal(() => byFarm(getDb().plots(), farmId), [farmId]);
+  const records = useLocal(() => byFarm(getDb().records(300), farmId), [farmId]);
   const [base, setBase] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   useFocusEffect(
@@ -29,7 +32,7 @@ export default function MapScreen() {
       return () => setFabHidden(false);
     }, [selected]),
   );
-  const farm = farms[0];
+  const farm = current ?? farms[0];
   useEffect(() => {
     tilesBaseUrl().then(setBase, () => setBase(null));
   }, []);
@@ -137,6 +140,9 @@ export default function MapScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: "#141a12" }}>
       <div ref={ref} style={{ position: "absolute", inset: 0 }} />
+      <View style={s.topLeft} pointerEvents="box-none">
+        <FarmLine style={s.panel} />
+      </View>
       {plot && (
         <View style={s.sheet}>
           <Text style={s.title}>{plot.name}</Text>
@@ -151,6 +157,8 @@ export default function MapScreen() {
 }
 
 const s = StyleSheet.create({
+  topLeft: { position: "absolute", top: 12, left: 12, right: 12, gap: 8 },
+  panel: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14 },
   sheet: { position: "absolute", left: 12, right: 12, bottom: 12, backgroundColor: C.papel, borderRadius: 16, padding: 20 },
   title: { ...T.title },
   sub: { ...T.small, marginTop: 2 },

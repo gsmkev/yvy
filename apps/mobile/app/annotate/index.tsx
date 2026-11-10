@@ -10,6 +10,7 @@ import { ArrowLeft, Check, X } from "lucide-react-native";
 import { describeRecord, LIMITS, parseRecordData, t, type MessageKey, type RecordKind } from "@yvy/shared";
 import type { LocalPhoto, Plot } from "../../src/db/store";
 import { getDb } from "../../src/lib/db";
+import { selectedFarmId } from "../../src/lib/farmFilter";
 import { FLOWS, KINDS_FOR, type Step } from "../../src/lib/annotate";
 import { currentFix, guessPlots, type Fix, type PlotGuess } from "../../src/lib/location";
 import { processPhoto } from "../../src/lib/photos";
@@ -26,14 +27,14 @@ export default function Annotate() {
   const params = useLocalSearchParams<{ plotId?: string; kind?: RecordKind; taskId?: string; recordId?: string }>();
   const session = useSession()!;
   const db = getDb();
-  const plots = useMemo(() => db.plots(), []);
+  const plots = useMemo(() => db.plots(selectedFarmId(db) ?? undefined), []);
   // Edición (RF-34): el mismo registro, con sus datos cargados; se guarda con el mismo id.
   const editing = useMemo(() => (params.recordId ? db.recordById(params.recordId) : null), []);
   const existingPhotos = useMemo(() => (editing ? db.photosOfRecord(editing.id).length : 0), []);
   const maxNewPhotos = LIMITS.photos.maxPerRecord - existingPhotos;
   const [fix, setFix] = useState<Fix | null | "searching">(editing ? null : "searching");
   const [guesses, setGuesses] = useState<PlotGuess[]>([]);
-  const [plot, setPlot] = useState<Plot | null>(() => plots.find((p) => p.id === (editing ? editing.plotId : params.plotId)) ?? null);
+  const [plot, setPlot] = useState<Plot | null>(() => db.plots().find((p) => p.id === (editing ? editing.plotId : params.plotId)) ?? null);
   const [kind, setKind] = useState<RecordKind | null>(editing?.kind ?? params.kind ?? null);
   const [values, setValues] = useState<Record<string, unknown>>(() => (editing ? (JSON.parse(editing.data) as Record<string, unknown>) : {}));
   const [photos, setPhotos] = useState<LocalPhoto[]>([]);
@@ -82,7 +83,7 @@ export default function Annotate() {
     const parsed = parseRecordData(kind, data);
     if (!parsed.success) return setPhase({ name: "step", i: 0 });
     const f = fix === "searching" ? null : fix;
-    const farmId = editing?.farmId ?? plot?.farmId ?? db.farms()[0]?.id;
+    const farmId = editing?.farmId ?? plot?.farmId ?? selectedFarmId(db) ?? db.farms()[0]?.id;
     if (!farmId) return;
     const recordId = db.saveRecord(
       session.user.id,

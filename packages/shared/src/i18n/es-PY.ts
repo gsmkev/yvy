@@ -215,6 +215,8 @@ export const esPY = {
     labsVoiceField3: "Lluvia",
     labsVoiceValue3: "20 mm",
     labsVoiceNext: "Siempre lo revisás vos antes de guardar.",
+    // app-a
+    farmChange: "Estancia {{name}} · cambiar",
   },
   fields: {
     condition: "Estado general",

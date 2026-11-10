@@ -83,6 +83,18 @@ export interface LocalPhoto {
   bytes: number;
 }
 
+/** Una cosa pendiente de mandar, tal como la ve la persona (pantalla Más). */
+export interface OutboxItem {
+  id: string;
+  /** Qué es: un registro nuevo o editado, un borrado, una tarea hecha, o solo fotos. */
+  what: "record" | "record_delete" | "task" | "photos";
+  recordKind: RecordKind | null;
+  plotId: string | null;
+  at: number;
+  photos: number;
+  photoBytes: number;
+}
+
 export class LocalDb implements SyncStore {
   constructor(
     readonly sql: Sql,
@@ -332,6 +344,50 @@ export class LocalDb implements SyncStore {
 
   pendingCount(): number {
     return this.sql.get<{ n: number }>("SELECT count(*) n FROM outbox WHERE rejected_reason IS NULL")?.n ?? 0;
+  }
+
+  /**
+   * Lo que falta mandar: mutaciones del outbox (cada registro con el peso de sus fotos) y fotos que
+   * el servidor ya conoce pero todavía no se subieron. Más viejo primero.
+   */
+  outboxItems(): OutboxItem[] {
+    const rows = this.sql.all<{ mutation_id: string; payload: string; created_at: number }>(
+      "SELECT mutation_id, payload, created_at FROM outbox WHERE rejected_reason IS NULL ORDER BY mutation_id",
+    );
+    const muts = rows.map((r) => ({ m: JSON.parse(r.payload) as Mutation, at: r.created_at }));
+    // Fotos por registro: las que van en el outbox y las que esperan subir.
+    const photosOf = new Map<string, { n: number; bytes: number; at: number }>();
+    const addPhoto = (recordId: string, bytes: number, at: number) => {
+      const p = photosOf.get(recordId) ?? { n: 0, bytes: 0, at };
+      photosOf.set(recordId, { n: p.n + 1, bytes: p.bytes + bytes, at: Math.min(p.at, at) });
+    };
+    for (const { m, at } of muts) if (m.kind === "attachments.upsert") addPhoto(m.row.recordId, m.row.bytes ?? 0, at);
+    for (const f of this.sql.all<{ record_id: string; bytes: number | null; created_at: number }>(
+      `SELECT a.record_id, a.bytes, a.created_at FROM local_files f JOIN attachments a ON a.id = f.attachment_id
+       WHERE f.uploaded = 0 AND NOT EXISTS (SELECT 1 FROM outbox o WHERE o.row_id = f.attachment_id)`,
+    ))
+      addPhoto(f.record_id, f.bytes ?? 0, f.created_at);
+
+    const items: OutboxItem[] = [];
+    const withRecord = new Set<string>();
+    for (const { m, at } of muts) {
+      if (m.kind === "records.upsert") {
+        const p = photosOf.get(m.row.id);
+        withRecord.add(m.row.id);
+        items.push({ id: m.mutationId, what: "record", recordKind: m.row.kind, plotId: m.row.plotId, at, photos: p?.n ?? 0, photoBytes: p?.bytes ?? 0 });
+      } else if (m.kind === "records.delete") {
+        items.push({ id: m.mutationId, what: "record_delete", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
+      } else if (m.kind === "tasks.status") {
+        items.push({ id: m.mutationId, what: "task", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
+      }
+    }
+    // Fotos de registros que ya llegaron al servidor.
+    for (const [recordId, p] of photosOf) {
+      if (withRecord.has(recordId)) continue;
+      const rec = this.sql.get<{ kind: RecordKind; plot_id: string | null }>("SELECT kind, plot_id FROM records WHERE id = ?", [recordId]);
+      items.push({ id: `photos-${recordId}`, what: "photos", recordKind: rec?.kind ?? null, plotId: rec?.plot_id ?? null, at: p.at, photos: p.n, photoBytes: p.bytes });
+    }
+    return items.sort((a, b) => a.at - b.at);
   }
 
   rejected(): { mutationId: string; kind: string; reason: string; detail: string | null }[] {

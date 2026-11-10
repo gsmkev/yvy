@@ -61,6 +61,20 @@ describe("LocalDb", () => {
     expect(thumbs.has(without)).toBe(false);
   });
 
+  it("cola de envío: registro con el peso de sus fotos, y fotos sueltas ya conocidas por el servidor", async () => {
+    const db = setup();
+    const id = db.saveRecord(USER, ORG, rec, [photo, photo]);
+    let items = db.outboxItems();
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ what: "record", recordKind: "rain", plotId: PLOT, photos: 2, photoBytes: 240_000 });
+    // El servidor recibió las mutaciones: quedan las fotos por subir, ahora como ítem propio.
+    await db.removeMutations((await db.pendingMutations(40)).map((m) => m.mutationId));
+    items = db.outboxItems();
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ what: "photos", recordKind: "rain", photos: 2, photoBytes: 240_000 });
+    expect(id).toBeTruthy();
+  });
+
   it("guardar registro con fotos: fila local + mutaciones en orden, pendiente", async () => {
     const db = setup();
     const id = db.saveRecord(USER, ORG, rec, [photo, photo]);

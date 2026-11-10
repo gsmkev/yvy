@@ -14,7 +14,7 @@ import { flushAlertVotes, localChanged } from "../../src/lib/sync";
 import { readVotes, recordVote } from "../../src/lib/votes";
 import { useLocal } from "../../src/lib/useLocal";
 import { FarmLine } from "../../src/ui/FarmLine";
-import { Row, s as k } from "../../src/ui/kit";
+import { Button, Row, s as k } from "../../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
 
 const dayLabel = () => {
@@ -65,7 +65,14 @@ export default function Today() {
     <ScrollView ref={scroller} style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 120 }]}>
       <FarmLine />
       <Text style={T.small}>{dayLabel()}</Text>
-      <Text style={[T.display, { marginTop: 2, marginBottom: 24 }]}>{session?.user.fullName.split(" ")[0]}</Text>
+      <Text style={[T.display, { marginTop: 2, marginBottom: 4 }]}>{session?.user.fullName.split(" ")[0]}</Text>
+      {/* La lluvia es lo que más se anota: un toque, directo a los milímetros (lluvia de la estancia, sin lote). */}
+      <Button
+        kind="text"
+        title={t("app.quickRain")}
+        onPress={() => router.push({ pathname: "/annotate", params: { kind: "rain", farmLevel: "1" } })}
+        style={{ alignSelf: "flex-start", paddingHorizontal: 0, marginBottom: 16 }}
+      />
 
       {alerts.map((a) => {
         const strong = a.severity === "warning";

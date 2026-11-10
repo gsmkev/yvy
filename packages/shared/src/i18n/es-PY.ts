@@ -217,6 +217,8 @@ export const esPY = {
     labsVoiceNext: "Siempre lo revisás vos antes de guardar.",
     // app-a
     farmChange: "Estancia {{name}} · cambiar",
+    ndviDate: "Imagen del {{date}}",
+    ndviNone: "Todavía no hay imagen de vigor",
   },
   fields: {
     condition: "Estado general",

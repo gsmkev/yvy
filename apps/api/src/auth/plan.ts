@@ -5,10 +5,23 @@
 import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { eq, sql } from "drizzle-orm";
-import { localDate } from "@yvy/shared";
+import { localDate, t } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { getDb } from "../db/client";
 import type { AppEnv } from "../types";
+
+/** La demo pública (plan 'demo') es de solo lectura: toda escritura se rechaza. */
+export const readOnlyDemo = createMiddleware<AppEnv>(async (c, next) => {
+  if (c.req.method !== "GET") {
+    const [org] = await getDb(c.env.DB)
+      .select({ plan: s.organizations.plan })
+      .from(s.organizations)
+      .where(eq(s.organizations.id, c.var.auth.orgId))
+      .limit(1);
+    if (org?.plan === "demo") throw new HTTPException(403, { message: t("ui.publicDemoReadOnly") });
+  }
+  await next();
+});
 
 export const readOnlyWhenExpired = createMiddleware<AppEnv>(async (c, next) => {
   if (c.req.method !== "GET") {
@@ -17,6 +30,7 @@ export const readOnlyWhenExpired = createMiddleware<AppEnv>(async (c, next) => {
       .from(s.organizations)
       .where(eq(s.organizations.id, c.var.auth.orgId))
       .limit(1);
+    if (org?.plan === "demo") throw new HTTPException(403, { message: t("ui.publicDemoReadOnly") });
     const expired =
       org &&
       ((org.plan === "trial" && org.trialEndsAt !== null && org.trialEndsAt < Date.now()) || org.plan === "blocked");

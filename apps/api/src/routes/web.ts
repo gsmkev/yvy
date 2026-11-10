@@ -66,6 +66,7 @@ web.get("/me", async (c) => {
     role: sdb.auth.role,
     tilesBaseUrl: c.env.TILES_PUBLIC_URL,
     isStaff: !!user?.email && admins.includes(user.email.toLowerCase()),
+    demo: org?.plan === "demo",
   });
 });
 

@@ -23,22 +23,27 @@ const tr = (key: string, vars?: Record<string, string | number>) => t(key as Mes
 type Phase = { name: "plot" } | { name: "kind" } | { name: "step"; i: number } | { name: "photo" } | { name: "done"; recordId: string };
 
 export default function Annotate() {
-  const params = useLocalSearchParams<{ plotId?: string; kind?: RecordKind; taskId?: string }>();
+  const params = useLocalSearchParams<{ plotId?: string; kind?: RecordKind; taskId?: string; recordId?: string }>();
   const session = useSession()!;
   const db = getDb();
   const plots = useMemo(() => db.plots(), []);
-  const [fix, setFix] = useState<Fix | null | "searching">("searching");
+  // Edición (RF-34): el mismo registro, con sus datos cargados; se guarda con el mismo id.
+  const editing = useMemo(() => (params.recordId ? db.recordById(params.recordId) : null), []);
+  const existingPhotos = useMemo(() => (editing ? db.photosOfRecord(editing.id).length : 0), []);
+  const maxNewPhotos = LIMITS.photos.maxPerRecord - existingPhotos;
+  const [fix, setFix] = useState<Fix | null | "searching">(editing ? null : "searching");
   const [guesses, setGuesses] = useState<PlotGuess[]>([]);
-  const [plot, setPlot] = useState<Plot | null>(() => plots.find((p) => p.id === params.plotId) ?? null);
-  const [kind, setKind] = useState<RecordKind | null>(params.kind ?? null);
-  const [values, setValues] = useState<Record<string, unknown>>({});
+  const [plot, setPlot] = useState<Plot | null>(() => plots.find((p) => p.id === (editing ? editing.plotId : params.plotId)) ?? null);
+  const [kind, setKind] = useState<RecordKind | null>(editing?.kind ?? params.kind ?? null);
+  const [values, setValues] = useState<Record<string, unknown>>(() => (editing ? (JSON.parse(editing.data) as Record<string, unknown>) : {}));
   const [photos, setPhotos] = useState<LocalPhoto[]>([]);
   const [phase, setPhase] = useState<Phase>(() =>
-    params.kind === "rain" || params.plotId ? (params.kind ? { name: "step", i: 0 } : { name: "kind" }) : { name: "plot" },
+    editing ? { name: "step", i: 0 } : params.kind === "rain" || params.plotId ? (params.kind ? { name: "step", i: 0 } : { name: "kind" }) : { name: "plot" },
   );
   const [camera, setCamera] = useState(false);
 
   useEffect(() => {
+    if (editing) return;
     currentFix().then((f) => {
       setFix(f);
       const g = guessPlots(plots, f);
@@ -57,7 +62,7 @@ export default function Annotate() {
   const back = () => {
     Keyboard.dismiss();
     if (phase.name === "step" && phase.i > 0) return setPhase({ name: "step", i: phase.i - 1 });
-    if (phase.name === "step") return params.kind ? router.back() : setPhase({ name: "kind" });
+    if (phase.name === "step") return params.kind || editing ? router.back() : setPhase({ name: "kind" });
     if (phase.name === "kind") return params.plotId ? router.back() : setPhase({ name: "plot" });
     if (phase.name === "photo") return setPhase({ name: "step", i: steps.length - 1 });
     router.back();
@@ -73,11 +78,11 @@ export default function Annotate() {
   const save = () => {
     if (!kind) return;
     const data: Record<string, unknown> = { ...values };
-    if (kind === "rain") data.readAt = Date.now();
+    if (kind === "rain" && !editing) data.readAt = Date.now();
     const parsed = parseRecordData(kind, data);
     if (!parsed.success) return setPhase({ name: "step", i: 0 });
     const f = fix === "searching" ? null : fix;
-    const farmId = plot?.farmId ?? db.farms()[0]?.id;
+    const farmId = editing?.farmId ?? plot?.farmId ?? db.farms()[0]?.id;
     if (!farmId) return;
     const recordId = db.saveRecord(
       session.user.id,
@@ -85,19 +90,21 @@ export default function Annotate() {
       {
         farmId,
         plotId: plot?.id ?? null,
-        poiId: null,
+        poiId: editing?.poiId ?? null,
         kind,
         data: parsed.data as Record<string, unknown>,
-        lon: f?.lon ?? null,
-        lat: f?.lat ?? null,
-        gpsAccuracyM: f?.accuracy ?? null,
-        capturedAt: Date.now(),
+        lon: editing ? editing.lon : (f?.lon ?? null),
+        lat: editing ? editing.lat : (f?.lat ?? null),
+        gpsAccuracyM: editing ? editing.gpsAccuracyM : (f?.accuracy ?? null),
+        capturedAt: editing?.capturedAt ?? Date.now(),
       },
       photos,
+      editing?.id,
     );
     if (params.taskId) db.completeTask(params.taskId, recordId);
     localChanged();
     syncNow();
+    if (editing) return router.back();
     setPhase({ name: "done", recordId });
   };
 
@@ -232,7 +239,7 @@ export default function Annotate() {
         <Progress i={steps.length} n={steps.length + 1} />
         <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]}>
           <Text style={T.title}>{t("app.addPhoto")}</Text>
-          <Text style={[T.small, { marginTop: 6 }]}>{t("app.photosCount", { n: photos.length, max: LIMITS.photos.maxPerRecord })}</Text>
+          <Text style={[T.small, { marginTop: 6 }]}>{t("app.photosCount", { n: photos.length + existingPhotos, max: LIMITS.photos.maxPerRecord })}</Text>
           <View style={st.photos}>
             {photos.map((p, i) => (
               <View key={p.thumbUri}>
@@ -249,10 +256,10 @@ export default function Annotate() {
             ))}
           </View>
           <View style={{ flex: 1 }} />
-          {photos.length < LIMITS.photos.maxPerRecord && (
+          {photos.length < maxNewPhotos && (
             <Button kind="secondary" big title={t("app.takePhoto")} onPress={() => setCamera(true)} style={{ marginBottom: 12 }} />
           )}
-          <Button big title={photos.length ? t("app.done") : t("app.skipPhoto")} onPress={save} />
+          <Button big title={editing ? t("app.recordSave") : photos.length ? t("app.done") : t("app.skipPhoto")} onPress={save} />
         </ScrollView>
       </View>
     );

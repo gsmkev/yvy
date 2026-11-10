@@ -394,6 +394,18 @@ export class LocalDb implements SyncStore {
       }));
   }
 
+  /** Un registro por id (ficha); null si no existe o fue borrado. */
+  recordById(id: string): RecordRow | null {
+    return this.records(500).find((r) => r.id === id) ?? null;
+  }
+
+  /** Fotos del registro; `thumbUri` es null si la miniatura no está en este celular. */
+  photosOfRecord(recordId: string): { id: string; thumbUri: string | null }[] {
+    return this.sql
+      .all<{ id: string }>("SELECT id FROM attachments WHERE record_id = ? AND deleted_at IS NULL ORDER BY created_at", [recordId])
+      .map((a) => ({ id: a.id, thumbUri: this.localPhoto(a.id) }));
+  }
+
   /** Últimas anotaciones de un lote (ficha del lote y pantalla Anotar). */
   recordsOfPlot(plotId: string, limit = 20): RecordRow[] {
     return this.records(500).filter((r) => r.plotId === plotId).slice(0, limit);

@@ -1,5 +1,6 @@
 /** Historial: 30 días agrupados por día. Lo pendiente de mandar se distingue por el color del punto. */
 import { SectionList, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
 import { Camera } from "lucide-react-native";
 import { describeRecord, t } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
@@ -47,6 +48,7 @@ export default function History() {
         <Row
           title={describeRecord(r.kind, JSON.parse(r.data))}
           subtitle={[t(`recordKinds.${r.kind}`), plots.find((p) => p.id === r.plotId)?.name, hhmm(r.capturedAt)].filter(Boolean).join(" · ")}
+          onPress={() => router.push({ pathname: "/record/[id]", params: { id: r.id } })}
           left={<View style={[st.dot, { backgroundColor: r.rejected ? C.peligro : r.pending ? C.trigo : C.accion }]} />}
           right={
             r.rejected ? (

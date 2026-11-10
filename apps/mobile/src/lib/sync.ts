@@ -126,6 +126,15 @@ export async function syncNow(): Promise<void> {
 }
 
 let started = false;
+let stopCurrent: (() => void) | null = null;
+
+/** Cierre de sesión: detiene los disparadores y descarta el motor, así otra persona arranca limpia. */
+export function stopAutoSync(): void {
+  stopCurrent?.();
+  engine = null;
+  set({ phase: "idle", pending: 0, lastSyncAt: null, error: null, online: true, version: status.version + 1 });
+}
+
 /** Arranca los disparadores automáticos. Idempotente. */
 export function startAutoSync(): () => void {
   if (started) return () => {};
@@ -142,10 +151,16 @@ export function startAutoSync(): () => void {
     if (online && !wasOnline) syncNow();
     wasOnline = online;
   });
-  return () => {
+  let stopped = false;
+  const stop = () => {
+    if (stopped) return;
+    stopped = true;
     clearInterval(interval);
     appSub.remove();
     netSub.remove();
     started = false;
+    if (stopCurrent === stop) stopCurrent = null;
   };
+  stopCurrent = stop;
+  return stop;
 }

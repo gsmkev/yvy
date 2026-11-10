@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router } from "expo-router";
 import { t } from "@yvy/shared";
+import { noteOrganizationEntry } from "../src/lib/org";
 import { registerDevice } from "../src/lib/push";
 import { api, setSession, type Session } from "../src/lib/session";
 import { deviceId } from "../src/lib/sync";
@@ -42,6 +43,7 @@ export default function Scan() {
               false,
             );
             await setSession(session);
+            noteOrganizationEntry(session);
             registerDevice();
             router.replace("/(tabs)");
           } catch (e) {

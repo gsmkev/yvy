@@ -2,8 +2,9 @@
  * Hoy: lo que el recorredor tiene que saber y hacer, en orden. Avisos primero (si hay), después tareas,
  * después lo que ya anotó. Sin secciones vacías: si no hay nada, lo dice una sola vez.
  */
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { router } from "expo-router";
+import { useEffect, useRef, type ElementRef } from "react";
+import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
 import { Check } from "lucide-react-native";
 import { describeRecord, t } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
@@ -22,6 +23,9 @@ const hhmm = (ms: number) => new Date(ms).toLocaleTimeString("es-PY", { hour: "2
 
 export default function Today() {
   const session = useSession();
+  const { alertId } = useLocalSearchParams<{ alertId?: string }>();
+  const scroller = useRef<ElementRef<typeof ScrollView>>(null);
+  const alertY = useRef<Record<string, number>>({});
   const userId = session?.user.id ?? "";
   const tasks = useLocal(() => getDb().tasksToday(userId), [userId]);
   const alerts = useLocal(() => getDb().activeAlerts());
@@ -38,15 +42,38 @@ export default function Today() {
   const done = tasks.filter((x) => x.status === "done");
   const empty = alerts.length === 0 && tasks.length === 0 && todayRecords.length === 0;
 
+  // Primera vez que se entra a otra organización: decir a cuál.
+  useEffect(() => {
+    const name = getDb().getKv("org_entered_notice");
+    if (!name) return;
+    getDb().setKv("org_entered_notice", null);
+    Alert.alert(t("app.enteredOrg", { name }));
+  }, [session?.organization.id]);
+
+  const scrollToAlert = (id: string) => {
+    const y = alertY.current[id];
+    if (y !== undefined) scroller.current?.scrollTo({ y: Math.max(0, y - 12), animated: true });
+  };
+  useEffect(() => {
+    if (alertId) scrollToAlert(alertId);
+  }, [alertId, alerts.length]);
+
   return (
-    <ScrollView style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 120 }]}>
+    <ScrollView ref={scroller} style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 120 }]}>
       <Text style={T.small}>{dayLabel()}</Text>
       <Text style={[T.display, { marginTop: 2, marginBottom: 24 }]}>{session?.user.fullName.split(" ")[0]}</Text>
 
       {alerts.map((a) => {
         const strong = a.severity === "warning";
         return (
-          <View key={a.id} style={[st.alert, strong ? st.alertStrong : st.alertSoft]}>
+          <View
+            key={a.id}
+            onLayout={(e) => {
+              alertY.current[a.id] = e.nativeEvent.layout.y;
+              if (a.id === alertId) scrollToAlert(a.id);
+            }}
+            style={[st.alert, strong ? st.alertStrong : st.alertSoft, a.id === alertId && st.alertPicked]}
+          >
             <Text style={[T.heading, { color: strong ? C.blanco : C.atencion }]}>
               {t(`ui.alertKind_${a.kind}` as never)}
               {a.probability ? ` · ${t(`ui.probability_${a.probability}` as never).toLowerCase()}` : ""}
@@ -110,6 +137,7 @@ const st = StyleSheet.create({
   alert: { borderRadius: RADIUS, padding: GUTTER, marginBottom: 12 },
   alertStrong: { backgroundColor: C.peligro },
   alertSoft: { backgroundColor: C.atencionSuave },
+  alertPicked: { borderWidth: 3, borderColor: C.tinta },
   empty: { paddingVertical: 32 },
   circle: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.lineaFuerte },
 });

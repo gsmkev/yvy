@@ -2,8 +2,10 @@
 import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
+import { useEffect } from "react";
 import { Platform } from "react-native";
-import { deviceId } from "./sync";
+import { router } from "expo-router";
+import { deviceId, syncNow } from "./sync";
 import { api } from "./session";
 
 Notifications.setNotificationHandler({
@@ -38,4 +40,25 @@ export async function registerDevice(): Promise<void> {
     appVersion: Constants.expoConfig?.version ?? null,
     pushToken,
   }).catch(() => {});
+}
+
+let lastHandled: string | null = null;
+
+/** Tocar un aviso abre Hoy con ese aviso resaltado (también si la app estaba cerrada). */
+function openAlert(response: Notifications.NotificationResponse | null | undefined) {
+  if (!response) return;
+  const key = response.notification.request.identifier;
+  if (key === lastHandled) return;
+  lastHandled = key;
+  const alertId = (response.notification.request.content.data as { alertId?: string } | undefined)?.alertId;
+  router.navigate({ pathname: "/(tabs)", params: alertId ? { alertId } : {} });
+  syncNow(); // por si el aviso todavía no bajó
+}
+
+export function useNotificationTap(): void {
+  useEffect(() => {
+    Notifications.getLastNotificationResponseAsync().then(openAlert).catch(() => {});
+    const sub = Notifications.addNotificationResponseReceivedListener(openAlert);
+    return () => sub.remove();
+  }, []);
 }

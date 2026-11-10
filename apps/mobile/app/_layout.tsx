@@ -7,8 +7,14 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts, Fraunces_400Regular, Fraunces_600SemiBold } from "@expo-google-fonts/fraunces";
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from "@expo-google-fonts/inter";
 import { dbReady } from "../src/lib/db";
+import { useNotificationTap } from "../src/lib/push";
 import { loadSession } from "../src/lib/session";
 import { C, F } from "../src/ui/theme";
+
+function NotificationTap() {
+  useNotificationTap();
+  return null;
+}
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
@@ -25,6 +31,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
+      <NotificationTap />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: C.papel },
@@ -38,6 +45,7 @@ export default function RootLayout() {
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="scan" options={{ title: "" }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="record/[id]" options={{ title: "" }} />
         <Stack.Screen name="annotate/index" options={{ title: "", presentation: "modal" }} />
       </Stack>
     </SafeAreaProvider>

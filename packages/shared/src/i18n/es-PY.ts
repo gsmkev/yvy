@@ -142,6 +142,15 @@ export const esPY = {
     synced: "Sincronizado",
     yes: "Sí",
     no: "No",
+    // app
+    gpsNoAccuracy: "Ubicación sin precisión",
+    recordEdit: "Editar",
+    recordDeleteTitle: "¿Borrar este registro?",
+    recordCapturedAt: "Anotado el {{when}}",
+    recordLocked: "Ya pasaron más de 24 h: no se puede editar ni borrar.",
+    recordGone: "Este registro ya no existe.",
+    recordSave: "Guardar cambios",
+    enteredOrg: "Entraste a {{name}}",
   },
   fields: {
     condition: "Estado general",

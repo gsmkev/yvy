@@ -1,6 +1,7 @@
 /** GPS solo al anotar (PRD §7: sin seguimiento continuo). */
 import * as Location from "expo-location";
 import { containsPoint, type Area } from "@yvy/geo";
+import { t } from "@yvy/shared";
 import type { Plot } from "../db/store";
 
 export interface Fix {
@@ -8,6 +9,15 @@ export interface Fix {
   lat: number;
   accuracy: number | null;
 }
+
+/** El GPS a veces informa 0 o nada (emuladores, algunos equipos): eso no es "exacto", es "sin dato". */
+export const hasAccuracy = (a: number | null | undefined): a is number => typeof a === "number" && Number.isFinite(a) && a > 0;
+
+/** Texto de precisión para mostrar: "Ubicación ± 8 m" o "Ubicación sin precisión". */
+export const accuracyLabel = (a: number | null | undefined): string =>
+  hasAccuracy(a) ? t("app.gpsOk", { m: Math.round(a) }) : t("app.gpsNoAccuracy");
+
+const cleanAccuracy = (a: number | null | undefined): number | null => (hasAccuracy(a) ? a : null);
 
 export async function currentFix(timeoutMs = 12_000): Promise<Fix | null> {
   const perm = await Location.requestForegroundPermissionsAsync();
@@ -17,9 +27,9 @@ export async function currentFix(timeoutMs = 12_000): Promise<Fix | null> {
       Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }),
       new Promise<null>((r) => setTimeout(() => r(null), timeoutMs)),
     ]);
-    if (pos) return { lon: pos.coords.longitude, lat: pos.coords.latitude, accuracy: pos.coords.accuracy };
+    if (pos) return { lon: pos.coords.longitude, lat: pos.coords.latitude, accuracy: cleanAccuracy(pos.coords.accuracy) };
     const last = await Location.getLastKnownPositionAsync({ maxAge: 10 * 60_000 });
-    return last ? { lon: last.coords.longitude, lat: last.coords.latitude, accuracy: last.coords.accuracy } : null;
+    return last ? { lon: last.coords.longitude, lat: last.coords.latitude, accuracy: cleanAccuracy(last.coords.accuracy) } : null;
   } catch {
     return null;
   }
@@ -47,7 +57,7 @@ export interface PlotGuess {
  */
 export function guessPlots(plots: Plot[], fix: Fix | null): PlotGuess[] {
   if (!fix) return [];
-  const err = fix.accuracy ?? 30;
+  const err = hasAccuracy(fix.accuracy) ? fix.accuracy : 30;
   const out: PlotGuess[] = [];
   for (const p of plots) {
     const geometry = JSON.parse(p.geometry) as Area;
@@ -60,7 +70,8 @@ export function guessPlots(plots: Plot[], fix: Fix | null): PlotGuess[] {
         (fix.lat - p.minLat) * M_PER_DEG_LAT,
         (p.maxLat - fix.lat) * M_PER_DEG_LAT,
       );
-      out.push({ plot: p, confidence: insideMargin > err ? "sure" : "near" });
+      // Sin precisión informada no se puede afirmar que estamos adentro con seguridad.
+      out.push({ plot: p, confidence: hasAccuracy(fix.accuracy) && insideMargin > err ? "sure" : "near" });
     } else if (metersToBboxEdge(p, fix.lon, fix.lat) <= Math.max(50, err)) {
       out.push({ plot: p, confidence: "near" });
     }

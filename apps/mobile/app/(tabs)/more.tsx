@@ -5,7 +5,7 @@ import { t } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { downloadPack, isWifi, packStatus } from "../../src/lib/offline";
 import { api, getSession, setSession } from "../../src/lib/session";
-import { localChanged, syncNow, useSyncStatus } from "../../src/lib/sync";
+import { localChanged, stopAutoSync, syncNow, useSyncStatus } from "../../src/lib/sync";
 import { useLocal } from "../../src/lib/useLocal";
 import { Button, Row, s as k } from "../../src/ui/kit";
 import { C, F, T } from "../../src/ui/theme";
@@ -39,6 +39,7 @@ export default function More() {
     if (pending > 0) return Alert.alert(t("app.logoutPending", { n: pending }));
     const s = getSession();
     if (s) await api("POST", "/auth/logout", { refreshToken: s.refreshToken }, false).catch(() => {});
+    stopAutoSync();
     getDb().wipeSynced();
     await setSession(null);
     router.replace("/login");

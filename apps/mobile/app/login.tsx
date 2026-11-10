@@ -3,6 +3,7 @@ import { ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, Text, Text
 import { router } from "expo-router";
 import { t } from "@yvy/shared";
 import campo from "../assets/campo-itapua.webp";
+import { noteOrganizationEntry } from "../src/lib/org";
 import { registerDevice } from "../src/lib/push";
 import { api, setSession, type Session } from "../src/lib/session";
 import { deviceId } from "../src/lib/sync";
@@ -90,6 +91,7 @@ export default function Login() {
                   run(async () => {
                     const session = await api<Session>("POST", "/auth/email/verify", { email: email.trim().toLowerCase(), code, deviceId: deviceId() }, false);
                     await setSession(session);
+                    noteOrganizationEntry(session);
                     registerDevice();
                     router.replace("/(tabs)");
                   })

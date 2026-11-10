@@ -585,7 +585,7 @@ export const esPY = {
     measureClose: "Cerrar forma",
     measureUndo: "Deshacer",
     measureDone: "Listo",
-    searchPlots: "Buscar lote o cultivo",
+    filterPlots: "Buscar lote o cultivo",
     noPlotMatch: "Ningún lote coincide con la búsqueda",
   },
   attribution: {

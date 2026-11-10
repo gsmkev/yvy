@@ -81,8 +81,8 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
       )}
       <Input
         type="search"
-        aria-label={t("ui.searchPlots")}
-        placeholder={t("ui.searchPlots")}
+        aria-label={t("ui.filterPlots")}
+        placeholder={t("ui.filterPlots")}
         value={q}
         onChange={(e) => setQ(e.target.value)}
         className="mb-3 w-full"

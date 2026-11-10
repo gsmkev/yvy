@@ -120,12 +120,13 @@ export const emailCodes = sqliteTable(
     id: text("id").primaryKey(),
     email: text("email").notNull(),
     codeHash: text("code_hash").notNull(),
+    ip: text("ip"),
     attempts: integer("attempts").notNull().default(0),
     expiresAt: integer("expires_at").notNull(),
     usedAt: integer("used_at"),
     createdAt: integer("created_at").notNull(),
   },
-  (t) => [index("email_codes_email_idx").on(t.email, t.createdAt)],
+  (t) => [index("email_codes_email_idx").on(t.email, t.createdAt), index("email_codes_ip_idx").on(t.ip, t.createdAt)],
 );
 
 /** QR de vinculación de un solo uso para empleados (reemplaza teléfono + PIN). */

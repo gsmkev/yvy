@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { areaHa, bboxOf, centroidOf, validateShape, type Area } from "@yvy/geo";
-import { CROPS, PLOT_KINDS, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
+import { CROPS, LIMITS, t, PLOT_KINDS, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
 
@@ -10,21 +10,41 @@ export const org = new Hono<AppEnv>();
 
 const uuid = z.string().uuid();
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
-const MAX_VERTICES = 5_000;
+/** Quita la altura (Z) de cada posición: MapLibre y Python esperan 2D. */
+const to2D = (v: unknown): unknown =>
+  Array.isArray(v) ? (typeof v[0] === "number" ? v.slice(0, 2) : v.map(to2D)) : v;
+
+const countVertices = (v: unknown): number =>
+  Array.isArray(v) ? (typeof v[0] === "number" ? 1 : v.reduce((n: number, x) => n + countVertices(x), 0)) : 0;
 
 /** Validación barata de la geometría (el cliente ya validó autointersecciones con Turf). */
-const area = z.unknown().transform((g, ctx) => {
-  const err = validateShape(g);
-  if (err) {
-    ctx.addIssue({ code: "custom", message: `geometría: ${err}` });
-    return z.NEVER;
-  }
-  if (JSON.stringify(g).length > MAX_VERTICES * 40) {
-    ctx.addIssue({ code: "custom", message: "geometría demasiado detallada" });
-    return z.NEVER;
-  }
-  return g as Area;
-});
+const areaWith = (check: (ha: number) => string | null) =>
+  z.unknown().transform((g, ctx) => {
+    const err = validateShape(g);
+    if (err) {
+      ctx.addIssue({ code: "custom", message: `geometría: ${err}` });
+      return z.NEVER;
+    }
+    const raw = g as { type: Area["type"]; coordinates: unknown };
+    if (countVertices(raw.coordinates) > LIMITS.geometry.maxVertices) {
+      ctx.addIssue({ code: "custom", message: t("ui.geomTooDetailed", { max: LIMITS.geometry.maxVertices }) });
+      return z.NEVER;
+    }
+    const flat = { type: raw.type, coordinates: to2D(raw.coordinates) } as Area;
+    const msg = check(areaHa(flat));
+    if (msg) {
+      ctx.addIssue({ code: "custom", message: msg });
+      return z.NEVER;
+    }
+    return flat;
+  });
+
+export const farmArea = areaWith((ha) =>
+  ha > LIMITS.geometry.maxFarmHa ? t("ui.farmTooBig", { max: LIMITS.geometry.maxFarmHa }) : null,
+);
+export const plotArea = areaWith((ha) =>
+  ha < LIMITS.geometry.minPlotHa ? t("ui.plotTooSmall", { min: String(LIMITS.geometry.minPlotHa).replace(".", ",") }) : null,
+);
 
 const describe = (g: Area) => ({ geometry: JSON.stringify(g), ...bboxOf(g), areaHa: areaHa(g) });
 
@@ -55,7 +75,7 @@ org.post("/farms", async (c) => {
       name: z.string().trim().min(1).max(120),
       department: z.string().max(60).nullish(),
       district: z.string().max(60).nullish(),
-      geometry: area,
+      geometry: farmArea,
     }),
     await readJson(c.req),
   );
@@ -74,7 +94,7 @@ org.post("/farms", async (c) => {
 const plotInput = z.object({
   name: z.string().trim().min(1).max(120),
   kind: z.enum(PLOT_KINDS),
-  geometry: area,
+  geometry: plotArea,
   crop: z.enum(CROPS).nullish(),
   season: z.enum(SEASONS).nullish(),
   sowingDate: isoDate.nullish(),

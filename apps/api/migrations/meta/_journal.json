@@ -15,6 +15,13 @@
       "when": 1794256594694,
       "tag": "0001_activity",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794349731166,
+      "tag": "0002_chunky_vin_gonzales",
+      "breakpoints": true
     }
   ]
 }

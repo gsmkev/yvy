@@ -1,7 +1,7 @@
 /** Matriz de permisos (PRD §9) y criterio de aceptación de la Fase 1. */
 import { describe, expect, it } from "vitest";
 import { newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
-import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";
+import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll, square } from "./helpers";
 
 const rain = (farmId: string, plotId: string | null) => ({
   mutationId: newId(),
@@ -108,17 +108,7 @@ describe("Fase 1 · aceptación", () => {
           token: worker.token,
           body: {
             name: "x",
-            geometry: {
-              type: "Polygon",
-              coordinates: [
-                [
-                  [0, 0],
-                  [1, 0],
-                  [1, 1],
-                  [0, 0],
-                ],
-              ],
-            },
+            geometry: square(-55, -27, 0.05),
           },
         })
       ).status,
@@ -141,17 +131,7 @@ describe("Fase 1 · aceptación", () => {
           token: agro.token,
           body: {
             name: "Agro",
-            geometry: {
-              type: "Polygon",
-              coordinates: [
-                [
-                  [0, 0],
-                  [1, 0],
-                  [1, 1],
-                  [0, 0],
-                ],
-              ],
-            },
+            geometry: square(-55, -27, 0.05),
           },
         })
       ).status,

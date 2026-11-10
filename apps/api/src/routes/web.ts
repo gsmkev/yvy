@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { areaHa, bboxOf, validateShape, type Area } from "@yvy/geo";
+import { areaHa, bboxOf } from "@yvy/geo";
 import { CROPS, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import {
@@ -25,6 +25,7 @@ import {
   updateTask,
 } from "../db/queries";
 import { parse, readJson } from "../lib/http";
+import { plotArea } from "./org";
 import { touchActivity } from "../auth/plan";
 import type { AppEnv } from "../types";
 
@@ -104,16 +105,14 @@ web.patch("/org/plots/:id", async (c) => {
         .string()
         .regex(/^#[0-9A-Fa-f]{6}$/)
         .nullish(),
-      geometry: z.unknown().optional(),
+      geometry: plotArea.optional(),
     }),
     await readJson(c.req),
   );
   const { geometry, ...rest } = b;
   let geo = {};
   if (geometry !== undefined) {
-    const err = validateShape(geometry);
-    if (err) return c.json({ error: `geometría: ${err}` }, 400);
-    geo = { geometry: JSON.stringify(geometry), ...bboxOf(geometry as Area), areaHa: areaHa(geometry as Area) };
+    geo = { geometry: JSON.stringify(geometry), ...bboxOf(geometry), areaHa: areaHa(geometry) };
   }
   await updatePlot(c.var.sdb, c.req.param("id"), { ...rest, ...geo });
   return c.json({ ok: true });

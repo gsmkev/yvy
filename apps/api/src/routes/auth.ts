@@ -5,7 +5,7 @@
  */
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { and, desc, eq, gte, isNull } from "drizzle-orm";
+import { and, count, desc, eq, gte, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { LIMITS, newId, t } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -64,6 +64,17 @@ auth.post("/email/start", async (c) => {
   const [user] = await db.select({ id: s.users.id }).from(s.users).where(eq(s.users.email, body.email)).limit(1);
   // Misma respuesta exista o no el usuario, para no revelar cuentas.
   if (!user) return c.json({ ok: true });
+  // Tope por IP (sin IP, p. ej. en pruebas, no se limita por este lado).
+  const ip = c.req.header("CF-Connecting-IP") ?? null;
+  if (ip) {
+    const [{ n }] = (await db
+      .select({ n: count() })
+      .from(s.emailCodes)
+      .where(and(eq(s.emailCodes.ip, ip), gte(s.emailCodes.createdAt, now - LIMITS.auth.emailCodesIpWindowMs)))) as [
+      { n: number },
+    ];
+    if (n >= LIMITS.auth.emailCodesPerIp) throw new HTTPException(429, { message: t("ui.tooManyCodesIp") });
+  }
   const recent = await db
     .select({ id: s.emailCodes.id })
     .from(s.emailCodes)
@@ -76,6 +87,7 @@ auth.post("/email/start", async (c) => {
     id: newId(),
     email: body.email,
     codeHash: await sha256Hex(`${body.email}:${code}`),
+    ip,
     expiresAt: now + LIMITS.auth.emailCodeTtlMs,
     createdAt: now,
   });

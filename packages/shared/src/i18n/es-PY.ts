@@ -37,6 +37,8 @@ export const esPY = {
     edit_window_expired: "pasaron más de 24 h y ya no se puede editar",
     too_many_attachments: "máximo {{max}} fotos por registro",
     deleted: "el registro fue borrado",
+    // api
+    captured_in_future: "la fecha del registro es futura; revisá el reloj del celular",
   },
   app: {
     annotate: "Anotar",
@@ -390,6 +392,11 @@ export const esPY = {
     confirmDeleteRecord: "¿Seguro que querés borrar el registro de {{kind}} del {{date}}?",
     editRecordHint: "Los cambios llegan a los celulares en la próxima sincronización.",
     recordRejected: "No se pudo guardar: {{reason}}",
+    // api
+    geomTooDetailed: "La geometría tiene demasiados vértices (máximo {{max}})",
+    plotTooSmall: "El lote es demasiado chico: el mínimo es {{min}} ha",
+    farmTooBig: "La estancia es demasiado grande: el máximo es {{max}} ha",
+    tooManyCodesIp: "Pediste muchos códigos desde esta conexión; esperá un rato antes de probar de nuevo",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

@@ -23,6 +23,21 @@ const PROB_LABEL: Record<string, string> = {
   high: "probabilidad alta",
 };
 
+/** Tokens que Expo marcó como DeviceNotRegistered (la respuesta trae un ticket por mensaje, en orden). */
+async function deadTokens(res: Response, sentTo: (string | null)[]): Promise<string[]> {
+  try {
+    const json = (await res.json()) as { data?: { status?: string; details?: { error?: string } }[] };
+    const out: string[] = [];
+    json.data?.forEach((tk, i) => {
+      const token = sentTo[i];
+      if (token && tk.status === "error" && tk.details?.error === "DeviceNotRegistered") out.push(token);
+    });
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 export async function sendPending(
   db: DB,
   env: Bindings,
@@ -57,6 +72,7 @@ export async function sendPending(
 
   const sent: string[] = [];
   const failed: string[] = [];
+  const cleanup: Stmt[] = [];
 
   // ---- Push ----
   const pushes = pending.filter((p) => p.channel === "push");
@@ -89,6 +105,12 @@ export async function sendPending(
         body: JSON.stringify(messages.slice(0, 100)),
       });
       (res.ok ? sent : failed).push(...pushes.map((p) => p.id));
+      if (res.ok) {
+        // B9: Expo responde 200 con un estado por mensaje; los tokens inválidos se borran.
+        const dead = await deadTokens(res, messages.slice(0, 100).map((m) => m.to));
+        for (let i = 0; i < dead.length; i += 90)
+          cleanup.push(db.update(s.devices).set({ pushToken: null }).where(inArray(s.devices.pushToken, dead.slice(i, i + 90))));
+      }
     } else {
       sent.push(...pushes.map((p) => p.id)); // sin dispositivos: nada que mandar
     }
@@ -134,7 +156,7 @@ export async function sendPending(
     }
   }
 
-  const stmts: Stmt[] = [];
+  const stmts: Stmt[] = [...cleanup];
   for (let i = 0; i < sent.length; i += 90)
     stmts.push(
       db

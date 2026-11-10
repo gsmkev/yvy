@@ -66,4 +66,6 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE UNIQUE INDEX `users_email_uq` ON `users` (`email`);",
   "CREATE TABLE `activity_daily` (\n\t`user_id` text NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`day` text NOT NULL,\n\t`role` text NOT NULL,\n\tPRIMARY KEY(`user_id`, `day`)\n);",
   "CREATE INDEX `activity_daily_org_idx` ON `activity_daily` (`organization_id`,`day`);",
+  "ALTER TABLE `email_codes` ADD `ip` text;",
+  "CREATE INDEX `email_codes_ip_idx` ON `email_codes` (`ip`,`created_at`);"
 ];

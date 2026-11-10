@@ -1,9 +1,10 @@
 /**
  * Guardado de avisos con deduplicación (RF-72) y creación de notificaciones (RF-73).
- * dedupe_key = estancia + tipo + fecha de inicio de la ventana. Si el aviso ya existe y la severidad no
+ * dedupe_key = estancia + tipo + fecha de inicio de la ventana; además, un aviso activo del mismo tipo que se
+ * solapa en el tiempo se actualiza en vez de crear otro (B8). Si el aviso ya existe y la severidad no
  * subió, no se vuelve a notificar.
  */
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import { newId } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, currentVersion, runBatch, type DB, type Stmt } from "../db/client";
@@ -28,9 +29,25 @@ export async function upsertAlert(
     .where(and(eq(s.plots.farmId, farm.id), isNull(s.plots.deletedAt)));
   const plotIds = (draft.details.plotIds as string[] | undefined) ?? affectedPlots(draft.kind, plots);
   const dedupeKey = `${farm.id}:${draft.kind}:${draft.validFrom}`;
-  const [existing] = await db.select().from(s.alerts).where(eq(s.alerts.dedupeKey, dedupeKey)).limit(1);
   const validFrom = Date.parse(`${draft.validFrom}T00:00:00-03:00`);
   const validTo = Date.parse(`${draft.validTo}T23:59:59-03:00`);
+  let [existing] = await db.select().from(s.alerts).where(eq(s.alerts.dedupeKey, dedupeKey)).limit(1);
+  // B8: un aviso que se corre día a día se actualiza en vez de duplicarse si la ventana se solapa.
+  if (!existing)
+    [existing] = await db
+      .select()
+      .from(s.alerts)
+      .where(
+        and(
+          eq(s.alerts.farmId, farm.id),
+          eq(s.alerts.kind, draft.kind),
+          isNull(s.alerts.resolvedAt),
+          lte(s.alerts.validFrom, validTo),
+          gte(s.alerts.validTo, validFrom),
+        ),
+      )
+      .orderBy(desc(s.alerts.validFrom))
+      .limit(1);
 
   if (
     existing &&

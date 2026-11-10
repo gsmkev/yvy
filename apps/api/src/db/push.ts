@@ -189,6 +189,10 @@ export async function applyPush(
     switch (m.kind) {
       case "records.upsert": {
         const r = m.row;
+        if (r.capturedAt > now + LIMITS.sync.maxFutureCaptureMs) {
+          reject(m, "captured_in_future");
+          break;
+        }
         const existing = records.get(r.id);
         if (existing && existing.organizationId !== org) {
           reject(m, "not_found");

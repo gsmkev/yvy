@@ -12,6 +12,10 @@ export const LIMITS = {
     recordsHistoryMs: 30 * 24 * 60 * 60 * 1000,
     /** NDVI que baja al celular (PRD §11: último año). */
     indexStatsHistoryMs: 365 * 24 * 60 * 60 * 1000,
+    /** Un registro con capturedAt más allá de esto en el futuro se rechaza (reloj mal puesto). */
+    maxFutureCaptureMs: 60 * 60 * 1000,
+    /** Tareas completadas que siguen bajando al celular. */
+    tasksDoneHistoryMs: 30 * 24 * 60 * 60 * 1000,
     /** Ventana en que el empleado puede editar o borrar sus registros (RF-34, §9). */
     workerEditWindowMs: 24 * 60 * 60 * 1000,
     /** Sincronización automática en primer plano (PRD: 15 min; anexo Cloudflare: 30). */
@@ -35,7 +39,16 @@ export const LIMITS = {
     emailCodeMaxAttempts: 5,
     linkCodeTtlMs: 24 * 60 * 60 * 1000,
     accessTokenTtlSeconds: 60 * 60,
+    /** Códigos de ingreso por IP en la ventana (anti abuso del tope de Resend). */
+    emailCodesPerIp: 10,
+    emailCodesIpWindowMs: 60 * 60 * 1000,
     refreshTokenTtlMs: 90 * 24 * 60 * 60 * 1000,
+  },
+  geometry: {
+    /** Hectáreas: bajo esto un lote es casi seguro un error de dibujo. */
+    minPlotHa: 0.1,
+    maxFarmHa: 100_000,
+    maxVertices: 5_000,
   },
   ingest: {
     maxRowsPerRequest: 40,

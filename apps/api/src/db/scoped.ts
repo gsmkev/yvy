@@ -154,6 +154,12 @@ export class ScopedDb {
     if (table === "records") return gte(s.records.capturedAt, now - LIMITS.sync.recordsHistoryMs);
     if (table === "attachments") return gte(s.attachments.createdAt, now - LIMITS.sync.recordsHistoryMs);
     if (table === "plot_index_stats") return gte(s.plotIndexStats.acquiredAt, now - LIMITS.sync.indexStatsHistoryMs);
+    // B7: tareas abiertas, o cerradas/canceladas hace menos de 30 días.
+    if (table === "tasks")
+      return or(
+        eq(s.tasks.status, "open"),
+        gte(sql`coalesce(${s.tasks.completedAt}, ${s.tasks.updatedAt})`, now - LIMITS.sync.tasksDoneHistoryMs),
+      );
     return undefined;
   }
 

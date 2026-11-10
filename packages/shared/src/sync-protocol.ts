@@ -64,7 +64,13 @@ export const pushRequest = z.object({
 export type PushRequest = z.infer<typeof pushRequest>;
 
 export type RejectReason =
-  "not_found" | "forbidden" | "invalid" | "edit_window_expired" | "too_many_attachments" | "deleted";
+  | "not_found"
+  | "forbidden"
+  | "invalid"
+  | "edit_window_expired"
+  | "too_many_attachments"
+  | "deleted"
+  | "captured_in_future";
 
 export type MutationResult =
   | { mutationId: string; status: "applied" | "duplicate" }

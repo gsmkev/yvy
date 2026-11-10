@@ -364,12 +364,49 @@ export async function updateFarm(sdb: ScopedDb, id: string, patch: Partial<typeo
 export async function deleteFarm(sdb: ScopedDb, id: string) {
   sdb.require(can.manageOrg, "Solo el dueño borra estancias");
   const ts = sdb.now();
+  const org = sdb.auth.orgId;
+  const farmPlots = sql`(SELECT id FROM plots WHERE farm_id = ${id} AND organization_id = ${org})`;
   await updateSynced(sdb, s.farms, id, { deletedAt: ts }, [
+    ...cascadeStmts(sdb, inArray(s.plotAssignments.plotId, farmPlots), eq(s.tasks.farmId, id), ts),
     sdb.db
       .update(s.plots)
       .set({ deletedAt: ts, updatedAt: ts, version: currentVersion })
-      .where(and(eq(s.plots.farmId, id), eq(s.plots.organizationId, sdb.auth.orgId))),
+      .where(and(eq(s.plots.farmId, id), eq(s.plots.organizationId, org))),
   ]);
+}
+
+/**
+ * Borrado en cascada de un lote o estancia (B1): sube assignments_version de quienes lo tenían asignado
+ * (antes de borrar las asignaciones), borra las asignaciones y cancela las tareas abiertas.
+ * 3 sentencias dentro del mismo batch.
+ */
+function cascadeStmts(sdb: ScopedDb, assignWhere: SQL, taskWhere: SQL, ts: number): Stmt[] {
+  const org = sdb.auth.orgId;
+  return [
+    sdb.db
+      .update(s.memberships)
+      .set({ assignmentsVersion: sql`${s.memberships.assignmentsVersion} + 1`, updatedAt: ts })
+      .where(
+        and(
+          eq(s.memberships.organizationId, org),
+          inArray(
+            s.memberships.userId,
+            sdb.db
+              .select({ u: s.plotAssignments.userId })
+              .from(s.plotAssignments)
+              .where(and(assignWhere, isNull(s.plotAssignments.deletedAt))),
+          ),
+        ),
+      ),
+    sdb.db
+      .update(s.plotAssignments)
+      .set({ deletedAt: ts, updatedAt: ts, version: currentVersion })
+      .where(and(eq(s.plotAssignments.organizationId, org), assignWhere, isNull(s.plotAssignments.deletedAt))),
+    sdb.db
+      .update(s.tasks)
+      .set({ status: "cancelled", updatedAt: ts, version: currentVersion })
+      .where(and(eq(s.tasks.organizationId, org), taskWhere, eq(s.tasks.status, "open"), isNull(s.tasks.deletedAt))),
+  ];
 }
 
 export async function updatePlot(sdb: ScopedDb, id: string, patch: Partial<typeof s.plots.$inferInsert>) {
@@ -379,7 +416,14 @@ export async function updatePlot(sdb: ScopedDb, id: string, patch: Partial<typeo
 
 export async function deletePlot(sdb: ScopedDb, id: string) {
   sdb.require(can.editField);
-  await updateSynced(sdb, s.plots, id, { deletedAt: sdb.now() });
+  const ts = sdb.now();
+  await updateSynced(
+    sdb,
+    s.plots,
+    id,
+    { deletedAt: ts },
+    cascadeStmts(sdb, eq(s.plotAssignments.plotId, id), eq(s.tasks.plotId, id), ts),
+  );
 }
 
 export async function deletePoi(sdb: ScopedDb, id: string) {

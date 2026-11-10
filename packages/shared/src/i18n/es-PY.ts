@@ -571,6 +571,8 @@ export const esPY = {
     // web-b
     vigor: "Vigor",
     lastVisitShort: "Visita",
+    worsenedPlots: "Lotes que empeoraron",
+    vigorDrop: "Bajó {{pct}} % desde el {{date}}",
     searchPlots: "Buscar lote o cultivo",
     noPlotMatch: "Ningún lote coincide con la búsqueda",
   },

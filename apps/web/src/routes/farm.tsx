@@ -17,6 +17,7 @@ import { TasksPanel } from "../components/TasksPanel";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs } from "../components/ui";
 import { post } from "../lib/api";
 import { download, plotsToKml } from "../lib/exports";
+import { closedAreaHa, fmtDistance, pathLengthM, type LonLat } from "../lib/measure";
 import { fmtDate, fmtHa, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useAlerts, useFarm, useFarms, useMe, useMembers } from "../lib/queries";
@@ -52,6 +53,24 @@ export function FarmPage() {
   const [view, setView] = useState<"map" | "list">("map");
   useEffect(() => {
     if (mode === "draw" || mode === "poi") setView("map");
+  }, [mode]);
+  // Medir: puntos marcados, forma cerrada; Esc termina.
+  const [measuring, setMeasuring] = useState(false);
+  const [mPoints, setMPoints] = useState<LonLat[]>([]);
+  const [mClosed, setMClosed] = useState(false);
+  const endMeasure = () => {
+    setMeasuring(false);
+    setMPoints([]);
+    setMClosed(false);
+  };
+  useEffect(() => {
+    if (!measuring) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && endMeasure();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [measuring]);
+  useEffect(() => {
+    if (mode !== "none" && measuring) endMeasure();
   }, [mode]);
 
   // Con un lote elegido el mapa encuadra el lote; sin selección, la estancia entera.
@@ -120,6 +139,11 @@ export function FarmPage() {
                   .map((r) => ({ id: r.id, lon: r.lon!, lat: r.lat!, color: BRAND.trigo }))
               : []
           }
+          measuring={measuring}
+          measurePoints={mPoints}
+          measureClosed={mClosed}
+          onMeasureClick={(lon, lat) => setMPoints((ps) => [...ps, [lon, lat]])}
+          onMeasureClose={() => setMClosed(true)}
           drawing={mode === "draw"}
           onDrawn={(g) => {
             setDrawn(g);
@@ -134,6 +158,58 @@ export function FarmPage() {
         />
         {/* Capas: control segmentado compacto, con leyenda cuando corresponde */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
+          <div className="flex w-56 flex-col gap-1.5 rounded-md border border-white/15 bg-surco/85 p-0.5 text-xs font-medium text-lino backdrop-blur">
+            {!measuring ? (
+              <button
+                onClick={() => setMeasuring(true)}
+                className="cursor-pointer rounded px-3 py-1.5 text-left hover:bg-white/10"
+              >
+                {t("ui.measure")}
+              </button>
+            ) : (
+              <div className="flex flex-col gap-2 p-2.5 font-normal">
+                {mPoints.length === 0 ? (
+                  <p className="text-lino/80">{t("ui.measureHint")}</p>
+                ) : (
+                  <>
+                    <p className="num">
+                      {mClosed ? t("ui.measurePerimeter") : t("ui.measureDistance")}:{" "}
+                      <strong className="font-semibold">{fmtDistance(pathLengthM(mPoints, mClosed))}</strong>
+                    </p>
+                    {mClosed && (
+                      <p className="num">
+                        {t("ui.area")}: <strong className="font-semibold">{fmtHa(closedAreaHa(mPoints) ?? 0)}</strong>
+                      </p>
+                    )}
+                  </>
+                )}
+                <div className="flex gap-4 font-medium">
+                  {mPoints.length >= 3 && !mClosed && (
+                    <button
+                      className="cursor-pointer underline-offset-4 hover:underline"
+                      onClick={() => setMClosed(true)}
+                    >
+                      {t("ui.measureClose")}
+                    </button>
+                  )}
+                  {mPoints.length > 0 && (
+                    <button
+                      className="cursor-pointer underline-offset-4 hover:underline"
+                      onClick={() => {
+                        setMClosed(false);
+                        setMPoints((ps) => ps.slice(0, -1));
+                      }}
+                    >
+                      {t("ui.measureUndo")}
+                    </button>
+                  )}
+                  <button className="cursor-pointer underline-offset-4 hover:underline" onClick={endMeasure}>
+                    {t("ui.measureDone")}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           <div
             role="radiogroup"
             aria-label={t("ui.layers")}

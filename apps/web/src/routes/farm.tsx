@@ -6,6 +6,7 @@ import { MapPinPlus, PenLine, Upload, X } from "lucide-react";
 import { areaHa, bboxOf, type Area } from "@yvy/geo";
 import { BRAND, NDVI_RAMP, POI_KINDS } from "@yvy/shared";
 import { AlertsList } from "../components/AlertsList";
+import { CopyCoords } from "../components/CopyCoords";
 import { ClimatePanel } from "../components/ClimatePanel";
 import { boundsOf, FarmMap } from "../components/FarmMap";
 import { ImportPlots } from "../components/ImportPlots";
@@ -253,8 +254,11 @@ export function FarmPage() {
                     {d.pois.map((p) => {
                       return (
                         <li key={p.id} className="flex items-baseline justify-between gap-2.5">
-                          {p.name}
-                          <span className="text-xs text-tinta-2">{tk(`ui.poiKinds_${p.kind}`)}</span>
+                          <span>
+                            {p.name}
+                            <span className="ml-2 text-xs text-tinta-2">{tk(`ui.poiKinds_${p.kind}`)}</span>
+                          </span>
+                          <CopyCoords lon={p.lon} lat={p.lat} className="shrink-0 !text-xs" />
                         </li>
                       );
                     })}

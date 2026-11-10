@@ -573,6 +573,8 @@ export const esPY = {
     lastVisitShort: "Visita",
     worsenedPlots: "Lotes que empeoraron",
     vigorDrop: "Bajó {{pct}} % desde el {{date}}",
+    copyCoords: "Copiar coordenadas",
+    copied: "Copiado",
     searchPlots: "Buscar lote o cultivo",
     noPlotMatch: "Ningún lote coincide con la búsqueda",
   },

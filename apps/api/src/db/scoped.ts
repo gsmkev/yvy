@@ -445,6 +445,15 @@ export class ScopedDb {
     return { id };
   }
 
+  /** Lotes vivos de una estancia de la organización (1 query). */
+  async countPlots(farmId: string): Promise<number> {
+    const [r] = await this.db
+      .select({ n: sql<number>`count(*)` })
+      .from(s.plots)
+      .where(and(eq(s.plots.farmId, farmId), eq(s.plots.organizationId, this.auth.orgId), isNull(s.plots.deletedAt)));
+    return Number(r?.n ?? 0);
+  }
+
   /** Alta de varios lotes de una vez (importación KML). */
   async createPlots(
     farmId: string,

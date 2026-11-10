@@ -103,3 +103,20 @@ describe("S-02 · jobs al crear la estancia", () => {
     expect(list.body.find((f) => f.id === farm.body.id).imageryStatus).toBe("ready");
   });
 });
+
+describe("S-01 · historia por lote", () => {
+  it("vuelve a pedir la historia al importar los primeros lotes, no en las importaciones siguientes", async () => {
+    secrets.GITHUB_DISPATCH_TOKEN = "ghp_test";
+    secrets.GITHUB_REPO = "koeti/yvy";
+    const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const owner = await createOrgWithOwner();
+    const farm = await newFarm(owner.token);
+    const plot = (name: string, x: number) => ({ name, kind: "crop", geometry: square(x, -27.15, 0.01) });
+    const path = `/org/farms/${farm.body.id}/plots`;
+    expect((await call("POST", path, { token: owner.token, body: { plots: [plot("A", -55.89)] } })).status).toBe(201);
+    expect((await call("POST", path, { token: owner.token, body: { plots: [plot("B", -55.87)] } })).status).toBe(201);
+    // 1 al crear la estancia + 1 al importar los primeros lotes
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});

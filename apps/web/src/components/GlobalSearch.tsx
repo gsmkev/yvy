@@ -79,7 +79,13 @@ export function GlobalSearch({ inputRef }: { inputRef: React.RefObject<HTMLInput
     };
     for (const f of farms.data ?? [])
       if (has(f.name, f.department))
-        out.farms.push({ key: `f${f.id}`, kind: "farms", title: f.name, sub: f.department ?? undefined, go: toFarm(f.id) });
+        out.farms.push({
+          key: `f${f.id}`,
+          kind: "farms",
+          title: f.name,
+          sub: f.department ?? undefined,
+          go: toFarm(f.id),
+        });
     for (const d of details) {
       if (!d.data) continue;
       for (const p of d.data.plots)

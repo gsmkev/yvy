@@ -27,17 +27,20 @@ export async function dispatchNewFarm(env: Bindings, farmId: string): Promise<"s
     return "skipped";
   }
   try {
-    const res = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/actions/workflows/${WORKFLOW}/dispatches`, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${env.GITHUB_DISPATCH_TOKEN}`,
-        accept: "application/vnd.github+json",
-        "x-github-api-version": "2022-11-28",
-        "user-agent": "Yvy/1.0 koeti.com.py",
-        "content-type": "application/json",
+    const res = await fetch(
+      `https://api.github.com/repos/${env.GITHUB_REPO}/actions/workflows/${WORKFLOW}/dispatches`,
+      {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${env.GITHUB_DISPATCH_TOKEN}`,
+          accept: "application/vnd.github+json",
+          "x-github-api-version": "2022-11-28",
+          "user-agent": "Yvy/1.0 koeti.com.py",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ ref: REF, inputs: { job: DISPATCH_JOB, farm: farmId } }),
       },
-      body: JSON.stringify({ ref: REF, inputs: { job: DISPATCH_JOB, farm: farmId } }),
-    });
+    );
     if (res.status === 204) return "sent";
     console.error(`dispatch de ${DISPATCH_JOB} rechazado: HTTP ${res.status}`);
   } catch (e) {

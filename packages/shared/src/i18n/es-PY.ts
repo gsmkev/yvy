@@ -571,6 +571,8 @@ export const esPY = {
     // web-b
     vigor: "Vigor",
     lastVisitShort: "Visita",
+    searchPlots: "Buscar lote o cultivo",
+    noPlotMatch: "Ningún lote coincide con la búsqueda",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

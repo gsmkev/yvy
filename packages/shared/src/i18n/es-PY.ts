@@ -756,6 +756,8 @@ export const esPY = {
       "Vamos a avisar al equipo de Yvy. Hasta que lo confirmemos con vos, tu cuenta y tus datos siguen como están.",
     accountDeleteConfirmButton: "Sí, pedir la baja",
     accountDeleteSent: "Recibimos tu pedido. Te escribimos para confirmar la baja y coordinar la copia de tus datos.",
+    // web-c
+    importFixed: "Corregimos {{count}} vértices repetidos o espigas sin superficie.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

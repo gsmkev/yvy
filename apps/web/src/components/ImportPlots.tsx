@@ -63,6 +63,11 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
       ) : (
         <div className="flex flex-col gap-3">
           <p className="text-sm">{t("ui.importPreview", { count: items.length })}</p>
+          {items.some((i) => i.fixed > 0) && (
+            <p className="text-sm text-tinta-2">
+              {t("ui.importFixed", { count: items.reduce((n, i) => n + i.fixed, 0) })}
+            </p>
+          )}
           {items.some((i) => i.error) && (
             <p className="text-sm text-alerta">
               {t("ui.importErrors", { count: items.filter((i) => i.error).length })}

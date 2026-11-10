@@ -78,3 +78,71 @@ export const describeArea = (g: Area) => ({
   ...bboxOf(g),
   areaHa: areaHa(g),
 });
+
+// ---------------------------------------------------------------------------
+// Limpieza de anillos (M-11)
+// ---------------------------------------------------------------------------
+
+const EPS = 1e-9;
+const same = (a: Position, b: Position) => Math.abs(a[0]! - b[0]!) < EPS && Math.abs(a[1]! - b[1]!) < EPS;
+
+/** a -> b -> c vuelve sobre sí mismo (c sobre la recta a-b del lado de a): b es una espiga de área cero. */
+const isSpike = (a: Position, b: Position, c: Position): boolean => {
+  const abx = b[0]! - a[0]!;
+  const aby = b[1]! - a[1]!;
+  const bcx = c[0]! - b[0]!;
+  const bcy = c[1]! - b[1]!;
+  const scale = Math.hypot(abx, aby) * Math.hypot(bcx, bcy);
+  if (scale === 0) return true;
+  const cross = abx * bcy - aby * bcx;
+  return Math.abs(cross) / scale < 1e-9 && abx * bcx + aby * bcy < 0;
+};
+
+/**
+ * Quita vértices consecutivos duplicados y espigas de área cero de un anillo cerrado.
+ * Devuelve el anillo limpio (cerrado) y cuántos vértices se quitaron. Si quedaría con menos de
+ * 4 posiciones se devuelve el original sin tocar para que la validación lo informe.
+ */
+export const cleanRing = (ring: Position[]): { ring: Position[]; removed: number } => {
+  if (ring.length < 4) return { ring, removed: 0 };
+  const open = same(ring[0]!, ring[ring.length - 1]!) ? ring.slice(0, -1) : ring.slice();
+  const out: Position[] = [];
+  for (const p of open) {
+    if (out.length && same(out[out.length - 1]!, p)) continue;
+    while (out.length >= 2 && isSpike(out[out.length - 2]!, out[out.length - 1]!, p)) out.pop();
+    out.push(p);
+  }
+  // La unión entre el final y el inicio también puede tener duplicados o espigas.
+  let changed = true;
+  while (changed && out.length >= 3) {
+    changed = false;
+    const n = out.length;
+    if (same(out[n - 1]!, out[0]!) || isSpike(out[n - 2]!, out[n - 1]!, out[0]!)) {
+      out.pop();
+      changed = true;
+    } else if (isSpike(out[n - 1]!, out[0]!, out[1]!)) {
+      out.shift();
+      changed = true;
+    }
+  }
+  if (out.length < 3) return { ring, removed: 0 };
+  const closed = [...out, out[0]!];
+  return { ring: closed, removed: ring.length - closed.length };
+};
+
+/** Aplica `cleanRing` a todos los anillos de un polígono o multipolígono. */
+export const cleanArea = (g: Area): { geometry: Area; removed: number } => {
+  let removed = 0;
+  const rings = (rs: Position[][]) =>
+    rs.map((r) => {
+      const c = cleanRing(r);
+      removed += c.removed;
+      return c.ring;
+    });
+  const geometry: Area =
+    g.type === "Polygon"
+      ? { type: "Polygon", coordinates: rings(g.coordinates) }
+      : { type: "MultiPolygon", coordinates: g.coordinates.map(rings) };
+  return { geometry, removed };
+};
+

@@ -5,7 +5,7 @@
 import { kml } from "@tmcw/togeojson";
 import JSZip from "jszip";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
-import { areaHa, validatePolygon, type Area, type ValidationError } from "@yvy/geo";
+import { areaHa, cleanArea, validatePolygon, type Area, type ValidationError } from "@yvy/geo";
 
 export interface ImportedPolygon {
   index: number;
@@ -13,6 +13,8 @@ export interface ImportedPolygon {
   geometry: Area;
   areaHa: number;
   error: ValidationError | null;
+  /** Vértices duplicados o espigas quitados al limpiar (M-11). */
+  fixed: number;
 }
 
 const NAME_KEYS = ["name", "Name", "NOMBRE", "nombre", "LOTE", "lote", "id", "ID"];
@@ -40,7 +42,8 @@ export function toPolygons(fc: FeatureCollection): ImportedPolygon[] {
   return flatten(fc)
     .filter((f) => f.geometry && (f.geometry.type === "Polygon" || f.geometry.type === "MultiPolygon"))
     .map((f, index) => {
-      const geometry = strip2d(f.geometry!) as Area;
+      const cleaned = cleanArea(strip2d(f.geometry!) as Area);
+      const geometry = cleaned.geometry;
       const props = (f.properties ?? {}) as Record<string, unknown>;
       const key = NAME_KEYS.find((k) => props[k] !== undefined && props[k] !== "");
       const error = validatePolygon(geometry);
@@ -50,6 +53,7 @@ export function toPolygons(fc: FeatureCollection): ImportedPolygon[] {
         geometry,
         areaHa: error ? 0 : areaHa(geometry),
         error,
+        fixed: cleaned.removed,
       };
     });
 }

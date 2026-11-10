@@ -5,17 +5,19 @@ import { FarmMap } from "../components/FarmMap";
 import { RecordsList } from "../components/RecordsList";
 import { Button, ErrorBox, Field, Input, Select } from "../components/ui";
 import { recordsToExcel } from "../lib/exports";
+import { DEFAULT_TZ, dayToMs } from "../lib/format";
 import { t, tk } from "../lib/i18n";
-import { fetchAllRecords, useFarms, useMe, useMembers, type RecordFilters } from "../lib/queries";
+import { fetchAllRecords, useFarm, useFarms, useMe, useMembers, type RecordFilters } from "../lib/queries";
 import type { RecordRow } from "../lib/types";
-
-const toMs = (d: string, end = false) => (d ? Date.parse(`${d}T${end ? "23:59:59" : "00:00:00"}-03:00`) : undefined);
 
 export function RecordsPage() {
   const farms = useFarms();
   const me = useMe();
   const members = useMembers();
   const [f, setF] = useState({ farmId: "", authorId: "", kind: "", from: "", to: "" });
+  // Zona horaria de la estancia elegida (el listado no la trae: se lee del detalle).
+  const selectedFarm = useFarm(f.farmId, !!f.farmId);
+  const tz = selectedFarm.data?.farm.timezone ?? DEFAULT_TZ;
   const [rows, setRows] = useState<RecordRow[]>([]);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<unknown>(null);
@@ -24,10 +26,10 @@ export function RecordsPage() {
       farmId: f.farmId || undefined,
       authorId: f.authorId || undefined,
       kind: f.kind || undefined,
-      from: toMs(f.from),
-      to: toMs(f.to, true),
+      from: dayToMs(f.from, tz),
+      to: dayToMs(f.to, tz, true),
     }),
-    [f],
+    [f, tz],
   );
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   const exportExcel = async () => {
@@ -68,7 +70,7 @@ export function RecordsPage() {
       </div>
       <section className="flex min-h-0 flex-col gap-3 overflow-auto p-4 *:shrink-0">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold">{t("ui.navRecords")}</h1>
+          <h1 className="font-serif text-2xl font-semibold">{t("ui.navRecords")}</h1>
           <Button icon={FileSpreadsheet} onClick={exportExcel} disabled={exporting}>
             {t("ui.exportExcel")}
           </Button>

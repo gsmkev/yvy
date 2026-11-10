@@ -7,7 +7,7 @@ import { Minus, Pencil, Satellite, Trash2, TrendingDown, TrendingUp } from "luci
 import { t, tk } from "../lib/i18n";
 import type { Member, Plot } from "../lib/types";
 import { LineChart } from "./charts";
-import { Button, Empty, ErrorBox, Field, Input, Select, Spinner, Stat } from "./ui";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Select, Spinner, Stat } from "./ui";
 
 interface Ndvi {
   series: { acquiredAt: number; mean: number; p10: number; p90: number; validPct: number }[];
@@ -29,6 +29,7 @@ export function PlotPanel({
 }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [form, setForm] = useState({
     name: plot.name,
     kind: plot.kind,
@@ -152,11 +153,7 @@ export function PlotPanel({
           <Button icon={Pencil} onClick={() => setEditing(true)}>
             {t("ui.edit")}
           </Button>
-          <Button
-            variant="danger"
-            icon={Trash2}
-            onClick={() => confirm(t("ui.confirmDelete", { name: plot.name })) && remove.mutate()}
-          >
+          <Button variant="danger" icon={Trash2} onClick={() => setConfirming(true)}>
             {t("ui.delete")}
           </Button>
         </div>
@@ -214,6 +211,17 @@ export function PlotPanel({
             </Button>
           </div>
         </form>
+      )}
+      {confirming && (
+        <ConfirmModal
+          title={plot.name}
+          message={t("ui.confirmDelete", { name: plot.name })}
+          confirmLabel={t("ui.delete")}
+          pending={remove.isPending}
+          error={remove.error}
+          onConfirm={() => remove.mutate()}
+          onClose={() => setConfirming(false)}
+        />
       )}
     </div>
   );

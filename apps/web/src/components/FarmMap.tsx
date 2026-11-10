@@ -9,8 +9,9 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { Protocol } from "pmtiles";
 import { TerraDraw, TerraDrawPolygonMode } from "terra-draw";
 import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter";
-import type { Feature, FeatureCollection, Polygon } from "geojson";
+import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { BRAND } from "@yvy/shared";
+import pointOnFeature from "@turf/point-on-feature";
 import { t } from "../lib/i18n";
 import type { Layer, Plot, Poi } from "../lib/types";
 
@@ -202,7 +203,7 @@ export function FarmMap(props: FarmMapProps) {
       const el = document.createElement("div");
       el.className = "plot-label";
       el.textContent = name;
-      return new maplibregl.Marker({ element: el }).setLngLat(centerOf(JSON.parse(geometry))).addTo(map);
+      return new maplibregl.Marker({ element: el }).setLngLat(labelPoint(JSON.parse(geometry))).addTo(map);
     });
     (map.getSource("plots") as GeoJSONSource).setData(
       fc(
@@ -254,7 +255,7 @@ export function FarmMap(props: FarmMapProps) {
 
   useEffect(() => {
     const map = mapRef.current;
-    if (map && props.bounds) map.fitBounds(props.bounds, { padding: 40, duration: 600 });
+    if (map && props.bounds) map.fitBounds(props.bounds, { padding: 60, duration: 600, maxZoom: 18 });
   }, [props.bounds?.join(",")]);
 
   // ---- dibujo ----
@@ -320,14 +321,7 @@ export const boundsOf = (o: {
   maxLat: number;
 }): [number, number, number, number] => [o.minLon, o.minLat, o.maxLon, o.maxLat];
 
-function centerOf(g: { type: string; coordinates: unknown }): [number, number] {
-  const pts: number[][] = [];
-  const walk = (c: unknown): void => {
-    if (Array.isArray(c) && typeof c[0] === "number") pts.push(c as number[]);
-    else if (Array.isArray(c)) c.forEach(walk);
-  };
-  walk(g.coordinates);
-  const xs = pts.map((p) => p[0]!);
-  const ys = pts.map((p) => p[1]!);
-  return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
+/** Punto garantizado dentro del polígono (el centro del bbox cae afuera en lotes en L o U). */
+function labelPoint(g: Polygon | MultiPolygon): [number, number] {
+  return pointOnFeature({ type: "Feature", properties: {}, geometry: g }).geometry.coordinates as [number, number];
 }

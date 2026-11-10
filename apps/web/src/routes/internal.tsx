@@ -36,7 +36,7 @@ export function InternalPage() {
   const pct = (v: number | null) => (v === null ? "—" : `${Math.round(v)} %`);
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-xl font-semibold">{t("ui.internalTitle")}</h1>
+      <h1 className="font-serif text-2xl font-semibold">{t("ui.internalTitle")}</h1>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {d.usage.map((u) => (
           <Card key={u.metric}>
@@ -49,22 +49,26 @@ export function InternalPage() {
         <table className="w-full text-sm">
           <thead className="eyebrow bg-lino text-left">
             <tr>
-              {[
-                "Organización",
-                "Plan",
-                "Estancias",
-                "Superficie",
-                "Empleados",
-                "Registros 7 d",
-                "Reg./empleado activo/sem (meta ≥ 10)",
-                "Dueños 2+ días/sem (meta ≥ 70 %)",
-                "Avisos útiles (meta ≥ 50 %)",
-                "Última actividad",
-              ].map((h) => (
-                <th key={h} className="px-3 py-2 font-medium">
-                  {h}
-                </th>
-              ))}
+              {(
+                [
+                  "internalOrg",
+                  "internalPlan",
+                  "internalFarms",
+                  "internalArea",
+                  "internalWorkers",
+                  "internalRecords7d",
+                  "internalPerWorker",
+                  "internalOwnersActive",
+                  "internalUseful",
+                  "internalLastActive",
+                ] as const
+              )
+                .map((k) => t(`ui.${k}`))
+                .map((h) => (
+                  <th key={h} className="px-3 py-2 font-medium">
+                    {h}
+                  </th>
+                ))}
             </tr>
           </thead>
           <tbody>

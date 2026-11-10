@@ -1,20 +1,15 @@
-import { createRootRoute, createRoute, createRouter, redirect } from "@tanstack/react-router";
+import { createRootRoute, createRoute, createRouter, lazyRouteComponent, redirect } from "@tanstack/react-router";
 import { getSession } from "./lib/api";
 import { Layout } from "./components/Layout";
-import { LoginPage } from "./routes/login";
-import { HomePage } from "./routes/home";
-import { NewFarmPage } from "./routes/farm-new";
-import { FarmPage } from "./routes/farm";
-import { ReportPage } from "./routes/report";
-import { RecordsPage } from "./routes/records";
-import { TasksPage } from "./routes/tasks";
-import { TeamPage } from "./routes/team";
-import { AlertsPage } from "./routes/alerts";
-import { InternalPage } from "./routes/internal";
+import { Spinner } from "./components/ui";
 
 const rootRoute = createRootRoute();
 
-const loginRoute = createRoute({ getParentRoute: () => rootRoute, path: "/ingresar", component: LoginPage });
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/ingresar",
+  component: lazyRouteComponent(() => import("./routes/login"), "LoginPage"),
+});
 
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -25,34 +20,71 @@ const appRoute = createRoute({
   },
 });
 
-const home = createRoute({ getParentRoute: () => appRoute, path: "/", component: HomePage });
-const newFarm = createRoute({ getParentRoute: () => appRoute, path: "/estancias/nueva", component: NewFarmPage });
+const home = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/",
+  component: lazyRouteComponent(() => import("./routes/home"), "HomePage"),
+});
+const newFarm = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/estancias/nueva",
+  component: lazyRouteComponent(() => import("./routes/farm-new"), "NewFarmPage"),
+});
 export const farmRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/estancias/$farmId",
-  component: FarmPage,
+  component: lazyRouteComponent(() => import("./routes/farm"), "FarmPage"),
 });
 export const reportRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/estancias/$farmId/parte",
-  component: ReportPage,
+  component: lazyRouteComponent(() => import("./routes/report"), "ReportPage"),
   validateSearch: (s: Record<string, unknown>) => ({
     desde: s.desde as string | undefined,
     hasta: s.hasta as string | undefined,
   }),
 });
-const records = createRoute({ getParentRoute: () => appRoute, path: "/registros", component: RecordsPage });
-const tasks = createRoute({ getParentRoute: () => appRoute, path: "/tareas", component: TasksPage });
-const team = createRoute({ getParentRoute: () => appRoute, path: "/equipo", component: TeamPage });
-const alerts = createRoute({ getParentRoute: () => appRoute, path: "/avisos", component: AlertsPage });
-const internal = createRoute({ getParentRoute: () => appRoute, path: "/interno", component: InternalPage });
+const records = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/registros",
+  component: lazyRouteComponent(() => import("./routes/records"), "RecordsPage"),
+});
+const tasks = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/tareas",
+  component: lazyRouteComponent(() => import("./routes/tasks"), "TasksPage"),
+});
+const team = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/equipo",
+  component: lazyRouteComponent(() => import("./routes/team"), "TeamPage"),
+});
+const alerts = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/avisos",
+  component: lazyRouteComponent(() => import("./routes/alerts"), "AlertsPage"),
+});
+const internal = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/interno",
+  component: lazyRouteComponent(() => import("./routes/internal"), "InternalPage"),
+});
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
   appRoute.addChildren([home, newFarm, farmRoute, reportRoute, records, tasks, team, alerts, internal]),
 ]);
 
-export const router = createRouter({ routeTree, defaultPreload: "intent" });
+export const router = createRouter({
+  routeTree,
+  defaultPreload: "intent",
+  defaultPendingMs: 150,
+  defaultPendingComponent: () => (
+    <div className="p-6">
+      <Spinner />
+    </div>
+  ),
+});
 
 declare module "@tanstack/react-router" {
   interface Register {

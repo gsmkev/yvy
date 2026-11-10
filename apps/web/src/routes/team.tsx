@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
 import { ROLES } from "@yvy/shared";
-import { Button, ErrorBox, Field, Input, Modal, Select, Spinner } from "../components/ui";
+import { Button, ConfirmModal, ErrorBox, Field, Input, Modal, Select, Spinner } from "../components/ui";
 import { del, get, post, put } from "../lib/api";
 import { fmtDateTime, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -17,6 +17,7 @@ export function TeamPage() {
   const [adding, setAdding] = useState(false);
   const [qr, setQr] = useState<{ member: Member; qr: string; expiresAt: number } | null>(null);
   const [assigning, setAssigning] = useState<Member | null>(null);
+  const [removing, setRemoving] = useState<Member | null>(null);
   const canManage = me.data?.role === "owner" || me.data?.role === "admin";
   const link = useMutation({
     mutationFn: (m: Member) =>
@@ -25,7 +26,10 @@ export function TeamPage() {
   });
   const remove = useMutation({
     mutationFn: (m: Member) => del(`/org/members/${m.userId}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["members"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["members"] });
+      setRemoving(null);
+    },
   });
 
   if (members.isLoading) return <Spinner />;
@@ -58,15 +62,23 @@ export function TeamPage() {
             </Button>
           )}
           {canManage && m.userId !== me.data?.user.id && (
-            <Button
-              variant="danger"
-              onClick={() => confirm(t("ui.confirmDelete", { name: m.fullName })) && remove.mutate(m)}
-            >
+            <Button variant="danger" onClick={() => setRemoving(m)}>
               {t("ui.removeMember")}
             </Button>
           )}
         </div>
       ))}
+      {removing && (
+        <ConfirmModal
+          title={removing.fullName}
+          message={t("ui.confirmDelete", { name: removing.fullName })}
+          confirmLabel={t("ui.removeMember")}
+          pending={remove.isPending}
+          error={remove.error}
+          onConfirm={() => remove.mutate(removing)}
+          onClose={() => setRemoving(null)}
+        />
+      )}
       {adding && <AddMember canAddAdmins={me.data?.role === "owner"} onClose={() => setAdding(false)} />}
       {assigning && <AssignPlots member={assigning} onClose={() => setAssigning(null)} />}
       {qr && (

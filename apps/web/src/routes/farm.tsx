@@ -3,7 +3,7 @@ import { Link, useParams } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Polygon } from "geojson";
 import { MapPinPlus, PenLine, Upload, X } from "lucide-react";
-import { areaHa } from "@yvy/geo";
+import { areaHa, bboxOf, type Area } from "@yvy/geo";
 import { BRAND, NDVI_RAMP, POI_KINDS } from "@yvy/shared";
 import { AlertsList } from "../components/AlertsList";
 import { ClimatePanel } from "../components/ClimatePanel";
@@ -39,7 +39,16 @@ export function FarmPage() {
   const [layer, setLayer] = useState<"satellite" | "ndvi">("satellite");
   const [records, setRecords] = useState<RecordRow[]>([]);
 
-  const bounds = useMemo(() => (farm.data ? boundsOf(farm.data.farm) : null), [farm.data?.farm.id]);
+  // Con un lote elegido el mapa encuadra el lote; sin selección, la estancia entera.
+  const selectedGeometry = farm.data?.plots.find((p) => p.id === selected)?.geometry;
+  const bounds = useMemo(() => {
+    if (!farm.data) return null;
+    if (selectedGeometry) {
+      const b = bboxOf(JSON.parse(selectedGeometry) as Area);
+      return [b.minLon, b.minLat, b.maxLon, b.maxLat] as [number, number, number, number];
+    }
+    return boundsOf(farm.data.farm);
+  }, [farm.data?.farm.id, selectedGeometry]);
   if (farm.isLoading)
     return (
       <div className="p-6">

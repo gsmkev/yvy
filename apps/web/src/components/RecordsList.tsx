@@ -4,9 +4,10 @@ import { get } from "../lib/api";
 import { describeData } from "../lib/exports";
 import { fmtDateTime } from "../lib/format";
 import { t, tk } from "../lib/i18n";
-import { fetchRecordsPage, type RecordFilters } from "../lib/queries";
+import { fetchRecordsPage, useMe, type RecordFilters } from "../lib/queries";
 import type { RecordRow } from "../lib/types";
 import { Clock } from "lucide-react";
+import { DeleteRecordConfirm, RecordEditForm } from "./RecordEdit";
 import { Button, Empty, ErrorBox, Modal, Spinner } from "./ui";
 
 export function useRecords(filters: RecordFilters) {
@@ -100,41 +101,60 @@ function Photo({ id }: { id: string }) {
 }
 
 export function RecordModal({ record: r, onClose }: { record: RecordRow; onClose: () => void }) {
+  const me = useMe();
+  const canEdit = !!me.data && me.data.role !== "worker";
+  const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   return (
-    <Modal title={tk(`recordKinds.${r.kind}`)} onClose={onClose}>
-      <dl className="num grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
-        <dt className="text-tinta-2">{t("ui.capturedAt")}</dt>
-        <dd>{fmtDateTime(r.capturedAt)}</dd>
-        <dt className="text-tinta-2">{t("ui.author")}</dt>
-        <dd>{r.authorName}</dd>
-        {r.plotName && (
-          <>
-            <dt className="text-tinta-2">{t("ui.plot")}</dt>
-            <dd>{r.plotName}</dd>
-          </>
-        )}
-        {r.lat !== null && (
-          <>
-            <dt className="text-tinta-2">{t("ui.location")}</dt>
-            <dd>
-              {r.lat.toFixed(5)}, {r.lon!.toFixed(5)}
-            </dd>
-          </>
-        )}
-      </dl>
-      <p className="mt-4 rounded-md border border-linea bg-papel p-3 text-sm whitespace-pre-wrap">
-        {describeData(r.kind, r.data)}
-      </p>
-      {r.attachments.length > 0 && (
-        <>
-          <h3 className="eyebrow mt-5 mb-2">{t("ui.photos")}</h3>
-          <div className="grid grid-cols-3 gap-2">
-            {r.attachments.map((a) => (
-              <Photo key={a.id} id={a.id} />
-            ))}
+    <>
+      <Modal title={tk(`recordKinds.${r.kind}`)} onClose={onClose}>
+        <dl className="num grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
+          <dt className="text-tinta-2">{t("ui.capturedAt")}</dt>
+          <dd>{fmtDateTime(r.capturedAt)}</dd>
+          <dt className="text-tinta-2">{t("ui.author")}</dt>
+          <dd>{r.authorName}</dd>
+          {r.plotName && (
+            <>
+              <dt className="text-tinta-2">{t("ui.plot")}</dt>
+              <dd>{r.plotName}</dd>
+            </>
+          )}
+          {r.lat !== null && (
+            <>
+              <dt className="text-tinta-2">{t("ui.location")}</dt>
+              <dd>
+                {r.lat.toFixed(5)}, {r.lon!.toFixed(5)}
+              </dd>
+            </>
+          )}
+        </dl>
+        {editing ? (
+          <div className="mt-4 border-t border-linea pt-4">
+            <RecordEditForm record={r} onDone={onClose} onCancel={() => setEditing(false)} />
           </div>
-        </>
-      )}
-    </Modal>
+        ) : (
+          <p className="mt-4 border-y border-linea py-3 text-sm whitespace-pre-wrap">{describeData(r.kind, r.data)}</p>
+        )}
+        {r.attachments.length > 0 && (
+          <>
+            <h3 className="eyebrow mt-5 mb-2">{t("ui.photos")}</h3>
+            <div className="grid grid-cols-3 gap-2">
+              {r.attachments.map((a) => (
+                <Photo key={a.id} id={a.id} />
+              ))}
+            </div>
+          </>
+        )}
+        {canEdit && !editing && (
+          <div className="mt-5 flex gap-2 border-t border-linea pt-4">
+            <Button onClick={() => setEditing(true)}>{t("ui.edit")}</Button>
+            <Button variant="danger" onClick={() => setDeleting(true)}>
+              {t("ui.delete")}
+            </Button>
+          </div>
+        )}
+      </Modal>
+      {deleting && <DeleteRecordConfirm record={r} onDone={onClose} onClose={() => setDeleting(false)} />}
+    </>
   );
 }

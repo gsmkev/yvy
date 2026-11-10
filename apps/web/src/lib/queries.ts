@@ -7,8 +7,9 @@ export const useFarms = () => useQuery({ queryKey: ["farms"], queryFn: () => get
 const natural = new Intl.Collator("es-PY", { numeric: true, sensitivity: "base" });
 export const byName = <T extends { name: string }>(a: T, b: T) => natural.compare(a.name, b.name);
 
-export const useFarm = (id: string) =>
+export const useFarm = (id: string, enabled = true) =>
   useQuery({
+    enabled,
     queryKey: ["farm", id],
     queryFn: async () => {
       const d = await get<FarmDetail>(`/org/farms/${id}`);

@@ -134,6 +134,44 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
   );
 }
 
+/** Confirmación de una acción destructiva (reemplaza a window.confirm). */
+export function ConfirmModal({
+  title,
+  message,
+  confirmLabel,
+  pending,
+  error,
+  onConfirm,
+  onClose,
+}: {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  pending?: boolean;
+  error?: unknown;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <Modal title={title} onClose={onClose}>
+      <p className="text-[15px]">{message}</p>
+      {error ? (
+        <div className="mt-3">
+          <ErrorBox error={error} />
+        </div>
+      ) : null}
+      <div className="mt-5 flex gap-2">
+        <Button variant="danger" onClick={onConfirm} disabled={pending}>
+          {confirmLabel}
+        </Button>
+        <Button variant="quiet" onClick={onClose}>
+          {t("ui.cancel")}
+        </Button>
+      </div>
+    </Modal>
+  );
+}
+
 export const Spinner = () => (
   <div className="flex flex-col gap-2 p-1" aria-busy="true" aria-label={t("ui.loading")}>
     {[0, 1, 2].map((i) => (

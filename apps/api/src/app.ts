@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { cors } from "hono/cors";
 import { requireAuth } from "./auth/middleware";
-import { ForbiddenError, NotFoundError } from "./db/scoped";
+import { ForbiddenError, NotFoundError, PlanLimitError } from "./db/scoped";
 import { agri } from "./routes/agri";
 import { auth } from "./routes/auth";
 import { ingest } from "./routes/ingest";
@@ -12,6 +12,7 @@ import { share } from "./routes/share";
 import { sync } from "./routes/sync";
 import { web } from "./routes/web";
 import { admin } from "./routes/admin";
+import { captureError } from "./lib/monitoring";
 import { readOnlyDemo, readOnlyWhenExpired } from "./auth/plan";
 import type { AppEnv } from "./types";
 
@@ -21,7 +22,15 @@ app.onError((err, c) => {
   if (err instanceof HTTPException) return c.json({ error: err.message }, err.status);
   if (err instanceof ForbiddenError) return c.json({ error: err.message }, 403);
   if (err instanceof NotFoundError) return c.json({ error: err.message }, 404);
+  if (err instanceof PlanLimitError) return c.json({ error: err.message }, 402);
   console.error(err);
+  let ctx: { waitUntil(p: Promise<unknown>): void } | undefined;
+  try {
+    ctx = c.executionCtx; // en pruebas no hay contexto
+  } catch {
+    /* sin contexto */
+  }
+  captureError(c.env, err, { request: c.req.raw, ctx, tags: { path: c.req.path } });
   return c.json({ error: "Error interno" }, 500);
 });
 
@@ -45,9 +54,9 @@ app.route("/public", share);
 
 const authed = new Hono<AppEnv>();
 // La sesión se exige solo en rutas de la API; el resto es la web (static assets).
-for (const path of ["/sync/*", "/org/*", "/media/*", "/admin/*", "/me", "/devices"]) authed.use(path, requireAuth);
+for (const path of ["/sync/*", "/org/*", "/media/*", "/admin/*", "/me", "/me/*", "/events", "/devices"]) authed.use(path, requireAuth);
 authed.use("/org/*", readOnlyWhenExpired);
-for (const path of ["/sync/push", "/media/*", "/devices"]) authed.use(path, readOnlyDemo);
+for (const path of ["/sync/push", "/media/*", "/devices", "/me/*", "/events"]) authed.use(path, readOnlyDemo);
 authed.route("/sync", sync);
 authed.route("/org", org);
 authed.route("/org", agri);

@@ -95,6 +95,31 @@ export const LIMITS = {
     maxItems: 30,
     maxTextLength: 120,
   },
+  tasks: {
+    /** Comentarios por tarea (se guardan como JSON en la propia tarea; ver tasks.comments). */
+    maxComments: 50,
+    maxCommentLength: 500,
+    /** Lotes que se pueden elegir de una vez en el mapa al crear tareas (T-01). */
+    maxPlotsPerBatch: 40,
+  },
+  /**
+   * Topes por plan (P-10): hectáreas de estancias y personas con acceso (todos los roles). `null` = sin tope.
+   * El equipo de Yvy puede fijar topes propios por organización desde el panel interno (organizations.max_ha / max_users).
+   */
+  plans: {
+    trial: { maxHa: 100_000, maxUsers: 25 },
+    active: { maxHa: 500_000, maxUsers: 100 },
+    blocked: { maxHa: 100_000, maxUsers: 25 },
+    demo: { maxHa: null, maxUsers: null },
+  },
+  events: {
+    /** Fracción de los eventos de uso (no del embudo) que se guarda. */
+    sampleRate: 0.5,
+    perUserPerMinute: 30,
+    nameLength: 40,
+    /** Los eventos de uso se borran pasado este tiempo; los del embudo quedan. */
+    retentionMs: 90 * 24 * 60 * 60 * 1000,
+  },
   share: {
     /** Duraciones permitidas del enlace de solo lectura (K-04), en días. */
     linkDays: [7, 30],
@@ -102,3 +127,15 @@ export const LIMITS = {
 } as const;
 
 export type Limits = typeof LIMITS;
+
+export type PlanName = keyof typeof LIMITS.plans;
+
+/** Topes efectivos de una organización: los propios si los tiene, y si no los de su plan. */
+export const planLimits = (
+  plan: string,
+  own: { maxHa?: number | null; maxUsers?: number | null } = {},
+): { maxHa: number | null; maxUsers: number | null } => {
+  const base: { maxHa: number | null; maxUsers: number | null } =
+    LIMITS.plans[plan as PlanName] ?? LIMITS.plans.trial;
+  return { maxHa: own.maxHa ?? base.maxHa, maxUsers: own.maxUsers ?? base.maxUsers };
+};

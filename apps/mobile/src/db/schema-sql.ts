@@ -94,5 +94,22 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `products` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`type` text NOT NULL,\n\t`unit` text NOT NULL,\n\t`active_ingredient` text,\n\t`withdrawal_days` integer,\n\t`tox_class` text,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
   "CREATE INDEX `products_sync_idx` ON `products` (`organization_id`,`version`,`id`);",
   "ALTER TABLE `tasks` ADD `prescription` text;",
-  "CREATE TABLE `forecast_hours` (\n\t`farm_id` text NOT NULL,\n\t`valid_at` integer NOT NULL,\n\t`temp_c` real,\n\t`wind_kmh` real,\n\t`humidity_pct` real,\n\t`precip_mm` real,\n\tPRIMARY KEY(`farm_id`, `valid_at`)\n);"
+  "CREATE TABLE `forecast_hours` (\n\t`farm_id` text NOT NULL,\n\t`valid_at` integer NOT NULL,\n\t`temp_c` real,\n\t`wind_kmh` real,\n\t`humidity_pct` real,\n\t`precip_mm` real,\n\tPRIMARY KEY(`farm_id`, `valid_at`)\n);",
+  "ALTER TABLE `tasks` ADD `due_time` text;",
+  "ALTER TABLE `tasks` ADD `priority` text DEFAULT 'normal' NOT NULL;",
+  "ALTER TABLE `tasks` ADD `comments` text DEFAULT '[]' NOT NULL;",
+  "CREATE TABLE `notification_prefs` (\n\t`user_id` text PRIMARY KEY NOT NULL,\n\t`prefs` text NOT NULL,\n\t`updated_at` integer NOT NULL\n);",
+  "ALTER TABLE `organizations` ADD `max_ha` real;",
+  "ALTER TABLE `organizations` ADD `max_users` integer;",
+  "CREATE TABLE `audit_log` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`actor_user_id` text NOT NULL,\n\t`action` text NOT NULL,\n\t`organization_id` text,\n\t`detail` text DEFAULT '{}' NOT NULL,\n\t`created_at` integer NOT NULL\n);",
+  "CREATE INDEX `audit_log_org_idx` ON `audit_log` (`organization_id`,`created_at`);",
+  "CREATE TABLE `events` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`name` text NOT NULL,\n\t`user_id` text NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`ts` integer NOT NULL\n);",
+  "CREATE INDEX `events_name_ts_idx` ON `events` (`name`,`ts`);",
+  "CREATE INDEX `events_user_ts_idx` ON `events` (`user_id`,`ts`);",
+  "CREATE UNIQUE INDEX `events_funnel_uq` ON `events` (`organization_id`,`name`) WHERE name IN ('signup', 'farm_created', 'plots_created', 'member_added', 'first_record');",
+  "INSERT OR IGNORE INTO `events` (`id`, `name`, `user_id`, `organization_id`, `ts`)\nSELECT lower(hex(randomblob(16))), 'signup', coalesce((SELECT m.user_id FROM memberships m WHERE m.organization_id = o.id AND m.role = 'owner' LIMIT 1), ''), o.id, o.created_at\nFROM organizations o WHERE o.plan <> 'demo';",
+  "INSERT OR IGNORE INTO `events` (`id`, `name`, `user_id`, `organization_id`, `ts`)\nSELECT lower(hex(randomblob(16))), 'farm_created', '', f.organization_id, min(f.created_at)\nFROM farms f WHERE f.deleted_at IS NULL GROUP BY f.organization_id;",
+  "INSERT OR IGNORE INTO `events` (`id`, `name`, `user_id`, `organization_id`, `ts`)\nSELECT lower(hex(randomblob(16))), 'plots_created', '', p.organization_id, min(p.created_at)\nFROM plots p WHERE p.deleted_at IS NULL GROUP BY p.organization_id;",
+  "INSERT OR IGNORE INTO `events` (`id`, `name`, `user_id`, `organization_id`, `ts`)\nSELECT lower(hex(randomblob(16))), 'member_added', m.user_id, m.organization_id, min(m.created_at)\nFROM memberships m WHERE m.deleted_at IS NULL AND m.role <> 'owner' GROUP BY m.organization_id;",
+  "INSERT OR IGNORE INTO `events` (`id`, `name`, `user_id`, `organization_id`, `ts`)\nSELECT lower(hex(randomblob(16))), 'first_record', '', r.organization_id, min(r.created_at)\nFROM records r WHERE r.deleted_at IS NULL GROUP BY r.organization_id;"
 ];

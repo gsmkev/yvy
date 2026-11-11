@@ -362,8 +362,8 @@ export class LocalDb implements SyncStore {
       const next = task.status !== "done" ? nextDueDate(task.dueDate, task.recurrence, localDate(ts, tz)) : null;
       if (next) {
         this.sql.run(
-          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, lon, lat, due_date, recurrence, status, prescription, created_by, created_at, updated_at, version, checklist)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, 0, ?) ON CONFLICT(id) DO NOTHING`,
+          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, lon, lat, due_date, due_time, priority, recurrence, status, prescription, created_by, created_at, updated_at, version, checklist)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, 0, ?) ON CONFLICT(id) DO NOTHING`,
           [
             nextOccurrenceId(taskId),
             task.organizationId,
@@ -375,6 +375,8 @@ export class LocalDb implements SyncStore {
             task.lon,
             task.lat,
             next,
+            task.dueTime,
+            task.priority,
             task.recurrence,
             task.prescription,
             task.createdBy,

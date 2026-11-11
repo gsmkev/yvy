@@ -2,10 +2,10 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { areaHa, bboxOf, centroidOf, checkPlots, validateShape, type Area } from "@yvy/geo";
-import { CROPS, doseText, LIMITS, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
+import { CROPS, doseText, LIMITS, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, TASK_PRIORITIES, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
 import { dispatchNewFarm, inBackground } from "../lib/dispatch";
 import { sendEmail } from "../lib/email";
-import { parse, readJson } from "../lib/http";
+import { parse, readJson, timeOfDay } from "../lib/http";
 import type { AppEnv } from "../types";
 
 export const org = new Hono<AppEnv>();
@@ -200,10 +200,14 @@ org.post("/tasks", async (c) => {
     z.object({
       farmId: uuid,
       plotId: uuid.nullish(),
+      /** T-01: una tarea por lote (lotes elegidos en el mapa). Con esto, `plotId` se ignora. */
+      plotIds: z.array(uuid).min(1).max(LIMITS.tasks.maxPlotsPerBatch).optional(),
       assigneeId: z.string(),
       title: z.string().trim().min(1).max(200),
       kind: z.enum(RECORD_KINDS).nullish(),
       dueDate: isoDate,
+      dueTime: timeOfDay.nullish(),
+      priority: z.enum(TASK_PRIORITIES).default("normal"),
       recurrence: z.enum(RECURRENCES).default("none"),
       /** Texto de cada ítem de la lista de verificación (F-15). */
       checklist: z.array(z.string().trim().max(LIMITS.checklist.maxTextLength)).max(LIMITS.checklist.maxItems).optional(),
@@ -212,16 +216,15 @@ org.post("/tasks", async (c) => {
     }).refine((b) => (b.lon == null) === (b.lat == null), { message: "lon y lat van juntas" }),
     await readJson(c.req),
   );
-  const { checklist, ...rest } = body;
-  return c.json(
-    await c.var.sdb.createTask({
-      ...rest,
-      plotId: body.plotId ?? null,
-      kind: body.kind ?? null,
-      lon: body.lon ?? null,
-      lat: body.lat ?? null,
-      checklist: serializeChecklist(newChecklist(checklist ?? [])),
-    }),
-    201,
-  );
+  const { plotIds, plotId, kind, dueTime, checklist, ...rest } = body;
+  const { ids } = await c.var.sdb.createTasks({
+    ...rest,
+    plotIds: plotIds ?? [plotId ?? null],
+    kind: kind ?? null,
+    dueTime: dueTime ?? null,
+    lon: body.lon ?? null,
+    lat: body.lat ?? null,
+    checklist: serializeChecklist(newChecklist(checklist ?? [])),
+  });
+  return c.json({ id: ids[0]!, ids }, 201);
 });

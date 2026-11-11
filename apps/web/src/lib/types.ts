@@ -6,6 +6,8 @@ export interface Me {
   role: "owner" | "admin" | "agronomist" | "worker";
   tilesBaseUrl: string;
   isStaff: boolean;
+  /** P-12: sesión de soporte de solo lectura. */
+  support?: boolean;
 }
 
 export interface FarmSummary {
@@ -125,6 +127,10 @@ export interface Task {
   title: string;
   kind: string | null;
   dueDate: string;
+  dueTime: string | null;
+  priority: "low" | "normal" | "high";
+  /** JSON: ver parseTaskComments en @yvy/shared. */
+  comments: string;
   recurrence: "none" | "daily" | "weekly";
   status: "open" | "done" | "cancelled";
   completedAt: number | null;

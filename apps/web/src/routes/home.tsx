@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, ChevronRight, Plus } from "lucide-react";
 import { FarmMap } from "../components/FarmMap";
 import { FirstRunGuide, guideSteps } from "../components/FirstRunGuide";
+import { OwnerDashboard } from "../components/OwnerDashboard";
 import { Button, Empty, ErrorBox, SectionHead, Spinner, Stat } from "../components/ui";
 import { fmtDate, fmtNum } from "../lib/format";
 import { t } from "../lib/i18n";
@@ -78,6 +79,8 @@ export function HomePage() {
             <Stat label={t("ui.activeAlerts")} value={alerts} tone={alerts ? "danger" : undefined} />
           </div>
         )}
+
+        {list.length > 1 && (me.data?.role === "owner" || me.data?.role === "admin") && <OwnerDashboard />}
 
         {farms.isLoading && <Spinner />}
         {farms.error && <ErrorBox error={farms.error} />}

@@ -1,11 +1,13 @@
 /** Consultas y edición para la web (y la ficha del lote en la app con red). */
 import { Hono } from "hono";
-import { eq } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
+import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { areaHa, bboxOf } from "@yvy/geo";
-import { alertSettingsSchema, CROPS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS } from "@yvy/shared";
+import { alertSettingsSchema, CROPS, FUNNEL_EVENTS, newId, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import {
+  addTaskComment,
   alertFeedback,
   deleteFarm,
   deletePlot,
@@ -19,13 +21,17 @@ import {
   farmRiskReport,
   farmSummaries,
   getAlertSettings,
+  getNotificationPrefs,
   listAlerts,
   listRecords,
   listShareLinks,
   listTasks,
+  ownerDashboard,
+  plotGeometryWarnings,
   plotNdvi,
   registerDevice,
   saveAlertSettings,
+  saveNotificationPrefs,
   removeMember,
   revokeShareLink,
   updateFarm,
@@ -34,7 +40,8 @@ import {
 } from "../db/queries";
 import { farmStockSummary, saveLivestockSettings } from "../db/livestock";
 import { createSanitaryEvent, deleteSanitaryEvent, listSanitaryEvents } from "../db/sanitary";
-import { parse, readJson } from "../lib/http";
+import { clientsOverview } from "../db/clients";
+import { parse, readJson, timeOfDay } from "../lib/http";
 import { plotArea } from "./org";
 import { touchActivity } from "../auth/plan";
 import type { AppEnv } from "../types";
@@ -47,7 +54,7 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 /** Perfil y sesión actual. */
 web.get("/me", async (c) => {
   const sdb = c.var.sdb;
-  await touchActivity(sdb.db, c.var.auth);
+  if (!sdb.auth.readOnly) await touchActivity(sdb.db, c.var.auth);
   const [user] = await sdb.db
     .select({
       id: s.users.id,
@@ -77,9 +84,55 @@ web.get("/me", async (c) => {
     tilesBaseUrl: c.env.TILES_PUBLIC_URL,
     isStaff: !!user?.email && admins.includes(user.email.toLowerCase()),
     demo: org?.plan === "demo",
+    support: !!sdb.auth.readOnly,
   });
 });
 
+/** U-29: qué avisos le llegan al usuario, por qué canal y en qué horario. Valen para todas sus organizaciones. */
+web.get("/me/notification-prefs", async (c) => c.json(await getNotificationPrefs(c.var.sdb)));
+web.put("/me/notification-prefs", async (c) => {
+  const prefs = parse(notificationPrefsSchema, await readJson(c.req));
+  await saveNotificationPrefs(c.var.sdb, prefs);
+  return c.json(await getNotificationPrefs(c.var.sdb));
+});
+
+/**
+ * P-03: evento de uso del cliente (ej. "view:tareas"). Se muestrea y tiene tope por usuario; los pasos del embudo
+ * los escribe solo el servidor, así que esos nombres se rechazan acá.
+ */
+web.post("/events", async (c) => {
+  const { name } = parse(
+    z.object({
+      name: z
+        .string()
+        .regex(/^[a-z0-9_.:-]+$/)
+        .max(LIMITS.events.nameLength),
+    }),
+    await readJson(c.req),
+  );
+  if ((FUNNEL_EVENTS as readonly string[]).includes(name)) throw new HTTPException(400, { message: "Nombre reservado" });
+  if (Math.random() >= LIMITS.events.sampleRate) return c.json({ recorded: false }, 202);
+  const { userId, orgId } = c.var.auth;
+  const now = Date.now();
+  const [{ n }] = (await c.var.sdb.db
+    .select({ n: sql<number>`count(*)` })
+    .from(s.events)
+    .where(and(eq(s.events.userId, userId), gte(s.events.ts, now - 60_000)))) as [{ n: number }];
+  if (n >= LIMITS.events.perUserPerMinute) throw new HTTPException(429, { message: "Demasiados eventos" });
+  await c.var.sdb.db.insert(s.events).values({ id: newId(), name, userId, organizationId: orgId, ts: now });
+  return c.json({ recorded: true }, 202);
+});
+
+/** K-02: estancias y avisos de todas las organizaciones de la persona (vista del agrónomo). */
+web.get("/me/clients", async (c) =>
+  // Una sesión de soporte ve solo la organización que se pidió, no las otras de la misma persona.
+  c.json(
+    await clientsOverview(c.var.sdb.db, c.var.auth.userId, {
+      onlyOrgId: c.var.auth.readOnly ? c.var.auth.orgId : undefined,
+    }),
+  ),
+);
+web.get("/org/dashboard", async (c) => c.json(await ownerDashboard(c.var.sdb)));
 web.get("/org/farms", async (c) => c.json(await farmSummaries(c.var.sdb)));
 web.get("/org/farms/:id", async (c) => c.json(await farmDetail(c.var.sdb, c.req.param("id"))));
 web.get("/org/farms/:id/climate", async (c) =>
@@ -133,7 +186,13 @@ web.patch("/org/plots/:id", async (c) => {
     geo = { geometry: JSON.stringify(geometry), ...bboxOf(geometry), areaHa: areaHa(geometry) };
   }
   await updatePlot(c.var.sdb, c.req.param("id"), { ...rest, ...geo });
-  return c.json({ ok: true });
+  if (!geometry) return c.json({ ok: true });
+  // M-02: cambió la forma; devuelve la superficie nueva y avisos de superposición o de lote fuera del perímetro.
+  return c.json({
+    ok: true,
+    areaHa: areaHa(geometry),
+    warnings: await plotGeometryWarnings(c.var.sdb, c.req.param("id"), geometry),
+  });
 });
 web.delete("/org/plots/:id", async (c) => {
   await deletePlot(c.var.sdb, c.req.param("id"));
@@ -192,6 +251,8 @@ web.patch("/org/tasks/:id", async (c) => {
       plotId: z.string().nullish(),
       kind: z.enum(RECORD_KINDS).nullish(),
       dueDate: isoDate.optional(),
+      dueTime: timeOfDay.nullish(),
+      priority: z.enum(TASK_PRIORITIES).optional(),
       recurrence: z.enum(RECURRENCES).optional(),
       status: z.enum(["open", "cancelled"]).optional(),
     }),
@@ -199,6 +260,11 @@ web.patch("/org/tasks/:id", async (c) => {
   );
   await updateTask(c.var.sdb, c.req.param("id"), b);
   return c.json({ ok: true });
+});
+/** T-02: comentario en la tarea. Lo puede hacer quien ve la tarea (el empleado solo en las suyas). */
+web.post("/org/tasks/:id/comments", async (c) => {
+  const b = parse(z.object({ text: z.string().trim().min(1).max(LIMITS.tasks.maxCommentLength) }), await readJson(c.req));
+  return c.json(await addTaskComment(c.var.sdb, c.req.param("id"), b.text), 201);
 });
 web.delete("/org/tasks/:id", async (c) => {
   await deleteTask(c.var.sdb, c.req.param("id"));

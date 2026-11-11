@@ -13,6 +13,7 @@
  *   pero sin depender de relojes de distintos datacenters.
  */
 import { HEALTH_REASONS } from "./livestock";
+import { sql } from "drizzle-orm";
 import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // ---------- Enums ----------
@@ -23,9 +24,24 @@ export const MEMBERSHIP_STATUS = ["active", "invited", "disabled"] as const;
 export const PLOT_KINDS = ["crop", "pasture"] as const;
 export const CROPS = ["soja", "maiz", "trigo", "arroz", "girasol", "chia", "otro"] as const;
 export const SEASONS = ["zafra", "zafrina"] as const;
-export const POI_KINDS = ["rain_gauge", "water", "house", "gate", "corral", "other"] as const;
+export const POI_KINDS = [
+  "rain_gauge",
+  "water",
+  "house",
+  "gate",
+  "corral",
+  "silo",
+  "shed",
+  "bridge",
+  "mill",
+  "trough",
+  "chute",
+  "dock",
+  "other",
+] as const;
 export const RECURRENCES = ["none", "daily", "weekly"] as const;
 export const TASK_STATUS = ["open", "done", "cancelled"] as const;
+export const TASK_PRIORITIES = ["low", "normal", "high"] as const;
 export const RECORD_KINDS = [
   "scouting",
   "pest",
@@ -55,6 +71,8 @@ export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_thr
 export const ALERT_SEVERITIES = ["info", "watch", "warning"] as const;
 /** Con MET Norway no hay ensemble: probabilidad cualitativa (PRD-cloudflare §4.8). */
 export const ALERT_PROBABILITIES = ["low", "medium", "high"] as const;
+/** P-03: pasos del embudo de activación. Los escribe el servidor, una sola vez por organización. */
+export const FUNNEL_EVENTS = ["signup", "farm_created", "plots_created", "member_added", "first_record"] as const;
 export const LAYERS = ["true_color", "ndvi"] as const;
 /** Estado del procesamiento satelital inicial de una estancia (S-02). */
 export const IMAGERY_STATUSES = ["pending", "processing", "ready", "failed"] as const;
@@ -87,6 +105,9 @@ export const organizations = sqliteTable("organizations", {
   country: text("country").notNull().default("PY"),
   plan: text("plan").notNull().default("trial"),
   trialEndsAt: integer("trial_ends_at"),
+  /** P-10: topes propios de la organización; null = los del plan (LIMITS.plans). */
+  maxHa: real("max_ha"),
+  maxUsers: integer("max_users"),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });
@@ -335,6 +356,11 @@ export const tasks = sqliteTable(
     /** Tipo de registro que abre al completarla (ej. "rain"), o null. */
     kind: text("kind", { enum: RECORD_KINDS }),
     dueDate: text("due_date").notNull(),
+    /** Hora límite "HH:MM" (hora de la estancia), o null si basta con el día. */
+    dueTime: text("due_time"),
+    priority: text("priority", { enum: TASK_PRIORITIES }).notNull().default("normal"),
+    /** JSON: comentarios de la tarea (ver taskCommentSchema). Se agregan solo por la API, nunca desde el celular. */
+    comments: text("comments").notNull().default("[]"),
     recurrence: text("recurrence", { enum: RECURRENCES }).notNull().default("none"),
     status: text("status", { enum: TASK_STATUS }).notNull().default("open"),
     completedAt: integer("completed_at"),
@@ -721,6 +747,49 @@ export const notifications = sqliteTable(
     createdAt: integer("created_at").notNull(),
   },
   (t) => [index("notifications_pending_idx").on(t.status, t.createdAt)],
+);
+
+/**
+ * P-03: analítica propia, sin terceros. Los pasos del embudo (FUNNEL_EVENTS) se guardan una vez por organización
+ * (índice único parcial); el resto son eventos de uso que manda el cliente por POST /events, con muestreo.
+ */
+export const events = sqliteTable(
+  "events",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    userId: text("user_id").notNull(),
+    organizationId: text("organization_id").notNull(),
+    ts: integer("ts").notNull(),
+  },
+  (t) => [
+    index("events_name_ts_idx").on(t.name, t.ts),
+    index("events_user_ts_idx").on(t.userId, t.ts),
+    uniqueIndex("events_funnel_uq")
+      .on(t.organizationId, t.name)
+      .where(sql`name IN ('signup', 'farm_created', 'plots_created', 'member_added', 'first_record')`),
+  ],
+);
+
+/** U-29: preferencias de notificación por usuario (JSON validado con notificationPrefsSchema). No se sincroniza. */
+export const notificationPrefs = sqliteTable("notification_prefs", {
+  userId: text("user_id").primaryKey(),
+  prefs: text("prefs").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});
+
+/** P-12: registro de auditoría de acciones del equipo de Yvy sobre organizaciones de clientes. */
+export const auditLog = sqliteTable(
+  "audit_log",
+  {
+    id: text("id").primaryKey(),
+    actorUserId: text("actor_user_id").notNull(),
+    action: text("action").notNull(),
+    organizationId: text("organization_id"),
+    detail: text("detail").notNull().default("{}"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("audit_log_org_idx").on(t.organizationId, t.createdAt)],
 );
 
 // ---------- Reportes ----------

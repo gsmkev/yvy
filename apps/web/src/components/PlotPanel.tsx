@@ -27,6 +27,7 @@ export function PlotPanel({
   onClose,
   problemAreas = [],
   onShowArea,
+  onEditShape,
 }: {
   plot: Plot;
   workers: Member[];
@@ -35,6 +36,8 @@ export function PlotPanel({
   /** Áreas problema de este lote (S-08). */
   problemAreas?: ProblemArea[];
   onShowArea?: (a: ProblemArea) => void;
+  /** M-02: pasa el mapa a edición de vértices de este lote. */
+  onEditShape?: () => void;
 }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
@@ -285,6 +288,9 @@ export function PlotPanel({
           <Button icon={Pencil} onClick={() => setEditing(true)}>
             {t("ui.edit")}
           </Button>
+          {onEditShape && JSON.parse(plot.geometry).type === "Polygon" && (
+            <Button onClick={onEditShape}>{t("ui.plotEditShape")}</Button>
+          )}
           <Button variant="danger" icon={Trash2} onClick={() => setConfirming(true)}>
             {t("ui.delete")}
           </Button>

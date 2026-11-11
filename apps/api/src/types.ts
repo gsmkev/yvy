@@ -10,6 +10,8 @@ export interface Secrets {
   /** Opcionales: sin ellos no se disparan los jobs al crear estancias (docs/DEPLOY.md). */
   GITHUB_DISPATCH_TOKEN?: string;
   GITHUB_REPO?: string;
+  /** Opcional (P-02): sin DSN no se manda nada a Sentry. */
+  SENTRY_DSN?: string;
 }
 
 /** Demo pública (V-02): sin estos dos valores POST /auth/demo responde 404 y la landing oculta el botón. */

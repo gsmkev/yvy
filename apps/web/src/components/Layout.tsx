@@ -1,15 +1,16 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { getSession, isNetworkDown, onNetworkChange, onSession, post, setSession } from "../lib/api";
+import { exitSupport, getSession, isNetworkDown, onNetworkChange, onSession, post, setSession } from "../lib/api";
 import { Toaster } from "./ui";
 import { FEATURES } from "../lib/features";
 import { fmtDate } from "../lib/format";
 import { t, type MessageKey } from "../lib/i18n";
 import { useAlerts, useFarms, useMe } from "../lib/queries";
 import { loadPrefs } from "../lib/prefs";
+import { trackView } from "../lib/track";
 import { GlobalSearch } from "./GlobalSearch";
-import { OrgSwitcher } from "./OrgSwitcher";
+import { OrgSwitcher, useOrganizations } from "./OrgSwitcher";
 
 const NAV: { to: string; label: MessageKey }[] = [
   { to: "/", label: "ui.navMap" },
@@ -66,7 +67,14 @@ export function Layout() {
     setSession(null);
   };
   const trial = me.data?.organization.plan === "trial" && me.data.organization.trialEndsAt;
-  const base = me.data?.isStaff ? [...NAV, { to: "/interno", label: "ui.navInternal" as MessageKey }] : NAV;
+  // K-02: el agrónomo con más de un cliente tiene una pantalla con todos juntos
+  const orgs = useOrganizations();
+  const hasClients = orgs.filter((o) => o.role !== "worker").length > 1;
+  const base = [
+    ...NAV,
+    ...(hasClients ? [{ to: "/clientes", label: "ui.navClients" as MessageKey }] : []),
+    ...(me.data?.isStaff ? [{ to: "/interno", label: "ui.navInternal" as MessageKey }] : []),
+  ];
   // El calendario sanitario no es para el empleado (G-10).
   const items = me.data?.role === "worker" ? base.filter((i) => i.to !== "/sanidad") : base;
   const nAlerts = alerts.data?.length ?? 0;
@@ -74,6 +82,7 @@ export function Layout() {
   // Con varias estancias, "Mapa" vuelve a la última que se miró
   const lastFarm = (farms.data?.length ?? 0) > 1 ? farms.data!.find((f) => f.id === loadPrefs().farmId)?.id : undefined;
   const onMap = path === "/" || path.startsWith("/estancias");
+  useEffect(() => trackView(path), [path]);
 
   return (
     <div className="flex h-full flex-col">
@@ -120,14 +129,12 @@ export function Layout() {
         >
           {t("ui.helpLink")}
         </Link>
-        {me.data?.role === "owner" && (
-          <Link
-            to="/cuenta"
-            className="text-sm whitespace-nowrap text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
-          >
-            {t("ui.account")}
-          </Link>
-        )}
+        <Link
+          to="/cuenta"
+          className="text-sm whitespace-nowrap text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
+        >
+          {t("ui.account")}
+        </Link>
         <button
           onClick={logout}
           className="cursor-pointer text-sm whitespace-nowrap text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
@@ -135,6 +142,14 @@ export function Layout() {
           {t("ui.logout")}
         </button>
       </header>
+      {me.data?.support && (
+        <p role="status" className="shrink-0 border-b border-trigo/40 bg-trigo/15 px-4 py-1.5 text-center text-sm text-surco">
+          {t("ui.supportBanner", { name: me.data.organization.name })}{" "}
+          <button className="cursor-pointer font-medium underline underline-offset-4" onClick={exitSupport}>
+            {t("ui.supportExit")}
+          </button>
+        </p>
+      )}
       {offline && (
         <p
           role="status"

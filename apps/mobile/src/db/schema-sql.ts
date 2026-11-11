@@ -114,5 +114,7 @@ export const SERVER_SCHEMA: string[] = [
   "INSERT OR IGNORE INTO `events` (`id`, `name`, `user_id`, `organization_id`, `ts`)\nSELECT lower(hex(randomblob(16))), 'first_record', '', r.organization_id, min(r.created_at)\nFROM records r WHERE r.deleted_at IS NULL GROUP BY r.organization_id;",
   "CREATE TABLE `eudr_results` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`plot_id` text NOT NULL,\n\t`status` text NOT NULL,\n\t`plot_area_ha` real NOT NULL,\n\t`forest_ref_ha` real NOT NULL,\n\t`loss_ha` real NOT NULL,\n\t`valid_pct` real NOT NULL,\n\t`ref_year` integer NOT NULL,\n\t`cur_year` integer NOT NULL,\n\t`ref_from_at` integer,\n\t`ref_to_at` integer,\n\t`cur_from_at` integer,\n\t`cur_to_at` integer,\n\t`ref_scenes` integer NOT NULL,\n\t`cur_scenes` integer NOT NULL,\n\t`changes` text NOT NULL,\n\t`computed_at` integer NOT NULL\n);",
   "CREATE UNIQUE INDEX `eudr_results_plot_uq` ON `eudr_results` (`plot_id`);",
-  "CREATE INDEX `eudr_results_farm_idx` ON `eudr_results` (`farm_id`);"
+  "CREATE INDEX `eudr_results_farm_idx` ON `eudr_results` (`farm_id`);",
+  "ALTER TABLE `organizations` ADD `referred_by` text;",
+  "ALTER TABLE `organizations` ADD `referrer_user_id` text;"
 ];

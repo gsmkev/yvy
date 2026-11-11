@@ -184,6 +184,18 @@ export function LandingPage() {
         </div>
       </section>
 
+      <section id="agronomos" className="border-t border-linea">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-14 sm:px-6 md:flex-row md:items-center md:justify-between">
+          <div className="max-w-xl">
+            <h2 className="font-serif text-[28px] leading-tight font-semibold">{t("ui.agroTitle")}</h2>
+            <p className="mt-3 text-tinta-2">{t("ui.agroText")}</p>
+          </div>
+          <a href={whatsappUrl(t("ui.agroWhatsappText"))} className={secondary} target="_blank" rel="noreferrer">
+            {t("ui.agroCta")}
+          </a>
+        </div>
+      </section>
+
       <section className="border-t border-linea bg-papel">
         <div className="mx-auto w-full max-w-5xl px-4 py-14 sm:px-6">
           <h2 className="font-serif text-[28px] leading-tight font-semibold">{t("ui.publicDataTitle")}</h2>

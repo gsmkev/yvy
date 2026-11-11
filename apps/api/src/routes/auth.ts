@@ -6,9 +6,9 @@
 import { funnelEvent } from "../db/events";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { and, count, desc, eq, gte, isNull } from "drizzle-orm";
+import { and, count, desc, eq, gte, isNull, like } from "drizzle-orm";
 import { z } from "zod";
-import { LIMITS, newId, t } from "@yvy/shared";
+import { LIMITS, newId, parseReferralCode, t } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { requireAuth } from "../auth/middleware";
 import { issueSession, revokeRefresh, rotateRefresh } from "../auth/session";
@@ -25,6 +25,20 @@ const MAX_CODES_PER_WINDOW = 3;
 
 export const auth = new Hono<AppEnv>();
 
+/**
+ * V-05: usuario con rol de agrónomo (en alguna organización) cuyo código de referido es `code`.
+ * El código son los últimos 8 caracteres del id (ver referralCode), así que se busca por sufijo.
+ */
+async function findReferrer(db: ReturnType<typeof getDb>, code: string): Promise<string | null> {
+  const [row] = await db
+    .select({ id: s.users.id })
+    .from(s.users)
+    .innerJoin(s.memberships, and(eq(s.memberships.userId, s.users.id), eq(s.memberships.role, "agronomist"), isNull(s.memberships.deletedAt)))
+    .where(like(s.users.id, `%${code.toLowerCase()}`))
+    .limit(1);
+  return row?.id ?? null;
+}
+
 /** Alta de una organización nueva con su dueño. Después se ingresa con /auth/email/start. */
 auth.post("/signup", async (c) => {
   if (c.env.ALLOW_SIGNUP !== "true") throw new HTTPException(403, { message: "Registro cerrado" });
@@ -33,12 +47,16 @@ auth.post("/signup", async (c) => {
       organizationName: z.string().trim().min(2).max(120),
       fullName: z.string().trim().min(2).max(120),
       email,
+      /** V-05: código de referido de un agrónomo (`?ref=`). Si no tiene forma válida se ignora; nunca frena el registro. */
+      ref: z.unknown().optional(),
     }),
     await readJson(c.req),
   );
   const db = getDb(c.env.DB);
+  const refCode = parseReferralCode(body.ref);
   const [existing] = await db.select({ id: s.users.id }).from(s.users).where(eq(s.users.email, body.email)).limit(1);
   if (existing) throw new HTTPException(409, { message: "Ese email ya tiene cuenta; ingresá con el código" });
+  const referrerUserId = refCode ? await findReferrer(db, refCode) : null;
   const ts = Date.now();
   const orgId = newId();
   const userId = newId();
@@ -46,6 +64,8 @@ auth.post("/signup", async (c) => {
     db.insert(s.organizations).values({
       id: orgId,
       name: body.organizationName,
+      referredBy: refCode,
+      referrerUserId,
       trialEndsAt: ts + 60 * 86_400_000,
       createdAt: ts,
       updatedAt: ts,

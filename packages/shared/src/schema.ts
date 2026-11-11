@@ -108,6 +108,10 @@ export const organizations = sqliteTable("organizations", {
   /** P-10: topes propios de la organización; null = los del plan (LIMITS.plans). */
   maxHa: real("max_ha"),
   maxUsers: integer("max_users"),
+  /** V-05: código de referido con el que se registró la organización (`?ref=`), tal cual llegó si tiene forma válida. */
+  referredBy: text("referred_by"),
+  /** V-05: agrónomo dueño del código, si se pudo identificar. */
+  referrerUserId: text("referrer_user_id"),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });

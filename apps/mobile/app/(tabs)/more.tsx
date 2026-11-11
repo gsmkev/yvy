@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Switch, View } from "react-native";
 import { router } from "expo-router";
 import { t, type MessageKey } from "@yvy/shared";
@@ -8,6 +8,8 @@ import { getDb } from "../../src/lib/db";
 import { downloadPack, isWifi, packStatus } from "../../src/lib/offline";
 import { remindersEnabled, setRemindersEnabled } from "../../src/lib/reminders";
 import { api, getSession, setSession } from "../../src/lib/session";
+import { deleteUploadedFiles, storageUsage, type StorageUsage } from "../../src/lib/storage";
+import { showToast } from "../../src/lib/toast";
 import { localChanged, stopAutoSync, syncNow, syncNowMobileData, useSyncStatus } from "../../src/lib/sync";
 import { useLocal } from "../../src/lib/useLocal";
 import { Button, Row, s as k, Text } from "../../src/ui/kit";
@@ -80,6 +82,8 @@ export default function More() {
               : t("app.offlinePackSize", { mb: (p.missingBytes / 1e6).toLocaleString("es-PY", { maximumFractionDigits: 1 }) });
         return <Row key={f.id} title={f.name} subtitle={subtitle} onPress={p.layers.length && !p.upToDate && pct === undefined ? () => download(f.id) : undefined} right={p.layers.length && !p.upToDate && pct === undefined ? <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{t("app.download")}</Text> : undefined} />;
       })}
+
+      <Storage />
 
       <View style={[st.switchRow]}>
         <Text style={[T.body, { flex: 1 }]}>{t("app.photosWifiOnly")}</Text>
@@ -158,6 +162,51 @@ function Outbox({ items, plotName, wifiOnly }: { items: OutboxItem[]; plotName: 
         </>
       )}
     </View>
+  );
+}
+
+/** Uso de almacenamiento (F-19) y "Borrar fotos ya subidas". */
+function Storage() {
+  const [usage, setUsage] = useState<StorageUsage | null>(null);
+  const [busy, setBusy] = useState(false);
+  const { version } = useSyncStatus();
+  const refresh = useCallback(() => storageUsage().then(setUsage, () => setUsage(null)), []);
+  useEffect(() => {
+    void refresh();
+  }, [version, refresh]);
+  if (!usage) return null;
+  const line = (n: number, bytes: number) => (n === 0 && bytes === 0 ? t("app.storageNone") : t("app.storageCount", { n, size: size(bytes) }));
+  const free = () =>
+    Alert.alert(t("app.storageDeleteTitle"), t("app.storageDeleteBody", { size: size(usage.reclaimable.bytes) }), [
+      { text: t("ui.cancel"), style: "cancel" },
+      {
+        text: t("app.storageDeleteConfirm"),
+        style: "destructive",
+        onPress: async () => {
+          setBusy(true);
+          const r = await deleteUploadedFiles();
+          setBusy(false);
+          showToast(t("app.storageDeleted", { size: size(r.bytes) }));
+          await refresh();
+        },
+      },
+    ]);
+  return (
+    <>
+      <Text style={st.section}>{t("app.storageTitle")}</Text>
+      <Row title={t("app.storagePhotos")} subtitle={line(usage.photos.n, usage.photos.bytes)} />
+      <Row title={t("app.storageVoice")} subtitle={line(usage.voice.n, usage.voice.bytes)} />
+      <Row title={t("app.storageMaps")} subtitle={line(usage.maps.n, usage.maps.bytes)} />
+      <Row title={t("app.storageDb")} subtitle={size(usage.database)} />
+      <Button
+        kind="secondary"
+        title={usage.reclaimable.n > 0 ? t("app.storageDelete", { size: size(usage.reclaimable.bytes) }) : t("app.storageDeleteNothing")}
+        disabled={usage.reclaimable.n === 0 || busy}
+        loading={busy}
+        onPress={free}
+        style={{ marginTop: 12 }}
+      />
+    </>
   );
 }
 

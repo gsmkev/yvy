@@ -23,7 +23,21 @@ export const MEMBERSHIP_STATUS = ["active", "invited", "disabled"] as const;
 export const PLOT_KINDS = ["crop", "pasture"] as const;
 export const CROPS = ["soja", "maiz", "trigo", "arroz", "girasol", "chia", "otro"] as const;
 export const SEASONS = ["zafra", "zafrina"] as const;
-export const POI_KINDS = ["rain_gauge", "water", "house", "gate", "corral", "other"] as const;
+export const POI_KINDS = [
+  "rain_gauge",
+  "water",
+  "house",
+  "gate",
+  "corral",
+  "silo",
+  "shed",
+  "bridge",
+  "mill",
+  "trough",
+  "chute",
+  "dock",
+  "other",
+] as const;
 export const RECURRENCES = ["none", "daily", "weekly"] as const;
 export const TASK_STATUS = ["open", "done", "cancelled"] as const;
 export const RECORD_KINDS = [

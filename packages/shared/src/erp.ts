@@ -7,6 +7,7 @@
  * del día, así los informes suman con una sola consulta.
  */
 import { z } from "zod";
+import type { DoseUnit } from "./agro";
 
 export const CURRENCIES = ["PYG", "USD"] as const;
 export type Currency = (typeof CURRENCIES)[number];
@@ -221,6 +222,67 @@ export function lotsRemaining<T extends PurchaseLot>(lots: T[], stockQty: number
 /** Días de un día "YYYY-MM-DD" a otro (negativo si `to` ya pasó). */
 export const daysUntil = (from: string, to: string): number =>
   Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+
+// ---------- Consumo automático desde los registros de campo (E-13) ----------
+
+export type BaseUnit = "l" | "kg";
+/** Registros de campo que descuentan stock y cargan costo. */
+export const CONSUMING_KINDS = ["application", "fertilization", "health"] as const;
+
+const DOSE_TO_BASE: Record<DoseUnit, { unit: BaseUnit; factor: number }> = {
+  l_ha: { unit: "l", factor: 1 },
+  ml_ha: { unit: "l", factor: 0.001 },
+  kg_ha: { unit: "kg", factor: 1 },
+  g_ha: { unit: "kg", factor: 0.001 },
+};
+
+const round3 = (n: number) => Math.round(n * 1000) / 1000;
+
+interface DoseLike {
+  productId?: string;
+  dose: number;
+  unit: DoseUnit;
+}
+
+/** Ids de catálogo que usa un registro (para leerlos de una vez). */
+export function consumptionProductIds(kind: string, data: Record<string, unknown>): string[] {
+  if (kind === "application" || kind === "fertilization")
+    return ((data.products as DoseLike[] | undefined) ?? []).map((p) => p.productId).filter((x): x is string => !!x);
+  if (kind === "health" && typeof data.productId === "string") return [data.productId];
+  return [];
+}
+
+/**
+ * Cantidades de insumos que consume un registro, en la unidad base del producto (l o kg).
+ * - application y fertilization: dosis por hectárea x superficie hecha (`areaHa` del registro o, si falta, la del lote).
+ * - health: la cantidad del registro (`quantity`).
+ * Solo cuentan los productos del catálogo (`units`: id a unidad). Un producto cuya dosis no es de la misma familia que
+ * su unidad (kg/ha para un líquido) o un registro sin superficie no consumen nada: no se inventa stock.
+ * Un mismo producto repetido se suma.
+ */
+export function consumptionLines(
+  kind: string,
+  data: Record<string, unknown>,
+  ctx: { plotAreaHa: number | null; units: Map<string, BaseUnit> },
+): { productId: string; qty: number }[] {
+  const acc = new Map<string, number>();
+  const add = (id: string, qty: number) => {
+    if (qty > 0) acc.set(id, (acc.get(id) ?? 0) + qty);
+  };
+  if (kind === "application" || kind === "fertilization") {
+    const area = typeof data.areaHa === "number" ? data.areaHa : ctx.plotAreaHa;
+    if (!area || area <= 0) return [];
+    for (const p of (data.products as DoseLike[] | undefined) ?? []) {
+      const unit = p.productId ? ctx.units.get(p.productId) : undefined;
+      const conv = DOSE_TO_BASE[p.unit];
+      if (p.productId && unit && conv && conv.unit === unit) add(p.productId, p.dose * conv.factor * area);
+    }
+  } else if (kind === "health") {
+    const id = data.productId;
+    if (typeof id === "string" && ctx.units.has(id) && typeof data.quantity === "number") add(id, data.quantity);
+  }
+  return [...acc].map(([productId, qty]) => ({ productId, qty: round3(qty) })).filter((l) => l.qty > 0);
+}
 
 // ---------- Terceros (E-02) ----------
 

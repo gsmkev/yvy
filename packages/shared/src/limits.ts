@@ -154,6 +154,11 @@ export const LIMITS = {
     listLimit: 300,
     /** Lotes de una orden de trabajo creados de una vez (cada lote es una tarea). */
     maxPlotsPerOrder: 40,
+    /**
+     * Salidas de stock que un solo push puede generar (consumo automático de los registros de campo). Con 12 columnas
+     * por fila son ~9 sentencias; más que eso se responde 503 y el celular divide el envío.
+     */
+    maxEffectMovesPerPush: 60,
   },
   share: {
     /** Duraciones permitidas del enlace de solo lectura (K-04), en días. */

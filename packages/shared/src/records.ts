@@ -11,6 +11,7 @@ import { LIMITS } from "./limits";
 export const RECORD_SCHEMA_VERSION = 1;
 
 const note = z.string().trim().max(2000).optional();
+const uuidStr = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/, "uuid inválido");
 const condition = z.enum(["good", "fair", "bad"]);
 const level3 = z.enum(["low", "medium", "high"]);
 
@@ -67,10 +68,15 @@ const livestockSchemas = {
     cause: z.enum(MORTALITY_CAUSES),
     note,
   }),
-  /** Producto en texto libre por ahora (el catálogo de productos llega con el ERP, ADR 0004). El potrero es opcional. */
+  /**
+   * Producto en texto libre o del catálogo (productId): con productId y cantidad, el ERP descuenta el stock (E-13).
+   * `quantity` va en la unidad del producto (l o kg). El potrero es opcional.
+   */
   health: z.object({
     reason: z.enum(HEALTH_REASONS),
     product: z.string().trim().min(1).max(120),
+    productId: uuidStr.optional(),
+    quantity: z.number().positive().max(1_000_000).optional(),
     dose: z.string().trim().max(80).optional(),
     counts: herdCountsSchema,
     note,
@@ -80,7 +86,6 @@ const livestockSchemas = {
 /** Unidad de la densidad de siembra: semillas por metro lineal o kg por hectárea. */
 export const DENSITY_UNITS = ["seeds_m", "kg_ha"] as const;
 
-const uuidStr = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/, "uuid inválido");
 /** Superficie hecha en hectáreas (aplicaciones, siembra, cosecha). */
 const areaDone = z.number().positive().max(100_000);
 const seasonId = uuidStr.optional();

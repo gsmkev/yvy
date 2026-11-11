@@ -12,7 +12,7 @@
  *   El pull pagina por (version, id): equivale al "updated_at + desempate por id" del PRD §11
  *   pero sin depender de relojes de distintos datacenters.
  */
-import { MACHINE_TYPES, METER_KINDS, PARTY_KINDS } from "./erp";
+import { CONTRACTOR_SERVICES, CURRENCIES, MACHINE_TYPES, METER_KINDS, PARTY_KINDS, RATE_UNITS } from "./erp";
 import { HEALTH_REASONS } from "./livestock";
 import { sql } from "drizzle-orm";
 import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
@@ -437,6 +437,25 @@ export const machines = sqliteTable(
     ...synced,
   },
   (t) => [index("machines_sync_idx").on(t.organizationId, t.version, t.id)],
+);
+
+/** Contratistas de servicios con su tarifa (E-04): una fila por contratista y servicio. Monto en unidad menor. */
+export const contractors = sqliteTable(
+  "contractors",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    name: text("name").notNull(),
+    /** Tercero (proveedor) asociado, para el RUC y las facturas. */
+    partyId: text("party_id"),
+    service: text("service", { enum: CONTRACTOR_SERVICES }).notNull(),
+    rateUnit: text("rate_unit", { enum: RATE_UNITS }).notNull(),
+    rateAmount: integer("rate_amount").notNull(),
+    currency: text("currency", { enum: CURRENCIES }).notNull().default("PYG"),
+    note: text("note"),
+    ...timestamps,
+  },
+  (t) => [index("contractors_org_idx").on(t.organizationId, t.name)],
 );
 
 // ---------- Trabajo ----------

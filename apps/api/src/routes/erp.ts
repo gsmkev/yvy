@@ -1,9 +1,9 @@
 /** ERP sencillo desde la web (ADR 0004). Montada en /org/erp. */
 import { Hono } from "hono";
 import type { z } from "zod";
-import { machineInput, partyInput, type Role } from "@yvy/shared";
+import { contractorInput, machineInput, partyInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
-import { erpCreate, erpDelete, erpList, erpUpdate, type ErpTable } from "../db/erp";
+import { erpCreate, erpDelete, erpList, erpUpdate, requireOwned, type ErpTable } from "../db/erp";
 import { can, type ScopedDb } from "../db/scoped";
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
@@ -56,4 +56,11 @@ master("machines", s.machines, machineInput, [s.machines.name], {
   read: can.viewStock,
   check: farmCheck,
   normalize: (v) => (v.meterValue === null ? { ...v, meterValue: 0 } : v),
+});
+
+// Las tarifas son montos: solo dueño y administrador (el agrónomo no ve montos).
+master("contractors", s.contractors, contractorInput, [s.contractors.name], {
+  check: async (sdb, v) => {
+    if (typeof v.partyId === "string") await requireOwned(sdb, s.parties, v.partyId, "El proveedor");
+  },
 });

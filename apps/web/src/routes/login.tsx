@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ApiError, post, setSession, type Session } from "../lib/api";
 import { t } from "../lib/i18n";
 import { Button, ErrorBox, Field, Input } from "../components/ui";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const search = useSearch({ from: "/ingresar" });
+  const [mode, setMode] = useState<"login" | "signup">(search.modo === "registro" ? "signup" : "login");
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");

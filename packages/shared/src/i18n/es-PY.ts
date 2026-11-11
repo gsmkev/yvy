@@ -1476,6 +1476,13 @@ export const esPY = {
     cropName_girasol: "Girasol",
     cropName_chia: "Chía",
     cropName_otro: "Otro cultivo",
+    navClients: "Clientes",
+    clientsTitle: "Tus clientes",
+    clientsSummary: "{{orgs}} organizaciones · {{alerts}} avisos activos. Tocá un punto del mapa o una estancia para entrar.",
+    clientsTruncated: "Se muestran las primeras 15 organizaciones.",
+    clientsNone: "Todavía no tenés clientes con acceso de oficina.",
+    clientsNoFarms: "Todavía no cargaron estancias.",
+    clientsOpenOrg: "Entrar",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

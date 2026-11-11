@@ -127,6 +127,11 @@ const account = createRoute({
   path: "/cuenta",
   component: lazyRouteComponent(() => import("./routes/public/account"), "AccountPage"),
 });
+const clients = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/clientes",
+  component: lazyRouteComponent(() => import("./routes/clients"), "ClientsPage"),
+});
 const internal = createRoute({
   getParentRoute: () => appRoute,
   path: "/interno",
@@ -155,6 +160,7 @@ const routeTree = rootRoute.addChildren([
     labsTool,
     alerts,
     account,
+    clients,
     internal,
   ]),
 ]);

@@ -443,6 +443,38 @@ export async function farmProblemAreas(sdb: ScopedDb, farmId: string) {
     .limit(200);
 }
 
+/** S-30: indicador EUDR por lote (calculado por workers-py). Solo roles con vista completa. */
+export async function farmEudr(sdb: ScopedDb, farmId: string) {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const rows = await sdb.db
+    .select({
+      plotId: s.eudrResults.plotId,
+      plotName: s.plots.name,
+      status: s.eudrResults.status,
+      plotAreaHa: s.eudrResults.plotAreaHa,
+      forestRefHa: s.eudrResults.forestRefHa,
+      lossHa: s.eudrResults.lossHa,
+      validPct: s.eudrResults.validPct,
+      refYear: s.eudrResults.refYear,
+      curYear: s.eudrResults.curYear,
+      refFromAt: s.eudrResults.refFromAt,
+      refToAt: s.eudrResults.refToAt,
+      curFromAt: s.eudrResults.curFromAt,
+      curToAt: s.eudrResults.curToAt,
+      refScenes: s.eudrResults.refScenes,
+      curScenes: s.eudrResults.curScenes,
+      changes: s.eudrResults.changes,
+      computedAt: s.eudrResults.computedAt,
+    })
+    .from(s.eudrResults)
+    .innerJoin(s.plots, and(eq(s.plots.id, s.eudrResults.plotId), isNull(s.plots.deletedAt)))
+    .where(and(eq(s.eudrResults.farmId, farmId), eq(s.eudrResults.organizationId, sdb.auth.orgId)))
+    .orderBy(desc(s.eudrResults.lossHa), s.plots.name)
+    .limit(500);
+  return { computedAt: rows.reduce<number | null>((m, r) => (m === null || r.computedAt > m ? r.computedAt : m), null), plots: rows };
+}
+
 /** C-10: informe de riesgo climático ya calculado (workers-py). Solo roles con vista completa. */
 export async function farmRiskReport(sdb: ScopedDb, farmId: string) {
   sdb.require(can.viewAll);

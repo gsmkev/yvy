@@ -82,6 +82,11 @@ const farmRisk = createRoute({
   path: "/estancias/$farmId/riesgo",
   component: lazyRouteComponent(() => import("./routes/risk"), "RiskPage"),
 });
+const farmEudr = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/estancias/$farmId/eudr",
+  component: lazyRouteComponent(() => import("./routes/eudr"), "EudrPage"),
+});
 const records = createRoute({
   getParentRoute: () => appRoute,
   path: "/registros",
@@ -151,6 +156,7 @@ const routeTree = rootRoute.addChildren([
     farmReports,
     farmGauges,
     farmRisk,
+    farmEudr,
     records,
     tasks,
     sanitary,

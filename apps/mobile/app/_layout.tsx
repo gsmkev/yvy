@@ -7,10 +7,13 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts, Fraunces_400Regular, Fraunces_600SemiBold } from "@expo-google-fonts/fraunces";
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from "@expo-google-fonts/inter";
 import { dbReady } from "../src/lib/db";
+import { initMonitoring } from "../src/lib/monitoring";
 import { useNotificationTap } from "../src/lib/push";
 import { loadSession } from "../src/lib/session";
 import { Toast } from "../src/ui/kit";
 import { C, F } from "../src/ui/theme";
+
+initMonitoring();
 
 function NotificationTap() {
   useNotificationTap();

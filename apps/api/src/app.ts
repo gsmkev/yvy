@@ -12,6 +12,7 @@ import { share } from "./routes/share";
 import { sync } from "./routes/sync";
 import { web } from "./routes/web";
 import { admin } from "./routes/admin";
+import { captureError } from "./lib/monitoring";
 import { readOnlyDemo, readOnlyWhenExpired } from "./auth/plan";
 import type { AppEnv } from "./types";
 
@@ -23,6 +24,13 @@ app.onError((err, c) => {
   if (err instanceof NotFoundError) return c.json({ error: err.message }, 404);
   if (err instanceof PlanLimitError) return c.json({ error: err.message }, 402);
   console.error(err);
+  let ctx: { waitUntil(p: Promise<unknown>): void } | undefined;
+  try {
+    ctx = c.executionCtx; // en pruebas no hay contexto
+  } catch {
+    /* sin contexto */
+  }
+  captureError(c.env, err, { request: c.req.raw, ctx, tags: { path: c.req.path } });
   return c.json({ error: "Error interno" }, 500);
 });
 

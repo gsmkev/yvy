@@ -15,7 +15,8 @@ import { FLOWS, KINDS_FOR, type Step } from "../../src/lib/annotate";
 import { currentFix, guessPlots, type Fix, type PlotGuess } from "../../src/lib/location";
 import { processPhoto } from "../../src/lib/photos";
 import { useSession } from "../../src/lib/session";
-import { localChanged, syncNow, useSyncStatus } from "../../src/lib/sync";
+import { localChanged, useSyncStatus } from "../../src/lib/sync";
+import { toastSaved } from "../../src/lib/toast";
 import { Button, Row, s as k } from "../../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T, TOUCH } from "../../src/ui/theme";
 
@@ -109,7 +110,7 @@ export default function Annotate() {
     );
     if (params.taskId) db.completeTask(params.taskId, recordId);
     localChanged();
-    syncNow();
+    toastSaved();
     if (editing) return router.back();
     setPhase({ name: "done", recordId });
   };

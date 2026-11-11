@@ -228,6 +228,8 @@ export const esPY = {
     copied: "Copiado",
     // app-b
     filterAll: "Todo",
+    toastSavedPending: "Guardado · se manda cuando haya señal",
+    toastSavedSent: "Guardado y enviado",
   },
   fields: {
     condition: "Estado general",

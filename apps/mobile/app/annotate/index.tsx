@@ -3,44 +3,83 @@
  * Pensado para usarse con una mano, al sol, sin señal. Nunca más de un dato por pantalla.
  */
 import { useEffect, useMemo, useRef, useState, type ElementRef } from "react";
-import { Image, Keyboard, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInput as TextInputRef } from "react-native";
+import { Image, Keyboard, Platform, Pressable, ScrollView, StyleSheet, View, type TextInput as TextInputRef } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Check, X } from "lucide-react-native";
-import { describeRecord, LIMITS, parseRecordData, t, type MessageKey, type RecordKind } from "@yvy/shared";
-import type { LocalPhoto, Plot } from "../../src/db/store";
+import {
+  describeRecord,
+  DOSE_UNITS_FOR,
+  LIMITS,
+  MONITOR_CROPS,
+  monitorTemplate,
+  parseRecordData,
+  summarizeStations,
+  t,
+  type DoseUnit,
+  type HerdCounts,
+  type MessageKey,
+  type MonitorCrop,
+  type ProductDose,
+  type RecordKind,
+  type Station,
+} from "@yvy/shared";
+import type { LocalPhoto, Plot, Season } from "../../src/db/store";
 import { getDb } from "../../src/lib/db";
-import { FLOWS, KINDS_FOR, type Step } from "../../src/lib/annotate";
+import { selectedFarmId } from "../../src/lib/farmFilter";
+import { FLOWS, KINDS_FOR, SINGLE_PLOT_KINDS, stepsFor, type Step } from "../../src/lib/annotate";
 import { currentFix, guessPlots, type Fix, type PlotGuess } from "../../src/lib/location";
 import { processPhoto } from "../../src/lib/photos";
 import { useSession } from "../../src/lib/session";
-import { localChanged, syncNow, useSyncStatus } from "../../src/lib/sync";
-import { Button, Row, s as k } from "../../src/ui/kit";
+import { localChanged, useSyncStatus } from "../../src/lib/sync";
+import { toastSaved } from "../../src/lib/toast";
+import { seedCounts } from "../../src/lib/counter";
+import { HerdCounter } from "../../src/ui/Counter";
+import { Button, Row, s as k, Text, TextInput } from "../../src/ui/kit";
+import { Stations } from "../../src/ui/Stations";
 import { C, F, GUTTER, RADIUS, T, TOUCH } from "../../src/ui/theme";
 
 const tr = (key: string, vars?: Record<string, string | number>) => t(key as MessageKey, vars);
 
-type Phase = { name: "plot" } | { name: "kind" } | { name: "step"; i: number } | { name: "photo" } | { name: "done"; recordId: string };
+/** Con más lotes que esto, la lista tiene buscador. */
+const SEARCH_FROM = 8;
+const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+type Phase = { name: "plot" } | { name: "multi" } | { name: "kind" } | { name: "mode" } | { name: "stationsCrop" } | { name: "stations" } | { name: "step"; i: number } | { name: "photo" } | { name: "done"; recordId: string };
 
 export default function Annotate() {
-  const params = useLocalSearchParams<{ plotId?: string; kind?: RecordKind; taskId?: string; recordId?: string }>();
+  const params = useLocalSearchParams<{ plotId?: string; kind?: RecordKind; taskId?: string; recordId?: string; farmLevel?: string }>();
   const session = useSession()!;
   const db = getDb();
-  const plots = useMemo(() => db.plots(), []);
+  const plots = useMemo(() => db.plots(selectedFarmId(db) ?? undefined), []);
   // Edición (RF-34): el mismo registro, con sus datos cargados; se guarda con el mismo id.
   const editing = useMemo(() => (params.recordId ? db.recordById(params.recordId) : null), []);
   const existingPhotos = useMemo(() => (editing ? db.photosOfRecord(editing.id).length : 0), []);
   const maxNewPhotos = LIMITS.photos.maxPerRecord - existingPhotos;
   const [fix, setFix] = useState<Fix | null | "searching">(editing ? null : "searching");
   const [guesses, setGuesses] = useState<PlotGuess[]>([]);
-  const [plot, setPlot] = useState<Plot | null>(() => plots.find((p) => p.id === (editing ? editing.plotId : params.plotId)) ?? null);
+  const [plot, setPlot] = useState<Plot | null>(() => db.plots().find((p) => p.id === (editing ? editing.plotId : params.plotId)) ?? null);
   const [kind, setKind] = useState<RecordKind | null>(editing?.kind ?? params.kind ?? null);
-  const [values, setValues] = useState<Record<string, unknown>>(() => (editing ? (JSON.parse(editing.data) as Record<string, unknown>) : {}));
-  const [photos, setPhotos] = useState<LocalPhoto[]>([]);
-  const [phase, setPhase] = useState<Phase>(() =>
-    editing ? { name: "step", i: 0 } : params.kind === "rain" || params.plotId ? (params.kind ? { name: "step", i: 0 } : { name: "kind" }) : { name: "plot" },
+  // Campañas activas que bajaron al celular: con una sola no se pregunta, se usa esa.
+  const seasons = useMemo(() => db.activeSeasons(), []);
+  const seed = (kd: RecordKind): Record<string, unknown> =>
+    seasons.length === 1 && FLOWS[kd].some((x) => x.kind === "season") ? { seasonId: seasons[0]!.id } : {};
+  const [values, setValues] = useState<Record<string, unknown>>(() =>
+    editing ? (JSON.parse(editing.data) as Record<string, unknown>) : params.kind ? seed(params.kind) : {},
   );
+  const [photos, setPhotos] = useState<LocalPhoto[]>([]);
+  // Plaga: primero se elige entre una observación o el monitoreo por estaciones (F-12).
+  const entryFor = (kd: RecordKind): Phase => (kd === "pest" && !editing ? { name: "mode" } : { name: "step", i: 0 });
+  const [phase, setPhase] = useState<Phase>(() =>
+    editing ? { name: "step", i: 0 } : params.kind === "rain" || params.plotId ? (params.kind ? entryFor(params.kind) : { name: "kind" }) : { name: "plot" },
+  );
+  const [stationMode, setStationMode] = useState(false);
+  const [crop, setCrop] = useState<MonitorCrop | null>(null);
+  const [stations, setStations] = useState<Station[]>([]);
   const [camera, setCamera] = useState(false);
+  const [query, setQuery] = useState("");
+  // F-10: anotar lo mismo en varios lotes a la vez.
+  const [multi, setMulti] = useState<Plot[]>([]);
 
   useEffect(() => {
     if (editing) return;
@@ -48,49 +87,96 @@ export default function Annotate() {
       setFix(f);
       const g = guessPlots(plots, f);
       setGuesses(g);
-      // Un solo candidato seguro: se elige solo y pasamos a "qué".
-      if (!params.plotId && g.length === 1 && g[0]!.confidence === "sure") {
+      // Un solo candidato seguro: se elige solo y pasamos a "qué" (salvo la lluvia de la estancia, que no es de un lote).
+      if (!params.plotId && !params.farmLevel && g.length === 1 && g[0]!.confidence === "sure") {
         setPlot(g[0]!.plot);
-        setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+        setPhase(kind ? entryFor(kind) : { name: "kind" });
       }
     });
   }, []);
 
-  const steps = kind ? FLOWS[kind] : [];
+  // F-01: si el GPS tarda (arranque en frío), explicar que busca satélites y que no usa internet.
+  const [gpsSlow, setGpsSlow] = useState(false);
+  useEffect(() => {
+    if (fix !== "searching") return setGpsSlow(false);
+    const id = setTimeout(() => setGpsSlow(true), 5000);
+    return () => clearTimeout(id);
+  }, [fix]);
+
+  // Un registro de monitoreo por estaciones solo permite editar la nota: los conteos son de campo.
+  const stationRecord = kind === "pest" && Array.isArray(values.stations);
+  // G-30: aguadas de la estancia, para preguntar de cuál es el nivel (no al editar un registro ya guardado).
+  const waterPois = useMemo(
+    () => (editing ? [] : db.pois(plot?.farmId ?? selectedFarmId(db) ?? undefined).filter((p) => p.kind === "water")),
+    [plot?.farmId, editing],
+  );
+  const flowCtx = { waterPois: waterPois.length, askSeason: seasons.length > 1 };
+  const steps = stationRecord ? FLOWS.pest.slice(-1) : stepsFor(kind, values, flowCtx);
   const stepIndex = phase.name === "step" ? phase.i : -1;
 
   const back = () => {
     Keyboard.dismiss();
     if (phase.name === "step" && phase.i > 0) return setPhase({ name: "step", i: phase.i - 1 });
     if (phase.name === "step") return params.kind || editing ? router.back() : setPhase({ name: "kind" });
-    if (phase.name === "kind") return params.plotId ? router.back() : setPhase({ name: "plot" });
-    if (phase.name === "photo") return setPhase({ name: "step", i: steps.length - 1 });
+    if (phase.name === "multi") return setPhase({ name: "plot" });
+    if (phase.name === "mode") return params.kind ? (params.plotId ? router.back() : setPhase({ name: "plot" })) : setPhase({ name: "kind" });
+    if (phase.name === "stationsCrop") return setPhase({ name: "mode" });
+    if (phase.name === "stations") return setPhase({ name: "mode" });
+    if (phase.name === "kind") return multi.length ? setPhase({ name: "multi" }) : params.plotId ? router.back() : setPhase({ name: "plot" });
+    if (phase.name === "photo") return setPhase(stationMode ? { name: "stations" } : { name: "step", i: steps.length - 1 });
     router.back();
   };
 
   const advance = (next: Record<string, unknown> = values) => {
     Keyboard.dismiss();
     setValues(next);
-    if (stepIndex < steps.length - 1) setPhase({ name: "step", i: stepIndex + 1 });
+    if (stepIndex < (stationRecord ? steps.length : stepsFor(kind, next, flowCtx).length) - 1) setPhase({ name: "step", i: stepIndex + 1 });
     else setPhase({ name: "photo" });
   };
 
   const save = () => {
     if (!kind) return;
-    const data: Record<string, unknown> = { ...values };
+    const { poiId: pickedPoi, ...answers } = values;
+    const data: Record<string, unknown> = { ...answers };
     if (kind === "rain" && !editing) data.readAt = Date.now();
+    // Compra: la hacienda entra de afuera, así que el potrero elegido es el destino y no hay origen.
+    const entersFromOutside = kind === "herd_move" && data.reason === "compra" && !!plot;
+    if (entersFromOutside) data.toPlotId = plot!.id;
     const parsed = parseRecordData(kind, data);
     if (!parsed.success) return setPhase({ name: "step", i: 0 });
     const f = fix === "searching" ? null : fix;
-    const farmId = editing?.farmId ?? plot?.farmId ?? db.farms()[0]?.id;
+    const farmId = editing?.farmId ?? plot?.farmId ?? selectedFarmId(db) ?? db.farms()[0]?.id;
     if (!farmId) return;
+    if (multi.length > 1 && !editing) {
+      const at = Date.now();
+      const ids = db.saveRecords(
+        session.user.id,
+        session.organization.id,
+        multi.map((p) => ({
+          farmId: p.farmId,
+          plotId: p.id,
+          poiId: null,
+          kind,
+          data: parsed.data as Record<string, unknown>,
+          lon: f?.lon ?? null,
+          lat: f?.lat ?? null,
+          gpsAccuracyM: f?.accuracy ?? null,
+          capturedAt: at,
+        })),
+        photos,
+      );
+      if (params.taskId) db.completeTask(params.taskId, ids[0]!);
+      localChanged();
+      toastSaved();
+      return setPhase({ name: "done", recordId: ids[0]! });
+    }
     const recordId = db.saveRecord(
       session.user.id,
       session.organization.id,
       {
         farmId,
-        plotId: plot?.id ?? null,
-        poiId: editing?.poiId ?? null,
+        plotId: entersFromOutside ? null : (plot?.id ?? null),
+        poiId: editing?.poiId ?? (typeof pickedPoi === "string" ? pickedPoi : null),
         kind,
         data: parsed.data as Record<string, unknown>,
         lon: editing ? editing.lon : (f?.lon ?? null),
@@ -103,7 +189,7 @@ export default function Annotate() {
     );
     if (params.taskId) db.completeTask(params.taskId, recordId);
     localChanged();
-    syncNow();
+    toastSaved();
     if (editing) return router.back();
     setPhase({ name: "done", recordId });
   };
@@ -143,31 +229,48 @@ export default function Annotate() {
     const sure = guesses.filter((g) => g.confidence === "sure");
     const near = guesses.filter((g) => g.confidence === "near");
     const showAll = guesses.length === 0 && fix !== "searching";
+    const searching = plots.length > SEARCH_FROM && query.trim() !== "";
+    const needle = fold(query);
     return (
       <View style={k.screen}>
         {header}
         <ScrollView contentContainerStyle={k.pad} keyboardShouldPersistTaps="handled">
           <Text style={T.title}>{t("app.whichPlot")}</Text>
-          <Text style={[T.small, { marginTop: 6, marginBottom: 20 }]}>
+          <Text style={[T.small, { marginTop: 6, marginBottom: gpsSlow ? 6 : 20 }]}>
             {fix === "searching" ? t("app.gpsSearching") : guesses.length ? t("app.detectedByGps") : fix ? t("app.noPlotNearby") : t("app.gpsNone")}
           </Text>
-          {[...sure, ...near].map((g) => (
+          {fix === "searching" && gpsSlow && <Text style={[T.small, { marginBottom: 20 }]}>{t("app.gpsSlowHint")}</Text>}
+          {plots.length > SEARCH_FROM && (
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder={t("app.plotSearch")}
+              placeholderTextColor={C.tinta3}
+              accessibilityLabel={t("app.plotSearch")}
+              autoCorrect={false}
+              clearButtonMode="while-editing"
+              returnKeyType="search"
+              style={st.search}
+            />
+          )}
+          {!searching && [...sure, ...near].map((g) => (
             <Row
               key={g.plot.id}
               title={g.plot.name}
               subtitle={g.confidence === "near" ? t("app.nearBorder") : plotSubtitle(g.plot)}
               onPress={() => {
                 setPlot(g.plot);
-                setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+                setMulti([]);
+                setPhase(kind ? entryFor(kind) : { name: "kind" });
               }}
             />
           ))}
-          {guesses.length > 0 && (
+          {guesses.length > 0 && !searching && (
             <Text style={[T.smallMedium, { marginTop: 24, marginBottom: 8 }]}>{t("app.changePlot")}</Text>
           )}
-          {(showAll || guesses.length > 0) &&
+          {(showAll || guesses.length > 0 || searching) &&
             plots
-              .filter((p) => !guesses.some((g) => g.plot.id === p.id))
+              .filter((p) => (searching ? fold(p.name).includes(needle) : !guesses.some((g) => g.plot.id === p.id)))
               .map((p) => (
                 <Row
                   key={p.id}
@@ -175,18 +278,60 @@ export default function Annotate() {
                   subtitle={plotSubtitle(p)}
                   onPress={() => {
                     setPlot(p);
-                    setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+                    setMulti([]);
+                    setPhase(kind ? entryFor(kind) : { name: "kind" });
                   }}
                 />
               ))}
+          {searching && !plots.some((p) => fold(p.name).includes(needle)) && <Text style={[T.small, { marginTop: 8 }]}>{t("app.plotSearchNone")}</Text>}
           <View style={{ height: 12 }} />
+          {plots.length > 1 && <Button kind="text" title={t("app.severalPlots")} onPress={() => setPhase({ name: "multi" })} />}
           <Button
             kind="text"
             title={t("app.noPlot")}
             onPress={() => {
               setPlot(null);
-              setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+              setMulti([]);
+              setPhase(kind ? entryFor(kind) : { name: "kind" });
             }}
+          />
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // ---------- 1b. Varios lotes ----------
+  if (phase.name === "multi") {
+    const toggle = (p: Plot) => setMulti((m) => (m.some((x) => x.id === p.id) ? m.filter((x) => x.id !== p.id) : [...m, p]));
+    return (
+      <View style={k.screen}>
+        {header}
+        <ScrollView contentContainerStyle={k.pad}>
+          <Text style={T.title}>{t("app.severalPlotsTitle")}</Text>
+          <Text style={[T.small, { marginTop: 6, marginBottom: 16 }]}>{t("app.severalPlotsHint")}</Text>
+          {plots.map((p) => {
+            const on = multi.some((x) => x.id === p.id);
+            return (
+              <Row
+                key={p.id}
+                title={p.name}
+                subtitle={plotSubtitle(p)}
+                selected={on}
+                onPress={() => toggle(p)}
+                left={on ? <Check size={22} color={C.accion} strokeWidth={3} /> : <View style={st.box} />}
+              />
+            );
+          })}
+          <Button
+            big
+            disabled={multi.length === 0}
+            title={multi.length === 1 ? t("app.severalPlotsContinueOne") : t("app.severalPlotsContinue", { n: multi.length })}
+            onPress={() => {
+              // Un solo lote marcado es un lote común.
+              setPlot(multi.length === 1 ? multi[0]! : null);
+              setPhase(kind ? entryFor(kind) : { name: "kind" });
+            }}
+            style={{ marginTop: 20 }}
           />
         </ScrollView>
       </View>
@@ -203,14 +348,17 @@ export default function Annotate() {
           <Text style={T.title}>{t("app.whatHappened")}</Text>
           {plot && rain > 0 && <Text style={[T.small, { marginTop: 6 }]}>{t("app.rainMonth", { mm: Math.round(rain) })}</Text>}
           <View style={{ height: 16 }} />
-          {KINDS_FOR(plot?.kind ?? null).map((kd) => (
+          {KINDS_FOR(plot?.kind ?? (multi.length > 1 && multi.every((p) => p.kind === multi[0]!.kind) ? multi[0]!.kind : null))
+            .filter((kd) => !(multi.length > 1 && SINGLE_PLOT_KINDS.includes(kd)))
+            .map((kd) => (
             <Row
               key={kd}
               title={t(`recordKinds.${kd}`)}
               onPress={() => {
                 setKind(kd);
-                setValues({});
-                setPhase({ name: "step", i: 0 });
+                setValues(seed(kd));
+                setStationMode(false);
+                setPhase(entryFor(kd));
               }}
             />
           ))}
@@ -219,14 +367,133 @@ export default function Annotate() {
     );
   }
 
+  // ---------- 2b. Plaga: una observación o por estaciones ----------
+  if (phase.name === "mode") {
+    const plotCrop = plot?.crop && monitorTemplate(plot.crop) ? (plot.crop as MonitorCrop) : null;
+    return (
+      <View style={k.screen}>
+        {header}
+        <ScrollView contentContainerStyle={k.pad}>
+          <Text style={[T.title, { marginBottom: 16 }]}>{t("app.pestMode")}</Text>
+          <Row
+            title={t("app.pestModeOne")}
+            onPress={() => {
+              setStationMode(false);
+              setPhase({ name: "step", i: 0 });
+            }}
+          />
+          <Row
+            title={t("app.pestModeStations")}
+            onPress={() => {
+              setStationMode(true);
+              setValues({});
+              if (plotCrop) setCrop(plotCrop);
+              setPhase(plotCrop || crop ? { name: "stations" } : { name: "stationsCrop" });
+            }}
+          />
+        </ScrollView>
+      </View>
+    );
+  }
+
+  if (phase.name === "stationsCrop") {
+    return (
+      <View style={k.screen}>
+        {header}
+        <ScrollView contentContainerStyle={k.pad}>
+          <Text style={[T.title, { marginBottom: 16 }]}>{t("app.stationsCrop")}</Text>
+          {MONITOR_CROPS.map((c) => (
+            <Row
+              key={c}
+              title={tr(`app.monitorCrop_${c}`)}
+              onPress={() => {
+                setCrop(c);
+                setPhase({ name: "stations" });
+              }}
+            />
+          ))}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  if (phase.name === "stations" && crop) {
+    const finish = () => {
+      const tpl = monitorTemplate(crop)!;
+      const sum = summarizeStations(stations, tpl);
+      setValues({
+        pest: sum.pest,
+        intensity: sum.intensity,
+        ...(sum.perMeter !== undefined ? { perMeter: sum.perMeter } : {}),
+        crop,
+        stations,
+        averages: sum.averages,
+      });
+      Keyboard.dismiss();
+      setPhase({ name: "photo" });
+    };
+    return (
+      <View style={k.screen}>
+        {header}
+        <Progress i={0} n={2} />
+        <Stations crop={crop} stations={stations} onChange={setStations} onDone={finish} />
+      </View>
+    );
+  }
+
   // ---------- 3. Pasos ----------
   if (phase.name === "step") {
     const step = steps[phase.i]!;
+    if (step.kind === "counter")
+      return (
+        <View style={k.screen}>
+          {header}
+          <Progress i={phase.i} n={steps.length + 1} />
+          <HerdCounter
+            key={`${kind}-${step.key}`}
+            question={tr(step.question)}
+            hint={step.hint ? tr(step.hint) : undefined}
+            counts={(values[step.key] as HerdCounts | undefined) ?? seedFor(kind, plot, editing)}
+            onChange={(c) => setValues((v) => ({ ...v, [step.key]: c }))}
+            onDone={(c) => advance({ ...values, [step.key]: c })}
+          />
+        </View>
+      );
+    if (step.kind === "poi")
+      return (
+        <View style={k.screen}>
+          {header}
+          <Progress i={phase.i} n={steps.length + 1} />
+          <ScrollView contentContainerStyle={k.pad}>
+            <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
+            {waterPois.map((p) => (
+              <Row key={p.id} title={p.name} selected={values[step.key] === p.id} onPress={() => advance({ ...values, [step.key]: p.id })} />
+            ))}
+            <Button kind="text" title={t("app.waterPoiOther")} onPress={() => advance({ ...values, [step.key]: undefined })} style={{ marginTop: 12 }} />
+          </ScrollView>
+        </View>
+      );
+    if (step.kind === "paddock")
+      return (
+        <View style={k.screen}>
+          {header}
+          <Progress i={phase.i} n={steps.length + 1} />
+          <ScrollView contentContainerStyle={k.pad}>
+            <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
+            {db
+              .plots(plot?.farmId ?? selectedFarmId(db) ?? undefined)
+              .filter((p) => p.kind === "pasture" && p.id !== plot?.id)
+              .map((p) => (
+                <Row key={p.id} title={p.name} selected={values[step.key] === p.id} onPress={() => advance({ ...values, [step.key]: p.id })} />
+              ))}
+          </ScrollView>
+        </View>
+      );
     return (
       <View style={k.screen}>
         {header}
         <Progress i={phase.i} n={steps.length + 1} />
-        <StepScreen key={`${kind}-${step.key}`} step={step} value={values[step.key]} onAnswer={(v) => advance({ ...values, [step.key]: v })} />
+        <StepScreen key={`${kind}-${step.key}`} step={step} value={values[step.key]} seasons={seasons} onAnswer={(v) => advance({ ...values, [step.key]: v })} />
       </View>
     );
   }
@@ -236,7 +503,7 @@ export default function Annotate() {
     return (
       <View style={k.screen}>
         {header}
-        <Progress i={steps.length} n={steps.length + 1} />
+        <Progress i={stationMode ? 1 : steps.length} n={stationMode ? 2 : steps.length + 1} />
         <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]}>
           <Text style={T.title}>{t("app.addPhoto")}</Text>
           <Text style={[T.small, { marginTop: 6 }]}>{t("app.photosCount", { n: photos.length + existingPhotos, max: LIMITS.photos.maxPerRecord })}</Text>
@@ -269,6 +536,13 @@ export default function Annotate() {
   return <Done plot={plot} kind={kind!} values={values} />;
 }
 
+/** Un conteo nuevo parte de lo que se calcula para el potrero: se corrige lo que cambió. */
+function seedFor(kind: RecordKind | null, plot: Plot | null, editing: unknown): HerdCounts {
+  if (kind !== "herd_count" || !plot || editing) return {};
+  const stock = getDb().herdStock(plot.id);
+  return stock ? seedCounts(stock.counts) : {};
+}
+
 function plotSubtitle(p: Plot) {
   const last = getDb().lastVisitByPlot().get(p.id);
   if (!last) return t("app.noVisits");
@@ -286,7 +560,7 @@ function Progress({ i, n }: { i: number; n: number }) {
   );
 }
 
-function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onAnswer: (v: unknown) => void }) {
+function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unknown; seasons: Season[]; onAnswer: (v: unknown) => void }) {
   const [text, setText] = useState(value === undefined ? "" : String(value));
   const input = useRef<ElementRef<typeof TextInputRef>>(null);
   useEffect(() => {
@@ -305,6 +579,21 @@ function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onA
       </ScrollView>
     );
   }
+  if (step.kind === "counter" || step.kind === "paddock" || step.kind === "poi") return null; // se dibuja con HerdCounter (pantalla completa)
+  if (step.kind === "season") {
+    return (
+      <ScrollView contentContainerStyle={k.pad}>
+        <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
+        {seasons.map((x) => (
+          <Row key={x.id} title={x.name} selected={value === x.id} onPress={() => onAnswer(x.id)} />
+        ))}
+        <Button kind="text" title={t("app.skip")} onPress={() => onAnswer(undefined)} style={{ marginTop: 12 }} />
+      </ScrollView>
+    );
+  }
+  if (step.kind === "products") {
+    return <ProductsStep question={step.question} value={value} fixedUnit={step.fixedUnit} types={step.productTypes} onAnswer={onAnswer} />;
+  }
   if (step.kind === "yesno") {
     return (
       <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]}>
@@ -319,7 +608,7 @@ function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onA
   }
   if (step.kind === "number") {
     const n = Number(text.replace(",", "."));
-    const ok = text !== "" && Number.isFinite(n) && n >= 0 && n <= step.max;
+    const ok = text !== "" && Number.isFinite(n) && n >= (step.min ?? 0) && n <= step.max && (!step.integer || Number.isInteger(n));
     return (
       <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
         <Text style={T.title}>{tr(step.question)}</Text>
@@ -329,7 +618,7 @@ function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onA
             ref={input}
             value={text}
             onChangeText={(v) => setText(v.replace(/[^0-9.,]/g, "").slice(0, 6))}
-            keyboardType="decimal-pad"
+            keyboardType={step.integer ? "number-pad" : "decimal-pad"}
             style={st.numberInput}
             placeholder="0"
             placeholderTextColor={C.tinta3}
@@ -339,7 +628,11 @@ function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onA
           <Text style={st.unit}>{step.unit}</Text>
         </View>
         <View style={{ flex: 1 }} />
-        <Button big title={t("app.next")} disabled={!ok} onPress={() => onAnswer(n)} />
+        {step.optional && text === "" ? (
+          <Button big kind="secondary" title={t("app.skip")} onPress={() => onAnswer(undefined)} />
+        ) : (
+          <Button big title={t("app.next")} disabled={!ok} onPress={() => onAnswer(n)} />
+        )}
       </ScrollView>
     );
   }
@@ -362,6 +655,149 @@ function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onA
       ) : (
         <Button big title={t("app.next")} disabled={!text.trim()} onPress={() => onAnswer(text.trim())} />
       )}
+    </ScrollView>
+  );
+}
+
+/** Productos de la mezcla: elegir del catálogo (o escribir uno) y una dosis por pantalla. */
+function ProductsStep({ question, value, fixedUnit, types, onAnswer }: { question: string; value: unknown; fixedUnit?: "kg_ha"; types?: string[]; onAnswer: (v: unknown) => void }) {
+  // Con un tipo pedido (fertilizantes) se ofrece ese tipo; si el catálogo no tiene ninguno, todos.
+  const catalog = useMemo(() => {
+    const all = getDb().products();
+    const typed = types ? all.filter((p) => types.includes(p.type)) : all;
+    return typed.length ? typed : all;
+  }, []);
+  const initial = Array.isArray(value) ? (value as ProductDose[]) : [];
+  const [doses, setDoses] = useState<ProductDose[]>(initial);
+  const [view, setView] = useState<"review" | "pick" | "other" | number>(initial.length ? "review" : "pick");
+  const [other, setOther] = useState("");
+  const [text, setText] = useState("");
+
+  const toggle = (p: { id: string; name: string; unit: "l" | "kg" }) =>
+    setDoses((ds) =>
+      ds.some((d) => d.productId === p.id)
+        ? ds.filter((d) => d.productId !== p.id)
+        : [...ds, { productId: p.id, name: p.name, dose: 0, unit: fixedUnit ?? DOSE_UNITS_FOR[p.unit][0] }],
+    );
+  const baseOf = (d: ProductDose): "l" | "kg" => (d.unit === "kg_ha" || d.unit === "g_ha" ? "kg" : "l");
+  const go = (i: number) => {
+    setText(doses[i]?.dose ? String(doses[i]!.dose).replace(".", ",") : "");
+    setView(i);
+  };
+
+  if (view === "review") {
+    return (
+      <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]}>
+        <Text style={T.title}>{t("app.productsReview")}</Text>
+        <Text style={[T.small, { marginTop: 6, marginBottom: 16 }]}>{t("app.productsReviewHint")}</Text>
+        {doses.map((d) => (
+          <Row key={`${d.productId ?? d.name}`} title={d.name} subtitle={describeRecord("application", { products: [d] }).replace(`${d.name} `, "")} />
+        ))}
+        <View style={{ flex: 1 }} />
+        <Button big title={t("app.next")} onPress={() => onAnswer(doses)} />
+        <Button kind="text" title={t("app.productsChange")} onPress={() => setView("pick")} style={{ marginTop: 8 }} />
+      </ScrollView>
+    );
+  }
+  if (view === "other") {
+    const name = other.trim();
+    return (
+      <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
+        <Text style={T.title}>{t("app.productOtherQuestion")}</Text>
+        <TextInput value={other} onChangeText={setOther} autoFocus style={st.search} accessibilityLabel={t("app.productOtherQuestion")} />
+        <View style={{ flex: 1 }} />
+        <Button
+          big
+          title={t("app.next")}
+          disabled={!name}
+          onPress={() => {
+            setDoses((ds) => [...ds, { name, dose: 0, unit: fixedUnit ?? "l_ha" }]);
+            setOther("");
+            setView("pick");
+          }}
+        />
+      </ScrollView>
+    );
+  }
+  if (typeof view === "number") {
+    const d = doses[view]!;
+    const n = Number(text.replace(",", "."));
+    const ok = text !== "" && Number.isFinite(n) && n > 0 && n <= 100_000;
+    const [big, small] = DOSE_UNITS_FOR[baseOf(d)];
+    const unit: DoseUnit = d.unit;
+    const alt = unit === big ? small : big;
+    const next = () => {
+      const list = doses.map((x, j) => (j === view ? { ...x, dose: n } : x));
+      setDoses(list);
+      if (view < list.length - 1) {
+        setText(list[view + 1]!.dose ? String(list[view + 1]!.dose).replace(".", ",") : "");
+        setView(view + 1);
+      } else onAnswer(list);
+    };
+    return (
+      <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
+        <Text style={T.title}>{t("app.productDoseQuestion", { name: d.name })}</Text>
+        <View style={st.numberRow}>
+          <TextInput
+            value={text}
+            onChangeText={(v) => setText(v.replace(/[^0-9.,]/g, "").slice(0, 7))}
+            keyboardType="decimal-pad"
+            autoFocus
+            style={st.numberInput}
+            placeholder="0"
+            placeholderTextColor={C.tinta3}
+            accessibilityLabel={t("app.productDoseQuestion", { name: d.name })}
+            onSubmitEditing={() => ok && next()}
+          />
+          <Text style={st.unit}>{tr(`fields.doseUnit_${unit}`)}</Text>
+        </View>
+        {!fixedUnit && <Button
+          kind="text"
+          title={t("app.productDoseChange", { unit: tr(`fields.doseUnit_${alt}`) })}
+          onPress={() => setDoses((ds) => ds.map((x, j) => (j === view ? { ...x, unit: alt } : x)))}
+          style={{ marginTop: 8 }}
+        />}
+        <View style={{ flex: 1 }} />
+        <Button big title={t("app.next")} disabled={!ok} onPress={next} />
+      </ScrollView>
+    );
+  }
+  return (
+    <ScrollView contentContainerStyle={k.pad}>
+      <Text style={T.title}>{tr(question)}</Text>
+      <Text style={[T.small, { marginTop: 6, marginBottom: 16 }]}>{catalog.length ? t("app.productsHint") : t("app.productsNone")}</Text>
+      {catalog.map((p) => {
+        const on = doses.some((d) => d.productId === p.id);
+        return (
+          <Row
+            key={p.id}
+            title={p.name}
+            subtitle={p.activeIngredient ?? undefined}
+            selected={on}
+            onPress={() => toggle(p)}
+            left={on ? <Check size={22} color={C.accion} strokeWidth={3} /> : <View style={st.box} />}
+          />
+        );
+      })}
+      {doses
+        .filter((d) => !d.productId)
+        .map((d) => (
+          <Row
+            key={d.name}
+            title={d.name}
+            selected
+            onPress={() => setDoses((ds) => ds.filter((x) => x !== d))}
+            left={<Check size={22} color={C.accion} strokeWidth={3} />}
+          />
+        ))}
+      <Button kind="text" title={t("app.productOther")} onPress={() => setView("other")} style={{ marginTop: 8 }} />
+      <Button
+        big
+        disabled={doses.length === 0}
+        title={t("app.productsContinue", { n: doses.length })}
+        onPress={() => go(0)}
+        style={{ marginTop: 16 }}
+      />
     </ScrollView>
   );
 }
@@ -438,9 +874,11 @@ const st = StyleSheet.create({
   numberInput: { ...T.number, flex: 1, flexBasis: 0, minWidth: 0, width: 0, padding: 0, minHeight: 72, borderWidth: 0, backgroundColor: "transparent", ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : {}) },
   unit: { fontFamily: F.serifLight, fontSize: 28, color: C.tinta2 },
   textInput: { ...T.body, ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : {}), minHeight: 140, marginTop: 20, textAlignVertical: "top", borderWidth: 1.5, borderColor: C.lineaFuerte, borderRadius: RADIUS, padding: 14, backgroundColor: C.blanco },
+  search: { ...T.body, ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : {}), minHeight: TOUCH, borderWidth: 1.5, borderColor: C.lineaFuerte, borderRadius: RADIUS, paddingHorizontal: 14, backgroundColor: C.blanco, marginBottom: 12 },
   photos: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 20 },
   thumb: { width: 104, height: 104, borderRadius: RADIUS },
   thumbX: { position: "absolute", top: 6, right: 6, width: 26, height: 26, borderRadius: 13, backgroundColor: "rgba(30,36,25,0.75)", alignItems: "center", justifyContent: "center" },
+  box: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: C.lineaFuerte },
   doneMark: { width: 72, height: 72, borderRadius: 36, backgroundColor: C.accion, alignItems: "center", justifyContent: "center" },
   shutterRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 28, paddingVertical: 24, backgroundColor: "#000" },
   shutter: { width: TOUCH + 20, height: TOUCH + 20, borderRadius: (TOUCH + 20) / 2, borderWidth: 6, borderColor: C.blanco, backgroundColor: C.accion },

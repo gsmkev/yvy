@@ -23,6 +23,7 @@ import {
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from "./client";
+import { funnelEvent } from "./events";
 import { can, type ScopedDb } from "./scoped";
 
 const paramsPerRow = (t: SQLiteTable) => Object.keys(getTableColumns(t)).length;
@@ -518,6 +519,8 @@ export async function applyPush(
       taskUpdates.length >
     0;
   if (touchesSynced) stmts.push(bumpVersion(db));
+  // P-03: primer registro de la organización (una sentencia; no hace nada si ya existe)
+  if (recordUpserts.length) stmts.push(funnelEvent(db, "first_record", auth.userId, org, now));
 
   for (const chunk of chunkForParams(poiUpserts, paramsPerRow(s.pointsOfInterest))) {
     stmts.push(

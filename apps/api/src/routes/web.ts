@@ -1,9 +1,10 @@
 /** Consultas y edición para la web (y la ficha del lote en la app con red). */
 import { Hono } from "hono";
-import { eq } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
+import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { areaHa, bboxOf } from "@yvy/geo";
-import { alertSettingsSchema, CROPS, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
+import { alertSettingsSchema, CROPS, FUNNEL_EVENTS, newId, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import {
   addTaskComment,
@@ -91,6 +92,33 @@ web.put("/me/notification-prefs", async (c) => {
   const prefs = parse(notificationPrefsSchema, await readJson(c.req));
   await saveNotificationPrefs(c.var.sdb, prefs);
   return c.json(await getNotificationPrefs(c.var.sdb));
+});
+
+/**
+ * P-03: evento de uso del cliente (ej. "view:tareas"). Se muestrea y tiene tope por usuario; los pasos del embudo
+ * los escribe solo el servidor, así que esos nombres se rechazan acá.
+ */
+web.post("/events", async (c) => {
+  const { name } = parse(
+    z.object({
+      name: z
+        .string()
+        .regex(/^[a-z0-9_.:-]+$/)
+        .max(LIMITS.events.nameLength),
+    }),
+    await readJson(c.req),
+  );
+  if ((FUNNEL_EVENTS as readonly string[]).includes(name)) throw new HTTPException(400, { message: "Nombre reservado" });
+  if (Math.random() >= LIMITS.events.sampleRate) return c.json({ recorded: false }, 202);
+  const { userId, orgId } = c.var.auth;
+  const now = Date.now();
+  const [{ n }] = (await c.var.sdb.db
+    .select({ n: sql<number>`count(*)` })
+    .from(s.events)
+    .where(and(eq(s.events.userId, userId), gte(s.events.ts, now - 60_000)))) as [{ n: number }];
+  if (n >= LIMITS.events.perUserPerMinute) throw new HTTPException(429, { message: "Demasiados eventos" });
+  await c.var.sdb.db.insert(s.events).values({ id: newId(), name, userId, organizationId: orgId, ts: now });
+  return c.json({ recorded: true }, 202);
 });
 
 web.get("/org/farms", async (c) => c.json(await farmSummaries(c.var.sdb)));

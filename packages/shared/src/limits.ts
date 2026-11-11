@@ -112,6 +112,14 @@ export const LIMITS = {
     blocked: { maxHa: 100_000, maxUsers: 10 },
     demo: { maxHa: null, maxUsers: null },
   },
+  events: {
+    /** Fracción de los eventos de uso (no del embudo) que se guarda. */
+    sampleRate: 0.5,
+    perUserPerMinute: 30,
+    nameLength: 40,
+    /** Los eventos de uso se borran pasado este tiempo; los del embudo quedan. */
+    retentionMs: 90 * 24 * 60 * 60 * 1000,
+  },
   share: {
     /** Duraciones permitidas del enlace de solo lectura (K-04), en días. */
     linkDays: [7, 30],

@@ -24,6 +24,9 @@ interface OrgMetrics {
   ownersActivePct: number | null;
   usefulPct: number | null;
   lastActive: string | null;
+  /** V-05: código de referido con el que se registró y agrónomo dueño del código. */
+  referredBy: string | null;
+  referrerName: string | null;
 }
 
 /** Métricas del PRD §4 por organización (solo equipo Yvy). */
@@ -99,6 +102,7 @@ export function InternalPage() {
                   "internalOwnersActive",
                   "internalUseful",
                   "internalLastActive",
+                  "internalReferral",
                   "internalLimits",
                   "internalActions",
                 ] as const
@@ -135,6 +139,9 @@ export function InternalPage() {
                 </td>
                 <td className="px-3 py-2">{pct(o.usefulPct)}</td>
                 <td className="px-3 py-2">{o.lastActive ?? "—"}</td>
+                <td className="px-3 py-2">
+                  {o.referredBy ? `${o.referrerName ?? t("ui.internalReferralUnknown")} · ${o.referredBy}` : "—"}
+                </td>
                 <td className="num px-3 py-2">
                   {o.limits.maxHa === null ? "∞" : fmtNum(o.limits.maxHa)} ha · {o.users}/
                   {o.limits.maxUsers === null ? "∞" : o.limits.maxUsers}

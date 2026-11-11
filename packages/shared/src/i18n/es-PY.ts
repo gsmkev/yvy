@@ -1522,6 +1522,20 @@ export const esPY = {
     eudrPdfWorking: "Armando el PDF…",
     eudrPdfFile: "indicador-eudr",
     eudrFooter: "Yvy · Sentinel-2 L2A · Análisis indicativo, no es una certificación ni una declaración de debida diligencia",
+    // agronomos
+    agroTitle: "Para agrónomos",
+    agroText:
+      "Si asesorás a productores, Yvy te deja ver las estancias y los avisos de todos tus clientes en un solo lugar. Cada estancia que traés con tu código personal queda registrada a tu nombre. Escribinos y acordamos las condiciones.",
+    agroCta: "Escribinos por WhatsApp",
+    agroWhatsappText: "Hola, soy agrónomo o agrónoma y quiero conocer el programa de Yvy para agrónomos.",
+    accountReferralTitle: "Tu código de agrónomo",
+    accountReferralText:
+      "Compartí este enlace con tus clientes. Cuando crean su cuenta con él, queda registrado que llegaron por vos.",
+    accountReferralCode: "Tu código",
+    accountReferralLink: "Enlace de registro",
+    accountReferralCopy: "Copiar enlace",
+    internalReferral: "Referido por",
+    internalReferralUnknown: "Código sin agrónomo",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

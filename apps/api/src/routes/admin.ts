@@ -57,7 +57,8 @@ admin.get("/metrics", async (c) => {
   const week = now - 7 * 86_400_000;
   const weekDay = new Date(week - 3 * 3_600_000).toISOString().slice(0, 10);
   const orgs = await db.all<Record<string, unknown>>(sql`
-    SELECT o.id, o.name, o.plan, o.trial_ends_at AS trialEndsAt, o.max_ha AS maxHaOwn, o.max_users AS maxUsersOwn, o.created_at AS createdAt,
+    SELECT o.id, o.name, o.plan, o.trial_ends_at AS trialEndsAt, o.max_ha AS maxHaOwn, o.max_users AS maxUsersOwn, o.created_at AS createdAt, o.referred_by AS referredBy,
+      (SELECT u.full_name FROM users u WHERE u.id = o.referrer_user_id) AS referrerName,
       (SELECT count(*) FROM farms f WHERE f.organization_id = o.id AND f.deleted_at IS NULL) AS farms,
       (SELECT coalesce(sum(area_ha), 0) FROM farms f WHERE f.organization_id = o.id AND f.deleted_at IS NULL) AS ha,
       (SELECT count(*) FROM memberships m WHERE m.organization_id = o.id AND m.role = 'worker' AND m.deleted_at IS NULL) AS workers,

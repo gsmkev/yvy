@@ -1,10 +1,46 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { NotificationPrefs } from "../../components/NotificationPrefs";
 import { ConfirmModal, Spinner } from "../../components/ui";
-import { post } from "../../lib/api";
+import { get, post } from "../../lib/api";
 import { t } from "../../lib/i18n";
 import { useMe } from "../../lib/queries";
+
+/** V-05: código personal de referido del agrónomo y el enlace de registro que lo lleva. */
+function Referral() {
+  const q = useQuery({ queryKey: ["referral"], queryFn: () => get<{ code: string | null }>("/me/referral") });
+  const [copied, setCopied] = useState(false);
+  const code = q.data?.code;
+  if (!code) return null;
+  const link = `${window.location.origin}/ingresar?modo=registro&ref=${code}`;
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // sin permiso de portapapeles: el enlace queda a la vista para copiarlo a mano
+    }
+  };
+  return (
+    <section className="mt-8">
+      <h2 className="font-serif text-xl font-semibold">{t("ui.accountReferralTitle")}</h2>
+      <p className="mt-2 text-tinta-2">{t("ui.accountReferralText")}</p>
+      <p className="mt-4 text-sm text-tinta-2">{t("ui.accountReferralCode")}</p>
+      <p className="num font-serif text-2xl font-semibold tracking-wider">{code}</p>
+      <p className="mt-3 text-sm text-tinta-2">{t("ui.accountReferralLink")}</p>
+      <p className="text-sm break-all">{link}</p>
+      <button
+        type="button"
+        className="mt-2 cursor-pointer text-sm font-medium text-accion underline underline-offset-4"
+        onClick={() => void copy()}
+        aria-live="polite"
+      >
+        {copied ? t("ui.copied") : t("ui.accountReferralCopy")}
+      </button>
+    </section>
+  );
+}
 
 /** Cuenta (solo dueño): por ahora, el pedido de baja (P-09). No borra nada. */
 export function AccountPage() {
@@ -26,6 +62,7 @@ export function AccountPage() {
     <div className="mx-auto w-full max-w-2xl p-4 sm:p-6">
       <h1 className="text-[28px] leading-tight">{t("ui.accountTitle")}</h1>
       <NotificationPrefs />
+      <Referral />
       {me.data?.role !== "owner" ? null : (
         <section className="mt-8">
           <h2 className="font-serif text-xl font-semibold">{t("ui.accountDeleteTitle")}</h2>

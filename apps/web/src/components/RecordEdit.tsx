@@ -18,7 +18,7 @@ import { post } from "../lib/api";
 import { fmtDateTime } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import type { RecordRow } from "../lib/types";
-import { Button, ConfirmModal, ErrorBox, Field, Input, Select } from "./ui";
+import { Button, ConfirmModal, ErrorBox, Field, Input, Select, toast } from "./ui";
 
 type Opt = { value: string; label: string };
 type FieldDef =
@@ -130,6 +130,7 @@ export function RecordEditForm({
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["records"] });
+      toast(t("ui.toastRecordSaved"));
       onDone();
     },
     onError: (e) => setInvalid(e instanceof Error ? e.message : String(e)),
@@ -209,6 +210,7 @@ export function DeleteRecordConfirm({
     mutationFn: () => push({ mutationId: newId(), kind: "records.delete", row: { id: r.id } }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["records"] });
+      toast(t("ui.toastRecordDeleted"));
       onDone();
     },
   });

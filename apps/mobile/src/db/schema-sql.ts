@@ -98,5 +98,7 @@ export const SERVER_SCHEMA: string[] = [
   "ALTER TABLE `tasks` ADD `due_time` text;",
   "ALTER TABLE `tasks` ADD `priority` text DEFAULT 'normal' NOT NULL;",
   "ALTER TABLE `tasks` ADD `comments` text DEFAULT '[]' NOT NULL;",
-  "CREATE TABLE `notification_prefs` (\n\t`user_id` text PRIMARY KEY NOT NULL,\n\t`prefs` text NOT NULL,\n\t`updated_at` integer NOT NULL\n);"
+  "CREATE TABLE `notification_prefs` (\n\t`user_id` text PRIMARY KEY NOT NULL,\n\t`prefs` text NOT NULL,\n\t`updated_at` integer NOT NULL\n);",
+  "ALTER TABLE `organizations` ADD `max_ha` real;",
+  "ALTER TABLE `organizations` ADD `max_users` integer;"
 ];

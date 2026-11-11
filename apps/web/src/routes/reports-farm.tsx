@@ -1,12 +1,13 @@
-/** Informes de una estancia: resumen de campaña por lote (R-03) e informe para el banco (R-04). */
+/** Informes de una estancia: campaña por lote (R-03), informe para el banco (R-04) y exportación completa (R-09). */
 import { useState } from "react";
 import { useParams } from "@tanstack/react-router";
 import { localDate } from "@yvy/shared";
 import { Button, ErrorBox, Field, Select, Spinner } from "../components/ui";
 import { download } from "../lib/exports";
+import { buildExportZip, collectExportData } from "../lib/reportsExport";
 import { t } from "../lib/i18n";
 import { get } from "../lib/api";
-import { fetchAllRecords, useFarm } from "../lib/queries";
+import { fetchAllRecords, useFarm, useMe } from "../lib/queries";
 import type { Alert } from "../lib/types";
 import {
   fetchClimate,
@@ -25,6 +26,8 @@ export function FarmReportsPage() {
   const [plotId, setPlotId] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const [progress, setProgress] = useState("");
+  const me = useMe();
 
   if (farm.isLoading) return <Spinner />;
   if (farm.error || !farm.data) return <ErrorBox error={farm.error} />;
@@ -74,6 +77,15 @@ export function FarmReportsPage() {
         />,
       ).toBlob();
       download(blob, `campana-${plot.name}-${to}.pdf`);
+    });
+
+  const exportZip = () =>
+    run(async () => {
+      const data = await collectExportData(me.data?.organization.name ?? "Yvy", (farm) =>
+        setProgress(t("ui.exportWorking", { farm })),
+      );
+      download(await buildExportZip(data), `yvy-exportacion-${localDate(Date.now())}.zip`);
+      setProgress("");
     });
 
   const bankPdf = () =>
@@ -144,6 +156,18 @@ export function FarmReportsPage() {
           </Button>
         </div>
       </section>
+      {me.data?.role === "owner" && (
+        <section>
+          <h2 className="font-serif text-xl font-semibold">{t("ui.exportTitle")}</h2>
+          <p className="mt-1 text-sm text-tinta-2">{t("ui.exportIntro")}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <Button variant="primary" onClick={exportZip} disabled={busy}>
+              {t("ui.exportDownload")}
+            </Button>
+            {busy && progress && <span className="text-sm text-tinta-2">{progress}</span>}
+          </div>
+        </section>
+      )}
       {error ? <ErrorBox error={error} /> : null}
     </div>
   );

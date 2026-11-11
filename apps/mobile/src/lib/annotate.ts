@@ -3,13 +3,24 @@
  * Cada tipo de registro es una lista corta de pasos; los datos se arman al final y se validan con
  * el esquema compartido (packages/shared/src/records.ts), que es la única fuente de verdad.
  */
-import { PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
+import { HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
 
-export type Step =
+type StepBase = {
+  /** Si devuelve true con las respuestas anteriores, el paso no se pregunta. */
+  skipIf?: (answers: Record<string, unknown>) => boolean;
+};
+
+export type Step = StepBase &
+  (
   | { key: string; kind: "choice"; question: string; options: { value: string; label: string }[]; optional?: boolean }
-  | { key: string; kind: "number"; question: string; hint?: string; unit: string; max: number }
+  | { key: string; kind: "number"; question: string; hint?: string; unit: string; max: number; integer?: boolean; min?: number }
   | { key: string; kind: "yesno"; question: string }
-  | { key: string; kind: "text"; question: string; optional?: boolean };
+  | { key: string; kind: "text"; question: string; optional?: boolean }
+  /** Contador grande por categoría de hacienda (G-06): el valor es { vaca: 3, toro: 1, ... }. */
+  | { key: string; kind: "counter"; question: string; hint?: string }
+  /** Elegir un potrero de la estancia (excluye el de origen). La respuesta es su id. */
+  | { key: string; kind: "paddock"; question: string }
+  );
 
 const lvl = (prefix: string) => ["low", "medium", "high"].map((v) => ({ value: v, label: `${prefix}${v}` }));
 const cond = ["good", "fair", "bad"].map((v) => ({ value: v, label: `fields.condition_${v}` }));
@@ -46,12 +57,64 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     { key: "note", kind: "text", question: "app.addNote", optional: true },
   ],
   note: [{ key: "text", kind: "text", question: "app.noteQuestion" }],
+  // ganaderia
+  herd_count: [{ key: "counts", kind: "counter", question: "app.herdCountQuestion", hint: "app.herdCountHint" }],
+  // En una venta no hay destino; en una compra el potrero elegido al empezar es el destino (ver annotate/index.tsx).
+  herd_move: [
+    {
+      key: "reason",
+      kind: "choice",
+      question: "app.moveReasonQuestion",
+      options: MOVE_REASONS.map((v) => ({ value: v, label: `fields.moveReason_${v}` })),
+    },
+    {
+      key: "toPlotId",
+      kind: "paddock",
+      question: "app.moveToQuestion",
+      skipIf: (a) => a.reason === "venta" || a.reason === "compra",
+    },
+    { key: "counts", kind: "counter", question: "app.moveCountQuestion", hint: "app.herdCountHint" },
+  ],
+  // La foto es el último paso común de todos los flujos.
+  mortality: [
+    {
+      key: "category",
+      kind: "choice",
+      question: "app.mortalityCategoryQuestion",
+      options: HERD_CATEGORIES.map((v) => ({ value: v, label: `fields.herd_${v}` })),
+    },
+    { key: "head", kind: "number", question: "app.mortalityHeadQuestion", unit: "cabezas", max: 1000, integer: true, min: 1 },
+    {
+      key: "cause",
+      kind: "choice",
+      question: "app.mortalityCauseQuestion",
+      options: MORTALITY_CAUSES.map((v) => ({ value: v, label: `fields.cause_${v}` })),
+    },
+  ],
+  health: [
+    {
+      key: "reason",
+      kind: "choice",
+      question: "app.healthReasonQuestion",
+      options: HEALTH_REASONS.map((v) => ({ value: v, label: `fields.healthReason_${v}` })),
+    },
+    { key: "product", kind: "text", question: "app.healthProductQuestion" },
+    { key: "dose", kind: "text", question: "app.healthDoseQuestion", optional: true },
+    { key: "counts", kind: "counter", question: "app.healthCountQuestion", hint: "app.herdCountHint" },
+  ],
 };
+
+/** Pasos que se preguntan dado lo respondido hasta ahora. */
+export const stepsFor = (kind: RecordKind | null, answers: Record<string, unknown>): Step[] =>
+  kind ? FLOWS[kind].filter((s) => !s.skipIf?.(answers)) : [];
 
 /** Qué se puede anotar en cada tipo de lote, en el orden de frecuencia real. */
 export const KINDS_FOR = (plotKind: "crop" | "pasture" | null): RecordKind[] =>
   plotKind === "pasture"
-    ? ["pasture_status", "rain", "water", "pest", "scouting", "note"]
+    ? ["pasture_status", "herd_count", "herd_move", "mortality", "health", "rain", "water", "pest", "scouting", "note"]
     : plotKind === "crop"
       ? ["scouting", "pest", "crop_status", "rain", "water", "note"]
-      : ["rain", "scouting", "water", "note", "pest", "crop_status", "pasture_status"];
+      : ["rain", "scouting", "water", "health", "note", "pest", "crop_status", "pasture_status"];
+
+/** Registros de hacienda: son de un solo potrero, no se cargan en varios a la vez (F-10). */
+export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count", "herd_move", "mortality", "health"];

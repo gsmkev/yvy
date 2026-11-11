@@ -3,27 +3,40 @@
  * Tocar un lote abre su ficha abajo; desde ahí se anota en ese lote.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Camera, Map, type CameraRef, type StyleSpecification } from "@maplibre/maplibre-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { LocateFixed, X } from "lucide-react-native";
-import { BRAND, describeRecord, t } from "@yvy/shared";
-import { containsPoint, type Area } from "@yvy/geo";
+import { BRAND, describeRecord, t, uaPerHa } from "@yvy/shared";
+import { centroidOf, containsPoint, type Area } from "@yvy/geo";
 import { useRef } from "react";
+import { useSession } from "../../src/lib/session";
+import { isOwnerMode } from "../../src/lib/ownerSummary";
 import { getDb } from "../../src/lib/db";
+import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
+import { copyText } from "../../src/lib/copy";
+import { fixCoords, formatFix } from "../../src/lib/coords";
 import { currentFix, type Fix } from "../../src/lib/location";
-import { packStatus, tilesBaseUrl } from "../../src/lib/offline";
+import { layerSource, tilesBaseUrl, type MapLayer } from "../../src/lib/offline";
 import { setFabHidden } from "../../src/lib/fab";
 import { useLocal } from "../../src/lib/useLocal";
-import { Button } from "../../src/ui/kit";
+import { FarmLine } from "../../src/ui/FarmLine";
+import { LayerSwitch, NdviLegend } from "../../src/ui/MapLayerControls";
+import { Button, Text } from "../../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
 
+const FIT_PADDING = { top: 120, bottom: 40, left: 24, right: 24 };
+const PLOT_PADDING = { top: 120, bottom: 320, left: 40, right: 40 };
 const daysAgo = (ms: number) => Math.floor((Date.now() - ms) / 86_400_000);
 
 export default function MapScreen() {
-  const farms = useLocal(() => getDb().farms());
-  const plots = useLocal(() => getDb().plots());
-  const records = useLocal(() => getDb().records(300));
+  const { farmId: chosenFarm, current } = useFarmChoice();
+  // F-29: dueño, administrador y agrónomo ven todos los lotes de todas las estancias; la estancia elegida solo mueve la cámara.
+  const owner = isOwnerMode(useSession()?.organization.role);
+  const farmId = owner ? null : chosenFarm;
+  const farms = useLocal(() => byFarm(getDb().farms().map((f) => ({ ...f, farmId: f.id })), farmId), [farmId]);
+  const plots = useLocal(() => byFarm(getDb().plots(), farmId), [farmId]);
+  const records = useLocal(() => byFarm(getDb().records(300), farmId), [farmId]);
   const lastVisit = useLocal(() => getDb().lastVisitByPlot());
   const [remoteBase, setRemoteBase] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -33,23 +46,43 @@ export default function MapScreen() {
       return () => setFabHidden(false);
     }, [selected]),
   );
+  const [mode, setModeState] = useState<MapLayer>(() => (getDb().getKv("map_layer") === "ndvi" ? "ndvi" : "true_color"));
+  const setMode = (m: MapLayer) => {
+    setModeState(m);
+    getDb().setKv("map_layer", m);
+  };
   const [me, setMe] = useState<Fix | null>(null);
+  const [copied, setCopied] = useState(false);
   const camera = useRef<CameraRef>(null);
-  const farm = farms[0];
+  const farm = current ?? farms[0];
+  // M-13: al elegir un lote la cámara se ajusta a sus límites, dejando lugar a la ficha de abajo.
+  useEffect(() => {
+    const p = plots.find((x) => x.id === selected);
+    if (p) camera.current?.fitBounds([p.minLon, p.minLat, p.maxLon, p.maxLat], { padding: PLOT_PADDING, duration: 600 });
+  }, [selected]);
+  const firstFarm = useRef(true);
+  useEffect(() => {
+    if (firstFarm.current) {
+      firstFarm.current = false;
+      return;
+    }
+    setSelected(null);
+    if (farm) camera.current?.fitBounds([farm.minLon, farm.minLat, farm.maxLon, farm.maxLat], { padding: FIT_PADDING, duration: 600 });
+  }, [farm?.id]);
+  const canMarkPoi = useSession()?.organization.role !== "worker";
   useEffect(() => {
     tilesBaseUrl().then(setRemoteBase, () => setRemoteBase(null));
   }, []);
+
+  const ndvi = useMemo(() => (farm && mode === "ndvi" ? layerSource(farm.id, "ndvi", remoteBase) : null), [farm?.id, mode, remoteBase]);
 
   const style = useMemo<StyleSpecification>(() => {
     const sources: StyleSpecification["sources"] = {};
     const layers: StyleSpecification["layers"] = [{ id: "bg", type: "background", paint: { "background-color": "#141a12" } }];
     for (const f of farms) {
-      const pack = packStatus(f.id);
-      const local = pack.localUri("true_color");
-      const remote = pack.layers.find((l) => l.layer === "true_color");
-      const url = local ? `pmtiles://${local}` : remote && remoteBase ? `pmtiles://${remoteBase.replace(/\/$/, "")}/${remote.pmtilesPath}` : null;
-      if (url) {
-        sources[`base-${f.id}`] = { type: "raster", url, tileSize: 256 };
+      const src = layerSource(f.id, mode, remoteBase);
+      if (src) {
+        sources[`base-${f.id}`] = { type: "raster", url: src.url, tileSize: 256 };
         layers.push({ id: `base-${f.id}`, type: "raster", source: `base-${f.id}` });
       }
     }
@@ -93,7 +126,7 @@ export default function MapScreen() {
       );
     }
     return { version: 8, sources, layers };
-  }, [farms, plots, records, remoteBase, selected, me, lastVisit]);
+  }, [farms, plots, records, remoteBase, selected, me, lastVisit, mode]);
 
   if (!farm) {
     return (
@@ -103,7 +136,21 @@ export default function MapScreen() {
     );
   }
   const plot = plots.find((p) => p.id === selected);
+  const rainMonth = plot ? getDb().rainThisMonth(plot.farmId) : 0;
+  const vigor = plot ? getDb().lastVigor(plot.id) : null;
+  const openTasks = plot ? getDb().openTasksOfPlot(plot.id) : 0;
+  // G-03: hacienda del potrero, calculada en el celular (anda sin señal).
+  const herd = plot?.kind === "pasture" ? getDb().herdStock(plot.id) : null;
+  const herdUa = plot && herd ? uaPerHa(herd.counts, plot.areaHa) : null;
   const plotRecords = plot ? records.filter((r) => r.plotId === plot.id).slice(0, 3) : [];
+
+  const copyMe = async () => {
+    if (!me) return;
+    if (await copyText(fixCoords(me))) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const locate = async () => {
     const f = await currentFix(8000);
@@ -127,10 +174,26 @@ export default function MapScreen() {
       >
         <Camera ref={camera} initialViewState={{ bounds: [farm.minLon, farm.minLat, farm.maxLon, farm.maxLat], padding: { top: 40, bottom: 40, left: 24, right: 24 } }} />
       </Map>
+      <View style={st.topLeft} pointerEvents="box-none">
+        <FarmLine style={st.panel} />
+        <LayerSwitch value={mode} onChange={setMode} />
+        {me && (
+          <Pressable accessibilityRole="button" accessibilityLabel={`${formatFix(me)}. ${t("app.coordsCopy")}`} onPress={copyMe} style={st.coords}>
+            <Text style={T.small}>{copied ? t("app.copied") : formatFix(me)}</Text>
+          </Pressable>
+        )}
+        {mode === "ndvi" && <NdviLegend acquiredAt={ndvi?.acquiredAt ?? null} missing={!ndvi} />}
+      </View>
       <Text style={st.attr}>Sentinel-2 · Copernicus</Text>
       <Pressable accessibilityRole="button" accessibilityLabel={t("app.whereAmI")} onPress={locate} style={st.locate}>
         <LocateFixed size={22} color={C.tinta} strokeWidth={2} />
       </Pressable>
+
+      {canMarkPoi && !plot && (
+        <View style={st.mark}>
+          <Button kind="secondary" title={t("app.poiMark")} onPress={() => router.push("/poi")} />
+        </View>
+      )}
 
       {plot && (
         <View style={st.sheet}>
@@ -148,12 +211,38 @@ export default function MapScreen() {
               <X size={22} color={C.tinta2} />
             </Pressable>
           </View>
+          {herd && (
+            <Text style={[T.smallMedium, { marginTop: 10 }]}>
+              {t("app.plotHerd", { n: herd.total })}
+              {herdUa !== null ? ` · ${t("app.plotHerdUa", { v: herdUa.toLocaleString("es-PY", { maximumFractionDigits: 2 }) })}` : ""}
+            </Text>
+          )}
+          {(rainMonth > 0 || vigor || openTasks > 0) && (
+            <View style={{ marginTop: 10, gap: 2 }}>
+              {rainMonth > 0 && <Text style={T.smallMedium}>{t("app.plotRainMonth", { mm: Math.round(rainMonth) })}</Text>}
+              {vigor && (
+                <Text style={T.smallMedium}>
+                  {t("app.plotVigor", { value: vigor.mean.toLocaleString("es-PY", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), date: new Date(vigor.acquiredAt).toLocaleDateString("es-PY", { day: "numeric", month: "short" }) })}
+                </Text>
+              )}
+              {openTasks > 0 && <Text style={T.smallMedium}>{t("app.plotOpenTasks", { n: openTasks })}</Text>}
+            </View>
+          )}
           {plotRecords.map((r) => (
             <Text key={r.id} style={[T.small, { marginTop: 8 }]} numberOfLines={1}>
               {new Date(r.capturedAt).toLocaleDateString("es-PY", { day: "numeric", month: "short" })} · {describeRecord(r.kind, JSON.parse(r.data))}
             </Text>
           ))}
           <Button big title={t("app.annotateIn", { plot: plot.name })} onPress={() => router.push({ pathname: "/annotate", params: { plotId: plot.id } })} style={{ marginTop: 16 }} />
+          <Button
+            kind="text"
+            title={t("app.gotoButton")}
+            onPress={() => {
+              const c = centroidOf(JSON.parse(plot.geometry) as Area);
+              router.push({ pathname: "/goto", params: { lon: String(c.lon), lat: String(c.lat), name: plot.name } });
+            }}
+            style={{ marginTop: 4 }}
+          />
         </View>
       )}
     </View>
@@ -163,6 +252,10 @@ export default function MapScreen() {
 const st = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   sheet: { position: "absolute", left: 12, right: 12, bottom: 12, backgroundColor: C.papel, borderRadius: RADIUS + 4, padding: GUTTER, elevation: 8, shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } },
+  mark: { position: "absolute", left: 12, right: 12, bottom: 12 },
   locate: { position: "absolute", top: 16, right: 16, width: 48, height: 48, borderRadius: 24, backgroundColor: C.papel, alignItems: "center", justifyContent: "center", elevation: 4, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
-  attr: { position: "absolute", top: 20, left: 16, fontFamily: F.sans, fontSize: 11, color: "rgba(255,255,255,0.7)" },
+  topLeft: { position: "absolute", top: 12, left: 12, right: 76, gap: 8 },
+  coords: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14, minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
+  panel: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14 },
+  attr: { position: "absolute", bottom: 6, left: 12, fontFamily: F.sans, fontSize: 11, color: "rgba(255,255,255,0.7)" },
 });

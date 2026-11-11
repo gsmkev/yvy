@@ -161,6 +161,10 @@ export type MoveReason = (typeof MOVE_REASONS)[number];
 export const MORTALITY_CAUSES = ["enfermedad", "accidente", "parto", "rayo", "sequia", "vibora", "desconocida", "otra"] as const;
 export type MortalityCause = (typeof MORTALITY_CAUSES)[number];
 
+/** Motivos de un tratamiento sanitario (G-11) y de una campaña planificada (G-10). */
+export const HEALTH_REASONS = ["aftosa", "brucelosis", "carbunclo", "garrapata", "desparasitacion", "otro"] as const;
+export type HealthReason = (typeof HEALTH_REASONS)[number];
+
 /**
  * El potrero de un registro de hacienda es `records.plot_id`. Devuelve el problema (texto en es-PY) o null.
  * Un conteo y una mortandad necesitan potrero; un movimiento necesita origen o destino.

@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  HEALTH_REASONS,
   HERD_CATEGORIES,
   MORTALITY_CAUSES,
   MOVE_REASONS,
@@ -80,6 +81,13 @@ const FIELDS: Record<RecordKind, FieldDef[]> = {
     { key: "category", label: f("herdCategory"), type: "select", options: opts("herd", HERD_CATEGORIES) },
     { key: "head", label: f("head"), type: "number" },
     { key: "cause", label: f("cause"), type: "select", options: opts("cause", MORTALITY_CAUSES) },
+    NOTE,
+  ],
+  health: [
+    { key: "reason", label: f("healthReason"), type: "select", options: opts("healthReason", HEALTH_REASONS) },
+    { key: "product", label: f("product"), type: "text" },
+    { key: "dose", label: f("dose"), type: "text", optional: true },
+    ...HERD_FIELDS("counts"),
     NOTE,
   ],
 };

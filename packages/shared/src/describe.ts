@@ -62,6 +62,13 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
         parts.push(`${d.head} ${tr(`fields.herd_${d.category}`, String(d.category)).toLowerCase()}`);
       if (str("cause")) parts.push(tr(`fields.cause_${d.cause}`, String(d.cause)).toLowerCase());
       break;
+    case "health": {
+      const c = (d.counts ?? {}) as Record<string, number>;
+      if (str("reason")) parts.push(tr(`fields.healthReason_${d.reason}`, String(d.reason)));
+      if (str("product")) parts.push(d.product as string);
+      parts.push(t("fields.herdTotalValue", { n: HERD_CATEGORIES.reduce((n, k) => n + (c[k] ?? 0), 0) }));
+      break;
+    }
     case "note":
       if (str("text")) parts.push(d.text as string);
       break;

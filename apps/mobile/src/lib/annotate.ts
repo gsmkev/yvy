@@ -3,7 +3,7 @@
  * Cada tipo de registro es una lista corta de pasos; los datos se arman al final y se validan con
  * el esquema compartido (packages/shared/src/records.ts), que es la única fuente de verdad.
  */
-import { HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
+import { HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
 
 type StepBase = {
   /** Si devuelve true con las respuestas anteriores, el paso no se pregunta. */
@@ -91,6 +91,17 @@ export const FLOWS: Record<RecordKind, Step[]> = {
       options: MORTALITY_CAUSES.map((v) => ({ value: v, label: `fields.cause_${v}` })),
     },
   ],
+  health: [
+    {
+      key: "reason",
+      kind: "choice",
+      question: "app.healthReasonQuestion",
+      options: HEALTH_REASONS.map((v) => ({ value: v, label: `fields.healthReason_${v}` })),
+    },
+    { key: "product", kind: "text", question: "app.healthProductQuestion" },
+    { key: "dose", kind: "text", question: "app.healthDoseQuestion", optional: true },
+    { key: "counts", kind: "counter", question: "app.healthCountQuestion", hint: "app.herdCountHint" },
+  ],
 };
 
 /** Pasos que se preguntan dado lo respondido hasta ahora. */
@@ -100,10 +111,10 @@ export const stepsFor = (kind: RecordKind | null, answers: Record<string, unknow
 /** Qué se puede anotar en cada tipo de lote, en el orden de frecuencia real. */
 export const KINDS_FOR = (plotKind: "crop" | "pasture" | null): RecordKind[] =>
   plotKind === "pasture"
-    ? ["pasture_status", "herd_count", "herd_move", "mortality", "rain", "water", "pest", "scouting", "note"]
+    ? ["pasture_status", "herd_count", "herd_move", "mortality", "health", "rain", "water", "pest", "scouting", "note"]
     : plotKind === "crop"
       ? ["scouting", "pest", "crop_status", "rain", "water", "note"]
-      : ["rain", "scouting", "water", "note", "pest", "crop_status", "pasture_status"];
+      : ["rain", "scouting", "water", "health", "note", "pest", "crop_status", "pasture_status"];
 
 /** Registros de hacienda: son de un solo potrero, no se cargan en varios a la vez (F-10). */
-export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count", "herd_move", "mortality"];
+export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count", "herd_move", "mortality", "health"];

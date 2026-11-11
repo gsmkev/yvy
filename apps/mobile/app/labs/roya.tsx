@@ -1,9 +1,8 @@
-import { Text } from "react-native";
 import { router } from "expo-router";
 import { t } from "@yvy/shared";
 import { Lab, Fact } from "../../src/labs/Lab";
 import { LeafIllustration } from "../../src/labs/illustrations";
-import { Button } from "../../src/ui/kit";
+import { Button, Text } from "../../src/ui/kit";
 import { T } from "../../src/ui/theme";
 
 export default function Roya() {

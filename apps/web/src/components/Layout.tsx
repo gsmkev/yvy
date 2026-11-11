@@ -10,7 +10,7 @@ import { useAlerts, useFarms, useMe } from "../lib/queries";
 import { loadPrefs } from "../lib/prefs";
 import { trackView } from "../lib/track";
 import { GlobalSearch } from "./GlobalSearch";
-import { OrgSwitcher } from "./OrgSwitcher";
+import { OrgSwitcher, useOrganizations } from "./OrgSwitcher";
 
 const NAV: { to: string; label: MessageKey }[] = [
   { to: "/", label: "ui.navMap" },
@@ -67,7 +67,14 @@ export function Layout() {
     setSession(null);
   };
   const trial = me.data?.organization.plan === "trial" && me.data.organization.trialEndsAt;
-  const base = me.data?.isStaff ? [...NAV, { to: "/interno", label: "ui.navInternal" as MessageKey }] : NAV;
+  // K-02: el agrónomo con más de un cliente tiene una pantalla con todos juntos
+  const orgs = useOrganizations();
+  const hasClients = orgs.filter((o) => o.role !== "worker").length > 1;
+  const base = [
+    ...NAV,
+    ...(hasClients ? [{ to: "/clientes", label: "ui.navClients" as MessageKey }] : []),
+    ...(me.data?.isStaff ? [{ to: "/interno", label: "ui.navInternal" as MessageKey }] : []),
+  ];
   // El calendario sanitario no es para el empleado (G-10).
   const items = me.data?.role === "worker" ? base.filter((i) => i.to !== "/sanidad") : base;
   const nAlerts = alerts.data?.length ?? 0;

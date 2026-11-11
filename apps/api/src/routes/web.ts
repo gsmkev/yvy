@@ -40,6 +40,7 @@ import {
 } from "../db/queries";
 import { farmStockSummary, saveLivestockSettings } from "../db/livestock";
 import { createSanitaryEvent, deleteSanitaryEvent, listSanitaryEvents } from "../db/sanitary";
+import { clientsOverview } from "../db/clients";
 import { parse, readJson, timeOfDay } from "../lib/http";
 import { plotArea } from "./org";
 import { touchActivity } from "../auth/plan";
@@ -122,6 +123,15 @@ web.post("/events", async (c) => {
   return c.json({ recorded: true }, 202);
 });
 
+/** K-02: estancias y avisos de todas las organizaciones de la persona (vista del agrónomo). */
+web.get("/me/clients", async (c) =>
+  // Una sesión de soporte ve solo la organización que se pidió, no las otras de la misma persona.
+  c.json(
+    await clientsOverview(c.var.sdb.db, c.var.auth.userId, {
+      onlyOrgId: c.var.auth.readOnly ? c.var.auth.orgId : undefined,
+    }),
+  ),
+);
 web.get("/org/dashboard", async (c) => c.json(await ownerDashboard(c.var.sdb)));
 web.get("/org/farms", async (c) => c.json(await farmSummaries(c.var.sdb)));
 web.get("/org/farms/:id", async (c) => c.json(await farmDetail(c.var.sdb, c.req.param("id"))));

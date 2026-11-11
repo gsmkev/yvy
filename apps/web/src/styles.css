@@ -19,6 +19,8 @@
   --color-cielo: #8db3c7;
   --color-alerta: #d2462b;
   --color-peligro: #b5391f;
+  /* Texto sobre fondos accion/peligro (blanco en claro, tinta en oscuro) */
+  --color-sobre: #ffffff;
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Fraunces", ui-serif, Georgia, serif;
@@ -27,6 +29,40 @@
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 10px;
+}
+
+/*
+ * Modo oscuro (U-20): mismos nombres de token, valores redefinidos. Sigue al sistema salvo que
+ * data-theme fije "light" o "dark" (preferencia manual en /cuenta). Contrastes AA sobre lino oscuro:
+ * surco 14:1 · tinta-2 7:1 · accion 9:1 · peligro 7:1. Los mapas conservan su fondo satelital oscuro.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-lino: #12170f;
+    --color-papel: #1b2118;
+    --color-surco: #ece9dd;
+    --color-tinta-2: #aab1a1;
+    --color-linea: #2e3629;
+    --color-accion: #a3c765;
+    --color-accion-2: #b9d97f;
+    --color-trigo-texto: #e0b957;
+    --color-peligro: #ff8f78;
+    --color-sobre: #12170f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --color-lino: #12170f;
+  --color-papel: #1b2118;
+  --color-surco: #ece9dd;
+  --color-tinta-2: #aab1a1;
+  --color-linea: #2e3629;
+  --color-accion: #a3c765;
+  --color-accion-2: #b9d97f;
+  --color-trigo-texto: #e0b957;
+  --color-peligro: #ff8f78;
+  --color-sobre: #12170f;
+  color-scheme: dark;
 }
 
 html,
@@ -61,6 +97,42 @@ h1 {
 :focus-visible {
   outline: 2px solid var(--color-accion);
   outline-offset: 2px;
+}
+/*
+ * Impresión (U-27): siempre con los colores claros (aunque la pantalla esté en modo oscuro) y sin
+ * alturas fijas, para que la ficha corra en varias hojas. La barra, los botones y las pestañas se
+ * ocultan con la variante print: de cada componente; el mapa se reemplaza por su captura.
+ */
+@media print {
+  :root,
+  :root[data-theme="dark"],
+  :root:not([data-theme="light"]) {
+    --color-lino: #ffffff;
+    --color-papel: #ffffff;
+    --color-surco: #1e2419;
+    --color-tinta-2: #545a4d;
+    --color-linea: #cfcabb;
+    --color-accion: #4e6b24;
+    --color-peligro: #b5391f;
+    --color-trigo-texto: #7a5b0e;
+    color-scheme: light;
+  }
+  html,
+  body,
+  #root {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff;
+  }
+  @page {
+    margin: 12mm;
+  }
+  table {
+    break-inside: auto;
+  }
+  tr {
+    break-inside: avoid;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   * {

@@ -40,7 +40,7 @@ class IngestClient:
         self.secret = secret or os.environ["YVY_INGEST_SECRET"]
         self.http = client or httpx.Client(timeout=60)
 
-    def _call(self, method: str, path: str, payload: Any | None = None) -> Any:
+    def _call(self, method: str, path: str, payload: Any | None = None, query: dict[str, str] | None = None) -> Any:
         body = "" if payload is None else json.dumps(payload, separators=(",", ":"))
         ts = int(time.time() * 1000)
         headers = {
@@ -48,7 +48,8 @@ class IngestClient:
             "x-yvy-timestamp": str(ts),
             "x-yvy-signature": sign(self.secret, ts, method, path, body),
         }
-        res = self.http.request(method, self.base_url + path, content=body or None, headers=headers)
+        # La firma cubre solo la ruta (sin query), igual que el Worker
+        res = self.http.request(method, self.base_url + path, params=query, content=body or None, headers=headers)
         res.raise_for_status()
         return res.json()
 
@@ -94,3 +95,11 @@ class IngestClient:
     def problem_areas(self, plot_id: str, acquired_at: int, areas: list[dict[str, Any]]) -> int:
         """Áreas problema de un lote en la última escena (S-08); reemplaza las de escenas anteriores."""
         return self._call("POST", "/ingest/problem-areas", {"plotId": plot_id, "acquiredAt": acquired_at, "areas": areas})["written"]
+
+    def weekly_summary(self, farm_id: str, start: str, end: str) -> dict[str, Any]:
+        """Agregados de la semana de una estancia para el parte (R-02)."""
+        return self._call("GET", f"/ingest/farms/{farm_id}/weekly-summary", query={"from": start, "to": end})
+
+    def weekly_report(self, farm_id: str, period_start: str, period_end: str, storage_path: str) -> None:
+        """Registra el PDF semanal ya subido a R2 (R-02)."""
+        self._call("POST", "/ingest/weekly-reports", {"farmId": farm_id, "periodStart": period_start, "periodEnd": period_end, "storagePath": storage_path})

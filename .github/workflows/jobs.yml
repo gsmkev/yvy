@@ -7,12 +7,13 @@ on:
     - cron: "40 */3 * * *" # firms_hotspots cada 3 h
     - cron: "0 4 * * 0" # semanal: climatología, mapa base e informe de riesgo (cada 90 días) de estancias nuevas
     - cron: "0 5 1 */3 *" # mapa base de todas cada 3 meses
+    - cron: "0 9 * * 1" # lunes: PDF del parte semanal (R-02); el Worker manda los emails a las 10:00 UTC
   workflow_dispatch:
     inputs:
       job:
         description: Job
         type: choice
-        options: [new_farm, s2_ingest, s2_basemap, chirps_daily, firms_hotspots, climatology_build, risk_report]
+        options: [new_farm, s2_ingest, s2_basemap, chirps_daily, firms_hotspots, climatology_build, risk_report, weekly_report]
       farm:
         description: "Id de estancia (obligatorio para new_farm: mapa base, 180 días y climatología)"
         required: false
@@ -47,6 +48,7 @@ jobs:
             "40 */3 * * *") echo "cmd=firms_hotspots" >> $GITHUB_OUTPUT ;;
             "0 4 * * 0") echo "cmd=weekly" >> $GITHUB_OUTPUT ;;
             "0 5 1 */3 *") echo "cmd=s2_basemap" >> $GITHUB_OUTPUT ;;
+            "0 9 * * 1") echo "cmd=weekly_report" >> $GITHUB_OUTPUT ;;
             *) echo "cmd=${{ inputs.job }}" >> $GITHUB_OUTPUT ;;
           esac
       - if: steps.pick.outputs.cmd == 'weekly'

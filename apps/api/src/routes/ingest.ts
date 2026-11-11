@@ -244,3 +244,29 @@ ingest.post("/problem-areas", async (c) => {
   if (written === null) throw new HTTPException(404, { message: "Lote inexistente" });
   return c.json({ written });
 });
+
+const isoDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+/** Datos del parte semanal (job weekly_report): agregados de la semana, sin registros ni personas. */
+ingest.get("/farms/:id/weekly-summary", async (c) => {
+  const q = parse(z.object({ from: isoDay, to: isoDay }), c.req.query());
+  const res = await c.var.sys.weeklySummary(c.req.param("id"), q.from, q.to);
+  if (!res) throw new HTTPException(404, { message: "Estancia inexistente" });
+  return c.json(res);
+});
+
+/** El job ya subió el PDF a R2: queda registrado para adjuntarlo al email del lunes. */
+ingest.post("/weekly-reports", async (c) => {
+  const b = parse(
+    z.object({
+      farmId: uuid,
+      periodStart: isoDay,
+      periodEnd: isoDay,
+      storagePath: z.string().max(300).regex(/^reports\/[\w./-]+\.pdf$/),
+    }),
+    json(c.var.body),
+  );
+  if (!(await c.var.sys.saveWeeklyReport(b.farmId, b.periodStart, b.periodEnd, b.storagePath, Date.now())))
+    throw new HTTPException(404, { message: "Estancia inexistente" });
+  return c.json({ ok: true }, 201);
+});

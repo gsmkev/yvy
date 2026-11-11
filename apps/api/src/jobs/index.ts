@@ -142,7 +142,11 @@ async function forecastJob(db: DB, env: Bindings, deps: JobDeps, farm: Farm): Pr
   await runBatch(db, saveForecastStmts(db, farm.id, now, days, LIMITS.weather.forecastRunsKept));
   const runs = await recentRuns(db, farm.id, LIMITS.weather.forecastRunsKept);
   const today = localDate(now, farm.tz);
-  for (const draft of [evaluateFrost(runs, today), evaluateExcessRain(days, today)]) {
+  const cfg = await new SystemDb(db).alertSettings(farm.id);
+  for (const draft of [
+    evaluateFrost(runs, today, cfg.frostTminC),
+    evaluateExcessRain(days, today, cfg.excessRainMm24h),
+  ]) {
     if (draft) await upsertAlert(db, farm, draft, now);
   }
 }
@@ -191,15 +195,19 @@ async function droughtJob(db: DB, deps: JobDeps, farm: Farm): Promise<void> {
   const soilP20 = clim.find((c) => c.variable === "soil_top" && c.dayOfYear === dayOfYear(today))?.p20 ?? null;
   const soilNow = [...power].reverse().find((d) => d.soilTop !== null)?.soilTop ?? null;
   const [latest] = await recentRuns(db, farm.id, 1);
-  const draft = evaluateDrought({
-    today,
-    // Exigimos al menos 25 de 30 días de CHIRPS para no avisar con datos incompletos.
-    rain30: rain && rain.n >= 25 ? (rain.mm ?? 0) : null,
-    normal30: normal30 || null,
-    soilNow,
-    soilP20,
-    forecast: latest ?? [],
-  });
+  const cfg = await new SystemDb(db).alertSettings(farm.id);
+  const draft = evaluateDrought(
+    {
+      today,
+      // Exigimos al menos 25 de 30 días de CHIRPS para no avisar con datos incompletos.
+      rain30: rain && rain.n >= 25 ? (rain.mm ?? 0) : null,
+      normal30: normal30 || null,
+      soilNow,
+      soilP20,
+      forecast: latest ?? [],
+    },
+    cfg.droughtDeficitPct,
+  );
   if (draft) await upsertAlert(db, farm, draft, now);
 }
 

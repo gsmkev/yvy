@@ -859,6 +859,18 @@ export const esPY = {
     unvisitedShowAll: "Ver todos los lotes",
     lastVisit: "Última visita",
     neverVisited: "Nunca",
+    // api-c
+    alertSettingsTitle: "Avisos de la estancia",
+    alertSettingsIntro: "Elegí desde qué valores querés que te avisemos. Los avisos siguen siendo orientativos.",
+    alertSettingsFrost: "Helada: avisar si la mínima pronosticada es de (°C) o menos",
+    alertSettingsFrostHint: "Valor habitual: 2 °C.",
+    alertSettingsRain: "Exceso de lluvia: avisar si se pronostican (mm) o más en 24 horas",
+    alertSettingsRainHint: "Valor habitual: 50 mm.",
+    alertSettingsDrought: "Sequía: avisar si la lluvia de 30 días tiene un déficit (%) mayor a",
+    alertSettingsDroughtHint: "Con 50 %, avisamos cuando llovió menos de la mitad de lo normal.",
+    alertSettingsOnlyOwner: "Solo el dueño o un administrador pueden cambiar estos valores.",
+    alertSettingsDefaults: "Volver a los valores habituales",
+    alertSettingsSaved: "Guardado.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

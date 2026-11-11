@@ -4,7 +4,7 @@
  */
 import { and, asc, desc, eq, getTableColumns, gte, inArray, isNull, lt, lte, or, sql, type SQL } from "drizzle-orm";
 import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
-import { LIMITS, type RecordKind } from "@yvy/shared";
+import { DEFAULT_ALERT_SETTINGS, LIMITS, type AlertSettings, type RecordKind } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, currentVersion, runBatch, type Stmt } from "./client";
 import { can, ForbiddenError, NotFoundError, type ScopedDb } from "./scoped";
@@ -365,6 +365,37 @@ export async function alertFeedback(sdb: ScopedDb, alertId: string, useful: bool
     .insert(s.alertFeedback)
     .values({ alertId, userId: sdb.auth.userId, useful, comment })
     .onConflictDoUpdate({ target: [s.alertFeedback.alertId, s.alertFeedback.userId], set: { useful, comment } });
+}
+
+/** C-04: umbrales de avisos de la estancia (valores por defecto si nunca se configuraron). */
+export async function getAlertSettings(
+  sdb: ScopedDb,
+  farmId: string,
+): Promise<AlertSettings & { isDefault: boolean }> {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const [row] = await sdb.db
+    .select()
+    .from(s.farmAlertSettings)
+    .where(and(eq(s.farmAlertSettings.farmId, farmId), eq(s.farmAlertSettings.organizationId, sdb.auth.orgId)))
+    .limit(1);
+  if (!row) return { ...DEFAULT_ALERT_SETTINGS, isDefault: true };
+  return {
+    frostTminC: row.frostTminC,
+    excessRainMm24h: row.excessRainMm24h,
+    droughtDeficitPct: row.droughtDeficitPct,
+    isDefault: false,
+  };
+}
+
+export async function saveAlertSettings(sdb: ScopedDb, farmId: string, v: AlertSettings) {
+  sdb.require(can.alertSettings, "Solo el dueño o un administrador cambian los avisos");
+  await sdb.requireFarm(farmId);
+  const row = { ...v, organizationId: sdb.auth.orgId, updatedAt: sdb.now(), updatedBy: sdb.auth.userId };
+  await sdb.db
+    .insert(s.farmAlertSettings)
+    .values({ farmId, ...row })
+    .onConflictDoUpdate({ target: s.farmAlertSettings.farmId, set: row });
 }
 
 // ---------- Edición y borrado lógico ----------

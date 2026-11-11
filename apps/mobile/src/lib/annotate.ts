@@ -3,12 +3,14 @@
  * Cada tipo de registro es una lista corta de pasos; los datos se arman al final y se validan con
  * el esquema compartido (packages/shared/src/records.ts), que es la única fuente de verdad.
  */
-import { HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
+import { CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
 
 /** Lo que el flujo necesita saber del campo para decidir qué preguntar. */
 export interface FlowCtx {
   /** Aguadas y tajamares de la estancia (G-30): si no hay, no se pregunta cuál. */
   waterPois: number;
+  /** Hay más de una campaña activa (A-01): si no, el paso de campaña no se pregunta. */
+  askSeason?: boolean;
 }
 
 type StepBase = {
@@ -19,11 +21,15 @@ type StepBase = {
 export type Step = StepBase &
   (
   | { key: string; kind: "choice"; question: string; options: { value: string; label: string }[]; optional?: boolean }
-  | { key: string; kind: "number"; question: string; hint?: string; unit: string; max: number; integer?: boolean; min?: number }
+  | { key: string; kind: "number"; question: string; hint?: string; unit: string; max: number; integer?: boolean; min?: number; optional?: boolean }
   | { key: string; kind: "yesno"; question: string }
   | { key: string; kind: "text"; question: string; optional?: boolean }
   /** Contador grande por categoría de hacienda (G-06): el valor es { vaca: 3, toro: 1, ... }. */
   | { key: string; kind: "counter"; question: string; hint?: string }
+  /** Campaña: se elige entre las activas que bajaron al celular. */
+  | { key: string; kind: "season"; question: string }
+  /** Productos de la mezcla con su dosis (catálogo del celular, o a mano). Guarda ProductDose[]. */
+  | { key: string; kind: "products"; question: string; fixedUnit?: "kg_ha"; productTypes?: string[] }
   /** Elegir un potrero de la estancia (excluye el de origen). La respuesta es su id. */
   | { key: string; kind: "paddock"; question: string }
   /** Elegir un punto de interés de un tipo (hoy: la aguada). La respuesta es su id; se guarda como poi_id. */
@@ -110,20 +116,71 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     { key: "product", kind: "text", question: "app.healthProductQuestion" },
     { key: "dose", kind: "text", question: "app.healthDoseQuestion", optional: true },
     { key: "counts", kind: "counter", question: "app.healthCountQuestion", hint: "app.herdCountHint" },
+    { key: "note", kind: "text", question: "app.addNote", optional: true },
+  ],
+  application: [
+    { key: "seasonId", kind: "season", question: "app.seasonQuestion", skipIf: (_a, ctx) => !ctx.askSeason },
+    { key: "products", kind: "products", question: "app.productsQuestion" },
+    { key: "volumeLHa", kind: "number", question: "app.volumeQuestion", unit: "L/ha", max: 2000, optional: true },
+    { key: "areaHa", kind: "number", question: "app.areaDoneQuestion", hint: "app.areaDoneHint", unit: "ha", max: 100_000, optional: true },
+    { key: "windKmh", kind: "number", question: "app.windQuestion", hint: "app.windHint", unit: "km/h", max: 200, optional: true },
+    { key: "tempC", kind: "number", question: "app.tempQuestion", unit: "°C", max: 60, optional: true },
+    { key: "humidityPct", kind: "number", question: "app.humidityQuestion", hint: "app.humidityHint", unit: "%", max: 100, optional: true },
+    { key: "note", kind: "text", question: "app.addNote", optional: true },
+  ],
+  fertilization: [
+    { key: "seasonId", kind: "season", question: "app.seasonQuestion", skipIf: (_a, ctx) => !ctx.askSeason },
+    { key: "products", kind: "products", question: "app.fertProductsQuestion", fixedUnit: "kg_ha", productTypes: ["fertilizer"] },
+    { key: "method", kind: "choice", question: "app.fertMethodQuestion", options: FERT_METHODS.map((v) => ({ value: v, label: `fields.method_${v}` })) },
+    { key: "areaHa", kind: "number", question: "app.areaDoneQuestion", hint: "app.areaDoneHint", unit: "ha", max: 100_000, optional: true },
+    { key: "note", kind: "text", question: "app.addNote", optional: true },
+  ],
+  harvest: [
+    { key: "seasonId", kind: "season", question: "app.seasonQuestion", skipIf: (_a, ctx) => !ctx.askSeason },
+    { key: "tons", kind: "number", question: "app.tonsQuestion", hint: "app.tonsHint", unit: "t", max: 1_000_000 },
+    { key: "moisturePct", kind: "number", question: "app.moistureQuestion", hint: "app.moistureHint", unit: "%", max: 100, optional: true },
+    { key: "areaHa", kind: "number", question: "app.areaDoneQuestion", hint: "app.areaDoneHint", unit: "ha", max: 100_000, optional: true },
+    {
+      key: "destination",
+      kind: "choice",
+      question: "app.destinationQuestion",
+      optional: true,
+      options: HARVEST_DESTINATIONS.map((v) => ({ value: v, label: `fields.destination_${v}` })),
+    },
+    { key: "note", kind: "text", question: "app.addNote", optional: true },
+  ],
+  sowing: [
+    { key: "seasonId", kind: "season", question: "app.seasonQuestion", skipIf: (_a, ctx) => !ctx.askSeason },
+    { key: "crop", kind: "choice", question: "app.sowingCropQuestion", options: CROPS.map((v) => ({ value: v, label: `fields.crop_${v}` })) },
+    { key: "variety", kind: "text", question: "app.varietyQuestion", optional: true },
+    {
+      key: "densityUnit",
+      kind: "choice",
+      question: "app.densityUnitQuestion",
+      optional: true,
+      options: DENSITY_UNITS.map((v) => ({ value: v, label: `fields.densityUnit_${v}` })),
+    },
+    { key: "density", kind: "number", question: "app.densityQuestion", unit: "", max: 1_000_000, skipIf: (a) => a.densityUnit === undefined },
+    { key: "areaHa", kind: "number", question: "app.areaDoneQuestion", hint: "app.areaDoneHint", unit: "ha", max: 100_000, optional: true },
+    { key: "note", kind: "text", question: "app.addNote", optional: true },
   ],
 };
 
 /** Pasos que se preguntan dado lo respondido hasta ahora. */
-export const stepsFor = (kind: RecordKind | null, answers: Record<string, unknown>, ctx: FlowCtx = { waterPois: 0 }): Step[] =>
+export const stepsFor = (kind: RecordKind | null, answers: Record<string, unknown>, ctx: FlowCtx = { waterPois: 0, askSeason: false }): Step[] =>
   kind ? FLOWS[kind].filter((s) => !s.skipIf?.(answers, ctx)) : [];
+
+/** Pasos de una lista dada con lo contestado hasta ahora (campaña solo si hay más de una activa). */
+export const visibleSteps = (steps: Step[], values: Record<string, unknown>, ctx: { askSeason: boolean }): Step[] =>
+  steps.filter((s) => !s.skipIf?.(values, { waterPois: 0, askSeason: ctx.askSeason }));
 
 /** Qué se puede anotar en cada tipo de lote, en el orden de frecuencia real. */
 export const KINDS_FOR = (plotKind: "crop" | "pasture" | null): RecordKind[] =>
   plotKind === "pasture"
     ? ["pasture_status", "herd_count", "herd_move", "mortality", "health", "rain", "water", "pest", "scouting", "note"]
     : plotKind === "crop"
-      ? ["scouting", "pest", "crop_status", "rain", "water", "note"]
-      : ["rain", "scouting", "water", "health", "note", "pest", "crop_status", "pasture_status"];
+      ? ["scouting", "pest", "crop_status", "application", "fertilization", "sowing", "harvest", "rain", "water", "note"]
+      : ["rain", "scouting", "water", "health", "note", "pest", "crop_status", "pasture_status", "application", "fertilization", "sowing", "harvest"];
 
 /** Registros de hacienda: son de un solo potrero, no se cargan en varios a la vez (F-10). */
 export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count", "herd_move", "mortality", "health"];

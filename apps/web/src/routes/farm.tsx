@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useSearch } from "@tanstack/react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Polygon } from "geojson";
 import { MapPinPlus, PenLine, Upload, X } from "lucide-react";
 import { areaHa, bboxOf, type Area } from "@yvy/geo";
@@ -15,7 +15,9 @@ import { PlotPanel } from "../components/PlotPanel";
 import { HerdPanel } from "../components/HerdPanel";
 import { PlotsTable } from "../components/PlotsTable";
 import { CompareOverlay, SceneControls } from "../components/SceneControls";
+import { ProductsPanel } from "../components/ProductsPanel";
 import { RecordsList } from "../components/RecordsList";
+import { SeasonsPanel } from "../components/SeasonsPanel";
 import { TasksPanel } from "../components/TasksPanel";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "../components/ui";
 import { del, post } from "../lib/api";
@@ -25,15 +27,16 @@ import { closedAreaHa, fmtDistance, pathLengthM, type LonLat } from "../lib/meas
 import { fmtDate, fmtHa, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { loadPrefs, savePrefs } from "../lib/prefs";
-import { useAlerts, useFarm, useFarms, useMe, useMembers, useProblemAreas } from "../lib/queries";
+import { fetchAllRecords, useAlerts, useFarm, useFarms, useMe, useMembers, useProblemAreas } from "../lib/queries";
 import { defaultCompare, layerDates, pickLayer, type Camera } from "../lib/scenes";
+import { PEST_COLORS, PEST_WINDOW_MS, pestCounts, pestPoints } from "../lib/pests";
 import type { FarmDetail, RecordRow } from "../lib/types";
 
 /** Días sin anotaciones para considerar un lote sin visitar. */
 const UNVISITED_DAYS = 7;
 
-type Tab = "plots" | "records" | "tasks" | "climate" | "alerts" | "herd";
-const TABS: Tab[] = ["plots", "records", "tasks", "climate", "alerts", "herd"];
+type Tab = "plots" | "seasons" | "products" | "records" | "tasks" | "climate" | "alerts" | "herd";
+const TABS: Tab[] = ["plots", "seasons", "products", "records", "tasks", "climate", "alerts", "herd"];
 
 export function FarmPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId" });
@@ -75,6 +78,17 @@ export function FarmPage() {
   const [curtain, setCurtain] = useState(50);
   const [camera, setCamera] = useState<Camera | null>(null);
   const [records, setRecords] = useState<RecordRow[]>([]);
+  // A-42: focos de plaga de los últimos 30 días sobre el mapa
+  const [showPests, setShowPests] = useState(false);
+  const pests = useQuery({
+    enabled: showPests,
+    queryKey: ["pests30", farmId],
+    queryFn: () => fetchAllRecords({ farmId, kind: "pest", from: Date.now() - PEST_WINDOW_MS }, 1000),
+  });
+  const pestPts = useMemo(
+    () => (showPests && pests.data && farm.data ? pestPoints(pests.data, farm.data.plots) : []),
+    [showPests, pests.data, farm.data?.plots],
+  );
   // Bajo lg no entran el mapa y el panel juntos: se alterna entre uno y otro.
   const [view, setView] = useState<"map" | "list">("map");
   useEffect(() => {
@@ -180,7 +194,9 @@ export function FarmPage() {
           selectedPlotId={selected}
           bounds={bounds}
           points={
-            tab === "records"
+            showPests
+              ? pestPts
+              : tab === "records"
               ? records
                   .filter((r) => r.lat !== null)
                   .map((r) => ({ id: r.id, lon: r.lon!, lat: r.lat!, color: BRAND.trigo }))
@@ -309,6 +325,33 @@ export function FarmPage() {
             }}
             onCompare={setCompare}
           />
+          <button
+            aria-pressed={showPests}
+            onClick={() => setShowPests(!showPests)}
+            className={`w-56 cursor-pointer rounded-md border border-white/15 px-3 py-1.5 text-left text-xs font-medium backdrop-blur transition-colors ${showPests ? "bg-lino text-surco" : "bg-surco/85 text-lino hover:bg-white/10"}`}
+          >
+            {t("ui.layerPests")}
+          </button>
+          {showPests && (
+            <div className="w-56 rounded-md border border-white/15 bg-surco/85 p-2.5 text-[11px] text-lino backdrop-blur">
+              <p className="mb-1 font-medium">{t("ui.pestsLegendTitle")}</p>
+              {pests.isLoading ? (
+                <p className="text-lino/70">{t("ui.loading")}</p>
+              ) : pestPts.length === 0 ? (
+                <p className="text-lino/70">{t("ui.pestsNone")}</p>
+              ) : (
+                <ul className="flex flex-col gap-1">
+                  {pestCounts(pestPts).map((c) => (
+                    <li key={c.pest} className="num flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: PEST_COLORS[c.pest] }} aria-hidden />
+                      {tk(`fields.pest_${c.pest}`)}
+                      <span className="ml-auto text-lino/70">{c.n}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
           {layer === "ndvi" && ndviLayer && (
             <div className="w-56 rounded-md border border-white/15 bg-surco/85 p-2.5 text-[11px] text-lino backdrop-blur">
               <div
@@ -432,6 +475,8 @@ export function FarmPage() {
           }}
           tabs={[
             { id: "plots", label: t("ui.tabPlots"), count: d.plots.length },
+            { id: "seasons", label: t("ui.tabSeasons") },
+            { id: "products", label: t("ui.tabProducts") },
             { id: "records", label: t("ui.tabRecords") },
             { id: "tasks", label: t("ui.tabTasks") },
             { id: "climate", label: t("ui.tabClimate") },
@@ -537,6 +582,8 @@ export function FarmPage() {
               )}
             </div>
           ))}
+        {tab === "seasons" && <SeasonsPanel farmId={farmId} plots={d.plots} canEdit={canEdit} />}
+        {tab === "products" && <ProductsPanel canEdit={canEdit} farmId={farmId} plots={d.plots} />}
         {tab === "records" && <RecordsList filters={{ farmId }} onRows={setRecords} />}
         {tab === "tasks" && <TasksPanel farmId={farmId} plots={d.plots} />}
         {tab === "climate" && <ClimatePanel farmId={farmId} />}

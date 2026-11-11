@@ -18,11 +18,13 @@ import {
   nextDueDate,
   nextOccurrenceId,
   parseChecklist,
+  prescriptionSchema,
   RECORD_SCHEMA_VERSION,
   resetChecklist,
   serializeChecklist,
   setChecklistItem,
   type CountEvent,
+  type Prescription,
   type Cursor,
   type HerdCategory,
   type HerdCounts,
@@ -50,6 +52,9 @@ const TABLES: Record<PullTable, SQLiteTable> = {
   alerts: s.alerts,
   plot_index_stats: s.plotIndexStats,
   farm_layers: s.farmLayers,
+  seasons: s.seasons,
+  plot_seasons: s.plotSeasons,
+  products: s.products,
 };
 
 /** jsKey → columna SQL, sacado del esquema compartido. */
@@ -73,6 +78,9 @@ export type Task = typeof s.tasks.$inferSelect;
 export type RecordRow = typeof s.records.$inferSelect & { pending: boolean; rejected: string | null; photos: number };
 export type Alert = typeof s.alerts.$inferSelect;
 export type FarmLayer = typeof s.farmLayers.$inferSelect;
+export type Season = typeof s.seasons.$inferSelect;
+export type Product = typeof s.products.$inferSelect;
+export type PlotSeason = typeof s.plotSeasons.$inferSelect;
 
 export interface NewRecord {
   farmId: string;
@@ -354,8 +362,8 @@ export class LocalDb implements SyncStore {
       const next = task.status !== "done" ? nextDueDate(task.dueDate, task.recurrence, localDate(ts, tz)) : null;
       if (next) {
         this.sql.run(
-          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, lon, lat, due_date, recurrence, status, created_by, created_at, updated_at, version, checklist)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, 0, ?) ON CONFLICT(id) DO NOTHING`,
+          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, lon, lat, due_date, recurrence, status, prescription, created_by, created_at, updated_at, version, checklist)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, 0, ?) ON CONFLICT(id) DO NOTHING`,
           [
             nextOccurrenceId(taskId),
             task.organizationId,
@@ -368,6 +376,7 @@ export class LocalDb implements SyncStore {
             task.lat,
             next,
             task.recurrence,
+            task.prescription,
             task.createdBy,
             ts,
             ts,
@@ -628,6 +637,41 @@ export class LocalDb implements SyncStore {
         [this.now()],
       )
       .map((r) => fromRow<Alert>(s.alerts, r));
+  }
+
+  /** Receta de una tarea (A-11), ya validada; null si no tiene o está dañada. */
+  prescriptionOf(taskId: string): Prescription | null {
+    const r = this.sql.get<{ prescription: string | null }>("SELECT prescription FROM tasks WHERE id = ?", [taskId]);
+    if (!r?.prescription) return null;
+    try {
+      const p = prescriptionSchema.safeParse(JSON.parse(r.prescription));
+      return p.success ? p.data : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Campañas activas de la organización, la más reciente primero. */
+  activeSeasons(): Season[] {
+    return this.sql
+      .all("SELECT * FROM seasons WHERE deleted_at IS NULL AND active = 1 ORDER BY start_date DESC, created_at DESC")
+      .map((r) => fromRow<Season>(s.seasons, r));
+  }
+
+  /** Catálogo de productos de la organización. */
+  products(): Product[] {
+    return this.sql
+      .all("SELECT * FROM products WHERE deleted_at IS NULL ORDER BY name")
+      .map((r) => fromRow<Product>(s.products, r));
+  }
+
+  /** Lo planificado en un lote para una campaña (cultivo, variedad), si bajó al celular. */
+  plotSeason(plotId: string, seasonId: string): PlotSeason | null {
+    const r = this.sql.get(
+      "SELECT * FROM plot_seasons WHERE plot_id = ? AND season_id = ? AND deleted_at IS NULL",
+      [plotId, seasonId],
+    );
+    return r ? fromRow<PlotSeason>(s.plotSeasons, r) : null;
   }
 
   latestLayers(farmId: string): FarmLayer[] {

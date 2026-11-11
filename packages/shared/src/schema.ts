@@ -39,8 +39,17 @@ export const RECORD_KINDS = [
   "herd_move",
   "mortality",
   "health",
+  // ADR 0004: registros agrícolas
+  "sowing",
+  "application",
+  "fertilization",
+  "harvest",
 ] as const;
 export type RecordKind = (typeof RECORD_KINDS)[number];
+/** Tipos de producto del catálogo (ADR 0004). */
+export const PRODUCT_TYPES = ["seed", "agrochemical", "fertilizer", "fuel", "veterinary", "other"] as const;
+/** Unidad base del producto: litros o kilos. */
+export const PRODUCT_UNITS = ["l", "kg"] as const;
 export const UPLOAD_STATUS = ["pending", "uploaded"] as const;
 export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_threshold", "water_low"] as const;
 export const ALERT_SEVERITIES = ["info", "watch", "warning"] as const;
@@ -255,6 +264,63 @@ export const plotAssignments = sqliteTable(
   ],
 );
 
+// ---------- Campañas (ADR 0004) ----------
+
+/** Campaña de la organización ("Zafra 2026/27"). Fechas de calendario "YYYY-MM-DD". */
+export const seasons = sqliteTable(
+  "seasons",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    name: text("name").notNull(),
+    startDate: text("start_date"),
+    endDate: text("end_date"),
+    active: integer("active", { mode: "boolean" }).notNull().default(true),
+    ...synced,
+  },
+  (t) => [index("seasons_sync_idx").on(t.organizationId, t.version, t.id)],
+);
+
+/** Qué se planifica o se sembró en un lote en una campaña. Una fila por (lote, campaña). */
+export const plotSeasons = sqliteTable(
+  "plot_seasons",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    plotId: text("plot_id").notNull(),
+    seasonId: text("season_id").notNull(),
+    crop: text("crop", { enum: CROPS }),
+    variety: text("variety"),
+    plannedSowingDate: text("planned_sowing_date"),
+    /** Rinde objetivo en toneladas por hectárea. */
+    targetYieldTHa: real("target_yield_t_ha"),
+    ...synced,
+  },
+  (t) => [
+    uniqueIndex("plot_seasons_plot_season_uq").on(t.plotId, t.seasonId),
+    index("plot_seasons_sync_idx").on(t.organizationId, t.version, t.id),
+    index("plot_seasons_season_idx").on(t.seasonId),
+  ],
+);
+
+/** Catálogo de productos de la organización (insumos). Baja al celular para cargar aplicaciones sin señal. */
+export const products = sqliteTable(
+  "products",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    name: text("name").notNull(),
+    type: text("type", { enum: PRODUCT_TYPES }).notNull(),
+    unit: text("unit", { enum: PRODUCT_UNITS }).notNull(),
+    activeIngredient: text("active_ingredient"),
+    /** Días de carencia antes de cosechar o de pastorear. */
+    withdrawalDays: integer("withdrawal_days"),
+    toxClass: text("tox_class"),
+    ...synced,
+  },
+  (t) => [index("products_sync_idx").on(t.organizationId, t.version, t.id)],
+);
+
 // ---------- Trabajo ----------
 
 export const tasks = sqliteTable(
@@ -277,6 +343,8 @@ export const tasks = sqliteTable(
     /** Punto al que ir (S-09: centro de un área problema). El celular lo muestra en el mapa y en "Llevame ahí". */
     lon: real("lon"),
     lat: real("lat"),
+    /** Receta agronómica (JSON, ver prescriptionSchema): al hacer la tarea, la aplicación sale precargada. */
+    prescription: text("prescription"),
     createdBy: text("created_by").notNull(),
     /** Lista de verificación (F-15): JSON `[{id, text, done}]` o null. Ver checklist.ts. */
     checklist: text("checklist"),
@@ -492,6 +560,21 @@ export const forecasts = sqliteTable(
     windDirDeg: real("wind_dir_deg"),
   },
   (t) => [primaryKey({ columns: [t.farmId, t.runAt, t.validDate] })],
+);
+
+/** Pronóstico horario de MET Norway (próximas horas) para las ventanas de pulverización. Solo la última corrida. */
+export const forecastHours = sqliteTable(
+  "forecast_hours",
+  {
+    farmId: text("farm_id").notNull(),
+    /** Inicio de la hora, epoch ms UTC. */
+    validAt: integer("valid_at").notNull(),
+    tempC: real("temp_c"),
+    windKmh: real("wind_kmh"),
+    humidityPct: real("humidity_pct"),
+    precipMm: real("precip_mm"),
+  },
+  (t) => [primaryKey({ columns: [t.farmId, t.validAt] })],
 );
 
 export const fireHotspots = sqliteTable(

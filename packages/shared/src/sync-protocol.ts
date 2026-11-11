@@ -111,6 +111,9 @@ export const PULL_TABLES = [
   "alerts",
   "plot_index_stats",
   "farm_layers",
+  "seasons",
+  "plot_seasons",
+  "products",
 ] as const;
 export type PullTable = (typeof PULL_TABLES)[number];
 
@@ -124,6 +127,7 @@ export const ASSIGNMENT_SCOPED_TABLES: readonly PullTable[] = [
   "attachments",
   "alerts",
   "farm_layers",
+  "plot_seasons",
 ];
 
 export const cursor = z.object({ version: z.number().int().nonnegative(), id: z.string() });

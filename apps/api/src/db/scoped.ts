@@ -71,6 +71,14 @@ const SYNCED: Record<PullTable, SyncedTable> = {
     version: s.farmLayers.version,
     id: s.farmLayers.id,
   },
+  seasons: { table: s.seasons, org: s.seasons.organizationId, version: s.seasons.version, id: s.seasons.id },
+  plot_seasons: {
+    table: s.plotSeasons,
+    org: s.plotSeasons.organizationId,
+    version: s.plotSeasons.version,
+    id: s.plotSeasons.id,
+  },
+  products: { table: s.products, org: s.products.organizationId, version: s.products.version, id: s.products.id },
 };
 
 /** Matriz de permisos (PRD §9). */
@@ -90,6 +98,10 @@ export const can = {
   alertSettings: (r: Role) => r === "owner" || r === "admin",
   /** G-10: planificar el calendario sanitario (y crear sus tareas): todos menos el empleado. */
   planSanitary: (r: Role) => r !== "worker",
+  /** ADR 0004: campañas y su plan por lote; el empleado solo las ve. */
+  editSeasons: (r: Role) => r !== "worker",
+  /** ADR 0004: catálogo de productos; el empleado lo recibe en el celular pero no lo edita. */
+  editProducts: (r: Role) => r !== "worker",
 };
 
 export class ScopedDb {
@@ -154,6 +166,12 @@ export class ScopedDb {
         return sql`0`; // PRD §11: no baja al empleado
       case "farm_layers":
         return sql`farm_layers.farm_id IN ${this.workerFarmsSql()}`;
+      case "seasons":
+        return undefined; // las campañas son de toda la organización: el empleado las necesita para anotar
+      case "plot_seasons":
+        return sql`plot_seasons.plot_id IN ${this.assignedPlotsSql()}`;
+      case "products":
+        return undefined; // el catálogo es de toda la organización
     }
   }
 
@@ -564,6 +582,60 @@ export class ScopedDb {
 
   // ---------- Tareas ----------
 
+  /**
+   * Receta → órdenes de trabajo (A-11): una tarea de aplicación por lote, para el mismo empleado, con la
+   * receta adentro. 3 lecturas y un solo batch (una fila por lote, máx. 40).
+   */
+  async createPrescription(input: {
+    farmId: string;
+    plotIds: string[];
+    assigneeId: string;
+    title: string;
+    dueDate: string;
+    prescription: string;
+  }): Promise<{ ids: string[] }> {
+    this.require(can.assign);
+    await this.requireFarm(input.farmId);
+    await this.memberRole(input.assigneeId);
+    const plotIds = [...new Set(input.plotIds)];
+    const found = await this.db
+      .select({ id: s.plots.id })
+      .from(s.plots)
+      .where(
+        and(
+          eq(s.plots.organizationId, this.auth.orgId),
+          eq(s.plots.farmId, input.farmId),
+          inArray(s.plots.id, plotIds),
+          isNull(s.plots.deletedAt),
+        ),
+      );
+    if (found.length !== plotIds.length) throw new NotFoundError("Lote inexistente");
+    const ts = this.now();
+    const ids = plotIds.map(() => newId());
+    await runBatch(this.db, [
+      bumpVersion(this.db),
+      ...plotIds.map((plotId, i) =>
+        this.db.insert(s.tasks).values({
+          id: ids[i]!,
+          organizationId: this.auth.orgId,
+          farmId: input.farmId,
+          plotId,
+          assigneeId: input.assigneeId,
+          title: input.title,
+          kind: "application",
+          dueDate: input.dueDate,
+          recurrence: "none",
+          prescription: input.prescription,
+          createdBy: this.auth.userId,
+          createdAt: ts,
+          updatedAt: ts,
+          version: currentVersion,
+        }),
+      ),
+    ]);
+    return { ids };
+  }
+
   async createTask(input: {
     farmId: string;
     plotId: string | null;
@@ -576,6 +648,7 @@ export class ScopedDb {
     checklist?: string | null;
     lon?: number | null;
     lat?: number | null;
+    prescription?: string | null;
   }) {
     this.require(can.assign);
     await this.requireFarm(input.farmId);

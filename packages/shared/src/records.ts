@@ -4,7 +4,8 @@
  */
 import { z } from "zod";
 import { HEALTH_REASONS, HERD_CATEGORIES, MAX_HEAD_PER_CATEGORY, MORTALITY_CAUSES, MOVE_REASONS } from "./livestock";
-import type { RecordKind } from "./schema";
+import { deltaT, DOSE_UNITS } from "./agro";
+import { CROPS, type RecordKind } from "./schema";
 import { LIMITS } from "./limits";
 
 export const RECORD_SCHEMA_VERSION = 1;
@@ -76,6 +77,35 @@ const livestockSchemas = {
   }),
 };
 // ---------- fin ganaderia ----------
+/** Unidad de la densidad de siembra: semillas por metro lineal o kg por hectárea. */
+export const DENSITY_UNITS = ["seeds_m", "kg_ha"] as const;
+
+const uuidStr = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/, "uuid inválido");
+/** Superficie hecha en hectáreas (aplicaciones, siembra, cosecha). */
+const areaDone = z.number().positive().max(100_000);
+const seasonId = uuidStr.optional();
+
+/** Producto de una aplicación: del catálogo (productId) o escrito a mano en el campo (solo name). */
+export const productDose = z.object({
+  productId: uuidStr.optional(),
+  name: z.string().trim().min(1).max(120),
+  dose: z.number().positive().max(100_000),
+  unit: z.enum(DOSE_UNITS),
+});
+/** Fertilizante: siempre kg/ha. */
+export const fertilizerDose = productDose.extend({ unit: z.literal("kg_ha") });
+export const HARVEST_DESTINATIONS = ["silo", "acopio", "industry", "other"] as const;
+export const FERT_METHODS = ["broadcast", "banded", "foliar", "fertigation"] as const;
+export type ProductDose = z.infer<typeof productDose>;
+
+/** Receta del agrónomo: qué aplicar y a qué dosis. Viaja dentro de la tarea (tasks.prescription). */
+export const prescriptionSchema = z.object({
+  seasonId,
+  products: z.array(productDose).min(1).max(10),
+  volumeLHa: z.number().positive().max(2000).optional(),
+  note,
+});
+export type Prescription = z.infer<typeof prescriptionSchema>;
 
 export const recordDataSchemas = {
   scouting: z.object({ condition, note }),
@@ -108,6 +138,53 @@ export const recordDataSchemas = {
   water: z.object({ level: z.enum(["full", "half", "low", "dry"]), note }),
   note: z.object({ text: z.string().trim().min(1).max(4000) }),
   ...livestockSchemas,
+  sowing: z
+    .object({
+      seasonId,
+      crop: z.enum(CROPS),
+      variety: z.string().trim().min(1).max(80).optional(),
+      density: z.number().positive().max(1_000_000).optional(),
+      densityUnit: z.enum(DENSITY_UNITS).optional(),
+      areaHa: areaDone.optional(),
+      note,
+    })
+    .refine((d) => d.density === undefined || d.densityUnit !== undefined, {
+      message: "Indicá la unidad de la densidad",
+    }),
+  fertilization: z.object({
+    seasonId,
+    products: z.array(fertilizerDose).min(1).max(10),
+    method: z.enum(FERT_METHODS),
+    areaHa: areaDone.optional(),
+    note,
+  }),
+  harvest: z.object({
+    seasonId,
+    tons: z.number().positive().max(1_000_000),
+    moisturePct: z.number().min(0).max(100).optional(),
+    areaHa: areaDone.optional(),
+    destination: z.enum(HARVEST_DESTINATIONS).optional(),
+    note,
+  }),
+  application: z
+    .object({
+      seasonId,
+      products: z.array(productDose).min(1).max(10),
+      volumeLHa: z.number().positive().max(2000).optional(),
+      areaHa: areaDone.optional(),
+      windKmh: z.number().nonnegative().max(200).optional(),
+      tempC: z.number().min(-20).max(60).optional(),
+      humidityPct: z.number().min(0).max(100).optional(),
+      machine: z.string().trim().min(1).max(80).optional(),
+      /** Tarea con la receta que originó la aplicación (A-11). */
+      prescriptionTaskId: uuidStr.optional(),
+      note,
+    })
+    // Delta T se calcula siempre acá: la app, la web y el Worker guardan el mismo número.
+    .transform((d): typeof d & { deltaT?: number } => {
+      const dt = d.tempC !== undefined && d.humidityPct !== undefined ? deltaT(d.tempC, d.humidityPct) : null;
+      return dt === null ? d : { ...d, deltaT: dt };
+    }),
 } satisfies Record<RecordKind, z.ZodType>;
 
 export type RecordData<K extends RecordKind> = z.infer<(typeof recordDataSchemas)[K]>;

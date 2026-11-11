@@ -458,6 +458,7 @@ export async function applyPush(
                   kind: t.kind,
                   lon: t.lon,
                   lat: t.lat,
+                  prescription: t.prescription,
                   dueDate: next,
                   recurrence: t.recurrence,
                   status: "open",

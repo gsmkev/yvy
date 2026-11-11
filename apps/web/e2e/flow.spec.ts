@@ -14,8 +14,9 @@ test("dueño: registro, estancia, importación de 20 lotes y empleado", async ({
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
   const email = `e2e-${Date.now()}@yvy.test`;
   await page.goto("/");
+  await expect(page.getByRole("heading", { name: /el campo no tiene señal/i })).toBeVisible();
+  await page.getByRole("link", { name: "Crear cuenta" }).first().click();
   await expect(page).toHaveURL(/ingresar/);
-  await page.getByText("¿Primera vez?").click();
   await page.getByLabel("Nombre de la organización").fill("Agro E2E");
   await page.getByLabel("Tu nombre").fill("Dueña E2E");
   await page.getByLabel("Tu email").fill(email);
@@ -72,9 +73,12 @@ test("dueño: registro, estancia, importación de 20 lotes y empleado", async ({
   await expect(page.getByText(/Todos los días/)).toBeVisible();
 
   // Estancia: Ramón figura en el lote, clima y parte semanal
-  // Con una sola estancia, "Mapa" abre esa estancia directamente
+  // Mientras la guía de primeros pasos no esté completa, "Mapa" muestra el inicio con la guía (U-24);
+  // después abre la única estancia directamente.
   await page.getByRole("link", { name: "Mapa" }).click();
-  await expect(page.getByRole("heading", { name: "Estancia E2E" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Primeros pasos" })).toBeVisible();
+  await page.getByRole("link", { name: /Estancia E2E/ }).first().click();
+  await expect(page.getByRole("heading", { name: "Estancia E2E", level: 1 })).toBeVisible();
   await page
     .getByRole("button", { name: /^Lote 1\b/ })
     .first()

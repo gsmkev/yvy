@@ -1,9 +1,9 @@
 /** Esqueleto común de las herramientas del laboratorio: introducción → resultado de ejemplo. Sin análisis real. */
 import { useState, type ReactNode } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { router, Stack } from "expo-router";
 import { t } from "@yvy/shared";
-import { Button, s as k } from "../ui/kit";
+import { Button, s as k, Text } from "../ui/kit";
 import { C, RADIUS, T } from "../ui/theme";
 
 export function PreviewNotice() {

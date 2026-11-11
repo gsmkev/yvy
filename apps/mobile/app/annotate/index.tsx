@@ -556,7 +556,7 @@ function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onA
   }
   if (step.kind === "number") {
     const n = Number(text.replace(",", "."));
-    const ok = text !== "" && Number.isFinite(n) && n >= 0 && n <= step.max;
+    const ok = text !== "" && Number.isFinite(n) && n >= (step.min ?? 0) && n <= step.max && (!step.integer || Number.isInteger(n));
     return (
       <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
         <Text style={T.title}>{tr(step.question)}</Text>
@@ -566,7 +566,7 @@ function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onA
             ref={input}
             value={text}
             onChangeText={(v) => setText(v.replace(/[^0-9.,]/g, "").slice(0, 6))}
-            keyboardType="decimal-pad"
+            keyboardType={step.integer ? "number-pad" : "decimal-pad"}
             style={st.numberInput}
             placeholder="0"
             placeholderTextColor={C.tinta3}

@@ -57,6 +57,11 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
       if (str("reason")) parts.push(tr(`fields.moveReason_${d.reason}`, String(d.reason)).toLowerCase());
       break;
     }
+    case "mortality":
+      if (typeof d.head === "number" && str("category"))
+        parts.push(`${d.head} ${tr(`fields.herd_${d.category}`, String(d.category)).toLowerCase()}`);
+      if (str("cause")) parts.push(tr(`fields.cause_${d.cause}`, String(d.cause)).toLowerCase());
+      break;
     case "note":
       if (str("text")) parts.push(d.text as string);
       break;

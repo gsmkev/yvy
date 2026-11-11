@@ -8,6 +8,8 @@ export interface Session {
   user: { id: string; fullName: string; email: string | null };
   organization: { id: string; name: string; role: string };
   organizations: { id: string; name: string; role: string }[];
+  /** P-12: sesión de soporte (solo lectura, sin renovación). */
+  support?: boolean;
 }
 
 const KEY = "yvy.session";
@@ -24,6 +26,33 @@ function load(): Session | null {
 }
 
 export const getSession = () => session;
+
+// ---- P-12: "ver como soporte" ----
+const STAFF_KEY = "yvy.staff-session";
+
+/** Pasa a la sesión de soporte; la del equipo queda guardada en esta pestaña para volver. */
+export function enterSupport(s: Session) {
+  try {
+    sessionStorage.setItem(STAFF_KEY, JSON.stringify(session));
+  } catch {
+    /* sin sessionStorage: al salir habrá que ingresar de nuevo */
+  }
+  setSession({ ...s, support: true });
+  window.location.assign("/");
+}
+
+/** Vuelve a la sesión del equipo (o cierra si no se puede) y recarga: nada de lo cacheado era de esta organización. */
+export function exitSupport() {
+  let back: Session | null = null;
+  try {
+    back = JSON.parse(sessionStorage.getItem(STAFF_KEY) ?? "null") as Session | null;
+    sessionStorage.removeItem(STAFF_KEY);
+  } catch {
+    /* ignorar */
+  }
+  setSession(back);
+  window.location.assign(back ? "/interno" : "/ingresar");
+}
 
 export function setSession(s: Session | null) {
   session = s;
@@ -90,6 +119,10 @@ async function netFetch(input: string, init: RequestInit): Promise<Response> {
 let refreshing: Promise<boolean> | null = null;
 async function refresh(): Promise<boolean> {
   if (!session) return false;
+  if (session.support) {
+    exitSupport(); // la sesión de soporte no se renueva
+    return false;
+  }
   refreshing ??= (async () => {
     const res = await netFetch("/auth/refresh", {
       method: "POST",

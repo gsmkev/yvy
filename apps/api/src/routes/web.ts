@@ -51,7 +51,7 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 /** Perfil y sesión actual. */
 web.get("/me", async (c) => {
   const sdb = c.var.sdb;
-  await touchActivity(sdb.db, c.var.auth);
+  if (!sdb.auth.readOnly) await touchActivity(sdb.db, c.var.auth);
   const [user] = await sdb.db
     .select({
       id: s.users.id,
@@ -81,6 +81,7 @@ web.get("/me", async (c) => {
     tilesBaseUrl: c.env.TILES_PUBLIC_URL,
     isStaff: !!user?.email && admins.includes(user.email.toLowerCase()),
     demo: org?.plan === "demo",
+    support: !!sdb.auth.readOnly,
   });
 });
 

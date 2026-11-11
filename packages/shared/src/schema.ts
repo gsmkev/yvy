@@ -753,6 +753,20 @@ export const notificationPrefs = sqliteTable("notification_prefs", {
   updatedAt: integer("updated_at").notNull(),
 });
 
+/** P-12: registro de auditoría de acciones del equipo de Yvy sobre organizaciones de clientes. */
+export const auditLog = sqliteTable(
+  "audit_log",
+  {
+    id: text("id").primaryKey(),
+    actorUserId: text("actor_user_id").notNull(),
+    action: text("action").notNull(),
+    organizationId: text("organization_id"),
+    detail: text("detail").notNull().default("{}"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("audit_log_org_idx").on(t.organizationId, t.createdAt)],
+);
+
 // ---------- Reportes ----------
 
 export const reports = sqliteTable(

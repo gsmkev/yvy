@@ -1,7 +1,7 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { getSession, isNetworkDown, onNetworkChange, onSession, post, setSession } from "../lib/api";
+import { exitSupport, getSession, isNetworkDown, onNetworkChange, onSession, post, setSession } from "../lib/api";
 import { Toaster } from "./ui";
 import { FEATURES } from "../lib/features";
 import { fmtDate } from "../lib/format";
@@ -133,6 +133,14 @@ export function Layout() {
           {t("ui.logout")}
         </button>
       </header>
+      {me.data?.support && (
+        <p role="status" className="shrink-0 border-b border-trigo/40 bg-trigo/15 px-4 py-1.5 text-center text-sm text-surco">
+          {t("ui.supportBanner", { name: me.data.organization.name })}{" "}
+          <button className="cursor-pointer font-medium underline underline-offset-4" onClick={exitSupport}>
+            {t("ui.supportExit")}
+          </button>
+        </p>
+      )}
       {offline && (
         <p
           role="status"

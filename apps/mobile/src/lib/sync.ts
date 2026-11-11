@@ -9,6 +9,7 @@ import { useSyncExternalStore } from "react";
 import { LIMITS } from "@yvy/shared";
 import { CpuLimitError, httpTransport, SyncEngine, type AttachmentUploader } from "@yvy/sync";
 import { getDb } from "./db";
+import { flushVotes } from "./votes";
 import { accessToken, api, API_URL, getSession, HttpError, OfflineError } from "./session";
 
 export interface SyncStatus {
@@ -99,6 +100,14 @@ export function deviceId(): string {
   return id;
 }
 
+/** Manda los "¿Te sirvió?" que quedaron en cola. Errores 4xx (salvo 401/429) descartan el voto; el resto lo reintenta. */
+export const flushAlertVotes = (): Promise<number> =>
+  flushVotes(
+    getDb(),
+    (id, useful) => api("POST", `/org/alerts/${id}/feedback`, { useful }),
+    (e) => !(e instanceof HttpError && e.status >= 400 && e.status < 500 && e.status !== 401 && e.status !== 429),
+  ).catch(() => 0);
+
 export async function syncNow(): Promise<void> {
   if (!getSession()) return;
   const net = await Network.getNetworkStateAsync().catch(() => null);
@@ -111,6 +120,7 @@ export async function syncNow(): Promise<void> {
     const r = await getEngine().sync();
     getDb().setKv("last_sync_at", String(r.finishedAt));
     set({ online: true, lastSyncAt: r.finishedAt });
+    await flushAlertVotes();
   } catch (e) {
     const offline =
       e instanceof OfflineError ||

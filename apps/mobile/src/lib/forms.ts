@@ -28,6 +28,7 @@ const level3 = (key: string): FieldSpec => ({
 const note: FieldSpec = { key: "note", type: "text", multiline: true };
 
 export const FORMS: Record<RecordKind, FieldSpec[]> = {
+  track: [],
   scouting: [condition, note],
   pest: [
     { key: "pest", type: "choice", options: PESTS, labelPrefix: "fields.pest_", required: true },

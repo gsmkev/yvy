@@ -89,6 +89,19 @@ export const LIMITS = {
     /** Conteo máximo por plaga en una estación. */
     maxCount: 10_000,
   },
+  track: {
+    /** Recorrida GPS (F-05): puntos que se guardan tras simplificar, y tolerancia de la simplificación en metros. */
+    maxPoints: 500,
+    simplifyToleranceM: 3,
+    /** Se descartan fixes con peor precisión que esto y los que no se movieron al menos esto. */
+    maxAccuracyM: 30,
+    minStepM: 5,
+    /** Muestreo: cada tanto tiempo o distancia (ahorra batería); el sistema agrupa lo que pueda. */
+    sampleIntervalMs: 5000,
+    sampleDistanceM: 5,
+    /** Duración máxima de una recorrida registrada, en segundos (12 h). */
+    maxDurationS: 12 * 3600,
+  },
   vigor: {
     /** Caída de vigor (NDVI) entre las dos últimas pasadas que se avisa, en % (web y app). */
     dropThresholdPct: 15,

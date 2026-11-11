@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CROPS } from "@yvy/shared";
 import { del, patch, post, put } from "../lib/api";
-import { fmtIsoDate, fmtNum } from "../lib/format";
+import { fmtHa, fmtIsoDate, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useSeasons } from "../lib/queries";
 import type { Plot, PlotSeason, Season } from "../lib/types";
@@ -101,7 +101,7 @@ export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots
                   <li key={p.id} className="flex items-baseline justify-between gap-3 py-3 text-sm">
                     <span className="min-w-0">
                       <span className="font-medium">{p.name}</span>
-                      <span className="num ml-2 text-xs text-tinta-2">{fmtNum(p.areaHa)} ha</span>
+                      <span className="num ml-2 text-xs text-tinta-2">{fmtHa(p.areaHa)}</span>
                       <span className="mt-0.5 block text-tinta-2">
                         {plan ? <PlanSummary plan={plan} /> : t("ui.seasonPlanEmpty")}
                       </span>

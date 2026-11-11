@@ -8,7 +8,7 @@ import { ShareLinksSection } from "../components/ShareLinks";
 import { Button, Card, ErrorBox, Field, Input, Spinner } from "../components/ui";
 import { get } from "../lib/api";
 import { download } from "../lib/exports";
-import { fmtIsoDate } from "../lib/format";
+import { fmtIsoDate, fmtMm } from "../lib/format";
 import { t } from "../lib/i18n";
 import { fetchAllRecords, useAlerts, useFarm } from "../lib/queries";
 
@@ -128,7 +128,7 @@ export function ReportPage() {
         </Card>
         <Card>
           <div className="eyebrow">{t("ui.rainWeek")}</div>
-          <div className="text-2xl font-semibold">{weekRain === null ? "—" : `${Math.round(weekRain)} mm`}</div>
+          <div className="text-2xl font-semibold">{weekRain === null ? "—" : fmtMm(weekRain)}</div>
         </Card>
         <Card>
           <div className="eyebrow">{t("ui.alertsTitle")}</div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { NotificationPrefs } from "../../components/NotificationPrefs";
+import { Preferences } from "../../components/Preferences";
 import { ConfirmModal, Spinner } from "../../components/ui";
 import { get, post } from "../../lib/api";
 import { t } from "../../lib/i18n";
@@ -61,6 +62,7 @@ export function AccountPage() {
   return (
     <div className="mx-auto w-full max-w-2xl p-4 sm:p-6">
       <h1 className="text-[28px] leading-tight">{t("ui.accountTitle")}</h1>
+      <Preferences />
       <NotificationPrefs />
       <Referral />
       {me.data?.role !== "owner" ? null : (

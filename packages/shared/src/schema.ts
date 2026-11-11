@@ -556,6 +556,8 @@ export const stockMoves = sqliteTable(
     originId: text("origin_id"),
     partyId: text("party_id"),
     note: text("note"),
+    /** Foto de la factura o el ticket en R2 (E-37). */
+    photoPath: text("photo_path"),
     createdBy: text("created_by").notNull(),
     ...timestamps,
   },

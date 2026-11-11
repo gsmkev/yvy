@@ -1868,6 +1868,12 @@ export const esPY = {
     expiringLot: "Lote {{lot}}",
     expiringIn: "Vence en {{n}} días",
     expiringExpired: "Venció hace {{n}} días",
+    photoAttach: "Adjuntar factura",
+    photoView: "Ver factura",
+    photoRemove: "Quitar foto",
+    photoUploading: "Subiendo...",
+    photoSaved: "Foto guardada",
+    photoUploadFailed: "No se pudo subir la foto. Probá de nuevo.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

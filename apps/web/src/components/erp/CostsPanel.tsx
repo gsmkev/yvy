@@ -9,6 +9,7 @@ import { fmtGs, fmtMoney } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
 import type { Season } from "../../lib/types";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
+import { InvoicePhoto } from "./InvoicePhoto";
 import { useParties } from "./PartiesPanel";
 
 export interface CostEntry {
@@ -107,6 +108,7 @@ export function CostsPanel() {
                 <th className="py-2 pr-4 font-medium">{t("ui.costDescription")}</th>
                 <th className="py-2 pr-4 text-right font-medium">{t("ui.costAmount")}</th>
                 <th />
+                <th />
               </tr>
             </thead>
             <tbody>
@@ -123,6 +125,9 @@ export function CostsPanel() {
                     {c.category === "sale" ? "" : "-"}
                     {fmtMoney(c.amount, c.currency)}
                     {c.currency !== "PYG" && <span className="block text-xs text-tinta-2">{fmtGs(c.amountPyg)}</span>}
+                  </td>
+                  <td className="py-2.5 pr-4 text-right whitespace-nowrap">
+                    <InvoicePhoto kind="cost-entries" id={c.id} hasPhoto={!!c.photoPath} />
                   </td>
                   <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
                     {c.origin === "manual" && (

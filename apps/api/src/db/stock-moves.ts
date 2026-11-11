@@ -65,8 +65,13 @@ async function requireProductAndWarehouses(sdb: ScopedDb, productId: string, war
 }
 
 /** Sin permiso para ver montos (agrónomo), se quitan valores, montos y monedas. */
-const mask = <T extends { valuePyg?: unknown; amount?: unknown; currency?: unknown }>(role: Role, rows: T[]): T[] =>
-  can.manageErp(role) ? rows : rows.map((r) => ({ ...r, valuePyg: undefined, amount: undefined, currency: undefined }));
+const mask = <T extends { valuePyg?: unknown; amount?: unknown; currency?: unknown; photoPath?: unknown }>(
+  role: Role,
+  rows: T[],
+): T[] =>
+  can.manageErp(role)
+    ? rows
+    : rows.map((r) => ({ ...r, valuePyg: undefined, amount: undefined, currency: undefined, photoPath: undefined }));
 
 const base = (sdb: ScopedDb, i: { productId: string; warehouseId: string; date: string; note?: string | null }) => {
   const ts = sdb.now();

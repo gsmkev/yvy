@@ -1,8 +1,12 @@
 /** ERP sencillo desde la web (ADR 0004). Montada en /org/erp. */
 import { Hono } from "hono";
 import { z } from "zod";
+import { LIMITS } from "@yvy/shared";
 import { contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
+import { HTTPException } from "hono/http-exception";
+import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
+import { presign } from "../lib/r2";
 import { fixDefaultWarehouse } from "../db/stock";
 import { adjustStock, consumeStock, deleteMove, expiringLots, listMoves, purchaseStock, requireWarehouseUnused, stockSummary, transferStock } from "../db/stock-moves";
 import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
@@ -150,5 +154,44 @@ erp.post("/stock/adjustments", async (c) =>
 );
 erp.delete("/stock/moves/:id", async (c) => {
   await deleteMove(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+// ---------- Foto de la factura o el ticket (E-37) ----------
+
+const photoKind = (v: string): PhotoKind => parse(z.enum(PHOTO_KINDS), v);
+
+/** URL firmada para subir la foto (PUT directo a R2). */
+erp.post("/photos/:kind/:id/upload-url", async (c) => {
+  const { key } = await photoTarget(c.var.sdb, photoKind(c.req.param("kind")), c.req.param("id"));
+  const ttl = LIMITS.photos.uploadUrlTtlSeconds;
+  return c.json({ url: await presign(c.env, "PUT", key, ttl), expiresAt: Date.now() + ttl * 1000 });
+});
+
+/** Confirma la subida: verifica el objeto y su tamaño y recién entonces lo asocia al movimiento. */
+erp.post("/photos/:kind/:id/uploaded", async (c) => {
+  const kind = photoKind(c.req.param("kind"));
+  const { key } = await photoTarget(c.var.sdb, kind, c.req.param("id"));
+  const head = await c.env.MEDIA.head(key);
+  if (!head) throw new HTTPException(409, { message: "La foto todavía no está en el almacenamiento" });
+  if (head.size > LIMITS.photos.maxBytes) {
+    await c.env.MEDIA.delete(key);
+    throw new HTTPException(413, { message: "Foto demasiado grande" });
+  }
+  await setPhotoPath(c.var.sdb, kind, c.req.param("id"), key);
+  return c.json({ ok: true });
+});
+
+erp.get("/photos/:kind/:id", async (c) => {
+  const { photoPath } = await photoTarget(c.var.sdb, photoKind(c.req.param("kind")), c.req.param("id"));
+  if (!photoPath) throw new HTTPException(404, { message: "No tiene foto" });
+  return c.json({ url: await presign(c.env, "GET", photoPath, LIMITS.photos.downloadUrlTtlSeconds) });
+});
+
+erp.delete("/photos/:kind/:id", async (c) => {
+  const kind = photoKind(c.req.param("kind"));
+  const { key, photoPath } = await photoTarget(c.var.sdb, kind, c.req.param("id"));
+  await setPhotoPath(c.var.sdb, kind, c.req.param("id"), null);
+  if (photoPath) await c.env.MEDIA.delete(key);
   return c.json({ ok: true });
 });

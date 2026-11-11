@@ -9,6 +9,7 @@ import { fmtGs, fmtMoney, fmtQty } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
 import { useProducts } from "../ProductsPanel";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { InvoicePhoto } from "./InvoicePhoto";
 import { useParties } from "./PartiesPanel";
 import { useWarehouses } from "./WarehousesPanel";
 
@@ -29,6 +30,7 @@ export interface StockMove {
   origin: "purchase" | "consumption" | "transfer" | "adjustment";
   originId: string | null;
   note: string | null;
+  photoPath?: string | null;
 }
 
 type Mode = "purchase" | "consumption" | "transfer" | "adjustment";
@@ -173,6 +175,9 @@ export function StockPanel() {
                         {m.currency === "USD" && <span className="block text-xs text-tinta-2">{fmtGs(m.valuePyg)}</span>}
                       </td>
                     )}
+                    <td className="py-2.5 pr-4 text-right whitespace-nowrap">
+                      {m.valuePyg !== undefined && m.origin === "purchase" && <InvoicePhoto kind="stock-moves" id={m.id} hasPhoto={!!m.photoPath} />}
+                    </td>
                     <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
                       {!(m.origin === "consumption" && m.originId) && (
                         <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(m)}>

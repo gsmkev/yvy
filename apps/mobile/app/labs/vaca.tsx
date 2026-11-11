@@ -1,8 +1,9 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { t } from "@yvy/shared";
 import { Lab, Fact } from "../../src/labs/Lab";
 import { CowIllustration } from "../../src/labs/illustrations";
 import { C, RADIUS, T } from "../../src/ui/theme";
+import { Text } from "../../src/ui/kit";
 
 const EXAMPLE = 3.5;
 

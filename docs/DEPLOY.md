@@ -100,8 +100,10 @@ La landing ofrece "Probar la demo" si el Worker tiene `DEMO_ORG_ID` y `DEMO_USER
 
 ```bash
 pnpm --filter api seed:demo            # escribe apps/api/seed/demo.sql e imprime DEMO_ORG_ID y DEMO_USER_ID
-cd apps/api && npx wrangler d1 execute yvy --remote --file=seed/demo.sql
 ```
+
+Para cargarlo en producción, commiteá el `demo.sql` y corré **Actions → Cargar demo → Run workflow** (`demo.yml`), que
+lo ejecuta con `wrangler d1 execute --remote` y antes verifica que solo tenga inserciones.
 
 El SQL usa ids fijos e `INSERT OR IGNORE`: correrlo de nuevo no duplica nada. Los registros de los últimos 60 días son
 relativos al día en que corriste el script; para refrescarlos, borrá las filas de esa organización y cargá un `demo.sql` nuevo.

@@ -15,6 +15,7 @@ const NAV: { to: string; label: MessageKey }[] = [
   { to: "/", label: "ui.navMap" },
   { to: "/registros", label: "ui.navRecords" },
   { to: "/tareas", label: "ui.navTasks" },
+  { to: "/sanidad", label: "ui.navSanitary" },
   { to: "/avisos", label: "ui.navAlerts" },
   { to: "/equipo", label: "ui.navTeam" },
   ...(FEATURES.labs ? [{ to: "/laboratorio", label: "ui.navLabs" as MessageKey }] : []),
@@ -65,7 +66,9 @@ export function Layout() {
     setSession(null);
   };
   const trial = me.data?.organization.plan === "trial" && me.data.organization.trialEndsAt;
-  const items = me.data?.isStaff ? [...NAV, { to: "/interno", label: "ui.navInternal" as MessageKey }] : NAV;
+  const base = me.data?.isStaff ? [...NAV, { to: "/interno", label: "ui.navInternal" as MessageKey }] : NAV;
+  // El calendario sanitario no es para el empleado (G-10).
+  const items = me.data?.role === "worker" ? base.filter((i) => i.to !== "/sanidad") : base;
   const nAlerts = alerts.data?.length ?? 0;
   const path = useRouterState({ select: (s) => s.location.pathname });
   // Con varias estancias, "Mapa" vuelve a la última que se miró

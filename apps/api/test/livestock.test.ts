@@ -1,34 +1,8 @@
 /** Ganadería (ADR 0004): registros de hacienda, stock calculado y permisos. */
 import { describe, expect, it } from "vitest";
-import { newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
+import { newId } from "@yvy/shared";
+import { push, rec } from "./records-helpers";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";
-
-export const rec = (
-  farmId: string,
-  plotId: string | null,
-  kind: string,
-  data: unknown,
-  capturedAt = Date.now() - 1000,
-) => ({
-  mutationId: newId(),
-  kind: "records.upsert",
-  row: {
-    id: newId(),
-    farmId,
-    plotId,
-    poiId: null,
-    kind,
-    data,
-    schemaVersion: RECORD_SCHEMA_VERSION,
-    lon: null,
-    lat: null,
-    gpsAccuracyM: null,
-    capturedAt,
-  },
-});
-
-export const push = (token: string, mutations: unknown[]) =>
-  call("POST", "/sync/push", { token, body: { deviceId: "dev", mutations } });
 
 async function setup() {
   const owner = await createOrgWithOwner();

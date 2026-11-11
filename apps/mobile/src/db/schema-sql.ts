@@ -76,5 +76,7 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE UNIQUE INDEX `share_links_hash_uq` ON `share_links` (`token_hash`);",
   "CREATE INDEX `share_links_farm_idx` ON `share_links` (`farm_id`);",
   "ALTER TABLE `tasks` ADD `checklist` text;",
-  "CREATE TABLE `farm_livestock_settings` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`max_ua_per_ha` real DEFAULT 1 NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`updated_by` text\n);"
+  "CREATE TABLE `farm_livestock_settings` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`max_ua_per_ha` real DEFAULT 1 NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`updated_by` text\n);",
+  "CREATE TABLE `sanitary_events` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text,\n\t`reason` text NOT NULL,\n\t`planned_date` text NOT NULL,\n\t`categories` text DEFAULT '[]' NOT NULL,\n\t`product` text,\n\t`note` text,\n\t`tasks_created` integer DEFAULT 0 NOT NULL,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
+  "CREATE INDEX `sanitary_events_org_date_idx` ON `sanitary_events` (`organization_id`,`planned_date`);"
 ];

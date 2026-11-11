@@ -28,6 +28,8 @@ export type Step = StepBase &
   | { key: string; kind: "counter"; question: string; hint?: string }
   /** Campaña: se elige entre las activas que bajaron al celular. */
   | { key: string; kind: "season"; question: string }
+  /** Productos de la mezcla con su dosis (catálogo del celular, o a mano). Guarda ProductDose[]. */
+  | { key: string; kind: "products"; question: string }
   /** Elegir un potrero de la estancia (excluye el de origen). La respuesta es su id. */
   | { key: string; kind: "paddock"; question: string }
   /** Elegir un punto de interés de un tipo (hoy: la aguada). La respuesta es su id; se guarda como poi_id. */
@@ -116,6 +118,16 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     { key: "counts", kind: "counter", question: "app.healthCountQuestion", hint: "app.herdCountHint" },
     { key: "note", kind: "text", question: "app.addNote", optional: true },
   ],
+  application: [
+    { key: "seasonId", kind: "season", question: "app.seasonQuestion", skipIf: (_a, ctx) => !ctx.askSeason },
+    { key: "products", kind: "products", question: "app.productsQuestion" },
+    { key: "volumeLHa", kind: "number", question: "app.volumeQuestion", unit: "L/ha", max: 2000, optional: true },
+    { key: "areaHa", kind: "number", question: "app.areaDoneQuestion", hint: "app.areaDoneHint", unit: "ha", max: 100_000, optional: true },
+    { key: "windKmh", kind: "number", question: "app.windQuestion", hint: "app.windHint", unit: "km/h", max: 200, optional: true },
+    { key: "tempC", kind: "number", question: "app.tempQuestion", unit: "°C", max: 60, optional: true },
+    { key: "humidityPct", kind: "number", question: "app.humidityQuestion", hint: "app.humidityHint", unit: "%", max: 100, optional: true },
+    { key: "note", kind: "text", question: "app.addNote", optional: true },
+  ],
   sowing: [
     { key: "seasonId", kind: "season", question: "app.seasonQuestion", skipIf: (_a, ctx) => !ctx.askSeason },
     { key: "crop", kind: "choice", question: "app.sowingCropQuestion", options: CROPS.map((v) => ({ value: v, label: `fields.crop_${v}` })) },
@@ -146,8 +158,8 @@ export const KINDS_FOR = (plotKind: "crop" | "pasture" | null): RecordKind[] =>
   plotKind === "pasture"
     ? ["pasture_status", "herd_count", "herd_move", "mortality", "health", "rain", "water", "pest", "scouting", "note"]
     : plotKind === "crop"
-      ? ["scouting", "pest", "crop_status", "sowing", "rain", "water", "note"]
-      : ["rain", "scouting", "water", "health", "note", "pest", "crop_status", "pasture_status", "sowing"];
+      ? ["scouting", "pest", "crop_status", "application", "sowing", "rain", "water", "note"]
+      : ["rain", "scouting", "water", "health", "note", "pest", "crop_status", "pasture_status", "application", "sowing"];
 
 /** Registros de hacienda: son de un solo potrero, no se cargan en varios a la vez (F-10). */
 export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count", "herd_move", "mortality", "health"];

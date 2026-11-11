@@ -10,6 +10,8 @@ export * from "./sync-protocol";
 export * from "./i18n";
 export {
   ROLES,
+  PRODUCT_TYPES,
+  PRODUCT_UNITS,
   RECORD_KINDS,
   PLOT_KINDS,
   CROPS,
@@ -24,6 +26,7 @@ export {
 } from "./schema";
 export * from "./tasks";
 export * from "./checklist";
+export * from "./agro";
 export * from "./alert-settings";
 export * from "./share";
 export * from "./describe";

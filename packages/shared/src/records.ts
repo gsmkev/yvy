@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 import { HEALTH_REASONS, HERD_CATEGORIES, MAX_HEAD_PER_CATEGORY, MORTALITY_CAUSES, MOVE_REASONS } from "./livestock";
+import { deltaT, DOSE_UNITS } from "./agro";
 import { CROPS, type RecordKind } from "./schema";
 import { LIMITS } from "./limits";
 
@@ -84,6 +85,15 @@ const uuidStr = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 const areaDone = z.number().positive().max(100_000);
 const seasonId = uuidStr.optional();
 
+/** Producto de una aplicación: del catálogo (productId) o escrito a mano en el campo (solo name). */
+export const productDose = z.object({
+  productId: uuidStr.optional(),
+  name: z.string().trim().min(1).max(120),
+  dose: z.number().positive().max(100_000),
+  unit: z.enum(DOSE_UNITS),
+});
+export type ProductDose = z.infer<typeof productDose>;
+
 export const recordDataSchemas = {
   scouting: z.object({ condition, note }),
   pest: z
@@ -127,6 +137,25 @@ export const recordDataSchemas = {
     })
     .refine((d) => d.density === undefined || d.densityUnit !== undefined, {
       message: "Indicá la unidad de la densidad",
+    }),
+  application: z
+    .object({
+      seasonId,
+      products: z.array(productDose).min(1).max(10),
+      volumeLHa: z.number().positive().max(2000).optional(),
+      areaHa: areaDone.optional(),
+      windKmh: z.number().nonnegative().max(200).optional(),
+      tempC: z.number().min(-20).max(60).optional(),
+      humidityPct: z.number().min(0).max(100).optional(),
+      machine: z.string().trim().min(1).max(80).optional(),
+      /** Tarea con la receta que originó la aplicación (A-11). */
+      prescriptionTaskId: uuidStr.optional(),
+      note,
+    })
+    // Delta T se calcula siempre acá: la app, la web y el Worker guardan el mismo número.
+    .transform((d): typeof d & { deltaT?: number } => {
+      const dt = d.tempC !== undefined && d.humidityPct !== undefined ? deltaT(d.tempC, d.humidityPct) : null;
+      return dt === null ? d : { ...d, deltaT: dt };
     }),
 } satisfies Record<RecordKind, z.ZodType>;
 

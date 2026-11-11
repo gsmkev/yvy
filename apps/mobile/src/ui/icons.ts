@@ -9,6 +9,7 @@ import {
   Footprints,
   NotebookPen,
   Shovel,
+  SprayCan,
   Sprout,
   Wheat,
   Flame,
@@ -33,6 +34,7 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
   mortality: HeartCrack,
   health: Syringe,
   sowing: Shovel,
+  application: SprayCan,
 };
 
 export const ALERT_ICON: Record<string, LucideIcon> = {

@@ -41,8 +41,13 @@ export const RECORD_KINDS = [
   "health",
   // ADR 0004: registros agrícolas
   "sowing",
+  "application",
 ] as const;
 export type RecordKind = (typeof RECORD_KINDS)[number];
+/** Tipos de producto del catálogo (ADR 0004). */
+export const PRODUCT_TYPES = ["seed", "agrochemical", "fertilizer", "fuel", "veterinary", "other"] as const;
+/** Unidad base del producto: litros o kilos. */
+export const PRODUCT_UNITS = ["l", "kg"] as const;
 export const UPLOAD_STATUS = ["pending", "uploaded"] as const;
 export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_threshold", "water_low"] as const;
 export const ALERT_SEVERITIES = ["info", "watch", "warning"] as const;
@@ -294,6 +299,24 @@ export const plotSeasons = sqliteTable(
     index("plot_seasons_sync_idx").on(t.organizationId, t.version, t.id),
     index("plot_seasons_season_idx").on(t.seasonId),
   ],
+);
+
+/** Catálogo de productos de la organización (insumos). Baja al celular para cargar aplicaciones sin señal. */
+export const products = sqliteTable(
+  "products",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    name: text("name").notNull(),
+    type: text("type", { enum: PRODUCT_TYPES }).notNull(),
+    unit: text("unit", { enum: PRODUCT_UNITS }).notNull(),
+    activeIngredient: text("active_ingredient"),
+    /** Días de carencia antes de cosechar o de pastorear. */
+    withdrawalDays: integer("withdrawal_days"),
+    toxClass: text("tox_class"),
+    ...synced,
+  },
+  (t) => [index("products_sync_idx").on(t.organizationId, t.version, t.id)],
 );
 
 // ---------- Trabajo ----------

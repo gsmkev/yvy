@@ -242,3 +242,50 @@ export async function plotHistory(sdb: ScopedDb, plotId: string): Promise<PlotHi
     (a, b) => (b.startDate ?? "").localeCompare(a.startDate ?? "") || b.seasonName.localeCompare(a.seasonName),
   );
 }
+
+// ---------- Productos (catálogo) ----------
+
+export interface ProductInput {
+  name: string;
+  type: (typeof s.PRODUCT_TYPES)[number];
+  unit: (typeof s.PRODUCT_UNITS)[number];
+  activeIngredient: string | null;
+  withdrawalDays: number | null;
+  toxClass: string | null;
+}
+
+export async function listProducts(sdb: ScopedDb) {
+  return sdb.db
+    .select()
+    .from(s.products)
+    .where(and(eq(s.products.organizationId, sdb.auth.orgId), isNull(s.products.deletedAt)))
+    .orderBy(asc(s.products.name));
+}
+
+export async function createProduct(sdb: ScopedDb, input: ProductInput) {
+  sdb.require(can.editProducts);
+  const id = newId();
+  const ts = sdb.now();
+  await runBatch(sdb.db, [
+    bumpVersion(sdb.db),
+    sdb.db.insert(s.products).values({
+      ...input,
+      id,
+      organizationId: sdb.auth.orgId,
+      createdAt: ts,
+      updatedAt: ts,
+      version: currentVersion,
+    }),
+  ]);
+  return { id };
+}
+
+export async function updateProduct(sdb: ScopedDb, id: string, patch: Partial<ProductInput>) {
+  sdb.require(can.editProducts);
+  await updateSynced(sdb, s.products, id, patch);
+}
+
+export async function deleteProduct(sdb: ScopedDb, id: string) {
+  sdb.require(can.editProducts);
+  await updateSynced(sdb, s.products, id, { deletedAt: sdb.now() });
+}

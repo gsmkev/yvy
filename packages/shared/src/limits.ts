@@ -67,6 +67,13 @@ export const LIMITS = {
     forecastRunsKept: 4,
     coordDecimals: 4,
   },
+  monitoring: {
+    /** Estaciones de muestreo que propone la app por lote (F-12). */
+    defaultStations: 5,
+    maxStations: 20,
+    /** Conteo máximo por plaga en una estación. */
+    maxCount: 10_000,
+  },
   share: {
     /** Duraciones permitidas del enlace de solo lectura (K-04), en días. */
     linkDays: [7, 30],

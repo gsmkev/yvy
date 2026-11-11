@@ -52,6 +52,23 @@ describe("sync/push", () => {
     expect(r.body.results[2].reason).toBe("forbidden");
   });
 
+  it("monitoreo por estaciones: el registro de plaga con estaciones se acepta y vuelve en el pull", async () => {
+    const { worker, farmId, plotIds } = await setup();
+    const stations = [
+      { lon: -55.89, lat: -27.21, accuracyM: 6, counts: { chinche_verde: 3, roya: 2 } },
+      { counts: { chinche_verde: 1, roya: 0 } },
+    ];
+    const ok = record(farmId, plotIds[0]!, {
+      kind: "pest",
+      data: { pest: "chinche", intensity: "high", perMeter: 2, crop: "soja", stations, averages: { chinche_verde: 2, roya: 1 } },
+    });
+    const bad = record(farmId, plotIds[0]!, { kind: "pest", data: { pest: "chinche", stations: [] } });
+    const r = await push(worker.token, [ok, bad]);
+    expect(r.body.results.map((x: any) => x.status)).toEqual(["applied", "rejected"]);
+    const pulled = (await pullAll(worker.token, "records")).find((x: any) => x.id === ok.row.id);
+    expect(JSON.parse(pulled.data).stations).toHaveLength(2);
+  });
+
   it("idempotencia: el mismo mutationId dos veces no duplica", async () => {
     const { worker, farmId, plotIds } = await setup();
     const m = record(farmId, plotIds[0]!);

@@ -7,7 +7,19 @@ import { Image, Keyboard, Platform, Pressable, ScrollView, StyleSheet, View, typ
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Check, X } from "lucide-react-native";
-import { describeRecord, LIMITS, parseRecordData, t, type MessageKey, type RecordKind } from "@yvy/shared";
+import {
+  describeRecord,
+  LIMITS,
+  MONITOR_CROPS,
+  monitorTemplate,
+  parseRecordData,
+  summarizeStations,
+  t,
+  type MessageKey,
+  type MonitorCrop,
+  type RecordKind,
+  type Station,
+} from "@yvy/shared";
 import type { LocalPhoto, Plot } from "../../src/db/store";
 import { getDb } from "../../src/lib/db";
 import { selectedFarmId } from "../../src/lib/farmFilter";
@@ -18,6 +30,7 @@ import { useSession } from "../../src/lib/session";
 import { localChanged, useSyncStatus } from "../../src/lib/sync";
 import { toastSaved } from "../../src/lib/toast";
 import { Button, Row, s as k, Text, TextInput } from "../../src/ui/kit";
+import { Stations } from "../../src/ui/Stations";
 import { C, F, GUTTER, RADIUS, T, TOUCH } from "../../src/ui/theme";
 
 const tr = (key: string, vars?: Record<string, string | number>) => t(key as MessageKey, vars);
@@ -26,7 +39,7 @@ const tr = (key: string, vars?: Record<string, string | number>) => t(key as Mes
 const SEARCH_FROM = 8;
 const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
-type Phase = { name: "plot" } | { name: "multi" } | { name: "kind" } | { name: "step"; i: number } | { name: "photo" } | { name: "done"; recordId: string };
+type Phase = { name: "plot" } | { name: "multi" } | { name: "kind" } | { name: "mode" } | { name: "stationsCrop" } | { name: "stations" } | { name: "step"; i: number } | { name: "photo" } | { name: "done"; recordId: string };
 
 export default function Annotate() {
   const params = useLocalSearchParams<{ plotId?: string; kind?: RecordKind; taskId?: string; recordId?: string; farmLevel?: string }>();
@@ -43,9 +56,14 @@ export default function Annotate() {
   const [kind, setKind] = useState<RecordKind | null>(editing?.kind ?? params.kind ?? null);
   const [values, setValues] = useState<Record<string, unknown>>(() => (editing ? (JSON.parse(editing.data) as Record<string, unknown>) : {}));
   const [photos, setPhotos] = useState<LocalPhoto[]>([]);
+  // Plaga: primero se elige entre una observación o el monitoreo por estaciones (F-12).
+  const entryFor = (kd: RecordKind): Phase => (kd === "pest" && !editing ? { name: "mode" } : { name: "step", i: 0 });
   const [phase, setPhase] = useState<Phase>(() =>
-    editing ? { name: "step", i: 0 } : params.kind === "rain" || params.plotId ? (params.kind ? { name: "step", i: 0 } : { name: "kind" }) : { name: "plot" },
+    editing ? { name: "step", i: 0 } : params.kind === "rain" || params.plotId ? (params.kind ? entryFor(params.kind) : { name: "kind" }) : { name: "plot" },
   );
+  const [stationMode, setStationMode] = useState(false);
+  const [crop, setCrop] = useState<MonitorCrop | null>(null);
+  const [stations, setStations] = useState<Station[]>([]);
   const [camera, setCamera] = useState(false);
   const [query, setQuery] = useState("");
   // F-10: anotar lo mismo en varios lotes a la vez.
@@ -60,7 +78,7 @@ export default function Annotate() {
       // Un solo candidato seguro: se elige solo y pasamos a "qué" (salvo la lluvia de la estancia, que no es de un lote).
       if (!params.plotId && !params.farmLevel && g.length === 1 && g[0]!.confidence === "sure") {
         setPlot(g[0]!.plot);
-        setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+        setPhase(kind ? entryFor(kind) : { name: "kind" });
       }
     });
   }, []);
@@ -73,7 +91,9 @@ export default function Annotate() {
     return () => clearTimeout(id);
   }, [fix]);
 
-  const steps = kind ? FLOWS[kind] : [];
+  // Un registro de monitoreo por estaciones solo permite editar la nota: los conteos son de campo.
+  const stationRecord = kind === "pest" && Array.isArray(values.stations);
+  const steps = kind ? (stationRecord ? FLOWS.pest.slice(-1) : FLOWS[kind]) : [];
   const stepIndex = phase.name === "step" ? phase.i : -1;
 
   const back = () => {
@@ -81,8 +101,11 @@ export default function Annotate() {
     if (phase.name === "step" && phase.i > 0) return setPhase({ name: "step", i: phase.i - 1 });
     if (phase.name === "step") return params.kind || editing ? router.back() : setPhase({ name: "kind" });
     if (phase.name === "multi") return setPhase({ name: "plot" });
+    if (phase.name === "mode") return params.kind ? (params.plotId ? router.back() : setPhase({ name: "plot" })) : setPhase({ name: "kind" });
+    if (phase.name === "stationsCrop") return setPhase({ name: "mode" });
+    if (phase.name === "stations") return setPhase({ name: "mode" });
     if (phase.name === "kind") return multi.length ? setPhase({ name: "multi" }) : params.plotId ? router.back() : setPhase({ name: "plot" });
-    if (phase.name === "photo") return setPhase({ name: "step", i: steps.length - 1 });
+    if (phase.name === "photo") return setPhase(stationMode ? { name: "stations" } : { name: "step", i: steps.length - 1 });
     router.back();
   };
 
@@ -216,7 +239,7 @@ export default function Annotate() {
               onPress={() => {
                 setPlot(g.plot);
                 setMulti([]);
-                setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+                setPhase(kind ? entryFor(kind) : { name: "kind" });
               }}
             />
           ))}
@@ -234,7 +257,7 @@ export default function Annotate() {
                   onPress={() => {
                     setPlot(p);
                     setMulti([]);
-                    setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+                    setPhase(kind ? entryFor(kind) : { name: "kind" });
                   }}
                 />
               ))}
@@ -247,7 +270,7 @@ export default function Annotate() {
             onPress={() => {
               setPlot(null);
               setMulti([]);
-              setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+              setPhase(kind ? entryFor(kind) : { name: "kind" });
             }}
           />
         </ScrollView>
@@ -284,7 +307,7 @@ export default function Annotate() {
             onPress={() => {
               // Un solo lote marcado es un lote común.
               setPlot(multi.length === 1 ? multi[0]! : null);
-              setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+              setPhase(kind ? entryFor(kind) : { name: "kind" });
             }}
             style={{ marginTop: 20 }}
           />
@@ -310,11 +333,86 @@ export default function Annotate() {
               onPress={() => {
                 setKind(kd);
                 setValues({});
-                setPhase({ name: "step", i: 0 });
+                setStationMode(false);
+                setPhase(entryFor(kd));
               }}
             />
           ))}
         </ScrollView>
+      </View>
+    );
+  }
+
+  // ---------- 2b. Plaga: una observación o por estaciones ----------
+  if (phase.name === "mode") {
+    const plotCrop = plot?.crop && monitorTemplate(plot.crop) ? (plot.crop as MonitorCrop) : null;
+    return (
+      <View style={k.screen}>
+        {header}
+        <ScrollView contentContainerStyle={k.pad}>
+          <Text style={[T.title, { marginBottom: 16 }]}>{t("app.pestMode")}</Text>
+          <Row
+            title={t("app.pestModeOne")}
+            onPress={() => {
+              setStationMode(false);
+              setPhase({ name: "step", i: 0 });
+            }}
+          />
+          <Row
+            title={t("app.pestModeStations")}
+            onPress={() => {
+              setStationMode(true);
+              setValues({});
+              if (plotCrop) setCrop(plotCrop);
+              setPhase(plotCrop || crop ? { name: "stations" } : { name: "stationsCrop" });
+            }}
+          />
+        </ScrollView>
+      </View>
+    );
+  }
+
+  if (phase.name === "stationsCrop") {
+    return (
+      <View style={k.screen}>
+        {header}
+        <ScrollView contentContainerStyle={k.pad}>
+          <Text style={[T.title, { marginBottom: 16 }]}>{t("app.stationsCrop")}</Text>
+          {MONITOR_CROPS.map((c) => (
+            <Row
+              key={c}
+              title={tr(`app.monitorCrop_${c}`)}
+              onPress={() => {
+                setCrop(c);
+                setPhase({ name: "stations" });
+              }}
+            />
+          ))}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  if (phase.name === "stations" && crop) {
+    const finish = () => {
+      const tpl = monitorTemplate(crop)!;
+      const sum = summarizeStations(stations, tpl);
+      setValues({
+        pest: sum.pest,
+        intensity: sum.intensity,
+        ...(sum.perMeter !== undefined ? { perMeter: sum.perMeter } : {}),
+        crop,
+        stations,
+        averages: sum.averages,
+      });
+      Keyboard.dismiss();
+      setPhase({ name: "photo" });
+    };
+    return (
+      <View style={k.screen}>
+        {header}
+        <Progress i={0} n={2} />
+        <Stations crop={crop} stations={stations} onChange={setStations} onDone={finish} />
       </View>
     );
   }
@@ -336,7 +434,7 @@ export default function Annotate() {
     return (
       <View style={k.screen}>
         {header}
-        <Progress i={steps.length} n={steps.length + 1} />
+        <Progress i={stationMode ? 1 : steps.length} n={stationMode ? 2 : steps.length + 1} />
         <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]}>
           <Text style={T.title}>{t("app.addPhoto")}</Text>
           <Text style={[T.small, { marginTop: 6 }]}>{t("app.photosCount", { n: photos.length + existingPhotos, max: LIMITS.photos.maxPerRecord })}</Text>

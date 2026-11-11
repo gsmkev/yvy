@@ -188,6 +188,19 @@ export const recordDataSchemas = {
     destination: z.enum(HARVEST_DESTINATIONS).optional(),
     note,
   }),
+  /**
+   * Carga de combustible de una máquina (E-16): litros y horómetro u odómetro. `machineId` es de la tabla machines
+   * (baja al celular); `machine` es el nombre, para cuando la máquina no está cargada. Descuenta el stock del
+   * combustible (`productId`, o el único producto de tipo combustible del catálogo) y carga el costo (E-13).
+   */
+  fuel_load: z.object({
+    machineId: uuidStr.optional(),
+    machine: z.string().trim().min(1).max(80),
+    liters: z.number().positive().max(100_000),
+    meterValue: z.number().min(0).max(10_000_000).optional(),
+    productId: uuidStr.optional(),
+    note,
+  }),
   application: z
     .object({
       seasonId,

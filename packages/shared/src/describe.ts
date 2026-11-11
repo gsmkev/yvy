@@ -106,6 +106,12 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
       if (typeof d.distanceM === "number") parts.push(t("fields.trackDistance", { km: dec(Number((d.distanceM / 1000).toFixed(2))) }));
       if (typeof d.durationS === "number") parts.push(t("fields.trackDuration", { min: Math.max(1, Math.round(d.durationS / 60)) }));
       break;
+    case "fuel_load": {
+      if (str("machine")) parts.push(d.machine as string);
+      if (typeof d.liters === "number") parts.push(t("fields.litersValue", { n: dec(d.liters) }));
+      if (typeof d.meterValue === "number") parts.push(t("fields.meterReading", { n: dec(d.meterValue) }));
+      break;
+    }
     case "note":
       if (str("text")) parts.push(d.text as string);
       break;

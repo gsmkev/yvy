@@ -66,6 +66,8 @@ export const RECORD_KINDS = [
   "harvest",
   // F-05: recorrida GPS grabada a pedido
   "track",
+  // ADR 0004: ERP
+  "fuel_load",
 ] as const;
 export type RecordKind = (typeof RECORD_KINDS)[number];
 /** Tipos de producto del catálogo (ADR 0004). */

@@ -10,7 +10,7 @@
  * - Entra en el mismo db.batch() del push: o se guarda todo o nada. Si no entra en el presupuesto de consultas de la
  *   invocación se responde 503 y el cliente divide el envío (ver packages/sync).
  */
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import {
   avgUnitCost,
@@ -24,7 +24,7 @@ import {
   type StockTotals,
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
-import { chunkForParams, type Stmt } from "./client";
+import { chunkForParams, currentVersion, type Stmt } from "./client";
 import type { ScopedDb } from "./scoped";
 import { emptyTotals, productTotals } from "./stock-moves";
 
@@ -90,8 +90,33 @@ export async function recordEffects(sdb: ScopedDb, upserts: EffectRecord[], dele
   if (deletedIds.length) reverse(deletedIds);
   if (!recs.length) return stmts;
 
+  // Horómetro u odómetro de las máquinas: queda la lectura más alta (la máquina baja al celular, es sincronizable).
+  const meters = new Map<string, number>();
+  for (const r of recs)
+    if (r.kind === "fuel_load" && typeof r.data.machineId === "string" && typeof r.data.meterValue === "number")
+      meters.set(r.data.machineId, Math.max(meters.get(r.data.machineId) ?? 0, r.data.meterValue));
+  for (const [id, v] of meters)
+    stmts.push(
+      db
+        .update(s.machines)
+        .set({ meterValue: sql`MAX(${s.machines.meterValue}, ${v})`, updatedAt: now, version: currentVersion })
+        .where(and(eq(s.machines.id, id), eq(s.machines.organizationId, org), isNull(s.machines.deletedAt))),
+    );
+
   // ---------- Lecturas (en paralelo) ----------
-  const productIds = [...new Set(recs.flatMap((r) => consumptionProductIds(r.kind, r.data)))];
+  // Carga de combustible sin producto: se usa el único combustible del catálogo (si hay más de uno, no se adivina).
+  let fuelProductId: string | null = null;
+  if (recs.some((r) => r.kind === "fuel_load" && typeof r.data.productId !== "string")) {
+    const fuels = await db
+      .select({ id: s.products.id })
+      .from(s.products)
+      .where(and(eq(s.products.organizationId, org), eq(s.products.type, "fuel"), isNull(s.products.deletedAt)))
+      .limit(2);
+    if (fuels.length === 1) fuelProductId = fuels[0]!.id;
+  }
+  const productIds = [
+    ...new Set([...(fuelProductId ? [fuelProductId] : []), ...recs.flatMap((r) => consumptionProductIds(r.kind, r.data))]),
+  ];
   const plotIds = [...new Set(recs.flatMap((r) => (r.plotId ? [r.plotId] : [])))];
   const farmIds = [...new Set(recs.map((r) => r.farmId))];
   const recIds = recs.map((r) => r.id);
@@ -164,7 +189,7 @@ export async function recordEffects(sdb: ScopedDb, upserts: EffectRecord[], dele
     const warehouseId = warehouseOf.get(r.farmId);
     if (!warehouseId) continue; // sin depósito en la estancia no hay de dónde descontar
     const plot = r.plotId ? plots.get(r.plotId) : undefined;
-    const lines = consumptionLines(r.kind, r.data, { plotAreaHa: plot?.areaHa ?? null, units });
+    const lines = consumptionLines(r.kind, r.data, { plotAreaHa: plot?.areaHa ?? null, units, fuelProductId });
     let total = 0;
     for (const l of lines) {
       const t = running.get(l.productId) ?? { ...emptyTotals };
@@ -197,7 +222,7 @@ export async function recordEffects(sdb: ScopedDb, upserts: EffectRecord[], dele
         plotId: r.plotId,
         seasonId: typeof r.data.seasonId === "string" ? r.data.seasonId : null,
         activity: r.kind === "health" || plot?.kind === "pasture" ? "ganaderia" : "agricultura",
-        category: "input",
+        category: r.kind === "fuel_load" ? "fuel" : "input",
         description: describe(r),
         amount: total,
         currency: "PYG",
@@ -221,6 +246,7 @@ export async function recordEffects(sdb: ScopedDb, upserts: EffectRecord[], dele
 /** Texto corto del costo: los productos del registro. */
 function describe(r: EffectRecord): string {
   if (r.kind === "health") return String(r.data.product ?? "").slice(0, 200);
+  if (r.kind === "fuel_load") return String(r.data.machine ?? "").slice(0, 200);
   const names = ((r.data.products as { name?: string }[] | undefined) ?? []).map((p) => p.name).filter(Boolean);
   return names.join(", ").slice(0, 200);
 }

@@ -295,3 +295,173 @@ export function RainChart(props: {
     </figure>
   );
 }
+
+/** Barras por mes: pluviómetro y satélite lado a lado, con la normal como marca (C-05, C-06). */
+export function MonthlyRainChart(props: {
+  months: { label: string; gauge: number | null; sat: number | null; normal: number | null }[];
+  labels: { satellite: string; normal: string; gauge: string };
+  ariaLabel: string;
+}) {
+  const { width, height, pad } = FRAME;
+  const max = Math.max(10, ...props.months.flatMap((m) => [m.gauge ?? 0, m.sat ?? 0, m.normal ?? 0]));
+  const n = props.months.length || 1;
+  const slot = (width - pad.l - pad.r) / n;
+  const bw = Math.min(28, slot / 3);
+  const sy = (v: number) => height - pad.b - (v / max) * (height - pad.t - pad.b);
+  const cx = (i: number) => pad.l + i * slot + slot / 2;
+  const ticks = niceTicks(0, max);
+  const hasNormal = props.months.some((m) => m.normal !== null);
+  const [hover, setHover] = useState<number | null>(null);
+  const h = hover !== null ? props.months[hover] : null;
+  return (
+    <figure className="relative">
+      <Legend
+        series={[
+          ...(props.months.some((m) => m.gauge !== null)
+            ? [{ name: props.labels.gauge, color: CHART.gauge, dot: true }]
+            : []),
+          ...(props.months.some((m) => m.sat !== null)
+            ? [{ name: props.labels.satellite, color: CHART.comparison, dot: true }]
+            : []),
+          ...(hasNormal ? [{ name: props.labels.normal, color: CHART.axis, dashed: true }] : []),
+        ]}
+      />
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label={props.ariaLabel}>
+        {ticks.map((t) => (
+          <g key={t}>
+            <line x1={pad.l} x2={width - pad.r} y1={sy(t)} y2={sy(t)} stroke={CHART.grid} />
+            <text x={pad.l - 6} y={sy(t) + 4} textAnchor="end" fontSize="11" fill={CHART.axis}>
+              {t}
+            </text>
+          </g>
+        ))}
+        {props.months.map((m, i) => (
+          <g
+            key={m.label}
+            onPointerEnter={() => setHover(i)}
+            onPointerLeave={() => setHover(null)}
+            opacity={hover === null || hover === i ? 1 : 0.55}
+          >
+            <rect x={cx(i) - slot / 2} y={pad.t} width={slot} height={height - pad.t - pad.b} fill="transparent" />
+            {m.gauge !== null && (
+              <rect
+                x={cx(i) - bw - 1}
+                y={sy(m.gauge)}
+                width={bw}
+                height={Math.max(0, sy(0) - sy(m.gauge))}
+                rx={3}
+                fill={CHART.gauge}
+              />
+            )}
+            {m.sat !== null && (
+              <rect
+                x={cx(i) + 1}
+                y={sy(m.sat)}
+                width={bw}
+                height={Math.max(0, sy(0) - sy(m.sat))}
+                rx={3}
+                fill={CHART.comparison}
+              />
+            )}
+            {m.normal !== null && (
+              <line
+                x1={cx(i) - bw - 4}
+                x2={cx(i) + bw + 4}
+                y1={sy(m.normal)}
+                y2={sy(m.normal)}
+                stroke={CHART.axis}
+                strokeWidth="2"
+                strokeDasharray="4 3"
+              />
+            )}
+            <text x={cx(i)} y={height - 8} textAnchor="middle" fontSize="11" fill={CHART.axis}>
+              {m.label}
+            </text>
+          </g>
+        ))}
+      </svg>
+      {h && (
+        <div className="pointer-events-none absolute top-6 right-2 rounded-lg bg-surco px-2.5 py-1.5 text-xs text-lino">
+          <div className="font-semibold">{h.label}</div>
+          {props.months.some((m) => m.gauge !== null) && (
+            <div>
+              {props.labels.gauge}: {h.gauge === null ? "—" : `${h.gauge.toFixed(1)} mm`}
+            </div>
+          )}
+          {props.months.some((m) => m.sat !== null) && (
+            <div>
+              {props.labels.satellite}: {h.sat === null ? "—" : `${h.sat.toFixed(1)} mm`}
+            </div>
+          )}
+          {h.normal !== null && (
+            <div>
+              {props.labels.normal}: {h.normal.toFixed(1)} mm
+            </div>
+          )}
+        </div>
+      )}
+    </figure>
+  );
+}
+
+/** Columnas de una sola serie con etiquetas por categoría (heladas por año, focos por mes). */
+export function ColumnChart(props: {
+  items: { label: string; value: number }[];
+  unit: string;
+  color?: string;
+  ariaLabel: string;
+  /** Muestra solo cada `every` etiquetas del eje (para series largas). */
+  every?: number;
+}) {
+  const { width, height, pad } = FRAME;
+  const max = Math.max(1, ...props.items.map((i) => i.value));
+  const n = props.items.length || 1;
+  const slot = (width - pad.l - pad.r) / n;
+  const bw = Math.max(3, Math.min(26, slot - 3));
+  const sy = (v: number) => height - pad.b - (v / max) * (height - pad.t - pad.b);
+  const cx = (i: number) => pad.l + i * slot + slot / 2;
+  const ticks = niceTicks(0, max);
+  const every = props.every ?? 1;
+  const [hover, setHover] = useState<number | null>(null);
+  const h = hover !== null ? props.items[hover] : null;
+  return (
+    <figure className="relative">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label={props.ariaLabel}>
+        {ticks.map((t) => (
+          <g key={t}>
+            <line x1={pad.l} x2={width - pad.r} y1={sy(t)} y2={sy(t)} stroke={CHART.grid} />
+            <text x={pad.l - 6} y={sy(t) + 4} textAnchor="end" fontSize="11" fill={CHART.axis}>
+              {t}
+            </text>
+          </g>
+        ))}
+        {props.items.map((it, i) => (
+          <g key={it.label} onPointerEnter={() => setHover(i)} onPointerLeave={() => setHover(null)}>
+            <rect x={cx(i) - slot / 2} y={pad.t} width={slot} height={height - pad.t - pad.b} fill="transparent" />
+            {it.value > 0 && (
+              <rect
+                x={cx(i) - bw / 2}
+                y={sy(it.value)}
+                width={bw}
+                height={Math.max(0, sy(0) - sy(it.value))}
+                rx={Math.min(3, bw / 4)}
+                fill={props.color ?? CHART.comparison}
+                opacity={hover === null || hover === i ? 1 : 0.55}
+              />
+            )}
+            {i % every === 0 && (
+              <text x={cx(i)} y={height - 8} textAnchor="middle" fontSize="11" fill={CHART.axis}>
+                {it.label}
+              </text>
+            )}
+          </g>
+        ))}
+      </svg>
+      {h && (
+        <div className="pointer-events-none absolute top-2 right-2 rounded-lg bg-surco px-2.5 py-1.5 text-xs text-lino">
+          <span className="font-semibold">{h.label}</span>: {h.value} {props.unit}
+        </div>
+      )}
+    </figure>
+  );
+}

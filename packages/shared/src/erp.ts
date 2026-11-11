@@ -139,6 +139,9 @@ export const stockPurchaseInput = z.object({
   amount: minorAmount,
   currency: currencySchema,
   partyId: uuid.nullish(),
+  /** Lote y vencimiento del producto comprado (E-12). */
+  lot: optText(40),
+  expiresOn: isoDate.nullish(),
   note: optText(200),
 });
 /** Consumo manual; con `plotId` también carga el costo al lote. */
@@ -191,6 +194,33 @@ export function avgUnitCost(t: StockTotals): number {
 
 /** Valor en guaraníes de mover `qty` unidades al costo promedio `avg` (siempre positivo). */
 export const moveValue = (qty: number, avg: number): number => Math.round(Math.abs(qty) * avg);
+
+// ---------- Lotes y vencimientos (E-12) ----------
+
+export interface PurchaseLot {
+  lot: string | null;
+  expiresOn: string | null;
+  qty: number;
+}
+
+/**
+ * Lo que queda de cada lote comprado. Sin atribuir cada consumo a un lote, se asume que sale primero lo que vence
+ * antes (FEFO) y al final lo que no tiene vencimiento. `stockQty` es el stock actual del producto: lo consumido
+ * es lo comprado menos lo que hay. Devuelve los lotes con su `remaining` (0 si ya se consumió).
+ */
+export function lotsRemaining<T extends PurchaseLot>(lots: T[], stockQty: number): (T & { remaining: number })[] {
+  let consumed = Math.max(0, lots.reduce((a, l) => a + l.qty, 0) - stockQty);
+  const sorted = [...lots].sort((a, b) => (a.expiresOn ?? "9999-99-99").localeCompare(b.expiresOn ?? "9999-99-99"));
+  return sorted.map((l) => {
+    const take = Math.min(consumed, l.qty);
+    consumed -= take;
+    return { ...l, remaining: Math.round((l.qty - take) * 1000) / 1000 };
+  });
+}
+
+/** Días de un día "YYYY-MM-DD" a otro (negativo si `to` ya pasó). */
+export const daysUntil = (from: string, to: string): number =>
+  Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
 
 // ---------- Terceros (E-02) ----------
 

@@ -5,7 +5,7 @@
  */
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
-import { avgUnitCost, LIMITS, moveValue, newId, noonAsuncion, type Role, type StockTotals } from "@yvy/shared";
+import { avgUnitCost, daysUntil, LIMITS, localDate, lotsRemaining, moveValue, newId, noonAsuncion, type Role, type StockTotals } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { chunkForParams, runBatch, type Stmt } from "./client";
 import { pygOf } from "./costs";
@@ -93,6 +93,8 @@ export async function purchaseStock(
     amount: number;
     currency: "PYG" | "USD";
     partyId?: string | null;
+    lot?: string | null;
+    expiresOn?: string | null;
     note?: string | null;
   },
 ) {
@@ -108,6 +110,8 @@ export async function purchaseStock(
     currency: i.currency,
     origin: "purchase" as const,
     partyId: i.partyId ?? null,
+    lot: i.lot?.trim() || null,
+    expiresOn: i.expiresOn ?? null,
   };
   await sdb.db.insert(s.stockMoves).values(row);
   return { id: row.id };
@@ -312,4 +316,44 @@ export async function deleteMove(sdb: ScopedDb, id: string) {
         ),
     );
   await runBatch(sdb.db, stmts);
+}
+
+/**
+ * Lotes que vencen dentro de `days` días (o ya vencieron) y todavía tienen producto (E-12). Tres consultas.
+ * Lo que queda de cada lote sale de la regla FEFO (ver lotsRemaining): se toman todas las compras de los productos
+ * que tienen algún lote con vencimiento, porque los lotes sin vencimiento se consumen al final.
+ */
+export async function expiringLots(sdb: ScopedDb, days: number = LIMITS.erp.expiryWarnDays) {
+  sdb.require(can.viewStock);
+  const org = sdb.auth.orgId;
+  const today = localDate(sdb.now());
+  const purchase = and(eq(s.stockMoves.organizationId, org), eq(s.stockMoves.origin, "purchase"), isNull(s.stockMoves.deletedAt));
+  const withExpiry = await sdb.db
+    .selectDistinct({ productId: s.stockMoves.productId })
+    .from(s.stockMoves)
+    .where(and(purchase, sql`${s.stockMoves.expiresOn} IS NOT NULL`))
+    .limit(LIMITS.erp.listLimit);
+  if (!withExpiry.length) return [];
+  const ids = withExpiry.map((r) => r.productId);
+  const lots = (
+    await Promise.all(
+      chunkForParams(ids, 2).map((chunk) =>
+        sdb.db
+          .select({ productId: s.stockMoves.productId, lot: s.stockMoves.lot, expiresOn: s.stockMoves.expiresOn, qty: s.stockMoves.qty })
+          .from(s.stockMoves)
+          .where(and(purchase, inArray(s.stockMoves.productId, chunk))),
+      ),
+    )
+  ).flat();
+  const totals = await productTotals(sdb, ids);
+  const byProduct = new Map<string, typeof lots>();
+  for (const l of lots) byProduct.set(l.productId, [...(byProduct.get(l.productId) ?? []), l]);
+  const out: { productId: string; lot: string | null; expiresOn: string; daysLeft: number; remaining: number }[] = [];
+  for (const [productId, ls] of byProduct)
+    for (const l of lotsRemaining(ls, totals.get(productId)?.qty ?? 0)) {
+      if (!l.expiresOn) continue;
+      const daysLeft = daysUntil(today, l.expiresOn);
+      if (l.remaining > 0 && daysLeft <= days) out.push({ productId, lot: l.lot, expiresOn: l.expiresOn, daysLeft, remaining: l.remaining });
+    }
+  return out.sort((a, b) => a.daysLeft - b.daysLeft);
 }

@@ -1862,6 +1862,12 @@ export const esPY = {
     stockChargePlot: "Cargar el costo al lote",
     stockNote: "Nota",
     stockDeleteConfirm: "¿Borrar este movimiento? El stock vuelve a lo que era antes.",
+    stockLot: "Lote",
+    stockExpires: "Vencimiento",
+    expiringTitle: "Por vencer",
+    expiringLot: "Lote {{lot}}",
+    expiringIn: "Vence en {{n}} días",
+    expiringExpired: "Venció hace {{n}} días",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

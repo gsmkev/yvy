@@ -139,5 +139,7 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `stock_moves` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`product_id` text NOT NULL,\n\t`warehouse_id` text NOT NULL,\n\t`qty` real NOT NULL,\n\t`value_pyg` integer NOT NULL,\n\t`amount` integer,\n\t`currency` text,\n\t`occurred_at` integer NOT NULL,\n\t`origin` text NOT NULL,\n\t`origin_id` text,\n\t`party_id` text,\n\t`note` text,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
   "CREATE INDEX `stock_moves_product_idx` ON `stock_moves` (`organization_id`,`product_id`);",
   "CREATE INDEX `stock_moves_warehouse_idx` ON `stock_moves` (`warehouse_id`);",
-  "CREATE INDEX `stock_moves_origin_idx` ON `stock_moves` (`origin_id`);"
+  "CREATE INDEX `stock_moves_origin_idx` ON `stock_moves` (`origin_id`);",
+  "ALTER TABLE `stock_moves` ADD `lot` text;",
+  "ALTER TABLE `stock_moves` ADD `expires_on` text;"
 ];

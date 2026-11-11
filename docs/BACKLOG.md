@@ -268,11 +268,11 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | ID | Qué | Por qué | Dónde | Prio | Esf | Estado |
 |---|---|---|---|---|---|---|
 | C-01 | Pronóstico de 10 días por estancia | Base | Web | — | — | Hecho |
-| C-02 | Pronóstico de 10 días en la app, sin señal con la última descarga | El empleado también decide | App | P1 | S | Falta |
+| C-02 | Pronóstico de 10 días en la app, sin señal con la última descarga | El empleado también decide | App | P1 | S | Hecho |
 | C-03 | Pronóstico por lote en estancias de más de 2.000 ha (RF-61) | Variación interna | Jobs, Web | P2 | M | Falta |
 | C-04 | Avisos configurables: el usuario elige umbrales (helada a 2 °C, lluvia de 50 mm) | Cada cultivo es distinto | Web, API | P1 | M | Falta |
-| C-05 | Comparar los pluviómetros propios con el satélite y con la normal | Confianza en el dato | Web | P1 | S | Parcial |
-| C-06 | Acumulado por campaña y por mes en la ficha del pluviómetro | Pregunta diaria | Web, App | P1 | S | Falta |
+| C-05 | Comparar los pluviómetros propios con el satélite y con la normal | Confianza en el dato | Web | P1 | S | Hecho |
+| C-06 | Acumulado por campaña y por mes en la ficha del pluviómetro | Pregunta diaria | Web, App | P1 | S | Hecho |
 | C-07 | Índice de sequía estandarizado (SPI) a 1, 3 y 6 meses | Sequía con números | Jobs, Web | P2 | M | Falta |
 | C-08 | Balance hídrico simple por lote (lluvia menos consumo del cultivo) | Riesgo de estrés | Jobs, Web | P2 | M | Falta |
 | C-09 | Informe de daños con fecha, evidencia satelital y fotos para el seguro agrícola | Cobrar el seguro | Web | P2 | M | Falta |

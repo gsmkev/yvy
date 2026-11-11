@@ -4,10 +4,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { NetworkError } from "./lib/api";
 import { initMonitoring } from "./lib/monitoring";
+import { registerServiceWorker } from "./lib/pwa";
 import { router } from "./router";
 import "./styles.css";
 
 initMonitoring();
+registerServiceWorker();
 
 // Sin conexión se reintenta sin tope (con espera creciente); los demás errores, una vez
 const queryClient = new QueryClient({

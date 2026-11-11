@@ -33,6 +33,8 @@ export const ALERT_SEVERITIES = ["info", "watch", "warning"] as const;
 /** Con MET Norway no hay ensemble: probabilidad cualitativa (PRD-cloudflare §4.8). */
 export const ALERT_PROBABILITIES = ["low", "medium", "high"] as const;
 export const LAYERS = ["true_color", "ndvi"] as const;
+/** Estado del procesamiento satelital inicial de una estancia (S-02). */
+export const IMAGERY_STATUSES = ["pending", "processing", "ready", "failed"] as const;
 
 // ---------- Columnas comunes ----------
 
@@ -389,6 +391,14 @@ export const farmLayers = sqliteTable(
     index("farm_layers_farm_idx").on(t.farmId, t.layer, t.acquiredAt),
   ],
 );
+
+/** Estado del primer procesamiento satelital por estancia. No se sincroniza: solo lo lee la web. */
+export const farmImagery = sqliteTable("farm_imagery", {
+  farmId: text("farm_id").primaryKey(),
+  status: text("status", { enum: IMAGERY_STATUSES }).notNull().default("pending"),
+  requestedAt: integer("requested_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});
 
 /** plot_id = "" cuando el dato es por estancia (SQLite no admite NULL útil en la PK). */
 export const climateDaily = sqliteTable(

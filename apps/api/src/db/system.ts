@@ -156,8 +156,25 @@ export class SystemDb {
         .update(s.farms)
         .set({ offlinePackVersion: sql`${s.farms.offlinePackVersion} + 1`, updatedAt: ts, version: currentVersion })
         .where(eq(s.farms.id, x.farmId)),
+      // El mapa base marca el fin del primer procesamiento (S-02)
+      ...(x.layer === "true_color" ? [this.imageryUpsert(x.farmId, "ready", ts)] : []),
     ]);
     return { id };
+  }
+
+  private imageryUpsert(farmId: string, status: (typeof s.IMAGERY_STATUSES)[number], ts: number) {
+    return this.db
+      .insert(s.farmImagery)
+      .values({ farmId, status, requestedAt: ts, updatedAt: ts })
+      .onConflictDoUpdate({ target: s.farmImagery.farmId, set: { status, updatedAt: ts } });
+  }
+
+  /** Estado del procesamiento satelital inicial. Devuelve false si la estancia no existe. */
+  async setImageryStatus(farmId: string, status: (typeof s.IMAGERY_STATUSES)[number]): Promise<boolean> {
+    const [farm] = await this.db.select({ id: s.farms.id }).from(s.farms).where(eq(s.farms.id, farmId)).limit(1);
+    if (!farm) return false;
+    await this.imageryUpsert(farmId, status, Date.now());
+    return true;
   }
 
   climateLatest() {

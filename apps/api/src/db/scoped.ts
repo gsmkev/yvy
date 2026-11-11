@@ -402,6 +402,7 @@ export class ScopedDb {
         updatedAt: ts,
         version: currentVersion,
       }),
+      this.db.insert(s.farmImagery).values({ farmId: id, status: "pending", requestedAt: ts, updatedAt: ts }),
     ]);
     return { id };
   }

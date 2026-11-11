@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { areaHa, bboxOf, centroidOf, validateShape, type Area } from "@yvy/geo";
 import { CROPS, LIMITS, t, PLOT_KINDS, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
+import { dispatchNewFarm, inBackground } from "../lib/dispatch";
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
 
@@ -88,6 +89,8 @@ org.post("/farms", async (c) => {
     centroidLon: lon,
     centroidLat: lat,
   });
+  // M-01/S-02: mapa base, 6 meses de historia y climatología al instante, sin demorar la respuesta
+  await inBackground(c, dispatchNewFarm(c.env, res.id));
   return c.json(res, 201);
 });
 

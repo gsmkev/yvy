@@ -11,6 +11,12 @@ import { can, ForbiddenError, NotFoundError, type ScopedDb } from "./scoped";
 
 // ---------- Inicio multi estancia (RF-90) ----------
 
+type ImageryStatus = (typeof s.IMAGERY_STATUSES)[number];
+/** Estado del primer procesamiento; las estancias anteriores a S-02 con mapa base cuentan como listas. */
+const IMAGERY_SQL = sql.raw(
+  `COALESCE((SELECT status FROM farm_imagery fi WHERE fi.farm_id = farms.id), CASE WHEN EXISTS (SELECT 1 FROM farm_layers l WHERE l.farm_id = farms.id AND l.layer = 'true_color' AND l.deleted_at IS NULL) THEN 'ready' END)`,
+);
+
 export async function farmSummaries(sdb: ScopedDb) {
   const org = sdb.auth.orgId;
   const now = sdb.now();
@@ -37,6 +43,7 @@ export async function farmSummaries(sdb: ScopedDb) {
       basemapPath: sql<
         string | null
       >`(SELECT pmtiles_path FROM farm_layers l WHERE l.farm_id = farms.id AND l.layer = 'true_color' AND l.deleted_at IS NULL ORDER BY acquired_at DESC LIMIT 1)`,
+      imageryStatus: sql<ImageryStatus | null>`${IMAGERY_SQL}`,
       records7d: sql<number>`(SELECT count(*) FROM records r WHERE r.farm_id = farms.id AND r.deleted_at IS NULL AND r.captured_at >= ${now - 7 * 86_400_000})`,
     })
     .from(s.farms)
@@ -59,7 +66,15 @@ export async function farmDetail(sdb: ScopedDb, farmId: string) {
     )
     .limit(1);
   if (!farm) throw new NotFoundError("Estancia inexistente");
-  const [plots, pois, layers, assignments] = await Promise.all([
+  const [[imagery], plots, pois, layers, assignments] = await Promise.all([
+    sdb.db
+      .select({
+        status: sql<ImageryStatus | null>`${IMAGERY_SQL}`,
+        requestedAt: sql<number | null>`(SELECT requested_at FROM farm_imagery fi WHERE fi.farm_id = farms.id)`,
+      })
+      .from(s.farms)
+      .where(eq(s.farms.id, farmId))
+      .limit(1),
     sdb.db
       .select()
       .from(s.plots)
@@ -83,7 +98,15 @@ export async function farmDetail(sdb: ScopedDb, farmId: string) {
           .innerJoin(s.plots, eq(s.plots.id, s.plotAssignments.plotId))
           .where(and(eq(s.plots.farmId, farmId), isNull(s.plotAssignments.deletedAt))),
   ]);
-  return { farm, plots, pois, layers, assignments };
+  return {
+    farm,
+    plots,
+    pois,
+    layers,
+    assignments,
+    imageryStatus: imagery?.status ?? null,
+    imageryRequestedAt: imagery?.requestedAt ?? null,
+  };
 }
 
 // ---------- Registros (RF-35) ----------

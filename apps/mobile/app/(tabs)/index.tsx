@@ -3,15 +3,18 @@
  * después lo que ya anotó. Sin secciones vacías: si no hay nada, lo dice una sola vez.
  */
 import { useEffect, useRef, type ElementRef } from "react";
-import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Check } from "lucide-react-native";
 import { describeRecord, t } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
+import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
 import { useSession } from "../../src/lib/session";
-import { localChanged } from "../../src/lib/sync";
+import { flushAlertVotes, localChanged } from "../../src/lib/sync";
+import { readVotes, recordVote } from "../../src/lib/votes";
 import { useLocal } from "../../src/lib/useLocal";
-import { Row, s as k } from "../../src/ui/kit";
+import { FarmLine } from "../../src/ui/FarmLine";
+import { Button, Row, s as k, Text } from "../../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
 
 const dayLabel = () => {
@@ -27,16 +30,16 @@ export default function Today() {
   const scroller = useRef<ElementRef<typeof ScrollView>>(null);
   const alertY = useRef<Record<string, number>>({});
   const userId = session?.user.id ?? "";
-  const tasks = useLocal(() => getDb().tasksToday(userId), [userId]);
-  const alerts = useLocal(() => getDb().activeAlerts());
+  const { farmId } = useFarmChoice();
+  const tasks = useLocal(() => byFarm(getDb().tasksToday(userId), farmId), [userId, farmId]);
+  const alerts = useLocal(() => byFarm(getDb().activeAlerts(), farmId), [farmId]);
   const plots = useLocal(() => getDb().plots());
+  const votes = useLocal(() => readVotes(getDb()));
   const todayRecords = useLocal(() => {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
-    return getDb()
-      .records(100)
-      .filter((r) => r.capturedAt >= start.getTime());
-  });
+    return byFarm(getDb().records(100), farmId).filter((r) => r.capturedAt >= start.getTime());
+  }, [farmId]);
   const plotName = (id: string | null) => plots.find((p) => p.id === id)?.name ?? "";
   const open = tasks.filter((x) => x.status === "open");
   const done = tasks.filter((x) => x.status === "done");
@@ -60,8 +63,16 @@ export default function Today() {
 
   return (
     <ScrollView ref={scroller} style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 120 }]}>
+      <FarmLine />
       <Text style={T.small}>{dayLabel()}</Text>
-      <Text style={[T.display, { marginTop: 2, marginBottom: 24 }]}>{session?.user.fullName.split(" ")[0]}</Text>
+      <Text style={[T.display, { marginTop: 2, marginBottom: 4 }]}>{session?.user.fullName.split(" ")[0]}</Text>
+      {/* La lluvia es lo que más se anota: un toque, directo a los milímetros (lluvia de la estancia, sin lote). */}
+      <Button
+        kind="text"
+        title={t("app.quickRain")}
+        onPress={() => router.push({ pathname: "/annotate", params: { kind: "rain", farmLevel: "1" } })}
+        style={{ alignSelf: "flex-start", paddingHorizontal: 0, marginBottom: 16 }}
+      />
 
       {alerts.map((a) => {
         const strong = a.severity === "warning";
@@ -80,6 +91,31 @@ export default function Today() {
             </Text>
             <Text style={[T.body, { color: strong ? C.blanco : C.tinta, marginTop: 4 }]}>{a.summary}</Text>
             <Text style={[T.small, { color: strong ? "rgba(255,255,255,0.8)" : C.tinta2, marginTop: 8 }]}>{t("ui.orientative", { source: a.source })}</Text>
+            <View style={st.vote}>
+              {votes[a.id] === undefined ? (
+                <>
+                  <Text style={[T.small, { color: strong ? C.blanco : C.tinta2 }]}>{t("ui.useful")}</Text>
+                  {([true, false] as const).map((useful) => (
+                    <Pressable
+                      key={String(useful)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${t("ui.useful")} ${useful ? t("app.yes") : t("app.no")}`}
+                      hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+                      onPress={() => {
+                        recordVote(getDb(), a.id, useful);
+                        localChanged();
+                        flushAlertVotes();
+                      }}
+                      style={st.voteBtn}
+                    >
+                      <Text style={[T.smallMedium, { color: strong ? C.blanco : C.tinta, textDecorationLine: "underline" }]}>{useful ? t("app.yes") : t("app.no")}</Text>
+                    </Pressable>
+                  ))}
+                </>
+              ) : (
+                <Text style={[T.small, { color: strong ? C.blanco : C.tinta2 }]}>{t("app.thanks")}</Text>
+              )}
+            </View>
           </View>
         );
       })}
@@ -137,6 +173,8 @@ const st = StyleSheet.create({
   alert: { borderRadius: RADIUS, padding: GUTTER, marginBottom: 12 },
   alertStrong: { backgroundColor: C.peligro },
   alertSoft: { backgroundColor: C.atencionSuave },
+  vote: { flexDirection: "row", alignItems: "center", gap: 20, marginTop: 4, minHeight: 44 },
+  voteBtn: { minHeight: 44, minWidth: 44, justifyContent: "center", alignItems: "center" },
   alertPicked: { borderWidth: 3, borderColor: C.tinta },
   empty: { paddingVertical: 32 },
   circle: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.lineaFuerte },

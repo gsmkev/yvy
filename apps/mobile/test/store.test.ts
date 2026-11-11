@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { addDays, localDate, newId, nextOccurrenceId } from "@yvy/shared";
 import { LocalDb } from "../src/db/store";
+import { planReminders } from "../src/lib/reminders-plan";
 import { nodeSql } from "./node-sql";
 
 const ORG = newId();
@@ -52,6 +53,83 @@ const rec = {
 const photo = { photoUri: "file:///p.webp", thumbUri: "file:///t.webp", width: 1280, height: 960, bytes: 120_000 };
 
 describe("LocalDb", () => {
+  it("miniatura del Historial: la primera foto local de cada registro", () => {
+    const db = setup();
+    const withPhotos = db.saveRecord(USER, ORG, rec, [{ ...photo, thumbUri: "file:///a_t.webp" }, { ...photo, thumbUri: "file:///b_t.webp" }]);
+    const without = db.saveRecord(USER, ORG, rec);
+    const thumbs = db.firstThumbByRecord();
+    expect(thumbs.get(withPhotos)).toBe("file:///a_t.webp");
+    expect(thumbs.has(without)).toBe(false);
+  });
+
+  it("cola de envío: registro con el peso de sus fotos, y fotos sueltas ya conocidas por el servidor", async () => {
+    const db = setup();
+    const id = db.saveRecord(USER, ORG, rec, [photo, photo]);
+    let items = db.outboxItems();
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ what: "record", recordKind: "rain", plotId: PLOT, photos: 2, photoBytes: 240_000 });
+    // El servidor recibió las mutaciones: quedan las fotos por subir, ahora como ítem propio.
+    await db.removeMutations((await db.pendingMutations(40)).map((m) => m.mutationId));
+    items = db.outboxItems();
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ what: "photos", recordKind: "rain", photos: 2, photoBytes: 240_000 });
+    expect(id).toBeTruthy();
+  });
+
+  it("punto de interés: fila local y mutación pois.upsert en la misma transacción", async () => {
+    const db = setup();
+    const id = db.savePoi(ORG, { farmId: FARM, kind: "gate", name: "  Tranquera norte ", lon: -55.9, lat: -27.2 });
+    expect(db.pois(FARM)).toMatchObject([{ id, kind: "gate", name: "Tranquera norte" }]);
+    const muts = await db.pendingMutations(10);
+    expect(muts).toHaveLength(1);
+    expect(muts[0]).toMatchObject({ kind: "pois.upsert", row: { id, name: "Tranquera norte", kind: "gate" } });
+    expect(db.outboxItems()[0]).toMatchObject({ what: "poi" });
+  });
+
+  it("varios lotes: un registro por lote en una transacción, mismo capturedAt, fotos en el primero", async () => {
+    const db = setup();
+    const plotB = newId();
+    const ids = db.saveRecords(USER, ORG, [rec, { ...rec, plotId: plotB }], [photo]);
+    expect(ids).toHaveLength(2);
+    const rows = db.records();
+    expect(rows.map((r) => r.capturedAt)).toEqual([rec.capturedAt, rec.capturedAt]);
+    expect(new Set(rows.map((r) => r.plotId))).toEqual(new Set([PLOT, plotB]));
+    expect(rows.find((r) => r.id === ids[0])!.photos).toBe(1);
+    expect(rows.find((r) => r.id === ids[1])!.photos).toBe(0);
+    expect((await db.pendingMutations(40)).map((m) => m.kind)).toEqual(["records.upsert", "attachments.upsert", "records.upsert"]);
+  });
+
+  it("recordatorios: un aviso por día a las 7:00 con las tareas abiertas; sin tareas, sin aviso", async () => {
+    const now = new Date(2026, 5, 10, 8, 0, 0).getTime(); // 8:00: el de hoy ya pasó
+    const db = setup(() => now);
+    const task = (title: string, dueDate: string, status = "open") => ({
+      id: newId(), organizationId: ORG, farmId: FARM, plotId: null, assigneeId: USER, title, kind: null, dueDate,
+      recurrence: "none", status, completedAt: null, completedBy: null, recordId: null, createdBy: USER,
+      createdAt: 1, updatedAt: 1, deletedAt: null, version: 1,
+    });
+    expect(planReminders(db, USER, now)).toEqual([]);
+    await db.applyPull("tasks", [task("Medir lluvia", localDate(now)), task("Hecha", localDate(now), "done"), task("Revisar aguada", localDate(now + 86_400_000))], null);
+    const plan = planReminders(db, USER, now);
+    // Mañana 7:00 y pasado mañana 7:00 (la tarea de hoy sigue abierta, así que cuenta en ambos días)
+    expect(plan.map((p) => [p.at.getHours(), p.at.getDate(), p.count])).toEqual([
+      [7, 11, 2],
+      [7, 12, 2],
+    ]);
+    expect(plan[0]!.titles).toContain("Revisar aguada");
+  });
+
+  it("ficha del lote: último vigor y tareas abiertas", async () => {
+    const db = setup();
+    expect(db.lastVigor(PLOT)).toBeNull();
+    expect(db.openTasksOfPlot(PLOT)).toBe(0);
+    const stat = (acquiredAt: number, mean: number) => ({
+      id: newId(), organizationId: ORG, plotId: PLOT, sceneId: newId(), acquiredAt, idx: "ndvi", mean, p10: 0.2, p90: 0.8,
+      validPct: 90, createdAt: 1, updatedAt: 1, deletedAt: null, version: 1,
+    });
+    await db.applyPull("plot_index_stats", [stat(1000, 0.4), stat(3000, 0.72), stat(2000, 0.5)], null);
+    expect(db.lastVigor(PLOT)).toEqual({ mean: 0.72, acquiredAt: 3000 });
+  });
+
   it("guardar registro con fotos: fila local + mutaciones en orden, pendiente", async () => {
     const db = setup();
     const id = db.saveRecord(USER, ORG, rec, [photo, photo]);

@@ -47,3 +47,6 @@ export const T = {
 export const TOUCH = 56;
 export const RADIUS = 12;
 export const GUTTER = 20;
+
+/** Tope del tamaño de letra del sistema (U-21): respeta la accesibilidad sin romper el diseño. */
+export const MAX_FONT_SCALE = 1.3;

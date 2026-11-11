@@ -1114,6 +1114,19 @@ export const esPY = {
     alertKind_water_low: "Aguada baja",
     poiLastWater: "Nivel: {{level}} · {{date}}",
     poiNoWater: "Sin medición",
+    // clima
+    gaugesTitle: "Pluviómetros",
+    gaugesLink: "Ver pluviómetros por mes y campaña",
+    gaugesIntro:
+      "Lluvia anotada en cada pluviómetro, la estimada por satélite (CHIRPS) y la normal de la zona, por mes y en la campaña que empezó el {{from}}. Se compara hasta el {{to}}, el último día con dato de satélite.",
+    gaugesNone: "Esta estancia no tiene pluviómetros. Agregá un punto de tipo pluviómetro en el mapa y anotá la lluvia ahí.",
+    gaugesUnassigned: "Lluvia anotada sin pluviómetro",
+    gaugesMonth: "Mes",
+    gaugesSeason: "Campaña",
+    gaugesVsSat: "Pluviómetro frente al satélite",
+    gaugesNoData: "Sin anotaciones",
+    gaugesChartLabel: "Lluvia por mes: {{name}}",
+    gaugesBack: "Volver a la estancia",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

@@ -75,5 +75,6 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `share_links` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`token_hash` text NOT NULL,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`expires_at` integer NOT NULL,\n\t`revoked_at` integer\n);",
   "CREATE UNIQUE INDEX `share_links_hash_uq` ON `share_links` (`token_hash`);",
   "CREATE INDEX `share_links_farm_idx` ON `share_links` (`farm_id`);",
-  "ALTER TABLE `tasks` ADD `checklist` text;"
+  "ALTER TABLE `tasks` ADD `checklist` text;",
+  "CREATE TABLE `farm_livestock_settings` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`max_ua_per_ha` real DEFAULT 1 NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`updated_by` text\n);"
 ];

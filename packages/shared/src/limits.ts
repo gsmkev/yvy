@@ -10,6 +10,8 @@ export const LIMITS = {
     pullPageSize: 200,
     /** Historial de registros y adjuntos que baja al celular (PRD §11). */
     recordsHistoryMs: 30 * 24 * 60 * 60 * 1000,
+    /** Movimientos y mortandad de hacienda que bajan al celular (G-03): el stock se calcula allá, sin señal. */
+    herdEventsHistoryMs: 365 * 24 * 60 * 60 * 1000,
     /** NDVI que baja al celular (PRD §11: último año). */
     indexStatsHistoryMs: 365 * 24 * 60 * 60 * 1000,
     /** Un registro con capturedAt más allá de esto en el futuro se rechaza (reloj mal puesto). */

@@ -514,6 +514,15 @@ export const farmAlertSettings = sqliteTable("farm_alert_settings", {
   updatedBy: text("updated_by"),
 });
 
+/** Carga animal máxima (UA/ha) por estancia (G-03). Sin fila = DEFAULT_MAX_UA_PER_HA. No se sincroniza. */
+export const farmLivestockSettings = sqliteTable("farm_livestock_settings", {
+  farmId: text("farm_id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  maxUaPerHa: real("max_ua_per_ha").notNull().default(1),
+  updatedAt: integer("updated_at").notNull(),
+  updatedBy: text("updated_by"),
+});
+
 export const alerts = sqliteTable(
   "alerts",
   {

@@ -30,6 +30,7 @@ import { processPhoto } from "../../src/lib/photos";
 import { useSession } from "../../src/lib/session";
 import { localChanged, useSyncStatus } from "../../src/lib/sync";
 import { toastSaved } from "../../src/lib/toast";
+import { seedCounts } from "../../src/lib/counter";
 import { HerdCounter } from "../../src/ui/Counter";
 import { Button, Row, s as k, Text, TextInput } from "../../src/ui/kit";
 import { Stations } from "../../src/ui/Stations";
@@ -436,7 +437,7 @@ export default function Annotate() {
             key={`${kind}-${step.key}`}
             question={tr(step.question)}
             hint={step.hint ? tr(step.hint) : undefined}
-            counts={(values[step.key] as HerdCounts | undefined) ?? {}}
+            counts={(values[step.key] as HerdCounts | undefined) ?? seedFor(kind, plot, editing)}
             onChange={(c) => setValues((v) => ({ ...v, [step.key]: c }))}
             onDone={(c) => advance({ ...values, [step.key]: c })}
           />
@@ -503,6 +504,13 @@ export default function Annotate() {
 
   // ---------- 5. Listo ----------
   return <Done plot={plot} kind={kind!} values={values} />;
+}
+
+/** Un conteo nuevo parte de lo que se calcula para el potrero: se corrige lo que cambió. */
+function seedFor(kind: RecordKind | null, plot: Plot | null, editing: unknown): HerdCounts {
+  if (kind !== "herd_count" || !plot || editing) return {};
+  const stock = getDb().herdStock(plot.id);
+  return stock ? seedCounts(stock.counts) : {};
 }
 
 function plotSubtitle(p: Plot) {

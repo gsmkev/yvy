@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { router, useFocusEffect } from "expo-router";
 import { FarmLine } from "../../src/ui/FarmLine";
 import { Button } from "../../src/ui/kit";
+import { LayerSwitch, NdviLegend } from "../../src/ui/MapLayerControls";
 import { StyleSheet, Text, View } from "react-native";
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -11,7 +12,7 @@ import { BRAND, t } from "@yvy/shared";
 import { containsPoint, type Area } from "@yvy/geo";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
-import { tilesBaseUrl } from "../../src/lib/offline";
+import { layerSource, tilesBaseUrl, type MapLayer } from "../../src/lib/offline";
 import { setFabHidden } from "../../src/lib/fab";
 import { useLocal } from "../../src/lib/useLocal";
 import { C, RADIUS, T } from "../../src/ui/theme";
@@ -33,6 +34,12 @@ export default function MapScreen() {
     }, [selected]),
   );
   const farm = current ?? farms[0];
+  const [mode, setModeState] = useState<MapLayer>(() => (getDb().getKv("map_layer") === "ndvi" ? "ndvi" : "true_color"));
+  const setMode = (m: MapLayer) => {
+    setModeState(m);
+    getDb().setKv("map_layer", m);
+  };
+  const ndvi = farm && mode === "ndvi" ? layerSource(farm.id, "ndvi", base) : null;
   useEffect(() => {
     tilesBaseUrl().then(setBase, () => setBase(null));
   }, []);
@@ -44,9 +51,7 @@ export default function MapScreen() {
       maplibregl.addProtocol("pmtiles", new Protocol().tile);
       protocol = true;
     }
-    const layer = getDb()
-      .latestLayers(farm.id)
-      .find((l) => l.layer === "true_color");
+    const layer = layerSource(farm.id, mode, base);
     const fc = (features: GeoJSON.Feature[]) => ({ type: "FeatureCollection" as const, features });
     const map = new maplibregl.Map({
       container: ref.current,
@@ -56,8 +61,8 @@ export default function MapScreen() {
       style: {
         version: 8,
         sources: {
-          ...(layer && base
-            ? { base: { type: "raster" as const, url: `pmtiles://${base}/${layer.pmtilesPath}`, tileSize: 256 } }
+          ...(layer
+            ? { base: { type: "raster" as const, url: layer.url, tileSize: 256 } }
             : {}),
           farms: {
             type: "geojson",
@@ -88,7 +93,7 @@ export default function MapScreen() {
         },
         layers: [
           { id: "bg", type: "background", paint: { "background-color": "#141a12" } },
-          ...(layer && base ? [{ id: "base", type: "raster" as const, source: "base" }] : []),
+          ...(layer ? [{ id: "base", type: "raster" as const, source: "base" }] : []),
           { id: "farms", type: "line", source: "farms", paint: { "line-color": "rgba(255,255,255,0.9)", "line-width": 2 } },
           { id: "plots-fill", type: "fill", source: "plots", paint: { "fill-color": "#ffffff", "fill-opacity": ["case", ["==", ["get", "sel"], 1], 0.28, 0.04] } },
           {
@@ -134,7 +139,7 @@ export default function MapScreen() {
         .addTo(map);
     }
     return () => map.remove();
-  }, [farm?.id, plots, records, base, selected]);
+  }, [farm?.id, plots, records, base, selected, mode]);
 
   const plot = plots.find((p) => p.id === selected);
   return (
@@ -142,6 +147,8 @@ export default function MapScreen() {
       <div ref={ref} style={{ position: "absolute", inset: 0 }} />
       <View style={s.topLeft} pointerEvents="box-none">
         <FarmLine style={s.panel} />
+        <LayerSwitch value={mode} onChange={setMode} />
+        {mode === "ndvi" && <NdviLegend acquiredAt={ndvi?.acquiredAt ?? null} missing={!ndvi} />}
       </View>
       {plot && (
         <View style={s.sheet}>

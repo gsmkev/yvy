@@ -13,11 +13,12 @@ import { useRef } from "react";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
 import { currentFix, type Fix } from "../../src/lib/location";
-import { packStatus, tilesBaseUrl } from "../../src/lib/offline";
+import { layerSource, tilesBaseUrl, type MapLayer } from "../../src/lib/offline";
 import { setFabHidden } from "../../src/lib/fab";
 import { useLocal } from "../../src/lib/useLocal";
 import { FarmLine } from "../../src/ui/FarmLine";
 import { Button } from "../../src/ui/kit";
+import { LayerSwitch, NdviLegend } from "../../src/ui/MapLayerControls";
 import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
 
 const FIT_PADDING = { top: 120, bottom: 40, left: 24, right: 24 };
@@ -37,6 +38,11 @@ export default function MapScreen() {
       return () => setFabHidden(false);
     }, [selected]),
   );
+  const [mode, setModeState] = useState<MapLayer>(() => (getDb().getKv("map_layer") === "ndvi" ? "ndvi" : "true_color"));
+  const setMode = (m: MapLayer) => {
+    setModeState(m);
+    getDb().setKv("map_layer", m);
+  };
   const [me, setMe] = useState<Fix | null>(null);
   const camera = useRef<CameraRef>(null);
   const farm = current ?? farms[0];
@@ -53,16 +59,15 @@ export default function MapScreen() {
     tilesBaseUrl().then(setRemoteBase, () => setRemoteBase(null));
   }, []);
 
+  const ndvi = useMemo(() => (farm && mode === "ndvi" ? layerSource(farm.id, "ndvi", remoteBase) : null), [farm?.id, mode, remoteBase]);
+
   const style = useMemo<StyleSpecification>(() => {
     const sources: StyleSpecification["sources"] = {};
     const layers: StyleSpecification["layers"] = [{ id: "bg", type: "background", paint: { "background-color": "#141a12" } }];
     for (const f of farms) {
-      const pack = packStatus(f.id);
-      const local = pack.localUri("true_color");
-      const remote = pack.layers.find((l) => l.layer === "true_color");
-      const url = local ? `pmtiles://${local}` : remote && remoteBase ? `pmtiles://${remoteBase.replace(/\/$/, "")}/${remote.pmtilesPath}` : null;
-      if (url) {
-        sources[`base-${f.id}`] = { type: "raster", url, tileSize: 256 };
+      const src = layerSource(f.id, mode, remoteBase);
+      if (src) {
+        sources[`base-${f.id}`] = { type: "raster", url: src.url, tileSize: 256 };
         layers.push({ id: `base-${f.id}`, type: "raster", source: `base-${f.id}` });
       }
     }
@@ -106,7 +111,7 @@ export default function MapScreen() {
       );
     }
     return { version: 8, sources, layers };
-  }, [farms, plots, records, remoteBase, selected, me, lastVisit]);
+  }, [farms, plots, records, remoteBase, selected, me, lastVisit, mode]);
 
   if (!farm) {
     return (
@@ -142,6 +147,8 @@ export default function MapScreen() {
       </Map>
       <View style={st.topLeft} pointerEvents="box-none">
         <FarmLine style={st.panel} />
+        <LayerSwitch value={mode} onChange={setMode} />
+        {mode === "ndvi" && <NdviLegend acquiredAt={ndvi?.acquiredAt ?? null} missing={!ndvi} />}
       </View>
       <Text style={st.attr}>Sentinel-2 · Copernicus</Text>
       <Pressable accessibilityRole="button" accessibilityLabel={t("app.whereAmI")} onPress={locate} style={st.locate}>

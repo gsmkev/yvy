@@ -112,6 +112,11 @@ Límite: el plan gratis de Sentry tiene cupo mensual de eventos; si se agota dej
 Todos los límites están en `packages/shared/src/limits.ts`. Workers Paid (US$ 5/mes) quita el techo de CPU y de requests;
 R2 cobra US$ 0,015/GB/mes después de 10 GB. No hace falta cambiar código.
 
+**Topes por plan (P-10).** `LIMITS.plans` fija hectáreas de estancias y personas con acceso por plan (prueba: 100.000 ha y 25 personas).
+La API responde 402 con un mensaje claro al crear estancias, lotes o personas por encima del tope. Desde el panel interno
+(`/interno`, solo `ADMIN_EMAILS`) → *Plan y topes* se cambia el plan y se fijan topes propios de una organización (vacío = el del plan).
+El mismo panel permite extender la prueba 30 días y "Ver como soporte" (solo lectura, 30 minutos, queda en la auditoría).
+
 ## 8. Restaurar un backup (P-05)
 
 Las copias están en R2: `yvy-media/backups/yvy-AAAA-MM-DD.sql.gz` (una por semana). D1 Time Travel cubre además los últimos 7 días.
@@ -135,3 +140,30 @@ Imprime las filas de cada tabla y sale con error si falta una tabla o columna re
 **Recuperar producción** (solo ante un desastre): creá una base nueva (`wrangler d1 create yvy-restore`), cargala con
 `wrangler d1 execute yvy-restore --remote --file yvy-….sql`, comprobala con el script de arriba y recién ahí cambiá el
 `database_id` (secret `D1_DATABASE_ID`) y volvé a desplegar. No sobrescribas la base vieja hasta confirmar que la nueva está bien.
+
+## 9. Prueba de carga del sync (P-21)
+
+Simula 10 empleados mandando en paralelo 1.000 registros con fotos (solo los metadatos, no los archivos) contra un
+`wrangler dev`, y mide tiempo por push, rendimiento y fallas. Sirve para ver si un cambio en el sync o en las consultas
+empeora algo antes de publicarlo. **Mide el Worker local (workerd + D1 local), no producción**: no mide los 10 ms de CPU
+del plan gratis ni la latencia real de D1; para eso mirá la pestaña Metrics del Worker en el panel de Cloudflare.
+
+```bash
+cd apps/api
+cp .dev.vars.example .dev.vars          # una sola vez
+pnpm db:migrate:local
+pnpm dev > /tmp/dev.log 2>&1 &          # esperar "Ready on http://localhost:8787"
+pnpm load:sync -- --log /tmp/dev.log    # opciones: --workers 10 --records 1000 --photos 2 --api http://localhost:8787
+```
+
+El script crea su propia organización (el código de ingreso lo lee del log de `wrangler dev`, igual que los E2E), una estancia con un
+lote por empleado y los empleados vinculados. Cada empleado manda sus registros en pushes de hasta 40 mutaciones
+(`LIMITS.sync.maxMutationsPerPush`). Al final comprueba contra el servidor que llegó cada registro y cada foto una sola vez y que
+repetir un push no duplica nada. Sale con código 1 si hubo fallas (HTTP o mutaciones rechazadas) o no cuadran los conteos.
+Con `--photos 0` se mide solo el costo de los registros; `--records 5000` para estresar más.
+
+Referencia (máquina de desarrollo, local, 10 empleados, 1.000 registros, 2 fotos): 80 pushes, mediana 190 ms, p95 261 ms, 0 fallas.
+Cada corrida deja datos de prueba en el D1 local; para limpiarlos borrá `apps/api/.wrangler/state`.
+
+Los cálculos del script (reparto, percentiles, armado de lotes, resumen) tienen pruebas en `apps/api/scripts/load-sync.test.mjs`,
+que corren con `pnpm --filter api test`.

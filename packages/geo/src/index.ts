@@ -3,6 +3,7 @@ import turfArea from "@turf/area";
 import turfBbox from "@turf/bbox";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import turfCentroid from "@turf/centroid";
+import intersect from "@turf/intersect";
 import kinks from "@turf/kinks";
 import type { MultiPolygon, Polygon, Position } from "geojson";
 
@@ -146,3 +147,90 @@ export const cleanArea = (g: Area): { geometry: Area; removed: number } => {
   return { geometry, removed };
 };
 
+// ---------------------------------------------------------------------------
+// Superposición y contención (M-10)
+// ---------------------------------------------------------------------------
+
+type Box = [number, number, number, number];
+const boxOf = (g: Area): Box => {
+  const b = turfBbox(g);
+  return [b[0], b[1], b[2], b[3]];
+};
+
+/** Área (grados²) de la intersección de dos cajas, 0 si no se tocan. Prefiltro barato antes de recortar. */
+const boxOverlap = (a: Box, b: Box): number => {
+  const w = Math.min(a[2], b[2]) - Math.max(a[0], b[0]);
+  const h = Math.min(a[3], b[3]) - Math.max(a[1], b[1]);
+  return w > 0 && h > 0 ? w * h : 0;
+};
+
+const intersectionHa = (a: Area, b: Area): number => {
+  try {
+    const r = intersect({
+      type: "FeatureCollection",
+      features: [
+        { type: "Feature", properties: {}, geometry: a },
+        { type: "Feature", properties: {}, geometry: b },
+      ],
+    });
+    return r ? areaHa(r.geometry as Area) : 0;
+  } catch {
+    return 0; // geometría degenerada: mejor no avisar que romper la carga
+  }
+};
+
+/** Parte de la figura más chica que cubre la otra (0 a 1). */
+export const overlapRatio = (a: Area, b: Area): number => {
+  if (boxOverlap(boxOf(a), boxOf(b)) === 0) return 0;
+  const smaller = Math.min(areaHa(a), areaHa(b));
+  return smaller > 0 ? Math.min(1, intersectionHa(a, b) / smaller) : 0;
+};
+
+/** Parte de `inner` que cae dentro de `outer` (0 a 1). */
+export const withinRatio = (inner: Area, outer: Area): number => {
+  if (boxOverlap(boxOf(inner), boxOf(outer)) === 0) return 0;
+  const area = areaHa(inner);
+  return area > 0 ? Math.min(1, intersectionHa(inner, outer) / area) : 1;
+};
+
+export const OVERLAP_WARN_RATIO = 0.01;
+/** Un lote avisa como "fuera" si menos de esta parte de su superficie queda adentro de la estancia. */
+export const WITHIN_WARN_RATIO = 0.99;
+
+export interface GeoWarning {
+  kind: "overlap" | "outside";
+  /** Índices en la lista de entrada. */
+  a: number;
+  b?: number;
+  ratio: number;
+}
+
+/**
+ * Avisos no bloqueantes: lotes que se superponen entre sí (> 1 % del más chico) y lotes que salen
+ * del perímetro. `maxExact` limita los recortes exactos (presupuesto de CPU del Worker).
+ */
+export const checkPlots = (plots: Area[], farm: Area | null, opts: { maxExact?: number } = {}): GeoWarning[] => {
+  const out: GeoWarning[] = [];
+  let budget = opts.maxExact ?? Infinity;
+  const boxes = plots.map(boxOf);
+  for (let i = 0; i < plots.length; i++) {
+    for (let j = i + 1; j < plots.length; j++) {
+      if (boxOverlap(boxes[i]!, boxes[j]!) === 0 || budget-- <= 0) continue;
+      const r = overlapRatio(plots[i]!, plots[j]!);
+      if (r > OVERLAP_WARN_RATIO) out.push({ kind: "overlap", a: i, b: j, ratio: r });
+    }
+  }
+  if (farm) {
+    const fb = boxOf(farm);
+    for (let i = 0; i < plots.length; i++) {
+      if (boxOverlap(boxes[i]!, fb) === 0) {
+        out.push({ kind: "outside", a: i, ratio: 0 });
+        continue;
+      }
+      if (budget-- <= 0) continue;
+      const r = withinRatio(plots[i]!, farm);
+      if (r < WITHIN_WARN_RATIO) out.push({ kind: "outside", a: i, ratio: r });
+    }
+  }
+  return out;
+};

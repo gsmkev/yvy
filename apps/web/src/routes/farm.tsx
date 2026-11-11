@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Polygon } from "geojson";
@@ -9,6 +9,7 @@ import { AlertsList } from "../components/AlertsList";
 import { CopyCoords } from "../components/CopyCoords";
 import { ClimatePanel } from "../components/ClimatePanel";
 import { boundsOf, FarmMap } from "../components/FarmMap";
+import { FullscreenButton } from "../components/FullscreenButton";
 import { ExportButtons } from "../components/ExportButtons";
 import { ImportPlots } from "../components/ImportPlots";
 import { PlotPanel } from "../components/PlotPanel";
@@ -56,6 +57,7 @@ export function FarmPage() {
   // Una pestaña guardada que este rol no tiene (ej. "herd" para un empleado) cae en Lotes en vez de mostrar nada.
   const tab: Tab = tabPref === "herd" && !canEdit ? "plots" : tabPref;
   const [onlyUnvisited, setOnlyUnvisited] = useState(false);
+  const mapBox = useRef<HTMLDivElement>(null);
   const { lote } = useSearch({ from: "/app/estancias/$farmId" });
   const [selected, setSelected] = useState<string | null>(lote ?? null);
   // Llegar desde el buscador con ?lote= elige ese lote
@@ -212,7 +214,8 @@ export function FarmPage() {
           </button>
         ))}
       </div>
-      <div className={`relative min-h-0 flex-1 lg:h-full ${view === "list" ? "max-lg:hidden" : ""}`}>
+      <div ref={mapBox} className={`relative min-h-0 flex-1 bg-lino lg:h-full ${view === "list" ? "max-lg:hidden" : ""}`}>
+        <FullscreenButton target={mapBox} className="absolute right-3 bottom-8 z-10" />
         <FarmMap
           outline={d.farm.geometry}
           plots={d.plots}

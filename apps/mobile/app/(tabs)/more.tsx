@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, Switch, View } from "react-native";
 import { router } from "expo-router";
 import { t, type MessageKey } from "@yvy/shared";
 import { FEATURES } from "../../src/lib/features";
@@ -10,7 +10,7 @@ import { remindersEnabled, setRemindersEnabled } from "../../src/lib/reminders";
 import { api, getSession, setSession } from "../../src/lib/session";
 import { localChanged, stopAutoSync, syncNow, syncNowMobileData, useSyncStatus } from "../../src/lib/sync";
 import { useLocal } from "../../src/lib/useLocal";
-import { Button, Row, s as k } from "../../src/ui/kit";
+import { Button, Row, s as k, Text } from "../../src/ui/kit";
 import { C, F, T } from "../../src/ui/theme";
 
 export default function More() {

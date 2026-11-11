@@ -1,12 +1,12 @@
 /** Historial: 30 días agrupados por día. Lo pendiente de mandar se distingue por el color del punto. */
 import { useState } from "react";
-import { Image, Pressable, ScrollView, SectionList, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, SectionList, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import { describeRecord, LIMITS, t, type RecordKind } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
 import { useLocal } from "../../src/lib/useLocal";
-import { Row, s as k } from "../../src/ui/kit";
+import { Row, s as k, Text } from "../../src/ui/kit";
 import { C, F, T } from "../../src/ui/theme";
 
 const dayKey = (ms: number) => new Date(ms - 3 * 3_600_000).toISOString().slice(0, 10);

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import { Text } from "./kit";
 import { t } from "@yvy/shared";
 import { setSelectedFarm, useFarmChoice } from "../lib/farmFilter";
 import { Row } from "./kit";

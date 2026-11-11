@@ -2,7 +2,7 @@
  * Ficha de un registro. Editar y borrar solo para el autor y dentro de las 24 h de capturado (RF-34);
  * pasado ese tiempo el servidor también lo rechaza.
  */
-import { Alert, Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, ScrollView, StyleSheet, View } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { describeRecord, LIMITS, t } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
@@ -10,7 +10,7 @@ import { accuracyLabel } from "../../src/lib/location";
 import { useSession } from "../../src/lib/session";
 import { localChanged, syncNow } from "../../src/lib/sync";
 import { useLocal } from "../../src/lib/useLocal";
-import { Button, s as k } from "../../src/ui/kit";
+import { Button, s as k, Text } from "../../src/ui/kit";
 import { T } from "../../src/ui/theme";
 
 export default function RecordDetail() {

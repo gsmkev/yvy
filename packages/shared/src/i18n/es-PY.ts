@@ -872,6 +872,11 @@ export const esPY = {
     alertSettingsDefaults: "Volver a los valores habituales",
     alertSettingsSaved: "Guardado.",
     alertKind_pest_threshold: "Plaga sobre el umbral",
+    shareWhatsapp: "Compartir por WhatsApp",
+    shareSignature: "Enviado desde Yvy",
+    shareAlertOrientative: "Aviso orientativo.",
+    shareSeeInApp: "Verlo en Yvy",
+    shareNoAlerts: "ninguno",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

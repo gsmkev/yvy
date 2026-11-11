@@ -4,10 +4,12 @@ import { get } from "../lib/api";
 import { describeData } from "../lib/exports";
 import { fmtDateTime } from "../lib/format";
 import { t, tk } from "../lib/i18n";
-import { fetchRecordsPage, useMe, type RecordFilters } from "../lib/queries";
+import { recordShareText } from "@yvy/shared";
+import { fetchRecordsPage, useFarms, useMe, type RecordFilters } from "../lib/queries";
 import type { RecordRow } from "../lib/types";
 import { Clock } from "lucide-react";
 import { DeleteRecordConfirm, RecordEditForm } from "./RecordEdit";
+import { ShareWhatsappButton } from "./ShareButton";
 import { Button, Empty, ErrorBox, Modal, Spinner } from "./ui";
 
 export function useRecords(filters: RecordFilters) {
@@ -102,7 +104,17 @@ function Photo({ id }: { id: string }) {
 
 export function RecordModal({ record: r, onClose }: { record: RecordRow; onClose: () => void }) {
   const me = useMe();
+  const farms = useFarms();
   const canEdit = !!me.data && me.data.role !== "worker";
+  const shareText = recordShareText({
+    kindLabel: tk(`recordKinds.${r.kind}`),
+    description: describeData(r.kind, r.data),
+    plotName: r.plotName,
+    farmName: farms.data?.find((f) => f.id === r.farmId)?.name,
+    when: fmtDateTime(r.capturedAt),
+    lat: r.lat,
+    lon: r.lon,
+  });
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   return (
@@ -144,6 +156,11 @@ export function RecordModal({ record: r, onClose }: { record: RecordRow; onClose
               ))}
             </div>
           </>
+        )}
+        {!editing && (
+          <div className="mt-5">
+            <ShareWhatsappButton text={shareText} />
+          </div>
         )}
         {canEdit && !editing && (
           <div className="mt-5 flex gap-2 border-t border-linea pt-4">

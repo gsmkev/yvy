@@ -2,9 +2,9 @@
  * Ficha de un registro. Editar y borrar solo para el autor y dentro de las 24 h de capturado (RF-34);
  * pasado ese tiempo el servidor también lo rechaza.
  */
-import { Alert, Image, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, Image, Linking, ScrollView, StyleSheet, View } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { describeRecord, LIMITS, t } from "@yvy/shared";
+import { describeRecord, LIMITS, recordShareText, t, whatsappUrl } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { accuracyLabel } from "../../src/lib/location";
 import { useSession } from "../../src/lib/session";
@@ -34,6 +34,20 @@ export default function RecordDetail() {
   const mine = !!session && record.authorId === session.user.id;
   const editable = mine && Date.now() - record.capturedAt < LIMITS.sync.workerEditWindowMs;
   const hasPlace = record.lon !== null && record.lat !== null;
+
+  const share = () => {
+    const farm = getDb().farms().find((f) => f.id === record.farmId);
+    const text = recordShareText({
+      kindLabel: t(`recordKinds.${record.kind}`),
+      description: describeRecord(record.kind, data),
+      plotName: plot?.name,
+      farmName: farm?.name,
+      when,
+      lat: record.lat,
+      lon: record.lon,
+    });
+    Linking.openURL(whatsappUrl(text)).catch(() => undefined);
+  };
 
   const remove = () =>
     Alert.alert(t("app.recordDeleteTitle"), t("ui.confirmDelete", { name: t(`recordKinds.${record.kind}`).toLowerCase() }), [
@@ -69,6 +83,7 @@ export default function RecordDetail() {
           style={{ marginTop: 20 }}
         />
       )}
+      <Button kind="secondary" title={t("ui.shareWhatsapp")} onPress={share} style={{ marginTop: 12 }} />
       <View style={{ height: 32 }} />
       {editable ? (
         <>

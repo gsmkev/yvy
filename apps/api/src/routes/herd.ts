@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { animalInput } from "@yvy/shared";
 import { animalHistory, createAnimal, deleteAnimal, listAnimals, updateAnimal } from "../db/animals";
-import { farmHeatStress, farmReproduction, farmSupplements, farmTheft, farmWeighings } from "../db/herd";
+import { farmForage, farmHeatStress, farmReproduction, farmRotation, farmSupplements, farmTheft, farmWeighings } from "../db/herd";
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
 
@@ -61,3 +61,8 @@ herd.delete("/animals/:id", async (c) => {
   return c.json({ ok: true });
 });
 herd.get("/animals/:id/history", async (c) => c.json(await animalHistory(c.var.sdb, c.req.param("id"))));
+
+// G-04: rotación de potreros (ocupación, descanso y próximo potrero).
+herd.get("/farms/:id/rotation", async (c) => c.json(await farmRotation(c.var.sdb, c.req.param("id"))));
+// G-05: oferta de forraje estimada por potrero.
+herd.get("/farms/:id/forage", async (c) => c.json(await farmForage(c.var.sdb, c.req.param("id"))));

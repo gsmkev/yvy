@@ -90,7 +90,21 @@ Después: Actions → **APK Android** → *Run workflow*. Queda en `https://<APP
 3. Creá empleados en **Equipo**, asignales lotes y mostrales el QR de vinculación.
 4. El empleado instala el APK, escanea el QR y baja el *Mapa sin conexión* por wifi.
 
-## 6. Pasar a pago (cuando haga falta)
+## 6. Monitoreo de errores con Sentry (opcional, P-02)
+
+Sin DSN no se carga el SDK ni sale ningún pedido de red. Con DSN se informan errores inesperados (500 del Worker, crons y cola;
+errores de JavaScript en la web y la app). No viajan encabezados, cookies, cuerpos ni usuarios.
+
+1. En Sentry (plan gratis) creá tres proyectos: uno de tipo Cloudflare/Node (Worker), uno React (web) y uno React Native (app).
+2. En GitHub → Settings → Variables (no son secretos: el DSN es público por diseño):
+   - `SENTRY_DSN_API`: DSN del Worker. El deploy lo pasa como variable `SENTRY_DSN`. En desarrollo va en `apps/api/.dev.vars`.
+   - `SENTRY_DSN_WEB`: DSN de la web. Se compila dentro del build como `VITE_SENTRY_DSN`.
+   - `SENTRY_DSN_APP`: DSN de la app. Se compila dentro del APK como `EXPO_PUBLIC_SENTRY_DSN`.
+3. Vacías o sin definir, el monitoreo queda apagado. Para probar: poné el DSN, provocá un error y buscalo en Sentry.
+
+Límite: el plan gratis de Sentry tiene cupo mensual de eventos; si se agota deja de recibir hasta el mes siguiente.
+
+## 7. Pasar a pago (cuando haga falta)
 
 Todos los límites están en `packages/shared/src/limits.ts`. Workers Paid (US$ 5/mes) quita el techo de CPU y de requests;
 R2 cobra US$ 0,015/GB/mes después de 10 GB. No hace falta cambiar código.

@@ -46,6 +46,8 @@ export interface FarmMapProps {
   showNdvi?: boolean;
   selectedPlotId?: string | null;
   bounds?: [number, number, number, number] | null;
+  /** Vuela a un punto (cambiar `n` para repetir el mismo destino). */
+  flyTo?: { lon: number; lat: number; zoom?: number; n: number } | null;
   drawing?: boolean;
   onDrawn?: (g: Polygon) => void;
   onPlotClick?: (id: string) => void;
@@ -257,6 +259,12 @@ export function FarmMap(props: FarmMapProps) {
     const map = mapRef.current;
     if (map && props.bounds) map.fitBounds(props.bounds, { padding: 60, duration: 600, maxZoom: 18 });
   }, [props.bounds?.join(",")]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const f = props.flyTo;
+    if (map && f) map.flyTo({ center: [f.lon, f.lat], zoom: f.zoom ?? 14, duration: 800 });
+  }, [props.flyTo?.n]);
 
   // ---- dibujo ----
   useEffect(() => {

@@ -553,6 +553,12 @@ export const esPY = {
     searchPois: "Puntos de interés",
     searchRecords: "Registros recientes",
     searchShortcutHint: "Atajo: / o Ctrl+K",
+    useMyLocation: "Usar mi ubicación",
+    locating: "Buscando tu ubicación…",
+    geoUnsupported: "Este navegador no permite obtener la ubicación. Buscá el lugar en el mapa.",
+    geoDenied:
+      "No pudimos usar tu ubicación porque el permiso está bloqueado. Habilitalo en los ajustes del sitio en tu navegador y probá de nuevo.",
+    geoFailed: "No pudimos obtener tu ubicación. Revisá que el GPS esté activo y probá de nuevo.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

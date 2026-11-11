@@ -22,6 +22,27 @@ export function NewFarmPage() {
   const [drawing, setDrawing] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const [flyTo, setFlyTo] = useState<{ lon: number; lat: number; zoom?: number; n: number } | null>(null);
+  const [geoMsg, setGeoMsg] = useState<string | null>(null);
+  const [locating, setLocating] = useState(false);
+
+  const goTo = (lon: number, lat: number, zoom?: number) => setFlyTo((f) => ({ lon, lat, zoom, n: (f?.n ?? 0) + 1 }));
+  const useMyLocation = () => {
+    setGeoMsg(null);
+    if (!("geolocation" in navigator)) return setGeoMsg(t("ui.geoUnsupported"));
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        setLocating(false);
+        goTo(p.coords.longitude, p.coords.latitude, 15);
+      },
+      (e) => {
+        setLocating(false);
+        setGeoMsg(e.code === e.PERMISSION_DENIED ? t("ui.geoDenied") : t("ui.geoFailed"));
+      },
+      { enableHighAccuracy: true, timeout: 15_000 },
+    );
+  };
 
   const onFile = async (file: File) => {
     setError(null);
@@ -61,6 +82,7 @@ export function NewFarmPage() {
         <FarmMap
           outline={geometry ? JSON.stringify(geometry) : null}
           bounds={b ? [b.minLon, b.minLat, b.maxLon, b.maxLat] : null}
+          flyTo={flyTo}
           drawing={drawing}
           onDrawn={(g: Polygon) => {
             setGeometry(g);
@@ -86,6 +108,18 @@ export function NewFarmPage() {
           <Field label={t("ui.district")}>
             <Input value={district} onChange={(e) => setDistrict(e.target.value)} />
           </Field>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <div>
+            <Button onClick={useMyLocation} disabled={locating}>
+              {locating ? t("ui.locating") : t("ui.useMyLocation")}
+            </Button>
+          </div>
+          {geoMsg && (
+            <p role="alert" className="text-sm text-peligro">
+              {geoMsg}
+            </p>
+          )}
         </div>
         <p className="text-sm text-tinta-2">{t("ui.drawFarm")}</p>
         <div className="flex flex-wrap gap-2">

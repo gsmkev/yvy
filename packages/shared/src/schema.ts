@@ -458,6 +458,20 @@ export const contractors = sqliteTable(
   (t) => [index("contractors_org_idx").on(t.organizationId, t.name)],
 );
 
+/** Tipo de cambio diario (E-06): guaraníes por dólar. Carga manual; se usa el más reciente hasta la fecha del movimiento. */
+export const exchangeRates = sqliteTable(
+  "exchange_rates",
+  {
+    organizationId: text("organization_id").notNull(),
+    /** "YYYY-MM-DD". */
+    date: text("date").notNull(),
+    usdToPyg: integer("usd_to_pyg").notNull(),
+    updatedBy: text("updated_by"),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.organizationId, t.date] })],
+);
+
 // ---------- Trabajo ----------
 
 export const tasks = sqliteTable(

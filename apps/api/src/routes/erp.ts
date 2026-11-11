@@ -1,9 +1,9 @@
 /** ERP sencillo desde la web (ADR 0004). Montada en /org/erp. */
 import { Hono } from "hono";
 import type { z } from "zod";
-import { contractorInput, machineInput, partyInput, type Role } from "@yvy/shared";
+import { contractorInput, exchangeRateInput, isoDate, machineInput, partyInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
-import { erpCreate, erpDelete, erpList, erpUpdate, requireOwned, type ErpTable } from "../db/erp";
+import { deleteRate, erpCreate, erpDelete, erpList, erpUpdate, listRates, requireOwned, saveRate, type ErpTable } from "../db/erp";
 import { can, type ScopedDb } from "../db/scoped";
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
@@ -63,4 +63,18 @@ master("contractors", s.contractors, contractorInput, [s.contractors.name], {
   check: async (sdb, v) => {
     if (typeof v.partyId === "string") await requireOwned(sdb, s.parties, v.partyId, "El proveedor");
   },
+});
+
+// ---------- Tipo de cambio (E-06) ----------
+
+erp.get("/exchange-rates", async (c) => c.json(await listRates(c.var.sdb)));
+erp.put("/exchange-rates/:date", async (c) => {
+  const date = parse(isoDate, c.req.param("date"));
+  const b = parse(exchangeRateInput.pick({ usdToPyg: true }), await readJson(c.req));
+  await saveRate(c.var.sdb, date, b.usdToPyg);
+  return c.json({ ok: true });
+});
+erp.delete("/exchange-rates/:date", async (c) => {
+  await deleteRate(c.var.sdb, parse(isoDate, c.req.param("date")));
+  return c.json({ ok: true });
 });

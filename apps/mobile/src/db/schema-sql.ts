@@ -128,5 +128,6 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `machines` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text,\n\t`name` text NOT NULL,\n\t`type` text NOT NULL,\n\t`brand` text,\n\t`model` text,\n\t`year` integer,\n\t`meter_kind` text DEFAULT 'hours' NOT NULL,\n\t`meter_value` real DEFAULT 0 NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
   "CREATE INDEX `machines_sync_idx` ON `machines` (`organization_id`,`version`,`id`);",
   "CREATE TABLE `contractors` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`party_id` text,\n\t`service` text NOT NULL,\n\t`rate_unit` text NOT NULL,\n\t`rate_amount` integer NOT NULL,\n\t`currency` text DEFAULT 'PYG' NOT NULL,\n\t`note` text,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
-  "CREATE INDEX `contractors_org_idx` ON `contractors` (`organization_id`,`name`);"
+  "CREATE INDEX `contractors_org_idx` ON `contractors` (`organization_id`,`name`);",
+  "CREATE TABLE `exchange_rates` (\n\t`organization_id` text NOT NULL,\n\t`date` text NOT NULL,\n\t`usd_to_pyg` integer NOT NULL,\n\t`updated_by` text,\n\t`updated_at` integer NOT NULL,\n\tPRIMARY KEY(`organization_id`, `date`)\n);"
 ];

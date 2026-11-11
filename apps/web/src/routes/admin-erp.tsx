@@ -2,6 +2,7 @@
 import type { ReactNode } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ContractorsPanel } from "../components/erp/ContractorsPanel";
+import { ExchangeRatesPanel } from "../components/erp/ExchangeRatesPanel";
 import { MachinesPanel } from "../components/erp/MachinesPanel";
 import { PartiesPanel } from "../components/erp/PartiesPanel";
 import { ProductsPanel } from "../components/ProductsPanel";
@@ -21,6 +22,7 @@ const SECTIONS: Section[] = [
   { id: "parties", label: "ui.adminSection_parties", render: () => <PartiesPanel /> },
   { id: "machines", label: "ui.adminSection_machines", render: () => <MachinesPanel /> },
   { id: "contractors", label: "ui.adminSection_contractors", render: () => <ContractorsPanel /> },
+  { id: "rates", label: "ui.adminSection_rates", render: () => <ExchangeRatesPanel /> },
 ];
 
 export function AdminPage() {

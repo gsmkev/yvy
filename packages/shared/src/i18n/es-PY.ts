@@ -1782,6 +1782,13 @@ export const esPY = {
     rateUnitPer_ton: "por tonelada",
     contractorRate: "Tarifa",
     currency: "Moneda",
+    adminSection_rates: "Tipo de cambio",
+    ratesIntro: "Guaraníes por dólar de cada día, cargados a mano. Los montos en dólares se convierten con el último tipo de cambio hasta la fecha del movimiento.",
+    ratesCurrent: "Cotización vigente",
+    ratesCurrentNote: "Por cada dólar, cargada para el {{date}}",
+    ratesNone: "Todavía no cargaste ningún tipo de cambio. Hace falta para registrar montos en dólares.",
+    ratesDate: "Fecha",
+    ratesValue: "Guaraníes por dólar",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

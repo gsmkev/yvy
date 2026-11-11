@@ -765,6 +765,11 @@ export const esPY = {
     importKmzNoKml: "El KMZ no tiene un archivo KML adentro.",
     importUnsupported: "No conocemos ese formato. Usá KML, KMZ, GeoJSON o un shapefile en .zip.",
     importMapHint: "Verde: se importa. Gris: lo dejaste afuera. Rojo: tiene problemas. Tocá un polígono para sumarlo o sacarlo.",
+    addPart: "Sumar otra parte",
+    startOver: "Empezar de nuevo",
+    farmParts: "{{count}} partes separadas",
+    fileHasMany: "El archivo trae {{count}} polígonos. Tomamos el más grande como perímetro.",
+    useAllAsParts: "Usar todos como partes de la estancia",
     importFixed: "Corregimos {{count}} vértices repetidos o espigas sin superficie.",
   },
   attribution: {

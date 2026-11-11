@@ -1,5 +1,5 @@
 import { PenLine, Upload, X } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Polygon } from "geojson";
@@ -10,7 +10,7 @@ import { post } from "../lib/api";
 import { fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { parseLocation } from "../lib/coords";
-import { parseFile } from "../lib/importGeo";
+import { combineAreas, parseFile, type ImportedPolygon } from "../lib/importGeo";
 import { searchPlaces, type Place } from "../lib/places-py";
 import type { Area } from "../lib/types";
 
@@ -20,7 +20,10 @@ export function NewFarmPage() {
   const [name, setName] = useState("");
   const [department, setDepartment] = useState("");
   const [district, setDistrict] = useState("");
-  const [geometry, setGeometry] = useState<Area | null>(null);
+  // Partes del perímetro: varias figuras forman un MultiPolygon (cascos separados).
+  const [parts, setParts] = useState<Area[]>([]);
+  const geometry = useMemo(() => combineAreas(parts), [parts]);
+  const [fileOptions, setFileOptions] = useState<ImportedPolygon[] | null>(null);
   const [drawing, setDrawing] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
@@ -63,10 +66,16 @@ export function NewFarmPage() {
   const onFile = async (file: File) => {
     setError(null);
     try {
-      const polys = (await parseFile(file)).filter((p) => !p.error);
+      const polys = (await parseFile(file)).filter((p) => !p.error).sort((a, b) => b.areaHa - a.areaHa);
       if (!polys.length) throw new Error(t("ui.importErrors", { count: 1 }));
-      // El polígono más grande es el perímetro
-      setGeometry(polys.sort((a, b) => b.areaHa - a.areaHa)[0]!.geometry);
+      if (polys.length === 1) {
+        setParts([polys[0]!.geometry]);
+        setFileOptions(null);
+      } else {
+        // Varios polígonos: el más grande como perímetro, o todos como partes de la estancia.
+        setParts([polys[0]!.geometry]);
+        setFileOptions(polys);
+      }
     } catch (e) {
       setError(e);
     }
@@ -101,7 +110,8 @@ export function NewFarmPage() {
           flyTo={flyTo}
           drawing={drawing}
           onDrawn={(g: Polygon) => {
-            setGeometry(g);
+            setParts((prev) => [...prev, g]);
+            setFileOptions(null);
             setDrawing(false);
           }}
         />
@@ -186,11 +196,22 @@ export function NewFarmPage() {
         <p className="text-sm text-tinta-2">{t("ui.drawFarm")}</p>
         <div className="flex flex-wrap gap-2">
           <Button icon={drawing ? X : PenLine} onClick={() => setDrawing(!drawing)}>
-            {drawing ? t("ui.cancel") : t("ui.draw")}
+            {drawing ? t("ui.cancel") : parts.length ? t("ui.addPart") : t("ui.draw")}
           </Button>
+          {parts.length > 0 && !drawing && (
+            <Button
+              variant="quiet"
+              onClick={() => {
+                setParts([]);
+                setFileOptions(null);
+              }}
+            >
+              {t("ui.startOver")}
+            </Button>
+          )}
           <label className="cursor-pointer">
             <span className="inline-flex h-9 items-center gap-2 rounded-md border border-linea bg-papel px-3.5 text-sm font-medium hover:bg-white">
-              <Upload size={16} aria-hidden />
+                <Upload size={16} aria-hidden />
               {t("ui.importShort")}
             </span>
             <input
@@ -201,9 +222,20 @@ export function NewFarmPage() {
             />
           </label>
         </div>
+        {fileOptions && (
+          <div className="flex flex-col gap-2 border-b border-linea pb-3 text-sm">
+            <p>{t("ui.fileHasMany", { count: fileOptions.length })}</p>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => setParts(fileOptions.map((p) => p.geometry))}>{t("ui.useAllAsParts")}</Button>
+            </div>
+          </div>
+        )}
         {geometry && (
           <p className="text-sm">
             {t("ui.area")}: <strong>{fmtHa(areaHa(geometry))}</strong>
+            {parts.length > 1 || geometry.type === "MultiPolygon"
+              ? ` · ${t("ui.farmParts", { count: geometry.coordinates.length })}`
+              : ""}
           </p>
         )}
         {error ? <ErrorBox error={error} /> : null}

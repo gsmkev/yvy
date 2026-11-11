@@ -40,7 +40,9 @@ const lvl = (prefix: string) => ["low", "medium", "high"].map((v) => ({ value: v
 const cond = ["good", "fair", "bad"].map((v) => ({ value: v, label: `fields.condition_${v}` }));
 
 /** Las etiquetas son claves de i18n; la pantalla las traduce. */
+/** `track` no se carga con preguntas: lo graba la pantalla de recorrida (F-05). */
 export const FLOWS: Record<RecordKind, Step[]> = {
+  track: [],
   rain: [{ key: "mm", kind: "number", question: "app.rainQuestion", hint: "app.rainHint", unit: "mm", max: 1000 }],
   scouting: [
     { key: "condition", kind: "choice", question: "app.scoutQuestion", options: cond },

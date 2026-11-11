@@ -102,6 +102,10 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
       if (typeof d.deltaT === "number") parts.push(t("fields.deltaTValue", { n: dec(d.deltaT) }));
       break;
     }
+    case "track":
+      if (typeof d.distanceM === "number") parts.push(t("fields.trackDistance", { km: dec(Number((d.distanceM / 1000).toFixed(2))) }));
+      if (typeof d.durationS === "number") parts.push(t("fields.trackDuration", { min: Math.max(1, Math.round(d.durationS / 60)) }));
+      break;
     case "note":
       if (str("text")) parts.push(d.text as string);
       break;

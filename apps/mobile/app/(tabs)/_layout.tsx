@@ -8,6 +8,7 @@ import { useSession } from "../../src/lib/session";
 import { useFabHidden } from "../../src/lib/fab";
 import { startAutoSync, useSyncStatus } from "../../src/lib/sync";
 import { SyncBar, Text } from "../../src/ui/kit";
+import { WalkBanner } from "../../src/ui/WalkBanner";
 import { C, F } from "../../src/ui/theme";
 
 const icon =
@@ -25,6 +26,7 @@ export default function TabsLayout() {
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: C.papel }}>
       <SyncBar />
+      <WalkBanner />
       <Tabs
         screenOptions={{
           headerShown: false,

@@ -8,6 +8,7 @@ import {
   Droplets,
   Footprints,
   NotebookPen,
+  Route,
   Scale,
   Shovel,
   Sprout as Fertilizer,
@@ -39,6 +40,7 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
   application: SprayCan,
   fertilization: Fertilizer,
   harvest: Scale,
+  track: Route,
 };
 
 export const ALERT_ICON: Record<string, LucideIcon> = {

@@ -9,7 +9,9 @@ export type Step =
   | { key: string; kind: "choice"; question: string; options: { value: string; label: string }[]; optional?: boolean }
   | { key: string; kind: "number"; question: string; hint?: string; unit: string; max: number }
   | { key: string; kind: "yesno"; question: string }
-  | { key: string; kind: "text"; question: string; optional?: boolean };
+  | { key: string; kind: "text"; question: string; optional?: boolean }
+  /** Contador grande por categoría de hacienda (G-06): el valor es { vaca: 3, toro: 1, ... }. */
+  | { key: string; kind: "counter"; question: string; hint?: string };
 
 const lvl = (prefix: string) => ["low", "medium", "high"].map((v) => ({ value: v, label: `${prefix}${v}` }));
 const cond = ["good", "fair", "bad"].map((v) => ({ value: v, label: `fields.condition_${v}` }));
@@ -46,12 +48,17 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     { key: "note", kind: "text", question: "app.addNote", optional: true },
   ],
   note: [{ key: "text", kind: "text", question: "app.noteQuestion" }],
+  // ganaderia
+  herd_count: [{ key: "counts", kind: "counter", question: "app.herdCountQuestion", hint: "app.herdCountHint" }],
 };
 
 /** Qué se puede anotar en cada tipo de lote, en el orden de frecuencia real. */
 export const KINDS_FOR = (plotKind: "crop" | "pasture" | null): RecordKind[] =>
   plotKind === "pasture"
-    ? ["pasture_status", "rain", "water", "pest", "scouting", "note"]
+    ? ["pasture_status", "herd_count", "rain", "water", "pest", "scouting", "note"]
     : plotKind === "crop"
       ? ["scouting", "pest", "crop_status", "rain", "water", "note"]
       : ["rain", "scouting", "water", "note", "pest", "crop_status", "pasture_status"];
+
+/** Registros de hacienda: son de un solo potrero, no se cargan en varios a la vez (F-10). */
+export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count"];

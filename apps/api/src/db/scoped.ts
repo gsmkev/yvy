@@ -88,6 +88,8 @@ export const can = {
   /** K-04: solo el dueño crea y revoca enlaces de solo lectura. */
   shareLinks: (r: Role) => r === "owner",
   alertSettings: (r: Role) => r === "owner" || r === "admin",
+  /** G-10: planificar el calendario sanitario (y crear sus tareas): todos menos el empleado. */
+  planSanitary: (r: Role) => r !== "worker",
 };
 
 export class ScopedDb {

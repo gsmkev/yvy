@@ -4,6 +4,7 @@ export * from "./brand";
 export * from "./records";
 export * from "./monitoring";
 export * from "./livestock";
+export * from "./sanitary";
 export * from "./sync-protocol";
 export * from "./i18n";
 export {

@@ -82,6 +82,11 @@ const tasks = createRoute({
   path: "/tareas",
   component: lazyRouteComponent(() => import("./routes/tasks"), "TasksPage"),
 });
+const sanitary = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/sanidad",
+  component: lazyRouteComponent(() => import("./routes/sanitary"), "SanitaryPage"),
+});
 const team = createRoute({
   getParentRoute: () => appRoute,
   path: "/equipo",
@@ -131,6 +136,7 @@ const routeTree = rootRoute.addChildren([
     farmReports,
     records,
     tasks,
+    sanitary,
     team,
     help,
     labs,

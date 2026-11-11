@@ -3,6 +3,8 @@ import {
   computeStock,
   DEFAULT_MAX_UA_PER_HA,
   farmStock,
+  matchingHealth,
+  sanitaryState,
   totalHead,
   uaOf,
   uaPerHa,
@@ -130,5 +132,30 @@ describe("carga animal", () => {
     expect(f.ua).toBeCloseTo(170);
     expect(f.uaPerHa).toBeCloseTo(0.85);
     expect(f.uaPerHa! > DEFAULT_MAX_UA_PER_HA).toBe(false);
+  });
+});
+
+describe("calendario sanitario: estado", () => {
+  const at = (iso: string) => Date.parse(`${iso}T12:00:00-03:00`);
+  const ev = { reason: "aftosa", plannedDate: "2026-11-10", farmId: null };
+  it("hecho si hay un tratamiento del mismo motivo dentro de la ventana", () => {
+    expect(sanitaryState(ev, [{ farmId: "f", reason: "aftosa", capturedAt: at("2026-11-12") }], "2026-11-20")).toBe("done");
+    // adelantado hasta 15 días
+    expect(sanitaryState(ev, [{ farmId: "f", reason: "aftosa", capturedAt: at("2026-10-27") }], "2026-11-20")).toBe("done");
+    expect(sanitaryState(ev, [{ farmId: "f", reason: "aftosa", capturedAt: at("2026-10-20") }], "2026-11-20")).toBe("overdue");
+  });
+  it("otro motivo no lo cumple", () => {
+    expect(sanitaryState(ev, [{ farmId: "f", reason: "brucelosis", capturedAt: at("2026-11-12") }], "2026-11-20")).toBe("overdue");
+  });
+  it("vencido solo después de la fecha; el mismo día todavía es próximo", () => {
+    expect(sanitaryState(ev, [], "2026-11-10")).toBe("upcoming");
+    expect(sanitaryState(ev, [], "2026-11-11")).toBe("overdue");
+    expect(sanitaryState(ev, [], "2026-11-01")).toBe("upcoming");
+  });
+  it("un evento de una estancia solo lo cumple un registro de esa estancia", () => {
+    const e = { ...ev, farmId: "A" };
+    const r = { reason: "aftosa", capturedAt: at("2026-11-12") };
+    expect(matchingHealth(e, [{ ...r, farmId: "B" }])).toBeNull();
+    expect(matchingHealth(e, [{ ...r, farmId: "A" }])).not.toBeNull();
   });
 });

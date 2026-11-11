@@ -18,6 +18,8 @@
       "/public/*",
       "/admin/*",
       "/me",
+      "/me/*",
+      "/events",
       "/devices",
       "/health",
       "/descargar-app",

@@ -88,6 +88,7 @@ const SYNCED: Record<PullTable, SyncedTable> = {
     id: s.plotSeasons.id,
   },
   products: { table: s.products, org: s.products.organizationId, version: s.products.version, id: s.products.id },
+  machines: { table: s.machines, org: s.machines.organizationId, version: s.machines.version, id: s.machines.id },
 };
 
 /** Matriz de permisos (PRD §9). */
@@ -187,6 +188,8 @@ export class ScopedDb {
         return sql`plot_seasons.plot_id IN ${this.assignedPlotsSql()}`;
       case "products":
         return undefined; // el catálogo es de toda la organización
+      case "machines":
+        return undefined; // las máquinas son de toda la organización: el empleado las elige al cargar combustible
     }
   }
 

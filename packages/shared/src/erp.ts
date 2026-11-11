@@ -70,6 +70,19 @@ export const exchangeRateInput = z.object({
   usdToPyg: z.number().int().min(1).max(100_000),
 });
 
+// ---------- Maquinaria (E-03) ----------
+
+export const machineInput = z.object({
+  name: z.string().trim().min(1).max(80),
+  type: z.enum(MACHINE_TYPES),
+  brand: optText(60),
+  model: optText(60),
+  year: z.number().int().min(1950).max(2100).nullish(),
+  meterKind: z.enum(METER_KINDS),
+  meterValue: z.number().min(0).max(10_000_000).nullish(),
+  farmId: z.string().uuid().nullish(),
+});
+
 // ---------- Terceros (E-02) ----------
 
 /** RUC (con dígito verificador) o cédula: solo dígitos y un guion final opcional. */

@@ -13,6 +13,17 @@ const loginRoute = createRoute({
     s.modo === "registro" ? { modo: "registro" } : {},
 });
 
+const termsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/terminos",
+  component: lazyRouteComponent(() => import("./routes/public/legal"), "TermsPage"),
+});
+const privacyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/privacidad",
+  component: lazyRouteComponent(() => import("./routes/public/legal"), "PrivacyPage"),
+});
+
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: "app",
@@ -88,6 +99,8 @@ const internal = createRoute({
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
+  termsRoute,
+  privacyRoute,
   appRoute.addChildren([home, newFarm, farmRoute, reportRoute, records, tasks, team, labs, labsTool, alerts, internal]),
 ]);
 

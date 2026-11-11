@@ -3,6 +3,7 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ApiError, post, setSession, type Session } from "../lib/api";
 import { t } from "../lib/i18n";
 import { Button, ErrorBox, Field, Input } from "../components/ui";
+import { LegalLinks } from "./public/PublicShell";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -142,6 +143,7 @@ export function LoginPage() {
             )}
             {error ? <ErrorBox error={error} /> : null}
           </form>
+          <LegalLinks className="mt-10 text-sm text-tinta-2" />
         </div>
       </div>
     </div>

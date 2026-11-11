@@ -22,3 +22,27 @@ export async function expectListStatus(path: string, tokens: Record<string, [str
     if (r.status !== status) throw new Error(`${who}: GET ${path} dio ${r.status}, se esperaba ${status}`);
   }
 }
+
+/** Organización con dos depósitos y un producto (litros) para probar stock. */
+export async function stockSetup() {
+  const s = await erpSetup();
+  const a = await erpPost(s.owner.token, "warehouses", { farmId: s.farmId, name: "Galpón", type: "shed" });
+  const b = await erpPost(s.owner.token, "warehouses", { farmId: s.farmId, name: "Depósito 2", type: "shed" });
+  const p = await call<any>("POST", "/org/products", {
+    token: s.owner.token,
+    body: { name: "Glifosato", type: "agrochemical", unit: "l" },
+  });
+  return { ...s, whA: a.body.id as string, whB: b.body.id as string, productId: p.body.id as string };
+}
+
+export const buy = (token: string, s: { productId: string; whA: string }, qty: number, amount: number, extra = {}) =>
+  erpPost(token, "stock/purchases", {
+    productId: s.productId,
+    warehouseId: s.whA,
+    date: "2026-11-05",
+    qty,
+    amount,
+    currency: "PYG",
+    ...extra,
+  });
+

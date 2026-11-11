@@ -1,29 +1,7 @@
 /** E-11: movimientos de stock a costo promedio ponderado, transferencias, ajustes y permisos. */
 import { describe, expect, it } from "vitest";
 import { call, createOrgWithOwner } from "./helpers";
-import { erpGet, erpPost, erpSetup } from "./erp-helpers";
-
-export async function stockSetup() {
-  const s = await erpSetup();
-  const a = await erpPost(s.owner.token, "warehouses", { farmId: s.farmId, name: "Galpón", type: "shed" });
-  const b = await erpPost(s.owner.token, "warehouses", { farmId: s.farmId, name: "Depósito 2", type: "shed" });
-  const p = await call<any>("POST", "/org/products", {
-    token: s.owner.token,
-    body: { name: "Glifosato", type: "agrochemical", unit: "l" },
-  });
-  return { ...s, whA: a.body.id as string, whB: b.body.id as string, productId: p.body.id as string };
-}
-
-export const buy = (token: string, s: { productId: string; whA: string }, qty: number, amount: number, extra = {}) =>
-  erpPost(token, "stock/purchases", {
-    productId: s.productId,
-    warehouseId: s.whA,
-    date: "2026-11-05",
-    qty,
-    amount,
-    currency: "PYG",
-    ...extra,
-  });
+import { buy, erpGet, erpPost, stockSetup } from "./erp-helpers";
 
 const summary = async (token: string) => (await erpGet<any>(token, "stock")).body;
 const inWh = (sum: any, productId: string, whId: string) =>

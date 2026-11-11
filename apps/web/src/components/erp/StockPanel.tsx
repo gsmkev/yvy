@@ -33,6 +33,14 @@ export interface StockMove {
 
 type Mode = "purchase" | "consumption" | "transfer" | "adjustment";
 
+interface ExpiringLot {
+  productId: string;
+  lot: string | null;
+  expiresOn: string;
+  daysLeft: number;
+  remaining: number;
+}
+
 export const useStock = () => useQuery({ queryKey: ["erp", "stock"], queryFn: () => get<Summary>("/org/erp/stock") });
 
 const dayOf = (ms: number) => new Date(ms).toISOString().slice(0, 10);
@@ -46,6 +54,7 @@ export function StockPanel() {
     queryKey: ["erp", "stock-moves", productId],
     queryFn: () => get<StockMove[]>(`/org/erp/stock/moves${qs({ productId: productId || undefined })}`),
   });
+  const expiring = useQuery({ queryKey: ["erp", "expiring"], queryFn: () => get<ExpiringLot[]>("/org/erp/stock/expiring") });
   const [mode, setMode] = useState<Mode | null>(null);
   const [removing, setRemoving] = useState<StockMove | null>(null);
   const qc = useQueryClient();
@@ -73,6 +82,26 @@ export function StockPanel() {
           </Button>
         ))}
       </div>
+      {expiring.data && expiring.data.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <h2 className="border-b border-linea pb-2 font-serif text-lg font-semibold">{t("ui.expiringTitle")}</h2>
+          <table className="w-full text-sm">
+            <tbody>
+              {expiring.data.map((l) => (
+                <tr key={`${l.productId}-${l.lot}-${l.expiresOn}`} className="border-b border-linea">
+                  <td className="py-2.5 pr-4 font-medium">{prod(l.productId)?.name}</td>
+                  <td className="py-2.5 pr-4 text-tinta-2">{l.lot ? t("ui.expiringLot", { lot: l.lot }) : ""}</td>
+                  <td className="num py-2.5 pr-4 text-right">{fmtQty(l.remaining, unit(l.productId))}</td>
+                  <td className="num py-2.5 pr-4 text-right">{fmtIsoDate(l.expiresOn)}</td>
+                  <td className={`py-2.5 text-right ${l.daysLeft < 0 ? "text-peligro" : "text-trigo-texto"}`}>
+                    {l.daysLeft < 0 ? t("ui.expiringExpired", { n: -l.daysLeft }) : t("ui.expiringIn", { n: l.daysLeft })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
       {(warehouses.data ?? []).length === 0 && <p className="text-sm text-trigo-texto">{t("ui.stockNoWarehouse")}</p>}
       {list.length === 0 ? (
         <Empty>{t("ui.stockEmpty")}</Empty>
@@ -193,6 +222,8 @@ function MoveModal({ mode, onClose }: { mode: Mode; onClose: () => void }) {
     plotId: "",
     note: "",
     sign: "1",
+    lot: "",
+    expiresOn: "",
   });
   const farm = useFarm(f.farmId, mode === "consumption" && !!f.farmId);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) =>
@@ -209,6 +240,8 @@ function MoveModal({ mode, onClose }: { mode: Mode; onClose: () => void }) {
           amount: toMinor(Number(f.amount), f.currency as Currency),
           currency: f.currency,
           partyId: f.partyId || null,
+          lot: f.lot.trim() || null,
+          expiresOn: f.expiresOn || null,
         });
       if (mode === "consumption")
         return post("/org/erp/stock/consumptions", { ...common, warehouseId: f.warehouseId, qty, plotId: f.plotId || null });
@@ -270,6 +303,12 @@ function MoveModal({ mode, onClose }: { mode: Mode; onClose: () => void }) {
             </Field>
             <Field label={t("ui.stockTotalAmount")}>
               <Input type="number" required min={0} step="any" value={f.amount} onChange={set("amount")} />
+            </Field>
+            <Field label={t("ui.stockLot")}>
+              <Input value={f.lot} onChange={set("lot")} maxLength={40} />
+            </Field>
+            <Field label={t("ui.stockExpires")}>
+              <Input type="date" value={f.expiresOn} onChange={set("expiresOn")} />
             </Field>
             <div className="col-span-2">
               <Field label={t("ui.stockSupplier")}>

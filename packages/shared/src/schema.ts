@@ -545,6 +545,9 @@ export const stockMoves = sqliteTable(
     warehouseId: text("warehouse_id").notNull(),
     qty: real("qty").notNull(),
     valuePyg: integer("value_pyg").notNull(),
+    /** Lote y vencimiento ("YYYY-MM-DD") de lo comprado: agroquímicos y vacunas (E-12). */
+    lot: text("lot"),
+    expiresOn: text("expires_on"),
     /** Total del comprobante en unidad menor de `currency` (solo compras). */
     amount: integer("amount"),
     currency: text("currency", { enum: CURRENCIES }),

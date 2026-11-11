@@ -764,6 +764,7 @@ export const esPY = {
       "El shapefile no trae .prj y sus coordenadas no son grados. Agregá el .prj o exportalo en WGS84.",
     importKmzNoKml: "El KMZ no tiene un archivo KML adentro.",
     importUnsupported: "No conocemos ese formato. Usá KML, KMZ, GeoJSON o un shapefile en .zip.",
+    importMapHint: "Verde: se importa. Gris: lo dejaste afuera. Rojo: tiene problemas. Tocá un polígono para sumarlo o sacarlo.",
     importFixed: "Corregimos {{count}} vértices repetidos o espigas sin superficie.",
   },
   attribution: {

@@ -120,3 +120,34 @@ describe("registro herd_move", () => {
     expect(r.body.results[1].reason).toBe("forbidden");
   });
 });
+
+describe("registro mortality", () => {
+  const ok = { category: "ternero", head: 2, cause: "enfermedad" };
+
+  it("se guarda con potrero, categoría, cabezas y causa", async () => {
+    const { owner, farmId, plotIds } = await setup();
+    const r = await push(owner.token, [rec(farmId, plotIds[0]!, "mortality", ok)]);
+    expect(r.body.results[0].status).toBe("applied");
+  });
+
+  it("rechaza sin potrero, cero cabezas, decimales, causa o categoría desconocida", async () => {
+    const { owner, farmId, plotIds } = await setup();
+    const r = await push(owner.token, [
+      rec(farmId, null, "mortality", ok),
+      rec(farmId, plotIds[0]!, "mortality", { ...ok, head: 0 }),
+      rec(farmId, plotIds[0]!, "mortality", { ...ok, head: 1.5 }),
+      rec(farmId, plotIds[0]!, "mortality", { ...ok, cause: "brujeria" }),
+      rec(farmId, plotIds[0]!, "mortality", { ...ok, category: "oveja" }),
+    ]);
+    expect(r.body.results.map((x: any) => x.status)).toEqual(Array(5).fill("rejected"));
+  });
+
+  it("el empleado carga mortandad solo en sus potreros", async () => {
+    const { worker, farmId, plotIds } = await setup();
+    const r = await push(worker.token, [
+      rec(farmId, plotIds[1]!, "mortality", ok),
+      rec(farmId, plotIds[2]!, "mortality", ok),
+    ]);
+    expect(r.body.results.map((x: any) => x.status)).toEqual(["applied", "rejected"]);
+  });
+});

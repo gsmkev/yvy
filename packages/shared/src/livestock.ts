@@ -157,6 +157,10 @@ export function farmStock(stock: Iterable<PlotStock>, areaByPlot: ReadonlyMap<st
 export const MOVE_REASONS = ["rotacion", "sanidad", "venta", "compra", "otro"] as const;
 export type MoveReason = (typeof MOVE_REASONS)[number];
 
+/** Causas de mortandad (lista cerrada para poder sumar por causa). */
+export const MORTALITY_CAUSES = ["enfermedad", "accidente", "parto", "rayo", "sequia", "vibora", "desconocida", "otra"] as const;
+export type MortalityCause = (typeof MORTALITY_CAUSES)[number];
+
 /**
  * El potrero de un registro de hacienda es `records.plot_id`. Devuelve el problema (texto en es-PY) o null.
  * Un conteo y una mortandad necesitan potrero; un movimiento necesita origen o destino.

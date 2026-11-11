@@ -1536,6 +1536,11 @@ export const esPY = {
     accountReferralCopy: "Copiar enlace",
     internalReferral: "Referido por",
     internalReferralUnknown: "Código sin agrónomo",
+    // web-p2
+    savedFilters: "Filtros guardados",
+    savedFilterSave: "Guardar estos filtros",
+    savedFilterName: "Nombre del filtro",
+    savedFilterDelete: "Borrar el filtro {{name}}",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

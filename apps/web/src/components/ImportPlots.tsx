@@ -87,8 +87,7 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
     for (const p of selected) {
       for (const ex of farm.data?.plots ?? []) {
         const r = overlapRatio(p.geometry, JSON.parse(ex.geometry) as Area);
-        if (r > OVERLAP_WARN_RATIO)
-          out.push(t("ui.warnOverlap", { a: p.name, b: ex.name, pct: Math.round(r * 100) }));
+        if (r > OVERLAP_WARN_RATIO) out.push(t("ui.warnOverlap", { a: p.name, b: ex.name, pct: Math.round(r * 100) }));
       }
     }
     return out;

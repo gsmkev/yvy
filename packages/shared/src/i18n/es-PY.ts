@@ -774,6 +774,7 @@ export const esPY = {
     warnOverlap: "{{a}} se superpone con {{b}} ({{pct}} % del más chico).",
     warnOutside: "{{a}} sale del perímetro de la estancia.",
     warnMore: "Y {{count}} avisos más.",
+    alsoImportPlots: "Importar también los {{count}} lotes del archivo al guardar la estancia",
     importFixed: "Corregimos {{count}} vértices repetidos o espigas sin superficie.",
   },
   attribution: {

@@ -4,6 +4,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Polygon } from "geojson";
 import { areaHa, bboxOf } from "@yvy/geo";
+import { LIMITS } from "@yvy/shared";
 import { FarmMap } from "../components/FarmMap";
 import { Button, ErrorBox, Field, Input } from "../components/ui";
 import { post } from "../lib/api";
@@ -24,6 +25,13 @@ export function NewFarmPage() {
   const [parts, setParts] = useState<Area[]>([]);
   const geometry = useMemo(() => combineAreas(parts), [parts]);
   const [fileOptions, setFileOptions] = useState<ImportedPolygon[] | null>(null);
+  // M-08: los demás polígonos del archivo, para importarlos como lotes en el mismo paso.
+  const [withPlots, setWithPlots] = useState(true);
+  const filePlots = (fileOptions ?? [])
+    .slice(1)
+    .filter(
+      (p) => p.areaHa >= LIMITS.geometry.minPlotHa && parts.length === 1 && parts[0] === fileOptions![0]!.geometry,
+    );
   const [drawing, setDrawing] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
@@ -92,6 +100,13 @@ export function NewFarmPage() {
         district: district || null,
         geometry,
       });
+      if (withPlots && filePlots.length) {
+        for (let i = 0; i < filePlots.length; i += 40) {
+          await post(`/org/farms/${r.id}/plots`, {
+            plots: filePlots.slice(i, i + 40).map((p) => ({ name: p.name, kind: "crop", geometry: p.geometry })),
+          });
+        }
+      }
       await qc.invalidateQueries({ queryKey: ["farms"] });
       navigate({ to: "/estancias/$farmId", params: { farmId: r.id } });
     } catch (e) {
@@ -225,6 +240,12 @@ export function NewFarmPage() {
         {fileOptions && (
           <div className="flex flex-col gap-2 border-b border-linea pb-3 text-sm">
             <p>{t("ui.fileHasMany", { count: fileOptions.length })}</p>
+            {filePlots.length > 0 && (
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={withPlots} onChange={(e) => setWithPlots(e.target.checked)} />
+                {t("ui.alsoImportPlots", { count: filePlots.length })}
+              </label>
+            )}
             <div className="flex flex-wrap gap-2">
               <Button onClick={() => setParts(fileOptions.map((p) => p.geometry))}>{t("ui.useAllAsParts")}</Button>
             </div>

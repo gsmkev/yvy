@@ -55,7 +55,10 @@ export const FLOWS: Record<RecordKind, Step[]> = {
 /** Qué se puede anotar en cada tipo de lote, en el orden de frecuencia real. */
 export const KINDS_FOR = (plotKind: "crop" | "pasture" | null): RecordKind[] =>
   plotKind === "pasture"
-    ? ["pasture_status", "rain", "water", "pest", "scouting", "note"]
+    ? ["pasture_status", "herd_count", "rain", "water", "pest", "scouting", "note"]
     : plotKind === "crop"
       ? ["scouting", "pest", "crop_status", "rain", "water", "note"]
       : ["rain", "scouting", "water", "note", "pest", "crop_status", "pasture_status"];
+
+/** Registros de hacienda: son de un solo potrero, no se cargan en varios a la vez (F-10). */
+export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count"];

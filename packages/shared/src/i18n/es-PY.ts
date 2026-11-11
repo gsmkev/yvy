@@ -335,6 +335,11 @@ export const esPY = {
     ownerRecordsOne: "1 anotación",
     ownerWorseTitle: "Lotes que empeoraron",
     ownerWorseLine: "El vigor bajó {{pct}} % desde el {{date}}",
+    // ganaderia
+    herdCountQuestion: "¿Cuántos animales hay?",
+    herdCountHint: "Contá por categoría. Mantené apretado + o − para ir más rápido.",
+    herdCounterTotal: "Total: {{n}} cabezas",
+    herdEmpty: "El potrero está vacío",
   },
   fields: {
     condition: "Estado general",

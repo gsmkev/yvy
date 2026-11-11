@@ -25,7 +25,7 @@ import { del, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
 import { download, plotsToGeoJson, plotsToKml, plotsToShapefileZip } from "../lib/exports";
 import { closedAreaHa, fmtDistance, pathLengthM, type LonLat } from "../lib/measure";
-import { fmtDate, fmtHa, fmtNum } from "../lib/format";
+import { fmtDate, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { loadPrefs, savePrefs } from "../lib/prefs";
 import { fetchAllRecords, useAlerts, useFarm, useFarms, useMe, useMembers, useProblemAreas } from "../lib/queries";
@@ -485,8 +485,8 @@ export function FarmPage() {
             {[d.farm.district, d.farm.department].filter(Boolean).join(", ")}
             {(d.farm.district || d.farm.department) && " · "}
             {fmtHa(d.farm.areaHa)} · {d.plots.length} {t("ui.plots").toLowerCase()}
-            {cropHa > 0 && ` · ${fmtNum(cropHa)} ha ${t("ui.crop").toLowerCase()}`}
-            {pastureHa > 0 && ` · ${fmtNum(pastureHa)} ha ${t("ui.pasture").toLowerCase()}`}
+            {cropHa > 0 && ` · ${fmtHa(cropHa)} ${t("ui.crop").toLowerCase()}`}
+            {pastureHa > 0 && ` · ${fmtHa(pastureHa)} ${t("ui.pasture").toLowerCase()}`}
           </p>
         </header>
 

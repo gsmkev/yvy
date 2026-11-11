@@ -1,5 +1,5 @@
 import { doseText } from "@yvy/shared";
-import { fmtNum } from "../lib/format";
+import { fmtHa, fmtNum, fmtTemp } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 
 type Data = Record<string, unknown>;
@@ -11,12 +11,12 @@ export function RecordDetails({ kind, data }: { kind: string; data: Data }) {
   const products = Array.isArray(data.products) ? (data.products as Data[]) : [];
   const rows: [string, string][] = [];
   if (num(data.volumeLHa) !== null) rows.push([t("ui.appVolume"), `${fmtNum(data.volumeLHa as number)} L/ha`]);
-  if (num(data.areaHa) !== null) rows.push([t("ui.appArea"), `${fmtNum(data.areaHa as number)} ha`]);
+  if (num(data.areaHa) !== null) rows.push([t("ui.appArea"), fmtHa(data.areaHa as number)]);
   if (typeof data.method === "string") rows.push([t("fields.method"), tk(`fields.method_${data.method}`)]);
   if (typeof data.machine === "string") rows.push([t("fields.machine"), data.machine]);
   const cond: [string, string][] = [];
   if (num(data.windKmh) !== null) cond.push([t("ui.appWind"), `${fmtNum(data.windKmh as number)} km/h`]);
-  if (num(data.tempC) !== null) cond.push([t("ui.appTemp"), `${fmtNum(data.tempC as number)} °C`]);
+  if (num(data.tempC) !== null) cond.push([t("ui.appTemp"), fmtTemp(data.tempC as number)]);
   if (num(data.humidityPct) !== null) cond.push([t("ui.appHumidity"), `${fmtNum(data.humidityPct as number)} %`]);
   if (num(data.deltaT) !== null) cond.push([t("ui.appDeltaT"), `${fmtNum(data.deltaT as number)} °C`]);
   return (

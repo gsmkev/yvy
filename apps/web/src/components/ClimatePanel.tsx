@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { addDays, CHART, localDate, t as _t } from "@yvy/shared";
 import { get } from "../lib/api";
-import { fmtIsoDate, fmtNum } from "../lib/format";
+import { fmtIsoDate, fmtMm, fmtNum, fmtRainValue, rainUnitLabel } from "../lib/format";
 import { t } from "../lib/i18n";
 import { LineChart, RainChart } from "./charts";
 import { CloudRain, CloudSun } from "lucide-react";
@@ -74,11 +74,11 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
       <div className="grid grid-cols-2 gap-4 border-b border-linea pb-5">
         <Stat
           label={t("ui.rain30")}
-          value={hasRain ? Math.round(rain30) : "—"}
-          unit={hasRain ? "mm" : undefined}
+          value={hasRain ? fmtRainValue(rain30) : "—"}
+          unit={hasRain ? rainUnitLabel() : undefined}
           note={
             normal30 > 0 && hasRain
-              ? `${t("ui.rainNormal")} ${Math.round(normal30)} mm · ${Math.round((rain30 / normal30) * 100)} %`
+              ? `${t("ui.rainNormal")} ${fmtMm(normal30)} · ${Math.round((rain30 / normal30) * 100)} %`
               : _t("attribution.chirps")
           }
         />

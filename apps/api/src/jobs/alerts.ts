@@ -15,6 +15,7 @@ const SOURCES: Record<AlertDraft["kind"], string> = {
   excess_rain: "MET Norway",
   drought: "CHIRPS + NASA POWER + MET Norway",
   fire: "NASA FIRMS",
+  pest_threshold: "Monitoreos de plagas (umbral por defecto)",
 };
 
 export async function upsertAlert(

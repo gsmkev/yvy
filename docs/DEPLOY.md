@@ -37,6 +37,28 @@ hace el primer deploy y carga los secrets. Al final imprime `INGEST_SECRET`: gua
 `ADMIN_EMAILS` (quién ve el panel interno), `OPS_EMAIL` (aviso al 70 % de los límites gratis), `YVY_API_URL` (= `APP_URL`),
 `ALLOW_SIGNUP` (`true` para el piloto), `EAS_PROJECT_ID` (opcional).
 
+### Secrets del Worker para disparar los jobs al crear una estancia (opcional, S-02)
+
+Sin estos dos el Worker se saltea el disparo (y avisa una vez en el log): la estancia se procesa recién en el cron semanal.
+
+1. GitHub → Settings → Developer settings → Personal access tokens → **Fine-grained tokens** → *Generate new token*.
+   Repository access: **Only select repositories** → solo este repo. Permisos de repositorio: **Actions: Read and write**
+   (y nada más; *Metadata: Read* queda por defecto). Vencimiento: 1 año; anotá la fecha para renovarlo.
+2. Cargalo en Cloudflare:
+   ```bash
+   cd apps/api
+   echo "github_pat_…" | pnpm wrangler secret put GITHUB_DISPATCH_TOKEN
+   echo "<owner>/<repo>" | pnpm wrangler secret put GITHUB_REPO
+   ```
+   En desarrollo local van en `apps/api/.dev.vars` (ver `.dev.vars.example`).
+
+Al crear una estancia, `POST /org/farms` llama a `POST /repos/{owner}/{repo}/actions/workflows/jobs.yml/dispatches`
+(rama `main`) con `job=new_farm` y el id de la estancia. Ese job corre el mapa base, la climatología y 180 días de
+Sentinel-2 de esa estancia (~10-20 min de Actions). El estado (`pending`, `processing`, `ready`, `failed`) sale como
+`imageryStatus` en `/org/farms` y `/org/farms/:id`; pasa a `ready` cuando llega el mapa base. Si GitHub rechaza el
+disparo (token vencido o sin permiso) queda en `failed` y el cron semanal lo recupera. También se puede correr a mano:
+Actions → *Jobs de datos* → `new_farm` con el id de la estancia.
+
 Con eso:
 - **Deploy** (`deploy.yml`): cada push a `main` corre lint, typecheck y tests, aplica migraciones y publica.
 - **Jobs de datos** (`jobs.yml`): Sentinel-2 diario, CHIRPS diario, FIRMS cada 3 h, climatología y mapa base semanal.
@@ -55,7 +77,7 @@ Después: Actions → **APK Android** → *Run workflow*. Queda en `https://<APP
 ## 5. Primera estancia
 
 1. Entrá a la web, registrate y creá la organización.
-2. En *Actions → Jobs de datos* corré `climatology_build` y `s2_basemap` (o esperá al domingo).
+2. Si configuraste el token de arriba, el mapa base, la climatología y los últimos 6 meses se procesan solos al crear la estancia. Si no, en *Actions → Jobs de datos* corré `new_farm` con el id de la estancia (o esperá al domingo).
 3. Creá empleados en **Equipo**, asignales lotes y mostrales el QR de vinculación.
 4. El empleado instala el APK, escanea el QR y baja el *Mapa sin conexión* por wifi.
 

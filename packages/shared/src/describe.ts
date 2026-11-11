@@ -1,5 +1,6 @@
 /** Resumen legible de un registro, en es-PY, a partir de sus datos (web, Excel, PDF y app). */
 import { hasKey, t, type MessageKey } from "./i18n";
+import { HERD_CATEGORIES } from "./livestock";
 
 const tr = (key: string, fallback: string) => (hasKey(key) ? t(key as MessageKey) : fallback);
 
@@ -18,6 +19,8 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
           t("fields.intensityValue", { v: tr(`fields.level_${d.intensity}`, String(d.intensity)).toLowerCase() }),
         );
       if (typeof d.perMeter === "number") parts.push(t("fields.perMeterValue", { n: d.perMeter }));
+      if (Array.isArray(d.stations))
+        parts.push(t(d.stations.length === 1 ? "app.stationsValueOne" : "app.stationsValue", { n: d.stations.length }));
       break;
     case "crop_status":
       if (str("stage")) parts.push(tr(`fields.stage_${d.stage}`, String(d.stage)));
@@ -36,6 +39,24 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
     case "scouting":
       if (str("condition")) parts.push(tr(`fields.condition_${d.condition}`, String(d.condition)));
       break;
+    case "herd_count": {
+      const c = (d.counts ?? {}) as Record<string, number>;
+      const total = HERD_CATEGORIES.reduce((n, k) => n + (c[k] ?? 0), 0);
+      let head = t("fields.herdTotalValue", { n: total });
+      const detail = HERD_CATEGORIES.filter((k) => typeof c[k] === "number" && c[k]! > 0).map((k) =>
+        t(`fields.herdCount_${k}`, { n: c[k]! }),
+      );
+      if (detail.length) head = `${head}: ${detail.join(", ")}`;
+      parts.push(head);
+      break;
+    }
+    case "herd_move": {
+      const c = (d.counts ?? {}) as Record<string, number>;
+      const total = HERD_CATEGORIES.reduce((n, k) => n + (c[k] ?? 0), 0);
+      parts.push(t("fields.herdTotalValue", { n: total }));
+      if (str("reason")) parts.push(tr(`fields.moveReason_${d.reason}`, String(d.reason)).toLowerCase());
+      break;
+    }
     case "note":
       if (str("text")) parts.push(d.text as string);
       break;

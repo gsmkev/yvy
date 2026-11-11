@@ -15,6 +15,7 @@ import {
   parseRecordData,
   summarizeStations,
   t,
+  type HerdCounts,
   type MessageKey,
   type MonitorCrop,
   type RecordKind,
@@ -23,12 +24,13 @@ import {
 import type { LocalPhoto, Plot } from "../../src/db/store";
 import { getDb } from "../../src/lib/db";
 import { selectedFarmId } from "../../src/lib/farmFilter";
-import { FLOWS, KINDS_FOR, type Step } from "../../src/lib/annotate";
+import { FLOWS, KINDS_FOR, SINGLE_PLOT_KINDS, type Step } from "../../src/lib/annotate";
 import { currentFix, guessPlots, type Fix, type PlotGuess } from "../../src/lib/location";
 import { processPhoto } from "../../src/lib/photos";
 import { useSession } from "../../src/lib/session";
 import { localChanged, useSyncStatus } from "../../src/lib/sync";
 import { toastSaved } from "../../src/lib/toast";
+import { HerdCounter } from "../../src/ui/Counter";
 import { Button, Row, s as k, Text, TextInput } from "../../src/ui/kit";
 import { Stations } from "../../src/ui/Stations";
 import { C, F, GUTTER, RADIUS, T, TOUCH } from "../../src/ui/theme";
@@ -326,7 +328,9 @@ export default function Annotate() {
           <Text style={T.title}>{t("app.whatHappened")}</Text>
           {plot && rain > 0 && <Text style={[T.small, { marginTop: 6 }]}>{t("app.rainMonth", { mm: Math.round(rain) })}</Text>}
           <View style={{ height: 16 }} />
-          {KINDS_FOR(plot?.kind ?? (multi.length > 1 && multi.every((p) => p.kind === multi[0]!.kind) ? multi[0]!.kind : null)).map((kd) => (
+          {KINDS_FOR(plot?.kind ?? (multi.length > 1 && multi.every((p) => p.kind === multi[0]!.kind) ? multi[0]!.kind : null))
+            .filter((kd) => !(multi.length > 1 && SINGLE_PLOT_KINDS.includes(kd)))
+            .map((kd) => (
             <Row
               key={kd}
               title={t(`recordKinds.${kd}`)}
@@ -420,6 +424,21 @@ export default function Annotate() {
   // ---------- 3. Pasos ----------
   if (phase.name === "step") {
     const step = steps[phase.i]!;
+    if (step.kind === "counter")
+      return (
+        <View style={k.screen}>
+          {header}
+          <Progress i={phase.i} n={steps.length + 1} />
+          <HerdCounter
+            key={`${kind}-${step.key}`}
+            question={tr(step.question)}
+            hint={step.hint ? tr(step.hint) : undefined}
+            counts={(values[step.key] as HerdCounts | undefined) ?? {}}
+            onChange={(c) => setValues((v) => ({ ...v, [step.key]: c }))}
+            onDone={(c) => advance({ ...values, [step.key]: c })}
+          />
+        </View>
+      );
     return (
       <View style={k.screen}>
         {header}
@@ -503,7 +522,7 @@ function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onA
       </ScrollView>
     );
   }
-  if (step.kind === "counter") return null; // G-06
+  if (step.kind === "counter") return null; // se dibuja con HerdCounter (pantalla completa)
   if (step.kind === "yesno") {
     return (
       <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]}>

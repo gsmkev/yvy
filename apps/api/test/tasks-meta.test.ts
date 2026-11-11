@@ -31,7 +31,8 @@ describe("tareas: prioridad, hora límite y comentarios (T-02)", () => {
     // el dueño edita
     const id = rows.find((r) => r.priority === "high").id;
     expect(
-      (await call("PATCH", `/org/tasks/${id}`, { token: owner.token, body: { priority: "low", dueTime: null } })).status,
+      (await call("PATCH", `/org/tasks/${id}`, { token: owner.token, body: { priority: "low", dueTime: null } }))
+        .status,
     ).toBe(200);
     const again = (await pullAll(worker.token, "tasks")).find((r) => r.id === id);
     expect(again).toMatchObject({ priority: "low", dueTime: null });
@@ -48,14 +49,18 @@ describe("tareas: prioridad, hora límite y comentarios (T-02)", () => {
     const { owner, worker, other, task } = await setup();
     const t = await task();
     const url = `/org/tasks/${t.body.id}/comments`;
-    const a = await call<{ name: string; text: string }>("POST", url, { token: owner.token, body: { text: "  Pasá por el pluviómetro  " } });
+    const a = await call<{ name: string; text: string }>("POST", url, {
+      token: owner.token,
+      body: { text: "  Pasá por el pluviómetro  " },
+    });
     expect(a.status).toBe(201);
     expect(a.body.text).toBe("Pasá por el pluviómetro");
     expect((await call("POST", url, { token: worker.token, body: { text: "Listo, 12 mm" } })).status).toBe(201);
     expect((await call("POST", url, { token: other.token, body: { text: "me meto" } })).status).toBe(404);
     expect((await call("POST", url, { token: owner.token, body: { text: "   " } })).status).toBe(400);
     expect(
-      (await call("POST", url, { token: owner.token, body: { text: "x".repeat(LIMITS.tasks.maxCommentLength + 1) } })).status,
+      (await call("POST", url, { token: owner.token, body: { text: "x".repeat(LIMITS.tasks.maxCommentLength + 1) } }))
+        .status,
     ).toBe(400);
     // Baja al celular por el sync, con el nombre del autor
     const [row] = await pullAll(worker.token, "tasks");
@@ -76,7 +81,9 @@ describe("tareas: prioridad, hora límite y comentarios (T-02)", () => {
     expect((await call("POST", url, { token: owner.token, body: { text: "uno más" } })).status).toBe(403);
     const stranger = await createOrgWithOwner("Otra");
     expect((await call("POST", url, { token: stranger.token, body: { text: "hola" } })).status).toBe(404);
-    expect((await call("POST", `/org/tasks/${newId()}/comments`, { token: owner.token, body: { text: "hola" } })).status).toBe(404);
+    expect(
+      (await call("POST", `/org/tasks/${newId()}/comments`, { token: owner.token, body: { text: "hola" } })).status,
+    ).toBe(404);
   });
 
   it("al completar una tarea recurrente, la siguiente conserva prioridad y hora", async () => {
@@ -87,7 +94,11 @@ describe("tareas: prioridad, hora límite y comentarios (T-02)", () => {
       body: {
         deviceId: "dev",
         mutations: [
-          { mutationId: newId(), kind: "tasks.status", row: { id: t.body.id, status: "done", completedAt: Date.now(), recordId: null } },
+          {
+            mutationId: newId(),
+            kind: "tasks.status",
+            row: { id: t.body.id, status: "done", completedAt: Date.now(), recordId: null },
+          },
         ],
       },
     });

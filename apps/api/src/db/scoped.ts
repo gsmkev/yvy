@@ -670,6 +670,10 @@ export class ScopedDb {
     dueTime?: string | null;
     priority?: (typeof s.TASK_PRIORITIES)[number];
     recurrence: (typeof s.RECURRENCES)[number];
+    checklist?: string | null;
+    lon?: number | null;
+    lat?: number | null;
+    prescription?: string | null;
   }): Promise<{ ids: string[] }> {
     this.require(can.assign);
     await this.requireFarm(input.farmId);

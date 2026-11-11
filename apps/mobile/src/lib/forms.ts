@@ -2,14 +2,15 @@
  * Campos de cada tipo de registro (RF-30), en el mismo orden y con los mismos valores que los esquemas Zod
  * de packages/shared/src/records.ts. La validación final la hace parseRecordData.
  */
-import { PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
+import { CROPS, DENSITY_UNITS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
 
 export type FieldSpec =
   | { key: string; type: "choice"; options: readonly string[]; labelPrefix: string; required?: boolean }
   | { key: string; type: "number"; unit?: string; required?: boolean }
   | { key: string; type: "boolean"; required?: boolean }
   | { key: string; type: "text"; multiline?: boolean; required?: boolean }
-  | { key: string; type: "poi" };
+  | { key: string; type: "poi" }
+  | { key: string; type: "counts"; required?: boolean };
 
 const condition: FieldSpec = {
   key: "condition",
@@ -60,4 +61,42 @@ export const FORMS: Record<RecordKind, FieldSpec[]> = {
     note,
   ],
   note: [{ key: "text", type: "text", multiline: true, required: true }],
+  // ganaderia
+  herd_count: [{ key: "counts", type: "counts", required: true }, note],
+  herd_move: [
+    { key: "reason", type: "choice", options: MOVE_REASONS, labelPrefix: "fields.moveReason_", required: true },
+    { key: "toPlotId", type: "poi" },
+    { key: "counts", type: "counts", required: true },
+    note,
+  ],
+  mortality: [
+    { key: "category", type: "choice", options: HERD_CATEGORIES, labelPrefix: "fields.herd_", required: true },
+    { key: "head", type: "number", unit: "cabezas", required: true },
+    { key: "cause", type: "choice", options: MORTALITY_CAUSES, labelPrefix: "fields.cause_", required: true },
+    note,
+  ],
+  health: [
+    { key: "reason", type: "choice", options: HEALTH_REASONS, labelPrefix: "fields.healthReason_", required: true },
+    { key: "product", type: "text", required: true },
+    { key: "dose", type: "text" },
+    { key: "counts", type: "counts", required: true },
+    note,
+  ],
+  application: [
+    { key: "volumeLHa", type: "number", unit: "L/ha" },
+    { key: "areaHa", type: "number", unit: "ha" },
+    { key: "windKmh", type: "number", unit: "km/h" },
+    { key: "tempC", type: "number", unit: "°C" },
+    { key: "humidityPct", type: "number", unit: "%" },
+    { key: "machine", type: "text" },
+    note,
+  ],
+  sowing: [
+    { key: "crop", type: "choice", options: CROPS, labelPrefix: "fields.crop_", required: true },
+    { key: "variety", type: "text" },
+    { key: "density", type: "number" },
+    { key: "densityUnit", type: "choice", options: DENSITY_UNITS, labelPrefix: "fields.densityUnit_" },
+    { key: "areaHa", type: "number", unit: "ha" },
+    note,
+  ],
 };

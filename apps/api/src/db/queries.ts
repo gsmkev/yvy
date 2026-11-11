@@ -543,7 +543,7 @@ type SyncedTbl = SQLiteTable & {
   deletedAt: SQLiteColumn;
 };
 
-async function updateSynced(
+export async function updateSynced(
   sdb: ScopedDb,
   table: SyncedTbl,
   id: string,

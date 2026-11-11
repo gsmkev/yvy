@@ -2,7 +2,7 @@
  * Campos de cada tipo de registro (RF-30), en el mismo orden y con los mismos valores que los esquemas Zod
  * de packages/shared/src/records.ts. La validación final la hace parseRecordData.
  */
-import { HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
+import { CROPS, DENSITY_UNITS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
 
 export type FieldSpec =
   | { key: string; type: "choice"; options: readonly string[]; labelPrefix: string; required?: boolean }
@@ -80,6 +80,14 @@ export const FORMS: Record<RecordKind, FieldSpec[]> = {
     { key: "product", type: "text", required: true },
     { key: "dose", type: "text" },
     { key: "counts", type: "counts", required: true },
+    note,
+  ],
+  sowing: [
+    { key: "crop", type: "choice", options: CROPS, labelPrefix: "fields.crop_", required: true },
+    { key: "variety", type: "text" },
+    { key: "density", type: "number" },
+    { key: "densityUnit", type: "choice", options: DENSITY_UNITS, labelPrefix: "fields.densityUnit_" },
+    { key: "areaHa", type: "number", unit: "ha" },
     note,
   ],
 };

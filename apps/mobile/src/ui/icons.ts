@@ -8,6 +8,7 @@ import {
   Droplets,
   Footprints,
   NotebookPen,
+  Shovel,
   Sprout,
   Wheat,
   Flame,
@@ -31,6 +32,7 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
   herd_move: ArrowRightLeft,
   mortality: HeartCrack,
   health: Syringe,
+  sowing: Shovel,
 };
 
 export const ALERT_ICON: Record<string, LucideIcon> = {

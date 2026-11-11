@@ -71,6 +71,13 @@ const SYNCED: Record<PullTable, SyncedTable> = {
     version: s.farmLayers.version,
     id: s.farmLayers.id,
   },
+  seasons: { table: s.seasons, org: s.seasons.organizationId, version: s.seasons.version, id: s.seasons.id },
+  plot_seasons: {
+    table: s.plotSeasons,
+    org: s.plotSeasons.organizationId,
+    version: s.plotSeasons.version,
+    id: s.plotSeasons.id,
+  },
 };
 
 /** Matriz de permisos (PRD §9). */
@@ -90,6 +97,8 @@ export const can = {
   alertSettings: (r: Role) => r === "owner" || r === "admin",
   /** G-10: planificar el calendario sanitario (y crear sus tareas): todos menos el empleado. */
   planSanitary: (r: Role) => r !== "worker",
+  /** ADR 0004: campañas y su plan por lote; el empleado solo las ve. */
+  editSeasons: (r: Role) => r !== "worker",
 };
 
 export class ScopedDb {
@@ -154,6 +163,10 @@ export class ScopedDb {
         return sql`0`; // PRD §11: no baja al empleado
       case "farm_layers":
         return sql`farm_layers.farm_id IN ${this.workerFarmsSql()}`;
+      case "seasons":
+        return undefined; // las campañas son de toda la organización: el empleado las necesita para anotar
+      case "plot_seasons":
+        return sql`plot_seasons.plot_id IN ${this.assignedPlotsSql()}`;
     }
   }
 

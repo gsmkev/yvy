@@ -69,6 +69,13 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
       parts.push(t("fields.herdTotalValue", { n: HERD_CATEGORIES.reduce((n, k) => n + (c[k] ?? 0), 0) }));
       break;
     }
+    case "sowing":
+      if (str("crop")) parts.push(tr(`fields.crop_${d.crop}`, String(d.crop)));
+      if (str("variety")) parts.push(d.variety as string);
+      if (typeof d.density === "number" && str("densityUnit"))
+        parts.push(`${d.density} ${tr(`fields.densityUnit_${d.densityUnit}`, String(d.densityUnit))}`);
+      if (typeof d.areaHa === "number") parts.push(t("fields.areaDoneValue", { n: d.areaHa }));
+      break;
     case "note":
       if (str("text")) parts.push(d.text as string);
       break;

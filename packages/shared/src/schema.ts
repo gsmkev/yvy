@@ -39,6 +39,8 @@ export const RECORD_KINDS = [
   "herd_move",
   "mortality",
   "health",
+  // ADR 0004: registros agrícolas
+  "sowing",
 ] as const;
 export type RecordKind = (typeof RECORD_KINDS)[number];
 export const UPLOAD_STATUS = ["pending", "uploaded"] as const;
@@ -252,6 +254,45 @@ export const plotAssignments = sqliteTable(
   (t) => [
     uniqueIndex("plot_assignments_uq").on(t.userId, t.plotId),
     index("plot_assignments_sync_idx").on(t.organizationId, t.version, t.id),
+  ],
+);
+
+// ---------- Campañas (ADR 0004) ----------
+
+/** Campaña de la organización ("Zafra 2026/27"). Fechas de calendario "YYYY-MM-DD". */
+export const seasons = sqliteTable(
+  "seasons",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    name: text("name").notNull(),
+    startDate: text("start_date"),
+    endDate: text("end_date"),
+    active: integer("active", { mode: "boolean" }).notNull().default(true),
+    ...synced,
+  },
+  (t) => [index("seasons_sync_idx").on(t.organizationId, t.version, t.id)],
+);
+
+/** Qué se planifica o se sembró en un lote en una campaña. Una fila por (lote, campaña). */
+export const plotSeasons = sqliteTable(
+  "plot_seasons",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    plotId: text("plot_id").notNull(),
+    seasonId: text("season_id").notNull(),
+    crop: text("crop", { enum: CROPS }),
+    variety: text("variety"),
+    plannedSowingDate: text("planned_sowing_date"),
+    /** Rinde objetivo en toneladas por hectárea. */
+    targetYieldTHa: real("target_yield_t_ha"),
+    ...synced,
+  },
+  (t) => [
+    uniqueIndex("plot_seasons_plot_season_uq").on(t.plotId, t.seasonId),
+    index("plot_seasons_sync_idx").on(t.organizationId, t.version, t.id),
+    index("plot_seasons_season_idx").on(t.seasonId),
   ],
 );
 

@@ -21,7 +21,7 @@ import {
   type RecordKind,
   type Station,
 } from "@yvy/shared";
-import type { LocalPhoto, Plot } from "../../src/db/store";
+import type { LocalPhoto, Plot, Season } from "../../src/db/store";
 import { getDb } from "../../src/lib/db";
 import { selectedFarmId } from "../../src/lib/farmFilter";
 import { FLOWS, KINDS_FOR, SINGLE_PLOT_KINDS, stepsFor, type Step } from "../../src/lib/annotate";
@@ -57,7 +57,13 @@ export default function Annotate() {
   const [guesses, setGuesses] = useState<PlotGuess[]>([]);
   const [plot, setPlot] = useState<Plot | null>(() => db.plots().find((p) => p.id === (editing ? editing.plotId : params.plotId)) ?? null);
   const [kind, setKind] = useState<RecordKind | null>(editing?.kind ?? params.kind ?? null);
-  const [values, setValues] = useState<Record<string, unknown>>(() => (editing ? (JSON.parse(editing.data) as Record<string, unknown>) : {}));
+  // Campañas activas que bajaron al celular: con una sola no se pregunta, se usa esa.
+  const seasons = useMemo(() => db.activeSeasons(), []);
+  const seed = (kd: RecordKind): Record<string, unknown> =>
+    seasons.length === 1 && FLOWS[kd].some((x) => x.kind === "season") ? { seasonId: seasons[0]!.id } : {};
+  const [values, setValues] = useState<Record<string, unknown>>(() =>
+    editing ? (JSON.parse(editing.data) as Record<string, unknown>) : params.kind ? seed(params.kind) : {},
+  );
   const [photos, setPhotos] = useState<LocalPhoto[]>([]);
   // Plaga: primero se elige entre una observación o el monitoreo por estaciones (F-12).
   const entryFor = (kd: RecordKind): Phase => (kd === "pest" && !editing ? { name: "mode" } : { name: "step", i: 0 });
@@ -101,7 +107,7 @@ export default function Annotate() {
     () => (editing ? [] : db.pois(plot?.farmId ?? selectedFarmId(db) ?? undefined).filter((p) => p.kind === "water")),
     [plot?.farmId, editing],
   );
-  const flowCtx = { waterPois: waterPois.length };
+  const flowCtx = { waterPois: waterPois.length, askSeason: seasons.length > 1 };
   const steps = stationRecord ? FLOWS.pest.slice(-1) : stepsFor(kind, values, flowCtx);
   const stepIndex = phase.name === "step" ? phase.i : -1;
 
@@ -347,7 +353,7 @@ export default function Annotate() {
               title={t(`recordKinds.${kd}`)}
               onPress={() => {
                 setKind(kd);
-                setValues({});
+                setValues(seed(kd));
                 setStationMode(false);
                 setPhase(entryFor(kd));
               }}
@@ -484,7 +490,7 @@ export default function Annotate() {
       <View style={k.screen}>
         {header}
         <Progress i={phase.i} n={steps.length + 1} />
-        <StepScreen key={`${kind}-${step.key}`} step={step} value={values[step.key]} onAnswer={(v) => advance({ ...values, [step.key]: v })} />
+        <StepScreen key={`${kind}-${step.key}`} step={step} value={values[step.key]} seasons={seasons} onAnswer={(v) => advance({ ...values, [step.key]: v })} />
       </View>
     );
   }
@@ -551,7 +557,7 @@ function Progress({ i, n }: { i: number; n: number }) {
   );
 }
 
-function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onAnswer: (v: unknown) => void }) {
+function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unknown; seasons: Season[]; onAnswer: (v: unknown) => void }) {
   const [text, setText] = useState(value === undefined ? "" : String(value));
   const input = useRef<ElementRef<typeof TextInputRef>>(null);
   useEffect(() => {
@@ -571,6 +577,17 @@ function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onA
     );
   }
   if (step.kind === "counter" || step.kind === "paddock" || step.kind === "poi") return null; // se dibuja con HerdCounter (pantalla completa)
+  if (step.kind === "season") {
+    return (
+      <ScrollView contentContainerStyle={k.pad}>
+        <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
+        {seasons.map((x) => (
+          <Row key={x.id} title={x.name} selected={value === x.id} onPress={() => onAnswer(x.id)} />
+        ))}
+        <Button kind="text" title={t("app.skip")} onPress={() => onAnswer(undefined)} style={{ marginTop: 12 }} />
+      </ScrollView>
+    );
+  }
   if (step.kind === "yesno") {
     return (
       <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]}>
@@ -605,7 +622,11 @@ function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onA
           <Text style={st.unit}>{step.unit}</Text>
         </View>
         <View style={{ flex: 1 }} />
-        <Button big title={t("app.next")} disabled={!ok} onPress={() => onAnswer(n)} />
+        {step.optional && text === "" ? (
+          <Button big kind="secondary" title={t("app.skip")} onPress={() => onAnswer(undefined)} />
+        ) : (
+          <Button big title={t("app.next")} disabled={!ok} onPress={() => onAnswer(n)} />
+        )}
       </ScrollView>
     );
   }

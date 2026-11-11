@@ -50,6 +50,8 @@ const TABLES: Record<PullTable, SQLiteTable> = {
   alerts: s.alerts,
   plot_index_stats: s.plotIndexStats,
   farm_layers: s.farmLayers,
+  seasons: s.seasons,
+  plot_seasons: s.plotSeasons,
 };
 
 /** jsKey → columna SQL, sacado del esquema compartido. */
@@ -73,6 +75,8 @@ export type Task = typeof s.tasks.$inferSelect;
 export type RecordRow = typeof s.records.$inferSelect & { pending: boolean; rejected: string | null; photos: number };
 export type Alert = typeof s.alerts.$inferSelect;
 export type FarmLayer = typeof s.farmLayers.$inferSelect;
+export type Season = typeof s.seasons.$inferSelect;
+export type PlotSeason = typeof s.plotSeasons.$inferSelect;
 
 export interface NewRecord {
   farmId: string;
@@ -628,6 +632,22 @@ export class LocalDb implements SyncStore {
         [this.now()],
       )
       .map((r) => fromRow<Alert>(s.alerts, r));
+  }
+
+  /** Campañas activas de la organización, la más reciente primero. */
+  activeSeasons(): Season[] {
+    return this.sql
+      .all("SELECT * FROM seasons WHERE deleted_at IS NULL AND active = 1 ORDER BY start_date DESC, created_at DESC")
+      .map((r) => fromRow<Season>(s.seasons, r));
+  }
+
+  /** Lo planificado en un lote para una campaña (cultivo, variedad), si bajó al celular. */
+  plotSeason(plotId: string, seasonId: string): PlotSeason | null {
+    const r = this.sql.get(
+      "SELECT * FROM plot_seasons WHERE plot_id = ? AND season_id = ? AND deleted_at IS NULL",
+      [plotId, seasonId],
+    );
+    return r ? fromRow<PlotSeason>(s.plotSeasons, r) : null;
   }
 
   latestLayers(farmId: string): FarmLayer[] {

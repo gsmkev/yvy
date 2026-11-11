@@ -1561,6 +1561,10 @@ export const esPY = {
     themeDark: "Oscuro",
     skipToContent: "Saltar al contenido",
     mapRegion: "Mapa de la estancia",
+    print: "Imprimir",
+    printedOn: "Yvy · impreso el {{date}}",
+    printMapAlt: "Mapa de {{name}}",
+    printPlotsTitle: "Lotes",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

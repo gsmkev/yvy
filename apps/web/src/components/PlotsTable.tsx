@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Plot } from "../lib/types";
 import { BRAND } from "@yvy/shared";
-import { fmtDay, fmtNdvi, fmtNum } from "../lib/format";
+import { areaUnitLabel, fmtAreaValue, fmtDay, fmtNdvi } from "../lib/format";
 import { t } from "../lib/i18n";
 import { defaultDir, sortPlots, type SortDir, type SortKey } from "../lib/plotsSort";
 import { Input } from "./ui";
@@ -93,7 +93,7 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
           <tr className="text-left text-xs text-tinta-2">
             {head("name", t("ui.plot"))}
             {head("kind", t("ui.kind"))}
-            {head("area", "ha", true)}
+            {head("area", areaUnitLabel(), true)}
             {head("vigor", t("ui.vigor"), true)}
             {head("visit", t("ui.lastVisitShort"), true)}
           </tr>
@@ -114,7 +114,7 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
               <td className="py-2.5 text-tinta-2">
                 {p.kind === "pasture" ? t("ui.pasture") : (p.crop ?? t("ui.crop"))}
               </td>
-              <td className="num py-2.5 text-right">{fmtNum(p.areaHa)}</td>
+              <td className="num py-2.5 text-right">{fmtAreaValue(p.areaHa)}</td>
               <td className="py-2.5 text-right">
                 <Vigor value={p.ndviMean} />
               </td>

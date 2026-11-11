@@ -25,7 +25,7 @@ import { del, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
 import { download, plotsToGeoJson, plotsToKml, plotsToShapefileZip } from "../lib/exports";
 import { closedAreaHa, fmtDistance, pathLengthM, type LonLat } from "../lib/measure";
-import { fmtDate, fmtHa } from "../lib/format";
+import { areaUnitLabel, fmtAreaValue, fmtDate, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { loadPrefs, savePrefs } from "../lib/prefs";
 import { fetchAllRecords, useAlerts, useFarm, useFarms, useMe, useMembers, useProblemAreas } from "../lib/queries";
@@ -58,6 +58,14 @@ export function FarmPage() {
   const tab: Tab = tabPref === "herd" && !canEdit ? "plots" : tabPref;
   const [onlyUnvisited, setOnlyUnvisited] = useState(false);
   const mapBox = useRef<HTMLDivElement>(null);
+  // U-27: captura del mapa para la hoja impresa
+  const snapshotRef = useRef<(() => Promise<string | null>) | null>(null);
+  const [snap, setSnap] = useState<string | null>(null);
+  const printPage = async () => {
+    setSnap((await snapshotRef.current?.().catch(() => null)) ?? null);
+    // Deja que React pinte la imagen antes de abrir el diálogo de impresión
+    setTimeout(() => window.print(), 150);
+  };
   const { lote } = useSearch({ from: "/app/estancias/$farmId" });
   const [selected, setSelected] = useState<string | null>(lote ?? null);
   // Llegar desde el buscador con ?lote= elige ese lote
@@ -203,11 +211,11 @@ export function FarmPage() {
   const pastureHa = d.plots.filter((p) => p.kind === "pasture").reduce((a, p) => a + p.areaHa, 0);
 
   return (
-    <div className="flex h-full flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_480px]">
+    <div className="flex h-full flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_480px] print:block print:h-auto">
       <div
         role="group"
         aria-label={t("ui.viewSwitch")}
-        className="flex gap-6 border-b border-linea bg-lino px-4 py-2.5 text-sm lg:hidden"
+        className="flex gap-6 border-b border-linea bg-lino px-4 py-2.5 text-sm lg:hidden print:hidden"
       >
         {(["map", "list"] as const).map((v) => (
           <button
@@ -220,9 +228,10 @@ export function FarmPage() {
           </button>
         ))}
       </div>
-      <div ref={mapBox} className={`relative min-h-0 flex-1 bg-lino lg:h-full ${view === "list" ? "max-lg:hidden" : ""}`}>
+      <div ref={mapBox} className={`relative min-h-0 flex-1 bg-lino lg:h-full print:hidden ${view === "list" ? "max-lg:hidden" : ""}`}>
         <FullscreenButton target={mapBox} className="absolute right-3 bottom-8 z-10" />
         <FarmMap
+          snapshotRef={snapshotRef}
           outline={d.farm.geometry}
           plots={d.plots}
           pois={d.pois}
@@ -466,12 +475,29 @@ export function FarmPage() {
       </div>
 
       <section
-        className={`flex min-h-0 flex-1 flex-col gap-5 overflow-auto border-l border-linea bg-lino p-4 *:shrink-0 lg:p-6 ${view === "map" ? "max-lg:hidden" : ""}`}
+        className={`flex min-h-0 flex-1 flex-col gap-5 overflow-auto border-l border-linea bg-lino p-4 *:shrink-0 lg:p-6 print:!flex print:overflow-visible print:border-0 print:p-0 ${view === "map" ? "max-lg:hidden" : ""}`}
       >
+        <div className="hidden print:block">
+          <p className="text-sm text-tinta-2">{t("ui.printedOn", { date: fmtDate(Date.now()) })}</p>
+          {snap && (
+            <img
+              src={snap}
+              alt={t("ui.printMapAlt", { name: d.farm.name })}
+              className="mt-2 max-h-[100mm] w-full rounded-md border border-linea object-cover"
+            />
+          )}
+        </div>
         <header>
           <div className="flex items-baseline justify-between gap-3">
             <h1 className="text-[28px] leading-tight">{d.farm.name}</h1>
-            <span className="flex shrink-0 gap-4 text-sm">
+            <span className="flex shrink-0 gap-4 text-sm print:hidden">
+              <button
+                type="button"
+                onClick={printPage}
+                className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
+              >
+                {t("ui.print")}
+              </button>
               {(farms.data?.length ?? 0) > 1 && (
                 <Link to="/" className="text-tinta-2 underline-offset-4 hover:text-surco hover:underline">
                   {t("ui.allFarms")}
@@ -497,7 +523,7 @@ export function FarmPage() {
         </header>
 
         {canEdit && (
-          <div className="flex flex-wrap items-center gap-2 border-b border-linea pb-5">
+          <div className="flex flex-wrap items-center gap-2 border-b border-linea pb-5 print:hidden">
             <Button variant="primary" icon={PenLine} onClick={() => setMode(mode === "draw" ? "none" : "draw")}>
               {t("ui.newPlot")}
             </Button>
@@ -584,7 +610,29 @@ export function FarmPage() {
           ) : d.plots.length === 0 ? (
             <Empty title={t("ui.noPlots")} />
           ) : (
-            <div>
+            <>
+            <table className="hidden w-full text-sm print:table">
+              <caption className="pb-2 text-left font-serif text-lg font-semibold">{t("ui.printPlotsTitle")}</caption>
+              <thead>
+                <tr className="border-b border-linea text-left text-xs text-tinta-2">
+                  <th className="py-1.5 font-medium">{t("ui.plot")}</th>
+                  <th className="py-1.5 font-medium">{t("ui.crop")}</th>
+                  <th className="py-1.5 text-right font-medium">{areaUnitLabel()}</th>
+                  <th className="py-1.5 text-right font-medium">{t("ui.lastVisitShort")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shownPlots.map((p) => (
+                  <tr key={p.id} className="border-b border-linea">
+                    <td className="py-1.5 font-medium">{p.name}</td>
+                    <td className="py-1.5">{p.kind === "pasture" ? t("ui.pasture") : (p.crop ?? t("ui.crop"))}</td>
+                    <td className="num py-1.5 text-right">{fmtAreaValue(p.areaHa)}</td>
+                    <td className="num py-1.5 text-right">{p.lastRecordAt ? fmtDate(p.lastRecordAt) : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="print:hidden">
               <div className="mb-1 flex items-baseline justify-between gap-3">
                 {unvisited.length > 0 ? (
                   <button
@@ -663,6 +711,7 @@ export function FarmPage() {
                 </>
               )}
             </div>
+            </>
           ))}
         {tab === "seasons" && <SeasonsPanel farmId={farmId} plots={d.plots} canEdit={canEdit} />}
         {tab === "products" && <ProductsPanel canEdit={canEdit} farmId={farmId} plots={d.plots} />}

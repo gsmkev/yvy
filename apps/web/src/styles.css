@@ -98,6 +98,42 @@ h1 {
   outline: 2px solid var(--color-accion);
   outline-offset: 2px;
 }
+/*
+ * Impresión (U-27): siempre con los colores claros (aunque la pantalla esté en modo oscuro) y sin
+ * alturas fijas, para que la ficha corra en varias hojas. La barra, los botones y las pestañas se
+ * ocultan con la variante print: de cada componente; el mapa se reemplaza por su captura.
+ */
+@media print {
+  :root,
+  :root[data-theme="dark"],
+  :root:not([data-theme="light"]) {
+    --color-lino: #ffffff;
+    --color-papel: #ffffff;
+    --color-surco: #1e2419;
+    --color-tinta-2: #545a4d;
+    --color-linea: #cfcabb;
+    --color-accion: #4e6b24;
+    --color-peligro: #b5391f;
+    --color-trigo-texto: #7a5b0e;
+    color-scheme: light;
+  }
+  html,
+  body,
+  #root {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff;
+  }
+  @page {
+    margin: 12mm;
+  }
+  table {
+    break-inside: auto;
+  }
+  tr {
+    break-inside: avoid;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

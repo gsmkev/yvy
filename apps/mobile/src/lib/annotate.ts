@@ -5,9 +5,15 @@
  */
 import { HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
 
+/** Lo que el flujo necesita saber del campo para decidir qué preguntar. */
+export interface FlowCtx {
+  /** Aguadas y tajamares de la estancia (G-30): si no hay, no se pregunta cuál. */
+  waterPois: number;
+}
+
 type StepBase = {
   /** Si devuelve true con las respuestas anteriores, el paso no se pregunta. */
-  skipIf?: (answers: Record<string, unknown>) => boolean;
+  skipIf?: (answers: Record<string, unknown>, ctx: FlowCtx) => boolean;
 };
 
 export type Step = StepBase &
@@ -20,6 +26,8 @@ export type Step = StepBase &
   | { key: string; kind: "counter"; question: string; hint?: string }
   /** Elegir un potrero de la estancia (excluye el de origen). La respuesta es su id. */
   | { key: string; kind: "paddock"; question: string }
+  /** Elegir un punto de interés de un tipo (hoy: la aguada). La respuesta es su id; se guarda como poi_id. */
+  | { key: string; kind: "poi"; question: string; poiKind: "water" }
   );
 
 const lvl = (prefix: string) => ["low", "medium", "high"].map((v) => ({ value: v, label: `${prefix}${v}` }));
@@ -48,6 +56,7 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     { key: "livestockPresent", kind: "yesno", question: "app.pastureLivestock" },
   ],
   water: [
+    { key: "poiId", kind: "poi", question: "app.waterPoiQuestion", poiKind: "water", skipIf: (_a, ctx) => ctx.waterPois === 0 },
     {
       key: "level",
       kind: "choice",
@@ -105,8 +114,8 @@ export const FLOWS: Record<RecordKind, Step[]> = {
 };
 
 /** Pasos que se preguntan dado lo respondido hasta ahora. */
-export const stepsFor = (kind: RecordKind | null, answers: Record<string, unknown>): Step[] =>
-  kind ? FLOWS[kind].filter((s) => !s.skipIf?.(answers)) : [];
+export const stepsFor = (kind: RecordKind | null, answers: Record<string, unknown>, ctx: FlowCtx = { waterPois: 0 }): Step[] =>
+  kind ? FLOWS[kind].filter((s) => !s.skipIf?.(answers, ctx)) : [];
 
 /** Qué se puede anotar en cada tipo de lote, en el orden de frecuencia real. */
 export const KINDS_FOR = (plotKind: "crop" | "pasture" | null): RecordKind[] =>

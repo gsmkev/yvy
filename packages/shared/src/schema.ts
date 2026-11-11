@@ -42,7 +42,7 @@ export const RECORD_KINDS = [
 ] as const;
 export type RecordKind = (typeof RECORD_KINDS)[number];
 export const UPLOAD_STATUS = ["pending", "uploaded"] as const;
-export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_threshold"] as const;
+export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_threshold", "water_low"] as const;
 export const ALERT_SEVERITIES = ["info", "watch", "warning"] as const;
 /** Con MET Norway no hay ensemble: probabilidad cualitativa (PRD-cloudflare §4.8). */
 export const ALERT_PROBABILITIES = ["low", "medium", "high"] as const;

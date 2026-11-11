@@ -355,6 +355,8 @@ export const esPY = {
     healthCountQuestion: "¿A cuántos animales?",
     plotHerd: "Hacienda: {{n}} cabezas",
     plotHerdUa: "{{v}} UA/ha",
+    waterPoiQuestion: "¿Qué aguada o tajamar es?",
+    waterPoiOther: "Otra o no sé cuál",
   },
   fields: {
     condition: "Estado general",
@@ -1100,6 +1102,9 @@ export const esPY = {
     sanitarySaved: "Tratamiento planificado",
     sanitarySavedTasks: "Tratamiento planificado y {{n}} tareas creadas",
     sanitaryNoAccess: "El calendario sanitario es para el dueño, los administradores y los agrónomos.",
+    alertKind_water_low: "Aguada baja",
+    poiLastWater: "Nivel: {{level}} · {{date}}",
+    poiNoWater: "Sin medición",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

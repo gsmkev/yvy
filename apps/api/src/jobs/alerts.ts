@@ -16,6 +16,7 @@ const SOURCES: Record<AlertDraft["kind"], string> = {
   drought: "CHIRPS + NASA POWER + MET Norway",
   fire: "NASA FIRMS",
   pest_threshold: "Monitoreos de plagas (umbral por defecto)",
+  water_low: "Registros de aguadas",
 };
 
 export async function upsertAlert(
@@ -54,6 +55,7 @@ export async function upsertAlert(
     existing &&
     existing.severity === draft.severity &&
     existing.probability === draft.probability &&
+    existing.summary === draft.summary &&
     existing.validTo === validTo
   ) {
     return { id: existing.id, notified: false };

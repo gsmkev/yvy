@@ -542,7 +542,7 @@ export function FarmPage() {
             </div>
           ))}
         {tab === "seasons" && <SeasonsPanel farmId={farmId} plots={d.plots} canEdit={canEdit} />}
-        {tab === "products" && <ProductsPanel canEdit={canEdit} />}
+        {tab === "products" && <ProductsPanel canEdit={canEdit} farmId={farmId} plots={d.plots} />}
         {tab === "records" && <RecordsList filters={{ farmId }} onRows={setRecords} />}
         {tab === "tasks" && <TasksPanel farmId={farmId} plots={d.plots} />}
         {tab === "climate" && <ClimatePanel farmId={farmId} />}

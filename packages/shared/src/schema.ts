@@ -343,6 +343,8 @@ export const tasks = sqliteTable(
     /** Punto al que ir (S-09: centro de un área problema). El celular lo muestra en el mapa y en "Llevame ahí". */
     lon: real("lon"),
     lat: real("lat"),
+    /** Receta agronómica (JSON, ver prescriptionSchema): al hacer la tarea, la aplicación sale precargada. */
+    prescription: text("prescription"),
     createdBy: text("created_by").notNull(),
     /** Lista de verificación (F-15): JSON `[{id, text, done}]` o null. Ver checklist.ts. */
     checklist: text("checklist"),

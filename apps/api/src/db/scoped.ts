@@ -582,6 +582,60 @@ export class ScopedDb {
 
   // ---------- Tareas ----------
 
+  /**
+   * Receta → órdenes de trabajo (A-11): una tarea de aplicación por lote, para el mismo empleado, con la
+   * receta adentro. 3 lecturas y un solo batch (una fila por lote, máx. 40).
+   */
+  async createPrescription(input: {
+    farmId: string;
+    plotIds: string[];
+    assigneeId: string;
+    title: string;
+    dueDate: string;
+    prescription: string;
+  }): Promise<{ ids: string[] }> {
+    this.require(can.assign);
+    await this.requireFarm(input.farmId);
+    await this.memberRole(input.assigneeId);
+    const plotIds = [...new Set(input.plotIds)];
+    const found = await this.db
+      .select({ id: s.plots.id })
+      .from(s.plots)
+      .where(
+        and(
+          eq(s.plots.organizationId, this.auth.orgId),
+          eq(s.plots.farmId, input.farmId),
+          inArray(s.plots.id, plotIds),
+          isNull(s.plots.deletedAt),
+        ),
+      );
+    if (found.length !== plotIds.length) throw new NotFoundError("Lote inexistente");
+    const ts = this.now();
+    const ids = plotIds.map(() => newId());
+    await runBatch(this.db, [
+      bumpVersion(this.db),
+      ...plotIds.map((plotId, i) =>
+        this.db.insert(s.tasks).values({
+          id: ids[i]!,
+          organizationId: this.auth.orgId,
+          farmId: input.farmId,
+          plotId,
+          assigneeId: input.assigneeId,
+          title: input.title,
+          kind: "application",
+          dueDate: input.dueDate,
+          recurrence: "none",
+          prescription: input.prescription,
+          createdBy: this.auth.userId,
+          createdAt: ts,
+          updatedAt: ts,
+          version: currentVersion,
+        }),
+      ),
+    ]);
+    return { ids };
+  }
+
   async createTask(input: {
     farmId: string;
     plotId: string | null;
@@ -594,6 +648,7 @@ export class ScopedDb {
     checklist?: string | null;
     lon?: number | null;
     lat?: number | null;
+    prescription?: string | null;
   }) {
     this.require(can.assign);
     await this.requireFarm(input.farmId);

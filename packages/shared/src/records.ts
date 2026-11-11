@@ -98,6 +98,15 @@ export const HARVEST_DESTINATIONS = ["silo", "acopio", "industry", "other"] as c
 export const FERT_METHODS = ["broadcast", "banded", "foliar", "fertigation"] as const;
 export type ProductDose = z.infer<typeof productDose>;
 
+/** Receta del agrónomo: qué aplicar y a qué dosis. Viaja dentro de la tarea (tasks.prescription). */
+export const prescriptionSchema = z.object({
+  seasonId,
+  products: z.array(productDose).min(1).max(10),
+  volumeLHa: z.number().positive().max(2000).optional(),
+  note,
+});
+export type Prescription = z.infer<typeof prescriptionSchema>;
+
 export const recordDataSchemas = {
   scouting: z.object({ condition, note }),
   pest: z

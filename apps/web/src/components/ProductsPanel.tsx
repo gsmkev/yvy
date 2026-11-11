@@ -3,17 +3,19 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PRODUCT_TYPES, PRODUCT_UNITS } from "@yvy/shared";
 import { del, get, patch, post } from "../lib/api";
 import { t, tk } from "../lib/i18n";
-import type { Product } from "../lib/types";
+import type { Plot, Product } from "../lib/types";
+import { PrescriptionModal } from "./PrescriptionModal";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
 
 export const useProducts = (enabled = true) =>
   useQuery({ enabled, queryKey: ["products"], queryFn: () => get<Product[]>("/org/products") });
 
 /** Catálogo de productos de la organización (A-10): lo usa el celular para cargar aplicaciones. */
-export function ProductsPanel({ canEdit }: { canEdit: boolean }) {
+export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; farmId: string; plots: Plot[] }) {
   const q = useProducts();
   const [editing, setEditing] = useState<Product | "new" | null>(null);
   const [removing, setRemoving] = useState<Product | null>(null);
+  const [prescribing, setPrescribing] = useState(false);
   const qc = useQueryClient();
   const remove = useMutation({
     mutationFn: (p: Product) => del(`/org/products/${p.id}`),
@@ -30,10 +32,11 @@ export function ProductsPanel({ canEdit }: { canEdit: boolean }) {
     <div className="flex flex-col gap-4">
       <p className="text-sm text-tinta-2">{t("ui.productsIntro")}</p>
       {canEdit && (
-        <div>
+        <div className="flex gap-2">
           <Button variant="primary" onClick={() => setEditing("new")}>
             {t("ui.productNew")}
           </Button>
+          <Button onClick={() => setPrescribing(true)}>{t("ui.prescriptionNew")}</Button>
         </div>
       )}
       {list.length === 0 ? (
@@ -69,6 +72,7 @@ export function ProductsPanel({ canEdit }: { canEdit: boolean }) {
           ))}
         </ul>
       )}
+      {prescribing && <PrescriptionModal farmId={farmId} plots={plots} onClose={() => setPrescribing(false)} />}
       {editing && <ProductModal product={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
       {removing && (
         <ConfirmModal

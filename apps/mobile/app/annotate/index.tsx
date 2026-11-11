@@ -62,8 +62,19 @@ export default function Annotate() {
   const [kind, setKind] = useState<RecordKind | null>(editing?.kind ?? params.kind ?? null);
   // Campañas activas que bajaron al celular: con una sola no se pregunta, se usa esa.
   const seasons = useMemo(() => db.activeSeasons(), []);
-  const seed = (kd: RecordKind): Record<string, unknown> =>
-    seasons.length === 1 && FLOWS[kd].some((x) => x.kind === "season") ? { seasonId: seasons[0]!.id } : {};
+  const seed = (kd: RecordKind): Record<string, unknown> => {
+    const out: Record<string, unknown> =
+      seasons.length === 1 && FLOWS[kd].some((x) => x.kind === "season") ? { seasonId: seasons[0]!.id } : {};
+    // A-11: la aplicación hecha desde una tarea sale precargada con la receta del ingeniero.
+    const rx = kd === "application" && params.taskId ? db.prescriptionOf(params.taskId) : null;
+    if (rx) {
+      out.products = rx.products;
+      if (rx.volumeLHa) out.volumeLHa = rx.volumeLHa;
+      if (rx.seasonId) out.seasonId = rx.seasonId;
+      out.prescriptionTaskId = params.taskId;
+    }
+    return out;
+  };
   const [values, setValues] = useState<Record<string, unknown>>(() =>
     editing ? (JSON.parse(editing.data) as Record<string, unknown>) : params.kind ? seed(params.kind) : {},
   );

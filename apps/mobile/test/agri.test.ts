@@ -147,3 +147,39 @@ describe("flujo de cosecha", () => {
     expect(steps.find((x) => x.key === "tons")).not.toHaveProperty("optional", true);
   });
 });
+
+describe("receta en la tarea (A-11)", () => {
+  const task = (prescription: string | null) => ({
+    id: newId(),
+    organizationId: ORG,
+    farmId: newId(),
+    plotId: null,
+    assigneeId: newId(),
+    title: "Aplicación",
+    kind: "application",
+    dueDate: "2026-11-20",
+    recurrence: "none",
+    status: "open",
+    completedAt: null,
+    completedBy: null,
+    recordId: null,
+    prescription,
+    createdBy: newId(),
+    createdAt: 1,
+    updatedAt: 1,
+    deletedAt: null,
+    version: 1,
+  });
+
+  it("la receta baja con la tarea y se lee validada", async () => {
+    const db = setup();
+    const rx = { products: [{ productId: newId(), name: "Glifosato", dose: 2, unit: "l_ha" }], volumeLHa: 80 };
+    const a = task(JSON.stringify(rx));
+    const b = task("no es json");
+    const c = task(null);
+    await db.applyPull("tasks", [a, b, c], null);
+    expect(db.prescriptionOf(a.id)).toMatchObject({ volumeLHa: 80, products: [{ name: "Glifosato", dose: 2 }] });
+    expect(db.prescriptionOf(b.id)).toBeNull();
+    expect(db.prescriptionOf(c.id)).toBeNull();
+  });
+});

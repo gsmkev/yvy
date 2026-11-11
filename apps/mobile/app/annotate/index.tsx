@@ -719,7 +719,8 @@ function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unk
         ref={input}
         value={text}
         onChangeText={setText}
-        multiline
+        multiline={!step.pattern}
+        autoCapitalize={step.pattern ? "characters" : undefined}
         style={st.textInput}
         accessibilityLabel={tr(step.question)}
         placeholder={step.optional ? t("app.optional") : undefined}
@@ -729,7 +730,12 @@ function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unk
       {step.optional && !text.trim() ? (
         <Button big kind="secondary" title={t("app.skip")} onPress={() => onAnswer(undefined)} />
       ) : (
-        <Button big title={t("app.next")} disabled={!text.trim()} onPress={() => onAnswer(text.trim())} />
+        <Button
+          big
+          title={t("app.next")}
+          disabled={!text.trim() || (!!step.pattern && !step.pattern.test(text.trim()))}
+          onPress={() => onAnswer(text.trim())}
+        />
       )}
     </ScrollView>
   );

@@ -82,6 +82,13 @@ export const FORMS: Record<RecordKind, FieldSpec[]> = {
     { key: "policeReport", type: "text" },
     note,
   ],
+  weighing: [
+    { key: "kg", type: "number", unit: "kg", required: true },
+    { key: "tag", type: "text" },
+    { key: "group", type: "text" },
+    { key: "head", type: "number", unit: "cabezas" },
+    note,
+  ],
   supplement: [
     { key: "type", type: "choice", options: SUPPLEMENT_TYPES, labelPrefix: "fields.supplementType_", required: true },
     { key: "kg", type: "number", unit: "kg", required: true },

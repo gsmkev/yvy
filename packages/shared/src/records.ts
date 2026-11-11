@@ -3,6 +3,7 @@
  * Subir RECORD_SCHEMA_VERSION al cambiar un esquema de forma incompatible.
  */
 import { z } from "zod";
+import { animalTag, MAX_WEIGHT_KG } from "./animals";
 import { SUPPLEMENT_TYPES, MAX_SUPPLEMENT_KG } from "./grazing";
 import { HEALTH_REASONS, HERD_CATEGORIES, MAX_HEAD_PER_CATEGORY, MORTALITY_CAUSES, MOVE_REASONS } from "./livestock";
 import { deltaT, DOSE_UNITS } from "./agro";
@@ -102,6 +103,22 @@ const livestockSchemas = {
     product: z.string().trim().min(1).max(120).optional(),
     note,
   }),
+  /**
+   * Pesada (G-22): peso promedio por cabeza de un lote de animales (`group`, `head`) o de un animal con caravana
+   * (`tag`, un solo animal). El potrero es opcional: la manga muchas veces no está en un potrero.
+   */
+  weighing: z
+    .object({
+      kg: z.number().positive().max(MAX_WEIGHT_KG),
+      head: z.number().int().min(1).max(MAX_HEAD_PER_CATEGORY).optional(),
+      group: z.string().trim().min(1).max(60).optional(),
+      category: z.enum(HERD_CATEGORIES).optional(),
+      tag: animalTag.optional(),
+      note,
+    })
+    .refine((d) => d.tag === undefined || d.head === undefined || d.head === 1, {
+      message: "Una pesada con caravana es de un solo animal",
+    }),
 };
 // ---------- fin ganaderia ----------
 /** Unidad de la densidad de siembra: semillas por metro lineal o kg por hectárea. */

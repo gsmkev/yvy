@@ -68,6 +68,12 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
         parts.push(`${d.head} ${tr(`fields.herd_${d.category}`, String(d.category)).toLowerCase()}`);
       if (str("cause")) parts.push(tr(`fields.cause_${d.cause}`, String(d.cause)).toLowerCase());
       break;
+    case "weighing":
+      if (typeof d.kg === "number") parts.push(t("fields.kgValue", { n: dec(d.kg) }));
+      if (str("tag")) parts.push(t("fields.tagValue", { n: d.tag as string }));
+      else if (str("group")) parts.push(d.group as string);
+      if (typeof d.head === "number" && !str("tag")) parts.push(t("fields.herdTotalValue", { n: d.head }));
+      break;
     case "supplement":
       if (str("type")) parts.push(tr(`fields.supplementType_${d.type}`, String(d.type)));
       if (typeof d.kg === "number") parts.push(t("fields.kgValue", { n: d.kg }));

@@ -3,7 +3,7 @@
  * Cada tipo de registro es una lista corta de pasos; los datos se arman al final y se validan con
  * el esquema compartido (packages/shared/src/records.ts), que es la única fuente de verdad.
  */
-import { SUPPLEMENT_TYPES, CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
+import { ANIMAL_TAG_RE, SUPPLEMENT_TYPES, CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
 
 /** Lo que el flujo necesita saber del campo para decidir qué preguntar. */
 export interface FlowCtx {
@@ -27,7 +27,7 @@ export type Step = StepBase &
   | { key: string; kind: "choice"; question: string; options: { value: string; label: string }[]; optional?: boolean }
   | { key: string; kind: "number"; question: string; hint?: string; unit: string; max: number; integer?: boolean; min?: number; optional?: boolean }
   | { key: string; kind: "yesno"; question: string }
-  | { key: string; kind: "text"; question: string; optional?: boolean }
+  | { key: string; kind: "text"; question: string; optional?: boolean; /** Si se pide, el texto tiene que cumplirlo para seguir. */ pattern?: RegExp }
   /** Contador grande por categoría de hacienda (G-06): el valor es { vaca: 3, toro: 1, ... }. */
   | { key: string; kind: "counter"; question: string; hint?: string }
   /** Campaña: se elige entre las activas que bajaron al celular. */
@@ -125,6 +125,13 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     },
     { key: "head", kind: "number", question: "app.theftHeadQuestion", hint: "app.theftHeadHint", unit: "cabezas", max: 1000, integer: true, min: 1 },
     { key: "policeReport", kind: "text", question: "app.theftReportQuestion", optional: true },
+  ],
+  // Pesada: de un lote de animales o de uno solo con caravana. Todo salvo el peso es opcional.
+  weighing: [
+    { key: "kg", kind: "number", question: "app.weighingKgQuestion", hint: "app.weighingKgHint", unit: "kg", max: 2000 },
+    { key: "tag", kind: "text", question: "app.weighingTagQuestion", optional: true, pattern: ANIMAL_TAG_RE },
+    { key: "group", kind: "text", question: "app.weighingGroupQuestion", optional: true, skipIf: (a) => !!a.tag },
+    { key: "head", kind: "number", question: "app.weighingHeadQuestion", unit: "cabezas", max: 100_000, integer: true, min: 1, optional: true, skipIf: (a) => !!a.tag },
   ],
   supplement: [
     {
@@ -225,10 +232,10 @@ export const visibleSteps = (steps: Step[], values: Record<string, unknown>, ctx
 /** Qué se puede anotar en cada tipo de lote, en el orden de frecuencia real. */
 export const KINDS_FOR = (plotKind: "crop" | "pasture" | null): RecordKind[] =>
   plotKind === "pasture"
-    ? ["pasture_status", "herd_count", "herd_move", "mortality", "theft", "supplement", "health", "rain", "water", "pest", "scouting", "note"]
+    ? ["pasture_status", "herd_count", "herd_move", "mortality", "theft", "supplement", "weighing", "health", "rain", "water", "pest", "scouting", "note"]
     : plotKind === "crop"
       ? ["scouting", "pest", "crop_status", "application", "fertilization", "sowing", "harvest", "fuel_load", "rain", "water", "note"]
-      : ["rain", "scouting", "water", "health", "note", "pest", "crop_status", "pasture_status", "application", "fertilization", "sowing", "harvest", "fuel_load"];
+      : ["rain", "scouting", "water", "weighing", "health", "note", "pest", "crop_status", "pasture_status", "application", "fertilization", "sowing", "harvest", "fuel_load"];
 
 /** Registros de hacienda: son de un solo potrero, no se cargan en varios a la vez (F-10). */
-export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count", "herd_move", "mortality", "theft", "supplement", "health"];
+export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count", "herd_move", "mortality", "theft", "supplement", "weighing", "health"];

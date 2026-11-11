@@ -8,7 +8,7 @@ import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { LAYERS } from "@yvy/shared/schema";
-import { LIMITS } from "@yvy/shared";
+import { farmRiskSchema, LIMITS } from "@yvy/shared";
 import { getDb } from "../db/client";
 import { SystemDb } from "../db/system";
 import { hmacVerifyHex } from "../lib/crypto";
@@ -58,6 +58,13 @@ ingest.get("/farms/:id/geometry", async (c) => {
   const [row] = await c.var.sys.farmGeometry(c.req.param("id"));
   if (!row) throw new HTTPException(404);
   return c.json({ farm: JSON.parse(row.farm), plots: JSON.parse(row.plots) });
+});
+
+/** El job new_farm avisa que empezó (processing) o que el mapa base falló (failed). `ready` lo pone /farm-layers. */
+ingest.post("/farms/:id/imagery-status", async (c) => {
+  const b = parse(z.object({ status: z.enum(["pending", "processing", "failed"]) }), json(c.var.body));
+  if (!(await c.var.sys.setImageryStatus(c.req.param("id"), b.status))) throw new HTTPException(404);
+  return c.json({ ok: true });
 });
 
 ingest.post("/scenes", async (c) => {
@@ -196,4 +203,13 @@ ingest.post("/fire-alerts", async (c) => {
   const res = await c.var.sys.fireAlert(b);
   if (!res) throw new HTTPException(404, { message: "Estancia inexistente" });
   return c.json(res);
+});
+
+/** Informe de riesgo climático (job risk_report): ya viene calculado, el Worker solo valida la forma y lo guarda. */
+ingest.post("/farm-risk", async (c) => {
+  const b = parse(z.object({ farmId: uuid, report: farmRiskSchema }), json(c.var.body));
+  if (c.var.body.length > 30_000) throw new HTTPException(413, { message: "Informe demasiado grande" });
+  if (!(await c.var.sys.upsertFarmRisk(b.farmId, JSON.stringify(b.report), Date.now())))
+    throw new HTTPException(404, { message: "Estancia inexistente" });
+  return c.json({ ok: true });
 });

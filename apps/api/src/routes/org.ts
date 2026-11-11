@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { areaHa, bboxOf, centroidOf, checkPlots, validateShape, type Area } from "@yvy/geo";
-import { CROPS, LIMITS, newChecklist, serializeChecklist, t, PLOT_KINDS, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
+import { CROPS, doseText, LIMITS, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
 import { dispatchNewFarm, inBackground } from "../lib/dispatch";
 import { sendEmail } from "../lib/email";
 import { parse, readJson } from "../lib/http";
@@ -169,6 +169,30 @@ org.post("/farms/:farmId/pois", async (c) => {
     await readJson(c.req),
   );
   return c.json(await c.var.sdb.createPoi({ farmId: c.req.param("farmId"), ...body }), 201);
+});
+
+/** A-11: receta del agrónomo → una tarea de aplicación por lote para el empleado, con la receta adentro. */
+org.post("/prescriptions", async (c) => {
+  const body = parse(
+    z.object({
+      farmId: uuid,
+      plotIds: z.array(uuid).min(1).max(40),
+      assigneeId: z.string(),
+      dueDate: isoDate,
+      prescription: prescriptionSchema,
+    }),
+    await readJson(c.req),
+  );
+  const names = body.prescription.products.map(doseText).join(", ");
+  const res = await c.var.sdb.createPrescription({
+    farmId: body.farmId,
+    plotIds: body.plotIds,
+    assigneeId: body.assigneeId,
+    dueDate: body.dueDate,
+    title: `${t("recordKinds.application")}: ${names}`.slice(0, 200),
+    prescription: JSON.stringify(body.prescription),
+  });
+  return c.json(res, 201);
 });
 
 org.post("/tasks", async (c) => {

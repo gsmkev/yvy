@@ -18,11 +18,13 @@ import {
   nextDueDate,
   nextOccurrenceId,
   parseChecklist,
+  prescriptionSchema,
   RECORD_SCHEMA_VERSION,
   resetChecklist,
   serializeChecklist,
   setChecklistItem,
   type CountEvent,
+  type Prescription,
   type Cursor,
   type HerdCategory,
   type HerdCounts,
@@ -360,8 +362,8 @@ export class LocalDb implements SyncStore {
       const next = task.status !== "done" ? nextDueDate(task.dueDate, task.recurrence, localDate(ts, tz)) : null;
       if (next) {
         this.sql.run(
-          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, lon, lat, due_date, recurrence, status, created_by, created_at, updated_at, version, checklist)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, 0, ?) ON CONFLICT(id) DO NOTHING`,
+          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, lon, lat, due_date, recurrence, status, prescription, created_by, created_at, updated_at, version, checklist)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, 0, ?) ON CONFLICT(id) DO NOTHING`,
           [
             nextOccurrenceId(taskId),
             task.organizationId,
@@ -374,6 +376,7 @@ export class LocalDb implements SyncStore {
             task.lat,
             next,
             task.recurrence,
+            task.prescription,
             task.createdBy,
             ts,
             ts,
@@ -634,6 +637,18 @@ export class LocalDb implements SyncStore {
         [this.now()],
       )
       .map((r) => fromRow<Alert>(s.alerts, r));
+  }
+
+  /** Receta de una tarea (A-11), ya validada; null si no tiene o está dañada. */
+  prescriptionOf(taskId: string): Prescription | null {
+    const r = this.sql.get<{ prescription: string | null }>("SELECT prescription FROM tasks WHERE id = ?", [taskId]);
+    if (!r?.prescription) return null;
+    try {
+      const p = prescriptionSchema.safeParse(JSON.parse(r.prescription));
+      return p.success ? p.data : null;
+    } catch {
+      return null;
+    }
   }
 
   /** Campañas activas de la organización, la más reciente primero. */

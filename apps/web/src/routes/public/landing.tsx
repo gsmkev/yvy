@@ -172,6 +172,18 @@ export function LandingPage() {
         </div>
       </section>
 
+      <section className="border-t border-linea">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-14 sm:px-6 md:flex-row md:items-center md:justify-between">
+          <div className="max-w-xl">
+            <h2 className="font-serif text-[28px] leading-tight font-semibold">{t("ui.riskLandingTitle")}</h2>
+            <p className="mt-3 text-tinta-2">{t("ui.riskLandingText")}</p>
+          </div>
+          <Link to="/ingresar" search={{ modo: "registro" }} className={secondary}>
+            {t("ui.riskLandingCta")}
+          </Link>
+        </div>
+      </section>
+
       <section className="border-t border-linea bg-papel">
         <div className="mx-auto w-full max-w-5xl px-4 py-14 sm:px-6">
           <h2 className="font-serif text-[28px] leading-tight font-semibold">{t("ui.publicDataTitle")}</h2>

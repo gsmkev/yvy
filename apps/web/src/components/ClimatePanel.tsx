@@ -108,6 +108,13 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
       >
         {t("ui.gaugesLink")}
       </Link>
+      <Link
+        to="/estancias/$farmId/riesgo"
+        params={{ farmId }}
+        className="self-start text-sm font-medium text-accion underline underline-offset-2"
+      >
+        {t("ui.riskLink")}
+      </Link>
       <div>
         <h3 className="eyebrow mb-2">{t("ui.forecast")}</h3>
         {c.forecast.length ? (

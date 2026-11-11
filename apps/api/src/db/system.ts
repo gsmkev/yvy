@@ -25,6 +25,8 @@ export class SystemDb {
         maxLon: s.farms.maxLon,
         maxLat: s.farms.maxLat,
         hasClimatology: sql<boolean>`EXISTS (SELECT 1 FROM climatology c WHERE c.farm_id = farms.id)`,
+        /** Informe de riesgo calculado en los últimos 90 días (C-10); pasado ese tiempo se recalcula. */
+        hasRisk: sql<boolean>`EXISTS (SELECT 1 FROM farm_risk r WHERE r.farm_id = farms.id AND r.computed_at > ${Date.now() - 90 * 86_400_000})`,
         hasBasemap: sql<boolean>`EXISTS (SELECT 1 FROM farm_layers l WHERE l.farm_id = farms.id AND l.layer = 'true_color' AND l.deleted_at IS NULL)`,
       })
       .from(s.farms)
@@ -305,6 +307,21 @@ export class SystemDb {
     );
     await runBatch(this.db, stmts);
     return rows.length;
+  }
+
+  /** C-10: guarda (reemplaza) el informe de riesgo de la estancia. */
+  async upsertFarmRisk(farmId: string, report: string, now: number): Promise<boolean> {
+    const [f] = await this.db
+      .select({ id: s.farms.id })
+      .from(s.farms)
+      .where(and(eq(s.farms.id, farmId), isNull(s.farms.deletedAt)))
+      .limit(1);
+    if (!f) return false;
+    await this.db
+      .insert(s.farmRisk)
+      .values({ farmId, computedAt: now, report })
+      .onConflictDoUpdate({ target: s.farmRisk.farmId, set: { computedAt: now, report } });
+    return true;
   }
 
   async fireAlert(x: {

@@ -5,6 +5,7 @@ export interface Prefs {
   farmId?: string;
   tab?: string;
   layer?: string;
+  guideDismissed?: boolean;
 }
 
 const key = () => `yvy.prefs.${getSession()?.user.id ?? "anon"}`;

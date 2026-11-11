@@ -8,6 +8,7 @@ import { t, tk } from "../lib/i18n";
 import { useFarms, useMembers, useTasks } from "../lib/queries";
 import type { Plot, Task } from "../lib/types";
 import { CheckCircle2, Circle, Plus } from "lucide-react";
+import { ExportButtons } from "./ExportButtons";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
 
 export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] }) {
@@ -39,10 +40,33 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
 
   return (
     <div className="flex flex-col gap-3">
-      <div>
+      <div className="flex items-center justify-between gap-2">
         <Button variant="primary" icon={Plus} onClick={() => setCreating(true)}>
           {t("ui.newTask")}
         </Button>
+        <ExportButtons
+          data={() => ({
+            name: t("ui.tasksFile"),
+            headers: [
+              t("ui.assignee"),
+              t("ui.taskTitle"),
+              t("ui.plot"),
+              t("ui.dueDate"),
+              t("ui.recurrence"),
+              t("ui.statusCol"),
+              t("ui.opensRecord"),
+            ],
+            rows: visible.map((x) => [
+              x.assigneeName ?? x.assigneeId,
+              x.title,
+              x.plotName,
+              fmtIsoDate(x.dueDate),
+              tk(`ui.recurrence_${x.recurrence}`),
+              x.status === "open" && x.dueDate < today ? t("ui.overdue") : tk(`ui.status_${x.status}`),
+              x.kind ? tk(`recordKinds.${x.kind}`) : "",
+            ]),
+          })}
+        />
       </div>
       {!visible.length && <Empty title={t("ui.noTasks")} />}
       {[...byAssignee.entries()].map(([name, list]) => {

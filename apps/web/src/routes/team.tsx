@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
 import { ROLES } from "@yvy/shared";
+import { ExportButtons } from "../components/ExportButtons";
 import { Button, ConfirmModal, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../components/ui";
 import { del, get, post, put } from "../lib/api";
 import { fmtDateTime, fmtHa } from "../lib/format";
@@ -39,11 +40,20 @@ export function TeamPage() {
     <div className="mx-auto flex max-w-3xl flex-col gap-3 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">{t("ui.teamTitle")}</h1>
-        {canManage && (
-          <Button variant="primary" icon={UserPlus} onClick={() => setAdding(true)}>
-            {t("ui.addMember")}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <ExportButtons
+            data={() => ({
+              name: t("ui.teamFile"),
+              headers: [t("ui.name"), t("ui.role"), t("ui.emailCol"), t("ui.phone")],
+              rows: members.data!.map((m) => [m.fullName, tk(`ui.role_${m.role}`), m.email, m.phone]),
+            })}
+          />
+          {canManage && (
+            <Button variant="primary" icon={UserPlus} onClick={() => setAdding(true)}>
+              {t("ui.addMember")}
+            </Button>
+          )}
+        </div>
       </div>
       {link.error && <ErrorBox error={link.error} />}
       {members.data!.map((m) => (

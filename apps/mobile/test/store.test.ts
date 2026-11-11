@@ -118,6 +118,18 @@ describe("LocalDb", () => {
     expect(plan[0]!.titles).toContain("Revisar aguada");
   });
 
+  it("ficha del lote: último vigor y tareas abiertas", async () => {
+    const db = setup();
+    expect(db.lastVigor(PLOT)).toBeNull();
+    expect(db.openTasksOfPlot(PLOT)).toBe(0);
+    const stat = (acquiredAt: number, mean: number) => ({
+      id: newId(), organizationId: ORG, plotId: PLOT, sceneId: newId(), acquiredAt, idx: "ndvi", mean, p10: 0.2, p90: 0.8,
+      validPct: 90, createdAt: 1, updatedAt: 1, deletedAt: null, version: 1,
+    });
+    await db.applyPull("plot_index_stats", [stat(1000, 0.4), stat(3000, 0.72), stat(2000, 0.5)], null);
+    expect(db.lastVigor(PLOT)).toEqual({ mean: 0.72, acquiredAt: 3000 });
+  });
+
   it("guardar registro con fotos: fila local + mutaciones en orden, pendiente", async () => {
     const db = setup();
     const id = db.saveRecord(USER, ORG, rec, [photo, photo]);

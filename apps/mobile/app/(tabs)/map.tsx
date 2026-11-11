@@ -132,6 +132,9 @@ export default function MapScreen() {
     );
   }
   const plot = plots.find((p) => p.id === selected);
+  const rainMonth = plot ? getDb().rainThisMonth(plot.farmId) : 0;
+  const vigor = plot ? getDb().lastVigor(plot.id) : null;
+  const openTasks = plot ? getDb().openTasksOfPlot(plot.id) : 0;
   const plotRecords = plot ? records.filter((r) => r.plotId === plot.id).slice(0, 3) : [];
 
   const copyMe = async () => {
@@ -201,6 +204,17 @@ export default function MapScreen() {
               <X size={22} color={C.tinta2} />
             </Pressable>
           </View>
+          {(rainMonth > 0 || vigor || openTasks > 0) && (
+            <View style={{ marginTop: 10, gap: 2 }}>
+              {rainMonth > 0 && <Text style={T.smallMedium}>{t("app.plotRainMonth", { mm: Math.round(rainMonth) })}</Text>}
+              {vigor && (
+                <Text style={T.smallMedium}>
+                  {t("app.plotVigor", { value: vigor.mean.toLocaleString("es-PY", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), date: new Date(vigor.acquiredAt).toLocaleDateString("es-PY", { day: "numeric", month: "short" }) })}
+                </Text>
+              )}
+              {openTasks > 0 && <Text style={T.smallMedium}>{t("app.plotOpenTasks", { n: openTasks })}</Text>}
+            </View>
+          )}
           {plotRecords.map((r) => (
             <Text key={r.id} style={[T.small, { marginTop: 8 }]} numberOfLines={1}>
               {new Date(r.capturedAt).toLocaleDateString("es-PY", { day: "numeric", month: "short" })} · {describeRecord(r.kind, JSON.parse(r.data))}

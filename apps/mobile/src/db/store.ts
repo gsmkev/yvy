@@ -514,6 +514,20 @@ export class LocalDb implements SyncStore {
     return rows.reduce((a, r) => a + (Number((JSON.parse(r.data) as { mm?: number }).mm) || 0), 0);
   }
 
+  /** Último NDVI del lote según lo que bajó al celular; null si no hay (empleados no reciben estadísticas). */
+  lastVigor(plotId: string): { mean: number; acquiredAt: number } | null {
+    const r = this.sql.get<{ mean: number; acquired_at: number }>(
+      "SELECT mean, acquired_at FROM plot_index_stats WHERE plot_id = ? AND idx = 'ndvi' AND deleted_at IS NULL ORDER BY acquired_at DESC LIMIT 1",
+      [plotId],
+    );
+    return r ? { mean: r.mean, acquiredAt: r.acquired_at } : null;
+  }
+
+  /** Tareas abiertas de un lote. */
+  openTasksOfPlot(plotId: string): number {
+    return this.sql.get<{ n: number }>("SELECT count(*) n FROM tasks WHERE plot_id = ? AND status = 'open' AND deleted_at IS NULL", [plotId])?.n ?? 0;
+  }
+
   /** Último registro por lote, para saber qué lotes hace días que nadie recorre. */
   lastVisitByPlot(): Map<string, number> {
     const rows = this.sql.all<{ plot_id: string; last: number }>(

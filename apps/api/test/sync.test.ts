@@ -52,6 +52,23 @@ describe("sync/push", () => {
     expect(r.body.results[2].reason).toBe("forbidden");
   });
 
+  it("monitoreo por estaciones: el registro de plaga con estaciones se acepta y vuelve en el pull", async () => {
+    const { worker, farmId, plotIds } = await setup();
+    const stations = [
+      { lon: -55.89, lat: -27.21, accuracyM: 6, counts: { chinche_verde: 3, roya: 2 } },
+      { counts: { chinche_verde: 1, roya: 0 } },
+    ];
+    const ok = record(farmId, plotIds[0]!, {
+      kind: "pest",
+      data: { pest: "chinche", intensity: "high", perMeter: 2, crop: "soja", stations, averages: { chinche_verde: 2, roya: 1 } },
+    });
+    const bad = record(farmId, plotIds[0]!, { kind: "pest", data: { pest: "chinche", stations: [] } });
+    const r = await push(worker.token, [ok, bad]);
+    expect(r.body.results.map((x: any) => x.status)).toEqual(["applied", "rejected"]);
+    const pulled = (await pullAll(worker.token, "records")).find((x: any) => x.id === ok.row.id);
+    expect(JSON.parse(pulled.data).stations).toHaveLength(2);
+  });
+
   it("idempotencia: el mismo mutationId dos veces no duplica", async () => {
     const { worker, farmId, plotIds } = await setup();
     const m = record(farmId, plotIds[0]!);
@@ -159,9 +176,60 @@ describe("sync/push", () => {
     });
     expect((await push(worker.token, [status("done")])).body.results[0].status).toBe("applied");
     expect((await push(worker.token, [status("open")])).body.results[0].status).toBe("applied");
-    const [task] = await pullAll(worker.token, "tasks");
+    // La tarea diaria crea la próxima ocurrencia al cerrarse: buscar la original por id, no por orden
+    const task = (await pullAll(worker.token, "tasks")).find((x) => x.id === t.body.id)!;
     expect(task.status).toBe("done");
     expect(task.completedBy).toBe(worker.userId);
+  });
+
+  it("lista de verificación: el empleado tilda ítems de su tarea, no de las ajenas ni inexistentes; se repite sin tildar", async () => {
+    const { owner, worker, farmId } = await setup();
+    const other = await addMemberAndLogin(owner.token, "worker");
+    const mk = (assigneeId: string, over: Record<string, unknown> = {}) =>
+      call("POST", "/org/tasks", {
+        token: owner.token,
+        body: {
+          farmId,
+          assigneeId,
+          title: "Revisar bebederos",
+          dueDate: "2026-11-10",
+          checklist: ["Bebedero 1", "Bebedero 2", "  ", "Bebedero 3"],
+          ...over,
+        },
+      });
+    const mine = await mk(worker.userId, { recurrence: "daily" });
+    const theirs = await mk(other.userId);
+    expect(mine.status).toBe(201);
+    const check = (id: string, itemId: string, done = true) => ({
+      mutationId: newId(),
+      kind: "tasks.check",
+      row: { id, itemId, done },
+    });
+    const r = await push(worker.token, [
+      check(mine.body.id, "i1"),
+      check(mine.body.id, "i3"),
+      check(mine.body.id, "zzz"),
+      check(theirs.body.id, "i1"),
+    ]);
+    expect(r.body.results.map((x: any) => x.status)).toEqual(["applied", "applied", "rejected", "rejected"]);
+    expect(r.body.results[2].reason).toBe("invalid");
+    expect(r.body.results[3].reason).toBe("forbidden");
+    expect((await push(worker.token, [check(mine.body.id, "i3", false)])).body.results[0].status).toBe("applied");
+    let [task] = (await pullAll(worker.token, "tasks")).filter((x: any) => x.id === mine.body.id);
+    expect(JSON.parse(task.checklist).map((i: any) => [i.text, i.done])).toEqual([
+      ["Bebedero 1", true],
+      ["Bebedero 2", false],
+      ["Bebedero 3", false],
+    ]);
+    // Al completarla nace la siguiente con la lista sin tildar.
+    await push(worker.token, [
+      { mutationId: newId(), kind: "tasks.status", row: { id: mine.body.id, status: "done", completedAt: Date.now(), recordId: null } },
+    ]);
+    const all = await pullAll(worker.token, "tasks");
+    const next = all.find((x: any) => x.id !== mine.body.id);
+    expect(JSON.parse(next.checklist).every((i: any) => !i.done)).toBe(true);
+    [task] = all.filter((x: any) => x.id === mine.body.id);
+    expect(JSON.parse(task.checklist)[0].done).toBe(true);
   });
 });
 

@@ -40,7 +40,7 @@ class IngestClient:
         self.secret = secret or os.environ["YVY_INGEST_SECRET"]
         self.http = client or httpx.Client(timeout=60)
 
-    def _call(self, method: str, path: str, payload: Any | None = None) -> Any:
+    def _call(self, method: str, path: str, payload: Any | None = None, query: dict[str, str] | None = None) -> Any:
         body = "" if payload is None else json.dumps(payload, separators=(",", ":"))
         ts = int(time.time() * 1000)
         headers = {
@@ -48,8 +48,11 @@ class IngestClient:
             "x-yvy-timestamp": str(ts),
             "x-yvy-signature": sign(self.secret, ts, method, path, body),
         }
-        res = self.http.request(method, self.base_url + path, content=body or None, headers=headers)
-        res.raise_for_status()
+        # La firma cubre solo la ruta (sin query), igual que el Worker
+        res = self.http.request(method, self.base_url + path, params=query, content=body or None, headers=headers)
+        if res.is_error:
+            # Incluir la respuesta del Worker (mensaje de validación) para que el log del job diga qué falló
+            raise httpx.HTTPStatusError(f"{res.status_code} en {method} {path}: {res.text[:500]}", request=res.request, response=res)
         return res.json()
 
     def farms(self) -> list[dict[str, Any]]:
@@ -80,5 +83,29 @@ class IngestClient:
     def climate_daily(self, rows: Iterable[dict[str, Any]]) -> int:
         return sum(self._call("POST", "/ingest/climate-daily", {"rows": b})["written"] for b in chunks(rows))
 
+    def imagery_status(self, farm_id: str, status: str) -> None:
+        """Estado del primer procesamiento: processing o failed (ready lo pone el Worker al llegar el mapa base)."""
+        self._call("POST", f"/ingest/farms/{farm_id}/imagery-status", {"status": status})
+
     def farm_layer(self, **layer: Any) -> str:
         return self._call("POST", "/ingest/farm-layers", layer)["id"]
+
+    def farm_risk(self, farm_id: str, report: dict[str, Any]) -> None:
+        """Informe de riesgo climático de la estancia (C-10)."""
+        self._call("POST", "/ingest/farm-risk", {"farmId": farm_id, "report": report})
+
+    def problem_areas(self, plot_id: str, acquired_at: int, areas: list[dict[str, Any]]) -> int:
+        """Áreas problema de un lote en la última escena (S-08); reemplaza las de escenas anteriores."""
+        return self._call("POST", "/ingest/problem-areas", {"plotId": plot_id, "acquiredAt": acquired_at, "areas": areas})["written"]
+
+    def weekly_summary(self, farm_id: str, start: str, end: str) -> dict[str, Any]:
+        """Agregados de la semana de una estancia para el parte (R-02)."""
+        return self._call("GET", f"/ingest/farms/{farm_id}/weekly-summary", query={"from": start, "to": end})
+
+    def eudr_result(self, result: dict[str, Any]) -> None:
+        """Indicador EUDR de un lote (S-30); reemplaza el anterior."""
+        self._call("POST", "/ingest/eudr", result)
+
+    def weekly_report(self, farm_id: str, period_start: str, period_end: str, storage_path: str) -> None:
+        """Registra el PDF semanal ya subido a R2 (R-02)."""
+        self._call("POST", "/ingest/weekly-reports", {"farmId": farm_id, "periodStart": period_start, "periodEnd": period_end, "storagePath": storage_path})

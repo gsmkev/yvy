@@ -1,9 +1,10 @@
 /** ERP sencillo desde la web (ADR 0004). Montada en /org/erp. */
 import { Hono } from "hono";
 import { z } from "zod";
-import { contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, warehouseInput, type Role } from "@yvy/shared";
+import { contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { fixDefaultWarehouse } from "../db/stock";
+import { adjustStock, consumeStock, deleteMove, listMoves, purchaseStock, requireWarehouseUnused, stockSummary, transferStock } from "../db/stock-moves";
 import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
 import { deleteRate, erpCreate, erpDelete, erpList, erpUpdate, listRates, requireOwned, saveRate, type ErpTable } from "../db/erp";
 import { can, type ScopedDb } from "../db/scoped";
@@ -124,4 +125,29 @@ master("warehouses", s.warehouses, warehouseInput, [s.warehouses.name], {
   read: can.viewStock,
   check: farmCheck,
   after: fixDefaultWarehouse,
+  beforeDelete: requireWarehouseUnused,
+});
+
+// ---------- Stock (E-11) ----------
+// Ver cantidades: dueño, administrador y agrónomo (sin montos). Cargar o borrar movimientos: dueño y administrador.
+
+erp.get("/stock", async (c) => c.json(await stockSummary(c.var.sdb)));
+erp.get("/stock/moves", async (c) =>
+  c.json(await listMoves(c.var.sdb, parse(z.object({ productId: uuid.optional(), warehouseId: uuid.optional() }), c.req.query()))),
+);
+erp.post("/stock/purchases", async (c) =>
+  c.json(await purchaseStock(c.var.sdb, parse(stockPurchaseInput, await readJson(c.req))), 201),
+);
+erp.post("/stock/consumptions", async (c) =>
+  c.json(await consumeStock(c.var.sdb, parse(stockConsumptionInput, await readJson(c.req))), 201),
+);
+erp.post("/stock/transfers", async (c) =>
+  c.json(await transferStock(c.var.sdb, parse(stockTransferInput, await readJson(c.req))), 201),
+);
+erp.post("/stock/adjustments", async (c) =>
+  c.json(await adjustStock(c.var.sdb, parse(stockAdjustmentInput, await readJson(c.req))), 201),
+);
+erp.delete("/stock/moves/:id", async (c) => {
+  await deleteMove(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
 });

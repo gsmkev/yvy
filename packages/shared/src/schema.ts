@@ -12,7 +12,7 @@
  *   El pull pagina por (version, id): equivale al "updated_at + desempate por id" del PRD §11
  *   pero sin depender de relojes de distintos datacenters.
  */
-import { ACTIVITIES, CONTRACTOR_SERVICES, COST_CATEGORIES, CURRENCIES, MACHINE_TYPES, METER_KINDS, PARTY_KINDS, RATE_UNITS, WAREHOUSE_TYPES } from "./erp";
+import { ACTIVITIES, CONTRACTOR_SERVICES, COST_CATEGORIES, CURRENCIES, MACHINE_TYPES, METER_KINDS, PARTY_KINDS, RATE_UNITS, STOCK_ORIGINS, WAREHOUSE_TYPES } from "./erp";
 import { HEALTH_REASONS } from "./livestock";
 import { sql } from "drizzle-orm";
 import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
@@ -527,6 +527,40 @@ export const warehouses = sqliteTable(
     ...timestamps,
   },
   (t) => [index("warehouses_farm_idx").on(t.organizationId, t.farmId)],
+);
+
+/**
+ * Movimientos de stock (E-11). El stock de un producto en un depósito es la suma de `qty`.
+ * `qty` va con signo en la unidad del producto (l o kg); `valuePyg` tiene el mismo signo y es el valor en guaraníes:
+ * entradas por su costo de compra, salidas al costo promedio ponderado del momento.
+ * Una transferencia son dos filas (salida y entrada) con el mismo `originId`. Un consumo automático de un registro de
+ * campo lleva `originId` = id del registro (E-13): se reemplaza o se revierte cuando el registro cambia o se borra.
+ */
+export const stockMoves = sqliteTable(
+  "stock_moves",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    productId: text("product_id").notNull(),
+    warehouseId: text("warehouse_id").notNull(),
+    qty: real("qty").notNull(),
+    valuePyg: integer("value_pyg").notNull(),
+    /** Total del comprobante en unidad menor de `currency` (solo compras). */
+    amount: integer("amount"),
+    currency: text("currency", { enum: CURRENCIES }),
+    occurredAt: integer("occurred_at").notNull(),
+    origin: text("origin", { enum: STOCK_ORIGINS }).notNull(),
+    originId: text("origin_id"),
+    partyId: text("party_id"),
+    note: text("note"),
+    createdBy: text("created_by").notNull(),
+    ...timestamps,
+  },
+  (t) => [
+    index("stock_moves_product_idx").on(t.organizationId, t.productId),
+    index("stock_moves_warehouse_idx").on(t.warehouseId),
+    index("stock_moves_origin_idx").on(t.originId),
+  ],
 );
 
 // ---------- Trabajo ----------

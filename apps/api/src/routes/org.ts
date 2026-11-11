@@ -183,7 +183,9 @@ org.post("/tasks", async (c) => {
       recurrence: z.enum(RECURRENCES).default("none"),
       /** Texto de cada ítem de la lista de verificación (F-15). */
       checklist: z.array(z.string().trim().max(LIMITS.checklist.maxTextLength)).max(LIMITS.checklist.maxItems).optional(),
-    }),
+      lon: z.number().min(-180).max(180).nullish(),
+      lat: z.number().min(-90).max(90).nullish(),
+    }).refine((b) => (b.lon == null) === (b.lat == null), { message: "lon y lat van juntas" }),
     await readJson(c.req),
   );
   const { checklist, ...rest } = body;
@@ -192,6 +194,8 @@ org.post("/tasks", async (c) => {
       ...rest,
       plotId: body.plotId ?? null,
       kind: body.kind ?? null,
+      lon: body.lon ?? null,
+      lat: body.lat ?? null,
       checklist: serializeChecklist(newChecklist(checklist ?? [])),
     }),
     201,

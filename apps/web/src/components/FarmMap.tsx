@@ -13,6 +13,7 @@ import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson"
 import { BRAND } from "@yvy/shared";
 import pointOnFeature from "@turf/point-on-feature";
 import { t } from "../lib/i18n";
+import { cameraDiffers, pickLayer, type Camera } from "../lib/scenes";
 import type { Layer, Plot, Poi } from "../lib/types";
 
 let protocolAdded = false;
@@ -38,12 +39,19 @@ export interface FarmMapProps {
   outline?: string | null; // GeoJSON de la estancia
   plots?: Plot[];
   pois?: Poi[];
+  /** Áreas problema del lote (S-08): borde punteado de alerta. */
+  problemAreas?: { id: string; geometry: string }[];
   points?: MapPoint[];
   /** Varias estancias a la vez (inicio): perímetro, nombre y fondo satelital propio. */
   farms?: { id: string; name: string; geometry: string; basemapPath?: string | null; alert?: boolean }[];
   layers?: Layer[];
   tilesBaseUrl?: string;
   showNdvi?: boolean;
+  /** Capa elegida por tipo (S-04); si falta, la más nueva. */
+  layerIds?: Partial<Record<Layer["layer"], string>>;
+  /** Cámara compartida entre dos mapas (comparar con cortina): se aplica al cambiar y se avisa al mover con el mouse. */
+  camera?: Camera | null;
+  onCamera?: (c: Camera) => void;
   selectedPlotId?: string | null;
   bounds?: [number, number, number, number] | null;
   /** Vuela a un punto (cambiar `n` para repetir el mismo destino). */
@@ -107,6 +115,7 @@ export function FarmMap(props: FarmMapProps) {
       map.addSource("outline", { type: "geojson", data: fc([]) });
       map.addSource("plots", { type: "geojson", data: fc([]) });
       map.addSource("pois", { type: "geojson", data: fc([]) });
+      map.addSource("problems", { type: "geojson", data: fc([]) });
       map.addSource("points", { type: "geojson", data: fc([]) });
       map.addSource("measure", { type: "geojson", data: fc([]) });
       map.addLayer({
@@ -140,6 +149,18 @@ export function FarmMap(props: FarmMapProps) {
           ],
           "line-width": ["case", ["boolean", ["get", "selected"], false], 3, 1.5],
         },
+      });
+      map.addLayer({
+        id: "problems-fill",
+        type: "fill",
+        source: "problems",
+        paint: { "fill-color": BRAND.alerta, "fill-opacity": 0.18 },
+      });
+      map.addLayer({
+        id: "problems-line",
+        type: "line",
+        source: "problems",
+        paint: { "line-color": BRAND.alerta, "line-width": 2, "line-dasharray": [2, 2] },
       });
       map.addLayer({
         id: "pois",
@@ -214,8 +235,19 @@ export function FarmMap(props: FarmMapProps) {
         map.on("mouseenter", l, () => (map.getCanvas().style.cursor = "pointer"));
         map.on("mouseleave", l, () => (map.getCanvas().style.cursor = ""));
       }
+      map.on("move", (e) => {
+        // Solo lo que mueve la persona: el salto que aplica la cámara del otro mapa no rebota.
+        if (!e.originalEvent) return;
+        cb.current.onCamera?.({
+          center: [map.getCenter().lng, map.getCenter().lat],
+          zoom: map.getZoom(),
+          bearing: map.getBearing(),
+          pitch: map.getPitch(),
+        });
+      });
       mapRef.current = map;
       sync();
+      if (cb.current.camera) map.jumpTo(cb.current.camera);
     });
     return () => {
       drawRef.current?.stop();
@@ -263,6 +295,15 @@ export function FarmMap(props: FarmMapProps) {
             selected: pl.id === p.selectedPlotId,
           },
           geometry: JSON.parse(pl.geometry),
+        })),
+      ),
+    );
+    (map.getSource("problems") as GeoJSONSource).setData(
+      fc(
+        (p.problemAreas ?? []).map((a) => ({
+          type: "Feature",
+          properties: { id: a.id },
+          geometry: JSON.parse(a.geometry),
         })),
       ),
     );
@@ -314,10 +355,12 @@ export function FarmMap(props: FarmMapProps) {
     props.farms,
     props.plots,
     props.pois,
+    props.problemAreas,
     props.points,
     props.selectedPlotId,
     props.layers,
     props.showNdvi,
+    props.layerIds,
     props.tilesBaseUrl,
     props.measuring,
     props.measurePoints,
@@ -328,6 +371,19 @@ export function FarmMap(props: FarmMapProps) {
     const map = mapRef.current;
     if (map && props.bounds) map.fitBounds(props.bounds, { padding: 60, duration: 600, maxZoom: 18 });
   }, [props.bounds?.join(",")]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const c = props.camera;
+    if (!map || !c) return;
+    const now: Camera = {
+      center: [map.getCenter().lng, map.getCenter().lat],
+      zoom: map.getZoom(),
+      bearing: map.getBearing(),
+      pitch: map.getPitch(),
+    };
+    if (cameraDiffers(now, c)) map.jumpTo(c);
+  }, [props.camera]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -363,8 +419,7 @@ export function FarmMap(props: FarmMapProps) {
 }
 
 function syncRasters(map: MlMap, p: FarmMapProps) {
-  const latest = (layer: Layer["layer"]) =>
-    (p.layers ?? []).filter((l) => l.layer === layer).sort((a, b) => b.acquiredAt - a.acquiredAt)[0];
+  const latest = (layer: Layer["layer"]) => pickLayer(p.layers ?? [], layer, p.layerIds?.[layer]);
   const set = (id: string, layer: Layer | undefined, visible: boolean, before: string) => {
     const url = layer && p.tilesBaseUrl ? `pmtiles://${p.tilesBaseUrl.replace(/\/$/, "")}/${layer.pmtilesPath}` : null;
     const src = map.getSource(id) as { url?: string } | undefined;

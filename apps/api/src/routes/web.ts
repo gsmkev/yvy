@@ -14,6 +14,9 @@ import {
   deleteTask,
   farmClimate,
   farmDetail,
+  farmForecast,
+  farmProblemAreas,
+  farmRiskReport,
   farmSummaries,
   getAlertSettings,
   listAlerts,
@@ -82,6 +85,13 @@ web.get("/org/farms/:id", async (c) => c.json(await farmDetail(c.var.sdb, c.req.
 web.get("/org/farms/:id/climate", async (c) =>
   c.json(await farmClimate(c.var.sdb, c.req.param("id"), Math.min(Math.max(Number(c.req.query("days")) || 90, 1), 400))),
 );
+
+web.get("/org/farms/:id/forecast", async (c) => c.json(await farmForecast(c.var.sdb, c.req.param("id"))));
+
+web.get("/org/farms/:id/problem-areas", async (c) =>
+  c.json(await farmProblemAreas(c.var.sdb, c.req.param("id"))),
+);
+web.get("/org/farms/:id/risk", async (c) => c.json(await farmRiskReport(c.var.sdb, c.req.param("id"))));
 
 web.patch("/org/farms/:id", async (c) => {
   const b = parse(

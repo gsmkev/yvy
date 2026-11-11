@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { get, qs } from "./api";
 import { isPendingDelete } from "./undo";
-import type { Alert, FarmDetail, FarmSummary, Me, Member, RecordRow, Task } from "./types";
+import type { Alert, FarmDetail, FarmSummary, Me, Member, ProblemArea, RecordRow, Task } from "./types";
 
 export const useMe = () => useQuery({ queryKey: ["me"], queryFn: () => get<Me>("/me"), staleTime: 60_000 });
 export const useFarms = () => useQuery({ queryKey: ["farms"], queryFn: () => get<FarmSummary[]>("/org/farms") });
@@ -23,6 +23,12 @@ export const useFarm = (id: string, enabled = true) =>
     // Mientras se procesan las imágenes de una estancia nueva, volver a mirar cada minuto
     refetchInterval: (q) =>
       q.state.data?.imageryStatus === "pending" || q.state.data?.imageryStatus === "processing" ? 60_000 : false,
+  });
+export const useProblemAreas = (farmId: string, enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ["problem-areas", farmId],
+    queryFn: () => get<ProblemArea[]>(`/org/farms/${farmId}/problem-areas`),
   });
 export const useMembers = (enabled = true) =>
   useQuery({ queryKey: ["members"], queryFn: () => get<Member[]>("/org/members"), enabled });

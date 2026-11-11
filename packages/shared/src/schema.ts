@@ -274,6 +274,9 @@ export const tasks = sqliteTable(
     completedAt: integer("completed_at"),
     completedBy: text("completed_by"),
     recordId: text("record_id"),
+    /** Punto al que ir (S-09: centro de un área problema). El celular lo muestra en el mapa y en "Llevame ahí". */
+    lon: real("lon"),
+    lat: real("lat"),
     createdBy: text("created_by").notNull(),
     /** Lista de verificación (F-15): JSON `[{id, text, done}]` o null. Ver checklist.ts. */
     checklist: text("checklist"),
@@ -447,6 +450,33 @@ export const climatology = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.farmId, t.plotId, t.dayOfYear, t.variable] })],
 );
+
+/** Áreas problema dentro de un lote en la última escena (S-08). Solo las escribe /ingest; no se sincronizan. */
+export const problemAreas = sqliteTable(
+  "problem_areas",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    plotId: text("plot_id").notNull(),
+    acquiredAt: integer("acquired_at").notNull(),
+    geometry: text("geometry").notNull(),
+    lon: real("lon").notNull(),
+    lat: real("lat").notNull(),
+    areaHa: real("area_ha").notNull(),
+    meanNdvi: real("mean_ndvi").notNull(),
+    plotMedianNdvi: real("plot_median_ndvi").notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("problem_areas_plot_idx").on(t.plotId), index("problem_areas_farm_idx").on(t.farmId)],
+);
+
+/** Informe de riesgo climático por estancia (C-10): JSON validado con farmRiskSchema. No se sincroniza. */
+export const farmRisk = sqliteTable("farm_risk", {
+  farmId: text("farm_id").primaryKey(),
+  computedAt: integer("computed_at").notNull(),
+  report: text("report").notNull(),
+});
 
 export const forecasts = sqliteTable(
   "forecasts",

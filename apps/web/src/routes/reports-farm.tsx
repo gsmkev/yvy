@@ -1,6 +1,6 @@
 /** Informes de una estancia: campaña por lote (R-03), informe para el banco (R-04) y exportación completa (R-09). */
 import { useState } from "react";
-import { useParams } from "@tanstack/react-router";
+import { Link, useParams } from "@tanstack/react-router";
 import { localDate } from "@yvy/shared";
 import { Button, ErrorBox, Field, Select, Spinner } from "../components/ui";
 import { download } from "../lib/exports";
@@ -154,6 +154,19 @@ export function FarmReportsPage() {
           <Button variant="primary" onClick={bankPdf} disabled={busy}>
             {busy ? t("ui.reportsGenerating") : t("ui.reportsBankPdf")}
           </Button>
+        </div>
+      </section>
+      <section>
+        <h2 className="font-serif text-xl font-semibold">{t("ui.riskTitle")}</h2>
+        <p className="mt-1 text-sm text-tinta-2">{t("ui.riskLandingText")}</p>
+        <div className="mt-3">
+          <Link
+            to="/estancias/$farmId/riesgo"
+            params={{ farmId }}
+            className="text-sm font-medium text-accion underline underline-offset-2"
+          >
+            {t("ui.riskLink")}
+          </Link>
         </div>
       </section>
       {me.data?.role === "owner" && (

@@ -9,6 +9,7 @@ import { router, useFocusEffect } from "expo-router";
 import { LocateFixed, X } from "lucide-react-native";
 import { BRAND, describeRecord, t, uaPerHa } from "@yvy/shared";
 import { centroidOf, containsPoint, type Area } from "@yvy/geo";
+import { distanceM } from "../../src/lib/bearing";
 import { useRef } from "react";
 import { useSession } from "../../src/lib/session";
 import { isOwnerMode } from "../../src/lib/ownerSummary";
@@ -38,6 +39,8 @@ export default function MapScreen() {
   const plots = useLocal(() => byFarm(getDb().plots(), farmId), [farmId]);
   const records = useLocal(() => byFarm(getDb().records(300), farmId), [farmId]);
   const lastVisit = useLocal(() => getDb().lastVisitByPlot());
+  const userId = useSession()?.user.id ?? "";
+  const taskPoints = useLocal(() => getDb().taskPoints(userId), [userId]);
   const [remoteBase, setRemoteBase] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   useFocusEffect(
@@ -104,6 +107,13 @@ export default function MapScreen() {
           .map((r) => ({ type: "Feature" as const, properties: { pending: r.pending ? 1 : 0 }, geometry: { type: "Point" as const, coordinates: [r.lon!, r.lat!] } })),
       },
     };
+    sources.tasks = {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: taskPoints.map((p) => ({ type: "Feature" as const, properties: {}, geometry: { type: "Point" as const, coordinates: [p.lon, p.lat] } })),
+      },
+    };
     if (me) sources.me = { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: [me.lon, me.lat] } } };
     layers.push(
       { id: "farms", type: "line", source: "farms", paint: { "line-color": "rgba(255,255,255,0.9)", "line-width": 2 } },
@@ -119,6 +129,7 @@ export default function MapScreen() {
       },
       { id: "records", type: "circle", source: "records", paint: { "circle-radius": 5, "circle-color": ["case", ["==", ["get", "pending"], 1], BRAND.trigo, BRAND.lino], "circle-stroke-width": 1.5, "circle-stroke-color": "#141a12" } },
     );
+    layers.push({ id: "tasks", type: "circle", source: "tasks", paint: { "circle-radius": 9, "circle-color": BRAND.alerta, "circle-stroke-width": 2.5, "circle-stroke-color": "#ffffff" } });
     if (me) {
       layers.push(
         { id: "me-halo", type: "circle", source: "me", paint: { "circle-radius": 18, "circle-color": BRAND.cielo, "circle-opacity": 0.3 } },
@@ -126,7 +137,7 @@ export default function MapScreen() {
       );
     }
     return { version: 8, sources, layers };
-  }, [farms, plots, records, remoteBase, selected, me, lastVisit, mode]);
+  }, [farms, plots, records, remoteBase, selected, me, lastVisit, mode, taskPoints]);
 
   if (!farm) {
     return (
@@ -169,6 +180,9 @@ export default function MapScreen() {
         compass={false}
         onPress={(e) => {
           const [lon, lat] = e.nativeEvent.lngLat as unknown as [number, number];
+          // Un toque cerca de una tarea con punto (S-09) lleva ahí
+          const task = taskPoints.find((p) => distanceM({ lon, lat }, p) < 40);
+          if (task) return router.push({ pathname: "/goto", params: { lon: String(task.lon), lat: String(task.lat), name: task.title } });
           setSelected(plots.find((p) => containsPoint(JSON.parse(p.geometry) as Area, lon, lat))?.id ?? null);
         }}
       >

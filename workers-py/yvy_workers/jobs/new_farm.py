@@ -36,11 +36,19 @@ def _backfill(api: IngestClient, farm: dict[str, Any]) -> Any:
     return s2_ingest(api, farm, days=BACKFILL_DAYS)
 
 
-def new_farm(api: IngestClient, farm: dict[str, Any], basemap: Step = _basemap, climatology: Step = _climatology, backfill: Step = _backfill) -> int:
+def _risk(api: IngestClient, farm: dict[str, Any]) -> Any:
+    from .risk import risk_report
+
+    if risk_report(api, [farm]):
+        raise RuntimeError("informe de riesgo con errores")
+    return "ok"
+
+
+def new_farm(api: IngestClient, farm: dict[str, Any], basemap: Step = _basemap, climatology: Step = _climatology, backfill: Step = _backfill, risk: Step = _risk) -> int:
     """Devuelve la cantidad de pasos que fallaron (0 = todo bien)."""
     api.imagery_status(farm["id"], "processing")
     failures = 0
-    for name, step in (("mapa base", basemap), ("climatología", climatology), ("historia Sentinel-2", backfill)):
+    for name, step in (("mapa base", basemap), ("climatología", climatology), ("historia Sentinel-2", backfill), ("informe de riesgo", risk)):
         try:
             log.info("%s: %s -> %s", farm["name"], name, step(api, farm))
         except Exception:

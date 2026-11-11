@@ -38,8 +38,8 @@ def test_new_farm_corre_los_tres_pasos_en_orden():
         return lambda api, farm: order.append(n)
 
     api = FakeApi()
-    assert new_farm(api, FARM, step("basemap"), step("clima"), step("s2")) == 0
-    assert order == ["basemap", "clima", "s2"]
+    assert new_farm(api, FARM, step("basemap"), step("clima"), step("s2"), step("riesgo")) == 0
+    assert order == ["basemap", "clima", "s2", "riesgo"]
     assert api.status == [("f1", "processing")]
 
 
@@ -52,8 +52,8 @@ def test_new_farm_si_falla_el_mapa_base_marca_failed_y_sigue():
         raise RuntimeError("sin escenas")
 
     api = FakeApi()
-    n = new_farm(api, FARM, boom, lambda a, f: ran.append("clima"), lambda a, f: ran.append("s2"))
-    assert n == 1 and ran == ["clima", "s2"]
+    n = new_farm(api, FARM, boom, lambda a, f: ran.append("clima"), lambda a, f: ran.append("s2"), lambda a, f: ran.append("riesgo"))
+    assert n == 1 and ran == ["clima", "s2", "riesgo"]
     assert api.status == [("f1", "processing"), ("f1", "failed")]
 
 

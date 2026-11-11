@@ -54,7 +54,7 @@ export async function farmSummaries(sdb: ScopedDb) {
 }
 
 /** Subconsulta: columna de la pasada NDVI número `offset` (0 = la última) del lote de la fila. */
-const ndviAt = (col: "mean" | "acquired_at", offset: number) =>
+export const ndviAt = (col: "mean" | "acquired_at", offset: number) =>
   sql<
     number | null
   >`(SELECT ${sql.raw(col)} FROM plot_index_stats x WHERE x.plot_id = plots.id AND x.idx = 'ndvi' AND x.deleted_at IS NULL ORDER BY x.acquired_at DESC LIMIT 1 OFFSET ${sql.raw(String(offset))})`;
@@ -332,6 +332,79 @@ export async function farmClimate(sdb: ScopedDb, farmId: string, days = 90) {
       mm: (JSON.parse(g.data) as { mm: number }).mm,
     })),
   };
+}
+
+/** C-02: último pronóstico de la estancia, liviano, para que la app lo guarde y lo lea sin señal. */
+export async function farmForecast(sdb: ScopedDb, farmId: string) {
+  const [farm] = await sdb.db
+    .select({ id: s.farms.id })
+    .from(s.farms)
+    .where(
+      and(
+        eq(s.farms.id, farmId),
+        eq(s.farms.organizationId, sdb.auth.orgId),
+        isNull(s.farms.deletedAt),
+        sdb.workerFilter("farms"),
+      ),
+    )
+    .limit(1);
+  if (!farm) throw new NotFoundError("Estancia inexistente");
+  const [latest] = await sdb.db
+    .select({ runAt: sql<number | null>`max(${s.forecasts.runAt})` })
+    .from(s.forecasts)
+    .where(eq(s.forecasts.farmId, farmId));
+  const runAt = latest?.runAt ?? null;
+  if (!runAt) return { runAt: null, source: null, days: [] };
+  const rows = await sdb.db
+    .select({
+      date: s.forecasts.validDate,
+      tminC: s.forecasts.tminC,
+      tmaxC: s.forecasts.tmaxC,
+      precipMm: s.forecasts.precipMm,
+      source: s.forecasts.source,
+    })
+    .from(s.forecasts)
+    .where(and(eq(s.forecasts.farmId, farmId), eq(s.forecasts.runAt, runAt)))
+    .orderBy(asc(s.forecasts.validDate))
+    .limit(10);
+  return {
+    runAt,
+    source: rows[0]?.source ?? null,
+    days: rows.map(({ source: _source, ...d }) => d),
+  };
+}
+
+/** S-08: áreas problema de la estancia (última escena por lote), con el nombre del lote. */
+export async function farmProblemAreas(sdb: ScopedDb, farmId: string) {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  return sdb.db
+    .select({
+      id: s.problemAreas.id,
+      plotId: s.problemAreas.plotId,
+      plotName: s.plots.name,
+      acquiredAt: s.problemAreas.acquiredAt,
+      geometry: s.problemAreas.geometry,
+      lon: s.problemAreas.lon,
+      lat: s.problemAreas.lat,
+      areaHa: s.problemAreas.areaHa,
+      meanNdvi: s.problemAreas.meanNdvi,
+      plotMedianNdvi: s.problemAreas.plotMedianNdvi,
+    })
+    .from(s.problemAreas)
+    .innerJoin(s.plots, and(eq(s.plots.id, s.problemAreas.plotId), isNull(s.plots.deletedAt)))
+    .where(and(eq(s.problemAreas.farmId, farmId), eq(s.problemAreas.organizationId, sdb.auth.orgId)))
+    .orderBy(desc(s.problemAreas.areaHa))
+    .limit(200);
+}
+
+/** C-10: informe de riesgo climático ya calculado (workers-py). Solo roles con vista completa. */
+export async function farmRiskReport(sdb: ScopedDb, farmId: string) {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const [row] = await sdb.db.select().from(s.farmRisk).where(eq(s.farmRisk.farmId, farmId)).limit(1);
+  if (!row) return { computedAt: null, report: null };
+  return { computedAt: row.computedAt, report: JSON.parse(row.report) as unknown };
 }
 
 export const dayOfYear = (date: string): number => {

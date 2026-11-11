@@ -456,6 +456,8 @@ export async function applyPush(
                   assigneeId: t.assigneeId,
                   title: t.title,
                   kind: t.kind,
+                  lon: t.lon,
+                  lat: t.lat,
                   dueDate: next,
                   recurrence: t.recurrence,
                   status: "open",

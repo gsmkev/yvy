@@ -7,7 +7,8 @@ import * as s from "@yvy/shared/schema";
 import { getDb, runBatch, type DB } from "../db/client";
 import { dayOfYear } from "../db/queries";
 import { SystemDb } from "../db/system";
-import { sendEmail } from "../lib/email";
+import { sendEmail, type EmailAttachment } from "../lib/email";
+import { presign } from "../lib/r2";
 import type { Bindings, JobMessage } from "../types";
 import { saveForecastStmts, upsertAlert } from "./alerts";
 import { sendPending } from "./notify";
@@ -222,7 +223,7 @@ async function pestJob(db: DB, deps: JobDeps, farm: Farm): Promise<void> {
   if (draft) await upsertAlert(db, farm, draft, now);
 }
 
-/** Parte semanal por email (RF-83): resumen y enlace; el PDF se genera en la web (anexo §4.9). */
+/** Parte semanal por email (RF-83): resumen y enlace; el PDF lo arma workers-py (R-02) y va adjunto; si todavía no está, se manda el enlace a la web. */
 async function weeklyReportJob(db: DB, env: Bindings, deps: JobDeps, farm: Farm): Promise<void> {
   const now = deps.now();
   const since = now - 7 * 86_400_000;
@@ -267,8 +268,22 @@ async function weeklyReportJob(db: DB, env: Bindings, deps: JobDeps, farm: Farm)
     "",
     `PDF con mapa, tabla y fotos: ${env.APP_URL}/estancias/${farm.id}/parte?desde=${from}&hasta=${to}`,
   ].join("\n");
+  // R-02: si workers-py ya armó el PDF de la semana, va adjunto y con enlace (válido 7 días). Resend lo baja
+  // desde la URL firmada de R2, así que el Worker no carga el archivo. Sin PDF (o sin credenciales) sale el texto.
+  let attachments: EmailAttachment[] = [];
+  let body = text;
+  const pdf = await new SystemDb(db).latestWeeklyReport(farm.id, now, 3 * 86_400_000);
+  if (pdf) {
+    try {
+      const url = await presign(env, "GET", pdf.storagePath, 7 * 86_400_000 / 1000);
+      attachments = [{ filename: `parte-${farm.name}-${pdf.periodEnd}.pdf`.replace(/[^\w.-]+/g, "-"), path: url }];
+      body = `${text}\n\nPDF del parte (el enlace vale 7 días): ${url}`;
+    } catch (e) {
+      console.error("no se pudo firmar el PDF semanal", e);
+    }
+  }
   for (const r of recipients) {
-    if (r.email) await sendEmail(env, r.email, `Yvy · Parte semanal · ${farm.name}`, text);
+    if (r.email) await sendEmail(env, r.email, `Yvy · Parte semanal · ${farm.name}`, body, attachments);
   }
 }
 

@@ -9,7 +9,7 @@ import sys
 from .ingest import IngestClient
 from .jobs.constants import BACKFILL_DAYS, BASEMAP_DAYS, DAILY_DAYS
 
-JOBS = ["s2_ingest", "s2_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "new_farm"]
+JOBS = ["s2_ingest", "s2_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "weekly_report", "new_farm"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -18,7 +18,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--farm", help="Procesar solo esta estancia")
     p.add_argument("--days", type=int, default=None, help="s2_ingest: días hacia atrás (10 por defecto); s2_basemap: 90")
     p.add_argument("--backfill", action="store_true", help=f"s2_ingest: historia de {BACKFILL_DAYS} días (estancia nueva)")
-    p.add_argument("--only-missing", action="store_true", help="climatology_build/s2_basemap: solo estancias sin datos")
+    p.add_argument("--only-missing", action="store_true", help="climatology_build/s2_basemap/risk_report: solo estancias sin datos")
     return p
 
 
@@ -42,7 +42,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.farm:
         farms = [f for f in farms if f["id"] == args.farm]
     if args.only_missing:
-        key = "hasClimatology" if args.job == "climatology_build" else "hasBasemap"
+        key = {"climatology_build": "hasClimatology", "risk_report": "hasRisk"}.get(args.job, "hasBasemap")
         farms = [f for f in farms if not f.get(key)]
     failures = 0
     if args.job == "new_farm" and not farms:
@@ -53,6 +53,14 @@ def main(argv: list[str] | None = None) -> int:
         from .jobs.chirps import chirps_daily
 
         chirps_daily(api, farms)
+    elif args.job == "weekly_report":
+        from .jobs.weekly import weekly_report
+
+        failures += weekly_report(api, farms)
+    elif args.job == "risk_report":
+        from .jobs.risk import risk_report
+
+        failures += risk_report(api, farms)
     elif args.job == "firms_hotspots":
         from .jobs.firms import firms_hotspots
 

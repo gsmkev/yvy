@@ -61,6 +61,9 @@ export interface JwtClaims {
   role: string;
   iat: number;
   exp: number;
+  /** P-12: sesión de soporte de solo lectura. `sup` es el usuario del equipo que la pidió. */
+  ro?: boolean;
+  sup?: string;
 }
 
 const JWT_HEADER = b64url(enc.encode(JSON.stringify({ alg: "HS256", typ: "JWT" })));

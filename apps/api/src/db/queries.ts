@@ -4,7 +4,17 @@
  */
 import { and, asc, desc, eq, getTableColumns, gte, inArray, isNull, lt, lte, or, sql, type SQL } from "drizzle-orm";
 import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
-import { DEFAULT_ALERT_SETTINGS, LIMITS, parseTaskComments, type AlertSettings, type RecordKind, type TaskComment } from "@yvy/shared";
+import {
+  DEFAULT_ALERT_SETTINGS,
+  LIMITS,
+  notifyOptionsFor,
+  parseNotificationPrefs,
+  parseTaskComments,
+  type AlertSettings,
+  type NotificationPrefs,
+  type RecordKind,
+  type TaskComment,
+} from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bboxOf, checkPlots, type Area } from "@yvy/geo";
 import { newId } from "@yvy/shared";
@@ -218,6 +228,39 @@ export async function listTasks(
     )
     .orderBy(asc(s.tasks.dueDate))
     .limit(500);
+}
+
+// ---------- Preferencias de notificación (U-29) ----------
+
+/** Preferencias del usuario de la sesión (valen para todas sus organizaciones) y qué le llega según su rol. */
+export async function getNotificationPrefs(sdb: ScopedDb) {
+  const [row] = await sdb.db
+    .select({ prefs: s.notificationPrefs.prefs })
+    .from(s.notificationPrefs)
+    .where(eq(s.notificationPrefs.userId, sdb.auth.userId))
+    .limit(1);
+  const [u] = await sdb.db
+    .select({ email: s.users.email })
+    .from(s.users)
+    .where(eq(s.users.id, sdb.auth.userId))
+    .limit(1);
+  const opts = notifyOptionsFor(sdb.auth.role);
+  return {
+    prefs: parseNotificationPrefs(row?.prefs),
+    kinds: opts.kinds,
+    email: opts.email && !!u?.email,
+  };
+}
+
+export async function saveNotificationPrefs(sdb: ScopedDb, prefs: NotificationPrefs) {
+  const ts = sdb.now();
+  await sdb.db
+    .insert(s.notificationPrefs)
+    .values({ userId: sdb.auth.userId, prefs: JSON.stringify(prefs), updatedAt: ts })
+    .onConflictDoUpdate({
+      target: s.notificationPrefs.userId,
+      set: { prefs: JSON.stringify(prefs), updatedAt: ts },
+    });
 }
 
 // ---------- Satélite (RF-53) ----------

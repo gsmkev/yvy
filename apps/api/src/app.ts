@@ -45,9 +45,9 @@ app.route("/public", share);
 
 const authed = new Hono<AppEnv>();
 // La sesión se exige solo en rutas de la API; el resto es la web (static assets).
-for (const path of ["/sync/*", "/org/*", "/media/*", "/admin/*", "/me", "/devices"]) authed.use(path, requireAuth);
+for (const path of ["/sync/*", "/org/*", "/media/*", "/admin/*", "/me", "/me/*", "/devices"]) authed.use(path, requireAuth);
 authed.use("/org/*", readOnlyWhenExpired);
-for (const path of ["/sync/push", "/media/*", "/devices"]) authed.use(path, readOnlyDemo);
+for (const path of ["/sync/push", "/media/*", "/devices", "/me/*"]) authed.use(path, readOnlyDemo);
 authed.route("/sync", sync);
 authed.route("/org", org);
 authed.route("/org", agri);

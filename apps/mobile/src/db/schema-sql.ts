@@ -97,5 +97,6 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `forecast_hours` (\n\t`farm_id` text NOT NULL,\n\t`valid_at` integer NOT NULL,\n\t`temp_c` real,\n\t`wind_kmh` real,\n\t`humidity_pct` real,\n\t`precip_mm` real,\n\tPRIMARY KEY(`farm_id`, `valid_at`)\n);",
   "ALTER TABLE `tasks` ADD `due_time` text;",
   "ALTER TABLE `tasks` ADD `priority` text DEFAULT 'normal' NOT NULL;",
-  "ALTER TABLE `tasks` ADD `comments` text DEFAULT '[]' NOT NULL;"
+  "ALTER TABLE `tasks` ADD `comments` text DEFAULT '[]' NOT NULL;",
+  "CREATE TABLE `notification_prefs` (\n\t`user_id` text PRIMARY KEY NOT NULL,\n\t`prefs` text NOT NULL,\n\t`updated_at` integer NOT NULL\n);"
 ];

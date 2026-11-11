@@ -43,6 +43,13 @@
       "when": 1794367090235,
       "tag": "0005_milky_the_fury",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1794367181604,
+      "tag": "0006_dashing_longshot",
+      "breakpoints": true
     }
   ]
 }

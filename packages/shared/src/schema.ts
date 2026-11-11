@@ -472,6 +472,22 @@ export const alertRules = sqliteTable("alert_rules", {
   enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
 });
 
+/** Enlace temporal de solo lectura a la ficha de una estancia (K-04). Solo se guarda el hash del token. */
+export const shareLinks = sqliteTable(
+  "share_links",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at").notNull(),
+    expiresAt: integer("expires_at").notNull(),
+    revokedAt: integer("revoked_at"),
+  },
+  (t) => [uniqueIndex("share_links_hash_uq").on(t.tokenHash), index("share_links_farm_idx").on(t.farmId)],
+);
+
 /** Umbrales de avisos por estancia (C-04). Sin fila = valores por defecto. No se sincroniza al celular. */
 export const farmAlertSettings = sqliteTable("farm_alert_settings", {
   farmId: text("farm_id").primaryKey(),

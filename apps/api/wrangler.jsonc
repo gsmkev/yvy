@@ -15,6 +15,7 @@
       "/org/*",
       "/media/*",
       "/ingest/*",
+      "/public/*",
       "/admin/*",
       "/me",
       "/devices",

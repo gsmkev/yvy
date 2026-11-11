@@ -10,6 +10,7 @@ import {
   deleteFarm,
   deletePlot,
   deletePoi,
+  createShareLink,
   deleteTask,
   farmClimate,
   farmDetail,
@@ -17,11 +18,13 @@ import {
   getAlertSettings,
   listAlerts,
   listRecords,
+  listShareLinks,
   listTasks,
   plotNdvi,
   registerDevice,
   saveAlertSettings,
   removeMember,
+  revokeShareLink,
   updateFarm,
   updatePlot,
   updateTask,
@@ -205,6 +208,15 @@ web.get("/org/alerts", async (c) => {
       useful: r.useful === null ? null : !!r.useful,
     })),
   );
+});
+web.get("/org/farms/:id/share-links", async (c) => c.json(await listShareLinks(c.var.sdb, c.req.param("id"))));
+web.post("/org/farms/:id/share-links", async (c) => {
+  const b = parse(z.object({ days: z.number().int() }), await readJson(c.req));
+  return c.json(await createShareLink(c.var.sdb, c.req.param("id"), b.days), 201);
+});
+web.delete("/org/share-links/:id", async (c) => {
+  await revokeShareLink(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
 });
 web.get("/org/farms/:id/alert-settings", async (c) => c.json(await getAlertSettings(c.var.sdb, c.req.param("id"))));
 web.put("/org/farms/:id/alert-settings", async (c) => {

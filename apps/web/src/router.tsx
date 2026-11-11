@@ -24,6 +24,12 @@ const privacyRoute = createRoute({
   component: lazyRouteComponent(() => import("./routes/public/legal"), "PrivacyPage"),
 });
 
+const sharedRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/compartido/$token",
+  component: lazyRouteComponent(() => import("./routes/reports-shared"), "SharedPage"),
+});
+
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: "app",
@@ -111,6 +117,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   termsRoute,
   privacyRoute,
+  sharedRoute,
   appRoute.addChildren([
     home,
     newFarm,

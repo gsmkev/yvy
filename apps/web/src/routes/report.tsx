@@ -4,6 +4,7 @@ import { useParams, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { addDays, localDate, weeklyShareText } from "@yvy/shared";
 import { ShareWhatsappButton } from "../components/ShareButton";
+import { ShareLinksSection } from "../components/ShareLinks";
 import { Button, Card, ErrorBox, Field, Input, Spinner } from "../components/ui";
 import { get } from "../lib/api";
 import { download } from "../lib/exports";
@@ -134,6 +135,7 @@ export function ReportPage() {
           <div className="text-2xl font-semibold">{periodAlerts.length}</div>
         </Card>
       </div>
+      <ShareLinksSection farmId={farmId} />
     </div>
   );
 }

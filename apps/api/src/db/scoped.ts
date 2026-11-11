@@ -85,6 +85,8 @@ export const can = {
   viewAll: (r: Role) => r !== "worker",
   reports: (r: Role) => r !== "worker",
   /** C-04: solo dueño y administrador cambian los umbrales de avisos. */
+  /** K-04: solo el dueño crea y revoca enlaces de solo lectura. */
+  shareLinks: (r: Role) => r === "owner",
   alertSettings: (r: Role) => r === "owner" || r === "admin",
 };
 

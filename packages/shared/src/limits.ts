@@ -67,6 +67,10 @@ export const LIMITS = {
     forecastRunsKept: 4,
     coordDecimals: 4,
   },
+  share: {
+    /** Duraciones permitidas del enlace de solo lectura (K-04), en días. */
+    linkDays: [7, 30],
+  },
 } as const;
 
 export type Limits = typeof LIMITS;

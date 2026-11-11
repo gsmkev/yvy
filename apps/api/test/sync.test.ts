@@ -176,7 +176,8 @@ describe("sync/push", () => {
     });
     expect((await push(worker.token, [status("done")])).body.results[0].status).toBe("applied");
     expect((await push(worker.token, [status("open")])).body.results[0].status).toBe("applied");
-    const [task] = await pullAll(worker.token, "tasks");
+    // La tarea diaria crea la próxima ocurrencia al cerrarse: buscar la original por id, no por orden
+    const task = (await pullAll(worker.token, "tasks")).find((x) => x.id === t.body.id)!;
     expect(task.status).toBe("done");
     expect(task.completedBy).toBe(worker.userId);
   });

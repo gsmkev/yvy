@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { getSession, onSession, post, setSession } from "../lib/api";
+import { getSession, isNetworkDown, onNetworkChange, onSession, post, setSession } from "../lib/api";
 import { Toaster } from "./ui";
 import { FEATURES } from "../lib/features";
 import { fmtDate } from "../lib/format";
@@ -32,6 +32,7 @@ export function Layout() {
   const alerts = useAlerts({ active: true });
   const searchRef = useRef<HTMLInputElement>(null);
   const farms = useFarms();
+  const offline = useSyncExternalStore(onNetworkChange, isNetworkDown);
   useEffect(() => {
     const off = onSession((s) => {
       if (!s) {
@@ -125,6 +126,14 @@ export function Layout() {
           {t("ui.logout")}
         </button>
       </header>
+      {offline && (
+        <p
+          role="status"
+          className="shrink-0 border-b border-trigo/40 bg-trigo/15 px-4 py-1 text-center text-xs text-surco"
+        >
+          {t("ui.offlineBanner")}
+        </p>
+      )}
       <main id="main" className="min-h-0 min-w-0 flex-1 overflow-auto">
         <Outlet />
       </main>

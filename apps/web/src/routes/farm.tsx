@@ -460,6 +460,15 @@ export function FarmPage() {
                           <span>
                             {p.name}
                             <span className="ml-2 text-xs text-tinta-2">{tk(`ui.poiKinds_${p.kind}`)}</span>
+                            {p.kind === "water" && (
+                              <span
+                                className={`ml-2 text-xs ${p.lastWaterLevel === "low" || p.lastWaterLevel === "dry" ? "font-medium text-peligro" : "text-tinta-2"}`}
+                              >
+                                {p.lastWaterLevel && p.lastWaterAt
+                                  ? t("ui.poiLastWater", { level: tk(`fields.water_${p.lastWaterLevel}`).toLowerCase(), date: fmtDate(p.lastWaterAt) })
+                                  : t("ui.poiNoWater")}
+                              </span>
+                            )}
                           </span>
                           <span className="flex shrink-0 items-baseline gap-3 text-xs text-tinta-2">
                             <CopyCoords lon={p.lon} lat={p.lat} className="!text-xs" />

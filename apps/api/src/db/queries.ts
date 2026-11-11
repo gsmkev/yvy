@@ -99,7 +99,16 @@ export async function farmDetail(sdb: ScopedDb, farmId: string) {
       .where(and(eq(s.plots.farmId, farmId), isNull(s.plots.deletedAt), sdb.workerFilter("plots")))
       .orderBy(asc(s.plots.name)),
     sdb.db
-      .select()
+      .select({
+        ...getTableColumns(s.pointsOfInterest),
+        // G-30: último nivel de agua registrado en la aguada o tajamar.
+        lastWaterLevel: sql<
+          string | null
+        >`(SELECT json_extract(r.data, '$.level') FROM records r WHERE r.poi_id = points_of_interest.id AND r.kind = 'water' AND r.deleted_at IS NULL ORDER BY r.captured_at DESC LIMIT 1)`,
+        lastWaterAt: sql<
+          number | null
+        >`(SELECT max(r.captured_at) FROM records r WHERE r.poi_id = points_of_interest.id AND r.kind = 'water' AND r.deleted_at IS NULL)`,
+      })
       .from(s.pointsOfInterest)
       .where(and(eq(s.pointsOfInterest.farmId, farmId), isNull(s.pointsOfInterest.deletedAt))),
     sdb.db

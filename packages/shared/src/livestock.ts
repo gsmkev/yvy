@@ -157,6 +157,9 @@ export function farmStock(stock: Iterable<PlotStock>, areaByPlot: ReadonlyMap<st
 export const MOVE_REASONS = ["rotacion", "sanidad", "venta", "compra", "otro"] as const;
 export type MoveReason = (typeof MOVE_REASONS)[number];
 
+/** Niveles de un registro de agua que disparan el aviso `water_low` (G-30). */
+export const WATER_LOW_LEVELS = ["low", "dry"] as const;
+
 /** Causas de mortandad (lista cerrada para poder sumar por causa). */
 export const MORTALITY_CAUSES = ["enfermedad", "accidente", "parto", "rayo", "sequia", "vibora", "desconocida", "otra"] as const;
 export type MortalityCause = (typeof MORTALITY_CAUSES)[number];

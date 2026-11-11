@@ -96,7 +96,13 @@ export default function Annotate() {
 
   // Un registro de monitoreo por estaciones solo permite editar la nota: los conteos son de campo.
   const stationRecord = kind === "pest" && Array.isArray(values.stations);
-  const steps = stationRecord ? FLOWS.pest.slice(-1) : stepsFor(kind, values);
+  // G-30: aguadas de la estancia, para preguntar de cuál es el nivel (no al editar un registro ya guardado).
+  const waterPois = useMemo(
+    () => (editing ? [] : db.pois(plot?.farmId ?? selectedFarmId(db) ?? undefined).filter((p) => p.kind === "water")),
+    [plot?.farmId, editing],
+  );
+  const flowCtx = { waterPois: waterPois.length };
+  const steps = stationRecord ? FLOWS.pest.slice(-1) : stepsFor(kind, values, flowCtx);
   const stepIndex = phase.name === "step" ? phase.i : -1;
 
   const back = () => {
@@ -115,13 +121,14 @@ export default function Annotate() {
   const advance = (next: Record<string, unknown> = values) => {
     Keyboard.dismiss();
     setValues(next);
-    if (stepIndex < (stationRecord ? steps.length : stepsFor(kind, next).length) - 1) setPhase({ name: "step", i: stepIndex + 1 });
+    if (stepIndex < (stationRecord ? steps.length : stepsFor(kind, next, flowCtx).length) - 1) setPhase({ name: "step", i: stepIndex + 1 });
     else setPhase({ name: "photo" });
   };
 
   const save = () => {
     if (!kind) return;
-    const data: Record<string, unknown> = { ...values };
+    const { poiId: pickedPoi, ...answers } = values;
+    const data: Record<string, unknown> = { ...answers };
     if (kind === "rain" && !editing) data.readAt = Date.now();
     // Compra: la hacienda entra de afuera, así que el potrero elegido es el destino y no hay origen.
     const entersFromOutside = kind === "herd_move" && data.reason === "compra" && !!plot;
@@ -160,7 +167,7 @@ export default function Annotate() {
       {
         farmId,
         plotId: entersFromOutside ? null : (plot?.id ?? null),
-        poiId: editing?.poiId ?? null,
+        poiId: editing?.poiId ?? (typeof pickedPoi === "string" ? pickedPoi : null),
         kind,
         data: parsed.data as Record<string, unknown>,
         lon: editing ? editing.lon : (f?.lon ?? null),
@@ -443,6 +450,20 @@ export default function Annotate() {
           />
         </View>
       );
+    if (step.kind === "poi")
+      return (
+        <View style={k.screen}>
+          {header}
+          <Progress i={phase.i} n={steps.length + 1} />
+          <ScrollView contentContainerStyle={k.pad}>
+            <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
+            {waterPois.map((p) => (
+              <Row key={p.id} title={p.name} selected={values[step.key] === p.id} onPress={() => advance({ ...values, [step.key]: p.id })} />
+            ))}
+            <Button kind="text" title={t("app.waterPoiOther")} onPress={() => advance({ ...values, [step.key]: undefined })} style={{ marginTop: 12 }} />
+          </ScrollView>
+        </View>
+      );
     if (step.kind === "paddock")
       return (
         <View style={k.screen}>
@@ -549,7 +570,7 @@ function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onA
       </ScrollView>
     );
   }
-  if (step.kind === "counter" || step.kind === "paddock") return null; // se dibuja con HerdCounter (pantalla completa)
+  if (step.kind === "counter" || step.kind === "paddock" || step.kind === "poi") return null; // se dibuja con HerdCounter (pantalla completa)
   if (step.kind === "yesno") {
     return (
       <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]}>

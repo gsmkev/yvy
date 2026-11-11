@@ -5,10 +5,16 @@
 import { and, count, eq, getTableColumns, inArray, isNull, sql } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import {
+  isAudioMime,
+  livestockPlotProblem,
   localDate,
   nextDueDate,
   nextOccurrenceId,
+  parseChecklist,
   parseRecordData,
+  resetChecklist,
+  serializeChecklist,
+  setChecklistItem,
   RECORD_SCHEMA_VERSION,
   LIMITS,
   type Mutation,
@@ -18,14 +24,20 @@ import {
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from "./client";
-import type { ScopedDb } from "./scoped";
+import { consumes, recordEffects, type EffectRecord } from "./erp-effects";
+import { funnelEvent } from "./events";
+import { can, type ScopedDb } from "./scoped";
 
 const paramsPerRow = (t: SQLiteTable) => Object.keys(getTableColumns(t)).length;
 
-export const attachmentPaths = (orgId: string, recordId: string, attachmentId: string) => ({
-  storagePath: `organizations/${orgId}/records/${recordId}/${attachmentId}.webp`,
-  thumbPath: `organizations/${orgId}/records/${recordId}/${attachmentId}_t.webp`,
-});
+/** Rutas en R2. La nota de voz (F-09) es un solo archivo .m4a: no tiene miniatura (thumbPath vacío). */
+export const attachmentPaths = (orgId: string, recordId: string, attachmentId: string, mime: string = "image/webp") =>
+  isAudioMime(mime)
+    ? { storagePath: `organizations/${orgId}/records/${recordId}/${attachmentId}.m4a`, thumbPath: "" }
+    : {
+        storagePath: `organizations/${orgId}/records/${recordId}/${attachmentId}.webp`,
+        thumbPath: `organizations/${orgId}/records/${recordId}/${attachmentId}_t.webp`,
+      };
 
 interface RecordState {
   organizationId: string;
@@ -58,6 +70,10 @@ export async function applyPush(
         farmIds.add(m.row.farmId);
         if (m.row.plotId) plotIds.add(m.row.plotId);
         if (m.row.poiId) poiIds.add(m.row.poiId);
+        if (m.row.kind === "herd_move") {
+          const to = (m.row.data as { toPlotId?: unknown } | null)?.toPlotId;
+          if (typeof to === "string") plotIds.add(to);
+        }
         break;
       case "records.delete":
         recordIds.add(m.row.id);
@@ -71,7 +87,12 @@ export async function applyPush(
         attachmentIds.add(m.row.id);
         break;
       case "tasks.status":
+      case "tasks.check":
         taskIds.add(m.row.id);
+        break;
+      case "pois.upsert":
+        poiIds.add(m.row.id);
+        farmIds.add(m.row.farmId);
         break;
     }
   }
@@ -133,9 +154,14 @@ export async function applyPush(
         : empty,
       poiIds.size
         ? db
-            .select({ id: s.pointsOfInterest.id, farmId: s.pointsOfInterest.farmId })
+            .select({
+              id: s.pointsOfInterest.id,
+              organizationId: s.pointsOfInterest.organizationId,
+              farmId: s.pointsOfInterest.farmId,
+              deletedAt: s.pointsOfInterest.deletedAt,
+            })
             .from(s.pointsOfInterest)
-            .where(and(eq(s.pointsOfInterest.organizationId, org), inArray(s.pointsOfInterest.id, ids(poiIds))))
+            .where(inArray(s.pointsOfInterest.id, ids(poiIds)))
         : empty,
       sdb.isWorker
         ? db
@@ -145,10 +171,10 @@ export async function applyPush(
         : empty,
       attachRecordIds.size
         ? db
-            .select({ recordId: s.attachments.recordId, n: count() })
+            .select({ recordId: s.attachments.recordId, mime: s.attachments.mime, n: count() })
             .from(s.attachments)
             .where(and(inArray(s.attachments.recordId, ids(attachRecordIds)), isNull(s.attachments.deletedAt)))
-            .groupBy(s.attachments.recordId)
+            .groupBy(s.attachments.recordId, s.attachments.mime)
         : empty,
     ]);
 
@@ -158,18 +184,28 @@ export async function applyPush(
   const tasks = new Map(taskRows.map((r) => [r.task.id, { ...r.task, tz: r.tz }]));
   const farms = new Set(farmRows.map((r) => r.id));
   const plots = new Map(plotRows.map((r) => [r.id, r.farmId]));
-  const pois = new Map(poiRows.map((r) => [r.id, r.farmId]));
+  // Un id que existe en otra organización no se toca ni se ve: solo sirve para rechazar.
+  const ownPoiRows = poiRows.filter((r) => r.organizationId === org);
+  const foreignPois = new Set(poiRows.filter((r) => r.organizationId !== org).map((r) => r.id));
+  const pois = new Map(ownPoiRows.map((r) => [r.id, r.farmId]));
+  const deletedPois = new Set(ownPoiRows.filter((r) => r.deletedAt).map((r) => r.id));
   const assignedPlots = new Set(assignedRows.map((r) => r.plotId));
   const workerFarms = new Set(assignedRows.map((r) => r.farmId));
-  const attachCount = new Map(countRows.map((r) => [r.recordId, r.n]));
+  // Fotos y notas de voz se cuentan aparte: una nota de voz no le quita lugar a las fotos (F-09).
+  const countKey = (recordId: string, mime: string) => `${recordId}:${isAudioMime(mime) ? "audio" : "photo"}`;
+  const attachCount = new Map<string, number>();
+  for (const r of countRows) attachCount.set(countKey(r.recordId, r.mime), (attachCount.get(countKey(r.recordId, r.mime)) ?? 0) + r.n);
 
   // ---------- Decisión por mutación, en orden ----------
   const results: MutationResult[] = [];
   const recordUpserts: (typeof s.records.$inferInsert)[] = [];
   const recordDeletes: string[] = [];
+  /** Registros que descuentan stock y cargan costo (ERP, E-13). */
+  const effectUpserts: EffectRecord[] = [];
   const attachmentUpserts: (typeof s.attachments.$inferInsert)[] = [];
   const attachmentDeletes: string[] = [];
   const taskUpdates: Stmt[] = [];
+  const poiUpserts: (typeof s.pointsOfInterest.$inferInsert)[] = [];
   const applied: (typeof s.syncMutations.$inferInsert)[] = [];
 
   const reject = (m: Mutation, reason: RejectReason, detail?: string) =>
@@ -230,6 +266,17 @@ export async function applyPush(
           reject(m, "invalid", data.error.issues[0]?.message);
           break;
         }
+        // Ganadería: el potrero es el del registro; el destino de un movimiento tiene que ser de la misma estancia.
+        const livestock = livestockPlotProblem(r.kind, r.plotId, data.data);
+        if (livestock) {
+          reject(m, "invalid", livestock);
+          break;
+        }
+        const toPlotId = r.kind === "herd_move" ? (data.data as { toPlotId?: string }).toPlotId : undefined;
+        if (toPlotId && (plots.get(toPlotId) !== r.farmId || (sdb.isWorker && !assignedPlots.has(toPlotId)))) {
+          reject(m, "forbidden", "plot");
+          break;
+        }
         const authorId = existing?.authorId ?? auth.userId;
         const createdAt = existing?.createdAt ?? now;
         recordUpserts.push({
@@ -251,6 +298,15 @@ export async function applyPush(
           updatedAt: now,
         });
         records.set(r.id, { organizationId: org, authorId, createdAt, deletedAt: null });
+        if (consumes(r.kind))
+          effectUpserts.push({
+            id: r.id,
+            farmId: r.farmId,
+            plotId: r.plotId,
+            kind: r.kind,
+            data: data.data as Record<string, unknown>,
+            capturedAt: r.capturedAt,
+          });
         accept(m, r.id);
         break;
       }
@@ -294,19 +350,20 @@ export async function applyPush(
           break;
         }
         if (!existing) {
-          const n = attachCount.get(a.recordId) ?? 0;
-          if (n >= LIMITS.photos.maxPerRecord) {
+          const key = countKey(a.recordId, a.mime);
+          const n = attachCount.get(key) ?? 0;
+          if (n >= (isAudioMime(a.mime) ? LIMITS.audio.maxPerRecord : LIMITS.photos.maxPerRecord)) {
             reject(m, "too_many_attachments");
             break;
           }
-          attachCount.set(a.recordId, n + 1);
+          attachCount.set(key, n + 1);
           attachments.set(a.id, { id: a.id, organizationId: org, recordId: a.recordId, deletedAt: null });
         }
         attachmentUpserts.push({
           id: a.id,
           organizationId: org,
           recordId: a.recordId,
-          ...attachmentPaths(org, a.recordId, a.id),
+          ...attachmentPaths(org, a.recordId, a.id, a.mime),
           mime: a.mime,
           width: a.width,
           height: a.height,
@@ -352,6 +409,35 @@ export async function applyPush(
         accept(m, m.row.id);
         break;
       }
+      case "pois.upsert": {
+        const p = m.row;
+        if (!can.editPoi(auth.role)) {
+          reject(m, "forbidden", "poi");
+          break;
+        }
+        if (foreignPois.has(p.id)) {
+          reject(m, "not_found");
+          break;
+        }
+        const knownFarm = pois.get(p.id);
+        if (knownFarm !== undefined && knownFarm !== p.farmId) {
+          // Existe (de esta organización) pero en otra estancia: no se mueve de estancia.
+          reject(m, "invalid", "farm");
+          break;
+        }
+        if (deletedPois.has(p.id)) {
+          reject(m, "deleted");
+          break;
+        }
+        if (!farms.has(p.farmId)) {
+          reject(m, "forbidden", "farm");
+          break;
+        }
+        poiUpserts.push({ id: p.id, organizationId: org, farmId: p.farmId, kind: p.kind, name: p.name, lon: p.lon, lat: p.lat, createdAt: now, updatedAt: now });
+        pois.set(p.id, p.farmId);
+        accept(m, p.id);
+        break;
+      }
       case "tasks.status": {
         const t = tasks.get(m.row.id);
         if (!t || t.organizationId !== org) {
@@ -392,9 +478,15 @@ export async function applyPush(
                   assigneeId: t.assigneeId,
                   title: t.title,
                   kind: t.kind,
+                  lon: t.lon,
+                  lat: t.lat,
+                  prescription: t.prescription,
                   dueDate: next,
+                  dueTime: t.dueTime,
+                  priority: t.priority,
                   recurrence: t.recurrence,
                   status: "open",
+                  checklist: serializeChecklist(resetChecklist(parseChecklist(t.checklist))),
                   createdBy: t.createdBy,
                   createdAt: now,
                   updatedAt: now,
@@ -408,6 +500,32 @@ export async function applyPush(
         accept(m, t.id);
         break;
       }
+      case "tasks.check": {
+        const t = tasks.get(m.row.id);
+        if (!t || t.organizationId !== org) {
+          reject(m, "not_found");
+          break;
+        }
+        if (sdb.isWorker && t.assigneeId !== auth.userId) {
+          reject(m, "forbidden");
+          break;
+        }
+        // Cada tilde es un ítem: el último gana por ítem, y lo demás de la lista no se toca.
+        const next = setChecklistItem(parseChecklist(t.checklist), m.row.itemId, m.row.done);
+        if (!next) {
+          reject(m, "invalid", "item");
+          break;
+        }
+        t.checklist = serializeChecklist(next);
+        taskUpdates.push(
+          db
+            .update(s.tasks)
+            .set({ checklist: t.checklist, updatedAt: now, version: currentVersion })
+            .where(and(eq(s.tasks.id, t.id), eq(s.tasks.organizationId, org))),
+        );
+        accept(m, t.id);
+        break;
+      }
     }
   }
 
@@ -418,10 +536,31 @@ export async function applyPush(
       recordDeletes.length +
       attachmentUpserts.length +
       attachmentDeletes.length +
+      poiUpserts.length +
       taskUpdates.length >
     0;
   if (touchesSynced) stmts.push(bumpVersion(db));
+  // P-03: primer registro de la organización (una sentencia; no hace nada si ya existe)
+  if (recordUpserts.length) stmts.push(funnelEvent(db, "first_record", auth.userId, org, now));
 
+  for (const chunk of chunkForParams(poiUpserts, paramsPerRow(s.pointsOfInterest))) {
+    stmts.push(
+      db
+        .insert(s.pointsOfInterest)
+        .values(chunk.map((p) => ({ ...p, version: currentVersion })))
+        .onConflictDoUpdate({
+          target: s.pointsOfInterest.id,
+          set: {
+            kind: sql`excluded.kind`,
+            name: sql`excluded.name`,
+            lon: sql`excluded.lon`,
+            lat: sql`excluded.lat`,
+            updatedAt: sql`excluded.updated_at`,
+            version: sql`excluded.version`,
+          },
+        }),
+    );
+  }
   for (const chunk of chunkForParams(recordUpserts, paramsPerRow(s.records))) {
     stmts.push(
       db
@@ -455,6 +594,8 @@ export async function applyPush(
         .where(and(eq(s.records.organizationId, org), inArray(s.records.id, chunk))),
     );
   }
+  // ERP (E-13): consumo de insumos y costo de los registros que llegan, y reversión de los que se borran.
+  stmts.push(...(await recordEffects(sdb, effectUpserts, recordDeletes)));
   for (const chunk of chunkForParams(attachmentUpserts, paramsPerRow(s.attachments))) {
     stmts.push(
       db

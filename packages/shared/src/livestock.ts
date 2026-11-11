@@ -173,7 +173,7 @@ export type HealthReason = (typeof HEALTH_REASONS)[number];
  * Un conteo y una mortandad necesitan potrero; un movimiento necesita origen o destino.
  */
 export function livestockPlotProblem(kind: string, plotId: string | null, data: unknown): string | null {
-  if ((kind === "herd_count" || kind === "mortality" || kind === "theft") && !plotId) return "Elegí el potrero";
+  if ((kind === "herd_count" || kind === "mortality" || kind === "theft" || kind === "supplement") && !plotId) return "Elegí el potrero";
   if (kind === "herd_move") {
     const to = (data as { toPlotId?: string } | null)?.toPlotId;
     if (!plotId && !to) return "Indicá el potrero de origen o el de destino";

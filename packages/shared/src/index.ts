@@ -5,6 +5,7 @@ export * from "./records";
 export * from "./monitoring";
 export * from "./livestock";
 export * from "./heat";
+export * from "./grazing";
 export * from "./sanitary";
 export * from "./erp";
 export * from "./risk";

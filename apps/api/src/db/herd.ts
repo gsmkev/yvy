@@ -11,9 +11,15 @@ import {
   summarizeHeat,
   type FarmHeatStressResponse,
   type HerdCategory,
+  type SupplementEvent,
+  type SupplementResponse,
+  type SupplementType,
   type TheftResponse,
+  MINERAL_SALT_REFERENCE_G,
+  summarizeSupplements,
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
+import { farmStockSummary } from "./livestock";
 import { can, type ScopedDb } from "./scoped";
 
 /** G-32: THI de las próximas 48 horas con el pronóstico horario guardado (MET Norway). */
@@ -107,4 +113,44 @@ export async function farmTheft(sdb: ScopedDb, farmId: string, from?: number, to
     totals: { head: out.reduce((n, r) => n + r.head, 0), byCategory, withoutReport },
     truncated: rows.length > MAX_ROWS,
   };
+}
+
+/**
+ * G-31: suplementación y sal mineral por potrero en una ventana (por defecto, los últimos 30 días).
+ * El consumo por cabeza usa la hacienda de hoy (stock calculado), por eso es aproximado.
+ */
+export async function farmSupplements(sdb: ScopedDb, farmId: string, from?: number, to?: number): Promise<SupplementResponse> {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const end = to ?? sdb.now();
+  const range = { from: from ?? end - 30 * DAY, to: end };
+  const [stock, rows] = await Promise.all([
+    farmStockSummary(sdb, farmId),
+    sdb.db
+      .select({ plotId: s.records.plotId, capturedAt: s.records.capturedAt, data: s.records.data })
+      .from(s.records)
+      .where(
+        and(
+          eq(s.records.organizationId, sdb.auth.orgId),
+          eq(s.records.farmId, farmId),
+          eq(s.records.kind, "supplement"),
+          isNull(s.records.deletedAt),
+          gte(s.records.capturedAt, range.from),
+          lte(s.records.capturedAt, range.to),
+        ),
+      )
+      .limit(MAX_ROWS * 4 + 1),
+  ]);
+  const events: SupplementEvent[] = [];
+  for (const r of rows.slice(0, MAX_ROWS * 4)) {
+    const d = parse<{ type?: SupplementType; kg?: number }>(r.data);
+    if (r.plotId && d?.type && typeof d.kg === "number") events.push({ plotId: r.plotId, capturedAt: r.capturedAt, type: d.type, kg: d.kg });
+  }
+  const sum = summarizeSupplements(
+    stock.plots.map((p) => ({ plotId: p.plotId, name: p.name, head: p.total })),
+    events,
+    range.from,
+    range.to,
+  );
+  return { ...range, ...sum, reference: MINERAL_SALT_REFERENCE_G, truncated: rows.length > MAX_ROWS * 4 };
 }

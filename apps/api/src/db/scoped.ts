@@ -7,6 +7,7 @@ import { and, asc, eq, gt, gte, inArray, isNull, or, sql, type SQL } from "drizz
 import type { AnySQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
 import {
   LIMITS,
+  localDate,
   newId,
   type Cursor,
   type PullResponse,
@@ -269,20 +270,53 @@ export class ScopedDb {
 
   // ---------- Miembros y asignaciones ----------
 
+  /** Miembros con su actividad de los últimos 7 días: tres consultas agrupadas, sin N+1. */
   async listMembers() {
     this.require(can.assign);
-    return this.db
-      .select({
-        userId: s.users.id,
-        fullName: s.users.fullName,
-        email: s.users.email,
-        phone: s.users.phone,
-        role: s.memberships.role,
-        status: s.memberships.status,
-      })
-      .from(s.memberships)
-      .innerJoin(s.users, eq(s.users.id, s.memberships.userId))
-      .where(and(eq(s.memberships.organizationId, this.auth.orgId), isNull(s.memberships.deletedAt)));
+    const org = this.auth.orgId;
+    const since = this.now() - 7 * 86_400_000;
+    const sinceDay = localDate(this.now() - 6 * 86_400_000);
+    const [members, days, recs, syncs] = await Promise.all([
+      this.db
+        .select({
+          userId: s.users.id,
+          fullName: s.users.fullName,
+          email: s.users.email,
+          phone: s.users.phone,
+          role: s.memberships.role,
+          status: s.memberships.status,
+        })
+        .from(s.memberships)
+        .innerJoin(s.users, eq(s.users.id, s.memberships.userId))
+        .where(and(eq(s.memberships.organizationId, org), isNull(s.memberships.deletedAt))),
+      this.db
+        .select({ userId: s.activityDaily.userId, n: sql<number>`count(*)` })
+        .from(s.activityDaily)
+        .where(and(eq(s.activityDaily.organizationId, org), gte(s.activityDaily.day, sinceDay)))
+        .groupBy(s.activityDaily.userId),
+      this.db
+        .select({ userId: s.records.authorId, n: sql<number>`count(*)` })
+        .from(s.records)
+        .where(and(eq(s.records.organizationId, org), isNull(s.records.deletedAt), gte(s.records.capturedAt, since)))
+        .groupBy(s.records.authorId),
+      this.db
+        .select({ userId: s.devices.userId, at: sql<number | null>`max(${s.devices.lastSyncAt})` })
+        .from(s.devices)
+        .where(
+          sql`${s.devices.userId} IN (SELECT user_id FROM memberships WHERE organization_id = ${org} AND deleted_at IS NULL)`,
+        )
+        .groupBy(s.devices.userId),
+    ]);
+    const n = (rows: { userId: string; n: number }[]) => new Map(rows.map((r) => [r.userId, Number(r.n)]));
+    const activeDays = n(days);
+    const records = n(recs);
+    const lastSync = new Map(syncs.map((r) => [r.userId, r.at]));
+    return members.map((m) => ({
+      ...m,
+      activeDays7: activeDays.get(m.userId) ?? 0,
+      records7d: records.get(m.userId) ?? 0,
+      lastSyncAt: lastSync.get(m.userId) ?? null,
+    }));
   }
 
   async addMember(input: {

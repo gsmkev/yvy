@@ -849,6 +849,11 @@ export const esPY = {
     overdueCountMany: "{{n}} tareas vencidas",
     filterAll: "Todas",
     filterOverdue: "Vencidas",
+    activityDays: "Activo {{n}} de 7 días",
+    activityRecords: "{{n}} registros en 7 días",
+    activityRecordsOne: "1 registro en 7 días",
+    lastSync: "Última sincronización {{date}}",
+    neverSynced: "Todavía no sincronizó",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

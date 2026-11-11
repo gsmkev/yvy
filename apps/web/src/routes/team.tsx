@@ -68,6 +68,11 @@ export function TeamPage() {
             <div className="text-sm text-tinta-2">
               {tk(`ui.role_${m.role}`)} {m.email ? `· ${m.email}` : ""} {m.phone ? `· ${m.phone}` : ""}
             </div>
+            <div className="num mt-0.5 text-xs text-tinta-2">
+              {t("ui.activityDays", { n: m.activeDays7 })} ·{" "}
+              {t(m.records7d === 1 ? "ui.activityRecordsOne" : "ui.activityRecords", { n: m.records7d })} ·{" "}
+              {m.lastSyncAt ? t("ui.lastSync", { date: fmtDateTime(m.lastSyncAt) }) : t("ui.neverSynced")}
+            </div>
             {overdueOf(m.userId) > 0 && (
               <div className="num mt-0.5 text-sm font-medium text-peligro">
                 {t(overdueOf(m.userId) === 1 ? "ui.overdueCountOne" : "ui.overdueCountMany", {

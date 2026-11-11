@@ -643,6 +643,8 @@ export class ScopedDb {
     title: string;
     kind: (typeof s.RECORD_KINDS)[number] | null;
     dueDate: string;
+    dueTime?: string | null;
+    priority?: (typeof s.TASK_PRIORITIES)[number];
     recurrence: (typeof s.RECURRENCES)[number];
     /** Lista de verificación en JSON (F-15). */
     checklist?: string | null;
@@ -650,23 +652,62 @@ export class ScopedDb {
     lat?: number | null;
     prescription?: string | null;
   }) {
+    const { ids } = await this.createTasks({ ...input, plotIds: [input.plotId] });
+    return { id: ids[0]! };
+  }
+
+  /**
+   * Una tarea por lote (T-01: elegir lotes en el mapa), todas en un mismo batch. `plotIds` con `null` crea una
+   * tarea sin lote. Los lotes tienen que ser de la estancia y de la organización.
+   */
+  async createTasks(input: {
+    farmId: string;
+    plotIds: (string | null)[];
+    assigneeId: string;
+    title: string;
+    kind: (typeof s.RECORD_KINDS)[number] | null;
+    dueDate: string;
+    dueTime?: string | null;
+    priority?: (typeof s.TASK_PRIORITIES)[number];
+    recurrence: (typeof s.RECURRENCES)[number];
+  }): Promise<{ ids: string[] }> {
     this.require(can.assign);
     await this.requireFarm(input.farmId);
     await this.memberRole(input.assigneeId);
-    const id = newId();
+    const { plotIds, ...base } = input;
+    const wanted = [...new Set(plotIds.filter((p): p is string => !!p))];
+    if (wanted.length) {
+      const found = await this.db
+        .select({ id: s.plots.id })
+        .from(s.plots)
+        .where(
+          and(
+            eq(s.plots.organizationId, this.auth.orgId),
+            eq(s.plots.farmId, input.farmId),
+            inArray(s.plots.id, wanted),
+            isNull(s.plots.deletedAt),
+          ),
+        );
+      if (found.length !== wanted.length) throw new NotFoundError("Lote inexistente");
+    }
+    const targets = [...new Set(plotIds)];
+    const ids = targets.map(() => newId());
     const ts = this.now();
     await runBatch(this.db, [
       bumpVersion(this.db),
-      this.db.insert(s.tasks).values({
-        ...input,
-        id,
-        organizationId: this.auth.orgId,
-        createdBy: this.auth.userId,
-        createdAt: ts,
-        updatedAt: ts,
-        version: currentVersion,
-      }),
+      ...targets.map((plotId, i) =>
+        this.db.insert(s.tasks).values({
+          ...base,
+          plotId,
+          id: ids[i]!,
+          organizationId: this.auth.orgId,
+          createdBy: this.auth.userId,
+          createdAt: ts,
+          updatedAt: ts,
+          version: currentVersion,
+        }),
+      ),
     ]);
-    return { id };
+    return { ids };
   }
 }

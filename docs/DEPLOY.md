@@ -35,7 +35,7 @@ hace el primer deploy y carga los secrets. Al final imprime `INGEST_SECRET`: gua
 
 **Variables:** `DEPLOY_ENABLED=true`, `APP_URL`, `TILES_PUBLIC_URL`, `EMAIL_FROM` (ej. `Yvy <ingreso@tu-dominio>`),
 `ADMIN_EMAILS` (quién ve el panel interno), `OPS_EMAIL` (aviso al 70 % de los límites gratis), `YVY_API_URL` (= `APP_URL`),
-`ALLOW_SIGNUP` (`true` para el piloto), `EAS_PROJECT_ID` (opcional).
+`ALLOW_SIGNUP` (`true` para el piloto), `EAS_PROJECT_ID` (opcional), `DEMO_ORG_ID` y `DEMO_USER_ID` (demo, ver 5b).
 
 ### Parte semanal con PDF adjunto (R-02)
 
@@ -92,6 +92,22 @@ Después: Actions → **APK Android** → *Run workflow*. Queda en `https://<APP
 2. Si configuraste el token de arriba, el mapa base, la climatología y los últimos 6 meses se procesan solos al crear la estancia. Si no, en *Actions → Jobs de datos* corré `new_farm` con el id de la estancia (o esperá al domingo).
 3. Creá empleados en **Equipo**, asignales lotes y mostrales el QR de vinculación.
 4. El empleado instala el APK, escanea el QR y baja el *Mapa sin conexión* por wifi.
+
+## 5b. Demo pública de solo lectura (opcional)
+
+La landing ofrece "Probar la demo" si el Worker tiene `DEMO_ORG_ID` y `DEMO_USER_ID`. La organización "Estancia de ejemplo"
+(plan `demo`, solo lectura, usuario `demo@yvy.invalid`) sale de un SQL generado:
+
+```bash
+pnpm --filter api seed:demo            # escribe apps/api/seed/demo.sql e imprime DEMO_ORG_ID y DEMO_USER_ID
+```
+
+Para cargarlo en producción, commiteá el `demo.sql` y corré **Actions → Cargar demo → Run workflow** (`demo.yml`), que
+lo ejecuta con `wrangler d1 execute --remote` y antes verifica que solo tenga inserciones.
+
+El SQL usa ids fijos e `INSERT OR IGNORE`: correrlo de nuevo no duplica nada. Los registros de los últimos 60 días son
+relativos al día en que corriste el script; para refrescarlos, borrá las filas de esa organización y cargá un `demo.sql` nuevo.
+Después cargá `DEMO_ORG_ID` y `DEMO_USER_ID` como variables de GitHub (Settings → Variables); `deploy.yml` se las pasa al Worker.
 
 ## 6. Monitoreo de errores con Sentry (opcional, P-02)
 

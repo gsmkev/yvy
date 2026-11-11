@@ -47,6 +47,8 @@ jobs:
           ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS }}
           OPS_EMAIL: ${{ vars.OPS_EMAIL }}
           SENTRY_DSN: ${{ vars.SENTRY_DSN_API }}
+          DEMO_ORG_ID: ${{ vars.DEMO_ORG_ID }}
+          DEMO_USER_ID: ${{ vars.DEMO_USER_ID }}
         run: >
           npx wrangler deploy
           --var "APP_ENV:production"
@@ -57,5 +59,7 @@ jobs:
           --var "ADMIN_EMAILS:$ADMIN_EMAILS"
           --var "OPS_EMAIL:$OPS_EMAIL"
           --var "SENTRY_DSN:$SENTRY_DSN"
+          --var "DEMO_ORG_ID:$DEMO_ORG_ID"
+          --var "DEMO_USER_ID:$DEMO_USER_ID"
       - name: Prueba de humo
         run: curl -fsS "${{ vars.APP_URL }}/health"

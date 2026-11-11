@@ -3,7 +3,7 @@
  * Subir RECORD_SCHEMA_VERSION al cambiar un esquema de forma incompatible.
  */
 import { z } from "zod";
-import { HERD_CATEGORIES, MAX_HEAD_PER_CATEGORY, MORTALITY_CAUSES, MOVE_REASONS } from "./livestock";
+import { HEALTH_REASONS, HERD_CATEGORIES, MAX_HEAD_PER_CATEGORY, MORTALITY_CAUSES, MOVE_REASONS } from "./livestock";
 import type { RecordKind } from "./schema";
 import { LIMITS } from "./limits";
 
@@ -64,6 +64,14 @@ const livestockSchemas = {
     category: z.enum(HERD_CATEGORIES),
     head: z.number().int().min(1).max(MAX_HEAD_PER_CATEGORY),
     cause: z.enum(MORTALITY_CAUSES),
+    note,
+  }),
+  /** Producto en texto libre por ahora (el catálogo de productos llega con el ERP, ADR 0004). El potrero es opcional. */
+  health: z.object({
+    reason: z.enum(HEALTH_REASONS),
+    product: z.string().trim().min(1).max(120),
+    dose: z.string().trim().max(80).optional(),
+    counts: herdCountsSchema,
     note,
   }),
 };

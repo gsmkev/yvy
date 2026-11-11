@@ -37,6 +37,7 @@ export const RECORD_KINDS = [
   "herd_count",
   "herd_move",
   "mortality",
+  "health",
 ] as const;
 export type RecordKind = (typeof RECORD_KINDS)[number];
 export const UPLOAD_STATUS = ["pending", "uploaded"] as const;

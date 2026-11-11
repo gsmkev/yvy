@@ -151,3 +151,30 @@ describe("registro mortality", () => {
     expect(r.body.results.map((x: any) => x.status)).toEqual(["applied", "rejected"]);
   });
 });
+
+describe("registro health", () => {
+  const ok = { reason: "aftosa", product: "Aftosa bivalente", dose: "2 ml", counts: { vaca: 50, ternero: 20 } };
+
+  it("se guarda con y sin potrero (la manga puede ser de varios)", async () => {
+    const { owner, farmId, plotIds } = await setup();
+    const r = await push(owner.token, [rec(farmId, plotIds[0]!, "health", ok), rec(farmId, null, "health", ok)]);
+    expect(r.body.results.map((x: any) => x.status)).toEqual(["applied", "applied"]);
+  });
+
+  it("rechaza producto vacío, motivo desconocido y cabezas vacías o negativas", async () => {
+    const { owner, farmId, plotIds } = await setup();
+    const r = await push(owner.token, [
+      rec(farmId, plotIds[0]!, "health", { ...ok, product: "  " }),
+      rec(farmId, plotIds[0]!, "health", { ...ok, reason: "magia" }),
+      rec(farmId, plotIds[0]!, "health", { ...ok, counts: {} }),
+      rec(farmId, plotIds[0]!, "health", { ...ok, counts: { vaca: -1 } }),
+    ]);
+    expect(r.body.results.map((x: any) => x.status)).toEqual(Array(4).fill("rejected"));
+  });
+
+  it("el empleado no trata en un potrero ajeno", async () => {
+    const { worker, farmId, plotIds } = await setup();
+    const r = await push(worker.token, [rec(farmId, plotIds[0]!, "health", ok), rec(farmId, plotIds[3]!, "health", ok)]);
+    expect(r.body.results.map((x: any) => x.status)).toEqual(["applied", "rejected"]);
+  });
+});

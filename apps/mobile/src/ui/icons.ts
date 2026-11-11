@@ -3,6 +3,7 @@ import {
   Beef,
   Bug,
   HeartCrack,
+  Syringe,
   CloudRain,
   Droplets,
   Footprints,
@@ -29,6 +30,7 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
   herd_count: Beef,
   herd_move: ArrowRightLeft,
   mortality: HeartCrack,
+  health: Syringe,
 };
 
 export const ALERT_ICON: Record<string, LucideIcon> = {

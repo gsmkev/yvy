@@ -8,7 +8,7 @@ import { DEFAULT_ALERT_SETTINGS, LIMITS, type AlertSettings, type RecordKind } f
 import * as s from "@yvy/shared/schema";
 import { newId } from "@yvy/shared";
 import { randomToken, sha256Hex } from "../lib/crypto";
-import { bumpVersion, currentVersion, runBatch, type Stmt } from "./client";
+import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from "./client";
 import { can, ForbiddenError, NotFoundError, type ScopedDb } from "./scoped";
 
 // ---------- Inicio multi estancia (RF-90) ----------
@@ -300,18 +300,18 @@ export async function farmClimate(sdb: ScopedDb, farmId: string, days = 90) {
         .orderBy(asc(s.forecasts.validDate))
     : [];
   const doys = [...new Set(daily.map((d) => dayOfYear(d.date)))];
-  const clim = doys.length
-    ? await sdb.db
+  // ≤ 90 parámetros por consulta: se trae por tandas (hasta 366 días para los informes de campaña).
+  const clim: (typeof s.climatology.$inferSelect)[] = [];
+  for (const chunk of chunkForParams(doys.slice(0, 366), 1)) {
+    clim.push(
+      ...(await sdb.db
         .select()
         .from(s.climatology)
         .where(
-          and(
-            eq(s.climatology.farmId, farmId),
-            eq(s.climatology.plotId, ""),
-            inArray(s.climatology.dayOfYear, doys.slice(0, 90)),
-          ),
-        )
-    : [];
+          and(eq(s.climatology.farmId, farmId), eq(s.climatology.plotId, ""), inArray(s.climatology.dayOfYear, chunk)),
+        )),
+    );
+  }
   return {
     daily,
     climatology: clim,

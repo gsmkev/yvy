@@ -78,7 +78,7 @@ web.get("/me", async (c) => {
 web.get("/org/farms", async (c) => c.json(await farmSummaries(c.var.sdb)));
 web.get("/org/farms/:id", async (c) => c.json(await farmDetail(c.var.sdb, c.req.param("id"))));
 web.get("/org/farms/:id/climate", async (c) =>
-  c.json(await farmClimate(c.var.sdb, c.req.param("id"), Number(c.req.query("days") ?? 90))),
+  c.json(await farmClimate(c.var.sdb, c.req.param("id"), Math.min(Math.max(Number(c.req.query("days")) || 90, 1), 400))),
 );
 
 web.patch("/org/farms/:id", async (c) => {

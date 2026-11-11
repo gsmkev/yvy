@@ -67,6 +67,11 @@ export const reportRoute = createRoute({
     hasta: s.hasta as string | undefined,
   }),
 });
+const farmReports = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/estancias/$farmId/informes",
+  component: lazyRouteComponent(() => import("./routes/reports-farm"), "FarmReportsPage"),
+});
 const records = createRoute({
   getParentRoute: () => appRoute,
   path: "/registros",
@@ -123,6 +128,7 @@ const routeTree = rootRoute.addChildren([
     newFarm,
     farmRoute,
     reportRoute,
+    farmReports,
     records,
     tasks,
     team,

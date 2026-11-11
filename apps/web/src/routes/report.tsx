@@ -1,6 +1,6 @@
 import { FileDown } from "lucide-react";
 import { useState } from "react";
-import { useParams, useSearch } from "@tanstack/react-router";
+import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { addDays, localDate, weeklyShareText } from "@yvy/shared";
 import { ShareWhatsappButton } from "../components/ShareButton";
@@ -135,6 +135,13 @@ export function ReportPage() {
           <div className="text-2xl font-semibold">{periodAlerts.length}</div>
         </Card>
       </div>
+      <Link
+        to="/estancias/$farmId/informes"
+        params={{ farmId }}
+        className="text-sm font-medium text-accion underline underline-offset-2"
+      >
+        {t("ui.reportsFarmLink")}
+      </Link>
       <ShareLinksSection farmId={farmId} />
     </div>
   );

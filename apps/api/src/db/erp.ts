@@ -1,10 +1,11 @@
 /**
  * ERP sencillo (ADR 0004): altas, cambios y bajas de los maestros de oficina (terceros, depósitos, tipos de cambio...).
- * Son tablas que no se sincronizan, así que no llevan bumpVersion. Todo filtra por organización y usa borrado lógico.
+ * Casi todas son de oficina y no se sincronizan; las que bajan al celular llevan `version`. Todo filtra por organización y usa borrado lógico.
  */
 import { and, asc, eq, isNull } from "drizzle-orm";
 import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
 import { newId, type Role } from "@yvy/shared";
+import { bumpVersion, currentVersion, runBatch, type Stmt } from "./client";
 import { NotFoundError, type ScopedDb } from "./scoped";
 
 export type ErpTable = SQLiteTable & {
@@ -13,6 +14,11 @@ export type ErpTable = SQLiteTable & {
   deletedAt: SQLiteColumn;
   updatedAt: SQLiteColumn;
 };
+
+/** Las tablas que bajan al celular (products, machines) llevan `version`: bumpVersion primero en el batch. */
+const isSynced = (table: ErpTable) => "version" in table;
+const write = async (sdb: ScopedDb, table: ErpTable, stmt: Stmt) =>
+  isSynced(table) ? runBatch(sdb.db, [bumpVersion(sdb.db), stmt]) : void (await stmt);
 
 /** "" pasa a null y lo que no vino (undefined) se descarta: un PATCH no pisa lo que no manda. */
 export const cleanRow = (o: Record<string, unknown>): Record<string, unknown> =>
@@ -40,9 +46,8 @@ export async function erpCreate(
   sdb.require(canWrite);
   const id = newId();
   const ts = sdb.now();
-  await sdb.db
-    .insert(table)
-    .values({ ...cleanRow(values), id, organizationId: sdb.auth.orgId, createdAt: ts, updatedAt: ts } as never);
+  const row = { ...cleanRow(values), id, organizationId: sdb.auth.orgId, createdAt: ts, updatedAt: ts };
+  await write(sdb, table, sdb.db.insert(table).values((isSynced(table) ? { ...row, version: currentVersion } : row) as never));
   return { id };
 }
 
@@ -57,10 +62,8 @@ export async function erpUpdate(
   const where = and(eq(table.id, id), eq(table.organizationId, sdb.auth.orgId), isNull(table.deletedAt));
   const [row] = await sdb.db.select({ id: table.id }).from(table).where(where).limit(1);
   if (!row) throw new NotFoundError("No existe");
-  await sdb.db
-    .update(table)
-    .set({ ...cleanRow(patch), updatedAt: sdb.now() } as never)
-    .where(where);
+  const set = { ...cleanRow(patch), updatedAt: sdb.now() };
+  await write(sdb, table, sdb.db.update(table).set((isSynced(table) ? { ...set, version: currentVersion } : set) as never).where(where));
 }
 
 export async function erpDelete(sdb: ScopedDb, table: ErpTable, canWrite: (r: Role) => boolean, id: string) {
@@ -69,5 +72,6 @@ export async function erpDelete(sdb: ScopedDb, table: ErpTable, canWrite: (r: Ro
   const [row] = await sdb.db.select({ id: table.id }).from(table).where(where).limit(1);
   if (!row) throw new NotFoundError("No existe");
   const ts = sdb.now();
-  await sdb.db.update(table).set({ deletedAt: ts, updatedAt: ts } as never).where(where);
+  const set = { deletedAt: ts, updatedAt: ts };
+  await write(sdb, table, sdb.db.update(table).set((isSynced(table) ? { ...set, version: currentVersion } : set) as never).where(where));
 }

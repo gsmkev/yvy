@@ -12,7 +12,7 @@
  *   El pull pagina por (version, id): equivale al "updated_at + desempate por id" del PRD §11
  *   pero sin depender de relojes de distintos datacenters.
  */
-import { PARTY_KINDS } from "./erp";
+import { MACHINE_TYPES, METER_KINDS, PARTY_KINDS } from "./erp";
 import { HEALTH_REASONS } from "./livestock";
 import { sql } from "drizzle-orm";
 import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
@@ -416,6 +416,27 @@ export const parties = sqliteTable(
     ...timestamps,
   },
   (t) => [index("parties_org_idx").on(t.organizationId, t.name)],
+);
+
+/** Maquinaria y vehículos (E-03). Baja al celular para elegir la máquina en una carga de combustible (E-16). */
+export const machines = sqliteTable(
+  "machines",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    /** Estancia donde está; vacío = de toda la organización. */
+    farmId: text("farm_id"),
+    name: text("name").notNull(),
+    type: text("type", { enum: MACHINE_TYPES }).notNull(),
+    brand: text("brand"),
+    model: text("model"),
+    year: integer("year"),
+    /** Horas de motor (tractor, cosechadora) o kilómetros (camión, camioneta). */
+    meterKind: text("meter_kind", { enum: METER_KINDS }).notNull().default("hours"),
+    meterValue: real("meter_value").notNull().default(0),
+    ...synced,
+  },
+  (t) => [index("machines_sync_idx").on(t.organizationId, t.version, t.id)],
 );
 
 // ---------- Trabajo ----------

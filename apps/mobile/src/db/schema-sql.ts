@@ -124,5 +124,7 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE UNIQUE INDEX `user_pins_phone_uq` ON `user_pins` (`phone_key`);",
   "CREATE INDEX `user_pins_org_idx` ON `user_pins` (`organization_id`);",
   "CREATE TABLE `parties` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`ruc` text,\n\t`kind` text DEFAULT 'supplier' NOT NULL,\n\t`phone` text,\n\t`email` text,\n\t`address` text,\n\t`note` text,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
-  "CREATE INDEX `parties_org_idx` ON `parties` (`organization_id`,`name`);"
+  "CREATE INDEX `parties_org_idx` ON `parties` (`organization_id`,`name`);",
+  "CREATE TABLE `machines` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text,\n\t`name` text NOT NULL,\n\t`type` text NOT NULL,\n\t`brand` text,\n\t`model` text,\n\t`year` integer,\n\t`meter_kind` text DEFAULT 'hours' NOT NULL,\n\t`meter_value` real DEFAULT 0 NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
+  "CREATE INDEX `machines_sync_idx` ON `machines` (`organization_id`,`version`,`id`);"
 ];

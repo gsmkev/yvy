@@ -75,6 +75,16 @@ describe("LocalDb", () => {
     expect(id).toBeTruthy();
   });
 
+  it("punto de interés: fila local y mutación pois.upsert en la misma transacción", async () => {
+    const db = setup();
+    const id = db.savePoi(ORG, { farmId: FARM, kind: "gate", name: "  Tranquera norte ", lon: -55.9, lat: -27.2 });
+    expect(db.pois(FARM)).toMatchObject([{ id, kind: "gate", name: "Tranquera norte" }]);
+    const muts = await db.pendingMutations(10);
+    expect(muts).toHaveLength(1);
+    expect(muts[0]).toMatchObject({ kind: "pois.upsert", row: { id, name: "Tranquera norte", kind: "gate" } });
+    expect(db.outboxItems()[0]).toMatchObject({ what: "poi" });
+  });
+
   it("guardar registro con fotos: fila local + mutaciones en orden, pendiente", async () => {
     const db = setup();
     const id = db.saveRecord(USER, ORG, rec, [photo, photo]);

@@ -16,6 +16,8 @@ export const LIMITS = {
     maxFutureCaptureMs: 60 * 60 * 1000,
     /** Tareas completadas que siguen bajando al celular. */
     tasksDoneHistoryMs: 30 * 24 * 60 * 60 * 1000,
+    /** Largo máximo del nombre de un punto de interés. */
+    maxPoiNameLength: 120,
     /** Ventana en que el empleado puede editar o borrar sus registros (RF-34, §9). */
     workerEditWindowMs: 24 * 60 * 60 * 1000,
     /** Sincronización automática en primer plano (PRD: 15 min; anexo Cloudflare: 30). */

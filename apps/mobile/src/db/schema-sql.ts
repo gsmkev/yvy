@@ -122,5 +122,7 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `farm_lines_farm_idx` ON `farm_lines` (`farm_id`);",
   "CREATE TABLE `user_pins` (\n\t`user_id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`phone_key` text NOT NULL,\n\t`salt` text NOT NULL,\n\t`pin_hash` text NOT NULL,\n\t`failed_attempts` integer DEFAULT 0 NOT NULL,\n\t`locked_until` integer,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL\n);",
   "CREATE UNIQUE INDEX `user_pins_phone_uq` ON `user_pins` (`phone_key`);",
-  "CREATE INDEX `user_pins_org_idx` ON `user_pins` (`organization_id`);"
+  "CREATE INDEX `user_pins_org_idx` ON `user_pins` (`organization_id`);",
+  "CREATE TABLE `parties` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`ruc` text,\n\t`kind` text DEFAULT 'supplier' NOT NULL,\n\t`phone` text,\n\t`email` text,\n\t`address` text,\n\t`note` text,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
+  "CREATE INDEX `parties_org_idx` ON `parties` (`organization_id`,`name`);"
 ];

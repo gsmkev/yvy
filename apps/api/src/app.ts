@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import { requireAuth } from "./auth/middleware";
 import { ForbiddenError, NotFoundError, PlanLimitError } from "./db/scoped";
 import { agri } from "./routes/agri";
+import { erp } from "./routes/erp";
 import { auth } from "./routes/auth";
 import { ingest } from "./routes/ingest";
 import { media } from "./routes/media";
@@ -60,6 +61,7 @@ for (const path of ["/sync/push", "/media/*", "/devices", "/me/*", "/events"]) a
 authed.route("/sync", sync);
 authed.route("/org", org);
 authed.route("/org", agri);
+authed.route("/org/erp", erp);
 authed.route("/media", media);
 authed.route("/", web);
 authed.route("/admin", admin);

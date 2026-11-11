@@ -559,10 +559,11 @@ export const esPY = {
     geoDenied:
       "No pudimos usar tu ubicación porque el permiso está bloqueado. Habilitalo en los ajustes del sitio en tu navegador y probá de nuevo.",
     geoFailed: "No pudimos obtener tu ubicación. Revisá que el GPS esté activo y probá de nuevo.",
-    placeSearch: "Buscar un departamento o ciudad",
-    placeSearchPlaceholder: "Ej.: Encarnación, Concepción",
-    placeNone: "No tenemos ese lugar en la lista. Probá con el departamento o pegá las coordenadas.",
+    placeSearch: "Buscar un lugar o pegar coordenadas",
+    placeSearchPlaceholder: "Ciudad, -25.28, -57.63 o enlace de Google Maps",
+    placeNone: "No tenemos ese lugar en la lista. Probá con el departamento, o pegá las coordenadas o el enlace completo de Google Maps (los enlaces acortados necesitan internet).",
     placeDepartment: "Departamento",
+    placeGoCoords: "Ir a estas coordenadas",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

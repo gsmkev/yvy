@@ -227,7 +227,7 @@ export const daysUntil = (from: string, to: string): number =>
 
 export type BaseUnit = "l" | "kg";
 /** Registros de campo que descuentan stock y cargan costo. */
-export const CONSUMING_KINDS = ["application", "fertilization", "health"] as const;
+export const CONSUMING_KINDS = ["application", "fertilization", "health", "fuel_load"] as const;
 
 const DOSE_TO_BASE: Record<DoseUnit, { unit: BaseUnit; factor: number }> = {
   l_ha: { unit: "l", factor: 1 },
@@ -248,7 +248,7 @@ interface DoseLike {
 export function consumptionProductIds(kind: string, data: Record<string, unknown>): string[] {
   if (kind === "application" || kind === "fertilization")
     return ((data.products as DoseLike[] | undefined) ?? []).map((p) => p.productId).filter((x): x is string => !!x);
-  if (kind === "health" && typeof data.productId === "string") return [data.productId];
+  if ((kind === "health" || kind === "fuel_load") && typeof data.productId === "string") return [data.productId];
   return [];
 }
 
@@ -256,6 +256,7 @@ export function consumptionProductIds(kind: string, data: Record<string, unknown
  * Cantidades de insumos que consume un registro, en la unidad base del producto (l o kg).
  * - application y fertilization: dosis por hectárea x superficie hecha (`areaHa` del registro o, si falta, la del lote).
  * - health: la cantidad del registro (`quantity`).
+ * - fuel_load: los litros de la carga, del combustible indicado o del único combustible del catálogo.
  * Solo cuentan los productos del catálogo (`units`: id a unidad). Un producto cuya dosis no es de la misma familia que
  * su unidad (kg/ha para un líquido) o un registro sin superficie no consumen nada: no se inventa stock.
  * Un mismo producto repetido se suma.
@@ -263,7 +264,7 @@ export function consumptionProductIds(kind: string, data: Record<string, unknown
 export function consumptionLines(
   kind: string,
   data: Record<string, unknown>,
-  ctx: { plotAreaHa: number | null; units: Map<string, BaseUnit> },
+  ctx: { plotAreaHa: number | null; units: Map<string, BaseUnit>; fuelProductId?: string | null },
 ): { productId: string; qty: number }[] {
   const acc = new Map<string, number>();
   const add = (id: string, qty: number) => {
@@ -277,6 +278,10 @@ export function consumptionLines(
       const conv = DOSE_TO_BASE[p.unit];
       if (p.productId && unit && conv && conv.unit === unit) add(p.productId, p.dose * conv.factor * area);
     }
+  } else if (kind === "fuel_load") {
+    // Litros de la carga; el producto es el indicado o, si no, el único combustible del catálogo.
+    const id = typeof data.productId === "string" ? data.productId : ctx.fuelProductId;
+    if (id && ctx.units.get(id) === "l" && typeof data.liters === "number") add(id, data.liters);
   } else if (kind === "health") {
     const id = data.productId;
     if (typeof id === "string" && ctx.units.has(id) && typeof data.quantity === "number") add(id, data.quantity);

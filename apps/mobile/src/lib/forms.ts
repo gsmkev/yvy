@@ -83,6 +83,12 @@ export const FORMS: Record<RecordKind, FieldSpec[]> = {
     { key: "counts", type: "counts", required: true },
     note,
   ],
+  fuel_load: [
+    { key: "machine", type: "text", required: true },
+    { key: "liters", type: "number", unit: "l", required: true },
+    { key: "meterValue", type: "number" },
+    note,
+  ],
   harvest: [
     { key: "tons", type: "number", unit: "t", required: true },
     { key: "moisturePct", type: "number", unit: "%" },

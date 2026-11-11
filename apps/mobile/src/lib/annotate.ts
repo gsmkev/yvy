@@ -13,6 +13,8 @@ export interface FlowCtx {
   askSeason?: boolean;
   /** Hay productos veterinarios en el catálogo (E-13): si no, el tratamiento se escribe a mano. */
   vetProducts?: boolean;
+  /** Hay máquinas en el catálogo (E-16): si no, la máquina se escribe a mano. */
+  machines?: boolean;
 }
 
 type StepBase = {
@@ -34,6 +36,8 @@ export type Step = StepBase &
   | { key: string; kind: "products"; question: string; fixedUnit?: "kg_ha"; productTypes?: string[] }
   /** Un producto del catálogo de ciertos tipos (guarda su id; "otro" salta el paso y se escribe a mano). */
   | { key: string; kind: "catalog"; question: string; productTypes: string[]; otherLabel: string }
+  /** Una máquina del catálogo (guarda su id; "otra" salta el paso y se escribe el nombre a mano). */
+  | { key: string; kind: "machine"; question: string; otherLabel: string }
   /** Elegir un potrero de la estancia (excluye el de origen). La respuesta es su id. */
   | { key: string; kind: "paddock"; question: string }
   /** Elegir un punto de interés de un tipo (hoy: la aguada). La respuesta es su id; se guarda como poi_id. */
@@ -151,6 +155,14 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     { key: "areaHa", kind: "number", question: "app.areaDoneQuestion", hint: "app.areaDoneHint", unit: "ha", max: 100_000, optional: true },
     { key: "note", kind: "text", question: "app.addNote", optional: true },
   ],
+  // Combustible (E-16): máquina, litros y horómetro. El ERP descuenta el stock y carga el costo.
+  fuel_load: [
+    { key: "machineId", kind: "machine", question: "app.fuelMachineQuestion", otherLabel: "app.fuelMachineOther", skipIf: (_a, ctx) => !ctx.machines },
+    { key: "machine", kind: "text", question: "app.fuelMachineQuestion", skipIf: (a) => !!a.machineId },
+    { key: "liters", kind: "number", question: "app.fuelLitersQuestion", hint: "app.fuelLitersHint", unit: "l", max: 100_000 },
+    { key: "meterValue", kind: "number", question: "app.fuelMeterQuestion", hint: "app.fuelMeterHint", unit: "", max: 10_000_000, optional: true },
+    { key: "note", kind: "text", question: "app.addNote", optional: true },
+  ],
   harvest: [
     { key: "seasonId", kind: "season", question: "app.seasonQuestion", skipIf: (_a, ctx) => !ctx.askSeason },
     { key: "tons", kind: "number", question: "app.tonsQuestion", hint: "app.tonsHint", unit: "t", max: 1_000_000 },
@@ -195,8 +207,8 @@ export const KINDS_FOR = (plotKind: "crop" | "pasture" | null): RecordKind[] =>
   plotKind === "pasture"
     ? ["pasture_status", "herd_count", "herd_move", "mortality", "health", "rain", "water", "pest", "scouting", "note"]
     : plotKind === "crop"
-      ? ["scouting", "pest", "crop_status", "application", "fertilization", "sowing", "harvest", "rain", "water", "note"]
-      : ["rain", "scouting", "water", "health", "note", "pest", "crop_status", "pasture_status", "application", "fertilization", "sowing", "harvest"];
+      ? ["scouting", "pest", "crop_status", "application", "fertilization", "sowing", "harvest", "fuel_load", "rain", "water", "note"]
+      : ["rain", "scouting", "water", "health", "note", "pest", "crop_status", "pasture_status", "application", "fertilization", "sowing", "harvest", "fuel_load"];
 
 /** Registros de hacienda: son de un solo potrero, no se cargan en varios a la vez (F-10). */
 export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count", "herd_move", "mortality", "health"];

@@ -7,6 +7,7 @@ import {
   CloudRain,
   Droplets,
   Footprints,
+  Fuel,
   NotebookPen,
   Route,
   Scale,
@@ -41,6 +42,7 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
   fertilization: Fertilizer,
   harvest: Scale,
   track: Route,
+  fuel_load: Fuel,
 };
 
 export const ALERT_ICON: Record<string, LucideIcon> = {

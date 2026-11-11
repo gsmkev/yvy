@@ -7,6 +7,7 @@ import * as s from "@yvy/shared/schema";
 import { HTTPException } from "hono/http-exception";
 import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
 import { presign } from "../lib/r2";
+import { fuelReport } from "../db/fuel";
 import { fixDefaultWarehouse } from "../db/stock";
 import { adjustStock, consumeStock, deleteMove, expiringLots, listMoves, purchaseStock, requireWarehouseUnused, stockSummary, transferStock } from "../db/stock-moves";
 import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
@@ -195,3 +196,9 @@ erp.delete("/photos/:kind/:id", async (c) => {
   if (photoPath) await c.env.MEDIA.delete(key);
   return c.json({ ok: true });
 });
+
+// ---------- Combustible (E-16) ----------
+
+erp.get("/fuel/report", async (c) =>
+  c.json(await fuelReport(c.var.sdb, parse(z.object({ farmId: uuid.optional(), from: isoDate.optional(), to: isoDate.optional() }), c.req.query()))),
+);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { newId, parseRecordData } from "@yvy/shared";
-import { stepsFor } from "../src/lib/annotate";
+import { KINDS_FOR, stepsFor } from "../src/lib/annotate";
 import { LocalDb } from "../src/db/store";
 import { nodeSql } from "./node-sql";
 
@@ -51,5 +51,21 @@ describe("máquinas en el celular (E-03)", () => {
     };
     await db.applyPull("machines", [row], { version: 1, id: row.id });
     expect(db.machines().map((m) => [m.name, m.meterValue])).toEqual([["John Deere 6130", 4200]]);
+  });
+});
+
+describe("carga de combustible en el celular (E-16)", () => {
+  it("con máquinas en el catálogo se elige una; sin catálogo se escribe el nombre", () => {
+    const keys = (a: Record<string, unknown>, machines: boolean) =>
+      stepsFor("fuel_load", a, { waterPois: 0, machines }).map((s) => s.key);
+    expect(keys({}, true)).toEqual(["machineId", "machine", "liters", "meterValue", "note"]);
+    expect(keys({ machineId: newId() }, true)).toEqual(["machineId", "liters", "meterValue", "note"]);
+    expect(keys({}, false)).toEqual(["machine", "liters", "meterValue", "note"]);
+  });
+  it("el registro se valida con el esquema compartido; la app lo ofrece en cualquier lote", () => {
+    expect(parseRecordData("fuel_load", { machine: "John Deere", liters: 120, meterValue: 4310.5 }).success).toBe(true);
+    expect(parseRecordData("fuel_load", { machine: "John Deere", liters: 0 }).success).toBe(false);
+    expect(KINDS_FOR("crop")).toContain("fuel_load");
+    expect(KINDS_FOR(null)).toContain("fuel_load");
   });
 });

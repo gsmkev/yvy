@@ -1353,6 +1353,9 @@ export const esPY = {
     sprayNoData: "Todavía no hay pronóstico por hora para esta estancia.",
     sprayWindowLine: "{{day}} de {{from}} a {{to}}",
     sprayHourTip: "{{hour}} · viento {{wind}} km/h · {{temp}} °C · humedad {{rh}} % · Delta T {{dt}}",
+    layerPests: "Plagas",
+    pestsLegendTitle: "Plagas de los últimos 30 días",
+    pestsNone: "No hay plagas anotadas en los últimos 30 días.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

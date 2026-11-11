@@ -14,6 +14,7 @@ import { ImportPlots } from "../components/ImportPlots";
 import { PlotPanel } from "../components/PlotPanel";
 import { HerdPanel } from "../components/HerdPanel";
 import { PlotsTable } from "../components/PlotsTable";
+import { CompareOverlay, SceneControls } from "../components/SceneControls";
 import { RecordsList } from "../components/RecordsList";
 import { TasksPanel } from "../components/TasksPanel";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "../components/ui";
@@ -25,6 +26,7 @@ import { fmtDate, fmtHa, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { loadPrefs, savePrefs } from "../lib/prefs";
 import { useAlerts, useFarm, useFarms, useMe, useMembers } from "../lib/queries";
+import { defaultCompare, layerDates, pickLayer, type Camera } from "../lib/scenes";
 import type { FarmDetail, RecordRow } from "../lib/types";
 
 /** Días sin anotaciones para considerar un lote sin visitar. */
@@ -65,6 +67,11 @@ export function FarmPage() {
     loadPrefs().layer === "ndvi" ? "ndvi" : "satellite",
   );
   useEffect(() => savePrefs({ farmId }), [farmId]);
+  // S-04: fecha elegida por tipo de capa y comparación con cortina
+  const [pickedIds, setPickedIds] = useState<{ ndvi?: string; true_color?: string }>({});
+  const [compare, setCompare] = useState<{ left: string; right: string } | null>(null);
+  const [curtain, setCurtain] = useState(50);
+  const [camera, setCamera] = useState<Camera | null>(null);
   const [records, setRecords] = useState<RecordRow[]>([]);
   // Bajo lg no entran el mapa y el panel juntos: se alterna entre uno y otro.
   const [view, setView] = useState<"map" | "list">("map");
@@ -132,6 +139,7 @@ export function FarmPage() {
   const ndviLayer = d.layers.filter((l) => l.layer === "ndvi").sort((a, b) => b.acquiredAt - a.acquiredAt)[0];
   // La capa NDVI recordada solo vale si esta estancia tiene imagen
   const layer = wantedLayer === "ndvi" && ndviLayer ? "ndvi" : "satellite";
+  const kind = layer === "ndvi" ? "ndvi" : "true_color";
   const hasBasemap = d.layers.some((l) => l.layer === "true_color");
   const cropHa = d.plots.filter((p) => p.kind === "crop").reduce((a, p) => a + p.areaHa, 0);
   const pastureHa = d.plots.filter((p) => p.kind === "pasture").reduce((a, p) => a + p.areaHa, 0);
@@ -160,6 +168,9 @@ export function FarmPage() {
           plots={d.plots}
           pois={d.pois}
           layers={d.layers}
+          layerIds={compare ? { ...pickedIds, [kind]: compare.left } : pickedIds}
+          camera={compare ? camera : null}
+          onCamera={compare ? setCamera : undefined}
           tilesBaseUrl={me.data?.tilesBaseUrl}
           showNdvi={layer === "ndvi"}
           selectedPlotId={selected}
@@ -188,6 +199,22 @@ export function FarmPage() {
           }}
           onMapClick={(lon, lat) => mode === "poi" && (setPoiAt([lon, lat]), setMode("none"))}
         />
+        {compare && (
+          <CompareOverlay
+            pct={curtain}
+            onPct={setCurtain}
+            camera={camera}
+            onCamera={setCamera}
+            mapProps={{
+              outline: d.farm.geometry,
+              layers: d.layers,
+              layerIds: { ...pickedIds, [kind]: compare.right },
+              tilesBaseUrl: me.data?.tilesBaseUrl,
+              showNdvi: layer === "ndvi",
+              bounds,
+            }}
+          />
+        )}
         {/* Capas: control segmentado compacto, con leyenda cuando corresponde */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
           <div className="flex w-56 flex-col gap-1.5 rounded-md border border-white/15 bg-surco/85 p-0.5 text-xs font-medium text-lino backdrop-blur">
@@ -255,6 +282,7 @@ export function FarmPage() {
                 disabled={l === "ndvi" && !ndviLayer}
                 onClick={() => {
                   setLayer(l);
+                  setCompare(null);
                   savePrefs({ layer: l });
                 }}
                 className={`cursor-pointer rounded px-3 py-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${layer === l ? "bg-lino text-surco" : "hover:bg-white/10"}`}
@@ -263,6 +291,20 @@ export function FarmPage() {
               </button>
             ))}
           </div>
+          <SceneControls
+            layers={d.layers}
+            kind={kind}
+            picked={pickLayer(d.layers, kind, pickedIds[kind])?.id ?? ""}
+            onPick={(id) => setPickedIds((p) => ({ ...p, [kind]: id }))}
+            compare={compare}
+            canCompare={layerDates(d.layers, kind).length > 1}
+            onToggleCompare={() => {
+              if (compare) return setCompare(null);
+              setCurtain(50);
+              setCompare(defaultCompare(d.layers, kind));
+            }}
+            onCompare={setCompare}
+          />
           {layer === "ndvi" && ndviLayer && (
             <div className="w-56 rounded-md border border-white/15 bg-surco/85 p-2.5 text-[11px] text-lino backdrop-blur">
               <div
@@ -274,7 +316,7 @@ export function FarmPage() {
                 <span>{t("ui.ndviLegendHigh")}</span>
               </div>
               <p className="num mt-1.5 text-lino/70">
-                {t("ui.imageDate", { date: fmtDate(ndviLayer.acquiredAt) })} · Sentinel-2
+                {t("ui.imageDate", { date: fmtDate((pickLayer(d.layers, "ndvi", pickedIds.ndvi) ?? ndviLayer).acquiredAt) })} · Sentinel-2
               </p>
             </div>
           )}

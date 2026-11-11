@@ -13,6 +13,7 @@ import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson"
 import { BRAND } from "@yvy/shared";
 import pointOnFeature from "@turf/point-on-feature";
 import { t } from "../lib/i18n";
+import { cameraDiffers, pickLayer, type Camera } from "../lib/scenes";
 import type { Layer, Plot, Poi } from "../lib/types";
 
 let protocolAdded = false;
@@ -44,6 +45,11 @@ export interface FarmMapProps {
   layers?: Layer[];
   tilesBaseUrl?: string;
   showNdvi?: boolean;
+  /** Capa elegida por tipo (S-04); si falta, la más nueva. */
+  layerIds?: Partial<Record<Layer["layer"], string>>;
+  /** Cámara compartida entre dos mapas (comparar con cortina): se aplica al cambiar y se avisa al mover con el mouse. */
+  camera?: Camera | null;
+  onCamera?: (c: Camera) => void;
   selectedPlotId?: string | null;
   bounds?: [number, number, number, number] | null;
   /** Vuela a un punto (cambiar `n` para repetir el mismo destino). */
@@ -214,8 +220,19 @@ export function FarmMap(props: FarmMapProps) {
         map.on("mouseenter", l, () => (map.getCanvas().style.cursor = "pointer"));
         map.on("mouseleave", l, () => (map.getCanvas().style.cursor = ""));
       }
+      map.on("move", (e) => {
+        // Solo lo que mueve la persona: el salto que aplica la cámara del otro mapa no rebota.
+        if (!e.originalEvent) return;
+        cb.current.onCamera?.({
+          center: [map.getCenter().lng, map.getCenter().lat],
+          zoom: map.getZoom(),
+          bearing: map.getBearing(),
+          pitch: map.getPitch(),
+        });
+      });
       mapRef.current = map;
       sync();
+      if (cb.current.camera) map.jumpTo(cb.current.camera);
     });
     return () => {
       drawRef.current?.stop();
@@ -318,6 +335,7 @@ export function FarmMap(props: FarmMapProps) {
     props.selectedPlotId,
     props.layers,
     props.showNdvi,
+    props.layerIds,
     props.tilesBaseUrl,
     props.measuring,
     props.measurePoints,
@@ -328,6 +346,19 @@ export function FarmMap(props: FarmMapProps) {
     const map = mapRef.current;
     if (map && props.bounds) map.fitBounds(props.bounds, { padding: 60, duration: 600, maxZoom: 18 });
   }, [props.bounds?.join(",")]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const c = props.camera;
+    if (!map || !c) return;
+    const now: Camera = {
+      center: [map.getCenter().lng, map.getCenter().lat],
+      zoom: map.getZoom(),
+      bearing: map.getBearing(),
+      pitch: map.getPitch(),
+    };
+    if (cameraDiffers(now, c)) map.jumpTo(c);
+  }, [props.camera]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -363,8 +394,7 @@ export function FarmMap(props: FarmMapProps) {
 }
 
 function syncRasters(map: MlMap, p: FarmMapProps) {
-  const latest = (layer: Layer["layer"]) =>
-    (p.layers ?? []).filter((l) => l.layer === layer).sort((a, b) => b.acquiredAt - a.acquiredAt)[0];
+  const latest = (layer: Layer["layer"]) => pickLayer(p.layers ?? [], layer, p.layerIds?.[layer]);
   const set = (id: string, layer: Layer | undefined, visible: boolean, before: string) => {
     const url = layer && p.tilesBaseUrl ? `pmtiles://${p.tilesBaseUrl.replace(/\/$/, "")}/${layer.pmtilesPath}` : null;
     const src = map.getSource(id) as { url?: string } | undefined;

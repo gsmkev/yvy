@@ -1172,6 +1172,13 @@ export const esPY = {
     riskLandingText:
       "Heladas, lluvia frente a lo normal, sequías y focos de fuego cerca de tu campo, con 30 años de datos públicos. Creá tu estancia, marcá el perímetro y el informe se arma solo. Lo bajás en PDF para el banco o el seguro.",
     riskLandingCta: "Pedir el informe",
+    sceneDate: "Fecha de la imagen",
+    compare: "Comparar",
+    compareEnd: "Dejar de comparar",
+    compareLeft: "Izquierda",
+    compareRight: "Derecha",
+    compareSwipe: "Deslizá para comparar las dos fechas",
+    compareNeedTwo: "Para comparar hacen falta dos fechas.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

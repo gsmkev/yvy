@@ -3,7 +3,7 @@
  * Cada escritura deriva organization_id de la fila padre (lote o estancia), nunca del request.
  */
 import { and, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
-import { newId } from "@yvy/shared";
+import { DEFAULT_ALERT_SETTINGS, newId, type AlertSettings } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { upsertAlert } from "../jobs/alerts";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type DB, type Stmt } from "./client";
@@ -28,6 +28,22 @@ export class SystemDb {
       })
       .from(s.farms)
       .where(isNull(s.farms.deletedAt));
+  }
+
+  /** Umbrales de avisos de la estancia (C-04); por defecto si no hay fila. */
+  async alertSettings(farmId: string): Promise<AlertSettings> {
+    const [row] = await this.db
+      .select()
+      .from(s.farmAlertSettings)
+      .where(eq(s.farmAlertSettings.farmId, farmId))
+      .limit(1);
+    return row
+      ? {
+          frostTminC: row.frostTminC,
+          excessRainMm24h: row.excessRainMm24h,
+          droughtDeficitPct: row.droughtDeficitPct,
+        }
+      : { ...DEFAULT_ALERT_SETTINGS };
   }
 
   farmGeometry(farmId: string) {

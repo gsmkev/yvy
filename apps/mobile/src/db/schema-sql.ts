@@ -70,5 +70,6 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `email_codes_ip_idx` ON `email_codes` (`ip`,`created_at`);",
   "CREATE TABLE `farm_imagery` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`status` text DEFAULT 'pending' NOT NULL,\n\t`requested_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL\n);",
   "CREATE TABLE `deletion_requests` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`user_id` text NOT NULL,\n\t`status` text DEFAULT 'pending' NOT NULL,\n\t`created_at` integer NOT NULL\n);",
-  "CREATE INDEX `deletion_requests_org_idx` ON `deletion_requests` (`organization_id`,`created_at`);"
+  "CREATE INDEX `deletion_requests_org_idx` ON `deletion_requests` (`organization_id`,`created_at`);",
+  "CREATE TABLE `farm_alert_settings` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`frost_tmin_c` real DEFAULT 2 NOT NULL,\n\t`excess_rain_mm_24h` real DEFAULT 50 NOT NULL,\n\t`drought_deficit_pct` real DEFAULT 50 NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`updated_by` text\n);"
 ];

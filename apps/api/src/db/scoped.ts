@@ -84,6 +84,8 @@ export const can = {
   assign: (r: Role) => r !== "worker",
   viewAll: (r: Role) => r !== "worker",
   reports: (r: Role) => r !== "worker",
+  /** C-04: solo dueño y administrador cambian los umbrales de avisos. */
+  alertSettings: (r: Role) => r === "owner" || r === "admin",
 };
 
 export class ScopedDb {

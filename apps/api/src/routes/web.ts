@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { areaHa, bboxOf } from "@yvy/geo";
-import { CROPS, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS } from "@yvy/shared";
+import { alertSettingsSchema, CROPS, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import {
   alertFeedback,
@@ -14,11 +14,13 @@ import {
   farmClimate,
   farmDetail,
   farmSummaries,
+  getAlertSettings,
   listAlerts,
   listRecords,
   listTasks,
   plotNdvi,
   registerDevice,
+  saveAlertSettings,
   removeMember,
   updateFarm,
   updatePlot,
@@ -203,6 +205,12 @@ web.get("/org/alerts", async (c) => {
       useful: r.useful === null ? null : !!r.useful,
     })),
   );
+});
+web.get("/org/farms/:id/alert-settings", async (c) => c.json(await getAlertSettings(c.var.sdb, c.req.param("id"))));
+web.put("/org/farms/:id/alert-settings", async (c) => {
+  const b = parse(alertSettingsSchema, await readJson(c.req));
+  await saveAlertSettings(c.var.sdb, c.req.param("id"), b);
+  return c.json({ ok: true });
 });
 web.post("/org/alerts/:id/feedback", async (c) => {
   const b = parse(z.object({ useful: z.boolean(), comment: z.string().max(1000).nullish() }), await readJson(c.req));

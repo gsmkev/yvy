@@ -472,6 +472,17 @@ export const alertRules = sqliteTable("alert_rules", {
   enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
 });
 
+/** Umbrales de avisos por estancia (C-04). Sin fila = valores por defecto. No se sincroniza al celular. */
+export const farmAlertSettings = sqliteTable("farm_alert_settings", {
+  farmId: text("farm_id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  frostTminC: real("frost_tmin_c").notNull().default(2),
+  excessRainMm24h: real("excess_rain_mm_24h").notNull().default(50),
+  droughtDeficitPct: real("drought_deficit_pct").notNull().default(50),
+  updatedAt: integer("updated_at").notNull(),
+  updatedBy: text("updated_by"),
+});
+
 export const alerts = sqliteTable(
   "alerts",
   {

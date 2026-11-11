@@ -86,6 +86,16 @@ export function Layout() {
 
   return (
     <div className="flex h-full flex-col">
+      <a
+        href="#main"
+        onClick={(e) => {
+          e.preventDefault();
+          document.getElementById("main")?.focus();
+        }}
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[70] focus:rounded-md focus:bg-surco focus:px-3 focus:py-2 focus:text-sm focus:text-lino"
+      >
+        {t("ui.skipToContent")}
+      </a>
       <header className="flex h-14 shrink-0 items-center gap-6 border-b border-linea bg-lino px-4 lg:px-6">
         <Link to="/" className="font-serif text-[22px] leading-none font-semibold tracking-tight">
           {t("ui.appName")}
@@ -141,7 +151,7 @@ export function Layout() {
           {t("ui.offlineBanner")}
         </p>
       )}
-      <main id="main" className="min-h-0 min-w-0 flex-1 overflow-auto">
+      <main id="main" tabIndex={-1} className="min-h-0 min-w-0 flex-1 overflow-auto outline-none">
         <Outlet />
       </main>
       <Toaster />

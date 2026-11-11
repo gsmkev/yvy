@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { centroidOf, type Area } from "@yvy/geo";
 import { CHART, CROPS, PLOT_KINDS, SEASONS } from "@yvy/shared";
@@ -40,6 +40,9 @@ export function PlotPanel({
   onEditShape?: () => void;
 }) {
   const qc = useQueryClient();
+  const heading = useRef<HTMLHeadingElement>(null);
+  // Al abrir la ficha el foco pasa al título, para que el lector de pantalla anuncie el lote
+  useEffect(() => heading.current?.focus(), []);
   const [editing, setEditing] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [form, setForm] = useState({
@@ -123,7 +126,9 @@ export function PlotPanel({
         >
           ← {t("ui.allPlots")}
         </button>
-        <h2 className="mt-3 font-serif text-[24px] leading-tight font-semibold">{plot.name}</h2>
+        <h2 ref={heading} tabIndex={-1} className="mt-3 font-serif text-[24px] leading-tight font-semibold outline-none">
+          {plot.name}
+        </h2>
         <p className="num mt-1 text-sm text-tinta-2">
           {plot.kind === "pasture" ? t("ui.pasture") : (plot.crop ?? t("ui.crop"))} · {fmtHa(plot.areaHa)}
           {plot.season ? ` · ${plot.season}` : ""}

@@ -1,4 +1,7 @@
 import {
+  useEffect,
+  useId,
+  useRef,
   useSyncExternalStore,
   type ButtonHTMLAttributes,
   type InputHTMLAttributes,
@@ -111,21 +114,66 @@ export function Stat({
   );
 }
 
+const FOCUSABLE =
+  'a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+/**
+ * Diálogo accesible (U-26): al abrir pasa el foco al primer campo (o al diálogo), Tab queda dentro,
+ * Escape cierra y al cerrar el foco vuelve a lo que lo abrió.
+ */
 export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+  const box = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  const close = useRef(onClose);
+  close.current = onClose;
+  useEffect(() => {
+    const before = document.activeElement as HTMLElement | null;
+    const el = box.current;
+    // Primer campo del formulario; si no hay (confirmaciones), el propio diálogo, para no enfocar una acción destructiva
+    const field = el?.querySelector<HTMLElement>(".modal-body :is(input,select,textarea):not([disabled]):not([type=\"hidden\"])");
+    (field ?? el)?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        close.current();
+      } else if (e.key === "Tab" && el) {
+        const items = Array.from(el.querySelectorAll<HTMLElement>(FOCUSABLE));
+        if (!items.length) return e.preventDefault();
+        const first = items[0]!;
+        const last = items[items.length - 1]!;
+        if (e.shiftKey && (document.activeElement === first || document.activeElement === el)) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      if (before && document.contains(before)) before.focus();
+    };
+  }, []);
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-surco/55 p-4 backdrop-blur-[2px]"
       onClick={onClose}
     >
       <div
+        ref={box}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
-        className="max-h-[90vh] w-full max-w-lg overflow-auto rounded-xl bg-lino shadow-xl"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className="max-h-[90vh] w-full max-w-lg overflow-auto rounded-xl bg-lino shadow-xl outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 flex items-center justify-between border-b border-linea bg-lino px-5 py-3.5">
-          <h2 className="font-serif text-xl font-semibold">{title}</h2>
+          <h2 id={titleId} className="font-serif text-xl font-semibold">
+            {title}
+          </h2>
           <button
             aria-label={t("ui.close")}
             className="cursor-pointer rounded p-1.5 text-tinta-2 hover:bg-surco/5 hover:text-surco"
@@ -134,7 +182,7 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
             <X size={18} aria-hidden />
           </button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className="modal-body p-5">{children}</div>
       </div>
     </div>
   );
@@ -326,11 +374,27 @@ export const Tabs = <T extends string>({
   value: T;
   onChange: (v: T) => void;
 }) => (
-  <div role="tablist" className="flex shrink-0 gap-5 overflow-x-auto border-b border-linea">
+  <div
+    role="tablist"
+    className="flex shrink-0 gap-5 overflow-x-auto border-b border-linea"
+    onKeyDown={(e) => {
+      // Flechas, Inicio y Fin pasan de una pestaña a otra
+      const i = tabs.findIndex((x) => x.id === value);
+      const to =
+        e.key === "ArrowRight" ? i + 1 : e.key === "ArrowLeft" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : null;
+      if (to === null) return;
+      e.preventDefault();
+      const next = tabs[(to + tabs.length) % tabs.length]!;
+      onChange(next.id);
+      setTimeout(() => document.getElementById(`tab-${next.id}`)?.focus(), 0);
+    }}
+  >
     {tabs.map((tb) => (
       <button
         key={tb.id}
+        id={`tab-${tb.id}`}
         role="tab"
+        tabIndex={value === tb.id ? 0 : -1}
         aria-selected={value === tb.id}
         onClick={() => onChange(tb.id)}
         className={`-mb-px cursor-pointer border-b-2 pt-1 pb-2.5 text-sm font-medium whitespace-nowrap transition-colors ${value === tb.id ? "border-surco text-surco" : "border-transparent text-tinta-2 hover:text-surco"}`}

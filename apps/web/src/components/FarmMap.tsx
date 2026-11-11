@@ -484,7 +484,13 @@ export function FarmMap(props: FarmMapProps) {
     };
   }, [props.editPlot?.id, mapRef.current]);
 
-  return <div ref={ref} className={props.className ?? "h-full w-full"} data-testid="map" />;
+  return <div
+      ref={ref}
+      role="region"
+      aria-label={t("ui.mapRegion")}
+      className={props.className ?? "h-full w-full"}
+      data-testid="map"
+    />;
 }
 
 function syncRasters(map: MlMap, p: FarmMapProps) {

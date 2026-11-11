@@ -1,45 +1,85 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { localDate, RECORD_KINDS, RECURRENCES } from "@yvy/shared";
+import { checklistProgress, localDate, parseChecklist, RECORD_KINDS, RECURRENCES } from "@yvy/shared";
 import { del, patch, post } from "../lib/api";
+import { deleteWithUndo } from "../lib/undo";
 import { fmtIsoDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useFarms, useMembers, useTasks } from "../lib/queries";
 import type { Plot, Task } from "../lib/types";
 import { CheckCircle2, Circle, Plus } from "lucide-react";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner } from "./ui";
+import { ExportButtons } from "./ExportButtons";
+import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "./ui";
 
 export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] }) {
   const tasks = useTasks({ farmId });
   const members = useMembers();
   const [creating, setCreating] = useState(false);
+  const [filter, setFilter] = useState<"all" | "overdue">("all");
   const qc = useQueryClient();
   const today = localDate(Date.now());
-  const cancel = useMutation({
-    mutationFn: (id: string) => patch(`/org/tasks/${id}`, { status: "cancelled" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
-  });
-  const remove = useMutation({
-    mutationFn: (id: string) => del(`/org/tasks/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
-  });
+  // Las repetitivas se cancelan (PATCH) y las únicas se borran (DELETE); ambas se pueden deshacer
+  const removeTask = (x: Task) =>
+    deleteWithUndo({
+      qc,
+      id: x.id,
+      message: t("ui.toastTaskDeleted"),
+      hide: () => qc.setQueriesData<Task[]>({ queryKey: ["tasks"] }, (l) => l?.filter((y) => y.id !== x.id)),
+      request: () =>
+        x.recurrence === "none" ? del(`/org/tasks/${x.id}`) : patch(`/org/tasks/${x.id}`, { status: "cancelled" }),
+      invalidate: [["tasks"]],
+    });
 
   if (tasks.isLoading) return <Spinner />;
   if (tasks.error) return <ErrorBox error={tasks.error} />;
-  const visible = (tasks.data ?? []).filter(
+  const isOverdue = (x: Task) => x.status === "open" && x.dueDate < today;
+  const shown = (tasks.data ?? []).filter(
     (x) => x.status !== "cancelled" && (x.status === "open" || x.dueDate >= localDate(Date.now() - 7 * 86_400_000)),
   );
+  const nOverdue = shown.filter(isOverdue).length;
+  const visible = filter === "overdue" ? shown.filter(isOverdue) : shown;
   const byAssignee = new Map<string, Task[]>();
   for (const x of visible)
     byAssignee.set(x.assigneeName ?? x.assigneeId, [...(byAssignee.get(x.assigneeName ?? x.assigneeId) ?? []), x]);
 
   return (
     <div className="flex flex-col gap-3">
-      <div>
+      <div className="flex items-center justify-between gap-2">
         <Button variant="primary" icon={Plus} onClick={() => setCreating(true)}>
           {t("ui.newTask")}
         </Button>
+        <ExportButtons
+          data={() => ({
+            name: t("ui.tasksFile"),
+            headers: [
+              t("ui.assignee"),
+              t("ui.taskTitle"),
+              t("ui.plot"),
+              t("ui.dueDate"),
+              t("ui.recurrence"),
+              t("ui.statusCol"),
+              t("ui.opensRecord"),
+            ],
+            rows: visible.map((x) => [
+              x.assigneeName ?? x.assigneeId,
+              x.title,
+              x.plotName,
+              fmtIsoDate(x.dueDate),
+              tk(`ui.recurrence_${x.recurrence}`),
+              x.status === "open" && x.dueDate < today ? t("ui.overdue") : tk(`ui.status_${x.status}`),
+              x.kind ? tk(`recordKinds.${x.kind}`) : "",
+            ]),
+          })}
+        />
       </div>
+      <Tabs
+        value={filter}
+        onChange={setFilter}
+        tabs={[
+          { id: "all", label: t("ui.filterAll") },
+          { id: "overdue", label: t("ui.filterOverdue"), count: nOverdue },
+        ]}
+      />
       {!visible.length && <Empty title={t("ui.noTasks")} />}
       {[...byAssignee.entries()].map(([name, list]) => {
         const overdue = list.filter((x) => x.status === "open" && x.dueDate < today).length;
@@ -72,12 +112,10 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
                       {x.plotName ? ` · ${x.plotName}` : ""}
                       {x.kind ? ` · ${t("ui.opensRecord")}: ${tk(`recordKinds.${x.kind}`)}` : ""}
                     </span>
+                    <ChecklistProgress task={x} />
                   </span>
                   {x.status === "open" && (
-                    <button
-                      className="text-xs text-tinta-2 hover:text-peligro"
-                      onClick={() => (x.recurrence === "none" ? remove.mutate(x.id) : cancel.mutate(x.id))}
-                    >
+                    <button className="text-xs text-tinta-2 hover:text-peligro" onClick={() => removeTask(x)}>
                       {t("ui.delete")}
                     </button>
                   )}
@@ -91,6 +129,37 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
         <NewTaskModal farmId={farmId} plots={plots} members={members.data ?? []} onClose={() => setCreating(false)} />
       )}
     </div>
+  );
+}
+
+function ChecklistProgress({ task }: { task: Task }) {
+  const list = parseChecklist(task.checklist);
+  if (!list.length) return null;
+  const { done, total } = checklistProgress(list);
+  return (
+    <span className="mt-1 block" data-testid="task-checklist">
+      <span className="flex items-center gap-2 text-xs text-tinta-2">
+        <span
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={total}
+          aria-valuenow={done}
+          aria-label={t("app.checklistProgress", { done, total })}
+          className="block h-1.5 w-24 overflow-hidden rounded-full bg-linea"
+        >
+          <span className="block h-full bg-soja" style={{ width: `${(done / total) * 100}%` }} />
+        </span>
+        {t("app.checklistProgress", { done, total })}
+      </span>
+      <span className="mt-1 block text-xs text-tinta-2">
+        {list.map((i) => (
+          <span key={i.id} className={`block ${i.done ? "line-through" : ""}`}>
+            {i.done ? "✓ " : "· "}
+            {i.text}
+          </span>
+        ))}
+      </span>
+    </span>
   );
 }
 
@@ -115,11 +184,20 @@ function NewTaskModal({
     kind: "",
     dueDate: localDate(Date.now()),
     recurrence: "none",
+    checklist: "",
   });
   const create = useMutation({
-    mutationFn: () => post("/org/tasks", { ...f, plotId: f.plotId || null, kind: f.kind || null }),
+    mutationFn: () => {
+      const { checklist, ...rest } = f;
+      const items = checklist
+        .split("\n")
+        .map((x) => x.trim())
+        .filter(Boolean);
+      return post("/org/tasks", { ...rest, plotId: f.plotId || null, kind: f.kind || null, ...(items.length ? { checklist: items } : {}) });
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
+      toast(t("ui.toastTaskSaved"));
       onClose();
     },
   });
@@ -183,6 +261,14 @@ function NewTaskModal({
               { value: "", label: t("ui.none") },
               ...RECORD_KINDS.map((k) => ({ value: k, label: tk(`recordKinds.${k}`) })),
             ]}
+          />
+        </Field>
+        <Field label={t("ui.taskChecklist")}>
+          <textarea
+            className="min-h-20 w-full rounded-md border border-linea bg-white px-3 py-2 text-sm"
+            value={f.checklist}
+            onChange={set("checklist")}
+            placeholder={t("ui.taskChecklistHint")}
           />
         </Field>
         {create.error && <ErrorBox error={create.error} />}

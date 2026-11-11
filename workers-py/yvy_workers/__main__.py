@@ -7,17 +7,30 @@ import logging
 import sys
 
 from .ingest import IngestClient
+from .jobs.constants import BACKFILL_DAYS, BASEMAP_DAYS, DAILY_DAYS
 
 JOBS = ["s2_ingest", "s2_basemap", "chirps_daily", "firms_hotspots", "climatology_build"]
 
 
-def main(argv: list[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="yvy_workers")
     p.add_argument("job", choices=JOBS)
     p.add_argument("--farm", help="Procesar solo esta estancia")
-    p.add_argument("--days", type=int, default=None)
+    p.add_argument("--days", type=int, default=None, help="s2_ingest: días hacia atrás (10 por defecto); s2_basemap: 90")
+    p.add_argument("--backfill", action="store_true", help=f"s2_ingest: historia de {BACKFILL_DAYS} días (estancia nueva)")
     p.add_argument("--only-missing", action="store_true", help="climatology_build/s2_basemap: solo estancias sin datos")
-    args = p.parse_args(argv)
+    return p
+
+
+def ingest_days(args: argparse.Namespace) -> int:
+    """Ventana de s2_ingest: --days manda; --backfill usa 180 días; si no, la del cron diario."""
+    if args.days:
+        return args.days
+    return BACKFILL_DAYS if args.backfill else DAILY_DAYS
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     log = logging.getLogger("yvy_workers")
 
@@ -44,11 +57,11 @@ def main(argv: list[str] | None = None) -> int:
                 if args.job == "s2_ingest":
                     from .jobs.s2 import s2_ingest
 
-                    log.info("%s: %s", f["name"], s2_ingest(api, f, days=args.days or 10))
+                    log.info("%s: %s", f["name"], s2_ingest(api, f, days=ingest_days(args)))
                 elif args.job == "s2_basemap":
                     from .jobs.s2 import s2_basemap
 
-                    s2_basemap(api, f, days=args.days or 90)
+                    s2_basemap(api, f, days=args.days or BASEMAP_DAYS)
                 elif args.job == "climatology_build":
                     from .jobs.climatology import climatology_build
 

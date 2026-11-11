@@ -58,6 +58,10 @@ export async function scheduled(controller: { cron: string }, env: Bindings, dep
       return;
     case CRONS.maintenance:
       await new SystemDb(getDb(env.DB)).purgeExpiredAuth(deps.now());
+      // P-03: los eventos de uso viejos se borran; los del embudo quedan
+      await getDb(env.DB).run(
+        sql`DELETE FROM events WHERE ts < ${deps.now() - LIMITS.events.retentionMs} AND name NOT IN ('signup', 'farm_created', 'plots_created', 'member_added', 'first_record')`,
+      );
       await recordUsage(env, deps.now());
       return;
   }

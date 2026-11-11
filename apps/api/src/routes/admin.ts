@@ -6,7 +6,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
-import { newId, planLimits } from "@yvy/shared";
+import { FUNNEL_EVENTS, newId, planLimits } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { getDb } from "../db/client";
 import { signJwt } from "../lib/crypto";
@@ -204,4 +204,28 @@ admin.get("/audit", async (c) => {
     .orderBy(desc(s.auditLog.createdAt))
     .limit(100);
   return c.json(rows);
+});
+
+/**
+ * P-03: embudo de activación de las organizaciones que se registraron en los últimos `days` días (por defecto 90):
+ * cuántas llegaron a cada paso, y las pantallas más usadas en el mismo período.
+ */
+admin.get("/funnel", async (c) => {
+  const days = Math.min(3650, Math.max(1, Number(c.req.query("days")) || 90));
+  const since = Date.now() - days * 86_400_000;
+  const db = getDb(c.env.DB);
+  const steps = await db.all<{ name: string; orgs: number }>(sql`
+    SELECT name, count(DISTINCT organization_id) AS orgs FROM events
+    WHERE organization_id IN (SELECT organization_id FROM events WHERE name = 'signup' AND ts >= ${since})
+      AND name IN (${sql.join(FUNNEL_EVENTS.map((n) => sql`${n}`), sql`, `)})
+    GROUP BY name`);
+  const byName = new Map(steps.map((r) => [r.name, Number(r.orgs)]));
+  const views = await db.all<{ name: string; n: number; users: number }>(sql`
+    SELECT name, count(*) AS n, count(DISTINCT user_id) AS users FROM events
+    WHERE name LIKE 'view:%' AND ts >= ${since} GROUP BY name ORDER BY n DESC LIMIT 15`);
+  return c.json({
+    days,
+    steps: FUNNEL_EVENTS.map((name) => ({ name, orgs: byName.get(name) ?? 0 })),
+    views: views.map((v) => ({ name: v.name, n: Number(v.n), users: Number(v.users) })),
+  });
 });

@@ -20,6 +20,7 @@ import {
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, currentVersion, runBatch, type DB, type Stmt } from "./client";
+import { funnelEvent } from "./events";
 
 export interface AuthCtx {
   userId: string;
@@ -406,6 +407,7 @@ export class ScopedDb {
           set: { role: input.role, status: "active", deletedAt: null, updatedAt: ts },
         }),
     );
+    stmts.push(funnelEvent(this.db, "member_added", this.auth.userId, this.auth.orgId, ts));
     await runBatch(this.db, stmts);
     return { userId };
   }
@@ -572,6 +574,7 @@ export class ScopedDb {
         version: currentVersion,
       }),
       this.db.insert(s.farmImagery).values({ farmId: id, status: "pending", requestedAt: ts, updatedAt: ts }),
+      funnelEvent(this.db, "farm_created", this.auth.userId, this.auth.orgId, ts),
     ]);
     return { id };
   }
@@ -615,6 +618,7 @@ export class ScopedDb {
           version: currentVersion,
         }),
       ),
+      funnelEvent(this.db, "plots_created", this.auth.userId, this.auth.orgId, ts),
     ]);
     return { ids, farmGeometry };
   }

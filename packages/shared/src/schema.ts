@@ -13,6 +13,7 @@
  *   pero sin depender de relojes de distintos datacenters.
  */
 import { HEALTH_REASONS } from "./livestock";
+import { sql } from "drizzle-orm";
 import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // ---------- Enums ----------
@@ -70,6 +71,8 @@ export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_thr
 export const ALERT_SEVERITIES = ["info", "watch", "warning"] as const;
 /** Con MET Norway no hay ensemble: probabilidad cualitativa (PRD-cloudflare §4.8). */
 export const ALERT_PROBABILITIES = ["low", "medium", "high"] as const;
+/** P-03: pasos del embudo de activación. Los escribe el servidor, una sola vez por organización. */
+export const FUNNEL_EVENTS = ["signup", "farm_created", "plots_created", "member_added", "first_record"] as const;
 export const LAYERS = ["true_color", "ndvi"] as const;
 /** Estado del procesamiento satelital inicial de una estancia (S-02). */
 export const IMAGERY_STATUSES = ["pending", "processing", "ready", "failed"] as const;
@@ -744,6 +747,28 @@ export const notifications = sqliteTable(
     createdAt: integer("created_at").notNull(),
   },
   (t) => [index("notifications_pending_idx").on(t.status, t.createdAt)],
+);
+
+/**
+ * P-03: analítica propia, sin terceros. Los pasos del embudo (FUNNEL_EVENTS) se guardan una vez por organización
+ * (índice único parcial); el resto son eventos de uso que manda el cliente por POST /events, con muestreo.
+ */
+export const events = sqliteTable(
+  "events",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    userId: text("user_id").notNull(),
+    organizationId: text("organization_id").notNull(),
+    ts: integer("ts").notNull(),
+  },
+  (t) => [
+    index("events_name_ts_idx").on(t.name, t.ts),
+    index("events_user_ts_idx").on(t.userId, t.ts),
+    uniqueIndex("events_funnel_uq")
+      .on(t.organizationId, t.name)
+      .where(sql`name IN ('signup', 'farm_created', 'plots_created', 'member_added', 'first_record')`),
+  ],
 );
 
 /** U-29: preferencias de notificación por usuario (JSON validado con notificationPrefsSchema). No se sincroniza. */

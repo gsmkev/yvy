@@ -166,8 +166,48 @@ export function InternalPage() {
         </table>
       </div>
       {editing && <PlanModal org={editing} onClose={() => setEditing(null)} />}
+      <Funnel />
       <AuditLog />
     </div>
+  );
+}
+
+interface FunnelData {
+  days: number;
+  steps: { name: string; orgs: number }[];
+  views: { name: string; n: number; users: number }[];
+}
+
+/** P-03: embudo de activación (organizaciones nuevas de los últimos 90 días) y pantallas más usadas. */
+function Funnel() {
+  const q = useQuery({ queryKey: ["admin-funnel"], queryFn: () => get<FunnelData>("/admin/funnel") });
+  if (!q.data) return null;
+  const first = q.data.steps[0]?.orgs ?? 0;
+  return (
+    <section>
+      <h2 className="font-serif text-xl font-semibold">{t("ui.internalFunnel", { days: q.data.days })}</h2>
+      <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-5">
+        {q.data.steps.map((st) => (
+          <div key={st.name} className="flex flex-col gap-0.5">
+            <span className="eyebrow">{tk(`ui.funnel_${st.name}`)}</span>
+            <span className="num font-serif text-[28px] leading-tight font-semibold">{st.orgs}</span>
+            <span className="text-xs text-tinta-2">{first ? `${Math.round((100 * st.orgs) / first)} %` : "—"}</span>
+          </div>
+        ))}
+      </div>
+      {q.data.views.length > 0 && (
+        <>
+          <h3 className="mt-5 font-semibold">{t("ui.internalViews")}</h3>
+          <ul className="mt-1 flex flex-col gap-0.5 text-sm">
+            {q.data.views.map((v) => (
+              <li key={v.name} className="num">
+                {v.name.replace("view:", "")} · {v.n} · {t("ui.internalViewsUsers", { n: v.users })}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
   );
 }
 

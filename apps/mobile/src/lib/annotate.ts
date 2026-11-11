@@ -3,7 +3,7 @@
  * Cada tipo de registro es una lista corta de pasos; los datos se arman al final y se validan con
  * el esquema compartido (packages/shared/src/records.ts), que es la única fuente de verdad.
  */
-import { ANIMAL_TAG_RE, SUPPLEMENT_TYPES, CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
+import { REPRO_EVENTS, SERVICE_METHODS, ANIMAL_TAG_RE, SUPPLEMENT_TYPES, CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
 
 /** Lo que el flujo necesita saber del campo para decidir qué preguntar. */
 export interface FlowCtx {
@@ -126,6 +126,64 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     { key: "head", kind: "number", question: "app.theftHeadQuestion", hint: "app.theftHeadHint", unit: "cabezas", max: 1000, integer: true, min: 1 },
     { key: "policeReport", kind: "text", question: "app.theftReportQuestion", optional: true },
   ],
+  // Reproducción: servicio, tacto, parición o destete; de un lote de vacas o de una sola con caravana.
+  reproduction: [
+    {
+      key: "event",
+      kind: "choice",
+      question: "app.reproEventQuestion",
+      options: REPRO_EVENTS.map((v) => ({ value: v, label: `fields.reproEvent_${v}` })),
+    },
+    { key: "tag", kind: "text", question: "app.reproTagQuestion", optional: true, pattern: ANIMAL_TAG_RE },
+    {
+      key: "head",
+      kind: "number",
+      question: "app.reproHeadQuestion",
+      unit: "vacas",
+      max: 100_000,
+      integer: true,
+      min: 1,
+      skipIf: (a) => !!a.tag || a.event === "weaning",
+    },
+    {
+      key: "head",
+      kind: "number",
+      question: "app.reproWeanedQuestion",
+      unit: "terneros",
+      max: 100_000,
+      integer: true,
+      min: 1,
+      skipIf: (a) => !!a.tag || a.event !== "weaning",
+    },
+    {
+      key: "method",
+      kind: "choice",
+      question: "app.reproMethodQuestion",
+      optional: true,
+      options: SERVICE_METHODS.map((v) => ({ value: v, label: `fields.reproMethod_${v}` })),
+      skipIf: (a) => a.event !== "service",
+    },
+    {
+      key: "pregnant",
+      kind: "number",
+      question: "app.reproPregnantQuestion",
+      hint: "app.reproPregnantHint",
+      unit: "preñadas",
+      max: 100_000,
+      integer: true,
+      skipIf: (a) => a.event !== "pregnancy_check",
+    },
+    {
+      key: "calves",
+      kind: "number",
+      question: "app.reproCalvesQuestion",
+      unit: "terneros",
+      max: 100_000,
+      integer: true,
+      optional: true,
+      skipIf: (a) => a.event !== "calving",
+    },
+  ],
   // Pesada: de un lote de animales o de uno solo con caravana. Todo salvo el peso es opcional.
   weighing: [
     { key: "kg", kind: "number", question: "app.weighingKgQuestion", hint: "app.weighingKgHint", unit: "kg", max: 2000 },
@@ -232,10 +290,10 @@ export const visibleSteps = (steps: Step[], values: Record<string, unknown>, ctx
 /** Qué se puede anotar en cada tipo de lote, en el orden de frecuencia real. */
 export const KINDS_FOR = (plotKind: "crop" | "pasture" | null): RecordKind[] =>
   plotKind === "pasture"
-    ? ["pasture_status", "herd_count", "herd_move", "mortality", "theft", "supplement", "weighing", "health", "rain", "water", "pest", "scouting", "note"]
+    ? ["pasture_status", "herd_count", "herd_move", "mortality", "theft", "supplement", "weighing", "reproduction", "health", "rain", "water", "pest", "scouting", "note"]
     : plotKind === "crop"
       ? ["scouting", "pest", "crop_status", "application", "fertilization", "sowing", "harvest", "fuel_load", "rain", "water", "note"]
-      : ["rain", "scouting", "water", "weighing", "health", "note", "pest", "crop_status", "pasture_status", "application", "fertilization", "sowing", "harvest", "fuel_load"];
+      : ["rain", "scouting", "water", "weighing", "reproduction", "health", "note", "pest", "crop_status", "pasture_status", "application", "fertilization", "sowing", "harvest", "fuel_load"];
 
 /** Registros de hacienda: son de un solo potrero, no se cargan en varios a la vez (F-10). */
-export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count", "herd_move", "mortality", "theft", "supplement", "weighing", "health"];
+export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count", "herd_move", "mortality", "theft", "supplement", "weighing", "reproduction", "health"];

@@ -29,4 +29,5 @@ export type AppEnv = {
 export type JobMessage =
   | { type: "forecast"; farmId: string }
   | { type: "drought"; farmId: string }
-  | { type: "weekly_report"; farmId: string };
+  | { type: "weekly_report"; farmId: string }
+  | { type: "pest"; farmId: string };

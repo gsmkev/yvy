@@ -11,6 +11,7 @@ import { sendEmail } from "../lib/email";
 import type { Bindings, JobMessage } from "../types";
 import { saveForecastStmts, upsertAlert } from "./alerts";
 import { sendPending } from "./notify";
+import { pestAlertDraft } from "./pests";
 import { evaluateDrought, evaluateExcessRain, evaluateFrost } from "./rules";
 import { dailyFromMet, dailyFromPower, fetchMet, powerUrl, type DailyForecast } from "./weather";
 
@@ -46,6 +47,7 @@ export async function scheduled(controller: { cron: string }, env: Bindings, dep
       return;
     case CRONS.drought:
       await enqueuePerFarm(env, "drought");
+      await enqueuePerFarm(env, "pest");
       return;
     case CRONS.weeklyReports:
       await enqueuePerFarm(env, "weekly_report");
@@ -82,6 +84,8 @@ export async function runJob(msg: JobMessage, env: Bindings, deps = defaultDeps(
       return droughtJob(db, deps, farm);
     case "weekly_report":
       return weeklyReportJob(db, env, deps, farm);
+    case "pest":
+      return pestJob(db, deps, farm);
   }
 }
 
@@ -208,6 +212,13 @@ async function droughtJob(db: DB, deps: JobDeps, farm: Farm): Promise<void> {
     },
     cfg.droughtDeficitPct,
   );
+  if (draft) await upsertAlert(db, farm, draft, now);
+}
+
+/** Monitoreos de plagas de los últimos 7 días contra el umbral por plaga (A-41). */
+async function pestJob(db: DB, deps: JobDeps, farm: Farm): Promise<void> {
+  const now = deps.now();
+  const draft = await pestAlertDraft(db, farm.id, now, localDate(now, farm.tz));
   if (draft) await upsertAlert(db, farm, draft, now);
 }
 

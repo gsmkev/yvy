@@ -871,6 +871,7 @@ export const esPY = {
     alertSettingsOnlyOwner: "Solo el dueño o un administrador pueden cambiar estos valores.",
     alertSettingsDefaults: "Volver a los valores habituales",
     alertSettingsSaved: "Guardado.",
+    alertKind_pest_threshold: "Plaga sobre el umbral",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

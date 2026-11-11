@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { areaHa, bboxOf } from "@yvy/geo";
-import { alertSettingsSchema, CROPS, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
+import { alertSettingsSchema, CROPS, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import {
   addTaskComment,
@@ -20,6 +20,7 @@ import {
   farmRiskReport,
   farmSummaries,
   getAlertSettings,
+  getNotificationPrefs,
   listAlerts,
   listRecords,
   listShareLinks,
@@ -28,6 +29,7 @@ import {
   plotNdvi,
   registerDevice,
   saveAlertSettings,
+  saveNotificationPrefs,
   removeMember,
   revokeShareLink,
   updateFarm,
@@ -80,6 +82,14 @@ web.get("/me", async (c) => {
     isStaff: !!user?.email && admins.includes(user.email.toLowerCase()),
     demo: org?.plan === "demo",
   });
+});
+
+/** U-29: qué avisos le llegan al usuario, por qué canal y en qué horario. Valen para todas sus organizaciones. */
+web.get("/me/notification-prefs", async (c) => c.json(await getNotificationPrefs(c.var.sdb)));
+web.put("/me/notification-prefs", async (c) => {
+  const prefs = parse(notificationPrefsSchema, await readJson(c.req));
+  await saveNotificationPrefs(c.var.sdb, prefs);
+  return c.json(await getNotificationPrefs(c.var.sdb));
 });
 
 web.get("/org/farms", async (c) => c.json(await farmSummaries(c.var.sdb)));

@@ -5,7 +5,7 @@
  * subió, no se vuelve a notificar.
  */
 import { and, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
-import { newId } from "@yvy/shared";
+import { newId, parseNotificationPrefs, wantsNotification } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type DB, type Stmt } from "../db/client";
 import type { HourlyForecast } from "./weather";
@@ -123,14 +123,25 @@ async function notificationStmts(
           .where(and(inArray(s.plotAssignments.plotId, plotIds.slice(0, 90)), isNull(s.plotAssignments.deletedAt)))
       : [];
   const workerSet = new Set(workers.map((w) => w.userId));
+  // U-29: lo que el usuario apagó para este tipo de aviso no se crea
+  const prefs = new Map<string, ReturnType<typeof parseNotificationPrefs>>();
+  for (const chunk of chunkForParams(members, 1)) {
+    const found = await db
+      .select({ userId: s.notificationPrefs.userId, prefs: s.notificationPrefs.prefs })
+      .from(s.notificationPrefs)
+      .where(inArray(s.notificationPrefs.userId, chunk.map((m) => m.userId)));
+    for (const f of found) prefs.set(f.userId, parseNotificationPrefs(f.prefs));
+  }
+  const wants = (userId: string, channel: "push" | "email") =>
+    wantsNotification(prefs.get(userId) ?? parseNotificationPrefs(null), kind, channel);
   const rows: (typeof s.notifications.$inferInsert)[] = [];
   for (const m of members) {
     if (m.role === "worker") {
-      if (workerSet.has(m.userId))
+      if (workerSet.has(m.userId) && wants(m.userId, "push"))
         rows.push({ id: newId(), userId: m.userId, alertId, channel: "push", createdAt: now });
     } else {
-      rows.push({ id: newId(), userId: m.userId, alertId, channel: "push", createdAt: now });
-      rows.push({ id: newId(), userId: m.userId, alertId, channel: "email", createdAt: now });
+      if (wants(m.userId, "push")) rows.push({ id: newId(), userId: m.userId, alertId, channel: "push", createdAt: now });
+      if (wants(m.userId, "email")) rows.push({ id: newId(), userId: m.userId, alertId, channel: "email", createdAt: now });
     }
   }
   const out: Stmt[] = [];

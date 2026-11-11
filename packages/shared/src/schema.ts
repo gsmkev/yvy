@@ -743,6 +743,13 @@ export const notifications = sqliteTable(
   (t) => [index("notifications_pending_idx").on(t.status, t.createdAt)],
 );
 
+/** U-29: preferencias de notificación por usuario (JSON validado con notificationPrefsSchema). No se sincroniza. */
+export const notificationPrefs = sqliteTable("notification_prefs", {
+  userId: text("user_id").primaryKey(),
+  prefs: text("prefs").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});
+
 // ---------- Reportes ----------
 
 export const reports = sqliteTable(

@@ -127,6 +127,13 @@
       "when": 1794398600830,
       "tag": "0017_glamorous_gauntlet",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1794398816539,
+      "tag": "0018_peaceful_james_howlett",
+      "breakpoints": true
     }
   ]
 }

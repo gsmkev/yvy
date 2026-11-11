@@ -103,6 +103,8 @@ export default function More() {
         />
       </View>
 
+      <Row title={t("app.notifRow")} subtitle={t("app.notifRowHint")} onPress={() => router.push("/notifications")} />
+
       {FEATURES.labs && (
         <>
           <Text style={st.section}>{t("app.labsSection")}</Text>

@@ -325,7 +325,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | ID | Qué | Prio | Esf | Estado |
 |---|---|---|---|---|
 | R-01 | Parte semanal PDF | — | — | Hecho |
-| R-02 | Parte semanal por email los lunes con el PDF adjunto | P1 | M | Parcial (texto con enlace) |
+| R-02 | Parte semanal por email los lunes con el PDF adjunto | P1 | M | Hecho |
 | R-03 | Resumen de campaña por lote en PDF (RF-81): siembra, aplicaciones, lluvia, vigor, cosecha | P1 | M | Falta |
 | R-04 | Informe para el banco: superficie, historia productiva, vigor, clima, sin deforestación | P1 | M | Falta |
 | R-05 | Informe de auditoría para certificaciones (soja responsable, buenas prácticas) | P2 | M | Falta |

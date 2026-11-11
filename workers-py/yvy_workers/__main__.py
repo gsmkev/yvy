@@ -9,7 +9,7 @@ import sys
 from .ingest import IngestClient
 from .jobs.constants import BACKFILL_DAYS, BASEMAP_DAYS, DAILY_DAYS
 
-JOBS = ["s2_ingest", "s2_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "new_farm"]
+JOBS = ["s2_ingest", "s2_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "weekly_report", "new_farm"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -53,6 +53,10 @@ def main(argv: list[str] | None = None) -> int:
         from .jobs.chirps import chirps_daily
 
         chirps_daily(api, farms)
+    elif args.job == "weekly_report":
+        from .jobs.weekly import weekly_report
+
+        failures += weekly_report(api, farms)
     elif args.job == "risk_report":
         from .jobs.risk import risk_report
 

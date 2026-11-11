@@ -37,6 +37,15 @@ hace el primer deploy y carga los secrets. Al final imprime `INGEST_SECRET`: gua
 `ADMIN_EMAILS` (quién ve el panel interno), `OPS_EMAIL` (aviso al 70 % de los límites gratis), `YVY_API_URL` (= `APP_URL`),
 `ALLOW_SIGNUP` (`true` para el piloto), `EAS_PROJECT_ID` (opcional).
 
+### Parte semanal con PDF adjunto (R-02)
+
+Los lunes 09:00 UTC el job `weekly_report` arma el PDF de cada estancia con dueño o administrador con email y lo sube a
+`reports/…` del bucket privado `yvy-media` (el token de R2 de los secrets tiene que alcanzar a ese bucket además de
+`yvy-tiles`; otro nombre de bucket va en la variable `R2_MEDIA_BUCKET`). A las 10:00 UTC el cron del Worker manda el email:
+si encuentra el PDF de las últimas 72 h, lo adjunta (Resend lo baja desde una URL firmada de R2 que vale 7 días, el Worker no
+carga el archivo) y repite el enlace en el texto. Si el job de GitHub se demora o falla, el email sale igual, solo con el
+enlace a la página de la web, como antes.
+
 ### Secrets del Worker para disparar los jobs al crear una estancia (opcional, S-02)
 
 Sin estos dos el Worker se saltea el disparo (y avisa una vez en el log): la estancia se procesa recién en el cron semanal.

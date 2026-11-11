@@ -54,7 +54,7 @@ export async function farmSummaries(sdb: ScopedDb) {
 }
 
 /** Subconsulta: columna de la pasada NDVI número `offset` (0 = la última) del lote de la fila. */
-const ndviAt = (col: "mean" | "acquired_at", offset: number) =>
+export const ndviAt = (col: "mean" | "acquired_at", offset: number) =>
   sql<
     number | null
   >`(SELECT ${sql.raw(col)} FROM plot_index_stats x WHERE x.plot_id = plots.id AND x.idx = 'ndvi' AND x.deleted_at IS NULL ORDER BY x.acquired_at DESC LIMIT 1 OFFSET ${sql.raw(String(offset))})`;

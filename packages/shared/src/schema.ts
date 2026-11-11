@@ -35,6 +35,7 @@ export const RECORD_KINDS = [
   "note",
   // ganaderia
   "herd_count",
+  "herd_move",
 ] as const;
 export type RecordKind = (typeof RECORD_KINDS)[number];
 export const UPLOAD_STATUS = ["pending", "uploaded"] as const;

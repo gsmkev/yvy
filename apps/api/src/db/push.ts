@@ -63,6 +63,10 @@ export async function applyPush(
         farmIds.add(m.row.farmId);
         if (m.row.plotId) plotIds.add(m.row.plotId);
         if (m.row.poiId) poiIds.add(m.row.poiId);
+        if (m.row.kind === "herd_move") {
+          const to = (m.row.data as { toPlotId?: unknown } | null)?.toPlotId;
+          if (typeof to === "string") plotIds.add(to);
+        }
         break;
       case "records.delete":
         recordIds.add(m.row.id);
@@ -254,6 +258,11 @@ export async function applyPush(
         const livestock = livestockPlotProblem(r.kind, r.plotId, data.data);
         if (livestock) {
           reject(m, "invalid", livestock);
+          break;
+        }
+        const toPlotId = r.kind === "herd_move" ? (data.data as { toPlotId?: string }).toPlotId : undefined;
+        if (toPlotId && (plots.get(toPlotId) !== r.farmId || (sdb.isWorker && !assignedPlots.has(toPlotId)))) {
+          reject(m, "forbidden", "plot");
           break;
         }
         const authorId = existing?.authorId ?? auth.userId;

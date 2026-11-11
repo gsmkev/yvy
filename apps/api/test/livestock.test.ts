@@ -70,3 +70,53 @@ describe("registro herd_count", () => {
     expect(r.body.results[1].reason).toBe("forbidden");
   });
 });
+
+describe("registro herd_move", () => {
+  const counts = { vaca: 10 };
+
+  it("rotación entre potreros de la estancia", async () => {
+    const { owner, farmId, plotIds } = await setup();
+    const r = await push(owner.token, [
+      rec(farmId, plotIds[0]!, "herd_move", { toPlotId: plotIds[1], counts, reason: "rotacion" }),
+      // venta: sale del campo, sin destino
+      rec(farmId, plotIds[0]!, "herd_move", { counts, reason: "venta" }),
+      // compra: entra de afuera, sin origen
+      rec(farmId, null, "herd_move", { toPlotId: plotIds[1], counts, reason: "compra" }),
+    ]);
+    expect(r.body.results.map((x: any) => x.status)).toEqual(["applied", "applied", "applied"]);
+  });
+
+  it("rechaza destino faltante, venta con destino, mismo potrero y sin origen ni destino", async () => {
+    const { owner, farmId, plotIds } = await setup();
+    const r = await push(owner.token, [
+      rec(farmId, plotIds[0]!, "herd_move", { counts, reason: "rotacion" }),
+      rec(farmId, plotIds[0]!, "herd_move", { toPlotId: plotIds[1], counts, reason: "venta" }),
+      rec(farmId, plotIds[0]!, "herd_move", { toPlotId: plotIds[0], counts, reason: "rotacion" }),
+      rec(farmId, null, "herd_move", { counts, reason: "otro" }),
+      rec(farmId, plotIds[0]!, "herd_move", { toPlotId: plotIds[1], counts: {}, reason: "rotacion" }),
+    ]);
+    expect(r.body.results.map((x: any) => x.status)).toEqual(Array(5).fill("rejected"));
+  });
+
+  it("el destino tiene que ser de la misma estancia y no puede ser ajeno", async () => {
+    const { owner, farmId, plotIds } = await setup();
+    const other = await createOrgWithOwner("Otra");
+    const foreign = await createFarmWithPlots(other.token, 1);
+    const r = await push(owner.token, [
+      rec(farmId, plotIds[0]!, "herd_move", { toPlotId: foreign.plotIds[0], counts, reason: "rotacion" }),
+      rec(farmId, plotIds[0]!, "herd_move", { toPlotId: newId(), counts, reason: "rotacion" }),
+    ]);
+    expect(r.body.results.map((x: any) => x.status)).toEqual(["rejected", "rejected"]);
+    expect(r.body.results[0].reason).toBe("forbidden");
+  });
+
+  it("el empleado mueve solo entre sus potreros asignados", async () => {
+    const { worker, farmId, plotIds } = await setup();
+    const r = await push(worker.token, [
+      rec(farmId, plotIds[0]!, "herd_move", { toPlotId: plotIds[1], counts, reason: "rotacion" }),
+      rec(farmId, plotIds[0]!, "herd_move", { toPlotId: plotIds[3], counts, reason: "rotacion" }),
+    ]);
+    expect(r.body.results.map((x: any) => x.status)).toEqual(["applied", "rejected"]);
+    expect(r.body.results[1].reason).toBe("forbidden");
+  });
+});

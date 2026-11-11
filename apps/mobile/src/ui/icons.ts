@@ -1,4 +1,5 @@
 import {
+  ArrowRightLeft,
   Beef,
   Bug,
   CloudRain,
@@ -25,6 +26,7 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
   note: NotebookPen,
   // ganaderia
   herd_count: Beef,
+  herd_move: ArrowRightLeft,
 };
 
 export const ALERT_ICON: Record<string, LucideIcon> = {

@@ -127,6 +127,71 @@ export const warehouseInput = z.object({
   isDefault: z.boolean().optional(),
 });
 
+// ---------- Stock (E-11) ----------
+
+const stockQty = z.number().positive().max(1_000_000_000);
+export const stockPurchaseInput = z.object({
+  productId: uuid,
+  warehouseId: uuid,
+  date: isoDate,
+  qty: stockQty,
+  /** Total del comprobante en unidad menor de `currency`. */
+  amount: minorAmount,
+  currency: currencySchema,
+  partyId: uuid.nullish(),
+  note: optText(200),
+});
+/** Consumo manual; con `plotId` también carga el costo al lote. */
+export const stockConsumptionInput = z.object({
+  productId: uuid,
+  warehouseId: uuid,
+  date: isoDate,
+  qty: stockQty,
+  plotId: uuid.nullish(),
+  seasonId: uuid.nullish(),
+  note: optText(200),
+});
+export const stockTransferInput = z.object({
+  productId: uuid,
+  fromWarehouseId: uuid,
+  toWarehouseId: uuid,
+  date: isoDate,
+  qty: stockQty,
+  note: optText(200),
+});
+/** Ajuste por recuento: positivo suma, negativo resta. */
+export const stockAdjustmentInput = z.object({
+  productId: uuid,
+  warehouseId: uuid,
+  date: isoDate,
+  qty: z
+    .number()
+    .min(-1_000_000_000)
+    .max(1_000_000_000)
+    .refine((n) => n !== 0, "La cantidad no puede ser cero"),
+  note: optText(200),
+});
+
+/** Suma de cantidades y valores de un producto, y el costo unitario de su última compra (para cuando no hay stock). */
+export interface StockTotals {
+  qty: number;
+  valuePyg: number;
+  lastUnitCost: number | null;
+}
+
+/**
+ * Costo promedio ponderado por unidad (guaraníes por l o kg): valor del stock dividido por la cantidad.
+ * Como las salidas se valorizan a este mismo costo, el cociente se mantiene entre movimientos.
+ * Sin stock positivo (o sin valor) se usa el costo de la última compra, y si no hubo, 0.
+ */
+export function avgUnitCost(t: StockTotals): number {
+  if (t.qty > 0 && t.valuePyg > 0) return t.valuePyg / t.qty;
+  return t.lastUnitCost ?? 0;
+}
+
+/** Valor en guaraníes de mover `qty` unidades al costo promedio `avg` (siempre positivo). */
+export const moveValue = (qty: number, avg: number): number => Math.round(Math.abs(qty) * avg);
+
 // ---------- Terceros (E-02) ----------
 
 /** RUC (con dígito verificador) o cédula: solo dígitos y un guion final opcional. */

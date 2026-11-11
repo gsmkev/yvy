@@ -4,27 +4,11 @@
  */
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { AwsClient } from "aws4fetch";
 import { LIMITS } from "@yvy/shared";
-import type { AppEnv, Bindings } from "../types";
+import { presign } from "../lib/r2";
+import type { AppEnv } from "../types";
 
 export const media = new Hono<AppEnv>();
-
-const presign = async (env: Bindings, method: "PUT" | "GET", key: string, ttl: number): Promise<string> => {
-  if (!env.R2_ACCESS_KEY_ID || !env.R2_SECRET_ACCESS_KEY || !env.R2_ACCOUNT_ID) {
-    throw new HTTPException(503, { message: "Faltan las credenciales S3 de R2" });
-  }
-  const client = new AwsClient({
-    accessKeyId: env.R2_ACCESS_KEY_ID,
-    secretAccessKey: env.R2_SECRET_ACCESS_KEY,
-    service: "s3",
-    region: "auto",
-  });
-  const url = new URL(`https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${env.MEDIA_BUCKET_NAME}/${key}`);
-  url.searchParams.set("X-Amz-Expires", String(ttl));
-  const signed = await client.sign(new Request(url, { method }), { aws: { signQuery: true } });
-  return signed.url;
-};
 
 /** URLs de subida de la foto y su miniatura (después de un push exitoso del adjunto). */
 media.post("/attachments/:id/upload-url", async (c) => {

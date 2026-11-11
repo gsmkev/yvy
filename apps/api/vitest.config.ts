@@ -21,6 +21,7 @@ export default defineConfig(async () => {
         },
       }),
     ],
-    test: { setupFiles: ["./test/apply-migrations.ts"] },
+    // scripts/*.test.mjs corre con node --test (usa node:sqlite, que no existe en workerd)
+    test: { setupFiles: ["./test/apply-migrations.ts"], include: ["test/**/*.test.ts"] },
   };
 });

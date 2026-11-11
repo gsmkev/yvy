@@ -125,6 +125,10 @@ export interface Task {
   title: string;
   kind: string | null;
   dueDate: string;
+  dueTime: string | null;
+  priority: "low" | "normal" | "high";
+  /** JSON: ver parseTaskComments en @yvy/shared. */
+  comments: string;
   recurrence: "none" | "daily" | "weekly";
   status: "open" | "done" | "cancelled";
   completedAt: number | null;

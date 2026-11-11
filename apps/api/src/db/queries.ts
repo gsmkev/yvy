@@ -4,7 +4,7 @@
  */
 import { and, asc, desc, eq, getTableColumns, gte, inArray, isNull, lt, lte, or, sql, type SQL } from "drizzle-orm";
 import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
-import { DEFAULT_ALERT_SETTINGS, LIMITS, type AlertSettings, type RecordKind } from "@yvy/shared";
+import { DEFAULT_ALERT_SETTINGS, LIMITS, parseTaskComments, type AlertSettings, type RecordKind, type TaskComment } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { newId } from "@yvy/shared";
 import { randomToken, sha256Hex } from "../lib/crypto";
@@ -643,6 +643,37 @@ export async function updateTask(sdb: ScopedDb, id: string, patch: Partial<typeo
   sdb.require(can.assign);
   if (patch.assigneeId) await sdb.memberRole(patch.assigneeId);
   await updateSynced(sdb, s.tasks, id, patch);
+}
+
+/**
+ * Agrega un comentario a la tarea (T-02). Los comentarios son un JSON dentro de la tarea: se reescribe con
+ * bumpVersion para que baje al celular. Lectura y escritura son dos pasos; si dos personas comentan a la vez
+ * gana la última escritura (aceptable con ≤ 50 comentarios de uso ocasional).
+ */
+export async function addTaskComment(sdb: ScopedDb, id: string, text: string) {
+  const [row] = await sdb.db
+    .select({ comments: s.tasks.comments })
+    .from(s.tasks)
+    .where(
+      and(
+        eq(s.tasks.id, id),
+        eq(s.tasks.organizationId, sdb.auth.orgId),
+        isNull(s.tasks.deletedAt),
+        sdb.workerFilter("tasks"),
+      ),
+    )
+    .limit(1);
+  if (!row) throw new NotFoundError("No existe");
+  const list = parseTaskComments(row.comments);
+  if (list.length >= LIMITS.tasks.maxComments) throw new ForbiddenError("La tarea ya tiene demasiados comentarios");
+  const [u] = await sdb.db
+    .select({ fullName: s.users.fullName })
+    .from(s.users)
+    .where(eq(s.users.id, sdb.auth.userId))
+    .limit(1);
+  const comment: TaskComment = { id: newId(), userId: sdb.auth.userId, name: u?.fullName ?? "", at: sdb.now(), text };
+  await updateSynced(sdb, s.tasks, id, { comments: JSON.stringify([...list, comment]) });
+  return comment;
 }
 
 export async function deleteTask(sdb: ScopedDb, id: string) {

@@ -120,6 +120,13 @@
       "when": 1794398352053,
       "tag": "0016_even_rafael_vega",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1794398600830,
+      "tag": "0017_glamorous_gauntlet",
+      "breakpoints": true
     }
   ]
 }

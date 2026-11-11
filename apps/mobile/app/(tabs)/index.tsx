@@ -6,7 +6,7 @@ import { useEffect, useRef, type ElementRef } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Check } from "lucide-react-native";
-import { checklistProgress, describeRecord, parseChecklist, t } from "@yvy/shared";
+import { checklistProgress, describeRecord, parseChecklist, parseTaskComments, t } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
 import { memberNames } from "../../src/lib/members";
@@ -24,6 +24,10 @@ const dayLabel = () => {
   const d = new Date();
   const txt = d.toLocaleDateString("es-PY", { weekday: "long", day: "numeric", month: "long" });
   return txt.charAt(0).toUpperCase() + txt.slice(1);
+};
+const commentsLabel = (json: string): string | null => {
+  const n = parseTaskComments(json).length;
+  return n === 0 ? null : n === 1 ? t("app.taskCommentsOne") : t("app.taskComments", { n });
 };
 const hhmm = (ms: number) => new Date(ms).toLocaleTimeString("es-PY", { hour: "2-digit", minute: "2-digit", hour12: false });
 
@@ -182,9 +186,12 @@ export default function Today() {
             <Row
               title={task.title}
               subtitle={[
+                task.priority === "high" ? t("app.taskHighPriority") : null,
+                task.dueTime ? t("app.taskDueAt", { time: task.dueTime }) : null,
                 task.kind ? t(`recordKinds.${task.kind}`) : null,
                 task.plotId ? plotName(task.plotId) : null,
                 parseChecklist(task.checklist).length ? t("app.checklistProgress", checklistProgress(parseChecklist(task.checklist))) : null,
+                commentsLabel(task.comments),
               ]
                 .filter(Boolean)
                 .join(" · ")}

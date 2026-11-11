@@ -94,5 +94,8 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `products` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`type` text NOT NULL,\n\t`unit` text NOT NULL,\n\t`active_ingredient` text,\n\t`withdrawal_days` integer,\n\t`tox_class` text,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
   "CREATE INDEX `products_sync_idx` ON `products` (`organization_id`,`version`,`id`);",
   "ALTER TABLE `tasks` ADD `prescription` text;",
-  "CREATE TABLE `forecast_hours` (\n\t`farm_id` text NOT NULL,\n\t`valid_at` integer NOT NULL,\n\t`temp_c` real,\n\t`wind_kmh` real,\n\t`humidity_pct` real,\n\t`precip_mm` real,\n\tPRIMARY KEY(`farm_id`, `valid_at`)\n);"
+  "CREATE TABLE `forecast_hours` (\n\t`farm_id` text NOT NULL,\n\t`valid_at` integer NOT NULL,\n\t`temp_c` real,\n\t`wind_kmh` real,\n\t`humidity_pct` real,\n\t`precip_mm` real,\n\tPRIMARY KEY(`farm_id`, `valid_at`)\n);",
+  "ALTER TABLE `tasks` ADD `due_time` text;",
+  "ALTER TABLE `tasks` ADD `priority` text DEFAULT 'normal' NOT NULL;",
+  "ALTER TABLE `tasks` ADD `comments` text DEFAULT '[]' NOT NULL;"
 ];

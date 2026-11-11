@@ -95,6 +95,13 @@ export const LIMITS = {
     maxItems: 30,
     maxTextLength: 120,
   },
+  tasks: {
+    /** Comentarios por tarea (se guardan como JSON en la propia tarea; ver tasks.comments). */
+    maxComments: 50,
+    maxCommentLength: 500,
+    /** Lotes que se pueden elegir de una vez en el mapa al crear tareas (T-01). */
+    maxPlotsPerBatch: 40,
+  },
   share: {
     /** Duraciones permitidas del enlace de solo lectura (K-04), en días. */
     linkDays: [7, 30],

@@ -406,6 +406,16 @@ export class LocalDb implements SyncStore {
       .map((a) => ({ id: a.id, thumbUri: this.localPhoto(a.id) }));
   }
 
+  /** Primera miniatura local de cada registro con fotos (Historial). Las fotos de otro celular no tienen miniatura acá. */
+  firstThumbByRecord(): Map<string, string> {
+    const rows = this.sql.all<{ record_id: string; thumb_uri: string }>(
+      `SELECT a.record_id, f.thumb_uri FROM attachments a JOIN local_files f ON f.attachment_id = a.id
+       WHERE a.deleted_at IS NULL ORDER BY a.created_at DESC, a.rowid DESC`,
+    );
+    // Se recorre de la más nueva a la más vieja: la última escritura en el mapa es la primera foto.
+    return new Map(rows.map((r) => [r.record_id, r.thumb_uri] as const));
+  }
+
   /** Últimas anotaciones de un lote (ficha del lote y pantalla Anotar). */
   recordsOfPlot(plotId: string, limit = 20): RecordRow[] {
     return this.records(500).filter((r) => r.plotId === plotId).slice(0, limit);

@@ -4,6 +4,7 @@ export * from "./brand";
 export * from "./records";
 export * from "./monitoring";
 export * from "./livestock";
+export * from "./heat";
 export * from "./sanitary";
 export * from "./erp";
 export * from "./risk";

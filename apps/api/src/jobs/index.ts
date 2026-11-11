@@ -13,6 +13,7 @@ import type { Bindings, JobMessage } from "../types";
 import { saveForecastStmts, saveHourlyStmts, upsertAlert } from "./alerts";
 import { sendPending } from "./notify";
 import { pestAlertDraft } from "./pests";
+import { evaluateHeatStress } from "./heat";
 import { evaluateDrought, evaluateExcessRain, evaluateFrost } from "./rules";
 import { dailyFromMet, hourlyFromMet, dailyFromPower, fetchMet, powerUrl, type DailyForecast } from "./weather";
 
@@ -161,6 +162,18 @@ async function forecastJob(db: DB, env: Bindings, deps: JobDeps, farm: Farm): Pr
     evaluateExcessRain(days, today, cfg.excessRainMm24h),
   ]) {
     if (draft) await upsertAlert(db, farm, draft, now);
+  }
+  // G-32: estrés térmico del ganado (THI). Solo para estancias con potreros, y el aviso es de los potreros.
+  const heat = evaluateHeatStress(hours, now, farm.tz);
+  if (heat) {
+    const pastures = await db
+      .select({ id: s.plots.id })
+      .from(s.plots)
+      .where(and(eq(s.plots.farmId, farm.id), eq(s.plots.kind, "pasture"), isNull(s.plots.deletedAt)));
+    if (pastures.length) {
+      heat.details.plotIds = pastures.map((p) => p.id);
+      await upsertAlert(db, farm, heat, now);
+    }
   }
 }
 

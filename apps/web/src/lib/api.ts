@@ -1,4 +1,6 @@
 /** Cliente de la API del Worker con renovación automática de sesión. */
+import { t } from "./i18n";
+
 export interface Session {
   accessToken: string;
   accessTokenExpiresAt: number;
@@ -48,11 +50,48 @@ export class ApiError extends Error {
   }
 }
 
+/** Falla de red (sin respuesta del servidor): distinta de un error HTTP. */
+export class NetworkError extends Error {
+  constructor() {
+    super(t("ui.networkError"));
+  }
+}
+
+let networkDown = false;
+const netListeners = new Set<() => void>();
+const setNetworkDown = (v: boolean) => {
+  if (v === networkDown) return;
+  networkDown = v;
+  netListeners.forEach((l) => l());
+};
+export const isNetworkDown = () => networkDown;
+export const onNetworkChange = (fn: () => void) => {
+  netListeners.add(fn);
+  return () => {
+    netListeners.delete(fn);
+  };
+};
+if (typeof window !== "undefined") {
+  window.addEventListener("offline", () => setNetworkDown(true));
+  window.addEventListener("online", () => setNetworkDown(false));
+}
+
+async function netFetch(input: string, init: RequestInit): Promise<Response> {
+  try {
+    const res = await fetch(input, init);
+    setNetworkDown(false);
+    return res;
+  } catch {
+    setNetworkDown(true);
+    throw new NetworkError();
+  }
+}
+
 let refreshing: Promise<boolean> | null = null;
 async function refresh(): Promise<boolean> {
   if (!session) return false;
   refreshing ??= (async () => {
-    const res = await fetch("/auth/refresh", {
+    const res = await netFetch("/auth/refresh", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ refreshToken: session!.refreshToken }),
@@ -71,7 +110,7 @@ async function refresh(): Promise<boolean> {
 
 export async function api<T>(method: string, path: string, body?: unknown, retry = true): Promise<T> {
   if (session && session.accessTokenExpiresAt - Date.now() < 60_000) await refresh();
-  const res = await fetch(path, {
+  const res = await netFetch(path, {
     method,
     headers: {
       "content-type": "application/json",

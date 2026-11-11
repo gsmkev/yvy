@@ -16,7 +16,7 @@ export type Severity = "info" | "watch" | "warning";
 export type Probability = "low" | "medium" | "high";
 
 export interface AlertDraft {
-  kind: "frost" | "excess_rain" | "drought" | "fire";
+  kind: "frost" | "excess_rain" | "drought" | "fire" | "pest_threshold";
   severity: Severity;
   probability: Probability | null;
   validFrom: string;

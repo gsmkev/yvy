@@ -29,3 +29,19 @@ export const alertSettingsSchema = z.object({
 });
 
 export type AlertSettings = z.infer<typeof alertSettingsSchema>;
+/**
+ * Umbrales de plagas por defecto (backlog A-41). VALORES POR DEFECTO A REVISAR POR UN AGRÓNOMO:
+ * son referencias generales de manejo integrado de plagas en soja, no una recomendación para un lote.
+ */
+export const PEST_THRESHOLDS: Record<
+  string,
+  { perMeter: number; crops: readonly string[]; stages: readonly string[] | null; label: string }
+> = {
+  /** Chinches: 2 por metro de surco en llenado de granos. */
+  chinche: { perMeter: 2, crops: ["soja"], stages: ["floracion", "llenado"], label: "Chinche" },
+  /** Orugas defoliadoras: 20 por metro de surco. */
+  oruga: { perMeter: 20, crops: ["soja"], stages: null, label: "Oruga" },
+};
+
+/** Ventana de registros que se promedia para el aviso de plagas. */
+export const PEST_WINDOW_DAYS = 7;

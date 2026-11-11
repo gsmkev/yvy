@@ -106,6 +106,10 @@ export interface Member {
   phone: string | null;
   role: Me["role"];
   status: string;
+  /** Días con actividad en los últimos 7. */
+  activeDays7: number;
+  records7d: number;
+  lastSyncAt: number | null;
 }
 
 export interface Task {

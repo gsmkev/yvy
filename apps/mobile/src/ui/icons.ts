@@ -1,4 +1,5 @@
 import {
+  Beef,
   Bug,
   CloudRain,
   Droplets,
@@ -22,6 +23,8 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
   rain: CloudRain,
   water: Droplets,
   note: NotebookPen,
+  // ganaderia
+  herd_count: Beef,
 };
 
 export const ALERT_ICON: Record<string, LucideIcon> = {

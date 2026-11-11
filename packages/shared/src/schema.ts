@@ -25,14 +25,26 @@ export const SEASONS = ["zafra", "zafrina"] as const;
 export const POI_KINDS = ["rain_gauge", "water", "house", "gate", "corral", "other"] as const;
 export const RECURRENCES = ["none", "daily", "weekly"] as const;
 export const TASK_STATUS = ["open", "done", "cancelled"] as const;
-export const RECORD_KINDS = ["scouting", "pest", "crop_status", "pasture_status", "rain", "water", "note"] as const;
+export const RECORD_KINDS = [
+  "scouting",
+  "pest",
+  "crop_status",
+  "pasture_status",
+  "rain",
+  "water",
+  "note",
+  // ganaderia
+  "herd_count",
+] as const;
 export type RecordKind = (typeof RECORD_KINDS)[number];
 export const UPLOAD_STATUS = ["pending", "uploaded"] as const;
-export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire"] as const;
+export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_threshold"] as const;
 export const ALERT_SEVERITIES = ["info", "watch", "warning"] as const;
 /** Con MET Norway no hay ensemble: probabilidad cualitativa (PRD-cloudflare §4.8). */
 export const ALERT_PROBABILITIES = ["low", "medium", "high"] as const;
 export const LAYERS = ["true_color", "ndvi"] as const;
+/** Estado del procesamiento satelital inicial de una estancia (S-02). */
+export const IMAGERY_STATUSES = ["pending", "processing", "ready", "failed"] as const;
 
 // ---------- Columnas comunes ----------
 
@@ -259,6 +271,8 @@ export const tasks = sqliteTable(
     completedBy: text("completed_by"),
     recordId: text("record_id"),
     createdBy: text("created_by").notNull(),
+    /** Lista de verificación (F-15): JSON `[{id, text, done}]` o null. Ver checklist.ts. */
+    checklist: text("checklist"),
     ...synced,
   },
   (t) => [
@@ -390,6 +404,14 @@ export const farmLayers = sqliteTable(
   ],
 );
 
+/** Estado del primer procesamiento satelital por estancia. No se sincroniza: solo lo lee la web. */
+export const farmImagery = sqliteTable("farm_imagery", {
+  farmId: text("farm_id").primaryKey(),
+  status: text("status", { enum: IMAGERY_STATUSES }).notNull().default("pending"),
+  requestedAt: integer("requested_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});
+
 /** plot_id = "" cuando el dato es por estancia (SQLite no admite NULL útil en la PK). */
 export const climateDaily = sqliteTable(
   "climate_daily",
@@ -460,6 +482,33 @@ export const alertRules = sqliteTable("alert_rules", {
   kind: text("kind", { enum: ALERT_KINDS }).notNull(),
   params: text("params").notNull().default("{}"),
   enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+});
+
+/** Enlace temporal de solo lectura a la ficha de una estancia (K-04). Solo se guarda el hash del token. */
+export const shareLinks = sqliteTable(
+  "share_links",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at").notNull(),
+    expiresAt: integer("expires_at").notNull(),
+    revokedAt: integer("revoked_at"),
+  },
+  (t) => [uniqueIndex("share_links_hash_uq").on(t.tokenHash), index("share_links_farm_idx").on(t.farmId)],
+);
+
+/** Umbrales de avisos por estancia (C-04). Sin fila = valores por defecto. No se sincroniza al celular. */
+export const farmAlertSettings = sqliteTable("farm_alert_settings", {
+  farmId: text("farm_id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  frostTminC: real("frost_tmin_c").notNull().default(2),
+  excessRainMm24h: real("excess_rain_mm_24h").notNull().default(50),
+  droughtDeficitPct: real("drought_deficit_pct").notNull().default(50),
+  updatedAt: integer("updated_at").notNull(),
+  updatedBy: text("updated_by"),
 });
 
 export const alerts = sqliteTable(
@@ -556,6 +605,19 @@ export const activityDaily = sqliteTable(
     role: text("role").notNull(),
   },
   (t) => [primaryKey({ columns: [t.userId, t.day] }), index("activity_daily_org_idx").on(t.organizationId, t.day)],
+);
+
+/** P-09: el dueño pide la baja de la cuenta. Solo se registra; el borrado lo hace el equipo a mano. */
+export const deletionRequests = sqliteTable(
+  "deletion_requests",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    userId: text("user_id").notNull(),
+    status: text("status").notNull().default("pending"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("deletion_requests_org_idx").on(t.organizationId, t.createdAt)],
 );
 
 export const usageDaily = sqliteTable(

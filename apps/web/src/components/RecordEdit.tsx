@@ -96,6 +96,12 @@ const FIELDS: Record<RecordKind, FieldDef[]> = {
     ...HERD_FIELDS("counts"),
     NOTE,
   ],
+  fuel_load: [
+    { key: "machine", label: f("machine"), type: "text" },
+    { key: "liters", label: f("liters"), type: "number" },
+    { key: "meterValue", label: f("meterValue"), type: "number", optional: true },
+    NOTE,
+  ],
   harvest: [
     { key: "tons", label: f("tons"), type: "number" },
     { key: "moisturePct", label: f("moisturePct"), type: "number", optional: true },

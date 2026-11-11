@@ -24,6 +24,7 @@ import {
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from "./client";
+import { hasEffects, recordEffects, type EffectRecord } from "./erp-effects";
 import { funnelEvent } from "./events";
 import { can, type ScopedDb } from "./scoped";
 
@@ -199,6 +200,8 @@ export async function applyPush(
   const results: MutationResult[] = [];
   const recordUpserts: (typeof s.records.$inferInsert)[] = [];
   const recordDeletes: string[] = [];
+  /** Registros que descuentan stock y cargan costo (ERP, E-13). */
+  const effectUpserts: EffectRecord[] = [];
   const attachmentUpserts: (typeof s.attachments.$inferInsert)[] = [];
   const attachmentDeletes: string[] = [];
   const taskUpdates: Stmt[] = [];
@@ -295,6 +298,15 @@ export async function applyPush(
           updatedAt: now,
         });
         records.set(r.id, { organizationId: org, authorId, createdAt, deletedAt: null });
+        if (hasEffects(r.kind))
+          effectUpserts.push({
+            id: r.id,
+            farmId: r.farmId,
+            plotId: r.plotId,
+            kind: r.kind,
+            data: data.data as Record<string, unknown>,
+            capturedAt: r.capturedAt,
+          });
         accept(m, r.id);
         break;
       }
@@ -469,6 +481,7 @@ export async function applyPush(
                   lon: t.lon,
                   lat: t.lat,
                   prescription: t.prescription,
+                  workOrder: t.workOrder,
                   dueDate: next,
                   dueTime: t.dueTime,
                   priority: t.priority,
@@ -582,6 +595,8 @@ export async function applyPush(
         .where(and(eq(s.records.organizationId, org), inArray(s.records.id, chunk))),
     );
   }
+  // ERP (E-13): consumo de insumos y costo de los registros que llegan, y reversión de los que se borran.
+  stmts.push(...(await recordEffects(sdb, effectUpserts, recordDeletes)));
   for (const chunk of chunkForParams(attachmentUpserts, paramsPerRow(s.attachments))) {
     stmts.push(
       db

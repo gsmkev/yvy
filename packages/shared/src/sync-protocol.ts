@@ -122,6 +122,7 @@ export const PULL_TABLES = [
   "seasons",
   "plot_seasons",
   "products",
+  "machines",
 ] as const;
 export type PullTable = (typeof PULL_TABLES)[number];
 

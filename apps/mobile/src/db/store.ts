@@ -18,6 +18,7 @@ import {
   nextDueDate,
   nextOccurrenceId,
   parseChecklist,
+  orderSchema,
   prescriptionSchema,
   RECORD_SCHEMA_VERSION,
   resetChecklist,
@@ -25,6 +26,7 @@ import {
   setChecklistItem,
   type CountEvent,
   type Prescription,
+  type WorkOrder,
   type Cursor,
   type HerdCategory,
   type HerdCounts,
@@ -55,6 +57,7 @@ const TABLES: Record<PullTable, SQLiteTable> = {
   seasons: s.seasons,
   plot_seasons: s.plotSeasons,
   products: s.products,
+  machines: s.machines,
 };
 
 /** jsKey → columna SQL, sacado del esquema compartido. */
@@ -80,6 +83,7 @@ export type Alert = typeof s.alerts.$inferSelect;
 export type FarmLayer = typeof s.farmLayers.$inferSelect;
 export type Season = typeof s.seasons.$inferSelect;
 export type Product = typeof s.products.$inferSelect;
+export type Machine = typeof s.machines.$inferSelect;
 export type PlotSeason = typeof s.plotSeasons.$inferSelect;
 
 export interface NewRecord {
@@ -382,8 +386,8 @@ export class LocalDb implements SyncStore {
       const next = task.status !== "done" ? nextDueDate(task.dueDate, task.recurrence, localDate(ts, tz)) : null;
       if (next) {
         this.sql.run(
-          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, lon, lat, due_date, due_time, priority, recurrence, status, prescription, created_by, created_at, updated_at, version, checklist)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, 0, ?) ON CONFLICT(id) DO NOTHING`,
+          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, lon, lat, due_date, due_time, priority, recurrence, status, prescription, created_by, created_at, updated_at, version, checklist, work_order)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, 0, ?, ?) ON CONFLICT(id) DO NOTHING`,
           [
             nextOccurrenceId(taskId),
             task.organizationId,
@@ -403,6 +407,7 @@ export class LocalDb implements SyncStore {
             ts,
             ts,
             serializeChecklist(resetChecklist(parseChecklist(task.checklist))),
+            task.workOrder,
           ],
         );
       }
@@ -689,6 +694,18 @@ export class LocalDb implements SyncStore {
     }
   }
 
+  /** Orden de trabajo de una tarea (E-20), ya validada; null si no tiene o está dañada. */
+  orderOf(taskId: string): WorkOrder | null {
+    const r = this.sql.get<{ work_order: string | null }>("SELECT work_order FROM tasks WHERE id = ?", [taskId]);
+    if (!r?.work_order) return null;
+    try {
+      const p = orderSchema.safeParse(JSON.parse(r.work_order));
+      return p.success ? p.data : null;
+    } catch {
+      return null;
+    }
+  }
+
   /** Campañas activas de la organización, la más reciente primero. */
   activeSeasons(): Season[] {
     return this.sql
@@ -701,6 +718,13 @@ export class LocalDb implements SyncStore {
     return this.sql
       .all("SELECT * FROM products WHERE deleted_at IS NULL ORDER BY name")
       .map((r) => fromRow<Product>(s.products, r));
+  }
+
+  /** Maquinaria y vehículos de la organización (para cargar combustible). */
+  machines(): Machine[] {
+    return this.sql
+      .all("SELECT * FROM machines WHERE deleted_at IS NULL ORDER BY name")
+      .map((r) => fromRow<Machine>(s.machines, r));
   }
 
   /** Lo planificado en un lote para una campaña (cultivo, variedad), si bajó al celular. */

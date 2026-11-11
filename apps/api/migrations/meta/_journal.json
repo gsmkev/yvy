@@ -183,6 +183,76 @@
       "when": 1794419470480,
       "tag": "0025_curly_gressill",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1794419711778,
+      "tag": "0026_lonely_speed_demon",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "6",
+      "when": 1794419737434,
+      "tag": "0027_mixed_kingpin",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "6",
+      "when": 1794419780459,
+      "tag": "0028_special_tombstone",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "6",
+      "when": 1794419806634,
+      "tag": "0029_neat_smiling_tiger",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "6",
+      "when": 1794419832438,
+      "tag": "0030_orange_frog_thor",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "6",
+      "when": 1794419859792,
+      "tag": "0031_loose_speed_demon",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1794419886231,
+      "tag": "0032_stale_piledriver",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1794419913298,
+      "tag": "0033_big_katie_power",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1794419941367,
+      "tag": "0034_kind_luckman",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "6",
+      "when": 1794420144101,
+      "tag": "0035_common_silk_fever",
+      "breakpoints": true
     }
   ]
 }

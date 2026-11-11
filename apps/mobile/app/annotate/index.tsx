@@ -13,6 +13,7 @@ import {
   LIMITS,
   MONITOR_CROPS,
   monitorTemplate,
+  ORDER_LABOR_KIND,
   parseRecordData,
   summarizeStations,
   t,
@@ -86,6 +87,15 @@ export default function Annotate() {
       if (rx.seasonId) out.seasonId = rx.seasonId;
       out.prescriptionTaskId = params.taskId;
     }
+    // E-21: la orden de trabajo precarga insumos, campaña y superficie prevista; al guardar queda ligada a la tarea.
+    const ord = params.taskId ? db.orderOf(params.taskId) : null;
+    if (ord && ORDER_LABOR_KIND[ord.labor] === kd) {
+      if ((kd === "application" || kd === "fertilization") && ord.products.length) out.products = ord.products;
+      if (ord.seasonId) out.seasonId = ord.seasonId;
+      if (ord.areaHa) out.areaHa = ord.areaHa;
+      if (kd === "application" && ord.volumeLHa) out.volumeLHa = ord.volumeLHa;
+      out.orderTaskId = params.taskId;
+    }
     return out;
   };
   const [values, setValues] = useState<Record<string, unknown>>(() =>
@@ -135,8 +145,10 @@ export default function Annotate() {
     () => (editing ? [] : db.pois(plot?.farmId ?? selectedFarmId(db) ?? undefined).filter((p) => p.kind === "water")),
     [plot?.farmId, editing],
   );
+  const vetProducts = useMemo(() => db.products().some((p) => p.type === "veterinary"), []);
+  const hasMachines = useMemo(() => db.machines().length > 0, []);
   // Con el punto ya escaneado no se pregunta de qué aguada es.
-  const flowCtx = { waterPois: scanPoi ? 0 : waterPois.length, askSeason: seasons.length > 1 };
+  const flowCtx = { waterPois: scanPoi ? 0 : waterPois.length, askSeason: seasons.length > 1, vetProducts, machines: hasMachines };
   const steps = stationRecord ? FLOWS.pest.slice(-1) : stepsFor(kind, values, flowCtx);
   const stepIndex = phase.name === "step" ? phase.i : -1;
 
@@ -164,6 +176,12 @@ export default function Annotate() {
     if (!kind) return;
     const { poiId: pickedPoi, ...answers } = values;
     const data: Record<string, unknown> = { ...answers };
+    // Tratamiento con producto del catálogo: el nombre sale del catálogo (E-13).
+    if (kind === "health" && typeof data.productId === "string")
+      data.product = db.products().find((p) => p.id === data.productId)?.name ?? data.product;
+    // Combustible: el nombre de la máquina sale del catálogo (E-16).
+    if (kind === "fuel_load" && typeof data.machineId === "string")
+      data.machine = db.machines().find((m) => m.id === data.machineId)?.name ?? data.machine;
     if (kind === "rain" && !editing) data.readAt = Date.now();
     // Compra: la hacienda entra de afuera, así que el potrero elegido es el destino y no hay origen.
     const entersFromOutside = kind === "herd_move" && data.reason === "compra" && !!plot;
@@ -617,6 +635,33 @@ function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unk
           <Row key={x.id} title={x.name} selected={value === x.id} onPress={() => onAnswer(x.id)} />
         ))}
         <Button kind="text" title={t("app.skip")} onPress={() => onAnswer(undefined)} style={{ marginTop: 12 }} />
+      </ScrollView>
+    );
+  }
+  if (step.kind === "catalog") {
+    const items = getDb()
+      .products()
+      .filter((p) => step.productTypes.includes(p.type));
+    return (
+      <ScrollView contentContainerStyle={k.pad}>
+        <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
+        {items.map((p) => (
+          <Row key={p.id} title={p.name} selected={value === p.id} onPress={() => onAnswer(p.id)} />
+        ))}
+        <Button kind="text" title={tr(step.otherLabel)} onPress={() => onAnswer(undefined)} style={{ marginTop: 12 }} />
+      </ScrollView>
+    );
+  }
+  if (step.kind === "machine") {
+    return (
+      <ScrollView contentContainerStyle={k.pad}>
+        <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
+        {getDb()
+          .machines()
+          .map((m) => (
+            <Row key={m.id} title={m.name} selected={value === m.id} onPress={() => onAnswer(m.id)} />
+          ))}
+        <Button kind="text" title={tr(step.otherLabel)} onPress={() => onAnswer(undefined)} style={{ marginTop: 12 }} />
       </ScrollView>
     );
   }

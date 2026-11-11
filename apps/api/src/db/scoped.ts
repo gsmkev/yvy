@@ -88,6 +88,7 @@ const SYNCED: Record<PullTable, SyncedTable> = {
     id: s.plotSeasons.id,
   },
   products: { table: s.products, org: s.products.organizationId, version: s.products.version, id: s.products.id },
+  machines: { table: s.machines, org: s.machines.organizationId, version: s.machines.version, id: s.machines.id },
 };
 
 /** Matriz de permisos (PRD §9). */
@@ -113,6 +114,10 @@ export const can = {
   editSeasons: (r: Role) => r !== "worker",
   /** ADR 0004: catálogo de productos; el empleado lo recibe en el celular pero no lo edita. */
   editProducts: (r: Role) => r !== "worker",
+  /** ADR 0004 (ERP): maestros, compras, costos y montos son de dueño y administrador. */
+  manageErp: (r: Role) => r === "owner" || r === "admin",
+  /** El agrónomo ve las cantidades de stock (nunca montos); el empleado no entra al ERP. */
+  viewStock: (r: Role) => r !== "worker",
 };
 
 export class ScopedDb {
@@ -183,6 +188,8 @@ export class ScopedDb {
         return sql`plot_seasons.plot_id IN ${this.assignedPlotsSql()}`;
       case "products":
         return undefined; // el catálogo es de toda la organización
+      case "machines":
+        return undefined; // las máquinas son de toda la organización: el empleado las elige al cargar combustible
     }
   }
 
@@ -837,6 +844,8 @@ export class ScopedDb {
     lon?: number | null;
     lat?: number | null;
     prescription?: string | null;
+    /** Orden de trabajo en JSON (E-20). */
+    workOrder?: string | null;
   }): Promise<{ ids: string[] }> {
     this.require(can.assign);
     await this.requireFarm(input.farmId);

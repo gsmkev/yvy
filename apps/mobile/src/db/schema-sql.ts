@@ -100,5 +100,7 @@ export const SERVER_SCHEMA: string[] = [
   "ALTER TABLE `tasks` ADD `comments` text DEFAULT '[]' NOT NULL;",
   "CREATE TABLE `notification_prefs` (\n\t`user_id` text PRIMARY KEY NOT NULL,\n\t`prefs` text NOT NULL,\n\t`updated_at` integer NOT NULL\n);",
   "ALTER TABLE `organizations` ADD `max_ha` real;",
-  "ALTER TABLE `organizations` ADD `max_users` integer;"
+  "ALTER TABLE `organizations` ADD `max_users` integer;",
+  "CREATE TABLE `audit_log` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`actor_user_id` text NOT NULL,\n\t`action` text NOT NULL,\n\t`organization_id` text,\n\t`detail` text DEFAULT '{}' NOT NULL,\n\t`created_at` integer NOT NULL\n);",
+  "CREATE INDEX `audit_log_org_idx` ON `audit_log` (`organization_id`,`created_at`);"
 ];

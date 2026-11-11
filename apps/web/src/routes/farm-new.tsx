@@ -10,6 +10,7 @@ import { post } from "../lib/api";
 import { fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { parseFile } from "../lib/importGeo";
+import { searchPlaces, type Place } from "../lib/places-py";
 import type { Area } from "../lib/types";
 
 export function NewFarmPage() {
@@ -25,6 +26,14 @@ export function NewFarmPage() {
   const [flyTo, setFlyTo] = useState<{ lon: number; lat: number; zoom?: number; n: number } | null>(null);
   const [geoMsg, setGeoMsg] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
+  const [place, setPlace] = useState("");
+  const found = searchPlaces(place);
+  const pickPlace = (p: Place) => {
+    goTo(p.lon, p.lat, p.zoom);
+    setPlace("");
+    setDepartment((d) => d || p.department);
+    if (p.kind === "city") setDistrict((d) => d || p.name);
+  };
 
   const goTo = (lon: number, lat: number, zoom?: number) => setFlyTo((f) => ({ lon, lat, zoom, n: (f?.n ?? 0) + 1 }));
   const useMyLocation = () => {
@@ -110,6 +119,38 @@ export function NewFarmPage() {
           </Field>
         </div>
         <div className="flex flex-col gap-1.5">
+          <Field label={t("ui.placeSearch")}>
+            <Input
+              value={place}
+              placeholder={t("ui.placeSearchPlaceholder")}
+              onChange={(e) => setPlace(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && found[0]) {
+                  e.preventDefault();
+                  pickPlace(found[0]);
+                }
+              }}
+            />
+          </Field>
+          {place.trim().length >= 2 && (
+            <ul className="rounded-md border border-linea bg-papel">
+              {found.length === 0 && <li className="px-3 py-2 text-sm text-tinta-2">{t("ui.placeNone")}</li>}
+              {found.map((p) => (
+                <li key={`${p.kind}${p.name}`} className="border-b border-linea last:border-0">
+                  <button
+                    type="button"
+                    onClick={() => pickPlace(p)}
+                    className="flex w-full cursor-pointer items-baseline justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-surco/[0.05]"
+                  >
+                    <span className="font-medium">{p.name}</span>
+                    <span className="text-xs text-tinta-2">
+                      {p.kind === "department" ? t("ui.placeDepartment") : p.department}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
           <div>
             <Button onClick={useMyLocation} disabled={locating}>
               {locating ? t("ui.locating") : t("ui.useMyLocation")}

@@ -9,7 +9,7 @@ import { t, tk } from "../lib/i18n";
 import type { Member, Plot } from "../lib/types";
 import { CopyCoords } from "./CopyCoords";
 import { LineChart } from "./charts";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Select, Spinner, Stat } from "./ui";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Select, Spinner, Stat, toast } from "./ui";
 
 interface Ndvi {
   series: { acquiredAt: number; mean: number; p10: number; p90: number; validPct: number }[];
@@ -57,6 +57,7 @@ export function PlotPanel({
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["farm", plot.farmId] });
+      toast(t("ui.toastPlotUpdated"));
       setEditing(false);
     },
   });
@@ -64,6 +65,7 @@ export function PlotPanel({
     mutationFn: () => del(`/org/plots/${plot.id}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["farm", plot.farmId] });
+      toast(t("ui.toastPlotDeleted"));
       onClose();
     },
   });

@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { getSession, onSession, post, setSession } from "../lib/api";
+import { Toaster } from "./ui";
 import { FEATURES } from "../lib/features";
 import { fmtDate } from "../lib/format";
 import { t, type MessageKey } from "../lib/i18n";
@@ -127,6 +128,7 @@ export function Layout() {
       <main id="main" className="min-h-0 min-w-0 flex-1 overflow-auto">
         <Outlet />
       </main>
+      <Toaster />
     </div>
   );
 }

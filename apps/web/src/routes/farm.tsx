@@ -14,7 +14,7 @@ import { PlotPanel } from "../components/PlotPanel";
 import { PlotsTable } from "../components/PlotsTable";
 import { RecordsList } from "../components/RecordsList";
 import { TasksPanel } from "../components/TasksPanel";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs } from "../components/ui";
+import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "../components/ui";
 import { post } from "../lib/api";
 import { download, plotsToGeoJson, plotsToKml, plotsToShapefileZip } from "../lib/exports";
 import { closedAreaHa, fmtDistance, pathLengthM, type LonLat } from "../lib/measure";
@@ -449,6 +449,7 @@ function NewPlotModal({
   const save = useMutation({
     mutationFn: () => post(`/org/farms/${farmId}/plots`, { plots: [{ name, kind, geometry }] }),
     onSuccess: () => {
+      toast(t("ui.toastPlotSaved"));
       onSaved();
       onClose();
     },
@@ -503,6 +504,7 @@ function NewPoiModal({
   const save = useMutation({
     mutationFn: () => post(`/org/farms/${farmId}/pois`, { name, kind, lon: at[0], lat: at[1] }),
     onSuccess: () => {
+      toast(t("ui.toastPoiSaved"));
       onSaved();
       onClose();
     },

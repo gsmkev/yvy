@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
 import { ROLES } from "@yvy/shared";
-import { Button, ConfirmModal, ErrorBox, Field, Input, Modal, Select, Spinner } from "../components/ui";
+import { Button, ConfirmModal, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../components/ui";
 import { del, get, post, put } from "../lib/api";
 import { fmtDateTime, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -28,6 +28,7 @@ export function TeamPage() {
     mutationFn: (m: Member) => del(`/org/members/${m.userId}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["members"] });
+      toast(t("ui.toastMemberRemoved"));
       setRemoving(null);
     },
   });
@@ -104,6 +105,7 @@ function AddMember({ canAddAdmins, onClose }: { canAddAdmins: boolean; onClose: 
       post("/org/members", { fullName: f.fullName, email: f.email || null, phone: f.phone || null, role: f.role }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["members"] });
+      toast(t("ui.toastMemberAdded"));
       onClose();
     },
   });
@@ -163,6 +165,7 @@ function AssignPlots({ member, onClose }: { member: Member; onClose: () => void 
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["farm"] });
       qc.invalidateQueries({ queryKey: ["farms"] });
+      toast(t("ui.toastPlotsAssigned"));
       onClose();
     },
   });

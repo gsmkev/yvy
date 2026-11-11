@@ -776,6 +776,18 @@ export const esPY = {
     warnMore: "Y {{count}} avisos más.",
     alsoImportPlots: "Importar también los {{count}} lotes del archivo al guardar la estancia",
     importFixed: "Corregimos {{count}} vértices repetidos o espigas sin superficie.",
+    // web-d
+    toastPlotSaved: "Lote guardado",
+    toastPlotUpdated: "Cambios guardados",
+    toastPlotDeleted: "Lote borrado",
+    toastPoiSaved: "Punto guardado",
+    toastTaskSaved: "Tarea guardada",
+    toastTaskDeleted: "Tarea borrada",
+    toastMemberAdded: "Miembro agregado",
+    toastMemberRemoved: "Miembro quitado",
+    toastPlotsAssigned: "Lotes asignados",
+    toastRecordSaved: "Registro guardado",
+    toastRecordDeleted: "Registro borrado",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

@@ -7,7 +7,7 @@ import { t, tk } from "../lib/i18n";
 import { useFarms, useMembers, useTasks } from "../lib/queries";
 import type { Plot, Task } from "../lib/types";
 import { CheckCircle2, Circle, Plus } from "lucide-react";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner } from "./ui";
+import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
 
 export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] }) {
   const tasks = useTasks({ farmId });
@@ -17,11 +17,17 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
   const today = localDate(Date.now());
   const cancel = useMutation({
     mutationFn: (id: string) => patch(`/org/tasks/${id}`, { status: "cancelled" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+      toast(t("ui.toastTaskDeleted"));
+    },
   });
   const remove = useMutation({
     mutationFn: (id: string) => del(`/org/tasks/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+      toast(t("ui.toastTaskDeleted"));
+    },
   });
 
   if (tasks.isLoading) return <Spinner />;
@@ -120,6 +126,7 @@ function NewTaskModal({
     mutationFn: () => post("/org/tasks", { ...f, plotId: f.plotId || null, kind: f.kind || null }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
+      toast(t("ui.toastTaskSaved"));
       onClose();
     },
   });

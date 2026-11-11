@@ -82,5 +82,7 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `farm_risk` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`computed_at` integer NOT NULL,\n\t`report` text NOT NULL\n);",
   "CREATE TABLE `problem_areas` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`plot_id` text NOT NULL,\n\t`acquired_at` integer NOT NULL,\n\t`geometry` text NOT NULL,\n\t`lon` real NOT NULL,\n\t`lat` real NOT NULL,\n\t`area_ha` real NOT NULL,\n\t`mean_ndvi` real NOT NULL,\n\t`plot_median_ndvi` real NOT NULL,\n\t`created_at` integer NOT NULL\n);",
   "CREATE INDEX `problem_areas_plot_idx` ON `problem_areas` (`plot_id`);",
-  "CREATE INDEX `problem_areas_farm_idx` ON `problem_areas` (`farm_id`);"
+  "CREATE INDEX `problem_areas_farm_idx` ON `problem_areas` (`farm_id`);",
+  "ALTER TABLE `tasks` ADD `lon` real;",
+  "ALTER TABLE `tasks` ADD `lat` real;"
 ];

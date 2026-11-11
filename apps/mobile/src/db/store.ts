@@ -354,8 +354,8 @@ export class LocalDb implements SyncStore {
       const next = task.status !== "done" ? nextDueDate(task.dueDate, task.recurrence, localDate(ts, tz)) : null;
       if (next) {
         this.sql.run(
-          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, due_date, recurrence, status, created_by, created_at, updated_at, version, checklist)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, 0, ?) ON CONFLICT(id) DO NOTHING`,
+          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, lon, lat, due_date, recurrence, status, created_by, created_at, updated_at, version, checklist)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, 0, ?) ON CONFLICT(id) DO NOTHING`,
           [
             nextOccurrenceId(taskId),
             task.organizationId,
@@ -364,6 +364,8 @@ export class LocalDb implements SyncStore {
             task.assigneeId,
             task.title,
             task.kind,
+            task.lon,
+            task.lat,
             next,
             task.recurrence,
             task.createdBy,
@@ -485,6 +487,15 @@ export class LocalDb implements SyncStore {
       .all("SELECT * FROM tasks WHERE assignee_id = ? AND deleted_at IS NULL ORDER BY due_date, title", [userId])
       .map((r) => fromRow<Task>(s.tasks, r))
       .filter((t) => isDueToday(t, today) || (t.status === "done" && localDate(t.completedAt ?? 0) === today));
+  }
+
+  /** Tareas abiertas con punto en el mapa (S-09), para dibujarlas y llevar a la persona ahí. */
+  taskPoints(userId: string): { id: string; title: string; lon: number; lat: number }[] {
+    return this.sql
+      .all<{ id: string; title: string; lon: number; lat: number }>(
+        "SELECT id, title, lon, lat FROM tasks WHERE assignee_id = ? AND status = 'open' AND deleted_at IS NULL AND lon IS NOT NULL AND lat IS NOT NULL",
+        [userId],
+      );
   }
 
   records(limit = 200): RecordRow[] {

@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { centroidOf, type Area } from "@yvy/geo";
 import { CHART, CROPS, PLOT_KINDS, SEASONS } from "@yvy/shared";
-import { del, get, patch } from "../lib/api";
+import { del, get, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
 import type { FarmDetail } from "../lib/types";
-import { fmtDate, fmtDay, fmtHa, fmtNdvi, fmtPct } from "../lib/format";
+import { fmtDate, fmtDay, fmtHa, fmtNdvi, fmtNum, fmtPct, toIso } from "../lib/format";
 import { Minus, Pencil, Satellite, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { t, tk } from "../lib/i18n";
 import type { Member, Plot, ProblemArea } from "../lib/types";
@@ -66,6 +66,26 @@ export function PlotPanel({
       qc.invalidateQueries({ queryKey: ["farm", plot.farmId] });
       toast(t("ui.toastPlotUpdated"));
       setEditing(false);
+    },
+  });
+  const [assigneeId, setAssigneeId] = useState(workers[0]?.userId ?? "");
+  const sendArea = useMutation({
+    mutationFn: (a: ProblemArea) =>
+      post("/org/tasks", {
+        farmId: plot.farmId,
+        plotId: plot.id,
+        assigneeId: assigneeId || workers[0]?.userId,
+        title: t("ui.problemTaskTitle", { ha: fmtNum(Math.round(a.areaHa * 10) / 10), plot: plot.name }),
+        kind: "scouting",
+        dueDate: toIso(Date.now()),
+        recurrence: "none",
+        lon: a.lon,
+        lat: a.lat,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+      const w = workers.find((x) => x.userId === (assigneeId || workers[0]?.userId));
+      toast(t("ui.problemTaskSent", { name: w?.fullName ?? "" }));
     },
   });
   const remove = () => {
@@ -173,21 +193,41 @@ export function PlotPanel({
           <p className="mb-2 text-xs text-tinta-2">
             {t("ui.problemAreasHint", { date: fmtDate(problemAreas[0]!.acquiredAt) })}
           </p>
-          <ul className="flex flex-col gap-2 text-sm">
+          {workers.length > 1 && (
+            <Field label={t("ui.problemTaskTo")}>
+              <Select
+                value={assigneeId}
+                onChange={(e) => setAssigneeId(e.target.value)}
+                options={workers.map((w) => ({ value: w.userId, label: w.fullName }))}
+              />
+            </Field>
+          )}
+          {workers.length === 0 && <p className="mb-2 text-xs text-tinta-2">{t("ui.problemTaskNoWorker")}</p>}
+          <ul className="flex flex-col gap-3 text-sm">
             {problemAreas.map((a) => (
-              <li key={a.id} className="flex items-baseline justify-between gap-3">
+              <li key={a.id} className="flex flex-col gap-1">
                 <span className="num">
                   {fmtHa(a.areaHa)} · {t("ui.problemAreaNdvi", { v: fmtNdvi(a.meanNdvi), m: fmtNdvi(a.plotMedianNdvi) })}
                 </span>
-                <button
-                  className="shrink-0 cursor-pointer text-accion underline underline-offset-2"
-                  onClick={() => onShowArea?.(a)}
-                >
-                  {t("ui.problemAreaShow")}
-                </button>
+                <span className="flex gap-4">
+                  <button
+                    className="cursor-pointer text-accion underline underline-offset-2"
+                    onClick={() => onShowArea?.(a)}
+                  >
+                    {t("ui.problemAreaShow")}
+                  </button>
+                  <button
+                    className="cursor-pointer text-accion underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-45"
+                    disabled={workers.length === 0 || sendArea.isPending}
+                    onClick={() => sendArea.mutate(a)}
+                  >
+                    {sendArea.isPending ? t("ui.problemTaskSending") : t("ui.problemTaskSend")}
+                  </button>
+                </span>
               </li>
             ))}
           </ul>
+          {sendArea.error && <ErrorBox error={sendArea.error} />}
         </div>
       )}
 

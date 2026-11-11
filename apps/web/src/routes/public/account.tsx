@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { NotificationPrefs } from "../../components/NotificationPrefs";
 import { ConfirmModal, Spinner } from "../../components/ui";
 import { post } from "../../lib/api";
 import { t } from "../../lib/i18n";
@@ -24,9 +25,8 @@ export function AccountPage() {
   return (
     <div className="mx-auto w-full max-w-2xl p-4 sm:p-6">
       <h1 className="text-[28px] leading-tight">{t("ui.accountTitle")}</h1>
-      {me.data?.role !== "owner" ? (
-        <p className="mt-4 text-tinta-2">{t("ui.accountOwnerOnly")}</p>
-      ) : (
+      <NotificationPrefs />
+      {me.data?.role !== "owner" ? null : (
         <section className="mt-8">
           <h2 className="font-serif text-xl font-semibold">{t("ui.accountDeleteTitle")}</h2>
           <p className="mt-2 text-tinta-2">{t("ui.accountDeleteText")}</p>

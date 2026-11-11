@@ -120,14 +120,12 @@ export function Layout() {
         >
           {t("ui.helpLink")}
         </Link>
-        {me.data?.role === "owner" && (
-          <Link
-            to="/cuenta"
-            className="text-sm whitespace-nowrap text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
-          >
-            {t("ui.account")}
-          </Link>
-        )}
+        <Link
+          to="/cuenta"
+          className="text-sm whitespace-nowrap text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
+        >
+          {t("ui.account")}
+        </Link>
         <button
           onClick={logout}
           className="cursor-pointer text-sm whitespace-nowrap text-tinta-2 underline-offset-4 hover:text-surco hover:underline"

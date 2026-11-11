@@ -87,7 +87,7 @@ export interface LocalPhoto {
 export interface OutboxItem {
   id: string;
   /** Qué es: un registro nuevo o editado, un borrado, una tarea hecha, o solo fotos. */
-  what: "record" | "record_delete" | "task" | "photos";
+  what: "record" | "record_delete" | "task" | "photos" | "poi";
   recordKind: RecordKind | null;
   plotId: string | null;
   at: number;
@@ -288,6 +288,22 @@ export class LocalDb implements SyncStore {
     return recordId;
   }
 
+  /** Marca un punto de interés (F-07). Fila local + mutación en una sola transacción. */
+  savePoi(orgId: string, input: { farmId: string; kind: Poi["kind"]; name: string; lon: number; lat: number }, poiId = newId()): string {
+    const ts = this.now();
+    const name = input.name.trim();
+    this.sql.tx(() => {
+      this.sql.run(
+        `INSERT INTO points_of_interest (id, organization_id, farm_id, kind, name, lon, lat, created_at, updated_at, version)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+         ON CONFLICT(id) DO UPDATE SET kind = excluded.kind, name = excluded.name, lon = excluded.lon, lat = excluded.lat, updated_at = excluded.updated_at`,
+        [poiId, orgId, input.farmId, input.kind, name, input.lon, input.lat, ts, ts],
+      );
+      this.enqueue({ mutationId: newId(), kind: "pois.upsert", row: { id: poiId, farmId: input.farmId, kind: input.kind, name, lon: input.lon, lat: input.lat } }, poiId);
+    });
+    return poiId;
+  }
+
   deleteRecord(recordId: string): void {
     const ts = this.now();
     this.sql.tx(() => {
@@ -377,6 +393,8 @@ export class LocalDb implements SyncStore {
         items.push({ id: m.mutationId, what: "record", recordKind: m.row.kind, plotId: m.row.plotId, at, photos: p?.n ?? 0, photoBytes: p?.bytes ?? 0 });
       } else if (m.kind === "records.delete") {
         items.push({ id: m.mutationId, what: "record_delete", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
+      } else if (m.kind === "pois.upsert") {
+        items.push({ id: m.mutationId, what: "poi", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
       } else if (m.kind === "tasks.status") {
         items.push({ id: m.mutationId, what: "task", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
       }

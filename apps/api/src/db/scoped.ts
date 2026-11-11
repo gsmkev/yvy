@@ -78,6 +78,8 @@ export const can = {
   /** RF-04: el administrador también crea empleados. */
   manageWorkers: (r: Role) => r === "owner" || r === "admin",
   editField: (r: Role) => r !== "worker",
+  /** PRD §9: crear/editar puntos de interés (también desde el celular, PRD §11): todos menos `worker`. */
+  editPoi: (r: Role) => r !== "worker",
   assign: (r: Role) => r !== "worker",
   viewAll: (r: Role) => r !== "worker",
   reports: (r: Role) => r !== "worker",

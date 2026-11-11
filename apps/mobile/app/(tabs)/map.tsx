@@ -10,6 +10,7 @@ import { LocateFixed, X } from "lucide-react-native";
 import { BRAND, describeRecord, t } from "@yvy/shared";
 import { centroidOf, containsPoint, type Area } from "@yvy/geo";
 import { useRef } from "react";
+import { useSession } from "../../src/lib/session";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
 import { copyText } from "../../src/lib/copy";
@@ -64,6 +65,7 @@ export default function MapScreen() {
     setSelected(null);
     if (farm) camera.current?.fitBounds([farm.minLon, farm.minLat, farm.maxLon, farm.maxLat], { padding: FIT_PADDING, duration: 600 });
   }, [farm?.id]);
+  const canMarkPoi = useSession()?.organization.role !== "worker";
   useEffect(() => {
     tilesBaseUrl().then(setRemoteBase, () => setRemoteBase(null));
   }, []);
@@ -177,6 +179,12 @@ export default function MapScreen() {
         <LocateFixed size={22} color={C.tinta} strokeWidth={2} />
       </Pressable>
 
+      {canMarkPoi && !plot && (
+        <View style={st.mark}>
+          <Button kind="secondary" title={t("app.poiMark")} onPress={() => router.push("/poi")} />
+        </View>
+      )}
+
       {plot && (
         <View style={st.sheet}>
           <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
@@ -217,6 +225,7 @@ export default function MapScreen() {
 const st = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   sheet: { position: "absolute", left: 12, right: 12, bottom: 12, backgroundColor: C.papel, borderRadius: RADIUS + 4, padding: GUTTER, elevation: 8, shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } },
+  mark: { position: "absolute", left: 12, right: 12, bottom: 12 },
   locate: { position: "absolute", top: 16, right: 16, width: 48, height: 48, borderRadius: 24, backgroundColor: C.papel, alignItems: "center", justifyContent: "center", elevation: 4, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
   topLeft: { position: "absolute", top: 12, left: 12, right: 76, gap: 8 },
   coords: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14, minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },

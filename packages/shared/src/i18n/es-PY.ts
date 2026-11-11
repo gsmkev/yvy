@@ -435,6 +435,13 @@ export const esPY = {
     walkDiscardConfirm: "¿Descartar la recorrida? No se puede recuperar.",
     walkRow: "Grabar recorrida",
     walkRowHint: "Camino, distancia y tiempo",
+    layerTracks: "Recorridas",
+    tracksLegendTitle: "Recorridas de los últimos 30 días",
+    tracksSummary: "{{n}} recorridas · {{km}} km",
+    tracksSummaryOne: "1 recorrida · {{km}} km",
+    tracksNone: "Nadie grabó recorridas en este período.",
+    tracksUnvisited: "Sin recorrer: {{names}}",
+    tracksPlotCount: "{{n}} recorridas",
   },
   fields: {
     condition: "Estado general",

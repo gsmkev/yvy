@@ -73,6 +73,9 @@ Con eso:
 - **Jobs de datos** (`jobs.yml`): Sentinel-2 diario, CHIRPS diario, FIRMS cada 3 h, climatología y mapa base semanal.
   Repo privado: ~640 min/mes de 2.000 gratis para 20 estancias (ilimitado si el repo es público).
 - **Backup** (`backup.yml`): export semanal de D1 a R2.
+- **Verificación de backup** (`backup-verify.yml`): el día 2 de cada mes baja la última copia de R2, la restaura en una base
+  SQLite y comprueba el esquema contra las migraciones y que las tablas clave tengan filas. Si falla, el workflow queda en rojo
+  y GitHub avisa por email (ver "Restaurar un backup").
 
 ## 4. Clave de firma del APK (guardala: sin ella no hay actualizaciones)
 
@@ -108,3 +111,27 @@ Límite: el plan gratis de Sentry tiene cupo mensual de eventos; si se agota dej
 
 Todos los límites están en `packages/shared/src/limits.ts`. Workers Paid (US$ 5/mes) quita el techo de CPU y de requests;
 R2 cobra US$ 0,015/GB/mes después de 10 GB. No hace falta cambiar código.
+
+## 8. Restaurar un backup (P-05)
+
+Las copias están en R2: `yvy-media/backups/yvy-AAAA-MM-DD.sql.gz` (una por semana). D1 Time Travel cubre además los últimos 7 días.
+
+**Probar que una copia sirve (en tu máquina, sin tocar producción):**
+
+```bash
+# con CLOUDFLARE_API_TOKEN y CLOUDFLARE_ACCOUNT_ID exportados
+pnpm --filter api backup:restore -- --latest --db /tmp/yvy-restaurada.sqlite
+# o con un archivo que ya bajaste:
+pnpm --filter api backup:restore -- yvy-2026-11-08.sql.gz --db /tmp/yvy-restaurada.sqlite --min-rows farms=1
+```
+
+Imprime las filas de cada tabla y sale con error si falta una tabla o columna respecto de `apps/api/migrations`, si
+`organizations`, `users` o `memberships` están vacías, o si no llega a un `--min-rows tabla=n`. Después abrí la base con
+`sqlite3 /tmp/yvy-restaurada.sqlite` para mirar los datos. Necesita Node 22 (usa `node:sqlite`).
+
+**Cargarla en el D1 local** para trabajar con datos reales: descomprimí (`gunzip -k yvy-….sql.gz`) y corré
+`pnpm --filter api exec wrangler d1 execute yvy --local --file yvy-….sql` (borrá antes `apps/api/.wrangler/state` si ya había datos).
+
+**Recuperar producción** (solo ante un desastre): creá una base nueva (`wrangler d1 create yvy-restore`), cargala con
+`wrangler d1 execute yvy-restore --remote --file yvy-….sql`, comprobala con el script de arriba y recién ahí cambiá el
+`database_id` (secret `D1_DATABASE_ID`) y volvé a desplegar. No sobrescribas la base vieja hasta confirmar que la nueva está bien.

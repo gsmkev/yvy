@@ -11,6 +11,7 @@ import {
   MOVE_REASONS,
   CROPS,
   DENSITY_UNITS,
+  FERT_METHODS,
   newId,
   parseRecordData,
   PESTS,
@@ -90,6 +91,11 @@ const FIELDS: Record<RecordKind, FieldDef[]> = {
     { key: "product", label: f("product"), type: "text" },
     { key: "dose", label: f("dose"), type: "text", optional: true },
     ...HERD_FIELDS("counts"),
+    NOTE,
+  ],
+  fertilization: [
+    { key: "method", label: f("method"), type: "select", options: opts("method", FERT_METHODS) },
+    { key: "areaHa", label: f("areaDone"), type: "number", optional: true },
     NOTE,
   ],
   application: [

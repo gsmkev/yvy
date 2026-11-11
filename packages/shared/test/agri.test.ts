@@ -58,3 +58,17 @@ describe("aplicación (application)", () => {
     ).toBe("Glifosato 2 L/ha + Aceite 0,5 L/ha · 30 ha · Delta T 4,2");
   });
 });
+
+describe("fertilización", () => {
+  const fert = { name: "Urea", dose: 150, unit: "kg_ha" };
+  it("kg/ha con método", () => {
+    expect(parseRecordData("fertilization", { products: [fert], method: "foliar", areaHa: 10 }).success).toBe(true);
+    expect(parseRecordData("fertilization", { products: [{ ...fert, unit: "l_ha" }], method: "foliar" }).success).toBe(false);
+    expect(parseRecordData("fertilization", { products: [fert] }).success).toBe(false);
+  });
+  it("se describe en es-PY", () => {
+    expect(describeRecord("fertilization", { products: [fert], method: "broadcast", areaHa: 40 })).toBe(
+      "Urea 150 kg/ha · al voleo · 40 ha",
+    );
+  });
+});

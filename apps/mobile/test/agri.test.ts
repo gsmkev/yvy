@@ -131,3 +131,11 @@ describe("flujo de aplicación", () => {
     expect(r.success && (r.data as { deltaT?: number }).deltaT).toBeGreaterThan(5);
   });
 });
+
+describe("flujo de fertilización", () => {
+  it("productos en kg/ha, método y superficie", () => {
+    const steps = visibleSteps(FLOWS.fertilization, {}, { askSeason: false });
+    expect(steps.map((x) => x.key)).toEqual(["products", "method", "areaHa", "note"]);
+    expect(steps[0]).toMatchObject({ fixedUnit: "kg_ha" });
+  });
+});

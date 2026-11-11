@@ -10,6 +10,7 @@ import { LIMITS } from "@yvy/shared";
 import { CpuLimitError, httpTransport, SyncEngine, type AttachmentUploader } from "@yvy/sync";
 import { getDb } from "./db";
 import { flushVotes } from "./votes";
+import { rescheduleReminders } from "./reminders";
 import { accessToken, api, API_URL, getSession, HttpError, OfflineError } from "./session";
 
 export interface SyncStatus {
@@ -135,6 +136,7 @@ export async function syncNow(): Promise<void> {
     });
   } finally {
     set({ phase: "idle", pending: getDb().pendingCount(), version: status.version + 1 });
+    void rescheduleReminders(); // F-16: las tareas pudieron cambiar
   }
 }
 

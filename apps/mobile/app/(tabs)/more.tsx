@@ -6,6 +6,7 @@ import { FEATURES } from "../../src/lib/features";
 import type { OutboxItem } from "../../src/db/store";
 import { getDb } from "../../src/lib/db";
 import { downloadPack, isWifi, packStatus } from "../../src/lib/offline";
+import { remindersEnabled, setRemindersEnabled } from "../../src/lib/reminders";
 import { api, getSession, setSession } from "../../src/lib/session";
 import { localChanged, stopAutoSync, syncNow, syncNowMobileData, useSyncStatus } from "../../src/lib/sync";
 import { useLocal } from "../../src/lib/useLocal";
@@ -20,6 +21,7 @@ export default function More() {
   const sync = useSyncStatus();
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [wifiOnly, setWifiOnly] = useState(getDb().getKv("photos_wifi_only") === "1");
+  const [reminders, setReminders] = useState(remindersEnabled());
   const session = getSession();
   const lastSync = sync.lastSyncAt ? new Date(sync.lastSyncAt).toLocaleString("es-PY", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }) : "—";
 
@@ -82,6 +84,23 @@ export default function More() {
       <View style={[st.switchRow]}>
         <Text style={[T.body, { flex: 1 }]}>{t("app.photosWifiOnly")}</Text>
         <Switch value={wifiOnly} onValueChange={(v) => (setWifiOnly(v), getDb().setKv("photos_wifi_only", v ? "1" : "0"))} trackColor={{ true: C.accion }} />
+      </View>
+
+      <View style={st.switchRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={T.body}>{t("app.remindersSwitch")}</Text>
+          <Text style={T.small}>{t("app.remindersHint")}</Text>
+        </View>
+        <Switch
+          value={reminders}
+          accessibilityLabel={t("app.remindersSwitch")}
+          onValueChange={async (v) => {
+            const on = await setRemindersEnabled(v);
+            setReminders(on);
+            if (v && !on) Alert.alert(t("app.remindersDenied"));
+          }}
+          trackColor={{ true: C.accion }}
+        />
       </View>
 
       {FEATURES.labs && (

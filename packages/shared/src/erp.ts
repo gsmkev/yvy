@@ -83,6 +83,19 @@ export const machineInput = z.object({
   farmId: z.string().uuid().nullish(),
 });
 
+// ---------- Contratistas (E-04) ----------
+
+export const contractorInput = z.object({
+  name: z.string().trim().min(1).max(120),
+  partyId: z.string().uuid().nullish(),
+  service: z.enum(CONTRACTOR_SERVICES),
+  rateUnit: z.enum(RATE_UNITS),
+  /** Tarifa en unidad menor de `currency`. */
+  rateAmount: minorAmount,
+  currency: currencySchema,
+  note: optText(300),
+});
+
 // ---------- Terceros (E-02) ----------
 
 /** RUC (con dígito verificador) o cédula: solo dígitos y un guion final opcional. */

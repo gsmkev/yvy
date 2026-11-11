@@ -28,6 +28,16 @@ export const cleanRow = (o: Record<string, unknown>): Record<string, unknown> =>
       .map(([k, v]) => [k, typeof v === "string" && v.trim() === "" ? null : v]),
   );
 
+/** Falla con 404 si la fila no existe en la organización (para ids que llegan en un body). */
+export async function requireOwned(sdb: ScopedDb, table: ErpTable, id: string, what = "El registro") {
+  const [row] = await sdb.db
+    .select({ id: table.id })
+    .from(table)
+    .where(and(eq(table.id, id), eq(table.organizationId, sdb.auth.orgId), isNull(table.deletedAt)))
+    .limit(1);
+  if (!row) throw new NotFoundError(`${what} no existe`);
+}
+
 export async function erpList(sdb: ScopedDb, table: ErpTable, canRead: (r: Role) => boolean, order: SQLiteColumn[]) {
   sdb.require(canRead);
   return sdb.db

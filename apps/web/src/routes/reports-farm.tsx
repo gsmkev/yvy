@@ -1,18 +1,22 @@
-/** Informes de una estancia: resumen de campaña por lote (R-03). */
+/** Informes de una estancia: resumen de campaña por lote (R-03) e informe para el banco (R-04). */
 import { useState } from "react";
 import { useParams } from "@tanstack/react-router";
 import { localDate } from "@yvy/shared";
 import { Button, ErrorBox, Field, Select, Spinner } from "../components/ui";
 import { download } from "../lib/exports";
 import { t } from "../lib/i18n";
+import { get } from "../lib/api";
 import { fetchAllRecords, useFarm } from "../lib/queries";
+import type { Alert } from "../lib/types";
 import {
   fetchClimate,
   fetchNdvi,
   gaugeBetween,
+  mapLimit,
   normalBetween,
   rainBetween,
   seasonStart,
+  vigorSummary,
 } from "../lib/reportsData";
 
 export function FarmReportsPage() {
@@ -72,6 +76,44 @@ export function FarmReportsPage() {
       download(blob, `campana-${plot.name}-${to}.pdf`);
     });
 
+  const bankPdf = () =>
+    run(async () => {
+      const to = localDate(Date.now());
+      const sowings = plots.filter((p) => p.kind === "crop" && p.sowingDate).map((p) => p.sowingDate!);
+      const seasonFrom = seasonStart(sowings.length ? sowings.sort()[0]! : null, to);
+      const days = Math.ceil((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${seasonFrom}T00:00:00Z`)) / 86_400_000) + 2;
+      const from30 = new Date(Date.parse(`${to}T00:00:00Z`) - 29 * 86_400_000).toISOString().slice(0, 10);
+      const [climate, alerts, series] = await Promise.all([
+        fetchClimate(farmId, Math.max(days, 31)),
+        get<Alert[]>(`/org/alerts?farmId=${farmId}&active=1`),
+        mapLimit(plots.slice(0, 80), 6, (p) => fetchNdvi(p.id).catch(() => null)),
+      ]);
+      const since = Date.now() - 365 * 86_400_000;
+      const vigor = new Map(
+        plots.slice(0, 80).map((p, i) => [p.id, vigorSummary((series[i]?.series ?? []).filter((x) => x.acquiredAt >= since))]),
+      );
+      const [{ pdf }, { BankReport }] = await Promise.all([
+        import("@react-pdf/renderer"),
+        import("../lib/reportsBankPdf"),
+      ]);
+      const blob = await pdf(
+        <BankReport
+          farm={f}
+          plots={plots}
+          vigor={vigor}
+          rain30={rainBetween(climate.daily, from30, to)}
+          normal30={normalBetween(climate.climatology, from30, to)}
+          rainSeason={rainBetween(climate.daily, seasonFrom, to)}
+          normalSeason={normalBetween(climate.climatology, seasonFrom, to)}
+          seasonFrom={seasonFrom}
+          to={to}
+          alerts={alerts}
+          generatedAt={Date.now()}
+        />,
+      ).toBlob();
+      download(blob, `informe-banco-${f.name}-${to}.pdf`);
+    });
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 p-4">
       <h1 className="text-xl font-semibold">
@@ -90,6 +132,15 @@ export function FarmReportsPage() {
           </Field>
           <Button variant="primary" onClick={seasonPdf} disabled={busy || !plot}>
             {busy ? t("ui.reportsGenerating") : t("ui.reportsSeasonPdf")}
+          </Button>
+        </div>
+      </section>
+      <section>
+        <h2 className="font-serif text-xl font-semibold">{t("ui.bankReportTitle")}</h2>
+        <p className="mt-1 text-sm text-tinta-2">{t("ui.reportsBankIntro")}</p>
+        <div className="mt-3">
+          <Button variant="primary" onClick={bankPdf} disabled={busy}>
+            {busy ? t("ui.reportsGenerating") : t("ui.reportsBankPdf")}
           </Button>
         </div>
       </section>

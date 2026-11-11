@@ -145,7 +145,15 @@ export function WeedsIllustration({ label, className }: Props) {
         <line key={y} x1="10" x2="590" y1={y} y2={y} stroke={C.soja} strokeOpacity={0.55} strokeWidth="1" />
       ))}
       {PATCHES.map((d, i) => (
-        <path key={i} d={d} fill={C.trigo} fillOpacity={0.55} stroke={C.alerta} strokeWidth="1.5" strokeLinejoin="round" />
+        <path
+          key={i}
+          d={d}
+          fill={C.trigo}
+          fillOpacity={0.55}
+          stroke={C.alerta}
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+        />
       ))}
     </svg>
   );

@@ -3,6 +3,7 @@
  * - Dueño/admin/agrónomo: código de 6 dígitos por email (SHA-256, 10 min, 5 intentos).
  * - Empleado: QR de vinculación de un solo uso (24 h) generado por dueño/admin.
  */
+import { funnelEvent } from "../db/events";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { and, count, desc, eq, gte, isNull } from "drizzle-orm";
@@ -53,8 +54,34 @@ auth.post("/signup", async (c) => {
     db
       .insert(s.memberships)
       .values({ id: newId(), organizationId: orgId, userId, role: "owner", createdAt: ts, updatedAt: ts }),
+    funnelEvent(db, "signup", userId, orgId, ts),
   ]);
   return c.json({ organizationId: orgId, userId }, 201);
+});
+
+/** La landing pregunta si hay demo configurada (404 si no). */
+auth.get("/demo", (c) => {
+  if (!c.env.DEMO_ORG_ID || !c.env.DEMO_USER_ID) throw new HTTPException(404, { message: "No existe" });
+  return c.json({ available: true });
+});
+
+/** Sesión normal del dueño de la organización de ejemplo; el plan 'demo' la deja en solo lectura. */
+auth.post("/demo", async (c) => {
+  if (!c.env.DEMO_ORG_ID || !c.env.DEMO_USER_ID) throw new HTTPException(404, { message: "No existe" });
+  const db = getDb(c.env.DB);
+  // Nunca entregar una sesión de escritura: la organización tiene que estar marcada como demo.
+  const [org] = await db
+    .select({ plan: s.organizations.plan })
+    .from(s.organizations)
+    .where(eq(s.organizations.id, c.env.DEMO_ORG_ID))
+    .limit(1);
+  if (org?.plan !== "demo") throw new HTTPException(404, { message: "No existe" });
+  const session = await issueSession(db, c.env.JWT_SECRET, c.env.DEMO_USER_ID, {
+    organizationId: c.env.DEMO_ORG_ID,
+    deviceId: "demo",
+  });
+  if (!session) throw new HTTPException(404, { message: "No existe" });
+  return c.json(session);
 });
 
 auth.post("/email/start", async (c) => {

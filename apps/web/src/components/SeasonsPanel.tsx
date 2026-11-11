@@ -22,7 +22,10 @@ export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots
     if (!selected || !seasons.some((s) => s.id === selected)) setSelected(seasons[0]?.id ?? null);
   }, [q.data]);
   const season = seasons.find((s) => s.id === selected) ?? null;
-  const refresh = () => qc.invalidateQueries({ queryKey: ["seasons"] });
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["seasons"] });
+    qc.invalidateQueries({ queryKey: ["plot-history"] });
+  };
   const toggle = useMutation({
     mutationFn: (s: Season) => patch(`/org/seasons/${s.id}`, { active: !s.active }),
     onSuccess: refresh,

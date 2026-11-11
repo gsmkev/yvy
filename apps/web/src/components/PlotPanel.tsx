@@ -5,10 +5,10 @@ import { CHART, CROPS, PLOT_KINDS, SEASONS } from "@yvy/shared";
 import { del, get, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
 import type { FarmDetail } from "../lib/types";
-import { fmtDate, fmtDay, fmtHa, fmtNdvi, fmtNum, fmtPct, toIso } from "../lib/format";
+import { fmtDate, fmtDay, fmtHa, fmtIsoDate, fmtNdvi, fmtNum, fmtPct, toIso } from "../lib/format";
 import { Minus, Pencil, Satellite, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { t, tk } from "../lib/i18n";
-import type { Member, Plot, ProblemArea } from "../lib/types";
+import type { Member, Plot, PlotHistoryRow, ProblemArea } from "../lib/types";
 import { CopyCoords } from "./CopyCoords";
 import { LineChart } from "./charts";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Select, Spinner, Stat, toast } from "./ui";
@@ -51,6 +51,11 @@ export function PlotPanel({
     queryKey: ["ndvi", plot.id],
     queryFn: () => get<Ndvi>(`/org/plots/${plot.id}/ndvi`),
     enabled: canEdit,
+  });
+  const history = useQuery({
+    queryKey: ["plot-history", plot.id],
+    queryFn: () => get<PlotHistoryRow[]>(`/org/plots/${plot.id}/seasons`),
+    enabled: plot.kind === "crop",
   });
   const save = useMutation({
     mutationFn: () =>
@@ -228,6 +233,40 @@ export function PlotPanel({
             ))}
           </ul>
           {sendArea.error && <ErrorBox error={sendArea.error} />}
+        </div>
+      )}
+
+      {plot.kind === "crop" && (
+        <div className="border-t border-linea pt-4">
+          <h3 className="eyebrow mb-1">{t("ui.rotationTitle")}</h3>
+          {history.isLoading && <Spinner />}
+          {history.error && <ErrorBox error={history.error} />}
+          {history.data && history.data.length === 0 && <p className="text-sm text-tinta-2">{t("ui.rotationNone")}</p>}
+          {history.data && history.data.length > 0 && (
+            <ul className="divide-y divide-linea border-y border-linea text-sm">
+              {history.data.map((h) => (
+                <li key={h.seasonId} className="py-2.5">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="font-medium">{h.seasonName}</span>
+                    <span>{h.crop ? tk(`fields.crop_${h.crop}`) : "—"}</span>
+                  </div>
+                  <p className="num mt-0.5 text-xs text-tinta-2">
+                    {[
+                      h.variety,
+                      h.sownOn
+                        ? t("ui.rotationSown", { date: fmtDate(h.sownOn) })
+                        : h.plannedSowingDate
+                          ? t("ui.rotationPlanned", { date: fmtIsoDate(h.plannedSowingDate) })
+                          : null,
+                      h.targetYieldTHa !== null ? `${t("ui.seasonTargetYield")}: ${fmtNum(h.targetYieldTHa)}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 

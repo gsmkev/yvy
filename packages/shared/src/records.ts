@@ -4,7 +4,7 @@
  */
 import { z } from "zod";
 import { HEALTH_REASONS, HERD_CATEGORIES, MAX_HEAD_PER_CATEGORY, MORTALITY_CAUSES, MOVE_REASONS } from "./livestock";
-import type { RecordKind } from "./schema";
+import { CROPS, type RecordKind } from "./schema";
 import { LIMITS } from "./limits";
 
 export const RECORD_SCHEMA_VERSION = 1;
@@ -76,6 +76,13 @@ const livestockSchemas = {
   }),
 };
 // ---------- fin ganaderia ----------
+/** Unidad de la densidad de siembra: semillas por metro lineal o kg por hectárea. */
+export const DENSITY_UNITS = ["seeds_m", "kg_ha"] as const;
+
+const uuidStr = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/, "uuid inválido");
+/** Superficie hecha en hectáreas (aplicaciones, siembra, cosecha). */
+const areaDone = z.number().positive().max(100_000);
+const seasonId = uuidStr.optional();
 
 export const recordDataSchemas = {
   scouting: z.object({ condition, note }),
@@ -108,6 +115,19 @@ export const recordDataSchemas = {
   water: z.object({ level: z.enum(["full", "half", "low", "dry"]), note }),
   note: z.object({ text: z.string().trim().min(1).max(4000) }),
   ...livestockSchemas,
+  sowing: z
+    .object({
+      seasonId,
+      crop: z.enum(CROPS),
+      variety: z.string().trim().min(1).max(80).optional(),
+      density: z.number().positive().max(1_000_000).optional(),
+      densityUnit: z.enum(DENSITY_UNITS).optional(),
+      areaHa: areaDone.optional(),
+      note,
+    })
+    .refine((d) => d.density === undefined || d.densityUnit !== undefined, {
+      message: "Indicá la unidad de la densidad",
+    }),
 } satisfies Record<RecordKind, z.ZodType>;
 
 export type RecordData<K extends RecordKind> = z.infer<(typeof recordDataSchemas)[K]>;

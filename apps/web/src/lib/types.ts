@@ -161,3 +161,33 @@ export interface ProblemArea {
   meanNdvi: number;
   plotMedianNdvi: number;
 }
+
+export interface Season {
+  id: string;
+  name: string;
+  startDate: string | null;
+  endDate: string | null;
+  active: boolean;
+}
+
+export interface PlotSeason {
+  id: string;
+  plotId: string;
+  seasonId: string;
+  crop: string | null;
+  variety: string | null;
+  plannedSowingDate: string | null;
+  targetYieldTHa: number | null;
+}
+
+/** Una campaña en el historial de rotación de un lote (A-02). */
+export interface PlotHistoryRow {
+  seasonId: string;
+  seasonName: string;
+  startDate: string | null;
+  crop: string | null;
+  variety: string | null;
+  plannedSowingDate: string | null;
+  targetYieldTHa: number | null;
+  sownOn: number | null;
+}

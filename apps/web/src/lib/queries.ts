@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { get, qs } from "./api";
 import { isPendingDelete } from "./undo";
-import type { Alert, FarmDetail, FarmSummary, Me, Member, ProblemArea, RecordRow, Task } from "./types";
+import type { Alert, FarmDetail, FarmSummary, Me, Member, PlotSeason, ProblemArea, RecordRow, Season, Task } from "./types";
 
 export const useMe = () => useQuery({ queryKey: ["me"], queryFn: () => get<Me>("/me"), staleTime: 60_000 });
 export const useFarms = () => useQuery({ queryKey: ["farms"], queryFn: () => get<FarmSummary[]>("/org/farms") });
@@ -67,3 +67,11 @@ export async function fetchAllRecords(f: RecordFilters, max = 5000): Promise<Rec
   } while (cursor && out.length < max);
   return out;
 }
+
+/** Campañas de la organización y el plan por lote de una estancia (ADR 0004). */
+export const useSeasons = (farmId: string, enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ["seasons", farmId],
+    queryFn: () => get<{ seasons: Season[]; plotSeasons: PlotSeason[] }>(`/org/seasons${qs({ farmId })}`),
+  });

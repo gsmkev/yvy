@@ -16,6 +16,7 @@ import { HerdPanel } from "../components/HerdPanel";
 import { PlotsTable } from "../components/PlotsTable";
 import { CompareOverlay, SceneControls } from "../components/SceneControls";
 import { RecordsList } from "../components/RecordsList";
+import { SeasonsPanel } from "../components/SeasonsPanel";
 import { TasksPanel } from "../components/TasksPanel";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "../components/ui";
 import { del, post } from "../lib/api";
@@ -32,8 +33,8 @@ import type { FarmDetail, RecordRow } from "../lib/types";
 /** Días sin anotaciones para considerar un lote sin visitar. */
 const UNVISITED_DAYS = 7;
 
-type Tab = "plots" | "records" | "tasks" | "climate" | "alerts" | "herd";
-const TABS: Tab[] = ["plots", "records", "tasks", "climate", "alerts", "herd"];
+type Tab = "plots" | "seasons" | "records" | "tasks" | "climate" | "alerts" | "herd";
+const TABS: Tab[] = ["plots", "seasons", "records", "tasks", "climate", "alerts", "herd"];
 
 export function FarmPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId" });
@@ -432,6 +433,7 @@ export function FarmPage() {
           }}
           tabs={[
             { id: "plots", label: t("ui.tabPlots"), count: d.plots.length },
+            { id: "seasons", label: t("ui.tabSeasons") },
             { id: "records", label: t("ui.tabRecords") },
             { id: "tasks", label: t("ui.tabTasks") },
             { id: "climate", label: t("ui.tabClimate") },
@@ -537,6 +539,7 @@ export function FarmPage() {
               )}
             </div>
           ))}
+        {tab === "seasons" && <SeasonsPanel farmId={farmId} plots={d.plots} canEdit={canEdit} />}
         {tab === "records" && <RecordsList filters={{ farmId }} onRows={setRecords} />}
         {tab === "tasks" && <TasksPanel farmId={farmId} plots={d.plots} />}
         {tab === "climate" && <ClimatePanel farmId={farmId} />}

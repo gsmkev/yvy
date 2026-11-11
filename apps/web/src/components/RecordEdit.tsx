@@ -9,6 +9,8 @@ import {
   HERD_CATEGORIES,
   MORTALITY_CAUSES,
   MOVE_REASONS,
+  CROPS,
+  DENSITY_UNITS,
   newId,
   parseRecordData,
   PESTS,
@@ -88,6 +90,14 @@ const FIELDS: Record<RecordKind, FieldDef[]> = {
     { key: "product", label: f("product"), type: "text" },
     { key: "dose", label: f("dose"), type: "text", optional: true },
     ...HERD_FIELDS("counts"),
+    NOTE,
+  ],
+  sowing: [
+    { key: "crop", label: f("crop"), type: "select", options: opts("crop", CROPS) },
+    { key: "variety", label: f("variety"), type: "text", optional: true },
+    { key: "density", label: f("density"), type: "number", optional: true },
+    { key: "densityUnit", label: f("densityUnit"), type: "select", options: opts("densityUnit", DENSITY_UNITS), optional: true },
+    { key: "areaHa", label: f("areaDone"), type: "number", optional: true },
     NOTE,
   ],
 };

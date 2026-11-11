@@ -84,5 +84,11 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `problem_areas_plot_idx` ON `problem_areas` (`plot_id`);",
   "CREATE INDEX `problem_areas_farm_idx` ON `problem_areas` (`farm_id`);",
   "ALTER TABLE `tasks` ADD `lon` real;",
-  "ALTER TABLE `tasks` ADD `lat` real;"
+  "ALTER TABLE `tasks` ADD `lat` real;",
+  "CREATE TABLE `plot_seasons` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`plot_id` text NOT NULL,\n\t`season_id` text NOT NULL,\n\t`crop` text,\n\t`variety` text,\n\t`planned_sowing_date` text,\n\t`target_yield_t_ha` real,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
+  "CREATE UNIQUE INDEX `plot_seasons_plot_season_uq` ON `plot_seasons` (`plot_id`,`season_id`);",
+  "CREATE INDEX `plot_seasons_sync_idx` ON `plot_seasons` (`organization_id`,`version`,`id`);",
+  "CREATE INDEX `plot_seasons_season_idx` ON `plot_seasons` (`season_id`);",
+  "CREATE TABLE `seasons` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`start_date` text,\n\t`end_date` text,\n\t`active` integer DEFAULT true NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
+  "CREATE INDEX `seasons_sync_idx` ON `seasons` (`organization_id`,`version`,`id`);"
 ];

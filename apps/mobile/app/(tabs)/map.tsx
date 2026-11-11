@@ -11,6 +11,7 @@ import { BRAND, describeRecord, t } from "@yvy/shared";
 import { centroidOf, containsPoint, type Area } from "@yvy/geo";
 import { useRef } from "react";
 import { useSession } from "../../src/lib/session";
+import { isOwnerMode } from "../../src/lib/ownerSummary";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
 import { copyText } from "../../src/lib/copy";
@@ -29,7 +30,10 @@ const PLOT_PADDING = { top: 120, bottom: 320, left: 40, right: 40 };
 const daysAgo = (ms: number) => Math.floor((Date.now() - ms) / 86_400_000);
 
 export default function MapScreen() {
-  const { farmId, current } = useFarmChoice();
+  const { farmId: chosenFarm, current } = useFarmChoice();
+  // F-29: dueño, administrador y agrónomo ven todos los lotes de todas las estancias; la estancia elegida solo mueve la cámara.
+  const owner = isOwnerMode(useSession()?.organization.role);
+  const farmId = owner ? null : chosenFarm;
   const farms = useLocal(() => byFarm(getDb().farms().map((f) => ({ ...f, farmId: f.id })), farmId), [farmId]);
   const plots = useLocal(() => byFarm(getDb().plots(), farmId), [farmId]);
   const records = useLocal(() => byFarm(getDb().records(300), farmId), [farmId]);

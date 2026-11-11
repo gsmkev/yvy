@@ -74,6 +74,10 @@ export const LIMITS = {
     /** Conteo máximo por plaga en una estación. */
     maxCount: 10_000,
   },
+  vigor: {
+    /** Caída de vigor (NDVI) entre las dos últimas pasadas que se avisa, en % (web y app). */
+    dropThresholdPct: 15,
+  },
   checklist: {
     /** Ítems por tarea (F-15). */
     maxItems: 30,

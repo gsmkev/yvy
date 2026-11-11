@@ -546,6 +546,19 @@ export class LocalDb implements SyncStore {
     return r ? { mean: r.mean, acquiredAt: r.acquired_at } : null;
   }
 
+  /** Las dos últimas pasadas de NDVI de cada lote, para ver cuáles empeoraron (F-29). */
+  lastTwoVigorPasses(): { plotId: string; mean: number; acquiredAt: number }[] {
+    return this.sql
+      .all<{ plot_id: string; mean: number; acquired_at: number }>(
+        `SELECT plot_id, mean, acquired_at FROM (
+           SELECT plot_id, mean, acquired_at,
+                  ROW_NUMBER() OVER (PARTITION BY plot_id ORDER BY acquired_at DESC) AS rn
+           FROM plot_index_stats WHERE idx = 'ndvi' AND deleted_at IS NULL
+         ) WHERE rn <= 2`,
+      )
+      .map((r) => ({ plotId: r.plot_id, mean: r.mean, acquiredAt: r.acquired_at }));
+  }
+
   /** Tareas abiertas de un lote. */
   openTasksOfPlot(plotId: string): number {
     return this.sql.get<{ n: number }>("SELECT count(*) n FROM tasks WHERE plot_id = ? AND status = 'open' AND deleted_at IS NULL", [plotId])?.n ?? 0;

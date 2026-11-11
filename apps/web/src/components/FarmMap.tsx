@@ -53,6 +53,8 @@ export interface FarmMapProps {
   camera?: Camera | null;
   onCamera?: (c: Camera) => void;
   selectedPlotId?: string | null;
+  /** Lotes marcados para una tarea (selección múltiple): se dibujan como el lote elegido. */
+  pickedPlotIds?: string[];
   bounds?: [number, number, number, number] | null;
   /** Vuela a un punto (cambiar `n` para repetir el mismo destino). */
   flyTo?: { lon: number; lat: number; zoom?: number; n: number } | null;
@@ -292,7 +294,7 @@ export function FarmMap(props: FarmMapProps) {
             name: pl.name,
             kind: pl.kind,
             color: pl.color,
-            selected: pl.id === p.selectedPlotId,
+            selected: pl.id === p.selectedPlotId || !!p.pickedPlotIds?.includes(pl.id),
           },
           geometry: JSON.parse(pl.geometry),
         })),
@@ -358,6 +360,7 @@ export function FarmMap(props: FarmMapProps) {
     props.problemAreas,
     props.points,
     props.selectedPlotId,
+    props.pickedPlotIds,
     props.layers,
     props.showNdvi,
     props.layerIds,

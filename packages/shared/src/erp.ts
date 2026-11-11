@@ -57,13 +57,8 @@ export function rateOn(rates: { date: string; usdToPyg: number }[], day: string)
 // ---------- Esquemas de entrada ----------
 
 export const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
-export const optText = (max: number) =>
-  z
-    .string()
-    .trim()
-    .max(max)
-    .nullish()
-    .transform((v) => v || null);
+/** Texto opcional: la API pasa "" a null antes de guardar (cleanRow), así un PATCH no pisa lo que no manda. */
+export const optText = (max: number) => z.string().trim().max(max).nullish();
 
 /** Monto en unidad menor: entero no negativo. */
 export const minorAmount = z.number().int().min(0).max(1_000_000_000_000);
@@ -73,4 +68,22 @@ export const exchangeRateInput = z.object({
   date: isoDate,
   /** Guaraníes por dólar (entero). */
   usdToPyg: z.number().int().min(1).max(100_000),
+});
+
+// ---------- Terceros (E-02) ----------
+
+/** RUC (con dígito verificador) o cédula: solo dígitos y un guion final opcional. */
+const ruc = z
+  .string()
+  .trim()
+  .regex(/^\d{3,9}(-\d)?$/, "RUC o cédula inválidos (ej. 80012345-6)");
+
+export const partyInput = z.object({
+  name: z.string().trim().min(1).max(120),
+  ruc: ruc.nullish(),
+  kind: z.enum(PARTY_KINDS),
+  phone: optText(40),
+  email: optText(120),
+  address: optText(200),
+  note: optText(500),
 });

@@ -1,6 +1,7 @@
 /** Administración (ADR 0004): maestros, stock, costos y márgenes. Solo dueño y administradores. */
 import type { ReactNode } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
+import { PartiesPanel } from "../components/erp/PartiesPanel";
 import { ProductsPanel } from "../components/ProductsPanel";
 import { Tabs } from "../components/ui";
 import { t, type MessageKey } from "../lib/i18n";
@@ -15,6 +16,7 @@ interface Section {
 /** Cada ítem del ERP suma su sección acá. */
 const SECTIONS: Section[] = [
   { id: "products", label: "ui.adminSection_products", render: () => <ProductsPanel canEdit /> },
+  { id: "parties", label: "ui.adminSection_parties", render: () => <PartiesPanel /> },
 ];
 
 export function AdminPage() {

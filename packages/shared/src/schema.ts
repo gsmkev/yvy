@@ -12,6 +12,7 @@
  *   El pull pagina por (version, id): equivale al "updated_at + desempate por id" del PRD §11
  *   pero sin depender de relojes de distintos datacenters.
  */
+import { PARTY_KINDS } from "./erp";
 import { HEALTH_REASONS } from "./livestock";
 import { sql } from "drizzle-orm";
 import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
@@ -394,6 +395,27 @@ export const products = sqliteTable(
     ...synced,
   },
   (t) => [index("products_sync_idx").on(t.organizationId, t.version, t.id)],
+);
+
+// ---------- ERP (ADR 0004) ----------
+// Tablas de oficina: no se sincronizan al celular (salvo products y machines), así que no llevan `version`.
+
+/** Proveedores y clientes (E-02). El RUC es texto: lleva guion y dígito verificador. */
+export const parties = sqliteTable(
+  "parties",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    name: text("name").notNull(),
+    ruc: text("ruc"),
+    kind: text("kind", { enum: PARTY_KINDS }).notNull().default("supplier"),
+    phone: text("phone"),
+    email: text("email"),
+    address: text("address"),
+    note: text("note"),
+    ...timestamps,
+  },
+  (t) => [index("parties_org_idx").on(t.organizationId, t.name)],
 );
 
 // ---------- Trabajo ----------

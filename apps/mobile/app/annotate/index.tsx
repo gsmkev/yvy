@@ -63,6 +63,14 @@ export default function Annotate() {
     });
   }, []);
 
+  // F-01: si el GPS tarda (arranque en frío), explicar que busca satélites y que no usa internet.
+  const [gpsSlow, setGpsSlow] = useState(false);
+  useEffect(() => {
+    if (fix !== "searching") return setGpsSlow(false);
+    const id = setTimeout(() => setGpsSlow(true), 5000);
+    return () => clearTimeout(id);
+  }, [fix]);
+
   const steps = kind ? FLOWS[kind] : [];
   const stepIndex = phase.name === "step" ? phase.i : -1;
 
@@ -157,9 +165,10 @@ export default function Annotate() {
         {header}
         <ScrollView contentContainerStyle={k.pad} keyboardShouldPersistTaps="handled">
           <Text style={T.title}>{t("app.whichPlot")}</Text>
-          <Text style={[T.small, { marginTop: 6, marginBottom: 20 }]}>
+          <Text style={[T.small, { marginTop: 6, marginBottom: gpsSlow ? 6 : 20 }]}>
             {fix === "searching" ? t("app.gpsSearching") : guesses.length ? t("app.detectedByGps") : fix ? t("app.noPlotNearby") : t("app.gpsNone")}
           </Text>
+          {fix === "searching" && gpsSlow && <Text style={[T.small, { marginBottom: 20 }]}>{t("app.gpsSlowHint")}</Text>}
           {plots.length > SEARCH_FROM && (
             <TextInput
               value={query}

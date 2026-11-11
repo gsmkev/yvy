@@ -334,6 +334,46 @@ export async function farmClimate(sdb: ScopedDb, farmId: string, days = 90) {
   };
 }
 
+/** C-02: último pronóstico de la estancia, liviano, para que la app lo guarde y lo lea sin señal. */
+export async function farmForecast(sdb: ScopedDb, farmId: string) {
+  const [farm] = await sdb.db
+    .select({ id: s.farms.id })
+    .from(s.farms)
+    .where(
+      and(
+        eq(s.farms.id, farmId),
+        eq(s.farms.organizationId, sdb.auth.orgId),
+        isNull(s.farms.deletedAt),
+        sdb.workerFilter("farms"),
+      ),
+    )
+    .limit(1);
+  if (!farm) throw new NotFoundError("Estancia inexistente");
+  const [latest] = await sdb.db
+    .select({ runAt: sql<number | null>`max(${s.forecasts.runAt})` })
+    .from(s.forecasts)
+    .where(eq(s.forecasts.farmId, farmId));
+  const runAt = latest?.runAt ?? null;
+  if (!runAt) return { runAt: null, source: null, days: [] };
+  const rows = await sdb.db
+    .select({
+      date: s.forecasts.validDate,
+      tminC: s.forecasts.tminC,
+      tmaxC: s.forecasts.tmaxC,
+      precipMm: s.forecasts.precipMm,
+      source: s.forecasts.source,
+    })
+    .from(s.forecasts)
+    .where(and(eq(s.forecasts.farmId, farmId), eq(s.forecasts.runAt, runAt)))
+    .orderBy(asc(s.forecasts.validDate))
+    .limit(10);
+  return {
+    runAt,
+    source: rows[0]?.source ?? null,
+    days: rows.map(({ source: _source, ...d }) => d),
+  };
+}
+
 export const dayOfYear = (date: string): number => {
   const d = Date.parse(`${date}T00:00:00Z`);
   return Math.floor((d - Date.parse(`${date.slice(0, 4)}-01-01T00:00:00Z`)) / 86_400_000) + 1;

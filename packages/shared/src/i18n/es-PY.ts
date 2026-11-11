@@ -357,6 +357,15 @@ export const esPY = {
     plotHerdUa: "{{v}} UA/ha",
     waterPoiQuestion: "¿Qué aguada o tajamar es?",
     waterPoiOther: "Otra o no sé cuál",
+    // clima
+    forecastTitle: "Próximos días",
+    forecastDay: "{{wd}} {{d}}",
+    forecastRain: "{{mm}} mm",
+    forecastDownloaded: "Pronóstico bajado hoy a las {{time}}",
+    forecastDownloadedOn: "Pronóstico bajado el {{date}} a las {{time}}",
+    forecastOld: "Es de hace {{n}} días. Se actualiza cuando haya señal.",
+    forecastNone: "Todavía no hay pronóstico. Se baja cuando haya señal.",
+    forecastSource: "Datos de MET Norway",
   },
   fields: {
     condition: "Estado general",

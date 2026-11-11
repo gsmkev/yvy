@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { cors } from "hono/cors";
 import { requireAuth } from "./auth/middleware";
-import { ForbiddenError, NotFoundError } from "./db/scoped";
+import { ForbiddenError, NotFoundError, PlanLimitError } from "./db/scoped";
 import { agri } from "./routes/agri";
 import { auth } from "./routes/auth";
 import { ingest } from "./routes/ingest";
@@ -21,6 +21,7 @@ app.onError((err, c) => {
   if (err instanceof HTTPException) return c.json({ error: err.message }, err.status);
   if (err instanceof ForbiddenError) return c.json({ error: err.message }, 403);
   if (err instanceof NotFoundError) return c.json({ error: err.message }, 404);
+  if (err instanceof PlanLimitError) return c.json({ error: err.message }, 402);
   console.error(err);
   return c.json({ error: "Error interno" }, 500);
 });

@@ -136,7 +136,7 @@ describe("LocalDb", () => {
     const db = setup(() => now);
     const task = (title: string, dueDate: string, status = "open") => ({
       id: newId(), organizationId: ORG, farmId: FARM, plotId: null, assigneeId: USER, title, kind: null, dueDate,
-      recurrence: "none", status, completedAt: null, completedBy: null, recordId: null, createdBy: USER,
+      dueTime: null, priority: "normal", comments: "[]", recurrence: "none", status, completedAt: null, completedBy: null, recordId: null, createdBy: USER,
       createdAt: 1, updatedAt: 1, deletedAt: null, version: 1,
     });
     expect(planReminders(db, USER, now)).toEqual([]);
@@ -156,7 +156,7 @@ describe("LocalDb", () => {
     const task = (title: string, over: Record<string, unknown> = {}) => ({
       id: newId(), organizationId: ORG, farmId: FARM, plotId: PLOT, assigneeId: USER, title, kind: "scouting", lon: -55.9, lat: -27.2,
       dueDate: localDate(now), recurrence: "none", status: "open", completedAt: null, completedBy: null, recordId: null, createdBy: USER,
-      createdAt: 1, updatedAt: 1, deletedAt: null, version: 1, ...over,
+      dueTime: null, priority: "normal", comments: "[]", createdAt: 1, updatedAt: 1, deletedAt: null, version: 1, ...over,
     });
     const weekly = task("Semanal", { recurrence: "weekly" });
     await db.applyPull(
@@ -247,6 +247,9 @@ describe("LocalDb", () => {
           title: "Medir lluvia",
           kind: "rain",
           dueDate: today,
+          dueTime: "08:00",
+          priority: "high",
+          comments: "[]",
           recurrence: "daily",
           status: "open",
           completedAt: null,
@@ -267,6 +270,8 @@ describe("LocalDb", () => {
     expect(db.tasksToday(USER, today).map((t) => t.status)).toEqual(["done"]);
     const tomorrow = db.tasksToday(USER, addDays(today, 1));
     expect(tomorrow.map((t) => [t.id, t.status])).toEqual([[nextOccurrenceId(taskId), "open"]]);
+    // T-02: la siguiente conserva prioridad y hora límite
+    expect(tomorrow[0]).toMatchObject({ priority: "high", dueTime: "08:00" });
     const kinds = (await db.pendingMutations(10)).map((m) => m.kind);
     expect(kinds).toEqual(["records.upsert", "tasks.status"]);
   });
@@ -299,6 +304,9 @@ describe("LocalDb", () => {
           recordId: null,
           createdBy: USER,
           checklist: JSON.stringify(list),
+          dueTime: null,
+          priority: "normal",
+          comments: "[]",
           createdAt: 1,
           updatedAt: 1,
           deletedAt: null,

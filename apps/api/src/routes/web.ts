@@ -3,9 +3,10 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { areaHa, bboxOf } from "@yvy/geo";
-import { alertSettingsSchema, CROPS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS } from "@yvy/shared";
+import { alertSettingsSchema, CROPS, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import {
+  addTaskComment,
   alertFeedback,
   deleteFarm,
   deletePlot,
@@ -34,7 +35,7 @@ import {
 } from "../db/queries";
 import { farmStockSummary, saveLivestockSettings } from "../db/livestock";
 import { createSanitaryEvent, deleteSanitaryEvent, listSanitaryEvents } from "../db/sanitary";
-import { parse, readJson } from "../lib/http";
+import { parse, readJson, timeOfDay } from "../lib/http";
 import { plotArea } from "./org";
 import { touchActivity } from "../auth/plan";
 import type { AppEnv } from "../types";
@@ -192,6 +193,8 @@ web.patch("/org/tasks/:id", async (c) => {
       plotId: z.string().nullish(),
       kind: z.enum(RECORD_KINDS).nullish(),
       dueDate: isoDate.optional(),
+      dueTime: timeOfDay.nullish(),
+      priority: z.enum(TASK_PRIORITIES).optional(),
       recurrence: z.enum(RECURRENCES).optional(),
       status: z.enum(["open", "cancelled"]).optional(),
     }),
@@ -199,6 +202,11 @@ web.patch("/org/tasks/:id", async (c) => {
   );
   await updateTask(c.var.sdb, c.req.param("id"), b);
   return c.json({ ok: true });
+});
+/** T-02: comentario en la tarea. Lo puede hacer quien ve la tarea (el empleado solo en las suyas). */
+web.post("/org/tasks/:id/comments", async (c) => {
+  const b = parse(z.object({ text: z.string().trim().min(1).max(LIMITS.tasks.maxCommentLength) }), await readJson(c.req));
+  return c.json(await addTaskComment(c.var.sdb, c.req.param("id"), b.text), 201);
 });
 web.delete("/org/tasks/:id", async (c) => {
   await deleteTask(c.var.sdb, c.req.param("id"));

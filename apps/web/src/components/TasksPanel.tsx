@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { checklistProgress, localDate, parseChecklist, RECORD_KINDS, RECURRENCES } from "@yvy/shared";
+import { checklistProgress, isOverdue as taskOverdue, LIMITS, localDate, localTime, parseChecklist, parseTaskComments, RECORD_KINDS, RECURRENCES, TASK_PRIORITIES } from "@yvy/shared";
 import { del, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
-import { fmtIsoDate } from "../lib/format";
+import { fmtDateTime, fmtIsoDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useFarms, useMembers, useTasks } from "../lib/queries";
 import type { Plot, Task } from "../lib/types";
@@ -32,12 +32,20 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
 
   if (tasks.isLoading) return <Spinner />;
   if (tasks.error) return <ErrorBox error={tasks.error} />;
-  const isOverdue = (x: Task) => x.status === "open" && x.dueDate < today;
+  const nowTime = localTime(Date.now());
+  const isOverdue = (x: Task) => taskOverdue(x, today, nowTime);
   const shown = (tasks.data ?? []).filter(
     (x) => x.status !== "cancelled" && (x.status === "open" || x.dueDate >= localDate(Date.now() - 7 * 86_400_000)),
   );
   const nOverdue = shown.filter(isOverdue).length;
-  const visible = filter === "overdue" ? shown.filter(isOverdue) : shown;
+  const visible = (filter === "overdue" ? shown.filter(isOverdue) : shown)
+    .slice()
+    .sort(
+      (a, b) =>
+        a.dueDate.localeCompare(b.dueDate) ||
+        (a.dueTime ?? "24:00").localeCompare(b.dueTime ?? "24:00") ||
+        PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority],
+    );
   const byAssignee = new Map<string, Task[]>();
   for (const x of visible)
     byAssignee.set(x.assigneeName ?? x.assigneeId, [...(byAssignee.get(x.assigneeName ?? x.assigneeId) ?? []), x]);
@@ -56,6 +64,8 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
               t("ui.taskTitle"),
               t("ui.plot"),
               t("ui.dueDate"),
+              t("ui.dueTime"),
+              t("ui.taskPriority"),
               t("ui.recurrence"),
               t("ui.statusCol"),
               t("ui.opensRecord"),
@@ -65,8 +75,10 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
               x.title,
               x.plotName,
               fmtIsoDate(x.dueDate),
+              x.dueTime ?? "",
+              tk(`ui.taskPriority_${x.priority}`),
               tk(`ui.recurrence_${x.recurrence}`),
-              x.status === "open" && x.dueDate < today ? t("ui.overdue") : tk(`ui.status_${x.status}`),
+              isOverdue(x) ? t("ui.overdue") : tk(`ui.status_${x.status}`),
               x.kind ? tk(`recordKinds.${x.kind}`) : "",
             ]),
           })}
@@ -82,7 +94,7 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
       />
       {!visible.length && <Empty title={t("ui.noTasks")} />}
       {[...byAssignee.entries()].map(([name, list]) => {
-        const overdue = list.filter((x) => x.status === "open" && x.dueDate < today).length;
+        const overdue = list.filter(isOverdue).length;
         return (
           <section key={name} className="border-t border-linea pt-3">
             <h3 className="mb-2 flex items-baseline justify-between gap-2 font-semibold">
@@ -95,31 +107,7 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
             </h3>
             <ul className="flex flex-col gap-1.5">
               {list.map((x) => (
-                <li key={x.id} className="flex items-center gap-2 text-sm">
-                  <span
-                    className={x.status === "done" ? "text-soja" : x.dueDate < today ? "text-peligro" : "text-tinta-2"}
-                  >
-                    {x.status === "done" ? (
-                      <CheckCircle2 size={18} aria-label={t("ui.status_done")} />
-                    ) : (
-                      <Circle size={18} aria-label={t("ui.status_open")} />
-                    )}
-                  </span>
-                  <span className={`flex-1 ${x.status === "done" ? "text-tinta-2 line-through" : ""}`}>
-                    {x.title}
-                    <span className="block text-xs text-tinta-2">
-                      {fmtIsoDate(x.dueDate)} · {tk(`ui.recurrence_${x.recurrence}`)}
-                      {x.plotName ? ` · ${x.plotName}` : ""}
-                      {x.kind ? ` · ${t("ui.opensRecord")}: ${tk(`recordKinds.${x.kind}`)}` : ""}
-                    </span>
-                    <ChecklistProgress task={x} />
-                  </span>
-                  {x.status === "open" && (
-                    <button className="text-xs text-tinta-2 hover:text-peligro" onClick={() => removeTask(x)}>
-                      {t("ui.delete")}
-                    </button>
-                  )}
-                </li>
+                <TaskRow key={x.id} x={x} overdue={isOverdue(x)} onDelete={() => removeTask(x)} />
               ))}
             </ul>
           </section>
@@ -163,6 +151,88 @@ function ChecklistProgress({ task }: { task: Task }) {
   );
 }
 
+const PRIORITY_RANK = { high: 0, normal: 1, low: 2 } as const;
+
+function TaskRow({ x, overdue, onDelete }: { x: Task; overdue: boolean; onDelete: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const qc = useQueryClient();
+  const comments = parseTaskComments(x.comments);
+  const send = useMutation({
+    mutationFn: () => post(`/org/tasks/${x.id}/comments`, { text }),
+    onSuccess: () => {
+      setText("");
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+      toast(t("ui.taskCommentSaved"));
+    },
+  });
+  const when = [fmtIsoDate(x.dueDate), x.dueTime ? t("ui.dueAtTime", { time: x.dueTime }) : null].filter(Boolean).join(" ");
+  return (
+    <li className="flex flex-col gap-1.5 text-sm">
+      <div className="flex items-center gap-2">
+        <span className={x.status === "done" ? "text-soja" : overdue ? "text-peligro" : "text-tinta-2"}>
+          {x.status === "done" ? (
+            <CheckCircle2 size={18} aria-label={t("ui.status_done")} />
+          ) : (
+            <Circle size={18} aria-label={t("ui.status_open")} />
+          )}
+        </span>
+        <span className={`flex-1 ${x.status === "done" ? "text-tinta-2 line-through" : ""}`}>
+          {x.title}
+          <span className="block text-xs text-tinta-2">
+            {when} · {tk(`ui.recurrence_${x.recurrence}`)}
+            {x.plotName ? ` · ${x.plotName}` : ""}
+            {x.kind ? ` · ${t("ui.opensRecord")}: ${tk(`recordKinds.${x.kind}`)}` : ""}
+            {x.priority === "high" && <span className="font-medium text-peligro"> · {t("ui.taskPriorityHigh")}</span>}
+            {x.priority === "low" && ` · ${t("ui.taskPriorityLow")}`}
+          </span>
+          <ChecklistProgress task={x} />
+        </span>
+        <button className="text-xs text-tinta-2 hover:text-surco" aria-expanded={open} onClick={() => setOpen(!open)}>
+          {open ? t("ui.taskCommentsHide") : t("ui.taskCommentsCount", { n: comments.length })}
+        </button>
+        {x.status === "open" && (
+          <button className="text-xs text-tinta-2 hover:text-peligro" onClick={onDelete}>
+            {t("ui.delete")}
+          </button>
+        )}
+      </div>
+      {open && (
+        <div className="ml-7 flex flex-col gap-2 border-l border-linea pl-3">
+          {!comments.length && <p className="text-xs text-tinta-2">{t("ui.taskCommentNone")}</p>}
+          {comments.map((c) => (
+            <p key={c.id} className="text-sm">
+              <span className="font-medium">{c.name}</span>
+              <span className="ml-2 text-xs text-tinta-2">{fmtDateTime(c.at)}</span>
+              <span className="block whitespace-pre-wrap">{c.text}</span>
+            </p>
+          ))}
+          <form
+            className="flex flex-col items-start gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (text.trim()) send.mutate();
+            }}
+          >
+            <textarea
+              aria-label={t("ui.taskComments")}
+              className="min-h-16 w-full rounded-md border border-linea bg-papel px-3 py-2 text-[15px] outline-none focus:border-accion focus:ring-2 focus:ring-accion/20"
+              maxLength={LIMITS.tasks.maxCommentLength}
+              placeholder={t("ui.taskCommentPlaceholder")}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+            />
+            {send.error && <ErrorBox error={send.error} />}
+            <Button type="submit" disabled={send.isPending || !text.trim()}>
+              {t("ui.taskCommentSend")}
+            </Button>
+          </form>
+        </div>
+      )}
+    </li>
+  );
+}
+
 function NewTaskModal({
   farmId,
   plots,
@@ -183,6 +253,8 @@ function NewTaskModal({
     title: "",
     kind: "",
     dueDate: localDate(Date.now()),
+    dueTime: "",
+    priority: "normal",
     recurrence: "none",
     checklist: "",
   });
@@ -193,7 +265,7 @@ function NewTaskModal({
         .split("\n")
         .map((x) => x.trim())
         .filter(Boolean);
-      return post("/org/tasks", { ...rest, plotId: f.plotId || null, kind: f.kind || null, ...(items.length ? { checklist: items } : {}) });
+      return post("/org/tasks", { ...rest, plotId: f.plotId || null, kind: f.kind || null, dueTime: f.dueTime || null, ...(items.length ? { checklist: items } : {}) });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
@@ -244,6 +316,16 @@ function NewTaskModal({
         <div className="grid grid-cols-2 gap-3">
           <Field label={t("ui.dueDate")}>
             <Input type="date" required value={f.dueDate} onChange={set("dueDate")} />
+          </Field>
+          <Field label={t("ui.dueTime")} hint={t("ui.dueTimeHint")}>
+            <Input type="time" value={f.dueTime} onChange={set("dueTime")} />
+          </Field>
+          <Field label={t("ui.taskPriority")}>
+            <Select
+              value={f.priority}
+              onChange={set("priority")}
+              options={TASK_PRIORITIES.map((p) => ({ value: p, label: tk(`ui.taskPriority_${p}`) }))}
+            />
           </Field>
           <Field label={t("ui.recurrence")}>
             <Select

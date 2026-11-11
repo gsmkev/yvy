@@ -40,6 +40,7 @@ export const POI_KINDS = [
 ] as const;
 export const RECURRENCES = ["none", "daily", "weekly"] as const;
 export const TASK_STATUS = ["open", "done", "cancelled"] as const;
+export const TASK_PRIORITIES = ["low", "normal", "high"] as const;
 export const RECORD_KINDS = [
   "scouting",
   "pest",
@@ -349,6 +350,11 @@ export const tasks = sqliteTable(
     /** Tipo de registro que abre al completarla (ej. "rain"), o null. */
     kind: text("kind", { enum: RECORD_KINDS }),
     dueDate: text("due_date").notNull(),
+    /** Hora límite "HH:MM" (hora de la estancia), o null si basta con el día. */
+    dueTime: text("due_time"),
+    priority: text("priority", { enum: TASK_PRIORITIES }).notNull().default("normal"),
+    /** JSON: comentarios de la tarea (ver taskCommentSchema). Se agregan solo por la API, nunca desde el celular. */
+    comments: text("comments").notNull().default("[]"),
     recurrence: text("recurrence", { enum: RECURRENCES }).notNull().default("none"),
     status: text("status", { enum: TASK_STATUS }).notNull().default("open"),
     completedAt: integer("completed_at"),

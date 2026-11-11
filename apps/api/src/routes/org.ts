@@ -2,10 +2,10 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { areaHa, bboxOf, centroidOf, checkPlots, validateShape, type Area } from "@yvy/geo";
-import { CROPS, doseText, LIMITS, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
+import { CROPS, doseText, LIMITS, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, TASK_PRIORITIES, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
 import { dispatchNewFarm, inBackground } from "../lib/dispatch";
 import { sendEmail } from "../lib/email";
-import { parse, readJson } from "../lib/http";
+import { parse, readJson, timeOfDay } from "../lib/http";
 import type { AppEnv } from "../types";
 
 export const org = new Hono<AppEnv>();
@@ -204,6 +204,8 @@ org.post("/tasks", async (c) => {
       title: z.string().trim().min(1).max(200),
       kind: z.enum(RECORD_KINDS).nullish(),
       dueDate: isoDate,
+      dueTime: timeOfDay.nullish(),
+      priority: z.enum(TASK_PRIORITIES).default("normal"),
       recurrence: z.enum(RECURRENCES).default("none"),
       /** Texto de cada ítem de la lista de verificación (F-15). */
       checklist: z.array(z.string().trim().max(LIMITS.checklist.maxTextLength)).max(LIMITS.checklist.maxItems).optional(),
@@ -220,6 +222,7 @@ org.post("/tasks", async (c) => {
       kind: body.kind ?? null,
       lon: body.lon ?? null,
       lat: body.lat ?? null,
+      dueTime: body.dueTime ?? null,
       checklist: serializeChecklist(newChecklist(checklist ?? [])),
     }),
     201,

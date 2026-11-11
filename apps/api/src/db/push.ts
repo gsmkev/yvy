@@ -460,6 +460,8 @@ export async function applyPush(
                   lat: t.lat,
                   prescription: t.prescription,
                   dueDate: next,
+                  dueTime: t.dueTime,
+                  priority: t.priority,
                   recurrence: t.recurrence,
                   status: "open",
                   checklist: serializeChecklist(resetChecklist(parseChecklist(t.checklist))),

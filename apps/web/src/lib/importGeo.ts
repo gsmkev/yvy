@@ -124,3 +124,10 @@ export async function parseFile(file: File): Promise<ImportedPolygon[]> {
   }
   throw new Error(t("ui.importUnsupported"));
 }
+
+/** Une varias figuras en una sola: un Polygon si hay una, un MultiPolygon si hay varias partes (M-09). */
+export function combineAreas(areas: Area[]): Area | null {
+  const polys = areas.flatMap((a) => (a.type === "Polygon" ? [a.coordinates] : a.coordinates));
+  if (!polys.length) return null;
+  return polys.length === 1 ? { type: "Polygon", coordinates: polys[0]! } : { type: "MultiPolygon", coordinates: polys };
+}

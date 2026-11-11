@@ -6,7 +6,7 @@ import { AppState } from "react-native";
 import * as Network from "expo-network";
 import * as FileSystem from "expo-file-system/legacy";
 import { useSyncExternalStore } from "react";
-import { LIMITS } from "@yvy/shared";
+import { isAudioMime, LIMITS } from "@yvy/shared";
 import { CpuLimitError, httpTransport, SyncEngine, type AttachmentUploader } from "@yvy/sync";
 import { getDb } from "./db";
 import { flushVotes } from "./votes";
@@ -58,18 +58,24 @@ const uploader: AttachmentUploader = {
     for (const f of db.pendingUploads()) {
       if (f.attempts >= MAX_UPLOAD_ATTEMPTS) continue;
       try {
-        const urls = await api<{ photo: string; thumb: string }>(
+        const urls = await api<{ photo: string; thumb: string | null }>(
           "POST",
           `/media/attachments/${f.attachmentId}/upload-url`,
         );
-        for (const [url, uri] of [
-          [urls.photo, f.photoUri],
-          [urls.thumb, f.thumbUri],
-        ] as const) {
+        // La nota de voz (F-09) es un solo archivo m4a; la foto lleva además su miniatura.
+        const audio = isAudioMime(f.mime);
+        const parts: (readonly [string | null, string, string])[] = audio
+          ? [[urls.photo, f.photoUri, LIMITS.audio.mime]]
+          : [
+              [urls.photo, f.photoUri, "image/webp"],
+              [urls.thumb, f.thumbUri, "image/webp"],
+            ];
+        for (const [url, uri, type] of parts) {
+          if (!url) continue;
           const r = await FileSystem.uploadAsync(url, uri, {
             httpMethod: "PUT",
             uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-            headers: { "content-type": "image/webp" },
+            headers: { "content-type": type },
           });
           if (r.status >= 300) throw new HttpError(r.status, "upload");
         }

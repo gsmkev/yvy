@@ -38,6 +38,13 @@ export const LIMITS = {
     uploadUrlTtlSeconds: 15 * 60,
     downloadUrlTtlSeconds: 60 * 60,
   },
+  audio: {
+    /** Nota de voz (F-09): AAC en .m4a, un solo archivo por registro, sin miniatura. */
+    mime: "audio/mp4",
+    maxSeconds: 90,
+    maxBytes: 1024 * 1024,
+    maxPerRecord: 1,
+  },
   auth: {
     emailCodeTtlMs: 10 * 60 * 1000,
     emailCodeMaxAttempts: 5,

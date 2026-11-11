@@ -7,6 +7,7 @@ import * as s from "@yvy/shared/schema";
 import { HTTPException } from "hono/http-exception";
 import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
 import { presign } from "../lib/r2";
+import { results } from "../db/results";
 import { fuelReport } from "../db/fuel";
 import { createWorkOrder, listWorkOrders } from "../db/work-orders";
 import { fixDefaultWarehouse } from "../db/stock";
@@ -229,3 +230,9 @@ erp.post("/work-orders", async (c) => {
   );
   return c.json(await createWorkOrder(c.var.sdb, b), 201);
 });
+
+// ---------- Costo por hectárea y por tonelada, margen (E-30, E-31) ----------
+
+erp.get("/results", async (c) =>
+  c.json(await results(c.var.sdb, parse(z.object({ farmId: uuid.optional(), seasonId: uuid.optional() }), c.req.query()))),
+);

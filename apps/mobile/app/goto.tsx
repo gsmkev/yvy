@@ -4,13 +4,13 @@
  */
 import { useEffect, useState } from "react";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import * as Location from "expo-location";
 import { ArrowUp } from "lucide-react-native";
 import { t } from "@yvy/shared";
 import { bearingDeg, cardinal, distanceM, formatDistance, turnDeg } from "../src/lib/bearing";
 import { hasAccuracy, type Fix } from "../src/lib/location";
-import { s as k } from "../src/ui/kit";
+import { s as k, Text } from "../src/ui/kit";
 import { C, GUTTER, T } from "../src/ui/theme";
 
 const ARRIVED_M = 15;

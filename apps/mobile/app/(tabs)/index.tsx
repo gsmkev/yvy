@@ -4,6 +4,7 @@
  */
 import { useEffect, useRef, type ElementRef } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Check } from "lucide-react-native";
 import { describeRecord, t } from "@yvy/shared";
@@ -15,6 +16,7 @@ import { readVotes, recordVote } from "../../src/lib/votes";
 import { useLocal } from "../../src/lib/useLocal";
 import { FarmLine } from "../../src/ui/FarmLine";
 import { Button, Row, s as k } from "../../src/ui/kit";
+import { Button, Row, s as k, Text } from "../../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
 
 const dayLabel = () => {

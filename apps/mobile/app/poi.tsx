@@ -3,7 +3,7 @@
  * Solo roles que no son empleado (PRD §9); el servidor también lo exige.
  */
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, TextInput } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import { router, Stack } from "expo-router";
 import { LIMITS, POI_KINDS, t, type MessageKey } from "@yvy/shared";
 import { getDb } from "../src/lib/db";
@@ -11,7 +11,7 @@ import { currentFix, guessPlots, type Fix } from "../src/lib/location";
 import { useSession } from "../src/lib/session";
 import { localChanged } from "../src/lib/sync";
 import { toastSaved } from "../src/lib/toast";
-import { Button, Row, s as k } from "../src/ui/kit";
+import { Button, Row, s as k, Text, TextInput } from "../src/ui/kit";
 import { C, RADIUS, T } from "../src/ui/theme";
 
 export default function MarkPoi() {

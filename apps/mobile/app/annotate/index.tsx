@@ -3,7 +3,7 @@
  * Pensado para usarse con una mano, al sol, sin señal. Nunca más de un dato por pantalla.
  */
 import { useEffect, useMemo, useRef, useState, type ElementRef } from "react";
-import { Image, Keyboard, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInput as TextInputRef } from "react-native";
+import { Image, Keyboard, Platform, Pressable, ScrollView, StyleSheet, View, type TextInput as TextInputRef } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Check, X } from "lucide-react-native";
@@ -17,7 +17,7 @@ import { processPhoto } from "../../src/lib/photos";
 import { useSession } from "../../src/lib/session";
 import { localChanged, useSyncStatus } from "../../src/lib/sync";
 import { toastSaved } from "../../src/lib/toast";
-import { Button, Row, s as k } from "../../src/ui/kit";
+import { Button, Row, s as k, Text, TextInput } from "../../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T, TOUCH } from "../../src/ui/theme";
 
 const tr = (key: string, vars?: Record<string, string | number>) => t(key as MessageKey, vars);

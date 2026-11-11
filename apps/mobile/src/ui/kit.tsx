@@ -1,11 +1,30 @@
-import type { ReactNode } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import type { ComponentProps, ReactNode } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text as RNText,
+  TextInput as RNTextInput,
+  View,
+  type StyleProp,
+  type TextProps,
+  type ViewStyle,
+} from "react-native";
 import { CloudOff } from "lucide-react-native";
 import { t } from "@yvy/shared";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { syncNow, useSyncStatus } from "../lib/sync";
 import { useToast } from "../lib/toast";
-import { C, F, GUTTER, RADIUS, T, TOUCH } from "./theme";
+import { C, F, GUTTER, MAX_FONT_SCALE, RADIUS, T, TOUCH } from "./theme";
+
+/** Texto que respeta el tamaño de letra del sistema hasta 1,3 veces, para que el diseño no se rompa (U-21). */
+export function Text(props: TextProps) {
+  return <RNText maxFontSizeMultiplier={MAX_FONT_SCALE} {...props} />;
+}
+
+export function TextInput(props: ComponentProps<typeof RNTextInput>) {
+  return <RNTextInput maxFontSizeMultiplier={MAX_FONT_SCALE} {...props} />;
+}
 
 /** Botón: `primary` solo uno por pantalla. `secondary` para alternativas. `text` para salir sin hacer nada. */
 export function Button({

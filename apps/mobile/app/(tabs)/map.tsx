@@ -3,7 +3,7 @@
  * Tocar un lote abre su ficha abajo; desde ahí se anota en ese lote.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Camera, Map, type CameraRef, type StyleSpecification } from "@maplibre/maplibre-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { LocateFixed, X } from "lucide-react-native";
@@ -22,6 +22,7 @@ import { useLocal } from "../../src/lib/useLocal";
 import { FarmLine } from "../../src/ui/FarmLine";
 import { Button } from "../../src/ui/kit";
 import { LayerSwitch, NdviLegend } from "../../src/ui/MapLayerControls";
+import { Button, Text } from "../../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
 
 const FIT_PADDING = { top: 120, bottom: 40, left: 24, right: 24 };

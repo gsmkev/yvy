@@ -5,6 +5,7 @@
 import { and, count, eq, getTableColumns, inArray, isNull, sql } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import {
+  livestockPlotProblem,
   localDate,
   nextDueDate,
   nextOccurrenceId,
@@ -247,6 +248,12 @@ export async function applyPush(
         const data = parseRecordData(r.kind, r.data);
         if (!data.success) {
           reject(m, "invalid", data.error.issues[0]?.message);
+          break;
+        }
+        // Ganadería: el potrero es el del registro; el destino de un movimiento tiene que ser de la misma estancia.
+        const livestock = livestockPlotProblem(r.kind, r.plotId, data.data);
+        if (livestock) {
+          reject(m, "invalid", livestock);
           break;
         }
         const authorId = existing?.authorId ?? auth.userId;

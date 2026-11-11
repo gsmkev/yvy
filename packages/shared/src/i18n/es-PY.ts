@@ -29,6 +29,7 @@ export const esPY = {
     rain: "Lluvia",
     water: "Aguada / tajamar",
     note: "Nota",
+    herd_count: "Conteo de hacienda",
   },
   rejectReasons: {
     not_found: "el dato no existe",
@@ -376,6 +377,19 @@ export const esPY = {
     water_low: "Bajo",
     water_dry: "Seco",
     text: "Texto",
+    // ganaderia
+    herd_vaca: "Vacas",
+    herd_vaquilla: "Vaquillas",
+    herd_novillo: "Novillos",
+    herd_ternero: "Terneros",
+    herd_toro: "Toros",
+    herdTotalValue: "{{n}} cabezas",
+    herdCounts: "Cabezas por categoría",
+    herdCount_vaca: "{{n}} vacas",
+    herdCount_vaquilla: "{{n}} vaquillas",
+    herdCount_novillo: "{{n}} novillos",
+    herdCount_ternero: "{{n}} terneros",
+    herdCount_toro: "{{n}} toros",
   },
   ui: {
     appName: "Yvy",

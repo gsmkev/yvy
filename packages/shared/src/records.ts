@@ -3,6 +3,7 @@
  * Subir RECORD_SCHEMA_VERSION al cambiar un esquema de forma incompatible.
  */
 import { z } from "zod";
+import { HERD_CATEGORIES, MAX_HEAD_PER_CATEGORY } from "./livestock";
 import type { RecordKind } from "./schema";
 import { LIMITS } from "./limits";
 
@@ -31,6 +32,24 @@ export const stationSchema = z.object({
   counts: z.record(z.string().max(40), z.number().nonnegative().max(LIMITS.monitoring.maxCount)),
 });
 export type Station = z.infer<typeof stationSchema>;
+// ---------- ganaderia (ADR 0004) ----------
+const headCount = z.number().int().min(0).max(MAX_HEAD_PER_CATEGORY);
+/** Cabezas por categoría; al menos una categoría con dato (un 0 es un dato: "conté y no hay"). */
+export const herdCountsSchema = z
+  .object({
+    vaca: headCount.optional(),
+    vaquilla: headCount.optional(),
+    novillo: headCount.optional(),
+    ternero: headCount.optional(),
+    toro: headCount.optional(),
+  })
+  .refine((c) => HERD_CATEGORIES.some((k) => c[k] !== undefined), { message: "Cargá al menos una categoría" });
+
+const livestockSchemas = {
+  /** El potrero es records.plot_id. */
+  herd_count: z.object({ counts: herdCountsSchema, note }),
+};
+// ---------- fin ganaderia ----------
 
 export const recordDataSchemas = {
   scouting: z.object({ condition, note }),
@@ -62,6 +81,7 @@ export const recordDataSchemas = {
   }),
   water: z.object({ level: z.enum(["full", "half", "low", "dry"]), note }),
   note: z.object({ text: z.string().trim().min(1).max(4000) }),
+  ...livestockSchemas,
 } satisfies Record<RecordKind, z.ZodType>;
 
 export type RecordData<K extends RecordKind> = z.infer<(typeof recordDataSchemas)[K]>;

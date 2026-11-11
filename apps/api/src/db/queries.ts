@@ -2,14 +2,33 @@
  * Consultas de la web y operaciones de edición. Todas reciben ScopedDb y filtran por organización
  * (y por lotes asignados cuando corresponde).
  */
-import { and, asc, desc, eq, gte, inArray, isNull, lt, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, gte, inArray, isNull, lt, lte, or, sql, type SQL } from "drizzle-orm";
 import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
-import { LIMITS, type RecordKind } from "@yvy/shared";
+import {
+  DEFAULT_ALERT_SETTINGS,
+  LIMITS,
+  notifyOptionsFor,
+  parseNotificationPrefs,
+  parseTaskComments,
+  type AlertSettings,
+  type NotificationPrefs,
+  type RecordKind,
+  type TaskComment,
+} from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
-import { bumpVersion, currentVersion, runBatch, type Stmt } from "./client";
+import { bboxOf, checkPlots, type Area } from "@yvy/geo";
+import { newId } from "@yvy/shared";
+import { randomToken, sha256Hex } from "../lib/crypto";
+import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from "./client";
 import { can, ForbiddenError, NotFoundError, type ScopedDb } from "./scoped";
 
 // ---------- Inicio multi estancia (RF-90) ----------
+
+type ImageryStatus = (typeof s.IMAGERY_STATUSES)[number];
+/** Estado del primer procesamiento; las estancias anteriores a S-02 con mapa base cuentan como listas. */
+const IMAGERY_SQL = sql.raw(
+  `COALESCE((SELECT status FROM farm_imagery fi WHERE fi.farm_id = farms.id), CASE WHEN EXISTS (SELECT 1 FROM farm_layers l WHERE l.farm_id = farms.id AND l.layer = 'true_color' AND l.deleted_at IS NULL) THEN 'ready' END)`,
+);
 
 export async function farmSummaries(sdb: ScopedDb) {
   const org = sdb.auth.orgId;
@@ -37,12 +56,19 @@ export async function farmSummaries(sdb: ScopedDb) {
       basemapPath: sql<
         string | null
       >`(SELECT pmtiles_path FROM farm_layers l WHERE l.farm_id = farms.id AND l.layer = 'true_color' AND l.deleted_at IS NULL ORDER BY acquired_at DESC LIMIT 1)`,
+      imageryStatus: sql<ImageryStatus | null>`${IMAGERY_SQL}`,
       records7d: sql<number>`(SELECT count(*) FROM records r WHERE r.farm_id = farms.id AND r.deleted_at IS NULL AND r.captured_at >= ${now - 7 * 86_400_000})`,
     })
     .from(s.farms)
     .where(and(eq(s.farms.organizationId, org), isNull(s.farms.deletedAt), sdb.workerFilter("farms")))
     .orderBy(asc(s.farms.name));
 }
+
+/** Subconsulta: columna de la pasada NDVI número `offset` (0 = la última) del lote de la fila. */
+export const ndviAt = (col: "mean" | "acquired_at", offset: number) =>
+  sql<
+    number | null
+  >`(SELECT ${sql.raw(col)} FROM plot_index_stats x WHERE x.plot_id = plots.id AND x.idx = 'ndvi' AND x.deleted_at IS NULL ORDER BY x.acquired_at DESC LIMIT 1 OFFSET ${sql.raw(String(offset))})`;
 
 export async function farmDetail(sdb: ScopedDb, farmId: string) {
   const org = sdb.auth.orgId;
@@ -59,14 +85,41 @@ export async function farmDetail(sdb: ScopedDb, farmId: string) {
     )
     .limit(1);
   if (!farm) throw new NotFoundError("Estancia inexistente");
-  const [plots, pois, layers, assignments] = await Promise.all([
+  const [[imagery], plots, pois, layers, assignments] = await Promise.all([
     sdb.db
-      .select()
+      .select({
+        status: sql<ImageryStatus | null>`${IMAGERY_SQL}`,
+        requestedAt: sql<number | null>`(SELECT requested_at FROM farm_imagery fi WHERE fi.farm_id = farms.id)`,
+      })
+      .from(s.farms)
+      .where(eq(s.farms.id, farmId))
+      .limit(1),
+    sdb.db
+      .select({
+        ...getTableColumns(s.plots),
+        // Vigor: últimas dos pasadas de NDVI y última visita, en una sola consulta (subconsultas correlacionadas).
+        ndviMean: ndviAt("mean", 0),
+        ndviAt: ndviAt("acquired_at", 0),
+        ndviPrevMean: ndviAt("mean", 1),
+        ndviPrevAt: ndviAt("acquired_at", 1),
+        lastRecordAt: sql<
+          number | null
+        >`(SELECT max(r.captured_at) FROM records r WHERE r.plot_id = plots.id AND r.deleted_at IS NULL)`,
+      })
       .from(s.plots)
       .where(and(eq(s.plots.farmId, farmId), isNull(s.plots.deletedAt), sdb.workerFilter("plots")))
       .orderBy(asc(s.plots.name)),
     sdb.db
-      .select()
+      .select({
+        ...getTableColumns(s.pointsOfInterest),
+        // G-30: último nivel de agua registrado en la aguada o tajamar.
+        lastWaterLevel: sql<
+          string | null
+        >`(SELECT json_extract(r.data, '$.level') FROM records r WHERE r.poi_id = points_of_interest.id AND r.kind = 'water' AND r.deleted_at IS NULL ORDER BY r.captured_at DESC LIMIT 1)`,
+        lastWaterAt: sql<
+          number | null
+        >`(SELECT max(r.captured_at) FROM records r WHERE r.poi_id = points_of_interest.id AND r.kind = 'water' AND r.deleted_at IS NULL)`,
+      })
       .from(s.pointsOfInterest)
       .where(and(eq(s.pointsOfInterest.farmId, farmId), isNull(s.pointsOfInterest.deletedAt))),
     sdb.db
@@ -83,7 +136,15 @@ export async function farmDetail(sdb: ScopedDb, farmId: string) {
           .innerJoin(s.plots, eq(s.plots.id, s.plotAssignments.plotId))
           .where(and(eq(s.plots.farmId, farmId), isNull(s.plotAssignments.deletedAt))),
   ]);
-  return { farm, plots, pois, layers, assignments };
+  return {
+    farm,
+    plots,
+    pois,
+    layers,
+    assignments,
+    imageryStatus: imagery?.status ?? null,
+    imageryRequestedAt: imagery?.requestedAt ?? null,
+  };
 }
 
 // ---------- Registros (RF-35) ----------
@@ -167,6 +228,39 @@ export async function listTasks(
     )
     .orderBy(asc(s.tasks.dueDate))
     .limit(500);
+}
+
+// ---------- Preferencias de notificación (U-29) ----------
+
+/** Preferencias del usuario de la sesión (valen para todas sus organizaciones) y qué le llega según su rol. */
+export async function getNotificationPrefs(sdb: ScopedDb) {
+  const [row] = await sdb.db
+    .select({ prefs: s.notificationPrefs.prefs })
+    .from(s.notificationPrefs)
+    .where(eq(s.notificationPrefs.userId, sdb.auth.userId))
+    .limit(1);
+  const [u] = await sdb.db
+    .select({ email: s.users.email })
+    .from(s.users)
+    .where(eq(s.users.id, sdb.auth.userId))
+    .limit(1);
+  const opts = notifyOptionsFor(sdb.auth.role);
+  return {
+    prefs: parseNotificationPrefs(row?.prefs),
+    kinds: opts.kinds,
+    email: opts.email && !!u?.email,
+  };
+}
+
+export async function saveNotificationPrefs(sdb: ScopedDb, prefs: NotificationPrefs) {
+  const ts = sdb.now();
+  await sdb.db
+    .insert(s.notificationPrefs)
+    .values({ userId: sdb.auth.userId, prefs: JSON.stringify(prefs), updatedAt: ts })
+    .onConflictDoUpdate({
+      target: s.notificationPrefs.userId,
+      set: { prefs: JSON.stringify(prefs), updatedAt: ts },
+    });
 }
 
 // ---------- Satélite (RF-53) ----------
@@ -259,18 +353,18 @@ export async function farmClimate(sdb: ScopedDb, farmId: string, days = 90) {
         .orderBy(asc(s.forecasts.validDate))
     : [];
   const doys = [...new Set(daily.map((d) => dayOfYear(d.date)))];
-  const clim = doys.length
-    ? await sdb.db
+  // ≤ 90 parámetros por consulta: se trae por tandas (hasta 366 días para los informes de campaña).
+  const clim: (typeof s.climatology.$inferSelect)[] = [];
+  for (const chunk of chunkForParams(doys.slice(0, 366), 1)) {
+    clim.push(
+      ...(await sdb.db
         .select()
         .from(s.climatology)
         .where(
-          and(
-            eq(s.climatology.farmId, farmId),
-            eq(s.climatology.plotId, ""),
-            inArray(s.climatology.dayOfYear, doys.slice(0, 90)),
-          ),
-        )
-    : [];
+          and(eq(s.climatology.farmId, farmId), eq(s.climatology.plotId, ""), inArray(s.climatology.dayOfYear, chunk)),
+        )),
+    );
+  }
   return {
     daily,
     climatology: clim,
@@ -282,6 +376,79 @@ export async function farmClimate(sdb: ScopedDb, farmId: string, days = 90) {
       mm: (JSON.parse(g.data) as { mm: number }).mm,
     })),
   };
+}
+
+/** C-02: último pronóstico de la estancia, liviano, para que la app lo guarde y lo lea sin señal. */
+export async function farmForecast(sdb: ScopedDb, farmId: string) {
+  const [farm] = await sdb.db
+    .select({ id: s.farms.id })
+    .from(s.farms)
+    .where(
+      and(
+        eq(s.farms.id, farmId),
+        eq(s.farms.organizationId, sdb.auth.orgId),
+        isNull(s.farms.deletedAt),
+        sdb.workerFilter("farms"),
+      ),
+    )
+    .limit(1);
+  if (!farm) throw new NotFoundError("Estancia inexistente");
+  const [latest] = await sdb.db
+    .select({ runAt: sql<number | null>`max(${s.forecasts.runAt})` })
+    .from(s.forecasts)
+    .where(eq(s.forecasts.farmId, farmId));
+  const runAt = latest?.runAt ?? null;
+  if (!runAt) return { runAt: null, source: null, days: [] };
+  const rows = await sdb.db
+    .select({
+      date: s.forecasts.validDate,
+      tminC: s.forecasts.tminC,
+      tmaxC: s.forecasts.tmaxC,
+      precipMm: s.forecasts.precipMm,
+      source: s.forecasts.source,
+    })
+    .from(s.forecasts)
+    .where(and(eq(s.forecasts.farmId, farmId), eq(s.forecasts.runAt, runAt)))
+    .orderBy(asc(s.forecasts.validDate))
+    .limit(10);
+  return {
+    runAt,
+    source: rows[0]?.source ?? null,
+    days: rows.map(({ source: _source, ...d }) => d),
+  };
+}
+
+/** S-08: áreas problema de la estancia (última escena por lote), con el nombre del lote. */
+export async function farmProblemAreas(sdb: ScopedDb, farmId: string) {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  return sdb.db
+    .select({
+      id: s.problemAreas.id,
+      plotId: s.problemAreas.plotId,
+      plotName: s.plots.name,
+      acquiredAt: s.problemAreas.acquiredAt,
+      geometry: s.problemAreas.geometry,
+      lon: s.problemAreas.lon,
+      lat: s.problemAreas.lat,
+      areaHa: s.problemAreas.areaHa,
+      meanNdvi: s.problemAreas.meanNdvi,
+      plotMedianNdvi: s.problemAreas.plotMedianNdvi,
+    })
+    .from(s.problemAreas)
+    .innerJoin(s.plots, and(eq(s.plots.id, s.problemAreas.plotId), isNull(s.plots.deletedAt)))
+    .where(and(eq(s.problemAreas.farmId, farmId), eq(s.problemAreas.organizationId, sdb.auth.orgId)))
+    .orderBy(desc(s.problemAreas.areaHa))
+    .limit(200);
+}
+
+/** C-10: informe de riesgo climático ya calculado (workers-py). Solo roles con vista completa. */
+export async function farmRiskReport(sdb: ScopedDb, farmId: string) {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const [row] = await sdb.db.select().from(s.farmRisk).where(eq(s.farmRisk.farmId, farmId)).limit(1);
+  if (!row) return { computedAt: null, report: null };
+  return { computedAt: row.computedAt, report: JSON.parse(row.report) as unknown };
 }
 
 export const dayOfYear = (date: string): number => {
@@ -328,6 +495,90 @@ export async function alertFeedback(sdb: ScopedDb, alertId: string, useful: bool
     .onConflictDoUpdate({ target: [s.alertFeedback.alertId, s.alertFeedback.userId], set: { useful, comment } });
 }
 
+/** C-04: umbrales de avisos de la estancia (valores por defecto si nunca se configuraron). */
+export async function getAlertSettings(
+  sdb: ScopedDb,
+  farmId: string,
+): Promise<AlertSettings & { isDefault: boolean }> {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const [row] = await sdb.db
+    .select()
+    .from(s.farmAlertSettings)
+    .where(and(eq(s.farmAlertSettings.farmId, farmId), eq(s.farmAlertSettings.organizationId, sdb.auth.orgId)))
+    .limit(1);
+  if (!row) return { ...DEFAULT_ALERT_SETTINGS, isDefault: true };
+  return {
+    frostTminC: row.frostTminC,
+    excessRainMm24h: row.excessRainMm24h,
+    droughtDeficitPct: row.droughtDeficitPct,
+    isDefault: false,
+  };
+}
+
+export async function saveAlertSettings(sdb: ScopedDb, farmId: string, v: AlertSettings) {
+  sdb.require(can.alertSettings, "Solo el dueño o un administrador cambian los avisos");
+  await sdb.requireFarm(farmId);
+  const row = { ...v, organizationId: sdb.auth.orgId, updatedAt: sdb.now(), updatedBy: sdb.auth.userId };
+  await sdb.db
+    .insert(s.farmAlertSettings)
+    .values({ farmId, ...row })
+    .onConflictDoUpdate({ target: s.farmAlertSettings.farmId, set: row });
+}
+
+// ---------- Enlaces de solo lectura (K-04) ----------
+
+/** Crea el enlace; devuelve el token en claro una sola vez (en la base queda su hash). */
+export async function createShareLink(sdb: ScopedDb, farmId: string, days: number) {
+  sdb.require(can.shareLinks, "Solo el dueño crea enlaces para compartir");
+  if (!(LIMITS.share.linkDays as readonly number[]).includes(days)) throw new ForbiddenError("Duración no permitida");
+  await sdb.requireFarm(farmId);
+  const token = randomToken(32);
+  const id = newId();
+  const ts = sdb.now();
+  const expiresAt = ts + days * 86_400_000;
+  await sdb.db.insert(s.shareLinks).values({
+    id,
+    organizationId: sdb.auth.orgId,
+    farmId,
+    tokenHash: await sha256Hex(token),
+    createdBy: sdb.auth.userId,
+    createdAt: ts,
+    expiresAt,
+  });
+  return { id, token, expiresAt };
+}
+
+export async function listShareLinks(sdb: ScopedDb, farmId: string) {
+  sdb.require(can.shareLinks, "Solo el dueño ve los enlaces para compartir");
+  await sdb.requireFarm(farmId);
+  return sdb.db
+    .select({
+      id: s.shareLinks.id,
+      createdAt: s.shareLinks.createdAt,
+      expiresAt: s.shareLinks.expiresAt,
+      revokedAt: s.shareLinks.revokedAt,
+    })
+    .from(s.shareLinks)
+    .where(and(eq(s.shareLinks.farmId, farmId), eq(s.shareLinks.organizationId, sdb.auth.orgId)))
+    .orderBy(desc(s.shareLinks.createdAt))
+    .limit(50);
+}
+
+export async function revokeShareLink(sdb: ScopedDb, id: string) {
+  sdb.require(can.shareLinks, "Solo el dueño revoca enlaces");
+  const [row] = await sdb.db
+    .select({ id: s.shareLinks.id })
+    .from(s.shareLinks)
+    .where(and(eq(s.shareLinks.id, id), eq(s.shareLinks.organizationId, sdb.auth.orgId)))
+    .limit(1);
+  if (!row) throw new NotFoundError("Enlace inexistente");
+  await sdb.db
+    .update(s.shareLinks)
+    .set({ revokedAt: sdb.now() })
+    .where(and(eq(s.shareLinks.id, id), isNull(s.shareLinks.revokedAt)));
+}
+
 // ---------- Edición y borrado lógico ----------
 
 type SyncedTbl = SQLiteTable & {
@@ -336,7 +587,7 @@ type SyncedTbl = SQLiteTable & {
   deletedAt: SQLiteColumn;
 };
 
-async function updateSynced(
+export async function updateSynced(
   sdb: ScopedDb,
   table: SyncedTbl,
   id: string,
@@ -415,6 +666,59 @@ export async function updatePlot(sdb: ScopedDb, id: string, patch: Partial<typeo
   await updateSynced(sdb, s.plots, id, patch);
 }
 
+/**
+ * Avisos no bloqueantes de un lote ya guardado (M-02): cuánto se superpone con los vecinos de su estancia y si
+ * sale del perímetro. Presupuesto de CPU: solo vecinos cuyo bbox toca al lote y como máximo 12 recortes exactos.
+ */
+export async function plotGeometryWarnings(sdb: ScopedDb, plotId: string, geometry: Area) {
+  const org = sdb.auth.orgId;
+  const [own] = await sdb.db
+    .select({ farmId: s.plots.farmId })
+    .from(s.plots)
+    .where(and(eq(s.plots.id, plotId), eq(s.plots.organizationId, org)))
+    .limit(1);
+  if (!own) throw new NotFoundError("No existe");
+  const box = bboxOf(geometry);
+  const [farm] = await sdb.db
+    .select({ geometry: s.farms.geometry })
+    .from(s.farms)
+    .where(and(eq(s.farms.id, own.farmId), eq(s.farms.organizationId, org)))
+    .limit(1);
+  const neighbors = await sdb.db
+    .select({ id: s.plots.id, name: s.plots.name, geometry: s.plots.geometry })
+    .from(s.plots)
+    .where(
+      and(
+        eq(s.plots.organizationId, org),
+        eq(s.plots.farmId, own.farmId),
+        isNull(s.plots.deletedAt),
+        sql`${s.plots.id} <> ${plotId}`,
+        lte(s.plots.minLon, box.maxLon),
+        gte(s.plots.maxLon, box.minLon),
+        lte(s.plots.minLat, box.maxLat),
+        gte(s.plots.maxLat, box.minLat),
+      ),
+    )
+    .limit(12);
+  const found = checkPlots(
+    [geometry, ...neighbors.map((n) => JSON.parse(n.geometry) as Area)],
+    farm ? (JSON.parse(farm.geometry) as Area) : null,
+    { maxExact: 12 },
+  );
+  return found
+    .filter((w) => w.a === 0 || w.b === 0)
+    .map((w) =>
+      w.kind === "outside"
+        ? { kind: "outside" as const, ratio: Math.round(w.ratio * 1000) / 1000 }
+        : {
+            kind: "overlap" as const,
+            plotId: neighbors[(w.a === 0 ? w.b! : w.a) - 1]!.id,
+            plotName: neighbors[(w.a === 0 ? w.b! : w.a) - 1]!.name,
+            ratio: Math.round(w.ratio * 1000) / 1000,
+          },
+    );
+}
+
 export async function deletePlot(sdb: ScopedDb, id: string) {
   sdb.require(can.editField);
   const ts = sdb.now();
@@ -436,6 +740,37 @@ export async function updateTask(sdb: ScopedDb, id: string, patch: Partial<typeo
   sdb.require(can.assign);
   if (patch.assigneeId) await sdb.memberRole(patch.assigneeId);
   await updateSynced(sdb, s.tasks, id, patch);
+}
+
+/**
+ * Agrega un comentario a la tarea (T-02). Los comentarios son un JSON dentro de la tarea: se reescribe con
+ * bumpVersion para que baje al celular. Lectura y escritura son dos pasos; si dos personas comentan a la vez
+ * gana la última escritura (aceptable con ≤ 50 comentarios de uso ocasional).
+ */
+export async function addTaskComment(sdb: ScopedDb, id: string, text: string) {
+  const [row] = await sdb.db
+    .select({ comments: s.tasks.comments })
+    .from(s.tasks)
+    .where(
+      and(
+        eq(s.tasks.id, id),
+        eq(s.tasks.organizationId, sdb.auth.orgId),
+        isNull(s.tasks.deletedAt),
+        sdb.workerFilter("tasks"),
+      ),
+    )
+    .limit(1);
+  if (!row) throw new NotFoundError("No existe");
+  const list = parseTaskComments(row.comments);
+  if (list.length >= LIMITS.tasks.maxComments) throw new ForbiddenError("La tarea ya tiene demasiados comentarios");
+  const [u] = await sdb.db
+    .select({ fullName: s.users.fullName })
+    .from(s.users)
+    .where(eq(s.users.id, sdb.auth.userId))
+    .limit(1);
+  const comment: TaskComment = { id: newId(), userId: sdb.auth.userId, name: u?.fullName ?? "", at: sdb.now(), text };
+  await updateSynced(sdb, s.tasks, id, { comments: JSON.stringify([...list, comment]) });
+  return comment;
 }
 
 export async function deleteTask(sdb: ScopedDb, id: string) {

@@ -37,3 +37,4 @@ export * from "./share";
 export * from "./describe";
 export * from "./notification-prefs";
 export * from "./pin";
+export * from "./qr";

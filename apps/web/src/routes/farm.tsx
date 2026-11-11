@@ -32,6 +32,7 @@ import { t, tk } from "../lib/i18n";
 import { loadPrefs, savePrefs } from "../lib/prefs";
 import { fetchAllRecords, useAlerts, useFarm, useFarmLines, useFarms, useMe, useMembers, useProblemAreas } from "../lib/queries";
 import { defaultCompare, layerDates, pickLayer, type Camera } from "../lib/scenes";
+import { PoiQrModal } from "../components/PoiQr";
 import { heatPoints, summarizeTracks, TRACK_WINDOW_MS } from "../lib/trackHeat";
 import { PEST_COLORS, PEST_WINDOW_MS, pestCounts, pestPoints } from "../lib/pests";
 import type { FarmDetail, RecordRow } from "../lib/types";
@@ -102,6 +103,7 @@ export function FarmPage() {
     setTaskPlots((l) => (l.includes(id) ? l.filter((x) => x !== id) : [...l, id]));
   const [drawn, setDrawn] = useState<Polygon | null>(null);
   const [poiAt, setPoiAt] = useState<[number, number] | null>(null);
+  const [poiQr, setPoiQr] = useState(false);
   const [wantedLayer, setLayer] = useState<"satellite" | "ndvi">(() =>
     loadPrefs().layer === "ndvi" ? "ndvi" : "satellite",
   );
@@ -769,7 +771,12 @@ export function FarmPage() {
               <p className="mt-3 text-xs text-tinta-2">{t("ui.selectPlotHint")}</p>
               {d.pois.length > 0 && (
                 <>
-                  <h3 className="eyebrow mt-6 mb-2">{t("ui.pois")}</h3>
+                  <div className="mt-6 mb-2 flex items-center justify-between gap-2">
+                    <h3 className="eyebrow">{t("ui.pois")}</h3>
+                    <button className="cursor-pointer text-xs text-tinta-2 underline underline-offset-4 hover:text-surco" onClick={() => setPoiQr(true)}>
+                      {t("app.poiQrPrint")}
+                    </button>
+                  </div>
                   <ul className="flex flex-col gap-1.5 text-sm">
                     {d.pois.map((p) => {
                       return (
@@ -865,6 +872,7 @@ export function FarmPage() {
           }}
         />
       )}
+      {poiQr && <PoiQrModal farmName={d.farm.name} pois={d.pois} onClose={() => setPoiQr(false)} />}
       {mode === "import" && <ImportPlots farmId={farmId} onClose={() => setMode("none")} />}
       {drawn && (
         <NewPlotModal

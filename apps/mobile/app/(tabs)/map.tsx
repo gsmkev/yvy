@@ -244,9 +244,10 @@ export default function MapScreen() {
         </Pressable>
       </View>
 
-      {canMarkPoi && !plot && (
+      {!plot && (
         <View style={st.mark}>
-          <Button kind="secondary" title={t("app.poiMark")} onPress={() => router.push("/poi")} />
+          <Button kind="secondary" title={t("app.poiScan")} onPress={() => router.push("/scan-poi")} />
+          {canMarkPoi && <Button kind="secondary" title={t("app.poiMark")} onPress={() => router.push("/poi")} style={{ marginTop: 8 }} />}
         </View>
       )}
 

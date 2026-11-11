@@ -9,6 +9,7 @@ import { fetchRecordsPage, useFarms, useMe, type RecordFilters } from "../lib/qu
 import type { RecordRow } from "../lib/types";
 import { Clock } from "lucide-react";
 import { DeleteRecordConfirm, RecordEditForm } from "./RecordEdit";
+import { RecordDetails } from "./RecordDetails";
 import { ShareWhatsappButton } from "./ShareButton";
 import { StationsView, stationsOf } from "./StationsView";
 import { Button, Empty, ErrorBox, Modal, Spinner } from "./ui";
@@ -149,6 +150,7 @@ export function RecordModal({ record: r, onClose }: { record: RecordRow; onClose
           <p className="mt-4 border-y border-linea py-3 text-sm whitespace-pre-wrap">{describeData(r.kind, r.data)}</p>
         )}
         {!editing && stationsOf(r.data) && <StationsView data={r.data} />}
+        {!editing && <RecordDetails kind={r.kind} data={r.data} />}
         {r.attachments.length > 0 && (
           <>
             <h3 className="eyebrow mt-5 mb-2">{t("ui.photos")}</h3>

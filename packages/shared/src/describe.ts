@@ -4,6 +4,12 @@ import { HERD_CATEGORIES } from "./livestock";
 
 const tr = (key: string, fallback: string) => (hasKey(key) ? t(key as MessageKey) : fallback);
 
+const dec = (n: number) => String(n).replace(".", ",");
+
+/** "Glifosato 2 L/ha" */
+export const doseText = (p: { name?: unknown; dose?: unknown; unit?: unknown }): string =>
+  `${String(p.name ?? "")} ${dec(Number(p.dose))} ${tr(`fields.doseUnit_${p.unit}`, String(p.unit ?? ""))}`.trim();
+
 export function describeRecord(kind: string, data: Record<string, unknown>): string {
   const d = data ?? {};
   const parts: string[] = [];
@@ -76,6 +82,13 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
         parts.push(`${d.density} ${tr(`fields.densityUnit_${d.densityUnit}`, String(d.densityUnit))}`);
       if (typeof d.areaHa === "number") parts.push(t("fields.areaDoneValue", { n: d.areaHa }));
       break;
+    case "application": {
+      const list = Array.isArray(d.products) ? (d.products as Record<string, unknown>[]) : [];
+      if (list.length) parts.push(list.map(doseText).join(" + "));
+      if (typeof d.areaHa === "number") parts.push(t("fields.areaDoneValue", { n: dec(d.areaHa) }));
+      if (typeof d.deltaT === "number") parts.push(t("fields.deltaTValue", { n: dec(d.deltaT) }));
+      break;
+    }
     case "note":
       if (str("text")) parts.push(d.text as string);
       break;

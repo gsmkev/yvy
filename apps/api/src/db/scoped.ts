@@ -78,6 +78,7 @@ const SYNCED: Record<PullTable, SyncedTable> = {
     version: s.plotSeasons.version,
     id: s.plotSeasons.id,
   },
+  products: { table: s.products, org: s.products.organizationId, version: s.products.version, id: s.products.id },
 };
 
 /** Matriz de permisos (PRD §9). */
@@ -99,6 +100,8 @@ export const can = {
   planSanitary: (r: Role) => r !== "worker",
   /** ADR 0004: campañas y su plan por lote; el empleado solo las ve. */
   editSeasons: (r: Role) => r !== "worker",
+  /** ADR 0004: catálogo de productos; el empleado lo recibe en el celular pero no lo edita. */
+  editProducts: (r: Role) => r !== "worker",
 };
 
 export class ScopedDb {
@@ -167,6 +170,8 @@ export class ScopedDb {
         return undefined; // las campañas son de toda la organización: el empleado las necesita para anotar
       case "plot_seasons":
         return sql`plot_seasons.plot_id IN ${this.assignedPlotsSql()}`;
+      case "products":
+        return undefined; // el catálogo es de toda la organización
     }
   }
 

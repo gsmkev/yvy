@@ -82,6 +82,15 @@ export const FORMS: Record<RecordKind, FieldSpec[]> = {
     { key: "counts", type: "counts", required: true },
     note,
   ],
+  application: [
+    { key: "volumeLHa", type: "number", unit: "L/ha" },
+    { key: "areaHa", type: "number", unit: "ha" },
+    { key: "windKmh", type: "number", unit: "km/h" },
+    { key: "tempC", type: "number", unit: "°C" },
+    { key: "humidityPct", type: "number", unit: "%" },
+    { key: "machine", type: "text" },
+    note,
+  ],
   sowing: [
     { key: "crop", type: "choice", options: CROPS, labelPrefix: "fields.crop_", required: true },
     { key: "variety", type: "text" },

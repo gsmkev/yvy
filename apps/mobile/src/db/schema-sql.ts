@@ -90,5 +90,7 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `plot_seasons_sync_idx` ON `plot_seasons` (`organization_id`,`version`,`id`);",
   "CREATE INDEX `plot_seasons_season_idx` ON `plot_seasons` (`season_id`);",
   "CREATE TABLE `seasons` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`start_date` text,\n\t`end_date` text,\n\t`active` integer DEFAULT true NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
-  "CREATE INDEX `seasons_sync_idx` ON `seasons` (`organization_id`,`version`,`id`);"
+  "CREATE INDEX `seasons_sync_idx` ON `seasons` (`organization_id`,`version`,`id`);",
+  "CREATE TABLE `products` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`type` text NOT NULL,\n\t`unit` text NOT NULL,\n\t`active_ingredient` text,\n\t`withdrawal_days` integer,\n\t`tox_class` text,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
+  "CREATE INDEX `products_sync_idx` ON `products` (`organization_id`,`version`,`id`);"
 ];

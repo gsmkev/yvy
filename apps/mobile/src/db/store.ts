@@ -52,6 +52,7 @@ const TABLES: Record<PullTable, SQLiteTable> = {
   farm_layers: s.farmLayers,
   seasons: s.seasons,
   plot_seasons: s.plotSeasons,
+  products: s.products,
 };
 
 /** jsKey → columna SQL, sacado del esquema compartido. */
@@ -76,6 +77,7 @@ export type RecordRow = typeof s.records.$inferSelect & { pending: boolean; reje
 export type Alert = typeof s.alerts.$inferSelect;
 export type FarmLayer = typeof s.farmLayers.$inferSelect;
 export type Season = typeof s.seasons.$inferSelect;
+export type Product = typeof s.products.$inferSelect;
 export type PlotSeason = typeof s.plotSeasons.$inferSelect;
 
 export interface NewRecord {
@@ -639,6 +641,13 @@ export class LocalDb implements SyncStore {
     return this.sql
       .all("SELECT * FROM seasons WHERE deleted_at IS NULL AND active = 1 ORDER BY start_date DESC, created_at DESC")
       .map((r) => fromRow<Season>(s.seasons, r));
+  }
+
+  /** Catálogo de productos de la organización. */
+  products(): Product[] {
+    return this.sql
+      .all("SELECT * FROM products WHERE deleted_at IS NULL ORDER BY name")
+      .map((r) => fromRow<Product>(s.products, r));
   }
 
   /** Lo planificado en un lote para una campaña (cultivo, variedad), si bajó al celular. */

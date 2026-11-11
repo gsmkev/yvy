@@ -92,6 +92,15 @@ const FIELDS: Record<RecordKind, FieldDef[]> = {
     ...HERD_FIELDS("counts"),
     NOTE,
   ],
+  application: [
+    { key: "volumeLHa", label: f("volumeLHa"), type: "number", optional: true },
+    { key: "areaHa", label: f("areaDone"), type: "number", optional: true },
+    { key: "windKmh", label: f("windKmh"), type: "number", optional: true },
+    { key: "tempC", label: f("tempC"), type: "number", optional: true },
+    { key: "humidityPct", label: f("humidityPct"), type: "number", optional: true },
+    { key: "machine", label: f("machine"), type: "text", optional: true },
+    NOTE,
+  ],
   sowing: [
     { key: "crop", label: f("crop"), type: "select", options: opts("crop", CROPS) },
     { key: "variety", label: f("variety"), type: "text", optional: true },

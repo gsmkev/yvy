@@ -162,6 +162,16 @@ export interface ProblemArea {
   plotMedianNdvi: number;
 }
 
+export interface Product {
+  id: string;
+  name: string;
+  type: "seed" | "agrochemical" | "fertilizer" | "fuel" | "veterinary" | "other";
+  unit: "l" | "kg";
+  activeIngredient: string | null;
+  withdrawalDays: number | null;
+  toxClass: string | null;
+}
+
 export interface Season {
   id: string;
   name: string;

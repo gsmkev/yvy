@@ -91,3 +91,43 @@ describe("flujo de siembra", () => {
     expect(parseRecordData("sowing", { crop: "maiz", densityUnit: "kg_ha" }).success).toBe(true);
   });
 });
+
+describe("flujo de aplicación", () => {
+  it("productos primero, condiciones opcionales después", () => {
+    const steps = visibleSteps(FLOWS.application, {}, { askSeason: false });
+    expect(steps.map((x) => x.key)).toEqual(["products", "volumeLHa", "areaHa", "windKmh", "tempC", "humidityPct", "note"]);
+    expect(steps.filter((x) => x.kind === "number").every((x) => x.kind === "number" && x.optional)).toBe(true);
+  });
+
+  it("el catálogo baja al celular y los datos calculan Delta T", async () => {
+    const db = setup();
+    const id = newId();
+    await db.applyPull(
+      "products",
+      [
+        {
+          id,
+          organizationId: ORG,
+          name: "Glifosato 48",
+          type: "agrochemical",
+          unit: "l",
+          activeIngredient: "glifosato",
+          withdrawalDays: 15,
+          toxClass: null,
+          createdAt: 1,
+          updatedAt: 1,
+          deletedAt: null,
+          version: 1,
+        },
+      ],
+      null,
+    );
+    expect(db.products().map((p) => p.name)).toEqual(["Glifosato 48"]);
+    const r = parseRecordData("application", {
+      products: [{ productId: id, name: "Glifosato 48", dose: 2, unit: "l_ha" }],
+      tempC: 25,
+      humidityPct: 50,
+    });
+    expect(r.success && (r.data as { deltaT?: number }).deltaT).toBeGreaterThan(5);
+  });
+});

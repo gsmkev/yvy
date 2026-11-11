@@ -1,13 +1,17 @@
 /** Agricultura desde la web (ADR 0004): campañas, plan por lote e historial del lote. */
 import { Hono } from "hono";
 import { z } from "zod";
-import { CROPS } from "@yvy/shared";
+import { CROPS, PRODUCT_TYPES, PRODUCT_UNITS } from "@yvy/shared";
 import {
+  createProduct,
   createSeason,
   deletePlotSeason,
+  deleteProduct,
   deleteSeason,
+  listProducts,
   listSeasons,
   plotHistory,
+  updateProduct,
   updateSeason,
   upsertPlotSeason,
 } from "../db/agri";
@@ -90,3 +94,38 @@ agri.delete("/seasons/:seasonId/plots/:plotId", async (c) => {
 });
 
 agri.get("/plots/:id/seasons", async (c) => c.json(await plotHistory(c.var.sdb, c.req.param("id"))));
+
+const productFields = {
+  name: z.string().trim().min(1).max(120),
+  type: z.enum(PRODUCT_TYPES),
+  unit: z.enum(PRODUCT_UNITS),
+  activeIngredient: z.string().trim().max(120).nullish(),
+  withdrawalDays: z.number().int().min(0).max(365).nullish(),
+  toxClass: z.string().trim().max(40).nullish(),
+};
+
+agri.get("/products", async (c) => c.json(await listProducts(c.var.sdb)));
+
+agri.post("/products", async (c) => {
+  const b = parse(z.object(productFields), await readJson(c.req));
+  return c.json(
+    await createProduct(c.var.sdb, {
+      ...b,
+      activeIngredient: b.activeIngredient || null,
+      withdrawalDays: b.withdrawalDays ?? null,
+      toxClass: b.toxClass || null,
+    }),
+    201,
+  );
+});
+
+agri.patch("/products/:id", async (c) => {
+  const b = parse(z.object(productFields).partial(), await readJson(c.req));
+  await updateProduct(c.var.sdb, c.req.param("id"), b);
+  return c.json({ ok: true });
+});
+
+agri.delete("/products/:id", async (c) => {
+  await deleteProduct(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});

@@ -13,6 +13,7 @@ import {
   LIMITS,
   MONITOR_CROPS,
   monitorTemplate,
+  ORDER_LABOR_KIND,
   parseRecordData,
   summarizeStations,
   t,
@@ -85,6 +86,15 @@ export default function Annotate() {
       if (rx.volumeLHa) out.volumeLHa = rx.volumeLHa;
       if (rx.seasonId) out.seasonId = rx.seasonId;
       out.prescriptionTaskId = params.taskId;
+    }
+    // E-21: la orden de trabajo precarga insumos, campaña y superficie prevista; al guardar queda ligada a la tarea.
+    const ord = params.taskId ? db.orderOf(params.taskId) : null;
+    if (ord && ORDER_LABOR_KIND[ord.labor] === kd) {
+      if ((kd === "application" || kd === "fertilization") && ord.products.length) out.products = ord.products;
+      if (ord.seasonId) out.seasonId = ord.seasonId;
+      if (ord.areaHa) out.areaHa = ord.areaHa;
+      if (kd === "application" && ord.volumeLHa) out.volumeLHa = ord.volumeLHa;
+      out.orderTaskId = params.taskId;
     }
     return out;
   };

@@ -24,7 +24,7 @@ import {
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from "./client";
-import { consumes, recordEffects, type EffectRecord } from "./erp-effects";
+import { hasEffects, recordEffects, type EffectRecord } from "./erp-effects";
 import { funnelEvent } from "./events";
 import { can, type ScopedDb } from "./scoped";
 
@@ -298,7 +298,7 @@ export async function applyPush(
           updatedAt: now,
         });
         records.set(r.id, { organizationId: org, authorId, createdAt, deletedAt: null });
-        if (consumes(r.kind))
+        if (hasEffects(r.kind))
           effectUpserts.push({
             id: r.id,
             farmId: r.farmId,
@@ -481,6 +481,7 @@ export async function applyPush(
                   lon: t.lon,
                   lat: t.lat,
                   prescription: t.prescription,
+                  workOrder: t.workOrder,
                   dueDate: next,
                   dueTime: t.dueTime,
                   priority: t.priority,

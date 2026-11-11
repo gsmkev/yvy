@@ -18,6 +18,7 @@ import {
   nextDueDate,
   nextOccurrenceId,
   parseChecklist,
+  orderSchema,
   prescriptionSchema,
   RECORD_SCHEMA_VERSION,
   resetChecklist,
@@ -25,6 +26,7 @@ import {
   setChecklistItem,
   type CountEvent,
   type Prescription,
+  type WorkOrder,
   type Cursor,
   type HerdCategory,
   type HerdCounts,
@@ -384,8 +386,8 @@ export class LocalDb implements SyncStore {
       const next = task.status !== "done" ? nextDueDate(task.dueDate, task.recurrence, localDate(ts, tz)) : null;
       if (next) {
         this.sql.run(
-          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, lon, lat, due_date, due_time, priority, recurrence, status, prescription, created_by, created_at, updated_at, version, checklist)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, 0, ?) ON CONFLICT(id) DO NOTHING`,
+          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, lon, lat, due_date, due_time, priority, recurrence, status, prescription, created_by, created_at, updated_at, version, checklist, work_order)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, 0, ?, ?) ON CONFLICT(id) DO NOTHING`,
           [
             nextOccurrenceId(taskId),
             task.organizationId,
@@ -405,6 +407,7 @@ export class LocalDb implements SyncStore {
             ts,
             ts,
             serializeChecklist(resetChecklist(parseChecklist(task.checklist))),
+            task.workOrder,
           ],
         );
       }
@@ -685,6 +688,18 @@ export class LocalDb implements SyncStore {
     if (!r?.prescription) return null;
     try {
       const p = prescriptionSchema.safeParse(JSON.parse(r.prescription));
+      return p.success ? p.data : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Orden de trabajo de una tarea (E-20), ya validada; null si no tiene o está dañada. */
+  orderOf(taskId: string): WorkOrder | null {
+    const r = this.sql.get<{ work_order: string | null }>("SELECT work_order FROM tasks WHERE id = ?", [taskId]);
+    if (!r?.work_order) return null;
+    try {
+      const p = orderSchema.safeParse(JSON.parse(r.work_order));
       return p.success ? p.data : null;
     } catch {
       return null;

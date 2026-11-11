@@ -89,6 +89,9 @@ export const DENSITY_UNITS = ["seeds_m", "kg_ha"] as const;
 /** Superficie hecha en hectáreas (aplicaciones, siembra, cosecha). */
 const areaDone = z.number().positive().max(100_000);
 const seasonId = uuidStr.optional();
+/** Orden de trabajo (tarea) que se está cerrando con este registro (E-21), y horas de máquina si se cobra por hora. */
+const orderTaskId = uuidStr.optional();
+const hours = z.number().positive().max(1000).optional();
 
 /** Producto de una aplicación: del catálogo (productId) o escrito a mano en el campo (solo name). */
 export const productDose = z.object({
@@ -127,6 +130,35 @@ export const trackSchema = z
   })
   .refine((d) => d.endedAt >= d.startedAt, { message: "La recorrida termina antes de empezar" });
 export type TrackData = z.infer<typeof trackSchema>;
+/** Labores de una orden de trabajo (E-20) y el tipo de registro con que se cierran (E-21). */
+export const ORDER_LABORS = ["spraying", "fertilizing", "sowing", "harvest", "other"] as const;
+export type OrderLabor = (typeof ORDER_LABORS)[number];
+export const ORDER_LABOR_KIND: Record<OrderLabor, RecordKind | null> = {
+  spraying: "application",
+  fertilizing: "fertilization",
+  sowing: "sowing",
+  harvest: "harvest",
+  other: null,
+};
+
+/**
+ * Orden de trabajo (E-20): viaja dentro de la tarea (tasks.work_order), una tarea por lote. El operario es el
+ * responsable de la tarea; si la hace un contratista, `contractorId` define cuánto cuesta. Al cerrarla desde la app
+ * se carga el registro de campo con la superficie y los consumos reales (`orderTaskId` lo liga a la tarea).
+ */
+export const orderSchema = z.object({
+  labor: z.enum(ORDER_LABORS),
+  seasonId,
+  /** Superficie prevista por lote en hectáreas; si falta, la del lote. */
+  areaHa: z.number().positive().max(100_000).optional(),
+  products: z.array(productDose).max(10).default([]),
+  volumeLHa: z.number().positive().max(2000).optional(),
+  machineId: uuidStr.optional(),
+  machine: z.string().trim().min(1).max(80).optional(),
+  contractorId: uuidStr.optional(),
+  note,
+});
+export type WorkOrder = z.infer<typeof orderSchema>;
 
 export const recordDataSchemas = {
   scouting: z.object({ condition, note }),
@@ -163,6 +195,8 @@ export const recordDataSchemas = {
   sowing: z
     .object({
       seasonId,
+      orderTaskId,
+      hours,
       crop: z.enum(CROPS),
       variety: z.string().trim().min(1).max(80).optional(),
       density: z.number().positive().max(1_000_000).optional(),
@@ -175,6 +209,8 @@ export const recordDataSchemas = {
     }),
   fertilization: z.object({
     seasonId,
+    orderTaskId,
+    hours,
     products: z.array(fertilizerDose).min(1).max(10),
     method: z.enum(FERT_METHODS),
     areaHa: areaDone.optional(),
@@ -182,6 +218,8 @@ export const recordDataSchemas = {
   }),
   harvest: z.object({
     seasonId,
+    orderTaskId,
+    hours,
     tons: z.number().positive().max(1_000_000),
     moisturePct: z.number().min(0).max(100).optional(),
     areaHa: areaDone.optional(),
@@ -204,6 +242,8 @@ export const recordDataSchemas = {
   application: z
     .object({
       seasonId,
+      orderTaskId,
+      hours,
       products: z.array(productDose).min(1).max(10),
       volumeLHa: z.number().positive().max(2000).optional(),
       areaHa: areaDone.optional(),

@@ -2,12 +2,13 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { LIMITS } from "@yvy/shared";
-import { contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
+import { orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { HTTPException } from "hono/http-exception";
 import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
 import { presign } from "../lib/r2";
 import { fuelReport } from "../db/fuel";
+import { createWorkOrder, listWorkOrders } from "../db/work-orders";
 import { fixDefaultWarehouse } from "../db/stock";
 import { adjustStock, consumeStock, deleteMove, expiringLots, listMoves, purchaseStock, requireWarehouseUnused, stockSummary, transferStock } from "../db/stock-moves";
 import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
@@ -202,3 +203,29 @@ erp.delete("/photos/:kind/:id", async (c) => {
 erp.get("/fuel/report", async (c) =>
   c.json(await fuelReport(c.var.sdb, parse(z.object({ farmId: uuid.optional(), from: isoDate.optional(), to: isoDate.optional() }), c.req.query()))),
 );
+
+// ---------- Órdenes de trabajo (E-20) ----------
+// Crear y ver: quien puede asignar tareas (no el empleado). El costo se ve solo con permiso de montos.
+
+erp.get("/work-orders", async (c) =>
+  c.json(
+    await listWorkOrders(
+      c.var.sdb,
+      parse(z.object({ farmId: uuid.optional(), status: z.enum(["open", "done", "cancelled"]).optional() }), c.req.query()),
+    ),
+  ),
+);
+erp.post("/work-orders", async (c) => {
+  const b = parse(
+    z.object({
+      farmId: uuid,
+      plotIds: z.array(uuid).min(1).max(LIMITS.erp.maxPlotsPerOrder),
+      assigneeId: z.string().min(1),
+      dueDate: isoDate,
+      title: z.string().trim().max(200).nullish(),
+      order: orderSchema,
+    }),
+    await readJson(c.req),
+  );
+  return c.json(await createWorkOrder(c.var.sdb, b), 201);
+});

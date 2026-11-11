@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 import type { RecordKind } from "./schema";
+import { LIMITS } from "./limits";
 
 export const RECORD_SCHEMA_VERSION = 1;
 
@@ -22,6 +23,15 @@ export const PHENO_STAGES = [
   "cosecha",
 ] as const;
 
+/** Estación de un monitoreo (F-12): dónde se paró y cuánto contó de cada plaga de la plantilla del cultivo. */
+export const stationSchema = z.object({
+  lon: z.number().min(-180).max(180).optional(),
+  lat: z.number().min(-90).max(90).optional(),
+  accuracyM: z.number().nonnegative().max(100_000).optional(),
+  counts: z.record(z.string().max(40), z.number().nonnegative().max(LIMITS.monitoring.maxCount)),
+});
+export type Station = z.infer<typeof stationSchema>;
+
 export const recordDataSchemas = {
   scouting: z.object({ condition, note }),
   pest: z
@@ -29,9 +39,13 @@ export const recordDataSchemas = {
       pest: z.enum(PESTS),
       intensity: level3.optional(),
       perMeter: z.number().nonnegative().max(10_000).optional(),
+      /** Monitoreo por estaciones (F-12). Campos opcionales: los registros viejos siguen siendo válidos. */
+      crop: z.string().max(20).optional(),
+      stations: z.array(stationSchema).min(1).max(LIMITS.monitoring.maxStations).optional(),
+      averages: z.record(z.string().max(40), z.number().nonnegative().max(LIMITS.monitoring.maxCount)).optional(),
       note,
     })
-    .refine((d) => d.intensity !== undefined || d.perMeter !== undefined, {
+    .refine((d) => d.intensity !== undefined || d.perMeter !== undefined || d.stations !== undefined, {
       message: "Indicá intensidad o número por metro",
     }),
   crop_status: z.object({ stage: z.enum(PHENO_STAGES), condition, note }),

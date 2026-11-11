@@ -16,7 +16,11 @@ import {
   newId,
   nextDueDate,
   nextOccurrenceId,
+  parseChecklist,
   RECORD_SCHEMA_VERSION,
+  resetChecklist,
+  serializeChecklist,
+  setChecklistItem,
   type Cursor,
   type Mutation,
   type PullTable,
@@ -81,6 +85,18 @@ export interface LocalPhoto {
   width: number;
   height: number;
   bytes: number;
+}
+
+/** Una cosa pendiente de mandar, tal como la ve la persona (pantalla Más). */
+export interface OutboxItem {
+  id: string;
+  /** Qué es: un registro nuevo o editado, un borrado, una tarea hecha, o solo fotos. */
+  what: "record" | "record_delete" | "task" | "photos" | "poi";
+  recordKind: RecordKind | null;
+  plotId: string | null;
+  at: number;
+  photos: number;
+  photoBytes: number;
 }
 
 export class LocalDb implements SyncStore {
@@ -276,6 +292,30 @@ export class LocalDb implements SyncStore {
     return recordId;
   }
 
+  /**
+   * Un registro por lote, todo en una transacción y con el mismo capturedAt (anotar en varios lotes, F-10).
+   * Las fotos van en el primero: subirlas una vez por lote sería mandar lo mismo varias veces.
+   */
+  saveRecords(userId: string, orgId: string, inputs: NewRecord[], photos: LocalPhoto[] = []): string[] {
+    return this.sql.tx(() => inputs.map((input, i) => this.saveRecord(userId, orgId, input, i === 0 ? photos : [])));
+  }
+
+  /** Marca un punto de interés (F-07). Fila local + mutación en una sola transacción. */
+  savePoi(orgId: string, input: { farmId: string; kind: Poi["kind"]; name: string; lon: number; lat: number }, poiId = newId()): string {
+    const ts = this.now();
+    const name = input.name.trim();
+    this.sql.tx(() => {
+      this.sql.run(
+        `INSERT INTO points_of_interest (id, organization_id, farm_id, kind, name, lon, lat, created_at, updated_at, version)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+         ON CONFLICT(id) DO UPDATE SET kind = excluded.kind, name = excluded.name, lon = excluded.lon, lat = excluded.lat, updated_at = excluded.updated_at`,
+        [poiId, orgId, input.farmId, input.kind, name, input.lon, input.lat, ts, ts],
+      );
+      this.enqueue({ mutationId: newId(), kind: "pois.upsert", row: { id: poiId, farmId: input.farmId, kind: input.kind, name, lon: input.lon, lat: input.lat } }, poiId);
+    });
+    return poiId;
+  }
+
   deleteRecord(recordId: string): void {
     const ts = this.now();
     this.sql.tx(() => {
@@ -307,8 +347,8 @@ export class LocalDb implements SyncStore {
       const next = task.status !== "done" ? nextDueDate(task.dueDate, task.recurrence, localDate(ts, tz)) : null;
       if (next) {
         this.sql.run(
-          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, due_date, recurrence, status, created_by, created_at, updated_at, version)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, 0) ON CONFLICT(id) DO NOTHING`,
+          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, due_date, recurrence, status, created_by, created_at, updated_at, version, checklist)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, 0, ?) ON CONFLICT(id) DO NOTHING`,
           [
             nextOccurrenceId(taskId),
             task.organizationId,
@@ -322,9 +362,28 @@ export class LocalDb implements SyncStore {
             task.createdBy,
             ts,
             ts,
+            serializeChecklist(resetChecklist(parseChecklist(task.checklist))),
           ],
         );
       }
+    });
+  }
+
+  taskById(id: string): Task | null {
+    const r = this.sql.get<Record<string, unknown>>("SELECT * FROM tasks WHERE id = ? AND deleted_at IS NULL", [id]);
+    return r ? fromRow<Task>(s.tasks, r) : null;
+  }
+
+  /** Tilda o destilda un ítem de la lista de verificación (F-15). Sin red: queda en el outbox. */
+  setChecklistItem(taskId: string, itemId: string, done: boolean): void {
+    const task = this.taskById(taskId);
+    if (!task) throw new Error("task_not_found");
+    const next = setChecklistItem(parseChecklist(task.checklist), itemId, done);
+    if (!next) throw new Error("item_not_found");
+    const ts = this.now();
+    this.sql.tx(() => {
+      this.sql.run("UPDATE tasks SET checklist = ?, updated_at = ? WHERE id = ?", [serializeChecklist(next), ts, taskId]);
+      this.enqueue({ mutationId: newId(), kind: "tasks.check", row: { id: taskId, itemId, done } }, taskId);
     });
   }
 
@@ -332,6 +391,52 @@ export class LocalDb implements SyncStore {
 
   pendingCount(): number {
     return this.sql.get<{ n: number }>("SELECT count(*) n FROM outbox WHERE rejected_reason IS NULL")?.n ?? 0;
+  }
+
+  /**
+   * Lo que falta mandar: mutaciones del outbox (cada registro con el peso de sus fotos) y fotos que
+   * el servidor ya conoce pero todavía no se subieron. Más viejo primero.
+   */
+  outboxItems(): OutboxItem[] {
+    const rows = this.sql.all<{ mutation_id: string; payload: string; created_at: number }>(
+      "SELECT mutation_id, payload, created_at FROM outbox WHERE rejected_reason IS NULL ORDER BY mutation_id",
+    );
+    const muts = rows.map((r) => ({ m: JSON.parse(r.payload) as Mutation, at: r.created_at }));
+    // Fotos por registro: las que van en el outbox y las que esperan subir.
+    const photosOf = new Map<string, { n: number; bytes: number; at: number }>();
+    const addPhoto = (recordId: string, bytes: number, at: number) => {
+      const p = photosOf.get(recordId) ?? { n: 0, bytes: 0, at };
+      photosOf.set(recordId, { n: p.n + 1, bytes: p.bytes + bytes, at: Math.min(p.at, at) });
+    };
+    for (const { m, at } of muts) if (m.kind === "attachments.upsert") addPhoto(m.row.recordId, m.row.bytes ?? 0, at);
+    for (const f of this.sql.all<{ record_id: string; bytes: number | null; created_at: number }>(
+      `SELECT a.record_id, a.bytes, a.created_at FROM local_files f JOIN attachments a ON a.id = f.attachment_id
+       WHERE f.uploaded = 0 AND NOT EXISTS (SELECT 1 FROM outbox o WHERE o.row_id = f.attachment_id)`,
+    ))
+      addPhoto(f.record_id, f.bytes ?? 0, f.created_at);
+
+    const items: OutboxItem[] = [];
+    const withRecord = new Set<string>();
+    for (const { m, at } of muts) {
+      if (m.kind === "records.upsert") {
+        const p = photosOf.get(m.row.id);
+        withRecord.add(m.row.id);
+        items.push({ id: m.mutationId, what: "record", recordKind: m.row.kind, plotId: m.row.plotId, at, photos: p?.n ?? 0, photoBytes: p?.bytes ?? 0 });
+      } else if (m.kind === "records.delete") {
+        items.push({ id: m.mutationId, what: "record_delete", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
+      } else if (m.kind === "pois.upsert") {
+        items.push({ id: m.mutationId, what: "poi", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
+      } else if (m.kind === "tasks.status" || m.kind === "tasks.check") {
+        items.push({ id: m.mutationId, what: "task", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
+      }
+    }
+    // Fotos de registros que ya llegaron al servidor.
+    for (const [recordId, p] of photosOf) {
+      if (withRecord.has(recordId)) continue;
+      const rec = this.sql.get<{ kind: RecordKind; plot_id: string | null }>("SELECT kind, plot_id FROM records WHERE id = ?", [recordId]);
+      items.push({ id: `photos-${recordId}`, what: "photos", recordKind: rec?.kind ?? null, plotId: rec?.plot_id ?? null, at: p.at, photos: p.n, photoBytes: p.bytes });
+    }
+    return items.sort((a, b) => a.at - b.at);
   }
 
   rejected(): { mutationId: string; kind: string; reason: string; detail: string | null }[] {
@@ -406,6 +511,16 @@ export class LocalDb implements SyncStore {
       .map((a) => ({ id: a.id, thumbUri: this.localPhoto(a.id) }));
   }
 
+  /** Primera miniatura local de cada registro con fotos (Historial). Las fotos de otro celular no tienen miniatura acá. */
+  firstThumbByRecord(): Map<string, string> {
+    const rows = this.sql.all<{ record_id: string; thumb_uri: string }>(
+      `SELECT a.record_id, f.thumb_uri FROM attachments a JOIN local_files f ON f.attachment_id = a.id
+       WHERE a.deleted_at IS NULL ORDER BY a.created_at DESC, a.rowid DESC`,
+    );
+    // Se recorre de la más nueva a la más vieja: la última escritura en el mapa es la primera foto.
+    return new Map(rows.map((r) => [r.record_id, r.thumb_uri] as const));
+  }
+
   /** Últimas anotaciones de un lote (ficha del lote y pantalla Anotar). */
   recordsOfPlot(plotId: string, limit = 20): RecordRow[] {
     return this.records(500).filter((r) => r.plotId === plotId).slice(0, limit);
@@ -420,6 +535,20 @@ export class LocalDb implements SyncStore {
       [farmId, from],
     );
     return rows.reduce((a, r) => a + (Number((JSON.parse(r.data) as { mm?: number }).mm) || 0), 0);
+  }
+
+  /** Último NDVI del lote según lo que bajó al celular; null si no hay (empleados no reciben estadísticas). */
+  lastVigor(plotId: string): { mean: number; acquiredAt: number } | null {
+    const r = this.sql.get<{ mean: number; acquired_at: number }>(
+      "SELECT mean, acquired_at FROM plot_index_stats WHERE plot_id = ? AND idx = 'ndvi' AND deleted_at IS NULL ORDER BY acquired_at DESC LIMIT 1",
+      [plotId],
+    );
+    return r ? { mean: r.mean, acquiredAt: r.acquired_at } : null;
+  }
+
+  /** Tareas abiertas de un lote. */
+  openTasksOfPlot(plotId: string): number {
+    return this.sql.get<{ n: number }>("SELECT count(*) n FROM tasks WHERE plot_id = ? AND status = 'open' AND deleted_at IS NULL", [plotId])?.n ?? 0;
   }
 
   /** Último registro por lote, para saber qué lotes hace días que nadie recorre. */

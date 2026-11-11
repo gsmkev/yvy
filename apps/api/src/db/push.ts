@@ -8,7 +8,11 @@ import {
   localDate,
   nextDueDate,
   nextOccurrenceId,
+  parseChecklist,
   parseRecordData,
+  resetChecklist,
+  serializeChecklist,
+  setChecklistItem,
   RECORD_SCHEMA_VERSION,
   LIMITS,
   type Mutation,
@@ -18,7 +22,7 @@ import {
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from "./client";
-import type { ScopedDb } from "./scoped";
+import { can, type ScopedDb } from "./scoped";
 
 const paramsPerRow = (t: SQLiteTable) => Object.keys(getTableColumns(t)).length;
 
@@ -71,7 +75,12 @@ export async function applyPush(
         attachmentIds.add(m.row.id);
         break;
       case "tasks.status":
+      case "tasks.check":
         taskIds.add(m.row.id);
+        break;
+      case "pois.upsert":
+        poiIds.add(m.row.id);
+        farmIds.add(m.row.farmId);
         break;
     }
   }
@@ -133,9 +142,14 @@ export async function applyPush(
         : empty,
       poiIds.size
         ? db
-            .select({ id: s.pointsOfInterest.id, farmId: s.pointsOfInterest.farmId })
+            .select({
+              id: s.pointsOfInterest.id,
+              organizationId: s.pointsOfInterest.organizationId,
+              farmId: s.pointsOfInterest.farmId,
+              deletedAt: s.pointsOfInterest.deletedAt,
+            })
             .from(s.pointsOfInterest)
-            .where(and(eq(s.pointsOfInterest.organizationId, org), inArray(s.pointsOfInterest.id, ids(poiIds))))
+            .where(inArray(s.pointsOfInterest.id, ids(poiIds)))
         : empty,
       sdb.isWorker
         ? db
@@ -158,7 +172,11 @@ export async function applyPush(
   const tasks = new Map(taskRows.map((r) => [r.task.id, { ...r.task, tz: r.tz }]));
   const farms = new Set(farmRows.map((r) => r.id));
   const plots = new Map(plotRows.map((r) => [r.id, r.farmId]));
-  const pois = new Map(poiRows.map((r) => [r.id, r.farmId]));
+  // Un id que existe en otra organización no se toca ni se ve: solo sirve para rechazar.
+  const ownPoiRows = poiRows.filter((r) => r.organizationId === org);
+  const foreignPois = new Set(poiRows.filter((r) => r.organizationId !== org).map((r) => r.id));
+  const pois = new Map(ownPoiRows.map((r) => [r.id, r.farmId]));
+  const deletedPois = new Set(ownPoiRows.filter((r) => r.deletedAt).map((r) => r.id));
   const assignedPlots = new Set(assignedRows.map((r) => r.plotId));
   const workerFarms = new Set(assignedRows.map((r) => r.farmId));
   const attachCount = new Map(countRows.map((r) => [r.recordId, r.n]));
@@ -170,6 +188,7 @@ export async function applyPush(
   const attachmentUpserts: (typeof s.attachments.$inferInsert)[] = [];
   const attachmentDeletes: string[] = [];
   const taskUpdates: Stmt[] = [];
+  const poiUpserts: (typeof s.pointsOfInterest.$inferInsert)[] = [];
   const applied: (typeof s.syncMutations.$inferInsert)[] = [];
 
   const reject = (m: Mutation, reason: RejectReason, detail?: string) =>
@@ -352,6 +371,35 @@ export async function applyPush(
         accept(m, m.row.id);
         break;
       }
+      case "pois.upsert": {
+        const p = m.row;
+        if (!can.editPoi(auth.role)) {
+          reject(m, "forbidden", "poi");
+          break;
+        }
+        if (foreignPois.has(p.id)) {
+          reject(m, "not_found");
+          break;
+        }
+        const knownFarm = pois.get(p.id);
+        if (knownFarm !== undefined && knownFarm !== p.farmId) {
+          // Existe (de esta organización) pero en otra estancia: no se mueve de estancia.
+          reject(m, "invalid", "farm");
+          break;
+        }
+        if (deletedPois.has(p.id)) {
+          reject(m, "deleted");
+          break;
+        }
+        if (!farms.has(p.farmId)) {
+          reject(m, "forbidden", "farm");
+          break;
+        }
+        poiUpserts.push({ id: p.id, organizationId: org, farmId: p.farmId, kind: p.kind, name: p.name, lon: p.lon, lat: p.lat, createdAt: now, updatedAt: now });
+        pois.set(p.id, p.farmId);
+        accept(m, p.id);
+        break;
+      }
       case "tasks.status": {
         const t = tasks.get(m.row.id);
         if (!t || t.organizationId !== org) {
@@ -395,6 +443,7 @@ export async function applyPush(
                   dueDate: next,
                   recurrence: t.recurrence,
                   status: "open",
+                  checklist: serializeChecklist(resetChecklist(parseChecklist(t.checklist))),
                   createdBy: t.createdBy,
                   createdAt: now,
                   updatedAt: now,
@@ -408,6 +457,32 @@ export async function applyPush(
         accept(m, t.id);
         break;
       }
+      case "tasks.check": {
+        const t = tasks.get(m.row.id);
+        if (!t || t.organizationId !== org) {
+          reject(m, "not_found");
+          break;
+        }
+        if (sdb.isWorker && t.assigneeId !== auth.userId) {
+          reject(m, "forbidden");
+          break;
+        }
+        // Cada tilde es un ítem: el último gana por ítem, y lo demás de la lista no se toca.
+        const next = setChecklistItem(parseChecklist(t.checklist), m.row.itemId, m.row.done);
+        if (!next) {
+          reject(m, "invalid", "item");
+          break;
+        }
+        t.checklist = serializeChecklist(next);
+        taskUpdates.push(
+          db
+            .update(s.tasks)
+            .set({ checklist: t.checklist, updatedAt: now, version: currentVersion })
+            .where(and(eq(s.tasks.id, t.id), eq(s.tasks.organizationId, org))),
+        );
+        accept(m, t.id);
+        break;
+      }
     }
   }
 
@@ -418,10 +493,29 @@ export async function applyPush(
       recordDeletes.length +
       attachmentUpserts.length +
       attachmentDeletes.length +
+      poiUpserts.length +
       taskUpdates.length >
     0;
   if (touchesSynced) stmts.push(bumpVersion(db));
 
+  for (const chunk of chunkForParams(poiUpserts, paramsPerRow(s.pointsOfInterest))) {
+    stmts.push(
+      db
+        .insert(s.pointsOfInterest)
+        .values(chunk.map((p) => ({ ...p, version: currentVersion })))
+        .onConflictDoUpdate({
+          target: s.pointsOfInterest.id,
+          set: {
+            kind: sql`excluded.kind`,
+            name: sql`excluded.name`,
+            lon: sql`excluded.lon`,
+            lat: sql`excluded.lat`,
+            updatedAt: sql`excluded.updated_at`,
+            version: sql`excluded.version`,
+          },
+        }),
+    );
+  }
   for (const chunk of chunkForParams(recordUpserts, paramsPerRow(s.records))) {
     stmts.push(
       db

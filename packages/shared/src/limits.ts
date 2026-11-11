@@ -16,6 +16,8 @@ export const LIMITS = {
     maxFutureCaptureMs: 60 * 60 * 1000,
     /** Tareas completadas que siguen bajando al celular. */
     tasksDoneHistoryMs: 30 * 24 * 60 * 60 * 1000,
+    /** Largo máximo del nombre de un punto de interés. */
+    maxPoiNameLength: 120,
     /** Ventana en que el empleado puede editar o borrar sus registros (RF-34, §9). */
     workerEditWindowMs: 24 * 60 * 60 * 1000,
     /** Sincronización automática en primer plano (PRD: 15 min; anexo Cloudflare: 30). */
@@ -64,6 +66,22 @@ export const LIMITS = {
     forecastCacheMs: 3 * 60 * 60 * 1000,
     forecastRunsKept: 4,
     coordDecimals: 4,
+  },
+  monitoring: {
+    /** Estaciones de muestreo que propone la app por lote (F-12). */
+    defaultStations: 5,
+    maxStations: 20,
+    /** Conteo máximo por plaga en una estación. */
+    maxCount: 10_000,
+  },
+  checklist: {
+    /** Ítems por tarea (F-15). */
+    maxItems: 30,
+    maxTextLength: 120,
+  },
+  share: {
+    /** Duraciones permitidas del enlace de solo lectura (K-04), en días. */
+    linkDays: [7, 30],
   },
 } as const;
 

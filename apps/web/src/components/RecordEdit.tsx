@@ -5,6 +5,14 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  HEALTH_REASONS,
+  HERD_CATEGORIES,
+  MORTALITY_CAUSES,
+  MOVE_REASONS,
+  CROPS,
+  DENSITY_UNITS,
+  FERT_METHODS,
+  HARVEST_DESTINATIONS,
   newId,
   parseRecordData,
   PESTS,
@@ -18,7 +26,7 @@ import { post } from "../lib/api";
 import { fmtDateTime } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import type { RecordRow } from "../lib/types";
-import { Button, ConfirmModal, ErrorBox, Field, Input, Select } from "./ui";
+import { Button, ConfirmModal, ErrorBox, Field, Input, Select, toast } from "./ui";
 
 type Opt = { value: string; label: string };
 type FieldDef =
@@ -32,7 +40,13 @@ const CONDITION = opts("condition", ["good", "fair", "bad"]);
 const LEVEL = opts("level", ["low", "medium", "high"]);
 const NOTE: FieldDef = { key: "note", label: t("app.note"), type: "textarea", optional: true };
 
+/** Cabezas por categoría: una clave con punto por categoría ("counts.vaca"); ver getPath y setPath. */
+const HERD_FIELDS = (root: string): FieldDef[] =>
+  HERD_CATEGORIES.map((c) => ({ key: `${root}.${c}`, label: f(`herd_${c}`), type: "number", optional: true }));
+
+/** `track` se graba en el celular (F-05) y no se edita a mano. */
 const FIELDS: Record<RecordKind, FieldDef[]> = {
+  track: [],
   scouting: [{ key: "condition", label: f("condition"), type: "select", options: CONDITION }, NOTE],
   pest: [
     { key: "pest", label: f("pest"), type: "select", options: opts("pest", PESTS) },
@@ -62,24 +76,87 @@ const FIELDS: Record<RecordKind, FieldDef[]> = {
     NOTE,
   ],
   note: [{ key: "text", label: f("text"), type: "textarea" }],
+  // ganaderia
+  herd_count: [...HERD_FIELDS("counts"), NOTE],
+  herd_move: [
+    { key: "reason", label: f("moveReason"), type: "select", options: opts("moveReason", MOVE_REASONS) },
+    ...HERD_FIELDS("counts"),
+    NOTE,
+  ],
+  mortality: [
+    { key: "category", label: f("herdCategory"), type: "select", options: opts("herd", HERD_CATEGORIES) },
+    { key: "head", label: f("head"), type: "number" },
+    { key: "cause", label: f("cause"), type: "select", options: opts("cause", MORTALITY_CAUSES) },
+    NOTE,
+  ],
+  health: [
+    { key: "reason", label: f("healthReason"), type: "select", options: opts("healthReason", HEALTH_REASONS) },
+    { key: "product", label: f("product"), type: "text" },
+    { key: "dose", label: f("dose"), type: "text", optional: true },
+    ...HERD_FIELDS("counts"),
+    NOTE,
+  ],
+  harvest: [
+    { key: "tons", label: f("tons"), type: "number" },
+    { key: "moisturePct", label: f("moisturePct"), type: "number", optional: true },
+    { key: "areaHa", label: f("areaDone"), type: "number", optional: true },
+    { key: "destination", label: f("destination"), type: "select", options: opts("destination", HARVEST_DESTINATIONS), optional: true },
+    NOTE,
+  ],
+  fertilization: [
+    { key: "method", label: f("method"), type: "select", options: opts("method", FERT_METHODS) },
+    { key: "areaHa", label: f("areaDone"), type: "number", optional: true },
+    NOTE,
+  ],
+  application: [
+    { key: "volumeLHa", label: f("volumeLHa"), type: "number", optional: true },
+    { key: "areaHa", label: f("areaDone"), type: "number", optional: true },
+    { key: "windKmh", label: f("windKmh"), type: "number", optional: true },
+    { key: "tempC", label: f("tempC"), type: "number", optional: true },
+    { key: "humidityPct", label: f("humidityPct"), type: "number", optional: true },
+    { key: "machine", label: f("machine"), type: "text", optional: true },
+    NOTE,
+  ],
+  sowing: [
+    { key: "crop", label: f("crop"), type: "select", options: opts("crop", CROPS) },
+    { key: "variety", label: f("variety"), type: "text", optional: true },
+    { key: "density", label: f("density"), type: "number", optional: true },
+    { key: "densityUnit", label: f("densityUnit"), type: "select", options: opts("densityUnit", DENSITY_UNITS), optional: true },
+    { key: "areaHa", label: f("areaDone"), type: "number", optional: true },
+    NOTE,
+  ],
 };
+
+const getPath = (o: Record<string, unknown>, path: string): unknown =>
+  path.split(".").reduce<unknown>((acc, k) => (acc && typeof acc === "object" ? (acc as Record<string, unknown>)[k] : undefined), o);
+
+/** Pone (o quita, con undefined) un valor en una ruta con puntos, sin tocar el objeto original. */
+function setPath(o: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> {
+  const [head, ...rest] = path.split(".") as [string, ...string[]];
+  if (!rest.length) {
+    const { [head]: _old, ...others } = o;
+    return value === undefined ? others : { ...others, [head]: value };
+  }
+  const child = o[head] && typeof o[head] === "object" ? (o[head] as Record<string, unknown>) : {};
+  return { ...o, [head]: setPath(child, rest.join("."), value) };
+}
 
 const toForm = (data: Record<string, unknown>, defs: FieldDef[]) =>
   Object.fromEntries(
     defs.map((d) => {
-      const v = data[d.key];
+      const v = getPath(data, d.key);
       return [d.key, d.type === "bool" ? (v === true ? "1" : "0") : v === undefined || v === null ? "" : String(v)];
     }),
   );
 
 /** Arma los datos nuevos sobre los originales (conserva claves que el formulario no edita, como readAt). */
 function fromForm(base: Record<string, unknown>, defs: FieldDef[], form: Record<string, string>) {
-  const out: Record<string, unknown> = { ...base };
+  let out: Record<string, unknown> = { ...base };
   for (const d of defs) {
     const raw = (form[d.key] ?? "").trim();
-    if (d.type === "bool") out[d.key] = raw === "1";
-    else if (raw === "") delete out[d.key];
-    else out[d.key] = d.type === "number" ? Number(raw) : raw;
+    if (d.type === "bool") out = setPath(out, d.key, raw === "1");
+    else if (raw === "") out = setPath(out, d.key, undefined);
+    else out = setPath(out, d.key, d.type === "number" ? Number(raw) : raw);
   }
   return out;
 }
@@ -130,6 +207,7 @@ export function RecordEditForm({
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["records"] });
+      toast(t("ui.toastRecordSaved"));
       onDone();
     },
     onError: (e) => setInvalid(e instanceof Error ? e.message : String(e)),
@@ -209,6 +287,7 @@ export function DeleteRecordConfirm({
     mutationFn: () => push({ mutationId: newId(), kind: "records.delete", row: { id: r.id } }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["records"] });
+      toast(t("ui.toastRecordDeleted"));
       onDone();
     },
   });

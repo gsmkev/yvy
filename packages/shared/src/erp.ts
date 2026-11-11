@@ -96,6 +96,28 @@ export const contractorInput = z.object({
   note: optText(300),
 });
 
+// ---------- Costos y ventas (E-05) ----------
+
+const uuid = z.string().uuid();
+/** Alta o cambio de un costo o una venta manual. La API calcula `amountPyg` con el tipo de cambio de la fecha. */
+export const costEntryInput = z.object({
+  date: isoDate,
+  farmId: uuid.nullish(),
+  plotId: uuid.nullish(),
+  seasonId: uuid.nullish(),
+  activity: z.enum(ACTIVITIES),
+  category: z.enum(COST_CATEGORIES),
+  description: optText(200),
+  amount: minorAmount.refine((n) => n > 0, "El monto tiene que ser mayor que cero"),
+  currency: currencySchema,
+  partyId: uuid.nullish(),
+  /** Solo ventas. */
+  tons: z.number().positive().max(1_000_000).nullish(),
+});
+
+/** Mediodía de Asunción (UTC-3) de un día "YYYY-MM-DD", en epoch ms. */
+export const noonAsuncion = (day: string): number => Date.parse(`${day}T12:00:00-03:00`);
+
 // ---------- Terceros (E-02) ----------
 
 /** RUC (con dígito verificador) o cédula: solo dígitos y un guion final opcional. */

@@ -1,8 +1,9 @@
 /** ERP sencillo desde la web (ADR 0004). Montada en /org/erp. */
 import { Hono } from "hono";
-import type { z } from "zod";
-import { contractorInput, exchangeRateInput, isoDate, machineInput, partyInput, type Role } from "@yvy/shared";
+import { z } from "zod";
+import { contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
+import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
 import { deleteRate, erpCreate, erpDelete, erpList, erpUpdate, listRates, requireOwned, saveRate, type ErpTable } from "../db/erp";
 import { can, type ScopedDb } from "../db/scoped";
 import { parse, readJson } from "../lib/http";
@@ -76,5 +77,32 @@ erp.put("/exchange-rates/:date", async (c) => {
 });
 erp.delete("/exchange-rates/:date", async (c) => {
   await deleteRate(c.var.sdb, parse(isoDate, c.req.param("date")));
+  return c.json({ ok: true });
+});
+
+// ---------- Costos y ventas (E-05) ----------
+
+const uuid = z.string().uuid();
+erp.get("/costs", async (c) => {
+  const q = parse(
+    z.object({
+      farmId: uuid.optional(),
+      plotId: uuid.optional(),
+      seasonId: uuid.optional(),
+      category: z.enum(COST_CATEGORIES).optional(),
+      from: isoDate.optional(),
+      to: isoDate.optional(),
+    }),
+    c.req.query(),
+  );
+  return c.json(await listCosts(c.var.sdb, q));
+});
+erp.post("/costs", async (c) => c.json(await createCost(c.var.sdb, parse(costEntryInput, await readJson(c.req))), 201));
+erp.patch("/costs/:id", async (c) => {
+  await updateCost(c.var.sdb, c.req.param("id"), parse(costEntryInput.partial(), await readJson(c.req)));
+  return c.json({ ok: true });
+});
+erp.delete("/costs/:id", async (c) => {
+  await deleteCost(c.var.sdb, c.req.param("id"));
   return c.json({ ok: true });
 });

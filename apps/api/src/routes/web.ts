@@ -17,6 +17,7 @@ import {
   farmClimate,
   farmDetail,
   farmForecast,
+  farmEudr,
   farmProblemAreas,
   farmRiskReport,
   farmSummaries,
@@ -144,7 +145,8 @@ web.get("/org/farms/:id/forecast", async (c) => c.json(await farmForecast(c.var.
 web.get("/org/farms/:id/problem-areas", async (c) =>
   c.json(await farmProblemAreas(c.var.sdb, c.req.param("id"))),
 );
-web.get("/org/farms/:id/risk", async (c) => c.json(await farmRiskReport(c.var.sdb, c.req.param("id"))));
+web.get("/org/farms/:id/eudr", async (c) => c.json(await farmEudr(c.var.sdb, c.req.param("id"))));
+web.get("/org/farms/:id/risk",async (c) => c.json(await farmRiskReport(c.var.sdb, c.req.param("id"))));
 
 web.patch("/org/farms/:id", async (c) => {
   const b = parse(

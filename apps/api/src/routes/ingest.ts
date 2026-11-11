@@ -245,6 +245,48 @@ ingest.post("/problem-areas", async (c) => {
   return c.json({ written });
 });
 
+/** Indicador EUDR de un lote (job eudr, S-30): ya viene calculado; el Worker valida la forma y lo guarda. */
+ingest.post("/eudr", async (c) => {
+  if (c.var.body.length > 80_000) throw new HTTPException(413, { message: "Resultado demasiado grande" });
+  const pos = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
+  const ms = z.number().int().nullable();
+  const b = parse(
+    z.object({
+      plotId: uuid,
+      status: z.enum(["no_change", "possible_loss", "no_data"]),
+      plotAreaHa: z.number().min(0).max(1_000_000),
+      forestRefHa: z.number().min(0).max(1_000_000),
+      lossHa: z.number().min(0).max(1_000_000),
+      validPct: z.number().min(0).max(100),
+      refYear: z.number().int().min(2018).max(2100),
+      curYear: z.number().int().min(2018).max(2100),
+      refFromAt: ms,
+      refToAt: ms,
+      curFromAt: ms,
+      curToAt: ms,
+      refScenes: z.number().int().min(0).max(1000),
+      curScenes: z.number().int().min(0).max(1000),
+      changes: z
+        .array(
+          z.object({
+            geometry: z.object({ type: z.literal("Polygon"), coordinates: z.array(z.array(pos).min(4).max(300)).min(1).max(4) }),
+            areaHa: z.number().positive().max(100_000),
+          }),
+        )
+        .max(20),
+    }),
+    json(c.var.body),
+  );
+  const { plotId, changes, ...rest } = b;
+  const fc = {
+    type: "FeatureCollection",
+    features: changes.map((a) => ({ type: "Feature", properties: { areaHa: a.areaHa }, geometry: a.geometry })),
+  };
+  if (!(await c.var.sys.upsertEudrResult(plotId, { ...rest, changes: JSON.stringify(fc) })))
+    throw new HTTPException(404, { message: "Lote inexistente" });
+  return c.json({ ok: true });
+});
+
 const isoDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 /** Datos del parte semanal (job weekly_report): agregados de la semana, sin registros ni personas. */

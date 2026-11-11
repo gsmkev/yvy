@@ -1244,6 +1244,10 @@ export const esPY = {
     toastSeasonSaved: "Campaña guardada",
     toastSeasonPlanSaved: "Plan guardado",
     toastSeasonDeleted: "Campaña borrada",
+    rotationTitle: "Rotación del lote",
+    rotationNone: "Este lote todavía no tiene campañas con cultivo. Cargalas en la pestaña Campañas.",
+    rotationSown: "sembrado el {{date}}",
+    rotationPlanned: "siembra prevista {{date}}",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

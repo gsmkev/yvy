@@ -845,6 +845,10 @@ export const esPY = {
     helpQ10: "¿Cómo cargo mis lotes?",
     helpA10:
       "En la estancia, dibujalos sobre el mapa con \"Nuevo lote\" o importá un archivo KML, KMZ, GeoJSON o shapefile con \"Importar\". Después podés renombrarlos y cargar el cultivo y la fecha de siembra.",
+    overdueCountOne: "{{n}} tarea vencida",
+    overdueCountMany: "{{n}} tareas vencidas",
+    filterAll: "Todas",
+    filterOverdue: "Vencidas",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

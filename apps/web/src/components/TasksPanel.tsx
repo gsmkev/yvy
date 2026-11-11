@@ -9,12 +9,13 @@ import { useFarms, useMembers, useTasks } from "../lib/queries";
 import type { Plot, Task } from "../lib/types";
 import { CheckCircle2, Circle, Plus } from "lucide-react";
 import { ExportButtons } from "./ExportButtons";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
+import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "./ui";
 
 export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] }) {
   const tasks = useTasks({ farmId });
   const members = useMembers();
   const [creating, setCreating] = useState(false);
+  const [filter, setFilter] = useState<"all" | "overdue">("all");
   const qc = useQueryClient();
   const today = localDate(Date.now());
   // Las repetitivas se cancelan (PATCH) y las únicas se borran (DELETE); ambas se pueden deshacer
@@ -31,9 +32,12 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
 
   if (tasks.isLoading) return <Spinner />;
   if (tasks.error) return <ErrorBox error={tasks.error} />;
-  const visible = (tasks.data ?? []).filter(
+  const isOverdue = (x: Task) => x.status === "open" && x.dueDate < today;
+  const shown = (tasks.data ?? []).filter(
     (x) => x.status !== "cancelled" && (x.status === "open" || x.dueDate >= localDate(Date.now() - 7 * 86_400_000)),
   );
+  const nOverdue = shown.filter(isOverdue).length;
+  const visible = filter === "overdue" ? shown.filter(isOverdue) : shown;
   const byAssignee = new Map<string, Task[]>();
   for (const x of visible)
     byAssignee.set(x.assigneeName ?? x.assigneeId, [...(byAssignee.get(x.assigneeName ?? x.assigneeId) ?? []), x]);
@@ -68,6 +72,14 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
           })}
         />
       </div>
+      <Tabs
+        value={filter}
+        onChange={setFilter}
+        tabs={[
+          { id: "all", label: t("ui.filterAll") },
+          { id: "overdue", label: t("ui.filterOverdue"), count: nOverdue },
+        ]}
+      />
       {!visible.length && <Empty title={t("ui.noTasks")} />}
       {[...byAssignee.entries()].map(([name, list]) => {
         const overdue = list.filter((x) => x.status === "open" && x.dueDate < today).length;

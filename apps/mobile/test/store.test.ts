@@ -52,6 +52,38 @@ const rec = {
 };
 const photo = { photoUri: "file:///p.webp", thumbUri: "file:///t.webp", width: 1280, height: 960, bytes: 120_000 };
 
+describe("LocalDb: hacienda calculada sin señal", () => {
+  const OTHER = newId();
+  it("último conteo + movimientos y mortandad posteriores, desde lo que hay en el celular", () => {
+    const t = 1_000;
+    const db = setup(() => t);
+    const base = { farmId: FARM, poiId: null, lon: null, lat: null, gpsAccuracyM: null };
+    expect(db.herdStock(PLOT)).toBeNull();
+    db.saveRecord(USER, ORG, { ...base, plotId: PLOT, kind: "herd_count", data: { counts: { vaca: 40, toro: 2 } }, capturedAt: 100 });
+    db.saveRecord(USER, ORG, {
+      ...base,
+      plotId: PLOT,
+      kind: "herd_move",
+      data: { toPlotId: OTHER, counts: { vaca: 10 }, reason: "rotacion" },
+      capturedAt: 200,
+    });
+    db.saveRecord(USER, ORG, {
+      ...base,
+      plotId: OTHER,
+      kind: "herd_move",
+      data: { toPlotId: PLOT, counts: { vaca: 3 }, reason: "rotacion" },
+      capturedAt: 300,
+    });
+    db.saveRecord(USER, ORG, { ...base, plotId: PLOT, kind: "mortality", data: { category: "vaca", head: 1, cause: "rayo" }, capturedAt: 400 });
+    const st = db.herdStock(PLOT)!;
+    expect(st.counts).toMatchObject({ vaca: 32, toro: 2 });
+    expect(st.lastCountAt).toBe(100);
+    // un conteo nuevo corrige todo
+    db.saveRecord(USER, ORG, { ...base, plotId: PLOT, kind: "herd_count", data: { counts: { vaca: 35 } }, capturedAt: 500 });
+    expect(db.herdStock(PLOT)!.counts).toMatchObject({ vaca: 35, toro: 0 });
+  });
+});
+
 describe("LocalDb", () => {
   it("miniatura del Historial: la primera foto local de cada registro", () => {
     const db = setup();

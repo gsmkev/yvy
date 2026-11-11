@@ -353,6 +353,8 @@ export const esPY = {
     healthProductQuestion: "¿Qué producto usaste?",
     healthDoseQuestion: "¿Qué dosis?",
     healthCountQuestion: "¿A cuántos animales?",
+    plotHerd: "Hacienda: {{n}} cabezas",
+    plotHerdUa: "{{v}} UA/ha",
   },
   fields: {
     condition: "Estado general",
@@ -1060,6 +1062,23 @@ export const esPY = {
     // campo
     taskChecklist: "Lista de verificación (un ítem por línea)",
     taskChecklistHint: "Bebedero 1\nBebedero 2",
+    // ganaderia
+    tabHerd: "Hacienda",
+    herdNoPaddocks: "Todavía no hay potreros",
+    herdNoPaddocksHint: "Marcá un lote como pastura para llevar su hacienda.",
+    herdFarmLine: "{{head}} cabezas · {{ua}} UA sobre {{area}} de potreros",
+    herdUaPerHa: "{{v}} UA/ha",
+    herdOverLimit: "Carga por encima del límite de {{max}} UA/ha en: {{plots}}.",
+    herdWholeFarm: "el total de la estancia",
+    herdTruncated: "Hay tantos movimientos que el cálculo puede estar incompleto. Un conteo nuevo lo corrige.",
+    herdTotal: "Total",
+    herdUaPerHaHead: "UA/ha",
+    herdLastCount: "Último conteo",
+    herdNeverCounted: "Sin conteo",
+    herdLimitLabel: "Carga máxima (UA/ha)",
+    herdLimitHint: "Avisamos cuando un potrero la supera.",
+    herdLimitIsDefault: "Es el valor por defecto: ajustalo a tu campo y a la época del año.",
+    herdEquivalents: "UA por cabeza, valores por defecto a revisar con un técnico: {{list}}.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

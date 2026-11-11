@@ -158,7 +158,16 @@ export class ScopedDb {
   /** Ventana de historial que baja al celular (PRD §11). */
   private historyFilter(table: PullTable): SQL | undefined {
     const now = this.now();
-    if (table === "records") return gte(s.records.capturedAt, now - LIMITS.sync.recordsHistoryMs);
+    // Hacienda: todos los conteos y un año de movimientos y mortandad, para calcular el stock en el celular (G-03).
+    if (table === "records")
+      return or(
+        gte(s.records.capturedAt, now - LIMITS.sync.recordsHistoryMs),
+        eq(s.records.kind, "herd_count"),
+        and(
+          inArray(s.records.kind, ["herd_move", "mortality"]),
+          gte(s.records.capturedAt, now - LIMITS.sync.herdEventsHistoryMs),
+        ),
+      );
     if (table === "attachments") return gte(s.attachments.createdAt, now - LIMITS.sync.recordsHistoryMs);
     if (table === "plot_index_stats") return gte(s.plotIndexStats.acquiredAt, now - LIMITS.sync.indexStatsHistoryMs);
     // B7: tareas abiertas, o cerradas/canceladas hace menos de 30 días.

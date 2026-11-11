@@ -178,3 +178,34 @@ export function livestockPlotProblem(kind: string, plotId: string | null, data: 
   }
   return null;
 }
+
+/** Respuesta de GET /org/farms/:id/stock (G-03). */
+export interface PlotStockRow {
+  plotId: string;
+  name: string;
+  areaHa: number;
+  counts: Record<HerdCategory, number>;
+  total: number;
+  ua: number;
+  uaPerHa: number | null;
+  lastCountAt: number | null;
+  overLimit: boolean;
+}
+
+export interface FarmStockResponse {
+  maxUaPerHa: number;
+  maxUaIsDefault: boolean;
+  plots: PlotStockRow[];
+  farm: {
+    counts: Record<HerdCategory, number>;
+    total: number;
+    ua: number;
+    areaHa: number;
+    uaPerHa: number | null;
+    overLimit: boolean;
+  };
+  /** Equivalencias usadas: valores por defecto a revisar por un técnico. */
+  uaEquivalents: Record<HerdCategory, number>;
+  /** Eventos que no entraron por pasar el tope de lectura (0 = el cálculo está completo). */
+  truncated: boolean;
+}

@@ -10,6 +10,7 @@
 import { getTableColumns, getTableName } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import {
+  computeStock,
   isDueToday,
   LIMITS,
   localDate,
@@ -21,8 +22,14 @@ import {
   resetChecklist,
   serializeChecklist,
   setChecklistItem,
+  type CountEvent,
   type Cursor,
+  type HerdCategory,
+  type HerdCounts,
+  type MortalityEvent,
   type Mutation,
+  type MoveEvent,
+  type PlotStock,
   type PullTable,
   type RecordKind,
   type RejectReason,
@@ -524,6 +531,37 @@ export class LocalDb implements SyncStore {
   /** Últimas anotaciones de un lote (ficha del lote y pantalla Anotar). */
   recordsOfPlot(plotId: string, limit = 20): RecordRow[] {
     return this.records(500).filter((r) => r.plotId === plotId).slice(0, limit);
+  }
+
+  /**
+   * Hacienda actual de un potrero, calculada con lo que hay en el celular (ADR 0004): último conteo más
+   * movimientos y mortandad posteriores. Funciona sin señal. `null` si el potrero nunca tuvo datos de hacienda.
+   */
+  herdStock(plotId: string): PlotStock | null {
+    const rows = this.sql.all<{ kind: string; plot_id: string | null; captured_at: number; data: string }>(
+      "SELECT kind, plot_id, captured_at, data FROM records WHERE deleted_at IS NULL AND kind IN ('herd_count','herd_move','mortality') AND (plot_id = ? OR (kind = 'herd_move' AND data LIKE ?))",
+      [plotId, `%${plotId}%`],
+    );
+    const counts: CountEvent[] = [];
+    const moves: MoveEvent[] = [];
+    const deaths: MortalityEvent[] = [];
+    for (const r of rows) {
+      let d: { counts?: HerdCounts; toPlotId?: string; category?: HerdCategory; head?: number };
+      try {
+        d = JSON.parse(r.data);
+      } catch {
+        continue;
+      }
+      if (r.kind === "herd_count" && r.plot_id === plotId && d.counts)
+        counts.push({ plotId, capturedAt: r.captured_at, counts: d.counts });
+      else if (r.kind === "herd_move" && d.counts) {
+        if (r.plot_id === plotId || d.toPlotId === plotId)
+          moves.push({ fromPlotId: r.plot_id, toPlotId: d.toPlotId ?? null, capturedAt: r.captured_at, counts: d.counts });
+      } else if (r.kind === "mortality" && r.plot_id === plotId && d.category && typeof d.head === "number")
+        deaths.push({ plotId, capturedAt: r.captured_at, category: d.category, head: d.head });
+    }
+    if (!counts.length && !moves.length && !deaths.length) return null;
+    return computeStock([plotId], counts, moves, deaths).get(plotId) ?? null;
   }
 
   /** Lluvia del mes en curso según el pluviómetro (mm), para mostrar al terminar de anotar. */

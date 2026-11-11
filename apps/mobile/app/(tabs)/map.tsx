@@ -7,7 +7,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { Camera, Map, type CameraRef, type StyleSpecification } from "@maplibre/maplibre-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { LocateFixed, X } from "lucide-react-native";
-import { BRAND, describeRecord, t } from "@yvy/shared";
+import { BRAND, describeRecord, t, uaPerHa } from "@yvy/shared";
 import { centroidOf, containsPoint, type Area } from "@yvy/geo";
 import { useRef } from "react";
 import { useSession } from "../../src/lib/session";
@@ -139,6 +139,9 @@ export default function MapScreen() {
   const rainMonth = plot ? getDb().rainThisMonth(plot.farmId) : 0;
   const vigor = plot ? getDb().lastVigor(plot.id) : null;
   const openTasks = plot ? getDb().openTasksOfPlot(plot.id) : 0;
+  // G-03: hacienda del potrero, calculada en el celular (anda sin señal).
+  const herd = plot?.kind === "pasture" ? getDb().herdStock(plot.id) : null;
+  const herdUa = plot && herd ? uaPerHa(herd.counts, plot.areaHa) : null;
   const plotRecords = plot ? records.filter((r) => r.plotId === plot.id).slice(0, 3) : [];
 
   const copyMe = async () => {
@@ -208,6 +211,12 @@ export default function MapScreen() {
               <X size={22} color={C.tinta2} />
             </Pressable>
           </View>
+          {herd && (
+            <Text style={[T.smallMedium, { marginTop: 10 }]}>
+              {t("app.plotHerd", { n: herd.total })}
+              {herdUa !== null ? ` · ${t("app.plotHerdUa", { v: herdUa.toLocaleString("es-PY", { maximumFractionDigits: 2 }) })}` : ""}
+            </Text>
+          )}
           {(rainMonth > 0 || vigor || openTasks > 0) && (
             <View style={{ marginTop: 10, gap: 2 }}>
               {rainMonth > 0 && <Text style={T.smallMedium}>{t("app.plotRainMonth", { mm: Math.round(rainMonth) })}</Text>}

@@ -66,4 +66,11 @@ describe("importación de lotes", () => {
     expect(kml).toContain("<name>A &amp; B</name>");
     expect(kml).toContain("-55.95,-27.15");
   });
+
+  it("M-11: limpia vértices repetidos y cuenta lo corregido", async () => {
+    const dirty = `<kml xmlns="http://www.opengis.net/kml/2.2"><Placemark><name>Sucio</name><Polygon><outerBoundaryIs><LinearRing><coordinates>-55.95,-27.15 -55.93,-27.15 -55.93,-27.15 -55.93,-27.17 -55.95,-27.17 -55.95,-27.15</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark></kml>`;
+    const [p] = await parseFile(new File([dirty], "sucio.kml"));
+    expect(p).toMatchObject({ error: null, fixed: 1 });
+    expect((p!.geometry.coordinates[0] as number[][]).length).toBe(5);
+  });
 });

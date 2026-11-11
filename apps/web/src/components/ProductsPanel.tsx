@@ -11,11 +11,12 @@ export const useProducts = (enabled = true) =>
   useQuery({ enabled, queryKey: ["products"], queryFn: () => get<Product[]>("/org/products") });
 
 /** Catálogo de productos de la organización (A-10): lo usa el celular para cargar aplicaciones. */
-export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; farmId: string; plots: Plot[] }) {
+export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; farmId?: string; plots?: Plot[] }) {
   const q = useProducts();
   const [editing, setEditing] = useState<Product | "new" | null>(null);
   const [removing, setRemoving] = useState<Product | null>(null);
   const [prescribing, setPrescribing] = useState(false);
+  const [type, setType] = useState("");
   const qc = useQueryClient();
   const remove = useMutation({
     mutationFn: (p: Product) => del(`/org/products/${p.id}`),
@@ -27,7 +28,7 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
   });
   if (q.isLoading) return <Spinner rows={5} h={56} />;
   if (q.error) return <ErrorBox error={q.error} />;
-  const list = q.data ?? [];
+  const list = (q.data ?? []).filter((p) => !type || p.type === type);
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-tinta-2">{t("ui.productsIntro")}</p>
@@ -36,9 +37,20 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
           <Button variant="primary" onClick={() => setEditing("new")}>
             {t("ui.productNew")}
           </Button>
-          <Button onClick={() => setPrescribing(true)}>{t("ui.prescriptionNew")}</Button>
+          {farmId && plots && <Button onClick={() => setPrescribing(true)}>{t("ui.prescriptionNew")}</Button>}
         </div>
       )}
+      <div className="max-w-60">
+        <Select
+          aria-label={t("ui.productType")}
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          options={[
+            { value: "", label: t("ui.productsAllTypes") },
+            ...PRODUCT_TYPES.map((x) => ({ value: x, label: tk(`fields.productType_${x}`) })),
+          ]}
+        />
+      </div>
       {list.length === 0 ? (
         <Empty title={t("ui.productsTitle")}>{t("ui.productNone")}</Empty>
       ) : (
@@ -72,7 +84,7 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
           ))}
         </ul>
       )}
-      {prescribing && <PrescriptionModal farmId={farmId} plots={plots} onClose={() => setPrescribing(false)} />}
+      {prescribing && farmId && plots && <PrescriptionModal farmId={farmId} plots={plots} onClose={() => setPrescribing(false)} />}
       {editing && <ProductModal product={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
       {removing && (
         <ConfirmModal

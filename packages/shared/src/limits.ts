@@ -146,6 +146,15 @@ export const LIMITS = {
     /** Los eventos de uso se borran pasado este tiempo; los del embudo quedan. */
     retentionMs: 90 * 24 * 60 * 60 * 1000,
   },
+  /** ERP sencillo (ADR 0004). */
+  erp: {
+    /** Días de aviso antes del vencimiento de un lote de agroquímico o vacuna (E-12). */
+    expiryWarnDays: 30,
+    /** Filas que devuelven los listados de movimientos y costos (el plan gratis no admite más por request). */
+    listLimit: 300,
+    /** Lotes de una orden de trabajo creados de una vez (cada lote es una tarea). */
+    maxPlotsPerOrder: 40,
+  },
   share: {
     /** Duraciones permitidas del enlace de solo lectura (K-04), en días. */
     linkDays: [7, 30],

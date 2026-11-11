@@ -225,7 +225,7 @@ export function NewFarmPage() {
             </Button>
           )}
           <label className="cursor-pointer">
-            <span className="inline-flex h-9 items-center gap-2 rounded-md border border-linea bg-papel px-3.5 text-sm font-medium hover:bg-white">
+            <span className="inline-flex h-9 items-center gap-2 rounded-md border border-linea bg-papel px-3.5 text-sm font-medium hover:bg-lino">
                 <Upload size={16} aria-hidden />
               {t("ui.importShort")}
             </span>

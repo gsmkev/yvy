@@ -1555,6 +1555,10 @@ export const esPY = {
     unitInches: "Pulgadas",
     unitTemp: "Temperatura",
     unitCuadraNote: "Una cuadra cuadrada son 100 varas por 100 varas (86,6 m de lado): 0,75 ha.",
+    themeLabel: "Tema",
+    themeAuto: "Como el sistema",
+    themeLight: "Claro",
+    themeDark: "Oscuro",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

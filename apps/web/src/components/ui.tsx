@@ -11,10 +11,10 @@ import { t, tk } from "../lib/i18n";
 type Variant = "primary" | "secondary" | "quiet" | "danger";
 
 const VARIANT: Record<Variant, string> = {
-  primary: "bg-accion text-white hover:bg-accion-2 border border-accion",
-  secondary: "bg-papel text-surco border border-linea hover:border-tinta-2/40 hover:bg-white",
+  primary: "bg-accion text-sobre hover:bg-accion-2 border border-accion",
+  secondary: "bg-papel text-surco border border-linea hover:border-tinta-2/40 hover:bg-lino",
   quiet: "text-tinta-2 hover:text-surco hover:bg-surco/5 border border-transparent",
-  danger: "bg-papel text-peligro border border-peligro/40 hover:bg-peligro hover:text-white",
+  danger: "bg-papel text-peligro border border-peligro/40 hover:bg-peligro hover:text-sobre",
 };
 
 export function Button({
@@ -213,7 +213,7 @@ export const ErrorBox = ({ error }: { error: unknown }) => (
 const SEV = {
   info: "border-cielo text-surco bg-cielo/15",
   watch: "border-trigo text-trigo-texto bg-trigo/15",
-  warning: "border-peligro bg-peligro text-white",
+  warning: "border-peligro bg-peligro text-sobre",
 } as const;
 
 /** Severidad siempre con ícono + texto, nunca solo color. */

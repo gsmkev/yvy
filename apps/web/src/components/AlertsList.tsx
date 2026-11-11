@@ -30,7 +30,7 @@ export function AlertsList({ farmId, farmNames }: { farmId?: string; farmNames?:
           >
             <div className="flex items-start gap-3">
               <span
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${a.severity === "warning" ? "bg-peligro text-white" : "bg-trigo/20 text-trigo-texto"}`}
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${a.severity === "warning" ? "bg-peligro text-sobre" : "bg-trigo/20 text-trigo-texto"}`}
               >
                 <Icon size={18} aria-hidden />
               </span>

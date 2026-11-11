@@ -398,7 +398,7 @@ function NewTaskModal({
           </Field>
           <Field label={t("ui.taskChecklist")}>
             <textarea
-              className="min-h-20 w-full rounded-md border border-linea bg-white px-3 py-2 text-sm"
+              className="min-h-20 w-full rounded-md border border-linea bg-papel px-3 py-2 text-sm"
               value={f.checklist}
               onChange={set("checklist")}
               placeholder={t("ui.taskChecklistHint")}

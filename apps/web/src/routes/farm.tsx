@@ -26,6 +26,9 @@ import { loadPrefs, savePrefs } from "../lib/prefs";
 import { useAlerts, useFarm, useFarms, useMe, useMembers } from "../lib/queries";
 import type { FarmDetail, RecordRow } from "../lib/types";
 
+/** Días sin anotaciones para considerar un lote sin visitar. */
+const UNVISITED_DAYS = 7;
+
 type Tab = "plots" | "records" | "tasks" | "climate" | "alerts";
 const TABS: Tab[] = ["plots", "records", "tasks", "climate", "alerts"];
 
@@ -42,6 +45,7 @@ export function FarmPage() {
     const saved = loadPrefs().tab;
     return TABS.includes(saved as Tab) ? (saved as Tab) : "plots";
   });
+  const [onlyUnvisited, setOnlyUnvisited] = useState(false);
   const { lote } = useSearch({ from: "/app/estancias/$farmId" });
   const [selected, setSelected] = useState<string | null>(lote ?? null);
   // Llegar desde el buscador con ?lote= elige ese lote
@@ -106,6 +110,9 @@ export function FarmPage() {
       </div>
     );
   const d = farm.data!;
+  const staleBefore = Date.now() - UNVISITED_DAYS * 86_400_000;
+  const unvisited = d.plots.filter((p) => !p.lastRecordAt || p.lastRecordAt < staleBefore);
+  const shownPlots = onlyUnvisited ? unvisited : d.plots;
   const removePoi = (id: string) =>
     deleteWithUndo({
       qc,
@@ -396,23 +403,48 @@ export function FarmPage() {
             <Empty title={t("ui.noPlots")} />
           ) : (
             <div>
-              <div className="mb-1 flex justify-end">
+              <div className="mb-1 flex items-baseline justify-between gap-3">
+                {unvisited.length > 0 ? (
+                  <button
+                    className="cursor-pointer text-left text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
+                    aria-pressed={onlyUnvisited}
+                    onClick={() => setOnlyUnvisited(!onlyUnvisited)}
+                  >
+                    {onlyUnvisited
+                      ? t("ui.unvisitedShowAll")
+                      : t(unvisited.length === 1 ? "ui.unvisitedOne" : "ui.unvisitedMany", {
+                          n: unvisited.length,
+                          days: UNVISITED_DAYS,
+                        })}
+                  </button>
+                ) : (
+                  <span />
+                )}
                 <ExportButtons
                   data={() => ({
                     name: t("ui.plotsFile"),
-                    headers: [t("ui.plot"), t("ui.kind"), t("ui.crop"), t("ui.season"), t("ui.sowingDate"), "ha"],
-                    rows: d.plots.map((p) => [
+                    headers: [
+                      t("ui.plot"),
+                      t("ui.kind"),
+                      t("ui.crop"),
+                      t("ui.season"),
+                      t("ui.sowingDate"),
+                      "ha",
+                      t("ui.lastVisit"),
+                    ],
+                    rows: shownPlots.map((p) => [
                       p.name,
                       p.kind === "pasture" ? t("ui.pasture") : t("ui.crop"),
                       p.crop ?? p.pastureType,
                       p.season,
                       p.sowingDate,
                       Math.round(p.areaHa * 100) / 100,
+                      p.lastRecordAt ? fmtDate(p.lastRecordAt) : t("ui.neverVisited"),
                     ]),
                   })}
                 />
               </div>
-              <PlotsTable plots={d.plots} onSelect={setSelected} />
+              <PlotsTable plots={shownPlots} onSelect={setSelected} />
               <p className="mt-3 text-xs text-tinta-2">{t("ui.selectPlotHint")}</p>
               {d.pois.length > 0 && (
                 <>

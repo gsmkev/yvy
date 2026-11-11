@@ -854,6 +854,11 @@ export const esPY = {
     activityRecordsOne: "1 registro en 7 días",
     lastSync: "Última sincronización {{date}}",
     neverSynced: "Todavía no sincronizó",
+    unvisitedOne: "1 lote sin visitar hace más de {{days}} días",
+    unvisitedMany: "{{n}} lotes sin visitar hace más de {{days}} días",
+    unvisitedShowAll: "Ver todos los lotes",
+    lastVisit: "Última visita",
+    neverVisited: "Nunca",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

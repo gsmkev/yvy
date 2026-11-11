@@ -82,6 +82,8 @@ const livestockSchemas = {
     quantity: z.number().positive().max(1_000_000).optional(),
     dose: z.string().trim().max(80).optional(),
     counts: herdCountsSchema,
+    /** Caravana del animal tratado, si fue uno solo (G-21): arma su historial. */
+    tag: animalTag.optional(),
     note,
   }),
   /**

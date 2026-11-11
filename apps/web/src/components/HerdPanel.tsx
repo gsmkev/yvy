@@ -7,6 +7,7 @@ import { fmtDay, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useMe } from "../lib/queries";
 import { HeatStressCard } from "./HeatStress";
+import { AnimalsPanel } from "./AnimalsPanel";
 import { ReproPanel } from "./ReproPanel";
 import { SupplementPanel } from "./SupplementPanel";
 import { TheftPanel } from "./TheftPanel";
@@ -140,7 +141,7 @@ function StockSection({ farmId }: { farmId: string }) {
   );
 }
 
-type Section = "stock" | "repro" | "weights" | "supplements" | "theft";
+type Section = "stock" | "animals" | "repro" | "weights" | "supplements" | "theft";
 
 /** Pestaña Hacienda: hacienda calculada y, abajo, cada módulo de ganadería en su sección. */
 export function HerdPanel({ farmId }: { farmId: string }) {
@@ -152,6 +153,7 @@ export function HerdPanel({ farmId }: { farmId: string }) {
         onChange={setSection}
         tabs={[
           { id: "stock", label: t("ui.herdSectionStock") },
+          { id: "animals", label: t("ui.herdSectionAnimals") },
           { id: "repro", label: t("ui.herdSectionRepro") },
           { id: "weights", label: t("ui.herdSectionWeights") },
           { id: "supplements", label: t("ui.herdSectionSupp") },
@@ -159,6 +161,7 @@ export function HerdPanel({ farmId }: { farmId: string }) {
         ]}
       />
       {section === "stock" && <StockSection farmId={farmId} />}
+      {section === "animals" && <AnimalsPanel farmId={farmId} />}
       {section === "repro" && <ReproPanel farmId={farmId} />}
       {section === "weights" && <WeighingsPanel farmId={farmId} />}
       {section === "supplements" && <SupplementPanel farmId={farmId} />}

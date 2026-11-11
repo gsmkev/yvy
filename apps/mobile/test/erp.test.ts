@@ -15,11 +15,11 @@ describe("tratamiento sanitario con producto del catálogo (E-13)", () => {
   it("con productos veterinarios en el catálogo pregunta cuál y cuánto; el nombre a mano se salta", () => {
     const keys = (a: Record<string, unknown>, vet: boolean) => stepsFor("health", a, { waterPois: 0, vetProducts: vet }).map((s) => s.key);
     // "Otro producto" deja productId sin valor: sigue el nombre a mano
-    expect(keys({}, true)).toEqual(["reason", "productId", "product", "dose", "counts", "note"]);
+    expect(keys({}, true)).toEqual(["reason", "productId", "product", "dose", "counts", "tag", "note"]);
     const id = newId();
-    expect(keys({ productId: id }, true)).toEqual(["reason", "productId", "quantity", "dose", "counts", "note"]);
+    expect(keys({ productId: id }, true)).toEqual(["reason", "productId", "quantity", "dose", "counts", "tag", "note"]);
     // sin catálogo veterinario, el producto se escribe a mano como siempre
-    expect(keys({}, false)).toEqual(["reason", "product", "dose", "counts", "note"]);
+    expect(keys({}, false)).toEqual(["reason", "product", "dose", "counts", "tag", "note"]);
   });
 
   it("el registro con productId y cantidad es válido y el esquema conserva ambos", () => {

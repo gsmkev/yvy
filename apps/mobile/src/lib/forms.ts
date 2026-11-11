@@ -109,6 +109,7 @@ export const FORMS: Record<RecordKind, FieldSpec[]> = {
     { key: "product", type: "text", required: true },
     { key: "dose", type: "text" },
     { key: "counts", type: "counts", required: true },
+    { key: "tag", type: "text" },
     note,
   ],
   fuel_load: [

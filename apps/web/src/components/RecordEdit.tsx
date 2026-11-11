@@ -128,6 +128,7 @@ const FIELDS: Record<RecordKind, FieldDef[]> = {
     { key: "product", label: f("product"), type: "text" },
     { key: "dose", label: f("dose"), type: "text", optional: true },
     ...HERD_FIELDS("counts"),
+    { key: "tag", label: f("tag"), type: "text", optional: true },
     NOTE,
   ],
   fuel_load: [

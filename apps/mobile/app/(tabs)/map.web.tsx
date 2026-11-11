@@ -2,10 +2,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { router, useFocusEffect } from "expo-router";
 import { FarmLine } from "../../src/ui/FarmLine";
-import { Button } from "../../src/ui/kit";
-import { LayerSwitch, NdviLegend } from "../../src/ui/MapLayerControls";
-import { StyleSheet, Text, View } from "react-native";
 import { Button, Text } from "../../src/ui/kit";
+import { LayerSwitch, NdviLegend } from "../../src/ui/MapLayerControls";
 import { StyleSheet, View } from "react-native";
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";

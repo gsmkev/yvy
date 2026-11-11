@@ -20,7 +20,6 @@ import { layerSource, tilesBaseUrl, type MapLayer } from "../../src/lib/offline"
 import { setFabHidden } from "../../src/lib/fab";
 import { useLocal } from "../../src/lib/useLocal";
 import { FarmLine } from "../../src/ui/FarmLine";
-import { Button } from "../../src/ui/kit";
 import { LayerSwitch, NdviLegend } from "../../src/ui/MapLayerControls";
 import { Button, Text } from "../../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";

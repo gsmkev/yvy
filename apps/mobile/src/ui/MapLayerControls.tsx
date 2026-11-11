@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import { Text } from "./kit";
 import { NDVI_RAMP, t } from "@yvy/shared";
 import type { MapLayer } from "../lib/offline";
 import { C, F, RADIUS, T } from "./theme";

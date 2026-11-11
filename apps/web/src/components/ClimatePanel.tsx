@@ -6,6 +6,7 @@ import { fmtIsoDate, fmtNum } from "../lib/format";
 import { t } from "../lib/i18n";
 import { LineChart, RainChart } from "./charts";
 import { CloudRain, CloudSun } from "lucide-react";
+import { SprayWindows } from "./SprayWindows";
 import { Empty, ErrorBox, Spinner, Stat } from "./ui";
 
 interface Climate {
@@ -115,6 +116,10 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
       >
         {t("ui.riskLink")}
       </Link>
+      <div>
+        <h3 className="eyebrow mb-2">{t("ui.sprayTitle")}</h3>
+        <SprayWindows farmId={farmId} />
+      </div>
       <div>
         <h3 className="eyebrow mb-2">{t("ui.forecast")}</h3>
         {c.forecast.length ? (

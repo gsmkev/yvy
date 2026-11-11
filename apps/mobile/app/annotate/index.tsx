@@ -24,13 +24,14 @@ import {
   type RecordKind,
   type Station,
 } from "@yvy/shared";
-import type { LocalPhoto, Plot, Season } from "../../src/db/store";
+import type { LocalAudio, LocalPhoto, Plot, Season } from "../../src/db/store";
 import { getDb } from "../../src/lib/db";
 import { selectedFarmId } from "../../src/lib/farmFilter";
 import { FLOWS, KINDS_FOR, SINGLE_PLOT_KINDS, stepsFor, type Step } from "../../src/lib/annotate";
 import { currentFix, guessPlots, type Fix, type PlotGuess } from "../../src/lib/location";
 import { processPhoto } from "../../src/lib/photos";
 import { PhotoMarkup } from "../../src/ui/PhotoMarkup";
+import { VoiceRecorder } from "../../src/ui/VoiceRecorder";
 import { useSession } from "../../src/lib/session";
 import { localChanged, useSyncStatus } from "../../src/lib/sync";
 import { toastSaved } from "../../src/lib/toast";
@@ -57,6 +58,8 @@ export default function Annotate() {
   const editing = useMemo(() => (params.recordId ? db.recordById(params.recordId) : null), []);
   const existingPhotos = useMemo(() => (editing ? db.photosOfRecord(editing.id).length : 0), []);
   const maxNewPhotos = LIMITS.photos.maxPerRecord - existingPhotos;
+  // Un registro lleva a lo sumo una nota de voz: al editar uno que ya la tiene no se ofrece otra.
+  const hasVoice = useMemo(() => (editing ? db.voiceOfRecord(editing.id).length > 0 : false), []);
   const [fix, setFix] = useState<Fix | null | "searching">(editing ? null : "searching");
   const [guesses, setGuesses] = useState<PlotGuess[]>([]);
   const [plot, setPlot] = useState<Plot | null>(() => db.plots().find((p) => p.id === (editing ? editing.plotId : params.plotId)) ?? null);
@@ -80,6 +83,7 @@ export default function Annotate() {
     editing ? (JSON.parse(editing.data) as Record<string, unknown>) : params.kind ? seed(params.kind) : {},
   );
   const [photos, setPhotos] = useState<LocalPhoto[]>([]);
+  const [voice, setVoice] = useState<LocalAudio | null>(null);
   // Plaga: primero se elige entre una observación o el monitoreo por estaciones (F-12).
   const entryFor = (kd: RecordKind): Phase => (kd === "pest" && !editing ? { name: "mode" } : { name: "step", i: 0 });
   const [phase, setPhase] = useState<Phase>(() =>
@@ -176,6 +180,7 @@ export default function Annotate() {
           capturedAt: at,
         })),
         photos,
+        voice,
       );
       if (params.taskId) db.completeTask(params.taskId, ids[0]!);
       localChanged();
@@ -198,6 +203,7 @@ export default function Annotate() {
       },
       photos,
       editing?.id,
+      voice,
     );
     if (params.taskId) db.completeTask(params.taskId, recordId);
     localChanged();
@@ -534,11 +540,12 @@ export default function Annotate() {
               </View>
             ))}
           </View>
+          {!hasVoice && <VoiceRecorder value={voice} onChange={setVoice} />}
           <View style={{ flex: 1 }} />
           {photos.length < maxNewPhotos && (
             <Button kind="secondary" big title={t("app.takePhoto")} onPress={() => setCamera(true)} style={{ marginBottom: 12 }} />
           )}
-          <Button big title={editing ? t("app.recordSave") : photos.length ? t("app.done") : t("app.skipPhoto")} onPress={save} />
+          <Button big title={editing ? t("app.recordSave") : photos.length || voice ? t("app.done") : t("app.skipPhoto")} onPress={save} />
         </ScrollView>
       </View>
     );

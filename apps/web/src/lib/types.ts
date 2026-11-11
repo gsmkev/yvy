@@ -111,7 +111,7 @@ export interface RecordRow {
   lat: number | null;
   gpsAccuracyM: number | null;
   capturedAt: number;
-  attachments: { id: string; uploadStatus: string }[];
+  attachments: { id: string; uploadStatus: string; mime?: string }[];
 }
 
 export interface Member {

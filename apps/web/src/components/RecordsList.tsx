@@ -4,7 +4,7 @@ import { get } from "../lib/api";
 import { describeData } from "../lib/exports";
 import { fmtDateTime } from "../lib/format";
 import { t, tk } from "../lib/i18n";
-import { recordShareText } from "@yvy/shared";
+import { isAudioMime, recordShareText } from "@yvy/shared";
 import { fetchRecordsPage, useFarms, useMe, type RecordFilters } from "../lib/queries";
 import type { RecordRow } from "../lib/types";
 import { Clock } from "lucide-react";
@@ -49,11 +49,12 @@ export function RecordsList({ filters, onRows }: { filters: RecordFilters; onRow
                   <span className="mt-0.5 flex items-center gap-2 text-sm text-tinta-2">
                     {tk(`recordKinds.${r.kind}`)} · {r.authorName ?? "—"}
                     {r.plotName && <span>· {r.plotName}</span>}
-                    {r.attachments.length > 0 && (
+                    {photosOf(r).length > 0 && (
                       <span>
-                        · {t(r.attachments.length === 1 ? "ui.photoOne" : "ui.photosMany", { n: r.attachments.length })}
+                        · {t(photosOf(r).length === 1 ? "ui.photoOne" : "ui.photosMany", { n: photosOf(r).length })}
                       </span>
                     )}
+                    {voiceOf(r).length > 0 && <span>· {t("app.voiceNote")}</span>}
                   </span>
                 </span>
               </button>
@@ -68,6 +69,43 @@ export function RecordsList({ filters, onRows }: { filters: RecordFilters; onRow
       )}
       {open && <RecordModal record={open} onClose={() => setOpen(null)} />}
     </div>
+  );
+}
+
+const photosOf = (r: RecordRow) => r.attachments.filter((a) => !isAudioMime(a.mime ?? ""));
+const voiceOf = (r: RecordRow) => r.attachments.filter((a) => isAudioMime(a.mime ?? ""));
+
+/** Nota de voz (F-09): se pide la URL firmada al tocar "Escuchar", no al abrir el registro. */
+function VoiceNote({ id, uploaded }: { id: string; uploaded: boolean }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  if (!uploaded)
+    return (
+      <p className="flex items-center gap-1 text-sm text-trigo-texto">
+        <Clock size={16} aria-hidden /> {t("app.pending")}
+      </p>
+    );
+  if (url)
+    return (
+      <audio controls autoPlay src={url} className="w-full" aria-label={t("app.voiceNote")}>
+        {t("app.voiceNote")}
+      </audio>
+    );
+  return (
+    <>
+      <Button
+        variant="quiet"
+        onClick={() =>
+          get<{ url: string }>(`/media/attachments/${id}`).then(
+            (r) => setUrl(r.url),
+            () => setFailed(true),
+          )
+        }
+      >
+        {t("app.voiceListen")}
+      </Button>
+      {failed && <p className="text-sm text-alerta">{t("app.voiceFailed")}</p>}
+    </>
   );
 }
 
@@ -151,14 +189,22 @@ export function RecordModal({ record: r, onClose }: { record: RecordRow; onClose
         )}
         {!editing && stationsOf(r.data) && <StationsView data={r.data} />}
         {!editing && <RecordDetails kind={r.kind} data={r.data} />}
-        {r.attachments.length > 0 && (
+        {photosOf(r).length > 0 && (
           <>
             <h3 className="eyebrow mt-5 mb-2">{t("ui.photos")}</h3>
             <div className="grid grid-cols-3 gap-2">
-              {r.attachments.map((a) => (
+              {photosOf(r).map((a) => (
                 <Photo key={a.id} id={a.id} />
               ))}
             </div>
+          </>
+        )}
+        {voiceOf(r).length > 0 && (
+          <>
+            <h3 className="eyebrow mt-5 mb-2">{t("app.voiceNote")}</h3>
+            {voiceOf(r).map((a) => (
+              <VoiceNote key={a.id} id={a.id} uploaded={a.uploadStatus === "uploaded"} />
+            ))}
           </>
         )}
         {!editing && (

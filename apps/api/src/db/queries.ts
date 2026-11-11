@@ -186,7 +186,7 @@ export async function listRecords(sdb: ScopedDb, f: RecordFilters) {
       record: s.records,
       authorName: s.users.fullName,
       plotName: s.plots.name,
-      attachments: sql<string>`(SELECT json_group_array(json_object('id', a.id, 'uploadStatus', a.upload_status)) FROM attachments a WHERE a.record_id = ${s.records.id} AND a.deleted_at IS NULL)`,
+      attachments: sql<string>`(SELECT json_group_array(json_object('id', a.id, 'uploadStatus', a.upload_status, 'mime', a.mime)) FROM attachments a WHERE a.record_id = ${s.records.id} AND a.deleted_at IS NULL)`,
     })
     .from(s.records)
     .leftJoin(s.users, eq(s.users.id, s.records.authorId))
@@ -199,7 +199,7 @@ export async function listRecords(sdb: ScopedDb, f: RecordFilters) {
     data: JSON.parse(r.record.data) as unknown,
     authorName: r.authorName,
     plotName: r.plotName,
-    attachments: JSON.parse(r.attachments) as { id: string; uploadStatus: string }[],
+    attachments: JSON.parse(r.attachments) as { id: string; uploadStatus: string; mime?: string }[],
   }));
   const last = page[page.length - 1];
   return { rows: page, nextCursor: rows.length > limit && last ? { capturedAt: last.capturedAt, id: last.id } : null };

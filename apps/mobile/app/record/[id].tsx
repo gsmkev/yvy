@@ -13,6 +13,7 @@ import { useSession } from "../../src/lib/session";
 import { localChanged, syncNow } from "../../src/lib/sync";
 import { useLocal } from "../../src/lib/useLocal";
 import { Button, s as k, Text } from "../../src/ui/kit";
+import { VoicePlayer } from "../../src/ui/VoicePlayer";
 import { T } from "../../src/ui/theme";
 
 export default function RecordDetail() {
@@ -21,6 +22,7 @@ export default function RecordDetail() {
   const record = useLocal(() => getDb().recordById(id), [id]);
   const plots = useLocal(() => getDb().plots());
   const photos = useLocal(() => (record ? getDb().photosOfRecord(record.id) : []), [record?.id]);
+  const voices = useLocal(() => (record ? getDb().voiceOfRecord(record.id) : []), [record?.id]);
 
   if (!record)
     return (
@@ -80,6 +82,9 @@ export default function RecordDetail() {
           {photos.map((p) => (p.thumbUri ? <Image key={p.id} source={{ uri: p.thumbUri }} style={st.thumb} /> : null))}
         </View>
       )}
+      {voices.map((v) => (
+        <VoicePlayer key={v.id} id={v.id} uri={v.uri} uploaded={v.uploaded} />
+      ))}
       {hasPlace && (
         <Button
           kind="secondary"

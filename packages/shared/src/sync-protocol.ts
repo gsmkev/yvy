@@ -27,14 +27,22 @@ export const recordRow = z.object({
   capturedAt: epochMs,
 });
 
-export const attachmentRow = z.object({
-  id: uuid,
-  recordId: uuid,
-  mime: z.literal("image/webp"),
-  width: z.number().int().positive().max(LIMITS.photos.maxLongSidePx).nullable(),
-  height: z.number().int().positive().max(LIMITS.photos.maxLongSidePx).nullable(),
-  bytes: z.number().int().positive().max(LIMITS.photos.maxBytes).nullable(),
-});
+/** Tipos de adjunto: foto WebP (con miniatura) o nota de voz m4a (F-09, sin miniatura). */
+export const ATTACHMENT_MIMES = ["image/webp", LIMITS.audio.mime] as const;
+export const isAudioMime = (mime: string): boolean => mime === LIMITS.audio.mime;
+
+export const attachmentRow = z
+  .object({
+    id: uuid,
+    recordId: uuid,
+    mime: z.enum(ATTACHMENT_MIMES),
+    width: z.number().int().positive().max(LIMITS.photos.maxLongSidePx).nullable(),
+    height: z.number().int().positive().max(LIMITS.photos.maxLongSidePx).nullable(),
+    bytes: z.number().int().positive().max(Math.max(LIMITS.photos.maxBytes, LIMITS.audio.maxBytes)).nullable(),
+  })
+  .refine((a) => a.bytes === null || a.bytes <= (isAudioMime(a.mime) ? LIMITS.audio.maxBytes : LIMITS.photos.maxBytes), {
+    message: "Adjunto demasiado grande",
+  });
 
 /** Desde el celular las tareas solo cambian de estado (PRD §11). */
 export const taskStatusRow = z.object({

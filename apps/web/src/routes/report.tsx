@@ -2,7 +2,9 @@ import { FileDown } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { addDays, localDate, weeklyShareText } from "@yvy/shared";
+import { addDays, isAudioMime, localDate, weeklyShareText } from "@yvy/shared";
+
+const isUploadedPhoto = (a: { uploadStatus: string; mime?: string }) => a.uploadStatus === "uploaded" && !isAudioMime(a.mime ?? "");
 import { ShareWhatsappButton } from "../components/ShareButton";
 import { ShareLinksSection } from "../components/ShareLinks";
 import { Button, Card, ErrorBox, Field, Input, Spinner } from "../components/ui";
@@ -66,12 +68,12 @@ export function ReportPage() {
     setBusy(true);
     setError(null);
     try {
-      const withPhotos = rows.filter((r) => r.attachments.some((a) => a.uploadStatus === "uploaded")).slice(0, 6);
+      const withPhotos = rows.filter((r) => r.attachments.some(isUploadedPhoto)).slice(0, 6);
       const photoUrls = (
         await Promise.all(
           withPhotos.map((r) =>
             get<{ url: string }>(
-              `/media/attachments/${r.attachments.find((a) => a.uploadStatus === "uploaded")!.id}`,
+              `/media/attachments/${r.attachments.find(isUploadedPhoto)!.id}`,
             ).catch(() => null),
           ),
         )

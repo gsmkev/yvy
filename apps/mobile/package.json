@@ -23,6 +23,7 @@
     "@yvy/sync": "workspace:*",
     "drizzle-orm": "0.45.4",
     "expo": "~58.0.23",
+    "expo-audio": "~58.0.12",
     "expo-build-properties": "~58.0.12",
     "expo-camera": "~58.0.14",
     "expo-constants": "~58.0.15",
@@ -51,6 +52,7 @@
     "react-native-safe-area-context": "~5.11.1",
     "react-native-screens": "~4.30.1",
     "react-native-svg": "15.16.0",
+    "react-native-view-shot": "6.2.1",
     "react-native-web": "~0.21.4",
     "sql.js": "1.15.2"
   },

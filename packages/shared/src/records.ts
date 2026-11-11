@@ -107,6 +107,22 @@ export const prescriptionSchema = z.object({
 });
 export type Prescription = z.infer<typeof prescriptionSchema>;
 
+/** Recorrida GPS (F-05): línea ya simplificada (Douglas-Peucker en el celular), distancia y tiempo reales. */
+export const trackSchema = z
+  .object({
+    line: z
+      .array(z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]))
+      .min(2)
+      .max(LIMITS.track.maxPoints),
+    distanceM: z.number().nonnegative().max(1_000_000),
+    durationS: z.number().int().nonnegative().max(LIMITS.track.maxDurationS),
+    startedAt: z.number().int().nonnegative(),
+    endedAt: z.number().int().nonnegative(),
+    note,
+  })
+  .refine((d) => d.endedAt >= d.startedAt, { message: "La recorrida termina antes de empezar" });
+export type TrackData = z.infer<typeof trackSchema>;
+
 export const recordDataSchemas = {
   scouting: z.object({ condition, note }),
   pest: z
@@ -137,6 +153,7 @@ export const recordDataSchemas = {
   }),
   water: z.object({ level: z.enum(["full", "half", "low", "dry"]), note }),
   note: z.object({ text: z.string().trim().min(1).max(4000) }),
+  track: trackSchema,
   ...livestockSchemas,
   sowing: z
     .object({

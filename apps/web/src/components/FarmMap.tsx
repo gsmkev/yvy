@@ -42,6 +42,8 @@ export interface FarmMapProps {
   /** Áreas problema del lote (S-08): borde punteado de alerta. */
   problemAreas?: { id: string; geometry: string }[];
   points?: MapPoint[];
+  /** Mapa de calor de recorridas (F-06): puntos a lo largo de las recorridas grabadas. */
+  heat?: [number, number][];
   /** Varias estancias a la vez (inicio): perímetro, nombre y fondo satelital propio. */
   farms?: { id: string; name: string; geometry: string; basemapPath?: string | null; alert?: boolean }[];
   layers?: Layer[];
@@ -132,6 +134,7 @@ export function FarmMap(props: FarmMapProps) {
       map.addSource("points", { type: "geojson", data: fc([]) });
       map.addSource("measure", { type: "geojson", data: fc([]) });
       map.addSource("lines", { type: "geojson", data: fc([]) });
+      map.addSource("heat", { type: "geojson", data: fc([]) });
       map.addLayer({
         id: "outline",
         type: "line",
@@ -180,6 +183,35 @@ export function FarmMap(props: FarmMapProps) {
           paint: { "line-color": color, "line-width": width, ...(dash ? { "line-dasharray": [...dash] } : {}) },
         });
       }
+      map.addLayer(
+        {
+          id: "heat",
+          type: "heatmap",
+          source: "heat",
+          paint: {
+            "heatmap-weight": 0.35,
+            "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 10, 0.6, 18, 1.6],
+            "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 10, 6, 14, 14, 18, 30],
+            "heatmap-opacity": 0.85,
+            "heatmap-color": [
+              "interpolate",
+              ["linear"],
+              ["heatmap-density"],
+              0,
+              "rgba(141,179,199,0)",
+              0.25,
+              BRAND.cielo,
+              0.55,
+              BRAND.soja,
+              0.8,
+              BRAND.trigo,
+              1,
+              BRAND.lino,
+            ],
+          },
+        },
+        "plots-fill",
+      );
       map.addLayer({
         id: "problems-fill",
         type: "fill",
@@ -378,6 +410,9 @@ export function FarmMap(props: FarmMapProps) {
         })),
       ),
     );
+    (map.getSource("heat") as GeoJSONSource).setData(
+      fc((p.heat ?? []).map((c) => ({ type: "Feature" as const, properties: {}, geometry: { type: "Point" as const, coordinates: c } }))),
+    );
     const mp = p.measurePoints ?? [];
     (map.getSource("measure") as GeoJSONSource).setData(
       fc([
@@ -411,6 +446,7 @@ export function FarmMap(props: FarmMapProps) {
     props.lines,
     props.problemAreas,
     props.points,
+    props.heat,
     props.selectedPlotId,
     props.pickedPlotIds,
     props.editPlot?.id,

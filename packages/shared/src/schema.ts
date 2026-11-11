@@ -63,6 +63,8 @@ export const RECORD_KINDS = [
   "application",
   "fertilization",
   "harvest",
+  // F-05: recorrida GPS grabada a pedido
+  "track",
 ] as const;
 export type RecordKind = (typeof RECORD_KINDS)[number];
 /** Tipos de producto del catálogo (ADR 0004). */
@@ -196,6 +198,27 @@ export const linkCodes = sqliteTable(
     createdAt: integer("created_at").notNull(),
   },
   (t) => [uniqueIndex("link_codes_hash_uq").on(t.codeHash)],
+);
+
+/**
+ * PIN de ingreso de un empleado (F-24). Solo existe el hash (SHA-256 con sal propia y el secreto del servidor como
+ * pimienta), nunca el PIN. `phoneKey` es el teléfono normalizado (ver pin.ts). Los intentos fallidos bloquean la cuenta.
+ */
+export const userPins = sqliteTable(
+  "user_pins",
+  {
+    userId: text("user_id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    phoneKey: text("phone_key").notNull(),
+    salt: text("salt").notNull(),
+    pinHash: text("pin_hash").notNull(),
+    failedAttempts: integer("failed_attempts").notNull().default(0),
+    lockedUntil: integer("locked_until"),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [uniqueIndex("user_pins_phone_uq").on(t.phoneKey), index("user_pins_org_idx").on(t.organizationId)],
 );
 
 export const refreshTokens = sqliteTable(

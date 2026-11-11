@@ -119,5 +119,8 @@ export const SERVER_SCHEMA: string[] = [
   "ALTER TABLE `organizations` ADD `referrer_user_id` text;",
   "CREATE TABLE `farm_lines` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`kind` text NOT NULL,\n\t`name` text NOT NULL,\n\t`geometry` text NOT NULL,\n\t`min_lon` real NOT NULL,\n\t`min_lat` real NOT NULL,\n\t`max_lon` real NOT NULL,\n\t`max_lat` real NOT NULL,\n\t`length_m` real NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
   "CREATE INDEX `farm_lines_sync_idx` ON `farm_lines` (`organization_id`,`version`,`id`);",
-  "CREATE INDEX `farm_lines_farm_idx` ON `farm_lines` (`farm_id`);"
+  "CREATE INDEX `farm_lines_farm_idx` ON `farm_lines` (`farm_id`);",
+  "CREATE TABLE `user_pins` (\n\t`user_id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`phone_key` text NOT NULL,\n\t`salt` text NOT NULL,\n\t`pin_hash` text NOT NULL,\n\t`failed_attempts` integer DEFAULT 0 NOT NULL,\n\t`locked_until` integer,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL\n);",
+  "CREATE UNIQUE INDEX `user_pins_phone_uq` ON `user_pins` (`phone_key`);",
+  "CREATE INDEX `user_pins_org_idx` ON `user_pins` (`organization_id`);"
 ];

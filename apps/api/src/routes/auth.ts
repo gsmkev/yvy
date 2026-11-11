@@ -6,15 +6,16 @@
 import { funnelEvent } from "../db/events";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { and, count, desc, eq, gte, isNull, like } from "drizzle-orm";
+import { and, count, desc, eq, gte, isNull, like, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
-import { LIMITS, newId, parseReferralCode, t } from "@yvy/shared";
+import { LIMITS, newId, parseReferralCode, PIN_REGEX, phoneKey, t } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { requireAuth } from "../auth/middleware";
 import { issueSession, revokeRefresh, rotateRefresh } from "../auth/session";
 import { getDb, runBatch } from "../db/client";
 import { can } from "../db/scoped";
 import { randomDigits, randomToken, sha256Hex } from "../lib/crypto";
+import { hashPin, safeEqualHex } from "../lib/pin";
 import { sendEmail } from "../lib/email";
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
@@ -212,6 +213,62 @@ auth.post("/link/redeem", async (c) => {
     now,
   });
   if (!session) throw new HTTPException(403, { message: "Usuario sin acceso" });
+  return c.json(session);
+});
+
+/**
+ * F-24: ingreso del empleado con teléfono y PIN de 6 dígitos, como alternativa al QR. Cada intento se cuenta ANTES de
+ * mirar el PIN (un UPDATE atómico), así que ráfagas en paralelo no se pasan del tope: a lo sumo `pinMaxAttempts`
+ * comparaciones por ventana de bloqueo. La respuesta es la misma para un teléfono sin PIN y para un PIN errado.
+ */
+auth.post("/pin/login", async (c) => {
+  const body = parse(
+    z.object({ phone: z.string().trim().min(6).max(30), pin: z.string().regex(PIN_REGEX), deviceId }),
+    await readJson(c.req),
+  );
+  const bad = () => new HTTPException(401, { message: t("app.pinLoginBad") });
+  const key = phoneKey(body.phone);
+  if (!key) throw bad();
+  const db = getDb(c.env.DB);
+  const now = Date.now();
+  const [pin] = await db.select().from(s.userPins).where(eq(s.userPins.phoneKey, key)).limit(1);
+  if (!pin) {
+    // Mismo trabajo que con un teléfono real, para no distinguirlos por el tiempo de respuesta.
+    await hashPin(c.env.JWT_SECRET, "x", body.pin);
+    throw bad();
+  }
+  const locked = () => new HTTPException(429, { message: t("app.pinLoginLocked", { min: Math.ceil(LIMITS.auth.pinLockMs / 60_000) }) });
+  // Cuenta el intento; si está bloqueada, el UPDATE no toca ninguna fila.
+  const [bumped] = await db
+    .update(s.userPins)
+    .set({ failedAttempts: sql`${s.userPins.failedAttempts} + 1` })
+    .where(and(eq(s.userPins.userId, pin.userId), or(isNull(s.userPins.lockedUntil), lte(s.userPins.lockedUntil, now))))
+    .returning({ n: s.userPins.failedAttempts });
+  if (!bumped) throw locked();
+  const lock = () =>
+    db
+      .update(s.userPins)
+      .set({ failedAttempts: 0, lockedUntil: now + LIMITS.auth.pinLockMs })
+      .where(eq(s.userPins.userId, pin.userId));
+  if (bumped.n > LIMITS.auth.pinMaxAttempts) {
+    await lock();
+    throw locked();
+  }
+  if (!safeEqualHex(await hashPin(c.env.JWT_SECRET, pin.salt, body.pin), pin.pinHash)) {
+    if (bumped.n >= LIMITS.auth.pinMaxAttempts) {
+      await lock();
+      throw locked();
+    }
+    throw bad();
+  }
+  await db.update(s.userPins).set({ failedAttempts: 0, lockedUntil: null }).where(eq(s.userPins.userId, pin.userId));
+  // Solo entra a la organización que fijó el PIN y mientras siga siendo empleado activo de ella.
+  const session = await issueSession(db, c.env.JWT_SECRET, pin.userId, {
+    organizationId: pin.organizationId,
+    deviceId: body.deviceId,
+    now,
+  });
+  if (!session || session.organization.role !== "worker") throw new HTTPException(403, { message: t("app.pinLoginNoAccess") });
   return c.json(session);
 });
 

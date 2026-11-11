@@ -6,11 +6,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Camera, Map, type CameraRef, type StyleSpecification } from "@maplibre/maplibre-react-native";
 import { router, useFocusEffect } from "expo-router";
-import { LocateFixed, X } from "lucide-react-native";
+import { Compass, LocateFixed, Navigation, X } from "lucide-react-native";
 import { BRAND, describeRecord, t, uaPerHa } from "@yvy/shared";
 import { centroidOf, containsPoint, type Area } from "@yvy/geo";
 import { distanceM } from "../../src/lib/bearing";
 import { useRef } from "react";
+import { mapBearingFor, shouldRotate } from "../../src/lib/heading";
+import { useHeading } from "../../src/lib/useHeading";
 import { useSession } from "../../src/lib/session";
 import { isOwnerMode } from "../../src/lib/ownerSummary";
 import { getDb } from "../../src/lib/db";
@@ -57,6 +59,23 @@ export default function MapScreen() {
   const [me, setMe] = useState<Fix | null>(null);
   const [copied, setCopied] = useState(false);
   const camera = useRef<CameraRef>(null);
+  // F-04: brújula y mapa que gira con el rumbo (se activa a mano; el sensor solo corre mientras está activo).
+  const [follow, setFollow] = useState(false);
+  const [bearing, setBearing] = useState(0);
+  const bearingRef = useRef(0);
+  const heading = useHeading(follow);
+  useEffect(() => {
+    if (!follow || heading === null) return;
+    const target = mapBearingFor(heading);
+    if (!shouldRotate(bearingRef.current, target)) return;
+    bearingRef.current = target;
+    camera.current?.setStop({ bearing: target, duration: 250, easing: "linear" });
+  }, [follow, heading]);
+  const northUp = () => {
+    setFollow(false);
+    bearingRef.current = 0;
+    camera.current?.setStop({ bearing: 0, duration: 300, easing: "ease" });
+  };
   const farm = current ?? farms[0];
   // M-13: al elegir un lote la cámara se ajusta a sus límites, dejando lugar a la ficha de abajo.
   useEffect(() => {
@@ -178,6 +197,11 @@ export default function MapScreen() {
         attribution={false}
         logo={false}
         compass={false}
+        onRegionIsChanging={(e) => {
+          const b = Math.round(e.nativeEvent.bearing);
+          bearingRef.current = b;
+          setBearing((prev) => (prev === b ? prev : b));
+        }}
         onPress={(e) => {
           const [lon, lat] = e.nativeEvent.lngLat as unknown as [number, number];
           // Un toque cerca de una tarea con punto (S-09) lleva ahí
@@ -203,9 +227,27 @@ export default function MapScreen() {
         <LocateFixed size={22} color={C.tinta} strokeWidth={2} />
       </Pressable>
 
-      {canMarkPoi && !plot && (
+      <View style={st.compassCol} pointerEvents="box-none">
+        <Pressable accessibilityRole="button" accessibilityLabel={t("app.compassNorth")} onPress={northUp} style={st.round}>
+          <View style={{ transform: [{ rotate: `${-bearing}deg` }] }}>
+            <Compass size={22} color={C.tinta} strokeWidth={2} />
+          </View>
+        </Pressable>
+        <Pressable
+          accessibilityRole="switch"
+          accessibilityState={{ checked: follow }}
+          accessibilityLabel={follow ? t("app.compassFollowOff") : t("app.compassFollowOn")}
+          onPress={() => setFollow((v) => !v)}
+          style={[st.round, follow && { backgroundColor: C.accion }]}
+        >
+          <Navigation size={22} color={follow ? C.blanco : C.tinta} strokeWidth={2} />
+        </Pressable>
+      </View>
+
+      {!plot && (
         <View style={st.mark}>
-          <Button kind="secondary" title={t("app.poiMark")} onPress={() => router.push("/poi")} />
+          <Button kind="secondary" title={t("app.poiScan")} onPress={() => router.push("/scan-poi")} />
+          {canMarkPoi && <Button kind="secondary" title={t("app.poiMark")} onPress={() => router.push("/poi")} style={{ marginTop: 8 }} />}
         </View>
       )}
 
@@ -268,6 +310,8 @@ const st = StyleSheet.create({
   sheet: { position: "absolute", left: 12, right: 12, bottom: 12, backgroundColor: C.papel, borderRadius: RADIUS + 4, padding: GUTTER, elevation: 8, shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } },
   mark: { position: "absolute", left: 12, right: 12, bottom: 12 },
   locate: { position: "absolute", top: 16, right: 16, width: 48, height: 48, borderRadius: 24, backgroundColor: C.papel, alignItems: "center", justifyContent: "center", elevation: 4, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
+  compassCol: { position: "absolute", top: 76, right: 16, gap: 10 },
+  round: { width: 48, height: 48, borderRadius: 24, backgroundColor: C.papel, alignItems: "center", justifyContent: "center", elevation: 4, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
   topLeft: { position: "absolute", top: 12, left: 12, right: 76, gap: 8 },
   coords: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14, minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
   panel: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14 },

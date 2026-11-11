@@ -44,7 +44,9 @@ const NOTE: FieldDef = { key: "note", label: t("app.note"), type: "textarea", op
 const HERD_FIELDS = (root: string): FieldDef[] =>
   HERD_CATEGORIES.map((c) => ({ key: `${root}.${c}`, label: f(`herd_${c}`), type: "number", optional: true }));
 
+/** `track` se graba en el celular (F-05) y no se edita a mano. */
 const FIELDS: Record<RecordKind, FieldDef[]> = {
+  track: [],
   scouting: [{ key: "condition", label: f("condition"), type: "select", options: CONDITION }, NOTE],
   pest: [
     { key: "pest", label: f("pest"), type: "select", options: opts("pest", PESTS) },

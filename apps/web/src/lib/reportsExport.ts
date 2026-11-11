@@ -1,5 +1,6 @@
 /** Exportación completa de la organización (R-09): ZIP con Excel, KML y GeoJSON, armado en el navegador. */
 import type { Feature, FeatureCollection, Geometry } from "geojson";
+import { isAudioMime } from "@yvy/shared";
 import { get } from "./api";
 import { describeData, plotsToKml } from "./exports";
 import { fmtDateTime } from "./format";
@@ -164,7 +165,7 @@ export async function collectExportData(orgName: string, onProgress?: (msg: stri
     .flatMap((f) =>
       f.records.flatMap((r) =>
         r.attachments
-          .filter((a) => a.uploadStatus === "uploaded")
+          .filter((a) => a.uploadStatus === "uploaded" && !isAudioMime(a.mime ?? ""))
           .map((a) => ({ recordId: r.id, farm: f.farm.name, capturedAt: r.capturedAt, attachmentId: a.id })),
       ),
     )

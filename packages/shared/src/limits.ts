@@ -38,6 +38,13 @@ export const LIMITS = {
     uploadUrlTtlSeconds: 15 * 60,
     downloadUrlTtlSeconds: 60 * 60,
   },
+  audio: {
+    /** Nota de voz (F-09): AAC en .m4a, un solo archivo por registro, sin miniatura. */
+    mime: "audio/mp4",
+    maxSeconds: 90,
+    maxBytes: 1024 * 1024,
+    maxPerRecord: 1,
+  },
   auth: {
     emailCodeTtlMs: 10 * 60 * 1000,
     emailCodeMaxAttempts: 5,
@@ -47,6 +54,9 @@ export const LIMITS = {
     emailCodesPerIp: 10,
     emailCodesIpWindowMs: 60 * 60 * 1000,
     refreshTokenTtlMs: 90 * 24 * 60 * 60 * 1000,
+    /** Ingreso con teléfono y PIN de 6 dígitos (F-24): intentos por cuenta antes de bloquear, y cuánto dura el bloqueo. */
+    pinMaxAttempts: 5,
+    pinLockMs: 15 * 60 * 1000,
   },
   geometry: {
     /** Hectáreas: bajo esto un lote es casi seguro un error de dibujo. */
@@ -88,6 +98,19 @@ export const LIMITS = {
     maxStations: 20,
     /** Conteo máximo por plaga en una estación. */
     maxCount: 10_000,
+  },
+  track: {
+    /** Recorrida GPS (F-05): puntos que se guardan tras simplificar, y tolerancia de la simplificación en metros. */
+    maxPoints: 500,
+    simplifyToleranceM: 3,
+    /** Se descartan fixes con peor precisión que esto y los que no se movieron al menos esto. */
+    maxAccuracyM: 30,
+    minStepM: 5,
+    /** Muestreo: cada tanto tiempo o distancia (ahorra batería); el sistema agrupa lo que pueda. */
+    sampleIntervalMs: 5000,
+    sampleDistanceM: 5,
+    /** Duración máxima de una recorrida registrada, en segundos (12 h). */
+    maxDurationS: 12 * 3600,
   },
   vigor: {
     /** Caída de vigor (NDVI) entre las dos últimas pasadas que se avisa, en % (web y app). */

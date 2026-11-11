@@ -24,12 +24,16 @@ import {
   type RecordKind,
   type Station,
 } from "@yvy/shared";
-import type { LocalPhoto, Plot, Season } from "../../src/db/store";
+import type { LocalAudio, LocalPhoto, Plot, Season } from "../../src/db/store";
 import { getDb } from "../../src/lib/db";
 import { selectedFarmId } from "../../src/lib/farmFilter";
 import { FLOWS, KINDS_FOR, SINGLE_PLOT_KINDS, stepsFor, type Step } from "../../src/lib/annotate";
 import { currentFix, guessPlots, type Fix, type PlotGuess } from "../../src/lib/location";
+import { containsPoint, type Area } from "@yvy/geo";
 import { processPhoto } from "../../src/lib/photos";
+import { kindForPoi } from "../../src/lib/poiQr";
+import { PhotoMarkup } from "../../src/ui/PhotoMarkup";
+import { VoiceRecorder } from "../../src/ui/VoiceRecorder";
 import { useSession } from "../../src/lib/session";
 import { localChanged, useSyncStatus } from "../../src/lib/sync";
 import { toastSaved } from "../../src/lib/toast";
@@ -48,18 +52,27 @@ const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").t
 type Phase = { name: "plot" } | { name: "multi" } | { name: "kind" } | { name: "mode" } | { name: "stationsCrop" } | { name: "stations" } | { name: "step"; i: number } | { name: "photo" } | { name: "done"; recordId: string };
 
 export default function Annotate() {
-  const params = useLocalSearchParams<{ plotId?: string; kind?: RecordKind; taskId?: string; recordId?: string; farmLevel?: string }>();
+  const params = useLocalSearchParams<{ plotId?: string; kind?: RecordKind; taskId?: string; recordId?: string; farmLevel?: string; poiId?: string }>();
   const session = useSession()!;
   const db = getDb();
   const plots = useMemo(() => db.plots(selectedFarmId(db) ?? undefined), []);
   // Edición (RF-34): el mismo registro, con sus datos cargados; se guarda con el mismo id.
   const editing = useMemo(() => (params.recordId ? db.recordById(params.recordId) : null), []);
+  // F-28: se llegó escaneando el QR de un punto de interés: se anota ahí (lote, estancia y punto salen de él).
+  const scanPoi = useMemo(() => (params.poiId && !params.recordId ? db.pois().find((p) => p.id === params.poiId) ?? null : null), []);
+  const presetKind: RecordKind | null = params.kind ?? (scanPoi ? kindForPoi(scanPoi.kind) : null);
   const existingPhotos = useMemo(() => (editing ? db.photosOfRecord(editing.id).length : 0), []);
   const maxNewPhotos = LIMITS.photos.maxPerRecord - existingPhotos;
+  // Un registro lleva a lo sumo una nota de voz: al editar uno que ya la tiene no se ofrece otra.
+  const hasVoice = useMemo(() => (editing ? db.voiceOfRecord(editing.id).length > 0 : false), []);
   const [fix, setFix] = useState<Fix | null | "searching">(editing ? null : "searching");
   const [guesses, setGuesses] = useState<PlotGuess[]>([]);
-  const [plot, setPlot] = useState<Plot | null>(() => db.plots().find((p) => p.id === (editing ? editing.plotId : params.plotId)) ?? null);
-  const [kind, setKind] = useState<RecordKind | null>(editing?.kind ?? params.kind ?? null);
+  const [plot, setPlot] = useState<Plot | null>(
+    () =>
+      db.plots().find((p) => p.id === (editing ? editing.plotId : params.plotId)) ??
+      (scanPoi ? plots.find((p) => containsPoint(JSON.parse(p.geometry) as Area, scanPoi.lon, scanPoi.lat)) ?? null : null),
+  );
+  const [kind, setKind] = useState<RecordKind | null>(editing?.kind ?? presetKind);
   // Campañas activas que bajaron al celular: con una sola no se pregunta, se usa esa.
   const seasons = useMemo(() => db.activeSeasons(), []);
   const seed = (kd: RecordKind): Record<string, unknown> => {
@@ -76,13 +89,14 @@ export default function Annotate() {
     return out;
   };
   const [values, setValues] = useState<Record<string, unknown>>(() =>
-    editing ? (JSON.parse(editing.data) as Record<string, unknown>) : params.kind ? seed(params.kind) : {},
+    editing ? (JSON.parse(editing.data) as Record<string, unknown>) : { ...(presetKind ? seed(presetKind) : {}), ...(scanPoi ? { poiId: scanPoi.id } : {}) },
   );
   const [photos, setPhotos] = useState<LocalPhoto[]>([]);
+  const [voice, setVoice] = useState<LocalAudio | null>(null);
   // Plaga: primero se elige entre una observación o el monitoreo por estaciones (F-12).
   const entryFor = (kd: RecordKind): Phase => (kd === "pest" && !editing ? { name: "mode" } : { name: "step", i: 0 });
   const [phase, setPhase] = useState<Phase>(() =>
-    editing ? { name: "step", i: 0 } : params.kind === "rain" || params.plotId ? (params.kind ? entryFor(params.kind) : { name: "kind" }) : { name: "plot" },
+    editing ? { name: "step", i: 0 } : scanPoi ? (presetKind ? entryFor(presetKind) : { name: "kind" }) : params.kind === "rain" || params.plotId ? (params.kind ? entryFor(params.kind) : { name: "kind" }) : { name: "plot" },
   );
   const [stationMode, setStationMode] = useState(false);
   const [crop, setCrop] = useState<MonitorCrop | null>(null);
@@ -99,7 +113,7 @@ export default function Annotate() {
       const g = guessPlots(plots, f);
       setGuesses(g);
       // Un solo candidato seguro: se elige solo y pasamos a "qué" (salvo la lluvia de la estancia, que no es de un lote).
-      if (!params.plotId && !params.farmLevel && g.length === 1 && g[0]!.confidence === "sure") {
+      if (!params.plotId && !params.poiId && !params.farmLevel && g.length === 1 && g[0]!.confidence === "sure") {
         setPlot(g[0]!.plot);
         setPhase(kind ? entryFor(kind) : { name: "kind" });
       }
@@ -121,19 +135,20 @@ export default function Annotate() {
     () => (editing ? [] : db.pois(plot?.farmId ?? selectedFarmId(db) ?? undefined).filter((p) => p.kind === "water")),
     [plot?.farmId, editing],
   );
-  const flowCtx = { waterPois: waterPois.length, askSeason: seasons.length > 1 };
+  // Con el punto ya escaneado no se pregunta de qué aguada es.
+  const flowCtx = { waterPois: scanPoi ? 0 : waterPois.length, askSeason: seasons.length > 1 };
   const steps = stationRecord ? FLOWS.pest.slice(-1) : stepsFor(kind, values, flowCtx);
   const stepIndex = phase.name === "step" ? phase.i : -1;
 
   const back = () => {
     Keyboard.dismiss();
     if (phase.name === "step" && phase.i > 0) return setPhase({ name: "step", i: phase.i - 1 });
-    if (phase.name === "step") return params.kind || editing ? router.back() : setPhase({ name: "kind" });
+    if (phase.name === "step") return presetKind || editing ? router.back() : setPhase({ name: "kind" });
     if (phase.name === "multi") return setPhase({ name: "plot" });
     if (phase.name === "mode") return params.kind ? (params.plotId ? router.back() : setPhase({ name: "plot" })) : setPhase({ name: "kind" });
     if (phase.name === "stationsCrop") return setPhase({ name: "mode" });
     if (phase.name === "stations") return setPhase({ name: "mode" });
-    if (phase.name === "kind") return multi.length ? setPhase({ name: "multi" }) : params.plotId ? router.back() : setPhase({ name: "plot" });
+    if (phase.name === "kind") return multi.length ? setPhase({ name: "multi" }) : params.plotId || scanPoi ? router.back() : setPhase({ name: "plot" });
     if (phase.name === "photo") return setPhase(stationMode ? { name: "stations" } : { name: "step", i: steps.length - 1 });
     router.back();
   };
@@ -156,7 +171,7 @@ export default function Annotate() {
     const parsed = parseRecordData(kind, data);
     if (!parsed.success) return setPhase({ name: "step", i: 0 });
     const f = fix === "searching" ? null : fix;
-    const farmId = editing?.farmId ?? plot?.farmId ?? selectedFarmId(db) ?? db.farms()[0]?.id;
+    const farmId = editing?.farmId ?? scanPoi?.farmId ?? plot?.farmId ?? selectedFarmId(db) ?? db.farms()[0]?.id;
     if (!farmId) return;
     if (multi.length > 1 && !editing) {
       const at = Date.now();
@@ -175,6 +190,7 @@ export default function Annotate() {
           capturedAt: at,
         })),
         photos,
+        voice,
       );
       if (params.taskId) db.completeTask(params.taskId, ids[0]!);
       localChanged();
@@ -197,6 +213,7 @@ export default function Annotate() {
       },
       photos,
       editing?.id,
+      voice,
     );
     if (params.taskId) db.completeTask(params.taskId, recordId);
     localChanged();
@@ -220,7 +237,7 @@ export default function Annotate() {
     <Stack.Screen
       options={{
         headerShown: phase.name !== "done",
-        title: plot ? plot.name : t("app.annotate"),
+        title: plot ? plot.name : scanPoi ? scanPoi.name : t("app.annotate"),
         headerLeft: () => (
           <Pressable onPress={back} hitSlop={12} accessibilityLabel={t("ui.cancel")} style={{ paddingHorizontal: 8 }}>
             <ArrowLeft size={24} color={C.tinta} />
@@ -533,11 +550,12 @@ export default function Annotate() {
               </View>
             ))}
           </View>
+          {!hasVoice && <VoiceRecorder value={voice} onChange={setVoice} />}
           <View style={{ flex: 1 }} />
           {photos.length < maxNewPhotos && (
             <Button kind="secondary" big title={t("app.takePhoto")} onPress={() => setCamera(true)} style={{ marginBottom: 12 }} />
           )}
-          <Button big title={editing ? t("app.recordSave") : photos.length ? t("app.done") : t("app.skipPhoto")} onPress={save} />
+          <Button big title={editing ? t("app.recordSave") : photos.length || voice ? t("app.done") : t("app.skipPhoto")} onPress={save} />
         </ScrollView>
       </View>
     );
@@ -839,7 +857,28 @@ function PhotoCamera({ onDone }: { onDone: (p: LocalPhoto | null) => void }) {
   const [perm, request] = useCameraPermissions();
   const [ref, setRef] = useState<CameraView | null>(null);
   const [busy, setBusy] = useState(false);
+  // F-08: después del disparo se puede dibujar encima (flecha, círculo) antes de procesar la foto.
+  const [shot, setShot] = useState<{ uri: string; width: number; height: number } | null>(null);
   if (!perm) return null;
+  if (shot)
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <PhotoMarkup
+          uri={shot.uri}
+          width={shot.width}
+          height={shot.height}
+          onDone={async (r) => {
+            if (!r) return onDone(null);
+            try {
+              onDone(await processPhoto(r.uri, r.width, r.height));
+            } catch {
+              onDone(null);
+            }
+          }}
+        />
+      </>
+    );
   if (!perm.granted)
     return (
       <View style={[k.screen, k.pad, { justifyContent: "center", gap: 12 }]}>
@@ -866,7 +905,8 @@ function PhotoCamera({ onDone }: { onDone: (p: LocalPhoto | null) => void }) {
             setBusy(true);
             try {
               const pic = await ref.takePictureAsync({ quality: 0.9 });
-              onDone(await processPhoto(pic.uri, pic.width, pic.height));
+              setShot({ uri: pic.uri, width: pic.width, height: pic.height });
+              setBusy(false);
             } catch {
               setBusy(false);
             }

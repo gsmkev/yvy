@@ -1,4 +1,4 @@
-import { MapPinned, QrCode, UserPlus } from "lucide-react";
+import { KeyRound, MapPinned, QrCode, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
@@ -23,6 +23,7 @@ export function TeamPage() {
   const [adding, setAdding] = useState(false);
   const [qr, setQr] = useState<{ member: Member; qr: string; expiresAt: number } | null>(null);
   const [assigning, setAssigning] = useState<Member | null>(null);
+  const [pinFor, setPinFor] = useState<Member | null>(null);
   const [removing, setRemoving] = useState<Member | null>(null);
   const canManage = me.data?.role === "owner" || me.data?.role === "admin";
   const link = useMutation({
@@ -68,6 +69,9 @@ export function TeamPage() {
             <div className="text-sm text-tinta-2">
               {tk(`ui.role_${m.role}`)} {m.email ? `· ${m.email}` : ""} {m.phone ? `· ${m.phone}` : ""}
             </div>
+            {m.role === "worker" && canManage && (
+              <div className="mt-0.5 text-xs text-tinta-2">{m.hasPin ? t("app.teamPinHas") : t("app.teamPinNone")}</div>
+            )}
             <div className="num mt-0.5 text-xs text-tinta-2">
               {t("ui.activityDays", { n: m.activeDays7 })} ·{" "}
               {t(m.records7d === 1 ? "ui.activityRecordsOne" : "ui.activityRecords", { n: m.records7d })} ·{" "}
@@ -87,6 +91,11 @@ export function TeamPage() {
           {canManage && m.role === "worker" && (
             <Button icon={QrCode} onClick={() => link.mutate(m)}>
               {t("ui.linkDevice")}
+            </Button>
+          )}
+          {canManage && m.role === "worker" && (
+            <Button icon={KeyRound} onClick={() => setPinFor(m)}>
+              {m.hasPin ? t("app.teamPinChange") : t("app.teamPinSet")}
             </Button>
           )}
           {canManage && m.userId !== me.data?.user.id && (
@@ -109,6 +118,7 @@ export function TeamPage() {
       )}
       {adding && <AddMember canAddAdmins={me.data?.role === "owner"} onClose={() => setAdding(false)} />}
       {assigning && <AssignPlots member={assigning} onClose={() => setAssigning(null)} />}
+      {pinFor && <PinDialog member={pinFor} onClose={() => setPinFor(null)} />}
       {qr && (
         <Modal title={`${t("ui.linkDevice")} · ${qr.member.fullName}`} onClose={() => setQr(null)}>
           <div className="flex flex-col items-center gap-3">
@@ -168,6 +178,84 @@ function AddMember({ canAddAdmins, onClose }: { canAddAdmins: boolean; onClose: 
           {t("ui.save")}
         </Button>
       </form>
+    </Modal>
+  );
+}
+
+/** F-24: el dueño o administrador da o cambia el PIN de ingreso de un empleado (alternativa al QR). */
+function PinDialog({ member, onClose }: { member: Member; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [phone, setPhone] = useState(member.phone ?? "");
+  const [own, setOwn] = useState(false);
+  const [pin, setPin] = useState("");
+  const [shown, setShown] = useState<string | null>(null);
+  const save = useMutation({
+    mutationFn: () => put<{ pin?: string }>(`/org/members/${member.userId}/pin`, { phone, ...(own ? { pin } : {}) }),
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ["members"] });
+      if (r.pin) setShown(r.pin);
+      else {
+        toast(t("app.teamPinSaved"));
+        onClose();
+      }
+    },
+  });
+  const clear = useMutation({
+    mutationFn: () => del(`/org/members/${member.userId}/pin`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["members"] });
+      onClose();
+    },
+  });
+  return (
+    <Modal title={`${t("app.teamPinTitle")} · ${member.fullName}`} onClose={onClose}>
+      {shown ? (
+        <div className="flex flex-col gap-4">
+          <p className="num text-center text-4xl font-semibold tracking-[0.3em]">{shown}</p>
+          <p className="text-sm text-tinta-2">{t("app.teamPinShow", { name: member.fullName, pin: shown })}</p>
+          <Button variant="primary" onClick={onClose}>
+            {t("ui.close")}
+          </Button>
+        </div>
+      ) : (
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            save.mutate();
+          }}
+        >
+          <Field label={t("app.teamPinPhoneLabel")}>
+            <Input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} />
+          </Field>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={own} onChange={(e) => setOwn(e.target.checked)} />
+            {t("app.teamPinOwn")}
+          </label>
+          {own && (
+            <Field label={t("app.loginPinLabel")}>
+              <Input
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                maxLength={6}
+                required
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              />
+            </Field>
+          )}
+          {!own && <p className="text-sm text-tinta-2">{t("app.teamPinGenerate")}</p>}
+          {(save.error || clear.error) && <ErrorBox error={save.error ?? clear.error} />}
+          <Button type="submit" variant="primary" disabled={save.isPending || (own && pin.length !== 6)}>
+            {t("ui.save")}
+          </Button>
+          {member.hasPin && (
+            <Button variant="danger" disabled={clear.isPending} onClick={() => clear.mutate()}>
+              {t("app.teamPinRemove")}
+            </Button>
+          )}
+        </form>
+      )}
     </Modal>
   );
 }

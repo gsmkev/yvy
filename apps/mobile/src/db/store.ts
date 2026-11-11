@@ -75,7 +75,7 @@ export type Farm = typeof s.farms.$inferSelect;
 export type Plot = typeof s.plots.$inferSelect;
 export type Poi = typeof s.pointsOfInterest.$inferSelect;
 export type Task = typeof s.tasks.$inferSelect;
-export type RecordRow = typeof s.records.$inferSelect & { pending: boolean; rejected: string | null; photos: number };
+export type RecordRow = typeof s.records.$inferSelect & { pending: boolean; rejected: string | null; photos: number; voice: number };
 export type Alert = typeof s.alerts.$inferSelect;
 export type FarmLayer = typeof s.farmLayers.$inferSelect;
 export type Season = typeof s.seasons.$inferSelect;
@@ -92,6 +92,12 @@ export interface NewRecord {
   lat: number | null;
   gpsAccuracyM: number | null;
   capturedAt: number;
+}
+
+/** Nota de voz grabada en el celular (F-09): un .m4a local, sin miniatura. */
+export interface LocalAudio {
+  uri: string;
+  bytes: number;
 }
 
 export interface LocalPhoto {
@@ -240,8 +246,9 @@ export class LocalDb implements SyncStore {
   // ---------- Escrituras offline ----------
 
   /** Guarda un registro con sus fotos. Todo en una transacción con sus mutaciones. */
-  saveRecord(userId: string, orgId: string, input: NewRecord, photos: LocalPhoto[] = [], recordId = newId()): string {
+  saveRecord(userId: string, orgId: string, input: NewRecord, photos: LocalPhoto[] = [], recordId = newId(), audio: LocalAudio | null = null): string {
     if (photos.length > LIMITS.photos.maxPerRecord) throw new Error("too_many_attachments");
+    if (audio && audio.bytes > LIMITS.audio.maxBytes) throw new Error("audio_too_big");
     const ts = this.now();
     const existing = this.sql.get<{ created_at: number }>("SELECT created_at FROM records WHERE id = ?", [recordId]);
     this.sql.tx(() => {
@@ -303,6 +310,19 @@ export class LocalDb implements SyncStore {
           id,
         );
       }
+      if (audio) {
+        const id = newId();
+        this.sql.run(
+          `INSERT INTO attachments (id, organization_id, record_id, storage_path, thumb_path, mime, width, height, bytes, upload_status, created_at, updated_at, version)
+           VALUES (?, ?, ?, '', '', ?, NULL, NULL, ?, 'pending', ?, ?, 0)`,
+          [id, orgId, recordId, LIMITS.audio.mime, audio.bytes, ts, ts],
+        );
+        this.sql.run("INSERT INTO local_files (attachment_id, photo_uri, thumb_uri) VALUES (?, ?, '')", [id, audio.uri]);
+        this.enqueue(
+          { mutationId: newId(), kind: "attachments.upsert", row: { id, recordId, mime: LIMITS.audio.mime, width: null, height: null, bytes: audio.bytes } },
+          id,
+        );
+      }
     });
     return recordId;
   }
@@ -311,8 +331,8 @@ export class LocalDb implements SyncStore {
    * Un registro por lote, todo en una transacción y con el mismo capturedAt (anotar en varios lotes, F-10).
    * Las fotos van en el primero: subirlas una vez por lote sería mandar lo mismo varias veces.
    */
-  saveRecords(userId: string, orgId: string, inputs: NewRecord[], photos: LocalPhoto[] = []): string[] {
-    return this.sql.tx(() => inputs.map((input, i) => this.saveRecord(userId, orgId, input, i === 0 ? photos : [])));
+  saveRecords(userId: string, orgId: string, inputs: NewRecord[], photos: LocalPhoto[] = [], audio: LocalAudio | null = null): string[] {
+    return this.sql.tx(() => inputs.map((input, i) => this.saveRecord(userId, orgId, input, i === 0 ? photos : [], undefined, i === 0 ? audio : null)));
   }
 
   /** Marca un punto de interés (F-07). Fila local + mutación en una sola transacción. */
@@ -516,7 +536,8 @@ export class LocalDb implements SyncStore {
         `SELECT r.*,
           EXISTS (SELECT 1 FROM outbox o WHERE o.rejected_reason IS NULL AND (o.row_id = r.id OR o.row_id IN (SELECT id FROM attachments WHERE record_id = r.id))) AS _pending,
           (SELECT rejected_reason FROM outbox o WHERE o.row_id = r.id AND o.rejected_reason IS NOT NULL LIMIT 1) AS _rejected,
-          (SELECT count(*) FROM attachments a WHERE a.record_id = r.id AND a.deleted_at IS NULL) AS _photos
+          (SELECT count(*) FROM attachments a WHERE a.record_id = r.id AND a.deleted_at IS NULL AND a.mime NOT LIKE 'audio/%') AS _photos,
+          (SELECT count(*) FROM attachments a WHERE a.record_id = r.id AND a.deleted_at IS NULL AND a.mime LIKE 'audio/%') AS _voice
          FROM records r WHERE r.deleted_at IS NULL AND r.captured_at >= ? ORDER BY r.captured_at DESC LIMIT ?`,
         [since, limit],
       )
@@ -525,6 +546,7 @@ export class LocalDb implements SyncStore {
         pending: !!r._pending,
         rejected: (r._rejected as string | null) ?? null,
         photos: Number(r._photos),
+        voice: Number(r._voice),
       }));
   }
 
@@ -536,15 +558,29 @@ export class LocalDb implements SyncStore {
   /** Fotos del registro; `thumbUri` es null si la miniatura no está en este celular. */
   photosOfRecord(recordId: string): { id: string; thumbUri: string | null }[] {
     return this.sql
-      .all<{ id: string }>("SELECT id FROM attachments WHERE record_id = ? AND deleted_at IS NULL ORDER BY created_at", [recordId])
+      .all<{ id: string }>("SELECT id FROM attachments WHERE record_id = ? AND deleted_at IS NULL AND mime NOT LIKE 'audio/%' ORDER BY created_at", [recordId])
       .map((a) => ({ id: a.id, thumbUri: this.localPhoto(a.id) }));
+  }
+
+  /** Nota de voz del registro (F-09): archivo local si está en este celular, y si ya se subió. */
+  voiceOfRecord(recordId: string): { id: string; uri: string | null; uploaded: boolean }[] {
+    return this.sql
+      .all<{ id: string; upload_status: string }>(
+        "SELECT id, upload_status FROM attachments WHERE record_id = ? AND deleted_at IS NULL AND mime LIKE 'audio/%' ORDER BY created_at",
+        [recordId],
+      )
+      .map((a) => ({
+        id: a.id,
+        uri: this.sql.get<{ photo_uri: string }>("SELECT photo_uri FROM local_files WHERE attachment_id = ?", [a.id])?.photo_uri || null,
+        uploaded: a.upload_status === "uploaded",
+      }));
   }
 
   /** Primera miniatura local de cada registro con fotos (Historial). Las fotos de otro celular no tienen miniatura acá. */
   firstThumbByRecord(): Map<string, string> {
     const rows = this.sql.all<{ record_id: string; thumb_uri: string }>(
       `SELECT a.record_id, f.thumb_uri FROM attachments a JOIN local_files f ON f.attachment_id = a.id
-       WHERE a.deleted_at IS NULL ORDER BY a.created_at DESC, a.rowid DESC`,
+       WHERE a.deleted_at IS NULL AND a.mime NOT LIKE 'audio/%' ORDER BY a.created_at DESC, a.rowid DESC`,
     );
     // Se recorre de la más nueva a la más vieja: la última escritura en el mapa es la primera foto.
     return new Map(rows.map((r) => [r.record_id, r.thumb_uri] as const));
@@ -688,10 +724,11 @@ export class LocalDb implements SyncStore {
 
   // ---------- Fotos pendientes de subir ----------
 
-  pendingUploads(): { attachmentId: string; photoUri: string; thumbUri: string; attempts: number }[] {
+  pendingUploads(): { attachmentId: string; photoUri: string; thumbUri: string; attempts: number; mime: string }[] {
     // Solo las que el servidor ya conoce (su mutación salió del outbox).
     return this.sql.all(
-      `SELECT f.attachment_id attachmentId, f.photo_uri photoUri, f.thumb_uri thumbUri, f.attempts FROM local_files f
+      `SELECT f.attachment_id attachmentId, f.photo_uri photoUri, f.thumb_uri thumbUri, f.attempts, a.mime FROM local_files f
+       JOIN attachments a ON a.id = f.attachment_id
        WHERE f.uploaded = 0 AND NOT EXISTS (SELECT 1 FROM outbox o WHERE o.row_id = f.attachment_id)`,
     );
   }
@@ -699,6 +736,38 @@ export class LocalDb implements SyncStore {
   markUploaded(attachmentId: string, ok: boolean): void {
     if (ok) this.sql.run("UPDATE local_files SET uploaded = 1 WHERE attachment_id = ?", [attachmentId]);
     else this.sql.run("UPDATE local_files SET attempts = attempts + 1 WHERE attachment_id = ?", [attachmentId]);
+  }
+
+  /** Cuánto ocupa lo local que se puede medir sin tocar el disco (F-19): fotos y notas ya cargadas, mapas bajados. */
+  storageSummary(): { photos: { n: number; bytes: number }; voice: { n: number; bytes: number }; maps: { n: number; bytes: number }; reclaimable: { n: number; bytes: number } } {
+    const sum = (where: string) =>
+      this.sql.get<{ n: number; bytes: number }>(
+        `SELECT count(*) n, coalesce(sum(a.bytes), 0) bytes FROM local_files f JOIN attachments a ON a.id = f.attachment_id WHERE f.photo_uri <> '' AND ${where}`,
+      ) ?? { n: 0, bytes: 0 };
+    const maps = this.sql.get<{ n: number; bytes: number }>("SELECT count(*) n, coalesce(sum(bytes), 0) bytes FROM offline_packs") ?? { n: 0, bytes: 0 };
+    return {
+      photos: sum("a.mime NOT LIKE 'audio/%'"),
+      voice: sum("a.mime LIKE 'audio/%'"),
+      maps,
+      reclaimable: sum("f.uploaded = 1"),
+    };
+  }
+
+  /** Archivos grandes (foto completa o nota de voz) cuyo original ya está en el servidor: se pueden borrar del celular. */
+  uploadedFiles(): { attachmentId: string; uri: string; bytes: number }[] {
+    return this.sql.all(
+      `SELECT f.attachment_id attachmentId, f.photo_uri uri, coalesce(a.bytes, 0) bytes FROM local_files f
+       JOIN attachments a ON a.id = f.attachment_id
+       WHERE f.uploaded = 1 AND f.photo_uri <> '' AND a.upload_status = 'uploaded'
+         AND NOT EXISTS (SELECT 1 FROM outbox o WHERE o.row_id = f.attachment_id)`,
+    );
+  }
+
+  /** Después de borrar los archivos: la fila queda sin ruta (la miniatura se conserva) y se ve desde el servidor. */
+  clearUploadedFiles(attachmentIds: string[]): void {
+    this.sql.tx(() => {
+      for (const id of attachmentIds) this.sql.run("UPDATE local_files SET photo_uri = '' WHERE attachment_id = ? AND uploaded = 1", [id]);
+    });
   }
 
   localPhoto(attachmentId: string): string | null {

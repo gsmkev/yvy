@@ -5,6 +5,7 @@
 import { and, count, eq, getTableColumns, inArray, isNull, sql } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import {
+  isAudioMime,
   livestockPlotProblem,
   localDate,
   nextDueDate,
@@ -28,10 +29,14 @@ import { can, type ScopedDb } from "./scoped";
 
 const paramsPerRow = (t: SQLiteTable) => Object.keys(getTableColumns(t)).length;
 
-export const attachmentPaths = (orgId: string, recordId: string, attachmentId: string) => ({
-  storagePath: `organizations/${orgId}/records/${recordId}/${attachmentId}.webp`,
-  thumbPath: `organizations/${orgId}/records/${recordId}/${attachmentId}_t.webp`,
-});
+/** Rutas en R2. La nota de voz (F-09) es un solo archivo .m4a: no tiene miniatura (thumbPath vacío). */
+export const attachmentPaths = (orgId: string, recordId: string, attachmentId: string, mime: string = "image/webp") =>
+  isAudioMime(mime)
+    ? { storagePath: `organizations/${orgId}/records/${recordId}/${attachmentId}.m4a`, thumbPath: "" }
+    : {
+        storagePath: `organizations/${orgId}/records/${recordId}/${attachmentId}.webp`,
+        thumbPath: `organizations/${orgId}/records/${recordId}/${attachmentId}_t.webp`,
+      };
 
 interface RecordState {
   organizationId: string;
@@ -165,10 +170,10 @@ export async function applyPush(
         : empty,
       attachRecordIds.size
         ? db
-            .select({ recordId: s.attachments.recordId, n: count() })
+            .select({ recordId: s.attachments.recordId, mime: s.attachments.mime, n: count() })
             .from(s.attachments)
             .where(and(inArray(s.attachments.recordId, ids(attachRecordIds)), isNull(s.attachments.deletedAt)))
-            .groupBy(s.attachments.recordId)
+            .groupBy(s.attachments.recordId, s.attachments.mime)
         : empty,
     ]);
 
@@ -185,7 +190,10 @@ export async function applyPush(
   const deletedPois = new Set(ownPoiRows.filter((r) => r.deletedAt).map((r) => r.id));
   const assignedPlots = new Set(assignedRows.map((r) => r.plotId));
   const workerFarms = new Set(assignedRows.map((r) => r.farmId));
-  const attachCount = new Map(countRows.map((r) => [r.recordId, r.n]));
+  // Fotos y notas de voz se cuentan aparte: una nota de voz no le quita lugar a las fotos (F-09).
+  const countKey = (recordId: string, mime: string) => `${recordId}:${isAudioMime(mime) ? "audio" : "photo"}`;
+  const attachCount = new Map<string, number>();
+  for (const r of countRows) attachCount.set(countKey(r.recordId, r.mime), (attachCount.get(countKey(r.recordId, r.mime)) ?? 0) + r.n);
 
   // ---------- Decisión por mutación, en orden ----------
   const results: MutationResult[] = [];
@@ -330,19 +338,20 @@ export async function applyPush(
           break;
         }
         if (!existing) {
-          const n = attachCount.get(a.recordId) ?? 0;
-          if (n >= LIMITS.photos.maxPerRecord) {
+          const key = countKey(a.recordId, a.mime);
+          const n = attachCount.get(key) ?? 0;
+          if (n >= (isAudioMime(a.mime) ? LIMITS.audio.maxPerRecord : LIMITS.photos.maxPerRecord)) {
             reject(m, "too_many_attachments");
             break;
           }
-          attachCount.set(a.recordId, n + 1);
+          attachCount.set(key, n + 1);
           attachments.set(a.id, { id: a.id, organizationId: org, recordId: a.recordId, deletedAt: null });
         }
         attachmentUpserts.push({
           id: a.id,
           organizationId: org,
           recordId: a.recordId,
-          ...attachmentPaths(org, a.recordId, a.id),
+          ...attachmentPaths(org, a.recordId, a.id, a.mime),
           mime: a.mime,
           width: a.width,
           height: a.height,

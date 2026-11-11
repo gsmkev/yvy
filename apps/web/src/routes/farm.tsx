@@ -32,6 +32,8 @@ import { t, tk } from "../lib/i18n";
 import { loadPrefs, savePrefs } from "../lib/prefs";
 import { fetchAllRecords, useAlerts, useFarm, useFarmLines, useFarms, useMe, useMembers, useProblemAreas } from "../lib/queries";
 import { defaultCompare, layerDates, pickLayer, type Camera } from "../lib/scenes";
+import { PoiQrModal } from "../components/PoiQr";
+import { heatPoints, summarizeTracks, TRACK_WINDOW_MS } from "../lib/trackHeat";
 import { PEST_COLORS, PEST_WINDOW_MS, pestCounts, pestPoints } from "../lib/pests";
 import type { FarmDetail, RecordRow } from "../lib/types";
 
@@ -101,6 +103,7 @@ export function FarmPage() {
     setTaskPlots((l) => (l.includes(id) ? l.filter((x) => x !== id) : [...l, id]));
   const [drawn, setDrawn] = useState<Polygon | null>(null);
   const [poiAt, setPoiAt] = useState<[number, number] | null>(null);
+  const [poiQr, setPoiQr] = useState(false);
   const [wantedLayer, setLayer] = useState<"satellite" | "ndvi">(() =>
     loadPrefs().layer === "ndvi" ? "ndvi" : "satellite",
   );
@@ -121,6 +124,18 @@ export function FarmPage() {
   const pestPts = useMemo(
     () => (showPests && pests.data && farm.data ? pestPoints(pests.data, farm.data.plots) : []),
     [showPests, pests.data, farm.data?.plots],
+  );
+  // F-06: recorridas grabadas en el celular, como mapa de calor de los últimos 30 días
+  const [showTracks, setShowTracks] = useState(false);
+  const tracks = useQuery({
+    enabled: showTracks,
+    queryKey: ["tracks30", farmId],
+    queryFn: () => fetchAllRecords({ farmId, kind: "track", from: Date.now() - TRACK_WINDOW_MS }, 1000),
+  });
+  const heat = useMemo(() => (showTracks && tracks.data ? heatPoints(tracks.data) : []), [showTracks, tracks.data]);
+  const trackSummary = useMemo(
+    () => (showTracks && tracks.data && farm.data ? summarizeTracks(tracks.data, farm.data.plots.map((p) => p.id)) : null),
+    [showTracks, tracks.data, farm.data?.plots],
   );
   // Bajo lg no entran el mapa y el panel juntos: se alterna entre uno y otro.
   const [view, setView] = useState<"map" | "list">("map");
@@ -246,6 +261,7 @@ export function FarmPage() {
           outline={d.farm.geometry}
           plots={d.plots}
           pois={d.pois}
+          heat={heat}
           problemAreas={problems.data}
           flyTo={flyTo}
           layers={d.layers}
@@ -421,6 +437,42 @@ export function FarmPage() {
                     </li>
                   ))}
                 </ul>
+              )}
+            </div>
+          )}
+          <button
+            aria-pressed={showTracks}
+            onClick={() => setShowTracks(!showTracks)}
+            className={`w-56 cursor-pointer rounded-md border border-white/15 px-3 py-1.5 text-left text-xs font-medium backdrop-blur transition-colors ${showTracks ? "bg-lino text-surco" : "bg-surco/85 text-lino hover:bg-white/10"}`}
+          >
+            {t("app.layerTracks")}
+          </button>
+          {showTracks && (
+            <div className="w-56 rounded-md border border-white/15 bg-surco/85 p-2.5 text-[11px] text-lino backdrop-blur">
+              <p className="mb-1 font-medium">{t("app.tracksLegendTitle")}</p>
+              {tracks.isLoading ? (
+                <p className="text-lino/70">{t("ui.loading")}</p>
+              ) : !trackSummary || trackSummary.walks === 0 ? (
+                <p className="text-lino/70">{t("app.tracksNone")}</p>
+              ) : (
+                <>
+                  <p className="num">
+                    {t(trackSummary.walks === 1 ? "app.tracksSummaryOne" : "app.tracksSummary", {
+                      n: trackSummary.walks,
+                      km: trackSummary.km.toLocaleString("es-PY", { maximumFractionDigits: 1 }),
+                    })}
+                  </p>
+                  {trackSummary.unvisited.length > 0 && (
+                    <p className="mt-1 text-lino/70">
+                      {t("app.tracksUnvisited", {
+                        names: trackSummary.unvisited
+                          .map((id) => d.plots.find((p) => p.id === id)?.name)
+                          .filter(Boolean)
+                          .join(", "),
+                      })}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -719,7 +771,12 @@ export function FarmPage() {
               <p className="mt-3 text-xs text-tinta-2">{t("ui.selectPlotHint")}</p>
               {d.pois.length > 0 && (
                 <>
-                  <h3 className="eyebrow mt-6 mb-2">{t("ui.pois")}</h3>
+                  <div className="mt-6 mb-2 flex items-center justify-between gap-2">
+                    <h3 className="eyebrow">{t("ui.pois")}</h3>
+                    <button className="cursor-pointer text-xs text-tinta-2 underline underline-offset-4 hover:text-surco" onClick={() => setPoiQr(true)}>
+                      {t("app.poiQrPrint")}
+                    </button>
+                  </div>
                   <ul className="flex flex-col gap-1.5 text-sm">
                     {d.pois.map((p) => {
                       return (
@@ -815,6 +872,7 @@ export function FarmPage() {
           }}
         />
       )}
+      {poiQr && <PoiQrModal farmName={d.farm.name} pois={d.pois} onClose={() => setPoiQr(false)} />}
       {mode === "import" && <ImportPlots farmId={farmId} onClose={() => setMode("none")} />}
       {drawn && (
         <NewPlotModal

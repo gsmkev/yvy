@@ -111,7 +111,7 @@ export interface RecordRow {
   lat: number | null;
   gpsAccuracyM: number | null;
   capturedAt: number;
-  attachments: { id: string; uploadStatus: string }[];
+  attachments: { id: string; uploadStatus: string; mime?: string }[];
 }
 
 export interface Member {
@@ -125,6 +125,8 @@ export interface Member {
   activeDays7: number;
   records7d: number;
   lastSyncAt: number | null;
+  /** F-24: ingresa con teléfono y PIN. */
+  hasPin?: boolean;
 }
 
 export interface Task {

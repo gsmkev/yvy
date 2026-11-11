@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { addDays, CHART, localDate, t as _t } from "@yvy/shared";
 import { get } from "../lib/api";
 import { fmtIsoDate, fmtNum } from "../lib/format";
@@ -100,6 +101,13 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
           <Empty icon={CloudRain}>{t("ui.noClimate")}</Empty>
         )}
       </div>
+      <Link
+        to="/estancias/$farmId/pluviometros"
+        params={{ farmId }}
+        className="self-start text-sm font-medium text-accion underline underline-offset-2"
+      >
+        {t("ui.gaugesLink")}
+      </Link>
       <div>
         <h3 className="eyebrow mb-2">{t("ui.forecast")}</h3>
         {c.forecast.length ? (

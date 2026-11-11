@@ -11,6 +11,8 @@ import { CpuLimitError, httpTransport, SyncEngine, type AttachmentUploader } fro
 import { getDb } from "./db";
 import { flushVotes } from "./votes";
 import { rescheduleReminders } from "./reminders";
+import { refreshMemberNames } from "./members";
+import { isOwnerMode } from "./ownerSummary";
 import { accessToken, api, API_URL, getSession, HttpError, OfflineError } from "./session";
 
 export interface SyncStatus {
@@ -125,6 +127,8 @@ export async function syncNow(): Promise<void> {
     getDb().setKv("last_sync_at", String(r.finishedAt));
     set({ online: true, lastSyncAt: r.finishedAt });
     await flushAlertVotes();
+    // F-29: el dueño necesita los nombres para ver quién anotó cada cosa.
+    if (isOwnerMode(getSession()?.organization.role)) await refreshMemberNames(getDb(), () => api("GET", "/org/members"));
   } catch (e) {
     const offline =
       e instanceof OfflineError ||

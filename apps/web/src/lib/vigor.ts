@@ -1,4 +1,4 @@
-import { NDVI_RAMP } from "@yvy/shared";
+import { LIMITS, NDVI_RAMP } from "@yvy/shared";
 import type { Plot } from "./types";
 
 /** Rango de NDVI que cubre la rampa: por debajo del primero es suelo o cultivo en problemas. */
@@ -19,7 +19,7 @@ export function ndviColor(v: number): string {
 }
 
 /** Caída de vigor que se avisa: más de 15 % entre las dos últimas pasadas. */
-export const DROP_THRESHOLD_PCT = 15;
+export const DROP_THRESHOLD_PCT = LIMITS.vigor.dropThresholdPct;
 
 export interface VigorDrop {
   /** Caída redondeada, en %. */

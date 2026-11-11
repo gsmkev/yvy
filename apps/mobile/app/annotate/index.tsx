@@ -24,7 +24,7 @@ import {
 import type { LocalPhoto, Plot } from "../../src/db/store";
 import { getDb } from "../../src/lib/db";
 import { selectedFarmId } from "../../src/lib/farmFilter";
-import { FLOWS, KINDS_FOR, SINGLE_PLOT_KINDS, type Step } from "../../src/lib/annotate";
+import { FLOWS, KINDS_FOR, SINGLE_PLOT_KINDS, stepsFor, type Step } from "../../src/lib/annotate";
 import { currentFix, guessPlots, type Fix, type PlotGuess } from "../../src/lib/location";
 import { processPhoto } from "../../src/lib/photos";
 import { useSession } from "../../src/lib/session";
@@ -95,7 +95,7 @@ export default function Annotate() {
 
   // Un registro de monitoreo por estaciones solo permite editar la nota: los conteos son de campo.
   const stationRecord = kind === "pest" && Array.isArray(values.stations);
-  const steps = kind ? (stationRecord ? FLOWS.pest.slice(-1) : FLOWS[kind]) : [];
+  const steps = stationRecord ? FLOWS.pest.slice(-1) : stepsFor(kind, values);
   const stepIndex = phase.name === "step" ? phase.i : -1;
 
   const back = () => {
@@ -114,7 +114,7 @@ export default function Annotate() {
   const advance = (next: Record<string, unknown> = values) => {
     Keyboard.dismiss();
     setValues(next);
-    if (stepIndex < steps.length - 1) setPhase({ name: "step", i: stepIndex + 1 });
+    if (stepIndex < (stationRecord ? steps.length : stepsFor(kind, next).length) - 1) setPhase({ name: "step", i: stepIndex + 1 });
     else setPhase({ name: "photo" });
   };
 
@@ -122,6 +122,9 @@ export default function Annotate() {
     if (!kind) return;
     const data: Record<string, unknown> = { ...values };
     if (kind === "rain" && !editing) data.readAt = Date.now();
+    // Compra: la hacienda entra de afuera, así que el potrero elegido es el destino y no hay origen.
+    const entersFromOutside = kind === "herd_move" && data.reason === "compra" && !!plot;
+    if (entersFromOutside) data.toPlotId = plot!.id;
     const parsed = parseRecordData(kind, data);
     if (!parsed.success) return setPhase({ name: "step", i: 0 });
     const f = fix === "searching" ? null : fix;
@@ -155,7 +158,7 @@ export default function Annotate() {
       session.organization.id,
       {
         farmId,
-        plotId: plot?.id ?? null,
+        plotId: entersFromOutside ? null : (plot?.id ?? null),
         poiId: editing?.poiId ?? null,
         kind,
         data: parsed.data as Record<string, unknown>,
@@ -439,6 +442,22 @@ export default function Annotate() {
           />
         </View>
       );
+    if (step.kind === "paddock")
+      return (
+        <View style={k.screen}>
+          {header}
+          <Progress i={phase.i} n={steps.length + 1} />
+          <ScrollView contentContainerStyle={k.pad}>
+            <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
+            {db
+              .plots(plot?.farmId ?? selectedFarmId(db) ?? undefined)
+              .filter((p) => p.kind === "pasture" && p.id !== plot?.id)
+              .map((p) => (
+                <Row key={p.id} title={p.name} selected={values[step.key] === p.id} onPress={() => advance({ ...values, [step.key]: p.id })} />
+              ))}
+          </ScrollView>
+        </View>
+      );
     return (
       <View style={k.screen}>
         {header}
@@ -522,7 +541,7 @@ function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onA
       </ScrollView>
     );
   }
-  if (step.kind === "counter") return null; // se dibuja con HerdCounter (pantalla completa)
+  if (step.kind === "counter" || step.kind === "paddock") return null; // se dibuja con HerdCounter (pantalla completa)
   if (step.kind === "yesno") {
     return (
       <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]}>

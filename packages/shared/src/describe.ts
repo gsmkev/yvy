@@ -50,6 +50,13 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
       parts.push(head);
       break;
     }
+    case "herd_move": {
+      const c = (d.counts ?? {}) as Record<string, number>;
+      const total = HERD_CATEGORIES.reduce((n, k) => n + (c[k] ?? 0), 0);
+      parts.push(t("fields.herdTotalValue", { n: total }));
+      if (str("reason")) parts.push(tr(`fields.moveReason_${d.reason}`, String(d.reason)).toLowerCase());
+      break;
+    }
     case "note":
       if (str("text")) parts.push(d.text as string);
       break;

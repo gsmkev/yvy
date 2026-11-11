@@ -3,7 +3,7 @@
  * Subir RECORD_SCHEMA_VERSION al cambiar un esquema de forma incompatible.
  */
 import { z } from "zod";
-import { HERD_CATEGORIES, MAX_HEAD_PER_CATEGORY } from "./livestock";
+import { HERD_CATEGORIES, MAX_HEAD_PER_CATEGORY, MOVE_REASONS } from "./livestock";
 import type { RecordKind } from "./schema";
 import { LIMITS } from "./limits";
 
@@ -48,6 +48,17 @@ export const herdCountsSchema = z
 const livestockSchemas = {
   /** El potrero es records.plot_id. */
   herd_count: z.object({ counts: herdCountsSchema, note }),
+  /** Origen = records.plot_id (vacío si entra de afuera); destino = toPlotId (vacío si sale del campo). */
+  herd_move: z
+    .object({
+      toPlotId: z.uuid().optional(),
+      counts: herdCountsSchema,
+      reason: z.enum(MOVE_REASONS),
+      note,
+    })
+    .refine((d) => d.reason === "otro" || (d.reason === "venta") === (d.toPlotId === undefined), {
+      message: "Indicá el potrero de destino (salvo en una venta)",
+    }),
 };
 // ---------- fin ganaderia ----------
 

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   HERD_CATEGORIES,
+  MOVE_REASONS,
   newId,
   parseRecordData,
   PESTS,
@@ -69,6 +70,11 @@ const FIELDS: Record<RecordKind, FieldDef[]> = {
   note: [{ key: "text", label: f("text"), type: "textarea" }],
   // ganaderia
   herd_count: [...HERD_FIELDS("counts"), NOTE],
+  herd_move: [
+    { key: "reason", label: f("moveReason"), type: "select", options: opts("moveReason", MOVE_REASONS) },
+    ...HERD_FIELDS("counts"),
+    NOTE,
+  ],
 };
 
 const getPath = (o: Record<string, unknown>, path: string): unknown =>

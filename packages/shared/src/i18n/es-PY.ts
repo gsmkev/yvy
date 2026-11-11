@@ -30,6 +30,7 @@ export const esPY = {
     water: "Aguada / tajamar",
     note: "Nota",
     herd_count: "Conteo de hacienda",
+    herd_move: "Movimiento de hacienda",
   },
   rejectReasons: {
     not_found: "el dato no existe",
@@ -340,6 +341,9 @@ export const esPY = {
     herdCountHint: "Contá por categoría. Mantené apretado + o − para ir más rápido.",
     herdCounterTotal: "Total: {{n}} cabezas",
     herdEmpty: "El potrero está vacío",
+    moveReasonQuestion: "¿Por qué los movés?",
+    moveToQuestion: "¿A qué potrero van?",
+    moveCountQuestion: "¿Cuántos animales movés?",
   },
   fields: {
     condition: "Estado general",
@@ -395,6 +399,12 @@ export const esPY = {
     herdCount_novillo: "{{n}} novillos",
     herdCount_ternero: "{{n}} terneros",
     herdCount_toro: "{{n}} toros",
+    moveReason: "Motivo",
+    moveReason_rotacion: "Rotación de potreros",
+    moveReason_sanidad: "Sanidad (manga o tratamiento)",
+    moveReason_venta: "Venta (salen del campo)",
+    moveReason_compra: "Compra (entran al potrero elegido)",
+    moveReason_otro: "Otro",
   },
   ui: {
     appName: "Yvy",

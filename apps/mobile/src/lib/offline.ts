@@ -39,6 +39,19 @@ export function packStatus(farmId: string) {
   };
 }
 
+export type MapLayer = "true_color" | "ndvi";
+
+/** Fuente PMTiles de una capa para el mapa: el archivo local si se bajó, si no el remoto. null si no hay imagen. */
+export function layerSource(farmId: string, layer: MapLayer, remoteBase: string | null): { url: string; acquiredAt: number | null } | null {
+  const pack = packStatus(farmId);
+  const remote = pack.layers.find((l) => l.layer === layer);
+  const local = pack.localUri(layer);
+  const acquiredAt = remote?.acquiredAt ?? null;
+  if (local) return { url: `pmtiles://${local}`, acquiredAt };
+  if (remote && remoteBase) return { url: `pmtiles://${remoteBase.replace(/\/$/, "")}/${remote.pmtilesPath}`, acquiredAt };
+  return null;
+}
+
 export async function isWifi(): Promise<boolean> {
   const n = await Network.getNetworkStateAsync();
   return n.type === Network.NetworkStateType.WIFI || n.type === Network.NetworkStateType.ETHERNET;

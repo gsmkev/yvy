@@ -33,6 +33,7 @@ export const ALERT_ICON: Record<string, LucideIcon> = {
   excess_rain: CloudRainWind,
   drought: SunDim,
   fire: Flame,
+  pest_threshold: Bug,
 };
 
 export const POI_ICON: Record<string, LucideIcon> = {

@@ -106,6 +106,12 @@ const sanitary = createRoute({
   path: "/sanidad",
   component: lazyRouteComponent(() => import("./routes/sanitary"), "SanitaryPage"),
 });
+const admin = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/administracion",
+  component: lazyRouteComponent(() => import("./routes/admin-erp"), "AdminPage"),
+  validateSearch: (s: Record<string, unknown>): { s?: string } => (typeof s.s === "string" ? { s: s.s } : {}),
+});
 const team = createRoute({
   getParentRoute: () => appRoute,
   path: "/equipo",
@@ -165,6 +171,7 @@ const routeTree = rootRoute.addChildren([
     tasks,
     sanitary,
     team,
+    admin,
     help,
     labs,
     labsTool,

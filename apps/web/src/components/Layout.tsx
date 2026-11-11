@@ -19,6 +19,7 @@ const NAV: { to: string; label: MessageKey }[] = [
   { to: "/sanidad", label: "ui.navSanitary" },
   { to: "/avisos", label: "ui.navAlerts" },
   { to: "/equipo", label: "ui.navTeam" },
+  { to: "/administracion", label: "ui.navAdmin" },
   ...(FEATURES.labs ? [{ to: "/laboratorio", label: "ui.navLabs" as MessageKey }] : []),
 ];
 
@@ -76,7 +77,13 @@ export function Layout() {
     ...(me.data?.isStaff ? [{ to: "/interno", label: "ui.navInternal" as MessageKey }] : []),
   ];
   // El calendario sanitario no es para el empleado (G-10).
-  const items = me.data?.role === "worker" ? base.filter((i) => i.to !== "/sanidad") : base;
+  const role = me.data?.role;
+  const items = base.filter(
+    (i) =>
+      (i.to !== "/sanidad" || role !== "worker") &&
+      // La administración (ERP) es solo del dueño y los administradores.
+      (i.to !== "/administracion" || role === "owner" || role === "admin"),
+  );
   const nAlerts = alerts.data?.length ?? 0;
   const path = useRouterState({ select: (s) => s.location.pathname });
   // Con varias estancias, "Mapa" vuelve a la última que se miró

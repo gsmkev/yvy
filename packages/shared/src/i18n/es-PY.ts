@@ -1712,6 +1712,13 @@ export const esPY = {
     lineDeleteConfirm: "¿Borrar la línea {{name}}?",
     lineRename: "Cambiar nombre",
     lineShow: "Ver en el mapa",
+    // erp
+    navAdmin: "Administración",
+    adminTitle: "Administración",
+    adminIntro: "Productos, depósitos, stock, costos y márgenes de la organización. Lo que se anota en el campo carga el stock y los costos solo.",
+    adminNoAccess: "La administración es para el dueño y los administradores.",
+    adminSection_products: "Productos",
+    productsAllTypes: "Todos los tipos",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

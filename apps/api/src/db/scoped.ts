@@ -113,6 +113,10 @@ export const can = {
   editSeasons: (r: Role) => r !== "worker",
   /** ADR 0004: catálogo de productos; el empleado lo recibe en el celular pero no lo edita. */
   editProducts: (r: Role) => r !== "worker",
+  /** ADR 0004 (ERP): maestros, compras, costos y montos son de dueño y administrador. */
+  manageErp: (r: Role) => r === "owner" || r === "admin",
+  /** El agrónomo ve las cantidades de stock (nunca montos); el empleado no entra al ERP. */
+  viewStock: (r: Role) => r !== "worker",
 };
 
 export class ScopedDb {

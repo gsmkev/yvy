@@ -226,6 +226,8 @@ export const esPY = {
     coordsNoAccuracy: "{{coords}} · sin precisión",
     coordsCopy: "Tocá para copiar",
     copied: "Copiado",
+    // app-b
+    filterAll: "Todo",
   },
   fields: {
     condition: "Estado general",

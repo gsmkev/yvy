@@ -790,6 +790,8 @@ export const esPY = {
     toastRecordDeleted: "Registro borrado",
     undo: "Deshacer",
     toastPoiDeleted: "Punto borrado",
+    offlineBanner: "Sin conexión. Reintentando…",
+    networkError: "No hay conexión con el servidor",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

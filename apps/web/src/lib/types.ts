@@ -45,6 +45,12 @@ export interface Plot {
   sowingDate: string | null;
   pastureType: string | null;
   color: string | null;
+  /** Última y penúltima pasada NDVI (media y fecha) y última visita; null si no hay. */
+  ndviMean: number | null;
+  ndviAt: number | null;
+  ndviPrevMean: number | null;
+  ndviPrevAt: number | null;
+  lastRecordAt: number | null;
 }
 
 export interface Poi {
@@ -71,6 +77,9 @@ export interface FarmDetail {
   pois: Poi[];
   layers: Layer[];
   assignments: { plotId: string; userId: string }[];
+  /** Procesamiento de imágenes al crear la estancia (S-02); null si es anterior a esa función. */
+  imageryStatus: "pending" | "processing" | "ready" | "failed" | null;
+  imageryRequestedAt: number | null;
 }
 
 export interface RecordRow {
@@ -97,6 +106,10 @@ export interface Member {
   phone: string | null;
   role: Me["role"];
   status: string;
+  /** Días con actividad en los últimos 7. */
+  activeDays7: number;
+  records7d: number;
+  lastSyncAt: number | null;
 }
 
 export interface Task {
@@ -117,7 +130,7 @@ export interface Task {
 export interface Alert {
   id: string;
   farmId: string;
-  kind: "frost" | "excess_rain" | "drought" | "fire";
+  kind: "frost" | "excess_rain" | "drought" | "fire" | "pest_threshold";
   severity: "info" | "watch" | "warning";
   probability: "low" | "medium" | "high" | null;
   validFrom: number;

@@ -234,3 +234,5 @@ export const checkPlots = (plots: Area[], farm: Area | null, opts: { maxExact?: 
   }
   return out;
 };
+
+export * from "./edit";

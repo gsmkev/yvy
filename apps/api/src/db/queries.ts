@@ -18,7 +18,8 @@ import {
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bboxOf, checkPlots, type Area } from "@yvy/geo";
-import { newId } from "@yvy/shared";
+import { newId, t } from "@yvy/shared";
+import { HTTPException } from "hono/http-exception";
 import { randomToken, sha256Hex } from "../lib/crypto";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from "./client";
 import { can, ForbiddenError, NotFoundError, type ScopedDb } from "./scoped";
@@ -841,6 +842,101 @@ export async function deletePlot(sdb: ScopedDb, id: string) {
     { deletedAt: ts },
     cascadeStmts(sdb, eq(s.plotAssignments.plotId, id), eq(s.tasks.plotId, id), ts),
   );
+}
+
+type PlotGeo = { geometry: string; minLon: number; minLat: number; maxLon: number; maxLat: number; areaHa: number };
+
+/** Tolerancia entre la superficie original y la de las partes (el cliente corta en grados, el servidor mide geodésico). */
+const AREA_TOLERANCE = 0.02;
+
+/**
+ * Reemplaza uno o dos lotes por lotes nuevos (dividir / unir, M-05). Los nuevos heredan tipo, cultivo, campaña,
+ * siembra, pasto y color del primer lote original, y quienes tenían asignado un original reciben los nuevos.
+ * Los originales se borran lógicamente con la misma cascada que deletePlot (asignaciones y tareas abiertas).
+ * Los registros históricos quedan apuntando al lote original (ya borrado). Lecturas: 2. Un solo batch.
+ */
+async function replacePlots(
+  sdb: ScopedDb,
+  originalIds: string[],
+  made: ({ name: string } & PlotGeo)[],
+  expectedAreaHa: (originals: { areaHa: number }[]) => [number, number],
+) {
+  sdb.require(can.editField);
+  const org = sdb.auth.orgId;
+  const originals = await sdb.db
+    .select()
+    .from(s.plots)
+    .where(and(eq(s.plots.organizationId, org), inArray(s.plots.id, originalIds), isNull(s.plots.deletedAt)));
+  if (originals.length !== originalIds.length) throw new NotFoundError("No existe");
+  if (new Set(originals.map((p) => p.farmId)).size !== 1) throw new HTTPException(400, { message: t("ui.plotsOtherFarm") });
+  const [lo, hi] = expectedAreaHa(originals);
+  const total = made.reduce((a, p) => a + p.areaHa, 0);
+  if (total < lo * (1 - AREA_TOLERANCE) || total > hi * (1 + AREA_TOLERANCE))
+    throw new HTTPException(400, { message: t("ui.plotsAreaMismatch") });
+  const base = originals.find((p) => p.id === originalIds[0])!;
+  const assigned = await sdb.db
+    .select({ userId: s.plotAssignments.userId })
+    .from(s.plotAssignments)
+    .where(
+      and(
+        eq(s.plotAssignments.organizationId, org),
+        inArray(s.plotAssignments.plotId, originalIds),
+        isNull(s.plotAssignments.deletedAt),
+      ),
+    );
+  const users = [...new Set(assigned.map((a) => a.userId))];
+  const ts = sdb.now();
+  const ids = made.map(() => newId());
+  await runBatch(sdb.db, [
+    bumpVersion(sdb.db),
+    ...made.map((p, i) =>
+      sdb.db.insert(s.plots).values({
+        ...p,
+        id: ids[i]!,
+        organizationId: org,
+        farmId: base.farmId,
+        kind: base.kind,
+        crop: base.crop,
+        season: base.season,
+        sowingDate: base.sowingDate,
+        pastureType: base.pastureType,
+        color: base.color,
+        createdAt: ts,
+        updatedAt: ts,
+        version: currentVersion,
+      }),
+    ),
+    ...ids.flatMap((plotId) =>
+      users.map((userId) =>
+        sdb.db.insert(s.plotAssignments).values({
+          id: newId(),
+          organizationId: org,
+          plotId,
+          userId,
+          createdAt: ts,
+          updatedAt: ts,
+          version: currentVersion,
+        }),
+      ),
+    ),
+    // Primero se suben las versiones de asignaciones y se borran las viejas, igual que al borrar un lote
+    ...cascadeStmts(sdb, inArray(s.plotAssignments.plotId, originalIds), inArray(s.tasks.plotId, originalIds), ts),
+    sdb.db
+      .update(s.plots)
+      .set({ deletedAt: ts, updatedAt: ts, version: currentVersion })
+      .where(and(eq(s.plots.organizationId, org), inArray(s.plots.id, originalIds))),
+  ]);
+  return { ids };
+}
+
+/** M-05: divide un lote en dos. La forma de las partes viene del cliente (packages/geo); acá solo se valida la superficie. */
+export function splitPlot(sdb: ScopedDb, id: string, parts: ({ name: string } & PlotGeo)[]) {
+  return replacePlots(sdb, [id], parts, ([o]) => [o!.areaHa, o!.areaHa]);
+}
+
+/** M-05: une dos lotes contiguos en uno (la superficie puede ser algo menor si se superponían). */
+export function mergePlots(sdb: ScopedDb, ids: [string, string], merged: { name: string } & PlotGeo) {
+  return replacePlots(sdb, ids, [merged], (os) => [Math.max(...os.map((o) => o.areaHa)), os[0]!.areaHa + os[1]!.areaHa]);
 }
 
 export async function deletePoi(sdb: ScopedDb, id: string) {

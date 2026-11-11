@@ -1,6 +1,6 @@
 import { createRootRoute, createRoute, createRouter, lazyRouteComponent, redirect } from "@tanstack/react-router";
 import { getSession } from "./lib/api";
-import { Layout } from "./components/Layout";
+import { RootGate } from "./routes/public/RootGate";
 import { Spinner } from "./components/ui";
 
 const rootRoute = createRootRoute();
@@ -9,14 +9,34 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/ingresar",
   component: lazyRouteComponent(() => import("./routes/login"), "LoginPage"),
+  validateSearch: (s: Record<string, unknown>): { modo?: "registro" } =>
+    s.modo === "registro" ? { modo: "registro" } : {},
+});
+
+const termsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/terminos",
+  component: lazyRouteComponent(() => import("./routes/public/legal"), "TermsPage"),
+});
+const privacyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/privacidad",
+  component: lazyRouteComponent(() => import("./routes/public/legal"), "PrivacyPage"),
+});
+
+const sharedRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/compartido/$token",
+  component: lazyRouteComponent(() => import("./routes/reports-shared"), "SharedPage"),
 });
 
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: "app",
-  component: Layout,
-  beforeLoad: () => {
-    if (!getSession()) throw redirect({ to: "/ingresar" });
+  // En "/" sin sesión RootGate muestra la landing pública; el resto de la app exige sesión.
+  component: RootGate,
+  beforeLoad: ({ location }) => {
+    if (!getSession() && location.pathname !== "/") throw redirect({ to: "/ingresar" });
   },
 });
 
@@ -33,6 +53,9 @@ const newFarm = createRoute({
 export const farmRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/estancias/$farmId",
+  validateSearch: (s: Record<string, unknown>): { lote?: string } => ({
+    lote: typeof s.lote === "string" ? s.lote : undefined,
+  }),
   component: lazyRouteComponent(() => import("./routes/farm"), "FarmPage"),
 });
 export const reportRoute = createRoute({
@@ -44,6 +67,26 @@ export const reportRoute = createRoute({
     hasta: s.hasta as string | undefined,
   }),
 });
+const farmReports = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/estancias/$farmId/informes",
+  component: lazyRouteComponent(() => import("./routes/reports-farm"), "FarmReportsPage"),
+});
+const farmGauges = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/estancias/$farmId/pluviometros",
+  component: lazyRouteComponent(() => import("./routes/rain-gauges"), "RainGaugesPage"),
+});
+const farmRisk = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/estancias/$farmId/riesgo",
+  component: lazyRouteComponent(() => import("./routes/risk"), "RiskPage"),
+});
+const farmEudr = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/estancias/$farmId/eudr",
+  component: lazyRouteComponent(() => import("./routes/eudr"), "EudrPage"),
+});
 const records = createRoute({
   getParentRoute: () => appRoute,
   path: "/registros",
@@ -54,10 +97,20 @@ const tasks = createRoute({
   path: "/tareas",
   component: lazyRouteComponent(() => import("./routes/tasks"), "TasksPage"),
 });
+const sanitary = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/sanidad",
+  component: lazyRouteComponent(() => import("./routes/sanitary"), "SanitaryPage"),
+});
 const team = createRoute({
   getParentRoute: () => appRoute,
   path: "/equipo",
   component: lazyRouteComponent(() => import("./routes/team"), "TeamPage"),
+});
+const help = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/ayuda",
+  component: lazyRouteComponent(() => import("./routes/help"), "HelpPage"),
 });
 const labs = createRoute({
   getParentRoute: () => appRoute,
@@ -74,6 +127,16 @@ const alerts = createRoute({
   path: "/avisos",
   component: lazyRouteComponent(() => import("./routes/alerts"), "AlertsPage"),
 });
+const account = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/cuenta",
+  component: lazyRouteComponent(() => import("./routes/public/account"), "AccountPage"),
+});
+const clients = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/clientes",
+  component: lazyRouteComponent(() => import("./routes/clients"), "ClientsPage"),
+});
 const internal = createRoute({
   getParentRoute: () => appRoute,
   path: "/interno",
@@ -82,7 +145,30 @@ const internal = createRoute({
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
-  appRoute.addChildren([home, newFarm, farmRoute, reportRoute, records, tasks, team, labs, labsTool, alerts, internal]),
+  termsRoute,
+  privacyRoute,
+  sharedRoute,
+  appRoute.addChildren([
+    home,
+    newFarm,
+    farmRoute,
+    reportRoute,
+    farmReports,
+    farmGauges,
+    farmRisk,
+    farmEudr,
+    records,
+    tasks,
+    sanitary,
+    team,
+    help,
+    labs,
+    labsTool,
+    alerts,
+    account,
+    clients,
+    internal,
+  ]),
 ]);
 
 export const router = createRouter({

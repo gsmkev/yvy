@@ -2,6 +2,7 @@ export * from "./limits";
 export * from "./ids";
 export * from "./brand";
 export * from "./records";
+export * from "./monitoring";
 export * from "./sync-protocol";
 export * from "./i18n";
 export {

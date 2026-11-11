@@ -1541,6 +1541,8 @@ export const esPY = {
     savedFilterSave: "Guardar estos filtros",
     savedFilterName: "Nombre del filtro",
     savedFilterDelete: "Borrar el filtro {{name}}",
+    fullscreen: "Pantalla completa",
+    fullscreenExit: "Salir de pantalla completa",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

@@ -16,6 +16,7 @@ import { flushAlertVotes, localChanged } from "../../src/lib/sync";
 import { readVotes, recordVote } from "../../src/lib/votes";
 import { useLocal } from "../../src/lib/useLocal";
 import { FarmLine } from "../../src/ui/FarmLine";
+import { ForecastStrip } from "../../src/ui/ForecastStrip";
 import { Button, Row, s as k, Text } from "../../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
 
@@ -118,6 +119,7 @@ export default function Today() {
           ))}
         </>
       )}
+      <ForecastStrip farmId={farmId ?? plots[0]?.farmId ?? null} />
 
       {alerts.map((a) => {
         const strong = a.severity === "warning";

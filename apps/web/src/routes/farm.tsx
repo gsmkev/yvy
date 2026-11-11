@@ -20,7 +20,7 @@ import { ProductsPanel } from "../components/ProductsPanel";
 import { RecordsList } from "../components/RecordsList";
 import { SeasonsPanel } from "../components/SeasonsPanel";
 import { TasksPanel } from "../components/TasksPanel";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "../components/ui";
+import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Skeleton, Spinner, Tabs, toast } from "../components/ui";
 import { del, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
 import { download, plotsToGeoJson, plotsToKml, plotsToShapefileZip } from "../lib/exports";
@@ -161,8 +161,14 @@ export function FarmPage() {
   }, [farm.data?.farm.id, selectedGeometry]);
   if (farm.isLoading)
     return (
-      <div className="p-6">
-        <Spinner />
+      <div className="flex h-full flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_480px]" aria-busy="true">
+        <div className="min-h-64 flex-1 animate-pulse bg-surco/[0.06] lg:h-full" />
+        <section className="flex flex-col gap-5 border-l border-linea p-4 lg:p-6">
+          <Skeleton h={42} />
+          <Skeleton h={20} className="w-2/3" />
+          <Skeleton h={40} />
+          <Spinner rows={5} h={56} />
+        </section>
       </div>
     );
   if (farm.error)

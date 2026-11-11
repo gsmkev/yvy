@@ -4,7 +4,7 @@ import { AlertTriangle, ChevronRight, Plus } from "lucide-react";
 import { FarmMap } from "../components/FarmMap";
 import { FirstRunGuide, guideSteps } from "../components/FirstRunGuide";
 import { OwnerDashboard } from "../components/OwnerDashboard";
-import { Button, Empty, ErrorBox, SectionHead, Spinner, Stat } from "../components/ui";
+import { Button, Empty, ErrorBox, SectionHead, Skeleton, Spinner, Stat } from "../components/ui";
 import { areaUnitLabel, fmtAreaValue, fmtDate, fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { loadPrefs, savePrefs } from "../lib/prefs";
@@ -72,6 +72,7 @@ export function HomePage() {
           )}
         </header>
 
+        {farms.isLoading && <Skeleton h={89} />}
         {list.length > 0 && (
           <div className="grid grid-cols-3 gap-4 border-y border-linea py-4">
             <Stat label={t("ui.area")} value={fmtAreaValue(totalHa)} unit={areaUnitLabel()} />
@@ -82,7 +83,7 @@ export function HomePage() {
 
         {list.length > 1 && (me.data?.role === "owner" || me.data?.role === "admin") && <OwnerDashboard />}
 
-        {farms.isLoading && <Spinner />}
+        {farms.isLoading && <Spinner rows={3} h={84} />}
         {farms.error && <ErrorBox error={farms.error} />}
         {guide && (
           <FirstRunGuide

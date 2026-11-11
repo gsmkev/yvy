@@ -16,7 +16,7 @@ export function AlertsList({ farmId, farmNames }: { farmId?: string; farmNames?:
     mutationFn: ({ id, useful }: { id: string; useful: boolean }) => post(`/org/alerts/${id}/feedback`, { useful }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["alerts"] }),
   });
-  if (q.isLoading) return <Spinner />;
+  if (q.isLoading) return <Spinner rows={5} h={56} />;
   if (q.error) return <ErrorBox error={q.error} />;
   if (!q.data?.length) return <Empty icon={ShieldCheck} title={t("ui.noAlerts")} />;
   return (

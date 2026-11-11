@@ -28,7 +28,7 @@ export function RecordsList({ filters, onRows }: { filters: RecordFilters; onRow
   const [open, setOpen] = useState<RecordRow | null>(null);
   const rows = q.data?.pages.flatMap((p) => p.rows) ?? [];
   useEffect(() => onRows?.(rows), [q.data]);
-  if (q.isLoading) return <Spinner />;
+  if (q.isLoading) return <Spinner rows={6} h={68} />;
   if (q.error) return <ErrorBox error={q.error} />;
   if (!rows.length) return <Empty title={t("ui.noRecords")} />;
   return (

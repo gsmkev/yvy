@@ -39,7 +39,7 @@ export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots
     },
   });
 
-  if (q.isLoading) return <Spinner />;
+  if (q.isLoading) return <Spinner rows={5} h={56} />;
   if (q.error) return <ErrorBox error={q.error} />;
   const planOf = (plotId: string) =>
     season ? (q.data?.plotSeasons ?? []).find((p) => p.plotId === plotId && p.seasonId === season.id) : undefined;

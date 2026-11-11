@@ -25,7 +25,7 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
       qc.invalidateQueries({ queryKey: ["products"] });
     },
   });
-  if (q.isLoading) return <Spinner />;
+  if (q.isLoading) return <Spinner rows={5} h={56} />;
   if (q.error) return <ErrorBox error={q.error} />;
   const list = q.data ?? [];
   return (

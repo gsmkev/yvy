@@ -289,6 +289,34 @@ export function consumptionLines(
   return [...acc].map(([productId, qty]) => ({ productId, qty: round3(qty) })).filter((l) => l.qty > 0);
 }
 
+// ---------- Costo y margen (E-30, E-31) ----------
+
+export interface ResultInput {
+  costPyg: number;
+  incomePyg: number;
+  areaHa: number;
+  tons: number;
+}
+export interface ResultFigures {
+  marginPyg: number;
+  /** Guaraníes por hectárea; null sin superficie. */
+  costPerHa: number | null;
+  marginPerHa: number | null;
+  /** Guaraníes por tonelada cosechada; null sin cosecha. */
+  costPerTon: number | null;
+}
+
+/** Costo por hectárea y por tonelada y margen bruto (ventas menos costos). Redondeado al guaraní. */
+export function resultFigures(r: ResultInput): ResultFigures {
+  const marginPyg = r.incomePyg - r.costPyg;
+  return {
+    marginPyg,
+    costPerHa: r.areaHa > 0 ? Math.round(r.costPyg / r.areaHa) : null,
+    marginPerHa: r.areaHa > 0 ? Math.round(marginPyg / r.areaHa) : null,
+    costPerTon: r.tons > 0 ? Math.round(r.costPyg / r.tons) : null,
+  };
+}
+
 // ---------- Terceros (E-02) ----------
 
 /** RUC (con dígito verificador) o cédula: solo dígitos y un guion final opcional. */

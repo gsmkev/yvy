@@ -10,7 +10,7 @@ import { useAlerts, useFarms, useMe } from "../lib/queries";
 import { loadPrefs } from "../lib/prefs";
 import { trackView } from "../lib/track";
 import { GlobalSearch } from "./GlobalSearch";
-import { OrgSwitcher, useOrganizations } from "./OrgSwitcher";
+import { AccountMenu, useOrganizations } from "./AccountMenu";
 
 const NAV: { to: string; label: MessageKey }[] = [
   { to: "/", label: "ui.navMap" },
@@ -119,28 +119,11 @@ export function Layout() {
           })}
         </nav>
         <GlobalSearch inputRef={searchRef} />
-        <OrgSwitcher
+        <AccountMenu
           name={me.data?.organization.name}
           sub={trial ? t("ui.trialEnds", { date: fmtDate(trial) }) : me.data?.user.fullName}
+          onLogout={logout}
         />
-        <Link
-          to="/ayuda"
-          className="text-sm whitespace-nowrap text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
-        >
-          {t("ui.helpLink")}
-        </Link>
-        <Link
-          to="/cuenta"
-          className="text-sm whitespace-nowrap text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
-        >
-          {t("ui.account")}
-        </Link>
-        <button
-          onClick={logout}
-          className="cursor-pointer text-sm whitespace-nowrap text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
-        >
-          {t("ui.logout")}
-        </button>
       </header>
       {me.data?.support && (
         <p role="status" className="shrink-0 border-b border-trigo/40 bg-trigo/15 px-4 py-1.5 text-center text-sm text-surco">

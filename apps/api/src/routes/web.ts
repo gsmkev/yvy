@@ -26,6 +26,7 @@ import {
   listRecords,
   listShareLinks,
   listTasks,
+  ownerDashboard,
   plotGeometryWarnings,
   plotNdvi,
   registerDevice,
@@ -121,6 +122,7 @@ web.post("/events", async (c) => {
   return c.json({ recorded: true }, 202);
 });
 
+web.get("/org/dashboard", async (c) => c.json(await ownerDashboard(c.var.sdb)));
 web.get("/org/farms", async (c) => c.json(await farmSummaries(c.var.sdb)));
 web.get("/org/farms/:id", async (c) => c.json(await farmDetail(c.var.sdb, c.req.param("id"))));
 web.get("/org/farms/:id/climate", async (c) =>

@@ -104,6 +104,8 @@ export const can = {
   /** C-04: solo dueño y administrador cambian los umbrales de avisos. */
   /** K-04: solo el dueño crea y revoca enlaces de solo lectura. */
   shareLinks: (r: Role) => r === "owner",
+  /** R-06: el tablero del inicio es para dueño y administrador. */
+  dashboard: (r: Role) => r === "owner" || r === "admin",
   alertSettings: (r: Role) => r === "owner" || r === "admin",
   /** G-10: planificar el calendario sanitario (y crear sus tareas): todos menos el empleado. */
   planSanitary: (r: Role) => r !== "worker",

@@ -230,6 +230,7 @@ export const esPY = {
     filterAll: "Todo",
     toastSavedPending: "Guardado · se manda cuando haya señal",
     toastSavedSent: "Guardado y enviado",
+    quickRain: "Anotar lluvia",
   },
   fields: {
     condition: "Estado general",

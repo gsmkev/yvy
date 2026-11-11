@@ -29,7 +29,7 @@ const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").t
 type Phase = { name: "plot" } | { name: "kind" } | { name: "step"; i: number } | { name: "photo" } | { name: "done"; recordId: string };
 
 export default function Annotate() {
-  const params = useLocalSearchParams<{ plotId?: string; kind?: RecordKind; taskId?: string; recordId?: string }>();
+  const params = useLocalSearchParams<{ plotId?: string; kind?: RecordKind; taskId?: string; recordId?: string; farmLevel?: string }>();
   const session = useSession()!;
   const db = getDb();
   const plots = useMemo(() => db.plots(selectedFarmId(db) ?? undefined), []);
@@ -55,8 +55,8 @@ export default function Annotate() {
       setFix(f);
       const g = guessPlots(plots, f);
       setGuesses(g);
-      // Un solo candidato seguro: se elige solo y pasamos a "qué".
-      if (!params.plotId && g.length === 1 && g[0]!.confidence === "sure") {
+      // Un solo candidato seguro: se elige solo y pasamos a "qué" (salvo la lluvia de la estancia, que no es de un lote).
+      if (!params.plotId && !params.farmLevel && g.length === 1 && g[0]!.confidence === "sure") {
         setPlot(g[0]!.plot);
         setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
       }

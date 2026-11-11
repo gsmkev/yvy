@@ -244,7 +244,13 @@ export function FarmPage() {
             </div>
           )}
           {!hasBasemap && (
-            <p className="w-56 rounded-md bg-surco/85 p-2.5 text-[11px] text-lino/80">{t("ui.noBasemap")}</p>
+            <p className="w-56 rounded-md bg-surco/85 p-2.5 text-[11px] text-lino/80">
+              {d.imageryStatus === "pending" || d.imageryStatus === "processing"
+                ? t("ui.imageryProcessing")
+                : d.imageryStatus === "failed"
+                  ? t("ui.imageryFailed")
+                  : t("ui.noBasemap")}
+            </p>
           )}
         </div>
         {mode !== "none" && mode !== "import" && (

@@ -15,6 +15,9 @@ export const useFarm = (id: string, enabled = true) =>
       const d = await get<FarmDetail>(`/org/farms/${id}`);
       return { ...d, plots: d.plots.sort(byName) };
     },
+    // Mientras se procesan las imágenes de una estancia nueva, volver a mirar cada minuto
+    refetchInterval: (q) =>
+      q.state.data?.imageryStatus === "pending" || q.state.data?.imageryStatus === "processing" ? 60_000 : false,
   });
 export const useMembers = (enabled = true) =>
   useQuery({ queryKey: ["members"], queryFn: () => get<Member[]>("/org/members"), enabled });

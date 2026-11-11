@@ -77,6 +77,9 @@ export interface FarmDetail {
   pois: Poi[];
   layers: Layer[];
   assignments: { plotId: string; userId: string }[];
+  /** Procesamiento de imágenes al crear la estancia (S-02); null si es anterior a esa función. */
+  imageryStatus: "pending" | "processing" | "ready" | "failed" | null;
+  imageryRequestedAt: number | null;
 }
 
 export interface RecordRow {

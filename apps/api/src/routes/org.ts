@@ -13,8 +13,7 @@ export const org = new Hono<AppEnv>();
 const uuid = z.string().uuid();
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 /** Quita la altura (Z) de cada posición: MapLibre y Python esperan 2D. */
-const to2D = (v: unknown): unknown =>
-  Array.isArray(v) ? (typeof v[0] === "number" ? v.slice(0, 2) : v.map(to2D)) : v;
+const to2D = (v: unknown): unknown => (Array.isArray(v) ? (typeof v[0] === "number" ? v.slice(0, 2) : v.map(to2D)) : v);
 
 const countVertices = (v: unknown): number =>
   Array.isArray(v) ? (typeof v[0] === "number" ? 1 : v.reduce((n: number, x) => n + countVertices(x), 0)) : 0;
@@ -45,7 +44,9 @@ export const farmArea = areaWith((ha) =>
   ha > LIMITS.geometry.maxFarmHa ? t("ui.farmTooBig", { max: LIMITS.geometry.maxFarmHa }) : null,
 );
 export const plotArea = areaWith((ha) =>
-  ha < LIMITS.geometry.minPlotHa ? t("ui.plotTooSmall", { min: String(LIMITS.geometry.minPlotHa).replace(".", ",") }) : null,
+  ha < LIMITS.geometry.minPlotHa
+    ? t("ui.plotTooSmall", { min: String(LIMITS.geometry.minPlotHa).replace(".", ",") })
+    : null,
 );
 
 const describe = (g: Area) => ({ geometry: JSON.stringify(g), ...bboxOf(g), areaHa: areaHa(g) });
@@ -126,8 +127,11 @@ const plotInput = z.object({
 /** Alta de uno o varios lotes (importación KML/KMZ/GeoJSON/SHP parseada en el navegador). */
 org.post("/farms/:farmId/plots", async (c) => {
   const body = parse(z.object({ plots: z.array(plotInput).min(1).max(40) }), await readJson(c.req));
+  const farmId = c.req.param("farmId");
+  // Primeros lotes de la estancia: la historia de vigor se calcula por lote, así que se vuelve a pedir (S-01)
+  const firstPlots = (await c.var.sdb.countPlots(farmId)) === 0;
   const res = await c.var.sdb.createPlots(
-    c.req.param("farmId"),
+    farmId,
     body.plots.map((p) => ({
       name: p.name,
       kind: p.kind,
@@ -139,6 +143,7 @@ org.post("/farms/:farmId/plots", async (c) => {
       color: p.color ?? null,
     })),
   );
+  if (firstPlots) await inBackground(c, dispatchNewFarm(c.env, farmId));
   return c.json(res, 201);
 });
 

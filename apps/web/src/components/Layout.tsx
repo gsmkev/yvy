@@ -96,6 +96,14 @@ export function Layout() {
           name={me.data?.organization.name}
           sub={trial ? t("ui.trialEnds", { date: fmtDate(trial) }) : me.data?.user.fullName}
         />
+        {me.data?.role === "owner" && (
+          <Link
+            to="/cuenta"
+            className="text-sm whitespace-nowrap text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
+          >
+            {t("ui.account")}
+          </Link>
+        )}
         <button
           onClick={logout}
           className="cursor-pointer text-sm whitespace-nowrap text-tinta-2 underline-offset-4 hover:text-surco hover:underline"

@@ -1,9 +1,16 @@
 import {
+  ArrowRightLeft,
+  Beef,
   Bug,
+  HeartCrack,
+  Syringe,
   CloudRain,
   Droplets,
   Footprints,
   NotebookPen,
+  Shovel,
+  Sprout as Fertilizer,
+  SprayCan,
   Sprout,
   Wheat,
   Flame,
@@ -22,9 +29,18 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
   rain: CloudRain,
   water: Droplets,
   note: NotebookPen,
+  // ganaderia
+  herd_count: Beef,
+  herd_move: ArrowRightLeft,
+  mortality: HeartCrack,
+  health: Syringe,
+  sowing: Shovel,
+  application: SprayCan,
+  fertilization: Fertilizer,
 };
 
 export const ALERT_ICON: Record<string, LucideIcon> = {
+  water_low: Droplets,
   frost: Snowflake,
   excess_rain: CloudRainWind,
   drought: SunDim,

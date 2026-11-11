@@ -7,6 +7,7 @@ import { and, asc, eq, gt, gte, inArray, isNull, or, sql, type SQL } from "drizz
 import type { AnySQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
 import {
   LIMITS,
+  localDate,
   newId,
   type Cursor,
   type PullResponse,
@@ -70,6 +71,14 @@ const SYNCED: Record<PullTable, SyncedTable> = {
     version: s.farmLayers.version,
     id: s.farmLayers.id,
   },
+  seasons: { table: s.seasons, org: s.seasons.organizationId, version: s.seasons.version, id: s.seasons.id },
+  plot_seasons: {
+    table: s.plotSeasons,
+    org: s.plotSeasons.organizationId,
+    version: s.plotSeasons.version,
+    id: s.plotSeasons.id,
+  },
+  products: { table: s.products, org: s.products.organizationId, version: s.products.version, id: s.products.id },
 };
 
 /** Matriz de permisos (PRD §9). */
@@ -78,9 +87,21 @@ export const can = {
   /** RF-04: el administrador también crea empleados. */
   manageWorkers: (r: Role) => r === "owner" || r === "admin",
   editField: (r: Role) => r !== "worker",
+  /** PRD §9: crear/editar puntos de interés (también desde el celular, PRD §11): todos menos `worker`. */
+  editPoi: (r: Role) => r !== "worker",
   assign: (r: Role) => r !== "worker",
   viewAll: (r: Role) => r !== "worker",
   reports: (r: Role) => r !== "worker",
+  /** C-04: solo dueño y administrador cambian los umbrales de avisos. */
+  /** K-04: solo el dueño crea y revoca enlaces de solo lectura. */
+  shareLinks: (r: Role) => r === "owner",
+  alertSettings: (r: Role) => r === "owner" || r === "admin",
+  /** G-10: planificar el calendario sanitario (y crear sus tareas): todos menos el empleado. */
+  planSanitary: (r: Role) => r !== "worker",
+  /** ADR 0004: campañas y su plan por lote; el empleado solo las ve. */
+  editSeasons: (r: Role) => r !== "worker",
+  /** ADR 0004: catálogo de productos; el empleado lo recibe en el celular pero no lo edita. */
+  editProducts: (r: Role) => r !== "worker",
 };
 
 export class ScopedDb {
@@ -145,13 +166,28 @@ export class ScopedDb {
         return sql`0`; // PRD §11: no baja al empleado
       case "farm_layers":
         return sql`farm_layers.farm_id IN ${this.workerFarmsSql()}`;
+      case "seasons":
+        return undefined; // las campañas son de toda la organización: el empleado las necesita para anotar
+      case "plot_seasons":
+        return sql`plot_seasons.plot_id IN ${this.assignedPlotsSql()}`;
+      case "products":
+        return undefined; // el catálogo es de toda la organización
     }
   }
 
   /** Ventana de historial que baja al celular (PRD §11). */
   private historyFilter(table: PullTable): SQL | undefined {
     const now = this.now();
-    if (table === "records") return gte(s.records.capturedAt, now - LIMITS.sync.recordsHistoryMs);
+    // Hacienda: todos los conteos y un año de movimientos y mortandad, para calcular el stock en el celular (G-03).
+    if (table === "records")
+      return or(
+        gte(s.records.capturedAt, now - LIMITS.sync.recordsHistoryMs),
+        eq(s.records.kind, "herd_count"),
+        and(
+          inArray(s.records.kind, ["herd_move", "mortality"]),
+          gte(s.records.capturedAt, now - LIMITS.sync.herdEventsHistoryMs),
+        ),
+      );
     if (table === "attachments") return gte(s.attachments.createdAt, now - LIMITS.sync.recordsHistoryMs);
     if (table === "plot_index_stats") return gte(s.plotIndexStats.acquiredAt, now - LIMITS.sync.indexStatsHistoryMs);
     // B7: tareas abiertas, o cerradas/canceladas hace menos de 30 días.
@@ -227,22 +263,93 @@ export class ScopedDb {
     ]);
   }
 
+  // ---------- Baja de la cuenta (P-09) ----------
+
+  /** Registra el pedido de baja (solo dueño). Idempotente: si ya hay uno pendiente, lo devuelve. */
+  async requestDeletion(): Promise<{
+    id: string;
+    created: boolean;
+    organizationName: string;
+    requester: string;
+  }> {
+    this.require(can.manageOrg, "Solo el dueño pide la baja de la cuenta");
+    const [org] = await this.db
+      .select({ name: s.organizations.name })
+      .from(s.organizations)
+      .where(eq(s.organizations.id, this.auth.orgId))
+      .limit(1);
+    const [user] = await this.db
+      .select({ email: s.users.email, fullName: s.users.fullName })
+      .from(s.users)
+      .where(eq(s.users.id, this.auth.userId))
+      .limit(1);
+    const requester = `${user?.fullName ?? ""} (${user?.email ?? "sin email"})`;
+    const [pending] = await this.db
+      .select({ id: s.deletionRequests.id })
+      .from(s.deletionRequests)
+      .where(and(eq(s.deletionRequests.organizationId, this.auth.orgId), eq(s.deletionRequests.status, "pending")))
+      .limit(1);
+    const organizationName = org?.name ?? "";
+    if (pending) return { id: pending.id, created: false, organizationName, requester };
+    const id = newId();
+    await this.db.insert(s.deletionRequests).values({
+      id,
+      organizationId: this.auth.orgId,
+      userId: this.auth.userId,
+      createdAt: this.now(),
+    });
+    return { id, created: true, organizationName, requester };
+  }
+
   // ---------- Miembros y asignaciones ----------
 
+  /** Miembros con su actividad de los últimos 7 días: tres consultas agrupadas, sin N+1. */
   async listMembers() {
     this.require(can.assign);
-    return this.db
-      .select({
-        userId: s.users.id,
-        fullName: s.users.fullName,
-        email: s.users.email,
-        phone: s.users.phone,
-        role: s.memberships.role,
-        status: s.memberships.status,
-      })
-      .from(s.memberships)
-      .innerJoin(s.users, eq(s.users.id, s.memberships.userId))
-      .where(and(eq(s.memberships.organizationId, this.auth.orgId), isNull(s.memberships.deletedAt)));
+    const org = this.auth.orgId;
+    const since = this.now() - 7 * 86_400_000;
+    const sinceDay = localDate(this.now() - 6 * 86_400_000);
+    const [members, days, recs, syncs] = await Promise.all([
+      this.db
+        .select({
+          userId: s.users.id,
+          fullName: s.users.fullName,
+          email: s.users.email,
+          phone: s.users.phone,
+          role: s.memberships.role,
+          status: s.memberships.status,
+        })
+        .from(s.memberships)
+        .innerJoin(s.users, eq(s.users.id, s.memberships.userId))
+        .where(and(eq(s.memberships.organizationId, org), isNull(s.memberships.deletedAt))),
+      this.db
+        .select({ userId: s.activityDaily.userId, n: sql<number>`count(*)` })
+        .from(s.activityDaily)
+        .where(and(eq(s.activityDaily.organizationId, org), gte(s.activityDaily.day, sinceDay)))
+        .groupBy(s.activityDaily.userId),
+      this.db
+        .select({ userId: s.records.authorId, n: sql<number>`count(*)` })
+        .from(s.records)
+        .where(and(eq(s.records.organizationId, org), isNull(s.records.deletedAt), gte(s.records.capturedAt, since)))
+        .groupBy(s.records.authorId),
+      this.db
+        .select({ userId: s.devices.userId, at: sql<number | null>`max(${s.devices.lastSyncAt})` })
+        .from(s.devices)
+        .where(
+          sql`${s.devices.userId} IN (SELECT user_id FROM memberships WHERE organization_id = ${org} AND deleted_at IS NULL)`,
+        )
+        .groupBy(s.devices.userId),
+    ]);
+    const n = (rows: { userId: string; n: number }[]) => new Map(rows.map((r) => [r.userId, Number(r.n)]));
+    const activeDays = n(days);
+    const records = n(recs);
+    const lastSync = new Map(syncs.map((r) => [r.userId, r.at]));
+    return members.map((m) => ({
+      ...m,
+      activeDays7: activeDays.get(m.userId) ?? 0,
+      records7d: records.get(m.userId) ?? 0,
+      lastSyncAt: lastSync.get(m.userId) ?? null,
+    }));
   }
 
   async addMember(input: {
@@ -377,13 +484,15 @@ export class ScopedDb {
 
   // ---------- Estancias, lotes, puntos de interés ----------
 
-  async requireFarm(farmId: string): Promise<void> {
+  /** Verifica que la estancia sea de la organización y devuelve su geometría (GeoJSON texto). */
+  async requireFarm(farmId: string): Promise<string> {
     const [f] = await this.db
-      .select({ id: s.farms.id })
+      .select({ id: s.farms.id, geometry: s.farms.geometry })
       .from(s.farms)
       .where(and(eq(s.farms.id, farmId), eq(s.farms.organizationId, this.auth.orgId), isNull(s.farms.deletedAt)))
       .limit(1);
     if (!f) throw new NotFoundError("Estancia inexistente");
+    return f.geometry;
   }
 
   async createFarm(
@@ -402,8 +511,18 @@ export class ScopedDb {
         updatedAt: ts,
         version: currentVersion,
       }),
+      this.db.insert(s.farmImagery).values({ farmId: id, status: "pending", requestedAt: ts, updatedAt: ts }),
     ]);
     return { id };
+  }
+
+  /** Lotes vivos de una estancia de la organización (1 query). */
+  async countPlots(farmId: string): Promise<number> {
+    const [r] = await this.db
+      .select({ n: sql<number>`count(*)` })
+      .from(s.plots)
+      .where(and(eq(s.plots.farmId, farmId), eq(s.plots.organizationId, this.auth.orgId), isNull(s.plots.deletedAt)));
+    return Number(r?.n ?? 0);
   }
 
   /** Alta de varios lotes de una vez (importación KML). */
@@ -413,9 +532,9 @@ export class ScopedDb {
       typeof s.plots.$inferInsert,
       "id" | "organizationId" | "farmId" | "createdAt" | "updatedAt" | "version"
     >[],
-  ): Promise<{ ids: string[] }> {
+  ): Promise<{ ids: string[]; farmGeometry: string }> {
     this.require(can.editField);
-    await this.requireFarm(farmId);
+    const farmGeometry = await this.requireFarm(farmId);
     const ts = this.now();
     const ids = items.map(() => newId());
     // Una sentencia por lote: las geometrías son largas y no conviene agruparlas.
@@ -433,7 +552,7 @@ export class ScopedDb {
         }),
       ),
     ]);
-    return { ids };
+    return { ids, farmGeometry };
   }
 
   async createPoi(input: {
@@ -471,6 +590,10 @@ export class ScopedDb {
     kind: (typeof s.RECORD_KINDS)[number] | null;
     dueDate: string;
     recurrence: (typeof s.RECURRENCES)[number];
+    /** Lista de verificación en JSON (F-15). */
+    checklist?: string | null;
+    lon?: number | null;
+    lat?: number | null;
   }) {
     this.require(can.assign);
     await this.requireFarm(input.farmId);

@@ -11,19 +11,23 @@ import { BRAND, describeRecord, t } from "@yvy/shared";
 import { containsPoint, type Area } from "@yvy/geo";
 import { useRef } from "react";
 import { getDb } from "../../src/lib/db";
+import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
 import { currentFix, type Fix } from "../../src/lib/location";
 import { packStatus, tilesBaseUrl } from "../../src/lib/offline";
 import { setFabHidden } from "../../src/lib/fab";
 import { useLocal } from "../../src/lib/useLocal";
+import { FarmLine } from "../../src/ui/FarmLine";
 import { Button } from "../../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
 
+const FIT_PADDING = { top: 120, bottom: 40, left: 24, right: 24 };
 const daysAgo = (ms: number) => Math.floor((Date.now() - ms) / 86_400_000);
 
 export default function MapScreen() {
-  const farms = useLocal(() => getDb().farms());
-  const plots = useLocal(() => getDb().plots());
-  const records = useLocal(() => getDb().records(300));
+  const { farmId, current } = useFarmChoice();
+  const farms = useLocal(() => byFarm(getDb().farms().map((f) => ({ ...f, farmId: f.id })), farmId), [farmId]);
+  const plots = useLocal(() => byFarm(getDb().plots(), farmId), [farmId]);
+  const records = useLocal(() => byFarm(getDb().records(300), farmId), [farmId]);
   const lastVisit = useLocal(() => getDb().lastVisitByPlot());
   const [remoteBase, setRemoteBase] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -35,7 +39,16 @@ export default function MapScreen() {
   );
   const [me, setMe] = useState<Fix | null>(null);
   const camera = useRef<CameraRef>(null);
-  const farm = farms[0];
+  const farm = current ?? farms[0];
+  const firstFarm = useRef(true);
+  useEffect(() => {
+    if (firstFarm.current) {
+      firstFarm.current = false;
+      return;
+    }
+    setSelected(null);
+    if (farm) camera.current?.fitBounds([farm.minLon, farm.minLat, farm.maxLon, farm.maxLat], { padding: FIT_PADDING, duration: 600 });
+  }, [farm?.id]);
   useEffect(() => {
     tilesBaseUrl().then(setRemoteBase, () => setRemoteBase(null));
   }, []);
@@ -127,6 +140,9 @@ export default function MapScreen() {
       >
         <Camera ref={camera} initialViewState={{ bounds: [farm.minLon, farm.minLat, farm.maxLon, farm.maxLat], padding: { top: 40, bottom: 40, left: 24, right: 24 } }} />
       </Map>
+      <View style={st.topLeft} pointerEvents="box-none">
+        <FarmLine style={st.panel} />
+      </View>
       <Text style={st.attr}>Sentinel-2 · Copernicus</Text>
       <Pressable accessibilityRole="button" accessibilityLabel={t("app.whereAmI")} onPress={locate} style={st.locate}>
         <LocateFixed size={22} color={C.tinta} strokeWidth={2} />
@@ -164,5 +180,7 @@ const st = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   sheet: { position: "absolute", left: 12, right: 12, bottom: 12, backgroundColor: C.papel, borderRadius: RADIUS + 4, padding: GUTTER, elevation: 8, shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } },
   locate: { position: "absolute", top: 16, right: 16, width: 48, height: 48, borderRadius: 24, backgroundColor: C.papel, alignItems: "center", justifyContent: "center", elevation: 4, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
-  attr: { position: "absolute", top: 20, left: 16, fontFamily: F.sans, fontSize: 11, color: "rgba(255,255,255,0.7)" },
+  topLeft: { position: "absolute", top: 12, left: 12, right: 76, gap: 8 },
+  panel: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14 },
+  attr: { position: "absolute", bottom: 6, left: 12, fontFamily: F.sans, fontSize: 11, color: "rgba(255,255,255,0.7)" },
 });

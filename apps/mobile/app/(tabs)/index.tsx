@@ -8,9 +8,11 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Check } from "lucide-react-native";
 import { describeRecord, t } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
+import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
 import { useSession } from "../../src/lib/session";
 import { localChanged } from "../../src/lib/sync";
 import { useLocal } from "../../src/lib/useLocal";
+import { FarmLine } from "../../src/ui/FarmLine";
 import { Row, s as k } from "../../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
 
@@ -27,16 +29,15 @@ export default function Today() {
   const scroller = useRef<ElementRef<typeof ScrollView>>(null);
   const alertY = useRef<Record<string, number>>({});
   const userId = session?.user.id ?? "";
-  const tasks = useLocal(() => getDb().tasksToday(userId), [userId]);
-  const alerts = useLocal(() => getDb().activeAlerts());
+  const { farmId } = useFarmChoice();
+  const tasks = useLocal(() => byFarm(getDb().tasksToday(userId), farmId), [userId, farmId]);
+  const alerts = useLocal(() => byFarm(getDb().activeAlerts(), farmId), [farmId]);
   const plots = useLocal(() => getDb().plots());
   const todayRecords = useLocal(() => {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
-    return getDb()
-      .records(100)
-      .filter((r) => r.capturedAt >= start.getTime());
-  });
+    return byFarm(getDb().records(100), farmId).filter((r) => r.capturedAt >= start.getTime());
+  }, [farmId]);
   const plotName = (id: string | null) => plots.find((p) => p.id === id)?.name ?? "";
   const open = tasks.filter((x) => x.status === "open");
   const done = tasks.filter((x) => x.status === "done");
@@ -60,6 +61,7 @@ export default function Today() {
 
   return (
     <ScrollView ref={scroller} style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 120 }]}>
+      <FarmLine />
       <Text style={T.small}>{dayLabel()}</Text>
       <Text style={[T.display, { marginTop: 2, marginBottom: 24 }]}>{session?.user.fullName.split(" ")[0]}</Text>
 

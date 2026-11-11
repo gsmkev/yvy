@@ -506,6 +506,9 @@ export const esPY = {
     switchConfirmTitle: "¿Cambiar de usuario?",
     switchConfirmBody: "Se cierra tu sesión en este celular y entra otra persona. Todo lo tuyo ya está en el servidor.",
     switchConfirmYes: "Cambiar",
+    offlineAll: "Bajar los mapas de las {{n}} estancias ({{mb}} MB)",
+    offlineAllReady: "Los mapas de todas tus estancias ya están en el celular.",
+    offlineAllFailed: "No se pudieron bajar los mapas de: {{names}}. Probá de nuevo con wifi.",
   },
   fields: {
     condition: "Estado general",

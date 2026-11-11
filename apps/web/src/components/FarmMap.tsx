@@ -7,7 +7,7 @@ import * as maplibregl from "maplibre-gl";
 import type { GeoJSONSource, Map as MlMap, MapLayerMouseEvent, MapMouseEvent } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Protocol } from "pmtiles";
-import { TerraDraw, TerraDrawPolygonMode } from "terra-draw";
+import { TerraDraw, TerraDrawPolygonMode, TerraDrawSelectMode } from "terra-draw";
 import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter";
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { BRAND } from "@yvy/shared";
@@ -59,6 +59,9 @@ export interface FarmMapProps {
   /** Vuela a un punto (cambiar `n` para repetir el mismo destino). */
   flyTo?: { lon: number; lat: number; zoom?: number; n: number } | null;
   drawing?: boolean;
+  /** M-02: lote cuya forma se edita (vértices arrastrables). Se oculta de la capa de lotes mientras tanto. */
+  editPlot?: { id: string; geometry: string } | null;
+  onEditChange?: (g: Polygon) => void;
   onDrawn?: (g: Polygon) => void;
   onPlotClick?: (id: string) => void;
   onPointClick?: (id: string) => void;
@@ -79,6 +82,7 @@ export function FarmMap(props: FarmMapProps) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const drawRef = useRef<TerraDraw | null>(null);
+  const editRef = useRef<TerraDraw | null>(null);
   const labelsRef = useRef<maplibregl.Marker[]>([]);
   const cb = useRef(props);
   cb.current = props;
@@ -275,8 +279,9 @@ export function FarmMap(props: FarmMapProps) {
     );
     // Nombres sobre el mapa (marcadores HTML: no dependen de un servidor de fuentes)
     for (const m of labelsRef.current) m.remove();
+    const plotsShown = (p.plots ?? []).filter((pl) => pl.id !== p.editPlot?.id);
     const labels = [
-      ...(p.plots ?? []).map((pl) => ({ name: pl.name, geometry: pl.geometry })),
+      ...plotsShown.map((pl) => ({ name: pl.name, geometry: pl.geometry })),
       ...(p.farms ?? []).map((f) => ({ name: f.name, geometry: f.geometry })),
     ];
     labelsRef.current = labels.map(({ name, geometry }) => {
@@ -287,7 +292,7 @@ export function FarmMap(props: FarmMapProps) {
     });
     (map.getSource("plots") as GeoJSONSource).setData(
       fc(
-        (p.plots ?? []).map((pl) => ({
+        plotsShown.map((pl) => ({
           type: "Feature",
           properties: {
             id: pl.id,
@@ -361,6 +366,7 @@ export function FarmMap(props: FarmMapProps) {
     props.points,
     props.selectedPlotId,
     props.pickedPlotIds,
+    props.editPlot?.id,
     props.layers,
     props.showNdvi,
     props.layerIds,
@@ -417,6 +423,66 @@ export function FarmMap(props: FarmMapProps) {
       drawRef.current = null;
     };
   }, [props.drawing, mapRef.current]);
+
+  // ---- edición de vértices (M-02) ----
+  useEffect(() => {
+    const map = mapRef.current;
+    const ep = props.editPlot;
+    if (!map || !ep) return;
+    const geom = JSON.parse(ep.geometry) as Polygon | MultiPolygon;
+    if (geom.type !== "Polygon") return;
+    const draw = new TerraDraw({
+      adapter: new TerraDrawMapLibreGLAdapter({ map }),
+      modes: [
+        new TerraDrawPolygonMode(),
+        new TerraDrawSelectMode({
+          flags: {
+            polygon: {
+              feature: {
+                draggable: false,
+                coordinates: { midpoints: true, draggable: true, deletable: true },
+              },
+            },
+          },
+        }),
+      ],
+    });
+    draw.start();
+    // terra-draw rechaza coordenadas con más de 9 decimales
+    const r9 = (n: number) => Math.round(n * 1e9) / 1e9;
+    draw.addFeatures([
+      {
+        type: "Feature",
+        properties: { mode: "polygon" },
+        geometry: {
+          type: "Polygon",
+          coordinates: geom.coordinates.map((ring) => ring.map((c) => [r9(c[0]!), r9(c[1]!)])),
+        },
+      },
+    ]);
+    const feature = draw.getSnapshot()[0];
+    if (!feature) {
+      draw.stop();
+      return;
+    }
+    const id = feature.id!;
+    draw.setMode("select");
+    draw.selectFeature(id);
+    const report = () => {
+      const f = draw.getSnapshot().find((x) => x.id === id);
+      if (f && f.geometry.type === "Polygon") cb.current.onEditChange?.(f.geometry as Polygon);
+    };
+    draw.on("change", (_ids, type) => {
+      if (type === "update" || type === "delete") report();
+    });
+    // Un clic en el vacío deselecciona; se vuelve a elegir para que los vértices sigan a la vista.
+    draw.on("deselect", () => setTimeout(() => editRef.current === draw && draw.selectFeature(id), 0));
+    editRef.current = draw;
+    return () => {
+      editRef.current = null;
+      draw.stop();
+    };
+  }, [props.editPlot?.id, mapRef.current]);
 
   return <div ref={ref} className={props.className ?? "h-full w-full"} data-testid="map" />;
 }

@@ -24,6 +24,7 @@ import {
   listRecords,
   listShareLinks,
   listTasks,
+  plotGeometryWarnings,
   plotNdvi,
   registerDevice,
   saveAlertSettings,
@@ -134,7 +135,13 @@ web.patch("/org/plots/:id", async (c) => {
     geo = { geometry: JSON.stringify(geometry), ...bboxOf(geometry), areaHa: areaHa(geometry) };
   }
   await updatePlot(c.var.sdb, c.req.param("id"), { ...rest, ...geo });
-  return c.json({ ok: true });
+  if (!geometry) return c.json({ ok: true });
+  // M-02: cambió la forma; devuelve la superficie nueva y avisos de superposición o de lote fuera del perímetro.
+  return c.json({
+    ok: true,
+    areaHa: areaHa(geometry),
+    warnings: await plotGeometryWarnings(c.var.sdb, c.req.param("id"), geometry),
+  });
 });
 web.delete("/org/plots/:id", async (c) => {
   await deletePlot(c.var.sdb, c.req.param("id"));

@@ -320,6 +320,7 @@ export class ScopedDb {
     const org = this.auth.orgId;
     const since = this.now() - 7 * 86_400_000;
     const sinceDay = localDate(this.now() - 6 * 86_400_000);
+    const withPin = await this.membersWithPin();
     const [members, days, recs, syncs] = await Promise.all([
       this.db
         .select({
@@ -357,6 +358,7 @@ export class ScopedDb {
     const lastSync = new Map(syncs.map((r) => [r.userId, r.at]));
     return members.map((m) => ({
       ...m,
+      hasPin: withPin.has(m.userId),
       activeDays7: activeDays.get(m.userId) ?? 0,
       records7d: records.get(m.userId) ?? 0,
       lastSyncAt: lastSync.get(m.userId) ?? null,
@@ -428,6 +430,80 @@ export class ScopedDb {
       .limit(1);
     if (!m) throw new NotFoundError("El usuario no pertenece a la organización");
     return m.role;
+  }
+
+  /**
+   * F-24: fija o cambia el PIN de ingreso de un empleado (solo dueño o administrador). Guarda el teléfono en su
+   * ficha y su clave normalizada. "phone_taken" si otra persona ya usa ese teléfono para ingresar.
+   */
+  async setMemberPin(
+    userId: string,
+    input: { phone: string; phoneKey: string; salt: string; pinHash: string },
+  ): Promise<"ok" | "phone_taken"> {
+    this.require(can.manageWorkers, "Solo dueño o administrador gestionan el PIN de los empleados");
+    if ((await this.memberRole(userId)) !== "worker") throw new ForbiddenError("El ingreso con PIN es solo para empleados");
+    const [other] = await this.db
+      .select({ userId: s.userPins.userId })
+      .from(s.userPins)
+      .where(and(eq(s.userPins.phoneKey, input.phoneKey), sql`${s.userPins.userId} <> ${userId}`))
+      .limit(1);
+    if (other) return "phone_taken";
+    const ts = this.now();
+    await runBatch(this.db, [
+      this.db.update(s.users).set({ phone: input.phone, updatedAt: ts }).where(eq(s.users.id, userId)),
+      this.db
+        .insert(s.userPins)
+        .values({
+          userId,
+          organizationId: this.auth.orgId,
+          phoneKey: input.phoneKey,
+          salt: input.salt,
+          pinHash: input.pinHash,
+          createdBy: this.auth.userId,
+          createdAt: ts,
+          updatedAt: ts,
+        })
+        .onConflictDoUpdate({
+          target: s.userPins.userId,
+          set: {
+            organizationId: this.auth.orgId,
+            phoneKey: input.phoneKey,
+            salt: input.salt,
+            pinHash: input.pinHash,
+            failedAttempts: 0,
+            lockedUntil: null,
+            createdBy: this.auth.userId,
+            updatedAt: ts,
+          },
+        }),
+    ]);
+    return "ok";
+  }
+
+  /** F-24: quita el PIN (el empleado ya no puede ingresar con teléfono). */
+  async clearMemberPin(userId: string): Promise<void> {
+    this.require(can.manageWorkers, "Solo dueño o administrador gestionan el PIN de los empleados");
+    await this.memberRole(userId);
+    await this.db
+      .delete(s.userPins)
+      .where(and(eq(s.userPins.userId, userId), eq(s.userPins.organizationId, this.auth.orgId)));
+  }
+
+  /** F-24: teléfono guardado en la ficha de un miembro de la organización. */
+  async memberPhone(userId: string): Promise<string | null> {
+    await this.memberRole(userId);
+    const [u] = await this.db.select({ phone: s.users.phone }).from(s.users).where(eq(s.users.id, userId)).limit(1);
+    return u?.phone ?? null;
+  }
+
+  /** F-24: quiénes de la organización ya tienen PIN (para mostrarlo en Equipo). */
+  async membersWithPin(): Promise<Set<string>> {
+    this.require(can.assign);
+    const rows = await this.db
+      .select({ userId: s.userPins.userId })
+      .from(s.userPins)
+      .where(eq(s.userPins.organizationId, this.auth.orgId));
+    return new Set(rows.map((r) => r.userId));
   }
 
   /** Reemplaza los lotes asignados a un usuario y avisa al cliente que rehaga sus tablas. */

@@ -125,6 +125,8 @@ export interface Member {
   activeDays7: number;
   records7d: number;
   lastSyncAt: number | null;
+  /** F-24: ingresa con teléfono y PIN. */
+  hasPin?: boolean;
 }
 
 export interface Task {

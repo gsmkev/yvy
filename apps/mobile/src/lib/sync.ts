@@ -41,10 +41,13 @@ export const localChanged = () => set({ pending: getDb().pendingCount(), version
 
 const MAX_UPLOAD_ATTEMPTS = 8;
 
+/** "Mandar por datos móviles": salta la regla "fotos solo con wifi" durante un solo ciclo. */
+let mobileDataOnce = false;
+
 const uploader: AttachmentUploader = {
   async uploadPending() {
     const db = getDb();
-    if (db.getKv("photos_wifi_only") === "1") {
+    if (db.getKv("photos_wifi_only") === "1" && !mobileDataOnce) {
       const net = await Network.getNetworkStateAsync();
       if (net.type !== Network.NetworkStateType.WIFI) return 0;
     }
@@ -132,6 +135,16 @@ export async function syncNow(): Promise<void> {
     });
   } finally {
     set({ phase: "idle", pending: getDb().pendingCount(), version: status.version + 1 });
+  }
+}
+
+/** Sincroniza ya, incluso las fotos aunque esté activado "solo con wifi" (una sola vez). */
+export async function syncNowMobileData(): Promise<void> {
+  mobileDataOnce = true;
+  try {
+    await syncNow();
+  } finally {
+    mobileDataOnce = false;
   }
 }
 

@@ -6,6 +6,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
+import { planLimits } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { getDb } from "../db/client";
 import { parse, readJson } from "../lib/http";
@@ -34,10 +35,11 @@ admin.get("/metrics", async (c) => {
   const week = now - 7 * 86_400_000;
   const weekDay = new Date(week - 3 * 3_600_000).toISOString().slice(0, 10);
   const orgs = await db.all<Record<string, unknown>>(sql`
-    SELECT o.id, o.name, o.plan, o.trial_ends_at AS trialEndsAt, o.created_at AS createdAt,
+    SELECT o.id, o.name, o.plan, o.trial_ends_at AS trialEndsAt, o.max_ha AS maxHaOwn, o.max_users AS maxUsersOwn, o.created_at AS createdAt,
       (SELECT count(*) FROM farms f WHERE f.organization_id = o.id AND f.deleted_at IS NULL) AS farms,
       (SELECT coalesce(sum(area_ha), 0) FROM farms f WHERE f.organization_id = o.id AND f.deleted_at IS NULL) AS ha,
       (SELECT count(*) FROM memberships m WHERE m.organization_id = o.id AND m.role = 'worker' AND m.deleted_at IS NULL) AS workers,
+      (SELECT count(*) FROM memberships m WHERE m.organization_id = o.id AND m.deleted_at IS NULL AND m.status = 'active') AS users,
       (SELECT count(*) FROM records r WHERE r.organization_id = o.id AND r.deleted_at IS NULL AND r.created_at >= ${week}) AS records7d,
       (SELECT count(DISTINCT r.author_id) FROM records r JOIN memberships m ON m.user_id = r.author_id AND m.organization_id = r.organization_id
          WHERE r.organization_id = o.id AND m.role = 'worker' AND r.created_at >= ${week}) AS activeWorkers7d,
@@ -57,6 +59,7 @@ admin.get("/metrics", async (c) => {
     generatedAt: now,
     organizations: orgs.map((o) => ({
       ...o,
+      limits: planLimits(String(o.plan), { maxHa: o.maxHaOwn as number | null, maxUsers: o.maxUsersOwn as number | null }),
       recordsPerActiveWorker: Number(o.activeWorkers7d) ? Number(o.workerRecords7d) / Number(o.activeWorkers7d) : null,
       ownersActivePct: Number(o.owners) ? (100 * Number(o.ownersActive2x)) / Number(o.owners) : null,
       usefulPct: Number(o.feedback) ? (100 * Number(o.useful)) / Number(o.feedback) : null,
@@ -67,7 +70,13 @@ admin.get("/metrics", async (c) => {
 
 admin.post("/orgs/:id/plan", async (c) => {
   const b = parse(
-    z.object({ plan: z.enum(["trial", "active", "blocked"]), trialEndsAt: z.number().int().nullish() }),
+    z.object({
+      plan: z.enum(["trial", "active", "blocked", "demo"]),
+      trialEndsAt: z.number().int().nullish(),
+      /** P-10: topes propios; null borra el tope propio y vuelve al del plan; sin el campo no se toca. */
+      maxHa: z.number().positive().max(10_000_000).nullish(),
+      maxUsers: z.number().int().positive().max(100_000).nullish(),
+    }),
     await readJson(c.req),
   );
   await getDb(c.env.DB)
@@ -75,6 +84,8 @@ admin.post("/orgs/:id/plan", async (c) => {
     .set({
       plan: b.plan,
       ...(b.trialEndsAt !== undefined ? { trialEndsAt: b.trialEndsAt } : {}),
+      ...(b.maxHa !== undefined ? { maxHa: b.maxHa } : {}),
+      ...(b.maxUsers !== undefined ? { maxUsers: b.maxUsers } : {}),
       updatedAt: Date.now(),
     })
     .where(eq(s.organizations.id, c.req.param("id")));

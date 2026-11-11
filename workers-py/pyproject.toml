@@ -13,6 +13,7 @@ dependencies = [
   "rio-tiler>=7.0",
   "pmtiles>=3.4",
   "pillow>=11",
+  "reportlab>=5.1.0",
 ]
 
 [dependency-groups]

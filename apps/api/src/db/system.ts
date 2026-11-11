@@ -2,10 +2,11 @@
  * Acceso de sistema (sin usuario): /ingest firmado por HMAC y crons. Única excepción a scopedDb.
  * Cada escritura deriva organization_id de la fila padre (lote o estancia), nunca del request.
  */
-import { and, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
-import { newId } from "@yvy/shared";
+import { and, desc, eq, gte, inArray, isNull, lt, or, sql } from "drizzle-orm";
+import { addDays, DEFAULT_ALERT_SETTINGS, localDate, newId, type AlertSettings } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { upsertAlert } from "../jobs/alerts";
+import { dayOfYear } from "./queries";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type DB, type Stmt } from "./client";
 
 export class SystemDb {
@@ -28,6 +29,109 @@ export class SystemDb {
       })
       .from(s.farms)
       .where(isNull(s.farms.deletedAt));
+  }
+
+  /**
+   * Resumen público de una estancia para un enlace de solo lectura (K-04). Devuelve el motivo si el enlace no sirve.
+   * No incluye registros, personas ni geometrías: solo lotes, superficie, vigor, lluvia y avisos.
+   */
+  async sharedSummary(tokenHash: string, now: number) {
+    const [link] = await this.db
+      .select({
+        farmId: s.shareLinks.farmId,
+        expiresAt: s.shareLinks.expiresAt,
+        revokedAt: s.shareLinks.revokedAt,
+        name: s.farms.name,
+        department: s.farms.department,
+        areaHa: s.farms.areaHa,
+      })
+      .from(s.shareLinks)
+      .innerJoin(s.farms, and(eq(s.farms.id, s.shareLinks.farmId), isNull(s.farms.deletedAt)))
+      .where(eq(s.shareLinks.tokenHash, tokenHash))
+      .limit(1);
+    if (!link) return { error: "not_found" as const };
+    if (link.revokedAt !== null) return { error: "revoked" as const };
+    if (link.expiresAt <= now) return { error: "expired" as const };
+    const farmId = link.farmId;
+    const today = localDate(now);
+    const from30 = addDays(today, -30);
+    const [plots, rain, alerts] = await Promise.all([
+      this.db
+        .select({
+          name: s.plots.name,
+          kind: s.plots.kind,
+          crop: s.plots.crop,
+          areaHa: s.plots.areaHa,
+          ndvi: sql<number | null>`(SELECT mean FROM plot_index_stats i WHERE i.plot_id = plots.id AND i.idx = 'ndvi' ORDER BY i.acquired_at DESC LIMIT 1)`,
+          ndviAt: sql<number | null>`(SELECT acquired_at FROM plot_index_stats i WHERE i.plot_id = plots.id AND i.idx = 'ndvi' ORDER BY i.acquired_at DESC LIMIT 1)`,
+        })
+        .from(s.plots)
+        .where(and(eq(s.plots.farmId, farmId), isNull(s.plots.deletedAt)))
+        .orderBy(s.plots.name)
+        .limit(500),
+      this.db
+        .select({ mm: sql<number | null>`sum(${s.climateDaily.precipMm})`, n: sql<number>`count(*)` })
+        .from(s.climateDaily)
+        .where(
+          and(
+            eq(s.climateDaily.farmId, farmId),
+            eq(s.climateDaily.plotId, ""),
+            inArray(s.climateDaily.source, ["chirps", "chirps_prelim"]),
+            gte(s.climateDaily.date, from30),
+          ),
+        ),
+      this.db
+        .select({
+          kind: s.alerts.kind,
+          severity: s.alerts.severity,
+          summary: s.alerts.summary,
+          validFrom: s.alerts.validFrom,
+          validTo: s.alerts.validTo,
+        })
+        .from(s.alerts)
+        .where(
+          and(
+            eq(s.alerts.farmId, farmId),
+            isNull(s.alerts.resolvedAt),
+            or(isNull(s.alerts.validTo), sql`${s.alerts.validTo} >= ${now}`),
+          ),
+        )
+        .orderBy(desc(s.alerts.validFrom))
+        .limit(50),
+    ]);
+    const doys = Array.from({ length: 30 }, (_, i) => dayOfYear(addDays(today, -i)));
+    const clim = await this.db
+      .select({ mean: s.climatology.mean })
+      .from(s.climatology)
+      .where(
+        and(eq(s.climatology.farmId, farmId), eq(s.climatology.plotId, ""), eq(s.climatology.variable, "precip"), inArray(s.climatology.dayOfYear, doys)),
+      );
+    const normal = clim.length ? clim.reduce((a, c) => a + (c.mean ?? 0), 0) : null;
+    return {
+      farm: { name: link.name, department: link.department, areaHa: link.areaHa, plotCount: plots.length },
+      plots,
+      rain30: { mm: rain[0] && rain[0].n >= 25 ? (rain[0].mm ?? 0) : null, normalMm: normal },
+      alerts,
+      generatedAt: now,
+      expiresAt: link.expiresAt,
+      today,
+    };
+  }
+
+  /** Umbrales de avisos de la estancia (C-04); por defecto si no hay fila. */
+  async alertSettings(farmId: string): Promise<AlertSettings> {
+    const [row] = await this.db
+      .select()
+      .from(s.farmAlertSettings)
+      .where(eq(s.farmAlertSettings.farmId, farmId))
+      .limit(1);
+    return row
+      ? {
+          frostTminC: row.frostTminC,
+          excessRainMm24h: row.excessRainMm24h,
+          droughtDeficitPct: row.droughtDeficitPct,
+        }
+      : { ...DEFAULT_ALERT_SETTINGS };
   }
 
   farmGeometry(farmId: string) {
@@ -156,8 +260,25 @@ export class SystemDb {
         .update(s.farms)
         .set({ offlinePackVersion: sql`${s.farms.offlinePackVersion} + 1`, updatedAt: ts, version: currentVersion })
         .where(eq(s.farms.id, x.farmId)),
+      // El mapa base marca el fin del primer procesamiento (S-02)
+      ...(x.layer === "true_color" ? [this.imageryUpsert(x.farmId, "ready", ts)] : []),
     ]);
     return { id };
+  }
+
+  private imageryUpsert(farmId: string, status: (typeof s.IMAGERY_STATUSES)[number], ts: number) {
+    return this.db
+      .insert(s.farmImagery)
+      .values({ farmId, status, requestedAt: ts, updatedAt: ts })
+      .onConflictDoUpdate({ target: s.farmImagery.farmId, set: { status, updatedAt: ts } });
+  }
+
+  /** Estado del procesamiento satelital inicial. Devuelve false si la estancia no existe. */
+  async setImageryStatus(farmId: string, status: (typeof s.IMAGERY_STATUSES)[number]): Promise<boolean> {
+    const [farm] = await this.db.select({ id: s.farms.id }).from(s.farms).where(eq(s.farms.id, farmId)).limit(1);
+    if (!farm) return false;
+    await this.imageryUpsert(farmId, status, Date.now());
+    return true;
   }
 
   climateLatest() {

@@ -18,6 +18,8 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
           t("fields.intensityValue", { v: tr(`fields.level_${d.intensity}`, String(d.intensity)).toLowerCase() }),
         );
       if (typeof d.perMeter === "number") parts.push(t("fields.perMeterValue", { n: d.perMeter }));
+      if (Array.isArray(d.stations))
+        parts.push(t(d.stations.length === 1 ? "app.stationsValueOne" : "app.stationsValue", { n: d.stations.length }));
       break;
     case "crop_status":
       if (str("stage")) parts.push(tr(`fields.stage_${d.stage}`, String(d.stage)));

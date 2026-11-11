@@ -10,7 +10,8 @@
  * - Entra en el mismo db.batch() del push: o se guarda todo o nada. Si no entra en el presupuesto de consultas de la
  *   invocación se responde 503 y el cliente divide el envío (ver packages/sync).
  */
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray, isNull, sql } from "drizzle-orm";
+import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import { HTTPException } from "hono/http-exception";
 import {
   avgUnitCost,
@@ -20,11 +21,16 @@ import {
   LIMITS,
   moveValue,
   newId,
+  orderSchema,
+  toPyg,
+  localDate,
   type BaseUnit,
+  type WorkOrder,
   type StockTotals,
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { chunkForParams, currentVersion, type Stmt } from "./client";
+import { usdRateOn } from "./erp";
 import type { ScopedDb } from "./scoped";
 import { emptyTotals, productTotals } from "./stock-moves";
 
@@ -38,10 +44,20 @@ export interface EffectRecord {
 }
 
 export const consumes = (kind: string) => (CONSUMING_KINDS as readonly string[]).includes(kind);
+/**
+ * Registros con efectos en el ERP: los que consumen insumos y los que cierran una orden de trabajo y pueden
+ * cargar el costo del contratista (siembra y cosecha). Se revisan todos para poder revertir si el registro cambia.
+ */
+export const hasEffects = (kind: string) => consumes(kind) || kind === "sowing" || kind === "harvest";
 
-/** Columnas que se mandan en cada fila (para repartir en sentencias de menos de 100 parámetros). */
-const MOVE_COLS = 12;
-const COST_COLS = 17;
+/**
+ * Parámetros que ocupa una fila en un INSERT de drizzle: las columnas que se mandan más las omitidas que tienen valor
+ * por defecto (las demás van como null literal). D1 admite 100 por consulta: se reparte en sentencias con este conteo.
+ */
+const rowParams = (table: SQLiteTable, row: Record<string, unknown>) =>
+  Object.entries(getTableColumns(table)).filter(([key, col]) => row[key] !== undefined || col.hasDefault).length;
+const insertChunks = <T extends Record<string, unknown>>(table: SQLiteTable, rows: T[]): T[][] =>
+  rows.length ? chunkForParams(rows, Math.max(...rows.map((r) => rowParams(table, r)))) : [];
 
 /**
  * Sentencias que dejan el stock y los costos de `upserts` (registros aceptados en este push) y de `deletedIds`
@@ -51,7 +67,7 @@ export async function recordEffects(sdb: ScopedDb, upserts: EffectRecord[], dele
   const deleted = new Set(deletedIds);
   // El último gana por id; un registro que se borra en el mismo envío no deja efectos.
   const byId = new Map<string, EffectRecord>();
-  for (const r of upserts) if (consumes(r.kind) && !deleted.has(r.id)) byId.set(r.id, r);
+  for (const r of upserts) if (hasEffects(r.kind) && !deleted.has(r.id)) byId.set(r.id, r);
   const recs = [...byId.values()];
   if (!recs.length && !deletedIds.length) return [];
 
@@ -120,7 +136,8 @@ export async function recordEffects(sdb: ScopedDb, upserts: EffectRecord[], dele
   const plotIds = [...new Set(recs.flatMap((r) => (r.plotId ? [r.plotId] : [])))];
   const farmIds = [...new Set(recs.map((r) => r.farmId))];
   const recIds = recs.map((r) => r.id);
-  const [unitRows, plotRows, whRows, oldMoves, totals] = await Promise.all([
+  const orderTaskIds = [...new Set(recs.flatMap((r) => (typeof r.data.orderTaskId === "string" ? [r.data.orderTaskId] : [])))];
+  const [unitRows, plotRows, whRows, oldMoves, oldCosts, orderTasks, totals] = await Promise.all([
     Promise.all(
       chunkForParams(productIds, 2).map((chunk) =>
         db
@@ -160,6 +177,22 @@ export async function recordEffects(sdb: ScopedDb, upserts: EffectRecord[], dele
           ),
       ),
     ).then((r) => r.flat()),
+    Promise.all(
+      chunkForParams(recIds, 2).map((chunk) =>
+        db
+          .select({ originId: s.costEntries.originId })
+          .from(s.costEntries)
+          .where(and(eq(s.costEntries.organizationId, org), inArray(s.costEntries.originId, chunk), isNull(s.costEntries.deletedAt))),
+      ),
+    ).then((r) => r.flat()),
+    Promise.all(
+      chunkForParams(orderTaskIds, 2).map((chunk) =>
+        db
+          .select({ id: s.tasks.id, workOrder: s.tasks.workOrder })
+          .from(s.tasks)
+          .where(and(eq(s.tasks.organizationId, org), isNull(s.tasks.deletedAt), inArray(s.tasks.id, chunk))),
+      ),
+    ).then((r) => r.flat()),
     productTotals(sdb, productIds),
   ]);
 
@@ -173,7 +206,7 @@ export async function recordEffects(sdb: ScopedDb, upserts: EffectRecord[], dele
       t.valuePyg -= m.valuePyg;
     }
   }
-  const hadEffects = new Set(oldMoves.map((m) => m.originId as string));
+  const hadEffects = new Set([...oldMoves, ...oldCosts].map((m) => m.originId as string));
   reverse(recIds.filter((id) => hadEffects.has(id)));
 
   const units = new Map<string, BaseUnit>(unitRows.map((p) => [p.id, p.unit]));
@@ -236,12 +269,76 @@ export async function recordEffects(sdb: ScopedDb, upserts: EffectRecord[], dele
       });
   }
 
+  // ---------- Costo del contratista de la orden de trabajo (E-21) ----------
+  const orders = new Map<string, WorkOrder>();
+  for (const t of orderTasks) {
+    try {
+      const p = orderSchema.safeParse(JSON.parse(t.workOrder ?? "null"));
+      if (p.success) orders.set(t.id, p.data);
+    } catch {
+      /* orden dañada: sin costo de contratista */
+    }
+  }
+  const contractorIds = [...new Set([...orders.values()].flatMap((o) => (o.contractorId ? [o.contractorId] : [])))];
+  if (contractorIds.length) {
+    const contractors = (
+      await Promise.all(
+        chunkForParams(contractorIds, 2).map((chunk) =>
+          db
+            .select()
+            .from(s.contractors)
+            .where(and(eq(s.contractors.organizationId, org), isNull(s.contractors.deletedAt), inArray(s.contractors.id, chunk))),
+        ),
+      )
+    ).flat();
+    const contractorOf = new Map(contractors.map((c) => [c.id, c]));
+    const rates = new Map<string, number | null>();
+    for (const r of recs) {
+      const order = typeof r.data.orderTaskId === "string" ? orders.get(r.data.orderTaskId) : undefined;
+      const c = order?.contractorId ? contractorOf.get(order.contractorId) : undefined;
+      if (!c) continue;
+      const plot = r.plotId ? plots.get(r.plotId) : undefined;
+      const area = typeof r.data.areaHa === "number" ? r.data.areaHa : (plot?.areaHa ?? null);
+      // Por hectárea: superficie hecha; por tonelada: lo cosechado; por hora: las horas del registro (si las trae).
+      const qty =
+        c.rateUnit === "ha" ? area : c.rateUnit === "ton" ? numOr(r.data.tons) : numOr(r.data.hours);
+      if (!qty || qty <= 0) continue;
+      const amount = Math.round(qty * c.rateAmount);
+      const day = localDate(r.capturedAt);
+      if (c.currency === "USD" && !rates.has(day)) rates.set(day, await usdRateOn(sdb, day));
+      const pyg = toPyg(amount, c.currency, rates.get(day) ?? null);
+      if (pyg === null) continue; // sin tipo de cambio no se inventa el costo
+      costs.push({
+        id: newId(),
+        organizationId: org,
+        occurredAt: r.capturedAt,
+        farmId: r.farmId,
+        plotId: r.plotId,
+        seasonId: typeof r.data.seasonId === "string" ? r.data.seasonId : null,
+        activity: plot?.kind === "pasture" ? "ganaderia" : "agricultura",
+        category: "contractor",
+        description: c.name,
+        amount,
+        currency: c.currency,
+        amountPyg: pyg,
+        partyId: c.partyId,
+        origin: "contractor",
+        originId: r.id,
+        createdBy: sdb.auth.userId,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  }
+
   if (moves.length > LIMITS.erp.maxEffectMovesPerPush)
     throw new HTTPException(503, { message: "Demasiados consumos en un solo envío: dividilo" });
-  for (const chunk of chunkForParams(moves, MOVE_COLS)) stmts.push(db.insert(s.stockMoves).values(chunk));
-  for (const chunk of chunkForParams(costs, COST_COLS)) stmts.push(db.insert(s.costEntries).values(chunk));
+  for (const chunk of insertChunks(s.stockMoves, moves)) stmts.push(db.insert(s.stockMoves).values(chunk));
+  for (const chunk of insertChunks(s.costEntries, costs)) stmts.push(db.insert(s.costEntries).values(chunk));
   return stmts;
 }
+
+const numOr = (v: unknown): number | null => (typeof v === "number" ? v : null);
 
 /** Texto corto del costo: los productos del registro. */
 function describe(r: EffectRecord): string {

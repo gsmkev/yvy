@@ -69,3 +69,42 @@ describe("carga de combustible en el celular (E-16)", () => {
     expect(KINDS_FOR(null)).toContain("fuel_load");
   });
 });
+
+describe("orden de trabajo en la tarea (E-20, E-21)", () => {
+  const task = (workOrder: string | null) => ({
+    id: newId(),
+    organizationId: ORG,
+    farmId: newId(),
+    plotId: null,
+    assigneeId: newId(),
+    title: "Pulverización",
+    kind: "application",
+    dueDate: "2026-11-20",
+    dueTime: null,
+    priority: "normal",
+    comments: "[]",
+    recurrence: "none",
+    status: "open",
+    completedAt: null,
+    completedBy: null,
+    recordId: null,
+    prescription: null,
+    workOrder,
+    createdBy: newId(),
+    createdAt: 1,
+    updatedAt: 1,
+    deletedAt: null,
+    version: 1,
+  });
+  it("baja con la tarea y se lee validada; lo dañado o ausente es null", async () => {
+    const db = setup();
+    const order = { labor: "spraying", areaHa: 10, products: [{ productId: newId(), name: "Glifosato", dose: 2, unit: "l_ha" }] };
+    const a = task(JSON.stringify(order));
+    const b = task("no es json");
+    const c = task(null);
+    await db.applyPull("tasks", [a, b, c], null);
+    expect(db.orderOf(a.id)).toMatchObject({ labor: "spraying", areaHa: 10, products: [{ name: "Glifosato" }] });
+    expect(db.orderOf(b.id)).toBeNull();
+    expect(db.orderOf(c.id)).toBeNull();
+  });
+});

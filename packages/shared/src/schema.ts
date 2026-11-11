@@ -602,6 +602,8 @@ export const tasks = sqliteTable(
     createdBy: text("created_by").notNull(),
     /** Lista de verificación (F-15): JSON `[{id, text, done}]` o null. Ver checklist.ts. */
     checklist: text("checklist"),
+    /** Orden de trabajo (JSON, ver orderSchema): labor, insumos, máquina y contratista. Baja al celular (E-20). */
+    workOrder: text("work_order"),
     ...synced,
   },
   (t) => [

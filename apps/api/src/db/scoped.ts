@@ -844,6 +844,8 @@ export class ScopedDb {
     lon?: number | null;
     lat?: number | null;
     prescription?: string | null;
+    /** Orden de trabajo en JSON (E-20). */
+    workOrder?: string | null;
   }): Promise<{ ids: string[] }> {
     this.require(can.assign);
     await this.requireFarm(input.farmId);

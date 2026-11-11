@@ -67,7 +67,7 @@ admin.get("/metrics", async (c) => {
 
 admin.post("/orgs/:id/plan", async (c) => {
   const b = parse(
-    z.object({ plan: z.enum(["trial", "active", "blocked"]), trialEndsAt: z.number().int().nullish() }),
+    z.object({ plan: z.enum(["trial", "active", "blocked", "demo"]), trialEndsAt: z.number().int().nullish() }),
     await readJson(c.req),
   );
   await getDb(c.env.DB)

@@ -10,15 +10,28 @@
 import { getTableColumns, getTableName } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import {
+  computeStock,
   isDueToday,
   LIMITS,
   localDate,
   newId,
   nextDueDate,
   nextOccurrenceId,
+  parseChecklist,
+  prescriptionSchema,
   RECORD_SCHEMA_VERSION,
+  resetChecklist,
+  serializeChecklist,
+  setChecklistItem,
+  type CountEvent,
+  type Prescription,
   type Cursor,
+  type HerdCategory,
+  type HerdCounts,
+  type MortalityEvent,
   type Mutation,
+  type MoveEvent,
+  type PlotStock,
   type PullTable,
   type RecordKind,
   type RejectReason,
@@ -39,6 +52,9 @@ const TABLES: Record<PullTable, SQLiteTable> = {
   alerts: s.alerts,
   plot_index_stats: s.plotIndexStats,
   farm_layers: s.farmLayers,
+  seasons: s.seasons,
+  plot_seasons: s.plotSeasons,
+  products: s.products,
 };
 
 /** jsKey → columna SQL, sacado del esquema compartido. */
@@ -62,6 +78,9 @@ export type Task = typeof s.tasks.$inferSelect;
 export type RecordRow = typeof s.records.$inferSelect & { pending: boolean; rejected: string | null; photos: number };
 export type Alert = typeof s.alerts.$inferSelect;
 export type FarmLayer = typeof s.farmLayers.$inferSelect;
+export type Season = typeof s.seasons.$inferSelect;
+export type Product = typeof s.products.$inferSelect;
+export type PlotSeason = typeof s.plotSeasons.$inferSelect;
 
 export interface NewRecord {
   farmId: string;
@@ -81,6 +100,18 @@ export interface LocalPhoto {
   width: number;
   height: number;
   bytes: number;
+}
+
+/** Una cosa pendiente de mandar, tal como la ve la persona (pantalla Más). */
+export interface OutboxItem {
+  id: string;
+  /** Qué es: un registro nuevo o editado, un borrado, una tarea hecha, o solo fotos. */
+  what: "record" | "record_delete" | "task" | "photos" | "poi";
+  recordKind: RecordKind | null;
+  plotId: string | null;
+  at: number;
+  photos: number;
+  photoBytes: number;
 }
 
 export class LocalDb implements SyncStore {
@@ -276,6 +307,30 @@ export class LocalDb implements SyncStore {
     return recordId;
   }
 
+  /**
+   * Un registro por lote, todo en una transacción y con el mismo capturedAt (anotar en varios lotes, F-10).
+   * Las fotos van en el primero: subirlas una vez por lote sería mandar lo mismo varias veces.
+   */
+  saveRecords(userId: string, orgId: string, inputs: NewRecord[], photos: LocalPhoto[] = []): string[] {
+    return this.sql.tx(() => inputs.map((input, i) => this.saveRecord(userId, orgId, input, i === 0 ? photos : [])));
+  }
+
+  /** Marca un punto de interés (F-07). Fila local + mutación en una sola transacción. */
+  savePoi(orgId: string, input: { farmId: string; kind: Poi["kind"]; name: string; lon: number; lat: number }, poiId = newId()): string {
+    const ts = this.now();
+    const name = input.name.trim();
+    this.sql.tx(() => {
+      this.sql.run(
+        `INSERT INTO points_of_interest (id, organization_id, farm_id, kind, name, lon, lat, created_at, updated_at, version)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+         ON CONFLICT(id) DO UPDATE SET kind = excluded.kind, name = excluded.name, lon = excluded.lon, lat = excluded.lat, updated_at = excluded.updated_at`,
+        [poiId, orgId, input.farmId, input.kind, name, input.lon, input.lat, ts, ts],
+      );
+      this.enqueue({ mutationId: newId(), kind: "pois.upsert", row: { id: poiId, farmId: input.farmId, kind: input.kind, name, lon: input.lon, lat: input.lat } }, poiId);
+    });
+    return poiId;
+  }
+
   deleteRecord(recordId: string): void {
     const ts = this.now();
     this.sql.tx(() => {
@@ -307,8 +362,8 @@ export class LocalDb implements SyncStore {
       const next = task.status !== "done" ? nextDueDate(task.dueDate, task.recurrence, localDate(ts, tz)) : null;
       if (next) {
         this.sql.run(
-          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, due_date, recurrence, status, created_by, created_at, updated_at, version)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, 0) ON CONFLICT(id) DO NOTHING`,
+          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, lon, lat, due_date, recurrence, status, prescription, created_by, created_at, updated_at, version, checklist)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, 0, ?) ON CONFLICT(id) DO NOTHING`,
           [
             nextOccurrenceId(taskId),
             task.organizationId,
@@ -317,14 +372,36 @@ export class LocalDb implements SyncStore {
             task.assigneeId,
             task.title,
             task.kind,
+            task.lon,
+            task.lat,
             next,
             task.recurrence,
+            task.prescription,
             task.createdBy,
             ts,
             ts,
+            serializeChecklist(resetChecklist(parseChecklist(task.checklist))),
           ],
         );
       }
+    });
+  }
+
+  taskById(id: string): Task | null {
+    const r = this.sql.get<Record<string, unknown>>("SELECT * FROM tasks WHERE id = ? AND deleted_at IS NULL", [id]);
+    return r ? fromRow<Task>(s.tasks, r) : null;
+  }
+
+  /** Tilda o destilda un ítem de la lista de verificación (F-15). Sin red: queda en el outbox. */
+  setChecklistItem(taskId: string, itemId: string, done: boolean): void {
+    const task = this.taskById(taskId);
+    if (!task) throw new Error("task_not_found");
+    const next = setChecklistItem(parseChecklist(task.checklist), itemId, done);
+    if (!next) throw new Error("item_not_found");
+    const ts = this.now();
+    this.sql.tx(() => {
+      this.sql.run("UPDATE tasks SET checklist = ?, updated_at = ? WHERE id = ?", [serializeChecklist(next), ts, taskId]);
+      this.enqueue({ mutationId: newId(), kind: "tasks.check", row: { id: taskId, itemId, done } }, taskId);
     });
   }
 
@@ -332,6 +409,52 @@ export class LocalDb implements SyncStore {
 
   pendingCount(): number {
     return this.sql.get<{ n: number }>("SELECT count(*) n FROM outbox WHERE rejected_reason IS NULL")?.n ?? 0;
+  }
+
+  /**
+   * Lo que falta mandar: mutaciones del outbox (cada registro con el peso de sus fotos) y fotos que
+   * el servidor ya conoce pero todavía no se subieron. Más viejo primero.
+   */
+  outboxItems(): OutboxItem[] {
+    const rows = this.sql.all<{ mutation_id: string; payload: string; created_at: number }>(
+      "SELECT mutation_id, payload, created_at FROM outbox WHERE rejected_reason IS NULL ORDER BY mutation_id",
+    );
+    const muts = rows.map((r) => ({ m: JSON.parse(r.payload) as Mutation, at: r.created_at }));
+    // Fotos por registro: las que van en el outbox y las que esperan subir.
+    const photosOf = new Map<string, { n: number; bytes: number; at: number }>();
+    const addPhoto = (recordId: string, bytes: number, at: number) => {
+      const p = photosOf.get(recordId) ?? { n: 0, bytes: 0, at };
+      photosOf.set(recordId, { n: p.n + 1, bytes: p.bytes + bytes, at: Math.min(p.at, at) });
+    };
+    for (const { m, at } of muts) if (m.kind === "attachments.upsert") addPhoto(m.row.recordId, m.row.bytes ?? 0, at);
+    for (const f of this.sql.all<{ record_id: string; bytes: number | null; created_at: number }>(
+      `SELECT a.record_id, a.bytes, a.created_at FROM local_files f JOIN attachments a ON a.id = f.attachment_id
+       WHERE f.uploaded = 0 AND NOT EXISTS (SELECT 1 FROM outbox o WHERE o.row_id = f.attachment_id)`,
+    ))
+      addPhoto(f.record_id, f.bytes ?? 0, f.created_at);
+
+    const items: OutboxItem[] = [];
+    const withRecord = new Set<string>();
+    for (const { m, at } of muts) {
+      if (m.kind === "records.upsert") {
+        const p = photosOf.get(m.row.id);
+        withRecord.add(m.row.id);
+        items.push({ id: m.mutationId, what: "record", recordKind: m.row.kind, plotId: m.row.plotId, at, photos: p?.n ?? 0, photoBytes: p?.bytes ?? 0 });
+      } else if (m.kind === "records.delete") {
+        items.push({ id: m.mutationId, what: "record_delete", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
+      } else if (m.kind === "pois.upsert") {
+        items.push({ id: m.mutationId, what: "poi", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
+      } else if (m.kind === "tasks.status" || m.kind === "tasks.check") {
+        items.push({ id: m.mutationId, what: "task", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
+      }
+    }
+    // Fotos de registros que ya llegaron al servidor.
+    for (const [recordId, p] of photosOf) {
+      if (withRecord.has(recordId)) continue;
+      const rec = this.sql.get<{ kind: RecordKind; plot_id: string | null }>("SELECT kind, plot_id FROM records WHERE id = ?", [recordId]);
+      items.push({ id: `photos-${recordId}`, what: "photos", recordKind: rec?.kind ?? null, plotId: rec?.plot_id ?? null, at: p.at, photos: p.n, photoBytes: p.bytes });
+    }
+    return items.sort((a, b) => a.at - b.at);
   }
 
   rejected(): { mutationId: string; kind: string; reason: string; detail: string | null }[] {
@@ -375,6 +498,15 @@ export class LocalDb implements SyncStore {
       .filter((t) => isDueToday(t, today) || (t.status === "done" && localDate(t.completedAt ?? 0) === today));
   }
 
+  /** Tareas abiertas con punto en el mapa (S-09), para dibujarlas y llevar a la persona ahí. */
+  taskPoints(userId: string): { id: string; title: string; lon: number; lat: number }[] {
+    return this.sql
+      .all<{ id: string; title: string; lon: number; lat: number }>(
+        "SELECT id, title, lon, lat FROM tasks WHERE assignee_id = ? AND status = 'open' AND deleted_at IS NULL AND lon IS NOT NULL AND lat IS NOT NULL",
+        [userId],
+      );
+  }
+
   records(limit = 200): RecordRow[] {
     const since = this.now() - LIMITS.sync.recordsHistoryMs;
     return this.sql
@@ -406,9 +538,50 @@ export class LocalDb implements SyncStore {
       .map((a) => ({ id: a.id, thumbUri: this.localPhoto(a.id) }));
   }
 
+  /** Primera miniatura local de cada registro con fotos (Historial). Las fotos de otro celular no tienen miniatura acá. */
+  firstThumbByRecord(): Map<string, string> {
+    const rows = this.sql.all<{ record_id: string; thumb_uri: string }>(
+      `SELECT a.record_id, f.thumb_uri FROM attachments a JOIN local_files f ON f.attachment_id = a.id
+       WHERE a.deleted_at IS NULL ORDER BY a.created_at DESC, a.rowid DESC`,
+    );
+    // Se recorre de la más nueva a la más vieja: la última escritura en el mapa es la primera foto.
+    return new Map(rows.map((r) => [r.record_id, r.thumb_uri] as const));
+  }
+
   /** Últimas anotaciones de un lote (ficha del lote y pantalla Anotar). */
   recordsOfPlot(plotId: string, limit = 20): RecordRow[] {
     return this.records(500).filter((r) => r.plotId === plotId).slice(0, limit);
+  }
+
+  /**
+   * Hacienda actual de un potrero, calculada con lo que hay en el celular (ADR 0004): último conteo más
+   * movimientos y mortandad posteriores. Funciona sin señal. `null` si el potrero nunca tuvo datos de hacienda.
+   */
+  herdStock(plotId: string): PlotStock | null {
+    const rows = this.sql.all<{ kind: string; plot_id: string | null; captured_at: number; data: string }>(
+      "SELECT kind, plot_id, captured_at, data FROM records WHERE deleted_at IS NULL AND kind IN ('herd_count','herd_move','mortality') AND (plot_id = ? OR (kind = 'herd_move' AND data LIKE ?))",
+      [plotId, `%${plotId}%`],
+    );
+    const counts: CountEvent[] = [];
+    const moves: MoveEvent[] = [];
+    const deaths: MortalityEvent[] = [];
+    for (const r of rows) {
+      let d: { counts?: HerdCounts; toPlotId?: string; category?: HerdCategory; head?: number };
+      try {
+        d = JSON.parse(r.data);
+      } catch {
+        continue;
+      }
+      if (r.kind === "herd_count" && r.plot_id === plotId && d.counts)
+        counts.push({ plotId, capturedAt: r.captured_at, counts: d.counts });
+      else if (r.kind === "herd_move" && d.counts) {
+        if (r.plot_id === plotId || d.toPlotId === plotId)
+          moves.push({ fromPlotId: r.plot_id, toPlotId: d.toPlotId ?? null, capturedAt: r.captured_at, counts: d.counts });
+      } else if (r.kind === "mortality" && r.plot_id === plotId && d.category && typeof d.head === "number")
+        deaths.push({ plotId, capturedAt: r.captured_at, category: d.category, head: d.head });
+    }
+    if (!counts.length && !moves.length && !deaths.length) return null;
+    return computeStock([plotId], counts, moves, deaths).get(plotId) ?? null;
   }
 
   /** Lluvia del mes en curso según el pluviómetro (mm), para mostrar al terminar de anotar. */
@@ -420,6 +593,33 @@ export class LocalDb implements SyncStore {
       [farmId, from],
     );
     return rows.reduce((a, r) => a + (Number((JSON.parse(r.data) as { mm?: number }).mm) || 0), 0);
+  }
+
+  /** Último NDVI del lote según lo que bajó al celular; null si no hay (empleados no reciben estadísticas). */
+  lastVigor(plotId: string): { mean: number; acquiredAt: number } | null {
+    const r = this.sql.get<{ mean: number; acquired_at: number }>(
+      "SELECT mean, acquired_at FROM plot_index_stats WHERE plot_id = ? AND idx = 'ndvi' AND deleted_at IS NULL ORDER BY acquired_at DESC LIMIT 1",
+      [plotId],
+    );
+    return r ? { mean: r.mean, acquiredAt: r.acquired_at } : null;
+  }
+
+  /** Las dos últimas pasadas de NDVI de cada lote, para ver cuáles empeoraron (F-29). */
+  lastTwoVigorPasses(): { plotId: string; mean: number; acquiredAt: number }[] {
+    return this.sql
+      .all<{ plot_id: string; mean: number; acquired_at: number }>(
+        `SELECT plot_id, mean, acquired_at FROM (
+           SELECT plot_id, mean, acquired_at,
+                  ROW_NUMBER() OVER (PARTITION BY plot_id ORDER BY acquired_at DESC) AS rn
+           FROM plot_index_stats WHERE idx = 'ndvi' AND deleted_at IS NULL
+         ) WHERE rn <= 2`,
+      )
+      .map((r) => ({ plotId: r.plot_id, mean: r.mean, acquiredAt: r.acquired_at }));
+  }
+
+  /** Tareas abiertas de un lote. */
+  openTasksOfPlot(plotId: string): number {
+    return this.sql.get<{ n: number }>("SELECT count(*) n FROM tasks WHERE plot_id = ? AND status = 'open' AND deleted_at IS NULL", [plotId])?.n ?? 0;
   }
 
   /** Último registro por lote, para saber qué lotes hace días que nadie recorre. */
@@ -437,6 +637,41 @@ export class LocalDb implements SyncStore {
         [this.now()],
       )
       .map((r) => fromRow<Alert>(s.alerts, r));
+  }
+
+  /** Receta de una tarea (A-11), ya validada; null si no tiene o está dañada. */
+  prescriptionOf(taskId: string): Prescription | null {
+    const r = this.sql.get<{ prescription: string | null }>("SELECT prescription FROM tasks WHERE id = ?", [taskId]);
+    if (!r?.prescription) return null;
+    try {
+      const p = prescriptionSchema.safeParse(JSON.parse(r.prescription));
+      return p.success ? p.data : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Campañas activas de la organización, la más reciente primero. */
+  activeSeasons(): Season[] {
+    return this.sql
+      .all("SELECT * FROM seasons WHERE deleted_at IS NULL AND active = 1 ORDER BY start_date DESC, created_at DESC")
+      .map((r) => fromRow<Season>(s.seasons, r));
+  }
+
+  /** Catálogo de productos de la organización. */
+  products(): Product[] {
+    return this.sql
+      .all("SELECT * FROM products WHERE deleted_at IS NULL ORDER BY name")
+      .map((r) => fromRow<Product>(s.products, r));
+  }
+
+  /** Lo planificado en un lote para una campaña (cultivo, variedad), si bajó al celular. */
+  plotSeason(plotId: string, seasonId: string): PlotSeason | null {
+    const r = this.sql.get(
+      "SELECT * FROM plot_seasons WHERE plot_id = ? AND season_id = ? AND deleted_at IS NULL",
+      [plotId, seasonId],
+    );
+    return r ? fromRow<PlotSeason>(s.plotSeasons, r) : null;
   }
 
   latestLayers(farmId: string): FarmLayer[] {

@@ -107,9 +107,17 @@ export async function sendPending(
       (res.ok ? sent : failed).push(...pushes.map((p) => p.id));
       if (res.ok) {
         // B9: Expo responde 200 con un estado por mensaje; los tokens inválidos se borran.
-        const dead = await deadTokens(res, messages.slice(0, 100).map((m) => m.to));
+        const dead = await deadTokens(
+          res,
+          messages.slice(0, 100).map((m) => m.to),
+        );
         for (let i = 0; i < dead.length; i += 90)
-          cleanup.push(db.update(s.devices).set({ pushToken: null }).where(inArray(s.devices.pushToken, dead.slice(i, i + 90))));
+          cleanup.push(
+            db
+              .update(s.devices)
+              .set({ pushToken: null })
+              .where(inArray(s.devices.pushToken, dead.slice(i, i + 90))),
+          );
       }
     } else {
       sent.push(...pushes.map((p) => p.id)); // sin dispositivos: nada que mandar

@@ -9,6 +9,7 @@ import { downloadPack, isWifi, packStatus } from "../../src/lib/offline";
 import { remindersEnabled, setRemindersEnabled } from "../../src/lib/reminders";
 import { api, getSession, setSession } from "../../src/lib/session";
 import { deleteUploadedFiles, storageUsage, type StorageUsage } from "../../src/lib/storage";
+import { canSwitchUser, unsentSummary } from "../../src/lib/switchUser";
 import { showToast } from "../../src/lib/toast";
 import { localChanged, stopAutoSync, syncNow, syncNowMobileData, useSyncStatus } from "../../src/lib/sync";
 import { useLocal } from "../../src/lib/useLocal";
@@ -42,9 +43,8 @@ export default function More() {
     }
   };
 
-  const logout = async () => {
-    const pending = getDb().pendingCount();
-    if (pending > 0) return Alert.alert(t("app.logoutPending", { n: pending }));
+  /** Cierra la sesión de esta persona. Solo si no queda nada sin mandar (ver lib/switchUser.ts). */
+  const leave = async () => {
     const s = getSession();
     if (s) await api("POST", "/auth/logout", { refreshToken: s.refreshToken }, false).catch(() => {});
     stopAutoSync();
@@ -52,6 +52,26 @@ export default function More() {
     await setSession(null);
     router.replace("/login");
   };
+
+  const guarded = (then: () => void) => {
+    const block = canSwitchUser(unsentSummary(getDb()));
+    if (!block.blocked) return then();
+    if (block.reason === "rejected") return Alert.alert(t("app.switchBlockedRejected", { n: block.n }));
+    Alert.alert(t(block.n === 1 ? "app.switchBlockedPendingOne" : "app.switchBlockedPending", { n: block.n }));
+  };
+
+  const logout = () =>
+    guarded(() => {
+      void leave();
+    });
+
+  const switchUser = () =>
+    guarded(() =>
+      Alert.alert(t("app.switchConfirmTitle"), t("app.switchConfirmBody"), [
+        { text: t("ui.cancel"), style: "cancel" },
+        { text: t("app.switchConfirmYes"), onPress: () => void leave() },
+      ]),
+    );
 
   return (
     <ScrollView style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 120 }]}>
@@ -121,6 +141,7 @@ export default function More() {
         </>
       )}
 
+      <Row title={t("app.switchUser")} subtitle={t("app.switchUserHint")} onPress={switchUser} />
       <Button kind="danger" title={t("app.logout")} onPress={logout} style={{ marginTop: 32 }} />
       <Text style={[T.small, { marginTop: 28, color: C.tinta3 }]}>
         {t("attribution.metNorway")} · {t("attribution.copernicus")} · {t("attribution.chirps")} · {t("attribution.firms")}

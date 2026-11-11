@@ -8,7 +8,11 @@ import {
   localDate,
   nextDueDate,
   nextOccurrenceId,
+  parseChecklist,
   parseRecordData,
+  resetChecklist,
+  serializeChecklist,
+  setChecklistItem,
   RECORD_SCHEMA_VERSION,
   LIMITS,
   type Mutation,
@@ -71,6 +75,7 @@ export async function applyPush(
         attachmentIds.add(m.row.id);
         break;
       case "tasks.status":
+      case "tasks.check":
         taskIds.add(m.row.id);
         break;
       case "pois.upsert":
@@ -438,6 +443,7 @@ export async function applyPush(
                   dueDate: next,
                   recurrence: t.recurrence,
                   status: "open",
+                  checklist: serializeChecklist(resetChecklist(parseChecklist(t.checklist))),
                   createdBy: t.createdBy,
                   createdAt: now,
                   updatedAt: now,
@@ -448,6 +454,32 @@ export async function applyPush(
           }
           t.status = m.row.status;
         }
+        accept(m, t.id);
+        break;
+      }
+      case "tasks.check": {
+        const t = tasks.get(m.row.id);
+        if (!t || t.organizationId !== org) {
+          reject(m, "not_found");
+          break;
+        }
+        if (sdb.isWorker && t.assigneeId !== auth.userId) {
+          reject(m, "forbidden");
+          break;
+        }
+        // Cada tilde es un ítem: el último gana por ítem, y lo demás de la lista no se toca.
+        const next = setChecklistItem(parseChecklist(t.checklist), m.row.itemId, m.row.done);
+        if (!next) {
+          reject(m, "invalid", "item");
+          break;
+        }
+        t.checklist = serializeChecklist(next);
+        taskUpdates.push(
+          db
+            .update(s.tasks)
+            .set({ checklist: t.checklist, updatedAt: now, version: currentVersion })
+            .where(and(eq(s.tasks.id, t.id), eq(s.tasks.organizationId, org))),
+        );
         accept(m, t.id);
         break;
       }

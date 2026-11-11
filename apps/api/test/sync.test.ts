@@ -180,6 +180,56 @@ describe("sync/push", () => {
     expect(task.status).toBe("done");
     expect(task.completedBy).toBe(worker.userId);
   });
+
+  it("lista de verificación: el empleado tilda ítems de su tarea, no de las ajenas ni inexistentes; se repite sin tildar", async () => {
+    const { owner, worker, farmId } = await setup();
+    const other = await addMemberAndLogin(owner.token, "worker");
+    const mk = (assigneeId: string, over: Record<string, unknown> = {}) =>
+      call("POST", "/org/tasks", {
+        token: owner.token,
+        body: {
+          farmId,
+          assigneeId,
+          title: "Revisar bebederos",
+          dueDate: "2026-11-10",
+          checklist: ["Bebedero 1", "Bebedero 2", "  ", "Bebedero 3"],
+          ...over,
+        },
+      });
+    const mine = await mk(worker.userId, { recurrence: "daily" });
+    const theirs = await mk(other.userId);
+    expect(mine.status).toBe(201);
+    const check = (id: string, itemId: string, done = true) => ({
+      mutationId: newId(),
+      kind: "tasks.check",
+      row: { id, itemId, done },
+    });
+    const r = await push(worker.token, [
+      check(mine.body.id, "i1"),
+      check(mine.body.id, "i3"),
+      check(mine.body.id, "zzz"),
+      check(theirs.body.id, "i1"),
+    ]);
+    expect(r.body.results.map((x: any) => x.status)).toEqual(["applied", "applied", "rejected", "rejected"]);
+    expect(r.body.results[2].reason).toBe("invalid");
+    expect(r.body.results[3].reason).toBe("forbidden");
+    expect((await push(worker.token, [check(mine.body.id, "i3", false)])).body.results[0].status).toBe("applied");
+    let [task] = (await pullAll(worker.token, "tasks")).filter((x: any) => x.id === mine.body.id);
+    expect(JSON.parse(task.checklist).map((i: any) => [i.text, i.done])).toEqual([
+      ["Bebedero 1", true],
+      ["Bebedero 2", false],
+      ["Bebedero 3", false],
+    ]);
+    // Al completarla nace la siguiente con la lista sin tildar.
+    await push(worker.token, [
+      { mutationId: newId(), kind: "tasks.status", row: { id: mine.body.id, status: "done", completedAt: Date.now(), recordId: null } },
+    ]);
+    const all = await pullAll(worker.token, "tasks");
+    const next = all.find((x: any) => x.id !== mine.body.id);
+    expect(JSON.parse(next.checklist).every((i: any) => !i.done)).toBe(true);
+    [task] = all.filter((x: any) => x.id === mine.body.id);
+    expect(JSON.parse(task.checklist)[0].done).toBe(true);
+  });
 });
 
 describe("sync/pull", () => {

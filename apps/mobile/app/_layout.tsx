@@ -47,7 +47,8 @@ export default function RootLayout() {
         <Stack.Screen name="scan" options={{ title: "" }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="record/[id]" options={{ title: "" }} />
-        <Stack.Screen name="poi" options={{ title: "" }} />
+        <Stack.Screen name="task/[id]" options={{ title: "" }} />
+        <Stack.Screen name="poi"options={{ title: "" }} />
         <Stack.Screen name="goto" options={{ title: "" }} />
         <Stack.Screen name="labs/roya" options={{ title: "" }} />
         <Stack.Screen name="labs/chinches" options={{ title: "" }} />

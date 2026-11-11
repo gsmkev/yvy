@@ -316,6 +316,10 @@ export const esPY = {
     stationsMapTitle: "Dónde se monitoreó",
     stationsNoGps: "Sin ubicación",
     stationsThreshold: "Umbral",
+    checklistProgress: "{{done}} de {{total}} hechos",
+    taskGone: "Esta tarea ya no existe.",
+    taskFinish: "Terminar tarea",
+    taskAnnotate: "Anotar {{kind}} y terminar",
   },
   fields: {
     condition: "Estado general",
@@ -981,6 +985,9 @@ export const esPY = {
     exportDownload: "Descargar exportación (ZIP)",
     exportWorking: "Juntando los datos de {{farm}}…",
     bankDeforestationNote: "El análisis de deforestación todavía no está incluido en este informe.",
+    // campo
+    taskChecklist: "Lista de verificación (un ítem por línea)",
+    taskChecklistHint: "Bebedero 1\nBebedero 2",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

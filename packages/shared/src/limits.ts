@@ -74,6 +74,11 @@ export const LIMITS = {
     /** Conteo máximo por plaga en una estación. */
     maxCount: 10_000,
   },
+  checklist: {
+    /** Ítems por tarea (F-15). */
+    maxItems: 30,
+    maxTextLength: 120,
+  },
   share: {
     /** Duraciones permitidas del enlace de solo lectura (K-04), en días. */
     linkDays: [7, 30],

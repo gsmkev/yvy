@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { areaHa, bboxOf, centroidOf, checkPlots, validateShape, type Area } from "@yvy/geo";
-import { CROPS, LIMITS, t, PLOT_KINDS, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
+import { CROPS, LIMITS, newChecklist, serializeChecklist, t, PLOT_KINDS, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
 import { dispatchNewFarm, inBackground } from "../lib/dispatch";
 import { sendEmail } from "../lib/email";
 import { parse, readJson } from "../lib/http";
@@ -181,8 +181,19 @@ org.post("/tasks", async (c) => {
       kind: z.enum(RECORD_KINDS).nullish(),
       dueDate: isoDate,
       recurrence: z.enum(RECURRENCES).default("none"),
+      /** Texto de cada ítem de la lista de verificación (F-15). */
+      checklist: z.array(z.string().trim().max(LIMITS.checklist.maxTextLength)).max(LIMITS.checklist.maxItems).optional(),
     }),
     await readJson(c.req),
   );
-  return c.json(await c.var.sdb.createTask({ ...body, plotId: body.plotId ?? null, kind: body.kind ?? null }), 201);
+  const { checklist, ...rest } = body;
+  return c.json(
+    await c.var.sdb.createTask({
+      ...rest,
+      plotId: body.plotId ?? null,
+      kind: body.kind ?? null,
+      checklist: serializeChecklist(newChecklist(checklist ?? [])),
+    }),
+    201,
+  );
 });

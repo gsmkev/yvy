@@ -931,6 +931,11 @@ export const esPY = {
     bankMax: "Máx.",
     bankScenes: "Imágenes",
     bankDeforestationTitle: "Deforestación",
+    exportTitle: "Exportación completa",
+    exportIntro:
+      "Un ZIP con Excel (lotes, registros, tareas, miembros y enlaces a las fotos), KML y GeoJSON de los lotes de todas las estancias. Solo la descarga el dueño.",
+    exportDownload: "Descargar exportación (ZIP)",
+    exportWorking: "Juntando los datos de {{farm}}…",
     bankDeforestationNote: "El análisis de deforestación todavía no está incluido en este informe.",
   },
   attribution: {

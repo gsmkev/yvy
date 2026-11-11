@@ -268,15 +268,15 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | ID | Qué | Por qué | Dónde | Prio | Esf | Estado |
 |---|---|---|---|---|---|---|
 | C-01 | Pronóstico de 10 días por estancia | Base | Web | — | — | Hecho |
-| C-02 | Pronóstico de 10 días en la app, sin señal con la última descarga | El empleado también decide | App | P1 | S | Falta |
+| C-02 | Pronóstico de 10 días en la app, sin señal con la última descarga | El empleado también decide | App | P1 | S | Hecho |
 | C-03 | Pronóstico por lote en estancias de más de 2.000 ha (RF-61) | Variación interna | Jobs, Web | P2 | M | Falta |
 | C-04 | Avisos configurables: el usuario elige umbrales (helada a 2 °C, lluvia de 50 mm) | Cada cultivo es distinto | Web, API | P1 | M | Falta |
-| C-05 | Comparar los pluviómetros propios con el satélite y con la normal | Confianza en el dato | Web | P1 | S | Parcial |
-| C-06 | Acumulado por campaña y por mes en la ficha del pluviómetro | Pregunta diaria | Web, App | P1 | S | Falta |
+| C-05 | Comparar los pluviómetros propios con el satélite y con la normal | Confianza en el dato | Web | P1 | S | Hecho |
+| C-06 | Acumulado por campaña y por mes en la ficha del pluviómetro | Pregunta diaria | Web, App | P1 | S | Hecho |
 | C-07 | Índice de sequía estandarizado (SPI) a 1, 3 y 6 meses | Sequía con números | Jobs, Web | P2 | M | Falta |
 | C-08 | Balance hídrico simple por lote (lluvia menos consumo del cultivo) | Riesgo de estrés | Jobs, Web | P2 | M | Falta |
 | C-09 | Informe de daños con fecha, evidencia satelital y fotos para el seguro agrícola | Cobrar el seguro | Web | P2 | M | Falta |
-| C-10 | Informe de riesgo climático del campo: heladas por año, lluvia frente a la normal, sequías, focos de fuego, a partir de 30 años de NASA POWER | Imán de clientes y para el banco | Web, Jobs | P1 | M | Falta |
+| C-10 | Informe de riesgo climático del campo: heladas por año, lluvia frente a la normal, sequías, focos de fuego, a partir de 30 años de NASA POWER | Imán de clientes y para el banco | Web, Jobs | P1 | M | Hecho |
 | C-11 | Estaciones meteorológicas propias (Davis u otras) conectadas | Productores grandes | API | P3 | L | Falta |
 | C-12 | Sensores de nivel de tanque o tajamar (LoRa) | Ganadería extensiva | API | P3 | L | Falta |
 
@@ -289,11 +289,11 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | S-01 | Al crear la estancia, procesar los últimos 6 meses de Sentinel-2 | Curva de campaña desde el primer día | Jobs, API | P0 | M | Falta |
 | S-02 | Disparar los jobs desde el Worker (GitHub `workflow_dispatch`) al crear la estancia, con estado "procesando" | No esperar al cron | API, Web | P0 | S | Falta |
 | S-03 | Historia desde 2017 a pedido: vigor de campañas anteriores | Comparar años | Jobs, Web | P2 | M | Falta |
-| S-04 | Selector de fecha con miniaturas y comparación de dos fechas con cortina | Ver el cambio | Web | P1 | M | Falta |
+| S-04 | Selector de fecha con miniaturas y comparación de dos fechas con cortina | Ver el cambio | Web | P1 | M | Parcial (fechas y cortina; sin miniaturas) |
 | S-05 | Vigor actual por lote en la tabla, con color de la rampa NDVI | Ver todo de un vistazo | Web | P0 | S | Falta |
 | S-06 | Lotes con caída de vigor mayor a 15 % entre dos pasadas (RF-54), con aviso | Encontrar el problema temprano | API, Web | P1 | S | Falta |
 | S-07 | Otros índices: NDRE (nitrógeno), NDMI (humedad), EVI | Más diagnóstico | Jobs, Web | P2 | M | Falta |
-| S-08 | Áreas problema dentro del lote (pixeles muy por debajo de la mediana) marcadas para ir a ver | Recorrida dirigida | Jobs, Web, App | P1 | M | Falta |
+| S-08 | Áreas problema dentro del lote (pixeles muy por debajo de la mediana) marcadas para ir a ver | Recorrida dirigida | Jobs, Web, App | P1 | M | Hecho (web; en la app llega por S-09) |
 | S-09 | Enviar esas áreas como tarea al empleado con el punto en la app | Del satélite al campo | Web, App | P1 | S | Falta |
 | S-10 | Animación de la campaña (timelapse) | Impacto en presentaciones | Web | P3 | M | Falta |
 | S-11 | Lotes finos: usar todos los pixeles tocados o avisar que el dato no es confiable | Calidad | Jobs | P2 | S | Falta |
@@ -401,7 +401,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | V-01 | Landing pública con la promesa, precio por hectárea, WhatsApp y descarga | P0 | M | Falta |
 | V-02 | Demo pública de solo lectura con una estancia de ejemplo | P0 | S | Falta |
 | V-03 | Términos de uso, política de privacidad y tratamiento de datos | P0 | S | Falta |
-| V-04 | Informe gratis de riesgo climático y vigor a cambio del email (usa C-10 y S-01) | P1 | M | Falta |
+| V-04 | Informe gratis de riesgo climático y vigor a cambio del email (usa C-10 y S-01) | P1 | M | Parcial (sección en la landing; sin captura de email) |
 | V-05 | Programa para agrónomos: cuenta gratis o comisión por cliente que traen | P1 | S | Falta |
 | V-06 | Referidos entre productores | P2 | S | Falta |
 | V-07 | Casos de éxito con números del piloto | P1 | S | Falta |

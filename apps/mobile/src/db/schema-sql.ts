@@ -67,5 +67,20 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `activity_daily` (\n\t`user_id` text NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`day` text NOT NULL,\n\t`role` text NOT NULL,\n\tPRIMARY KEY(`user_id`, `day`)\n);",
   "CREATE INDEX `activity_daily_org_idx` ON `activity_daily` (`organization_id`,`day`);",
   "ALTER TABLE `email_codes` ADD `ip` text;",
-  "CREATE INDEX `email_codes_ip_idx` ON `email_codes` (`ip`,`created_at`);"
+  "CREATE INDEX `email_codes_ip_idx` ON `email_codes` (`ip`,`created_at`);",
+  "CREATE TABLE `farm_imagery` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`status` text DEFAULT 'pending' NOT NULL,\n\t`requested_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL\n);",
+  "CREATE TABLE `deletion_requests` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`user_id` text NOT NULL,\n\t`status` text DEFAULT 'pending' NOT NULL,\n\t`created_at` integer NOT NULL\n);",
+  "CREATE INDEX `deletion_requests_org_idx` ON `deletion_requests` (`organization_id`,`created_at`);",
+  "CREATE TABLE `farm_alert_settings` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`frost_tmin_c` real DEFAULT 2 NOT NULL,\n\t`excess_rain_mm_24h` real DEFAULT 50 NOT NULL,\n\t`drought_deficit_pct` real DEFAULT 50 NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`updated_by` text\n);",
+  "CREATE TABLE `share_links` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`token_hash` text NOT NULL,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`expires_at` integer NOT NULL,\n\t`revoked_at` integer\n);",
+  "CREATE UNIQUE INDEX `share_links_hash_uq` ON `share_links` (`token_hash`);",
+  "CREATE INDEX `share_links_farm_idx` ON `share_links` (`farm_id`);",
+  "ALTER TABLE `tasks` ADD `checklist` text;",
+  "CREATE TABLE `farm_livestock_settings` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`max_ua_per_ha` real DEFAULT 1 NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`updated_by` text\n);",
+  "CREATE TABLE `sanitary_events` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text,\n\t`reason` text NOT NULL,\n\t`planned_date` text NOT NULL,\n\t`categories` text DEFAULT '[]' NOT NULL,\n\t`product` text,\n\t`note` text,\n\t`tasks_created` integer DEFAULT 0 NOT NULL,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
+  "CREATE INDEX `sanitary_events_org_date_idx` ON `sanitary_events` (`organization_id`,`planned_date`);",
+  "CREATE TABLE `farm_risk` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`computed_at` integer NOT NULL,\n\t`report` text NOT NULL\n);",
+  "CREATE TABLE `problem_areas` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`plot_id` text NOT NULL,\n\t`acquired_at` integer NOT NULL,\n\t`geometry` text NOT NULL,\n\t`lon` real NOT NULL,\n\t`lat` real NOT NULL,\n\t`area_ha` real NOT NULL,\n\t`mean_ndvi` real NOT NULL,\n\t`plot_median_ndvi` real NOT NULL,\n\t`created_at` integer NOT NULL\n);",
+  "CREATE INDEX `problem_areas_plot_idx` ON `problem_areas` (`plot_id`);",
+  "CREATE INDEX `problem_areas_farm_idx` ON `problem_areas` (`farm_id`);"
 ];

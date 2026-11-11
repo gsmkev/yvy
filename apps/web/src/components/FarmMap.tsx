@@ -46,11 +46,20 @@ export interface FarmMapProps {
   showNdvi?: boolean;
   selectedPlotId?: string | null;
   bounds?: [number, number, number, number] | null;
+  /** Vuela a un punto (cambiar `n` para repetir el mismo destino). */
+  flyTo?: { lon: number; lat: number; zoom?: number; n: number } | null;
   drawing?: boolean;
   onDrawn?: (g: Polygon) => void;
   onPlotClick?: (id: string) => void;
   onPointClick?: (id: string) => void;
   onMapClick?: (lon: number, lat: number) => void;
+  /** Herramienta de medir: puntos marcados, forma cerrada y avisos de clic. */
+  measuring?: boolean;
+  measurePoints?: [number, number][];
+  measureClosed?: boolean;
+  onMeasureClick?: (lon: number, lat: number) => void;
+  /** El clic cayó sobre el primer punto: cierra la forma. */
+  onMeasureClose?: () => void;
   className?: string;
 }
 
@@ -99,6 +108,7 @@ export function FarmMap(props: FarmMapProps) {
       map.addSource("plots", { type: "geojson", data: fc([]) });
       map.addSource("pois", { type: "geojson", data: fc([]) });
       map.addSource("points", { type: "geojson", data: fc([]) });
+      map.addSource("measure", { type: "geojson", data: fc([]) });
       map.addLayer({
         id: "outline",
         type: "line",
@@ -153,16 +163,52 @@ export function FarmMap(props: FarmMapProps) {
           "circle-stroke-width": 1.5,
         },
       });
+      map.addLayer({
+        id: "measure-fill",
+        type: "fill",
+        source: "measure",
+        filter: ["==", ["geometry-type"], "Polygon"],
+        paint: { "fill-color": BRAND.cielo, "fill-opacity": 0.25 },
+      });
+      map.addLayer({
+        id: "measure-line",
+        type: "line",
+        source: "measure",
+        filter: ["!=", ["geometry-type"], "Point"],
+        paint: { "line-color": BRAND.cielo, "line-width": 3 },
+      });
+      map.addLayer({
+        id: "measure-points",
+        type: "circle",
+        source: "measure",
+        filter: ["==", ["geometry-type"], "Point"],
+        paint: {
+          "circle-radius": 5,
+          "circle-color": BRAND.lino,
+          "circle-stroke-color": BRAND.cielo,
+          "circle-stroke-width": 2.5,
+        },
+      });
       map.on("click", "plots-fill", (e: MapLayerMouseEvent) => {
         const id = e.features?.[0]?.properties?.id as string | undefined;
-        if (id && !cb.current.drawing) cb.current.onPlotClick?.(id);
+        if (id && !cb.current.drawing && !cb.current.measuring) cb.current.onPlotClick?.(id);
       });
       map.on("click", "points", (e: MapLayerMouseEvent) => {
         const id = e.features?.[0]?.properties?.id as string | undefined;
         if (id) cb.current.onPointClick?.(id);
       });
       map.on("click", (e: MapMouseEvent) => {
-        if (!cb.current.drawing) cb.current.onMapClick?.(e.lngLat.lng, e.lngLat.lat);
+        const c = cb.current;
+        if (c.measuring) {
+          const first = c.measurePoints?.[0];
+          if (first && !c.measureClosed && (c.measurePoints?.length ?? 0) >= 3) {
+            const a = map.project(first);
+            if (Math.hypot(a.x - e.point.x, a.y - e.point.y) < 12) return c.onMeasureClose?.();
+          }
+          if (!c.measureClosed) c.onMeasureClick?.(e.lngLat.lng, e.lngLat.lat);
+          return;
+        }
+        if (!c.drawing) c.onMapClick?.(e.lngLat.lng, e.lngLat.lat);
       });
       for (const l of ["plots-fill", "points"]) {
         map.on("mouseenter", l, () => (map.getCanvas().style.cursor = "pointer"));
@@ -238,6 +284,28 @@ export function FarmMap(props: FarmMapProps) {
         })),
       ),
     );
+    const mp = p.measurePoints ?? [];
+    (map.getSource("measure") as GeoJSONSource).setData(
+      fc([
+        ...(mp.length > 1
+          ? [
+              {
+                type: "Feature" as const,
+                properties: {},
+                geometry: p.measureClosed
+                  ? { type: "Polygon" as const, coordinates: [[...mp, mp[0]!]] }
+                  : { type: "LineString" as const, coordinates: mp },
+              },
+            ]
+          : []),
+        ...mp.map((c) => ({
+          type: "Feature" as const,
+          properties: {},
+          geometry: { type: "Point" as const, coordinates: c },
+        })),
+      ]),
+    );
+    map.getCanvas().style.cursor = p.measuring ? "crosshair" : "";
     syncRasters(map, p);
   };
 
@@ -251,12 +319,21 @@ export function FarmMap(props: FarmMapProps) {
     props.layers,
     props.showNdvi,
     props.tilesBaseUrl,
+    props.measuring,
+    props.measurePoints,
+    props.measureClosed,
   ]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (map && props.bounds) map.fitBounds(props.bounds, { padding: 60, duration: 600, maxZoom: 18 });
   }, [props.bounds?.join(",")]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const f = props.flyTo;
+    if (map && f) map.flyTo({ center: [f.lon, f.lat], zoom: f.zoom ?? 14, duration: 800 });
+  }, [props.flyTo?.n]);
 
   // ---- dibujo ----
   useEffect(() => {

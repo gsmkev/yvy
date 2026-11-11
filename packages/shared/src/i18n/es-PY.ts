@@ -792,6 +792,12 @@ export const esPY = {
     toastPoiDeleted: "Punto borrado",
     offlineBanner: "Sin conexión. Reintentando…",
     networkError: "No hay conexión con el servidor",
+    exportCsv: "Exportar CSV",
+    emailCol: "Email",
+    statusCol: "Estado",
+    plotsFile: "lotes",
+    tasksFile: "tareas",
+    teamFile: "equipo",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

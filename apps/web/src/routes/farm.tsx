@@ -9,6 +9,7 @@ import { AlertsList } from "../components/AlertsList";
 import { CopyCoords } from "../components/CopyCoords";
 import { ClimatePanel } from "../components/ClimatePanel";
 import { boundsOf, FarmMap } from "../components/FarmMap";
+import { ExportButtons } from "../components/ExportButtons";
 import { ImportPlots } from "../components/ImportPlots";
 import { PlotPanel } from "../components/PlotPanel";
 import { PlotsTable } from "../components/PlotsTable";
@@ -395,6 +396,22 @@ export function FarmPage() {
             <Empty title={t("ui.noPlots")} />
           ) : (
             <div>
+              <div className="mb-1 flex justify-end">
+                <ExportButtons
+                  data={() => ({
+                    name: t("ui.plotsFile"),
+                    headers: [t("ui.plot"), t("ui.kind"), t("ui.crop"), t("ui.season"), t("ui.sowingDate"), "ha"],
+                    rows: d.plots.map((p) => [
+                      p.name,
+                      p.kind === "pasture" ? t("ui.pasture") : t("ui.crop"),
+                      p.crop ?? p.pastureType,
+                      p.season,
+                      p.sowingDate,
+                      Math.round(p.areaHa * 100) / 100,
+                    ]),
+                  })}
+                />
+              </div>
               <PlotsTable plots={d.plots} onSelect={setSelected} />
               <p className="mt-3 text-xs text-tinta-2">{t("ui.selectPlotHint")}</p>
               {d.pois.length > 0 && (

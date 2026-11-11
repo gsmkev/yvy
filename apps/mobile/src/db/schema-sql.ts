@@ -129,5 +129,9 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `machines_sync_idx` ON `machines` (`organization_id`,`version`,`id`);",
   "CREATE TABLE `contractors` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`party_id` text,\n\t`service` text NOT NULL,\n\t`rate_unit` text NOT NULL,\n\t`rate_amount` integer NOT NULL,\n\t`currency` text DEFAULT 'PYG' NOT NULL,\n\t`note` text,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
   "CREATE INDEX `contractors_org_idx` ON `contractors` (`organization_id`,`name`);",
-  "CREATE TABLE `exchange_rates` (\n\t`organization_id` text NOT NULL,\n\t`date` text NOT NULL,\n\t`usd_to_pyg` integer NOT NULL,\n\t`updated_by` text,\n\t`updated_at` integer NOT NULL,\n\tPRIMARY KEY(`organization_id`, `date`)\n);"
+  "CREATE TABLE `exchange_rates` (\n\t`organization_id` text NOT NULL,\n\t`date` text NOT NULL,\n\t`usd_to_pyg` integer NOT NULL,\n\t`updated_by` text,\n\t`updated_at` integer NOT NULL,\n\tPRIMARY KEY(`organization_id`, `date`)\n);",
+  "CREATE TABLE `cost_entries` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`occurred_at` integer NOT NULL,\n\t`farm_id` text,\n\t`plot_id` text,\n\t`season_id` text,\n\t`activity` text NOT NULL,\n\t`category` text NOT NULL,\n\t`description` text,\n\t`amount` integer NOT NULL,\n\t`currency` text DEFAULT 'PYG' NOT NULL,\n\t`amount_pyg` integer NOT NULL,\n\t`tons` real,\n\t`product_id` text,\n\t`party_id` text,\n\t`origin` text DEFAULT 'manual' NOT NULL,\n\t`origin_id` text,\n\t`photo_path` text,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
+  "CREATE INDEX `cost_entries_org_date_idx` ON `cost_entries` (`organization_id`,`occurred_at`);",
+  "CREATE INDEX `cost_entries_plot_idx` ON `cost_entries` (`plot_id`);",
+  "CREATE INDEX `cost_entries_origin_idx` ON `cost_entries` (`origin_id`);"
 ];

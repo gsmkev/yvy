@@ -12,7 +12,7 @@
  *   El pull pagina por (version, id): equivale al "updated_at + desempate por id" del PRD §11
  *   pero sin depender de relojes de distintos datacenters.
  */
-import { CONTRACTOR_SERVICES, CURRENCIES, MACHINE_TYPES, METER_KINDS, PARTY_KINDS, RATE_UNITS } from "./erp";
+import { ACTIVITIES, CONTRACTOR_SERVICES, COST_CATEGORIES, CURRENCIES, MACHINE_TYPES, METER_KINDS, PARTY_KINDS, RATE_UNITS } from "./erp";
 import { HEALTH_REASONS } from "./livestock";
 import { sql } from "drizzle-orm";
 import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
@@ -470,6 +470,47 @@ export const exchangeRates = sqliteTable(
     updatedAt: integer("updated_at").notNull(),
   },
   (t) => [primaryKey({ columns: [t.organizationId, t.date] })],
+);
+
+/**
+ * Todo costo y toda venta (E-05, E-30, E-31). Centro de costo = estancia, lote, campaña y actividad.
+ * `amount` va en unidad menor de `currency` y `amountPyg` es su valor en guaraníes con el tipo de cambio del día.
+ * La venta (`category = "sale"`) es un ingreso con monto positivo. Los costos que nacen de un registro de campo
+ * (consumo de insumos, combustible, contratista) llevan `origin` y `originId` = id del registro.
+ */
+export const costEntries = sqliteTable(
+  "cost_entries",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    /** Epoch ms del día del gasto (mediodía en Asunción). */
+    occurredAt: integer("occurred_at").notNull(),
+    farmId: text("farm_id"),
+    plotId: text("plot_id"),
+    seasonId: text("season_id"),
+    activity: text("activity", { enum: ACTIVITIES }).notNull(),
+    category: text("category", { enum: COST_CATEGORIES }).notNull(),
+    description: text("description"),
+    amount: integer("amount").notNull(),
+    currency: text("currency", { enum: CURRENCIES }).notNull().default("PYG"),
+    amountPyg: integer("amount_pyg").notNull(),
+    /** Toneladas vendidas (solo ventas): permite el precio por tonelada. */
+    tons: real("tons"),
+    productId: text("product_id"),
+    partyId: text("party_id"),
+    /** "manual", "consumption" (insumos de un registro), "fuel", "contractor" (orden de trabajo). */
+    origin: text("origin").notNull().default("manual"),
+    originId: text("origin_id"),
+    /** Foto de la factura o el ticket en R2 (E-37). */
+    photoPath: text("photo_path"),
+    createdBy: text("created_by").notNull(),
+    ...timestamps,
+  },
+  (t) => [
+    index("cost_entries_org_date_idx").on(t.organizationId, t.occurredAt),
+    index("cost_entries_plot_idx").on(t.plotId),
+    index("cost_entries_origin_idx").on(t.originId),
+  ],
 );
 
 // ---------- Trabajo ----------

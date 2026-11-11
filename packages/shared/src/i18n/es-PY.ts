@@ -564,6 +564,10 @@ export const esPY = {
     placeNone: "No tenemos ese lugar en la lista. Probá con el departamento, o pegá las coordenadas o el enlace completo de Google Maps (los enlaces acortados necesitan internet).",
     placeDepartment: "Departamento",
     placeGoCoords: "Ir a estas coordenadas",
+    orgSwitch: "Cambiar de organización",
+    orgSwitching: "Cambiando…",
+    orgCurrent: "La que estás viendo",
+    orgSwitchFailed: "No pudimos cambiar de organización. Probá de nuevo.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

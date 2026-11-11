@@ -733,6 +733,11 @@ export async function deleteFarm(sdb: ScopedDb, id: string) {
   const farmPlots = sql`(SELECT id FROM plots WHERE farm_id = ${id} AND organization_id = ${org})`;
   await updateSynced(sdb, s.farms, id, { deletedAt: ts }, [
     ...cascadeStmts(sdb, inArray(s.plotAssignments.plotId, farmPlots), eq(s.tasks.farmId, id), ts),
+    // M-20: las líneas del mapa se van con la estancia
+    sdb.db
+      .update(s.farmLines)
+      .set({ deletedAt: ts, updatedAt: ts, version: currentVersion })
+      .where(and(eq(s.farmLines.farmId, id), eq(s.farmLines.organizationId, org), isNull(s.farmLines.deletedAt))),
     sdb.db
       .update(s.plots)
       .set({ deletedAt: ts, updatedAt: ts, version: currentVersion })

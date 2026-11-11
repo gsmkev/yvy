@@ -60,6 +60,8 @@ export interface FarmMapProps {
   flyTo?: { lon: number; lat: number; zoom?: number; n: number } | null;
   drawing?: boolean;
   /** Dibujo de una línea (cortar un lote, trazar un alambrado). Termina con doble toque o Enter. */
+  /** M-20: alambrados, caminos y cañerías de la estancia. */
+  lines?: { id: string; kind: string; geometry: string }[];
   drawingLine?: boolean;
   onLineDrawn?: (g: LineString) => void;
   /** M-02: lote cuya forma se edita (vértices arrastrables). Se oculta de la capa de lotes mientras tanto. */
@@ -129,6 +131,7 @@ export function FarmMap(props: FarmMapProps) {
       map.addSource("problems", { type: "geojson", data: fc([]) });
       map.addSource("points", { type: "geojson", data: fc([]) });
       map.addSource("measure", { type: "geojson", data: fc([]) });
+      map.addSource("lines", { type: "geojson", data: fc([]) });
       map.addLayer({
         id: "outline",
         type: "line",
@@ -161,6 +164,22 @@ export function FarmMap(props: FarmMapProps) {
           "line-width": ["case", ["boolean", ["get", "selected"], false], 3, 1.5],
         },
       });
+      // Alambrado: blanco punteado · camino: arena continuo · cañería: celeste con puntos
+      // (el trazo punteado no admite valores por elemento, por eso una capa por tipo)
+      for (const [kind, color, width, dash] of [
+        ["fence", "#ffffff", 2, [4, 3]],
+        ["road", "#C9C46A", 3, undefined],
+        ["pipe", BRAND.cielo, 2.5, [0.5, 2]],
+      ] as const) {
+        map.addLayer({
+          id: `lines-${kind}`,
+          type: "line",
+          source: "lines",
+          filter: ["==", ["get", "kind"], kind],
+          layout: { "line-cap": dash ? "butt" : "round" },
+          paint: { "line-color": color, "line-width": width, ...(dash ? { "line-dasharray": [...dash] } : {}) },
+        });
+      }
       map.addLayer({
         id: "problems-fill",
         type: "fill",
@@ -323,6 +342,15 @@ export function FarmMap(props: FarmMapProps) {
         })),
       ),
     );
+    (map.getSource("lines") as GeoJSONSource).setData(
+      fc(
+        (p.lines ?? []).map((l) => ({
+          type: "Feature",
+          properties: { id: l.id, kind: l.kind },
+          geometry: JSON.parse(l.geometry),
+        })),
+      ),
+    );
     (map.getSource("problems") as GeoJSONSource).setData(
       fc(
         (p.problemAreas ?? []).map((a) => ({
@@ -380,6 +408,7 @@ export function FarmMap(props: FarmMapProps) {
     props.farms,
     props.plots,
     props.pois,
+    props.lines,
     props.problemAreas,
     props.points,
     props.selectedPlotId,

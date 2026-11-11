@@ -566,7 +566,11 @@ export function FarmPage() {
               plot={plot}
               workers={workersOf(plot.id)}
               canEdit={canEdit}
-              onClose={() => setSelected(null)}
+              onClose={() => {
+                setSelected(null);
+                // Al volver a la lista, el foco queda en la pestaña activa y no se pierde en el vacío
+                setTimeout(() => document.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')?.focus(), 0);
+              }}
               problemAreas={(problems.data ?? []).filter((a) => a.plotId === plot.id)}
               onShowArea={(a) => {
                 setFlyTo({ lon: a.lon, lat: a.lat, zoom: 17, n: Date.now() });

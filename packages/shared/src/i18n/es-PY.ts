@@ -1559,6 +1559,8 @@ export const esPY = {
     themeAuto: "Como el sistema",
     themeLight: "Claro",
     themeDark: "Oscuro",
+    skipToContent: "Saltar al contenido",
+    mapRegion: "Mapa de la estancia",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

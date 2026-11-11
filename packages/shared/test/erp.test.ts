@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { avgUnitCost, daysUntil, lotsRemaining, moveValue } from "../src/erp";
+import { avgUnitCost, consumptionLines, consumptionProductIds, daysUntil, lotsRemaining, moveValue, type BaseUnit } from "../src/erp";
 
 describe("costo promedio ponderado", () => {
   it("valor sobre cantidad", () => {
@@ -35,5 +35,52 @@ describe("lotes (FEFO)", () => {
   it("días entre fechas", () => {
     expect(daysUntil("2026-11-10", "2026-12-10")).toBe(30);
     expect(daysUntil("2026-11-10", "2026-11-07")).toBe(-3);
+  });
+});
+
+describe("consumo de un registro de campo", () => {
+  const units = new Map<string, BaseUnit>([
+    ["gly", "l"],
+    ["urea", "kg"],
+    ["vac", "l"],
+  ]);
+  const ctx = { plotAreaHa: 20, units };
+  it("dosis por hectárea x superficie hecha, con conversión de ml y g", () => {
+    const data = {
+      areaHa: 10,
+      products: [
+        { productId: "gly", name: "G", dose: 2, unit: "l_ha" },
+        { productId: "urea", name: "U", dose: 250, unit: "g_ha" },
+      ],
+    };
+    expect(consumptionLines("application", data, ctx)).toEqual([
+      { productId: "gly", qty: 20 },
+      { productId: "urea", qty: 2.5 },
+    ]);
+    expect(consumptionProductIds("application", data)).toEqual(["gly", "urea"]);
+  });
+  it("sin superficie del registro usa la del lote; sin ninguna, no consume", () => {
+    const data = { products: [{ productId: "gly", name: "G", dose: 1, unit: "l_ha" }] };
+    expect(consumptionLines("application", data, ctx)).toEqual([{ productId: "gly", qty: 20 }]);
+    expect(consumptionLines("application", data, { ...ctx, plotAreaHa: null })).toEqual([]);
+  });
+  it("ignora lo que no es del catálogo y las dosis de otra familia; suma lo repetido", () => {
+    const data = {
+      areaHa: 1,
+      products: [
+        { name: "a mano", dose: 1, unit: "l_ha" },
+        { productId: "desconocido", name: "x", dose: 1, unit: "l_ha" },
+        { productId: "gly", name: "G", dose: 1, unit: "kg_ha" },
+        { productId: "gly", name: "G", dose: 1, unit: "l_ha" },
+        { productId: "gly", name: "G", dose: 500, unit: "ml_ha" },
+      ],
+    };
+    expect(consumptionLines("fertilization", data, ctx)).toEqual([{ productId: "gly", qty: 1.5 }]);
+  });
+  it("sanidad: la cantidad anotada, solo con producto del catálogo", () => {
+    expect(consumptionLines("health", { productId: "vac", quantity: 2 }, ctx)).toEqual([{ productId: "vac", qty: 2 }]);
+    expect(consumptionLines("health", { productId: "vac" }, ctx)).toEqual([]);
+    expect(consumptionLines("health", { product: "texto libre", quantity: 2 }, ctx)).toEqual([]);
+    expect(consumptionLines("rain", { mm: 3 }, ctx)).toEqual([]);
   });
 });

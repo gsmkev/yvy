@@ -135,8 +135,9 @@ export default function Annotate() {
     () => (editing ? [] : db.pois(plot?.farmId ?? selectedFarmId(db) ?? undefined).filter((p) => p.kind === "water")),
     [plot?.farmId, editing],
   );
+  const vetProducts = useMemo(() => db.products().some((p) => p.type === "veterinary"), []);
   // Con el punto ya escaneado no se pregunta de qué aguada es.
-  const flowCtx = { waterPois: scanPoi ? 0 : waterPois.length, askSeason: seasons.length > 1 };
+  const flowCtx = { waterPois: scanPoi ? 0 : waterPois.length, askSeason: seasons.length > 1, vetProducts };
   const steps = stationRecord ? FLOWS.pest.slice(-1) : stepsFor(kind, values, flowCtx);
   const stepIndex = phase.name === "step" ? phase.i : -1;
 
@@ -164,6 +165,9 @@ export default function Annotate() {
     if (!kind) return;
     const { poiId: pickedPoi, ...answers } = values;
     const data: Record<string, unknown> = { ...answers };
+    // Tratamiento con producto del catálogo: el nombre sale del catálogo (E-13).
+    if (kind === "health" && typeof data.productId === "string")
+      data.product = db.products().find((p) => p.id === data.productId)?.name ?? data.product;
     if (kind === "rain" && !editing) data.readAt = Date.now();
     // Compra: la hacienda entra de afuera, así que el potrero elegido es el destino y no hay origen.
     const entersFromOutside = kind === "herd_move" && data.reason === "compra" && !!plot;
@@ -617,6 +621,20 @@ function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unk
           <Row key={x.id} title={x.name} selected={value === x.id} onPress={() => onAnswer(x.id)} />
         ))}
         <Button kind="text" title={t("app.skip")} onPress={() => onAnswer(undefined)} style={{ marginTop: 12 }} />
+      </ScrollView>
+    );
+  }
+  if (step.kind === "catalog") {
+    const items = getDb()
+      .products()
+      .filter((p) => step.productTypes.includes(p.type));
+    return (
+      <ScrollView contentContainerStyle={k.pad}>
+        <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
+        {items.map((p) => (
+          <Row key={p.id} title={p.name} selected={value === p.id} onPress={() => onAnswer(p.id)} />
+        ))}
+        <Button kind="text" title={tr(step.otherLabel)} onPress={() => onAnswer(undefined)} style={{ marginTop: 12 }} />
       </ScrollView>
     );
   }

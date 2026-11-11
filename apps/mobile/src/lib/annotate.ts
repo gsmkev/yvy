@@ -11,6 +11,8 @@ export interface FlowCtx {
   waterPois: number;
   /** Hay más de una campaña activa (A-01): si no, el paso de campaña no se pregunta. */
   askSeason?: boolean;
+  /** Hay productos veterinarios en el catálogo (E-13): si no, el tratamiento se escribe a mano. */
+  vetProducts?: boolean;
 }
 
 type StepBase = {
@@ -30,6 +32,8 @@ export type Step = StepBase &
   | { key: string; kind: "season"; question: string }
   /** Productos de la mezcla con su dosis (catálogo del celular, o a mano). Guarda ProductDose[]. */
   | { key: string; kind: "products"; question: string; fixedUnit?: "kg_ha"; productTypes?: string[] }
+  /** Un producto del catálogo de ciertos tipos (guarda su id; "otro" salta el paso y se escribe a mano). */
+  | { key: string; kind: "catalog"; question: string; productTypes: string[]; otherLabel: string }
   /** Elegir un potrero de la estancia (excluye el de origen). La respuesta es su id. */
   | { key: string; kind: "paddock"; question: string }
   /** Elegir un punto de interés de un tipo (hoy: la aguada). La respuesta es su id; se guarda como poi_id. */
@@ -115,7 +119,17 @@ export const FLOWS: Record<RecordKind, Step[]> = {
       question: "app.healthReasonQuestion",
       options: HEALTH_REASONS.map((v) => ({ value: v, label: `fields.healthReason_${v}` })),
     },
-    { key: "product", kind: "text", question: "app.healthProductQuestion" },
+    // Con un producto del catálogo el ERP descuenta el stock (E-13); si no, se escribe a mano como siempre.
+    {
+      key: "productId",
+      kind: "catalog",
+      question: "app.healthProductQuestion",
+      productTypes: ["veterinary"],
+      otherLabel: "app.healthProductOther",
+      skipIf: (_a, ctx) => !ctx.vetProducts,
+    },
+    { key: "product", kind: "text", question: "app.healthProductQuestion", skipIf: (a) => !!a.productId },
+    { key: "quantity", kind: "number", question: "app.healthQuantityQuestion", hint: "app.healthQuantityHint", unit: "", max: 1_000_000, skipIf: (a) => !a.productId },
     { key: "dose", kind: "text", question: "app.healthDoseQuestion", optional: true },
     { key: "counts", kind: "counter", question: "app.healthCountQuestion", hint: "app.herdCountHint" },
     { key: "note", kind: "text", question: "app.addNote", optional: true },

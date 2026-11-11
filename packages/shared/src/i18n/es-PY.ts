@@ -518,6 +518,10 @@ export const esPY = {
     poiQrHelp: "Imprimilos y pegalos en cada punto. Al escanearlos con la app, se abre Anotar en ese punto, incluso sin señal.",
     poiQrOne: "Código QR",
     poiQrNone: "Todavía no hay puntos de interés.",
+    // erp
+    healthProductOther: "Otro producto (escribir)",
+    healthQuantityQuestion: "¿Cuánto usaste en total?",
+    healthQuantityHint: "En litros o kilos, según el producto del catálogo. Así se descuenta del stock.",
   },
   fields: {
     condition: "Estado general",

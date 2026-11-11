@@ -31,7 +31,7 @@ export function Button({
     <button
       type="button"
       {...p}
-      className={`inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md px-3.5 text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45 ${VARIANT[variant]} ${className}`}
+      className={`inline-flex h-10 cursor-pointer print:hidden items-center justify-center gap-2 rounded-md px-3.5 text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45 ${VARIANT[variant]} ${className}`}
     >
       {/* Ícono solo en botones sin texto: con texto, el texto alcanza */}
       {Icon && !children && <Icon size={16} strokeWidth={2} aria-hidden />}
@@ -343,7 +343,7 @@ export function Toaster() {
   return (
     <div
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex flex-col items-center gap-2 px-4"
+      className="pointer-events-none print:hidden fixed inset-x-0 bottom-4 z-[60] flex flex-col items-center gap-2 px-4"
     >
       {list.map((x) => (
         <div
@@ -376,7 +376,7 @@ export const Tabs = <T extends string>({
 }) => (
   <div
     role="tablist"
-    className="flex shrink-0 gap-5 overflow-x-auto border-b border-linea"
+    className="flex shrink-0 gap-5 overflow-x-auto border-b border-linea print:hidden"
     onKeyDown={(e) => {
       // Flechas, Inicio y Fin pasan de una pestaña a otra
       const i = tabs.findIndex((x) => x.id === value);

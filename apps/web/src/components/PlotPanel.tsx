@@ -122,7 +122,7 @@ export function PlotPanel({
       <div>
         <button
           onClick={onClose}
-          className="cursor-pointer text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
+          className="cursor-pointer text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline print:hidden"
         >
           ← {t("ui.allPlots")}
         </button>

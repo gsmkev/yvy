@@ -74,6 +74,8 @@ export interface FarmMapProps {
   /** El clic cayó sobre el primer punto: cierra la forma. */
   onMeasureClose?: () => void;
   className?: string;
+  /** U-27: se llena con una función que devuelve la captura del mapa (PNG en data URL) o null si no se puede. */
+  snapshotRef?: { current: (() => Promise<string | null>) | null };
 }
 
 const fc = (features: Feature[]): FeatureCollection => ({ type: "FeatureCollection", features });
@@ -252,6 +254,19 @@ export function FarmMap(props: FarmMapProps) {
         });
       });
       mapRef.current = map;
+      if (cb.current.snapshotRef)
+        cb.current.snapshotRef.current = () =>
+          new Promise((resolve) => {
+            // El lienzo solo se puede leer dentro del cuadro en que se dibuja
+            map.once("render", () => {
+              try {
+                resolve(map.getCanvas().toDataURL("image/png"));
+              } catch {
+                resolve(null);
+              }
+            });
+            map.triggerRepaint();
+          });
       sync();
       if (cb.current.camera) map.jumpTo(cb.current.camera);
     });

@@ -85,18 +85,18 @@ export function Layout() {
   useEffect(() => trackView(path), [path]);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col print:block print:h-auto">
       <a
         href="#main"
         onClick={(e) => {
           e.preventDefault();
           document.getElementById("main")?.focus();
         }}
-        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[70] focus:rounded-md focus:bg-surco focus:px-3 focus:py-2 focus:text-sm focus:text-lino"
+        className="sr-only print:hidden focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[70] focus:rounded-md focus:bg-surco focus:px-3 focus:py-2 focus:text-sm focus:text-lino"
       >
         {t("ui.skipToContent")}
       </a>
-      <header className="flex h-14 shrink-0 items-center gap-6 border-b border-linea bg-lino px-4 lg:px-6">
+      <header className="flex h-14 print:hidden shrink-0 items-center gap-6 border-b border-linea bg-lino px-4 lg:px-6">
         <Link to="/" className="font-serif text-[22px] leading-none font-semibold tracking-tight">
           {t("ui.appName")}
         </Link>
@@ -136,7 +136,7 @@ export function Layout() {
         />
       </header>
       {me.data?.support && (
-        <p role="status" className="shrink-0 border-b border-trigo/40 bg-trigo/15 px-4 py-1.5 text-center text-sm text-surco">
+        <p role="status" className="shrink-0 border-b border-trigo/40 bg-trigo/15 px-4 py-1.5 print:hidden text-center text-sm text-surco">
           {t("ui.supportBanner", { name: me.data.organization.name })}{" "}
           <button className="cursor-pointer font-medium underline underline-offset-4" onClick={exitSupport}>
             {t("ui.supportExit")}
@@ -151,7 +151,7 @@ export function Layout() {
           {t("ui.offlineBanner")}
         </p>
       )}
-      <main id="main" tabIndex={-1} className="min-h-0 min-w-0 flex-1 overflow-auto outline-none">
+      <main id="main" tabIndex={-1} className="min-h-0 min-w-0 flex-1 overflow-auto outline-none print:overflow-visible">
         <Outlet />
       </main>
       <Toaster />

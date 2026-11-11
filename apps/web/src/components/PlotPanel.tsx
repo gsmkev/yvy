@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { centroidOf, type Area } from "@yvy/geo";
 import { CHART, CROPS, PLOT_KINDS, SEASONS } from "@yvy/shared";
 import { del, get, patch } from "../lib/api";
 import { fmtDate, fmtDay, fmtHa, fmtNdvi, fmtPct } from "../lib/format";
 import { Minus, Pencil, Satellite, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { t, tk } from "../lib/i18n";
 import type { Member, Plot } from "../lib/types";
+import { CopyCoords } from "./CopyCoords";
 import { LineChart } from "./charts";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Select, Spinner, Stat } from "./ui";
 
@@ -87,6 +89,7 @@ export function PlotPanel({
             ? `${t("ui.assignedTo")} ${workers.map((w) => w.fullName).join(", ")}`
             : t("ui.nobodyAssigned")}
         </p>
+        <CopyCoords className="mt-2" {...centroidOf(JSON.parse(plot.geometry) as Area)} />
       </div>
 
       {canEdit && ndvi.isLoading && <Spinner />}

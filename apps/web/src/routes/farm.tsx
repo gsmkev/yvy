@@ -6,6 +6,7 @@ import { MapPinPlus, PenLine, Upload, X } from "lucide-react";
 import { areaHa, bboxOf, type Area } from "@yvy/geo";
 import { BRAND, NDVI_RAMP, POI_KINDS } from "@yvy/shared";
 import { AlertsList } from "../components/AlertsList";
+import { CopyCoords } from "../components/CopyCoords";
 import { ClimatePanel } from "../components/ClimatePanel";
 import { boundsOf, FarmMap } from "../components/FarmMap";
 import { ImportPlots } from "../components/ImportPlots";
@@ -16,6 +17,7 @@ import { TasksPanel } from "../components/TasksPanel";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs } from "../components/ui";
 import { post } from "../lib/api";
 import { download, plotsToKml } from "../lib/exports";
+import { closedAreaHa, fmtDistance, pathLengthM, type LonLat } from "../lib/measure";
 import { fmtDate, fmtHa, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useAlerts, useFarm, useFarms, useMe, useMembers } from "../lib/queries";
@@ -47,6 +49,29 @@ export function FarmPage() {
   const [poiAt, setPoiAt] = useState<[number, number] | null>(null);
   const [layer, setLayer] = useState<"satellite" | "ndvi">("satellite");
   const [records, setRecords] = useState<RecordRow[]>([]);
+  // Bajo lg no entran el mapa y el panel juntos: se alterna entre uno y otro.
+  const [view, setView] = useState<"map" | "list">("map");
+  useEffect(() => {
+    if (mode === "draw" || mode === "poi") setView("map");
+  }, [mode]);
+  // Medir: puntos marcados, forma cerrada; Esc termina.
+  const [measuring, setMeasuring] = useState(false);
+  const [mPoints, setMPoints] = useState<LonLat[]>([]);
+  const [mClosed, setMClosed] = useState(false);
+  const endMeasure = () => {
+    setMeasuring(false);
+    setMPoints([]);
+    setMClosed(false);
+  };
+  useEffect(() => {
+    if (!measuring) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && endMeasure();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [measuring]);
+  useEffect(() => {
+    if (mode !== "none" && measuring) endMeasure();
+  }, [mode]);
 
   // Con un lote elegido el mapa encuadra el lote; sin selección, la estancia entera.
   const selectedGeometry = farm.data?.plots.find((p) => p.id === selected)?.geometry;
@@ -80,8 +105,24 @@ export function FarmPage() {
   const pastureHa = d.plots.filter((p) => p.kind === "pasture").reduce((a, p) => a + p.areaHa, 0);
 
   return (
-    <div className="grid h-full lg:grid-cols-[minmax(0,1fr)_480px]">
-      <div className="relative h-80 lg:h-full">
+    <div className="flex h-full flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_480px]">
+      <div
+        role="group"
+        aria-label={t("ui.viewSwitch")}
+        className="flex gap-6 border-b border-linea bg-lino px-4 py-2.5 text-sm lg:hidden"
+      >
+        {(["map", "list"] as const).map((v) => (
+          <button
+            key={v}
+            aria-pressed={view === v}
+            onClick={() => setView(v)}
+            className={`cursor-pointer underline-offset-4 ${view === v ? "font-medium text-surco underline" : "text-tinta-2"}`}
+          >
+            {v === "map" ? t("ui.viewMap") : t("ui.viewList")}
+          </button>
+        ))}
+      </div>
+      <div className={`relative min-h-0 flex-1 lg:h-full ${view === "list" ? "max-lg:hidden" : ""}`}>
         <FarmMap
           outline={d.farm.geometry}
           plots={d.plots}
@@ -98,6 +139,11 @@ export function FarmPage() {
                   .map((r) => ({ id: r.id, lon: r.lon!, lat: r.lat!, color: BRAND.trigo }))
               : []
           }
+          measuring={measuring}
+          measurePoints={mPoints}
+          measureClosed={mClosed}
+          onMeasureClick={(lon, lat) => setMPoints((ps) => [...ps, [lon, lat]])}
+          onMeasureClose={() => setMClosed(true)}
           drawing={mode === "draw"}
           onDrawn={(g) => {
             setDrawn(g);
@@ -106,11 +152,64 @@ export function FarmPage() {
           onPlotClick={(id) => {
             setSelected(id);
             setTab("plots");
+            if (window.matchMedia("(max-width: 1023px)").matches) setView("list");
           }}
           onMapClick={(lon, lat) => mode === "poi" && (setPoiAt([lon, lat]), setMode("none"))}
         />
         {/* Capas: control segmentado compacto, con leyenda cuando corresponde */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
+          <div className="flex w-56 flex-col gap-1.5 rounded-md border border-white/15 bg-surco/85 p-0.5 text-xs font-medium text-lino backdrop-blur">
+            {!measuring ? (
+              <button
+                onClick={() => setMeasuring(true)}
+                className="cursor-pointer rounded px-3 py-1.5 text-left hover:bg-white/10"
+              >
+                {t("ui.measure")}
+              </button>
+            ) : (
+              <div className="flex flex-col gap-2 p-2.5 font-normal">
+                {mPoints.length === 0 ? (
+                  <p className="text-lino/80">{t("ui.measureHint")}</p>
+                ) : (
+                  <>
+                    <p className="num">
+                      {mClosed ? t("ui.measurePerimeter") : t("ui.measureDistance")}:{" "}
+                      <strong className="font-semibold">{fmtDistance(pathLengthM(mPoints, mClosed))}</strong>
+                    </p>
+                    {mClosed && (
+                      <p className="num">
+                        {t("ui.area")}: <strong className="font-semibold">{fmtHa(closedAreaHa(mPoints) ?? 0)}</strong>
+                      </p>
+                    )}
+                  </>
+                )}
+                <div className="flex gap-4 font-medium">
+                  {mPoints.length >= 3 && !mClosed && (
+                    <button
+                      className="cursor-pointer underline-offset-4 hover:underline"
+                      onClick={() => setMClosed(true)}
+                    >
+                      {t("ui.measureClose")}
+                    </button>
+                  )}
+                  {mPoints.length > 0 && (
+                    <button
+                      className="cursor-pointer underline-offset-4 hover:underline"
+                      onClick={() => {
+                        setMClosed(false);
+                        setMPoints((ps) => ps.slice(0, -1));
+                      }}
+                    >
+                      {t("ui.measureUndo")}
+                    </button>
+                  )}
+                  <button className="cursor-pointer underline-offset-4 hover:underline" onClick={endMeasure}>
+                    {t("ui.measureDone")}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           <div
             role="radiogroup"
             aria-label={t("ui.layers")}
@@ -162,7 +261,9 @@ export function FarmPage() {
         )}
       </div>
 
-      <section className="flex min-h-0 flex-col gap-5 overflow-auto border-l border-linea bg-lino p-6 *:shrink-0">
+      <section
+        className={`flex min-h-0 flex-1 flex-col gap-5 overflow-auto border-l border-linea bg-lino p-4 *:shrink-0 lg:p-6 ${view === "map" ? "max-lg:hidden" : ""}`}
+      >
         <header>
           <div className="flex items-baseline justify-between gap-3">
             <h1 className="text-[28px] leading-tight">{d.farm.name}</h1>
@@ -253,8 +354,11 @@ export function FarmPage() {
                     {d.pois.map((p) => {
                       return (
                         <li key={p.id} className="flex items-baseline justify-between gap-2.5">
-                          {p.name}
-                          <span className="text-xs text-tinta-2">{tk(`ui.poiKinds_${p.kind}`)}</span>
+                          <span>
+                            {p.name}
+                            <span className="ml-2 text-xs text-tinta-2">{tk(`ui.poiKinds_${p.kind}`)}</span>
+                          </span>
+                          <CopyCoords lon={p.lon} lat={p.lat} className="shrink-0 !text-xs" />
                         </li>
                       );
                     })}

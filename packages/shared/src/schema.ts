@@ -108,6 +108,10 @@ export const organizations = sqliteTable("organizations", {
   /** P-10: topes propios de la organización; null = los del plan (LIMITS.plans). */
   maxHa: real("max_ha"),
   maxUsers: integer("max_users"),
+  /** V-05: código de referido con el que se registró la organización (`?ref=`), tal cual llegó si tiene forma válida. */
+  referredBy: text("referred_by"),
+  /** V-05: agrónomo dueño del código, si se pudo identificar. */
+  referrerUserId: text("referrer_user_id"),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });
@@ -563,6 +567,39 @@ export const problemAreas = sqliteTable(
     createdAt: integer("created_at").notNull(),
   },
   (t) => [index("problem_areas_plot_idx").on(t.plotId), index("problem_areas_farm_idx").on(t.farmId)],
+);
+
+/**
+ * Indicador EUDR por lote (S-30): hectáreas con cobertura arbórea en 2020 y con posible pérdida hasta hoy,
+ * calculado por workers-py con Sentinel-2. Una fila por lote; `changes` es un GeoJSON chico con los polígonos
+ * de cambio. Análisis indicativo, no una declaración de debida diligencia. Solo lo escribe /ingest; no se sincroniza.
+ */
+export const eudrResults = sqliteTable(
+  "eudr_results",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    plotId: text("plot_id").notNull(),
+    /** no_change | possible_loss | no_data */
+    status: text("status").notNull(),
+    plotAreaHa: real("plot_area_ha").notNull(),
+    forestRefHa: real("forest_ref_ha").notNull(),
+    lossHa: real("loss_ha").notNull(),
+    validPct: real("valid_pct").notNull(),
+    refYear: integer("ref_year").notNull(),
+    curYear: integer("cur_year").notNull(),
+    refFromAt: integer("ref_from_at"),
+    refToAt: integer("ref_to_at"),
+    curFromAt: integer("cur_from_at"),
+    curToAt: integer("cur_to_at"),
+    refScenes: integer("ref_scenes").notNull(),
+    curScenes: integer("cur_scenes").notNull(),
+    /** FeatureCollection de polígonos de cambio (WGS84), con `areaHa` en las propiedades. */
+    changes: text("changes").notNull(),
+    computedAt: integer("computed_at").notNull(),
+  },
+  (t) => [uniqueIndex("eudr_results_plot_uq").on(t.plotId), index("eudr_results_farm_idx").on(t.farmId)],
 );
 
 /** Informe de riesgo climático por estancia (C-10): JSON validado con farmRiskSchema. No se sincroniza. */

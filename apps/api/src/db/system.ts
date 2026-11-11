@@ -502,6 +502,26 @@ export class SystemDb {
     return true;
   }
 
+  /** S-30: guarda (reemplaza) el indicador EUDR de un lote. La organización sale del lote, no del request. */
+  async upsertEudrResult(
+    plotId: string,
+    r: Omit<typeof s.eudrResults.$inferInsert, "id" | "organizationId" | "farmId" | "plotId" | "computedAt">,
+  ): Promise<boolean> {
+    const [plot] = await this.db
+      .select({ org: s.plots.organizationId, farmId: s.plots.farmId })
+      .from(s.plots)
+      .where(and(eq(s.plots.id, plotId), isNull(s.plots.deletedAt)))
+      .limit(1);
+    if (!plot) return false;
+    const row = { ...r, organizationId: plot.org, farmId: plot.farmId, plotId, computedAt: Date.now() };
+    const { plotId: _p, ...set } = row;
+    await this.db
+      .insert(s.eudrResults)
+      .values({ ...row, id: newId() })
+      .onConflictDoUpdate({ target: s.eudrResults.plotId, set });
+    return true;
+  }
+
   async fireAlert(x: {
     farmId: string;
     date: string;

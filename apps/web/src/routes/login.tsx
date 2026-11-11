@@ -33,7 +33,7 @@ export function LoginPage() {
     run(async () => {
       if (mode === "signup") {
         try {
-          await post("/auth/signup", { organizationName: orgName, fullName, email });
+          await post("/auth/signup", { organizationName: orgName, fullName, email, ...(search.ref ? { ref: search.ref } : {}) });
         } catch (e) {
           if (!(e instanceof ApiError && e.status === 409)) throw e;
         }

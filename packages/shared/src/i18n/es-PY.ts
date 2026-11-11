@@ -1483,6 +1483,59 @@ export const esPY = {
     clientsNone: "Todavía no tenés clientes con acceso de oficina.",
     clientsNoFarms: "Todavía no cargaron estancias.",
     clientsOpenOrg: "Entrar",
+    // eudr
+    eudrTitle: "Libre de deforestación (EUDR)",
+    eudrLink: "Ver indicador de deforestación",
+    eudrLandingText:
+      "Compará la cobertura arbórea de cada lote en la estación seca de 2020 con la de hoy, con imágenes de Sentinel-2.",
+    eudrDisclaimerTitle: "Análisis satelital indicativo",
+    eudrDisclaimer:
+      "Este es un análisis indicativo hecho con imágenes de satélite. No es una declaración de debida diligencia ni una certificación, y no reemplaza la verificación en el campo ni lo que exige la regulación europea (EUDR).",
+    eudrMethodTitle: "Método y fuente de datos",
+    eudrMethodSource: "Fuente: Sentinel-2 L2A de Copernicus (vía Earth Search), imágenes de 10 m. Ninguna otra fuente.",
+    eudrMethodComposite:
+      "Se arma un compuesto de mediana de la estación seca (1 de junio al 30 de setiembre) de {{ref}} y otro de {{cur}}. La fecha de corte de la regulación es el 31 de diciembre de 2020.",
+    eudrMethodRule:
+      "Un píxel cuenta como cobertura arbórea si tiene NDVI de {{ndvi}} o más y NDMI de {{ndmi}} o más. Posible pérdida de bosque: cobertura arbórea en {{ref}} que hoy tiene NDVI menor a {{loss}}, con una caída de al menos {{drop}}, en parches de {{min}} ha o más.",
+    eudrMethodLimits:
+      "Los umbrales son indicativos y no están calibrados con datos de campo. Nubes, sombras, cosechas, quemas o pasturas pueden dar falsos positivos y falsos negativos.",
+    eudrComputed: "Calculado el {{date}}",
+    eudrRefComposite: "Compuesto de {{year}}: escenas del {{from}} al {{to}} ({{n}} escenas)",
+    eudrCurComposite: "Compuesto de {{year}}: escenas del {{from}} al {{to}} ({{n}} escenas)",
+    eudrPending:
+      "Todavía no se calculó el indicador de esta estancia. Se actualiza cada tres meses y puede pedirse uno nuevo al equipo de Yvy.",
+    eudrNoPlots: "Esta estancia no tiene lotes cargados.",
+    eudrForest: "Cobertura arbórea en {{year}}",
+    eudrLoss: "Posible pérdida de bosque",
+    eudrPlotsWithLoss: "Lotes con posible pérdida",
+    eudrPlotsTitle: "Resultado por lote",
+    eudrColPlot: "Lote",
+    eudrColArea: "Superficie",
+    eudrColForest: "Cobertura arbórea {{year}}",
+    eudrColResult: "Resultado",
+    eudrStatus_no_change: "Sin cambio",
+    eudrStatus_possible_loss: "Posible pérdida de bosque: {{ha}} ha",
+    eudrStatus_no_data: "Sin datos suficientes por nubes",
+    eudrMapTitle: "Áreas con posible pérdida",
+    eudrMapNone: "No hay áreas de cambio para mostrar.",
+    eudrPdf: "Descargar PDF",
+    eudrPdfWorking: "Armando el PDF…",
+    eudrPdfFile: "indicador-eudr",
+    eudrFooter: "Yvy · Sentinel-2 L2A · Análisis indicativo, no es una certificación ni una declaración de debida diligencia",
+    // agronomos
+    agroTitle: "Para agrónomos",
+    agroText:
+      "Si asesorás a productores, Yvy te deja ver las estancias y los avisos de todos tus clientes en un solo lugar. Cada estancia que traés con tu código personal queda registrada a tu nombre. Escribinos y acordamos las condiciones.",
+    agroCta: "Escribinos por WhatsApp",
+    agroWhatsappText: "Hola, soy agrónomo o agrónoma y quiero conocer el programa de Yvy para agrónomos.",
+    accountReferralTitle: "Tu código de agrónomo",
+    accountReferralText:
+      "Compartí este enlace con tus clientes. Cuando crean su cuenta con él, queda registrado que llegaron por vos.",
+    accountReferralCode: "Tu código",
+    accountReferralLink: "Enlace de registro",
+    accountReferralCopy: "Copiar enlace",
+    internalReferral: "Referido por",
+    internalReferralUnknown: "Código sin agrónomo",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

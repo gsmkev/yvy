@@ -1,4 +1,5 @@
 import { createRootRoute, createRoute, createRouter, lazyRouteComponent, redirect } from "@tanstack/react-router";
+import { parseReferralCode } from "@yvy/shared";
 import { getSession } from "./lib/api";
 import { RootGate } from "./routes/public/RootGate";
 import { Spinner } from "./components/ui";
@@ -9,8 +10,11 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/ingresar",
   component: lazyRouteComponent(() => import("./routes/login"), "LoginPage"),
-  validateSearch: (s: Record<string, unknown>): { modo?: "registro" } =>
-    s.modo === "registro" ? { modo: "registro" } : {},
+  // `ref`: código de referido de un agrónomo (V-05); abre el registro y viaja con el alta
+  validateSearch: (s: Record<string, unknown>): { modo?: "registro"; ref?: string } => {
+    const ref = parseReferralCode(s.ref) ?? undefined;
+    return { ...(s.modo === "registro" || ref ? { modo: "registro" as const } : {}), ...(ref ? { ref } : {}) };
+  },
 });
 
 const termsRoute = createRoute({
@@ -82,6 +86,11 @@ const farmRisk = createRoute({
   path: "/estancias/$farmId/riesgo",
   component: lazyRouteComponent(() => import("./routes/risk"), "RiskPage"),
 });
+const farmEudr = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/estancias/$farmId/eudr",
+  component: lazyRouteComponent(() => import("./routes/eudr"), "EudrPage"),
+});
 const records = createRoute({
   getParentRoute: () => appRoute,
   path: "/registros",
@@ -151,6 +160,7 @@ const routeTree = rootRoute.addChildren([
     farmReports,
     farmGauges,
     farmRisk,
+    farmEudr,
     records,
     tasks,
     sanitary,

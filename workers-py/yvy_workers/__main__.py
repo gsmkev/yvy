@@ -9,7 +9,7 @@ import sys
 from .ingest import IngestClient
 from .jobs.constants import BACKFILL_DAYS, BASEMAP_DAYS, DAILY_DAYS
 
-JOBS = ["s2_ingest", "s2_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "weekly_report", "new_farm"]
+JOBS = ["s2_ingest", "s2_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "weekly_report", "new_farm", "eudr"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -80,6 +80,10 @@ def main(argv: list[str] | None = None) -> int:
                     from .jobs.s2 import s2_basemap
 
                     s2_basemap(api, f, days=args.days or BASEMAP_DAYS)
+                elif args.job == "eudr":
+                    from .jobs.eudr import eudr_analysis
+
+                    log.info("%s: %d lotes", f["name"], eudr_analysis(api, f))
                 elif args.job == "climatology_build":
                     from .jobs.climatology import climatology_build
 

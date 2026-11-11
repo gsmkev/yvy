@@ -100,6 +100,10 @@ class IngestClient:
         """Agregados de la semana de una estancia para el parte (R-02)."""
         return self._call("GET", f"/ingest/farms/{farm_id}/weekly-summary", query={"from": start, "to": end})
 
+    def eudr_result(self, result: dict[str, Any]) -> None:
+        """Indicador EUDR de un lote (S-30); reemplaza el anterior."""
+        self._call("POST", "/ingest/eudr", result)
+
     def weekly_report(self, farm_id: str, period_start: str, period_end: str, storage_path: str) -> None:
         """Registra el PDF semanal ya subido a R2 (R-02)."""
         self._call("POST", "/ingest/weekly-reports", {"farmId": farm_id, "periodStart": period_start, "periodEnd": period_end, "storagePath": storage_path})

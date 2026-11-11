@@ -168,6 +168,33 @@ export interface ProblemArea {
   plotMedianNdvi: number;
 }
 
+/** Indicador EUDR de un lote (S-30), calculado con Sentinel-2 por workers-py. Análisis indicativo. */
+export interface EudrPlot {
+  plotId: string;
+  plotName: string;
+  status: "no_change" | "possible_loss" | "no_data";
+  plotAreaHa: number;
+  forestRefHa: number;
+  lossHa: number;
+  validPct: number;
+  refYear: number;
+  curYear: number;
+  refFromAt: number | null;
+  refToAt: number | null;
+  curFromAt: number | null;
+  curToAt: number | null;
+  refScenes: number;
+  curScenes: number;
+  /** FeatureCollection (texto) con los polígonos de cambio. */
+  changes: string;
+  computedAt: number;
+}
+
+export interface EudrResponse {
+  computedAt: number | null;
+  plots: EudrPlot[];
+}
+
 export interface Product {
   id: string;
   name: string;

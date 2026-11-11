@@ -1,10 +1,10 @@
 /** Consultas y edición para la web (y la ficha del lote en la app con red). */
 import { Hono } from "hono";
-import { and, eq, gte, sql } from "drizzle-orm";
+import { and, eq, gte, isNull, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { areaHa, bboxOf } from "@yvy/geo";
-import { alertSettingsSchema, CROPS, FUNNEL_EVENTS, newId, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
+import { alertSettingsSchema, referralCode, CROPS, FUNNEL_EVENTS, newId, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import {
   addTaskComment,
@@ -17,6 +17,7 @@ import {
   farmClimate,
   farmDetail,
   farmForecast,
+  farmEudr,
   farmProblemAreas,
   farmRiskReport,
   farmSummaries,
@@ -88,6 +89,23 @@ web.get("/me", async (c) => {
   });
 });
 
+/** V-05: código de referido del agrónomo (null si la persona no es agrónomo en ninguna de sus organizaciones). */
+web.get("/me/referral", async (c) => {
+  const [m] = await c.var.sdb.db
+    .select({ id: s.memberships.id })
+    .from(s.memberships)
+    .where(
+      and(
+        eq(s.memberships.userId, c.var.sdb.auth.userId),
+        eq(s.memberships.role, "agronomist"),
+        eq(s.memberships.status, "active"),
+        isNull(s.memberships.deletedAt),
+      ),
+    )
+    .limit(1);
+  return c.json({ code: m ? referralCode(c.var.sdb.auth.userId) : null });
+});
+
 /** U-29: qué avisos le llegan al usuario, por qué canal y en qué horario. Valen para todas sus organizaciones. */
 web.get("/me/notification-prefs", async (c) => c.json(await getNotificationPrefs(c.var.sdb)));
 web.put("/me/notification-prefs", async (c) => {
@@ -144,7 +162,8 @@ web.get("/org/farms/:id/forecast", async (c) => c.json(await farmForecast(c.var.
 web.get("/org/farms/:id/problem-areas", async (c) =>
   c.json(await farmProblemAreas(c.var.sdb, c.req.param("id"))),
 );
-web.get("/org/farms/:id/risk", async (c) => c.json(await farmRiskReport(c.var.sdb, c.req.param("id"))));
+web.get("/org/farms/:id/eudr", async (c) => c.json(await farmEudr(c.var.sdb, c.req.param("id"))));
+web.get("/org/farms/:id/risk",async (c) => c.json(await farmRiskReport(c.var.sdb, c.req.param("id"))));
 
 web.patch("/org/farms/:id", async (c) => {
   const b = parse(

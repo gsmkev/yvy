@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { get, qs } from "./api";
+import { isPendingDelete } from "./undo";
 import type { Alert, FarmDetail, FarmSummary, Me, Member, RecordRow, Task } from "./types";
 
 export const useMe = () => useQuery({ queryKey: ["me"], queryFn: () => get<Me>("/me"), staleTime: 60_000 });
@@ -13,7 +14,11 @@ export const useFarm = (id: string, enabled = true) =>
     queryKey: ["farm", id],
     queryFn: async () => {
       const d = await get<FarmDetail>(`/org/farms/${id}`);
-      return { ...d, plots: d.plots.sort(byName) };
+      return {
+        ...d,
+        plots: d.plots.filter((p) => !isPendingDelete(p.id)).sort(byName),
+        pois: d.pois.filter((p) => !isPendingDelete(p.id)),
+      };
     },
     // Mientras se procesan las imágenes de una estancia nueva, volver a mirar cada minuto
     refetchInterval: (q) =>
@@ -22,7 +27,10 @@ export const useFarm = (id: string, enabled = true) =>
 export const useMembers = (enabled = true) =>
   useQuery({ queryKey: ["members"], queryFn: () => get<Member[]>("/org/members"), enabled });
 export const useTasks = (f: { farmId?: string; assigneeId?: string; status?: string } = {}) =>
-  useQuery({ queryKey: ["tasks", f], queryFn: () => get<Task[]>(`/org/tasks${qs(f)}`) });
+  useQuery({
+    queryKey: ["tasks", f],
+    queryFn: async () => (await get<Task[]>(`/org/tasks${qs(f)}`)).filter((x) => !isPendingDelete(x.id)),
+  });
 export const useAlerts = (f: { farmId?: string; active?: boolean } = {}) =>
   useQuery({
     queryKey: ["alerts", f],

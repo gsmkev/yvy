@@ -15,14 +15,15 @@ import { PlotsTable } from "../components/PlotsTable";
 import { RecordsList } from "../components/RecordsList";
 import { TasksPanel } from "../components/TasksPanel";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "../components/ui";
-import { post } from "../lib/api";
+import { del, post } from "../lib/api";
+import { deleteWithUndo } from "../lib/undo";
 import { download, plotsToGeoJson, plotsToKml, plotsToShapefileZip } from "../lib/exports";
 import { closedAreaHa, fmtDistance, pathLengthM, type LonLat } from "../lib/measure";
 import { fmtDate, fmtHa, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { loadPrefs, savePrefs } from "../lib/prefs";
 import { useAlerts, useFarm, useFarms, useMe, useMembers } from "../lib/queries";
-import type { RecordRow } from "../lib/types";
+import type { FarmDetail, RecordRow } from "../lib/types";
 
 type Tab = "plots" | "records" | "tasks" | "climate" | "alerts";
 const TABS: Tab[] = ["plots", "records", "tasks", "climate", "alerts"];
@@ -104,6 +105,16 @@ export function FarmPage() {
       </div>
     );
   const d = farm.data!;
+  const removePoi = (id: string) =>
+    deleteWithUndo({
+      qc,
+      id,
+      message: t("ui.toastPoiDeleted"),
+      hide: () =>
+        qc.setQueryData<FarmDetail>(["farm", farmId], (x) => x && { ...x, pois: x.pois.filter((p) => p.id !== id) }),
+      request: () => del(`/org/pois/${id}`),
+      invalidate: [["farm", farmId]],
+    });
   const plot = d.plots.find((p) => p.id === selected);
   const workersOf = (plotId: string) =>
     (members.data ?? []).filter((m) => d.assignments.some((a) => a.plotId === plotId && a.userId === m.userId));
@@ -397,7 +408,14 @@ export function FarmPage() {
                             {p.name}
                             <span className="ml-2 text-xs text-tinta-2">{tk(`ui.poiKinds_${p.kind}`)}</span>
                           </span>
-                          <CopyCoords lon={p.lon} lat={p.lat} className="shrink-0 !text-xs" />
+                          <span className="flex shrink-0 items-baseline gap-3 text-xs text-tinta-2">
+                            <CopyCoords lon={p.lon} lat={p.lat} className="!text-xs" />
+                            {canEdit && (
+                              <button className="cursor-pointer hover:text-peligro" onClick={() => removePoi(p.id)}>
+                                {t("ui.delete")}
+                              </button>
+                            )}
+                          </span>
                         </li>
                       );
                     })}

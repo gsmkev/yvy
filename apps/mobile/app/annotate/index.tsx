@@ -503,6 +503,7 @@ function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onA
       </ScrollView>
     );
   }
+  if (step.kind === "counter") return null; // G-06
   if (step.kind === "yesno") {
     return (
       <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]}>

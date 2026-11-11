@@ -25,7 +25,17 @@ export const SEASONS = ["zafra", "zafrina"] as const;
 export const POI_KINDS = ["rain_gauge", "water", "house", "gate", "corral", "other"] as const;
 export const RECURRENCES = ["none", "daily", "weekly"] as const;
 export const TASK_STATUS = ["open", "done", "cancelled"] as const;
-export const RECORD_KINDS = ["scouting", "pest", "crop_status", "pasture_status", "rain", "water", "note"] as const;
+export const RECORD_KINDS = [
+  "scouting",
+  "pest",
+  "crop_status",
+  "pasture_status",
+  "rain",
+  "water",
+  "note",
+  // ganaderia
+  "herd_count",
+] as const;
 export type RecordKind = (typeof RECORD_KINDS)[number];
 export const UPLOAD_STATUS = ["pending", "uploaded"] as const;
 export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_threshold"] as const;

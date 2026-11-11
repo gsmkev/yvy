@@ -26,7 +26,7 @@ const tr = (key: string, vars?: Record<string, string | number>) => t(key as Mes
 const SEARCH_FROM = 8;
 const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
-type Phase = { name: "plot" } | { name: "kind" } | { name: "step"; i: number } | { name: "photo" } | { name: "done"; recordId: string };
+type Phase = { name: "plot" } | { name: "multi" } | { name: "kind" } | { name: "step"; i: number } | { name: "photo" } | { name: "done"; recordId: string };
 
 export default function Annotate() {
   const params = useLocalSearchParams<{ plotId?: string; kind?: RecordKind; taskId?: string; recordId?: string; farmLevel?: string }>();
@@ -48,6 +48,8 @@ export default function Annotate() {
   );
   const [camera, setCamera] = useState(false);
   const [query, setQuery] = useState("");
+  // F-10: anotar lo mismo en varios lotes a la vez.
+  const [multi, setMulti] = useState<Plot[]>([]);
 
   useEffect(() => {
     if (editing) return;
@@ -78,7 +80,8 @@ export default function Annotate() {
     Keyboard.dismiss();
     if (phase.name === "step" && phase.i > 0) return setPhase({ name: "step", i: phase.i - 1 });
     if (phase.name === "step") return params.kind || editing ? router.back() : setPhase({ name: "kind" });
-    if (phase.name === "kind") return params.plotId ? router.back() : setPhase({ name: "plot" });
+    if (phase.name === "multi") return setPhase({ name: "plot" });
+    if (phase.name === "kind") return multi.length ? setPhase({ name: "multi" }) : params.plotId ? router.back() : setPhase({ name: "plot" });
     if (phase.name === "photo") return setPhase({ name: "step", i: steps.length - 1 });
     router.back();
   };
@@ -99,6 +102,29 @@ export default function Annotate() {
     const f = fix === "searching" ? null : fix;
     const farmId = editing?.farmId ?? plot?.farmId ?? selectedFarmId(db) ?? db.farms()[0]?.id;
     if (!farmId) return;
+    if (multi.length > 1 && !editing) {
+      const at = Date.now();
+      const ids = db.saveRecords(
+        session.user.id,
+        session.organization.id,
+        multi.map((p) => ({
+          farmId: p.farmId,
+          plotId: p.id,
+          poiId: null,
+          kind,
+          data: parsed.data as Record<string, unknown>,
+          lon: f?.lon ?? null,
+          lat: f?.lat ?? null,
+          gpsAccuracyM: f?.accuracy ?? null,
+          capturedAt: at,
+        })),
+        photos,
+      );
+      if (params.taskId) db.completeTask(params.taskId, ids[0]!);
+      localChanged();
+      toastSaved();
+      return setPhase({ name: "done", recordId: ids[0]! });
+    }
     const recordId = db.saveRecord(
       session.user.id,
       session.organization.id,
@@ -189,6 +215,7 @@ export default function Annotate() {
               subtitle={g.confidence === "near" ? t("app.nearBorder") : plotSubtitle(g.plot)}
               onPress={() => {
                 setPlot(g.plot);
+                setMulti([]);
                 setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
               }}
             />
@@ -206,19 +233,60 @@ export default function Annotate() {
                   subtitle={plotSubtitle(p)}
                   onPress={() => {
                     setPlot(p);
+                    setMulti([]);
                     setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
                   }}
                 />
               ))}
           {searching && !plots.some((p) => fold(p.name).includes(needle)) && <Text style={[T.small, { marginTop: 8 }]}>{t("app.plotSearchNone")}</Text>}
           <View style={{ height: 12 }} />
+          {plots.length > 1 && <Button kind="text" title={t("app.severalPlots")} onPress={() => setPhase({ name: "multi" })} />}
           <Button
             kind="text"
             title={t("app.noPlot")}
             onPress={() => {
               setPlot(null);
+              setMulti([]);
               setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
             }}
+          />
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // ---------- 1b. Varios lotes ----------
+  if (phase.name === "multi") {
+    const toggle = (p: Plot) => setMulti((m) => (m.some((x) => x.id === p.id) ? m.filter((x) => x.id !== p.id) : [...m, p]));
+    return (
+      <View style={k.screen}>
+        {header}
+        <ScrollView contentContainerStyle={k.pad}>
+          <Text style={T.title}>{t("app.severalPlotsTitle")}</Text>
+          <Text style={[T.small, { marginTop: 6, marginBottom: 16 }]}>{t("app.severalPlotsHint")}</Text>
+          {plots.map((p) => {
+            const on = multi.some((x) => x.id === p.id);
+            return (
+              <Row
+                key={p.id}
+                title={p.name}
+                subtitle={plotSubtitle(p)}
+                selected={on}
+                onPress={() => toggle(p)}
+                left={on ? <Check size={22} color={C.accion} strokeWidth={3} /> : <View style={st.box} />}
+              />
+            );
+          })}
+          <Button
+            big
+            disabled={multi.length === 0}
+            title={multi.length === 1 ? t("app.severalPlotsContinueOne") : t("app.severalPlotsContinue", { n: multi.length })}
+            onPress={() => {
+              // Un solo lote marcado es un lote común.
+              setPlot(multi.length === 1 ? multi[0]! : null);
+              setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+            }}
+            style={{ marginTop: 20 }}
           />
         </ScrollView>
       </View>
@@ -235,7 +303,7 @@ export default function Annotate() {
           <Text style={T.title}>{t("app.whatHappened")}</Text>
           {plot && rain > 0 && <Text style={[T.small, { marginTop: 6 }]}>{t("app.rainMonth", { mm: Math.round(rain) })}</Text>}
           <View style={{ height: 16 }} />
-          {KINDS_FOR(plot?.kind ?? null).map((kd) => (
+          {KINDS_FOR(plot?.kind ?? (multi.length > 1 && multi.every((p) => p.kind === multi[0]!.kind) ? multi[0]!.kind : null)).map((kd) => (
             <Row
               key={kd}
               title={t(`recordKinds.${kd}`)}
@@ -474,6 +542,7 @@ const st = StyleSheet.create({
   photos: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 20 },
   thumb: { width: 104, height: 104, borderRadius: RADIUS },
   thumbX: { position: "absolute", top: 6, right: 6, width: 26, height: 26, borderRadius: 13, backgroundColor: "rgba(30,36,25,0.75)", alignItems: "center", justifyContent: "center" },
+  box: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: C.lineaFuerte },
   doneMark: { width: 72, height: 72, borderRadius: 36, backgroundColor: C.accion, alignItems: "center", justifyContent: "center" },
   shutterRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 28, paddingVertical: 24, backgroundColor: "#000" },
   shutter: { width: TOUCH + 20, height: TOUCH + 20, borderRadius: (TOUCH + 20) / 2, borderWidth: 6, borderColor: C.blanco, backgroundColor: C.accion },

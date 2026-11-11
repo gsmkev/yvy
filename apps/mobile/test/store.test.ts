@@ -85,6 +85,19 @@ describe("LocalDb", () => {
     expect(db.outboxItems()[0]).toMatchObject({ what: "poi" });
   });
 
+  it("varios lotes: un registro por lote en una transacción, mismo capturedAt, fotos en el primero", async () => {
+    const db = setup();
+    const plotB = newId();
+    const ids = db.saveRecords(USER, ORG, [rec, { ...rec, plotId: plotB }], [photo]);
+    expect(ids).toHaveLength(2);
+    const rows = db.records();
+    expect(rows.map((r) => r.capturedAt)).toEqual([rec.capturedAt, rec.capturedAt]);
+    expect(new Set(rows.map((r) => r.plotId))).toEqual(new Set([PLOT, plotB]));
+    expect(rows.find((r) => r.id === ids[0])!.photos).toBe(1);
+    expect(rows.find((r) => r.id === ids[1])!.photos).toBe(0);
+    expect((await db.pendingMutations(40)).map((m) => m.kind)).toEqual(["records.upsert", "attachments.upsert", "records.upsert"]);
+  });
+
   it("guardar registro con fotos: fila local + mutaciones en orden, pendiente", async () => {
     const db = setup();
     const id = db.saveRecord(USER, ORG, rec, [photo, photo]);

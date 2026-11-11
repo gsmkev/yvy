@@ -288,6 +288,14 @@ export class LocalDb implements SyncStore {
     return recordId;
   }
 
+  /**
+   * Un registro por lote, todo en una transacción y con el mismo capturedAt (anotar en varios lotes, F-10).
+   * Las fotos van en el primero: subirlas una vez por lote sería mandar lo mismo varias veces.
+   */
+  saveRecords(userId: string, orgId: string, inputs: NewRecord[], photos: LocalPhoto[] = []): string[] {
+    return this.sql.tx(() => inputs.map((input, i) => this.saveRecord(userId, orgId, input, i === 0 ? photos : [])));
+  }
+
   /** Marca un punto de interés (F-07). Fila local + mutación en una sola transacción. */
   savePoi(orgId: string, input: { farmId: string; kind: Poi["kind"]; name: string; lon: number; lat: number }, poiId = newId()): string {
     const ts = this.now();

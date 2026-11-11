@@ -23,6 +23,12 @@ def to_crs(geom: BaseGeometry, dst: CRS | str | int) -> BaseGeometry:
     return shapely.transform(geom, lambda xy: np.column_stack(t.transform(xy[:, 0], xy[:, 1])))
 
 
+def from_crs(geom: BaseGeometry, src: CRS | str | int) -> BaseGeometry:
+    """De un CRS métrico (UTM) a WGS84 lon/lat."""
+    t = Transformer.from_crs(src, "EPSG:4326", always_xy=True)
+    return shapely.transform(geom, lambda xy: np.column_stack(t.transform(xy[:, 0], xy[:, 1])))
+
+
 def load(geojson: dict[str, Any]) -> BaseGeometry:
     return shape(geojson)
 

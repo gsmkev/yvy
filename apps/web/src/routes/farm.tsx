@@ -20,10 +20,12 @@ import { download, plotsToGeoJson, plotsToKml, plotsToShapefileZip } from "../li
 import { closedAreaHa, fmtDistance, pathLengthM, type LonLat } from "../lib/measure";
 import { fmtDate, fmtHa, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
+import { loadPrefs, savePrefs } from "../lib/prefs";
 import { useAlerts, useFarm, useFarms, useMe, useMembers } from "../lib/queries";
 import type { RecordRow } from "../lib/types";
 
 type Tab = "plots" | "records" | "tasks" | "climate" | "alerts";
+const TABS: Tab[] = ["plots", "records", "tasks", "climate", "alerts"];
 
 export function FarmPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId" });
@@ -34,7 +36,10 @@ export function FarmPage() {
   const members = useMembers(canEdit);
   const alerts = useAlerts({ farmId, active: true });
   const qc = useQueryClient();
-  const [tab, setTab] = useState<Tab>("plots");
+  const [tab, setTab] = useState<Tab>(() => {
+    const saved = loadPrefs().tab;
+    return TABS.includes(saved as Tab) ? (saved as Tab) : "plots";
+  });
   const { lote } = useSearch({ from: "/app/estancias/$farmId" });
   const [selected, setSelected] = useState<string | null>(lote ?? null);
   // Llegar desde el buscador con ?lote= elige ese lote
@@ -47,7 +52,10 @@ export function FarmPage() {
   const [mode, setMode] = useState<"none" | "draw" | "poi" | "import">("none");
   const [drawn, setDrawn] = useState<Polygon | null>(null);
   const [poiAt, setPoiAt] = useState<[number, number] | null>(null);
-  const [layer, setLayer] = useState<"satellite" | "ndvi">("satellite");
+  const [wantedLayer, setLayer] = useState<"satellite" | "ndvi">(() =>
+    loadPrefs().layer === "ndvi" ? "ndvi" : "satellite",
+  );
+  useEffect(() => savePrefs({ farmId }), [farmId]);
   const [records, setRecords] = useState<RecordRow[]>([]);
   // Bajo lg no entran el mapa y el panel juntos: se alterna entre uno y otro.
   const [view, setView] = useState<"map" | "list">("map");
@@ -100,6 +108,8 @@ export function FarmPage() {
   const workersOf = (plotId: string) =>
     (members.data ?? []).filter((m) => d.assignments.some((a) => a.plotId === plotId && a.userId === m.userId));
   const ndviLayer = d.layers.filter((l) => l.layer === "ndvi").sort((a, b) => b.acquiredAt - a.acquiredAt)[0];
+  // La capa NDVI recordada solo vale si esta estancia tiene imagen
+  const layer = wantedLayer === "ndvi" && ndviLayer ? "ndvi" : "satellite";
   const hasBasemap = d.layers.some((l) => l.layer === "true_color");
   const cropHa = d.plots.filter((p) => p.kind === "crop").reduce((a, p) => a + p.areaHa, 0);
   const pastureHa = d.plots.filter((p) => p.kind === "pasture").reduce((a, p) => a + p.areaHa, 0);
@@ -221,7 +231,10 @@ export function FarmPage() {
                 role="radio"
                 aria-checked={layer === l}
                 disabled={l === "ndvi" && !ndviLayer}
-                onClick={() => setLayer(l)}
+                onClick={() => {
+                  setLayer(l);
+                  savePrefs({ layer: l });
+                }}
                 className={`cursor-pointer rounded px-3 py-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${layer === l ? "bg-lino text-surco" : "hover:bg-white/10"}`}
               >
                 {l === "satellite" ? t("ui.layerSatellite") : t("ui.layerNdvi")}
@@ -345,7 +358,10 @@ export function FarmPage() {
 
         <Tabs<Tab>
           value={tab}
-          onChange={setTab}
+          onChange={(v) => {
+            setTab(v);
+            savePrefs({ tab: v });
+          }}
           tabs={[
             { id: "plots", label: t("ui.tabPlots"), count: d.plots.length },
             { id: "records", label: t("ui.tabRecords") },

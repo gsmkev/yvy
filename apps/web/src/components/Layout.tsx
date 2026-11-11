@@ -5,7 +5,8 @@ import { getSession, onSession, post, setSession } from "../lib/api";
 import { FEATURES } from "../lib/features";
 import { fmtDate } from "../lib/format";
 import { t, type MessageKey } from "../lib/i18n";
-import { useAlerts, useMe } from "../lib/queries";
+import { useAlerts, useFarms, useMe } from "../lib/queries";
+import { loadPrefs } from "../lib/prefs";
 import { GlobalSearch } from "./GlobalSearch";
 import { OrgSwitcher } from "./OrgSwitcher";
 
@@ -29,6 +30,7 @@ export function Layout() {
   const me = useMe();
   const alerts = useAlerts({ active: true });
   const searchRef = useRef<HTMLInputElement>(null);
+  const farms = useFarms();
   useEffect(() => {
     const off = onSession((s) => {
       if (!s) {
@@ -64,6 +66,8 @@ export function Layout() {
   const items = me.data?.isStaff ? [...NAV, { to: "/interno", label: "ui.navInternal" as MessageKey }] : NAV;
   const nAlerts = alerts.data?.length ?? 0;
   const path = useRouterState({ select: (s) => s.location.pathname });
+  // Con varias estancias, "Mapa" vuelve a la última que se miró
+  const lastFarm = (farms.data?.length ?? 0) > 1 ? farms.data!.find((f) => f.id === loadPrefs().farmId)?.id : undefined;
   const onMap = path === "/" || path.startsWith("/estancias");
 
   return (
@@ -73,23 +77,32 @@ export function Layout() {
           {t("ui.appName")}
         </Link>
         <nav aria-label="Principal" className="flex h-full flex-1 gap-5 overflow-x-auto">
-          {items.map((n) => (
-            <Link
-              key={n.to}
-              to={n.to}
-              className={`-mb-px flex items-center border-b-2 text-[15px] whitespace-nowrap transition-colors hover:text-surco ${
-                n.to === "/" && onMap ? "border-surco font-medium text-surco" : "border-transparent text-tinta-2"
-              }`}
-              activeProps={n.to === "/" ? {} : { className: "!border-surco !text-surco font-medium" }}
-            >
-              {t(n.label)}
-              {n.to === "/avisos" && nAlerts > 0 && (
-                <span className="num ml-1.5 rounded-full bg-peligro px-1.5 text-xs leading-5 font-semibold text-white">
-                  {nAlerts}
-                </span>
-              )}
-            </Link>
-          ))}
+          {items.map((n) => {
+            const cls = `-mb-px flex items-center border-b-2 text-[15px] whitespace-nowrap transition-colors hover:text-surco ${
+              n.to === "/" && onMap ? "border-surco font-medium text-surco" : "border-transparent text-tinta-2"
+            }`;
+            if (n.to === "/" && lastFarm)
+              return (
+                <Link key={n.to} to="/estancias/$farmId" params={{ farmId: lastFarm }} className={cls}>
+                  {t(n.label)}
+                </Link>
+              );
+            return (
+              <Link
+                key={n.to}
+                to={n.to}
+                className={cls}
+                activeProps={n.to === "/" ? {} : { className: "!border-surco !text-surco font-medium" }}
+              >
+                {t(n.label)}
+                {n.to === "/avisos" && nAlerts > 0 && (
+                  <span className="num ml-1.5 rounded-full bg-peligro px-1.5 text-xs leading-5 font-semibold text-white">
+                    {nAlerts}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
         <GlobalSearch inputRef={searchRef} />
         <OrgSwitcher

@@ -92,6 +92,9 @@ export const productDose = z.object({
   dose: z.number().positive().max(100_000),
   unit: z.enum(DOSE_UNITS),
 });
+/** Fertilizante: siempre kg/ha. */
+export const fertilizerDose = productDose.extend({ unit: z.literal("kg_ha") });
+export const FERT_METHODS = ["broadcast", "banded", "foliar", "fertigation"] as const;
 export type ProductDose = z.infer<typeof productDose>;
 
 export const recordDataSchemas = {
@@ -138,6 +141,13 @@ export const recordDataSchemas = {
     .refine((d) => d.density === undefined || d.densityUnit !== undefined, {
       message: "Indicá la unidad de la densidad",
     }),
+  fertilization: z.object({
+    seasonId,
+    products: z.array(fertilizerDose).min(1).max(10),
+    method: z.enum(FERT_METHODS),
+    areaHa: areaDone.optional(),
+    note,
+  }),
   application: z
     .object({
       seasonId,

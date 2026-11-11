@@ -1,17 +1,18 @@
 import { doseText } from "@yvy/shared";
 import { fmtNum } from "../lib/format";
-import { t } from "../lib/i18n";
+import { t, tk } from "../lib/i18n";
 
 type Data = Record<string, unknown>;
 const num = (v: unknown): number | null => (typeof v === "number" ? v : null);
 
 /** Detalle estructurado de los registros agrícolas (la descripción corta ya sale de describeRecord). */
 export function RecordDetails({ kind, data }: { kind: string; data: Data }) {
-  if (kind !== "application") return null;
+  if (kind !== "application" && kind !== "fertilization") return null;
   const products = Array.isArray(data.products) ? (data.products as Data[]) : [];
   const rows: [string, string][] = [];
   if (num(data.volumeLHa) !== null) rows.push([t("ui.appVolume"), `${fmtNum(data.volumeLHa as number)} L/ha`]);
   if (num(data.areaHa) !== null) rows.push([t("ui.appArea"), `${fmtNum(data.areaHa as number)} ha`]);
+  if (typeof data.method === "string") rows.push([t("fields.method"), tk(`fields.method_${data.method}`)]);
   if (typeof data.machine === "string") rows.push([t("fields.machine"), data.machine]);
   const cond: [string, string][] = [];
   if (num(data.windKmh) !== null) cond.push([t("ui.appWind"), `${fmtNum(data.windKmh as number)} km/h`]);

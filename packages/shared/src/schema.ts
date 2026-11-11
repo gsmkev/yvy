@@ -42,6 +42,7 @@ export const RECORD_KINDS = [
   // ADR 0004: registros agrícolas
   "sowing",
   "application",
+  "fertilization",
 ] as const;
 export type RecordKind = (typeof RECORD_KINDS)[number];
 /** Tipos de producto del catálogo (ADR 0004). */

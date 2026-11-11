@@ -592,7 +592,7 @@ function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unk
     );
   }
   if (step.kind === "products") {
-    return <ProductsStep question={step.question} value={value} onAnswer={onAnswer} />;
+    return <ProductsStep question={step.question} value={value} fixedUnit={step.fixedUnit} types={step.productTypes} onAnswer={onAnswer} />;
   }
   if (step.kind === "yesno") {
     return (
@@ -660,8 +660,13 @@ function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unk
 }
 
 /** Productos de la mezcla: elegir del catálogo (o escribir uno) y una dosis por pantalla. */
-function ProductsStep({ question, value, onAnswer }: { question: string; value: unknown; onAnswer: (v: unknown) => void }) {
-  const catalog = useMemo(() => getDb().products(), []);
+function ProductsStep({ question, value, fixedUnit, types, onAnswer }: { question: string; value: unknown; fixedUnit?: "kg_ha"; types?: string[]; onAnswer: (v: unknown) => void }) {
+  // Con un tipo pedido (fertilizantes) se ofrece ese tipo; si el catálogo no tiene ninguno, todos.
+  const catalog = useMemo(() => {
+    const all = getDb().products();
+    const typed = types ? all.filter((p) => types.includes(p.type)) : all;
+    return typed.length ? typed : all;
+  }, []);
   const initial = Array.isArray(value) ? (value as ProductDose[]) : [];
   const [doses, setDoses] = useState<ProductDose[]>(initial);
   const [view, setView] = useState<"review" | "pick" | "other" | number>(initial.length ? "review" : "pick");
@@ -672,7 +677,7 @@ function ProductsStep({ question, value, onAnswer }: { question: string; value: 
     setDoses((ds) =>
       ds.some((d) => d.productId === p.id)
         ? ds.filter((d) => d.productId !== p.id)
-        : [...ds, { productId: p.id, name: p.name, dose: 0, unit: DOSE_UNITS_FOR[p.unit][0] }],
+        : [...ds, { productId: p.id, name: p.name, dose: 0, unit: fixedUnit ?? DOSE_UNITS_FOR[p.unit][0] }],
     );
   const baseOf = (d: ProductDose): "l" | "kg" => (d.unit === "kg_ha" || d.unit === "g_ha" ? "kg" : "l");
   const go = (i: number) => {
@@ -706,7 +711,7 @@ function ProductsStep({ question, value, onAnswer }: { question: string; value: 
           title={t("app.next")}
           disabled={!name}
           onPress={() => {
-            setDoses((ds) => [...ds, { name, dose: 0, unit: "l_ha" }]);
+            setDoses((ds) => [...ds, { name, dose: 0, unit: fixedUnit ?? "l_ha" }]);
             setOther("");
             setView("pick");
           }}
@@ -746,12 +751,12 @@ function ProductsStep({ question, value, onAnswer }: { question: string; value: 
           />
           <Text style={st.unit}>{tr(`fields.doseUnit_${unit}`)}</Text>
         </View>
-        <Button
+        {!fixedUnit && <Button
           kind="text"
           title={t("app.productDoseChange", { unit: tr(`fields.doseUnit_${alt}`) })}
           onPress={() => setDoses((ds) => ds.map((x, j) => (j === view ? { ...x, unit: alt } : x)))}
           style={{ marginTop: 8 }}
-        />
+        />}
         <View style={{ flex: 1 }} />
         <Button big title={t("app.next")} disabled={!ok} onPress={next} />
       </ScrollView>

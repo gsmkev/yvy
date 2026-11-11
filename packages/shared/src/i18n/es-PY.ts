@@ -36,6 +36,7 @@ export const esPY = {
     // agri
     sowing: "Siembra",
     application: "Aplicación",
+    fertilization: "Fertilización",
   },
   rejectReasons: {
     not_found: "el dato no existe",
@@ -395,6 +396,8 @@ export const esPY = {
     tempQuestion: "¿Qué temperatura hay?",
     humidityQuestion: "¿Qué humedad hay?",
     humidityHint: "Humedad relativa en porcentaje.",
+    fertProductsQuestion: "¿Qué fertilizantes pusiste?",
+    fertMethodQuestion: "¿Cómo lo aplicaste?",
   },
   fields: {
     condition: "Estado general",
@@ -513,6 +516,11 @@ export const esPY = {
     deltaT: "Delta T (°C)",
     deltaTValue: "Delta T {{n}}",
     machine: "Máquina o contratista",
+    method: "Método",
+    method_broadcast: "Al voleo",
+    method_banded: "En línea",
+    method_foliar: "Foliar",
+    method_fertigation: "Fertirriego",
   },
   ui: {
     appName: "Yvy",

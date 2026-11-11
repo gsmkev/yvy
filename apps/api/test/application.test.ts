@@ -146,3 +146,51 @@ describe("registro de aplicación", () => {
     await bad({ products: [dose], areaHa: -1 });
   });
 });
+
+describe("registro de fertilización (A-16)", () => {
+  const push = (token: string, farmId: string, plotId: string | null, data: unknown) =>
+    call("POST", "/sync/push", {
+      token,
+      body: {
+        deviceId: "d",
+        mutations: [
+          {
+            mutationId: newId(),
+            kind: "records.upsert",
+            row: {
+              id: newId(),
+              farmId,
+              plotId,
+              poiId: null,
+              kind: "fertilization",
+              data,
+              schemaVersion: RECORD_SCHEMA_VERSION,
+              lon: null,
+              lat: null,
+              gpsAccuracyM: null,
+              capturedAt: Date.now(),
+            },
+          },
+        ],
+      },
+    });
+  const fert = { productId: newId(), name: "Urea", dose: 150, unit: "kg_ha" };
+
+  it("acepta kg/ha con método y superficie; el empleado solo en su lote", async () => {
+    const { owner, worker, farmId, plotIds } = await setup();
+    expect((await push(owner.token, farmId, null, { products: [fert], method: "broadcast", areaHa: 40 })).body.results[0].status).toBe("applied");
+    expect((await push(worker.token, farmId, plotIds[0]!, { products: [fert], method: "banded" })).body.results[0].status).toBe("applied");
+    expect((await push(worker.token, farmId, plotIds[2]!, { products: [fert], method: "banded" })).body.results[0].status).toBe("rejected");
+  });
+
+  it("rechaza otra unidad, método inexistente o sin productos", async () => {
+    const { owner, farmId } = await setup();
+    const bad = async (data: unknown) =>
+      expect((await push(owner.token, farmId, null, data)).body.results[0].status).toBe("rejected");
+    await bad({ products: [{ ...fert, unit: "l_ha" }], method: "foliar" });
+    await bad({ products: [fert], method: "avioneta" });
+    await bad({ products: [fert] });
+    await bad({ products: [], method: "foliar" });
+    await bad({ products: [{ ...fert, dose: -5 }], method: "foliar" });
+  });
+});

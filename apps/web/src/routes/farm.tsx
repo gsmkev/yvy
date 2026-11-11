@@ -3,7 +3,7 @@ import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Polygon } from "geojson";
 import { MapPinPlus, PenLine, Upload, X } from "lucide-react";
-import { areaHa, bboxOf, type Area } from "@yvy/geo";
+import { areaHa, bboxOf, validatePolygon, type Area } from "@yvy/geo";
 import { BRAND, NDVI_RAMP, POI_KINDS } from "@yvy/shared";
 import { AlertsList } from "../components/AlertsList";
 import { CopyCoords } from "../components/CopyCoords";
@@ -20,7 +20,7 @@ import { RecordsList } from "../components/RecordsList";
 import { SeasonsPanel } from "../components/SeasonsPanel";
 import { TasksPanel } from "../components/TasksPanel";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "../components/ui";
-import { del, post } from "../lib/api";
+import { del, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
 import { download, plotsToGeoJson, plotsToKml, plotsToShapefileZip } from "../lib/exports";
 import { closedAreaHa, fmtDistance, pathLengthM, type LonLat } from "../lib/measure";
@@ -66,6 +66,13 @@ export function FarmPage() {
     }
   }, [lote]);
   const [mode, setMode] = useState<"none" | "draw" | "poi" | "import">("none");
+  // M-02: edición de vértices de un lote existente
+  const [shapeEdit, setShapeEdit] = useState<{ id: string; geometry: string } | null>(null);
+  const [shape, setShape] = useState<Polygon | null>(null);
+  const endShapeEdit = () => {
+    setShapeEdit(null);
+    setShape(null);
+  };
   // T-01: lotes marcados en el mapa para una tarea nueva; `picking` esconde el diálogo mientras se elige.
   const [taskPlots, setTaskPlots] = useState<string[]>([]);
   const [picking, setPicking] = useState(false);
@@ -100,8 +107,14 @@ export function FarmPage() {
     if (mode === "draw" || mode === "poi") setView("map");
   }, [mode]);
   useEffect(() => {
-    if (picking) setView("map");
-  }, [picking]);
+    if (picking || shapeEdit) setView("map");
+  }, [picking, shapeEdit]);
+  useEffect(() => {
+    if (!shapeEdit) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && endShapeEdit();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [shapeEdit]);
   // Al salir de Tareas el diálogo se cierra: la selección del mapa no queda colgada.
   useEffect(() => {
     if (tab !== "tasks") {
@@ -214,6 +227,8 @@ export function FarmPage() {
           showNdvi={layer === "ndvi"}
           selectedPlotId={picking ? null : selected}
           pickedPlotIds={taskPlots}
+          editPlot={shapeEdit}
+          onEditChange={setShape}
           bounds={bounds}
           points={
             showPests
@@ -235,6 +250,7 @@ export function FarmPage() {
             setMode("none");
           }}
           onPlotClick={(id) => {
+            if (shapeEdit) return;
             if (picking) return togglePicked(id);
             setSelected(id);
             setTab("plots");
@@ -400,8 +416,20 @@ export function FarmPage() {
             </p>
           )}
         </div>
+        {shapeEdit && (
+          <ShapeEditBar
+            plotId={shapeEdit.id}
+            original={shapeEdit.geometry}
+            shape={shape}
+            onDone={endShapeEdit}
+            onSaved={() => {
+              qc.invalidateQueries({ queryKey: ["farm", farmId] });
+              qc.invalidateQueries({ queryKey: ["farms"] });
+            }}
+          />
+        )}
         {picking && (
-          <div className="absolute bottom-4 left-1/2 flex max-w-[calc(100%-2rem)] -translate-x-1/2 flex-wrap items-center gap-x-4 gap-y-1 rounded-md bg-surco px-4 py-2.5 text-sm text-lino shadow-lg">
+          <div className="absolute bottom-4 left-1/2 flex max-w-[calc(100%-2rem)] -translate-x-1/2 flex-wrap items-center gap-x-4 gap-y-1 rounded-md bg-surco px-4 py-2.5 text-sm text-lino">
             <span>{t("ui.taskPickHint")}</span>
             <span className="num font-semibold">{t("ui.taskPickCount", { n: taskPlots.length })}</span>
             <button className="cursor-pointer font-medium underline underline-offset-4" onClick={() => setPicking(false)}>
@@ -534,6 +562,10 @@ export function FarmPage() {
               onShowArea={(a) => {
                 setFlyTo({ lon: a.lon, lat: a.lat, zoom: 17, n: Date.now() });
                 setView("map");
+              }}
+              onEditShape={() => {
+                setShape(null);
+                setShapeEdit({ id: plot.id, geometry: plot.geometry });
               }}
             />
           ) : d.plots.length === 0 ? (
@@ -707,6 +739,64 @@ function NewPlotModal({
         </Button>
       </form>
     </Modal>
+  );
+}
+
+/** Barra de la edición de vértices: superficie en vivo, validación completa (Turf) y guardado por PATCH. */
+function ShapeEditBar({
+  plotId,
+  original,
+  shape,
+  onDone,
+  onSaved,
+}: {
+  plotId: string;
+  original: string;
+  shape: Polygon | null;
+  onDone: () => void;
+  onSaved: () => void;
+}) {
+  const problem = shape ? validatePolygon(shape) : null;
+  const save = useMutation({
+    mutationFn: () =>
+      patch<{ areaHa: number; warnings: { kind: "overlap" | "outside"; plotName?: string }[] }>(
+        `/org/plots/${plotId}`,
+        { geometry: shape },
+      ),
+    onSuccess: (r) => {
+      onSaved();
+      toast(t("ui.plotShapeSaved", { area: fmtHa(r.areaHa) }));
+      for (const w of r.warnings)
+        toast(
+          w.kind === "overlap" ? t("ui.plotShapeOverlap", { name: w.plotName ?? "" }) : t("ui.plotShapeOutside"),
+          { ms: 6000 },
+        );
+      onDone();
+    },
+  });
+  const area = areaHa(shape ?? (JSON.parse(original) as Polygon));
+  return (
+    <div className="absolute bottom-4 left-1/2 flex max-w-[calc(100%-2rem)] -translate-x-1/2 flex-col gap-2 rounded-md bg-surco px-4 py-3 text-sm text-lino">
+      <p>{t("ui.plotEditHint")}</p>
+      <p className="num">
+        {t("ui.area")}: <strong className="font-semibold">{fmtHa(area)}</strong>
+        {shape && <span className="text-lino/70"> · {t("ui.plotEditWas", { area: fmtHa(areaHa(JSON.parse(original) as Polygon)) })}</span>}
+      </p>
+      {problem && <p className="font-medium text-trigo">{tk(`ui.geomError_${problem}`)}</p>}
+      {save.error && <p className="font-medium text-trigo">{save.error instanceof Error ? save.error.message : String(save.error)}</p>}
+      <div className="flex gap-4 font-medium">
+        <button
+          className="cursor-pointer underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
+          disabled={!shape || !!problem || save.isPending}
+          onClick={() => save.mutate()}
+        >
+          {t("ui.plotEditSave")}
+        </button>
+        <button className="cursor-pointer underline-offset-4 hover:underline" onClick={onDone}>
+          {t("ui.cancel")}
+        </button>
+      </div>
+    </div>
   );
 }
 

@@ -6,6 +6,7 @@ import { and, asc, desc, eq, getTableColumns, gte, inArray, isNull, lt, lte, or,
 import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
 import { DEFAULT_ALERT_SETTINGS, LIMITS, parseTaskComments, type AlertSettings, type RecordKind, type TaskComment } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
+import { bboxOf, checkPlots, type Area } from "@yvy/geo";
 import { newId } from "@yvy/shared";
 import { randomToken, sha256Hex } from "../lib/crypto";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from "./client";
@@ -620,6 +621,59 @@ function cascadeStmts(sdb: ScopedDb, assignWhere: SQL, taskWhere: SQL, ts: numbe
 export async function updatePlot(sdb: ScopedDb, id: string, patch: Partial<typeof s.plots.$inferInsert>) {
   sdb.require(can.editField);
   await updateSynced(sdb, s.plots, id, patch);
+}
+
+/**
+ * Avisos no bloqueantes de un lote ya guardado (M-02): cuánto se superpone con los vecinos de su estancia y si
+ * sale del perímetro. Presupuesto de CPU: solo vecinos cuyo bbox toca al lote y como máximo 12 recortes exactos.
+ */
+export async function plotGeometryWarnings(sdb: ScopedDb, plotId: string, geometry: Area) {
+  const org = sdb.auth.orgId;
+  const [own] = await sdb.db
+    .select({ farmId: s.plots.farmId })
+    .from(s.plots)
+    .where(and(eq(s.plots.id, plotId), eq(s.plots.organizationId, org)))
+    .limit(1);
+  if (!own) throw new NotFoundError("No existe");
+  const box = bboxOf(geometry);
+  const [farm] = await sdb.db
+    .select({ geometry: s.farms.geometry })
+    .from(s.farms)
+    .where(and(eq(s.farms.id, own.farmId), eq(s.farms.organizationId, org)))
+    .limit(1);
+  const neighbors = await sdb.db
+    .select({ id: s.plots.id, name: s.plots.name, geometry: s.plots.geometry })
+    .from(s.plots)
+    .where(
+      and(
+        eq(s.plots.organizationId, org),
+        eq(s.plots.farmId, own.farmId),
+        isNull(s.plots.deletedAt),
+        sql`${s.plots.id} <> ${plotId}`,
+        lte(s.plots.minLon, box.maxLon),
+        gte(s.plots.maxLon, box.minLon),
+        lte(s.plots.minLat, box.maxLat),
+        gte(s.plots.maxLat, box.minLat),
+      ),
+    )
+    .limit(12);
+  const found = checkPlots(
+    [geometry, ...neighbors.map((n) => JSON.parse(n.geometry) as Area)],
+    farm ? (JSON.parse(farm.geometry) as Area) : null,
+    { maxExact: 12 },
+  );
+  return found
+    .filter((w) => w.a === 0 || w.b === 0)
+    .map((w) =>
+      w.kind === "outside"
+        ? { kind: "outside" as const, ratio: Math.round(w.ratio * 1000) / 1000 }
+        : {
+            kind: "overlap" as const,
+            plotId: neighbors[(w.a === 0 ? w.b! : w.a) - 1]!.id,
+            plotName: neighbors[(w.a === 0 ? w.b! : w.a) - 1]!.name,
+            ratio: Math.round(w.ratio * 1000) / 1000,
+          },
+    );
 }
 
 export async function deletePlot(sdb: ScopedDb, id: string) {

@@ -60,6 +60,13 @@ ingest.get("/farms/:id/geometry", async (c) => {
   return c.json({ farm: JSON.parse(row.farm), plots: JSON.parse(row.plots) });
 });
 
+/** El job new_farm avisa que empezó (processing) o que el mapa base falló (failed). `ready` lo pone /farm-layers. */
+ingest.post("/farms/:id/imagery-status", async (c) => {
+  const b = parse(z.object({ status: z.enum(["pending", "processing", "failed"]) }), json(c.var.body));
+  if (!(await c.var.sys.setImageryStatus(c.req.param("id"), b.status))) throw new HTTPException(404);
+  return c.json({ ok: true });
+});
+
 ingest.post("/scenes", async (c) => {
   const b = parse(
     z.object({

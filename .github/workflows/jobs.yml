@@ -12,12 +12,13 @@ on:
       job:
         description: Job
         type: choice
-        options: [s2_ingest, s2_basemap, chirps_daily, firms_hotspots, climatology_build]
+        options: [new_farm, s2_ingest, s2_basemap, chirps_daily, firms_hotspots, climatology_build]
       farm:
-        description: Id de estancia (opcional)
+        description: "Id de estancia (obligatorio para new_farm: mapa base, 180 días y climatología)"
         required: false
 concurrency:
-  group: jobs-${{ github.event.schedule || inputs.job }}
+  # new_farm por estancia: dos estancias creadas a la vez no se cancelan entre sí en la cola
+  group: jobs-${{ github.event.schedule || format('{0}-{1}', inputs.job, inputs.farm) }}
   cancel-in-progress: false
 jobs:
   run:
@@ -53,4 +54,6 @@ jobs:
           uv run --frozen python -m yvy_workers climatology_build --only-missing
           uv run --frozen python -m yvy_workers s2_basemap --only-missing
       - if: steps.pick.outputs.cmd != 'weekly'
-        run: uv run --frozen python -m yvy_workers ${{ steps.pick.outputs.cmd }} ${{ inputs.farm && format('--farm {0}', inputs.farm) || '' }}
+        env:
+          FARM: ${{ inputs.farm }}
+        run: uv run --frozen python -m yvy_workers ${{ steps.pick.outputs.cmd }} ${FARM:+--farm "$FARM"}

@@ -9,6 +9,7 @@ import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from "@expo-goog
 import { dbReady } from "../src/lib/db";
 import { useNotificationTap } from "../src/lib/push";
 import { loadSession } from "../src/lib/session";
+import { Toast } from "../src/ui/kit";
 import { C, F } from "../src/ui/theme";
 
 function NotificationTap() {
@@ -46,6 +47,8 @@ export default function RootLayout() {
         <Stack.Screen name="scan" options={{ title: "" }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="record/[id]" options={{ title: "" }} />
+        <Stack.Screen name="poi" options={{ title: "" }} />
+        <Stack.Screen name="goto" options={{ title: "" }} />
         <Stack.Screen name="labs/roya" options={{ title: "" }} />
         <Stack.Screen name="labs/chinches" options={{ title: "" }} />
         <Stack.Screen name="labs/pasto" options={{ title: "" }} />
@@ -53,6 +56,7 @@ export default function RootLayout() {
         <Stack.Screen name="labs/voz" options={{ title: "" }} />
         <Stack.Screen name="annotate/index" options={{ title: "", presentation: "modal" }} />
       </Stack>
+      <Toast />
     </SafeAreaProvider>
   );
 }

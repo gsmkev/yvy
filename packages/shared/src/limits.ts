@@ -16,6 +16,8 @@ export const LIMITS = {
     maxFutureCaptureMs: 60 * 60 * 1000,
     /** Tareas completadas que siguen bajando al celular. */
     tasksDoneHistoryMs: 30 * 24 * 60 * 60 * 1000,
+    /** Largo máximo del nombre de un punto de interés. */
+    maxPoiNameLength: 120,
     /** Ventana en que el empleado puede editar o borrar sus registros (RF-34, §9). */
     workerEditWindowMs: 24 * 60 * 60 * 1000,
     /** Sincronización automática en primer plano (PRD: 15 min; anexo Cloudflare: 30). */
@@ -64,6 +66,10 @@ export const LIMITS = {
     forecastCacheMs: 3 * 60 * 60 * 1000,
     forecastRunsKept: 4,
     coordDecimals: 4,
+  },
+  share: {
+    /** Duraciones permitidas del enlace de solo lectura (K-04), en días. */
+    linkDays: [7, 30],
   },
 } as const;
 

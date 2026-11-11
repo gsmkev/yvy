@@ -141,5 +141,6 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `stock_moves_warehouse_idx` ON `stock_moves` (`warehouse_id`);",
   "CREATE INDEX `stock_moves_origin_idx` ON `stock_moves` (`origin_id`);",
   "ALTER TABLE `stock_moves` ADD `lot` text;",
-  "ALTER TABLE `stock_moves` ADD `expires_on` text;"
+  "ALTER TABLE `stock_moves` ADD `expires_on` text;",
+  "ALTER TABLE `stock_moves` ADD `photo_path` text;"
 ];

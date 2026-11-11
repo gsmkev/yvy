@@ -1,9 +1,13 @@
 /** Gestión desde la web: miembros, asignaciones, estancias, lotes, puntos de interés y tareas. */
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { areaHa, bboxOf, centroidOf, checkPlots, validateShape, type Area } from "@yvy/geo";
-import { CROPS, doseText, LIMITS, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, TASK_PRIORITIES, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
+import { CROPS, doseText, isWeakPin, LIMITS, PIN_LENGTH, PIN_REGEX, phoneKey, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, TASK_PRIORITIES, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
+import { can } from "../db/scoped";
+import { randomDigits, randomToken } from "../lib/crypto";
 import { dispatchNewFarm, inBackground } from "../lib/dispatch";
+import { hashPin } from "../lib/pin";
 import { sendEmail } from "../lib/email";
 import { parse, readJson, timeOfDay } from "../lib/http";
 import type { AppEnv } from "../types";
@@ -78,6 +82,35 @@ org.post("/members", async (c) => {
     await readJson(c.req),
   );
   return c.json(await c.var.sdb.addMember({ ...body, email: body.email ?? null, phone: body.phone ?? null }), 201);
+});
+
+/**
+ * F-24: PIN de ingreso del empleado. Sin `pin` en el cuerpo el servidor genera uno al azar y lo devuelve una sola vez
+ * (después solo queda el hash). El teléfono sale del cuerpo o de la ficha del empleado.
+ */
+org.put("/members/:userId/pin", async (c) => {
+  const body = parse(
+    z.object({ pin: z.string().regex(PIN_REGEX, "El PIN tiene 6 dígitos").optional(), phone: z.string().trim().max(30).optional() }),
+    await readJson(c.req),
+  );
+  const sdb = c.var.sdb;
+  sdb.require(can.manageWorkers, "Solo dueño o administrador gestionan el PIN de los empleados");
+  const userId = c.req.param("userId");
+  const phone = body.phone ?? (await sdb.memberPhone(userId));
+  const key = phone ? phoneKey(phone) : null;
+  if (!phone || !key) throw new HTTPException(400, { message: t("app.pinNeedsPhone") });
+  if (body.pin && isWeakPin(body.pin)) throw new HTTPException(400, { message: t("app.pinTooWeak") });
+  let pin = body.pin;
+  while (!pin || isWeakPin(pin)) pin = randomDigits(PIN_LENGTH);
+  const salt = randomToken(16);
+  const res = await sdb.setMemberPin(userId, { phone, phoneKey: key, salt, pinHash: await hashPin(c.env.JWT_SECRET, salt, pin) });
+  if (res === "phone_taken") throw new HTTPException(409, { message: t("app.pinPhoneTaken") });
+  return c.json({ ok: true, pin: body.pin ? undefined : pin });
+});
+
+org.delete("/members/:userId/pin", async (c) => {
+  await c.var.sdb.clearMemberPin(c.req.param("userId"));
+  return c.json({ ok: true });
 });
 
 org.put("/members/:userId/plots", async (c) => {

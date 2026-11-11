@@ -54,6 +54,9 @@ export const LIMITS = {
     emailCodesPerIp: 10,
     emailCodesIpWindowMs: 60 * 60 * 1000,
     refreshTokenTtlMs: 90 * 24 * 60 * 60 * 1000,
+    /** Ingreso con teléfono y PIN de 6 dígitos (F-24): intentos por cuenta antes de bloquear, y cuánto dura el bloqueo. */
+    pinMaxAttempts: 5,
+    pinLockMs: 15 * 60 * 1000,
   },
   geometry: {
     /** Hectáreas: bajo esto un lote es casi seguro un error de dibujo. */

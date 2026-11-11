@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Polygon } from "geojson";
+import type { LineString, Polygon } from "geojson";
 import { MapPinPlus, PenLine, Upload, X } from "lucide-react";
 import { areaHa, bboxOf, validatePolygon, type Area } from "@yvy/geo";
 import { BRAND, NDVI_RAMP, POI_KINDS } from "@yvy/shared";
@@ -13,6 +13,7 @@ import { FullscreenButton } from "../components/FullscreenButton";
 import { ExportButtons } from "../components/ExportButtons";
 import { ImportPlots } from "../components/ImportPlots";
 import { PlotPanel } from "../components/PlotPanel";
+import { MergeModal, SplitModal } from "../components/PlotEditModals";
 import { HerdPanel } from "../components/HerdPanel";
 import { PlotsTable } from "../components/PlotsTable";
 import { CompareOverlay, SceneControls } from "../components/SceneControls";
@@ -58,6 +59,11 @@ export function FarmPage() {
   const tab: Tab = tabPref === "herd" && !canEdit ? "plots" : tabPref;
   const [onlyUnvisited, setOnlyUnvisited] = useState(false);
   const mapBox = useRef<HTMLDivElement>(null);
+  // M-05: dividir (dibuja una línea sobre el lote) y unir (se elige el lote contiguo en el mapa)
+  const [splitting, setSplitting] = useState<string | null>(null);
+  const [splitLine, setSplitLine] = useState<LineString | null>(null);
+  const [mergeFrom, setMergeFrom] = useState<string | null>(null);
+  const [mergeWith, setMergeWith] = useState<string | null>(null);
   // U-27: captura del mapa para la hoja impresa
   const snapshotRef = useRef<(() => Promise<string | null>) | null>(null);
   const [snap, setSnap] = useState<string | null>(null);
@@ -263,12 +269,15 @@ export function FarmPage() {
           onMeasureClick={(lon, lat) => setMPoints((ps) => [...ps, [lon, lat]])}
           onMeasureClose={() => setMClosed(true)}
           drawing={mode === "draw"}
+          drawingLine={!!splitting && !splitLine}
+          onLineDrawn={setSplitLine}
           onDrawn={(g) => {
             setDrawn(g);
             setMode("none");
           }}
           onPlotClick={(id) => {
             if (shapeEdit) return;
+            if (mergeFrom) return id !== mergeFrom && setMergeWith(id);
             if (picking) return togglePicked(id);
             setSelected(id);
             setTab("plots");
@@ -460,6 +469,20 @@ export function FarmPage() {
             )}
           </div>
         )}
+        {(splitting || mergeFrom) && !splitLine && !mergeWith && (
+          <div className="absolute bottom-4 left-1/2 flex max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-3 rounded-md bg-surco px-4 py-2.5 text-sm text-lino">
+            {splitting ? t("ui.splitHint") : t("ui.mergePick")}
+            <button
+              className="cursor-pointer font-medium underline underline-offset-4"
+              onClick={() => {
+                setSplitting(null);
+                setMergeFrom(null);
+              }}
+            >
+              {t("ui.cancel")}
+            </button>
+          </div>
+        )}
         {mode !== "none" && mode !== "import" && !picking && (
           <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-md bg-surco px-4 py-2.5 text-sm text-lino shadow-lg">
             {mode === "poi" ? t("ui.clickMapForPoi") : t("ui.drawHint")}
@@ -602,6 +625,14 @@ export function FarmPage() {
                 setFlyTo({ lon: a.lon, lat: a.lat, zoom: 17, n: Date.now() });
                 setView("map");
               }}
+              onSplit={() => {
+                setMergeFrom(null);
+                setSplitting(plot.id);
+              }}
+              onMerge={() => {
+                setSplitting(null);
+                setMergeFrom(plot.id);
+              }}
               onEditShape={() => {
                 setShape(null);
                 setShapeEdit({ id: plot.id, geometry: plot.geometry });
@@ -728,6 +759,42 @@ export function FarmPage() {
         {tab === "herd" && canEdit && <HerdPanel farmId={farmId} />}
       </section>
 
+      {splitting && splitLine && d.plots.find((p) => p.id === splitting) && (
+        <SplitModal
+          plot={d.plots.find((p) => p.id === splitting)!}
+          line={splitLine}
+          onClose={() => {
+            setSplitLine(null);
+            setSplitting(null);
+          }}
+          onDone={() => {
+            setSplitLine(null);
+            setSplitting(null);
+            setSelected(null);
+            qc.invalidateQueries({ queryKey: ["farm", farmId] });
+            qc.invalidateQueries({ queryKey: ["farms"] });
+            toast(t("ui.splitDone"));
+          }}
+        />
+      )}
+      {mergeFrom && mergeWith && d.plots.find((p) => p.id === mergeFrom) && d.plots.find((p) => p.id === mergeWith) && (
+        <MergeModal
+          a={d.plots.find((p) => p.id === mergeFrom)!}
+          b={d.plots.find((p) => p.id === mergeWith)!}
+          onClose={() => {
+            setMergeWith(null);
+            setMergeFrom(null);
+          }}
+          onDone={() => {
+            setMergeWith(null);
+            setMergeFrom(null);
+            setSelected(null);
+            qc.invalidateQueries({ queryKey: ["farm", farmId] });
+            qc.invalidateQueries({ queryKey: ["farms"] });
+            toast(t("ui.mergeDone"));
+          }}
+        />
+      )}
       {mode === "import" && <ImportPlots farmId={farmId} onClose={() => setMode("none")} />}
       {drawn && (
         <NewPlotModal

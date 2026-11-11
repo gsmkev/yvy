@@ -7,9 +7,9 @@ import * as maplibregl from "maplibre-gl";
 import type { GeoJSONSource, Map as MlMap, MapLayerMouseEvent, MapMouseEvent } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Protocol } from "pmtiles";
-import { TerraDraw, TerraDrawPolygonMode, TerraDrawSelectMode } from "terra-draw";
+import { TerraDraw, TerraDrawLineStringMode, TerraDrawPolygonMode, TerraDrawSelectMode } from "terra-draw";
 import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter";
-import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
+import type { Feature, FeatureCollection, LineString, MultiPolygon, Polygon } from "geojson";
 import { BRAND } from "@yvy/shared";
 import pointOnFeature from "@turf/point-on-feature";
 import { t } from "../lib/i18n";
@@ -59,6 +59,9 @@ export interface FarmMapProps {
   /** Vuela a un punto (cambiar `n` para repetir el mismo destino). */
   flyTo?: { lon: number; lat: number; zoom?: number; n: number } | null;
   drawing?: boolean;
+  /** Dibujo de una línea (cortar un lote, trazar un alambrado). Termina con doble toque o Enter. */
+  drawingLine?: boolean;
+  onLineDrawn?: (g: LineString) => void;
   /** M-02: lote cuya forma se edita (vértices arrastrables). Se oculta de la capa de lotes mientras tanto. */
   editPlot?: { id: string; geometry: string } | null;
   onEditChange?: (g: Polygon) => void;
@@ -220,7 +223,7 @@ export function FarmMap(props: FarmMapProps) {
       });
       map.on("click", "plots-fill", (e: MapLayerMouseEvent) => {
         const id = e.features?.[0]?.properties?.id as string | undefined;
-        if (id && !cb.current.drawing && !cb.current.measuring) cb.current.onPlotClick?.(id);
+        if (id && !cb.current.drawing && !cb.current.drawingLine && !cb.current.measuring) cb.current.onPlotClick?.(id);
       });
       map.on("click", "points", (e: MapLayerMouseEvent) => {
         const id = e.features?.[0]?.properties?.id as string | undefined;
@@ -237,7 +240,7 @@ export function FarmMap(props: FarmMapProps) {
           if (!c.measureClosed) c.onMeasureClick?.(e.lngLat.lng, e.lngLat.lat);
           return;
         }
-        if (!c.drawing) c.onMapClick?.(e.lngLat.lng, e.lngLat.lat);
+        if (!c.drawing && !c.drawingLine) c.onMapClick?.(e.lngLat.lng, e.lngLat.lat);
       });
       for (const l of ["plots-fill", "points"]) {
         map.on("mouseenter", l, () => (map.getCanvas().style.cursor = "pointer"));
@@ -438,6 +441,24 @@ export function FarmMap(props: FarmMapProps) {
       drawRef.current = null;
     };
   }, [props.drawing, mapRef.current]);
+
+  // ---- dibujo de líneas (M-05, M-20) ----
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !props.drawingLine) return;
+    const draw = new TerraDraw({
+      adapter: new TerraDrawMapLibreGLAdapter({ map }),
+      modes: [new TerraDrawLineStringMode()],
+    });
+    draw.start();
+    draw.setMode("linestring");
+    draw.on("finish", (id) => {
+      const f = draw.getSnapshot().find((x) => x.id === id);
+      if (f && f.geometry.type === "LineString") cb.current.onLineDrawn?.(f.geometry as LineString);
+      draw.clear();
+    });
+    return () => draw.stop();
+  }, [props.drawingLine, mapRef.current]);
 
   // ---- edición de vértices (M-02) ----
   useEffect(() => {

@@ -28,6 +28,8 @@ export function PlotPanel({
   problemAreas = [],
   onShowArea,
   onEditShape,
+  onSplit,
+  onMerge,
 }: {
   plot: Plot;
   workers: Member[];
@@ -38,6 +40,9 @@ export function PlotPanel({
   onShowArea?: (a: ProblemArea) => void;
   /** M-02: pasa el mapa a edición de vértices de este lote. */
   onEditShape?: () => void;
+  /** M-05: dibujar una línea para dividir el lote / elegir otro lote para unir. */
+  onSplit?: () => void;
+  onMerge?: () => void;
 }) {
   const qc = useQueryClient();
   const heading = useRef<HTMLHeadingElement>(null);
@@ -289,12 +294,18 @@ export function PlotPanel({
       )}
 
       {canEdit && !editing && (
-        <div className="flex gap-2 border-t border-linea pt-4">
+        <div className="flex flex-wrap gap-2 border-t border-linea pt-4">
           <Button icon={Pencil} onClick={() => setEditing(true)}>
             {t("ui.edit")}
           </Button>
           {onEditShape && JSON.parse(plot.geometry).type === "Polygon" && (
             <Button onClick={onEditShape}>{t("ui.plotEditShape")}</Button>
+          )}
+          {onSplit && JSON.parse(plot.geometry).type === "Polygon" && (
+            <Button onClick={onSplit}>{t("ui.splitPlot")}</Button>
+          )}
+          {onMerge && JSON.parse(plot.geometry).type === "Polygon" && (
+            <Button onClick={onMerge}>{t("ui.mergePlots")}</Button>
           )}
           <Button variant="danger" icon={Trash2} onClick={() => setConfirming(true)}>
             {t("ui.delete")}

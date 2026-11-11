@@ -66,6 +66,11 @@ export function FarmPage() {
     }
   }, [lote]);
   const [mode, setMode] = useState<"none" | "draw" | "poi" | "import">("none");
+  // T-01: lotes marcados en el mapa para una tarea nueva; `picking` esconde el diálogo mientras se elige.
+  const [taskPlots, setTaskPlots] = useState<string[]>([]);
+  const [picking, setPicking] = useState(false);
+  const togglePicked = (id: string) =>
+    setTaskPlots((l) => (l.includes(id) ? l.filter((x) => x !== id) : [...l, id]));
   const [drawn, setDrawn] = useState<Polygon | null>(null);
   const [poiAt, setPoiAt] = useState<[number, number] | null>(null);
   const [wantedLayer, setLayer] = useState<"satellite" | "ndvi">(() =>
@@ -94,6 +99,22 @@ export function FarmPage() {
   useEffect(() => {
     if (mode === "draw" || mode === "poi") setView("map");
   }, [mode]);
+  useEffect(() => {
+    if (picking) setView("map");
+  }, [picking]);
+  // Al salir de Tareas el diálogo se cierra: la selección del mapa no queda colgada.
+  useEffect(() => {
+    if (tab !== "tasks") {
+      setPicking(false);
+      setTaskPlots([]);
+    }
+  }, [tab]);
+  useEffect(() => {
+    if (!picking) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setPicking(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [picking]);
   // Medir: puntos marcados, forma cerrada; Esc termina.
   const [measuring, setMeasuring] = useState(false);
   const [mPoints, setMPoints] = useState<LonLat[]>([]);
@@ -191,7 +212,8 @@ export function FarmPage() {
           onCamera={compare ? setCamera : undefined}
           tilesBaseUrl={me.data?.tilesBaseUrl}
           showNdvi={layer === "ndvi"}
-          selectedPlotId={selected}
+          selectedPlotId={picking ? null : selected}
+          pickedPlotIds={taskPlots}
           bounds={bounds}
           points={
             showPests
@@ -213,6 +235,7 @@ export function FarmPage() {
             setMode("none");
           }}
           onPlotClick={(id) => {
+            if (picking) return togglePicked(id);
             setSelected(id);
             setTab("plots");
             if (window.matchMedia("(max-width: 1023px)").matches) setView("list");
@@ -377,7 +400,21 @@ export function FarmPage() {
             </p>
           )}
         </div>
-        {mode !== "none" && mode !== "import" && (
+        {picking && (
+          <div className="absolute bottom-4 left-1/2 flex max-w-[calc(100%-2rem)] -translate-x-1/2 flex-wrap items-center gap-x-4 gap-y-1 rounded-md bg-surco px-4 py-2.5 text-sm text-lino shadow-lg">
+            <span>{t("ui.taskPickHint")}</span>
+            <span className="num font-semibold">{t("ui.taskPickCount", { n: taskPlots.length })}</span>
+            <button className="cursor-pointer font-medium underline underline-offset-4" onClick={() => setPicking(false)}>
+              {t("ui.taskPickDone")}
+            </button>
+            {taskPlots.length > 0 && (
+              <button className="cursor-pointer underline-offset-4 hover:underline" onClick={() => setTaskPlots([])}>
+                {t("ui.taskPickClear")}
+              </button>
+            )}
+          </div>
+        )}
+        {mode !== "none" && mode !== "import" && !picking && (
           <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-md bg-surco px-4 py-2.5 text-sm text-lino shadow-lg">
             {mode === "poi" ? t("ui.clickMapForPoi") : t("ui.drawHint")}
             <button
@@ -585,7 +622,13 @@ export function FarmPage() {
         {tab === "seasons" && <SeasonsPanel farmId={farmId} plots={d.plots} canEdit={canEdit} />}
         {tab === "products" && <ProductsPanel canEdit={canEdit} farmId={farmId} plots={d.plots} />}
         {tab === "records" && <RecordsList filters={{ farmId }} onRows={setRecords} />}
-        {tab === "tasks" && <TasksPanel farmId={farmId} plots={d.plots} />}
+        {tab === "tasks" && (
+          <TasksPanel
+            farmId={farmId}
+            plots={d.plots}
+            pick={{ ids: taskPlots, setIds: setTaskPlots, picking, setPicking }}
+          />
+        )}
         {tab === "climate" && <ClimatePanel farmId={farmId} />}
         {tab === "alerts" && <AlertsList farmId={farmId} />}
         {tab === "herd" && canEdit && <HerdPanel farmId={farmId} />}

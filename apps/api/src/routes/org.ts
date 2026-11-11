@@ -200,6 +200,8 @@ org.post("/tasks", async (c) => {
     z.object({
       farmId: uuid,
       plotId: uuid.nullish(),
+      /** T-01: una tarea por lote (lotes elegidos en el mapa). Con esto, `plotId` se ignora. */
+      plotIds: z.array(uuid).min(1).max(LIMITS.tasks.maxPlotsPerBatch).optional(),
       assigneeId: z.string(),
       title: z.string().trim().min(1).max(200),
       kind: z.enum(RECORD_KINDS).nullish(),
@@ -214,17 +216,15 @@ org.post("/tasks", async (c) => {
     }).refine((b) => (b.lon == null) === (b.lat == null), { message: "lon y lat van juntas" }),
     await readJson(c.req),
   );
-  const { checklist, ...rest } = body;
-  return c.json(
-    await c.var.sdb.createTask({
-      ...rest,
-      plotId: body.plotId ?? null,
-      kind: body.kind ?? null,
-      lon: body.lon ?? null,
-      lat: body.lat ?? null,
-      dueTime: body.dueTime ?? null,
-      checklist: serializeChecklist(newChecklist(checklist ?? [])),
-    }),
-    201,
-  );
+  const { plotIds, plotId, kind, dueTime, checklist, ...rest } = body;
+  const { ids } = await c.var.sdb.createTasks({
+    ...rest,
+    plotIds: plotIds ?? [plotId ?? null],
+    kind: kind ?? null,
+    dueTime: dueTime ?? null,
+    lon: body.lon ?? null,
+    lat: body.lat ?? null,
+    checklist: serializeChecklist(newChecklist(checklist ?? [])),
+  });
+  return c.json({ id: ids[0]!, ids }, 201);
 });

@@ -24,6 +24,7 @@ import { LayerSwitch, NdviLegend } from "../../src/ui/MapLayerControls";
 import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
 
 const FIT_PADDING = { top: 120, bottom: 40, left: 24, right: 24 };
+const PLOT_PADDING = { top: 120, bottom: 320, left: 40, right: 40 };
 const daysAgo = (ms: number) => Math.floor((Date.now() - ms) / 86_400_000);
 
 export default function MapScreen() {
@@ -49,6 +50,11 @@ export default function MapScreen() {
   const [copied, setCopied] = useState(false);
   const camera = useRef<CameraRef>(null);
   const farm = current ?? farms[0];
+  // M-13: al elegir un lote la cámara se ajusta a sus límites, dejando lugar a la ficha de abajo.
+  useEffect(() => {
+    const p = plots.find((x) => x.id === selected);
+    if (p) camera.current?.fitBounds([p.minLon, p.minLat, p.maxLon, p.maxLat], { padding: PLOT_PADDING, duration: 600 });
+  }, [selected]);
   const firstFarm = useRef(true);
   useEffect(() => {
     if (firstFarm.current) {

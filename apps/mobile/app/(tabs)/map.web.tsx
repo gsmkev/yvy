@@ -34,6 +34,8 @@ export default function MapScreen() {
     }, [selected]),
   );
   const farm = current ?? farms[0];
+  const lastSel = useRef<string | null>(null);
+  const view = useRef<{ farmId: string; center: [number, number]; zoom: number } | null>(null);
   const [mode, setModeState] = useState<MapLayer>(() => (getDb().getKv("map_layer") === "ndvi" ? "ndvi" : "true_color"));
   const setMode = (m: MapLayer) => {
     setModeState(m);
@@ -53,11 +55,16 @@ export default function MapScreen() {
     }
     const layer = layerSource(farm.id, mode, base);
     const fc = (features: GeoJSON.Feature[]) => ({ type: "FeatureCollection" as const, features });
+    // M-13: al elegir un lote se ajusta a sus límites; al cambiar otra cosa se conserva la vista.
+    const sel = plots.find((p) => p.id === selected);
+    const fitPlot = sel && selected !== lastSel.current;
+    lastSel.current = selected;
+    const keep = !fitPlot && view.current?.farmId === farm.id ? view.current : null;
     const map = new maplibregl.Map({
       container: ref.current,
       attributionControl: false,
-      bounds: [farm.minLon, farm.minLat, farm.maxLon, farm.maxLat],
-      fitBoundsOptions: { padding: 24 },
+      ...(keep ? { center: keep.center, zoom: keep.zoom } : { bounds: fitPlot ? ([sel.minLon, sel.minLat, sel.maxLon, sel.maxLat] as [number, number, number, number]) : ([farm.minLon, farm.minLat, farm.maxLon, farm.maxLat] as [number, number, number, number]) }),
+      fitBoundsOptions: fitPlot ? { padding: { top: 80, bottom: 280, left: 40, right: 40 } } : { padding: 24 },
       style: {
         version: 8,
         sources: {
@@ -138,7 +145,10 @@ export default function MapScreen() {
         .setLngLat([(p.minLon + p.maxLon) / 2, (p.minLat + p.maxLat) / 2])
         .addTo(map);
     }
-    return () => map.remove();
+    return () => {
+      view.current = { farmId: farm.id, center: map.getCenter().toArray() as [number, number], zoom: map.getZoom() };
+      map.remove();
+    };
   }, [farm?.id, plots, records, base, selected, mode]);
 
   const plot = plots.find((p) => p.id === selected);

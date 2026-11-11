@@ -3,6 +3,8 @@
  * Sin dependencias: corren en el Worker, la web y Hermes.
  */
 
+import { LIMITS } from "./limits";
+
 /** Unidad de la dosis de un producto, por hectárea. */
 export const DOSE_UNITS = ["l_ha", "ml_ha", "kg_ha", "g_ha"] as const;
 export type DoseUnit = (typeof DOSE_UNITS)[number];
@@ -43,4 +45,40 @@ export function yieldTHa(harvests: { tons: number; areaHa?: number | null }[], p
   const area = allHaveArea ? harvests.reduce((a, h) => a + (h.areaHa as number), 0) : plotAreaHa;
   if (!(area > 0) || !(tons > 0)) return null;
   return Math.round((tons / area) * 100) / 100;
+}
+
+export interface SprayInput {
+  tempC: number | null;
+  windKmh: number | null;
+  humidityPct: number | null;
+  precipMm: number | null;
+}
+
+/** ¿Es una hora apta para pulverizar? Viento, Delta T y lluvia dentro de LIMITS.spray; sin dato, no apta. */
+export function sprayHour(h: SprayInput): { deltaT: number | null; ok: boolean } {
+  const dt = h.tempC === null || h.humidityPct === null ? null : deltaT(h.tempC, h.humidityPct);
+  const L = LIMITS.spray;
+  const ok =
+    dt !== null &&
+    h.windKmh !== null &&
+    h.windKmh >= L.windMinKmh &&
+    h.windKmh <= L.windMaxKmh &&
+    dt >= L.deltaTMin &&
+    dt <= L.deltaTMax &&
+    (h.precipMm ?? 0) <= L.maxRainMm;
+  return { deltaT: dt, ok };
+}
+
+const HOUR_MS = 3_600_000;
+
+/** Junta horas aptas consecutivas en ventanas { from, to } (epoch ms; `to` es el fin de la última hora). */
+export function sprayWindows(hours: { at: number; ok: boolean }[]): { from: number; to: number }[] {
+  const out: { from: number; to: number }[] = [];
+  for (const h of [...hours].sort((a, b) => a.at - b.at)) {
+    if (!h.ok) continue;
+    const last = out[out.length - 1];
+    if (last && last.to === h.at) last.to = h.at + HOUR_MS;
+    else out.push({ from: h.at, to: h.at + HOUR_MS });
+  }
+  return out;
 }

@@ -7,7 +7,8 @@
 import { and, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import { newId } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
-import { bumpVersion, currentVersion, runBatch, type DB, type Stmt } from "../db/client";
+import { bumpVersion, chunkForParams, currentVersion, runBatch, type DB, type Stmt } from "../db/client";
+import type { HourlyForecast } from "./weather";
 import { affectedPlots, severityRank, type AlertDraft } from "./rules";
 
 const SOURCES: Record<AlertDraft["kind"], string> = {
@@ -138,6 +139,15 @@ async function notificationStmts(
 }
 
 /** Guarda la corrida y deja solo las últimas N por estancia. */
+/** Reemplaza el pronóstico horario de la estancia (solo la última corrida): borra todo y guarda las horas nuevas. */
+export function saveHourlyStmts(db: DB, farmId: string, hours: HourlyForecast[]): Stmt[] {
+  const out: Stmt[] = [db.delete(s.forecastHours).where(eq(s.forecastHours.farmId, farmId))];
+  const rows = hours.map((h) => ({ farmId, ...h }));
+  // 6 columnas por fila y ≤ 100 parámetros por consulta
+  for (const chunk of chunkForParams(rows, 6)) out.push(db.insert(s.forecastHours).values(chunk));
+  return out;
+}
+
 export function saveForecastStmts(
   db: DB,
   farmId: string,

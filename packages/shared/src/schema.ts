@@ -562,6 +562,21 @@ export const forecasts = sqliteTable(
   (t) => [primaryKey({ columns: [t.farmId, t.runAt, t.validDate] })],
 );
 
+/** Pronóstico horario de MET Norway (próximas horas) para las ventanas de pulverización. Solo la última corrida. */
+export const forecastHours = sqliteTable(
+  "forecast_hours",
+  {
+    farmId: text("farm_id").notNull(),
+    /** Inicio de la hora, epoch ms UTC. */
+    validAt: integer("valid_at").notNull(),
+    tempC: real("temp_c"),
+    windKmh: real("wind_kmh"),
+    humidityPct: real("humidity_pct"),
+    precipMm: real("precip_mm"),
+  },
+  (t) => [primaryKey({ columns: [t.farmId, t.validAt] })],
+);
+
 export const fireHotspots = sqliteTable(
   "fire_hotspots",
   {

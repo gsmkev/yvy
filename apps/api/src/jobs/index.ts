@@ -10,11 +10,11 @@ import { SystemDb } from "../db/system";
 import { sendEmail, type EmailAttachment } from "../lib/email";
 import { presign } from "../lib/r2";
 import type { Bindings, JobMessage } from "../types";
-import { saveForecastStmts, upsertAlert } from "./alerts";
+import { saveForecastStmts, saveHourlyStmts, upsertAlert } from "./alerts";
 import { sendPending } from "./notify";
 import { pestAlertDraft } from "./pests";
 import { evaluateDrought, evaluateExcessRain, evaluateFrost } from "./rules";
-import { dailyFromMet, dailyFromPower, fetchMet, powerUrl, type DailyForecast } from "./weather";
+import { dailyFromMet, hourlyFromMet, dailyFromPower, fetchMet, powerUrl, type DailyForecast } from "./weather";
 
 export const CRONS = {
   forecast: "0 */3 * * *",
@@ -144,7 +144,11 @@ async function forecastJob(db: DB, env: Bindings, deps: JobDeps, farm: Farm): Pr
   const now = deps.now();
   const met = await fetchMet(deps.fetch, env.MET_USER_AGENT, farm.lat, farm.lon);
   const days = dailyFromMet(met, farm.tz);
-  await runBatch(db, saveForecastStmts(db, farm.id, now, days, LIMITS.weather.forecastRunsKept));
+  const hours = hourlyFromMet(met, now, LIMITS.weather.hourlyHorizonHours);
+  await runBatch(db, [
+    ...saveForecastStmts(db, farm.id, now, days, LIMITS.weather.forecastRunsKept),
+    ...saveHourlyStmts(db, farm.id, hours),
+  ]);
   const runs = await recentRuns(db, farm.id, LIMITS.weather.forecastRunsKept);
   const today = localDate(now, farm.tz);
   const cfg = await new SystemDb(db).alertSettings(farm.id);

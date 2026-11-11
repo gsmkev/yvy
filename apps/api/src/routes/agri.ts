@@ -11,6 +11,7 @@ import {
   listProducts,
   listSeasons,
   plotHistory,
+  sprayForecast,
   updateProduct,
   updateSeason,
   upsertPlotSeason,
@@ -92,6 +93,8 @@ agri.delete("/seasons/:seasonId/plots/:plotId", async (c) => {
   await deletePlotSeason(c.var.sdb, c.req.param("plotId"), c.req.param("seasonId"));
   return c.json({ ok: true });
 });
+
+agri.get("/farms/:id/spray-windows", async (c) => c.json(await sprayForecast(c.var.sdb, c.req.param("id"))));
 
 agri.get("/plots/:id/seasons", async (c) => c.json(await plotHistory(c.var.sdb, c.req.param("id"))));
 

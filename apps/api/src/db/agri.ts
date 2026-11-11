@@ -2,8 +2,8 @@
  * Agricultura (ADR 0004): campañas, plan por lote e historial de rotación.
  * Toda escritura a tablas sincronizables: bumpVersion() primero y `version: currentVersion` en la fila.
  */
-import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
-import { newId, yieldTHa } from "@yvy/shared";
+import { and, asc, desc, eq, gte, inArray, isNull } from "drizzle-orm";
+import { LIMITS, newId, sprayHour, sprayWindows, yieldTHa } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, currentVersion, runBatch } from "./client";
 import { updateSynced } from "./queries";
@@ -311,4 +311,27 @@ export async function updateProduct(sdb: ScopedDb, id: string, patch: Partial<Pr
 export async function deleteProduct(sdb: ScopedDb, id: string) {
   sdb.require(can.editProducts);
   await updateSynced(sdb, s.products, id, { deletedAt: sdb.now() });
+}
+
+// ---------- Ventanas para pulverizar (A-13) ----------
+
+/** Próximas horas del pronóstico guardado, cada una marcada apta o no según LIMITS.spray, y las ventanas aptas. */
+export async function sprayForecast(sdb: ScopedDb, farmId: string) {
+  await sdb.requireFarm(farmId);
+  const from = sdb.now() - (sdb.now() % 3_600_000);
+  const rows = await sdb.db
+    .select()
+    .from(s.forecastHours)
+    .where(and(eq(s.forecastHours.farmId, farmId), gte(s.forecastHours.validAt, from)))
+    .orderBy(asc(s.forecastHours.validAt))
+    .limit(LIMITS.weather.hourlyHorizonHours);
+  const hours = rows.map((h) => ({
+    at: h.validAt,
+    tempC: h.tempC,
+    windKmh: h.windKmh,
+    humidityPct: h.humidityPct,
+    precipMm: h.precipMm,
+    ...sprayHour(h),
+  }));
+  return { hours, windows: sprayWindows(hours), limits: LIMITS.spray };
 }

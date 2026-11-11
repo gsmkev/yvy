@@ -68,6 +68,16 @@ export const LIMITS = {
     forecastCacheMs: 3 * 60 * 60 * 1000,
     forecastRunsKept: 4,
     coordDecimals: 4,
+    /** Horas de pronóstico que se guardan para las ventanas de pulverización (A-13). */
+    hourlyHorizonHours: 48,
+  },
+  /** Condiciones para pulverizar (A-13): viento en km/h, Delta T en °C y sin lluvia. */
+  spray: {
+    windMinKmh: 3,
+    windMaxKmh: 15,
+    deltaTMin: 2,
+    deltaTMax: 8,
+    maxRainMm: 0,
   },
   monitoring: {
     /** Estaciones de muestreo que propone la app por lote (F-12). */

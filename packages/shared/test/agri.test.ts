@@ -95,3 +95,41 @@ describe("cosecha (harvest) y rinde", () => {
     );
   });
 });
+
+import { sprayHour, sprayWindows, LIMITS } from "../src";
+
+describe("ventanas para pulverizar", () => {
+  const ok = { tempC: 25, windKmh: 8, humidityPct: 60, precipMm: 0 };
+  it("apta con viento 3-15 km/h, Delta T 2-8 y sin lluvia", () => {
+    const r = sprayHour(ok);
+    expect(r.ok).toBe(true);
+    expect(r.deltaT).toBeGreaterThanOrEqual(LIMITS.spray.deltaTMin);
+    expect(r.deltaT).toBeLessThanOrEqual(LIMITS.spray.deltaTMax);
+  });
+  it("no apta: poco o mucho viento, lluvia, aire muy húmedo o muy seco", () => {
+    expect(sprayHour({ ...ok, windKmh: 2 }).ok).toBe(false);
+    expect(sprayHour({ ...ok, windKmh: 3 }).ok).toBe(true);
+    expect(sprayHour({ ...ok, windKmh: 15 }).ok).toBe(true);
+    expect(sprayHour({ ...ok, windKmh: 15.1 }).ok).toBe(false);
+    expect(sprayHour({ ...ok, precipMm: 0.1 }).ok).toBe(false);
+    expect(sprayHour({ ...ok, humidityPct: 95 }).ok).toBe(false); // Delta T bajo
+    expect(sprayHour({ tempC: 38, windKmh: 8, humidityPct: 25, precipMm: 0 }).ok).toBe(false); // Delta T alto
+  });
+  it("sin datos no es apta", () => {
+    expect(sprayHour({ ...ok, windKmh: null }).ok).toBe(false);
+    expect(sprayHour({ ...ok, humidityPct: null }).deltaT).toBeNull();
+    expect(sprayHour({ ...ok, humidityPct: null }).ok).toBe(false);
+  });
+  it("junta horas aptas consecutivas en ventanas", () => {
+    const H = 3_600_000;
+    const t0 = Date.parse("2026-11-10T09:00:00Z");
+    const hours = [1, 1, 0, 1, 1, 1, 0, 1].map((v, i) => ({ at: t0 + i * H, ok: v === 1 }));
+    expect(sprayWindows(hours)).toEqual([
+      { from: t0, to: t0 + 2 * H },
+      { from: t0 + 3 * H, to: t0 + 6 * H },
+      { from: t0 + 7 * H, to: t0 + 8 * H },
+    ]);
+    expect(sprayWindows([])).toEqual([]);
+    expect(sprayWindows(hours.map((h) => ({ ...h, ok: false })))).toEqual([]);
+  });
+});

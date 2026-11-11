@@ -1,8 +1,9 @@
 /** ERP sencillo desde la web (ADR 0004). Montada en /org/erp. */
 import { Hono } from "hono";
 import { z } from "zod";
-import { contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, type Role } from "@yvy/shared";
+import { contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, warehouseInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
+import { fixDefaultWarehouse } from "../db/stock";
 import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
 import { deleteRate, erpCreate, erpDelete, erpList, erpUpdate, listRates, requireOwned, saveRate, type ErpTable } from "../db/erp";
 import { can, type ScopedDb } from "../db/scoped";
@@ -18,6 +19,10 @@ interface MasterOpts {
   check?: (sdb: ScopedDb, values: Record<string, unknown>) => Promise<void>;
   /** Ajusta los valores antes de guardar (por ejemplo, un null que la columna no admite). */
   normalize?: (values: Record<string, unknown>) => Record<string, unknown>;
+  /** Después de guardar (alta o cambio) con el id de la fila. */
+  after?: (sdb: ScopedDb, id: string) => Promise<void>;
+  /** Antes de borrar: puede rechazar el borrado. */
+  beforeDelete?: (sdb: ScopedDb, id: string) => Promise<void>;
 }
 
 /** Alta, listado, cambio y baja de un maestro con su esquema Zod. */
@@ -30,16 +35,21 @@ function master(path: string, table: ErpTable, schema: z.ZodObject, order: ErpTa
     const b = (o.normalize ?? ((v) => v))(parse(schema, await readJson(c.req)) as Record<string, unknown>);
     c.var.sdb.require(write);
     await o.check?.(c.var.sdb, b);
-    return c.json(await erpCreate(c.var.sdb, table, write, b), 201);
+    const created = await erpCreate(c.var.sdb, table, write, b);
+    await o.after?.(c.var.sdb, created.id);
+    return c.json(created, 201);
   });
   erp.patch(`/${path}/:id`, async (c) => {
     const b = (o.normalize ?? ((v) => v))(parse(schema.partial(), await readJson(c.req)) as Record<string, unknown>);
     c.var.sdb.require(write);
     await o.check?.(c.var.sdb, b);
     await erpUpdate(c.var.sdb, table, write, c.req.param("id"), b);
+    await o.after?.(c.var.sdb, c.req.param("id"));
     return c.json({ ok: true });
   });
   erp.delete(`/${path}/:id`, async (c) => {
+    c.var.sdb.require(write);
+    await o.beforeDelete?.(c.var.sdb, c.req.param("id"));
     await erpDelete(c.var.sdb, table, write, c.req.param("id"));
     return c.json({ ok: true });
   });
@@ -105,4 +115,13 @@ erp.patch("/costs/:id", async (c) => {
 erp.delete("/costs/:id", async (c) => {
   await deleteCost(c.var.sdb, c.req.param("id"));
   return c.json({ ok: true });
+});
+
+// ---------- Depósitos (E-10) ----------
+
+// El agrónomo ve los depósitos (para entender el stock); dueño y administrador los editan.
+master("warehouses", s.warehouses, warehouseInput, [s.warehouses.name], {
+  read: can.viewStock,
+  check: farmCheck,
+  after: fixDefaultWarehouse,
 });

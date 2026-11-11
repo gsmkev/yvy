@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
+import { ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import { t } from "@yvy/shared";
 import campo from "../assets/campo-itapua.webp";
@@ -7,7 +7,7 @@ import { noteOrganizationEntry } from "../src/lib/org";
 import { registerDevice } from "../src/lib/push";
 import { api, setSession, type Session } from "../src/lib/session";
 import { deviceId } from "../src/lib/sync";
-import { Button } from "../src/ui/kit";
+import { Button, Text, TextInput } from "../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../src/ui/theme";
 
 export default function Login() {

@@ -30,6 +30,7 @@ import { selectedFarmId } from "../../src/lib/farmFilter";
 import { FLOWS, KINDS_FOR, SINGLE_PLOT_KINDS, stepsFor, type Step } from "../../src/lib/annotate";
 import { currentFix, guessPlots, type Fix, type PlotGuess } from "../../src/lib/location";
 import { processPhoto } from "../../src/lib/photos";
+import { PhotoMarkup } from "../../src/ui/PhotoMarkup";
 import { useSession } from "../../src/lib/session";
 import { localChanged, useSyncStatus } from "../../src/lib/sync";
 import { toastSaved } from "../../src/lib/toast";
@@ -839,7 +840,28 @@ function PhotoCamera({ onDone }: { onDone: (p: LocalPhoto | null) => void }) {
   const [perm, request] = useCameraPermissions();
   const [ref, setRef] = useState<CameraView | null>(null);
   const [busy, setBusy] = useState(false);
+  // F-08: después del disparo se puede dibujar encima (flecha, círculo) antes de procesar la foto.
+  const [shot, setShot] = useState<{ uri: string; width: number; height: number } | null>(null);
   if (!perm) return null;
+  if (shot)
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <PhotoMarkup
+          uri={shot.uri}
+          width={shot.width}
+          height={shot.height}
+          onDone={async (r) => {
+            if (!r) return onDone(null);
+            try {
+              onDone(await processPhoto(r.uri, r.width, r.height));
+            } catch {
+              onDone(null);
+            }
+          }}
+        />
+      </>
+    );
   if (!perm.granted)
     return (
       <View style={[k.screen, k.pad, { justifyContent: "center", gap: 12 }]}>
@@ -866,7 +888,8 @@ function PhotoCamera({ onDone }: { onDone: (p: LocalPhoto | null) => void }) {
             setBusy(true);
             try {
               const pic = await ref.takePictureAsync({ quality: 0.9 });
-              onDone(await processPhoto(pic.uri, pic.width, pic.height));
+              setShot({ uri: pic.uri, width: pic.width, height: pic.height });
+              setBusy(false);
             } catch {
               setBusy(false);
             }

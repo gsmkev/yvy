@@ -442,6 +442,12 @@ export const esPY = {
     tracksNone: "Nadie grabó recorridas en este período.",
     tracksUnvisited: "Sin recorrer: {{names}}",
     tracksPlotCount: "{{n}} recorridas",
+    markupHint: "Arrastrá sobre la foto para marcar. Después se guarda con el dibujo.",
+    markupArrow: "Flecha",
+    markupCircle: "Círculo",
+    markupUndo: "Deshacer",
+    markupDone: "Guardar con dibujo",
+    markupNoDrawing: "Guardar sin dibujo",
   },
   fields: {
     condition: "Estado general",

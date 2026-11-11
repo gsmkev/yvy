@@ -1,8 +1,9 @@
 import { Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { bboxOf } from "@yvy/geo";
+import { bboxOf, checkPlots, overlapRatio, OVERLAP_WARN_RATIO, type Area } from "@yvy/geo";
 import { post } from "../lib/api";
+import { useFarm } from "../lib/queries";
 import { fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { parseFile, type ImportedPolygon } from "../lib/importGeo";
@@ -65,6 +66,33 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
   }, [items?.length]);
 
   const selected = items?.filter((i) => i.selected && !i.error) ?? [];
+  const farm = useFarm(farmId);
+
+  // Avisos no bloqueantes (M-10): superposición entre lotes y lotes fuera de la estancia.
+  const warnings = useMemo(() => {
+    if (!selected.length) return [] as string[];
+    const out: string[] = [];
+    const farmGeom = farm.data ? (JSON.parse(farm.data.farm.geometry) as Area) : null;
+    for (const w of checkPlots(
+      selected.map((p) => p.geometry),
+      farmGeom,
+    )) {
+      const a = selected[w.a]!.name;
+      out.push(
+        w.kind === "overlap"
+          ? t("ui.warnOverlap", { a, b: selected[w.b!]!.name, pct: Math.round(w.ratio * 100) })
+          : t("ui.warnOutside", { a }),
+      );
+    }
+    for (const p of selected) {
+      for (const ex of farm.data?.plots ?? []) {
+        const r = overlapRatio(p.geometry, JSON.parse(ex.geometry) as Area);
+        if (r > OVERLAP_WARN_RATIO)
+          out.push(t("ui.warnOverlap", { a: p.name, b: ex.name, pct: Math.round(r * 100) }));
+      }
+    }
+    return out;
+  }, [selected.map((p) => p.index).join(","), farm.data]);
   const save = async () => {
     setBusy(true);
     setError(null);
@@ -123,6 +151,21 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
             />
           </div>
           <p className="text-xs text-tinta-2">{t("ui.importMapHint")}</p>
+          {warnings.length > 0 && (
+            <div className="text-sm text-surco" data-testid="import-warnings">
+              <p className="font-medium">{t("ui.warnTitle")}</p>
+              <ul>
+                {warnings.slice(0, 8).map((w, i) => (
+                  <li key={i} className="border-b border-linea py-1">
+                    {w}
+                  </li>
+                ))}
+              </ul>
+              {warnings.length > 8 && (
+                <p className="py-1 text-tinta-2">{t("ui.warnMore", { count: warnings.length - 8 })}</p>
+              )}
+            </div>
+          )}
           <ul className="flex max-h-80 flex-col gap-1.5 overflow-auto">
             {items.map((p, i) => (
               <li

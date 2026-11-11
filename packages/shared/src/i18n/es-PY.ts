@@ -770,6 +770,10 @@ export const esPY = {
     farmParts: "{{count}} partes separadas",
     fileHasMany: "El archivo trae {{count}} polígonos. Tomamos el más grande como perímetro.",
     useAllAsParts: "Usar todos como partes de la estancia",
+    warnTitle: "Ojo con esto (podés importar igual)",
+    warnOverlap: "{{a}} se superpone con {{b}} ({{pct}} % del más chico).",
+    warnOutside: "{{a}} sale del perímetro de la estancia.",
+    warnMore: "Y {{count}} avisos más.",
     importFixed: "Corregimos {{count}} vértices repetidos o espigas sin superficie.",
   },
   attribution: {

@@ -417,13 +417,15 @@ export class ScopedDb {
 
   // ---------- Estancias, lotes, puntos de interés ----------
 
-  async requireFarm(farmId: string): Promise<void> {
+  /** Verifica que la estancia sea de la organización y devuelve su geometría (GeoJSON texto). */
+  async requireFarm(farmId: string): Promise<string> {
     const [f] = await this.db
-      .select({ id: s.farms.id })
+      .select({ id: s.farms.id, geometry: s.farms.geometry })
       .from(s.farms)
       .where(and(eq(s.farms.id, farmId), eq(s.farms.organizationId, this.auth.orgId), isNull(s.farms.deletedAt)))
       .limit(1);
     if (!f) throw new NotFoundError("Estancia inexistente");
+    return f.geometry;
   }
 
   async createFarm(
@@ -463,9 +465,9 @@ export class ScopedDb {
       typeof s.plots.$inferInsert,
       "id" | "organizationId" | "farmId" | "createdAt" | "updatedAt" | "version"
     >[],
-  ): Promise<{ ids: string[] }> {
+  ): Promise<{ ids: string[]; farmGeometry: string }> {
     this.require(can.editField);
-    await this.requireFarm(farmId);
+    const farmGeometry = await this.requireFarm(farmId);
     const ts = this.now();
     const ids = items.map(() => newId());
     // Una sentencia por lote: las geometrías son largas y no conviene agruparlas.
@@ -483,7 +485,7 @@ export class ScopedDb {
         }),
       ),
     ]);
-    return { ids };
+    return { ids, farmGeometry };
   }
 
   async createPoi(input: {

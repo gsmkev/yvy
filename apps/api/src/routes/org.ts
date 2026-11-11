@@ -1,7 +1,7 @@
 /** Gestión desde la web: miembros, asignaciones, estancias, lotes, puntos de interés y tareas. */
 import { Hono } from "hono";
 import { z } from "zod";
-import { areaHa, bboxOf, centroidOf, validateShape, type Area } from "@yvy/geo";
+import { areaHa, bboxOf, centroidOf, checkPlots, validateShape, type Area } from "@yvy/geo";
 import { CROPS, LIMITS, t, PLOT_KINDS, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
 import { dispatchNewFarm, inBackground } from "../lib/dispatch";
 import { sendEmail } from "../lib/email";
@@ -144,7 +144,18 @@ org.post("/farms/:farmId/plots", async (c) => {
     })),
   );
   if (firstPlots) await inBackground(c, dispatchNewFarm(c.env, farmId));
-  return c.json(res, 201);
+  // Avisos no bloqueantes (M-10). Presupuesto de CPU: prefiltro por bbox y como máximo 12 recortes exactos.
+  const warnings = checkPlots(
+    body.plots.map((p) => p.geometry),
+    JSON.parse(res.farmGeometry) as Area,
+    { maxExact: 12 },
+  ).map((w) => ({
+    kind: w.kind,
+    plot: w.a,
+    ...(w.b !== undefined ? { other: w.b } : {}),
+    ratio: Math.round(w.ratio * 1000) / 1000,
+  }));
+  return c.json({ ids: res.ids, warnings }, 201);
 });
 
 org.post("/farms/:farmId/pois", async (c) => {

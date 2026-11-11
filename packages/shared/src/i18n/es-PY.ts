@@ -810,6 +810,41 @@ export const esPY = {
     guideDone: "Listo",
     guideDo: "Hacerlo",
     guideDismiss: "Ocultar guía",
+    helpLink: "Ayuda",
+    helpTitle: "Ayuda",
+    helpIntro: "Las preguntas más comunes, con respuestas cortas.",
+    helpWhatsapp: "Escribinos por WhatsApp",
+    helpWhatsappHint: "¿No encontraste lo que buscabas? Te respondemos por ahí.",
+    helpQ1: "¿Funciona sin señal?",
+    helpA1:
+      "Sí. La app del celular guarda todo en el teléfono: anotaciones, fotos y tareas. Cuando vuelve la señal, se sube sola. Mientras tanto, cada registro se ve con borde punteado; al subir, el borde pasa a sólido.",
+    helpQ2: "¿Cómo conecto el celular de un empleado?",
+    helpA2:
+      "En Equipo, tocá \"Vincular celular\" en la fila del empleado. Aparece un código QR: el empleado instala la app, lo escanea y listo. El código vence a los pocos minutos; si pasó el tiempo, generá otro.",
+    helpQ3: "¿Cuándo se sincronizan los datos?",
+    helpA3:
+      "Cada vez que el celular tiene conexión. En Equipo ves la actividad de cada empleado: los días que usó la app y los registros de la última semana. Si un empleado estuvo todo el día sin señal, sus anotaciones aparecen cuando vuelva a conectarse.",
+    helpQ4: "¿Qué es el NDVI?",
+    helpA4:
+      "Es un índice de vigor de las plantas medido con imágenes de satélite. Más alto significa cultivo o pasto más verde y sano. En el mapa, la capa \"Vigor (NDVI)\" pinta cada lote con una rampa de marrón a verde, y en el lote ves la curva de la campaña.",
+    helpQ5: "¿Cada cuánto hay imágenes nuevas?",
+    helpA5:
+      "Usamos Sentinel-2, que pasa cada pocos días. Si hay nubes sobre tu campo, esa imagen se descarta y hay que esperar la siguiente. Debajo de la leyenda del mapa ves la fecha de la imagen que se está mostrando.",
+    helpQ6: "¿Cómo funcionan los avisos?",
+    helpA6:
+      "Yvy mira el pronóstico y los datos de lluvia, temperatura y focos de calor de tu zona, y te avisa de heladas, exceso de lluvia, sequía y fuego cercano. En Avisos ves los vigentes; podés marcar si el aviso te sirvió para que mejoren.",
+    helpQ7: "¿Cómo exporto mis datos?",
+    helpA7:
+      "Los registros, la tabla de lotes, las tareas y el equipo se exportan a Excel o CSV con los botones de cada pantalla. Los lotes también se bajan en KML desde la estancia, y el parte semanal sale en PDF.",
+    helpQ8: "¿Cuánto cuesta?",
+    helpA8:
+      "Arrancás con una prueba gratis de 60 días. Después el precio depende de las hectáreas de tu estancia, con un mínimo mensual. Escribinos y te pasamos el número exacto para tu campo.",
+    helpQ9: "¿Qué puede hacer cada rol?",
+    helpA9:
+      "El dueño ve y hace todo. El administrador gestiona empleados y datos de la estancia. El agrónomo edita lotes y registros. El empleado ve solo los lotes que le asignaste y anota desde la app.",
+    helpQ10: "¿Cómo cargo mis lotes?",
+    helpA10:
+      "En la estancia, dibujalos sobre el mapa con \"Nuevo lote\" o importá un archivo KML, KMZ, GeoJSON o shapefile con \"Importar\". Después podés renombrarlos y cargar el cultivo y la fecha de siembra.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

@@ -11,3 +11,6 @@ R2_SECRET_ACCESS_KEY=
 # solo sobre ese repo; GITHUB_REPO = owner/nombre). Vacío en desarrollo: se saltea.
 GITHUB_DISPATCH_TOKEN=
 GITHUB_REPO=
+# Demo pública de solo lectura (opcional): organización con plan 'demo' y su dueño.
+# DEMO_ORG_ID=
+# DEMO_USER_ID=

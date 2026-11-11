@@ -54,5 +54,6 @@
     "OPS_EMAIL": "",
     // Emails del equipo de Yvy con acceso al panel interno (separados por coma)
     "ADMIN_EMAILS": "",
+    // Demo pública (V-02): agregar DEMO_ORG_ID y DEMO_USER_ID (dueño de esa organización, plan 'demo') para activarla.
   },
 }

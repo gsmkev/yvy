@@ -12,7 +12,13 @@ export interface Secrets {
   GITHUB_REPO?: string;
 }
 
-export type Bindings = Env & Secrets;
+/** Demo pública (V-02): sin estos dos valores POST /auth/demo responde 404 y la landing oculta el botón. */
+export interface DemoConfig {
+  DEMO_ORG_ID?: string;
+  DEMO_USER_ID?: string;
+}
+
+export type Bindings = Env & Secrets & DemoConfig;
 
 export type AppEnv = {
   Bindings: Bindings;

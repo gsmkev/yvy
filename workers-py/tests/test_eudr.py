@@ -159,3 +159,26 @@ def test_el_cliente_firma_y_manda_el_resultado():
     api = IngestClient("http://x", "secret", httpx.Client(transport=httpx.MockTransport(handler)))
     api.eudr_result({"plotId": "a", "status": "no_change"})
     assert seen[0][:2] == ("POST", "/ingest/eudr")
+
+
+def test_outline_entra_en_los_limites_del_worker():
+    """Un parche de raster con escalones y huecos debe salir como un solo anillo de ≤ 120 puntos (el Worker acepta 300)."""
+    import math
+
+    from shapely.geometry import Polygon
+
+    from yvy_workers.jobs.eudr import MAX_RING_POINTS, outline
+
+    # Anillo exterior en escalera de 1 200 puntos y 10 huecos
+    ext = []
+    for i in range(600):
+        a = 2 * math.pi * i / 600
+        r = 500 + (40 if i % 2 else 0)
+        ext.append((r * math.cos(a), r * math.sin(a)))
+    holes = [[(x, y), (x + 10, y), (x + 10, y + 10), (x, y + 10)] for x, y in [(-200 + 40 * k, 0) for k in range(10)]]
+    poly = Polygon(ext, holes)
+    out = outline(poly)
+    assert out.geom_type == "Polygon"
+    assert len(out.interiors) == 0
+    assert 4 <= len(out.exterior.coords) <= MAX_RING_POINTS
+    assert out.area > 0.8 * Polygon(ext).area

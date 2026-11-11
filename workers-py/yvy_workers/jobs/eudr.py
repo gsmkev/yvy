@@ -48,6 +48,8 @@ MAX_SEARCH_CLOUD = 50.0
 MIN_VALID_PCT = 60.0  # lote con menos de esto de píxeles válidos en ambos compuestos: sin datos (RF-51)
 MAX_POLYS_PER_PLOT = 20
 SIMPLIFY_M = 15.0
+# El Worker acepta hasta 300 puntos por anillo y 80 KB por lote: el mapa de cambios solo necesita el contorno.
+MAX_RING_POINTS = 120
 PIXEL_HA = 0.01  # 10 m x 10 m
 
 STATUS_NO_CHANGE = "no_change"
@@ -80,6 +82,21 @@ def classify_change(
     with np.errstate(invalid="ignore"):
         lost = forest_ref & (cur_ndvi < LOSS_NDVI_MAX) & (ref_ndvi - cur_ndvi >= LOSS_NDVI_DROP)
     return valid, forest_ref, lost
+
+
+def outline(poly: BaseGeometry, tolerance: float = SIMPLIFY_M, max_points: int = MAX_RING_POINTS) -> BaseGeometry:
+    """Contorno exterior simplificado hasta que entra en max_points (sin huecos: el mapa es indicativo)."""
+    from shapely.geometry import Polygon
+
+    exterior = Polygon(poly.exterior) if poly.geom_type == "Polygon" else Polygon(max(poly.geoms, key=lambda g: g.area).exterior)
+    tol = tolerance
+    simple = exterior.simplify(tol)
+    while (simple.is_empty or simple.geom_type != "Polygon" or len(simple.exterior.coords) > max_points) and tol < 10_000:
+        tol *= 2
+        simple = exterior.simplify(tol)
+    if simple.is_empty or simple.geom_type != "Polygon" or len(simple.exterior.coords) < 4:
+        simple = exterior.envelope
+    return simple
 
 
 def _round_coords(c: Any, nd: int = 5) -> Any:
@@ -134,10 +151,7 @@ def analyze_plots(
         row["lossHa"] = round(sum(ha for ha, _ in patches), 2)
         row["status"] = STATUS_LOSS if patches else STATUS_NO_CHANGE
         for ha, poly in patches[:MAX_POLYS_PER_PLOT]:
-            simple = poly.simplify(SIMPLIFY_M)
-            if simple.is_empty or simple.geom_type != "Polygon":
-                simple = poly
-            wgs = mapping(from_crs(simple, grid.crs))
+            wgs = mapping(from_crs(outline(poly), grid.crs))
             row["changes"].append(
                 {"geometry": {"type": "Polygon", "coordinates": _round_coords(wgs["coordinates"])}, "areaHa": round(ha, 2)}
             )

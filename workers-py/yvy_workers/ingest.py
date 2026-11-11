@@ -50,7 +50,9 @@ class IngestClient:
         }
         # La firma cubre solo la ruta (sin query), igual que el Worker
         res = self.http.request(method, self.base_url + path, params=query, content=body or None, headers=headers)
-        res.raise_for_status()
+        if res.is_error:
+            # Incluir la respuesta del Worker (mensaje de validación) para que el log del job diga qué falló
+            raise httpx.HTTPStatusError(f"{res.status_code} en {method} {path}: {res.text[:500]}", request=res.request, response=res)
         return res.json()
 
     def farms(self) -> list[dict[str, Any]]:

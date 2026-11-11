@@ -178,12 +178,21 @@ export function ConfirmModal({
   );
 }
 
-export const Spinner = () => (
+/**
+ * Marcador de carga con alturas fijas (U-19): reserva el alto que va a ocupar el contenido real
+ * para que al llegar los datos la página no salte. `rows` y `h` (px) se ajustan a cada lista.
+ */
+export const Spinner = ({ rows = 3, h = 48 }: { rows?: number; h?: number }) => (
   <div className="flex flex-col gap-2 p-1" aria-busy="true" aria-label={t("ui.loading")}>
-    {[0, 1, 2].map((i) => (
-      <div key={i} className="h-12 animate-pulse rounded-md bg-surco/[0.06]" />
+    {Array.from({ length: rows }, (_, i) => (
+      <div key={i} className="animate-pulse rounded-md bg-surco/[0.06]" style={{ height: h }} />
     ))}
   </div>
+);
+
+/** Un bloque de carga de alto fijo (px). */
+export const Skeleton = ({ h, className = "" }: { h: number; className?: string }) => (
+  <div aria-hidden className={`animate-pulse rounded-md bg-surco/[0.06] ${className}`} style={{ height: h }} />
 );
 
 export function Empty({

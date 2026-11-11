@@ -38,7 +38,7 @@ export function TasksPanel({ farmId, plots, pick }: { farmId?: string; plots?: P
       invalidate: [["tasks"]],
     });
 
-  if (tasks.isLoading) return <Spinner />;
+  if (tasks.isLoading) return <Spinner rows={5} h={56} />;
   if (tasks.error) return <ErrorBox error={tasks.error} />;
   const nowTime = localTime(Date.now());
   const isOverdue = (x: Task) => taskOverdue(x, today, nowTime);

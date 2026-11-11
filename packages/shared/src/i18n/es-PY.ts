@@ -412,6 +412,11 @@ export const esPY = {
     notifRow: "Avisos y silencio",
     notifRowHint: "Elegí qué avisos te llegan y desde cuándo no molestar",
     notifNeedsSignal: "Necesitás señal para cambiar esto.",
+    // app-p2
+    compassNorth: "Norte arriba",
+    compassFollowOn: "Girar con el rumbo",
+    compassFollowOff: "Dejar de girar",
+    compassFollowHint: "El mapa gira para que arriba sea hacia donde mirás. Necesita la brújula del celular.",
   },
   fields: {
     condition: "Estado general",

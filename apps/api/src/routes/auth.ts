@@ -3,6 +3,7 @@
  * - Dueño/admin/agrónomo: código de 6 dígitos por email (SHA-256, 10 min, 5 intentos).
  * - Empleado: QR de vinculación de un solo uso (24 h) generado por dueño/admin.
  */
+import { funnelEvent } from "../db/events";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { and, count, desc, eq, gte, isNull } from "drizzle-orm";
@@ -53,6 +54,7 @@ auth.post("/signup", async (c) => {
     db
       .insert(s.memberships)
       .values({ id: newId(), organizationId: orgId, userId, role: "owner", createdAt: ts, updatedAt: ts }),
+    funnelEvent(db, "signup", userId, orgId, ts),
   ]);
   return c.json({ organizationId: orgId, userId }, 201);
 });

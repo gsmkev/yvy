@@ -8,6 +8,7 @@ import { fmtDate } from "../lib/format";
 import { t, type MessageKey } from "../lib/i18n";
 import { useAlerts, useFarms, useMe } from "../lib/queries";
 import { loadPrefs } from "../lib/prefs";
+import { trackView } from "../lib/track";
 import { GlobalSearch } from "./GlobalSearch";
 import { OrgSwitcher } from "./OrgSwitcher";
 
@@ -74,6 +75,7 @@ export function Layout() {
   // Con varias estancias, "Mapa" vuelve a la última que se miró
   const lastFarm = (farms.data?.length ?? 0) > 1 ? farms.data!.find((f) => f.id === loadPrefs().farmId)?.id : undefined;
   const onMap = path === "/" || path.startsWith("/estancias");
+  useEffect(() => trackView(path), [path]);
 
   return (
     <div className="flex h-full flex-col">

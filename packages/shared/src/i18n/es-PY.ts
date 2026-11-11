@@ -788,6 +788,8 @@ export const esPY = {
     toastPlotsAssigned: "Lotes asignados",
     toastRecordSaved: "Registro guardado",
     toastRecordDeleted: "Registro borrado",
+    undo: "Deshacer",
+    toastPoiDeleted: "Punto borrado",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

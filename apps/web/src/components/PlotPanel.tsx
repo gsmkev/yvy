@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { centroidOf, type Area } from "@yvy/geo";
 import { CHART, CROPS, PLOT_KINDS, SEASONS } from "@yvy/shared";
 import { del, get, patch } from "../lib/api";
+import { deleteWithUndo } from "../lib/undo";
+import type { FarmDetail } from "../lib/types";
 import { fmtDate, fmtDay, fmtHa, fmtNdvi, fmtPct } from "../lib/format";
 import { Minus, Pencil, Satellite, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { t, tk } from "../lib/i18n";
@@ -61,14 +63,21 @@ export function PlotPanel({
       setEditing(false);
     },
   });
-  const remove = useMutation({
-    mutationFn: () => del(`/org/plots/${plot.id}`),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["farm", plot.farmId] });
-      toast(t("ui.toastPlotDeleted"));
-      onClose();
-    },
-  });
+  const remove = () => {
+    deleteWithUndo({
+      qc,
+      id: plot.id,
+      message: t("ui.toastPlotDeleted"),
+      hide: () =>
+        qc.setQueryData<FarmDetail>(
+          ["farm", plot.farmId],
+          (d) => d && { ...d, plots: d.plots.filter((p) => p.id !== plot.id) },
+        ),
+      request: () => del(`/org/plots/${plot.id}`),
+      invalidate: [["farm", plot.farmId], ["farms"]],
+    });
+    onClose();
+  };
   const set = (k: keyof typeof form) => (e: { target: { value: string } }) => setForm({ ...form, [k]: e.target.value });
 
   const delta = ndvi.data?.deltaVsFarmPct ?? null;
@@ -222,9 +231,7 @@ export function PlotPanel({
           title={plot.name}
           message={t("ui.confirmDelete", { name: plot.name })}
           confirmLabel={t("ui.delete")}
-          pending={remove.isPending}
-          error={remove.error}
-          onConfirm={() => remove.mutate()}
+          onConfirm={remove}
           onClose={() => setConfirming(false)}
         />
       )}

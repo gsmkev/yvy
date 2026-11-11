@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { localDate, RECORD_KINDS, RECURRENCES } from "@yvy/shared";
 import { del, patch, post } from "../lib/api";
+import { deleteWithUndo } from "../lib/undo";
 import { fmtIsoDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useFarms, useMembers, useTasks } from "../lib/queries";
@@ -15,20 +16,17 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
   const [creating, setCreating] = useState(false);
   const qc = useQueryClient();
   const today = localDate(Date.now());
-  const cancel = useMutation({
-    mutationFn: (id: string) => patch(`/org/tasks/${id}`, { status: "cancelled" }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["tasks"] });
-      toast(t("ui.toastTaskDeleted"));
-    },
-  });
-  const remove = useMutation({
-    mutationFn: (id: string) => del(`/org/tasks/${id}`),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["tasks"] });
-      toast(t("ui.toastTaskDeleted"));
-    },
-  });
+  // Las repetitivas se cancelan (PATCH) y las únicas se borran (DELETE); ambas se pueden deshacer
+  const removeTask = (x: Task) =>
+    deleteWithUndo({
+      qc,
+      id: x.id,
+      message: t("ui.toastTaskDeleted"),
+      hide: () => qc.setQueriesData<Task[]>({ queryKey: ["tasks"] }, (l) => l?.filter((y) => y.id !== x.id)),
+      request: () =>
+        x.recurrence === "none" ? del(`/org/tasks/${x.id}`) : patch(`/org/tasks/${x.id}`, { status: "cancelled" }),
+      invalidate: [["tasks"]],
+    });
 
   if (tasks.isLoading) return <Spinner />;
   if (tasks.error) return <ErrorBox error={tasks.error} />;
@@ -80,10 +78,7 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
                     </span>
                   </span>
                   {x.status === "open" && (
-                    <button
-                      className="text-xs text-tinta-2 hover:text-peligro"
-                      onClick={() => (x.recurrence === "none" ? remove.mutate(x.id) : cancel.mutate(x.id))}
-                    >
+                    <button className="text-xs text-tinta-2 hover:text-peligro" onClick={() => removeTask(x)}>
                       {t("ui.delete")}
                     </button>
                   )}

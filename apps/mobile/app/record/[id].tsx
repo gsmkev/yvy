@@ -61,6 +61,14 @@ export default function RecordDetail() {
           {photos.map((p) => (p.thumbUri ? <Image key={p.id} source={{ uri: p.thumbUri }} style={st.thumb} /> : null))}
         </View>
       )}
+      {hasPlace && (
+        <Button
+          kind="secondary"
+          title={t("app.gotoButton")}
+          onPress={() => router.push({ pathname: "/goto", params: { lon: String(record.lon), lat: String(record.lat), name: describeRecord(record.kind, data) } })}
+          style={{ marginTop: 20 }}
+        />
+      )}
       <View style={{ height: 32 }} />
       {editable ? (
         <>

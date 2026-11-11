@@ -80,5 +80,13 @@ class IngestClient:
     def climate_daily(self, rows: Iterable[dict[str, Any]]) -> int:
         return sum(self._call("POST", "/ingest/climate-daily", {"rows": b})["written"] for b in chunks(rows))
 
+    def imagery_status(self, farm_id: str, status: str) -> None:
+        """Estado del primer procesamiento: processing o failed (ready lo pone el Worker al llegar el mapa base)."""
+        self._call("POST", f"/ingest/farms/{farm_id}/imagery-status", {"status": status})
+
     def farm_layer(self, **layer: Any) -> str:
         return self._call("POST", "/ingest/farm-layers", layer)["id"]
+
+    def farm_risk(self, farm_id: str, report: dict[str, Any]) -> None:
+        """Informe de riesgo climático de la estancia (C-10)."""
+        self._call("POST", "/ingest/farm-risk", {"farmId": farm_id, "report": report})

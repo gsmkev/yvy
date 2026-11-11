@@ -3,27 +3,36 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { areaHa, bboxOf } from "@yvy/geo";
-import { CROPS, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS } from "@yvy/shared";
+import { alertSettingsSchema, CROPS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import {
   alertFeedback,
   deleteFarm,
   deletePlot,
   deletePoi,
+  createShareLink,
   deleteTask,
   farmClimate,
   farmDetail,
+  farmForecast,
+  farmRiskReport,
   farmSummaries,
+  getAlertSettings,
   listAlerts,
   listRecords,
+  listShareLinks,
   listTasks,
   plotNdvi,
   registerDevice,
+  saveAlertSettings,
   removeMember,
+  revokeShareLink,
   updateFarm,
   updatePlot,
   updateTask,
 } from "../db/queries";
+import { farmStockSummary, saveLivestockSettings } from "../db/livestock";
+import { createSanitaryEvent, deleteSanitaryEvent, listSanitaryEvents } from "../db/sanitary";
 import { parse, readJson } from "../lib/http";
 import { plotArea } from "./org";
 import { touchActivity } from "../auth/plan";
@@ -66,14 +75,19 @@ web.get("/me", async (c) => {
     role: sdb.auth.role,
     tilesBaseUrl: c.env.TILES_PUBLIC_URL,
     isStaff: !!user?.email && admins.includes(user.email.toLowerCase()),
+    demo: org?.plan === "demo",
   });
 });
 
 web.get("/org/farms", async (c) => c.json(await farmSummaries(c.var.sdb)));
 web.get("/org/farms/:id", async (c) => c.json(await farmDetail(c.var.sdb, c.req.param("id"))));
 web.get("/org/farms/:id/climate", async (c) =>
-  c.json(await farmClimate(c.var.sdb, c.req.param("id"), Number(c.req.query("days") ?? 90))),
+  c.json(await farmClimate(c.var.sdb, c.req.param("id"), Math.min(Math.max(Number(c.req.query("days")) || 90, 1), 400))),
 );
+
+web.get("/org/farms/:id/forecast", async (c) => c.json(await farmForecast(c.var.sdb, c.req.param("id"))));
+
+web.get("/org/farms/:id/risk", async (c) => c.json(await farmRiskReport(c.var.sdb, c.req.param("id"))));
 
 web.patch("/org/farms/:id", async (c) => {
   const b = parse(
@@ -202,6 +216,49 @@ web.get("/org/alerts", async (c) => {
       useful: r.useful === null ? null : !!r.useful,
     })),
   );
+});
+web.get("/org/farms/:id/share-links", async (c) => c.json(await listShareLinks(c.var.sdb, c.req.param("id"))));
+web.post("/org/farms/:id/share-links", async (c) => {
+  const b = parse(z.object({ days: z.number().int() }), await readJson(c.req));
+  return c.json(await createShareLink(c.var.sdb, c.req.param("id"), b.days), 201);
+});
+web.delete("/org/share-links/:id", async (c) => {
+  await revokeShareLink(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+// Hacienda calculada (G-03) y carga máxima configurable.
+web.get("/org/farms/:id/stock", async (c) => c.json(await farmStockSummary(c.var.sdb, c.req.param("id"))));
+web.put("/org/farms/:id/livestock-settings", async (c) => {
+  const b = parse(
+    z.object({ maxUaPerHa: z.number().min(MAX_UA_PER_HA_LIMITS.min).max(MAX_UA_PER_HA_LIMITS.max) }),
+    await readJson(c.req),
+  );
+  await saveLivestockSettings(c.var.sdb, c.req.param("id"), b.maxUaPerHa);
+  return c.json({ ok: true });
+});
+
+// Calendario sanitario (G-10).
+web.get("/org/sanitary-events", async (c) => {
+  const q = parse(
+    z.object({ month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/), farmId: z.string().uuid().optional() }),
+    c.req.query(),
+  );
+  return c.json(await listSanitaryEvents(c.var.sdb, q.month, q.farmId));
+});
+web.post("/org/sanitary-events", async (c) => {
+  const b = parse(sanitaryEventSchema, await readJson(c.req));
+  return c.json(await createSanitaryEvent(c.var.sdb, b), 201);
+});
+web.delete("/org/sanitary-events/:id", async (c) => {
+  await deleteSanitaryEvent(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+web.get("/org/farms/:id/alert-settings", async (c) => c.json(await getAlertSettings(c.var.sdb, c.req.param("id"))));
+web.put("/org/farms/:id/alert-settings", async (c) => {
+  const b = parse(alertSettingsSchema, await readJson(c.req));
+  await saveAlertSettings(c.var.sdb, c.req.param("id"), b);
+  return c.json({ ok: true });
 });
 web.post("/org/alerts/:id/feedback", async (c) => {
   const b = parse(z.object({ useful: z.boolean(), comment: z.string().max(1000).nullish() }), await readJson(c.req));

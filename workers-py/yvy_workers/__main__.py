@@ -7,33 +7,56 @@ import logging
 import sys
 
 from .ingest import IngestClient
+from .jobs.constants import BACKFILL_DAYS, BASEMAP_DAYS, DAILY_DAYS
 
-JOBS = ["s2_ingest", "s2_basemap", "chirps_daily", "firms_hotspots", "climatology_build"]
+JOBS = ["s2_ingest", "s2_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "new_farm"]
 
 
-def main(argv: list[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="yvy_workers")
     p.add_argument("job", choices=JOBS)
     p.add_argument("--farm", help="Procesar solo esta estancia")
-    p.add_argument("--days", type=int, default=None)
-    p.add_argument("--only-missing", action="store_true", help="climatology_build/s2_basemap: solo estancias sin datos")
-    args = p.parse_args(argv)
+    p.add_argument("--days", type=int, default=None, help="s2_ingest: días hacia atrás (10 por defecto); s2_basemap: 90")
+    p.add_argument("--backfill", action="store_true", help=f"s2_ingest: historia de {BACKFILL_DAYS} días (estancia nueva)")
+    p.add_argument("--only-missing", action="store_true", help="climatology_build/s2_basemap/risk_report: solo estancias sin datos")
+    return p
+
+
+def ingest_days(args: argparse.Namespace) -> int:
+    """Ventana de s2_ingest: --days manda; --backfill usa 180 días; si no, la del cron diario."""
+    if args.days:
+        return args.days
+    return BACKFILL_DAYS if args.backfill else DAILY_DAYS
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     log = logging.getLogger("yvy_workers")
+
+    if args.job == "new_farm" and not args.farm:
+        build_parser().error("new_farm necesita --farm <id>")
 
     api = IngestClient()
     farms = api.farms()
     if args.farm:
         farms = [f for f in farms if f["id"] == args.farm]
     if args.only_missing:
-        key = "hasClimatology" if args.job == "climatology_build" else "hasBasemap"
+        key = {"climatology_build": "hasClimatology", "risk_report": "hasRisk"}.get(args.job, "hasBasemap")
         farms = [f for f in farms if not f.get(key)]
     failures = 0
+    if args.job == "new_farm" and not farms:
+        log.error("estancia %s inexistente", args.farm)
+        return 1
 
     if args.job == "chirps_daily":
         from .jobs.chirps import chirps_daily
 
         chirps_daily(api, farms)
+    elif args.job == "risk_report":
+        from .jobs.risk import risk_report
+
+        failures += risk_report(api, farms)
     elif args.job == "firms_hotspots":
         from .jobs.firms import firms_hotspots
 
@@ -41,14 +64,18 @@ def main(argv: list[str] | None = None) -> int:
     else:
         for f in farms:
             try:
-                if args.job == "s2_ingest":
+                if args.job == "new_farm":
+                    from .jobs.new_farm import new_farm
+
+                    failures += new_farm(api, f)
+                elif args.job == "s2_ingest":
                     from .jobs.s2 import s2_ingest
 
-                    log.info("%s: %s", f["name"], s2_ingest(api, f, days=args.days or 10))
+                    log.info("%s: %s", f["name"], s2_ingest(api, f, days=ingest_days(args)))
                 elif args.job == "s2_basemap":
                     from .jobs.s2 import s2_basemap
 
-                    s2_basemap(api, f, days=args.days or 90)
+                    s2_basemap(api, f, days=args.days or BASEMAP_DAYS)
                 elif args.job == "climatology_build":
                     from .jobs.climatology import climatology_build
 

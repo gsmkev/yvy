@@ -13,6 +13,7 @@ import { FullscreenButton } from "../components/FullscreenButton";
 import { ExportButtons } from "../components/ExportButtons";
 import { ImportPlots } from "../components/ImportPlots";
 import { PlotPanel } from "../components/PlotPanel";
+import { LinesPanel, NewLineModal } from "../components/LinesPanel";
 import { MergeModal, SplitModal } from "../components/PlotEditModals";
 import { HerdPanel } from "../components/HerdPanel";
 import { PlotsTable } from "../components/PlotsTable";
@@ -29,7 +30,7 @@ import { closedAreaHa, fmtDistance, pathLengthM, type LonLat } from "../lib/meas
 import { areaUnitLabel, fmtAreaValue, fmtDate, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { loadPrefs, savePrefs } from "../lib/prefs";
-import { fetchAllRecords, useAlerts, useFarm, useFarms, useMe, useMembers, useProblemAreas } from "../lib/queries";
+import { fetchAllRecords, useAlerts, useFarm, useFarmLines, useFarms, useMe, useMembers, useProblemAreas } from "../lib/queries";
 import { defaultCompare, layerDates, pickLayer, type Camera } from "../lib/scenes";
 import { PEST_COLORS, PEST_WINDOW_MS, pestCounts, pestPoints } from "../lib/pests";
 import type { FarmDetail, RecordRow } from "../lib/types";
@@ -43,6 +44,7 @@ const TABS: Tab[] = ["plots", "seasons", "products", "records", "tasks", "climat
 export function FarmPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId" });
   const farm = useFarm(farmId);
+  const lines = useFarmLines(farmId);
   const farms = useFarms();
   const me = useMe();
   const canEdit = !!me.data && me.data.role !== "worker";
@@ -64,6 +66,9 @@ export function FarmPage() {
   const [splitLine, setSplitLine] = useState<LineString | null>(null);
   const [mergeFrom, setMergeFrom] = useState<string | null>(null);
   const [mergeWith, setMergeWith] = useState<string | null>(null);
+  // M-20: trazar alambrados, caminos y cañerías
+  const [lineDraw, setLineDraw] = useState(false);
+  const [newLine, setNewLine] = useState<LineString | null>(null);
   // U-27: captura del mapa para la hoja impresa
   const snapshotRef = useRef<(() => Promise<string | null>) | null>(null);
   const [snap, setSnap] = useState<string | null>(null);
@@ -269,8 +274,9 @@ export function FarmPage() {
           onMeasureClick={(lon, lat) => setMPoints((ps) => [...ps, [lon, lat]])}
           onMeasureClose={() => setMClosed(true)}
           drawing={mode === "draw"}
-          drawingLine={!!splitting && !splitLine}
-          onLineDrawn={setSplitLine}
+          lines={lines.data}
+          drawingLine={(!!splitting && !splitLine) || (lineDraw && !newLine)}
+          onLineDrawn={(g) => (splitting ? setSplitLine(g) : setNewLine(g))}
           onDrawn={(g) => {
             setDrawn(g);
             setMode("none");
@@ -469,14 +475,15 @@ export function FarmPage() {
             )}
           </div>
         )}
-        {(splitting || mergeFrom) && !splitLine && !mergeWith && (
+        {(splitting || mergeFrom || lineDraw) && !splitLine && !mergeWith && !newLine && (
           <div className="absolute bottom-4 left-1/2 flex max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-3 rounded-md bg-surco px-4 py-2.5 text-sm text-lino">
-            {splitting ? t("ui.splitHint") : t("ui.mergePick")}
+            {splitting ? t("ui.splitHint") : lineDraw ? t("ui.linesHint") : t("ui.mergePick")}
             <button
               className="cursor-pointer font-medium underline underline-offset-4"
               onClick={() => {
                 setSplitting(null);
                 setMergeFrom(null);
+                setLineDraw(false);
               }}
             >
               {t("ui.cancel")}
@@ -706,6 +713,9 @@ export function FarmPage() {
                 />
               </div>
               <PlotsTable plots={shownPlots} onSelect={setSelected} />
+              <div className="mt-6">
+                <LinesPanel farmId={farmId} lines={lines.data ?? []} canEdit={!!canEdit} onDraw={() => setLineDraw(true)} />
+              </div>
               <p className="mt-3 text-xs text-tinta-2">{t("ui.selectPlotHint")}</p>
               {d.pois.length > 0 && (
                 <>
@@ -759,6 +769,16 @@ export function FarmPage() {
         {tab === "herd" && canEdit && <HerdPanel farmId={farmId} />}
       </section>
 
+      {newLine && (
+        <NewLineModal
+          farmId={farmId}
+          line={newLine}
+          onClose={() => {
+            setNewLine(null);
+            setLineDraw(false);
+          }}
+        />
+      )}
       {splitting && splitLine && d.plots.find((p) => p.id === splitting) && (
         <SplitModal
           plot={d.plots.find((p) => p.id === splitting)!}

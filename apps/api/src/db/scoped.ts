@@ -558,6 +558,23 @@ export class ScopedDb {
     return f.geometry;
   }
 
+  /** La estancia existe en la organización y, si es empleado, tiene lotes asignados en ella. */
+  async requireFarmVisible(farmId: string): Promise<void> {
+    const [f] = await this.db
+      .select({ id: s.farms.id })
+      .from(s.farms)
+      .where(
+        and(
+          eq(s.farms.id, farmId),
+          eq(s.farms.organizationId, this.auth.orgId),
+          isNull(s.farms.deletedAt),
+          this.workerFilter("farms"),
+        ),
+      )
+      .limit(1);
+    if (!f) throw new NotFoundError("Estancia inexistente");
+  }
+
   async createFarm(
     input: Omit<typeof s.farms.$inferInsert, "id" | "organizationId" | "createdAt" | "updatedAt" | "version">,
   ) {

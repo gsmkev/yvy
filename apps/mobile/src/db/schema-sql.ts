@@ -116,5 +116,8 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE UNIQUE INDEX `eudr_results_plot_uq` ON `eudr_results` (`plot_id`);",
   "CREATE INDEX `eudr_results_farm_idx` ON `eudr_results` (`farm_id`);",
   "ALTER TABLE `organizations` ADD `referred_by` text;",
-  "ALTER TABLE `organizations` ADD `referrer_user_id` text;"
+  "ALTER TABLE `organizations` ADD `referrer_user_id` text;",
+  "CREATE TABLE `farm_lines` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`kind` text NOT NULL,\n\t`name` text NOT NULL,\n\t`geometry` text NOT NULL,\n\t`min_lon` real NOT NULL,\n\t`min_lat` real NOT NULL,\n\t`max_lon` real NOT NULL,\n\t`max_lat` real NOT NULL,\n\t`length_m` real NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
+  "CREATE INDEX `farm_lines_sync_idx` ON `farm_lines` (`organization_id`,`version`,`id`);",
+  "CREATE INDEX `farm_lines_farm_idx` ON `farm_lines` (`farm_id`);"
 ];

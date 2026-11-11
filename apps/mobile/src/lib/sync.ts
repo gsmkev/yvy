@@ -6,9 +6,13 @@ import { AppState } from "react-native";
 import * as Network from "expo-network";
 import * as FileSystem from "expo-file-system/legacy";
 import { useSyncExternalStore } from "react";
-import { LIMITS } from "@yvy/shared";
+import { isAudioMime, LIMITS } from "@yvy/shared";
 import { CpuLimitError, httpTransport, SyncEngine, type AttachmentUploader } from "@yvy/sync";
 import { getDb } from "./db";
+import { flushVotes } from "./votes";
+import { rescheduleReminders } from "./reminders";
+import { refreshMemberNames } from "./members";
+import { isOwnerMode } from "./ownerSummary";
 import { accessToken, api, API_URL, getSession, HttpError, OfflineError } from "./session";
 
 export interface SyncStatus {
@@ -40,10 +44,13 @@ export const localChanged = () => set({ pending: getDb().pendingCount(), version
 
 const MAX_UPLOAD_ATTEMPTS = 8;
 
+/** "Mandar por datos móviles": salta la regla "fotos solo con wifi" durante un solo ciclo. */
+let mobileDataOnce = false;
+
 const uploader: AttachmentUploader = {
   async uploadPending() {
     const db = getDb();
-    if (db.getKv("photos_wifi_only") === "1") {
+    if (db.getKv("photos_wifi_only") === "1" && !mobileDataOnce) {
       const net = await Network.getNetworkStateAsync();
       if (net.type !== Network.NetworkStateType.WIFI) return 0;
     }
@@ -51,18 +58,24 @@ const uploader: AttachmentUploader = {
     for (const f of db.pendingUploads()) {
       if (f.attempts >= MAX_UPLOAD_ATTEMPTS) continue;
       try {
-        const urls = await api<{ photo: string; thumb: string }>(
+        const urls = await api<{ photo: string; thumb: string | null }>(
           "POST",
           `/media/attachments/${f.attachmentId}/upload-url`,
         );
-        for (const [url, uri] of [
-          [urls.photo, f.photoUri],
-          [urls.thumb, f.thumbUri],
-        ] as const) {
+        // La nota de voz (F-09) es un solo archivo m4a; la foto lleva además su miniatura.
+        const audio = isAudioMime(f.mime);
+        const parts: (readonly [string | null, string, string])[] = audio
+          ? [[urls.photo, f.photoUri, LIMITS.audio.mime]]
+          : [
+              [urls.photo, f.photoUri, "image/webp"],
+              [urls.thumb, f.thumbUri, "image/webp"],
+            ];
+        for (const [url, uri, type] of parts) {
+          if (!url) continue;
           const r = await FileSystem.uploadAsync(url, uri, {
             httpMethod: "PUT",
             uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-            headers: { "content-type": "image/webp" },
+            headers: { "content-type": type },
           });
           if (r.status >= 300) throw new HttpError(r.status, "upload");
         }
@@ -99,6 +112,14 @@ export function deviceId(): string {
   return id;
 }
 
+/** Manda los "¿Te sirvió?" que quedaron en cola. Errores 4xx (salvo 401/429) descartan el voto; el resto lo reintenta. */
+export const flushAlertVotes = (): Promise<number> =>
+  flushVotes(
+    getDb(),
+    (id, useful) => api("POST", `/org/alerts/${id}/feedback`, { useful }),
+    (e) => !(e instanceof HttpError && e.status >= 400 && e.status < 500 && e.status !== 401 && e.status !== 429),
+  ).catch(() => 0);
+
 export async function syncNow(): Promise<void> {
   if (!getSession()) return;
   const net = await Network.getNetworkStateAsync().catch(() => null);
@@ -111,6 +132,9 @@ export async function syncNow(): Promise<void> {
     const r = await getEngine().sync();
     getDb().setKv("last_sync_at", String(r.finishedAt));
     set({ online: true, lastSyncAt: r.finishedAt });
+    await flushAlertVotes();
+    // F-29: el dueño necesita los nombres para ver quién anotó cada cosa.
+    if (isOwnerMode(getSession()?.organization.role)) await refreshMemberNames(getDb(), () => api("GET", "/org/members"));
   } catch (e) {
     const offline =
       e instanceof OfflineError ||
@@ -122,6 +146,17 @@ export async function syncNow(): Promise<void> {
     });
   } finally {
     set({ phase: "idle", pending: getDb().pendingCount(), version: status.version + 1 });
+    void rescheduleReminders(); // F-16: las tareas pudieron cambiar
+  }
+}
+
+/** Sincroniza ya, incluso las fotos aunque esté activado "solo con wifi" (una sola vez). */
+export async function syncNowMobileData(): Promise<void> {
+  mobileDataOnce = true;
+  try {
+    await syncNow();
+  } finally {
+    mobileDataOnce = false;
   }
 }
 

@@ -12,6 +12,7 @@ import {
   CROPS,
   DENSITY_UNITS,
   FERT_METHODS,
+  HARVEST_DESTINATIONS,
   newId,
   parseRecordData,
   PESTS,
@@ -91,6 +92,13 @@ const FIELDS: Record<RecordKind, FieldDef[]> = {
     { key: "product", label: f("product"), type: "text" },
     { key: "dose", label: f("dose"), type: "text", optional: true },
     ...HERD_FIELDS("counts"),
+    NOTE,
+  ],
+  harvest: [
+    { key: "tons", label: f("tons"), type: "number" },
+    { key: "moisturePct", label: f("moisturePct"), type: "number", optional: true },
+    { key: "areaHa", label: f("areaDone"), type: "number", optional: true },
+    { key: "destination", label: f("destination"), type: "select", options: opts("destination", HARVEST_DESTINATIONS), optional: true },
     NOTE,
   ],
   fertilization: [

@@ -200,4 +200,6 @@ export interface PlotHistoryRow {
   plannedSowingDate: string | null;
   targetYieldTHa: number | null;
   sownOn: number | null;
+  harvestTons: number | null;
+  yieldTHa: number | null;
 }

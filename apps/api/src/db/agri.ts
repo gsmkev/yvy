@@ -3,7 +3,7 @@
  * Toda escritura a tablas sincronizables: bumpVersion() primero y `version: currentVersion` en la fila.
  */
 import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
-import { newId } from "@yvy/shared";
+import { newId, yieldTHa } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, currentVersion, runBatch } from "./client";
 import { updateSynced } from "./queries";
@@ -167,6 +167,9 @@ export interface PlotHistoryRow {
   targetYieldTHa: number | null;
   /** Fecha real de siembra (registro `sowing`), si hay. */
   sownOn: number | null;
+  /** Cosecha de la campaña (registros `harvest`): toneladas y rinde en t/ha. */
+  harvestTons: number | null;
+  yieldTHa: number | null;
 }
 
 /**
@@ -177,7 +180,7 @@ export interface PlotHistoryRow {
 export async function plotHistory(sdb: ScopedDb, plotId: string): Promise<PlotHistoryRow[]> {
   const org = sdb.auth.orgId;
   const [plot] = await sdb.db
-    .select({ id: s.plots.id })
+    .select({ id: s.plots.id, areaHa: s.plots.areaHa })
     .from(s.plots)
     .where(
       and(
@@ -189,7 +192,7 @@ export async function plotHistory(sdb: ScopedDb, plotId: string): Promise<PlotHi
     )
     .limit(1);
   if (!plot) throw new NotFoundError("Lote inexistente");
-  const [plans, seasons, sowings] = await Promise.all([
+  const [plans, seasons, sowings, harvests] = await Promise.all([
     sdb.db
       .select()
       .from(s.plotSeasons)
@@ -213,7 +216,24 @@ export async function plotHistory(sdb: ScopedDb, plotId: string): Promise<PlotHi
         ),
       )
       .orderBy(asc(s.records.capturedAt)),
+    sdb.db
+      .select({ data: s.records.data })
+      .from(s.records)
+      .where(
+        and(
+          eq(s.records.organizationId, org),
+          eq(s.records.plotId, plotId),
+          eq(s.records.kind, "harvest"),
+          isNull(s.records.deletedAt),
+        ),
+      ),
   ]);
+  const harvestBySeason = new Map<string, { tons: number; areaHa?: number }[]>();
+  for (const r of harvests) {
+    const d = JSON.parse(r.data) as { seasonId?: string; tons?: number; areaHa?: number };
+    if (d.seasonId && typeof d.tons === "number")
+      harvestBySeason.set(d.seasonId, [...(harvestBySeason.get(d.seasonId) ?? []), { tons: d.tons, areaHa: d.areaHa }]);
+  }
   const planBySeason = new Map(plans.map((p) => [p.seasonId, p]));
   const sownBySeason = new Map<string, { crop: string; variety: string | null; at: number }>();
   for (const r of sowings) {
@@ -225,7 +245,8 @@ export async function plotHistory(sdb: ScopedDb, plotId: string): Promise<PlotHi
   for (const season of seasons) {
     const plan = planBySeason.get(season.id);
     const sown = sownBySeason.get(season.id);
-    if (!plan && !sown) continue;
+    const crops = harvestBySeason.get(season.id);
+    if (!plan && !sown && !crops) continue;
     rows.push({
       seasonId: season.id,
       seasonName: season.name,
@@ -236,6 +257,8 @@ export async function plotHistory(sdb: ScopedDb, plotId: string): Promise<PlotHi
       plannedSowingDate: plan?.plannedSowingDate ?? null,
       targetYieldTHa: plan?.targetYieldTHa ?? null,
       sownOn: sown?.at ?? null,
+      harvestTons: crops ? Math.round(crops.reduce((a, h) => a + h.tons, 0) * 100) / 100 : null,
+      yieldTHa: crops ? yieldTHa(crops, plot.areaHa) : null,
     });
   }
   return rows.sort(

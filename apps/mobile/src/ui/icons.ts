@@ -8,6 +8,7 @@ import {
   Droplets,
   Footprints,
   NotebookPen,
+  Scale,
   Shovel,
   Sprout as Fertilizer,
   SprayCan,
@@ -37,6 +38,7 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
   sowing: Shovel,
   application: SprayCan,
   fertilization: Fertilizer,
+  harvest: Scale,
 };
 
 export const ALERT_ICON: Record<string, LucideIcon> = {

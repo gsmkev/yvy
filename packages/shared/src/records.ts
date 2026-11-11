@@ -94,6 +94,7 @@ export const productDose = z.object({
 });
 /** Fertilizante: siempre kg/ha. */
 export const fertilizerDose = productDose.extend({ unit: z.literal("kg_ha") });
+export const HARVEST_DESTINATIONS = ["silo", "acopio", "industry", "other"] as const;
 export const FERT_METHODS = ["broadcast", "banded", "foliar", "fertigation"] as const;
 export type ProductDose = z.infer<typeof productDose>;
 
@@ -146,6 +147,14 @@ export const recordDataSchemas = {
     products: z.array(fertilizerDose).min(1).max(10),
     method: z.enum(FERT_METHODS),
     areaHa: areaDone.optional(),
+    note,
+  }),
+  harvest: z.object({
+    seasonId,
+    tons: z.number().positive().max(1_000_000),
+    moisturePct: z.number().min(0).max(100).optional(),
+    areaHa: areaDone.optional(),
+    destination: z.enum(HARVEST_DESTINATIONS).optional(),
     note,
   }),
   application: z

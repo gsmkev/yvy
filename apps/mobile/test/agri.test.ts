@@ -139,3 +139,11 @@ describe("flujo de fertilización", () => {
     expect(steps[0]).toMatchObject({ fixedUnit: "kg_ha" });
   });
 });
+
+describe("flujo de cosecha", () => {
+  it("toneladas obligatorias, el resto opcional", () => {
+    const steps = visibleSteps(FLOWS.harvest, {}, { askSeason: true });
+    expect(steps.map((x) => x.key)).toEqual(["seasonId", "tons", "moisturePct", "areaHa", "destination", "note"]);
+    expect(steps.find((x) => x.key === "tons")).not.toHaveProperty("optional", true);
+  });
+});

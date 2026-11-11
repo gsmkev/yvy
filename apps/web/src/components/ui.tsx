@@ -1,4 +1,7 @@
 import {
+  useEffect,
+  useId,
+  useRef,
   useSyncExternalStore,
   type ButtonHTMLAttributes,
   type InputHTMLAttributes,
@@ -11,10 +14,10 @@ import { t, tk } from "../lib/i18n";
 type Variant = "primary" | "secondary" | "quiet" | "danger";
 
 const VARIANT: Record<Variant, string> = {
-  primary: "bg-accion text-white hover:bg-accion-2 border border-accion",
-  secondary: "bg-papel text-surco border border-linea hover:border-tinta-2/40 hover:bg-white",
+  primary: "bg-accion text-sobre hover:bg-accion-2 border border-accion",
+  secondary: "bg-papel text-surco border border-linea hover:border-tinta-2/40 hover:bg-lino",
   quiet: "text-tinta-2 hover:text-surco hover:bg-surco/5 border border-transparent",
-  danger: "bg-papel text-peligro border border-peligro/40 hover:bg-peligro hover:text-white",
+  danger: "bg-papel text-peligro border border-peligro/40 hover:bg-peligro hover:text-sobre",
 };
 
 export function Button({
@@ -28,7 +31,7 @@ export function Button({
     <button
       type="button"
       {...p}
-      className={`inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md px-3.5 text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45 ${VARIANT[variant]} ${className}`}
+      className={`inline-flex h-10 cursor-pointer print:hidden items-center justify-center gap-2 rounded-md px-3.5 text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45 ${VARIANT[variant]} ${className}`}
     >
       {/* Ícono solo en botones sin texto: con texto, el texto alcanza */}
       {Icon && !children && <Icon size={16} strokeWidth={2} aria-hidden />}
@@ -111,21 +114,66 @@ export function Stat({
   );
 }
 
+const FOCUSABLE =
+  'a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+/**
+ * Diálogo accesible (U-26): al abrir pasa el foco al primer campo (o al diálogo), Tab queda dentro,
+ * Escape cierra y al cerrar el foco vuelve a lo que lo abrió.
+ */
 export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+  const box = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  const close = useRef(onClose);
+  close.current = onClose;
+  useEffect(() => {
+    const before = document.activeElement as HTMLElement | null;
+    const el = box.current;
+    // Primer campo del formulario; si no hay (confirmaciones), el propio diálogo, para no enfocar una acción destructiva
+    const field = el?.querySelector<HTMLElement>(".modal-body :is(input,select,textarea):not([disabled]):not([type=\"hidden\"])");
+    (field ?? el)?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        close.current();
+      } else if (e.key === "Tab" && el) {
+        const items = Array.from(el.querySelectorAll<HTMLElement>(FOCUSABLE));
+        if (!items.length) return e.preventDefault();
+        const first = items[0]!;
+        const last = items[items.length - 1]!;
+        if (e.shiftKey && (document.activeElement === first || document.activeElement === el)) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      if (before && document.contains(before)) before.focus();
+    };
+  }, []);
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-surco/55 p-4 backdrop-blur-[2px]"
       onClick={onClose}
     >
       <div
+        ref={box}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
-        className="max-h-[90vh] w-full max-w-lg overflow-auto rounded-xl bg-lino shadow-xl"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className="max-h-[90vh] w-full max-w-lg overflow-auto rounded-xl bg-lino shadow-xl outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 flex items-center justify-between border-b border-linea bg-lino px-5 py-3.5">
-          <h2 className="font-serif text-xl font-semibold">{title}</h2>
+          <h2 id={titleId} className="font-serif text-xl font-semibold">
+            {title}
+          </h2>
           <button
             aria-label={t("ui.close")}
             className="cursor-pointer rounded p-1.5 text-tinta-2 hover:bg-surco/5 hover:text-surco"
@@ -134,7 +182,7 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
             <X size={18} aria-hidden />
           </button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className="modal-body p-5">{children}</div>
       </div>
     </div>
   );
@@ -178,12 +226,21 @@ export function ConfirmModal({
   );
 }
 
-export const Spinner = () => (
+/**
+ * Marcador de carga con alturas fijas (U-19): reserva el alto que va a ocupar el contenido real
+ * para que al llegar los datos la página no salte. `rows` y `h` (px) se ajustan a cada lista.
+ */
+export const Spinner = ({ rows = 3, h = 48 }: { rows?: number; h?: number }) => (
   <div className="flex flex-col gap-2 p-1" aria-busy="true" aria-label={t("ui.loading")}>
-    {[0, 1, 2].map((i) => (
-      <div key={i} className="h-12 animate-pulse rounded-md bg-surco/[0.06]" />
+    {Array.from({ length: rows }, (_, i) => (
+      <div key={i} className="animate-pulse rounded-md bg-surco/[0.06]" style={{ height: h }} />
     ))}
   </div>
+);
+
+/** Un bloque de carga de alto fijo (px). */
+export const Skeleton = ({ h, className = "" }: { h: number; className?: string }) => (
+  <div aria-hidden className={`animate-pulse rounded-md bg-surco/[0.06] ${className}`} style={{ height: h }} />
 );
 
 export function Empty({
@@ -213,7 +270,7 @@ export const ErrorBox = ({ error }: { error: unknown }) => (
 const SEV = {
   info: "border-cielo text-surco bg-cielo/15",
   watch: "border-trigo text-trigo-texto bg-trigo/15",
-  warning: "border-peligro bg-peligro text-white",
+  warning: "border-peligro bg-peligro text-sobre",
 } as const;
 
 /** Severidad siempre con ícono + texto, nunca solo color. */
@@ -286,7 +343,7 @@ export function Toaster() {
   return (
     <div
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex flex-col items-center gap-2 px-4"
+      className="pointer-events-none print:hidden fixed inset-x-0 bottom-4 z-[60] flex flex-col items-center gap-2 px-4"
     >
       {list.map((x) => (
         <div
@@ -317,11 +374,27 @@ export const Tabs = <T extends string>({
   value: T;
   onChange: (v: T) => void;
 }) => (
-  <div role="tablist" className="flex shrink-0 gap-5 overflow-x-auto border-b border-linea">
+  <div
+    role="tablist"
+    className="flex shrink-0 gap-5 overflow-x-auto border-b border-linea print:hidden"
+    onKeyDown={(e) => {
+      // Flechas, Inicio y Fin pasan de una pestaña a otra
+      const i = tabs.findIndex((x) => x.id === value);
+      const to =
+        e.key === "ArrowRight" ? i + 1 : e.key === "ArrowLeft" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : null;
+      if (to === null) return;
+      e.preventDefault();
+      const next = tabs[(to + tabs.length) % tabs.length]!;
+      onChange(next.id);
+      setTimeout(() => document.getElementById(`tab-${next.id}`)?.focus(), 0);
+    }}
+  >
     {tabs.map((tb) => (
       <button
         key={tb.id}
+        id={`tab-${tb.id}`}
         role="tab"
+        tabIndex={value === tb.id ? 0 : -1}
         aria-selected={value === tb.id}
         onClick={() => onChange(tb.id)}
         className={`-mb-px cursor-pointer border-b-2 pt-1 pb-2.5 text-sm font-medium whitespace-nowrap transition-colors ${value === tb.id ? "border-surco text-surco" : "border-transparent text-tinta-2 hover:text-surco"}`}

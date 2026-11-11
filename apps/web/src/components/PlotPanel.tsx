@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { centroidOf, type Area } from "@yvy/geo";
 import { CHART, CROPS, PLOT_KINDS, SEASONS } from "@yvy/shared";
@@ -28,6 +28,8 @@ export function PlotPanel({
   problemAreas = [],
   onShowArea,
   onEditShape,
+  onSplit,
+  onMerge,
 }: {
   plot: Plot;
   workers: Member[];
@@ -38,8 +40,14 @@ export function PlotPanel({
   onShowArea?: (a: ProblemArea) => void;
   /** M-02: pasa el mapa a edición de vértices de este lote. */
   onEditShape?: () => void;
+  /** M-05: dibujar una línea para dividir el lote / elegir otro lote para unir. */
+  onSplit?: () => void;
+  onMerge?: () => void;
 }) {
   const qc = useQueryClient();
+  const heading = useRef<HTMLHeadingElement>(null);
+  // Al abrir la ficha el foco pasa al título, para que el lector de pantalla anuncie el lote
+  useEffect(() => heading.current?.focus(), []);
   const [editing, setEditing] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [form, setForm] = useState({
@@ -119,11 +127,13 @@ export function PlotPanel({
       <div>
         <button
           onClick={onClose}
-          className="cursor-pointer text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
+          className="cursor-pointer text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline print:hidden"
         >
           ← {t("ui.allPlots")}
         </button>
-        <h2 className="mt-3 font-serif text-[24px] leading-tight font-semibold">{plot.name}</h2>
+        <h2 ref={heading} tabIndex={-1} className="mt-3 font-serif text-[24px] leading-tight font-semibold outline-none">
+          {plot.name}
+        </h2>
         <p className="num mt-1 text-sm text-tinta-2">
           {plot.kind === "pasture" ? t("ui.pasture") : (plot.crop ?? t("ui.crop"))} · {fmtHa(plot.areaHa)}
           {plot.season ? ` · ${plot.season}` : ""}
@@ -284,12 +294,18 @@ export function PlotPanel({
       )}
 
       {canEdit && !editing && (
-        <div className="flex gap-2 border-t border-linea pt-4">
+        <div className="flex flex-wrap gap-2 border-t border-linea pt-4">
           <Button icon={Pencil} onClick={() => setEditing(true)}>
             {t("ui.edit")}
           </Button>
           {onEditShape && JSON.parse(plot.geometry).type === "Polygon" && (
             <Button onClick={onEditShape}>{t("ui.plotEditShape")}</Button>
+          )}
+          {onSplit && JSON.parse(plot.geometry).type === "Polygon" && (
+            <Button onClick={onSplit}>{t("ui.splitPlot")}</Button>
+          )}
+          {onMerge && JSON.parse(plot.geometry).type === "Polygon" && (
+            <Button onClick={onMerge}>{t("ui.mergePlots")}</Button>
           )}
           <Button variant="danger" icon={Trash2} onClick={() => setConfirming(true)}>
             {t("ui.delete")}

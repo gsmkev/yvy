@@ -10,7 +10,7 @@ import { PublicShell } from "./PublicShell";
 
 const btn =
   "inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-medium transition-colors duration-150";
-const primary = `${btn} cursor-pointer border border-accion bg-accion text-white hover:bg-accion-2 disabled:cursor-not-allowed disabled:opacity-45`;
+const primary = `${btn} cursor-pointer border border-accion bg-accion text-sobre hover:bg-accion-2 disabled:cursor-not-allowed disabled:opacity-45`;
 const secondary = `${btn} cursor-pointer border border-linea bg-papel text-surco hover:border-tinta-2/40`;
 
 /** La demo existe solo si el Worker tiene DEMO_ORG_ID y DEMO_USER_ID (si no, GET /auth/demo no responde ok). */
@@ -230,7 +230,7 @@ export function LandingPage() {
       <section className="border-t border-linea bg-surco text-lino">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-12 sm:px-6 md:flex-row md:items-center md:justify-between">
           <p className="max-w-md font-serif text-2xl leading-tight font-semibold">{t("ui.publicPromise")}</p>
-          <Link to="/ingresar" search={{ modo: "registro" }} className={`${btn} bg-lino text-surco hover:bg-white`}>
+          <Link to="/ingresar" search={{ modo: "registro" }} className={`${btn} bg-lino text-surco hover:bg-papel`}>
             {t("ui.publicSignup")}
           </Link>
         </div>

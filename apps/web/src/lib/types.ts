@@ -55,6 +55,16 @@ export interface Plot {
   lastRecordAt: number | null;
 }
 
+export interface FarmLine {
+  id: string;
+  farmId: string;
+  kind: "fence" | "road" | "pipe";
+  name: string;
+  /** GeoJSON LineString. */
+  geometry: string;
+  lengthM: number;
+}
+
 export interface Poi {
   id: string;
   farmId: string;

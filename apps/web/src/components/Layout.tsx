@@ -10,7 +10,7 @@ import { useAlerts, useFarms, useMe } from "../lib/queries";
 import { loadPrefs } from "../lib/prefs";
 import { trackView } from "../lib/track";
 import { GlobalSearch } from "./GlobalSearch";
-import { OrgSwitcher, useOrganizations } from "./OrgSwitcher";
+import { AccountMenu, useOrganizations } from "./AccountMenu";
 
 const NAV: { to: string; label: MessageKey }[] = [
   { to: "/", label: "ui.navMap" },
@@ -85,8 +85,18 @@ export function Layout() {
   useEffect(() => trackView(path), [path]);
 
   return (
-    <div className="flex h-full flex-col">
-      <header className="flex h-14 shrink-0 items-center gap-6 border-b border-linea bg-lino px-4 lg:px-6">
+    <div className="flex h-full flex-col print:block print:h-auto">
+      <a
+        href="#main"
+        onClick={(e) => {
+          e.preventDefault();
+          document.getElementById("main")?.focus();
+        }}
+        className="sr-only print:hidden focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[70] focus:rounded-md focus:bg-surco focus:px-3 focus:py-2 focus:text-sm focus:text-lino"
+      >
+        {t("ui.skipToContent")}
+      </a>
+      <header className="flex h-14 print:hidden shrink-0 items-center gap-6 border-b border-linea bg-lino px-4 lg:px-6">
         <Link to="/" className="font-serif text-[22px] leading-none font-semibold tracking-tight">
           {t("ui.appName")}
         </Link>
@@ -110,7 +120,7 @@ export function Layout() {
               >
                 {t(n.label)}
                 {n.to === "/avisos" && nAlerts > 0 && (
-                  <span className="num ml-1.5 rounded-full bg-peligro px-1.5 text-xs leading-5 font-semibold text-white">
+                  <span className="num ml-1.5 rounded-full bg-peligro px-1.5 text-xs leading-5 font-semibold text-sobre">
                     {nAlerts}
                   </span>
                 )}
@@ -119,31 +129,14 @@ export function Layout() {
           })}
         </nav>
         <GlobalSearch inputRef={searchRef} />
-        <OrgSwitcher
+        <AccountMenu
           name={me.data?.organization.name}
           sub={trial ? t("ui.trialEnds", { date: fmtDate(trial) }) : me.data?.user.fullName}
+          onLogout={logout}
         />
-        <Link
-          to="/ayuda"
-          className="text-sm whitespace-nowrap text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
-        >
-          {t("ui.helpLink")}
-        </Link>
-        <Link
-          to="/cuenta"
-          className="text-sm whitespace-nowrap text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
-        >
-          {t("ui.account")}
-        </Link>
-        <button
-          onClick={logout}
-          className="cursor-pointer text-sm whitespace-nowrap text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
-        >
-          {t("ui.logout")}
-        </button>
       </header>
       {me.data?.support && (
-        <p role="status" className="shrink-0 border-b border-trigo/40 bg-trigo/15 px-4 py-1.5 text-center text-sm text-surco">
+        <p role="status" className="shrink-0 border-b border-trigo/40 bg-trigo/15 px-4 py-1.5 print:hidden text-center text-sm text-surco">
           {t("ui.supportBanner", { name: me.data.organization.name })}{" "}
           <button className="cursor-pointer font-medium underline underline-offset-4" onClick={exitSupport}>
             {t("ui.supportExit")}
@@ -158,7 +151,7 @@ export function Layout() {
           {t("ui.offlineBanner")}
         </p>
       )}
-      <main id="main" className="min-h-0 min-w-0 flex-1 overflow-auto">
+      <main id="main" tabIndex={-1} className="min-h-0 min-w-0 flex-1 overflow-auto outline-none print:overflow-visible">
         <Outlet />
       </main>
       <Toaster />

@@ -39,6 +39,9 @@ export const POI_KINDS = [
   "dock",
   "other",
 ] as const;
+/** Líneas del mapa (M-20): alambrados, caminos internos y cañerías. */
+export const LINE_KINDS = ["fence", "road", "pipe"] as const;
+export type LineKind = (typeof LINE_KINDS)[number];
 export const RECURRENCES = ["none", "daily", "weekly"] as const;
 export const TASK_STATUS = ["open", "done", "cancelled"] as const;
 export const TASK_PRIORITIES = ["low", "normal", "high"] as const;
@@ -272,6 +275,30 @@ export const pointsOfInterest = sqliteTable(
     ...synced,
   },
   (t) => [index("poi_sync_idx").on(t.organizationId, t.version, t.id), index("poi_farm_idx").on(t.farmId)],
+);
+
+/**
+ * Línea del mapa de una estancia (M-20): alambrado, camino interno o cañería, con su largo en metros.
+ * Por ahora solo la web la usa; no está en el pull del sync (se suma cuando la app la necesite).
+ */
+export const farmLines = sqliteTable(
+  "farm_lines",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    kind: text("kind", { enum: LINE_KINDS }).notNull(),
+    name: text("name").notNull(),
+    /** GeoJSON LineString. */
+    geometry: text("geometry").notNull(),
+    ...bbox,
+    lengthM: real("length_m").notNull(),
+    ...synced,
+  },
+  (t) => [
+    index("farm_lines_sync_idx").on(t.organizationId, t.version, t.id),
+    index("farm_lines_farm_idx").on(t.farmId),
+  ],
 );
 
 export const plotAssignments = sqliteTable(

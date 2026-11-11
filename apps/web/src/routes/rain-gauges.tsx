@@ -4,7 +4,7 @@ import { Link, useParams } from "@tanstack/react-router";
 import { localDate } from "@yvy/shared";
 import { MonthlyRainChart } from "../components/charts";
 import { Empty, ErrorBox, Spinner } from "../components/ui";
-import { fmtIsoDate, fmtNum } from "../lib/format";
+import { fmtIsoDate, fmtMm } from "../lib/format";
 import {
   campaignStart,
   gaugeTable,
@@ -20,7 +20,7 @@ import { useFarm } from "../lib/queries";
 
 const monthName = new Intl.DateTimeFormat("es-PY", { month: "short", year: "2-digit", timeZone: "UTC" });
 const monthLabel = (key: string) => monthName.format(new Date(`${key}-15T12:00:00Z`)).replace(".", "");
-const mm = (v: number | null) => (v === null ? "—" : `${fmtNum(Math.round(v * 10) / 10)} mm`);
+const mm = (v: number | null) => (v === null ? "—" : fmtMm(Math.round(v * 10) / 10));
 const diff = (r: GaugeRow) => {
   const d = gaugeVsSat(r);
   return d === null ? "—" : `${d > 0 ? "+" : ""}${Math.round(d)} %`;

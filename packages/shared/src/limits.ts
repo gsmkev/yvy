@@ -53,6 +53,9 @@ export const LIMITS = {
     minPlotHa: 0.1,
     maxFarmHa: 100_000,
     maxVertices: 5_000,
+    /** M-20: vértices de una línea (alambrado, camino, cañería) y líneas por estancia. */
+    maxLineVertices: 2_000,
+    maxLinesPerFarm: 500,
   },
   ingest: {
     maxRowsPerRequest: 40,

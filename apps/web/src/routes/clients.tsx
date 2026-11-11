@@ -5,7 +5,7 @@ import { BRAND } from "@yvy/shared";
 import { FarmMap } from "../components/FarmMap";
 import { Empty, ErrorBox, Spinner } from "../components/ui";
 import { get, getSession, post, setSession, type Session } from "../lib/api";
-import { fmtDate, fmtNum } from "../lib/format";
+import { fmtDate, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 
 interface ClientFarm {
@@ -141,7 +141,7 @@ export function ClientsPage() {
                     >
                       <span className="font-medium hover:underline">{f.name}</span>
                       <span className="num text-xs text-tinta-2">
-                        {fmtNum(f.areaHa)} ha
+                        {fmtHa(f.areaHa)}
                         {f.department ? ` · ${f.department}` : ""} ·{" "}
                         {f.lastRecordAt
                           ? `${t("ui.lastRecord").toLowerCase()} ${fmtDate(f.lastRecordAt)}`

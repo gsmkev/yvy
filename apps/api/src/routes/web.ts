@@ -27,12 +27,14 @@ import {
   listRecords,
   listShareLinks,
   listTasks,
+  mergePlots,
   ownerDashboard,
   plotGeometryWarnings,
   plotNdvi,
   registerDevice,
   saveAlertSettings,
   saveNotificationPrefs,
+  splitPlot,
   removeMember,
   revokeShareLink,
   updateFarm,
@@ -42,6 +44,7 @@ import {
 import { farmStockSummary, saveLivestockSettings } from "../db/livestock";
 import { createSanitaryEvent, deleteSanitaryEvent, listSanitaryEvents } from "../db/sanitary";
 import { clientsOverview } from "../db/clients";
+import { createLine, deleteLine, listFarmLines, updateLine } from "../db/lines";
 import { parse, readJson, timeOfDay } from "../lib/http";
 import { plotArea } from "./org";
 import { touchActivity } from "../auth/plan";
@@ -216,6 +219,85 @@ web.patch("/org/plots/:id", async (c) => {
 web.delete("/org/plots/:id", async (c) => {
   await deletePlot(c.var.sdb, c.req.param("id"));
   return c.json({ ok: true });
+});
+/** M-20: líneas del mapa (alambrados, caminos, cañerías). */
+const lineGeometry = z.unknown().transform((g, ctx) => {
+  const c = (g as { type?: string; coordinates?: unknown } | null)?.coordinates;
+  const ok =
+    (g as { type?: string } | null)?.type === "LineString" &&
+    Array.isArray(c) &&
+    c.length >= 2 &&
+    c.length <= LIMITS.geometry.maxLineVertices &&
+    c.every(
+      (p) =>
+        Array.isArray(p) &&
+        typeof p[0] === "number" &&
+        typeof p[1] === "number" &&
+        Math.abs(p[0]) <= 180 &&
+        Math.abs(p[1]) <= 90,
+    );
+  if (!ok) {
+    ctx.addIssue({ code: "custom", message: "geometría: línea inválida" });
+    return z.NEVER;
+  }
+  return { type: "LineString" as const, coordinates: (c as number[][]).map((p) => [p[0]!, p[1]!]) };
+});
+web.get("/org/farms/:id/lines", async (c) => c.json(await listFarmLines(c.var.sdb, c.req.param("id"))));
+web.post("/org/farms/:id/lines", async (c) => {
+  const b = parse(
+    z.object({ kind: z.enum(s.LINE_KINDS), name: z.string().trim().min(1).max(120), geometry: lineGeometry }),
+    await readJson(c.req),
+  );
+  return c.json(await createLine(c.var.sdb, c.req.param("id"), b), 201);
+});
+web.patch("/org/lines/:id", async (c) => {
+  const b = parse(
+    z.object({ kind: z.enum(s.LINE_KINDS).optional(), name: z.string().trim().min(1).max(120).optional() }),
+    await readJson(c.req),
+  );
+  await updateLine(c.var.sdb, c.req.param("id"), b);
+  return c.json({ ok: true });
+});
+web.delete("/org/lines/:id", async (c) => {
+  await deleteLine(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+/** M-05: dividir un lote en dos. Los polígonos los calcula el cliente; el servidor valida forma y superficie. */
+web.post("/org/plots/:id/split", async (c) => {
+  const b = parse(
+    z.object({
+      parts: z.tuple([
+        z.object({ name: z.string().trim().min(1).max(120), geometry: plotArea }),
+        z.object({ name: z.string().trim().min(1).max(120), geometry: plotArea }),
+      ]),
+    }),
+    await readJson(c.req),
+  );
+  const res = await splitPlot(
+    c.var.sdb,
+    c.req.param("id"),
+    b.parts.map((p) => ({ name: p.name, geometry: JSON.stringify(p.geometry), ...bboxOf(p.geometry), areaHa: areaHa(p.geometry) })),
+  );
+  return c.json(res, 201);
+});
+/** M-05: unir dos lotes contiguos de la misma estancia en uno. */
+web.post("/org/plots/merge", async (c) => {
+  const b = parse(
+    z.object({
+      ids: z.tuple([z.string().min(1), z.string().min(1)]).refine(([x, y]) => x !== y),
+      name: z.string().trim().min(1).max(120),
+      geometry: plotArea,
+    }),
+    await readJson(c.req),
+  );
+  const res = await mergePlots(c.var.sdb, b.ids, {
+    name: b.name,
+    geometry: JSON.stringify(b.geometry),
+    ...bboxOf(b.geometry),
+    areaHa: areaHa(b.geometry),
+  });
+  return c.json(res, 201);
 });
 web.get("/org/plots/:id/ndvi", async (c) => c.json(await plotNdvi(c.var.sdb, c.req.param("id"))));
 

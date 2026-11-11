@@ -169,6 +169,13 @@
       "when": 1794402119800,
       "tag": "0023_dusty_prima",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1794403209936,
+      "tag": "0024_soft_ricochet",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Polygon } from "geojson";
+import type { LineString, Polygon } from "geojson";
 import { MapPinPlus, PenLine, Upload, X } from "lucide-react";
 import { areaHa, bboxOf, validatePolygon, type Area } from "@yvy/geo";
 import { BRAND, NDVI_RAMP, POI_KINDS } from "@yvy/shared";
@@ -9,9 +9,12 @@ import { AlertsList } from "../components/AlertsList";
 import { CopyCoords } from "../components/CopyCoords";
 import { ClimatePanel } from "../components/ClimatePanel";
 import { boundsOf, FarmMap } from "../components/FarmMap";
+import { FullscreenButton } from "../components/FullscreenButton";
 import { ExportButtons } from "../components/ExportButtons";
 import { ImportPlots } from "../components/ImportPlots";
 import { PlotPanel } from "../components/PlotPanel";
+import { LinesPanel, NewLineModal } from "../components/LinesPanel";
+import { MergeModal, SplitModal } from "../components/PlotEditModals";
 import { HerdPanel } from "../components/HerdPanel";
 import { PlotsTable } from "../components/PlotsTable";
 import { CompareOverlay, SceneControls } from "../components/SceneControls";
@@ -19,15 +22,15 @@ import { ProductsPanel } from "../components/ProductsPanel";
 import { RecordsList } from "../components/RecordsList";
 import { SeasonsPanel } from "../components/SeasonsPanel";
 import { TasksPanel } from "../components/TasksPanel";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "../components/ui";
+import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Skeleton, Spinner, Tabs, toast } from "../components/ui";
 import { del, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
 import { download, plotsToGeoJson, plotsToKml, plotsToShapefileZip } from "../lib/exports";
 import { closedAreaHa, fmtDistance, pathLengthM, type LonLat } from "../lib/measure";
-import { fmtDate, fmtHa, fmtNum } from "../lib/format";
+import { areaUnitLabel, fmtAreaValue, fmtDate, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { loadPrefs, savePrefs } from "../lib/prefs";
-import { fetchAllRecords, useAlerts, useFarm, useFarms, useMe, useMembers, useProblemAreas } from "../lib/queries";
+import { fetchAllRecords, useAlerts, useFarm, useFarmLines, useFarms, useMe, useMembers, useProblemAreas } from "../lib/queries";
 import { defaultCompare, layerDates, pickLayer, type Camera } from "../lib/scenes";
 import { PEST_COLORS, PEST_WINDOW_MS, pestCounts, pestPoints } from "../lib/pests";
 import type { FarmDetail, RecordRow } from "../lib/types";
@@ -41,6 +44,7 @@ const TABS: Tab[] = ["plots", "seasons", "products", "records", "tasks", "climat
 export function FarmPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId" });
   const farm = useFarm(farmId);
+  const lines = useFarmLines(farmId);
   const farms = useFarms();
   const me = useMe();
   const canEdit = !!me.data && me.data.role !== "worker";
@@ -56,6 +60,23 @@ export function FarmPage() {
   // Una pestaña guardada que este rol no tiene (ej. "herd" para un empleado) cae en Lotes en vez de mostrar nada.
   const tab: Tab = tabPref === "herd" && !canEdit ? "plots" : tabPref;
   const [onlyUnvisited, setOnlyUnvisited] = useState(false);
+  const mapBox = useRef<HTMLDivElement>(null);
+  // M-05: dividir (dibuja una línea sobre el lote) y unir (se elige el lote contiguo en el mapa)
+  const [splitting, setSplitting] = useState<string | null>(null);
+  const [splitLine, setSplitLine] = useState<LineString | null>(null);
+  const [mergeFrom, setMergeFrom] = useState<string | null>(null);
+  const [mergeWith, setMergeWith] = useState<string | null>(null);
+  // M-20: trazar alambrados, caminos y cañerías
+  const [lineDraw, setLineDraw] = useState(false);
+  const [newLine, setNewLine] = useState<LineString | null>(null);
+  // U-27: captura del mapa para la hoja impresa
+  const snapshotRef = useRef<(() => Promise<string | null>) | null>(null);
+  const [snap, setSnap] = useState<string | null>(null);
+  const printPage = async () => {
+    setSnap((await snapshotRef.current?.().catch(() => null)) ?? null);
+    // Deja que React pinte la imagen antes de abrir el diálogo de impresión
+    setTimeout(() => window.print(), 150);
+  };
   const { lote } = useSearch({ from: "/app/estancias/$farmId" });
   const [selected, setSelected] = useState<string | null>(lote ?? null);
   // Llegar desde el buscador con ?lote= elige ese lote
@@ -159,8 +180,14 @@ export function FarmPage() {
   }, [farm.data?.farm.id, selectedGeometry]);
   if (farm.isLoading)
     return (
-      <div className="p-6">
-        <Spinner />
+      <div className="flex h-full flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_480px]" aria-busy="true">
+        <div className="min-h-64 flex-1 animate-pulse bg-surco/[0.06] lg:h-full" />
+        <section className="flex flex-col gap-5 border-l border-linea p-4 lg:p-6">
+          <Skeleton h={42} />
+          <Skeleton h={20} className="w-2/3" />
+          <Skeleton h={40} />
+          <Spinner rows={5} h={56} />
+        </section>
       </div>
     );
   if (farm.error)
@@ -195,11 +222,11 @@ export function FarmPage() {
   const pastureHa = d.plots.filter((p) => p.kind === "pasture").reduce((a, p) => a + p.areaHa, 0);
 
   return (
-    <div className="flex h-full flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_480px]">
+    <div className="flex h-full flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_480px] print:block print:h-auto">
       <div
         role="group"
         aria-label={t("ui.viewSwitch")}
-        className="flex gap-6 border-b border-linea bg-lino px-4 py-2.5 text-sm lg:hidden"
+        className="flex gap-6 border-b border-linea bg-lino px-4 py-2.5 text-sm lg:hidden print:hidden"
       >
         {(["map", "list"] as const).map((v) => (
           <button
@@ -212,8 +239,10 @@ export function FarmPage() {
           </button>
         ))}
       </div>
-      <div className={`relative min-h-0 flex-1 lg:h-full ${view === "list" ? "max-lg:hidden" : ""}`}>
+      <div ref={mapBox} className={`relative min-h-0 flex-1 bg-lino lg:h-full print:hidden ${view === "list" ? "max-lg:hidden" : ""}`}>
+        <FullscreenButton target={mapBox} className="absolute right-3 bottom-8 z-10" />
         <FarmMap
+          snapshotRef={snapshotRef}
           outline={d.farm.geometry}
           plots={d.plots}
           pois={d.pois}
@@ -245,12 +274,16 @@ export function FarmPage() {
           onMeasureClick={(lon, lat) => setMPoints((ps) => [...ps, [lon, lat]])}
           onMeasureClose={() => setMClosed(true)}
           drawing={mode === "draw"}
+          lines={lines.data}
+          drawingLine={(!!splitting && !splitLine) || (lineDraw && !newLine)}
+          onLineDrawn={(g) => (splitting ? setSplitLine(g) : setNewLine(g))}
           onDrawn={(g) => {
             setDrawn(g);
             setMode("none");
           }}
           onPlotClick={(id) => {
             if (shapeEdit) return;
+            if (mergeFrom) return id !== mergeFrom && setMergeWith(id);
             if (picking) return togglePicked(id);
             setSelected(id);
             setTab("plots");
@@ -442,6 +475,21 @@ export function FarmPage() {
             )}
           </div>
         )}
+        {(splitting || mergeFrom || lineDraw) && !splitLine && !mergeWith && !newLine && (
+          <div className="absolute bottom-4 left-1/2 flex max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-3 rounded-md bg-surco px-4 py-2.5 text-sm text-lino">
+            {splitting ? t("ui.splitHint") : lineDraw ? t("ui.linesHint") : t("ui.mergePick")}
+            <button
+              className="cursor-pointer font-medium underline underline-offset-4"
+              onClick={() => {
+                setSplitting(null);
+                setMergeFrom(null);
+                setLineDraw(false);
+              }}
+            >
+              {t("ui.cancel")}
+            </button>
+          </div>
+        )}
         {mode !== "none" && mode !== "import" && !picking && (
           <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-md bg-surco px-4 py-2.5 text-sm text-lino shadow-lg">
             {mode === "poi" ? t("ui.clickMapForPoi") : t("ui.drawHint")}
@@ -457,12 +505,29 @@ export function FarmPage() {
       </div>
 
       <section
-        className={`flex min-h-0 flex-1 flex-col gap-5 overflow-auto border-l border-linea bg-lino p-4 *:shrink-0 lg:p-6 ${view === "map" ? "max-lg:hidden" : ""}`}
+        className={`flex min-h-0 flex-1 flex-col gap-5 overflow-auto border-l border-linea bg-lino p-4 *:shrink-0 lg:p-6 print:!flex print:overflow-visible print:border-0 print:p-0 ${view === "map" ? "max-lg:hidden" : ""}`}
       >
+        <div className="hidden print:block">
+          <p className="text-sm text-tinta-2">{t("ui.printedOn", { date: fmtDate(Date.now()) })}</p>
+          {snap && (
+            <img
+              src={snap}
+              alt={t("ui.printMapAlt", { name: d.farm.name })}
+              className="mt-2 max-h-[100mm] w-full rounded-md border border-linea object-cover"
+            />
+          )}
+        </div>
         <header>
           <div className="flex items-baseline justify-between gap-3">
             <h1 className="text-[28px] leading-tight">{d.farm.name}</h1>
-            <span className="flex shrink-0 gap-4 text-sm">
+            <span className="flex shrink-0 gap-4 text-sm print:hidden">
+              <button
+                type="button"
+                onClick={printPage}
+                className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
+              >
+                {t("ui.print")}
+              </button>
               {(farms.data?.length ?? 0) > 1 && (
                 <Link to="/" className="text-tinta-2 underline-offset-4 hover:text-surco hover:underline">
                   {t("ui.allFarms")}
@@ -482,13 +547,13 @@ export function FarmPage() {
             {[d.farm.district, d.farm.department].filter(Boolean).join(", ")}
             {(d.farm.district || d.farm.department) && " · "}
             {fmtHa(d.farm.areaHa)} · {d.plots.length} {t("ui.plots").toLowerCase()}
-            {cropHa > 0 && ` · ${fmtNum(cropHa)} ha ${t("ui.crop").toLowerCase()}`}
-            {pastureHa > 0 && ` · ${fmtNum(pastureHa)} ha ${t("ui.pasture").toLowerCase()}`}
+            {cropHa > 0 && ` · ${fmtHa(cropHa)} ${t("ui.crop").toLowerCase()}`}
+            {pastureHa > 0 && ` · ${fmtHa(pastureHa)} ${t("ui.pasture").toLowerCase()}`}
           </p>
         </header>
 
         {canEdit && (
-          <div className="flex flex-wrap items-center gap-2 border-b border-linea pb-5">
+          <div className="flex flex-wrap items-center gap-2 border-b border-linea pb-5 print:hidden">
             <Button variant="primary" icon={PenLine} onClick={() => setMode(mode === "draw" ? "none" : "draw")}>
               {t("ui.newPlot")}
             </Button>
@@ -557,11 +622,23 @@ export function FarmPage() {
               plot={plot}
               workers={workersOf(plot.id)}
               canEdit={canEdit}
-              onClose={() => setSelected(null)}
+              onClose={() => {
+                setSelected(null);
+                // Al volver a la lista, el foco queda en la pestaña activa y no se pierde en el vacío
+                setTimeout(() => document.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')?.focus(), 0);
+              }}
               problemAreas={(problems.data ?? []).filter((a) => a.plotId === plot.id)}
               onShowArea={(a) => {
                 setFlyTo({ lon: a.lon, lat: a.lat, zoom: 17, n: Date.now() });
                 setView("map");
+              }}
+              onSplit={() => {
+                setMergeFrom(null);
+                setSplitting(plot.id);
+              }}
+              onMerge={() => {
+                setSplitting(null);
+                setMergeFrom(plot.id);
               }}
               onEditShape={() => {
                 setShape(null);
@@ -571,7 +648,29 @@ export function FarmPage() {
           ) : d.plots.length === 0 ? (
             <Empty title={t("ui.noPlots")} />
           ) : (
-            <div>
+            <>
+            <table className="hidden w-full text-sm print:table">
+              <caption className="pb-2 text-left font-serif text-lg font-semibold">{t("ui.printPlotsTitle")}</caption>
+              <thead>
+                <tr className="border-b border-linea text-left text-xs text-tinta-2">
+                  <th className="py-1.5 font-medium">{t("ui.plot")}</th>
+                  <th className="py-1.5 font-medium">{t("ui.crop")}</th>
+                  <th className="py-1.5 text-right font-medium">{areaUnitLabel()}</th>
+                  <th className="py-1.5 text-right font-medium">{t("ui.lastVisitShort")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shownPlots.map((p) => (
+                  <tr key={p.id} className="border-b border-linea">
+                    <td className="py-1.5 font-medium">{p.name}</td>
+                    <td className="py-1.5">{p.kind === "pasture" ? t("ui.pasture") : (p.crop ?? t("ui.crop"))}</td>
+                    <td className="num py-1.5 text-right">{fmtAreaValue(p.areaHa)}</td>
+                    <td className="num py-1.5 text-right">{p.lastRecordAt ? fmtDate(p.lastRecordAt) : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="print:hidden">
               <div className="mb-1 flex items-baseline justify-between gap-3">
                 {unvisited.length > 0 ? (
                   <button
@@ -614,6 +713,9 @@ export function FarmPage() {
                 />
               </div>
               <PlotsTable plots={shownPlots} onSelect={setSelected} />
+              <div className="mt-6">
+                <LinesPanel farmId={farmId} lines={lines.data ?? []} canEdit={!!canEdit} onDraw={() => setLineDraw(true)} />
+              </div>
               <p className="mt-3 text-xs text-tinta-2">{t("ui.selectPlotHint")}</p>
               {d.pois.length > 0 && (
                 <>
@@ -650,6 +752,7 @@ export function FarmPage() {
                 </>
               )}
             </div>
+            </>
           ))}
         {tab === "seasons" && <SeasonsPanel farmId={farmId} plots={d.plots} canEdit={canEdit} />}
         {tab === "products" && <ProductsPanel canEdit={canEdit} farmId={farmId} plots={d.plots} />}
@@ -666,6 +769,52 @@ export function FarmPage() {
         {tab === "herd" && canEdit && <HerdPanel farmId={farmId} />}
       </section>
 
+      {newLine && (
+        <NewLineModal
+          farmId={farmId}
+          line={newLine}
+          onClose={() => {
+            setNewLine(null);
+            setLineDraw(false);
+          }}
+        />
+      )}
+      {splitting && splitLine && d.plots.find((p) => p.id === splitting) && (
+        <SplitModal
+          plot={d.plots.find((p) => p.id === splitting)!}
+          line={splitLine}
+          onClose={() => {
+            setSplitLine(null);
+            setSplitting(null);
+          }}
+          onDone={() => {
+            setSplitLine(null);
+            setSplitting(null);
+            setSelected(null);
+            qc.invalidateQueries({ queryKey: ["farm", farmId] });
+            qc.invalidateQueries({ queryKey: ["farms"] });
+            toast(t("ui.splitDone"));
+          }}
+        />
+      )}
+      {mergeFrom && mergeWith && d.plots.find((p) => p.id === mergeFrom) && d.plots.find((p) => p.id === mergeWith) && (
+        <MergeModal
+          a={d.plots.find((p) => p.id === mergeFrom)!}
+          b={d.plots.find((p) => p.id === mergeWith)!}
+          onClose={() => {
+            setMergeWith(null);
+            setMergeFrom(null);
+          }}
+          onDone={() => {
+            setMergeWith(null);
+            setMergeFrom(null);
+            setSelected(null);
+            qc.invalidateQueries({ queryKey: ["farm", farmId] });
+            qc.invalidateQueries({ queryKey: ["farms"] });
+            toast(t("ui.mergeDone"));
+          }}
+        />
+      )}
       {mode === "import" && <ImportPlots farmId={farmId} onClose={() => setMode("none")} />}
       {drawn && (
         <NewPlotModal

@@ -4,8 +4,8 @@ import { AlertTriangle, ChevronRight, Plus } from "lucide-react";
 import { FarmMap } from "../components/FarmMap";
 import { FirstRunGuide, guideSteps } from "../components/FirstRunGuide";
 import { OwnerDashboard } from "../components/OwnerDashboard";
-import { Button, Empty, ErrorBox, SectionHead, Spinner, Stat } from "../components/ui";
-import { fmtDate, fmtNum } from "../lib/format";
+import { Button, Empty, ErrorBox, SectionHead, Skeleton, Spinner, Stat } from "../components/ui";
+import { areaUnitLabel, fmtAreaValue, fmtDate, fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { loadPrefs, savePrefs } from "../lib/prefs";
 import { useFarms, useMe, useMembers } from "../lib/queries";
@@ -72,9 +72,10 @@ export function HomePage() {
           )}
         </header>
 
+        {farms.isLoading && <Skeleton h={89} />}
         {list.length > 0 && (
           <div className="grid grid-cols-3 gap-4 border-y border-linea py-4">
-            <Stat label={t("ui.area")} value={fmtNum(totalHa)} unit="ha" />
+            <Stat label={t("ui.area")} value={fmtAreaValue(totalHa)} unit={areaUnitLabel()} />
             <Stat label={t("ui.records7d")} value={records} />
             <Stat label={t("ui.activeAlerts")} value={alerts} tone={alerts ? "danger" : undefined} />
           </div>
@@ -82,7 +83,7 @@ export function HomePage() {
 
         {list.length > 1 && (me.data?.role === "owner" || me.data?.role === "admin") && <OwnerDashboard />}
 
-        {farms.isLoading && <Spinner />}
+        {farms.isLoading && <Spinner rows={3} h={84} />}
         {farms.error && <ErrorBox error={farms.error} />}
         {guide && (
           <FirstRunGuide
@@ -127,7 +128,7 @@ export function HomePage() {
                         {f.department && <span className="text-sm text-tinta-2">{f.department}</span>}
                       </div>
                       <p className="num mt-1 text-xs text-tinta-2">
-                        {fmtNum(f.areaHa)} ha · {f.plots} {t("ui.plots").toLowerCase()} · {f.workers}{" "}
+                        {fmtHa(f.areaHa)} · {f.plots} {t("ui.plots").toLowerCase()} · {f.workers}{" "}
                         {t("ui.workers").toLowerCase()} ·{" "}
                         {f.lastRecordAt
                           ? `${t("ui.lastRecord").toLowerCase()} ${fmtDate(f.lastRecordAt)}`

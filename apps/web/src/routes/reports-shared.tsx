@@ -1,7 +1,7 @@
 /** Resumen público de solo lectura de una estancia (K-04): /compartido/:token, sin sesión ni menú. */
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
-import { fmtDate, fmtHa, fmtNdvi, fmtNum } from "../lib/format";
+import { fmtDate, fmtHa, fmtMm, fmtNdvi } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 
 interface SharedSummary {
@@ -60,10 +60,10 @@ export function SharedPage() {
             <Fact label={t("ui.plots")} value={String(d.farm.plotCount)} />
             <Fact
               label={t("ui.sharedRain30")}
-              value={d.rain30.mm === null ? t("ui.sharedNoData") : `${fmtNum(Math.round(d.rain30.mm))} mm`}
+              value={d.rain30.mm === null ? t("ui.sharedNoData") : fmtMm(d.rain30.mm)}
               note={
                 d.rain30.normalMm
-                  ? `${t("ui.sharedRainNormal")}: ${fmtNum(Math.round(d.rain30.normalMm))} mm`
+                  ? `${t("ui.sharedRainNormal")}: ${fmtMm(d.rain30.normalMm)}`
                   : undefined
               }
             />

@@ -31,7 +31,7 @@ export function HerdPanel({ farmId }: { farmId: string }) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["stock", farmId] }),
   });
 
-  if (stock.isLoading) return <Spinner />;
+  if (stock.isLoading) return <Spinner rows={5} h={56} />;
   if (stock.error) return <ErrorBox error={stock.error} />;
   const d = stock.data;
   if (!d) return null;

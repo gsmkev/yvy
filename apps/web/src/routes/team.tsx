@@ -112,7 +112,7 @@ export function TeamPage() {
       {qr && (
         <Modal title={`${t("ui.linkDevice")} · ${qr.member.fullName}`} onClose={() => setQr(null)}>
           <div className="flex flex-col items-center gap-3">
-            <div className="rounded-lg border border-linea bg-white p-4">
+            <div className="rounded-lg border border-linea bg-papel p-4">
               <QRCodeSVG value={qr.qr} size={240} />
             </div>
             <p className="text-center text-sm text-tinta-2">{t("ui.linkHelp")}</p>

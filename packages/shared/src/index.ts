@@ -24,6 +24,8 @@ export {
   ALERT_KINDS,
   ALERT_SEVERITIES,
   ALERT_PROBABILITIES,
+  LINE_KINDS,
+  type LineKind,
   type Role,
   type RecordKind,
 } from "./schema";

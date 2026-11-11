@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
+import { ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import { t } from "@yvy/shared";
 import campo from "../assets/campo-itapua.webp";
@@ -7,11 +7,13 @@ import { noteOrganizationEntry } from "../src/lib/org";
 import { registerDevice } from "../src/lib/push";
 import { api, setSession, type Session } from "../src/lib/session";
 import { deviceId } from "../src/lib/sync";
-import { Button } from "../src/ui/kit";
+import { Button, Text, TextInput } from "../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../src/ui/theme";
 
 export default function Login() {
-  const [mode, setMode] = useState<"choose" | "email" | "code">("choose");
+  const [mode, setMode] = useState<"choose" | "email" | "code" | "phone">("choose");
+  const [phone, setPhone] = useState("");
+  const [pin, setPin] = useState("");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +41,49 @@ export default function Login() {
           {mode === "choose" && (
             <>
               <Button big title={t("app.loginQr")} onPress={() => router.push("/scan")} />
+              <Button kind="secondary" title={t("app.loginPhone")} onPress={() => setMode("phone")} style={{ marginTop: 10 }} />
               <Button kind="secondary" title={t("app.loginEmail")} onPress={() => setMode("email")} style={{ marginTop: 10 }} />
+            </>
+          )}
+          {mode === "phone" && (
+            <>
+              <Text style={T.bodyMedium}>{t("app.loginPhoneLabel")}</Text>
+              <TextInput
+                style={s.input}
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+                autoComplete="tel"
+                autoFocus
+                accessibilityLabel={t("app.loginPhoneLabel")}
+              />
+              <Text style={T.bodyMedium}>{t("app.loginPinLabel")}</Text>
+              <TextInput
+                style={[s.input, s.code]}
+                value={pin}
+                onChangeText={(v) => setPin(v.replace(/\D/g, "").slice(0, 6))}
+                keyboardType="number-pad"
+                secureTextEntry
+                accessibilityLabel={t("app.loginPinLabel")}
+              />
+              <Text style={[T.small, { marginBottom: 12 }]}>{t("app.loginPinHint")}</Text>
+              <Button
+                big
+                title={t("app.loginPhoneSubmit")}
+                loading={busy}
+                disabled={phone.replace(/\D/g, "").length < 6 || pin.length !== 6}
+                onPress={() =>
+                  run(async () => {
+                    const session = await api<Session>("POST", "/auth/pin/login", { phone: phone.trim(), pin, deviceId: deviceId() }, false);
+                    setPin("");
+                    await setSession(session);
+                    noteOrganizationEntry(session);
+                    registerDevice();
+                    router.replace("/(tabs)");
+                  })
+                }
+              />
+              <Button kind="text" title={t("ui.cancel")} onPress={() => (setPin(""), setMode("choose"))} style={{ marginTop: 6 }} />
             </>
           )}
           {mode === "email" && (

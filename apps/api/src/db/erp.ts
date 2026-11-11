@@ -2,11 +2,12 @@
  * ERP sencillo (ADR 0004): altas, cambios y bajas de los maestros de oficina (terceros, depósitos, tipos de cambio...).
  * Casi todas son de oficina y no se sincronizan; las que bajan al celular llevan `version`. Todo filtra por organización y usa borrado lógico.
  */
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, lte } from "drizzle-orm";
 import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
 import { newId, type Role } from "@yvy/shared";
 import { bumpVersion, currentVersion, runBatch, type Stmt } from "./client";
-import { NotFoundError, type ScopedDb } from "./scoped";
+import * as s from "@yvy/shared/schema";
+import { can, NotFoundError, type ScopedDb } from "./scoped";
 
 export type ErpTable = SQLiteTable & {
   id: SQLiteColumn;
@@ -36,6 +37,60 @@ export async function requireOwned(sdb: ScopedDb, table: ErpTable, id: string, w
     .where(and(eq(table.id, id), eq(table.organizationId, sdb.auth.orgId), isNull(table.deletedAt)))
     .limit(1);
   if (!row) throw new NotFoundError(`${what} no existe`);
+}
+
+// ---------- Tipos de cambio (E-06) ----------
+
+export async function listRates(sdb: ScopedDb, limit = 120) {
+  sdb.require(can.manageErp);
+  return sdb.db
+    .select({ date: s.exchangeRates.date, usdToPyg: s.exchangeRates.usdToPyg })
+    .from(s.exchangeRates)
+    .where(eq(s.exchangeRates.organizationId, sdb.auth.orgId))
+    .orderBy(desc(s.exchangeRates.date))
+    .limit(limit);
+}
+
+/** Alta o cambio del tipo de cambio de un día (una fila por día). */
+export async function saveRate(sdb: ScopedDb, date: string, usdToPyg: number) {
+  sdb.require(can.manageErp);
+  await sdb.db
+    .insert(s.exchangeRates)
+    .values({ organizationId: sdb.auth.orgId, date, usdToPyg, updatedBy: sdb.auth.userId, updatedAt: sdb.now() })
+    .onConflictDoUpdate({
+      target: [s.exchangeRates.organizationId, s.exchangeRates.date],
+      set: { usdToPyg, updatedBy: sdb.auth.userId, updatedAt: sdb.now() },
+    });
+}
+
+export async function deleteRate(sdb: ScopedDb, date: string) {
+  sdb.require(can.manageErp);
+  const where = and(eq(s.exchangeRates.organizationId, sdb.auth.orgId), eq(s.exchangeRates.date, date));
+  const [row] = await sdb.db.select({ date: s.exchangeRates.date }).from(s.exchangeRates).where(where).limit(1);
+  if (!row) throw new NotFoundError("No hay tipo de cambio ese día");
+  await sdb.db.delete(s.exchangeRates).where(where);
+}
+
+/**
+ * Guaraníes por dólar para un día: el último cargado hasta ese día; si todos son posteriores, el más antiguo
+ * (ver rateOn). Sin ninguno, null. Dos consultas como mucho.
+ */
+export async function usdRateOn(sdb: ScopedDb, day: string): Promise<number | null> {
+  const org = sdb.auth.orgId;
+  const [upTo] = await sdb.db
+    .select({ r: s.exchangeRates.usdToPyg })
+    .from(s.exchangeRates)
+    .where(and(eq(s.exchangeRates.organizationId, org), lte(s.exchangeRates.date, day)))
+    .orderBy(desc(s.exchangeRates.date))
+    .limit(1);
+  if (upTo) return upTo.r;
+  const [oldest] = await sdb.db
+    .select({ r: s.exchangeRates.usdToPyg })
+    .from(s.exchangeRates)
+    .where(eq(s.exchangeRates.organizationId, org))
+    .orderBy(asc(s.exchangeRates.date))
+    .limit(1);
+  return oldest?.r ?? null;
 }
 
 export async function erpList(sdb: ScopedDb, table: ErpTable, canRead: (r: Role) => boolean, order: SQLiteColumn[]) {

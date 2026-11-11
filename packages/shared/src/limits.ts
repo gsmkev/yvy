@@ -107,9 +107,9 @@ export const LIMITS = {
    * El equipo de Yvy puede fijar topes propios por organización desde el panel interno (organizations.max_ha / max_users).
    */
   plans: {
-    trial: { maxHa: 100_000, maxUsers: 10 },
-    active: { maxHa: 500_000, maxUsers: 50 },
-    blocked: { maxHa: 100_000, maxUsers: 10 },
+    trial: { maxHa: 100_000, maxUsers: 25 },
+    active: { maxHa: 500_000, maxUsers: 100 },
+    blocked: { maxHa: 100_000, maxUsers: 25 },
     demo: { maxHa: null, maxUsers: null },
   },
   events: {

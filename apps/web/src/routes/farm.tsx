@@ -16,7 +16,7 @@ import { RecordsList } from "../components/RecordsList";
 import { TasksPanel } from "../components/TasksPanel";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs } from "../components/ui";
 import { post } from "../lib/api";
-import { download, plotsToKml } from "../lib/exports";
+import { download, plotsToGeoJson, plotsToKml, plotsToShapefileZip } from "../lib/exports";
 import { closedAreaHa, fmtDistance, pathLengthM, type LonLat } from "../lib/measure";
 import { fmtDate, fmtHa, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -322,6 +322,23 @@ export function FarmPage() {
               }
             >
               KML
+            </Button>
+            <Button
+              variant="quiet"
+              onClick={() =>
+                download(
+                  new Blob([plotsToGeoJson(d.plots, d.pois)], { type: "application/geo+json" }),
+                  `${d.farm.name}.geojson`,
+                )
+              }
+            >
+              GeoJSON
+            </Button>
+            <Button
+              variant="quiet"
+              onClick={async () => download(await plotsToShapefileZip(d.plots, d.pois), `${d.farm.name}-shapefile.zip`)}
+            >
+              Shapefile
             </Button>
           </div>
         )}

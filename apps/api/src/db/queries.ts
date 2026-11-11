@@ -374,6 +374,30 @@ export async function farmForecast(sdb: ScopedDb, farmId: string) {
   };
 }
 
+/** S-08: áreas problema de la estancia (última escena por lote), con el nombre del lote. */
+export async function farmProblemAreas(sdb: ScopedDb, farmId: string) {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  return sdb.db
+    .select({
+      id: s.problemAreas.id,
+      plotId: s.problemAreas.plotId,
+      plotName: s.plots.name,
+      acquiredAt: s.problemAreas.acquiredAt,
+      geometry: s.problemAreas.geometry,
+      lon: s.problemAreas.lon,
+      lat: s.problemAreas.lat,
+      areaHa: s.problemAreas.areaHa,
+      meanNdvi: s.problemAreas.meanNdvi,
+      plotMedianNdvi: s.problemAreas.plotMedianNdvi,
+    })
+    .from(s.problemAreas)
+    .innerJoin(s.plots, and(eq(s.plots.id, s.problemAreas.plotId), isNull(s.plots.deletedAt)))
+    .where(and(eq(s.problemAreas.farmId, farmId), eq(s.problemAreas.organizationId, sdb.auth.orgId)))
+    .orderBy(desc(s.problemAreas.areaHa))
+    .limit(200);
+}
+
 /** C-10: informe de riesgo climático ya calculado (workers-py). Solo roles con vista completa. */
 export async function farmRiskReport(sdb: ScopedDb, farmId: string) {
   sdb.require(can.viewAll);

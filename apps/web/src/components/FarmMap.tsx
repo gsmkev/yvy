@@ -39,6 +39,8 @@ export interface FarmMapProps {
   outline?: string | null; // GeoJSON de la estancia
   plots?: Plot[];
   pois?: Poi[];
+  /** Áreas problema del lote (S-08): borde punteado de alerta. */
+  problemAreas?: { id: string; geometry: string }[];
   points?: MapPoint[];
   /** Varias estancias a la vez (inicio): perímetro, nombre y fondo satelital propio. */
   farms?: { id: string; name: string; geometry: string; basemapPath?: string | null; alert?: boolean }[];
@@ -113,6 +115,7 @@ export function FarmMap(props: FarmMapProps) {
       map.addSource("outline", { type: "geojson", data: fc([]) });
       map.addSource("plots", { type: "geojson", data: fc([]) });
       map.addSource("pois", { type: "geojson", data: fc([]) });
+      map.addSource("problems", { type: "geojson", data: fc([]) });
       map.addSource("points", { type: "geojson", data: fc([]) });
       map.addSource("measure", { type: "geojson", data: fc([]) });
       map.addLayer({
@@ -146,6 +149,18 @@ export function FarmMap(props: FarmMapProps) {
           ],
           "line-width": ["case", ["boolean", ["get", "selected"], false], 3, 1.5],
         },
+      });
+      map.addLayer({
+        id: "problems-fill",
+        type: "fill",
+        source: "problems",
+        paint: { "fill-color": BRAND.alerta, "fill-opacity": 0.18 },
+      });
+      map.addLayer({
+        id: "problems-line",
+        type: "line",
+        source: "problems",
+        paint: { "line-color": BRAND.alerta, "line-width": 2, "line-dasharray": [2, 2] },
       });
       map.addLayer({
         id: "pois",
@@ -283,6 +298,15 @@ export function FarmMap(props: FarmMapProps) {
         })),
       ),
     );
+    (map.getSource("problems") as GeoJSONSource).setData(
+      fc(
+        (p.problemAreas ?? []).map((a) => ({
+          type: "Feature",
+          properties: { id: a.id },
+          geometry: JSON.parse(a.geometry),
+        })),
+      ),
+    );
     (map.getSource("pois") as GeoJSONSource).setData(
       fc(
         (p.pois ?? []).map((x) => ({
@@ -331,6 +355,7 @@ export function FarmMap(props: FarmMapProps) {
     props.farms,
     props.plots,
     props.pois,
+    props.problemAreas,
     props.points,
     props.selectedPlotId,
     props.layers,

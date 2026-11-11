@@ -93,4 +93,52 @@ describe("/ingest", () => {
     expect(alerts).toHaveLength(1);
     expect(alerts[0]).toMatchObject({ kind: "fire", severity: "warning" });
   });
+
+  it("detalle de estancia trae vigor, pasada previa y última visita por lote", async () => {
+    const owner = await createOrgWithOwner();
+    const { farmId, plotIds } = await createFarmWithPlots(owner.token, 2);
+    const day = 86_400_000;
+    const now = Date.now();
+    for (const [i, [at, mean]] of (
+      [
+        [now - 10 * day, 0.8],
+        [now - 5 * day, 0.6],
+      ] as const
+    ).entries()) {
+      const sb = JSON.stringify({
+        source: "sentinel-2-l2a",
+        itemId: `S2_vigor_${farmId}_${i}`,
+        acquiredAt: at,
+        cloudPct: 5,
+      });
+      const scene = await call("POST", "/ingest/scenes", {
+        body: sb,
+        headers: await signed("POST", "/ingest/scenes", sb),
+      });
+      const body = JSON.stringify({
+        rows: [
+          {
+            plotId: plotIds[0],
+            sceneId: scene.body.id,
+            acquiredAt: at,
+            idx: "ndvi",
+            mean,
+            p10: 0.1,
+            p90: 0.9,
+            validPct: 90,
+          },
+        ],
+      });
+      await call("POST", "/ingest/plot-index-stats", {
+        body,
+        headers: await signed("POST", "/ingest/plot-index-stats", body),
+      });
+    }
+    const d = await call("GET", `/org/farms/${farmId}`, { token: owner.token });
+    const a = d.body.plots.find((p: any) => p.id === plotIds[0]);
+    const b = d.body.plots.find((p: any) => p.id === plotIds[1]);
+    expect(a).toMatchObject({ ndviMean: 0.6, ndviPrevMean: 0.8, lastRecordAt: null });
+    expect(a.ndviAt).toBeGreaterThan(a.ndviPrevAt);
+    expect(b).toMatchObject({ ndviMean: null, ndviAt: null, ndviPrevMean: null, lastRecordAt: null });
+  });
 });

@@ -3,7 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#FBFAF5" />
+    <meta name="theme-color" content="#FBFAF5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#12170F" media="(prefers-color-scheme: dark)" />
+    <script>
+      // Tema elegido a mano (U-20): se aplica antes de pintar para evitar el destello
+      try {
+        var th = localStorage.getItem("yvy.theme");
+        if (th === "light" || th === "dark") document.documentElement.dataset.theme = th;
+      } catch (e) {}
+    </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

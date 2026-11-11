@@ -110,7 +110,7 @@ export function Layout() {
               >
                 {t(n.label)}
                 {n.to === "/avisos" && nAlerts > 0 && (
-                  <span className="num ml-1.5 rounded-full bg-peligro px-1.5 text-xs leading-5 font-semibold text-white">
+                  <span className="num ml-1.5 rounded-full bg-peligro px-1.5 text-xs leading-5 font-semibold text-sobre">
                     {nAlerts}
                   </span>
                 )}

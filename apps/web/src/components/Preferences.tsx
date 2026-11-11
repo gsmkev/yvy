@@ -1,5 +1,6 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { t } from "../lib/i18n";
+import { getTheme, setTheme, subscribeTheme } from "../lib/theme";
 import { getUnits, setUnits, subscribeUnits, type Units } from "../lib/units";
 
 function Choice<T extends string>({
@@ -35,8 +36,9 @@ function Choice<T extends string>({
 }
 
 /** Preferencias de este navegador: unidades (U-23) y, más abajo, el tema (U-20). Se guardan en localStorage. */
-export function Preferences({ children }: { children?: React.ReactNode }) {
+export function Preferences() {
   const units = useSyncExternalStore(subscribeUnits, getUnits);
+  const theme = useSyncExternalStore(subscribeTheme, getTheme);
   const set = (patch: Partial<Units>) => setUnits(patch);
   // Llegar desde el menú de la cuenta (#preferencias) lleva hasta esta sección
   useEffect(() => {
@@ -47,7 +49,16 @@ export function Preferences({ children }: { children?: React.ReactNode }) {
       <h2 className="font-serif text-xl font-semibold">{t("ui.prefsTitle")}</h2>
       <p className="mt-2 text-tinta-2">{t("ui.prefsIntro")}</p>
       <div className="mt-3 border-t border-linea">
-        {children}
+        <Choice
+          legend={t("ui.themeLabel")}
+          value={theme}
+          onChange={setTheme}
+          options={[
+            { value: "auto", label: t("ui.themeAuto") },
+            { value: "light", label: t("ui.themeLight") },
+            { value: "dark", label: t("ui.themeDark") },
+          ]}
+        />
         <Choice
           legend={t("ui.unitArea")}
           value={units.area}

@@ -21,6 +21,10 @@ import { C, F, GUTTER, RADIUS, T, TOUCH } from "../../src/ui/theme";
 
 const tr = (key: string, vars?: Record<string, string | number>) => t(key as MessageKey, vars);
 
+/** Con más lotes que esto, la lista tiene buscador. */
+const SEARCH_FROM = 8;
+const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
 type Phase = { name: "plot" } | { name: "kind" } | { name: "step"; i: number } | { name: "photo" } | { name: "done"; recordId: string };
 
 export default function Annotate() {
@@ -42,6 +46,7 @@ export default function Annotate() {
     editing ? { name: "step", i: 0 } : params.kind === "rain" || params.plotId ? (params.kind ? { name: "step", i: 0 } : { name: "kind" }) : { name: "plot" },
   );
   const [camera, setCamera] = useState(false);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     if (editing) return;
@@ -144,6 +149,8 @@ export default function Annotate() {
     const sure = guesses.filter((g) => g.confidence === "sure");
     const near = guesses.filter((g) => g.confidence === "near");
     const showAll = guesses.length === 0 && fix !== "searching";
+    const searching = plots.length > SEARCH_FROM && query.trim() !== "";
+    const needle = fold(query);
     return (
       <View style={k.screen}>
         {header}
@@ -152,7 +159,20 @@ export default function Annotate() {
           <Text style={[T.small, { marginTop: 6, marginBottom: 20 }]}>
             {fix === "searching" ? t("app.gpsSearching") : guesses.length ? t("app.detectedByGps") : fix ? t("app.noPlotNearby") : t("app.gpsNone")}
           </Text>
-          {[...sure, ...near].map((g) => (
+          {plots.length > SEARCH_FROM && (
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder={t("app.plotSearch")}
+              placeholderTextColor={C.tinta3}
+              accessibilityLabel={t("app.plotSearch")}
+              autoCorrect={false}
+              clearButtonMode="while-editing"
+              returnKeyType="search"
+              style={st.search}
+            />
+          )}
+          {!searching && [...sure, ...near].map((g) => (
             <Row
               key={g.plot.id}
               title={g.plot.name}
@@ -163,12 +183,12 @@ export default function Annotate() {
               }}
             />
           ))}
-          {guesses.length > 0 && (
+          {guesses.length > 0 && !searching && (
             <Text style={[T.smallMedium, { marginTop: 24, marginBottom: 8 }]}>{t("app.changePlot")}</Text>
           )}
-          {(showAll || guesses.length > 0) &&
+          {(showAll || guesses.length > 0 || searching) &&
             plots
-              .filter((p) => !guesses.some((g) => g.plot.id === p.id))
+              .filter((p) => (searching ? fold(p.name).includes(needle) : !guesses.some((g) => g.plot.id === p.id)))
               .map((p) => (
                 <Row
                   key={p.id}
@@ -180,6 +200,7 @@ export default function Annotate() {
                   }}
                 />
               ))}
+          {searching && !plots.some((p) => fold(p.name).includes(needle)) && <Text style={[T.small, { marginTop: 8 }]}>{t("app.plotSearchNone")}</Text>}
           <View style={{ height: 12 }} />
           <Button
             kind="text"
@@ -439,6 +460,7 @@ const st = StyleSheet.create({
   numberInput: { ...T.number, flex: 1, flexBasis: 0, minWidth: 0, width: 0, padding: 0, minHeight: 72, borderWidth: 0, backgroundColor: "transparent", ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : {}) },
   unit: { fontFamily: F.serifLight, fontSize: 28, color: C.tinta2 },
   textInput: { ...T.body, ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : {}), minHeight: 140, marginTop: 20, textAlignVertical: "top", borderWidth: 1.5, borderColor: C.lineaFuerte, borderRadius: RADIUS, padding: 14, backgroundColor: C.blanco },
+  search: { ...T.body, ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : {}), minHeight: TOUCH, borderWidth: 1.5, borderColor: C.lineaFuerte, borderRadius: RADIUS, paddingHorizontal: 14, backgroundColor: C.blanco, marginBottom: 12 },
   photos: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 20 },
   thumb: { width: 104, height: 104, borderRadius: RADIUS },
   thumbX: { position: "absolute", top: 6, right: 6, width: 26, height: 26, borderRadius: 13, backgroundColor: "rgba(30,36,25,0.75)", alignItems: "center", justifyContent: "center" },

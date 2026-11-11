@@ -12,7 +12,7 @@
  *   El pull pagina por (version, id): equivale al "updated_at + desempate por id" del PRD §11
  *   pero sin depender de relojes de distintos datacenters.
  */
-import { ACTIVITIES, CONTRACTOR_SERVICES, COST_CATEGORIES, CURRENCIES, MACHINE_TYPES, METER_KINDS, PARTY_KINDS, RATE_UNITS } from "./erp";
+import { ACTIVITIES, CONTRACTOR_SERVICES, COST_CATEGORIES, CURRENCIES, MACHINE_TYPES, METER_KINDS, PARTY_KINDS, RATE_UNITS, WAREHOUSE_TYPES } from "./erp";
 import { HEALTH_REASONS } from "./livestock";
 import { sql } from "drizzle-orm";
 import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
@@ -511,6 +511,22 @@ export const costEntries = sqliteTable(
     index("cost_entries_plot_idx").on(t.plotId),
     index("cost_entries_origin_idx").on(t.originId),
   ],
+);
+
+/** Depósitos de una estancia: galpón, tanque de combustible o silo (E-10). Uno por estancia es el predeterminado. */
+export const warehouses = sqliteTable(
+  "warehouses",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    name: text("name").notNull(),
+    type: text("type", { enum: WAREHOUSE_TYPES }).notNull().default("shed"),
+    /** Donde se descuentan los consumos automáticos de los registros de campo (E-13). */
+    isDefault: integer("is_default", { mode: "boolean" }).notNull().default(false),
+    ...timestamps,
+  },
+  (t) => [index("warehouses_farm_idx").on(t.organizationId, t.farmId)],
 );
 
 // ---------- Trabajo ----------

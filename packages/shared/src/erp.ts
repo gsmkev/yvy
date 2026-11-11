@@ -118,6 +118,15 @@ export const costEntryInput = z.object({
 /** Mediodía de Asunción (UTC-3) de un día "YYYY-MM-DD", en epoch ms. */
 export const noonAsuncion = (day: string): number => Date.parse(`${day}T12:00:00-03:00`);
 
+// ---------- Depósitos (E-10) ----------
+
+export const warehouseInput = z.object({
+  farmId: uuid,
+  name: z.string().trim().min(1).max(80),
+  type: z.enum(WAREHOUSE_TYPES),
+  isDefault: z.boolean().optional(),
+});
+
 // ---------- Terceros (E-02) ----------
 
 /** RUC (con dígito verificador) o cédula: solo dígitos y un guion final opcional. */

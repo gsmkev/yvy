@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { addDays, localDate, newId, nextOccurrenceId } from "@yvy/shared";
 import { LocalDb } from "../src/db/store";
+import { planReminders } from "../src/lib/reminders-plan";
 import { nodeSql } from "./node-sql";
 
 const ORG = newId();
@@ -96,6 +97,25 @@ describe("LocalDb", () => {
     expect(rows.find((r) => r.id === ids[0])!.photos).toBe(1);
     expect(rows.find((r) => r.id === ids[1])!.photos).toBe(0);
     expect((await db.pendingMutations(40)).map((m) => m.kind)).toEqual(["records.upsert", "attachments.upsert", "records.upsert"]);
+  });
+
+  it("recordatorios: un aviso por día a las 7:00 con las tareas abiertas; sin tareas, sin aviso", async () => {
+    const now = new Date(2026, 5, 10, 8, 0, 0).getTime(); // 8:00: el de hoy ya pasó
+    const db = setup(() => now);
+    const task = (title: string, dueDate: string, status = "open") => ({
+      id: newId(), organizationId: ORG, farmId: FARM, plotId: null, assigneeId: USER, title, kind: null, dueDate,
+      recurrence: "none", status, completedAt: null, completedBy: null, recordId: null, createdBy: USER,
+      createdAt: 1, updatedAt: 1, deletedAt: null, version: 1,
+    });
+    expect(planReminders(db, USER, now)).toEqual([]);
+    await db.applyPull("tasks", [task("Medir lluvia", localDate(now)), task("Hecha", localDate(now), "done"), task("Revisar aguada", localDate(now + 86_400_000))], null);
+    const plan = planReminders(db, USER, now);
+    // Mañana 7:00 y pasado mañana 7:00 (la tarea de hoy sigue abierta, así que cuenta en ambos días)
+    expect(plan.map((p) => [p.at.getHours(), p.at.getDate(), p.count])).toEqual([
+      [7, 11, 2],
+      [7, 12, 2],
+    ]);
+    expect(plan[0]!.titles).toContain("Revisar aguada");
   });
 
   it("guardar registro con fotos: fila local + mutaciones en orden, pendiente", async () => {

@@ -202,7 +202,7 @@ export class ScopedDb {
         gte(s.records.capturedAt, now - LIMITS.sync.recordsHistoryMs),
         eq(s.records.kind, "herd_count"),
         and(
-          inArray(s.records.kind, ["herd_move", "mortality"]),
+          inArray(s.records.kind, ["herd_move", "mortality", "theft"]),
           gte(s.records.capturedAt, now - LIMITS.sync.herdEventsHistoryMs),
         ),
       );

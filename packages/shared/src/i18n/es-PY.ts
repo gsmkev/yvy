@@ -41,6 +41,8 @@ export const esPY = {
     track: "Recorrida grabada",
     // erp
     fuel_load: "Carga de combustible",
+    // gan-p2
+    theft: "Abigeato",
   },
   rejectReasons: {
     not_found: "el dato no existe",
@@ -530,6 +532,11 @@ export const esPY = {
     fuelLitersHint: "Los litros del surtidor o del tanque.",
     fuelMeterQuestion: "¿Qué marca el horómetro?",
     fuelMeterHint: "Horas de motor, o kilómetros si es un vehículo. Sirve para calcular el consumo por hora.",
+    // gan-p2
+    theftCategoryQuestion: "¿Qué categoría falta?",
+    theftHeadQuestion: "¿Cuántas cabezas faltan?",
+    theftHeadHint: "Contá cuántas faltan respecto de lo que debería haber.",
+    theftReportQuestion: "¿Número de denuncia? Dejalo vacío si todavía no la hiciste",
   },
   fields: {
     condition: "Estado general",
@@ -669,6 +676,10 @@ export const esPY = {
     meterValue: "Horómetro u odómetro",
     litersValue: "{{n}} l",
     meterReading: "lectura {{n}}",
+    // gan-p2
+    reportedAt: "Fecha de la denuncia",
+    policeReport: "Número de denuncia",
+    policeReportValue: "denuncia {{n}}",
   },
   ui: {
     appName: "Yvy",
@@ -1960,6 +1971,16 @@ export const esPY = {
     heatLevel_danger: "Peligro",
     heatLevel_emergency: "Emergencia",
     heatHourTitle: "{{time}} · {{temp}} · {{hum}} % de humedad · THI {{thi}}",
+    herdSectionStock: "Hacienda",
+    herdSectionTheft: "Abigeato",
+    theftNone: "No hay faltantes registrados",
+    theftNoneHint: "Cuando falte hacienda después de un conteo, anotalo desde la app en Anotar, Abigeato.",
+    theftSummary: "{{head}} cabezas faltantes: {{list}}",
+    theftWithoutReport: "{{n}} avisos sin número de denuncia. Completalo editando el registro.",
+    theftDate: "Aviso",
+    theftReport: "Denuncia",
+    theftNoReport: "Sin denuncia",
+    theftHint: "El faltante se descuenta de la hacienda del potrero. Para cargar el número de denuncia, editá el registro desde Registros.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

@@ -76,6 +76,12 @@ export const FORMS: Record<RecordKind, FieldSpec[]> = {
     { key: "cause", type: "choice", options: MORTALITY_CAUSES, labelPrefix: "fields.cause_", required: true },
     note,
   ],
+  theft: [
+    { key: "category", type: "choice", options: HERD_CATEGORIES, labelPrefix: "fields.herd_", required: true },
+    { key: "head", type: "number", unit: "cabezas", required: true },
+    { key: "policeReport", type: "text" },
+    note,
+  ],
   health: [
     { key: "reason", type: "choice", options: HEALTH_REASONS, labelPrefix: "fields.healthReason_", required: true },
     { key: "product", type: "text", required: true },

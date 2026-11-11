@@ -183,6 +183,8 @@ export default function Annotate() {
     if (kind === "fuel_load" && typeof data.machineId === "string")
       data.machine = db.machines().find((m) => m.id === data.machineId)?.name ?? data.machine;
     if (kind === "rain" && !editing) data.readAt = Date.now();
+    // Abigeato: si ya hay número de denuncia, la fecha de la denuncia es hoy.
+    if (kind === "theft" && !editing && data.policeReport) data.reportedAt = Date.now();
     // Compra: la hacienda entra de afuera, así que el potrero elegido es el destino y no hay origen.
     const entersFromOutside = kind === "herd_move" && data.reason === "compra" && !!plot;
     if (entersFromOutside) data.toPlotId = plot!.id;

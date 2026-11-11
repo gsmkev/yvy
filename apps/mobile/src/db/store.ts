@@ -602,7 +602,7 @@ export class LocalDb implements SyncStore {
    */
   herdStock(plotId: string): PlotStock | null {
     const rows = this.sql.all<{ kind: string; plot_id: string | null; captured_at: number; data: string }>(
-      "SELECT kind, plot_id, captured_at, data FROM records WHERE deleted_at IS NULL AND kind IN ('herd_count','herd_move','mortality') AND (plot_id = ? OR (kind = 'herd_move' AND data LIKE ?))",
+      "SELECT kind, plot_id, captured_at, data FROM records WHERE deleted_at IS NULL AND kind IN ('herd_count','herd_move','mortality','theft') AND (plot_id = ? OR (kind = 'herd_move' AND data LIKE ?))",
       [plotId, `%${plotId}%`],
     );
     const counts: CountEvent[] = [];
@@ -620,7 +620,7 @@ export class LocalDb implements SyncStore {
       else if (r.kind === "herd_move" && d.counts) {
         if (r.plot_id === plotId || d.toPlotId === plotId)
           moves.push({ fromPlotId: r.plot_id, toPlotId: d.toPlotId ?? null, capturedAt: r.captured_at, counts: d.counts });
-      } else if (r.kind === "mortality" && r.plot_id === plotId && d.category && typeof d.head === "number")
+      } else if ((r.kind === "mortality" || r.kind === "theft") && r.plot_id === plotId && d.category && typeof d.head === "number")
         deaths.push({ plotId, capturedAt: r.captured_at, category: d.category, head: d.head });
     }
     if (!counts.length && !moves.length && !deaths.length) return null;

@@ -68,6 +68,11 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
         parts.push(`${d.head} ${tr(`fields.herd_${d.category}`, String(d.category)).toLowerCase()}`);
       if (str("cause")) parts.push(tr(`fields.cause_${d.cause}`, String(d.cause)).toLowerCase());
       break;
+    case "theft":
+      if (typeof d.head === "number" && str("category"))
+        parts.push(`${d.head} ${tr(`fields.herd_${d.category}`, String(d.category)).toLowerCase()}`);
+      if (str("policeReport")) parts.push(t("fields.policeReportValue", { n: d.policeReport as string }));
+      break;
     case "health": {
       const c = (d.counts ?? {}) as Record<string, number>;
       if (str("reason")) parts.push(tr(`fields.healthReason_${d.reason}`, String(d.reason)));

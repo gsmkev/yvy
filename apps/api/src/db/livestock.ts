@@ -96,7 +96,7 @@ export async function farmStockSummary(sdb: ScopedDb, farmId: string): Promise<F
       and(
         eq(s.records.organizationId, org),
         eq(s.records.farmId, farmId),
-        inArray(s.records.kind, ["herd_move", "mortality"]),
+        inArray(s.records.kind, ["herd_move", "mortality", "theft"]),
         isNull(s.records.deletedAt),
         sql`${s.records.capturedAt} >= ${since}`,
       ),

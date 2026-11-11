@@ -448,6 +448,13 @@ export const climatology = sqliteTable(
   (t) => [primaryKey({ columns: [t.farmId, t.plotId, t.dayOfYear, t.variable] })],
 );
 
+/** Informe de riesgo climático por estancia (C-10): JSON validado con farmRiskSchema. No se sincroniza. */
+export const farmRisk = sqliteTable("farm_risk", {
+  farmId: text("farm_id").primaryKey(),
+  computedAt: integer("computed_at").notNull(),
+  report: text("report").notNull(),
+});
+
 export const forecasts = sqliteTable(
   "forecasts",
   {

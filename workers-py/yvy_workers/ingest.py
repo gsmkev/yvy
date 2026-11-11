@@ -86,3 +86,7 @@ class IngestClient:
 
     def farm_layer(self, **layer: Any) -> str:
         return self._call("POST", "/ingest/farm-layers", layer)["id"]
+
+    def farm_risk(self, farm_id: str, report: dict[str, Any]) -> None:
+        """Informe de riesgo climático de la estancia (C-10)."""
+        self._call("POST", "/ingest/farm-risk", {"farmId": farm_id, "report": report})

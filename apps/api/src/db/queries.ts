@@ -374,6 +374,15 @@ export async function farmForecast(sdb: ScopedDb, farmId: string) {
   };
 }
 
+/** C-10: informe de riesgo climático ya calculado (workers-py). Solo roles con vista completa. */
+export async function farmRiskReport(sdb: ScopedDb, farmId: string) {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const [row] = await sdb.db.select().from(s.farmRisk).where(eq(s.farmRisk.farmId, farmId)).limit(1);
+  if (!row) return { computedAt: null, report: null };
+  return { computedAt: row.computedAt, report: JSON.parse(row.report) as unknown };
+}
+
 export const dayOfYear = (date: string): number => {
   const d = Date.parse(`${date}T00:00:00Z`);
   return Math.floor((d - Date.parse(`${date.slice(0, 4)}-01-01T00:00:00Z`)) / 86_400_000) + 1;

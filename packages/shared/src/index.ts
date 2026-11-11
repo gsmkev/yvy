@@ -5,6 +5,7 @@ export * from "./records";
 export * from "./monitoring";
 export * from "./livestock";
 export * from "./sanitary";
+export * from "./risk";
 export * from "./sync-protocol";
 export * from "./i18n";
 export {

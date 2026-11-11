@@ -24,6 +24,7 @@ from rasterio.vrt import WarpedVRT
 from shapely.geometry.base import BaseGeometry
 
 from ..geo import load, to_crs, utm_crs
+from .problems import find_problem_areas
 from ..ingest import IngestClient
 from ..storage import upload_tiles
 from .constants import BASEMAP_DAYS, DAILY_DAYS
@@ -198,7 +199,7 @@ def s2_ingest(api: IngestClient, farm: dict[str, Any], days: int = DAILY_DAYS, u
         return {"scenes": 0, "stats": 0}
     grid = make_grid(geom)
     farm_mask = geometry_mask([grid.farm], out_shape=(grid.height, grid.width), transform=grid.transform, invert=True)
-    done = {"scenes": 0, "stats": 0}
+    done = {"scenes": 0, "stats": 0, "problems": 0}
     latest_layer: tuple[int, np.ndarray, np.ndarray] | None = None
     for key, group in group_passes(items):
         acquired = _epoch_ms(group[0])
@@ -218,10 +219,25 @@ def s2_ingest(api: IngestClient, farm: dict[str, Any], days: int = DAILY_DAYS, u
         api.scene_processed(scene["id"])
         done["scenes"] += 1
         log.info("pasada %s (%d teselas): %d lotes, %.0f %% válido, %.1fs", key, len(group), len(stats), ok[farm_mask].mean() * 100, time.time() - t0)
-    if latest_layer and upload:
+    if latest_layer:
         acquired, ndvi, valid = latest_layer
-        publish_layer(api, farm, grid, "ndvi", acquired, ndvi_rgba(ndvi, valid))
+        done["problems"] = upload_problem_areas(api, grid, ndvi, valid, acquired)
+        if upload:
+            publish_layer(api, farm, grid, "ndvi", acquired, ndvi_rgba(ndvi, valid))
     return done
+
+
+def upload_problem_areas(api: IngestClient, grid: Grid, ndvi: np.ndarray, ok: np.ndarray, acquired: int) -> int:
+    """S-08: áreas muy por debajo de la mediana del lote en la última escena válida. Falla sin frenar el resto."""
+    try:
+        by_plot: dict[str, list[dict[str, Any]]] = {}
+        for a in find_problem_areas(ndvi, ok, grid.plots, grid.transform, grid.crs, grid.width, grid.height):
+            by_plot.setdefault(a["plotId"], []).append({k: v for k, v in a.items() if k != "plotId"})
+        # También los lotes sin áreas: así se borran las de la escena anterior
+        return sum(api.problem_areas(pid, acquired, by_plot.get(pid, [])) for pid, _ in grid.plots)
+    except Exception:
+        log.exception("áreas problema: falló")
+        return 0
 
 
 def s2_basemap(api: IngestClient, farm: dict[str, Any], days: int = BASEMAP_DAYS, upload: bool = True) -> int:

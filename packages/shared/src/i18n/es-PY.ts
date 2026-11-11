@@ -1179,6 +1179,10 @@ export const esPY = {
     compareRight: "Derecha",
     compareSwipe: "Deslizá para comparar las dos fechas",
     compareNeedTwo: "Para comparar hacen falta dos fechas.",
+    problemAreasTitle: "Áreas para ir a ver",
+    problemAreasHint: "Partes del lote con el vigor muy por debajo del resto, en la imagen del {{date}}.",
+    problemAreaNdvi: "NDVI {{v}} frente a {{m}} del lote",
+    problemAreaShow: "Ver en el mapa",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

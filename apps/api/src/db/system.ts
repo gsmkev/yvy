@@ -309,6 +309,44 @@ export class SystemDb {
     return rows.length;
   }
 
+  /**
+   * S-08: reemplaza las áreas problema de un lote por las de la escena `acquiredAt` (lista vacía = las limpia).
+   * Si ya hay áreas de una escena más nueva, no pisa nada. La organización sale del lote, no del request.
+   */
+  async replaceProblemAreas(
+    plotId: string,
+    acquiredAt: number,
+    areas: Omit<typeof s.problemAreas.$inferInsert, "id" | "organizationId" | "farmId" | "plotId" | "acquiredAt" | "createdAt">[],
+  ): Promise<number | null> {
+    const [plot] = await this.db
+      .select({ org: s.plots.organizationId, farmId: s.plots.farmId })
+      .from(s.plots)
+      .where(and(eq(s.plots.id, plotId), isNull(s.plots.deletedAt)))
+      .limit(1);
+    if (!plot) return null;
+    const [newer] = await this.db
+      .select({ n: sql<number>`count(*)` })
+      .from(s.problemAreas)
+      .where(and(eq(s.problemAreas.plotId, plotId), gte(s.problemAreas.acquiredAt, acquiredAt + 1)));
+    if (newer && newer.n > 0) return 0;
+    const ts = Date.now();
+    await runBatch(this.db, [
+      this.db.delete(s.problemAreas).where(eq(s.problemAreas.plotId, plotId)),
+      ...areas.map((a) =>
+        this.db.insert(s.problemAreas).values({
+          ...a,
+          id: newId(),
+          organizationId: plot.org,
+          farmId: plot.farmId,
+          plotId,
+          acquiredAt,
+          createdAt: ts,
+        }),
+      ),
+    ]);
+    return areas.length;
+  }
+
   /** C-10: guarda (reemplaza) el informe de riesgo de la estancia. */
   async upsertFarmRisk(farmId: string, report: string, now: number): Promise<boolean> {
     const [f] = await this.db

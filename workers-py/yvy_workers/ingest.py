@@ -90,3 +90,7 @@ class IngestClient:
     def farm_risk(self, farm_id: str, report: dict[str, Any]) -> None:
         """Informe de riesgo climático de la estancia (C-10)."""
         self._call("POST", "/ingest/farm-risk", {"farmId": farm_id, "report": report})
+
+    def problem_areas(self, plot_id: str, acquired_at: int, areas: list[dict[str, Any]]) -> int:
+        """Áreas problema de un lote en la última escena (S-08); reemplaza las de escenas anteriores."""
+        return self._call("POST", "/ingest/problem-areas", {"plotId": plot_id, "acquiredAt": acquired_at, "areas": areas})["written"]

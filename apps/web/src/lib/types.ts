@@ -147,3 +147,17 @@ export interface Alert {
 }
 
 export type Area = Polygon | MultiPolygon;
+
+/** Área del lote con vigor muy por debajo de la mediana (S-08). */
+export interface ProblemArea {
+  id: string;
+  plotId: string;
+  plotName: string;
+  acquiredAt: number;
+  geometry: string;
+  lon: number;
+  lat: number;
+  areaHa: number;
+  meanNdvi: number;
+  plotMedianNdvi: number;
+}

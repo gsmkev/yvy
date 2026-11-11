@@ -25,7 +25,7 @@ import { closedAreaHa, fmtDistance, pathLengthM, type LonLat } from "../lib/meas
 import { fmtDate, fmtHa, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { loadPrefs, savePrefs } from "../lib/prefs";
-import { useAlerts, useFarm, useFarms, useMe, useMembers } from "../lib/queries";
+import { useAlerts, useFarm, useFarms, useMe, useMembers, useProblemAreas } from "../lib/queries";
 import { defaultCompare, layerDates, pickLayer, type Camera } from "../lib/scenes";
 import type { FarmDetail, RecordRow } from "../lib/types";
 
@@ -43,6 +43,8 @@ export function FarmPage() {
   const canEdit = !!me.data && me.data.role !== "worker";
   const members = useMembers(canEdit);
   const alerts = useAlerts({ farmId, active: true });
+  const problems = useProblemAreas(farmId, canEdit);
+  const [flyTo, setFlyTo] = useState<{ lon: number; lat: number; zoom?: number; n: number } | null>(null);
   const qc = useQueryClient();
   const [tabPref, setTab] = useState<Tab>(() => {
     const saved = loadPrefs().tab;
@@ -167,6 +169,8 @@ export function FarmPage() {
           outline={d.farm.geometry}
           plots={d.plots}
           pois={d.pois}
+          problemAreas={problems.data}
+          flyTo={flyTo}
           layers={d.layers}
           layerIds={compare ? { ...pickedIds, [kind]: compare.left } : pickedIds}
           camera={compare ? camera : null}
@@ -444,6 +448,11 @@ export function FarmPage() {
               workers={workersOf(plot.id)}
               canEdit={canEdit}
               onClose={() => setSelected(null)}
+              problemAreas={(problems.data ?? []).filter((a) => a.plotId === plot.id)}
+              onShowArea={(a) => {
+                setFlyTo({ lon: a.lon, lat: a.lat, zoom: 17, n: Date.now() });
+                setView("map");
+              }}
             />
           ) : d.plots.length === 0 ? (
             <Empty title={t("ui.noPlots")} />

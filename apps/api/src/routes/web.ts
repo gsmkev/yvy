@@ -15,6 +15,7 @@ import {
   farmClimate,
   farmDetail,
   farmForecast,
+  farmProblemAreas,
   farmRiskReport,
   farmSummaries,
   getAlertSettings,
@@ -87,6 +88,9 @@ web.get("/org/farms/:id/climate", async (c) =>
 
 web.get("/org/farms/:id/forecast", async (c) => c.json(await farmForecast(c.var.sdb, c.req.param("id"))));
 
+web.get("/org/farms/:id/problem-areas", async (c) =>
+  c.json(await farmProblemAreas(c.var.sdb, c.req.param("id"))),
+);
 web.get("/org/farms/:id/risk", async (c) => c.json(await farmRiskReport(c.var.sdb, c.req.param("id"))));
 
 web.patch("/org/farms/:id", async (c) => {

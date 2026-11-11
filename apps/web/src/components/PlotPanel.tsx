@@ -8,7 +8,7 @@ import type { FarmDetail } from "../lib/types";
 import { fmtDate, fmtDay, fmtHa, fmtNdvi, fmtPct } from "../lib/format";
 import { Minus, Pencil, Satellite, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { t, tk } from "../lib/i18n";
-import type { Member, Plot } from "../lib/types";
+import type { Member, Plot, ProblemArea } from "../lib/types";
 import { CopyCoords } from "./CopyCoords";
 import { LineChart } from "./charts";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Select, Spinner, Stat, toast } from "./ui";
@@ -25,11 +25,16 @@ export function PlotPanel({
   workers,
   canEdit,
   onClose,
+  problemAreas = [],
+  onShowArea,
 }: {
   plot: Plot;
   workers: Member[];
   canEdit: boolean;
   onClose: () => void;
+  /** Áreas problema de este lote (S-08). */
+  problemAreas?: ProblemArea[];
+  onShowArea?: (a: ProblemArea) => void;
 }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
@@ -161,6 +166,30 @@ export function PlotPanel({
         </div>
       )}
       {ndvi.error && <ErrorBox error={ndvi.error} />}
+
+      {canEdit && problemAreas.length > 0 && (
+        <div className="border-t border-linea pt-4">
+          <h3 className="eyebrow mb-1">{t("ui.problemAreasTitle")}</h3>
+          <p className="mb-2 text-xs text-tinta-2">
+            {t("ui.problemAreasHint", { date: fmtDate(problemAreas[0]!.acquiredAt) })}
+          </p>
+          <ul className="flex flex-col gap-2 text-sm">
+            {problemAreas.map((a) => (
+              <li key={a.id} className="flex items-baseline justify-between gap-3">
+                <span className="num">
+                  {fmtHa(a.areaHa)} · {t("ui.problemAreaNdvi", { v: fmtNdvi(a.meanNdvi), m: fmtNdvi(a.plotMedianNdvi) })}
+                </span>
+                <button
+                  className="shrink-0 cursor-pointer text-accion underline underline-offset-2"
+                  onClick={() => onShowArea?.(a)}
+                >
+                  {t("ui.problemAreaShow")}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {canEdit && !editing && (
         <div className="flex gap-2 border-t border-linea pt-4">

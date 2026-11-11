@@ -213,3 +213,34 @@ ingest.post("/farm-risk", async (c) => {
     throw new HTTPException(404, { message: "Estancia inexistente" });
   return c.json({ ok: true });
 });
+
+/** Áreas problema de un lote (job s2_ingest, S-08): polígonos chicos ya calculados. */
+ingest.post("/problem-areas", async (c) => {
+  const pos = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
+  const b = parse(
+    z.object({
+      plotId: uuid,
+      acquiredAt: z.number().int(),
+      areas: z
+        .array(
+          z.object({
+            geometry: z.object({ type: z.literal("Polygon"), coordinates: z.array(z.array(pos).min(4).max(300)).min(1).max(4) }),
+            areaHa: z.number().positive().max(100_000),
+            lon: z.number().min(-180).max(180),
+            lat: z.number().min(-90).max(90),
+            meanNdvi: z.number().min(-1).max(1),
+            plotMedianNdvi: z.number().min(-1).max(1),
+          }),
+        )
+        .max(10),
+    }),
+    json(c.var.body),
+  );
+  const written = await c.var.sys.replaceProblemAreas(
+    b.plotId,
+    b.acquiredAt,
+    b.areas.map(({ geometry, ...a }) => ({ ...a, geometry: JSON.stringify(geometry) })),
+  );
+  if (written === null) throw new HTTPException(404, { message: "Lote inexistente" });
+  return c.json({ written });
+});

@@ -178,8 +178,8 @@ export default function Today() {
         <>
           <Text style={st.section}>{t("app.tasksToday")}</Text>
           {open.map((task) => (
+            <View key={task.id}>
             <Row
-              key={task.id}
               title={task.title}
               subtitle={[
                 task.kind ? t(`recordKinds.${task.kind}`) : null,
@@ -198,6 +198,15 @@ export default function Today() {
               }}
               right={<View style={st.circle} />}
             />
+            {task.lon !== null && task.lat !== null && (
+              <Button
+                kind="text"
+                title={t("app.gotoButton")}
+                onPress={() => router.push({ pathname: "/goto", params: { lon: String(task.lon), lat: String(task.lat), name: task.title } })}
+                style={{ alignSelf: "flex-start", paddingHorizontal: 0 }}
+              />
+            )}
+            </View>
           ))}
         </>
       )}

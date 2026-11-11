@@ -574,6 +574,8 @@ export class ScopedDb {
     recurrence: (typeof s.RECURRENCES)[number];
     /** Lista de verificación en JSON (F-15). */
     checklist?: string | null;
+    lon?: number | null;
+    lat?: number | null;
   }) {
     this.require(can.assign);
     await this.requireFarm(input.farmId);

@@ -274,6 +274,9 @@ export const tasks = sqliteTable(
     completedAt: integer("completed_at"),
     completedBy: text("completed_by"),
     recordId: text("record_id"),
+    /** Punto al que ir (S-09: centro de un área problema). El celular lo muestra en el mapa y en "Llevame ahí". */
+    lon: real("lon"),
+    lat: real("lat"),
     createdBy: text("created_by").notNull(),
     /** Lista de verificación (F-15): JSON `[{id, text, done}]` o null. Ver checklist.ts. */
     checklist: text("checklist"),

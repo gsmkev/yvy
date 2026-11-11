@@ -366,6 +366,7 @@ export const esPY = {
     forecastOld: "Es de hace {{n}} días. Se actualiza cuando haya señal.",
     forecastNone: "Todavía no hay pronóstico. Se baja cuando haya señal.",
     forecastSource: "Datos de MET Norway",
+    taskPointOnMap: "Tarea: {{title}}",
   },
   fields: {
     condition: "Estado general",
@@ -1183,6 +1184,12 @@ export const esPY = {
     problemAreasHint: "Partes del lote con el vigor muy por debajo del resto, en la imagen del {{date}}.",
     problemAreaNdvi: "NDVI {{v}} frente a {{m}} del lote",
     problemAreaShow: "Ver en el mapa",
+    problemTaskSend: "Mandar a recorrer",
+    problemTaskSending: "Mandando…",
+    problemTaskTitle: "Recorrer {{ha}} ha de {{plot}} con vigor bajo",
+    problemTaskSent: "Tarea mandada a {{name}}. Le aparece en Hoy y en el mapa.",
+    problemTaskNoWorker: "Asigná un empleado al lote para mandarlo a recorrer esta área.",
+    problemTaskTo: "Para",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

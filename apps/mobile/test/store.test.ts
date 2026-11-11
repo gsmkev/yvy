@@ -150,6 +150,27 @@ describe("LocalDb", () => {
     expect(plan[0]!.titles).toContain("Revisar aguada");
   });
 
+  it("tareas con punto (S-09): solo las abiertas y propias con coordenadas, y la siguiente ocurrencia conserva el punto", async () => {
+    const now = new Date(2026, 5, 10, 8, 0, 0).getTime();
+    const db = setup(() => now);
+    const task = (title: string, over: Record<string, unknown> = {}) => ({
+      id: newId(), organizationId: ORG, farmId: FARM, plotId: PLOT, assigneeId: USER, title, kind: "scouting", lon: -55.9, lat: -27.2,
+      dueDate: localDate(now), recurrence: "none", status: "open", completedAt: null, completedBy: null, recordId: null, createdBy: USER,
+      createdAt: 1, updatedAt: 1, deletedAt: null, version: 1, ...over,
+    });
+    const weekly = task("Semanal", { recurrence: "weekly" });
+    await db.applyPull(
+      "tasks",
+      [task("Con punto"), task("Sin punto", { lon: null, lat: null }), task("Hecha", { status: "done" }), task("Ajena", { assigneeId: newId() }), weekly],
+      null,
+    );
+    expect(db.taskPoints(USER).map((p) => p.title).sort()).toEqual(["Con punto", "Semanal"]);
+    db.completeTask(weekly.id, null);
+    const next = db.taskPoints(USER).filter((p) => p.title === "Semanal");
+    expect(next).toHaveLength(1);
+    expect(next[0]).toMatchObject({ lon: -55.9, lat: -27.2 });
+  });
+
   it("ficha del lote: último vigor y tareas abiertas", async () => {
     const db = setup();
     expect(db.lastVigor(PLOT)).toBeNull();

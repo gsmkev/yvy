@@ -1,0 +1,18 @@
+import { NDVI_RAMP } from "@yvy/shared";
+
+/** Rango de NDVI que cubre la rampa: por debajo del primero es suelo o cultivo en problemas. */
+const LOW = 0.2;
+const HIGH = 0.9;
+
+const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as [number, number, number];
+
+/** Color de la rampa NDVI (interpolado entre las cinco paradas) para un valor de NDVI. */
+export function ndviColor(v: number): string {
+  const pos = Math.min(1, Math.max(0, (v - LOW) / (HIGH - LOW))) * (NDVI_RAMP.length - 1);
+  const i = Math.min(NDVI_RAMP.length - 2, Math.floor(pos));
+  const f = pos - i;
+  const a = rgb(NDVI_RAMP[i]!);
+  const b = rgb(NDVI_RAMP[i + 1]!);
+  const c = a.map((x, k) => Math.round(x + (b[k]! - x) * f));
+  return `#${c.map((x) => x.toString(16).padStart(2, "0")).join("")}`.toUpperCase();
+}

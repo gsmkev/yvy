@@ -2,7 +2,7 @@
  * Consultas de la web y operaciones de edición. Todas reciben ScopedDb y filtran por organización
  * (y por lotes asignados cuando corresponde).
  */
-import { and, asc, desc, eq, gte, inArray, isNull, lt, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, gte, inArray, isNull, lt, lte, or, sql, type SQL } from "drizzle-orm";
 import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
 import { LIMITS, type RecordKind } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -51,6 +51,12 @@ export async function farmSummaries(sdb: ScopedDb) {
     .orderBy(asc(s.farms.name));
 }
 
+/** Subconsulta: columna de la pasada NDVI número `offset` (0 = la última) del lote de la fila. */
+const ndviAt = (col: "mean" | "acquired_at", offset: number) =>
+  sql<
+    number | null
+  >`(SELECT ${sql.raw(col)} FROM plot_index_stats x WHERE x.plot_id = plots.id AND x.idx = 'ndvi' AND x.deleted_at IS NULL ORDER BY x.acquired_at DESC LIMIT 1 OFFSET ${sql.raw(String(offset))})`;
+
 export async function farmDetail(sdb: ScopedDb, farmId: string) {
   const org = sdb.auth.orgId;
   const [farm] = await sdb.db
@@ -76,7 +82,17 @@ export async function farmDetail(sdb: ScopedDb, farmId: string) {
       .where(eq(s.farms.id, farmId))
       .limit(1),
     sdb.db
-      .select()
+      .select({
+        ...getTableColumns(s.plots),
+        // Vigor: últimas dos pasadas de NDVI y última visita, en una sola consulta (subconsultas correlacionadas).
+        ndviMean: ndviAt("mean", 0),
+        ndviAt: ndviAt("acquired_at", 0),
+        ndviPrevMean: ndviAt("mean", 1),
+        ndviPrevAt: ndviAt("acquired_at", 1),
+        lastRecordAt: sql<
+          number | null
+        >`(SELECT max(r.captured_at) FROM records r WHERE r.plot_id = plots.id AND r.deleted_at IS NULL)`,
+      })
       .from(s.plots)
       .where(and(eq(s.plots.farmId, farmId), isNull(s.plots.deletedAt), sdb.workerFilter("plots")))
       .orderBy(asc(s.plots.name)),

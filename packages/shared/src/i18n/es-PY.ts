@@ -568,6 +568,8 @@ export const esPY = {
     orgSwitching: "Cambiando…",
     orgCurrent: "La que estás viendo",
     orgSwitchFailed: "No pudimos cambiar de organización. Probá de nuevo.",
+    // web-b
+    vigor: "Vigor",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

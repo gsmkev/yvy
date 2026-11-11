@@ -6,7 +6,7 @@ import { useEffect, useRef, type ElementRef } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Check } from "lucide-react-native";
-import { describeRecord, t } from "@yvy/shared";
+import { checklistProgress, describeRecord, parseChecklist, t } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
 import { useSession } from "../../src/lib/session";
@@ -134,9 +134,16 @@ export default function Today() {
             <Row
               key={task.id}
               title={task.title}
-              subtitle={[task.kind ? t(`recordKinds.${task.kind}`) : null, task.plotId ? plotName(task.plotId) : null].filter(Boolean).join(" · ")}
+              subtitle={[
+                task.kind ? t(`recordKinds.${task.kind}`) : null,
+                task.plotId ? plotName(task.plotId) : null,
+                parseChecklist(task.checklist).length ? t("app.checklistProgress", checklistProgress(parseChecklist(task.checklist))) : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
               onPress={() => {
-                if (task.kind) router.push({ pathname: "/annotate", params: { kind: task.kind, taskId: task.id, plotId: task.plotId ?? "" } });
+                if (parseChecklist(task.checklist).length) router.push({ pathname: "/task/[id]", params: { id: task.id } });
+                else if (task.kind) router.push({ pathname: "/annotate", params: { kind: task.kind, taskId: task.id, plotId: task.plotId ?? "" } });
                 else {
                   getDb().completeTask(task.id, null);
                   localChanged();

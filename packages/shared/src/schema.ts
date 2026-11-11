@@ -261,6 +261,8 @@ export const tasks = sqliteTable(
     completedBy: text("completed_by"),
     recordId: text("record_id"),
     createdBy: text("created_by").notNull(),
+    /** Lista de verificación (F-15): JSON `[{id, text, done}]` o null. Ver checklist.ts. */
+    checklist: text("checklist"),
     ...synced,
   },
   (t) => [

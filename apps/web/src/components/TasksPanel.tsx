@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { localDate, RECORD_KINDS, RECURRENCES } from "@yvy/shared";
+import { checklistProgress, localDate, parseChecklist, RECORD_KINDS, RECURRENCES } from "@yvy/shared";
 import { del, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
 import { fmtIsoDate } from "../lib/format";
@@ -112,6 +112,7 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
                       {x.plotName ? ` · ${x.plotName}` : ""}
                       {x.kind ? ` · ${t("ui.opensRecord")}: ${tk(`recordKinds.${x.kind}`)}` : ""}
                     </span>
+                    <ChecklistProgress task={x} />
                   </span>
                   {x.status === "open" && (
                     <button className="text-xs text-tinta-2 hover:text-peligro" onClick={() => removeTask(x)}>
@@ -128,6 +129,37 @@ export function TasksPanel({ farmId, plots }: { farmId?: string; plots?: Plot[] 
         <NewTaskModal farmId={farmId} plots={plots} members={members.data ?? []} onClose={() => setCreating(false)} />
       )}
     </div>
+  );
+}
+
+function ChecklistProgress({ task }: { task: Task }) {
+  const list = parseChecklist(task.checklist);
+  if (!list.length) return null;
+  const { done, total } = checklistProgress(list);
+  return (
+    <span className="mt-1 block" data-testid="task-checklist">
+      <span className="flex items-center gap-2 text-xs text-tinta-2">
+        <span
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={total}
+          aria-valuenow={done}
+          aria-label={t("app.checklistProgress", { done, total })}
+          className="block h-1.5 w-24 overflow-hidden rounded-full bg-linea"
+        >
+          <span className="block h-full bg-soja" style={{ width: `${(done / total) * 100}%` }} />
+        </span>
+        {t("app.checklistProgress", { done, total })}
+      </span>
+      <span className="mt-1 block text-xs text-tinta-2">
+        {list.map((i) => (
+          <span key={i.id} className={`block ${i.done ? "line-through" : ""}`}>
+            {i.done ? "✓ " : "· "}
+            {i.text}
+          </span>
+        ))}
+      </span>
+    </span>
   );
 }
 
@@ -152,9 +184,17 @@ function NewTaskModal({
     kind: "",
     dueDate: localDate(Date.now()),
     recurrence: "none",
+    checklist: "",
   });
   const create = useMutation({
-    mutationFn: () => post("/org/tasks", { ...f, plotId: f.plotId || null, kind: f.kind || null }),
+    mutationFn: () => {
+      const { checklist, ...rest } = f;
+      const items = checklist
+        .split("\n")
+        .map((x) => x.trim())
+        .filter(Boolean);
+      return post("/org/tasks", { ...rest, plotId: f.plotId || null, kind: f.kind || null, ...(items.length ? { checklist: items } : {}) });
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
       toast(t("ui.toastTaskSaved"));
@@ -221,6 +261,14 @@ function NewTaskModal({
               { value: "", label: t("ui.none") },
               ...RECORD_KINDS.map((k) => ({ value: k, label: tk(`recordKinds.${k}`) })),
             ]}
+          />
+        </Field>
+        <Field label={t("ui.taskChecklist")}>
+          <textarea
+            className="min-h-20 w-full rounded-md border border-linea bg-white px-3 py-2 text-sm"
+            value={f.checklist}
+            onChange={set("checklist")}
+            placeholder={t("ui.taskChecklistHint")}
           />
         </Field>
         {create.error && <ErrorBox error={create.error} />}

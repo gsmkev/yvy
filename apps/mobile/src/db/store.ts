@@ -16,7 +16,11 @@ import {
   newId,
   nextDueDate,
   nextOccurrenceId,
+  parseChecklist,
   RECORD_SCHEMA_VERSION,
+  resetChecklist,
+  serializeChecklist,
+  setChecklistItem,
   type Cursor,
   type Mutation,
   type PullTable,
@@ -343,8 +347,8 @@ export class LocalDb implements SyncStore {
       const next = task.status !== "done" ? nextDueDate(task.dueDate, task.recurrence, localDate(ts, tz)) : null;
       if (next) {
         this.sql.run(
-          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, due_date, recurrence, status, created_by, created_at, updated_at, version)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, 0) ON CONFLICT(id) DO NOTHING`,
+          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, due_date, recurrence, status, created_by, created_at, updated_at, version, checklist)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, 0, ?) ON CONFLICT(id) DO NOTHING`,
           [
             nextOccurrenceId(taskId),
             task.organizationId,
@@ -358,9 +362,28 @@ export class LocalDb implements SyncStore {
             task.createdBy,
             ts,
             ts,
+            serializeChecklist(resetChecklist(parseChecklist(task.checklist))),
           ],
         );
       }
+    });
+  }
+
+  taskById(id: string): Task | null {
+    const r = this.sql.get<Record<string, unknown>>("SELECT * FROM tasks WHERE id = ? AND deleted_at IS NULL", [id]);
+    return r ? fromRow<Task>(s.tasks, r) : null;
+  }
+
+  /** Tilda o destilda un ítem de la lista de verificación (F-15). Sin red: queda en el outbox. */
+  setChecklistItem(taskId: string, itemId: string, done: boolean): void {
+    const task = this.taskById(taskId);
+    if (!task) throw new Error("task_not_found");
+    const next = setChecklistItem(parseChecklist(task.checklist), itemId, done);
+    if (!next) throw new Error("item_not_found");
+    const ts = this.now();
+    this.sql.tx(() => {
+      this.sql.run("UPDATE tasks SET checklist = ?, updated_at = ? WHERE id = ?", [serializeChecklist(next), ts, taskId]);
+      this.enqueue({ mutationId: newId(), kind: "tasks.check", row: { id: taskId, itemId, done } }, taskId);
     });
   }
 
@@ -403,7 +426,7 @@ export class LocalDb implements SyncStore {
         items.push({ id: m.mutationId, what: "record_delete", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
       } else if (m.kind === "pois.upsert") {
         items.push({ id: m.mutationId, what: "poi", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
-      } else if (m.kind === "tasks.status") {
+      } else if (m.kind === "tasks.status" || m.kind === "tasks.check") {
         items.push({ id: m.mutationId, what: "task", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
       }
     }

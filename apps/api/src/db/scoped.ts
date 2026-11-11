@@ -561,6 +561,8 @@ export class ScopedDb {
     kind: (typeof s.RECORD_KINDS)[number] | null;
     dueDate: string;
     recurrence: (typeof s.RECURRENCES)[number];
+    /** Lista de verificación en JSON (F-15). */
+    checklist?: string | null;
   }) {
     this.require(can.assign);
     await this.requireFarm(input.farmId);

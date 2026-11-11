@@ -125,6 +125,8 @@ export interface Task {
   recurrence: "none" | "daily" | "weekly";
   status: "open" | "done" | "cancelled";
   completedAt: number | null;
+  /** Lista de verificación en JSON (F-15); ver parseChecklist. */
+  checklist: string | null;
 }
 
 export interface Alert {

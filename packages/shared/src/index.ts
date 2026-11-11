@@ -20,6 +20,7 @@ export {
   type RecordKind,
 } from "./schema";
 export * from "./tasks";
+export * from "./checklist";
 export * from "./alert-settings";
 export * from "./share";
 export * from "./describe";

@@ -12,6 +12,7 @@
  *   El pull pagina por (version, id): equivale al "updated_at + desempate por id" del PRD §11
  *   pero sin depender de relojes de distintos datacenters.
  */
+import { HEALTH_REASONS } from "./livestock";
 import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // ---------- Enums ----------
@@ -25,14 +26,31 @@ export const SEASONS = ["zafra", "zafrina"] as const;
 export const POI_KINDS = ["rain_gauge", "water", "house", "gate", "corral", "other"] as const;
 export const RECURRENCES = ["none", "daily", "weekly"] as const;
 export const TASK_STATUS = ["open", "done", "cancelled"] as const;
-export const RECORD_KINDS = ["scouting", "pest", "crop_status", "pasture_status", "rain", "water", "note"] as const;
+export const RECORD_KINDS = [
+  "scouting",
+  "pest",
+  "crop_status",
+  "pasture_status",
+  "rain",
+  "water",
+  "note",
+  // ganaderia
+  "herd_count",
+  "herd_move",
+  "mortality",
+  "health",
+  // ADR 0004: registros agrícolas
+  "sowing",
+] as const;
 export type RecordKind = (typeof RECORD_KINDS)[number];
 export const UPLOAD_STATUS = ["pending", "uploaded"] as const;
-export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire"] as const;
+export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_threshold", "water_low"] as const;
 export const ALERT_SEVERITIES = ["info", "watch", "warning"] as const;
 /** Con MET Norway no hay ensemble: probabilidad cualitativa (PRD-cloudflare §4.8). */
 export const ALERT_PROBABILITIES = ["low", "medium", "high"] as const;
 export const LAYERS = ["true_color", "ndvi"] as const;
+/** Estado del procesamiento satelital inicial de una estancia (S-02). */
+export const IMAGERY_STATUSES = ["pending", "processing", "ready", "failed"] as const;
 
 // ---------- Columnas comunes ----------
 
@@ -239,6 +257,45 @@ export const plotAssignments = sqliteTable(
   ],
 );
 
+// ---------- Campañas (ADR 0004) ----------
+
+/** Campaña de la organización ("Zafra 2026/27"). Fechas de calendario "YYYY-MM-DD". */
+export const seasons = sqliteTable(
+  "seasons",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    name: text("name").notNull(),
+    startDate: text("start_date"),
+    endDate: text("end_date"),
+    active: integer("active", { mode: "boolean" }).notNull().default(true),
+    ...synced,
+  },
+  (t) => [index("seasons_sync_idx").on(t.organizationId, t.version, t.id)],
+);
+
+/** Qué se planifica o se sembró en un lote en una campaña. Una fila por (lote, campaña). */
+export const plotSeasons = sqliteTable(
+  "plot_seasons",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    plotId: text("plot_id").notNull(),
+    seasonId: text("season_id").notNull(),
+    crop: text("crop", { enum: CROPS }),
+    variety: text("variety"),
+    plannedSowingDate: text("planned_sowing_date"),
+    /** Rinde objetivo en toneladas por hectárea. */
+    targetYieldTHa: real("target_yield_t_ha"),
+    ...synced,
+  },
+  (t) => [
+    uniqueIndex("plot_seasons_plot_season_uq").on(t.plotId, t.seasonId),
+    index("plot_seasons_sync_idx").on(t.organizationId, t.version, t.id),
+    index("plot_seasons_season_idx").on(t.seasonId),
+  ],
+);
+
 // ---------- Trabajo ----------
 
 export const tasks = sqliteTable(
@@ -258,7 +315,12 @@ export const tasks = sqliteTable(
     completedAt: integer("completed_at"),
     completedBy: text("completed_by"),
     recordId: text("record_id"),
+    /** Punto al que ir (S-09: centro de un área problema). El celular lo muestra en el mapa y en "Llevame ahí". */
+    lon: real("lon"),
+    lat: real("lat"),
     createdBy: text("created_by").notNull(),
+    /** Lista de verificación (F-15): JSON `[{id, text, done}]` o null. Ver checklist.ts. */
+    checklist: text("checklist"),
     ...synced,
   },
   (t) => [
@@ -390,6 +452,14 @@ export const farmLayers = sqliteTable(
   ],
 );
 
+/** Estado del primer procesamiento satelital por estancia. No se sincroniza: solo lo lee la web. */
+export const farmImagery = sqliteTable("farm_imagery", {
+  farmId: text("farm_id").primaryKey(),
+  status: text("status", { enum: IMAGERY_STATUSES }).notNull().default("pending"),
+  requestedAt: integer("requested_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});
+
 /** plot_id = "" cuando el dato es por estancia (SQLite no admite NULL útil en la PK). */
 export const climateDaily = sqliteTable(
   "climate_daily",
@@ -421,6 +491,33 @@ export const climatology = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.farmId, t.plotId, t.dayOfYear, t.variable] })],
 );
+
+/** Áreas problema dentro de un lote en la última escena (S-08). Solo las escribe /ingest; no se sincronizan. */
+export const problemAreas = sqliteTable(
+  "problem_areas",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    plotId: text("plot_id").notNull(),
+    acquiredAt: integer("acquired_at").notNull(),
+    geometry: text("geometry").notNull(),
+    lon: real("lon").notNull(),
+    lat: real("lat").notNull(),
+    areaHa: real("area_ha").notNull(),
+    meanNdvi: real("mean_ndvi").notNull(),
+    plotMedianNdvi: real("plot_median_ndvi").notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("problem_areas_plot_idx").on(t.plotId), index("problem_areas_farm_idx").on(t.farmId)],
+);
+
+/** Informe de riesgo climático por estancia (C-10): JSON validado con farmRiskSchema. No se sincroniza. */
+export const farmRisk = sqliteTable("farm_risk", {
+  farmId: text("farm_id").primaryKey(),
+  computedAt: integer("computed_at").notNull(),
+  report: text("report").notNull(),
+});
 
 export const forecasts = sqliteTable(
   "forecasts",
@@ -461,6 +558,66 @@ export const alertRules = sqliteTable("alert_rules", {
   params: text("params").notNull().default("{}"),
   enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
 });
+
+/** Enlace temporal de solo lectura a la ficha de una estancia (K-04). Solo se guarda el hash del token. */
+export const shareLinks = sqliteTable(
+  "share_links",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at").notNull(),
+    expiresAt: integer("expires_at").notNull(),
+    revokedAt: integer("revoked_at"),
+  },
+  (t) => [uniqueIndex("share_links_hash_uq").on(t.tokenHash), index("share_links_farm_idx").on(t.farmId)],
+);
+
+/** Umbrales de avisos por estancia (C-04). Sin fila = valores por defecto. No se sincroniza al celular. */
+export const farmAlertSettings = sqliteTable("farm_alert_settings", {
+  farmId: text("farm_id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  frostTminC: real("frost_tmin_c").notNull().default(2),
+  excessRainMm24h: real("excess_rain_mm_24h").notNull().default(50),
+  droughtDeficitPct: real("drought_deficit_pct").notNull().default(50),
+  updatedAt: integer("updated_at").notNull(),
+  updatedBy: text("updated_by"),
+});
+
+/** Carga animal máxima (UA/ha) por estancia (G-03). Sin fila = DEFAULT_MAX_UA_PER_HA. No se sincroniza. */
+export const farmLivestockSettings = sqliteTable("farm_livestock_settings", {
+  farmId: text("farm_id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  maxUaPerHa: real("max_ua_per_ha").notNull().default(1),
+  updatedAt: integer("updated_at").notNull(),
+  updatedBy: text("updated_by"),
+});
+
+/**
+ * Calendario sanitario de la organización (G-10). Solo web: el celular recibe las tareas que se crean para
+ * los empleados. farm_id vacío = toda la organización. El estado (hecho o vencido) se calcula, no se guarda.
+ */
+export const sanitaryEvents = sqliteTable(
+  "sanitary_events",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id"),
+    reason: text("reason", { enum: HEALTH_REASONS }).notNull(),
+    /** "YYYY-MM-DD". */
+    plannedDate: text("planned_date").notNull(),
+    /** JSON: categorías de hacienda alcanzadas (vacío = todas). */
+    categories: text("categories").notNull().default("[]"),
+    product: text("product"),
+    note: text("note"),
+    tasksCreated: integer("tasks_created").notNull().default(0),
+    createdBy: text("created_by").notNull(),
+    ...timestamps,
+  },
+  (t) => [index("sanitary_events_org_date_idx").on(t.organizationId, t.plannedDate)],
+);
 
 export const alerts = sqliteTable(
   "alerts",
@@ -556,6 +713,19 @@ export const activityDaily = sqliteTable(
     role: text("role").notNull(),
   },
   (t) => [primaryKey({ columns: [t.userId, t.day] }), index("activity_daily_org_idx").on(t.organizationId, t.day)],
+);
+
+/** P-09: el dueño pide la baja de la cuenta. Solo se registra; el borrado lo hace el equipo a mano. */
+export const deletionRequests = sqliteTable(
+  "deletion_requests",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    userId: text("user_id").notNull(),
+    status: text("status").notNull().default("pending"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("deletion_requests_org_idx").on(t.organizationId, t.createdAt)],
 );
 
 export const usageDaily = sqliteTable(

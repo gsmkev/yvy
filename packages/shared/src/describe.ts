@@ -1,5 +1,6 @@
 /** Resumen legible de un registro, en es-PY, a partir de sus datos (web, Excel, PDF y app). */
 import { hasKey, t, type MessageKey } from "./i18n";
+import { HERD_CATEGORIES } from "./livestock";
 
 const tr = (key: string, fallback: string) => (hasKey(key) ? t(key as MessageKey) : fallback);
 
@@ -18,6 +19,8 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
           t("fields.intensityValue", { v: tr(`fields.level_${d.intensity}`, String(d.intensity)).toLowerCase() }),
         );
       if (typeof d.perMeter === "number") parts.push(t("fields.perMeterValue", { n: d.perMeter }));
+      if (Array.isArray(d.stations))
+        parts.push(t(d.stations.length === 1 ? "app.stationsValueOne" : "app.stationsValue", { n: d.stations.length }));
       break;
     case "crop_status":
       if (str("stage")) parts.push(tr(`fields.stage_${d.stage}`, String(d.stage)));
@@ -35,6 +38,43 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
       break;
     case "scouting":
       if (str("condition")) parts.push(tr(`fields.condition_${d.condition}`, String(d.condition)));
+      break;
+    case "herd_count": {
+      const c = (d.counts ?? {}) as Record<string, number>;
+      const total = HERD_CATEGORIES.reduce((n, k) => n + (c[k] ?? 0), 0);
+      let head = t("fields.herdTotalValue", { n: total });
+      const detail = HERD_CATEGORIES.filter((k) => typeof c[k] === "number" && c[k]! > 0).map((k) =>
+        t(`fields.herdCount_${k}`, { n: c[k]! }),
+      );
+      if (detail.length) head = `${head}: ${detail.join(", ")}`;
+      parts.push(head);
+      break;
+    }
+    case "herd_move": {
+      const c = (d.counts ?? {}) as Record<string, number>;
+      const total = HERD_CATEGORIES.reduce((n, k) => n + (c[k] ?? 0), 0);
+      parts.push(t("fields.herdTotalValue", { n: total }));
+      if (str("reason")) parts.push(tr(`fields.moveReason_${d.reason}`, String(d.reason)).toLowerCase());
+      break;
+    }
+    case "mortality":
+      if (typeof d.head === "number" && str("category"))
+        parts.push(`${d.head} ${tr(`fields.herd_${d.category}`, String(d.category)).toLowerCase()}`);
+      if (str("cause")) parts.push(tr(`fields.cause_${d.cause}`, String(d.cause)).toLowerCase());
+      break;
+    case "health": {
+      const c = (d.counts ?? {}) as Record<string, number>;
+      if (str("reason")) parts.push(tr(`fields.healthReason_${d.reason}`, String(d.reason)));
+      if (str("product")) parts.push(d.product as string);
+      parts.push(t("fields.herdTotalValue", { n: HERD_CATEGORIES.reduce((n, k) => n + (c[k] ?? 0), 0) }));
+      break;
+    }
+    case "sowing":
+      if (str("crop")) parts.push(tr(`fields.crop_${d.crop}`, String(d.crop)));
+      if (str("variety")) parts.push(d.variety as string);
+      if (typeof d.density === "number" && str("densityUnit"))
+        parts.push(`${d.density} ${tr(`fields.densityUnit_${d.densityUnit}`, String(d.densityUnit))}`);
+      if (typeof d.areaHa === "number") parts.push(t("fields.areaDoneValue", { n: d.areaHa }));
       break;
     case "note":
       if (str("text")) parts.push(d.text as string);

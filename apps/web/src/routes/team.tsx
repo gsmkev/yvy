@@ -3,16 +3,22 @@ import { useState } from "react";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
 import { ROLES } from "@yvy/shared";
-import { Button, ConfirmModal, ErrorBox, Field, Input, Modal, Select, Spinner } from "../components/ui";
+import { ExportButtons } from "../components/ExportButtons";
+import { Button, ConfirmModal, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../components/ui";
 import { del, get, post, put } from "../lib/api";
+import { localDate } from "@yvy/shared";
 import { fmtDateTime, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
-import { useFarms, useMe, useMembers } from "../lib/queries";
+import { useFarms, useMe, useMembers, useTasks } from "../lib/queries";
 import type { FarmDetail, Member } from "../lib/types";
 
 export function TeamPage() {
   const me = useMe();
   const members = useMembers();
+  const openTasks = useTasks({ status: "open" });
+  const today = localDate(Date.now());
+  const overdueOf = (userId: string) =>
+    (openTasks.data ?? []).filter((x) => x.assigneeId === userId && x.dueDate < today).length;
   const qc = useQueryClient();
   const [adding, setAdding] = useState(false);
   const [qr, setQr] = useState<{ member: Member; qr: string; expiresAt: number } | null>(null);
@@ -28,6 +34,7 @@ export function TeamPage() {
     mutationFn: (m: Member) => del(`/org/members/${m.userId}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["members"] });
+      toast(t("ui.toastMemberRemoved"));
       setRemoving(null);
     },
   });
@@ -38,11 +45,20 @@ export function TeamPage() {
     <div className="mx-auto flex max-w-3xl flex-col gap-3 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">{t("ui.teamTitle")}</h1>
-        {canManage && (
-          <Button variant="primary" icon={UserPlus} onClick={() => setAdding(true)}>
-            {t("ui.addMember")}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <ExportButtons
+            data={() => ({
+              name: t("ui.teamFile"),
+              headers: [t("ui.name"), t("ui.role"), t("ui.emailCol"), t("ui.phone")],
+              rows: members.data!.map((m) => [m.fullName, tk(`ui.role_${m.role}`), m.email, m.phone]),
+            })}
+          />
+          {canManage && (
+            <Button variant="primary" icon={UserPlus} onClick={() => setAdding(true)}>
+              {t("ui.addMember")}
+            </Button>
+          )}
+        </div>
       </div>
       {link.error && <ErrorBox error={link.error} />}
       {members.data!.map((m) => (
@@ -52,6 +68,18 @@ export function TeamPage() {
             <div className="text-sm text-tinta-2">
               {tk(`ui.role_${m.role}`)} {m.email ? `· ${m.email}` : ""} {m.phone ? `· ${m.phone}` : ""}
             </div>
+            <div className="num mt-0.5 text-xs text-tinta-2">
+              {t("ui.activityDays", { n: m.activeDays7 })} ·{" "}
+              {t(m.records7d === 1 ? "ui.activityRecordsOne" : "ui.activityRecords", { n: m.records7d })} ·{" "}
+              {m.lastSyncAt ? t("ui.lastSync", { date: fmtDateTime(m.lastSyncAt) }) : t("ui.neverSynced")}
+            </div>
+            {overdueOf(m.userId) > 0 && (
+              <div className="num mt-0.5 text-sm font-medium text-peligro">
+                {t(overdueOf(m.userId) === 1 ? "ui.overdueCountOne" : "ui.overdueCountMany", {
+                  n: overdueOf(m.userId),
+                })}
+              </div>
+            )}
           </div>
           <Button icon={MapPinned} onClick={() => setAssigning(m)}>
             {t("ui.assignPlots")}
@@ -104,6 +132,7 @@ function AddMember({ canAddAdmins, onClose }: { canAddAdmins: boolean; onClose: 
       post("/org/members", { fullName: f.fullName, email: f.email || null, phone: f.phone || null, role: f.role }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["members"] });
+      toast(t("ui.toastMemberAdded"));
       onClose();
     },
   });
@@ -163,6 +192,7 @@ function AssignPlots({ member, onClose }: { member: Member; onClose: () => void 
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["farm"] });
       qc.invalidateQueries({ queryKey: ["farms"] });
+      toast(t("ui.toastPlotsAssigned"));
       onClose();
     },
   });

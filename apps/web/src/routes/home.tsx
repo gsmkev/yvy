@@ -1,11 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, ChevronRight, Plus } from "lucide-react";
 import { FarmMap } from "../components/FarmMap";
+import { FirstRunGuide, guideSteps } from "../components/FirstRunGuide";
 import { Button, Empty, ErrorBox, SectionHead, Spinner, Stat } from "../components/ui";
 import { fmtDate, fmtNum } from "../lib/format";
 import { t } from "../lib/i18n";
-import { useFarms, useMe } from "../lib/queries";
+import { loadPrefs, savePrefs } from "../lib/prefs";
+import { useFarms, useMe, useMembers } from "../lib/queries";
 
 /** Inicio multi estancia (RF-90). */
 export function HomePage() {
@@ -14,8 +16,14 @@ export function HomePage() {
   const navigate = useNavigate();
   const canEdit = me.data && me.data.role !== "worker";
   const list = farms.data ?? [];
-  // Con una sola estancia, el mapa de esa estancia es el inicio
-  const only = list.length === 1 ? list[0]!.id : null;
+  const members = useMembers(!!canEdit);
+  const [dismissed, setDismissed] = useState(() => !!loadPrefs().guideDismissed);
+  // Guía de primera vez: solo para quien edita, hasta completar los 4 pasos o descartarla
+  const steps = canEdit && farms.data && members.data ? guideSteps(list, members.data) : null;
+  const guide = steps && !dismissed && steps.some((s) => !s.done) ? steps : null;
+  const ready = !!me.data && (!canEdit || !!members.data || members.isError);
+  // Con una sola estancia, el mapa de esa estancia es el inicio (salvo que falte completar la guía)
+  const only = list.length === 1 && ready && !guide ? list[0]!.id : null;
   useEffect(() => {
     if (only) navigate({ to: "/estancias/$farmId", params: { farmId: only }, replace: true });
   }, [only]);
@@ -73,7 +81,16 @@ export function HomePage() {
 
         {farms.isLoading && <Spinner />}
         {farms.error && <ErrorBox error={farms.error} />}
-        {farms.data && list.length === 0 && (
+        {guide && (
+          <FirstRunGuide
+            steps={guide}
+            onDismiss={() => {
+              savePrefs({ guideDismissed: true });
+              setDismissed(true);
+            }}
+          />
+        )}
+        {farms.data && list.length === 0 && !guide && (
           <Empty title={t("ui.onboardingTitle")}>
             <ol className="mt-1 flex list-decimal flex-col gap-1.5 pl-5">
               <li>{t("ui.onboarding1")}</li>

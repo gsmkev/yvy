@@ -5,7 +5,7 @@ import { t, type MessageKey } from "@yvy/shared";
 import { FEATURES } from "../../src/lib/features";
 import type { OutboxItem } from "../../src/db/store";
 import { getDb } from "../../src/lib/db";
-import { downloadPack, isWifi, packStatus } from "../../src/lib/offline";
+import { allPacksPlan, downloadAllPacks, downloadPack, isWifi, packStatus } from "../../src/lib/offline";
 import { remindersEnabled, setRemindersEnabled } from "../../src/lib/reminders";
 import { api, getSession, setSession } from "../../src/lib/session";
 import { deleteUploadedFiles, storageUsage, type StorageUsage } from "../../src/lib/storage";
@@ -40,6 +40,21 @@ export default function More() {
         const { [farmId]: _, ...rest } = p;
         return rest;
       });
+    }
+  };
+
+  // F-26: bajar los mapas de todas las estancias de una vez (por wifi).
+  const [allProgress, setAllProgress] = useState<number | null>(null);
+  const plan = allPacksPlan();
+  const downloadAll = async () => {
+    if (!(await isWifi())) return Alert.alert(t("app.offlinePackNeedsWifi"));
+    setAllProgress(0);
+    try {
+      const { failed } = await downloadAllPacks(setAllProgress);
+      localChanged();
+      if (failed.length) Alert.alert(t("app.offlineAllFailed", { names: failed.join(", ") }));
+    } finally {
+      setAllProgress(null);
     }
   };
 
@@ -102,6 +117,17 @@ export default function More() {
               : t("app.offlinePackSize", { mb: (p.missingBytes / 1e6).toLocaleString("es-PY", { maximumFractionDigits: 1 }) });
         return <Row key={f.id} title={f.name} subtitle={subtitle} onPress={p.layers.length && !p.upToDate && pct === undefined ? () => download(f.id) : undefined} right={p.layers.length && !p.upToDate && pct === undefined ? <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{t("app.download")}</Text> : undefined} />;
       })}
+
+      {farms.length > 1 && plan.farms.length > 0 && (
+        <Button
+          kind="secondary"
+          title={allProgress !== null ? `${Math.round(allProgress * 100)} %` : t("app.offlineAll", { n: plan.farms.length, mb: (plan.totalBytes / 1e6).toLocaleString("es-PY", { maximumFractionDigits: 1 }) })}
+          loading={allProgress !== null}
+          onPress={downloadAll}
+          style={{ marginTop: 12 }}
+        />
+      )}
+      {farms.length > 1 && plan.farms.length === 0 && plan.withoutImagery < farms.length && <Text style={[T.small, { paddingVertical: 8 }]}>{t("app.offlineAllReady")}</Text>}
 
       <Storage />
 

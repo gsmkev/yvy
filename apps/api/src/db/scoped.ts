@@ -25,6 +25,9 @@ export interface AuthCtx {
   userId: string;
   orgId: string;
   role: Role;
+  /** P-12: sesión de soporte (el equipo de Yvy viendo la organización): solo lectura. */
+  readOnly?: boolean;
+  supportBy?: string;
 }
 
 export class ForbiddenError extends Error {}

@@ -6,6 +6,8 @@ export interface Me {
   role: "owner" | "admin" | "agronomist" | "worker";
   tilesBaseUrl: string;
   isStaff: boolean;
+  /** P-12: sesión de soporte de solo lectura. */
+  support?: boolean;
 }
 
 export interface FarmSummary {

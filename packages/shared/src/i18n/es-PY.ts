@@ -696,6 +696,17 @@ export const esPY = {
       "Si cambiamos algo importante, te avisamos por email. La fecha de la última revisión legal se va a indicar acá cuando esté hecha.",
     privacyS9Title: "Contacto",
     privacyS9Text: "Para cualquier consulta sobre tus datos, escribinos por WhatsApp desde la página de inicio.",
+    accountTitle: "Cuenta",
+    accountOwnerOnly: "Solo el dueño de la organización puede ver esta página.",
+    accountDeleteTitle: "Baja de la cuenta",
+    accountDeleteText:
+      "Si querés dejar de usar Yvy, pedí la baja. No se borra nada ahora: el equipo de Yvy te escribe para confirmar y, si querés, antes te pasamos una copia de tus datos.",
+    accountDeleteButton: "Pedir la baja de la cuenta",
+    accountDeleteConfirmTitle: "¿Pedir la baja de la cuenta?",
+    accountDeleteConfirmText:
+      "Vamos a avisar al equipo de Yvy. Hasta que lo confirmemos con vos, tu cuenta y tus datos siguen como están.",
+    accountDeleteConfirmButton: "Sí, pedir la baja",
+    accountDeleteSent: "Recibimos tu pedido. Te escribimos para confirmar la baja y coordinar la copia de tus datos.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

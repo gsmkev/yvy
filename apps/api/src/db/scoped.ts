@@ -227,6 +227,44 @@ export class ScopedDb {
     ]);
   }
 
+  // ---------- Baja de la cuenta (P-09) ----------
+
+  /** Registra el pedido de baja (solo dueño). Idempotente: si ya hay uno pendiente, lo devuelve. */
+  async requestDeletion(): Promise<{
+    id: string;
+    created: boolean;
+    organizationName: string;
+    requester: string;
+  }> {
+    this.require(can.manageOrg, "Solo el dueño pide la baja de la cuenta");
+    const [org] = await this.db
+      .select({ name: s.organizations.name })
+      .from(s.organizations)
+      .where(eq(s.organizations.id, this.auth.orgId))
+      .limit(1);
+    const [user] = await this.db
+      .select({ email: s.users.email, fullName: s.users.fullName })
+      .from(s.users)
+      .where(eq(s.users.id, this.auth.userId))
+      .limit(1);
+    const requester = `${user?.fullName ?? ""} (${user?.email ?? "sin email"})`;
+    const [pending] = await this.db
+      .select({ id: s.deletionRequests.id })
+      .from(s.deletionRequests)
+      .where(and(eq(s.deletionRequests.organizationId, this.auth.orgId), eq(s.deletionRequests.status, "pending")))
+      .limit(1);
+    const organizationName = org?.name ?? "";
+    if (pending) return { id: pending.id, created: false, organizationName, requester };
+    const id = newId();
+    await this.db.insert(s.deletionRequests).values({
+      id,
+      organizationId: this.auth.orgId,
+      userId: this.auth.userId,
+      createdAt: this.now(),
+    });
+    return { id, created: true, organizationName, requester };
+  }
+
   // ---------- Miembros y asignaciones ----------
 
   async listMembers() {

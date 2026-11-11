@@ -4,6 +4,7 @@ import { z } from "zod";
 import { areaHa, bboxOf, centroidOf, validateShape, type Area } from "@yvy/geo";
 import { CROPS, LIMITS, t, PLOT_KINDS, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
 import { dispatchNewFarm, inBackground } from "../lib/dispatch";
+import { sendEmail } from "../lib/email";
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
 
@@ -48,6 +49,20 @@ export const plotArea = areaWith((ha) =>
 );
 
 const describe = (g: Area) => ({ geometry: JSON.stringify(g), ...bboxOf(g), areaHa: areaHa(g) });
+
+/** P-09: registra el pedido de baja y avisa al equipo. No borra nada. */
+org.post("/delete-request", async (c) => {
+  const res = await c.var.sdb.requestDeletion();
+  if (res.created && c.env.OPS_EMAIL) {
+    await sendEmail(
+      c.env,
+      c.env.OPS_EMAIL,
+      `Pedido de baja: ${res.organizationName}`,
+      `${res.requester} pidió la baja de la organización "${res.organizationName}" (${c.var.auth.orgId}). Pedido ${res.id}.`,
+    ).catch((e) => console.error("delete-request email", e));
+  }
+  return c.json({ ok: true, requestId: res.id }, res.created ? 201 : 200);
+});
 
 org.get("/members", async (c) => c.json(await c.var.sdb.listMembers()));
 

@@ -568,6 +568,19 @@ export const activityDaily = sqliteTable(
   (t) => [primaryKey({ columns: [t.userId, t.day] }), index("activity_daily_org_idx").on(t.organizationId, t.day)],
 );
 
+/** P-09: el dueño pide la baja de la cuenta. Solo se registra; el borrado lo hace el equipo a mano. */
+export const deletionRequests = sqliteTable(
+  "deletion_requests",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    userId: text("user_id").notNull(),
+    status: text("status").notNull().default("pending"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("deletion_requests_org_idx").on(t.organizationId, t.createdAt)],
+);
+
 export const usageDaily = sqliteTable(
   "usage_daily",
   {

@@ -10,12 +10,16 @@ export const LIMITS = {
     pullPageSize: 200,
     /** Historial de registros y adjuntos que baja al celular (PRD §11). */
     recordsHistoryMs: 30 * 24 * 60 * 60 * 1000,
+    /** Movimientos y mortandad de hacienda que bajan al celular (G-03): el stock se calcula allá, sin señal. */
+    herdEventsHistoryMs: 365 * 24 * 60 * 60 * 1000,
     /** NDVI que baja al celular (PRD §11: último año). */
     indexStatsHistoryMs: 365 * 24 * 60 * 60 * 1000,
     /** Un registro con capturedAt más allá de esto en el futuro se rechaza (reloj mal puesto). */
     maxFutureCaptureMs: 60 * 60 * 1000,
     /** Tareas completadas que siguen bajando al celular. */
     tasksDoneHistoryMs: 30 * 24 * 60 * 60 * 1000,
+    /** Largo máximo del nombre de un punto de interés. */
+    maxPoiNameLength: 120,
     /** Ventana en que el empleado puede editar o borrar sus registros (RF-34, §9). */
     workerEditWindowMs: 24 * 60 * 60 * 1000,
     /** Sincronización automática en primer plano (PRD: 15 min; anexo Cloudflare: 30). */
@@ -64,6 +68,36 @@ export const LIMITS = {
     forecastCacheMs: 3 * 60 * 60 * 1000,
     forecastRunsKept: 4,
     coordDecimals: 4,
+    /** Horas de pronóstico que se guardan para las ventanas de pulverización (A-13). */
+    hourlyHorizonHours: 48,
+  },
+  /** Condiciones para pulverizar (A-13): viento en km/h, Delta T en °C y sin lluvia. */
+  spray: {
+    windMinKmh: 3,
+    windMaxKmh: 15,
+    deltaTMin: 2,
+    deltaTMax: 8,
+    maxRainMm: 0,
+  },
+  monitoring: {
+    /** Estaciones de muestreo que propone la app por lote (F-12). */
+    defaultStations: 5,
+    maxStations: 20,
+    /** Conteo máximo por plaga en una estación. */
+    maxCount: 10_000,
+  },
+  vigor: {
+    /** Caída de vigor (NDVI) entre las dos últimas pasadas que se avisa, en % (web y app). */
+    dropThresholdPct: 15,
+  },
+  checklist: {
+    /** Ítems por tarea (F-15). */
+    maxItems: 30,
+    maxTextLength: 120,
+  },
+  share: {
+    /** Duraciones permitidas del enlace de solo lectura (K-04), en días. */
+    linkDays: [7, 30],
   },
 } as const;
 

@@ -102,6 +102,9 @@ export const organizations = sqliteTable("organizations", {
   country: text("country").notNull().default("PY"),
   plan: text("plan").notNull().default("trial"),
   trialEndsAt: integer("trial_ends_at"),
+  /** P-10: topes propios de la organización; null = los del plan (LIMITS.plans). */
+  maxHa: real("max_ha"),
+  maxUsers: integer("max_users"),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });

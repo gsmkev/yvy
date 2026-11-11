@@ -9,6 +9,8 @@ import {
   LIMITS,
   localDate,
   newId,
+  planLimits,
+  t,
   type Cursor,
   type PullResponse,
   type PullTable,
@@ -27,6 +29,9 @@ export interface AuthCtx {
 
 export class ForbiddenError extends Error {}
 export class NotFoundError extends Error {}
+/** P-10: la acción pasa el tope del plan. Se responde 402 con el mensaje tal cual. */
+export class PlanLimitError extends Error {}
+const fmt = (n: number) => n.toLocaleString("es-PY");
 
 interface SyncedTable {
   table: SQLiteTable;
@@ -367,6 +372,7 @@ export class ScopedDb {
       const [u] = await this.db.select({ id: s.users.id }).from(s.users).where(eq(s.users.email, input.email)).limit(1);
       userId = u?.id;
     }
+    await this.requireUserRoom(userId ?? null);
     const stmts: Stmt[] = [];
     if (!userId) {
       userId = newId();
@@ -482,6 +488,56 @@ export class ScopedDb {
     await runBatch(this.db, stmts);
   }
 
+  // ---------- Topes del plan (P-10) ----------
+
+  /** Topes efectivos de la organización. */
+  async planLimits() {
+    const [o] = await this.db
+      .select({ plan: s.organizations.plan, maxHa: s.organizations.maxHa, maxUsers: s.organizations.maxUsers })
+      .from(s.organizations)
+      .where(eq(s.organizations.id, this.auth.orgId))
+      .limit(1);
+    return planLimits(o?.plan ?? "trial", o ?? {});
+  }
+
+  /** Falla con 402 y un mensaje claro si sumar `extraHa` hectáreas de estancias pasa el tope del plan. */
+  async requireHaRoom(extraHa: number, what: "farms" | "plots" = "farms"): Promise<void> {
+    const { maxHa } = await this.planLimits();
+    if (maxHa === null) return;
+    const [r] = await this.db
+      .select({ ha: sql<number>`coalesce(sum(area_ha), 0)` })
+      .from(what === "farms" ? s.farms : s.plots)
+      .where(
+        and(
+          eq(what === "farms" ? s.farms.organizationId : s.plots.organizationId, this.auth.orgId),
+          isNull(what === "farms" ? s.farms.deletedAt : s.plots.deletedAt),
+        ),
+      );
+    const total = Number(r?.ha ?? 0) + extraHa;
+    if (total > maxHa)
+      throw new PlanLimitError(
+        t("ui.planLimitHa", { max: fmt(maxHa), total: fmt(Math.round(total)), extra: fmt(Math.round(extraHa)) }),
+      );
+  }
+
+  /** Falla con 402 si sumar una persona pasa el tope de usuarios (la que ya tiene acceso no cuenta de nuevo). */
+  async requireUserRoom(existingUserId: string | null): Promise<void> {
+    const { maxUsers } = await this.planLimits();
+    if (maxUsers === null) return;
+    const rows = await this.db
+      .select({ userId: s.memberships.userId })
+      .from(s.memberships)
+      .where(
+        and(
+          eq(s.memberships.organizationId, this.auth.orgId),
+          isNull(s.memberships.deletedAt),
+          eq(s.memberships.status, "active"),
+        ),
+      );
+    if (existingUserId && rows.some((m) => m.userId === existingUserId)) return;
+    if (rows.length + 1 > maxUsers) throw new PlanLimitError(t("ui.planLimitUsers", { max: maxUsers }));
+  }
+
   // ---------- Estancias, lotes, puntos de interés ----------
 
   /** Verifica que la estancia sea de la organización y devuelve su geometría (GeoJSON texto). */
@@ -499,6 +555,7 @@ export class ScopedDb {
     input: Omit<typeof s.farms.$inferInsert, "id" | "organizationId" | "createdAt" | "updatedAt" | "version">,
   ) {
     this.require(can.editField);
+    await this.requireHaRoom(input.areaHa);
     const id = newId();
     const ts = this.now();
     await runBatch(this.db, [
@@ -535,6 +592,10 @@ export class ScopedDb {
   ): Promise<{ ids: string[]; farmGeometry: string }> {
     this.require(can.editField);
     const farmGeometry = await this.requireFarm(farmId);
+    await this.requireHaRoom(
+      items.reduce((a, p) => a + (p.areaHa ?? 0), 0),
+      "plots",
+    );
     const ts = this.now();
     const ids = items.map(() => newId());
     // Una sentencia por lote: las geometrías son largas y no conviene agruparlas.

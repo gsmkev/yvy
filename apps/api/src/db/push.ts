@@ -5,10 +5,15 @@
 import { and, count, eq, getTableColumns, inArray, isNull, sql } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import {
+  livestockPlotProblem,
   localDate,
   nextDueDate,
   nextOccurrenceId,
+  parseChecklist,
   parseRecordData,
+  resetChecklist,
+  serializeChecklist,
+  setChecklistItem,
   RECORD_SCHEMA_VERSION,
   LIMITS,
   type Mutation,
@@ -58,6 +63,10 @@ export async function applyPush(
         farmIds.add(m.row.farmId);
         if (m.row.plotId) plotIds.add(m.row.plotId);
         if (m.row.poiId) poiIds.add(m.row.poiId);
+        if (m.row.kind === "herd_move") {
+          const to = (m.row.data as { toPlotId?: unknown } | null)?.toPlotId;
+          if (typeof to === "string") plotIds.add(to);
+        }
         break;
       case "records.delete":
         recordIds.add(m.row.id);
@@ -71,6 +80,7 @@ export async function applyPush(
         attachmentIds.add(m.row.id);
         break;
       case "tasks.status":
+      case "tasks.check":
         taskIds.add(m.row.id);
         break;
       case "pois.upsert":
@@ -242,6 +252,17 @@ export async function applyPush(
         const data = parseRecordData(r.kind, r.data);
         if (!data.success) {
           reject(m, "invalid", data.error.issues[0]?.message);
+          break;
+        }
+        // Ganadería: el potrero es el del registro; el destino de un movimiento tiene que ser de la misma estancia.
+        const livestock = livestockPlotProblem(r.kind, r.plotId, data.data);
+        if (livestock) {
+          reject(m, "invalid", livestock);
+          break;
+        }
+        const toPlotId = r.kind === "herd_move" ? (data.data as { toPlotId?: string }).toPlotId : undefined;
+        if (toPlotId && (plots.get(toPlotId) !== r.farmId || (sdb.isWorker && !assignedPlots.has(toPlotId)))) {
+          reject(m, "forbidden", "plot");
           break;
         }
         const authorId = existing?.authorId ?? auth.userId;
@@ -438,6 +459,7 @@ export async function applyPush(
                   dueDate: next,
                   recurrence: t.recurrence,
                   status: "open",
+                  checklist: serializeChecklist(resetChecklist(parseChecklist(t.checklist))),
                   createdBy: t.createdBy,
                   createdAt: now,
                   updatedAt: now,
@@ -448,6 +470,32 @@ export async function applyPush(
           }
           t.status = m.row.status;
         }
+        accept(m, t.id);
+        break;
+      }
+      case "tasks.check": {
+        const t = tasks.get(m.row.id);
+        if (!t || t.organizationId !== org) {
+          reject(m, "not_found");
+          break;
+        }
+        if (sdb.isWorker && t.assigneeId !== auth.userId) {
+          reject(m, "forbidden");
+          break;
+        }
+        // Cada tilde es un ítem: el último gana por ítem, y lo demás de la lista no se toca.
+        const next = setChecklistItem(parseChecklist(t.checklist), m.row.itemId, m.row.done);
+        if (!next) {
+          reject(m, "invalid", "item");
+          break;
+        }
+        t.checklist = serializeChecklist(next);
+        taskUpdates.push(
+          db
+            .update(s.tasks)
+            .set({ checklist: t.checklist, updatedAt: now, version: currentVersion })
+            .where(and(eq(s.tasks.id, t.id), eq(s.tasks.organizationId, org))),
+        );
         accept(m, t.id);
         break;
       }

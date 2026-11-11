@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, localDate, newId, nextOccurrenceId } from "@yvy/shared";
+import { addDays, localDate, newId, nextOccurrenceId, parseChecklist } from "@yvy/shared";
 import { LocalDb } from "../src/db/store";
 import { planReminders } from "../src/lib/reminders-plan";
 import { nodeSql } from "./node-sql";
@@ -51,6 +51,38 @@ const rec = {
   capturedAt: Date.now(),
 };
 const photo = { photoUri: "file:///p.webp", thumbUri: "file:///t.webp", width: 1280, height: 960, bytes: 120_000 };
+
+describe("LocalDb: hacienda calculada sin señal", () => {
+  const OTHER = newId();
+  it("último conteo + movimientos y mortandad posteriores, desde lo que hay en el celular", () => {
+    const t = 1_000;
+    const db = setup(() => t);
+    const base = { farmId: FARM, poiId: null, lon: null, lat: null, gpsAccuracyM: null };
+    expect(db.herdStock(PLOT)).toBeNull();
+    db.saveRecord(USER, ORG, { ...base, plotId: PLOT, kind: "herd_count", data: { counts: { vaca: 40, toro: 2 } }, capturedAt: 100 });
+    db.saveRecord(USER, ORG, {
+      ...base,
+      plotId: PLOT,
+      kind: "herd_move",
+      data: { toPlotId: OTHER, counts: { vaca: 10 }, reason: "rotacion" },
+      capturedAt: 200,
+    });
+    db.saveRecord(USER, ORG, {
+      ...base,
+      plotId: OTHER,
+      kind: "herd_move",
+      data: { toPlotId: PLOT, counts: { vaca: 3 }, reason: "rotacion" },
+      capturedAt: 300,
+    });
+    db.saveRecord(USER, ORG, { ...base, plotId: PLOT, kind: "mortality", data: { category: "vaca", head: 1, cause: "rayo" }, capturedAt: 400 });
+    const st = db.herdStock(PLOT)!;
+    expect(st.counts).toMatchObject({ vaca: 32, toro: 2 });
+    expect(st.lastCountAt).toBe(100);
+    // un conteo nuevo corrige todo
+    db.saveRecord(USER, ORG, { ...base, plotId: PLOT, kind: "herd_count", data: { counts: { vaca: 35 } }, capturedAt: 500 });
+    expect(db.herdStock(PLOT)!.counts).toMatchObject({ vaca: 35, toro: 0 });
+  });
+});
 
 describe("LocalDb", () => {
   it("miniatura del Historial: la primera foto local de cada registro", () => {
@@ -216,6 +248,56 @@ describe("LocalDb", () => {
     expect(tomorrow.map((t) => [t.id, t.status])).toEqual([[nextOccurrenceId(taskId), "open"]]);
     const kinds = (await db.pendingMutations(10)).map((m) => m.kind);
     expect(kinds).toEqual(["records.upsert", "tasks.status"]);
+  });
+
+  it("lista de verificación: se tilda sin red, queda en el outbox y la repetición nace sin tildar", async () => {
+    const now = Date.now();
+    const db = setup(() => now);
+    const today = localDate(now);
+    const taskId = newId();
+    const list = [
+      { id: "i1", text: "Bebedero 1", done: false },
+      { id: "i2", text: "Bebedero 2", done: false },
+    ];
+    await db.applyPull(
+      "tasks",
+      [
+        {
+          id: taskId,
+          organizationId: ORG,
+          farmId: FARM,
+          plotId: null,
+          assigneeId: USER,
+          title: "Revisar bebederos",
+          kind: null,
+          dueDate: today,
+          recurrence: "daily",
+          status: "open",
+          completedAt: null,
+          completedBy: null,
+          recordId: null,
+          createdBy: USER,
+          checklist: JSON.stringify(list),
+          createdAt: 1,
+          updatedAt: 1,
+          deletedAt: null,
+          version: 1,
+        },
+      ],
+      { version: 1, id: taskId },
+    );
+    db.setChecklistItem(taskId, "i1", true);
+    expect(parseChecklist(db.taskById(taskId)!.checklist).map((i) => i.done)).toEqual([true, false]);
+    expect(() => db.setChecklistItem(taskId, "zzz", true)).toThrow();
+    // Un pull con el estado viejo no pisa lo pendiente.
+    await db.applyPull("tasks", [{ ...db.taskById(taskId)!, checklist: JSON.stringify(list), version: 2 }], { version: 2, id: taskId });
+    expect(parseChecklist(db.taskById(taskId)!.checklist)[0]!.done).toBe(true);
+    db.completeTask(taskId, null);
+    const next = db.taskById(nextOccurrenceId(taskId))!;
+    expect(parseChecklist(next.checklist).map((i) => i.done)).toEqual([false, false]);
+    const muts = await db.pendingMutations(10);
+    expect(muts.map((m) => m.kind)).toEqual(["tasks.check", "tasks.status"]);
+    expect(muts[0]!.row).toEqual({ id: taskId, itemId: "i1", done: true });
   });
 
   it("rechazadas: no se reintentan y se pueden descartar", async () => {

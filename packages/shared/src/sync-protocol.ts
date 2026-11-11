@@ -44,6 +44,13 @@ export const taskStatusRow = z.object({
   recordId: uuid.nullable(),
 });
 
+/** Tilde de un ítem de la lista de verificación de una tarea (F-15). */
+export const taskCheckRow = z.object({
+  id: uuid,
+  itemId: z.string().min(1).max(24),
+  done: z.boolean(),
+});
+
 /** Punto de interés marcado desde el celular (PRD §11: solo roles que no son `worker`). */
 export const poiRow = z.object({
   id: uuid,
@@ -63,6 +70,7 @@ export const mutation = z.discriminatedUnion("kind", [
   z.object({ ...base, kind: z.literal("attachments.upsert"), row: attachmentRow }),
   z.object({ ...base, kind: z.literal("attachments.delete"), row: del }),
   z.object({ ...base, kind: z.literal("tasks.status"), row: taskStatusRow }),
+  z.object({ ...base, kind: z.literal("tasks.check"), row: taskCheckRow }),
   z.object({ ...base, kind: z.literal("pois.upsert"), row: poiRow }),
 ]);
 export type Mutation = z.infer<typeof mutation>;

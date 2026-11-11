@@ -60,6 +60,9 @@ export interface Poi {
   name: string;
   lon: number;
   lat: number;
+  /** Último nivel de agua registrado (solo aguadas y tajamares). */
+  lastWaterLevel?: string | null;
+  lastWaterAt?: number | null;
 }
 
 export interface Layer {
@@ -125,12 +128,14 @@ export interface Task {
   recurrence: "none" | "daily" | "weekly";
   status: "open" | "done" | "cancelled";
   completedAt: number | null;
+  /** Lista de verificación en JSON (F-15); ver parseChecklist. */
+  checklist: string | null;
 }
 
 export interface Alert {
   id: string;
   farmId: string;
-  kind: "frost" | "excess_rain" | "drought" | "fire" | "pest_threshold";
+  kind: "frost" | "excess_rain" | "drought" | "fire" | "pest_threshold" | "water_low";
   severity: "info" | "watch" | "warning";
   probability: "low" | "medium" | "high" | null;
   validFrom: number;

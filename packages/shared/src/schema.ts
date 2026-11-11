@@ -12,6 +12,7 @@
  *   El pull pagina por (version, id): equivale al "updated_at + desempate por id" del PRD §11
  *   pero sin depender de relojes de distintos datacenters.
  */
+import { HEALTH_REASONS } from "./livestock";
 import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // ---------- Enums ----------
@@ -25,10 +26,23 @@ export const SEASONS = ["zafra", "zafrina"] as const;
 export const POI_KINDS = ["rain_gauge", "water", "house", "gate", "corral", "other"] as const;
 export const RECURRENCES = ["none", "daily", "weekly"] as const;
 export const TASK_STATUS = ["open", "done", "cancelled"] as const;
-export const RECORD_KINDS = ["scouting", "pest", "crop_status", "pasture_status", "rain", "water", "note"] as const;
+export const RECORD_KINDS = [
+  "scouting",
+  "pest",
+  "crop_status",
+  "pasture_status",
+  "rain",
+  "water",
+  "note",
+  // ganaderia
+  "herd_count",
+  "herd_move",
+  "mortality",
+  "health",
+] as const;
 export type RecordKind = (typeof RECORD_KINDS)[number];
 export const UPLOAD_STATUS = ["pending", "uploaded"] as const;
-export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_threshold"] as const;
+export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_threshold", "water_low"] as const;
 export const ALERT_SEVERITIES = ["info", "watch", "warning"] as const;
 /** Con MET Norway no hay ensemble: probabilidad cualitativa (PRD-cloudflare §4.8). */
 export const ALERT_PROBABILITIES = ["low", "medium", "high"] as const;
@@ -261,6 +275,8 @@ export const tasks = sqliteTable(
     completedBy: text("completed_by"),
     recordId: text("record_id"),
     createdBy: text("created_by").notNull(),
+    /** Lista de verificación (F-15): JSON `[{id, text, done}]` o null. Ver checklist.ts. */
+    checklist: text("checklist"),
     ...synced,
   },
   (t) => [
@@ -498,6 +514,39 @@ export const farmAlertSettings = sqliteTable("farm_alert_settings", {
   updatedAt: integer("updated_at").notNull(),
   updatedBy: text("updated_by"),
 });
+
+/** Carga animal máxima (UA/ha) por estancia (G-03). Sin fila = DEFAULT_MAX_UA_PER_HA. No se sincroniza. */
+export const farmLivestockSettings = sqliteTable("farm_livestock_settings", {
+  farmId: text("farm_id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  maxUaPerHa: real("max_ua_per_ha").notNull().default(1),
+  updatedAt: integer("updated_at").notNull(),
+  updatedBy: text("updated_by"),
+});
+
+/**
+ * Calendario sanitario de la organización (G-10). Solo web: el celular recibe las tareas que se crean para
+ * los empleados. farm_id vacío = toda la organización. El estado (hecho o vencido) se calcula, no se guarda.
+ */
+export const sanitaryEvents = sqliteTable(
+  "sanitary_events",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id"),
+    reason: text("reason", { enum: HEALTH_REASONS }).notNull(),
+    /** "YYYY-MM-DD". */
+    plannedDate: text("planned_date").notNull(),
+    /** JSON: categorías de hacienda alcanzadas (vacío = todas). */
+    categories: text("categories").notNull().default("[]"),
+    product: text("product"),
+    note: text("note"),
+    tasksCreated: integer("tasks_created").notNull().default(0),
+    createdBy: text("created_by").notNull(),
+    ...timestamps,
+  },
+  (t) => [index("sanitary_events_org_date_idx").on(t.organizationId, t.plannedDate)],
+);
 
 export const alerts = sqliteTable(
   "alerts",

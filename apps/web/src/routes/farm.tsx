@@ -12,6 +12,7 @@ import { boundsOf, FarmMap } from "../components/FarmMap";
 import { ExportButtons } from "../components/ExportButtons";
 import { ImportPlots } from "../components/ImportPlots";
 import { PlotPanel } from "../components/PlotPanel";
+import { HerdPanel } from "../components/HerdPanel";
 import { PlotsTable } from "../components/PlotsTable";
 import { RecordsList } from "../components/RecordsList";
 import { TasksPanel } from "../components/TasksPanel";
@@ -29,8 +30,8 @@ import type { FarmDetail, RecordRow } from "../lib/types";
 /** Días sin anotaciones para considerar un lote sin visitar. */
 const UNVISITED_DAYS = 7;
 
-type Tab = "plots" | "records" | "tasks" | "climate" | "alerts";
-const TABS: Tab[] = ["plots", "records", "tasks", "climate", "alerts"];
+type Tab = "plots" | "records" | "tasks" | "climate" | "alerts" | "herd";
+const TABS: Tab[] = ["plots", "records", "tasks", "climate", "alerts", "herd"];
 
 export function FarmPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId" });
@@ -41,10 +42,12 @@ export function FarmPage() {
   const members = useMembers(canEdit);
   const alerts = useAlerts({ farmId, active: true });
   const qc = useQueryClient();
-  const [tab, setTab] = useState<Tab>(() => {
+  const [tabPref, setTab] = useState<Tab>(() => {
     const saved = loadPrefs().tab;
     return TABS.includes(saved as Tab) ? (saved as Tab) : "plots";
   });
+  // Una pestaña guardada que este rol no tiene (ej. "herd" para un empleado) cae en Lotes en vez de mostrar nada.
+  const tab: Tab = tabPref === "herd" && !canEdit ? "plots" : tabPref;
   const [onlyUnvisited, setOnlyUnvisited] = useState(false);
   const { lote } = useSearch({ from: "/app/estancias/$farmId" });
   const [selected, setSelected] = useState<string | null>(lote ?? null);
@@ -387,6 +390,7 @@ export function FarmPage() {
             { id: "tasks", label: t("ui.tabTasks") },
             { id: "climate", label: t("ui.tabClimate") },
             { id: "alerts", label: t("ui.tabAlerts"), count: alerts.data?.length || undefined },
+            ...(canEdit ? [{ id: "herd" as const, label: t("ui.tabHerd") }] : []),
           ]}
         />
 
@@ -456,6 +460,15 @@ export function FarmPage() {
                           <span>
                             {p.name}
                             <span className="ml-2 text-xs text-tinta-2">{tk(`ui.poiKinds_${p.kind}`)}</span>
+                            {p.kind === "water" && (
+                              <span
+                                className={`ml-2 text-xs ${p.lastWaterLevel === "low" || p.lastWaterLevel === "dry" ? "font-medium text-peligro" : "text-tinta-2"}`}
+                              >
+                                {p.lastWaterLevel && p.lastWaterAt
+                                  ? t("ui.poiLastWater", { level: tk(`fields.water_${p.lastWaterLevel}`).toLowerCase(), date: fmtDate(p.lastWaterAt) })
+                                  : t("ui.poiNoWater")}
+                              </span>
+                            )}
                           </span>
                           <span className="flex shrink-0 items-baseline gap-3 text-xs text-tinta-2">
                             <CopyCoords lon={p.lon} lat={p.lat} className="!text-xs" />
@@ -477,6 +490,7 @@ export function FarmPage() {
         {tab === "tasks" && <TasksPanel farmId={farmId} plots={d.plots} />}
         {tab === "climate" && <ClimatePanel farmId={farmId} />}
         {tab === "alerts" && <AlertsList farmId={farmId} />}
+        {tab === "herd" && canEdit && <HerdPanel farmId={farmId} />}
       </section>
 
       {mode === "import" && <ImportPlots farmId={farmId} onClose={() => setMode("none")} />}

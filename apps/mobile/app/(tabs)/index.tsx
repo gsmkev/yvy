@@ -6,9 +6,11 @@ import { useEffect, useRef, type ElementRef } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Check } from "lucide-react-native";
-import { describeRecord, t } from "@yvy/shared";
+import { checklistProgress, describeRecord, parseChecklist, t } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
+import { memberNames } from "../../src/lib/members";
+import { authorName, isOwnerMode, recordsByAuthor, vigorDrops } from "../../src/lib/ownerSummary";
 import { useSession } from "../../src/lib/session";
 import { flushAlertVotes, localChanged } from "../../src/lib/sync";
 import { readVotes, recordVote } from "../../src/lib/votes";
@@ -41,6 +43,21 @@ export default function Today() {
     return byFarm(getDb().records(100), farmId).filter((r) => r.capturedAt >= start.getTime());
   }, [farmId]);
   const plotName = (id: string | null) => plots.find((p) => p.id === id)?.name ?? "";
+  // F-29: resumen del campo para dueño, administrador y agrónomo.
+  const owner = isOwnerMode(session?.organization.role);
+  const farmPlotIds = new Set(byFarm(plots, farmId).map((p) => p.id));
+  const summary = useLocal(() => {
+    if (!owner) return null;
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const recs = byFarm(getDb().records(500), farmId);
+    return {
+      byAuthor: recordsByAuthor(recs, start.getTime()),
+      worse: vigorDrops(getDb().lastTwoVigorPasses()),
+      names: memberNames(getDb()),
+    };
+  }, [owner, farmId]);
+  const worse = (summary?.worse ?? []).filter((w) => farmPlotIds.has(w.plotId));
   const open = tasks.filter((x) => x.status === "open");
   const done = tasks.filter((x) => x.status === "done");
   const empty = alerts.length === 0 && tasks.length === 0 && todayRecords.length === 0;
@@ -73,6 +90,34 @@ export default function Today() {
         onPress={() => router.push({ pathname: "/annotate", params: { kind: "rain", farmLevel: "1" } })}
         style={{ alignSelf: "flex-start", paddingHorizontal: 0, marginBottom: 16 }}
       />
+
+      {summary && (
+        <>
+          <Text style={st.section}>{t("app.ownerTitle")}</Text>
+          <Row
+            title={alerts.length === 0 ? t("app.ownerAlertsNone") : alerts.length === 1 ? t("app.ownerAlertsOne") : t("app.ownerAlerts", { n: alerts.length })}
+            subtitle={alerts.length ? t("app.ownerAlertsHint") : undefined}
+          />
+          <Text style={[T.smallMedium, { marginTop: 16, marginBottom: 4 }]}>{t("app.ownerRecordsTitle")}</Text>
+          {summary.byAuthor.length === 0 && <Text style={T.small}>{t("app.ownerRecordsNone")}</Text>}
+          {summary.byAuthor.map((a) => (
+            <Row
+              key={a.authorId}
+              title={authorName(a.authorId, userId, summary.names)}
+              subtitle={t(a.count === 1 ? "app.ownerRecordsOne" : "app.ownerRecordsMany", { n: a.count })}
+            />
+          ))}
+          {worse.length > 0 && <Text style={[T.smallMedium, { marginTop: 16, marginBottom: 4 }]}>{t("app.ownerWorseTitle")}</Text>}
+          {worse.map((w) => (
+            <Row
+              key={w.plotId}
+              title={plotName(w.plotId)}
+              subtitle={t("app.ownerWorseLine", { pct: w.pct, date: new Date(w.since).toLocaleDateString("es-PY", { day: "numeric", month: "short" }) })}
+              onPress={() => router.push("/(tabs)/map")}
+            />
+          ))}
+        </>
+      )}
 
       {alerts.map((a) => {
         const strong = a.severity === "warning";
@@ -134,9 +179,16 @@ export default function Today() {
             <Row
               key={task.id}
               title={task.title}
-              subtitle={[task.kind ? t(`recordKinds.${task.kind}`) : null, task.plotId ? plotName(task.plotId) : null].filter(Boolean).join(" · ")}
+              subtitle={[
+                task.kind ? t(`recordKinds.${task.kind}`) : null,
+                task.plotId ? plotName(task.plotId) : null,
+                parseChecklist(task.checklist).length ? t("app.checklistProgress", checklistProgress(parseChecklist(task.checklist))) : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
               onPress={() => {
-                if (task.kind) router.push({ pathname: "/annotate", params: { kind: task.kind, taskId: task.id, plotId: task.plotId ?? "" } });
+                if (parseChecklist(task.checklist).length) router.push({ pathname: "/task/[id]", params: { id: task.id } });
+                else if (task.kind) router.push({ pathname: "/annotate", params: { kind: task.kind, taskId: task.id, plotId: task.plotId ?? "" } });
                 else {
                   getDb().completeTask(task.id, null);
                   localChanged();

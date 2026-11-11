@@ -10,6 +10,8 @@ export const LIMITS = {
     pullPageSize: 200,
     /** Historial de registros y adjuntos que baja al celular (PRD §11). */
     recordsHistoryMs: 30 * 24 * 60 * 60 * 1000,
+    /** Movimientos y mortandad de hacienda que bajan al celular (G-03): el stock se calcula allá, sin señal. */
+    herdEventsHistoryMs: 365 * 24 * 60 * 60 * 1000,
     /** NDVI que baja al celular (PRD §11: último año). */
     indexStatsHistoryMs: 365 * 24 * 60 * 60 * 1000,
     /** Un registro con capturedAt más allá de esto en el futuro se rechaza (reloj mal puesto). */
@@ -66,6 +68,22 @@ export const LIMITS = {
     forecastCacheMs: 3 * 60 * 60 * 1000,
     forecastRunsKept: 4,
     coordDecimals: 4,
+  },
+  monitoring: {
+    /** Estaciones de muestreo que propone la app por lote (F-12). */
+    defaultStations: 5,
+    maxStations: 20,
+    /** Conteo máximo por plaga en una estación. */
+    maxCount: 10_000,
+  },
+  vigor: {
+    /** Caída de vigor (NDVI) entre las dos últimas pasadas que se avisa, en % (web y app). */
+    dropThresholdPct: 15,
+  },
+  checklist: {
+    /** Ítems por tarea (F-15). */
+    maxItems: 30,
+    maxTextLength: 120,
   },
   share: {
     /** Duraciones permitidas del enlace de solo lectura (K-04), en días. */

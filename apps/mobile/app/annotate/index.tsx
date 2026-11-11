@@ -7,17 +7,33 @@ import { Image, Keyboard, Platform, Pressable, ScrollView, StyleSheet, View, typ
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Check, X } from "lucide-react-native";
-import { describeRecord, LIMITS, parseRecordData, t, type MessageKey, type RecordKind } from "@yvy/shared";
+import {
+  describeRecord,
+  LIMITS,
+  MONITOR_CROPS,
+  monitorTemplate,
+  parseRecordData,
+  summarizeStations,
+  t,
+  type HerdCounts,
+  type MessageKey,
+  type MonitorCrop,
+  type RecordKind,
+  type Station,
+} from "@yvy/shared";
 import type { LocalPhoto, Plot } from "../../src/db/store";
 import { getDb } from "../../src/lib/db";
 import { selectedFarmId } from "../../src/lib/farmFilter";
-import { FLOWS, KINDS_FOR, type Step } from "../../src/lib/annotate";
+import { FLOWS, KINDS_FOR, SINGLE_PLOT_KINDS, stepsFor, type Step } from "../../src/lib/annotate";
 import { currentFix, guessPlots, type Fix, type PlotGuess } from "../../src/lib/location";
 import { processPhoto } from "../../src/lib/photos";
 import { useSession } from "../../src/lib/session";
 import { localChanged, useSyncStatus } from "../../src/lib/sync";
 import { toastSaved } from "../../src/lib/toast";
+import { seedCounts } from "../../src/lib/counter";
+import { HerdCounter } from "../../src/ui/Counter";
 import { Button, Row, s as k, Text, TextInput } from "../../src/ui/kit";
+import { Stations } from "../../src/ui/Stations";
 import { C, F, GUTTER, RADIUS, T, TOUCH } from "../../src/ui/theme";
 
 const tr = (key: string, vars?: Record<string, string | number>) => t(key as MessageKey, vars);
@@ -26,7 +42,7 @@ const tr = (key: string, vars?: Record<string, string | number>) => t(key as Mes
 const SEARCH_FROM = 8;
 const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
-type Phase = { name: "plot" } | { name: "multi" } | { name: "kind" } | { name: "step"; i: number } | { name: "photo" } | { name: "done"; recordId: string };
+type Phase = { name: "plot" } | { name: "multi" } | { name: "kind" } | { name: "mode" } | { name: "stationsCrop" } | { name: "stations" } | { name: "step"; i: number } | { name: "photo" } | { name: "done"; recordId: string };
 
 export default function Annotate() {
   const params = useLocalSearchParams<{ plotId?: string; kind?: RecordKind; taskId?: string; recordId?: string; farmLevel?: string }>();
@@ -43,9 +59,14 @@ export default function Annotate() {
   const [kind, setKind] = useState<RecordKind | null>(editing?.kind ?? params.kind ?? null);
   const [values, setValues] = useState<Record<string, unknown>>(() => (editing ? (JSON.parse(editing.data) as Record<string, unknown>) : {}));
   const [photos, setPhotos] = useState<LocalPhoto[]>([]);
+  // Plaga: primero se elige entre una observación o el monitoreo por estaciones (F-12).
+  const entryFor = (kd: RecordKind): Phase => (kd === "pest" && !editing ? { name: "mode" } : { name: "step", i: 0 });
   const [phase, setPhase] = useState<Phase>(() =>
-    editing ? { name: "step", i: 0 } : params.kind === "rain" || params.plotId ? (params.kind ? { name: "step", i: 0 } : { name: "kind" }) : { name: "plot" },
+    editing ? { name: "step", i: 0 } : params.kind === "rain" || params.plotId ? (params.kind ? entryFor(params.kind) : { name: "kind" }) : { name: "plot" },
   );
+  const [stationMode, setStationMode] = useState(false);
+  const [crop, setCrop] = useState<MonitorCrop | null>(null);
+  const [stations, setStations] = useState<Station[]>([]);
   const [camera, setCamera] = useState(false);
   const [query, setQuery] = useState("");
   // F-10: anotar lo mismo en varios lotes a la vez.
@@ -60,7 +81,7 @@ export default function Annotate() {
       // Un solo candidato seguro: se elige solo y pasamos a "qué" (salvo la lluvia de la estancia, que no es de un lote).
       if (!params.plotId && !params.farmLevel && g.length === 1 && g[0]!.confidence === "sure") {
         setPlot(g[0]!.plot);
-        setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+        setPhase(kind ? entryFor(kind) : { name: "kind" });
       }
     });
   }, []);
@@ -73,7 +94,15 @@ export default function Annotate() {
     return () => clearTimeout(id);
   }, [fix]);
 
-  const steps = kind ? FLOWS[kind] : [];
+  // Un registro de monitoreo por estaciones solo permite editar la nota: los conteos son de campo.
+  const stationRecord = kind === "pest" && Array.isArray(values.stations);
+  // G-30: aguadas de la estancia, para preguntar de cuál es el nivel (no al editar un registro ya guardado).
+  const waterPois = useMemo(
+    () => (editing ? [] : db.pois(plot?.farmId ?? selectedFarmId(db) ?? undefined).filter((p) => p.kind === "water")),
+    [plot?.farmId, editing],
+  );
+  const flowCtx = { waterPois: waterPois.length };
+  const steps = stationRecord ? FLOWS.pest.slice(-1) : stepsFor(kind, values, flowCtx);
   const stepIndex = phase.name === "step" ? phase.i : -1;
 
   const back = () => {
@@ -81,22 +110,29 @@ export default function Annotate() {
     if (phase.name === "step" && phase.i > 0) return setPhase({ name: "step", i: phase.i - 1 });
     if (phase.name === "step") return params.kind || editing ? router.back() : setPhase({ name: "kind" });
     if (phase.name === "multi") return setPhase({ name: "plot" });
+    if (phase.name === "mode") return params.kind ? (params.plotId ? router.back() : setPhase({ name: "plot" })) : setPhase({ name: "kind" });
+    if (phase.name === "stationsCrop") return setPhase({ name: "mode" });
+    if (phase.name === "stations") return setPhase({ name: "mode" });
     if (phase.name === "kind") return multi.length ? setPhase({ name: "multi" }) : params.plotId ? router.back() : setPhase({ name: "plot" });
-    if (phase.name === "photo") return setPhase({ name: "step", i: steps.length - 1 });
+    if (phase.name === "photo") return setPhase(stationMode ? { name: "stations" } : { name: "step", i: steps.length - 1 });
     router.back();
   };
 
   const advance = (next: Record<string, unknown> = values) => {
     Keyboard.dismiss();
     setValues(next);
-    if (stepIndex < steps.length - 1) setPhase({ name: "step", i: stepIndex + 1 });
+    if (stepIndex < (stationRecord ? steps.length : stepsFor(kind, next, flowCtx).length) - 1) setPhase({ name: "step", i: stepIndex + 1 });
     else setPhase({ name: "photo" });
   };
 
   const save = () => {
     if (!kind) return;
-    const data: Record<string, unknown> = { ...values };
+    const { poiId: pickedPoi, ...answers } = values;
+    const data: Record<string, unknown> = { ...answers };
     if (kind === "rain" && !editing) data.readAt = Date.now();
+    // Compra: la hacienda entra de afuera, así que el potrero elegido es el destino y no hay origen.
+    const entersFromOutside = kind === "herd_move" && data.reason === "compra" && !!plot;
+    if (entersFromOutside) data.toPlotId = plot!.id;
     const parsed = parseRecordData(kind, data);
     if (!parsed.success) return setPhase({ name: "step", i: 0 });
     const f = fix === "searching" ? null : fix;
@@ -130,8 +166,8 @@ export default function Annotate() {
       session.organization.id,
       {
         farmId,
-        plotId: plot?.id ?? null,
-        poiId: editing?.poiId ?? null,
+        plotId: entersFromOutside ? null : (plot?.id ?? null),
+        poiId: editing?.poiId ?? (typeof pickedPoi === "string" ? pickedPoi : null),
         kind,
         data: parsed.data as Record<string, unknown>,
         lon: editing ? editing.lon : (f?.lon ?? null),
@@ -216,7 +252,7 @@ export default function Annotate() {
               onPress={() => {
                 setPlot(g.plot);
                 setMulti([]);
-                setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+                setPhase(kind ? entryFor(kind) : { name: "kind" });
               }}
             />
           ))}
@@ -234,7 +270,7 @@ export default function Annotate() {
                   onPress={() => {
                     setPlot(p);
                     setMulti([]);
-                    setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+                    setPhase(kind ? entryFor(kind) : { name: "kind" });
                   }}
                 />
               ))}
@@ -247,7 +283,7 @@ export default function Annotate() {
             onPress={() => {
               setPlot(null);
               setMulti([]);
-              setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+              setPhase(kind ? entryFor(kind) : { name: "kind" });
             }}
           />
         </ScrollView>
@@ -284,7 +320,7 @@ export default function Annotate() {
             onPress={() => {
               // Un solo lote marcado es un lote común.
               setPlot(multi.length === 1 ? multi[0]! : null);
-              setPhase(kind ? { name: "step", i: 0 } : { name: "kind" });
+              setPhase(kind ? entryFor(kind) : { name: "kind" });
             }}
             style={{ marginTop: 20 }}
           />
@@ -303,14 +339,17 @@ export default function Annotate() {
           <Text style={T.title}>{t("app.whatHappened")}</Text>
           {plot && rain > 0 && <Text style={[T.small, { marginTop: 6 }]}>{t("app.rainMonth", { mm: Math.round(rain) })}</Text>}
           <View style={{ height: 16 }} />
-          {KINDS_FOR(plot?.kind ?? (multi.length > 1 && multi.every((p) => p.kind === multi[0]!.kind) ? multi[0]!.kind : null)).map((kd) => (
+          {KINDS_FOR(plot?.kind ?? (multi.length > 1 && multi.every((p) => p.kind === multi[0]!.kind) ? multi[0]!.kind : null))
+            .filter((kd) => !(multi.length > 1 && SINGLE_PLOT_KINDS.includes(kd)))
+            .map((kd) => (
             <Row
               key={kd}
               title={t(`recordKinds.${kd}`)}
               onPress={() => {
                 setKind(kd);
                 setValues({});
-                setPhase({ name: "step", i: 0 });
+                setStationMode(false);
+                setPhase(entryFor(kd));
               }}
             />
           ))}
@@ -319,9 +358,128 @@ export default function Annotate() {
     );
   }
 
+  // ---------- 2b. Plaga: una observación o por estaciones ----------
+  if (phase.name === "mode") {
+    const plotCrop = plot?.crop && monitorTemplate(plot.crop) ? (plot.crop as MonitorCrop) : null;
+    return (
+      <View style={k.screen}>
+        {header}
+        <ScrollView contentContainerStyle={k.pad}>
+          <Text style={[T.title, { marginBottom: 16 }]}>{t("app.pestMode")}</Text>
+          <Row
+            title={t("app.pestModeOne")}
+            onPress={() => {
+              setStationMode(false);
+              setPhase({ name: "step", i: 0 });
+            }}
+          />
+          <Row
+            title={t("app.pestModeStations")}
+            onPress={() => {
+              setStationMode(true);
+              setValues({});
+              if (plotCrop) setCrop(plotCrop);
+              setPhase(plotCrop || crop ? { name: "stations" } : { name: "stationsCrop" });
+            }}
+          />
+        </ScrollView>
+      </View>
+    );
+  }
+
+  if (phase.name === "stationsCrop") {
+    return (
+      <View style={k.screen}>
+        {header}
+        <ScrollView contentContainerStyle={k.pad}>
+          <Text style={[T.title, { marginBottom: 16 }]}>{t("app.stationsCrop")}</Text>
+          {MONITOR_CROPS.map((c) => (
+            <Row
+              key={c}
+              title={tr(`app.monitorCrop_${c}`)}
+              onPress={() => {
+                setCrop(c);
+                setPhase({ name: "stations" });
+              }}
+            />
+          ))}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  if (phase.name === "stations" && crop) {
+    const finish = () => {
+      const tpl = monitorTemplate(crop)!;
+      const sum = summarizeStations(stations, tpl);
+      setValues({
+        pest: sum.pest,
+        intensity: sum.intensity,
+        ...(sum.perMeter !== undefined ? { perMeter: sum.perMeter } : {}),
+        crop,
+        stations,
+        averages: sum.averages,
+      });
+      Keyboard.dismiss();
+      setPhase({ name: "photo" });
+    };
+    return (
+      <View style={k.screen}>
+        {header}
+        <Progress i={0} n={2} />
+        <Stations crop={crop} stations={stations} onChange={setStations} onDone={finish} />
+      </View>
+    );
+  }
+
   // ---------- 3. Pasos ----------
   if (phase.name === "step") {
     const step = steps[phase.i]!;
+    if (step.kind === "counter")
+      return (
+        <View style={k.screen}>
+          {header}
+          <Progress i={phase.i} n={steps.length + 1} />
+          <HerdCounter
+            key={`${kind}-${step.key}`}
+            question={tr(step.question)}
+            hint={step.hint ? tr(step.hint) : undefined}
+            counts={(values[step.key] as HerdCounts | undefined) ?? seedFor(kind, plot, editing)}
+            onChange={(c) => setValues((v) => ({ ...v, [step.key]: c }))}
+            onDone={(c) => advance({ ...values, [step.key]: c })}
+          />
+        </View>
+      );
+    if (step.kind === "poi")
+      return (
+        <View style={k.screen}>
+          {header}
+          <Progress i={phase.i} n={steps.length + 1} />
+          <ScrollView contentContainerStyle={k.pad}>
+            <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
+            {waterPois.map((p) => (
+              <Row key={p.id} title={p.name} selected={values[step.key] === p.id} onPress={() => advance({ ...values, [step.key]: p.id })} />
+            ))}
+            <Button kind="text" title={t("app.waterPoiOther")} onPress={() => advance({ ...values, [step.key]: undefined })} style={{ marginTop: 12 }} />
+          </ScrollView>
+        </View>
+      );
+    if (step.kind === "paddock")
+      return (
+        <View style={k.screen}>
+          {header}
+          <Progress i={phase.i} n={steps.length + 1} />
+          <ScrollView contentContainerStyle={k.pad}>
+            <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
+            {db
+              .plots(plot?.farmId ?? selectedFarmId(db) ?? undefined)
+              .filter((p) => p.kind === "pasture" && p.id !== plot?.id)
+              .map((p) => (
+                <Row key={p.id} title={p.name} selected={values[step.key] === p.id} onPress={() => advance({ ...values, [step.key]: p.id })} />
+              ))}
+          </ScrollView>
+        </View>
+      );
     return (
       <View style={k.screen}>
         {header}
@@ -336,7 +494,7 @@ export default function Annotate() {
     return (
       <View style={k.screen}>
         {header}
-        <Progress i={steps.length} n={steps.length + 1} />
+        <Progress i={stationMode ? 1 : steps.length} n={stationMode ? 2 : steps.length + 1} />
         <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]}>
           <Text style={T.title}>{t("app.addPhoto")}</Text>
           <Text style={[T.small, { marginTop: 6 }]}>{t("app.photosCount", { n: photos.length + existingPhotos, max: LIMITS.photos.maxPerRecord })}</Text>
@@ -367,6 +525,13 @@ export default function Annotate() {
 
   // ---------- 5. Listo ----------
   return <Done plot={plot} kind={kind!} values={values} />;
+}
+
+/** Un conteo nuevo parte de lo que se calcula para el potrero: se corrige lo que cambió. */
+function seedFor(kind: RecordKind | null, plot: Plot | null, editing: unknown): HerdCounts {
+  if (kind !== "herd_count" || !plot || editing) return {};
+  const stock = getDb().herdStock(plot.id);
+  return stock ? seedCounts(stock.counts) : {};
 }
 
 function plotSubtitle(p: Plot) {
@@ -405,6 +570,7 @@ function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onA
       </ScrollView>
     );
   }
+  if (step.kind === "counter" || step.kind === "paddock" || step.kind === "poi") return null; // se dibuja con HerdCounter (pantalla completa)
   if (step.kind === "yesno") {
     return (
       <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]}>
@@ -419,7 +585,7 @@ function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onA
   }
   if (step.kind === "number") {
     const n = Number(text.replace(",", "."));
-    const ok = text !== "" && Number.isFinite(n) && n >= 0 && n <= step.max;
+    const ok = text !== "" && Number.isFinite(n) && n >= (step.min ?? 0) && n <= step.max && (!step.integer || Number.isInteger(n));
     return (
       <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
         <Text style={T.title}>{tr(step.question)}</Text>
@@ -429,7 +595,7 @@ function StepScreen({ step, value, onAnswer }: { step: Step; value: unknown; onA
             ref={input}
             value={text}
             onChangeText={(v) => setText(v.replace(/[^0-9.,]/g, "").slice(0, 6))}
-            keyboardType="decimal-pad"
+            keyboardType={step.integer ? "number-pad" : "decimal-pad"}
             style={st.numberInput}
             placeholder="0"
             placeholderTextColor={C.tinta3}

@@ -10,15 +10,26 @@
 import { getTableColumns, getTableName } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import {
+  computeStock,
   isDueToday,
   LIMITS,
   localDate,
   newId,
   nextDueDate,
   nextOccurrenceId,
+  parseChecklist,
   RECORD_SCHEMA_VERSION,
+  resetChecklist,
+  serializeChecklist,
+  setChecklistItem,
+  type CountEvent,
   type Cursor,
+  type HerdCategory,
+  type HerdCounts,
+  type MortalityEvent,
   type Mutation,
+  type MoveEvent,
+  type PlotStock,
   type PullTable,
   type RecordKind,
   type RejectReason,
@@ -343,8 +354,8 @@ export class LocalDb implements SyncStore {
       const next = task.status !== "done" ? nextDueDate(task.dueDate, task.recurrence, localDate(ts, tz)) : null;
       if (next) {
         this.sql.run(
-          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, due_date, recurrence, status, created_by, created_at, updated_at, version)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, 0) ON CONFLICT(id) DO NOTHING`,
+          `INSERT INTO tasks (id, organization_id, farm_id, plot_id, assignee_id, title, kind, due_date, recurrence, status, created_by, created_at, updated_at, version, checklist)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, 0, ?) ON CONFLICT(id) DO NOTHING`,
           [
             nextOccurrenceId(taskId),
             task.organizationId,
@@ -358,9 +369,28 @@ export class LocalDb implements SyncStore {
             task.createdBy,
             ts,
             ts,
+            serializeChecklist(resetChecklist(parseChecklist(task.checklist))),
           ],
         );
       }
+    });
+  }
+
+  taskById(id: string): Task | null {
+    const r = this.sql.get<Record<string, unknown>>("SELECT * FROM tasks WHERE id = ? AND deleted_at IS NULL", [id]);
+    return r ? fromRow<Task>(s.tasks, r) : null;
+  }
+
+  /** Tilda o destilda un ítem de la lista de verificación (F-15). Sin red: queda en el outbox. */
+  setChecklistItem(taskId: string, itemId: string, done: boolean): void {
+    const task = this.taskById(taskId);
+    if (!task) throw new Error("task_not_found");
+    const next = setChecklistItem(parseChecklist(task.checklist), itemId, done);
+    if (!next) throw new Error("item_not_found");
+    const ts = this.now();
+    this.sql.tx(() => {
+      this.sql.run("UPDATE tasks SET checklist = ?, updated_at = ? WHERE id = ?", [serializeChecklist(next), ts, taskId]);
+      this.enqueue({ mutationId: newId(), kind: "tasks.check", row: { id: taskId, itemId, done } }, taskId);
     });
   }
 
@@ -403,7 +433,7 @@ export class LocalDb implements SyncStore {
         items.push({ id: m.mutationId, what: "record_delete", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
       } else if (m.kind === "pois.upsert") {
         items.push({ id: m.mutationId, what: "poi", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
-      } else if (m.kind === "tasks.status") {
+      } else if (m.kind === "tasks.status" || m.kind === "tasks.check") {
         items.push({ id: m.mutationId, what: "task", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
       }
     }
@@ -503,6 +533,37 @@ export class LocalDb implements SyncStore {
     return this.records(500).filter((r) => r.plotId === plotId).slice(0, limit);
   }
 
+  /**
+   * Hacienda actual de un potrero, calculada con lo que hay en el celular (ADR 0004): último conteo más
+   * movimientos y mortandad posteriores. Funciona sin señal. `null` si el potrero nunca tuvo datos de hacienda.
+   */
+  herdStock(plotId: string): PlotStock | null {
+    const rows = this.sql.all<{ kind: string; plot_id: string | null; captured_at: number; data: string }>(
+      "SELECT kind, plot_id, captured_at, data FROM records WHERE deleted_at IS NULL AND kind IN ('herd_count','herd_move','mortality') AND (plot_id = ? OR (kind = 'herd_move' AND data LIKE ?))",
+      [plotId, `%${plotId}%`],
+    );
+    const counts: CountEvent[] = [];
+    const moves: MoveEvent[] = [];
+    const deaths: MortalityEvent[] = [];
+    for (const r of rows) {
+      let d: { counts?: HerdCounts; toPlotId?: string; category?: HerdCategory; head?: number };
+      try {
+        d = JSON.parse(r.data);
+      } catch {
+        continue;
+      }
+      if (r.kind === "herd_count" && r.plot_id === plotId && d.counts)
+        counts.push({ plotId, capturedAt: r.captured_at, counts: d.counts });
+      else if (r.kind === "herd_move" && d.counts) {
+        if (r.plot_id === plotId || d.toPlotId === plotId)
+          moves.push({ fromPlotId: r.plot_id, toPlotId: d.toPlotId ?? null, capturedAt: r.captured_at, counts: d.counts });
+      } else if (r.kind === "mortality" && r.plot_id === plotId && d.category && typeof d.head === "number")
+        deaths.push({ plotId, capturedAt: r.captured_at, category: d.category, head: d.head });
+    }
+    if (!counts.length && !moves.length && !deaths.length) return null;
+    return computeStock([plotId], counts, moves, deaths).get(plotId) ?? null;
+  }
+
   /** Lluvia del mes en curso según el pluviómetro (mm), para mostrar al terminar de anotar. */
   rainThisMonth(farmId: string, now = this.now()): number {
     const d = new Date(now - 3 * 3_600_000);
@@ -521,6 +582,19 @@ export class LocalDb implements SyncStore {
       [plotId],
     );
     return r ? { mean: r.mean, acquiredAt: r.acquired_at } : null;
+  }
+
+  /** Las dos últimas pasadas de NDVI de cada lote, para ver cuáles empeoraron (F-29). */
+  lastTwoVigorPasses(): { plotId: string; mean: number; acquiredAt: number }[] {
+    return this.sql
+      .all<{ plot_id: string; mean: number; acquired_at: number }>(
+        `SELECT plot_id, mean, acquired_at FROM (
+           SELECT plot_id, mean, acquired_at,
+                  ROW_NUMBER() OVER (PARTITION BY plot_id ORDER BY acquired_at DESC) AS rn
+           FROM plot_index_stats WHERE idx = 'ndvi' AND deleted_at IS NULL
+         ) WHERE rn <= 2`,
+      )
+      .map((r) => ({ plotId: r.plot_id, mean: r.mean, acquiredAt: r.acquired_at }));
   }
 
   /** Tareas abiertas de un lote. */

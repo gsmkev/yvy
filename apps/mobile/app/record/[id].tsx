@@ -7,6 +7,8 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import { describeRecord, LIMITS, recordShareText, t, whatsappUrl } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { accuracyLabel } from "../../src/lib/location";
+import { memberNames } from "../../src/lib/members";
+import { authorName, isOwnerMode } from "../../src/lib/ownerSummary";
 import { useSession } from "../../src/lib/session";
 import { localChanged, syncNow } from "../../src/lib/sync";
 import { useLocal } from "../../src/lib/useLocal";
@@ -69,6 +71,9 @@ export default function RecordDetail() {
       <Text style={T.small}>{[t(`recordKinds.${record.kind}`), plot?.name].filter(Boolean).join(" · ")}</Text>
       <Text style={[T.title, { marginTop: 4 }]}>{describeRecord(record.kind, data)}</Text>
       <Text style={[T.body, { marginTop: 16 }]}>{t("app.recordCapturedAt", { when })}</Text>
+      {isOwnerMode(session?.organization.role) && (
+        <Text style={[T.small, { marginTop: 4 }]}>{t("app.recordAuthor", { name: authorName(record.authorId, session?.user.id, memberNames(getDb())) })}</Text>
+      )}
       {hasPlace && <Text style={[T.small, { marginTop: 4 }]}>{accuracyLabel(record.gpsAccuracyM)}</Text>}
       {photos.length > 0 && (
         <View style={st.photos}>

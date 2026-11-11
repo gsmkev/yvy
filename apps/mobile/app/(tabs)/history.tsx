@@ -5,6 +5,9 @@ import { router } from "expo-router";
 import { describeRecord, LIMITS, t, type RecordKind } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
+import { memberNames } from "../../src/lib/members";
+import { authorName, isOwnerMode } from "../../src/lib/ownerSummary";
+import { useSession } from "../../src/lib/session";
 import { useLocal } from "../../src/lib/useLocal";
 import { Row, s as k, Text } from "../../src/ui/kit";
 import { C, F, T } from "../../src/ui/theme";
@@ -22,6 +25,10 @@ const hhmm = (ms: number) => new Date(ms).toLocaleTimeString("es-PY", { hour: "2
 
 export default function History() {
   const { farmId } = useFarmChoice();
+  const session = useSession();
+  // F-29: el dueño ve lo de todos, con el nombre de quien anotó.
+  const owner = isOwnerMode(session?.organization.role);
+  const names = useLocal(() => (owner ? memberNames(getDb()) : {}), [owner]);
   const records = useLocal(() => byFarm(getDb().records(), farmId), [farmId]);
   const plots = useLocal(() => getDb().plots());
   const thumbs = useLocal(() => getDb().firstThumbByRecord());
@@ -74,7 +81,7 @@ export default function History() {
       renderItem={({ item: r }) => (
         <Row
           title={describeRecord(r.kind, JSON.parse(r.data))}
-          subtitle={[t(`recordKinds.${r.kind}`), plots.find((p) => p.id === r.plotId)?.name, hhmm(r.capturedAt)].filter(Boolean).join(" · ")}
+          subtitle={[t(`recordKinds.${r.kind}`), owner ? authorName(r.authorId, session?.user.id, names) : null, plots.find((p) => p.id === r.plotId)?.name, hhmm(r.capturedAt)].filter(Boolean).join(" · ")}
           onPress={() => router.push({ pathname: "/record/[id]", params: { id: r.id } })}
           left={<View style={[st.dot, { backgroundColor: r.rejected ? C.peligro : r.pending ? C.trigo : C.accion }]} />}
           right={

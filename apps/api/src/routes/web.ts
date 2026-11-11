@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { areaHa, bboxOf } from "@yvy/geo";
-import { alertSettingsSchema, CROPS, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS } from "@yvy/shared";
+import { alertSettingsSchema, CROPS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import {
   alertFeedback,
@@ -29,6 +29,8 @@ import {
   updatePlot,
   updateTask,
 } from "../db/queries";
+import { farmStockSummary, saveLivestockSettings } from "../db/livestock";
+import { createSanitaryEvent, deleteSanitaryEvent, listSanitaryEvents } from "../db/sanitary";
 import { parse, readJson } from "../lib/http";
 import { plotArea } from "./org";
 import { touchActivity } from "../auth/plan";
@@ -218,6 +220,34 @@ web.delete("/org/share-links/:id", async (c) => {
   await revokeShareLink(c.var.sdb, c.req.param("id"));
   return c.json({ ok: true });
 });
+// Hacienda calculada (G-03) y carga máxima configurable.
+web.get("/org/farms/:id/stock", async (c) => c.json(await farmStockSummary(c.var.sdb, c.req.param("id"))));
+web.put("/org/farms/:id/livestock-settings", async (c) => {
+  const b = parse(
+    z.object({ maxUaPerHa: z.number().min(MAX_UA_PER_HA_LIMITS.min).max(MAX_UA_PER_HA_LIMITS.max) }),
+    await readJson(c.req),
+  );
+  await saveLivestockSettings(c.var.sdb, c.req.param("id"), b.maxUaPerHa);
+  return c.json({ ok: true });
+});
+
+// Calendario sanitario (G-10).
+web.get("/org/sanitary-events", async (c) => {
+  const q = parse(
+    z.object({ month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/), farmId: z.string().uuid().optional() }),
+    c.req.query(),
+  );
+  return c.json(await listSanitaryEvents(c.var.sdb, q.month, q.farmId));
+});
+web.post("/org/sanitary-events", async (c) => {
+  const b = parse(sanitaryEventSchema, await readJson(c.req));
+  return c.json(await createSanitaryEvent(c.var.sdb, b), 201);
+});
+web.delete("/org/sanitary-events/:id", async (c) => {
+  await deleteSanitaryEvent(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
 web.get("/org/farms/:id/alert-settings", async (c) => c.json(await getAlertSettings(c.var.sdb, c.req.param("id"))));
 web.put("/org/farms/:id/alert-settings", async (c) => {
   const b = parse(alertSettingsSchema, await readJson(c.req));

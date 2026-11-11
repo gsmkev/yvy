@@ -82,6 +82,12 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
         parts.push(`${d.density} ${tr(`fields.densityUnit_${d.densityUnit}`, String(d.densityUnit))}`);
       if (typeof d.areaHa === "number") parts.push(t("fields.areaDoneValue", { n: d.areaHa }));
       break;
+    case "harvest":
+      if (typeof d.tons === "number") parts.push(t("fields.tonsValue", { n: dec(d.tons) }));
+      if (typeof d.moisturePct === "number") parts.push(t("fields.moistureValue", { n: dec(d.moisturePct) }));
+      if (typeof d.areaHa === "number") parts.push(t("fields.areaDoneValue", { n: dec(d.areaHa) }));
+      if (str("destination")) parts.push(tr(`fields.destination_${d.destination}`, String(d.destination)).toLowerCase());
+      break;
     case "fertilization": {
       const list = Array.isArray(d.products) ? (d.products as Record<string, unknown>[]) : [];
       if (list.length) parts.push(list.map(doseText).join(" + "));

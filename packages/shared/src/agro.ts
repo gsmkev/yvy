@@ -30,3 +30,17 @@ export function deltaT(tempC: number, humidityPct: number): number | null {
     4.686035;
   return Math.round((tempC - wet) * 10) / 10;
 }
+
+/**
+ * Rinde (t/ha) de un lote en una campaña a partir de sus cosechas. Si todas traen superficie se usa la suma;
+ * si alguna no la trae, la superficie del lote (una cosecha sin superficie se toma como el lote entero).
+ * Devuelve null sin toneladas o sin superficie.
+ */
+export function yieldTHa(harvests: { tons: number; areaHa?: number | null }[], plotAreaHa: number): number | null {
+  if (!harvests.length) return null;
+  const tons = harvests.reduce((a, h) => a + h.tons, 0);
+  const allHaveArea = harvests.every((h) => typeof h.areaHa === "number" && h.areaHa > 0);
+  const area = allHaveArea ? harvests.reduce((a, h) => a + (h.areaHa as number), 0) : plotAreaHa;
+  if (!(area > 0) || !(tons > 0)) return null;
+  return Math.round((tons / area) * 100) / 100;
+}

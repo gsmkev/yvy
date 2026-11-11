@@ -72,3 +72,26 @@ describe("fertilización", () => {
     );
   });
 });
+
+import { yieldTHa } from "../src";
+
+describe("cosecha (harvest) y rinde", () => {
+  it("valida toneladas, humedad y destino", () => {
+    expect(parseRecordData("harvest", { tons: 120.5, moisturePct: 13, areaHa: 40, destination: "acopio" }).success).toBe(true);
+    expect(parseRecordData("harvest", { tons: 0 }).success).toBe(false);
+    expect(parseRecordData("harvest", { tons: 5, moisturePct: 101 }).success).toBe(false);
+    expect(parseRecordData("harvest", { tons: 5, destination: "puerto" }).success).toBe(false);
+  });
+  it("rinde con superficie de cada cosecha o con la del lote", () => {
+    expect(yieldTHa([{ tons: 60, areaHa: 20 }, { tons: 30, areaHa: 10 }], 99)).toBe(3);
+    expect(yieldTHa([{ tons: 90 }], 30)).toBe(3);
+    expect(yieldTHa([{ tons: 60, areaHa: 20 }, { tons: 30 }], 30)).toBe(3);
+    expect(yieldTHa([], 30)).toBeNull();
+    expect(yieldTHa([{ tons: 10 }], 0)).toBeNull();
+  });
+  it("se describe en es-PY", () => {
+    expect(describeRecord("harvest", { tons: 120.5, moisturePct: 13, destination: "silo" })).toBe(
+      "120,5 t · 13 % de humedad · silo propio",
+    );
+  });
+});

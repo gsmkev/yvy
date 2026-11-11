@@ -231,3 +231,56 @@ describe("registro de siembra", () => {
     expect((await send({ crop: "soja", areaHa: -3 })).body.results[0].status).toBe("rejected");
   });
 });
+
+describe("cosecha y rinde por lote (A-20)", () => {
+  const harvest = (token: string, farmId: string, plotId: string, data: unknown) =>
+    call("POST", "/sync/push", {
+      token,
+      body: {
+        deviceId: "d",
+        mutations: [
+          {
+            mutationId: newId(),
+            kind: "records.upsert",
+            row: {
+              id: newId(),
+              farmId,
+              plotId,
+              poiId: null,
+              kind: "harvest",
+              data,
+              schemaVersion: RECORD_SCHEMA_VERSION,
+              lon: null,
+              lat: null,
+              gpsAccuracyM: null,
+              capturedAt: Date.now(),
+            },
+          },
+        ],
+      },
+    });
+
+  it("el historial del lote trae toneladas y rinde t/ha por campaña", async () => {
+    const { owner, worker, farmId, plotIds } = await setup();
+    const season = await newSeason(owner.token);
+    await call("PUT", `/org/seasons/${season.body.id}/plots/${plotIds[0]}`, {
+      token: owner.token,
+      body: { crop: "soja", targetYieldTHa: 3.5 },
+    });
+    // el lote del helper mide ~ 1,5 km por lado: rinde con superficie explícita para no depender de eso
+    expect((await harvest(worker.token, farmId, plotIds[0]!, { seasonId: season.body.id, tons: 60, areaHa: 20 })).body.results[0].status).toBe("applied");
+    expect((await harvest(worker.token, farmId, plotIds[0]!, { seasonId: season.body.id, tons: 30, areaHa: 10, moisturePct: 13.5, destination: "silo" })).body.results[0].status).toBe("applied");
+    const h = await call<{ harvestTons: number; yieldTHa: number; targetYieldTHa: number }[]>("GET", `/org/plots/${plotIds[0]}/seasons`, { token: owner.token });
+    expect(h.body[0]).toMatchObject({ harvestTons: 90, yieldTHa: 3, targetYieldTHa: 3.5 });
+  });
+
+  it("valida toneladas, humedad y destino", async () => {
+    const { owner, farmId, plotIds } = await setup();
+    const bad = async (data: unknown) =>
+      expect((await harvest(owner.token, farmId, plotIds[0]!, data)).body.results[0].status).toBe("rejected");
+    await bad({});
+    await bad({ tons: 0 });
+    await bad({ tons: 5, moisturePct: 120 });
+    await bad({ tons: 5, destination: "puerto" });
+  });
+});

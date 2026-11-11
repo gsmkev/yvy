@@ -250,6 +250,16 @@ export function PlotPanel({
                     <span className="font-medium">{h.seasonName}</span>
                     <span>{h.crop ? tk(`fields.crop_${h.crop}`) : "—"}</span>
                   </div>
+                  {h.yieldTHa !== null && (
+                    <p className="num mt-0.5">
+                      {t("ui.yieldPerHa")}: <strong>{fmtNum(h.yieldTHa)} t/ha</strong>
+                      <span className="text-xs text-tinta-2">
+                        {" "}
+                        · {t("ui.rotationHarvest", { tons: fmtNum(h.harvestTons ?? 0) })}
+                        {h.targetYieldTHa !== null ? ` · ${t("ui.yieldVsTarget", { n: fmtNum(h.targetYieldTHa) })}` : ""}
+                      </span>
+                    </p>
+                  )}
                   <p className="num mt-0.5 text-xs text-tinta-2">
                     {[
                       h.variety,
@@ -258,7 +268,7 @@ export function PlotPanel({
                         : h.plannedSowingDate
                           ? t("ui.rotationPlanned", { date: fmtIsoDate(h.plannedSowingDate) })
                           : null,
-                      h.targetYieldTHa !== null ? `${t("ui.seasonTargetYield")}: ${fmtNum(h.targetYieldTHa)}` : null,
+                      h.targetYieldTHa !== null && h.yieldTHa === null ? `${t("ui.seasonTargetYield")}: ${fmtNum(h.targetYieldTHa)}` : null,
                     ]
                       .filter(Boolean)
                       .join(" · ")}

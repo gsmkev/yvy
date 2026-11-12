@@ -1,11 +1,19 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PRODUCT_TYPES, PRODUCT_UNITS } from "@yvy/shared";
-import { del, get, patch, post } from "../lib/api";
+import { del, get, patch, post, put } from "../lib/api";
 import { t, tk } from "../lib/i18n";
 import type { Plot, Product } from "../lib/types";
 import { PrescriptionModal } from "./PrescriptionModal";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
+
+interface DoseRange {
+  productId: string;
+  min: number | null;
+  max: number | null;
+}
+const useDoseRanges = (enabled = true) =>
+  useQuery({ enabled, queryKey: ["dose-ranges"], queryFn: () => get<DoseRange[]>("/org/products/dose-ranges") });
 
 export const useProducts = (enabled = true) =>
   useQuery({ enabled, queryKey: ["products"], queryFn: () => get<Product[]>("/org/products") });
@@ -13,6 +21,7 @@ export const useProducts = (enabled = true) =>
 /** Catálogo de productos de la organización (A-10): lo usa el celular para cargar aplicaciones. */
 export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; farmId?: string; plots?: Plot[] }) {
   const q = useProducts();
+  const ranges = useDoseRanges();
   const [editing, setEditing] = useState<Product | "new" | null>(null);
   const [removing, setRemoving] = useState<Product | null>(null);
   const [prescribing, setPrescribing] = useState(false);
@@ -65,6 +74,7 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
                     tk(`fields.productUnit_${p.unit}`),
                     p.activeIngredient,
                     p.withdrawalDays !== null ? `${t("ui.productWithdrawal")}: ${p.withdrawalDays}` : null,
+                    doseShown(p, ranges.data),
                   ]
                     .filter(Boolean)
                     .join(" · ")}
@@ -85,7 +95,7 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
         </ul>
       )}
       {prescribing && farmId && plots && <PrescriptionModal farmId={farmId} plots={plots} onClose={() => setPrescribing(false)} />}
-      {editing && <ProductModal product={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
+      {editing && <ProductModal product={editing === "new" ? null : editing} range={ranges.data?.find((r) => r.productId === (editing === "new" ? "" : editing.id))} onClose={() => setEditing(null)} />}
       {removing && (
         <ConfirmModal
           title={removing.name}
@@ -101,7 +111,16 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
   );
 }
 
-function ProductModal({ product, onClose }: { product: Product | null; onClose: () => void }) {
+/** "Dosis habitual: 1 a 3 l/ha", o null si el producto no tiene rango. */
+function doseShown(p: Product, ranges: DoseRange[] | undefined): string | null {
+  const r = ranges?.find((x) => x.productId === p.id);
+  if (!r || (r.min === null && r.max === null)) return null;
+  const n = (v: number) => v.toLocaleString("es-PY", { maximumFractionDigits: 2 });
+  const range = r.min !== null && r.max !== null ? `${n(r.min)} a ${n(r.max)}` : r.min !== null ? `${t("ui.reviewAtLeast")} ${n(r.min)}` : `${t("ui.reviewUpTo")} ${n(r.max!)}`;
+  return t("ui.productDoseShown", { range, unit: p.unit === "l" ? "l/ha" : "kg/ha" });
+}
+
+function ProductModal({ product, range, onClose }: { product: Product | null; range?: DoseRange; onClose: () => void }) {
   const qc = useQueryClient();
   const [f, setF] = useState({
     name: product?.name ?? "",
@@ -110,6 +129,8 @@ function ProductModal({ product, onClose }: { product: Product | null; onClose: 
     activeIngredient: product?.activeIngredient ?? "",
     withdrawalDays: product?.withdrawalDays?.toString() ?? "",
     toxClass: product?.toxClass ?? "",
+    doseMin: range?.min?.toString() ?? "",
+    doseMax: range?.max?.toString() ?? "",
   });
   const save = useMutation({
     mutationFn: () => {
@@ -121,11 +142,19 @@ function ProductModal({ product, onClose }: { product: Product | null; onClose: 
         withdrawalDays: f.withdrawalDays === "" ? null : Number(f.withdrawalDays),
         toxClass: f.toxClass.trim() || null,
       };
-      return product ? patch(`/org/products/${product.id}`, body) : post("/org/products", body);
+      const saved = product ? patch(`/org/products/${product.id}`, body).then(() => product.id) : post<{ id: string }>("/org/products", body).then((r) => r.id);
+      // X-26: la dosis habitual va aparte del producto (no se sincroniza al celular)
+      return saved.then((id) =>
+        put(`/org/products/${id}/dose-range`, {
+          min: f.doseMin === "" ? null : Number(f.doseMin),
+          max: f.doseMax === "" ? null : Number(f.doseMax),
+        }),
+      );
     },
     onSuccess: () => {
       toast(t("ui.toastProductSaved"));
       qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["dose-ranges"] });
       onClose();
     },
   });
@@ -167,6 +196,18 @@ function ProductModal({ product, onClose }: { product: Product | null; onClose: 
             <Input value={f.toxClass} onChange={set("toxClass")} maxLength={40} />
           </Field>
         </div>
+        <fieldset className="border-t border-linea pt-3">
+          <legend className="text-sm font-medium">{t("ui.productDoseTitle")}</legend>
+          <p className="mt-1 text-xs text-tinta-2">{t("ui.productDoseHint")}</p>
+          <div className="mt-2 grid grid-cols-2 gap-3">
+            <Field label={t("ui.productDoseMin", { unit: f.unit === "l" ? "l/ha" : "kg/ha" })}>
+              <Input type="number" min={0} step="any" value={f.doseMin} onChange={set("doseMin")} />
+            </Field>
+            <Field label={t("ui.productDoseMax", { unit: f.unit === "l" ? "l/ha" : "kg/ha" })}>
+              <Input type="number" min={0} step="any" value={f.doseMax} onChange={set("doseMax")} />
+            </Field>
+          </div>
+        </fieldset>
         {save.error && <ErrorBox error={save.error} />}
         <Button type="submit" variant="primary" disabled={save.isPending}>
           {t("ui.save")}

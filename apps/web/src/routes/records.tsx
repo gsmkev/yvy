@@ -1,6 +1,7 @@
 import { FileSpreadsheet } from "lucide-react";
 import { useMemo, useState } from "react";
-import { BRAND, RECORD_KINDS } from "@yvy/shared";
+import { Link } from "@tanstack/react-router";
+import { BRAND, isFieldRole, RECORD_KINDS } from "@yvy/shared";
 import { FarmMap } from "../components/FarmMap";
 import { RecordsList } from "../components/RecordsList";
 import { Button, ErrorBox, Field, Input, Select } from "../components/ui";
@@ -75,6 +76,11 @@ export function RecordsPage() {
       <section className="flex min-h-0 flex-col gap-3 overflow-auto p-4 *:shrink-0">
         <div className="flex items-center justify-between">
           <h1 className="font-serif text-2xl font-semibold">{t("ui.navRecords")}</h1>
+          {me.data && !isFieldRole(me.data.role) && (
+            <Link to="/para-revisar" className="text-sm font-medium text-accion underline underline-offset-4">
+              {t("ui.reviewTitle")}
+            </Link>
+          )}
           <Button icon={FileSpreadsheet} onClick={exportExcel} disabled={exporting}>
             {t("ui.exportExcel")}
           </Button>

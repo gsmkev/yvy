@@ -512,6 +512,13 @@
       "when": 1794497126251,
       "tag": "0072_right_frank_castle",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "6",
+      "when": 1794497470514,
+      "tag": "0073_natural_kabuki",
+      "breakpoints": true
     }
   ]
 }

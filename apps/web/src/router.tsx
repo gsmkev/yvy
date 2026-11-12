@@ -156,6 +156,11 @@ const calendar = createRoute({
   path: "/calendario",
   component: lazyRouteComponent(() => import("./routes/calendar"), "CalendarPage"),
 });
+const review = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/para-revisar",
+  component: lazyRouteComponent(() => import("./routes/review"), "ReviewPage"),
+});
 const compare = createRoute({
   getParentRoute: () => appRoute,
   path: "/comparar",
@@ -228,6 +233,7 @@ const routeTree = rootRoute.addChildren([
     records,
     tasks,
     calendar,
+    review,
     compare,
     sanitary,
     team,

@@ -45,6 +45,7 @@ export {
   type RecordKind,
 } from "./schema";
 export * from "./tasks";
+export * from "./oddities";
 export * from "./checklist";
 export * from "./agro";
 export * from "./alert-settings";

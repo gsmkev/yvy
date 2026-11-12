@@ -2058,3 +2058,23 @@ export const jobRuns = sqliteTable("job_runs", {
   lastFailAt: integer("last_fail_at"),
   lastFailStatus: integer("last_fail_status"),
 });
+
+/**
+ * X-26: dosis habitual de un producto por hectárea, en la unidad base del producto (l o kg). La carga la organización;
+ * una aplicación fuera de este rango aparece en "Para revisar". Tabla de oficina: no se sincroniza.
+ */
+export const productDoseRanges = sqliteTable("product_dose_ranges", {
+  productId: text("product_id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  minDose: real("min_dose"),
+  maxDose: real("max_dose"),
+  updatedAt: integer("updated_at").notNull(),
+});
+
+/** X-26: "Está bien" sobre un registro marcado. Vale hasta que el registro se edite (updated_at posterior). */
+export const recordReviews = sqliteTable("record_reviews", {
+  recordId: text("record_id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  reviewedBy: text("reviewed_by").notNull(),
+  reviewedAt: integer("reviewed_at").notNull(),
+});

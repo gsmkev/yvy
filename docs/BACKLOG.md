@@ -407,7 +407,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | V-07 | Casos de éxito con números del piloto | P1 | S | Falta |
 | V-08 | Video de 2 minutos de la historia completa | P0 | S | Falta |
 | V-09 | Calculadora de precio en la landing | P2 | S | Falta |
-| V-10 | Academia: videos cortos por función, en español y guaraní | P2 | M | Falta |
+| V-10 | Academia: videos cortos por función, en español y guaraní | P2 | M | Hecho |
 
 ---
 

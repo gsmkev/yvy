@@ -1137,6 +1137,38 @@ export const farmRisk = sqliteTable("farm_risk", {
   report: text("report").notNull(),
 });
 
+/**
+ * Pedidos del informe gratis de riesgo climático desde la landing (V-04). No es de una organización ni se sincroniza.
+ * El email se guarda solo para mandar el informe (consentimiento explícito en `consentAt`) y se borra pasado
+ * LIMITS.leads.retentionMs. La IP se guarda como hash para el tope por conexión. El enlace del informe se deriva de
+ * `id` con HMAC; no se guarda.
+ */
+export const leads = sqliteTable(
+  "leads",
+  {
+    id: text("id").primaryKey(),
+    email: text("email").notNull(),
+    lon: real("lon").notNull(),
+    lat: real("lat").notNull(),
+    consentAt: integer("consent_at").notNull(),
+    consentVersion: text("consent_version").notNull(),
+    ipHash: text("ip_hash"),
+    /** pending (esperando al job), ready (informe calculado, email sin enviar) o sent. */
+    status: text("status").notNull().default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    /** JSON validado con farmRiskSchema. */
+    report: text("report"),
+    reportAt: integer("report_at"),
+    sentAt: integer("sent_at"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    index("leads_ip_idx").on(t.ipHash, t.createdAt),
+    index("leads_email_idx").on(t.email, t.createdAt),
+    index("leads_status_idx").on(t.status, t.createdAt),
+  ],
+);
+
 /** SPI a 1, 3 y 6 meses por estancia (C-07): JSON validado con farmSpiSchema. Una fila por estancia; no se sincroniza. */
 export const farmSpi = sqliteTable("farm_spi", {
   farmId: text("farm_id").primaryKey(),

@@ -103,6 +103,22 @@ export const LIMITS = {
     deltaTMax: 8,
     maxRainMm: 0,
   },
+  /** Informe gratis a cambio del email (V-04). */
+  leads: {
+    /** Pedidos por conexión (IP) en 24 h. */
+    perIpPerDay: 3,
+    /** Un mismo email puede volver a pedir pasado este tiempo. */
+    emailCooldownMs: 7 * 24 * 60 * 60 * 1000,
+    /** Pedidos que el job procesa por corrida y veces que se reintenta uno que falla. */
+    jobBatch: 20,
+    maxAttempts: 5,
+    /** El email y el informe se borran pasado este tiempo. */
+    retentionMs: 90 * 24 * 60 * 60 * 1000,
+    /** Versión del texto de consentimiento que aceptó la persona (se guarda con el pedido). */
+    consentVersion: "2026-11",
+    /** Rectángulo de Paraguay: el informe usa focos de calor de NASA FIRMS solo de ese país. */
+    bbox: { minLon: -62.7, maxLon: -54.2, minLat: -27.7, maxLat: -19.2 },
+  },
   /** F-14: formularios configurables por la organización. */
   forms: {
     maxFieldsPerKind: 10,

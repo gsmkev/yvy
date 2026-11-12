@@ -137,6 +137,14 @@ class IngestClient:
         """Informe de riesgo climático de la estancia (C-10)."""
         self._call("POST", "/ingest/farm-risk", {"farmId": farm_id, "report": report})
 
+    def leads(self) -> list[dict[str, Any]]:
+        """Pedidos del informe gratis de la landing que esperan su informe (V-04): id y punto, sin el email."""
+        return self._call("GET", "/ingest/leads")
+
+    def lead_report(self, lead_id: str, report: dict[str, Any]) -> dict[str, Any]:
+        """Informe de un pedido (V-04); el Worker lo guarda y manda el email con el enlace."""
+        return self._call("POST", f"/ingest/leads/{lead_id}/report", {"report": report})
+
     def problem_areas(self, plot_id: str, acquired_at: int, areas: list[dict[str, Any]]) -> int:
         """Áreas problema de un lote en la última escena (S-08); reemplaza las de escenas anteriores."""
         return self._call("POST", "/ingest/problem-areas", {"plotId": plot_id, "acquiredAt": acquired_at, "areas": areas})["written"]

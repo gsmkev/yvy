@@ -3,7 +3,7 @@
  * Cada escritura deriva organization_id de la fila padre (lote o estancia), nunca del request.
  */
 import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lt, lte, or, sql } from "drizzle-orm";
-import { addDays, DEFAULT_ALERT_SETTINGS, localDate, newId, type AlertSettings } from "@yvy/shared";
+import { addDays, DEFAULT_ALERT_SETTINGS, LIMITS, localDate, newId, type AlertSettings } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { upsertAlert } from "../jobs/alerts";
 import { dayOfYear, ndviAt } from "./queries";
@@ -856,8 +856,36 @@ export class SystemDb {
   }
 
   /** Mantenimiento diario: borra códigos y tokens vencidos. */
+  /** V-04: pedidos del informe gratis que esperan al job (sin enviar, con intentos disponibles, de los últimos 30 días). */
+  pendingLeads(now: number) {
+    return this.db
+      .select({ id: s.leads.id, lon: s.leads.lon, lat: s.leads.lat })
+      .from(s.leads)
+      .where(
+        and(isNull(s.leads.sentAt), lt(s.leads.attempts, LIMITS.leads.maxAttempts), gte(s.leads.createdAt, now - 30 * 86_400_000)),
+      )
+      .orderBy(asc(s.leads.createdAt))
+      .limit(LIMITS.leads.jobBatch);
+  }
+
+  /** V-04: guarda el informe del pedido y cuenta el intento. Devuelve el email, o null si no existe o ya se envió. */
+  async saveLeadReport(id: string, report: string, now: number): Promise<{ email: string } | null> {
+    const [row] = await this.db
+      .update(s.leads)
+      .set({ report, reportAt: now, status: "ready", attempts: sql`${s.leads.attempts} + 1` })
+      .where(and(eq(s.leads.id, id), isNull(s.leads.sentAt)))
+      .returning({ email: s.leads.email });
+    return row ?? null;
+  }
+
+  async markLeadSent(id: string, now: number): Promise<void> {
+    await this.db.update(s.leads).set({ status: "sent", sentAt: now }).where(eq(s.leads.id, id));
+  }
+
   async purgeExpiredAuth(now = Date.now()): Promise<void> {
     await runBatch(this.db, [
+      // V-04: el email del pedido y su informe no se guardan más allá de la retención
+      this.db.delete(s.leads).where(lt(s.leads.createdAt, now - LIMITS.leads.retentionMs)),
       this.db.delete(s.emailCodes).where(lt(s.emailCodes.expiresAt, now)),
       this.db.delete(s.linkCodes).where(or(lt(s.linkCodes.expiresAt, now), sql`${s.linkCodes.usedAt} IS NOT NULL`)),
       this.db

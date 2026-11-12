@@ -253,5 +253,9 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `calendar_feeds_user_idx` ON `calendar_feeds` (`user_id`,`organization_id`);",
   "CREATE TABLE `job_runs` (\n\t`job` text PRIMARY KEY NOT NULL,\n\t`last_ok_at` integer,\n\t`last_fail_at` integer,\n\t`last_fail_status` integer\n);",
   "CREATE TABLE `product_dose_ranges` (\n\t`product_id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`min_dose` real,\n\t`max_dose` real,\n\t`updated_at` integer NOT NULL\n);",
-  "CREATE TABLE `record_reviews` (\n\t`record_id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`reviewed_by` text NOT NULL,\n\t`reviewed_at` integer NOT NULL\n);"
+  "CREATE TABLE `record_reviews` (\n\t`record_id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`reviewed_by` text NOT NULL,\n\t`reviewed_at` integer NOT NULL\n);",
+  "CREATE TABLE `leads` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`email` text NOT NULL,\n\t`lon` real NOT NULL,\n\t`lat` real NOT NULL,\n\t`consent_at` integer NOT NULL,\n\t`consent_version` text NOT NULL,\n\t`ip_hash` text,\n\t`status` text DEFAULT 'pending' NOT NULL,\n\t`attempts` integer DEFAULT 0 NOT NULL,\n\t`report` text,\n\t`report_at` integer,\n\t`sent_at` integer,\n\t`created_at` integer NOT NULL\n);",
+  "CREATE INDEX `leads_ip_idx` ON `leads` (`ip_hash`,`created_at`);",
+  "CREATE INDEX `leads_email_idx` ON `leads` (`email`,`created_at`);",
+  "CREATE INDEX `leads_status_idx` ON `leads` (`status`,`created_at`);"
 ];

@@ -51,6 +51,12 @@ const apiDocsRoute = createRoute({
   component: lazyRouteComponent(() => import("./routes/public/api-docs"), "ApiDocsPage"),
 });
 
+const leadReportRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/informe/$id/$sig",
+  component: lazyRouteComponent(() => import("./routes/public/informe"), "LeadReportPage"),
+});
+
 const sharedRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/compartido/$token",
@@ -219,6 +225,7 @@ const routeTree = rootRoute.addChildren([
   apiDocsRoute,
   statusRoute,
   sharedRoute,
+  leadReportRoute,
   appRoute.addChildren([
     home,
     newFarm,

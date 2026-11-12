@@ -9,7 +9,7 @@ import sys
 from .ingest import IngestClient
 from .jobs.constants import BACKFILL_DAYS, BASEMAP_DAYS, DAILY_DAYS
 
-JOBS = ["s2_ingest", "s2_basemap", "country_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "weekly_report", "new_farm", "eudr", "s2_history", "burned_area", "cover_change", "power_daily", "spi", "mgmt_zones", "boundaries", "custom_layers", "fertility_maps"]
+JOBS = ["s2_ingest", "s2_basemap", "country_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "lead_report", "weekly_report", "new_farm", "eudr", "s2_history", "burned_area", "cover_change", "power_daily", "spi", "mgmt_zones", "boundaries", "custom_layers", "fertility_maps"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -54,6 +54,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     api = IngestClient()
+    if args.job == "lead_report":  # V-04: son pedidos de la landing, no de estancias
+        from .jobs.leads import lead_report
+
+        return 1 if lead_report(api, api.leads()) else 0
     farms = api.farms()
     if args.farm:
         farms = [f for f in farms if f["id"] == args.farm]

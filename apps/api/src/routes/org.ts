@@ -6,6 +6,7 @@ import { areaHa, bboxOf, centroidOf, checkPlots, validateShape, type Area } from
 import { CROPS, doseText, FARM_ACCESS_LEVELS, isWeakPin, LIMITS, PIN_LENGTH, PIN_REGEX, phoneKey, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, TASK_PRIORITIES, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
 import { can } from "../db/scoped";
 import { randomDigits, randomToken } from "../lib/crypto";
+import { createApiToken, listApiTokens, revokeApiToken } from "../db/api-tokens";
 import { createSchedule, deleteSchedule, listSchedules } from "../db/schedules";
 import { dispatchNewFarm, inBackground } from "../lib/dispatch";
 import { hashPin } from "../lib/pin";
@@ -133,6 +134,17 @@ org.post("/report-schedules", async (c) => {
 });
 org.delete("/report-schedules/:id", async (c) => {
   await deleteSchedule(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+/** I-01: tokens de la API pública (solo el dueño). El token se muestra una sola vez al crearlo. */
+org.get("/api-tokens", async (c) => c.json(await listApiTokens(c.var.sdb)));
+org.post("/api-tokens", async (c) => {
+  const b = parse(z.object({ name: z.string().trim().min(2).max(80) }), await readJson(c.req));
+  return c.json(await createApiToken(c.var.sdb, b.name), 201);
+});
+org.delete("/api-tokens/:id", async (c) => {
+  await revokeApiToken(c.var.sdb, c.req.param("id"));
   return c.json({ ok: true });
 });
 

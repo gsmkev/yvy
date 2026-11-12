@@ -28,6 +28,12 @@ const privacyRoute = createRoute({
   component: lazyRouteComponent(() => import("./routes/public/legal"), "PrivacyPage"),
 });
 
+const apiDocsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/api-docs",
+  component: lazyRouteComponent(() => import("./routes/public/api-docs"), "ApiDocsPage"),
+});
+
 const sharedRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/compartido/$token",
@@ -138,6 +144,11 @@ const compare = createRoute({
   path: "/comparar",
   component: lazyRouteComponent(() => import("./routes/compare"), "ComparePage"),
 });
+const apiTokens = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/api-publica",
+  component: lazyRouteComponent(() => import("./routes/api-tokens"), "ApiTokensPage"),
+});
 const audit = createRoute({
   getParentRoute: () => appRoute,
   path: "/cambios",
@@ -183,6 +194,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   termsRoute,
   privacyRoute,
+  apiDocsRoute,
   sharedRoute,
   appRoute.addChildren([
     home,
@@ -203,6 +215,7 @@ const routeTree = rootRoute.addChildren([
     team,
     admin,
     audit,
+    apiTokens,
     help,
     labs,
     labsTool,

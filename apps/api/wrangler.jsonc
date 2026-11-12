@@ -16,6 +16,7 @@
       "/media/*",
       "/ingest/*",
       "/public/*",
+      "/v1/*",
       "/admin/*",
       "/me",
       "/me/*",

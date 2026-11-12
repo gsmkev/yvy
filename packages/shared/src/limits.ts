@@ -181,6 +181,14 @@ export const LIMITS = {
   },
   /** R-10: destinatarios externos de informes programados por organización. */
   reportSchedules: { max: 10 },
+  /** I-01: API pública. */
+  api: {
+    /** Pedidos por token por minuto. */
+    perMinute: 60,
+    maxTokensPerOrg: 5,
+    maxPageSize: 200,
+    defaultPageSize: 50,
+  },
   /** K-06: registro de cambios de la organización. */
   audit: {
     pageSize: 50,

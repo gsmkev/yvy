@@ -4,6 +4,7 @@
 import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import { addDays, LIMITS, localDate } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
+import { purgeApiRate } from "../db/api-tokens";
 import { getDb, runBatch, type DB } from "../db/client";
 import { dayOfYear } from "../db/queries";
 import { SystemDb } from "../db/system";
@@ -74,6 +75,7 @@ export async function scheduled(controller: { cron: string }, env: Bindings, dep
       await getDb(env.DB).run(
         sql`DELETE FROM events WHERE ts < ${deps.now() - LIMITS.events.retentionMs} AND name NOT IN ('signup', 'farm_created', 'plots_created', 'member_added', 'first_record')`,
       );
+      await purgeApiRate(getDb(env.DB), deps.now());
       await recordUsage(env, deps.now());
       return;
   }

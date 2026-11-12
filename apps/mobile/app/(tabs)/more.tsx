@@ -94,6 +94,8 @@ export default function More() {
       <Text style={T.small}>{session?.organization.name}</Text>
       <Text style={[T.display, { marginTop: 2 }]}>{session?.user.fullName}</Text>
 
+      <Row title={t("app.emergencyTitle")} subtitle={t("app.emergencyRowHint")} onPress={() => router.push("/emergency")} />
+
       <Text style={st.section}>{t("app.syncTitle")}</Text>
       <Row title={t("app.lastSyncAt", { when: lastSync })} subtitle={sync.pending > 0 ? t("app.pendingCount", { n: sync.pending }) : t("app.allSent")} onPress={syncNow} />
       <Outbox items={outbox} plotName={(id) => plots.find((p) => p.id === id)?.name} wifiOnly={wifiOnly} />

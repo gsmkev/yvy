@@ -14,6 +14,8 @@ import { saveForecastStmts, saveHourlyStmts, upsertAlert } from "./alerts";
 import { sendPending } from "./notify";
 import { pestAlertDraft } from "./pests";
 import { evaluateHeatStress } from "./heat";
+import { plotForecastJob, plotsNeedingForecast } from "./plot-forecast";
+import { evaluateRust } from "./rust";
 import { evaluateDrought, evaluateExcessRain, evaluateFrost } from "./rules";
 import { dailyFromMet, hourlyFromMet, dailyFromPower, fetchMet, powerUrl, type DailyForecast } from "./weather";
 
@@ -32,7 +34,7 @@ export interface JobDeps {
 
 const defaultDeps = (): JobDeps => ({ fetch: (...a) => fetch(...a), now: Date.now });
 
-async function enqueuePerFarm(env: Bindings, type: JobMessage["type"]): Promise<number> {
+async function enqueuePerFarm(env: Bindings, type: Exclude<JobMessage["type"], "plot_forecast">): Promise<number> {
   const farms = await new SystemDb(getDb(env.DB)).activeFarms();
   for (let i = 0; i < farms.length; i += 100) {
     await env.JOBS.sendBatch(
@@ -44,9 +46,17 @@ async function enqueuePerFarm(env: Bindings, type: JobMessage["type"]): Promise<
 
 export async function scheduled(controller: { cron: string }, env: Bindings, deps = defaultDeps()): Promise<void> {
   switch (controller.cron) {
-    case CRONS.forecast:
+    case CRONS.forecast: {
       await enqueuePerFarm(env, "forecast");
+      // C-03: estancias de más de 2.000 ha: un mensaje por lote
+      const plots = await plotsNeedingForecast(getDb(env.DB));
+      for (let i = 0; i < plots.length; i += 100) {
+        await env.JOBS.sendBatch(
+          plots.slice(i, i + 100).map((p) => ({ body: { type: "plot_forecast", ...p } satisfies JobMessage })),
+        );
+      }
       return;
+    }
     case CRONS.drought:
       await enqueuePerFarm(env, "drought");
       await enqueuePerFarm(env, "pest");
@@ -92,6 +102,9 @@ export async function runJob(msg: JobMessage, env: Bindings, deps = defaultDeps(
       return weeklyReportJob(db, env, deps, farm);
     case "pest":
       return pestJob(db, deps, farm);
+    case "plot_forecast":
+      await plotForecastJob(db, env, deps, farm, msg.plotId);
+      return;
   }
 }
 
@@ -157,9 +170,17 @@ async function forecastJob(db: DB, env: Bindings, deps: JobDeps, farm: Farm): Pr
   const runs = await recentRuns(db, farm.id, LIMITS.weather.forecastRunsKept);
   const today = localDate(now, farm.tz);
   const cfg = await new SystemDb(db).alertSettings(farm.id);
+  // A-40: roya asiática solo si la estancia tiene soja
+  const soy = await db
+    .select({ id: s.plots.id })
+    .from(s.plots)
+    .where(
+      and(eq(s.plots.farmId, farm.id), eq(s.plots.kind, "crop"), eq(s.plots.crop, "soja"), isNull(s.plots.deletedAt)),
+    );
   for (const draft of [
     evaluateFrost(runs, today, cfg.frostTminC),
     evaluateExcessRain(days, today, cfg.excessRainMm24h),
+    evaluateRust(hours, farm.tz, soy.map((p) => p.id)),
   ]) {
     if (draft) await upsertAlert(db, farm, draft, now);
   }

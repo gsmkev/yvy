@@ -171,12 +171,13 @@ export function FarmMap(props: FarmMapProps) {
           "line-width": ["case", ["boolean", ["get", "selected"], false], 3, 1.5],
         },
       });
-      // Alambrado: blanco punteado · camino: arena continuo · cañería: celeste con puntos
+      // Alambrado: blanco punteado · camino: arena continuo · cañería: celeste con puntos · curso de agua: celeste continuo
       // (el trazo punteado no admite valores por elemento, por eso una capa por tipo)
       for (const [kind, color, width, dash] of [
         ["fence", "#ffffff", 2, [4, 3]],
         ["road", "#C9C46A", 3, undefined],
         ["pipe", BRAND.cielo, 2.5, [0.5, 2]],
+        ["stream", BRAND.cielo, 3.5, undefined],
       ] as const) {
         map.addLayer({
           id: `lines-${kind}`,

@@ -83,6 +83,10 @@ export const LIMITS = {
     coordDecimals: 4,
     /** Horas de pronóstico que se guardan para las ventanas de pulverización (A-13). */
     hourlyHorizonHours: 48,
+    /** C-03: pronóstico por lote solo en estancias de más de esta superficie (ha); como mucho esta cantidad de lotes. */
+    plotForecastMinFarmHa: 2_000,
+    plotForecastMaxPlots: 60,
+    plotForecastDays: 10,
   },
   /** Condiciones para pulverizar (A-13): viento en km/h, Delta T en °C y sin lluvia. */
   spray: {
@@ -171,6 +175,45 @@ export const LIMITS = {
   share: {
     /** Duraciones permitidas del enlace de solo lectura (K-04), en días. */
     linkDays: [7, 30],
+  },
+  // agri-p2
+  /** Mapas de rendimiento (A-21): celdas de la grilla resumen y tamaño máximo del cuerpo que acepta el Worker. */
+  yieldMap: { maxCells: 800, maxBodyBytes: 120_000 },
+  /**
+   * Roya asiática de la soja (A-40): mojado foliar estimado con el pronóstico horario. Una hora cuenta si la humedad
+   * relativa llega a `humidityPct` (o llueve `rainMm`) y la temperatura está entre `tempMinC` y `tempMaxC`.
+   * Valores de referencia a revisar por un agrónomo.
+   */
+  rust: { humidityPct: 90, rainMm: 0.1, tempMinC: 15, tempMaxC: 28, watchHours: 8, warningHours: 12 },
+  /**
+   * Zonas de amortiguación (A-15): distancia en metros a casas, escuelas y cursos de agua dentro de la cual una
+   * aplicación se marca. Valores de referencia que la web deja editar: confirmá lo que exige la normativa vigente
+   * y la habilitación de tu zona antes de usarlos como límite legal.
+   */
+  buffer: { house: 100, school: 100, water: 100, stream: 100, maxM: 2_000 },
+  /** Ventana de siembra (A-05): valores de referencia, a revisar por un agrónomo. */
+  sowing: {
+    /** Humedad del suelo superficial (NASA POWER GWETTOP, fracción de saturación 0-1): abajo no germina, arriba encharca. */
+    soilMinFraction: 0.35,
+    soilMaxFraction: 0.9,
+    /** Lluvia en un día a partir de la cual no se entra al lote. */
+    heavyRainDayMm: 15,
+    /** Lluvia acumulada en 3 días que compensa un suelo justo. */
+    rainAheadMm: 12,
+    /** Temperatura mínima del aire (°C) por debajo de la cual se espera. */
+    minTminC: { soja: 10, maiz: 10, trigo: 0, arroz: 15, girasol: 8, chia: 10, otro: 10 } as Record<string, number>,
+    /** Días de pronóstico que se evalúan. */
+    horizonDays: 7,
+  },
+  /** Balance hídrico por lote (C-08): lluvia menos consumo del cultivo, en mm. */
+  waterBalance: {
+    /** Ventana reciente para el riesgo de estrés. */
+    recentDays: 14,
+    /** Balance de la ventana reciente (mm) a partir del cual el riesgo es medio o alto. */
+    mediumRiskMm: -30,
+    highRiskMm: -60,
+    /** Días de historia que devuelve la serie. */
+    maxDays: 200,
   },
 } as const;
 

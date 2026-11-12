@@ -22,6 +22,7 @@ export const notificationPrefsSchema = z.object({
     pest_threshold: channels,
     water_low: channels,
     heat_stress: channels,
+    rust_risk: channels,
   }),
   /** Horario de silencio: el push que cae adentro espera a que termine. Puede cruzar la medianoche. */
   quiet: z

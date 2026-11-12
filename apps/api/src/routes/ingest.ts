@@ -8,7 +8,7 @@ import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { ANALYSIS_KINDS, INDEX_KINDS, LAYERS } from "@yvy/shared/schema";
-import { farmRiskSchema, LIMITS } from "@yvy/shared";
+import { farmRiskSchema, farmSpiSchema, LIMITS } from "@yvy/shared";
 import { getDb } from "../db/client";
 import { SystemDb } from "../db/system";
 import { hmacVerifyHex } from "../lib/crypto";
@@ -397,4 +397,57 @@ ingest.post("/weekly-reports", async (c) => {
   if (!(await c.var.sys.saveWeeklyReport(b.farmId, b.periodStart, b.periodEnd, b.storagePath, Date.now())))
     throw new HTTPException(404, { message: "Estancia inexistente" });
   return c.json({ ok: true }, 201);
+});
+
+/** C-07: lluvia diaria de la estancia (CHIRPS) para que el job calcule el SPI. */
+ingest.get("/farms/:id/precip", async (c) => {
+  const q = parse(z.object({ from: isoDay }), c.req.query());
+  return c.json(await c.var.sys.farmPrecip(c.req.param("id"), q.from));
+});
+
+/** SPI a 1, 3 y 6 meses (job spi, C-07): ya viene calculado; el Worker valida la forma y lo guarda. */
+ingest.post("/farm-spi", async (c) => {
+  const b = parse(z.object({ farmId: uuid, report: farmSpiSchema }), json(c.var.body));
+  if (c.var.body.length > 5_000) throw new HTTPException(413, { message: "Informe demasiado grande" });
+  if (!(await c.var.sys.upsertFarmSpi(b.farmId, JSON.stringify(b.report), Date.now())))
+    throw new HTTPException(404, { message: "Estancia inexistente" });
+  return c.json({ ok: true });
+});
+
+/** Zonas de manejo de un lote (job mgmt_zones, A-32): ya vienen calculadas; el Worker valida la forma y las guarda. */
+ingest.post("/management-zones", async (c) => {
+  if (c.var.body.length > 150_000) throw new HTTPException(413, { message: "Resultado demasiado grande" });
+  const pos = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
+  const ring = z.array(pos).min(4).max(400);
+  const b = parse(
+    z.object({
+      plotId: uuid,
+      seasons: z.array(z.number().int().min(2015).max(2100)).min(2).max(6),
+      zones: z
+        .array(
+          z.object({
+            zone: z.number().int().min(1).max(3),
+            areaHa: z.number().positive().max(1_000_000),
+            pct: z.number().min(0).max(100),
+            meanNdvi: z.number().min(-1).max(1),
+            geometry: z.object({
+              type: z.literal("MultiPolygon"),
+              coordinates: z.array(z.array(ring).min(1).max(20)).min(1).max(15),
+            }),
+          }),
+        )
+        .min(1)
+        .max(3),
+    }),
+    json(c.var.body),
+  );
+  if (new Set(b.zones.map((x) => x.zone)).size !== b.zones.length)
+    throw new HTTPException(400, { message: "Zonas repetidas" });
+  const written = await c.var.sys.replaceManagementZones(
+    b.plotId,
+    b.seasons,
+    b.zones.map((x) => ({ ...x, geometry: JSON.stringify(x.geometry) })),
+  );
+  if (written === null) throw new HTTPException(404, { message: "Lote inexistente" });
+  return c.json({ written });
 });

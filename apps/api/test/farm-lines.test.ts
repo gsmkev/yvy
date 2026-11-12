@@ -36,6 +36,13 @@ describe("líneas del mapa (M-20)", () => {
     expect((await call<any[]>("GET", `/org/farms/${farmId}/lines`, { token: owner.token })).body).toEqual([]);
   });
 
+  it("acepta el curso de agua como tipo de línea (A-15)", async () => {
+    const { owner, farmId } = await setup();
+    const r = await call("POST", `/org/farms/${farmId}/lines`, { token: owner.token, body: { kind: "stream", name: "Arroyo Pytã", geometry: line } });
+    expect(r.status).toBe(201);
+    expect((await call<any[]>("GET", `/org/farms/${farmId}/lines`, { token: owner.token })).body[0]).toMatchObject({ kind: "stream" });
+  });
+
   it("rechaza geometrías que no son una línea válida", async () => {
     const { owner, farmId } = await setup();
     const bad = [

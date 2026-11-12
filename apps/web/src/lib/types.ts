@@ -58,7 +58,7 @@ export interface Plot {
 export interface FarmLine {
   id: string;
   farmId: string;
-  kind: "fence" | "road" | "pipe";
+  kind: "fence" | "road" | "pipe" | "stream";
   name: string;
   /** GeoJSON LineString. */
   geometry: string;
@@ -153,7 +153,7 @@ export interface Task {
 export interface Alert {
   id: string;
   farmId: string;
-  kind: "frost" | "excess_rain" | "drought" | "fire" | "pest_threshold" | "water_low" | "heat_stress";
+  kind: "frost" | "excess_rain" | "drought" | "fire" | "pest_threshold" | "water_low" | "heat_stress" | "rust_risk";
   severity: "info" | "watch" | "warning";
   probability: "low" | "medium" | "high" | null;
   validFrom: number;

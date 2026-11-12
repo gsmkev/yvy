@@ -1,3 +1,4 @@
+import { SpiPanel } from "./SpiPanel";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { addDays, CHART, localDate, t as _t } from "@yvy/shared";
@@ -185,6 +186,7 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
           <Empty icon={CloudSun}>{t("ui.noClimate")}</Empty>
         )}
       </div>
+      <SpiPanel farmId={farmId} />
     </div>
   );
 }

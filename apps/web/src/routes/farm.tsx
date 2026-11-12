@@ -15,6 +15,7 @@ import { ImportPlots } from "../components/ImportPlots";
 import { PlotPanel } from "../components/PlotPanel";
 import { LinesPanel, NewLineModal } from "../components/LinesPanel";
 import { MergeModal, SplitModal } from "../components/PlotEditModals";
+import { AgroPanel } from "../components/AgroPanel";
 import { HerdPanel } from "../components/HerdPanel";
 import { PlotsTable } from "../components/PlotsTable";
 import { CompareOverlay, SceneControls } from "../components/SceneControls";
@@ -40,8 +41,8 @@ import type { FarmDetail, Layer, RecordRow } from "../lib/types";
 /** Días sin anotaciones para considerar un lote sin visitar. */
 const UNVISITED_DAYS = 7;
 
-type Tab = "plots" | "seasons" | "products" | "records" | "tasks" | "climate" | "alerts" | "herd";
-const TABS: Tab[] = ["plots", "seasons", "products", "records", "tasks", "climate", "alerts", "herd"];
+type Tab = "plots" | "seasons" | "products" | "records" | "tasks" | "climate" | "alerts" | "herd" | "agro";
+const TABS: Tab[] = ["plots", "seasons", "products", "records", "tasks", "climate", "alerts", "herd", "agro"];
 
 export function FarmPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId" });
@@ -60,7 +61,7 @@ export function FarmPage() {
     return TABS.includes(saved as Tab) ? (saved as Tab) : "plots";
   });
   // Una pestaña guardada que este rol no tiene (ej. "herd" para un empleado) cae en Lotes en vez de mostrar nada.
-  const tab: Tab = tabPref === "herd" && !canEdit ? "plots" : tabPref;
+  const tab: Tab = (tabPref === "herd" || tabPref === "agro") && !canEdit ? "plots" : tabPref;
   const [onlyUnvisited, setOnlyUnvisited] = useState(false);
   const mapBox = useRef<HTMLDivElement>(null);
   // M-05: dividir (dibuja una línea sobre el lote) y unir (se elige el lote contiguo en el mapa)
@@ -690,6 +691,7 @@ export function FarmPage() {
             { id: "climate", label: t("ui.tabClimate") },
             { id: "alerts", label: t("ui.tabAlerts"), count: alerts.data?.length || undefined },
             ...(canEdit ? [{ id: "herd" as const, label: t("ui.tabHerd") }] : []),
+            ...(canEdit ? [{ id: "agro" as const, label: t("ui.tabAgro") }] : []),
           ]}
         />
 
@@ -851,6 +853,7 @@ export function FarmPage() {
         {tab === "climate" && <ClimatePanel farmId={farmId} />}
         {tab === "alerts" && <AlertsList farmId={farmId} />}
         {tab === "herd" && canEdit && <HerdPanel farmId={farmId} />}
+        {tab === "agro" && canEdit && <AgroPanel farmId={farmId} plots={d.plots} pois={d.pois} />}
       </section>
 
       {newLine && (

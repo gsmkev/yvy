@@ -130,6 +130,18 @@ class IngestClient:
         """Áreas problema de un lote en la última escena (S-08); reemplaza las de escenas anteriores."""
         return self._call("POST", "/ingest/problem-areas", {"plotId": plot_id, "acquiredAt": acquired_at, "areas": areas})["written"]
 
+    def farm_precip(self, farm_id: str, start: str) -> list[dict[str, Any]]:
+        """Lluvia diaria CHIRPS de la estancia desde `start` (C-07)."""
+        return self._call("GET", f"/ingest/farms/{farm_id}/precip", query={"from": start})
+
+    def farm_spi(self, farm_id: str, report: dict[str, Any]) -> None:
+        """SPI a 1, 3 y 6 meses de la estancia (C-07)."""
+        self._call("POST", "/ingest/farm-spi", {"farmId": farm_id, "report": report})
+
+    def management_zones(self, plot_id: str, seasons: list[int], zones: list[dict[str, Any]]) -> None:
+        """Zonas de manejo de un lote (A-32); reemplaza las anteriores."""
+        self._call("POST", "/ingest/management-zones", {"plotId": plot_id, "seasons": seasons, "zones": zones})
+
     def weekly_summary(self, farm_id: str, start: str, end: str) -> dict[str, Any]:
         """Agregados de la semana de una estancia para el parte (R-02)."""
         return self._call("GET", f"/ingest/farms/{farm_id}/weekly-summary", query={"from": start, "to": end})

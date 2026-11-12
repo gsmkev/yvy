@@ -30,6 +30,7 @@ export const POI_KINDS = [
   "rain_gauge",
   "water",
   "house",
+  "school",
   "gate",
   "corral",
   "silo",
@@ -41,8 +42,8 @@ export const POI_KINDS = [
   "dock",
   "other",
 ] as const;
-/** Líneas del mapa (M-20): alambrados, caminos internos y cañerías. */
-export const LINE_KINDS = ["fence", "road", "pipe"] as const;
+/** Líneas del mapa (M-20): alambrados, caminos internos, cañerías y cursos de agua (A-15). */
+export const LINE_KINDS = ["fence", "road", "pipe", "stream"] as const;
 export type LineKind = (typeof LINE_KINDS)[number];
 export const RECURRENCES = ["none", "daily", "weekly"] as const;
 export const TASK_STATUS = ["open", "done", "cancelled"] as const;
@@ -80,7 +81,7 @@ export const PRODUCT_TYPES = ["seed", "agrochemical", "fertilizer", "fuel", "vet
 /** Unidad base del producto: litros o kilos. */
 export const PRODUCT_UNITS = ["l", "kg"] as const;
 export const UPLOAD_STATUS = ["pending", "uploaded"] as const;
-export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_threshold", "water_low", "heat_stress"] as const;
+export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_threshold", "water_low", "heat_stress", "rust_risk"] as const;
 export const ALERT_SEVERITIES = ["info", "watch", "warning"] as const;
 /** Con MET Norway no hay ensemble: probabilidad cualitativa (PRD-cloudflare §4.8). */
 export const ALERT_PROBABILITIES = ["low", "medium", "high"] as const;
@@ -332,6 +333,107 @@ export const farmLines = sqliteTable(
   (t) => [
     index("farm_lines_sync_idx").on(t.organizationId, t.version, t.id),
     index("farm_lines_farm_idx").on(t.farmId),
+  ],
+);
+
+/**
+ * Análisis de suelo de laboratorio (A-30): por lote o por punto de muestreo. Solo la web lo usa por ahora
+ * (no está en el pull del sync). Valores nulos = el laboratorio no lo informó.
+ */
+export const soilSamples = sqliteTable(
+  "soil_samples",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    plotId: text("plot_id"),
+    /** Nombre o número del punto de muestreo ("P-07"). */
+    pointLabel: text("point_label"),
+    lon: real("lon"),
+    lat: real("lat"),
+    /** Fecha de muestreo "YYYY-MM-DD". */
+    sampledOn: text("sampled_on").notNull(),
+    depthCm: integer("depth_cm").notNull().default(20),
+    lab: text("lab"),
+    ph: real("ph"),
+    /** Fósforo (Mehlich-1), mg/kg. */
+    pMgKg: real("p_mg_kg"),
+    /** Potasio, cmolc/kg. */
+    kCmolKg: real("k_cmol_kg"),
+    /** Materia orgánica, %. */
+    omPct: real("om_pct"),
+    note: text("note"),
+    ...synced,
+  },
+  (t) => [
+    index("soil_samples_sync_idx").on(t.organizationId, t.version, t.id),
+    index("soil_samples_farm_idx").on(t.farmId),
+    index("soil_samples_plot_idx").on(t.plotId),
+  ],
+);
+
+/**
+ * Entrega de grano a un acopio o silo (A-23): ticket de balanza con humedad, descuentos y neto, por lote.
+ * Pesos en kilos. Solo la web la usa (no está en el pull del sync).
+ */
+export const grainDeliveries = sqliteTable(
+  "grain_deliveries",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    plotId: text("plot_id"),
+    seasonId: text("season_id"),
+    crop: text("crop", { enum: CROPS }).notNull(),
+    ticket: text("ticket").notNull(),
+    silo: text("silo").notNull(),
+    deliveredOn: text("delivered_on").notNull(),
+    grossKg: real("gross_kg").notNull(),
+    moisturePct: real("moisture_pct"),
+    baseMoisturePct: real("base_moisture_pct").notNull(),
+    impuritiesPct: real("impurities_pct").notNull().default(0),
+    otherKg: real("other_kg").notNull().default(0),
+    /** Calculado al guardar con grainNet (packages/shared). */
+    netKg: real("net_kg").notNull(),
+    note: text("note"),
+    ...synced,
+  },
+  (t) => [
+    index("grain_deliveries_sync_idx").on(t.organizationId, t.version, t.id),
+    index("grain_deliveries_farm_idx").on(t.farmId, t.deliveredOn),
+    index("grain_deliveries_plot_idx").on(t.plotId),
+  ],
+);
+
+/**
+ * Mapa de rendimiento de la cosechadora de un lote en una campaña (A-21). El archivo (shapefile) se procesa en el
+ * navegador; acá queda el resumen y una grilla de promedios en `cells` (JSON [[lon, lat, t/ha, puntos], ...]).
+ * Solo la web lo usa (no está en el pull del sync).
+ */
+export const yieldMaps = sqliteTable(
+  "yield_maps",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    plotId: text("plot_id").notNull(),
+    seasonId: text("season_id"),
+    fileName: text("file_name").notNull(),
+    nPoints: integer("n_points").notNull(),
+    nDropped: integer("n_dropped").notNull(),
+    meanTHa: real("mean_t_ha").notNull(),
+    p10THa: real("p10_t_ha").notNull(),
+    p90THa: real("p90_t_ha").notNull(),
+    minTHa: real("min_t_ha").notNull(),
+    maxTHa: real("max_t_ha").notNull(),
+    cvPct: real("cv_pct").notNull(),
+    cellM: integer("cell_m").notNull(),
+    cells: text("cells").notNull(),
+    ...synced,
+  },
+  (t) => [
+    index("yield_maps_sync_idx").on(t.organizationId, t.version, t.id),
+    index("yield_maps_plot_idx").on(t.plotId, t.seasonId),
   ],
 );
 
@@ -939,6 +1041,13 @@ export const farmRisk = sqliteTable("farm_risk", {
   report: text("report").notNull(),
 });
 
+/** SPI a 1, 3 y 6 meses por estancia (C-07): JSON validado con farmSpiSchema. Una fila por estancia; no se sincroniza. */
+export const farmSpi = sqliteTable("farm_spi", {
+  farmId: text("farm_id").primaryKey(),
+  computedAt: integer("computed_at").notNull(),
+  report: text("report").notNull(),
+});
+
 export const forecasts = sqliteTable(
   "forecasts",
   {
@@ -968,6 +1077,25 @@ export const forecastHours = sqliteTable(
     precipMm: real("precip_mm"),
   },
   (t) => [primaryKey({ columns: [t.farmId, t.validAt] })],
+);
+
+/**
+ * Pronóstico diario de MET Norway por lote en estancias de más de 2.000 ha (C-03), en el centro del lote.
+ * Solo la última corrida (se reemplaza). No se sincroniza.
+ */
+export const plotForecasts = sqliteTable(
+  "plot_forecasts",
+  {
+    plotId: text("plot_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    validDate: text("valid_date").notNull(),
+    runAt: integer("run_at").notNull(),
+    tminC: real("tmin_c"),
+    tmaxC: real("tmax_c"),
+    precipMm: real("precip_mm"),
+    windKmh: real("wind_kmh"),
+  },
+  (t) => [primaryKey({ columns: [t.plotId, t.validDate] }), index("plot_forecasts_farm_idx").on(t.farmId)],
 );
 
 export const fireHotspots = sqliteTable(
@@ -1215,4 +1343,28 @@ export const usageDaily = sqliteTable(
     limit: real("limit"),
   },
   (t) => [primaryKey({ columns: [t.day, t.metric] })],
+);
+
+/**
+ * Zonas de manejo de un lote (A-32): 3 zonas (1 = menor vigor relativo, 3 = mayor) calculadas por workers-py con k-means
+ * sobre el NDVI máximo de varias campañas. Una fila por lote y zona; `geometry` es un MultiPolygon GeoJSON simplificado.
+ * Solo las escribe /ingest; no se sincronizan.
+ */
+export const managementZones = sqliteTable(
+  "management_zones",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    plotId: text("plot_id").notNull(),
+    zone: integer("zone").notNull(),
+    areaHa: real("area_ha").notNull(),
+    pct: real("pct").notNull(),
+    meanNdvi: real("mean_ndvi").notNull(),
+    /** Años de inicio de las campañas usadas, JSON [2023, 2024, 2025]. */
+    seasons: text("seasons").notNull(),
+    geometry: text("geometry").notNull(),
+    computedAt: integer("computed_at").notNull(),
+  },
+  (t) => [uniqueIndex("management_zones_plot_zone_uq").on(t.plotId, t.zone), index("management_zones_farm_idx").on(t.farmId)],
 );

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Switch, View } from "react-native";
 import { router } from "expo-router";
-import { getLocale, LOCALES, LOCALE_NAMES, t, type MessageKey } from "@yvy/shared";
+import { getLocale, LIMITS, LOCALES, LOCALE_NAMES, t, type MessageKey } from "@yvy/shared";
 import { FEATURES } from "../../src/lib/features";
 import type { OutboxItem } from "../../src/db/store";
 import { getDb } from "../../src/lib/db";
@@ -22,6 +22,7 @@ export default function More() {
   const farms = useLocal(() => getDb().farms());
   const rejected = useLocal(() => getDb().rejected());
   const outbox = useLocal(() => getDb().outboxItems());
+  const stuck = useLocal(() => getDb().stuckUploads(LIMITS.photos.maxUploadAttempts));
   const plots = useLocal(() => getDb().plots());
   const sync = useSyncStatus();
   const [progress, setProgress] = useState<Record<string, number>>({});
@@ -99,7 +100,11 @@ export default function More() {
 
       <Text style={st.section}>{t("app.syncTitle")}</Text>
       <Row title={t("app.lastSyncAt", { when: lastSync })} subtitle={sync.pending > 0 ? t("app.pendingCount", { n: sync.pending }) : t("app.allSent")} onPress={syncNow} />
-      <Outbox items={outbox} plotName={(id) => plots.find((p) => p.id === id)?.name} wifiOnly={wifiOnly} />
+      <Outbox items={outbox} plotName={(id) => plots.find((p) => p.id === id)?.name} wifiOnly={wifiOnly} error={sync.error} stuck={stuck} />
+      <View style={st.switchRow}>
+        <Text style={[T.body, { flex: 1 }]}>{t("app.photosWifiOnly")}</Text>
+        <Switch value={wifiOnly} accessibilityLabel={t("app.photosWifiOnly")} onValueChange={(v) => (setWifiOnly(v), getDb().setKv("photos_wifi_only", v ? "1" : "0"))} trackColor={{ true: C.accion }} />
+      </View>
       {rejected.map((r) => (
         <View key={r.mutationId} style={st.rejected}>
           <Text style={[T.bodyMedium, { color: C.peligro }]}>{t("app.rejected")}</Text>
@@ -134,11 +139,6 @@ export default function More() {
       {farms.length > 1 && plan.farms.length === 0 && plan.withoutImagery < farms.length && <Text style={[T.small, { paddingVertical: 8 }]}>{t("app.offlineAllReady")}</Text>}
 
       <Storage />
-
-      <View style={[st.switchRow]}>
-        <Text style={[T.body, { flex: 1 }]}>{t("app.photosWifiOnly")}</Text>
-        <Switch value={wifiOnly} onValueChange={(v) => (setWifiOnly(v), getDb().setKv("photos_wifi_only", v ? "1" : "0"))} trackColor={{ true: C.accion }} />
-      </View>
 
       <View style={st.switchRow}>
         <View style={{ flex: 1 }}>
@@ -209,25 +209,54 @@ const size = (bytes: number) => (bytes >= 1e6 ? `${(bytes / 1e6).toLocaleString(
 const when = (ms: number) => new Date(ms).toLocaleString("es-PY", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false });
 
 /** Cola de envío (F-18): qué falta mandar, cuánto pesan las fotos y cómo mandarlo ya. */
-function Outbox({ items, plotName, wifiOnly }: { items: OutboxItem[]; plotName: (id: string | null) => string | undefined; wifiOnly: boolean }) {
+function Outbox({
+  items,
+  plotName,
+  wifiOnly,
+  error,
+  stuck,
+}: {
+  items: OutboxItem[];
+  plotName: (id: string | null) => string | undefined;
+  wifiOnly: boolean;
+  error: string | null;
+  stuck: { n: number; bytes: number };
+}) {
   const photoBytes = items.reduce((a, i) => a + i.photoBytes, 0);
+  const retryStuck = () => {
+    getDb().retryStuckUploads(LIMITS.photos.maxUploadAttempts);
+    localChanged();
+    void syncNow();
+  };
   const label = (i: OutboxItem) =>
     i.what === "record_delete" ? t("app.outboxRecordDelete") : i.what === "task" ? t("app.outboxTask") : i.what === "poi" ? t("app.outboxPoi") : i.what === "plot" ? t("app.outboxPlot") : i.recordKind ? t(`recordKinds.${i.recordKind}` as MessageKey) : t("app.outboxPhotosOnly");
   return (
     <View style={{ marginTop: 8 }}>
       <Text style={st.sub}>{t("app.outboxTitle")}</Text>
-      {items.length === 0 && <Text style={[T.small, { paddingVertical: 8 }]}>{t("app.outboxEmpty")}</Text>}
+      {items.length === 0 && stuck.n === 0 && <Text style={[T.small, { paddingVertical: 8 }]}>{t("app.outboxEmpty")}</Text>}
+      {items.length > 0 && (
+        <Text style={[T.smallMedium, { paddingVertical: 6 }]}>
+          {photoBytes > 0 ? t("app.outboxSummary", { n: items.length, size: size(photoBytes) }) : t("app.outboxSummaryNoPhotos", { n: items.length })}
+        </Text>
+      )}
+      {error && <Text style={[T.small, { color: C.peligro, paddingVertical: 4 }]}>{error === "cpu" ? t("app.outboxErrorCpu") : t("app.outboxError")}</Text>}
       {items.slice(0, OUTBOX_SHOWN).map((i) => (
         <Row
           key={i.id}
           title={label(i)}
-          subtitle={[plotName(i.plotId), when(i.at), i.photos > 0 ? t("app.outboxPhotoSize", { n: i.photos, size: size(i.photoBytes) }) : null].filter(Boolean).join(" · ")}
+          subtitle={[plotName(i.plotId), when(i.at), i.photos > 0 ? t("app.outboxPhotoSize", { n: i.photos, size: size(i.photoBytes) }) : null, i.photos > 0 && wifiOnly ? t("app.outboxWaitingWifi") : null].filter(Boolean).join(" · ")}
         />
       ))}
       {items.length > OUTBOX_SHOWN && <Text style={[T.small, { paddingVertical: 8 }]}>{t("app.outboxMore", { n: items.length - OUTBOX_SHOWN })}</Text>}
+      {stuck.n > 0 && (
+        <>
+          <Text style={[T.small, { paddingVertical: 6 }]}>{t("app.outboxStuck", { n: stuck.n, size: size(stuck.bytes) })}</Text>
+          <Button kind="secondary" title={t("app.outboxStuckRetry")} onPress={retryStuck} style={{ marginTop: 4 }} />
+        </>
+      )}
       {items.length > 0 && (
         <>
-          <Button kind="secondary" title={t("app.outboxSendNow")} onPress={syncNow} style={{ marginTop: 12 }} />
+          <Button kind="secondary" title={error ? t("app.outboxRetry") : t("app.outboxSendNow")} onPress={syncNow} style={{ marginTop: 12 }} />
           {photoBytes > 0 && wifiOnly && (
             <>
               <Button kind="text" title={t("app.outboxSendMobile")} onPress={syncNowMobileData} style={{ marginTop: 4 }} />

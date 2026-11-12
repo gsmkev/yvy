@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   HEALTH_REASONS,
+  IRRIGATION_METHODS,
   SUPPLEMENT_TYPES,
   REPRO_EVENTS,
   SERVICE_METHODS,
@@ -129,6 +130,11 @@ const FIELDS: Record<RecordKind, FieldDef[]> = {
     { key: "dose", label: f("dose"), type: "text", optional: true },
     ...HERD_FIELDS("counts"),
     { key: "tag", label: f("tag"), type: "text", optional: true },
+    NOTE,
+  ],
+  irrigation: [
+    { key: "mm", label: f("irrigationMm"), type: "number" },
+    { key: "method", label: f("irrigationMethod"), type: "select", options: opts("irrigationMethod", IRRIGATION_METHODS) },
     NOTE,
   ],
   fuel_load: [

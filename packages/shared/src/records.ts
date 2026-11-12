@@ -168,6 +168,7 @@ export const productDose = z.object({
 /** Fertilizante: siempre kg/ha. */
 export const fertilizerDose = productDose.extend({ unit: z.literal("kg_ha") });
 export const HARVEST_DESTINATIONS = ["silo", "acopio", "industry", "other"] as const;
+export const IRRIGATION_METHODS = ["pivot", "sprinkler", "drip", "furrow", "flood"] as const;
 export const FERT_METHODS = ["broadcast", "banded", "foliar", "fertigation"] as const;
 export type ProductDose = z.infer<typeof productDose>;
 
@@ -272,6 +273,16 @@ export const recordDataSchemas = {
     .refine((d) => d.density === undefined || d.densityUnit !== undefined, {
       message: "Indicá la unidad de la densidad",
     }),
+  /**
+   * Riego (A-43): lámina aplicada en el lote (records.plot_id), en mm sobre toda su superficie. `appliedAt` (epoch ms)
+   * es cuándo se regó; si falta, vale capturedAt. Entra al balance hídrico del lote.
+   */
+  irrigation: z.object({
+    mm: z.number().positive().max(LIMITS.irrigation.maxMm),
+    appliedAt: z.number().int().nonnegative().optional(),
+    method: z.enum(IRRIGATION_METHODS),
+    note,
+  }),
   fertilization: z.object({
     seasonId,
     orderTaskId,

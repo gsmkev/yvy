@@ -1,5 +1,5 @@
 /**
- * Balance hídrico simple por lote (C-08): lluvia (CHIRPS) menos el consumo del cultivo (ETc).
+ * Balance hídrico simple por lote (C-08, A-43): lluvia (CHIRPS) más riego aplicado menos el consumo del cultivo (ETc).
  * La evapotranspiración de referencia (ET0) sale de la temperatura mínima y máxima de NASA POWER con Hargreaves-Samani
  * (FAO-56) y se multiplica por el coeficiente del cultivo (Kc) según los días desde la siembra.
  * Es un balance de entradas y salidas, sin suelo ni escorrentía: sirve para ver la tendencia de estrés, no para regar.
@@ -65,49 +65,79 @@ export interface BalanceDay {
 export type StressRisk = "low" | "medium" | "high";
 
 export interface WaterBalanceResult {
-  /** Días con lluvia y temperatura (los únicos que entran al balance). */
+  /** Días con lluvia (los únicos que entran al balance); con `keepWithoutEt`, también los que no tienen temperatura. */
   days: number;
   rainMm: number;
+  /** Riego aplicado en esos días (A-43). */
+  irrigationMm: number;
   etcMm: number;
+  /** Días del balance sin temperatura: no restan consumo, así que el balance de esos días es solo lluvia más riego. */
+  etMissingDays: number;
   balanceMm: number;
   /** Balance de los últimos 14 días completos. */
   balance14Mm: number | null;
+  /** Sin riesgo cuando algún día reciente no tiene consumo estimado: el número sería optimista. */
   risk: StressRisk | null;
-  series: { date: string; rainMm: number; etcMm: number; cumMm: number }[];
+  series: { date: string; rainMm: number; irrigationMm: number; etcMm: number | null; cumMm: number }[];
+}
+
+export interface WaterBalanceOptions {
+  /** Riego aplicado por fecha (mm). */
+  irrigation?: Record<string, number>;
+  /** Cuenta los días con lluvia pero sin temperatura (sin restar consumo) en vez de descartarlos. */
+  keepWithoutEt?: boolean;
 }
 
 /**
- * Balance diario desde la siembra. Un día sin lluvia o sin temperatura no cuenta (no se supone 0 mm): CHIRPS preliminar
- * llega con unos días de atraso. `days` debe venir ordenado por fecha y empezar en la siembra o después.
+ * Balance diario desde la siembra: lluvia + riego - consumo. Un día sin lluvia no cuenta (no se supone 0 mm): CHIRPS
+ * preliminar llega con unos días de atraso. Un día sin temperatura se descarta, salvo con `keepWithoutEt`, que lo cuenta
+ * sin consumo y lo declara en `etMissingDays`. `days` debe venir ordenado por fecha y empezar en la siembra o después.
  */
-export function waterBalance(days: BalanceDay[], crop: Crop, sowingDate: string, latDeg: number): WaterBalanceResult | null {
+export function waterBalance(
+  days: BalanceDay[],
+  crop: Crop,
+  sowingDate: string,
+  latDeg: number,
+  opts: WaterBalanceOptions = {},
+): WaterBalanceResult | null {
   if (!CROP_KC[crop]) return null;
   const sow = Date.parse(`${sowingDate}T00:00:00Z`);
   const series: WaterBalanceResult["series"] = [];
+  const missing: boolean[] = [];
   let cum = 0;
   let rainMm = 0;
+  let irrMm = 0;
   let etcMm = 0;
   for (const d of days) {
-    if (d.date < sowingDate || d.rainMm === null || d.tminC === null || d.tmaxC === null) continue;
+    if (d.date < sowingDate || d.rainMm === null) continue;
+    const noEt = d.tminC === null || d.tmaxC === null;
+    if (noEt && !opts.keepWithoutEt) continue;
     const kc = cropKc(crop, Math.round((Date.parse(`${d.date}T00:00:00Z`) - sow) / 86_400_000));
     if (kc === null) continue;
-    const etc = et0Hargreaves(d.tminC, d.tmaxC, latDeg, dayOfYearIso(d.date)) * kc;
-    cum += d.rainMm - etc;
+    const etc = noEt ? null : et0Hargreaves(d.tminC!, d.tmaxC!, latDeg, dayOfYearIso(d.date)) * kc;
+    const irr = opts.irrigation?.[d.date] ?? 0;
+    cum += d.rainMm + irr - (etc ?? 0);
     rainMm += d.rainMm;
-    etcMm += etc;
-    series.push({ date: d.date, rainMm: round1(d.rainMm), etcMm: round1(etc), cumMm: round1(cum) });
+    irrMm += irr;
+    etcMm += etc ?? 0;
+    missing.push(noEt);
+    series.push({ date: d.date, rainMm: round1(d.rainMm), irrigationMm: round1(irr), etcMm: etc === null ? null : round1(etc), cumMm: round1(cum) });
   }
   if (!series.length) return null;
-  const last = series.slice(-LIMITS.waterBalance.recentDays);
-  const balance14 = last.length >= LIMITS.waterBalance.recentDays ? last.reduce((a, x) => a + x.rainMm - x.etcMm, 0) : null;
   const L = LIMITS.waterBalance;
+  const last = series.slice(-L.recentDays);
+  const lastMissing = missing.slice(-L.recentDays);
+  const full = last.length >= L.recentDays && !lastMissing.some(Boolean);
+  const balance14 = last.length >= L.recentDays ? last.reduce((a, x) => a + x.rainMm + x.irrigationMm - (x.etcMm ?? 0), 0) : null;
   return {
     days: series.length,
     rainMm: round1(rainMm),
+    irrigationMm: round1(irrMm),
     etcMm: round1(etcMm),
-    balanceMm: round1(rainMm - etcMm),
+    etMissingDays: missing.filter(Boolean).length,
+    balanceMm: round1(rainMm + irrMm - etcMm),
     balance14Mm: balance14 === null ? null : round1(balance14),
-    risk: balance14 === null ? null : balance14 <= L.highRiskMm ? "high" : balance14 <= L.mediumRiskMm ? "medium" : "low",
+    risk: !full || balance14 === null ? null : balance14 <= L.highRiskMm ? "high" : balance14 <= L.mediumRiskMm ? "medium" : "low",
     series,
   };
 }

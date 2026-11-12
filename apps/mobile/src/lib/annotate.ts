@@ -3,7 +3,7 @@
  * Cada tipo de registro es una lista corta de pasos; los datos se arman al final y se validan con
  * el esquema compartido (packages/shared/src/records.ts), que es la única fuente de verdad.
  */
-import { EXTRA_PREFIX, type FormField, REPRO_EVENTS, SERVICE_METHODS, ANIMAL_TAG_RE, SUPPLEMENT_TYPES, CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
+import { LIMITS, IRRIGATION_METHODS, EXTRA_PREFIX, type FormField, REPRO_EVENTS, SERVICE_METHODS, ANIMAL_TAG_RE, SUPPLEMENT_TYPES, CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
 
 /** Lo que el flujo necesita saber del campo para decidir qué preguntar. */
 export interface FlowCtx {
@@ -243,6 +243,12 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     { key: "areaHa", kind: "number", question: "app.areaDoneQuestion", hint: "app.areaDoneHint", unit: "ha", max: 100_000, optional: true },
     { key: "note", kind: "text", question: "app.addNote", optional: true },
   ],
+  // Riego (A-43): la lámina y el método; la fecha es la de la carga (appliedAt, en annotate/index.tsx).
+  irrigation: [
+    { key: "mm", kind: "number", question: "app.irrigationMmQuestion", hint: "app.irrigationMmHint", unit: "mm", max: LIMITS.irrigation.maxMm },
+    { key: "method", kind: "choice", question: "app.irrigationMethodQuestion", options: IRRIGATION_METHODS.map((v) => ({ value: v, label: `fields.irrigationMethod_${v}` })) },
+    { key: "note", kind: "text", question: "app.addNote", optional: true },
+  ],
   // Combustible (E-16): máquina, litros y horómetro. El ERP descuenta el stock y carga el costo.
   fuel_load: [
     { key: "machineId", kind: "machine", question: "app.fuelMachineQuestion", otherLabel: "app.fuelMachineOther", skipIf: (_a, ctx) => !ctx.machines },
@@ -312,8 +318,8 @@ export const KINDS_FOR = (plotKind: "crop" | "pasture" | null): RecordKind[] =>
   plotKind === "pasture"
     ? ["pasture_status", "herd_count", "herd_move", "mortality", "theft", "supplement", "weighing", "reproduction", "health", "rain", "water", "pest", "scouting", "note"]
     : plotKind === "crop"
-      ? ["scouting", "pest", "crop_status", "application", "fertilization", "sowing", "harvest", "fuel_load", "rain", "water", "note"]
-      : ["rain", "scouting", "water", "weighing", "reproduction", "health", "note", "pest", "crop_status", "pasture_status", "application", "fertilization", "sowing", "harvest", "fuel_load"];
+      ? ["scouting", "pest", "crop_status", "application", "fertilization", "irrigation", "sowing", "harvest", "fuel_load", "rain", "water", "note"]
+      : ["rain", "scouting", "water", "weighing", "reproduction", "health", "note", "pest", "crop_status", "pasture_status", "application", "fertilization", "irrigation", "sowing", "harvest", "fuel_load"];
 
 /** Registros de hacienda: son de un solo potrero, no se cargan en varios a la vez (F-10). */
 export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count", "herd_move", "mortality", "theft", "supplement", "weighing", "reproduction", "health"];

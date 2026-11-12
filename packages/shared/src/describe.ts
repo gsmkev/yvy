@@ -18,6 +18,10 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
     case "rain":
       if (typeof d.mm === "number") parts.push(`${d.mm} mm`);
       break;
+    case "irrigation":
+      if (typeof d.mm === "number") parts.push(t("fields.mmValue", { n: dec(d.mm) }));
+      if (str("method")) parts.push(tr(`fields.irrigationMethod_${d.method}`, String(d.method)).toLowerCase());
+      break;
     case "pest":
       if (str("pest")) parts.push(tr(`fields.pest_${d.pest}`, String(d.pest)));
       if (str("intensity"))

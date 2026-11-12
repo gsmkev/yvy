@@ -52,4 +52,20 @@ describe("balance hídrico (C-08)", () => {
     // menos de 14 días: sin riesgo
     expect(waterBalance(days(10, 5), "soja", "2026-12-01", -27)!.risk).toBeNull();
   });
+
+  it("A-43: el riego suma al balance y sin temperatura queda solo lluvia más riego", () => {
+    const d = days(20, 0);
+    const dry = waterBalance(d, "soja", "2026-12-01", -27)!;
+    const irrigated = waterBalance(d, "soja", "2026-12-01", -27, { irrigation: { "2026-12-05": 30, "2026-12-19": 20 } })!;
+    expect(irrigated.irrigationMm).toBe(50);
+    expect(irrigated.balanceMm).toBeCloseTo(dry.balanceMm + 50, 1);
+    expect(irrigated.series[4]!.irrigationMm).toBe(30);
+    expect(irrigated.balance14Mm).toBeCloseTo(dry.balance14Mm! + 20, 1);
+    // sin temperatura: con keepWithoutEt el día cuenta sin consumo y no hay riesgo; sin la opción se descarta
+    const noTemp = d.map((x) => ({ ...x, tminC: null, tmaxC: null }));
+    expect(waterBalance(noTemp, "soja", "2026-12-01", -27)).toBeNull();
+    const rainOnly = waterBalance(noTemp, "soja", "2026-12-01", -27, { irrigation: { "2026-12-05": 30 }, keepWithoutEt: true })!;
+    expect(rainOnly).toMatchObject({ days: 20, etMissingDays: 20, etcMm: 0, irrigationMm: 30, balanceMm: 30, risk: null });
+    expect(rainOnly.series[0]!.etcMm).toBeNull();
+  });
 });

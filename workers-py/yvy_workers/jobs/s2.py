@@ -24,8 +24,10 @@ from rasterio.vrt import WarpedVRT
 from shapely.geometry.base import BaseGeometry
 
 from ..geo import load, to_crs, utm_crs
+from .problems import find_problem_areas
 from ..ingest import IngestClient
 from ..storage import upload_tiles
+from .constants import BASEMAP_DAYS, DAILY_DAYS
 from ..tiles import ndvi_rgba, write_pmtiles
 
 log = logging.getLogger(__name__)
@@ -38,6 +40,8 @@ SCL_INVALID = (0, 1, 3, 8, 9, 10, 11)
 MIN_VALID_PCT = 60.0  # RF-51
 MAX_SCENE_CLOUD = 80.0
 RES = 10.0
+MAX_ITEMS = 400  # 180 días x 2 satélites x hasta 3 teselas MGRS entran de sobra
+THIN_PLOT_M = 30.0  # S-11: un lote más angosto que esto casi no tiene píxeles de 10 m "puros"
 ATTRIBUTION = "Contiene datos modificados de Copernicus Sentinel"
 
 
@@ -50,6 +54,10 @@ class Grid:
     farm: BaseGeometry  # en crs
     plots: list[tuple[str, BaseGeometry]]  # en crs
 
+
+# Mapa base con contexto: 3 km alrededor de la estancia (con 1 km una estancia chica se veía como un recorte aislado)
+BASEMAP_BUFFER_M = 3000.0
+BASEMAP_MARGIN_DEG = 0.03
 
 def make_grid(geom: dict[str, Any], buffer_m: float = 200.0) -> Grid:
     farm_wgs = load(geom["farm"])
@@ -113,11 +121,21 @@ def compute_ndvi(red: np.ndarray, nir: np.ndarray, valid: np.ndarray) -> tuple[n
     return np.where(ok, ndvi, np.nan), ok
 
 
-def plot_stats(ndvi: np.ndarray, ok: np.ndarray, grid: Grid) -> list[dict[str, Any]]:
-    """Media, p10, p90 y % de píxeles válidos por lote. Descarta lotes con < 60 % válido (RF-51)."""
+def is_thin(geom: BaseGeometry, width_m: float = THIN_PLOT_M) -> bool:
+    """S-11: ¿el lote es más angosto que `width_m` en algún tramo? (geom en metros): si no sobrevive a un retroceso de medio ancho."""
+    return geom.buffer(-width_m / 2).is_empty
+
+
+def plot_stats(ndvi: np.ndarray, ok: np.ndarray, grid: Grid, idx: str = "ndvi") -> list[dict[str, Any]]:
+    """Media, p10, p90 y % de píxeles válidos por lote. Descarta lotes con < 60 % válido (RF-51).
+
+    Los lotes de menos de 30 m de ancho usan todos los píxeles que toca el polígono (si no, quedan sin ninguno) y
+    se marcan `lowConfidence`: esos píxeles mezclan el lote con lo de al lado (S-11).
+    """
     out = []
     for plot_id, geom in grid.plots:
-        inside = geometry_mask([geom], out_shape=(grid.height, grid.width), transform=grid.transform, invert=True, all_touched=False)
+        thin = is_thin(geom)
+        inside = geometry_mask([geom], out_shape=(grid.height, grid.width), transform=grid.transform, invert=True, all_touched=thin)
         total = int(inside.sum())
         if total == 0:
             continue
@@ -128,7 +146,8 @@ def plot_stats(ndvi: np.ndarray, ok: np.ndarray, grid: Grid) -> list[dict[str, A
         out.append(
             {
                 "plotId": plot_id,
-                "idx": "ndvi",
+                "idx": idx,
+                "lowConfidence": thin,
                 "mean": round(float(np.mean(vals)), 4),
                 "p10": round(float(np.percentile(vals, 10)), 4),
                 "p90": round(float(np.percentile(vals, 90)), 4),
@@ -148,7 +167,7 @@ def search(bbox: list[float], start: datetime, end: datetime, max_cloud: float) 
         datetime=f"{start.isoformat()}/{end.isoformat()}",
         query={"eo:cloud_cover": {"lt": max_cloud}},
         sortby=[{"field": "properties.datetime", "direction": "asc"}],
-        max_items=200,
+        max_items=MAX_ITEMS,
     ).item_collection_as_dict()["features"]
     return items
 
@@ -187,7 +206,7 @@ def mosaic_ndvi(items: list[dict[str, Any]], grid: Grid) -> tuple[np.ndarray, np
     return ndvi, ok
 
 
-def s2_ingest(api: IngestClient, farm: dict[str, Any], days: int = 10, upload: bool = True) -> dict[str, int]:
+def s2_ingest(api: IngestClient, farm: dict[str, Any], days: int = DAILY_DAYS, upload: bool = True) -> dict[str, int]:
     """Procesa las pasadas nuevas de los últimos `days` días para una estancia."""
     end = datetime.now(timezone.utc)
     items = search(farm_bbox(farm), end - timedelta(days=days), end, MAX_SCENE_CLOUD)
@@ -196,12 +215,13 @@ def s2_ingest(api: IngestClient, farm: dict[str, Any], days: int = 10, upload: b
         return {"scenes": 0, "stats": 0}
     grid = make_grid(geom)
     farm_mask = geometry_mask([grid.farm], out_shape=(grid.height, grid.width), transform=grid.transform, invert=True)
-    done = {"scenes": 0, "stats": 0}
+    done = {"scenes": 0, "stats": 0, "problems": 0}
     latest_layer: tuple[int, np.ndarray, np.ndarray] | None = None
     for key, group in group_passes(items):
         acquired = _epoch_ms(group[0])
         cloud = float(np.mean([it["properties"].get("eo:cloud_cover", 0) for it in group]))
-        scene = api.scene(SOURCE, key, acquired, round(cloud, 1))
+        # La marca de "procesada" es por estancia: la misma pasada cubre a varias y cada una necesita sus estadísticas
+        scene = api.scene(SOURCE, f"{farm['id']}:{key}", acquired, round(cloud, 1))
         if scene["processed"]:
             continue
         t0 = time.time()
@@ -216,19 +236,34 @@ def s2_ingest(api: IngestClient, farm: dict[str, Any], days: int = 10, upload: b
         api.scene_processed(scene["id"])
         done["scenes"] += 1
         log.info("pasada %s (%d teselas): %d lotes, %.0f %% válido, %.1fs", key, len(group), len(stats), ok[farm_mask].mean() * 100, time.time() - t0)
-    if latest_layer and upload:
+    if latest_layer:
         acquired, ndvi, valid = latest_layer
-        publish_layer(api, farm, grid, "ndvi", acquired, ndvi_rgba(ndvi, valid))
+        done["problems"] = upload_problem_areas(api, grid, ndvi, valid, acquired)
+        if upload:
+            publish_layer(api, farm, grid, "ndvi", acquired, ndvi_rgba(ndvi, valid))
     return done
 
 
-def s2_basemap(api: IngestClient, farm: dict[str, Any], days: int = 90, upload: bool = True) -> int:
+def upload_problem_areas(api: IngestClient, grid: Grid, ndvi: np.ndarray, ok: np.ndarray, acquired: int) -> int:
+    """S-08: áreas muy por debajo de la mediana del lote en la última escena válida. Falla sin frenar el resto."""
+    try:
+        by_plot: dict[str, list[dict[str, Any]]] = {}
+        for a in find_problem_areas(ndvi, ok, grid.plots, grid.transform, grid.crs, grid.width, grid.height):
+            by_plot.setdefault(a["plotId"], []).append({k: v for k, v in a.items() if k != "plotId"})
+        # También los lotes sin áreas: así se borran las de la escena anterior
+        return sum(api.problem_areas(pid, acquired, by_plot.get(pid, [])) for pid, _ in grid.plots)
+    except Exception:
+        log.exception("áreas problema: falló")
+        return 0
+
+
+def s2_basemap(api: IngestClient, farm: dict[str, Any], days: int = BASEMAP_DAYS, upload: bool = True) -> int:
     """Compuesto mediana de color natural con baja nubosidad (RF-55). Devuelve bytes del PMTiles."""
     end = datetime.now(timezone.utc)
     items = search(farm_bbox(farm), end - timedelta(days=days), end, 30.0)[-12:]
     if not items:
         raise RuntimeError("Sin escenas con poca nubosidad en el período")
-    grid = make_grid(api.farm_geometry(farm["id"]), buffer_m=1000.0)
+    grid = make_grid(api.farm_geometry(farm["id"]), buffer_m=BASEMAP_BUFFER_M)
     stacks: dict[str, list[np.ndarray]] = {"red": [], "green": [], "blue": []}
     raw: dict[str, list[np.ndarray]] = {"red": [], "green": [], "blue": []}
     for item in items:
@@ -248,11 +283,13 @@ def s2_basemap(api: IngestClient, farm: dict[str, Any], days: int = 90, upload: 
     # Estiramiento simple 0-0,3 de reflectancia con gamma para que se vea natural
     img = np.clip(np.nan_to_num(rgb) / 0.3, 0, 1) ** (1 / 1.4) * 255
     rgba = np.concatenate([img.astype(np.uint8), np.where(alpha, 255, 0)[None].astype(np.uint8)])
-    return publish_layer(api, farm, grid, "true_color", _epoch_ms(items[-1]), rgba) if upload else 0
+    return publish_layer(api, farm, grid, "true_color", _epoch_ms(items[-1]), rgba, BASEMAP_MARGIN_DEG) if upload else 0
 
 
-def publish_layer(api: IngestClient, farm: dict[str, Any], grid: Grid, layer: str, acquired: int, rgba: np.ndarray) -> int:
-    bounds = (farm["minLon"] - 0.01, farm["minLat"] - 0.01, farm["maxLon"] + 0.01, farm["maxLat"] + 0.01)
+def publish_layer(
+    api: IngestClient, farm: dict[str, Any], grid: Grid, layer: str, acquired: int, rgba: np.ndarray, margin_deg: float = 0.01
+) -> int:
+    bounds = (farm["minLon"] - margin_deg, farm["minLat"] - margin_deg, farm["maxLon"] + margin_deg, farm["maxLat"] + margin_deg)
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / f"{layer}.pmtiles"
         size = write_pmtiles(rgba, grid.transform, grid.crs, path, bounds, f"Yvy {layer}", ATTRIBUTION)

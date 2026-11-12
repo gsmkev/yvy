@@ -372,6 +372,39 @@ export const soilSamples = sqliteTable(
   ],
 );
 
+/**
+ * Entrega de grano a un acopio o silo (A-23): ticket de balanza con humedad, descuentos y neto, por lote.
+ * Pesos en kilos. Solo la web la usa (no está en el pull del sync).
+ */
+export const grainDeliveries = sqliteTable(
+  "grain_deliveries",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    plotId: text("plot_id"),
+    seasonId: text("season_id"),
+    crop: text("crop", { enum: CROPS }).notNull(),
+    ticket: text("ticket").notNull(),
+    silo: text("silo").notNull(),
+    deliveredOn: text("delivered_on").notNull(),
+    grossKg: real("gross_kg").notNull(),
+    moisturePct: real("moisture_pct"),
+    baseMoisturePct: real("base_moisture_pct").notNull(),
+    impuritiesPct: real("impurities_pct").notNull().default(0),
+    otherKg: real("other_kg").notNull().default(0),
+    /** Calculado al guardar con grainNet (packages/shared). */
+    netKg: real("net_kg").notNull(),
+    note: text("note"),
+    ...synced,
+  },
+  (t) => [
+    index("grain_deliveries_sync_idx").on(t.organizationId, t.version, t.id),
+    index("grain_deliveries_farm_idx").on(t.farmId, t.deliveredOn),
+    index("grain_deliveries_plot_idx").on(t.plotId),
+  ],
+);
+
 export const plotAssignments = sqliteTable(
   "plot_assignments",
   {

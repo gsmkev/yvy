@@ -15,7 +15,19 @@ on:
       job:
         description: Job
         type: choice
-        options: [weekly, new_farm, s2_ingest, s2_basemap, chirps_daily, firms_hotspots, climatology_build, risk_report, weekly_report, eudr]
+        options:
+          [
+            weekly,
+            new_farm,
+            s2_ingest,
+            s2_basemap,
+            chirps_daily,
+            firms_hotspots,
+            climatology_build,
+            risk_report,
+            weekly_report,
+            eudr,
+          ]
       farm:
         description: "Id de estancia (obligatorio para new_farm; eudr: indicador de deforestación de esa estancia, vacío = todas)"
         required: false

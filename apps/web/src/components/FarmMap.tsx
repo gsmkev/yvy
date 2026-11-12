@@ -413,7 +413,13 @@ export function FarmMap(props: FarmMapProps) {
       ),
     );
     (map.getSource("heat") as GeoJSONSource).setData(
-      fc((p.heat ?? []).map((c) => ({ type: "Feature" as const, properties: {}, geometry: { type: "Point" as const, coordinates: c } }))),
+      fc(
+        (p.heat ?? []).map((c) => ({
+          type: "Feature" as const,
+          properties: {},
+          geometry: { type: "Point" as const, coordinates: c },
+        })),
+      ),
     );
     const mp = p.measurePoints ?? [];
     (map.getSource("measure") as GeoJSONSource).setData(
@@ -587,13 +593,15 @@ export function FarmMap(props: FarmMapProps) {
     };
   }, [props.editPlot?.id, mapRef.current]);
 
-  return <div
+  return (
+    <div
       ref={ref}
       role="region"
       aria-label={t("ui.mapRegion")}
       className={props.className ?? "h-full w-full"}
       data-testid="map"
-    />;
+    />
+  );
 }
 
 function syncRasters(map: MlMap, p: FarmMapProps) {

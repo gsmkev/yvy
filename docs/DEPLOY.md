@@ -224,3 +224,21 @@ email que Google verificó (no crea organizaciones; para eso está el registro).
    ```
    En desarrollo van en `apps/api/.dev.vars` (ver `.dev.vars.example`). `APP_URL` tiene que ser la dirección pública exacta.
 
+## Actualizar la app sin tienda: EAS Update (opcional, P-31)
+
+El APK se distribuye directo (sección 4), pero el **código JavaScript y los assets** se pueden actualizar sin que nadie reinstale:
+la app, al abrirse, busca una actualización y la usa la próxima vez que arranca. Sin la variable `EAS_UPDATE_URL` está apagado y
+todo sigue como antes (instalar el APK nuevo).
+
+1. En `apps/mobile`: `npx eas init` (crea el proyecto de Expo, gratis) → te da el `EAS_PROJECT_ID`.
+2. GitHub → Settings → Variables: `EAS_PROJECT_ID` y `EAS_UPDATE_URL` = `https://u.expo.dev/<EAS_PROJECT_ID>`; Secrets: `EXPO_TOKEN`
+   (Expo → Account settings → Access tokens). El workflow **APK Android** pasa `EAS_UPDATE_URL` al build, así que hay que
+   **generar un APK nuevo una vez** con la variable cargada para que ese APK sepa buscar actualizaciones.
+3. Para publicar un cambio de JavaScript: Actions → **Actualización de la app (EAS Update)** → *Run workflow* con un mensaje; o
+   `EAS_UPDATE_URL=... pnpm --filter mobile run update "qué cambia"` desde tu máquina (con `EXPO_TOKEN`).
+
+Reglas: `runtimeVersion` sigue a `version` de `apps/mobile/app.config.ts`. Una actualización solo llega a APKs de **la misma versión**.
+Si el cambio toca código nativo (un plugin o permiso nuevo, una dependencia con módulo nativo), subí `version` y publicá un APK nuevo:
+publicar una actualización incompatible con el nativo instalado podría romper la app. En desarrollo (`expo start`) no se usa.
+Canales: `production` (APK de producción) y `preview` (pruebas internas), definidos en `apps/mobile/eas.json`.
+

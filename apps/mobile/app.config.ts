@@ -2,6 +2,17 @@ import type { ExpoConfig } from "expo/config";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://10.0.2.2:8787";
 
+/**
+ * P-31: actualizaciones de la app sin pasar por la tienda (EAS Update, solo el código JavaScript y los assets).
+ * Opcional: sin `EAS_UPDATE_URL` quedan apagadas y la app se actualiza instalando el APK nuevo, como antes.
+ * `runtimeVersion` por versión de la app: una actualización solo llega a APKs de la misma `version`, así que un
+ * cambio nativo (plugin nuevo, permiso) exige subir `version` y publicar un APK nuevo. Ver docs/DEPLOY.md.
+ */
+export const updatesConfig = (env: Record<string, string | undefined>): ExpoConfig["updates"] =>
+  env.EAS_UPDATE_URL
+    ? { url: env.EAS_UPDATE_URL, enabled: true, checkAutomatically: "ON_LOAD", fallbackToCacheTimeout: 0 }
+    : { enabled: false };
+
 const config: ExpoConfig = {
   name: "Yvy",
   slug: "yvy",
@@ -44,6 +55,8 @@ const config: ExpoConfig = {
       },
     ],
   ],
+  runtimeVersion: { policy: "appVersion" },
+  updates: updatesConfig(process.env),
   experiments: { typedRoutes: false },
   extra: { apiUrl: API_URL, eas: { projectId: process.env.EAS_PROJECT_ID } },
 };

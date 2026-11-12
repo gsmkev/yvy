@@ -389,7 +389,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | P-20 | Pruebas automáticas de la app en un Android real (Maestro) | P1 | M | Falta |
 | P-21 | Pruebas de carga del sync con 10 empleados y 1.000 registros | P1 | S | Falta |
 | P-30 | Publicar en Play Store (cuenta de desarrollador) | P1 | S | Falta (cuenta) |
-| P-31 | Actualización de la app sin tienda (EAS Update) | P2 | S | Falta |
+| P-31 | Actualización de la app sin tienda (EAS Update) | P2 | S | Hecho |
 | P-32 | Versión iOS para dueños y agrónomos | P3 | M | Falta |
 
 ---

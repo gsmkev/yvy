@@ -8,6 +8,7 @@ interface MemberRow {
   activeDays7: number;
   records7d: number;
   lastSyncAt: number | null;
+  overdueTasks: number;
 }
 
 describe("T-06 · actividad por miembro en /org/members", () => {
@@ -78,5 +79,45 @@ describe("T-06 · actividad por miembro en /org/members", () => {
     const res = await call<MemberRow[]>("GET", "/org/members", { token: a.token });
     expect(res.body.every((m) => m.userId !== b.userId)).toBe(true);
     expect(res.body.find((m) => m.userId === a.userId)!.records7d).toBe(0);
+  });
+});
+
+describe("T-05 · tareas vencidas por empleado en /org/members", () => {
+  it("cuenta las abiertas vencidas (día pasado u hora límite de hoy pasada) y no las hechas, futuras ni ajenas", async () => {
+    const owner = await createOrgWithOwner();
+    const { farmId } = await createFarmWithPlots(owner.token, 1);
+    const worker = await addMemberAndLogin(owner.token, "worker");
+    const other = await addMemberAndLogin(owner.token, "worker", "Otro");
+    const day = (n: number) => localDate(Date.now() + n * 86_400_000);
+    const mk = (assigneeId: string, dueDate: string, extra: Record<string, unknown> = {}) =>
+      call<{ id: string }>("POST", "/org/tasks", {
+        token: owner.token,
+        body: { farmId, assigneeId, title: "Tarea", dueDate, ...extra },
+      });
+    await mk(worker.userId, day(-10));
+    await mk(worker.userId, day(-1));
+    await mk(worker.userId, day(1));
+    await mk(worker.userId, day(10));
+    await mk(other.userId, day(-3));
+    const done = await mk(worker.userId, day(-4));
+    const closed = await call("POST", "/sync/push", {
+      token: worker.token,
+      body: {
+        deviceId: "d1",
+        mutations: [
+          {
+            mutationId: newId(),
+            kind: "tasks.status",
+            row: { id: done.body.id, status: "done", completedAt: Date.now(), recordId: null },
+          },
+        ],
+      },
+    });
+    expect(closed.status).toBe(200);
+    const res = await call<MemberRow[]>("GET", "/org/members", { token: owner.token });
+    expect(res.status).toBe(200);
+    expect(res.body.find((m) => m.userId === worker.userId)!.overdueTasks).toBe(2);
+    expect(res.body.find((m) => m.userId === other.userId)!.overdueTasks).toBe(1);
+    expect(res.body.find((m) => m.userId === owner.userId)!.overdueTasks).toBe(0);
   });
 });

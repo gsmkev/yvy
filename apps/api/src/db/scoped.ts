@@ -7,8 +7,10 @@ import { and, asc, eq, gt, gte, inArray, isNull, or, sql, type SQL } from "drizz
 import type { AnySQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
 import {
   isFieldRole,
+  isOverdue,
   LIMITS,
   localDate,
+  localTime,
   newId,
   planLimits,
   t,
@@ -466,7 +468,7 @@ export class ScopedDb {
     const since = this.now() - 7 * 86_400_000;
     const sinceDay = localDate(this.now() - 6 * 86_400_000);
     const withPin = await this.membersWithPin();
-    const [members, days, recs, syncs] = await Promise.all([
+    const [members, days, recs, syncs, overdueRows] = await Promise.all([
       this.db
         .select({
           userId: s.users.id,
@@ -496,6 +498,7 @@ export class ScopedDb {
           sql`${s.devices.userId} IN (SELECT user_id FROM memberships WHERE organization_id = ${org} AND deleted_at IS NULL)`,
         )
         .groupBy(s.devices.userId),
+      this.overdueTasksByAssignee(),
     ]);
     const n = (rows: { userId: string; n: number }[]) => new Map(rows.map((r) => [r.userId, Number(r.n)]));
     const activeDays = n(days);
@@ -507,7 +510,43 @@ export class ScopedDb {
       activeDays7: activeDays.get(m.userId) ?? 0,
       records7d: records.get(m.userId) ?? 0,
       lastSyncAt: lastSync.get(m.userId) ?? null,
+      overdueTasks: overdueRows.get(m.userId) ?? 0,
     }));
+  }
+
+  /**
+   * T-05: tareas abiertas vencidas por empleado. Vencida = pasó el día, o es hoy y pasó la hora límite, en la hora
+   * de la estancia. Las que vencieron hace 2 días o más lo están en cualquier huso (una consulta agrupada); solo las de
+   * ayer a mañana se miran una por una con su huso.
+   */
+  private async overdueTasksByAssignee(): Promise<Map<string, number>> {
+    const now = this.now();
+    const sure = localDate(now - 2 * 86_400_000);
+    const edge = localDate(now + 86_400_000);
+    const base = and(
+      eq(s.tasks.organizationId, this.auth.orgId),
+      eq(s.tasks.status, "open"),
+      isNull(s.tasks.deletedAt),
+      this.workerFilter("tasks"),
+    );
+    const [past, near] = await Promise.all([
+      this.db
+        .select({ userId: s.tasks.assigneeId, n: sql<number>`count(*)` })
+        .from(s.tasks)
+        .where(and(base, sql`${s.tasks.dueDate} < ${sure}`))
+        .groupBy(s.tasks.assigneeId),
+      this.db
+        .select({ userId: s.tasks.assigneeId, dueDate: s.tasks.dueDate, dueTime: s.tasks.dueTime, tz: s.farms.timezone })
+        .from(s.tasks)
+        .innerJoin(s.farms, eq(s.farms.id, s.tasks.farmId))
+        .where(and(base, sql`${s.tasks.dueDate} >= ${sure}`, sql`${s.tasks.dueDate} <= ${edge}`)),
+    ]);
+    const out = new Map(past.map((r) => [r.userId, Number(r.n)]));
+    for (const t of near) {
+      if (isOverdue({ status: "open", dueDate: t.dueDate, dueTime: t.dueTime }, localDate(now, t.tz), localTime(now, t.tz)))
+        out.set(t.userId, (out.get(t.userId) ?? 0) + 1);
+    }
+    return out;
   }
 
   async addMember(input: {

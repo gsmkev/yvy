@@ -1,5 +1,6 @@
 import type { Plot, Poi } from "../lib/types";
 import { BufferPanel } from "./BufferPanel";
+import { DeliveriesPanel } from "./DeliveriesPanel";
 import { SoilPanel } from "./SoilPanel";
 import { SowingPlan } from "./SowingPlan";
 import { SowingWindow } from "./SowingWindow";
@@ -14,6 +15,7 @@ export function AgroPanel({ farmId, plots, pois }: { farmId: string; plots: Plot
       <WithdrawalPanel farmId={farmId} />
       <BufferPanel farmId={farmId} plots={plots} pois={pois} />
       <SoilPanel farmId={farmId} plots={plots} />
+      <DeliveriesPanel farmId={farmId} plots={plots} />
     </div>
   );
 }

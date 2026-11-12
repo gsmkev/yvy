@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { CROPS } from "@yvy/shared";
 import { farmSowingWindow, farmWithdrawal, plotPhenology, plotWaterBalance } from "../db/agri2";
+import { createDelivery, deleteDelivery, listDeliveries } from "../db/deliveries";
 import { createSoilSample, deleteSoilSample, listSoilSamples, updateSoilSample } from "../db/soil";
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
@@ -85,5 +86,43 @@ agri2.patch("/soil-samples/:id", async (c) => {
 
 agri2.delete("/soil-samples/:id", async (c) => {
   await deleteSoilSample(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+// ---------- A-23: entregas de grano a acopio ----------
+agri2.get("/farms/:id/deliveries", async (c) => c.json(await listDeliveries(c.var.sdb, c.req.param("id"))));
+
+agri2.post("/farms/:id/deliveries", async (c) => {
+  const b = parse(
+    z.object({
+      plotId: z.string().uuid().nullish(),
+      seasonId: z.string().uuid().nullish(),
+      crop: z.enum(CROPS),
+      ticket: z.string().trim().min(1).max(40),
+      silo: z.string().trim().min(1).max(120),
+      deliveredOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      grossKg: z.number().positive().max(1_000_000),
+      moisturePct: z.number().min(0).max(60).nullish(),
+      baseMoisturePct: z.number().min(0).max(30),
+      impuritiesPct: z.number().min(0).max(50).default(0),
+      otherKg: z.number().min(0).max(1_000_000).default(0),
+      note: z.string().trim().max(500).nullish(),
+    }),
+    await readJson(c.req),
+  );
+  return c.json(
+    await createDelivery(c.var.sdb, c.req.param("id"), {
+      ...b,
+      plotId: b.plotId ?? null,
+      seasonId: b.seasonId ?? null,
+      moisturePct: b.moisturePct ?? null,
+      note: b.note || null,
+    }),
+    201,
+  );
+});
+
+agri2.delete("/deliveries/:id", async (c) => {
+  await deleteDelivery(c.var.sdb, c.req.param("id"));
   return c.json({ ok: true });
 });

@@ -158,5 +158,9 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `soil_samples` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`plot_id` text,\n\t`point_label` text,\n\t`lon` real,\n\t`lat` real,\n\t`sampled_on` text NOT NULL,\n\t`depth_cm` integer DEFAULT 20 NOT NULL,\n\t`lab` text,\n\t`ph` real,\n\t`p_mg_kg` real,\n\t`k_cmol_kg` real,\n\t`om_pct` real,\n\t`note` text,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
   "CREATE INDEX `soil_samples_sync_idx` ON `soil_samples` (`organization_id`,`version`,`id`);",
   "CREATE INDEX `soil_samples_farm_idx` ON `soil_samples` (`farm_id`);",
-  "CREATE INDEX `soil_samples_plot_idx` ON `soil_samples` (`plot_id`);"
+  "CREATE INDEX `soil_samples_plot_idx` ON `soil_samples` (`plot_id`);",
+  "CREATE TABLE `grain_deliveries` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`plot_id` text,\n\t`season_id` text,\n\t`crop` text NOT NULL,\n\t`ticket` text NOT NULL,\n\t`silo` text NOT NULL,\n\t`delivered_on` text NOT NULL,\n\t`gross_kg` real NOT NULL,\n\t`moisture_pct` real,\n\t`base_moisture_pct` real NOT NULL,\n\t`impurities_pct` real DEFAULT 0 NOT NULL,\n\t`other_kg` real DEFAULT 0 NOT NULL,\n\t`net_kg` real NOT NULL,\n\t`note` text,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
+  "CREATE INDEX `grain_deliveries_sync_idx` ON `grain_deliveries` (`organization_id`,`version`,`id`);",
+  "CREATE INDEX `grain_deliveries_farm_idx` ON `grain_deliveries` (`farm_id`,`delivered_on`);",
+  "CREATE INDEX `grain_deliveries_plot_idx` ON `grain_deliveries` (`plot_id`);"
 ];

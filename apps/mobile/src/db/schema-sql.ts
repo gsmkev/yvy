@@ -228,5 +228,8 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `account_map` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`key` text NOT NULL,\n\t`code` text NOT NULL,\n\t`name` text NOT NULL,\n\t`updated_by` text NOT NULL,\n\t`updated_at` integer NOT NULL\n);",
   "CREATE UNIQUE INDEX `account_map_key_uq` ON `account_map` (`organization_id`,`key`);",
   "ALTER TABLE `warehouses` ADD `version` integer DEFAULT 0 NOT NULL;",
-  "CREATE INDEX `warehouses_sync_idx` ON `warehouses` (`organization_id`,`version`,`id`);"
+  "CREATE INDEX `warehouses_sync_idx` ON `warehouses` (`organization_id`,`version`,`id`);",
+  "CREATE TABLE `custom_layers` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`kind` text NOT NULL,\n\t`status` text NOT NULL,\n\t`mime` text NOT NULL,\n\t`original_path` text NOT NULL,\n\t`image_path` text,\n\t`image_mime` text,\n\t`bytes` integer NOT NULL,\n\t`corners` text,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
+  "CREATE INDEX `custom_layers_sync_idx` ON `custom_layers` (`organization_id`,`version`,`id`);",
+  "CREATE INDEX `custom_layers_farm_idx` ON `custom_layers` (`farm_id`,`status`);"
 ];

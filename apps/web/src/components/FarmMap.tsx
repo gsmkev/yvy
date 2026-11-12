@@ -51,6 +51,8 @@ export interface FarmMapProps {
   layers?: Layer[];
   /** M-16: límites administrativos (geoBoundaries); sin datos, la capa no existe. */
   boundaries?: FeatureCollection | null;
+  /** M-17: imágenes propias georreferenciadas (url local), de abajo hacia arriba. */
+  customImages?: { id: string; url: string; corners: [number, number][]; opacity: number }[];
   tilesBaseUrl?: string;
   showNdvi?: boolean;
   /** S-07: índice que muestra la capa de vigor (NDVI por defecto). */
@@ -362,6 +364,7 @@ export function FarmMap(props: FarmMapProps) {
       ]),
     );
     syncBoundaries(map, p.boundaries ?? null);
+    syncCustomImages(map, p.customImages ?? []);
     // Nombres sobre el mapa (marcadores HTML: no dependen de un servidor de fuentes)
     for (const m of labelsRef.current) m.remove();
     const plotsShown = (p.plots ?? []).filter((pl) => pl.id !== p.editPlot?.id);
@@ -474,6 +477,7 @@ export function FarmMap(props: FarmMapProps) {
     props.editPlot?.id,
     props.layers,
     props.boundaries,
+    props.customImages,
     props.showNdvi,
     props.indexKind,
     props.layerIds,
@@ -645,6 +649,28 @@ function syncBoundaries(map: MlMap, data: FeatureCollection | null) {
     },
     before,
   );
+}
+
+/** M-17: cada imagen propia es una fuente `image` con sus 4 esquinas; se quitan las que ya no están activas. */
+function syncCustomImages(map: MlMap, images: NonNullable<FarmMapProps["customImages"]>) {
+  const want = new Set(images.map((i) => `custom-${i.id}`));
+  for (const l of map.getStyle().layers ?? [])
+    if (l.id.startsWith("custom-") && !want.has(l.id)) {
+      map.removeLayer(l.id);
+      if (map.getSource(l.id)) map.removeSource(l.id);
+    }
+  for (const img of images) {
+    const id = `custom-${img.id}`;
+    const src = map.getSource(id) as { url?: string; updateImage?: (o: { url: string; coordinates: number[][] }) => void } | undefined;
+    if (src && src.url !== img.url) {
+      map.removeLayer(id);
+      map.removeSource(id);
+    }
+    if (!map.getSource(id)) {
+      map.addSource(id, { type: "image", url: img.url, coordinates: img.corners as [[number, number], [number, number], [number, number], [number, number]] });
+      map.addLayer({ id, type: "raster", source: id, paint: { "raster-opacity": img.opacity, "raster-fade-duration": 0 } }, map.getLayer("outline") ? "outline" : undefined);
+    } else map.setPaintProperty(id, "raster-opacity", img.opacity);
+  }
 }
 
 function syncRasters(map: MlMap, p: FarmMapProps) {

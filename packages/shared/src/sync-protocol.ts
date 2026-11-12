@@ -27,14 +27,22 @@ export const recordRow = z.object({
   capturedAt: epochMs,
 });
 
-export const attachmentRow = z.object({
-  id: uuid,
-  recordId: uuid,
-  mime: z.literal("image/webp"),
-  width: z.number().int().positive().max(LIMITS.photos.maxLongSidePx).nullable(),
-  height: z.number().int().positive().max(LIMITS.photos.maxLongSidePx).nullable(),
-  bytes: z.number().int().positive().max(LIMITS.photos.maxBytes).nullable(),
-});
+/** Tipos de adjunto: foto WebP (con miniatura) o nota de voz m4a (F-09, sin miniatura). */
+export const ATTACHMENT_MIMES = ["image/webp", LIMITS.audio.mime] as const;
+export const isAudioMime = (mime: string): boolean => mime === LIMITS.audio.mime;
+
+export const attachmentRow = z
+  .object({
+    id: uuid,
+    recordId: uuid,
+    mime: z.enum(ATTACHMENT_MIMES),
+    width: z.number().int().positive().max(LIMITS.photos.maxLongSidePx).nullable(),
+    height: z.number().int().positive().max(LIMITS.photos.maxLongSidePx).nullable(),
+    bytes: z.number().int().positive().max(Math.max(LIMITS.photos.maxBytes, LIMITS.audio.maxBytes)).nullable(),
+  })
+  .refine((a) => a.bytes === null || a.bytes <= (isAudioMime(a.mime) ? LIMITS.audio.maxBytes : LIMITS.photos.maxBytes), {
+    message: "Adjunto demasiado grande",
+  });
 
 /** Desde el celular las tareas solo cambian de estado (PRD §11). */
 export const taskStatusRow = z.object({
@@ -42,6 +50,23 @@ export const taskStatusRow = z.object({
   status: z.enum(TASK_STATUS),
   completedAt: epochMs.nullable(),
   recordId: uuid.nullable(),
+});
+
+/** Tilde de un ítem de la lista de verificación de una tarea (F-15). */
+export const taskCheckRow = z.object({
+  id: uuid,
+  itemId: z.string().min(1).max(24),
+  done: z.boolean(),
+});
+
+/** Punto de interés marcado desde el celular (PRD §11: solo roles que no son `worker`). */
+export const poiRow = z.object({
+  id: uuid,
+  farmId: uuid,
+  kind: z.enum(POI_KINDS),
+  name: z.string().trim().min(1).max(LIMITS.sync.maxPoiNameLength),
+  lon,
+  lat,
 });
 
 const base = { mutationId: uuid };
@@ -53,6 +78,8 @@ export const mutation = z.discriminatedUnion("kind", [
   z.object({ ...base, kind: z.literal("attachments.upsert"), row: attachmentRow }),
   z.object({ ...base, kind: z.literal("attachments.delete"), row: del }),
   z.object({ ...base, kind: z.literal("tasks.status"), row: taskStatusRow }),
+  z.object({ ...base, kind: z.literal("tasks.check"), row: taskCheckRow }),
+  z.object({ ...base, kind: z.literal("pois.upsert"), row: poiRow }),
 ]);
 export type Mutation = z.infer<typeof mutation>;
 export type MutationKind = Mutation["kind"];
@@ -92,6 +119,11 @@ export const PULL_TABLES = [
   "alerts",
   "plot_index_stats",
   "farm_layers",
+  "seasons",
+  "plot_seasons",
+  "products",
+  "machines",
+  "animals",
 ] as const;
 export type PullTable = (typeof PULL_TABLES)[number];
 
@@ -105,6 +137,8 @@ export const ASSIGNMENT_SCOPED_TABLES: readonly PullTable[] = [
   "attachments",
   "alerts",
   "farm_layers",
+  "plot_seasons",
+  "animals",
 ];
 
 export const cursor = z.object({ version: z.number().int().nonnegative(), id: z.string() });

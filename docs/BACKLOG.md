@@ -295,7 +295,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | S-07 | Otros índices: NDRE (nitrógeno), NDMI (humedad), EVI | Más diagnóstico | Jobs, Web | P2 | M | Falta |
 | S-08 | Áreas problema dentro del lote (pixeles muy por debajo de la mediana) marcadas para ir a ver | Recorrida dirigida | Jobs, Web, App | P1 | M | Hecho (web; en la app llega por S-09) |
 | S-09 | Enviar esas áreas como tarea al empleado con el punto en la app | Del satélite al campo | Web, App | P1 | S | Hecho |
-| S-10 | Animación de la campaña (timelapse) | Impacto en presentaciones | Web | P3 | M | Falta |
+| S-10 | Animación de la campaña (timelapse) | Impacto en presentaciones | Web | P3 | M | Hecho |
 | S-11 | Lotes finos: usar todos los pixeles tocados o avisar que el dato no es confiable | Calidad | Jobs | P2 | S | Falta |
 | S-12 | Imágenes en días nublados con Sentinel-1 radar (necesita ADR) | Verano lluvioso | Jobs | P3 | L | Falta |
 | S-20 | Área quemada después de un foco de fuego | Pérdidas en el Chaco | Jobs, Web | P2 | M | Falta |

@@ -1,7 +1,8 @@
 /** Elegir la fecha de la imagen y comparar dos fechas con una cortina (S-04). */
+import { useEffect, useState } from "react";
 import { fmtDate } from "../lib/format";
-import { t } from "../lib/i18n";
-import { layerDates, type Camera } from "../lib/scenes";
+import { t, tk } from "../lib/i18n";
+import { layerDates, nextFrame, TIMELAPSE_SPEEDS, timelapseFrames, type Camera } from "../lib/scenes";
 import type { Layer } from "../lib/types";
 import { FarmMap, type FarmMapProps } from "./FarmMap";
 
@@ -33,6 +34,60 @@ function DatePick({
   );
 }
 
+/** S-10: reproduce las fechas con imagen en orden, con play/pausa y velocidad. Cada cuadro elige la fecha del mapa. */
+function Timelapse({ frames, onPick, onClose }: { frames: Layer[]; onPick: (id: string) => void; onClose: () => void }) {
+  const [i, setI] = useState(0);
+  const [playing, setPlaying] = useState(true);
+  const [speed, setSpeed] = useState<(typeof TIMELAPSE_SPEEDS)[number]["key"]>("normal");
+  const ms = TIMELAPSE_SPEEDS.find((s) => s.key === speed)!.ms;
+  useEffect(() => {
+    if (!playing) return;
+    const timer = setInterval(() => setI((c) => nextFrame(c, frames.length)), ms);
+    return () => clearInterval(timer);
+  }, [playing, ms, frames.length]);
+  const frame = frames[Math.min(i, frames.length - 1)]!;
+  useEffect(() => onPick(frame.id), [frame.id]);
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="num text-sm font-medium" aria-live="off">
+        {fmtDate(frame.acquiredAt)}
+      </p>
+      <input
+        type="range"
+        min={0}
+        max={frames.length - 1}
+        value={i}
+        aria-label={t("ui.timelapseFrame", { n: i + 1, total: frames.length })}
+        onChange={(e) => {
+          setPlaying(false);
+          setI(Number(e.target.value));
+        }}
+        className="accent-[#7A9A3F]"
+      />
+      <div className="flex items-center gap-3">
+        <button className="cursor-pointer font-medium underline-offset-4 hover:underline" onClick={() => setPlaying(!playing)}>
+          {playing ? t("ui.timelapsePause") : t("ui.timelapsePlay")}
+        </button>
+        <select
+          aria-label={t("ui.timelapseSpeed")}
+          className={`${sel} !w-auto`}
+          value={speed}
+          onChange={(e) => setSpeed(e.target.value as typeof speed)}
+        >
+          {TIMELAPSE_SPEEDS.map((s) => (
+            <option key={s.key} value={s.key}>
+              {tk(`ui.timelapseSpeed_${s.key}`)}
+            </option>
+          ))}
+        </select>
+        <button className="ml-auto cursor-pointer text-lino/70 underline-offset-4 hover:underline" onClick={onClose}>
+          {t("ui.timelapseStop")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function SceneControls(props: {
   layers: Layer[];
   kind: Layer["layer"];
@@ -45,10 +100,15 @@ export function SceneControls(props: {
   onCompare: (c: { left: string; right: string }) => void;
 }) {
   const dates = layerDates(props.layers, props.kind);
+  const [animating, setAnimating] = useState(false);
+  // Cambiar de índice o entrar a comparar corta la animación
+  useEffect(() => setAnimating(false), [props.kind, props.compare === null]);
   if (dates.length === 0) return null;
   return (
     <div className="flex w-56 flex-col gap-2 rounded-md border border-white/15 bg-surco/85 p-2.5 text-xs text-lino backdrop-blur">
-      {props.compare ? (
+      {animating && !props.compare ? (
+        <Timelapse frames={timelapseFrames(props.layers, props.kind)} onPick={props.onPick} onClose={() => setAnimating(false)} />
+      ) : props.compare ? (
         <>
           <DatePick
             label={t("ui.compareLeft")}
@@ -67,12 +127,22 @@ export function SceneControls(props: {
         <DatePick label={t("ui.sceneDate")} layers={dates} value={props.picked} onChange={props.onPick} />
       )}
       {props.canCompare ? (
-        <button
-          className="cursor-pointer self-start font-medium underline-offset-4 hover:underline"
-          onClick={props.onToggleCompare}
-        >
-          {props.compare ? t("ui.compareEnd") : t("ui.compare")}
-        </button>
+        <div className="flex gap-4">
+          <button
+            className="cursor-pointer font-medium underline-offset-4 hover:underline"
+            onClick={props.onToggleCompare}
+          >
+            {props.compare ? t("ui.compareEnd") : t("ui.compare")}
+          </button>
+          {!props.compare && !animating && props.kind !== "true_color" && (
+            <button
+              className="cursor-pointer font-medium underline-offset-4 hover:underline"
+              onClick={() => setAnimating(true)}
+            >
+              {t("ui.timelapse")}
+            </button>
+          )}
+        </div>
       ) : (
         <p className="text-lino/60">{t("ui.compareNeedTwo")}</p>
       )}

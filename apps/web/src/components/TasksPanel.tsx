@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { checklistProgress, isOverdue as taskOverdue, LIMITS, localDate, localTime, parseChecklist, parseTaskComments, RECORD_KINDS, RECURRENCES, TASK_PRIORITIES } from "@yvy/shared";
+import { checklistProgress, closeRequirements, isOverdue as taskOverdue, LIMITS, localDate, localTime, parseChecklist, parseTaskComments, RECORD_KINDS, RECURRENCES, TASK_PRIORITIES } from "@yvy/shared";
 import { del, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
 import { fmtDateTime, fmtIsoDate } from "../lib/format";
@@ -395,6 +395,17 @@ function NewTaskModal({
                 ...RECORD_KINDS.map((k) => ({ value: k, label: tk(`recordKinds.${k}`) })),
               ]}
             />
+            {closeRequirements(f.kind) && (
+              <p className="mt-1 text-xs text-tinta-2">
+                {t(
+                  closeRequirements(f.kind)!.photo && closeRequirements(f.kind)!.location
+                    ? "ui.closeNeedsPhotoLocation"
+                    : closeRequirements(f.kind)!.photo
+                      ? "ui.closeNeedsPhoto"
+                      : "ui.closeNeedsLocation",
+                )}
+              </p>
+            )}
           </Field>
           <Field label={t("ui.taskChecklist")}>
             <textarea

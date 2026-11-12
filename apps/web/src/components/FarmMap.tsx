@@ -36,6 +36,8 @@ export interface MapPoint {
   lat: number;
   label?: string;
   color?: string;
+  /** Radio del punto en píxeles (6 si falta). */
+  radius?: number;
 }
 
 export interface FarmMapProps {
@@ -260,7 +262,7 @@ export function FarmMap(props: FarmMapProps) {
         type: "circle",
         source: "points",
         paint: {
-          "circle-radius": 6,
+          "circle-radius": ["coalesce", ["get", "radius"], 6],
           "circle-color": ["coalesce", ["get", "color"], BRAND.trigo],
           "circle-stroke-color": BRAND.lino,
           "circle-stroke-width": 1.5,
@@ -433,7 +435,7 @@ export function FarmMap(props: FarmMapProps) {
       fc(
         (p.points ?? []).map((x) => ({
           type: "Feature",
-          properties: { id: x.id, color: x.color },
+          properties: { id: x.id, color: x.color, radius: x.radius },
           geometry: { type: "Point", coordinates: [x.lon, x.lat] },
         })),
       ),

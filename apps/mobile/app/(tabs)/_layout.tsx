@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Pressable, StyleSheet, Text, type ColorValue } from "react-native";
+import { Pressable, StyleSheet, type ColorValue } from "react-native";
 import { Redirect, Tabs, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ClipboardList, Map, MoreHorizontal, Plus, Sun, type LucideIcon } from "lucide-react-native";
@@ -7,7 +7,8 @@ import { t } from "@yvy/shared";
 import { useSession } from "../../src/lib/session";
 import { useFabHidden } from "../../src/lib/fab";
 import { startAutoSync, useSyncStatus } from "../../src/lib/sync";
-import { SyncBar } from "../../src/ui/kit";
+import { SyncBar, Text } from "../../src/ui/kit";
+import { WalkBanner } from "../../src/ui/WalkBanner";
 import { C, F } from "../../src/ui/theme";
 
 const icon =
@@ -25,6 +26,7 @@ export default function TabsLayout() {
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: C.papel }}>
       <SyncBar />
+      <WalkBanner />
       <Tabs
         screenOptions={{
           headerShown: false,

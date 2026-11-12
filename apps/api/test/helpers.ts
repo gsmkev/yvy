@@ -1,4 +1,5 @@
 import { env } from "cloudflare:test";
+import { eq } from "drizzle-orm";
 import type { Polygon } from "geojson";
 import { newId, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -101,4 +102,22 @@ export async function pullAll(token: string, table: string) {
     cursor = r.body.cursor ?? cursor;
     if (!r.body.hasMore) return rows;
   }
+}
+
+/** Sesión del equipo de Yvy (email en ADMIN_EMAILS del vitest.config) con su propia organización. */
+export async function createStaff() {
+  const ts = Date.now();
+  const orgId = newId();
+  await db().insert(s.organizations).values({ id: orgId, name: "Equipo Yvy", plan: "active", createdAt: ts, updatedAt: ts });
+  let [u] = await db().select().from(s.users).where(eq(s.users.email, "staff@yvy.test")).limit(1);
+  if (!u) {
+    const id = newId();
+    await db().insert(s.users).values({ id, email: "staff@yvy.test", fullName: "Equipo", createdAt: ts, updatedAt: ts });
+    [u] = await db().select().from(s.users).where(eq(s.users.id, id)).limit(1);
+  }
+  await db()
+    .insert(s.memberships)
+    .values({ id: newId(), organizationId: orgId, userId: u!.id, role: "admin", createdAt: ts, updatedAt: ts });
+  const session = await issueSession(db(), env.JWT_SECRET, u!.id, { organizationId: orgId });
+  return { orgId, userId: u!.id, token: session!.accessToken };
 }

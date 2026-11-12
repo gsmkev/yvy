@@ -78,6 +78,7 @@ export const RECORD_KINDS = [
   "reproduction",
   // ADR 0004: registros agrícolas
   "sowing",
+  "irrigation",
   "application",
   "fertilization",
   "harvest",

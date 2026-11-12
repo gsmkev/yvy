@@ -248,8 +248,9 @@ export async function farmSowingWindow(sdb: ScopedDb, farmId: string, crop: Crop
 }
 
 /**
- * C-08: balance hídrico simple del lote desde la siembra (máx. LIMITS.waterBalance.maxDays días):
- * lluvia CHIRPS de la estancia menos ETc (Hargreaves con temperaturas de NASA POWER por Kc del cultivo). 2 consultas.
+ * C-08, A-43: balance hídrico simple del lote desde la siembra (máx. LIMITS.waterBalance.maxDays días):
+ * lluvia CHIRPS de la estancia más el riego registrado menos ETc (Hargreaves con temperaturas de NASA POWER por Kc
+ * del cultivo; sin temperaturas, solo lluvia más riego). 4 consultas.
  */
 export async function plotWaterBalance(sdb: ScopedDb, plotId: string) {
   const plot = await requirePlotRow(sdb, plotId);
@@ -296,12 +297,37 @@ export async function plotWaterBalance(sdb: ScopedDb, plotId: string) {
     }
     byDate.set(r.date, d);
   }
+  // A-43: riego aplicado en el lote desde la fecha de inicio de la serie (appliedAt, o la captura si falta).
+  const irrRows = await sdb.db
+    .select({
+      at: sql<number>`coalesce(json_extract(${s.records.data}, '$.appliedAt'), ${s.records.capturedAt})`,
+      mm: sql<number>`json_extract(${s.records.data}, '$.mm')`,
+    })
+    .from(s.records)
+    .where(
+      and(
+        eq(s.records.organizationId, sdb.auth.orgId),
+        eq(s.records.plotId, plot.id),
+        eq(s.records.kind, "irrigation"),
+        isNull(s.records.deletedAt),
+        gte(s.records.capturedAt, Date.parse(`${from}T00:00:00Z`) - 2 * DAY),
+        sdb.workerFilter("records"),
+      ),
+    )
+    .limit(LIMITS.waterBalance.maxDays * 2);
+  const irrigation: Record<string, number> = {};
+  for (const r of irrRows) {
+    if (typeof r.mm !== "number") continue;
+    const day = localDate(Number(r.at));
+    irrigation[day] = (irrigation[day] ?? 0) + r.mm;
+  }
   const lat = (plot.minLat + plot.maxLat) / 2;
   const balance = waterBalance(
     [...byDate.entries()].map(([date, d]) => ({ date, rainMm: d.rainMm, tminC: d.tminC, tmaxC: d.tmaxC })),
     crop,
     sowing.date,
     lat,
+    { irrigation, keepWithoutEt: true },
   );
   return { status: balance ? ("ok" as const) : ("no_data" as const), crop, sowingDate: sowing.date, balance };
 }

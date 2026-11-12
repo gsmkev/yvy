@@ -240,6 +240,8 @@ export const LIMITS = {
     /** Días de pronóstico que se evalúan. */
     horizonDays: 7,
   },
+  /** Riego (A-43): lámina máxima por registro, en mm. */
+  irrigation: { maxMm: 500 },
   /** Balance hídrico por lote (C-08): lluvia menos consumo del cultivo, en mm. */
   waterBalance: {
     /** Ventana reciente para el riesgo de estrés. */

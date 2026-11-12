@@ -1,5 +1,6 @@
-import { CHART } from "@yvy/shared";
+import { CHART, IRRIGATION_METHODS, LIMITS, localDate, newId, noonAsuncion, RECORD_SCHEMA_VERSION, type PushResponse } from "@yvy/shared";
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { fmtIsoDate, fmtDate, fmtDay, fmtMm, fmtNum, fmtTemp } from "../lib/format";
 import { usePhenology, usePlotForecast, useWaterBalance, useWithdrawal } from "../lib/agri2";
 import { t, tk } from "../lib/i18n";
@@ -9,7 +10,8 @@ import { DamageReportModal } from "./DamageReportModal";
 import { YieldVigorSection } from "./YieldVigorSection";
 import { YieldMapSection } from "./YieldMapSection";
 import { ZonesSection } from "./ZonesSection";
-import { Button, ErrorBox, Spinner } from "./ui";
+import { post } from "../lib/api";
+import { Button, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
 
 /** Secciones agronómicas de la ficha de un lote de cultivo (agri-p2). Solo para quien edita el campo. */
 export function PlotAgro({ plot }: { plot: Plot }) {
@@ -19,7 +21,7 @@ export function PlotAgro({ plot }: { plot: Plot }) {
       <WithdrawalSection plot={plot} />
       <PlotForecastSection plot={plot} />
       <PhenologySection plotId={plot.id} />
-      <WaterBalanceSection plotId={plot.id} />
+      <WaterBalanceSection plot={plot} />
       <ZonesSection plot={plot} />
       <YieldMapSection plot={plot} />
       <YieldVigorSection plot={plot} />
@@ -91,7 +93,9 @@ function PhenologySection({ plotId }: { plotId: string }) {
 }
 
 /** C-08: lluvia menos consumo del cultivo desde la siembra. */
-function WaterBalanceSection({ plotId }: { plotId: string }) {
+function WaterBalanceSection({ plot }: { plot: Plot }) {
+  const plotId = plot.id;
+  const [irrigating, setIrrigating] = useState(false);
   const q = useWaterBalance(plotId);
   const d = q.data;
   const b = d?.balance;
@@ -99,12 +103,23 @@ function WaterBalanceSection({ plotId }: { plotId: string }) {
     <Section title={t("ui.waterBalTitle")}>
       {q.isLoading && <Spinner rows={2} h={24} />}
       {q.error && <ErrorBox error={q.error} />}
+      {d && (
+        <div className="mb-2">
+          <Button onClick={() => setIrrigating(true)}>{t("ui.waterBalIrrigate")}</Button>
+        </div>
+      )}
+      {irrigating && <IrrigationModal plot={plot} onClose={() => setIrrigating(false)} />}
       {d && !b && <p className="text-sm text-tinta-2">{t(`ui.waterBalStatus_${d.status === "ok" ? "no_data" : d.status}` as "ui.waterBalStatus_no_data")}</p>}
       {b && (
         <div className="flex flex-col gap-2 text-sm">
           <p className="num">
-            {t("ui.waterBalTotals", { rain: fmtMm(b.rainMm), etc: fmtMm(b.etcMm), days: b.days })}
+            {b.etMissingDays === b.days
+              ? t("ui.waterBalTotalsNoEt", { rain: fmtMm(b.rainMm), irr: fmtMm(b.irrigationMm), days: b.days })
+              : b.irrigationMm > 0
+                ? t("ui.waterBalTotalsIrr", { rain: fmtMm(b.rainMm), irr: fmtMm(b.irrigationMm), etc: fmtMm(b.etcMm), days: b.days })
+                : t("ui.waterBalTotals", { rain: fmtMm(b.rainMm), etc: fmtMm(b.etcMm), days: b.days })}
           </p>
+          {b.etMissingDays > 0 && <p className="text-xs text-tinta-2">{t("ui.waterBalNoEt", { n: b.etMissingDays })}</p>}
           <p className="num">
             {t("ui.waterBalBalance")}: <strong>{fmtMm(b.balanceMm)}</strong>
             {b.balance14Mm !== null && (
@@ -127,6 +142,15 @@ function WaterBalanceSection({ plotId }: { plotId: string }) {
                 color: CHART.primary,
                 points: b.series.map((p) => ({ x: Date.parse(`${p.date}T12:00:00Z`), y: p.cumMm })),
               },
+              ...(b.irrigationMm > 0
+                ? [
+                    {
+                      name: t("ui.waterBalIrrCum"),
+                      color: CHART.comparison,
+                      points: b.series.map((p, i) => ({ x: Date.parse(`${p.date}T12:00:00Z`), y: b.series.slice(0, i + 1).reduce((a, x) => a + x.irrigationMm, 0) })),
+                    },
+                  ]
+                : []),
             ]}
           />
           <p className="text-xs text-tinta-2">{t("ui.waterBalNote")}</p>
@@ -194,5 +218,83 @@ function DamageSection({ plot }: { plot: Plot }) {
       <Button onClick={() => setOpen(true)}>{t("ui.damageOpen")}</Button>
       {open && <DamageReportModal plot={plot} onClose={() => setOpen(false)} />}
     </Section>
+  );
+}
+
+/** A-43: anota un riego del lote desde la web (el mismo registro `irrigation` que carga la app). */
+function IrrigationModal({ plot, onClose }: { plot: Plot; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [f, setF] = useState({ mm: "", method: "pivot", date: localDate(Date.now()) });
+  const save = useMutation({
+    mutationFn: async () => {
+      const at = Math.min(noonAsuncion(f.date), Date.now() - 1000);
+      const res = await post<PushResponse>("/sync/push", {
+        deviceId: "web",
+        mutations: [
+          {
+            mutationId: newId(),
+            kind: "records.upsert",
+            row: {
+              id: newId(),
+              farmId: plot.farmId,
+              plotId: plot.id,
+              poiId: null,
+              kind: "irrigation",
+              data: { mm: Number(f.mm), method: f.method, appliedAt: at },
+              schemaVersion: RECORD_SCHEMA_VERSION,
+              lon: null,
+              lat: null,
+              gpsAccuracyM: null,
+              capturedAt: at,
+            },
+          },
+        ],
+      });
+      const r = res.results[0];
+      if (r?.status === "rejected") throw new Error(r.detail ?? t("ui.fuelRejected"));
+    },
+    onSuccess: () => {
+      toast(t("ui.waterBalIrrigateSaved"));
+      qc.invalidateQueries({ queryKey: ["water-balance", plot.id] });
+      qc.invalidateQueries({ queryKey: ["records"] });
+      onClose();
+    },
+  });
+  return (
+    <Modal title={t("ui.waterBalIrrigate")} onClose={onClose}>
+      <form
+        className="grid grid-cols-2 gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          save.mutate();
+        }}
+      >
+        <Field label={t("fields.irrigationMm")}>
+          <Input type="number" required min={0.1} max={LIMITS.irrigation.maxMm} step="any" value={f.mm} onChange={(e) => setF({ ...f, mm: e.target.value })} />
+        </Field>
+        <Field label={t("fields.irrigationDate")}>
+          <Input type="date" required value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} />
+        </Field>
+        <div className="col-span-2">
+          <Field label={t("fields.irrigationMethod")}>
+            <Select
+              value={f.method}
+              onChange={(e) => setF({ ...f, method: e.target.value })}
+              options={IRRIGATION_METHODS.map((m) => ({ value: m, label: t(`fields.irrigationMethod_${m}` as "fields.irrigationMethod_pivot") }))}
+            />
+          </Field>
+        </div>
+        {save.error ? (
+          <div className="col-span-2">
+            <ErrorBox error={save.error} />
+          </div>
+        ) : null}
+        <div className="col-span-2">
+          <Button type="submit" variant="primary" disabled={save.isPending}>
+            {t("ui.save")}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }

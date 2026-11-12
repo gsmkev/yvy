@@ -46,11 +46,13 @@ export interface WaterBalance {
   balance: {
     days: number;
     rainMm: number;
+    irrigationMm: number;
     etcMm: number;
+    etMissingDays: number;
     balanceMm: number;
     balance14Mm: number | null;
     risk: "low" | "medium" | "high" | null;
-    series: { date: string; rainMm: number; etcMm: number; cumMm: number }[];
+    series: { date: string; rainMm: number; irrigationMm: number; etcMm: number | null; cumMm: number }[];
   } | null;
 }
 

@@ -160,7 +160,7 @@ Detalles que un usuario espera sin pedirlos.
 | A-16 | Fertilización: producto, kg/ha, momento y método | Costo y nutrición | Web, App | P1 | S | Falta |
 | A-20 | Cosecha por lote: toneladas, humedad, descuentos, rinde por hectárea | El resultado final | Web, App | P1 | M | Falta |
 | A-21 | Importar mapas de rendimiento de la cosechadora (shapefile) | Variabilidad real | Web, Jobs | P2 | L | Falta |
-| A-22 | Comparar rinde con vigor satelital por zona del lote | Validar las zonas | Web | P3 | M | Falta |
+| A-22 | Comparar rinde con vigor satelital por zona del lote | Validar las zonas | Web | P3 | M | Hecho |
 | A-23 | Entregas a acopio: ticket de balanza, silo, humedad, descuentos | Cerrar el ciclo con la venta | Web | P2 | M | Falta |
 | A-30 | Análisis de suelo: cargar resultados de laboratorio por punto o lote | Fertilidad | Web | P2 | M | Falta |
 | A-31 | Mapas de fertilidad interpolados (pH, fósforo, potasio, materia orgánica) | Prescripción | Web, Jobs | P3 | L | Falta |

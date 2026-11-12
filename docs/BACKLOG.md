@@ -92,7 +92,7 @@ Detalles que un usuario espera sin pedirlos.
 | M-09 | Estancia con varios polígonos (cascos separados) | Muy común | Web | P1 | S | Parcial |
 | M-10 | Avisar si dos lotes se superponen o si un lote sale de la estancia | Errores de carga | Web, API | P1 | S | Hecho |
 | M-11 | Limpiar vértices duplicados y espigas al importar | Áreas correctas | Web | P2 | S | Hecho |
-| M-12 | Etiquetas por punto interior garantizado en la app | Lotes en L | App | P2 | S | Parcial (web hecho) |
+| M-12 | Etiquetas por punto interior garantizado en la app | Lotes en L | App | P2 | S | Hecho |
 | M-13 | Zoom al lote al elegirlo en la app | Coherencia con la web | App | P1 | S | Hecho |
 | M-14 | Curvas de nivel y pendiente (Copernicus DEM, necesita ADR) | Erosión, terrazas, siembra | Web, Jobs | P2 | M | Falta |
 | M-15 | Caminos, arroyos y localidades de fondo (OpenStreetMap, necesita ADR) | Orientarse | Web, App | P2 | M | Falta |

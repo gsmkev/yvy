@@ -3,7 +3,7 @@
  * Cada tipo de registro es una lista corta de pasos; los datos se arman al final y se validan con
  * el esquema compartido (packages/shared/src/records.ts), que es la única fuente de verdad.
  */
-import { CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
+import { SUPPLEMENT_TYPES, CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
 
 /** Lo que el flujo necesita saber del campo para decidir qué preguntar. */
 export interface FlowCtx {
@@ -126,6 +126,16 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     { key: "head", kind: "number", question: "app.theftHeadQuestion", hint: "app.theftHeadHint", unit: "cabezas", max: 1000, integer: true, min: 1 },
     { key: "policeReport", kind: "text", question: "app.theftReportQuestion", optional: true },
   ],
+  supplement: [
+    {
+      key: "type",
+      kind: "choice",
+      question: "app.supplementTypeQuestion",
+      options: SUPPLEMENT_TYPES.map((v) => ({ value: v, label: `fields.supplementType_${v}` })),
+    },
+    { key: "kg", kind: "number", question: "app.supplementKgQuestion", hint: "app.supplementKgHint", unit: "kg", max: 100_000 },
+    { key: "note", kind: "text", question: "app.addNote", optional: true },
+  ],
   health: [
     {
       key: "reason",
@@ -215,10 +225,10 @@ export const visibleSteps = (steps: Step[], values: Record<string, unknown>, ctx
 /** Qué se puede anotar en cada tipo de lote, en el orden de frecuencia real. */
 export const KINDS_FOR = (plotKind: "crop" | "pasture" | null): RecordKind[] =>
   plotKind === "pasture"
-    ? ["pasture_status", "herd_count", "herd_move", "mortality", "theft", "health", "rain", "water", "pest", "scouting", "note"]
+    ? ["pasture_status", "herd_count", "herd_move", "mortality", "theft", "supplement", "health", "rain", "water", "pest", "scouting", "note"]
     : plotKind === "crop"
       ? ["scouting", "pest", "crop_status", "application", "fertilization", "sowing", "harvest", "fuel_load", "rain", "water", "note"]
       : ["rain", "scouting", "water", "health", "note", "pest", "crop_status", "pasture_status", "application", "fertilization", "sowing", "harvest", "fuel_load"];
 
 /** Registros de hacienda: son de un solo potrero, no se cargan en varios a la vez (F-10). */
-export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count", "herd_move", "mortality", "theft", "health"];
+export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count", "herd_move", "mortality", "theft", "supplement", "health"];

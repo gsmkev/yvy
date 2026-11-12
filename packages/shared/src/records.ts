@@ -3,6 +3,7 @@
  * Subir RECORD_SCHEMA_VERSION al cambiar un esquema de forma incompatible.
  */
 import { z } from "zod";
+import { SUPPLEMENT_TYPES, MAX_SUPPLEMENT_KG } from "./grazing";
 import { HEALTH_REASONS, HERD_CATEGORIES, MAX_HEAD_PER_CATEGORY, MORTALITY_CAUSES, MOVE_REASONS } from "./livestock";
 import { deltaT, DOSE_UNITS } from "./agro";
 import { CROPS, type RecordKind } from "./schema";
@@ -91,6 +92,14 @@ const livestockSchemas = {
     head: z.number().int().min(1).max(MAX_HEAD_PER_CATEGORY),
     reportedAt: z.number().int().nonnegative().optional(),
     policeReport: z.string().trim().min(1).max(40).optional(),
+    note,
+  }),
+  /** Suplementación y sal mineral (G-31): kilos dados en un potrero (records.plot_id). */
+  supplement: z.object({
+    type: z.enum(SUPPLEMENT_TYPES),
+    kg: z.number().positive().max(MAX_SUPPLEMENT_KG),
+    /** Marca o fórmula, si importa. */
+    product: z.string().trim().min(1).max(120).optional(),
     note,
   }),
 };

@@ -21,3 +21,14 @@ describe("G-13 abigeato", () => {
     expect(parseRecordData("theft", { category: "vaca", head: 0 }).success).toBe(false);
   });
 });
+
+describe("G-31 suplementación", () => {
+  it("el flujo es tipo y kilos, y se ofrece en potreros", () => {
+    expect(keys("supplement")).toEqual(["type", "kg", "note"]);
+    expect(KINDS_FOR("pasture")).toContain("supplement");
+    expect(KINDS_FOR("crop")).not.toContain("supplement");
+    expect(SINGLE_PLOT_KINDS).toContain("supplement");
+    expect(parseRecordData("supplement", { type: "sal_mineral", kg: 25 }).success).toBe(true);
+    expect(parseRecordData("supplement", { type: "sal_mineral", kg: -1 }).success).toBe(false);
+  });
+});

@@ -68,6 +68,10 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
         parts.push(`${d.head} ${tr(`fields.herd_${d.category}`, String(d.category)).toLowerCase()}`);
       if (str("cause")) parts.push(tr(`fields.cause_${d.cause}`, String(d.cause)).toLowerCase());
       break;
+    case "supplement":
+      if (str("type")) parts.push(tr(`fields.supplementType_${d.type}`, String(d.type)));
+      if (typeof d.kg === "number") parts.push(t("fields.kgValue", { n: d.kg }));
+      break;
     case "theft":
       if (typeof d.head === "number" && str("category"))
         parts.push(`${d.head} ${tr(`fields.herd_${d.category}`, String(d.category)).toLowerCase()}`);

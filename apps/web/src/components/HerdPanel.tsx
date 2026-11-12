@@ -7,6 +7,7 @@ import { fmtDay, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useMe } from "../lib/queries";
 import { HeatStressCard } from "./HeatStress";
+import { SupplementPanel } from "./SupplementPanel";
 import { TheftPanel } from "./TheftPanel";
 import { Button, Empty, ErrorBox, Field, Input, Spinner, Tabs } from "./ui";
 
@@ -137,7 +138,7 @@ function StockSection({ farmId }: { farmId: string }) {
   );
 }
 
-type Section = "stock" | "theft";
+type Section = "stock" | "supplements" | "theft";
 
 /** Pestaña Hacienda: hacienda calculada y, abajo, cada módulo de ganadería en su sección. */
 export function HerdPanel({ farmId }: { farmId: string }) {
@@ -149,10 +150,12 @@ export function HerdPanel({ farmId }: { farmId: string }) {
         onChange={setSection}
         tabs={[
           { id: "stock", label: t("ui.herdSectionStock") },
+          { id: "supplements", label: t("ui.herdSectionSupp") },
           { id: "theft", label: t("ui.herdSectionTheft") },
         ]}
       />
       {section === "stock" && <StockSection farmId={farmId} />}
+      {section === "supplements" && <SupplementPanel farmId={farmId} />}
       {section === "theft" && <TheftPanel farmId={farmId} />}
     </div>
   );

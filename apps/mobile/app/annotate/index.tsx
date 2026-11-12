@@ -3,7 +3,7 @@
  * Pensado para usarse con una mano, al sol, sin señal. Nunca más de un dato por pantalla.
  */
 import { useEffect, useMemo, useRef, useState, type ElementRef } from "react";
-import { Image, Keyboard, Platform, Pressable, ScrollView, StyleSheet, View, type TextInput as TextInputRef } from "react-native";
+import { Alert, Image, Keyboard, Platform, Pressable, ScrollView, StyleSheet, View, type TextInput as TextInputRef } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Check, X } from "lucide-react-native";
@@ -35,7 +35,7 @@ import { selectedFarmId } from "../../src/lib/farmFilter";
 import { FLOWS, KINDS_FOR, RAW, SINGLE_PLOT_KINDS, stepsFor, type Step } from "../../src/lib/annotate";
 import { currentFix, guessPlots, type Fix, type PlotGuess } from "../../src/lib/location";
 import { containsPoint, type Area } from "@yvy/geo";
-import { processPhoto } from "../../src/lib/photos";
+import { photoQualityWarning, processPhoto } from "../../src/lib/photos";
 import { kindForPoi } from "../../src/lib/poiQr";
 import { PhotoMarkup } from "../../src/ui/PhotoMarkup";
 import { VoiceRecorder } from "../../src/ui/VoiceRecorder";
@@ -984,8 +984,15 @@ function PhotoCamera({ onDone }: { onDone: (p: LocalPhoto | null) => void }) {
             setBusy(true);
             try {
               const pic = await ref.takePictureAsync({ quality: 0.9 });
-              setShot({ uri: pic.uri, width: pic.width, height: pic.height });
+              const warning = await photoQualityWarning(pic.uri, pic.width, pic.height);
               setBusy(false);
+              const keep = () => setShot({ uri: pic.uri, width: pic.width, height: pic.height });
+              // X-09: aviso sin bloquear. "Sacarla de nuevo" descarta esta toma; "Dejarla así" sigue con ella.
+              if (!warning) return keep();
+              Alert.alert(warning, undefined, [
+                { text: t("app.photoQualityRetake"), style: "cancel" },
+                { text: t("app.photoQualityKeep"), onPress: keep },
+              ]);
             } catch {
               setBusy(false);
             }

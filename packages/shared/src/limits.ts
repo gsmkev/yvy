@@ -34,6 +34,8 @@ export const LIMITS = {
     maxLongSidePx: 1280,
     webpQuality: 0.6,
     thumbLongSidePx: 320,
+    /** X-09: aviso de calidad sobre una miniatura. Umbrales orientativos (luminancia 0-255; varianza del laplaciano). */
+    quality: { sidePx: 128, darkMeanLuma: 45, blurLaplacianVar: 25 },
     maxBytes: 600 * 1024,
     uploadUrlTtlSeconds: 15 * 60,
     downloadUrlTtlSeconds: 60 * 60,

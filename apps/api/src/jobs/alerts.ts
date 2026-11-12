@@ -5,9 +5,11 @@
  * subió, no se vuelve a notificar.
  */
 import { and, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
-import { newId } from "@yvy/shared";
+import { newId, parseNotificationPrefs, wantsNotification } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
-import { bumpVersion, currentVersion, runBatch, type DB, type Stmt } from "../db/client";
+import { bumpVersion, chunkForParams, currentVersion, runBatch, type DB, type Stmt } from "../db/client";
+import { alertOutboxStmts } from "../db/webhooks";
+import type { HourlyForecast } from "./weather";
 import { affectedPlots, severityRank, type AlertDraft } from "./rules";
 
 const SOURCES: Record<AlertDraft["kind"], string> = {
@@ -15,6 +17,10 @@ const SOURCES: Record<AlertDraft["kind"], string> = {
   excess_rain: "MET Norway",
   drought: "CHIRPS + NASA POWER + MET Norway",
   fire: "NASA FIRMS",
+  pest_threshold: "Monitoreos de plagas (umbral por defecto)",
+  water_low: "Registros de aguadas",
+  heat_stress: "MET Norway",
+  rust_risk: "MET Norway (humedad y temperatura horarias)",
 };
 
 export async function upsertAlert(
@@ -53,6 +59,7 @@ export async function upsertAlert(
     existing &&
     existing.severity === draft.severity &&
     existing.probability === draft.probability &&
+    existing.summary === draft.summary &&
     existing.validTo === validTo
   ) {
     return { id: existing.id, notified: false };
@@ -90,6 +97,22 @@ export async function upsertAlert(
     stmts.push(db.insert(s.alertPlots).values(plotIds.slice(i, i + 40).map((plotId) => ({ alertId: id, plotId }))));
   }
 
+  // I-02: aviso nuevo (no una actualización) → buzón de webhooks, en el mismo batch
+  if (!existing)
+    stmts.push(
+      ...(await alertOutboxStmts(db, farm.organizationId, {
+        id,
+        farmId: farm.id,
+        kind: draft.kind,
+        severity: draft.severity,
+        probability: draft.probability,
+        summary: draft.summary,
+        validFrom,
+        validTo,
+        plotIds,
+        source: SOURCES[draft.kind],
+      }, now)),
+    );
   const notify = !existing || severityRank(draft.severity) > severityRank(existing.severity);
   if (notify) stmts.push(...(await notificationStmts(db, farm.organizationId, id, draft.kind, plotIds, now)));
   await runBatch(db, stmts);
@@ -119,14 +142,26 @@ async function notificationStmts(
           .where(and(inArray(s.plotAssignments.plotId, plotIds.slice(0, 90)), isNull(s.plotAssignments.deletedAt)))
       : [];
   const workerSet = new Set(workers.map((w) => w.userId));
+  // U-29: lo que el usuario apagó para este tipo de aviso no se crea
+  const prefs = new Map<string, ReturnType<typeof parseNotificationPrefs>>();
+  for (const chunk of chunkForParams(members, 1)) {
+    const found = await db
+      .select({ userId: s.notificationPrefs.userId, prefs: s.notificationPrefs.prefs })
+      .from(s.notificationPrefs)
+      .where(inArray(s.notificationPrefs.userId, chunk.map((m) => m.userId)));
+    for (const f of found) prefs.set(f.userId, parseNotificationPrefs(f.prefs));
+  }
+  const wants = (userId: string, channel: "push" | "email") =>
+    wantsNotification(prefs.get(userId) ?? parseNotificationPrefs(null), kind, channel);
   const rows: (typeof s.notifications.$inferInsert)[] = [];
   for (const m of members) {
-    if (m.role === "worker") {
-      if (workerSet.has(m.userId))
+    // Supervisor y contratista reciben solo lo de sus lotes asignados, como el empleado (el alcance por estancia no se evalúa acá).
+    if (m.role === "worker" || m.role === "contractor" || m.role === "supervisor") {
+      if (workerSet.has(m.userId) && wants(m.userId, "push"))
         rows.push({ id: newId(), userId: m.userId, alertId, channel: "push", createdAt: now });
     } else {
-      rows.push({ id: newId(), userId: m.userId, alertId, channel: "push", createdAt: now });
-      rows.push({ id: newId(), userId: m.userId, alertId, channel: "email", createdAt: now });
+      if (wants(m.userId, "push")) rows.push({ id: newId(), userId: m.userId, alertId, channel: "push", createdAt: now });
+      if (wants(m.userId, "email")) rows.push({ id: newId(), userId: m.userId, alertId, channel: "email", createdAt: now });
     }
   }
   const out: Stmt[] = [];
@@ -135,6 +170,15 @@ async function notificationStmts(
 }
 
 /** Guarda la corrida y deja solo las últimas N por estancia. */
+/** Reemplaza el pronóstico horario de la estancia (solo la última corrida): borra todo y guarda las horas nuevas. */
+export function saveHourlyStmts(db: DB, farmId: string, hours: HourlyForecast[]): Stmt[] {
+  const out: Stmt[] = [db.delete(s.forecastHours).where(eq(s.forecastHours.farmId, farmId))];
+  const rows = hours.map((h) => ({ farmId, ...h }));
+  // 6 columnas por fila y ≤ 100 parámetros por consulta
+  for (const chunk of chunkForParams(rows, 6)) out.push(db.insert(s.forecastHours).values(chunk));
+  return out;
+}
+
 export function saveForecastStmts(
   db: DB,
   farmId: string,

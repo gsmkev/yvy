@@ -1,11 +1,11 @@
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "@tanstack/react-router";
 import { Button } from "../components/ui";
-import { AnimalCountIllustration, StandCountIllustration, WeedsIllustration } from "../components/labs/illustrations";
+import { AnimalCountIllustration, HailIllustration, InfraIllustration, StandCountIllustration, WeedsIllustration } from "../components/labs/illustrations";
 import { t, tk } from "../lib/i18n";
 
-type ToolId = "animals" | "stand" | "weeds" | "ask" | "summary" | "rust";
-const TOOLS: ToolId[] = ["animals", "stand", "weeds", "ask", "summary", "rust"];
+type ToolId = "animals" | "stand" | "weeds" | "ask" | "summary" | "rust" | "hail" | "infra" | "yield" | "advice";
+const TOOLS: ToolId[] = ["animals", "stand", "weeds", "ask", "summary", "rust", "hail", "infra", "yield", "advice"];
 
 const nf = (n: number, digits = 0) =>
   n.toLocaleString("es-PY", { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -80,6 +80,14 @@ function ToolBody({ id }: { id: ToolId }) {
       return <Ask />;
     case "summary":
       return <Summary />;
+    case "hail":
+      return <Hail />;
+    case "infra":
+      return <Infra />;
+    case "yield":
+      return <Yield />;
+    case "advice":
+      return <Advice />;
     case "rust":
       return <p className="border-b border-linea pb-4">{t("ui.labsRustBody")}</p>;
   }
@@ -228,6 +236,139 @@ function Weeds() {
         <Button disabled>{t("ui.labsPrescription")}</Button>
       </div>
     </Flow>
+  );
+}
+
+const HAIL = [
+  { id: "severe", ha: 4.2, color: "#D2462B" },
+  { id: "moderate", ha: 11.5, color: "#D9A93A" },
+] as const;
+
+function Hail() {
+  const lot = 48;
+  const damaged = HAIL.reduce((s, h) => s + h.ha, 0);
+  const label = { severe: t("ui.labsHailSevere"), moderate: t("ui.labsHailModerate") };
+  return (
+    <Flow>
+      <p className="text-sm text-tinta-2">{t("ui.labsHailLot", { ha: lot })}</p>
+      <div className="grid grid-cols-2 gap-4">
+        <Figure value={`${nf(damaged, 1)} ha`} label={t("ui.labsHailArea")} />
+        <Figure value={`${nf((damaged / lot) * 100)} %`} label={t("ui.labsHailPct")} />
+      </div>
+      <HailIllustration label={t("ui.labsHailIllustrationLabel")} className="w-full border border-linea" />
+      {HAIL.map((h) => (
+        <Legend key={h.id} color={h.color} label={label[h.id]} />
+      ))}
+      <Table
+        head={[t("ui.labsHailClass"), t("ui.labsPaddockArea"), t("ui.labsWeedsPct")]}
+        rows={[
+          ...HAIL.map((h) => [label[h.id], `${nf(h.ha, 1)} ha`, `${nf((h.ha / lot) * 100)} %`]),
+          [t("ui.labsHailNone"), `${nf(lot - damaged, 1)} ha`, `${nf(((lot - damaged) / lot) * 100)} %`],
+        ]}
+      />
+      <p className="text-sm">{t("ui.labsHailNote")}</p>
+      <div>
+        <Button disabled>{t("ui.labsHailReport")}</Button>
+      </div>
+    </Flow>
+  );
+}
+
+function Infra() {
+  const rows = [
+    [t("ui.labsInfraFence"), t("ui.labsInfraFencePlace"), t("ui.labsInfraFenceSize")],
+    [t("ui.labsInfraPond"), t("ui.labsInfraPondPlace"), t("ui.labsInfraPondSize")],
+    [t("ui.labsInfraRoad"), t("ui.labsInfraRoadPlace"), t("ui.labsInfraRoadSize")],
+  ];
+  return (
+    <Flow>
+      <InfraIllustration label={t("ui.labsInfraIllustrationLabel")} className="w-full border border-linea" />
+      <Legend color="#D2462B" label={t("ui.labsInfraLegend")} />
+      <Table head={[t("ui.labsInfraFinding"), t("ui.labsInfraPlace"), t("ui.labsInfraSize")]} rows={rows} />
+      <p className="text-sm">{t("ui.labsInfraNote")}</p>
+      <div>
+        <Button disabled>{t("ui.labsInfraTask")}</Button>
+      </div>
+    </Flow>
+  );
+}
+
+const YIELD_PLOTS = [
+  { id: "Norte 1", crop: "soy", ha: 120, low: 3100, high: 3700 },
+  { id: "Norte 2", crop: "soy", ha: 92, low: 2900, high: 3500 },
+  { id: "Sur 2", crop: "corn", ha: 64, low: 6800, high: 8200 },
+] as const;
+
+function Yield() {
+  const sum = (k: "low" | "high") => YIELD_PLOTS.reduce((s, p) => s + (p.ha * p[k]) / 1000, 0);
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <Button disabled>{t("ui.labsYieldPick")}</Button>
+      </div>
+      <Flow drop={false}>
+        <p className="text-sm text-tinta-2">
+          {t("ui.labsYieldCampaign")} · {t("ui.labsAskFarm")}
+        </p>
+        <Figure
+          value={t("ui.labsYieldTotalValue", { low: nf(sum("low")), high: nf(sum("high")) })}
+          label={t("ui.labsYieldTotal")}
+        />
+        <Table
+          head={[t("ui.labsYieldPlot"), t("ui.labsYieldCrop"), t("ui.labsPaddockArea"), t("ui.labsYieldRange")]}
+          rows={YIELD_PLOTS.map((p) => [
+            p.id,
+            tk(`ui.labsYieldCrop_${p.crop}`),
+            `${nf(p.ha)} ha`,
+            t("ui.labsYieldRangeValue", { low: nf(p.low), high: nf(p.high) }),
+          ])}
+        />
+        <div>
+          <h3 className="font-semibold">{t("ui.labsYieldBasis")}</h3>
+          <ul className="mt-1 list-disc pl-5 text-sm">
+            <li>{t("ui.labsYieldBasis1")}</li>
+            <li>{t("ui.labsYieldBasis2")}</li>
+            <li>{t("ui.labsYieldBasis3")}</li>
+          </ul>
+        </div>
+        <p className="text-sm">{t("ui.labsYieldNote")}</p>
+        <div>
+          <Button disabled>{t("ui.labsYieldExport")}</Button>
+        </div>
+      </Flow>
+    </div>
+  );
+}
+
+function Advice() {
+  const sources = [1, 2, 3] as const;
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <Button disabled>{t("ui.labsAdvicePick")}</Button>
+      </div>
+      <Flow drop={false}>
+        <p className="text-sm text-tinta-2">
+          {t("ui.labsSummaryDraft")} · {t("ui.labsAdviceWalk")}
+        </p>
+        <div>
+          <h3 className="font-semibold">{t("ui.labsAdviceSource")}</h3>
+          <ul className="mt-1 list-disc pl-5 text-sm">
+            {sources.map((n) => (
+              <li key={n}>{tk(`ui.labsAdviceSource${n}`)}</li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h3 className="font-semibold">{t("ui.labsAdviceDraftTitle")}</h3>
+          <p className="mt-1 border-b border-linea pb-4">{t("ui.labsAdviceText")}</p>
+        </div>
+        <p className="text-sm">{t("ui.labsAdviceReview")}</p>
+        <div>
+          <Button disabled>{t("ui.labsAdviceEdit")}</Button>
+        </div>
+      </Flow>
+    </div>
   );
 }
 

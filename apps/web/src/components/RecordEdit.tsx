@@ -5,6 +5,17 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  HEALTH_REASONS,
+  SUPPLEMENT_TYPES,
+  REPRO_EVENTS,
+  SERVICE_METHODS,
+  HERD_CATEGORIES,
+  MORTALITY_CAUSES,
+  MOVE_REASONS,
+  CROPS,
+  DENSITY_UNITS,
+  FERT_METHODS,
+  HARVEST_DESTINATIONS,
   newId,
   parseRecordData,
   PESTS,
@@ -15,15 +26,16 @@ import {
   type RecordKind,
 } from "@yvy/shared";
 import { post } from "../lib/api";
-import { fmtDateTime } from "../lib/format";
+import { fmtDateTime, toIso } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import type { RecordRow } from "../lib/types";
-import { Button, ConfirmModal, ErrorBox, Field, Input, Select } from "./ui";
+import { Button, ConfirmModal, ErrorBox, Field, Input, Select, toast } from "./ui";
 
 type Opt = { value: string; label: string };
 type FieldDef =
   | { key: string; label: string; type: "select"; options: Opt[]; optional?: boolean }
-  | { key: string; label: string; type: "number" | "text" | "textarea" | "bool"; optional?: boolean };
+  /** Fecha: se guarda en epoch ms (mediodía de Paraguay) y se edita como día. */
+  | { key: string; label: string; type: "number" | "text" | "textarea" | "bool" | "date"; optional?: boolean };
 
 const f = (k: string) => tk(`fields.${k}`);
 const opts = (prefix: string, values: readonly string[]): Opt[] =>
@@ -32,7 +44,13 @@ const CONDITION = opts("condition", ["good", "fair", "bad"]);
 const LEVEL = opts("level", ["low", "medium", "high"]);
 const NOTE: FieldDef = { key: "note", label: t("app.note"), type: "textarea", optional: true };
 
+/** Cabezas por categoría: una clave con punto por categoría ("counts.vaca"); ver getPath y setPath. */
+const HERD_FIELDS = (root: string): FieldDef[] =>
+  HERD_CATEGORIES.map((c) => ({ key: `${root}.${c}`, label: f(`herd_${c}`), type: "number", optional: true }));
+
+/** `track` se graba en el celular (F-05) y no se edita a mano. */
 const FIELDS: Record<RecordKind, FieldDef[]> = {
+  track: [],
   scouting: [{ key: "condition", label: f("condition"), type: "select", options: CONDITION }, NOTE],
   pest: [
     { key: "pest", label: f("pest"), type: "select", options: opts("pest", PESTS) },
@@ -62,24 +80,126 @@ const FIELDS: Record<RecordKind, FieldDef[]> = {
     NOTE,
   ],
   note: [{ key: "text", label: f("text"), type: "textarea" }],
+  // ganaderia
+  herd_count: [...HERD_FIELDS("counts"), NOTE],
+  herd_move: [
+    { key: "reason", label: f("moveReason"), type: "select", options: opts("moveReason", MOVE_REASONS) },
+    ...HERD_FIELDS("counts"),
+    NOTE,
+  ],
+  mortality: [
+    { key: "category", label: f("herdCategory"), type: "select", options: opts("herd", HERD_CATEGORIES) },
+    { key: "head", label: f("head"), type: "number" },
+    { key: "cause", label: f("cause"), type: "select", options: opts("cause", MORTALITY_CAUSES) },
+    NOTE,
+  ],
+  reproduction: [
+    { key: "event", label: f("reproEvent"), type: "select", options: opts("reproEvent", REPRO_EVENTS) },
+    { key: "head", label: f("head"), type: "number" },
+    { key: "method", label: f("reproMethod"), type: "select", options: opts("reproMethod", SERVICE_METHODS), optional: true },
+    { key: "pregnant", label: f("reproPregnant"), type: "number", optional: true },
+    { key: "calves", label: f("reproCalves"), type: "number", optional: true },
+    { key: "tag", label: f("tag"), type: "text", optional: true },
+    NOTE,
+  ],
+  weighing: [
+    { key: "kg", label: f("kg"), type: "number" },
+    { key: "tag", label: f("tag"), type: "text", optional: true },
+    { key: "group", label: f("group"), type: "text", optional: true },
+    { key: "head", label: f("head"), type: "number", optional: true },
+    { key: "category", label: f("herdCategory"), type: "select", options: opts("herd", HERD_CATEGORIES), optional: true },
+    NOTE,
+  ],
+  supplement: [
+    { key: "type", label: f("supplementType"), type: "select", options: opts("supplementType", SUPPLEMENT_TYPES) },
+    { key: "kg", label: f("kg"), type: "number" },
+    { key: "product", label: f("product"), type: "text", optional: true },
+    NOTE,
+  ],
+  theft: [
+    { key: "category", label: f("herdCategory"), type: "select", options: opts("herd", HERD_CATEGORIES) },
+    { key: "head", label: f("head"), type: "number" },
+    { key: "reportedAt", label: f("reportedAt"), type: "date", optional: true },
+    { key: "policeReport", label: f("policeReport"), type: "text", optional: true },
+    NOTE,
+  ],
+  health: [
+    { key: "reason", label: f("healthReason"), type: "select", options: opts("healthReason", HEALTH_REASONS) },
+    { key: "product", label: f("product"), type: "text" },
+    { key: "dose", label: f("dose"), type: "text", optional: true },
+    ...HERD_FIELDS("counts"),
+    { key: "tag", label: f("tag"), type: "text", optional: true },
+    NOTE,
+  ],
+  fuel_load: [
+    { key: "machine", label: f("machine"), type: "text" },
+    { key: "liters", label: f("liters"), type: "number" },
+    { key: "meterValue", label: f("meterValue"), type: "number", optional: true },
+    NOTE,
+  ],
+  harvest: [
+    { key: "tons", label: f("tons"), type: "number" },
+    { key: "moisturePct", label: f("moisturePct"), type: "number", optional: true },
+    { key: "areaHa", label: f("areaDone"), type: "number", optional: true },
+    { key: "destination", label: f("destination"), type: "select", options: opts("destination", HARVEST_DESTINATIONS), optional: true },
+    NOTE,
+  ],
+  fertilization: [
+    { key: "method", label: f("method"), type: "select", options: opts("method", FERT_METHODS) },
+    { key: "areaHa", label: f("areaDone"), type: "number", optional: true },
+    NOTE,
+  ],
+  application: [
+    { key: "volumeLHa", label: f("volumeLHa"), type: "number", optional: true },
+    { key: "areaHa", label: f("areaDone"), type: "number", optional: true },
+    { key: "windKmh", label: f("windKmh"), type: "number", optional: true },
+    { key: "tempC", label: f("tempC"), type: "number", optional: true },
+    { key: "humidityPct", label: f("humidityPct"), type: "number", optional: true },
+    { key: "machine", label: f("machine"), type: "text", optional: true },
+    NOTE,
+  ],
+  sowing: [
+    { key: "crop", label: f("crop"), type: "select", options: opts("crop", CROPS) },
+    { key: "variety", label: f("variety"), type: "text", optional: true },
+    { key: "density", label: f("density"), type: "number", optional: true },
+    { key: "densityUnit", label: f("densityUnit"), type: "select", options: opts("densityUnit", DENSITY_UNITS), optional: true },
+    { key: "areaHa", label: f("areaDone"), type: "number", optional: true },
+    NOTE,
+  ],
 };
+
+const getPath = (o: Record<string, unknown>, path: string): unknown =>
+  path.split(".").reduce<unknown>((acc, k) => (acc && typeof acc === "object" ? (acc as Record<string, unknown>)[k] : undefined), o);
+
+/** Pone (o quita, con undefined) un valor en una ruta con puntos, sin tocar el objeto original. */
+function setPath(o: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> {
+  const [head, ...rest] = path.split(".") as [string, ...string[]];
+  if (!rest.length) {
+    const { [head]: _old, ...others } = o;
+    return value === undefined ? others : { ...others, [head]: value };
+  }
+  const child = o[head] && typeof o[head] === "object" ? (o[head] as Record<string, unknown>) : {};
+  return { ...o, [head]: setPath(child, rest.join("."), value) };
+}
 
 const toForm = (data: Record<string, unknown>, defs: FieldDef[]) =>
   Object.fromEntries(
     defs.map((d) => {
-      const v = data[d.key];
+      const v = getPath(data, d.key);
+      if (d.type === "date") return [d.key, typeof v === "number" ? toIso(v) : ""];
       return [d.key, d.type === "bool" ? (v === true ? "1" : "0") : v === undefined || v === null ? "" : String(v)];
     }),
   );
 
 /** Arma los datos nuevos sobre los originales (conserva claves que el formulario no edita, como readAt). */
 function fromForm(base: Record<string, unknown>, defs: FieldDef[], form: Record<string, string>) {
-  const out: Record<string, unknown> = { ...base };
+  let out: Record<string, unknown> = { ...base };
   for (const d of defs) {
     const raw = (form[d.key] ?? "").trim();
-    if (d.type === "bool") out[d.key] = raw === "1";
-    else if (raw === "") delete out[d.key];
-    else out[d.key] = d.type === "number" ? Number(raw) : raw;
+    if (d.type === "bool") out = setPath(out, d.key, raw === "1");
+    else if (raw === "") out = setPath(out, d.key, undefined);
+    else if (d.type === "date") out = setPath(out, d.key, Date.parse(`${raw}T12:00:00-03:00`));
+    else out = setPath(out, d.key, d.type === "number" ? Number(raw) : raw);
   }
   return out;
 }
@@ -130,6 +250,7 @@ export function RecordEditForm({
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["records"] });
+      toast(t("ui.toastRecordSaved"));
       onDone();
     },
     onError: (e) => setInvalid(e instanceof Error ? e.message : String(e)),
@@ -172,7 +293,7 @@ export function RecordEditForm({
             />
           ) : (
             <Input
-              type={d.type === "number" ? "number" : "text"}
+              type={d.type === "number" ? "number" : d.type === "date" ? "date" : "text"}
               step={d.type === "number" ? "any" : undefined}
               min={d.type === "number" ? 0 : undefined}
               value={form[d.key]}
@@ -209,6 +330,7 @@ export function DeleteRecordConfirm({
     mutationFn: () => push({ mutationId: newId(), kind: "records.delete", row: { id: r.id } }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["records"] });
+      toast(t("ui.toastRecordDeleted"));
       onDone();
     },
   });

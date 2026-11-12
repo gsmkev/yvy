@@ -173,6 +173,12 @@ export const LIMITS = {
     linkDays: [7, 30],
   },
   // agri-p2
+  /**
+   * Zonas de amortiguación (A-15): distancia en metros a casas, escuelas y cursos de agua dentro de la cual una
+   * aplicación se marca. Valores de referencia que la web deja editar: confirmá lo que exige la normativa vigente
+   * y la habilitación de tu zona antes de usarlos como límite legal.
+   */
+  buffer: { house: 100, school: 100, water: 100, stream: 100, maxM: 2_000 },
   /** Ventana de siembra (A-05): valores de referencia, a revisar por un agrónomo. */
   sowing: {
     /** Humedad del suelo superficial (NASA POWER GWETTOP, fracción de saturación 0-1): abajo no germina, arriba encharca. */

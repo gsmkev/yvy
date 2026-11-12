@@ -30,6 +30,7 @@ export const POI_KINDS = [
   "rain_gauge",
   "water",
   "house",
+  "school",
   "gate",
   "corral",
   "silo",
@@ -41,8 +42,8 @@ export const POI_KINDS = [
   "dock",
   "other",
 ] as const;
-/** Líneas del mapa (M-20): alambrados, caminos internos y cañerías. */
-export const LINE_KINDS = ["fence", "road", "pipe"] as const;
+/** Líneas del mapa (M-20): alambrados, caminos internos, cañerías y cursos de agua (A-15). */
+export const LINE_KINDS = ["fence", "road", "pipe", "stream"] as const;
 export type LineKind = (typeof LINE_KINDS)[number];
 export const RECURRENCES = ["none", "daily", "weekly"] as const;
 export const TASK_STATUS = ["open", "done", "cancelled"] as const;

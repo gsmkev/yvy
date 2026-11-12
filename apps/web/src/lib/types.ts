@@ -80,7 +80,7 @@ export interface Poi {
 
 export interface Layer {
   id: string;
-  layer: "true_color" | "ndvi" | "ndre" | "ndmi" | "evi";
+  layer: "true_color" | "ndvi" | "ndre" | "ndmi" | "evi" | "fert_ph" | "fert_p" | "fert_k" | "fert_om";
   acquiredAt: number;
   pmtilesPath: string;
   bytes: number;

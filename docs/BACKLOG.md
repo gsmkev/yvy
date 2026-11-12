@@ -163,7 +163,7 @@ Detalles que un usuario espera sin pedirlos.
 | A-22 | Comparar rinde con vigor satelital por zona del lote | Validar las zonas | Web | P3 | M | Hecho |
 | A-23 | Entregas a acopio: ticket de balanza, silo, humedad, descuentos | Cerrar el ciclo con la venta | Web | P2 | M | Falta |
 | A-30 | Análisis de suelo: cargar resultados de laboratorio por punto o lote | Fertilidad | Web | P2 | M | Falta |
-| A-31 | Mapas de fertilidad interpolados (pH, fósforo, potasio, materia orgánica) | Prescripción | Web, Jobs | P3 | L | Falta |
+| A-31 | Mapas de fertilidad interpolados (pH, fósforo, potasio, materia orgánica) | Prescripción | Web, Jobs | P3 | L | Hecho |
 | A-32 | Zonas de manejo a partir de varias campañas de vigor | Agricultura de precisión básica | Web, Jobs | P2 | L | Falta |
 | A-33 | Prescripción de dosis variable exportable a la maquinaria (shapefile o ISOXML) | Ahorro de insumos | Web, Jobs | P3 | L | Falta |
 | A-40 | Alerta de roya asiática por horas de mojado foliar y temperatura | Enfermedad clave en soja | API, Jobs | P2 | M | Falta |

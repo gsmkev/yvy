@@ -17,6 +17,7 @@ const NAV: { to: string; label: MessageKey }[] = [
   { to: "/", label: "ui.navMap" },
   { to: "/registros", label: "ui.navRecords" },
   { to: "/tareas", label: "ui.navTasks" },
+  { to: "/calendario", label: "ui.navCalendar" },
   { to: "/sanidad", label: "ui.navSanitary" },
   { to: "/avisos", label: "ui.navAlerts" },
   { to: "/equipo", label: "ui.navTeam" },

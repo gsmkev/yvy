@@ -128,6 +128,11 @@ const forms = createRoute({
   component: lazyRouteComponent(() => import("./routes/forms"), "FormsPage"),
 });
 
+const calendar = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/calendario",
+  component: lazyRouteComponent(() => import("./routes/calendar"), "CalendarPage"),
+});
 const audit = createRoute({
   getParentRoute: () => appRoute,
   path: "/cambios",
@@ -187,6 +192,7 @@ const routeTree = rootRoute.addChildren([
     forms,
     records,
     tasks,
+    calendar,
     sanitary,
     team,
     admin,

@@ -1,5 +1,6 @@
 import { HTTPException } from "hono/http-exception";
-import type { z } from "zod";
+import { z } from "zod";
+import { isTimeOfDay } from "@yvy/shared";
 
 /** Valida el body con Zod y devuelve 400 con el primer error. */
 export const parse = <T extends z.ZodType>(schema: T, data: unknown): z.infer<T> => {
@@ -18,3 +19,6 @@ export const readJson = async (req: { json: () => Promise<unknown> }): Promise<u
     throw new HTTPException(400, { message: "JSON inválido" });
   }
 };
+
+/** Hora del día "HH:MM". */
+export const timeOfDay = z.string().refine(isTimeOfDay, "Hora inválida (HH:MM)");

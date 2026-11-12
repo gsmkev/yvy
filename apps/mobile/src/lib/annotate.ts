@@ -36,6 +36,8 @@ export type Step = StepBase &
   | { key: string; kind: "season"; question: string }
   /** Productos de la mezcla con su dosis (catálogo del celular, o a mano). Guarda ProductDose[]. */
   | { key: string; kind: "products"; question: string; fixedUnit?: "kg_ha"; productTypes?: string[] }
+  /** Cierre de la orden de trabajo (E-21): cantidad real gastada por producto. Reescribe `products` con `usedQty`. */
+  | { key: "products"; kind: "usage"; question: string; hint?: string }
   /** Un producto del catálogo de ciertos tipos (guarda su id; "otro" salta el paso y se escribe a mano). */
   | { key: string; kind: "catalog"; question: string; productTypes: string[]; otherLabel: string }
   /** Una máquina del catálogo (guarda su id; "otra" salta el paso y se escribe el nombre a mano). */
@@ -234,6 +236,7 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     { key: "windKmh", kind: "number", question: "app.windQuestion", hint: "app.windHint", unit: "km/h", max: 200, optional: true },
     { key: "tempC", kind: "number", question: "app.tempQuestion", unit: "°C", max: 60, optional: true },
     { key: "humidityPct", kind: "number", question: "app.humidityQuestion", hint: "app.humidityHint", unit: "%", max: 100, optional: true },
+    { key: "products", kind: "usage", question: "app.usageQuestion", hint: "app.usageHint", skipIf: (a) => !a.orderTaskId },
     { key: "note", kind: "text", question: "app.addNote", optional: true },
   ],
   fertilization: [
@@ -241,6 +244,7 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     { key: "products", kind: "products", question: "app.fertProductsQuestion", fixedUnit: "kg_ha", productTypes: ["fertilizer"] },
     { key: "method", kind: "choice", question: "app.fertMethodQuestion", options: FERT_METHODS.map((v) => ({ value: v, label: `fields.method_${v}` })) },
     { key: "areaHa", kind: "number", question: "app.areaDoneQuestion", hint: "app.areaDoneHint", unit: "ha", max: 100_000, optional: true },
+    { key: "products", kind: "usage", question: "app.usageQuestion", hint: "app.usageHint", skipIf: (a) => !a.orderTaskId },
     { key: "note", kind: "text", question: "app.addNote", optional: true },
   ],
   // Riego (A-43): la lámina y el método; la fecha es la de la carga (appliedAt, en annotate/index.tsx).

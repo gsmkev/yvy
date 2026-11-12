@@ -164,6 +164,11 @@ export const productDose = z.object({
   name: z.string().trim().min(1).max(120),
   dose: z.number().positive().max(100_000),
   unit: z.enum(DOSE_UNITS),
+  /**
+   * Cantidad total realmente usada (E-21), en la unidad de la dosis sin "/ha" (L, mL, kg o g). Si falta, el consumo es
+   * la dosis por la superficie hecha; si está, descuenta el stock por esta cantidad.
+   */
+  usedQty: z.number().positive().max(1_000_000_000).optional(),
 });
 /** Fertilizante: siempre kg/ha. */
 export const fertilizerDose = productDose.extend({ unit: z.literal("kg_ha") });

@@ -242,6 +242,8 @@ interface DoseLike {
   productId?: string;
   dose: number;
   unit: DoseUnit;
+  /** Cantidad total realmente usada (E-21), en la unidad de la dosis sin "/ha". */
+  usedQty?: number;
 }
 
 /** Ids de catálogo que usa un registro (para leerlos de una vez). */
@@ -255,7 +257,8 @@ export function consumptionProductIds(kind: string, data: Record<string, unknown
 
 /**
  * Cantidades de insumos que consume un registro, en la unidad base del producto (l o kg).
- * - application y fertilization: dosis por hectárea x superficie hecha (`areaHa` del registro o, si falta, la del lote).
+ * - application y fertilization: dosis por hectárea x superficie hecha (`areaHa` del registro o, si falta, la del lote),
+ *   o la cantidad real usada del producto (`usedQty`) si el operario la anotó al cerrar la orden (E-21).
  * - health: la cantidad del registro (`quantity`).
  * - fuel_load: los litros de la carga, del combustible indicado o del único combustible del catálogo.
  * Solo cuentan los productos del catálogo (`units`: id a unidad). Un producto cuya dosis no es de la misma familia que
@@ -273,11 +276,13 @@ export function consumptionLines(
   };
   if (kind === "application" || kind === "fertilization") {
     const area = typeof data.areaHa === "number" ? data.areaHa : ctx.plotAreaHa;
-    if (!area || area <= 0) return [];
     for (const p of (data.products as DoseLike[] | undefined) ?? []) {
       const unit = p.productId ? ctx.units.get(p.productId) : undefined;
       const conv = DOSE_TO_BASE[p.unit];
-      if (p.productId && unit && conv && conv.unit === unit) add(p.productId, p.dose * conv.factor * area);
+      if (!(p.productId && unit && conv && conv.unit === unit)) continue;
+      // Con la cantidad real que anotó el operario (E-21) no hace falta la superficie.
+      if (typeof p.usedQty === "number" && p.usedQty > 0) add(p.productId, p.usedQty * conv.factor);
+      else if (area && area > 0) add(p.productId, p.dose * conv.factor * area);
     }
   } else if (kind === "fuel_load") {
     // Litros de la carga; el producto es el indicado o, si no, el único combustible del catálogo.

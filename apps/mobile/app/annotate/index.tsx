@@ -559,7 +559,7 @@ export default function Annotate() {
       <View style={k.screen}>
         {header}
         <Progress i={phase.i} n={steps.length + 1} />
-        <StepScreen key={`${kind}-${step.key}`} step={step} value={values[step.key]} answers={values} prefilled={!editing && kind === "application" && !!sprayPre && values[step.key] !== undefined && (sprayPre as Record<string, unknown>)[step.key] === values[step.key]} seasons={seasons} onAnswer={(v) => advance({ ...values, [step.key]: v })} />
+        <StepScreen key={`${kind}-${step.kind}-${step.key}`} plotAreaHa={plot?.areaHa ?? null} step={step} value={values[step.key]} answers={values} prefilled={!editing && kind === "application" && !!sprayPre && values[step.key] !== undefined && (sprayPre as Record<string, unknown>)[step.key] === values[step.key]} seasons={seasons} onAnswer={(v) => advance({ ...values, [step.key]: v })} />
       </View>
     );
   }
@@ -641,7 +641,7 @@ function Progress({ i, n }: { i: number; n: number }) {
   );
 }
 
-function StepScreen({ step, value, answers, prefilled, seasons, onAnswer }: { step: Step; value: unknown; answers: Record<string, unknown>; prefilled: boolean; seasons: Season[]; onAnswer: (v: unknown) => void }) {
+function StepScreen({ step, value, answers, prefilled, plotAreaHa, seasons, onAnswer }: { plotAreaHa: number | null; step: Step; value: unknown; answers: Record<string, unknown>; prefilled: boolean; seasons: Season[]; onAnswer: (v: unknown) => void }) {
   const [text, setText] = useState(value === undefined ? "" : String(value));
   const input = useRef<ElementRef<typeof TextInputRef>>(null);
   useEffect(() => {
@@ -698,6 +698,10 @@ function StepScreen({ step, value, answers, prefilled, seasons, onAnswer }: { st
         <Button kind="text" title={tr(step.otherLabel)} onPress={() => onAnswer(undefined)} style={{ marginTop: 12 }} />
       </ScrollView>
     );
+  }
+  if (step.kind === "usage") {
+    const area = typeof answers.areaHa === "number" ? answers.areaHa : plotAreaHa;
+    return <UsageStep question={step.question} hint={step.hint} products={Array.isArray(value) ? (value as ProductDose[]) : []} areaHa={area} onAnswer={onAnswer} />;
   }
   if (step.kind === "products") {
     return <ProductsStep question={step.question} value={value} fixedUnit={step.fixedUnit} types={step.productTypes} onAnswer={onAnswer} />;
@@ -788,6 +792,49 @@ function StepScreen({ step, value, answers, prefilled, seasons, onAnswer }: { st
   );
 }
 
+/**
+ * Cierre de la orden (E-21): lo que realmente salió del depósito, por producto. Si no se escribe, queda lo previsto
+ * (dosis por superficie hecha) y no se guarda cantidad.
+ */
+function UsageStep({ question, hint, products, areaHa, onAnswer }: { question: string; hint?: string; products: ProductDose[]; areaHa: number | null; onAnswer: (v: unknown) => void }) {
+  const [texts, setTexts] = useState<string[]>(() => products.map((p) => (p.usedQty ? String(p.usedQty).replace(".", ",") : "")));
+  const parse = (x: string) => Number(x.replace(",", "."));
+  const valid = (x: string) => x === "" || (Number.isFinite(parse(x)) && parse(x) > 0 && parse(x) <= 1_000_000_000);
+  const planned = (p: ProductDose) => (areaHa ? Math.round(p.dose * areaHa * 100) / 100 : null);
+  const done = () => onAnswer(products.map((p, i) => ({ ...p, usedQty: texts[i] ? parse(texts[i]!) : undefined })));
+  const anyText = texts.some((x) => x !== "");
+  return (
+    <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
+      <Text style={T.title}>{tr(question)}</Text>
+      {hint && <Text style={[T.small, { marginTop: 6, marginBottom: 16 }]}>{tr(hint)}</Text>}
+      {products.map((p, i) => {
+        const unit = tr(`fields.usageUnit_${p.unit}`);
+        const plan = planned(p);
+        return (
+          <View key={p.productId ?? p.name} style={{ marginBottom: 20 }}>
+            <Text style={T.body}>{p.name}</Text>
+            {plan !== null && <Text style={T.small}>{t("app.usagePlanned", { qty: `${String(plan).replace(".", ",")} ${unit}` })}</Text>}
+            <View style={st.numberRow}>
+              <TextInput
+                value={texts[i]}
+                onChangeText={(v) => setTexts((xs) => xs.map((x, j) => (j === i ? v.replace(/[^0-9.,]/g, "").slice(0, 10) : x)))}
+                keyboardType="decimal-pad"
+                style={st.numberInput}
+                placeholder={plan !== null ? String(plan).replace(".", ",") : "0"}
+                placeholderTextColor={C.tinta3}
+                accessibilityLabel={`${p.name} (${unit})`}
+              />
+              <Text style={st.unit}>{unit}</Text>
+            </View>
+          </View>
+        );
+      })}
+      <View style={{ flex: 1 }} />
+      <Button big title={anyText ? t("app.next") : t("app.usageAsPlanned")} disabled={!texts.every(valid)} onPress={done} />
+    </ScrollView>
+  );
+}
+
 /** Productos de la mezcla: elegir del catálogo (o escribir uno) y una dosis por pantalla. */
 function ProductsStep({ question, value, fixedUnit, types, onAnswer }: { question: string; value: unknown; fixedUnit?: "kg_ha"; types?: string[]; onAnswer: (v: unknown) => void }) {
   // Con un tipo pedido (fertilizantes) se ofrece ese tipo; si el catálogo no tiene ninguno, todos.
@@ -856,7 +903,7 @@ function ProductsStep({ question, value, fixedUnit, types, onAnswer }: { questio
     const unit: DoseUnit = d.unit;
     const alt = unit === big ? small : big;
     const next = () => {
-      const list = doses.map((x, j) => (j === view ? { ...x, dose: n } : x));
+      const list = doses.map((x, j) => (j === view ? { ...x, dose: n, usedQty: undefined } : x));
       setDoses(list);
       if (view < list.length - 1) {
         setText(list[view + 1]!.dose ? String(list[view + 1]!.dose).replace(".", ",") : "");

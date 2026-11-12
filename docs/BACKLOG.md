@@ -233,7 +233,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | ID | Qué | Prio | Esf | Estado |
 |---|---|---|---|---|
 | E-20 | Órdenes de trabajo: labor, lotes, superficie, insumos, máquina, operario o contratista | P1 | M | Parcial (tareas) |
-| E-21 | Cierre de la orden desde la app con superficie hecha y consumos reales | P1 | M | Falta |
+| E-21 | Cierre de la orden desde la app con superficie hecha y consumos reales | P1 | M | Hecho |
 | E-22 | Mantenimiento preventivo por horas o kilómetros, con historial de reparaciones | P2 | M | Falta |
 | E-23 | Costo de labor propia (combustible, operario, amortización) frente a contratista | P2 | M | Falta |
 

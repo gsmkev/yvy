@@ -18,6 +18,10 @@ export * from "./sync-protocol";
 export * from "./i18n";
 export {
   ROLES,
+  FIELD_ROLES,
+  isFieldRole,
+  FARM_ACCESS_LEVELS,
+  type FarmAccessLevel,
   PRODUCT_TYPES,
   PRODUCT_UNITS,
   RECORD_KINDS,

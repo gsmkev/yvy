@@ -1,5 +1,6 @@
 /** Umbrales de avisos de una estancia (C-04). Los edita el dueño o un administrador; el resto los ve. */
 import { useEffect, useState } from "react";
+import { isFieldRole } from "@yvy/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ALERT_SETTINGS_LIMITS, DEFAULT_ALERT_SETTINGS, type AlertSettings } from "@yvy/shared";
 import { get, put } from "../lib/api";
@@ -32,7 +33,7 @@ export function AlertSettingsSection() {
   const canEdit = me.data?.role === "owner" || me.data?.role === "admin";
   const qc = useQueryClient();
   const settings = useQuery({
-    enabled: !!id && !!me.data && me.data.role !== "worker",
+    enabled: !!id && !!me.data && !isFieldRole(me.data.role),
     queryKey: ["alert-settings", id],
     queryFn: () => get<Settings>(`/org/farms/${id}/alert-settings`),
   });
@@ -64,7 +65,7 @@ export function AlertSettingsSection() {
     },
   });
 
-  if (me.data?.role === "worker" || !farms.data?.length) return null;
+  if ((me.data && isFieldRole(me.data.role)) || !farms.data?.length) return null;
   return (
     <section className="mt-10 border-t border-linea pt-6" aria-labelledby="alert-settings-title">
       <h2 id="alert-settings-title" className="font-serif text-xl font-semibold">

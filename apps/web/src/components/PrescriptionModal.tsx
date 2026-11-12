@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { isFieldRole } from "@yvy/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DOSE_UNITS_FOR, localDate, type DoseUnit } from "@yvy/shared";
 import { post } from "../lib/api";
@@ -149,7 +150,7 @@ export function PrescriptionModal({
               onChange={set("assigneeId")}
               options={[
                 { value: "", label: "—" },
-                ...(members.data ?? []).filter((m) => m.role === "worker").map((m) => ({ value: m.userId, label: m.fullName })),
+                ...(members.data ?? []).filter((m) => isFieldRole(m.role)).map((m) => ({ value: m.userId, label: m.fullName })),
               ]}
             />
           </Field>

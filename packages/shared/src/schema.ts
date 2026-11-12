@@ -20,8 +20,18 @@ import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from
 
 // ---------- Enums ----------
 
-export const ROLES = ["owner", "admin", "agronomist", "worker"] as const;
+/**
+ * `supervisor` (T-09, capataz): ve y asigna solo dentro de las estancias que se le dan (tabla farm_access).
+ * `contractor` (K-03): como el empleado, pero externo: solo los lotes y tareas que se le asignan, sin catálogo ni campañas.
+ */
+export const ROLES = ["owner", "admin", "agronomist", "supervisor", "worker", "contractor"] as const;
 export type Role = (typeof ROLES)[number];
+/** Roles de campo: ven solo sus lotes asignados y sus tareas (el celular sin las pantallas de gestión). */
+export const FIELD_ROLES = ["worker", "contractor"] as const;
+export const isFieldRole = (r: string): boolean => (FIELD_ROLES as readonly string[]).includes(r);
+/** K-05: nivel de acceso a una estancia concreta. `view` = solo lectura. */
+export const FARM_ACCESS_LEVELS = ["view", "edit"] as const;
+export type FarmAccessLevel = (typeof FARM_ACCESS_LEVELS)[number];
 export const MEMBERSHIP_STATUS = ["active", "invited", "disabled"] as const;
 export const PLOT_KINDS = ["crop", "pasture"] as const;
 export const CROPS = ["soja", "maiz", "trigo", "arroz", "girasol", "chia", "otro"] as const;
@@ -1367,4 +1377,21 @@ export const managementZones = sqliteTable(
     computedAt: integer("computed_at").notNull(),
   },
   (t) => [uniqueIndex("management_zones_plot_zone_uq").on(t.plotId, t.zone), index("management_zones_farm_idx").on(t.farmId)],
+);
+
+/**
+ * T-09 / K-05: estancias a las que se limita a una persona. No se sincroniza.
+ * `supervisor`: sin filas no ve ninguna estancia. `admin` y `agronomist`: sin filas ven todas; con filas, solo esas
+ * (y `view` las deja en solo lectura). El dueño y los roles de campo no usan esta tabla.
+ */
+export const farmAccess = sqliteTable(
+  "farm_access",
+  {
+    organizationId: text("organization_id").notNull(),
+    userId: text("user_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    level: text("level", { enum: FARM_ACCESS_LEVELS }).notNull().default("edit"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.organizationId, t.userId, t.farmId] }), index("farm_access_farm_idx").on(t.farmId)],
 );

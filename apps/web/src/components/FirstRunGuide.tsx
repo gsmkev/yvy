@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { isFieldRole } from "@yvy/shared";
 import type { ReactNode } from "react";
 import { t } from "../lib/i18n";
 import type { FarmSummary, Member } from "../lib/types";
@@ -36,7 +37,7 @@ export function guideSteps(farms: FarmSummary[], members: Member[]): GuideStep[]
       ),
     },
     {
-      done: members.some((m) => m.role === "worker"),
+      done: members.some((m) => isFieldRole(m.role)),
       title: t("ui.guideStep3"),
       hint: t("ui.guideStep3Hint"),
       action: (

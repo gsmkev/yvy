@@ -138,7 +138,8 @@ async function notificationStmts(
     wantsNotification(prefs.get(userId) ?? parseNotificationPrefs(null), kind, channel);
   const rows: (typeof s.notifications.$inferInsert)[] = [];
   for (const m of members) {
-    if (m.role === "worker") {
+    // Supervisor y contratista reciben solo lo de sus lotes asignados, como el empleado (el alcance por estancia no se evalúa acá).
+    if (m.role === "worker" || m.role === "contractor" || m.role === "supervisor") {
       if (workerSet.has(m.userId) && wants(m.userId, "push"))
         rows.push({ id: newId(), userId: m.userId, alertId, channel: "push", createdAt: now });
     } else {

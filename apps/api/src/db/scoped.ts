@@ -6,6 +6,7 @@
 import { and, asc, eq, gt, gte, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 import type { AnySQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
 import {
+  isFieldRole,
   LIMITS,
   localDate,
   newId,
@@ -93,35 +94,52 @@ const SYNCED: Record<PullTable, SyncedTable> = {
   animals: { table: s.animals, org: s.animals.organizationId, version: s.animals.version, id: s.animals.id },
 };
 
-/** Matriz de permisos (PRD §9). */
+/** Tabla Drizzle → nombre de tabla sincronizable (para aplicar el alcance por estancia al editar). */
+export const SYNCED_KEYS = new Map<unknown, PullTable>(
+  (Object.entries(SYNCED) as [PullTable, SyncedTable][]).map(([k, v]) => [v.table, k]),
+);
+
+/**
+ * Matriz de permisos (PRD §9, ampliada en docs/PRD-roles.md).
+ * `supervisor` (capataz, T-09) = como el administrador de campo pero sin catálogo, campañas, equipo ni tablero, y solo
+ * dentro de sus estancias (farm_access). `contractor` (K-03) = empleado externo: mismos límites que `worker`.
+ */
 export const can = {
   manageOrg: (r: Role) => r === "owner",
-  /** RF-04: el administrador también crea empleados. */
+  /** RF-04: el administrador también crea empleados y contratistas. */
   manageWorkers: (r: Role) => r === "owner" || r === "admin",
-  editField: (r: Role) => r !== "worker",
-  /** PRD §9: crear/editar puntos de interés (también desde el celular, PRD §11): todos menos `worker`. */
-  editPoi: (r: Role) => r !== "worker",
-  assign: (r: Role) => r !== "worker",
-  viewAll: (r: Role) => r !== "worker",
-  reports: (r: Role) => r !== "worker",
-  /** C-04: solo dueño y administrador cambian los umbrales de avisos. */
+  /** T-09 / K-05: solo el dueño limita a una persona a ciertas estancias. */
+  manageFarmAccess: (r: Role) => r === "owner",
+  editField: (r: Role) => !isFieldRole(r),
+  /** PRD §9: crear/editar puntos de interés (también desde el celular, PRD §11): todos menos los roles de campo. */
+  editPoi: (r: Role) => !isFieldRole(r),
+  assign: (r: Role) => !isFieldRole(r),
+  viewAll: (r: Role) => !isFieldRole(r),
+  reports: (r: Role) => !isFieldRole(r),
   /** K-04: solo el dueño crea y revoca enlaces de solo lectura. */
   shareLinks: (r: Role) => r === "owner",
   /** R-06: el tablero del inicio es para dueño y administrador. */
   dashboard: (r: Role) => r === "owner" || r === "admin",
+  /** C-04: solo dueño y administrador cambian los umbrales de avisos. */
   alertSettings: (r: Role) => r === "owner" || r === "admin",
-  /** G-10: planificar el calendario sanitario (y crear sus tareas): todos menos el empleado. */
-  planSanitary: (r: Role) => r !== "worker",
-  /** ADR 0004: campañas y su plan por lote; el empleado solo las ve. */
-  editSeasons: (r: Role) => r !== "worker",
-  /** ADR 0004: catálogo de productos; el empleado lo recibe en el celular pero no lo edita. */
-  editProducts: (r: Role) => r !== "worker",
+  /** G-10: planificar el calendario sanitario (y crear sus tareas): todos menos los roles de campo. */
+  planSanitary: (r: Role) => !isFieldRole(r),
+  /** ADR 0004: campañas y su plan por lote; el supervisor y los roles de campo solo las ven. */
+  editSeasons: (r: Role) => r === "owner" || r === "admin" || r === "agronomist",
+  /** ADR 0004: catálogo de productos; el supervisor y los roles de campo no lo editan. */
+  editProducts: (r: Role) => r === "owner" || r === "admin" || r === "agronomist",
+  /** K-06: el dueño ve el registro de cambios de su organización. */
+  viewAudit: (r: Role) => r === "owner",
+  /** I-01: tokens de la API pública; solo el dueño. */
+  manageApiTokens: (r: Role) => r === "owner",
+  /** R-10: informes programados a terceros; dueño y administrador. */
+  scheduleReports: (r: Role) => r === "owner" || r === "admin",
   /** ADR 0004 (ERP): maestros, compras, costos y montos son de dueño y administrador. */
   manageErp: (r: Role) => r === "owner" || r === "admin",
-  /** El agrónomo ve las cantidades de stock (nunca montos); el empleado no entra al ERP. */
-  viewStock: (r: Role) => r !== "worker",
-  /** G-21: alta y edición de animales con caravana; el empleado los consulta (también sin señal) pero no los edita. */
-  editAnimals: (r: Role) => r !== "worker",
+  /** El agrónomo ve las cantidades de stock (nunca montos); los roles de campo no entran al ERP. */
+  viewStock: (r: Role) => !isFieldRole(r),
+  /** G-21: alta y edición de animales con caravana; los roles de campo los consultan (también sin señal) pero no los editan. */
+  editAnimals: (r: Role) => !isFieldRole(r),
   /** S-03: pedir la historia de vigor desde 2017 gasta minutos de cómputo: dueño y administrador. */
   requestHistory: (r: Role) => r === "owner" || r === "admin",
   /** F-14: definir los campos propios de los formularios: dueño y administrador (todos los roles los reciben). */
@@ -137,8 +155,13 @@ export class ScopedDb {
     readonly now: () => number = Date.now,
   ) {}
 
+  /** Rol de campo (empleado o contratista): ve solo sus lotes asignados y sus tareas. */
   get isWorker(): boolean {
-    return this.auth.role === "worker";
+    return isFieldRole(this.auth.role);
+  }
+
+  get isContractor(): boolean {
+    return this.auth.role === "contractor";
   }
 
   require(check: (r: Role) => boolean, msg = "No tenés permiso"): void {
@@ -150,7 +173,7 @@ export class ScopedDb {
     const { role, userId } = this.auth;
     if (role === "owner" || role === "admin") return null;
     if (rec.authorId !== userId) return "forbidden";
-    if (role === "worker" && this.now() - rec.createdAt > LIMITS.sync.workerEditWindowMs) return "edit_window_expired";
+    if (isFieldRole(role) && this.now() - rec.createdAt > LIMITS.sync.workerEditWindowMs) return "edit_window_expired";
     return null;
   }
 
@@ -166,11 +189,43 @@ export class ScopedDb {
 
   /** Empleado: registros de sus lotes, o propios (incluye los sin lote). */
   recordsVisibleSql(): SQL {
+    // K-03: el contratista solo ve lo que cargó él.
+    if (this.isContractor) return sql`records.author_id = ${this.auth.userId}`;
     return sql`(records.plot_id IN ${this.assignedPlotsSql()} OR records.author_id = ${this.auth.userId})`;
   }
 
-  workerFilter(table: PullTable): SQL | undefined {
-    if (!this.isWorker) return undefined;
+  /**
+   * T-09 / K-05: condición para limitar `col` (columna con id de estancia) a las estancias de la persona.
+   * `undefined` = sin límite (dueño y roles de campo, que se limitan por lotes). Con `write`, solo las de nivel `edit`.
+   * Supervisor: solo las de farm_access. Administrador/agrónomo: todas mientras no tengan filas.
+   */
+  farmScopeSql(col: string, write = false): SQL | undefined {
+    const { role, userId, orgId } = this.auth;
+    if (role === "owner" || isFieldRole(role)) return undefined;
+    const mine = sql`organization_id = ${orgId} AND user_id = ${userId}`;
+    const c = sql.raw(col);
+    const rows = write
+      ? sql`(SELECT farm_id FROM farm_access WHERE ${mine} AND level = 'edit')`
+      : sql`(SELECT farm_id FROM farm_access WHERE ${mine})`;
+    if (role === "supervisor") return sql`${c} IN ${rows}`;
+    return sql`(NOT EXISTS (SELECT 1 FROM farm_access WHERE ${mine}) OR ${c} IN ${rows})`;
+  }
+
+  /** ¿Tiene limitadas las estancias que ve? (supervisor siempre; admin/agrónomo si el dueño les dio una lista). */
+  async isFarmRestricted(): Promise<boolean> {
+    const { role, userId, orgId } = this.auth;
+    if (role === "owner" || isFieldRole(role)) return false;
+    if (role === "supervisor") return true;
+    const [r] = await this.db
+      .select({ n: sql<number>`count(*)` })
+      .from(s.farmAccess)
+      .where(and(eq(s.farmAccess.organizationId, orgId), eq(s.farmAccess.userId, userId)));
+    return Number(r?.n ?? 0) > 0;
+  }
+
+  /** Condición de visibilidad por tabla: lotes asignados (roles de campo) o estancias permitidas (supervisor, K-05). */
+  workerFilter(table: PullTable, write = false): SQL | undefined {
+    if (!this.isWorker) return this.scopeFilter(table, write);
     switch (table) {
       case "farms":
         return sql`farms.id IN ${this.workerFarmsSql()}`;
@@ -193,15 +248,56 @@ export class ScopedDb {
       case "farm_layers":
         return sql`farm_layers.farm_id IN ${this.workerFarmsSql()}`;
       case "seasons":
-        return undefined; // las campañas son de toda la organización: el empleado las necesita para anotar
+        // las campañas son de toda la organización: el empleado las necesita para anotar; el contratista no
+        return this.isContractor ? sql`0` : undefined;
       case "plot_seasons":
         return sql`plot_seasons.plot_id IN ${this.assignedPlotsSql()}`;
       case "products":
-        return undefined; // el catálogo es de toda la organización
+        return this.isContractor ? sql`0` : undefined; // el catálogo es de toda la organización
       case "machines":
         return undefined; // las máquinas son de toda la organización: el empleado las elige al cargar combustible
       case "animals":
         return sql`animals.farm_id IN ${this.workerFarmsSql()}`;
+    }
+  }
+
+  private scopeFilter(table: PullTable, write: boolean): SQL | undefined {
+    const sc = (col: string) => this.farmScopeSql(col, write);
+    const viaPlots = (col: string) => {
+      const f = sc("plots.farm_id");
+      return f ? sql`${sql.raw(col)} IN (SELECT id FROM plots WHERE ${f})` : undefined;
+    };
+    switch (table) {
+      case "farms":
+        return sc("farms.id");
+      case "plots":
+        return sc("plots.farm_id");
+      case "points_of_interest":
+        return sc("points_of_interest.farm_id");
+      case "plot_assignments":
+        return viaPlots("plot_assignments.plot_id");
+      case "tasks":
+        return sc("tasks.farm_id");
+      case "records":
+        return sc("records.farm_id");
+      case "attachments": {
+        const f = sc("records.farm_id");
+        return f ? sql`attachments.record_id IN (SELECT id FROM records WHERE ${f})` : undefined;
+      }
+      case "alerts":
+        return sc("alerts.farm_id");
+      case "plot_index_stats":
+        return viaPlots("plot_index_stats.plot_id");
+      case "farm_layers":
+        return sc("farm_layers.farm_id");
+      case "plot_seasons":
+        return viaPlots("plot_seasons.plot_id");
+      case "animals":
+        return sc("animals.farm_id");
+      case "seasons":
+      case "products":
+      case "machines":
+        return undefined;
     }
   }
 
@@ -396,9 +492,10 @@ export class ScopedDb {
     phone: string | null;
     role: Role;
   }): Promise<{ userId: string }> {
-    if (input.role === "worker") this.require(can.manageWorkers, "Solo dueño o administrador crean empleados");
+    if (isFieldRole(input.role))
+      this.require(can.manageWorkers, "Solo dueño o administrador crean empleados y contratistas");
     else this.require(can.manageOrg, "Solo el dueño gestiona miembros");
-    if (input.role !== "worker" && !input.email) throw new ForbiddenError("Falta el email");
+    if (!isFieldRole(input.role) && !input.email) throw new ForbiddenError("Falta el email");
     const ts = this.now();
     let userId: string | undefined;
     if (input.email) {
@@ -541,7 +638,12 @@ export class ScopedDb {
         .select({ id: s.plots.id })
         .from(s.plots)
         .where(
-          and(eq(s.plots.organizationId, this.auth.orgId), inArray(s.plots.id, wanted), isNull(s.plots.deletedAt)),
+          and(
+            eq(s.plots.organizationId, this.auth.orgId),
+            inArray(s.plots.id, wanted),
+            isNull(s.plots.deletedAt),
+            this.farmScopeSql("plots.farm_id", true),
+          ),
         );
       if (found.length !== wanted.length) throw new NotFoundError("Lote inexistente");
     }
@@ -594,6 +696,61 @@ export class ScopedDb {
         .where(and(eq(s.memberships.organizationId, this.auth.orgId), eq(s.memberships.userId, userId))),
     );
     await runBatch(this.db, stmts);
+  }
+
+  // ---------- Alcance por estancia (T-09 supervisor, K-05 permisos finos) ----------
+
+  /** Estancias a las que cada persona está limitada, para la pantalla de Equipo (solo el dueño). */
+  async listFarmAccess() {
+    this.require(can.manageFarmAccess, "Solo el dueño ve los permisos por estancia");
+    return this.db
+      .select({ userId: s.farmAccess.userId, farmId: s.farmAccess.farmId, level: s.farmAccess.level })
+      .from(s.farmAccess)
+      .where(eq(s.farmAccess.organizationId, this.auth.orgId));
+  }
+
+  /**
+   * Reemplaza las estancias de una persona. Supervisor: sin filas no ve ninguna. Administrador y agrónomo: sin filas
+   * ven todas; con filas, solo esas (`view` = solo lectura). Avisa al celular para que rehaga sus tablas.
+   */
+  async setFarmAccess(userId: string, farms: { farmId: string; level: s.FarmAccessLevel }[]): Promise<void> {
+    this.require(can.manageFarmAccess, "Solo el dueño limita el acceso a estancias");
+    const role = await this.memberRole(userId);
+    if (role === "owner" || isFieldRole(role))
+      throw new ForbiddenError("El acceso por estancia es para supervisores, administradores y agrónomos");
+    const wanted = new Map(farms.map((f) => [f.farmId, f.level]));
+    if (wanted.size) {
+      const found = await this.db
+        .select({ id: s.farms.id })
+        .from(s.farms)
+        .where(
+          and(eq(s.farms.organizationId, this.auth.orgId), inArray(s.farms.id, [...wanted.keys()]), isNull(s.farms.deletedAt)),
+        );
+      if (found.length !== wanted.size) throw new NotFoundError("Estancia inexistente");
+    }
+    const ts = this.now();
+    await runBatch(this.db, [
+      this.db
+        .delete(s.farmAccess)
+        .where(and(eq(s.farmAccess.organizationId, this.auth.orgId), eq(s.farmAccess.userId, userId))),
+      ...(wanted.size
+        ? [
+            this.db.insert(s.farmAccess).values(
+              [...wanted].map(([farmId, level]) => ({
+                organizationId: this.auth.orgId,
+                userId,
+                farmId,
+                level,
+                createdAt: ts,
+              })),
+            ),
+          ]
+        : []),
+      this.db
+        .update(s.memberships)
+        .set({ assignmentsVersion: sql`${s.memberships.assignmentsVersion} + 1`, updatedAt: ts })
+        .where(and(eq(s.memberships.organizationId, this.auth.orgId), eq(s.memberships.userId, userId))),
+    ]);
   }
 
   // ---------- Topes del plan (P-10) ----------
@@ -649,14 +806,42 @@ export class ScopedDb {
   // ---------- Estancias, lotes, puntos de interés ----------
 
   /** Verifica que la estancia sea de la organización y devuelve su geometría (GeoJSON texto). */
-  async requireFarm(farmId: string): Promise<string> {
+  async requireFarm(farmId: string, write = false): Promise<string> {
     const [f] = await this.db
       .select({ id: s.farms.id, geometry: s.farms.geometry })
       .from(s.farms)
-      .where(and(eq(s.farms.id, farmId), eq(s.farms.organizationId, this.auth.orgId), isNull(s.farms.deletedAt)))
+      .where(
+        and(
+          eq(s.farms.id, farmId),
+          eq(s.farms.organizationId, this.auth.orgId),
+          isNull(s.farms.deletedAt),
+          // T-09 / K-05: fuera de las estancias permitidas (o solo lectura al escribir) se responde "inexistente"/prohibido.
+          this.farmScopeSql("farms.id", write),
+        ),
+      )
       .limit(1);
-    if (!f) throw new NotFoundError("Estancia inexistente");
+    if (!f) {
+      if (write && (await this.farmReadable(farmId)))
+        throw new ForbiddenError("Tenés acceso de solo lectura a esta estancia");
+      throw new NotFoundError("Estancia inexistente");
+    }
     return f.geometry;
+  }
+
+  private async farmReadable(farmId: string): Promise<boolean> {
+    const [f] = await this.db
+      .select({ id: s.farms.id })
+      .from(s.farms)
+      .where(
+        and(
+          eq(s.farms.id, farmId),
+          eq(s.farms.organizationId, this.auth.orgId),
+          isNull(s.farms.deletedAt),
+          this.farmScopeSql("farms.id"),
+        ),
+      )
+      .limit(1);
+    return !!f;
   }
 
   /** La estancia existe en la organización y, si es empleado, tiene lotes asignados en ella. */
@@ -680,6 +865,7 @@ export class ScopedDb {
     input: Omit<typeof s.farms.$inferInsert, "id" | "organizationId" | "createdAt" | "updatedAt" | "version">,
   ) {
     this.require(can.editField);
+    if (await this.isFarmRestricted()) throw new ForbiddenError("Con acceso limitado a ciertas estancias no podés crear otras");
     await this.requireHaRoom(input.areaHa);
     const id = newId();
     const ts = this.now();
@@ -717,7 +903,7 @@ export class ScopedDb {
     >[],
   ): Promise<{ ids: string[]; farmGeometry: string }> {
     this.require(can.editField);
-    const farmGeometry = await this.requireFarm(farmId);
+    const farmGeometry = await this.requireFarm(farmId, true);
     await this.requireHaRoom(
       items.reduce((a, p) => a + (p.areaHa ?? 0), 0),
       "plots",
@@ -751,7 +937,7 @@ export class ScopedDb {
     lat: number;
   }) {
     this.require(can.editField);
-    await this.requireFarm(input.farmId);
+    await this.requireFarm(input.farmId, true);
     const id = newId();
     const ts = this.now();
     await runBatch(this.db, [
@@ -783,7 +969,7 @@ export class ScopedDb {
     prescription: string;
   }): Promise<{ ids: string[] }> {
     this.require(can.assign);
-    await this.requireFarm(input.farmId);
+    await this.requireFarm(input.farmId, true);
     await this.memberRole(input.assigneeId);
     const plotIds = [...new Set(input.plotIds)];
     const found = await this.db
@@ -866,7 +1052,7 @@ export class ScopedDb {
     workOrder?: string | null;
   }): Promise<{ ids: string[] }> {
     this.require(can.assign);
-    await this.requireFarm(input.farmId);
+    await this.requireFarm(input.farmId, true);
     await this.memberRole(input.assigneeId);
     const { plotIds, ...base } = input;
     const wanted = [...new Set(plotIds.filter((p): p is string => !!p))];

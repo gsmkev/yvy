@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { areaHa, bboxOf, centroidOf, checkPlots, validateShape, type Area } from "@yvy/geo";
-import { CROPS, doseText, isWeakPin, LIMITS, PIN_LENGTH, PIN_REGEX, phoneKey, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, TASK_PRIORITIES, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
+import { CROPS, doseText, FARM_ACCESS_LEVELS, isWeakPin, LIMITS, PIN_LENGTH, PIN_REGEX, phoneKey, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, TASK_PRIORITIES, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
 import { can } from "../db/scoped";
 import { randomDigits, randomToken } from "../lib/crypto";
 import { dispatchNewFarm, inBackground } from "../lib/dispatch";
@@ -110,6 +110,18 @@ org.put("/members/:userId/pin", async (c) => {
 
 org.delete("/members/:userId/pin", async (c) => {
   await c.var.sdb.clearMemberPin(c.req.param("userId"));
+  return c.json({ ok: true });
+});
+
+/** T-09 / K-05: estancias de cada supervisor, administrador o agrónomo (solo el dueño). */
+org.get("/farm-access", async (c) => c.json(await c.var.sdb.listFarmAccess()));
+
+org.put("/members/:userId/farms", async (c) => {
+  const body = parse(
+    z.object({ farms: z.array(z.object({ farmId: uuid, level: z.enum(FARM_ACCESS_LEVELS).default("edit") })).max(200) }),
+    await readJson(c.req),
+  );
+  await c.var.sdb.setFarmAccess(c.req.param("userId"), body.farms);
   return c.json({ ok: true });
 });
 

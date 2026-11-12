@@ -316,7 +316,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | T-06 | Actividad del empleado: días activos, registros, lotes visitados, última conexión | P1 | S | Parcial |
 | T-07 | Lotes sin visitar hace más de N días, en la web | P1 | S | Parcial (solo app) |
 | T-08 | Comentarios y menciones en registros ("@Ramón mirá esto") | P2 | M | Falta |
-| T-09 | Supervisor por estancia con permisos intermedios (capataz) | P2 | M | Falta |
+| T-09 | Supervisor por estancia con permisos intermedios (capataz) | P2 | M | Hecho |
 
 ---
 

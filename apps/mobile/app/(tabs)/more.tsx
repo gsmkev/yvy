@@ -191,6 +191,7 @@ export default function More() {
           <Row title={t("app.labsWeedIdTitle")} subtitle={t("app.labsWeedIdRow")} onPress={() => router.push("/labs/malezas")} />
           <Row title={t("app.labsTagTitle")} subtitle={t("app.labsTagRow")} onPress={() => router.push("/labs/caravana")} />
           <Row title={t("app.labsStageTitle")} subtitle={t("app.labsStageRow")} onPress={() => router.push("/labs/fenologia")} />
+          <Row title={t("app.labsTranslateTitle")} subtitle={t("app.labsTranslateRow")} onPress={() => router.push("/labs/guarani")} />
         </>
       )}
 

@@ -7,7 +7,7 @@ import { Hono } from "hono";
 import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
-import { INDEX_KINDS, LAYERS } from "@yvy/shared/schema";
+import { ANALYSIS_KINDS, INDEX_KINDS, LAYERS } from "@yvy/shared/schema";
 import { farmRiskSchema, LIMITS } from "@yvy/shared";
 import { getDb } from "../db/client";
 import { SystemDb } from "../db/system";
@@ -296,6 +296,84 @@ ingest.post("/eudr", async (c) => {
 });
 
 const isoDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+/** Focos de calor guardados cerca de la estancia (job burned_area, S-20). */
+ingest.get("/farms/:id/hotspots", async (c) => {
+  const q = parse(z.object({ days: z.coerce.number().int().min(1).max(400).default(120) }), c.req.query());
+  const res = await c.var.sys.farmHotspots(c.req.param("id"), Date.now() - q.days * 86_400_000);
+  if (!res) throw new HTTPException(404, { message: "Estancia inexistente" });
+  return c.json(res);
+});
+
+/** El job de un análisis a demanda (cover_change) termina o falla. */
+ingest.post("/farms/:id/analysis-status", async (c) => {
+  const b = parse(z.object({ kind: z.enum(ANALYSIS_KINDS), status: z.enum(["done", "failed"]) }), json(c.var.body));
+  if (!(await c.var.sys.setAnalysisStatus(c.req.param("id"), b.kind, b.status))) throw new HTTPException(404);
+  return c.json({ ok: true });
+});
+
+const pct = z.number().min(0).max(100);
+const ha = z.number().min(0).max(1_000_000);
+const classHa = z.object({ forest: ha, pasture: ha, crop: ha, other: ha });
+const metricsByKind = {
+  burned: z.object({ eventAt: z.number().int(), burnedHa: ha, highHa: ha, hotspots: z.number().int().min(0).max(100_000) }),
+  cover_change: z.object({
+    from: classHa,
+    to: classHa,
+    forestToPasture: ha,
+    forestToCrop: ha,
+    forestToOther: ha,
+  }),
+} as const;
+
+/** Análisis de un lote (jobs burned_area y cover_change): ya viene calculado; el Worker valida la forma y lo guarda. */
+ingest.post("/analyses", async (c) => {
+  if (c.var.body.length > 80_000) throw new HTTPException(413, { message: "Resultado demasiado grande" });
+  const pos = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
+  const b = parse(
+    z.object({
+      plotId: uuid,
+      kind: z.enum(ANALYSIS_KINDS),
+      refKey: z.string().min(1).max(40),
+      fromAt: z.number().int().nullable(),
+      toAt: z.number().int().nullable(),
+      plotAreaHa: ha,
+      validPct: pct,
+      metrics: z.unknown(),
+      changes: z
+        .array(
+          z.object({
+            geometry: z.object({ type: z.literal("Polygon"), coordinates: z.array(z.array(pos).min(4).max(300)).min(1).max(4) }),
+            areaHa: z.number().positive().max(100_000),
+            severity: z.enum(["moderate", "high"]).optional(),
+          }),
+        )
+        .max(30),
+    }),
+    json(c.var.body),
+  );
+  const metrics = parse(metricsByKind[b.kind], b.metrics);
+  const fc = {
+    type: "FeatureCollection",
+    features: b.changes.map((a) => ({
+      type: "Feature",
+      properties: { areaHa: a.areaHa, ...(a.severity ? { severity: a.severity } : {}) },
+      geometry: a.geometry,
+    })),
+  };
+  const ok = await c.var.sys.upsertAnalysis(b.plotId, {
+    kind: b.kind,
+    refKey: b.refKey,
+    fromAt: b.fromAt,
+    toAt: b.toAt,
+    plotAreaHa: b.plotAreaHa,
+    validPct: b.validPct,
+    metrics: JSON.stringify(metrics),
+    changes: JSON.stringify(fc),
+  });
+  if (!ok) throw new HTTPException(404, { message: "Lote inexistente" });
+  return c.json({ ok: true });
+});
 
 /** Datos del parte semanal (job weekly_report): agregados de la semana, sin registros ni personas. */
 ingest.get("/farms/:id/weekly-summary", async (c) => {

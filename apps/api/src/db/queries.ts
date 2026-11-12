@@ -481,6 +481,65 @@ export async function markHistoryFailed(sdb: ScopedDb, farmId: string): Promise<
     .where(and(eq(s.farmHistory.farmId, farmId), eq(s.farmHistory.organizationId, sdb.auth.orgId)));
 }
 
+// ---------- Análisis por lote: área quemada (S-20) y cambio de cobertura (S-31) ----------
+
+/** Resultados de un tipo de análisis por lote (con el nombre del lote), los más nuevos primero. Solo roles con vista completa. */
+export async function farmAnalyses(sdb: ScopedDb, farmId: string, kind: s.AnalysisKind) {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const rows = await sdb.db
+    .select({
+      plotId: s.plotAnalyses.plotId,
+      plotName: s.plots.name,
+      refKey: s.plotAnalyses.refKey,
+      fromAt: s.plotAnalyses.fromAt,
+      toAt: s.plotAnalyses.toAt,
+      plotAreaHa: s.plotAnalyses.plotAreaHa,
+      validPct: s.plotAnalyses.validPct,
+      metrics: s.plotAnalyses.metrics,
+      changes: s.plotAnalyses.changes,
+      computedAt: s.plotAnalyses.computedAt,
+    })
+    .from(s.plotAnalyses)
+    .innerJoin(s.plots, and(eq(s.plots.id, s.plotAnalyses.plotId), isNull(s.plots.deletedAt)))
+    .where(and(eq(s.plotAnalyses.farmId, farmId), eq(s.plotAnalyses.kind, kind), eq(s.plotAnalyses.organizationId, sdb.auth.orgId)))
+    .orderBy(desc(s.plotAnalyses.refKey), s.plots.name)
+    .limit(500);
+  return { plots: rows.map((r) => ({ ...r, metrics: JSON.parse(r.metrics) as Record<string, unknown> })) };
+}
+
+export async function analysisStatus(sdb: ScopedDb, farmId: string, kind: s.AnalysisKind) {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const [row] = await sdb.db
+    .select({ status: s.analysisJobs.status, params: s.analysisJobs.params, requestedAt: s.analysisJobs.requestedAt })
+    .from(s.analysisJobs)
+    .where(and(eq(s.analysisJobs.farmId, farmId), eq(s.analysisJobs.kind, kind), eq(s.analysisJobs.organizationId, sdb.auth.orgId)))
+    .limit(1);
+  return row ? { ...row, params: JSON.parse(row.params) as Record<string, string> } : { status: null, params: null, requestedAt: null };
+}
+
+/** Registra el pedido. Devuelve false si ya hay uno en curso (hace menos de 6 h). */
+export async function markAnalysisRequested(sdb: ScopedDb, farmId: string, kind: s.AnalysisKind, params: Record<string, string>): Promise<boolean> {
+  sdb.require(can.requestAnalysis, "Solo el dueño o el administrador piden este análisis");
+  const cur = await analysisStatus(sdb, farmId, kind);
+  const now = sdb.now();
+  if (cur.status === "processing" && cur.requestedAt && now - cur.requestedAt < HISTORY_RETRY_MS) return false;
+  const row = { status: "processing" as const, params: JSON.stringify(params), requestedAt: now, updatedAt: now };
+  await sdb.db
+    .insert(s.analysisJobs)
+    .values({ farmId, kind, organizationId: sdb.auth.orgId, ...row })
+    .onConflictDoUpdate({ target: [s.analysisJobs.farmId, s.analysisJobs.kind], set: row });
+  return true;
+}
+
+export async function markAnalysisFailed(sdb: ScopedDb, farmId: string, kind: s.AnalysisKind): Promise<void> {
+  await sdb.db
+    .update(s.analysisJobs)
+    .set({ status: "failed", updatedAt: sdb.now() })
+    .where(and(eq(s.analysisJobs.farmId, farmId), eq(s.analysisJobs.kind, kind), eq(s.analysisJobs.organizationId, sdb.auth.orgId)));
+}
+
 /** Vigor (NDVI) de un lote en todas las campañas cargadas, para comparar años. */
 export async function plotVigorHistory(sdb: ScopedDb, plotId: string) {
   sdb.require(can.viewAll);

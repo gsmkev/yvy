@@ -18,6 +18,10 @@ import {
   farmDetail,
   farmForecast,
   farmEudr,
+  farmAnalyses,
+  analysisStatus,
+  markAnalysisFailed,
+  markAnalysisRequested,
   farmHistoryStatus,
   markHistoryFailed,
   markHistoryRequested,
@@ -306,6 +310,29 @@ web.post("/org/plots/merge", async (c) => {
 });
 web.get("/org/plots/:id/vigor-history", async (c) => c.json(await plotVigorHistory(c.var.sdb, c.req.param("id"))));
 web.get("/org/farms/:id/history", async (c) => c.json(await farmHistoryStatus(c.var.sdb, c.req.param("id"))));
+/** S-20: área quemada por lote tras un foco de fuego (job burned_area). */
+web.get("/org/farms/:id/burned", async (c) => c.json(await farmAnalyses(c.var.sdb, c.req.param("id"), "burned")));
+/** S-31: cambio de cobertura entre dos fechas, a pedido. */
+web.get("/org/farms/:id/cover-change", async (c) => {
+  const id = c.req.param("id");
+  return c.json({ ...(await farmAnalyses(c.var.sdb, id, "cover_change")), job: await analysisStatus(c.var.sdb, id, "cover_change") });
+});
+web.post("/org/farms/:id/cover-change", async (c) => {
+  const farmId = c.req.param("id");
+  const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+  const b = parse(z.object({ from: day, to: day }), await readJson(c.req));
+  const first = "2017-01-01";
+  const today = new Date(c.var.sdb.now()).toISOString().slice(0, 10);
+  if (b.from < first || b.to > today || Date.parse(b.to) - Date.parse(b.from) < 90 * 86_400_000)
+    throw new HTTPException(400, { message: "Elegí dos fechas desde 2017, con al menos 3 meses de diferencia" });
+  if (!(await markAnalysisRequested(c.var.sdb, farmId, "cover_change", b))) return c.json({ status: "processing", already: true }, 202);
+  const res = await dispatchJob(c.env, "cover_change", farmId, b);
+  if (res !== "sent") {
+    await markAnalysisFailed(c.var.sdb, farmId, "cover_change");
+    throw new HTTPException(503, { message: "No se pudo pedir el análisis: los jobs no están disponibles" });
+  }
+  return c.json({ status: "processing", already: false }, 202);
+});
 /** S-03: pide el job s2_history (Sentinel-2 desde 2017) para la estancia. */
 web.post("/org/farms/:id/history", async (c) => {
   const farmId = c.req.param("id");

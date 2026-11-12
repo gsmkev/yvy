@@ -875,6 +875,55 @@ export const eudrResults = sqliteTable(
   (t) => [uniqueIndex("eudr_results_plot_uq").on(t.plotId), index("eudr_results_farm_idx").on(t.farmId)],
 );
 
+/** Análisis por lote calculados por workers-py con Sentinel-2: área quemada (S-20) y cambio de cobertura (S-31). */
+export const ANALYSIS_KINDS = ["burned", "cover_change"] as const;
+export type AnalysisKind = (typeof ANALYSIS_KINDS)[number];
+
+/**
+ * Una fila por lote, tipo de análisis y referencia (burned: fecha ISO del primer foco; cover_change: "desde_hasta").
+ * `metrics` es un JSON chico según el tipo y `changes` un FeatureCollection con los polígonos. Solo lo escribe
+ * /ingest; no se sincroniza. Análisis indicativo.
+ */
+export const plotAnalyses = sqliteTable(
+  "plot_analyses",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    plotId: text("plot_id").notNull(),
+    kind: text("kind", { enum: ANALYSIS_KINDS }).notNull(),
+    refKey: text("ref_key").notNull(),
+    /** Fecha de la imagen "antes" y de la imagen "después". */
+    fromAt: integer("from_at"),
+    toAt: integer("to_at"),
+    plotAreaHa: real("plot_area_ha").notNull(),
+    validPct: real("valid_pct").notNull(),
+    metrics: text("metrics").notNull(),
+    changes: text("changes").notNull(),
+    computedAt: integer("computed_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("plot_analyses_uq").on(t.plotId, t.kind, t.refKey),
+    index("plot_analyses_farm_idx").on(t.farmId, t.kind),
+  ],
+);
+
+/** Pedidos a demanda de análisis pesados por estancia (S-31). No se sincroniza. */
+export const analysisJobs = sqliteTable(
+  "analysis_jobs",
+  {
+    farmId: text("farm_id").notNull(),
+    kind: text("kind", { enum: ANALYSIS_KINDS }).notNull(),
+    organizationId: text("organization_id").notNull(),
+    status: text("status", { enum: HISTORY_STATUSES }).notNull(),
+    /** Parámetros del pedido (JSON): fechas del cambio de cobertura. */
+    params: text("params").notNull().default("{}"),
+    requestedAt: integer("requested_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.farmId, t.kind] })],
+);
+
 /** Informe de riesgo climático por estancia (C-10): JSON validado con farmRiskSchema. No se sincroniza. */
 export const farmRisk = sqliteTable("farm_risk", {
   farmId: text("farm_id").primaryKey(),

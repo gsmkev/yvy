@@ -2,7 +2,7 @@
  * Acceso de sistema (sin usuario): /ingest firmado por HMAC y crons. Única excepción a scopedDb.
  * Cada escritura deriva organization_id de la fila padre (lote o estancia), nunca del request.
  */
-import { and, desc, eq, gte, inArray, isNull, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lt, lte, or, sql } from "drizzle-orm";
 import { addDays, DEFAULT_ALERT_SETTINGS, localDate, newId, type AlertSettings } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { upsertAlert } from "../jobs/alerts";
@@ -532,6 +532,61 @@ export class SystemDb {
       .values({ ...row, id: newId() })
       .onConflictDoUpdate({ target: s.eudrResults.plotId, set });
     return true;
+  }
+
+  /** S-20: focos de calor guardados cerca de la estancia (bbox + ~2 km) desde `since`. */
+  async farmHotspots(farmId: string, since: number) {
+    const [f] = await this.db
+      .select({ minLon: s.farms.minLon, minLat: s.farms.minLat, maxLon: s.farms.maxLon, maxLat: s.farms.maxLat })
+      .from(s.farms)
+      .where(and(eq(s.farms.id, farmId), isNull(s.farms.deletedAt)))
+      .limit(1);
+    if (!f) return null;
+    const pad = 0.02;
+    return this.db
+      .select({ lon: s.fireHotspots.lon, lat: s.fireHotspots.lat, acquiredAt: s.fireHotspots.acquiredAt, confidence: s.fireHotspots.confidence })
+      .from(s.fireHotspots)
+      .where(
+        and(
+          gte(s.fireHotspots.acquiredAt, since),
+          gte(s.fireHotspots.lon, f.minLon - pad),
+          lte(s.fireHotspots.lon, f.maxLon + pad),
+          gte(s.fireHotspots.lat, f.minLat - pad),
+          lte(s.fireHotspots.lat, f.maxLat + pad),
+        ),
+      )
+      .orderBy(s.fireHotspots.acquiredAt)
+      .limit(500);
+  }
+
+  /** S-20 y S-31: guarda (reemplaza) el análisis de un lote. La organización sale del lote, no del request. */
+  async upsertAnalysis(
+    plotId: string,
+    r: Pick<typeof s.plotAnalyses.$inferInsert, "kind" | "refKey" | "fromAt" | "toAt" | "plotAreaHa" | "validPct" | "metrics" | "changes">,
+  ): Promise<boolean> {
+    const [plot] = await this.db
+      .select({ org: s.plots.organizationId, farmId: s.plots.farmId })
+      .from(s.plots)
+      .where(and(eq(s.plots.id, plotId), isNull(s.plots.deletedAt)))
+      .limit(1);
+    if (!plot) return false;
+    const row = { ...r, organizationId: plot.org, farmId: plot.farmId, plotId, computedAt: Date.now() };
+    const { plotId: _p, kind: _k, refKey: _r, ...set } = row;
+    await this.db
+      .insert(s.plotAnalyses)
+      .values({ ...row, id: newId() })
+      .onConflictDoUpdate({ target: [s.plotAnalyses.plotId, s.plotAnalyses.kind, s.plotAnalyses.refKey], set });
+    return true;
+  }
+
+  /** S-31: el job termina (o falla); solo cambia el estado de un pedido existente. */
+  async setAnalysisStatus(farmId: string, kind: s.AnalysisKind, status: "done" | "failed"): Promise<boolean> {
+    const res = await this.db
+      .update(s.analysisJobs)
+      .set({ status, updatedAt: Date.now() })
+      .where(and(eq(s.analysisJobs.farmId, farmId), eq(s.analysisJobs.kind, kind)))
+      .returning({ id: s.analysisJobs.farmId });
+    return res.length > 0;
   }
 
   async fireAlert(x: {

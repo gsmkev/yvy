@@ -181,7 +181,7 @@ Detalles que un usuario espera sin pedirlos.
 | G-02 | Movimientos entre potreros, con fecha y cantidad, desde la app | El dato que hoy se pierde | App, Web | P1 | M | Falta |
 | G-03 | Carga animal (UA/ha) por potrero y estancia, con alerta de sobrecarga | Decisión diaria | Web | P1 | S | Falta |
 | G-04 | Rotación de potreros: días de ocupación y descanso, próximo potrero sugerido | Pastoreo planificado | Web, App | P2 | M | Falta |
-| G-05 | Oferta de pasto estimada con satélite y altura medida | Cuánto comen y cuánto queda | Web, Jobs | P2 | L | Parcial (altura y cobertura) |
+| G-05 | Oferta de pasto estimada con satélite y altura medida | Cuánto comen y cuánto queda | Web, Jobs | P2 | L | Hecho |
 | G-06 | Conteo rápido de animales en la app (contador grande con categorías) | Recuento en la manga | App | P1 | S | Falta |
 | G-10 | Calendario sanitario: aftosa (campañas oficiales), brucelosis, carbunclo, garrapata, desparasitación | Obligaciones y pérdidas | Web, App | P1 | M | Falta |
 | G-11 | Registro de tratamientos con producto, dosis, animales y carencia | Trazabilidad | App, Web | P1 | M | Falta |

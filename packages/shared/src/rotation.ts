@@ -181,7 +181,16 @@ export const FORAGE = {
   /** NDVI → kg MS/ha: max(0, NDVI - base) * slope. */
   ndviBase: 0.2,
   ndviSlopeKgDmHa: 8000,
-  /** Peso de cada método cuando hay los dos: la altura medida en el potrero pesa más que el satélite. */
+  /**
+   * Calibración con la altura medida: si hay una imagen de satélite de la fecha de la medición (a no más de
+   * `calibrationWindowDays` días), la altura fija el nivel y el NDVI solo mueve la estimación desde entonces:
+   * kg MS/ha = kg de la altura x (kg por NDVI hoy / kg por NDVI el día de la medición), con la razón entre
+   * `ratioMin` y `ratioMax` para que una imagen mala no dispare el número.
+   */
+  calibrationWindowDays: 7,
+  ratioMin: 0.3,
+  ratioMax: 3,
+  /** Peso de cada método cuando hay los dos pero no hay imagen de la fecha de la medición: la altura pesa más. */
   heightWeight: 0.6,
   /** Fracción del forraje que se puede cosechar sin dañar el pasto ("tomar la mitad, dejar la mitad"). */
   utilization: 0.5,
@@ -191,7 +200,7 @@ export const FORAGE = {
   staleDays: 30,
 } as const;
 
-export type ForageMethod = "height" | "ndvi" | "both";
+export type ForageMethod = "height" | "ndvi" | "both" | "calibrated";
 
 export interface ForageInput {
   heightCm: number | null;
@@ -199,6 +208,8 @@ export interface ForageInput {
   heightAt: number | null;
   ndvi: number | null;
   ndviAt: number | null;
+  /** NDVI de la imagen más cercana a la fecha de la altura medida (a no más de calibrationWindowDays); null si no hay. */
+  ndviAtHeight?: number | null;
   areaHa: number;
   /** Unidades animales presentes hoy. */
   ua: number;
@@ -227,11 +238,22 @@ export const kgDmFromNdvi = (ndvi: number): number =>
 export function estimateForage(i: ForageInput): ForageEstimate {
   const heightKg = i.heightCm !== null && i.cover !== null ? kgDmFromHeight(i.heightCm, i.cover) : null;
   const ndviKg = i.ndvi !== null ? kgDmFromNdvi(i.ndvi) : null;
-  const kgHa =
-    heightKg !== null && ndviKg !== null
+  const anchorKg = i.ndviAtHeight != null ? kgDmFromNdvi(i.ndviAtHeight) : 0;
+  const calibrated = heightKg !== null && ndviKg !== null && anchorKg > 0;
+  const kgHa = calibrated
+    ? Math.round(heightKg * Math.min(FORAGE.ratioMax, Math.max(FORAGE.ratioMin, ndviKg / anchorKg)))
+    : heightKg !== null && ndviKg !== null
       ? Math.round(FORAGE.heightWeight * heightKg + (1 - FORAGE.heightWeight) * ndviKg)
       : (heightKg ?? ndviKg);
-  const method: ForageMethod | null = heightKg !== null && ndviKg !== null ? "both" : heightKg !== null ? "height" : ndviKg !== null ? "ndvi" : null;
+  const method: ForageMethod | null = calibrated
+    ? "calibrated"
+    : heightKg !== null && ndviKg !== null
+      ? "both"
+      : heightKg !== null
+        ? "height"
+        : ndviKg !== null
+          ? "ndvi"
+          : null;
   const total = kgHa === null ? null : Math.round(kgHa * i.areaHa);
   const usable = total === null ? null : Math.round(total * FORAGE.utilization);
   const demand = Math.round(i.ua * FORAGE.dmPerUaDay);

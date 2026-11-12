@@ -326,13 +326,13 @@ export async function farmRotation(sdb: ScopedDb, farmId: string): Promise<Rotat
 
 /**
  * G-05: oferta de forraje (kg de materia seca por hectárea) de cada potrero con la última altura y cobertura
- * medidas y el último NDVI de satélite, y días de pasto con la hacienda de hoy. 6 consultas por estancia.
+ * medidas y el último NDVI de satélite, y días de pasto con la hacienda de hoy. 7 consultas por estancia.
  */
 export async function farmForage(sdb: ScopedDb, farmId: string): Promise<ForageResponse> {
   sdb.require(can.viewAll);
   await sdb.requireFarm(farmId);
   const now = sdb.now();
-  const [stock, readings, ndviRows] = await Promise.all([
+  const [stock, readings, ndviRows, recentNdvi] = await Promise.all([
     farmStockSummary(sdb, farmId),
     latestPastureReadings(sdb, farmId),
     sdb.db
@@ -347,8 +347,32 @@ export async function farmForage(sdb: ScopedDb, farmId: string): Promise<ForageR
           sql`${s.plotIndexStats.acquiredAt} = (SELECT max(p2.acquired_at) FROM plot_index_stats p2 WHERE p2.plot_id = ${s.plotIndexStats.plotId} AND p2.idx = 'ndvi' AND p2.deleted_at IS NULL)`,
         ),
       ),
+    // Imágenes de los últimos 60 días: para encontrar la de la fecha de la altura medida (calibración).
+    sdb.db
+      .select({ plotId: s.plotIndexStats.plotId, mean: s.plotIndexStats.mean, acquiredAt: s.plotIndexStats.acquiredAt })
+      .from(s.plotIndexStats)
+      .where(
+        and(
+          eq(s.plotIndexStats.organizationId, sdb.auth.orgId),
+          eq(s.plotIndexStats.idx, "ndvi"),
+          isNull(s.plotIndexStats.deletedAt),
+          gte(s.plotIndexStats.acquiredAt, now - 60 * DAY),
+          sql`${s.plotIndexStats.plotId} IN (SELECT id FROM plots WHERE farm_id = ${farmId} AND kind = 'pasture' AND deleted_at IS NULL)`,
+        ),
+      ),
   ]);
   const ndvi = new Map(ndviRows.map((r) => [r.plotId, r] as const));
+  /** NDVI de la imagen más cercana a la altura medida, a no más de la ventana de calibración. */
+  const ndviNear = (plotId: string, at: number | null): number | null => {
+    if (at === null) return null;
+    let best: { mean: number; gap: number } | null = null;
+    for (const r of recentNdvi) {
+      if (r.plotId !== plotId) continue;
+      const gap = Math.abs(r.acquiredAt - at);
+      if (gap <= FORAGE.calibrationWindowDays * DAY && (!best || gap < best.gap)) best = { mean: r.mean, gap };
+    }
+    return best?.mean ?? null;
+  };
   return {
     coefficients: FORAGE,
     plots: stock.plots.map((p) => {
@@ -360,6 +384,7 @@ export async function farmForage(sdb: ScopedDb, farmId: string): Promise<ForageR
         heightAt: h?.at ?? null,
         ndvi: n?.mean ?? null,
         ndviAt: n?.acquiredAt ?? null,
+        ndviAtHeight: ndviNear(p.plotId, h?.at ?? null),
         areaHa: p.areaHa,
         ua: p.ua,
         now,

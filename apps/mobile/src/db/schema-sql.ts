@@ -176,5 +176,9 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `farm_access_farm_idx` ON `farm_access` (`farm_id`);",
   "ALTER TABLE `audit_log` ADD `entity` text;",
   "ALTER TABLE `audit_log` ADD `entity_id` text;",
-  "CREATE INDEX `audit_log_entity_idx` ON `audit_log` (`organization_id`,`entity`,`entity_id`);"
+  "CREATE INDEX `audit_log_entity_idx` ON `audit_log` (`organization_id`,`entity`,`entity_id`);",
+  "CREATE TABLE `comments` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`record_id` text NOT NULL,\n\t`author_id` text NOT NULL,\n\t`author_name` text DEFAULT '' NOT NULL,\n\t`body` text NOT NULL,\n\t`mentions` text DEFAULT '[]' NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
+  "CREATE INDEX `comments_sync_idx` ON `comments` (`organization_id`,`version`,`id`);",
+  "CREATE INDEX `comments_record_idx` ON `comments` (`record_id`,`created_at`);",
+  "ALTER TABLE `notifications` ADD `comment_id` text;"
 ];

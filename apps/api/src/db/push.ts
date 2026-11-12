@@ -29,6 +29,7 @@ import { areaHa, bboxOf, validateShape, type Area } from "@yvy/geo";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from "./client";
 import { hasEffects, recordEffects, type EffectRecord } from "./erp-effects";
 import { auditStmts } from "./audit";
+import { mentionStmts, validMentions } from "./comments";
 import { funnelEvent } from "./events";
 import { can, type ScopedDb } from "./scoped";
 
@@ -71,8 +72,20 @@ export async function applyPush(
   const poiIds = new Set<string>();
   const plotUpsertIds = new Set<string>();
   const attachRecordIds = new Set<string>();
+  // T-08: comentarios
+  const commentIds = new Set<string>();
+  const commentRecordIds = new Set<string>();
+  const mentionIds = new Set<string>();
   for (const m of mutations) {
     switch (m.kind) {
+      case "comments.upsert":
+        commentIds.add(m.row.id);
+        commentRecordIds.add(m.row.recordId);
+        m.row.mentions.forEach((u) => mentionIds.add(u));
+        break;
+      case "comments.delete":
+        commentIds.add(m.row.id);
+        break;
       case "records.upsert":
         recordIds.add(m.row.id);
         farmIds.add(m.row.farmId);
@@ -215,6 +228,45 @@ export async function applyPush(
             .from(s.farmAccess)
             .where(and(eq(s.farmAccess.organizationId, org), eq(s.farmAccess.userId, auth.userId))),
     ]);
+
+  const commentRows = commentIds.size
+    ? await db
+        .select({
+          id: s.comments.id,
+          organizationId: s.comments.organizationId,
+          authorId: s.comments.authorId,
+          recordId: s.comments.recordId,
+          deletedAt: s.comments.deletedAt,
+        })
+        .from(s.comments)
+        .where(inArray(s.comments.id, ids(commentIds)))
+    : [];
+  // registros que esta persona puede ver (los comentarios van sobre registros visibles)
+  const visibleForComments = new Set(
+    commentRecordIds.size
+      ? (
+          await db
+            .select({ id: s.records.id })
+            .from(s.records)
+            .where(
+              and(
+                eq(s.records.organizationId, org),
+                isNull(s.records.deletedAt),
+                inArray(s.records.id, ids(commentRecordIds)),
+                sdb.workerFilter("records"),
+              ),
+            )
+        ).map((r) => r.id)
+      : [],
+  );
+  const authorName = commentRecordIds.size
+    ? ((await db.select({ n: s.users.fullName }).from(s.users).where(eq(s.users.id, auth.userId)).limit(1))[0]?.n ?? "")
+    : "";
+  const validMentioned = new Set(await validMentions(db, org, auth.userId, ids(mentionIds)));
+  const commentsById = new Map(commentRows.map((r) => [r.id, r]));
+  const commentUpserts: (typeof s.comments.$inferInsert)[] = [];
+  const commentDeletes: string[] = [];
+  const mentionRows: { commentId: string; userId: string }[] = [];
 
   const seen = new Set(seenRows.map((r) => r.id));
   const records = new Map<string, RecordState>(recRows.map((r) => [r.id, r]));
@@ -556,6 +608,55 @@ export async function applyPush(
         accept(m, p.id);
         break;
       }
+      case "comments.upsert": {
+        const c = m.row;
+        const prev = commentsById.get(c.id);
+        if (prev && (prev.organizationId !== org || prev.authorId !== auth.userId || prev.recordId !== c.recordId)) {
+          reject(m, prev.organizationId !== org ? "not_found" : "forbidden");
+          break;
+        }
+        if (prev?.deletedAt) {
+          reject(m, "deleted");
+          break;
+        }
+        if (!visibleForComments.has(c.recordId)) {
+          reject(m, "not_found", "record");
+          break;
+        }
+        const mentions = c.mentions.filter((u) => validMentioned.has(u));
+        if (!prev) mentions.forEach((u) => mentionRows.push({ commentId: c.id, userId: u }));
+        commentUpserts.push({
+          id: c.id,
+          organizationId: org,
+          recordId: c.recordId,
+          authorId: auth.userId,
+          authorName,
+          body: c.body,
+          mentions: JSON.stringify(mentions),
+          createdAt: now,
+          updatedAt: now,
+        });
+        commentsById.set(c.id, { id: c.id, organizationId: org, authorId: auth.userId, recordId: c.recordId, deletedAt: null });
+        accept(m, c.id);
+        break;
+      }
+      case "comments.delete": {
+        const prev = commentsById.get(m.row.id);
+        if (!prev || prev.organizationId !== org) {
+          reject(m, "not_found");
+          break;
+        }
+        if (prev.authorId !== auth.userId && !can.manageWorkers(auth.role)) {
+          reject(m, "forbidden");
+          break;
+        }
+        if (!prev.deletedAt) {
+          commentDeletes.push(prev.id);
+          prev.deletedAt = now;
+        }
+        accept(m, prev.id);
+        break;
+      }
       case "tasks.status": {
         const t = tasks.get(m.row.id);
         if (!t || t.organizationId !== org) {
@@ -671,6 +772,8 @@ export async function applyPush(
       attachmentDeletes.length +
       poiUpserts.length +
       plotUpserts.length +
+      commentUpserts.length +
+      commentDeletes.length +
       taskUpdates.length >
     0;
   if (touchesSynced) stmts.push(bumpVersion(db));
@@ -790,6 +893,30 @@ export async function applyPush(
         .where(and(eq(s.attachments.organizationId, org), inArray(s.attachments.id, chunk))),
     );
   }
+  for (const chunk of chunkForParams(commentUpserts, paramsPerRow(s.comments))) {
+    stmts.push(
+      db
+        .insert(s.comments)
+        .values(chunk.map((c) => ({ ...c, version: currentVersion })))
+        .onConflictDoUpdate({
+          target: s.comments.id,
+          set: {
+            body: sql`excluded.body`,
+            updatedAt: sql`excluded.updated_at`,
+            version: sql`excluded.version`,
+          },
+        }),
+    );
+  }
+  for (const chunk of chunkForParams(commentDeletes, 1)) {
+    stmts.push(
+      db
+        .update(s.comments)
+        .set({ deletedAt: now, updatedAt: now, version: currentVersion })
+        .where(and(eq(s.comments.organizationId, org), inArray(s.comments.id, chunk))),
+    );
+  }
+  stmts.push(...(await mentionStmts(db, mentionRows, now)));
   stmts.push(...taskUpdates);
   for (const chunk of chunkForParams(applied, paramsPerRow(s.syncMutations))) {
     stmts.push(db.insert(s.syncMutations).values(chunk).onConflictDoNothing());

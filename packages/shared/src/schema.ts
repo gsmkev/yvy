@@ -787,6 +787,30 @@ export const records = sqliteTable(
   ],
 );
 
+/**
+ * T-08: comentarios sobre un registro, con menciones (`@Ramón mirá esto`). Se sincroniza; cada comentario es una fila
+ * propia (a diferencia de los de las tareas, que van en un JSON) para que dos personas comentando offline no se pisen.
+ */
+export const comments = sqliteTable(
+  "comments",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    recordId: text("record_id").notNull(),
+    authorId: text("author_id").notNull(),
+    /** Nombre del autor al comentar (el celular no tiene la tabla de usuarios). */
+    authorName: text("author_name").notNull().default(""),
+    body: text("body").notNull(),
+    /** JSON: ids de usuario mencionados (miembros de la organización). */
+    mentions: text("mentions").notNull().default("[]"),
+    ...synced,
+  },
+  (t) => [
+    index("comments_sync_idx").on(t.organizationId, t.version, t.id),
+    index("comments_record_idx").on(t.recordId, t.createdAt),
+  ],
+);
+
 export const attachments = sqliteTable(
   "attachments",
   {
@@ -1244,6 +1268,8 @@ export const notifications = sqliteTable(
     id: text("id").primaryKey(),
     userId: text("user_id").notNull(),
     alertId: text("alert_id"),
+    /** T-08: aviso de mención en un comentario (en vez de un aviso agronómico). */
+    commentId: text("comment_id"),
     channel: text("channel", { enum: ["push", "email"] }).notNull(),
     status: text("status", { enum: ["pending", "sent", "failed"] })
       .notNull()

@@ -124,6 +124,8 @@ export const can = {
   editAnimals: (r: Role) => r !== "worker",
   /** S-03: pedir la historia de vigor desde 2017 gasta minutos de cómputo: dueño y administrador. */
   requestHistory: (r: Role) => r === "owner" || r === "admin",
+  /** F-14: definir los campos propios de los formularios: dueño y administrador (todos los roles los reciben). */
+  manageForms: (r: Role) => r === "owner" || r === "admin",
   /** S-31: pedir el cambio de cobertura entre dos fechas (mismo costo de cómputo). */
   requestAnalysis: (r: Role) => r === "owner" || r === "admin",
 };

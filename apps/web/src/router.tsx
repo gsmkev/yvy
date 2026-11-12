@@ -122,6 +122,11 @@ const team = createRoute({
   path: "/equipo",
   component: lazyRouteComponent(() => import("./routes/team"), "TeamPage"),
 });
+const forms = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/formularios",
+  component: lazyRouteComponent(() => import("./routes/forms"), "FormsPage"),
+});
 const help = createRoute({
   getParentRoute: () => appRoute,
   path: "/ayuda",
@@ -173,6 +178,7 @@ const routeTree = rootRoute.addChildren([
     farmRisk,
     farmEudr,
     farmChanges,
+    forms,
     records,
     tasks,
     sanitary,

@@ -4,7 +4,7 @@ import { and, eq, gte, isNull, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { areaHa, bboxOf } from "@yvy/geo";
-import { alertSettingsSchema, referralCode, CROPS, FUNNEL_EVENTS, newId, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
+import { alertSettingsSchema, formConfigSchema, referralCode, CROPS, FUNNEL_EVENTS, newId, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import {
   addTaskComment,
@@ -18,6 +18,8 @@ import {
   farmDetail,
   farmForecast,
   farmEudr,
+  getFormConfig,
+  saveFormConfig,
   farmAnalyses,
   analysisStatus,
   markAnalysisFailed,
@@ -310,6 +312,12 @@ web.post("/org/plots/merge", async (c) => {
 });
 web.get("/org/plots/:id/vigor-history", async (c) => c.json(await plotVigorHistory(c.var.sdb, c.req.param("id"))));
 web.get("/org/farms/:id/history", async (c) => c.json(await farmHistoryStatus(c.var.sdb, c.req.param("id"))));
+/** F-14: campos propios de los formularios. Leer: todo el equipo (el empleado los llena en la app). Editar: dueño y administrador. */
+web.get("/org/form-config", async (c) => c.json(await getFormConfig(c.var.sdb)));
+web.put("/org/form-config", async (c) => {
+  const config = parse(formConfigSchema, await readJson(c.req));
+  return c.json(await saveFormConfig(c.var.sdb, config));
+});
 /** S-20: área quemada por lote tras un foco de fuego (job burned_area). */
 web.get("/org/farms/:id/burned", async (c) => c.json(await farmAnalyses(c.var.sdb, c.req.param("id"), "burned")));
 /** S-31: cambio de cobertura entre dos fechas, a pedido. */

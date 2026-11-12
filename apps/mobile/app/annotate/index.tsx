@@ -11,10 +11,12 @@ import {
   describeRecord,
   DOSE_UNITS_FOR,
   LIMITS,
+  flattenExtra,
   MONITOR_CROPS,
   monitorTemplate,
   ORDER_LABOR_KIND,
   parseRecordData,
+  splitExtraAnswers,
   summarizeStations,
   t,
   type DoseUnit,
@@ -26,9 +28,10 @@ import {
   type Station,
 } from "@yvy/shared";
 import type { LocalAudio, LocalPhoto, Plot, Season } from "../../src/db/store";
+import { fieldsFor, readFormConfig } from "../../src/lib/formConfig";
 import { getDb } from "../../src/lib/db";
 import { selectedFarmId } from "../../src/lib/farmFilter";
-import { FLOWS, KINDS_FOR, SINGLE_PLOT_KINDS, stepsFor, type Step } from "../../src/lib/annotate";
+import { FLOWS, KINDS_FOR, RAW, SINGLE_PLOT_KINDS, stepsFor, type Step } from "../../src/lib/annotate";
 import { currentFix, guessPlots, type Fix, type PlotGuess } from "../../src/lib/location";
 import { containsPoint, type Area } from "@yvy/geo";
 import { processPhoto } from "../../src/lib/photos";
@@ -44,7 +47,7 @@ import { Button, Row, s as k, Text, TextInput } from "../../src/ui/kit";
 import { Stations } from "../../src/ui/Stations";
 import { C, F, GUTTER, RADIUS, T, TOUCH } from "../../src/ui/theme";
 
-const tr = (key: string, vars?: Record<string, string | number>) => t(key as MessageKey, vars);
+const tr = (key: string, vars?: Record<string, string | number>) => (key.startsWith(RAW) ? key.slice(RAW.length) : t(key as MessageKey, vars));
 
 /** Con más lotes que esto, la lista tiene buscador. */
 const SEARCH_FROM = 8;
@@ -99,7 +102,7 @@ export default function Annotate() {
     return out;
   };
   const [values, setValues] = useState<Record<string, unknown>>(() =>
-    editing ? (JSON.parse(editing.data) as Record<string, unknown>) : { ...(presetKind ? seed(presetKind) : {}), ...(scanPoi ? { poiId: scanPoi.id } : {}) },
+    editing ? flattenExtra(JSON.parse(editing.data) as Record<string, unknown>) : { ...(presetKind ? seed(presetKind) : {}), ...(scanPoi ? { poiId: scanPoi.id } : {}) },
   );
   const [photos, setPhotos] = useState<LocalPhoto[]>([]);
   const [voice, setVoice] = useState<LocalAudio | null>(null);
@@ -147,8 +150,9 @@ export default function Annotate() {
   );
   const vetProducts = useMemo(() => db.products().some((p) => p.type === "veterinary"), []);
   const hasMachines = useMemo(() => db.machines().length > 0, []);
+  const extraFields = useMemo(() => fieldsFor(readFormConfig(db), kind), [kind]);
   // Con el punto ya escaneado no se pregunta de qué aguada es.
-  const flowCtx = { waterPois: scanPoi ? 0 : waterPois.length, askSeason: seasons.length > 1, vetProducts, machines: hasMachines };
+  const flowCtx = { waterPois: scanPoi ? 0 : waterPois.length, askSeason: seasons.length > 1, vetProducts, machines: hasMachines, extraFields };
   const steps = stationRecord ? FLOWS.pest.slice(-1) : stepsFor(kind, values, flowCtx);
   const stepIndex = phase.name === "step" ? phase.i : -1;
 
@@ -175,7 +179,8 @@ export default function Annotate() {
   const save = () => {
     if (!kind) return;
     const { poiId: pickedPoi, ...answers } = values;
-    const data: Record<string, unknown> = { ...answers };
+    const { rest, extra } = splitExtraAnswers(answers);
+    const data: Record<string, unknown> = { ...rest, ...(extra ? { extra } : {}) };
     // Tratamiento con producto del catálogo: el nombre sale del catálogo (E-13).
     if (kind === "health" && typeof data.productId === "string")
       data.product = db.products().find((p) => p.id === data.productId)?.name ?? data.product;

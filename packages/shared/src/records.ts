@@ -10,6 +10,7 @@ import { HEALTH_REASONS, HERD_CATEGORIES, MAX_HEAD_PER_CATEGORY, MORTALITY_CAUSE
 import { deltaT, DOSE_UNITS } from "./agro";
 import { CROPS, type RecordKind } from "./schema";
 import { LIMITS } from "./limits";
+import { extraSchema } from "./forms";
 
 export const RECORD_SCHEMA_VERSION = 1;
 
@@ -328,4 +329,17 @@ export const recordDataSchemas = {
 
 export type RecordData<K extends RecordKind> = z.infer<(typeof recordDataSchemas)[K]>;
 
-export const parseRecordData = (kind: RecordKind, data: unknown) => recordDataSchemas[kind].safeParse(data);
+/**
+ * Valida los datos de un registro. Los campos propios de la organización (F-14) van aparte, en `data.extra`, y se
+ * validan con un esquema genérico; el resto, con el esquema del tipo. Sin `extra` el resultado es el de siempre.
+ */
+export const parseRecordData = (kind: RecordKind, data: unknown) => {
+  if (data === null || typeof data !== "object" || Array.isArray(data) || !("extra" in data)) return recordDataSchemas[kind].safeParse(data);
+  const { extra, ...rest } = data as Record<string, unknown>;
+  const base = recordDataSchemas[kind].safeParse(rest);
+  if (!base.success) return base;
+  if (extra === undefined) return base;
+  const e = extraSchema.safeParse(extra);
+  if (!e.success) return { success: false as const, error: e.error };
+  return { success: true as const, data: { ...(base.data as object), extra: e.data } as unknown as typeof base.data };
+};

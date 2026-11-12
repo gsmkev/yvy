@@ -1,4 +1,5 @@
 import { KeyRound, MapPinned, QrCode, UserPlus } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
@@ -54,6 +55,11 @@ export function TeamPage() {
               rows: members.data!.map((m) => [m.fullName, tk(`ui.role_${m.role}`), m.email, m.phone]),
             })}
           />
+          {canManage && (
+            <Link to="/formularios" className="text-sm font-medium text-accion underline underline-offset-2">
+              {t("ui.formsLink")}
+            </Link>
+          )}
           {canManage && (
             <Button variant="primary" icon={UserPlus} onClick={() => setAdding(true)}>
               {t("ui.addMember")}

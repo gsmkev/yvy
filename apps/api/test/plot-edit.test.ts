@@ -36,6 +36,21 @@ describe("editar los vértices de un lote (M-02)", () => {
     expect(JSON.parse(after.geometry).coordinates[0]).toHaveLength(5);
   });
 
+  it("M-09: un lote con dos partes se guarda como MultiPolygon con la suma de áreas y el bbox de ambas", async () => {
+    const { owner, ids } = await setup();
+    const a = square(-55.89, -27.21, 0.01);
+    const b = square(-55.84, -27.25, 0.012);
+    const next = { type: "MultiPolygon", coordinates: [a.coordinates, b.coordinates] };
+    const r = await call<{ areaHa: number }>("PATCH", `/org/plots/${ids[0]}`, { token: owner.token, body: { geometry: next } });
+    expect(r.status).toBe(200);
+    expect(r.body.areaHa).toBeCloseTo(areaHa(a) + areaHa(b), 4);
+    const after = (await pullAll(owner.token, "plots")).find((p) => p.id === ids[0])!;
+    expect(JSON.parse(after.geometry).type).toBe("MultiPolygon");
+    expect(after.minLon).toBeCloseTo(-55.89, 9);
+    expect(after.maxLon).toBeCloseTo(-55.84 + 0.012, 9);
+    expect(after.minLat).toBeCloseTo(-27.25 - 0.012, 9);
+  });
+
   it("avisa si el lote editado pisa a un vecino o se sale del perímetro, sin bloquear", async () => {
     const { owner, ids } = await setup();
     const over = await call<{ warnings: any[] }>("PATCH", `/org/plots/${ids[0]}`, {

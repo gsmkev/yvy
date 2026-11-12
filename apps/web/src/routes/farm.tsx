@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { isFieldRole } from "@yvy/shared";
 import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { LineString, Polygon } from "geojson";
+import type { LineString, MultiPolygon, Polygon } from "geojson";
 import { MapPinPlus, PenLine, Upload, X } from "lucide-react";
 import { areaHa, bboxOf, validatePolygon, type Area } from "@yvy/geo";
 import { BRAND, FERT_LAYERS, FERT_LAYER_PARAM, FERT_STYLE, INDEX_KINDS, NDMI_RAMP, NDVI_RAMP, POI_KINDS, SOIL_RANGES, type FertLayerKey } from "@yvy/shared";
@@ -102,7 +102,7 @@ export function FarmPage() {
   const [mode, setMode] = useState<"none" | "draw" | "poi" | "import">("none");
   // M-02: edición de vértices de un lote existente
   const [shapeEdit, setShapeEdit] = useState<{ id: string; geometry: string } | null>(null);
-  const [shape, setShape] = useState<Polygon | null>(null);
+  const [shape, setShape] = useState<Polygon | MultiPolygon | null>(null);
   const endShapeEdit = () => {
     setShapeEdit(null);
     setShape(null);
@@ -1046,7 +1046,7 @@ function ShapeEditBar({
 }: {
   plotId: string;
   original: string;
-  shape: Polygon | null;
+  shape: Polygon | MultiPolygon | null;
   onDone: () => void;
   onSaved: () => void;
 }) {
@@ -1068,13 +1068,13 @@ function ShapeEditBar({
       onDone();
     },
   });
-  const area = areaHa(shape ?? (JSON.parse(original) as Polygon));
+  const area = areaHa(shape ?? (JSON.parse(original) as Polygon | MultiPolygon));
   return (
     <div className="absolute bottom-4 left-1/2 flex max-w-[calc(100%-2rem)] -translate-x-1/2 flex-col gap-2 rounded-md bg-surco px-4 py-3 text-sm text-lino">
       <p>{t("ui.plotEditHint")}</p>
       <p className="num">
         {t("ui.area")}: <strong className="font-semibold">{fmtHa(area)}</strong>
-        {shape && <span className="text-lino/70"> · {t("ui.plotEditWas", { area: fmtHa(areaHa(JSON.parse(original) as Polygon)) })}</span>}
+        {shape && <span className="text-lino/70"> · {t("ui.plotEditWas", { area: fmtHa(areaHa(JSON.parse(original) as Polygon | MultiPolygon)) })}</span>}
       </p>
       {problem && <p className="font-medium text-trigo">{tk(`ui.geomError_${problem}`)}</p>}
       {save.error && <p className="font-medium text-trigo">{save.error instanceof Error ? save.error.message : String(save.error)}</p>}

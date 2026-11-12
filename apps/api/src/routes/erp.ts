@@ -1,0 +1,479 @@
+/** ERP sencillo desde la web (ADR 0004). Montada en /org/erp. */
+import { Hono } from "hono";
+import { z } from "zod";
+import { LIMITS } from "@yvy/shared";
+import { accountMapInput, attendanceDayInput, cashAccountInput, cashMoveInput, cashTransferInput, settleInput, CATTLE_DEAL_KINDS, cattleDealInput, grainContractInput, grainDeliveryInput, grainSettlementInput, purchaseInput, purchaseInvoiceInput, purchaseReceiveInput, budgetLineInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, documentTaxInput, EXPORT_DATASETS, exportFormatInput, feedRationInput, noonAsuncion, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
+import * as s from "@yvy/shared/schema";
+import { HTTPException } from "hono/http-exception";
+import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
+import { presign } from "../lib/r2";
+import { results } from "../db/results";
+import { fuelReport } from "../db/fuel";
+import { feedlotReport, listRations, requireRationProducts } from "../db/feedlot";
+import { createWorkOrder, listWorkOrders } from "../db/work-orders";
+import { fixDefaultWarehouse } from "../db/stock";
+import { adjustStock, consumeStock, deleteMove, expiringLots, listMoves, purchaseStock, requireWarehouseUnused, stockSummary, transferStock } from "../db/stock-moves";
+import { deleteMachineCost, laborComparison, listMachineCosts, saveMachineCost } from "../db/labor-cost";
+import { attendanceSummary, deleteAttendance, listAttendance, markDay } from "../db/attendance";
+import { balances, createPayment, deletePayment, employeeStatement, listPayments, payroll } from "../db/employee-payments";
+import { budgetCompare } from "../db/budget";
+import { createPurchase, deletePurchase, getPurchase, invoicePurchase, listPurchases, receivePurchase, revertReception } from "../db/purchases";
+import { checkContractRefs, contractsSummary, createDelivery, createSettlement, deleteDelivery, deleteSettlement, listDeliveries, listSettlements } from "../db/grain-sales";
+import { createDeal, deleteDeal, listDeals } from "../db/cattle-deals";
+import { accountBalances, createMove as createCashMove, deleteMove as deleteCashMove, dues, listMoves as listCashMoves, requireAccountUnused, settle, transfer } from "../db/cash";
+import { accountantExport, listMap, resetMap, saveMap } from "../db/accountant";
+import { deleteDocumentTax, exportRows, saveDocumentTax } from "../db/export-docs";
+import { createLog, deleteLog, duePlans, listLogs } from "../db/maintenance";
+import { deleteMinimum, listMinimums, lowStock, saveMinimum } from "../db/stock-minimums";
+import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
+import { deleteRate, erpCreate, erpDelete, erpList, erpUpdate, listRates, requireOwned, saveRate, type ErpTable } from "../db/erp";
+import { can, type ScopedDb } from "../db/scoped";
+import { parse, readJson } from "../lib/http";
+import type { AppEnv } from "../types";
+
+export const erp = new Hono<AppEnv>();
+
+interface MasterOpts {
+  read?: (r: Role) => boolean;
+  write?: (r: Role) => boolean;
+  /** Validación extra con acceso a la base (por ejemplo, que la estancia sea de la organización). */
+  check?: (sdb: ScopedDb, values: Record<string, unknown>) => Promise<void>;
+  /** Ajusta los valores antes de guardar (por ejemplo, un null que la columna no admite). */
+  normalize?: (values: Record<string, unknown>) => Record<string, unknown>;
+  /** Después de guardar (alta o cambio) con el id de la fila. */
+  after?: (sdb: ScopedDb, id: string) => Promise<void>;
+  /** Antes de borrar: puede rechazar el borrado. */
+  beforeDelete?: (sdb: ScopedDb, id: string) => Promise<void>;
+}
+
+/** Alta, listado, cambio y baja de un maestro con su esquema Zod. */
+function master(path: string, table: ErpTable, schema: z.ZodObject, order: ErpTable[keyof ErpTable][], o: MasterOpts = {}) {
+  const read = o.read ?? can.manageErp;
+  const write = o.write ?? can.manageErp;
+  const cols = order as never as Parameters<typeof erpList>[3];
+  erp.get(`/${path}`, async (c) => c.json(await erpList(c.var.sdb, table, read, cols)));
+  erp.post(`/${path}`, async (c) => {
+    const b = (o.normalize ?? ((v) => v))(parse(schema, await readJson(c.req)) as Record<string, unknown>);
+    c.var.sdb.require(write);
+    await o.check?.(c.var.sdb, b);
+    const created = await erpCreate(c.var.sdb, table, write, b);
+    await o.after?.(c.var.sdb, created.id);
+    return c.json(created, 201);
+  });
+  erp.patch(`/${path}/:id`, async (c) => {
+    const b = (o.normalize ?? ((v) => v))(parse(schema.partial(), await readJson(c.req)) as Record<string, unknown>);
+    c.var.sdb.require(write);
+    await o.check?.(c.var.sdb, b);
+    await erpUpdate(c.var.sdb, table, write, c.req.param("id"), b);
+    await o.after?.(c.var.sdb, c.req.param("id"));
+    return c.json({ ok: true });
+  });
+  erp.delete(`/${path}/:id`, async (c) => {
+    c.var.sdb.require(write);
+    await o.beforeDelete?.(c.var.sdb, c.req.param("id"));
+    await erpDelete(c.var.sdb, table, write, c.req.param("id"));
+    return c.json({ ok: true });
+  });
+}
+
+master("parties", s.parties, partyInput, [s.parties.name]);
+
+/** La estancia de una máquina o un depósito tiene que ser de la organización. */
+const farmCheck = async (sdb: ScopedDb, v: Record<string, unknown>) => {
+  if (typeof v.farmId === "string") await sdb.requireFarm(v.farmId);
+};
+
+// El agrónomo ve las máquinas (para entender el combustible); solo dueño y administrador las editan.
+master("machines", s.machines, machineInput, [s.machines.name], {
+  read: can.viewStock,
+  check: farmCheck,
+  normalize: (v) => (v.meterValue === null ? { ...v, meterValue: 0 } : v),
+});
+
+// Las tarifas son montos: solo dueño y administrador (el agrónomo no ve montos).
+master("contractors", s.contractors, contractorInput, [s.contractors.name], {
+  check: async (sdb, v) => {
+    if (typeof v.partyId === "string") await requireOwned(sdb, s.parties, v.partyId, "El proveedor");
+  },
+});
+
+// ---------- Tipo de cambio (E-06) ----------
+
+erp.get("/exchange-rates", async (c) => c.json(await listRates(c.var.sdb)));
+erp.put("/exchange-rates/:date", async (c) => {
+  const date = parse(isoDate, c.req.param("date"));
+  const b = parse(exchangeRateInput.pick({ usdToPyg: true }), await readJson(c.req));
+  await saveRate(c.var.sdb, date, b.usdToPyg);
+  return c.json({ ok: true });
+});
+erp.delete("/exchange-rates/:date", async (c) => {
+  await deleteRate(c.var.sdb, parse(isoDate, c.req.param("date")));
+  return c.json({ ok: true });
+});
+
+// ---------- Costos y ventas (E-05) ----------
+
+const uuid = z.string().uuid();
+erp.get("/costs", async (c) => {
+  const q = parse(
+    z.object({
+      farmId: uuid.optional(),
+      plotId: uuid.optional(),
+      seasonId: uuid.optional(),
+      category: z.enum(COST_CATEGORIES).optional(),
+      from: isoDate.optional(),
+      to: isoDate.optional(),
+    }),
+    c.req.query(),
+  );
+  return c.json(await listCosts(c.var.sdb, q));
+});
+erp.post("/costs", async (c) => c.json(await createCost(c.var.sdb, parse(costEntryInput, await readJson(c.req))), 201));
+erp.patch("/costs/:id", async (c) => {
+  await updateCost(c.var.sdb, c.req.param("id"), parse(costEntryInput.partial(), await readJson(c.req)));
+  return c.json({ ok: true });
+});
+erp.delete("/costs/:id", async (c) => {
+  await deleteCost(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+// ---------- Depósitos (E-10) ----------
+
+// El agrónomo ve los depósitos (para entender el stock); dueño y administrador los editan.
+master("warehouses", s.warehouses, warehouseInput, [s.warehouses.name], {
+  read: can.viewStock,
+  check: farmCheck,
+  after: fixDefaultWarehouse,
+  beforeDelete: requireWarehouseUnused,
+});
+
+// ---------- Stock (E-11) ----------
+// Ver cantidades: dueño, administrador y agrónomo (sin montos). Cargar o borrar movimientos: dueño y administrador.
+
+erp.get("/stock", async (c) => c.json(await stockSummary(c.var.sdb)));
+erp.get("/stock/expiring", async (c) => c.json(await expiringLots(c.var.sdb)));
+erp.get("/stock/moves", async (c) =>
+  c.json(await listMoves(c.var.sdb, parse(z.object({ productId: uuid.optional(), warehouseId: uuid.optional() }), c.req.query()))),
+);
+erp.get("/stock/low", async (c) => c.json(await lowStock(c.var.sdb)));
+erp.get("/stock/minimums", async (c) => c.json(await listMinimums(c.var.sdb)));
+erp.put("/stock/minimums", async (c) => {
+  await saveMinimum(c.var.sdb, parse(stockMinimumInput, await readJson(c.req)));
+  return c.json({ ok: true });
+});
+erp.delete("/stock/minimums/:id", async (c) => {
+  await deleteMinimum(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+erp.post("/stock/purchases", async (c) =>
+  c.json(await purchaseStock(c.var.sdb, parse(stockPurchaseInput, await readJson(c.req))), 201),
+);
+erp.post("/stock/consumptions", async (c) =>
+  c.json(await consumeStock(c.var.sdb, parse(stockConsumptionInput, await readJson(c.req))), 201),
+);
+erp.post("/stock/transfers", async (c) =>
+  c.json(await transferStock(c.var.sdb, parse(stockTransferInput, await readJson(c.req))), 201),
+);
+erp.post("/stock/adjustments", async (c) =>
+  c.json(await adjustStock(c.var.sdb, parse(stockAdjustmentInput, await readJson(c.req))), 201),
+);
+erp.delete("/stock/moves/:id", async (c) => {
+  await deleteMove(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+// ---------- Foto de la factura o el ticket (E-37) ----------
+
+const photoKind = (v: string): PhotoKind => parse(z.enum(PHOTO_KINDS), v);
+
+/** URL firmada para subir la foto (PUT directo a R2). */
+erp.post("/photos/:kind/:id/upload-url", async (c) => {
+  const { key } = await photoTarget(c.var.sdb, photoKind(c.req.param("kind")), c.req.param("id"));
+  const ttl = LIMITS.photos.uploadUrlTtlSeconds;
+  return c.json({ url: await presign(c.env, "PUT", key, ttl), expiresAt: Date.now() + ttl * 1000 });
+});
+
+/** Confirma la subida: verifica el objeto y su tamaño y recién entonces lo asocia al movimiento. */
+erp.post("/photos/:kind/:id/uploaded", async (c) => {
+  const kind = photoKind(c.req.param("kind"));
+  const { key } = await photoTarget(c.var.sdb, kind, c.req.param("id"));
+  const head = await c.env.MEDIA.head(key);
+  if (!head) throw new HTTPException(409, { message: "La foto todavía no está en el almacenamiento" });
+  if (head.size > LIMITS.photos.maxBytes) {
+    await c.env.MEDIA.delete(key);
+    throw new HTTPException(413, { message: "Foto demasiado grande" });
+  }
+  await setPhotoPath(c.var.sdb, kind, c.req.param("id"), key);
+  return c.json({ ok: true });
+});
+
+erp.get("/photos/:kind/:id", async (c) => {
+  const { photoPath } = await photoTarget(c.var.sdb, photoKind(c.req.param("kind")), c.req.param("id"));
+  if (!photoPath) throw new HTTPException(404, { message: "No tiene foto" });
+  return c.json({ url: await presign(c.env, "GET", photoPath, LIMITS.photos.downloadUrlTtlSeconds) });
+});
+
+erp.delete("/photos/:kind/:id", async (c) => {
+  const kind = photoKind(c.req.param("kind"));
+  const { key, photoPath } = await photoTarget(c.var.sdb, kind, c.req.param("id"));
+  await setPhotoPath(c.var.sdb, kind, c.req.param("id"), null);
+  if (photoPath) await c.env.MEDIA.delete(key);
+  return c.json({ ok: true });
+});
+
+// ---------- Combustible (E-16) ----------
+
+erp.get("/fuel/report", async (c) =>
+  c.json(await fuelReport(c.var.sdb, parse(z.object({ farmId: uuid.optional(), from: isoDate.optional(), to: isoDate.optional() }), c.req.query()))),
+);
+
+// ---------- Feedlot (G-33) ----------
+// Raciones (maestro de oficina) y resumen por corral. Los suministros son registros `feed` que llegan por /sync/push.
+
+const rationRow = async (sdb: ScopedDb, v: z.infer<typeof feedRationInput>) => {
+  if (!(await requireRationProducts(sdb, v.items.map((i) => i.productId)))) throw new HTTPException(400, { message: "Un ingrediente no está en el catálogo" });
+  return { name: v.name, items: JSON.stringify(v.items), note: v.note ?? null };
+};
+erp.get("/feedlot/rations", async (c) => c.json(await listRations(c.var.sdb)));
+erp.post("/feedlot/rations", async (c) => {
+  c.var.sdb.require(can.manageErp);
+  const row = await rationRow(c.var.sdb, parse(feedRationInput, await readJson(c.req)));
+  return c.json(await erpCreate(c.var.sdb, s.feedRations, can.manageErp, row), 201);
+});
+erp.put("/feedlot/rations/:id", async (c) => {
+  c.var.sdb.require(can.manageErp);
+  const row = await rationRow(c.var.sdb, parse(feedRationInput, await readJson(c.req)));
+  await erpUpdate(c.var.sdb, s.feedRations, can.manageErp, c.req.param("id"), row);
+  return c.json({ ok: true });
+});
+erp.delete("/feedlot/rations/:id", async (c) => {
+  await erpDelete(c.var.sdb, s.feedRations, can.manageErp, c.req.param("id"));
+  return c.json({ ok: true });
+});
+erp.get("/feedlot/report", async (c) => {
+  const q = parse(z.object({ farmId: uuid.optional(), from: isoDate, to: isoDate }), c.req.query());
+  return c.json(await feedlotReport(c.var.sdb, { farmId: q.farmId, from: noonAsuncion(q.from) - 12 * 3_600_000, to: noonAsuncion(q.to) + 12 * 3_600_000 - 1 }));
+});
+
+// ---------- Exportación para sistemas contables (I-06) ----------
+
+erp.get("/export/rows", async (c) => {
+  const q = parse(z.object({ dataset: z.enum(EXPORT_DATASETS), from: isoDate, to: isoDate }), c.req.query());
+  return c.json(await exportRows(c.var.sdb, q.dataset, q.from, q.to));
+});
+erp.put("/export/taxes", async (c) => c.json(await saveDocumentTax(c.var.sdb, parse(documentTaxInput, await readJson(c.req)))));
+erp.delete("/export/taxes/:kind/:id", async (c) => {
+  await deleteDocumentTax(c.var.sdb, parse(z.enum(["purchase", "settlement", "cattle"]), c.req.param("kind")), parse(uuid, c.req.param("id")));
+  return c.json({ ok: true });
+});
+erp.get("/export/formats", async (c) => {
+  const rows = await erpList(c.var.sdb, s.exportFormats, can.manageErp, [s.exportFormats.name] as never);
+  return c.json(rows.map((r) => ({ ...(r as { id: string; name: string; dataset: string; config: string }), config: JSON.parse((r as { config: string }).config) })));
+});
+erp.post("/export/formats", async (c) => {
+  const b = parse(exportFormatInput, await readJson(c.req));
+  return c.json(await erpCreate(c.var.sdb, s.exportFormats, can.manageErp, { ...b, config: JSON.stringify(b.config) }), 201);
+});
+erp.put("/export/formats/:id", async (c) => {
+  const b = parse(exportFormatInput, await readJson(c.req));
+  await erpUpdate(c.var.sdb, s.exportFormats, can.manageErp, c.req.param("id"), { ...b, config: JSON.stringify(b.config) });
+  return c.json({ ok: true });
+});
+erp.delete("/export/formats/:id", async (c) => {
+  await erpDelete(c.var.sdb, s.exportFormats, can.manageErp, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+// ---------- Órdenes de trabajo (E-20) ----------
+// Crear y ver: quien puede asignar tareas (no el empleado). El costo se ve solo con permiso de montos.
+
+erp.get("/work-orders", async (c) =>
+  c.json(
+    await listWorkOrders(
+      c.var.sdb,
+      parse(z.object({ farmId: uuid.optional(), status: z.enum(["open", "done", "cancelled"]).optional() }), c.req.query()),
+    ),
+  ),
+);
+erp.post("/work-orders", async (c) => {
+  const b = parse(
+    z.object({
+      farmId: uuid,
+      plotIds: z.array(uuid).min(1).max(LIMITS.erp.maxPlotsPerOrder),
+      assigneeId: z.string().min(1),
+      dueDate: isoDate,
+      title: z.string().trim().max(200).nullish(),
+      order: orderSchema,
+    }),
+    await readJson(c.req),
+  );
+  return c.json(await createWorkOrder(c.var.sdb, b), 201);
+});
+
+// ---------- Costo por hectárea y por tonelada, margen (E-30, E-31) ----------
+
+erp.get("/results", async (c) =>
+  c.json(await results(c.var.sdb, parse(z.object({ farmId: uuid.optional(), seasonId: uuid.optional() }), c.req.query()))),
+);
+
+// ---------- Mantenimiento preventivo (E-22) ----------
+// Planes y avisos: el agrónomo los ve (son horas y km). Servicios con costo: dueño y administrador.
+
+master("maintenance-plans", s.maintenancePlans, maintenancePlanInput, [s.maintenancePlans.name], {
+  read: can.viewStock,
+  check: async (sdb, v) => {
+    if (typeof v.machineId === "string") await requireOwned(sdb, s.machines, v.machineId, "La máquina");
+  },
+  normalize: (v) => (v.lastDoneMeter === null ? { ...v, lastDoneMeter: 0 } : v),
+});
+erp.get("/maintenance/due", async (c) => c.json(await duePlans(c.var.sdb, c.req.query("all") === "1")));
+erp.get("/maintenance/logs", async (c) =>
+  c.json(await listLogs(c.var.sdb, parse(uuid.optional(), c.req.query("machineId")))),
+);
+erp.post("/maintenance/logs", async (c) => c.json(await createLog(c.var.sdb, parse(maintenanceLogInput, await readJson(c.req))), 201));
+erp.delete("/maintenance/logs/:id", async (c) => {
+  await deleteLog(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+// ---------- Labor propia frente a contratista (E-23) ----------
+// Son montos: solo dueño y administrador.
+
+erp.get("/machine-costs", async (c) => c.json(await listMachineCosts(c.var.sdb)));
+erp.put("/machine-costs/:machineId", async (c) => {
+  await saveMachineCost(c.var.sdb, parse(uuid, c.req.param("machineId")), parse(machineCostInput, await readJson(c.req)));
+  return c.json({ ok: true });
+});
+erp.delete("/machine-costs/:machineId", async (c) => {
+  await deleteMachineCost(c.var.sdb, parse(uuid, c.req.param("machineId")));
+  return c.json({ ok: true });
+});
+erp.get("/labor-cost", async (c) => c.json(await laborComparison(c.var.sdb)));
+
+// ---------- Personal y asistencia (E-25) ----------
+// Jornales son montos: solo dueño y administrador.
+
+master("employees", s.employees, employeeInput, [s.employees.name]);
+erp.get("/attendance", async (c) =>
+  c.json(await listAttendance(c.var.sdb, parse(z.object({ employeeId: uuid.optional(), from: isoDate.optional(), to: isoDate.optional() }), c.req.query()))),
+);
+erp.get("/attendance/summary", async (c) =>
+  c.json(await attendanceSummary(c.var.sdb, parse(z.object({ from: isoDate.optional(), to: isoDate.optional() }), c.req.query()))),
+);
+erp.post("/attendance", async (c) => {
+  const b = parse(attendanceDayInput, await readJson(c.req));
+  return c.json(await markDay(c.var.sdb, b.date, b.entries), 201);
+});
+erp.delete("/attendance/:id", async (c) => {
+  await deleteAttendance(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+// ---------- Adelantos, pagos y saldo por empleado (E-26) ----------
+
+erp.get("/employee-payments", async (c) => c.json(await listPayments(c.var.sdb, parse(uuid.optional(), c.req.query("employeeId")))));
+erp.post("/employee-payments", async (c) => c.json(await createPayment(c.var.sdb, parse(employeePaymentInput, await readJson(c.req))), 201));
+erp.delete("/employee-payments/:id", async (c) => {
+  await deletePayment(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+erp.get("/employees/balance", async (c) => c.json(await balances(c.var.sdb, parse(isoDate.optional(), c.req.query("to")))));
+erp.get("/employees/payroll", async (c) => {
+  const q = parse(z.object({ from: isoDate, to: isoDate }), c.req.query());
+  return c.json(await payroll(c.var.sdb, q.from, q.to));
+});
+erp.get("/employees/:id/statement", async (c) => c.json(await employeeStatement(c.var.sdb, parse(uuid, c.req.param("id")))));
+
+// ---------- Presupuesto de campaña (E-32) ----------
+
+master("budget-lines", s.budgetLines, budgetLineInput, [s.budgetLines.category], {
+  normalize: (v) => (typeof v.plotId === "string" ? { ...v, crop: null } : typeof v.crop === "string" ? { ...v, plotId: null } : v),
+  check: async (sdb, v) => {
+    if (typeof v.seasonId === "string") await requireOwned(sdb, s.seasons, v.seasonId, "La campaña");
+    if (typeof v.plotId === "string") await requireOwned(sdb, s.plots, v.plotId, "El lote");
+  },
+});
+erp.get("/budget/compare", async (c) => c.json(await budgetCompare(c.var.sdb, parse(uuid, c.req.query("seasonId")))));
+
+// ---------- Compras: orden, factura y recepción (E-33) ----------
+
+erp.get("/purchases", async (c) => c.json(await listPurchases(c.var.sdb, { status: c.req.query("status") })));
+erp.post("/purchases", async (c) => c.json(await createPurchase(c.var.sdb, parse(purchaseInput, await readJson(c.req))), 201));
+erp.get("/purchases/:id", async (c) => c.json(await getPurchase(c.var.sdb, parse(uuid, c.req.param("id")))));
+erp.post("/purchases/:id/invoice", async (c) => {
+  await invoicePurchase(c.var.sdb, parse(uuid, c.req.param("id")), parse(purchaseInvoiceInput, await readJson(c.req)));
+  return c.json({ ok: true });
+});
+erp.post("/purchases/:id/receive", async (c) =>
+  c.json(await receivePurchase(c.var.sdb, parse(uuid, c.req.param("id")), parse(purchaseReceiveInput, await readJson(c.req)))),
+);
+erp.delete("/purchases/:id/reception", async (c) => {
+  await revertReception(c.var.sdb, parse(uuid, c.req.param("id")));
+  return c.json({ ok: true });
+});
+erp.delete("/purchases/:id", async (c) => {
+  await deletePurchase(c.var.sdb, parse(uuid, c.req.param("id")));
+  return c.json({ ok: true });
+});
+
+// ---------- Venta de granos (E-34) ----------
+
+master("grain-contracts", s.grainContracts, grainContractInput, [s.grainContracts.createdAt], {
+  check: (sdb, v) => checkContractRefs(sdb, v),
+});
+erp.get("/grain-contracts/summary", async (c) => c.json(await contractsSummary(c.var.sdb)));
+erp.get("/grain-deliveries", async (c) => c.json(await listDeliveries(c.var.sdb, parse(uuid.optional(), c.req.query("contractId")))));
+erp.post("/grain-deliveries", async (c) => c.json(await createDelivery(c.var.sdb, parse(grainDeliveryInput, await readJson(c.req))), 201));
+erp.delete("/grain-deliveries/:id", async (c) => {
+  await deleteDelivery(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+erp.get("/grain-settlements", async (c) => c.json(await listSettlements(c.var.sdb, parse(uuid.optional(), c.req.query("contractId")))));
+erp.post("/grain-settlements", async (c) => c.json(await createSettlement(c.var.sdb, parse(grainSettlementInput, await readJson(c.req))), 201));
+erp.delete("/grain-settlements/:id", async (c) => {
+  await deleteSettlement(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+// ---------- Compras y ventas de hacienda (E-35, G-40) ----------
+
+erp.get("/cattle-deals", async (c) => c.json(await listDeals(c.var.sdb, parse(z.enum(CATTLE_DEAL_KINDS).optional(), c.req.query("kind")))));
+erp.post("/cattle-deals", async (c) => c.json(await createDeal(c.var.sdb, parse(cattleDealInput, await readJson(c.req))), 201));
+erp.delete("/cattle-deals/:id", async (c) => {
+  await deleteDeal(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+// ---------- Caja y bancos, cuentas a pagar y a cobrar (E-36) ----------
+
+master("cash-accounts", s.cashAccounts, cashAccountInput, [s.cashAccounts.name], {
+  normalize: (v) => (v.openingBalance === null ? { ...v, openingBalance: 0 } : v),
+  beforeDelete: requireAccountUnused,
+});
+erp.get("/cash/balances", async (c) => c.json(await accountBalances(c.var.sdb)));
+erp.get("/cash/moves", async (c) => c.json(await listCashMoves(c.var.sdb, parse(uuid.optional(), c.req.query("accountId")))));
+erp.post("/cash/moves", async (c) => c.json(await createCashMove(c.var.sdb, parse(cashMoveInput, await readJson(c.req))), 201));
+erp.post("/cash/transfers", async (c) => c.json(await transfer(c.var.sdb, parse(cashTransferInput, await readJson(c.req))), 201));
+erp.post("/cash/settle", async (c) => c.json(await settle(c.var.sdb, parse(settleInput, await readJson(c.req))), 201));
+erp.delete("/cash/moves/:id", async (c) => {
+  await deleteCashMove(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+erp.get("/payables", async (c) => c.json(await dues(c.var.sdb, "payable")));
+erp.get("/receivables", async (c) => c.json(await dues(c.var.sdb, "receivable")));
+
+// ---------- Exportación al contador (E-38) ----------
+
+erp.get("/accountant/map", async (c) => c.json(await listMap(c.var.sdb)));
+erp.put("/accountant/map/:key", async (c) => {
+  await saveMap(c.var.sdb, c.req.param("key"), parse(accountMapInput, await readJson(c.req)));
+  return c.json({ ok: true });
+});
+erp.delete("/accountant/map/:key", async (c) => {
+  await resetMap(c.var.sdb, c.req.param("key"));
+  return c.json({ ok: true });
+});
+erp.get("/accountant/export", async (c) =>
+  c.json(await accountantExport(c.var.sdb, parse(z.object({ from: isoDate.optional(), to: isoDate.optional() }), c.req.query()))),
+);

@@ -250,7 +250,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | ID | Qué | Prio | Esf | Estado |
 |---|---|---|---|---|
 | E-30 | Costo por hectárea, por tonelada y por kilo de carne, por lote y campaña | P1 | M | Falta |
-| E-31 | Margen bruto por lote, cultivo, actividad y campaña | P1 | M | Falta |
+| E-31 | Margen bruto por lote, cultivo, actividad y campaña | P1 | M | Hecho |
 | E-32 | Presupuesto de campaña y comparación con lo real | P2 | M | Falta |
 | E-33 | Compras: orden, factura de proveedor, recepción en depósito | P2 | M | Falta |
 | E-34 | Ventas de granos: contratos, entregas, precio, liquidaciones | P2 | M | Falta |

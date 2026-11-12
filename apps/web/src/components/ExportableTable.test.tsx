@@ -99,7 +99,8 @@ describe("exportar cualquier tabla (U-28)", () => {
   it("el botón Excel genera un .xlsx", async () => {
     render(<Demo />);
     fireEvent.click(screen.getByRole("button", { name: "Exportar Excel" }));
-    await waitFor(() => expect(saved).toHaveLength(1));
+    // La librería de Excel se carga con import dinámico: en CI puede tardar más que el segundo por defecto de waitFor
+    await waitFor(() => expect(saved).toHaveLength(1), { timeout: 15_000 });
     expect(saved[0]!.name).toMatch(/\.xlsx$/);
     expect(saved[0]!.blob.size).toBeGreaterThan(1000);
   });

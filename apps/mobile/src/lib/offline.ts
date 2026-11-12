@@ -5,6 +5,7 @@
 import * as FileSystem from "expo-file-system/legacy";
 import * as Network from "expo-network";
 import { getDb } from "./db";
+import { overallProgress, planDownloads, type DownloadPlan, type PackInfo } from "./offlinePlan";
 import { api } from "./session";
 
 const DIR = `${FileSystem.documentDirectory}tiles/`;
@@ -37,6 +38,19 @@ export function packStatus(farmId: string) {
       return d?.uri ?? null;
     },
   };
+}
+
+export type MapLayer = "true_color" | "ndvi";
+
+/** Fuente PMTiles de una capa para el mapa: el archivo local si se bajó, si no el remoto. null si no hay imagen. */
+export function layerSource(farmId: string, layer: MapLayer, remoteBase: string | null): { url: string; acquiredAt: number | null } | null {
+  const pack = packStatus(farmId);
+  const remote = pack.layers.find((l) => l.layer === layer);
+  const local = pack.localUri(layer);
+  const acquiredAt = remote?.acquiredAt ?? null;
+  if (local) return { url: `pmtiles://${local}`, acquiredAt };
+  if (remote && remoteBase) return { url: `pmtiles://${remoteBase.replace(/\/$/, "")}/${remote.pmtilesPath}`, acquiredAt };
+  return null;
 }
 
 export async function isWifi(): Promise<boolean> {
@@ -73,4 +87,35 @@ export async function downloadPack(farmId: string, onProgress: (fraction: number
     done += l.bytes;
     onProgress(done / total);
   }
+}
+
+/** Estado de los mapas de todas las estancias del usuario (las que bajaron al celular). */
+export function allPacksPlan(): DownloadPlan {
+  const infos: PackInfo[] = getDb()
+    .farms()
+    .map((f) => {
+      const p = packStatus(f.id);
+      return { farmId: f.id, name: f.name, layerCount: p.layers.length, upToDate: p.upToDate, missingBytes: p.missingBytes };
+    });
+  return planDownloads(infos);
+}
+
+/**
+ * Baja en fila los mapas de todas las estancias que faltan (F-26). Si una falla se sigue con las demás y se avisa
+ * cuáles quedaron; lo ya bajado no se repite. Los caminos entre estancias no se bajan: no hay fuente de rutas.
+ */
+export async function downloadAllPacks(onProgress: (fraction: number) => void): Promise<{ failed: string[] }> {
+  const plan = allPacksPlan();
+  const done: string[] = [];
+  const failed: string[] = [];
+  for (const f of plan.farms) {
+    try {
+      await downloadPack(f.farmId, (frac) => onProgress(overallProgress(plan, done, f.farmId, frac)));
+      done.push(f.farmId);
+    } catch {
+      failed.push(f.name);
+    }
+    onProgress(overallProgress(plan, done, null, 0));
+  }
+  return { failed };
 }

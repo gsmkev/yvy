@@ -6,6 +6,7 @@ import { areaHa, bboxOf, centroidOf, checkPlots, validateShape, type Area } from
 import { CROPS, doseText, FARM_ACCESS_LEVELS, isWeakPin, LIMITS, PIN_LENGTH, PIN_REGEX, phoneKey, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, TASK_PRIORITIES, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
 import { can } from "../db/scoped";
 import { randomDigits, randomToken } from "../lib/crypto";
+import { createSchedule, deleteSchedule, listSchedules } from "../db/schedules";
 import { dispatchNewFarm, inBackground } from "../lib/dispatch";
 import { hashPin } from "../lib/pin";
 import { sendEmail } from "../lib/email";
@@ -115,6 +116,25 @@ org.delete("/members/:userId/pin", async (c) => {
 
 /** T-09 / K-05: estancias de cada supervisor, administrador o agrónomo (solo el dueño). */
 org.get("/farm-access", async (c) => c.json(await c.var.sdb.listFarmAccess()));
+
+/** R-10: informes programados por email a terceros. */
+org.get("/report-schedules", async (c) => c.json(await listSchedules(c.var.sdb)));
+org.post("/report-schedules", async (c) => {
+  const b = parse(
+    z.object({
+      farmId: uuid.nullish(),
+      name: z.string().trim().min(2).max(120),
+      email: z.string().trim().toLowerCase().email().max(254),
+      frequency: z.enum(["weekly", "monthly"]),
+    }),
+    await readJson(c.req),
+  );
+  return c.json(await createSchedule(c.var.sdb, { ...b, farmId: b.farmId ?? null }), 201);
+});
+org.delete("/report-schedules/:id", async (c) => {
+  await deleteSchedule(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
 
 org.put("/members/:userId/farms", async (c) => {
   const body = parse(

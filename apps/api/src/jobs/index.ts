@@ -328,6 +328,50 @@ async function weeklyReportJob(db: DB, env: Bindings, deps: JobDeps, farm: Farm)
   for (const r of recipients) {
     if (r.email) await sendEmail(env, r.email, `Yvy · Parte semanal · ${farm.name}`, body, attachments);
   }
+  await sendToExternalRecipients(db, env, farm, now, body, attachments);
+}
+
+/** Primer lunes del mes (hora de la estancia): el día del mes es ≤ 7. */
+export const isFirstMondayOfMonth = (ms: number, tz: string): boolean => Number(localDate(ms, tz).slice(8)) <= 7;
+
+/**
+ * R-10: el mismo parte (texto y PDF) a los destinatarios externos que programó el dueño: socio, agrónomo, banco.
+ * Los semanales lo reciben todos los lunes; los mensuales, solo el primer lunes del mes.
+ */
+async function sendToExternalRecipients(
+  db: DB,
+  env: Bindings,
+  farm: Farm,
+  now: number,
+  body: string,
+  attachments: EmailAttachment[],
+): Promise<void> {
+  const rows = await db
+    .select()
+    .from(s.reportSchedules)
+    .where(
+      and(
+        eq(s.reportSchedules.organizationId, farm.organizationId),
+        isNull(s.reportSchedules.deletedAt),
+        sql`(${s.reportSchedules.farmId} IS NULL OR ${s.reportSchedules.farmId} = ${farm.id})`,
+      ),
+    );
+  const due = rows.filter((r) => r.frequency === "weekly" || isFirstMondayOfMonth(now, farm.tz));
+  if (!due.length) return;
+  const [org] = await db
+    .select({ name: s.organizations.name })
+    .from(s.organizations)
+    .where(eq(s.organizations.id, farm.organizationId))
+    .limit(1);
+  const text = `${org?.name ?? "Una organización"} te comparte este informe de ${farm.name} desde Yvy.\n\n${body}\n\nSi no querés seguir recibiéndolo, pedile a quien te lo programó que te quite de la lista.`;
+  for (const r of due) {
+    try {
+      await sendEmail(env, r.email, `Yvy · Parte de ${farm.name} · ${org?.name ?? ""}`, text, attachments);
+      await db.update(s.reportSchedules).set({ lastSentAt: now }).where(eq(s.reportSchedules.id, r.id));
+    } catch (e) {
+      console.error("informe programado", r.id, e);
+    }
+  }
 }
 
 /** Uso diario y aviso al 70 % de los límites del plan gratis (anexo §6). */

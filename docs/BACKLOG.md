@@ -333,7 +333,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | R-07 | Comparación entre estancias y entre campañas | P2 | M | Hecho |
 | R-08 | Comparación anónima con la zona (vigor y lluvia de campos vecinos) | P3 | M | Falta |
 | R-09 | Exportación completa de la organización (Excel, KML, fotos en ZIP) | P1 | M | Falta |
-| R-10 | Informes programados por email a terceros (socio, agrónomo, banco) | P2 | S | Falta |
+| R-10 | Informes programados por email a terceros (socio, agrónomo, banco) | P2 | S | Hecho |
 
 ---
 

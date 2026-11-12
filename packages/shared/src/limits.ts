@@ -179,6 +179,8 @@ export const LIMITS = {
     /** Comentarios por registro (tope para que el celular no cargue hilos eternos). */
     maxPerRecord: 200,
   },
+  /** R-10: destinatarios externos de informes programados por organización. */
+  reportSchedules: { max: 10 },
   /** K-06: registro de cambios de la organización. */
   audit: {
     pageSize: 50,

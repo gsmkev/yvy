@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Link, useParams } from "@tanstack/react-router";
 import { localDate } from "@yvy/shared";
+import { ReportSchedules } from "../components/ReportSchedules";
 import { Button, ErrorBox, Field, Select, Spinner } from "../components/ui";
 import { download } from "../lib/exports";
 import { buildExportZip, collectExportData } from "../lib/reportsExport";
@@ -226,6 +227,7 @@ export function FarmReportsPage() {
           </Link>
         </div>
       </section>
+      {(me.data?.role === "owner" || me.data?.role === "admin") && <ReportSchedules farmId={farmId} />}
       {me.data?.role === "owner" && (
         <section>
           <h2 className="font-serif text-xl font-semibold">{t("ui.exportTitle")}</h2>

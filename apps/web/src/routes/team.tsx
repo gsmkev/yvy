@@ -7,19 +7,14 @@ import { isFieldRole, ROLES, type FarmAccessLevel } from "@yvy/shared";
 import { ExportButtons } from "../components/ExportButtons";
 import { Button, ConfirmModal, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../components/ui";
 import { del, get, post, put } from "../lib/api";
-import { localDate } from "@yvy/shared";
 import { fmtDateTime, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
-import { useFarms, useMe, useMembers, useTasks } from "../lib/queries";
+import { useFarms, useMe, useMembers } from "../lib/queries";
 import type { FarmDetail, Member } from "../lib/types";
 
 export function TeamPage() {
   const me = useMe();
   const members = useMembers();
-  const openTasks = useTasks({ status: "open" });
-  const today = localDate(Date.now());
-  const overdueOf = (userId: string) =>
-    (openTasks.data ?? []).filter((x) => x.assigneeId === userId && x.dueDate < today).length;
   const qc = useQueryClient();
   const [adding, setAdding] = useState(false);
   const [qr, setQr] = useState<{ member: Member; qr: string; expiresAt: number } | null>(null);
@@ -94,11 +89,9 @@ export function TeamPage() {
               {t(m.records7d === 1 ? "ui.activityRecordsOne" : "ui.activityRecords", { n: m.records7d })} ·{" "}
               {m.lastSyncAt ? t("ui.lastSync", { date: fmtDateTime(m.lastSyncAt) }) : t("ui.neverSynced")}
             </div>
-            {overdueOf(m.userId) > 0 && (
+            {m.overdueTasks > 0 && (
               <div className="num mt-0.5 text-sm font-medium text-peligro">
-                {t(overdueOf(m.userId) === 1 ? "ui.overdueCountOne" : "ui.overdueCountMany", {
-                  n: overdueOf(m.userId),
-                })}
+                {t(m.overdueTasks === 1 ? "ui.overdueCountOne" : "ui.overdueCountMany", { n: m.overdueTasks })}
               </div>
             )}
           </div>

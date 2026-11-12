@@ -127,6 +127,8 @@ export interface Member {
   activeDays7: number;
   records7d: number;
   lastSyncAt: number | null;
+  /** T-05: tareas abiertas vencidas (con la hora límite, en la hora de la estancia). */
+  overdueTasks: number;
   /** F-24: ingresa con teléfono y PIN. */
   hasPin?: boolean;
 }

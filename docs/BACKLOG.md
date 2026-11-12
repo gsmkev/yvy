@@ -312,7 +312,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | T-02 | Prioridad, fecha límite con hora y comentarios en la tarea | P1 | S | Hecho |
 | T-03 | Foto y ubicación obligatorias para cerrar ciertas tareas | P2 | S | Hecho |
 | T-04 | Calendario semanal de labores por estancia | P2 | M | Hecho |
-| T-05 | Tareas vencidas por empleado con contador en Equipo | P1 | S | Parcial |
+| T-05 | Tareas vencidas por empleado con contador en Equipo | P1 | S | Hecho |
 | T-06 | Actividad del empleado: días activos, registros, lotes visitados, última conexión | P1 | S | Parcial |
 | T-07 | Lotes sin visitar hace más de N días, en la web | P1 | S | Parcial (solo app) |
 | T-08 | Comentarios y menciones en registros ("@Ramón mirá esto") | P2 | M | Hecho |

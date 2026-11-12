@@ -1,10 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { post } from "../lib/api";
+import { alertShareText } from "@yvy/shared";
 import { fmtDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useAlerts } from "../lib/queries";
 import { AlertTriangle, Check, ShieldCheck, ThumbsDown, ThumbsUp } from "lucide-react";
 import { ALERT_ICON } from "../lib/icons";
+import { ShareWhatsappButton } from "./ShareButton";
 import { Button, Empty, ErrorBox, SeverityBadge, Spinner } from "./ui";
 
 export function AlertsList({ farmId, farmNames }: { farmId?: string; farmNames?: Record<string, string> }) {
@@ -14,7 +16,7 @@ export function AlertsList({ farmId, farmNames }: { farmId?: string; farmNames?:
     mutationFn: ({ id, useful }: { id: string; useful: boolean }) => post(`/org/alerts/${id}/feedback`, { useful }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["alerts"] }),
   });
-  if (q.isLoading) return <Spinner />;
+  if (q.isLoading) return <Spinner rows={5} h={56} />;
   if (q.error) return <ErrorBox error={q.error} />;
   if (!q.data?.length) return <Empty icon={ShieldCheck} title={t("ui.noAlerts")} />;
   return (
@@ -28,7 +30,7 @@ export function AlertsList({ farmId, farmNames }: { farmId?: string; farmNames?:
           >
             <div className="flex items-start gap-3">
               <span
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${a.severity === "warning" ? "bg-peligro text-white" : "bg-trigo/20 text-trigo-texto"}`}
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${a.severity === "warning" ? "bg-peligro text-sobre" : "bg-trigo/20 text-trigo-texto"}`}
               >
                 <Icon size={18} aria-hidden />
               </span>
@@ -73,6 +75,18 @@ export function AlertsList({ farmId, farmNames }: { farmId?: string; farmNames?:
                       <Check size={14} aria-hidden /> {t("ui.thanks")}
                     </span>
                   )}
+                  <ShareWhatsappButton
+                    variant="quiet"
+                    className="ml-auto h-8"
+                    text={alertShareText({
+                      kindLabel: tk(`ui.alertKind_${a.kind}`),
+                      severityLabel: tk(`ui.severity_${a.severity}`),
+                      summary: a.summary,
+                      farmName: farmNames?.[a.farmId],
+                      validity: `${fmtDate(a.validFrom)}${a.validTo && a.validTo - a.validFrom > 86_400_000 ? ` – ${fmtDate(a.validTo)}` : ""}`,
+                      link: `${window.location.origin}/avisos`,
+                    })}
+                  />
                 </div>
               </div>
             </div>

@@ -547,6 +547,7 @@ export const esPY = {
     taskHighPriority: "Prioridad alta",
     taskComments: "{{n}} comentarios",
     taskCommentsOne: "1 comentario",
+    taskCommentsOpen: "Comentarios",
     notifRow: "Avisos y silencio",
     notifRowHint: "Elegí qué avisos te llegan y desde cuándo no molestar",
     notifNeedsSignal: "Necesitás señal para cambiar esto.",

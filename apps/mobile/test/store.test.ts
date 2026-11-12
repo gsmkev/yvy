@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, LIMITS, localDate, newId, nextOccurrenceId, parseChecklist } from "@yvy/shared";
+import { addDays, LIMITS, localDate, newId, nextOccurrenceId, parseChecklist, parseTaskComments } from "@yvy/shared";
 import { LocalDb } from "../src/db/store";
 import { planReminders } from "../src/lib/reminders-plan";
 import { nodeSql } from "./node-sql";
@@ -355,6 +355,30 @@ describe("LocalDb", () => {
     const muts = await db.pendingMutations(10);
     expect(muts.map((m) => m.kind)).toEqual(["tasks.check", "tasks.status"]);
     expect(muts[0]!.row).toEqual({ id: taskId, itemId: "i1", done: true });
+  });
+
+  it("comentarios de tarea: se ven ya, quedan en el outbox y respetan el tope", async () => {
+    const db = setup();
+    const taskId = newId();
+    await db.applyPull(
+      "tasks",
+      [
+        {
+          id: taskId, organizationId: ORG, farmId: FARM, plotId: null, assigneeId: USER, title: "Medir lluvia", kind: null,
+          dueDate: "2026-11-10", recurrence: "none", status: "open", completedAt: null, completedBy: null, recordId: null,
+          createdBy: USER, checklist: null, dueTime: null, priority: "normal", comments: "[]", createdAt: 1, updatedAt: 1,
+          deletedAt: null, version: 1,
+        },
+      ],
+      { version: 1, id: taskId },
+    );
+    db.addTaskComment(taskId, USER, "Ramón", "  Listo, 12 mm ");
+    const list = parseTaskComments(db.taskById(taskId)!.comments);
+    expect(list.map((c) => [c.name, c.text])).toEqual([["Ramón", "Listo, 12 mm"]]);
+    const muts = await db.pendingMutations(10);
+    expect(muts.map((m) => m.kind)).toEqual(["tasks.comment"]);
+    expect(muts[0]!.row).toEqual({ id: list[0]!.id, taskId, text: "Listo, 12 mm" });
+    expect(() => db.addTaskComment(taskId, USER, "Ramón", "   ")).toThrow();
   });
 
   it("rechazadas: no se reintentan y se pueden descartar", async () => {

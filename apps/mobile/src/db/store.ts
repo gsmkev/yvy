@@ -21,6 +21,7 @@ import {
   nextDueDate,
   nextOccurrenceId,
   parseChecklist,
+  parseTaskComments,
   orderSchema,
   prescriptionSchema,
   RECORD_SCHEMA_VERSION,
@@ -492,6 +493,25 @@ export class LocalDb implements SyncStore {
     });
   }
 
+  /** T-02: comenta una tarea. Se ve ya en el celular y viaja por el outbox. */
+  addTaskComment(taskId: string, userId: string, authorName: string, text: string): void {
+    const task = this.taskById(taskId);
+    const body = text.trim().slice(0, LIMITS.tasks.maxCommentLength);
+    if (!task || !body) throw new Error("task_not_found");
+    const list = parseTaskComments(task.comments);
+    if (list.length >= LIMITS.tasks.maxComments) throw new Error("comments_limit");
+    const ts = this.now();
+    const id = newId();
+    this.sql.tx(() => {
+      this.sql.run("UPDATE tasks SET comments = ?, updated_at = ? WHERE id = ?", [
+        JSON.stringify([...list, { id, userId, name: authorName, at: ts, text: body }]),
+        ts,
+        taskId,
+      ]);
+      this.enqueue({ mutationId: newId(), kind: "tasks.comment", row: { id, taskId, text: body } }, taskId);
+    });
+  }
+
   // ---------- Lecturas para la UI ----------
 
   pendingCount(): number {
@@ -533,7 +553,7 @@ export class LocalDb implements SyncStore {
         items.push({ id: m.mutationId, what: "plot", recordKind: null, plotId: m.row.id, at, photos: 0, photoBytes: 0 });
       } else if (m.kind === "pois.upsert") {
         items.push({ id: m.mutationId, what: "poi", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
-      } else if (m.kind === "tasks.status" || m.kind === "tasks.check") {
+      } else if (m.kind === "tasks.status" || m.kind === "tasks.check" || m.kind === "tasks.comment") {
         items.push({ id: m.mutationId, what: "task", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
       }
     }

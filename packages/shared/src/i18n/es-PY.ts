@@ -2654,6 +2654,13 @@ export const esPY = {
     googleError_unverified: "Google no confirmó tu email. Ingresá con el código por email.",
     googleError_no_account: "No hay una cuenta de Yvy con ese email. Registrate primero con ese mismo email.",
     googleError_no_org: "Tu cuenta no pertenece a ninguna organización activa.",
+    accountReferralTitleProducer: "Tu código de referido",
+    accountReferralTextProducer: "Compartí este enlace con otros productores. Cuando crean su cuenta con él, queda anotado que llegaron por vos y el equipo de Yvy te lo reconoce.",
+    accountReferralCount: "Llegaron con tu código: {{n}} · crédito anotado en {{c}}",
+    internalReferralCredit: "Anotar crédito",
+    internalReferralCredited: "Crédito anotado {{date}}",
+    internalReferralCreditUndo: "Quitar crédito",
+    internalAudit_referral_credit: "Anotó el crédito de un referido",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

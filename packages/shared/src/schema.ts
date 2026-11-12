@@ -139,6 +139,8 @@ export const organizations = sqliteTable("organizations", {
   referredBy: text("referred_by"),
   /** V-05: agrónomo dueño del código, si se pudo identificar. */
   referrerUserId: text("referrer_user_id"),
+  /** V-06: el equipo anotó el crédito del referido (cuando la organización referida pasó a pagar). null = sin anotar. */
+  referralCreditedAt: integer("referral_credited_at"),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });

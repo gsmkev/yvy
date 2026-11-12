@@ -1,6 +1,6 @@
 /** Consultas y edición para la web (y la ficha del lote en la app con red). */
 import { Hono } from "hono";
-import { and, eq, gte, isNull, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { areaHa, bboxOf } from "@yvy/geo";
@@ -106,21 +106,37 @@ web.get("/me", async (c) => {
   });
 });
 
-/** V-05: código de referido del agrónomo (null si la persona no es agrónomo en ninguna de sus organizaciones). */
+/**
+ * V-05 / V-06: código de referido del agrónomo o del productor (dueño de una organización); null para los demás roles.
+ * Con cuántas organizaciones se registraron con su código y en cuántas el equipo ya anotó el crédito.
+ */
 web.get("/me/referral", async (c) => {
-  const [m] = await c.var.sdb.db
+  const sdb = c.var.sdb;
+  const [m] = await sdb.db
     .select({ id: s.memberships.id })
     .from(s.memberships)
     .where(
       and(
-        eq(s.memberships.userId, c.var.sdb.auth.userId),
-        eq(s.memberships.role, "agronomist"),
+        eq(s.memberships.userId, sdb.auth.userId),
+        inArray(s.memberships.role, ["agronomist", "owner"]),
         eq(s.memberships.status, "active"),
         isNull(s.memberships.deletedAt),
       ),
     )
     .limit(1);
-  return c.json({ code: m ? referralCode(c.var.sdb.auth.userId) : null });
+  if (!m) return c.json({ code: null, referred: 0, credited: 0 });
+  const [n] = await sdb.db
+    .select({
+      referred: sql<number>`count(*)`,
+      credited: sql<number>`sum(${s.organizations.referralCreditedAt} IS NOT NULL)`,
+    })
+    .from(s.organizations)
+    .where(eq(s.organizations.referrerUserId, sdb.auth.userId));
+  return c.json({
+    code: referralCode(sdb.auth.userId),
+    referred: Number(n?.referred ?? 0),
+    credited: Number(n?.credited ?? 0),
+  });
 });
 
 /** U-29: qué avisos le llegan al usuario, por qué canal y en qué horario. Valen para todas sus organizaciones. */

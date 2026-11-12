@@ -57,7 +57,7 @@ admin.get("/metrics", async (c) => {
   const week = now - 7 * 86_400_000;
   const weekDay = new Date(week - 3 * 3_600_000).toISOString().slice(0, 10);
   const orgs = await db.all<Record<string, unknown>>(sql`
-    SELECT o.id, o.name, o.plan, o.trial_ends_at AS trialEndsAt, o.max_ha AS maxHaOwn, o.max_users AS maxUsersOwn, o.created_at AS createdAt, o.referred_by AS referredBy,
+    SELECT o.id, o.name, o.plan, o.trial_ends_at AS trialEndsAt, o.max_ha AS maxHaOwn, o.max_users AS maxUsersOwn, o.created_at AS createdAt, o.referred_by AS referredBy, o.referrer_user_id AS referrerUserId, o.referral_credited_at AS referralCreditedAt,
       (SELECT u.full_name FROM users u WHERE u.id = o.referrer_user_id) AS referrerName,
       (SELECT count(*) FROM farms f WHERE f.organization_id = o.id AND f.deleted_at IS NULL) AS farms,
       (SELECT coalesce(sum(area_ha), 0) FROM farms f WHERE f.organization_id = o.id AND f.deleted_at IS NULL) AS ha,
@@ -113,6 +113,26 @@ admin.post("/orgs/:id/plan", async (c) => {
       updatedAt: Date.now(),
     })
     .where(eq(s.organizations.id, c.req.param("id")));
+  return c.json({ ok: true });
+});
+
+/** V-06: anotar (o quitar) el crédito del referido de una organización. Solo si se registró con el código de alguien. */
+admin.post("/orgs/:id/referral-credit", async (c) => {
+  const b = parse(z.object({ credited: z.boolean() }), await readJson(c.req));
+  const id = c.req.param("id");
+  const db = getDb(c.env.DB);
+  const [o] = await db
+    .select({ referrer: s.organizations.referrerUserId })
+    .from(s.organizations)
+    .where(eq(s.organizations.id, id))
+    .limit(1);
+  if (!o) throw new HTTPException(404, { message: "No existe" });
+  if (!o.referrer) throw new HTTPException(400, { message: "Esta organización no llegó por el código de nadie" });
+  await audit(c, "referral_credit", id, { credited: b.credited, referrer: o.referrer });
+  await db
+    .update(s.organizations)
+    .set({ referralCreditedAt: b.credited ? Date.now() : null, updatedAt: Date.now() })
+    .where(eq(s.organizations.id, id));
   return c.json({ ok: true });
 });
 

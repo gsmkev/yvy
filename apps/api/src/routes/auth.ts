@@ -7,7 +7,7 @@ import { funnelEvent } from "../db/events";
 import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
-import { and, count, desc, eq, gte, isNull, like, lte, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNull, like, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { LIMITS, newId, parseReferralCode, PIN_REGEX, phoneKey, t } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -28,14 +28,14 @@ const MAX_CODES_PER_WINDOW = 3;
 export const auth = new Hono<AppEnv>();
 
 /**
- * V-05: usuario con rol de agrónomo (en alguna organización) cuyo código de referido es `code`.
+ * V-05 / V-06: usuario con rol de agrónomo o dueño (productor) en alguna organización cuyo código de referido es `code`.
  * El código son los últimos 8 caracteres del id (ver referralCode), así que se busca por sufijo.
  */
 async function findReferrer(db: ReturnType<typeof getDb>, code: string): Promise<string | null> {
   const [row] = await db
     .select({ id: s.users.id })
     .from(s.users)
-    .innerJoin(s.memberships, and(eq(s.memberships.userId, s.users.id), eq(s.memberships.role, "agronomist"), isNull(s.memberships.deletedAt)))
+    .innerJoin(s.memberships, and(eq(s.memberships.userId, s.users.id), inArray(s.memberships.role, ["agronomist", "owner"]), isNull(s.memberships.deletedAt)))
     .where(like(s.users.id, `%${code.toLowerCase()}`))
     .limit(1);
   return row?.id ?? null;

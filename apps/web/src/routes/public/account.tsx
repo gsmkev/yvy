@@ -9,8 +9,9 @@ import { useMe } from "../../lib/queries";
 
 /** V-05: código personal de referido del agrónomo y el enlace de registro que lo lleva. */
 function Referral() {
-  const q = useQuery({ queryKey: ["referral"], queryFn: () => get<{ code: string | null }>("/me/referral") });
+  const q = useQuery({ queryKey: ["referral"], queryFn: () => get<{ code: string | null; referred: number; credited: number }>("/me/referral") });
   const [copied, setCopied] = useState(false);
+  const me = useMe();
   const code = q.data?.code;
   if (!code) return null;
   const link = `${window.location.origin}/ingresar?modo=registro&ref=${code}`;
@@ -25,10 +26,13 @@ function Referral() {
   };
   return (
     <section className="mt-8">
-      <h2 className="font-serif text-xl font-semibold">{t("ui.accountReferralTitle")}</h2>
-      <p className="mt-2 text-tinta-2">{t("ui.accountReferralText")}</p>
+      <h2 className="font-serif text-xl font-semibold">{t(me.data?.role === "owner" ? "ui.accountReferralTitleProducer" : "ui.accountReferralTitle")}</h2>
+      <p className="mt-2 text-tinta-2">{t(me.data?.role === "owner" ? "ui.accountReferralTextProducer" : "ui.accountReferralText")}</p>
       <p className="mt-4 text-sm text-tinta-2">{t("ui.accountReferralCode")}</p>
       <p className="num font-serif text-2xl font-semibold tracking-wider">{code}</p>
+      {(q.data?.referred ?? 0) > 0 && (
+        <p className="mt-2 text-sm">{t("ui.accountReferralCount", { n: q.data!.referred, c: q.data!.credited })}</p>
+      )}
       <p className="mt-3 text-sm text-tinta-2">{t("ui.accountReferralLink")}</p>
       <p className="text-sm break-all">{link}</p>
       <button

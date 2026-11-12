@@ -8,12 +8,13 @@ import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Camera, Map, Marker, type CameraRef, type StyleSpecification } from "@maplibre/maplibre-react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { CROPS, PLOT_KINDS, t, type MessageKey } from "@yvy/shared";
-import { containsPoint, type Area } from "@yvy/geo";
+import { containsPoint, traceToPolygon, type Area, type TracePoint } from "@yvy/geo";
 import { getDb } from "../src/lib/db";
 import { byFarm, useFarmChoice } from "../src/lib/farmFilter";
 import { layerSource, tilesBaseUrl } from "../src/lib/offline";
 import { addVertex, checkDraft, moveVertex, removeVertex, verticesOf, type V } from "../src/lib/plotDraft";
 import { useSession } from "../src/lib/session";
+import { appendFix, startWalk, traceLengthM } from "../src/lib/perimeterWalk";
 import { localChanged } from "../src/lib/sync";
 import { toastSaved } from "../src/lib/toast";
 import { useLocal } from "../src/lib/useLocal";
@@ -24,7 +25,7 @@ const MAX_MARKERS = 120;
 
 export default function PlotDraw() {
   const session = useSession();
-  const { plotId } = useLocalSearchParams<{ plotId?: string }>();
+  const { plotId, mode } = useLocalSearchParams<{ plotId?: string; mode?: string }>();
   const { current } = useFarmChoice();
   const plots = useLocal(() => getDb().plots());
   const farms = useLocal(() => getDb().farms());
@@ -34,6 +35,12 @@ export default function PlotDraw() {
   const [vs, setVs] = useState<V[]>(initial ?? []);
   const [sel, setSel] = useState<number | null>(null);
   const [step, setStep] = useState<"draw" | "form">("draw");
+  // M-04: caminar el borde con el GPS. idle = todavía no empezó, on = grabando, off = ya cerrado (se ajusta como cualquier dibujo)
+  const [walk, setWalk] = useState<"idle" | "on" | "off">(mode === "walk" && !plotId ? "idle" : "off");
+  const [trace, setTrace] = useState<TracePoint[]>([]);
+  const [walkMsg, setWalkMsg] = useState<string | null>(null);
+  const walker = useRef<{ stop: () => void } | null>(null);
+  useEffect(() => () => walker.current?.stop(), []);
   const [name, setName] = useState(editing?.name ?? "");
   const [kind, setKind] = useState<(typeof PLOT_KINDS)[number]>(editing?.kind ?? "crop");
   const [crop, setCrop] = useState<(typeof CROPS)[number] | null>(editing?.crop ?? null);
@@ -54,6 +61,36 @@ export default function PlotDraw() {
       camera.current?.fitBounds([editing.minLon, editing.minLat, editing.maxLon, editing.maxLat], { padding: { top: 60, bottom: 220, left: 60, right: 60 }, duration: 0 });
     }
   }, [editing?.id]);
+
+  const beginWalk = async () => {
+    setWalkMsg(null);
+    setTrace([]);
+    setVs([]);
+    const w = await startWalk((fix) => {
+      setTrace((cur) => {
+        const next = appendFix(cur, fix);
+        if (next !== cur) setVs(next.map((p) => [p.lon, p.lat] as V));
+        return next;
+      });
+      camera.current?.flyTo({ center: [fix.lon, fix.lat], zoom: 18, duration: 400 });
+    });
+    if (w === "denied") return setWalkMsg(t("app.perimWalkDenied"));
+    walker.current = w;
+    setWalk("on");
+  };
+  const endWalk = () => {
+    walker.current?.stop();
+    walker.current = null;
+    const r = traceToPolygon(trace);
+    if ("error" in r) {
+      setWalkMsg(r.error === "too_few_points" ? t("app.perimWalkTooShort") : r.error === "self_intersection" ? t("app.perimWalkCrossed") : t("app.perimWalkInvalid"));
+      setWalk("idle");
+      return;
+    }
+    // El perímetro caminado queda como un dibujo común: se ajusta vértice por vértice y sigue el flujo de M-03
+    setVs(r.polygon.coordinates[0]!.slice(0, -1).map((p) => [p[0]!, p[1]!] as V));
+    setWalk("off");
+  };
 
   const draft = checkDraft(vs);
   const others = byFarm(plots, farm?.id ?? null).filter((p) => p.id !== plotId);
@@ -106,6 +143,7 @@ export default function PlotDraw() {
   }
 
   const onMap = (lon: number, lat: number) => {
+    if (walk !== "off") return;
     if (sel !== null) {
       setVs(moveVertex(vs, sel, [lon, lat]));
       setSel(null);
@@ -195,7 +233,7 @@ export default function PlotDraw() {
         }}
       >
         <Camera ref={camera} initialViewState={{ bounds: [farm.minLon, farm.minLat, farm.maxLon, farm.maxLat], padding: { top: 40, bottom: 220, left: 24, right: 24 } }} />
-        {vs.length <= MAX_MARKERS &&
+        {walk === "off" && vs.length <= MAX_MARKERS &&
           vs.map((v, i) => (
             <Marker key={`${i}-${v[0]}-${v[1]}`} lngLat={v}>
               <Pressable
@@ -208,6 +246,20 @@ export default function PlotDraw() {
             </Marker>
           ))}
       </Map>
+      {walk !== "off" ? (
+        <View style={st.sheet}>
+          <Text style={T.smallMedium}>
+            {walk === "on" ? t("app.perimWalkRecording", { points: trace.length, m: Math.round(traceLengthM(trace)) }) : (walkMsg ?? t("app.perimWalkIntro"))}
+          </Text>
+          <Button
+            big
+            title={walk === "on" ? t("app.perimWalkStop") : t("app.perimWalkStart")}
+            onPress={walk === "on" ? endWalk : beginWalk}
+            style={{ marginTop: 12 }}
+          />
+          <Button kind="text" title={t("app.perimWalkDrawInstead")} onPress={() => { walker.current?.stop(); setWalk("off"); }} style={{ marginTop: 4 }} />
+        </View>
+      ) : (
       <View style={st.sheet}>
         <Text style={T.smallMedium}>{hint}</Text>
         <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
@@ -237,6 +289,7 @@ export default function PlotDraw() {
           </View>
         </View>
       </View>
+      )}
     </View>
   );
 }

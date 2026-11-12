@@ -155,3 +155,33 @@ export function TagLabelIllustration({ size = 280 }: { size?: number }) {
     </Svg>
   );
 }
+
+/** Planta de soja en floración con flores marcadas en trigo. */
+export function SoyStageIllustration({ size = 280 }: { size?: number }) {
+  const leaves: [number, number, number][] = [
+    [96, 150, -30],
+    [144, 150, 30],
+    [92, 112, -35],
+    [148, 112, 35],
+    [100, 76, -30],
+    [140, 76, 30],
+  ];
+  return (
+    <Svg width={size} height={size} viewBox="0 0 240 240" accessibilityLabel="Planta de soja de ejemplo en floración">
+      <Rect width="240" height="240" fill={LINO} />
+      <Rect x="0" y="206" width="240" height="34" fill={SURCO} />
+      <Path d="M120 208 L120 44" stroke={SOJA} strokeWidth="6" strokeLinecap="round" />
+      {leaves.map(([x, y, rot]) => (
+        <G key={`${x}-${y}`} transform={`translate(${x} ${y}) rotate(${rot})`}>
+          <Ellipse cx="0" cy="0" rx="22" ry="11" fill={SOJA} />
+        </G>
+      ))}
+      <G fill={TRIGO}>
+        <Circle cx="124" cy="132" r="5" />
+        <Circle cx="116" cy="96" r="5" />
+        <Circle cx="124" cy="60" r="5" />
+      </G>
+      <Circle cx="120" cy="96" r="46" fill="none" stroke={SURCO} strokeWidth="1.5" />
+    </Svg>
+  );
+}

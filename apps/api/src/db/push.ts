@@ -23,6 +23,7 @@ import {
   type RejectReason,
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
+import { areaHa, bboxOf, validateShape, type Area } from "@yvy/geo";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from "./client";
 import { hasEffects, recordEffects, type EffectRecord } from "./erp-effects";
 import { funnelEvent } from "./events";
@@ -62,6 +63,7 @@ export async function applyPush(
   const farmIds = new Set<string>();
   const plotIds = new Set<string>();
   const poiIds = new Set<string>();
+  const plotUpsertIds = new Set<string>();
   const attachRecordIds = new Set<string>();
   for (const m of mutations) {
     switch (m.kind) {
@@ -94,12 +96,16 @@ export async function applyPush(
         poiIds.add(m.row.id);
         farmIds.add(m.row.farmId);
         break;
+      case "plots.upsert":
+        plotUpsertIds.add(m.row.id);
+        farmIds.add(m.row.farmId);
+        break;
     }
   }
   const ids = <T>(set: Set<T>) => [...set];
   const empty = Promise.resolve([] as never[]);
 
-  const [seenRows, recRows, attRows, taskRows, farmRows, plotRows, poiRows, assignedRows, countRows] =
+  const [seenRows, recRows, attRows, taskRows, farmRows, plotRows, poiRows, assignedRows, countRows, plotUpRows] =
     await Promise.all([
       db
         .select({ id: s.syncMutations.mutationId })
@@ -176,6 +182,17 @@ export async function applyPush(
             .where(and(inArray(s.attachments.recordId, ids(attachRecordIds)), isNull(s.attachments.deletedAt)))
             .groupBy(s.attachments.recordId, s.attachments.mime)
         : empty,
+      plotUpsertIds.size
+        ? db
+            .select({
+              id: s.plots.id,
+              organizationId: s.plots.organizationId,
+              farmId: s.plots.farmId,
+              deletedAt: s.plots.deletedAt,
+            })
+            .from(s.plots)
+            .where(inArray(s.plots.id, ids(plotUpsertIds)))
+        : empty,
     ]);
 
   const seen = new Set(seenRows.map((r) => r.id));
@@ -195,6 +212,27 @@ export async function applyPush(
   const countKey = (recordId: string, mime: string) => `${recordId}:${isAudioMime(mime) ? "audio" : "photo"}`;
   const attachCount = new Map<string, number>();
   for (const r of countRows) attachCount.set(countKey(r.recordId, r.mime), (attachCount.get(countKey(r.recordId, r.mime)) ?? 0) + r.n);
+  // M-03: lotes que llegan por plots.upsert. Un id de otra organización solo sirve para rechazar.
+  const plotState = new Map(plotUpRows.map((r) => [r.id, r]));
+  const parsedPlots = new Map<string, { area: Area; ha: number }>();
+  let planBlocked = false;
+  if (plotUpsertIds.size && can.editField(auth.role)) {
+    let newHa = 0;
+    for (const m of mutations) {
+      if (m.kind !== "plots.upsert" || validateShape(m.row.geometry) !== null) continue;
+      const g = m.row.geometry as Area;
+      const ha = areaHa(g);
+      parsedPlots.set(m.row.id, { area: g, ha });
+      if (!plotState.has(m.row.id)) newHa += ha;
+    }
+    if (newHa > 0) {
+      try {
+        await sdb.requireHaRoom(newHa, "plots");
+      } catch {
+        planBlocked = true;
+      }
+    }
+  }
 
   // ---------- Decisión por mutación, en orden ----------
   const results: MutationResult[] = [];
@@ -206,6 +244,7 @@ export async function applyPush(
   const attachmentDeletes: string[] = [];
   const taskUpdates: Stmt[] = [];
   const poiUpserts: (typeof s.pointsOfInterest.$inferInsert)[] = [];
+  const plotUpserts: (typeof s.plots.$inferInsert)[] = [];
   const applied: (typeof s.syncMutations.$inferInsert)[] = [];
 
   const reject = (m: Mutation, reason: RejectReason, detail?: string) =>
@@ -438,6 +477,57 @@ export async function applyPush(
         accept(m, p.id);
         break;
       }
+      case "plots.upsert": {
+        const p = m.row;
+        if (!can.editField(auth.role)) {
+          reject(m, "forbidden", "plot");
+          break;
+        }
+        const known = plotState.get(p.id);
+        if (known && known.organizationId !== org) {
+          reject(m, "not_found");
+          break;
+        }
+        if (known?.deletedAt) {
+          reject(m, "deleted");
+          break;
+        }
+        if (known && known.farmId !== p.farmId) {
+          reject(m, "invalid", "farm");
+          break;
+        }
+        if (!farms.has(p.farmId)) {
+          reject(m, "forbidden", "farm");
+          break;
+        }
+        const geo = parsedPlots.get(p.id);
+        if (!geo || geo.ha < LIMITS.geometry.minPlotHa) {
+          reject(m, "invalid", geo ? "area" : "geometry");
+          break;
+        }
+        if (!known && planBlocked) {
+          reject(m, "forbidden", "plan");
+          break;
+        }
+        plotUpserts.push({
+          id: p.id,
+          organizationId: org,
+          farmId: p.farmId,
+          name: p.name,
+          kind: p.kind,
+          crop: p.kind === "crop" ? p.crop : null,
+          geometry: JSON.stringify(geo.area),
+          ...bboxOf(geo.area),
+          areaHa: geo.ha,
+          createdAt: now,
+          updatedAt: now,
+        });
+        plots.set(p.id, p.farmId);
+        // Si se repite el mismo lote en el push, el último gana y no se vuelve a contar como nuevo
+        plotState.set(p.id, { id: p.id, organizationId: org, farmId: p.farmId, deletedAt: null });
+        accept(m, p.id);
+        break;
+      }
       case "tasks.status": {
         const t = tasks.get(m.row.id);
         if (!t || t.organizationId !== org) {
@@ -538,12 +628,39 @@ export async function applyPush(
       attachmentUpserts.length +
       attachmentDeletes.length +
       poiUpserts.length +
+      plotUpserts.length +
       taskUpdates.length >
     0;
   if (touchesSynced) stmts.push(bumpVersion(db));
   // P-03: primer registro de la organización (una sentencia; no hace nada si ya existe)
   if (recordUpserts.length) stmts.push(funnelEvent(db, "first_record", auth.userId, org, now));
 
+  // Una sentencia por lote: las geometrías son largas y no conviene agruparlas (igual que createPlots).
+  const newPlots = plotUpserts.filter((p) => !plotUpRows.some((r) => r.id === p.id));
+  for (const p of plotUpserts) {
+    stmts.push(
+      db
+        .insert(s.plots)
+        .values({ ...p, version: currentVersion })
+        .onConflictDoUpdate({
+          target: s.plots.id,
+          set: {
+            name: sql`excluded.name`,
+            kind: sql`excluded.kind`,
+            crop: sql`excluded.crop`,
+            geometry: sql`excluded.geometry`,
+            minLon: sql`excluded.min_lon`,
+            minLat: sql`excluded.min_lat`,
+            maxLon: sql`excluded.max_lon`,
+            maxLat: sql`excluded.max_lat`,
+            areaHa: sql`excluded.area_ha`,
+            updatedAt: sql`excluded.updated_at`,
+            version: sql`excluded.version`,
+          },
+        }),
+    );
+  }
+  if (newPlots.length) stmts.push(funnelEvent(db, "plots_created", auth.userId, org, now));
   for (const chunk of chunkForParams(poiUpserts, paramsPerRow(s.pointsOfInterest))) {
     stmts.push(
       db

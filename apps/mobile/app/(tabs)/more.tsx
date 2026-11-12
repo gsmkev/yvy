@@ -185,7 +185,7 @@ const when = (ms: number) => new Date(ms).toLocaleString("es-PY", { day: "numeri
 function Outbox({ items, plotName, wifiOnly }: { items: OutboxItem[]; plotName: (id: string | null) => string | undefined; wifiOnly: boolean }) {
   const photoBytes = items.reduce((a, i) => a + i.photoBytes, 0);
   const label = (i: OutboxItem) =>
-    i.what === "record_delete" ? t("app.outboxRecordDelete") : i.what === "task" ? t("app.outboxTask") : i.what === "poi" ? t("app.outboxPoi") : i.recordKind ? t(`recordKinds.${i.recordKind}` as MessageKey) : t("app.outboxPhotosOnly");
+    i.what === "record_delete" ? t("app.outboxRecordDelete") : i.what === "task" ? t("app.outboxTask") : i.what === "poi" ? t("app.outboxPoi") : i.what === "plot" ? t("app.outboxPlot") : i.recordKind ? t(`recordKinds.${i.recordKind}` as MessageKey) : t("app.outboxPhotosOnly");
   return (
     <View style={{ marginTop: 8 }}>
       <Text style={st.sub}>{t("app.outboxTitle")}</Text>

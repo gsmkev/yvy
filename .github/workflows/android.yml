@@ -14,6 +14,8 @@ jobs:
     env:
       EXPO_PUBLIC_API_URL: ${{ vars.APP_URL }}
       EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
+      EAS_UPDATE_URL: ${{ vars.EAS_UPDATE_URL }}
+      EXPO_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_APP }}
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6

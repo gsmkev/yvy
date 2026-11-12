@@ -12,7 +12,9 @@ import { z } from "zod";
 import { LIMITS, newId, parseReferralCode, PIN_REGEX, phoneKey, t } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { requireAuth } from "../auth/middleware";
-import { issueSession, revokeRefresh, rotateRefresh } from "../auth/session";
+import { issueSession, revokeRefresh, rotateRefresh, type Session } from "../auth/session";
+import { beginSetup, checkSecondFactor, disableTotp, issueRecoveryCodes, totpEnabled, totpStatus } from "../auth/totp";
+import { signTicket, verifyTicket } from "../lib/totp";
 import { getDb, runBatch } from "../db/client";
 import { can } from "../db/scoped";
 import { hmacHex, hmacVerifyHex, randomDigits, randomToken, sha256Hex } from "../lib/crypto";
@@ -39,6 +41,29 @@ async function findReferrer(db: ReturnType<typeof getDb>, code: string): Promise
     .where(like(s.users.id, `%${code.toLowerCase()}`))
     .limit(1);
   return row?.id ?? null;
+}
+
+/**
+ * P-08: tras el código de email (o Google), quien tiene segundo factor no recibe sesión sino un pase de 5 minutos que
+ * se canjea en /auth/totp/login con el código de la app. Sin segundo factor, la sesión sale como siempre.
+ */
+async function sessionOrChallenge(
+  db: ReturnType<typeof getDb>,
+  secret: string,
+  userId: string,
+  opts: { organizationId?: string; deviceId?: string | null; now: number },
+): Promise<{ session: Session } | { challenge: { mfaRequired: true; ticket: string } } | null> {
+  if (await totpEnabled(db, userId)) {
+    const ticket = await signTicket(secret, {
+      userId,
+      ...(opts.organizationId ? { organizationId: opts.organizationId } : {}),
+      deviceId: opts.deviceId ?? null,
+      exp: opts.now + LIMITS.auth.totpTicketTtlMs,
+    });
+    return { challenge: { mfaRequired: true, ticket } };
+  }
+  const session = await issueSession(db, secret, userId, opts);
+  return session ? { session } : null;
 }
 
 /** Alta de una organización nueva con su dueño. Después se ingresa con /auth/email/start. */
@@ -174,13 +199,33 @@ auth.post("/email/verify", async (c) => {
     .returning({ id: s.emailCodes.id });
   if (!used.length) throw new HTTPException(401, { message: "Código inválido o vencido" });
   const [user] = await db.select({ id: s.users.id }).from(s.users).where(eq(s.users.email, body.email)).limit(1);
-  const session =
+  const out =
     user &&
-    (await issueSession(db, c.env.JWT_SECRET, user.id, {
+    (await sessionOrChallenge(db, c.env.JWT_SECRET, user.id, {
       organizationId: body.organizationId,
       deviceId: body.deviceId,
       now,
     }));
+  if (!out) throw new HTTPException(403, { message: "No pertenecés a ninguna organización activa" });
+  return c.json("session" in out ? out.session : out.challenge);
+});
+
+/** P-08: segundo paso del ingreso. Código de 6 dígitos de la app, o un código de recuperación (de un solo uso). */
+auth.post("/totp/login", async (c) => {
+  const body = parse(z.object({ ticket: z.string().min(20).max(1000), code: z.string().trim().min(6).max(20) }), await readJson(c.req));
+  const db = getDb(c.env.DB);
+  const now = Date.now();
+  const ticket = await verifyTicket(c.env.JWT_SECRET, body.ticket, now);
+  if (!ticket) throw new HTTPException(401, { message: t("totp.ticketExpired") });
+  const res = await checkSecondFactor(db, c.env.JWT_SECRET, ticket.userId, body.code, now);
+  if (res === "locked")
+    throw new HTTPException(429, { message: t("totp.locked", { min: Math.ceil(LIMITS.auth.totpLockMs / 60_000) }) });
+  if (res !== "ok") throw new HTTPException(401, { message: t("totp.bad") });
+  const session = await issueSession(db, c.env.JWT_SECRET, ticket.userId, {
+    organizationId: ticket.organizationId,
+    deviceId: ticket.deviceId,
+    now,
+  });
   if (!session) throw new HTTPException(403, { message: "No pertenecés a ninguna organización activa" });
   return c.json(session);
 });
@@ -453,11 +498,81 @@ auth.post("/google/exchange", async (c) => {
     .returning({ userId: s.linkCodes.userId, organizationId: s.linkCodes.organizationId });
   const link = used[0];
   if (!link) throw new HTTPException(401, { message: "Código inválido o vencido" });
-  const session = await issueSession(db, c.env.JWT_SECRET, link.userId, {
+  const out = await sessionOrChallenge(db, c.env.JWT_SECRET, link.userId, {
     organizationId: link.organizationId,
     deviceId: body.deviceId,
     now,
   });
-  if (!session) throw new HTTPException(403, { message: "No pertenecés a ninguna organización activa" });
-  return c.json(session);
+  if (!out) throw new HTTPException(403, { message: "No pertenecés a ninguna organización activa" });
+  return c.json("session" in out ? out.session : out.challenge);
+});
+
+// ---------- Segundo factor (P-08) ----------
+
+const locked = () => new HTTPException(429, { message: t("totp.locked", { min: Math.ceil(LIMITS.auth.totpLockMs / 60_000) }) });
+const orgRequiresTotp = async (db: ReturnType<typeof getDb>, orgId: string) => {
+  const [org] = await db
+    .select({ on: s.organizations.requireAdminTotp })
+    .from(s.organizations)
+    .where(eq(s.organizations.id, orgId))
+    .limit(1);
+  return !!org?.on;
+};
+
+/** Estado propio: si lo tiene, cuántos códigos de recuperación quedan y si la organización lo exige. */
+auth.get("/totp", requireAuth, async (c) => {
+  const db = getDb(c.env.DB);
+  return c.json({
+    ...(await totpStatus(db, c.var.auth.userId)),
+    requiredByOrg: c.var.auth.role === "admin" && (await orgRequiresTotp(db, c.var.auth.orgId)),
+  });
+});
+
+/** Empieza el alta: devuelve el secreto y la URI otpauth:// que la web dibuja como QR. Reemplaza un alta sin confirmar. */
+auth.post("/totp/setup", requireAuth, async (c) => {
+  const db = getDb(c.env.DB);
+  const [u] = await db
+    .select({ email: s.users.email, fullName: s.users.fullName })
+    .from(s.users)
+    .where(eq(s.users.id, c.var.auth.userId))
+    .limit(1);
+  const r = await beginSetup(db, c.env.JWT_SECRET, c.var.auth.userId, u?.email ?? u?.fullName ?? "Yvy", Date.now());
+  if (!r) throw new HTTPException(409, { message: t("totp.alreadyOn") });
+  return c.json(r);
+});
+
+/** Confirma el alta con un código de la app y entrega los códigos de recuperación (una sola vez). */
+auth.post("/totp/enable", requireAuth, async (c) => {
+  const body = parse(z.object({ code: z.string().regex(/^\d{6}$/) }), await readJson(c.req));
+  const db = getDb(c.env.DB);
+  const now = Date.now();
+  const res = await checkSecondFactor(db, c.env.JWT_SECRET, c.var.auth.userId, body.code, now, true);
+  if (res === "locked") throw locked();
+  if (res !== "ok") throw new HTTPException(400, { message: t("totp.bad") });
+  await db.update(s.userTotp).set({ enabledAt: now }).where(eq(s.userTotp.userId, c.var.auth.userId));
+  return c.json({ recoveryCodes: await issueRecoveryCodes(db, c.var.auth.userId, now) }, 201);
+});
+
+/** Códigos de recuperación nuevos; pide un código vigente (de la app o de recuperación). */
+auth.post("/totp/recovery-codes", requireAuth, async (c) => {
+  const body = parse(z.object({ code: z.string().trim().min(6).max(20) }), await readJson(c.req));
+  const db = getDb(c.env.DB);
+  const now = Date.now();
+  const res = await checkSecondFactor(db, c.env.JWT_SECRET, c.var.auth.userId, body.code, now);
+  if (res === "locked") throw locked();
+  if (res !== "ok") throw new HTTPException(400, { message: t("totp.bad") });
+  return c.json({ recoveryCodes: await issueRecoveryCodes(db, c.var.auth.userId, now) });
+});
+
+/** Lo apaga; pide un código vigente. El administrador de una organización que lo exige no puede apagarlo. */
+auth.post("/totp/disable", requireAuth, async (c) => {
+  const body = parse(z.object({ code: z.string().trim().min(6).max(20) }), await readJson(c.req));
+  const db = getDb(c.env.DB);
+  if (c.var.auth.role === "admin" && (await orgRequiresTotp(db, c.var.auth.orgId)))
+    throw new HTTPException(403, { message: t("totp.requiredByOrg") });
+  const res = await checkSecondFactor(db, c.env.JWT_SECRET, c.var.auth.userId, body.code, Date.now());
+  if (res === "locked") throw locked();
+  if (res !== "ok") throw new HTTPException(400, { message: t("totp.bad") });
+  await disableTotp(db, c.var.auth.userId);
+  return c.json({ ok: true });
 });

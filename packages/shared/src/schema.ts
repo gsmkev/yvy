@@ -151,6 +151,8 @@ export const organizations = sqliteTable("organizations", {
   referrerUserId: text("referrer_user_id"),
   /** V-06: el equipo anotó el crédito del referido (cuando la organización referida pasó a pagar). null = sin anotar. */
   referralCreditedAt: integer("referral_credited_at"),
+  /** P-08: el dueño exige segundo factor (TOTP) a los administradores de la organización. */
+  requireAdminTotp: integer("require_admin_totp", { mode: "boolean" }).notNull().default(false),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });
@@ -1956,4 +1958,31 @@ export const accountMap = sqliteTable(
     updatedAt: integer("updated_at").notNull(),
   },
   (t) => [uniqueIndex("account_map_key_uq").on(t.organizationId, t.key)],
+);
+
+/**
+ * P-08: segundo factor TOTP (RFC 6238) por usuario. El secreto va cifrado (AES-GCM, clave derivada de JWT_SECRET);
+ * `enabledAt` null = alta sin confirmar. `lastStep` evita reusar un código ya aceptado. No se sincroniza.
+ */
+export const userTotp = sqliteTable("user_totp", {
+  userId: text("user_id").primaryKey(),
+  secretEnc: text("secret_enc").notNull(),
+  enabledAt: integer("enabled_at"),
+  lastStep: integer("last_step").notNull().default(0),
+  failedAttempts: integer("failed_attempts").notNull().default(0),
+  lockedUntil: integer("locked_until"),
+  createdAt: integer("created_at").notNull(),
+});
+
+/** P-08: códigos de recuperación de un solo uso; solo queda el SHA-256. */
+export const totpRecoveryCodes = sqliteTable(
+  "totp_recovery_codes",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    codeHash: text("code_hash").notNull(),
+    usedAt: integer("used_at"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("totp_recovery_user_idx").on(t.userId), uniqueIndex("totp_recovery_hash_uq").on(t.codeHash)],
 );

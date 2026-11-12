@@ -10,7 +10,9 @@ export function LoginPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/ingresar" });
   const [mode, setMode] = useState<"login" | "signup">(search.modo === "registro" ? "signup" : "login");
-  const [step, setStep] = useState<"email" | "code">("email");
+  const [step, setStep] = useState<"email" | "code" | "totp">("email");
+  const [ticket, setTicket] = useState("");
+  const [totpCode, setTotpCode] = useState("");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [orgName, setOrgName] = useState("");
@@ -23,8 +25,13 @@ export function LoginPage() {
   useEffect(() => {
     if (!search.google) return;
     setBusy(true);
-    post<Session>("/auth/google/exchange", { code: search.google, deviceId: "web" })
+    post<Session | { mfaRequired: true; ticket: string }>("/auth/google/exchange", { code: search.google, deviceId: "web" })
       .then((s) => {
+        if ("mfaRequired" in s) {
+          setTicket(s.ticket);
+          setStep("totp");
+          return;
+        }
         setSession(s);
         navigate({ to: "/" });
       })
@@ -59,8 +66,20 @@ export function LoginPage() {
 
   const verify = () =>
     run(async () => {
-      const s = await post<Session>("/auth/email/verify", { email, code, deviceId: "web" });
+      const s = await post<Session | { mfaRequired: true; ticket: string }>("/auth/email/verify", { email, code, deviceId: "web" });
+      if ("mfaRequired" in s) {
+        setTicket(s.ticket);
+        setStep("totp");
+        return;
+      }
       setSession(s);
+      navigate({ to: "/" });
+    });
+
+  // P-08: segundo paso con el código de la app (o uno de recuperación)
+  const verifyTotp = () =>
+    run(async () => {
+      setSession(await post<Session>("/auth/totp/login", { ticket, code: totpCode }));
       navigate({ to: "/" });
     });
 
@@ -81,13 +100,14 @@ export function LoginPage() {
           <p className="mb-10 font-serif text-[28px] leading-none font-semibold">Yvy</p>
           <h1 className="text-[26px] leading-tight">{t(mode === "login" ? "ui.loginTitle" : "ui.signupTitle")}</h1>
           <p className="mt-1 mb-6 text-sm text-tinta-2">
-            {step === "email" ? t("ui.loginHelp") : t("auth.codeSent", { email })}
+            {step === "email" ? t("ui.loginHelp") : step === "totp" ? t("ui.totpLoginHelp") : t("auth.codeSent", { email })}
           </p>
           <form
             className="flex flex-col gap-4"
             onSubmit={(e) => {
               e.preventDefault();
               if (step === "email") sendCode();
+              else if (step === "totp") verifyTotp();
               else verify();
             }}
           >
@@ -128,6 +148,23 @@ export function LoginPage() {
                 >
                   {t(mode === "login" ? "ui.signupLink" : "ui.loginLink")}
                 </button>
+              </>
+            ) : step === "totp" ? (
+              <>
+                <Field label={t("ui.totpLoginLabel")}>
+                  <Input
+                    required
+                    autoFocus
+                    autoComplete="one-time-code"
+                    maxLength={20}
+                    value={totpCode}
+                    onChange={(e) => setTotpCode(e.target.value)}
+                    className="num h-14 text-center text-2xl tracking-[0.3em]"
+                  />
+                </Field>
+                <Button type="submit" variant="primary" disabled={busy || totpCode.trim().length < 6} className="h-11">
+                  {t("ui.verify")}
+                </Button>
               </>
             ) : (
               <>

@@ -428,6 +428,13 @@
       "when": 1794480378927,
       "tag": "0060_solid_mad_thinker",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "6",
+      "when": 1794480605451,
+      "tag": "0061_strong_sally_floyd",
+      "breakpoints": true
     }
   ]
 }

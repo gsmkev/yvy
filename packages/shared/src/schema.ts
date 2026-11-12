@@ -12,7 +12,7 @@
  *   El pull pagina por (version, id): equivale al "updated_at + desempate por id" del PRD §11
  *   pero sin depender de relojes de distintos datacenters.
  */
-import { ACTIVITIES, CONTRACTOR_SERVICES, COST_CATEGORIES, CURRENCIES, EMPLOYEE_PAYMENT_KINDS, MACHINE_TYPES, MAINTENANCE_KINDS, METER_KINDS, PARTY_KINDS, RATE_UNITS, STOCK_ORIGINS, WAREHOUSE_TYPES } from "./erp";
+import { ACTIVITIES, CATTLE_DEAL_KINDS, CONTRACTOR_SERVICES, COST_CATEGORIES, CURRENCIES, EMPLOYEE_PAYMENT_KINDS, MACHINE_TYPES, MAINTENANCE_KINDS, METER_KINDS, PARTY_KINDS, RATE_UNITS, STOCK_ORIGINS, WAREHOUSE_TYPES } from "./erp";
 import { ANIMAL_SEXES } from "./animals";
 import { HEALTH_REASONS, HERD_CATEGORIES } from "./livestock";
 import { sql } from "drizzle-orm";
@@ -1761,4 +1761,37 @@ export const grainSettlements = sqliteTable(
     ...timestamps,
   },
   (t) => [index("grain_settlements_contract_idx").on(t.organizationId, t.contractId), index("grain_settlements_due_idx").on(t.organizationId, t.dueDate)],
+);
+
+/** Compra o venta de hacienda: cabezas, kilos, precio y guía de traslado (E-35). */
+export const cattleDeals = sqliteTable(
+  "cattle_deals",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    kind: text("kind", { enum: CATTLE_DEAL_KINDS }).notNull(),
+    date: text("date").notNull(),
+    partyId: text("party_id"),
+    farmId: text("farm_id"),
+    seasonId: text("season_id"),
+    /** Categoría (vaca, novillo, ternero...): texto libre. */
+    category: text("category"),
+    heads: integer("heads").notNull(),
+    /** Kilos vivos totales. */
+    totalKg: real("total_kg").notNull(),
+    /** Importe total en unidad menor de `currency` y en guaraníes. */
+    amount: integer("amount").notNull(),
+    currency: text("currency", { enum: CURRENCIES }).notNull(),
+    amountPyg: integer("amount_pyg").notNull(),
+    /** Número de la guía de traslado (SENACSA). */
+    guideNumber: text("guide_number"),
+    dueDate: text("due_date"),
+    /** Lo ya pagado o cobrado, en unidad menor de `currency` (E-36). */
+    paidAmount: integer("paid_amount").notNull().default(0),
+    photoPath: text("photo_path"),
+    note: text("note"),
+    createdBy: text("created_by").notNull(),
+    ...timestamps,
+  },
+  (t) => [index("cattle_deals_org_idx").on(t.organizationId, t.date), index("cattle_deals_due_idx").on(t.organizationId, t.dueDate)],
 );

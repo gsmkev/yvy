@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { LIMITS } from "@yvy/shared";
-import { attendanceDayInput, grainContractInput, grainDeliveryInput, grainSettlementInput, purchaseInput, purchaseInvoiceInput, purchaseReceiveInput, budgetLineInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
+import { attendanceDayInput, CATTLE_DEAL_KINDS, cattleDealInput, grainContractInput, grainDeliveryInput, grainSettlementInput, purchaseInput, purchaseInvoiceInput, purchaseReceiveInput, budgetLineInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { HTTPException } from "hono/http-exception";
 import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
@@ -18,6 +18,7 @@ import { balances, createPayment, deletePayment, employeeStatement, listPayments
 import { budgetCompare } from "../db/budget";
 import { createPurchase, deletePurchase, getPurchase, invoicePurchase, listPurchases, receivePurchase, revertReception } from "../db/purchases";
 import { checkContractRefs, contractsSummary, createDelivery, createSettlement, deleteDelivery, deleteSettlement, listDeliveries, listSettlements } from "../db/grain-sales";
+import { createDeal, deleteDeal, listDeals } from "../db/cattle-deals";
 import { createLog, deleteLog, duePlans, listLogs } from "../db/maintenance";
 import { deleteMinimum, listMinimums, lowStock, saveMinimum } from "../db/stock-minimums";
 import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
@@ -367,5 +368,14 @@ erp.get("/grain-settlements", async (c) => c.json(await listSettlements(c.var.sd
 erp.post("/grain-settlements", async (c) => c.json(await createSettlement(c.var.sdb, parse(grainSettlementInput, await readJson(c.req))), 201));
 erp.delete("/grain-settlements/:id", async (c) => {
   await deleteSettlement(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+// ---------- Compras y ventas de hacienda (E-35, G-40) ----------
+
+erp.get("/cattle-deals", async (c) => c.json(await listDeals(c.var.sdb, parse(z.enum(CATTLE_DEAL_KINDS).optional(), c.req.query("kind")))));
+erp.post("/cattle-deals", async (c) => c.json(await createDeal(c.var.sdb, parse(cattleDealInput, await readJson(c.req))), 201));
+erp.delete("/cattle-deals/:id", async (c) => {
+  await deleteDeal(c.var.sdb, c.req.param("id"));
   return c.json({ ok: true });
 });

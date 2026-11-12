@@ -24,6 +24,7 @@ interface Results {
   byPlot: (Figures & { plotId: string | null; name: string | null; crop: string | null })[];
   byCrop: (Figures & { crop: string | null })[];
   byActivity: { activity: string; costPyg: number; incomePyg: number; marginPyg: number }[];
+  beef: { kgSold: number; costPyg: number; incomePyg: number; costPerKgPyg: number | null };
 }
 
 const gs = (n: number | null) => (n === null ? "" : fmtGs(n));
@@ -119,7 +120,11 @@ export function ResultsPanel() {
                   ))}
                 </tbody>
               </Section>
-              <p className="text-xs text-tinta-2">{t("ui.resultsBeefNote")}</p>
+              {q.data.beef.costPerKgPyg !== null ? (
+                <p className="text-sm">{t("ui.resultsBeefKg", { cost: fmtGs(q.data.beef.costPerKgPyg), kg: q.data.beef.kgSold.toLocaleString("es-PY") })}</p>
+              ) : (
+                <p className="text-xs text-tinta-2">{t("ui.resultsBeefNote")}</p>
+              )}
             </>
           )}
         </>

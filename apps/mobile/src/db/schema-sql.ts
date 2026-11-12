@@ -216,5 +216,8 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `grain_settlements_contract_idx` ON `grain_settlements` (`organization_id`,`contract_id`);",
   "CREATE INDEX `grain_settlements_due_idx` ON `grain_settlements` (`organization_id`,`due_date`);",
   "ALTER TABLE `grain_deliveries` ADD `contract_id` text;",
-  "CREATE INDEX `grain_deliveries_contract_idx` ON `grain_deliveries` (`organization_id`,`contract_id`);"
+  "CREATE INDEX `grain_deliveries_contract_idx` ON `grain_deliveries` (`organization_id`,`contract_id`);",
+  "CREATE TABLE `cattle_deals` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`kind` text NOT NULL,\n\t`date` text NOT NULL,\n\t`party_id` text,\n\t`farm_id` text,\n\t`season_id` text,\n\t`category` text,\n\t`heads` integer NOT NULL,\n\t`total_kg` real NOT NULL,\n\t`amount` integer NOT NULL,\n\t`currency` text NOT NULL,\n\t`amount_pyg` integer NOT NULL,\n\t`guide_number` text,\n\t`due_date` text,\n\t`paid_amount` integer DEFAULT 0 NOT NULL,\n\t`photo_path` text,\n\t`note` text,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
+  "CREATE INDEX `cattle_deals_org_idx` ON `cattle_deals` (`organization_id`,`date`);",
+  "CREATE INDEX `cattle_deals_due_idx` ON `cattle_deals` (`organization_id`,`due_date`);"
 ];

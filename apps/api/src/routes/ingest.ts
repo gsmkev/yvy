@@ -164,7 +164,10 @@ ingest.post("/farm-layers", async (c) => {
   );
   const res = await c.var.sys.addFarmLayer({ ...b, bounds: JSON.stringify(b.bounds) });
   if (!res) throw new HTTPException(404, { message: "Estancia inexistente" });
-  return c.json(res, 201);
+  // Retención: las versiones viejas de esta capa salen de D1 y de R2 (borrar en R2 no cuesta operaciones de clase A)
+  const stale = await c.var.sys.pruneFarmLayers(b.farmId, b.layer);
+  if (stale.length) await c.env.TILES.delete(stale);
+  return c.json({ ...res, pruned: stale.length }, 201);
 });
 
 /** M-17: GeoTIFF por convertir de una estancia (job custom_layers). */

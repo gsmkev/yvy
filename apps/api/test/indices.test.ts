@@ -1,5 +1,6 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
+import { LIMITS } from "@yvy/shared";
 import { hmacHex } from "../src/lib/crypto";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner } from "./helpers";
 
@@ -57,6 +58,20 @@ describe("S-07 · otros índices (NDRE, NDMI, EVI)", () => {
     const layer = { farmId, layer: "ndmi", acquiredAt: Date.now(), pmtilesPath: `farms/${farmId}/ndmi/1.pmtiles`, bytes: 1000, bounds: [-56, -27.3, -55.8, -27.1] };
     const raw = JSON.stringify(layer);
     expect((await call("POST", "/ingest/farm-layers", { body: raw, headers: await signed("POST", "/ingest/farm-layers", raw) })).status).toBe(201);
+    // Retención: con el tope de NDMI, la capa más vieja sale de la ficha y de R2
+    const keep = LIMITS.storage.layerRetention.ndmi;
+    const t0 = Date.now();
+    await env.TILES.put(`farms/${farmId}/ndmi/1.pmtiles`, "x");
+    for (let i = 1; i <= keep; i++) {
+      const l = JSON.stringify({ ...layer, acquiredAt: t0 + i, pmtilesPath: `farms/${farmId}/ndmi/${i + 1}.pmtiles` });
+      await env.TILES.put(`farms/${farmId}/ndmi/${i + 1}.pmtiles`, "x");
+      await call("POST", "/ingest/farm-layers", { body: l, headers: await signed("POST", "/ingest/farm-layers", l) });
+    }
+    const kept = (await call<any>("GET", `/org/farms/${farmId}`, { token: owner.token })).body.layers.filter((l: any) => l.layer === "ndmi");
+    expect(kept).toHaveLength(keep);
+    expect(kept.some((l: any) => l.pmtilesPath === `farms/${farmId}/ndmi/1.pmtiles`)).toBe(false);
+    expect(await env.TILES.head(`farms/${farmId}/ndmi/1.pmtiles`)).toBeNull();
+    expect(await env.TILES.head(`farms/${farmId}/ndmi/2.pmtiles`)).not.toBeNull();
     const bad = JSON.stringify({ ...layer, layer: "ndwi" });
     expect((await call("POST", "/ingest/farm-layers", { body: bad, headers: await signed("POST", "/ingest/farm-layers", bad) })).status).toBe(400);
     const detail = await call<any>("GET", `/org/farms/${farmId}`, { token: owner.token });

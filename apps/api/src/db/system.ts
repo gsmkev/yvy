@@ -289,6 +289,34 @@ export class SystemDb {
     return { id };
   }
 
+  /**
+   * Retención en R2: marca borradas las versiones de una capa que pasan el tope de LIMITS.storage.layerRetention
+   * (las más viejas) y devuelve sus rutas para borrar los archivos. El borrado lógico viaja por sync al celular.
+   */
+  async pruneFarmLayers(farmId: string, layer: (typeof s.LAYERS)[number]): Promise<string[]> {
+    const r = LIMITS.storage.layerRetention;
+    const keep = layer.startsWith("fert_") ? r.fert : r[layer as keyof typeof r];
+    const old = await this.db
+      .select({ id: s.farmLayers.id, path: s.farmLayers.pmtilesPath })
+      .from(s.farmLayers)
+      .where(and(eq(s.farmLayers.farmId, farmId), eq(s.farmLayers.layer, layer), isNull(s.farmLayers.deletedAt)))
+      .orderBy(desc(s.farmLayers.acquiredAt), desc(s.farmLayers.id))
+      .limit(50)
+      .offset(keep);
+    if (!old.length) return [];
+    const ts = Date.now();
+    await runBatch(this.db, [
+      bumpVersion(this.db),
+      ...chunkForParams(old.map((o) => o.id), 1).map((ids) =>
+        this.db
+          .update(s.farmLayers)
+          .set({ deletedAt: ts, updatedAt: ts, version: currentVersion })
+          .where(inArray(s.farmLayers.id, ids)),
+      ),
+    ]);
+    return old.map((o) => o.path);
+  }
+
   /** R-08: estancias de OTRAS organizaciones dentro de la caja, con su centro. Solo para calcular medianas. */
   benchmarkCandidates(orgId: string, box: { minLon: number; maxLon: number; minLat: number; maxLat: number }) {
     return this.db

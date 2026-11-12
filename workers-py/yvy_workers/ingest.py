@@ -84,6 +84,22 @@ class IngestClient:
     def scene_processed(self, scene_id: str) -> None:
         self._call("POST", f"/ingest/scenes/{scene_id}/processed", {})
 
+    def history_status(self, farm_id: str, status: str) -> None:
+        """Estado de la historia de vigor desde 2017 (S-03): done o failed (processing lo pone el Worker al pedirla)."""
+        self._call("POST", f"/ingest/farms/{farm_id}/history-status", {"status": status})
+
+    def farm_hotspots(self, farm_id: str, days: int) -> list[dict[str, Any]]:
+        """Focos de calor guardados cerca de la estancia en los últimos `days` días (S-20)."""
+        return self._call("GET", f"/ingest/farms/{farm_id}/hotspots", query={"days": str(days)})
+
+    def analysis(self, result: dict[str, Any]) -> None:
+        """Análisis de un lote (área quemada, cambio de cobertura); reemplaza el anterior de la misma referencia."""
+        self._call("POST", "/ingest/analyses", result)
+
+    def analysis_status(self, farm_id: str, kind: str, status: str) -> None:
+        """Estado de un análisis pedido a demanda: done o failed."""
+        self._call("POST", f"/ingest/farms/{farm_id}/analysis-status", {"kind": kind, "status": status})
+
     def climate_latest(self) -> list[dict[str, Any]]:
         return self._call("GET", "/ingest/climate-latest")
 

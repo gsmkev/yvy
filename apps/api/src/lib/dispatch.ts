@@ -17,8 +17,15 @@ export function dispatchConfigured(env: Pick<Bindings, "GITHUB_DISPATCH_TOKEN" |
   return Boolean(env.GITHUB_DISPATCH_TOKEN && /^[\w.-]+\/[\w.-]+$/.test(env.GITHUB_REPO ?? ""));
 }
 
-/** Pide a GitHub correr `new_farm` para la estancia. Nunca lanza: marca la estancia como fallida si GitHub rechaza. */
-export async function dispatchNewFarm(env: Bindings, farmId: string): Promise<"skipped" | "sent" | "failed"> {
+export const HISTORY_JOB = "s2_history";
+
+/** Pide a GitHub correr un job para una estancia. Nunca lanza. */
+export async function dispatchJob(
+  env: Bindings,
+  job: string,
+  farmId: string,
+  extra: Record<string, string> = {},
+): Promise<"skipped" | "sent" | "failed"> {
   if (!dispatchConfigured(env)) {
     if (!warned) {
       warned = true;
@@ -38,14 +45,21 @@ export async function dispatchNewFarm(env: Bindings, farmId: string): Promise<"s
           "user-agent": "Yvy/1.0 koeti.com.py",
           "content-type": "application/json",
         },
-        body: JSON.stringify({ ref: REF, inputs: { job: DISPATCH_JOB, farm: farmId } }),
+        body: JSON.stringify({ ref: REF, inputs: { job, farm: farmId, ...extra } }),
       },
     );
     if (res.status === 204) return "sent";
-    console.error(`dispatch de ${DISPATCH_JOB} rechazado: HTTP ${res.status}`);
+    console.error(`dispatch de ${job} rechazado: HTTP ${res.status}`);
   } catch (e) {
     console.error("dispatch de jobs falló", e);
   }
+  return "failed";
+}
+
+/** Pide a GitHub correr `new_farm` para la estancia. Nunca lanza: marca la estancia como fallida si GitHub rechaza. */
+export async function dispatchNewFarm(env: Bindings, farmId: string): Promise<"skipped" | "sent" | "failed"> {
+  const res = await dispatchJob(env, DISPATCH_JOB, farmId);
+  if (res !== "failed") return res;
   try {
     await new SystemDb(getDb(env.DB)).setImageryStatus(farmId, "failed");
   } catch (e) {

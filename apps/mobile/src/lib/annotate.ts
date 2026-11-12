@@ -3,7 +3,7 @@
  * Cada tipo de registro es una lista corta de pasos; los datos se arman al final y se validan con
  * el esquema compartido (packages/shared/src/records.ts), que es la única fuente de verdad.
  */
-import { REPRO_EVENTS, SERVICE_METHODS, ANIMAL_TAG_RE, SUPPLEMENT_TYPES, CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
+import { EXTRA_PREFIX, type FormField, REPRO_EVENTS, SERVICE_METHODS, ANIMAL_TAG_RE, SUPPLEMENT_TYPES, CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
 
 /** Lo que el flujo necesita saber del campo para decidir qué preguntar. */
 export interface FlowCtx {
@@ -15,6 +15,8 @@ export interface FlowCtx {
   vetProducts?: boolean;
   /** Hay máquinas en el catálogo (E-16): si no, la máquina se escribe a mano. */
   machines?: boolean;
+  /** F-14: campos propios de la organización para este tipo de registro; se preguntan después de los estándar. */
+  extraFields?: FormField[];
 }
 
 type StepBase = {
@@ -280,9 +282,24 @@ export const FLOWS: Record<RecordKind, Step[]> = {
   ],
 };
 
-/** Pasos que se preguntan dado lo respondido hasta ahora. */
+/** Prefijo de los textos que ya vienen escritos por la organización (no son claves de i18n). */
+export const RAW = "raw:";
+
+/** F-14: un paso por cada campo propio. Las respuestas quedan en `extra.<id>` y al guardar pasan a `data.extra`. */
+export const extraSteps = (fields: FormField[] = []): Step[] =>
+  fields.map((f): Step => {
+    const key = `${EXTRA_PREFIX}${f.id}`;
+    const question = `${RAW}${f.label}`;
+    const optional = !f.required;
+    if (f.type === "number") return { key, kind: "number", question, unit: f.unit ?? "", max: 1_000_000_000, min: -1_000_000_000, optional };
+    if (f.type === "choice") return { key, kind: "choice", question, optional, options: (f.options ?? []).map((o) => ({ value: o, label: `${RAW}${o}` })) };
+    if (f.type === "yesno") return { key, kind: "yesno", question };
+    return { key, kind: "text", question, optional };
+  });
+
+/** Pasos que se preguntan dado lo respondido hasta ahora (los estándar y, al final, los campos propios). */
 export const stepsFor = (kind: RecordKind | null, answers: Record<string, unknown>, ctx: FlowCtx = { waterPois: 0, askSeason: false }): Step[] =>
-  kind ? FLOWS[kind].filter((s) => !s.skipIf?.(answers, ctx)) : [];
+  kind ? [...FLOWS[kind], ...extraSteps(ctx.extraFields)].filter((s) => !s.skipIf?.(answers, ctx)) : [];
 
 /** Pasos de una lista dada con lo contestado hasta ahora (campaña solo si hay más de una activa). */
 export const visibleSteps = (steps: Step[], values: Record<string, unknown>, ctx: { askSeason: boolean }): Step[] =>

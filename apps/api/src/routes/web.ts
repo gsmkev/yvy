@@ -4,7 +4,7 @@ import { and, eq, gte, isNull, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { areaHa, bboxOf } from "@yvy/geo";
-import { alertSettingsSchema, referralCode, CROPS, FUNNEL_EVENTS, newId, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
+import { alertSettingsSchema, formConfigSchema, referralCode, CROPS, FUNNEL_EVENTS, newId, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import {
   addTaskComment,
@@ -18,6 +18,16 @@ import {
   farmDetail,
   farmForecast,
   farmEudr,
+  getFormConfig,
+  saveFormConfig,
+  farmAnalyses,
+  analysisStatus,
+  markAnalysisFailed,
+  markAnalysisRequested,
+  farmHistoryStatus,
+  markHistoryFailed,
+  markHistoryRequested,
+  plotVigorHistory,
   farmProblemAreas,
   farmRiskReport,
   farmSummaries,
@@ -47,6 +57,7 @@ import { clientsOverview } from "../db/clients";
 import { createLine, deleteLine, listFarmLines, updateLine } from "../db/lines";
 import { parse, readJson, timeOfDay } from "../lib/http";
 import { plotArea } from "./org";
+import { dispatchJob, HISTORY_JOB } from "../lib/dispatch";
 import { touchActivity } from "../auth/plan";
 import type { AppEnv } from "../types";
 
@@ -298,6 +309,48 @@ web.post("/org/plots/merge", async (c) => {
     areaHa: areaHa(b.geometry),
   });
   return c.json(res, 201);
+});
+web.get("/org/plots/:id/vigor-history", async (c) => c.json(await plotVigorHistory(c.var.sdb, c.req.param("id"))));
+web.get("/org/farms/:id/history", async (c) => c.json(await farmHistoryStatus(c.var.sdb, c.req.param("id"))));
+/** F-14: campos propios de los formularios. Leer: todo el equipo (el empleado los llena en la app). Editar: dueño y administrador. */
+web.get("/org/form-config", async (c) => c.json(await getFormConfig(c.var.sdb)));
+web.put("/org/form-config", async (c) => {
+  const config = parse(formConfigSchema, await readJson(c.req));
+  return c.json(await saveFormConfig(c.var.sdb, config));
+});
+/** S-20: área quemada por lote tras un foco de fuego (job burned_area). */
+web.get("/org/farms/:id/burned", async (c) => c.json(await farmAnalyses(c.var.sdb, c.req.param("id"), "burned")));
+/** S-31: cambio de cobertura entre dos fechas, a pedido. */
+web.get("/org/farms/:id/cover-change", async (c) => {
+  const id = c.req.param("id");
+  return c.json({ ...(await farmAnalyses(c.var.sdb, id, "cover_change")), job: await analysisStatus(c.var.sdb, id, "cover_change") });
+});
+web.post("/org/farms/:id/cover-change", async (c) => {
+  const farmId = c.req.param("id");
+  const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+  const b = parse(z.object({ from: day, to: day }), await readJson(c.req));
+  const first = "2017-01-01";
+  const today = new Date(c.var.sdb.now()).toISOString().slice(0, 10);
+  if (b.from < first || b.to > today || Date.parse(b.to) - Date.parse(b.from) < 90 * 86_400_000)
+    throw new HTTPException(400, { message: "Elegí dos fechas desde 2017, con al menos 3 meses de diferencia" });
+  if (!(await markAnalysisRequested(c.var.sdb, farmId, "cover_change", b))) return c.json({ status: "processing", already: true }, 202);
+  const res = await dispatchJob(c.env, "cover_change", farmId, b);
+  if (res !== "sent") {
+    await markAnalysisFailed(c.var.sdb, farmId, "cover_change");
+    throw new HTTPException(503, { message: "No se pudo pedir el análisis: los jobs no están disponibles" });
+  }
+  return c.json({ status: "processing", already: false }, 202);
+});
+/** S-03: pide el job s2_history (Sentinel-2 desde 2017) para la estancia. */
+web.post("/org/farms/:id/history", async (c) => {
+  const farmId = c.req.param("id");
+  if (!(await markHistoryRequested(c.var.sdb, farmId))) return c.json({ status: "processing", already: true }, 202);
+  const res = await dispatchJob(c.env, HISTORY_JOB, farmId);
+  if (res !== "sent") {
+    await markHistoryFailed(c.var.sdb, farmId);
+    throw new HTTPException(503, { message: "No se pudo pedir la historia: los jobs no están disponibles" });
+  }
+  return c.json({ status: "processing", already: false }, 202);
 });
 web.get("/org/plots/:id/ndvi", async (c) => c.json(await plotNdvi(c.var.sdb, c.req.param("id"))));
 

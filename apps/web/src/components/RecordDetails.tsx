@@ -1,12 +1,49 @@
-import { doseText } from "@yvy/shared";
+import { useQuery } from "@tanstack/react-query";
+import { describeExtra, doseText, type Extra, type FormConfig, type RecordKind } from "@yvy/shared";
+import { get } from "../lib/api";
 import { fmtHa, fmtNum, fmtTemp } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 
 type Data = Record<string, unknown>;
 const num = (v: unknown): number | null => (typeof v === "number" ? v : null);
 
-/** Detalle estructurado de los registros agrícolas (la descripción corta ya sale de describeRecord). */
+/** Detalle del registro: lo agrícola estructurado y las respuestas a los campos propios de la organización (F-14). */
 export function RecordDetails({ kind, data }: { kind: string; data: Data }) {
+  return (
+    <>
+      <AgroDetails kind={kind} data={data} />
+      <ExtraDetails kind={kind} extra={data.extra && typeof data.extra === "object" ? (data.extra as Extra) : undefined} />
+    </>
+  );
+}
+
+function ExtraDetails({ kind, extra }: { kind: string; extra: Extra | undefined }) {
+  const cfg = useQuery({
+    enabled: !!extra,
+    queryKey: ["form-config"],
+    queryFn: () => get<{ config: FormConfig }>("/org/form-config"),
+    staleTime: 5 * 60_000,
+  });
+  if (!extra) return null;
+  const rows = describeExtra(cfg.data?.config[kind as RecordKind], extra);
+  if (rows.length === 0) return null;
+  return (
+    <div className="mt-4 text-sm">
+      <h3 className="eyebrow mb-1">{t("ui.extraTitle")}</h3>
+      <dl className="num grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
+        {rows.map((r) => (
+          <div key={r.label} className="contents">
+            <dt className="text-tinta-2">{r.label}</dt>
+            <dd>{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
+/** Detalle estructurado de los registros agrícolas (la descripción corta ya sale de describeRecord). */
+function AgroDetails({ kind, data }: { kind: string; data: Data }) {
   if (kind !== "application" && kind !== "fertilization") return null;
   const products = Array.isArray(data.products) ? (data.products as Data[]) : [];
   const rows: [string, string][] = [];

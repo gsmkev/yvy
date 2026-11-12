@@ -25,7 +25,7 @@ const Footer = () => (
 type Geo = { type: string; coordinates: number[][][] | number[][][][] };
 
 /** Mapa esquemático: perímetro, lotes y áreas con posible pérdida (relleno de alerta). */
-function ChangeMap({ farm, plots, areas, width = 539, height = 260 }: { farm: Farm; plots: Plot[]; areas: { id: string; geometry: string }[]; width?: number; height?: number }) {
+export function ChangeMap({ farm, plots, areas, width = 539, height = 260 }: { farm: Farm; plots: Plot[]; areas: { id: string; geometry: string }[]; width?: number; height?: number }) {
   const [x0, y0, x1, y1] = [farm.minLon, farm.minLat, farm.maxLon, farm.maxLat];
   const k = Math.min(width / (x1 - x0), height / (y1 - y0));
   const px = (lon: number) => (lon - x0) * k + (width - (x1 - x0) * k) / 2;

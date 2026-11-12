@@ -260,6 +260,34 @@
       "when": 1794438061942,
       "tag": "0036_special_switch",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "6",
+      "when": 1794455717485,
+      "tag": "0037_volatile_senator_kelly",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "6",
+      "when": 1794456209044,
+      "tag": "0038_right_boom_boom",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "6",
+      "when": 1794456401165,
+      "tag": "0039_shocking_satana",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "6",
+      "when": 1794473086990,
+      "tag": "0040_useful_loa",
+      "breakpoints": true
     }
   ]
 }

@@ -9,6 +9,8 @@
  */
 import { getTableColumns, getTableName } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
+import { describeArea } from "@yvy/geo";
+import type { Polygon } from "geojson";
 import {
   computeStock,
   isDueToday,
@@ -119,7 +121,7 @@ export interface LocalPhoto {
 export interface OutboxItem {
   id: string;
   /** Qué es: un registro nuevo o editado, un borrado, una tarea hecha, o solo fotos. */
-  what: "record" | "record_delete" | "task" | "photos" | "poi";
+  what: "record" | "record_delete" | "task" | "photos" | "poi" | "plot";
   recordKind: RecordKind | null;
   plotId: string | null;
   at: number;
@@ -206,7 +208,7 @@ export class LocalDb implements SyncStore {
         if (this.hasPending(String(row.id))) continue;
         this.sql.run(
           insert,
-          cols.map((c) => (row[c.key] === undefined ? null : (row[c.key] as Param))),
+          cols.map((c) => (row[c.key] === undefined ? null : typeof row[c.key] === "boolean" ? (row[c.key] ? 1 : 0) : (row[c.key] as Param))),
         );
       }
       if (cursor) {
@@ -358,6 +360,36 @@ export class LocalDb implements SyncStore {
     return poiId;
   }
 
+  /**
+   * Lote dibujado o editado en el celular (M-03, M-04). Fila local + mutación plots.upsert en una sola transacción.
+   * Al editar solo cambian nombre, tipo, cultivo y forma: campaña, fecha de siembra y color quedan como estaban.
+   */
+  savePlot(
+    orgId: string,
+    input: { id?: string; farmId: string; name: string; kind: Plot["kind"]; crop: Plot["crop"]; geometry: Polygon },
+  ): string {
+    const id = input.id ?? newId();
+    const ts = this.now();
+    const name = input.name.trim();
+    const crop = input.kind === "crop" ? input.crop : null;
+    const d = describeArea(input.geometry);
+    this.sql.tx(() => {
+      this.sql.run(
+        `INSERT INTO plots (id, organization_id, farm_id, name, kind, geometry, min_lon, min_lat, max_lon, max_lat, area_ha, crop, created_at, updated_at, version)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+         ON CONFLICT(id) DO UPDATE SET name = excluded.name, kind = excluded.kind, crop = excluded.crop, geometry = excluded.geometry,
+           min_lon = excluded.min_lon, min_lat = excluded.min_lat, max_lon = excluded.max_lon, max_lat = excluded.max_lat,
+           area_ha = excluded.area_ha, updated_at = excluded.updated_at`,
+        [id, orgId, input.farmId, name, input.kind, d.geometry, d.minLon, d.minLat, d.maxLon, d.maxLat, d.areaHa, crop, ts, ts],
+      );
+      this.enqueue(
+        { mutationId: newId(), kind: "plots.upsert", row: { id, farmId: input.farmId, name, kind: input.kind, crop, geometry: input.geometry } },
+        id,
+      );
+    });
+    return id;
+  }
+
   deleteRecord(recordId: string): void {
     const ts = this.now();
     this.sql.tx(() => {
@@ -472,6 +504,8 @@ export class LocalDb implements SyncStore {
         items.push({ id: m.mutationId, what: "record", recordKind: m.row.kind, plotId: m.row.plotId, at, photos: p?.n ?? 0, photoBytes: p?.bytes ?? 0 });
       } else if (m.kind === "records.delete") {
         items.push({ id: m.mutationId, what: "record_delete", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
+      } else if (m.kind === "plots.upsert") {
+        items.push({ id: m.mutationId, what: "plot", recordKind: null, plotId: m.row.id, at, photos: 0, photoBytes: 0 });
       } else if (m.kind === "pois.upsert") {
         items.push({ id: m.mutationId, what: "poi", recordKind: null, plotId: null, at, photos: 0, photoBytes: 0 });
       } else if (m.kind === "tasks.status" || m.kind === "tasks.check") {
@@ -769,7 +803,7 @@ export class LocalDb implements SyncStore {
   latestLayers(farmId: string): FarmLayer[] {
     return this.sql
       .all(
-        `SELECT l.* FROM farm_layers l WHERE l.farm_id = ? AND l.deleted_at IS NULL
+        `SELECT l.* FROM farm_layers l WHERE l.farm_id = ? AND l.deleted_at IS NULL AND l.layer IN ('true_color', 'ndvi')
          AND l.acquired_at = (SELECT max(acquired_at) FROM farm_layers x WHERE x.farm_id = l.farm_id AND x.layer = l.layer AND x.deleted_at IS NULL)`,
         [farmId],
       )

@@ -86,7 +86,10 @@ export const ALERT_SEVERITIES = ["info", "watch", "warning"] as const;
 export const ALERT_PROBABILITIES = ["low", "medium", "high"] as const;
 /** P-03: pasos del embudo de activación. Los escribe el servidor, una sola vez por organización. */
 export const FUNNEL_EVENTS = ["signup", "farm_created", "plots_created", "member_added", "first_record"] as const;
-export const LAYERS = ["true_color", "ndvi"] as const;
+/** S-07: índices de vegetación que calcula el job de Sentinel-2. */
+export const INDEX_KINDS = ["ndvi", "ndre", "ndmi", "evi"] as const;
+export type IndexKind = (typeof INDEX_KINDS)[number];
+export const LAYERS = ["true_color", ...INDEX_KINDS] as const;
 /** Estado del procesamiento satelital inicial de una estancia (S-02). */
 export const IMAGERY_STATUSES = ["pending", "processing", "ready", "failed"] as const;
 
@@ -740,6 +743,8 @@ export const plotIndexStats = sqliteTable(
     p10: real("p10").notNull(),
     p90: real("p90").notNull(),
     validPct: real("valid_pct").notNull(),
+    /** S-11: lote de menos de 30 m de ancho; los píxeles mezclan con el borde y el dato es poco confiable. */
+    lowConfidence: integer("low_confidence", { mode: "boolean" }).notNull().default(false),
     ...synced,
   },
   (t) => [
@@ -771,6 +776,16 @@ export const farmLayers = sqliteTable(
 export const farmImagery = sqliteTable("farm_imagery", {
   farmId: text("farm_id").primaryKey(),
   status: text("status", { enum: IMAGERY_STATUSES }).notNull().default("pending"),
+  requestedAt: integer("requested_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});
+
+/** S-03: estado de la historia de vigor desde 2017 pedida a demanda por estancia. No se sincroniza. */
+export const HISTORY_STATUSES = ["processing", "done", "failed"] as const;
+export const farmHistory = sqliteTable("farm_history", {
+  farmId: text("farm_id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  status: text("status", { enum: HISTORY_STATUSES }).notNull(),
   requestedAt: integer("requested_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });
@@ -858,6 +873,63 @@ export const eudrResults = sqliteTable(
     computedAt: integer("computed_at").notNull(),
   },
   (t) => [uniqueIndex("eudr_results_plot_uq").on(t.plotId), index("eudr_results_farm_idx").on(t.farmId)],
+);
+
+/** F-14: campos propios por tipo de registro de cada organización (JSON validado con formConfigSchema). No se sincroniza: la app lo pide por /org/form-config. */
+export const formConfigs = sqliteTable("form_configs", {
+  organizationId: text("organization_id").primaryKey(),
+  config: text("config").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+  updatedBy: text("updated_by").notNull(),
+});
+
+/** Análisis por lote calculados por workers-py con Sentinel-2: área quemada (S-20) y cambio de cobertura (S-31). */
+export const ANALYSIS_KINDS = ["burned", "cover_change"] as const;
+export type AnalysisKind = (typeof ANALYSIS_KINDS)[number];
+
+/**
+ * Una fila por lote, tipo de análisis y referencia (burned: fecha ISO del primer foco; cover_change: "desde_hasta").
+ * `metrics` es un JSON chico según el tipo y `changes` un FeatureCollection con los polígonos. Solo lo escribe
+ * /ingest; no se sincroniza. Análisis indicativo.
+ */
+export const plotAnalyses = sqliteTable(
+  "plot_analyses",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    plotId: text("plot_id").notNull(),
+    kind: text("kind", { enum: ANALYSIS_KINDS }).notNull(),
+    refKey: text("ref_key").notNull(),
+    /** Fecha de la imagen "antes" y de la imagen "después". */
+    fromAt: integer("from_at"),
+    toAt: integer("to_at"),
+    plotAreaHa: real("plot_area_ha").notNull(),
+    validPct: real("valid_pct").notNull(),
+    metrics: text("metrics").notNull(),
+    changes: text("changes").notNull(),
+    computedAt: integer("computed_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("plot_analyses_uq").on(t.plotId, t.kind, t.refKey),
+    index("plot_analyses_farm_idx").on(t.farmId, t.kind),
+  ],
+);
+
+/** Pedidos a demanda de análisis pesados por estancia (S-31). No se sincroniza. */
+export const analysisJobs = sqliteTable(
+  "analysis_jobs",
+  {
+    farmId: text("farm_id").notNull(),
+    kind: text("kind", { enum: ANALYSIS_KINDS }).notNull(),
+    organizationId: text("organization_id").notNull(),
+    status: text("status", { enum: HISTORY_STATUSES }).notNull(),
+    /** Parámetros del pedido (JSON): fechas del cambio de cobertura. */
+    params: text("params").notNull().default("{}"),
+    requestedAt: integer("requested_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.farmId, t.kind] })],
 );
 
 /** Informe de riesgo climático por estancia (C-10): JSON validado con farmRiskSchema. No se sincroniza. */

@@ -8,15 +8,18 @@ import type { FarmDetail } from "../lib/types";
 import { fmtDate, fmtDay, fmtHa, fmtIsoDate, fmtNdvi, fmtNum, fmtPct, toIso } from "../lib/format";
 import { Minus, Pencil, Satellite, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { t, tk } from "../lib/i18n";
-import type { Member, Plot, PlotHistoryRow, ProblemArea } from "../lib/types";
+import type { Farm, Member, Plot, PlotHistoryRow, ProblemArea } from "../lib/types";
 import { CopyCoords } from "./CopyCoords";
 import { LineChart } from "./charts";
+import { SamplingGrid } from "./SamplingGrid";
+import { VigorSeasons } from "./VigorSeasons";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Select, Spinner, Stat, toast } from "./ui";
 
 interface Ndvi {
-  series: { acquiredAt: number; mean: number; p10: number; p90: number; validPct: number }[];
+  series: { acquiredAt: number; mean: number; p10: number; p90: number; validPct: number; lowConfidence: boolean }[];
   farmAvg: { acquiredAt: number; mean: number }[];
-  current: { acquiredAt: number; mean: number } | null;
+  current: { acquiredAt: number; mean: number; lowConfidence: boolean } | null;
+  others?: Record<string, { acquiredAt: number; mean: number; lowConfidence: boolean }>;
   deltaVsFarmPct: number | null;
 }
 
@@ -30,6 +33,7 @@ export function PlotPanel({
   onEditShape,
   onSplit,
   onMerge,
+  farm,
 }: {
   plot: Plot;
   workers: Member[];
@@ -43,6 +47,8 @@ export function PlotPanel({
   /** M-05: dibujar una línea para dividir el lote / elegir otro lote para unir. */
   onSplit?: () => void;
   onMerge?: () => void;
+  /** Estancia del lote (encabezado de la grilla de muestreo). */
+  farm?: Farm;
 }) {
   const qc = useQueryClient();
   const heading = useRef<HTMLHeadingElement>(null);
@@ -175,6 +181,24 @@ export function PlotPanel({
                   </div>
                 )}
               </div>
+              {ndvi.data.current.lowConfidence && (
+                <p className="mt-2 rounded border border-trigo/60 px-2 py-1 text-xs text-tinta-2" role="note">
+                  <strong>{t("ui.lowConfidence")}.</strong> {t("ui.lowConfidenceNote")}
+                </p>
+              )}
+              {ndvi.data.others && Object.keys(ndvi.data.others).length > 0 && (
+                <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs">
+                  {(["ndre", "ndmi", "evi"] as const).map((k) => {
+                    const o = ndvi.data!.others![k];
+                    return o ? (
+                      <div key={k}>
+                        <dt className="eyebrow">{t(`ui.index_${k}`)}</dt>
+                        <dd className="num text-base font-medium">{fmtNdvi(o.mean)}</dd>
+                      </div>
+                    ) : null;
+                  })}
+                </dl>
+              )}
               <h3 className="eyebrow mt-5 mb-1">{t("ui.ndviCurve")}</h3>
               <LineChart
                 ariaLabel={t("ui.ndviCurve")}
@@ -203,6 +227,8 @@ export function PlotPanel({
           )}
         </div>
       )}
+      {canEdit && <SamplingGrid plot={plot} farm={farm} />}
+      {canEdit && <VigorSeasons plotId={plot.id} farmId={plot.farmId} />}
       {ndvi.error && <ErrorBox error={ndvi.error} />}
 
       {canEdit && problemAreas.length > 0 && (

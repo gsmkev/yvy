@@ -79,7 +79,7 @@ export interface Poi {
 
 export interface Layer {
   id: string;
-  layer: "true_color" | "ndvi";
+  layer: "true_color" | "ndvi" | "ndre" | "ndmi" | "evi";
   acquiredAt: number;
   pmtilesPath: string;
   bytes: number;
@@ -205,6 +205,49 @@ export interface EudrPlot {
 export interface EudrResponse {
   computedAt: number | null;
   plots: EudrPlot[];
+}
+
+/** Análisis por lote de Sentinel-2 (S-20 área quemada, S-31 cambio de cobertura). Indicativos. */
+export interface AnalysisPlot<M> {
+  plotId: string;
+  plotName: string;
+  refKey: string;
+  fromAt: number | null;
+  toAt: number | null;
+  plotAreaHa: number;
+  validPct: number;
+  metrics: M;
+  /** FeatureCollection (texto) con los polígonos. */
+  changes: string;
+  computedAt: number;
+}
+
+export interface BurnedMetrics {
+  eventAt: number;
+  burnedHa: number;
+  highHa: number;
+  hotspots: number;
+}
+
+export interface ClassHa {
+  forest: number;
+  pasture: number;
+  crop: number;
+  other: number;
+}
+
+export interface CoverMetrics {
+  from: ClassHa;
+  to: ClassHa;
+  forestToPasture: number;
+  forestToCrop: number;
+  forestToOther: number;
+}
+
+export interface AnalysisJob {
+  status: "processing" | "done" | "failed" | null;
+  params: { from?: string; to?: string } | null;
+  requestedAt: number | null;
 }
 
 export interface Product {

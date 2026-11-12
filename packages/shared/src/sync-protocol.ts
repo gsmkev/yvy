@@ -5,7 +5,7 @@
  */
 import { z } from "zod";
 import { LIMITS } from "./limits";
-import { POI_KINDS, RECORD_KINDS, TASK_STATUS } from "./schema";
+import { CROPS, PLOT_KINDS, POI_KINDS, RECORD_KINDS, TASK_STATUS } from "./schema";
 
 const uuid = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/, "uuid inválido");
 const epochMs = z.number().int().nonnegative();
@@ -69,6 +69,19 @@ export const poiRow = z.object({
   lat,
 });
 
+/**
+ * Lote dibujado o editado en el celular (M-03, M-04). La geometría es un Polígono GeoJSON; el servidor valida
+ * la forma, calcula área y bbox y aplica el límite de hectáreas del plan. Solo roles que no son `worker`.
+ */
+export const plotRow = z.object({
+  id: uuid,
+  farmId: uuid,
+  name: z.string().trim().min(1).max(120),
+  kind: z.enum(PLOT_KINDS),
+  crop: z.enum(CROPS).nullable(),
+  geometry: z.unknown(),
+});
+
 const base = { mutationId: uuid };
 const del = z.object({ id: uuid });
 
@@ -80,6 +93,7 @@ export const mutation = z.discriminatedUnion("kind", [
   z.object({ ...base, kind: z.literal("tasks.status"), row: taskStatusRow }),
   z.object({ ...base, kind: z.literal("tasks.check"), row: taskCheckRow }),
   z.object({ ...base, kind: z.literal("pois.upsert"), row: poiRow }),
+  z.object({ ...base, kind: z.literal("plots.upsert"), row: plotRow }),
 ]);
 export type Mutation = z.infer<typeof mutation>;
 export type MutationKind = Mutation["kind"];

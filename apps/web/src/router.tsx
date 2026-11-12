@@ -91,6 +91,11 @@ const farmEudr = createRoute({
   path: "/estancias/$farmId/eudr",
   component: lazyRouteComponent(() => import("./routes/eudr"), "EudrPage"),
 });
+const farmChanges = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/estancias/$farmId/cambios",
+  component: lazyRouteComponent(() => import("./routes/changes"), "ChangesPage"),
+});
 const records = createRoute({
   getParentRoute: () => appRoute,
   path: "/registros",
@@ -116,6 +121,11 @@ const team = createRoute({
   getParentRoute: () => appRoute,
   path: "/equipo",
   component: lazyRouteComponent(() => import("./routes/team"), "TeamPage"),
+});
+const forms = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/formularios",
+  component: lazyRouteComponent(() => import("./routes/forms"), "FormsPage"),
 });
 const help = createRoute({
   getParentRoute: () => appRoute,
@@ -167,6 +177,8 @@ const routeTree = rootRoute.addChildren([
     farmGauges,
     farmRisk,
     farmEudr,
+    farmChanges,
+    forms,
     records,
     tasks,
     sanitary,

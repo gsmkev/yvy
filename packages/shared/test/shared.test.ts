@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { deterministicUuid, localDate, nextDueDate, nextOccurrenceId, parseRecordData, t } from "../src";
+import {
+  deterministicUuid,
+  livestockPlotProblem,
+  localDate,
+  nextDueDate,
+  nextOccurrenceId,
+  parseRecordData,
+  t,
+} from "../src";
 
 describe("tareas recurrentes", () => {
   it("próxima fecha diaria y semanal", () => {
@@ -26,6 +34,30 @@ describe("registros", () => {
     expect(parseRecordData("pest", { pest: "chinche" }).success).toBe(false);
     expect(parseRecordData("pest", { pest: "chinche", intensity: "high" }).success).toBe(true);
     expect(parseRecordData("note", { text: "" }).success).toBe(false);
+  });
+});
+
+describe("ganadería: conteo de hacienda", () => {
+  it("acepta cabezas por categoría y un cero es un dato", () => {
+    expect(parseRecordData("herd_count", { counts: { vaca: 120, toro: 4 } }).success).toBe(true);
+    expect(parseRecordData("herd_count", { counts: { vaca: 0 } }).success).toBe(true);
+  });
+  it("rechaza vacío, negativos, decimales y categorías desconocidas", () => {
+    expect(parseRecordData("herd_count", { counts: {} }).success).toBe(false);
+    expect(parseRecordData("herd_count", { counts: { vaca: -1 } }).success).toBe(false);
+    expect(parseRecordData("herd_count", { counts: { vaca: 1.5 } }).success).toBe(false);
+    expect(parseRecordData("herd_count", { counts: { vaca: 1_000_000 } }).success).toBe(false);
+    expect(parseRecordData("herd_count", { counts: { oveja: 3 } }).success).toBe(false);
+  });
+  it("describe el conteo en es-PY", () => {
+    expect(describeRecord("herd_count", { counts: { vaca: 12, toro: 3, ternero: 0 } })).toBe(
+      "15 cabezas: 12 vacas, 3 toros",
+    );
+  });
+  it("el conteo necesita potrero", () => {
+    expect(livestockPlotProblem("herd_count", null, {})).not.toBeNull();
+    expect(livestockPlotProblem("herd_count", "p1", {})).toBeNull();
+    expect(livestockPlotProblem("rain", null, {})).toBeNull();
   });
 });
 

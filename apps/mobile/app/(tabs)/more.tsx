@@ -5,13 +5,14 @@ import { getLocale, LIMITS, LOCALES, LOCALE_NAMES, t, type MessageKey } from "@y
 import { FEATURES } from "../../src/lib/features";
 import type { OutboxItem } from "../../src/db/store";
 import { getDb } from "../../src/lib/db";
-import { allPacksPlan, downloadAllPacks, downloadPack, isWifi, packStatus } from "../../src/lib/offline";
+import { allPacksPlan, downloadAllPacks, downloadPack, isWifi, mapBudget, packStatus } from "../../src/lib/offline";
 import { remindersEnabled, setRemindersEnabled } from "../../src/lib/reminders";
 import { chooseLocale } from "../../src/lib/locale";
 import { api, getSession, setSession } from "../../src/lib/session";
 import { deleteUploadedFiles, storageUsage, type StorageUsage } from "../../src/lib/storage";
 import { canSwitchUser, unsentSummary } from "../../src/lib/switchUser";
 import { showToast } from "../../src/lib/toast";
+import { fitsBudget } from "../../src/lib/offlinePlan";
 import { localChanged, stopAutoSync, syncNow, syncNowMobileData, useSyncStatus } from "../../src/lib/sync";
 import { canCount } from "../../src/lib/stock-count";
 import { useLocal } from "../../src/lib/useLocal";
@@ -33,6 +34,7 @@ export default function More() {
 
   const download = async (farmId: string) => {
     if (!(await isWifi())) return Alert.alert(t("app.offlinePackNeedsWifi"));
+    if (!fitsBudget(packStatus(farmId).missingBytes, mapBudget())) return Alert.alert(t("app.offlineOverLimit", { mb: Math.round(LIMITS.offline.maxMapBytes / 1e6) }));
     try {
       await downloadPack(farmId, (f) => setProgress((p) => ({ ...p, [farmId]: f })));
       localChanged();
@@ -136,7 +138,10 @@ export default function More() {
           style={{ marginTop: 12 }}
         />
       )}
-      {farms.length > 1 && plan.farms.length === 0 && plan.withoutImagery < farms.length && <Text style={[T.small, { paddingVertical: 8 }]}>{t("app.offlineAllReady")}</Text>}
+      {plan.overBudget.length > 0 && (
+        <Text style={[T.small, { paddingVertical: 8 }]}>{t("app.offlineOverLimitFarms", { names: plan.overBudget.map((f) => f.name).join(", "), mb: Math.round(LIMITS.offline.maxMapBytes / 1e6) })}</Text>
+      )}
+      {farms.length > 1 && plan.farms.length === 0 && plan.overBudget.length === 0 && plan.withoutImagery < farms.length && <Text style={[T.small, { paddingVertical: 8 }]}>{t("app.offlineAllReady")}</Text>}
 
       <Storage />
 

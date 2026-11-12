@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { overallProgress, planDownloads, type PackInfo } from "../src/lib/offlinePlan";
+import { fitsBudget, overallProgress, planDownloads, type PackInfo } from "../src/lib/offlinePlan";
 
 const pack = (farmId: string, name: string, over: Partial<PackInfo> = {}): PackInfo => ({ farmId, name, layerCount: 2, upToDate: false, missingBytes: 10_000_000, ...over });
 
@@ -18,8 +18,20 @@ describe("mapas sin conexión de varias estancias (F-26)", () => {
 
   it("sin nada pendiente el plan queda vacío", () => {
     const plan = planDownloads([pack("a", "Al día", { upToDate: true, missingBytes: 0 })]);
-    expect(plan).toEqual({ farms: [], totalBytes: 0, withoutImagery: 0 });
+    expect(plan).toEqual({ farms: [], overBudget: [], totalBytes: 0, withoutImagery: 0 });
     expect(overallProgress(plan, [], null, 0)).toBe(1);
+  });
+
+  it("respeta el tope de mapas: lo que no entra queda aparte y una chica sí puede entrar", () => {
+    const plan = planDownloads(
+      [pack("a", "A", { missingBytes: 30_000_000 }), pack("b", "B", { missingBytes: 50_000_000 }), pack("c", "C", { missingBytes: 10_000_000 })],
+      { usedBytes: 20_000_000, maxBytes: 70_000_000 },
+    );
+    expect(plan.farms.map((f) => f.name)).toEqual(["A", "C"]);
+    expect(plan.overBudget.map((f) => f.name)).toEqual(["B"]);
+    expect(plan.totalBytes).toBe(40_000_000);
+    expect(fitsBudget(50_000_000, { usedBytes: 20_000_000, maxBytes: 70_000_000 })).toBe(true);
+    expect(fitsBudget(50_000_001, { usedBytes: 20_000_000, maxBytes: 70_000_000 })).toBe(false);
   });
 
   it("el progreso global pesa cada estancia por su tamaño", () => {

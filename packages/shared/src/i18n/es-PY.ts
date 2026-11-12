@@ -638,6 +638,8 @@ export const esPY = {
     switchConfirmBody: "Se cierra tu sesión en este celular y entra otra persona. Todo lo tuyo ya está en el servidor.",
     switchConfirmYes: "Cambiar",
     offlineAll: "Bajar los mapas de las {{n}} estancias ({{mb}} MB)",
+    offlineOverLimit: "No entra: los mapas ocupan el máximo de {{mb}} MB. Borrá mapas de otra estancia para bajar este.",
+    offlineOverLimitFarms: "No entran en el celular (máximo {{mb}} MB de mapas): {{names}}. Liberá lugar y bajalos de a uno.",
     offlineAllReady: "Los mapas de todas tus estancias ya están en el celular.",
     offlineAllFailed: "No se pudieron bajar los mapas de: {{names}}. Probá de nuevo con wifi.",
     poiScan: "Escanear QR de un punto",

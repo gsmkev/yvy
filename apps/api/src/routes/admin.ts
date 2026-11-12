@@ -6,7 +6,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
-import { FUNNEL_EVENTS, newId, planLimits } from "@yvy/shared";
+import { FUNNEL_EVENTS, localDate, newId, planLimits } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { getDb } from "../db/client";
 import { signJwt } from "../lib/crypto";
@@ -236,7 +236,8 @@ admin.get("/audit", async (c) => {
 
 /**
  * P-03: embudo de activación de las organizaciones que se registraron en los últimos `days` días (por defecto 90):
- * cuántas llegaron a cada paso, y las pantallas más usadas en el mismo período.
+ * cuántas llegaron a cada paso, las pantallas más abiertas en el mismo período (conteos diarios estimados, sin personas)
+ * y el total de pantallas abiertas por día en las últimas dos semanas.
  */
 admin.get("/funnel", async (c) => {
   const days = Math.min(3650, Math.max(1, Number(c.req.query("days")) || 90));
@@ -248,12 +249,15 @@ admin.get("/funnel", async (c) => {
       AND name IN (${sql.join(FUNNEL_EVENTS.map((n) => sql`${n}`), sql`, `)})
     GROUP BY name`);
   const byName = new Map(steps.map((r) => [r.name, Number(r.orgs)]));
-  const views = await db.all<{ name: string; n: number; users: number }>(sql`
-    SELECT name, count(*) AS n, count(DISTINCT user_id) AS users FROM events
-    WHERE name LIKE 'view:%' AND ts >= ${since} GROUP BY name ORDER BY n DESC LIMIT 15`);
+  const views = await db.all<{ name: string; n: number }>(sql`
+    SELECT name, sum(n) AS n FROM events_daily
+    WHERE day >= ${localDate(since)} GROUP BY name ORDER BY n DESC LIMIT 15`);
+  const daily = await db.all<{ day: string; n: number }>(sql`
+    SELECT day, sum(n) AS n FROM events_daily WHERE day >= ${localDate(Date.now() - 13 * 86_400_000)} GROUP BY day ORDER BY day`);
   return c.json({
     days,
     steps: FUNNEL_EVENTS.map((name) => ({ name, orgs: byName.get(name) ?? 0 })),
-    views: views.map((v) => ({ name: v.name, n: Number(v.n), users: Number(v.users) })),
+    views: views.map((v) => ({ name: v.name, n: Number(v.n) })),
+    daily: daily.map((d) => ({ day: d.day, n: Number(d.n) })),
   });
 });

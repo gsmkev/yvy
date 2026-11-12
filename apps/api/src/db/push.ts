@@ -830,7 +830,7 @@ export async function applyPush(
     0;
   if (touchesSynced) stmts.push(bumpVersion(db));
   // P-03: primer registro de la organización (una sentencia; no hace nada si ya existe)
-  if (recordUpserts.length) stmts.push(funnelEvent(db, "first_record", auth.userId, org, now));
+  if (recordUpserts.length) stmts.push(funnelEvent(db, "first_record", org, now));
 
   // Una sentencia por lote: las geometrías son largas y no conviene agruparlas (igual que createPlots).
   const newPlots = plotUpserts.filter((p) => !plotUpRows.some((r) => r.id === p.id));
@@ -857,7 +857,7 @@ export async function applyPush(
         }),
     );
   }
-  if (newPlots.length) stmts.push(funnelEvent(db, "plots_created", auth.userId, org, now));
+  if (newPlots.length) stmts.push(funnelEvent(db, "plots_created", org, now));
   for (const chunk of chunkForParams(poiUpserts, paramsPerRow(s.pointsOfInterest))) {
     stmts.push(
       db

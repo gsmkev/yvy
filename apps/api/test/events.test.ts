@@ -1,12 +1,16 @@
 import { env } from "cloudflare:test";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
-import { LIMITS, newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
+import { LIMITS, localDate, newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { CRONS, scheduled } from "../src/jobs";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, createStaff, db, square } from "./helpers";
 
 afterEach(() => vi.restoreAllMocks());
+// la base se comparte entre las pruebas del archivo: cada una empieza sin cuentas diarias
+beforeEach(async () => {
+  await db().delete(s.eventsDaily);
+});
 
 const mine = async (orgId: string) =>
   (await db().select().from(s.events).where(eq(s.events.organizationId, orgId))).map((e) => e.name).sort();
@@ -56,38 +60,54 @@ describe("analítica propia (P-03)", () => {
     expect((await mine(owner.orgId)).filter((n) => n === "first_record")).toHaveLength(1);
   });
 
-  it("POST /events: requiere sesión, valida el nombre y reserva los del embudo", async () => {
+  const days = async () => await db().select().from(s.eventsDaily);
+
+  it("POST /events: requiere sesión, valida el nombre y suma por día y pantalla, sin guardar quién", async () => {
     const owner = await createOrgWithOwner();
     vi.spyOn(Math, "random").mockReturnValue(0);
     expect((await call("POST", "/events", { body: { name: "view:mapa" } })).status).toBe(401);
     expect((await call("POST", "/events", { token: owner.token, body: { name: "view:mapa" } })).status).toBe(202);
-    expect((await call("POST", "/events", { token: owner.token, body: { name: "Con Espacios" } })).status).toBe(400);
-    expect((await call("POST", "/events", { token: owner.token, body: { name: "x".repeat(41) } })).status).toBe(400);
-    expect((await call("POST", "/events", { token: owner.token, body: { name: "signup" } })).status).toBe(400);
-    expect(await mine(owner.orgId)).toEqual(["view:mapa"]);
+    expect((await call("POST", "/events", { token: owner.token, body: { name: "view:mapa" } })).status).toBe(202);
+    expect((await call("POST", "/events", { token: owner.token, body: { name: "view:tareas" } })).status).toBe(202);
+    for (const name of ["Con Espacios", "x".repeat(41), "signup", "view:", "mapa", "view:Mapa"])
+      expect((await call("POST", "/events", { token: owner.token, body: { name } })).status).toBe(400);
+    const rows = await days();
+    // una fila por pantalla (no una por visita), con el peso del muestreo, y ninguna columna de persona
+    const weight = Math.round(1 / LIMITS.events.sampleRate);
+    expect(rows.map((r) => [r.name, r.n]).sort()).toEqual([
+      ["view:mapa", 2 * weight],
+      ["view:tareas", weight],
+    ]);
+    expect(Object.keys(rows[0]!).sort()).toEqual(["day", "n", "name"]);
+    expect(await mine(owner.orgId)).toEqual([]); // el embudo no se toca
   });
 
-  it("POST /events: muestrea y limita por usuario", async () => {
+  it("POST /events: muestrea y respeta el tope diario por pantalla", async () => {
     const owner = await createOrgWithOwner();
     const rnd = vi.spyOn(Math, "random").mockReturnValue(LIMITS.events.sampleRate + 0.01);
     const dropped = await call<{ recorded: boolean }>("POST", "/events", { token: owner.token, body: { name: "view:x" } });
     expect(dropped.body.recorded).toBe(false);
-    expect(await mine(owner.orgId)).toEqual([]);
+    expect(await days()).toEqual([]);
     rnd.mockReturnValue(0);
-    for (let i = 0; i < LIMITS.events.perUserPerMinute; i++)
-      expect((await call("POST", "/events", { token: owner.token, body: { name: "view:x" } })).status).toBe(202);
-    expect((await call("POST", "/events", { token: owner.token, body: { name: "view:x" } })).status).toBe(429);
+    const today = localDate(Date.now());
+    await db().insert(s.eventsDaily).values({ day: today, name: "view:x", n: LIMITS.events.maxPerNamePerDay });
+    const capped = await call<{ recorded: boolean }>("POST", "/events", { token: owner.token, body: { name: "view:x" } });
+    expect(capped.status).toBe(202);
+    expect(capped.body.recorded).toBe(false);
+    expect((await days()).find((r) => r.name === "view:x")!.n).toBe(LIMITS.events.maxPerNamePerDay);
   });
 
-  it("el mantenimiento borra los eventos de uso viejos y deja los del embudo", async () => {
+  it("el mantenimiento borra las cuentas diarias viejas y deja los pasos del embudo", async () => {
     const owner = await createOrgWithOwner();
     const old = Date.now() - LIMITS.events.retentionMs - 86_400_000;
-    await db().insert(s.events).values([
-      { id: newId(), name: "view:viejo", userId: owner.userId, organizationId: owner.orgId, ts: old },
-      { id: newId(), name: "signup", userId: owner.userId, organizationId: owner.orgId, ts: old },
+    await db().insert(s.events).values({ id: newId(), name: "signup", organizationId: owner.orgId, ts: old });
+    await db().insert(s.eventsDaily).values([
+      { day: localDate(old), name: "view:viejo", n: 4 },
+      { day: localDate(Date.now()), name: "view:nuevo", n: 2 },
     ]);
     await scheduled({ cron: CRONS.maintenance }, env, { fetch, now: Date.now });
     expect(await mine(owner.orgId)).toEqual(["signup"]);
+    expect((await days()).map((r) => r.name)).toEqual(["view:nuevo"]);
   });
 
   it("el panel interno muestra el embudo por cohorte y las pantallas más vistas; el dueño no", async () => {
@@ -95,16 +115,18 @@ describe("analítica propia (P-03)", () => {
     const a = await createOrgWithOwner("A");
     const b = await createOrgWithOwner("B");
     const ts = Date.now();
-    const ev = (orgId: string, userId: string, name: string, at = ts) => ({ id: newId(), name, userId, organizationId: orgId, ts: at });
+    const ev = (orgId: string, name: string, at = ts) => ({ id: newId(), name, organizationId: orgId, ts: at });
     await db().insert(s.events).values([
-      ev(a.orgId, a.userId, "signup"),
-      ev(a.orgId, a.userId, "farm_created"),
-      ev(a.orgId, a.userId, "plots_created"),
-      ev(b.orgId, b.userId, "signup"),
-      ev(b.orgId, b.userId, "farm_created"),
-      ev(a.orgId, a.userId, "view:tareas"),
-      ev(b.orgId, b.userId, "view:tareas"),
-      ev(a.orgId, a.userId, "view:mapa"),
+      ev(a.orgId, "signup"),
+      ev(a.orgId, "farm_created"),
+      ev(a.orgId, "plots_created"),
+      ev(b.orgId, "signup"),
+      ev(b.orgId, "farm_created"),
+    ]);
+    const today = localDate(ts);
+    await db().insert(s.eventsDaily).values([
+      { day: today, name: "view:tareas", n: 6 },
+      { day: today, name: "view:mapa", n: 2 },
     ]);
     expect((await call("GET", "/admin/funnel", { token: a.token })).status).toBe(403);
     const r = await call<any>("GET", "/admin/funnel?days=1", { token: staff.token });
@@ -120,6 +142,10 @@ describe("analítica propia (P-03)", () => {
       "member_added",
       "first_record",
     ]);
-    expect(r.body.views.find((v: { name: string }) => v.name === "view:tareas")).toMatchObject({ n: 2, users: 2 });
+    expect(r.body.views).toEqual([
+      { name: "view:tareas", n: 6 },
+      { name: "view:mapa", n: 2 },
+    ]);
+    expect(r.body.daily).toEqual([{ day: today, n: 8 }]);
   });
 });

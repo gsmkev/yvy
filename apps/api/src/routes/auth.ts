@@ -101,7 +101,7 @@ auth.post("/signup", async (c) => {
     db
       .insert(s.memberships)
       .values({ id: newId(), organizationId: orgId, userId, role: "owner", createdAt: ts, updatedAt: ts }),
-    funnelEvent(db, "signup", userId, orgId, ts),
+    funnelEvent(db, "signup", orgId, ts),
   ]);
   return c.json({ organizationId: orgId, userId }, 201);
 });

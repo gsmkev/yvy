@@ -612,7 +612,7 @@ export class ScopedDb {
           set: { role: input.role, status: "active", deletedAt: null, updatedAt: ts },
         }),
     );
-    stmts.push(funnelEvent(this.db, "member_added", this.auth.userId, this.auth.orgId, ts));
+    stmts.push(funnelEvent(this.db, "member_added", this.auth.orgId, ts));
     stmts.push(...this.audit({ action: "member_add", entity: "member", entityId: userId, detail: { role: input.role, name: input.fullName } }));
     await runBatch(this.db, stmts);
     return { userId };
@@ -967,7 +967,7 @@ export class ScopedDb {
         version: currentVersion,
       }),
       this.db.insert(s.farmImagery).values({ farmId: id, status: "pending", requestedAt: ts, updatedAt: ts }),
-      funnelEvent(this.db, "farm_created", this.auth.userId, this.auth.orgId, ts),
+      funnelEvent(this.db, "farm_created", this.auth.orgId, ts),
       ...this.audit({ action: "farm_create", entity: "farm", entityId: id, detail: { name: input.name, areaHa: input.areaHa } }),
     ]);
     return { id };
@@ -1012,7 +1012,7 @@ export class ScopedDb {
           version: currentVersion,
         }),
       ),
-      funnelEvent(this.db, "plots_created", this.auth.userId, this.auth.orgId, ts),
+      funnelEvent(this.db, "plots_created", this.auth.orgId, ts),
       ...this.audit({ action: "plot_create", entity: "plot", entityId: ids[0] ?? null, detail: { farmId, count: ids.length } }),
     ]);
     return { ids, farmGeometry };

@@ -1400,25 +1400,37 @@ export const notifications = sqliteTable(
 );
 
 /**
- * P-03: analítica propia, sin terceros. Los pasos del embudo (FUNNEL_EVENTS) se guardan una vez por organización
- * (índice único parcial); el resto son eventos de uso que manda el cliente por POST /events, con muestreo.
+ * P-03: analítica propia, sin terceros y sin datos de personas. Los pasos del embudo (FUNNEL_EVENTS) se guardan una
+ * vez por organización (índice único parcial); no llevan usuario.
  */
 export const events = sqliteTable(
   "events",
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
-    userId: text("user_id").notNull(),
     organizationId: text("organization_id").notNull(),
     ts: integer("ts").notNull(),
   },
   (t) => [
     index("events_name_ts_idx").on(t.name, t.ts),
-    index("events_user_ts_idx").on(t.userId, t.ts),
     uniqueIndex("events_funnel_uq")
       .on(t.organizationId, t.name)
       .where(sql`name IN ('signup', 'farm_created', 'plots_created', 'member_added', 'first_record')`),
   ],
+);
+
+/**
+ * P-03: pantallas abiertas ("view:tareas"), agrupadas por día y nombre: una fila por día y pantalla, sin usuario ni
+ * organización. `n` ya viene ponderado por el muestreo (cada evento guardado suma 1 / sampleRate). Se borran a los 90 días.
+ */
+export const eventsDaily = sqliteTable(
+  "events_daily",
+  {
+    day: text("day").notNull(),
+    name: text("name").notNull(),
+    n: integer("n").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.day, t.name] })],
 );
 
 /** U-29: preferencias de notificación por usuario (JSON validado con notificationPrefsSchema). No se sincroniza. */

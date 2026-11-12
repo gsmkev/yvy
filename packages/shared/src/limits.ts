@@ -223,11 +223,12 @@ export const LIMITS = {
     outboxRetentionMs: 3 * 24 * 60 * 60 * 1000,
   },
   events: {
-    /** Fracción de los eventos de uso (no del embudo) que se guarda. */
+    /** Fracción de las pantallas abiertas que se cuenta; cada una guardada suma 1 / sampleRate, así el total sigue siendo un estimado sin sesgo. */
     sampleRate: 0.5,
-    perUserPerMinute: 30,
+    /** Tope diario por pantalla (ya ponderado): protege las 100.000 escrituras diarias del plan gratis de un cliente que repita eventos. */
+    maxPerNamePerDay: 20_000,
     nameLength: 40,
-    /** Los eventos de uso se borran pasado este tiempo; los del embudo quedan. */
+    /** Las cuentas diarias de pantallas se borran pasado este tiempo; los pasos del embudo quedan. */
     retentionMs: 90 * 24 * 60 * 60 * 1000,
   },
   /** ERP sencillo (ADR 0004). */

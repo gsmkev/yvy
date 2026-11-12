@@ -206,7 +206,8 @@ export function InternalPage() {
 interface FunnelData {
   days: number;
   steps: { name: string; orgs: number }[];
-  views: { name: string; n: number; users: number }[];
+  views: { name: string; n: number }[];
+  daily: { day: string; n: number }[];
 }
 
 /** P-03: embudo de activación (organizaciones nuevas de los últimos 90 días) y pantallas más usadas. */
@@ -229,10 +230,23 @@ function Funnel() {
       {q.data.views.length > 0 && (
         <>
           <h3 className="mt-5 font-semibold">{t("ui.internalViews")}</h3>
+          <p className="text-xs text-tinta-2">{t("ui.internalViewsNote")}</p>
           <ul className="mt-1 flex flex-col gap-0.5 text-sm">
             {q.data.views.map((v) => (
               <li key={v.name} className="num">
-                {v.name.replace("view:", "")} · {v.n} · {t("ui.internalViewsUsers", { n: v.users })}
+                {v.name.replace("view:", "")} · {fmtNum(v.n)}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {q.data.daily.length > 0 && (
+        <>
+          <h3 className="mt-5 font-semibold">{t("ui.internalViewsDaily")}</h3>
+          <ul className="mt-1 flex flex-wrap gap-x-5 gap-y-0.5 text-sm">
+            {q.data.daily.map((d) => (
+              <li key={d.day} className="num">
+                {d.day.slice(5)} · {fmtNum(d.n)}
               </li>
             ))}
           </ul>

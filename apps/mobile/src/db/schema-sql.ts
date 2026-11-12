@@ -260,5 +260,10 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `leads_status_idx` ON `leads` (`status`,`created_at`);",
   "ALTER TABLE `plot_seasons` ADD `sowing_density` real;",
   "ALTER TABLE `plot_seasons` ADD `density_unit` text;",
-  "CREATE TABLE `onboarding_state` (\n\t`user_id` text PRIMARY KEY NOT NULL,\n\t`dismissed_at` integer,\n\t`updated_at` integer NOT NULL\n);"
+  "CREATE TABLE `onboarding_state` (\n\t`user_id` text PRIMARY KEY NOT NULL,\n\t`dismissed_at` integer,\n\t`updated_at` integer NOT NULL\n);",
+  "CREATE TABLE `events_daily` (\n\t`day` text NOT NULL,\n\t`name` text NOT NULL,\n\t`n` integer DEFAULT 0 NOT NULL,\n\tPRIMARY KEY(`day`, `name`)\n);",
+  "INSERT INTO `events_daily` (`day`, `name`, `n`)\nSELECT date(`ts` / 1000 - 10800, 'unixepoch'), `name`, count(*) * 2 FROM `events`\nWHERE `name` LIKE 'view:%' GROUP BY 1, 2;",
+  "DELETE FROM `events` WHERE `name` LIKE 'view:%';",
+  "DROP INDEX `events_user_ts_idx`;",
+  "ALTER TABLE `events` DROP COLUMN `user_id`;"
 ];

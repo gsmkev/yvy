@@ -7,14 +7,17 @@ import { useAlerts } from "../lib/queries";
 import { AlertTriangle, Check, ShieldCheck, ThumbsDown, ThumbsUp } from "lucide-react";
 import { ALERT_ICON } from "../lib/icons";
 import { ShareWhatsappButton } from "./ShareButton";
-import { Button, Empty, ErrorBox, SeverityBadge, Spinner } from "./ui";
+import { Button, Empty, ErrorBox, SeverityBadge, Spinner, toast } from "./ui";
 
 export function AlertsList({ farmId, farmNames }: { farmId?: string; farmNames?: Record<string, string> }) {
   const q = useAlerts({ farmId, active: true });
   const qc = useQueryClient();
   const feedback = useMutation({
     mutationFn: ({ id, useful }: { id: string; useful: boolean }) => post(`/org/alerts/${id}/feedback`, { useful }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["alerts"] }),
+    onSuccess: () => {
+      toast(t("ui.toastAlertFeedback"));
+      return qc.invalidateQueries({ queryKey: ["alerts"] });
+    },
   });
   if (q.isLoading) return <Spinner rows={5} h={56} />;
   if (q.error) return <ErrorBox error={q.error} />;

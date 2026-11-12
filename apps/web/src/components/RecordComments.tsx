@@ -5,7 +5,7 @@ import { del, get, post } from "../lib/api";
 import { fmtDateTime } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useMe, useMembers } from "../lib/queries";
-import { Button, ErrorBox, Select, Spinner } from "./ui";
+import { Button, ErrorBox, Select, Spinner, toast } from "./ui";
 
 interface Comment {
   id: string;
@@ -38,12 +38,16 @@ export function RecordComments({ recordId }: { recordId: string }) {
     onSuccess: () => {
       setText("");
       setMentioned(new Map());
+      toast(t("ui.toastCommentSent"));
       qc.invalidateQueries({ queryKey: ["comments", recordId] });
     },
   });
   const remove = useMutation({
     mutationFn: (id: string) => del(`/org/comments/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["comments", recordId] }),
+    onSuccess: () => {
+      toast(t("ui.toastCommentDeleted"));
+      return qc.invalidateQueries({ queryKey: ["comments", recordId] });
+    },
   });
   const others = (members.data ?? []).filter((m) => m.userId !== me.data?.user.id);
   return (

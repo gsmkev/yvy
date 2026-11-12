@@ -52,7 +52,7 @@ Detalles que un usuario espera sin pedirlos.
 | U-06 | Filtros por tipo en el Historial de la app | Encontrar la lluvia de ayer | App | P1 | S | Hecho |
 | U-07 | Recordar la última estancia, pestaña y capa elegidas | Menos clics al volver | Web, App | P1 | S | Hecho |
 | U-08 | Deshacer durante unos segundos después de borrar | Errores de dedo | Web, App | P1 | S | Hecho |
-| U-09 | Avisos breves de confirmación ("Guardado", "Se manda cuando haya señal") | Tranquilidad en el campo | Web, App | P1 | S | Parcial |
+| U-09 | Avisos breves de confirmación ("Guardado", "Se manda cuando haya señal") | Tranquilidad en el campo | Web, App | P1 | S | Hecho |
 | U-10 | Botón "Usar mi ubicación" al crear una estancia: centra el mapa con el GPS del navegador o del celular | Un clic para llegar al campo | Web, App | P0 | S | Hecho |
 | U-11 | Buscar la estancia por departamento, distrito o localidad, con una lista de Paraguay incluida en la app (anda sin internet) | La gente no sabe sus coordenadas | Web, App | P0 | S | Hecho |
 | U-12 | Pegar coordenadas o un enlace de Google Maps o WhatsApp y que el mapa vaya ahí | Así se pasan ubicaciones en Paraguay | Web, App | P1 | S | Hecho |

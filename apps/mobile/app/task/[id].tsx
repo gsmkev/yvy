@@ -9,6 +9,7 @@ import { checklistProgress, parseChecklist, t } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { localChanged } from "../../src/lib/sync";
 import { useLocal } from "../../src/lib/useLocal";
+import { toastSaved } from "../../src/lib/toast";
 import { Button, Row, s as k, Text } from "../../src/ui/kit";
 import { C, T } from "../../src/ui/theme";
 
@@ -32,6 +33,7 @@ export default function TaskChecklist() {
     }
     getDb().completeTask(task.id, null);
     localChanged();
+    toastSaved();
     router.back();
   };
   return (

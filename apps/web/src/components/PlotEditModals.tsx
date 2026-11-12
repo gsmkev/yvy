@@ -6,7 +6,7 @@ import { post } from "../lib/api";
 import { fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import type { Plot } from "../lib/types";
-import { Button, ErrorBox, Field, Input, Modal } from "./ui";
+import { Button, ErrorBox, Field, Input, Modal, toast } from "./ui";
 
 /** M-05: confirma la división de un lote con la línea dibujada. */
 export function SplitModal({
@@ -29,7 +29,10 @@ export function SplitModal({
         parts: result.parts.map((geometry, i) => ({ name: names[i]!.trim(), geometry })),
       });
     },
-    onSuccess: onDone,
+    onSuccess: () => {
+      toast(t("ui.toastPlotSplit"));
+      onDone();
+    },
   });
   const valid = names.every((n) => n.trim());
   return (
@@ -99,7 +102,10 @@ export function MergeModal({
       if (!result.ok) throw new Error(tk(`ui.mergeError_${result.error}`));
       return post("/org/plots/merge", { ids: [a.id, b.id], name: name.trim(), geometry: result.polygon });
     },
-    onSuccess: onDone,
+    onSuccess: () => {
+      toast(t("ui.toastPlotsMerged"));
+      onDone();
+    },
   });
   return (
     <Modal title={t("ui.mergePlots")} onClose={onClose}>

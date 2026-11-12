@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import * as s from "@yvy/shared/schema";
-import { call, createFarmWithPlots, createOrgWithOwner, createStaff, db } from "./helpers";
+import { call, createFarmWithPlots, createOrgWithOwner, createStaff, db, square } from "./helpers";
 
 describe("panel interno: búsqueda, prueba y soporte (P-12)", () => {
   it("busca organizaciones por nombre, id o email de un miembro; el dueño no entra", async () => {
@@ -95,5 +95,33 @@ describe("panel interno: búsqueda, prueba y soporte (P-12)", () => {
     const log = await call<any[]>("GET", `/admin/audit?orgId=${o.orgId}`, { token: staff.token });
     expect(log.body.map((r) => r.action)).toEqual(["plan_changed"]);
     expect(JSON.parse(log.body[0].detail)).toMatchObject({ plan: "active", maxHa: 500 });
+  });
+
+  it("con la prueba vencida el dueño solo lee; al extenderla desde el panel vuelve a escribir", async () => {
+    const staff = await createStaff();
+    const o = await createOrgWithOwner("Vencida");
+    await db()
+      .update(s.organizations)
+      .set({ trialEndsAt: Date.now() - 86_400_000 })
+      .where(eq(s.organizations.id, o.orgId));
+    const farm = { name: "Nueva", geometry: square(-55.9, -27.2, 0.02) };
+    expect((await call("GET", "/org/farms", { token: o.token })).status).toBe(200);
+    expect((await call("POST", "/org/farms", { token: o.token, body: farm })).status).toBe(402);
+    expect((await call("POST", `/admin/orgs/${o.orgId}/extend-trial`, { token: staff.token, body: { days: 15 } })).status).toBe(200);
+    expect((await call("POST", "/org/farms", { token: o.token, body: farm })).status).toBe(201);
+    const log = await call<any[]>("GET", `/admin/audit?orgId=${o.orgId}`, { token: staff.token });
+    expect(log.body.map((r) => r.action)).toEqual(["trial_extended"]);
+  });
+
+  it("la sesión de soporte ve el plan del cliente pero no pide cambios ni cancela pedidos", async () => {
+    const staff = await createStaff();
+    const o = await createOrgWithOwner("Cliente plan");
+    const support = (await call<any>("POST", `/admin/orgs/${o.orgId}/support-session`, { token: staff.token })).body.accessToken;
+    const plan = await call<any>("GET", "/org/plan", { token: support });
+    expect(plan.status).toBe(200);
+    expect(plan.body.plan).toBe("trial");
+    expect((await call("POST", "/org/plan-request", { token: support, body: { plan: "active" } })).status).toBe(403);
+    expect((await call("DELETE", "/org/plan-request", { token: support })).status).toBe(403);
+    expect((await call<any>("GET", "/org/plan", { token: o.token })).body.pending).toBeNull();
   });
 });

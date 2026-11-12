@@ -407,3 +407,72 @@ export function maintenanceStatus(p: { meter: number; lastDoneMeter: number; eve
   const status: MaintenanceStatus = remaining <= 0 ? "overdue" : remaining <= p.everyUnits * MAINTENANCE_WARN_FRACTION ? "soon" : "ok";
   return { dueAt, remaining, status };
 }
+
+// ---------- Costo de labor propia frente a contratista (E-23) ----------
+
+export const machineCostInput = z.object({
+  service: z.enum(CONTRACTOR_SERVICES),
+  purchasePricePyg: minorAmount,
+  residualPyg: minorAmount,
+  lifeHours: z.number().min(0).max(1_000_000),
+  operatorPerHourPyg: minorAmount,
+  haPerHour: z.number().positive().max(10_000).nullish(),
+  fuelLitersPerHour: z.number().positive().max(10_000).nullish(),
+  fuelPricePyg: minorAmount.nullish(),
+});
+
+export interface OwnCostInput {
+  fuelLitersPerHour: number | null;
+  fuelPricePyg: number | null;
+  operatorPerHourPyg: number;
+  purchasePricePyg: number;
+  residualPyg: number;
+  lifeHours: number;
+  haPerHour: number | null;
+}
+export interface OwnCost {
+  fuelPerHour: number;
+  operatorPerHour: number;
+  depreciationPerHour: number;
+  totalPerHour: number;
+  /** Por hectárea; null si no se conoce el rendimiento. */
+  perHa: number | null;
+}
+
+/** Costo propio por hora: combustible + operario + amortización lineal ((compra - reventa) / vida útil). Guaraníes enteros. */
+export function ownLaborCost(i: OwnCostInput): OwnCost {
+  const fuelPerHour = Math.round((i.fuelLitersPerHour ?? 0) * (i.fuelPricePyg ?? 0));
+  const depreciationPerHour = i.lifeHours > 0 ? Math.round(Math.max(0, i.purchasePricePyg - i.residualPyg) / i.lifeHours) : 0;
+  const totalPerHour = fuelPerHour + i.operatorPerHourPyg + depreciationPerHour;
+  return {
+    fuelPerHour,
+    operatorPerHour: i.operatorPerHourPyg,
+    depreciationPerHour,
+    totalPerHour,
+    perHa: i.haPerHour && i.haPerHour > 0 ? Math.round(totalPerHour / i.haPerHour) : null,
+  };
+}
+
+/** Tarifa de un contratista llevada a guaraníes por hectárea o por hora (por tonelada no es comparable: null). */
+export function contractorRatePer(
+  unit: (typeof RATE_UNITS)[number],
+  ratePyg: number,
+  haPerHour: number | null,
+): { perHa: number | null; perHour: number | null } {
+  if (unit === "ha") return { perHa: ratePyg, perHour: haPerHour ? Math.round(ratePyg * haPerHour) : null };
+  if (unit === "hour") return { perHa: haPerHour ? Math.round(ratePyg / haPerHour) : null, perHour: ratePyg };
+  return { perHa: null, perHour: null };
+}
+
+/** Quién conviene: compara por hectárea si ambos la tienen y si no por hora. `savingPyg` > 0 = lo propio es más barato. */
+export function laborVerdict(own: OwnCost, contractorPerHa: number | null, contractorPerHour: number | null) {
+  if (own.perHa !== null && contractorPerHa !== null)
+    return { basis: "ha" as const, savingPyg: contractorPerHa - own.perHa, cheaper: own.perHa <= contractorPerHa ? ("own" as const) : ("contractor" as const) };
+  if (contractorPerHour !== null)
+    return {
+      basis: "hour" as const,
+      savingPyg: contractorPerHour - own.totalPerHour,
+      cheaper: own.totalPerHour <= contractorPerHour ? ("own" as const) : ("contractor" as const),
+    };
+  return null;
+}

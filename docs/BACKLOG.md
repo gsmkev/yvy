@@ -96,7 +96,7 @@ Detalles que un usuario espera sin pedirlos.
 | M-13 | Zoom al lote al elegirlo en la app | Coherencia con la web | App | P1 | S | Falta |
 | M-14 | Curvas de nivel y pendiente (Copernicus DEM, necesita ADR) | Erosión, terrazas, siembra | Web, Jobs | P2 | M | Falta |
 | M-15 | Caminos, arroyos y localidades de fondo (OpenStreetMap, necesita ADR) | Orientarse | Web, App | P2 | M | Falta |
-| M-16 | Límites de departamentos y distritos | Contexto y búsqueda | Web | P3 | S | Falta |
+| M-16 | Límites de departamentos y distritos | Contexto y búsqueda | Web | P3 | S | Hecho |
 | M-17 | Capas personalizadas: subir una imagen de dron o un mapa de suelos | Productores grandes | Web | P3 | M | Falta |
 | M-18 | Grilla de muestreo de suelo sobre el lote (cada 5 o 10 ha) con puntos numerados | Planificar análisis | Web, App | P2 | M | Falta |
 | M-19 | Puntos de interés con más tipos: silo, galpón, tranquera, puente, molino, bebedero, manga, embarcadero | Mapa del campo completo | Web, App | P1 | S | Parcial |

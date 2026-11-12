@@ -1608,6 +1608,11 @@ export const esPY = {
     sprayWindowLine: "{{day}} de {{from}} a {{to}}",
     sprayHourTip: "{{hour}} · viento {{wind}} km/h · {{temp}} °C · humedad {{rh}} % · Delta T {{dt}}",
     layerPests: "Plagas",
+    layerBoundaries: "Límites",
+    boundariesAdm1: "Departamentos",
+    boundariesAdm2: "Distritos",
+    boundariesLoading: "Cargando límites…",
+    boundariesMissing: "Los límites todavía no están publicados en este servidor.",
     pestsLegendTitle: "Plagas de los últimos 30 días",
     pestsNone: "No hay plagas anotadas en los últimos 30 días.",
     // plataforma
@@ -2919,6 +2924,7 @@ export const esPY = {
     chirps: "CHIRPS (UCSB Climate Hazards Center)",
     nasaPower: "NASA POWER",
     firms: "NASA FIRMS",
+    geoBoundaries: "geoBoundaries",
     esriDev: "Imagen de fondo provisoria: Esri World Imagery (solo desarrollo)",
   },
 } as const;

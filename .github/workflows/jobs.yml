@@ -11,6 +11,7 @@ on:
     - cron: "0 9 * * 1" # lunes: PDF del parte semanal (R-02); el Worker manda los emails a las 10:00 UTC
     - cron: "30 12 * * 1" # lunes: área quemada (S-20) tras los focos de fuego
     - cron: "0 6 15 1,4,7,10 *" # trimestral: indicador EUDR (S-30) de todas las estancias (Sentinel-2 de la estación seca)
+    - cron: "0 7 2 1 *" # anual: límites administrativos (M-16, geoBoundaries)
   workflow_dispatch:
     inputs:
       job:
@@ -35,6 +36,7 @@ on:
             power_daily,
             spi,
             mgmt_zones,
+            boundaries,
           ]
       farm:
         description: "Id de estancia (obligatorio para new_farm y s2_history; eudr: indicador de deforestación de esa estancia, vacío = todas)"
@@ -80,6 +82,7 @@ jobs:
             "0 9 * * 1") echo "cmd=weekly_report" >> $GITHUB_OUTPUT ;;
             "30 12 * * 1") echo "cmd=burned_area" >> $GITHUB_OUTPUT ;;
             "0 6 15 1,4,7,10 *") echo "cmd=eudr" >> $GITHUB_OUTPUT ;;
+            "0 7 2 1 *") echo "cmd=boundaries" >> $GITHUB_OUTPUT ;;
             *) echo "cmd=${{ inputs.job }}" >> $GITHUB_OUTPUT ;;
           esac
       - if: steps.pick.outputs.cmd == 'weekly'

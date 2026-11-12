@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { CROPS } from "@yvy/shared";
-import { farmSowingWindow, plotPhenology, plotWaterBalance } from "../db/agri2";
+import { farmSowingWindow, farmWithdrawal, plotPhenology, plotWaterBalance } from "../db/agri2";
 import { parse } from "../lib/http";
 import type { AppEnv } from "../types";
 
@@ -19,3 +19,6 @@ agri2.get("/farms/:id/sowing-window", async (c) => {
 
 /** C-08: balance hídrico simple del lote (lluvia menos consumo del cultivo). */
 agri2.get("/plots/:id/water-balance", async (c) => c.json(await plotWaterBalance(c.var.sdb, c.req.param("id"))));
+
+/** A-14: carencia antes de cosechar: lotes con restricción vigente y cosechas hechas antes de tiempo. */
+agri2.get("/farms/:id/withdrawal", async (c) => c.json(await farmWithdrawal(c.var.sdb, c.req.param("id"))));

@@ -60,3 +60,17 @@ export const useWaterBalance = (plotId: string, enabled = true) =>
     queryKey: ["water-balance", plotId],
     queryFn: () => get<WaterBalance>(`/org/plots/${plotId}/water-balance`),
   });
+
+export interface WithdrawalResponse {
+  today: string;
+  restrictions: { plotId: string; plotName: string; safeFrom: string; daysLeft: number; product: string; appliedOn: string }[];
+  violations: { plotId: string; plotName: string; harvestedOn: string; safeFrom: string; product: string; appliedOn: string }[];
+  unknown: { plotId: string; plotName: string; product: string; appliedOn: string }[];
+}
+
+export const useWithdrawal = (farmId: string, enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ["withdrawal", farmId],
+    queryFn: () => get<WithdrawalResponse>(`/org/farms/${farmId}/withdrawal`),
+  });

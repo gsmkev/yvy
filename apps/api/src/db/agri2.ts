@@ -16,6 +16,7 @@ import {
   sowingWindow,
   waterBalance,
   CROP_KC,
+  withdrawalReport,
   type CROPS,
   type PHENO_STAGES,
 } from "@yvy/shared";
@@ -303,4 +304,64 @@ export async function plotWaterBalance(sdb: ScopedDb, plotId: string) {
     lat,
   );
   return { status: balance ? ("ok" as const) : ("no_data" as const), crop, sowingDate: sowing.date, balance };
+}
+
+/**
+ * A-14: carencia antes de cosechar por lote. Cruza las aplicaciones de los últimos 180 días (productos del catálogo
+ * con su carencia) con las cosechas de los últimos 90. 5 consultas, sin N+1.
+ */
+export async function farmWithdrawal(sdb: ScopedDb, farmId: string) {
+  const farm = await requireFarmRow(sdb, farmId);
+  const org = sdb.auth.orgId;
+  const now = sdb.now();
+  const today = localDate(now, farm.tz);
+  const recs = (kind: string, since: number, limit: number) =>
+    sdb.db
+      .select({ plotId: s.records.plotId, at: s.records.capturedAt, data: s.records.data })
+      .from(s.records)
+      .where(
+        and(
+          eq(s.records.organizationId, org),
+          eq(s.records.farmId, farmId),
+          eq(s.records.kind, kind as "application"),
+          isNotNull(s.records.plotId),
+          isNull(s.records.deletedAt),
+          gte(s.records.capturedAt, since),
+          sdb.workerFilter("records"),
+        ),
+      )
+      .orderBy(desc(s.records.capturedAt))
+      .limit(limit);
+  const [apps, harvests, products, plots] = await Promise.all([
+    recs("application", now - 180 * DAY, 300),
+    recs("harvest", now - 90 * DAY, 100),
+    sdb.db
+      .select({ id: s.products.id, withdrawalDays: s.products.withdrawalDays })
+      .from(s.products)
+      .where(and(eq(s.products.organizationId, org), isNull(s.products.deletedAt))),
+    sdb.db
+      .select({ id: s.plots.id, name: s.plots.name })
+      .from(s.plots)
+      .where(and(eq(s.plots.farmId, farmId), eq(s.plots.organizationId, org), isNull(s.plots.deletedAt))),
+  ]);
+  const days = new Map(products.map((p) => [p.id, p.withdrawalDays]));
+  const names = new Map(plots.map((p) => [p.id, p.name]));
+  const report = withdrawalReport(
+    apps.map((a) => ({
+      plotId: a.plotId!,
+      date: localDate(a.at, farm.tz),
+      products: ((JSON.parse(a.data) as { products?: { productId?: string; name: string }[] }).products ?? []).map(
+        (p) => ({ name: p.name, withdrawalDays: p.productId ? (days.get(p.productId) ?? null) : null }),
+      ),
+    })),
+    harvests.map((h) => ({ plotId: h.plotId!, date: localDate(h.at, farm.tz) })),
+    today,
+  );
+  const named = <T extends { plotId: string }>(x: T) => ({ ...x, plotName: names.get(x.plotId) ?? "" });
+  return {
+    today,
+    restrictions: report.restrictions.map(named),
+    violations: report.violations.map(named),
+    unknown: report.unknown.map(named),
+  };
 }

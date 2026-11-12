@@ -63,6 +63,7 @@ const TABLES: Record<PullTable, SQLiteTable> = {
   machines: s.machines,
   animals: s.animals,
   comments: s.comments,
+  warehouses: s.warehouses,
 };
 
 /** jsKey → columna SQL, sacado del esquema compartido. */
@@ -90,6 +91,7 @@ export type Season = typeof s.seasons.$inferSelect;
 export type Product = typeof s.products.$inferSelect;
 export type Machine = typeof s.machines.$inferSelect;
 export type Animal = typeof s.animals.$inferSelect;
+export type Warehouse = typeof s.warehouses.$inferSelect;
 export type PlotSeason = typeof s.plotSeasons.$inferSelect;
 
 export interface NewRecord {
@@ -812,6 +814,13 @@ export class LocalDb implements SyncStore {
         photos: 0,
         voice: 0,
       }));
+  }
+
+  /** Depósitos de la organización (para el recuento de inventario, E-15). */
+  warehouses(): Warehouse[] {
+    return this.sql
+      .all("SELECT * FROM warehouses WHERE deleted_at IS NULL ORDER BY name")
+      .map((r) => fromRow<Warehouse>(s.warehouses, r));
   }
 
   /** Lo planificado en un lote para una campaña (cultivo, variedad), si bajó al celular. */

@@ -1,5 +1,6 @@
 import {
   ArrowRightLeft,
+  ClipboardList,
   Beef,
   Bug,
   HeartCrack,
@@ -52,6 +53,7 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
   harvest: Scale,
   track: Route,
   fuel_load: Fuel,
+  stock_count: ClipboardList,
 };
 
 export const ALERT_ICON: Record<string, LucideIcon> = {

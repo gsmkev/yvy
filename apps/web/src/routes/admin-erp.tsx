@@ -1,15 +1,25 @@
 /** Administración (ADR 0004): maestros, stock, costos y márgenes. Solo dueño y administradores. */
 import type { ReactNode } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
+import { AccountantPanel } from "../components/erp/AccountantPanel";
+import { BudgetPanel } from "../components/erp/BudgetPanel";
+import { CashPanel } from "../components/erp/CashPanel";
+import { CattlePanel } from "../components/erp/CattlePanel";
 import { ContractorsPanel } from "../components/erp/ContractorsPanel";
 import { CostsPanel } from "../components/erp/CostsPanel";
+import { StaffPanel } from "../components/erp/StaffPanel";
 import { StockPanel } from "../components/erp/StockPanel";
 import { WarehousesPanel } from "../components/erp/WarehousesPanel";
 import { ExchangeRatesPanel } from "../components/erp/ExchangeRatesPanel";
 import { FuelPanel } from "../components/erp/FuelPanel";
 import { OrdersPanel } from "../components/erp/OrdersPanel";
+import { PurchasesPanel } from "../components/erp/PurchasesPanel";
 import { ResultsPanel } from "../components/erp/ResultsPanel";
 import { MachinesPanel } from "../components/erp/MachinesPanel";
+import { GrainSalesPanel } from "../components/erp/GrainSalesPanel";
+import { LaborCostPanel } from "../components/erp/LaborCostPanel";
+import { MaintenancePanel } from "../components/erp/MaintenancePanel";
+import { MinStockPanel } from "../components/erp/MinStockPanel";
 import { PartiesPanel } from "../components/erp/PartiesPanel";
 import { ProductsPanel } from "../components/ProductsPanel";
 import { Tabs } from "../components/ui";
@@ -28,11 +38,21 @@ const SECTIONS: Section[] = [
   { id: "parties", label: "ui.adminSection_parties", render: () => <PartiesPanel /> },
   { id: "machines", label: "ui.adminSection_machines", render: () => <MachinesPanel /> },
   { id: "warehouses", label: "ui.adminSection_warehouses", render: () => <WarehousesPanel /> },
+  { id: "purchases", label: "ui.adminSection_purchases", render: () => <PurchasesPanel /> },
+  { id: "grain", label: "ui.adminSection_grain", render: () => <GrainSalesPanel /> },
+  { id: "cattle", label: "ui.adminSection_cattle", render: () => <CattlePanel /> },
+  { id: "cash", label: "ui.adminSection_cash", render: () => <CashPanel /> },
   { id: "stock", label: "ui.adminSection_stock", render: () => <StockPanel /> },
+  { id: "minstock", label: "ui.adminSection_minstock", render: () => <MinStockPanel /> },
+  { id: "maintenance", label: "ui.adminSection_maintenance", render: () => <MaintenancePanel /> },
+  { id: "labor", label: "ui.adminSection_labor", render: () => <LaborCostPanel /> },
+  { id: "staff", label: "ui.adminSection_staff", render: () => <StaffPanel /> },
   { id: "fuel", label: "ui.adminSection_fuel", render: () => <FuelPanel /> },
   { id: "orders", label: "ui.adminSection_orders", render: () => <OrdersPanel /> },
+  { id: "budget", label: "ui.adminSection_budget", render: () => <BudgetPanel /> },
   { id: "results", label: "ui.adminSection_results", render: () => <ResultsPanel /> },
   { id: "contractors", label: "ui.adminSection_contractors", render: () => <ContractorsPanel /> },
+  { id: "accountant", label: "ui.adminSection_accountant", render: () => <AccountantPanel /> },
   { id: "rates", label: "ui.adminSection_rates", render: () => <ExchangeRatesPanel /> },
   { id: "costs", label: "ui.adminSection_costs", render: () => <CostsPanel /> },
 ];

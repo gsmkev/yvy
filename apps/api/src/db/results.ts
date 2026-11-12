@@ -1,11 +1,11 @@
 /**
  * Costo por hectárea y por tonelada, y margen bruto por lote, cultivo y actividad (E-30, E-31).
  * Ingresos = ventas (cost_entries.category = "sale"); costos = el resto. Todo en guaraníes.
- * Cuatro consultas agrupadas, sin recorrer filas en JS. El costo por kilo de carne no se calcula: las ventas de
- * hacienda (herd_move con motivo venta) no traen kilos ni precio.
+ * Cinco consultas agrupadas, sin recorrer filas en JS. El costo por kilo de carne (E-35) es el costo de ganadería sobre
+ * los kilos vendidos en cattle_deals; no se valoriza la hacienda en pie, así que una compra pesa en el período en que se hace.
  */
 import { and, eq, isNull, sql } from "drizzle-orm";
-import { resultFigures, type Activity, type ResultFigures, type ResultInput } from "@yvy/shared";
+import { costPerKgBeef, resultFigures, type Activity, type ResultFigures, type ResultInput } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { can, type ScopedDb } from "./scoped";
 
@@ -16,7 +16,7 @@ export async function results(sdb: ScopedDb, f: { farmId?: string; seasonId?: st
   const org = sdb.auth.orgId;
   const ce = s.costEntries;
   const seasonOf = (col: unknown) => (f.seasonId ? sql`${col} = ${f.seasonId}` : undefined);
-  const [groups, plots, harvests, plans] = await Promise.all([
+  const [groups, plots, harvests, plans, beefKg] = await Promise.all([
     sdb.db
       .select({
         plotId: ce.plotId,
@@ -57,6 +57,19 @@ export async function results(sdb: ScopedDb, f: { farmId?: string; seasonId?: st
           .from(s.plotSeasons)
           .where(and(eq(s.plotSeasons.organizationId, org), eq(s.plotSeasons.seasonId, f.seasonId), isNull(s.plotSeasons.deletedAt)))
       : Promise.resolve([] as { plotId: string; crop: string | null }[]),
+    // Kilos de hacienda vendida (E-35): base del costo por kilo de carne.
+    sdb.db
+      .select({ kg: sql<number>`COALESCE(SUM(${s.cattleDeals.totalKg}), 0)` })
+      .from(s.cattleDeals)
+      .where(
+        and(
+          eq(s.cattleDeals.organizationId, org),
+          eq(s.cattleDeals.kind, "sell"),
+          isNull(s.cattleDeals.deletedAt),
+          f.farmId ? eq(s.cattleDeals.farmId, f.farmId) : undefined,
+          f.seasonId ? eq(s.cattleDeals.seasonId, f.seasonId) : undefined,
+        ),
+      ),
   ]);
   const planCrop = new Map(plans.map((p) => [p.plotId, p.crop]));
   const tonsOf = new Map(harvests.map((h) => [h.plotId, h.tons]));
@@ -112,5 +125,8 @@ export async function results(sdb: ScopedDb, f: { farmId?: string; seasonId?: st
   const area = byPlot.filter((r) => r.costPyg > 0 || r.incomePyg > 0 || r.tons > 0).reduce((x, r) => x + r.areaHa, 0);
   const tons = byPlot.reduce((x, r) => x + r.tons, 0);
   const totals: ResultRow = { costPyg: totalCost, incomePyg: totalIncome, areaHa: area, tons, ...resultFigures({ costPyg: totalCost, incomePyg: totalIncome, areaHa: area, tons }) };
-  return { totals, byPlot, byCrop, byActivity };
+  const livestock = byActivityAcc.get("ganaderia") ?? { costPyg: 0, incomePyg: 0 };
+  const kg = beefKg[0]?.kg ?? 0;
+  const beef = { kgSold: kg, costPyg: livestock.costPyg, incomePyg: livestock.incomePyg, costPerKgPyg: costPerKgBeef(livestock.costPyg, kg) };
+  return { totals, byPlot, byCrop, byActivity, beef };
 }

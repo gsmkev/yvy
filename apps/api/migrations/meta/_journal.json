@@ -372,6 +372,90 @@
       "when": 1794478466972,
       "tag": "0052_opposite_mauler",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "6",
+      "when": 1794478778072,
+      "tag": "0053_open_king_bedlam",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "6",
+      "when": 1794479026421,
+      "tag": "0054_flat_vulture",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "6",
+      "when": 1794479198502,
+      "tag": "0055_black_imperial_guard",
+      "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "6",
+      "when": 1794479385261,
+      "tag": "0056_typical_deadpool",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "6",
+      "when": 1794479593769,
+      "tag": "0057_clumsy_bloodstorm",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "6",
+      "when": 1794479809056,
+      "tag": "0058_spicy_timeslip",
+      "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "6",
+      "when": 1794480031769,
+      "tag": "0059_young_senator_kelly",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "6",
+      "when": 1794480378927,
+      "tag": "0060_solid_mad_thinker",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "6",
+      "when": 1794480605451,
+      "tag": "0061_strong_sally_floyd",
+      "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "6",
+      "when": 1794480812786,
+      "tag": "0062_wooden_guardian",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "6",
+      "when": 1794481031381,
+      "tag": "0063_chemical_king_bedlam",
+      "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "6",
+      "when": 1794481306081,
+      "tag": "0064_watery_marvel_boy",
+      "breakpoints": true
     }
   ]
 }

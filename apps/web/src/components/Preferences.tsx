@@ -1,4 +1,6 @@
 import { useEffect, useSyncExternalStore } from "react";
+import { getLocale, LOCALES, LOCALE_NAMES } from "@yvy/shared";
+import { chooseLocale } from "../lib/locale";
 import { t } from "../lib/i18n";
 import { getTheme, setTheme, subscribeTheme } from "../lib/theme";
 import { getUnits, setUnits, subscribeUnits, type Units } from "../lib/units";
@@ -49,6 +51,12 @@ export function Preferences() {
       <h2 className="font-serif text-xl font-semibold">{t("ui.prefsTitle")}</h2>
       <p className="mt-2 text-tinta-2">{t("ui.prefsIntro")}</p>
       <div className="mt-3 border-t border-linea">
+        <Choice
+          legend={t("ui.languageLabel")}
+          value={getLocale()}
+          onChange={chooseLocale}
+          options={LOCALES.map((l) => ({ value: l, label: LOCALE_NAMES[l] }))}
+        />
         <Choice
           legend={t("ui.themeLabel")}
           value={theme}

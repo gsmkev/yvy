@@ -80,6 +80,8 @@ export const esPY = {
   },
   app: {
     annotate: "Anotar",
+    language: "Idioma",
+    languageChoose: "Elegí el idioma",
     annotateIn: "Anotar en {{plot}}",
     whichPlot: "¿En qué lote estás?",
     detectedByGps: "Según el GPS estás acá",
@@ -2050,6 +2052,7 @@ export const esPY = {
     accountMenu: "Menú de la cuenta",
     preferences: "Preferencias",
     prefsTitle: "Preferencias",
+    languageLabel: "Idioma",
     prefsIntro: "Valen solo para este navegador.",
     unitArea: "Superficie",
     unitHectares: "Hectáreas",

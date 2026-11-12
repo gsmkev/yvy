@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Switch, View } from "react-native";
 import { router } from "expo-router";
-import { t, type MessageKey } from "@yvy/shared";
+import { getLocale, LOCALES, LOCALE_NAMES, t, type MessageKey } from "@yvy/shared";
 import { FEATURES } from "../../src/lib/features";
 import type { OutboxItem } from "../../src/db/store";
 import { getDb } from "../../src/lib/db";
 import { allPacksPlan, downloadAllPacks, downloadPack, isWifi, packStatus } from "../../src/lib/offline";
 import { remindersEnabled, setRemindersEnabled } from "../../src/lib/reminders";
+import { chooseLocale } from "../../src/lib/locale";
 import { api, getSession, setSession } from "../../src/lib/session";
 import { deleteUploadedFiles, storageUsage, type StorageUsage } from "../../src/lib/storage";
 import { canSwitchUser, unsentSummary } from "../../src/lib/switchUser";
@@ -155,6 +156,24 @@ export default function More() {
           trackColor={{ true: C.accion }}
         />
       </View>
+
+      <Row
+        title={t("app.language")}
+        subtitle={LOCALE_NAMES[getLocale()]}
+        onPress={() =>
+          Alert.alert(
+            t("app.languageChoose"),
+            undefined,
+            LOCALES.map((l) => ({
+              text: LOCALE_NAMES[l],
+              onPress: () => {
+                chooseLocale(getDb(), l);
+                router.replace("/");
+              },
+            })),
+          )
+        }
+      />
 
       <Row title={t("app.walkRow")} subtitle={t("app.walkRowHint")} onPress={() => router.push("/walk")} />
       <Row title={t("app.animalsRow")} subtitle={t("app.animalsRowHint")} onPress={() => router.push("/animals")} />

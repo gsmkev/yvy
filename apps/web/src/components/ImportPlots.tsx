@@ -1,10 +1,14 @@
 import { Upload } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { bboxOf, checkPlots, overlapRatio, OVERLAP_WARN_RATIO, type Area } from "@yvy/geo";
 import { post } from "../lib/api";
+import { useFarm } from "../lib/queries";
 import { fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { parseFile, type ImportedPolygon } from "../lib/importGeo";
+import type { Plot } from "../lib/types";
+import { FarmMap } from "./FarmMap";
 import { Button, ErrorBox, Input, Modal, Select } from "./ui";
 
 /** RF-11: previsualizar, elegir polígonos, poner nombre y tipo. */
@@ -26,7 +30,68 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
     }
   };
 
+  // Vista previa: verde = se importa, gris = descartado, rojo = con problemas.
+  const previewPlots = useMemo<Plot[]>(
+    () =>
+      (items ?? []).map((p) => ({
+        id: String(p.index),
+        farmId: "",
+        name: p.name,
+        kind: p.kind,
+        geometry: JSON.stringify(p.geometry),
+        areaHa: p.areaHa,
+        crop: null,
+        season: null,
+        sowingDate: null,
+        pastureType: null,
+        ndviMean: null,
+        ndviAt: null,
+        ndviPrevMean: null,
+        ndviPrevAt: null,
+        lastRecordAt: null,
+        color: p.error ? "#D2462B" : p.selected ? "#7A9A3F" : "#9A9A8E",
+      })),
+    [items],
+  );
+  const previewBounds = useMemo<[number, number, number, number] | null>(() => {
+    if (!items?.length) return null;
+    const boxes = items.filter((p) => !p.error).map((p) => bboxOf(p.geometry));
+    if (!boxes.length) return null;
+    return [
+      Math.min(...boxes.map((b) => b.minLon)),
+      Math.min(...boxes.map((b) => b.minLat)),
+      Math.max(...boxes.map((b) => b.maxLon)),
+      Math.max(...boxes.map((b) => b.maxLat)),
+    ];
+  }, [items?.length]);
+
   const selected = items?.filter((i) => i.selected && !i.error) ?? [];
+  const farm = useFarm(farmId);
+
+  // Avisos no bloqueantes (M-10): superposición entre lotes y lotes fuera de la estancia.
+  const warnings = useMemo(() => {
+    if (!selected.length) return [] as string[];
+    const out: string[] = [];
+    const farmGeom = farm.data ? (JSON.parse(farm.data.farm.geometry) as Area) : null;
+    for (const w of checkPlots(
+      selected.map((p) => p.geometry),
+      farmGeom,
+    )) {
+      const a = selected[w.a]!.name;
+      out.push(
+        w.kind === "overlap"
+          ? t("ui.warnOverlap", { a, b: selected[w.b!]!.name, pct: Math.round(w.ratio * 100) })
+          : t("ui.warnOutside", { a }),
+      );
+    }
+    for (const p of selected) {
+      for (const ex of farm.data?.plots ?? []) {
+        const r = overlapRatio(p.geometry, JSON.parse(ex.geometry) as Area);
+        if (r > OVERLAP_WARN_RATIO) out.push(t("ui.warnOverlap", { a: p.name, b: ex.name, pct: Math.round(r * 100) }));
+      }
+    }
+    return out;
+  }, [selected.map((p) => p.index).join(","), farm.data]);
   const save = async () => {
     setBusy(true);
     setError(null);
@@ -63,10 +128,42 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
       ) : (
         <div className="flex flex-col gap-3">
           <p className="text-sm">{t("ui.importPreview", { count: items.length })}</p>
+          {items.some((i) => i.fixed > 0) && (
+            <p className="text-sm text-tinta-2">
+              {t("ui.importFixed", { count: items.reduce((n, i) => n + i.fixed, 0) })}
+            </p>
+          )}
           {items.some((i) => i.error) && (
             <p className="text-sm text-alerta">
               {t("ui.importErrors", { count: items.filter((i) => i.error).length })}
             </p>
+          )}
+          <div className="overflow-hidden rounded-md border border-linea" data-testid="import-preview-map">
+            <FarmMap
+              className="h-56 w-full"
+              plots={previewPlots}
+              bounds={previewBounds}
+              onPlotClick={(id) => {
+                const i = items.findIndex((x) => String(x.index) === id);
+                if (i >= 0 && !items[i]!.error) update(i, { selected: !items[i]!.selected });
+              }}
+            />
+          </div>
+          <p className="text-xs text-tinta-2">{t("ui.importMapHint")}</p>
+          {warnings.length > 0 && (
+            <div className="text-sm text-surco" data-testid="import-warnings">
+              <p className="font-medium">{t("ui.warnTitle")}</p>
+              <ul>
+                {warnings.slice(0, 8).map((w, i) => (
+                  <li key={i} className="border-b border-linea py-1">
+                    {w}
+                  </li>
+                ))}
+              </ul>
+              {warnings.length > 8 && (
+                <p className="py-1 text-tinta-2">{t("ui.warnMore", { count: warnings.length - 8 })}</p>
+              )}
+            </div>
           )}
           <ul className="flex max-h-80 flex-col gap-1.5 overflow-auto">
             {items.map((p, i) => (

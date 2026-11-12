@@ -13,6 +13,7 @@ import {
   nextDueDate,
   nextOccurrenceId,
   parseChecklist,
+  parseTaskComments,
   parseRecordData,
   resetChecklist,
   serializeChecklist,
@@ -109,6 +110,9 @@ export async function applyPush(
         break;
       case "attachments.delete":
         attachmentIds.add(m.row.id);
+        break;
+      case "tasks.comment":
+        taskIds.add(m.row.taskId);
         break;
       case "tasks.status":
       case "tasks.check":
@@ -323,6 +327,7 @@ export async function applyPush(
   const attachmentUpserts: (typeof s.attachments.$inferInsert)[] = [];
   const attachmentDeletes: string[] = [];
   const taskUpdates: Stmt[] = [];
+  let taskAuthorName: string | undefined;
   const poiUpserts: (typeof s.pointsOfInterest.$inferInsert)[] = [];
   const plotUpserts: (typeof s.plots.$inferInsert)[] = [];
   const applied: (typeof s.syncMutations.$inferInsert)[] = [];
@@ -746,6 +751,38 @@ export async function applyPush(
           }
           t.status = m.row.status;
         }
+        accept(m, t.id);
+        break;
+      }
+      case "tasks.comment": {
+        const t = tasks.get(m.row.taskId);
+        if (!t || t.organizationId !== org || t.deletedAt) {
+          reject(m, "not_found");
+          break;
+        }
+        if ((sdb.isWorker && t.assigneeId !== auth.userId) || !farmWritable(t.farmId)) {
+          reject(m, "forbidden");
+          break;
+        }
+        const list = parseTaskComments(t.comments);
+        if (list.some((c) => c.id === m.row.id)) {
+          accept(m, t.id);
+          break;
+        }
+        if (list.length >= LIMITS.tasks.maxComments) {
+          reject(m, "invalid", "limit");
+          break;
+        }
+        taskAuthorName ??= (
+          await db.select({ n: s.users.fullName }).from(s.users).where(eq(s.users.id, auth.userId)).limit(1)
+        )[0]?.n ?? "";
+        t.comments = JSON.stringify([...list, { id: m.row.id, userId: auth.userId, name: taskAuthorName, at: now, text: m.row.text }]);
+        taskUpdates.push(
+          db
+            .update(s.tasks)
+            .set({ comments: t.comments, updatedAt: now, version: currentVersion })
+            .where(and(eq(s.tasks.id, t.id), eq(s.tasks.organizationId, org))),
+        );
         accept(m, t.id);
         break;
       }

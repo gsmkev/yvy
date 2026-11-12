@@ -59,6 +59,13 @@ export const taskCheckRow = z.object({
   done: z.boolean(),
 });
 
+/** T-02: comentario nuevo en una tarea. El id lo pone el celular; el nombre del autor lo pone el servidor. */
+export const taskCommentRow = z.object({
+  id: z.string().min(1).max(40),
+  taskId: uuid,
+  text: z.string().trim().min(1).max(LIMITS.tasks.maxCommentLength),
+});
+
 /** Punto de interés marcado desde el celular (PRD §11: solo roles que no son `worker`). */
 export const poiRow = z.object({
   id: uuid,
@@ -100,6 +107,7 @@ export const mutation = z.discriminatedUnion("kind", [
   z.object({ ...base, kind: z.literal("attachments.delete"), row: del }),
   z.object({ ...base, kind: z.literal("tasks.status"), row: taskStatusRow }),
   z.object({ ...base, kind: z.literal("tasks.check"), row: taskCheckRow }),
+  z.object({ ...base, kind: z.literal("tasks.comment"), row: taskCommentRow }),
   z.object({ ...base, kind: z.literal("pois.upsert"), row: poiRow }),
   z.object({ ...base, kind: z.literal("plots.upsert"), row: plotRow }),
   z.object({ ...base, kind: z.literal("comments.upsert"), row: commentRow }),

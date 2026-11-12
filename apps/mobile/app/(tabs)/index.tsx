@@ -213,6 +213,12 @@ export default function Today() {
               }}
               right={<View style={st.circle} />}
             />
+            <Button
+              kind="text"
+              title={commentsLabel(task.comments) ?? t("app.taskCommentsOpen")}
+              onPress={() => router.push({ pathname: "/task/[id]", params: { id: task.id } })}
+              style={{ alignSelf: "flex-start", paddingHorizontal: 0 }}
+            />
             {task.lon !== null && task.lat !== null && (
               <Button
                 kind="text"

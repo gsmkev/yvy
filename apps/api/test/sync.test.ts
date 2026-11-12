@@ -265,4 +265,29 @@ describe("sync/pull", () => {
     expect(await pullAll(owner.token, "records")).toHaveLength(1);
     expect(env.DB).toBeTruthy();
   });
+
+  it("comentarios de tarea desde el celular (T-02): idempotentes, con nombre del servidor y solo en tareas propias", async () => {
+    const { owner, worker, farmId } = await setup();
+    const other = await addMemberAndLogin(owner.token, "worker");
+    const mk = (assigneeId: string) =>
+      call<{ id: string }>("POST", "/org/tasks", {
+        token: owner.token,
+        body: { farmId, assigneeId, title: "Medir lluvia", dueDate: "2026-11-10" },
+      });
+    const mine = await mk(worker.userId);
+    const theirs = await mk(other.userId);
+    const cid = newId();
+    const comment = (taskId: string, id = newId(), text = "Listo, 12 mm") => ({
+      mutationId: newId(),
+      kind: "tasks.comment",
+      row: { id, taskId, text },
+    });
+    const r = await push(worker.token, [comment(mine.body.id, cid), comment(mine.body.id, cid), comment(theirs.body.id)]);
+    expect(r.body.results.map((x: any) => x.status)).toEqual(["applied", "applied", "rejected"]);
+    expect(r.body.results[2].reason).toBe("forbidden");
+    const [task] = (await pullAll(worker.token, "tasks")).filter((x: any) => x.id === mine.body.id);
+    const list = JSON.parse(task.comments);
+    expect(list).toHaveLength(1);
+    expect(list[0]).toMatchObject({ id: cid, userId: worker.userId, name: "Ramón", text: "Listo, 12 mm" });
+  });
 });

@@ -757,7 +757,7 @@ export const tasks = sqliteTable(
     /** Hora límite "HH:MM" (hora de la estancia), o null si basta con el día. */
     dueTime: text("due_time"),
     priority: text("priority", { enum: TASK_PRIORITIES }).notNull().default("normal"),
-    /** JSON: comentarios de la tarea (ver taskCommentSchema). Se agregan solo por la API, nunca desde el celular. */
+    /** JSON: comentarios de la tarea (ver taskCommentSchema). Se agregan por la API (web) o por la mutación tasks.comment (celular, sin señal). */
     comments: text("comments").notNull().default("[]"),
     recurrence: text("recurrence", { enum: RECURRENCES }).notNull().default("none"),
     status: text("status", { enum: TASK_STATUS }).notNull().default("open"),

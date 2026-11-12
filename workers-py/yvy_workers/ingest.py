@@ -84,6 +84,10 @@ class IngestClient:
     def scene_processed(self, scene_id: str) -> None:
         self._call("POST", f"/ingest/scenes/{scene_id}/processed", {})
 
+    def history_status(self, farm_id: str, status: str) -> None:
+        """Estado de la historia de vigor desde 2017 (S-03): done o failed (processing lo pone el Worker al pedirla)."""
+        self._call("POST", f"/ingest/farms/{farm_id}/history-status", {"status": status})
+
     def climate_latest(self) -> list[dict[str, Any]]:
         return self._call("GET", "/ingest/climate-latest")
 

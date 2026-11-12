@@ -79,7 +79,7 @@ export interface Poi {
 
 export interface Layer {
   id: string;
-  layer: "true_color" | "ndvi";
+  layer: "true_color" | "ndvi" | "ndre" | "ndmi" | "evi";
   acquiredAt: number;
   pmtilesPath: string;
   bytes: number;

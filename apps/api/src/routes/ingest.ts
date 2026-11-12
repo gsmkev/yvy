@@ -7,7 +7,7 @@ import { Hono } from "hono";
 import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
-import { LAYERS } from "@yvy/shared/schema";
+import { INDEX_KINDS, LAYERS } from "@yvy/shared/schema";
 import { farmRiskSchema, LIMITS } from "@yvy/shared";
 import { getDb } from "../db/client";
 import { SystemDb } from "../db/system";
@@ -94,7 +94,7 @@ ingest.post("/plot-index-stats", async (c) => {
             plotId: uuid,
             sceneId: z.string(),
             acquiredAt: z.number().int(),
-            idx: z.literal("ndvi"),
+            idx: z.enum(INDEX_KINDS),
             mean: z.number().min(-1).max(1),
             p10: z.number().min(-1).max(1),
             p90: z.number().min(-1).max(1),

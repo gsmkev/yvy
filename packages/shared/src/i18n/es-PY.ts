@@ -2128,6 +2128,17 @@ export const esPY = {
     // sat-p2
     lowConfidence: "Poco confiable",
     lowConfidenceNote: "Lote muy angosto (menos de 30 m): los píxeles de la imagen se mezclan con el borde, tomá este valor como orientativo.",
+    indexPick: "Índice",
+    index_ndvi: "NDVI · vigor",
+    index_ndre: "NDRE · nitrógeno",
+    index_ndmi: "NDMI · humedad",
+    index_evi: "EVI · biomasa densa",
+    indexHint_ndvi: "Qué tan verde y vigoroso está el cultivo.",
+    indexHint_ndre: "Clorofila y nitrógeno; reacciona antes que el NDVI en cultivos densos.",
+    indexHint_ndmi: "Agua en la vegetación: sirve para ver estrés hídrico.",
+    indexHint_evi: "Como el NDVI pero sin saturarse con follaje denso.",
+    ndmiLegendLow: "Seco",
+    ndmiLegendHigh: "Húmedo",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

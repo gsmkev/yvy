@@ -31,6 +31,8 @@ export {
   ALERT_SEVERITIES,
   ALERT_PROBABILITIES,
   LINE_KINDS,
+  INDEX_KINDS,
+  type IndexKind,
   type LineKind,
   type Role,
   type RecordKind,

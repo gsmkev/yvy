@@ -769,7 +769,7 @@ export class LocalDb implements SyncStore {
   latestLayers(farmId: string): FarmLayer[] {
     return this.sql
       .all(
-        `SELECT l.* FROM farm_layers l WHERE l.farm_id = ? AND l.deleted_at IS NULL
+        `SELECT l.* FROM farm_layers l WHERE l.farm_id = ? AND l.deleted_at IS NULL AND l.layer IN ('true_color', 'ndvi')
          AND l.acquired_at = (SELECT max(acquired_at) FROM farm_layers x WHERE x.farm_id = l.farm_id AND x.layer = l.layer AND x.deleted_at IS NULL)`,
         [farmId],
       )

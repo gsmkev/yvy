@@ -86,7 +86,10 @@ export const ALERT_SEVERITIES = ["info", "watch", "warning"] as const;
 export const ALERT_PROBABILITIES = ["low", "medium", "high"] as const;
 /** P-03: pasos del embudo de activación. Los escribe el servidor, una sola vez por organización. */
 export const FUNNEL_EVENTS = ["signup", "farm_created", "plots_created", "member_added", "first_record"] as const;
-export const LAYERS = ["true_color", "ndvi"] as const;
+/** S-07: índices de vegetación que calcula el job de Sentinel-2. */
+export const INDEX_KINDS = ["ndvi", "ndre", "ndmi", "evi"] as const;
+export type IndexKind = (typeof INDEX_KINDS)[number];
+export const LAYERS = ["true_color", ...INDEX_KINDS] as const;
 /** Estado del procesamiento satelital inicial de una estancia (S-02). */
 export const IMAGERY_STATUSES = ["pending", "processing", "ready", "failed"] as const;
 

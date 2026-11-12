@@ -17,6 +17,7 @@ interface Ndvi {
   series: { acquiredAt: number; mean: number; p10: number; p90: number; validPct: number; lowConfidence: boolean }[];
   farmAvg: { acquiredAt: number; mean: number }[];
   current: { acquiredAt: number; mean: number; lowConfidence: boolean } | null;
+  others?: Record<string, { acquiredAt: number; mean: number; lowConfidence: boolean }>;
   deltaVsFarmPct: number | null;
 }
 
@@ -179,6 +180,19 @@ export function PlotPanel({
                 <p className="mt-2 rounded border border-trigo/60 px-2 py-1 text-xs text-tinta-2" role="note">
                   <strong>{t("ui.lowConfidence")}.</strong> {t("ui.lowConfidenceNote")}
                 </p>
+              )}
+              {ndvi.data.others && Object.keys(ndvi.data.others).length > 0 && (
+                <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs">
+                  {(["ndre", "ndmi", "evi"] as const).map((k) => {
+                    const o = ndvi.data!.others![k];
+                    return o ? (
+                      <div key={k}>
+                        <dt className="eyebrow">{t(`ui.index_${k}`)}</dt>
+                        <dd className="num text-base font-medium">{fmtNdvi(o.mean)}</dd>
+                      </div>
+                    ) : null;
+                  })}
+                </dl>
               )}
               <h3 className="eyebrow mt-5 mb-1">{t("ui.ndviCurve")}</h3>
               <LineChart

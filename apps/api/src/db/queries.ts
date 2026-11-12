@@ -2,7 +2,7 @@
  * Consultas de la web y operaciones de edición. Todas reciben ScopedDb y filtran por organización
  * (y por lotes asignados cuando corresponde).
  */
-import { and, asc, desc, eq, getTableColumns, gte, inArray, isNull, lt, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, gte, inArray, isNull, lt, lte, ne, or, sql, type SQL } from "drizzle-orm";
 import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
 import {
   DEFAULT_ALERT_SETTINGS,
@@ -309,12 +309,33 @@ export async function plotNdvi(sdb: ScopedDb, plotId: string) {
       .groupBy(s.plotIndexStats.sceneId)
       .orderBy(asc(sql`min(${s.plotIndexStats.acquiredAt})`)),
   ]);
+  // S-07: último valor de NDRE, NDMI y EVI (los más recientes de los últimos 60 días)
+  const otherRows = await sdb.db
+    .select({
+      idx: s.plotIndexStats.idx,
+      acquiredAt: s.plotIndexStats.acquiredAt,
+      mean: s.plotIndexStats.mean,
+      lowConfidence: s.plotIndexStats.lowConfidence,
+    })
+    .from(s.plotIndexStats)
+    .where(
+      and(
+        eq(s.plotIndexStats.plotId, plotId),
+        ne(s.plotIndexStats.idx, "ndvi"),
+        gte(s.plotIndexStats.acquiredAt, sdb.now() - 60 * 86_400_000),
+      ),
+    )
+    .orderBy(desc(s.plotIndexStats.acquiredAt))
+    .limit(60);
+  const others: Record<string, { acquiredAt: number; mean: number; lowConfidence: boolean }> = {};
+  for (const r of otherRows) others[r.idx] ??= { acquiredAt: r.acquiredAt, mean: r.mean, lowConfidence: r.lowConfidence };
   const last = series[series.length - 1];
   const lastAvg = last && farmAvg.find((a) => a.acquiredAt === last.acquiredAt);
   return {
     series,
     farmAvg,
     current: last ?? null,
+    others,
     deltaVsFarmPct: last && lastAvg && lastAvg.mean ? ((last.mean - lastAvg.mean) / lastAvg.mean) * 100 : null,
   };
 }

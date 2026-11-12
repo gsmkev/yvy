@@ -4,6 +4,7 @@ import { and, eq, gte, isNull, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { areaHa, bboxOf } from "@yvy/geo";
+import { compareFarms, compareSeasons } from "../db/compare";
 import { addComment, deleteComment, listComments } from "../db/comments";
 import { alertSettingsSchema, formConfigSchema, referralCode, CROPS, FUNNEL_EVENTS, newId, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -183,6 +184,9 @@ web.delete("/org/comments/:id", async (c) => {
   await deleteComment(c.var.sdb, c.req.param("id"));
   return c.json({ ok: true });
 });
+/** R-07: comparación entre estancias y entre campañas. */
+web.get("/org/compare/farms", async (c) => c.json(await compareFarms(c.var.sdb)));
+web.get("/org/compare/seasons", async (c) => c.json(await compareSeasons(c.var.sdb)));
 web.get("/org/audit", async (c) =>
   c.json(
     await listAudit(c.var.sdb, {

@@ -18,6 +18,7 @@ const NAV: { to: string; label: MessageKey }[] = [
   { to: "/registros", label: "ui.navRecords" },
   { to: "/tareas", label: "ui.navTasks" },
   { to: "/calendario", label: "ui.navCalendar" },
+  { to: "/comparar", label: "ui.navCompare" },
   { to: "/sanidad", label: "ui.navSanitary" },
   { to: "/avisos", label: "ui.navAlerts" },
   { to: "/equipo", label: "ui.navTeam" },
@@ -83,6 +84,7 @@ export function Layout() {
   const items = base.filter(
     (i) =>
       (i.to !== "/sanidad" || !(role && isFieldRole(role))) &&
+      (i.to !== "/comparar" || !(role && isFieldRole(role))) &&
       // La administración (ERP) es solo del dueño y los administradores.
       (i.to !== "/administracion" || role === "owner" || role === "admin"),
   );

@@ -1,6 +1,8 @@
 /** Resumen legible de un registro, en es-PY, a partir de sus datos (web, Excel, PDF y app). */
 import { hasKey, t, type MessageKey } from "./i18n";
 import { HERD_CATEGORIES } from "./livestock";
+import { sprayWarnings } from "./agro";
+import { LIMITS } from "./limits";
 
 const tr = (key: string, fallback: string) => (hasKey(key) ? t(key as MessageKey) : fallback);
 
@@ -154,4 +156,16 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
   if (kind !== "note" && str("note")) parts.push(d.note as string);
   const out = parts.join(" · ");
   return out ? out.charAt(0).toUpperCase() + out.slice(1) : tr(`recordKinds.${kind}`, kind);
+}
+
+/** Avisos de condiciones al aplicar (A-12) ya redactados, en es-PY: uno por cada umbral de LIMITS.spray que se pasó. */
+export function sprayWarningTexts(c: { windKmh?: number | null; deltaT?: number | null }): string[] {
+  const L = LIMITS.spray;
+  return sprayWarnings(c).map((w) =>
+    w === "windHigh"
+      ? t("ui.sprayWarnWind", { wind: dec(c.windKmh as number), max: L.windMaxKmh })
+      : w === "deltaTLow"
+        ? t("ui.sprayWarnDeltaLow", { dt: dec(c.deltaT as number), min: L.deltaTMin })
+        : t("ui.sprayWarnDeltaHigh", { dt: dec(c.deltaT as number), max: L.deltaTMax }),
+  );
 }

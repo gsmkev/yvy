@@ -2673,6 +2673,13 @@ export const esPY = {
     helpVideoTopic_alerts: "Avisos de clima y fuego",
     helpVideoTopic_reports: "Informes y partes en PDF",
     helpVideoTopic_team: "Equipo y permisos",
+    // erp-p2
+    adminSection_minstock: "Stock mínimo",
+    minStockIntro: "Cargá cuánto tiene que haber como mínimo de cada producto en cada depósito. Cuando el stock llega a ese número, aparece acá el aviso de reposición.",
+    minStockNew: "Cargar mínimo",
+    minStockMin: "Mínimo",
+    minStockLowTitle: "Para reponer",
+    minStockMissing: "Faltan {{qty}}",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

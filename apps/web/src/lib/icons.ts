@@ -37,6 +37,7 @@ export const ALERT_ICON: Record<string, LucideIcon> = {
   pest_threshold: Bug,
   water_low: Waves,
   heat_stress: Thermometer,
+  rust_risk: Bug,
 };
 
 export const POI_ICON: Record<string, LucideIcon> = {

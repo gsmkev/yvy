@@ -14,6 +14,7 @@ import { saveForecastStmts, saveHourlyStmts, upsertAlert } from "./alerts";
 import { sendPending } from "./notify";
 import { pestAlertDraft } from "./pests";
 import { evaluateHeatStress } from "./heat";
+import { evaluateRust } from "./rust";
 import { evaluateDrought, evaluateExcessRain, evaluateFrost } from "./rules";
 import { dailyFromMet, hourlyFromMet, dailyFromPower, fetchMet, powerUrl, type DailyForecast } from "./weather";
 
@@ -157,9 +158,17 @@ async function forecastJob(db: DB, env: Bindings, deps: JobDeps, farm: Farm): Pr
   const runs = await recentRuns(db, farm.id, LIMITS.weather.forecastRunsKept);
   const today = localDate(now, farm.tz);
   const cfg = await new SystemDb(db).alertSettings(farm.id);
+  // A-40: roya asiática solo si la estancia tiene soja
+  const soy = await db
+    .select({ id: s.plots.id })
+    .from(s.plots)
+    .where(
+      and(eq(s.plots.farmId, farm.id), eq(s.plots.kind, "crop"), eq(s.plots.crop, "soja"), isNull(s.plots.deletedAt)),
+    );
   for (const draft of [
     evaluateFrost(runs, today, cfg.frostTminC),
     evaluateExcessRain(days, today, cfg.excessRainMm24h),
+    evaluateRust(hours, farm.tz, soy.map((p) => p.id)),
   ]) {
     if (draft) await upsertAlert(db, farm, draft, now);
   }

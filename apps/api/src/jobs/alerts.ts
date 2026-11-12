@@ -19,6 +19,7 @@ const SOURCES: Record<AlertDraft["kind"], string> = {
   pest_threshold: "Monitoreos de plagas (umbral por defecto)",
   water_low: "Registros de aguadas",
   heat_stress: "MET Norway",
+  rust_risk: "MET Norway (humedad y temperatura horarias)",
 };
 
 export async function upsertAlert(

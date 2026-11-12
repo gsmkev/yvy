@@ -2411,6 +2411,8 @@ export const esPY = {
     delivSaved: "Entrega guardada",
     delivDeleted: "Entrega borrada",
     delivConfirmDelete: "¿Borrar la entrega del ticket {{ticket}}?",
+    alertKind_rust_risk: "Riesgo de roya de la soja",
+    notifKind_rust_risk: "Riesgo de roya de la soja",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

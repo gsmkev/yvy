@@ -174,6 +174,12 @@ export const LIMITS = {
   },
   // agri-p2
   /**
+   * Roya asiática de la soja (A-40): mojado foliar estimado con el pronóstico horario. Una hora cuenta si la humedad
+   * relativa llega a `humidityPct` (o llueve `rainMm`) y la temperatura está entre `tempMinC` y `tempMaxC`.
+   * Valores de referencia a revisar por un agrónomo.
+   */
+  rust: { humidityPct: 90, rainMm: 0.1, tempMinC: 15, tempMaxC: 28, watchHours: 8, warningHours: 12 },
+  /**
    * Zonas de amortiguación (A-15): distancia en metros a casas, escuelas y cursos de agua dentro de la cual una
    * aplicación se marca. Valores de referencia que la web deja editar: confirmá lo que exige la normativa vigente
    * y la habilitación de tu zona antes de usarlos como límite legal.

@@ -38,6 +38,7 @@ import {
   listShareLinks,
   listTasks,
   mergePlots,
+  listAudit,
   ownerDashboard,
   plotGeometryWarnings,
   plotNdvi,
@@ -165,6 +166,14 @@ web.get("/me/clients", async (c) =>
   ),
 );
 web.get("/org/dashboard", async (c) => c.json(await ownerDashboard(c.var.sdb)));
+web.get("/org/audit", async (c) =>
+  c.json(
+    await listAudit(c.var.sdb, {
+      entity: c.req.query("entity") || undefined,
+      before: Number(c.req.query("before")) || undefined,
+    }),
+  ),
+);
 web.get("/org/farms", async (c) => c.json(await farmSummaries(c.var.sdb)));
 web.get("/org/farms/:id", async (c) => c.json(await farmDetail(c.var.sdb, c.req.param("id"))));
 web.get("/org/farms/:id/climate", async (c) =>

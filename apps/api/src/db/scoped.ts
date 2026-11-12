@@ -22,6 +22,7 @@ import {
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, currentVersion, runBatch, type DB, type Stmt } from "./client";
+import { auditStmts, type AuditEntry } from "./audit";
 import { funnelEvent } from "./events";
 
 export interface AuthCtx {
@@ -166,6 +167,11 @@ export class ScopedDb {
 
   require(check: (r: Role) => boolean, msg = "No tenés permiso"): void {
     if (!check(this.auth.role)) throw new ForbiddenError(msg);
+  }
+
+  /** K-06: filas del registro de cambios, para sumar al batch del cambio. */
+  audit(...entries: AuditEntry[]): Stmt[] {
+    return auditStmts(this.db, this.auth, entries, this.now());
   }
 
   /** Puede editar/borrar un registro (PRD §9 y RF-34). */
@@ -534,6 +540,7 @@ export class ScopedDb {
         }),
     );
     stmts.push(funnelEvent(this.db, "member_added", this.auth.userId, this.auth.orgId, ts));
+    stmts.push(...this.audit({ action: "member_add", entity: "member", entityId: userId, detail: { role: input.role, name: input.fullName } }));
     await runBatch(this.db, stmts);
     return { userId };
   }
@@ -695,6 +702,7 @@ export class ScopedDb {
         .set({ assignmentsVersion: sql`${s.memberships.assignmentsVersion} + 1`, updatedAt: ts })
         .where(and(eq(s.memberships.organizationId, this.auth.orgId), eq(s.memberships.userId, userId))),
     );
+    stmts.push(...this.audit({ action: "member_plots", entity: "member", entityId: userId, detail: { plots: wanted.length } }));
     await runBatch(this.db, stmts);
   }
 
@@ -750,6 +758,12 @@ export class ScopedDb {
         .update(s.memberships)
         .set({ assignmentsVersion: sql`${s.memberships.assignmentsVersion} + 1`, updatedAt: ts })
         .where(and(eq(s.memberships.organizationId, this.auth.orgId), eq(s.memberships.userId, userId))),
+      ...this.audit({
+        action: "member_farms",
+        entity: "member",
+        entityId: userId,
+        detail: { farms: [...wanted].map(([farmId, level]) => ({ farmId, level })) },
+      }),
     ]);
   }
 
@@ -881,6 +895,7 @@ export class ScopedDb {
       }),
       this.db.insert(s.farmImagery).values({ farmId: id, status: "pending", requestedAt: ts, updatedAt: ts }),
       funnelEvent(this.db, "farm_created", this.auth.userId, this.auth.orgId, ts),
+      ...this.audit({ action: "farm_create", entity: "farm", entityId: id, detail: { name: input.name, areaHa: input.areaHa } }),
     ]);
     return { id };
   }
@@ -925,6 +940,7 @@ export class ScopedDb {
         }),
       ),
       funnelEvent(this.db, "plots_created", this.auth.userId, this.auth.orgId, ts),
+      ...this.audit({ action: "plot_create", entity: "plot", entityId: ids[0] ?? null, detail: { farmId, count: ids.length } }),
     ]);
     return { ids, farmGeometry };
   }
@@ -950,6 +966,7 @@ export class ScopedDb {
         updatedAt: ts,
         version: currentVersion,
       }),
+      ...this.audit({ action: "poi_create", entity: "poi", entityId: id, detail: { farmId: input.farmId, name: input.name } }),
     ]);
     return { id };
   }
@@ -1006,6 +1023,12 @@ export class ScopedDb {
           version: currentVersion,
         }),
       ),
+      ...this.audit({
+        action: "task_create",
+        entity: "task",
+        entityId: ids[0] ?? null,
+        detail: { farmId: input.farmId, count: ids.length, assigneeId: input.assigneeId, title: input.title, prescription: true },
+      }),
     ]);
     return { ids };
   }
@@ -1087,6 +1110,12 @@ export class ScopedDb {
           version: currentVersion,
         }),
       ),
+      ...this.audit({
+        action: "task_create",
+        entity: "task",
+        entityId: ids[0] ?? null,
+        detail: { farmId: input.farmId, count: ids.length, assigneeId: input.assigneeId, title: input.title },
+      }),
     ]);
     return { ids };
   }

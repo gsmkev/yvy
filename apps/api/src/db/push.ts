@@ -26,6 +26,7 @@ import * as s from "@yvy/shared/schema";
 import { areaHa, bboxOf, validateShape, type Area } from "@yvy/geo";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from "./client";
 import { hasEffects, recordEffects, type EffectRecord } from "./erp-effects";
+import { auditStmts } from "./audit";
 import { funnelEvent } from "./events";
 import { can, type ScopedDb } from "./scoped";
 
@@ -718,6 +719,15 @@ export async function applyPush(
         }),
     );
   }
+  // K-06: el borrado de un registro deja quién y cuándo (en una o pocas sentencias)
+  stmts.push(
+    ...auditStmts(
+      db,
+      { userId: auth.userId, orgId: org },
+      recordDeletes.map((id) => ({ action: "record_delete", entity: "record" as const, entityId: id, detail: { deviceId } })),
+      now,
+    ),
+  );
   for (const chunk of chunkForParams(recordDeletes, 1)) {
     stmts.push(
       db

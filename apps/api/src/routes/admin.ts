@@ -187,7 +187,7 @@ admin.post("/orgs/:id/support-session", async (c) => {
   });
 });
 
-/** P-12: últimas acciones del equipo (opcionalmente de una organización). */
+/** P-12: últimas acciones del equipo (opcionalmente de una organización); con `scope=org`, los cambios que hicieron las personas de esa organización (K-06). */
 admin.get("/audit", async (c) => {
   const org = c.req.query("orgId");
   const rows = await getDb(c.env.DB)
@@ -195,13 +195,20 @@ admin.get("/audit", async (c) => {
       id: s.auditLog.id,
       action: s.auditLog.action,
       organizationId: s.auditLog.organizationId,
+      entity: s.auditLog.entity,
+      entityId: s.auditLog.entityId,
       detail: s.auditLog.detail,
       createdAt: s.auditLog.createdAt,
       actor: s.users.email,
     })
     .from(s.auditLog)
     .leftJoin(s.users, eq(s.users.id, s.auditLog.actorUserId))
-    .where(org ? eq(s.auditLog.organizationId, org) : undefined)
+    .where(
+      and(
+        org ? eq(s.auditLog.organizationId, org) : undefined,
+        c.req.query("scope") === "org" ? sql`${s.auditLog.entity} IS NOT NULL` : sql`${s.auditLog.entity} IS NULL`,
+      ),
+    )
     .orderBy(desc(s.auditLog.createdAt))
     .limit(100);
   return c.json(rows);

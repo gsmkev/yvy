@@ -14,6 +14,7 @@ import {
   parseTaskComments,
   type AlertSettings,
   type NotificationPrefs,
+  type PullTable,
   type RecordKind,
   type TaskComment,
 } from "@yvy/shared";
@@ -22,6 +23,7 @@ import { bboxOf, checkPlots, type Area } from "@yvy/geo";
 import { newId, t, type FormConfig } from "@yvy/shared";
 import { HTTPException } from "hono/http-exception";
 import { randomToken, sha256Hex } from "../lib/crypto";
+import { patchDetail, type AuditEntity } from "./audit";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from "./client";
 import { can, ForbiddenError, NotFoundError, SYNCED_KEYS, type ScopedDb } from "./scoped";
 
@@ -732,6 +734,39 @@ export async function ownerDashboard(sdb: ScopedDb) {
   };
 }
 
+// ---------- Registro de cambios (K-06) ----------
+
+/** El dueño ve quién cambió qué y cuándo, de más nuevo a más viejo; `before` (epoch ms) pagina. */
+export async function listAudit(sdb: ScopedDb, f: { entity?: string; before?: number; limit?: number }) {
+  sdb.require(can.viewAudit, "Solo el dueño ve el registro de cambios");
+  const limit = Math.min(f.limit ?? LIMITS.audit.pageSize, 200);
+  const rows = await sdb.db
+    .select({
+      id: s.auditLog.id,
+      action: s.auditLog.action,
+      entity: s.auditLog.entity,
+      entityId: s.auditLog.entityId,
+      detail: s.auditLog.detail,
+      createdAt: s.auditLog.createdAt,
+      actorId: s.auditLog.actorUserId,
+      actor: s.users.fullName,
+    })
+    .from(s.auditLog)
+    .leftJoin(s.users, eq(s.users.id, s.auditLog.actorUserId))
+    .where(
+      and(
+        eq(s.auditLog.organizationId, sdb.auth.orgId),
+        // las acciones del equipo de Yvy (soporte, plan) no llevan entidad y no son del dueño
+        sql`${s.auditLog.entity} IS NOT NULL`,
+        f.entity ? eq(s.auditLog.entity, f.entity) : undefined,
+        f.before ? lt(s.auditLog.createdAt, f.before) : undefined,
+      ),
+    )
+    .orderBy(desc(s.auditLog.createdAt), desc(s.auditLog.id))
+    .limit(limit + 1);
+  return { rows: rows.slice(0, limit), hasMore: rows.length > limit };
+}
+
 // ---------- Avisos (RF-70..75) ----------
 
 export async function listAlerts(sdb: ScopedDb, f: { farmId?: string; active?: boolean }) {
@@ -863,6 +898,15 @@ type SyncedTbl = SQLiteTable & {
   deletedAt: SQLiteColumn;
 };
 
+const AUDITED: Partial<Record<PullTable, AuditEntity>> = {
+  farms: "farm",
+  plots: "plot",
+  tasks: "task",
+  points_of_interest: "poi",
+  products: "product",
+  seasons: "season",
+};
+
 export async function updateSynced(
   sdb: ScopedDb,
   table: SyncedTbl,
@@ -881,8 +925,15 @@ export async function updateSynced(
   );
   const exists = await sdb.db.select({ id: table.id }).from(table).where(where).limit(1);
   if (!exists.length) throw new NotFoundError("No existe");
+  // K-06: queda en el registro de cambios quién editó o borró qué
+  const entity = key && AUDITED[key];
+  const deleting = patch.deletedAt != null;
+  const audit = entity
+    ? sdb.audit({ action: `${entity}_${deleting ? "delete" : "update"}`, entity, entityId: id, detail: deleting ? {} : patchDetail(patch) })
+    : [];
   await runBatch(sdb.db, [
     bumpVersion(sdb.db),
+    ...audit,
     sdb.db
       .update(table)
       .set({ ...patch, updatedAt: ts, version: currentVersion } as never)
@@ -1110,6 +1161,12 @@ async function replacePlots(
       .update(s.plots)
       .set({ deletedAt: ts, updatedAt: ts, version: currentVersion })
       .where(and(eq(s.plots.organizationId, org), inArray(s.plots.id, originalIds))),
+    ...sdb.audit({
+      action: originalIds.length === 1 ? "plot_split" : "plot_merge",
+      entity: "plot",
+      entityId: originalIds[0]!,
+      detail: { from: originalIds, to: ids },
+    }),
   ]);
   return { ids };
 }
@@ -1193,6 +1250,7 @@ export async function removeMember(sdb: ScopedDb, userId: string) {
           isNull(s.refreshTokens.revokedAt),
         ),
       ),
+    ...sdb.audit({ action: "member_remove", entity: "member", entityId: userId, detail: { role } }),
   ]);
 }
 

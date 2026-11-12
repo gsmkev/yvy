@@ -104,6 +104,10 @@ describe("estimateForage (puro)", () => {
     expect(both.totalKgDm).toBe(both.kgDmHa! * 10);
     expect(both.usableKgDm).toBe(Math.round(both.totalKgDm! * FORAGE.utilization));
     expect(both.daysLeft).toBe(Math.floor(both.usableKgDm! / 500));
+    // calibrada: la altura (2.400) manda y el NDVI de hoy (4.000) contra el de la medición (3.200) la sube un 25 %
+    expect(estimateForage({ ...base, heightCm: 20, cover: "medium", heightAt: NOW, ndvi: 0.7, ndviAt: NOW, ndviAtHeight: 0.6 })).toMatchObject({ method: "calibrated", kgDmHa: 3000 });
+    // la razón se acota: una imagen mala no dispara el número
+    expect(estimateForage({ ...base, heightCm: 20, cover: "medium", heightAt: NOW, ndvi: 0.9, ndviAt: NOW, ndviAtHeight: 0.21 }).kgDmHa).toBe(Math.round(2400 * FORAGE.ratioMax));
     expect(estimateForage({ ...base, ndvi: 0.7, ndviAt: NOW })).toMatchObject({ method: "ndvi", kgDmHa: 4000, daysLeft: null });
     expect(estimateForage(base)).toMatchObject({ method: null, kgDmHa: null, usableKgDm: null, stale: false });
     expect(estimateForage({ ...base, heightCm: 10, cover: "low", heightAt: NOW - 40 * DAY }).stale).toBe(true);
@@ -162,13 +166,39 @@ describe("GET /org/farms/:id/forage", () => {
     const res = await call<any>("GET", `/org/farms/${farmId}/forage`, { token: owner.token });
     expect(res.status).toBe(200);
     const a = res.body.plots.find((p: any) => p.plotId === A);
-    expect(a).toMatchObject({ method: "both", heightCm: 20, cover: "medium", ndvi: 0.7, head: 50, stale: false });
-    expect(a.kgDmHa).toBe(Math.round(0.6 * 2400 + 0.4 * 4000));
+    // la imagen es de la misma semana que la altura: la altura fija el nivel (2.400 kg MS/ha) y el NDVI no lo mueve
+    expect(a).toMatchObject({ method: "calibrated", heightCm: 20, cover: "medium", ndvi: 0.7, head: 50, stale: false });
+    expect(a.kgDmHa).toBe(2400);
     expect(a.demandKgDay).toBe(500);
     expect(a.daysLeft).toBeGreaterThan(0);
     const b = res.body.plots.find((p: any) => p.plotId === plotIds[1]);
     expect(b).toMatchObject({ method: null, kgDmHa: null, daysLeft: null });
     expect(res.body.coefficients.utilization).toBe(0.5);
+  });
+
+  it("una imagen posterior a la altura mueve la estimación; sin imagen cercana se pondera", async () => {
+    const { owner, farmId, plotIds } = await setupHerd();
+    const [A, B] = [plotIds[0]!, plotIds[1]!];
+    const now = Date.now();
+    await push(owner.token, [
+      rec(farmId, A, "pasture_status", { heightCm: 20, cover: "medium", livestockPresent: false }, now - 20 * DAY),
+      rec(farmId, B, "pasture_status", { heightCm: 20, cover: "medium", livestockPresent: false }, now - 20 * DAY),
+    ]);
+    const ts = Date.now();
+    const ndvi = (plotId: string, at: number, mean: number) => ({
+      id: newId(), organizationId: owner.orgId, plotId, sceneId: newId(), acquiredAt: at, idx: "ndvi" as const,
+      mean, p10: mean - 0.1, p90: mean + 0.1, validPct: 100, createdAt: ts, updatedAt: ts, version: 1,
+    });
+    await db().insert(s.plotIndexStats).values([
+      ndvi(A, now - 21 * DAY, 0.6), // 3.200 kg/ha el día de la medición
+      ndvi(A, now - 2 * DAY, 0.4), // 1.600 kg/ha hoy: la mitad
+      ndvi(B, now - 2 * DAY, 0.7), // B no tiene imagen de la fecha de la medición
+    ]);
+    const res = await call<any>("GET", `/org/farms/${farmId}/forage`, { token: owner.token });
+    const a = res.body.plots.find((p: any) => p.plotId === A);
+    expect(a).toMatchObject({ method: "calibrated", kgDmHa: 1200 }); // 2.400 x 0,5
+    const b = res.body.plots.find((p: any) => p.plotId === B);
+    expect(b).toMatchObject({ method: "both", kgDmHa: Math.round(0.6 * 2400 + 0.4 * 4000) });
   });
 
   it("permisos: el empleado no; no mezcla organizaciones", async () => {

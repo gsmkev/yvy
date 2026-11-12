@@ -78,9 +78,9 @@ export async function scheduled(controller: { cron: string }, env: Bindings, dep
       return;
     case CRONS.maintenance:
       await new SystemDb(getDb(env.DB)).purgeExpiredAuth(deps.now());
-      // P-03: los eventos de uso viejos se borran; los del embudo quedan
+      // P-03: las cuentas diarias de pantallas viejas se borran; los pasos del embudo quedan
       await getDb(env.DB).run(
-        sql`DELETE FROM events WHERE ts < ${deps.now() - LIMITS.events.retentionMs} AND name NOT IN ('signup', 'farm_created', 'plots_created', 'member_added', 'first_record')`,
+        sql`DELETE FROM events_daily WHERE day < ${localDate(deps.now() - LIMITS.events.retentionMs)}`,
       );
       await purgeApiRate(getDb(env.DB), deps.now());
       // P-06: pasa a R2 una tanda de datos viejos (solo si ARCHIVE_AFTER_MONTHS está configurada)

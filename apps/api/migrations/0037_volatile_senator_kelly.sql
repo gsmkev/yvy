@@ -1,0 +1,1 @@
+ALTER TABLE `plot_index_stats` ADD `low_confidence` integer DEFAULT false NOT NULL;

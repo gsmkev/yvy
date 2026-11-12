@@ -1,5 +1,5 @@
-# Verifica cada mes que el último backup de D1 (R2) se puede restaurar (P-05): esquema contra las migraciones y filas
-# en las tablas clave. Si falla, el workflow queda en rojo y GitHub avisa. Ver docs/DEPLOY.md, "Restaurar un backup".
+# Verifica cada mes que el último backup de D1 (R2) se puede restaurar (P-05): esquema contra las migraciones, filas
+# en las tablas clave y conteos contra los de D1 al exportar (el backup semanal ya lo verifica al hacerlo; esto confirma lo guardado). Si falla, el workflow queda en rojo y GitHub avisa. Ver docs/DEPLOY.md, "Restaurar un backup".
 name: Verificar backup D1
 on:
   schedule: [{ cron: "40 7 2 * *" }]

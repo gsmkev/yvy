@@ -5,7 +5,8 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { gzipSync } from "node:zlib";
 import { DatabaseSync } from "node:sqlite";
-import { MIGRATIONS_DIR, readBackup, restoreAndVerify } from "./restore-backup.mjs";
+import { compareCounts, MIGRATIONS_DIR, readBackup, restoreAndVerify } from "./restore-backup.mjs";
+import { COUNT_TABLES, countsSql, parseCounts } from "./backup-counts.mjs";
 
 /** Una copia como la de `wrangler d1 export`: PRAGMA, el esquema de las migraciones y los datos. */
 const schema = (omit) =>
@@ -84,4 +85,38 @@ test("avisa de tablas que el repo no conoce, sin fallar", () => {
   const r = restoreAndVerify(backup('CREATE TABLE "rara" (id integer);'));
   assert.equal(r.ok, true);
   assert.match(r.warnings.join("\n"), /rara/);
+});
+
+test("conteos de D1: la copia puede tener de más, no de menos que la tolerancia", () => {
+  assert.deepEqual(compareCounts({ records: 1000 }, { records: 1000 }), []);
+  assert.deepEqual(compareCounts({ records: 1010 }, { records: 1000 }), []);
+  assert.deepEqual(compareCounts({ records: 981 }, { records: 1000 }), []); // 2 % de tolerancia
+  assert.match(compareCounts({ records: 970 }, { records: 1000 })[0], /records tiene 970 filas en la copia y D1 tenía 1000/);
+  assert.deepEqual(compareCounts({ farms: 2 }, { farms: 7 }), []); // tablas chicas: mínimo 5
+  assert.equal(compareCounts({ farms: 1 }, { farms: 7 }).length, 1);
+  assert.match(compareCounts({}, { tasks: 9 })[0], /no tiene la tabla tasks/);
+});
+
+test("la restauración falla si los conteos de D1 no cierran, y pasa si cierran", () => {
+  const ok = restoreAndVerify(backup(), { expectedCounts: { organizations: 1, users: 1, memberships: 1 } });
+  assert.equal(ok.ok, true, ok.errors.join("; "));
+  const bad = restoreAndVerify(backup(), { expectedCounts: { organizations: 1, users: 30 } });
+  assert.equal(bad.ok, false);
+  assert.match(bad.errors.join("\n"), /users tiene 1 filas en la copia y D1 tenía 30/);
+});
+
+test("conteos: la consulta cubre las tablas de negocio y existen en el esquema", () => {
+  const sql = countsSql();
+  for (const t of COUNT_TABLES) assert.match(sql, new RegExp(`FROM "${t}"`));
+  assert.ok(!/UNION/i.test(sql), "D1 limita los términos de una consulta compuesta");
+  assert.ok(!/DELETE|UPDATE|INSERT|DROP/i.test(sql), "solo lectura");
+  const db = new DatabaseSync(":memory:");
+  db.exec(schema());
+  db.exec(`INSERT INTO organizations (id,name,country,plan,created_at,updated_at) VALUES ('o1','X','PY','trial',1,1)`);
+  const rows = db.prepare(sql).all();
+  assert.equal(Object.keys(rows[0]).length, COUNT_TABLES.length);
+  const counts = parseCounts([{ results: rows, success: true }]);
+  assert.equal(counts.organizations, 1);
+  assert.equal(counts.records, 0);
+  assert.throws(() => parseCounts([{ results: [] }]), /no devolvió/);
 });

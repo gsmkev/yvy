@@ -89,12 +89,13 @@ export default function Today() {
       <FarmLine />
       <Text style={T.small}>{dayLabel()}</Text>
       <Text style={[T.display, { marginTop: 2, marginBottom: 4 }]}>{session?.user.fullName.split(" ")[0]}</Text>
-      {/* La lluvia es lo que más se anota: un toque, directo a los milímetros (lluvia de la estancia, sin lote). */}
+      {/* La lluvia es lo que más se anota: un toque, directo a los milímetros (lluvia de la estancia, sin lote).
+          El mismo destino lo abre el atajo de Android (yvy://annotate?kind=rain&farmLevel=1). */}
       <Button
-        kind="text"
+        kind="secondary"
         title={t("app.quickRain")}
         onPress={() => router.push({ pathname: "/annotate", params: { kind: "rain", farmLevel: "1" } })}
-        style={{ alignSelf: "flex-start", paddingHorizontal: 0, marginBottom: 16 }}
+        style={{ marginTop: 12, marginBottom: 16 }}
       />
 
       {summary && (

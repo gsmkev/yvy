@@ -54,6 +54,10 @@ class Grid:
     plots: list[tuple[str, BaseGeometry]]  # en crs
 
 
+# Mapa base con contexto: 3 km alrededor de la estancia (con 1 km una estancia chica se veía como un recorte aislado)
+BASEMAP_BUFFER_M = 3000.0
+BASEMAP_MARGIN_DEG = 0.03
+
 def make_grid(geom: dict[str, Any], buffer_m: float = 200.0) -> Grid:
     farm_wgs = load(geom["farm"])
     crs = utm_crs(farm_wgs.centroid.x, farm_wgs.centroid.y)
@@ -204,7 +208,8 @@ def s2_ingest(api: IngestClient, farm: dict[str, Any], days: int = DAILY_DAYS, u
     for key, group in group_passes(items):
         acquired = _epoch_ms(group[0])
         cloud = float(np.mean([it["properties"].get("eo:cloud_cover", 0) for it in group]))
-        scene = api.scene(SOURCE, key, acquired, round(cloud, 1))
+        # La marca de "procesada" es por estancia: la misma pasada cubre a varias y cada una necesita sus estadísticas
+        scene = api.scene(SOURCE, f"{farm['id']}:{key}", acquired, round(cloud, 1))
         if scene["processed"]:
             continue
         t0 = time.time()
@@ -246,7 +251,7 @@ def s2_basemap(api: IngestClient, farm: dict[str, Any], days: int = BASEMAP_DAYS
     items = search(farm_bbox(farm), end - timedelta(days=days), end, 30.0)[-12:]
     if not items:
         raise RuntimeError("Sin escenas con poca nubosidad en el período")
-    grid = make_grid(api.farm_geometry(farm["id"]), buffer_m=1000.0)
+    grid = make_grid(api.farm_geometry(farm["id"]), buffer_m=BASEMAP_BUFFER_M)
     stacks: dict[str, list[np.ndarray]] = {"red": [], "green": [], "blue": []}
     raw: dict[str, list[np.ndarray]] = {"red": [], "green": [], "blue": []}
     for item in items:
@@ -266,11 +271,13 @@ def s2_basemap(api: IngestClient, farm: dict[str, Any], days: int = BASEMAP_DAYS
     # Estiramiento simple 0-0,3 de reflectancia con gamma para que se vea natural
     img = np.clip(np.nan_to_num(rgb) / 0.3, 0, 1) ** (1 / 1.4) * 255
     rgba = np.concatenate([img.astype(np.uint8), np.where(alpha, 255, 0)[None].astype(np.uint8)])
-    return publish_layer(api, farm, grid, "true_color", _epoch_ms(items[-1]), rgba) if upload else 0
+    return publish_layer(api, farm, grid, "true_color", _epoch_ms(items[-1]), rgba, BASEMAP_MARGIN_DEG) if upload else 0
 
 
-def publish_layer(api: IngestClient, farm: dict[str, Any], grid: Grid, layer: str, acquired: int, rgba: np.ndarray) -> int:
-    bounds = (farm["minLon"] - 0.01, farm["minLat"] - 0.01, farm["maxLon"] + 0.01, farm["maxLat"] + 0.01)
+def publish_layer(
+    api: IngestClient, farm: dict[str, Any], grid: Grid, layer: str, acquired: int, rgba: np.ndarray, margin_deg: float = 0.01
+) -> int:
+    bounds = (farm["minLon"] - margin_deg, farm["minLat"] - margin_deg, farm["maxLon"] + margin_deg, farm["maxLat"] + margin_deg)
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / f"{layer}.pmtiles"
         size = write_pmtiles(rgba, grid.transform, grid.crs, path, bounds, f"Yvy {layer}", ATTRIBUTION)

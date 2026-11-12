@@ -8,12 +8,15 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import logging
 import os
 import time
 from collections.abc import Iterable, Iterator
 from typing import Any
 
 import httpx
+
+log = logging.getLogger("yvy_workers")
 
 MAX_ROWS = 40
 
@@ -49,7 +52,20 @@ class IngestClient:
             "x-yvy-signature": sign(self.secret, ts, method, path, body),
         }
         # La firma cubre solo la ruta (sin query), igual que el Worker
-        res = self.http.request(method, self.base_url + path, params=query, content=body or None, headers=headers)
+        res = None
+        for attempt in range(4):
+            try:
+                res = self.http.request(method, self.base_url + path, params=query, content=body or None, headers=headers)
+                break
+            except httpx.TransportError as e:
+                # Cloudflare cierra conexiones que quedaron ociosas mientras el job bajaba archivos: se reintenta
+                # (todos los endpoints de /ingest son idempotentes: upsert por clave).
+                if attempt == 3:
+                    raise
+                wait = 2 * (attempt + 1)
+                log.warning("ingest %s %s: %s, reintento en %ds", method, path, type(e).__name__, wait)
+                time.sleep(wait)
+        assert res is not None
         if res.is_error:
             # Incluir la respuesta del Worker (mensaje de validación) para que el log del job diga qué falló
             raise httpx.HTTPStatusError(f"{res.status_code} en {method} {path}: {res.text[:500]}", request=res.request, response=res)

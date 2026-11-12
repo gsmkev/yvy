@@ -8,7 +8,8 @@ import { buildExportZip, collectExportData } from "../lib/reportsExport";
 import { t } from "../lib/i18n";
 import { get } from "../lib/api";
 import { fetchAllRecords, useFarm, useMe } from "../lib/queries";
-import type { Alert } from "../lib/types";
+import type { Alert, Poi, Product } from "../lib/types";
+import { buildAuditReport } from "../lib/auditReportData";
 import {
   fetchClimate,
   fetchNdvi,
@@ -77,6 +78,27 @@ export function FarmReportsPage() {
         />,
       ).toBlob();
       download(blob, `campana-${plot.name}-${to}.pdf`);
+    });
+
+  /** R-05: aplicaciones del año con productos, dosis, carencia, distancia a agua o vivienda y operadores. */
+  const auditPdf = () =>
+    run(async () => {
+      const to = localDate(Date.now());
+      const from = `${to.slice(0, 4)}-01-01`;
+      const fromMs = Date.parse(`${from}T00:00:00-03:00`);
+      const toMs = Date.parse(`${to}T23:59:59-03:00`);
+      const [applications, harvests, products] = await Promise.all([
+        fetchAllRecords({ farmId, kind: "application", from: fromMs, to: toMs }, 2000),
+        fetchAllRecords({ farmId, kind: "harvest", from: fromMs, to: toMs }, 500),
+        get<Product[]>("/org/products"),
+      ]);
+      const data = buildAuditReport({ from, to, applications, harvests, products, pois: farm.data!.pois as Poi[] });
+      const [{ pdf }, { AuditReport }] = await Promise.all([
+        import("@react-pdf/renderer"),
+        import("../lib/auditReportPdf"),
+      ]);
+      const blob = await pdf(<AuditReport {...data} farm={f} generatedAt={Date.now()} />).toBlob();
+      download(blob, `auditoria-${f.name}-${to}.pdf`);
     });
 
   const exportZip = () =>
@@ -153,6 +175,15 @@ export function FarmReportsPage() {
         <div className="mt-3">
           <Button variant="primary" onClick={bankPdf} disabled={busy}>
             {busy ? t("ui.reportsGenerating") : t("ui.reportsBankPdf")}
+          </Button>
+        </div>
+      </section>
+      <section>
+        <h2 className="font-serif text-xl font-semibold">{t("ui.auditReportTitle")}</h2>
+        <p className="mt-1 text-sm text-tinta-2">{t("ui.auditReportIntro")}</p>
+        <div className="mt-3">
+          <Button variant="primary" onClick={auditPdf} disabled={busy}>
+            {busy ? t("ui.reportsGenerating") : t("ui.auditReportPdf")}
           </Button>
         </div>
       </section>

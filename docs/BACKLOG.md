@@ -328,7 +328,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | R-02 | Parte semanal por email los lunes con el PDF adjunto | P1 | M | Hecho |
 | R-03 | Resumen de campaña por lote en PDF (RF-81): siembra, aplicaciones, lluvia, vigor, cosecha | P1 | M | Falta |
 | R-04 | Informe para el banco: superficie, historia productiva, vigor, clima, sin deforestación | P1 | M | Falta |
-| R-05 | Informe de auditoría para certificaciones (soja responsable, buenas prácticas) | P2 | M | Falta |
+| R-05 | Informe de auditoría para certificaciones (soja responsable, buenas prácticas) | P2 | M | Hecho |
 | R-06 | Tablero del dueño: superficie por cultivo, lluvia, avisos, actividad, margen | P1 | M | Parcial |
 | R-07 | Comparación entre estancias y entre campañas | P2 | M | Hecho |
 | R-08 | Comparación anónima con la zona (vigor y lluvia de campos vecinos) | P3 | M | Falta |

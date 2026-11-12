@@ -81,6 +81,18 @@ const livestockSchemas = {
     counts: herdCountsSchema,
     note,
   }),
+  /**
+   * Abigeato (G-13): cabezas que faltan después de un conteo. El potrero es records.plot_id y la fecha del aviso es
+   * capturedAt. `reportedAt` (epoch ms) y `policeReport` (número de denuncia) se completan cuando se hace la denuncia.
+   * Descuenta de la hacienda del potrero, igual que la mortandad.
+   */
+  theft: z.object({
+    category: z.enum(HERD_CATEGORIES),
+    head: z.number().int().min(1).max(MAX_HEAD_PER_CATEGORY),
+    reportedAt: z.number().int().nonnegative().optional(),
+    policeReport: z.string().trim().min(1).max(40).optional(),
+    note,
+  }),
 };
 // ---------- fin ganaderia ----------
 /** Unidad de la densidad de siembra: semillas por metro lineal o kg por hectárea. */

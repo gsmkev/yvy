@@ -116,6 +116,16 @@ export const FLOWS: Record<RecordKind, Step[]> = {
       options: MORTALITY_CAUSES.map((v) => ({ value: v, label: `fields.cause_${v}` })),
     },
   ],
+  theft: [
+    {
+      key: "category",
+      kind: "choice",
+      question: "app.theftCategoryQuestion",
+      options: HERD_CATEGORIES.map((v) => ({ value: v, label: `fields.herd_${v}` })),
+    },
+    { key: "head", kind: "number", question: "app.theftHeadQuestion", hint: "app.theftHeadHint", unit: "cabezas", max: 1000, integer: true, min: 1 },
+    { key: "policeReport", kind: "text", question: "app.theftReportQuestion", optional: true },
+  ],
   health: [
     {
       key: "reason",
@@ -205,10 +215,10 @@ export const visibleSteps = (steps: Step[], values: Record<string, unknown>, ctx
 /** Qué se puede anotar en cada tipo de lote, en el orden de frecuencia real. */
 export const KINDS_FOR = (plotKind: "crop" | "pasture" | null): RecordKind[] =>
   plotKind === "pasture"
-    ? ["pasture_status", "herd_count", "herd_move", "mortality", "health", "rain", "water", "pest", "scouting", "note"]
+    ? ["pasture_status", "herd_count", "herd_move", "mortality", "theft", "health", "rain", "water", "pest", "scouting", "note"]
     : plotKind === "crop"
       ? ["scouting", "pest", "crop_status", "application", "fertilization", "sowing", "harvest", "fuel_load", "rain", "water", "note"]
       : ["rain", "scouting", "water", "health", "note", "pest", "crop_status", "pasture_status", "application", "fertilization", "sowing", "harvest", "fuel_load"];
 
 /** Registros de hacienda: son de un solo potrero, no se cargan en varios a la vez (F-10). */
-export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count", "herd_move", "mortality", "health"];
+export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count", "herd_move", "mortality", "theft", "health"];

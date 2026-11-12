@@ -7,13 +7,14 @@ import { fmtDay, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useMe } from "../lib/queries";
 import { HeatStressCard } from "./HeatStress";
-import { Button, Empty, ErrorBox, Field, Input, Spinner } from "./ui";
+import { TheftPanel } from "./TheftPanel";
+import { Button, Empty, ErrorBox, Field, Input, Spinner, Tabs } from "./ui";
 
 const dec = new Intl.NumberFormat("es-PY", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const int = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 });
 const num = (v: string) => Number(v.replace(",", "."));
 
-export function HerdPanel({ farmId }: { farmId: string }) {
+function StockSection({ farmId }: { farmId: string }) {
   const me = useMe();
   const canEditLimit = me.data?.role === "owner" || me.data?.role === "admin";
   const qc = useQueryClient();
@@ -132,6 +133,27 @@ export function HerdPanel({ farmId }: { farmId: string }) {
           list: HERD_CATEGORIES.map((c) => `${tk(`fields.herd_${c}`).toLowerCase()} ${dec.format(UA_EQUIVALENTS[c])}`).join(", "),
         })}
       </p>
+    </div>
+  );
+}
+
+type Section = "stock" | "theft";
+
+/** Pestaña Hacienda: hacienda calculada y, abajo, cada módulo de ganadería en su sección. */
+export function HerdPanel({ farmId }: { farmId: string }) {
+  const [section, setSection] = useState<Section>("stock");
+  return (
+    <div className="mt-4 flex flex-col gap-2">
+      <Tabs<Section>
+        value={section}
+        onChange={setSection}
+        tabs={[
+          { id: "stock", label: t("ui.herdSectionStock") },
+          { id: "theft", label: t("ui.herdSectionTheft") },
+        ]}
+      />
+      {section === "stock" && <StockSection farmId={farmId} />}
+      {section === "theft" && <TheftPanel farmId={farmId} />}
     </div>
   );
 }

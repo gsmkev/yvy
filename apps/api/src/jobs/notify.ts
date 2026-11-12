@@ -3,9 +3,9 @@
  * cada corrida usa 2 subrequests. Email con tope diario (Resend gratis: 100/día).
  */
 import { and, asc, eq, gte, inArray, isNotNull, sql } from "drizzle-orm";
-import { t } from "@yvy/shared";
+import { inQuietHours, localTime, parseNotificationPrefs, t } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
-import { runBatch, type DB, type Stmt } from "../db/client";
+import { chunkForParams, runBatch, type DB, type Stmt } from "../db/client";
 import type { Bindings } from "../types";
 
 export const EMAIL_DAILY_CAP = 90;
@@ -55,6 +55,7 @@ export async function sendPending(
       probability: s.alerts.probability,
       source: s.alerts.source,
       farmName: s.farms.name,
+      tz: s.farms.timezone,
       alertId: s.alerts.id,
     })
     .from(s.notifications)
@@ -63,7 +64,24 @@ export async function sendPending(
     .innerJoin(s.farms, eq(s.farms.id, s.alerts.farmId))
     .where(eq(s.notifications.status, "pending"))
     .orderBy(asc(s.notifications.createdAt))
-    .limit(BATCH);
+    .limit(BATCH * 3);
+  // U-29: el push dentro del horario de silencio del usuario (hora de la estancia) queda pendiente hasta que termine.
+  const quiet = new Map<string, ReturnType<typeof parseNotificationPrefs>["quiet"]>();
+  const pushUsers = [...new Set(pending.filter((p) => p.channel === "push").map((p) => p.userId))];
+  for (const chunk of chunkForParams(pushUsers, 1)) {
+    const found = await db
+      .select({ userId: s.notificationPrefs.userId, prefs: s.notificationPrefs.prefs })
+      .from(s.notificationPrefs)
+      .where(inArray(s.notificationPrefs.userId, chunk));
+    for (const f of found) quiet.set(f.userId, parseNotificationPrefs(f.prefs).quiet);
+  }
+  const held = (p: (typeof pending)[number]) => {
+    const q = quiet.get(p.userId);
+    return p.channel === "push" && !!q && inQuietHours(q, localTime(now, p.tz));
+  };
+  const batch = pending.filter((p) => !held(p)).slice(0, BATCH);
+  pending.length = 0;
+  pending.push(...batch);
   if (!pending.length) return { push: 0, email: 0 };
 
   const title = (p: (typeof pending)[number]) => `${KIND_LABEL[p.kind] ?? p.kind} · ${p.farmName}`;
@@ -107,9 +125,17 @@ export async function sendPending(
       (res.ok ? sent : failed).push(...pushes.map((p) => p.id));
       if (res.ok) {
         // B9: Expo responde 200 con un estado por mensaje; los tokens inválidos se borran.
-        const dead = await deadTokens(res, messages.slice(0, 100).map((m) => m.to));
+        const dead = await deadTokens(
+          res,
+          messages.slice(0, 100).map((m) => m.to),
+        );
         for (let i = 0; i < dead.length; i += 90)
-          cleanup.push(db.update(s.devices).set({ pushToken: null }).where(inArray(s.devices.pushToken, dead.slice(i, i + 90))));
+          cleanup.push(
+            db
+              .update(s.devices)
+              .set({ pushToken: null })
+              .where(inArray(s.devices.pushToken, dead.slice(i, i + 90))),
+          );
       }
     } else {
       sent.push(...pushes.map((p) => p.id)); // sin dispositivos: nada que mandar
@@ -170,6 +196,117 @@ export async function sendPending(
         .update(s.notifications)
         .set({ status: "failed" })
         .where(inArray(s.notifications.id, failed.slice(i, i + 90))),
+    );
+  await runBatch(db, stmts);
+  return {
+    push: pushes.filter((p) => sent.includes(p.id)).length,
+    email: emails.filter((e) => sent.includes(e.id)).length,
+  };
+}
+
+/**
+ * T-08: avisos de mención en comentarios (push y email). Salen en la misma corrida de 15 min que los avisos
+ * agronómicos; el email comparte el tope diario. Sin RESEND_API_KEY (desarrollo) el email se imprime.
+ */
+export async function sendMentions(
+  db: DB,
+  env: Bindings,
+  fetchFn: typeof fetch = fetch,
+  now = Date.now(),
+): Promise<{ push: number; email: number }> {
+  const pending = await db
+    .select({
+      id: s.notifications.id,
+      channel: s.notifications.channel,
+      userId: s.notifications.userId,
+      email: s.users.email,
+      body: s.comments.body,
+      author: s.comments.authorName,
+      recordId: s.comments.recordId,
+    })
+    .from(s.notifications)
+    .innerJoin(s.users, eq(s.users.id, s.notifications.userId))
+    .innerJoin(s.comments, eq(s.comments.id, s.notifications.commentId))
+    .where(and(eq(s.notifications.status, "pending"), isNotNull(s.notifications.commentId)))
+    .orderBy(asc(s.notifications.createdAt))
+    .limit(BATCH);
+  if (!pending.length) return { push: 0, email: 0 };
+  const title = (p: (typeof pending)[number]) => t("ui.mentionTitle", { name: p.author || "Alguien" });
+  const sent: string[] = [];
+  const failed: string[] = [];
+
+  const pushes = pending.filter((p) => p.channel === "push");
+  if (pushes.length) {
+    const tokens = await db
+      .select({ userId: s.devices.userId, token: s.devices.pushToken })
+      .from(s.devices)
+      .where(
+        and(
+          inArray(s.devices.userId, [...new Set(pushes.map((p) => p.userId))].slice(0, 90)),
+          isNotNull(s.devices.pushToken),
+        ),
+      );
+    const messages = pushes.flatMap((p) =>
+      tokens
+        .filter((tk) => tk.userId === p.userId)
+        .map((tk) => ({
+          to: tk.token,
+          title: title(p),
+          body: p.body.slice(0, 140),
+          data: { recordId: p.recordId },
+          sound: "default",
+        })),
+    );
+    if (messages.length) {
+      const res = await fetchFn("https://exp.host/--/api/v2/push/send", {
+        method: "POST",
+        headers: { "content-type": "application/json", accept: "application/json" },
+        body: JSON.stringify(messages.slice(0, 100)),
+      });
+      (res.ok ? sent : failed).push(...pushes.map((p) => p.id));
+    } else sent.push(...pushes.map((p) => p.id));
+  }
+
+  const emails = pending.filter((p) => p.channel === "email");
+  if (emails.length) {
+    const [{ n }] = (await db
+      .select({ n: sql<number>`count(*)` })
+      .from(s.notifications)
+      .where(
+        and(
+          eq(s.notifications.channel, "email"),
+          eq(s.notifications.status, "sent"),
+          gte(s.notifications.sentAt, now - 86_400_000),
+        ),
+      )) as [{ n: number }];
+    const room = Math.max(0, EMAIL_DAILY_CAP - n);
+    sent.push(...emails.filter((e) => !e.email).map((e) => e.id));
+    for (const e of emails.filter((x) => x.email).slice(0, room)) {
+      const text = `${e.body}\n\n${env.APP_URL}/registros`;
+      try {
+        if (!env.RESEND_API_KEY) console.log(`[email:dev] ${e.email}: ${title(e)} — ${text}`);
+        else {
+          const res = await fetchFn("https://api.resend.com/emails", {
+            method: "POST",
+            headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
+            body: JSON.stringify({ from: env.EMAIL_FROM, to: e.email, subject: `Yvy · ${title(e)}`, text }),
+          });
+          if (!res.ok) throw new Error(String(res.status));
+        }
+        sent.push(e.id);
+      } catch {
+        failed.push(e.id);
+      }
+    }
+  }
+  const stmts: Stmt[] = [];
+  for (let i = 0; i < sent.length; i += 90)
+    stmts.push(
+      db.update(s.notifications).set({ status: "sent", sentAt: now }).where(inArray(s.notifications.id, sent.slice(i, i + 90))),
+    );
+  for (let i = 0; i < failed.length; i += 90)
+    stmts.push(
+      db.update(s.notifications).set({ status: "failed" }).where(inArray(s.notifications.id, failed.slice(i, i + 90))),
     );
   await runBatch(db, stmts);
   return {

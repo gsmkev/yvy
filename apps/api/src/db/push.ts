@@ -30,6 +30,7 @@ import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from
 import { hasEffects, recordEffects, type EffectRecord } from "./erp-effects";
 import { auditStmts } from "./audit";
 import { mentionStmts, validMentions } from "./comments";
+import { countEffects } from "./inventory-count";
 import { funnelEvent } from "./events";
 import { can, type ScopedDb } from "./scoped";
 
@@ -375,6 +376,11 @@ export async function applyPush(
         }
         if ((r.lon === null) !== (r.lat === null) || r.schemaVersion > RECORD_SCHEMA_VERSION) {
           reject(m, "invalid");
+          break;
+        }
+        // El recuento de depósito es del ERP: el empleado no entra (E-15).
+        if (r.kind === "stock_count" && !can.viewStock(auth.role)) {
+          reject(m, "forbidden");
           break;
         }
         const data = parseRecordData(r.kind, r.data);
@@ -868,6 +874,8 @@ export async function applyPush(
   }
   // ERP (E-13): consumo de insumos y costo de los registros que llegan, y reversión de los que se borran.
   stmts.push(...(await recordEffects(sdb, effectUpserts, recordDeletes)));
+  // ERP (E-15): ajustes de stock de los recuentos de depósito.
+  stmts.push(...(await countEffects(sdb, effectUpserts, recordDeletes)));
   for (const chunk of chunkForParams(attachmentUpserts, paramsPerRow(s.attachments))) {
     stmts.push(
       db

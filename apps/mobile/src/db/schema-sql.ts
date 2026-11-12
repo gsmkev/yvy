@@ -226,5 +226,7 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `cash_moves_account_idx` ON `cash_moves` (`organization_id`,`account_id`,`date`);",
   "CREATE INDEX `cash_moves_doc_idx` ON `cash_moves` (`doc_id`);",
   "CREATE TABLE `account_map` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`key` text NOT NULL,\n\t`code` text NOT NULL,\n\t`name` text NOT NULL,\n\t`updated_by` text NOT NULL,\n\t`updated_at` integer NOT NULL\n);",
-  "CREATE UNIQUE INDEX `account_map_key_uq` ON `account_map` (`organization_id`,`key`);"
+  "CREATE UNIQUE INDEX `account_map_key_uq` ON `account_map` (`organization_id`,`key`);",
+  "ALTER TABLE `warehouses` ADD `version` integer DEFAULT 0 NOT NULL;",
+  "CREATE INDEX `warehouses_sync_idx` ON `warehouses` (`organization_id`,`version`,`id`);"
 ];

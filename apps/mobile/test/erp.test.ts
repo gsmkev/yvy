@@ -108,3 +108,43 @@ describe("orden de trabajo en la tarea (E-20, E-21)", () => {
     expect(db.orderOf(c.id)).toBeNull();
   });
 });
+
+describe("recuento de depósito (E-15)", () => {
+  it("canCount: dueño, administrador y agrónomo; el empleado no", async () => {
+    const { canCount } = await import("../src/lib/stock-count");
+    expect(["owner", "admin", "agronomist", "worker", undefined].map(canCount)).toEqual([true, true, true, false, false]);
+  });
+
+  it("parseCounted acepta coma o punto y descarta vacío, texto y negativos", async () => {
+    const { parseCounted } = await import("../src/lib/stock-count");
+    expect(["12,5", " 12.5 ", "0", "", "abc", "-1", undefined].map(parseCounted)).toEqual([12.5, 12.5, 0, null, null, null, null]);
+  });
+
+  it("buildCountData cuenta solo lo escrito (el 0 cuenta) y es válido para el esquema", async () => {
+    const { buildCountData } = await import("../src/lib/stock-count");
+    const wh = newId();
+    const [a, b, c] = [newId(), newId(), newId()];
+    expect(buildCountData(wh, { [a]: "3,5", [b]: "", [c]: "0" }, " fin de mes ")).toEqual({
+      warehouseId: wh,
+      lines: [{ productId: a, counted: 3.5 }, { productId: c, counted: 0 }],
+      note: "fin de mes",
+    });
+    expect(buildCountData(wh, { [a]: "" })).toBeNull();
+    expect(buildCountData(wh, { "no-es-uuid": "3" })).toBeNull();
+  });
+
+  it("el recuento se guarda sin señal en una transacción con su mutación en el outbox y los depósitos bajan al celular", async () => {
+    const { buildCountData } = await import("../src/lib/stock-count");
+    const db = setup();
+    const farmId = newId();
+    const whId = newId();
+    const productId = newId();
+    const data = buildCountData(whId, { [productId]: "7" })!;
+    const id = db.saveRecord(newId(), ORG, { farmId, plotId: null, poiId: null, kind: "stock_count", data, lon: null, lat: null, gpsAccuracyM: null, capturedAt: Date.now() });
+    const queued = db.outboxItems();
+    expect(queued).toHaveLength(1);
+    expect(queued[0]).toMatchObject({ what: "record", recordKind: "stock_count" });
+    expect(id).toBeTruthy();
+    expect(db.warehouses()).toEqual([]);
+  });
+});

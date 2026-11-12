@@ -12,6 +12,7 @@ import { deleteUploadedFiles, storageUsage, type StorageUsage } from "../../src/
 import { canSwitchUser, unsentSummary } from "../../src/lib/switchUser";
 import { showToast } from "../../src/lib/toast";
 import { localChanged, stopAutoSync, syncNow, syncNowMobileData, useSyncStatus } from "../../src/lib/sync";
+import { canCount } from "../../src/lib/stock-count";
 import { useLocal } from "../../src/lib/useLocal";
 import { Button, Row, s as k, Text } from "../../src/ui/kit";
 import { C, F, T } from "../../src/ui/theme";
@@ -155,6 +156,7 @@ export default function More() {
 
       <Row title={t("app.walkRow")} subtitle={t("app.walkRowHint")} onPress={() => router.push("/walk")} />
       <Row title={t("app.animalsRow")} subtitle={t("app.animalsRowHint")} onPress={() => router.push("/animals")} />
+      {canCount(session?.organization.role) && <Row title={t("ui.countRow")} subtitle={t("ui.countRowHint")} onPress={() => router.push("/stock-count")} />}
       <Row title={t("app.notifRow")} subtitle={t("app.notifRowHint")} onPress={() => router.push("/notifications")} />
 
       {FEATURES.labs && (

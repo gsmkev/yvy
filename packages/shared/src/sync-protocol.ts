@@ -151,6 +151,7 @@ export const PULL_TABLES = [
   "machines",
   "animals",
   "comments",
+  "warehouses",
 ] as const;
 export type PullTable = (typeof PULL_TABLES)[number];
 

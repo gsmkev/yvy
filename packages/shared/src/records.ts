@@ -304,6 +304,20 @@ export const recordDataSchemas = {
     productId: uuidStr.optional(),
     note,
   }),
+  /**
+   * Recuento físico de un depósito (E-15), contado en el galpón sin señal. `counted` es lo que hay, no la diferencia:
+   * al llegar al servidor, la diferencia con el stock de ese momento se asienta como ajuste (origin "adjustment",
+   * con el id del registro). Editar o borrar el registro revierte esos ajustes.
+   */
+  stock_count: z.object({
+    warehouseId: uuidStr,
+    lines: z
+      .array(z.object({ productId: uuidStr, counted: z.number().min(0).max(1_000_000_000) }))
+      .min(1)
+      .max(60)
+      .refine((l) => new Set(l.map((x) => x.productId)).size === l.length, "Un producto aparece dos veces"),
+    note,
+  }),
   application: z
     .object({
       seasonId,

@@ -70,6 +70,7 @@ export const RECORD_KINDS = [
   "herd_count",
   "herd_move",
   "mortality",
+  "stock_count",
   "health",
   "theft",
   "supplement",
@@ -678,9 +679,9 @@ export const warehouses = sqliteTable(
     type: text("type", { enum: WAREHOUSE_TYPES }).notNull().default("shed"),
     /** Donde se descuentan los consumos automáticos de los registros de campo (E-13). */
     isDefault: integer("is_default", { mode: "boolean" }).notNull().default(false),
-    ...timestamps,
+    ...synced,
   },
-  (t) => [index("warehouses_farm_idx").on(t.organizationId, t.farmId)],
+  (t) => [index("warehouses_farm_idx").on(t.organizationId, t.farmId), index("warehouses_sync_idx").on(t.organizationId, t.version, t.id)],
 );
 
 /**

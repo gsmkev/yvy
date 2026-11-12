@@ -8,7 +8,7 @@ import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { ANALYSIS_KINDS, INDEX_KINDS, LAYERS } from "@yvy/shared/schema";
-import { farmRiskSchema, LIMITS } from "@yvy/shared";
+import { farmRiskSchema, farmSpiSchema, LIMITS } from "@yvy/shared";
 import { getDb } from "../db/client";
 import { SystemDb } from "../db/system";
 import { hmacVerifyHex } from "../lib/crypto";
@@ -397,4 +397,19 @@ ingest.post("/weekly-reports", async (c) => {
   if (!(await c.var.sys.saveWeeklyReport(b.farmId, b.periodStart, b.periodEnd, b.storagePath, Date.now())))
     throw new HTTPException(404, { message: "Estancia inexistente" });
   return c.json({ ok: true }, 201);
+});
+
+/** C-07: lluvia diaria de la estancia (CHIRPS) para que el job calcule el SPI. */
+ingest.get("/farms/:id/precip", async (c) => {
+  const q = parse(z.object({ from: isoDay }), c.req.query());
+  return c.json(await c.var.sys.farmPrecip(c.req.param("id"), q.from));
+});
+
+/** SPI a 1, 3 y 6 meses (job spi, C-07): ya viene calculado; el Worker valida la forma y lo guarda. */
+ingest.post("/farm-spi", async (c) => {
+  const b = parse(z.object({ farmId: uuid, report: farmSpiSchema }), json(c.var.body));
+  if (c.var.body.length > 5_000) throw new HTTPException(413, { message: "Informe demasiado grande" });
+  if (!(await c.var.sys.upsertFarmSpi(b.farmId, JSON.stringify(b.report), Date.now())))
+    throw new HTTPException(404, { message: "Estancia inexistente" });
+  return c.json({ ok: true });
 });

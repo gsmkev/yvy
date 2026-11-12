@@ -2,7 +2,7 @@
  * Acceso de sistema (sin usuario): /ingest firmado por HMAC y crons. Única excepción a scopedDb.
  * Cada escritura deriva organization_id de la fila padre (lote o estancia), nunca del request.
  */
-import { and, desc, eq, gte, inArray, isNull, lt, lte, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lt, lte, or, sql } from "drizzle-orm";
 import { addDays, DEFAULT_ALERT_SETTINGS, localDate, newId, type AlertSettings } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { upsertAlert } from "../jobs/alerts";
@@ -500,6 +500,45 @@ export class SystemDb {
   }
 
   /** C-10: guarda (reemplaza) el informe de riesgo de la estancia. */
+  /** C-07: guarda (reemplaza) el SPI de la estancia. */
+  async upsertFarmSpi(farmId: string, report: string, now: number): Promise<boolean> {
+    const [f] = await this.db
+      .select({ id: s.farms.id })
+      .from(s.farms)
+      .where(and(eq(s.farms.id, farmId), isNull(s.farms.deletedAt)))
+      .limit(1);
+    if (!f) return false;
+    await this.db
+      .insert(s.farmSpi)
+      .values({ farmId, computedAt: now, report })
+      .onConflictDoUpdate({ target: s.farmSpi.farmId, set: { computedAt: now, report } });
+    return true;
+  }
+
+  /** C-07: lluvia diaria de la estancia desde una fecha (CHIRPS final, o preliminar si la final todavía no salió). */
+  async farmPrecip(farmId: string, from: string) {
+    const rows = await this.db
+      .select({ date: s.climateDaily.date, source: s.climateDaily.source, mm: s.climateDaily.precipMm })
+      .from(s.climateDaily)
+      .where(
+        and(
+          eq(s.climateDaily.farmId, farmId),
+          eq(s.climateDaily.plotId, ""),
+          inArray(s.climateDaily.source, ["chirps", "chirps_prelim"]),
+          gte(s.climateDaily.date, from),
+        ),
+      )
+      .orderBy(asc(s.climateDaily.date))
+      .limit(400);
+    const byDate = new Map<string, { mm: number; final: boolean }>();
+    for (const r of rows) {
+      if (r.mm === null) continue;
+      const cur = byDate.get(r.date);
+      if (!cur || (r.source === "chirps" && !cur.final)) byDate.set(r.date, { mm: r.mm, final: r.source === "chirps" });
+    }
+    return [...byDate.entries()].map(([date, v]) => ({ date, mm: v.mm }));
+  }
+
   async upsertFarmRisk(farmId: string, report: string, now: number): Promise<boolean> {
     const [f] = await this.db
       .select({ id: s.farms.id })

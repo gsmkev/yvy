@@ -21,7 +21,7 @@ import {
   type PHENO_STAGES,
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
-import { NotFoundError, type ScopedDb } from "./scoped";
+import { can, NotFoundError, type ScopedDb } from "./scoped";
 
 const DAY = 86_400_000;
 
@@ -401,4 +401,13 @@ export async function farmPlotForecast(sdb: ScopedDb, farmId: string) {
     byPlot.set(r.plotId, p);
   }
   return { enabled, minHa: LIMITS.weather.plotForecastMinFarmHa, plots: [...byPlot.values()] };
+}
+
+/** C-07: SPI a 1, 3 y 6 meses calculado por workers-py. */
+export async function farmSpiReport(sdb: ScopedDb, farmId: string) {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const [row] = await sdb.db.select().from(s.farmSpi).where(eq(s.farmSpi.farmId, farmId)).limit(1);
+  if (!row) return { computedAt: null, report: null };
+  return { computedAt: row.computedAt, report: JSON.parse(row.report) as unknown };
 }

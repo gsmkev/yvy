@@ -65,6 +65,26 @@ describe("costo y margen (E-30, E-31)", () => {
     expect(r.byCrop[0]).toMatchObject({ crop: "soja", costPyg: 1_800_000, incomePyg: 6_000_000, tons: 20 });
   });
 
+  it("por campaña: costos, ventas y margen de cada una, sin filtrar por campaña", async () => {
+    const s = await setup();
+    await load(s);
+    const r = await get(s);
+    const z = r.bySeason.find((x: any) => x.seasonId === s.seasonId);
+    expect(z).toMatchObject({ name: "Zafra 2026/27", costPyg: 2_000_000, incomePyg: 6_000_000, marginPyg: 4_000_000 });
+    // lo que no tiene campaña queda aparte
+    expect(r.bySeason.find((x: any) => x.seasonId === null)).toMatchObject({ costPyg: 999_000, incomePyg: 0 });
+  });
+
+  it("las ventas de granos y de hacienda cuentan como ingreso", async () => {
+    const s = await setup();
+    const c = (extra: Record<string, unknown>) => erpPost(s.owner.token, "costs", cost({ seasonId: s.seasonId, ...extra }));
+    await c({ plotId: s.plotIds[0], category: "sale", amount: 1_000_000, tons: 5 });
+    await c({ farmId: s.farmId, activity: "ganaderia", category: "sale", amount: 4_000_000 });
+    const r = await get(s, `?seasonId=${s.seasonId}`);
+    expect(r.totals.incomePyg).toBe(5_000_000);
+    expect(r.byActivity.find((x: any) => x.activity === "ganaderia")).toMatchObject({ incomePyg: 4_000_000 });
+  });
+
   it("los costos que nacen del campo (consumo de insumos) entran solos", async () => {
     const s = await setup();
     const wh = await erpPost(s.owner.token, "warehouses", { farmId: s.farmId, name: "Galpón", type: "shed" });
@@ -91,9 +111,10 @@ describe("resultFigures", () => {
     expect(resultFigures({ costPyg: 1_500_000, incomePyg: 6_000_000, areaHa: 10, tons: 20 })).toEqual({
       marginPyg: 4_500_000,
       costPerHa: 150_000,
+      incomePerHa: 600_000,
       marginPerHa: 450_000,
       costPerTon: 75_000,
     });
-    expect(resultFigures({ costPyg: 100, incomePyg: 0, areaHa: 0, tons: 0 })).toEqual({ marginPyg: -100, costPerHa: null, marginPerHa: null, costPerTon: null });
+    expect(resultFigures({ costPyg: 100, incomePyg: 0, areaHa: 0, tons: 0 })).toEqual({ marginPyg: -100, costPerHa: null, incomePerHa: null, marginPerHa: null, costPerTon: null });
   });
 });

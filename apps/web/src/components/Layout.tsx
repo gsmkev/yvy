@@ -12,6 +12,7 @@ import { loadPrefs } from "../lib/prefs";
 import { trackView } from "../lib/track";
 import { GlobalSearch } from "./GlobalSearch";
 import { AccountMenu, useOrganizations } from "./AccountMenu";
+import { TotpSection } from "./Totp";
 
 const NAV: { to: string; label: MessageKey }[] = [
   { to: "/", label: "ui.navMap" },
@@ -65,6 +66,8 @@ export function Layout() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
+  // P-08: el dueño exige segundo factor y este administrador todavía no lo activó: no ve otra cosa hasta activarlo
+  const mfaGate = useSyncExternalStore(onSession, () => getSession()?.mfaSetupRequired === true);
   const logout = async () => {
     const s = getSession();
     if (s) await post("/auth/logout", { refreshToken: s.refreshToken }).catch(() => {});
@@ -163,7 +166,14 @@ export function Layout() {
         </p>
       )}
       <main id="main" tabIndex={-1} className="min-h-0 min-w-0 flex-1 overflow-auto outline-none print:overflow-visible">
-        <Outlet />
+        {mfaGate ? (
+          <div className="mx-auto w-full max-w-2xl p-4 sm:p-6">
+            <h1 className="text-[28px] leading-tight">{t("ui.totpSetupGateTitle")}</h1>
+            <TotpSection forced />
+          </div>
+        ) : (
+          <Outlet />
+        )}
       </main>
       <Toaster />
     </div>

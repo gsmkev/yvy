@@ -7,11 +7,15 @@ import { agri } from "./routes/agri";
 import { erp } from "./routes/erp";
 import { agri2 } from "./routes/agri2";
 import { auth } from "./routes/auth";
+import { layers } from "./routes/layers";
 import { herd } from "./routes/herd";
+import { leads } from "./routes/leads";
 import { ingest } from "./routes/ingest";
 import { media } from "./routes/media";
 import { org } from "./routes/org";
+import { calendar } from "./routes/calendar";
 import { share } from "./routes/share";
+import { status } from "./routes/status";
 import { sync } from "./routes/sync";
 import { v1 } from "./routes/v1";
 import { web } from "./routes/web";
@@ -52,9 +56,15 @@ app.get("/health", (c) => c.json({ ok: true }));
 app.get("/descargar-app", (c) => c.redirect(`${c.env.TILES_PUBLIC_URL.replace(/\/$/, "")}/app/yvy.apk`, 302));
 // La demo no puede escribir tampoco por sync, media, dispositivos ni vinculando empleados.
 app.use("/auth/link", requireAuth, readOnlyDemo);
+// P-08: la cuenta de la demo no puede activar un segundo factor (dejaría a todos afuera)
+for (const path of ["/auth/totp/setup", "/auth/totp/enable", "/auth/totp/disable", "/auth/totp/recovery-codes"])
+  app.use(path, requireAuth, readOnlyDemo);
 app.route("/auth", auth);
 app.route("/ingest", ingest as unknown as Hono<AppEnv>);
 app.route("/public", share);
+app.route("/public", calendar);
+app.route("/public", status);
+app.route("/public", leads);
 // I-01: API pública de solo lectura con token de organización (no usa la sesión de la web)
 app.route("/v1", v1);
 
@@ -69,6 +79,7 @@ authed.route("/org", agri);
 authed.route("/org/erp", erp);
 authed.route("/org", herd);
 authed.route("/org", agri2);
+authed.route("/org", layers);
 authed.route("/media", media);
 authed.route("/", web);
 authed.route("/admin", admin);

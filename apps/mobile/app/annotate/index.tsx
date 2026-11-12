@@ -3,7 +3,7 @@
  * Pensado para usarse con una mano, al sol, sin señal. Nunca más de un dato por pantalla.
  */
 import { useEffect, useMemo, useRef, useState, type ElementRef } from "react";
-import { Image, Keyboard, Platform, Pressable, ScrollView, StyleSheet, View, type TextInput as TextInputRef } from "react-native";
+import { Alert, Image, Keyboard, Platform, Pressable, ScrollView, StyleSheet, View, type TextInput as TextInputRef } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Check, X } from "lucide-react-native";
@@ -16,6 +16,8 @@ import {
   monitorTemplate,
   ORDER_LABOR_KIND,
   parseRecordData,
+  deltaT,
+  sprayWarningTexts,
   splitExtraAnswers,
   summarizeStations,
   t,
@@ -35,12 +37,13 @@ import { selectedFarmId } from "../../src/lib/farmFilter";
 import { FLOWS, KINDS_FOR, RAW, SINGLE_PLOT_KINDS, stepsFor, type Step } from "../../src/lib/annotate";
 import { currentFix, guessPlots, type Fix, type PlotGuess } from "../../src/lib/location";
 import { containsPoint, type Area } from "@yvy/geo";
-import { processPhoto } from "../../src/lib/photos";
+import { photoQualityWarning, processPhoto } from "../../src/lib/photos";
 import { kindForPoi } from "../../src/lib/poiQr";
 import { PhotoMarkup } from "../../src/ui/PhotoMarkup";
 import { VoiceRecorder } from "../../src/ui/VoiceRecorder";
 import { useSession } from "../../src/lib/session";
 import { localChanged, useSyncStatus } from "../../src/lib/sync";
+import { sprayPrefill } from "../../src/lib/sprayHours";
 import { toastSaved } from "../../src/lib/toast";
 import { seedCounts } from "../../src/lib/counter";
 import { HerdCounter } from "../../src/ui/Counter";
@@ -80,6 +83,7 @@ export default function Annotate() {
   const [kind, setKind] = useState<RecordKind | null>(editing?.kind ?? presetKind);
   // Campañas activas que bajaron al celular: con una sola no se pregunta, se usa esa.
   const seasons = useMemo(() => db.activeSeasons(), []);
+  const sprayPre = useMemo(() => sprayPrefill(db, plot?.farmId ?? selectedFarmId(db) ?? undefined, Date.now()), [plot?.farmId]);
   const seed = (kd: RecordKind): Record<string, unknown> => {
     const out: Record<string, unknown> =
       seasons.length === 1 && FLOWS[kd].some((x) => x.kind === "season") ? { seasonId: seasons[0]!.id } : {};
@@ -91,6 +95,8 @@ export default function Annotate() {
       if (rx.seasonId) out.seasonId = rx.seasonId;
       out.prescriptionTaskId = params.taskId;
     }
+    // A-12: viento, temperatura y humedad de esta hora según el pronóstico guardado (editables a mano).
+    if (kd === "application") Object.assign(out, sprayPre ?? {});
     // E-21: la orden de trabajo precarga insumos, campaña y superficie prevista; al guardar queda ligada a la tarea.
     const ord = params.taskId ? db.orderOf(params.taskId) : null;
     if (ord && ORDER_LABOR_KIND[ord.labor] === kd) {
@@ -194,6 +200,7 @@ export default function Annotate() {
     if (kind === "fuel_load" && typeof data.machineId === "string")
       data.machine = db.machines().find((m) => m.id === data.machineId)?.name ?? data.machine;
     if (kind === "rain" && !editing) data.readAt = Date.now();
+    if (kind === "irrigation" && !editing) data.appliedAt = Date.now();
     // Abigeato: si ya hay número de denuncia, la fecha de la denuncia es hoy.
     if (kind === "theft" && !editing && data.policeReport) data.reportedAt = Date.now();
     // Compra: la hacienda entra de afuera, así que el potrero elegido es el destino y no hay origen.
@@ -552,7 +559,7 @@ export default function Annotate() {
       <View style={k.screen}>
         {header}
         <Progress i={phase.i} n={steps.length + 1} />
-        <StepScreen key={`${kind}-${step.key}`} step={step} value={values[step.key]} seasons={seasons} onAnswer={(v) => advance({ ...values, [step.key]: v })} />
+        <StepScreen key={`${kind}-${step.kind}-${step.key}`} plotAreaHa={plot?.areaHa ?? null} step={step} value={values[step.key]} answers={values} prefilled={!editing && kind === "application" && !!sprayPre && values[step.key] !== undefined && (sprayPre as Record<string, unknown>)[step.key] === values[step.key]} seasons={seasons} onAnswer={(v) => advance({ ...values, [step.key]: v })} />
       </View>
     );
   }
@@ -634,7 +641,7 @@ function Progress({ i, n }: { i: number; n: number }) {
   );
 }
 
-function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unknown; seasons: Season[]; onAnswer: (v: unknown) => void }) {
+function StepScreen({ step, value, answers, prefilled, plotAreaHa, seasons, onAnswer }: { plotAreaHa: number | null; step: Step; value: unknown; answers: Record<string, unknown>; prefilled: boolean; seasons: Season[]; onAnswer: (v: unknown) => void }) {
   const [text, setText] = useState(value === undefined ? "" : String(value));
   const input = useRef<ElementRef<typeof TextInputRef>>(null);
   useEffect(() => {
@@ -692,6 +699,10 @@ function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unk
       </ScrollView>
     );
   }
+  if (step.kind === "usage") {
+    const area = typeof answers.areaHa === "number" ? answers.areaHa : plotAreaHa;
+    return <UsageStep question={step.question} hint={step.hint} products={Array.isArray(value) ? (value as ProductDose[]) : []} areaHa={area} onAnswer={onAnswer} />;
+  }
   if (step.kind === "products") {
     return <ProductsStep question={step.question} value={value} fixedUnit={step.fixedUnit} types={step.productTypes} onAnswer={onAnswer} />;
   }
@@ -710,10 +721,20 @@ function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unk
   if (step.kind === "number") {
     const n = Number(text.replace(",", "."));
     const ok = text !== "" && Number.isFinite(n) && n >= (step.min ?? 0) && n <= step.max && (!step.integer || Number.isInteger(n));
+    // A-12: aviso al pasar los umbrales de viento o Delta T (con la temperatura ya cargada y esta humedad).
+    const warnings =
+      !ok || answers === undefined
+        ? []
+        : step.key === "windKmh"
+          ? sprayWarningTexts({ windKmh: n })
+          : step.key === "humidityPct" && typeof answers.tempC === "number"
+            ? sprayWarningTexts({ deltaT: deltaT(answers.tempC, n) })
+            : [];
     return (
       <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
         <Text style={T.title}>{tr(step.question)}</Text>
         {step.hint && <Text style={[T.small, { marginTop: 6 }]}>{tr(step.hint)}</Text>}
+        {prefilled && <Text style={[T.small, { marginTop: 6 }]}>{t("ui.sprayPrefilled")}</Text>}
         <View style={st.numberRow}>
           <TextInput
             ref={input}
@@ -728,6 +749,11 @@ function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unk
           />
           <Text style={st.unit}>{step.unit}</Text>
         </View>
+        {warnings.map((w) => (
+          <Text key={w} style={st.warn} accessibilityRole="alert">
+            {w}
+          </Text>
+        ))}
         <View style={{ flex: 1 }} />
         {step.optional && text === "" ? (
           <Button big kind="secondary" title={t("app.skip")} onPress={() => onAnswer(undefined)} />
@@ -762,6 +788,49 @@ function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unk
           onPress={() => onAnswer(text.trim())}
         />
       )}
+    </ScrollView>
+  );
+}
+
+/**
+ * Cierre de la orden (E-21): lo que realmente salió del depósito, por producto. Si no se escribe, queda lo previsto
+ * (dosis por superficie hecha) y no se guarda cantidad.
+ */
+function UsageStep({ question, hint, products, areaHa, onAnswer }: { question: string; hint?: string; products: ProductDose[]; areaHa: number | null; onAnswer: (v: unknown) => void }) {
+  const [texts, setTexts] = useState<string[]>(() => products.map((p) => (p.usedQty ? String(p.usedQty).replace(".", ",") : "")));
+  const parse = (x: string) => Number(x.replace(",", "."));
+  const valid = (x: string) => x === "" || (Number.isFinite(parse(x)) && parse(x) > 0 && parse(x) <= 1_000_000_000);
+  const planned = (p: ProductDose) => (areaHa ? Math.round(p.dose * areaHa * 100) / 100 : null);
+  const done = () => onAnswer(products.map((p, i) => ({ ...p, usedQty: texts[i] ? parse(texts[i]!) : undefined })));
+  const anyText = texts.some((x) => x !== "");
+  return (
+    <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
+      <Text style={T.title}>{tr(question)}</Text>
+      {hint && <Text style={[T.small, { marginTop: 6, marginBottom: 16 }]}>{tr(hint)}</Text>}
+      {products.map((p, i) => {
+        const unit = tr(`fields.usageUnit_${p.unit}`);
+        const plan = planned(p);
+        return (
+          <View key={p.productId ?? p.name} style={{ marginBottom: 20 }}>
+            <Text style={T.body}>{p.name}</Text>
+            {plan !== null && <Text style={T.small}>{t("app.usagePlanned", { qty: `${String(plan).replace(".", ",")} ${unit}` })}</Text>}
+            <View style={st.numberRow}>
+              <TextInput
+                value={texts[i]}
+                onChangeText={(v) => setTexts((xs) => xs.map((x, j) => (j === i ? v.replace(/[^0-9.,]/g, "").slice(0, 10) : x)))}
+                keyboardType="decimal-pad"
+                style={st.numberInput}
+                placeholder={plan !== null ? String(plan).replace(".", ",") : "0"}
+                placeholderTextColor={C.tinta3}
+                accessibilityLabel={`${p.name} (${unit})`}
+              />
+              <Text style={st.unit}>{unit}</Text>
+            </View>
+          </View>
+        );
+      })}
+      <View style={{ flex: 1 }} />
+      <Button big title={anyText ? t("app.next") : t("app.usageAsPlanned")} disabled={!texts.every(valid)} onPress={done} />
     </ScrollView>
   );
 }
@@ -834,7 +903,7 @@ function ProductsStep({ question, value, fixedUnit, types, onAnswer }: { questio
     const unit: DoseUnit = d.unit;
     const alt = unit === big ? small : big;
     const next = () => {
-      const list = doses.map((x, j) => (j === view ? { ...x, dose: n } : x));
+      const list = doses.map((x, j) => (j === view ? { ...x, dose: n, usedQty: undefined } : x));
       setDoses(list);
       if (view < list.length - 1) {
         setText(list[view + 1]!.dose ? String(list[view + 1]!.dose).replace(".", ",") : "");
@@ -983,8 +1052,15 @@ function PhotoCamera({ onDone }: { onDone: (p: LocalPhoto | null) => void }) {
             setBusy(true);
             try {
               const pic = await ref.takePictureAsync({ quality: 0.9 });
-              setShot({ uri: pic.uri, width: pic.width, height: pic.height });
+              const warning = await photoQualityWarning(pic.uri, pic.width, pic.height);
               setBusy(false);
+              const keep = () => setShot({ uri: pic.uri, width: pic.width, height: pic.height });
+              // X-09: aviso sin bloquear. "Sacarla de nuevo" descarta esta toma; "Dejarla así" sigue con ella.
+              if (!warning) return keep();
+              Alert.alert(warning, undefined, [
+                { text: t("app.photoQualityRetake"), style: "cancel" },
+                { text: t("app.photoQualityKeep"), onPress: keep },
+              ]);
             } catch {
               setBusy(false);
             }
@@ -997,6 +1073,7 @@ function PhotoCamera({ onDone }: { onDone: (p: LocalPhoto | null) => void }) {
 }
 
 const st = StyleSheet.create({
+  warn: { marginTop: 16, padding: 12, borderRadius: RADIUS, backgroundColor: C.atencionSuave, color: C.atencion, fontFamily: F.sansMedium, fontSize: 15, lineHeight: 21 },
   progress: { flexDirection: "row", gap: 6, paddingHorizontal: GUTTER, paddingTop: 12 },
   progressDot: { flex: 1, height: 4, borderRadius: 2, backgroundColor: C.linea },
   numberRow: { flexDirection: "row", alignItems: "baseline", gap: 10, marginTop: 28, borderBottomWidth: 2, borderBottomColor: C.tinta, paddingBottom: 6 },

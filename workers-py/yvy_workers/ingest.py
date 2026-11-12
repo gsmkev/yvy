@@ -77,6 +77,10 @@ class IngestClient:
     def farm_geometry(self, farm_id: str) -> dict[str, Any]:
         return self._call("GET", f"/ingest/farms/{farm_id}/geometry")
 
+    def soil_points(self, farm_id: str) -> list[dict[str, Any]]:
+        """Análisis de suelo de la estancia con coordenadas (A-31): lon, lat, sampledOn, ph, pMgKg, kCmolKg, omPct."""
+        return self._call("GET", f"/ingest/farms/{farm_id}/soil-points")
+
     def scene(self, source: str, item_id: str, acquired_at: int, cloud_pct: float | None) -> dict[str, Any]:
         """Registra la escena; devuelve {id, processed}."""
         return self._call("POST", "/ingest/scenes", {"source": source, "itemId": item_id, "acquiredAt": acquired_at, "cloudPct": cloud_pct})
@@ -122,9 +126,24 @@ class IngestClient:
     def farm_layer(self, **layer: Any) -> str:
         return self._call("POST", "/ingest/farm-layers", layer)["id"]
 
+    def custom_layers_pending(self, farm_id: str) -> list[dict[str, Any]]:
+        """GeoTIFF subidos por la web (M-17) que esperan su conversión a PNG."""
+        return self._call("GET", f"/ingest/farms/{farm_id}/custom-layers-pending")
+
+    def custom_layer_result(self, layer_id: str, result: dict[str, Any]) -> None:
+        self._call("POST", f"/ingest/custom-layers/{layer_id}/result", result)
+
     def farm_risk(self, farm_id: str, report: dict[str, Any]) -> None:
         """Informe de riesgo climático de la estancia (C-10)."""
         self._call("POST", "/ingest/farm-risk", {"farmId": farm_id, "report": report})
+
+    def leads(self) -> list[dict[str, Any]]:
+        """Pedidos del informe gratis de la landing que esperan su informe (V-04): id y punto, sin el email."""
+        return self._call("GET", "/ingest/leads")
+
+    def lead_report(self, lead_id: str, report: dict[str, Any]) -> dict[str, Any]:
+        """Informe de un pedido (V-04); el Worker lo guarda y manda el email con el enlace."""
+        return self._call("POST", f"/ingest/leads/{lead_id}/report", {"report": report})
 
     def problem_areas(self, plot_id: str, acquired_at: int, areas: list[dict[str, Any]]) -> int:
         """Áreas problema de un lote en la última escena (S-08); reemplaza las de escenas anteriores."""

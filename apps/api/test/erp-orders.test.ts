@@ -107,6 +107,17 @@ describe("cierre de la orden (E-21)", () => {
     expect((await erpGet<any>(s.owner.token, "costs")).body.rows).toHaveLength(0);
   });
 
+  it("con la cantidad real usada (usedQty) el stock baja por lo gastado, no por dosis x superficie", async () => {
+    const s = await setup();
+    const { body } = await create(s.owner.token, order(s));
+    await close(s, body.ids[0], "application", {
+      products: [{ productId: s.productId, name: "Glifosato", dose: 2, unit: "l_ha", usedQty: 18 }],
+      areaHa: 8, // 16 l según la dosis, pero se gastaron 18
+    });
+    const costs = (await erpGet<any>(s.owner.token, "costs")).body.rows;
+    expect(costs.find((c: any) => c.category === "input")).toMatchObject({ amountPyg: 180_000 });
+  });
+
   it("cosecha con contratista por tonelada; la tarifa en dólares se convierte con el tipo de cambio", async () => {
     const s = await setup();
     await call("PUT", "/org/erp/exchange-rates/2026-11-01", { token: s.owner.token, body: { usdToPyg: 7300 } });

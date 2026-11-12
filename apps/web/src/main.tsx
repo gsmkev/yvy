@@ -1,3 +1,4 @@
+import "./lib/locale"; // primero: fija el idioma antes de que otros módulos armen textos
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";

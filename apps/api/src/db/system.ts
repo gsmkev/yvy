@@ -2,8 +2,8 @@
  * Acceso de sistema (sin usuario): /ingest firmado por HMAC y crons. Única excepción a scopedDb.
  * Cada escritura deriva organization_id de la fila padre (lote o estancia), nunca del request.
  */
-import { and, asc, desc, eq, gte, inArray, isNull, lt, lte, or, sql } from "drizzle-orm";
-import { addDays, DEFAULT_ALERT_SETTINGS, localDate, newId, type AlertSettings } from "@yvy/shared";
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lt, lte, or, sql } from "drizzle-orm";
+import { addDays, DEFAULT_ALERT_SETTINGS, LIMITS, localDate, newId, type AlertSettings } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { upsertAlert } from "../jobs/alerts";
 import { dayOfYear, ndviAt } from "./queries";
@@ -149,6 +149,23 @@ export class SystemDb {
       .limit(1);
   }
 
+  /** A-31: análisis de suelo de la estancia con coordenadas (para interpolar mapas de fertilidad). */
+  soilPoints(farmId: string) {
+    return this.db
+      .select({
+        lon: s.soilSamples.lon,
+        lat: s.soilSamples.lat,
+        sampledOn: s.soilSamples.sampledOn,
+        ph: s.soilSamples.ph,
+        pMgKg: s.soilSamples.pMgKg,
+        kCmolKg: s.soilSamples.kCmolKg,
+        omPct: s.soilSamples.omPct,
+      })
+      .from(s.soilSamples)
+      .where(and(eq(s.soilSamples.farmId, farmId), isNull(s.soilSamples.deletedAt), isNotNull(s.soilSamples.lon), isNotNull(s.soilSamples.lat)))
+      .limit(5000);
+  }
+
   /** Registra la escena. `processed` indica si ya se cargaron sus estadísticas. */
   async upsertScene(x: {
     source: string;
@@ -270,6 +287,114 @@ export class SystemDb {
       ...(x.layer === "true_color" ? [this.imageryUpsert(x.farmId, "ready", ts)] : []),
     ]);
     return { id };
+  }
+
+  /** R-08: estancias de OTRAS organizaciones dentro de la caja, con su centro. Solo para calcular medianas. */
+  benchmarkCandidates(orgId: string, box: { minLon: number; maxLon: number; minLat: number; maxLat: number }) {
+    return this.db
+      .select({ id: s.farms.id, organizationId: s.farms.organizationId, lon: s.farms.centroidLon, lat: s.farms.centroidLat })
+      .from(s.farms)
+      .where(
+        and(
+          isNull(s.farms.deletedAt),
+          sql`${s.farms.organizationId} <> ${orgId}`,
+          gte(s.farms.centroidLon, box.minLon),
+          lte(s.farms.centroidLon, box.maxLon),
+          gte(s.farms.centroidLat, box.minLat),
+          lte(s.farms.centroidLat, box.maxLat),
+        ),
+      )
+      .limit(2000);
+  }
+
+  /**
+   * R-08: vigor medio (NDVI de los lotes desde `since`) y lluvia acumulada (CHIRPS desde `sinceDate`) por estancia.
+   * 2 consultas por tanda de ≤ 90 estancias.
+   */
+  async benchmarkMetrics(farmIds: string[], since: number, sinceDate: string) {
+    const out = new Map<string, { ndvi: number | null; rainMm: number | null }>();
+    for (const ids of chunkForParams(farmIds, 1)) {
+      const list = sql.join(ids.map((i) => sql`${i}`), sql`, `);
+      const ndvi = await this.db.all<{ farm_id: string; v: number }>(
+        sql`SELECT p.farm_id AS farm_id, AVG(st.mean) AS v FROM plot_index_stats st JOIN plots p ON p.id = st.plot_id
+            WHERE p.farm_id IN (${list}) AND st.idx = 'ndvi' AND st.acquired_at >= ${since}
+              AND st.deleted_at IS NULL AND p.deleted_at IS NULL GROUP BY p.farm_id`,
+      );
+      // chirps y chirps_prelim pueden repetir el día: se cuenta una vez por día
+      const rain = await this.db.all<{ farm_id: string; v: number }>(
+        sql`SELECT farm_id, SUM(mm) AS v FROM (
+              SELECT farm_id, date, MAX(precip_mm) AS mm FROM climate_daily
+              WHERE farm_id IN (${list}) AND plot_id = '' AND source IN ('chirps', 'chirps_prelim')
+                AND date >= ${sinceDate} AND precip_mm IS NOT NULL GROUP BY farm_id, date
+            ) GROUP BY farm_id`,
+      );
+      for (const id of ids) out.set(id, { ndvi: null, rainMm: null });
+      for (const r of ndvi) out.get(r.farm_id)!.ndvi = r.v;
+      for (const r of rain) out.get(r.farm_id)!.rainMm = r.v;
+    }
+    return out;
+  }
+
+  async saveBenchmark(row: typeof s.zoneBenchmarks.$inferInsert) {
+    await this.db
+      .insert(s.zoneBenchmarks)
+      .values(row)
+      .onConflictDoUpdate({ target: s.zoneBenchmarks.farmId, set: row });
+  }
+
+  async clearBenchmark(farmId: string) {
+    await this.db.delete(s.zoneBenchmarks).where(eq(s.zoneBenchmarks.farmId, farmId));
+  }
+
+  /** M-17: GeoTIFF de una estancia esperando su conversión a PNG georreferenciado. */
+  pendingCustomLayers(farmId: string) {
+    return this.db
+      .select({ id: s.customLayers.id, originalPath: s.customLayers.originalPath, mime: s.customLayers.mime })
+      .from(s.customLayers)
+      .where(
+        and(
+          eq(s.customLayers.farmId, farmId),
+          eq(s.customLayers.status, "processing"),
+          isNull(s.customLayers.deletedAt),
+        ),
+      );
+  }
+
+  /** M-17: resultado de la conversión. Devuelve false si la capa no existe, ya no está pendiente o la ruta no es suya. */
+  async finishCustomLayer(
+    id: string,
+    r:
+      | { status: "failed" }
+      | { status: "ready"; imagePath: string; imageMime: string; bytes: number; corners: [number, number][] },
+  ): Promise<boolean> {
+    const [row] = await this.db
+      .select({ org: s.customLayers.organizationId })
+      .from(s.customLayers)
+      .where(and(eq(s.customLayers.id, id), eq(s.customLayers.status, "processing"), isNull(s.customLayers.deletedAt)))
+      .limit(1);
+    if (!row) return false;
+    if (r.status === "ready" && !r.imagePath.startsWith(`layers/${row.org}/${id}/`)) return false;
+    const ts = Date.now();
+    await runBatch(this.db, [
+      bumpVersion(this.db),
+      this.db
+        .update(s.customLayers)
+        .set(
+          r.status === "failed"
+            ? { status: "failed", updatedAt: ts, version: currentVersion }
+            : {
+                status: "ready",
+                imagePath: r.imagePath,
+                imageMime: r.imageMime,
+                bytes: r.bytes,
+                corners: JSON.stringify(r.corners),
+                updatedAt: ts,
+                version: currentVersion,
+              },
+        )
+        .where(eq(s.customLayers.id, id)),
+    ]);
+    return true;
   }
 
   private imageryUpsert(farmId: string, status: (typeof s.IMAGERY_STATUSES)[number], ts: number) {
@@ -731,8 +856,36 @@ export class SystemDb {
   }
 
   /** Mantenimiento diario: borra códigos y tokens vencidos. */
+  /** V-04: pedidos del informe gratis que esperan al job (sin enviar, con intentos disponibles, de los últimos 30 días). */
+  pendingLeads(now: number) {
+    return this.db
+      .select({ id: s.leads.id, lon: s.leads.lon, lat: s.leads.lat })
+      .from(s.leads)
+      .where(
+        and(isNull(s.leads.sentAt), lt(s.leads.attempts, LIMITS.leads.maxAttempts), gte(s.leads.createdAt, now - 30 * 86_400_000)),
+      )
+      .orderBy(asc(s.leads.createdAt))
+      .limit(LIMITS.leads.jobBatch);
+  }
+
+  /** V-04: guarda el informe del pedido y cuenta el intento. Devuelve el email, o null si no existe o ya se envió. */
+  async saveLeadReport(id: string, report: string, now: number): Promise<{ email: string } | null> {
+    const [row] = await this.db
+      .update(s.leads)
+      .set({ report, reportAt: now, status: "ready", attempts: sql`${s.leads.attempts} + 1` })
+      .where(and(eq(s.leads.id, id), isNull(s.leads.sentAt)))
+      .returning({ email: s.leads.email });
+    return row ?? null;
+  }
+
+  async markLeadSent(id: string, now: number): Promise<void> {
+    await this.db.update(s.leads).set({ status: "sent", sentAt: now }).where(eq(s.leads.id, id));
+  }
+
   async purgeExpiredAuth(now = Date.now()): Promise<void> {
     await runBatch(this.db, [
+      // V-04: el email del pedido y su informe no se guardan más allá de la retención
+      this.db.delete(s.leads).where(lt(s.leads.createdAt, now - LIMITS.leads.retentionMs)),
       this.db.delete(s.emailCodes).where(lt(s.emailCodes.expiresAt, now)),
       this.db.delete(s.linkCodes).where(or(lt(s.linkCodes.expiresAt, now), sql`${s.linkCodes.usedAt} IS NOT NULL`)),
       this.db

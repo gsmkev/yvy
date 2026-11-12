@@ -4,6 +4,7 @@ import { and, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { areaHa, bboxOf } from "@yvy/geo";
+import { createFeed, feedStatus, revokeFeed } from "../db/calendar-feed";
 import { compareFarms, compareSeasons } from "../db/compare";
 import { addComment, deleteComment, listComments } from "../db/comments";
 import { alertSettingsSchema, formConfigSchema, referralCode, CROPS, FUNNEL_EVENTS, newId, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
@@ -140,6 +141,16 @@ web.get("/me/referral", async (c) => {
 });
 
 /** U-29: qué avisos le llegan al usuario, por qué canal y en qué horario. Valen para todas sus organizaciones. */
+/** I-04: enlace del calendario de tareas (.ics). La URL con el token se muestra una sola vez; regenerarla revoca la anterior. */
+web.get("/me/calendar-feed", async (c) => c.json(await feedStatus(c.var.sdb)));
+web.post("/me/calendar-feed", async (c) => {
+  const token = await createFeed(c.var.sdb);
+  return c.json({ url: `${c.env.APP_URL.replace(/\/$/, "")}/public/calendar/${token}.ics` }, 201);
+});
+web.delete("/me/calendar-feed", async (c) => {
+  await revokeFeed(c.var.sdb);
+  return c.json({ ok: true });
+});
 web.get("/me/notification-prefs", async (c) => c.json(await getNotificationPrefs(c.var.sdb)));
 web.put("/me/notification-prefs", async (c) => {
   const prefs = parse(notificationPrefsSchema, await readJson(c.req));

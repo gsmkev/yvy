@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { describeExtra, doseText, type Extra, type FormConfig, type RecordKind } from "@yvy/shared";
+import { describeExtra, doseText, sprayWarningTexts, type Extra, type FormConfig, type RecordKind } from "@yvy/shared";
 import { get } from "../lib/api";
 import { fmtHa, fmtNum, fmtTemp } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -65,6 +65,7 @@ function AgroDetails({ kind, data }: { kind: string; data: Data }) {
             {products.map((p, i) => (
               <li key={i} className="num py-2">
                 {doseText(p)}
+                {num(p.usedQty) !== null ? ` · ${t("ui.appUsed", { qty: `${fmtNum(p.usedQty as number)} ${tk(`fields.usageUnit_${String(p.unit)}`)}` })}` : ""}
               </li>
             ))}
           </ul>
@@ -87,6 +88,12 @@ function AgroDetails({ kind, data }: { kind: string; data: Data }) {
               ))}
             </dl>
           </div>
+        ))}
+      {kind === "application" &&
+        sprayWarningTexts({ windKmh: num(data.windKmh), deltaT: num(data.deltaT) }).map((w) => (
+          <p key={w} role="alert" className="border-l-2 border-trigo pl-3 text-tinta">
+            {w}
+          </p>
         ))}
       {typeof data.prescriptionTaskId === "string" && <p className="text-tinta-2">{t("ui.appPrescription")}</p>}
     </div>

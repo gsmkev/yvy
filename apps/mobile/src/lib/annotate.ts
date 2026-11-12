@@ -3,7 +3,7 @@
  * Cada tipo de registro es una lista corta de pasos; los datos se arman al final y se validan con
  * el esquema compartido (packages/shared/src/records.ts), que es la única fuente de verdad.
  */
-import { EXTRA_PREFIX, type FormField, REPRO_EVENTS, SERVICE_METHODS, ANIMAL_TAG_RE, SUPPLEMENT_TYPES, CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
+import { LIMITS, IRRIGATION_METHODS, EXTRA_PREFIX, type FormField, REPRO_EVENTS, SERVICE_METHODS, ANIMAL_TAG_RE, SUPPLEMENT_TYPES, CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
 
 /** Lo que el flujo necesita saber del campo para decidir qué preguntar. */
 export interface FlowCtx {
@@ -36,6 +36,8 @@ export type Step = StepBase &
   | { key: string; kind: "season"; question: string }
   /** Productos de la mezcla con su dosis (catálogo del celular, o a mano). Guarda ProductDose[]. */
   | { key: string; kind: "products"; question: string; fixedUnit?: "kg_ha"; productTypes?: string[] }
+  /** Cierre de la orden de trabajo (E-21): cantidad real gastada por producto. Reescribe `products` con `usedQty`. */
+  | { key: "products"; kind: "usage"; question: string; hint?: string }
   /** Un producto del catálogo de ciertos tipos (guarda su id; "otro" salta el paso y se escribe a mano). */
   | { key: string; kind: "catalog"; question: string; productTypes: string[]; otherLabel: string }
   /** Una máquina del catálogo (guarda su id; "otra" salta el paso y se escribe el nombre a mano). */
@@ -234,6 +236,7 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     { key: "windKmh", kind: "number", question: "app.windQuestion", hint: "app.windHint", unit: "km/h", max: 200, optional: true },
     { key: "tempC", kind: "number", question: "app.tempQuestion", unit: "°C", max: 60, optional: true },
     { key: "humidityPct", kind: "number", question: "app.humidityQuestion", hint: "app.humidityHint", unit: "%", max: 100, optional: true },
+    { key: "products", kind: "usage", question: "app.usageQuestion", hint: "app.usageHint", skipIf: (a) => !a.orderTaskId },
     { key: "note", kind: "text", question: "app.addNote", optional: true },
   ],
   fertilization: [
@@ -241,6 +244,13 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     { key: "products", kind: "products", question: "app.fertProductsQuestion", fixedUnit: "kg_ha", productTypes: ["fertilizer"] },
     { key: "method", kind: "choice", question: "app.fertMethodQuestion", options: FERT_METHODS.map((v) => ({ value: v, label: `fields.method_${v}` })) },
     { key: "areaHa", kind: "number", question: "app.areaDoneQuestion", hint: "app.areaDoneHint", unit: "ha", max: 100_000, optional: true },
+    { key: "products", kind: "usage", question: "app.usageQuestion", hint: "app.usageHint", skipIf: (a) => !a.orderTaskId },
+    { key: "note", kind: "text", question: "app.addNote", optional: true },
+  ],
+  // Riego (A-43): la lámina y el método; la fecha es la de la carga (appliedAt, en annotate/index.tsx).
+  irrigation: [
+    { key: "mm", kind: "number", question: "app.irrigationMmQuestion", hint: "app.irrigationMmHint", unit: "mm", max: LIMITS.irrigation.maxMm },
+    { key: "method", kind: "choice", question: "app.irrigationMethodQuestion", options: IRRIGATION_METHODS.map((v) => ({ value: v, label: `fields.irrigationMethod_${v}` })) },
     { key: "note", kind: "text", question: "app.addNote", optional: true },
   ],
   // Combustible (E-16): máquina, litros y horómetro. El ERP descuenta el stock y carga el costo.
@@ -253,6 +263,8 @@ export const FLOWS: Record<RecordKind, Step[]> = {
   ],
   // Recuento de depósito (E-15): tiene su propia pantalla, no pasa por este asistente.
   stock_count: [],
+  // Ración suministrada (G-33): se carga desde la web.
+  feed: [],
   harvest: [
     { key: "seasonId", kind: "season", question: "app.seasonQuestion", skipIf: (_a, ctx) => !ctx.askSeason },
     { key: "tons", kind: "number", question: "app.tonsQuestion", hint: "app.tonsHint", unit: "t", max: 1_000_000 },
@@ -312,8 +324,8 @@ export const KINDS_FOR = (plotKind: "crop" | "pasture" | null): RecordKind[] =>
   plotKind === "pasture"
     ? ["pasture_status", "herd_count", "herd_move", "mortality", "theft", "supplement", "weighing", "reproduction", "health", "rain", "water", "pest", "scouting", "note"]
     : plotKind === "crop"
-      ? ["scouting", "pest", "crop_status", "application", "fertilization", "sowing", "harvest", "fuel_load", "rain", "water", "note"]
-      : ["rain", "scouting", "water", "weighing", "reproduction", "health", "note", "pest", "crop_status", "pasture_status", "application", "fertilization", "sowing", "harvest", "fuel_load"];
+      ? ["scouting", "pest", "crop_status", "application", "fertilization", "irrigation", "sowing", "harvest", "fuel_load", "rain", "water", "note"]
+      : ["rain", "scouting", "water", "weighing", "reproduction", "health", "note", "pest", "crop_status", "pasture_status", "application", "fertilization", "irrigation", "sowing", "harvest", "fuel_load"];
 
 /** Registros de hacienda: son de un solo potrero, no se cargan en varios a la vez (F-10). */
 export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count", "herd_move", "mortality", "theft", "supplement", "weighing", "reproduction", "health"];

@@ -368,12 +368,26 @@ def s2_basemap(api: IngestClient, farm: dict[str, Any], days: int = BASEMAP_DAYS
         warnings.simplefilter("ignore", RuntimeWarning)
         clean = np.stack([np.nanmedian(np.stack(stacks[b]), axis=0) for b in ("red", "green", "blue")])
         fallback = np.stack([np.nanmedian(np.stack(raw[b]), axis=0) for b in ("red", "green", "blue")])
-    rgb = np.where(np.isfinite(clean), clean, fallback)
-    alpha = np.all(np.isfinite(rgb), axis=0)
-    # Estiramiento simple 0-0,3 de reflectancia con gamma para que se vea natural
-    img = np.clip(np.nan_to_num(rgb) / 0.3, 0, 1) ** (1 / 1.4) * 255
-    rgba = np.concatenate([img.astype(np.uint8), np.where(alpha, 255, 0)[None].astype(np.uint8)])
+    rgba = natural_color(np.where(np.isfinite(clean), clean, fallback))
     return publish_layer(api, farm, grid, "true_color", _epoch_ms(items[-1]), rgba, BASEMAP_MARGIN_DEG) if upload else 0
+
+
+# Color natural: reflectancia → sRGB. Curva compartida por el mapa base de cada estancia y el del país.
+WHITE = 0.25  # reflectancia que llega a blanco (0,3 dejaba el campo apagado)
+GAMMA = 1.6
+SATURATION = 1.25  # Sentinel-2 en color verdadero sale grisáceo por la atmósfera
+
+
+def natural_color(rgb: np.ndarray, white: float = WHITE, gamma: float = GAMMA, saturation: float = SATURATION) -> np.ndarray:
+    """(3, h, w) reflectancia con NaN sin dato → (4, h, w) uint8 RGBA."""
+    ok = np.all(np.isfinite(rgb), axis=0)
+    x = np.clip(np.nan_to_num(rgb) / white, 0, 1) ** (1 / gamma)
+    lum = 0.2126 * x[0] + 0.7152 * x[1] + 0.0722 * x[2]
+    x = np.clip(lum + (x - lum) * saturation, 0, 1)
+    out = np.zeros((4, *rgb.shape[1:]), dtype=np.uint8)
+    out[:3] = (x * 255).round().astype(np.uint8)
+    out[3] = np.where(ok, 255, 0)
+    return out
 
 
 def publish_layer(
@@ -382,7 +396,10 @@ def publish_layer(
     bounds = (farm["minLon"] - margin_deg, farm["minLat"] - margin_deg, farm["maxLon"] + margin_deg, farm["maxLat"] + margin_deg)
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / f"{layer}.pmtiles"
-        size = write_pmtiles(rgba, grid.transform, grid.crs, path, bounds, f"Yvy {layer}", ATTRIBUTION)
+        # El mapa base se mira de cerca: más calidad WebP que los índices
+        size = write_pmtiles(
+            rgba, grid.transform, grid.crs, path, bounds, f"Yvy {layer}", ATTRIBUTION, quality=85 if layer == "true_color" else 75
+        )
         key = f"farms/{farm['id']}/{layer}/{acquired}.pmtiles"
         upload_tiles(path, key)
     api.farm_layer(farmId=farm["id"], layer=layer, acquiredAt=acquired, pmtilesPath=key, bytes=size, bounds=list(bounds))

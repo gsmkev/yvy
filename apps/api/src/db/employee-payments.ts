@@ -1,6 +1,7 @@
 /** Adelantos, pagos y saldo por empleado (E-26). Montos: solo dueño y administrador. */
-import { and, asc, desc, eq, isNull, lte, sql } from "drizzle-orm";
-import { employeeBalance, LIMITS, newId, statement, type EmployeePaymentKind, type StatementLine } from "@yvy/shared";
+import { and, asc, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
+import { HTTPException } from "hono/http-exception";
+import { buildPayroll, employeeBalance, LIMITS, monthsBetween, newId, statement, type EmployeePaymentKind, type StatementLine } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { requireOwned } from "./erp";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
@@ -114,4 +115,35 @@ export async function employeeStatement(sdb: ScopedDb, employeeId: string) {
     ...pays.map((p): StatementLine => ({ id: p.id, date: p.date, kind: p.kind, amountPyg: -p.amountPyg, note: p.note })),
   ];
   return statement(lines);
+}
+
+/**
+ * Planilla para el contador (E-27): jornales, adelantos y pagos por empleado y mes entre dos fechas. Sin aportes ni
+ * descuentos. Tres consultas agrupadas; el Excel se arma en el navegador. Solo dueño y administrador.
+ */
+export async function payroll(sdb: ScopedDb, from: string, to: string) {
+  sdb.require(can.manageErp);
+  if (from > to) throw new HTTPException(400, { message: "La fecha inicial es posterior a la final" });
+  if (monthsBetween(from, to).length > LIMITS.payroll.maxMonths)
+    throw new HTTPException(400, { message: `Elegí un período de hasta ${LIMITS.payroll.maxMonths} meses` });
+  const org = sdb.auth.orgId;
+  const a = s.attendance;
+  const p = s.employeePayments;
+  const [staff, accruals, payments] = await Promise.all([
+    sdb.db
+      .select({ id: s.employees.id, name: s.employees.name, ci: s.employees.ci })
+      .from(s.employees)
+      .where(and(eq(s.employees.organizationId, org), isNull(s.employees.deletedAt))),
+    sdb.db
+      .select({ employeeId: a.employeeId, month: sql<string>`substr(${a.date}, 1, 7)`, days: sql<number>`SUM(${a.days})`, wagePyg: sql<number>`SUM(${a.wagePyg})` })
+      .from(a)
+      .where(and(eq(a.organizationId, org), isNull(a.deletedAt), gte(a.date, from), lte(a.date, to)))
+      .groupBy(a.employeeId, sql`substr(${a.date}, 1, 7)`),
+    sdb.db
+      .select({ employeeId: p.employeeId, month: sql<string>`substr(${p.date}, 1, 7)`, kind: p.kind, amountPyg: sql<number>`SUM(${p.amountPyg})` })
+      .from(p)
+      .where(and(eq(p.organizationId, org), isNull(p.deletedAt), gte(p.date, from), lte(p.date, to)))
+      .groupBy(p.employeeId, sql`substr(${p.date}, 1, 7)`, p.kind),
+  ]);
+  return buildPayroll(staff, accruals, payments);
 }

@@ -71,6 +71,40 @@ export function sprayHour(h: SprayInput): { deltaT: number | null; ok: boolean }
 
 const HOUR_MS = 3_600_000;
 
+export type SprayWarning = "windHigh" | "deltaTLow" | "deltaTHigh";
+
+/**
+ * Avisos al registrar una aplicación (A-12): viento por encima de LIMITS.spray.windMaxKmh y Delta T fuera de
+ * deltaTMin..deltaTMax. Si falta un dato, no avisa de ése (el aviso es de lo que se midió).
+ */
+export function sprayWarnings(c: { windKmh?: number | null; deltaT?: number | null }): SprayWarning[] {
+  const L = LIMITS.spray;
+  const out: SprayWarning[] = [];
+  if (typeof c.windKmh === "number" && c.windKmh > L.windMaxKmh) out.push("windHigh");
+  if (typeof c.deltaT === "number") {
+    if (c.deltaT < L.deltaTMin) out.push("deltaTLow");
+    else if (c.deltaT > L.deltaTMax) out.push("deltaTHigh");
+  }
+  return out;
+}
+
+export interface ForecastHourLike {
+  at: number;
+  tempC: number | null;
+  windKmh: number | null;
+  humidityPct: number | null;
+}
+
+/** La hora del pronóstico que contiene a `now`; null si el pronóstico guardado no llega a ese momento. */
+export function forecastHourAt<T extends ForecastHourLike>(hours: T[], now: number): T | null {
+  let best: T | null = null;
+  for (const h of hours) {
+    if (now < h.at || now >= h.at + HOUR_MS) continue;
+    best = h;
+  }
+  return best;
+}
+
 /** Junta horas aptas consecutivas en ventanas { from, to } (epoch ms; `to` es el fin de la última hora). */
 export function sprayWindows(hours: { at: number; ok: boolean }[]): { from: number; to: number }[] {
   const out: { from: number; to: number }[] = [];

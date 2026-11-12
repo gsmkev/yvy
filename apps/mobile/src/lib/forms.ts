@@ -2,7 +2,7 @@
  * Campos de cada tipo de registro (RF-30), en el mismo orden y con los mismos valores que los esquemas Zod
  * de packages/shared/src/records.ts. La validación final la hace parseRecordData.
  */
-import { REPRO_EVENTS, SERVICE_METHODS, SUPPLEMENT_TYPES, CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
+import { IRRIGATION_METHODS, REPRO_EVENTS, SERVICE_METHODS, SUPPLEMENT_TYPES, CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
 
 export type FieldSpec =
   | { key: string; type: "choice"; options: readonly string[]; labelPrefix: string; required?: boolean }
@@ -112,6 +112,11 @@ export const FORMS: Record<RecordKind, FieldSpec[]> = {
     { key: "tag", type: "text" },
     note,
   ],
+  irrigation: [
+    { key: "mm", type: "number", unit: "mm", required: true },
+    { key: "method", type: "choice", options: IRRIGATION_METHODS, labelPrefix: "fields.irrigationMethod_", required: true },
+    note,
+  ],
   fuel_load: [
     { key: "machine", type: "text", required: true },
     { key: "liters", type: "number", unit: "l", required: true },
@@ -119,6 +124,7 @@ export const FORMS: Record<RecordKind, FieldSpec[]> = {
     note,
   ],
   stock_count: [],
+  feed: [],
   harvest: [
     { key: "tons", type: "number", unit: "t", required: true },
     { key: "moisturePct", type: "number", unit: "%" },

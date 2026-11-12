@@ -9,7 +9,7 @@ import sys
 from .ingest import IngestClient
 from .jobs.constants import BACKFILL_DAYS, BASEMAP_DAYS, DAILY_DAYS
 
-JOBS = ["s2_ingest", "s2_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "weekly_report", "new_farm", "eudr", "s2_history", "burned_area", "cover_change", "power_daily", "spi", "mgmt_zones"]
+JOBS = ["s2_ingest", "s2_basemap", "country_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "lead_report", "weekly_report", "new_farm", "eudr", "s2_history", "burned_area", "cover_change", "power_daily", "spi", "mgmt_zones", "boundaries", "custom_layers", "fertility_maps"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -41,7 +41,23 @@ def main(argv: list[str] | None = None) -> int:
     if args.job == "cover_change" and not (args.from_date and args.to_date):
         build_parser().error("cover_change necesita --from y --to (AAAA-MM-DD)")
 
+    if args.job == "country_basemap":
+        from .jobs.country import country_basemap
+
+        country_basemap()
+        return 0
+
+    if args.job == "boundaries":  # límites administrativos: no dependen de las estancias ni de la API
+        from .jobs.boundaries import boundaries
+
+        log.info("límites publicados: %d niveles", boundaries())
+        return 0
+
     api = IngestClient()
+    if args.job == "lead_report":  # V-04: son pedidos de la landing, no de estancias
+        from .jobs.leads import lead_report
+
+        return 1 if lead_report(api, api.leads()) else 0
     farms = api.farms()
     if args.farm:
         farms = [f for f in farms if f["id"] == args.farm]
@@ -110,10 +126,18 @@ def main(argv: list[str] | None = None) -> int:
                     from .jobs.s2 import s2_basemap
 
                     s2_basemap(api, f, days=args.days or BASEMAP_DAYS)
+                elif args.job == "custom_layers":
+                    from .jobs.custom_layers import custom_layers
+
+                    log.info("%s: %d capas propias listas", f["name"], custom_layers(api, f))
                 elif args.job == "mgmt_zones":
                     from .jobs.zones import management_zones
 
                     log.info("%s: %d lotes con zonas de manejo", f["name"], management_zones(api, f))
+                elif args.job == "fertility_maps":
+                    from .jobs.fertility import fertility_maps
+
+                    log.info("%s: mapas de fertilidad %s", f["name"], fertility_maps(api, f) or "sin puntos suficientes")
                 elif args.job == "eudr":
                     from .jobs.eudr import eudr_analysis
 

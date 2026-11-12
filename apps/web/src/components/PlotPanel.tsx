@@ -11,6 +11,7 @@ import { t, tk } from "../lib/i18n";
 import type { Farm, Member, Plot, PlotHistoryRow, ProblemArea } from "../lib/types";
 import { CopyCoords } from "./CopyCoords";
 import { PlotAgro } from "./PlotAgro";
+import { PlotResults } from "./PlotResults";
 import { LineChart } from "./charts";
 import { SamplingGrid } from "./SamplingGrid";
 import { VigorSeasons } from "./VigorSeasons";
@@ -319,6 +320,8 @@ export function PlotPanel({
           )}
         </div>
       )}
+
+      {canEdit && <PlotResults plot={plot} />}
 
       {canEdit && <PlotAgro plot={plot} />}
 

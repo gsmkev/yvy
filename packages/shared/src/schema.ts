@@ -78,6 +78,7 @@ export const RECORD_KINDS = [
   "reproduction",
   // ADR 0004: registros agrícolas
   "sowing",
+  "irrigation",
   "application",
   "fertilization",
   "harvest",
@@ -85,6 +86,8 @@ export const RECORD_KINDS = [
   "track",
   // ADR 0004: ERP
   "fuel_load",
+  // G-33: ración suministrada a un corral (feedlot)
+  "feed",
 ] as const;
 export type RecordKind = (typeof RECORD_KINDS)[number];
 /** Tipos de producto del catálogo (ADR 0004). */
@@ -101,7 +104,13 @@ export const FUNNEL_EVENTS = ["signup", "farm_created", "plots_created", "member
 /** S-07: índices de vegetación que calcula el job de Sentinel-2. */
 export const INDEX_KINDS = ["ndvi", "ndre", "ndmi", "evi"] as const;
 export type IndexKind = (typeof INDEX_KINDS)[number];
-export const LAYERS = ["true_color", ...INDEX_KINDS] as const;
+/** A-31: mapas de fertilidad interpolados (pH, fósforo, potasio, materia orgánica) a partir de análisis de suelo con punto. */
+export const FERT_LAYERS = ["fert_ph", "fert_p", "fert_k", "fert_om"] as const;
+export type FertLayer = (typeof FERT_LAYERS)[number];
+export const LAYERS = ["true_color", ...INDEX_KINDS, ...FERT_LAYERS] as const;
+/** M-17: capas propias (imagen georreferenciada) de una estancia. */
+export const CUSTOM_LAYER_KINDS = ["image", "geotiff"] as const;
+export const CUSTOM_LAYER_STATUSES = ["processing", "ready", "failed"] as const;
 /** Estado del procesamiento satelital inicial de una estancia (S-02). */
 export const IMAGERY_STATUSES = ["pending", "processing", "ready", "failed"] as const;
 
@@ -142,6 +151,8 @@ export const organizations = sqliteTable("organizations", {
   referrerUserId: text("referrer_user_id"),
   /** V-06: el equipo anotó el crédito del referido (cuando la organización referida pasó a pagar). null = sin anotar. */
   referralCreditedAt: integer("referral_credited_at"),
+  /** P-08: el dueño exige segundo factor (TOTP) a los administradores de la organización. */
+  requireAdminTotp: integer("require_admin_totp", { mode: "boolean" }).notNull().default(false),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });
@@ -930,6 +941,35 @@ export const farmLayers = sqliteTable(
   ],
 );
 
+/**
+ * Capa propia de una estancia (M-17): imagen de dron, mapa de suelos o cualquier PNG/JPG con 4 esquinas. El archivo
+ * original va a R2 (bucket de media); un GeoTIFF lo convierte workers-py a PNG georreferenciado en WGS84.
+ * `corners` = [[lon, lat] × 4] en orden arriba-izq., arriba-der., abajo-der., abajo-izq. Solo la web la usa (no está en el pull).
+ */
+export const customLayers = sqliteTable(
+  "custom_layers",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    name: text("name").notNull(),
+    kind: text("kind", { enum: CUSTOM_LAYER_KINDS }).notNull(),
+    status: text("status", { enum: CUSTOM_LAYER_STATUSES }).notNull(),
+    mime: text("mime").notNull(),
+    originalPath: text("original_path").notNull(),
+    /** PNG/JPG que se dibuja en el mapa; null mientras un GeoTIFF se procesa. */
+    imagePath: text("image_path"),
+    imageMime: text("image_mime"),
+    bytes: integer("bytes").notNull(),
+    corners: text("corners"),
+    ...synced,
+  },
+  (t) => [
+    index("custom_layers_sync_idx").on(t.organizationId, t.version, t.id),
+    index("custom_layers_farm_idx").on(t.farmId, t.status),
+  ],
+);
+
 /** Estado del primer procesamiento satelital por estancia. No se sincroniza: solo lo lee la web. */
 export const farmImagery = sqliteTable("farm_imagery", {
   farmId: text("farm_id").primaryKey(),
@@ -1097,11 +1137,62 @@ export const farmRisk = sqliteTable("farm_risk", {
   report: text("report").notNull(),
 });
 
+/**
+ * Pedidos del informe gratis de riesgo climático desde la landing (V-04). No es de una organización ni se sincroniza.
+ * El email se guarda solo para mandar el informe (consentimiento explícito en `consentAt`) y se borra pasado
+ * LIMITS.leads.retentionMs. La IP se guarda como hash para el tope por conexión. El enlace del informe se deriva de
+ * `id` con HMAC; no se guarda.
+ */
+export const leads = sqliteTable(
+  "leads",
+  {
+    id: text("id").primaryKey(),
+    email: text("email").notNull(),
+    lon: real("lon").notNull(),
+    lat: real("lat").notNull(),
+    consentAt: integer("consent_at").notNull(),
+    consentVersion: text("consent_version").notNull(),
+    ipHash: text("ip_hash"),
+    /** pending (esperando al job), ready (informe calculado, email sin enviar) o sent. */
+    status: text("status").notNull().default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    /** JSON validado con farmRiskSchema. */
+    report: text("report"),
+    reportAt: integer("report_at"),
+    sentAt: integer("sent_at"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    index("leads_ip_idx").on(t.ipHash, t.createdAt),
+    index("leads_email_idx").on(t.email, t.createdAt),
+    index("leads_status_idx").on(t.status, t.createdAt),
+  ],
+);
+
 /** SPI a 1, 3 y 6 meses por estancia (C-07): JSON validado con farmSpiSchema. Una fila por estancia; no se sincroniza. */
 export const farmSpi = sqliteTable("farm_spi", {
   farmId: text("farm_id").primaryKey(),
   computedAt: integer("computed_at").notNull(),
   report: text("report").notNull(),
+});
+
+/**
+ * R-08: comparación anónima de una estancia con la mediana de las estancias de otras organizaciones dentro de un radio.
+ * La calcula un cron con acceso de sistema; acá solo quedan números de la propia estancia, las medianas y cuántas
+ * estancias entraron (nunca ids, nombres ni geometrías ajenas). Una fila por estancia; si dejan de alcanzar los
+ * vecinos, la fila se borra. No se sincroniza.
+ */
+export const zoneBenchmarks = sqliteTable("zone_benchmarks", {
+  farmId: text("farm_id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  computedAt: integer("computed_at").notNull(),
+  radiusKm: integer("radius_km").notNull(),
+  windowDays: integer("window_days").notNull(),
+  nFarms: integer("n_farms").notNull(),
+  ndvi: real("ndvi"),
+  ndviMedian: real("ndvi_median"),
+  rainMm: real("rain_mm"),
+  rainMedianMm: real("rain_median_mm"),
 });
 
 export const forecasts = sqliteTable(
@@ -1637,6 +1728,20 @@ export const employeePayments = sqliteTable(
   (t) => [index("employee_payments_idx").on(t.organizationId, t.employeeId, t.date)],
 );
 
+/** Ración de feedlot (G-33): ingredientes del catálogo con su % de materia seca, en JSON [{productId, pctDm, dmPct}]. Solo oficina. */
+export const feedRations = sqliteTable(
+  "feed_rations",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    name: text("name").notNull(),
+    items: text("items").notNull(),
+    note: text("note"),
+    ...timestamps,
+  },
+  (t) => [index("feed_rations_org_idx").on(t.organizationId, t.name)],
+);
+
 /** Presupuesto de campaña: una línea por lote, cultivo o toda la campaña, con actividad y rubro (E-32). */
 export const budgetLines = sqliteTable(
   "budget_lines",
@@ -1834,6 +1939,43 @@ export const cashMoves = sqliteTable(
   (t) => [index("cash_moves_account_idx").on(t.organizationId, t.accountId, t.date), index("cash_moves_doc_idx").on(t.docId)],
 );
 
+/**
+ * Datos de IVA de un documento (I-06): timbrado y desglose en gravadas 10 %, gravadas 5 % y exentas (guaraníes, con el
+ * IVA incluido). Una fila por documento de compra o venta; sin fila, el desglose no está cargado.
+ */
+export const documentTaxes = sqliteTable(
+  "document_taxes",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    /** "purchase", "settlement" o "cattle", como en cash_moves.doc_kind. */
+    docKind: text("doc_kind").notNull(),
+    docId: text("doc_id").notNull(),
+    timbrado: text("timbrado"),
+    gross10: integer("gross_10").notNull().default(0),
+    gross5: integer("gross_5").notNull().default(0),
+    exempt: integer("exempt").notNull().default(0),
+    updatedBy: text("updated_by").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [uniqueIndex("document_taxes_doc_uq").on(t.organizationId, t.docKind, t.docId)],
+);
+
+/** Formato de exportación guardado (I-06): conjunto de datos, columnas, separador y formatos de fecha y de números. */
+export const exportFormats = sqliteTable(
+  "export_formats",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    name: text("name").notNull(),
+    dataset: text("dataset").notNull(),
+    /** JSON con ExportConfig (packages/shared/src/export-format.ts). */
+    config: text("config").notNull(),
+    ...timestamps,
+  },
+  (t) => [index("export_formats_org_idx").on(t.organizationId, t.dataset)],
+);
+
 /** Plan de cuentas del contador: a qué cuenta va cada rubro al exportar (E-38). Sin fila, rige el plan de ejemplo. */
 export const accountMap = sqliteTable(
   "account_map",
@@ -1849,3 +1991,122 @@ export const accountMap = sqliteTable(
   },
   (t) => [uniqueIndex("account_map_key_uq").on(t.organizationId, t.key)],
 );
+
+/**
+ * P-08: segundo factor TOTP (RFC 6238) por usuario. El secreto va cifrado (AES-GCM, clave derivada de JWT_SECRET);
+ * `enabledAt` null = alta sin confirmar. `lastStep` evita reusar un código ya aceptado. No se sincroniza.
+ */
+export const userTotp = sqliteTable("user_totp", {
+  userId: text("user_id").primaryKey(),
+  secretEnc: text("secret_enc").notNull(),
+  enabledAt: integer("enabled_at"),
+  lastStep: integer("last_step").notNull().default(0),
+  failedAttempts: integer("failed_attempts").notNull().default(0),
+  lockedUntil: integer("locked_until"),
+  createdAt: integer("created_at").notNull(),
+});
+
+/** P-08: códigos de recuperación de un solo uso; solo queda el SHA-256. */
+export const totpRecoveryCodes = sqliteTable(
+  "totp_recovery_codes",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    codeHash: text("code_hash").notNull(),
+    usedAt: integer("used_at"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("totp_recovery_user_idx").on(t.userId), uniqueIndex("totp_recovery_hash_uq").on(t.codeHash)],
+);
+
+/**
+ * I-02: URLs a las que la organización pide que le avisen. El secreto de firma va cifrado (AES-GCM) porque el
+ * Worker tiene que usarlo para firmar cada envío. `events` es un arreglo JSON de WEBHOOK_EVENTS.
+ */
+export const webhookEndpoints = sqliteTable(
+  "webhook_endpoints",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    url: text("url").notNull(),
+    secretEnc: text("secret_enc").notNull(),
+    events: text("events").notNull().default("[]"),
+    enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+    /** Último intento: 'ok' o 'error' (null = todavía sin envíos). */
+    lastStatus: text("last_status", { enum: ["ok", "error"] }),
+    lastHttpStatus: integer("last_http_status"),
+    lastError: text("last_error"),
+    lastAttemptAt: integer("last_attempt_at"),
+    lastSuccessAt: integer("last_success_at"),
+    consecutiveFailures: integer("consecutive_failures").notNull().default(0),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at").notNull(),
+    deletedAt: integer("deleted_at"),
+  },
+  (t) => [index("webhook_endpoints_org_idx").on(t.organizationId)],
+);
+
+/**
+ * I-02: buzón de eventos de aviso nuevo. Se escribe en el mismo batch que el aviso (solo si la organización tiene
+ * un webhook que lo pide) y el cron de 15 minutos lo pasa a la cola y lo vacía. No se sincroniza.
+ */
+export const webhookOutbox = sqliteTable(
+  "webhook_outbox",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    event: text("event").notNull(),
+    payload: text("payload").notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("webhook_outbox_created_idx").on(t.createdAt)],
+);
+
+/**
+ * I-04: enlace secreto del calendario de tareas (.ics) de un usuario en una organización. Solo se guarda el SHA-256
+ * del token. Hay a lo sumo uno vigente por usuario y organización; regenerarlo revoca el anterior. No se sincroniza.
+ */
+export const calendarFeeds = sqliteTable(
+  "calendar_feeds",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    organizationId: text("organization_id").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    createdAt: integer("created_at").notNull(),
+    lastUsedAt: integer("last_used_at"),
+    revokedAt: integer("revoked_at"),
+  },
+  (t) => [uniqueIndex("calendar_feeds_hash_uq").on(t.tokenHash), index("calendar_feeds_user_idx").on(t.userId, t.organizationId)],
+);
+
+/**
+ * P-04: última corrida de cada job de datos (sentinel2, chirps, firms), anotada por /ingest en cada pedido firmado.
+ * Alimenta la página pública de estado; no guarda nada de clientes. No se sincroniza.
+ */
+export const jobRuns = sqliteTable("job_runs", {
+  job: text("job").primaryKey(),
+  lastOkAt: integer("last_ok_at"),
+  lastFailAt: integer("last_fail_at"),
+  lastFailStatus: integer("last_fail_status"),
+});
+
+/**
+ * X-26: dosis habitual de un producto por hectárea, en la unidad base del producto (l o kg). La carga la organización;
+ * una aplicación fuera de este rango aparece en "Para revisar". Tabla de oficina: no se sincroniza.
+ */
+export const productDoseRanges = sqliteTable("product_dose_ranges", {
+  productId: text("product_id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  minDose: real("min_dose"),
+  maxDose: real("max_dose"),
+  updatedAt: integer("updated_at").notNull(),
+});
+
+/** X-26: "Está bien" sobre un registro marcado. Vale hasta que el registro se edite (updated_at posterior). */
+export const recordReviews = sqliteTable("record_reviews", {
+  recordId: text("record_id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  reviewedBy: text("reviewed_by").notNull(),
+  reviewedAt: integer("reviewed_at").notNull(),
+});

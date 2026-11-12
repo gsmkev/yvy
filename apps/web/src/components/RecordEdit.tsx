@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   HEALTH_REASONS,
+  IRRIGATION_METHODS,
   SUPPLEMENT_TYPES,
   REPRO_EVENTS,
   SERVICE_METHODS,
@@ -13,6 +14,8 @@ import {
   MORTALITY_CAUSES,
   MOVE_REASONS,
   CROPS,
+  deltaT,
+  sprayWarningTexts,
   DENSITY_UNITS,
   FERT_METHODS,
   HARVEST_DESTINATIONS,
@@ -129,6 +132,12 @@ const FIELDS: Record<RecordKind, FieldDef[]> = {
     { key: "dose", label: f("dose"), type: "text", optional: true },
     ...HERD_FIELDS("counts"),
     { key: "tag", label: f("tag"), type: "text", optional: true },
+    NOTE,
+  ],
+  feed: [],
+  irrigation: [
+    { key: "mm", label: f("irrigationMm"), type: "number" },
+    { key: "method", label: f("irrigationMethod"), type: "select", options: opts("irrigationMethod", IRRIGATION_METHODS) },
     NOTE,
   ],
   fuel_load: [
@@ -256,6 +265,15 @@ export function RecordEditForm({
     },
     onError: (e) => setInvalid(e instanceof Error ? e.message : String(e)),
   });
+  // A-12: avisos de viento y Delta T al editar las condiciones de una aplicación
+  const num = (k: string) => (form[k] === undefined || form[k] === "" ? null : Number(form[k]));
+  const warnings =
+    r.kind === "application"
+      ? sprayWarningTexts({
+          windKmh: num("windKmh"),
+          deltaT: num("tempC") !== null && num("humidityPct") !== null ? deltaT(num("tempC")!, num("humidityPct")!) : null,
+        })
+      : [];
   const set = (k: string) => (e: { target: { value: string } }) => {
     setInvalid(null);
     setForm({ ...form, [k]: e.target.value });
@@ -302,6 +320,11 @@ export function RecordEditForm({
             />
           )}
         </Field>
+      ))}
+      {warnings.map((w) => (
+        <p key={w} role="alert" className="rounded-md bg-trigo/20 px-3 py-2 text-sm text-tinta">
+          {w}
+        </p>
       ))}
       <p className="text-xs text-tinta-2">{t("ui.editRecordHint")}</p>
       {invalid ? <ErrorBox error={new Error(invalid)} /> : null}

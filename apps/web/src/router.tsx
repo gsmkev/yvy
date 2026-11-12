@@ -39,10 +39,22 @@ const privacyRoute = createRoute({
   component: lazyRouteComponent(() => import("./routes/public/legal"), "PrivacyPage"),
 });
 
+const statusRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/estado",
+  component: lazyRouteComponent(() => import("./routes/public/status"), "StatusPage"),
+});
+
 const apiDocsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/api-docs",
   component: lazyRouteComponent(() => import("./routes/public/api-docs"), "ApiDocsPage"),
+});
+
+const leadReportRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/informe/$id/$sig",
+  component: lazyRouteComponent(() => import("./routes/public/informe"), "LeadReportPage"),
 });
 
 const sharedRoute = createRoute({
@@ -150,6 +162,11 @@ const calendar = createRoute({
   path: "/calendario",
   component: lazyRouteComponent(() => import("./routes/calendar"), "CalendarPage"),
 });
+const review = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/para-revisar",
+  component: lazyRouteComponent(() => import("./routes/review"), "ReviewPage"),
+});
 const compare = createRoute({
   getParentRoute: () => appRoute,
   path: "/comparar",
@@ -206,7 +223,9 @@ const routeTree = rootRoute.addChildren([
   termsRoute,
   privacyRoute,
   apiDocsRoute,
+  statusRoute,
   sharedRoute,
+  leadReportRoute,
   appRoute.addChildren([
     home,
     newFarm,
@@ -221,6 +240,7 @@ const routeTree = rootRoute.addChildren([
     records,
     tasks,
     calendar,
+    review,
     compare,
     sanitary,
     team,

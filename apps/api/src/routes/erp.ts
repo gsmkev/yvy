@@ -2,25 +2,27 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { LIMITS } from "@yvy/shared";
-import { accountMapInput, attendanceDayInput, cashAccountInput, cashMoveInput, cashTransferInput, settleInput, CATTLE_DEAL_KINDS, cattleDealInput, grainContractInput, grainDeliveryInput, grainSettlementInput, purchaseInput, purchaseInvoiceInput, purchaseReceiveInput, budgetLineInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
+import { accountMapInput, attendanceDayInput, cashAccountInput, cashMoveInput, cashTransferInput, settleInput, CATTLE_DEAL_KINDS, cattleDealInput, grainContractInput, grainDeliveryInput, grainSettlementInput, purchaseInput, purchaseInvoiceInput, purchaseReceiveInput, budgetLineInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, documentTaxInput, EXPORT_DATASETS, exportFormatInput, feedRationInput, noonAsuncion, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { HTTPException } from "hono/http-exception";
 import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
 import { presign } from "../lib/r2";
 import { results } from "../db/results";
 import { fuelReport } from "../db/fuel";
+import { feedlotReport, listRations, requireRationProducts } from "../db/feedlot";
 import { createWorkOrder, listWorkOrders } from "../db/work-orders";
 import { fixDefaultWarehouse } from "../db/stock";
 import { adjustStock, consumeStock, deleteMove, expiringLots, listMoves, purchaseStock, requireWarehouseUnused, stockSummary, transferStock } from "../db/stock-moves";
 import { deleteMachineCost, laborComparison, listMachineCosts, saveMachineCost } from "../db/labor-cost";
 import { attendanceSummary, deleteAttendance, listAttendance, markDay } from "../db/attendance";
-import { balances, createPayment, deletePayment, employeeStatement, listPayments } from "../db/employee-payments";
+import { balances, createPayment, deletePayment, employeeStatement, listPayments, payroll } from "../db/employee-payments";
 import { budgetCompare } from "../db/budget";
 import { createPurchase, deletePurchase, getPurchase, invoicePurchase, listPurchases, receivePurchase, revertReception } from "../db/purchases";
 import { checkContractRefs, contractsSummary, createDelivery, createSettlement, deleteDelivery, deleteSettlement, listDeliveries, listSettlements } from "../db/grain-sales";
 import { createDeal, deleteDeal, listDeals } from "../db/cattle-deals";
 import { accountBalances, createMove as createCashMove, deleteMove as deleteCashMove, dues, listMoves as listCashMoves, requireAccountUnused, settle, transfer } from "../db/cash";
 import { accountantExport, listMap, resetMap, saveMap } from "../db/accountant";
+import { deleteDocumentTax, exportRows, saveDocumentTax } from "../db/export-docs";
 import { createLog, deleteLog, duePlans, listLogs } from "../db/maintenance";
 import { deleteMinimum, listMinimums, lowStock, saveMinimum } from "../db/stock-minimums";
 import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
@@ -226,6 +228,63 @@ erp.get("/fuel/report", async (c) =>
   c.json(await fuelReport(c.var.sdb, parse(z.object({ farmId: uuid.optional(), from: isoDate.optional(), to: isoDate.optional() }), c.req.query()))),
 );
 
+// ---------- Feedlot (G-33) ----------
+// Raciones (maestro de oficina) y resumen por corral. Los suministros son registros `feed` que llegan por /sync/push.
+
+const rationRow = async (sdb: ScopedDb, v: z.infer<typeof feedRationInput>) => {
+  if (!(await requireRationProducts(sdb, v.items.map((i) => i.productId)))) throw new HTTPException(400, { message: "Un ingrediente no está en el catálogo" });
+  return { name: v.name, items: JSON.stringify(v.items), note: v.note ?? null };
+};
+erp.get("/feedlot/rations", async (c) => c.json(await listRations(c.var.sdb)));
+erp.post("/feedlot/rations", async (c) => {
+  c.var.sdb.require(can.manageErp);
+  const row = await rationRow(c.var.sdb, parse(feedRationInput, await readJson(c.req)));
+  return c.json(await erpCreate(c.var.sdb, s.feedRations, can.manageErp, row), 201);
+});
+erp.put("/feedlot/rations/:id", async (c) => {
+  c.var.sdb.require(can.manageErp);
+  const row = await rationRow(c.var.sdb, parse(feedRationInput, await readJson(c.req)));
+  await erpUpdate(c.var.sdb, s.feedRations, can.manageErp, c.req.param("id"), row);
+  return c.json({ ok: true });
+});
+erp.delete("/feedlot/rations/:id", async (c) => {
+  await erpDelete(c.var.sdb, s.feedRations, can.manageErp, c.req.param("id"));
+  return c.json({ ok: true });
+});
+erp.get("/feedlot/report", async (c) => {
+  const q = parse(z.object({ farmId: uuid.optional(), from: isoDate, to: isoDate }), c.req.query());
+  return c.json(await feedlotReport(c.var.sdb, { farmId: q.farmId, from: noonAsuncion(q.from) - 12 * 3_600_000, to: noonAsuncion(q.to) + 12 * 3_600_000 - 1 }));
+});
+
+// ---------- Exportación para sistemas contables (I-06) ----------
+
+erp.get("/export/rows", async (c) => {
+  const q = parse(z.object({ dataset: z.enum(EXPORT_DATASETS), from: isoDate, to: isoDate }), c.req.query());
+  return c.json(await exportRows(c.var.sdb, q.dataset, q.from, q.to));
+});
+erp.put("/export/taxes", async (c) => c.json(await saveDocumentTax(c.var.sdb, parse(documentTaxInput, await readJson(c.req)))));
+erp.delete("/export/taxes/:kind/:id", async (c) => {
+  await deleteDocumentTax(c.var.sdb, parse(z.enum(["purchase", "settlement", "cattle"]), c.req.param("kind")), parse(uuid, c.req.param("id")));
+  return c.json({ ok: true });
+});
+erp.get("/export/formats", async (c) => {
+  const rows = await erpList(c.var.sdb, s.exportFormats, can.manageErp, [s.exportFormats.name] as never);
+  return c.json(rows.map((r) => ({ ...(r as { id: string; name: string; dataset: string; config: string }), config: JSON.parse((r as { config: string }).config) })));
+});
+erp.post("/export/formats", async (c) => {
+  const b = parse(exportFormatInput, await readJson(c.req));
+  return c.json(await erpCreate(c.var.sdb, s.exportFormats, can.manageErp, { ...b, config: JSON.stringify(b.config) }), 201);
+});
+erp.put("/export/formats/:id", async (c) => {
+  const b = parse(exportFormatInput, await readJson(c.req));
+  await erpUpdate(c.var.sdb, s.exportFormats, can.manageErp, c.req.param("id"), { ...b, config: JSON.stringify(b.config) });
+  return c.json({ ok: true });
+});
+erp.delete("/export/formats/:id", async (c) => {
+  await erpDelete(c.var.sdb, s.exportFormats, can.manageErp, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
 // ---------- Órdenes de trabajo (E-20) ----------
 // Crear y ver: quien puede asignar tareas (no el empleado). El costo se ve solo con permiso de montos.
 
@@ -320,6 +379,10 @@ erp.delete("/employee-payments/:id", async (c) => {
   return c.json({ ok: true });
 });
 erp.get("/employees/balance", async (c) => c.json(await balances(c.var.sdb, parse(isoDate.optional(), c.req.query("to")))));
+erp.get("/employees/payroll", async (c) => {
+  const q = parse(z.object({ from: isoDate, to: isoDate }), c.req.query());
+  return c.json(await payroll(c.var.sdb, q.from, q.to));
+});
 erp.get("/employees/:id/statement", async (c) => c.json(await employeeStatement(c.var.sdb, parse(uuid, c.req.param("id")))));
 
 // ---------- Presupuesto de campaña (E-32) ----------

@@ -10,6 +10,8 @@ export interface Session {
   organizations: { id: string; name: string; role: string }[];
   /** P-12: sesión de soporte (solo lectura, sin renovación). */
   support?: boolean;
+  /** P-08: la organización exige segundo factor a los administradores y este todavía no lo activó. */
+  mfaSetupRequired?: boolean;
 }
 
 const KEY = "yvy.session";
@@ -170,3 +172,30 @@ export const qs = (params: Record<string, string | number | undefined | null>) =
   const s = p.toString();
   return s ? `?${s}` : "";
 };
+
+/** Cuerpo binario (un archivo) con la misma sesión: la API lo recibe tal cual, con su tipo y tamaño. */
+export async function apiFile<T>(path: string, file: Blob, retry = true): Promise<T> {
+  if (session && session.accessTokenExpiresAt - Date.now() < 60_000) await refresh();
+  const res = await netFetch(path, {
+    method: "POST",
+    headers: {
+      "content-type": file.type,
+      ...(session ? { authorization: `Bearer ${session.accessToken}` } : {}),
+    },
+    body: file,
+  });
+  if (res.status === 401 && retry && session && (await refresh())) return apiFile<T>(path, file, false);
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!res.ok) throw new ApiError(res.status, (data as { error?: string })?.error ?? `HTTP ${res.status}`);
+  return data as T;
+}
+
+/** Descarga un archivo de la API (que pide sesión) como Blob, para usarlo con una URL local. */
+export async function getBlob(path: string, retry = true): Promise<Blob> {
+  if (session && session.accessTokenExpiresAt - Date.now() < 60_000) await refresh();
+  const res = await netFetch(path, { headers: session ? { authorization: `Bearer ${session.accessToken}` } : {} });
+  if (res.status === 401 && retry && session && (await refresh())) return getBlob(path, false);
+  if (!res.ok) throw new ApiError(res.status, `HTTP ${res.status}`);
+  return res.blob();
+}

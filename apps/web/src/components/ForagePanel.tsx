@@ -67,6 +67,7 @@ export function ForagePanel({ farmId }: { farmId: string }) {
           base: dec.format(c.ndviBase),
           slope: int.format(c.ndviSlopeKgDmHa),
           w: Math.round(c.heightWeight * 100),
+          win: c.calibrationWindowDays,
           use: Math.round(c.utilization * 100),
           dm: c.dmPerUaDay,
         })}

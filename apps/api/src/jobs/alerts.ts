@@ -8,6 +8,7 @@ import { and, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import { newId, parseNotificationPrefs, wantsNotification } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type DB, type Stmt } from "../db/client";
+import { alertOutboxStmts } from "../db/webhooks";
 import type { HourlyForecast } from "./weather";
 import { affectedPlots, severityRank, type AlertDraft } from "./rules";
 
@@ -96,6 +97,22 @@ export async function upsertAlert(
     stmts.push(db.insert(s.alertPlots).values(plotIds.slice(i, i + 40).map((plotId) => ({ alertId: id, plotId }))));
   }
 
+  // I-02: aviso nuevo (no una actualización) → buzón de webhooks, en el mismo batch
+  if (!existing)
+    stmts.push(
+      ...(await alertOutboxStmts(db, farm.organizationId, {
+        id,
+        farmId: farm.id,
+        kind: draft.kind,
+        severity: draft.severity,
+        probability: draft.probability,
+        summary: draft.summary,
+        validFrom,
+        validTo,
+        plotIds,
+        source: SOURCES[draft.kind],
+      }, now)),
+    );
   const notify = !existing || severityRank(draft.severity) > severityRank(existing.severity);
   if (notify) stmts.push(...(await notificationStmts(db, farm.organizationId, id, draft.kind, plotIds, now)));
   await runBatch(db, stmts);

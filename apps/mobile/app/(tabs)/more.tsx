@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Switch, View } from "react-native";
 import { router } from "expo-router";
-import { t, type MessageKey } from "@yvy/shared";
+import { getLocale, LOCALES, LOCALE_NAMES, t, type MessageKey } from "@yvy/shared";
 import { FEATURES } from "../../src/lib/features";
 import type { OutboxItem } from "../../src/db/store";
 import { getDb } from "../../src/lib/db";
 import { allPacksPlan, downloadAllPacks, downloadPack, isWifi, packStatus } from "../../src/lib/offline";
 import { remindersEnabled, setRemindersEnabled } from "../../src/lib/reminders";
+import { chooseLocale } from "../../src/lib/locale";
 import { api, getSession, setSession } from "../../src/lib/session";
 import { deleteUploadedFiles, storageUsage, type StorageUsage } from "../../src/lib/storage";
 import { canSwitchUser, unsentSummary } from "../../src/lib/switchUser";
@@ -94,6 +95,8 @@ export default function More() {
       <Text style={T.small}>{session?.organization.name}</Text>
       <Text style={[T.display, { marginTop: 2 }]}>{session?.user.fullName}</Text>
 
+      <Row title={t("app.emergencyTitle")} subtitle={t("app.emergencyRowHint")} onPress={() => router.push("/emergency")} />
+
       <Text style={st.section}>{t("app.syncTitle")}</Text>
       <Row title={t("app.lastSyncAt", { when: lastSync })} subtitle={sync.pending > 0 ? t("app.pendingCount", { n: sync.pending }) : t("app.allSent")} onPress={syncNow} />
       <Outbox items={outbox} plotName={(id) => plots.find((p) => p.id === id)?.name} wifiOnly={wifiOnly} />
@@ -154,6 +157,24 @@ export default function More() {
         />
       </View>
 
+      <Row
+        title={t("app.language")}
+        subtitle={LOCALE_NAMES[getLocale()]}
+        onPress={() =>
+          Alert.alert(
+            t("app.languageChoose"),
+            undefined,
+            LOCALES.map((l) => ({
+              text: LOCALE_NAMES[l],
+              onPress: () => {
+                chooseLocale(getDb(), l);
+                router.replace("/");
+              },
+            })),
+          )
+        }
+      />
+
       <Row title={t("app.walkRow")} subtitle={t("app.walkRowHint")} onPress={() => router.push("/walk")} />
       <Row title={t("app.animalsRow")} subtitle={t("app.animalsRowHint")} onPress={() => router.push("/animals")} />
       {canCount(session?.organization.role) && <Row title={t("ui.countRow")} subtitle={t("ui.countRowHint")} onPress={() => router.push("/stock-count")} />}
@@ -167,6 +188,10 @@ export default function More() {
           <Row title={t("app.labsGrassTitle")} subtitle={t("app.labsGrassRow")} onPress={() => router.push("/labs/pasto")} />
           <Row title={t("app.labsCowTitle")} subtitle={t("app.labsCowRow")} onPress={() => router.push("/labs/vaca")} />
           <Row title={t("app.labsVoiceTitle")} subtitle={t("app.labsVoiceRow")} onPress={() => router.push("/labs/voz")} />
+          <Row title={t("app.labsWeedIdTitle")} subtitle={t("app.labsWeedIdRow")} onPress={() => router.push("/labs/malezas")} />
+          <Row title={t("app.labsTagTitle")} subtitle={t("app.labsTagRow")} onPress={() => router.push("/labs/caravana")} />
+          <Row title={t("app.labsStageTitle")} subtitle={t("app.labsStageRow")} onPress={() => router.push("/labs/fenologia")} />
+          <Row title={t("app.labsTranslateTitle")} subtitle={t("app.labsTranslateRow")} onPress={() => router.push("/labs/guarani")} />
         </>
       )}
 

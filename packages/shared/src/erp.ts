@@ -227,7 +227,7 @@ export const daysUntil = (from: string, to: string): number =>
 
 export type BaseUnit = "l" | "kg";
 /** Registros de campo que descuentan stock y cargan costo. */
-export const CONSUMING_KINDS = ["application", "fertilization", "health", "fuel_load"] as const;
+export const CONSUMING_KINDS = ["application", "fertilization", "health", "fuel_load", "feed"] as const;
 
 const DOSE_TO_BASE: Record<DoseUnit, { unit: BaseUnit; factor: number }> = {
   l_ha: { unit: "l", factor: 1 },
@@ -242,6 +242,8 @@ interface DoseLike {
   productId?: string;
   dose: number;
   unit: DoseUnit;
+  /** Cantidad total realmente usada (E-21), en la unidad de la dosis sin "/ha". */
+  usedQty?: number;
 }
 
 /** Ids de catálogo que usa un registro (para leerlos de una vez). */
@@ -249,12 +251,14 @@ export function consumptionProductIds(kind: string, data: Record<string, unknown
   if (kind === "application" || kind === "fertilization")
     return ((data.products as DoseLike[] | undefined) ?? []).map((p) => p.productId).filter((x): x is string => !!x);
   if ((kind === "health" || kind === "fuel_load") && typeof data.productId === "string") return [data.productId];
+  if (kind === "feed") return ((data.items as { productId?: string }[] | undefined) ?? []).map((i) => i.productId).filter((x): x is string => !!x);
   return [];
 }
 
 /**
  * Cantidades de insumos que consume un registro, en la unidad base del producto (l o kg).
- * - application y fertilization: dosis por hectárea x superficie hecha (`areaHa` del registro o, si falta, la del lote).
+ * - application y fertilization: dosis por hectárea x superficie hecha (`areaHa` del registro o, si falta, la del lote),
+ *   o la cantidad real usada del producto (`usedQty`) si el operario la anotó al cerrar la orden (E-21).
  * - health: la cantidad del registro (`quantity`).
  * - fuel_load: los litros de la carga, del combustible indicado o del único combustible del catálogo.
  * Solo cuentan los productos del catálogo (`units`: id a unidad). Un producto cuya dosis no es de la misma familia que
@@ -272,16 +276,22 @@ export function consumptionLines(
   };
   if (kind === "application" || kind === "fertilization") {
     const area = typeof data.areaHa === "number" ? data.areaHa : ctx.plotAreaHa;
-    if (!area || area <= 0) return [];
     for (const p of (data.products as DoseLike[] | undefined) ?? []) {
       const unit = p.productId ? ctx.units.get(p.productId) : undefined;
       const conv = DOSE_TO_BASE[p.unit];
-      if (p.productId && unit && conv && conv.unit === unit) add(p.productId, p.dose * conv.factor * area);
+      if (!(p.productId && unit && conv && conv.unit === unit)) continue;
+      // Con la cantidad real que anotó el operario (E-21) no hace falta la superficie.
+      if (typeof p.usedQty === "number" && p.usedQty > 0) add(p.productId, p.usedQty * conv.factor);
+      else if (area && area > 0) add(p.productId, p.dose * conv.factor * area);
     }
   } else if (kind === "fuel_load") {
     // Litros de la carga; el producto es el indicado o, si no, el único combustible del catálogo.
     const id = typeof data.productId === "string" ? data.productId : ctx.fuelProductId;
     if (id && ctx.units.get(id) === "l" && typeof data.liters === "number") add(id, data.liters);
+  } else if (kind === "feed") {
+    // Ración: los kilos tal cual de cada ingrediente, solo de productos del catálogo medidos en kg.
+    for (const i of (data.items as { productId?: string; kg?: number }[] | undefined) ?? [])
+      if (i.productId && ctx.units.get(i.productId) === "kg" && typeof i.kg === "number") add(i.productId, i.kg);
   } else if (kind === "health") {
     const id = data.productId;
     if (typeof id === "string" && ctx.units.has(id) && typeof data.quantity === "number") add(id, data.quantity);
@@ -301,6 +311,7 @@ export interface ResultFigures {
   marginPyg: number;
   /** Guaraníes por hectárea; null sin superficie. */
   costPerHa: number | null;
+  incomePerHa: number | null;
   marginPerHa: number | null;
   /** Guaraníes por tonelada cosechada; null sin cosecha. */
   costPerTon: number | null;
@@ -312,6 +323,7 @@ export function resultFigures(r: ResultInput): ResultFigures {
   return {
     marginPyg,
     costPerHa: r.areaHa > 0 ? Math.round(r.costPyg / r.areaHa) : null,
+    incomePerHa: r.areaHa > 0 ? Math.round(r.incomePyg / r.areaHa) : null,
     marginPerHa: r.areaHa > 0 ? Math.round(marginPyg / r.areaHa) : null,
     costPerTon: r.tons > 0 ? Math.round(r.costPyg / r.tons) : null,
   };

@@ -11,6 +11,7 @@ import {
   Baby,
   CloudRain,
   Droplets,
+  Waves,
   Footprints,
   Fuel,
   NotebookPen,
@@ -49,11 +50,13 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
   reproduction: Baby,
   sowing: Shovel,
   application: SprayCan,
+  irrigation: Waves,
   fertilization: Fertilizer,
   harvest: Scale,
   track: Route,
   fuel_load: Fuel,
   stock_count: ClipboardList,
+  feed: Wheat,
 };
 
 export const ALERT_ICON: Record<string, LucideIcon> = {

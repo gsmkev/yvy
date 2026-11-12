@@ -6,6 +6,7 @@ import { fmtNum } from "../../lib/format";
 import { t } from "../../lib/i18n";
 import { priceFor } from "../../lib/pricing";
 import { ErrorBox } from "../../components/ui";
+import { LeadForm } from "./LeadForm";
 import { PublicShell } from "./PublicShell";
 
 const btn =
@@ -173,14 +174,12 @@ export function LandingPage() {
       </section>
 
       <section className="border-t border-linea">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-14 sm:px-6 md:flex-row md:items-center md:justify-between">
-          <div className="max-w-xl">
+        <div className="mx-auto grid w-full max-w-5xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2">
+          <div>
             <h2 className="font-serif text-[28px] leading-tight font-semibold">{t("ui.riskLandingTitle")}</h2>
             <p className="mt-3 text-tinta-2">{t("ui.riskLandingText")}</p>
           </div>
-          <Link to="/ingresar" search={{ modo: "registro" }} className={secondary}>
-            {t("ui.riskLandingCta")}
-          </Link>
+          <LeadForm />
         </div>
       </section>
 

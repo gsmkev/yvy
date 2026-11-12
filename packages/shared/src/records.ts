@@ -164,10 +164,16 @@ export const productDose = z.object({
   name: z.string().trim().min(1).max(120),
   dose: z.number().positive().max(100_000),
   unit: z.enum(DOSE_UNITS),
+  /**
+   * Cantidad total realmente usada (E-21), en la unidad de la dosis sin "/ha" (L, mL, kg o g). Si falta, el consumo es
+   * la dosis por la superficie hecha; si está, descuenta el stock por esta cantidad.
+   */
+  usedQty: z.number().positive().max(1_000_000_000).optional(),
 });
 /** Fertilizante: siempre kg/ha. */
 export const fertilizerDose = productDose.extend({ unit: z.literal("kg_ha") });
 export const HARVEST_DESTINATIONS = ["silo", "acopio", "industry", "other"] as const;
+export const IRRIGATION_METHODS = ["pivot", "sprinkler", "drip", "furrow", "flood"] as const;
 export const FERT_METHODS = ["broadcast", "banded", "foliar", "fertigation"] as const;
 export type ProductDose = z.infer<typeof productDose>;
 
@@ -272,6 +278,32 @@ export const recordDataSchemas = {
     .refine((d) => d.density === undefined || d.densityUnit !== undefined, {
       message: "Indicá la unidad de la densidad",
     }),
+  /**
+   * Riego (A-43): lámina aplicada en el lote (records.plot_id), en mm sobre toda su superficie. `appliedAt` (epoch ms)
+   * es cuándo se regó; si falta, vale capturedAt. Entra al balance hídrico del lote.
+   */
+  irrigation: z.object({
+    mm: z.number().positive().max(LIMITS.irrigation.maxMm),
+    appliedAt: z.number().int().nonnegative().optional(),
+    method: z.enum(IRRIGATION_METHODS),
+    note,
+  }),
+  /**
+   * Ración suministrada a un corral (G-33): el corral es records.plot_id. `kgDm` es la materia seca dada; `items` son los
+   * kilos tal cual de cada ingrediente del catálogo (la web los calcula con la ración vigente, y quedan como historia
+   * aunque la ración cambie). Descuenta el stock de los ingredientes y carga el costo (E-13). Se carga desde la web.
+   */
+  feed: z.object({
+    rationId: uuidStr.optional(),
+    ration: z.string().trim().min(1).max(80),
+    kgDm: z.number().positive().max(LIMITS.feedlot.maxKgDm),
+    head: z.number().int().min(1).max(MAX_HEAD_PER_CATEGORY * 5).optional(),
+    items: z
+      .array(z.object({ productId: uuidStr, name: z.string().trim().min(1).max(120), kg: z.number().positive().max(10_000_000) }))
+      .min(1)
+      .max(LIMITS.feedlot.maxRationItems),
+    note,
+  }),
   fertilization: z.object({
     seasonId,
     orderTaskId,

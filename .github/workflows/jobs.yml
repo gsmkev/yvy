@@ -7,10 +7,12 @@ on:
     - cron: "30 10,16,22 * * *" # chirps_daily
     - cron: "40 */3 * * *" # firms_hotspots cada 3 h
     - cron: "0 4 * * 0" # semanal: climatología, mapa base e informe de riesgo (cada 90 días) de estancias nuevas
-    - cron: "0 5 1 */3 *" # mapa base de todas cada 3 meses
+    - cron: "0 5 1 */3 *" # mapa base de todas y el de todo el país cada 3 meses
+    - cron: "10 11 * * *" # informes gratis pedidos en la landing (V-04); el Worker también dispara este job al recibir un pedido
     - cron: "0 9 * * 1" # lunes: PDF del parte semanal (R-02); el Worker manda los emails a las 10:00 UTC
     - cron: "30 12 * * 1" # lunes: área quemada (S-20) tras los focos de fuego
     - cron: "0 6 15 1,4,7,10 *" # trimestral: indicador EUDR (S-30) de todas las estancias (Sentinel-2 de la estación seca)
+    - cron: "0 7 2 1 *" # anual: límites administrativos (M-16, geoBoundaries)
   workflow_dispatch:
     inputs:
       job:
@@ -22,10 +24,12 @@ on:
             new_farm,
             s2_ingest,
             s2_basemap,
+            country_basemap,
             chirps_daily,
             firms_hotspots,
             climatology_build,
             risk_report,
+            lead_report,
             weekly_report,
             eudr,
             s2_history,
@@ -34,6 +38,9 @@ on:
             power_daily,
             spi,
             mgmt_zones,
+            boundaries,
+            custom_layers,
+            fertility_maps,
           ]
       farm:
         description: "Id de estancia (obligatorio para new_farm y s2_history; eudr: indicador de deforestación de esa estancia, vacío = todas)"
@@ -53,7 +60,8 @@ jobs:
     # Se saltea (no falla) hasta que estén configurados los secrets y variables de docs/DEPLOY.md
     if: ${{ vars.YVY_API_URL != '' }}
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ inputs.job == 's2_history' && 300 || 60 }}
+    # s2_history y el mapa del país (solo o en la corrida trimestral) tardan horas, el resto minutos
+    timeout-minutes: ${{ (inputs.job == 's2_history' || inputs.job == 'country_basemap' || github.event.schedule == '0 5 1 */3 *') && 300 || 60 }}
     defaults: { run: { working-directory: workers-py } }
     env:
       YVY_API_URL: ${{ vars.YVY_API_URL }}
@@ -75,9 +83,11 @@ jobs:
             "40 */3 * * *") echo "cmd=firms_hotspots" >> $GITHUB_OUTPUT ;;
             "0 4 * * 0") echo "cmd=weekly" >> $GITHUB_OUTPUT ;;
             "0 5 1 */3 *") echo "cmd=s2_basemap" >> $GITHUB_OUTPUT ;;
+            "10 11 * * *") echo "cmd=lead_report" >> $GITHUB_OUTPUT ;;
             "0 9 * * 1") echo "cmd=weekly_report" >> $GITHUB_OUTPUT ;;
             "30 12 * * 1") echo "cmd=burned_area" >> $GITHUB_OUTPUT ;;
             "0 6 15 1,4,7,10 *") echo "cmd=eudr" >> $GITHUB_OUTPUT ;;
+            "0 7 2 1 *") echo "cmd=boundaries" >> $GITHUB_OUTPUT ;;
             *) echo "cmd=${{ inputs.job }}" >> $GITHUB_OUTPUT ;;
           esac
       - if: steps.pick.outputs.cmd == 'weekly'
@@ -89,6 +99,10 @@ jobs:
           uv run --frozen python -m yvy_workers s2_ingest --backfill
           uv run --frozen python -m yvy_workers power_daily
           uv run --frozen python -m yvy_workers spi
+          # GeoTIFF subidos como capas propias que el aviso inmediato no alcanzó a procesar (M-17)
+          uv run --frozen python -m yvy_workers custom_layers
+      - if: github.event.schedule == '0 5 1 */3 *'
+        run: uv run --frozen python -m yvy_workers country_basemap
       - if: steps.pick.outputs.cmd != 'weekly'
         env:
           FARM: ${{ inputs.farm }}

@@ -34,6 +34,8 @@ export const LIMITS = {
     maxLongSidePx: 1280,
     webpQuality: 0.6,
     thumbLongSidePx: 320,
+    /** X-09: aviso de calidad sobre una miniatura. Umbrales orientativos (luminancia 0-255; varianza del laplaciano). */
+    quality: { sidePx: 128, darkMeanLuma: 45, blurLaplacianVar: 25 },
     maxBytes: 600 * 1024,
     uploadUrlTtlSeconds: 15 * 60,
     downloadUrlTtlSeconds: 60 * 60,
@@ -57,6 +59,11 @@ export const LIMITS = {
     /** Ingreso con teléfono y PIN de 6 dígitos (F-24): intentos por cuenta antes de bloquear, y cuánto dura el bloqueo. */
     pinMaxAttempts: 5,
     pinLockMs: 15 * 60 * 1000,
+    /** P-08: segundo factor. Intentos por usuario antes de bloquear, bloqueo, vida del pase tras el código de email y recuperación. */
+    totpMaxAttempts: 5,
+    totpLockMs: 15 * 60 * 1000,
+    totpTicketTtlMs: 5 * 60 * 1000,
+    totpRecoveryCodes: 8,
   },
   geometry: {
     /** Hectáreas: bajo esto un lote es casi seguro un error de dibujo. */
@@ -95,6 +102,22 @@ export const LIMITS = {
     deltaTMin: 2,
     deltaTMax: 8,
     maxRainMm: 0,
+  },
+  /** Informe gratis a cambio del email (V-04). */
+  leads: {
+    /** Pedidos por conexión (IP) en 24 h. */
+    perIpPerDay: 3,
+    /** Un mismo email puede volver a pedir pasado este tiempo. */
+    emailCooldownMs: 7 * 24 * 60 * 60 * 1000,
+    /** Pedidos que el job procesa por corrida y veces que se reintenta uno que falla. */
+    jobBatch: 20,
+    maxAttempts: 5,
+    /** El email y el informe se borran pasado este tiempo. */
+    retentionMs: 90 * 24 * 60 * 60 * 1000,
+    /** Versión del texto de consentimiento que aceptó la persona (se guarda con el pedido). */
+    consentVersion: "2026-11",
+    /** Rectángulo de Paraguay: el informe usa focos de calor de NASA FIRMS solo de ese país. */
+    bbox: { minLon: -62.7, maxLon: -54.2, minLat: -27.7, maxLat: -19.2 },
   },
   /** F-14: formularios configurables por la organización. */
   forms: {
@@ -150,6 +173,38 @@ export const LIMITS = {
     blocked: { maxHa: 100_000, maxUsers: 25 },
     demo: { maxHa: null, maxUsers: null },
   },
+  oddities: {
+    /** X-26: se revisan los registros de los últimos días. */
+    windowDays: 90,
+    maxCandidates: 500,
+    /** Lluvia diaria por encima de esto (mm) se marca. Valor general: en el Chaco o el este puede haber más, y se confirma con "Está bien". */
+    rainMmPerDay: 150,
+    /** Meses [desde, hasta] en que se espera cada plaga en soja y maíz del país (se admite cruzar el año). Fuera de eso se marca. */
+    pestMonths: { chinche: [10, 5], oruga: [10, 5], roya: [11, 5] },
+    /** Rinde máximo creíble en t/ha por cultivo (el cultivo sale del lote). */
+    maxYieldTHa: { soja: 7, maiz: 18, trigo: 9, arroz: 14, girasol: 5, chia: 3, otro: 40 },
+  },
+  emergency: {
+    /** F-30: contactos de emergencia que se guardan en el celular. */
+    maxContacts: 5,
+  },
+  status: {
+    /** Horas sin una corrida buena a partir de las cuales un job de datos figura "atrasado" (P-04). */
+    staleAfterHours: { sentinel2: 7 * 24, chirps: 3 * 24, firms: 2 * 24 },
+    /** /ingest anota la corrida de un job a lo sumo una vez por este tiempo. */
+    recordEveryMs: 60_000,
+    probeTimeoutMs: 3_000,
+  },
+  webhooks: {
+    maxPerOrg: 5,
+    /** Pausa del envío tras tantos fallos seguidos (el dueño la reactiva desde Cuenta). */
+    disableAfterFailures: 20,
+    timeoutMs: 8_000,
+    /** Espera antes de cada reintento de la cola, en segundos (la cola reintenta 3 veces). */
+    retryDelaysSec: [30, 300, 1800],
+    /** Un evento del buzón que nadie pasó a la cola se descarta pasado este tiempo. */
+    outboxRetentionMs: 3 * 24 * 60 * 60 * 1000,
+  },
   events: {
     /** Fracción de los eventos de uso (no del embudo) que se guarda. */
     sampleRate: 0.5,
@@ -203,7 +258,17 @@ export const LIMITS = {
   },
   // agri-p2
   /** Mapas de rendimiento (A-21): celdas de la grilla resumen y tamaño máximo del cuerpo que acepta el Worker. */
+  /**
+   * Comparación anónima con la zona (R-08): estancias de OTRAS organizaciones dentro de `radiusKm`. Solo se publica si hay
+   * al menos `minFarms` estancias de al menos `minOrgs` organizaciones distintas; vigor y lluvia de los últimos `windowDays`.
+   */
+  benchmark: { radiusKm: 30, minFarms: 3, minOrgs: 3, windowDays: 30, maxNeighbors: 300 },
   yieldMap: { maxCells: 800, maxBodyBytes: 120_000 },
+  /**
+   * Capas propias (M-17): imagen georreferenciada por estancia. PNG/JPG con 4 esquinas se guardan tal cual;
+   * un GeoTIFF (dron, mapa de suelos) lo convierte workers-py. El Worker solo valida tamaño y tipo.
+   */
+  customLayers: { maxPerFarm: 20, imageMaxBytes: 10_000_000, geotiffMaxBytes: 90_000_000, nameMaxLength: 80 },
   /**
    * Roya asiática de la soja (A-40): mojado foliar estimado con el pronóstico horario. Una hora cuenta si la humedad
    * relativa llega a `humidityPct` (o llueve `rainMm`) y la temperatura está entre `tempMinC` y `tempMaxC`.
@@ -230,6 +295,18 @@ export const LIMITS = {
     /** Días de pronóstico que se evalúan. */
     horizonDays: 7,
   },
+  /** Mapas de fertilidad (A-31): puntos con coordenadas y valor que pide cada parámetro para interpolar. Igual en workers-py. */
+  fertility: { minPoints: 8 },
+  /** Prescripción de dosis variable (A-33): dosis máxima por hectárea (kg o l). */
+  prescription: { maxRate: 100_000 },
+  /** Feedlot (G-33): ingredientes por ración, tolerancia de la suma de % de MS y tope de MS por suministro (kg). */
+  feedlot: { maxRationItems: 12, pctTolerance: 0.5, maxKgDm: 1_000_000 },
+  /** Planilla para el contador (E-27): meses como máximo por exportación. */
+  payroll: { maxMonths: 24 },
+  /** Exportación para sistemas contables (I-06): columnas por formato y diferencia tolerada entre el desglose de IVA y el importe (Gs.). */
+  exportFormat: { maxColumns: 20, taxToleranceGs: 5 },
+  /** Riego (A-43): lámina máxima por registro, en mm. */
+  irrigation: { maxMm: 500 },
   /** Balance hídrico por lote (C-08): lluvia menos consumo del cultivo, en mm. */
   waterBalance: {
     /** Ventana reciente para el riesgo de estrés. */

@@ -57,6 +57,7 @@ export default function RootLayout() {
         <Stack.Screen name="notifications" options={{ title: "" }} />
         <Stack.Screen name="animals" options={{ title: "" }} />
         <Stack.Screen name="goto" options={{ title: "" }} />
+        <Stack.Screen name="emergency" options={{ title: "" }} />
         <Stack.Screen name="walk" options={{ title: "" }} />
         <Stack.Screen name="scan-poi" options={{ title: "" }} />
         <Stack.Screen name="labs/roya" options={{ title: "" }} />

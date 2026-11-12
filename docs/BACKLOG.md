@@ -138,7 +138,7 @@ Detalles que un usuario espera sin pedirlos.
 | F-27 | Lector de caravanas electrónicas (RFID) por Bluetooth | Ganadería (ver G-21) | App | P3 | L | Falta |
 | F-28 | Escanear código QR de un punto de interés pegado en un bebedero o silo para anotar ahí | Anotar sin buscar | App | P2 | S | Falta |
 | F-29 | Modo "solo lectura" para el dueño en la app con todos los lotes | Hoy la app está pensada para el empleado | App | P1 | M | Parcial |
-| F-30 | Mensaje de texto (SMS) de emergencia con coordenadas si no hay datos pero hay señal de voz | Accidentes y fuego | App | P3 | S | Falta |
+| F-30 | Mensaje de texto (SMS) de emergencia con coordenadas si no hay datos pero hay señal de voz | Accidentes y fuego | App | P3 | S | Hecho |
 
 ---
 

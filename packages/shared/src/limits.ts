@@ -155,6 +155,10 @@ export const LIMITS = {
     blocked: { maxHa: 100_000, maxUsers: 25 },
     demo: { maxHa: null, maxUsers: null },
   },
+  emergency: {
+    /** F-30: contactos de emergencia que se guardan en el celular. */
+    maxContacts: 5,
+  },
   status: {
     /** Horas sin una corrida buena a partir de las cuales un job de datos figura "atrasado" (P-04). */
     staleAfterHours: { sentinel2: 7 * 24, chirps: 3 * 24, firms: 2 * 24 },

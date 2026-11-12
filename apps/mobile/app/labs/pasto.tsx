@@ -1,8 +1,8 @@
-import { Text } from "react-native";
 import { t } from "@yvy/shared";
 import { Lab, Fact } from "../../src/labs/Lab";
 import { PastureIllustration } from "../../src/labs/illustrations";
 import { T } from "../../src/ui/theme";
+import { Text } from "../../src/ui/kit";
 
 export default function Pasto() {
   return (

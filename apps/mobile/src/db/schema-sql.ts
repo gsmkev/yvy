@@ -154,5 +154,9 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `plot_analyses` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`plot_id` text NOT NULL,\n\t`kind` text NOT NULL,\n\t`ref_key` text NOT NULL,\n\t`from_at` integer,\n\t`to_at` integer,\n\t`plot_area_ha` real NOT NULL,\n\t`valid_pct` real NOT NULL,\n\t`metrics` text NOT NULL,\n\t`changes` text NOT NULL,\n\t`computed_at` integer NOT NULL\n);",
   "CREATE UNIQUE INDEX `plot_analyses_uq` ON `plot_analyses` (`plot_id`,`kind`,`ref_key`);",
   "CREATE INDEX `plot_analyses_farm_idx` ON `plot_analyses` (`farm_id`,`kind`);",
-  "CREATE TABLE `form_configs` (\n\t`organization_id` text PRIMARY KEY NOT NULL,\n\t`config` text NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`updated_by` text NOT NULL\n);"
+  "CREATE TABLE `form_configs` (\n\t`organization_id` text PRIMARY KEY NOT NULL,\n\t`config` text NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`updated_by` text NOT NULL\n);",
+  "CREATE TABLE `soil_samples` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`plot_id` text,\n\t`point_label` text,\n\t`lon` real,\n\t`lat` real,\n\t`sampled_on` text NOT NULL,\n\t`depth_cm` integer DEFAULT 20 NOT NULL,\n\t`lab` text,\n\t`ph` real,\n\t`p_mg_kg` real,\n\t`k_cmol_kg` real,\n\t`om_pct` real,\n\t`note` text,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
+  "CREATE INDEX `soil_samples_sync_idx` ON `soil_samples` (`organization_id`,`version`,`id`);",
+  "CREATE INDEX `soil_samples_farm_idx` ON `soil_samples` (`farm_id`);",
+  "CREATE INDEX `soil_samples_plot_idx` ON `soil_samples` (`plot_id`);"
 ];

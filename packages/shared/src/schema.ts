@@ -336,6 +336,42 @@ export const farmLines = sqliteTable(
   ],
 );
 
+/**
+ * Análisis de suelo de laboratorio (A-30): por lote o por punto de muestreo. Solo la web lo usa por ahora
+ * (no está en el pull del sync). Valores nulos = el laboratorio no lo informó.
+ */
+export const soilSamples = sqliteTable(
+  "soil_samples",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    plotId: text("plot_id"),
+    /** Nombre o número del punto de muestreo ("P-07"). */
+    pointLabel: text("point_label"),
+    lon: real("lon"),
+    lat: real("lat"),
+    /** Fecha de muestreo "YYYY-MM-DD". */
+    sampledOn: text("sampled_on").notNull(),
+    depthCm: integer("depth_cm").notNull().default(20),
+    lab: text("lab"),
+    ph: real("ph"),
+    /** Fósforo (Mehlich-1), mg/kg. */
+    pMgKg: real("p_mg_kg"),
+    /** Potasio, cmolc/kg. */
+    kCmolKg: real("k_cmol_kg"),
+    /** Materia orgánica, %. */
+    omPct: real("om_pct"),
+    note: text("note"),
+    ...synced,
+  },
+  (t) => [
+    index("soil_samples_sync_idx").on(t.organizationId, t.version, t.id),
+    index("soil_samples_farm_idx").on(t.farmId),
+    index("soil_samples_plot_idx").on(t.plotId),
+  ],
+);
+
 export const plotAssignments = sqliteTable(
   "plot_assignments",
   {

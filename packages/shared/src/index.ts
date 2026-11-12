@@ -52,3 +52,4 @@ export * from "./pheno";
 export * from "./sowing-window";
 export * from "./water-balance";
 export * from "./withdrawal";
+export * from "./soil";

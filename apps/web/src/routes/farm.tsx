@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LineString, Polygon } from "geojson";
 import { MapPinPlus, PenLine, Upload, X } from "lucide-react";
 import { areaHa, bboxOf, validatePolygon, type Area } from "@yvy/geo";
-import { BRAND, NDVI_RAMP, POI_KINDS } from "@yvy/shared";
+import { BRAND, INDEX_KINDS, NDMI_RAMP, NDVI_RAMP, POI_KINDS, type IndexKind } from "@yvy/shared";
 import { AlertsList } from "../components/AlertsList";
 import { CopyCoords } from "../components/CopyCoords";
 import { ClimatePanel } from "../components/ClimatePanel";
@@ -35,7 +35,7 @@ import { defaultCompare, layerDates, pickLayer, type Camera } from "../lib/scene
 import { PoiQrModal } from "../components/PoiQr";
 import { heatPoints, summarizeTracks, TRACK_WINDOW_MS } from "../lib/trackHeat";
 import { PEST_COLORS, PEST_WINDOW_MS, pestCounts, pestPoints } from "../lib/pests";
-import type { FarmDetail, RecordRow } from "../lib/types";
+import type { FarmDetail, Layer, RecordRow } from "../lib/types";
 
 /** Días sin anotaciones para considerar un lote sin visitar. */
 const UNVISITED_DAYS = 7;
@@ -109,7 +109,8 @@ export function FarmPage() {
   );
   useEffect(() => savePrefs({ farmId }), [farmId]);
   // S-04: fecha elegida por tipo de capa y comparación con cortina
-  const [pickedIds, setPickedIds] = useState<{ ndvi?: string; true_color?: string }>({});
+  const [pickedIds, setPickedIds] = useState<Partial<Record<Layer["layer"], string>>>({});
+  const [indexKind, setIndexKind] = useState<IndexKind>("ndvi"); // S-07
   const [compare, setCompare] = useState<{ left: string; right: string } | null>(null);
   const [curtain, setCurtain] = useState(50);
   const [camera, setCamera] = useState<Camera | null>(null);
@@ -228,10 +229,13 @@ export function FarmPage() {
   const plot = d.plots.find((p) => p.id === selected);
   const workersOf = (plotId: string) =>
     (members.data ?? []).filter((m) => d.assignments.some((a) => a.plotId === plotId && a.userId === m.userId));
-  const ndviLayer = d.layers.filter((l) => l.layer === "ndvi").sort((a, b) => b.acquiredAt - a.acquiredAt)[0];
-  // La capa NDVI recordada solo vale si esta estancia tiene imagen
+  const hasIndex = (k: IndexKind) => d.layers.some((l) => l.layer === k);
+  // Si el índice elegido no tiene imagen en esta estancia, vuelve a NDVI
+  const shownIndex: IndexKind = hasIndex(indexKind) ? indexKind : "ndvi";
+  const ndviLayer = d.layers.filter((l) => l.layer === shownIndex).sort((a, b) => b.acquiredAt - a.acquiredAt)[0];
+  // La capa de vigor recordada solo vale si esta estancia tiene imagen
   const layer = wantedLayer === "ndvi" && ndviLayer ? "ndvi" : "satellite";
-  const kind = layer === "ndvi" ? "ndvi" : "true_color";
+  const kind = layer === "ndvi" ? shownIndex : "true_color";
   const hasBasemap = d.layers.some((l) => l.layer === "true_color");
   const cropHa = d.plots.filter((p) => p.kind === "crop").reduce((a, p) => a + p.areaHa, 0);
   const pastureHa = d.plots.filter((p) => p.kind === "pasture").reduce((a, p) => a + p.areaHa, 0);
@@ -270,6 +274,7 @@ export function FarmPage() {
           onCamera={compare ? setCamera : undefined}
           tilesBaseUrl={me.data?.tilesBaseUrl}
           showNdvi={layer === "ndvi"}
+          indexKind={shownIndex}
           selectedPlotId={picking ? null : selected}
           pickedPlotIds={taskPlots}
           editPlot={shapeEdit}
@@ -319,6 +324,7 @@ export function FarmPage() {
               layerIds: { ...pickedIds, [kind]: compare.right },
               tilesBaseUrl: me.data?.tilesBaseUrl,
               showNdvi: layer === "ndvi",
+              indexKind: shownIndex,
               bounds,
             }}
           />
@@ -399,6 +405,26 @@ export function FarmPage() {
               </button>
             ))}
           </div>
+          {layer === "ndvi" && INDEX_KINDS.filter(hasIndex).length > 1 && (
+            <label className="flex w-56 flex-col gap-1 rounded-md border border-white/15 bg-surco/85 p-2.5 text-xs text-lino backdrop-blur">
+              <span className="text-lino/70">{t("ui.indexPick")}</span>
+              <select
+                className="h-8 w-full cursor-pointer rounded border border-white/20 bg-surco px-2 text-xs text-lino outline-none focus:border-lino"
+                value={shownIndex}
+                onChange={(e) => {
+                  setIndexKind(e.target.value as IndexKind);
+                  setCompare(null);
+                }}
+              >
+                {INDEX_KINDS.filter(hasIndex).map((k) => (
+                  <option key={k} value={k}>
+                    {t(`ui.index_${k}`)}
+                  </option>
+                ))}
+              </select>
+              <span className="text-lino/60">{t(`ui.indexHint_${shownIndex}`)}</span>
+            </label>
+          )}
           <SceneControls
             layers={d.layers}
             kind={kind}
@@ -480,14 +506,14 @@ export function FarmPage() {
             <div className="w-56 rounded-md border border-white/15 bg-surco/85 p-2.5 text-[11px] text-lino backdrop-blur">
               <div
                 className="h-2 rounded-sm"
-                style={{ background: `linear-gradient(90deg, ${NDVI_RAMP.join(",")})` }}
+                style={{ background: `linear-gradient(90deg, ${(shownIndex === "ndmi" ? NDMI_RAMP : NDVI_RAMP).join(",")})` }}
               />
               <div className="num mt-1 flex justify-between text-lino/70">
-                <span>{t("ui.ndviLegendLow")}</span>
-                <span>{t("ui.ndviLegendHigh")}</span>
+                <span>{shownIndex === "ndmi" ? t("ui.ndmiLegendLow") : t("ui.ndviLegendLow")}</span>
+                <span>{shownIndex === "ndmi" ? t("ui.ndmiLegendHigh") : t("ui.ndviLegendHigh")}</span>
               </div>
               <p className="num mt-1.5 text-lino/70">
-                {t("ui.imageDate", { date: fmtDate((pickLayer(d.layers, "ndvi", pickedIds.ndvi) ?? ndviLayer).acquiredAt) })} · Sentinel-2
+                {t("ui.imageDate", { date: fmtDate((pickLayer(d.layers, shownIndex, pickedIds[shownIndex]) ?? ndviLayer).acquiredAt) })} · Sentinel-2
               </p>
             </div>
           )}

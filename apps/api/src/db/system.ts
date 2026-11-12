@@ -243,7 +243,7 @@ export class SystemDb {
 
   async addFarmLayer(x: {
     farmId: string;
-    layer: "true_color" | "ndvi";
+    layer: (typeof s.LAYERS)[number];
     acquiredAt: number;
     pmtilesPath: string;
     bytes: number;

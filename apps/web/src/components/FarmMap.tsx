@@ -49,6 +49,8 @@ export interface FarmMapProps {
   layers?: Layer[];
   tilesBaseUrl?: string;
   showNdvi?: boolean;
+  /** S-07: índice que muestra la capa de vigor (NDVI por defecto). */
+  indexKind?: Layer["layer"];
   /** Capa elegida por tipo (S-04); si falta, la más nueva. */
   layerIds?: Partial<Record<Layer["layer"], string>>;
   /** Cámara compartida entre dos mapas (comparar con cortina): se aplica al cambiar y se avisa al mover con el mouse. */
@@ -460,6 +462,7 @@ export function FarmMap(props: FarmMapProps) {
     props.editPlot?.id,
     props.layers,
     props.showNdvi,
+    props.indexKind,
     props.layerIds,
     props.tilesBaseUrl,
     props.measuring,
@@ -629,7 +632,7 @@ function syncRasters(map: MlMap, p: FarmMapProps) {
         "outline",
       );
   }
-  set("ndvi", latest("ndvi"), !!p.showNdvi, "outline");
+  set("ndvi", latest(p.indexKind ?? "ndvi"), !!p.showNdvi, "outline");
 }
 
 export const boundsOf = (o: {

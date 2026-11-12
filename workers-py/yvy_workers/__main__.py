@@ -9,7 +9,7 @@ import sys
 from .ingest import IngestClient
 from .jobs.constants import BACKFILL_DAYS, BASEMAP_DAYS, DAILY_DAYS
 
-JOBS = ["s2_ingest", "s2_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "weekly_report", "new_farm", "eudr"]
+JOBS = ["s2_ingest", "s2_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "weekly_report", "new_farm", "eudr", "s2_history"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -34,8 +34,8 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     log = logging.getLogger("yvy_workers")
 
-    if args.job == "new_farm" and not args.farm:
-        build_parser().error("new_farm necesita --farm <id>")
+    if args.job in ("new_farm", "s2_history") and not args.farm:
+        build_parser().error(f"{args.job} necesita --farm <id>")
 
     api = IngestClient()
     farms = api.farms()
@@ -76,6 +76,12 @@ def main(argv: list[str] | None = None) -> int:
                     from .jobs.s2 import s2_ingest
 
                     log.info("%s: %s", f["name"], s2_ingest(api, f, days=ingest_days(args)))
+                elif args.job == "s2_history":
+                    from .jobs.s2 import s2_history
+
+                    done = s2_history(api, f)
+                    api.history_status(f["id"], "done")
+                    log.info("%s: historia %s", f["name"], done)
                 elif args.job == "s2_basemap":
                     from .jobs.s2 import s2_basemap
 
@@ -90,6 +96,8 @@ def main(argv: list[str] | None = None) -> int:
                     log.info("%s: %d filas", f["name"], climatology_build(api, f))
             except Exception:  # una estancia que falla no frena a las demás
                 failures += 1
+                if args.job == "s2_history":
+                    api.history_status(f["id"], "failed")
                 log.exception("falló %s en %s", args.job, f["name"])
     return 1 if failures else 0
 

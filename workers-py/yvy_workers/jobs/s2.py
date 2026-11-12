@@ -11,7 +11,7 @@ import tempfile
 import time
 import warnings
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -28,7 +28,7 @@ from .problems import find_problem_areas
 from ..ingest import IngestClient
 from ..storage import upload_tiles
 from .constants import BASEMAP_DAYS, DAILY_DAYS
-from ..tiles import ndvi_rgba, write_pmtiles
+from ..tiles import index_rgba, write_pmtiles
 
 log = logging.getLogger(__name__)
 
@@ -42,6 +42,8 @@ MAX_SCENE_CLOUD = 80.0
 RES = 10.0
 MAX_ITEMS = 400  # 180 días x 2 satélites x hasta 3 teselas MGRS entran de sobra
 THIN_PLOT_M = 30.0  # S-11: un lote más angosto que esto casi no tiene píxeles de 10 m "puros"
+HISTORY_FIRST_YEAR = 2017  # S-03: primer año con Sentinel-2 completo (A y B)
+INDICES = ("ndvi", "ndre", "ndmi", "evi")  # S-07
 ATTRIBUTION = "Contiene datos modificados de Copernicus Sentinel"
 
 
@@ -58,6 +60,7 @@ class Grid:
 # Mapa base con contexto: 3 km alrededor de la estancia (con 1 km una estancia chica se veía como un recorte aislado)
 BASEMAP_BUFFER_M = 3000.0
 BASEMAP_MARGIN_DEG = 0.03
+
 
 def make_grid(geom: dict[str, Any], buffer_m: float = 200.0) -> Grid:
     farm_wgs = load(geom["farm"])
@@ -126,6 +129,33 @@ def is_thin(geom: BaseGeometry, width_m: float = THIN_PLOT_M) -> bool:
     return geom.buffer(-width_m / 2).is_empty
 
 
+def compute_indices(bands: dict[str, np.ndarray], valid: np.ndarray, wanted: tuple[str, ...] = INDICES) -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    """Índices de vegetación de una escena (S-07). `bands` con reflectancia: red, nir, rededge1 (B05), nir08 (B8A),
+    swir16 (B11) y blue. Cada índice devuelve (valores con NaN donde no vale, máscara válida).
+
+    NDVI = (NIR - R) / (NIR + R)            vigor
+    NDRE = (B8A - B05) / (B8A + B05)        nitrógeno / clorofila (borde rojo)
+    NDMI = (NIR - SWIR1) / (NIR + SWIR1)    humedad de la vegetación
+    EVI  = 2,5 (NIR - R) / (NIR + 6 R - 7,5 Azul + 1)   no se satura tanto con follaje denso
+    """
+    out: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+    with np.errstate(divide="ignore", invalid="ignore"):
+        for idx in wanted:
+            if idx == "ndvi":
+                v = (bands["nir"] - bands["red"]) / (bands["nir"] + bands["red"])
+            elif idx == "ndre":
+                v = (bands["nir08"] - bands["rededge1"]) / (bands["nir08"] + bands["rededge1"])
+            elif idx == "ndmi":
+                v = (bands["nir"] - bands["swir16"]) / (bands["nir"] + bands["swir16"])
+            elif idx == "evi":
+                v = 2.5 * (bands["nir"] - bands["red"]) / (bands["nir"] + 6 * bands["red"] - 7.5 * bands["blue"] + 1)
+            else:
+                raise ValueError(f"índice desconocido: {idx}")
+            ok = valid & np.isfinite(v) & (np.abs(v) <= 1)
+            out[idx] = (np.where(ok, v, np.nan).astype("float32"), ok)
+    return out
+
+
 def plot_stats(ndvi: np.ndarray, ok: np.ndarray, grid: Grid, idx: str = "ndvi") -> list[dict[str, Any]]:
     """Media, p10, p90 y % de píxeles válidos por lote. Descarta lotes con < 60 % válido (RF-51).
 
@@ -189,21 +219,71 @@ def group_passes(items: list[dict[str, Any]]) -> list[tuple[str, list[dict[str, 
     return sorted(groups.items())
 
 
-def mosaic_ndvi(items: list[dict[str, Any]], grid: Grid) -> tuple[np.ndarray, np.ndarray]:
-    """NDVI de la pasada: cada píxel toma la primera tesela con dato válido."""
-    ndvi = np.full((grid.height, grid.width), np.nan, dtype="float32")
-    ok = np.zeros((grid.height, grid.width), dtype=bool)
+BAND_FOR = {"ndvi": ("red", "nir"), "ndre": ("nir08", "rededge1"), "ndmi": ("nir", "swir16"), "evi": ("red", "nir", "blue")}
+
+
+def mosaic_indices(items: list[dict[str, Any]], grid: Grid, wanted: tuple[str, ...] = INDICES) -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    """Índices de la pasada: cada píxel toma la primera tesela con dato válido. Solo baja las bandas que hacen falta."""
+    shape = (grid.height, grid.width)
+    res = {i: (np.full(shape, np.nan, dtype="float32"), np.zeros(shape, dtype=bool)) for i in wanted}
+    names = sorted({b for i in wanted for b in BAND_FOR[i]})
     for item in items:
-        if ok.all():
+        if all(ok.all() for _, ok in res.values()):
             break
         valid = scl_valid(item, grid)
-        if not valid[~ok].any():
+        if not any(valid[~ok].any() for _, ok in res.values()):
             continue
-        n, o = compute_ndvi(reflectance(item, "red", grid), reflectance(item, "nir", grid), valid)
-        take = o & ~ok
-        ndvi[take] = n[take]
-        ok |= take
-    return ndvi, ok
+        bands = {b: reflectance(item, b, grid) for b in names}
+        for idx, (vals, o) in compute_indices(bands, valid, wanted).items():
+            arr, ok = res[idx]
+            take = o & ~ok
+            arr[take] = vals[take]
+            ok |= take
+    return res
+
+
+def mosaic_ndvi(items: list[dict[str, Any]], grid: Grid) -> tuple[np.ndarray, np.ndarray]:
+    return mosaic_indices(items, grid, ("ndvi",))["ndvi"]
+
+
+Latest = dict[str, tuple[int, np.ndarray, np.ndarray]]
+
+
+def ingest_range(
+    api: IngestClient,
+    geom: dict[str, Any],
+    grid: Grid,
+    items: list[dict[str, Any]],
+    indices: tuple[str, ...] = INDICES,
+    farm_id: str = "",
+) -> tuple[dict[str, int], Latest]:
+    """Procesa las pasadas de `items` aún no procesadas: estadísticas por lote de cada índice. Devuelve también,
+    por índice, la última pasada con >= 60 % de la estancia válida (para la capa del mapa)."""
+    farm_mask = geometry_mask([grid.farm], out_shape=(grid.height, grid.width), transform=grid.transform, invert=True)
+    done = {"scenes": 0, "stats": 0}
+    latest: Latest = {}
+    for key, group in group_passes(items):
+        acquired = _epoch_ms(group[0])
+        cloud = float(np.mean([it["properties"].get("eo:cloud_cover", 0) for it in group]))
+        # La marca de "procesada" es por estancia: la misma pasada cubre a varias y cada una necesita sus estadísticas
+        scene = api.scene(SOURCE, f"{farm_id}:{key}" if farm_id else key, acquired, round(cloud, 1))
+        if scene["processed"]:
+            continue
+        t0 = time.time()
+        mosaics = mosaic_indices(group, grid, indices)
+        stats: list[dict[str, Any]] = []
+        for idx, (values, ok) in mosaics.items():
+            stats += plot_stats(values, ok, grid, idx)
+            if ok[farm_mask].mean() * 100 >= MIN_VALID_PCT:
+                latest[idx] = (acquired, values, ok & farm_mask)
+        for st in stats:
+            st.update(sceneId=scene["id"], acquiredAt=acquired)
+        if stats:
+            done["stats"] += api.plot_index_stats(stats)
+        api.scene_processed(scene["id"])
+        done["scenes"] += 1
+        log.info("pasada %s (%d teselas): %d filas, %.0f %% válido, %.1fs", key, len(group), len(stats), mosaics["ndvi"][1][farm_mask].mean() * 100 if "ndvi" in mosaics else 0, time.time() - t0)
+    return done, latest
 
 
 def s2_ingest(api: IngestClient, farm: dict[str, Any], days: int = DAILY_DAYS, upload: bool = True) -> dict[str, int]:
@@ -214,34 +294,44 @@ def s2_ingest(api: IngestClient, farm: dict[str, Any], days: int = DAILY_DAYS, u
     if not geom["plots"]:
         return {"scenes": 0, "stats": 0}
     grid = make_grid(geom)
-    farm_mask = geometry_mask([grid.farm], out_shape=(grid.height, grid.width), transform=grid.transform, invert=True)
-    done = {"scenes": 0, "stats": 0, "problems": 0}
-    latest_layer: tuple[int, np.ndarray, np.ndarray] | None = None
-    for key, group in group_passes(items):
-        acquired = _epoch_ms(group[0])
-        cloud = float(np.mean([it["properties"].get("eo:cloud_cover", 0) for it in group]))
-        # La marca de "procesada" es por estancia: la misma pasada cubre a varias y cada una necesita sus estadísticas
-        scene = api.scene(SOURCE, f"{farm['id']}:{key}", acquired, round(cloud, 1))
-        if scene["processed"]:
-            continue
-        t0 = time.time()
-        ndvi, ok = mosaic_ndvi(group, grid)
-        stats = plot_stats(ndvi, ok, grid)
-        for st in stats:
-            st.update(sceneId=scene["id"], acquiredAt=acquired)
-        if stats:
-            done["stats"] += api.plot_index_stats(stats)
-        if ok[farm_mask].mean() * 100 >= MIN_VALID_PCT:
-            latest_layer = (acquired, ndvi, ok & farm_mask)
-        api.scene_processed(scene["id"])
-        done["scenes"] += 1
-        log.info("pasada %s (%d teselas): %d lotes, %.0f %% válido, %.1fs", key, len(group), len(stats), ok[farm_mask].mean() * 100, time.time() - t0)
-    if latest_layer:
-        acquired, ndvi, valid = latest_layer
+    done, latest = ingest_range(api, geom, grid, items, farm_id=farm["id"])
+    done["problems"] = 0
+    if "ndvi" in latest:
+        acquired, ndvi, valid = latest["ndvi"]
         done["problems"] = upload_problem_areas(api, grid, ndvi, valid, acquired)
-        if upload:
-            publish_layer(api, farm, grid, "ndvi", acquired, ndvi_rgba(ndvi, valid))
+    if upload:
+        # NDVI siempre; NDRE, NDMI y EVI son capas opcionales del selector: si una falla no frena el resto (S-07)
+        for idx in INDICES:
+            if idx in latest:
+                acquired, values, valid = latest[idx]
+                try:
+                    publish_layer(api, farm, grid, idx, acquired, index_rgba(values, valid, idx))
+                except Exception:
+                    if idx == "ndvi":
+                        raise
+                    log.exception("capa %s: falló", idx)
     return done
+
+
+def s2_history(api: IngestClient, farm: dict[str, Any], first_year: int = HISTORY_FIRST_YEAR, today: date | None = None) -> dict[str, int]:
+    """S-03: vigor (NDVI por lote) de todas las campañas desde 2017, a pedido. Año por año para no pasar de MAX_ITEMS.
+    Idempotente: las pasadas ya procesadas se saltean. Sin capas ni áreas problema: solo la historia por lote."""
+    now = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc) if today else datetime.now(timezone.utc)
+    geom = api.farm_geometry(farm["id"])
+    total = {"scenes": 0, "stats": 0}
+    if not geom["plots"]:
+        return total
+    grid = make_grid(geom)
+    for year in range(first_year, now.year + 1):
+        start = datetime(year, 1, 1, tzinfo=timezone.utc)
+        end = min(datetime(year, 12, 31, 23, 59, 59, tzinfo=timezone.utc), now)
+        if start > end:
+            break
+        done, _ = ingest_range(api, geom, grid, search(farm_bbox(farm), start, end, MAX_SCENE_CLOUD), ("ndvi",), farm_id=farm["id"])
+        total["scenes"] += done["scenes"]
+        total["stats"] += done["stats"]
+        log.info("historia %s %d: %s", farm["name"], year, done)
+    return total
 
 
 def upload_problem_areas(api: IngestClient, grid: Grid, ndvi: np.ndarray, ok: np.ndarray, acquired: int) -> int:

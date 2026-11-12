@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router } from "expo-router";
 import { t } from "@yvy/shared";
@@ -7,7 +7,7 @@ import { noteOrganizationEntry } from "../src/lib/org";
 import { registerDevice } from "../src/lib/push";
 import { api, setSession, type Session } from "../src/lib/session";
 import { deviceId } from "../src/lib/sync";
-import { Button } from "../src/ui/kit";
+import { Button, Text } from "../src/ui/kit";
 import { C, T } from "../src/ui/theme";
 
 /** Vinculación del empleado con el QR que genera el administrador (anexo §4.2). */

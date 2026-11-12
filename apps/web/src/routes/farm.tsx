@@ -698,6 +698,7 @@ export function FarmPage() {
             <PlotPanel
               key={plot.id}
               plot={plot}
+              farm={d.farm}
               workers={workersOf(plot.id)}
               canEdit={canEdit}
               onClose={() => {

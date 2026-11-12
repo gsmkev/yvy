@@ -8,7 +8,7 @@ import { Camera, Map, Marker, type CameraRef, type StyleSpecification } from "@m
 import { router, useFocusEffect } from "expo-router";
 import { Compass, LocateFixed, Navigation, X } from "lucide-react-native";
 import { BRAND, describeRecord, t, uaPerHa } from "@yvy/shared";
-import { centroidOf, containsPoint, labelPoint, type Area } from "@yvy/geo";
+import { centroidOf, containsPoint, labelPoint, samplingGrid, type Area } from "@yvy/geo";
 import { distanceM } from "../../src/lib/bearing";
 import { useRef } from "react";
 import { mapBearingFor, shouldRotate } from "../../src/lib/heading";
@@ -31,6 +31,7 @@ import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
 const FIT_PADDING = { top: 120, bottom: 40, left: 24, right: 24 };
 const PLOT_PADDING = { top: 120, bottom: 320, left: 40, right: 40 };
 const MAX_LABELS = 60;
+const MAX_SAMPLES = 150;
 const daysAgo = (ms: number) => Math.floor((Date.now() - ms) / 86_400_000);
 
 export default function MapScreen() {
@@ -57,6 +58,8 @@ export default function MapScreen() {
     setModeState(m);
     getDb().setKv("map_layer", m);
   };
+  // M-18: grilla de muestreo de suelo del lote elegido (hectáreas por punto), calculada en el celular
+  const [gridHa, setGridHa] = useState<5 | 10 | null>(null);
   const [me, setMe] = useState<Fix | null>(null);
   const [copied, setCopied] = useState(false);
   const camera = useRef<CameraRef>(null);
@@ -106,6 +109,11 @@ export default function MapScreen() {
         .map((p) => ({ id: p.id, name: p.name, ...labelPoint(JSON.parse(p.geometry) as Area) })),
     [plots, farm?.id, farmId],
   );
+
+  const samples = useMemo(() => {
+    const p = plots.find((x) => x.id === selected);
+    return p && gridHa ? samplingGrid(JSON.parse(p.geometry) as Area, gridHa).slice(0, MAX_SAMPLES) : [];
+  }, [plots, selected, gridHa]);
 
   const ndvi = useMemo(() => (farm && mode === "ndvi" ? layerSource(farm.id, "ndvi", remoteBase) : null), [farm?.id, mode, remoteBase]);
 
@@ -222,6 +230,13 @@ export default function MapScreen() {
         }}
       >
         <Camera ref={camera} initialViewState={{ bounds: [farm.minLon, farm.minLat, farm.maxLon, farm.maxLat], padding: { top: 40, bottom: 40, left: 24, right: 24 } }} />
+        {samples.map((p) => (
+          <Marker key={`s${p.n}`} lngLat={[p.lon, p.lat]}>
+            <View style={st.sample} accessible accessibilityLabel={t("app.samplingPoint", { n: p.n })}>
+              <Text style={st.sampleText}>{p.n}</Text>
+            </View>
+          </Marker>
+        ))}
         {labels.map((l) => (
           <Marker key={l.id} lngLat={[l.lon, l.lat]}>
             <Text numberOfLines={1} style={st.label} pointerEvents="none">
@@ -309,6 +324,13 @@ export default function MapScreen() {
             </Text>
           ))}
           <Button big title={t("app.annotateIn", { plot: plot.name })} onPress={() => router.push({ pathname: "/annotate", params: { plotId: plot.id } })} style={{ marginTop: 16 }} />
+          <Button
+            kind="text"
+            title={gridHa === null ? t("app.samplingShow5") : gridHa === 5 ? t("app.samplingShow10") : t("app.samplingHide")}
+            onPress={() => setGridHa(gridHa === null ? 5 : gridHa === 5 ? 10 : null)}
+            style={{ marginTop: 4 }}
+          />
+          {gridHa !== null && <Text style={T.small}>{t("app.samplingInfo", { n: samples.length })}</Text>}
           {canMarkPoi && (
             <Button kind="text" title={t("app.plotDrawEdit")} onPress={() => router.push({ pathname: "/plot-draw", params: { plotId: plot.id } })} style={{ marginTop: 4 }} />
           )}
@@ -338,5 +360,7 @@ const st = StyleSheet.create({
   coords: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14, minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
   panel: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14 },
   label: { fontFamily: F.sansMedium, fontSize: 12, color: "#ffffff", textShadowColor: "rgba(0,0,0,0.85)", textShadowRadius: 3, textShadowOffset: { width: 0, height: 1 }, maxWidth: 110 },
+  sample: { minWidth: 26, height: 26, borderRadius: 13, backgroundColor: "#D9A93A", borderWidth: 2, borderColor: "#1E2419", alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
+  sampleText: { fontFamily: F.sansMedium, fontSize: 11, color: "#1E2419" },
   attr: { position: "absolute", bottom: 6, left: 12, fontFamily: F.sans, fontSize: 11, color: "rgba(255,255,255,0.7)" },
 });

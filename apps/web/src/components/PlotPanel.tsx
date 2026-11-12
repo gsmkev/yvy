@@ -8,9 +8,10 @@ import type { FarmDetail } from "../lib/types";
 import { fmtDate, fmtDay, fmtHa, fmtIsoDate, fmtNdvi, fmtNum, fmtPct, toIso } from "../lib/format";
 import { Minus, Pencil, Satellite, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { t, tk } from "../lib/i18n";
-import type { Member, Plot, PlotHistoryRow, ProblemArea } from "../lib/types";
+import type { Farm, Member, Plot, PlotHistoryRow, ProblemArea } from "../lib/types";
 import { CopyCoords } from "./CopyCoords";
 import { LineChart } from "./charts";
+import { SamplingGrid } from "./SamplingGrid";
 import { VigorSeasons } from "./VigorSeasons";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Select, Spinner, Stat, toast } from "./ui";
 
@@ -32,6 +33,7 @@ export function PlotPanel({
   onEditShape,
   onSplit,
   onMerge,
+  farm,
 }: {
   plot: Plot;
   workers: Member[];
@@ -45,6 +47,8 @@ export function PlotPanel({
   /** M-05: dibujar una línea para dividir el lote / elegir otro lote para unir. */
   onSplit?: () => void;
   onMerge?: () => void;
+  /** Estancia del lote (encabezado de la grilla de muestreo). */
+  farm?: Farm;
 }) {
   const qc = useQueryClient();
   const heading = useRef<HTMLHeadingElement>(null);
@@ -223,6 +227,7 @@ export function PlotPanel({
           )}
         </div>
       )}
+      {canEdit && <SamplingGrid plot={plot} farm={farm} />}
       {canEdit && <VigorSeasons plotId={plot.id} farmId={plot.farmId} />}
       {ndvi.error && <ErrorBox error={ndvi.error} />}
 

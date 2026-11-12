@@ -1,0 +1,25 @@
+# Actualización de la app sin tienda (P-31): publica el JavaScript nuevo con EAS Update, a mano.
+# Necesita el secret EXPO_TOKEN y la variable EAS_UPDATE_URL (https://u.expo.dev/<EAS_PROJECT_ID>). Ver docs/DEPLOY.md.
+name: Actualización de la app (EAS Update)
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: Qué cambia (se ve en el panel de Expo)
+        required: true
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    if: ${{ vars.EAS_UPDATE_URL != '' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter mobile run update -- "${{ inputs.message }}"
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_UPDATE_URL: ${{ vars.EAS_UPDATE_URL }}
+          EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
+          EXPO_PUBLIC_API_URL: ${{ vars.YVY_API_URL }}

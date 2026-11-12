@@ -162,5 +162,7 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `grain_deliveries` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`plot_id` text,\n\t`season_id` text,\n\t`crop` text NOT NULL,\n\t`ticket` text NOT NULL,\n\t`silo` text NOT NULL,\n\t`delivered_on` text NOT NULL,\n\t`gross_kg` real NOT NULL,\n\t`moisture_pct` real,\n\t`base_moisture_pct` real NOT NULL,\n\t`impurities_pct` real DEFAULT 0 NOT NULL,\n\t`other_kg` real DEFAULT 0 NOT NULL,\n\t`net_kg` real NOT NULL,\n\t`note` text,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
   "CREATE INDEX `grain_deliveries_sync_idx` ON `grain_deliveries` (`organization_id`,`version`,`id`);",
   "CREATE INDEX `grain_deliveries_farm_idx` ON `grain_deliveries` (`farm_id`,`delivered_on`);",
-  "CREATE INDEX `grain_deliveries_plot_idx` ON `grain_deliveries` (`plot_id`);"
+  "CREATE INDEX `grain_deliveries_plot_idx` ON `grain_deliveries` (`plot_id`);",
+  "CREATE TABLE `plot_forecasts` (\n\t`plot_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`valid_date` text NOT NULL,\n\t`run_at` integer NOT NULL,\n\t`tmin_c` real,\n\t`tmax_c` real,\n\t`precip_mm` real,\n\t`wind_kmh` real,\n\tPRIMARY KEY(`plot_id`, `valid_date`)\n);",
+  "CREATE INDEX `plot_forecasts_farm_idx` ON `plot_forecasts` (`farm_id`);"
 ];

@@ -365,3 +365,40 @@ export async function farmWithdrawal(sdb: ScopedDb, farmId: string) {
     unknown: report.unknown.map(named),
   };
 }
+
+/** C-03: pronóstico por lote de una estancia grande (la última corrida de cada lote). 1 consulta además de la estancia. */
+export async function farmPlotForecast(sdb: ScopedDb, farmId: string) {
+  const farm = await requireFarmRow(sdb, farmId);
+  const enabled = farm.areaHa > LIMITS.weather.plotForecastMinFarmHa;
+  if (!enabled) return { enabled, minHa: LIMITS.weather.plotForecastMinFarmHa, plots: [] };
+  const rows = await sdb.db
+    .select({
+      plotId: s.plotForecasts.plotId,
+      plotName: s.plots.name,
+      runAt: s.plotForecasts.runAt,
+      date: s.plotForecasts.validDate,
+      tminC: s.plotForecasts.tminC,
+      tmaxC: s.plotForecasts.tmaxC,
+      precipMm: s.plotForecasts.precipMm,
+      windKmh: s.plotForecasts.windKmh,
+    })
+    .from(s.plotForecasts)
+    .innerJoin(s.plots, eq(s.plots.id, s.plotForecasts.plotId))
+    .where(
+      and(
+        eq(s.plotForecasts.farmId, farmId),
+        eq(s.plots.organizationId, sdb.auth.orgId),
+        isNull(s.plots.deletedAt),
+        sdb.workerFilter("plots"),
+      ),
+    )
+    .orderBy(asc(s.plots.name), asc(s.plotForecasts.validDate))
+    .limit(LIMITS.weather.plotForecastMaxPlots * LIMITS.weather.plotForecastDays);
+  const byPlot = new Map<string, { plotId: string; plotName: string; runAt: number; days: { date: string; tminC: number | null; tmaxC: number | null; precipMm: number | null; windKmh: number | null }[] }>();
+  for (const r of rows) {
+    const p = byPlot.get(r.plotId) ?? { plotId: r.plotId, plotName: r.plotName, runAt: r.runAt, days: [] };
+    p.days.push({ date: r.date, tminC: r.tminC, tmaxC: r.tmaxC, precipMm: r.precipMm, windKmh: r.windKmh });
+    byPlot.set(r.plotId, p);
+  }
+  return { enabled, minHa: LIMITS.weather.plotForecastMinFarmHa, plots: [...byPlot.values()] };
+}

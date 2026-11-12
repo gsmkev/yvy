@@ -1,6 +1,6 @@
 import { CHART } from "@yvy/shared";
-import { fmtIsoDate, fmtDate, fmtDay, fmtMm, fmtNum } from "../lib/format";
-import { usePhenology, useWaterBalance, useWithdrawal } from "../lib/agri2";
+import { fmtIsoDate, fmtDate, fmtDay, fmtMm, fmtNum, fmtTemp } from "../lib/format";
+import { usePhenology, usePlotForecast, useWaterBalance, useWithdrawal } from "../lib/agri2";
 import { t, tk } from "../lib/i18n";
 import type { Plot } from "../lib/types";
 import { LineChart } from "./charts";
@@ -12,6 +12,7 @@ export function PlotAgro({ plot }: { plot: Plot }) {
   return (
     <>
       <WithdrawalSection plot={plot} />
+      <PlotForecastSection plot={plot} />
       <PhenologySection plotId={plot.id} />
       <WaterBalanceSection plotId={plot.id} />
     </>
@@ -147,6 +148,31 @@ function WithdrawalSection({ plot }: { plot: Plot }) {
           {t("ui.withdrawalViolation", { plot: plot.name, date: fmtIsoDate(x.harvestedOn), product: x.product, safe: fmtIsoDate(x.safeFrom) })}
         </p>
       ))}
+    </Section>
+  );
+}
+
+/** C-03: pronóstico propio del lote (solo estancias de más de 2.000 ha). */
+function PlotForecastSection({ plot }: { plot: Plot }) {
+  const q = usePlotForecast(plot.farmId);
+  const f = q.data?.plots.find((p) => p.plotId === plot.id);
+  if (!f) return null;
+  return (
+    <Section title={t("ui.plotFcTitle")}>
+      <ul className="divide-y divide-linea border-y border-linea text-sm">
+        {f.days.slice(0, 7).map((d) => (
+          <li key={d.date} className="num flex items-baseline justify-between gap-3 py-2">
+            <span>{fmtIsoDate(d.date)}</span>
+            <span className="text-tinta-2">
+              {d.tminC !== null && d.tmaxC !== null ? `${fmtTemp(d.tminC)} / ${fmtTemp(d.tmaxC)}` : "—"}
+              {d.precipMm !== null ? ` · ${fmtMm(d.precipMm)}` : ""}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-1 text-xs text-tinta-2">
+        {t("ui.plotFcNote", { date: fmtDate(f.runAt) })} {t("attribution.metNorway")}
+      </p>
     </Section>
   );
 }

@@ -74,3 +74,22 @@ export const useWithdrawal = (farmId: string, enabled = true) =>
     queryKey: ["withdrawal", farmId],
     queryFn: () => get<WithdrawalResponse>(`/org/farms/${farmId}/withdrawal`),
   });
+
+export interface PlotForecastResponse {
+  enabled: boolean;
+  minHa: number;
+  plots: {
+    plotId: string;
+    plotName: string;
+    runAt: number;
+    days: { date: string; tminC: number | null; tmaxC: number | null; precipMm: number | null; windKmh: number | null }[];
+  }[];
+}
+
+export const usePlotForecast = (farmId: string, enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ["plot-forecast", farmId],
+    queryFn: () => get<PlotForecastResponse>(`/org/farms/${farmId}/plot-forecast`),
+    staleTime: 10 * 60_000,
+  });

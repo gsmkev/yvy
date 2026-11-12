@@ -251,5 +251,7 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `calendar_feeds` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`user_id` text NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`token_hash` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`last_used_at` integer,\n\t`revoked_at` integer\n);",
   "CREATE UNIQUE INDEX `calendar_feeds_hash_uq` ON `calendar_feeds` (`token_hash`);",
   "CREATE INDEX `calendar_feeds_user_idx` ON `calendar_feeds` (`user_id`,`organization_id`);",
-  "CREATE TABLE `job_runs` (\n\t`job` text PRIMARY KEY NOT NULL,\n\t`last_ok_at` integer,\n\t`last_fail_at` integer,\n\t`last_fail_status` integer\n);"
+  "CREATE TABLE `job_runs` (\n\t`job` text PRIMARY KEY NOT NULL,\n\t`last_ok_at` integer,\n\t`last_fail_at` integer,\n\t`last_fail_status` integer\n);",
+  "CREATE TABLE `product_dose_ranges` (\n\t`product_id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`min_dose` real,\n\t`max_dose` real,\n\t`updated_at` integer NOT NULL\n);",
+  "CREATE TABLE `record_reviews` (\n\t`record_id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`reviewed_by` text NOT NULL,\n\t`reviewed_at` integer NOT NULL\n);"
 ];

@@ -157,6 +157,17 @@ export const LIMITS = {
     blocked: { maxHa: 100_000, maxUsers: 25 },
     demo: { maxHa: null, maxUsers: null },
   },
+  oddities: {
+    /** X-26: se revisan los registros de los últimos días. */
+    windowDays: 90,
+    maxCandidates: 500,
+    /** Lluvia diaria por encima de esto (mm) se marca. Valor general: en el Chaco o el este puede haber más, y se confirma con "Está bien". */
+    rainMmPerDay: 150,
+    /** Meses [desde, hasta] en que se espera cada plaga en soja y maíz del país (se admite cruzar el año). Fuera de eso se marca. */
+    pestMonths: { chinche: [10, 5], oruga: [10, 5], roya: [11, 5] },
+    /** Rinde máximo creíble en t/ha por cultivo (el cultivo sale del lote). */
+    maxYieldTHa: { soja: 7, maiz: 18, trigo: 9, arroz: 14, girasol: 5, chia: 3, otro: 40 },
+  },
   emergency: {
     /** F-30: contactos de emergencia que se guardan en el celular. */
     maxContacts: 5,

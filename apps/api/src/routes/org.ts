@@ -7,6 +7,7 @@ import { WEBHOOK_EVENTS, CROPS, doseText, FARM_ACCESS_LEVELS, isWeakPin, LIMITS,
 import { can } from "../db/scoped";
 import { randomDigits, randomToken } from "../lib/crypto";
 import { createApiToken, listApiTokens, revokeApiToken } from "../db/api-tokens";
+import { listReview, markReviewed } from "../db/review";
 import { createWebhook, deleteWebhook, listWebhooks, pingMessage, updateWebhook } from "../db/webhooks";
 import { getSecurity, setRequireAdminTotp } from "../db/security";
 import { createSchedule, deleteSchedule, listSchedules } from "../db/schedules";
@@ -147,6 +148,13 @@ org.post("/api-tokens", async (c) => {
 });
 org.delete("/api-tokens/:id", async (c) => {
   await revokeApiToken(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+/** X-26: registros raros para revisar y "Está bien". */
+org.get("/review", async (c) => c.json(await listReview(c.var.sdb)));
+org.post("/review/:recordId/ok", async (c) => {
+  await markReviewed(c.var.sdb, c.req.param("recordId"));
   return c.json({ ok: true });
 });
 

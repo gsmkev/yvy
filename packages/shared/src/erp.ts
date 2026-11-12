@@ -367,3 +367,43 @@ export function belowMinimum(
   }
   return out.sort((a, b) => b.missing - a.missing);
 }
+
+// ---------- Mantenimiento preventivo (E-22) ----------
+
+export const MAINTENANCE_KINDS = ["preventive", "repair"] as const;
+export type MaintenanceStatus = "ok" | "soon" | "overdue";
+/** Se avisa cuando falta esta fracción del intervalo (o menos) para el próximo servicio. */
+export const MAINTENANCE_WARN_FRACTION = 0.1;
+
+export const maintenancePlanInput = z.object({
+  machineId: uuid,
+  name: z.string().trim().min(1).max(80),
+  everyUnits: z.number().positive().max(1_000_000),
+  /** Lectura del medidor en el último servicio (0 si es nueva). */
+  lastDoneMeter: z.number().min(0).max(10_000_000).nullish(),
+});
+
+export const maintenanceLogInput = z.object({
+  machineId: uuid,
+  /** Si es un servicio de un plan, el plan vuelve a contar desde `meterValue`. */
+  planId: uuid.nullish(),
+  kind: z.enum(MAINTENANCE_KINDS),
+  date: isoDate,
+  meterValue: z.number().min(0).max(10_000_000).nullish(),
+  description: optText(300),
+  partyId: uuid.nullish(),
+  amount: minorAmount.nullish(),
+  currency: currencySchema.nullish(),
+});
+
+/** Cuánto falta (en horas o km) para el próximo servicio y en qué estado está. Negativo = vencido. */
+export function maintenanceStatus(p: { meter: number; lastDoneMeter: number; everyUnits: number }): {
+  dueAt: number;
+  remaining: number;
+  status: MaintenanceStatus;
+} {
+  const dueAt = p.lastDoneMeter + p.everyUnits;
+  const remaining = Math.round((dueAt - p.meter) * 100) / 100;
+  const status: MaintenanceStatus = remaining <= 0 ? "overdue" : remaining <= p.everyUnits * MAINTENANCE_WARN_FRACTION ? "soon" : "ok";
+  return { dueAt, remaining, status };
+}

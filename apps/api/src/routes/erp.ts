@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { LIMITS } from "@yvy/shared";
-import { orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
+import { maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { HTTPException } from "hono/http-exception";
 import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
@@ -12,6 +12,7 @@ import { fuelReport } from "../db/fuel";
 import { createWorkOrder, listWorkOrders } from "../db/work-orders";
 import { fixDefaultWarehouse } from "../db/stock";
 import { adjustStock, consumeStock, deleteMove, expiringLots, listMoves, purchaseStock, requireWarehouseUnused, stockSummary, transferStock } from "../db/stock-moves";
+import { createLog, deleteLog, duePlans, listLogs } from "../db/maintenance";
 import { deleteMinimum, listMinimums, lowStock, saveMinimum } from "../db/stock-minimums";
 import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
 import { deleteRate, erpCreate, erpDelete, erpList, erpUpdate, listRates, requireOwned, saveRate, type ErpTable } from "../db/erp";
@@ -247,3 +248,23 @@ erp.post("/work-orders", async (c) => {
 erp.get("/results", async (c) =>
   c.json(await results(c.var.sdb, parse(z.object({ farmId: uuid.optional(), seasonId: uuid.optional() }), c.req.query()))),
 );
+
+// ---------- Mantenimiento preventivo (E-22) ----------
+// Planes y avisos: el agrónomo los ve (son horas y km). Servicios con costo: dueño y administrador.
+
+master("maintenance-plans", s.maintenancePlans, maintenancePlanInput, [s.maintenancePlans.name], {
+  read: can.viewStock,
+  check: async (sdb, v) => {
+    if (typeof v.machineId === "string") await requireOwned(sdb, s.machines, v.machineId, "La máquina");
+  },
+  normalize: (v) => (v.lastDoneMeter === null ? { ...v, lastDoneMeter: 0 } : v),
+});
+erp.get("/maintenance/due", async (c) => c.json(await duePlans(c.var.sdb, c.req.query("all") === "1")));
+erp.get("/maintenance/logs", async (c) =>
+  c.json(await listLogs(c.var.sdb, parse(uuid.optional(), c.req.query("machineId")))),
+);
+erp.post("/maintenance/logs", async (c) => c.json(await createLog(c.var.sdb, parse(maintenanceLogInput, await readJson(c.req))), 201));
+erp.delete("/maintenance/logs/:id", async (c) => {
+  await deleteLog(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});

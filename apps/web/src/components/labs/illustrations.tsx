@@ -186,3 +186,29 @@ export function HailIllustration({ label, className }: Props) {
     </svg>
   );
 }
+
+/** Tres potreros con alambrado, un tajamar seco y un camino; los tres problemas van en alerta. */
+export function InfraIllustration({ label, className }: Props) {
+  return (
+    <svg viewBox="0 0 600 360" role="img" aria-label={label} className={className}>
+      <rect width="600" height="360" fill={C.lino} />
+      <g fill={C.soja} fillOpacity={0.3} stroke={C.surco} strokeWidth="1.5">
+        <rect x="20" y="20" width="270" height="190" />
+        <rect x="310" y="20" width="270" height="190" />
+        <rect x="20" y="230" width="560" height="110" />
+      </g>
+      {/* Alambrado caído: tramo del límite norte sin línea, con los postes marcados */}
+      <rect x="20" y="16" width="270" height="8" fill={C.lino} />
+      <line x1="20" y1="20" x2="130" y2="20" stroke={C.surco} strokeWidth="1.5" />
+      <line x1="130" y1="20" x2="230" y2="20" stroke={C.alerta} strokeWidth="3" strokeDasharray="2 8" strokeLinecap="round" />
+      <rect x="120" y="6" width="120" height="28" fill="none" stroke={C.alerta} strokeWidth="1.5" />
+      {/* Tajamar seco: círculo del espejo de agua vacío */}
+      <circle cx="440" cy="120" r="34" fill={C.lino} stroke={C.trigo} strokeWidth="2" strokeDasharray="6 4" />
+      <rect x="396" y="76" width="88" height="88" fill="none" stroke={C.alerta} strokeWidth="1.5" />
+      {/* Camino y cruce cortado */}
+      <path d="M0,300 L200,300 M330,300 L600,300" stroke={C.surco} strokeWidth="5" />
+      <path d="M200,300 L330,300" stroke={C.cielo} strokeWidth="9" strokeOpacity="0.8" />
+      <rect x="190" y="276" width="150" height="48" fill="none" stroke={C.alerta} strokeWidth="1.5" />
+    </svg>
+  );
+}

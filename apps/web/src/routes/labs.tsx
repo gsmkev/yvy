@@ -1,11 +1,11 @@
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "@tanstack/react-router";
 import { Button } from "../components/ui";
-import { AnimalCountIllustration, HailIllustration, StandCountIllustration, WeedsIllustration } from "../components/labs/illustrations";
+import { AnimalCountIllustration, HailIllustration, InfraIllustration, StandCountIllustration, WeedsIllustration } from "../components/labs/illustrations";
 import { t, tk } from "../lib/i18n";
 
-type ToolId = "animals" | "stand" | "weeds" | "ask" | "summary" | "rust" | "hail";
-const TOOLS: ToolId[] = ["animals", "stand", "weeds", "ask", "summary", "rust", "hail"];
+type ToolId = "animals" | "stand" | "weeds" | "ask" | "summary" | "rust" | "hail" | "infra";
+const TOOLS: ToolId[] = ["animals", "stand", "weeds", "ask", "summary", "rust", "hail", "infra"];
 
 const nf = (n: number, digits = 0) =>
   n.toLocaleString("es-PY", { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -82,6 +82,8 @@ function ToolBody({ id }: { id: ToolId }) {
       return <Summary />;
     case "hail":
       return <Hail />;
+    case "infra":
+      return <Infra />;
     case "rust":
       return <p className="border-b border-linea pb-4">{t("ui.labsRustBody")}</p>;
   }
@@ -263,6 +265,25 @@ function Hail() {
       <p className="text-sm">{t("ui.labsHailNote")}</p>
       <div>
         <Button disabled>{t("ui.labsHailReport")}</Button>
+      </div>
+    </Flow>
+  );
+}
+
+function Infra() {
+  const rows = [
+    [t("ui.labsInfraFence"), t("ui.labsInfraFencePlace"), t("ui.labsInfraFenceSize")],
+    [t("ui.labsInfraPond"), t("ui.labsInfraPondPlace"), t("ui.labsInfraPondSize")],
+    [t("ui.labsInfraRoad"), t("ui.labsInfraRoadPlace"), t("ui.labsInfraRoadSize")],
+  ];
+  return (
+    <Flow>
+      <InfraIllustration label={t("ui.labsInfraIllustrationLabel")} className="w-full border border-linea" />
+      <Legend color="#D2462B" label={t("ui.labsInfraLegend")} />
+      <Table head={[t("ui.labsInfraFinding"), t("ui.labsInfraPlace"), t("ui.labsInfraSize")]} rows={rows} />
+      <p className="text-sm">{t("ui.labsInfraNote")}</p>
+      <div>
+        <Button disabled>{t("ui.labsInfraTask")}</Button>
       </div>
     </Flow>
   );

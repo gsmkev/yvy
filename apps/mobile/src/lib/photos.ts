@@ -28,6 +28,11 @@ export async function processPhoto(uri: string, width: number, height: number): 
   return { photoUri, thumbUri, width: big.width, height: big.height, bytes: info.exists ? info.size : 0 };
 }
 
+/** F-17: borra del celular los archivos de una foto que se descartó antes de guardar el registro. */
+export async function discardPhoto(p: LocalPhoto): Promise<void> {
+  await Promise.all([FileSystem.deleteAsync(p.photoUri, { idempotent: true }), FileSystem.deleteAsync(p.thumbUri, { idempotent: true })]).catch(() => {});
+}
+
 /**
  * X-09: revisa la foto recién sacada sobre una miniatura. Devuelve el aviso en es-PY si salió oscura o movida, o null si
  * está bien (o si no se pudo revisar: ante la duda no se molesta). Nunca lanza ni bloquea.

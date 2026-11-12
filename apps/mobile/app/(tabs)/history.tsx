@@ -31,7 +31,7 @@ export default function History() {
   const names = useLocal(() => (owner ? memberNames(getDb()) : {}), [owner]);
   const records = useLocal(() => byFarm(getDb().records(), farmId), [farmId]);
   const plots = useLocal(() => getDb().plots());
-  const thumbs = useLocal(() => getDb().firstThumbByRecord());
+  const thumbs = useLocal(() => getDb().thumbsByRecord(2));
   const [filter, setFilter] = useState<RecordKind | "all">("all");
   // Solo se ofrecen los tipos que hay en el historial.
   const kinds = [...new Set(records.map((r) => r.kind))];
@@ -88,9 +88,11 @@ export default function History() {
             r.rejected ? (
               <Text style={[T.small, { color: C.peligro }]}>{t("app.rejected")}</Text>
             ) : r.photos > 0 ? (
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                {r.photos > 1 && <Text style={T.small}>{r.photos}</Text>}
-                {thumbs.get(r.id) ? <Image source={{ uri: thumbs.get(r.id)! }} style={st.thumb} accessibilityLabel={t("app.photosCount", { n: r.photos, max: LIMITS.photos.maxPerRecord })} /> : <Text style={T.small}>{r.photos}</Text>}
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                {thumbs.get(r.id)?.map((uri) => (
+                  <Image key={uri} source={{ uri }} style={st.thumb} accessibilityLabel={t("app.photosCount", { n: r.photos, max: LIMITS.photos.maxPerRecord })} />
+                ))}
+                {r.photos > (thumbs.get(r.id)?.length ?? 0) && <Text style={T.small}>{thumbs.get(r.id)?.length ? `+${r.photos - thumbs.get(r.id)!.length}` : r.photos}</Text>}
               </View>
             ) : undefined
           }

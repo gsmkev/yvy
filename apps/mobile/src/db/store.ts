@@ -653,6 +653,20 @@ export class LocalDb implements SyncStore {
     return new Map(rows.map((r) => [r.record_id, r.thumb_uri] as const));
   }
 
+  /** F-17: hasta `max` miniaturas locales por registro, en el orden en que se sacaron (Historial). */
+  thumbsByRecord(max = 2): Map<string, string[]> {
+    const rows = this.sql.all<{ record_id: string; thumb_uri: string }>(
+      `SELECT a.record_id, f.thumb_uri FROM attachments a JOIN local_files f ON f.attachment_id = a.id
+       WHERE a.deleted_at IS NULL AND a.mime NOT LIKE 'audio/%' ORDER BY a.created_at, a.rowid`,
+    );
+    const out = new Map<string, string[]>();
+    for (const r of rows) {
+      const list = out.get(r.record_id) ?? [];
+      if (list.length < max) out.set(r.record_id, [...list, r.thumb_uri]);
+    }
+    return out;
+  }
+
   /** Últimas anotaciones de un lote (ficha del lote y pantalla Anotar). */
   recordsOfPlot(plotId: string, limit = 20): RecordRow[] {
     return this.records(500).filter((r) => r.plotId === plotId).slice(0, limit);

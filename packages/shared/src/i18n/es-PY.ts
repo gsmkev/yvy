@@ -341,6 +341,8 @@ export const esPY = {
     toastSavedSent: "Guardado y enviado",
     toastSavedLocal: "Guardado en el celular",
     quickRain: "Anotar lluvia",
+    photoDiscard: "Quitar esta foto",
+    photoDiscarded: "Foto quitada",
     shortcutRainShort: "Anotar lluvia",
     shortcutRainLong: "Anotar la lluvia de hoy",
     gpsSlowHint: "Buscando satélites… al aire libre tarda menos. No necesita internet.",

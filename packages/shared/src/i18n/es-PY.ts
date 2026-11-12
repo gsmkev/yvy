@@ -1168,6 +1168,19 @@ export const esPY = {
     labsSummaryText:
       "Esta semana se registraron 14 tareas en 6 lotes. Llovieron 38 mm el martes y el jueves, lo que frenó la aplicación en Sur 2 hasta el viernes. Se sembró soja en Norte 1 y Norte 2, 212 ha en total. Quedó abierto un aviso de calor para el fin de semana y dos tareas vencidas, ambas de mantenimiento de alambrado.",
     labsSummaryDraft: "Borrador generado",
+    labsTool_hail_name: "Daño por granizo o viento",
+    labsTool_hail_desc: "Marca las zonas golpeadas por una tormenta a partir de imágenes de dron o de satélite y arma un respaldo para el seguro.",
+    labsHailIllustrationLabel: "Ilustración de un lote con zonas de daño moderado y severo marcadas",
+    labsHailArea: "Superficie con daño",
+    labsHailPct: "del lote",
+    labsHailLot: "Lote de muestra de {{ha}} ha, tormenta del 2 de noviembre",
+    labsHailClass: "Nivel de daño",
+    labsHailSevere: "Severo",
+    labsHailModerate: "Moderado",
+    labsHailNone: "Sin daño visible",
+    labsHailNote:
+      "El daño se concentra del lado oeste, por donde entró la tormenta. Sirve como respaldo gráfico para el parte, pero no reemplaza la inspección del perito del seguro.",
+    labsHailReport: "Generar informe para el seguro",
     // web-a
     searchLabel: "Buscar",
     searchPlaceholder: "Buscar estancias, lotes, gente…",

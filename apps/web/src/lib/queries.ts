@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { get, qs } from "./api";
-import type { Alert, FarmDetail, FarmSummary, Me, Member, RecordRow, Task } from "./types";
+import { isPendingDelete } from "./undo";
+import type { Alert, FarmDetail, FarmLine, FarmSummary, Me, Member, PlotSeason, ProblemArea, RecordRow, Season, Task } from "./types";
 
 export const useMe = () => useQuery({ queryKey: ["me"], queryFn: () => get<Me>("/me"), staleTime: 60_000 });
 export const useFarms = () => useQuery({ queryKey: ["farms"], queryFn: () => get<FarmSummary[]>("/org/farms") });
@@ -13,13 +14,35 @@ export const useFarm = (id: string, enabled = true) =>
     queryKey: ["farm", id],
     queryFn: async () => {
       const d = await get<FarmDetail>(`/org/farms/${id}`);
-      return { ...d, plots: d.plots.sort(byName) };
+      return {
+        ...d,
+        plots: d.plots.filter((p) => !isPendingDelete(p.id)).sort(byName),
+        pois: d.pois.filter((p) => !isPendingDelete(p.id)),
+      };
     },
+    // Mientras se procesan las imágenes de una estancia nueva, volver a mirar cada minuto
+    refetchInterval: (q) =>
+      q.state.data?.imageryStatus === "pending" || q.state.data?.imageryStatus === "processing" ? 60_000 : false,
+  });
+export const useFarmLines = (farmId: string, enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ["lines", farmId],
+    queryFn: async () => (await get<FarmLine[]>(`/org/farms/${farmId}/lines`)).filter((l) => !isPendingDelete(l.id)),
+  });
+export const useProblemAreas = (farmId: string, enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ["problem-areas", farmId],
+    queryFn: () => get<ProblemArea[]>(`/org/farms/${farmId}/problem-areas`),
   });
 export const useMembers = (enabled = true) =>
   useQuery({ queryKey: ["members"], queryFn: () => get<Member[]>("/org/members"), enabled });
 export const useTasks = (f: { farmId?: string; assigneeId?: string; status?: string } = {}) =>
-  useQuery({ queryKey: ["tasks", f], queryFn: () => get<Task[]>(`/org/tasks${qs(f)}`) });
+  useQuery({
+    queryKey: ["tasks", f],
+    queryFn: async () => (await get<Task[]>(`/org/tasks${qs(f)}`)).filter((x) => !isPendingDelete(x.id)),
+  });
 export const useAlerts = (f: { farmId?: string; active?: boolean } = {}) =>
   useQuery({
     queryKey: ["alerts", f],
@@ -50,3 +73,11 @@ export async function fetchAllRecords(f: RecordFilters, max = 5000): Promise<Rec
   } while (cursor && out.length < max);
   return out;
 }
+
+/** Campañas de la organización y el plan por lote de una estancia (ADR 0004). */
+export const useSeasons = (farmId: string, enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ["seasons", farmId],
+    queryFn: () => get<{ seasons: Season[]; plotSeasons: PlotSeason[] }>(`/org/seasons${qs({ farmId })}`),
+  });

@@ -106,3 +106,65 @@ def test_chirps_solo_fechas_faltantes():
     assert need[date(2026, 11, 4)] == ["a", "b"]
     assert need[date(2026, 11, 2)] == ["b"]
     assert date(2026, 10, 31) not in need
+
+
+def test_escena_procesada_es_por_estancia(monkeypatch):
+    """La misma pasada de Sentinel-2 cubre varias estancias: la marca de procesada no puede ser global."""
+    from yvy_workers.jobs import s2
+
+    calls: list[str] = []
+
+    class Api:
+        def farm_geometry(self, _fid):
+            return {"plots": []}
+
+    item = {"id": "S2A_X", "properties": {"datetime": "2026-11-08T13:50:00Z", "platform": "sentinel-2a", "eo:cloud_cover": 5}}
+    monkeypatch.setattr(s2, "search", lambda *a, **k: [item])
+    # Sin lotes no hay nada que calcular: solo verificamos la clave con una API que registra las escenas
+    class Api2(Api):
+        def farm_geometry(self, _fid):
+            return {"plots": [["p1", {"type": "Polygon", "coordinates": [[[0, 0], [1, 0], [1, 1], [0, 0]]]}]], "farm": {}}
+
+        def scene(self, _src, item_id, _acq, _cloud):
+            calls.append(item_id)
+            return {"id": "x", "processed": True}
+
+    monkeypatch.setattr(s2, "make_grid", lambda *_a, **_k: type("G", (), {"farm": {"type": "Polygon", "coordinates": [[[0, 0], [1, 0], [1, 1], [0, 0]]]}, "height": 1, "width": 1, "transform": None})())
+    monkeypatch.setattr(s2, "geometry_mask", lambda *a, **k: __import__("numpy").ones((1, 1), dtype=bool))
+    s2.s2_ingest(Api2(), {"id": "farm-a", "minLon": 0, "minLat": 0, "maxLon": 1, "maxLat": 1}, upload=False)
+    s2.s2_ingest(Api2(), {"id": "farm-b", "minLon": 0, "minLat": 0, "maxLon": 1, "maxLat": 1}, upload=False)
+    assert calls == ["farm-a:2026-11-08_sentinel-2a", "farm-b:2026-11-08_sentinel-2a"]
+
+
+def test_ingest_reintenta_errores_de_red(monkeypatch):
+    """Cloudflare corta conexiones ociosas: el cliente de ingest reintenta en vez de abortar el job."""
+    import httpx
+
+    from yvy_workers.ingest import IngestClient
+
+    n = {"i": 0}
+
+    def handler(request):
+        n["i"] += 1
+        if n["i"] < 3:
+            raise httpx.RemoteProtocolError("Server disconnected without sending a response.", request=request)
+        return httpx.Response(200, json={"written": 1})
+
+    monkeypatch.setattr("time.sleep", lambda _s: None)
+    api = IngestClient("https://api.test", "secreto", httpx.Client(transport=httpx.MockTransport(handler)))
+    assert api._call("POST", "/ingest/climate-daily", {"rows": []}) == {"written": 1}
+    assert n["i"] == 3
+def test_lote_fino_usa_pixeles_tocados_y_se_marca_poco_confiable():
+    """S-11: un lote de ~20 m de ancho no tiene ningún píxel de 10 m con el centro adentro de forma fiable."""
+    from yvy_workers.jobs.s2 import is_thin
+
+    thin = {"id": "fino", "geometry": {"type": "Polygon", "coordinates": [[[-55.9500, -27.1500], [-55.9498, -27.1500], [-55.9498, -27.1560], [-55.9500, -27.1560], [-55.9500, -27.1500]]]}}
+    geom = {"farm": FARM, "plots": [thin, GEOM["plots"][1]]}
+    grid = make_grid(geom)
+    assert is_thin(grid.plots[0][1]) and not is_thin(grid.plots[1][1])
+    shape = (grid.height, grid.width)
+    ndvi, ok = compute_ndvi(np.full(shape, 0.05, "float32"), np.full(shape, 0.45, "float32"), np.ones(shape, bool))
+    stats = {s["plotId"]: s for s in plot_stats(ndvi, ok, grid)}
+    assert stats["fino"]["lowConfidence"] is True
+    assert stats["b"]["lowConfidence"] is False
+    assert stats["fino"]["mean"] == pytest.approx(0.8, abs=1e-3)

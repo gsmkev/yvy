@@ -116,3 +116,24 @@ export function CowIllustration({ size = 280 }: { size?: number }) {
     </Svg>
   );
 }
+
+/** Macolla de gramínea con la espiga todavía cerrada, vista de costado. */
+export function WeedIllustration({ size = 280 }: { size?: number }) {
+  const blades = [
+    "M120 200 Q96 150 70 96",
+    "M120 200 Q108 140 100 70",
+    "M120 200 Q122 130 126 56",
+    "M120 200 Q140 140 156 78",
+    "M120 200 Q150 160 184 112",
+  ];
+  return (
+    <Svg width={size} height={size} viewBox="0 0 240 240" accessibilityLabel="Macolla de maleza de ejemplo">
+      <Rect width="240" height="240" fill={LINO} />
+      <Rect x="0" y="198" width="240" height="42" fill={SURCO} />
+      {blades.map((d) => (
+        <Path key={d} d={d} stroke={SOJA} strokeWidth="7" strokeLinecap="round" fill="none" />
+      ))}
+      <Circle cx="126" cy="56" r="22" fill="none" stroke={TRIGO} strokeWidth="2.5" />
+    </Svg>
+  );
+}

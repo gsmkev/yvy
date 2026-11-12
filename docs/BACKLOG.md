@@ -440,7 +440,7 @@ y el aviso de que están en desarrollo). Ninguna analiza datos reales todavía.
 | X-03 | Cobertura y altura estimada del pasto por foto | Oferta forrajera sin regla | P2 | M | Maqueta |
 | X-04 | Condición corporal de la vaca por foto (escala 1 a 5) | Manejo del rodeo de cría | P3 | L | Maqueta |
 | X-05 | Nota de voz que se convierte en registro (reconocimiento de voz en el celular) | El peón prefiere hablar | P2 | M | Maqueta |
-| X-06 | Identificación de malezas por foto (capín, buva, amargo) con sugerencia de control | Malezas resistentes | P3 | L | Falta |
+| X-06 | Identificación de malezas por foto (capín, buva, amargo) con sugerencia de control | Malezas resistentes | P3 | L | Maqueta |
 | X-07 | Lectura de caravanas visuales y de etiquetas de productos por foto | Carga sin tipear | P3 | M | Falta |
 | X-08 | Estado fenológico de la soja o el maíz por foto | Fenología sin experto | P3 | L | Falta |
 | X-09 | Calidad de la foto antes de guardar (desenfocada, oscura, muy lejos) | Mejores datos para todo lo demás | P2 | S | Hecho |

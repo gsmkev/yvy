@@ -8,6 +8,7 @@ import { LIMITS, newId, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import type { DB } from "../db/client";
 import { randomToken, sha256Hex, signJwt } from "../lib/crypto";
+import { totpSetupRequired } from "./totp";
 
 export interface Session {
   accessToken: string;
@@ -17,6 +18,8 @@ export interface Session {
   user: { id: string; fullName: string; email: string | null };
   organization: { id: string; name: string; role: Role };
   organizations: { id: string; name: string; role: Role }[];
+  /** P-08: la organización exige segundo factor a los administradores y este todavía no lo dio de alta. */
+  mfaSetupRequired?: true;
 }
 
 export async function membershipsOf(db: DB, userId: string) {
@@ -46,6 +49,7 @@ export async function issueSession(
   const org = opts.organizationId ? orgs.find((o) => o.id === opts.organizationId) : orgs[0];
   if (!org) return null;
 
+  const mfaSetup = await totpSetupRequired(db, userId, org.id, org.role);
   const exp = Math.floor(now / 1000) + LIMITS.auth.accessTokenTtlSeconds;
   const accessToken = await signJwt(jwtSecret, {
     sub: userId,
@@ -53,6 +57,7 @@ export async function issueSession(
     role: org.role,
     iat: Math.floor(now / 1000),
     exp,
+    ...(mfaSetup ? { tsr: true } : {}),
   });
   const refreshToken = randomToken(32);
   const refreshTokenExpiresAt = now + LIMITS.auth.refreshTokenTtlMs;
@@ -73,6 +78,7 @@ export async function issueSession(
     user,
     organization: org,
     organizations: orgs,
+    ...(mfaSetup ? { mfaSetupRequired: true as const } : {}),
   };
 }
 

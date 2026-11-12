@@ -3,6 +3,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import { LIMITS, newId } from "@yvy/shared";
 import type { LocalPhoto } from "../db/store";
+import { analyzeJpeg, base64ToBytes, photoIssueMessage, photoIssues } from "./photoQuality";
 
 const DIR = `${FileSystem.documentDirectory}photos/`;
 
@@ -25,4 +26,24 @@ export async function processPhoto(uri: string, width: number, height: number): 
   await FileSystem.moveAsync({ from: thumb.uri, to: thumbUri });
   const info = await FileSystem.getInfoAsync(photoUri);
   return { photoUri, thumbUri, width: big.width, height: big.height, bytes: info.exists ? info.size : 0 };
+}
+
+/**
+ * X-09: revisa la foto recién sacada sobre una miniatura. Devuelve el aviso en es-PY si salió oscura o movida, o null si
+ * está bien (o si no se pudo revisar: ante la duda no se molesta). Nunca lanza ni bloquea.
+ */
+export async function photoQualityWarning(uri: string, width: number, height: number): Promise<string | null> {
+  try {
+    const side = LIMITS.photos.quality.sidePx;
+    const scale = Math.min(1, side / Math.max(width, height));
+    const ctx = ImageManipulator.manipulate(uri);
+    ctx.resize({ width: Math.max(8, Math.round(width * scale)), height: Math.max(8, Math.round(height * scale)) });
+    const img = await ctx.renderAsync();
+    const small = await img.saveAsync({ format: SaveFormat.JPEG, compress: 0.9, base64: true });
+    if (!small.base64) return null;
+    const stats = analyzeJpeg(base64ToBytes(small.base64));
+    return stats ? photoIssueMessage(photoIssues(stats)) : null;
+  } catch {
+    return null;
+  }
 }

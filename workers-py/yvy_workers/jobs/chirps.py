@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 
 BASE = "https://data.chc.ucsb.edu/products/CHIRPS/v3.0/daily"
 PRELIM_LAG_DAYS = 3
-BACKFILL_DAYS = 60
+BACKFILL_DAYS = 200  # C-07: el SPI a 6 meses necesita ~190 días; se completan de a max_files por corrida
 
 
 def url(d: date, final: bool) -> str:

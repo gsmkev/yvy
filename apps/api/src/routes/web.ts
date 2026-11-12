@@ -18,6 +18,10 @@ import {
   farmDetail,
   farmForecast,
   farmEudr,
+  farmHistoryStatus,
+  markHistoryFailed,
+  markHistoryRequested,
+  plotVigorHistory,
   farmProblemAreas,
   farmRiskReport,
   farmSummaries,
@@ -47,6 +51,7 @@ import { clientsOverview } from "../db/clients";
 import { createLine, deleteLine, listFarmLines, updateLine } from "../db/lines";
 import { parse, readJson, timeOfDay } from "../lib/http";
 import { plotArea } from "./org";
+import { dispatchJob, HISTORY_JOB } from "../lib/dispatch";
 import { touchActivity } from "../auth/plan";
 import type { AppEnv } from "../types";
 
@@ -298,6 +303,19 @@ web.post("/org/plots/merge", async (c) => {
     areaHa: areaHa(b.geometry),
   });
   return c.json(res, 201);
+});
+web.get("/org/plots/:id/vigor-history", async (c) => c.json(await plotVigorHistory(c.var.sdb, c.req.param("id"))));
+web.get("/org/farms/:id/history", async (c) => c.json(await farmHistoryStatus(c.var.sdb, c.req.param("id"))));
+/** S-03: pide el job s2_history (Sentinel-2 desde 2017) para la estancia. */
+web.post("/org/farms/:id/history", async (c) => {
+  const farmId = c.req.param("id");
+  if (!(await markHistoryRequested(c.var.sdb, farmId))) return c.json({ status: "processing", already: true }, 202);
+  const res = await dispatchJob(c.env, HISTORY_JOB, farmId);
+  if (res !== "sent") {
+    await markHistoryFailed(c.var.sdb, farmId);
+    throw new HTTPException(503, { message: "No se pudo pedir la historia: los jobs no están disponibles" });
+  }
+  return c.json({ status: "processing", already: false }, 202);
 });
 web.get("/org/plots/:id/ndvi", async (c) => c.json(await plotNdvi(c.var.sdb, c.req.param("id"))));
 

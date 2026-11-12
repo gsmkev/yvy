@@ -287,6 +287,16 @@ export class SystemDb {
     return true;
   }
 
+  /** S-03: el job de historia avisa que terminó (done) o falló. */
+  async setHistoryStatus(farmId: string, status: "done" | "failed"): Promise<boolean> {
+    const res = await this.db
+      .update(s.farmHistory)
+      .set({ status, updatedAt: Date.now() })
+      .where(eq(s.farmHistory.farmId, farmId))
+      .returning({ id: s.farmHistory.farmId });
+    return res.length > 0;
+  }
+
   climateLatest() {
     return this.db
       .select({

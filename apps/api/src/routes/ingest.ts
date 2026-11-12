@@ -67,6 +67,13 @@ ingest.post("/farms/:id/imagery-status", async (c) => {
   return c.json({ ok: true });
 });
 
+/** S-03: el job s2_history termina; solo cambia el estado de un pedido existente. */
+ingest.post("/farms/:id/history-status", async (c) => {
+  const b = parse(z.object({ status: z.enum(["done", "failed"]) }), json(c.var.body));
+  if (!(await c.var.sys.setHistoryStatus(c.req.param("id"), b.status))) throw new HTTPException(404);
+  return c.json({ ok: true });
+});
+
 ingest.post("/scenes", async (c) => {
   const b = parse(
     z.object({

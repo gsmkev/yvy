@@ -149,5 +149,9 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `animals_sync_idx` ON `animals` (`organization_id`,`version`,`id`);",
   "CREATE INDEX `animals_farm_idx` ON `animals` (`farm_id`);",
   "ALTER TABLE `plot_index_stats` ADD `low_confidence` integer DEFAULT false NOT NULL;",
-  "CREATE TABLE `farm_history` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`status` text NOT NULL,\n\t`requested_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL\n);"
+  "CREATE TABLE `farm_history` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`status` text NOT NULL,\n\t`requested_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL\n);",
+  "CREATE TABLE `analysis_jobs` (\n\t`farm_id` text NOT NULL,\n\t`kind` text NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`status` text NOT NULL,\n\t`params` text DEFAULT '{}' NOT NULL,\n\t`requested_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\tPRIMARY KEY(`farm_id`, `kind`)\n);",
+  "CREATE TABLE `plot_analyses` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`plot_id` text NOT NULL,\n\t`kind` text NOT NULL,\n\t`ref_key` text NOT NULL,\n\t`from_at` integer,\n\t`to_at` integer,\n\t`plot_area_ha` real NOT NULL,\n\t`valid_pct` real NOT NULL,\n\t`metrics` text NOT NULL,\n\t`changes` text NOT NULL,\n\t`computed_at` integer NOT NULL\n);",
+  "CREATE UNIQUE INDEX `plot_analyses_uq` ON `plot_analyses` (`plot_id`,`kind`,`ref_key`);",
+  "CREATE INDEX `plot_analyses_farm_idx` ON `plot_analyses` (`farm_id`,`kind`);"
 ];

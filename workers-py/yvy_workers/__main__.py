@@ -9,7 +9,7 @@ import sys
 from .ingest import IngestClient
 from .jobs.constants import BACKFILL_DAYS, BASEMAP_DAYS, DAILY_DAYS
 
-JOBS = ["s2_ingest", "s2_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "weekly_report", "new_farm", "eudr", "s2_history"]
+JOBS = ["s2_ingest", "s2_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "weekly_report", "new_farm", "eudr", "s2_history", "burned_area"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -76,6 +76,10 @@ def main(argv: list[str] | None = None) -> int:
                     from .jobs.s2 import s2_ingest
 
                     log.info("%s: %s", f["name"], s2_ingest(api, f, days=ingest_days(args)))
+                elif args.job == "burned_area":
+                    from .jobs.burned import burned_area
+
+                    log.info("%s: %d lotes con resultado", f["name"], burned_area(api, f))
                 elif args.job == "s2_history":
                     from .jobs.s2 import s2_history
 

@@ -182,6 +182,19 @@ export function FarmReportsPage() {
           </Link>
         </div>
       </section>
+      <section>
+        <h2 className="font-serif text-xl font-semibold">{t("ui.changesTitle")}</h2>
+        <p className="mt-1 text-sm text-tinta-2">{t("ui.changesLandingText")}</p>
+        <div className="mt-3">
+          <Link
+            to="/estancias/$farmId/cambios"
+            params={{ farmId }}
+            className="text-sm font-medium text-accion underline underline-offset-2"
+          >
+            {t("ui.changesLink")}
+          </Link>
+        </div>
+      </section>
       {me.data?.role === "owner" && (
         <section>
           <h2 className="font-serif text-xl font-semibold">{t("ui.exportTitle")}</h2>

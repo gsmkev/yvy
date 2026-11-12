@@ -20,7 +20,12 @@ export function dispatchConfigured(env: Pick<Bindings, "GITHUB_DISPATCH_TOKEN" |
 export const HISTORY_JOB = "s2_history";
 
 /** Pide a GitHub correr un job para una estancia. Nunca lanza. */
-export async function dispatchJob(env: Bindings, job: string, farmId: string): Promise<"skipped" | "sent" | "failed"> {
+export async function dispatchJob(
+  env: Bindings,
+  job: string,
+  farmId: string,
+  extra: Record<string, string> = {},
+): Promise<"skipped" | "sent" | "failed"> {
   if (!dispatchConfigured(env)) {
     if (!warned) {
       warned = true;
@@ -40,7 +45,7 @@ export async function dispatchJob(env: Bindings, job: string, farmId: string): P
           "user-agent": "Yvy/1.0 koeti.com.py",
           "content-type": "application/json",
         },
-        body: JSON.stringify({ ref: REF, inputs: { job, farm: farmId } }),
+        body: JSON.stringify({ ref: REF, inputs: { job, farm: farmId, ...extra } }),
       },
     );
     if (res.status === 204) return "sent";

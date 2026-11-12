@@ -168,6 +168,11 @@ export const LIMITS = {
     maxItems: 30,
     maxTextLength: 120,
   },
+  /** T-07: lotes sin visitar. Días que se pueden elegir y el que vale por defecto. */
+  visits: {
+    staleDayOptions: [3, 7, 14, 30],
+    defaultStaleDays: 7,
+  },
   tasks: {
     /** Comentarios por tarea (se guardan como JSON en la propia tarea; ver tasks.comments). */
     maxComments: 50,

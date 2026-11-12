@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { isFieldRole, isWaterPoi } from "@yvy/shared";
+import { isFieldRole, isWaterPoi, LIMITS, stalePlots, staleDaysOrDefault } from "@yvy/shared";
 import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LineString, MultiPolygon, Polygon } from "geojson";
@@ -49,8 +49,6 @@ import { useBoundaries, type BoundaryLevel } from "../lib/boundaries";
 import { PEST_COLORS, PEST_WINDOW_MS, pestCounts, pestPoints, pestsByPlot } from "../lib/pests";
 import type { FarmDetail, Layer, RecordRow } from "../lib/types";
 
-/** Días sin anotaciones para considerar un lote sin visitar. */
-const UNVISITED_DAYS = 7;
 
 type Tab = "plots" | "seasons" | "products" | "records" | "tasks" | "climate" | "alerts" | "herd" | "agro";
 const TABS: Tab[] = ["plots", "seasons", "products", "records", "tasks", "climate", "alerts", "herd", "agro"];
@@ -74,6 +72,11 @@ export function FarmPage() {
   // Una pestaña guardada que este rol no tiene (ej. "herd" para un empleado) cae en Lotes en vez de mostrar nada.
   const tab: Tab = (tabPref === "herd" || tabPref === "agro") && !canEdit ? "plots" : tabPref;
   const [onlyUnvisited, setOnlyUnvisited] = useState(false);
+  const [staleDays, setStaleDaysState] = useState(() => staleDaysOrDefault(loadPrefs().staleDays));
+  const setStaleDays = (n: number) => {
+    setStaleDaysState(n);
+    savePrefs({ staleDays: n });
+  };
   const mapBox = useRef<HTMLDivElement>(null);
   // M-05: dividir (dibuja una línea sobre el lote) y unir (se elige el lote contiguo en el mapa)
   const [splitting, setSplitting] = useState<string | null>(null);
@@ -236,8 +239,7 @@ export function FarmPage() {
       </div>
     );
   const d = farm.data!;
-  const staleBefore = Date.now() - UNVISITED_DAYS * 86_400_000;
-  const unvisited = d.plots.filter((p) => !p.lastRecordAt || p.lastRecordAt < staleBefore);
+  const unvisited = stalePlots(d.plots, staleDays, Date.now());
   const shownPlots = onlyUnvisited ? unvisited : d.plots;
   const removePoi = (id: string) =>
     deleteWithUndo({
@@ -302,6 +304,7 @@ export function FarmPage() {
           indexKind={shownIndex}
           selectedPlotId={picking ? null : selected}
           pickedPlotIds={taskPlots}
+          stalePlotIds={onlyUnvisited ? unvisited.map((p) => p.id) : undefined}
           editPlot={shapeEdit}
           onEditChange={setShape}
           bounds={bounds}
@@ -846,12 +849,18 @@ export function FarmPage() {
                       ? t("ui.unvisitedShowAll")
                       : t(unvisited.length === 1 ? "ui.unvisitedOne" : "ui.unvisitedMany", {
                           n: unvisited.length,
-                          days: UNVISITED_DAYS,
+                          days: staleDays,
                         })}
                   </button>
                 ) : (
                   <span />
                 )}
+                <Select
+                  aria-label={t("ui.unvisitedAfter")}
+                  value={String(staleDays)}
+                  onChange={(e) => setStaleDays(staleDaysOrDefault(Number(e.target.value)))}
+                  options={LIMITS.visits.staleDayOptions.map((n) => ({ value: String(n), label: t("ui.daysN", { n }) }))}
+                />
                 <ExportButtons
                   data={() => ({
                     name: t("ui.plotsFile"),

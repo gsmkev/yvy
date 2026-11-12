@@ -80,6 +80,12 @@ export const LIMITS = {
     maxSkewMs: 5 * 60 * 1000,
   },
   storage: {
+    /**
+     * Cuántas versiones de cada capa ráster se guardan por estancia en R2 (las más nuevas). Cada pasada de Sentinel-2
+     * sube 4 índices; sin tope el bucket crece sin fin. Las curvas de vigor no dependen de esto (salen de plot_stats).
+     * NDVI guarda ~4 meses de pasadas para la línea de tiempo y el timelapse; el mapa base y la fertilidad, solo la última.
+     */
+    layerRetention: { true_color: 1, ndvi: 24, ndre: 6, ndmi: 6, evi: 6, fert: 1 },
     d1ArchiveThresholdBytes: 400 * 1024 * 1024,
     archiveAfterMs: 365 * 24 * 60 * 60 * 1000,
     usageWarnRatio: 0.7,

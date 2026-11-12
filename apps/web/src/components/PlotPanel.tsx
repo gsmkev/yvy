@@ -10,6 +10,7 @@ import { Minus, Pencil, Satellite, Trash2, TrendingDown, TrendingUp } from "luci
 import { t, tk } from "../lib/i18n";
 import type { Farm, Member, Plot, PlotHistoryRow, ProblemArea } from "../lib/types";
 import { CopyCoords } from "./CopyCoords";
+import { PlotAgro } from "./PlotAgro";
 import { LineChart } from "./charts";
 import { SamplingGrid } from "./SamplingGrid";
 import { VigorSeasons } from "./VigorSeasons";
@@ -318,6 +319,8 @@ export function PlotPanel({
           )}
         </div>
       )}
+
+      {canEdit && <PlotAgro plot={plot} />}
 
       {canEdit && !editing && (
         <div className="flex flex-wrap gap-2 border-t border-linea pt-4">

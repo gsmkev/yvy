@@ -48,3 +48,4 @@ export * from "./notification-prefs";
 export * from "./pin";
 export * from "./qr";
 export * from "./sowing-plan";
+export * from "./pheno";

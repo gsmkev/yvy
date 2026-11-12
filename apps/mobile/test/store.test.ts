@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, localDate, newId, nextOccurrenceId, parseChecklist } from "@yvy/shared";
+import { addDays, LIMITS, localDate, newId, nextOccurrenceId, parseChecklist } from "@yvy/shared";
 import { LocalDb } from "../src/db/store";
 import { planReminders } from "../src/lib/reminders-plan";
 import { nodeSql } from "./node-sql";
@@ -112,6 +112,21 @@ describe("LocalDb", () => {
     items = db.outboxItems();
     expect(items).toHaveLength(1);
     expect(items[0]).toMatchObject({ what: "photos", recordKind: "rain", photos: 2, photoBytes: 240_000 });
+    expect(id).toBeTruthy();
+  });
+
+  it("F-18 fotos trabadas: se cuentan tras los intentos máximos y Reintentar las rehabilita", async () => {
+    const db = setup();
+    const id = db.saveRecord(USER, ORG, rec, [photo]);
+    await db.removeMutations((await db.pendingMutations(40)).map((m) => m.mutationId));
+    const max = LIMITS.photos.maxUploadAttempts;
+    expect(db.stuckUploads(max).n).toBe(0);
+    const attachmentId = db.pendingUploads()[0]!.attachmentId;
+    for (let i = 0; i < max; i++) db.markUploaded(attachmentId, false);
+    expect(db.stuckUploads(max)).toEqual({ n: 1, bytes: 120_000 });
+    db.retryStuckUploads(max);
+    expect(db.stuckUploads(max).n).toBe(0);
+    expect(db.pendingUploads()[0]).toMatchObject({ attempts: 0 });
     expect(id).toBeTruthy();
   });
 

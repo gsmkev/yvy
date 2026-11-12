@@ -37,6 +37,8 @@ export const LIMITS = {
     /** X-09: aviso de calidad sobre una miniatura. Umbrales orientativos (luminancia 0-255; varianza del laplaciano). */
     quality: { sidePx: 128, darkMeanLuma: 45, blurLaplacianVar: 25 },
     maxBytes: 600 * 1024,
+    /** F-18: tras tantos intentos fallidos una foto deja de reintentarse sola y espera el "Reintentar" de la persona. */
+    maxUploadAttempts: 8,
     uploadUrlTtlSeconds: 15 * 60,
     downloadUrlTtlSeconds: 60 * 60,
   },

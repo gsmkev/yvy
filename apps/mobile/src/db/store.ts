@@ -872,6 +872,22 @@ export class LocalDb implements SyncStore {
     else this.sql.run("UPDATE local_files SET attempts = attempts + 1 WHERE attachment_id = ?", [attachmentId]);
   }
 
+  /** F-18: fotos que ya no se reintentan solas por tantos fallos, con lo que pesan. */
+  stuckUploads(maxAttempts: number): { n: number; bytes: number } {
+    return (
+      this.sql.get<{ n: number; bytes: number }>(
+        `SELECT count(*) n, coalesce(sum(a.bytes), 0) bytes FROM local_files f JOIN attachments a ON a.id = f.attachment_id
+         WHERE f.uploaded = 0 AND f.attempts >= ? AND NOT EXISTS (SELECT 1 FROM outbox o WHERE o.row_id = f.attachment_id)`,
+        [maxAttempts],
+      ) ?? { n: 0, bytes: 0 }
+    );
+  }
+
+  /** F-18: "Reintentar" las fotos trabadas: vuelven a contar desde cero. */
+  retryStuckUploads(maxAttempts: number): void {
+    this.sql.run("UPDATE local_files SET attempts = 0 WHERE uploaded = 0 AND attempts >= ?", [maxAttempts]);
+  }
+
   /** Cuánto ocupa lo local que se puede medir sin tocar el disco (F-19): fotos y notas ya cargadas, mapas bajados. */
   storageSummary(): { photos: { n: number; bytes: number }; voice: { n: number; bytes: number }; maps: { n: number; bytes: number }; reclaimable: { n: number; bytes: number } } {
     const sum = (where: string) =>

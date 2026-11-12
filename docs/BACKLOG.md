@@ -126,7 +126,7 @@ Detalles que un usuario espera sin pedirlos.
 | F-15 | Listas de verificación en tareas (revisar bebederos 1 a 5) | Rutinas | App, Web | P1 | M | Hecho |
 | F-16 | Recordatorios locales de tareas sin internet | El aviso llega igual | App | P1 | S | Hecho |
 | F-17 | Fotos: quitar una mal sacada y ver miniaturas en el Historial | Detalle de uso | App | P1 | S | Hecho |
-| F-18 | Cola de envío visible: qué falta mandar, tamaño, reintentar o mandar por wifi | Control del dato | App | P1 | S | Parcial |
+| F-18 | Cola de envío visible: qué falta mandar, tamaño, reintentar o mandar por wifi | Control del dato | App | P1 | S | Hecho |
 | F-19 | Uso de almacenamiento y borrar fotos ya subidas | Celulares de 32 GB | App | P2 | S | Hecho |
 | F-20 | Selector de estancia en la app cuando hay más de una | Hoy se mezclan | App | P0 | S | Hecho |
 | F-21 | Satélite y vigor (NDVI) en el mapa de la app, sin señal | El dueño en el campo | App | P0 | S | Hecho |

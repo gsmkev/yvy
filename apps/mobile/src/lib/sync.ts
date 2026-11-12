@@ -43,8 +43,6 @@ export const useSyncStatus = () =>
 /** Llamar después de cada escritura local. */
 export const localChanged = () => set({ pending: getDb().pendingCount(), version: status.version + 1 });
 
-const MAX_UPLOAD_ATTEMPTS = 8;
-
 /** "Mandar por datos móviles": salta la regla "fotos solo con wifi" durante un solo ciclo. */
 let mobileDataOnce = false;
 
@@ -57,7 +55,7 @@ const uploader: AttachmentUploader = {
     }
     let done = 0;
     for (const f of db.pendingUploads()) {
-      if (f.attempts >= MAX_UPLOAD_ATTEMPTS) continue;
+      if (f.attempts >= LIMITS.photos.maxUploadAttempts) continue;
       try {
         const urls = await api<{ photo: string; thumb: string | null }>(
           "POST",

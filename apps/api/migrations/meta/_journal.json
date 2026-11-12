@@ -414,6 +414,13 @@
       "when": 1794479809056,
       "tag": "0058_spicy_timeslip",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "6",
+      "when": 1794480031769,
+      "tag": "0059_young_senator_kelly",
+      "breakpoints": true
     }
   ]
 }

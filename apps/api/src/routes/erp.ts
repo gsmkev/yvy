@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { LIMITS } from "@yvy/shared";
-import { attendanceDayInput, budgetLineInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
+import { attendanceDayInput, purchaseInput, purchaseInvoiceInput, purchaseReceiveInput, budgetLineInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { HTTPException } from "hono/http-exception";
 import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
@@ -16,6 +16,7 @@ import { deleteMachineCost, laborComparison, listMachineCosts, saveMachineCost }
 import { attendanceSummary, deleteAttendance, listAttendance, markDay } from "../db/attendance";
 import { balances, createPayment, deletePayment, employeeStatement, listPayments } from "../db/employee-payments";
 import { budgetCompare } from "../db/budget";
+import { createPurchase, deletePurchase, getPurchase, invoicePurchase, listPurchases, receivePurchase, revertReception } from "../db/purchases";
 import { createLog, deleteLog, duePlans, listLogs } from "../db/maintenance";
 import { deleteMinimum, listMinimums, lowStock, saveMinimum } from "../db/stock-minimums";
 import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
@@ -327,3 +328,24 @@ master("budget-lines", s.budgetLines, budgetLineInput, [s.budgetLines.category],
   },
 });
 erp.get("/budget/compare", async (c) => c.json(await budgetCompare(c.var.sdb, parse(uuid, c.req.query("seasonId")))));
+
+// ---------- Compras: orden, factura y recepción (E-33) ----------
+
+erp.get("/purchases", async (c) => c.json(await listPurchases(c.var.sdb, { status: c.req.query("status") })));
+erp.post("/purchases", async (c) => c.json(await createPurchase(c.var.sdb, parse(purchaseInput, await readJson(c.req))), 201));
+erp.get("/purchases/:id", async (c) => c.json(await getPurchase(c.var.sdb, parse(uuid, c.req.param("id")))));
+erp.post("/purchases/:id/invoice", async (c) => {
+  await invoicePurchase(c.var.sdb, parse(uuid, c.req.param("id")), parse(purchaseInvoiceInput, await readJson(c.req)));
+  return c.json({ ok: true });
+});
+erp.post("/purchases/:id/receive", async (c) =>
+  c.json(await receivePurchase(c.var.sdb, parse(uuid, c.req.param("id")), parse(purchaseReceiveInput, await readJson(c.req)))),
+);
+erp.delete("/purchases/:id/reception", async (c) => {
+  await revertReception(c.var.sdb, parse(uuid, c.req.param("id")));
+  return c.json({ ok: true });
+});
+erp.delete("/purchases/:id", async (c) => {
+  await deletePurchase(c.var.sdb, parse(uuid, c.req.param("id")));
+  return c.json({ ok: true });
+});

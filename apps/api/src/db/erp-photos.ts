@@ -8,11 +8,11 @@ import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
 import * as s from "@yvy/shared/schema";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
 
-export const PHOTO_KINDS = ["stock-moves", "cost-entries"] as const;
+export const PHOTO_KINDS = ["stock-moves", "cost-entries", "purchases"] as const;
 export type PhotoKind = (typeof PHOTO_KINDS)[number];
 
 type Tbl = SQLiteTable & { id: SQLiteColumn; organizationId: SQLiteColumn; deletedAt: SQLiteColumn; photoPath: SQLiteColumn };
-const TABLES: Record<PhotoKind, Tbl> = { "stock-moves": s.stockMoves, "cost-entries": s.costEntries };
+const TABLES: Record<PhotoKind, Tbl> = { "stock-moves": s.stockMoves, "cost-entries": s.costEntries, purchases: s.purchases };
 
 /** Clave del objeto en R2: una foto por movimiento. */
 export const photoKey = (orgId: string, kind: PhotoKind, id: string) => `organizations/${orgId}/erp/${kind}/${id}.webp`;

@@ -6,7 +6,7 @@ import { t } from "../../lib/i18n";
 import { compressPhoto } from "../../lib/photo";
 import { toast } from "../ui";
 
-export type PhotoKind = "stock-moves" | "cost-entries";
+export type PhotoKind = "stock-moves" | "cost-entries" | "purchases";
 
 export function InvoicePhoto({ kind, id, hasPhoto }: { kind: PhotoKind; id: string; hasPhoto: boolean }) {
   const qc = useQueryClient();

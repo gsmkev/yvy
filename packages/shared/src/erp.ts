@@ -620,3 +620,55 @@ export function budgetVsActual(
     };
   });
 }
+
+// ---------- Compras: orden, factura y recepción (E-33) ----------
+
+export const maxPurchaseLines = 20;
+
+export const purchaseLineInput = z
+  .object({
+    productId: uuid.nullish(),
+    description: optText(200),
+    /** Rubro del gasto (solo líneas sin producto); no puede ser una venta. */
+    category: z.enum(COST_CATEGORIES).refine((c) => c !== "sale", "Una compra no puede ser una venta").nullish(),
+    activity: z.enum(ACTIVITIES).nullish(),
+    qty: z.number().positive().max(1_000_000_000),
+    unitPrice: minorAmount,
+    lot: optText(60),
+    expiresOn: isoDate.nullish(),
+  })
+  .refine((l) => l.productId || (l.description && l.description.trim()), "Cada línea lleva un producto o una descripción");
+
+export const purchaseInput = z.object({
+  partyId: uuid.nullish(),
+  farmId: uuid.nullish(),
+  orderDate: isoDate,
+  expectedDate: isoDate.nullish(),
+  currency: currencySchema,
+  note: optText(300),
+  lines: z.array(purchaseLineInput).min(1).max(maxPurchaseLines),
+});
+
+export const purchaseInvoiceInput = z.object({
+  invoiceNumber: z.string().trim().min(1).max(40),
+  invoiceDate: isoDate,
+  dueDate: isoDate.nullish(),
+});
+
+export const purchaseReceiveInput = z.object({
+  warehouseId: uuid,
+  date: isoDate,
+  /** Cantidades recibidas, lote y vencimiento por línea; lo que no se manda se recibe completo. */
+  lines: z
+    .array(z.object({ lineId: uuid, qty: z.number().min(0).max(1_000_000_000).optional(), lot: optText(60), expiresOn: isoDate.nullish() }))
+    .max(maxPurchaseLines)
+    .optional(),
+});
+
+/** Importe de una línea en unidad menor: cantidad por precio unitario, redondeado. */
+export const lineAmount = (qty: number, unitPrice: number): number => Math.round(qty * unitPrice);
+
+export type PurchaseStatus = "ordered" | "invoiced" | "received" | "complete";
+/** Estado derivado: con factura y recepción está completa; la factura y la recepción pueden llegar en cualquier orden. */
+export const purchaseStatus = (p: { invoiceNumber: string | null; receivedAt: string | null }): PurchaseStatus =>
+  p.invoiceNumber && p.receivedAt ? "complete" : p.receivedAt ? "received" : p.invoiceNumber ? "invoiced" : "ordered";

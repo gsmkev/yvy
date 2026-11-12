@@ -124,6 +124,7 @@ export const FORMS: Record<RecordKind, FieldSpec[]> = {
     note,
   ],
   stock_count: [],
+  feed: [],
   harvest: [
     { key: "tons", type: "number", unit: "t", required: true },
     { key: "moisturePct", type: "number", unit: "%" },

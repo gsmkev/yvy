@@ -56,6 +56,7 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
   track: Route,
   fuel_load: Fuel,
   stock_count: ClipboardList,
+  feed: Wheat,
 };
 
 export const ALERT_ICON: Record<string, LucideIcon> = {

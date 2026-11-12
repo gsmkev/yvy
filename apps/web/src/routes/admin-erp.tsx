@@ -11,6 +11,7 @@ import { StaffPanel } from "../components/erp/StaffPanel";
 import { StockPanel } from "../components/erp/StockPanel";
 import { WarehousesPanel } from "../components/erp/WarehousesPanel";
 import { ExchangeRatesPanel } from "../components/erp/ExchangeRatesPanel";
+import { FeedlotPanel } from "../components/erp/FeedlotPanel";
 import { FuelPanel } from "../components/erp/FuelPanel";
 import { OrdersPanel } from "../components/erp/OrdersPanel";
 import { PurchasesPanel } from "../components/erp/PurchasesPanel";
@@ -48,6 +49,7 @@ const SECTIONS: Section[] = [
   { id: "labor", label: "ui.adminSection_labor", render: () => <LaborCostPanel /> },
   { id: "staff", label: "ui.adminSection_staff", render: () => <StaffPanel /> },
   { id: "fuel", label: "ui.adminSection_fuel", render: () => <FuelPanel /> },
+  { id: "feedlot", label: "ui.adminSection_feedlot", render: () => <FeedlotPanel /> },
   { id: "orders", label: "ui.adminSection_orders", render: () => <OrdersPanel /> },
   { id: "budget", label: "ui.adminSection_budget", render: () => <BudgetPanel /> },
   { id: "results", label: "ui.adminSection_results", render: () => <ResultsPanel /> },

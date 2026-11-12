@@ -140,6 +140,10 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
       if (typeof d.meterValue === "number") parts.push(t("fields.meterReading", { n: dec(d.meterValue) }));
       break;
     }
+    case "feed":
+      if (str("ration")) parts.push(d.ration as string);
+      if (typeof d.kgDm === "number") parts.push(t("fields.kgDmValue", { n: dec(d.kgDm) }));
+      break;
     case "stock_count":
       if (Array.isArray(d.lines)) parts.push(t("ui.countSummary", { n: d.lines.length }));
       break;

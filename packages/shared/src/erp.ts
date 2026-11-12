@@ -809,3 +809,28 @@ export function dueStatus(dueDate: string | null, today: string, soonDays = 7): 
   const daysLeft = daysUntil(today, dueDate);
   return { status: daysLeft < 0 ? "overdue" : daysLeft <= soonDays ? "soon" : "ok", daysLeft };
 }
+
+// ---------- Exportación al contador (E-38) ----------
+
+export interface AccountRef {
+  code: string;
+  name: string;
+}
+/** Plan de ejemplo: el contador lo reemplaza con los códigos de su plan de cuentas. */
+export const DEFAULT_ACCOUNT_MAP: Record<CostCategory, AccountRef> = {
+  input: { code: "5.1.01", name: "Insumos" },
+  fuel: { code: "5.1.02", name: "Combustibles y lubricantes" },
+  contractor: { code: "5.1.03", name: "Servicios de terceros" },
+  labor: { code: "5.2.01", name: "Sueldos y jornales" },
+  machinery: { code: "5.3.01", name: "Maquinaria: mantenimiento y repuestos" },
+  other: { code: "5.9.01", name: "Otros gastos" },
+  sale: { code: "4.1.01", name: "Ventas" },
+};
+
+export const accountMapInput = z.object({
+  code: z.string().trim().min(1).max(30),
+  name: z.string().trim().min(1).max(80),
+});
+
+/** Cuenta de un rubro: la que cargó el contador o, si no hay, la del plan de ejemplo. */
+export const accountFor = (key: CostCategory, custom: Record<string, AccountRef>): AccountRef => custom[key] ?? DEFAULT_ACCOUNT_MAP[key];

@@ -171,6 +171,8 @@ export const LIMITS = {
      * por fila son ~9 sentencias; más que eso se responde 503 y el celular divide el envío.
      */
     maxEffectMovesPerPush: 60,
+    /** Asientos que entran en una exportación al contador (E-38); si hay más, se avisa que se recortó el período. */
+    exportLimit: 2000,
   },
   /** T-08: comentarios en registros. */
   comments: {

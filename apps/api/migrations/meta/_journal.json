@@ -442,6 +442,13 @@
       "when": 1794480812786,
       "tag": "0062_wooden_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "6",
+      "when": 1794481031381,
+      "tag": "0063_chemical_king_bedlam",
+      "breakpoints": true
     }
   ]
 }

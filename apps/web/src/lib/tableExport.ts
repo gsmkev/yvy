@@ -43,3 +43,22 @@ export async function tableToExcel(d: TableData) {
     `${d.name}-${stamp()}.xlsx`,
   );
 }
+
+/** Un Excel con varias hojas (una por tabla), generado en el navegador. */
+export async function tablesToExcel(baseName: string, tables: TableData[]) {
+  const ExcelJS = (await import("exceljs")).default;
+  const wb = new ExcelJS.Workbook();
+  for (const d of tables) {
+    const ws = wb.addWorksheet(d.name.slice(0, 31));
+    ws.columns = d.headers.map((header, i) => ({
+      header,
+      key: `c${i}`,
+      width: Math.min(50, Math.max(header.length + 2, ...d.rows.slice(0, 200).map((r) => String(r[i] ?? "").length + 2), 10)),
+    }));
+    ws.getRow(1).font = { bold: true };
+    // Mismo criterio que el CSV: un texto que empieza con = + - @ no se interpreta como fórmula.
+    for (const r of d.rows) ws.addRow(r.map((v) => (typeof v === "string" && /^[=+\-@]/.test(v) ? `'${v}` : (v ?? ""))));
+  }
+  const buf = await wb.xlsx.writeBuffer();
+  download(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `${baseName}-${stamp()}.xlsx`);
+}

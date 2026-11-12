@@ -122,6 +122,8 @@ export function FarmMap(props: FarmMapProps) {
         ],
       },
       bounds: props.bounds ?? PARAGUAY,
+      // Sentinel-2 tiene 10 m por píxel y las teselas llegan a z16: más cerca solo se ve borroso
+      maxZoom: 17,
       fitBoundsOptions: { padding: 40 },
       attributionControl: { compact: true },
     });
@@ -411,7 +413,13 @@ export function FarmMap(props: FarmMapProps) {
       ),
     );
     (map.getSource("heat") as GeoJSONSource).setData(
-      fc((p.heat ?? []).map((c) => ({ type: "Feature" as const, properties: {}, geometry: { type: "Point" as const, coordinates: c } }))),
+      fc(
+        (p.heat ?? []).map((c) => ({
+          type: "Feature" as const,
+          properties: {},
+          geometry: { type: "Point" as const, coordinates: c },
+        })),
+      ),
     );
     const mp = p.measurePoints ?? [];
     (map.getSource("measure") as GeoJSONSource).setData(
@@ -461,7 +469,7 @@ export function FarmMap(props: FarmMapProps) {
 
   useEffect(() => {
     const map = mapRef.current;
-    if (map && props.bounds) map.fitBounds(props.bounds, { padding: 60, duration: 600, maxZoom: 18 });
+    if (map && props.bounds) map.fitBounds(props.bounds, { padding: 60, duration: 600, maxZoom: 16 });
   }, [props.bounds?.join(",")]);
 
   useEffect(() => {
@@ -585,13 +593,15 @@ export function FarmMap(props: FarmMapProps) {
     };
   }, [props.editPlot?.id, mapRef.current]);
 
-  return <div
+  return (
+    <div
       ref={ref}
       role="region"
       aria-label={t("ui.mapRegion")}
       className={props.className ?? "h-full w-full"}
       data-testid="map"
-    />;
+    />
+  );
 }
 
 function syncRasters(map: MlMap, p: FarmMapProps) {

@@ -145,7 +145,43 @@ export function WeedsIllustration({ label, className }: Props) {
         <line key={y} x1="10" x2="590" y1={y} y2={y} stroke={C.soja} strokeOpacity={0.55} strokeWidth="1" />
       ))}
       {PATCHES.map((d, i) => (
-        <path key={i} d={d} fill={C.trigo} fillOpacity={0.55} stroke={C.alerta} strokeWidth="1.5" strokeLinejoin="round" />
+        <path
+          key={i}
+          d={d}
+          fill={C.trigo}
+          fillOpacity={0.55}
+          stroke={C.alerta}
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+        />
+      ))}
+    </svg>
+  );
+}
+
+/** Lote con dos clases de daño: moderado (trigo) y severo (alerta), más fuerte del lado oeste. */
+const HAIL_MODERATE = [
+  "M18,30 L190,22 L236,96 L180,176 L120,230 L18,250 Z",
+  "M300,260 L372,236 L416,290 L360,330 L304,320 Z",
+];
+const HAIL_SEVERE = [
+  "M18,60 L100,52 L132,112 L84,172 L18,184 Z",
+  "M60,214 L118,206 L136,246 L92,276 L40,262 Z",
+];
+
+export function HailIllustration({ label, className }: Props) {
+  return (
+    <svg viewBox="0 0 600 360" role="img" aria-label={label} className={className}>
+      <rect width="600" height="360" fill={C.lino} />
+      <rect x="10" y="10" width="580" height="340" fill={C.soja} fillOpacity={0.28} stroke={C.soja} strokeWidth="2" />
+      {ROWS.map((y) => (
+        <line key={y} x1="10" x2="590" y1={y} y2={y} stroke={C.soja} strokeOpacity={0.55} strokeWidth="1" />
+      ))}
+      {HAIL_MODERATE.map((d, i) => (
+        <path key={`m${i}`} d={d} fill={C.trigo} fillOpacity={0.5} stroke={C.trigo} strokeWidth="1.5" strokeLinejoin="round" />
+      ))}
+      {HAIL_SEVERE.map((d, i) => (
+        <path key={`s${i}`} d={d} fill={C.alerta} fillOpacity={0.5} stroke={C.alerta} strokeWidth="1.5" strokeLinejoin="round" />
       ))}
     </svg>
   );

@@ -248,6 +248,7 @@ export default function MapScreen() {
         <View style={st.mark}>
           <Button kind="secondary" title={t("app.poiScan")} onPress={() => router.push("/scan-poi")} />
           {canMarkPoi && <Button kind="secondary" title={t("app.poiMark")} onPress={() => router.push("/poi")} style={{ marginTop: 8 }} />}
+          {canMarkPoi && <Button kind="secondary" title={t("app.plotDrawStart")} onPress={() => router.push("/plot-draw")} style={{ marginTop: 8 }} />}
         </View>
       )}
 
@@ -290,6 +291,9 @@ export default function MapScreen() {
             </Text>
           ))}
           <Button big title={t("app.annotateIn", { plot: plot.name })} onPress={() => router.push({ pathname: "/annotate", params: { plotId: plot.id } })} style={{ marginTop: 16 }} />
+          {canMarkPoi && (
+            <Button kind="text" title={t("app.plotDrawEdit")} onPress={() => router.push({ pathname: "/plot-draw", params: { plotId: plot.id } })} style={{ marginTop: 4 }} />
+          )}
           <Button
             kind="text"
             title={t("app.gotoButton")}

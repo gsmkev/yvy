@@ -1,11 +1,16 @@
 import { FileDown } from "lucide-react";
 import { useState } from "react";
-import { useParams, useSearch } from "@tanstack/react-router";
+import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { addDays, localDate } from "@yvy/shared";
+import { addDays, isAudioMime, localDate, weeklyShareText } from "@yvy/shared";
+
+const isUploadedPhoto = (a: { uploadStatus: string; mime?: string }) => a.uploadStatus === "uploaded" && !isAudioMime(a.mime ?? "");
+import { ShareWhatsappButton } from "../components/ShareButton";
+import { ShareLinksSection } from "../components/ShareLinks";
 import { Button, Card, ErrorBox, Field, Input, Spinner } from "../components/ui";
 import { get } from "../lib/api";
 import { download } from "../lib/exports";
+import { fmtIsoDate, fmtMm } from "../lib/format";
 import { t } from "../lib/i18n";
 import { fetchAllRecords, useAlerts, useFarm } from "../lib/queries";
 
@@ -48,16 +53,27 @@ export function ReportPage() {
   const gauge = (climate.data?.gauge ?? []).filter((g) => g.capturedAt >= fromMs && g.capturedAt <= toMs);
   const periodAlerts = (alerts.data ?? []).filter((a) => a.validFrom <= toMs && (a.validTo ?? a.validFrom) >= fromMs);
 
+  const shareText = weeklyShareText({
+    farmName: farm.data!.farm.name,
+    from: fmtIsoDate(from),
+    to: fmtIsoDate(to),
+    records: rows.length,
+    workers: new Set(rows.map((r) => r.authorId)).size,
+    rainMm: weekRain,
+    alerts: periodAlerts.map((a) => a.summary),
+    link: `${window.location.origin}/estancias/${farmId}/parte?desde=${from}&hasta=${to}`,
+  });
+
   const generate = async () => {
     setBusy(true);
     setError(null);
     try {
-      const withPhotos = rows.filter((r) => r.attachments.some((a) => a.uploadStatus === "uploaded")).slice(0, 6);
+      const withPhotos = rows.filter((r) => r.attachments.some(isUploadedPhoto)).slice(0, 6);
       const photoUrls = (
         await Promise.all(
           withPhotos.map((r) =>
             get<{ url: string }>(
-              `/media/attachments/${r.attachments.find((a) => a.uploadStatus === "uploaded")!.id}`,
+              `/media/attachments/${r.attachments.find(isUploadedPhoto)!.id}`,
             ).catch(() => null),
           ),
         )
@@ -104,6 +120,7 @@ export function ReportPage() {
         <Button variant="primary" icon={FileDown} onClick={generate} disabled={busy}>
           {t("ui.downloadPdf")}
         </Button>
+        <ShareWhatsappButton text={shareText} />
       </div>
       {error ? <ErrorBox error={error} /> : null}
       <div className="grid grid-cols-3 gap-3">
@@ -113,13 +130,21 @@ export function ReportPage() {
         </Card>
         <Card>
           <div className="eyebrow">{t("ui.rainWeek")}</div>
-          <div className="text-2xl font-semibold">{weekRain === null ? "—" : `${Math.round(weekRain)} mm`}</div>
+          <div className="text-2xl font-semibold">{weekRain === null ? "—" : fmtMm(weekRain)}</div>
         </Card>
         <Card>
           <div className="eyebrow">{t("ui.alertsTitle")}</div>
           <div className="text-2xl font-semibold">{periodAlerts.length}</div>
         </Card>
       </div>
+      <Link
+        to="/estancias/$farmId/informes"
+        params={{ farmId }}
+        className="text-sm font-medium text-accion underline underline-offset-2"
+      >
+        {t("ui.reportsFarmLink")}
+      </Link>
+      <ShareLinksSection farmId={farmId} />
     </div>
   );
 }

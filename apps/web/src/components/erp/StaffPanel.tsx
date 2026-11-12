@@ -1,11 +1,12 @@
 /** Personal: empleados con su jornal y asistencia diaria con lote y labor (E-25). */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { EMPLOYEE_PAYMENT_KINDS, localDate } from "@yvy/shared";
+import { EMPLOYEE_PAYMENT_KINDS, localDate, type PayrollRow } from "@yvy/shared";
 import { del, get, post, qs } from "../../lib/api";
 import { fmtIsoDate } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
+import { tablesToExcel } from "../../lib/tableExport";
 import { useFarm, useFarms } from "../../lib/queries";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
 import { MasterPanel, useErpList, type FieldDef } from "./MasterPanel";
@@ -240,6 +241,7 @@ function BalancesTab() {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-tinta-2">{t("ui.balIntro")}</p>
+      <PayrollExport />
       {rows.length === 0 ? (
         <Empty>{t("ui.attNoStaff")}</Empty>
       ) : (
@@ -374,5 +376,75 @@ function StatementModal({ row, onClose }: { row: Balance; onClose: () => void })
         </table>
       )}
     </Modal>
+  );
+}
+
+const monthStart = (back: number) => {
+  const d = new Date(Date.now() - 3 * 3_600_000);
+  return localDate(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - back, 1));
+};
+
+/** Planilla para el contador (E-27): Excel con jornales, adelantos y pagos por empleado y mes. Sin aportes. */
+function PayrollExport() {
+  const [from, setFrom] = useState(monthStart(2));
+  const [to, setTo] = useState(localDate(Date.now()));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const [empty, setEmpty] = useState(false);
+  const download = async () => {
+    setBusy(true);
+    setError(null);
+    setEmpty(false);
+    try {
+      const rows = await get<PayrollRow[]>(`/org/erp/employees/payroll${qs({ from, to })}`);
+      if (rows.length === 0) return setEmpty(true);
+      const headers = [t("ui.payMonth"), t("ui.staffName"), t("ui.staffCi"), t("ui.balDays"), t("ui.balAccrued"), t("ui.balAdvances"), t("ui.balPayments"), t("ui.payMonthBalance")];
+      const line = (r: PayrollRow) => [r.month, r.name, r.ci ?? "", r.days, r.accruedPyg, r.advancesPyg, r.paymentsPyg, r.balancePyg];
+      const totals = new Map<string, PayrollRow>();
+      for (const r of rows) {
+        const x = totals.get(r.employeeId) ?? { ...r, month: "", days: 0, accruedPyg: 0, advancesPyg: 0, paymentsPyg: 0, balancePyg: 0 };
+        x.days += r.days;
+        x.accruedPyg += r.accruedPyg;
+        x.advancesPyg += r.advancesPyg;
+        x.paymentsPyg += r.paymentsPyg;
+        x.balancePyg += r.balancePyg;
+        totals.set(r.employeeId, x);
+      }
+      const sum = (k: "days" | "accruedPyg" | "advancesPyg" | "paymentsPyg" | "balancePyg") => rows.reduce((a, r) => a + r[k], 0);
+      await tablesToExcel(`planilla-${from.slice(0, 7)}_${to.slice(0, 7)}`, [
+        {
+          name: t("ui.paySheetMonthly"),
+          headers,
+          rows: [...rows.map(line), [], [t("ui.payTotal"), "", "", sum("days"), sum("accruedPyg"), sum("advancesPyg"), sum("paymentsPyg"), sum("balancePyg")], [], [t("ui.payNoContributions")]],
+        },
+        {
+          name: t("ui.paySheetByEmployee"),
+          headers: headers.slice(1),
+          rows: [...totals.values()].sort((a, b) => a.name.localeCompare(b.name, "es")).map((r) => line(r).slice(1)),
+        },
+      ]);
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="flex flex-col gap-2 border-y border-linea py-3">
+      <div className="flex flex-wrap items-end gap-3">
+        <Field label={t("ui.acctFrom")}>
+          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+        </Field>
+        <Field label={t("ui.acctTo")}>
+          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+        </Field>
+        <Button onClick={download} disabled={busy || !from || !to}>
+          {t("ui.payExport")}
+        </Button>
+      </div>
+      <p className="text-xs text-tinta-2">{t("ui.payExportHint")}</p>
+      {empty && <p className="text-sm">{t("ui.payEmpty")}</p>}
+      {error ? <ErrorBox error={error} /> : null}
+    </div>
   );
 }

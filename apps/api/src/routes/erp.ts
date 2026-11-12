@@ -15,7 +15,7 @@ import { fixDefaultWarehouse } from "../db/stock";
 import { adjustStock, consumeStock, deleteMove, expiringLots, listMoves, purchaseStock, requireWarehouseUnused, stockSummary, transferStock } from "../db/stock-moves";
 import { deleteMachineCost, laborComparison, listMachineCosts, saveMachineCost } from "../db/labor-cost";
 import { attendanceSummary, deleteAttendance, listAttendance, markDay } from "../db/attendance";
-import { balances, createPayment, deletePayment, employeeStatement, listPayments } from "../db/employee-payments";
+import { balances, createPayment, deletePayment, employeeStatement, listPayments, payroll } from "../db/employee-payments";
 import { budgetCompare } from "../db/budget";
 import { createPurchase, deletePurchase, getPurchase, invoicePurchase, listPurchases, receivePurchase, revertReception } from "../db/purchases";
 import { checkContractRefs, contractsSummary, createDelivery, createSettlement, deleteDelivery, deleteSettlement, listDeliveries, listSettlements } from "../db/grain-sales";
@@ -349,6 +349,10 @@ erp.delete("/employee-payments/:id", async (c) => {
   return c.json({ ok: true });
 });
 erp.get("/employees/balance", async (c) => c.json(await balances(c.var.sdb, parse(isoDate.optional(), c.req.query("to")))));
+erp.get("/employees/payroll", async (c) => {
+  const q = parse(z.object({ from: isoDate, to: isoDate }), c.req.query());
+  return c.json(await payroll(c.var.sdb, q.from, q.to));
+});
 erp.get("/employees/:id/statement", async (c) => c.json(await employeeStatement(c.var.sdb, parse(uuid, c.req.param("id")))));
 
 // ---------- Presupuesto de campaña (E-32) ----------

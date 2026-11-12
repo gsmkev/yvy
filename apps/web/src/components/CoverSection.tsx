@@ -10,6 +10,7 @@ import { fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useFarm, useMe } from "../lib/queries";
 import type { AnalysisJob, AnalysisPlot, CoverMetrics } from "../lib/types";
+import { ExportableTable } from "./ExportableTable";
 
 const CLASSES = ["forest", "pasture", "crop", "other"] as const;
 const iso = (d: Date) => d.toISOString().slice(0, 10);
@@ -117,26 +118,28 @@ export function CoverSection({ farmId }: { farmId: string }) {
             <Stat label={t("ui.coverForestTo", { date: day(range.to) })} value={fmtHa(sum.to.forest)} />
             <Stat label={t("ui.coverForestLost")} value={fmtHa(sum.forestLostHa)} tone={sum.forestLostHa > 0 ? "danger" : undefined} />
           </div>
-          <table className="num w-full text-sm">
-            <thead>
-              <tr className="border-b border-linea text-left text-tinta-2">
-                <th className="py-1.5 pr-3 font-normal">{t("ui.coverColClass")}</th>
-                <th className="px-3 py-1.5 text-right font-normal">{day(range.from)}</th>
-                <th className="px-3 py-1.5 text-right font-normal">{day(range.to)}</th>
-                <th className="py-1.5 pl-3 text-right font-normal">{t("ui.coverColDiff")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {CLASSES.map((c) => (
-                <tr key={c} className="border-b border-linea/60">
-                  <td className="py-1.5 pr-3">{t(`ui.coverClass_${c}`)}</td>
-                  <td className="px-3 py-1.5 text-right">{fmtHa(sum.from[c])}</td>
-                  <td className="px-3 py-1.5 text-right">{fmtHa(sum.to[c])}</td>
-                  <td className="py-1.5 pl-3 text-right">{`${sum.to[c] - sum.from[c] > 0 ? "+" : ""}${fmtHa(sum.to[c] - sum.from[c])}`}</td>
+          <ExportableTable name="cobertura">
+            <table className="num w-full text-sm">
+              <thead>
+                <tr className="border-b border-linea text-left text-tinta-2">
+                  <th className="py-1.5 pr-3 font-normal">{t("ui.coverColClass")}</th>
+                  <th className="px-3 py-1.5 text-right font-normal">{day(range.from)}</th>
+                  <th className="px-3 py-1.5 text-right font-normal">{day(range.to)}</th>
+                  <th className="py-1.5 pl-3 text-right font-normal">{t("ui.coverColDiff")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {CLASSES.map((c) => (
+                  <tr key={c} className="border-b border-linea/60">
+                    <td className="py-1.5 pr-3">{t(`ui.coverClass_${c}`)}</td>
+                    <td className="px-3 py-1.5 text-right">{fmtHa(sum.from[c])}</td>
+                    <td className="px-3 py-1.5 text-right">{fmtHa(sum.to[c])}</td>
+                    <td className="py-1.5 pl-3 text-right">{`${sum.to[c] - sum.from[c] > 0 ? "+" : ""}${fmtHa(sum.to[c] - sum.from[c])}`}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
           <p className="text-sm text-tinta-2">
             {t("ui.coverConversions", { pasture: fmtHa(sum.forestToPasture), crop: fmtHa(sum.forestToCrop), other: fmtHa(sum.forestToOther) })}
           </p>

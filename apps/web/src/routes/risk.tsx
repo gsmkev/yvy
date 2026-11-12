@@ -12,6 +12,7 @@ import { fmtDate, fmtMm, fmtNum } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useFarm, useMe } from "../lib/queries";
 import { fireByMonth, fmtMmDd, rainByMonth, type RiskResponse } from "../lib/riskData";
+import { ExportableTable } from "../components/ExportableTable";
 
 function Section({ title, lead, children }: { title: string; lead?: string; children: React.ReactNode }) {
   return (
@@ -70,30 +71,32 @@ export function RiskReportBody({ r }: { r: FarmRisk }) {
               months={rain.map((m) => ({ label: m.label, gauge: m.mm, sat: null, normal: m.normalMm }))}
             />
             <div className="overflow-x-auto">
-              <table className="num w-full text-sm">
-                <thead>
-                  <tr className="border-b border-linea text-left text-tinta-2">
-                    <th className="py-1.5 pr-3 font-normal">{t("ui.gaugesMonth")}</th>
-                    <th className="px-3 py-1.5 text-right font-normal">{t("ui.riskRainRecent")}</th>
-                    <th className="px-3 py-1.5 text-right font-normal">{t("ui.riskRainNormal")}</th>
-                    <th className="py-1.5 pl-3 text-right font-normal">{t("ui.riskRainRange")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rain.map((m) => (
-                    <tr key={m.key} className="border-b border-linea/60">
-                      <td className="py-1.5 pr-3">{m.label}</td>
-                      <td className="px-3 py-1.5 text-right">{fmtMm(m.mm)}</td>
-                      <td className="px-3 py-1.5 text-right">
-                        {m.normalMm === null ? "—" : fmtMm(m.normalMm)}
-                      </td>
-                      <td className="py-1.5 pl-3 text-right">
-                        {m.p20Mm === null || m.p80Mm === null ? "—" : `${Math.round(m.p20Mm)} a ${Math.round(m.p80Mm)} mm`}
-                      </td>
+              <ExportableTable name="riesgo">
+                <table className="num w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-linea text-left text-tinta-2">
+                      <th className="py-1.5 pr-3 font-normal">{t("ui.gaugesMonth")}</th>
+                      <th className="px-3 py-1.5 text-right font-normal">{t("ui.riskRainRecent")}</th>
+                      <th className="px-3 py-1.5 text-right font-normal">{t("ui.riskRainNormal")}</th>
+                      <th className="py-1.5 pl-3 text-right font-normal">{t("ui.riskRainRange")}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {rain.map((m) => (
+                      <tr key={m.key} className="border-b border-linea/60">
+                        <td className="py-1.5 pr-3">{m.label}</td>
+                        <td className="px-3 py-1.5 text-right">{fmtMm(m.mm)}</td>
+                        <td className="px-3 py-1.5 text-right">
+                          {m.normalMm === null ? "—" : fmtMm(m.normalMm)}
+                        </td>
+                        <td className="py-1.5 pl-3 text-right">
+                          {m.p20Mm === null || m.p80Mm === null ? "—" : `${Math.round(m.p20Mm)} a ${Math.round(m.p80Mm)} mm`}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ExportableTable>
             </div>
           </>
         ) : null}

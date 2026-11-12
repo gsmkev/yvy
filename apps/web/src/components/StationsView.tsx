@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import { BRAND, monitorTemplate, stationAverages, type MonitorItem, type Station } from "@yvy/shared";
 import { t, tk } from "../lib/i18n";
 import { FarmMap, type MapPoint } from "./FarmMap";
+import { ExportableTable } from "./ExportableTable";
 
 const fmt = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
 
@@ -52,53 +53,55 @@ export function StationsView({ data }: { data: Record<string, unknown> }) {
       <div>
         <h3 className="eyebrow mb-2">{t("app.stationsTable")}</h3>
         <div className="overflow-x-auto">
-          <table className="num w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-linea text-tinta-2">
-                <th className="py-1.5 pr-3 font-medium">#</th>
-                {items.map((i) => (
-                  <th key={i.key} className="py-1.5 pr-3 font-medium">
-                    {label(i)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {stations.map((s, n) => (
-                <tr key={n} className="border-b border-linea">
-                  <td className="py-1.5 pr-3" title={s.lat === undefined ? t("app.stationsNoGps") : `${s.lat.toFixed(5)}, ${s.lon!.toFixed(5)}`}>
-                    {n + 1}
-                  </td>
-                  {items.map((i) => {
-                    const v = s.counts[i.key] ?? 0;
-                    return (
-                      <td key={i.key} className={`py-1.5 pr-3 ${v > i.threshold ? "font-medium text-alerta" : ""}`}>
-                        {fmt(v)}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-              <tr className="font-medium">
-                <td className="py-1.5 pr-3">{t("app.stationsAverageRow")}</td>
-                {items.map((i) => (
-                  <td key={i.key} className={`py-1.5 pr-3 ${(avg[i.key] ?? 0) > i.threshold ? "text-alerta" : ""}`}>
-                    {fmt(avg[i.key] ?? 0)}
-                  </td>
-                ))}
-              </tr>
-              {Number.isFinite(items[0]?.threshold) && (
-                <tr className="text-tinta-2">
-                  <td className="py-1.5 pr-3">{t("app.stationsThreshold")}</td>
+          <ExportableTable name="estaciones">
+            <table className="num w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-linea text-tinta-2">
+                  <th className="py-1.5 pr-3 font-medium">#</th>
                   {items.map((i) => (
-                    <td key={i.key} className="py-1.5 pr-3">
-                      {fmt(i.threshold)}
+                    <th key={i.key} className="py-1.5 pr-3 font-medium">
+                      {label(i)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {stations.map((s, n) => (
+                  <tr key={n} className="border-b border-linea">
+                    <td className="py-1.5 pr-3" title={s.lat === undefined ? t("app.stationsNoGps") : `${s.lat.toFixed(5)}, ${s.lon!.toFixed(5)}`}>
+                      {n + 1}
+                    </td>
+                    {items.map((i) => {
+                      const v = s.counts[i.key] ?? 0;
+                      return (
+                        <td key={i.key} className={`py-1.5 pr-3 ${v > i.threshold ? "font-medium text-alerta" : ""}`}>
+                          {fmt(v)}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+                <tr className="font-medium">
+                  <td className="py-1.5 pr-3">{t("app.stationsAverageRow")}</td>
+                  {items.map((i) => (
+                    <td key={i.key} className={`py-1.5 pr-3 ${(avg[i.key] ?? 0) > i.threshold ? "text-alerta" : ""}`}>
+                      {fmt(avg[i.key] ?? 0)}
                     </td>
                   ))}
                 </tr>
-              )}
-            </tbody>
-          </table>
+                {Number.isFinite(items[0]?.threshold) && (
+                  <tr className="text-tinta-2">
+                    <td className="py-1.5 pr-3">{t("app.stationsThreshold")}</td>
+                    {items.map((i) => (
+                      <td key={i.key} className="py-1.5 pr-3">
+                        {fmt(i.threshold)}
+                      </td>
+                    ))}
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
         <p className="mt-2 text-xs text-tinta-2">{t("app.stationsDefaults")}</p>
       </div>

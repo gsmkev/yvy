@@ -11,6 +11,7 @@ import { fmtDate, fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useFarm, useMe } from "../lib/queries";
 import type { EudrResponse } from "../lib/types";
+import { ExportableTable } from "../components/ExportableTable";
 
 function Disclaimer() {
   return (
@@ -139,28 +140,30 @@ export function EudrPage() {
           <section className="border-t border-linea pt-6">
             <h2 className="font-serif text-xl font-semibold">{t("ui.eudrPlotsTitle")}</h2>
             <div className="mt-3 overflow-x-auto">
-              <table className="num w-full text-sm">
-                <thead>
-                  <tr className="border-b border-linea text-left text-tinta-2">
-                    <th className="py-1.5 pr-3 font-normal">{t("ui.eudrColPlot")}</th>
-                    <th className="px-3 py-1.5 text-right font-normal">{t("ui.eudrColArea")}</th>
-                    <th className="px-3 py-1.5 text-right font-normal">{t("ui.eudrColForest", { year: refYear })}</th>
-                    <th className="py-1.5 pl-3 font-normal">{t("ui.eudrColResult")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.plots.map((p) => (
-                    <tr key={p.plotId} className="border-b border-linea/60">
-                      <td className="py-1.5 pr-3">{p.plotName}</td>
-                      <td className="px-3 py-1.5 text-right">{fmtHa(p.plotAreaHa)}</td>
-                      <td className="px-3 py-1.5 text-right">{p.status === "no_data" ? "—" : fmtHa(p.forestRefHa)}</td>
-                      <td className={`py-1.5 pl-3 ${p.status === "possible_loss" ? "font-medium text-peligro" : ""}`}>
-                        {statusText(p.status, p.lossHa)}
-                      </td>
+              <ExportableTable name="eudr">
+                <table className="num w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-linea text-left text-tinta-2">
+                      <th className="py-1.5 pr-3 font-normal">{t("ui.eudrColPlot")}</th>
+                      <th className="px-3 py-1.5 text-right font-normal">{t("ui.eudrColArea")}</th>
+                      <th className="px-3 py-1.5 text-right font-normal">{t("ui.eudrColForest", { year: refYear })}</th>
+                      <th className="py-1.5 pl-3 font-normal">{t("ui.eudrColResult")}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {data.plots.map((p) => (
+                      <tr key={p.plotId} className="border-b border-linea/60">
+                        <td className="py-1.5 pr-3">{p.plotName}</td>
+                        <td className="px-3 py-1.5 text-right">{fmtHa(p.plotAreaHa)}</td>
+                        <td className="px-3 py-1.5 text-right">{p.status === "no_data" ? "—" : fmtHa(p.forestRefHa)}</td>
+                        <td className={`py-1.5 pl-3 ${p.status === "possible_loss" ? "font-medium text-peligro" : ""}`}>
+                          {statusText(p.status, p.lossHa)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ExportableTable>
             </div>
           </section>
           <Method refYear={refYear} curYear={curYear} />

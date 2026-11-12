@@ -23,6 +23,7 @@ import { fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { Button, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { ExportableTable } from "../ExportableTable";
 
 interface Saved {
   id: string;
@@ -206,31 +207,33 @@ export function ExportPanel() {
             <>
               <p className="text-sm">{missingTax > 0 ? t("ui.expTaxMissing", { n: missingTax }) : t("ui.expTaxComplete")}</p>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <tbody>
-                    {docs.map((d) => (
-                      <tr key={`${d.docKind}-${d.docId}`} className="border-t border-linea">
-                        <td className="num py-2 pr-3">{d.date}</td>
-                        <td className="py-2 pr-3">
-                          <span className="font-medium">{d.party || "—"}</span>
-                          <span className="block text-xs text-tinta-2">
-                            {d.concept}
-                            {d.number ? ` · ${d.number}` : ""}
-                          </span>
-                        </td>
-                        <td className="num py-2 pr-3 text-right">{fmtGs(d.amountPyg)}</td>
-                        <td className="py-2 pr-3 text-xs text-tinta-2">
-                          {d.gross10 === null && d.gross5 === null && d.exempt === null ? t("ui.expTaxNone") : taxMismatch(d) ? t("ui.expTaxMismatch") : t("ui.expTaxLoaded")}
-                        </td>
-                        <td className="py-2 text-right">
-                          <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline" onClick={() => setTaxing(d)}>
-                            {t("ui.expTaxEdit")}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <ExportableTable name="comprobantes">
+                  <table className="w-full text-sm">
+                    <tbody>
+                      {docs.map((d) => (
+                        <tr key={`${d.docKind}-${d.docId}`} className="border-t border-linea">
+                          <td className="num py-2 pr-3">{d.date}</td>
+                          <td className="py-2 pr-3">
+                            <span className="font-medium">{d.party || "—"}</span>
+                            <span className="block text-xs text-tinta-2">
+                              {d.concept}
+                              {d.number ? ` · ${d.number}` : ""}
+                            </span>
+                          </td>
+                          <td className="num py-2 pr-3 text-right">{fmtGs(d.amountPyg)}</td>
+                          <td className="py-2 pr-3 text-xs text-tinta-2">
+                            {d.gross10 === null && d.gross5 === null && d.exempt === null ? t("ui.expTaxNone") : taxMismatch(d) ? t("ui.expTaxMismatch") : t("ui.expTaxLoaded")}
+                          </td>
+                          <td className="py-2 text-right">
+                            <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline" onClick={() => setTaxing(d)}>
+                              {t("ui.expTaxEdit")}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </ExportableTable>
               </div>
             </>
           )}

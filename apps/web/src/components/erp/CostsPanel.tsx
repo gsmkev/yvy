@@ -11,6 +11,7 @@ import type { Season } from "../../lib/types";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
 import { InvoicePhoto } from "./InvoicePhoto";
 import { useParties } from "./PartiesPanel";
+import { ExportableTable } from "../ExportableTable";
 
 export interface CostEntry {
   id: string;
@@ -99,52 +100,54 @@ export function CostsPanel() {
       {q.data && q.data.rows.length === 0 && <Empty>{t("ui.erpEmpty")}</Empty>}
       {q.data && q.data.rows.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-linea text-left text-tinta-2">
-                <th className="py-2 pr-4 font-medium">{t("ui.costDate")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.costCategory")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.costActivity")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.costDescription")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.costAmount")}</th>
-                <th />
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {q.data.rows.map((c) => (
-                <tr key={c.id} className="border-b border-linea">
-                  <td className="num py-2.5 pr-4 whitespace-nowrap">{fmtIsoDate(dayOf(c.occurredAt))}</td>
-                  <td className="py-2.5 pr-4">{tk(`ui.costCategory_${c.category}`)}</td>
-                  <td className="py-2.5 pr-4">{tk(`ui.activity_${c.activity}`)}</td>
-                  <td className="py-2.5 pr-4">
-                    {c.description}
-                    <span className="block text-xs text-tinta-2">{[farmName(c.farmId), c.origin !== "manual" ? t("ui.costFromRecord") : ""].filter(Boolean).join(" · ")}</span>
-                  </td>
-                  <td className={`num py-2.5 pr-4 text-right ${c.category === "sale" ? "text-accion" : ""}`}>
-                    {c.category === "sale" ? "" : "-"}
-                    {fmtMoney(c.amount, c.currency)}
-                    {c.currency !== "PYG" && <span className="block text-xs text-tinta-2">{fmtGs(c.amountPyg)}</span>}
-                  </td>
-                  <td className="py-2.5 pr-4 text-right whitespace-nowrap">
-                    <InvoicePhoto kind="cost-entries" id={c.id} hasPhoto={!!c.photoPath} />
-                  </td>
-                  <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
-                    {c.origin === "manual" && (
-                      <>
-                        <button className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setEditing(c)}>
-                          {t("ui.erpEdit")}
-                        </button>
-                        <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(c)}>
-                          {t("ui.delete")}
-                        </button>
-                      </>
-                    )}
-                  </td>
+          <ExportableTable name="costos">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-linea text-left text-tinta-2">
+                  <th className="py-2 pr-4 font-medium">{t("ui.costDate")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("ui.costCategory")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("ui.costActivity")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("ui.costDescription")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.costAmount")}</th>
+                  <th />
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {q.data.rows.map((c) => (
+                  <tr key={c.id} className="border-b border-linea">
+                    <td className="num py-2.5 pr-4 whitespace-nowrap">{fmtIsoDate(dayOf(c.occurredAt))}</td>
+                    <td className="py-2.5 pr-4">{tk(`ui.costCategory_${c.category}`)}</td>
+                    <td className="py-2.5 pr-4">{tk(`ui.activity_${c.activity}`)}</td>
+                    <td className="py-2.5 pr-4">
+                      {c.description}
+                      <span className="block text-xs text-tinta-2">{[farmName(c.farmId), c.origin !== "manual" ? t("ui.costFromRecord") : ""].filter(Boolean).join(" · ")}</span>
+                    </td>
+                    <td className={`num py-2.5 pr-4 text-right ${c.category === "sale" ? "text-accion" : ""}`}>
+                      {c.category === "sale" ? "" : "-"}
+                      {fmtMoney(c.amount, c.currency)}
+                      {c.currency !== "PYG" && <span className="block text-xs text-tinta-2">{fmtGs(c.amountPyg)}</span>}
+                    </td>
+                    <td className="py-2.5 pr-4 text-right whitespace-nowrap">
+                      <InvoicePhoto kind="cost-entries" id={c.id} hasPhoto={!!c.photoPath} />
+                    </td>
+                    <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
+                      {c.origin === "manual" && (
+                        <>
+                          <button className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setEditing(c)}>
+                            {t("ui.erpEdit")}
+                          </button>
+                          <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(c)}>
+                            {t("ui.delete")}
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
       )}
       {editing && <CostModal entry={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}

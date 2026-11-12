@@ -9,6 +9,7 @@ import { fmtMoney } from "../../lib/money";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
 import { MasterPanel, type FieldDef } from "./MasterPanel";
 import { useParties } from "./PartiesPanel";
+import { ExportableTable } from "../ExportableTable";
 
 interface Account {
   id: string;
@@ -174,22 +175,24 @@ function MoveModal({ account, onClose }: { account: Account; onClose: () => void
           </Button>
         </div>
       </form>
-      <table className="mt-4 w-full text-sm">
-        <tbody>
-          {(moves.data ?? []).map((m) => (
-            <tr key={m.id} className="border-b border-linea">
-              <td className="num py-2 pr-3">{fmtIsoDate(m.date)}</td>
-              <td className="py-2 pr-3 text-tinta-2">{m.description}</td>
-              <td className={`num py-2 pr-3 text-right ${m.amount < 0 ? "text-peligro" : ""}`}>{fmtMoney(m.amount, account.currency)}</td>
-              <td className="py-2 text-right">
-                <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => remove.mutate(m.id)}>
-                  {t("ui.delete")}
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ExportableTable name="caja">
+        <table className="mt-4 w-full text-sm">
+          <tbody>
+            {(moves.data ?? []).map((m) => (
+              <tr key={m.id} className="border-b border-linea">
+                <td className="num py-2 pr-3">{fmtIsoDate(m.date)}</td>
+                <td className="py-2 pr-3 text-tinta-2">{m.description}</td>
+                <td className={`num py-2 pr-3 text-right ${m.amount < 0 ? "text-peligro" : ""}`}>{fmtMoney(m.amount, account.currency)}</td>
+                <td className="py-2 text-right">
+                  <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => remove.mutate(m.id)}>
+                    {t("ui.delete")}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </ExportableTable>
       {(moves.data ?? []).length === 0 && <p className="mt-3 text-sm text-tinta-2">{fromMinor(account.openingBalance, account.currency) === 0 ? t("ui.erpEmpty") : ""}</p>}
     </Modal>
   );
@@ -275,24 +278,26 @@ function DuesTab({ direction }: { direction: "payables" | "receivables" }) {
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <tbody>
-              {rows.map((r) => (
-                <tr key={`${r.docKind}-${r.docId}`} className="border-b border-linea">
-                  <td className={`num py-2.5 pr-4 ${TONE[r.status]}`}>{r.dueDate ? fmtIsoDate(r.dueDate) : t("ui.cashNoDue")}</td>
-                  <td className="py-2.5 pr-4 font-medium">{r.label}</td>
-                  <td className="py-2.5 pr-4 text-tinta-2">{party(r.partyId)}</td>
-                  <td className="num py-2.5 pr-4 text-right text-tinta-2">{fmtMoney(r.total, r.currency)}</td>
-                  <td className="num py-2.5 pr-4 text-right font-medium">{fmtMoney(r.pending, r.currency)}</td>
-                  <td className="py-2.5 text-right">
-                    <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline" onClick={() => setPaying(r)}>
-                      {t(direction === "payables" ? "ui.cashPay" : "ui.cashCollect")}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ExportableTable name="caja-movimientos">
+            <table className="w-full text-sm">
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={`${r.docKind}-${r.docId}`} className="border-b border-linea">
+                    <td className={`num py-2.5 pr-4 ${TONE[r.status]}`}>{r.dueDate ? fmtIsoDate(r.dueDate) : t("ui.cashNoDue")}</td>
+                    <td className="py-2.5 pr-4 font-medium">{r.label}</td>
+                    <td className="py-2.5 pr-4 text-tinta-2">{party(r.partyId)}</td>
+                    <td className="num py-2.5 pr-4 text-right text-tinta-2">{fmtMoney(r.total, r.currency)}</td>
+                    <td className="num py-2.5 pr-4 text-right font-medium">{fmtMoney(r.pending, r.currency)}</td>
+                    <td className="py-2.5 text-right">
+                      <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline" onClick={() => setPaying(r)}>
+                        {t(direction === "payables" ? "ui.cashPay" : "ui.cashCollect")}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
       )}
       {paying && <SettleModal due={paying} payable={direction === "payables"} onClose={() => setPaying(null)} />}

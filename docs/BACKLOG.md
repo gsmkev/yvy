@@ -71,7 +71,7 @@ Detalles que un usuario espera sin pedirlos.
 | U-25 | Centro de ayuda con videos cortos y botón de WhatsApp de soporte | Soporte barato | Web, App | P1 | S | Hecho |
 | U-26 | Accesibilidad completa: "saltar al contenido", foco visible en el mapa, grupos de opciones leídos por TalkBack | Calidad y licitaciones | Web, App | P2 | M | Parcial |
 | U-27 | Vista de impresión para la ficha del lote y la estancia | Reuniones en papel | Web | P2 | S | Hecho |
-| U-28 | Exportar cualquier tabla a Excel y CSV | El contador y el banco | Web | P1 | S | Parcial |
+| U-28 | Exportar cualquier tabla a Excel y CSV | El contador y el banco | Web | P1 | S | Hecho |
 | U-29 | Notificaciones con preferencias por tipo (helada sí, tareas no) y horario de silencio | No molestar de más | Web, App | P1 | M | Hecho |
 | U-30 | Menú de cuenta con perfil, idioma, notificaciones y cerrar sesión | Orden | Web | P2 | S | Hecho |
 

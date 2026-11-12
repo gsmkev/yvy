@@ -6,6 +6,7 @@ import { t } from "../lib/i18n";
 import { defaultDir, sortPlots, type SortDir, type SortKey } from "../lib/plotsSort";
 import { Input } from "./ui";
 import { ndviColor, vigorDrop } from "../lib/vigor";
+import { ExportableTable } from "./ExportableTable";
 
 /** Muestra del color de la rampa NDVI junto al valor; sin pasadas procesadas, un guion. */
 export function Vigor({ value }: { value: number | null }) {
@@ -88,41 +89,43 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
         className="mb-3 w-full"
       />
       {rows.length === 0 && <p className="py-4 text-sm text-tinta-2">{t("ui.noPlotMatch")}</p>}
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-xs text-tinta-2">
-            {head("name", t("ui.plot"))}
-            {head("kind", t("ui.kind"))}
-            {head("area", areaUnitLabel(), true)}
-            {head("vigor", t("ui.vigor"), true)}
-            {head("visit", t("ui.lastVisitShort"), true)}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-linea border-t border-linea">
-          {rows.map((p) => (
-            <tr key={p.id} className="cursor-pointer hover:bg-surco/[0.03]" onClick={() => onSelect(p.id)}>
-              <td className="py-2.5">
-                <button className="flex cursor-pointer items-center gap-2.5 text-left font-medium" aria-label={p.name}>
-                  <span
-                    className="h-3 w-3 shrink-0 rounded-sm"
-                    style={{ background: p.color ?? (p.kind === "pasture" ? BRAND.trigo : BRAND.soja) }}
-                  />
-                  {p.name}
-                </button>
-                {drop(p) && <p className="num mt-0.5 pl-[22px] text-xs text-peligro">{dropText(drop(p)!)}</p>}
-              </td>
-              <td className="py-2.5 text-tinta-2">
-                {p.kind === "pasture" ? t("ui.pasture") : (p.crop ?? t("ui.crop"))}
-              </td>
-              <td className="num py-2.5 text-right">{fmtAreaValue(p.areaHa)}</td>
-              <td className="py-2.5 text-right">
-                <Vigor value={p.ndviMean} />
-              </td>
-              <td className="num py-2.5 text-right text-tinta-2">{p.lastRecordAt ? fmtDay(p.lastRecordAt) : "—"}</td>
+      <ExportableTable name="lotes">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs text-tinta-2">
+              {head("name", t("ui.plot"))}
+              {head("kind", t("ui.kind"))}
+              {head("area", areaUnitLabel(), true)}
+              {head("vigor", t("ui.vigor"), true)}
+              {head("visit", t("ui.lastVisitShort"), true)}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-linea border-t border-linea">
+            {rows.map((p) => (
+              <tr key={p.id} className="cursor-pointer hover:bg-surco/[0.03]" onClick={() => onSelect(p.id)}>
+                <td className="py-2.5">
+                  <button className="flex cursor-pointer items-center gap-2.5 text-left font-medium" aria-label={p.name}>
+                    <span
+                      className="h-3 w-3 shrink-0 rounded-sm"
+                      style={{ background: p.color ?? (p.kind === "pasture" ? BRAND.trigo : BRAND.soja) }}
+                    />
+                    {p.name}
+                  </button>
+                  {drop(p) && <p className="num mt-0.5 pl-[22px] text-xs text-peligro">{dropText(drop(p)!)}</p>}
+                </td>
+                <td className="py-2.5 text-tinta-2">
+                  {p.kind === "pasture" ? t("ui.pasture") : (p.crop ?? t("ui.crop"))}
+                </td>
+                <td className="num py-2.5 text-right">{fmtAreaValue(p.areaHa)}</td>
+                <td className="py-2.5 text-right">
+                  <Vigor value={p.ndviMean} />
+                </td>
+                <td className="num py-2.5 text-right text-tinta-2">{p.lastRecordAt ? fmtDay(p.lastRecordAt) : "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </ExportableTable>
     </>
   );
 }

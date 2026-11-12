@@ -6,6 +6,7 @@ import { fmtHa, fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { useFarms } from "../../lib/queries";
+import { ExportableTable } from "../ExportableTable";
 import { Empty, ErrorBox, Field, Select, Spinner, Stat } from "../ui";
 import { useSeasonList } from "./CostsPanel";
 
@@ -159,7 +160,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <div className="flex flex-col gap-1">
       <h2 className="border-b border-linea pb-2 font-serif text-lg font-semibold">{title}</h2>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">{children}</table>
+        <ExportableTable name={title}>
+          <table className="w-full text-sm">{children}</table>
+        </ExportableTable>
       </div>
     </div>
   );

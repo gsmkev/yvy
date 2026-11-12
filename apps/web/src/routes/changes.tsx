@@ -11,6 +11,7 @@ import { fmtDate, fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useFarm, useMe } from "../lib/queries";
 import type { AnalysisPlot, BurnedMetrics } from "../lib/types";
+import { ExportableTable } from "../components/ExportableTable";
 
 function Disclaimer() {
   return (
@@ -81,26 +82,28 @@ function BurnedSection({ farmId }: { farmId: string }) {
           </div>
           {ev.plots.length > 0 && (
             <div className="overflow-x-auto">
-              <table className="num w-full text-sm">
-                <thead>
-                  <tr className="border-b border-linea text-left text-tinta-2">
-                    <th className="py-1.5 pr-3 font-normal">{t("ui.eudrColPlot")}</th>
-                    <th className="px-3 py-1.5 text-right font-normal">{t("ui.eudrColArea")}</th>
-                    <th className="px-3 py-1.5 text-right font-normal">{t("ui.burnedColBurned")}</th>
-                    <th className="py-1.5 pl-3 text-right font-normal">{t("ui.burnedColHigh")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ev.plots.map((p) => (
-                    <tr key={p.plotId} className="border-b border-linea/60">
-                      <td className="py-1.5 pr-3">{p.plotName}</td>
-                      <td className="px-3 py-1.5 text-right">{fmtHa(p.plotAreaHa)}</td>
-                      <td className="px-3 py-1.5 text-right font-medium text-peligro">{fmtHa(p.metrics.burnedHa)}</td>
-                      <td className="py-1.5 pl-3 text-right">{fmtHa(p.metrics.highHa)}</td>
+              <ExportableTable name="cambios">
+                <table className="num w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-linea text-left text-tinta-2">
+                      <th className="py-1.5 pr-3 font-normal">{t("ui.eudrColPlot")}</th>
+                      <th className="px-3 py-1.5 text-right font-normal">{t("ui.eudrColArea")}</th>
+                      <th className="px-3 py-1.5 text-right font-normal">{t("ui.burnedColBurned")}</th>
+                      <th className="py-1.5 pl-3 text-right font-normal">{t("ui.burnedColHigh")}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {ev.plots.map((p) => (
+                      <tr key={p.plotId} className="border-b border-linea/60">
+                        <td className="py-1.5 pr-3">{p.plotName}</td>
+                        <td className="px-3 py-1.5 text-right">{fmtHa(p.plotAreaHa)}</td>
+                        <td className="px-3 py-1.5 text-right font-medium text-peligro">{fmtHa(p.metrics.burnedHa)}</td>
+                        <td className="py-1.5 pl-3 text-right">{fmtHa(p.metrics.highHa)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ExportableTable>
             </div>
           )}
           <p className="text-sm text-tinta-2">

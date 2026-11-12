@@ -10,6 +10,7 @@ import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spi
 import { useMachines } from "./MachinesPanel";
 import { MasterPanel, useErpList, type FieldDef } from "./MasterPanel";
 import { useParties } from "./PartiesPanel";
+import { ExportableTable } from "../ExportableTable";
 
 interface Due {
   planId: string;
@@ -80,29 +81,31 @@ export function MaintenancePanel() {
       {due.data && due.data.length > 0 && (
         <div className="flex flex-col gap-2">
           <h2 className="border-b border-linea pb-2 font-serif text-lg font-semibold">{t("ui.maintDueTitle")}</h2>
-          <table className="w-full text-sm">
-            <tbody>
-              {due.data.map((d) => (
-                <tr key={d.planId} className="border-b border-linea">
-                  <td className="py-2.5 pr-4 font-medium">{d.machine}</td>
-                  <td className="py-2.5 pr-4">{d.name}</td>
-                  <td className="num py-2.5 pr-4 text-right text-tinta-2">
-                    {fmtNum(d.meter)} / {fmtNum(d.dueAt)} {unitOf(d.meterKind)}
-                  </td>
-                  <td className={`py-2.5 pr-4 text-right ${d.status === "overdue" ? "text-peligro" : "text-trigo-texto"}`}>
-                    {d.status === "overdue"
-                      ? t("ui.maintOverdue", { n: `${fmtNum(-d.remaining)} ${unitOf(d.meterKind)}` })
-                      : t("ui.maintSoon", { n: `${fmtNum(d.remaining)} ${unitOf(d.meterKind)}` })}
-                  </td>
-                  <td className="py-2.5 text-right">
-                    <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline" onClick={() => setLogging(d.planId)}>
-                      {t("ui.maintDone")}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ExportableTable name="mantenimiento-vencido">
+            <table className="w-full text-sm">
+              <tbody>
+                {due.data.map((d) => (
+                  <tr key={d.planId} className="border-b border-linea">
+                    <td className="py-2.5 pr-4 font-medium">{d.machine}</td>
+                    <td className="py-2.5 pr-4">{d.name}</td>
+                    <td className="num py-2.5 pr-4 text-right text-tinta-2">
+                      {fmtNum(d.meter)} / {fmtNum(d.dueAt)} {unitOf(d.meterKind)}
+                    </td>
+                    <td className={`py-2.5 pr-4 text-right ${d.status === "overdue" ? "text-peligro" : "text-trigo-texto"}`}>
+                      {d.status === "overdue"
+                        ? t("ui.maintOverdue", { n: `${fmtNum(-d.remaining)} ${unitOf(d.meterKind)}` })
+                        : t("ui.maintSoon", { n: `${fmtNum(d.remaining)} ${unitOf(d.meterKind)}` })}
+                    </td>
+                    <td className="py-2.5 text-right">
+                      <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline" onClick={() => setLogging(d.planId)}>
+                        {t("ui.maintDone")}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
       )}
       <div className="flex flex-col gap-2">
@@ -140,27 +143,29 @@ export function MaintenancePanel() {
           <Empty>{t("ui.erpEmpty")}</Empty>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <tbody>
-                {(logs.data ?? []).map((l) => (
-                  <tr key={l.id} className="border-b border-linea">
-                    <td className="num py-2.5 pr-4">{fmtIsoDate(localDate(l.occurredAt))}</td>
-                    <td className="py-2.5 pr-4 font-medium">{machine(l.machineId)?.name}</td>
-                    <td className="py-2.5 pr-4">{tk(`ui.maintKind_${l.kind}`)}</td>
-                    <td className="py-2.5 pr-4 text-tinta-2">{l.description}</td>
-                    <td className="num py-2.5 pr-4 text-right">
-                      {l.meterValue !== null ? `${fmtNum(l.meterValue)} ${unitOf(machine(l.machineId)?.meterKind ?? "hours")}` : ""}
-                    </td>
-                    <td className="num py-2.5 pr-4 text-right">{l.amountPyg ? fmtGs(l.amountPyg) : ""}</td>
-                    <td className="py-2.5 text-right">
-                      <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(l)}>
-                        {t("ui.delete")}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <ExportableTable name="mantenimiento-historial">
+              <table className="w-full text-sm">
+                <tbody>
+                  {(logs.data ?? []).map((l) => (
+                    <tr key={l.id} className="border-b border-linea">
+                      <td className="num py-2.5 pr-4">{fmtIsoDate(localDate(l.occurredAt))}</td>
+                      <td className="py-2.5 pr-4 font-medium">{machine(l.machineId)?.name}</td>
+                      <td className="py-2.5 pr-4">{tk(`ui.maintKind_${l.kind}`)}</td>
+                      <td className="py-2.5 pr-4 text-tinta-2">{l.description}</td>
+                      <td className="num py-2.5 pr-4 text-right">
+                        {l.meterValue !== null ? `${fmtNum(l.meterValue)} ${unitOf(machine(l.machineId)?.meterKind ?? "hours")}` : ""}
+                      </td>
+                      <td className="num py-2.5 pr-4 text-right">{l.amountPyg ? fmtGs(l.amountPyg) : ""}</td>
+                      <td className="py-2.5 text-right">
+                        <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(l)}>
+                          {t("ui.delete")}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </ExportableTable>
           </div>
         )}
       </div>

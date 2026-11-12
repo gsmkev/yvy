@@ -12,6 +12,7 @@ import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spi
 import { InvoicePhoto } from "./InvoicePhoto";
 import { useParties } from "./PartiesPanel";
 import { useWarehouses } from "./WarehousesPanel";
+import { ExportableTable } from "../ExportableTable";
 
 interface Summary {
   rows: { productId: string; warehouseId: string; qty: number; valuePyg?: number }[];
@@ -87,21 +88,23 @@ export function StockPanel() {
       {expiring.data && expiring.data.length > 0 && (
         <div className="flex flex-col gap-2">
           <h2 className="border-b border-linea pb-2 font-serif text-lg font-semibold">{t("ui.expiringTitle")}</h2>
-          <table className="w-full text-sm">
-            <tbody>
-              {expiring.data.map((l) => (
-                <tr key={`${l.productId}-${l.lot}-${l.expiresOn}`} className="border-b border-linea">
-                  <td className="py-2.5 pr-4 font-medium">{prod(l.productId)?.name}</td>
-                  <td className="py-2.5 pr-4 text-tinta-2">{l.lot ? t("ui.expiringLot", { lot: l.lot }) : ""}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtQty(l.remaining, unit(l.productId))}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtIsoDate(l.expiresOn)}</td>
-                  <td className={`py-2.5 text-right ${l.daysLeft < 0 ? "text-peligro" : "text-trigo-texto"}`}>
-                    {l.daysLeft < 0 ? t("ui.expiringExpired", { n: -l.daysLeft }) : t("ui.expiringIn", { n: l.daysLeft })}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ExportableTable name="stock-por-vencer">
+            <table className="w-full text-sm">
+              <tbody>
+                {expiring.data.map((l) => (
+                  <tr key={`${l.productId}-${l.lot}-${l.expiresOn}`} className="border-b border-linea">
+                    <td className="py-2.5 pr-4 font-medium">{prod(l.productId)?.name}</td>
+                    <td className="py-2.5 pr-4 text-tinta-2">{l.lot ? t("ui.expiringLot", { lot: l.lot }) : ""}</td>
+                    <td className="num py-2.5 pr-4 text-right">{fmtQty(l.remaining, unit(l.productId))}</td>
+                    <td className="num py-2.5 pr-4 text-right">{fmtIsoDate(l.expiresOn)}</td>
+                    <td className={`py-2.5 text-right ${l.daysLeft < 0 ? "text-peligro" : "text-trigo-texto"}`}>
+                      {l.daysLeft < 0 ? t("ui.expiringExpired", { n: -l.daysLeft }) : t("ui.expiringIn", { n: l.daysLeft })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
       )}
       {(warehouses.data ?? []).length === 0 && <p className="text-sm text-trigo-texto">{t("ui.stockNoWarehouse")}</p>}
@@ -109,33 +112,35 @@ export function StockPanel() {
         <Empty>{t("ui.stockEmpty")}</Empty>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-linea text-left text-tinta-2">
-                <th className="py-2 pr-4 font-medium">{t("ui.stockProduct")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.stockWhere")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.stockQty")}</th>
-                {list[0]?.avgCostPyg !== undefined && <th className="py-2 pr-4 text-right font-medium">{t("ui.stockAvgCost")}</th>}
-                {list[0]?.valuePyg !== undefined && <th className="py-2 text-right font-medium">{t("ui.stockValue")}</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((p) => (
-                <tr key={p.productId} className="border-b border-linea align-top">
-                  <td className="py-2.5 pr-4 font-medium">{prod(p.productId)?.name ?? p.productId}</td>
-                  <td className="py-2.5 pr-4 text-tinta-2">
-                    {(stock.data?.rows ?? [])
-                      .filter((r) => r.productId === p.productId && Math.abs(r.qty) > 1e-9)
-                      .map((r) => `${wh(r.warehouseId)}: ${fmtQty(r.qty)}`)
-                      .join(" · ")}
-                  </td>
-                  <td className={`num py-2.5 pr-4 text-right ${p.qty < 0 ? "text-peligro" : ""}`}>{fmtQty(p.qty, unit(p.productId))}</td>
-                  {p.avgCostPyg !== undefined && <td className="num py-2.5 pr-4 text-right">{fmtGs(p.avgCostPyg)}</td>}
-                  {p.valuePyg !== undefined && <td className="num py-2.5 text-right">{fmtGs(p.valuePyg)}</td>}
+          <ExportableTable name="stock">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-linea text-left text-tinta-2">
+                  <th className="py-2 pr-4 font-medium">{t("ui.stockProduct")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("ui.stockWhere")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.stockQty")}</th>
+                  {list[0]?.avgCostPyg !== undefined && <th className="py-2 pr-4 text-right font-medium">{t("ui.stockAvgCost")}</th>}
+                  {list[0]?.valuePyg !== undefined && <th className="py-2 text-right font-medium">{t("ui.stockValue")}</th>}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {list.map((p) => (
+                  <tr key={p.productId} className="border-b border-linea align-top">
+                    <td className="py-2.5 pr-4 font-medium">{prod(p.productId)?.name ?? p.productId}</td>
+                    <td className="py-2.5 pr-4 text-tinta-2">
+                      {(stock.data?.rows ?? [])
+                        .filter((r) => r.productId === p.productId && Math.abs(r.qty) > 1e-9)
+                        .map((r) => `${wh(r.warehouseId)}: ${fmtQty(r.qty)}`)
+                        .join(" · ")}
+                    </td>
+                    <td className={`num py-2.5 pr-4 text-right ${p.qty < 0 ? "text-peligro" : ""}`}>{fmtQty(p.qty, unit(p.productId))}</td>
+                    {p.avgCostPyg !== undefined && <td className="num py-2.5 pr-4 text-right">{fmtGs(p.avgCostPyg)}</td>}
+                    {p.valuePyg !== undefined && <td className="num py-2.5 text-right">{fmtGs(p.valuePyg)}</td>}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
       )}
       <div className="flex flex-col gap-2">
@@ -152,43 +157,45 @@ export function StockPanel() {
         {moves.data && moves.data.length === 0 && <Empty>{t("ui.erpEmpty")}</Empty>}
         {moves.data && moves.data.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <tbody>
-                {moves.data.map((m) => (
-                  <tr key={m.id} className="border-b border-linea">
-                    <td className="num py-2.5 pr-4 whitespace-nowrap">{fmtIsoDate(dayOf(m.occurredAt))}</td>
-                    <td className="py-2.5 pr-4">
-                      {tk(`ui.stockOrigin_${m.origin}`)}
-                      {m.originId && m.origin === "consumption" && <span className="block text-xs text-tinta-2">{t("ui.costFromRecord")}</span>}
-                    </td>
-                    <td className="py-2.5 pr-4">
-                      {prod(m.productId)?.name}
-                      <span className="block text-xs text-tinta-2">{wh(m.warehouseId)}</span>
-                    </td>
-                    <td className={`num py-2.5 pr-4 text-right ${m.qty < 0 ? "" : "text-accion"}`}>
-                      {m.qty > 0 ? "+" : ""}
-                      {fmtQty(m.qty, unit(m.productId))}
-                    </td>
-                    {m.valuePyg !== undefined && (
-                      <td className="num py-2.5 pr-4 text-right">
-                        {m.amount != null && m.currency ? fmtMoney(m.amount, m.currency) : fmtGs(Math.abs(m.valuePyg))}
-                        {m.currency === "USD" && <span className="block text-xs text-tinta-2">{fmtGs(m.valuePyg)}</span>}
+            <ExportableTable name="movimientos-de-stock">
+              <table className="w-full text-sm">
+                <tbody>
+                  {moves.data.map((m) => (
+                    <tr key={m.id} className="border-b border-linea">
+                      <td className="num py-2.5 pr-4 whitespace-nowrap">{fmtIsoDate(dayOf(m.occurredAt))}</td>
+                      <td className="py-2.5 pr-4">
+                        {tk(`ui.stockOrigin_${m.origin}`)}
+                        {m.originId && m.origin === "consumption" && <span className="block text-xs text-tinta-2">{t("ui.costFromRecord")}</span>}
                       </td>
-                    )}
-                    <td className="py-2.5 pr-4 text-right whitespace-nowrap">
-                      {m.valuePyg !== undefined && m.origin === "purchase" && <InvoicePhoto kind="stock-moves" id={m.id} hasPhoto={!!m.photoPath} />}
-                    </td>
-                    <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
-                      {!(m.origin === "consumption" && m.originId) && (
-                        <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(m)}>
-                          {t("ui.delete")}
-                        </button>
+                      <td className="py-2.5 pr-4">
+                        {prod(m.productId)?.name}
+                        <span className="block text-xs text-tinta-2">{wh(m.warehouseId)}</span>
+                      </td>
+                      <td className={`num py-2.5 pr-4 text-right ${m.qty < 0 ? "" : "text-accion"}`}>
+                        {m.qty > 0 ? "+" : ""}
+                        {fmtQty(m.qty, unit(m.productId))}
+                      </td>
+                      {m.valuePyg !== undefined && (
+                        <td className="num py-2.5 pr-4 text-right">
+                          {m.amount != null && m.currency ? fmtMoney(m.amount, m.currency) : fmtGs(Math.abs(m.valuePyg))}
+                          {m.currency === "USD" && <span className="block text-xs text-tinta-2">{fmtGs(m.valuePyg)}</span>}
+                        </td>
                       )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <td className="py-2.5 pr-4 text-right whitespace-nowrap">
+                        {m.valuePyg !== undefined && m.origin === "purchase" && <InvoicePhoto kind="stock-moves" id={m.id} hasPhoto={!!m.photoPath} />}
+                      </td>
+                      <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
+                        {!(m.origin === "consumption" && m.originId) && (
+                          <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(m)}>
+                            {t("ui.delete")}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </ExportableTable>
           </div>
         )}
       </div>

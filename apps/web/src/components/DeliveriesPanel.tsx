@@ -6,6 +6,7 @@ import { fmtIsoDate, fmtNum, toIso } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import type { Plot } from "../lib/types";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
+import { ExportableTable } from "./ExportableTable";
 
 interface Delivery {
   id: string;
@@ -71,38 +72,40 @@ export function DeliveriesPanel({ farmId, plots }: { farmId: string; plots: Plot
       )}
       {d && d.rows.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-left text-tinta-2">
-              <tr>
-                <th className="py-2 pr-3 font-medium">{t("ui.delivDate")}</th>
-                <th className="py-2 pr-3 font-medium">{t("ui.delivTicket")}</th>
-                <th className="py-2 pr-3 font-medium">{t("ui.delivSilo")}</th>
-                <th className="py-2 pr-3 font-medium">{t("ui.plot")}</th>
-                <th className="num py-2 pr-3 text-right font-medium">{t("ui.delivGross")}</th>
-                <th className="num py-2 pr-3 text-right font-medium">{t("ui.delivMoisture")}</th>
-                <th className="num py-2 pr-3 text-right font-medium">{t("ui.delivNet")}</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-linea border-y border-linea">
-              {d.rows.map((r) => (
-                <tr key={r.id}>
-                  <td className="num py-2.5 pr-3">{fmtIsoDate(r.deliveredOn)}</td>
-                  <td className="num py-2.5 pr-3">{r.ticket}</td>
-                  <td className="py-2.5 pr-3">{r.silo}</td>
-                  <td className="py-2.5 pr-3">{r.plotName ?? "—"}</td>
-                  <td className="num py-2.5 pr-3 text-right">{tons(r.grossKg)}</td>
-                  <td className="num py-2.5 pr-3 text-right">{r.moisturePct === null ? "—" : `${fmtNum(r.moisturePct)} %`}</td>
-                  <td className="num py-2.5 pr-3 text-right font-medium">{tons(r.netKg)}</td>
-                  <td className="py-2.5 text-right">
-                    <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(r)}>
-                      {t("ui.delete")}
-                    </button>
-                  </td>
+          <ExportableTable name="entregas">
+            <table className="w-full text-sm">
+              <thead className="text-left text-tinta-2">
+                <tr>
+                  <th className="py-2 pr-3 font-medium">{t("ui.delivDate")}</th>
+                  <th className="py-2 pr-3 font-medium">{t("ui.delivTicket")}</th>
+                  <th className="py-2 pr-3 font-medium">{t("ui.delivSilo")}</th>
+                  <th className="py-2 pr-3 font-medium">{t("ui.plot")}</th>
+                  <th className="num py-2 pr-3 text-right font-medium">{t("ui.delivGross")}</th>
+                  <th className="num py-2 pr-3 text-right font-medium">{t("ui.delivMoisture")}</th>
+                  <th className="num py-2 pr-3 text-right font-medium">{t("ui.delivNet")}</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-linea border-y border-linea">
+                {d.rows.map((r) => (
+                  <tr key={r.id}>
+                    <td className="num py-2.5 pr-3">{fmtIsoDate(r.deliveredOn)}</td>
+                    <td className="num py-2.5 pr-3">{r.ticket}</td>
+                    <td className="py-2.5 pr-3">{r.silo}</td>
+                    <td className="py-2.5 pr-3">{r.plotName ?? "—"}</td>
+                    <td className="num py-2.5 pr-3 text-right">{tons(r.grossKg)}</td>
+                    <td className="num py-2.5 pr-3 text-right">{r.moisturePct === null ? "—" : `${fmtNum(r.moisturePct)} %`}</td>
+                    <td className="num py-2.5 pr-3 text-right font-medium">{tons(r.netKg)}</td>
+                    <td className="py-2.5 text-right">
+                      <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(r)}>
+                        {t("ui.delete")}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
       )}
       {adding && <DeliveryModal farmId={farmId} plots={plots} onClose={() => setAdding(false)} />}

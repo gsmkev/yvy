@@ -9,6 +9,7 @@ import { fmtQty } from "../../lib/money";
 import { useFarms } from "../../lib/queries";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
 import { useMachines } from "./MachinesPanel";
+import { ExportableTable } from "../ExportableTable";
 
 interface MachineFuel {
   machineId: string | null;
@@ -54,32 +55,34 @@ export function FuelPanel() {
       {q.data && q.data.length === 0 && <Empty>{t("ui.fuelEmpty")}</Empty>}
       {q.data && q.data.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-linea text-left text-tinta-2">
-                <th className="py-2 pr-4 font-medium">{t("ui.machineName")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.fuelLoads")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.fuelLiters")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.fuelMeterRange")}</th>
-                <th className="py-2 text-right font-medium">{t("ui.fuelRate")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {q.data.map((m) => (
-                <tr key={m.machineId ?? m.name} className="border-b border-linea">
-                  <td className="py-2.5 pr-4 font-medium">{m.name}</td>
-                  <td className="num py-2.5 pr-4 text-right">{m.loads}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtQty(m.liters, "l")}</td>
-                  <td className="num py-2.5 pr-4 text-right">
-                    {m.firstMeter !== null && m.lastMeter !== null ? `${fmtNum(m.firstMeter)} a ${fmtNum(m.lastMeter)}` : ""}
-                  </td>
-                  <td className="num py-2.5 text-right">
-                    {m.litersPerUnit === null ? "" : `${fmtQty(m.litersPerUnit)} ${m.meterKind === "hours" ? t("ui.fuelPerHour") : t("ui.fuelPer100km")}`}
-                  </td>
+          <ExportableTable name="combustible">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-linea text-left text-tinta-2">
+                  <th className="py-2 pr-4 font-medium">{t("ui.machineName")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.fuelLoads")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.fuelLiters")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.fuelMeterRange")}</th>
+                  <th className="py-2 text-right font-medium">{t("ui.fuelRate")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {q.data.map((m) => (
+                  <tr key={m.machineId ?? m.name} className="border-b border-linea">
+                    <td className="py-2.5 pr-4 font-medium">{m.name}</td>
+                    <td className="num py-2.5 pr-4 text-right">{m.loads}</td>
+                    <td className="num py-2.5 pr-4 text-right">{fmtQty(m.liters, "l")}</td>
+                    <td className="num py-2.5 pr-4 text-right">
+                      {m.firstMeter !== null && m.lastMeter !== null ? `${fmtNum(m.firstMeter)} a ${fmtNum(m.lastMeter)}` : ""}
+                    </td>
+                    <td className="num py-2.5 text-right">
+                      {m.litersPerUnit === null ? "" : `${fmtQty(m.litersPerUnit)} ${m.meterKind === "hours" ? t("ui.fuelPerHour") : t("ui.fuelPer100km")}`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
       )}
       {loading && <FuelLoadModal onClose={() => setLoading(false)} />}

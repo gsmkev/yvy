@@ -6,6 +6,7 @@ import { get } from "../lib/api";
 import { fmtDay } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { Empty, ErrorBox, Field, Select, Spinner } from "./ui";
+import { ExportableTable } from "./ExportableTable";
 
 const int = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 });
 const dec = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 1 });
@@ -44,35 +45,37 @@ export function SupplementPanel({ farmId }: { farmId: string }) {
           </p>
           {d.truncated && <p className="text-sm text-tinta-2">{t("ui.herdTruncated")}</p>}
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-sm">
-              <thead>
-                <tr className="text-left text-xs text-tinta-2">
-                  <th className="pb-2 font-medium">{t("ui.plot")}</th>
-                  <th className="pb-2 text-right font-medium">{t("ui.suppHead")}</th>
-                  <th className="pb-2 text-right font-medium">{t("ui.suppKg")}</th>
-                  <th className="pb-2 text-right font-medium">{t("ui.suppSaltKg")}</th>
-                  <th className="pb-2 text-right font-medium">{t("ui.suppSaltPerHead")}</th>
-                  <th className="pb-2 text-right font-medium">{t("ui.suppLast")}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-linea border-t border-linea">
-                {d.plots.map((p) => (
-                  <tr key={p.plotId}>
-                    <td className="py-2.5 font-medium">{p.name}</td>
-                    <td className="num py-2.5 text-right">{p.head ? int.format(p.head) : "—"}</td>
-                    <td className="num py-2.5 text-right">{p.totalKg ? dec.format(p.totalKg) : "—"}</td>
-                    <td className="num py-2.5 text-right">{p.byType.sal_mineral ? dec.format(p.byType.sal_mineral) : "—"}</td>
-                    <td
-                      className={`num py-2.5 text-right ${p.saltStatus === "low" || p.saltStatus === "high" ? "font-medium text-peligro" : ""}`}
-                    >
-                      {p.saltGPerHeadDay === null ? "—" : `${int.format(p.saltGPerHeadDay)} g`}
-                      {p.saltStatus && p.saltStatus !== "ok" ? ` · ${t(`ui.suppSalt_${p.saltStatus}`)}` : ""}
-                    </td>
-                    <td className="num py-2.5 text-right text-tinta-2">{p.lastAt ? fmtDay(p.lastAt) : "—"}</td>
+            <ExportableTable name="suplementacion">
+              <table className="w-full min-w-[640px] text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-tinta-2">
+                    <th className="pb-2 font-medium">{t("ui.plot")}</th>
+                    <th className="pb-2 text-right font-medium">{t("ui.suppHead")}</th>
+                    <th className="pb-2 text-right font-medium">{t("ui.suppKg")}</th>
+                    <th className="pb-2 text-right font-medium">{t("ui.suppSaltKg")}</th>
+                    <th className="pb-2 text-right font-medium">{t("ui.suppSaltPerHead")}</th>
+                    <th className="pb-2 text-right font-medium">{t("ui.suppLast")}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-linea border-t border-linea">
+                  {d.plots.map((p) => (
+                    <tr key={p.plotId}>
+                      <td className="py-2.5 font-medium">{p.name}</td>
+                      <td className="num py-2.5 text-right">{p.head ? int.format(p.head) : "—"}</td>
+                      <td className="num py-2.5 text-right">{p.totalKg ? dec.format(p.totalKg) : "—"}</td>
+                      <td className="num py-2.5 text-right">{p.byType.sal_mineral ? dec.format(p.byType.sal_mineral) : "—"}</td>
+                      <td
+                        className={`num py-2.5 text-right ${p.saltStatus === "low" || p.saltStatus === "high" ? "font-medium text-peligro" : ""}`}
+                      >
+                        {p.saltGPerHeadDay === null ? "—" : `${int.format(p.saltGPerHeadDay)} g`}
+                        {p.saltStatus && p.saltStatus !== "ok" ? ` · ${t(`ui.suppSalt_${p.saltStatus}`)}` : ""}
+                      </td>
+                      <td className="num py-2.5 text-right text-tinta-2">{p.lastAt ? fmtDay(p.lastAt) : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </ExportableTable>
           </div>
           <p className="text-xs text-tinta-2">{t("ui.suppHint", { min: d.reference.min, max: d.reference.max })}</p>
         </>

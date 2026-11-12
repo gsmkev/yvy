@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 
-def upload_tiles(local: Path, key: str) -> None:
+def upload_tiles(local: Path, key: str, cache_control: str = "public, max-age=31536000, immutable") -> None:
     import boto3  # importación diferida: los tests no la necesitan
 
     s3 = boto3.client(
@@ -20,7 +20,7 @@ def upload_tiles(local: Path, key: str) -> None:
         str(local),
         os.environ.get("R2_TILES_BUCKET", "yvy-tiles"),
         key,
-        ExtraArgs={"ContentType": "application/vnd.pmtiles", "CacheControl": "public, max-age=31536000, immutable"},
+        ExtraArgs={"ContentType": "application/vnd.pmtiles", "CacheControl": cache_control},
     )
 
 

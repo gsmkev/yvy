@@ -24,6 +24,8 @@ function ensureProtocol() {
   protocolAdded = true;
 }
 
+/** Mapa base de Paraguay en R2 (bucket yvy-tiles), publicado por el job country_basemap. */
+export const COUNTRY_BASEMAP = "base/paraguay.pmtiles";
 const DEV_BASEMAP = import.meta.env.DEV || import.meta.env.VITE_DEV_BASEMAP === "1";
 const PARAGUAY: [number, number, number, number] = [-62.7, -27.7, -54.2, -19.2];
 
@@ -623,6 +625,11 @@ function syncRasters(map: MlMap, p: FarmMapProps) {
     }
     if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
   };
+  // Fondo de todo el país (job country_basemap, ~160 m): siempre debajo de los mapas base de cada estancia
+  if (!DEV_BASEMAP) {
+    const first = map.getStyle().layers.find((l) => l.id.startsWith("basemap") || l.id === "ndvi")?.id ?? "outline";
+    set("country", { id: "country", layer: "true_color", acquiredAt: 0, pmtilesPath: COUNTRY_BASEMAP, bytes: 0, bounds: "" }, true, first);
+  }
   set("basemap", latest("true_color"), true, "outline");
   for (const f of p.farms ?? []) {
     if (f.basemapPath)

@@ -6,6 +6,7 @@ import type { Polygon } from "geojson";
 import { areaHa, bboxOf } from "@yvy/geo";
 import { LIMITS } from "@yvy/shared";
 import { FarmMap } from "../components/FarmMap";
+import { useMe } from "../lib/queries";
 import { Button, ErrorBox, Field, Input } from "../components/ui";
 import { post } from "../lib/api";
 import { fmtHa } from "../lib/format";
@@ -18,6 +19,7 @@ import type { Area } from "../lib/types";
 export function NewFarmPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const me = useMe();
   const [name, setName] = useState("");
   const [department, setDepartment] = useState("");
   const [district, setDistrict] = useState("");
@@ -121,6 +123,7 @@ export function NewFarmPage() {
       <div className="h-96 lg:h-full">
         <FarmMap
           outline={geometry ? JSON.stringify(geometry) : null}
+          tilesBaseUrl={me.data?.tilesBaseUrl}
           bounds={b ? [b.minLon, b.minLat, b.maxLon, b.maxLat] : null}
           flyTo={flyTo}
           drawing={drawing}

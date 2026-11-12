@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 import { animalTag, MAX_WEIGHT_KG } from "./animals";
+import { REPRO_EVENTS, SERVICE_METHODS } from "./repro";
 import { SUPPLEMENT_TYPES, MAX_SUPPLEMENT_KG } from "./grazing";
 import { HEALTH_REASONS, HERD_CATEGORIES, MAX_HEAD_PER_CATEGORY, MORTALITY_CAUSES, MOVE_REASONS } from "./livestock";
 import { deltaT, DOSE_UNITS } from "./agro";
@@ -118,6 +119,29 @@ const livestockSchemas = {
     })
     .refine((d) => d.tag === undefined || d.head === undefined || d.head === 1, {
       message: "Una pesada con caravana es de un solo animal",
+    }),
+  /**
+   * Reproducción (G-20): servicio, tacto, parición o destete. `head` son vacas (servidas, tactadas o paridas) o
+   * terneros destetados; con caravana es 1. Índices en packages/shared/src/repro.ts.
+   */
+  reproduction: z
+    .object({
+      event: z.enum(REPRO_EVENTS),
+      head: z.number().int().min(1).max(MAX_HEAD_PER_CATEGORY).default(1),
+      method: z.enum(SERVICE_METHODS).optional(),
+      pregnant: z.number().int().min(0).max(MAX_HEAD_PER_CATEGORY).optional(),
+      calves: z.number().int().min(0).max(MAX_HEAD_PER_CATEGORY).optional(),
+      tag: animalTag.optional(),
+      note,
+    })
+    .refine((d) => d.event !== "pregnancy_check" || d.pregnant !== undefined, {
+      message: "Indicá cuántas están preñadas",
+    })
+    .refine((d) => d.pregnant === undefined || d.pregnant <= d.head, {
+      message: "No puede haber más preñadas que tactadas",
+    })
+    .refine((d) => d.tag === undefined || d.head === 1, {
+      message: "Un registro con caravana es de un solo animal",
     }),
 };
 // ---------- fin ganaderia ----------

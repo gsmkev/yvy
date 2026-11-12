@@ -48,3 +48,22 @@ describe("G-22 pesadas", () => {
     expect(SINGLE_PLOT_KINDS).toContain("weighing");
   });
 });
+
+describe("G-20 reproducción", () => {
+  it("el flujo cambia según el evento y con caravana no pregunta cabezas", () => {
+    expect(keys("reproduction", { event: "service" })).toEqual(["event", "tag", "head", "method"]);
+    expect(keys("reproduction", { event: "pregnancy_check" })).toEqual(["event", "tag", "head", "pregnant"]);
+    expect(keys("reproduction", { event: "calving" })).toEqual(["event", "tag", "head", "calves"]);
+    expect(keys("reproduction", { event: "weaning" })).toEqual(["event", "tag", "head"]);
+    expect(keys("reproduction", { event: "pregnancy_check", tag: "PY-1" })).toEqual(["event", "tag", "pregnant"]);
+    // El destete pregunta por terneros, no por vacas.
+    const q = (a: Record<string, unknown>) => stepsFor("reproduction", a, { waterPois: 0 }).find((s) => s.key === "head")?.question;
+    expect(q({ event: "weaning" })).toBe("app.reproWeanedQuestion");
+    expect(q({ event: "service" })).toBe("app.reproHeadQuestion");
+  });
+  it("se ofrece en potreros y sin lote", () => {
+    expect(KINDS_FOR("pasture")).toContain("reproduction");
+    expect(KINDS_FOR(null)).toContain("reproduction");
+    expect(SINGLE_PLOT_KINDS).toContain("reproduction");
+  });
+});

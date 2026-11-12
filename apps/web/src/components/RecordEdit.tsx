@@ -7,6 +7,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   HEALTH_REASONS,
   SUPPLEMENT_TYPES,
+  REPRO_EVENTS,
+  SERVICE_METHODS,
   HERD_CATEGORIES,
   MORTALITY_CAUSES,
   MOVE_REASONS,
@@ -89,6 +91,15 @@ const FIELDS: Record<RecordKind, FieldDef[]> = {
     { key: "category", label: f("herdCategory"), type: "select", options: opts("herd", HERD_CATEGORIES) },
     { key: "head", label: f("head"), type: "number" },
     { key: "cause", label: f("cause"), type: "select", options: opts("cause", MORTALITY_CAUSES) },
+    NOTE,
+  ],
+  reproduction: [
+    { key: "event", label: f("reproEvent"), type: "select", options: opts("reproEvent", REPRO_EVENTS) },
+    { key: "head", label: f("head"), type: "number" },
+    { key: "method", label: f("reproMethod"), type: "select", options: opts("reproMethod", SERVICE_METHODS), optional: true },
+    { key: "pregnant", label: f("reproPregnant"), type: "number", optional: true },
+    { key: "calves", label: f("reproCalves"), type: "number", optional: true },
+    { key: "tag", label: f("tag"), type: "text", optional: true },
     NOTE,
   ],
   weighing: [

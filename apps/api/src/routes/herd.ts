@@ -1,7 +1,7 @@
 /** Ganadería, segunda tanda (gan-p2): rotación, pasto, reproducción, pesadas, animales, abigeato, suplementos, calor. */
 import { Hono } from "hono";
 import { z } from "zod";
-import { farmHeatStress, farmSupplements, farmTheft, farmWeighings } from "../db/herd";
+import { farmHeatStress, farmReproduction, farmSupplements, farmTheft, farmWeighings } from "../db/herd";
 import { parse } from "../lib/http";
 import type { AppEnv } from "../types";
 
@@ -32,4 +32,10 @@ herd.get("/farms/:id/supplements", async (c) => {
 herd.get("/farms/:id/weighings", async (c) => {
   const q = parse(range, c.req.query());
   return c.json(await farmWeighings(c.var.sdb, c.req.param("id"), q.from, q.to));
+});
+
+// G-20: reproducción (servicio, tacto, parición, destete) e índices.
+herd.get("/farms/:id/reproduction", async (c) => {
+  const q = parse(range, c.req.query());
+  return c.json(await farmReproduction(c.var.sdb, c.req.param("id"), q.from, q.to));
 });

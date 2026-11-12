@@ -463,6 +463,8 @@ export function FarmPage() {
               setCompare(defaultCompare(d.layers, kind));
             }}
             onCompare={setCompare}
+            tilesBaseUrl={me.data?.tilesBaseUrl}
+            farmBounds={boundsOf(d.farm)}
           />
           <BoundariesControl
             level={boundaryLevel}

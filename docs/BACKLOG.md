@@ -289,7 +289,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | S-01 | Al crear la estancia, procesar los últimos 6 meses de Sentinel-2 | Curva de campaña desde el primer día | Jobs, API | P0 | M | Hecho |
 | S-02 | Disparar los jobs desde el Worker (GitHub `workflow_dispatch`) al crear la estancia, con estado "procesando" | No esperar al cron | API, Web | P0 | S | Hecho |
 | S-03 | Historia desde 2017 a pedido: vigor de campañas anteriores | Comparar años | Jobs, Web | P2 | M | Hecho |
-| S-04 | Selector de fecha con miniaturas y comparación de dos fechas con cortina | Ver el cambio | Web | P1 | M | Parcial (fechas y cortina; sin miniaturas) |
+| S-04 | Selector de fecha con miniaturas y comparación de dos fechas con cortina | Ver el cambio | Web | P1 | M | Hecho |
 | S-05 | Vigor actual por lote en la tabla, con color de la rampa NDVI | Ver todo de un vistazo | Web | P0 | S | Hecho |
 | S-06 | Lotes con caída de vigor mayor a 15 % entre dos pasadas (RF-54), con aviso | Encontrar el problema temprano | API, Web | P1 | S | Hecho |
 | S-07 | Otros índices: NDRE (nitrógeno), NDMI (humedad), EVI | Más diagnóstico | Jobs, Web | P2 | M | Hecho |

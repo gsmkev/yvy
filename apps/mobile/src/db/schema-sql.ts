@@ -165,5 +165,8 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `grain_deliveries_plot_idx` ON `grain_deliveries` (`plot_id`);",
   "CREATE TABLE `plot_forecasts` (\n\t`plot_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`valid_date` text NOT NULL,\n\t`run_at` integer NOT NULL,\n\t`tmin_c` real,\n\t`tmax_c` real,\n\t`precip_mm` real,\n\t`wind_kmh` real,\n\tPRIMARY KEY(`plot_id`, `valid_date`)\n);",
   "CREATE INDEX `plot_forecasts_farm_idx` ON `plot_forecasts` (`farm_id`);",
-  "CREATE TABLE `farm_spi` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`computed_at` integer NOT NULL,\n\t`report` text NOT NULL\n);"
+  "CREATE TABLE `farm_spi` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`computed_at` integer NOT NULL,\n\t`report` text NOT NULL\n);",
+  "CREATE TABLE `yield_maps` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`plot_id` text NOT NULL,\n\t`season_id` text,\n\t`file_name` text NOT NULL,\n\t`n_points` integer NOT NULL,\n\t`n_dropped` integer NOT NULL,\n\t`mean_t_ha` real NOT NULL,\n\t`p10_t_ha` real NOT NULL,\n\t`p90_t_ha` real NOT NULL,\n\t`min_t_ha` real NOT NULL,\n\t`max_t_ha` real NOT NULL,\n\t`cv_pct` real NOT NULL,\n\t`cell_m` integer NOT NULL,\n\t`cells` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
+  "CREATE INDEX `yield_maps_sync_idx` ON `yield_maps` (`organization_id`,`version`,`id`);",
+  "CREATE INDEX `yield_maps_plot_idx` ON `yield_maps` (`plot_id`,`season_id`);"
 ];

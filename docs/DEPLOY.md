@@ -88,8 +88,8 @@ Después: Actions → **APK Android** → *Run workflow*. Queda en `https://<APP
 
 ## 5. Primera estancia
 
-0. Una sola vez: *Actions → Jobs de datos* → `country_basemap`. Arma el fondo satelital de todo Paraguay (~160 m,
-   unos 10 minutos) en `base/paraguay.pmtiles` del bucket `yvy-tiles`; sin él, el mapa se ve negro hasta que una
+0. Una sola vez: *Actions → Jobs de datos* → `country_basemap`. Arma el fondo satelital de todo Paraguay (20 m, zoom 4 a 13,
+   alrededor de 1 hora y ~1 GB) en `base/paraguay.pmtiles` del bucket `yvy-tiles`; sin él, el mapa se ve negro hasta que una
    estancia tenga su propio mapa base. Después se renueva solo cada 3 meses.
 1. Entrá a la web, registrate y creá la organización.
 2. Si configuraste el token de arriba, el mapa base, la climatología y los últimos 6 meses se procesan solos al crear la estancia. Si no, en *Actions → Jobs de datos* corré `new_farm` con el id de la estancia (o esperá al domingo).

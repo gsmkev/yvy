@@ -1428,6 +1428,14 @@ export const notificationPrefs = sqliteTable("notification_prefs", {
   updatedAt: integer("updated_at").notNull(),
 });
 
+/** U-24: estado del recorrido de primera vez por usuario (se oculta una vez y vale en todos sus dispositivos). No se sincroniza. */
+export const onboardingState = sqliteTable("onboarding_state", {
+  userId: text("user_id").primaryKey(),
+  /** Cuándo ocultó la guía; null = la ve mientras le falten pasos. */
+  dismissedAt: integer("dismissed_at"),
+  updatedAt: integer("updated_at").notNull(),
+});
+
 /**
  * Registro de auditoría. P-12: acciones del equipo de Yvy sobre organizaciones de clientes. K-06: quién cambió qué y
  * cuándo dentro de la organización (estancias, lotes, miembros, tareas, borrado de registros).

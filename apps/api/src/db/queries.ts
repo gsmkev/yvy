@@ -268,6 +268,28 @@ export async function saveNotificationPrefs(sdb: ScopedDb, prefs: NotificationPr
     });
 }
 
+// ---------- Recorrido de primera vez (U-24) ----------
+
+/** El estado de la guía de los 4 pasos es de la persona, no del navegador: se oculta una vez y vale en todos sus dispositivos. */
+export async function getOnboarding(sdb: ScopedDb) {
+  const [row] = await sdb.db
+    .select({ dismissedAt: s.onboardingState.dismissedAt })
+    .from(s.onboardingState)
+    .where(eq(s.onboardingState.userId, sdb.auth.userId))
+    .limit(1);
+  return { dismissedAt: row?.dismissedAt ?? null };
+}
+
+export async function saveOnboarding(sdb: ScopedDb, dismissed: boolean) {
+  const ts = sdb.now();
+  const dismissedAt = dismissed ? ts : null;
+  await sdb.db
+    .insert(s.onboardingState)
+    .values({ userId: sdb.auth.userId, dismissedAt, updatedAt: ts })
+    .onConflictDoUpdate({ target: s.onboardingState.userId, set: { dismissedAt, updatedAt: ts } });
+  return { dismissedAt };
+}
+
 // ---------- Satélite (RF-53) ----------
 
 export async function plotNdvi(sdb: ScopedDb, plotId: string) {

@@ -259,5 +259,6 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `leads_email_idx` ON `leads` (`email`,`created_at`);",
   "CREATE INDEX `leads_status_idx` ON `leads` (`status`,`created_at`);",
   "ALTER TABLE `plot_seasons` ADD `sowing_density` real;",
-  "ALTER TABLE `plot_seasons` ADD `density_unit` text;"
+  "ALTER TABLE `plot_seasons` ADD `density_unit` text;",
+  "CREATE TABLE `onboarding_state` (\n\t`user_id` text PRIMARY KEY NOT NULL,\n\t`dismissed_at` integer,\n\t`updated_at` integer NOT NULL\n);"
 ];

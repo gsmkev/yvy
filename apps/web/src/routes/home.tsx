@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isFieldRole } from "@yvy/shared";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, ChevronRight, Plus } from "lucide-react";
@@ -9,7 +10,8 @@ import { Button, Empty, ErrorBox, SectionHead, Skeleton, Spinner, Stat } from ".
 import { areaUnitLabel, fmtAreaValue, fmtDate, fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { loadPrefs, savePrefs } from "../lib/prefs";
-import { useFarms, useMe, useMembers } from "../lib/queries";
+import { put } from "../lib/api";
+import { useFarms, useMe, useMembers, useOnboarding } from "../lib/queries";
 
 /** Inicio multi estancia (RF-90). */
 export function HomePage() {
@@ -19,11 +21,19 @@ export function HomePage() {
   const canEdit = me.data && !isFieldRole(me.data.role);
   const list = farms.data ?? [];
   const members = useMembers(!!canEdit);
-  const [dismissed, setDismissed] = useState(() => !!loadPrefs().guideDismissed);
+  const qc = useQueryClient();
+  const onboarding = useOnboarding(!!canEdit);
+  const setGuide = useMutation({
+    mutationFn: (dismissed: boolean) => put<{ dismissedAt: number | null }>("/me/onboarding", { dismissed }),
+    onMutate: (d) => qc.setQueryData(["onboarding"], { dismissedAt: d ? Date.now() : null }),
+    onSuccess: (r) => qc.setQueryData(["onboarding"], r),
+  });
+  // Lo que ocultó antes en este navegador vale hasta que el servidor responda
+  const dismissed = onboarding.data ? onboarding.data.dismissedAt !== null : !!loadPrefs().guideDismissed;
   // Guía de primera vez: solo para quien edita, hasta completar los 4 pasos o descartarla
   const steps = canEdit && farms.data && members.data ? guideSteps(list, members.data) : null;
   const guide = steps && !dismissed && steps.some((s) => !s.done) ? steps : null;
-  const ready = !!me.data && (!canEdit || !!members.data || members.isError);
+  const ready = !!me.data && (!canEdit || ((!!members.data || members.isError) && (!onboarding.isLoading)));
   // Con una sola estancia, el mapa de esa estancia es el inicio (salvo que falte completar la guía)
   const only = list.length === 1 && ready && !guide ? list[0]!.id : null;
   useEffect(() => {
@@ -91,9 +101,17 @@ export function HomePage() {
             steps={guide}
             onDismiss={() => {
               savePrefs({ guideDismissed: true });
-              setDismissed(true);
+              setGuide.mutate(true);
             }}
           />
+        )}
+        {steps && dismissed && steps.some((s) => !s.done) && (
+          <button
+            className="cursor-pointer self-start text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
+            onClick={() => setGuide.mutate(false)}
+          >
+            {t("ui.guideShow")}
+          </button>
         )}
         {farms.data && list.length === 0 && !guide && (
           <Empty title={t("ui.onboardingTitle")}>

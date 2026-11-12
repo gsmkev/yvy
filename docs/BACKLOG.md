@@ -67,7 +67,7 @@ Detalles que un usuario espera sin pedirlos.
 | U-21 | Respetar el tamaño de letra del sistema | Usuarios mayores | App | P1 | M | Hecho |
 | U-22 | Guaraní (gn-PY) con selector de idioma | Diferencial real con el empleado | App, Web | P2 | M | Parcial (navegación y Anotar) |
 | U-23 | Unidades configurables: hectáreas o cuadras, mm, °C, kg o arrobas | Costumbres locales | Web, App | P2 | S | Hecho |
-| U-24 | Recorrido guiado de primera vez (4 pasos con estado) | Activación sin acompañamiento | Web | P1 | M | Parcial |
+| U-24 | Recorrido guiado de primera vez (4 pasos con estado) | Activación sin acompañamiento | Web | P1 | M | Hecho |
 | U-25 | Centro de ayuda con videos cortos y botón de WhatsApp de soporte | Soporte barato | Web, App | P1 | S | Hecho |
 | U-26 | Accesibilidad completa: "saltar al contenido", foco visible en el mapa, grupos de opciones leídos por TalkBack | Calidad y licitaciones | Web, App | P2 | M | Parcial |
 | U-27 | Vista de impresión para la ficha del lote y la estancia | Reuniones en papel | Web | P2 | S | Hecho |

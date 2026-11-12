@@ -36,6 +36,8 @@ import {
   farmSummaries,
   getAlertSettings,
   getNotificationPrefs,
+  getOnboarding,
+  saveOnboarding,
   listAlerts,
   listRecords,
   listShareLinks,
@@ -150,6 +152,11 @@ web.post("/me/calendar-feed", async (c) => {
 web.delete("/me/calendar-feed", async (c) => {
   await revokeFeed(c.var.sdb);
   return c.json({ ok: true });
+});
+web.get("/me/onboarding", async (c) => c.json(await getOnboarding(c.var.sdb)));
+web.put("/me/onboarding", async (c) => {
+  const b = parse(z.object({ dismissed: z.boolean() }), await readJson(c.req));
+  return c.json(await saveOnboarding(c.var.sdb, b.dismissed));
 });
 web.get("/me/notification-prefs", async (c) => c.json(await getNotificationPrefs(c.var.sdb)));
 web.put("/me/notification-prefs", async (c) => {

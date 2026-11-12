@@ -62,7 +62,7 @@ Detalles que un usuario espera sin pedirlos.
 | U-16 | Web usable en el celular: alternar Mapa y Lista | El dueño mira desde el celular | Web | P0 | M | Hecho |
 | U-17 | Web instalable (PWA) con ícono y uso básico sin conexión en la oficina | Starlink se corta | Web | P2 | M | Hecho |
 | U-18 | Indicador de conexión en la web y reintento automático | Hoy un error de red muestra un mensaje técnico | Web | P1 | S | Hecho |
-| U-19 | Alturas reservadas mientras carga, sin saltos | Sensación de calidad | Web | P2 | S | Parcial |
+| U-19 | Alturas reservadas mientras carga, sin saltos | Sensación de calidad | Web | P2 | S | Hecho |
 | U-20 | Modo oscuro | De noche en el campo la pantalla blanca encandila | App, Web | P2 | M | Hecho |
 | U-21 | Respetar el tamaño de letra del sistema | Usuarios mayores | App | P1 | M | Hecho |
 | U-22 | Guaraní (gn-PY) con selector de idioma | Diferencial real con el empleado | App, Web | P2 | M | Parcial (navegación y Anotar) |

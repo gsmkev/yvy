@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { fmtDate, fmtHa, fmtMm, fmtNdvi } from "../lib/format";
+import { Spinner } from "../components/ui";
 import { t, tk } from "../lib/i18n";
 
 interface SharedSummary {
@@ -38,7 +39,11 @@ export function SharedPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
       <p className="font-serif text-2xl font-semibold">Yvy</p>
-      {q.isLoading && <p className="mt-6 text-tinta-2">{t("ui.loading")}</p>}
+      {q.isLoading && (
+        <div className="mt-6">
+          <Spinner rows={4} h={72} />
+        </div>
+      )}
       {q.error && (
         <p className="mt-6 text-lg">
           {q.error instanceof SharedError && q.error.reason === "expired"

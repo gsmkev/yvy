@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
 import { get, post, put, getSession, setSession, type Session } from "../lib/api";
 import { t } from "../lib/i18n";
-import { Button, ErrorBox, Field, Input, toast } from "./ui";
+import { Button, ErrorBox, Field, Input, Skeleton, toast } from "./ui";
 
 interface Status {
   enabled: boolean;
@@ -80,7 +80,7 @@ export function TotpSection({ forced = false }: { forced?: boolean }) {
     },
   });
   const s = status.data;
-  if (!s) return null;
+  if (!s) return <Skeleton h={168} className="mt-8" />;
   const lockedByOrg = forced || s.requiredByOrg;
 
   return (
@@ -188,7 +188,7 @@ export function AdminTotpPolicy() {
       return qc.invalidateQueries({ queryKey: ["org-security"] });
     },
   });
-  if (!q.data) return null;
+  if (!q.data) return <Skeleton h={64} className="mt-8" />;
   return (
     <section className="mt-8">
       <h2 className="font-serif text-xl font-semibold">{t("ui.totpPolicyTitle")}</h2>

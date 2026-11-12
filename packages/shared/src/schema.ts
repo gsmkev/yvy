@@ -1373,6 +1373,37 @@ export const reportSchedules = sqliteTable(
   (t) => [index("report_schedules_org_idx").on(t.organizationId, t.farmId)],
 );
 
+/**
+ * I-01: tokens de la API pública (solo lectura) por organización. Solo se guarda el SHA-256 del token; `prefix` son
+ * los primeros caracteres, para reconocerlo en la lista. No se sincroniza.
+ */
+export const apiTokens = sqliteTable(
+  "api_tokens",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    name: text("name").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    prefix: text("prefix").notNull(),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at").notNull(),
+    lastUsedAt: integer("last_used_at"),
+    revokedAt: integer("revoked_at"),
+  },
+  (t) => [uniqueIndex("api_tokens_hash_uq").on(t.tokenHash), index("api_tokens_org_idx").on(t.organizationId)],
+);
+
+/** I-01: pedidos por token y minuto (ventana fija) para el límite de uso. Se limpia en el cron diario. */
+export const apiRate = sqliteTable(
+  "api_rate",
+  {
+    tokenId: text("token_id").notNull(),
+    window: integer("window").notNull(),
+    n: integer("n").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.tokenId, t.window] })],
+);
+
 // ---------- Operación ----------
 
 /** Un registro por usuario y día con actividad (métricas del PRD §4; 1 escritura por día). */

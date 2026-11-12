@@ -57,9 +57,14 @@ export function TeamPage() {
             })}
           />
           {me.data?.role === "owner" && (
-            <Link to="/cambios" className="text-sm underline underline-offset-4">
-              {t("ui.auditTitle")}
-            </Link>
+            <>
+              <Link to="/cambios" className="text-sm underline underline-offset-4">
+                {t("ui.auditTitle")}
+              </Link>
+              <Link to="/api-publica" className="text-sm underline underline-offset-4">
+                {t("ui.apiTokensTitle")}
+              </Link>
+            </>
           )}
           {canManage && (
             <Link to="/formularios" className="text-sm font-medium text-accion underline underline-offset-2">

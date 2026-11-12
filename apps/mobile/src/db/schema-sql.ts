@@ -182,5 +182,9 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `comments_record_idx` ON `comments` (`record_id`,`created_at`);",
   "ALTER TABLE `notifications` ADD `comment_id` text;",
   "CREATE TABLE `report_schedules` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text,\n\t`name` text NOT NULL,\n\t`email` text NOT NULL,\n\t`frequency` text NOT NULL,\n\t`last_sent_at` integer,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
-  "CREATE INDEX `report_schedules_org_idx` ON `report_schedules` (`organization_id`,`farm_id`);"
+  "CREATE INDEX `report_schedules_org_idx` ON `report_schedules` (`organization_id`,`farm_id`);",
+  "CREATE TABLE `api_rate` (\n\t`token_id` text NOT NULL,\n\t`window` integer NOT NULL,\n\t`n` integer DEFAULT 0 NOT NULL,\n\tPRIMARY KEY(`token_id`, `window`)\n);",
+  "CREATE TABLE `api_tokens` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`token_hash` text NOT NULL,\n\t`prefix` text NOT NULL,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`last_used_at` integer,\n\t`revoked_at` integer\n);",
+  "CREATE UNIQUE INDEX `api_tokens_hash_uq` ON `api_tokens` (`token_hash`);",
+  "CREATE INDEX `api_tokens_org_idx` ON `api_tokens` (`organization_id`);"
 ];

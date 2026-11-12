@@ -89,7 +89,7 @@ Detalles que un usuario espera sin pedirlos.
 | M-06 | Vista previa de la importación dibujada en el mapa | Elegir bien antes de guardar | Web | P1 | S | Hecho |
 | M-07 | Importar shapefile (.zip), GeoJSON y KMZ además de KML | Archivos de agrimensores y maquinaria | Web | P1 | M | Hecho |
 | M-08 | Importar perímetro y lotes del mismo archivo en un paso | Hoy se sube dos veces | Web | P1 | S | Hecho |
-| M-09 | Estancia con varios polígonos (cascos separados) | Muy común | Web | P1 | S | Parcial |
+| M-09 | Estancia con varios polígonos (cascos separados) | Muy común | Web | P1 | S | Hecho |
 | M-10 | Avisar si dos lotes se superponen o si un lote sale de la estancia | Errores de carga | Web, API | P1 | S | Hecho |
 | M-11 | Limpiar vértices duplicados y espigas al importar | Áreas correctas | Web | P2 | S | Hecho |
 | M-12 | Etiquetas por punto interior garantizado en la app | Lotes en L | App | P2 | S | Hecho |

@@ -330,7 +330,7 @@ export function PlotPanel({
           <Button icon={Pencil} onClick={() => setEditing(true)}>
             {t("ui.edit")}
           </Button>
-          {onEditShape && JSON.parse(plot.geometry).type === "Polygon" && (
+          {onEditShape && (
             <Button onClick={onEditShape}>{t("ui.plotEditShape")}</Button>
           )}
           {onSplit && JSON.parse(plot.geometry).type === "Polygon" && (

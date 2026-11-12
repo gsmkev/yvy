@@ -76,7 +76,7 @@ export interface FarmMapProps {
   onLineDrawn?: (g: LineString) => void;
   /** M-02: lote cuya forma se edita (vértices arrastrables). Se oculta de la capa de lotes mientras tanto. */
   editPlot?: { id: string; geometry: string } | null;
-  onEditChange?: (g: Polygon) => void;
+  onEditChange?: (g: Polygon | MultiPolygon) => void;
   onDrawn?: (g: Polygon) => void;
   onPlotClick?: (id: string) => void;
   onPointClick?: (id: string) => void;
@@ -559,7 +559,7 @@ export function FarmMap(props: FarmMapProps) {
     const ep = props.editPlot;
     if (!map || !ep) return;
     const geom = JSON.parse(ep.geometry) as Polygon | MultiPolygon;
-    if (geom.type !== "Polygon") return;
+    const parts: number[][][][] = geom.type === "Polygon" ? [geom.coordinates] : geom.coordinates;
     const draw = new TerraDraw({
       adapter: new TerraDrawMapLibreGLAdapter({ map }),
       modes: [
@@ -579,33 +579,40 @@ export function FarmMap(props: FarmMapProps) {
     draw.start();
     // terra-draw rechaza coordenadas con más de 9 decimales
     const r9 = (n: number) => Math.round(n * 1e9) / 1e9;
-    draw.addFeatures([
-      {
-        type: "Feature",
+    draw.addFeatures(
+      parts.map((rings) => ({
+        type: "Feature" as const,
         properties: { mode: "polygon" },
-        geometry: {
-          type: "Polygon",
-          coordinates: geom.coordinates.map((ring) => ring.map((c) => [r9(c[0]!), r9(c[1]!)])),
-        },
-      },
-    ]);
-    const feature = draw.getSnapshot()[0];
-    if (!feature) {
+        geometry: { type: "Polygon" as const, coordinates: rings.map((ring) => ring.map((c) => [r9(c[0]!), r9(c[1]!)])) },
+      })),
+    );
+    // M-09: cada parte (casco) es una figura; se informa el conjunto como Polygon o MultiPolygon.
+    const ids = draw.getSnapshot().map((x) => x.id!);
+    if (!ids.length) {
       draw.stop();
       return;
     }
-    const id = feature.id!;
     draw.setMode("select");
-    draw.selectFeature(id);
+    draw.selectFeature(ids[0]!);
     const report = () => {
-      const f = draw.getSnapshot().find((x) => x.id === id);
-      if (f && f.geometry.type === "Polygon") cb.current.onEditChange?.(f.geometry as Polygon);
+      const polys = draw
+        .getSnapshot()
+        .filter((x) => ids.includes(x.id!) && x.geometry.type === "Polygon")
+        .map((x) => (x.geometry as Polygon).coordinates);
+      if (polys.length === ids.length)
+        cb.current.onEditChange?.(
+          polys.length === 1 ? { type: "Polygon", coordinates: polys[0]! } : { type: "MultiPolygon", coordinates: polys },
+        );
     };
     draw.on("change", (_ids, type) => {
       if (type === "update" || type === "delete") report();
     });
     // Un clic en el vacío deselecciona; se vuelve a elegir para que los vértices sigan a la vista.
-    draw.on("deselect", () => setTimeout(() => editRef.current === draw && draw.selectFeature(id), 0));
+    let current = ids[0]!;
+    draw.on("select", (sel) => {
+      current = sel;
+    });
+    draw.on("deselect", () => setTimeout(() => editRef.current === draw && draw.selectFeature(current), 0));
     editRef.current = draw;
     return () => {
       editRef.current = null;

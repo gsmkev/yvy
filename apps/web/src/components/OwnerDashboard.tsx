@@ -2,10 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { get } from "../lib/api";
 import { fmtNum } from "../lib/format";
+import { fmtGs } from "../lib/money";
 import { t, tk } from "../lib/i18n";
 import { ErrorBox, SectionHead, Spinner, Stat } from "./ui";
 
 interface Dashboard {
+  /** Solo viene con el permiso de montos (dueño y administrador); null si no. */
+  margin: { incomePyg: number; costPyg: number; marginPyg: number; entries: number } | null;
   areaByCrop: { crop: string | null; kind: "crop" | "pasture"; ha: number; plots: number }[];
   rain: { month: string; farmsWithData: number; mm: number | null; normalMm: number | null; pctOfNormal: number | null };
   alerts: { total: number; byKind: { kind: string; severity: string; n: number }[] };
@@ -54,6 +57,18 @@ export function OwnerDashboard() {
           value={`${d.activity.activeWorkers7d}/${d.activity.workers}`}
           note={t("ui.dashActivityNote", { staff: d.activity.activeStaff7d, total: d.activity.staff })}
         />
+        {d.margin && (
+          <Stat
+            label={t("ui.dashMargin")}
+            value={d.margin.entries ? fmtGs(d.margin.marginPyg) : "—"}
+            tone={d.margin.entries && d.margin.marginPyg < 0 ? "danger" : undefined}
+            note={
+              d.margin.entries
+                ? t("ui.dashMarginNote", { income: fmtGs(d.margin.incomePyg), cost: fmtGs(d.margin.costPyg) })
+                : t("ui.dashMarginNone")
+            }
+          />
+        )}
         <Stat
           label={t("ui.dashRecords")}
           value={d.records7d.total}

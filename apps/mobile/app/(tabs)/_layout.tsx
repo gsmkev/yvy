@@ -10,6 +10,7 @@ import { startAutoSync, useSyncStatus } from "../../src/lib/sync";
 import { SyncBar, Text } from "../../src/ui/kit";
 import { WalkBanner } from "../../src/ui/WalkBanner";
 import { C, F } from "../../src/ui/theme";
+import { useReadOnly } from "../../src/lib/readOnly";
 
 const icon =
   (I: LucideIcon) =>
@@ -20,7 +21,7 @@ const icon =
 export default function TabsLayout() {
   const session = useSession();
   const { pending } = useSyncStatus();
-  const fabHidden = useFabHidden();
+  const fabHidden = useFabHidden() || useReadOnly();
   useEffect(() => (session ? startAutoSync() : undefined), [!!session]);
   if (!session) return <Redirect href="/login" />;
   return (

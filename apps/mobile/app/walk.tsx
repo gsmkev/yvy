@@ -17,8 +17,9 @@ import { discardWalk, recoverDraft, startWalk, stopWalk, useWalk } from "../src/
 import { buildTrack, durationS, formatDuration, isTooShort, type WalkDraft } from "../src/lib/walkTracker";
 import { Button, s as k, Text } from "../src/ui/kit";
 import { T } from "../src/ui/theme";
+import { withWriteAccess } from "../src/ui/ReadOnlyGate";
 
-export default function Walk() {
+function Walk() {
   const session = useSession();
   const { recording, draft } = useWalk();
   const { current } = useFarmChoice();
@@ -122,3 +123,6 @@ export default function Walk() {
     </ScrollView>
   );
 }
+
+/** F-29: en solo lectura esta pantalla no se abre. */
+export default withWriteAccess(Walk);

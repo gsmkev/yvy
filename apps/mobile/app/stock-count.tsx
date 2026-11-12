@@ -14,8 +14,9 @@ import { showToast } from "../src/lib/toast";
 import { useLocal } from "../src/lib/useLocal";
 import { Button, Row, s as k, Text, TextInput } from "../src/ui/kit";
 import { C, T } from "../src/ui/theme";
+import { withWriteAccess } from "../src/ui/ReadOnlyGate";
 
-export default function StockCount() {
+function StockCount() {
   const session = getSession();
   const warehouses = useLocal(() => getDb().warehouses());
   const products = useLocal(() => getDb().products());
@@ -92,3 +93,6 @@ const st = StyleSheet.create({
   line: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.linea },
   qty: { width: 110, textAlign: "right" },
 });
+
+/** F-29: en solo lectura esta pantalla no se abre. */
+export default withWriteAccess(StockCount);

@@ -12,12 +12,14 @@ import { api, getSession, setSession } from "../../src/lib/session";
 import { deleteUploadedFiles, storageUsage, type StorageUsage } from "../../src/lib/storage";
 import { canSwitchUser, unsentSummary } from "../../src/lib/switchUser";
 import { showToast } from "../../src/lib/toast";
+import { isOwnerMode } from "../../src/lib/ownerSummary";
 import { fitsBudget } from "../../src/lib/offlinePlan";
 import { localChanged, stopAutoSync, syncNow, syncNowMobileData, useSyncStatus } from "../../src/lib/sync";
 import { canCount } from "../../src/lib/stock-count";
 import { useLocal } from "../../src/lib/useLocal";
 import { Button, Row, s as k, Text } from "../../src/ui/kit";
 import { C, F, T } from "../../src/ui/theme";
+import { setReadOnly, useReadOnly } from "../../src/lib/readOnly";
 
 export default function More() {
   const farms = useLocal(() => getDb().farms());
@@ -30,6 +32,7 @@ export default function More() {
   const [wifiOnly, setWifiOnly] = useState(getDb().getKv("photos_wifi_only") === "1");
   const [reminders, setReminders] = useState(remindersEnabled());
   const session = getSession();
+  const readOnly = useReadOnly();
   const lastSync = sync.lastSyncAt ? new Date(sync.lastSyncAt).toLocaleString("es-PY", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }) : "—";
 
   const download = async (farmId: string) => {
@@ -144,6 +147,16 @@ export default function More() {
       {farms.length > 1 && plan.farms.length === 0 && plan.overBudget.length === 0 && plan.withoutImagery < farms.length && <Text style={[T.small, { paddingVertical: 8 }]}>{t("app.offlineAllReady")}</Text>}
 
       <Storage />
+
+      {isOwnerMode(session?.organization.role) && (
+        <View style={st.switchRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={T.body}>{t("app.readOnlySwitch")}</Text>
+            <Text style={T.small}>{t("app.readOnlyHint")}</Text>
+          </View>
+          <Switch value={readOnly} accessibilityLabel={t("app.readOnlySwitch")} onValueChange={setReadOnly} trackColor={{ true: C.accion }} />
+        </View>
+      )}
 
       <View style={st.switchRow}>
         <View style={{ flex: 1 }}>

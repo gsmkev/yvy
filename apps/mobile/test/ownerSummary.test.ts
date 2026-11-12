@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";
 import { LocalDb } from "../src/db/store";
 import { MEMBERS_TTL_MS, memberNames, refreshMemberNames } from "../src/lib/members";
-import { authorName, isOwnerMode, recordsByAuthor, vigorDrops } from "../src/lib/ownerSummary";
+import { authorName, isOwnerMode, recordsByAuthor, resolveReadOnly, vigorDrops } from "../src/lib/ownerSummary";
 import { nodeSql } from "./node-sql";
 
 describe("modo dueño", () => {
@@ -102,5 +102,20 @@ describe("pasadas de vigor locales", () => {
     });
     await db.applyPull("plot_index_stats", [row(1, 0.5), row(2, 0.6), row(3, 0.7)], { version: 1, id: "x" });
     expect(db.lastTwoVigorPasses().map((p) => p.acquiredAt).sort()).toEqual([2, 3]);
+  });
+});
+
+describe("F-29 solo lectura", () => {
+  it("el dueño arranca en solo lectura; administrador y agrónomo, no", () => {
+    expect(resolveReadOnly("owner", null)).toBe(true);
+    expect(resolveReadOnly("admin", null)).toBe(false);
+    expect(resolveReadOnly("agronomist", null)).toBe(false);
+  });
+  it("la elección guardada manda y los empleados nunca quedan en solo lectura", () => {
+    expect(resolveReadOnly("owner", "0")).toBe(false);
+    expect(resolveReadOnly("admin", "1")).toBe(true);
+    expect(resolveReadOnly("worker", "1")).toBe(false);
+    expect(resolveReadOnly("contractor", null)).toBe(false);
+    expect(resolveReadOnly(null, "1")).toBe(false);
   });
 });

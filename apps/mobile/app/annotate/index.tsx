@@ -51,6 +51,7 @@ import { Button, Row, s as k, Text, TextInput } from "../../src/ui/kit";
 import { Stations } from "../../src/ui/Stations";
 import { C, F, GUTTER, RADIUS, T, TOUCH } from "../../src/ui/theme";
 import { gpsHintText, useGpsStage } from "../../src/lib/gpsHint";
+import { withWriteAccess } from "../../src/ui/ReadOnlyGate";
 
 const tr = (key: string, vars?: Record<string, string | number>) => (key.startsWith(RAW) ? key.slice(RAW.length) : t(key as MessageKey, vars));
 
@@ -60,7 +61,7 @@ const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").t
 
 type Phase = { name: "plot" } | { name: "multi" } | { name: "kind" } | { name: "mode" } | { name: "stationsCrop" } | { name: "stations" } | { name: "step"; i: number } | { name: "photo" } | { name: "done"; recordId: string };
 
-export default function Annotate() {
+function Annotate() {
   const params = useLocalSearchParams<{ plotId?: string; kind?: RecordKind; taskId?: string; recordId?: string; farmLevel?: string; poiId?: string }>();
   const session = useSession()!;
   const db = getDb();
@@ -1106,3 +1107,6 @@ const st = StyleSheet.create({
   shutterRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 28, paddingVertical: 24, backgroundColor: "#000" },
   shutter: { width: TOUCH + 20, height: TOUCH + 20, borderRadius: (TOUCH + 20) / 2, borderWidth: 6, borderColor: C.blanco, backgroundColor: C.accion },
 });
+
+/** F-29: en solo lectura esta pantalla no se abre. */
+export default withWriteAccess(Annotate);

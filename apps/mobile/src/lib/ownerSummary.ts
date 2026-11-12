@@ -7,6 +7,17 @@ import { isFieldRole, LIMITS, t } from "@yvy/shared";
 /** Dueño, administrador y agrónomo ven todo el campo; el empleado, solo lo suyo. */
 export const isOwnerMode = (role: string | null | undefined): boolean => !!role && !isFieldRole(role);
 
+/**
+ * Solo lectura (F-29): la elección guardada ("1" o "0") manda; sin elección, solo el dueño arranca en solo lectura.
+ * Administrador y agrónomo arrancan con la app completa y los empleados no tienen el modo.
+ */
+export function resolveReadOnly(role: string | null | undefined, stored: string | null): boolean {
+  if (!isOwnerMode(role)) return false;
+  if (stored === "1") return true;
+  if (stored === "0") return false;
+  return role === "owner";
+}
+
 export interface VigorPass {
   plotId: string;
   mean: number;

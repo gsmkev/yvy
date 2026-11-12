@@ -20,6 +20,7 @@ import { ForecastStrip } from "../../src/ui/ForecastStrip";
 import { toastSaved } from "../../src/lib/toast";
 import { Button, Row, s as k, Text } from "../../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
+import { useReadOnly } from "../../src/lib/readOnly";
 
 const dayLabel = () => {
   const d = new Date();
@@ -51,6 +52,7 @@ export default function Today() {
   const plotName = (id: string | null) => plots.find((p) => p.id === id)?.name ?? "";
   // F-29: resumen del campo para dueño, administrador y agrónomo.
   const owner = isOwnerMode(session?.organization.role);
+  const readOnly = useReadOnly();
   const farmPlotIds = new Set(byFarm(plots, farmId).map((p) => p.id));
   const summary = useLocal(() => {
     if (!owner) return null;
@@ -91,12 +93,14 @@ export default function Today() {
       <Text style={[T.display, { marginTop: 2, marginBottom: 4 }]}>{session?.user.fullName.split(" ")[0]}</Text>
       {/* La lluvia es lo que más se anota: un toque, directo a los milímetros (lluvia de la estancia, sin lote).
           El mismo destino lo abre el atajo de Android (yvy://annotate?kind=rain&farmLevel=1). */}
-      <Button
-        kind="secondary"
-        title={t("app.quickRain")}
-        onPress={() => router.push({ pathname: "/annotate", params: { kind: "rain", farmLevel: "1" } })}
-        style={{ marginTop: 12, marginBottom: 16 }}
-      />
+      {!readOnly && (
+        <Button
+          kind="secondary"
+          title={t("app.quickRain")}
+          onPress={() => router.push({ pathname: "/annotate", params: { kind: "rain", farmLevel: "1" } })}
+          style={{ marginTop: 12, marginBottom: 16 }}
+        />
+      )}
 
       {summary && (
         <>
@@ -199,6 +203,7 @@ export default function Today() {
                 .join(" · ")}
               onPress={() => {
                 if (parseChecklist(task.checklist).length) router.push({ pathname: "/task/[id]", params: { id: task.id } });
+                else if (readOnly) return;
                 else if (task.kind) router.push({ pathname: "/annotate", params: { kind: task.kind, taskId: task.id, plotId: task.plotId ?? "" } });
                 else {
                   getDb().completeTask(task.id, null);

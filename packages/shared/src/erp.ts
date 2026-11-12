@@ -476,3 +476,36 @@ export function laborVerdict(own: OwnCost, contractorPerHa: number | null, contr
     };
   return null;
 }
+
+// ---------- Personal y asistencia (E-25) ----------
+
+export const employeeInput = z.object({
+  name: z.string().trim().min(1).max(120),
+  ci: optText(30),
+  phone: optText(40),
+  dailyWagePyg: minorAmount,
+  userId: z.string().min(1).max(64).nullish(),
+  note: optText(300),
+});
+
+export const ATTENDANCE_DAYS = [1, 0.5] as const;
+export const maxAttendanceEntriesPerCall = 30;
+
+export const attendanceEntry = z.object({
+  employeeId: uuid,
+  /** Día completo o medio día. */
+  days: z.union([z.literal(1), z.literal(0.5)]),
+  farmId: uuid.nullish(),
+  plotId: uuid.nullish(),
+  seasonId: uuid.nullish(),
+  labor: optText(120),
+  /** Jornal del día si no es el vigente del empleado. */
+  wagePyg: minorAmount.nullish(),
+});
+export const attendanceDayInput = z.object({
+  date: isoDate,
+  entries: z.array(attendanceEntry).min(1).max(maxAttendanceEntriesPerCall),
+});
+
+/** Jornal por los días trabajados, en guaraníes enteros. */
+export const wageFor = (dailyWagePyg: number, days: number): number => Math.round(dailyWagePyg * days);

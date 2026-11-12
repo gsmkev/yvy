@@ -1568,3 +1568,49 @@ export const machineCosts = sqliteTable(
   },
   (t) => [uniqueIndex("machine_costs_machine_uq").on(t.organizationId, t.machineId)],
 );
+
+/** Personal (peones, capataz, administrativos) con su jornal. Puede o no tener usuario en la app (E-25). */
+export const employees = sqliteTable(
+  "employees",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    name: text("name").notNull(),
+    /** Cédula de identidad. */
+    ci: text("ci"),
+    phone: text("phone"),
+    /** Jornal por día completo, en guaraníes. */
+    dailyWagePyg: integer("daily_wage_pyg").notNull().default(0),
+    /** Si trabaja con la app, su usuario (sin cargarlo dos veces). */
+    userId: text("user_id"),
+    note: text("note"),
+    ...timestamps,
+  },
+  (t) => [index("employees_org_idx").on(t.organizationId, t.name)],
+);
+
+/** Asistencia y jornal de un día, con el lote y la labor (E-25). Genera un costo de mano de obra. */
+export const attendance = sqliteTable(
+  "attendance",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    employeeId: text("employee_id").notNull(),
+    /** "YYYY-MM-DD". */
+    date: text("date").notNull(),
+    /** 1 = día completo, 0.5 = medio día. */
+    days: real("days").notNull(),
+    farmId: text("farm_id"),
+    plotId: text("plot_id"),
+    seasonId: text("season_id"),
+    labor: text("labor"),
+    /** Jornal del día en guaraníes (el jornal vigente por los días, o el que se cargó a mano). */
+    wagePyg: integer("wage_pyg").notNull(),
+    createdBy: text("created_by").notNull(),
+    ...timestamps,
+  },
+  (t) => [
+    index("attendance_date_idx").on(t.organizationId, t.date),
+    index("attendance_employee_idx").on(t.organizationId, t.employeeId, t.date),
+  ],
+);

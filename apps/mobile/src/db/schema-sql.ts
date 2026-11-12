@@ -195,5 +195,10 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `maintenance_plans` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`machine_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`every_units` real NOT NULL,\n\t`last_done_meter` real DEFAULT 0 NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
   "CREATE INDEX `maintenance_plans_machine_idx` ON `maintenance_plans` (`organization_id`,`machine_id`);",
   "CREATE TABLE `machine_costs` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`machine_id` text NOT NULL,\n\t`service` text NOT NULL,\n\t`purchase_price_pyg` integer DEFAULT 0 NOT NULL,\n\t`residual_pyg` integer DEFAULT 0 NOT NULL,\n\t`life_hours` real DEFAULT 0 NOT NULL,\n\t`operator_per_hour_pyg` integer DEFAULT 0 NOT NULL,\n\t`ha_per_hour` real,\n\t`fuel_liters_per_hour` real,\n\t`fuel_price_pyg` integer,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
-  "CREATE UNIQUE INDEX `machine_costs_machine_uq` ON `machine_costs` (`organization_id`,`machine_id`);"
+  "CREATE UNIQUE INDEX `machine_costs_machine_uq` ON `machine_costs` (`organization_id`,`machine_id`);",
+  "CREATE TABLE `attendance` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`employee_id` text NOT NULL,\n\t`date` text NOT NULL,\n\t`days` real NOT NULL,\n\t`farm_id` text,\n\t`plot_id` text,\n\t`season_id` text,\n\t`labor` text,\n\t`wage_pyg` integer NOT NULL,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
+  "CREATE INDEX `attendance_date_idx` ON `attendance` (`organization_id`,`date`);",
+  "CREATE INDEX `attendance_employee_idx` ON `attendance` (`organization_id`,`employee_id`,`date`);",
+  "CREATE TABLE `employees` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`ci` text,\n\t`phone` text,\n\t`daily_wage_pyg` integer DEFAULT 0 NOT NULL,\n\t`user_id` text,\n\t`note` text,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
+  "CREATE INDEX `employees_org_idx` ON `employees` (`organization_id`,`name`);"
 ];

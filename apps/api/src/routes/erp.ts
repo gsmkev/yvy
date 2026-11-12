@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { LIMITS } from "@yvy/shared";
-import { machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
+import { attendanceDayInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { HTTPException } from "hono/http-exception";
 import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
@@ -13,6 +13,7 @@ import { createWorkOrder, listWorkOrders } from "../db/work-orders";
 import { fixDefaultWarehouse } from "../db/stock";
 import { adjustStock, consumeStock, deleteMove, expiringLots, listMoves, purchaseStock, requireWarehouseUnused, stockSummary, transferStock } from "../db/stock-moves";
 import { deleteMachineCost, laborComparison, listMachineCosts, saveMachineCost } from "../db/labor-cost";
+import { attendanceSummary, deleteAttendance, listAttendance, markDay } from "../db/attendance";
 import { createLog, deleteLog, duePlans, listLogs } from "../db/maintenance";
 import { deleteMinimum, listMinimums, lowStock, saveMinimum } from "../db/stock-minimums";
 import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
@@ -283,3 +284,22 @@ erp.delete("/machine-costs/:machineId", async (c) => {
   return c.json({ ok: true });
 });
 erp.get("/labor-cost", async (c) => c.json(await laborComparison(c.var.sdb)));
+
+// ---------- Personal y asistencia (E-25) ----------
+// Jornales son montos: solo dueño y administrador.
+
+master("employees", s.employees, employeeInput, [s.employees.name]);
+erp.get("/attendance", async (c) =>
+  c.json(await listAttendance(c.var.sdb, parse(z.object({ employeeId: uuid.optional(), from: isoDate.optional(), to: isoDate.optional() }), c.req.query()))),
+);
+erp.get("/attendance/summary", async (c) =>
+  c.json(await attendanceSummary(c.var.sdb, parse(z.object({ from: isoDate.optional(), to: isoDate.optional() }), c.req.query()))),
+);
+erp.post("/attendance", async (c) => {
+  const b = parse(attendanceDayInput, await readJson(c.req));
+  return c.json(await markDay(c.var.sdb, b.date, b.entries), 201);
+});
+erp.delete("/attendance/:id", async (c) => {
+  await deleteAttendance(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});

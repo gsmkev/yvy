@@ -62,6 +62,7 @@ const TABLES: Record<PullTable, SQLiteTable> = {
   products: s.products,
   machines: s.machines,
   animals: s.animals,
+  comments: s.comments,
 };
 
 /** jsKey → columna SQL, sacado del esquema compartido. */
@@ -386,6 +387,28 @@ export class LocalDb implements SyncStore {
         { mutationId: newId(), kind: "plots.upsert", row: { id, farmId: input.farmId, name, kind: input.kind, crop, geometry: input.geometry } },
         id,
       );
+    });
+    return id;
+  }
+
+  /** T-08: comentarios de un registro (los de otras personas bajan con el sync). */
+  commentsOf(recordId: string): { id: string; authorName: string; body: string; createdAt: number }[] {
+    return this.sql.all(
+      "SELECT id, author_name AS authorName, body, created_at AS createdAt FROM comments WHERE record_id = ? AND deleted_at IS NULL ORDER BY created_at, id",
+      [recordId],
+    );
+  }
+
+  /** T-08: comentar sin señal. Las menciones se hacen desde la web (el celular no tiene la lista de personas). */
+  addComment(userId: string, orgId: string, authorName: string, recordId: string, body: string): string {
+    const id = newId();
+    const ts = this.now();
+    this.sql.tx(() => {
+      this.sql.run(
+        "INSERT INTO comments (id, organization_id, record_id, author_id, author_name, body, mentions, created_at, updated_at, version) VALUES (?, ?, ?, ?, ?, ?, '[]', ?, ?, 0)",
+        [id, orgId, recordId, userId, authorName, body, ts, ts],
+      );
+      this.enqueue({ mutationId: newId(), kind: "comments.upsert", row: { id, recordId, body, mentions: [] } }, id);
     });
     return id;
   }

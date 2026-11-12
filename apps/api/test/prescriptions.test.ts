@@ -97,11 +97,17 @@ describe("recetas", () => {
               kind: "application",
               data: { ...rx, prescriptionTaskId: taskId, areaHa: 12 },
               schemaVersion: 1,
-              lon: null,
-              lat: null,
+              // T-03: una aplicación se cierra con foto y ubicación
+              lon: -55.9,
+              lat: -27.2,
               gpsAccuracyM: null,
               capturedAt: Date.now(),
             },
+          },
+          {
+            mutationId: newId(),
+            kind: "attachments.upsert",
+            row: { id: newId(), recordId, mime: "image/webp", width: 100, height: 100, bytes: 1000 },
           },
           {
             mutationId: newId(),
@@ -111,7 +117,7 @@ describe("recetas", () => {
         ],
       },
     });
-    expect(push.body.results.map((x: { status: string }) => x.status)).toEqual(["applied", "applied"]);
+    expect(push.body.results.map((x: { status: string }) => x.status)).toEqual(["applied", "applied", "applied"]);
     const [t] = (await pullAll(worker.token, "tasks")).filter((x) => x.id === taskId);
     expect(t).toMatchObject({ status: "done", recordId });
   });

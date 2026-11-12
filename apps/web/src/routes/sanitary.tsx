@@ -1,5 +1,6 @@
 /** Calendario sanitario (G-10): lista por mes de campañas y tratamientos planificados, con estado hecho o vencido. */
 import { useState } from "react";
+import { isFieldRole } from "@yvy/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { HEALTH_REASONS, HERD_CATEGORIES, localDate, type HerdCategory, type SanitaryState } from "@yvy/shared";
 import { del, get, post } from "../lib/api";
@@ -40,7 +41,7 @@ export function SanitaryPage() {
   const qc = useQueryClient();
   const [month, setMonth] = useState(() => localDate(Date.now()).slice(0, 7));
   const [creating, setCreating] = useState(false);
-  const canPlan = !!me.data && me.data.role !== "worker";
+  const canPlan = !!me.data && !isFieldRole(me.data.role);
   const events = useQuery({
     enabled: canPlan,
     queryKey: ["sanitary", month],

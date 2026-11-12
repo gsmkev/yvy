@@ -20,7 +20,7 @@ export async function clientsOverview(
 ) {
   const now = opts.now ?? Date.now();
   const memberships = (await membershipsOf(db, userId)).filter(
-    (m) => m.role !== "worker" && (!opts.onlyOrgId || m.id === opts.onlyOrgId),
+    (m) => m.role !== "worker" && m.role !== "contractor" && (!opts.onlyOrgId || m.id === opts.onlyOrgId),
   );
   const orgs = memberships.slice(0, MAX_CLIENT_ORGS);
   const clients = await Promise.all(

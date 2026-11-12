@@ -2,6 +2,7 @@
  * Ficha de un registro. Editar y borrar solo para el autor y dentro de las 24 h de capturado (RF-34);
  * pasado ese tiempo el servidor también lo rechaza.
  */
+import { useState } from "react";
 import { Alert, Image, Linking, ScrollView, StyleSheet, View } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { describeRecord, LIMITS, recordShareText, t, whatsappUrl } from "@yvy/shared";
@@ -12,7 +13,7 @@ import { authorName, isOwnerMode } from "../../src/lib/ownerSummary";
 import { useSession } from "../../src/lib/session";
 import { localChanged, syncNow } from "../../src/lib/sync";
 import { useLocal } from "../../src/lib/useLocal";
-import { Button, s as k, Text } from "../../src/ui/kit";
+import { Button, s as k, Text, TextInput } from "../../src/ui/kit";
 import { VoicePlayer } from "../../src/ui/VoicePlayer";
 import { T } from "../../src/ui/theme";
 
@@ -23,6 +24,8 @@ export default function RecordDetail() {
   const plots = useLocal(() => getDb().plots());
   const photos = useLocal(() => (record ? getDb().photosOfRecord(record.id) : []), [record?.id]);
   const voices = useLocal(() => (record ? getDb().voiceOfRecord(record.id) : []), [record?.id]);
+  const comments = useLocal(() => (record ? getDb().commentsOf(record.id) : []), [record?.id]);
+  const [draft, setDraft] = useState("");
 
   if (!record)
     return (
@@ -104,6 +107,33 @@ export default function RecordDetail() {
       ) : (
         mine && <Text style={T.small}>{t("app.recordLocked")}</Text>
       )}
+      <Text style={[T.heading, { marginTop: 24 }]}>{t("ui.comments")}</Text>
+      {comments.length === 0 && <Text style={T.small}>{t("ui.commentNone")}</Text>}
+      {comments.map((c) => (
+        <View key={c.id} style={{ marginTop: 8 }}>
+          <Text style={T.small}>{c.authorName}</Text>
+          <Text>{c.body}</Text>
+        </View>
+      ))}
+      <TextInput
+        value={draft}
+        onChangeText={setDraft}
+        placeholder={t("ui.commentPlaceholder")}
+        multiline
+        maxLength={LIMITS.comments.maxLength}
+        style={{ borderWidth: 1, borderRadius: 8, padding: 10, marginTop: 12, minHeight: 60 }}
+      />
+      <Button
+        title={t("ui.commentSend")}
+        disabled={!draft.trim() || !session}
+        onPress={() => {
+          if (!session) return;
+          getDb().addComment(session.user.id, session.organization.id, session.user.fullName, record.id, draft.trim());
+          setDraft("");
+          localChanged();
+        }}
+        style={{ marginTop: 8 }}
+      />
     </ScrollView>
   );
 }

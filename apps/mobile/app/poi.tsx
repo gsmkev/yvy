@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { router, Stack } from "expo-router";
-import { LIMITS, POI_KINDS, t, type MessageKey } from "@yvy/shared";
+import { isFieldRole, LIMITS, POI_KINDS, t, type MessageKey } from "@yvy/shared";
 import { getDb } from "../src/lib/db";
 import { currentFix, guessPlots, type Fix } from "../src/lib/location";
 import { useSession } from "../src/lib/session";
@@ -24,7 +24,7 @@ export default function MarkPoi() {
     currentFix().then(setFix);
   }, []);
 
-  if (!session || session.organization.role === "worker") return null;
+  if (!session || isFieldRole(session.organization.role)) return null;
   const here = fix === "searching" ? null : fix;
 
   const save = () => {

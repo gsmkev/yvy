@@ -36,7 +36,7 @@ export async function createLine(
   input: { kind: (typeof s.LINE_KINDS)[number]; name: string; geometry: LineString },
 ) {
   sdb.require(can.editField);
-  await sdb.requireFarm(farmId);
+  await sdb.requireFarm(farmId, true);
   const [n] = await sdb.db
     .select({ n: sql<number>`count(*)` })
     .from(s.farmLines)

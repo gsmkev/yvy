@@ -13,6 +13,7 @@ import { media } from "./routes/media";
 import { org } from "./routes/org";
 import { share } from "./routes/share";
 import { sync } from "./routes/sync";
+import { v1 } from "./routes/v1";
 import { web } from "./routes/web";
 import { admin } from "./routes/admin";
 import { captureError } from "./lib/monitoring";
@@ -54,6 +55,8 @@ app.use("/auth/link", requireAuth, readOnlyDemo);
 app.route("/auth", auth);
 app.route("/ingest", ingest as unknown as Hono<AppEnv>);
 app.route("/public", share);
+// I-01: API pública de solo lectura con token de organización (no usa la sesión de la web)
+app.route("/v1", v1);
 
 const authed = new Hono<AppEnv>();
 // La sesión se exige solo en rutas de la API; el resto es la web (static assets).

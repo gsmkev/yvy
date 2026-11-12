@@ -310,13 +310,13 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 |---|---|---|---|---|
 | T-01 | Asignar tarea tocando lotes en el mapa | P1 | S | Falta |
 | T-02 | Prioridad, fecha límite con hora y comentarios en la tarea | P1 | S | Parcial |
-| T-03 | Foto y ubicación obligatorias para cerrar ciertas tareas | P2 | S | Falta |
-| T-04 | Calendario semanal de labores por estancia | P2 | M | Falta |
+| T-03 | Foto y ubicación obligatorias para cerrar ciertas tareas | P2 | S | Hecho |
+| T-04 | Calendario semanal de labores por estancia | P2 | M | Hecho |
 | T-05 | Tareas vencidas por empleado con contador en Equipo | P1 | S | Parcial |
 | T-06 | Actividad del empleado: días activos, registros, lotes visitados, última conexión | P1 | S | Parcial |
 | T-07 | Lotes sin visitar hace más de N días, en la web | P1 | S | Parcial (solo app) |
-| T-08 | Comentarios y menciones en registros ("@Ramón mirá esto") | P2 | M | Falta |
-| T-09 | Supervisor por estancia con permisos intermedios (capataz) | P2 | M | Falta |
+| T-08 | Comentarios y menciones en registros ("@Ramón mirá esto") | P2 | M | Hecho |
+| T-09 | Supervisor por estancia con permisos intermedios (capataz) | P2 | M | Hecho |
 
 ---
 
@@ -328,12 +328,12 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | R-02 | Parte semanal por email los lunes con el PDF adjunto | P1 | M | Hecho |
 | R-03 | Resumen de campaña por lote en PDF (RF-81): siembra, aplicaciones, lluvia, vigor, cosecha | P1 | M | Falta |
 | R-04 | Informe para el banco: superficie, historia productiva, vigor, clima, sin deforestación | P1 | M | Falta |
-| R-05 | Informe de auditoría para certificaciones (soja responsable, buenas prácticas) | P2 | M | Falta |
+| R-05 | Informe de auditoría para certificaciones (soja responsable, buenas prácticas) | P2 | M | Hecho |
 | R-06 | Tablero del dueño: superficie por cultivo, lluvia, avisos, actividad, margen | P1 | M | Parcial |
-| R-07 | Comparación entre estancias y entre campañas | P2 | M | Falta |
+| R-07 | Comparación entre estancias y entre campañas | P2 | M | Hecho |
 | R-08 | Comparación anónima con la zona (vigor y lluvia de campos vecinos) | P3 | M | Falta |
 | R-09 | Exportación completa de la organización (Excel, KML, fotos en ZIP) | P1 | M | Falta |
-| R-10 | Informes programados por email a terceros (socio, agrónomo, banco) | P2 | S | Falta |
+| R-10 | Informes programados por email a terceros (socio, agrónomo, banco) | P2 | S | Hecho |
 
 ---
 
@@ -343,10 +343,10 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 |---|---|---|---|---|
 | K-01 | Selector de organización para agrónomos con varios clientes | P0 | S | Falta (la API lo soporta) |
 | K-02 | Vista del agrónomo: todos sus clientes en un mapa con avisos | P1 | M | Falta |
-| K-03 | Contratista externo con acceso a ciertos lotes y tareas | P2 | M | Falta |
+| K-03 | Contratista externo con acceso a ciertos lotes y tareas | P2 | M | Hecho |
 | K-04 | Enlace temporal de solo lectura para un banco, auditor o comprador | P1 | S | Falta |
-| K-05 | Permisos finos por estancia | P2 | M | Parcial |
-| K-06 | Registro de auditoría: quién cambió qué y cuándo | P2 | M | Falta |
+| K-05 | Permisos finos por estancia | P2 | M | Hecho |
+| K-06 | Registro de auditoría: quién cambió qué y cuándo | P2 | M | Hecho |
 | K-10 | Compartir un registro por WhatsApp: texto, foto y ubicación | P1 | S | Falta |
 | K-11 | Compartir el parte semanal y avisos por WhatsApp | P1 | S | Falta |
 | K-12 | Cargar registros por WhatsApp (bot que recibe lluvia, foto y ubicación) | P3 | L | Falta |
@@ -358,7 +358,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 
 | ID | Qué | Prio | Esf | Estado |
 |---|---|---|---|---|
-| I-01 | API pública con tokens por organización | P2 | M | Falta |
+| I-01 | API pública con tokens por organización | P2 | M | Hecho |
 | I-02 | Webhooks (aviso nuevo, registro nuevo) | P3 | S | Falta |
 | I-03 | Plataformas de maquinaria (John Deere Operations Center y similares): lotes, labores, rindes | P3 | L | Falta |
 | I-04 | Calendario (Google, Outlook) para tareas | P3 | S | Falta |
@@ -377,8 +377,8 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | P-03 | Analítica de producto: qué pantallas se usan, embudo de activación | P1 | S | Parcial (métricas del PRD) |
 | P-04 | Página de estado del servicio | P3 | S | Falta |
 | P-05 | Copias de seguridad verificadas con restauración probada | P1 | S | Parcial |
-| P-06 | Archivado de datos viejos de D1 a R2 | P2 | M | Falta |
-| P-07 | Ingreso con Google | P2 | S | Falta |
+| P-06 | Archivado de datos viejos de D1 a R2 | P2 | M | Hecho |
+| P-07 | Ingreso con Google | P2 | S | Hecho |
 | P-08 | Segundo factor para dueños | P3 | S | Falta |
 | P-09 | Baja de la cuenta y borrado de datos | P1 | S | Falta |
 | P-10 | Planes con límites por hectáreas y usuarios, y cambio de plan desde la web | P1 | M | Parcial (manual) |
@@ -389,7 +389,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | P-20 | Pruebas automáticas de la app en un Android real (Maestro) | P1 | M | Falta |
 | P-21 | Pruebas de carga del sync con 10 empleados y 1.000 registros | P1 | S | Falta |
 | P-30 | Publicar en Play Store (cuenta de desarrollador) | P1 | S | Falta (cuenta) |
-| P-31 | Actualización de la app sin tienda (EAS Update) | P2 | S | Falta |
+| P-31 | Actualización de la app sin tienda (EAS Update) | P2 | S | Hecho |
 | P-32 | Versión iOS para dueños y agrónomos | P3 | M | Falta |
 
 ---
@@ -403,11 +403,11 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | V-03 | Términos de uso, política de privacidad y tratamiento de datos | P0 | S | Falta |
 | V-04 | Informe gratis de riesgo climático y vigor a cambio del email (usa C-10 y S-01) | P1 | M | Parcial (sección en la landing; sin captura de email) |
 | V-05 | Programa para agrónomos: cuenta gratis o comisión por cliente que traen | P1 | S | Falta |
-| V-06 | Referidos entre productores | P2 | S | Falta |
+| V-06 | Referidos entre productores | P2 | S | Hecho |
 | V-07 | Casos de éxito con números del piloto | P1 | S | Falta |
 | V-08 | Video de 2 minutos de la historia completa | P0 | S | Falta |
 | V-09 | Calculadora de precio en la landing | P2 | S | Falta |
-| V-10 | Academia: videos cortos por función, en español y guaraní | P2 | M | Falta |
+| V-10 | Academia: videos cortos por función, en español y guaraní | P2 | M | Hecho |
 
 ---
 

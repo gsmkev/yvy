@@ -19,6 +19,7 @@ const WORKER_FIRST = [
   "/media/",
   "/ingest/",
   "/public/",
+  "/v1/",
   "/admin/",
   "/me",
   "/events",

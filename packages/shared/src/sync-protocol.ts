@@ -82,6 +82,14 @@ export const plotRow = z.object({
   geometry: z.unknown(),
 });
 
+/** T-08: comentario con menciones; el servidor valida que los mencionados sean de la organización. */
+export const commentRow = z.object({
+  id: uuid,
+  recordId: uuid,
+  body: z.string().trim().min(1).max(LIMITS.comments.maxLength),
+  mentions: z.array(uuid).max(LIMITS.comments.maxMentions).default([]),
+});
+
 const base = { mutationId: uuid };
 const del = z.object({ id: uuid });
 
@@ -94,6 +102,8 @@ export const mutation = z.discriminatedUnion("kind", [
   z.object({ ...base, kind: z.literal("tasks.check"), row: taskCheckRow }),
   z.object({ ...base, kind: z.literal("pois.upsert"), row: poiRow }),
   z.object({ ...base, kind: z.literal("plots.upsert"), row: plotRow }),
+  z.object({ ...base, kind: z.literal("comments.upsert"), row: commentRow }),
+  z.object({ ...base, kind: z.literal("comments.delete"), row: del }),
 ]);
 export type Mutation = z.infer<typeof mutation>;
 export type MutationKind = Mutation["kind"];
@@ -111,7 +121,9 @@ export type RejectReason =
   | "edit_window_expired"
   | "too_many_attachments"
   | "deleted"
-  | "captured_in_future";
+  | "captured_in_future"
+  /** T-03: la tarea pide foto y/o ubicación en el registro con el que se cierra. */
+  | "close_requirements";
 
 export type MutationResult =
   | { mutationId: string; status: "applied" | "duplicate" }
@@ -138,6 +150,7 @@ export const PULL_TABLES = [
   "products",
   "machines",
   "animals",
+  "comments",
 ] as const;
 export type PullTable = (typeof PULL_TABLES)[number];
 
@@ -153,6 +166,7 @@ export const ASSIGNMENT_SCOPED_TABLES: readonly PullTable[] = [
   "farm_layers",
   "plot_seasons",
   "animals",
+  "comments",
 ];
 
 export const cursor = z.object({ version: z.number().int().nonnegative(), id: z.string() });

@@ -1,9 +1,11 @@
 /** Consultas y edición para la web (y la ficha del lote en la app con red). */
 import { Hono } from "hono";
-import { and, eq, gte, isNull, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { areaHa, bboxOf } from "@yvy/geo";
+import { compareFarms, compareSeasons } from "../db/compare";
+import { addComment, deleteComment, listComments } from "../db/comments";
 import { alertSettingsSchema, formConfigSchema, referralCode, CROPS, FUNNEL_EVENTS, newId, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import {
@@ -38,6 +40,7 @@ import {
   listShareLinks,
   listTasks,
   mergePlots,
+  listAudit,
   ownerDashboard,
   plotGeometryWarnings,
   plotNdvi,
@@ -103,21 +106,37 @@ web.get("/me", async (c) => {
   });
 });
 
-/** V-05: código de referido del agrónomo (null si la persona no es agrónomo en ninguna de sus organizaciones). */
+/**
+ * V-05 / V-06: código de referido del agrónomo o del productor (dueño de una organización); null para los demás roles.
+ * Con cuántas organizaciones se registraron con su código y en cuántas el equipo ya anotó el crédito.
+ */
 web.get("/me/referral", async (c) => {
-  const [m] = await c.var.sdb.db
+  const sdb = c.var.sdb;
+  const [m] = await sdb.db
     .select({ id: s.memberships.id })
     .from(s.memberships)
     .where(
       and(
-        eq(s.memberships.userId, c.var.sdb.auth.userId),
-        eq(s.memberships.role, "agronomist"),
+        eq(s.memberships.userId, sdb.auth.userId),
+        inArray(s.memberships.role, ["agronomist", "owner"]),
         eq(s.memberships.status, "active"),
         isNull(s.memberships.deletedAt),
       ),
     )
     .limit(1);
-  return c.json({ code: m ? referralCode(c.var.sdb.auth.userId) : null });
+  if (!m) return c.json({ code: null, referred: 0, credited: 0 });
+  const [n] = await sdb.db
+    .select({
+      referred: sql<number>`count(*)`,
+      credited: sql<number>`sum(${s.organizations.referralCreditedAt} IS NOT NULL)`,
+    })
+    .from(s.organizations)
+    .where(eq(s.organizations.referrerUserId, sdb.auth.userId));
+  return c.json({
+    code: referralCode(sdb.auth.userId),
+    referred: Number(n?.referred ?? 0),
+    credited: Number(n?.credited ?? 0),
+  });
 });
 
 /** U-29: qué avisos le llegan al usuario, por qué canal y en qué horario. Valen para todas sus organizaciones. */
@@ -165,6 +184,33 @@ web.get("/me/clients", async (c) =>
   ),
 );
 web.get("/org/dashboard", async (c) => c.json(await ownerDashboard(c.var.sdb)));
+/** T-08: comentarios y menciones en un registro. */
+web.get("/org/records/:id/comments", async (c) => c.json(await listComments(c.var.sdb, c.req.param("id"))));
+web.post("/org/records/:id/comments", async (c) => {
+  const b = parse(
+    z.object({
+      body: z.string().trim().min(1).max(LIMITS.comments.maxLength),
+      mentions: z.array(z.string().uuid()).max(LIMITS.comments.maxMentions).default([]),
+    }),
+    await readJson(c.req),
+  );
+  return c.json(await addComment(c.var.sdb, c.req.param("id"), b.body, b.mentions), 201);
+});
+web.delete("/org/comments/:id", async (c) => {
+  await deleteComment(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+/** R-07: comparación entre estancias y entre campañas. */
+web.get("/org/compare/farms", async (c) => c.json(await compareFarms(c.var.sdb)));
+web.get("/org/compare/seasons", async (c) => c.json(await compareSeasons(c.var.sdb)));
+web.get("/org/audit", async (c) =>
+  c.json(
+    await listAudit(c.var.sdb, {
+      entity: c.req.query("entity") || undefined,
+      before: Number(c.req.query("before")) || undefined,
+    }),
+  ),
+);
 web.get("/org/farms", async (c) => c.json(await farmSummaries(c.var.sdb)));
 web.get("/org/farms/:id", async (c) => c.json(await farmDetail(c.var.sdb, c.req.param("id"))));
 web.get("/org/farms/:id/climate", async (c) =>

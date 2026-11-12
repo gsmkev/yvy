@@ -183,3 +183,75 @@ Cada corrida deja datos de prueba en el D1 local; para limpiarlos borrá `apps/a
 
 Los cálculos del script (reparto, percentiles, armado de lotes, resumen) tienen pruebas en `apps/api/scripts/load-sync.test.mjs`,
 que corren con `pnpm --filter api test`.
+
+## Archivado de datos viejos a R2 (opcional, P-06)
+
+D1 gratis guarda 500 MB. Con la variable `ARCHIVE_AFTER_MONTHS` (número entero, mínimo 3; por ejemplo `12`) el cron diario de
+mantenimiento (03:00 UTC) mueve, de a una tanda por tabla y por corrida, los **registros** y las **estadísticas de vigor**
+más viejos que ese plazo al bucket privado `yvy-media`, en `archive/<tabla>/AAAA-MM/<corrida>-<id>.ndjson` (un archivo por
+tanda, una carpeta por mes), y recién después los borra de D1. Con los registros se archivan sus adjuntos (las fotos quedan en R2
+donde estaban) y comentarios. No se archivan los tipos que la app y la web leen siempre: hacienda (conteos, movimientos,
+mortandad, sanidad), siembra, aplicación, fertilización y cosecha. Sin la variable no se archiva nada.
+
+Cargala como variable del Worker (en `wrangler.jsonc` → `vars`, o en GitHub → Variables y pasarla desde `deploy.yml`);
+no es un secreto. En desarrollo va en `apps/api/.dev.vars`.
+
+Restaurar un mes (genera SQL, no toca la base):
+
+```bash
+pnpm --filter api exec wrangler r2 object get yvy-media/archive/records/2025-01/<archivo>.ndjson --remote --file reg-2025-01.ndjson
+node apps/api/scripts/restore-archive.mjs reg-2025-01.ndjson > restaurar.sql
+pnpm --filter api exec wrangler d1 execute yvy --remote --file restaurar.sql
+```
+
+Las filas se insertan con `INSERT OR IGNORE` y una versión de sync nueva, así los celulares las vuelven a bajar. Los nombres de los
+archivos de un mes se ven en el panel de R2 (Cloudflare → R2 → yvy-media → `archive/`).
+
+## Ingreso con Google (opcional, P-07)
+
+Sin las dos variables no existe `/auth/google` y la web no muestra el botón. Solo entra quien **ya tiene cuenta**: se vincula por el
+email que Google verificó (no crea organizaciones; para eso está el registro). No se guarda nada de Google en la base.
+
+1. Google Cloud Console → APIs y servicios → Credenciales → *Crear credenciales* → **ID de cliente de OAuth**, tipo *Aplicación web*
+   (pantalla de consentimiento: alcances `openid`, `email`, `profile`).
+2. *URI de redireccionamiento autorizados*: `<APP_URL>/auth/google/callback` (ej. `https://yvy-api.<subdominio>.workers.dev/auth/google/callback`;
+   en desarrollo `http://localhost:8787/auth/google/callback`).
+3. Cargá los datos en el Worker:
+   ```bash
+   cd apps/api
+   echo "<id>.apps.googleusercontent.com" | pnpm wrangler secret put GOOGLE_CLIENT_ID
+   echo "<secreto>" | pnpm wrangler secret put GOOGLE_CLIENT_SECRET
+   ```
+   En desarrollo van en `apps/api/.dev.vars` (ver `.dev.vars.example`). `APP_URL` tiene que ser la dirección pública exacta.
+
+## Actualizar la app sin tienda: EAS Update (opcional, P-31)
+
+El APK se distribuye directo (sección 4), pero el **código JavaScript y los assets** se pueden actualizar sin que nadie reinstale:
+la app, al abrirse, busca una actualización y la usa la próxima vez que arranca. Sin la variable `EAS_UPDATE_URL` está apagado y
+todo sigue como antes (instalar el APK nuevo).
+
+1. En `apps/mobile`: `npx eas init` (crea el proyecto de Expo, gratis) → te da el `EAS_PROJECT_ID`.
+2. GitHub → Settings → Variables: `EAS_PROJECT_ID` y `EAS_UPDATE_URL` = `https://u.expo.dev/<EAS_PROJECT_ID>`; Secrets: `EXPO_TOKEN`
+   (Expo → Account settings → Access tokens). El workflow **APK Android** pasa `EAS_UPDATE_URL` al build, así que hay que
+   **generar un APK nuevo una vez** con la variable cargada para que ese APK sepa buscar actualizaciones.
+3. Para publicar un cambio de JavaScript: Actions → **Actualización de la app (EAS Update)** → *Run workflow* con un mensaje; o
+   `EAS_UPDATE_URL=... pnpm --filter mobile run update "qué cambia"` desde tu máquina (con `EXPO_TOKEN`).
+
+Reglas: `runtimeVersion` sigue a `version` de `apps/mobile/app.config.ts`. Una actualización solo llega a APKs de **la misma versión**.
+Si el cambio toca código nativo (un plugin o permiso nuevo, una dependencia con módulo nativo), subí `version` y publicá un APK nuevo:
+publicar una actualización incompatible con el nativo instalado podría romper la app. En desarrollo (`expo start`) no se usa.
+Canales: `production` (APK de producción) y `preview` (pruebas internas), definidos en `apps/mobile/eas.json`.
+
+## Academia: videos en /ayuda (opcional, V-10)
+
+La sección **Videos** de `/ayuda` lista los temas (mapa, registros, sin señal, tareas, avisos, informes, equipo). Sin configurar, cada tema
+dice "Próximamente": no hay videos de relleno. Para enlazar los reales, cargá la variable de GitHub (Settings → Variables)
+`ACADEMY_VIDEOS` con un JSON; `deploy.yml` la compila en la web como `VITE_ACADEMY_VIDEOS` (no es un secreto: los enlaces son públicos):
+
+```json
+{"map": "https://youtu.be/…", "record": {"es": "https://…", "gn": "https://…"}, "offline": "https://…"}
+```
+
+Las claves son `map`, `record`, `offline`, `tasks`, `alerts`, `reports`, `team`; cada valor es un enlace (se muestra como español) o un objeto con `es`
+y/o `gn`. Solo se aceptan enlaces `https`. Para probar en local: `VITE_ACADEMY_VIDEOS='{...}' pnpm --filter web dev`.
+

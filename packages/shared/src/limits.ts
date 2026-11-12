@@ -172,6 +172,29 @@ export const LIMITS = {
      */
     maxEffectMovesPerPush: 60,
   },
+  /** T-08: comentarios en registros. */
+  comments: {
+    maxLength: 1000,
+    maxMentions: 10,
+    /** Comentarios por registro (tope para que el celular no cargue hilos eternos). */
+    maxPerRecord: 200,
+  },
+  /** R-10: destinatarios externos de informes programados por organización. */
+  reportSchedules: { max: 10 },
+  /** I-01: API pública. */
+  api: {
+    /** Pedidos por token por minuto. */
+    perMinute: 60,
+    maxTokensPerOrg: 5,
+    maxPageSize: 200,
+    defaultPageSize: 50,
+  },
+  /** K-06: registro de cambios de la organización. */
+  audit: {
+    pageSize: 50,
+    /** Campos con valor corto que se guardan tal cual en el detalle de un cambio; el resto solo se nombra. */
+    maxValueLength: 80,
+  },
   share: {
     /** Duraciones permitidas del enlace de solo lectura (K-04), en días. */
     linkDays: [7, 30],

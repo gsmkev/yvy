@@ -3,9 +3,11 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { areaHa, bboxOf, centroidOf, checkPlots, validateShape, type Area } from "@yvy/geo";
-import { CROPS, doseText, isWeakPin, LIMITS, PIN_LENGTH, PIN_REGEX, phoneKey, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, TASK_PRIORITIES, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
+import { CROPS, doseText, FARM_ACCESS_LEVELS, isWeakPin, LIMITS, PIN_LENGTH, PIN_REGEX, phoneKey, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, TASK_PRIORITIES, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
 import { can } from "../db/scoped";
 import { randomDigits, randomToken } from "../lib/crypto";
+import { createApiToken, listApiTokens, revokeApiToken } from "../db/api-tokens";
+import { createSchedule, deleteSchedule, listSchedules } from "../db/schedules";
 import { dispatchNewFarm, inBackground } from "../lib/dispatch";
 import { hashPin } from "../lib/pin";
 import { sendEmail } from "../lib/email";
@@ -110,6 +112,48 @@ org.put("/members/:userId/pin", async (c) => {
 
 org.delete("/members/:userId/pin", async (c) => {
   await c.var.sdb.clearMemberPin(c.req.param("userId"));
+  return c.json({ ok: true });
+});
+
+/** T-09 / K-05: estancias de cada supervisor, administrador o agrónomo (solo el dueño). */
+org.get("/farm-access", async (c) => c.json(await c.var.sdb.listFarmAccess()));
+
+/** R-10: informes programados por email a terceros. */
+org.get("/report-schedules", async (c) => c.json(await listSchedules(c.var.sdb)));
+org.post("/report-schedules", async (c) => {
+  const b = parse(
+    z.object({
+      farmId: uuid.nullish(),
+      name: z.string().trim().min(2).max(120),
+      email: z.string().trim().toLowerCase().email().max(254),
+      frequency: z.enum(["weekly", "monthly"]),
+    }),
+    await readJson(c.req),
+  );
+  return c.json(await createSchedule(c.var.sdb, { ...b, farmId: b.farmId ?? null }), 201);
+});
+org.delete("/report-schedules/:id", async (c) => {
+  await deleteSchedule(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+/** I-01: tokens de la API pública (solo el dueño). El token se muestra una sola vez al crearlo. */
+org.get("/api-tokens", async (c) => c.json(await listApiTokens(c.var.sdb)));
+org.post("/api-tokens", async (c) => {
+  const b = parse(z.object({ name: z.string().trim().min(2).max(80) }), await readJson(c.req));
+  return c.json(await createApiToken(c.var.sdb, b.name), 201);
+});
+org.delete("/api-tokens/:id", async (c) => {
+  await revokeApiToken(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+org.put("/members/:userId/farms", async (c) => {
+  const body = parse(
+    z.object({ farms: z.array(z.object({ farmId: uuid, level: z.enum(FARM_ACCESS_LEVELS).default("edit") })).max(200) }),
+    await readJson(c.req),
+  );
+  await c.var.sdb.setFarmAccess(c.req.param("userId"), body.farms);
   return c.json({ ok: true });
 });
 

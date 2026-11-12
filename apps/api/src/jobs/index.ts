@@ -4,6 +4,7 @@
 import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import { addDays, LIMITS, localDate } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
+import { purgeApiRate } from "../db/api-tokens";
 import { getDb, runBatch, type DB } from "../db/client";
 import { dayOfYear } from "../db/queries";
 import { SystemDb } from "../db/system";
@@ -11,7 +12,8 @@ import { sendEmail, type EmailAttachment } from "../lib/email";
 import { presign } from "../lib/r2";
 import type { Bindings, JobMessage } from "../types";
 import { saveForecastStmts, saveHourlyStmts, upsertAlert } from "./alerts";
-import { sendPending } from "./notify";
+import { archiveOld } from "./archive";
+import { sendMentions, sendPending } from "./notify";
 import { pestAlertDraft } from "./pests";
 import { evaluateHeatStress } from "./heat";
 import { plotForecastJob, plotsNeedingForecast } from "./plot-forecast";
@@ -66,6 +68,7 @@ export async function scheduled(controller: { cron: string }, env: Bindings, dep
       return;
     case CRONS.notify:
       await sendPending(getDb(env.DB), env, deps.fetch, deps.now());
+      await sendMentions(getDb(env.DB), env, deps.fetch, deps.now());
       return;
     case CRONS.maintenance:
       await new SystemDb(getDb(env.DB)).purgeExpiredAuth(deps.now());
@@ -73,6 +76,9 @@ export async function scheduled(controller: { cron: string }, env: Bindings, dep
       await getDb(env.DB).run(
         sql`DELETE FROM events WHERE ts < ${deps.now() - LIMITS.events.retentionMs} AND name NOT IN ('signup', 'farm_created', 'plots_created', 'member_added', 'first_record')`,
       );
+      await purgeApiRate(getDb(env.DB), deps.now());
+      // P-06: pasa a R2 una tanda de datos viejos (solo si ARCHIVE_AFTER_MONTHS está configurada)
+      await archiveOld(env, getDb(env.DB), deps.now());
       await recordUsage(env, deps.now());
       return;
   }
@@ -326,6 +332,50 @@ async function weeklyReportJob(db: DB, env: Bindings, deps: JobDeps, farm: Farm)
   }
   for (const r of recipients) {
     if (r.email) await sendEmail(env, r.email, `Yvy · Parte semanal · ${farm.name}`, body, attachments);
+  }
+  await sendToExternalRecipients(db, env, farm, now, body, attachments);
+}
+
+/** Primer lunes del mes (hora de la estancia): el día del mes es ≤ 7. */
+export const isFirstMondayOfMonth = (ms: number, tz: string): boolean => Number(localDate(ms, tz).slice(8)) <= 7;
+
+/**
+ * R-10: el mismo parte (texto y PDF) a los destinatarios externos que programó el dueño: socio, agrónomo, banco.
+ * Los semanales lo reciben todos los lunes; los mensuales, solo el primer lunes del mes.
+ */
+async function sendToExternalRecipients(
+  db: DB,
+  env: Bindings,
+  farm: Farm,
+  now: number,
+  body: string,
+  attachments: EmailAttachment[],
+): Promise<void> {
+  const rows = await db
+    .select()
+    .from(s.reportSchedules)
+    .where(
+      and(
+        eq(s.reportSchedules.organizationId, farm.organizationId),
+        isNull(s.reportSchedules.deletedAt),
+        sql`(${s.reportSchedules.farmId} IS NULL OR ${s.reportSchedules.farmId} = ${farm.id})`,
+      ),
+    );
+  const due = rows.filter((r) => r.frequency === "weekly" || isFirstMondayOfMonth(now, farm.tz));
+  if (!due.length) return;
+  const [org] = await db
+    .select({ name: s.organizations.name })
+    .from(s.organizations)
+    .where(eq(s.organizations.id, farm.organizationId))
+    .limit(1);
+  const text = `${org?.name ?? "Una organización"} te comparte este informe de ${farm.name} desde Yvy.\n\n${body}\n\nSi no querés seguir recibiéndolo, pedile a quien te lo programó que te quite de la lista.`;
+  for (const r of due) {
+    try {
+      await sendEmail(env, r.email, `Yvy · Parte de ${farm.name} · ${org?.name ?? ""}`, text, attachments);
+      await db.update(s.reportSchedules).set({ lastSentAt: now }).where(eq(s.reportSchedules.id, r.id));
+    } catch (e) {
+      console.error("informe programado", r.id, e);
+    }
   }
 }
 

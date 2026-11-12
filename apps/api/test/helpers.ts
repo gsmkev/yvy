@@ -63,7 +63,7 @@ export async function createOrgWithOwner(name = "Estancia Test") {
 export async function addMemberAndLogin(ownerToken: string, role: Role, fullName = "Ramón") {
   const r = await call<{ userId: string }>("POST", "/org/members", {
     token: ownerToken,
-    body: { fullName, role, email: role === "worker" ? null : `${newId()}@test.py` },
+    body: { fullName, role, email: role === "worker" || role === "contractor" ? null : `${newId()}@test.py` },
   });
   if (r.status !== 201) throw new Error(JSON.stringify(r.body));
   const session = await issueSession(db(), env.JWT_SECRET, r.body.userId);

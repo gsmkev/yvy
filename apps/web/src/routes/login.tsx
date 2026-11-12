@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { ApiError, post, setSession, type Session } from "../lib/api";
-import { t } from "../lib/i18n";
+import { ApiError, get, post, setSession, type Session } from "../lib/api";
+import { t, tk } from "../lib/i18n";
 import { Button, ErrorBox, Field, Input } from "../components/ui";
 import { LegalLinks } from "./public/PublicShell";
 
@@ -16,6 +17,20 @@ export function LoginPage() {
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
+
+  // P-07: botón de Google solo si el servidor lo tiene configurado; al volver trae `?google=` (código de un solo uso)
+  const google = useQuery({ queryKey: ["google-enabled"], queryFn: () => get<{ enabled: boolean }>("/auth/google"), staleTime: Infinity, retry: false });
+  useEffect(() => {
+    if (!search.google) return;
+    setBusy(true);
+    post<Session>("/auth/google/exchange", { code: search.google, deviceId: "web" })
+      .then((s) => {
+        setSession(s);
+        navigate({ to: "/" });
+      })
+      .catch((e) => setError(e))
+      .finally(() => setBusy(false));
+  }, [search.google, navigate]);
 
   const run = async (fn: () => Promise<void>) => {
     setBusy(true);
@@ -141,8 +156,21 @@ export function LoginPage() {
                 </button>
               </>
             )}
+            {search.google_error && (
+              <p role="alert" className="text-sm text-peligro">
+                {tk(`ui.googleError_${search.google_error}`)}
+              </p>
+            )}
             {error ? <ErrorBox error={error} /> : null}
           </form>
+          {google.data?.enabled && mode === "login" && step === "email" && (
+            <a
+              href="/auth/google/start"
+              className="mt-4 flex h-11 items-center justify-center rounded-md border border-linea bg-papel text-sm font-medium hover:border-tinta-2/40"
+            >
+              {t("ui.googleSignIn")}
+            </a>
+          )}
           <LegalLinks className="mt-10 text-sm text-tinta-2" />
         </div>
       </div>

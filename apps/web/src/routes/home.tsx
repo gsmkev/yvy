@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { isFieldRole } from "@yvy/shared";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, ChevronRight, Plus } from "lucide-react";
 import { FarmMap } from "../components/FarmMap";
@@ -15,7 +16,7 @@ export function HomePage() {
   const farms = useFarms();
   const me = useMe();
   const navigate = useNavigate();
-  const canEdit = me.data && me.data.role !== "worker";
+  const canEdit = me.data && !isFieldRole(me.data.role);
   const list = farms.data ?? [];
   const members = useMembers(!!canEdit);
   const [dismissed, setDismissed] = useState(() => !!loadPrefs().guideDismissed);

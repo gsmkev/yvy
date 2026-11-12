@@ -1,4 +1,5 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
+import { isFieldRole } from "@yvy/shared";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { exitSupport, getSession, isNetworkDown, onNetworkChange, onSession, post, setSession } from "../lib/api";
@@ -16,6 +17,8 @@ const NAV: { to: string; label: MessageKey }[] = [
   { to: "/", label: "ui.navMap" },
   { to: "/registros", label: "ui.navRecords" },
   { to: "/tareas", label: "ui.navTasks" },
+  { to: "/calendario", label: "ui.navCalendar" },
+  { to: "/comparar", label: "ui.navCompare" },
   { to: "/sanidad", label: "ui.navSanitary" },
   { to: "/avisos", label: "ui.navAlerts" },
   { to: "/equipo", label: "ui.navTeam" },
@@ -70,7 +73,7 @@ export function Layout() {
   const trial = me.data?.organization.plan === "trial" && me.data.organization.trialEndsAt;
   // K-02: el agrónomo con más de un cliente tiene una pantalla con todos juntos
   const orgs = useOrganizations();
-  const hasClients = orgs.filter((o) => o.role !== "worker").length > 1;
+  const hasClients = orgs.filter((o) => !isFieldRole(o.role)).length > 1;
   const base = [
     ...NAV,
     ...(hasClients ? [{ to: "/clientes", label: "ui.navClients" as MessageKey }] : []),
@@ -80,7 +83,8 @@ export function Layout() {
   const role = me.data?.role;
   const items = base.filter(
     (i) =>
-      (i.to !== "/sanidad" || role !== "worker") &&
+      (i.to !== "/sanidad" || !(role && isFieldRole(role))) &&
+      (i.to !== "/comparar" || !(role && isFieldRole(role))) &&
       // La administración (ERP) es solo del dueño y los administradores.
       (i.to !== "/administracion" || role === "owner" || role === "admin"),
   );

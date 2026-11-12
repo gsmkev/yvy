@@ -27,6 +27,7 @@ jobs:
       - run: pnpm --filter web build
         env:
           VITE_SENTRY_DSN: ${{ vars.SENTRY_DSN_WEB }}
+          VITE_ACADEMY_VIDEOS: ${{ vars.ACADEMY_VIDEOS }}
       - name: Configuración de producción
         working-directory: apps/api
         env:

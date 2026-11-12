@@ -20,8 +20,18 @@ import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from
 
 // ---------- Enums ----------
 
-export const ROLES = ["owner", "admin", "agronomist", "worker"] as const;
+/**
+ * `supervisor` (T-09, capataz): ve y asigna solo dentro de las estancias que se le dan (tabla farm_access).
+ * `contractor` (K-03): como el empleado, pero externo: solo los lotes y tareas que se le asignan, sin catálogo ni campañas.
+ */
+export const ROLES = ["owner", "admin", "agronomist", "supervisor", "worker", "contractor"] as const;
 export type Role = (typeof ROLES)[number];
+/** Roles de campo: ven solo sus lotes asignados y sus tareas (el celular sin las pantallas de gestión). */
+export const FIELD_ROLES = ["worker", "contractor"] as const;
+export const isFieldRole = (r: string): boolean => (FIELD_ROLES as readonly string[]).includes(r);
+/** K-05: nivel de acceso a una estancia concreta. `view` = solo lectura. */
+export const FARM_ACCESS_LEVELS = ["view", "edit"] as const;
+export type FarmAccessLevel = (typeof FARM_ACCESS_LEVELS)[number];
 export const MEMBERSHIP_STATUS = ["active", "invited", "disabled"] as const;
 export const PLOT_KINDS = ["crop", "pasture"] as const;
 export const CROPS = ["soja", "maiz", "trigo", "arroz", "girasol", "chia", "otro"] as const;
@@ -129,6 +139,8 @@ export const organizations = sqliteTable("organizations", {
   referredBy: text("referred_by"),
   /** V-05: agrónomo dueño del código, si se pudo identificar. */
   referrerUserId: text("referrer_user_id"),
+  /** V-06: el equipo anotó el crédito del referido (cuando la organización referida pasó a pagar). null = sin anotar. */
+  referralCreditedAt: integer("referral_credited_at"),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });
@@ -777,6 +789,30 @@ export const records = sqliteTable(
   ],
 );
 
+/**
+ * T-08: comentarios sobre un registro, con menciones (`@Ramón mirá esto`). Se sincroniza; cada comentario es una fila
+ * propia (a diferencia de los de las tareas, que van en un JSON) para que dos personas comentando offline no se pisen.
+ */
+export const comments = sqliteTable(
+  "comments",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    recordId: text("record_id").notNull(),
+    authorId: text("author_id").notNull(),
+    /** Nombre del autor al comentar (el celular no tiene la tabla de usuarios). */
+    authorName: text("author_name").notNull().default(""),
+    body: text("body").notNull(),
+    /** JSON: ids de usuario mencionados (miembros de la organización). */
+    mentions: text("mentions").notNull().default("[]"),
+    ...synced,
+  },
+  (t) => [
+    index("comments_sync_idx").on(t.organizationId, t.version, t.id),
+    index("comments_record_idx").on(t.recordId, t.createdAt),
+  ],
+);
+
 export const attachments = sqliteTable(
   "attachments",
   {
@@ -1234,6 +1270,8 @@ export const notifications = sqliteTable(
     id: text("id").primaryKey(),
     userId: text("user_id").notNull(),
     alertId: text("alert_id"),
+    /** T-08: aviso de mención en un comentario (en vez de un aviso agronómico). */
+    commentId: text("comment_id"),
     channel: text("channel", { enum: ["push", "email"] }).notNull(),
     status: text("status", { enum: ["pending", "sent", "failed"] })
       .notNull()
@@ -1273,7 +1311,10 @@ export const notificationPrefs = sqliteTable("notification_prefs", {
   updatedAt: integer("updated_at").notNull(),
 });
 
-/** P-12: registro de auditoría de acciones del equipo de Yvy sobre organizaciones de clientes. */
+/**
+ * Registro de auditoría. P-12: acciones del equipo de Yvy sobre organizaciones de clientes. K-06: quién cambió qué y
+ * cuándo dentro de la organización (estancias, lotes, miembros, tareas, borrado de registros).
+ */
 export const auditLog = sqliteTable(
   "audit_log",
   {
@@ -1281,10 +1322,16 @@ export const auditLog = sqliteTable(
     actorUserId: text("actor_user_id").notNull(),
     action: text("action").notNull(),
     organizationId: text("organization_id"),
+    /** K-06: qué se tocó (`farm`, `plot`, `member`, `task`, `record`...) y su id. Las acciones del equipo de Yvy no lo llevan. */
+    entity: text("entity"),
+    entityId: text("entity_id"),
     detail: text("detail").notNull().default("{}"),
     createdAt: integer("created_at").notNull(),
   },
-  (t) => [index("audit_log_org_idx").on(t.organizationId, t.createdAt)],
+  (t) => [
+    index("audit_log_org_idx").on(t.organizationId, t.createdAt),
+    index("audit_log_entity_idx").on(t.organizationId, t.entity, t.entityId),
+  ],
 );
 
 // ---------- Reportes ----------
@@ -1305,6 +1352,58 @@ export const reports = sqliteTable(
     createdAt: integer("created_at").notNull(),
   },
   (t) => [index("reports_farm_idx").on(t.farmId, t.periodStart)],
+);
+
+/**
+ * R-10: destinatarios externos (socio, agrónomo, banco) del parte semanal con PDF. `farmId` null = todas las
+ * estancias de la organización. No se sincroniza.
+ */
+export const reportSchedules = sqliteTable(
+  "report_schedules",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id"),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    frequency: text("frequency", { enum: ["weekly", "monthly"] }).notNull(),
+    lastSentAt: integer("last_sent_at"),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at").notNull(),
+    deletedAt: integer("deleted_at"),
+  },
+  (t) => [index("report_schedules_org_idx").on(t.organizationId, t.farmId)],
+);
+
+/**
+ * I-01: tokens de la API pública (solo lectura) por organización. Solo se guarda el SHA-256 del token; `prefix` son
+ * los primeros caracteres, para reconocerlo en la lista. No se sincroniza.
+ */
+export const apiTokens = sqliteTable(
+  "api_tokens",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    name: text("name").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    prefix: text("prefix").notNull(),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at").notNull(),
+    lastUsedAt: integer("last_used_at"),
+    revokedAt: integer("revoked_at"),
+  },
+  (t) => [uniqueIndex("api_tokens_hash_uq").on(t.tokenHash), index("api_tokens_org_idx").on(t.organizationId)],
+);
+
+/** I-01: pedidos por token y minuto (ventana fija) para el límite de uso. Se limpia en el cron diario. */
+export const apiRate = sqliteTable(
+  "api_rate",
+  {
+    tokenId: text("token_id").notNull(),
+    window: integer("window").notNull(),
+    n: integer("n").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.tokenId, t.window] })],
 );
 
 // ---------- Operación ----------
@@ -1367,4 +1466,21 @@ export const managementZones = sqliteTable(
     computedAt: integer("computed_at").notNull(),
   },
   (t) => [uniqueIndex("management_zones_plot_zone_uq").on(t.plotId, t.zone), index("management_zones_farm_idx").on(t.farmId)],
+);
+
+/**
+ * T-09 / K-05: estancias a las que se limita a una persona. No se sincroniza.
+ * `supervisor`: sin filas no ve ninguna estancia. `admin` y `agronomist`: sin filas ven todas; con filas, solo esas
+ * (y `view` las deja en solo lectura). El dueño y los roles de campo no usan esta tabla.
+ */
+export const farmAccess = sqliteTable(
+  "farm_access",
+  {
+    organizationId: text("organization_id").notNull(),
+    userId: text("user_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    level: text("level", { enum: FARM_ACCESS_LEVELS }).notNull().default("edit"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.organizationId, t.userId, t.farmId] }), index("farm_access_farm_idx").on(t.farmId)],
 );

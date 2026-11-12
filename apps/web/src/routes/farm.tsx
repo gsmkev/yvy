@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { isFieldRole } from "@yvy/shared";
 import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LineString, Polygon } from "geojson";
@@ -50,7 +51,7 @@ export function FarmPage() {
   const lines = useFarmLines(farmId);
   const farms = useFarms();
   const me = useMe();
-  const canEdit = !!me.data && me.data.role !== "worker";
+  const canEdit = !!me.data && !isFieldRole(me.data.role);
   const members = useMembers(canEdit);
   const alerts = useAlerts({ farmId, active: true });
   const problems = useProblemAreas(farmId, canEdit);

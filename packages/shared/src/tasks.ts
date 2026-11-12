@@ -114,3 +114,37 @@ export const isOverdue = (
   today: string,
   nowTime: string,
 ): boolean => t.status === "open" && (t.dueDate < today || (t.dueDate === today && !!t.dueTime && t.dueTime < nowTime));
+
+/**
+ * T-03: qué tiene que traer el registro con el que se cierra una tarea de cada tipo. Lo exige el servidor al recibir
+ * el cierre (`tasks.status` → `done`) y la app lo pide antes de guardar. Las tareas sin tipo no piden nada.
+ */
+export interface CloseRequirements {
+  photo: boolean;
+  location: boolean;
+}
+export const TASK_CLOSE_REQUIREMENTS: Readonly<Record<string, CloseRequirements>> = {
+  application: { photo: true, location: true },
+  fertilization: { photo: true, location: true },
+  scouting: { photo: true, location: true },
+  pest: { photo: true, location: true },
+  sowing: { photo: false, location: true },
+  harvest: { photo: false, location: true },
+  crop_status: { photo: true, location: false },
+  pasture_status: { photo: true, location: false },
+};
+
+export const closeRequirements = (kind: string | null | undefined): CloseRequirements | null =>
+  (kind && TASK_CLOSE_REQUIREMENTS[kind]) || null;
+
+/** Lo que falta para poder cerrar: `record` (no hay registro), `photo` o `location`; null si cumple. */
+export const closeProblem = (
+  req: CloseRequirements,
+  record: { lon: number | null; lat: number | null } | null,
+  photos: number,
+): "record" | "photo" | "location" | null => {
+  if (!record) return "record";
+  if (req.photo && photos < 1) return "photo";
+  if (req.location && (record.lon === null || record.lat === null)) return "location";
+  return null;
+};

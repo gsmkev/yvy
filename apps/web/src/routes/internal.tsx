@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, Card, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../components/ui";
 import { enterSupport, get, post, qs, type Session } from "../lib/api";
 import { fmtDate, fmtDateTime, fmtHa, fmtNum } from "../lib/format";
+import { AuditList, type AuditEntryRow } from "../components/AuditList";
 import { t, tk } from "../lib/i18n";
 
 interface OrgMetrics {
@@ -27,11 +28,15 @@ interface OrgMetrics {
   /** V-05: código de referido con el que se registró y agrónomo dueño del código. */
   referredBy: string | null;
   referrerName: string | null;
+  /** V-06: quién lo refirió (si se pudo identificar) y cuándo el equipo anotó el crédito. */
+  referrerUserId: string | null;
+  referralCreditedAt: number | null;
 }
 
 /** Métricas del PRD §4 por organización (solo equipo Yvy). */
 export function InternalPage() {
   const [editing, setEditing] = useState<OrgMetrics | null>(null);
+  const [changes, setChanges] = useState<OrgMetrics | null>(null);
   const [search, setSearch] = useState("");
   const [term, setTerm] = useState("");
   // Busca en el servidor cuando se deja de escribir
@@ -54,6 +59,10 @@ export function InternalPage() {
       qc.invalidateQueries({ queryKey: ["admin-metrics"] });
       toast(t("ui.internalTrialExtended"));
     },
+  });
+  const credit = useMutation({
+    mutationFn: (v: { id: string; credited: boolean }) => post(`/admin/orgs/${v.id}/referral-credit`, { credited: v.credited }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-metrics"] }),
   });
   const support = useMutation({
     mutationFn: (id: string) => post<Session>(`/admin/orgs/${id}/support-session`),
@@ -141,6 +150,17 @@ export function InternalPage() {
                 <td className="px-3 py-2">{o.lastActive ?? "—"}</td>
                 <td className="px-3 py-2">
                   {o.referredBy ? `${o.referrerName ?? t("ui.internalReferralUnknown")} · ${o.referredBy}` : "—"}
+                  {o.referrerUserId && (
+                    <div className="text-xs">
+                      {o.referralCreditedAt ? `${t("ui.internalReferralCredited", { date: fmtDate(o.referralCreditedAt) })} · ` : ""}
+                      <button
+                        className="cursor-pointer underline underline-offset-4"
+                        onClick={() => credit.mutate({ id: o.id, credited: !o.referralCreditedAt })}
+                      >
+                        {o.referralCreditedAt ? t("ui.internalReferralCreditUndo") : t("ui.internalReferralCredit")}
+                      </button>
+                    </div>
+                  )}
                 </td>
                 <td className="num px-3 py-2">
                   {o.limits.maxHa === null ? "∞" : fmtNum(o.limits.maxHa)} ha · {o.users}/
@@ -159,6 +179,9 @@ export function InternalPage() {
                       {t("ui.internalExtend")}
                     </button>
                   )}
+                  <button className="cursor-pointer underline underline-offset-4" onClick={() => setChanges(o)}>
+                    {t("ui.internalChanges")}
+                  </button>
                   <button
                     className="cursor-pointer underline underline-offset-4 disabled:opacity-50"
                     disabled={support.isPending}
@@ -173,6 +196,7 @@ export function InternalPage() {
         </table>
       </div>
       {editing && <PlanModal org={editing} onClose={() => setEditing(null)} />}
+      {changes && <OrgChanges org={changes} onClose={() => setChanges(null)} />}
       <Funnel />
       <AuditLog />
     </div>
@@ -302,6 +326,22 @@ function PlanModal({ org, onClose }: { org: OrgMetrics; onClose: () => void }) {
           {t("ui.save")}
         </Button>
       </form>
+    </Modal>
+  );
+}
+
+/** K-06: últimos cambios que hicieron las personas de una organización (solo lectura, para soporte). */
+function OrgChanges({ org, onClose }: { org: OrgMetrics; onClose: () => void }) {
+  const q = useQuery({
+    queryKey: ["admin-audit-org", org.id],
+    queryFn: () => get<AuditEntryRow[]>(`/admin/audit${qs({ orgId: org.id, scope: "org" })}`),
+  });
+  return (
+    <Modal title={`${t("ui.internalChanges")} · ${org.name}`} onClose={onClose}>
+      {q.isPending && <Spinner />}
+      {q.error && <ErrorBox error={q.error} />}
+      {q.data && !q.data.length && <p className="text-sm text-tinta-2">{t("ui.auditEmpty")}</p>}
+      {q.data && <AuditList rows={q.data} />}
     </Modal>
   );
 }

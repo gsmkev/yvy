@@ -6,6 +6,7 @@ import { and, asc, desc, eq, getTableColumns, gte, inArray, isNull, lt, lte, ne,
 import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
 import {
   DEFAULT_ALERT_SETTINGS,
+  isFieldRole,
   LIMITS,
   localDate,
   notifyOptionsFor,
@@ -13,6 +14,7 @@ import {
   parseTaskComments,
   type AlertSettings,
   type NotificationPrefs,
+  type PullTable,
   type RecordKind,
   type TaskComment,
 } from "@yvy/shared";
@@ -21,8 +23,9 @@ import { bboxOf, checkPlots, type Area } from "@yvy/geo";
 import { newId, t, type FormConfig } from "@yvy/shared";
 import { HTTPException } from "hono/http-exception";
 import { randomToken, sha256Hex } from "../lib/crypto";
+import { patchDetail, type AuditEntity } from "./audit";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from "./client";
-import { can, ForbiddenError, NotFoundError, type ScopedDb } from "./scoped";
+import { can, ForbiddenError, NotFoundError, SYNCED_KEYS, type ScopedDb } from "./scoped";
 
 // ---------- Inicio multi estancia (RF-90) ----------
 
@@ -665,7 +668,8 @@ export async function ownerDashboard(sdb: ScopedDb) {
   const week = now - 7 * 86_400_000;
   const today = localDate(now);
   const monthStart = `${today.slice(0, 7)}-01`;
-  const farmIds = sql`(SELECT id FROM farms WHERE organization_id = ${org} AND deleted_at IS NULL)`;
+  // K-05: el administrador con estancias limitadas ve el tablero de esas estancias
+  const farmIds = sql`(SELECT id FROM farms WHERE organization_id = ${org} AND deleted_at IS NULL AND ${sdb.farmScopeSql("farms.id") ?? sql`1`})`;
   const [byCrop, rain, normal, alerts, members, records] = await Promise.all([
     sdb.db.all<{ crop: string | null; kind: string; ha: number; plots: number }>(sql`
       SELECT crop, kind, sum(area_ha) AS ha, count(*) AS plots FROM plots
@@ -684,7 +688,7 @@ export async function ownerDashboard(sdb: ScopedDb) {
       GROUP BY farm_id`),
     sdb.db.all<{ kind: string; severity: string; n: number }>(sql`
       SELECT kind, severity, count(*) AS n FROM alerts
-      WHERE organization_id = ${org} AND resolved_at IS NULL AND (valid_to IS NULL OR valid_to >= ${now})
+      WHERE organization_id = ${org} AND resolved_at IS NULL AND (valid_to IS NULL OR valid_to >= ${now}) AND farm_id IN ${farmIds}
       GROUP BY kind, severity`),
     sdb.db.all<{ role: string; total: number; active: number }>(sql`
       SELECT m.role, count(*) AS total,
@@ -693,7 +697,7 @@ export async function ownerDashboard(sdb: ScopedDb) {
     sdb.db.all<{ kind: string; n: number; byWorkers: number }>(sql`
       SELECT r.kind, count(*) AS n,
         sum(EXISTS (SELECT 1 FROM memberships m WHERE m.user_id = r.author_id AND m.organization_id = ${org} AND m.role = 'worker')) AS byWorkers
-      FROM records r WHERE r.organization_id = ${org} AND r.deleted_at IS NULL AND r.captured_at >= ${week} GROUP BY r.kind ORDER BY n DESC`),
+      FROM records r WHERE r.organization_id = ${org} AND r.deleted_at IS NULL AND r.captured_at >= ${week} AND r.farm_id IN ${farmIds} GROUP BY r.kind ORDER BY n DESC`),
   ]);
   // Lluvia: solo estancias con dato real y normal a la vez, así la comparación es entre lo mismo
   const normalBy = new Map(normal.map((r) => [r.farm_id, Number(r.mm)]));
@@ -719,8 +723,8 @@ export async function ownerDashboard(sdb: ScopedDb) {
     activity: {
       workers: Number(workers?.total ?? 0),
       activeWorkers7d: Number(workers?.active ?? 0),
-      staff: members.filter((m) => m.role !== "worker").reduce((a, m) => a + Number(m.total), 0),
-      activeStaff7d: members.filter((m) => m.role !== "worker").reduce((a, m) => a + Number(m.active), 0),
+      staff: members.filter((m) => !isFieldRole(m.role)).reduce((a, m) => a + Number(m.total), 0),
+      activeStaff7d: members.filter((m) => !isFieldRole(m.role)).reduce((a, m) => a + Number(m.active), 0),
     },
     records7d: {
       total: records.reduce((a, r) => a + Number(r.n), 0),
@@ -728,6 +732,39 @@ export async function ownerDashboard(sdb: ScopedDb) {
       byKind: records.map((r) => ({ kind: r.kind, n: Number(r.n) })),
     },
   };
+}
+
+// ---------- Registro de cambios (K-06) ----------
+
+/** El dueño ve quién cambió qué y cuándo, de más nuevo a más viejo; `before` (epoch ms) pagina. */
+export async function listAudit(sdb: ScopedDb, f: { entity?: string; before?: number; limit?: number }) {
+  sdb.require(can.viewAudit, "Solo el dueño ve el registro de cambios");
+  const limit = Math.min(f.limit ?? LIMITS.audit.pageSize, 200);
+  const rows = await sdb.db
+    .select({
+      id: s.auditLog.id,
+      action: s.auditLog.action,
+      entity: s.auditLog.entity,
+      entityId: s.auditLog.entityId,
+      detail: s.auditLog.detail,
+      createdAt: s.auditLog.createdAt,
+      actorId: s.auditLog.actorUserId,
+      actor: s.users.fullName,
+    })
+    .from(s.auditLog)
+    .leftJoin(s.users, eq(s.users.id, s.auditLog.actorUserId))
+    .where(
+      and(
+        eq(s.auditLog.organizationId, sdb.auth.orgId),
+        // las acciones del equipo de Yvy (soporte, plan) no llevan entidad y no son del dueño
+        sql`${s.auditLog.entity} IS NOT NULL`,
+        f.entity ? eq(s.auditLog.entity, f.entity) : undefined,
+        f.before ? lt(s.auditLog.createdAt, f.before) : undefined,
+      ),
+    )
+    .orderBy(desc(s.auditLog.createdAt), desc(s.auditLog.id))
+    .limit(limit + 1);
+  return { rows: rows.slice(0, limit), hasMore: rows.length > limit };
 }
 
 // ---------- Avisos (RF-70..75) ----------
@@ -861,6 +898,15 @@ type SyncedTbl = SQLiteTable & {
   deletedAt: SQLiteColumn;
 };
 
+const AUDITED: Partial<Record<PullTable, AuditEntity>> = {
+  farms: "farm",
+  plots: "plot",
+  tasks: "task",
+  points_of_interest: "poi",
+  products: "product",
+  seasons: "season",
+};
+
 export async function updateSynced(
   sdb: ScopedDb,
   table: SyncedTbl,
@@ -869,11 +915,25 @@ export async function updateSynced(
   extra: Stmt[] = [],
 ) {
   const ts = sdb.now();
-  const where = and(eq(table.id, id), eq(table.organizationId, sdb.auth.orgId), isNull(table.deletedAt));
+  // T-09 / K-05: solo filas de estancias donde puede escribir (las tablas fuera de SYNCED no llevan estancia).
+  const key = SYNCED_KEYS.get(table);
+  const where = and(
+    eq(table.id, id),
+    eq(table.organizationId, sdb.auth.orgId),
+    isNull(table.deletedAt),
+    key ? sdb.workerFilter(key, true) : undefined,
+  );
   const exists = await sdb.db.select({ id: table.id }).from(table).where(where).limit(1);
   if (!exists.length) throw new NotFoundError("No existe");
+  // K-06: queda en el registro de cambios quién editó o borró qué
+  const entity = key && AUDITED[key];
+  const deleting = patch.deletedAt != null;
+  const audit = entity
+    ? sdb.audit({ action: `${entity}_${deleting ? "delete" : "update"}`, entity, entityId: id, detail: deleting ? {} : patchDetail(patch) })
+    : [];
   await runBatch(sdb.db, [
     bumpVersion(sdb.db),
+    ...audit,
     sdb.db
       .update(table)
       .set({ ...patch, updatedAt: ts, version: currentVersion } as never)
@@ -1101,6 +1161,12 @@ async function replacePlots(
       .update(s.plots)
       .set({ deletedAt: ts, updatedAt: ts, version: currentVersion })
       .where(and(eq(s.plots.organizationId, org), inArray(s.plots.id, originalIds))),
+    ...sdb.audit({
+      action: originalIds.length === 1 ? "plot_split" : "plot_merge",
+      entity: "plot",
+      entityId: originalIds[0]!,
+      detail: { from: originalIds, to: ids },
+    }),
   ]);
   return { ids };
 }
@@ -1165,7 +1231,7 @@ export async function deleteTask(sdb: ScopedDb, id: string) {
 /** Dar de baja a un miembro: deshabilita la membresía y cierra sus sesiones. */
 export async function removeMember(sdb: ScopedDb, userId: string) {
   const role = await sdb.memberRole(userId);
-  if (role === "worker") sdb.require(can.manageWorkers);
+  if (isFieldRole(role)) sdb.require(can.manageWorkers);
   else sdb.require(can.manageOrg, "Solo el dueño gestiona miembros");
   if (userId === sdb.auth.userId) throw new ForbiddenError("No podés darte de baja a vos mismo");
   const ts = sdb.now();
@@ -1184,6 +1250,7 @@ export async function removeMember(sdb: ScopedDb, userId: string) {
           isNull(s.refreshTokens.revokedAt),
         ),
       ),
+    ...sdb.audit({ action: "member_remove", entity: "member", entityId: userId, detail: { role } }),
   ]);
 }
 

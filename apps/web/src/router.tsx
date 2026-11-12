@@ -11,9 +11,20 @@ const loginRoute = createRoute({
   path: "/ingresar",
   component: lazyRouteComponent(() => import("./routes/login"), "LoginPage"),
   // `ref`: código de referido de un agrónomo (V-05); abre el registro y viaja con el alta
-  validateSearch: (s: Record<string, unknown>): { modo?: "registro"; ref?: string } => {
+  validateSearch: (s: Record<string, unknown>): { modo?: "registro"; ref?: string; google?: string; google_error?: string } => {
     const ref = parseReferralCode(s.ref) ?? undefined;
-    return { ...(s.modo === "registro" || ref ? { modo: "registro" as const } : {}), ...(ref ? { ref } : {}) };
+    // P-07: vuelta del ingreso con Google (código de un solo uso, o un error de la lista)
+    const google = typeof s.google === "string" && /^[\w-]{20,64}$/.test(s.google) ? s.google : undefined;
+    const googleError =
+      typeof s.google_error === "string" && ["state", "denied", "exchange", "unverified", "no_account", "no_org"].includes(s.google_error)
+        ? s.google_error
+        : undefined;
+    return {
+      ...(s.modo === "registro" || ref ? { modo: "registro" as const } : {}),
+      ...(ref ? { ref } : {}),
+      ...(google ? { google } : {}),
+      ...(googleError ? { google_error: googleError } : {}),
+    };
   },
 });
 
@@ -26,6 +37,12 @@ const privacyRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/privacidad",
   component: lazyRouteComponent(() => import("./routes/public/legal"), "PrivacyPage"),
+});
+
+const apiDocsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/api-docs",
+  component: lazyRouteComponent(() => import("./routes/public/api-docs"), "ApiDocsPage"),
 });
 
 const sharedRoute = createRoute({
@@ -127,6 +144,27 @@ const forms = createRoute({
   path: "/formularios",
   component: lazyRouteComponent(() => import("./routes/forms"), "FormsPage"),
 });
+
+const calendar = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/calendario",
+  component: lazyRouteComponent(() => import("./routes/calendar"), "CalendarPage"),
+});
+const compare = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/comparar",
+  component: lazyRouteComponent(() => import("./routes/compare"), "ComparePage"),
+});
+const apiTokens = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/api-publica",
+  component: lazyRouteComponent(() => import("./routes/api-tokens"), "ApiTokensPage"),
+});
+const audit = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/cambios",
+  component: lazyRouteComponent(() => import("./routes/audit"), "AuditPage"),
+});
 const help = createRoute({
   getParentRoute: () => appRoute,
   path: "/ayuda",
@@ -167,6 +205,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   termsRoute,
   privacyRoute,
+  apiDocsRoute,
   sharedRoute,
   appRoute.addChildren([
     home,
@@ -181,9 +220,13 @@ const routeTree = rootRoute.addChildren([
     forms,
     records,
     tasks,
+    calendar,
+    compare,
     sanitary,
     team,
     admin,
+    audit,
+    apiTokens,
     help,
     labs,
     labsTool,

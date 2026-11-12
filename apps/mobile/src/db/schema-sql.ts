@@ -171,5 +171,21 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `yield_maps_plot_idx` ON `yield_maps` (`plot_id`,`season_id`);",
   "CREATE TABLE `management_zones` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`plot_id` text NOT NULL,\n\t`zone` integer NOT NULL,\n\t`area_ha` real NOT NULL,\n\t`pct` real NOT NULL,\n\t`mean_ndvi` real NOT NULL,\n\t`seasons` text NOT NULL,\n\t`geometry` text NOT NULL,\n\t`computed_at` integer NOT NULL\n);",
   "CREATE UNIQUE INDEX `management_zones_plot_zone_uq` ON `management_zones` (`plot_id`,`zone`);",
-  "CREATE INDEX `management_zones_farm_idx` ON `management_zones` (`farm_id`);"
+  "CREATE INDEX `management_zones_farm_idx` ON `management_zones` (`farm_id`);",
+  "CREATE TABLE `farm_access` (\n\t`organization_id` text NOT NULL,\n\t`user_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`level` text DEFAULT 'edit' NOT NULL,\n\t`created_at` integer NOT NULL,\n\tPRIMARY KEY(`organization_id`, `user_id`, `farm_id`)\n);",
+  "CREATE INDEX `farm_access_farm_idx` ON `farm_access` (`farm_id`);",
+  "ALTER TABLE `audit_log` ADD `entity` text;",
+  "ALTER TABLE `audit_log` ADD `entity_id` text;",
+  "CREATE INDEX `audit_log_entity_idx` ON `audit_log` (`organization_id`,`entity`,`entity_id`);",
+  "CREATE TABLE `comments` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`record_id` text NOT NULL,\n\t`author_id` text NOT NULL,\n\t`author_name` text DEFAULT '' NOT NULL,\n\t`body` text NOT NULL,\n\t`mentions` text DEFAULT '[]' NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
+  "CREATE INDEX `comments_sync_idx` ON `comments` (`organization_id`,`version`,`id`);",
+  "CREATE INDEX `comments_record_idx` ON `comments` (`record_id`,`created_at`);",
+  "ALTER TABLE `notifications` ADD `comment_id` text;",
+  "CREATE TABLE `report_schedules` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text,\n\t`name` text NOT NULL,\n\t`email` text NOT NULL,\n\t`frequency` text NOT NULL,\n\t`last_sent_at` integer,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
+  "CREATE INDEX `report_schedules_org_idx` ON `report_schedules` (`organization_id`,`farm_id`);",
+  "CREATE TABLE `api_rate` (\n\t`token_id` text NOT NULL,\n\t`window` integer NOT NULL,\n\t`n` integer DEFAULT 0 NOT NULL,\n\tPRIMARY KEY(`token_id`, `window`)\n);",
+  "CREATE TABLE `api_tokens` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`token_hash` text NOT NULL,\n\t`prefix` text NOT NULL,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`last_used_at` integer,\n\t`revoked_at` integer\n);",
+  "CREATE UNIQUE INDEX `api_tokens_hash_uq` ON `api_tokens` (`token_hash`);",
+  "CREATE INDEX `api_tokens_org_idx` ON `api_tokens` (`organization_id`);",
+  "ALTER TABLE `organizations` ADD `referral_credited_at` integer;"
 ];

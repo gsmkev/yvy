@@ -26,11 +26,14 @@ const list = async (token: string) => (await erpGet<any[]>(token, "work-orders")
 
 /** Cierra la orden como lo hace el celular: el registro con orderTaskId y la tarea hecha con ese registro. */
 async function close(s: S, taskId: string, kind: string, data: Record<string, unknown>, plotId = s.plotIds[0]!) {
-  const m = rec(s.farmId, plotId, kind, { ...data, orderTaskId: taskId });
+  const base = rec(s.farmId, plotId, kind, { ...data, orderTaskId: taskId });
+  // T-03: las tareas de aplicación, cosecha, etc. se cierran con foto y ubicación
+  const m = { ...base, row: { ...base.row, lon: -55.9, lat: -27.2 } };
+  const photo = { mutationId: newId(), kind: "attachments.upsert", row: { id: newId(), recordId: m.row.id, mime: "image/webp", width: 100, height: 100, bytes: 1000 } };
   const done = { mutationId: newId(), kind: "tasks.status", row: { id: taskId, status: "done", completedAt: Date.now(), recordId: m.row.id } };
-  const r = await push(s.worker.token, [m, done]);
+  const r = await push(s.worker.token, [m, photo, done]);
   if (r.status !== 200) throw new Error(JSON.stringify(r.body));
-  expect(r.body.results.map((x: any) => x.status)).toEqual(["applied", "applied"]);
+  expect(r.body.results.map((x: any) => x.status)).toEqual(["applied", "applied", "applied"]);
   return m.row.id as string;
 }
 

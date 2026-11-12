@@ -1,5 +1,6 @@
 /** Informe de riesgo climático de la estancia (C-10): heladas, lluvia frente a lo normal, sequías y focos de calor. */
 import { useState } from "react";
+import { isFieldRole } from "@yvy/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import { CHART, type FarmRisk } from "@yvy/shared";
@@ -161,7 +162,7 @@ export function RiskPage() {
   if (risk.error || !risk.data) return <ErrorBox error={risk.error} />;
   const f = farm.data.farm;
   const { report, computedAt } = risk.data;
-  const canPdf = me.data?.role !== "worker" && report !== null && computedAt !== null;
+  const canPdf = !(me.data && isFieldRole(me.data.role)) && report !== null && computedAt !== null;
 
   const pdfFile = async () => {
     if (!report || computedAt === null) return;

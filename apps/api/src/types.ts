@@ -12,6 +12,11 @@ export interface Secrets {
   GITHUB_REPO?: string;
   /** Opcional (P-02): sin DSN no se manda nada a Sentry. */
   SENTRY_DSN?: string;
+  /** Opcional (P-06): meses tras los cuales los registros y estadísticas se archivan en R2 (mínimo 3). Vacío = no archiva. */
+  ARCHIVE_AFTER_MONTHS?: string;
+  /** Opcionales (P-07): ingreso con Google. Sin ellos el botón no aparece. */
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_CLIENT_SECRET?: string;
 }
 
 /** Demo pública (V-02): sin estos dos valores POST /auth/demo responde 404 y la landing oculta el botón. */

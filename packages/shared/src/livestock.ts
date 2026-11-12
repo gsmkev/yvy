@@ -160,6 +160,10 @@ export type MoveReason = (typeof MOVE_REASONS)[number];
 /** Niveles de un registro de agua que disparan el aviso `water_low` (G-30). */
 export const WATER_LOW_LEVELS = ["low", "dry"] as const;
 
+/** Puntos de interés cuyo nivel se registra y entra al aviso de seca: aguadas y tajamares, bebederos y molinos (G-30). */
+export const WATER_POI_KINDS = ["water", "trough", "mill"] as const;
+export const isWaterPoi = (kind: string): boolean => (WATER_POI_KINDS as readonly string[]).includes(kind);
+
 /** Causas de mortandad (lista cerrada para poder sumar por causa). */
 export const MORTALITY_CAUSES = ["enfermedad", "accidente", "parto", "rayo", "sequia", "vibora", "desconocida", "otra"] as const;
 export type MortalityCause = (typeof MORTALITY_CAUSES)[number];

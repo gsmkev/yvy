@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { isFieldRole } from "@yvy/shared";
+import { isFieldRole, isWaterPoi } from "@yvy/shared";
 import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LineString, MultiPolygon, Polygon } from "geojson";
@@ -897,7 +897,7 @@ export function FarmPage() {
                             <PoiGlyph kind={p.kind} />
                             {p.name}
                             <span className="ml-2 text-xs text-tinta-2">{tk(`ui.poiKinds_${p.kind}`)}</span>
-                            {p.kind === "water" && (
+                            {isWaterPoi(p.kind) && (
                               <span
                                 className={`ml-2 text-xs ${p.lastWaterLevel === "low" || p.lastWaterLevel === "dry" ? "font-medium text-peligro" : "text-tinta-2"}`}
                               >

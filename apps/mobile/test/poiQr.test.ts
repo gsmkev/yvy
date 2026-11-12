@@ -7,9 +7,10 @@ describe("anotar en un punto escaneado (F-28)", () => {
     expect(kindForPoi("rain_gauge")).toBe("rain");
     expect(kindForPoi("water")).toBe("water");
     expect(kindForPoi("trough")).toBe("water");
+    expect(kindForPoi("mill")).toBe("water");
   });
 
   it("los demás puntos preguntan qué anotar", () => {
-    for (const k of POI_KINDS.filter((x) => !["rain_gauge", "water", "trough"].includes(x))) expect(kindForPoi(k)).toBeNull();
+    for (const k of POI_KINDS.filter((x) => !["rain_gauge", "water", "trough", "mill"].includes(x))) expect(kindForPoi(k)).toBeNull();
   });
 });

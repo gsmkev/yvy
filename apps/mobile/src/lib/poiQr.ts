@@ -3,7 +3,7 @@ import type { RecordKind } from "@yvy/shared";
 import type { Poi } from "../db/store";
 
 /**
- * Qué se anota de entrada según el tipo de punto: en el pluviómetro, lluvia; en la aguada o el bebedero, su nivel.
+ * Qué se anota de entrada según el tipo de punto: en el pluviómetro, lluvia; en la aguada, el bebedero o el molino, su nivel.
  * Con los demás (silo, corral, tranquera…) se pregunta qué anotar.
  */
 export function kindForPoi(poiKind: Poi["kind"]): RecordKind | null {
@@ -12,6 +12,7 @@ export function kindForPoi(poiKind: Poi["kind"]): RecordKind | null {
       return "rain";
     case "water":
     case "trough":
+    case "mill":
       return "water";
     default:
       return null;

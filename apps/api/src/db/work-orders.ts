@@ -72,6 +72,7 @@ export async function listWorkOrders(sdb: ScopedDb, f: { farmId?: string; status
       completedAt: s.tasks.completedAt,
       recordId: s.tasks.recordId,
       workOrder: s.tasks.workOrder,
+      createdAt: s.tasks.createdAt,
     })
     .from(s.tasks)
     .leftJoin(s.plots, eq(s.plots.id, s.tasks.plotId))
@@ -113,6 +114,26 @@ export async function listWorkOrders(sdb: ScopedDb, f: { farmId?: string; status
         ).then((r) => r.flat())
       : Promise.resolve(null),
   ]);
+  // Nombre del contratista de cada orden (una consulta para todos).
+  const contractorIds = [
+    ...new Set(
+      tasks.flatMap((x) => {
+        const id = (JSON.parse(x.workOrder as string) as WorkOrder).contractorId;
+        return id ? [id] : [];
+      }),
+    ),
+  ];
+  const contractors = (
+    await Promise.all(
+      chunkForParams(contractorIds, 2).map((chunk) =>
+        sdb.db
+          .select({ id: s.contractors.id, name: s.contractors.name })
+          .from(s.contractors)
+          .where(and(eq(s.contractors.organizationId, org), inArray(s.contractors.id, chunk))),
+      ),
+    )
+  ).flat();
+  const contractorName = new Map(contractors.map((c) => [c.id, c.name]));
   const rec = new Map(records.map((r) => [r.id, r]));
   const cost = costs ? new Map(costs.map((c) => [c.originId, c.costPyg])) : null;
   return tasks.map(({ workOrder, plotAreaHa, ...x }) => {
@@ -121,6 +142,7 @@ export async function listWorkOrders(sdb: ScopedDb, f: { farmId?: string; status
     return {
       ...x,
       order,
+      contractorName: order.contractorId ? (contractorName.get(order.contractorId) ?? null) : null,
       plannedAreaHa: order.areaHa ?? plotAreaHa ?? null,
       actualAreaHa: r?.areaHa ?? null,
       actualTons: r?.tons ?? null,

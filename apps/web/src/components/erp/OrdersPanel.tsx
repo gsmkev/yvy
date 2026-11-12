@@ -1,33 +1,25 @@
 /** Órdenes de trabajo (E-20, E-21): una tarea por lote con insumos, máquina y operario o contratista. */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { DOSE_UNITS_FOR, localDate, ORDER_LABORS, type WorkOrder } from "@yvy/shared";
+import { DOSE_UNITS_FOR, localDate, ORDER_LABORS } from "@yvy/shared";
 import { get, post } from "../../lib/api";
 import { fmtIsoDate } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
-import { useFarm, useFarms, useMembers } from "../../lib/queries";
+import { useFarm, useFarms, useMembers, useSeasons } from "../../lib/queries";
+import { groupOrders, orderSheetHtml, plotsLabel, productsLabel, type OrderGroup, type OrderRow } from "../../lib/workOrders";
 import { useProducts } from "../ProductsPanel";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
 import { useContractors } from "./ContractorsPanel";
 import { useMachines } from "./MachinesPanel";
 
-interface OrderRow {
-  id: string;
-  title: string;
-  plotName: string | null;
-  assigneeName: string | null;
-  dueDate: string;
-  status: "open" | "done" | "cancelled";
-  order: WorkOrder;
-  plannedAreaHa: number | null;
-  actualAreaHa: number | null;
-  costPyg?: number;
-}
-
 export function OrdersPanel() {
   const [creating, setCreating] = useState(false);
+  const farms = useFarms();
   const q = useQuery({ queryKey: ["erp", "orders"], queryFn: () => get<OrderRow[]>("/org/erp/work-orders") });
+  const groups = useMemo(() => groupOrders(q.data ?? []), [q.data]);
+  const farmName = (id: string) => farms.data?.find((f) => f.id === id)?.name ?? "";
+  const hasCost = groups.some((g) => g.costPyg !== undefined);
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-tinta-2">{t("ui.ordersIntro")}</p>
@@ -39,32 +31,58 @@ export function OrdersPanel() {
       {q.isLoading && <Spinner />}
       {q.error ? <ErrorBox error={q.error} /> : null}
       {q.data && q.data.length === 0 && <Empty>{t("ui.erpEmpty")}</Empty>}
-      {q.data && q.data.length > 0 && (
+      {groups.length > 0 && (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-linea text-left text-tinta-2">
                 <th className="py-2 pr-4 font-medium">{t("ui.orderLabor")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.orderPlot")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.orderAssignee")}</th>
+                <th className="py-2 pr-4 font-medium">{t("ui.orderPlots")}</th>
+                <th className="py-2 pr-4 font-medium">{t("ui.orderExecutor")}</th>
+                <th className="py-2 pr-4 font-medium">{t("ui.orderMachine")}</th>
+                <th className="py-2 pr-4 font-medium">{t("ui.orderProducts")}</th>
                 <th className="py-2 pr-4 font-medium">{t("ui.orderDue")}</th>
                 <th className="py-2 pr-4 font-medium">{t("ui.orderStatus")}</th>
                 <th className="py-2 pr-4 text-right font-medium">{t("ui.orderPlanned")}</th>
                 <th className="py-2 pr-4 text-right font-medium">{t("ui.orderActual")}</th>
-                {q.data[0]?.costPyg !== undefined && <th className="py-2 text-right font-medium">{t("ui.orderCost")}</th>}
+                {hasCost && <th className="py-2 pr-4 text-right font-medium">{t("ui.orderCost")}</th>}
+                <th className="py-2" />
               </tr>
             </thead>
             <tbody>
-              {q.data.map((o) => (
-                <tr key={o.id} className="border-b border-linea">
-                  <td className="py-2.5 pr-4 font-medium">{tk(`ui.orderLabor_${o.order.labor}`)}</td>
-                  <td className="py-2.5 pr-4">{o.plotName}</td>
-                  <td className="py-2.5 pr-4">{o.assigneeName}</td>
-                  <td className="num py-2.5 pr-4">{fmtIsoDate(o.dueDate)}</td>
-                  <td className="py-2.5 pr-4">{tk(`ui.orderStatus_${o.status}`)}</td>
-                  <td className="num py-2.5 pr-4 text-right">{o.plannedAreaHa !== null ? `${o.plannedAreaHa.toLocaleString("es-PY", { maximumFractionDigits: 1 })} ha` : ""}</td>
-                  <td className="num py-2.5 pr-4 text-right">{o.actualAreaHa !== null ? `${o.actualAreaHa.toLocaleString("es-PY", { maximumFractionDigits: 1 })} ha` : ""}</td>
-                  {o.costPyg !== undefined && <td className="num py-2.5 text-right">{o.status === "done" ? fmtGs(o.costPyg) : ""}</td>}
+              {groups.map((g) => (
+                <tr key={g.key} className="border-b border-linea align-top">
+                  <td className="py-2.5 pr-4 font-medium">{tk(`ui.orderLabor_${g.labor}`)}</td>
+                  <td className="py-2.5 pr-4">{plotsLabel(g.plotNames)}</td>
+                  <td className="py-2.5 pr-4">
+                    {g.contractorName ? (
+                      <>
+                        {g.contractorName}
+                        <span className="block text-xs text-tinta-2">{g.assigneeName}</span>
+                      </>
+                    ) : (
+                      g.assigneeName
+                    )}
+                  </td>
+                  <td className="py-2.5 pr-4">{g.machine ?? ""}</td>
+                  <td className="py-2.5 pr-4">{productsLabel(g.order)}</td>
+                  <td className="num py-2.5 pr-4">{fmtIsoDate(g.dueDate)}</td>
+                  <td className="py-2.5 pr-4">
+                    {g.status === "open" && g.done > 0
+                      ? t("ui.orderProgress", { done: g.done, total: g.rows.length })
+                      : tk(`ui.orderStatus_${g.status}`)}
+                  </td>
+                  <td className="num py-2.5 pr-4 text-right">{g.plannedHa !== null ? `${g.plannedHa.toLocaleString("es-PY", { maximumFractionDigits: 1 })} ha` : ""}</td>
+                  <td className="num py-2.5 pr-4 text-right">{g.actualHa !== null ? `${g.actualHa.toLocaleString("es-PY", { maximumFractionDigits: 1 })} ha` : ""}</td>
+                  {hasCost && <td className="num py-2.5 pr-4 text-right">{g.done > 0 && g.costPyg !== undefined ? fmtGs(g.costPyg) : ""}</td>}
+                  <td className="py-2.5 text-right">
+                    <button
+                      className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline print:hidden"
+                      onClick={() => printOrder(g, farmName(g.farmId))}
+                    >
+                      {t("ui.orderPrint")}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -74,6 +92,16 @@ export function OrdersPanel() {
       {creating && <OrderModal onClose={() => setCreating(false)} />}
     </div>
   );
+}
+
+function printOrder(g: OrderGroup, farmName: string) {
+  const w = window.open("", "_blank");
+  if (!w) return;
+  w.document.open();
+  w.document.write(orderSheetHtml(g, farmName));
+  w.document.close();
+  w.focus();
+  w.print();
 }
 
 interface Dose {
@@ -89,11 +117,12 @@ function OrderModal({ onClose }: { onClose: () => void }) {
   const machines = useMachines();
   const contractors = useContractors();
   const products = useProducts();
-  const [f, setF] = useState({ farmId: "", labor: "spraying", assigneeId: "", dueDate: localDate(Date.now()), areaHa: "", machineId: "", contractorId: "", note: "" });
+  const [f, setF] = useState({ farmId: "", labor: "spraying", assigneeId: "", dueDate: localDate(Date.now()), areaHa: "", machineId: "", contractorId: "", seasonId: "", note: "" });
   const [plotIds, setPlotIds] = useState<string[]>([]);
   const [doses, setDoses] = useState<Dose[]>([]);
   const farmId = f.farmId || farms.data?.[0]?.id || "";
   const farm = useFarm(farmId, !!farmId);
+  const seasons = useSeasons(farmId, !!farmId);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   const save = useMutation({
     mutationFn: async () => {
@@ -107,6 +136,7 @@ function OrderModal({ onClose }: { onClose: () => void }) {
           .map((d) => ({ productId: d.productId, name: catalog.find((p) => p.id === d.productId)?.name ?? "", dose: Number(d.dose), unit: d.unit })),
         ...(f.machineId ? { machineId: f.machineId } : {}),
         ...(f.contractorId ? { contractorId: f.contractorId } : {}),
+        ...(f.seasonId ? { seasonId: f.seasonId } : {}),
         ...(f.note.trim() ? { note: f.note.trim() } : {}),
       };
       return post("/org/erp/work-orders", { farmId, plotIds, assigneeId: f.assigneeId || members.data?.[0]?.userId, dueDate: f.dueDate, order });
@@ -174,6 +204,15 @@ function OrderModal({ onClose }: { onClose: () => void }) {
         <div className="col-span-2">
           <Field label={t("ui.orderContractor")}>
             <Select value={f.contractorId} onChange={set("contractorId")} options={[none, ...(contractors.data ?? []).map((c) => ({ value: c.id, label: c.name }))]} />
+          </Field>
+        </div>
+        <div className="col-span-2">
+          <Field label={t("ui.season")}>
+            <Select
+              value={f.seasonId}
+              onChange={set("seasonId")}
+              options={[none, ...(seasons.data?.seasons ?? []).map((x) => ({ value: x.id, label: x.name }))]}
+            />
           </Field>
         </div>
         {inputs && (

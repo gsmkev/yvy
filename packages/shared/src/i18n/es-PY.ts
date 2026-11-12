@@ -2413,6 +2413,8 @@ export const esPY = {
     delivConfirmDelete: "¿Borrar la entrega del ticket {{ticket}}?",
     alertKind_rust_risk: "Riesgo de roya de la soja",
     notifKind_rust_risk: "Riesgo de roya de la soja",
+    plotFcTitle: "Pronóstico de este lote",
+    plotFcNote: "Pronóstico en el centro del lote, actualizado el {{date}}. En estancias grandes el clima cambia de un lote a otro.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

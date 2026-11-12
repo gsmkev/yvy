@@ -1040,6 +1040,25 @@ export const forecastHours = sqliteTable(
   (t) => [primaryKey({ columns: [t.farmId, t.validAt] })],
 );
 
+/**
+ * Pronóstico diario de MET Norway por lote en estancias de más de 2.000 ha (C-03), en el centro del lote.
+ * Solo la última corrida (se reemplaza). No se sincroniza.
+ */
+export const plotForecasts = sqliteTable(
+  "plot_forecasts",
+  {
+    plotId: text("plot_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    validDate: text("valid_date").notNull(),
+    runAt: integer("run_at").notNull(),
+    tminC: real("tmin_c"),
+    tmaxC: real("tmax_c"),
+    precipMm: real("precip_mm"),
+    windKmh: real("wind_kmh"),
+  },
+  (t) => [primaryKey({ columns: [t.plotId, t.validDate] }), index("plot_forecasts_farm_idx").on(t.farmId)],
+);
+
 export const fireHotspots = sqliteTable(
   "fire_hotspots",
   {

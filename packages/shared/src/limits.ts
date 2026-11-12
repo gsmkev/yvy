@@ -83,6 +83,10 @@ export const LIMITS = {
     coordDecimals: 4,
     /** Horas de pronóstico que se guardan para las ventanas de pulverización (A-13). */
     hourlyHorizonHours: 48,
+    /** C-03: pronóstico por lote solo en estancias de más de esta superficie (ha); como mucho esta cantidad de lotes. */
+    plotForecastMinFarmHa: 2_000,
+    plotForecastMaxPlots: 60,
+    plotForecastDays: 10,
   },
   /** Condiciones para pulverizar (A-13): viento en km/h, Delta T en °C y sin lluvia. */
   spray: {

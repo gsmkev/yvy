@@ -99,6 +99,7 @@ ingest.post("/plot-index-stats", async (c) => {
             p10: z.number().min(-1).max(1),
             p90: z.number().min(-1).max(1),
             validPct: z.number().min(0).max(100),
+            lowConfidence: z.boolean().default(false),
           }),
         )
         .min(1)

@@ -260,6 +260,13 @@
       "when": 1794438061942,
       "tag": "0036_special_switch",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "6",
+      "when": 1794455717485,
+      "tag": "0037_volatile_senator_kelly",
+      "breakpoints": true
     }
   ]
 }

@@ -14,9 +14,9 @@ import { LineChart } from "./charts";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Select, Spinner, Stat, toast } from "./ui";
 
 interface Ndvi {
-  series: { acquiredAt: number; mean: number; p10: number; p90: number; validPct: number }[];
+  series: { acquiredAt: number; mean: number; p10: number; p90: number; validPct: number; lowConfidence: boolean }[];
   farmAvg: { acquiredAt: number; mean: number }[];
-  current: { acquiredAt: number; mean: number } | null;
+  current: { acquiredAt: number; mean: number; lowConfidence: boolean } | null;
   deltaVsFarmPct: number | null;
 }
 
@@ -175,6 +175,11 @@ export function PlotPanel({
                   </div>
                 )}
               </div>
+              {ndvi.data.current.lowConfidence && (
+                <p className="mt-2 rounded border border-trigo/60 px-2 py-1 text-xs text-tinta-2" role="note">
+                  <strong>{t("ui.lowConfidence")}.</strong> {t("ui.lowConfidenceNote")}
+                </p>
+              )}
               <h3 className="eyebrow mt-5 mb-1">{t("ui.ndviCurve")}</h3>
               <LineChart
                 ariaLabel={t("ui.ndviCurve")}

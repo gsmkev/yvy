@@ -284,9 +284,10 @@ export async function plotNdvi(sdb: ScopedDb, plotId: string) {
         p10: s.plotIndexStats.p10,
         p90: s.plotIndexStats.p90,
         validPct: s.plotIndexStats.validPct,
+        lowConfidence: s.plotIndexStats.lowConfidence,
       })
       .from(s.plotIndexStats)
-      .where(and(eq(s.plotIndexStats.plotId, plotId), gte(s.plotIndexStats.acquiredAt, since)))
+      .where(and(eq(s.plotIndexStats.plotId, plotId), eq(s.plotIndexStats.idx, "ndvi"), gte(s.plotIndexStats.acquiredAt, since)))
       .orderBy(asc(s.plotIndexStats.acquiredAt)),
     // Promedio del campo para el mismo cultivo (o tipo de lote) en cada escena.
     sdb.db
@@ -301,6 +302,7 @@ export async function plotNdvi(sdb: ScopedDb, plotId: string) {
           eq(s.plots.farmId, plot.farmId),
           isNull(s.plots.deletedAt),
           plot.crop ? eq(s.plots.crop, plot.crop) : eq(s.plots.kind, plot.kind),
+          eq(s.plotIndexStats.idx, "ndvi"),
           gte(s.plotIndexStats.acquiredAt, since),
         ),
       )

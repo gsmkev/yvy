@@ -141,4 +141,27 @@ describe("/ingest", () => {
     expect(a.ndviAt).toBeGreaterThan(a.ndviPrevAt);
     expect(b).toMatchObject({ ndviMean: null, ndviAt: null, ndviPrevMean: null, lastRecordAt: null });
   });
+
+  it("S-11: el dato de un lote fino se guarda y se muestra como poco confiable", async () => {
+    const owner = await createOrgWithOwner();
+    const { plotIds } = await createFarmWithPlots(owner.token, 2);
+    const row = (plotId: string, lowConfidence?: boolean) => ({
+      plotId,
+      sceneId: "s-fino",
+      acquiredAt: Date.now() - 86_400_000,
+      idx: "ndvi",
+      mean: 0.5,
+      p10: 0.4,
+      p90: 0.6,
+      validPct: 90,
+      ...(lowConfidence === undefined ? {} : { lowConfidence }),
+    });
+    const body = JSON.stringify({ rows: [row(plotIds[0]!, true), row(plotIds[1]!)] });
+    const r = await call("POST", "/ingest/plot-index-stats", { body, headers: await signed("POST", "/ingest/plot-index-stats", body) });
+    expect(r.status).toBe(200);
+    const a = await call<any>("GET", `/org/plots/${plotIds[0]}/ndvi`, { token: owner.token });
+    expect(a.body.current.lowConfidence).toBe(true);
+    const b = await call<any>("GET", `/org/plots/${plotIds[1]}/ndvi`, { token: owner.token });
+    expect(b.body.current.lowConfidence).toBe(false);
+  });
 });

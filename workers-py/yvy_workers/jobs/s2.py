@@ -41,6 +41,7 @@ MIN_VALID_PCT = 60.0  # RF-51
 MAX_SCENE_CLOUD = 80.0
 RES = 10.0
 MAX_ITEMS = 400  # 180 días x 2 satélites x hasta 3 teselas MGRS entran de sobra
+THIN_PLOT_M = 30.0  # S-11: un lote más angosto que esto casi no tiene píxeles de 10 m "puros"
 ATTRIBUTION = "Contiene datos modificados de Copernicus Sentinel"
 
 
@@ -120,11 +121,21 @@ def compute_ndvi(red: np.ndarray, nir: np.ndarray, valid: np.ndarray) -> tuple[n
     return np.where(ok, ndvi, np.nan), ok
 
 
-def plot_stats(ndvi: np.ndarray, ok: np.ndarray, grid: Grid) -> list[dict[str, Any]]:
-    """Media, p10, p90 y % de píxeles válidos por lote. Descarta lotes con < 60 % válido (RF-51)."""
+def is_thin(geom: BaseGeometry, width_m: float = THIN_PLOT_M) -> bool:
+    """S-11: ¿el lote es más angosto que `width_m` en algún tramo? (geom en metros): si no sobrevive a un retroceso de medio ancho."""
+    return geom.buffer(-width_m / 2).is_empty
+
+
+def plot_stats(ndvi: np.ndarray, ok: np.ndarray, grid: Grid, idx: str = "ndvi") -> list[dict[str, Any]]:
+    """Media, p10, p90 y % de píxeles válidos por lote. Descarta lotes con < 60 % válido (RF-51).
+
+    Los lotes de menos de 30 m de ancho usan todos los píxeles que toca el polígono (si no, quedan sin ninguno) y
+    se marcan `lowConfidence`: esos píxeles mezclan el lote con lo de al lado (S-11).
+    """
     out = []
     for plot_id, geom in grid.plots:
-        inside = geometry_mask([geom], out_shape=(grid.height, grid.width), transform=grid.transform, invert=True, all_touched=False)
+        thin = is_thin(geom)
+        inside = geometry_mask([geom], out_shape=(grid.height, grid.width), transform=grid.transform, invert=True, all_touched=thin)
         total = int(inside.sum())
         if total == 0:
             continue
@@ -135,7 +146,8 @@ def plot_stats(ndvi: np.ndarray, ok: np.ndarray, grid: Grid) -> list[dict[str, A
         out.append(
             {
                 "plotId": plot_id,
-                "idx": "ndvi",
+                "idx": idx,
+                "lowConfidence": thin,
                 "mean": round(float(np.mean(vals)), 4),
                 "p10": round(float(np.percentile(vals, 10)), 4),
                 "p90": round(float(np.percentile(vals, 90)), 4),

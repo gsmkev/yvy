@@ -2125,6 +2125,9 @@ export const esPY = {
     forageMethod_ndvi: "por NDVI",
     forageMethod_both: "altura y NDVI",
     forageHint: "Estimación orientativa en kg de materia seca (MS). Por altura: {{low}}, {{mid}} o {{high}} kg MS/ha por cm según cobertura baja, media o alta. Por NDVI: (NDVI − {{base}}) × {{slope}}. Con los dos, {{w}} % altura. Aprovechable: {{use}} % del forraje. Consumo: {{dm}} kg MS por UA y día. Son coeficientes por defecto a revisar por un técnico; no reemplazan una medición de campo.",
+    // sat-p2
+    lowConfidence: "Poco confiable",
+    lowConfidenceNote: "Lote muy angosto (menos de 30 m): los píxeles de la imagen se mezclan con el borde, tomá este valor como orientativo.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

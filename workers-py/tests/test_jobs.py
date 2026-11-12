@@ -154,3 +154,17 @@ def test_ingest_reintenta_errores_de_red(monkeypatch):
     api = IngestClient("https://api.test", "secreto", httpx.Client(transport=httpx.MockTransport(handler)))
     assert api._call("POST", "/ingest/climate-daily", {"rows": []}) == {"written": 1}
     assert n["i"] == 3
+def test_lote_fino_usa_pixeles_tocados_y_se_marca_poco_confiable():
+    """S-11: un lote de ~20 m de ancho no tiene ningún píxel de 10 m con el centro adentro de forma fiable."""
+    from yvy_workers.jobs.s2 import is_thin
+
+    thin = {"id": "fino", "geometry": {"type": "Polygon", "coordinates": [[[-55.9500, -27.1500], [-55.9498, -27.1500], [-55.9498, -27.1560], [-55.9500, -27.1560], [-55.9500, -27.1500]]]}}
+    geom = {"farm": FARM, "plots": [thin, GEOM["plots"][1]]}
+    grid = make_grid(geom)
+    assert is_thin(grid.plots[0][1]) and not is_thin(grid.plots[1][1])
+    shape = (grid.height, grid.width)
+    ndvi, ok = compute_ndvi(np.full(shape, 0.05, "float32"), np.full(shape, 0.45, "float32"), np.ones(shape, bool))
+    stats = {s["plotId"]: s for s in plot_stats(ndvi, ok, grid)}
+    assert stats["fino"]["lowConfidence"] is True
+    assert stats["b"]["lowConfidence"] is False
+    assert stats["fino"]["mean"] == pytest.approx(0.8, abs=1e-3)

@@ -1,5 +1,6 @@
 /** Elegir la fecha de la imagen y comparar dos fechas con una cortina (S-04). */
 import { useEffect, useState } from "react";
+import { layerThumb, type Bounds } from "../lib/sceneThumbs";
 import { fmtDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { layerDates, nextFrame, TIMELAPSE_SPEEDS, timelapseFrames, type Camera } from "../lib/scenes";
@@ -9,28 +10,85 @@ import { FarmMap, type FarmMapProps } from "./FarmMap";
 const sel =
   "h-8 w-full cursor-pointer rounded border border-white/20 bg-surco px-2 text-xs text-lino outline-none focus:border-lino";
 
+/** Miniatura de una fecha: una tesela del archivo de esa capa, pedida solo cuando se ve. */
+function Thumb({ layer, tilesBaseUrl, bounds }: { layer: Layer; tilesBaseUrl: string; bounds: Bounds }) {
+  const [src, setSrc] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    let live = true;
+    layerThumb(tilesBaseUrl, layer, bounds).then((u) => {
+      if (!live) return;
+      setSrc(u);
+      setDone(true);
+    });
+    return () => {
+      live = false;
+    };
+  }, [tilesBaseUrl, layer.pmtilesPath]);
+  return src ? (
+    <img src={src} alt="" className="aspect-square w-full rounded-sm object-cover" />
+  ) : (
+    <span className={`block aspect-square w-full rounded-sm bg-white/10 ${done ? "" : "animate-pulse"}`} aria-hidden />
+  );
+}
+
 function DatePick({
   label,
   layers,
   value,
   onChange,
+  thumbs,
 }: {
   label: string;
   layers: Layer[];
   value: string;
   onChange: (id: string) => void;
+  /** Con esto el selector ofrece ver una miniatura por fecha. */
+  thumbs?: { tilesBaseUrl: string; bounds: Bounds };
 }) {
+  const [open, setOpen] = useState(false);
   return (
-    <label className="flex flex-col gap-1">
-      <span className="text-lino/70">{label}</span>
-      <select className={sel} value={value} onChange={(e) => onChange(e.target.value)}>
-        {layers.map((l) => (
-          <option key={l.id} value={l.id}>
-            {fmtDate(l.acquiredAt)}
-          </option>
-        ))}
-      </select>
-    </label>
+    <div className="flex flex-col gap-1">
+      <label className="flex flex-col gap-1">
+        <span className="text-lino/70">{label}</span>
+        <select className={sel} value={value} onChange={(e) => onChange(e.target.value)}>
+          {layers.map((l) => (
+            <option key={l.id} value={l.id}>
+              {fmtDate(l.acquiredAt)}
+            </option>
+          ))}
+        </select>
+      </label>
+      {thumbs && (
+        <>
+          <button
+            type="button"
+            aria-expanded={open}
+            onClick={() => setOpen(!open)}
+            className="cursor-pointer self-start text-lino/70 underline-offset-4 hover:underline"
+          >
+            {open ? t("ui.sceneThumbsHide") : t("ui.sceneThumbsShow")}
+          </button>
+          {open && (
+            <ul className="grid max-h-44 grid-cols-3 gap-1.5 overflow-y-auto" aria-label={label}>
+              {layers.map((l) => (
+                <li key={l.id}>
+                  <button
+                    type="button"
+                    aria-pressed={l.id === value}
+                    onClick={() => onChange(l.id)}
+                    className={`flex w-full cursor-pointer flex-col gap-0.5 rounded-sm border p-0.5 text-center text-[10px] leading-tight ${l.id === value ? "border-lino" : "border-transparent hover:border-white/30"}`}
+                  >
+                    <Thumb layer={l} tilesBaseUrl={thumbs.tilesBaseUrl} bounds={thumbs.bounds} />
+                    <span className="num">{fmtDate(l.acquiredAt)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </div>
   );
 }
 
@@ -98,8 +156,13 @@ export function SceneControls(props: {
   canCompare: boolean;
   onToggleCompare: () => void;
   onCompare: (c: { left: string; right: string }) => void;
+  /** Base de las teselas y límites de la estancia; sin esto no hay miniaturas. */
+  tilesBaseUrl?: string;
+  farmBounds?: Bounds | null;
 }) {
   const dates = layerDates(props.layers, props.kind);
+  const thumbs =
+    props.tilesBaseUrl && props.farmBounds ? { tilesBaseUrl: props.tilesBaseUrl, bounds: props.farmBounds } : undefined;
   const [animating, setAnimating] = useState(false);
   // Cambiar de índice o entrar a comparar corta la animación
   useEffect(() => setAnimating(false), [props.kind, props.compare === null]);
@@ -115,16 +178,18 @@ export function SceneControls(props: {
             layers={dates}
             value={props.compare.left}
             onChange={(left) => props.onCompare({ ...props.compare!, left })}
+            thumbs={thumbs}
           />
           <DatePick
             label={t("ui.compareRight")}
             layers={dates}
             value={props.compare.right}
             onChange={(right) => props.onCompare({ ...props.compare!, right })}
+            thumbs={thumbs}
           />
         </>
       ) : (
-        <DatePick label={t("ui.sceneDate")} layers={dates} value={props.picked} onChange={props.onPick} />
+        <DatePick label={t("ui.sceneDate")} layers={dates} value={props.picked} onChange={props.onPick} thumbs={thumbs} />
       )}
       {props.canCompare ? (
         <div className="flex gap-4">

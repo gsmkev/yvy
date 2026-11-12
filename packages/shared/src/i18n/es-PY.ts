@@ -1863,6 +1863,8 @@ export const esPY = {
     leadReportMissing: "Este enlace no existe o todavía no está listo el informe.",
     leadReportCta: "Seguí tu campo todo el año con Yvy",
     sceneDate: "Fecha de la imagen",
+    sceneThumbsShow: "Ver miniaturas",
+    sceneThumbsHide: "Ocultar miniaturas",
     compare: "Comparar",
     compareEnd: "Dejar de comparar",
     compareLeft: "Izquierda",

@@ -138,8 +138,8 @@ export const can = {
   scheduleReports: (r: Role) => r === "owner" || r === "admin",
   /** ADR 0004 (ERP): maestros, compras, costos y montos son de dueño y administrador. */
   manageErp: (r: Role) => r === "owner" || r === "admin",
-  /** El agrónomo ve las cantidades de stock (nunca montos); los roles de campo no entran al ERP. */
-  viewStock: (r: Role) => !isFieldRole(r),
+  /** El agrónomo ve las cantidades de stock (nunca montos); el supervisor y los roles de campo no entran al ERP. */
+  viewStock: (r: Role) => r === "owner" || r === "admin" || r === "agronomist",
   /** G-21: alta y edición de animales con caravana; los roles de campo los consultan (también sin señal) pero no los editan. */
   editAnimals: (r: Role) => !isFieldRole(r),
   /** S-03: pedir la historia de vigor desde 2017 gasta minutos de cómputo: dueño y administrador. */

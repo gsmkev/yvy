@@ -13,6 +13,7 @@ import { OrdersPanel } from "../components/erp/OrdersPanel";
 import { PurchasesPanel } from "../components/erp/PurchasesPanel";
 import { ResultsPanel } from "../components/erp/ResultsPanel";
 import { MachinesPanel } from "../components/erp/MachinesPanel";
+import { GrainSalesPanel } from "../components/erp/GrainSalesPanel";
 import { LaborCostPanel } from "../components/erp/LaborCostPanel";
 import { MaintenancePanel } from "../components/erp/MaintenancePanel";
 import { MinStockPanel } from "../components/erp/MinStockPanel";
@@ -35,6 +36,7 @@ const SECTIONS: Section[] = [
   { id: "machines", label: "ui.adminSection_machines", render: () => <MachinesPanel /> },
   { id: "warehouses", label: "ui.adminSection_warehouses", render: () => <WarehousesPanel /> },
   { id: "purchases", label: "ui.adminSection_purchases", render: () => <PurchasesPanel /> },
+  { id: "grain", label: "ui.adminSection_grain", render: () => <GrainSalesPanel /> },
   { id: "stock", label: "ui.adminSection_stock", render: () => <StockPanel /> },
   { id: "minstock", label: "ui.adminSection_minstock", render: () => <MinStockPanel /> },
   { id: "maintenance", label: "ui.adminSection_maintenance", render: () => <MaintenancePanel /> },

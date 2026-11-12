@@ -2,22 +2,38 @@
 name: Jobs de datos
 on:
   schedule:
-    - cron: "15 13 * * *" # s2_ingest diario (después del paso de Sentinel-2 por Paraguay)
-    - cron: "30 10 * * *" # chirps_daily
+    # GitHub puede saltear o demorar horarios con carga: los jobs diarios corren en varios turnos y solo procesan lo que falta
+    - cron: "15 13,19 * * *" # s2_ingest (después del paso de Sentinel-2 por Paraguay)
+    - cron: "30 10,16,22 * * *" # chirps_daily
     - cron: "40 */3 * * *" # firms_hotspots cada 3 h
-    - cron: "0 4 * * 0" # semanal: climatología y mapa base de estancias nuevas
+    - cron: "0 4 * * 0" # semanal: climatología, mapa base e informe de riesgo (cada 90 días) de estancias nuevas
     - cron: "0 5 1 */3 *" # mapa base de todas cada 3 meses
+    - cron: "0 9 * * 1" # lunes: PDF del parte semanal (R-02); el Worker manda los emails a las 10:00 UTC
+    - cron: "0 6 15 1,4,7,10 *" # trimestral: indicador EUDR (S-30) de todas las estancias (Sentinel-2 de la estación seca)
   workflow_dispatch:
     inputs:
       job:
         description: Job
         type: choice
-        options: [s2_ingest, s2_basemap, chirps_daily, firms_hotspots, climatology_build]
+        options:
+          [
+            weekly,
+            new_farm,
+            s2_ingest,
+            s2_basemap,
+            chirps_daily,
+            firms_hotspots,
+            climatology_build,
+            risk_report,
+            weekly_report,
+            eudr,
+          ]
       farm:
-        description: Id de estancia (opcional)
+        description: "Id de estancia (obligatorio para new_farm; eudr: indicador de deforestación de esa estancia, vacío = todas)"
         required: false
 concurrency:
-  group: jobs-${{ github.event.schedule || inputs.job }}
+  # new_farm por estancia: dos estancias creadas a la vez no se cancelan entre sí en la cola
+  group: jobs-${{ github.event.schedule || format('{0}-{1}', inputs.job, inputs.farm) }}
   cancel-in-progress: false
 jobs:
   run:
@@ -41,16 +57,23 @@ jobs:
         id: pick
         run: |
           case "${{ github.event.schedule }}" in
-            "15 13 * * *") echo "cmd=s2_ingest" >> $GITHUB_OUTPUT ;;
-            "30 10 * * *") echo "cmd=chirps_daily" >> $GITHUB_OUTPUT ;;
+            "15 13,19 * * *") echo "cmd=s2_ingest" >> $GITHUB_OUTPUT ;;
+            "30 10,16,22 * * *") echo "cmd=chirps_daily" >> $GITHUB_OUTPUT ;;
             "40 */3 * * *") echo "cmd=firms_hotspots" >> $GITHUB_OUTPUT ;;
             "0 4 * * 0") echo "cmd=weekly" >> $GITHUB_OUTPUT ;;
             "0 5 1 */3 *") echo "cmd=s2_basemap" >> $GITHUB_OUTPUT ;;
+            "0 9 * * 1") echo "cmd=weekly_report" >> $GITHUB_OUTPUT ;;
+            "0 6 15 1,4,7,10 *") echo "cmd=eudr" >> $GITHUB_OUTPUT ;;
             *) echo "cmd=${{ inputs.job }}" >> $GITHUB_OUTPUT ;;
           esac
       - if: steps.pick.outputs.cmd == 'weekly'
         run: |
           uv run --frozen python -m yvy_workers climatology_build --only-missing
           uv run --frozen python -m yvy_workers s2_basemap --only-missing
+          uv run --frozen python -m yvy_workers risk_report --only-missing
+          # Historia de vigor de 180 días: solo procesa las pasadas que cada estancia todavía no tiene
+          uv run --frozen python -m yvy_workers s2_ingest --backfill
       - if: steps.pick.outputs.cmd != 'weekly'
-        run: uv run --frozen python -m yvy_workers ${{ steps.pick.outputs.cmd }} ${{ inputs.farm && format('--farm {0}', inputs.farm) || '' }}
+        env:
+          FARM: ${{ inputs.farm }}
+        run: uv run --frozen python -m yvy_workers ${{ steps.pick.outputs.cmd }} ${FARM:+--farm "$FARM"}

@@ -25,6 +25,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint && pnpm typecheck && pnpm test
       - run: pnpm --filter web build
+        env:
+          VITE_SENTRY_DSN: ${{ vars.SENTRY_DSN_WEB }}
       - name: Configuración de producción
         working-directory: apps/api
         env:
@@ -44,6 +46,9 @@ jobs:
           ALLOW_SIGNUP: ${{ vars.ALLOW_SIGNUP || 'true' }}
           ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS }}
           OPS_EMAIL: ${{ vars.OPS_EMAIL }}
+          SENTRY_DSN: ${{ vars.SENTRY_DSN_API }}
+          DEMO_ORG_ID: ${{ vars.DEMO_ORG_ID }}
+          DEMO_USER_ID: ${{ vars.DEMO_USER_ID }}
         run: >
           npx wrangler deploy
           --var "APP_ENV:production"
@@ -53,5 +58,8 @@ jobs:
           --var "ALLOW_SIGNUP:$ALLOW_SIGNUP"
           --var "ADMIN_EMAILS:$ADMIN_EMAILS"
           --var "OPS_EMAIL:$OPS_EMAIL"
+          --var "SENTRY_DSN:$SENTRY_DSN"
+          --var "DEMO_ORG_ID:$DEMO_ORG_ID"
+          --var "DEMO_USER_ID:$DEMO_USER_ID"
       - name: Prueba de humo
         run: curl -fsS "${{ vars.APP_URL }}/health"

@@ -20,6 +20,7 @@ import {
   Snowflake,
   CloudRainWind,
   SunDim,
+  Thermometer,
   type LucideIcon,
 } from "lucide-react-native";
 import type { RecordKind } from "@yvy/shared";
@@ -47,6 +48,7 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
 
 export const ALERT_ICON: Record<string, LucideIcon> = {
   water_low: Droplets,
+  heat_stress: Thermometer,
   frost: Snowflake,
   excess_rain: CloudRainWind,
   drought: SunDim,

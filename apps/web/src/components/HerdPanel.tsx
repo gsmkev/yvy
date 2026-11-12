@@ -6,6 +6,7 @@ import { get, put } from "../lib/api";
 import { fmtDay, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useMe } from "../lib/queries";
+import { HeatStressCard } from "./HeatStress";
 import { Button, Empty, ErrorBox, Field, Input, Spinner } from "./ui";
 
 const dec = new Intl.NumberFormat("es-PY", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -123,6 +124,8 @@ export function HerdPanel({ farmId }: { farmId: string }) {
         )}
         {save.error ? <ErrorBox error={save.error} /> : null}
       </form>
+
+      <HeatStressCard farmId={farmId} />
 
       <p className="text-xs text-tinta-2">
         {t("ui.herdEquivalents", {

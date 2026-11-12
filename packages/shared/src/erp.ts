@@ -728,3 +728,34 @@ export function contractProgress(contractTons: number, deliveredTons: number, se
     toSettleTons: q(Math.max(0, deliveredTons - settledTons)),
   };
 }
+
+// ---------- Compras y ventas de hacienda (E-35) ----------
+
+export const CATTLE_DEAL_KINDS = ["buy", "sell"] as const;
+export type CattleDealKind = (typeof CATTLE_DEAL_KINDS)[number];
+
+export const cattleDealInput = z.object({
+  kind: z.enum(CATTLE_DEAL_KINDS),
+  date: isoDate,
+  partyId: uuid.nullish(),
+  farmId: uuid.nullish(),
+  seasonId: uuid.nullish(),
+  category: optText(60),
+  heads: z.number().int().min(1).max(100_000),
+  totalKg: z.number().positive().max(100_000_000),
+  /** Importe total en unidad menor de la moneda. */
+  amount: minorAmount.refine((n) => n > 0, "El importe tiene que ser mayor que cero"),
+  currency: currencySchema,
+  guideNumber: optText(40),
+  dueDate: isoDate.nullish(),
+  note: optText(300),
+});
+
+/** Precio por kilo vivo (en la unidad menor de la moneda) y kilos por cabeza. */
+export const cattleFigures = (amount: number, totalKg: number, heads: number) => ({
+  pricePerKg: totalKg > 0 ? Math.round((amount / totalKg) * 100) / 100 : null,
+  kgPerHead: heads > 0 ? Math.round((totalKg / heads) * 10) / 10 : null,
+});
+
+/** Costo por kilo de carne vendida: costos de ganadería sobre kilos vendidos (guaraníes). Null sin kilos vendidos. */
+export const costPerKgBeef = (livestockCostPyg: number, kgSold: number): number | null => (kgSold > 0 ? Math.round(livestockCostPyg / kgSold) : null);

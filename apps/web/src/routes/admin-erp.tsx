@@ -2,6 +2,7 @@
 import type { ReactNode } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { BudgetPanel } from "../components/erp/BudgetPanel";
+import { CattlePanel } from "../components/erp/CattlePanel";
 import { ContractorsPanel } from "../components/erp/ContractorsPanel";
 import { CostsPanel } from "../components/erp/CostsPanel";
 import { StaffPanel } from "../components/erp/StaffPanel";
@@ -37,6 +38,7 @@ const SECTIONS: Section[] = [
   { id: "warehouses", label: "ui.adminSection_warehouses", render: () => <WarehousesPanel /> },
   { id: "purchases", label: "ui.adminSection_purchases", render: () => <PurchasesPanel /> },
   { id: "grain", label: "ui.adminSection_grain", render: () => <GrainSalesPanel /> },
+  { id: "cattle", label: "ui.adminSection_cattle", render: () => <CattlePanel /> },
   { id: "stock", label: "ui.adminSection_stock", render: () => <StockPanel /> },
   { id: "minstock", label: "ui.adminSection_minstock", render: () => <MinStockPanel /> },
   { id: "maintenance", label: "ui.adminSection_maintenance", render: () => <MaintenancePanel /> },

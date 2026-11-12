@@ -2647,6 +2647,13 @@ export const esPY = {
     apiTokenRevoke: "Revocar",
     apiTokenName: "Nombre (para qué sistema)",
     apiTokenCreate: "Crear token",
+    googleSignIn: "Ingresar con Google",
+    googleError_state: "No pudimos confirmar el ingreso con Google. Probá de nuevo.",
+    googleError_denied: "Cancelaste el ingreso con Google.",
+    googleError_exchange: "Google no respondió bien. Probá de nuevo o ingresá con el código por email.",
+    googleError_unverified: "Google no confirmó tu email. Ingresá con el código por email.",
+    googleError_no_account: "No hay una cuenta de Yvy con ese email. Registrate primero con ese mismo email.",
+    googleError_no_org: "Tu cuenta no pertenece a ninguna organización activa.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

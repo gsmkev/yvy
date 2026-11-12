@@ -207,3 +207,20 @@ pnpm --filter api exec wrangler d1 execute yvy --remote --file restaurar.sql
 Las filas se insertan con `INSERT OR IGNORE` y una versión de sync nueva, así los celulares las vuelven a bajar. Los nombres de los
 archivos de un mes se ven en el panel de R2 (Cloudflare → R2 → yvy-media → `archive/`).
 
+## Ingreso con Google (opcional, P-07)
+
+Sin las dos variables no existe `/auth/google` y la web no muestra el botón. Solo entra quien **ya tiene cuenta**: se vincula por el
+email que Google verificó (no crea organizaciones; para eso está el registro). No se guarda nada de Google en la base.
+
+1. Google Cloud Console → APIs y servicios → Credenciales → *Crear credenciales* → **ID de cliente de OAuth**, tipo *Aplicación web*
+   (pantalla de consentimiento: alcances `openid`, `email`, `profile`).
+2. *URI de redireccionamiento autorizados*: `<APP_URL>/auth/google/callback` (ej. `https://yvy-api.<subdominio>.workers.dev/auth/google/callback`;
+   en desarrollo `http://localhost:8787/auth/google/callback`).
+3. Cargá los datos en el Worker:
+   ```bash
+   cd apps/api
+   echo "<id>.apps.googleusercontent.com" | pnpm wrangler secret put GOOGLE_CLIENT_ID
+   echo "<secreto>" | pnpm wrangler secret put GOOGLE_CLIENT_SECRET
+   ```
+   En desarrollo van en `apps/api/.dev.vars` (ver `.dev.vars.example`). `APP_URL` tiene que ser la dirección pública exacta.
+

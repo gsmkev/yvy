@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { LIMITS } from "@yvy/shared";
-import { attendanceDayInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
+import { attendanceDayInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { HTTPException } from "hono/http-exception";
 import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
@@ -14,6 +14,7 @@ import { fixDefaultWarehouse } from "../db/stock";
 import { adjustStock, consumeStock, deleteMove, expiringLots, listMoves, purchaseStock, requireWarehouseUnused, stockSummary, transferStock } from "../db/stock-moves";
 import { deleteMachineCost, laborComparison, listMachineCosts, saveMachineCost } from "../db/labor-cost";
 import { attendanceSummary, deleteAttendance, listAttendance, markDay } from "../db/attendance";
+import { balances, createPayment, deletePayment, employeeStatement, listPayments } from "../db/employee-payments";
 import { createLog, deleteLog, duePlans, listLogs } from "../db/maintenance";
 import { deleteMinimum, listMinimums, lowStock, saveMinimum } from "../db/stock-minimums";
 import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
@@ -303,3 +304,14 @@ erp.delete("/attendance/:id", async (c) => {
   await deleteAttendance(c.var.sdb, c.req.param("id"));
   return c.json({ ok: true });
 });
+
+// ---------- Adelantos, pagos y saldo por empleado (E-26) ----------
+
+erp.get("/employee-payments", async (c) => c.json(await listPayments(c.var.sdb, parse(uuid.optional(), c.req.query("employeeId")))));
+erp.post("/employee-payments", async (c) => c.json(await createPayment(c.var.sdb, parse(employeePaymentInput, await readJson(c.req))), 201));
+erp.delete("/employee-payments/:id", async (c) => {
+  await deletePayment(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+erp.get("/employees/balance", async (c) => c.json(await balances(c.var.sdb, parse(isoDate.optional(), c.req.query("to")))));
+erp.get("/employees/:id/statement", async (c) => c.json(await employeeStatement(c.var.sdb, parse(uuid, c.req.param("id")))));

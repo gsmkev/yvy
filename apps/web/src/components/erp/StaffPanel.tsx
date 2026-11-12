@@ -1,13 +1,13 @@
 /** Personal: empleados con su jornal y asistencia diaria con lote y labor (E-25). */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { localDate } from "@yvy/shared";
+import { EMPLOYEE_PAYMENT_KINDS, localDate } from "@yvy/shared";
 import { del, get, post, qs } from "../../lib/api";
 import { fmtIsoDate } from "../../lib/format";
-import { t } from "../../lib/i18n";
+import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
-import { Button, Empty, ErrorBox, Field, Input, Select, Spinner, Tabs, toast } from "../ui";
+import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
 import { MasterPanel, useErpList, type FieldDef } from "./MasterPanel";
 
 export interface Employee {
@@ -31,19 +31,19 @@ interface Attendance {
 
 
 
-export function StaffPanel({ extra }: { extra?: { id: string; label: string; render: () => React.ReactNode }[] }) {
+export function StaffPanel() {
   const [tab, setTab] = useState<string>("attendance");
   const tabs = [
     { id: "attendance", label: t("ui.staffAttendance") },
+    { id: "balances", label: t("ui.staffBalances") },
     { id: "employees", label: t("ui.staffEmployees") },
-    ...(extra ?? []).map((x) => ({ id: x.id, label: x.label })),
   ];
   return (
     <div className="flex flex-col gap-4">
       <Tabs<string> tabs={tabs} value={tab} onChange={setTab} />
       {tab === "attendance" && <AttendanceSheet />}
       {tab === "employees" && <EmployeesList />}
-      {extra?.find((x) => x.id === tab)?.render()}
+      {tab === "balances" && <BalancesTab />}
     </div>
   );
 }
@@ -208,5 +208,171 @@ function AttendanceSheet() {
         </table>
       )}
     </div>
+  );
+}
+
+interface Balance {
+  employeeId: string;
+  name: string;
+  days: number;
+  accruedPyg: number;
+  advancesPyg: number;
+  paymentsPyg: number;
+  balancePyg: number;
+}
+interface Line {
+  id: string;
+  date: string;
+  kind: "wage" | "advance" | "payment";
+  amountPyg: number;
+  balancePyg: number;
+  note: string | null;
+}
+
+/** Saldo por empleado (devengado - adelantos - pagos), con su cuenta corriente y el alta de adelantos y pagos. */
+function BalancesTab() {
+  const q = useQuery({ queryKey: ["erp", "employee-balance"], queryFn: () => get<Balance[]>("/org/erp/employees/balance") });
+  const [paying, setPaying] = useState<Balance | null>(null);
+  const [viewing, setViewing] = useState<Balance | null>(null);
+  if (q.isLoading) return <Spinner />;
+  if (q.error) return <ErrorBox error={q.error} />;
+  const rows = q.data ?? [];
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-tinta-2">{t("ui.balIntro")}</p>
+      {rows.length === 0 ? (
+        <Empty>{t("ui.attNoStaff")}</Empty>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-linea text-left text-tinta-2">
+                <th className="py-2 pr-4 font-medium">{t("ui.staffName")}</th>
+                <th className="py-2 pr-4 text-right font-medium">{t("ui.balDays")}</th>
+                <th className="py-2 pr-4 text-right font-medium">{t("ui.balAccrued")}</th>
+                <th className="py-2 pr-4 text-right font-medium">{t("ui.balAdvances")}</th>
+                <th className="py-2 pr-4 text-right font-medium">{t("ui.balPayments")}</th>
+                <th className="py-2 pr-4 text-right font-medium">{t("ui.balBalance")}</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.employeeId} className="border-b border-linea">
+                  <td className="py-2.5 pr-4 font-medium">{r.name}</td>
+                  <td className="num py-2.5 pr-4 text-right">{r.days}</td>
+                  <td className="num py-2.5 pr-4 text-right">{fmtGs(r.accruedPyg)}</td>
+                  <td className="num py-2.5 pr-4 text-right">{fmtGs(r.advancesPyg)}</td>
+                  <td className="num py-2.5 pr-4 text-right">{fmtGs(r.paymentsPyg)}</td>
+                  <td className={`num py-2.5 pr-4 text-right font-medium ${r.balancePyg < 0 ? "text-peligro" : ""}`}>{fmtGs(r.balancePyg)}</td>
+                  <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
+                    <button className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setPaying(r)}>
+                      {t("ui.balPay")}
+                    </button>
+                    <button className="cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setViewing(r)}>
+                      {t("ui.balStatement")}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {paying && <PayModal row={paying} onClose={() => setPaying(null)} />}
+      {viewing && <StatementModal row={viewing} onClose={() => setViewing(null)} />}
+    </div>
+  );
+}
+
+function PayModal({ row, onClose }: { row: Balance; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [kind, setKind] = useState("advance");
+  const [date, setDate] = useState(localDate(Date.now()));
+  const [amount, setAmount] = useState(row.balancePyg > 0 ? String(row.balancePyg) : "");
+  const [note, setNote] = useState("");
+  const save = useMutation({
+    mutationFn: () => post("/org/erp/employee-payments", { employeeId: row.employeeId, kind, date, amountPyg: Number(amount), note: note || null }),
+    onSuccess: () => {
+      toast(t("ui.erpSaved"));
+      qc.invalidateQueries({ queryKey: ["erp"] });
+      onClose();
+    },
+  });
+  return (
+    <Modal title={`${t("ui.balPay")}: ${row.name}`} onClose={onClose}>
+      <form
+        className="grid grid-cols-2 gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          save.mutate();
+        }}
+      >
+        <Field label={t("ui.costCategory")}>
+          <Select value={kind} onChange={(e) => setKind(e.target.value)} options={EMPLOYEE_PAYMENT_KINDS.map((k) => ({ value: k, label: tk(`ui.balKind_${k}`) }))} />
+        </Field>
+        <Field label={t("ui.costDate")}>
+          <Input required type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        </Field>
+        <Field label={t("ui.balAmount")}>
+          <Input required type="number" min={1} step="1" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        </Field>
+        <Field label={t("ui.balNote")}>
+          <Input maxLength={200} value={note} onChange={(e) => setNote(e.target.value)} />
+        </Field>
+        {save.error ? (
+          <div className="col-span-2">
+            <ErrorBox error={save.error} />
+          </div>
+        ) : null}
+        <div className="col-span-2">
+          <Button type="submit" variant="primary" disabled={save.isPending}>
+            {t("ui.save")}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function StatementModal({ row, onClose }: { row: Balance; onClose: () => void }) {
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ["erp", "employee-statement", row.employeeId], queryFn: () => get<Line[]>(`/org/erp/employees/${row.employeeId}/statement`) });
+  const remove = useMutation({
+    mutationFn: (id: string) => del(`/org/erp/employee-payments/${id}`),
+    onSuccess: () => {
+      toast(t("ui.erpDeleted"));
+      qc.invalidateQueries({ queryKey: ["erp"] });
+    },
+  });
+  return (
+    <Modal title={`${t("ui.balStatement")}: ${row.name}`} onClose={onClose}>
+      {q.isLoading ? (
+        <Spinner />
+      ) : (
+        <table className="w-full text-sm">
+          <tbody>
+            {(q.data ?? []).map((l) => (
+              <tr key={l.id} className="border-b border-linea">
+                <td className="num py-2 pr-3">{fmtIsoDate(l.date)}</td>
+                <td className="py-2 pr-3">
+                  {l.kind === "wage" ? t("ui.balKind_wage") : tk(`ui.balKind_${l.kind}`)}
+                  {l.note ? <span className="text-tinta-2">: {l.note}</span> : null}
+                </td>
+                <td className={`num py-2 pr-3 text-right ${l.amountPyg < 0 ? "text-tinta-2" : ""}`}>{fmtGs(l.amountPyg)}</td>
+                <td className="num py-2 pr-3 text-right font-medium">{fmtGs(l.balancePyg)}</td>
+                <td className="py-2 text-right">
+                  {l.kind !== "wage" && (
+                    <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => remove.mutate(l.id)}>
+                      {t("ui.delete")}
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </Modal>
   );
 }

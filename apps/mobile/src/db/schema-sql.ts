@@ -200,5 +200,7 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `attendance_date_idx` ON `attendance` (`organization_id`,`date`);",
   "CREATE INDEX `attendance_employee_idx` ON `attendance` (`organization_id`,`employee_id`,`date`);",
   "CREATE TABLE `employees` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`ci` text,\n\t`phone` text,\n\t`daily_wage_pyg` integer DEFAULT 0 NOT NULL,\n\t`user_id` text,\n\t`note` text,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
-  "CREATE INDEX `employees_org_idx` ON `employees` (`organization_id`,`name`);"
+  "CREATE INDEX `employees_org_idx` ON `employees` (`organization_id`,`name`);",
+  "CREATE TABLE `employee_payments` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`employee_id` text NOT NULL,\n\t`date` text NOT NULL,\n\t`kind` text NOT NULL,\n\t`amount_pyg` integer NOT NULL,\n\t`note` text,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
+  "CREATE INDEX `employee_payments_idx` ON `employee_payments` (`organization_id`,`employee_id`,`date`);"
 ];

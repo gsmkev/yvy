@@ -15,6 +15,7 @@ export * from "./erp";
 export * from "./risk";
 export * from "./referral";
 export * from "./sync-protocol";
+export * from "./webhooks";
 export * from "./i18n";
 export {
   ROLES,

@@ -6,16 +6,8 @@ import { and, count, eq, isNull, lt, lte, or, sql } from "drizzle-orm";
 import { LIMITS, newId } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { runBatch, type DB } from "../db/client";
-import {
-  matchTotp,
-  newRecoveryCode,
-  newTotpSecret,
-  normalizeRecoveryCode,
-  openSecret,
-  otpauthUri,
-  recoveryHash,
-  sealSecret,
-} from "../lib/totp";
+import { openSecret, sealSecret } from "../lib/crypto";
+import { matchTotp, newRecoveryCode, newTotpSecret, normalizeRecoveryCode, otpauthUri, recoveryHash } from "../lib/totp";
 
 export type SecondFactor = "ok" | "bad" | "locked";
 

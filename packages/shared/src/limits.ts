@@ -155,6 +155,16 @@ export const LIMITS = {
     blocked: { maxHa: 100_000, maxUsers: 25 },
     demo: { maxHa: null, maxUsers: null },
   },
+  webhooks: {
+    maxPerOrg: 5,
+    /** Pausa del envío tras tantos fallos seguidos (el dueño la reactiva desde Cuenta). */
+    disableAfterFailures: 20,
+    timeoutMs: 8_000,
+    /** Espera antes de cada reintento de la cola, en segundos (la cola reintenta 3 veces). */
+    retryDelaysSec: [30, 300, 1800],
+    /** Un evento del buzón que nadie pasó a la cola se descarta pasado este tiempo. */
+    outboxRetentionMs: 3 * 24 * 60 * 60 * 1000,
+  },
   events: {
     /** Fracción de los eventos de uso (no del embudo) que se guarda. */
     sampleRate: 0.5,

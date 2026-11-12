@@ -243,5 +243,9 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `totp_recovery_user_idx` ON `totp_recovery_codes` (`user_id`);",
   "CREATE UNIQUE INDEX `totp_recovery_hash_uq` ON `totp_recovery_codes` (`code_hash`);",
   "CREATE TABLE `user_totp` (\n\t`user_id` text PRIMARY KEY NOT NULL,\n\t`secret_enc` text NOT NULL,\n\t`enabled_at` integer,\n\t`last_step` integer DEFAULT 0 NOT NULL,\n\t`failed_attempts` integer DEFAULT 0 NOT NULL,\n\t`locked_until` integer,\n\t`created_at` integer NOT NULL\n);",
-  "ALTER TABLE `organizations` ADD `require_admin_totp` integer DEFAULT false NOT NULL;"
+  "ALTER TABLE `organizations` ADD `require_admin_totp` integer DEFAULT false NOT NULL;",
+  "CREATE TABLE `webhook_endpoints` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`url` text NOT NULL,\n\t`secret_enc` text NOT NULL,\n\t`events` text DEFAULT '[]' NOT NULL,\n\t`enabled` integer DEFAULT true NOT NULL,\n\t`last_status` text,\n\t`last_http_status` integer,\n\t`last_error` text,\n\t`last_attempt_at` integer,\n\t`last_success_at` integer,\n\t`consecutive_failures` integer DEFAULT 0 NOT NULL,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
+  "CREATE INDEX `webhook_endpoints_org_idx` ON `webhook_endpoints` (`organization_id`);",
+  "CREATE TABLE `webhook_outbox` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`event` text NOT NULL,\n\t`payload` text NOT NULL,\n\t`created_at` integer NOT NULL\n);",
+  "CREATE INDEX `webhook_outbox_created_idx` ON `webhook_outbox` (`created_at`);"
 ];

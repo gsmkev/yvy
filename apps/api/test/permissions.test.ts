@@ -159,3 +159,84 @@ describe("Fase 1 · aceptación", () => {
     expect(r.status).toBe(400);
   });
 });
+
+describe("puntos de interés desde el celular (PRD §9 y §11)", () => {
+  const poi = (farmId: string, over: Record<string, unknown> = {}) => ({
+    mutationId: newId(),
+    kind: "pois.upsert",
+    row: { id: newId(), farmId, kind: "rain_gauge", name: "Pluviómetro de la casa", lon: -55.89, lat: -27.21, ...over },
+  });
+  const push = (token: string, mutations: unknown[]) =>
+    call("POST", "/sync/push", { token, body: { deviceId: "dev", mutations } });
+
+  it("dueño, administrador y agrónomo crean y editan; el empleado no", async () => {
+    const owner = await createOrgWithOwner();
+    const { farmId, plotIds } = await createFarmWithPlots(owner.token, 2);
+    const admin = await addMemberAndLogin(owner.token, "admin");
+    const agro = await addMemberAndLogin(owner.token, "agronomist");
+    const worker = await addMemberAndLogin(owner.token, "worker");
+    await call("PUT", `/org/members/${worker.userId}/plots`, { token: owner.token, body: { plotIds } });
+
+    for (const who of [owner, admin, agro]) {
+      const m = poi(farmId);
+      const r = await push(who.token, [m]);
+      expect(r.body.results[0].status).toBe("applied");
+      // Editar: mismo id, otro nombre
+      const edit = { ...m, mutationId: newId(), row: { ...m.row, name: "Pluviómetro nuevo", kind: "water" } };
+      expect((await push(who.token, [edit])).body.results[0].status).toBe("applied");
+    }
+    const denied = await push(worker.token, [poi(farmId)]);
+    expect(denied.body.results[0]).toMatchObject({ status: "rejected", reason: "forbidden" });
+
+    const pois = await pullAll(owner.token, "points_of_interest");
+    expect(pois).toHaveLength(3);
+    expect(pois.every((p) => p.name === "Pluviómetro nuevo" && p.kind === "water")).toBe(true);
+    // Lo del empleado rechazado no quedó guardado
+    expect((await pullAll(worker.token, "points_of_interest")).length).toBe(3);
+  });
+
+  it("idempotente, valida estancia y forma, y un registro puede apuntar al punto nuevo en el mismo push", async () => {
+    const owner = await createOrgWithOwner();
+    const { farmId } = await createFarmWithPlots(owner.token, 1);
+    const other = await createOrgWithOwner("Otra");
+    const otherFarm = await createFarmWithPlots(other.token, 1);
+
+    const m = poi(farmId);
+    expect((await push(owner.token, [m])).body.results[0].status).toBe("applied");
+    expect((await push(owner.token, [m])).body.results[0].status).toBe("duplicate");
+    expect((await pullAll(owner.token, "points_of_interest")).filter((p) => p.id === m.row.id)).toHaveLength(1);
+
+    // Estancia de otra organización
+    expect((await push(owner.token, [poi(otherFarm.farmId)])).body.results[0]).toMatchObject({ status: "rejected", reason: "forbidden" });
+    // Un id de otra organización no se pisa
+    const theirs = poi(otherFarm.farmId);
+    await push(other.token, [theirs]);
+    const steal = { mutationId: newId(), kind: "pois.upsert", row: { ...theirs.row, farmId, name: "robado" } };
+    expect((await push(owner.token, [steal])).body.results[0]).toMatchObject({ status: "rejected", reason: "not_found" });
+    expect((await pullAll(other.token, "points_of_interest")).find((p) => p.id === theirs.row.id).name).toBe("Pluviómetro de la casa");
+    // Nombre vacío: el protocolo lo rechaza
+    expect((await push(owner.token, [poi(farmId, { name: "  " })])).status).toBe(400);
+
+    // Registro en el punto recién creado, en el mismo push
+    const p2 = poi(farmId, { name: "Aguada norte", kind: "water" });
+    const rec = {
+      mutationId: newId(),
+      kind: "records.upsert",
+      row: {
+        id: newId(),
+        farmId,
+        plotId: null,
+        poiId: p2.row.id,
+        kind: "rain",
+        data: { mm: 10, readAt: Date.now() },
+        schemaVersion: RECORD_SCHEMA_VERSION,
+        lon: null,
+        lat: null,
+        gpsAccuracyM: null,
+        capturedAt: Date.now(),
+      },
+    };
+    const r = await push(owner.token, [p2, rec]);
+    expect(r.body.results.map((x: any) => x.status)).toEqual(["applied", "applied"]);
+  });
+});

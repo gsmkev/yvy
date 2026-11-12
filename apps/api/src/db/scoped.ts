@@ -6,8 +6,13 @@
 import { and, asc, eq, gt, gte, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 import type { AnySQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
 import {
+  isFieldRole,
   LIMITS,
+  localDate,
   newId,
+  planLimits,
+  t,
+  TAGGED_RECORD_KINDS,
   type Cursor,
   type PullResponse,
   type PullTable,
@@ -17,15 +22,23 @@ import {
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, currentVersion, runBatch, type DB, type Stmt } from "./client";
+import { auditStmts, type AuditEntry } from "./audit";
+import { funnelEvent } from "./events";
 
 export interface AuthCtx {
   userId: string;
   orgId: string;
   role: Role;
+  /** P-12: sesión de soporte (el equipo de Yvy viendo la organización): solo lectura. */
+  readOnly?: boolean;
+  supportBy?: string;
 }
 
 export class ForbiddenError extends Error {}
 export class NotFoundError extends Error {}
+/** P-10: la acción pasa el tope del plan. Se responde 402 con el mensaje tal cual. */
+export class PlanLimitError extends Error {}
+const fmt = (n: number) => n.toLocaleString("es-PY");
 
 interface SyncedTable {
   table: SQLiteTable;
@@ -70,17 +83,72 @@ const SYNCED: Record<PullTable, SyncedTable> = {
     version: s.farmLayers.version,
     id: s.farmLayers.id,
   },
+  seasons: { table: s.seasons, org: s.seasons.organizationId, version: s.seasons.version, id: s.seasons.id },
+  plot_seasons: {
+    table: s.plotSeasons,
+    org: s.plotSeasons.organizationId,
+    version: s.plotSeasons.version,
+    id: s.plotSeasons.id,
+  },
+  products: { table: s.products, org: s.products.organizationId, version: s.products.version, id: s.products.id },
+  machines: { table: s.machines, org: s.machines.organizationId, version: s.machines.version, id: s.machines.id },
+  animals: { table: s.animals, org: s.animals.organizationId, version: s.animals.version, id: s.animals.id },
+  comments: { table: s.comments, org: s.comments.organizationId, version: s.comments.version, id: s.comments.id },
+  warehouses: { table: s.warehouses, org: s.warehouses.organizationId, version: s.warehouses.version, id: s.warehouses.id },
 };
 
-/** Matriz de permisos (PRD §9). */
+/** Tabla Drizzle → nombre de tabla sincronizable (para aplicar el alcance por estancia al editar). */
+export const SYNCED_KEYS = new Map<unknown, PullTable>(
+  (Object.entries(SYNCED) as [PullTable, SyncedTable][]).map(([k, v]) => [v.table, k]),
+);
+
+/**
+ * Matriz de permisos (PRD §9, ampliada en docs/PRD-roles.md).
+ * `supervisor` (capataz, T-09) = como el administrador de campo pero sin catálogo, campañas, equipo ni tablero, y solo
+ * dentro de sus estancias (farm_access). `contractor` (K-03) = empleado externo: mismos límites que `worker`.
+ */
 export const can = {
   manageOrg: (r: Role) => r === "owner",
-  /** RF-04: el administrador también crea empleados. */
+  /** RF-04: el administrador también crea empleados y contratistas. */
   manageWorkers: (r: Role) => r === "owner" || r === "admin",
-  editField: (r: Role) => r !== "worker",
-  assign: (r: Role) => r !== "worker",
-  viewAll: (r: Role) => r !== "worker",
-  reports: (r: Role) => r !== "worker",
+  /** T-09 / K-05: solo el dueño limita a una persona a ciertas estancias. */
+  manageFarmAccess: (r: Role) => r === "owner",
+  editField: (r: Role) => !isFieldRole(r),
+  /** PRD §9: crear/editar puntos de interés (también desde el celular, PRD §11): todos menos los roles de campo. */
+  editPoi: (r: Role) => !isFieldRole(r),
+  assign: (r: Role) => !isFieldRole(r),
+  viewAll: (r: Role) => !isFieldRole(r),
+  reports: (r: Role) => !isFieldRole(r),
+  /** K-04: solo el dueño crea y revoca enlaces de solo lectura. */
+  shareLinks: (r: Role) => r === "owner",
+  /** R-06: el tablero del inicio es para dueño y administrador. */
+  dashboard: (r: Role) => r === "owner" || r === "admin",
+  /** C-04: solo dueño y administrador cambian los umbrales de avisos. */
+  alertSettings: (r: Role) => r === "owner" || r === "admin",
+  /** G-10: planificar el calendario sanitario (y crear sus tareas): todos menos los roles de campo. */
+  planSanitary: (r: Role) => !isFieldRole(r),
+  /** ADR 0004: campañas y su plan por lote; el supervisor y los roles de campo solo las ven. */
+  editSeasons: (r: Role) => r === "owner" || r === "admin" || r === "agronomist",
+  /** ADR 0004: catálogo de productos; el supervisor y los roles de campo no lo editan. */
+  editProducts: (r: Role) => r === "owner" || r === "admin" || r === "agronomist",
+  /** K-06: el dueño ve el registro de cambios de su organización. */
+  viewAudit: (r: Role) => r === "owner",
+  /** I-01: tokens de la API pública; solo el dueño. */
+  manageApiTokens: (r: Role) => r === "owner",
+  /** R-10: informes programados a terceros; dueño y administrador. */
+  scheduleReports: (r: Role) => r === "owner" || r === "admin",
+  /** ADR 0004 (ERP): maestros, compras, costos y montos son de dueño y administrador. */
+  manageErp: (r: Role) => r === "owner" || r === "admin",
+  /** El agrónomo ve las cantidades de stock (nunca montos); el supervisor y los roles de campo no entran al ERP. */
+  viewStock: (r: Role) => r === "owner" || r === "admin" || r === "agronomist",
+  /** G-21: alta y edición de animales con caravana; los roles de campo los consultan (también sin señal) pero no los editan. */
+  editAnimals: (r: Role) => !isFieldRole(r),
+  /** S-03: pedir la historia de vigor desde 2017 gasta minutos de cómputo: dueño y administrador. */
+  requestHistory: (r: Role) => r === "owner" || r === "admin",
+  /** F-14: definir los campos propios de los formularios: dueño y administrador (todos los roles los reciben). */
+  manageForms: (r: Role) => r === "owner" || r === "admin",
+  /** S-31: pedir el cambio de cobertura entre dos fechas (mismo costo de cómputo). */
+  requestAnalysis: (r: Role) => r === "owner" || r === "admin",
 };
 
 export class ScopedDb {
@@ -90,12 +158,22 @@ export class ScopedDb {
     readonly now: () => number = Date.now,
   ) {}
 
+  /** Rol de campo (empleado o contratista): ve solo sus lotes asignados y sus tareas. */
   get isWorker(): boolean {
-    return this.auth.role === "worker";
+    return isFieldRole(this.auth.role);
+  }
+
+  get isContractor(): boolean {
+    return this.auth.role === "contractor";
   }
 
   require(check: (r: Role) => boolean, msg = "No tenés permiso"): void {
     if (!check(this.auth.role)) throw new ForbiddenError(msg);
+  }
+
+  /** K-06: filas del registro de cambios, para sumar al batch del cambio. */
+  audit(...entries: AuditEntry[]): Stmt[] {
+    return auditStmts(this.db, this.auth, entries, this.now());
   }
 
   /** Puede editar/borrar un registro (PRD §9 y RF-34). */
@@ -103,7 +181,7 @@ export class ScopedDb {
     const { role, userId } = this.auth;
     if (role === "owner" || role === "admin") return null;
     if (rec.authorId !== userId) return "forbidden";
-    if (role === "worker" && this.now() - rec.createdAt > LIMITS.sync.workerEditWindowMs) return "edit_window_expired";
+    if (isFieldRole(role) && this.now() - rec.createdAt > LIMITS.sync.workerEditWindowMs) return "edit_window_expired";
     return null;
   }
 
@@ -119,11 +197,43 @@ export class ScopedDb {
 
   /** Empleado: registros de sus lotes, o propios (incluye los sin lote). */
   recordsVisibleSql(): SQL {
+    // K-03: el contratista solo ve lo que cargó él.
+    if (this.isContractor) return sql`records.author_id = ${this.auth.userId}`;
     return sql`(records.plot_id IN ${this.assignedPlotsSql()} OR records.author_id = ${this.auth.userId})`;
   }
 
-  workerFilter(table: PullTable): SQL | undefined {
-    if (!this.isWorker) return undefined;
+  /**
+   * T-09 / K-05: condición para limitar `col` (columna con id de estancia) a las estancias de la persona.
+   * `undefined` = sin límite (dueño y roles de campo, que se limitan por lotes). Con `write`, solo las de nivel `edit`.
+   * Supervisor: solo las de farm_access. Administrador/agrónomo: todas mientras no tengan filas.
+   */
+  farmScopeSql(col: string, write = false): SQL | undefined {
+    const { role, userId, orgId } = this.auth;
+    if (role === "owner" || isFieldRole(role)) return undefined;
+    const mine = sql`organization_id = ${orgId} AND user_id = ${userId}`;
+    const c = sql.raw(col);
+    const rows = write
+      ? sql`(SELECT farm_id FROM farm_access WHERE ${mine} AND level = 'edit')`
+      : sql`(SELECT farm_id FROM farm_access WHERE ${mine})`;
+    if (role === "supervisor") return sql`${c} IN ${rows}`;
+    return sql`(NOT EXISTS (SELECT 1 FROM farm_access WHERE ${mine}) OR ${c} IN ${rows})`;
+  }
+
+  /** ¿Tiene limitadas las estancias que ve? (supervisor siempre; admin/agrónomo si el dueño les dio una lista). */
+  async isFarmRestricted(): Promise<boolean> {
+    const { role, userId, orgId } = this.auth;
+    if (role === "owner" || isFieldRole(role)) return false;
+    if (role === "supervisor") return true;
+    const [r] = await this.db
+      .select({ n: sql<number>`count(*)` })
+      .from(s.farmAccess)
+      .where(and(eq(s.farmAccess.organizationId, orgId), eq(s.farmAccess.userId, userId)));
+    return Number(r?.n ?? 0) > 0;
+  }
+
+  /** Condición de visibilidad por tabla: lotes asignados (roles de campo) o estancias permitidas (supervisor, K-05). */
+  workerFilter(table: PullTable, write = false): SQL | undefined {
+    if (!this.isWorker) return this.scopeFilter(table, write);
     switch (table) {
       case "farms":
         return sql`farms.id IN ${this.workerFarmsSql()}`;
@@ -145,13 +255,89 @@ export class ScopedDb {
         return sql`0`; // PRD §11: no baja al empleado
       case "farm_layers":
         return sql`farm_layers.farm_id IN ${this.workerFarmsSql()}`;
+      case "seasons":
+        // las campañas son de toda la organización: el empleado las necesita para anotar; el contratista no
+        return this.isContractor ? sql`0` : undefined;
+      case "plot_seasons":
+        return sql`plot_seasons.plot_id IN ${this.assignedPlotsSql()}`;
+      case "products":
+        return this.isContractor ? sql`0` : undefined; // el catálogo es de toda la organización
+      case "machines":
+        return undefined; // las máquinas son de toda la organización: el empleado las elige al cargar combustible
+      case "animals":
+        return sql`animals.farm_id IN ${this.workerFarmsSql()}`;
+      case "comments":
+        return sql`comments.record_id IN (SELECT id FROM records WHERE organization_id = ${this.auth.orgId} AND ${this.recordsVisibleSql()})`;
+      case "warehouses":
+        return sql`0`; // los depósitos son para el recuento (E-15): el empleado no entra al ERP
+    }
+  }
+
+  private scopeFilter(table: PullTable, write: boolean): SQL | undefined {
+    const sc = (col: string) => this.farmScopeSql(col, write);
+    const viaPlots = (col: string) => {
+      const f = sc("plots.farm_id");
+      return f ? sql`${sql.raw(col)} IN (SELECT id FROM plots WHERE ${f})` : undefined;
+    };
+    switch (table) {
+      case "farms":
+        return sc("farms.id");
+      case "plots":
+        return sc("plots.farm_id");
+      case "points_of_interest":
+        return sc("points_of_interest.farm_id");
+      case "plot_assignments":
+        return viaPlots("plot_assignments.plot_id");
+      case "tasks":
+        return sc("tasks.farm_id");
+      case "records":
+        return sc("records.farm_id");
+      case "attachments": {
+        const f = sc("records.farm_id");
+        return f ? sql`attachments.record_id IN (SELECT id FROM records WHERE ${f})` : undefined;
+      }
+      case "alerts":
+        return sc("alerts.farm_id");
+      case "plot_index_stats":
+        return viaPlots("plot_index_stats.plot_id");
+      case "farm_layers":
+        return sc("farm_layers.farm_id");
+      case "plot_seasons":
+        return viaPlots("plot_seasons.plot_id");
+      case "animals":
+        return sc("animals.farm_id");
+      case "comments": {
+        const f = sc("records.farm_id");
+        return f ? sql`comments.record_id IN (SELECT id FROM records WHERE ${f})` : undefined;
+      }
+      case "seasons":
+      case "products":
+      case "machines":
+        return undefined;
+      case "warehouses":
+        return this.auth.role === "supervisor" ? sql`0` : undefined; // el supervisor tampoco entra al ERP (E-15)
     }
   }
 
   /** Ventana de historial que baja al celular (PRD §11). */
   private historyFilter(table: PullTable): SQL | undefined {
     const now = this.now();
-    if (table === "records") return gte(s.records.capturedAt, now - LIMITS.sync.recordsHistoryMs);
+    // Hacienda: todos los conteos y un año de movimientos y mortandad, para calcular el stock en el celular (G-03).
+    if (table === "records")
+      return or(
+        gte(s.records.capturedAt, now - LIMITS.sync.recordsHistoryMs),
+        eq(s.records.kind, "herd_count"),
+        and(
+          inArray(s.records.kind, ["herd_move", "mortality", "theft"]),
+          gte(s.records.capturedAt, now - LIMITS.sync.herdEventsHistoryMs),
+        ),
+        // G-21: lo que lleva la caravana de un animal baja un año, para ver su historial sin señal.
+        and(
+          inArray(s.records.kind, [...TAGGED_RECORD_KINDS]),
+          sql`json_extract(${s.records.data}, '$.tag') IS NOT NULL`,
+          gte(s.records.capturedAt, now - LIMITS.sync.herdEventsHistoryMs),
+        ),
+      );
     if (table === "attachments") return gte(s.attachments.createdAt, now - LIMITS.sync.recordsHistoryMs);
     if (table === "plot_index_stats") return gte(s.plotIndexStats.acquiredAt, now - LIMITS.sync.indexStatsHistoryMs);
     // B7: tareas abiertas, o cerradas/canceladas hace menos de 30 días.
@@ -227,22 +413,95 @@ export class ScopedDb {
     ]);
   }
 
+  // ---------- Baja de la cuenta (P-09) ----------
+
+  /** Registra el pedido de baja (solo dueño). Idempotente: si ya hay uno pendiente, lo devuelve. */
+  async requestDeletion(): Promise<{
+    id: string;
+    created: boolean;
+    organizationName: string;
+    requester: string;
+  }> {
+    this.require(can.manageOrg, "Solo el dueño pide la baja de la cuenta");
+    const [org] = await this.db
+      .select({ name: s.organizations.name })
+      .from(s.organizations)
+      .where(eq(s.organizations.id, this.auth.orgId))
+      .limit(1);
+    const [user] = await this.db
+      .select({ email: s.users.email, fullName: s.users.fullName })
+      .from(s.users)
+      .where(eq(s.users.id, this.auth.userId))
+      .limit(1);
+    const requester = `${user?.fullName ?? ""} (${user?.email ?? "sin email"})`;
+    const [pending] = await this.db
+      .select({ id: s.deletionRequests.id })
+      .from(s.deletionRequests)
+      .where(and(eq(s.deletionRequests.organizationId, this.auth.orgId), eq(s.deletionRequests.status, "pending")))
+      .limit(1);
+    const organizationName = org?.name ?? "";
+    if (pending) return { id: pending.id, created: false, organizationName, requester };
+    const id = newId();
+    await this.db.insert(s.deletionRequests).values({
+      id,
+      organizationId: this.auth.orgId,
+      userId: this.auth.userId,
+      createdAt: this.now(),
+    });
+    return { id, created: true, organizationName, requester };
+  }
+
   // ---------- Miembros y asignaciones ----------
 
+  /** Miembros con su actividad de los últimos 7 días: tres consultas agrupadas, sin N+1. */
   async listMembers() {
     this.require(can.assign);
-    return this.db
-      .select({
-        userId: s.users.id,
-        fullName: s.users.fullName,
-        email: s.users.email,
-        phone: s.users.phone,
-        role: s.memberships.role,
-        status: s.memberships.status,
-      })
-      .from(s.memberships)
-      .innerJoin(s.users, eq(s.users.id, s.memberships.userId))
-      .where(and(eq(s.memberships.organizationId, this.auth.orgId), isNull(s.memberships.deletedAt)));
+    const org = this.auth.orgId;
+    const since = this.now() - 7 * 86_400_000;
+    const sinceDay = localDate(this.now() - 6 * 86_400_000);
+    const withPin = await this.membersWithPin();
+    const [members, days, recs, syncs] = await Promise.all([
+      this.db
+        .select({
+          userId: s.users.id,
+          fullName: s.users.fullName,
+          email: s.users.email,
+          phone: s.users.phone,
+          role: s.memberships.role,
+          status: s.memberships.status,
+        })
+        .from(s.memberships)
+        .innerJoin(s.users, eq(s.users.id, s.memberships.userId))
+        .where(and(eq(s.memberships.organizationId, org), isNull(s.memberships.deletedAt))),
+      this.db
+        .select({ userId: s.activityDaily.userId, n: sql<number>`count(*)` })
+        .from(s.activityDaily)
+        .where(and(eq(s.activityDaily.organizationId, org), gte(s.activityDaily.day, sinceDay)))
+        .groupBy(s.activityDaily.userId),
+      this.db
+        .select({ userId: s.records.authorId, n: sql<number>`count(*)` })
+        .from(s.records)
+        .where(and(eq(s.records.organizationId, org), isNull(s.records.deletedAt), gte(s.records.capturedAt, since)))
+        .groupBy(s.records.authorId),
+      this.db
+        .select({ userId: s.devices.userId, at: sql<number | null>`max(${s.devices.lastSyncAt})` })
+        .from(s.devices)
+        .where(
+          sql`${s.devices.userId} IN (SELECT user_id FROM memberships WHERE organization_id = ${org} AND deleted_at IS NULL)`,
+        )
+        .groupBy(s.devices.userId),
+    ]);
+    const n = (rows: { userId: string; n: number }[]) => new Map(rows.map((r) => [r.userId, Number(r.n)]));
+    const activeDays = n(days);
+    const records = n(recs);
+    const lastSync = new Map(syncs.map((r) => [r.userId, r.at]));
+    return members.map((m) => ({
+      ...m,
+      hasPin: withPin.has(m.userId),
+      activeDays7: activeDays.get(m.userId) ?? 0,
+      records7d: records.get(m.userId) ?? 0,
+      lastSyncAt: lastSync.get(m.userId) ?? null,
+    }));
   }
 
   async addMember(input: {
@@ -251,15 +510,17 @@ export class ScopedDb {
     phone: string | null;
     role: Role;
   }): Promise<{ userId: string }> {
-    if (input.role === "worker") this.require(can.manageWorkers, "Solo dueño o administrador crean empleados");
+    if (isFieldRole(input.role))
+      this.require(can.manageWorkers, "Solo dueño o administrador crean empleados y contratistas");
     else this.require(can.manageOrg, "Solo el dueño gestiona miembros");
-    if (input.role !== "worker" && !input.email) throw new ForbiddenError("Falta el email");
+    if (!isFieldRole(input.role) && !input.email) throw new ForbiddenError("Falta el email");
     const ts = this.now();
     let userId: string | undefined;
     if (input.email) {
       const [u] = await this.db.select({ id: s.users.id }).from(s.users).where(eq(s.users.email, input.email)).limit(1);
       userId = u?.id;
     }
+    await this.requireUserRoom(userId ?? null);
     const stmts: Stmt[] = [];
     if (!userId) {
       userId = newId();
@@ -290,6 +551,8 @@ export class ScopedDb {
           set: { role: input.role, status: "active", deletedAt: null, updatedAt: ts },
         }),
     );
+    stmts.push(funnelEvent(this.db, "member_added", this.auth.userId, this.auth.orgId, ts));
+    stmts.push(...this.audit({ action: "member_add", entity: "member", entityId: userId, detail: { role: input.role, name: input.fullName } }));
     await runBatch(this.db, stmts);
     return { userId };
   }
@@ -310,6 +573,80 @@ export class ScopedDb {
     return m.role;
   }
 
+  /**
+   * F-24: fija o cambia el PIN de ingreso de un empleado (solo dueño o administrador). Guarda el teléfono en su
+   * ficha y su clave normalizada. "phone_taken" si otra persona ya usa ese teléfono para ingresar.
+   */
+  async setMemberPin(
+    userId: string,
+    input: { phone: string; phoneKey: string; salt: string; pinHash: string },
+  ): Promise<"ok" | "phone_taken"> {
+    this.require(can.manageWorkers, "Solo dueño o administrador gestionan el PIN de los empleados");
+    if ((await this.memberRole(userId)) !== "worker") throw new ForbiddenError("El ingreso con PIN es solo para empleados");
+    const [other] = await this.db
+      .select({ userId: s.userPins.userId })
+      .from(s.userPins)
+      .where(and(eq(s.userPins.phoneKey, input.phoneKey), sql`${s.userPins.userId} <> ${userId}`))
+      .limit(1);
+    if (other) return "phone_taken";
+    const ts = this.now();
+    await runBatch(this.db, [
+      this.db.update(s.users).set({ phone: input.phone, updatedAt: ts }).where(eq(s.users.id, userId)),
+      this.db
+        .insert(s.userPins)
+        .values({
+          userId,
+          organizationId: this.auth.orgId,
+          phoneKey: input.phoneKey,
+          salt: input.salt,
+          pinHash: input.pinHash,
+          createdBy: this.auth.userId,
+          createdAt: ts,
+          updatedAt: ts,
+        })
+        .onConflictDoUpdate({
+          target: s.userPins.userId,
+          set: {
+            organizationId: this.auth.orgId,
+            phoneKey: input.phoneKey,
+            salt: input.salt,
+            pinHash: input.pinHash,
+            failedAttempts: 0,
+            lockedUntil: null,
+            createdBy: this.auth.userId,
+            updatedAt: ts,
+          },
+        }),
+    ]);
+    return "ok";
+  }
+
+  /** F-24: quita el PIN (el empleado ya no puede ingresar con teléfono). */
+  async clearMemberPin(userId: string): Promise<void> {
+    this.require(can.manageWorkers, "Solo dueño o administrador gestionan el PIN de los empleados");
+    await this.memberRole(userId);
+    await this.db
+      .delete(s.userPins)
+      .where(and(eq(s.userPins.userId, userId), eq(s.userPins.organizationId, this.auth.orgId)));
+  }
+
+  /** F-24: teléfono guardado en la ficha de un miembro de la organización. */
+  async memberPhone(userId: string): Promise<string | null> {
+    await this.memberRole(userId);
+    const [u] = await this.db.select({ phone: s.users.phone }).from(s.users).where(eq(s.users.id, userId)).limit(1);
+    return u?.phone ?? null;
+  }
+
+  /** F-24: quiénes de la organización ya tienen PIN (para mostrarlo en Equipo). */
+  async membersWithPin(): Promise<Set<string>> {
+    this.require(can.assign);
+    const rows = await this.db
+      .select({ userId: s.userPins.userId })
+      .from(s.userPins)
+      .where(eq(s.userPins.organizationId, this.auth.orgId));
+    return new Set(rows.map((r) => r.userId));
+  }
+
   /** Reemplaza los lotes asignados a un usuario y avisa al cliente que rehaga sus tablas. */
   async setAssignments(userId: string, plotIds: string[]): Promise<void> {
     this.require(can.assign);
@@ -320,7 +657,12 @@ export class ScopedDb {
         .select({ id: s.plots.id })
         .from(s.plots)
         .where(
-          and(eq(s.plots.organizationId, this.auth.orgId), inArray(s.plots.id, wanted), isNull(s.plots.deletedAt)),
+          and(
+            eq(s.plots.organizationId, this.auth.orgId),
+            inArray(s.plots.id, wanted),
+            isNull(s.plots.deletedAt),
+            this.farmScopeSql("plots.farm_id", true),
+          ),
         );
       if (found.length !== wanted.length) throw new NotFoundError("Lote inexistente");
     }
@@ -372,16 +714,175 @@ export class ScopedDb {
         .set({ assignmentsVersion: sql`${s.memberships.assignmentsVersion} + 1`, updatedAt: ts })
         .where(and(eq(s.memberships.organizationId, this.auth.orgId), eq(s.memberships.userId, userId))),
     );
+    stmts.push(...this.audit({ action: "member_plots", entity: "member", entityId: userId, detail: { plots: wanted.length } }));
     await runBatch(this.db, stmts);
+  }
+
+  // ---------- Alcance por estancia (T-09 supervisor, K-05 permisos finos) ----------
+
+  /** Estancias a las que cada persona está limitada, para la pantalla de Equipo (solo el dueño). */
+  async listFarmAccess() {
+    this.require(can.manageFarmAccess, "Solo el dueño ve los permisos por estancia");
+    return this.db
+      .select({ userId: s.farmAccess.userId, farmId: s.farmAccess.farmId, level: s.farmAccess.level })
+      .from(s.farmAccess)
+      .where(eq(s.farmAccess.organizationId, this.auth.orgId));
+  }
+
+  /**
+   * Reemplaza las estancias de una persona. Supervisor: sin filas no ve ninguna. Administrador y agrónomo: sin filas
+   * ven todas; con filas, solo esas (`view` = solo lectura). Avisa al celular para que rehaga sus tablas.
+   */
+  async setFarmAccess(userId: string, farms: { farmId: string; level: s.FarmAccessLevel }[]): Promise<void> {
+    this.require(can.manageFarmAccess, "Solo el dueño limita el acceso a estancias");
+    const role = await this.memberRole(userId);
+    if (role === "owner" || isFieldRole(role))
+      throw new ForbiddenError("El acceso por estancia es para supervisores, administradores y agrónomos");
+    const wanted = new Map(farms.map((f) => [f.farmId, f.level]));
+    if (wanted.size) {
+      const found = await this.db
+        .select({ id: s.farms.id })
+        .from(s.farms)
+        .where(
+          and(eq(s.farms.organizationId, this.auth.orgId), inArray(s.farms.id, [...wanted.keys()]), isNull(s.farms.deletedAt)),
+        );
+      if (found.length !== wanted.size) throw new NotFoundError("Estancia inexistente");
+    }
+    const ts = this.now();
+    await runBatch(this.db, [
+      this.db
+        .delete(s.farmAccess)
+        .where(and(eq(s.farmAccess.organizationId, this.auth.orgId), eq(s.farmAccess.userId, userId))),
+      ...(wanted.size
+        ? [
+            this.db.insert(s.farmAccess).values(
+              [...wanted].map(([farmId, level]) => ({
+                organizationId: this.auth.orgId,
+                userId,
+                farmId,
+                level,
+                createdAt: ts,
+              })),
+            ),
+          ]
+        : []),
+      this.db
+        .update(s.memberships)
+        .set({ assignmentsVersion: sql`${s.memberships.assignmentsVersion} + 1`, updatedAt: ts })
+        .where(and(eq(s.memberships.organizationId, this.auth.orgId), eq(s.memberships.userId, userId))),
+      ...this.audit({
+        action: "member_farms",
+        entity: "member",
+        entityId: userId,
+        detail: { farms: [...wanted].map(([farmId, level]) => ({ farmId, level })) },
+      }),
+    ]);
+  }
+
+  // ---------- Topes del plan (P-10) ----------
+
+  /** Topes efectivos de la organización. */
+  async planLimits() {
+    const [o] = await this.db
+      .select({ plan: s.organizations.plan, maxHa: s.organizations.maxHa, maxUsers: s.organizations.maxUsers })
+      .from(s.organizations)
+      .where(eq(s.organizations.id, this.auth.orgId))
+      .limit(1);
+    return planLimits(o?.plan ?? "trial", o ?? {});
+  }
+
+  /** Falla con 402 y un mensaje claro si sumar `extraHa` hectáreas de estancias pasa el tope del plan. */
+  async requireHaRoom(extraHa: number, what: "farms" | "plots" = "farms"): Promise<void> {
+    const { maxHa } = await this.planLimits();
+    if (maxHa === null) return;
+    const [r] = await this.db
+      .select({ ha: sql<number>`coalesce(sum(area_ha), 0)` })
+      .from(what === "farms" ? s.farms : s.plots)
+      .where(
+        and(
+          eq(what === "farms" ? s.farms.organizationId : s.plots.organizationId, this.auth.orgId),
+          isNull(what === "farms" ? s.farms.deletedAt : s.plots.deletedAt),
+        ),
+      );
+    const total = Number(r?.ha ?? 0) + extraHa;
+    if (total > maxHa)
+      throw new PlanLimitError(
+        t("ui.planLimitHa", { max: fmt(maxHa), total: fmt(Math.round(total)), extra: fmt(Math.round(extraHa)) }),
+      );
+  }
+
+  /** Falla con 402 si sumar una persona pasa el tope de usuarios (la que ya tiene acceso no cuenta de nuevo). */
+  async requireUserRoom(existingUserId: string | null): Promise<void> {
+    const { maxUsers } = await this.planLimits();
+    if (maxUsers === null) return;
+    const rows = await this.db
+      .select({ userId: s.memberships.userId })
+      .from(s.memberships)
+      .where(
+        and(
+          eq(s.memberships.organizationId, this.auth.orgId),
+          isNull(s.memberships.deletedAt),
+          eq(s.memberships.status, "active"),
+        ),
+      );
+    if (existingUserId && rows.some((m) => m.userId === existingUserId)) return;
+    if (rows.length + 1 > maxUsers) throw new PlanLimitError(t("ui.planLimitUsers", { max: maxUsers }));
   }
 
   // ---------- Estancias, lotes, puntos de interés ----------
 
-  async requireFarm(farmId: string): Promise<void> {
+  /** Verifica que la estancia sea de la organización y devuelve su geometría (GeoJSON texto). */
+  async requireFarm(farmId: string, write = false): Promise<string> {
+    const [f] = await this.db
+      .select({ id: s.farms.id, geometry: s.farms.geometry })
+      .from(s.farms)
+      .where(
+        and(
+          eq(s.farms.id, farmId),
+          eq(s.farms.organizationId, this.auth.orgId),
+          isNull(s.farms.deletedAt),
+          // T-09 / K-05: fuera de las estancias permitidas (o solo lectura al escribir) se responde "inexistente"/prohibido.
+          this.farmScopeSql("farms.id", write),
+        ),
+      )
+      .limit(1);
+    if (!f) {
+      if (write && (await this.farmReadable(farmId)))
+        throw new ForbiddenError("Tenés acceso de solo lectura a esta estancia");
+      throw new NotFoundError("Estancia inexistente");
+    }
+    return f.geometry;
+  }
+
+  private async farmReadable(farmId: string): Promise<boolean> {
     const [f] = await this.db
       .select({ id: s.farms.id })
       .from(s.farms)
-      .where(and(eq(s.farms.id, farmId), eq(s.farms.organizationId, this.auth.orgId), isNull(s.farms.deletedAt)))
+      .where(
+        and(
+          eq(s.farms.id, farmId),
+          eq(s.farms.organizationId, this.auth.orgId),
+          isNull(s.farms.deletedAt),
+          this.farmScopeSql("farms.id"),
+        ),
+      )
+      .limit(1);
+    return !!f;
+  }
+
+  /** La estancia existe en la organización y, si es empleado, tiene lotes asignados en ella. */
+  async requireFarmVisible(farmId: string): Promise<void> {
+    const [f] = await this.db
+      .select({ id: s.farms.id })
+      .from(s.farms)
+      .where(
+        and(
+          eq(s.farms.id, farmId),
+          eq(s.farms.organizationId, this.auth.orgId),
+          isNull(s.farms.deletedAt),
+          this.workerFilter("farms"),
+        ),
+      )
       .limit(1);
     if (!f) throw new NotFoundError("Estancia inexistente");
   }
@@ -390,6 +891,8 @@ export class ScopedDb {
     input: Omit<typeof s.farms.$inferInsert, "id" | "organizationId" | "createdAt" | "updatedAt" | "version">,
   ) {
     this.require(can.editField);
+    if (await this.isFarmRestricted()) throw new ForbiddenError("Con acceso limitado a ciertas estancias no podés crear otras");
+    await this.requireHaRoom(input.areaHa);
     const id = newId();
     const ts = this.now();
     await runBatch(this.db, [
@@ -402,8 +905,20 @@ export class ScopedDb {
         updatedAt: ts,
         version: currentVersion,
       }),
+      this.db.insert(s.farmImagery).values({ farmId: id, status: "pending", requestedAt: ts, updatedAt: ts }),
+      funnelEvent(this.db, "farm_created", this.auth.userId, this.auth.orgId, ts),
+      ...this.audit({ action: "farm_create", entity: "farm", entityId: id, detail: { name: input.name, areaHa: input.areaHa } }),
     ]);
     return { id };
+  }
+
+  /** Lotes vivos de una estancia de la organización (1 query). */
+  async countPlots(farmId: string): Promise<number> {
+    const [r] = await this.db
+      .select({ n: sql<number>`count(*)` })
+      .from(s.plots)
+      .where(and(eq(s.plots.farmId, farmId), eq(s.plots.organizationId, this.auth.orgId), isNull(s.plots.deletedAt)));
+    return Number(r?.n ?? 0);
   }
 
   /** Alta de varios lotes de una vez (importación KML). */
@@ -413,9 +928,13 @@ export class ScopedDb {
       typeof s.plots.$inferInsert,
       "id" | "organizationId" | "farmId" | "createdAt" | "updatedAt" | "version"
     >[],
-  ): Promise<{ ids: string[] }> {
+  ): Promise<{ ids: string[]; farmGeometry: string }> {
     this.require(can.editField);
-    await this.requireFarm(farmId);
+    const farmGeometry = await this.requireFarm(farmId, true);
+    await this.requireHaRoom(
+      items.reduce((a, p) => a + (p.areaHa ?? 0), 0),
+      "plots",
+    );
     const ts = this.now();
     const ids = items.map(() => newId());
     // Una sentencia por lote: las geometrías son largas y no conviene agruparlas.
@@ -432,8 +951,10 @@ export class ScopedDb {
           version: currentVersion,
         }),
       ),
+      funnelEvent(this.db, "plots_created", this.auth.userId, this.auth.orgId, ts),
+      ...this.audit({ action: "plot_create", entity: "plot", entityId: ids[0] ?? null, detail: { farmId, count: ids.length } }),
     ]);
-    return { ids };
+    return { ids, farmGeometry };
   }
 
   async createPoi(input: {
@@ -444,7 +965,7 @@ export class ScopedDb {
     lat: number;
   }) {
     this.require(can.editField);
-    await this.requireFarm(input.farmId);
+    await this.requireFarm(input.farmId, true);
     const id = newId();
     const ts = this.now();
     await runBatch(this.db, [
@@ -457,11 +978,72 @@ export class ScopedDb {
         updatedAt: ts,
         version: currentVersion,
       }),
+      ...this.audit({ action: "poi_create", entity: "poi", entityId: id, detail: { farmId: input.farmId, name: input.name } }),
     ]);
     return { id };
   }
 
   // ---------- Tareas ----------
+
+  /**
+   * Receta → órdenes de trabajo (A-11): una tarea de aplicación por lote, para el mismo empleado, con la
+   * receta adentro. 3 lecturas y un solo batch (una fila por lote, máx. 40).
+   */
+  async createPrescription(input: {
+    farmId: string;
+    plotIds: string[];
+    assigneeId: string;
+    title: string;
+    dueDate: string;
+    prescription: string;
+  }): Promise<{ ids: string[] }> {
+    this.require(can.assign);
+    await this.requireFarm(input.farmId, true);
+    await this.memberRole(input.assigneeId);
+    const plotIds = [...new Set(input.plotIds)];
+    const found = await this.db
+      .select({ id: s.plots.id })
+      .from(s.plots)
+      .where(
+        and(
+          eq(s.plots.organizationId, this.auth.orgId),
+          eq(s.plots.farmId, input.farmId),
+          inArray(s.plots.id, plotIds),
+          isNull(s.plots.deletedAt),
+        ),
+      );
+    if (found.length !== plotIds.length) throw new NotFoundError("Lote inexistente");
+    const ts = this.now();
+    const ids = plotIds.map(() => newId());
+    await runBatch(this.db, [
+      bumpVersion(this.db),
+      ...plotIds.map((plotId, i) =>
+        this.db.insert(s.tasks).values({
+          id: ids[i]!,
+          organizationId: this.auth.orgId,
+          farmId: input.farmId,
+          plotId,
+          assigneeId: input.assigneeId,
+          title: input.title,
+          kind: "application",
+          dueDate: input.dueDate,
+          recurrence: "none",
+          prescription: input.prescription,
+          createdBy: this.auth.userId,
+          createdAt: ts,
+          updatedAt: ts,
+          version: currentVersion,
+        }),
+      ),
+      ...this.audit({
+        action: "task_create",
+        entity: "task",
+        entityId: ids[0] ?? null,
+        detail: { farmId: input.farmId, count: ids.length, assigneeId: input.assigneeId, title: input.title, prescription: true },
+      }),
+    ]);
+    return { ids };
+  }
 
   async createTask(input: {
     farmId: string;
@@ -470,25 +1052,83 @@ export class ScopedDb {
     title: string;
     kind: (typeof s.RECORD_KINDS)[number] | null;
     dueDate: string;
+    dueTime?: string | null;
+    priority?: (typeof s.TASK_PRIORITIES)[number];
     recurrence: (typeof s.RECURRENCES)[number];
+    /** Lista de verificación en JSON (F-15). */
+    checklist?: string | null;
+    lon?: number | null;
+    lat?: number | null;
+    prescription?: string | null;
   }) {
+    const { ids } = await this.createTasks({ ...input, plotIds: [input.plotId] });
+    return { id: ids[0]! };
+  }
+
+  /**
+   * Una tarea por lote (T-01: elegir lotes en el mapa), todas en un mismo batch. `plotIds` con `null` crea una
+   * tarea sin lote. Los lotes tienen que ser de la estancia y de la organización.
+   */
+  async createTasks(input: {
+    farmId: string;
+    plotIds: (string | null)[];
+    assigneeId: string;
+    title: string;
+    kind: (typeof s.RECORD_KINDS)[number] | null;
+    dueDate: string;
+    dueTime?: string | null;
+    priority?: (typeof s.TASK_PRIORITIES)[number];
+    recurrence: (typeof s.RECURRENCES)[number];
+    checklist?: string | null;
+    lon?: number | null;
+    lat?: number | null;
+    prescription?: string | null;
+    /** Orden de trabajo en JSON (E-20). */
+    workOrder?: string | null;
+  }): Promise<{ ids: string[] }> {
     this.require(can.assign);
-    await this.requireFarm(input.farmId);
+    await this.requireFarm(input.farmId, true);
     await this.memberRole(input.assigneeId);
-    const id = newId();
+    const { plotIds, ...base } = input;
+    const wanted = [...new Set(plotIds.filter((p): p is string => !!p))];
+    if (wanted.length) {
+      const found = await this.db
+        .select({ id: s.plots.id })
+        .from(s.plots)
+        .where(
+          and(
+            eq(s.plots.organizationId, this.auth.orgId),
+            eq(s.plots.farmId, input.farmId),
+            inArray(s.plots.id, wanted),
+            isNull(s.plots.deletedAt),
+          ),
+        );
+      if (found.length !== wanted.length) throw new NotFoundError("Lote inexistente");
+    }
+    const targets = [...new Set(plotIds)];
+    const ids = targets.map(() => newId());
     const ts = this.now();
     await runBatch(this.db, [
       bumpVersion(this.db),
-      this.db.insert(s.tasks).values({
-        ...input,
-        id,
-        organizationId: this.auth.orgId,
-        createdBy: this.auth.userId,
-        createdAt: ts,
-        updatedAt: ts,
-        version: currentVersion,
+      ...targets.map((plotId, i) =>
+        this.db.insert(s.tasks).values({
+          ...base,
+          plotId,
+          id: ids[i]!,
+          organizationId: this.auth.orgId,
+          createdBy: this.auth.userId,
+          createdAt: ts,
+          updatedAt: ts,
+          version: currentVersion,
+        }),
+      ),
+      ...this.audit({
+        action: "task_create",
+        entity: "task",
+        entityId: ids[0] ?? null,
+        detail: { farmId: input.farmId, count: ids.length, assigneeId: input.assigneeId, title: input.title },
       }),
     ]);
-    return { id };
+    return { ids };
   }
 }

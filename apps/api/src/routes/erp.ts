@@ -2,13 +2,14 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { LIMITS } from "@yvy/shared";
-import { accountMapInput, attendanceDayInput, cashAccountInput, cashMoveInput, cashTransferInput, settleInput, CATTLE_DEAL_KINDS, cattleDealInput, grainContractInput, grainDeliveryInput, grainSettlementInput, purchaseInput, purchaseInvoiceInput, purchaseReceiveInput, budgetLineInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
+import { accountMapInput, attendanceDayInput, cashAccountInput, cashMoveInput, cashTransferInput, settleInput, CATTLE_DEAL_KINDS, cattleDealInput, grainContractInput, grainDeliveryInput, grainSettlementInput, purchaseInput, purchaseInvoiceInput, purchaseReceiveInput, budgetLineInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, feedRationInput, noonAsuncion, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { HTTPException } from "hono/http-exception";
 import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
 import { presign } from "../lib/r2";
 import { results } from "../db/results";
 import { fuelReport } from "../db/fuel";
+import { feedlotReport, listRations, requireRationProducts } from "../db/feedlot";
 import { createWorkOrder, listWorkOrders } from "../db/work-orders";
 import { fixDefaultWarehouse } from "../db/stock";
 import { adjustStock, consumeStock, deleteMove, expiringLots, listMoves, purchaseStock, requireWarehouseUnused, stockSummary, transferStock } from "../db/stock-moves";
@@ -225,6 +226,34 @@ erp.delete("/photos/:kind/:id", async (c) => {
 erp.get("/fuel/report", async (c) =>
   c.json(await fuelReport(c.var.sdb, parse(z.object({ farmId: uuid.optional(), from: isoDate.optional(), to: isoDate.optional() }), c.req.query()))),
 );
+
+// ---------- Feedlot (G-33) ----------
+// Raciones (maestro de oficina) y resumen por corral. Los suministros son registros `feed` que llegan por /sync/push.
+
+const rationRow = async (sdb: ScopedDb, v: z.infer<typeof feedRationInput>) => {
+  if (!(await requireRationProducts(sdb, v.items.map((i) => i.productId)))) throw new HTTPException(400, { message: "Un ingrediente no está en el catálogo" });
+  return { name: v.name, items: JSON.stringify(v.items), note: v.note ?? null };
+};
+erp.get("/feedlot/rations", async (c) => c.json(await listRations(c.var.sdb)));
+erp.post("/feedlot/rations", async (c) => {
+  c.var.sdb.require(can.manageErp);
+  const row = await rationRow(c.var.sdb, parse(feedRationInput, await readJson(c.req)));
+  return c.json(await erpCreate(c.var.sdb, s.feedRations, can.manageErp, row), 201);
+});
+erp.put("/feedlot/rations/:id", async (c) => {
+  c.var.sdb.require(can.manageErp);
+  const row = await rationRow(c.var.sdb, parse(feedRationInput, await readJson(c.req)));
+  await erpUpdate(c.var.sdb, s.feedRations, can.manageErp, c.req.param("id"), row);
+  return c.json({ ok: true });
+});
+erp.delete("/feedlot/rations/:id", async (c) => {
+  await erpDelete(c.var.sdb, s.feedRations, can.manageErp, c.req.param("id"));
+  return c.json({ ok: true });
+});
+erp.get("/feedlot/report", async (c) => {
+  const q = parse(z.object({ farmId: uuid.optional(), from: isoDate, to: isoDate }), c.req.query());
+  return c.json(await feedlotReport(c.var.sdb, { farmId: q.farmId, from: noonAsuncion(q.from) - 12 * 3_600_000, to: noonAsuncion(q.to) + 12 * 3_600_000 - 1 }));
+});
 
 // ---------- Órdenes de trabajo (E-20) ----------
 // Crear y ver: quien puede asignar tareas (no el empleado). El costo se ve solo con permiso de montos.

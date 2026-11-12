@@ -259,6 +259,8 @@ export const FLOWS: Record<RecordKind, Step[]> = {
   ],
   // Recuento de depósito (E-15): tiene su propia pantalla, no pasa por este asistente.
   stock_count: [],
+  // Ración suministrada (G-33): se carga desde la web.
+  feed: [],
   harvest: [
     { key: "seasonId", kind: "season", question: "app.seasonQuestion", skipIf: (_a, ctx) => !ctx.askSeason },
     { key: "tons", kind: "number", question: "app.tonsQuestion", hint: "app.tonsHint", unit: "t", max: 1_000_000 },

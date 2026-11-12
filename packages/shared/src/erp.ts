@@ -227,7 +227,7 @@ export const daysUntil = (from: string, to: string): number =>
 
 export type BaseUnit = "l" | "kg";
 /** Registros de campo que descuentan stock y cargan costo. */
-export const CONSUMING_KINDS = ["application", "fertilization", "health", "fuel_load"] as const;
+export const CONSUMING_KINDS = ["application", "fertilization", "health", "fuel_load", "feed"] as const;
 
 const DOSE_TO_BASE: Record<DoseUnit, { unit: BaseUnit; factor: number }> = {
   l_ha: { unit: "l", factor: 1 },
@@ -249,6 +249,7 @@ export function consumptionProductIds(kind: string, data: Record<string, unknown
   if (kind === "application" || kind === "fertilization")
     return ((data.products as DoseLike[] | undefined) ?? []).map((p) => p.productId).filter((x): x is string => !!x);
   if ((kind === "health" || kind === "fuel_load") && typeof data.productId === "string") return [data.productId];
+  if (kind === "feed") return ((data.items as { productId?: string }[] | undefined) ?? []).map((i) => i.productId).filter((x): x is string => !!x);
   return [];
 }
 
@@ -282,6 +283,10 @@ export function consumptionLines(
     // Litros de la carga; el producto es el indicado o, si no, el único combustible del catálogo.
     const id = typeof data.productId === "string" ? data.productId : ctx.fuelProductId;
     if (id && ctx.units.get(id) === "l" && typeof data.liters === "number") add(id, data.liters);
+  } else if (kind === "feed") {
+    // Ración: los kilos tal cual de cada ingrediente, solo de productos del catálogo medidos en kg.
+    for (const i of (data.items as { productId?: string; kg?: number }[] | undefined) ?? [])
+      if (i.productId && ctx.units.get(i.productId) === "kg" && typeof i.kg === "number") add(i.productId, i.kg);
   } else if (kind === "health") {
     const id = data.productId;
     if (typeof id === "string" && ctx.units.has(id) && typeof data.quantity === "number") add(id, data.quantity);

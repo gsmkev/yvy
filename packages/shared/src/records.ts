@@ -283,6 +283,22 @@ export const recordDataSchemas = {
     method: z.enum(IRRIGATION_METHODS),
     note,
   }),
+  /**
+   * Ración suministrada a un corral (G-33): el corral es records.plot_id. `kgDm` es la materia seca dada; `items` son los
+   * kilos tal cual de cada ingrediente del catálogo (la web los calcula con la ración vigente, y quedan como historia
+   * aunque la ración cambie). Descuenta el stock de los ingredientes y carga el costo (E-13). Se carga desde la web.
+   */
+  feed: z.object({
+    rationId: uuidStr.optional(),
+    ration: z.string().trim().min(1).max(80),
+    kgDm: z.number().positive().max(LIMITS.feedlot.maxKgDm),
+    head: z.number().int().min(1).max(MAX_HEAD_PER_CATEGORY * 5).optional(),
+    items: z
+      .array(z.object({ productId: uuidStr, name: z.string().trim().min(1).max(120), kg: z.number().positive().max(10_000_000) }))
+      .min(1)
+      .max(LIMITS.feedlot.maxRationItems),
+    note,
+  }),
   fertilization: z.object({
     seasonId,
     orderTaskId,

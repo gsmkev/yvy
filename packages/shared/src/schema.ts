@@ -86,6 +86,8 @@ export const RECORD_KINDS = [
   "track",
   // ADR 0004: ERP
   "fuel_load",
+  // G-33: ración suministrada a un corral (feedlot)
+  "feed",
 ] as const;
 export type RecordKind = (typeof RECORD_KINDS)[number];
 /** Tipos de producto del catálogo (ADR 0004). */
@@ -1690,6 +1692,20 @@ export const employeePayments = sqliteTable(
     ...timestamps,
   },
   (t) => [index("employee_payments_idx").on(t.organizationId, t.employeeId, t.date)],
+);
+
+/** Ración de feedlot (G-33): ingredientes del catálogo con su % de materia seca, en JSON [{productId, pctDm, dmPct}]. Solo oficina. */
+export const feedRations = sqliteTable(
+  "feed_rations",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    name: text("name").notNull(),
+    items: text("items").notNull(),
+    note: text("note"),
+    ...timestamps,
+  },
+  (t) => [index("feed_rations_org_idx").on(t.organizationId, t.name)],
 );
 
 /** Presupuesto de campaña: una línea por lote, cultivo o toda la campaña, con actividad y rubro (E-32). */

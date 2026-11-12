@@ -194,7 +194,7 @@ Detalles que un usuario espera sin pedirlos.
 | G-30 | Aguadas: nivel de tajamares, bebederos y molinos con alerta de seca | Sequía en el Chaco | App, Web | P1 | S | Parcial (registro de aguada) |
 | G-31 | Suplementación y sal mineral: consumo por potrero | Costo | App, Web | P2 | S | Falta |
 | G-32 | Índice de estrés térmico del ganado (temperatura y humedad) con aviso | Olas de calor | API | P2 | S | Falta |
-| G-33 | Feedlot: raciones, consumo y conversión | Engorde intensivo | Web | P3 | L | Falta |
+| G-33 | Feedlot: raciones, consumo y conversión | Engorde intensivo | Web | P3 | L | Hecho |
 | G-40 | Compras y ventas de hacienda con guías de traslado | Movimiento de dinero | Web | P2 | M | Falta (ver ERP) |
 
 ---

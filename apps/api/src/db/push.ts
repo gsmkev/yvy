@@ -383,6 +383,11 @@ export async function applyPush(
           reject(m, "forbidden");
           break;
         }
+        // El suministro de raciones (G-33) carga stock y costos: solo dueño y administrador.
+        if (r.kind === "feed" && !can.manageErp(auth.role)) {
+          reject(m, "forbidden");
+          break;
+        }
         const data = parseRecordData(r.kind, r.data);
         if (!data.success) {
           reject(m, "invalid", data.error.issues[0]?.message);

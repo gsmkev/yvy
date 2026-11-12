@@ -244,6 +244,8 @@ export const LIMITS = {
   fertility: { minPoints: 8 },
   /** Prescripción de dosis variable (A-33): dosis máxima por hectárea (kg o l). */
   prescription: { maxRate: 100_000 },
+  /** Feedlot (G-33): ingredientes por ración, tolerancia de la suma de % de MS y tope de MS por suministro (kg). */
+  feedlot: { maxRationItems: 12, pctTolerance: 0.5, maxKgDm: 1_000_000 },
   /** Riego (A-43): lámina máxima por registro, en mm. */
   irrigation: { maxMm: 500 },
   /** Balance hídrico por lote (C-08): lluvia menos consumo del cultivo, en mm. */

@@ -254,7 +254,7 @@ export async function recordEffects(sdb: ScopedDb, upserts: EffectRecord[], dele
         farmId: r.farmId,
         plotId: r.plotId,
         seasonId: typeof r.data.seasonId === "string" ? r.data.seasonId : null,
-        activity: r.kind === "health" || plot?.kind === "pasture" ? "ganaderia" : "agricultura",
+        activity: r.kind === "health" || r.kind === "feed" || plot?.kind === "pasture" ? "ganaderia" : "agricultura",
         category: r.kind === "fuel_load" ? "fuel" : "input",
         description: describe(r),
         amount: total,
@@ -344,6 +344,7 @@ const numOr = (v: unknown): number | null => (typeof v === "number" ? v : null);
 function describe(r: EffectRecord): string {
   if (r.kind === "health") return String(r.data.product ?? "").slice(0, 200);
   if (r.kind === "fuel_load") return String(r.data.machine ?? "").slice(0, 200);
+  if (r.kind === "feed") return String(r.data.ration ?? "").slice(0, 200);
   const names = ((r.data.products as { name?: string }[] | undefined) ?? []).map((p) => p.name).filter(Boolean);
   return names.join(", ").slice(0, 200);
 }

@@ -132,6 +132,7 @@ const FIELDS: Record<RecordKind, FieldDef[]> = {
     { key: "tag", label: f("tag"), type: "text", optional: true },
     NOTE,
   ],
+  feed: [],
   irrigation: [
     { key: "mm", label: f("irrigationMm"), type: "number" },
     { key: "method", label: f("irrigationMethod"), type: "select", options: opts("irrigationMethod", IRRIGATION_METHODS) },

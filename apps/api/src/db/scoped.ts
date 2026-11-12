@@ -468,7 +468,7 @@ export class ScopedDb {
     const since = this.now() - 7 * 86_400_000;
     const sinceDay = localDate(this.now() - 6 * 86_400_000);
     const withPin = await this.membersWithPin();
-    const [members, days, recs, syncs, overdueRows] = await Promise.all([
+    const [members, days, recs, syncs, overdueRows, plotRows] = await Promise.all([
       this.db
         .select({
           userId: s.users.id,
@@ -499,16 +499,32 @@ export class ScopedDb {
         )
         .groupBy(s.devices.userId),
       this.overdueTasksByAssignee(),
+      // T-06: lotes distintos en los que anotó cada persona en 7 días
+      this.db
+        .select({ userId: s.records.authorId, n: sql<number>`count(distinct ${s.records.plotId})` })
+        .from(s.records)
+        .where(
+          and(
+            eq(s.records.organizationId, org),
+            isNull(s.records.deletedAt),
+            gte(s.records.capturedAt, since),
+            sql`${s.records.plotId} IS NOT NULL`,
+            this.workerFilter("records"),
+          ),
+        )
+        .groupBy(s.records.authorId),
     ]);
     const n = (rows: { userId: string; n: number }[]) => new Map(rows.map((r) => [r.userId, Number(r.n)]));
     const activeDays = n(days);
     const records = n(recs);
+    const plotsVisited = n(plotRows);
     const lastSync = new Map(syncs.map((r) => [r.userId, r.at]));
     return members.map((m) => ({
       ...m,
       hasPin: withPin.has(m.userId),
       activeDays7: activeDays.get(m.userId) ?? 0,
       records7d: records.get(m.userId) ?? 0,
+      plotsVisited7d: plotsVisited.get(m.userId) ?? 0,
       lastSyncAt: lastSync.get(m.userId) ?? null,
       overdueTasks: overdueRows.get(m.userId) ?? 0,
     }));

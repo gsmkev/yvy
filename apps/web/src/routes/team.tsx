@@ -87,6 +87,7 @@ export function TeamPage() {
             <div className="num mt-0.5 text-xs text-tinta-2">
               {t("ui.activityDays", { n: m.activeDays7 })} ·{" "}
               {t(m.records7d === 1 ? "ui.activityRecordsOne" : "ui.activityRecords", { n: m.records7d })} ·{" "}
+              {t(m.plotsVisited7d === 1 ? "ui.activityPlotsOne" : "ui.activityPlots", { n: m.plotsVisited7d })} ·{" "}
               {m.lastSyncAt ? t("ui.lastSync", { date: fmtDateTime(m.lastSyncAt) }) : t("ui.neverSynced")}
             </div>
             {m.overdueTasks > 0 && (

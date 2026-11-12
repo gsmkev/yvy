@@ -7,6 +7,7 @@ interface MemberRow {
   userId: string;
   activeDays7: number;
   records7d: number;
+  plotsVisited7d: number;
   lastSyncAt: number | null;
   overdueTasks: number;
 }
@@ -62,11 +63,12 @@ describe("T-06 · actividad por miembro en /org/members", () => {
     expect(res.status).toBe(200);
     const w = res.body.find((m) => m.userId === worker.userId)!;
     expect(w.records7d).toBe(2);
+    expect(w.plotsVisited7d).toBe(1);
     expect(w.activeDays7).toBeGreaterThanOrEqual(2);
     expect(w.activeDays7).toBeLessThanOrEqual(3);
     expect(w.lastSyncAt).toBeGreaterThanOrEqual(syncAt);
     const i = res.body.find((m) => m.userId === idle.userId)!;
-    expect(i).toMatchObject({ activeDays7: 0, records7d: 0, lastSyncAt: null });
+    expect(i).toMatchObject({ activeDays7: 0, records7d: 0, plotsVisited7d: 0, lastSyncAt: null });
   });
 
   it("no mezcla actividad de otra organización", async () => {

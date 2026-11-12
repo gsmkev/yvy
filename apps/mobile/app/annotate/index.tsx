@@ -50,6 +50,7 @@ import { HerdCounter } from "../../src/ui/Counter";
 import { Button, Row, s as k, Text, TextInput } from "../../src/ui/kit";
 import { Stations } from "../../src/ui/Stations";
 import { C, F, GUTTER, RADIUS, T, TOUCH } from "../../src/ui/theme";
+import { gpsHintText, useGpsStage } from "../../src/lib/gpsHint";
 
 const tr = (key: string, vars?: Record<string, string | number>) => (key.startsWith(RAW) ? key.slice(RAW.length) : t(key as MessageKey, vars));
 
@@ -146,12 +147,7 @@ export default function Annotate() {
   const missingLocation = !!closeReq?.location && (fix === "searching" || !fix);
 
   // F-01: si el GPS tarda (arranque en frío), explicar que busca satélites y que no usa internet.
-  const [gpsSlow, setGpsSlow] = useState(false);
-  useEffect(() => {
-    if (fix !== "searching") return setGpsSlow(false);
-    const id = setTimeout(() => setGpsSlow(true), 5000);
-    return () => clearTimeout(id);
-  }, [fix]);
+  const gpsHint = gpsHintText(useGpsStage(fix === "searching"));
 
   // Un registro de monitoreo por estaciones solo permite editar la nota: los conteos son de campo.
   const stationRecord = kind === "pest" && Array.isArray(values.stations);
@@ -302,10 +298,11 @@ export default function Annotate() {
         {header}
         <ScrollView contentContainerStyle={k.pad} keyboardShouldPersistTaps="handled">
           <Text style={T.title}>{t("app.whichPlot")}</Text>
-          <Text style={[T.small, { marginTop: 6, marginBottom: gpsSlow ? 6 : 20 }]}>
+          <Text style={[T.small, { marginTop: 6, marginBottom: (fix === "searching" && gpsHint) || !fix ? 6 : 20 }]}>
             {fix === "searching" ? t("app.gpsSearching") : guesses.length ? t("app.detectedByGps") : fix ? t("app.noPlotNearby") : t("app.gpsNone")}
           </Text>
-          {fix === "searching" && gpsSlow && <Text style={[T.small, { marginBottom: 20 }]}>{t("app.gpsSlowHint")}</Text>}
+          {fix === "searching" && gpsHint && <Text style={[T.small, { marginBottom: 20 }]}>{gpsHint}</Text>}
+          {!fix && <Text style={[T.small, { marginBottom: 20 }]}>{t("app.gpsNoneHint")}</Text>}
           {plots.length > SEARCH_FROM && (
             <TextInput
               value={query}

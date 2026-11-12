@@ -25,6 +25,7 @@ import { setFabHidden } from "../../src/lib/fab";
 import { useLocal } from "../../src/lib/useLocal";
 import { FarmLine } from "../../src/ui/FarmLine";
 import { LayerSwitch, NdviLegend } from "../../src/ui/MapLayerControls";
+import { showToast } from "../../src/lib/toast";
 import { Button, Text } from "../../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
 
@@ -202,8 +203,9 @@ export default function MapScreen() {
   };
 
   const locate = async () => {
+    showToast(t("app.gpsSearching"), 8000);
     const f = await currentFix(8000);
-    if (!f) return;
+    if (!f) return showToast(t("app.gpsNoneHint"), 6000);
     setMe(f);
     camera.current?.flyTo({ center: [f.lon, f.lat], zoom: 15, duration: 800 });
   };

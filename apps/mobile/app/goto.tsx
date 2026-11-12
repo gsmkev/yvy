@@ -12,6 +12,7 @@ import { bearingDeg, cardinal, distanceM, formatDistance, turnDeg } from "../src
 import { hasAccuracy, type Fix } from "../src/lib/location";
 import { s as k, Text } from "../src/ui/kit";
 import { C, GUTTER, T } from "../src/ui/theme";
+import { gpsHintText, useGpsStage } from "../src/lib/gpsHint";
 
 const ARRIVED_M = 15;
 
@@ -21,6 +22,7 @@ export default function GoTo() {
   const [me, setMe] = useState<Fix | null>(null);
   const [heading, setHeading] = useState<number | null>(null);
   const [denied, setDenied] = useState(false);
+  const stage = useGpsStage(!me && !denied);
 
   useEffect(() => {
     let alive = true;
@@ -64,7 +66,7 @@ export default function GoTo() {
         ) : dist === null ? (
           <>
             <Text style={T.heading}>{t("app.gpsSearching")}</Text>
-            <Text style={[T.small, { marginTop: 6, textAlign: "center" }]}>{t("app.gpsSlowHint")}</Text>
+            <Text style={[T.small, { marginTop: 6, textAlign: "center" }]}>{gpsHintText(stage) ?? t("app.gpsSlowHint")}</Text>
           </>
         ) : arrived ? (
           <Text style={T.display}>{t("app.gotoArrived")}</Text>

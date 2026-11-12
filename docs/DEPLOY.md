@@ -70,7 +70,7 @@ Actions → *Jobs de datos* → `new_farm` con el id de la estancia.
 
 Con eso:
 - **Deploy** (`deploy.yml`): cada push a `main` corre lint, typecheck y tests, aplica migraciones y publica.
-- **Jobs de datos** (`jobs.yml`): Sentinel-2 diario, CHIRPS diario, FIRMS cada 3 h, climatología y mapa base semanal.
+- **Jobs de datos** (`jobs.yml`): Sentinel-2 diario, CHIRPS diario, FIRMS cada 3 h, climatología y mapa base semanal; fondo del país cada 3 meses.
   Repo privado: ~640 min/mes de 2.000 gratis para 20 estancias (ilimitado si el repo es público).
 - **Backup** (`backup.yml`): export semanal de D1 a R2.
 - **Verificación de backup** (`backup-verify.yml`): el día 2 de cada mes baja la última copia de R2, la restaura en una base
@@ -88,6 +88,9 @@ Después: Actions → **APK Android** → *Run workflow*. Queda en `https://<APP
 
 ## 5. Primera estancia
 
+0. Una sola vez: *Actions → Jobs de datos* → `country_basemap`. Arma el fondo satelital de todo Paraguay (~160 m,
+   unos 10 minutos) en `base/paraguay.pmtiles` del bucket `yvy-tiles`; sin él, el mapa se ve negro hasta que una
+   estancia tenga su propio mapa base. Después se renueva solo cada 3 meses.
 1. Entrá a la web, registrate y creá la organización.
 2. Si configuraste el token de arriba, el mapa base, la climatología y los últimos 6 meses se procesan solos al crear la estancia. Si no, en *Actions → Jobs de datos* corré `new_farm` con el id de la estancia (o esperá al domingo).
 3. Creá empleados en **Equipo**, asignales lotes y mostrales el QR de vinculación.

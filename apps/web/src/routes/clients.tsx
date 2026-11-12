@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BRAND } from "@yvy/shared";
 import { FarmMap } from "../components/FarmMap";
+import { useMe } from "../lib/queries";
 import { Empty, ErrorBox, Spinner } from "../components/ui";
 import { get, getSession, post, setSession, type Session } from "../lib/api";
 import { fmtDate, fmtHa } from "../lib/format";
@@ -33,6 +34,7 @@ export function ClientsPage() {
   const q = useQuery({ queryKey: ["clients"], queryFn: () => get<{ clients: Client[]; truncated: boolean }>("/me/clients") });
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const me = useMe();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
   const current = getSession()?.organization.id;
@@ -99,6 +101,7 @@ export function ClientsPage() {
       <div className="relative h-72 lg:h-full">
         <FarmMap
           points={points}
+          tilesBaseUrl={me.data?.tilesBaseUrl}
           bounds={bounds}
           onPointClick={(id) => {
             const [orgId, farmId] = id.split("|");

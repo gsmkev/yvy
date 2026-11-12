@@ -1905,6 +1905,43 @@ export const cashMoves = sqliteTable(
   (t) => [index("cash_moves_account_idx").on(t.organizationId, t.accountId, t.date), index("cash_moves_doc_idx").on(t.docId)],
 );
 
+/**
+ * Datos de IVA de un documento (I-06): timbrado y desglose en gravadas 10 %, gravadas 5 % y exentas (guaraníes, con el
+ * IVA incluido). Una fila por documento de compra o venta; sin fila, el desglose no está cargado.
+ */
+export const documentTaxes = sqliteTable(
+  "document_taxes",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    /** "purchase", "settlement" o "cattle", como en cash_moves.doc_kind. */
+    docKind: text("doc_kind").notNull(),
+    docId: text("doc_id").notNull(),
+    timbrado: text("timbrado"),
+    gross10: integer("gross_10").notNull().default(0),
+    gross5: integer("gross_5").notNull().default(0),
+    exempt: integer("exempt").notNull().default(0),
+    updatedBy: text("updated_by").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [uniqueIndex("document_taxes_doc_uq").on(t.organizationId, t.docKind, t.docId)],
+);
+
+/** Formato de exportación guardado (I-06): conjunto de datos, columnas, separador y formatos de fecha y de números. */
+export const exportFormats = sqliteTable(
+  "export_formats",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    name: text("name").notNull(),
+    dataset: text("dataset").notNull(),
+    /** JSON con ExportConfig (packages/shared/src/export-format.ts). */
+    config: text("config").notNull(),
+    ...timestamps,
+  },
+  (t) => [index("export_formats_org_idx").on(t.organizationId, t.dataset)],
+);
+
 /** Plan de cuentas del contador: a qué cuenta va cada rubro al exportar (E-38). Sin fila, rige el plan de ejemplo. */
 export const accountMap = sqliteTable(
   "account_map",

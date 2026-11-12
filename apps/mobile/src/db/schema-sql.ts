@@ -234,5 +234,9 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `custom_layers_farm_idx` ON `custom_layers` (`farm_id`,`status`);",
   "CREATE TABLE `zone_benchmarks` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`computed_at` integer NOT NULL,\n\t`radius_km` integer NOT NULL,\n\t`window_days` integer NOT NULL,\n\t`n_farms` integer NOT NULL,\n\t`ndvi` real,\n\t`ndvi_median` real,\n\t`rain_mm` real,\n\t`rain_median_mm` real\n);",
   "CREATE TABLE `feed_rations` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`items` text NOT NULL,\n\t`note` text,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
-  "CREATE INDEX `feed_rations_org_idx` ON `feed_rations` (`organization_id`,`name`);"
+  "CREATE INDEX `feed_rations_org_idx` ON `feed_rations` (`organization_id`,`name`);",
+  "CREATE TABLE `document_taxes` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`doc_kind` text NOT NULL,\n\t`doc_id` text NOT NULL,\n\t`timbrado` text,\n\t`gross_10` integer DEFAULT 0 NOT NULL,\n\t`gross_5` integer DEFAULT 0 NOT NULL,\n\t`exempt` integer DEFAULT 0 NOT NULL,\n\t`updated_by` text NOT NULL,\n\t`updated_at` integer NOT NULL\n);",
+  "CREATE UNIQUE INDEX `document_taxes_doc_uq` ON `document_taxes` (`organization_id`,`doc_kind`,`doc_id`);",
+  "CREATE TABLE `export_formats` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`dataset` text NOT NULL,\n\t`config` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
+  "CREATE INDEX `export_formats_org_idx` ON `export_formats` (`organization_id`,`dataset`);"
 ];

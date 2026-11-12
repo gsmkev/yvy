@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { LIMITS } from "@yvy/shared";
-import { accountMapInput, attendanceDayInput, cashAccountInput, cashMoveInput, cashTransferInput, settleInput, CATTLE_DEAL_KINDS, cattleDealInput, grainContractInput, grainDeliveryInput, grainSettlementInput, purchaseInput, purchaseInvoiceInput, purchaseReceiveInput, budgetLineInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, feedRationInput, noonAsuncion, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
+import { accountMapInput, attendanceDayInput, cashAccountInput, cashMoveInput, cashTransferInput, settleInput, CATTLE_DEAL_KINDS, cattleDealInput, grainContractInput, grainDeliveryInput, grainSettlementInput, purchaseInput, purchaseInvoiceInput, purchaseReceiveInput, budgetLineInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, documentTaxInput, EXPORT_DATASETS, exportFormatInput, feedRationInput, noonAsuncion, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { HTTPException } from "hono/http-exception";
 import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
@@ -22,6 +22,7 @@ import { checkContractRefs, contractsSummary, createDelivery, createSettlement, 
 import { createDeal, deleteDeal, listDeals } from "../db/cattle-deals";
 import { accountBalances, createMove as createCashMove, deleteMove as deleteCashMove, dues, listMoves as listCashMoves, requireAccountUnused, settle, transfer } from "../db/cash";
 import { accountantExport, listMap, resetMap, saveMap } from "../db/accountant";
+import { deleteDocumentTax, exportRows, saveDocumentTax } from "../db/export-docs";
 import { createLog, deleteLog, duePlans, listLogs } from "../db/maintenance";
 import { deleteMinimum, listMinimums, lowStock, saveMinimum } from "../db/stock-minimums";
 import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
@@ -253,6 +254,35 @@ erp.delete("/feedlot/rations/:id", async (c) => {
 erp.get("/feedlot/report", async (c) => {
   const q = parse(z.object({ farmId: uuid.optional(), from: isoDate, to: isoDate }), c.req.query());
   return c.json(await feedlotReport(c.var.sdb, { farmId: q.farmId, from: noonAsuncion(q.from) - 12 * 3_600_000, to: noonAsuncion(q.to) + 12 * 3_600_000 - 1 }));
+});
+
+// ---------- Exportación para sistemas contables (I-06) ----------
+
+erp.get("/export/rows", async (c) => {
+  const q = parse(z.object({ dataset: z.enum(EXPORT_DATASETS), from: isoDate, to: isoDate }), c.req.query());
+  return c.json(await exportRows(c.var.sdb, q.dataset, q.from, q.to));
+});
+erp.put("/export/taxes", async (c) => c.json(await saveDocumentTax(c.var.sdb, parse(documentTaxInput, await readJson(c.req)))));
+erp.delete("/export/taxes/:kind/:id", async (c) => {
+  await deleteDocumentTax(c.var.sdb, parse(z.enum(["purchase", "settlement", "cattle"]), c.req.param("kind")), parse(uuid, c.req.param("id")));
+  return c.json({ ok: true });
+});
+erp.get("/export/formats", async (c) => {
+  const rows = await erpList(c.var.sdb, s.exportFormats, can.manageErp, [s.exportFormats.name] as never);
+  return c.json(rows.map((r) => ({ ...(r as { id: string; name: string; dataset: string; config: string }), config: JSON.parse((r as { config: string }).config) })));
+});
+erp.post("/export/formats", async (c) => {
+  const b = parse(exportFormatInput, await readJson(c.req));
+  return c.json(await erpCreate(c.var.sdb, s.exportFormats, can.manageErp, { ...b, config: JSON.stringify(b.config) }), 201);
+});
+erp.put("/export/formats/:id", async (c) => {
+  const b = parse(exportFormatInput, await readJson(c.req));
+  await erpUpdate(c.var.sdb, s.exportFormats, can.manageErp, c.req.param("id"), { ...b, config: JSON.stringify(b.config) });
+  return c.json({ ok: true });
+});
+erp.delete("/export/formats/:id", async (c) => {
+  await erpDelete(c.var.sdb, s.exportFormats, can.manageErp, c.req.param("id"));
+  return c.json({ ok: true });
 });
 
 // ---------- Órdenes de trabajo (E-20) ----------

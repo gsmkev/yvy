@@ -97,7 +97,7 @@ export function plotsToGeoJson(plots: Plot[], points: ExportPoint[] = []): strin
 const WGS84_PRJ =
   'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]';
 
-interface DbfField {
+export interface DbfField {
   name: string;
   /** C = texto, N = número */
   type: "C" | "N";
@@ -244,6 +244,26 @@ function shpFiles(type: 1 | 5, shapes: ShpShape[]): { shp: ArrayBuffer; shx: Arr
     off += 8 + s.content.length;
   });
   return { shp: shp.buffer, shx: shx.buffer };
+}
+
+/** Shapefile de polígonos en WGS84 (zip con .shp, .shx, .dbf, .prj y .cpg), con las columnas que se indiquen (A-33). */
+export async function polygonsToShapefileZip(
+  base: string,
+  items: { geometry: { type: string; coordinates: unknown }; row: Record<string, string | number | null> }[],
+  fields: DbfField[],
+): Promise<Blob> {
+  const JSZip = (await import("jszip")).default;
+  const zip = new JSZip();
+  const { shp, shx } = shpFiles(
+    5,
+    items.map((i) => polygonShape(esriRings(i.geometry))),
+  );
+  zip.file(`${base}.shp`, shp);
+  zip.file(`${base}.shx`, shx);
+  zip.file(`${base}.dbf`, dbfBytes(fields, items.map((i) => i.row)));
+  zip.file(`${base}.prj`, WGS84_PRJ);
+  zip.file(`${base}.cpg`, "UTF-8");
+  return zip.generateAsync({ type: "blob" });
 }
 
 /** Zip con lotes.* (polígonos) y puntos.* (puntos de interés), en WGS84 y UTF-8. */

@@ -165,7 +165,7 @@ Detalles que un usuario espera sin pedirlos.
 | A-30 | Análisis de suelo: cargar resultados de laboratorio por punto o lote | Fertilidad | Web | P2 | M | Falta |
 | A-31 | Mapas de fertilidad interpolados (pH, fósforo, potasio, materia orgánica) | Prescripción | Web, Jobs | P3 | L | Hecho |
 | A-32 | Zonas de manejo a partir de varias campañas de vigor | Agricultura de precisión básica | Web, Jobs | P2 | L | Falta |
-| A-33 | Prescripción de dosis variable exportable a la maquinaria (shapefile o ISOXML) | Ahorro de insumos | Web, Jobs | P3 | L | Falta |
+| A-33 | Prescripción de dosis variable exportable a la maquinaria (shapefile o ISOXML) | Ahorro de insumos | Web, Jobs | P3 | L | Hecho |
 | A-40 | Alerta de roya asiática por horas de mojado foliar y temperatura | Enfermedad clave en soja | API, Jobs | P2 | M | Falta |
 | A-41 | Umbral de daño económico por plaga con aviso cuando el monitoreo lo supera | Manejo integrado de plagas | API | P1 | S | Falta |
 | A-42 | Mapa de focos de plaga del último mes sobre los lotes | Ver la dispersión | Web | P1 | S | Parcial |

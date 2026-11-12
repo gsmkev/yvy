@@ -242,6 +242,8 @@ export const LIMITS = {
   },
   /** Mapas de fertilidad (A-31): puntos con coordenadas y valor que pide cada parámetro para interpolar. Igual en workers-py. */
   fertility: { minPoints: 8 },
+  /** Prescripción de dosis variable (A-33): dosis máxima por hectárea (kg o l). */
+  prescription: { maxRate: 100_000 },
   /** Riego (A-43): lámina máxima por registro, en mm. */
   irrigation: { maxMm: 500 },
   /** Balance hídrico por lote (C-08): lluvia menos consumo del cultivo, en mm. */

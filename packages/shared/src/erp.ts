@@ -759,3 +759,53 @@ export const cattleFigures = (amount: number, totalKg: number, heads: number) =>
 
 /** Costo por kilo de carne vendida: costos de ganadería sobre kilos vendidos (guaraníes). Null sin kilos vendidos. */
 export const costPerKgBeef = (livestockCostPyg: number, kgSold: number): number | null => (kgSold > 0 ? Math.round(livestockCostPyg / kgSold) : null);
+
+// ---------- Caja y bancos, cuentas a pagar y a cobrar (E-36) ----------
+
+export const CASH_ACCOUNT_TYPES = ["cash", "bank"] as const;
+export const DOC_KINDS = ["purchase", "settlement", "cattle"] as const;
+export type DocKind = (typeof DOC_KINDS)[number];
+
+export const cashAccountInput = z.object({
+  name: z.string().trim().min(1).max(80),
+  type: z.enum(CASH_ACCOUNT_TYPES),
+  currency: currencySchema,
+  /** Saldo inicial en unidad menor (puede ser negativo: un sobregiro). */
+  openingBalance: z.number().int().min(-1_000_000_000_000).max(1_000_000_000_000).nullish(),
+  note: optText(200),
+});
+
+export const cashMoveInput = z.object({
+  accountId: uuid,
+  date: isoDate,
+  /** Con signo: positivo entra, negativo sale. */
+  amount: z.number().int().refine((n) => n !== 0, "El monto no puede ser cero").refine((n) => Math.abs(n) <= 1_000_000_000_000),
+  description: optText(200),
+  partyId: uuid.nullish(),
+});
+
+export const cashTransferInput = z.object({
+  fromAccountId: uuid,
+  toAccountId: uuid,
+  date: isoDate,
+  amount: minorAmount.refine((n) => n > 0, "El monto tiene que ser mayor que cero"),
+  description: optText(200),
+});
+
+export const settleInput = z.object({
+  docKind: z.enum(DOC_KINDS),
+  docId: uuid,
+  accountId: uuid,
+  date: isoDate,
+  /** Lo que se paga o cobra ahora, en la moneda del documento. */
+  amount: minorAmount.refine((n) => n > 0, "El monto tiene que ser mayor que cero"),
+  description: optText(200),
+});
+
+export type DueStatus = "none" | "overdue" | "soon" | "ok";
+/** Estado de un vencimiento al día `today`: vencido, por vencer (dentro de `soonDays`) o en fecha. */
+export function dueStatus(dueDate: string | null, today: string, soonDays = 7): { status: DueStatus; daysLeft: number | null } {
+  if (!dueDate) return { status: "none", daysLeft: null };
+  const daysLeft = daysUntil(today, dueDate);
+  return { status: daysLeft < 0 ? "overdue" : daysLeft <= soonDays ? "soon" : "ok", daysLeft };
+}

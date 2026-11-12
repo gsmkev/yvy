@@ -12,7 +12,7 @@
  *   El pull pagina por (version, id): equivale al "updated_at + desempate por id" del PRD §11
  *   pero sin depender de relojes de distintos datacenters.
  */
-import { ACTIVITIES, CATTLE_DEAL_KINDS, CONTRACTOR_SERVICES, COST_CATEGORIES, CURRENCIES, EMPLOYEE_PAYMENT_KINDS, MACHINE_TYPES, MAINTENANCE_KINDS, METER_KINDS, PARTY_KINDS, RATE_UNITS, STOCK_ORIGINS, WAREHOUSE_TYPES } from "./erp";
+import { ACTIVITIES, CASH_ACCOUNT_TYPES, CATTLE_DEAL_KINDS, CONTRACTOR_SERVICES, COST_CATEGORIES, CURRENCIES, EMPLOYEE_PAYMENT_KINDS, MACHINE_TYPES, MAINTENANCE_KINDS, METER_KINDS, PARTY_KINDS, RATE_UNITS, STOCK_ORIGINS, WAREHOUSE_TYPES } from "./erp";
 import { ANIMAL_SEXES } from "./animals";
 import { HEALTH_REASONS, HERD_CATEGORIES } from "./livestock";
 import { sql } from "drizzle-orm";
@@ -1794,4 +1794,41 @@ export const cattleDeals = sqliteTable(
     ...timestamps,
   },
   (t) => [index("cattle_deals_org_idx").on(t.organizationId, t.date), index("cattle_deals_due_idx").on(t.organizationId, t.dueDate)],
+);
+
+/** Caja o cuenta bancaria en una moneda (E-36). */
+export const cashAccounts = sqliteTable(
+  "cash_accounts",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    name: text("name").notNull(),
+    type: text("type", { enum: CASH_ACCOUNT_TYPES }).notNull(),
+    currency: text("currency", { enum: CURRENCIES }).notNull(),
+    /** Saldo inicial en unidad menor de `currency`. */
+    openingBalance: integer("opening_balance").notNull().default(0),
+    note: text("note"),
+    ...timestamps,
+  },
+  (t) => [index("cash_accounts_org_idx").on(t.organizationId)],
+);
+
+/** Movimiento de una cuenta: entra con signo positivo, sale con negativo, en la moneda de la cuenta (E-36). */
+export const cashMoves = sqliteTable(
+  "cash_moves",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    accountId: text("account_id").notNull(),
+    date: text("date").notNull(),
+    amount: integer("amount").notNull(),
+    description: text("description"),
+    partyId: text("party_id"),
+    /** Documento que se pagó o cobró: "purchase", "settlement" o "cattle"; "transfer" entre cuentas; o null (manual). */
+    docKind: text("doc_kind"),
+    docId: text("doc_id"),
+    createdBy: text("created_by").notNull(),
+    ...timestamps,
+  },
+  (t) => [index("cash_moves_account_idx").on(t.organizationId, t.accountId, t.date), index("cash_moves_doc_idx").on(t.docId)],
 );

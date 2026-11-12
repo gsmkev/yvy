@@ -435,6 +435,13 @@
       "when": 1794480605451,
       "tag": "0061_strong_sally_floyd",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "6",
+      "when": 1794480812786,
+      "tag": "0062_wooden_guardian",
+      "breakpoints": true
     }
   ]
 }

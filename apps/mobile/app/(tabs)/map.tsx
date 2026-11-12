@@ -8,7 +8,7 @@ import { Camera, Map, Marker, type CameraRef, type StyleSpecification } from "@m
 import { router, useFocusEffect } from "expo-router";
 import { Compass, LocateFixed, Navigation, X } from "lucide-react-native";
 import { BRAND, isFieldRole, describeRecord, t, uaPerHa } from "@yvy/shared";
-import { centroidOf, containsPoint, labelPoint, samplingGrid, type Area } from "@yvy/geo";
+import { containsPoint, samplingGrid, type Area } from "@yvy/geo";
 import { distanceM } from "../../src/lib/bearing";
 import { useRef } from "react";
 import { mapBearingFor, shouldRotate } from "../../src/lib/heading";
@@ -29,6 +29,7 @@ import { showToast } from "../../src/lib/toast";
 import { Button, Text } from "../../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
 import { useReadOnly } from "../../src/lib/readOnly";
+import { plotLabels, plotTarget } from "../../src/lib/plotLabels";
 
 const FIT_PADDING = { top: 120, bottom: 40, left: 24, right: 24 };
 const PLOT_PADDING = { top: 120, bottom: 320, left: 40, right: 40 };
@@ -104,12 +105,9 @@ export default function MapScreen() {
   }, []);
 
   // M-12: la etiqueta va en un punto garantizado adentro del lote (el centro del bbox cae afuera en lotes en L o U).
-  // Son vistas nativas: con muchos lotes solo se rotulan los de la estancia elegida y hasta MAX_LABELS.
+  // Son vistas nativas: con muchos lotes solo se rotulan los de la estancia elegida y los MAX_LABELS más grandes.
   const labels = useMemo(
-    () =>
-      (farmId ? plots : plots.filter((p) => p.farmId === farm?.id))
-        .slice(0, MAX_LABELS)
-        .map((p) => ({ id: p.id, name: p.name, ...labelPoint(JSON.parse(p.geometry) as Area) })),
+    () => plotLabels(farmId ? plots : plots.filter((p) => p.farmId === farm?.id), MAX_LABELS),
     [plots, farm?.id, farmId],
   );
 
@@ -344,7 +342,7 @@ export default function MapScreen() {
             kind="text"
             title={t("app.gotoButton")}
             onPress={() => {
-              const c = centroidOf(JSON.parse(plot.geometry) as Area);
+              const c = plotTarget(plot.geometry);
               router.push({ pathname: "/goto", params: { lon: String(c.lon), lat: String(c.lat), name: plot.name } });
             }}
             style={{ marginTop: 4 }}

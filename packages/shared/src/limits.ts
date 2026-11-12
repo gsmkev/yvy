@@ -205,6 +205,11 @@ export const LIMITS = {
   /** Mapas de rendimiento (A-21): celdas de la grilla resumen y tamaño máximo del cuerpo que acepta el Worker. */
   yieldMap: { maxCells: 800, maxBodyBytes: 120_000 },
   /**
+   * Capas propias (M-17): imagen georreferenciada por estancia. PNG/JPG con 4 esquinas se guardan tal cual;
+   * un GeoTIFF (dron, mapa de suelos) lo convierte workers-py. El Worker solo valida tamaño y tipo.
+   */
+  customLayers: { maxPerFarm: 20, imageMaxBytes: 10_000_000, geotiffMaxBytes: 90_000_000, nameMaxLength: 80 },
+  /**
    * Roya asiática de la soja (A-40): mojado foliar estimado con el pronóstico horario. Una hora cuenta si la humedad
    * relativa llega a `humidityPct` (o llueve `rainMm`) y la temperatura está entre `tempMinC` y `tempMaxC`.
    * Valores de referencia a revisar por un agrónomo.

@@ -272,6 +272,57 @@ export class SystemDb {
     return { id };
   }
 
+  /** M-17: GeoTIFF de una estancia esperando su conversión a PNG georreferenciado. */
+  pendingCustomLayers(farmId: string) {
+    return this.db
+      .select({ id: s.customLayers.id, originalPath: s.customLayers.originalPath, mime: s.customLayers.mime })
+      .from(s.customLayers)
+      .where(
+        and(
+          eq(s.customLayers.farmId, farmId),
+          eq(s.customLayers.status, "processing"),
+          isNull(s.customLayers.deletedAt),
+        ),
+      );
+  }
+
+  /** M-17: resultado de la conversión. Devuelve false si la capa no existe, ya no está pendiente o la ruta no es suya. */
+  async finishCustomLayer(
+    id: string,
+    r:
+      | { status: "failed" }
+      | { status: "ready"; imagePath: string; imageMime: string; bytes: number; corners: [number, number][] },
+  ): Promise<boolean> {
+    const [row] = await this.db
+      .select({ org: s.customLayers.organizationId })
+      .from(s.customLayers)
+      .where(and(eq(s.customLayers.id, id), eq(s.customLayers.status, "processing"), isNull(s.customLayers.deletedAt)))
+      .limit(1);
+    if (!row) return false;
+    if (r.status === "ready" && !r.imagePath.startsWith(`layers/${row.org}/${id}/`)) return false;
+    const ts = Date.now();
+    await runBatch(this.db, [
+      bumpVersion(this.db),
+      this.db
+        .update(s.customLayers)
+        .set(
+          r.status === "failed"
+            ? { status: "failed", updatedAt: ts, version: currentVersion }
+            : {
+                status: "ready",
+                imagePath: r.imagePath,
+                imageMime: r.imageMime,
+                bytes: r.bytes,
+                corners: JSON.stringify(r.corners),
+                updatedAt: ts,
+                version: currentVersion,
+              },
+        )
+        .where(eq(s.customLayers.id, id)),
+    ]);
+    return true;
+  }
+
   private imageryUpsert(farmId: string, status: (typeof s.IMAGERY_STATUSES)[number], ts: number) {
     return this.db
       .insert(s.farmImagery)

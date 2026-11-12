@@ -147,6 +147,8 @@ export const can = {
   requestHistory: (r: Role) => r === "owner" || r === "admin",
   /** F-14: definir los campos propios de los formularios: dueño y administrador (todos los roles los reciben). */
   manageForms: (r: Role) => r === "owner" || r === "admin",
+  /** M-17: subir y borrar capas propias (imágenes de dron, mapas de suelos); todos las ven salvo los roles de campo. */
+  manageCustomLayers: (r: Role) => r === "owner" || r === "admin" || r === "agronomist",
   /** S-31: pedir el cambio de cobertura entre dos fechas (mismo costo de cómputo). */
   requestAnalysis: (r: Role) => r === "owner" || r === "admin",
 };

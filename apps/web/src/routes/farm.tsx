@@ -6,6 +6,7 @@ import type { LineString, Polygon } from "geojson";
 import { MapPinPlus, PenLine, Upload, X } from "lucide-react";
 import { areaHa, bboxOf, validatePolygon, type Area } from "@yvy/geo";
 import { BRAND, INDEX_KINDS, NDMI_RAMP, NDVI_RAMP, POI_KINDS, type IndexKind } from "@yvy/shared";
+import { CustomLayersControl, type ActiveLayers } from "../components/CustomLayersControl";
 import { BoundariesControl } from "../components/BoundariesControl";
 import { AlertsList } from "../components/AlertsList";
 import { CopyCoords } from "../components/CopyCoords";
@@ -37,6 +38,7 @@ import { fetchAllRecords, useAlerts, useFarm, useFarmLines, useFarms, useMe, use
 import { defaultCompare, layerDates, pickLayer, type Camera } from "../lib/scenes";
 import { PoiQrModal } from "../components/PoiQr";
 import { heatPoints, summarizeTracks, TRACK_WINDOW_MS } from "../lib/trackHeat";
+import { useCustomLayerImages, useCustomLayers } from "../lib/customLayers";
 import { useBoundaries, type BoundaryLevel } from "../lib/boundaries";
 import { PEST_COLORS, PEST_WINDOW_MS, pestCounts, pestPoints } from "../lib/pests";
 import type { FarmDetail, Layer, RecordRow } from "../lib/types";
@@ -116,6 +118,15 @@ export function FarmPage() {
   const [pickedIds, setPickedIds] = useState<Partial<Record<Layer["layer"], string>>>({});
   const [indexKind, setIndexKind] = useState<IndexKind>("ndvi"); // S-07
   const [boundaryLevel, setBoundaryLevel] = useState<BoundaryLevel | null>(null); // M-16
+  // M-17: capas propias activas con su opacidad
+  const customLayers = useCustomLayers(farmId, !!me.data && me.data.role !== "worker" && me.data.role !== "contractor");
+  const [customActive, setCustomActive] = useState<ActiveLayers>({});
+  const customUrls = useCustomLayerImages(Object.keys(customActive));
+  const customImages = (customLayers.data ?? []).flatMap((l) =>
+    l.id in customActive && l.corners && customUrls[l.id]
+      ? [{ id: l.id, url: customUrls[l.id]!, corners: l.corners, opacity: customActive[l.id]! }]
+      : [],
+  );
   const boundaries = useBoundaries(boundaryLevel, me.data?.tilesBaseUrl);
   const [compare, setCompare] = useState<{ left: string; right: string } | null>(null);
   const [curtain, setCurtain] = useState(50);
@@ -276,6 +287,7 @@ export function FarmPage() {
           flyTo={flyTo}
           layers={d.layers}
           boundaries={boundaryLevel ? boundaries.data : null}
+          customImages={customImages}
           layerIds={compare ? { ...pickedIds, [kind]: compare.left } : pickedIds}
           camera={compare ? camera : null}
           onCamera={compare ? setCamera : undefined}
@@ -451,6 +463,14 @@ export function FarmPage() {
             onLevel={setBoundaryLevel}
             loading={!!boundaryLevel && boundaries.isLoading}
             missing={!!boundaryLevel && boundaries.isFetched && !boundaries.data}
+          />
+          <CustomLayersControl
+            farmId={farmId}
+            layers={customLayers.data ?? []}
+            active={customActive}
+            onActive={setCustomActive}
+            canManage={!!me.data && ["owner", "admin", "agronomist"].includes(me.data.role)}
+            farmBounds={boundsOf(d.farm)}
           />
           <button
             aria-pressed={showPests}

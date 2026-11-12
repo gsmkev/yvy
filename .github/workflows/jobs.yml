@@ -37,6 +37,7 @@ on:
             spi,
             mgmt_zones,
             boundaries,
+            custom_layers,
           ]
       farm:
         description: "Id de estancia (obligatorio para new_farm y s2_history; eudr: indicador de deforestación de esa estancia, vacío = todas)"
@@ -94,6 +95,8 @@ jobs:
           uv run --frozen python -m yvy_workers s2_ingest --backfill
           uv run --frozen python -m yvy_workers power_daily
           uv run --frozen python -m yvy_workers spi
+          # GeoTIFF subidos como capas propias que el aviso inmediato no alcanzó a procesar (M-17)
+          uv run --frozen python -m yvy_workers custom_layers
       - if: github.event.schedule == '0 5 1 */3 *'
         run: uv run --frozen python -m yvy_workers country_basemap
       - if: steps.pick.outputs.cmd != 'weekly'

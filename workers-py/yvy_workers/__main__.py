@@ -9,7 +9,7 @@ import sys
 from .ingest import IngestClient
 from .jobs.constants import BACKFILL_DAYS, BASEMAP_DAYS, DAILY_DAYS
 
-JOBS = ["s2_ingest", "s2_basemap", "country_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "weekly_report", "new_farm", "eudr", "s2_history", "burned_area", "cover_change", "power_daily", "spi", "mgmt_zones", "boundaries"]
+JOBS = ["s2_ingest", "s2_basemap", "country_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "weekly_report", "new_farm", "eudr", "s2_history", "burned_area", "cover_change", "power_daily", "spi", "mgmt_zones", "boundaries", "custom_layers"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -122,6 +122,10 @@ def main(argv: list[str] | None = None) -> int:
                     from .jobs.s2 import s2_basemap
 
                     s2_basemap(api, f, days=args.days or BASEMAP_DAYS)
+                elif args.job == "custom_layers":
+                    from .jobs.custom_layers import custom_layers
+
+                    log.info("%s: %d capas propias listas", f["name"], custom_layers(api, f))
                 elif args.job == "mgmt_zones":
                     from .jobs.zones import management_zones
 

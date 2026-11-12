@@ -159,6 +159,28 @@ ingest.post("/farm-layers", async (c) => {
   return c.json(res, 201);
 });
 
+/** M-17: GeoTIFF por convertir de una estancia (job custom_layers). */
+ingest.get("/farms/:id/custom-layers-pending", async (c) => c.json(await c.var.sys.pendingCustomLayers(c.req.param("id"))));
+
+/** M-17: el job termina una capa: PNG georreferenciado en R2 con sus 4 esquinas, o fallo. */
+ingest.post("/custom-layers/:id/result", async (c) => {
+  const b = parse(
+    z.discriminatedUnion("status", [
+      z.object({ status: z.literal("failed") }),
+      z.object({
+        status: z.literal("ready"),
+        imagePath: z.string().max(300),
+        imageMime: z.enum(["image/png", "image/jpeg"]),
+        bytes: z.number().int().positive(),
+        corners: z.array(z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)])).length(4),
+      }),
+    ]),
+    json(c.var.body),
+  );
+  if (!(await c.var.sys.finishCustomLayer(c.req.param("id"), b))) throw new HTTPException(404);
+  return c.json({ ok: true });
+});
+
 /** Climatología 1991-2020 por día del año (job climatology_build). */
 ingest.post("/climatology", async (c) => {
   const b = parse(

@@ -102,6 +102,9 @@ export const FUNNEL_EVENTS = ["signup", "farm_created", "plots_created", "member
 export const INDEX_KINDS = ["ndvi", "ndre", "ndmi", "evi"] as const;
 export type IndexKind = (typeof INDEX_KINDS)[number];
 export const LAYERS = ["true_color", ...INDEX_KINDS] as const;
+/** M-17: capas propias (imagen georreferenciada) de una estancia. */
+export const CUSTOM_LAYER_KINDS = ["image", "geotiff"] as const;
+export const CUSTOM_LAYER_STATUSES = ["processing", "ready", "failed"] as const;
 /** Estado del procesamiento satelital inicial de una estancia (S-02). */
 export const IMAGERY_STATUSES = ["pending", "processing", "ready", "failed"] as const;
 
@@ -927,6 +930,35 @@ export const farmLayers = sqliteTable(
   (t) => [
     index("farm_layers_sync_idx").on(t.organizationId, t.version, t.id),
     index("farm_layers_farm_idx").on(t.farmId, t.layer, t.acquiredAt),
+  ],
+);
+
+/**
+ * Capa propia de una estancia (M-17): imagen de dron, mapa de suelos o cualquier PNG/JPG con 4 esquinas. El archivo
+ * original va a R2 (bucket de media); un GeoTIFF lo convierte workers-py a PNG georreferenciado en WGS84.
+ * `corners` = [[lon, lat] × 4] en orden arriba-izq., arriba-der., abajo-der., abajo-izq. Solo la web la usa (no está en el pull).
+ */
+export const customLayers = sqliteTable(
+  "custom_layers",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    name: text("name").notNull(),
+    kind: text("kind", { enum: CUSTOM_LAYER_KINDS }).notNull(),
+    status: text("status", { enum: CUSTOM_LAYER_STATUSES }).notNull(),
+    mime: text("mime").notNull(),
+    originalPath: text("original_path").notNull(),
+    /** PNG/JPG que se dibuja en el mapa; null mientras un GeoTIFF se procesa. */
+    imagePath: text("image_path"),
+    imageMime: text("image_mime"),
+    bytes: integer("bytes").notNull(),
+    corners: text("corners"),
+    ...synced,
+  },
+  (t) => [
+    index("custom_layers_sync_idx").on(t.organizationId, t.version, t.id),
+    index("custom_layers_farm_idx").on(t.farmId, t.status),
   ],
 );
 

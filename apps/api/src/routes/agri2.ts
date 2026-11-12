@@ -3,7 +3,8 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { CROPS } from "@yvy/shared";
 import { farmSowingWindow, farmWithdrawal, plotPhenology, plotWaterBalance } from "../db/agri2";
-import { parse } from "../lib/http";
+import { createSoilSample, deleteSoilSample, listSoilSamples, updateSoilSample } from "../db/soil";
+import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
 
 export const agri2 = new Hono<AppEnv>();
@@ -22,3 +23,67 @@ agri2.get("/plots/:id/water-balance", async (c) => c.json(await plotWaterBalance
 
 /** A-14: carencia antes de cosechar: lotes con restricción vigente y cosechas hechas antes de tiempo. */
 agri2.get("/farms/:id/withdrawal", async (c) => c.json(await farmWithdrawal(c.var.sdb, c.req.param("id"))));
+
+// ---------- A-30: análisis de suelo ----------
+const num = (min: number, max: number) => z.number().min(min).max(max).nullish();
+const soilFields = {
+  plotId: z.string().uuid().nullish(),
+  pointLabel: z.string().trim().max(60).nullish(),
+  lon: num(-180, 180),
+  lat: num(-90, 90),
+  sampledOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  depthCm: z.number().int().min(1).max(300),
+  lab: z.string().trim().max(120).nullish(),
+  ph: num(2, 11),
+  pMgKg: num(0, 2000),
+  kCmolKg: num(0, 50),
+  omPct: num(0, 60),
+  note: z.string().trim().max(1000).nullish(),
+};
+const hasValue = (v: { ph?: unknown; pMgKg?: unknown; kCmolKg?: unknown; omPct?: unknown }) =>
+  v.ph != null || v.pMgKg != null || v.kCmolKg != null || v.omPct != null;
+const coordsTogether = (v: { lon?: unknown; lat?: unknown }) => (v.lon == null) === (v.lat == null);
+const norm = (b: Record<string, unknown>) =>
+  Object.fromEntries(
+    Object.entries(b).map(([k, v]) => [k, v === undefined ? undefined : v === "" ? null : (v ?? null)]),
+  );
+
+agri2.get("/farms/:id/soil-samples", async (c) => c.json(await listSoilSamples(c.var.sdb, c.req.param("id"))));
+
+agri2.post("/farms/:id/soil-samples", async (c) => {
+  const b = parse(
+    z
+      .object({ ...soilFields, depthCm: soilFields.depthCm.default(20) })
+      .refine(hasValue, { message: "Cargá al menos un valor del análisis" })
+      .refine(coordsTogether, { message: "Indicá longitud y latitud juntas" }),
+    await readJson(c.req),
+  );
+  return c.json(
+    await createSoilSample(c.var.sdb, c.req.param("id"), {
+      plotId: b.plotId ?? null,
+      pointLabel: b.pointLabel || null,
+      lon: b.lon ?? null,
+      lat: b.lat ?? null,
+      sampledOn: b.sampledOn,
+      depthCm: b.depthCm,
+      lab: b.lab || null,
+      ph: b.ph ?? null,
+      pMgKg: b.pMgKg ?? null,
+      kCmolKg: b.kCmolKg ?? null,
+      omPct: b.omPct ?? null,
+      note: b.note || null,
+    }),
+    201,
+  );
+});
+
+agri2.patch("/soil-samples/:id", async (c) => {
+  const b = parse(z.object(soilFields).partial().refine(coordsTogether, { message: "Indicá longitud y latitud juntas" }), await readJson(c.req));
+  await updateSoilSample(c.var.sdb, c.req.param("id"), norm(b) as never);
+  return c.json({ ok: true });
+});
+
+agri2.delete("/soil-samples/:id", async (c) => {
+  await deleteSoilSample(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});

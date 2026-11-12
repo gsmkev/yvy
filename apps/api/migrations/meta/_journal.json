@@ -288,6 +288,13 @@
       "when": 1794473086990,
       "tag": "0040_useful_loa",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "6",
+      "when": 1794474143942,
+      "tag": "0041_skinny_quasar",
+      "breakpoints": true
     }
   ]
 }

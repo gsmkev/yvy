@@ -1986,3 +1986,46 @@ export const totpRecoveryCodes = sqliteTable(
   },
   (t) => [index("totp_recovery_user_idx").on(t.userId), uniqueIndex("totp_recovery_hash_uq").on(t.codeHash)],
 );
+
+/**
+ * I-02: URLs a las que la organización pide que le avisen. El secreto de firma va cifrado (AES-GCM) porque el
+ * Worker tiene que usarlo para firmar cada envío. `events` es un arreglo JSON de WEBHOOK_EVENTS.
+ */
+export const webhookEndpoints = sqliteTable(
+  "webhook_endpoints",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    url: text("url").notNull(),
+    secretEnc: text("secret_enc").notNull(),
+    events: text("events").notNull().default("[]"),
+    enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+    /** Último intento: 'ok' o 'error' (null = todavía sin envíos). */
+    lastStatus: text("last_status", { enum: ["ok", "error"] }),
+    lastHttpStatus: integer("last_http_status"),
+    lastError: text("last_error"),
+    lastAttemptAt: integer("last_attempt_at"),
+    lastSuccessAt: integer("last_success_at"),
+    consecutiveFailures: integer("consecutive_failures").notNull().default(0),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at").notNull(),
+    deletedAt: integer("deleted_at"),
+  },
+  (t) => [index("webhook_endpoints_org_idx").on(t.organizationId)],
+);
+
+/**
+ * I-02: buzón de eventos de aviso nuevo. Se escribe en el mismo batch que el aviso (solo si la organización tiene
+ * un webhook que lo pide) y el cron de 15 minutos lo pasa a la cola y lo vacía. No se sincroniza.
+ */
+export const webhookOutbox = sqliteTable(
+  "webhook_outbox",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    event: text("event").notNull(),
+    payload: text("payload").notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("webhook_outbox_created_idx").on(t.createdAt)],
+);

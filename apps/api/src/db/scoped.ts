@@ -149,6 +149,8 @@ export const can = {
   manageForms: (r: Role) => r === "owner" || r === "admin",
   /** M-17: subir y borrar capas propias (imágenes de dron, mapas de suelos); todos las ven salvo los roles de campo. */
   manageCustomLayers: (r: Role) => r === "owner" || r === "admin" || r === "agronomist",
+  /** I-02: webhooks de la organización; dueño y administrador. */
+  manageWebhooks: (r: Role) => r === "owner" || r === "admin",
   /** S-31: pedir el cambio de cobertura entre dos fechas (mismo costo de cómputo). */
   requestAnalysis: (r: Role) => r === "owner" || r === "admin",
 };

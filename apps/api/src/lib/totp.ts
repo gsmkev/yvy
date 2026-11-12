@@ -78,33 +78,6 @@ export async function matchTotp(secretBase32: string, code: string, nowMs: numbe
 export const otpauthUri = (secretBase32: string, account: string, issuer = "Yvy"): string =>
   `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(account)}?secret=${secretBase32}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=${TOTP_DIGITS}&period=${TOTP_STEP_SECONDS}`;
 
-// ---------- Secreto en reposo ----------
-
-const aesKey = async (jwtSecret: string) =>
-  crypto.subtle.importKey("raw", await crypto.subtle.digest("SHA-256", enc.encode(`totp-secret:${jwtSecret}`)), "AES-GCM", false, [
-    "encrypt",
-    "decrypt",
-  ]);
-
-const toB64 = (b: Uint8Array) => btoa(String.fromCharCode(...b));
-const fromB64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
-
-export async function sealSecret(jwtSecret: string, secretBase32: string): Promise<string> {
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await aesKey(jwtSecret), enc.encode(secretBase32)));
-  return `${toB64(iv)}.${toB64(ct)}`;
-}
-
-export async function openSecret(jwtSecret: string, sealed: string): Promise<string | null> {
-  try {
-    const [iv, ct] = sealed.split(".");
-    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: fromB64(iv!) }, await aesKey(jwtSecret), fromB64(ct!));
-    return new TextDecoder().decode(pt);
-  } catch {
-    return null;
-  }
-}
-
 // ---------- Códigos de recuperación ----------
 
 /** Sin 0/O/1/I para poder dictarlos. 10 caracteres = 50 bits; se muestran como XXXXX-XXXXX. */

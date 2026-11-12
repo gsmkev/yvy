@@ -60,6 +60,8 @@ export async function applyPush(
   deviceId: string,
   mutations: Mutation[],
   now = Date.now(),
+  /** I-02: recibe los registros que este push crea (no los que edita), para avisar a los webhooks. */
+  created?: (typeof s.records.$inferInsert)[],
 ): Promise<PushResponse> {
   const { db, auth } = sdb;
   const org = auth.orgId;
@@ -406,7 +408,7 @@ export async function applyPush(
         }
         const authorId = existing?.authorId ?? auth.userId;
         const createdAt = existing?.createdAt ?? now;
-        recordUpserts.push({
+        const newRow: typeof s.records.$inferInsert = {
           id: r.id,
           organizationId: org,
           farmId: r.farmId,
@@ -423,7 +425,9 @@ export async function applyPush(
           deviceId,
           createdAt,
           updatedAt: now,
-        });
+        };
+        recordUpserts.push(newRow);
+        if (!existing) created?.push(newRow);
         records.set(r.id, { organizationId: org, farmId: r.farmId, authorId, createdAt, deletedAt: null, lon: r.lon, lat: r.lat });
         if (hasEffects(r.kind))
           effectUpserts.push({

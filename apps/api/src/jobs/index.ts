@@ -5,6 +5,7 @@ import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import { addDays, LIMITS, localDate } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { purgeApiRate } from "../db/api-tokens";
+import { deliverWebhook, drainOutbox, webhookRetryDelay } from "../db/webhooks";
 import { getDb, runBatch, type DB } from "../db/client";
 import { dayOfYear } from "../db/queries";
 import { SystemDb } from "../db/system";
@@ -37,7 +38,7 @@ export interface JobDeps {
 
 const defaultDeps = (): JobDeps => ({ fetch: (...a) => fetch(...a), now: Date.now });
 
-async function enqueuePerFarm(env: Bindings, type: Exclude<JobMessage["type"], "plot_forecast">): Promise<number> {
+async function enqueuePerFarm(env: Bindings, type: Exclude<JobMessage["type"], "plot_forecast" | "webhook">): Promise<number> {
   const farms = await new SystemDb(getDb(env.DB)).activeFarms();
   for (let i = 0; i < farms.length; i += 100) {
     await env.JOBS.sendBatch(
@@ -71,6 +72,8 @@ export async function scheduled(controller: { cron: string }, env: Bindings, dep
     case CRONS.notify:
       await sendPending(getDb(env.DB), env, deps.fetch, deps.now());
       await sendMentions(getDb(env.DB), env, deps.fetch, deps.now());
+      // I-02: avisos nuevos que esperan en el buzón pasan a la cola de webhooks
+      await drainOutbox(env, getDb(env.DB), deps.now());
       return;
     case CRONS.maintenance:
       await new SystemDb(getDb(env.DB)).purgeExpiredAuth(deps.now());
@@ -86,7 +89,7 @@ export async function scheduled(controller: { cron: string }, env: Bindings, dep
   }
 }
 
-export async function runJob(msg: JobMessage, env: Bindings, deps = defaultDeps()): Promise<void> {
+export async function runJob(msg: Exclude<JobMessage, { type: "webhook" }>, env: Bindings, deps = defaultDeps()): Promise<void> {
   const db = getDb(env.DB);
   const [farm] = await db
     .select({
@@ -121,12 +124,15 @@ export async function runJob(msg: JobMessage, env: Bindings, deps = defaultDeps(
 
 export async function queue(batch: MessageBatch<JobMessage>, env: Bindings): Promise<void> {
   for (const msg of batch.messages) {
+    const body = msg.body;
     try {
-      await runJob(msg.body, env);
+      if (body.type === "webhook") await deliverWebhook(env, getDb(env.DB), body);
+      else await runJob(body, env);
       msg.ack();
     } catch (err) {
-      console.error(`[job] ${msg.body.type} farm=${msg.body.farmId}`, err);
-      msg.retry({ delaySeconds: 600 });
+      console.error(`[job] ${body.type} ${body.type === "webhook" ? `endpoint=${body.endpointId}` : `farm=${body.farmId}`}`, err);
+      // I-02: los webhooks reintentan con espera creciente (30 s, 5 min, 30 min); el resto, a los 10 minutos
+      msg.retry({ delaySeconds: body.type === "webhook" ? webhookRetryDelay(msg.attempts) : 600 });
     }
   }
 }

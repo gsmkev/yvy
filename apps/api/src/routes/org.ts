@@ -3,10 +3,11 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { areaHa, bboxOf, centroidOf, checkPlots, validateShape, type Area } from "@yvy/geo";
-import { CROPS, doseText, FARM_ACCESS_LEVELS, isWeakPin, LIMITS, PIN_LENGTH, PIN_REGEX, phoneKey, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, TASK_PRIORITIES, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
+import { WEBHOOK_EVENTS, CROPS, doseText, FARM_ACCESS_LEVELS, isWeakPin, LIMITS, PIN_LENGTH, PIN_REGEX, phoneKey, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, TASK_PRIORITIES, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
 import { can } from "../db/scoped";
 import { randomDigits, randomToken } from "../lib/crypto";
 import { createApiToken, listApiTokens, revokeApiToken } from "../db/api-tokens";
+import { createWebhook, deleteWebhook, listWebhooks, pingMessage, updateWebhook } from "../db/webhooks";
 import { getSecurity, setRequireAdminTotp } from "../db/security";
 import { createSchedule, deleteSchedule, listSchedules } from "../db/schedules";
 import { dispatchNewFarm, inBackground } from "../lib/dispatch";
@@ -147,6 +148,28 @@ org.post("/api-tokens", async (c) => {
 org.delete("/api-tokens/:id", async (c) => {
   await revokeApiToken(c.var.sdb, c.req.param("id"));
   return c.json({ ok: true });
+});
+
+/** I-02: webhooks de la organización (dueño y administrador). El secreto de firma se muestra una sola vez. */
+const webhookEvents = z.array(z.enum(WEBHOOK_EVENTS)).min(1).max(WEBHOOK_EVENTS.length);
+org.get("/webhooks", async (c) => c.json(await listWebhooks(c.var.sdb)));
+org.post("/webhooks", async (c) => {
+  const b = parse(z.object({ url: z.string().trim().max(300), events: webhookEvents }), await readJson(c.req));
+  return c.json(await createWebhook(c.env, c.var.sdb, b.url, b.events), 201);
+});
+org.patch("/webhooks/:id", async (c) => {
+  const b = parse(z.object({ enabled: z.boolean().optional(), events: webhookEvents.optional() }), await readJson(c.req));
+  await updateWebhook(c.var.sdb, c.req.param("id"), b);
+  return c.json({ ok: true });
+});
+org.delete("/webhooks/:id", async (c) => {
+  await deleteWebhook(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+/** Manda un evento de prueba por la cola, para ver el estado en el panel. */
+org.post("/webhooks/:id/test", async (c) => {
+  await c.env.JOBS.send(await pingMessage(c.var.sdb, c.req.param("id")));
+  return c.json({ ok: true }, 202);
 });
 
 /** P-08: el dueño exige segundo factor a los administradores. */

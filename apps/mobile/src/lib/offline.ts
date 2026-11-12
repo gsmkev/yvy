@@ -5,7 +5,8 @@
 import * as FileSystem from "expo-file-system/legacy";
 import * as Network from "expo-network";
 import { getDb } from "./db";
-import { overallProgress, planDownloads, type DownloadPlan, type PackInfo } from "./offlinePlan";
+import { LIMITS } from "@yvy/shared";
+import { overallProgress, planDownloads, type Budget, type DownloadPlan, type PackInfo } from "./offlinePlan";
 import { api } from "./session";
 
 const DIR = `${FileSystem.documentDirectory}tiles/`;
@@ -89,6 +90,11 @@ export async function downloadPack(farmId: string, onProgress: (fraction: number
   }
 }
 
+/** Lo que ocupan los mapas bajados frente al tope de LIMITS.offline.maxMapBytes. */
+export function mapBudget(): Budget {
+  return { usedBytes: getDb().storageSummary().maps.bytes, maxBytes: LIMITS.offline.maxMapBytes };
+}
+
 /** Estado de los mapas de todas las estancias del usuario (las que bajaron al celular). */
 export function allPacksPlan(): DownloadPlan {
   const infos: PackInfo[] = getDb()
@@ -97,7 +103,7 @@ export function allPacksPlan(): DownloadPlan {
       const p = packStatus(f.id);
       return { farmId: f.id, name: f.name, layerCount: p.layers.length, upToDate: p.upToDate, missingBytes: p.missingBytes };
     });
-  return planDownloads(infos);
+  return planDownloads(infos, mapBudget());
 }
 
 /**

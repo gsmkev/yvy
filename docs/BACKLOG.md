@@ -134,7 +134,7 @@ Detalles que un usuario espera sin pedirlos.
 | F-23 | Ficha del lote en la app: últimas anotaciones, vigor, lluvia del mes, tareas | Contexto antes de anotar | App | P1 | M | Hecho |
 | F-24 | Ingreso por teléfono y PIN además del QR | Pregunta abierta del PRD | App, API | P2 | M | Hecho |
 | F-25 | Celular compartido: cambiar de usuario sin perder lo pendiente | Un celular por cuadrilla | App | P2 | M | Hecho |
-| F-26 | Mapa sin conexión de varias estancias y de zonas de camino | Viajes entre campos | App | P2 | M | Parcial |
+| F-26 | Mapa sin conexión de varias estancias y de zonas de camino | Viajes entre campos | App | P2 | M | Parcial (hecho: varias estancias en fila con tope de LIMITS.offline.maxMapBytes; faltan las zonas de camino: sin mapa de fondo de caminos no hay qué bajar, depende de M-15 y su ADR de OpenStreetMap) |
 | F-27 | Lector de caravanas electrónicas (RFID) por Bluetooth | Ganadería (ver G-21) | App | P3 | L | Falta |
 | F-28 | Escanear código QR de un punto de interés pegado en un bebedero o silo para anotar ahí | Anotar sin buscar | App | P2 | S | Hecho |
 | F-29 | Modo "solo lectura" para el dueño en la app con todos los lotes | Hoy la app está pensada para el empleado | App | P1 | M | Parcial |

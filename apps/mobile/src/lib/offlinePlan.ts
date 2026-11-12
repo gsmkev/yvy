@@ -10,19 +10,41 @@ export interface PackInfo {
 }
 
 export interface DownloadPlan {
-  /** Estancias con algo para bajar, en orden alfabético. */
+  /** Estancias con algo para bajar y que entran en el tope de mapas, en orden alfabético. */
   farms: PackInfo[];
+  /** Estancias con algo para bajar que no entran en el tope (LIMITS.offline.maxMapBytes): se bajan de a una tras liberar lugar. */
+  overBudget: PackInfo[];
   totalBytes: number;
   /** Estancias que no tienen imagen todavía: no se pueden bajar y no cuentan como pendientes. */
   withoutImagery: number;
 }
 
-export function planDownloads(packs: PackInfo[]): DownloadPlan {
-  const farms = packs
+export interface Budget {
+  /** Lo que ya ocupan los mapas bajados. */
+  usedBytes: number;
+  maxBytes: number;
+}
+
+/** ¿Entra `missingBytes` más sin pasar el tope de mapas? */
+export const fitsBudget = (missingBytes: number, b: Budget): boolean => b.usedBytes + missingBytes <= b.maxBytes;
+
+export function planDownloads(packs: PackInfo[], budget: Budget = { usedBytes: 0, maxBytes: Infinity }): DownloadPlan {
+  const pending = packs
     .filter((p) => p.layerCount > 0 && !p.upToDate)
     .sort((a, b) => a.name.localeCompare(b.name, "es"));
+  // En orden alfabético se agregan las que caben; las que se pasan del tope quedan aparte (una más chica puede entrar después).
+  const farms: PackInfo[] = [];
+  const overBudget: PackInfo[] = [];
+  let used = budget.usedBytes;
+  for (const p of pending) {
+    if (used + p.missingBytes <= budget.maxBytes) {
+      farms.push(p);
+      used += p.missingBytes;
+    } else overBudget.push(p);
+  }
   return {
     farms,
+    overBudget,
     totalBytes: farms.reduce((a, p) => a + p.missingBytes, 0),
     withoutImagery: packs.filter((p) => p.layerCount === 0).length,
   };

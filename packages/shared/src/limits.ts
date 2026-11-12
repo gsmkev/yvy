@@ -81,6 +81,10 @@ export const LIMITS = {
     /** Tolerancia de reloj para la firma HMAC. */
     maxSkewMs: 5 * 60 * 1000,
   },
+  /** F-26: tope de mapas sin conexión en el celular (suma de todas las estancias), para no llenarlo de a poco. */
+  offline: {
+    maxMapBytes: 600 * 1024 * 1024,
+  },
   storage: {
     /**
      * Cuántas versiones de cada capa ráster se guardan por estancia en R2 (las más nuevas). Cada pasada de Sentinel-2

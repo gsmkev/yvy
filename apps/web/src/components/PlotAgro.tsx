@@ -1,6 +1,6 @@
 import { CHART } from "@yvy/shared";
 import { fmtIsoDate, fmtDate, fmtDay, fmtMm, fmtNum } from "../lib/format";
-import { usePhenology, useWaterBalance } from "../lib/agri2";
+import { usePhenology, useWaterBalance, useWithdrawal } from "../lib/agri2";
 import { t, tk } from "../lib/i18n";
 import type { Plot } from "../lib/types";
 import { LineChart } from "./charts";
@@ -11,6 +11,7 @@ export function PlotAgro({ plot }: { plot: Plot }) {
   if (plot.kind !== "crop") return null;
   return (
     <>
+      <WithdrawalSection plot={plot} />
       <PhenologySection plotId={plot.id} />
       <WaterBalanceSection plotId={plot.id} />
     </>
@@ -124,6 +125,28 @@ function WaterBalanceSection({ plotId }: { plotId: string }) {
           </p>
         </div>
       )}
+    </Section>
+  );
+}
+
+/** A-14: si el lote tiene una carencia vigente, lo primero que se ve en la sección agronómica. */
+function WithdrawalSection({ plot }: { plot: Plot }) {
+  const q = useWithdrawal(plot.farmId);
+  const r = q.data?.restrictions.find((x) => x.plotId === plot.id);
+  const v = q.data?.violations.filter((x) => x.plotId === plot.id) ?? [];
+  if (!r && v.length === 0) return null;
+  return (
+    <Section title={t("ui.withdrawalTitle")}>
+      {r && (
+        <p className="text-sm font-medium text-peligro">
+          {t("ui.withdrawalPlot", { date: fmtIsoDate(r.safeFrom), product: r.product, n: r.daysLeft })}
+        </p>
+      )}
+      {v.map((x) => (
+        <p key={`${x.harvestedOn}${x.product}`} className="text-sm text-peligro">
+          {t("ui.withdrawalViolation", { plot: plot.name, date: fmtIsoDate(x.harvestedOn), product: x.product, safe: fmtIsoDate(x.safeFrom) })}
+        </p>
+      ))}
     </Section>
   );
 }

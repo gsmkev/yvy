@@ -58,7 +58,7 @@ export interface Plot {
 export interface FarmLine {
   id: string;
   farmId: string;
-  kind: "fence" | "road" | "pipe";
+  kind: "fence" | "road" | "pipe" | "stream";
   name: string;
   /** GeoJSON LineString. */
   geometry: string;

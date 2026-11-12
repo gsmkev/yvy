@@ -13,6 +13,7 @@ import {
   Snowflake,
   Sprout,
   SunDim,
+  Thermometer,
   Waves,
   Wheat,
   type LucideIcon,
@@ -35,6 +36,7 @@ export const ALERT_ICON: Record<string, LucideIcon> = {
   fire: Flame,
   pest_threshold: Bug,
   water_low: Waves,
+  heat_stress: Thermometer,
 };
 
 export const POI_ICON: Record<string, LucideIcon> = {

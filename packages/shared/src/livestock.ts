@@ -173,7 +173,7 @@ export type HealthReason = (typeof HEALTH_REASONS)[number];
  * Un conteo y una mortandad necesitan potrero; un movimiento necesita origen o destino.
  */
 export function livestockPlotProblem(kind: string, plotId: string | null, data: unknown): string | null {
-  if ((kind === "herd_count" || kind === "mortality") && !plotId) return "Elegí el potrero";
+  if ((kind === "herd_count" || kind === "mortality" || kind === "theft" || kind === "supplement") && !plotId) return "Elegí el potrero";
   if (kind === "herd_move") {
     const to = (data as { toPlotId?: string } | null)?.toPlotId;
     if (!plotId && !to) return "Indicá el potrero de origen o el de destino";
@@ -210,5 +210,35 @@ export interface FarmStockResponse {
   /** Equivalencias usadas: valores por defecto a revisar por un técnico. */
   uaEquivalents: Record<HerdCategory, number>;
   /** Eventos que no entraron por pasar el tope de lectura (0 = el cálculo está completo). */
+  truncated: boolean;
+}
+
+// ---------- gan-p2 ----------
+
+/** Un aviso de abigeato (G-13), tal como lo lista GET /org/farms/:id/theft. */
+export interface TheftRow {
+  id: string;
+  plotId: string | null;
+  plotName: string | null;
+  /** Cuándo se notó el faltante (capturedAt del registro). */
+  capturedAt: number;
+  category: HerdCategory;
+  head: number;
+  /** Fecha de la denuncia (epoch ms) y número, o null si todavía no se hizo. */
+  reportedAt: number | null;
+  policeReport: string | null;
+  note: string | null;
+}
+
+export interface TheftResponse {
+  from: number;
+  to: number;
+  rows: TheftRow[];
+  totals: {
+    head: number;
+    byCategory: Record<HerdCategory, number>;
+    /** Avisos sin número de denuncia: es lo que falta completar. */
+    withoutReport: number;
+  };
   truncated: boolean;
 }

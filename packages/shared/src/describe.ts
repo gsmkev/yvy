@@ -68,11 +68,35 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
         parts.push(`${d.head} ${tr(`fields.herd_${d.category}`, String(d.category)).toLowerCase()}`);
       if (str("cause")) parts.push(tr(`fields.cause_${d.cause}`, String(d.cause)).toLowerCase());
       break;
+    case "reproduction": {
+      if (str("event")) parts.push(tr(`fields.reproEvent_${d.event}`, String(d.event)));
+      if (typeof d.head === "number") parts.push(t("fields.herdTotalValue", { n: d.head }));
+      if (typeof d.pregnant === "number") parts.push(t("fields.reproPregnantValue", { n: d.pregnant }));
+      if (typeof d.calves === "number") parts.push(t("fields.reproCalvesValue", { n: d.calves }));
+      if (str("tag")) parts.push(t("fields.tagValue", { n: d.tag as string }));
+      break;
+    }
+    case "weighing":
+      if (typeof d.kg === "number") parts.push(t("fields.kgValue", { n: dec(d.kg) }));
+      if (str("tag")) parts.push(t("fields.tagValue", { n: d.tag as string }));
+      else if (str("group")) parts.push(d.group as string);
+      if (typeof d.head === "number" && !str("tag")) parts.push(t("fields.herdTotalValue", { n: d.head }));
+      break;
+    case "supplement":
+      if (str("type")) parts.push(tr(`fields.supplementType_${d.type}`, String(d.type)));
+      if (typeof d.kg === "number") parts.push(t("fields.kgValue", { n: d.kg }));
+      break;
+    case "theft":
+      if (typeof d.head === "number" && str("category"))
+        parts.push(`${d.head} ${tr(`fields.herd_${d.category}`, String(d.category)).toLowerCase()}`);
+      if (str("policeReport")) parts.push(t("fields.policeReportValue", { n: d.policeReport as string }));
+      break;
     case "health": {
       const c = (d.counts ?? {}) as Record<string, number>;
       if (str("reason")) parts.push(tr(`fields.healthReason_${d.reason}`, String(d.reason)));
       if (str("product")) parts.push(d.product as string);
       parts.push(t("fields.herdTotalValue", { n: HERD_CATEGORIES.reduce((n, k) => n + (c[k] ?? 0), 0) }));
+      if (str("tag")) parts.push(t("fields.tagValue", { n: d.tag as string }));
       break;
     }
     case "sowing":

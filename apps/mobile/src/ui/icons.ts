@@ -4,6 +4,10 @@ import {
   Bug,
   HeartCrack,
   Syringe,
+  ShieldAlert,
+  Package,
+  Weight,
+  Baby,
   CloudRain,
   Droplets,
   Footprints,
@@ -20,6 +24,7 @@ import {
   Snowflake,
   CloudRainWind,
   SunDim,
+  Thermometer,
   type LucideIcon,
 } from "lucide-react-native";
 import type { RecordKind } from "@yvy/shared";
@@ -37,6 +42,10 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
   herd_move: ArrowRightLeft,
   mortality: HeartCrack,
   health: Syringe,
+  theft: ShieldAlert,
+  supplement: Package,
+  weighing: Weight,
+  reproduction: Baby,
   sowing: Shovel,
   application: SprayCan,
   fertilization: Fertilizer,
@@ -47,6 +56,7 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
 
 export const ALERT_ICON: Record<string, LucideIcon> = {
   water_low: Droplets,
+  heat_stress: Thermometer,
   frost: Snowflake,
   excess_rain: CloudRainWind,
   drought: SunDim,

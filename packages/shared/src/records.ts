@@ -3,6 +3,9 @@
  * Subir RECORD_SCHEMA_VERSION al cambiar un esquema de forma incompatible.
  */
 import { z } from "zod";
+import { animalTag, MAX_WEIGHT_KG } from "./animals";
+import { REPRO_EVENTS, SERVICE_METHODS } from "./repro";
+import { SUPPLEMENT_TYPES, MAX_SUPPLEMENT_KG } from "./grazing";
 import { HEALTH_REASONS, HERD_CATEGORIES, MAX_HEAD_PER_CATEGORY, MORTALITY_CAUSES, MOVE_REASONS } from "./livestock";
 import { deltaT, DOSE_UNITS } from "./agro";
 import { CROPS, type RecordKind } from "./schema";
@@ -79,8 +82,69 @@ const livestockSchemas = {
     quantity: z.number().positive().max(1_000_000).optional(),
     dose: z.string().trim().max(80).optional(),
     counts: herdCountsSchema,
+    /** Caravana del animal tratado, si fue uno solo (G-21): arma su historial. */
+    tag: animalTag.optional(),
     note,
   }),
+  /**
+   * Abigeato (G-13): cabezas que faltan después de un conteo. El potrero es records.plot_id y la fecha del aviso es
+   * capturedAt. `reportedAt` (epoch ms) y `policeReport` (número de denuncia) se completan cuando se hace la denuncia.
+   * Descuenta de la hacienda del potrero, igual que la mortandad.
+   */
+  theft: z.object({
+    category: z.enum(HERD_CATEGORIES),
+    head: z.number().int().min(1).max(MAX_HEAD_PER_CATEGORY),
+    reportedAt: z.number().int().nonnegative().optional(),
+    policeReport: z.string().trim().min(1).max(40).optional(),
+    note,
+  }),
+  /** Suplementación y sal mineral (G-31): kilos dados en un potrero (records.plot_id). */
+  supplement: z.object({
+    type: z.enum(SUPPLEMENT_TYPES),
+    kg: z.number().positive().max(MAX_SUPPLEMENT_KG),
+    /** Marca o fórmula, si importa. */
+    product: z.string().trim().min(1).max(120).optional(),
+    note,
+  }),
+  /**
+   * Pesada (G-22): peso promedio por cabeza de un lote de animales (`group`, `head`) o de un animal con caravana
+   * (`tag`, un solo animal). El potrero es opcional: la manga muchas veces no está en un potrero.
+   */
+  weighing: z
+    .object({
+      kg: z.number().positive().max(MAX_WEIGHT_KG),
+      head: z.number().int().min(1).max(MAX_HEAD_PER_CATEGORY).optional(),
+      group: z.string().trim().min(1).max(60).optional(),
+      category: z.enum(HERD_CATEGORIES).optional(),
+      tag: animalTag.optional(),
+      note,
+    })
+    .refine((d) => d.tag === undefined || d.head === undefined || d.head === 1, {
+      message: "Una pesada con caravana es de un solo animal",
+    }),
+  /**
+   * Reproducción (G-20): servicio, tacto, parición o destete. `head` son vacas (servidas, tactadas o paridas) o
+   * terneros destetados; con caravana es 1. Índices en packages/shared/src/repro.ts.
+   */
+  reproduction: z
+    .object({
+      event: z.enum(REPRO_EVENTS),
+      head: z.number().int().min(1).max(MAX_HEAD_PER_CATEGORY).default(1),
+      method: z.enum(SERVICE_METHODS).optional(),
+      pregnant: z.number().int().min(0).max(MAX_HEAD_PER_CATEGORY).optional(),
+      calves: z.number().int().min(0).max(MAX_HEAD_PER_CATEGORY).optional(),
+      tag: animalTag.optional(),
+      note,
+    })
+    .refine((d) => d.event !== "pregnancy_check" || d.pregnant !== undefined, {
+      message: "Indicá cuántas están preñadas",
+    })
+    .refine((d) => d.pregnant === undefined || d.pregnant <= d.head, {
+      message: "No puede haber más preñadas que tactadas",
+    })
+    .refine((d) => d.tag === undefined || d.head === 1, {
+      message: "Un registro con caravana es de un solo animal",
+    }),
 };
 // ---------- fin ganaderia ----------
 /** Unidad de la densidad de siembra: semillas por metro lineal o kg por hectárea. */

@@ -183,6 +183,8 @@ export default function Annotate() {
     if (kind === "fuel_load" && typeof data.machineId === "string")
       data.machine = db.machines().find((m) => m.id === data.machineId)?.name ?? data.machine;
     if (kind === "rain" && !editing) data.readAt = Date.now();
+    // Abigeato: si ya hay número de denuncia, la fecha de la denuncia es hoy.
+    if (kind === "theft" && !editing && data.policeReport) data.reportedAt = Date.now();
     // Compra: la hacienda entra de afuera, así que el potrero elegido es el destino y no hay origen.
     const entersFromOutside = kind === "herd_move" && data.reason === "compra" && !!plot;
     if (entersFromOutside) data.toPlotId = plot!.id;
@@ -717,7 +719,8 @@ function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unk
         ref={input}
         value={text}
         onChangeText={setText}
-        multiline
+        multiline={!step.pattern}
+        autoCapitalize={step.pattern ? "characters" : undefined}
         style={st.textInput}
         accessibilityLabel={tr(step.question)}
         placeholder={step.optional ? t("app.optional") : undefined}
@@ -727,7 +730,12 @@ function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unk
       {step.optional && !text.trim() ? (
         <Button big kind="secondary" title={t("app.skip")} onPress={() => onAnswer(undefined)} />
       ) : (
-        <Button big title={t("app.next")} disabled={!text.trim()} onPress={() => onAnswer(text.trim())} />
+        <Button
+          big
+          title={t("app.next")}
+          disabled={!text.trim() || (!!step.pattern && !step.pattern.test(text.trim()))}
+          onPress={() => onAnswer(text.trim())}
+        />
       )}
     </ScrollView>
   );

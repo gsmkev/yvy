@@ -2,7 +2,7 @@
  * Campos de cada tipo de registro (RF-30), en el mismo orden y con los mismos valores que los esquemas Zod
  * de packages/shared/src/records.ts. La validación final la hace parseRecordData.
  */
-import { CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
+import { REPRO_EVENTS, SERVICE_METHODS, SUPPLEMENT_TYPES, CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
 
 export type FieldSpec =
   | { key: string; type: "choice"; options: readonly string[]; labelPrefix: string; required?: boolean }
@@ -76,11 +76,40 @@ export const FORMS: Record<RecordKind, FieldSpec[]> = {
     { key: "cause", type: "choice", options: MORTALITY_CAUSES, labelPrefix: "fields.cause_", required: true },
     note,
   ],
+  theft: [
+    { key: "category", type: "choice", options: HERD_CATEGORIES, labelPrefix: "fields.herd_", required: true },
+    { key: "head", type: "number", unit: "cabezas", required: true },
+    { key: "policeReport", type: "text" },
+    note,
+  ],
+  reproduction: [
+    { key: "event", type: "choice", options: REPRO_EVENTS, labelPrefix: "fields.reproEvent_", required: true },
+    { key: "head", type: "number" },
+    { key: "method", type: "choice", options: SERVICE_METHODS, labelPrefix: "fields.reproMethod_" },
+    { key: "pregnant", type: "number" },
+    { key: "calves", type: "number" },
+    { key: "tag", type: "text" },
+    note,
+  ],
+  weighing: [
+    { key: "kg", type: "number", unit: "kg", required: true },
+    { key: "tag", type: "text" },
+    { key: "group", type: "text" },
+    { key: "head", type: "number", unit: "cabezas" },
+    note,
+  ],
+  supplement: [
+    { key: "type", type: "choice", options: SUPPLEMENT_TYPES, labelPrefix: "fields.supplementType_", required: true },
+    { key: "kg", type: "number", unit: "kg", required: true },
+    { key: "product", type: "text" },
+    note,
+  ],
   health: [
     { key: "reason", type: "choice", options: HEALTH_REASONS, labelPrefix: "fields.healthReason_", required: true },
     { key: "product", type: "text", required: true },
     { key: "dose", type: "text" },
     { key: "counts", type: "counts", required: true },
+    { key: "tag", type: "text" },
     note,
   ],
   fuel_load: [

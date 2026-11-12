@@ -6,6 +6,9 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   HEALTH_REASONS,
+  SUPPLEMENT_TYPES,
+  REPRO_EVENTS,
+  SERVICE_METHODS,
   HERD_CATEGORIES,
   MORTALITY_CAUSES,
   MOVE_REASONS,
@@ -23,7 +26,7 @@ import {
   type RecordKind,
 } from "@yvy/shared";
 import { post } from "../lib/api";
-import { fmtDateTime } from "../lib/format";
+import { fmtDateTime, toIso } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import type { RecordRow } from "../lib/types";
 import { Button, ConfirmModal, ErrorBox, Field, Input, Select, toast } from "./ui";
@@ -31,7 +34,8 @@ import { Button, ConfirmModal, ErrorBox, Field, Input, Select, toast } from "./u
 type Opt = { value: string; label: string };
 type FieldDef =
   | { key: string; label: string; type: "select"; options: Opt[]; optional?: boolean }
-  | { key: string; label: string; type: "number" | "text" | "textarea" | "bool"; optional?: boolean };
+  /** Fecha: se guarda en epoch ms (mediodía de Paraguay) y se edita como día. */
+  | { key: string; label: string; type: "number" | "text" | "textarea" | "bool" | "date"; optional?: boolean };
 
 const f = (k: string) => tk(`fields.${k}`);
 const opts = (prefix: string, values: readonly string[]): Opt[] =>
@@ -89,11 +93,42 @@ const FIELDS: Record<RecordKind, FieldDef[]> = {
     { key: "cause", label: f("cause"), type: "select", options: opts("cause", MORTALITY_CAUSES) },
     NOTE,
   ],
+  reproduction: [
+    { key: "event", label: f("reproEvent"), type: "select", options: opts("reproEvent", REPRO_EVENTS) },
+    { key: "head", label: f("head"), type: "number" },
+    { key: "method", label: f("reproMethod"), type: "select", options: opts("reproMethod", SERVICE_METHODS), optional: true },
+    { key: "pregnant", label: f("reproPregnant"), type: "number", optional: true },
+    { key: "calves", label: f("reproCalves"), type: "number", optional: true },
+    { key: "tag", label: f("tag"), type: "text", optional: true },
+    NOTE,
+  ],
+  weighing: [
+    { key: "kg", label: f("kg"), type: "number" },
+    { key: "tag", label: f("tag"), type: "text", optional: true },
+    { key: "group", label: f("group"), type: "text", optional: true },
+    { key: "head", label: f("head"), type: "number", optional: true },
+    { key: "category", label: f("herdCategory"), type: "select", options: opts("herd", HERD_CATEGORIES), optional: true },
+    NOTE,
+  ],
+  supplement: [
+    { key: "type", label: f("supplementType"), type: "select", options: opts("supplementType", SUPPLEMENT_TYPES) },
+    { key: "kg", label: f("kg"), type: "number" },
+    { key: "product", label: f("product"), type: "text", optional: true },
+    NOTE,
+  ],
+  theft: [
+    { key: "category", label: f("herdCategory"), type: "select", options: opts("herd", HERD_CATEGORIES) },
+    { key: "head", label: f("head"), type: "number" },
+    { key: "reportedAt", label: f("reportedAt"), type: "date", optional: true },
+    { key: "policeReport", label: f("policeReport"), type: "text", optional: true },
+    NOTE,
+  ],
   health: [
     { key: "reason", label: f("healthReason"), type: "select", options: opts("healthReason", HEALTH_REASONS) },
     { key: "product", label: f("product"), type: "text" },
     { key: "dose", label: f("dose"), type: "text", optional: true },
     ...HERD_FIELDS("counts"),
+    { key: "tag", label: f("tag"), type: "text", optional: true },
     NOTE,
   ],
   fuel_load: [
@@ -151,6 +186,7 @@ const toForm = (data: Record<string, unknown>, defs: FieldDef[]) =>
   Object.fromEntries(
     defs.map((d) => {
       const v = getPath(data, d.key);
+      if (d.type === "date") return [d.key, typeof v === "number" ? toIso(v) : ""];
       return [d.key, d.type === "bool" ? (v === true ? "1" : "0") : v === undefined || v === null ? "" : String(v)];
     }),
   );
@@ -162,6 +198,7 @@ function fromForm(base: Record<string, unknown>, defs: FieldDef[], form: Record<
     const raw = (form[d.key] ?? "").trim();
     if (d.type === "bool") out = setPath(out, d.key, raw === "1");
     else if (raw === "") out = setPath(out, d.key, undefined);
+    else if (d.type === "date") out = setPath(out, d.key, Date.parse(`${raw}T12:00:00-03:00`));
     else out = setPath(out, d.key, d.type === "number" ? Number(raw) : raw);
   }
   return out;
@@ -256,7 +293,7 @@ export function RecordEditForm({
             />
           ) : (
             <Input
-              type={d.type === "number" ? "number" : "text"}
+              type={d.type === "number" ? "number" : d.type === "date" ? "date" : "text"}
               step={d.type === "number" ? "any" : undefined}
               min={d.type === "number" ? 0 : undefined}
               value={form[d.key]}

@@ -6,13 +6,21 @@ import { get, put } from "../lib/api";
 import { fmtDay, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useMe } from "../lib/queries";
-import { Button, Empty, ErrorBox, Field, Input, Spinner } from "./ui";
+import { HeatStressCard } from "./HeatStress";
+import { ForagePanel } from "./ForagePanel";
+import { RotationPanel } from "./RotationPanel";
+import { AnimalsPanel } from "./AnimalsPanel";
+import { ReproPanel } from "./ReproPanel";
+import { SupplementPanel } from "./SupplementPanel";
+import { TheftPanel } from "./TheftPanel";
+import { WeighingsPanel } from "./WeighingsPanel";
+import { Button, Empty, ErrorBox, Field, Input, Spinner, Tabs } from "./ui";
 
 const dec = new Intl.NumberFormat("es-PY", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const int = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 });
 const num = (v: string) => Number(v.replace(",", "."));
 
-export function HerdPanel({ farmId }: { farmId: string }) {
+function StockSection({ farmId }: { farmId: string }) {
   const me = useMe();
   const canEditLimit = me.data?.role === "owner" || me.data?.role === "admin";
   const qc = useQueryClient();
@@ -124,11 +132,46 @@ export function HerdPanel({ farmId }: { farmId: string }) {
         {save.error ? <ErrorBox error={save.error} /> : null}
       </form>
 
+      <HeatStressCard farmId={farmId} />
+
       <p className="text-xs text-tinta-2">
         {t("ui.herdEquivalents", {
           list: HERD_CATEGORIES.map((c) => `${tk(`fields.herd_${c}`).toLowerCase()} ${dec.format(UA_EQUIVALENTS[c])}`).join(", "),
         })}
       </p>
+    </div>
+  );
+}
+
+type Section = "stock" | "rotation" | "forage" | "animals" | "repro" | "weights" | "supplements" | "theft";
+
+/** Pestaña Hacienda: hacienda calculada y, abajo, cada módulo de ganadería en su sección. */
+export function HerdPanel({ farmId }: { farmId: string }) {
+  const [section, setSection] = useState<Section>("stock");
+  return (
+    <div className="mt-4 flex flex-col gap-2">
+      <Tabs<Section>
+        value={section}
+        onChange={setSection}
+        tabs={[
+          { id: "stock", label: t("ui.herdSectionStock") },
+          { id: "rotation", label: t("ui.herdSectionRotation") },
+          { id: "forage", label: t("ui.herdSectionForage") },
+          { id: "animals", label: t("ui.herdSectionAnimals") },
+          { id: "repro", label: t("ui.herdSectionRepro") },
+          { id: "weights", label: t("ui.herdSectionWeights") },
+          { id: "supplements", label: t("ui.herdSectionSupp") },
+          { id: "theft", label: t("ui.herdSectionTheft") },
+        ]}
+      />
+      {section === "stock" && <StockSection farmId={farmId} />}
+      {section === "rotation" && <RotationPanel farmId={farmId} />}
+      {section === "forage" && <ForagePanel farmId={farmId} />}
+      {section === "animals" && <AnimalsPanel farmId={farmId} />}
+      {section === "repro" && <ReproPanel farmId={farmId} />}
+      {section === "weights" && <WeighingsPanel farmId={farmId} />}
+      {section === "supplements" && <SupplementPanel farmId={farmId} />}
+      {section === "theft" && <TheftPanel farmId={farmId} />}
     </div>
   );
 }

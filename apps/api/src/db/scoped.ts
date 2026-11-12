@@ -11,6 +11,7 @@ import {
   newId,
   planLimits,
   t,
+  TAGGED_RECORD_KINDS,
   type Cursor,
   type PullResponse,
   type PullTable,
@@ -89,6 +90,7 @@ const SYNCED: Record<PullTable, SyncedTable> = {
   },
   products: { table: s.products, org: s.products.organizationId, version: s.products.version, id: s.products.id },
   machines: { table: s.machines, org: s.machines.organizationId, version: s.machines.version, id: s.machines.id },
+  animals: { table: s.animals, org: s.animals.organizationId, version: s.animals.version, id: s.animals.id },
 };
 
 /** Matriz de permisos (PRD §9). */
@@ -118,6 +120,8 @@ export const can = {
   manageErp: (r: Role) => r === "owner" || r === "admin",
   /** El agrónomo ve las cantidades de stock (nunca montos); el empleado no entra al ERP. */
   viewStock: (r: Role) => r !== "worker",
+  /** G-21: alta y edición de animales con caravana; el empleado los consulta (también sin señal) pero no los edita. */
+  editAnimals: (r: Role) => r !== "worker",
 };
 
 export class ScopedDb {
@@ -190,6 +194,8 @@ export class ScopedDb {
         return undefined; // el catálogo es de toda la organización
       case "machines":
         return undefined; // las máquinas son de toda la organización: el empleado las elige al cargar combustible
+      case "animals":
+        return sql`animals.farm_id IN ${this.workerFarmsSql()}`;
     }
   }
 
@@ -202,7 +208,13 @@ export class ScopedDb {
         gte(s.records.capturedAt, now - LIMITS.sync.recordsHistoryMs),
         eq(s.records.kind, "herd_count"),
         and(
-          inArray(s.records.kind, ["herd_move", "mortality"]),
+          inArray(s.records.kind, ["herd_move", "mortality", "theft"]),
+          gte(s.records.capturedAt, now - LIMITS.sync.herdEventsHistoryMs),
+        ),
+        // G-21: lo que lleva la caravana de un animal baja un año, para ver su historial sin señal.
+        and(
+          inArray(s.records.kind, [...TAGGED_RECORD_KINDS]),
+          sql`json_extract(${s.records.data}, '$.tag') IS NOT NULL`,
           gte(s.records.capturedAt, now - LIMITS.sync.herdEventsHistoryMs),
         ),
       );

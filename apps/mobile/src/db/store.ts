@@ -15,6 +15,7 @@ import {
   LIMITS,
   localDate,
   newId,
+  normalizeTag,
   nextDueDate,
   nextOccurrenceId,
   parseChecklist,
@@ -58,6 +59,7 @@ const TABLES: Record<PullTable, SQLiteTable> = {
   plot_seasons: s.plotSeasons,
   products: s.products,
   machines: s.machines,
+  animals: s.animals,
 };
 
 /** jsKey → columna SQL, sacado del esquema compartido. */
@@ -84,6 +86,7 @@ export type FarmLayer = typeof s.farmLayers.$inferSelect;
 export type Season = typeof s.seasons.$inferSelect;
 export type Product = typeof s.products.$inferSelect;
 export type Machine = typeof s.machines.$inferSelect;
+export type Animal = typeof s.animals.$inferSelect;
 export type PlotSeason = typeof s.plotSeasons.$inferSelect;
 
 export interface NewRecord {
@@ -602,7 +605,7 @@ export class LocalDb implements SyncStore {
    */
   herdStock(plotId: string): PlotStock | null {
     const rows = this.sql.all<{ kind: string; plot_id: string | null; captured_at: number; data: string }>(
-      "SELECT kind, plot_id, captured_at, data FROM records WHERE deleted_at IS NULL AND kind IN ('herd_count','herd_move','mortality') AND (plot_id = ? OR (kind = 'herd_move' AND data LIKE ?))",
+      "SELECT kind, plot_id, captured_at, data FROM records WHERE deleted_at IS NULL AND kind IN ('herd_count','herd_move','mortality','theft') AND (plot_id = ? OR (kind = 'herd_move' AND data LIKE ?))",
       [plotId, `%${plotId}%`],
     );
     const counts: CountEvent[] = [];
@@ -620,7 +623,7 @@ export class LocalDb implements SyncStore {
       else if (r.kind === "herd_move" && d.counts) {
         if (r.plot_id === plotId || d.toPlotId === plotId)
           moves.push({ fromPlotId: r.plot_id, toPlotId: d.toPlotId ?? null, capturedAt: r.captured_at, counts: d.counts });
-      } else if (r.kind === "mortality" && r.plot_id === plotId && d.category && typeof d.head === "number")
+      } else if ((r.kind === "mortality" || r.kind === "theft") && r.plot_id === plotId && d.category && typeof d.head === "number")
         deaths.push({ plotId, capturedAt: r.captured_at, category: d.category, head: d.head });
     }
     if (!counts.length && !moves.length && !deaths.length) return null;
@@ -725,6 +728,33 @@ export class LocalDb implements SyncStore {
     return this.sql
       .all("SELECT * FROM machines WHERE deleted_at IS NULL ORDER BY name")
       .map((r) => fromRow<Machine>(s.machines, r));
+  }
+
+  /** Animales con caravana (G-21) de las estancias del celular; con `query`, los que tienen ese texto en la caravana. */
+  animals(query = "", limit = 30): Animal[] {
+    // La caravana solo lleva letras, números y guiones: lo demás no puede coincidir (y no se pasa al LIKE).
+    const needle = normalizeTag(query).replace(/[^A-Z0-9-]/g, "");
+    return this.sql
+      .all("SELECT * FROM animals WHERE deleted_at IS NULL AND tag LIKE ? ORDER BY tag LIMIT ?", [`%${needle}%`, limit])
+      .map((r) => fromRow<Animal>(s.animals, r));
+  }
+
+  /** Registros que llevan la caravana (pesadas, reproducción, sanidad), del más nuevo al más viejo; sin señal. */
+  recordsOfTag(tag: string, limit = 100): RecordRow[] {
+    return this.sql
+      .all(
+        `SELECT r.*, 0 AS _pending, NULL AS _rejected, 0 AS _photos FROM records r
+         WHERE r.deleted_at IS NULL AND r.kind IN ('weighing','reproduction','health') AND json_extract(r.data, '$.tag') = ?
+         ORDER BY r.captured_at DESC LIMIT ?`,
+        [normalizeTag(tag), limit],
+      )
+      .map((r) => ({
+        ...fromRow<typeof s.records.$inferSelect>(s.records, r),
+        pending: false,
+        rejected: null,
+        photos: 0,
+        voice: 0,
+      }));
   }
 
   /** Lo planificado en un lote para una campaña (cultivo, variedad), si bajó al celular. */

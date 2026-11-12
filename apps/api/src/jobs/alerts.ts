@@ -18,6 +18,7 @@ const SOURCES: Record<AlertDraft["kind"], string> = {
   fire: "NASA FIRMS",
   pest_threshold: "Monitoreos de plagas (umbral por defecto)",
   water_low: "Registros de aguadas",
+  heat_stress: "MET Norway",
 };
 
 export async function upsertAlert(

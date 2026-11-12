@@ -875,6 +875,14 @@ export const eudrResults = sqliteTable(
   (t) => [uniqueIndex("eudr_results_plot_uq").on(t.plotId), index("eudr_results_farm_idx").on(t.farmId)],
 );
 
+/** F-14: campos propios por tipo de registro de cada organización (JSON validado con formConfigSchema). No se sincroniza: la app lo pide por /org/form-config. */
+export const formConfigs = sqliteTable("form_configs", {
+  organizationId: text("organization_id").primaryKey(),
+  config: text("config").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+  updatedBy: text("updated_by").notNull(),
+});
+
 /** Análisis por lote calculados por workers-py con Sentinel-2: área quemada (S-20) y cambio de cobertura (S-31). */
 export const ANALYSIS_KINDS = ["burned", "cover_change"] as const;
 export type AnalysisKind = (typeof ANALYSIS_KINDS)[number];

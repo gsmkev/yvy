@@ -18,7 +18,7 @@ import {
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bboxOf, checkPlots, type Area } from "@yvy/geo";
-import { newId, t } from "@yvy/shared";
+import { newId, t, type FormConfig } from "@yvy/shared";
 import { HTTPException } from "hono/http-exception";
 import { randomToken, sha256Hex } from "../lib/crypto";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from "./client";
@@ -441,6 +441,29 @@ export async function farmForecast(sdb: ScopedDb, farmId: string) {
     source: rows[0]?.source ?? null,
     days: rows.map(({ source: _source, ...d }) => d),
   };
+}
+
+// ---------- Formularios configurables (F-14) ----------
+
+/** Campos propios de la organización por tipo de registro. Los lee todo el equipo: el empleado los llena en la app. */
+export async function getFormConfig(sdb: ScopedDb): Promise<{ config: FormConfig; updatedAt: number | null }> {
+  const [row] = await sdb.db
+    .select({ config: s.formConfigs.config, updatedAt: s.formConfigs.updatedAt })
+    .from(s.formConfigs)
+    .where(eq(s.formConfigs.organizationId, sdb.auth.orgId))
+    .limit(1);
+  return row ? { config: JSON.parse(row.config) as FormConfig, updatedAt: row.updatedAt } : { config: {}, updatedAt: null };
+}
+
+export async function saveFormConfig(sdb: ScopedDb, config: FormConfig): Promise<{ updatedAt: number }> {
+  sdb.require(can.manageForms, "Solo el dueño o el administrador definen los formularios");
+  const updatedAt = sdb.now();
+  const row = { config: JSON.stringify(config), updatedAt, updatedBy: sdb.auth.userId };
+  await sdb.db
+    .insert(s.formConfigs)
+    .values({ organizationId: sdb.auth.orgId, ...row })
+    .onConflictDoUpdate({ target: s.formConfigs.organizationId, set: row });
+  return { updatedAt };
 }
 
 // ---------- Historia de vigor desde 2017 (S-03) ----------

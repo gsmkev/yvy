@@ -92,6 +92,14 @@ export const LIMITS = {
     deltaTMax: 8,
     maxRainMm: 0,
   },
+  /** F-14: formularios configurables por la organización. */
+  forms: {
+    maxFieldsPerKind: 10,
+    maxLabel: 60,
+    maxOptions: 12,
+    maxOptionLength: 40,
+    maxTextLength: 500,
+  },
   monitoring: {
     /** Estaciones de muestreo que propone la app por lote (F-12). */
     defaultStations: 5,

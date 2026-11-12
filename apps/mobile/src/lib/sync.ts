@@ -12,6 +12,7 @@ import { getDb } from "./db";
 import { flushVotes } from "./votes";
 import { rescheduleReminders } from "./reminders";
 import { refreshMemberNames } from "./members";
+import { refreshFormConfig } from "./formConfig";
 import { isOwnerMode } from "./ownerSummary";
 import { accessToken, api, API_URL, getSession, HttpError, OfflineError } from "./session";
 
@@ -133,6 +134,8 @@ export async function syncNow(): Promise<void> {
     getDb().setKv("last_sync_at", String(r.finishedAt));
     set({ online: true, lastSyncAt: r.finishedAt });
     await flushAlertVotes();
+    // F-14: campos propios de los formularios de la organización
+    await refreshFormConfig(getDb(), () => api("GET", "/org/form-config"));
     // F-29: el dueño necesita los nombres para ver quién anotó cada cosa.
     if (isOwnerMode(getSession()?.organization.role)) await refreshMemberNames(getDb(), () => api("GET", "/org/members"));
   } catch (e) {

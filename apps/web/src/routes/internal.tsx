@@ -28,6 +28,9 @@ interface OrgMetrics {
   /** V-05: código de referido con el que se registró y agrónomo dueño del código. */
   referredBy: string | null;
   referrerName: string | null;
+  /** V-06: quién lo refirió (si se pudo identificar) y cuándo el equipo anotó el crédito. */
+  referrerUserId: string | null;
+  referralCreditedAt: number | null;
 }
 
 /** Métricas del PRD §4 por organización (solo equipo Yvy). */
@@ -56,6 +59,10 @@ export function InternalPage() {
       qc.invalidateQueries({ queryKey: ["admin-metrics"] });
       toast(t("ui.internalTrialExtended"));
     },
+  });
+  const credit = useMutation({
+    mutationFn: (v: { id: string; credited: boolean }) => post(`/admin/orgs/${v.id}/referral-credit`, { credited: v.credited }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-metrics"] }),
   });
   const support = useMutation({
     mutationFn: (id: string) => post<Session>(`/admin/orgs/${id}/support-session`),
@@ -143,6 +150,17 @@ export function InternalPage() {
                 <td className="px-3 py-2">{o.lastActive ?? "—"}</td>
                 <td className="px-3 py-2">
                   {o.referredBy ? `${o.referrerName ?? t("ui.internalReferralUnknown")} · ${o.referredBy}` : "—"}
+                  {o.referrerUserId && (
+                    <div className="text-xs">
+                      {o.referralCreditedAt ? `${t("ui.internalReferralCredited", { date: fmtDate(o.referralCreditedAt) })} · ` : ""}
+                      <button
+                        className="cursor-pointer underline underline-offset-4"
+                        onClick={() => credit.mutate({ id: o.id, credited: !o.referralCreditedAt })}
+                      >
+                        {o.referralCreditedAt ? t("ui.internalReferralCreditUndo") : t("ui.internalReferralCredit")}
+                      </button>
+                    </div>
+                  )}
                 </td>
                 <td className="num px-3 py-2">
                   {o.limits.maxHa === null ? "∞" : fmtNum(o.limits.maxHa)} ha · {o.users}/

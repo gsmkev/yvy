@@ -186,5 +186,6 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `api_rate` (\n\t`token_id` text NOT NULL,\n\t`window` integer NOT NULL,\n\t`n` integer DEFAULT 0 NOT NULL,\n\tPRIMARY KEY(`token_id`, `window`)\n);",
   "CREATE TABLE `api_tokens` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`token_hash` text NOT NULL,\n\t`prefix` text NOT NULL,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`last_used_at` integer,\n\t`revoked_at` integer\n);",
   "CREATE UNIQUE INDEX `api_tokens_hash_uq` ON `api_tokens` (`token_hash`);",
-  "CREATE INDEX `api_tokens_org_idx` ON `api_tokens` (`organization_id`);"
+  "CREATE INDEX `api_tokens_org_idx` ON `api_tokens` (`organization_id`);",
+  "ALTER TABLE `organizations` ADD `referral_credited_at` integer;"
 ];

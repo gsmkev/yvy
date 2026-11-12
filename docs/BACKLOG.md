@@ -378,7 +378,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | P-04 | Página de estado del servicio | P3 | S | Falta |
 | P-05 | Copias de seguridad verificadas con restauración probada | P1 | S | Parcial |
 | P-06 | Archivado de datos viejos de D1 a R2 | P2 | M | Hecho |
-| P-07 | Ingreso con Google | P2 | S | Falta |
+| P-07 | Ingreso con Google | P2 | S | Hecho |
 | P-08 | Segundo factor para dueños | P3 | S | Falta |
 | P-09 | Baja de la cuenta y borrado de datos | P1 | S | Falta |
 | P-10 | Planes con límites por hectáreas y usuarios, y cambio de plan desde la web | P1 | M | Parcial (manual) |

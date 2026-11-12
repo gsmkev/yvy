@@ -19,3 +19,6 @@ SENTRY_DSN=
 # Opcional (P-06): meses tras los cuales los registros y estadísticas de vigor viejos pasan de D1 a R2 (mínimo 3).
 # Vacío = no archiva nada.
 ARCHIVE_AFTER_MONTHS=
+# Opcional (P-07): ingreso con Google. Sin estos dos el botón no aparece.
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=

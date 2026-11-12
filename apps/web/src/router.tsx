@@ -11,9 +11,20 @@ const loginRoute = createRoute({
   path: "/ingresar",
   component: lazyRouteComponent(() => import("./routes/login"), "LoginPage"),
   // `ref`: código de referido de un agrónomo (V-05); abre el registro y viaja con el alta
-  validateSearch: (s: Record<string, unknown>): { modo?: "registro"; ref?: string } => {
+  validateSearch: (s: Record<string, unknown>): { modo?: "registro"; ref?: string; google?: string; google_error?: string } => {
     const ref = parseReferralCode(s.ref) ?? undefined;
-    return { ...(s.modo === "registro" || ref ? { modo: "registro" as const } : {}), ...(ref ? { ref } : {}) };
+    // P-07: vuelta del ingreso con Google (código de un solo uso, o un error de la lista)
+    const google = typeof s.google === "string" && /^[\w-]{20,64}$/.test(s.google) ? s.google : undefined;
+    const googleError =
+      typeof s.google_error === "string" && ["state", "denied", "exchange", "unverified", "no_account", "no_org"].includes(s.google_error)
+        ? s.google_error
+        : undefined;
+    return {
+      ...(s.modo === "registro" || ref ? { modo: "registro" as const } : {}),
+      ...(ref ? { ref } : {}),
+      ...(google ? { google } : {}),
+      ...(googleError ? { google_error: googleError } : {}),
+    };
   },
 });
 

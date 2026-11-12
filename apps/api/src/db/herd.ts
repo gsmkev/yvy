@@ -17,6 +17,9 @@ import {
   type TheftResponse,
   MINERAL_SALT_REFERENCE_G,
   summarizeSupplements,
+  groupWeighings,
+  type WeighingEvent,
+  type WeighingsResponse,
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { farmStockSummary } from "./livestock";
@@ -153,4 +156,33 @@ export async function farmSupplements(sdb: ScopedDb, farmId: string, from?: numb
     range.to,
   );
   return { ...range, ...sum, reference: MINERAL_SALT_REFERENCE_G, truncated: rows.length > MAX_ROWS * 4 };
+}
+
+/** G-22: pesadas y ganancia diaria de peso por lote de animales y por animal con caravana. */
+export async function farmWeighings(sdb: ScopedDb, farmId: string, from?: number, to?: number): Promise<WeighingsResponse> {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const range = rangeOf(sdb, from, to);
+  const rows = await sdb.db
+    .select({ capturedAt: s.records.capturedAt, data: s.records.data })
+    .from(s.records)
+    .where(
+      and(
+        eq(s.records.organizationId, sdb.auth.orgId),
+        eq(s.records.farmId, farmId),
+        eq(s.records.kind, "weighing"),
+        isNull(s.records.deletedAt),
+        gte(s.records.capturedAt, range.from),
+        lte(s.records.capturedAt, range.to),
+      ),
+    )
+    .orderBy(desc(s.records.capturedAt))
+    .limit(MAX_ROWS * 2 + 1);
+  const events: WeighingEvent[] = [];
+  for (const r of rows.slice(0, MAX_ROWS * 2)) {
+    const d = parse<{ kg?: number; head?: number; group?: string; tag?: string }>(r.data);
+    if (typeof d?.kg !== "number") continue;
+    events.push({ capturedAt: r.capturedAt, kg: d.kg, head: d.head ?? 1, group: d.group ?? null, tag: d.tag ?? null });
+  }
+  return { ...range, ...groupWeighings(events), truncated: rows.length > MAX_ROWS * 2 };
 }

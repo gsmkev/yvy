@@ -1,7 +1,7 @@
 /** Ganadería, segunda tanda (gan-p2): rotación, pasto, reproducción, pesadas, animales, abigeato, suplementos, calor. */
 import { Hono } from "hono";
 import { z } from "zod";
-import { farmHeatStress, farmSupplements, farmTheft } from "../db/herd";
+import { farmHeatStress, farmSupplements, farmTheft, farmWeighings } from "../db/herd";
 import { parse } from "../lib/http";
 import type { AppEnv } from "../types";
 
@@ -26,4 +26,10 @@ herd.get("/farms/:id/theft", async (c) => {
 herd.get("/farms/:id/supplements", async (c) => {
   const q = parse(range, c.req.query());
   return c.json(await farmSupplements(c.var.sdb, c.req.param("id"), q.from, q.to));
+});
+
+// G-22: pesadas y ganancia diaria de peso.
+herd.get("/farms/:id/weighings", async (c) => {
+  const q = parse(range, c.req.query());
+  return c.json(await farmWeighings(c.var.sdb, c.req.param("id"), q.from, q.to));
 });

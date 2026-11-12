@@ -32,3 +32,19 @@ describe("G-31 suplementación", () => {
     expect(parseRecordData("supplement", { type: "sal_mineral", kg: -1 }).success).toBe(false);
   });
 });
+
+describe("G-22 pesadas", () => {
+  it("con caravana no se pregunta el lote ni las cabezas; sin caravana sí", () => {
+    expect(keys("weighing")).toEqual(["kg", "tag", "group", "head"]);
+    expect(keys("weighing", { tag: "PY-1" })).toEqual(["kg", "tag"]);
+    expect(FLOWS.weighing.find((s) => s.key === "tag")).toMatchObject({ optional: true });
+    const tag = FLOWS.weighing.find((s) => s.key === "tag");
+    expect(tag?.kind === "text" && tag.pattern?.test("PY-0012")).toBe(true);
+    expect(tag?.kind === "text" && tag.pattern?.test("PY 0012")).toBe(false);
+  });
+  it("se ofrece en potreros y sin lote, y es de un solo potrero", () => {
+    expect(KINDS_FOR("pasture")).toContain("weighing");
+    expect(KINDS_FOR(null)).toContain("weighing");
+    expect(SINGLE_PLOT_KINDS).toContain("weighing");
+  });
+});

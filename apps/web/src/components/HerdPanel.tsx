@@ -9,6 +9,7 @@ import { useMe } from "../lib/queries";
 import { HeatStressCard } from "./HeatStress";
 import { SupplementPanel } from "./SupplementPanel";
 import { TheftPanel } from "./TheftPanel";
+import { WeighingsPanel } from "./WeighingsPanel";
 import { Button, Empty, ErrorBox, Field, Input, Spinner, Tabs } from "./ui";
 
 const dec = new Intl.NumberFormat("es-PY", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -138,7 +139,7 @@ function StockSection({ farmId }: { farmId: string }) {
   );
 }
 
-type Section = "stock" | "supplements" | "theft";
+type Section = "stock" | "weights" | "supplements" | "theft";
 
 /** Pestaña Hacienda: hacienda calculada y, abajo, cada módulo de ganadería en su sección. */
 export function HerdPanel({ farmId }: { farmId: string }) {
@@ -150,11 +151,13 @@ export function HerdPanel({ farmId }: { farmId: string }) {
         onChange={setSection}
         tabs={[
           { id: "stock", label: t("ui.herdSectionStock") },
+          { id: "weights", label: t("ui.herdSectionWeights") },
           { id: "supplements", label: t("ui.herdSectionSupp") },
           { id: "theft", label: t("ui.herdSectionTheft") },
         ]}
       />
       {section === "stock" && <StockSection farmId={farmId} />}
+      {section === "weights" && <WeighingsPanel farmId={farmId} />}
       {section === "supplements" && <SupplementPanel farmId={farmId} />}
       {section === "theft" && <TheftPanel farmId={farmId} />}
     </div>

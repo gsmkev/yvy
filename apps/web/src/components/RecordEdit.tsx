@@ -91,6 +91,14 @@ const FIELDS: Record<RecordKind, FieldDef[]> = {
     { key: "cause", label: f("cause"), type: "select", options: opts("cause", MORTALITY_CAUSES) },
     NOTE,
   ],
+  weighing: [
+    { key: "kg", label: f("kg"), type: "number" },
+    { key: "tag", label: f("tag"), type: "text", optional: true },
+    { key: "group", label: f("group"), type: "text", optional: true },
+    { key: "head", label: f("head"), type: "number", optional: true },
+    { key: "category", label: f("herdCategory"), type: "select", options: opts("herd", HERD_CATEGORIES), optional: true },
+    NOTE,
+  ],
   supplement: [
     { key: "type", label: f("supplementType"), type: "select", options: opts("supplementType", SUPPLEMENT_TYPES) },
     { key: "kg", label: f("kg"), type: "number" },

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cameraDiffers, defaultCompare, layerDates, pickLayer } from "./scenes";
+import { cameraDiffers, defaultCompare, layerDates, nextFrame, pickLayer, timelapseFrames } from "./scenes";
 import type { Layer } from "./types";
 
 const L = (id: string, layer: Layer["layer"], acquiredAt: number): Layer => ({
@@ -34,5 +34,17 @@ describe("fechas de imagen", () => {
     const cam = { center: [-55.9, -27.2] as [number, number], zoom: 12, bearing: 0, pitch: 0 };
     expect(cameraDiffers(cam, { ...cam, zoom: 12 + 1e-6 })).toBe(false);
     expect(cameraDiffers(cam, { ...cam, center: [-55.8, -27.2] })).toBe(true);
+  });
+});
+
+describe("timelapse (S-10)", () => {
+  it("ordena los cuadros de la fecha más vieja a la más nueva", () => {
+    expect(timelapseFrames(layers, "ndvi").map((l) => l.id)).toEqual(["a", "c", "b"]);
+    expect(timelapseFrames(layers, "evi")).toEqual([]);
+  });
+  it("vuelve al primer cuadro después del último", () => {
+    expect(nextFrame(0, 3)).toBe(1);
+    expect(nextFrame(2, 3)).toBe(0);
+    expect(nextFrame(0, 0)).toBe(0);
   });
 });

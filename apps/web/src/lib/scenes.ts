@@ -41,3 +41,18 @@ export function cameraDiffers(a: Camera, b: Camera): boolean {
     Math.abs(a.pitch - b.pitch) > 1e-3
   );
 }
+
+/** S-10: cuadros del timelapse, de la fecha más vieja a la más nueva (una por fecha). */
+export function timelapseFrames(layers: Layer[], kind: Kind): Layer[] {
+  return layerDates(layers, kind).reverse();
+}
+
+/** Velocidades del timelapse: milisegundos que se queda cada cuadro. */
+export const TIMELAPSE_SPEEDS = [
+  { key: "slow", ms: 2000 },
+  { key: "normal", ms: 1000 },
+  { key: "fast", ms: 500 },
+] as const;
+
+/** Cuadro que sigue; al llegar al final vuelve al primero. */
+export const nextFrame = (i: number, n: number): number => (n <= 0 ? 0 : (i + 1) % n);

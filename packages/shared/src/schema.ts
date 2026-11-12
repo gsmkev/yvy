@@ -81,7 +81,7 @@ export const PRODUCT_TYPES = ["seed", "agrochemical", "fertilizer", "fuel", "vet
 /** Unidad base del producto: litros o kilos. */
 export const PRODUCT_UNITS = ["l", "kg"] as const;
 export const UPLOAD_STATUS = ["pending", "uploaded"] as const;
-export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_threshold", "water_low", "heat_stress"] as const;
+export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_threshold", "water_low", "heat_stress", "rust_risk"] as const;
 export const ALERT_SEVERITIES = ["info", "watch", "warning"] as const;
 /** Con MET Norway no hay ensemble: probabilidad cualitativa (PRD-cloudflare §4.8). */
 export const ALERT_PROBABILITIES = ["low", "medium", "high"] as const;

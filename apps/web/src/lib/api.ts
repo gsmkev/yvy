@@ -1,4 +1,6 @@
 /** Cliente de la API del Worker con renovación automática de sesión. */
+import { t } from "./i18n";
+
 export interface Session {
   accessToken: string;
   accessTokenExpiresAt: number;
@@ -6,6 +8,8 @@ export interface Session {
   user: { id: string; fullName: string; email: string | null };
   organization: { id: string; name: string; role: string };
   organizations: { id: string; name: string; role: string }[];
+  /** P-12: sesión de soporte (solo lectura, sin renovación). */
+  support?: boolean;
 }
 
 const KEY = "yvy.session";
@@ -22,6 +26,33 @@ function load(): Session | null {
 }
 
 export const getSession = () => session;
+
+// ---- P-12: "ver como soporte" ----
+const STAFF_KEY = "yvy.staff-session";
+
+/** Pasa a la sesión de soporte; la del equipo queda guardada en esta pestaña para volver. */
+export function enterSupport(s: Session) {
+  try {
+    sessionStorage.setItem(STAFF_KEY, JSON.stringify(session));
+  } catch {
+    /* sin sessionStorage: al salir habrá que ingresar de nuevo */
+  }
+  setSession({ ...s, support: true });
+  window.location.assign("/");
+}
+
+/** Vuelve a la sesión del equipo (o cierra si no se puede) y recarga: nada de lo cacheado era de esta organización. */
+export function exitSupport() {
+  let back: Session | null = null;
+  try {
+    back = JSON.parse(sessionStorage.getItem(STAFF_KEY) ?? "null") as Session | null;
+    sessionStorage.removeItem(STAFF_KEY);
+  } catch {
+    /* ignorar */
+  }
+  setSession(back);
+  window.location.assign(back ? "/interno" : "/ingresar");
+}
 
 export function setSession(s: Session | null) {
   session = s;
@@ -48,11 +79,52 @@ export class ApiError extends Error {
   }
 }
 
+/** Falla de red (sin respuesta del servidor): distinta de un error HTTP. */
+export class NetworkError extends Error {
+  constructor() {
+    super(t("ui.networkError"));
+  }
+}
+
+let networkDown = false;
+const netListeners = new Set<() => void>();
+const setNetworkDown = (v: boolean) => {
+  if (v === networkDown) return;
+  networkDown = v;
+  netListeners.forEach((l) => l());
+};
+export const isNetworkDown = () => networkDown;
+export const onNetworkChange = (fn: () => void) => {
+  netListeners.add(fn);
+  return () => {
+    netListeners.delete(fn);
+  };
+};
+if (typeof window !== "undefined") {
+  window.addEventListener("offline", () => setNetworkDown(true));
+  window.addEventListener("online", () => setNetworkDown(false));
+}
+
+async function netFetch(input: string, init: RequestInit): Promise<Response> {
+  try {
+    const res = await fetch(input, init);
+    setNetworkDown(false);
+    return res;
+  } catch {
+    setNetworkDown(true);
+    throw new NetworkError();
+  }
+}
+
 let refreshing: Promise<boolean> | null = null;
 async function refresh(): Promise<boolean> {
   if (!session) return false;
+  if (session.support) {
+    exitSupport(); // la sesión de soporte no se renueva
+    return false;
+  }
   refreshing ??= (async () => {
-    const res = await fetch("/auth/refresh", {
+    const res = await netFetch("/auth/refresh", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ refreshToken: session!.refreshToken }),
@@ -71,7 +143,7 @@ async function refresh(): Promise<boolean> {
 
 export async function api<T>(method: string, path: string, body?: unknown, retry = true): Promise<T> {
   if (session && session.accessTokenExpiresAt - Date.now() < 60_000) await refresh();
-  const res = await fetch(path, {
+  const res = await netFetch(path, {
     method,
     headers: {
       "content-type": "application/json",

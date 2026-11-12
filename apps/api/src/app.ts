@@ -53,6 +53,9 @@ app.get("/health", (c) => c.json({ ok: true }));
 app.get("/descargar-app", (c) => c.redirect(`${c.env.TILES_PUBLIC_URL.replace(/\/$/, "")}/app/yvy.apk`, 302));
 // La demo no puede escribir tampoco por sync, media, dispositivos ni vinculando empleados.
 app.use("/auth/link", requireAuth, readOnlyDemo);
+// P-08: la cuenta de la demo no puede activar un segundo factor (dejaría a todos afuera)
+for (const path of ["/auth/totp/setup", "/auth/totp/enable", "/auth/totp/disable", "/auth/totp/recovery-codes"])
+  app.use(path, requireAuth, readOnlyDemo);
 app.route("/auth", auth);
 app.route("/ingest", ingest as unknown as Hono<AppEnv>);
 app.route("/public", share);

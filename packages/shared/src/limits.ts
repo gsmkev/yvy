@@ -57,6 +57,11 @@ export const LIMITS = {
     /** Ingreso con teléfono y PIN de 6 dígitos (F-24): intentos por cuenta antes de bloquear, y cuánto dura el bloqueo. */
     pinMaxAttempts: 5,
     pinLockMs: 15 * 60 * 1000,
+    /** P-08: segundo factor. Intentos por usuario antes de bloquear, bloqueo, vida del pase tras el código de email y recuperación. */
+    totpMaxAttempts: 5,
+    totpLockMs: 15 * 60 * 1000,
+    totpTicketTtlMs: 5 * 60 * 1000,
+    totpRecoveryCodes: 8,
   },
   geometry: {
     /** Hectáreas: bajo esto un lote es casi seguro un error de dibujo. */

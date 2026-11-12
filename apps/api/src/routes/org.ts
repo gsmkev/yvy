@@ -7,6 +7,7 @@ import { CROPS, doseText, FARM_ACCESS_LEVELS, isWeakPin, LIMITS, PIN_LENGTH, PIN
 import { can } from "../db/scoped";
 import { randomDigits, randomToken } from "../lib/crypto";
 import { createApiToken, listApiTokens, revokeApiToken } from "../db/api-tokens";
+import { getSecurity, setRequireAdminTotp } from "../db/security";
 import { createSchedule, deleteSchedule, listSchedules } from "../db/schedules";
 import { dispatchNewFarm, inBackground } from "../lib/dispatch";
 import { hashPin } from "../lib/pin";
@@ -145,6 +146,14 @@ org.post("/api-tokens", async (c) => {
 });
 org.delete("/api-tokens/:id", async (c) => {
   await revokeApiToken(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+/** P-08: el dueño exige segundo factor a los administradores. */
+org.get("/security", async (c) => c.json(await getSecurity(c.var.sdb)));
+org.put("/security", async (c) => {
+  const b = parse(z.object({ requireAdminTotp: z.boolean() }), await readJson(c.req));
+  await setRequireAdminTotp(c.var.sdb, b.requireAdminTotp);
   return c.json({ ok: true });
 });
 

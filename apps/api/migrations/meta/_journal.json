@@ -484,6 +484,13 @@
       "when": 1794496061260,
       "tag": "0068_many_toad",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "6",
+      "when": 1794496298921,
+      "tag": "0069_elite_ironclad",
+      "breakpoints": true
     }
   ]
 }

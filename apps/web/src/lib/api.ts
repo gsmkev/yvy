@@ -10,6 +10,8 @@ export interface Session {
   organizations: { id: string; name: string; role: string }[];
   /** P-12: sesión de soporte (solo lectura, sin renovación). */
   support?: boolean;
+  /** P-08: la organización exige segundo factor a los administradores y este todavía no lo activó. */
+  mfaSetupRequired?: boolean;
 }
 
 const KEY = "yvy.session";

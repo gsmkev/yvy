@@ -64,6 +64,8 @@ export interface JwtClaims {
   /** P-12: sesión de soporte de solo lectura. `sup` es el usuario del equipo que la pidió. */
   ro?: boolean;
   sup?: string;
+  /** P-08: el administrador debe dar de alta su segundo factor; hasta entonces solo puede usar /auth/totp. */
+  tsr?: boolean;
 }
 
 const JWT_HEADER = b64url(enc.encode(JSON.stringify({ alg: "HS256", typ: "JWT" })));

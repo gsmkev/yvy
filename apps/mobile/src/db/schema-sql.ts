@@ -238,5 +238,10 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `document_taxes` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`doc_kind` text NOT NULL,\n\t`doc_id` text NOT NULL,\n\t`timbrado` text,\n\t`gross_10` integer DEFAULT 0 NOT NULL,\n\t`gross_5` integer DEFAULT 0 NOT NULL,\n\t`exempt` integer DEFAULT 0 NOT NULL,\n\t`updated_by` text NOT NULL,\n\t`updated_at` integer NOT NULL\n);",
   "CREATE UNIQUE INDEX `document_taxes_doc_uq` ON `document_taxes` (`organization_id`,`doc_kind`,`doc_id`);",
   "CREATE TABLE `export_formats` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`dataset` text NOT NULL,\n\t`config` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
-  "CREATE INDEX `export_formats_org_idx` ON `export_formats` (`organization_id`,`dataset`);"
+  "CREATE INDEX `export_formats_org_idx` ON `export_formats` (`organization_id`,`dataset`);",
+  "CREATE TABLE `totp_recovery_codes` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`user_id` text NOT NULL,\n\t`code_hash` text NOT NULL,\n\t`used_at` integer,\n\t`created_at` integer NOT NULL\n);",
+  "CREATE INDEX `totp_recovery_user_idx` ON `totp_recovery_codes` (`user_id`);",
+  "CREATE UNIQUE INDEX `totp_recovery_hash_uq` ON `totp_recovery_codes` (`code_hash`);",
+  "CREATE TABLE `user_totp` (\n\t`user_id` text PRIMARY KEY NOT NULL,\n\t`secret_enc` text NOT NULL,\n\t`enabled_at` integer,\n\t`last_step` integer DEFAULT 0 NOT NULL,\n\t`failed_attempts` integer DEFAULT 0 NOT NULL,\n\t`locked_until` integer,\n\t`created_at` integer NOT NULL\n);",
+  "ALTER TABLE `organizations` ADD `require_admin_totp` integer DEFAULT false NOT NULL;"
 ];

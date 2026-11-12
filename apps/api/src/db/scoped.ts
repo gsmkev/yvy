@@ -122,6 +122,8 @@ export const can = {
   viewStock: (r: Role) => r !== "worker",
   /** G-21: alta y edición de animales con caravana; el empleado los consulta (también sin señal) pero no los edita. */
   editAnimals: (r: Role) => r !== "worker",
+  /** S-03: pedir la historia de vigor desde 2017 gasta minutos de cómputo: dueño y administrador. */
+  requestHistory: (r: Role) => r === "owner" || r === "admin",
 };
 
 export class ScopedDb {

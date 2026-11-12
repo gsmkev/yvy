@@ -2139,6 +2139,13 @@ export const esPY = {
     indexHint_evi: "Como el NDVI pero sin saturarse con follaje denso.",
     ndmiLegendLow: "Seco",
     ndmiLegendHigh: "Húmedo",
+    vigorSeasonsTitle: "Vigor por campaña",
+    vigorSeasonsNone: "Todavía no hay campañas anteriores para comparar. Pedí la historia desde 2017.",
+    historyRequest: "Pedir historia desde 2017",
+    historyHint: "Se calcula con Sentinel-2 en segundo plano y puede tardar un buen rato.",
+    historyRequested: "Pedido enviado. Mirá de nuevo en un rato.",
+    historyProcessing: "Calculando la historia desde 2017 (pedida el {{date}}). Mirá de nuevo en un rato.",
+    historyFailed: "No se pudo pedir la historia. Probá de nuevo más tarde.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

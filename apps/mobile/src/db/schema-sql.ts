@@ -148,5 +148,6 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE UNIQUE INDEX `animals_org_tag_uq` ON `animals` (`organization_id`,`tag`) WHERE deleted_at IS NULL;",
   "CREATE INDEX `animals_sync_idx` ON `animals` (`organization_id`,`version`,`id`);",
   "CREATE INDEX `animals_farm_idx` ON `animals` (`farm_id`);",
-  "ALTER TABLE `plot_index_stats` ADD `low_confidence` integer DEFAULT false NOT NULL;"
+  "ALTER TABLE `plot_index_stats` ADD `low_confidence` integer DEFAULT false NOT NULL;",
+  "CREATE TABLE `farm_history` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`status` text NOT NULL,\n\t`requested_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL\n);"
 ];

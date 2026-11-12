@@ -780,6 +780,16 @@ export const farmImagery = sqliteTable("farm_imagery", {
   updatedAt: integer("updated_at").notNull(),
 });
 
+/** S-03: estado de la historia de vigor desde 2017 pedida a demanda por estancia. No se sincroniza. */
+export const HISTORY_STATUSES = ["processing", "done", "failed"] as const;
+export const farmHistory = sqliteTable("farm_history", {
+  farmId: text("farm_id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  status: text("status", { enum: HISTORY_STATUSES }).notNull(),
+  requestedAt: integer("requested_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});
+
 /** plot_id = "" cuando el dato es por estancia (SQLite no admite NULL útil en la PK). */
 export const climateDaily = sqliteTable(
   "climate_daily",

@@ -267,6 +267,13 @@
       "when": 1794455717485,
       "tag": "0037_volatile_senator_kelly",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "6",
+      "when": 1794456209044,
+      "tag": "0038_right_boom_boom",
+      "breakpoints": true
     }
   ]
 }

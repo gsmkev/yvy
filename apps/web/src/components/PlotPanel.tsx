@@ -11,6 +11,7 @@ import { t, tk } from "../lib/i18n";
 import type { Member, Plot, PlotHistoryRow, ProblemArea } from "../lib/types";
 import { CopyCoords } from "./CopyCoords";
 import { LineChart } from "./charts";
+import { VigorSeasons } from "./VigorSeasons";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Select, Spinner, Stat, toast } from "./ui";
 
 interface Ndvi {
@@ -222,6 +223,7 @@ export function PlotPanel({
           )}
         </div>
       )}
+      {canEdit && <VigorSeasons plotId={plot.id} farmId={plot.farmId} />}
       {ndvi.error && <ErrorBox error={ndvi.error} />}
 
       {canEdit && problemAreas.length > 0 && (

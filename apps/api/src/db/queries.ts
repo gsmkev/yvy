@@ -443,6 +443,62 @@ export async function farmForecast(sdb: ScopedDb, farmId: string) {
   };
 }
 
+// ---------- Historia de vigor desde 2017 (S-03) ----------
+
+const HISTORY_RETRY_MS = 6 * 3_600_000;
+const HISTORY_MAX_ROWS = 3000;
+
+export async function farmHistoryStatus(sdb: ScopedDb, farmId: string) {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const [row] = await sdb.db
+    .select({ status: s.farmHistory.status, requestedAt: s.farmHistory.requestedAt, updatedAt: s.farmHistory.updatedAt })
+    .from(s.farmHistory)
+    .where(and(eq(s.farmHistory.farmId, farmId), eq(s.farmHistory.organizationId, sdb.auth.orgId)))
+    .limit(1);
+  return row ?? { status: null, requestedAt: null, updatedAt: null };
+}
+
+/** Registra el pedido. Devuelve false si ya hay uno en curso (hace menos de 6 h): no se encolan dos. */
+export async function markHistoryRequested(sdb: ScopedDb, farmId: string): Promise<boolean> {
+  sdb.require(can.requestHistory, "Solo el dueño o el administrador piden la historia");
+  await sdb.requireFarm(farmId);
+  const cur = await farmHistoryStatus(sdb, farmId);
+  const now = sdb.now();
+  if (cur.status === "processing" && cur.requestedAt && now - cur.requestedAt < HISTORY_RETRY_MS) return false;
+  await sdb.db
+    .insert(s.farmHistory)
+    .values({ farmId, organizationId: sdb.auth.orgId, status: "processing", requestedAt: now, updatedAt: now })
+    .onConflictDoUpdate({ target: s.farmHistory.farmId, set: { status: "processing", requestedAt: now, updatedAt: now } });
+  return true;
+}
+
+/** El pedido no llegó a salir (GitHub sin configurar o rechazó): vuelve a poder pedirse. */
+export async function markHistoryFailed(sdb: ScopedDb, farmId: string): Promise<void> {
+  await sdb.db
+    .update(s.farmHistory)
+    .set({ status: "failed", updatedAt: sdb.now() })
+    .where(and(eq(s.farmHistory.farmId, farmId), eq(s.farmHistory.organizationId, sdb.auth.orgId)));
+}
+
+/** Vigor (NDVI) de un lote en todas las campañas cargadas, para comparar años. */
+export async function plotVigorHistory(sdb: ScopedDb, plotId: string) {
+  sdb.require(can.viewAll);
+  const [plot] = await sdb.db
+    .select({ id: s.plots.id })
+    .from(s.plots)
+    .where(and(eq(s.plots.id, plotId), eq(s.plots.organizationId, sdb.auth.orgId), isNull(s.plots.deletedAt)))
+    .limit(1);
+  if (!plot) throw new NotFoundError("Lote inexistente");
+  const rows = await sdb.db
+    .select({ acquiredAt: s.plotIndexStats.acquiredAt, mean: s.plotIndexStats.mean, lowConfidence: s.plotIndexStats.lowConfidence })
+    .from(s.plotIndexStats)
+    .where(and(eq(s.plotIndexStats.plotId, plotId), eq(s.plotIndexStats.idx, "ndvi"), isNull(s.plotIndexStats.deletedAt)))
+    .orderBy(asc(s.plotIndexStats.acquiredAt))
+    .limit(HISTORY_MAX_ROWS);
+  return { series: rows };
+}
+
 /** S-08: áreas problema de la estancia (última escena por lote), con el nombre del lote. */
 export async function farmProblemAreas(sdb: ScopedDb, farmId: string) {
   sdb.require(can.viewAll);

@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { LIMITS } from "@yvy/shared";
-import { attendanceDayInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
+import { attendanceDayInput, budgetLineInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { HTTPException } from "hono/http-exception";
 import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
@@ -15,6 +15,7 @@ import { adjustStock, consumeStock, deleteMove, expiringLots, listMoves, purchas
 import { deleteMachineCost, laborComparison, listMachineCosts, saveMachineCost } from "../db/labor-cost";
 import { attendanceSummary, deleteAttendance, listAttendance, markDay } from "../db/attendance";
 import { balances, createPayment, deletePayment, employeeStatement, listPayments } from "../db/employee-payments";
+import { budgetCompare } from "../db/budget";
 import { createLog, deleteLog, duePlans, listLogs } from "../db/maintenance";
 import { deleteMinimum, listMinimums, lowStock, saveMinimum } from "../db/stock-minimums";
 import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
@@ -315,3 +316,14 @@ erp.delete("/employee-payments/:id", async (c) => {
 });
 erp.get("/employees/balance", async (c) => c.json(await balances(c.var.sdb, parse(isoDate.optional(), c.req.query("to")))));
 erp.get("/employees/:id/statement", async (c) => c.json(await employeeStatement(c.var.sdb, parse(uuid, c.req.param("id")))));
+
+// ---------- Presupuesto de campaña (E-32) ----------
+
+master("budget-lines", s.budgetLines, budgetLineInput, [s.budgetLines.category], {
+  normalize: (v) => (typeof v.plotId === "string" ? { ...v, crop: null } : typeof v.crop === "string" ? { ...v, plotId: null } : v),
+  check: async (sdb, v) => {
+    if (typeof v.seasonId === "string") await requireOwned(sdb, s.seasons, v.seasonId, "La campaña");
+    if (typeof v.plotId === "string") await requireOwned(sdb, s.plots, v.plotId, "El lote");
+  },
+});
+erp.get("/budget/compare", async (c) => c.json(await budgetCompare(c.var.sdb, parse(uuid, c.req.query("seasonId")))));

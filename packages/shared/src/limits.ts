@@ -177,6 +177,8 @@ export const LIMITS = {
     linkDays: [7, 30],
   },
   // agri-p2
+  /** Mapas de rendimiento (A-21): celdas de la grilla resumen y tamaño máximo del cuerpo que acepta el Worker. */
+  yieldMap: { maxCells: 800, maxBodyBytes: 120_000 },
   /**
    * Roya asiática de la soja (A-40): mojado foliar estimado con el pronóstico horario. Una hora cuenta si la humedad
    * relativa llega a `humidityPct` (o llueve `rainMm`) y la temperatura está entre `tempMinC` y `tempMaxC`.

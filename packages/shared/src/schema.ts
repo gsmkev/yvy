@@ -405,6 +405,38 @@ export const grainDeliveries = sqliteTable(
   ],
 );
 
+/**
+ * Mapa de rendimiento de la cosechadora de un lote en una campaña (A-21). El archivo (shapefile) se procesa en el
+ * navegador; acá queda el resumen y una grilla de promedios en `cells` (JSON [[lon, lat, t/ha, puntos], ...]).
+ * Solo la web lo usa (no está en el pull del sync).
+ */
+export const yieldMaps = sqliteTable(
+  "yield_maps",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    plotId: text("plot_id").notNull(),
+    seasonId: text("season_id"),
+    fileName: text("file_name").notNull(),
+    nPoints: integer("n_points").notNull(),
+    nDropped: integer("n_dropped").notNull(),
+    meanTHa: real("mean_t_ha").notNull(),
+    p10THa: real("p10_t_ha").notNull(),
+    p90THa: real("p90_t_ha").notNull(),
+    minTHa: real("min_t_ha").notNull(),
+    maxTHa: real("max_t_ha").notNull(),
+    cvPct: real("cv_pct").notNull(),
+    cellM: integer("cell_m").notNull(),
+    cells: text("cells").notNull(),
+    ...synced,
+  },
+  (t) => [
+    index("yield_maps_sync_idx").on(t.organizationId, t.version, t.id),
+    index("yield_maps_plot_idx").on(t.plotId, t.seasonId),
+  ],
+);
+
 export const plotAssignments = sqliteTable(
   "plot_assignments",
   {

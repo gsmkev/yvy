@@ -1,8 +1,10 @@
 /** Agricultura, segunda tanda (agri-p2): fenología, ventana de siembra, carencias, amortiguación, suelo, entregas. */
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
-import { CROPS } from "@yvy/shared";
+import { CROPS, LIMITS } from "@yvy/shared";
 import { farmPlotForecast, farmSpiReport, farmSowingWindow, farmWithdrawal, plotPhenology, plotWaterBalance } from "../db/agri2";
+import { createYieldMap, deleteYieldMap, listYieldMaps } from "../db/yield";
 import { createDelivery, deleteDelivery, listDeliveries } from "../db/deliveries";
 import { createSoilSample, deleteSoilSample, listSoilSamples, updateSoilSample } from "../db/soil";
 import { parse, readJson } from "../lib/http";
@@ -132,3 +134,44 @@ agri2.get("/farms/:id/plot-forecast", async (c) => c.json(await farmPlotForecast
 
 /** C-07: índice de precipitación estandarizado (SPI) a 1, 3 y 6 meses. */
 agri2.get("/farms/:id/spi", async (c) => c.json(await farmSpiReport(c.var.sdb, c.req.param("id"))));
+
+// ---------- A-21: mapas de rendimiento de la cosechadora ----------
+const yieldNum = z.number().min(0).max(1_000);
+agri2.get("/plots/:id/yield-maps", async (c) => c.json(await listYieldMaps(c.var.sdb, c.req.param("id"))));
+
+agri2.post("/plots/:id/yield-maps", async (c) => {
+  const raw = await c.req.text();
+  if (raw.length > LIMITS.yieldMap.maxBodyBytes) throw new HTTPException(413, { message: "El mapa es demasiado grande" });
+  let json: unknown;
+  try {
+    json = JSON.parse(raw);
+  } catch {
+    throw new HTTPException(400, { message: "JSON inválido" });
+  }
+  const b = parse(
+    z.object({
+      seasonId: z.string().uuid().nullish(),
+      fileName: z.string().trim().min(1).max(200),
+      nPoints: z.number().int().min(3).max(10_000_000),
+      nDropped: z.number().int().min(0).max(10_000_000),
+      meanTHa: yieldNum,
+      p10THa: yieldNum,
+      p90THa: yieldNum,
+      minTHa: yieldNum,
+      maxTHa: yieldNum,
+      cvPct: z.number().min(0).max(1_000),
+      cellM: z.number().int().min(1).max(5_000),
+      cells: z
+        .array(z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90), yieldNum, z.number().int().min(1)]))
+        .min(1)
+        .max(LIMITS.yieldMap.maxCells),
+    }),
+    json,
+  );
+  return c.json(await createYieldMap(c.var.sdb, c.req.param("id"), { ...b, seasonId: b.seasonId ?? null }), 201);
+});
+
+agri2.delete("/yield-maps/:id", async (c) => {
+  await deleteYieldMap(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});

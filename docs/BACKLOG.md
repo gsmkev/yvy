@@ -463,5 +463,5 @@ y el aviso de que están en desarrollo). Ninguna analiza datos reales todavía.
 |---|---|---|---|---|---|
 | X-40 | Resumen semanal escrito por estancia | El dueño lee en un minuto | P3 | M | Maqueta |
 | X-41 | "Preguntale al campo": preguntas sobre registros, lotes y clima | Acceso a los datos sin filtros | P3 | L | Maqueta |
-| X-42 | Recomendación del agrónomo redactada a partir de la recorrida | Ahorra tiempo al asesor | P3 | M | Falta |
+| X-42 | Recomendación del agrónomo redactada a partir de la recorrida | Ahorra tiempo al asesor | P3 | M | Maqueta |
 | X-43 | Traducción automática de notas entre español y guaraní | Equipos mixtos | P3 | M | Falta |

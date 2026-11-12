@@ -1219,6 +1219,19 @@ export const esPY = {
     labsYieldNote:
       "Es un rango, no una promesa: se angosta a medida que avanza el ciclo. En un lote sin campañas anteriores cargadas la estimación queda en blanco, no se inventa un número.",
     labsYieldExport: "Exportar estimación",
+    labsTool_advice_name: "Recomendación del agrónomo",
+    labsTool_advice_desc: "Redacta un borrador de recomendación a partir de lo que se cargó en la recorrida, para que el agrónomo lo revise.",
+    labsAdvicePick: "Elegí la recorrida",
+    labsAdviceWalk: "Recorrida del 5 de noviembre, Norte 1 y Norte 2 (datos de muestra)",
+    labsAdviceSource: "Lo que se cargó en la recorrida",
+    labsAdviceSource1: "Foto de hoja con manchas compatibles con roya en Norte 1, en 3 de 10 puntos.",
+    labsAdviceSource2: "Conteo de chinches en Norte 2: 1 por metro.",
+    labsAdviceSource3: "Lluvia de 38 mm en la semana.",
+    labsAdviceDraftTitle: "Borrador de recomendación",
+    labsAdviceText:
+      "En Norte 1 se encontraron manchas compatibles con roya en 3 de 10 puntos, sobre las hojas de abajo. Conviene volver a monitorear en 5 a 7 días y decidir si corresponde aplicar. En Norte 2 las chinches están en 1 por metro, por debajo del umbral: repetir el conteo en 4 días. Con la lluvia de la semana, la humedad favorece la enfermedad.",
+    labsAdviceReview: "Lo revisa, lo corrige y lo firma el agrónomo antes de que salga. Yvy no manda nada solo.",
+    labsAdviceEdit: "Editar y firmar",
     // web-a
     searchLabel: "Buscar",
     searchPlaceholder: "Buscar estancias, lotes, gente…",

@@ -1652,3 +1652,58 @@ export const budgetLines = sqliteTable(
   },
   (t) => [index("budget_lines_season_idx").on(t.organizationId, t.seasonId)],
 );
+
+/** Compra a un proveedor: orden, factura y recepción en depósito (E-33). */
+export const purchases = sqliteTable(
+  "purchases",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    partyId: text("party_id"),
+    farmId: text("farm_id"),
+    /** "YYYY-MM-DD". */
+    orderDate: text("order_date").notNull(),
+    expectedDate: text("expected_date"),
+    currency: text("currency", { enum: CURRENCIES }).notNull(),
+    /** Total en unidad menor de `currency` (se recalcula al recibir con las cantidades recibidas). */
+    totalAmount: integer("total_amount").notNull().default(0),
+    /** Total en guaraníes con el tipo de cambio de la factura (o de la orden si todavía no hay factura). */
+    totalPyg: integer("total_pyg").notNull().default(0),
+    invoiceNumber: text("invoice_number"),
+    invoiceDate: text("invoice_date"),
+    /** Vencimiento de la factura: de acá salen las cuentas a pagar (E-36). */
+    dueDate: text("due_date"),
+    /** Lo ya pagado, en unidad menor de `currency` (E-36). */
+    paidAmount: integer("paid_amount").notNull().default(0),
+    warehouseId: text("warehouse_id"),
+    receivedAt: text("received_at"),
+    note: text("note"),
+    /** Foto de la factura en R2 (E-37). */
+    photoPath: text("photo_path"),
+    createdBy: text("created_by").notNull(),
+    ...timestamps,
+  },
+  (t) => [index("purchases_org_idx").on(t.organizationId, t.orderDate), index("purchases_due_idx").on(t.organizationId, t.dueDate)],
+);
+
+export const purchaseLines = sqliteTable(
+  "purchase_lines",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    purchaseId: text("purchase_id").notNull(),
+    /** Producto del catálogo (entra al stock) o, sin producto, un gasto con su rubro (entra como costo). */
+    productId: text("product_id"),
+    description: text("description"),
+    category: text("category", { enum: COST_CATEGORIES }),
+    activity: text("activity", { enum: ACTIVITIES }),
+    qty: real("qty").notNull(),
+    /** Cantidad realmente recibida (por defecto, la pedida). */
+    receivedQty: real("received_qty"),
+    unitPrice: integer("unit_price").notNull(),
+    lot: text("lot"),
+    expiresOn: text("expires_on"),
+    ...timestamps,
+  },
+  (t) => [index("purchase_lines_purchase_idx").on(t.organizationId, t.purchaseId)],
+);

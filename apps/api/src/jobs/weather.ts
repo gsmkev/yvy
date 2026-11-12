@@ -18,7 +18,14 @@ export interface DailyForecast {
 interface MetStep {
   time: string;
   data: {
-    instant: { details: { air_temperature?: number; wind_speed?: number; wind_from_direction?: number } };
+    instant: {
+      details: {
+        air_temperature?: number;
+        wind_speed?: number;
+        wind_from_direction?: number;
+        relative_humidity?: number;
+      };
+    };
     next_1_hours?: { details?: { precipitation_amount?: number } };
     next_6_hours?: {
       details?: { precipitation_amount?: number; air_temperature_min?: number; air_temperature_max?: number };
@@ -44,6 +51,44 @@ export async function fetchMet(
   const res = await fetchFn(metUrl(lat, lon), { headers: { "User-Agent": userAgent, Accept: "application/json" } });
   if (!res.ok) throw new Error(`MET Norway ${res.status}`);
   return (await res.json()) as MetResponse;
+}
+
+export interface HourlyForecast {
+  validAt: number;
+  tempC: number;
+  windKmh: number;
+  humidityPct: number;
+  precipMm: number;
+}
+
+/**
+ * Horas sueltas del pronóstico (viento, temperatura, humedad y lluvia de la hora) desde `fromMs`, hasta
+ * `hours` horas. Solo pasos con datos de 1 hora; MET los trae así las primeras ~60 horas.
+ */
+export function hourlyFromMet(met: MetResponse, fromMs: number, hours: number): HourlyForecast[] {
+  const out: HourlyForecast[] = [];
+  const start = fromMs - (fromMs % 3_600_000);
+  for (const st of met.properties.timeseries) {
+    const t = Date.parse(st.time);
+    if (t < start || t >= start + hours * 3_600_000) continue;
+    const i = st.data.instant.details;
+    const rain = st.data.next_1_hours?.details?.precipitation_amount;
+    if (
+      i.air_temperature === undefined ||
+      i.wind_speed === undefined ||
+      i.relative_humidity === undefined ||
+      rain === undefined
+    )
+      continue;
+    out.push({
+      validAt: t,
+      tempC: i.air_temperature,
+      windKmh: Math.round(i.wind_speed * 36) / 10,
+      humidityPct: i.relative_humidity,
+      precipMm: rain,
+    });
+  }
+  return out;
 }
 
 /** Agrega la serie de MET a días locales sin contar dos veces la lluvia. */

@@ -4,8 +4,8 @@ import { Button } from "../components/ui";
 import { AnimalCountIllustration, HailIllustration, InfraIllustration, StandCountIllustration, WeedsIllustration } from "../components/labs/illustrations";
 import { t, tk } from "../lib/i18n";
 
-type ToolId = "animals" | "stand" | "weeds" | "ask" | "summary" | "rust" | "hail" | "infra" | "yield";
-const TOOLS: ToolId[] = ["animals", "stand", "weeds", "ask", "summary", "rust", "hail", "infra", "yield"];
+type ToolId = "animals" | "stand" | "weeds" | "ask" | "summary" | "rust" | "hail" | "infra" | "yield" | "advice";
+const TOOLS: ToolId[] = ["animals", "stand", "weeds", "ask", "summary", "rust", "hail", "infra", "yield", "advice"];
 
 const nf = (n: number, digits = 0) =>
   n.toLocaleString("es-PY", { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -86,6 +86,8 @@ function ToolBody({ id }: { id: ToolId }) {
       return <Infra />;
     case "yield":
       return <Yield />;
+    case "advice":
+      return <Advice />;
     case "rust":
       return <p className="border-b border-linea pb-4">{t("ui.labsRustBody")}</p>;
   }
@@ -332,6 +334,38 @@ function Yield() {
         <p className="text-sm">{t("ui.labsYieldNote")}</p>
         <div>
           <Button disabled>{t("ui.labsYieldExport")}</Button>
+        </div>
+      </Flow>
+    </div>
+  );
+}
+
+function Advice() {
+  const sources = [1, 2, 3] as const;
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <Button disabled>{t("ui.labsAdvicePick")}</Button>
+      </div>
+      <Flow drop={false}>
+        <p className="text-sm text-tinta-2">
+          {t("ui.labsSummaryDraft")} · {t("ui.labsAdviceWalk")}
+        </p>
+        <div>
+          <h3 className="font-semibold">{t("ui.labsAdviceSource")}</h3>
+          <ul className="mt-1 list-disc pl-5 text-sm">
+            {sources.map((n) => (
+              <li key={n}>{tk(`ui.labsAdviceSource${n}`)}</li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h3 className="font-semibold">{t("ui.labsAdviceDraftTitle")}</h3>
+          <p className="mt-1 border-b border-linea pb-4">{t("ui.labsAdviceText")}</p>
+        </div>
+        <p className="text-sm">{t("ui.labsAdviceReview")}</p>
+        <div>
+          <Button disabled>{t("ui.labsAdviceEdit")}</Button>
         </div>
       </Flow>
     </div>

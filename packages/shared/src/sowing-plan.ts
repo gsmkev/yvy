@@ -23,7 +23,10 @@ export interface SowingPlanRow {
   variety: string | null;
   plots: number;
   areaHa: number;
-  /** kg de semilla con la densidad de referencia del cultivo (o la que se pase en `rates`). */
+  /**
+   * kg de semilla. Cada lote usa su densidad planificada si está en kg/ha (A-01) y, si no, la de referencia
+   * del cultivo (o la que se pase en `rates`).
+   */
   seedKg: number;
 }
 
@@ -43,7 +46,14 @@ const r1 = (n: number) => Math.round(n * 10) / 10;
  */
 export function sowingPlan(
   plots: { id: string; kind: "crop" | "pasture"; areaHa: number }[],
-  plotSeasons: { plotId: string; seasonId: string; crop: Crop | null; variety: string | null }[],
+  plotSeasons: {
+    plotId: string;
+    seasonId: string;
+    crop: Crop | null;
+    variety: string | null;
+    sowingDensity?: number | null;
+    densityUnit?: string | null;
+  }[],
   seasonId: string,
   rates: Partial<Record<Crop, number>> = {},
 ): SowingPlanResult {
@@ -62,15 +72,19 @@ export function sowingPlan(
     const variety = ps.variety?.trim() || null;
     const key = `${ps.crop}\u0000${(variety ?? "").toLowerCase()}`;
     const row = groups.get(key) ?? { crop: ps.crop, variety, plots: 0, areaHa: 0, seedKg: 0 };
+    // Solo la densidad en kg/ha da kilos de semilla; en semillas por metro hace falta el peso de mil granos.
+    const rate =
+      ps.sowingDensity && ps.densityUnit === "kg_ha" ? ps.sowingDensity : (rates[ps.crop] ?? SEED_RATE_KG_HA[ps.crop]);
     row.plots++;
     row.areaHa += p.areaHa;
+    row.seedKg += p.areaHa * rate;
     groups.set(key, row);
   }
   const rows = [...groups.values()]
     .map((r) => ({
       ...r,
       areaHa: r1(r.areaHa),
-      seedKg: Math.round(r.areaHa * (rates[r.crop] ?? SEED_RATE_KG_HA[r.crop])),
+      seedKg: Math.round(r.seedKg),
     }))
     .sort(
       (a, b) =>

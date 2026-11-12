@@ -8,7 +8,7 @@ import { REPRO_EVENTS, SERVICE_METHODS } from "./repro";
 import { SUPPLEMENT_TYPES, MAX_SUPPLEMENT_KG } from "./grazing";
 import { HEALTH_REASONS, HERD_CATEGORIES, MAX_HEAD_PER_CATEGORY, MORTALITY_CAUSES, MOVE_REASONS } from "./livestock";
 import { deltaT, DOSE_UNITS } from "./agro";
-import { CROPS, type RecordKind } from "./schema";
+import { CROPS, DENSITY_UNITS, type RecordKind } from "./schema";
 import { LIMITS } from "./limits";
 import { extraSchema } from "./forms";
 
@@ -148,8 +148,7 @@ const livestockSchemas = {
     }),
 };
 // ---------- fin ganaderia ----------
-/** Unidad de la densidad de siembra: semillas por metro lineal o kg por hectárea. */
-export const DENSITY_UNITS = ["seeds_m", "kg_ha"] as const;
+export { DENSITY_UNITS } from "./schema";
 
 /** Superficie hecha en hectáreas (aplicaciones, siembra, cosecha). */
 const areaDone = z.number().positive().max(100_000);

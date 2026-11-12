@@ -284,3 +284,40 @@ describe("cosecha y rinde por lote (A-20)", () => {
     await bad({ tons: 5, destination: "puerto" });
   });
 });
+
+describe("densidad de siembra y plan vigente (A-01)", () => {
+  const put = (token: string, seasonId: string, plotId: string, body: Record<string, unknown>) =>
+    call("PUT", `/org/seasons/${seasonId}/plots/${plotId}`, { token, body });
+
+  it("guarda la densidad planificada con su unidad, la baja al celular y la muestra en el historial", async () => {
+    const { owner, plotIds } = await setup();
+    const season = await newSeason(owner.token);
+    const ok = await put(owner.token, season.body.id, plotIds[0]!, { crop: "soja", sowingDensity: 60, densityUnit: "kg_ha" });
+    expect(ok.status).toBe(200);
+    expect((await pullAll(owner.token, "plot_seasons"))[0]).toMatchObject({ sowingDensity: 60, densityUnit: "kg_ha" });
+    const h = await call<{ sowingDensity: number | null; densityUnit: string | null }[]>("GET", `/org/plots/${plotIds[0]}/seasons`, { token: owner.token });
+    expect(h.body[0]).toMatchObject({ sowingDensity: 60, densityUnit: "kg_ha" });
+  });
+
+  it("pide la unidad con la densidad y borra ambas si se quita la densidad", async () => {
+    const { owner, plotIds } = await setup();
+    const season = await newSeason(owner.token);
+    expect((await put(owner.token, season.body.id, plotIds[0]!, { crop: "soja", sowingDensity: 60 })).status).toBe(400);
+    expect((await put(owner.token, season.body.id, plotIds[0]!, { sowingDensity: 0, densityUnit: "kg_ha" })).status).toBe(400);
+    await put(owner.token, season.body.id, plotIds[0]!, { crop: "soja", sowingDensity: 14, densityUnit: "seeds_m" });
+    await put(owner.token, season.body.id, plotIds[0]!, { crop: "soja", densityUnit: "kg_ha" });
+    expect((await pullAll(owner.token, "plot_seasons"))[0]).toMatchObject({ sowingDensity: null, densityUnit: null });
+  });
+
+  it("el cultivo y la fecha del plan de la campaña activa mandan sobre el texto libre del lote", async () => {
+    const { owner, plotIds } = await setup();
+    // Los lotes de prueba nacen con crop soja; el plan dice maíz.
+    const season = await newSeason(owner.token);
+    await put(owner.token, season.body.id, plotIds[0]!, { crop: "maiz", plannedSowingDate: "2026-09-20" });
+    const r = await call("GET", `/org/plots/${plotIds[0]}/phenology`, { token: owner.token });
+    expect(r.body).toMatchObject({ crop: "maiz", sowingDate: "2026-09-20", sowingSource: "plan" });
+    // Con la campaña cerrada vuelve al texto libre del lote.
+    await call("PATCH", `/org/seasons/${season.body.id}`, { token: owner.token, body: { active: false } });
+    expect((await call("GET", `/org/plots/${plotIds[0]}/phenology`, { token: owner.token })).body.crop).toBe("soja");
+  });
+});

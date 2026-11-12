@@ -36,6 +36,8 @@ export const MEMBERSHIP_STATUS = ["active", "invited", "disabled"] as const;
 export const PLOT_KINDS = ["crop", "pasture"] as const;
 export const CROPS = ["soja", "maiz", "trigo", "arroz", "girasol", "chia", "otro"] as const;
 export const SEASONS = ["zafra", "zafrina"] as const;
+/** Unidad de la densidad de siembra: semillas por metro lineal o kg por hectárea. */
+export const DENSITY_UNITS = ["seeds_m", "kg_ha"] as const;
 export const POI_KINDS = [
   "rain_gauge",
   "water",
@@ -508,6 +510,9 @@ export const plotSeasons = sqliteTable(
     crop: text("crop", { enum: CROPS }),
     variety: text("variety"),
     plannedSowingDate: text("planned_sowing_date"),
+    /** Densidad de siembra prevista y su unidad (A-01). */
+    sowingDensity: real("sowing_density"),
+    densityUnit: text("density_unit", { enum: DENSITY_UNITS }),
     /** Rinde objetivo en toneladas por hectárea. */
     targetYieldTHa: real("target_yield_t_ha"),
     ...synced,

@@ -257,5 +257,7 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `leads` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`email` text NOT NULL,\n\t`lon` real NOT NULL,\n\t`lat` real NOT NULL,\n\t`consent_at` integer NOT NULL,\n\t`consent_version` text NOT NULL,\n\t`ip_hash` text,\n\t`status` text DEFAULT 'pending' NOT NULL,\n\t`attempts` integer DEFAULT 0 NOT NULL,\n\t`report` text,\n\t`report_at` integer,\n\t`sent_at` integer,\n\t`created_at` integer NOT NULL\n);",
   "CREATE INDEX `leads_ip_idx` ON `leads` (`ip_hash`,`created_at`);",
   "CREATE INDEX `leads_email_idx` ON `leads` (`email`,`created_at`);",
-  "CREATE INDEX `leads_status_idx` ON `leads` (`status`,`created_at`);"
+  "CREATE INDEX `leads_status_idx` ON `leads` (`status`,`created_at`);",
+  "ALTER TABLE `plot_seasons` ADD `sowing_density` real;",
+  "ALTER TABLE `plot_seasons` ADD `density_unit` text;"
 ];

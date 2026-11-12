@@ -45,3 +45,20 @@ describe("plan de siembra (A-03)", () => {
     expect(sowingPlan(plots, [plan("a", null, "X")], "s1").unplannedPlots).toBe(4);
   });
 });
+
+describe("densidad planificada por lote (A-01)", () => {
+  it("el lote con densidad en kg/ha usa la suya; en semillas por metro usa la de referencia", () => {
+    const r = sowingPlan(
+      plots,
+      [
+        { ...plan("a", "soja", null), sowingDensity: 80, densityUnit: "kg_ha" },
+        { ...plan("b", "soja", null), sowingDensity: 14, densityUnit: "seeds_m" },
+        plan("c", "soja", null),
+      ],
+      "s1",
+    );
+    // a: 100 ha x 80 = 8000; b y c con la referencia de 60 kg/ha: 70,25 ha x 60 = 4215
+    expect(r.rows).toEqual([{ crop: "soja", variety: null, plots: 3, areaHa: 170.3, seedKg: 12215 }]);
+  });
+});
+

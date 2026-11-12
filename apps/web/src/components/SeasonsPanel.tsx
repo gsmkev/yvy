@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CROPS } from "@yvy/shared";
+import { CROPS, DENSITY_UNITS } from "@yvy/shared";
 import { del, patch, post, put } from "../lib/api";
 import { fmtHa, fmtIsoDate, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -155,11 +155,15 @@ export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots
   );
 }
 
+/** "60 kg por hectárea" / "14 semillas por metro". */
+export const fmtDensity = (density: number, unit: string): string => `${fmtNum(density)} ${tk(`fields.densityUnit_${unit}`)}`;
+
 export function PlanSummary({ plan }: { plan: PlotSeason }) {
   const parts = [
     plan.crop ? tk(`fields.crop_${plan.crop}`) : null,
     plan.variety,
     plan.plannedSowingDate ? `${t("ui.seasonPlannedSowing")} ${fmtIsoDate(plan.plannedSowingDate)}` : null,
+    plan.sowingDensity !== null && plan.densityUnit ? fmtDensity(plan.sowingDensity, plan.densityUnit) : null,
     plan.targetYieldTHa !== null ? `${fmtNum(plan.targetYieldTHa)} t/ha` : null,
   ].filter(Boolean);
   return <span className="num">{parts.length ? parts.join(" · ") : t("ui.seasonPlanEmpty")}</span>;
@@ -235,6 +239,8 @@ function PlanModal({
     crop: plan?.crop ?? plot.crop ?? "",
     variety: plan?.variety ?? "",
     plannedSowingDate: plan?.plannedSowingDate ?? "",
+    sowingDensity: plan?.sowingDensity?.toString() ?? "",
+    densityUnit: plan?.densityUnit ?? "kg_ha",
     targetYieldTHa: plan?.targetYieldTHa?.toString() ?? "",
   });
   const url = `/org/seasons/${season.id}/plots/${plot.id}`;
@@ -244,6 +250,8 @@ function PlanModal({
         crop: f.crop || null,
         variety: f.variety.trim() || null,
         plannedSowingDate: f.plannedSowingDate || null,
+        sowingDensity: f.sowingDensity ? Number(f.sowingDensity.replace(",", ".")) : null,
+        densityUnit: f.sowingDensity ? f.densityUnit : null,
         targetYieldTHa: f.targetYieldTHa ? Number(f.targetYieldTHa.replace(",", ".")) : null,
       }),
     onSuccess: () => {
@@ -282,6 +290,23 @@ function PlanModal({
           </Field>
           <Field label={t("ui.seasonPlannedSowing")}>
             <Input type="date" value={f.plannedSowingDate} onChange={set("plannedSowingDate")} />
+          </Field>
+          <Field label={t("ui.seasonDensity")}>
+            <Input
+              type="number"
+              inputMode="decimal"
+              step="any"
+              min={0}
+              value={f.sowingDensity}
+              onChange={set("sowingDensity")}
+            />
+          </Field>
+          <Field label={t("ui.seasonDensityUnit")}>
+            <Select
+              value={f.densityUnit}
+              onChange={set("densityUnit")}
+              options={DENSITY_UNITS.map((u) => ({ value: u, label: tk(`fields.densityUnit_${u}`) }))}
+            />
           </Field>
           <Field label={t("ui.seasonTargetYield")}>
             <Input

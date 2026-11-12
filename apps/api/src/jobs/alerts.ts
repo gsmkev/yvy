@@ -8,6 +8,7 @@ import { and, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import { newId, parseNotificationPrefs, wantsNotification } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type DB, type Stmt } from "../db/client";
+import { withPlanCrops } from "../db/plan-crops";
 import { alertOutboxStmts } from "../db/webhooks";
 import type { HourlyForecast } from "./weather";
 import { affectedPlots, severityRank, type AlertDraft } from "./rules";
@@ -29,10 +30,13 @@ export async function upsertAlert(
   draft: AlertDraft,
   now = Date.now(),
 ): Promise<{ id: string; notified: boolean } | null> {
-  const plots = await db
-    .select({ id: s.plots.id, kind: s.plots.kind, crop: s.plots.crop })
-    .from(s.plots)
-    .where(and(eq(s.plots.farmId, farm.id), isNull(s.plots.deletedAt)));
+  const plots = await withPlanCrops(
+    db,
+    await db
+      .select({ id: s.plots.id, kind: s.plots.kind, crop: s.plots.crop })
+      .from(s.plots)
+      .where(and(eq(s.plots.farmId, farm.id), isNull(s.plots.deletedAt))),
+  );
   const plotIds = (draft.details.plotIds as string[] | undefined) ?? affectedPlots(draft.kind, plots);
   const dedupeKey = `${farm.id}:${draft.kind}:${draft.validFrom}`;
   const validFrom = Date.parse(`${draft.validFrom}T00:00:00-03:00`);

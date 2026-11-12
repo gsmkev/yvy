@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { newId, PEST_THRESHOLDS } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
+import { planCropsByPlot, withPlanCrops } from "../src/db/plan-crops";
 import { runJob } from "../src/jobs";
 import { evaluatePests } from "../src/jobs/pests";
 import { call, createFarmWithPlots, createOrgWithOwner, db } from "./helpers";
@@ -105,5 +106,21 @@ describe("job de plagas", () => {
     });
     await runJob({ type: "pest", farmId }, env, deps(now));
     expect(await db().select().from(s.alerts).where(eq(s.alerts.farmId, farmId))).toHaveLength(0);
+  });
+});
+
+describe("cultivo del plan de la campaña en los avisos (A-01)", () => {
+  it("un lote sin cultivo en el texto libre pero con soja en el plan activo cuenta como soja", async () => {
+    const owner = await createOrgWithOwner();
+    const { plotIds } = await createFarmWithPlots(owner.token, 1);
+    await call("PATCH", `/org/plots/${plotIds[0]}`, { token: owner.token, body: { crop: null } });
+    const season = await call<{ id: string }>("POST", "/org/seasons", { token: owner.token, body: { name: "Zafra", active: true } });
+    await call("PUT", `/org/seasons/${season.body.id}/plots/${plotIds[0]}`, { token: owner.token, body: { crop: "soja" } });
+    expect((await planCropsByPlot(db(), plotIds)).get(plotIds[0]!)).toBe("soja");
+    const [p] = await withPlanCrops(db(), [{ id: plotIds[0]!, crop: null as string | null }]);
+    expect(p!.crop).toBe("soja");
+    // Una campaña cerrada deja de mandar.
+    await call("PATCH", `/org/seasons/${season.body.id}`, { token: owner.token, body: { active: false } });
+    expect((await planCropsByPlot(db(), plotIds)).size).toBe(0);
   });
 });

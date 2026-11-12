@@ -277,6 +277,8 @@ export interface PlotSeason {
   crop: string | null;
   variety: string | null;
   plannedSowingDate: string | null;
+  sowingDensity: number | null;
+  densityUnit: "seeds_m" | "kg_ha" | null;
   targetYieldTHa: number | null;
 }
 
@@ -288,6 +290,8 @@ export interface PlotHistoryRow {
   crop: string | null;
   variety: string | null;
   plannedSowingDate: string | null;
+  sowingDensity: number | null;
+  densityUnit: string | null;
   targetYieldTHa: number | null;
   sownOn: number | null;
   harvestTons: number | null;

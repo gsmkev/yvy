@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { LIMITS } from "@yvy/shared";
-import { attendanceDayInput, purchaseInput, purchaseInvoiceInput, purchaseReceiveInput, budgetLineInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
+import { attendanceDayInput, grainContractInput, grainDeliveryInput, grainSettlementInput, purchaseInput, purchaseInvoiceInput, purchaseReceiveInput, budgetLineInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { HTTPException } from "hono/http-exception";
 import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
@@ -17,6 +17,7 @@ import { attendanceSummary, deleteAttendance, listAttendance, markDay } from "..
 import { balances, createPayment, deletePayment, employeeStatement, listPayments } from "../db/employee-payments";
 import { budgetCompare } from "../db/budget";
 import { createPurchase, deletePurchase, getPurchase, invoicePurchase, listPurchases, receivePurchase, revertReception } from "../db/purchases";
+import { checkContractRefs, contractsSummary, createDelivery, createSettlement, deleteDelivery, deleteSettlement, listDeliveries, listSettlements } from "../db/grain-sales";
 import { createLog, deleteLog, duePlans, listLogs } from "../db/maintenance";
 import { deleteMinimum, listMinimums, lowStock, saveMinimum } from "../db/stock-minimums";
 import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
@@ -347,5 +348,24 @@ erp.delete("/purchases/:id/reception", async (c) => {
 });
 erp.delete("/purchases/:id", async (c) => {
   await deletePurchase(c.var.sdb, parse(uuid, c.req.param("id")));
+  return c.json({ ok: true });
+});
+
+// ---------- Venta de granos (E-34) ----------
+
+master("grain-contracts", s.grainContracts, grainContractInput, [s.grainContracts.createdAt], {
+  check: (sdb, v) => checkContractRefs(sdb, v),
+});
+erp.get("/grain-contracts/summary", async (c) => c.json(await contractsSummary(c.var.sdb)));
+erp.get("/grain-deliveries", async (c) => c.json(await listDeliveries(c.var.sdb, parse(uuid.optional(), c.req.query("contractId")))));
+erp.post("/grain-deliveries", async (c) => c.json(await createDelivery(c.var.sdb, parse(grainDeliveryInput, await readJson(c.req))), 201));
+erp.delete("/grain-deliveries/:id", async (c) => {
+  await deleteDelivery(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
+erp.get("/grain-settlements", async (c) => c.json(await listSettlements(c.var.sdb, parse(uuid.optional(), c.req.query("contractId")))));
+erp.post("/grain-settlements", async (c) => c.json(await createSettlement(c.var.sdb, parse(grainSettlementInput, await readJson(c.req))), 201));
+erp.delete("/grain-settlements/:id", async (c) => {
+  await deleteSettlement(c.var.sdb, c.req.param("id"));
   return c.json({ ok: true });
 });

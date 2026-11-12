@@ -408,9 +408,12 @@ export const grainDeliveries = sqliteTable(
     /** Calculado al guardar con grainNet (packages/shared). */
     netKg: real("net_kg").notNull(),
     note: text("note"),
+    /** E-34: contrato de venta al que se entregó (vacío = entrega a acopio sin contrato). */
+    contractId: text("contract_id"),
     ...synced,
   },
   (t) => [
+    index("grain_deliveries_contract_idx").on(t.organizationId, t.contractId),
     index("grain_deliveries_sync_idx").on(t.organizationId, t.version, t.id),
     index("grain_deliveries_farm_idx").on(t.farmId, t.deliveredOn),
     index("grain_deliveries_plot_idx").on(t.plotId),
@@ -1706,4 +1709,56 @@ export const purchaseLines = sqliteTable(
     ...timestamps,
   },
   (t) => [index("purchase_lines_purchase_idx").on(t.organizationId, t.purchaseId)],
+);
+
+/** Contrato de venta de granos a un comprador (E-34). */
+export const grainContracts = sqliteTable(
+  "grain_contracts",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    partyId: text("party_id"),
+    number: text("number"),
+    crop: text("crop").notNull(),
+    seasonId: text("season_id"),
+    /** Toneladas contratadas. */
+    tons: real("tons").notNull(),
+    /** Precio por tonelada en unidad menor de `currency`. */
+    priceMinor: integer("price_minor").notNull(),
+    currency: text("currency", { enum: CURRENCIES }).notNull(),
+    deliveryFrom: text("delivery_from"),
+    deliveryTo: text("delivery_to"),
+    note: text("note"),
+    ...timestamps,
+  },
+  (t) => [index("grain_contracts_org_idx").on(t.organizationId, t.crop)],
+);
+
+/** Liquidación de un contrato: toneladas, precio, descuentos y neto. Es un ingreso y una cuenta a cobrar (E-34, E-36). */
+export const grainSettlements = sqliteTable(
+  "grain_settlements",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    contractId: text("contract_id").notNull(),
+    number: text("number"),
+    date: text("date").notNull(),
+    tons: real("tons").notNull(),
+    priceMinor: integer("price_minor").notNull(),
+    deductionsMinor: integer("deductions_minor").notNull().default(0),
+    /** Neto cobrable en unidad menor de `currency` y en guaraníes. */
+    netAmount: integer("net_amount").notNull(),
+    netPyg: integer("net_pyg").notNull(),
+    currency: text("currency", { enum: CURRENCIES }).notNull(),
+    farmId: text("farm_id"),
+    plotId: text("plot_id"),
+    seasonId: text("season_id"),
+    dueDate: text("due_date"),
+    /** Lo ya cobrado, en unidad menor de `currency` (E-36). */
+    paidAmount: integer("paid_amount").notNull().default(0),
+    photoPath: text("photo_path"),
+    createdBy: text("created_by").notNull(),
+    ...timestamps,
+  },
+  (t) => [index("grain_settlements_contract_idx").on(t.organizationId, t.contractId), index("grain_settlements_due_idx").on(t.organizationId, t.dueDate)],
 );

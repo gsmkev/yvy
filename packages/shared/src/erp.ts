@@ -672,3 +672,59 @@ export type PurchaseStatus = "ordered" | "invoiced" | "received" | "complete";
 /** Estado derivado: con factura y recepción está completa; la factura y la recepción pueden llegar en cualquier orden. */
 export const purchaseStatus = (p: { invoiceNumber: string | null; receivedAt: string | null }): PurchaseStatus =>
   p.invoiceNumber && p.receivedAt ? "complete" : p.receivedAt ? "received" : p.invoiceNumber ? "invoiced" : "ordered";
+
+// ---------- Venta de granos: contratos, entregas y liquidaciones (E-34) ----------
+
+export const grainContractInput = z.object({
+  partyId: uuid.nullish(),
+  number: optText(40),
+  crop: z.string().trim().min(1).max(40),
+  seasonId: uuid.nullish(),
+  tons: z.number().positive().max(10_000_000),
+  priceMinor: minorAmount.refine((n) => n > 0, "El precio tiene que ser mayor que cero"),
+  currency: currencySchema,
+  deliveryFrom: isoDate.nullish(),
+  deliveryTo: isoDate.nullish(),
+  note: optText(300),
+});
+
+export const grainDeliveryInput = z.object({
+  contractId: uuid,
+  date: isoDate,
+  /** Toneladas netas entregadas. */
+  tons: z.number().positive().max(10_000_000),
+  /** La estancia sale del lote; sin lote y con varias estancias hay que indicarla. */
+  farmId: uuid.nullish(),
+  plotId: uuid.nullish(),
+  ticket: optText(40),
+  destination: optText(80),
+  moisturePct: z.number().min(0).max(100).nullish(),
+});
+
+export const grainSettlementInput = z.object({
+  contractId: uuid,
+  number: optText(40),
+  date: isoDate,
+  tons: z.number().positive().max(10_000_000),
+  /** Si no se manda, el precio del contrato. */
+  priceMinor: minorAmount.nullish(),
+  deductionsMinor: minorAmount.nullish(),
+  farmId: uuid.nullish(),
+  plotId: uuid.nullish(),
+  dueDate: isoDate.nullish(),
+});
+
+/** Neto de una liquidación: toneladas por precio menos descuentos (nunca negativo). */
+export const settlementNet = (tons: number, priceMinor: number, deductionsMinor: number): number =>
+  Math.max(0, Math.round(tons * priceMinor) - deductionsMinor);
+
+/** Avance de un contrato: lo entregado, lo liquidado y lo que falta de cada cosa. */
+export function contractProgress(contractTons: number, deliveredTons: number, settledTons: number) {
+  const q = (n: number) => Math.round(n * 1000) / 1000;
+  return {
+    deliveredTons: q(deliveredTons),
+    settledTons: q(settledTons),
+    toDeliverTons: q(Math.max(0, contractTons - deliveredTons)),
+    toSettleTons: q(Math.max(0, deliveredTons - settledTons)),
+  };
+}

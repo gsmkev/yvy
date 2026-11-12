@@ -209,5 +209,12 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `purchase_lines_purchase_idx` ON `purchase_lines` (`organization_id`,`purchase_id`);",
   "CREATE TABLE `purchases` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`party_id` text,\n\t`farm_id` text,\n\t`order_date` text NOT NULL,\n\t`expected_date` text,\n\t`currency` text NOT NULL,\n\t`total_amount` integer DEFAULT 0 NOT NULL,\n\t`total_pyg` integer DEFAULT 0 NOT NULL,\n\t`invoice_number` text,\n\t`invoice_date` text,\n\t`due_date` text,\n\t`paid_amount` integer DEFAULT 0 NOT NULL,\n\t`warehouse_id` text,\n\t`received_at` text,\n\t`note` text,\n\t`photo_path` text,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
   "CREATE INDEX `purchases_org_idx` ON `purchases` (`organization_id`,`order_date`);",
-  "CREATE INDEX `purchases_due_idx` ON `purchases` (`organization_id`,`due_date`);"
+  "CREATE INDEX `purchases_due_idx` ON `purchases` (`organization_id`,`due_date`);",
+  "CREATE TABLE `grain_contracts` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`party_id` text,\n\t`number` text,\n\t`crop` text NOT NULL,\n\t`season_id` text,\n\t`tons` real NOT NULL,\n\t`price_minor` integer NOT NULL,\n\t`currency` text NOT NULL,\n\t`delivery_from` text,\n\t`delivery_to` text,\n\t`note` text,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
+  "CREATE INDEX `grain_contracts_org_idx` ON `grain_contracts` (`organization_id`,`crop`);",
+  "CREATE TABLE `grain_settlements` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`contract_id` text NOT NULL,\n\t`number` text,\n\t`date` text NOT NULL,\n\t`tons` real NOT NULL,\n\t`price_minor` integer NOT NULL,\n\t`deductions_minor` integer DEFAULT 0 NOT NULL,\n\t`net_amount` integer NOT NULL,\n\t`net_pyg` integer NOT NULL,\n\t`currency` text NOT NULL,\n\t`farm_id` text,\n\t`plot_id` text,\n\t`season_id` text,\n\t`due_date` text,\n\t`paid_amount` integer DEFAULT 0 NOT NULL,\n\t`photo_path` text,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
+  "CREATE INDEX `grain_settlements_contract_idx` ON `grain_settlements` (`organization_id`,`contract_id`);",
+  "CREATE INDEX `grain_settlements_due_idx` ON `grain_settlements` (`organization_id`,`due_date`);",
+  "ALTER TABLE `grain_deliveries` ADD `contract_id` text;",
+  "CREATE INDEX `grain_deliveries_contract_idx` ON `grain_deliveries` (`organization_id`,`contract_id`);"
 ];

@@ -126,6 +126,8 @@ export interface Member {
   /** Días con actividad en los últimos 7. */
   activeDays7: number;
   records7d: number;
+  /** T-06: lotes distintos en los que anotó en los últimos 7 días. */
+  plotsVisited7d: number;
   lastSyncAt: number | null;
   /** T-05: tareas abiertas vencidas (con la hora límite, en la hora de la estancia). */
   overdueTasks: number;

@@ -250,5 +250,6 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `webhook_outbox_created_idx` ON `webhook_outbox` (`created_at`);",
   "CREATE TABLE `calendar_feeds` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`user_id` text NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`token_hash` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`last_used_at` integer,\n\t`revoked_at` integer\n);",
   "CREATE UNIQUE INDEX `calendar_feeds_hash_uq` ON `calendar_feeds` (`token_hash`);",
-  "CREATE INDEX `calendar_feeds_user_idx` ON `calendar_feeds` (`user_id`,`organization_id`);"
+  "CREATE INDEX `calendar_feeds_user_idx` ON `calendar_feeds` (`user_id`,`organization_id`);",
+  "CREATE TABLE `job_runs` (\n\t`job` text PRIMARY KEY NOT NULL,\n\t`last_ok_at` integer,\n\t`last_fail_at` integer,\n\t`last_fail_status` integer\n);"
 ];

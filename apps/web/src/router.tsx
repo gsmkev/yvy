@@ -39,6 +39,12 @@ const privacyRoute = createRoute({
   component: lazyRouteComponent(() => import("./routes/public/legal"), "PrivacyPage"),
 });
 
+const statusRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/estado",
+  component: lazyRouteComponent(() => import("./routes/public/status"), "StatusPage"),
+});
+
 const apiDocsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/api-docs",
@@ -206,6 +212,7 @@ const routeTree = rootRoute.addChildren([
   termsRoute,
   privacyRoute,
   apiDocsRoute,
+  statusRoute,
   sharedRoute,
   appRoute.addChildren([
     home,

@@ -375,7 +375,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | P-01 | Producción en dominio propio con email de ingreso verificado | P0 | S | Falta (credenciales) |
 | P-02 | Monitoreo de errores (Sentry) en web, app y Worker | P1 | S | Falta |
 | P-03 | Analítica de producto: qué pantallas se usan, embudo de activación | P1 | S | Parcial (métricas del PRD) |
-| P-04 | Página de estado del servicio | P3 | S | Falta |
+| P-04 | Página de estado del servicio | P3 | S | Hecho |
 | P-05 | Copias de seguridad verificadas con restauración probada | P1 | S | Parcial |
 | P-06 | Archivado de datos viejos de D1 a R2 | P2 | M | Hecho |
 | P-07 | Ingreso con Google | P2 | S | Hecho |

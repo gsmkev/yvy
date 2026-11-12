@@ -10,6 +10,7 @@ import { z } from "zod";
 import { ANALYSIS_KINDS, INDEX_KINDS, LAYERS } from "@yvy/shared/schema";
 import { farmRiskSchema, farmSpiSchema, LIMITS } from "@yvy/shared";
 import { getDb } from "../db/client";
+import { recordIngest } from "../db/status";
 import { SystemDb } from "../db/system";
 import { hmacVerifyHex } from "../lib/crypto";
 import { parse } from "../lib/http";
@@ -33,6 +34,8 @@ const verify = createMiddleware<IngestEnv>(async (c, next) => {
   c.set("body", body);
   c.set("sys", new SystemDb(getDb(c.env.DB)));
   await next();
+  // P-04: anota la corrida del job (solo pedidos ya autenticados); una falla al anotar nunca rompe el ingreso de datos
+  await recordIngest(getDb(c.env.DB), path, c.res.status).catch((e) => console.error("[status] anotar corrida", e));
 });
 
 const json = (s: string): unknown => {

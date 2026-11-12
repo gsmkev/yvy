@@ -741,6 +741,13 @@ export class LocalDb implements SyncStore {
     return this.sql.get<{ n: number }>("SELECT count(*) n FROM tasks WHERE plot_id = ? AND status = 'open' AND deleted_at IS NULL", [plotId])?.n ?? 0;
   }
 
+  /** Tareas abiertas de un lote (ficha del lote, F-23), las que vencen antes primero. */
+  openTasksListOfPlot(plotId: string, limit = 20): Task[] {
+    return this.sql
+      .all("SELECT * FROM tasks WHERE plot_id = ? AND status = 'open' AND deleted_at IS NULL ORDER BY due_date, title LIMIT ?", [plotId, limit])
+      .map((r) => fromRow<Task>(s.tasks, r));
+  }
+
   /** Último registro por lote, para saber qué lotes hace días que nadie recorre. */
   lastVisitByPlot(): Map<string, number> {
     const rows = this.sql.all<{ plot_id: string; last: number }>(

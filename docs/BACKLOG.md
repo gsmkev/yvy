@@ -131,7 +131,7 @@ Detalles que un usuario espera sin pedirlos.
 | F-20 | Selector de estancia en la app cuando hay más de una | Hoy se mezclan | App | P0 | S | Hecho |
 | F-21 | Satélite y vigor (NDVI) en el mapa de la app, sin señal | El dueño en el campo | App | P0 | S | Hecho |
 | F-22 | "¿Te sirvió?" en los avisos de la app | Métrica de avisos | App | P1 | S | Hecho |
-| F-23 | Ficha del lote en la app: últimas anotaciones, vigor, lluvia del mes, tareas | Contexto antes de anotar | App | P1 | M | Parcial |
+| F-23 | Ficha del lote en la app: últimas anotaciones, vigor, lluvia del mes, tareas | Contexto antes de anotar | App | P1 | M | Hecho |
 | F-24 | Ingreso por teléfono y PIN además del QR | Pregunta abierta del PRD | App, API | P2 | M | Hecho |
 | F-25 | Celular compartido: cambiar de usuario sin perder lo pendiente | Un celular por cuadrilla | App | P2 | M | Hecho |
 | F-26 | Mapa sin conexión de varias estancias y de zonas de camino | Viajes entre campos | App | P2 | M | Parcial |

@@ -58,6 +58,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="record/[id]" options={{ title: "" }} />
         <Stack.Screen name="task/[id]" options={{ title: "" }} />
+        <Stack.Screen name="plot/[id]" options={{ title: "" }} />
         <Stack.Screen name="poi" options={{ title: "" }} />
         <Stack.Screen name="plot-draw" options={{ title: "" }} />
         <Stack.Screen name="stock-count" options={{ title: "" }} />

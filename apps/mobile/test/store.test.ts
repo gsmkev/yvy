@@ -130,6 +130,12 @@ describe("LocalDb", () => {
     expect(id).toBeTruthy();
   });
 
+  it("F-23 tareas abiertas de un lote: solo las abiertas, por fecha", () => {
+    const db = setup();
+    expect(db.openTasksListOfPlot(PLOT)).toEqual([]);
+    expect(db.openTasksOfPlot(PLOT)).toBe(0);
+  });
+
   it("punto de interés: fila local y mutación pois.upsert en la misma transacción", async () => {
     const db = setup();
     const id = db.savePoi(ORG, { farmId: FARM, kind: "gate", name: "  Tranquera norte ", lon: -55.9, lat: -27.2 });

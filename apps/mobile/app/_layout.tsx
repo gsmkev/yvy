@@ -7,9 +7,13 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts, Fraunces_400Regular, Fraunces_600SemiBold } from "@expo-google-fonts/fraunces";
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from "@expo-google-fonts/inter";
 import { dbReady } from "../src/lib/db";
+import { initMonitoring } from "../src/lib/monitoring";
 import { useNotificationTap } from "../src/lib/push";
 import { loadSession } from "../src/lib/session";
+import { Toast } from "../src/ui/kit";
 import { C, F } from "../src/ui/theme";
+
+initMonitoring();
 
 function NotificationTap() {
   useNotificationTap();
@@ -46,6 +50,15 @@ export default function RootLayout() {
         <Stack.Screen name="scan" options={{ title: "" }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="record/[id]" options={{ title: "" }} />
+        <Stack.Screen name="task/[id]" options={{ title: "" }} />
+        <Stack.Screen name="poi" options={{ title: "" }} />
+        <Stack.Screen name="plot-draw" options={{ title: "" }} />
+        <Stack.Screen name="stock-count" options={{ title: "" }} />
+        <Stack.Screen name="notifications" options={{ title: "" }} />
+        <Stack.Screen name="animals" options={{ title: "" }} />
+        <Stack.Screen name="goto" options={{ title: "" }} />
+        <Stack.Screen name="walk" options={{ title: "" }} />
+        <Stack.Screen name="scan-poi" options={{ title: "" }} />
         <Stack.Screen name="labs/roya" options={{ title: "" }} />
         <Stack.Screen name="labs/chinches" options={{ title: "" }} />
         <Stack.Screen name="labs/pasto" options={{ title: "" }} />
@@ -53,6 +66,7 @@ export default function RootLayout() {
         <Stack.Screen name="labs/voz" options={{ title: "" }} />
         <Stack.Screen name="annotate/index" options={{ title: "", presentation: "modal" }} />
       </Stack>
+      <Toast />
     </SafeAreaProvider>
   );
 }

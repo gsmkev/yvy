@@ -2,15 +2,19 @@
  * Ficha de un registro. Editar y borrar solo para el autor y dentro de las 24 h de capturado (RF-34);
  * pasado ese tiempo el servidor también lo rechaza.
  */
-import { Alert, Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Alert, Image, Linking, ScrollView, StyleSheet, View } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { describeRecord, LIMITS, t } from "@yvy/shared";
+import { describeRecord, LIMITS, recordShareText, t, whatsappUrl } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { accuracyLabel } from "../../src/lib/location";
+import { memberNames } from "../../src/lib/members";
+import { authorName, isOwnerMode } from "../../src/lib/ownerSummary";
 import { useSession } from "../../src/lib/session";
 import { localChanged, syncNow } from "../../src/lib/sync";
 import { useLocal } from "../../src/lib/useLocal";
-import { Button, s as k } from "../../src/ui/kit";
+import { Button, s as k, Text, TextInput } from "../../src/ui/kit";
+import { VoicePlayer } from "../../src/ui/VoicePlayer";
 import { T } from "../../src/ui/theme";
 
 export default function RecordDetail() {
@@ -19,6 +23,9 @@ export default function RecordDetail() {
   const record = useLocal(() => getDb().recordById(id), [id]);
   const plots = useLocal(() => getDb().plots());
   const photos = useLocal(() => (record ? getDb().photosOfRecord(record.id) : []), [record?.id]);
+  const voices = useLocal(() => (record ? getDb().voiceOfRecord(record.id) : []), [record?.id]);
+  const comments = useLocal(() => (record ? getDb().commentsOf(record.id) : []), [record?.id]);
+  const [draft, setDraft] = useState("");
 
   if (!record)
     return (
@@ -34,6 +41,20 @@ export default function RecordDetail() {
   const mine = !!session && record.authorId === session.user.id;
   const editable = mine && Date.now() - record.capturedAt < LIMITS.sync.workerEditWindowMs;
   const hasPlace = record.lon !== null && record.lat !== null;
+
+  const share = () => {
+    const farm = getDb().farms().find((f) => f.id === record.farmId);
+    const text = recordShareText({
+      kindLabel: t(`recordKinds.${record.kind}`),
+      description: describeRecord(record.kind, data),
+      plotName: plot?.name,
+      farmName: farm?.name,
+      when,
+      lat: record.lat,
+      lon: record.lon,
+    });
+    Linking.openURL(whatsappUrl(text)).catch(() => undefined);
+  };
 
   const remove = () =>
     Alert.alert(t("app.recordDeleteTitle"), t("ui.confirmDelete", { name: t(`recordKinds.${record.kind}`).toLowerCase() }), [
@@ -55,12 +76,27 @@ export default function RecordDetail() {
       <Text style={T.small}>{[t(`recordKinds.${record.kind}`), plot?.name].filter(Boolean).join(" · ")}</Text>
       <Text style={[T.title, { marginTop: 4 }]}>{describeRecord(record.kind, data)}</Text>
       <Text style={[T.body, { marginTop: 16 }]}>{t("app.recordCapturedAt", { when })}</Text>
+      {isOwnerMode(session?.organization.role) && (
+        <Text style={[T.small, { marginTop: 4 }]}>{t("app.recordAuthor", { name: authorName(record.authorId, session?.user.id, memberNames(getDb())) })}</Text>
+      )}
       {hasPlace && <Text style={[T.small, { marginTop: 4 }]}>{accuracyLabel(record.gpsAccuracyM)}</Text>}
       {photos.length > 0 && (
         <View style={st.photos}>
           {photos.map((p) => (p.thumbUri ? <Image key={p.id} source={{ uri: p.thumbUri }} style={st.thumb} /> : null))}
         </View>
       )}
+      {voices.map((v) => (
+        <VoicePlayer key={v.id} id={v.id} uri={v.uri} uploaded={v.uploaded} />
+      ))}
+      {hasPlace && (
+        <Button
+          kind="secondary"
+          title={t("app.gotoButton")}
+          onPress={() => router.push({ pathname: "/goto", params: { lon: String(record.lon), lat: String(record.lat), name: describeRecord(record.kind, data) } })}
+          style={{ marginTop: 20 }}
+        />
+      )}
+      <Button kind="secondary" title={t("ui.shareWhatsapp")} onPress={share} style={{ marginTop: 12 }} />
       <View style={{ height: 32 }} />
       {editable ? (
         <>
@@ -71,6 +107,33 @@ export default function RecordDetail() {
       ) : (
         mine && <Text style={T.small}>{t("app.recordLocked")}</Text>
       )}
+      <Text style={[T.heading, { marginTop: 24 }]}>{t("ui.comments")}</Text>
+      {comments.length === 0 && <Text style={T.small}>{t("ui.commentNone")}</Text>}
+      {comments.map((c) => (
+        <View key={c.id} style={{ marginTop: 8 }}>
+          <Text style={T.small}>{c.authorName}</Text>
+          <Text>{c.body}</Text>
+        </View>
+      ))}
+      <TextInput
+        value={draft}
+        onChangeText={setDraft}
+        placeholder={t("ui.commentPlaceholder")}
+        multiline
+        maxLength={LIMITS.comments.maxLength}
+        style={{ borderWidth: 1, borderRadius: 8, padding: 10, marginTop: 12, minHeight: 60 }}
+      />
+      <Button
+        title={t("ui.commentSend")}
+        disabled={!draft.trim() || !session}
+        onPress={() => {
+          if (!session) return;
+          getDb().addComment(session.user.id, session.organization.id, session.user.fullName, record.id, draft.trim());
+          setDraft("");
+          localChanged();
+        }}
+        style={{ marginTop: 8 }}
+      />
     </ScrollView>
   );
 }

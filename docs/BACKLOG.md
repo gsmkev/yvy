@@ -153,7 +153,7 @@ Detalles que un usuario espera sin pedirlos.
 | A-05 | Ventana de siembra según humedad del suelo y pronóstico | Decisión clave en soja | Web | P2 | M | Falta |
 | A-10 | Aplicaciones fitosanitarias: producto, dosis, volumen, lotes, operario, máquina | Registro obligatorio de hecho | Web, App | P1 | M | Falta |
 | A-11 | Receta agronómica del ingeniero que se convierte en orden de trabajo | Flujo agrónomo → campo | Web, App | P1 | M | Falta |
-| A-12 | Condiciones al aplicar: viento, temperatura, humedad y Delta T, guardadas con el registro | Calidad y deriva | App | P1 | S | Falta |
+| A-12 | Condiciones al aplicar: viento, temperatura, humedad y Delta T, guardadas con el registro | Calidad y deriva | App | P1 | S | Hecho |
 | A-13 | Ventanas para pulverizar en el pronóstico (horas aptas por viento y Delta T) | Ahorro y eficacia | Web, App | P1 | M | Falta |
 | A-14 | Período de carencia y reingreso por producto, con aviso antes de cosechar | Seguridad y residuos | Web, App | P2 | S | Falta |
 | A-15 | Zonas de amortiguación cerca de casas, escuelas y cursos de agua, con aviso | Cumplimiento ambiental | Web | P2 | M | Falta |

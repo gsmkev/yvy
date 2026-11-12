@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { t } from "@yvy/shared";
 import { getDb } from "../lib/db";
+import { refreshSprayHours } from "../lib/sprayHours";
 import { daysOld, readForecast, refreshForecast, upcoming, type CachedForecast } from "../lib/forecast";
 import { api } from "../lib/session";
 import { useSyncStatus } from "../lib/sync";
@@ -35,6 +36,8 @@ export function ForecastStrip({ farmId }: { farmId: string | null }) {
       (id) => api("GET", `/org/farms/${id}/forecast`),
       Date.now(),
     ).then((f) => alive && setData(f));
+    // A-12: las horas de hoy quedan guardadas para precargar las condiciones al aplicar
+    refreshSprayHours(getDb(), farmId, (id) => api("GET", `/org/farms/${id}/spray-windows`), Date.now());
     return () => {
       alive = false;
     };

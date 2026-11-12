@@ -16,6 +16,8 @@ import {
   monitorTemplate,
   ORDER_LABOR_KIND,
   parseRecordData,
+  deltaT,
+  sprayWarningTexts,
   splitExtraAnswers,
   summarizeStations,
   t,
@@ -41,6 +43,7 @@ import { PhotoMarkup } from "../../src/ui/PhotoMarkup";
 import { VoiceRecorder } from "../../src/ui/VoiceRecorder";
 import { useSession } from "../../src/lib/session";
 import { localChanged, useSyncStatus } from "../../src/lib/sync";
+import { sprayPrefill } from "../../src/lib/sprayHours";
 import { toastSaved } from "../../src/lib/toast";
 import { seedCounts } from "../../src/lib/counter";
 import { HerdCounter } from "../../src/ui/Counter";
@@ -80,6 +83,7 @@ export default function Annotate() {
   const [kind, setKind] = useState<RecordKind | null>(editing?.kind ?? presetKind);
   // Campañas activas que bajaron al celular: con una sola no se pregunta, se usa esa.
   const seasons = useMemo(() => db.activeSeasons(), []);
+  const sprayPre = useMemo(() => sprayPrefill(db, plot?.farmId ?? selectedFarmId(db) ?? undefined, Date.now()), [plot?.farmId]);
   const seed = (kd: RecordKind): Record<string, unknown> => {
     const out: Record<string, unknown> =
       seasons.length === 1 && FLOWS[kd].some((x) => x.kind === "season") ? { seasonId: seasons[0]!.id } : {};
@@ -91,6 +95,8 @@ export default function Annotate() {
       if (rx.seasonId) out.seasonId = rx.seasonId;
       out.prescriptionTaskId = params.taskId;
     }
+    // A-12: viento, temperatura y humedad de esta hora según el pronóstico guardado (editables a mano).
+    if (kd === "application") Object.assign(out, sprayPre ?? {});
     // E-21: la orden de trabajo precarga insumos, campaña y superficie prevista; al guardar queda ligada a la tarea.
     const ord = params.taskId ? db.orderOf(params.taskId) : null;
     if (ord && ORDER_LABOR_KIND[ord.labor] === kd) {
@@ -553,7 +559,7 @@ export default function Annotate() {
       <View style={k.screen}>
         {header}
         <Progress i={phase.i} n={steps.length + 1} />
-        <StepScreen key={`${kind}-${step.key}`} step={step} value={values[step.key]} seasons={seasons} onAnswer={(v) => advance({ ...values, [step.key]: v })} />
+        <StepScreen key={`${kind}-${step.key}`} step={step} value={values[step.key]} answers={values} prefilled={!editing && kind === "application" && !!sprayPre && values[step.key] !== undefined && (sprayPre as Record<string, unknown>)[step.key] === values[step.key]} seasons={seasons} onAnswer={(v) => advance({ ...values, [step.key]: v })} />
       </View>
     );
   }
@@ -635,7 +641,7 @@ function Progress({ i, n }: { i: number; n: number }) {
   );
 }
 
-function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unknown; seasons: Season[]; onAnswer: (v: unknown) => void }) {
+function StepScreen({ step, value, answers, prefilled, seasons, onAnswer }: { step: Step; value: unknown; answers: Record<string, unknown>; prefilled: boolean; seasons: Season[]; onAnswer: (v: unknown) => void }) {
   const [text, setText] = useState(value === undefined ? "" : String(value));
   const input = useRef<ElementRef<typeof TextInputRef>>(null);
   useEffect(() => {
@@ -711,10 +717,20 @@ function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unk
   if (step.kind === "number") {
     const n = Number(text.replace(",", "."));
     const ok = text !== "" && Number.isFinite(n) && n >= (step.min ?? 0) && n <= step.max && (!step.integer || Number.isInteger(n));
+    // A-12: aviso al pasar los umbrales de viento o Delta T (con la temperatura ya cargada y esta humedad).
+    const warnings =
+      !ok || answers === undefined
+        ? []
+        : step.key === "windKmh"
+          ? sprayWarningTexts({ windKmh: n })
+          : step.key === "humidityPct" && typeof answers.tempC === "number"
+            ? sprayWarningTexts({ deltaT: deltaT(answers.tempC, n) })
+            : [];
     return (
       <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
         <Text style={T.title}>{tr(step.question)}</Text>
         {step.hint && <Text style={[T.small, { marginTop: 6 }]}>{tr(step.hint)}</Text>}
+        {prefilled && <Text style={[T.small, { marginTop: 6 }]}>{t("ui.sprayPrefilled")}</Text>}
         <View style={st.numberRow}>
           <TextInput
             ref={input}
@@ -729,6 +745,11 @@ function StepScreen({ step, value, seasons, onAnswer }: { step: Step; value: unk
           />
           <Text style={st.unit}>{step.unit}</Text>
         </View>
+        {warnings.map((w) => (
+          <Text key={w} style={st.warn} accessibilityRole="alert">
+            {w}
+          </Text>
+        ))}
         <View style={{ flex: 1 }} />
         {step.optional && text === "" ? (
           <Button big kind="secondary" title={t("app.skip")} onPress={() => onAnswer(undefined)} />
@@ -1005,6 +1026,7 @@ function PhotoCamera({ onDone }: { onDone: (p: LocalPhoto | null) => void }) {
 }
 
 const st = StyleSheet.create({
+  warn: { marginTop: 16, padding: 12, borderRadius: RADIUS, backgroundColor: C.atencionSuave, color: C.atencion, fontFamily: F.sansMedium, fontSize: 15, lineHeight: 21 },
   progress: { flexDirection: "row", gap: 6, paddingHorizontal: GUTTER, paddingTop: 12 },
   progressDot: { flex: 1, height: 4, borderRadius: 2, backgroundColor: C.linea },
   numberRow: { flexDirection: "row", alignItems: "baseline", gap: 10, marginTop: 28, borderBottomWidth: 2, borderBottomColor: C.tinta, paddingBottom: 6 },

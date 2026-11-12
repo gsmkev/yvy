@@ -27,7 +27,7 @@ const Grid = ({ children }: { children: React.ReactNode }) => (
   <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">{children}</div>
 );
 
-function Report({ r }: { r: FarmRisk }) {
+export function RiskReportBody({ r }: { r: FarmRisk }) {
   const rain = rainByMonth(r.rain);
   const fire = r.fire;
   return (
@@ -207,7 +207,7 @@ export function RiskPage() {
             </div>
           )}
           {error ? <ErrorBox error={error} /> : null}
-          <Report r={report} />
+          <RiskReportBody r={report} />
         </>
       )}
     </div>

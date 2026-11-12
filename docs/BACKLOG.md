@@ -401,7 +401,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | V-01 | Landing pública con la promesa, precio por hectárea, WhatsApp y descarga | P0 | M | Falta |
 | V-02 | Demo pública de solo lectura con una estancia de ejemplo | P0 | S | Falta |
 | V-03 | Términos de uso, política de privacidad y tratamiento de datos | P0 | S | Falta |
-| V-04 | Informe gratis de riesgo climático y vigor a cambio del email (usa C-10 y S-01) | P1 | M | Parcial (sección en la landing; sin captura de email) |
+| V-04 | Informe gratis de riesgo climático y vigor a cambio del email (usa C-10 y S-01) | P1 | M | Hecho (riesgo climático; el vigor espera S-01 y el dibujo del campo se reemplazó por coordenadas) |
 | V-05 | Programa para agrónomos: cuenta gratis o comisión por cliente que traen | P1 | S | Falta |
 | V-06 | Referidos entre productores | P2 | S | Hecho |
 | V-07 | Casos de éxito con números del piloto | P1 | S | Falta |

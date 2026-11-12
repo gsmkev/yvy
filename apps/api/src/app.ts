@@ -9,6 +9,7 @@ import { agri2 } from "./routes/agri2";
 import { auth } from "./routes/auth";
 import { layers } from "./routes/layers";
 import { herd } from "./routes/herd";
+import { leads } from "./routes/leads";
 import { ingest } from "./routes/ingest";
 import { media } from "./routes/media";
 import { org } from "./routes/org";
@@ -63,6 +64,7 @@ app.route("/ingest", ingest as unknown as Hono<AppEnv>);
 app.route("/public", share);
 app.route("/public", calendar);
 app.route("/public", status);
+app.route("/public", leads);
 // I-01: API pública de solo lectura con token de organización (no usa la sesión de la web)
 app.route("/v1", v1);
 

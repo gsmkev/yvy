@@ -8,12 +8,14 @@ import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { ANALYSIS_KINDS, INDEX_KINDS, LAYERS } from "@yvy/shared/schema";
-import { farmRiskSchema, farmSpiSchema, LIMITS } from "@yvy/shared";
+import { farmRiskSchema, farmSpiSchema, LIMITS, t } from "@yvy/shared";
 import { getDb } from "../db/client";
 import { recordIngest } from "../db/status";
 import { SystemDb } from "../db/system";
 import { hmacVerifyHex } from "../lib/crypto";
+import { sendEmail } from "../lib/email";
 import { parse } from "../lib/http";
+import { leadLink } from "./leads";
 import type { Bindings } from "../types";
 
 type IngestEnv = { Bindings: Bindings; Variables: { body: string; sys: SystemDb } };
@@ -248,6 +250,28 @@ ingest.post("/farm-risk", async (c) => {
   if (!(await c.var.sys.upsertFarmRisk(b.farmId, JSON.stringify(b.report), Date.now())))
     throw new HTTPException(404, { message: "Estancia inexistente" });
   return c.json({ ok: true });
+});
+
+/** V-04: pedidos del informe gratis pendientes (solo el punto: el email no sale de la base). */
+ingest.get("/leads", async (c) => c.json(await c.var.sys.pendingLeads(Date.now())));
+
+/** V-04: informe del pedido ya calculado. Se guarda y se manda por email con el enlace; si el envío falla queda para el próximo intento. */
+ingest.post("/leads/:id/report", async (c) => {
+  const id = c.req.param("id");
+  const b = parse(z.object({ report: farmRiskSchema }), json(c.var.body));
+  if (c.var.body.length > 30_000) throw new HTTPException(413, { message: "Informe demasiado grande" });
+  const now = Date.now();
+  const lead = await c.var.sys.saveLeadReport(id, JSON.stringify(b.report), now);
+  if (!lead) throw new HTTPException(404, { message: "Pedido inexistente" });
+  try {
+    const link = await leadLink(c.env, id);
+    await sendEmail(c.env, lead.email, t("leads.emailSubject"), t("leads.emailBody", { link, days: Math.round(LIMITS.leads.retentionMs / 86_400_000) }));
+    await c.var.sys.markLeadSent(id, now);
+    return c.json({ ok: true, sent: true });
+  } catch (e) {
+    console.error("no se pudo mandar el informe gratis", e);
+    return c.json({ ok: true, sent: false });
+  }
 });
 
 /** Áreas problema de un lote (job s2_ingest, S-08): polígonos chicos ya calculados. */

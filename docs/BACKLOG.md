@@ -331,7 +331,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | R-05 | Informe de auditoría para certificaciones (soja responsable, buenas prácticas) | P2 | M | Hecho |
 | R-06 | Tablero del dueño: superficie por cultivo, lluvia, avisos, actividad, margen | P1 | M | Parcial |
 | R-07 | Comparación entre estancias y entre campañas | P2 | M | Hecho |
-| R-08 | Comparación anónima con la zona (vigor y lluvia de campos vecinos) | P3 | M | Falta |
+| R-08 | Comparación anónima con la zona (vigor y lluvia de campos vecinos) | P3 | M | Hecho |
 | R-09 | Exportación completa de la organización (Excel, KML, fotos en ZIP) | P1 | M | Falta |
 | R-10 | Informes programados por email a terceros (socio, agrónomo, banco) | P2 | S | Hecho |
 

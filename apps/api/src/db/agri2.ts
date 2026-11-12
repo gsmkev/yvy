@@ -412,6 +412,27 @@ export async function farmSpiReport(sdb: ScopedDb, farmId: string) {
   return { computedAt: row.computedAt, report: JSON.parse(row.report) as unknown };
 }
 
+/** R-08: comparación anónima con la zona (la calcula el cron semanal). Solo números propios y medianas, sin ids ajenos. */
+export async function farmZoneBenchmark(sdb: ScopedDb, farmId: string) {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const [row] = await sdb.db
+    .select({
+      computedAt: s.zoneBenchmarks.computedAt,
+      radiusKm: s.zoneBenchmarks.radiusKm,
+      windowDays: s.zoneBenchmarks.windowDays,
+      nFarms: s.zoneBenchmarks.nFarms,
+      ndvi: s.zoneBenchmarks.ndvi,
+      ndviMedian: s.zoneBenchmarks.ndviMedian,
+      rainMm: s.zoneBenchmarks.rainMm,
+      rainMedianMm: s.zoneBenchmarks.rainMedianMm,
+    })
+    .from(s.zoneBenchmarks)
+    .where(and(eq(s.zoneBenchmarks.farmId, farmId), eq(s.zoneBenchmarks.organizationId, sdb.auth.orgId)))
+    .limit(1);
+  return row ?? null;
+}
+
 /** A-32: zonas de manejo de los lotes de la estancia (calculadas por workers-py). 1 consulta. */
 export async function farmManagementZones(sdb: ScopedDb, farmId: string) {
   sdb.require(can.viewAll);

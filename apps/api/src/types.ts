@@ -38,5 +38,7 @@ export type JobMessage =
   | { type: "drought"; farmId: string }
   | { type: "weekly_report"; farmId: string }
   | { type: "pest"; farmId: string }
+  /** R-08: comparación anónima con la zona. */
+  | { type: "benchmark"; farmId: string }
   /** C-03: pronóstico de un lote de una estancia grande (un mensaje por lote para no pasar los límites de subrequests). */
   | { type: "plot_forecast"; farmId: string; plotId: string };

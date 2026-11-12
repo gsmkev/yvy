@@ -13,6 +13,7 @@ import { presign } from "../lib/r2";
 import type { Bindings, JobMessage } from "../types";
 import { saveForecastStmts, saveHourlyStmts, upsertAlert } from "./alerts";
 import { archiveOld } from "./archive";
+import { benchmarkJob } from "./benchmark";
 import { sendMentions, sendPending } from "./notify";
 import { pestAlertDraft } from "./pests";
 import { evaluateHeatStress } from "./heat";
@@ -65,6 +66,7 @@ export async function scheduled(controller: { cron: string }, env: Bindings, dep
       return;
     case CRONS.weeklyReports:
       await enqueuePerFarm(env, "weekly_report");
+      await enqueuePerFarm(env, "benchmark");
       return;
     case CRONS.notify:
       await sendPending(getDb(env.DB), env, deps.fetch, deps.now());
@@ -108,6 +110,9 @@ export async function runJob(msg: JobMessage, env: Bindings, deps = defaultDeps(
       return weeklyReportJob(db, env, deps, farm);
     case "pest":
       return pestJob(db, deps, farm);
+    case "benchmark":
+      await benchmarkJob(new SystemDb(db), farm, deps.now());
+      return;
     case "plot_forecast":
       await plotForecastJob(db, env, deps, farm, msg.plotId);
       return;

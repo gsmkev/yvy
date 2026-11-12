@@ -65,6 +65,19 @@ describe("aviso al registrar agua", () => {
     expect(alerts[0]!.summary).toBe("Aguada Molino seca (y 1 más)");
   });
 
+  it("G-30: bebederos y molinos también cuentan, con su nombre de tipo en el aviso", async () => {
+    const { owner, farmId, poi } = await setup();
+    const b = await poi("Bebedero Sur", "trough");
+    const m = await poi("Molino Viejo", "mill");
+    await push(owner.token, [water(farmId, b, "low", Date.now() - 2000)]);
+    expect((await openAlerts(farmId))[0]!.summary).toBe("Bebedero Bebedero Sur con nivel bajo");
+    await push(owner.token, [water(farmId, m, "dry", Date.now() - 1000)]);
+    const alerts = await openAlerts(farmId);
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]!.summary).toBe("Molino Molino Viejo seca (y 1 más)");
+    expect((JSON.parse(alerts[0]!.details as unknown as string) as { pois: { kind: string }[] }).pois.map((p) => p.kind).sort()).toEqual(["mill", "trough"]);
+  });
+
   it("se resuelve cuando todas las aguadas vuelven a estar bien", async () => {
     const { owner, farmId, poi } = await setup();
     const a = await poi("Tajamar");
@@ -74,7 +87,7 @@ describe("aviso al registrar agua", () => {
     expect(await openAlerts(farmId)).toHaveLength(0);
   });
 
-  it("solo cuentan aguadas y tajamares, y registros ligados a un punto", async () => {
+  it("solo cuentan aguadas, tajamares, bebederos y molinos, y registros ligados a un punto", async () => {
     const { owner, farmId, poi } = await setup();
     const casa = await poi("Casa", "house");
     await push(owner.token, [water(farmId, casa, "dry"), water(farmId, null, "dry")]);

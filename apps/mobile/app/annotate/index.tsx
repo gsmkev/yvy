@@ -29,6 +29,7 @@ import {
   type RecordKind,
   type Station,
   closeRequirements,
+  isWaterPoi,
 } from "@yvy/shared";
 import type { LocalAudio, LocalPhoto, Plot, Season } from "../../src/db/store";
 import { fieldsFor, readFormConfig } from "../../src/lib/formConfig";
@@ -182,7 +183,7 @@ function Annotate() {
   const stationRecord = kind === "pest" && Array.isArray(values.stations);
   // G-30: aguadas de la estancia, para preguntar de cuál es el nivel (no al editar un registro ya guardado).
   const waterPois = useMemo(
-    () => (editing ? [] : db.pois(plot?.farmId ?? selectedFarmId(db) ?? undefined).filter((p) => p.kind === "water")),
+    () => (editing ? [] : db.pois(plot?.farmId ?? selectedFarmId(db) ?? undefined).filter((p) => isWaterPoi(p.kind))),
     [plot?.farmId, editing],
   );
   const vetProducts = useMemo(() => db.products().some((p) => p.type === "veterinary"), []);

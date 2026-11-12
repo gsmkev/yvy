@@ -1,10 +1,10 @@
 /**
- * Aviso de aguada baja (G-30): el último registro `water` de cada punto de interés tipo aguada o tajamar dice
- * "bajo" o "seco". Se recalcula cuando llega un registro de agua (no hace falta esperar al cron) y el aviso se
+ * Aviso de aguada baja (G-30): el último registro `water` de cada punto de interés tipo aguada, tajamar, bebedero o
+ * molino dice "bajo" o "seco". Se recalcula cuando llega un registro de agua (no hace falta esperar al cron) y el aviso se
  * resuelve solo cuando todas las aguadas vuelven a estar medio o llenas.
  */
-import { and, eq, isNull, sql } from "drizzle-orm";
-import { addDays, WATER_LOW_LEVELS } from "@yvy/shared";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { addDays, WATER_LOW_LEVELS, WATER_POI_KINDS } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, currentVersion, runBatch, type DB } from "../db/client";
 import { upsertAlert } from "./alerts";
@@ -18,8 +18,11 @@ export interface WaterReading {
   name: string;
   level: string;
   capturedAt: number;
+  /** Tipo del punto (aguada, bebedero, molino); sin dato se dice "Aguada". */
+  kind?: string;
 }
 
+const KIND_LABEL: Record<string, string> = { water: "Aguada", trough: "Bebedero", mill: "Molino" };
 const fmtLevel = (level: string) => (level === "dry" ? "seca" : "con nivel bajo");
 
 /** Función pura: arma el aviso (o null) a partir de la última lectura de cada aguada. */
@@ -36,13 +39,19 @@ export function evaluateWater(readings: WaterReading[], plotIds: string[], today
     probability: null,
     validFrom: today,
     validTo: addDays(today, 3),
-    summary: `Aguada ${top.name} ${fmtLevel(top.level)}${
+    summary: `${KIND_LABEL[top.kind ?? "water"] ?? "Aguada"} ${top.name} ${fmtLevel(top.level)}${
       low.length > 1 ? ` (y ${low.length - 1} más)` : ""
     }`,
     details: {
       plotIds,
       windowDays: WATER_WINDOW_DAYS,
-      pois: low.map((r) => ({ poiId: r.poiId, name: r.name, level: r.level, capturedAt: r.capturedAt })),
+      pois: low.map((r) => ({
+        poiId: r.poiId,
+        name: r.name,
+        kind: r.kind ?? "water",
+        level: r.level,
+        capturedAt: r.capturedAt,
+      })),
     },
   };
 }
@@ -54,6 +63,7 @@ export async function latestWaterReadings(db: DB, farmId: string, now: number): 
     .select({
       poiId: s.records.poiId,
       name: s.pointsOfInterest.name,
+      kind: s.pointsOfInterest.kind,
       level: sql<string>`json_extract(${s.records.data}, '$.level')`,
       capturedAt: s.records.capturedAt,
     })
@@ -65,7 +75,7 @@ export async function latestWaterReadings(db: DB, farmId: string, now: number): 
         eq(s.records.kind, "water"),
         isNull(s.records.deletedAt),
         isNull(s.pointsOfInterest.deletedAt),
-        eq(s.pointsOfInterest.kind, "water"),
+        inArray(s.pointsOfInterest.kind, [...WATER_POI_KINDS]),
         sql`${s.records.capturedAt} >= ${since}`,
         sql`${s.records.capturedAt} = (SELECT max(r2.captured_at) FROM records r2 WHERE r2.poi_id = ${s.records.poiId} AND r2.kind = 'water' AND r2.deleted_at IS NULL)`,
       ),

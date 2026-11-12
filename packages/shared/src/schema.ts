@@ -1009,6 +1009,13 @@ export const farmRisk = sqliteTable("farm_risk", {
   report: text("report").notNull(),
 });
 
+/** SPI a 1, 3 y 6 meses por estancia (C-07): JSON validado con farmSpiSchema. Una fila por estancia; no se sincroniza. */
+export const farmSpi = sqliteTable("farm_spi", {
+  farmId: text("farm_id").primaryKey(),
+  computedAt: integer("computed_at").notNull(),
+  report: text("report").notNull(),
+});
+
 export const forecasts = sqliteTable(
   "forecasts",
   {

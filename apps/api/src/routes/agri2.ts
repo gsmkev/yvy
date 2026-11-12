@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { CROPS } from "@yvy/shared";
-import { farmPlotForecast, farmSowingWindow, farmWithdrawal, plotPhenology, plotWaterBalance } from "../db/agri2";
+import { farmPlotForecast, farmSpiReport, farmSowingWindow, farmWithdrawal, plotPhenology, plotWaterBalance } from "../db/agri2";
 import { createDelivery, deleteDelivery, listDeliveries } from "../db/deliveries";
 import { createSoilSample, deleteSoilSample, listSoilSamples, updateSoilSample } from "../db/soil";
 import { parse, readJson } from "../lib/http";
@@ -129,3 +129,6 @@ agri2.delete("/deliveries/:id", async (c) => {
 
 /** C-03: pronóstico por lote (solo estancias de más de 2.000 ha). */
 agri2.get("/farms/:id/plot-forecast", async (c) => c.json(await farmPlotForecast(c.var.sdb, c.req.param("id"))));
+
+/** C-07: índice de precipitación estandarizado (SPI) a 1, 3 y 6 meses. */
+agri2.get("/farms/:id/spi", async (c) => c.json(await farmSpiReport(c.var.sdb, c.req.param("id"))));

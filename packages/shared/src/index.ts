@@ -54,3 +54,4 @@ export * from "./water-balance";
 export * from "./withdrawal";
 export * from "./soil";
 export * from "./grain";
+export * from "./spi";

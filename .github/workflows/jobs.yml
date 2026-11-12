@@ -32,6 +32,7 @@ on:
             burned_area,
             cover_change,
             power_daily,
+            spi,
           ]
       farm:
         description: "Id de estancia (obligatorio para new_farm y s2_history; eudr: indicador de deforestación de esa estancia, vacío = todas)"
@@ -86,6 +87,7 @@ jobs:
           # Historia de vigor de 180 días: solo procesa las pasadas que cada estancia todavía no tiene
           uv run --frozen python -m yvy_workers s2_ingest --backfill
           uv run --frozen python -m yvy_workers power_daily
+          uv run --frozen python -m yvy_workers spi
       - if: steps.pick.outputs.cmd != 'weekly'
         env:
           FARM: ${{ inputs.farm }}

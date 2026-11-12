@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { LIMITS } from "@yvy/shared";
-import { attendanceDayInput, cashAccountInput, cashMoveInput, cashTransferInput, settleInput, CATTLE_DEAL_KINDS, cattleDealInput, grainContractInput, grainDeliveryInput, grainSettlementInput, purchaseInput, purchaseInvoiceInput, purchaseReceiveInput, budgetLineInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
+import { accountMapInput, attendanceDayInput, cashAccountInput, cashMoveInput, cashTransferInput, settleInput, CATTLE_DEAL_KINDS, cattleDealInput, grainContractInput, grainDeliveryInput, grainSettlementInput, purchaseInput, purchaseInvoiceInput, purchaseReceiveInput, budgetLineInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { HTTPException } from "hono/http-exception";
 import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
@@ -20,6 +20,7 @@ import { createPurchase, deletePurchase, getPurchase, invoicePurchase, listPurch
 import { checkContractRefs, contractsSummary, createDelivery, createSettlement, deleteDelivery, deleteSettlement, listDeliveries, listSettlements } from "../db/grain-sales";
 import { createDeal, deleteDeal, listDeals } from "../db/cattle-deals";
 import { accountBalances, createMove as createCashMove, deleteMove as deleteCashMove, dues, listMoves as listCashMoves, requireAccountUnused, settle, transfer } from "../db/cash";
+import { accountantExport, listMap, resetMap, saveMap } from "../db/accountant";
 import { createLog, deleteLog, duePlans, listLogs } from "../db/maintenance";
 import { deleteMinimum, listMinimums, lowStock, saveMinimum } from "../db/stock-minimums";
 import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
@@ -398,3 +399,18 @@ erp.delete("/cash/moves/:id", async (c) => {
 });
 erp.get("/payables", async (c) => c.json(await dues(c.var.sdb, "payable")));
 erp.get("/receivables", async (c) => c.json(await dues(c.var.sdb, "receivable")));
+
+// ---------- Exportación al contador (E-38) ----------
+
+erp.get("/accountant/map", async (c) => c.json(await listMap(c.var.sdb)));
+erp.put("/accountant/map/:key", async (c) => {
+  await saveMap(c.var.sdb, c.req.param("key"), parse(accountMapInput, await readJson(c.req)));
+  return c.json({ ok: true });
+});
+erp.delete("/accountant/map/:key", async (c) => {
+  await resetMap(c.var.sdb, c.req.param("key"));
+  return c.json({ ok: true });
+});
+erp.get("/accountant/export", async (c) =>
+  c.json(await accountantExport(c.var.sdb, parse(z.object({ from: isoDate.optional(), to: isoDate.optional() }), c.req.query()))),
+);

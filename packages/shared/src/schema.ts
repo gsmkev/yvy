@@ -1832,3 +1832,19 @@ export const cashMoves = sqliteTable(
   },
   (t) => [index("cash_moves_account_idx").on(t.organizationId, t.accountId, t.date), index("cash_moves_doc_idx").on(t.docId)],
 );
+
+/** Plan de cuentas del contador: a qué cuenta va cada rubro al exportar (E-38). Sin fila, rige el plan de ejemplo. */
+export const accountMap = sqliteTable(
+  "account_map",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    /** Rubro de costo (input, fuel...) o "sale" para ingresos. */
+    key: text("key").notNull(),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    updatedBy: text("updated_by").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [uniqueIndex("account_map_key_uq").on(t.organizationId, t.key)],
+);

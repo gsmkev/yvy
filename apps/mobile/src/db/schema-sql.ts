@@ -224,5 +224,7 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `cash_accounts_org_idx` ON `cash_accounts` (`organization_id`);",
   "CREATE TABLE `cash_moves` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`account_id` text NOT NULL,\n\t`date` text NOT NULL,\n\t`amount` integer NOT NULL,\n\t`description` text,\n\t`party_id` text,\n\t`doc_kind` text,\n\t`doc_id` text,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
   "CREATE INDEX `cash_moves_account_idx` ON `cash_moves` (`organization_id`,`account_id`,`date`);",
-  "CREATE INDEX `cash_moves_doc_idx` ON `cash_moves` (`doc_id`);"
+  "CREATE INDEX `cash_moves_doc_idx` ON `cash_moves` (`doc_id`);",
+  "CREATE TABLE `account_map` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`key` text NOT NULL,\n\t`code` text NOT NULL,\n\t`name` text NOT NULL,\n\t`updated_by` text NOT NULL,\n\t`updated_at` integer NOT NULL\n);",
+  "CREATE UNIQUE INDEX `account_map_key_uq` ON `account_map` (`organization_id`,`key`);"
 ];

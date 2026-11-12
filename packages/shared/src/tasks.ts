@@ -3,6 +3,8 @@
  * El celular la crea localmente sin red y el servidor la crea al recibir el push: las dos usan el mismo
  * id determinístico, así que nunca se duplica.
  */
+import { z } from "zod";
+
 export const DEFAULT_TZ = "America/Asuncion";
 
 /** Fecha de calendario "YYYY-MM-DD" en la zona horaria dada. */
@@ -19,6 +21,19 @@ export const localDate = (ms: number, tz: string = DEFAULT_TZ): string => {
   } catch {
     // Paraguay usa UTC-3 todo el año desde 2024.
     return new Date(ms - 3 * 3_600_000).toISOString().slice(0, 10);
+  }
+};
+
+/** Hora "HH:MM" en la zona horaria dada. */
+export const localTime = (ms: number, tz: string = DEFAULT_TZ): string => {
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(
+      new Date(ms),
+    );
+    const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+    return `${get("hour")}:${get("minute")}`;
+  } catch {
+    return new Date(ms - 3 * 3_600_000).toISOString().slice(11, 16);
   }
 };
 
@@ -69,3 +84,33 @@ export const nextOccurrenceId = (taskId: string): string => deterministicUuid(`n
 /** Tareas visibles en "Hoy": abiertas con fecha ≤ hoy. */
 export const isDueToday = (t: { status: string; dueDate: string; deletedAt?: number | null }, today: string): boolean =>
   t.status === "open" && !t.deletedAt && t.dueDate <= today;
+
+/** Comentario de una tarea. Vive en tasks.comments (JSON); el autor se guarda con su nombre de ese momento. */
+export const taskCommentSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  name: z.string(),
+  at: z.number().int(),
+  text: z.string().min(1),
+});
+export type TaskComment = z.infer<typeof taskCommentSchema>;
+
+/** Lee el JSON de comentarios sin romper si está dañado. */
+export const parseTaskComments = (json: string | null | undefined): TaskComment[] => {
+  try {
+    const r = z.array(taskCommentSchema).safeParse(JSON.parse(json || "[]"));
+    return r.success ? r.data : [];
+  } catch {
+    return [];
+  }
+};
+
+/** "HH:MM" válida (00:00 a 23:59). */
+export const isTimeOfDay = (v: string): boolean => /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
+
+/** Ya venció: el día pasó, o es hoy y la hora límite ya pasó. */
+export const isOverdue = (
+  t: { status: string; dueDate: string; dueTime?: string | null },
+  today: string,
+  nowTime: string,
+): boolean => t.status === "open" && (t.dueDate < today || (t.dueDate === today && !!t.dueTime && t.dueTime < nowTime));

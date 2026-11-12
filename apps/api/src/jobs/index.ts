@@ -12,6 +12,7 @@ import { sendEmail, type EmailAttachment } from "../lib/email";
 import { presign } from "../lib/r2";
 import type { Bindings, JobMessage } from "../types";
 import { saveForecastStmts, saveHourlyStmts, upsertAlert } from "./alerts";
+import { archiveOld } from "./archive";
 import { sendMentions, sendPending } from "./notify";
 import { pestAlertDraft } from "./pests";
 import { evaluateHeatStress } from "./heat";
@@ -76,6 +77,8 @@ export async function scheduled(controller: { cron: string }, env: Bindings, dep
         sql`DELETE FROM events WHERE ts < ${deps.now() - LIMITS.events.retentionMs} AND name NOT IN ('signup', 'farm_created', 'plots_created', 'member_added', 'first_record')`,
       );
       await purgeApiRate(getDb(env.DB), deps.now());
+      // P-06: pasa a R2 una tanda de datos viejos (solo si ARCHIVE_AFTER_MONTHS está configurada)
+      await archiveOld(env, getDb(env.DB), deps.now());
       await recordUsage(env, deps.now());
       return;
   }

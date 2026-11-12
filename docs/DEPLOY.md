@@ -183,3 +183,27 @@ Cada corrida deja datos de prueba en el D1 local; para limpiarlos borrá `apps/a
 
 Los cálculos del script (reparto, percentiles, armado de lotes, resumen) tienen pruebas en `apps/api/scripts/load-sync.test.mjs`,
 que corren con `pnpm --filter api test`.
+
+## Archivado de datos viejos a R2 (opcional, P-06)
+
+D1 gratis guarda 500 MB. Con la variable `ARCHIVE_AFTER_MONTHS` (número entero, mínimo 3; por ejemplo `12`) el cron diario de
+mantenimiento (03:00 UTC) mueve, de a una tanda por tabla y por corrida, los **registros** y las **estadísticas de vigor**
+más viejos que ese plazo al bucket privado `yvy-media`, en `archive/<tabla>/AAAA-MM/<corrida>-<id>.ndjson` (un archivo por
+tanda, una carpeta por mes), y recién después los borra de D1. Con los registros se archivan sus adjuntos (las fotos quedan en R2
+donde estaban) y comentarios. No se archivan los tipos que la app y la web leen siempre: hacienda (conteos, movimientos,
+mortandad, sanidad), siembra, aplicación, fertilización y cosecha. Sin la variable no se archiva nada.
+
+Cargala como variable del Worker (en `wrangler.jsonc` → `vars`, o en GitHub → Variables y pasarla desde `deploy.yml`);
+no es un secreto. En desarrollo va en `apps/api/.dev.vars`.
+
+Restaurar un mes (genera SQL, no toca la base):
+
+```bash
+pnpm --filter api exec wrangler r2 object get yvy-media/archive/records/2025-01/<archivo>.ndjson --remote --file reg-2025-01.ndjson
+node apps/api/scripts/restore-archive.mjs reg-2025-01.ndjson > restaurar.sql
+pnpm --filter api exec wrangler d1 execute yvy --remote --file restaurar.sql
+```
+
+Las filas se insertan con `INSERT OR IGNORE` y una versión de sync nueva, así los celulares las vuelven a bajar. Los nombres de los
+archivos de un mes se ven en el panel de R2 (Cloudflare → R2 → yvy-media → `archive/`).
+

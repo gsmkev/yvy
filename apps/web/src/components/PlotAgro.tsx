@@ -5,6 +5,7 @@ import { t, tk } from "../lib/i18n";
 import type { Plot } from "../lib/types";
 import { LineChart } from "./charts";
 import { YieldMapSection } from "./YieldMapSection";
+import { ZonesSection } from "./ZonesSection";
 import { ErrorBox, Spinner } from "./ui";
 
 /** Secciones agronómicas de la ficha de un lote de cultivo (agri-p2). Solo para quien edita el campo. */
@@ -16,6 +17,7 @@ export function PlotAgro({ plot }: { plot: Plot }) {
       <PlotForecastSection plot={plot} />
       <PhenologySection plotId={plot.id} />
       <WaterBalanceSection plotId={plot.id} />
+      <ZonesSection plot={plot} />
       <YieldMapSection plot={plot} />
     </>
   );

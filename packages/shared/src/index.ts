@@ -60,5 +60,6 @@ export * from "./withdrawal";
 export * from "./soil";
 export * from "./prescription";
 export * from "./feedlot";
+export * from "./payroll";
 export * from "./grain";
 export * from "./spi";

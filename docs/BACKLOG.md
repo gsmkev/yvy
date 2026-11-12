@@ -243,7 +243,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 |---|---|---|---|---|
 | E-25 | Asistencia y jornales por día, con lote o labor | P2 | M | Falta |
 | E-26 | Adelantos, pagos y saldo por empleado | P2 | M | Falta |
-| E-27 | Planilla simple exportable para el contador (sin cálculo de aportes, que lo hace el contador) | P3 | M | Falta |
+| E-27 | Planilla simple exportable para el contador (sin cálculo de aportes, que lo hace el contador) | P3 | M | Hecho |
 
 **6.5 Compras, ventas y tesorería**
 

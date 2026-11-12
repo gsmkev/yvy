@@ -87,7 +87,7 @@ Detalles que un usuario espera sin pedirlos.
 | M-04 | Dibujar el perímetro caminando con el GPS | El borde real del lote | App | P2 | M | Hecho |
 | M-05 | Dividir un lote en dos y unir dos lotes | Cambios de campaña | Web | P2 | M | Hecho |
 | M-06 | Vista previa de la importación dibujada en el mapa | Elegir bien antes de guardar | Web | P1 | S | Hecho |
-| M-07 | Importar shapefile (.zip), GeoJSON y KMZ además de KML | Archivos de agrimensores y maquinaria | Web | P1 | M | Parcial |
+| M-07 | Importar shapefile (.zip), GeoJSON y KMZ además de KML | Archivos de agrimensores y maquinaria | Web | P1 | M | Hecho |
 | M-08 | Importar perímetro y lotes del mismo archivo en un paso | Hoy se sube dos veces | Web | P1 | S | Hecho |
 | M-09 | Estancia con varios polígonos (cascos separados) | Muy común | Web | P1 | S | Parcial |
 | M-10 | Avisar si dos lotes se superponen o si un lote sale de la estancia | Errores de carga | Web, API | P1 | S | Hecho |

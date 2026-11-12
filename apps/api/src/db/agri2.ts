@@ -411,3 +411,32 @@ export async function farmSpiReport(sdb: ScopedDb, farmId: string) {
   if (!row) return { computedAt: null, report: null };
   return { computedAt: row.computedAt, report: JSON.parse(row.report) as unknown };
 }
+
+/** A-32: zonas de manejo de los lotes de la estancia (calculadas por workers-py). 1 consulta. */
+export async function farmManagementZones(sdb: ScopedDb, farmId: string) {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const rows = await sdb.db
+    .select({
+      plotId: s.managementZones.plotId,
+      zone: s.managementZones.zone,
+      areaHa: s.managementZones.areaHa,
+      pct: s.managementZones.pct,
+      meanNdvi: s.managementZones.meanNdvi,
+      seasons: s.managementZones.seasons,
+      geometry: s.managementZones.geometry,
+      computedAt: s.managementZones.computedAt,
+    })
+    .from(s.managementZones)
+    .innerJoin(s.plots, eq(s.plots.id, s.managementZones.plotId))
+    .where(
+      and(
+        eq(s.managementZones.farmId, farmId),
+        eq(s.managementZones.organizationId, sdb.auth.orgId),
+        isNull(s.plots.deletedAt),
+      ),
+    )
+    .orderBy(asc(s.managementZones.plotId), asc(s.managementZones.zone))
+    .limit(LIMITS.weather.plotForecastMaxPlots * 6);
+  return rows;
+}

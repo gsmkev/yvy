@@ -33,6 +33,7 @@ on:
             cover_change,
             power_daily,
             spi,
+            mgmt_zones,
           ]
       farm:
         description: "Id de estancia (obligatorio para new_farm y s2_history; eudr: indicador de deforestación de esa estancia, vacío = todas)"

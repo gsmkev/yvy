@@ -138,6 +138,10 @@ class IngestClient:
         """SPI a 1, 3 y 6 meses de la estancia (C-07)."""
         self._call("POST", "/ingest/farm-spi", {"farmId": farm_id, "report": report})
 
+    def management_zones(self, plot_id: str, seasons: list[int], zones: list[dict[str, Any]]) -> None:
+        """Zonas de manejo de un lote (A-32); reemplaza las anteriores."""
+        self._call("POST", "/ingest/management-zones", {"plotId": plot_id, "seasons": seasons, "zones": zones})
+
     def weekly_summary(self, farm_id: str, start: str, end: str) -> dict[str, Any]:
         """Agregados de la semana de una estancia para el parte (R-02)."""
         return self._call("GET", f"/ingest/farms/{farm_id}/weekly-summary", query={"from": start, "to": end})

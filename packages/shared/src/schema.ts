@@ -1344,3 +1344,27 @@ export const usageDaily = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.day, t.metric] })],
 );
+
+/**
+ * Zonas de manejo de un lote (A-32): 3 zonas (1 = menor vigor relativo, 3 = mayor) calculadas por workers-py con k-means
+ * sobre el NDVI máximo de varias campañas. Una fila por lote y zona; `geometry` es un MultiPolygon GeoJSON simplificado.
+ * Solo las escribe /ingest; no se sincronizan.
+ */
+export const managementZones = sqliteTable(
+  "management_zones",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    plotId: text("plot_id").notNull(),
+    zone: integer("zone").notNull(),
+    areaHa: real("area_ha").notNull(),
+    pct: real("pct").notNull(),
+    meanNdvi: real("mean_ndvi").notNull(),
+    /** Años de inicio de las campañas usadas, JSON [2023, 2024, 2025]. */
+    seasons: text("seasons").notNull(),
+    geometry: text("geometry").notNull(),
+    computedAt: integer("computed_at").notNull(),
+  },
+  (t) => [uniqueIndex("management_zones_plot_zone_uq").on(t.plotId, t.zone), index("management_zones_farm_idx").on(t.farmId)],
+);

@@ -500,6 +500,38 @@ export class SystemDb {
   }
 
   /** C-10: guarda (reemplaza) el informe de riesgo de la estancia. */
+  /** A-32: reemplaza las zonas de manejo de un lote. La organización y la estancia salen del lote, no del request. */
+  async replaceManagementZones(
+    plotId: string,
+    seasons: number[],
+    zones: { zone: number; areaHa: number; pct: number; meanNdvi: number; geometry: string }[],
+  ): Promise<number | null> {
+    const [plot] = await this.db
+      .select({ org: s.plots.organizationId, farmId: s.plots.farmId })
+      .from(s.plots)
+      .where(and(eq(s.plots.id, plotId), isNull(s.plots.deletedAt)))
+      .limit(1);
+    if (!plot) return null;
+    const ts = Date.now();
+    await runBatch(this.db, [
+      this.db.delete(s.managementZones).where(eq(s.managementZones.plotId, plotId)),
+      ...chunkForParams(zones, 11).map((chunk) =>
+        this.db.insert(s.managementZones).values(
+          chunk.map((z) => ({
+            ...z,
+            id: newId(),
+            organizationId: plot.org,
+            farmId: plot.farmId,
+            plotId,
+            seasons: JSON.stringify(seasons),
+            computedAt: ts,
+          })),
+        ),
+      ),
+    ]);
+    return zones.length;
+  }
+
   /** C-07: guarda (reemplaza) el SPI de la estancia. */
   async upsertFarmSpi(farmId: string, report: string, now: number): Promise<boolean> {
     const [f] = await this.db

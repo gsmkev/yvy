@@ -2447,6 +2447,11 @@ export const esPY = {
     yieldMapNoSeason: "Sin campaña",
     yieldMapSaved: "Mapa de rendimiento guardado",
     yieldFileUnsupported: "Formato no admitido: usá un .zip con el shapefile o un archivo GeoJSON.",
+    zonesTitle: "Zonas de manejo",
+    zonesLevel_1: "Zona de vigor bajo",
+    zonesLevel_2: "Zona de vigor medio",
+    zonesLevel_3: "Zona de vigor alto",
+    zonesNote: "Calculadas con el vigor máximo de las campañas {{seasons}}, el {{date}}. Sirven para muestrear suelo y variar insumos por zona; confirmalas en el campo.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

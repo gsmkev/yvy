@@ -168,5 +168,8 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `farm_spi` (\n\t`farm_id` text PRIMARY KEY NOT NULL,\n\t`computed_at` integer NOT NULL,\n\t`report` text NOT NULL\n);",
   "CREATE TABLE `yield_maps` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`plot_id` text NOT NULL,\n\t`season_id` text,\n\t`file_name` text NOT NULL,\n\t`n_points` integer NOT NULL,\n\t`n_dropped` integer NOT NULL,\n\t`mean_t_ha` real NOT NULL,\n\t`p10_t_ha` real NOT NULL,\n\t`p90_t_ha` real NOT NULL,\n\t`min_t_ha` real NOT NULL,\n\t`max_t_ha` real NOT NULL,\n\t`cv_pct` real NOT NULL,\n\t`cell_m` integer NOT NULL,\n\t`cells` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
   "CREATE INDEX `yield_maps_sync_idx` ON `yield_maps` (`organization_id`,`version`,`id`);",
-  "CREATE INDEX `yield_maps_plot_idx` ON `yield_maps` (`plot_id`,`season_id`);"
+  "CREATE INDEX `yield_maps_plot_idx` ON `yield_maps` (`plot_id`,`season_id`);",
+  "CREATE TABLE `management_zones` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`plot_id` text NOT NULL,\n\t`zone` integer NOT NULL,\n\t`area_ha` real NOT NULL,\n\t`pct` real NOT NULL,\n\t`mean_ndvi` real NOT NULL,\n\t`seasons` text NOT NULL,\n\t`geometry` text NOT NULL,\n\t`computed_at` integer NOT NULL\n);",
+  "CREATE UNIQUE INDEX `management_zones_plot_zone_uq` ON `management_zones` (`plot_id`,`zone`);",
+  "CREATE INDEX `management_zones_farm_idx` ON `management_zones` (`farm_id`);"
 ];

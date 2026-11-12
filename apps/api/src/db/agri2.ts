@@ -3,7 +3,7 @@
  * zonas de amortiguación, suelo, entregas, balance hídrico, etc. Solo lectura sobre datos que ya existen o
  * tablas propias de la web. Toda consulta pasa por ScopedDb.
  */
-import { and, asc, desc, eq, gte, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import {
   accumulateGdd,
   addDays,
@@ -14,6 +14,8 @@ import {
   localDate,
   nextStage,
   sowingWindow,
+  waterBalance,
+  CROP_KC,
   type CROPS,
   type PHENO_STAGES,
 } from "@yvy/shared";
@@ -242,4 +244,63 @@ export async function farmSowingWindow(sdb: ScopedDb, farmId: string, crop: Crop
   const soil = soilRows[0] ?? null;
   const result = sowingWindow(crop, soil?.v ?? null, forecast.days);
   return { crop, ...result, soilDate: soil?.date ?? null, forecastRunAt: forecast.runAt };
+}
+
+/**
+ * C-08: balance hídrico simple del lote desde la siembra (máx. LIMITS.waterBalance.maxDays días):
+ * lluvia CHIRPS de la estancia menos ETc (Hargreaves con temperaturas de NASA POWER por Kc del cultivo). 2 consultas.
+ */
+export async function plotWaterBalance(sdb: ScopedDb, plotId: string) {
+  const plot = await requirePlotRow(sdb, plotId);
+  const empty = { status: "ok" as "ok" | "no_crop" | "no_reference" | "no_sowing_date" | "no_data", crop: plot.crop, sowingDate: null as string | null, balance: null as ReturnType<typeof waterBalance> };
+  const sowing = await plotSowing(sdb, plot);
+  const crop = ((sowing?.crop as Crop | null) ?? plot.crop) as Crop | null;
+  if (plot.kind !== "crop" || !crop) return { ...empty, status: "no_crop" as const };
+  if (!CROP_KC[crop]) return { ...empty, crop, status: "no_reference" as const };
+  if (!sowing) return { ...empty, crop, status: "no_sowing_date" as const };
+  const today = localDate(sdb.now());
+  const from = sowing.date > addDays(today, -LIMITS.waterBalance.maxDays) ? sowing.date : addDays(today, -LIMITS.waterBalance.maxDays);
+  const rows = await sdb.db
+    .select({
+      date: s.climateDaily.date,
+      source: s.climateDaily.source,
+      rainMm: s.climateDaily.precipMm,
+      tminC: s.climateDaily.tminC,
+      tmaxC: s.climateDaily.tmaxC,
+    })
+    .from(s.climateDaily)
+    .where(
+      and(
+        eq(s.climateDaily.farmId, plot.farmId),
+        eq(s.climateDaily.plotId, ""),
+        inArray(s.climateDaily.source, ["chirps", "chirps_prelim", "nasa_power"]),
+        gte(s.climateDaily.date, from),
+      ),
+    )
+    .orderBy(asc(s.climateDaily.date))
+    .limit(3 * LIMITS.waterBalance.maxDays + 3);
+  const byDate = new Map<string, { rainMm: number | null; rankRain: number; tminC: number | null; tmaxC: number | null }>();
+  for (const r of rows) {
+    const d = byDate.get(r.date) ?? { rainMm: null, rankRain: 0, tminC: null, tmaxC: null };
+    if (r.source === "nasa_power") {
+      d.tminC = r.tminC;
+      d.tmaxC = r.tmaxC;
+    } else if (r.rainMm !== null) {
+      // CHIRPS final pisa a la preliminar
+      const rank = r.source === "chirps" ? 2 : 1;
+      if (rank > d.rankRain) {
+        d.rainMm = r.rainMm;
+        d.rankRain = rank;
+      }
+    }
+    byDate.set(r.date, d);
+  }
+  const lat = (plot.minLat + plot.maxLat) / 2;
+  const balance = waterBalance(
+    [...byDate.entries()].map(([date, d]) => ({ date, rainMm: d.rainMm, tminC: d.tminC, tmaxC: d.tmaxC })),
+    crop,
+    sowing.date,
+    lat,
+  );
+  return { status: balance ? ("ok" as const) : ("no_data" as const), crop, sowingDate: sowing.date, balance };
 }

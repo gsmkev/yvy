@@ -50,3 +50,4 @@ export * from "./qr";
 export * from "./sowing-plan";
 export * from "./pheno";
 export * from "./sowing-window";
+export * from "./water-balance";

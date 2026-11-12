@@ -1,7 +1,9 @@
-import { fmtIsoDate, fmtDate, fmtNum } from "../lib/format";
-import { usePhenology } from "../lib/agri2";
+import { CHART } from "@yvy/shared";
+import { fmtIsoDate, fmtDate, fmtDay, fmtMm, fmtNum } from "../lib/format";
+import { usePhenology, useWaterBalance } from "../lib/agri2";
 import { t, tk } from "../lib/i18n";
 import type { Plot } from "../lib/types";
+import { LineChart } from "./charts";
 import { ErrorBox, Spinner } from "./ui";
 
 /** Secciones agronómicas de la ficha de un lote de cultivo (agri-p2). Solo para quien edita el campo. */
@@ -10,6 +12,7 @@ export function PlotAgro({ plot }: { plot: Plot }) {
   return (
     <>
       <PhenologySection plotId={plot.id} />
+      <WaterBalanceSection plotId={plot.id} />
     </>
   );
 }
@@ -70,6 +73,55 @@ function PhenologySection({ plotId }: { plotId: string }) {
           </p>
           <p className="text-xs text-tinta-2">{t("ui.phenoNote")}</p>
           <p className="text-xs text-tinta-2">{t("attribution.nasaPower")}</p>
+        </div>
+      )}
+    </Section>
+  );
+}
+
+/** C-08: lluvia menos consumo del cultivo desde la siembra. */
+function WaterBalanceSection({ plotId }: { plotId: string }) {
+  const q = useWaterBalance(plotId);
+  const d = q.data;
+  const b = d?.balance;
+  return (
+    <Section title={t("ui.waterBalTitle")}>
+      {q.isLoading && <Spinner rows={2} h={24} />}
+      {q.error && <ErrorBox error={q.error} />}
+      {d && !b && <p className="text-sm text-tinta-2">{t(`ui.waterBalStatus_${d.status === "ok" ? "no_data" : d.status}` as "ui.waterBalStatus_no_data")}</p>}
+      {b && (
+        <div className="flex flex-col gap-2 text-sm">
+          <p className="num">
+            {t("ui.waterBalTotals", { rain: fmtMm(b.rainMm), etc: fmtMm(b.etcMm), days: b.days })}
+          </p>
+          <p className="num">
+            {t("ui.waterBalBalance")}: <strong>{fmtMm(b.balanceMm)}</strong>
+            {b.balance14Mm !== null && (
+              <span className="text-tinta-2"> · {t("ui.waterBalLast14", { mm: fmtMm(b.balance14Mm) })}</span>
+            )}
+          </p>
+          {b.risk && (
+            <p className={b.risk === "low" ? "" : "font-medium text-peligro"}>
+              {t(`ui.waterBalRisk_${b.risk}` as "ui.waterBalRisk_low")}
+            </p>
+          )}
+          <LineChart
+            ariaLabel={t("ui.waterBalTitle")}
+            yLabel="mm"
+            formatX={(x) => fmtDay(x)}
+            formatY={(y) => fmtNum(Math.round(y))}
+            series={[
+              {
+                name: t("ui.waterBalCum"),
+                color: CHART.primary,
+                points: b.series.map((p) => ({ x: Date.parse(`${p.date}T12:00:00Z`), y: p.cumMm })),
+              },
+            ]}
+          />
+          <p className="text-xs text-tinta-2">{t("ui.waterBalNote")}</p>
+          <p className="text-xs text-tinta-2">
+            {t("attribution.chirps")} · {t("attribution.nasaPower")}
+          </p>
         </div>
       )}
     </Section>

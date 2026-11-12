@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { CROPS } from "@yvy/shared";
-import { farmSowingWindow, plotPhenology } from "../db/agri2";
+import { farmSowingWindow, plotPhenology, plotWaterBalance } from "../db/agri2";
 import { parse } from "../lib/http";
 import type { AppEnv } from "../types";
 
@@ -16,3 +16,6 @@ agri2.get("/farms/:id/sowing-window", async (c) => {
   const q = parse(z.object({ crop: z.enum(CROPS).default("soja") }), c.req.query());
   return c.json(await farmSowingWindow(c.var.sdb, c.req.param("id"), q.crop));
 });
+
+/** C-08: balance hídrico simple del lote (lluvia menos consumo del cultivo). */
+agri2.get("/plots/:id/water-balance", async (c) => c.json(await plotWaterBalance(c.var.sdb, c.req.param("id"))));

@@ -38,3 +38,25 @@ export const useSowingWindow = (farmId: string, crop: string) =>
     queryKey: ["sowing-window", farmId, crop],
     queryFn: () => get<SowingWindowResponse>(`/org/farms/${farmId}/sowing-window?crop=${crop}`),
   });
+
+export interface WaterBalance {
+  status: "ok" | "no_crop" | "no_reference" | "no_sowing_date" | "no_data";
+  crop: string | null;
+  sowingDate: string | null;
+  balance: {
+    days: number;
+    rainMm: number;
+    etcMm: number;
+    balanceMm: number;
+    balance14Mm: number | null;
+    risk: "low" | "medium" | "high" | null;
+    series: { date: string; rainMm: number; etcMm: number; cumMm: number }[];
+  } | null;
+}
+
+export const useWaterBalance = (plotId: string, enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ["water-balance", plotId],
+    queryFn: () => get<WaterBalance>(`/org/plots/${plotId}/water-balance`),
+  });

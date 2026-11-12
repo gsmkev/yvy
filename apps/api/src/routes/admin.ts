@@ -261,3 +261,86 @@ admin.get("/funnel", async (c) => {
     daily: daily.map((d) => ({ day: d.day, n: Number(d.n) })),
   });
 });
+
+/** P-10: pedidos de cambio de plan de las organizaciones. `status=pending` (por defecto) o `all` (los últimos 50). */
+admin.get("/plan-requests", async (c) => {
+  const all = c.req.query("status") === "all";
+  const rows = await getDb(c.env.DB)
+    .select({
+      id: s.planRequests.id,
+      organizationId: s.planRequests.organizationId,
+      organization: s.organizations.name,
+      currentPlan: s.organizations.plan,
+      plan: s.planRequests.plan,
+      maxHa: s.planRequests.maxHa,
+      maxUsers: s.planRequests.maxUsers,
+      note: s.planRequests.note,
+      status: s.planRequests.status,
+      createdAt: s.planRequests.createdAt,
+      resolvedAt: s.planRequests.resolvedAt,
+      resolutionNote: s.planRequests.resolutionNote,
+      requester: s.users.fullName,
+    })
+    .from(s.planRequests)
+    .innerJoin(s.organizations, eq(s.organizations.id, s.planRequests.organizationId))
+    .leftJoin(s.users, eq(s.users.id, s.planRequests.requestedBy))
+    .where(all ? undefined : eq(s.planRequests.status, "pending"))
+    .orderBy(desc(s.planRequests.createdAt))
+    .limit(50);
+  return c.json(rows);
+});
+
+/**
+ * P-10: aprueba un pedido pendiente: la organización pasa al plan pedido y se fijan los topes que pidió (o los que el
+ * equipo corrija en el cuerpo). Todo en un batch, con su fila de auditoría. No cobra: el cobro es P-11.
+ */
+admin.post("/plan-requests/:id/approve", async (c) => {
+  const b = parse(
+    z.object({
+      maxHa: z.number().positive().max(10_000_000).nullish(),
+      maxUsers: z.number().int().positive().max(100_000).nullish(),
+    }),
+    await readJson(c.req),
+  );
+  const db = getDb(c.env.DB);
+  const [r] = await db.select().from(s.planRequests).where(eq(s.planRequests.id, c.req.param("id"))).limit(1);
+  if (!r) throw new HTTPException(404, { message: "No existe" });
+  if (r.status !== "pending") throw new HTTPException(409, { message: "Ese pedido ya está resuelto" });
+  const now = Date.now();
+  const maxHa = b.maxHa === undefined ? r.maxHa : b.maxHa;
+  const maxUsers = b.maxUsers === undefined ? r.maxUsers : b.maxUsers;
+  await db.batch([
+    db
+      .update(s.organizations)
+      .set({
+        plan: r.plan,
+        trialEndsAt: null,
+        ...(maxHa !== null ? { maxHa } : {}),
+        ...(maxUsers !== null ? { maxUsers } : {}),
+        updatedAt: now,
+      })
+      .where(eq(s.organizations.id, r.organizationId)),
+    db
+      .update(s.planRequests)
+      .set({ status: "approved", resolvedAt: now, resolvedBy: c.var.auth.userId })
+      .where(and(eq(s.planRequests.id, r.id), eq(s.planRequests.status, "pending"))),
+    audit(c, "plan_request_approved", r.organizationId, { requestId: r.id, plan: r.plan, maxHa, maxUsers }),
+  ]);
+  return c.json({ ok: true });
+});
+
+admin.post("/plan-requests/:id/reject", async (c) => {
+  const b = parse(z.object({ note: z.string().trim().max(500).nullish() }), await readJson(c.req));
+  const db = getDb(c.env.DB);
+  const [r] = await db.select().from(s.planRequests).where(eq(s.planRequests.id, c.req.param("id"))).limit(1);
+  if (!r) throw new HTTPException(404, { message: "No existe" });
+  if (r.status !== "pending") throw new HTTPException(409, { message: "Ese pedido ya está resuelto" });
+  await db.batch([
+    db
+      .update(s.planRequests)
+      .set({ status: "rejected", resolvedAt: Date.now(), resolvedBy: c.var.auth.userId, resolutionNote: b.note ?? null })
+      .where(and(eq(s.planRequests.id, r.id), eq(s.planRequests.status, "pending"))),
+    audit(c, "plan_request_rejected", r.organizationId, { requestId: r.id, note: b.note ?? null }),
+  ]);
+  return c.json({ ok: true });
+});

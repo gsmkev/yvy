@@ -311,6 +311,7 @@ export interface ResultFigures {
   marginPyg: number;
   /** Guaraníes por hectárea; null sin superficie. */
   costPerHa: number | null;
+  incomePerHa: number | null;
   marginPerHa: number | null;
   /** Guaraníes por tonelada cosechada; null sin cosecha. */
   costPerTon: number | null;
@@ -322,6 +323,7 @@ export function resultFigures(r: ResultInput): ResultFigures {
   return {
     marginPyg,
     costPerHa: r.areaHa > 0 ? Math.round(r.costPyg / r.areaHa) : null,
+    incomePerHa: r.areaHa > 0 ? Math.round(r.incomePyg / r.areaHa) : null,
     marginPerHa: r.areaHa > 0 ? Math.round(marginPyg / r.areaHa) : null,
     costPerTon: r.tons > 0 ? Math.round(r.costPyg / r.tons) : null,
   };

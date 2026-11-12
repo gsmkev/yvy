@@ -16,6 +16,7 @@ interface Figures {
   areaHa: number;
   tons: number;
   costPerHa: number | null;
+  incomePerHa: number | null;
   marginPerHa: number | null;
   costPerTon: number | null;
 }
@@ -24,6 +25,7 @@ interface Results {
   byPlot: (Figures & { plotId: string | null; name: string | null; crop: string | null })[];
   byCrop: (Figures & { crop: string | null })[];
   byActivity: { activity: string; costPyg: number; incomePyg: number; marginPyg: number }[];
+  bySeason: { seasonId: string | null; name: string | null; costPyg: number; incomePyg: number; marginPyg: number }[];
   beef: { kgSold: number; costPyg: number; incomePyg: number; costPerKgPyg: number | null };
 }
 
@@ -60,6 +62,7 @@ export function ResultsPanel() {
             <Stat label={t("ui.costTotalIncome")} value={fmtGs(q.data.totals.incomePyg)} />
             <Stat label={t("ui.resultsMargin")} value={fmtGs(q.data.totals.marginPyg)} tone={q.data.totals.marginPyg < 0 ? "danger" : undefined} />
             {q.data.totals.costPerHa !== null && <Stat label={t("ui.resultsCostPerHa")} value={fmtGs(q.data.totals.costPerHa)} />}
+            {q.data.totals.incomePerHa !== null && <Stat label={t("ui.resultsIncomePerHa")} value={fmtGs(q.data.totals.incomePerHa)} />}
             {q.data.totals.costPerTon !== null && <Stat label={t("ui.resultsCostPerTon")} value={fmtGs(q.data.totals.costPerTon)} />}
           </div>
           {q.data.byPlot.length === 0 ? (
@@ -75,6 +78,8 @@ export function ResultsPanel() {
                     <th className={th}>{t("ui.costTotalIncome")}</th>
                     <th className={th}>{t("ui.resultsMargin")}</th>
                     <th className={th}>{t("ui.resultsCostPerHa")}</th>
+                    <th className={th}>{t("ui.resultsIncomePerHa")}</th>
+                    <th className={th}>{t("ui.resultsMarginPerHa")}</th>
                     <th className={th}>{t("ui.resultsTons")}</th>
                     <th className="py-2 text-right font-medium">{t("ui.resultsCostPerTon")}</th>
                   </tr>
@@ -88,6 +93,8 @@ export function ResultsPanel() {
                       <td className="num py-2.5 pr-4 text-right">{fmtGs(r.incomePyg)}</td>
                       <td className={`num py-2.5 pr-4 text-right ${tone(r.marginPyg)}`}>{fmtGs(r.marginPyg)}</td>
                       <td className="num py-2.5 pr-4 text-right">{gs(r.costPerHa)}</td>
+                      <td className="num py-2.5 pr-4 text-right">{gs(r.incomePerHa)}</td>
+                      <td className={`num py-2.5 pr-4 text-right ${tone(r.marginPerHa ?? 0)}`}>{gs(r.marginPerHa)}</td>
                       <td className="num py-2.5 pr-4 text-right">{r.tons ? fmtNum(r.tons) : ""}</td>
                       <td className="num py-2.5 text-right">{gs(r.costPerTon)}</td>
                     </tr>
@@ -103,7 +110,21 @@ export function ResultsPanel() {
                       <td className="num py-2.5 pr-4 text-right">{fmtGs(r.costPyg)}</td>
                       <td className="num py-2.5 pr-4 text-right">{fmtGs(r.incomePyg)}</td>
                       <td className={`num py-2.5 pr-4 text-right ${tone(r.marginPyg)}`}>{fmtGs(r.marginPyg)}</td>
-                      <td className="num py-2.5 text-right">{gs(r.costPerHa)}</td>
+                      <td className="num py-2.5 pr-4 text-right">{gs(r.costPerHa)}</td>
+                      <td className="num py-2.5 pr-4 text-right">{gs(r.incomePerHa)}</td>
+                      <td className={`num py-2.5 text-right ${tone(r.marginPerHa ?? 0)}`}>{gs(r.marginPerHa)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Section>
+              <Section title={t("ui.resultsBySeason")}>
+                <tbody>
+                  {q.data.bySeason.map((r) => (
+                    <tr key={r.seasonId ?? "none"} className="border-b border-linea">
+                      <td className="py-2.5 pr-4 font-medium">{r.name ?? t("ui.resultsNoSeason")}</td>
+                      <td className="num py-2.5 pr-4 text-right">{fmtGs(r.costPyg)}</td>
+                      <td className="num py-2.5 pr-4 text-right">{fmtGs(r.incomePyg)}</td>
+                      <td className={`num py-2.5 text-right ${tone(r.marginPyg)}`}>{fmtGs(r.marginPyg)}</td>
                     </tr>
                   ))}
                 </tbody>

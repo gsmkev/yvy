@@ -16,7 +16,7 @@ export async function results(sdb: ScopedDb, f: { farmId?: string; seasonId?: st
   const org = sdb.auth.orgId;
   const ce = s.costEntries;
   const seasonOf = (col: unknown) => (f.seasonId ? sql`${col} = ${f.seasonId}` : undefined);
-  const [groups, plots, harvests, plans, beefKg] = await Promise.all([
+  const [groups, plots, harvests, plans, beefKg, seasonGroups, seasonNames] = await Promise.all([
     sdb.db
       .select({
         plotId: ce.plotId,
@@ -70,6 +70,20 @@ export async function results(sdb: ScopedDb, f: { farmId?: string; seasonId?: st
           f.seasonId ? eq(s.cattleDeals.seasonId, f.seasonId) : undefined,
         ),
       ),
+    // Por campaña (E-31): siempre todas las campañas de la estancia, sin el filtro de campaña.
+    sdb.db
+      .select({
+        seasonId: ce.seasonId,
+        costPyg: sql<number>`COALESCE(SUM(CASE WHEN ${ce.category} <> 'sale' THEN ${ce.amountPyg} END), 0)`,
+        incomePyg: sql<number>`COALESCE(SUM(CASE WHEN ${ce.category} = 'sale' THEN ${ce.amountPyg} END), 0)`,
+      })
+      .from(ce)
+      .where(and(eq(ce.organizationId, org), isNull(ce.deletedAt), f.farmId ? eq(ce.farmId, f.farmId) : undefined))
+      .groupBy(ce.seasonId),
+    sdb.db
+      .select({ id: s.seasons.id, name: s.seasons.name, startsOn: s.seasons.startDate })
+      .from(s.seasons)
+      .where(and(eq(s.seasons.organizationId, org), isNull(s.seasons.deletedAt))),
   ]);
   const planCrop = new Map(plans.map((p) => [p.plotId, p.crop]));
   const tonsOf = new Map(harvests.map((h) => [h.plotId, h.tons]));
@@ -128,5 +142,16 @@ export async function results(sdb: ScopedDb, f: { farmId?: string; seasonId?: st
   const livestock = byActivityAcc.get("ganaderia") ?? { costPyg: 0, incomePyg: 0 };
   const kg = beefKg[0]?.kg ?? 0;
   const beef = { kgSold: kg, costPyg: livestock.costPyg, incomePyg: livestock.incomePyg, costPerKgPyg: costPerKgBeef(livestock.costPyg, kg) };
-  return { totals, byPlot, byCrop, byActivity, beef };
+  const seasonOf2 = new Map(seasonNames.map((x) => [x.id, x]));
+  const bySeason = seasonGroups
+    .map((g) => ({
+      seasonId: g.seasonId,
+      name: g.seasonId ? (seasonOf2.get(g.seasonId)?.name ?? null) : null,
+      startsOn: g.seasonId ? (seasonOf2.get(g.seasonId)?.startsOn ?? null) : null,
+      costPyg: g.costPyg,
+      incomePyg: g.incomePyg,
+      marginPyg: g.incomePyg - g.costPyg,
+    }))
+    .sort((a, b) => (b.startsOn ?? "").localeCompare(a.startsOn ?? ""));
+  return { totals, byPlot, byCrop, byActivity, bySeason, beef };
 }

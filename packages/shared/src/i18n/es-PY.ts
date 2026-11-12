@@ -2484,6 +2484,15 @@ export const esPY = {
     damageColKind: "Tipo",
     damageColDetail: "Detalle",
     damageDisclaimer: "Este informe reúne datos satelitales y registros cargados por el equipo. No reemplaza la inspección del perito ni la denuncia a la aseguradora en los plazos de la póliza.",
+    // plat-p2
+    role_supervisor: "Capataz",
+    role_contractor: "Contratista",
+    farmAccess: "Estancias",
+    farmAccessSaved: "Estancias guardadas",
+    farmAccess_edit: "Puede editar",
+    farmAccess_view: "Solo lectura",
+    farmAccessHintSupervisor: "El capataz ve y asigna solo en las estancias que marques. Sin ninguna, no ve nada.",
+    farmAccessHintOther: "Sin ninguna marcada ve todas las estancias. Si marcás algunas, solo ve esas; en las de solo lectura no puede cambiar nada.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { isFieldRole } from "@yvy/shared";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { get } from "../lib/api";
@@ -42,7 +43,7 @@ export function GlobalSearch({ inputRef }: { inputRef: React.RefObject<HTMLInput
 
   const me = useMe();
   const farms = useFarms();
-  const members = useMembers(!!me.data && me.data.role !== "worker");
+  const members = useMembers(!!me.data && !isFieldRole(me.data.role));
   const details = useQueries({
     queries: (farms.data ?? []).slice(0, MAX_FARMS_SCANNED).map((f) => ({
       queryKey: ["farm", f.id],

@@ -6,6 +6,7 @@ import { and, asc, desc, eq, getTableColumns, gte, inArray, isNull, lt, lte, ne,
 import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
 import {
   DEFAULT_ALERT_SETTINGS,
+  isFieldRole,
   LIMITS,
   localDate,
   notifyOptionsFor,
@@ -22,7 +23,7 @@ import { newId, t, type FormConfig } from "@yvy/shared";
 import { HTTPException } from "hono/http-exception";
 import { randomToken, sha256Hex } from "../lib/crypto";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from "./client";
-import { can, ForbiddenError, NotFoundError, type ScopedDb } from "./scoped";
+import { can, ForbiddenError, NotFoundError, SYNCED_KEYS, type ScopedDb } from "./scoped";
 
 // ---------- Inicio multi estancia (RF-90) ----------
 
@@ -665,7 +666,8 @@ export async function ownerDashboard(sdb: ScopedDb) {
   const week = now - 7 * 86_400_000;
   const today = localDate(now);
   const monthStart = `${today.slice(0, 7)}-01`;
-  const farmIds = sql`(SELECT id FROM farms WHERE organization_id = ${org} AND deleted_at IS NULL)`;
+  // K-05: el administrador con estancias limitadas ve el tablero de esas estancias
+  const farmIds = sql`(SELECT id FROM farms WHERE organization_id = ${org} AND deleted_at IS NULL AND ${sdb.farmScopeSql("farms.id") ?? sql`1`})`;
   const [byCrop, rain, normal, alerts, members, records] = await Promise.all([
     sdb.db.all<{ crop: string | null; kind: string; ha: number; plots: number }>(sql`
       SELECT crop, kind, sum(area_ha) AS ha, count(*) AS plots FROM plots
@@ -684,7 +686,7 @@ export async function ownerDashboard(sdb: ScopedDb) {
       GROUP BY farm_id`),
     sdb.db.all<{ kind: string; severity: string; n: number }>(sql`
       SELECT kind, severity, count(*) AS n FROM alerts
-      WHERE organization_id = ${org} AND resolved_at IS NULL AND (valid_to IS NULL OR valid_to >= ${now})
+      WHERE organization_id = ${org} AND resolved_at IS NULL AND (valid_to IS NULL OR valid_to >= ${now}) AND farm_id IN ${farmIds}
       GROUP BY kind, severity`),
     sdb.db.all<{ role: string; total: number; active: number }>(sql`
       SELECT m.role, count(*) AS total,
@@ -693,7 +695,7 @@ export async function ownerDashboard(sdb: ScopedDb) {
     sdb.db.all<{ kind: string; n: number; byWorkers: number }>(sql`
       SELECT r.kind, count(*) AS n,
         sum(EXISTS (SELECT 1 FROM memberships m WHERE m.user_id = r.author_id AND m.organization_id = ${org} AND m.role = 'worker')) AS byWorkers
-      FROM records r WHERE r.organization_id = ${org} AND r.deleted_at IS NULL AND r.captured_at >= ${week} GROUP BY r.kind ORDER BY n DESC`),
+      FROM records r WHERE r.organization_id = ${org} AND r.deleted_at IS NULL AND r.captured_at >= ${week} AND r.farm_id IN ${farmIds} GROUP BY r.kind ORDER BY n DESC`),
   ]);
   // Lluvia: solo estancias con dato real y normal a la vez, así la comparación es entre lo mismo
   const normalBy = new Map(normal.map((r) => [r.farm_id, Number(r.mm)]));
@@ -719,8 +721,8 @@ export async function ownerDashboard(sdb: ScopedDb) {
     activity: {
       workers: Number(workers?.total ?? 0),
       activeWorkers7d: Number(workers?.active ?? 0),
-      staff: members.filter((m) => m.role !== "worker").reduce((a, m) => a + Number(m.total), 0),
-      activeStaff7d: members.filter((m) => m.role !== "worker").reduce((a, m) => a + Number(m.active), 0),
+      staff: members.filter((m) => !isFieldRole(m.role)).reduce((a, m) => a + Number(m.total), 0),
+      activeStaff7d: members.filter((m) => !isFieldRole(m.role)).reduce((a, m) => a + Number(m.active), 0),
     },
     records7d: {
       total: records.reduce((a, r) => a + Number(r.n), 0),
@@ -869,7 +871,14 @@ export async function updateSynced(
   extra: Stmt[] = [],
 ) {
   const ts = sdb.now();
-  const where = and(eq(table.id, id), eq(table.organizationId, sdb.auth.orgId), isNull(table.deletedAt));
+  // T-09 / K-05: solo filas de estancias donde puede escribir (las tablas fuera de SYNCED no llevan estancia).
+  const key = SYNCED_KEYS.get(table);
+  const where = and(
+    eq(table.id, id),
+    eq(table.organizationId, sdb.auth.orgId),
+    isNull(table.deletedAt),
+    key ? sdb.workerFilter(key, true) : undefined,
+  );
   const exists = await sdb.db.select({ id: table.id }).from(table).where(where).limit(1);
   if (!exists.length) throw new NotFoundError("No existe");
   await runBatch(sdb.db, [
@@ -1165,7 +1174,7 @@ export async function deleteTask(sdb: ScopedDb, id: string) {
 /** Dar de baja a un miembro: deshabilita la membresía y cierra sus sesiones. */
 export async function removeMember(sdb: ScopedDb, userId: string) {
   const role = await sdb.memberRole(userId);
-  if (role === "worker") sdb.require(can.manageWorkers);
+  if (isFieldRole(role)) sdb.require(can.manageWorkers);
   else sdb.require(can.manageOrg, "Solo el dueño gestiona miembros");
   if (userId === sdb.auth.userId) throw new ForbiddenError("No podés darte de baja a vos mismo");
   const ts = sdb.now();

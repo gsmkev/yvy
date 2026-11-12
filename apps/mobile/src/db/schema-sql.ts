@@ -171,5 +171,7 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `yield_maps_plot_idx` ON `yield_maps` (`plot_id`,`season_id`);",
   "CREATE TABLE `management_zones` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`plot_id` text NOT NULL,\n\t`zone` integer NOT NULL,\n\t`area_ha` real NOT NULL,\n\t`pct` real NOT NULL,\n\t`mean_ndvi` real NOT NULL,\n\t`seasons` text NOT NULL,\n\t`geometry` text NOT NULL,\n\t`computed_at` integer NOT NULL\n);",
   "CREATE UNIQUE INDEX `management_zones_plot_zone_uq` ON `management_zones` (`plot_id`,`zone`);",
-  "CREATE INDEX `management_zones_farm_idx` ON `management_zones` (`farm_id`);"
+  "CREATE INDEX `management_zones_farm_idx` ON `management_zones` (`farm_id`);",
+  "CREATE TABLE `farm_access` (\n\t`organization_id` text NOT NULL,\n\t`user_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`level` text DEFAULT 'edit' NOT NULL,\n\t`created_at` integer NOT NULL,\n\tPRIMARY KEY(`organization_id`, `user_id`, `farm_id`)\n);",
+  "CREATE INDEX `farm_access_farm_idx` ON `farm_access` (`farm_id`);"
 ];

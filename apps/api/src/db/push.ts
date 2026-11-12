@@ -42,6 +42,7 @@ export const attachmentPaths = (orgId: string, recordId: string, attachmentId: s
 
 interface RecordState {
   organizationId: string;
+  farmId: string;
   authorId: string;
   createdAt: number;
   deletedAt: number | null;
@@ -105,7 +106,7 @@ export async function applyPush(
   const ids = <T>(set: Set<T>) => [...set];
   const empty = Promise.resolve([] as never[]);
 
-  const [seenRows, recRows, attRows, taskRows, farmRows, plotRows, poiRows, assignedRows, countRows, plotUpRows] =
+  const [seenRows, recRows, attRows, taskRows, farmRows, plotRows, poiRows, assignedRows, countRows, plotUpRows, accessRows] =
     await Promise.all([
       db
         .select({ id: s.syncMutations.mutationId })
@@ -121,6 +122,7 @@ export async function applyPush(
             .select({
               id: s.records.id,
               organizationId: s.records.organizationId,
+              farmId: s.records.farmId,
               authorId: s.records.authorId,
               createdAt: s.records.createdAt,
               deletedAt: s.records.deletedAt,
@@ -193,6 +195,13 @@ export async function applyPush(
             .from(s.plots)
             .where(inArray(s.plots.id, ids(plotUpsertIds)))
         : empty,
+      // T-09 / K-05: estancias permitidas (supervisor, o admin/agrónomo con lista del dueño)
+      auth.role === "owner" || sdb.isWorker
+        ? empty
+        : db
+            .select({ farmId: s.farmAccess.farmId, level: s.farmAccess.level })
+            .from(s.farmAccess)
+            .where(and(eq(s.farmAccess.organizationId, org), eq(s.farmAccess.userId, auth.userId))),
     ]);
 
   const seen = new Set(seenRows.map((r) => r.id));
@@ -233,6 +242,10 @@ export async function applyPush(
       }
     }
   }
+  const farmLimited = auth.role === "supervisor" || accessRows.length > 0;
+  const writableFarms = new Set(accessRows.filter((r) => r.level === "edit").map((r) => r.farmId));
+  /** Sin lista no hay límite; con lista (o supervisor) solo las estancias de nivel `edit`. */
+  const farmWritable = (farmId: string) => !farmLimited || writableFarms.has(farmId);
 
   // ---------- Decisión por mutación, en orden ----------
   const results: MutationResult[] = [];
@@ -284,7 +297,7 @@ export async function applyPush(
             break;
           }
         }
-        if (!farms.has(r.farmId) || (sdb.isWorker && !workerFarms.has(r.farmId))) {
+        if (!farms.has(r.farmId) || (sdb.isWorker && !workerFarms.has(r.farmId)) || !farmWritable(r.farmId)) {
           reject(m, "forbidden", "farm");
           break;
         }
@@ -336,7 +349,7 @@ export async function applyPush(
           createdAt,
           updatedAt: now,
         });
-        records.set(r.id, { organizationId: org, authorId, createdAt, deletedAt: null });
+        records.set(r.id, { organizationId: org, farmId: r.farmId, authorId, createdAt, deletedAt: null });
         if (hasEffects(r.kind))
           effectUpserts.push({
             id: r.id,
@@ -356,7 +369,7 @@ export async function applyPush(
           break;
         }
         if (!existing.deletedAt) {
-          const err = sdb.canEditRecord(existing);
+          const err = !farmWritable(existing.farmId) ? "forbidden" : sdb.canEditRecord(existing);
           if (err) {
             reject(m, err);
             break;
@@ -378,7 +391,7 @@ export async function applyPush(
           reject(m, "deleted");
           break;
         }
-        const err = sdb.canEditRecord(rec);
+        const err = !farmWritable(rec.farmId) ? "forbidden" : sdb.canEditRecord(rec);
         if (err) {
           reject(m, err);
           break;
@@ -429,6 +442,7 @@ export async function applyPush(
               await db
                 .select({
                   organizationId: s.records.organizationId,
+                  farmId: s.records.farmId,
                   authorId: s.records.authorId,
                   createdAt: s.records.createdAt,
                   deletedAt: s.records.deletedAt,
@@ -437,7 +451,7 @@ export async function applyPush(
                 .where(eq(s.records.id, existing.recordId))
                 .limit(1)
             )[0];
-          const err = owner ? sdb.canEditRecord(owner) : "not_found";
+          const err = !owner ? "not_found" : !farmWritable(owner.farmId) ? "forbidden" : sdb.canEditRecord(owner);
           if (err) {
             reject(m, err);
             break;
@@ -468,7 +482,7 @@ export async function applyPush(
           reject(m, "deleted");
           break;
         }
-        if (!farms.has(p.farmId)) {
+        if (!farms.has(p.farmId) || !farmWritable(p.farmId)) {
           reject(m, "forbidden", "farm");
           break;
         }
@@ -534,7 +548,7 @@ export async function applyPush(
           reject(m, "not_found");
           break;
         }
-        if (sdb.isWorker && t.assigneeId !== auth.userId) {
+        if ((sdb.isWorker && t.assigneeId !== auth.userId) || !farmWritable(t.farmId)) {
           reject(m, "forbidden");
           break;
         }
@@ -597,7 +611,7 @@ export async function applyPush(
           reject(m, "not_found");
           break;
         }
-        if (sdb.isWorker && t.assigneeId !== auth.userId) {
+        if ((sdb.isWorker && t.assigneeId !== auth.userId) || !farmWritable(t.farmId)) {
           reject(m, "forbidden");
           break;
         }

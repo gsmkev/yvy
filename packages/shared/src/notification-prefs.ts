@@ -70,4 +70,4 @@ export const inQuietHours = (q: NotificationPrefs["quiet"], time: string): boole
  * email; el empleado solo helada y fuego de sus lotes, por push.
  */
 export const notifyOptionsFor = (role: Role): { kinds: readonly NotifyKind[]; email: boolean } =>
-  role === "worker" ? { kinds: ["frost", "fire"], email: false } : { kinds: ALERT_KINDS, email: true };
+  role === "worker" || role === "contractor" || role === "supervisor" ? { kinds: ["frost", "fire"], email: false } : { kinds: ALERT_KINDS, email: true };

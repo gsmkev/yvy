@@ -1,9 +1,10 @@
 import type { MultiPolygon, Polygon } from "geojson";
+import type { Role } from "@yvy/shared";
 
 export interface Me {
   user: { id: string; fullName: string; email: string | null };
   organization: { id: string; name: string; plan: string; trialEndsAt: number | null };
-  role: "owner" | "admin" | "agronomist" | "worker";
+  role: Role;
   tilesBaseUrl: string;
   isStaff: boolean;
   /** P-12: sesión de soporte de solo lectura. */

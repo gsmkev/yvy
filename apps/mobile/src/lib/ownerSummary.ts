@@ -2,10 +2,10 @@
  * Modo dueño (F-29): el resumen del campo que ve quien no es empleado. Lógica pura sobre lo que ya bajó al celular
  * (registros de todos, estadísticas de vigor, avisos), así anda sin señal.
  */
-import { LIMITS, t } from "@yvy/shared";
+import { isFieldRole, LIMITS, t } from "@yvy/shared";
 
 /** Dueño, administrador y agrónomo ven todo el campo; el empleado, solo lo suyo. */
-export const isOwnerMode = (role: string | null | undefined): boolean => !!role && role !== "worker";
+export const isOwnerMode = (role: string | null | undefined): boolean => !!role && !isFieldRole(role);
 
 export interface VigorPass {
   plotId: string;

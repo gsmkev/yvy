@@ -17,7 +17,7 @@ import {
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type Stmt } from "./client";
-import { can, NotFoundError, type ScopedDb } from "./scoped";
+import { can, ForbiddenError, NotFoundError, type ScopedDb } from "./scoped";
 
 /** Tope de tareas creadas por evento (presupuesto de queries del plan gratis). */
 const MAX_TASKS_PER_EVENT = 100;
@@ -91,7 +91,8 @@ export async function listSanitaryEvents(sdb: ScopedDb, month: string, farmId?: 
 export async function createSanitaryEvent(sdb: ScopedDb, input: SanitaryEventInput) {
   sdb.require(can.planSanitary, "No tenés permiso para planificar el calendario sanitario");
   const org = sdb.auth.orgId;
-  if (input.farmId) await sdb.requireFarm(input.farmId);
+  if (input.farmId) await sdb.requireFarm(input.farmId, true);
+  else if (await sdb.isFarmRestricted()) throw new ForbiddenError("Con acceso limitado a ciertas estancias, elegí una estancia");
   const ts = sdb.now();
   const id = newId();
   let workers: { userId: string; farmId: string }[] = [];

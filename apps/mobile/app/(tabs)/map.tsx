@@ -7,7 +7,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { Camera, Map, Marker, type CameraRef, type StyleSpecification } from "@maplibre/maplibre-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { Compass, LocateFixed, Navigation, X } from "lucide-react-native";
-import { BRAND, describeRecord, t, uaPerHa } from "@yvy/shared";
+import { BRAND, isFieldRole, describeRecord, t, uaPerHa } from "@yvy/shared";
 import { centroidOf, containsPoint, labelPoint, samplingGrid, type Area } from "@yvy/geo";
 import { distanceM } from "../../src/lib/bearing";
 import { useRef } from "react";
@@ -95,7 +95,7 @@ export default function MapScreen() {
     setSelected(null);
     if (farm) camera.current?.fitBounds([farm.minLon, farm.minLat, farm.maxLon, farm.maxLat], { padding: FIT_PADDING, duration: 600 });
   }, [farm?.id]);
-  const canMarkPoi = useSession()?.organization.role !== "worker";
+  const canMarkPoi = !isFieldRole(useSession()?.organization.role ?? "worker");
   useEffect(() => {
     tilesBaseUrl().then(setRemoteBase, () => setRemoteBase(null));
   }, []);

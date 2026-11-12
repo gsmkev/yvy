@@ -1,0 +1,1 @@
+ALTER TABLE `organizations` ADD `referral_credited_at` integer;

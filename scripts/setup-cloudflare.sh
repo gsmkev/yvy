@@ -9,8 +9,11 @@ cd "$(dirname "$0")/../apps/api"
 W="npx wrangler"
 
 echo "▸ Base D1"
-if ! $W d1 info yvy >/dev/null 2>&1; then $W d1 create yvy; fi
-DB_ID=$($W d1 info yvy --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).uuid))')
+# Buscar por nombre con `d1 list`: `d1 info yvy` usa el database_id de wrangler.jsonc,
+# que en la primera ejecución todavía es el placeholder.
+db_id() { $W d1 list --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s).find((x)=>x.name==="yvy");if(d)console.log(d.uuid)})'; }
+DB_ID=$(db_id || true)
+if [ -z "$DB_ID" ]; then $W d1 create yvy >/dev/null; DB_ID=$(db_id); fi
 sed -i.bak "s/\"database_id\": \"[^\"]*\"/\"database_id\": \"$DB_ID\"/" wrangler.jsonc && rm -f wrangler.jsonc.bak
 echo "  database_id=$DB_ID  → guardalo como secret D1_DATABASE_ID en GitHub"
 

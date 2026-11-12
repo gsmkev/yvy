@@ -1,3 +1,5 @@
+import { areaLabel, cToTemp, getUnits, haToArea, mmToRain, rainLabel, tempLabel } from "./units";
+
 const nf = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 1 });
 const nf2 = new Intl.NumberFormat("es-PY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const pct1 = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 1, signDisplay: "exceptZero" });
@@ -21,7 +23,19 @@ const dtf = new Intl.DateTimeFormat("es-PY", {
 export const fmtNum = (n: number) => nf.format(n);
 export const fmtNdvi = (n: number) => nf2.format(n);
 export const fmtPct = (n: number) => `${pct1.format(n)} %`;
-export const fmtHa = (n: number) => `${nf.format(n)} ha`;
+/** Superficie en la unidad elegida (ha o cuadras), con su sufijo. */
+export const fmtHa = (n: number) => `${nf.format(haToArea(n))} ${areaLabel()}`;
+/** Solo el número de la superficie (en la unidad elegida) y la unidad, por separado. */
+export const fmtAreaValue = (ha: number) => nf.format(haToArea(ha));
+export const areaUnitLabel = () => areaLabel();
+/** Lluvia en mm o pulgadas (estas con dos decimales). */
+export const fmtMm = (mm: number) =>
+  getUnits().rain === "in" ? `${nf2.format(mmToRain(mm))} ${rainLabel()}` : `${nf.format(mm)} ${rainLabel()}`;
+/** Solo el número de la lluvia, y la unidad por separado. */
+export const fmtRainValue = (mm: number) => (getUnits().rain === "in" ? nf2.format(mmToRain(mm)) : nf.format(Math.round(mm)));
+export const rainUnitLabel = () => rainLabel();
+/** Temperatura en °C o °F. */
+export const fmtTemp = (c: number) => `${nf.format(cToTemp(c))} ${tempLabel()}`;
 export const fmtDate = (ms: number) => df.format(new Date(ms));
 export const fmtDay = (ms: number) => dShort.format(new Date(ms)).replace(".", "");
 export const fmtDateTime = (ms: number) => dtf.format(new Date(ms)).replace(".", "");

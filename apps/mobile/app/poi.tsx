@@ -13,12 +13,14 @@ import { localChanged } from "../src/lib/sync";
 import { toastSaved } from "../src/lib/toast";
 import { Button, Row, s as k, Text, TextInput } from "../src/ui/kit";
 import { C, RADIUS, T } from "../src/ui/theme";
+import { gpsHintText, useGpsStage } from "../src/lib/gpsHint";
 
 export default function MarkPoi() {
   const session = useSession();
   const [fix, setFix] = useState<Fix | null | "searching">("searching");
   const [kind, setKind] = useState<(typeof POI_KINDS)[number]>("other");
   const [name, setName] = useState("");
+  const gpsHint = gpsHintText(useGpsStage(fix === "searching"));
 
   useEffect(() => {
     currentFix().then(setFix);
@@ -45,6 +47,8 @@ export default function MarkPoi() {
       <Stack.Screen options={{ title: "" }} />
       <Text style={T.title}>{t("app.poiTitle")}</Text>
       <Text style={[T.small, { marginTop: 6 }]}>{fix === "searching" ? t("app.gpsSearching") : here ? t("app.gpsOk", { m: Math.round(here.accuracy ?? 0) }) : t("app.poiNoGps")}</Text>
+      {fix === "searching" && gpsHint && <Text style={[T.small, { marginTop: 6 }]}>{gpsHint}</Text>}
+      {!here && fix !== "searching" && <Text style={[T.small, { marginTop: 6 }]}>{t("app.gpsNoneHint")}</Text>}
       <Text style={[T.heading, { marginTop: 24, marginBottom: 4 }]}>{t("app.poiWhat")}</Text>
       {POI_KINDS.map((kd) => (
         <Row key={kd} title={t(`ui.poiKinds_${kd}` as MessageKey)} selected={kind === kd} onPress={() => setKind(kd)} />

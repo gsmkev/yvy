@@ -109,7 +109,7 @@ Detalles que un usuario espera sin pedirlos.
 
 | ID | Qué | Por qué | Dónde | Prio | Esf | Estado |
 |---|---|---|---|---|---|---|
-| F-01 | GPS sin internet explicado en pantalla: el GPS anda sin datos; avisar cuando tarda (arranque en frío) | Expectativas claras | App | P1 | S | Parcial |
+| F-01 | GPS sin internet explicado en pantalla: el GPS anda sin datos; avisar cuando tarda (arranque en frío) | Expectativas claras | App | P1 | S | Hecho |
 | F-02 | Mostrar mis coordenadas y la precisión en el mapa | Confianza en el dato | App | P1 | S | Hecho |
 | F-03 | "Llevame ahí": rumbo y distancia a un lote, punto o registro, sin internet (brújula y flecha) | Encontrar el foco de plaga que marcó otro | App | P1 | M | Hecho |
 | F-04 | Brújula en el mapa y mapa que gira con el rumbo | Orientarse en el lote | App | P2 | S | Hecho |

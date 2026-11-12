@@ -20,6 +20,7 @@ import {
 import { accuracyLabel, currentFix, type Fix } from "../lib/location";
 import { Button, s as k, Text } from "./kit";
 import { C, GUTTER, RADIUS, T, TOUCH } from "./theme";
+import { gpsHintText, useGpsStage } from "../lib/gpsHint";
 
 const tr = (key: string, vars?: Record<string, string | number>) => t(key as MessageKey, vars);
 const fmt = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
@@ -104,6 +105,7 @@ export function Stations({
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [fix, setFix] = useState<Fix | null | "searching">("searching");
   const n = stations.length + 1;
+  const gpsHint = gpsHintText(useGpsStage(fix === "searching", n));
 
   // Una ubicación nueva por estación.
   useEffect(() => {
@@ -146,7 +148,7 @@ export function Stations({
   };
 
   const live = [...stations, { counts }];
-  const gps = fix === "searching" ? t("app.stationGpsSearching") : fix ? accuracyLabel(fix.accuracy) : t("app.stationGpsNone");
+  const gps = fix === "searching" ? [t("app.stationGpsSearching"), gpsHint].filter(Boolean).join(" ") : fix ? accuracyLabel(fix.accuracy) : `${t("app.stationGpsNone")}. ${t("app.gpsNoneHint")}`;
   return (
     <ScrollView contentContainerStyle={[k.pad, { paddingBottom: 40 }]}>
       <Text style={T.title}>

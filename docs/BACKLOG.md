@@ -361,7 +361,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | I-01 | API pública con tokens por organización | P2 | M | Hecho |
 | I-02 | Webhooks (aviso nuevo, registro nuevo) | P3 | S | Hecho |
 | I-03 | Plataformas de maquinaria (John Deere Operations Center y similares): lotes, labores, rindes | P3 | L | Falta |
-| I-04 | Calendario (Google, Outlook) para tareas | P3 | S | Falta |
+| I-04 | Calendario (Google, Outlook) para tareas | P3 | S | Hecho |
 | I-05 | Balanzas y lectores de caravanas | P3 | L | Falta |
 | I-06 | Sistemas contables locales (exportación con formato) | P3 | M | Hecho |
 | I-07 | Pasarela de pago local (Bancard u otra) | P2 | M | Falta |

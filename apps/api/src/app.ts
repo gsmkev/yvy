@@ -12,6 +12,7 @@ import { herd } from "./routes/herd";
 import { ingest } from "./routes/ingest";
 import { media } from "./routes/media";
 import { org } from "./routes/org";
+import { calendar } from "./routes/calendar";
 import { share } from "./routes/share";
 import { sync } from "./routes/sync";
 import { v1 } from "./routes/v1";
@@ -59,6 +60,7 @@ for (const path of ["/auth/totp/setup", "/auth/totp/enable", "/auth/totp/disable
 app.route("/auth", auth);
 app.route("/ingest", ingest as unknown as Hono<AppEnv>);
 app.route("/public", share);
+app.route("/public", calendar);
 // I-01: API pública de solo lectura con token de organización (no usa la sesión de la web)
 app.route("/v1", v1);
 

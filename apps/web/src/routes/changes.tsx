@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
+import { CoverSection } from "../components/CoverSection";
 import { boundsOf, FarmMap } from "../components/FarmMap";
 import { Empty, ErrorBox, Spinner, Stat } from "../components/ui";
 import { get } from "../lib/api";
@@ -133,6 +134,7 @@ export function ChangesPage() {
       </div>
       <Disclaimer />
       <BurnedSection farmId={farmId} />
+      <CoverSection farmId={farmId} />
     </div>
   );
 }

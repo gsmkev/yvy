@@ -30,6 +30,7 @@ on:
             eudr,
             s2_history,
             burned_area,
+            cover_change,
           ]
       farm:
         description: "Id de estancia (obligatorio para new_farm y s2_history; eudr: indicador de deforestación de esa estancia, vacío = todas)"

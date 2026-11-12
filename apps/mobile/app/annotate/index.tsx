@@ -37,14 +37,14 @@ import { selectedFarmId } from "../../src/lib/farmFilter";
 import { FLOWS, KINDS_FOR, RAW, SINGLE_PLOT_KINDS, stepsFor, type Step } from "../../src/lib/annotate";
 import { currentFix, guessPlots, type Fix, type PlotGuess } from "../../src/lib/location";
 import { containsPoint, type Area } from "@yvy/geo";
-import { photoQualityWarning, processPhoto } from "../../src/lib/photos";
+import { discardPhoto, photoQualityWarning, processPhoto } from "../../src/lib/photos";
 import { kindForPoi } from "../../src/lib/poiQr";
 import { PhotoMarkup } from "../../src/ui/PhotoMarkup";
 import { VoiceRecorder } from "../../src/ui/VoiceRecorder";
 import { useSession } from "../../src/lib/session";
 import { localChanged, useSyncStatus } from "../../src/lib/sync";
 import { sprayPrefill } from "../../src/lib/sprayHours";
-import { toastSaved } from "../../src/lib/toast";
+import { showToast, toastSaved } from "../../src/lib/toast";
 import { seedCounts } from "../../src/lib/counter";
 import { HerdCounter } from "../../src/ui/Counter";
 import { Button, Row, s as k, Text, TextInput } from "../../src/ui/kit";
@@ -113,6 +113,23 @@ export default function Annotate() {
     editing ? flattenExtra(JSON.parse(editing.data) as Record<string, unknown>) : { ...(presetKind ? seed(presetKind) : {}), ...(scanPoi ? { poiId: scanPoi.id } : {}) },
   );
   const [photos, setPhotos] = useState<LocalPhoto[]>([]);
+  // F-17: las fotos que no llegan a guardarse (se quitó una, o se salió sin guardar) no quedan ocupando lugar.
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
+  const savedRef = useRef(false);
+  useEffect(
+    () => () => {
+      if (!savedRef.current) photosRef.current.forEach((p) => void discardPhoto(p));
+    },
+    [],
+  );
+  const removePhoto = (i: number) => {
+    const gone = photos[i];
+    if (!gone) return;
+    setPhotos(photos.filter((_, j) => j !== i));
+    void discardPhoto(gone);
+    showToast(t("app.photoDiscarded"));
+  };
   const [voice, setVoice] = useState<LocalAudio | null>(null);
   // Plaga: primero se elige entre una observación o el monitoreo por estaciones (F-12).
   const entryFor = (kd: RecordKind): Phase => (kd === "pest" && !editing ? { name: "mode" } : { name: "step", i: 0 });
@@ -226,6 +243,7 @@ export default function Annotate() {
         photos,
         voice,
       );
+      savedRef.current = true;
       if (params.taskId) db.completeTask(params.taskId, ids[0]!);
       localChanged();
       toastSaved();
@@ -249,6 +267,7 @@ export default function Annotate() {
       editing?.id,
       voice,
     );
+    savedRef.current = true;
     if (params.taskId) db.completeTask(params.taskId, recordId);
     localChanged();
     toastSaved();
@@ -575,12 +594,13 @@ export default function Annotate() {
               <View key={p.thumbUri}>
                 <Image source={{ uri: p.thumbUri }} style={st.thumb} />
                 <Pressable
-                  accessibilityLabel={t("ui.delete")}
-                  onPress={() => setPhotos(photos.filter((_, j) => j !== i))}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("app.photoDiscard")}
+                  onPress={() => removePhoto(i)}
                   style={st.thumbX}
-                  hitSlop={8}
+                  hitSlop={6}
                 >
-                  <X size={14} color={C.blanco} />
+                  <X size={18} color={C.blanco} />
                 </Pressable>
               </View>
             ))}
@@ -1080,7 +1100,7 @@ const st = StyleSheet.create({
   search: { ...T.body, ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : {}), minHeight: TOUCH, borderWidth: 1.5, borderColor: C.lineaFuerte, borderRadius: RADIUS, paddingHorizontal: 14, backgroundColor: C.blanco, marginBottom: 12 },
   photos: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 20 },
   thumb: { width: 104, height: 104, borderRadius: RADIUS },
-  thumbX: { position: "absolute", top: 6, right: 6, width: 26, height: 26, borderRadius: 13, backgroundColor: "rgba(30,36,25,0.75)", alignItems: "center", justifyContent: "center" },
+  thumbX: { position: "absolute", top: 4, right: 4, width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(30,36,25,0.75)", alignItems: "center", justifyContent: "center" },
   box: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: C.lineaFuerte },
   doneMark: { width: 72, height: 72, borderRadius: 36, backgroundColor: C.accion, alignItems: "center", justifyContent: "center" },
   shutterRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 28, paddingVertical: 24, backgroundColor: "#000" },

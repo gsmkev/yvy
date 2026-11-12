@@ -94,6 +94,13 @@ describe("LocalDb", () => {
     expect(thumbs.has(without)).toBe(false);
   });
 
+  it("F-17 Historial: hasta dos miniaturas por registro, en orden", () => {
+    const db = setup();
+    const id = db.saveRecord(USER, ORG, rec, ["a", "b", "c"].map((n) => ({ ...photo, thumbUri: `file:///${n}_t.webp` })));
+    expect(db.thumbsByRecord(2).get(id)).toEqual(["file:///a_t.webp", "file:///b_t.webp"]);
+    expect(db.thumbsByRecord(5).get(id)).toHaveLength(3);
+  });
+
   it("cola de envío: registro con el peso de sus fotos, y fotos sueltas ya conocidas por el servidor", async () => {
     const db = setup();
     const id = db.saveRecord(USER, ORG, rec, [photo, photo]);

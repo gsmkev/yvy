@@ -187,6 +187,16 @@ export const LIMITS = {
     /** Días de pronóstico que se evalúan. */
     horizonDays: 7,
   },
+  /** Balance hídrico por lote (C-08): lluvia menos consumo del cultivo, en mm. */
+  waterBalance: {
+    /** Ventana reciente para el riesgo de estrés. */
+    recentDays: 14,
+    /** Balance de la ventana reciente (mm) a partir del cual el riesgo es medio o alto. */
+    mediumRiskMm: -30,
+    highRiskMm: -60,
+    /** Días de historia que devuelve la serie. */
+    maxDays: 200,
+  },
 } as const;
 
 export type Limits = typeof LIMITS;

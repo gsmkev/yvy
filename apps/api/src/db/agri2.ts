@@ -4,6 +4,7 @@
  * tablas propias de la web. Toda consulta pasa por ScopedDb.
  */
 import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, sql } from "drizzle-orm";
+import { currentPlotPlan } from "./agri";
 import {
   accumulateGdd,
   addDays,
@@ -52,7 +53,14 @@ export async function requirePlotRow(sdb: ScopedDb, plotId: string) {
     )
     .limit(1);
   if (!plot) throw new NotFoundError("Lote inexistente");
-  return plot;
+  // A-01: el plan de la campaña activa manda sobre el texto libre del lote (que queda de respaldo).
+  const plan = await currentPlotPlan(sdb, plot.id);
+  return {
+    ...plot,
+    crop: plan?.crop ?? plot.crop,
+    sowingDate: plan?.plannedSowingDate ?? plot.sowingDate,
+    sowingFromPlan: !!plan?.plannedSowingDate,
+  };
 }
 
 export type PlotRow = Awaited<ReturnType<typeof requirePlotRow>>;
@@ -62,7 +70,7 @@ export async function plotSowing(
   sdb: ScopedDb,
   plot: PlotRow,
   tz = "America/Asuncion",
-): Promise<{ date: string; source: "record" | "plot"; crop: string | null } | null> {
+): Promise<{ date: string; source: "record" | "plan" | "plot"; crop: string | null } | null> {
   const since = sdb.now() - 400 * DAY;
   const [rec] = await sdb.db
     .select({ at: s.records.capturedAt, crop: sql<string | null>`json_extract(${s.records.data}, '$.crop')` })
@@ -79,7 +87,7 @@ export async function plotSowing(
     .orderBy(desc(s.records.capturedAt))
     .limit(1);
   if (rec) return { date: localDate(rec.at, tz), source: "record", crop: rec.crop };
-  if (plot.sowingDate) return { date: plot.sowingDate, source: "plot", crop: null };
+  if (plot.sowingDate) return { date: plot.sowingDate, source: plot.sowingFromPlan ? "plan" : "plot", crop: null };
   return null;
 }
 
@@ -90,7 +98,7 @@ export interface Phenology {
   status: "ok" | "no_crop" | "no_reference" | "no_sowing_date" | "no_data";
   crop: string | null;
   sowingDate: string | null;
-  sowingSource: "record" | "plot" | null;
+  sowingSource: "record" | "plan" | "plot" | null;
   baseC: number | null;
   gdd: number | null;
   /** Días con temperatura sobre los días transcurridos desde la siembra: si es bajo, el GDD queda corto. */

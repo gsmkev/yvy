@@ -20,6 +20,8 @@ export interface PlotSeasonInput {
   crop: (typeof s.CROPS)[number] | null;
   variety: string | null;
   plannedSowingDate: string | null;
+  sowingDensity: number | null;
+  densityUnit: (typeof s.DENSITY_UNITS)[number] | null;
   targetYieldTHa: number | null;
 }
 
@@ -164,6 +166,9 @@ export interface PlotHistoryRow {
   crop: string | null;
   variety: string | null;
   plannedSowingDate: string | null;
+  /** Densidad de siembra: la del registro de siembra si lo hay y, si no, la planificada. */
+  sowingDensity: number | null;
+  densityUnit: string | null;
   targetYieldTHa: number | null;
   /** Fecha real de siembra (registro `sowing`), si hay. */
   sownOn: number | null;
@@ -235,11 +240,26 @@ export async function plotHistory(sdb: ScopedDb, plotId: string): Promise<PlotHi
       harvestBySeason.set(d.seasonId, [...(harvestBySeason.get(d.seasonId) ?? []), { tons: d.tons, areaHa: d.areaHa }]);
   }
   const planBySeason = new Map(plans.map((p) => [p.seasonId, p]));
-  const sownBySeason = new Map<string, { crop: string; variety: string | null; at: number }>();
+  const sownBySeason = new Map<
+    string,
+    { crop: string; variety: string | null; at: number; density: number | null; densityUnit: string | null }
+  >();
   for (const r of sowings) {
-    const d = JSON.parse(r.data) as { seasonId?: string; crop?: string; variety?: string };
+    const d = JSON.parse(r.data) as {
+      seasonId?: string;
+      crop?: string;
+      variety?: string;
+      density?: number;
+      densityUnit?: string;
+    };
     if (d.seasonId && d.crop)
-      sownBySeason.set(d.seasonId, { crop: d.crop, variety: d.variety ?? null, at: r.capturedAt });
+      sownBySeason.set(d.seasonId, {
+        crop: d.crop,
+        variety: d.variety ?? null,
+        at: r.capturedAt,
+        density: d.density ?? null,
+        densityUnit: d.densityUnit ?? null,
+      });
   }
   const rows: PlotHistoryRow[] = [];
   for (const season of seasons) {
@@ -255,6 +275,8 @@ export async function plotHistory(sdb: ScopedDb, plotId: string): Promise<PlotHi
       crop: sown?.crop ?? plan?.crop ?? null,
       variety: sown?.variety ?? plan?.variety ?? null,
       plannedSowingDate: plan?.plannedSowingDate ?? null,
+      sowingDensity: sown?.density ?? plan?.sowingDensity ?? null,
+      densityUnit: sown?.density != null ? sown.densityUnit : (plan?.densityUnit ?? null),
       targetYieldTHa: plan?.targetYieldTHa ?? null,
       sownOn: sown?.at ?? null,
       harvestTons: crops ? Math.round(crops.reduce((a, h) => a + h.tons, 0) * 100) / 100 : null,
@@ -334,4 +356,34 @@ export async function sprayForecast(sdb: ScopedDb, farmId: string) {
     ...sprayHour(h),
   }));
   return { hours, windows: sprayWindows(hours), limits: LIMITS.spray };
+}
+
+/**
+ * Plan vigente de un lote (A-01): el de la campaña activa más reciente. Es la fuente del cultivo y de la fecha
+ * de siembra prevista; el texto libre de `plots.crop` y `plots.sowing_date` queda solo como respaldo.
+ */
+export async function currentPlotPlan(sdb: ScopedDb, plotId: string) {
+  const [plan] = await sdb.db
+    .select({
+      crop: s.plotSeasons.crop,
+      variety: s.plotSeasons.variety,
+      plannedSowingDate: s.plotSeasons.plannedSowingDate,
+      sowingDensity: s.plotSeasons.sowingDensity,
+      densityUnit: s.plotSeasons.densityUnit,
+      seasonId: s.plotSeasons.seasonId,
+    })
+    .from(s.plotSeasons)
+    .innerJoin(s.seasons, eq(s.seasons.id, s.plotSeasons.seasonId))
+    .where(
+      and(
+        eq(s.plotSeasons.plotId, plotId),
+        eq(s.plotSeasons.organizationId, sdb.auth.orgId),
+        isNull(s.plotSeasons.deletedAt),
+        isNull(s.seasons.deletedAt),
+        eq(s.seasons.active, true),
+      ),
+    )
+    .orderBy(desc(s.seasons.startDate), desc(s.seasons.createdAt))
+    .limit(1);
+  return plan ?? null;
 }

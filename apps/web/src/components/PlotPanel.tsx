@@ -8,6 +8,7 @@ import type { FarmDetail } from "../lib/types";
 import { fmtDate, fmtDay, fmtHa, fmtIsoDate, fmtNdvi, fmtNum, fmtPct, toIso } from "../lib/format";
 import { Minus, Pencil, Satellite, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { t, tk } from "../lib/i18n";
+import { fmtDensity } from "./SeasonsPanel";
 import type { Farm, Member, Plot, PlotHistoryRow, ProblemArea } from "../lib/types";
 import { CopyCoords } from "./CopyCoords";
 import { PlotAgro } from "./PlotAgro";
@@ -309,6 +310,7 @@ export function PlotPanel({
                         : h.plannedSowingDate
                           ? t("ui.rotationPlanned", { date: fmtIsoDate(h.plannedSowingDate) })
                           : null,
+                      h.sowingDensity !== null && h.densityUnit ? fmtDensity(h.sowingDensity, h.densityUnit) : null,
                       h.targetYieldTHa !== null && h.yieldTHa === null ? `${t("ui.seasonTargetYield")}: ${fmtNum(h.targetYieldTHa)}` : null,
                     ]
                       .filter(Boolean)

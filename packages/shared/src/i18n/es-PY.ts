@@ -1897,6 +1897,8 @@ export const esPY = {
     seasonPlanTitle: "Plan por lote",
     seasonVariety: "Variedad",
     seasonPlannedSowing: "Siembra prevista",
+    seasonDensity: "Densidad de siembra",
+    seasonDensityUnit: "Unidad de la densidad",
     seasonTargetYield: "Rinde objetivo (t/ha)",
     seasonPlanEdit: "Planificar",
     seasonPlanSave: "Guardar plan",

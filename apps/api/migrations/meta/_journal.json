@@ -526,6 +526,13 @@
       "when": 1794498596010,
       "tag": "0074_dusty_otto_octavius",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "6",
+      "when": 1794515657205,
+      "tag": "0075_fuzzy_beast",
+      "breakpoints": true
     }
   ]
 }

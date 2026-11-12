@@ -2,7 +2,7 @@
 import { listDoseRanges, setDoseRange } from "../db/review";
 import { Hono } from "hono";
 import { z } from "zod";
-import { CROPS, PRODUCT_TYPES, PRODUCT_UNITS } from "@yvy/shared";
+import { CROPS, DENSITY_UNITS, PRODUCT_TYPES, PRODUCT_UNITS } from "@yvy/shared";
 import {
   createProduct,
   createSeason,
@@ -77,14 +77,18 @@ agri.put("/seasons/:seasonId/plots/:plotId", async (c) => {
       crop: z.enum(CROPS).nullish(),
       variety: z.string().trim().max(80).nullish(),
       plannedSowingDate: isoDate.nullish(),
+      sowingDensity: z.number().positive().max(1_000_000).nullish(),
+      densityUnit: z.enum(DENSITY_UNITS).nullish(),
       targetYieldTHa: z.number().positive().max(100).nullish(),
-    }),
+    }).refine((d) => d.sowingDensity == null || d.densityUnit != null, { message: "Indicá la unidad de la densidad" }),
     await readJson(c.req),
   );
   await upsertPlotSeason(c.var.sdb, c.req.param("plotId"), c.req.param("seasonId"), {
     crop: b.crop ?? null,
     variety: b.variety || null,
     plannedSowingDate: b.plannedSowingDate ?? null,
+    sowingDensity: b.sowingDensity ?? null,
+    densityUnit: b.sowingDensity != null ? (b.densityUnit ?? null) : null,
     targetYieldTHa: b.targetYieldTHa ?? null,
   });
   return c.json({ ok: true });

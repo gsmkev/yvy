@@ -108,6 +108,17 @@ function Annotate() {
       if (kd === "application" && ord.volumeLHa) out.volumeLHa = ord.volumeLHa;
       out.orderTaskId = params.taskId;
     }
+    // A-01: la siembra sale precargada con el plan del lote en la campaña (cultivo, variedad y densidad).
+    if (kd === "sowing" && plot) {
+      const sid = out.seasonId as string | undefined;
+      const plan = sid ? db.plotSeason(plot.id, sid) : null;
+      if (plan?.crop && out.crop === undefined) out.crop = plan.crop;
+      if (plan?.variety && out.variety === undefined) out.variety = plan.variety;
+      if (plan?.sowingDensity && plan.densityUnit && out.density === undefined) {
+        out.density = plan.sowingDensity;
+        out.densityUnit = plan.densityUnit;
+      }
+    }
     return out;
   };
   const [values, setValues] = useState<Record<string, unknown>>(() =>

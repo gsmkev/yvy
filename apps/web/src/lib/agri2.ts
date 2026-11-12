@@ -7,7 +7,7 @@ export interface Phenology {
   status: "ok" | "no_crop" | "no_reference" | "no_sowing_date" | "no_data";
   crop: string | null;
   sowingDate: string | null;
-  sowingSource: "record" | "plot" | null;
+  sowingSource: "record" | "plan" | "plot" | null;
   baseC: number | null;
   gdd: number | null;
   coverage: { days: number; of: number } | null;

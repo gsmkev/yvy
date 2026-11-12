@@ -6,6 +6,7 @@ import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import { addDays, PEST_THRESHOLDS, PEST_WINDOW_DAYS } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { chunkForParams, type DB } from "../db/client";
+import { withPlanCrops } from "../db/plan-crops";
 import type { AlertDraft } from "./rules";
 
 export interface PestAverage {
@@ -99,10 +100,13 @@ export async function pestAlertDraft(db: DB, farmId: string, now: number, today:
   const stageByPlot = new Map<string, string>();
   for (const ids of chunkForParams(plotIds, 1)) {
     plots.push(
-      ...(await db
-        .select({ id: s.plots.id, name: s.plots.name, crop: s.plots.crop })
-        .from(s.plots)
-        .where(and(inArray(s.plots.id, ids), isNull(s.plots.deletedAt)))),
+      ...(await withPlanCrops(
+        db,
+        await db
+          .select({ id: s.plots.id, name: s.plots.name, crop: s.plots.crop })
+          .from(s.plots)
+          .where(and(inArray(s.plots.id, ids), isNull(s.plots.deletedAt))),
+      )),
     );
     const stages = await db
       .select({ plotId: s.records.plotId, stage: sql<string>`json_extract(${s.records.data}, '$.stage')` })

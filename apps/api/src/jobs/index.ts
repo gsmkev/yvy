@@ -8,6 +8,7 @@ import { purgeApiRate } from "../db/api-tokens";
 import { deliverWebhook, drainOutbox, webhookRetryDelay } from "../db/webhooks";
 import { getDb, runBatch, type DB } from "../db/client";
 import { dayOfYear } from "../db/queries";
+import { withPlanCrops } from "../db/plan-crops";
 import { SystemDb } from "../db/system";
 import { sendEmail, type EmailAttachment } from "../lib/email";
 import { presign } from "../lib/r2";
@@ -188,12 +189,15 @@ async function forecastJob(db: DB, env: Bindings, deps: JobDeps, farm: Farm): Pr
   const today = localDate(now, farm.tz);
   const cfg = await new SystemDb(db).alertSettings(farm.id);
   // A-40: roya asiática solo si la estancia tiene soja
-  const soy = await db
-    .select({ id: s.plots.id })
-    .from(s.plots)
-    .where(
-      and(eq(s.plots.farmId, farm.id), eq(s.plots.kind, "crop"), eq(s.plots.crop, "soja"), isNull(s.plots.deletedAt)),
-    );
+  const soy = (
+    await withPlanCrops(
+      db,
+      await db
+        .select({ id: s.plots.id, crop: s.plots.crop })
+        .from(s.plots)
+        .where(and(eq(s.plots.farmId, farm.id), eq(s.plots.kind, "crop"), isNull(s.plots.deletedAt))),
+    )
+  ).filter((p) => p.crop === "soja");
   for (const draft of [
     evaluateFrost(runs, today, cfg.frostTminC),
     evaluateExcessRain(days, today, cfg.excessRainMm24h),

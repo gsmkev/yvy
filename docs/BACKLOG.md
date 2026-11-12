@@ -146,7 +146,7 @@ Detalles que un usuario espera sin pedirlos.
 
 | ID | Qué | Por qué | Dónde | Prio | Esf | Estado |
 |---|---|---|---|---|---|---|
-| A-01 | Campañas (zafra, zafriña, invierno) con cultivo, variedad, fecha y densidad de siembra por lote | La unidad de análisis del productor | Web, App | P1 | M | Parcial (cultivo y campaña en texto) |
+| A-01 | Campañas (zafra, zafriña, invierno) con cultivo, variedad, fecha y densidad de siembra por lote | La unidad de análisis del productor | Web, App | P1 | M | Hecho |
 | A-02 | Rotación histórica por lote: qué se sembró cada campaña | Planificación y certificaciones | Web | P1 | S | Hecho |
 | A-03 | Plan de siembra de la campaña: superficie por cultivo y variedad | Compras de semilla | Web | P2 | M | Hecho |
 | A-04 | Fenología estimada por grados-día (NASA POWER) y comparación con lo observado | Saber en qué estado está el cultivo | Web, Jobs | P2 | M | Hecho |

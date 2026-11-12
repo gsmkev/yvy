@@ -2,9 +2,9 @@
  * Análisis de suelo (A-30): resultados de laboratorio por lote o por punto de muestreo.
  * Solo la web los usa (no están en el pull del sync). Escribe y lee quien edita el campo (no el empleado).
  */
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
-import { newId } from "@yvy/shared";
+import { fertilityPointCounts, newId } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, currentVersion, runBatch } from "./client";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
@@ -73,6 +73,18 @@ export async function listSoilSamples(sdb: ScopedDb, farmId: string) {
     )
     .orderBy(desc(s.soilSamples.sampledOn), desc(s.soilSamples.createdAt))
     .limit(1000);
+}
+
+/** A-31: ¿hay puntos suficientes para algún mapa? Cuenta ubicaciones distintas con coordenadas y valor por parámetro. */
+export async function fertilityPointCountsOf(sdb: ScopedDb, farmId: string) {
+  sdb.require(can.editField);
+  await sdb.requireFarm(farmId);
+  const rows = await sdb.db
+    .select({ lon: s.soilSamples.lon, lat: s.soilSamples.lat, ph: s.soilSamples.ph, pMgKg: s.soilSamples.pMgKg, kCmolKg: s.soilSamples.kCmolKg, omPct: s.soilSamples.omPct })
+    .from(s.soilSamples)
+    .where(and(eq(s.soilSamples.farmId, farmId), eq(s.soilSamples.organizationId, sdb.auth.orgId), isNull(s.soilSamples.deletedAt), isNotNull(s.soilSamples.lon), isNotNull(s.soilSamples.lat)))
+    .limit(MAX_SOIL_SAMPLES_PER_FARM);
+  return fertilityPointCounts(rows);
 }
 
 export async function createSoilSample(sdb: ScopedDb, farmId: string, input: SoilInput) {

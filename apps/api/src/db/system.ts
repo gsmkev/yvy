@@ -2,7 +2,7 @@
  * Acceso de sistema (sin usuario): /ingest firmado por HMAC y crons. Única excepción a scopedDb.
  * Cada escritura deriva organization_id de la fila padre (lote o estancia), nunca del request.
  */
-import { and, asc, desc, eq, gte, inArray, isNull, lt, lte, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lt, lte, or, sql } from "drizzle-orm";
 import { addDays, DEFAULT_ALERT_SETTINGS, localDate, newId, type AlertSettings } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { upsertAlert } from "../jobs/alerts";
@@ -147,6 +147,23 @@ export class SystemDb {
       .from(s.farms)
       .where(eq(s.farms.id, farmId))
       .limit(1);
+  }
+
+  /** A-31: análisis de suelo de la estancia con coordenadas (para interpolar mapas de fertilidad). */
+  soilPoints(farmId: string) {
+    return this.db
+      .select({
+        lon: s.soilSamples.lon,
+        lat: s.soilSamples.lat,
+        sampledOn: s.soilSamples.sampledOn,
+        ph: s.soilSamples.ph,
+        pMgKg: s.soilSamples.pMgKg,
+        kCmolKg: s.soilSamples.kCmolKg,
+        omPct: s.soilSamples.omPct,
+      })
+      .from(s.soilSamples)
+      .where(and(eq(s.soilSamples.farmId, farmId), isNull(s.soilSamples.deletedAt), isNotNull(s.soilSamples.lon), isNotNull(s.soilSamples.lat)))
+      .limit(5000);
   }
 
   /** Registra la escena. `processed` indica si ya se cargaron sus estadísticas. */

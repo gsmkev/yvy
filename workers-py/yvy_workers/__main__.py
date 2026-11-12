@@ -9,7 +9,7 @@ import sys
 from .ingest import IngestClient
 from .jobs.constants import BACKFILL_DAYS, BASEMAP_DAYS, DAILY_DAYS
 
-JOBS = ["s2_ingest", "s2_basemap", "country_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "weekly_report", "new_farm", "eudr", "s2_history", "burned_area", "cover_change", "power_daily", "spi", "mgmt_zones", "boundaries", "custom_layers"]
+JOBS = ["s2_ingest", "s2_basemap", "country_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "weekly_report", "new_farm", "eudr", "s2_history", "burned_area", "cover_change", "power_daily", "spi", "mgmt_zones", "boundaries", "custom_layers", "fertility_maps"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -130,6 +130,10 @@ def main(argv: list[str] | None = None) -> int:
                     from .jobs.zones import management_zones
 
                     log.info("%s: %d lotes con zonas de manejo", f["name"], management_zones(api, f))
+                elif args.job == "fertility_maps":
+                    from .jobs.fertility import fertility_maps
+
+                    log.info("%s: mapas de fertilidad %s", f["name"], fertility_maps(api, f) or "sin puntos suficientes")
                 elif args.job == "eudr":
                     from .jobs.eudr import eudr_analysis
 

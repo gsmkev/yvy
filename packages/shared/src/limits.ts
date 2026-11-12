@@ -240,6 +240,8 @@ export const LIMITS = {
     /** Días de pronóstico que se evalúan. */
     horizonDays: 7,
   },
+  /** Mapas de fertilidad (A-31): puntos con coordenadas y valor que pide cada parámetro para interpolar. Igual en workers-py. */
+  fertility: { minPoints: 8 },
   /** Riego (A-43): lámina máxima por registro, en mm. */
   irrigation: { maxMm: 500 },
   /** Balance hídrico por lote (C-08): lluvia menos consumo del cultivo, en mm. */

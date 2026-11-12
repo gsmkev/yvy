@@ -102,7 +102,10 @@ export const FUNNEL_EVENTS = ["signup", "farm_created", "plots_created", "member
 /** S-07: índices de vegetación que calcula el job de Sentinel-2. */
 export const INDEX_KINDS = ["ndvi", "ndre", "ndmi", "evi"] as const;
 export type IndexKind = (typeof INDEX_KINDS)[number];
-export const LAYERS = ["true_color", ...INDEX_KINDS] as const;
+/** A-31: mapas de fertilidad interpolados (pH, fósforo, potasio, materia orgánica) a partir de análisis de suelo con punto. */
+export const FERT_LAYERS = ["fert_ph", "fert_p", "fert_k", "fert_om"] as const;
+export type FertLayer = (typeof FERT_LAYERS)[number];
+export const LAYERS = ["true_color", ...INDEX_KINDS, ...FERT_LAYERS] as const;
 /** M-17: capas propias (imagen georreferenciada) de una estancia. */
 export const CUSTOM_LAYER_KINDS = ["image", "geotiff"] as const;
 export const CUSTOM_LAYER_STATUSES = ["processing", "ready", "failed"] as const;

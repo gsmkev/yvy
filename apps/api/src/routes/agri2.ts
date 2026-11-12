@@ -6,7 +6,8 @@ import { CROPS, LIMITS } from "@yvy/shared";
 import { farmManagementZones, farmZoneBenchmark, farmPlotForecast, farmSpiReport, farmSowingWindow, farmWithdrawal, plotPhenology, plotWaterBalance } from "../db/agri2";
 import { createYieldMap, deleteYieldMap, listYieldMaps } from "../db/yield";
 import { createDelivery, deleteDelivery, listDeliveries } from "../db/deliveries";
-import { createSoilSample, deleteSoilSample, listSoilSamples, updateSoilSample } from "../db/soil";
+import { createSoilSample, deleteSoilSample, fertilityPointCountsOf, listSoilSamples, updateSoilSample } from "../db/soil";
+import { dispatchJob } from "../lib/dispatch";
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
 
@@ -50,6 +51,18 @@ const norm = (b: Record<string, unknown>) =>
   Object.fromEntries(
     Object.entries(b).map(([k, v]) => [k, v === undefined ? undefined : v === "" ? null : (v ?? null)]),
   );
+
+/** A-31: puntos por parámetro y pedido del cálculo de mapas (job fertility_maps en GitHub Actions). */
+agri2.get("/farms/:id/fertility", async (c) => c.json({ minPoints: LIMITS.fertility.minPoints, points: await fertilityPointCountsOf(c.var.sdb, c.req.param("id")) }));
+agri2.post("/farms/:id/fertility-maps", async (c) => {
+  const id = c.req.param("id");
+  const counts = await fertilityPointCountsOf(c.var.sdb, id);
+  if (!Object.values(counts).some((n) => n >= LIMITS.fertility.minPoints))
+    throw new HTTPException(400, { message: `Hacen falta al menos ${LIMITS.fertility.minPoints} puntos con coordenadas en algún parámetro` });
+  if ((await dispatchJob(c.env, "fertility_maps", id)) !== "sent")
+    throw new HTTPException(503, { message: "No se pudo pedir el cálculo: los jobs no están disponibles" });
+  return c.json({ status: "processing" }, 202);
+});
 
 agri2.get("/farms/:id/soil-samples", async (c) => c.json(await listSoilSamples(c.var.sdb, c.req.param("id"))));
 

@@ -77,6 +77,10 @@ class IngestClient:
     def farm_geometry(self, farm_id: str) -> dict[str, Any]:
         return self._call("GET", f"/ingest/farms/{farm_id}/geometry")
 
+    def soil_points(self, farm_id: str) -> list[dict[str, Any]]:
+        """Análisis de suelo de la estancia con coordenadas (A-31): lon, lat, sampledOn, ph, pMgKg, kCmolKg, omPct."""
+        return self._call("GET", f"/ingest/farms/{farm_id}/soil-points")
+
     def scene(self, source: str, item_id: str, acquired_at: int, cloud_pct: float | None) -> dict[str, Any]:
         """Registra la escena; devuelve {id, processed}."""
         return self._call("POST", "/ingest/scenes", {"source": source, "itemId": item_id, "acquiredAt": acquired_at, "cloudPct": cloud_pct})

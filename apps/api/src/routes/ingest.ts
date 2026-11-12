@@ -54,6 +54,9 @@ ingest.get("/farms", async (c) => c.json(await c.var.sys.activeFarms()));
 /** Última fecha cargada por estancia y fuente (para que los jobs bajen solo lo que falta). */
 ingest.get("/climate-latest", async (c) => c.json(await c.var.sys.climateLatest()));
 
+/** A-31: análisis de suelo con coordenadas para el job fertility_maps. */
+ingest.get("/farms/:id/soil-points", async (c) => c.json(await c.var.sys.soilPoints(c.req.param("id"))));
+
 ingest.get("/farms/:id/geometry", async (c) => {
   const [row] = await c.var.sys.farmGeometry(c.req.param("id"));
   if (!row) throw new HTTPException(404);

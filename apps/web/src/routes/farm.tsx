@@ -5,9 +5,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LineString, Polygon } from "geojson";
 import { MapPinPlus, PenLine, Upload, X } from "lucide-react";
 import { areaHa, bboxOf, validatePolygon, type Area } from "@yvy/geo";
-import { BRAND, INDEX_KINDS, NDMI_RAMP, NDVI_RAMP, POI_KINDS, type IndexKind } from "@yvy/shared";
+import { BRAND, FERT_LAYERS, FERT_LAYER_PARAM, FERT_STYLE, INDEX_KINDS, NDMI_RAMP, NDVI_RAMP, POI_KINDS, SOIL_RANGES, type FertLayerKey } from "@yvy/shared";
 import { CustomLayersControl, type ActiveLayers } from "../components/CustomLayersControl";
 import { BoundariesControl } from "../components/BoundariesControl";
+
+/** Capas que se ven en Vigor: índices de vegetación (S-07) y mapas de fertilidad (A-31). */
+const OVERLAYS = [...INDEX_KINDS, ...FERT_LAYERS] as const;
+type Overlay = (typeof OVERLAYS)[number];
+const isFert = (k: Overlay): k is FertLayerKey => (FERT_LAYERS as readonly string[]).includes(k);
 import { AlertsList } from "../components/AlertsList";
 import { CopyCoords } from "../components/CopyCoords";
 import { ClimatePanel } from "../components/ClimatePanel";
@@ -31,7 +36,7 @@ import { del, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
 import { download, plotsToGeoJson, plotsToKml, plotsToShapefileZip } from "../lib/exports";
 import { closedAreaHa, fmtDistance, pathLengthM, type LonLat } from "../lib/measure";
-import { areaUnitLabel, fmtAreaValue, fmtDate, fmtHa } from "../lib/format";
+import { areaUnitLabel, fmtAreaValue, fmtDate, fmtHa, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { loadPrefs, savePrefs } from "../lib/prefs";
 import { fetchAllRecords, useAlerts, useFarm, useFarmLines, useFarms, useMe, useMembers, useProblemAreas } from "../lib/queries";
@@ -116,7 +121,7 @@ export function FarmPage() {
   useEffect(() => savePrefs({ farmId }), [farmId]);
   // S-04: fecha elegida por tipo de capa y comparación con cortina
   const [pickedIds, setPickedIds] = useState<Partial<Record<Layer["layer"], string>>>({});
-  const [indexKind, setIndexKind] = useState<IndexKind>("ndvi"); // S-07
+  const [indexKind, setIndexKind] = useState<Overlay>("ndvi"); // S-07
   const [boundaryLevel, setBoundaryLevel] = useState<BoundaryLevel | null>(null); // M-16
   // M-17: capas propias activas con su opacidad
   const customLayers = useCustomLayers(farmId, !!me.data && me.data.role !== "worker" && me.data.role !== "contractor");
@@ -246,9 +251,9 @@ export function FarmPage() {
   const plot = d.plots.find((p) => p.id === selected);
   const workersOf = (plotId: string) =>
     (members.data ?? []).filter((m) => d.assignments.some((a) => a.plotId === plotId && a.userId === m.userId));
-  const hasIndex = (k: IndexKind) => d.layers.some((l) => l.layer === k);
+  const hasIndex = (k: Overlay) => d.layers.some((l) => l.layer === k);
   // Si el índice elegido no tiene imagen en esta estancia, vuelve a NDVI
-  const shownIndex: IndexKind = hasIndex(indexKind) ? indexKind : "ndvi";
+  const shownIndex: Overlay = hasIndex(indexKind) ? indexKind : "ndvi";
   const ndviLayer = d.layers.filter((l) => l.layer === shownIndex).sort((a, b) => b.acquiredAt - a.acquiredAt)[0];
   // La capa de vigor recordada solo vale si esta estancia tiene imagen
   const layer = wantedLayer === "ndvi" && ndviLayer ? "ndvi" : "satellite";
@@ -424,24 +429,24 @@ export function FarmPage() {
               </button>
             ))}
           </div>
-          {layer === "ndvi" && INDEX_KINDS.filter(hasIndex).length > 1 && (
+          {layer === "ndvi" && OVERLAYS.filter(hasIndex).length > 1 && (
             <label className="flex w-56 flex-col gap-1 rounded-md border border-white/15 bg-surco/85 p-2.5 text-xs text-lino backdrop-blur">
               <span className="text-lino/70">{t("ui.indexPick")}</span>
               <select
                 className="h-8 w-full cursor-pointer rounded border border-white/20 bg-surco px-2 text-xs text-lino outline-none focus:border-lino"
                 value={shownIndex}
                 onChange={(e) => {
-                  setIndexKind(e.target.value as IndexKind);
+                  setIndexKind(e.target.value as Overlay);
                   setCompare(null);
                 }}
               >
-                {INDEX_KINDS.filter(hasIndex).map((k) => (
+                {OVERLAYS.filter(hasIndex).map((k) => (
                   <option key={k} value={k}>
-                    {t(`ui.index_${k}`)}
+                    {isFert(k) ? t(`ui.fertLayer_${k}` as "ui.fertLayer_fert_ph") : t(`ui.index_${k}`)}
                   </option>
                 ))}
               </select>
-              <span className="text-lino/60">{t(`ui.indexHint_${shownIndex}`)}</span>
+              {!isFert(shownIndex) && <span className="text-lino/60">{t(`ui.indexHint_${shownIndex}`)}</span>}
             </label>
           )}
           <SceneControls
@@ -539,14 +544,34 @@ export function FarmPage() {
             <div className="w-56 rounded-md border border-white/15 bg-surco/85 p-2.5 text-[11px] text-lino backdrop-blur">
               <div
                 className="h-2 rounded-sm"
-                style={{ background: `linear-gradient(90deg, ${(shownIndex === "ndmi" ? NDMI_RAMP : NDVI_RAMP).join(",")})` }}
+                style={{
+                  background: `linear-gradient(90deg, ${(isFert(shownIndex) ? FERT_STYLE[shownIndex].ramp : shownIndex === "ndmi" ? NDMI_RAMP : NDVI_RAMP).join(",")})`,
+                }}
               />
-              <div className="num mt-1 flex justify-between text-lino/70">
-                <span>{shownIndex === "ndmi" ? t("ui.ndmiLegendLow") : t("ui.ndviLegendLow")}</span>
-                <span>{shownIndex === "ndmi" ? t("ui.ndmiLegendHigh") : t("ui.ndviLegendHigh")}</span>
-              </div>
+              {isFert(shownIndex) ? (
+                <>
+                  <div className="num mt-1 flex justify-between text-lino/70">
+                    <span>
+                      {shownIndex === "fert_ph" ? t("ui.fertLegendPh") : t("ui.fertLegendLow")} {fmtNum(FERT_STYLE[shownIndex].lo)}
+                    </span>
+                    <span>
+                      {fmtNum(FERT_STYLE[shownIndex].hi)} {FERT_STYLE[shownIndex].unit}
+                    </span>
+                  </div>
+                  <p className="num mt-1 text-lino/70">
+                    {t("ui.soilLevel_low")} &lt; {fmtNum(SOIL_RANGES[FERT_LAYER_PARAM[shownIndex]][0])} · {t("ui.soilLevel_high")} &gt;{" "}
+                    {fmtNum(SOIL_RANGES[FERT_LAYER_PARAM[shownIndex]][1])}
+                  </p>
+                  <p className="mt-1 text-lino/60">{t("ui.fertLegendNote")}</p>
+                </>
+              ) : (
+                <div className="num mt-1 flex justify-between text-lino/70">
+                  <span>{shownIndex === "ndmi" ? t("ui.ndmiLegendLow") : t("ui.ndviLegendLow")}</span>
+                  <span>{shownIndex === "ndmi" ? t("ui.ndmiLegendHigh") : t("ui.ndviLegendHigh")}</span>
+                </div>
+              )}
               <p className="num mt-1.5 text-lino/70">
-                {t("ui.imageDate", { date: fmtDate((pickLayer(d.layers, shownIndex, pickedIds[shownIndex]) ?? ndviLayer).acquiredAt) })} · Sentinel-2
+                {t("ui.imageDate", { date: fmtDate((pickLayer(d.layers, shownIndex, pickedIds[shownIndex]) ?? ndviLayer).acquiredAt) })} · {isFert(shownIndex) ? t("ui.soilTitle") : "Sentinel-2"}
               </p>
             </div>
           )}

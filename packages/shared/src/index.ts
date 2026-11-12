@@ -37,6 +37,7 @@ export {
   ALERT_PROBABILITIES,
   LINE_KINDS,
   INDEX_KINDS,
+  FERT_LAYERS,
   type IndexKind,
   type LineKind,
   type Role,

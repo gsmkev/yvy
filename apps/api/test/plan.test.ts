@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { issueSession } from "../src/auth/session";
+import { app } from "../src/app";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, db, square } from "./helpers";
 
 describe("Fase 8 · prueba gratis y panel interno", () => {
@@ -82,5 +83,45 @@ describe("Fase 8 · prueba gratis y panel interno", () => {
       (await call("POST", `/admin/orgs/${owner.orgId}/plan`, { token: staff!.accessToken, body: { plan: "active" } }))
         .status,
     ).toBe(200);
+  });
+});
+
+describe("V-02 · demo pública de solo lectura", () => {
+  const req = (method: string, path: string, e: object) =>
+    app.request(path, { method, headers: { "content-type": "application/json" } }, e);
+
+  it("sin DEMO_ORG_ID y DEMO_USER_ID el endpoint responde 404", async () => {
+    expect((await req("POST", "/auth/demo", env)).status).toBe(404);
+    expect((await req("GET", "/auth/demo", env)).status).toBe(404);
+  });
+
+  it("emite sesión de dueño que solo puede leer", async () => {
+    const owner = await createOrgWithOwner("Estancia de ejemplo");
+    const demoEnv = { ...env, DEMO_ORG_ID: owner.orgId, DEMO_USER_ID: owner.userId };
+    // La organización todavía no es 'demo': no se entrega una sesión de escritura.
+    expect((await req("POST", "/auth/demo", demoEnv)).status).toBe(404);
+    await db().update(s.organizations).set({ plan: "demo" }).where(eq(s.organizations.id, owner.orgId));
+
+    expect(await (await req("GET", "/auth/demo", demoEnv)).json()).toEqual({ available: true });
+    const res = await req("POST", "/auth/demo", demoEnv);
+    expect(res.status).toBe(200);
+    const session = (await res.json()) as { accessToken: string; organization: { id: string; role: string } };
+    expect(session.organization).toMatchObject({ id: owner.orgId, role: "owner" });
+
+    const me = await call("GET", "/me", { token: session.accessToken });
+    expect(me.body.demo).toBe(true);
+    expect((await call("GET", "/org/farms", { token: session.accessToken })).status).toBe(200);
+
+    for (const [method, path, body] of [
+      ["POST", "/org/farms", { name: "x", geometry: square(-55, -27) }],
+      ["POST", "/sync/push", { deviceId: "d", mutations: [] }],
+      ["POST", "/auth/link", { userId: owner.userId }],
+    ] as const) {
+      const r = await call(method, path, { token: session.accessToken, body });
+      expect(r.status, `${method} ${path}`).toBe(403);
+    }
+    // Una organización común no ve la marca de demo.
+    const other = await createOrgWithOwner();
+    expect((await call("GET", "/me", { token: other.token })).body.demo).toBe(false);
   });
 });

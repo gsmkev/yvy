@@ -327,6 +327,7 @@ export default function MapScreen() {
             </Text>
           ))}
           <Button big title={t("app.annotateIn", { plot: plot.name })} onPress={() => router.push({ pathname: "/annotate", params: { plotId: plot.id } })} style={{ marginTop: 16 }} />
+          <Button kind="secondary" title={t("app.plotSheetOpen")} onPress={() => router.push({ pathname: "/plot/[id]", params: { id: plot.id } })} style={{ marginTop: 8 }} />
           <Button
             kind="text"
             title={gridHa === null ? t("app.samplingShow5") : gridHa === 5 ? t("app.samplingShow10") : t("app.samplingHide")}

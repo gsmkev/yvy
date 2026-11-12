@@ -28,6 +28,7 @@ export function FarmLine({ style }: { style?: StyleProp<ViewStyle> }) {
           {options.map((f) => (
             <Row
               key={f.id}
+              choice="radio"
               title={f.name}
               selected={f.id === current.id}
               onPress={() => {

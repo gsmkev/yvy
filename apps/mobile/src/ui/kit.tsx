@@ -82,6 +82,7 @@ export function Row({
   right,
   selected,
   disabled,
+  choice,
 }: {
   title: string;
   subtitle?: string;
@@ -90,12 +91,14 @@ export function Row({
   right?: ReactNode;
   selected?: boolean;
   disabled?: boolean;
+  /** U-26: la fila es una opción. "radio" (una sola, dentro de un RadioGroup) o "checkbox" (se tildan varias): TalkBack la anuncia con su estado. */
+  choice?: "radio" | "checkbox";
 }) {
   return (
     <Pressable
-      accessibilityRole={onPress ? "button" : undefined}
+      accessibilityRole={choice ?? (onPress ? "button" : undefined)}
       accessibilityLabel={subtitle ? `${title}. ${subtitle}` : title}
-      accessibilityState={{ selected: !!selected, disabled: !!disabled }}
+      accessibilityState={choice ? { checked: !!selected, disabled: !!disabled } : { selected: !!selected, disabled: !!disabled }}
       onPress={onPress}
       disabled={disabled || !onPress}
       style={({ pressed }) => [s.row, selected && s.rowSelected, pressed && s.rowPressed, disabled && { opacity: 0.5 }]}
@@ -113,6 +116,15 @@ export function Row({
       </View>
       {right && <View style={s.rowRight}>{right}</View>}
     </Pressable>
+  );
+}
+
+/** U-26: agrupa opciones de una sola respuesta para que TalkBack diga "opción 2 de 4" y el nombre del grupo. */
+export function RadioGroup({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <View accessibilityRole="radiogroup" accessibilityLabel={label}>
+      {children}
+    </View>
   );
 }
 

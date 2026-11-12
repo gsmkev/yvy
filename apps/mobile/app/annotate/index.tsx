@@ -48,7 +48,7 @@ import { sprayPrefill } from "../../src/lib/sprayHours";
 import { showToast, toastSaved } from "../../src/lib/toast";
 import { seedCounts } from "../../src/lib/counter";
 import { HerdCounter } from "../../src/ui/Counter";
-import { Button, Row, s as k, Text, TextInput } from "../../src/ui/kit";
+import { Button, RadioGroup, Row, s as k, Text, TextInput } from "../../src/ui/kit";
 import { Stations } from "../../src/ui/Stations";
 import { C, F, GUTTER, RADIUS, T, TOUCH } from "../../src/ui/theme";
 import { gpsHintText, useGpsStage } from "../../src/lib/gpsHint";
@@ -411,6 +411,7 @@ function Annotate() {
                 key={p.id}
                 title={p.name}
                 subtitle={plotSubtitle(p)}
+                choice="checkbox"
                 selected={on}
                 onPress={() => toggle(p)}
                 left={on ? <Check size={22} color={C.accion} strokeWidth={3} /> : <View style={st.box} />}
@@ -561,9 +562,11 @@ function Annotate() {
           <Progress i={phase.i} n={steps.length + 1} />
           <ScrollView contentContainerStyle={k.pad}>
             <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
-            {waterPois.map((p) => (
-              <Row key={p.id} title={p.name} selected={values[step.key] === p.id} onPress={() => advance({ ...values, [step.key]: p.id })} />
-            ))}
+            <RadioGroup label={tr(step.question)}>
+              {waterPois.map((p) => (
+                <Row key={p.id} choice="radio" title={p.name} selected={values[step.key] === p.id} onPress={() => advance({ ...values, [step.key]: p.id })} />
+              ))}
+            </RadioGroup>
             <Button kind="text" title={t("app.waterPoiOther")} onPress={() => advance({ ...values, [step.key]: undefined })} style={{ marginTop: 12 }} />
           </ScrollView>
         </View>
@@ -575,12 +578,14 @@ function Annotate() {
           <Progress i={phase.i} n={steps.length + 1} />
           <ScrollView contentContainerStyle={k.pad}>
             <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
-            {db
-              .plots(plot?.farmId ?? selectedFarmId(db) ?? undefined)
-              .filter((p) => p.kind === "pasture" && p.id !== plot?.id)
-              .map((p) => (
-                <Row key={p.id} title={p.name} selected={values[step.key] === p.id} onPress={() => advance({ ...values, [step.key]: p.id })} />
-              ))}
+            <RadioGroup label={tr(step.question)}>
+              {db
+                .plots(plot?.farmId ?? selectedFarmId(db) ?? undefined)
+                .filter((p) => p.kind === "pasture" && p.id !== plot?.id)
+                .map((p) => (
+                  <Row key={p.id} choice="radio" title={p.name} selected={values[step.key] === p.id} onPress={() => advance({ ...values, [step.key]: p.id })} />
+                ))}
+            </RadioGroup>
           </ScrollView>
         </View>
       );
@@ -683,9 +688,11 @@ function StepScreen({ step, value, answers, prefilled, plotAreaHa, seasons, onAn
     return (
       <ScrollView contentContainerStyle={k.pad}>
         <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
-        {step.options.map((o) => (
-          <Row key={o.value} title={tr(o.label)} selected={value === o.value} onPress={() => onAnswer(o.value)} />
-        ))}
+        <RadioGroup label={tr(step.question)}>
+          {step.options.map((o) => (
+            <Row key={o.value} choice="radio" title={tr(o.label)} selected={value === o.value} onPress={() => onAnswer(o.value)} />
+          ))}
+        </RadioGroup>
         {step.optional && <Button kind="text" title={t("app.skip")} onPress={() => onAnswer(undefined)} style={{ marginTop: 12 }} />}
       </ScrollView>
     );
@@ -695,9 +702,11 @@ function StepScreen({ step, value, answers, prefilled, plotAreaHa, seasons, onAn
     return (
       <ScrollView contentContainerStyle={k.pad}>
         <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
-        {seasons.map((x) => (
-          <Row key={x.id} title={x.name} selected={value === x.id} onPress={() => onAnswer(x.id)} />
-        ))}
+        <RadioGroup label={tr(step.question)}>
+          {seasons.map((x) => (
+            <Row key={x.id} choice="radio" title={x.name} selected={value === x.id} onPress={() => onAnswer(x.id)} />
+          ))}
+        </RadioGroup>
         <Button kind="text" title={t("app.skip")} onPress={() => onAnswer(undefined)} style={{ marginTop: 12 }} />
       </ScrollView>
     );
@@ -709,9 +718,11 @@ function StepScreen({ step, value, answers, prefilled, plotAreaHa, seasons, onAn
     return (
       <ScrollView contentContainerStyle={k.pad}>
         <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
-        {items.map((p) => (
-          <Row key={p.id} title={p.name} selected={value === p.id} onPress={() => onAnswer(p.id)} />
-        ))}
+        <RadioGroup label={tr(step.question)}>
+          {items.map((p) => (
+            <Row key={p.id} choice="radio" title={p.name} selected={value === p.id} onPress={() => onAnswer(p.id)} />
+          ))}
+        </RadioGroup>
         <Button kind="text" title={tr(step.otherLabel)} onPress={() => onAnswer(undefined)} style={{ marginTop: 12 }} />
       </ScrollView>
     );
@@ -720,11 +731,13 @@ function StepScreen({ step, value, answers, prefilled, plotAreaHa, seasons, onAn
     return (
       <ScrollView contentContainerStyle={k.pad}>
         <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
-        {getDb()
-          .machines()
-          .map((m) => (
-            <Row key={m.id} title={m.name} selected={value === m.id} onPress={() => onAnswer(m.id)} />
-          ))}
+        <RadioGroup label={tr(step.question)}>
+          {getDb()
+            .machines()
+            .map((m) => (
+              <Row key={m.id} choice="radio" title={m.name} selected={value === m.id} onPress={() => onAnswer(m.id)} />
+            ))}
+        </RadioGroup>
         <Button kind="text" title={tr(step.otherLabel)} onPress={() => onAnswer(undefined)} style={{ marginTop: 12 }} />
       </ScrollView>
     );
@@ -979,6 +992,7 @@ function ProductsStep({ question, value, fixedUnit, types, onAnswer }: { questio
             key={p.id}
             title={p.name}
             subtitle={p.activeIngredient ?? undefined}
+            choice="checkbox"
             selected={on}
             onPress={() => toggle(p)}
             left={on ? <Check size={22} color={C.accion} strokeWidth={3} /> : <View style={st.box} />}

@@ -52,6 +52,7 @@ export default function TaskChecklist() {
         <Row
           key={i.id}
           title={i.text}
+          choice="checkbox"
           selected={i.done}
           disabled={!open}
           onPress={() => {

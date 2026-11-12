@@ -8,7 +8,7 @@ import { Stack } from "expo-router";
 import { describeRecord, normalizeTag, t, weightSeries, type MessageKey, type WeightPoint } from "@yvy/shared";
 import { getDb } from "../src/lib/db";
 import { useLocal } from "../src/lib/useLocal";
-import { Row, s as k, Text, TextInput } from "../src/ui/kit";
+import { RadioGroup, Row, s as k, Text, TextInput } from "../src/ui/kit";
 import { C, RADIUS, T } from "../src/ui/theme";
 
 const when = (ms: number) => new Date(ms).toLocaleDateString("es-PY", { day: "numeric", month: "short", year: "numeric" });
@@ -49,15 +49,18 @@ export default function Animals() {
       />
       {total === 0 && <Text style={[T.small, { marginTop: 16 }]}>{t("app.animalsNone")}</Text>}
       {total > 0 && found.length === 0 && <Text style={[T.small, { marginTop: 16 }]}>{t("app.animalsNoMatch")}</Text>}
-      {found.map((a) => (
-        <Row
-          key={a.id}
-          title={a.tag}
-          subtitle={`${t(`fields.herd_${a.category}` as MessageKey)} · ${t(`fields.sex_${a.sex}` as MessageKey)}`}
-          selected={selected === a.id}
-          onPress={() => setSelected(a.id)}
-        />
-      ))}
+      <RadioGroup label={t("app.animalsTitle")}>
+        {found.map((a) => (
+          <Row
+            key={a.id}
+            choice="radio"
+            title={a.tag}
+            subtitle={`${t(`fields.herd_${a.category}` as MessageKey)} · ${t(`fields.sex_${a.sex}` as MessageKey)}`}
+            selected={selected === a.id}
+            onPress={() => setSelected(a.id)}
+          />
+        ))}
+      </RadioGroup>
       {animal && (
         <View style={{ marginTop: 24 }}>
           <Text style={T.heading}>{animal.tag}</Text>

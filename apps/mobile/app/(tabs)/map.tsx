@@ -282,6 +282,7 @@ export default function MapScreen() {
           <Button kind="secondary" title={t("app.poiScan")} onPress={() => router.push("/scan-poi")} />
           {canMarkPoi && <Button kind="secondary" title={t("app.poiMark")} onPress={() => router.push("/poi")} style={{ marginTop: 8 }} />}
           {canMarkPoi && <Button kind="secondary" title={t("app.plotDrawStart")} onPress={() => router.push("/plot-draw")} style={{ marginTop: 8 }} />}
+          {canMarkPoi && <Button kind="secondary" title={t("app.perimWalkMenu")} onPress={() => router.push({ pathname: "/plot-draw", params: { mode: "walk" } })} style={{ marginTop: 8 }} />}
         </View>
       )}
 

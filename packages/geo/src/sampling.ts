@@ -118,6 +118,8 @@ export type TraceError = ValidationError | "too_few_points";
  */
 export function traceToPolygon(points: TracePoint[], toleranceM = 3): { polygon: Polygon; ha: number } | { error: TraceError } {
   const simple = simplifyTrace(points, toleranceM);
+  // Al cerrar, el último punto queda en el lado que une el penúltimo con el primero: sobra
+  while (simple.length > 3 && distToSegmentM(simple[simple.length - 1]!, simple[simple.length - 2]!, simple[0]!) <= toleranceM) simple.pop();
   if (simple.length < 3) return { error: "too_few_points" };
   const ring: Position[] = simple.map((p) => [round(p.lon), round(p.lat)]);
   ring.push([...ring[0]!]);

@@ -36,6 +36,30 @@ def ndvi_rgba(ndvi: np.ndarray, valid: np.ndarray, lo: float = 0.1, hi: float = 
     return out
 
 
+# S-07: rangos y rampas por índice. NDRE y EVI usan la rampa de vigor; NDMI (humedad) va de trigo (seco) a cielo (húmedo).
+NDMI_RAMP = ["#D9A93A", "#F1EEE4", "#8DB3C7"]
+INDEX_STYLE: dict[str, tuple[list[str], float, float]] = {
+    "ndvi": (NDVI_RAMP, 0.1, 0.9),
+    "ndre": (NDVI_RAMP, 0.05, 0.6),
+    "evi": (NDVI_RAMP, 0.05, 0.8),
+    "ndmi": (NDMI_RAMP, -0.2, 0.6),
+}
+
+
+def index_rgba(values: np.ndarray, valid: np.ndarray, idx: str) -> np.ndarray:
+    """Colorea cualquier índice de vegetación con su rampa y rango. Devuelve (4, h, w) uint8."""
+    ramp, lo, hi = INDEX_STYLE[idx]
+    stops = np.array([_hex(c) for c in ramp], dtype=float)
+    t = np.clip((np.nan_to_num(values) - lo) / (hi - lo), 0, 1) * (len(stops) - 1)
+    i = np.clip(np.floor(t).astype(int), 0, len(stops) - 2)
+    f = (t - i)[..., None]
+    rgb = stops[i] * (1 - f) + stops[i + 1] * f
+    out = np.zeros((4, *values.shape), dtype=np.uint8)
+    out[:3] = np.moveaxis(rgb, -1, 0).astype(np.uint8)
+    out[3] = np.where(valid, 255, 0)
+    return out
+
+
 def lonlat_to_tile(lon: float, lat: float, z: int) -> tuple[int, int]:
     n = 2**z
     x = int((lon + 180) / 360 * n)

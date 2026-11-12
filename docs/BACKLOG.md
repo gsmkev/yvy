@@ -454,7 +454,7 @@ y el aviso de que están en desarrollo). Ninguna analiza datos reales todavía.
 | X-22 | Mapa de malezas por dron con prescripción de aplicación localizada | Ahorro de herbicida | P3 | L | Maqueta |
 | X-23 | Daño por granizo o viento a partir de dron o satélite, para el seguro | Cobrar el seguro | P3 | L | Maqueta |
 | X-24 | Detección de alambrados caídos, tajamares secos y caminos cortados en imágenes | Mantenimiento | P3 | L | Maqueta |
-| X-25 | Rinde estimado por lote a partir de vigor, clima e historia | Planificar ventas | P3 | L | Falta |
+| X-25 | Rinde estimado por lote a partir de vigor, clima e historia | Planificar ventas | P3 | L | Maqueta |
 | X-26 | Registros raros para revisar (lluvia de 300 mm, plaga fuera de época) | Calidad de datos, sin costo | P2 | S | Hecho |
 
 **Nube (modelos de lenguaje, con costo por uso)**

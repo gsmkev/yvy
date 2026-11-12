@@ -1,3 +1,4 @@
+import { ZoneBenchmark } from "./ZoneBenchmark";
 import { SpiPanel } from "./SpiPanel";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -187,6 +188,7 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
         )}
       </div>
       <SpiPanel farmId={farmId} />
+      <ZoneBenchmark farmId={farmId} />
     </div>
   );
 }

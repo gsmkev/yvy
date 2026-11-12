@@ -1136,6 +1136,25 @@ export const farmSpi = sqliteTable("farm_spi", {
   report: text("report").notNull(),
 });
 
+/**
+ * R-08: comparación anónima de una estancia con la mediana de las estancias de otras organizaciones dentro de un radio.
+ * La calcula un cron con acceso de sistema; acá solo quedan números de la propia estancia, las medianas y cuántas
+ * estancias entraron (nunca ids, nombres ni geometrías ajenas). Una fila por estancia; si dejan de alcanzar los
+ * vecinos, la fila se borra. No se sincroniza.
+ */
+export const zoneBenchmarks = sqliteTable("zone_benchmarks", {
+  farmId: text("farm_id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  computedAt: integer("computed_at").notNull(),
+  radiusKm: integer("radius_km").notNull(),
+  windowDays: integer("window_days").notNull(),
+  nFarms: integer("n_farms").notNull(),
+  ndvi: real("ndvi"),
+  ndviMedian: real("ndvi_median"),
+  rainMm: real("rain_mm"),
+  rainMedianMm: real("rain_median_mm"),
+});
+
 export const forecasts = sqliteTable(
   "forecasts",
   {

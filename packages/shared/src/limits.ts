@@ -203,6 +203,11 @@ export const LIMITS = {
   },
   // agri-p2
   /** Mapas de rendimiento (A-21): celdas de la grilla resumen y tamaño máximo del cuerpo que acepta el Worker. */
+  /**
+   * Comparación anónima con la zona (R-08): estancias de OTRAS organizaciones dentro de `radiusKm`. Solo se publica si hay
+   * al menos `minFarms` estancias de al menos `minOrgs` organizaciones distintas; vigor y lluvia de los últimos `windowDays`.
+   */
+  benchmark: { radiusKm: 30, minFarms: 3, minOrgs: 3, windowDays: 30, maxNeighbors: 300 },
   yieldMap: { maxCells: 800, maxBodyBytes: 120_000 },
   /**
    * Capas propias (M-17): imagen georreferenciada por estancia. PNG/JPG con 4 esquinas se guardan tal cual;

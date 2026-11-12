@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { CROPS, LIMITS } from "@yvy/shared";
-import { farmManagementZones, farmPlotForecast, farmSpiReport, farmSowingWindow, farmWithdrawal, plotPhenology, plotWaterBalance } from "../db/agri2";
+import { farmManagementZones, farmZoneBenchmark, farmPlotForecast, farmSpiReport, farmSowingWindow, farmWithdrawal, plotPhenology, plotWaterBalance } from "../db/agri2";
 import { createYieldMap, deleteYieldMap, listYieldMaps } from "../db/yield";
 import { createDelivery, deleteDelivery, listDeliveries } from "../db/deliveries";
 import { createSoilSample, deleteSoilSample, listSoilSamples, updateSoilSample } from "../db/soil";
@@ -175,6 +175,9 @@ agri2.delete("/yield-maps/:id", async (c) => {
   await deleteYieldMap(c.var.sdb, c.req.param("id"));
   return c.json({ ok: true });
 });
+
+/** R-08: vigor y lluvia de la estancia frente a la mediana anónima de la zona (null si no hay al menos 3 vecinas). */
+agri2.get("/farms/:id/zone-benchmark", async (c) => c.json(await farmZoneBenchmark(c.var.sdb, c.req.param("id"))));
 
 /** A-32: zonas de manejo (3 por lote) calculadas con varias campañas de vigor. */
 agri2.get("/farms/:id/management-zones", async (c) => c.json(await farmManagementZones(c.var.sdb, c.req.param("id"))));

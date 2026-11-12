@@ -33,6 +33,35 @@ export const randomDigits = (n: number): string => {
   return String(buf[0]! % max).padStart(n, "0");
 };
 
+// ---------- Secretos en reposo (AES-GCM) ----------
+// La clave sale de JWT_SECRET: rotarlo obliga a volver a dar de alta lo guardado así (TOTP, secretos de webhooks).
+
+const aesKey = async (jwtSecret: string) =>
+  crypto.subtle.importKey("raw", await crypto.subtle.digest("SHA-256", enc.encode(`secret-box:${jwtSecret}`)), "AES-GCM", false, [
+    "encrypt",
+    "decrypt",
+  ]);
+
+const toB64 = (b: Uint8Array) => btoa(String.fromCharCode(...b));
+const fromB64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+
+export async function sealSecret(jwtSecret: string, secretBase32: string): Promise<string> {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await aesKey(jwtSecret), enc.encode(secretBase32)));
+  return `${toB64(iv)}.${toB64(ct)}`;
+}
+
+export async function openSecret(jwtSecret: string, sealed: string): Promise<string | null> {
+  try {
+    const [iv, ct] = sealed.split(".");
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: fromB64(iv!) }, await aesKey(jwtSecret), fromB64(ct!));
+    return new TextDecoder().decode(pt);
+  } catch {
+    return null;
+  }
+}
+
+
 const keyCache = new Map<string, Promise<CryptoKey>>();
 const hmacKey = (secret: string): Promise<CryptoKey> => {
   let k = keyCache.get(secret);
@@ -61,6 +90,11 @@ export interface JwtClaims {
   role: string;
   iat: number;
   exp: number;
+  /** P-12: sesión de soporte de solo lectura. `sup` es el usuario del equipo que la pidió. */
+  ro?: boolean;
+  sup?: string;
+  /** P-08: el administrador debe dar de alta su segundo factor; hasta entonces solo puede usar /auth/totp. */
+  tsr?: boolean;
 }
 
 const JWT_HEADER = b64url(enc.encode(JSON.stringify({ alg: "HS256", typ: "JWT" })));

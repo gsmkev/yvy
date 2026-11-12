@@ -123,6 +123,7 @@ export const PULL_TABLES = [
   "plot_seasons",
   "products",
   "machines",
+  "animals",
 ] as const;
 export type PullTable = (typeof PULL_TABLES)[number];
 
@@ -137,6 +138,7 @@ export const ASSIGNMENT_SCOPED_TABLES: readonly PullTable[] = [
   "alerts",
   "farm_layers",
   "plot_seasons",
+  "animals",
 ];
 
 export const cursor = z.object({ version: z.number().int().nonnegative(), id: z.string() });

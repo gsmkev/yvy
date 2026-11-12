@@ -221,6 +221,7 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     { key: "quantity", kind: "number", question: "app.healthQuantityQuestion", hint: "app.healthQuantityHint", unit: "", max: 1_000_000, skipIf: (a) => !a.productId },
     { key: "dose", kind: "text", question: "app.healthDoseQuestion", optional: true },
     { key: "counts", kind: "counter", question: "app.healthCountQuestion", hint: "app.herdCountHint" },
+    { key: "tag", kind: "text", question: "app.healthTagQuestion", optional: true, pattern: ANIMAL_TAG_RE },
     { key: "note", kind: "text", question: "app.addNote", optional: true },
   ],
   application: [

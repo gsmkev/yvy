@@ -96,6 +96,7 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
       if (str("reason")) parts.push(tr(`fields.healthReason_${d.reason}`, String(d.reason)));
       if (str("product")) parts.push(d.product as string);
       parts.push(t("fields.herdTotalValue", { n: HERD_CATEGORIES.reduce((n, k) => n + (c[k] ?? 0), 0) }));
+      if (str("tag")) parts.push(t("fields.tagValue", { n: d.tag as string }));
       break;
     }
     case "sowing":

@@ -2,6 +2,7 @@
  * Caravanas (G-21) y pesadas (G-22). Lógica pura compartida por el Worker, la web y la app.
  */
 import { z } from "zod";
+import { HERD_CATEGORIES } from "./livestock";
 
 /** Caravana: letras, números y guiones (ej. "PY-0012345" o "1234"). Se guarda en mayúsculas. */
 export const ANIMAL_TAG_RE = /^[A-Za-z0-9-]{1,20}$/;
@@ -12,6 +13,26 @@ export const animalTag = z
   .transform((s) => s.toUpperCase());
 
 export const normalizeTag = (s: string): string => s.trim().toUpperCase();
+
+export const ANIMAL_SEXES = ["hembra", "macho"] as const;
+export type AnimalSex = (typeof ANIMAL_SEXES)[number];
+
+/** Entrada para crear o editar un animal. La categoría es la misma lista que la hacienda por potrero. */
+export const animalInput = z.object({
+  tag: animalTag,
+  category: z.enum(HERD_CATEGORIES),
+  sex: z.enum(ANIMAL_SEXES),
+  /** Fecha de nacimiento "AAAA-MM-DD", si se conoce. */
+  birthDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullish(),
+  note: z.string().trim().max(500).nullish(),
+});
+export type AnimalInput = z.infer<typeof animalInput>;
+
+/** Tipos de registro que pueden llevar la caravana de un animal (y por eso forman su historial). */
+export const TAGGED_RECORD_KINDS = ["weighing", "reproduction", "health"] as const;
 
 // ---------- Pesadas y ganancia diaria de peso (G-22) ----------
 
@@ -120,6 +141,27 @@ export function groupWeighings(events: readonly WeighingEvent[]): { groups: Weig
     groups: [...groups].map(([k, g]) => weightSeries(k, g.label, g.pts)).sort(byLast),
     animals: [...animals].map(([k, pts]) => weightSeries(k, k, pts)).sort(byLast),
   };
+}
+
+/** Un animal, tal como lo devuelven la lista y el historial. */
+export interface AnimalRow {
+  id: string;
+  farmId: string;
+  tag: string;
+  category: (typeof HERD_CATEGORIES)[number];
+  sex: AnimalSex;
+  birthDate: string | null;
+  note: string | null;
+}
+
+/** Respuesta de GET /org/animals/:id/history. */
+export interface AnimalHistoryResponse {
+  animal: AnimalRow;
+  /** Registros que llevan la caravana, del más nuevo al más viejo. */
+  records: { id: string; kind: string; capturedAt: number; plotId: string | null; data: Record<string, unknown> }[];
+  /** Ganancia diaria de peso del animal con sus pesadas con caravana, o null si no tiene. */
+  weight: WeightSeries | null;
+  truncated: boolean;
 }
 
 export interface WeighingsResponse {

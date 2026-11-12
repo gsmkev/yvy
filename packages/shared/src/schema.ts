@@ -13,7 +13,8 @@
  *   pero sin depender de relojes de distintos datacenters.
  */
 import { ACTIVITIES, CONTRACTOR_SERVICES, COST_CATEGORIES, CURRENCIES, MACHINE_TYPES, METER_KINDS, PARTY_KINDS, RATE_UNITS, STOCK_ORIGINS, WAREHOUSE_TYPES } from "./erp";
-import { HEALTH_REASONS } from "./livestock";
+import { ANIMAL_SEXES } from "./animals";
+import { HEALTH_REASONS, HERD_CATEGORIES } from "./livestock";
 import { sql } from "drizzle-orm";
 import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
@@ -401,6 +402,33 @@ export const products = sqliteTable(
     ...synced,
   },
   (t) => [index("products_sync_idx").on(t.organizationId, t.version, t.id)],
+);
+
+/**
+ * Animales con caravana (G-21). La hacienda sigue contándose por potrero y categoría; esta tabla es para quien
+ * identifica a algunos animales individualmente. La caravana es única en la organización entre los no borrados.
+ */
+export const animals = sqliteTable(
+  "animals",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id").notNull(),
+    /** En mayúsculas (ver normalizeTag). */
+    tag: text("tag").notNull(),
+    category: text("category", { enum: HERD_CATEGORIES }).notNull(),
+    sex: text("sex", { enum: ANIMAL_SEXES }).notNull(),
+    birthDate: text("birth_date"),
+    note: text("note"),
+    ...synced,
+  },
+  (t) => [
+    uniqueIndex("animals_org_tag_uq")
+      .on(t.organizationId, t.tag)
+      .where(sql`deleted_at IS NULL`),
+    index("animals_sync_idx").on(t.organizationId, t.version, t.id),
+    index("animals_farm_idx").on(t.farmId),
+  ],
 );
 
 // ---------- ERP (ADR 0004) ----------

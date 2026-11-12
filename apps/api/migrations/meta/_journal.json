@@ -253,6 +253,13 @@
       "when": 1794420144101,
       "tag": "0035_common_silk_fever",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "6",
+      "when": 1794438061942,
+      "tag": "0036_special_switch",
+      "breakpoints": true
     }
   ]
 }

@@ -1666,6 +1666,8 @@ export const esPY = {
     unvisitedOne: "1 lote sin visitar hace más de {{days}} días",
     unvisitedMany: "{{n}} lotes sin visitar hace más de {{days}} días",
     unvisitedShowAll: "Ver todos los lotes",
+    unvisitedAfter: "Días sin visita para marcar un lote",
+    daysN: "{{n}} días",
     lastVisit: "Última visita",
     neverVisited: "Nunca",
     // api-c

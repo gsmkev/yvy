@@ -68,6 +68,8 @@ export interface FarmMapProps {
   selectedPlotId?: string | null;
   /** Lotes marcados para una tarea (selección múltiple): se dibujan como el lote elegido. */
   pickedPlotIds?: string[];
+  /** T-07: lotes sin visitar (borde trigo cuando se filtra por ellos). */
+  stalePlotIds?: string[];
   bounds?: [number, number, number, number] | null;
   /** Vuela a un punto (cambiar `n` para repetir el mismo destino). */
   flyTo?: { lon: number; lat: number; zoom?: number; n: number } | null;
@@ -175,9 +177,11 @@ export function FarmMap(props: FarmMapProps) {
             "case",
             ["boolean", ["get", "selected"], false],
             "#ffffff",
+            ["boolean", ["get", "stale"], false],
+            BRAND.trigo,
             ["coalesce", ["get", "color"], "rgba(255,255,255,0.7)"],
           ],
-          "line-width": ["case", ["boolean", ["get", "selected"], false], 3, 1.5],
+          "line-width": ["case", ["boolean", ["get", "selected"], false], 3, ["boolean", ["get", "stale"], false], 3, 1.5],
         },
       });
       // Alambrado: blanco punteado · camino: arena continuo · cañería: celeste con puntos · curso de agua: celeste continuo
@@ -399,6 +403,7 @@ export function FarmMap(props: FarmMapProps) {
             kind: pl.kind,
             color: pl.color,
             selected: pl.id === p.selectedPlotId || !!p.pickedPlotIds?.includes(pl.id),
+            stale: !!p.stalePlotIds?.includes(pl.id),
           },
           geometry: JSON.parse(pl.geometry),
         })),
@@ -485,6 +490,7 @@ export function FarmMap(props: FarmMapProps) {
     props.heat,
     props.selectedPlotId,
     props.pickedPlotIds,
+    props.stalePlotIds,
     props.editPlot?.id,
     props.layers,
     props.boundaries,

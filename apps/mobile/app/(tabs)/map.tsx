@@ -7,7 +7,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { Camera, Map, Marker, type CameraRef, type StyleSpecification } from "@maplibre/maplibre-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { Compass, LocateFixed, Navigation, X } from "lucide-react-native";
-import { BRAND, isFieldRole, describeRecord, t, uaPerHa } from "@yvy/shared";
+import { BRAND, LIMITS, isFieldRole, describeRecord, t, uaPerHa } from "@yvy/shared";
 import { containsPoint, samplingGrid, type Area } from "@yvy/geo";
 import { distanceM } from "../../src/lib/bearing";
 import { useRef } from "react";
@@ -135,7 +135,7 @@ export default function MapScreen() {
       type: "geojson",
       data: {
         type: "FeatureCollection",
-        features: plots.map((p) => feature(p.geometry, { sel: p.id === selected ? 1 : 0, stale: (lastVisit.get(p.id) ? daysAgo(lastVisit.get(p.id)!) : 99) >= 7 ? 1 : 0 })),
+        features: plots.map((p) => feature(p.geometry, { sel: p.id === selected ? 1 : 0, stale: (lastVisit.get(p.id) ? daysAgo(lastVisit.get(p.id)!) : 99) >= LIMITS.visits.defaultStaleDays ? 1 : 0 })),
       },
     };
     sources.records = {

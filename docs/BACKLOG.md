@@ -119,7 +119,7 @@ Detalles que un usuario espera sin pedirlos.
 | F-08 | Varias fotos con dibujo encima (flecha, círculo) | Señalar la plaga | App | P2 | M | Hecho |
 | F-09 | Nota de voz grabada sin señal; transcripción cuando vuelve la señal | El peón prefiere hablar | App, Jobs | P2 | M | Hecho |
 | F-10 | Anotar en varios lotes a la vez (lluvia general, recorrida de 5 lotes) | Menos carga repetida | App | P1 | M | Hecho |
-| F-11 | Lluvia en un toque desde Hoy y desde un widget de Android | El registro más frecuente | App | P1 | S | Parcial |
+| F-11 | Lluvia en un toque desde Hoy y desde un widget de Android | El registro más frecuente | App | P1 | S | Parcial (hecho: botón en Hoy y atajo de Android al mantener el ícono; falta el widget, que pide un módulo nativo que no se puede probar sin compilar el APK) |
 | F-12 | Monitoreo de plagas por estaciones: N puntos por lote con conteo, promedio y comparación con el umbral de daño | Manejo integrado de plagas real | App, Web | P1 | M | Hecho |
 | F-13 | Plantillas de monitoreo por cultivo (soja: chinches, orugas, roya; maíz: cogollero, chicharrita) | Carga guiada | App | P1 | M | Hecho |
 | F-14 | Formularios configurables por la organización (campos propios) | Cada estancia mide distinto | Web, App | P2 | L | Hecho |

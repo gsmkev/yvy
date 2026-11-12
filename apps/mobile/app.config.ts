@@ -13,6 +13,12 @@ export const updatesConfig = (env: Record<string, string | undefined>): ExpoConf
     ? { url: env.EAS_UPDATE_URL, enabled: true, checkAutomatically: "ON_LOAD", fallbackToCacheTimeout: 0 }
     : { enabled: false };
 
+/**
+ * F-11: textos del atajo "Anotar lluvia" de Android. Se repiten acá porque Expo lee esta config antes de
+ * armar la app; un test los compara con i18n (app.shortcutRainShort y app.shortcutRainLong).
+ */
+export const SHORTCUT_LABELS = { rainShort: "Anotar lluvia", rainLong: "Anotar la lluvia de hoy" };
+
 const config: ExpoConfig = {
   name: "Yvy",
   slug: "yvy",
@@ -47,6 +53,8 @@ const config: ExpoConfig = {
     ["expo-audio", { microphonePermission: "Yvy usa el micrófono para grabar notas de voz que se guardan con el registro." }],
     ["expo-notifications", { color: "#7A9A3F" }],
     "@maplibre/maplibre-react-native",
+    // F-11: atajo de Android que abre la anotación de lluvia (yvy://annotate?kind=rain&farmLevel=1).
+    ["./plugins/android-shortcuts", SHORTCUT_LABELS],
     // Android 9+ (PRD §7)
     [
       "expo-build-properties",

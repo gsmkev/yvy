@@ -341,6 +341,8 @@ export const esPY = {
     toastSavedSent: "Guardado y enviado",
     toastSavedLocal: "Guardado en el celular",
     quickRain: "Anotar lluvia",
+    shortcutRainShort: "Anotar lluvia",
+    shortcutRainLong: "Anotar la lluvia de hoy",
     gpsSlowHint: "Buscando satélites… al aire libre tarda menos. No necesita internet.",
     gpsColdHint: "Sigue buscando. Después de prender el celular o de viajar lejos puede tardar hasta un minuto. Esperá a cielo abierto: el GPS anda sin internet ni crédito.",
     gpsNoneHint: "No encontramos señal de GPS. Salí a cielo abierto y probá de nuevo: no necesita internet.",

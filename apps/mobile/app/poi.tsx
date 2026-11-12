@@ -11,7 +11,7 @@ import { currentFix, guessPlots, type Fix } from "../src/lib/location";
 import { useSession } from "../src/lib/session";
 import { localChanged } from "../src/lib/sync";
 import { toastSaved } from "../src/lib/toast";
-import { Button, Row, s as k, Text, TextInput } from "../src/ui/kit";
+import { Button, RadioGroup, Row, s as k, Text, TextInput } from "../src/ui/kit";
 import { POI_ICON } from "../src/ui/icons";
 import { C, RADIUS, T } from "../src/ui/theme";
 import { gpsHintText, useGpsStage } from "../src/lib/gpsHint";
@@ -57,9 +57,11 @@ function MarkPoi() {
       {fix === "searching" && gpsHint && <Text style={[T.small, { marginTop: 6 }]}>{gpsHint}</Text>}
       {!here && fix !== "searching" && <Text style={[T.small, { marginTop: 6 }]}>{t("app.gpsNoneHint")}</Text>}
       <Text style={[T.heading, { marginTop: 24, marginBottom: 4 }]}>{t("app.poiWhat")}</Text>
-      {POI_KINDS.map((kd) => (
-        <Row key={kd} title={t(`ui.poiKinds_${kd}` as MessageKey)} left={<PoiIcon kind={kd} />} selected={kind === kd} onPress={() => setKind(kd)} />
-      ))}
+      <RadioGroup label={t("app.poiWhat")}>
+        {POI_KINDS.map((kd) => (
+          <Row key={kd} choice="radio" title={t(`ui.poiKinds_${kd}` as MessageKey)} left={<PoiIcon kind={kd} />} selected={kind === kd} onPress={() => setKind(kd)} />
+        ))}
+      </RadioGroup>
       <Text style={[T.heading, { marginTop: 24, marginBottom: 8 }]}>{t("app.poiName")}</Text>
       <TextInput
         value={name}

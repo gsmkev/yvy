@@ -18,7 +18,7 @@ import { appendFix, startWalk, traceLengthM } from "../src/lib/perimeterWalk";
 import { localChanged } from "../src/lib/sync";
 import { toastSaved } from "../src/lib/toast";
 import { useLocal } from "../src/lib/useLocal";
-import { Button, Row, s as k, Text, TextInput } from "../src/ui/kit";
+import { Button, RadioGroup, Row, s as k, Text, TextInput } from "../src/ui/kit";
 import { C, GUTTER, RADIUS, T } from "../src/ui/theme";
 import { withWriteAccess } from "../src/ui/ReadOnlyGate";
 
@@ -191,15 +191,19 @@ function PlotDraw() {
           style={st.input}
         />
         <Text style={[T.heading, { marginTop: 24, marginBottom: 4 }]}>{t("app.plotDrawKind")}</Text>
-        {PLOT_KINDS.map((kd) => (
-          <Row key={kd} title={kd === "crop" ? t("ui.crop") : t("ui.pasture")} selected={kind === kd} onPress={() => setKind(kd)} />
-        ))}
+        <RadioGroup label={t("app.plotDrawKind")}>
+          {PLOT_KINDS.map((kd) => (
+            <Row key={kd} choice="radio" title={kd === "crop" ? t("ui.crop") : t("ui.pasture")} selected={kind === kd} onPress={() => setKind(kd)} />
+          ))}
+        </RadioGroup>
         {kind === "crop" && (
           <>
             <Text style={[T.heading, { marginTop: 24, marginBottom: 4 }]}>{t("app.plotDrawCrop")}</Text>
-            {CROPS.map((c) => (
-              <Row key={c} title={t(`fields.crop_${c}` as MessageKey)} selected={crop === c} onPress={() => setCrop(c)} />
-            ))}
+            <RadioGroup label={t("app.plotDrawCrop")}>
+              {CROPS.map((c) => (
+                <Row key={c} choice="radio" title={t(`fields.crop_${c}` as MessageKey)} selected={crop === c} onPress={() => setCrop(c)} />
+              ))}
+            </RadioGroup>
           </>
         )}
         <Button big title={t("app.plotDrawSave")} disabled={!name.trim() || !("polygon" in draft)} onPress={save} style={{ marginTop: 28 }} />

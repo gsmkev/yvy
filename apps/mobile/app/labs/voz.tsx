@@ -1,7 +1,8 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { t } from "@yvy/shared";
 import { Lab, Fact } from "../../src/labs/Lab";
 import { C, T } from "../../src/ui/theme";
+import { Text } from "../../src/ui/kit";
 
 export default function Voz() {
   return (

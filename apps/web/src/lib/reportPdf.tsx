@@ -6,7 +6,7 @@ import { fmtDateTime, fmtHa, fmtIsoDate } from "./format";
 import { t, tk } from "./i18n";
 import type { Alert, Farm, Plot, RecordRow } from "./types";
 
-const s = StyleSheet.create({
+export const s = StyleSheet.create({
   page: { padding: 28, fontSize: 9, color: BRAND.surco, fontFamily: "Helvetica" },
   h1: { fontSize: 16, fontFamily: "Helvetica-Bold" },
   h2: { fontSize: 11, fontFamily: "Helvetica-Bold", marginTop: 10, marginBottom: 4 },
@@ -36,7 +36,7 @@ const s = StyleSheet.create({
   },
 });
 
-function MiniMap({
+export function MiniMap({
   farm,
   plots,
   records,

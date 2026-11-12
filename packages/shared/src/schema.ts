@@ -12,7 +12,7 @@
  *   El pull pagina por (version, id): equivale al "updated_at + desempate por id" del PRD §11
  *   pero sin depender de relojes de distintos datacenters.
  */
-import { ACTIVITIES, CONTRACTOR_SERVICES, COST_CATEGORIES, CURRENCIES, MACHINE_TYPES, METER_KINDS, PARTY_KINDS, RATE_UNITS, STOCK_ORIGINS, WAREHOUSE_TYPES } from "./erp";
+import { ACTIVITIES, CONTRACTOR_SERVICES, COST_CATEGORIES, CURRENCIES, MACHINE_TYPES, MAINTENANCE_KINDS, METER_KINDS, PARTY_KINDS, RATE_UNITS, STOCK_ORIGINS, WAREHOUSE_TYPES } from "./erp";
 import { ANIMAL_SEXES } from "./animals";
 import { HEALTH_REASONS, HERD_CATEGORIES } from "./livestock";
 import { sql } from "drizzle-orm";
@@ -1499,4 +1499,45 @@ export const farmAccess = sqliteTable(
     createdAt: integer("created_at").notNull(),
   },
   (t) => [primaryKey({ columns: [t.organizationId, t.userId, t.farmId] }), index("farm_access_farm_idx").on(t.farmId)],
+);
+
+// ---------- ERP, segunda tanda (ADR 0004): tablas de oficina, no se sincronizan ----------
+
+/** Plan de mantenimiento preventivo de una máquina: cada tantas horas o kilómetros (E-22). */
+export const maintenancePlans = sqliteTable(
+  "maintenance_plans",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    machineId: text("machine_id").notNull(),
+    name: text("name").notNull(),
+    /** Cada cuántas horas o kilómetros (según el medidor de la máquina). */
+    everyUnits: real("every_units").notNull(),
+    /** Lectura del medidor en el último servicio. */
+    lastDoneMeter: real("last_done_meter").notNull().default(0),
+    ...timestamps,
+  },
+  (t) => [index("maintenance_plans_machine_idx").on(t.organizationId, t.machineId)],
+);
+
+/** Historial de servicios y reparaciones de una máquina, con su costo (E-22). */
+export const maintenanceLogs = sqliteTable(
+  "maintenance_logs",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    machineId: text("machine_id").notNull(),
+    planId: text("plan_id"),
+    kind: text("kind", { enum: MAINTENANCE_KINDS }).notNull(),
+    occurredAt: integer("occurred_at").notNull(),
+    meterValue: real("meter_value"),
+    description: text("description"),
+    partyId: text("party_id"),
+    amount: integer("amount"),
+    currency: text("currency", { enum: CURRENCIES }),
+    amountPyg: integer("amount_pyg"),
+    createdBy: text("created_by").notNull(),
+    ...timestamps,
+  },
+  (t) => [index("maintenance_logs_machine_idx").on(t.organizationId, t.machineId, t.occurredAt)],
 );

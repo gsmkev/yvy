@@ -189,5 +189,9 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `api_tokens_org_idx` ON `api_tokens` (`organization_id`);",
   "ALTER TABLE `organizations` ADD `referral_credited_at` integer;",
   "CREATE TABLE `stock_minimums` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`product_id` text NOT NULL,\n\t`warehouse_id` text NOT NULL,\n\t`min_qty` real NOT NULL,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
-  "CREATE UNIQUE INDEX `stock_minimums_uq` ON `stock_minimums` (`organization_id`,`product_id`,`warehouse_id`);"
+  "CREATE UNIQUE INDEX `stock_minimums_uq` ON `stock_minimums` (`organization_id`,`product_id`,`warehouse_id`);",
+  "CREATE TABLE `maintenance_logs` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`machine_id` text NOT NULL,\n\t`plan_id` text,\n\t`kind` text NOT NULL,\n\t`occurred_at` integer NOT NULL,\n\t`meter_value` real,\n\t`description` text,\n\t`party_id` text,\n\t`amount` integer,\n\t`currency` text,\n\t`amount_pyg` integer,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
+  "CREATE INDEX `maintenance_logs_machine_idx` ON `maintenance_logs` (`organization_id`,`machine_id`,`occurred_at`);",
+  "CREATE TABLE `maintenance_plans` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`machine_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`every_units` real NOT NULL,\n\t`last_done_meter` real DEFAULT 0 NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
+  "CREATE INDEX `maintenance_plans_machine_idx` ON `maintenance_plans` (`organization_id`,`machine_id`);"
 ];

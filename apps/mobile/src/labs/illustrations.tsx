@@ -116,3 +116,42 @@ export function CowIllustration({ size = 280 }: { size?: number }) {
     </Svg>
   );
 }
+
+/** Macolla de gramínea con la espiga todavía cerrada, vista de costado. */
+export function WeedIllustration({ size = 280 }: { size?: number }) {
+  const blades = [
+    "M120 200 Q96 150 70 96",
+    "M120 200 Q108 140 100 70",
+    "M120 200 Q122 130 126 56",
+    "M120 200 Q140 140 156 78",
+    "M120 200 Q150 160 184 112",
+  ];
+  return (
+    <Svg width={size} height={size} viewBox="0 0 240 240" accessibilityLabel="Macolla de maleza de ejemplo">
+      <Rect width="240" height="240" fill={LINO} />
+      <Rect x="0" y="198" width="240" height="42" fill={SURCO} />
+      {blades.map((d) => (
+        <Path key={d} d={d} stroke={SOJA} strokeWidth="7" strokeLinecap="round" fill="none" />
+      ))}
+      <Circle cx="126" cy="56" r="22" fill="none" stroke={TRIGO} strokeWidth="2.5" />
+    </Svg>
+  );
+}
+
+/** Caravana amarilla en una oreja y, abajo, una etiqueta de producto con sus renglones. */
+export function TagLabelIllustration({ size = 280 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 240 240" accessibilityLabel="Caravana y etiqueta de producto de ejemplo">
+      <Rect width="240" height="240" fill={LINO} />
+      <Path d="M24 8 Q60 -6 96 10 L100 54 Q70 70 28 56 Z" fill={SURCO} />
+      <Rect x="58" y="34" width="52" height="44" rx="6" fill={TRIGO} stroke={SURCO} strokeWidth="2" />
+      <Path d="M70 50 H98 M70 62 H92" stroke={SURCO} strokeWidth="3" strokeLinecap="round" />
+      <Circle cx="58" cy="44" r="4" fill={SURCO} />
+      <Rect x="130" y="40" width="82" height="34" fill="none" stroke={ALERTA} strokeWidth="2" strokeDasharray="5 4" />
+      <Rect x="28" y="112" width="184" height="104" fill="#FFFFFF" stroke={SURCO} strokeWidth="2" />
+      <Rect x="28" y="112" width="184" height="22" fill={SOJA} />
+      <Path d="M42 154 H150 M42 170 H182 M42 186 H130 M42 202 H166" stroke={SURCO} strokeWidth="3" strokeLinecap="round" opacity={0.6} />
+      <Rect x="36" y="146" width="116" height="16" fill="none" stroke={ALERTA} strokeWidth="2" strokeDasharray="5 4" />
+    </Svg>
+  );
+}

@@ -10,6 +10,7 @@ import { FuelPanel } from "../components/erp/FuelPanel";
 import { OrdersPanel } from "../components/erp/OrdersPanel";
 import { ResultsPanel } from "../components/erp/ResultsPanel";
 import { MachinesPanel } from "../components/erp/MachinesPanel";
+import { LaborCostPanel } from "../components/erp/LaborCostPanel";
 import { MaintenancePanel } from "../components/erp/MaintenancePanel";
 import { MinStockPanel } from "../components/erp/MinStockPanel";
 import { PartiesPanel } from "../components/erp/PartiesPanel";
@@ -33,6 +34,7 @@ const SECTIONS: Section[] = [
   { id: "stock", label: "ui.adminSection_stock", render: () => <StockPanel /> },
   { id: "minstock", label: "ui.adminSection_minstock", render: () => <MinStockPanel /> },
   { id: "maintenance", label: "ui.adminSection_maintenance", render: () => <MaintenancePanel /> },
+  { id: "labor", label: "ui.adminSection_labor", render: () => <LaborCostPanel /> },
   { id: "fuel", label: "ui.adminSection_fuel", render: () => <FuelPanel /> },
   { id: "orders", label: "ui.adminSection_orders", render: () => <OrdersPanel /> },
   { id: "results", label: "ui.adminSection_results", render: () => <ResultsPanel /> },

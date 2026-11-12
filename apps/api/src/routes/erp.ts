@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { LIMITS } from "@yvy/shared";
-import { maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
+import { machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { HTTPException } from "hono/http-exception";
 import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
@@ -12,6 +12,7 @@ import { fuelReport } from "../db/fuel";
 import { createWorkOrder, listWorkOrders } from "../db/work-orders";
 import { fixDefaultWarehouse } from "../db/stock";
 import { adjustStock, consumeStock, deleteMove, expiringLots, listMoves, purchaseStock, requireWarehouseUnused, stockSummary, transferStock } from "../db/stock-moves";
+import { deleteMachineCost, laborComparison, listMachineCosts, saveMachineCost } from "../db/labor-cost";
 import { createLog, deleteLog, duePlans, listLogs } from "../db/maintenance";
 import { deleteMinimum, listMinimums, lowStock, saveMinimum } from "../db/stock-minimums";
 import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
@@ -268,3 +269,17 @@ erp.delete("/maintenance/logs/:id", async (c) => {
   await deleteLog(c.var.sdb, c.req.param("id"));
   return c.json({ ok: true });
 });
+
+// ---------- Labor propia frente a contratista (E-23) ----------
+// Son montos: solo dueño y administrador.
+
+erp.get("/machine-costs", async (c) => c.json(await listMachineCosts(c.var.sdb)));
+erp.put("/machine-costs/:machineId", async (c) => {
+  await saveMachineCost(c.var.sdb, parse(uuid, c.req.param("machineId")), parse(machineCostInput, await readJson(c.req)));
+  return c.json({ ok: true });
+});
+erp.delete("/machine-costs/:machineId", async (c) => {
+  await deleteMachineCost(c.var.sdb, parse(uuid, c.req.param("machineId")));
+  return c.json({ ok: true });
+});
+erp.get("/labor-cost", async (c) => c.json(await laborComparison(c.var.sdb)));

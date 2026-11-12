@@ -1541,3 +1541,30 @@ export const maintenanceLogs = sqliteTable(
   },
   (t) => [index("maintenance_logs_machine_idx").on(t.organizationId, t.machineId, t.occurredAt)],
 );
+
+/** Datos para costear el trabajo propio de una máquina (E-23): amortización, operario, rendimiento y combustible. */
+export const machineCosts = sqliteTable(
+  "machine_costs",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    machineId: text("machine_id").notNull(),
+    /** Labor que hace la máquina: se compara con los contratistas de ese servicio. */
+    service: text("service", { enum: CONTRACTOR_SERVICES }).notNull(),
+    /** Valor de compra y de reventa estimado, en guaraníes. */
+    purchasePricePyg: integer("purchase_price_pyg").notNull().default(0),
+    residualPyg: integer("residual_pyg").notNull().default(0),
+    /** Vida útil en horas de motor. */
+    lifeHours: real("life_hours").notNull().default(0),
+    /** Costo del operario por hora, en guaraníes. */
+    operatorPerHourPyg: integer("operator_per_hour_pyg").notNull().default(0),
+    /** Hectáreas por hora de trabajo. */
+    haPerHour: real("ha_per_hour"),
+    /** Litros por hora (si no se carga, sale de las cargas de combustible) y precio del litro (si no, el costo del stock). */
+    fuelLitersPerHour: real("fuel_liters_per_hour"),
+    fuelPricePyg: integer("fuel_price_pyg"),
+    createdBy: text("created_by").notNull(),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("machine_costs_machine_uq").on(t.organizationId, t.machineId)],
+);

@@ -50,6 +50,9 @@ describe("órdenes de trabajo (E-20)", () => {
     expect(JSON.parse(tasks[0].prescription).products[0].productId).toBe(s.productId);
     const rows = await list(s.owner.token);
     expect(rows.map((x) => [x.status, x.plannedAreaHa])).toEqual([["open", 10], ["open", 10]]);
+    // E-20: la lista trae el nombre del contratista y la hora de alta, para agrupar las tareas de una misma orden.
+    expect(rows.map((x) => x.contractorName)).toEqual(["Pulverizaciones Villalba", "Pulverizaciones Villalba"]);
+    expect(rows[0].createdAt).toBe(rows[1].createdAt);
   });
 
   it("otras labores usan su tipo de registro; sin superficie prevista toma la del lote", async () => {

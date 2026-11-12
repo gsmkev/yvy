@@ -72,10 +72,12 @@ Con eso:
 - **Deploy** (`deploy.yml`): cada push a `main` corre lint, typecheck y tests, aplica migraciones y publica.
 - **Jobs de datos** (`jobs.yml`): Sentinel-2 diario, CHIRPS diario, FIRMS cada 3 h, climatología y mapa base semanal; fondo del país cada 3 meses.
   Repo privado: ~640 min/mes de 2.000 gratis para 20 estancias (ilimitado si el repo es público).
-- **Backup** (`backup.yml`): export semanal de D1 a R2.
-- **Verificación de backup** (`backup-verify.yml`): el día 2 de cada mes baja la última copia de R2, la restaura en una base
-  SQLite y comprueba el esquema contra las migraciones y que las tablas clave tengan filas. Si falla, el workflow queda en rojo
-  y GitHub avisa por email (ver "Restaurar un backup").
+- **Backup** (`backup.yml`, domingos): cuenta las filas de las tablas principales de D1 (solo lectura), exporta D1, restaura
+  la copia en una base SQLite temporal y la verifica (esquema contra las migraciones, tablas clave con filas y conteos contra
+  lo que tenía D1), y sube a R2 la copia y su `yvy-AAAA-MM-DD.counts.json`. La copia se sube aunque la verificación falle;
+  en ese caso el trabajo queda en rojo y GitHub avisa por email.
+- **Verificación de backup** (`backup-verify.yml`): el día 2 de cada mes baja de R2 la última copia con sus conteos y repite
+  la restauración y la verificación, para confirmar que lo guardado sigue sirviendo (ver "Restaurar un backup").
 
 ## 4. Clave de firma del APK (guardala: sin ella no hay actualizaciones)
 
@@ -150,7 +152,11 @@ pnpm --filter api backup:restore -- yvy-2026-11-08.sql.gz --db /tmp/yvy-restaura
 ```
 
 Imprime las filas de cada tabla y sale con error si falta una tabla o columna respecto de `apps/api/migrations`, si
-`organizations`, `users` o `memberships` están vacías, o si no llega a un `--min-rows tabla=n`. Después abrí la base con
+`organizations`, `users` o `memberships` están vacías, si no llega a un `--min-rows tabla=n` o, con `--counts conteos.json`
+(`--latest` lo baja solo), si en alguna tabla principal faltan más filas que el 2 % (mínimo 5) de las que tenía D1 al exportar.
+Los conteos los saca `node scripts/backup-counts.mjs salida.json`: son `SELECT count(*)` de 14 tablas de negocio, de solo
+lectura, y cada conteo lee las filas de la tabla, así que no suman casi nada contra las 5 millones de lecturas diarias del plan gratis.
+`--local` los saca del D1 local, para probar todo el circuito sin tocar producción. Después abrí la base con
 `sqlite3 /tmp/yvy-restaurada.sqlite` para mirar los datos. Necesita Node 22 (usa `node:sqlite`).
 
 **Cargarla en el D1 local** para trabajar con datos reales: descomprimí (`gunzip -k yvy-….sql.gz`) y corré

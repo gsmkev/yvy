@@ -1,4 +1,8 @@
-# Backup semanal de D1 a R2 (anexo §4.10). D1 Time Travel cubre 7 días; esto guarda historia más larga.
+# Backup semanal de D1 a R2 (anexo §4.10), restaurado y verificado en el mismo trabajo (P-05).
+# D1 Time Travel cubre 7 días; esto guarda historia más larga. Pasos: contar filas de D1 -> exportar -> restaurar la copia
+# en una base SQLite temporal y compararla (esquema, tablas clave y conteos) -> subir a R2. La copia se sube aunque la
+# verificación falle (mejor una copia dudosa que ninguna), pero el trabajo queda en rojo y GitHub avisa por email.
+# Ver docs/DEPLOY.md, "Restaurar un backup".
 name: Backup D1
 on:
   schedule: [{ cron: "20 6 * * 0" }]
@@ -17,8 +21,31 @@ jobs:
       - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
-      - run: |
-          f="yvy-$(date -u +%Y-%m-%d).sql"
-          npx wrangler d1 export yvy --remote --output "$f"
-          gzip "$f"
-          npx wrangler r2 object put "yvy-media/backups/$f.gz" --file "$f.gz" --remote
+      - name: Contar las filas de D1 (solo lectura) y exportar
+        id: export
+        run: |
+          d="$(date -u +%Y-%m-%d)"
+          echo "d=$d" >> "$GITHUB_OUTPUT"
+          node scripts/backup-counts.mjs "yvy-$d.counts.json"
+          npx wrangler d1 export yvy --remote --output "yvy-$d.sql"
+          gzip "yvy-$d.sql"
+      - name: Restaurar en una base temporal y verificar
+        id: verify
+        run: |
+          d="${{ steps.export.outputs.d }}"
+          node scripts/restore-backup.mjs "yvy-$d.sql.gz" --counts "yvy-$d.counts.json" --db "$RUNNER_TEMP/restaurada.sqlite" | tee "$RUNNER_TEMP/resultado.txt"
+      - name: Subir la copia y los conteos a R2
+        if: ${{ always() && steps.export.outcome == 'success' }}
+        run: |
+          d="${{ steps.export.outputs.d }}"
+          npx wrangler r2 object put "yvy-media/backups/yvy-$d.sql.gz" --file "yvy-$d.sql.gz" --remote
+          npx wrangler r2 object put "yvy-media/backups/yvy-$d.counts.json" --file "yvy-$d.counts.json" --remote
+      - name: Resumen
+        if: always()
+        run: |
+          {
+            echo "### Backup de D1"
+            echo '```'
+            cat "$RUNNER_TEMP/resultado.txt" 2>/dev/null || echo "No se pudo restaurar la copia"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -14,8 +14,9 @@ import { toastSaved } from "../src/lib/toast";
 import { Button, Row, s as k, Text, TextInput } from "../src/ui/kit";
 import { C, RADIUS, T } from "../src/ui/theme";
 import { gpsHintText, useGpsStage } from "../src/lib/gpsHint";
+import { withWriteAccess } from "../src/ui/ReadOnlyGate";
 
-export default function MarkPoi() {
+function MarkPoi() {
   const session = useSession();
   const [fix, setFix] = useState<Fix | null | "searching">("searching");
   const [kind, setKind] = useState<(typeof POI_KINDS)[number]>("other");
@@ -70,3 +71,6 @@ export default function MarkPoi() {
 const st = StyleSheet.create({
   input: { ...T.body, minHeight: 56, borderWidth: 1.5, borderColor: C.lineaFuerte, borderRadius: RADIUS, paddingHorizontal: 14, backgroundColor: C.blanco },
 });
+
+/** F-29: en solo lectura esta pantalla no se abre. */
+export default withWriteAccess(MarkPoi);

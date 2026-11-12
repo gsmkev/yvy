@@ -137,7 +137,7 @@ Detalles que un usuario espera sin pedirlos.
 | F-26 | Mapa sin conexión de varias estancias y de zonas de camino | Viajes entre campos | App | P2 | M | Parcial (hecho: varias estancias en fila con tope de LIMITS.offline.maxMapBytes; faltan las zonas de camino: sin mapa de fondo de caminos no hay qué bajar, depende de M-15 y su ADR de OpenStreetMap) |
 | F-27 | Lector de caravanas electrónicas (RFID) por Bluetooth | Ganadería (ver G-21) | App | P3 | L | Falta |
 | F-28 | Escanear código QR de un punto de interés pegado en un bebedero o silo para anotar ahí | Anotar sin buscar | App | P2 | S | Hecho |
-| F-29 | Modo "solo lectura" para el dueño en la app con todos los lotes | Hoy la app está pensada para el empleado | App | P1 | M | Parcial |
+| F-29 | Modo "solo lectura" para el dueño en la app con todos los lotes | Hoy la app está pensada para el empleado | App | P1 | M | Hecho |
 | F-30 | Mensaje de texto (SMS) de emergencia con coordenadas si no hay datos pero hay señal de voz | Accidentes y fuego | App | P3 | S | Hecho |
 
 ---

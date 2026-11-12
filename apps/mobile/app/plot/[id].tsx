@@ -12,6 +12,7 @@ import { useSession } from "../../src/lib/session";
 import { useLocal } from "../../src/lib/useLocal";
 import { Button, Row, s as k, Text } from "../../src/ui/kit";
 import { C, F, T } from "../../src/ui/theme";
+import { useReadOnly } from "../../src/lib/readOnly";
 
 const RECENT = 10;
 const day = (ms: number) => new Date(ms).toLocaleDateString("es-PY", { day: "numeric", month: "short" });
@@ -20,6 +21,7 @@ const num = (v: number, digits: number) => v.toLocaleString("es-PY", { minimumFr
 export default function PlotSheet() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const session = useSession();
+  const readOnly = useReadOnly();
   const data = useLocal(() => {
     const db = getDb();
     const plot = db.plots().find((p) => p.id === id) ?? null;
@@ -59,7 +61,7 @@ export default function PlotSheet() {
         ].join(" · ")}
       </Text>
 
-      <Button big title={t("app.annotateIn", { plot: plot.name })} onPress={() => router.push({ pathname: "/annotate", params: { plotId: plot.id } })} style={{ marginTop: 20 }} />
+      {!readOnly && <Button big title={t("app.annotateIn", { plot: plot.name })} onPress={() => router.push({ pathname: "/annotate", params: { plotId: plot.id } })} style={{ marginTop: 20 }} />}
 
       <Text style={st.section}>{t("app.plotSheetNow")}</Text>
       <Row

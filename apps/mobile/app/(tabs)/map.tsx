@@ -28,6 +28,7 @@ import { LayerSwitch, NdviLegend } from "../../src/ui/MapLayerControls";
 import { showToast } from "../../src/lib/toast";
 import { Button, Text } from "../../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
+import { useReadOnly } from "../../src/lib/readOnly";
 
 const FIT_PADDING = { top: 120, bottom: 40, left: 24, right: 24 };
 const PLOT_PADDING = { top: 120, bottom: 320, left: 40, right: 40 };
@@ -96,7 +97,8 @@ export default function MapScreen() {
     setSelected(null);
     if (farm) camera.current?.fitBounds([farm.minLon, farm.minLat, farm.maxLon, farm.maxLat], { padding: FIT_PADDING, duration: 600 });
   }, [farm?.id]);
-  const canMarkPoi = !isFieldRole(useSession()?.organization.role ?? "worker");
+  const readOnly = useReadOnly();
+  const canMarkPoi = !isFieldRole(useSession()?.organization.role ?? "worker") && !readOnly;
   useEffect(() => {
     tilesBaseUrl().then(setRemoteBase, () => setRemoteBase(null));
   }, []);
@@ -326,8 +328,8 @@ export default function MapScreen() {
               {new Date(r.capturedAt).toLocaleDateString("es-PY", { day: "numeric", month: "short" })} · {describeRecord(r.kind, JSON.parse(r.data))}
             </Text>
           ))}
-          <Button big title={t("app.annotateIn", { plot: plot.name })} onPress={() => router.push({ pathname: "/annotate", params: { plotId: plot.id } })} style={{ marginTop: 16 }} />
-          <Button kind="secondary" title={t("app.plotSheetOpen")} onPress={() => router.push({ pathname: "/plot/[id]", params: { id: plot.id } })} style={{ marginTop: 8 }} />
+          {!readOnly && <Button big title={t("app.annotateIn", { plot: plot.name })} onPress={() => router.push({ pathname: "/annotate", params: { plotId: plot.id } })} style={{ marginTop: 16 }} />}
+          <Button kind={readOnly ? "primary" : "secondary"} title={t("app.plotSheetOpen")} onPress={() => router.push({ pathname: "/plot/[id]", params: { id: plot.id } })} style={{ marginTop: readOnly ? 16 : 8 }} />
           <Button
             kind="text"
             title={gridHa === null ? t("app.samplingShow5") : gridHa === 5 ? t("app.samplingShow10") : t("app.samplingHide")}

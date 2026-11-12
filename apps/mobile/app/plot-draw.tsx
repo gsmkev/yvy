@@ -20,10 +20,11 @@ import { toastSaved } from "../src/lib/toast";
 import { useLocal } from "../src/lib/useLocal";
 import { Button, Row, s as k, Text, TextInput } from "../src/ui/kit";
 import { C, GUTTER, RADIUS, T } from "../src/ui/theme";
+import { withWriteAccess } from "../src/ui/ReadOnlyGate";
 
 const MAX_MARKERS = 120;
 
-export default function PlotDraw() {
+function PlotDraw() {
   const session = useSession();
   const { plotId, mode } = useLocalSearchParams<{ plotId?: string; mode?: string }>();
   const { current } = useFarmChoice();
@@ -300,3 +301,6 @@ const st = StyleSheet.create({
   vertex: { width: 18, height: 18, borderRadius: 9, backgroundColor: "#D9A93A", borderWidth: 2.5, borderColor: "#ffffff" },
   vertexSel: { width: 26, height: 26, borderRadius: 13, backgroundColor: "#D2462B" },
 });
+
+/** F-29: en solo lectura esta pantalla no se abre. */
+export default withWriteAccess(PlotDraw);

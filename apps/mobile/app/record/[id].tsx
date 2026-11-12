@@ -17,6 +17,7 @@ import { Button, s as k, Text, TextInput } from "../../src/ui/kit";
 import { showToast, toastSaved } from "../../src/lib/toast";
 import { VoicePlayer } from "../../src/ui/VoicePlayer";
 import { T } from "../../src/ui/theme";
+import { useReadOnly } from "../../src/lib/readOnly";
 
 export default function RecordDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -57,6 +58,7 @@ export default function RecordDetail() {
     Linking.openURL(whatsappUrl(text)).catch(() => undefined);
   };
 
+  const readOnly = useReadOnly();
   const remove = () =>
     Alert.alert(t("app.recordDeleteTitle"), t("ui.confirmDelete", { name: t(`recordKinds.${record.kind}`).toLowerCase() }), [
       { text: t("ui.cancel"), style: "cancel" },
@@ -100,14 +102,14 @@ export default function RecordDetail() {
       )}
       <Button kind="secondary" title={t("ui.shareWhatsapp")} onPress={share} style={{ marginTop: 12 }} />
       <View style={{ height: 32 }} />
-      {editable ? (
+      {editable && !readOnly ? (
         <>
           <Button big title={t("app.recordEdit")} onPress={() => router.push({ pathname: "/annotate", params: { recordId: record.id } })} />
           <Button kind="danger" title={t("ui.delete")} onPress={remove} style={{ marginTop: 12 }} />
           <Text style={[T.small, { marginTop: 12 }]}>{t("app.editWindow")}</Text>
         </>
       ) : (
-        mine && <Text style={T.small}>{t("app.recordLocked")}</Text>
+        mine && !readOnly && <Text style={T.small}>{t("app.recordLocked")}</Text>
       )}
       <Text style={[T.heading, { marginTop: 24 }]}>{t("ui.comments")}</Text>
       {comments.length === 0 && <Text style={T.small}>{t("ui.commentNone")}</Text>}
@@ -117,6 +119,8 @@ export default function RecordDetail() {
           <Text>{c.body}</Text>
         </View>
       ))}
+      {!readOnly && (
+        <>
       <TextInput
         value={draft}
         onChangeText={setDraft}
@@ -137,6 +141,8 @@ export default function RecordDetail() {
         }}
         style={{ marginTop: 8 }}
       />
+        </>
+      )}
     </ScrollView>
   );
 }

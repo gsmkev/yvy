@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { MultiPolygon, Position } from "geojson";
 import { get } from "../lib/api";
 import { fmtDate, fmtHa, fmtNdvi } from "../lib/format";
 import { t } from "../lib/i18n";
 import type { Plot } from "../lib/types";
+import { RatePrescription } from "./RatePrescription";
+import { Button } from "./ui";
 
 export interface ManagementZone {
   plotId: string;
@@ -29,7 +32,8 @@ const ZONE_COLOR: Record<number, string> = { 1: "#B5562E", 2: "#C9C46A", 3: "#3F
 /** Zonas de manejo de un lote (A-32): 3 zonas calculadas con varias campañas de vigor. */
 export function ZonesSection({ plot }: { plot: Plot }) {
   const q = useManagementZones(plot.farmId);
-  const zones = (q.data ?? []).filter((z) => z.plotId === plot.id);
+  const [rx, setRx] = useState(false);
+  const zones = (q.data ?? []).filter((z) => z.plotId === plot.id).sort((a, b) => a.zone - b.zone);
   if (!zones.length) return null;
   const outline = JSON.parse(plot.geometry) as { type: "Polygon" | "MultiPolygon"; coordinates: Position[][] | Position[][][] };
   const rings: Position[][] = outline.type === "Polygon" ? (outline.coordinates as Position[][]) : (outline.coordinates as Position[][][]).flat();
@@ -68,6 +72,10 @@ export function ZonesSection({ plot }: { plot: Plot }) {
       </ul>
       <p className="mt-1 text-xs text-tinta-2">{t("ui.zonesNote", { seasons, date: fmtDate(zones[0]!.computedAt) })}</p>
       <p className="text-xs text-tinta-2">{t("attribution.copernicus")}</p>
+      <div className="mt-2">
+        <Button onClick={() => setRx(true)}>{t("ui.rxOpen")}</Button>
+      </div>
+      {rx && <RatePrescription plot={plot} zones={zones} onClose={() => setRx(false)} />}
     </div>
   );
 }

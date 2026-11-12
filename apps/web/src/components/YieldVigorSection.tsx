@@ -8,6 +8,7 @@ import { fetchAllRecords } from "../lib/queries";
 import type { Plot } from "../lib/types";
 import { harvestYield, MIN_CELLS_PER_ZONE, readYieldVigor, zoneYields } from "../lib/yieldZones";
 import { useManagementZones } from "./ZonesSection";
+import { Skeleton } from "./ui";
 
 interface SavedMap {
   id: string;
@@ -34,7 +35,7 @@ export function YieldVigorSection({ plot }: { plot: Plot }) {
     () => (map && zones.length ? zoneYields(zones, JSON.parse(map.cells) as [number, number, number, number][]) : []),
     [map?.id, zonesQ.data],
   );
-  if (zonesQ.isLoading || maps.isLoading) return null;
+  if (zonesQ.isLoading || maps.isLoading) return <Skeleton h={120} />;
   const reading = readYieldVigor(rows);
   const harvest = harvests.data ? harvestYield(harvests.data, plot.areaHa, map?.seasonId ?? null) : null;
   const seasonYears = zones[0]

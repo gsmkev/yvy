@@ -2029,3 +2029,21 @@ export const webhookOutbox = sqliteTable(
   },
   (t) => [index("webhook_outbox_created_idx").on(t.createdAt)],
 );
+
+/**
+ * I-04: enlace secreto del calendario de tareas (.ics) de un usuario en una organización. Solo se guarda el SHA-256
+ * del token. Hay a lo sumo uno vigente por usuario y organización; regenerarlo revoca el anterior. No se sincroniza.
+ */
+export const calendarFeeds = sqliteTable(
+  "calendar_feeds",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    organizationId: text("organization_id").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    createdAt: integer("created_at").notNull(),
+    lastUsedAt: integer("last_used_at"),
+    revokedAt: integer("revoked_at"),
+  },
+  (t) => [uniqueIndex("calendar_feeds_hash_uq").on(t.tokenHash), index("calendar_feeds_user_idx").on(t.userId, t.organizationId)],
+);

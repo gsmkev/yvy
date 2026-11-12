@@ -247,5 +247,8 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `webhook_endpoints` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`url` text NOT NULL,\n\t`secret_enc` text NOT NULL,\n\t`events` text DEFAULT '[]' NOT NULL,\n\t`enabled` integer DEFAULT true NOT NULL,\n\t`last_status` text,\n\t`last_http_status` integer,\n\t`last_error` text,\n\t`last_attempt_at` integer,\n\t`last_success_at` integer,\n\t`consecutive_failures` integer DEFAULT 0 NOT NULL,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
   "CREATE INDEX `webhook_endpoints_org_idx` ON `webhook_endpoints` (`organization_id`);",
   "CREATE TABLE `webhook_outbox` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`event` text NOT NULL,\n\t`payload` text NOT NULL,\n\t`created_at` integer NOT NULL\n);",
-  "CREATE INDEX `webhook_outbox_created_idx` ON `webhook_outbox` (`created_at`);"
+  "CREATE INDEX `webhook_outbox_created_idx` ON `webhook_outbox` (`created_at`);",
+  "CREATE TABLE `calendar_feeds` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`user_id` text NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`token_hash` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`last_used_at` integer,\n\t`revoked_at` integer\n);",
+  "CREATE UNIQUE INDEX `calendar_feeds_hash_uq` ON `calendar_feeds` (`token_hash`);",
+  "CREATE INDEX `calendar_feeds_user_idx` ON `calendar_feeds` (`user_id`,`organization_id`);"
 ];

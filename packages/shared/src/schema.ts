@@ -52,6 +52,7 @@ export const POI_KINDS = [
   "dock",
   "other",
 ] as const;
+export type PoiKind = (typeof POI_KINDS)[number];
 /** Líneas del mapa (M-20): alambrados, caminos internos, cañerías y cursos de agua (A-15). */
 export const LINE_KINDS = ["fence", "road", "pipe", "stream"] as const;
 export type LineKind = (typeof LINE_KINDS)[number];

@@ -1,3 +1,4 @@
+import type { PoiKind } from "@yvy/shared";
 import type { MultiPolygon, Polygon } from "geojson";
 import type { Role } from "@yvy/shared";
 
@@ -69,7 +70,7 @@ export interface FarmLine {
 export interface Poi {
   id: string;
   farmId: string;
-  kind: string;
+  kind: PoiKind;
   name: string;
   lon: number;
   lat: number;

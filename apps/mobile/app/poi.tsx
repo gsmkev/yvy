@@ -5,16 +5,22 @@
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { router, Stack } from "expo-router";
-import { isFieldRole, LIMITS, POI_KINDS, t, type MessageKey } from "@yvy/shared";
+import { isFieldRole, LIMITS, POI_KINDS, t, type MessageKey, type PoiKind } from "@yvy/shared";
 import { getDb } from "../src/lib/db";
 import { currentFix, guessPlots, type Fix } from "../src/lib/location";
 import { useSession } from "../src/lib/session";
 import { localChanged } from "../src/lib/sync";
 import { toastSaved } from "../src/lib/toast";
 import { Button, Row, s as k, Text, TextInput } from "../src/ui/kit";
+import { POI_ICON } from "../src/ui/icons";
 import { C, RADIUS, T } from "../src/ui/theme";
 import { gpsHintText, useGpsStage } from "../src/lib/gpsHint";
 import { withWriteAccess } from "../src/ui/ReadOnlyGate";
+
+function PoiIcon({ kind }: { kind: PoiKind }) {
+  const Icon = POI_ICON[kind];
+  return <Icon size={24} color={C.tinta2} strokeWidth={2} />;
+}
 
 function MarkPoi() {
   const session = useSession();
@@ -52,7 +58,7 @@ function MarkPoi() {
       {!here && fix !== "searching" && <Text style={[T.small, { marginTop: 6 }]}>{t("app.gpsNoneHint")}</Text>}
       <Text style={[T.heading, { marginTop: 24, marginBottom: 4 }]}>{t("app.poiWhat")}</Text>
       {POI_KINDS.map((kd) => (
-        <Row key={kd} title={t(`ui.poiKinds_${kd}` as MessageKey)} selected={kind === kd} onPress={() => setKind(kd)} />
+        <Row key={kd} title={t(`ui.poiKinds_${kd}` as MessageKey)} left={<PoiIcon kind={kd} />} selected={kind === kd} onPress={() => setKind(kd)} />
       ))}
       <Text style={[T.heading, { marginTop: 24, marginBottom: 8 }]}>{t("app.poiName")}</Text>
       <TextInput

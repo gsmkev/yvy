@@ -1,5 +1,16 @@
 import {
+  Anchor,
   ArrowRightLeft,
+  Cylinder,
+  DoorOpen,
+  Droplet,
+  Fan,
+  Fence,
+  Home,
+  MapPin,
+  School,
+  Spline,
+  Warehouse,
   ClipboardList,
   Beef,
   Bug,
@@ -29,7 +40,7 @@ import {
   Thermometer,
   type LucideIcon,
 } from "lucide-react-native";
-import type { RecordKind } from "@yvy/shared";
+import type { PoiKind, RecordKind } from "@yvy/shared";
 
 export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
   scouting: Footprints,
@@ -66,4 +77,22 @@ export const ALERT_ICON: Record<string, LucideIcon> = {
   excess_rain: CloudRainWind,
   drought: SunDim,
   fire: Flame,
+};
+
+/** M-19: el mismo ícono por tipo de punto de interés que en la web. */
+export const POI_ICON: Record<PoiKind, LucideIcon> = {
+  rain_gauge: CloudRain,
+  water: Waves,
+  house: Home,
+  school: School,
+  gate: DoorOpen,
+  corral: Fence,
+  silo: Cylinder,
+  shed: Warehouse,
+  bridge: Spline,
+  mill: Fan,
+  trough: Droplet,
+  chute: Beef,
+  dock: Anchor,
+  other: MapPin,
 };

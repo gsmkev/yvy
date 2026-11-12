@@ -47,6 +47,7 @@ export default function MapScreen() {
   const records = useLocal(() => byFarm(getDb().records(300), farmId), [farmId]);
   const lastVisit = useLocal(() => getDb().lastVisitByPlot());
   const userId = useSession()?.user.id ?? "";
+  const pois = useLocal(() => byFarm(getDb().pois(), farmId), [farmId]);
   const taskPoints = useLocal(() => getDb().taskPoints(userId), [userId]);
   const [remoteBase, setRemoteBase] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -146,6 +147,13 @@ export default function MapScreen() {
           .map((r) => ({ type: "Feature" as const, properties: { pending: r.pending ? 1 : 0 }, geometry: { type: "Point" as const, coordinates: [r.lon!, r.lat!] } })),
       },
     };
+    sources.pois = {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: pois.map((p) => ({ type: "Feature" as const, properties: {}, geometry: { type: "Point" as const, coordinates: [p.lon, p.lat] } })),
+      },
+    };
     sources.tasks = {
       type: "geojson",
       data: {
@@ -168,6 +176,7 @@ export default function MapScreen() {
       },
       { id: "records", type: "circle", source: "records", paint: { "circle-radius": 5, "circle-color": ["case", ["==", ["get", "pending"], 1], BRAND.trigo, BRAND.lino], "circle-stroke-width": 1.5, "circle-stroke-color": "#141a12" } },
     );
+    layers.push({ id: "pois", type: "circle", source: "pois", paint: { "circle-radius": 6, "circle-color": BRAND.cielo, "circle-stroke-width": 2, "circle-stroke-color": "#141a12" } });
     layers.push({ id: "tasks", type: "circle", source: "tasks", paint: { "circle-radius": 9, "circle-color": BRAND.alerta, "circle-stroke-width": 2.5, "circle-stroke-color": "#ffffff" } });
     if (me) {
       layers.push(
@@ -176,7 +185,7 @@ export default function MapScreen() {
       );
     }
     return { version: 8, sources, layers };
-  }, [farms, plots, records, remoteBase, selected, me, lastVisit, mode, taskPoints]);
+  }, [farms, plots, records, pois, remoteBase, selected, me, lastVisit, mode, taskPoints]);
 
   if (!farm) {
     return (

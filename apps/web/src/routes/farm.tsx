@@ -13,6 +13,7 @@ import { BoundariesControl } from "../components/BoundariesControl";
 const OVERLAYS = [...INDEX_KINDS, ...FERT_LAYERS] as const;
 type Overlay = (typeof OVERLAYS)[number];
 const isFert = (k: Overlay): k is FertLayerKey => (FERT_LAYERS as readonly string[]).includes(k);
+import { PoiGlyph } from "../components/PoiGlyph";
 import { AlertsList } from "../components/AlertsList";
 import { CopyCoords } from "../components/CopyCoords";
 import { ClimatePanel } from "../components/ClimatePanel";
@@ -868,6 +869,7 @@ export function FarmPage() {
                       return (
                         <li key={p.id} className="flex items-baseline justify-between gap-2.5">
                           <span>
+                            <PoiGlyph kind={p.kind} />
                             {p.name}
                             <span className="ml-2 text-xs text-tinta-2">{tk(`ui.poiKinds_${p.kind}`)}</span>
                             {p.kind === "water" && (

@@ -81,3 +81,7 @@ export const useSeasons = (farmId: string, enabled = true) =>
     queryKey: ["seasons", farmId],
     queryFn: () => get<{ seasons: Season[]; plotSeasons: PlotSeason[] }>(`/org/seasons${qs({ farmId })}`),
   });
+
+/** U-24: la guía de primeros pasos se oculta por persona (en el servidor), no por navegador. */
+export const useOnboarding = (enabled = true) =>
+  useQuery({ queryKey: ["onboarding"], queryFn: () => get<{ dismissedAt: number | null }>("/me/onboarding"), enabled, staleTime: 5 * 60_000 });

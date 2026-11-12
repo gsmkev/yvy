@@ -1617,6 +1617,7 @@ export const esPY = {
     guideDone: "Listo",
     guideDo: "Hacerlo",
     guideDismiss: "Ocultar guía",
+    guideShow: "Mostrar los primeros pasos",
     helpLink: "Ayuda",
     helpTitle: "Ayuda",
     helpIntro: "Las preguntas más comunes, con respuestas cortas.",

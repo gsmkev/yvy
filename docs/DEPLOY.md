@@ -138,6 +138,10 @@ La API responde 402 con un mensaje claro al crear estancias, lotes o personas po
 (`/interno`, solo `ADMIN_EMAILS`) → *Plan y topes* se cambia el plan y se fijan topes propios de una organización (vacío = el del plan).
 El mismo panel permite extender la prueba 30 días y "Ver como soporte" (solo lectura, 30 minutos, queda en la auditoría).
 
+El dueño pide otro plan o más topes desde *Cuenta → Plan* (también con la prueba vencida). Es un pedido, no un cambio: no se cobra
+nada (el cobro es P-11) y queda pendiente en *Pedidos de plan* del panel interno hasta que lo aprobás (la organización pasa al plan
+activo y se fijan los topes pedidos) o lo rechazás con un motivo. Si `OPS_EMAIL` está configurado, el pedido también llega por email.
+
 ## 8. Restaurar un backup (P-05)
 
 Las copias están en R2: `yvy-media/backups/yvy-AAAA-MM-DD.sql.gz` (una por semana). D1 Time Travel cubre además los últimos 7 días.

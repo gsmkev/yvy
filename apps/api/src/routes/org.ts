@@ -3,12 +3,13 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { areaHa, bboxOf, centroidOf, checkPlots, validateShape, type Area } from "@yvy/geo";
-import { WEBHOOK_EVENTS, CROPS, doseText, FARM_ACCESS_LEVELS, isWeakPin, LIMITS, PIN_LENGTH, PIN_REGEX, phoneKey, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, TASK_PRIORITIES, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
+import { WEBHOOK_EVENTS, REQUESTABLE_PLANS, CROPS, doseText, FARM_ACCESS_LEVELS, isWeakPin, LIMITS, PIN_LENGTH, PIN_REGEX, phoneKey, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, TASK_PRIORITIES, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
 import { can } from "../db/scoped";
 import { randomDigits, randomToken } from "../lib/crypto";
 import { createApiToken, listApiTokens, revokeApiToken } from "../db/api-tokens";
 import { listReview, markReviewed } from "../db/review";
 import { createWebhook, deleteWebhook, listWebhooks, pingMessage, updateWebhook } from "../db/webhooks";
+import { cancelPlanRequest, createPlanRequest, planOverview } from "../db/plans";
 import { getSecurity, setRequireAdminTotp } from "../db/security";
 import { createSchedule, deleteSchedule, listSchedules } from "../db/schedules";
 import { dispatchNewFarm, inBackground } from "../lib/dispatch";
@@ -72,6 +73,35 @@ org.post("/delete-request", async (c) => {
     ).catch((e) => console.error("delete-request email", e));
   }
   return c.json({ ok: true, requestId: res.id }, res.created ? 201 : 200);
+});
+
+/** P-10: plan, topes, uso y pedido de cambio (solo el dueño). */
+org.get("/plan", async (c) => c.json(await planOverview(c.var.sdb)));
+/** P-10: pide otro plan o más topes. No cobra ni cambia nada: queda pendiente hasta que lo aprueba el panel interno. */
+org.post("/plan-request", async (c) => {
+  const b = parse(
+    z.object({
+      plan: z.enum(REQUESTABLE_PLANS),
+      maxHa: z.number().positive().max(LIMITS.planRequest.maxHa).nullish(),
+      maxUsers: z.number().int().positive().max(LIMITS.planRequest.maxUsers).nullish(),
+      note: z.string().trim().max(LIMITS.planRequest.noteLength).nullish(),
+    }),
+    await readJson(c.req),
+  );
+  const res = await createPlanRequest(c.var.sdb, b);
+  if (c.env.OPS_EMAIL) {
+    await sendEmail(
+      c.env,
+      c.env.OPS_EMAIL,
+      `Pedido de plan: ${res.orgName}`,
+      `La organización "${res.orgName}" (${c.var.auth.orgId}) pidió el plan ${b.plan}${b.maxHa ? `, hasta ${b.maxHa} ha` : ""}${b.maxUsers ? `, hasta ${b.maxUsers} personas` : ""}.${b.note ? ` Nota: ${b.note}` : ""} Se aprueba en el panel interno.`,
+    ).catch((e) => console.error("plan-request email", e));
+  }
+  return c.json({ id: res.id }, 201);
+});
+org.delete("/plan-request", async (c) => {
+  await cancelPlanRequest(c.var.sdb);
+  return c.json({ ok: true });
 });
 
 org.get("/members", async (c) => c.json(await c.var.sdb.listMembers()));

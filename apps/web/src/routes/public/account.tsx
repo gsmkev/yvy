@@ -5,6 +5,7 @@ import { NotificationPrefs } from "../../components/NotificationPrefs";
 import { CalendarFeed } from "../../components/CalendarFeed";
 import { WebhooksPanel } from "../../components/Webhooks";
 import { Preferences } from "../../components/Preferences";
+import { PlanPanel } from "../../components/PlanPanel";
 import { AdminTotpPolicy, TotpSection } from "../../components/Totp";
 import { ConfirmModal, Spinner, toast } from "../../components/ui";
 import { get, post } from "../../lib/api";
@@ -80,6 +81,7 @@ export function AccountPage() {
       {me.data && !isFieldRole(me.data.role) && <TotpSection />}
       {me.data?.role === "owner" && <AdminTotpPolicy />}
       {(me.data?.role === "owner" || me.data?.role === "admin") && <WebhooksPanel />}
+      {me.data?.role === "owner" && <PlanPanel />}
       {me.data?.role !== "owner" ? null : (
         <section className="mt-8">
           <h2 className="font-serif text-xl font-semibold">{t("ui.accountDeleteTitle")}</h2>

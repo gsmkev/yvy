@@ -381,7 +381,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | P-07 | Ingreso con Google | P2 | S | Hecho |
 | P-08 | Segundo factor para dueños | P3 | S | Hecho |
 | P-09 | Baja de la cuenta y borrado de datos | P1 | S | Hecho |
-| P-10 | Planes con límites por hectáreas y usuarios, y cambio de plan desde la web | P1 | M | Parcial (manual) |
+| P-10 | Planes con límites por hectáreas y usuarios, y cambio de plan desde la web | P1 | M | Hecho (sin cobro: P-11) |
 | P-11 | Facturación y cobro recurrente | P2 | M | Falta |
 | P-12 | Panel interno: buscar organización, entrar como soporte en modo lectura, extender prueba | P1 | M | Parcial |
 | P-13 | Rechazar fechas imposibles y guardar fecha de recepción | — | — | Hecho |

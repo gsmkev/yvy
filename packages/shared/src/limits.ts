@@ -168,6 +168,8 @@ export const LIMITS = {
     maxItems: 30,
     maxTextLength: 120,
   },
+  /** P-10: pedido de cambio de plan. */
+  planRequest: { noteLength: 500, maxHa: 10_000_000, maxUsers: 100_000 },
   /** T-07: lotes sin visitar. Días que se pueden elegir y el que vale por defecto. */
   visits: {
     staleDayOptions: [3, 7, 14, 30],

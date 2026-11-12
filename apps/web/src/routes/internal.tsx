@@ -197,9 +197,99 @@ export function InternalPage() {
       </div>
       {editing && <PlanModal org={editing} onClose={() => setEditing(null)} />}
       {changes && <OrgChanges org={changes} onClose={() => setChanges(null)} />}
+      <PlanRequests />
       <Funnel />
       <AuditLog />
     </div>
+  );
+}
+
+interface PlanRequestRow {
+  id: string;
+  organization: string;
+  currentPlan: string;
+  plan: string;
+  maxHa: number | null;
+  maxUsers: number | null;
+  note: string | null;
+  createdAt: number;
+  requester: string | null;
+}
+
+/** P-10: pedidos de plan que hicieron los dueños desde la web. Aprobar aplica el plan y los topes; no cobra. */
+function PlanRequests() {
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ["admin-plan-requests"], queryFn: () => get<PlanRequestRow[]>("/admin/plan-requests") });
+  const [rejecting, setRejecting] = useState<{ id: string; note: string } | null>(null);
+  const done = (msg: "ui.internalPlanApproved" | "ui.internalPlanRejected") => () => {
+    setRejecting(null);
+    qc.invalidateQueries({ queryKey: ["admin-plan-requests"] });
+    qc.invalidateQueries({ queryKey: ["admin-metrics"] });
+    toast(t(msg));
+  };
+  const approve = useMutation({
+    mutationFn: (id: string) => post(`/admin/plan-requests/${id}/approve`, {}),
+    onSuccess: done("ui.internalPlanApproved"),
+  });
+  const reject = useMutation({
+    mutationFn: (v: { id: string; note: string }) => post(`/admin/plan-requests/${v.id}/reject`, { note: v.note.trim() || null }),
+    onSuccess: done("ui.internalPlanRejected"),
+  });
+  if (!q.data) return null;
+  return (
+    <section>
+      <h2 className="font-serif text-xl font-semibold">{t("ui.internalPlanRequests")}</h2>
+      {!q.data.length && <p className="mt-2 text-sm text-tinta-2">{t("ui.internalPlanRequestsNone")}</p>}
+      {(approve.error || reject.error) && <ErrorBox error={approve.error ?? reject.error} />}
+      <ul className="mt-2 divide-y divide-linea">
+        {q.data.map((r) => (
+          <li key={r.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-3 text-sm">
+            <div className="min-w-0 flex-1">
+              <p className="font-medium">
+                {r.organization} · {t("ui.internalPlanAsks", { from: r.currentPlan, plan: r.plan })}
+              </p>
+              <p className="num text-tinta-2">
+                {[
+                  r.maxHa ? t("ui.planUpToHa", { n: fmtNum(r.maxHa) }) : null,
+                  r.maxUsers ? t("ui.planUpToUsers", { n: fmtNum(r.maxUsers) }) : null,
+                  r.requester,
+                  fmtDateTime(r.createdAt),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+              {r.note && <p className="text-tinta-2">“{r.note}”</p>}
+            </div>
+            {rejecting?.id === r.id ? (
+              <form
+                className="flex items-center gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  reject.mutate(rejecting);
+                }}
+              >
+                <Input
+                  aria-label={t("ui.internalPlanRejectNote")}
+                  placeholder={t("ui.internalPlanRejectNote")}
+                  value={rejecting.note}
+                  onChange={(e) => setRejecting({ id: r.id, note: e.target.value })}
+                />
+                <Button type="submit" variant="danger" disabled={reject.isPending}>
+                  {t("ui.internalPlanReject")}
+                </Button>
+              </form>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button variant="primary" disabled={approve.isPending} onClick={() => approve.mutate(r.id)}>
+                  {t("ui.internalPlanApprove")}
+                </Button>
+                <Button onClick={() => setRejecting({ id: r.id, note: "" })}>{t("ui.internalPlanReject")}</Button>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

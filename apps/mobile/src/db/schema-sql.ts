@@ -265,5 +265,8 @@ export const SERVER_SCHEMA: string[] = [
   "INSERT INTO `events_daily` (`day`, `name`, `n`)\nSELECT date(`ts` / 1000 - 10800, 'unixepoch'), `name`, count(*) * 2 FROM `events`\nWHERE `name` LIKE 'view:%' GROUP BY 1, 2;",
   "DELETE FROM `events` WHERE `name` LIKE 'view:%';",
   "DROP INDEX `events_user_ts_idx`;",
-  "ALTER TABLE `events` DROP COLUMN `user_id`;"
+  "ALTER TABLE `events` DROP COLUMN `user_id`;",
+  "CREATE TABLE `plan_requests` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`requested_by` text NOT NULL,\n\t`plan` text NOT NULL,\n\t`max_ha` real,\n\t`max_users` integer,\n\t`note` text,\n\t`status` text DEFAULT 'pending' NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`resolved_at` integer,\n\t`resolved_by` text,\n\t`resolution_note` text\n);",
+  "CREATE UNIQUE INDEX `plan_requests_pending_uq` ON `plan_requests` (`organization_id`) WHERE status = 'pending';",
+  "CREATE INDEX `plan_requests_status_idx` ON `plan_requests` (`status`,`created_at`);"
 ];

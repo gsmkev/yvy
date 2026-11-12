@@ -8,7 +8,7 @@ import { LIMITS, newId } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { chunkForParams, type DB, type Stmt } from "./client";
 
-export type AuditEntity = "farm" | "plot" | "member" | "task" | "record" | "poi" | "product" | "season" | "line";
+export type AuditEntity = "farm" | "plot" | "member" | "task" | "record" | "poi" | "product" | "season" | "line" | "plan";
 
 export interface AuditEntry {
   /** `<entidad>_<verbo>`, por ejemplo `farm_update` o `record_delete`. */

@@ -102,6 +102,10 @@ export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_thr
 export const ALERT_SEVERITIES = ["info", "watch", "warning"] as const;
 /** Con MET Norway no hay ensemble: probabilidad cualitativa (PRD-cloudflare §4.8). */
 export const ALERT_PROBABILITIES = ["low", "medium", "high"] as const;
+/** P-10: estados de un pedido de cambio de plan (lo aprueba el panel interno; no hay cobro automático). */
+export const PLAN_REQUEST_STATUS = ["pending", "approved", "rejected", "cancelled"] as const;
+/** P-10: planes que el dueño puede pedir desde la web. */
+export const REQUESTABLE_PLANS = ["active"] as const;
 /** P-03: pasos del embudo de activación. Los escribe el servidor, una sola vez por organización. */
 export const FUNNEL_EVENTS = ["signup", "farm_created", "plots_created", "member_added", "first_record"] as const;
 /** S-07: índices de vegetación que calcula el job de Sentinel-2. */
@@ -1439,6 +1443,35 @@ export const notificationPrefs = sqliteTable("notification_prefs", {
   prefs: text("prefs").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });
+
+/**
+ * P-10: pedido de cambio de plan o de topes, hecho por el dueño desde la web. Queda pendiente hasta que el panel interno lo
+ * aprueba (aplica el plan y los topes) o lo rechaza; el cobro es aparte (P-11). Un solo pedido pendiente por organización.
+ */
+export const planRequests = sqliteTable(
+  "plan_requests",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    requestedBy: text("requested_by").notNull(),
+    plan: text("plan", { enum: REQUESTABLE_PLANS }).notNull(),
+    /** Topes que pide (null = los del plan). */
+    maxHa: real("max_ha"),
+    maxUsers: integer("max_users"),
+    note: text("note"),
+    status: text("status", { enum: PLAN_REQUEST_STATUS }).notNull().default("pending"),
+    createdAt: integer("created_at").notNull(),
+    resolvedAt: integer("resolved_at"),
+    resolvedBy: text("resolved_by"),
+    resolutionNote: text("resolution_note"),
+  },
+  (t) => [
+    uniqueIndex("plan_requests_pending_uq")
+      .on(t.organizationId)
+      .where(sql`status = 'pending'`),
+    index("plan_requests_status_idx").on(t.status, t.createdAt),
+  ],
+);
 
 /** U-24: estado del recorrido de primera vez por usuario (se oculta una vez y vale en todos sus dispositivos). No se sincroniza. */
 export const onboardingState = sqliteTable("onboarding_state", {

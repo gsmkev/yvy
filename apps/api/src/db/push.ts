@@ -6,6 +6,8 @@ import { and, count, eq, getTableColumns, inArray, isNull, sql } from "drizzle-o
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import {
   isAudioMime,
+  closeProblem,
+  closeRequirements,
   livestockPlotProblem,
   localDate,
   nextDueDate,
@@ -47,6 +49,8 @@ interface RecordState {
   authorId: string;
   createdAt: number;
   deletedAt: number | null;
+  lon: number | null;
+  lat: number | null;
 }
 
 export async function applyPush(
@@ -93,6 +97,11 @@ export async function applyPush(
       case "tasks.status":
       case "tasks.check":
         taskIds.add(m.row.id);
+        // T-03: el registro con el que se cierra una tarea (y sus fotos) hay que mirarlo para exigir foto y ubicación
+        if (m.kind === "tasks.status" && m.row.status === "done" && m.row.recordId) {
+          recordIds.add(m.row.recordId);
+          attachRecordIds.add(m.row.recordId);
+        }
         break;
       case "pois.upsert":
         poiIds.add(m.row.id);
@@ -127,6 +136,8 @@ export async function applyPush(
               authorId: s.records.authorId,
               createdAt: s.records.createdAt,
               deletedAt: s.records.deletedAt,
+              lon: s.records.lon,
+              lat: s.records.lat,
             })
             .from(s.records)
             .where(inArray(s.records.id, ids(recordIds)))
@@ -350,7 +361,7 @@ export async function applyPush(
           createdAt,
           updatedAt: now,
         });
-        records.set(r.id, { organizationId: org, farmId: r.farmId, authorId, createdAt, deletedAt: null });
+        records.set(r.id, { organizationId: org, farmId: r.farmId, authorId, createdAt, deletedAt: null, lon: r.lon, lat: r.lat });
         if (hasEffects(r.kind))
           effectUpserts.push({
             id: r.id,
@@ -447,6 +458,8 @@ export async function applyPush(
                   authorId: s.records.authorId,
                   createdAt: s.records.createdAt,
                   deletedAt: s.records.deletedAt,
+                  lon: s.records.lon,
+                  lat: s.records.lat,
                 })
                 .from(s.records)
                 .where(eq(s.records.id, existing.recordId))
@@ -552,6 +565,20 @@ export async function applyPush(
         if ((sdb.isWorker && t.assigneeId !== auth.userId) || !farmWritable(t.farmId)) {
           reject(m, "forbidden");
           break;
+        }
+        // T-03: ciertas tareas se cierran solo con un registro que traiga foto y/o ubicación
+        const need = m.row.status === "done" && t.status !== "done" ? closeRequirements(t.kind) : null;
+        if (need) {
+          const rec = m.row.recordId ? records.get(m.row.recordId) : undefined;
+          const problem = closeProblem(
+            need,
+            rec && !rec.deletedAt && rec.organizationId === org ? rec : null,
+            m.row.recordId ? (attachCount.get(`${m.row.recordId}:photo`) ?? 0) : 0,
+          );
+          if (problem) {
+            reject(m, "close_requirements", problem);
+            break;
+          }
         }
         // PRD §11: `done` gana sobre `open`.
         if (!(t.status === "done" && m.row.status === "open")) {

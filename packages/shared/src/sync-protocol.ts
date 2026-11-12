@@ -111,7 +111,9 @@ export type RejectReason =
   | "edit_window_expired"
   | "too_many_attachments"
   | "deleted"
-  | "captured_in_future";
+  | "captured_in_future"
+  /** T-03: la tarea pide foto y/o ubicación en el registro con el que se cierra. */
+  | "close_requirements";
 
 export type MutationResult =
   | { mutationId: string; status: "applied" | "duplicate" }

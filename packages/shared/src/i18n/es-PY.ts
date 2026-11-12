@@ -56,6 +56,8 @@ export const esPY = {
     deleted: "el registro fue borrado",
     // api
     captured_in_future: "la fecha del registro es futura; revisá el reloj del celular",
+    // plat-p2
+    close_requirements: "la tarea pide foto y ubicación en el registro para poder cerrarla",
   },
   app: {
     annotate: "Anotar",
@@ -606,6 +608,10 @@ export const esPY = {
     perimWalkTooShort: "Recorriste muy poco para armar un lote. Probá de nuevo.",
     perimWalkCrossed: "El recorrido se cruza a sí mismo. Probá de nuevo o dibujalo tocando el mapa.",
     perimWalkInvalid: "No se pudo armar un lote con ese recorrido. Probá de nuevo.",
+    // plat-p2
+    taskNeedsPhoto: "Esta tarea pide al menos una foto para cerrarse.",
+    taskNeedsLocation: "Esta tarea pide la ubicación. Esperá a que el GPS la encuentre.",
+    taskNeedsPhotoAndLocation: "Esta tarea pide una foto y la ubicación. Sacá la foto y esperá al GPS.",
   },
   fields: {
     condition: "Estado general",
@@ -2533,6 +2539,9 @@ export const esPY = {
     internalAudit_product_delete: "Borró un producto",
     internalAudit_season_update: "Editó una campaña",
     internalAudit_season_delete: "Borró una campaña",
+    closeNeedsPhotoLocation: "Para cerrar esta tarea, el registro tiene que llevar foto y ubicación.",
+    closeNeedsPhoto: "Para cerrar esta tarea, el registro tiene que llevar foto.",
+    closeNeedsLocation: "Para cerrar esta tarea, el registro tiene que llevar ubicación.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

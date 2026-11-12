@@ -26,6 +26,7 @@ import {
   type ProductDose,
   type RecordKind,
   type Station,
+  closeRequirements,
 } from "@yvy/shared";
 import type { LocalAudio, LocalPhoto, Plot, Season } from "../../src/db/store";
 import { fieldsFor, readFormConfig } from "../../src/lib/formConfig";
@@ -132,6 +133,11 @@ export default function Annotate() {
       }
     });
   }, []);
+
+  // T-03: la tarea de este tipo pide foto y/o ubicación para poder cerrarse
+  const closeReq = useMemo(() => (params.taskId && !editing ? closeRequirements(db.taskById(params.taskId)?.kind) : null), []);
+  const missingPhoto = !!closeReq?.photo && photos.length + existingPhotos === 0;
+  const missingLocation = !!closeReq?.location && (fix === "searching" || !fix);
 
   // F-01: si el GPS tarda (arranque en frío), explicar que busca satélites y que no usa internet.
   const [gpsSlow, setGpsSlow] = useState(false);
@@ -580,7 +586,21 @@ export default function Annotate() {
           {photos.length < maxNewPhotos && (
             <Button kind="secondary" big title={t("app.takePhoto")} onPress={() => setCamera(true)} style={{ marginBottom: 12 }} />
           )}
-          <Button big title={editing ? t("app.recordSave") : photos.length || voice ? t("app.done") : t("app.skipPhoto")} onPress={save} />
+          {(missingPhoto || missingLocation) && (
+            <Text style={[T.small, { marginBottom: 10 }]}>
+              {missingPhoto && missingLocation
+                ? t("app.taskNeedsPhotoAndLocation")
+                : missingPhoto
+                  ? t("app.taskNeedsPhoto")
+                  : t("app.taskNeedsLocation")}
+            </Text>
+          )}
+          <Button
+            big
+            disabled={missingPhoto || missingLocation}
+            title={editing ? t("app.recordSave") : photos.length || voice ? t("app.done") : t("app.skipPhoto")}
+            onPress={save}
+          />
         </ScrollView>
       </View>
     );

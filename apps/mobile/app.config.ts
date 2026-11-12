@@ -15,8 +15,8 @@ const config: ExpoConfig = {
     package: "py.com.koeti.yvy",
     versionCode: 1,
     adaptiveIcon: { foregroundImage: "./assets/icon.png", backgroundColor: "#1E2419" },
-    permissions: ["CAMERA", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "POST_NOTIFICATIONS"],
-    blockedPermissions: ["RECORD_AUDIO", "ACCESS_BACKGROUND_LOCATION"],
+    permissions: ["CAMERA", "RECORD_AUDIO", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "POST_NOTIFICATIONS"],
+    blockedPermissions: ["ACCESS_BACKGROUND_LOCATION"],
   },
   ios: { bundleIdentifier: "py.com.koeti.yvy", supportsTablet: false },
   plugins: [
@@ -32,6 +32,8 @@ const config: ExpoConfig = {
       "expo-location",
       { locationWhenInUsePermission: "Yvy guarda la ubicación de cada registro para saber en qué lote está." },
     ],
+    // F-09: el micrófono solo se usa cuando la persona toca "Grabar nota de voz".
+    ["expo-audio", { microphonePermission: "Yvy usa el micrófono para grabar notas de voz que se guardan con el registro." }],
     ["expo-notifications", { color: "#7A9A3F" }],
     "@maplibre/maplibre-react-native",
     // Android 9+ (PRD §7)

@@ -172,6 +172,21 @@ export const LIMITS = {
     /** Duraciones permitidas del enlace de solo lectura (K-04), en días. */
     linkDays: [7, 30],
   },
+  // agri-p2
+  /** Ventana de siembra (A-05): valores de referencia, a revisar por un agrónomo. */
+  sowing: {
+    /** Humedad del suelo superficial (NASA POWER GWETTOP, fracción de saturación 0-1): abajo no germina, arriba encharca. */
+    soilMinFraction: 0.35,
+    soilMaxFraction: 0.9,
+    /** Lluvia en un día a partir de la cual no se entra al lote. */
+    heavyRainDayMm: 15,
+    /** Lluvia acumulada en 3 días que compensa un suelo justo. */
+    rainAheadMm: 12,
+    /** Temperatura mínima del aire (°C) por debajo de la cual se espera. */
+    minTminC: { soja: 10, maiz: 10, trigo: 0, arroz: 15, girasol: 8, chia: 10, otro: 10 } as Record<string, number>,
+    /** Días de pronóstico que se evalúan. */
+    horizonDays: 7,
+  },
 } as const;
 
 export type Limits = typeof LIMITS;

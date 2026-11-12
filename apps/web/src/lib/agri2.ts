@@ -23,3 +23,18 @@ export const usePhenology = (plotId: string, enabled = true) =>
     queryKey: ["phenology", plotId],
     queryFn: () => get<Phenology>(`/org/plots/${plotId}/phenology`),
   });
+
+export interface SowingWindowResponse {
+  crop: string;
+  soil: number | null;
+  soilDate: string | null;
+  forecastRunAt: number | null;
+  days: { date: string; ok: boolean; reasons: ("rain_day" | "cold" | "dry" | "saturated")[]; rainAhead: boolean }[];
+  best: { from: string; to: string } | null;
+}
+
+export const useSowingWindow = (farmId: string, crop: string) =>
+  useQuery({
+    queryKey: ["sowing-window", farmId, crop],
+    queryFn: () => get<SowingWindowResponse>(`/org/farms/${farmId}/sowing-window?crop=${crop}`),
+  });

@@ -3,14 +3,17 @@
  * zonas de amortiguación, suelo, entregas, balance hídrico, etc. Solo lectura sobre datos que ya existen o
  * tablas propias de la web. Toda consulta pasa por ScopedDb.
  */
-import { and, asc, desc, eq, gte, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNotNull, isNull, sql } from "drizzle-orm";
 import {
   accumulateGdd,
+  addDays,
   CROP_GDD,
   comparePheno,
   estimateStage,
+  LIMITS,
   localDate,
   nextStage,
+  sowingWindow,
   type CROPS,
   type PHENO_STAGES,
 } from "@yvy/shared";
@@ -165,4 +168,78 @@ export async function plotPhenology(sdb: ScopedDb, plotId: string): Promise<Phen
     observed,
     comparison: estimatedStage && observed ? comparePheno(estimatedStage, observed.stage) : null,
   };
+}
+
+/** Estancia visible para el usuario (el empleado solo si tiene lotes en ella); 404 si no. */
+export async function requireFarmRow(sdb: ScopedDb, farmId: string) {
+  const [farm] = await sdb.db
+    .select({
+      id: s.farms.id,
+      name: s.farms.name,
+      tz: s.farms.timezone,
+      areaHa: s.farms.areaHa,
+      lon: s.farms.centroidLon,
+      lat: s.farms.centroidLat,
+    })
+    .from(s.farms)
+    .where(
+      and(
+        eq(s.farms.id, farmId),
+        eq(s.farms.organizationId, sdb.auth.orgId),
+        isNull(s.farms.deletedAt),
+        sdb.workerFilter("farms"),
+      ),
+    )
+    .limit(1);
+  if (!farm) throw new NotFoundError("Estancia inexistente");
+  return farm;
+}
+
+/** Última corrida del pronóstico diario de la estancia desde hoy (hasta `days` días). */
+export async function latestForecastDays(sdb: ScopedDb, farmId: string, today: string, days: number) {
+  const [latest] = await sdb.db
+    .select({ runAt: sql<number | null>`max(${s.forecasts.runAt})` })
+    .from(s.forecasts)
+    .where(eq(s.forecasts.farmId, farmId));
+  if (!latest?.runAt) return { runAt: null as number | null, days: [] };
+  const rows = await sdb.db
+    .select({
+      date: s.forecasts.validDate,
+      tminC: s.forecasts.tminC,
+      tmaxC: s.forecasts.tmaxC,
+      precipMm: s.forecasts.precipMm,
+    })
+    .from(s.forecasts)
+    .where(
+      and(eq(s.forecasts.farmId, farmId), eq(s.forecasts.runAt, latest.runAt), gte(s.forecasts.validDate, today)),
+    )
+    .orderBy(asc(s.forecasts.validDate))
+    .limit(days);
+  return { runAt: latest.runAt, days: rows };
+}
+
+/** A-05: ventana de siembra de los próximos días (humedad del suelo NASA POWER + pronóstico MET Norway). 3 consultas. */
+export async function farmSowingWindow(sdb: ScopedDb, farmId: string, crop: Crop) {
+  const farm = await requireFarmRow(sdb, farmId);
+  const today = localDate(sdb.now(), farm.tz);
+  const [soilRows, forecast] = await Promise.all([
+    sdb.db
+      .select({ date: s.climateDaily.date, v: s.climateDaily.soilMoisture0_7 })
+      .from(s.climateDaily)
+      .where(
+        and(
+          eq(s.climateDaily.farmId, farmId),
+          eq(s.climateDaily.plotId, ""),
+          eq(s.climateDaily.source, "nasa_power"),
+          isNotNull(s.climateDaily.soilMoisture0_7),
+          gte(s.climateDaily.date, addDays(today, -10)),
+        ),
+      )
+      .orderBy(desc(s.climateDaily.date))
+      .limit(1),
+    latestForecastDays(sdb, farmId, today, LIMITS.sowing.horizonDays),
+  ]);
+  const soil = soilRows[0] ?? null;
+  const result = sowingWindow(crop, soil?.v ?? null, forecast.days);
+  return { crop, ...result, soilDate: soil?.date ?? null, forecastRunAt: forecast.runAt };
 }

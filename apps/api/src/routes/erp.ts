@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { LIMITS } from "@yvy/shared";
-import { orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
+import { orderSchema, contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput, warehouseInput, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { HTTPException } from "hono/http-exception";
 import { PHOTO_KINDS, photoTarget, setPhotoPath, type PhotoKind } from "../db/erp-photos";
@@ -12,6 +12,7 @@ import { fuelReport } from "../db/fuel";
 import { createWorkOrder, listWorkOrders } from "../db/work-orders";
 import { fixDefaultWarehouse } from "../db/stock";
 import { adjustStock, consumeStock, deleteMove, expiringLots, listMoves, purchaseStock, requireWarehouseUnused, stockSummary, transferStock } from "../db/stock-moves";
+import { deleteMinimum, listMinimums, lowStock, saveMinimum } from "../db/stock-minimums";
 import { createCost, deleteCost, listCosts, updateCost } from "../db/costs";
 import { deleteRate, erpCreate, erpDelete, erpList, erpUpdate, listRates, requireOwned, saveRate, type ErpTable } from "../db/erp";
 import { can, type ScopedDb } from "../db/scoped";
@@ -143,6 +144,16 @@ erp.get("/stock/expiring", async (c) => c.json(await expiringLots(c.var.sdb)));
 erp.get("/stock/moves", async (c) =>
   c.json(await listMoves(c.var.sdb, parse(z.object({ productId: uuid.optional(), warehouseId: uuid.optional() }), c.req.query()))),
 );
+erp.get("/stock/low", async (c) => c.json(await lowStock(c.var.sdb)));
+erp.get("/stock/minimums", async (c) => c.json(await listMinimums(c.var.sdb)));
+erp.put("/stock/minimums", async (c) => {
+  await saveMinimum(c.var.sdb, parse(stockMinimumInput, await readJson(c.req)));
+  return c.json({ ok: true });
+});
+erp.delete("/stock/minimums/:id", async (c) => {
+  await deleteMinimum(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
 erp.post("/stock/purchases", async (c) =>
   c.json(await purchaseStock(c.var.sdb, parse(stockPurchaseInput, await readJson(c.req))), 201),
 );

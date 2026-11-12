@@ -761,6 +761,22 @@ export const tasks = sqliteTable(
   ],
 );
 
+/** Stock mínimo por producto y depósito (E-14). Tabla de oficina: no se sincroniza. */
+export const stockMinimums = sqliteTable(
+  "stock_minimums",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    productId: text("product_id").notNull(),
+    warehouseId: text("warehouse_id").notNull(),
+    /** En la unidad base del producto (l o kg). */
+    minQty: real("min_qty").notNull(),
+    createdBy: text("created_by").notNull(),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("stock_minimums_uq").on(t.organizationId, t.productId, t.warehouseId)],
+);
+
 export const records = sqliteTable(
   "records",
   {

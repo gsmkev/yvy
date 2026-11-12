@@ -334,3 +334,36 @@ export const partyInput = z.object({
   address: optText(200),
   note: optText(500),
 });
+
+// ---------- Stock mínimo (E-14) ----------
+
+export const stockMinimumInput = z.object({
+  productId: uuid,
+  warehouseId: uuid,
+  /** En la unidad base del producto. */
+  minQty: z.number().min(0).max(1_000_000_000),
+});
+
+export interface LowStockRow {
+  productId: string;
+  warehouseId: string;
+  qty: number;
+  minQty: number;
+  /** Lo que falta para llegar al mínimo. */
+  missing: number;
+}
+
+/** Productos por debajo del mínimo (o justo en él) en su depósito: los de mayor faltante primero. Con 0 como mínimo no avisa. */
+export function belowMinimum(
+  stock: { productId: string; warehouseId: string; qty: number }[],
+  minimums: { productId: string; warehouseId: string; minQty: number }[],
+): LowStockRow[] {
+  const have = new Map(stock.map((r) => [`${r.productId}|${r.warehouseId}`, r.qty]));
+  const out: LowStockRow[] = [];
+  for (const m of minimums) {
+    if (m.minQty <= 0) continue;
+    const qty = have.get(`${m.productId}|${m.warehouseId}`) ?? 0;
+    if (qty <= m.minQty + 1e-9) out.push({ productId: m.productId, warehouseId: m.warehouseId, qty, minQty: m.minQty, missing: Math.round((m.minQty - qty) * 1000) / 1000 });
+  }
+  return out.sort((a, b) => b.missing - a.missing);
+}

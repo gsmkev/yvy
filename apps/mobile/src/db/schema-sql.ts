@@ -187,5 +187,7 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `api_tokens` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`token_hash` text NOT NULL,\n\t`prefix` text NOT NULL,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`last_used_at` integer,\n\t`revoked_at` integer\n);",
   "CREATE UNIQUE INDEX `api_tokens_hash_uq` ON `api_tokens` (`token_hash`);",
   "CREATE INDEX `api_tokens_org_idx` ON `api_tokens` (`organization_id`);",
-  "ALTER TABLE `organizations` ADD `referral_credited_at` integer;"
+  "ALTER TABLE `organizations` ADD `referral_credited_at` integer;",
+  "CREATE TABLE `stock_minimums` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`product_id` text NOT NULL,\n\t`warehouse_id` text NOT NULL,\n\t`min_qty` real NOT NULL,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
+  "CREATE UNIQUE INDEX `stock_minimums_uq` ON `stock_minimums` (`organization_id`,`product_id`,`warehouse_id`);"
 ];

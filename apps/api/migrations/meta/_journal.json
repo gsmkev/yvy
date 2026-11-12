@@ -372,6 +372,13 @@
       "when": 1794478466972,
       "tag": "0052_opposite_mauler",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "6",
+      "when": 1794478778072,
+      "tag": "0053_open_king_bedlam",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,7 @@ import { useParams } from "@tanstack/react-router";
 import { fmtDate, fmtHa, fmtMm, fmtNdvi } from "../lib/format";
 import { Spinner } from "../components/ui";
 import { t, tk } from "../lib/i18n";
+import { ExportableTable } from "../components/ExportableTable";
 
 interface SharedSummary {
   farm: { name: string; department: string | null; areaHa: number; plotCount: number };
@@ -77,29 +78,31 @@ export function SharedPage() {
 
           <h2 className="mt-8 font-serif text-xl font-semibold">{t("ui.plots")}</h2>
           <div className="mt-2 overflow-x-auto">
-            <table className="num w-full text-left text-sm">
-              <thead className="border-b border-linea text-tinta-2">
-                <tr>
-                  <th className="py-2 pr-3 font-medium">{t("ui.plot")}</th>
-                  <th className="py-2 pr-3 font-medium">{t("ui.crop")}</th>
-                  <th className="py-2 pr-3 text-right font-medium">{t("ui.area")}</th>
-                  <th className="py-2 text-right font-medium">{t("ui.sharedVigor")}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-linea">
-                {d.plots.map((p, i) => (
-                  <tr key={i}>
-                    <td className="py-2 pr-3">{p.name}</td>
-                    <td className="py-2 pr-3 capitalize">{p.kind === "pasture" ? t("ui.pasture") : (p.crop ?? "—")}</td>
-                    <td className="py-2 pr-3 text-right">{fmtHa(p.areaHa)}</td>
-                    <td className="py-2 text-right">
-                      {p.ndvi === null ? "—" : fmtNdvi(p.ndvi)}
-                      {p.ndviAt ? <span className="ml-2 text-xs text-tinta-2">{fmtDate(p.ndviAt)}</span> : null}
-                    </td>
+            <ExportableTable name="informes-compartidos">
+              <table className="num w-full text-left text-sm">
+                <thead className="border-b border-linea text-tinta-2">
+                  <tr>
+                    <th className="py-2 pr-3 font-medium">{t("ui.plot")}</th>
+                    <th className="py-2 pr-3 font-medium">{t("ui.crop")}</th>
+                    <th className="py-2 pr-3 text-right font-medium">{t("ui.area")}</th>
+                    <th className="py-2 text-right font-medium">{t("ui.sharedVigor")}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-linea">
+                  {d.plots.map((p, i) => (
+                    <tr key={i}>
+                      <td className="py-2 pr-3">{p.name}</td>
+                      <td className="py-2 pr-3 capitalize">{p.kind === "pasture" ? t("ui.pasture") : (p.crop ?? "—")}</td>
+                      <td className="py-2 pr-3 text-right">{fmtHa(p.areaHa)}</td>
+                      <td className="py-2 text-right">
+                        {p.ndvi === null ? "—" : fmtNdvi(p.ndvi)}
+                        {p.ndviAt ? <span className="ml-2 text-xs text-tinta-2">{fmtDate(p.ndviAt)}</span> : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </ExportableTable>
           </div>
 
           <h2 className="mt-8 font-serif text-xl font-semibold">{t("ui.alertsTitle")}</h2>

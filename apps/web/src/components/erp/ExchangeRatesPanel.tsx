@@ -7,6 +7,7 @@ import { fmtIsoDate } from "../../lib/format";
 import { t } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { Button, Empty, ErrorBox, Field, Input, Spinner, toast } from "../ui";
+import { ExportableTable } from "../ExportableTable";
 
 interface Rate {
   date: string;
@@ -69,31 +70,33 @@ export function ExchangeRatesPanel() {
       {rates.length === 0 ? (
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
-        <table className="w-full max-w-lg text-sm">
-          <thead>
-            <tr className="border-b border-linea text-left text-tinta-2">
-              <th className="py-2 pr-4 font-medium">{t("ui.ratesDate")}</th>
-              <th className="py-2 pr-4 text-right font-medium">{t("ui.ratesValue")}</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {rates.map((r) => (
-              <tr key={r.date} className="border-b border-linea">
-                <td className="num py-2.5 pr-4">{fmtIsoDate(r.date)}</td>
-                <td className="num py-2.5 pr-4 text-right">{fmtGs(r.usdToPyg)}</td>
-                <td className="py-2.5 text-right">
-                  <button
-                    className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline"
-                    onClick={() => remove.mutate(r.date)}
-                  >
-                    {t("ui.delete")}
-                  </button>
-                </td>
+        <ExportableTable name="tipos-de-cambio">
+          <table className="w-full max-w-lg text-sm">
+            <thead>
+              <tr className="border-b border-linea text-left text-tinta-2">
+                <th className="py-2 pr-4 font-medium">{t("ui.ratesDate")}</th>
+                <th className="py-2 pr-4 text-right font-medium">{t("ui.ratesValue")}</th>
+                <th />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rates.map((r) => (
+                <tr key={r.date} className="border-b border-linea">
+                  <td className="num py-2.5 pr-4">{fmtIsoDate(r.date)}</td>
+                  <td className="num py-2.5 pr-4 text-right">{fmtGs(r.usdToPyg)}</td>
+                  <td className="py-2.5 text-right">
+                    <button
+                      className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline"
+                      onClick={() => remove.mutate(r.date)}
+                    >
+                      {t("ui.delete")}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </ExportableTable>
       )}
     </div>
   );

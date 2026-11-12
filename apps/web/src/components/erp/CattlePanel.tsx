@@ -12,6 +12,7 @@ import { useSeasonList } from "./CostsPanel";
 import { InvoicePhoto } from "./InvoicePhoto";
 import { RowModal, type FieldDef } from "./MasterPanel";
 import { useParties } from "./PartiesPanel";
+import { ExportableTable } from "../ExportableTable";
 
 interface Deal {
   id: string;
@@ -72,46 +73,48 @@ export function CattlePanel() {
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-linea text-left text-tinta-2">
-                <th className="py-2 pr-4 font-medium">{t("ui.costDate")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.cattleKind")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.cattleParty")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.cattleHeads")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.cattleKg")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.cattlePricePerKg")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.cattleAmount")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.cattleGuide")}</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {(q.data ?? []).map((d) => (
-                <tr key={d.id} className="border-b border-linea">
-                  <td className="num py-2.5 pr-4">{fmtIsoDate(d.date)}</td>
-                  <td className="py-2.5 pr-4">
-                    {tk(`ui.cattleKind_${d.kind}`)}
-                    {d.category ? <span className="text-tinta-2"> · {d.category}</span> : null}
-                  </td>
-                  <td className="py-2.5 pr-4">{party(d.partyId)}</td>
-                  <td className="num py-2.5 pr-4 text-right">{d.heads}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtNum(d.totalKg)}</td>
-                  <td className="num py-2.5 pr-4 text-right">{d.pricePerKg === null ? "" : fmtMoney(Math.round(d.pricePerKg), d.currency)}</td>
-                  <td className="num py-2.5 pr-4 text-right font-medium">{fmtMoney(d.amount, d.currency)}</td>
-                  <td className="py-2.5 pr-4 text-tinta-2">{d.guideNumber ?? ""}</td>
-                  <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
-                    <span className="mr-4">
-                      <InvoicePhoto kind="cattle-deals" id={d.id} hasPhoto={!!d.photoPath} />
-                    </span>
-                    <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => remove.mutate(d.id)}>
-                      {t("ui.delete")}
-                    </button>
-                  </td>
+          <ExportableTable name="ganado">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-linea text-left text-tinta-2">
+                  <th className="py-2 pr-4 font-medium">{t("ui.costDate")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("ui.cattleKind")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("ui.cattleParty")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.cattleHeads")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.cattleKg")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.cattlePricePerKg")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.cattleAmount")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("ui.cattleGuide")}</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {(q.data ?? []).map((d) => (
+                  <tr key={d.id} className="border-b border-linea">
+                    <td className="num py-2.5 pr-4">{fmtIsoDate(d.date)}</td>
+                    <td className="py-2.5 pr-4">
+                      {tk(`ui.cattleKind_${d.kind}`)}
+                      {d.category ? <span className="text-tinta-2"> · {d.category}</span> : null}
+                    </td>
+                    <td className="py-2.5 pr-4">{party(d.partyId)}</td>
+                    <td className="num py-2.5 pr-4 text-right">{d.heads}</td>
+                    <td className="num py-2.5 pr-4 text-right">{fmtNum(d.totalKg)}</td>
+                    <td className="num py-2.5 pr-4 text-right">{d.pricePerKg === null ? "" : fmtMoney(Math.round(d.pricePerKg), d.currency)}</td>
+                    <td className="num py-2.5 pr-4 text-right font-medium">{fmtMoney(d.amount, d.currency)}</td>
+                    <td className="py-2.5 pr-4 text-tinta-2">{d.guideNumber ?? ""}</td>
+                    <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
+                      <span className="mr-4">
+                        <InvoicePhoto kind="cattle-deals" id={d.id} hasPhoto={!!d.photoPath} />
+                      </span>
+                      <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => remove.mutate(d.id)}>
+                        {t("ui.delete")}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
       )}
       {remove.error ? <ErrorBox error={remove.error} /> : null}

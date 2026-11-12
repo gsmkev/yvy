@@ -6,6 +6,7 @@ import { fmtIsoDate, fmtNum, toIso } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import type { Plot } from "../lib/types";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
+import { ExportableTable } from "./ExportableTable";
 
 export interface SoilSample {
   id: string;
@@ -65,58 +66,60 @@ export function SoilPanel({ farmId, plots }: { farmId: string; plots: Plot[] }) 
       {q.data && rows.length === 0 && <Empty title={t("ui.soilTitle")}>{t("ui.soilNone")}</Empty>}
       {rows.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-left text-tinta-2">
-              <tr>
-                <th className="py-2 pr-3 font-medium">{t("ui.soilWhere")}</th>
-                <th className="py-2 pr-3 font-medium">{t("ui.soilDate")}</th>
-                {SOIL_PARAMS.map((p) => (
-                  <th key={p} className="py-2 pr-3 font-medium">
-                    {t(`ui.soilParam_${p}` as "ui.soilParam_ph")}
-                  </th>
+          <ExportableTable name="suelo">
+            <table className="w-full text-sm">
+              <thead className="text-left text-tinta-2">
+                <tr>
+                  <th className="py-2 pr-3 font-medium">{t("ui.soilWhere")}</th>
+                  <th className="py-2 pr-3 font-medium">{t("ui.soilDate")}</th>
+                  {SOIL_PARAMS.map((p) => (
+                    <th key={p} className="py-2 pr-3 font-medium">
+                      {t(`ui.soilParam_${p}` as "ui.soilParam_ph")}
+                    </th>
+                  ))}
+                  <th />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-linea border-y border-linea">
+                {rows.map((r) => (
+                  <tr key={r.id}>
+                    <td className="py-2.5 pr-3">
+                      {[r.plotName, r.pointLabel].filter(Boolean).join(" · ") || t("ui.soilFarmWide")}
+                      <span className="block text-xs text-tinta-2">
+                        {[`${r.depthCm} cm`, r.lab].filter(Boolean).join(" · ")}
+                      </span>
+                    </td>
+                    <td className="num py-2.5 pr-3">{fmtIsoDate(r.sampledOn)}</td>
+                    {SOIL_PARAMS.map((p) => (
+                      <td key={p} className="num py-2.5 pr-3">
+                        {cell(p, r[p])}
+                      </td>
+                    ))}
+                    <td className="py-2.5 text-right">
+                      <button
+                        className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline"
+                        onClick={() => setRemoving(r)}
+                      >
+                        {t("ui.delete")}
+                      </button>
+                    </td>
+                  </tr>
                 ))}
-                <th />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-linea border-y border-linea">
-              {rows.map((r) => (
-                <tr key={r.id}>
-                  <td className="py-2.5 pr-3">
-                    {[r.plotName, r.pointLabel].filter(Boolean).join(" · ") || t("ui.soilFarmWide")}
-                    <span className="block text-xs text-tinta-2">
-                      {[`${r.depthCm} cm`, r.lab].filter(Boolean).join(" · ")}
-                    </span>
-                  </td>
-                  <td className="num py-2.5 pr-3">{fmtIsoDate(r.sampledOn)}</td>
-                  {SOIL_PARAMS.map((p) => (
-                    <td key={p} className="num py-2.5 pr-3">
-                      {cell(p, r[p])}
-                    </td>
-                  ))}
-                  <td className="py-2.5 text-right">
-                    <button
-                      className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline"
-                      onClick={() => setRemoving(r)}
-                    >
-                      {t("ui.delete")}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {rows.length > 1 && (
-                <tr className="font-medium">
-                  <td className="py-2.5 pr-3">{t("ui.soilAverage")}</td>
-                  <td />
-                  {SOIL_PARAMS.map((p) => (
-                    <td key={p} className="num py-2.5 pr-3">
-                      {cell(p, avg[p])}
-                    </td>
-                  ))}
-                  <td />
-                </tr>
-              )}
-            </tbody>
-          </table>
+                {rows.length > 1 && (
+                  <tr className="font-medium">
+                    <td className="py-2.5 pr-3">{t("ui.soilAverage")}</td>
+                    <td />
+                    {SOIL_PARAMS.map((p) => (
+                      <td key={p} className="num py-2.5 pr-3">
+                        {cell(p, avg[p])}
+                      </td>
+                    ))}
+                    <td />
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
       )}
       <p className="text-xs text-tinta-2">{t("ui.soilNote")}</p>

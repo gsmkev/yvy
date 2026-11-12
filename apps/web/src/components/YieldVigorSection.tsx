@@ -9,6 +9,7 @@ import type { Plot } from "../lib/types";
 import { harvestYield, MIN_CELLS_PER_ZONE, readYieldVigor, zoneYields } from "../lib/yieldZones";
 import { useManagementZones } from "./ZonesSection";
 import { Skeleton } from "./ui";
+import { ExportableTable } from "./ExportableTable";
 
 interface SavedMap {
   id: string;
@@ -66,36 +67,38 @@ export function YieldVigorSection({ plot }: { plot: Plot }) {
               </select>
             </label>
           )}
-          <table className="num w-full text-left">
-            <thead className="text-xs text-tinta-2">
-              <tr>
-                <th className="py-1 font-medium">{t("ui.yieldVigorZone")}</th>
-                <th className="py-1 font-medium">{t("ui.yieldVigorNdvi")}</th>
-                <th className="py-1 font-medium">{t("ui.yieldVigorYield")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-linea border-y border-linea">
-              {rows.map((r) => (
-                <tr key={r.zone}>
-                  <td className="py-2">
-                    {tk(`ui.zonesLevel_${r.zone}`)}
-                    <span className="block text-xs text-tinta-2">{fmtHa(r.areaHa)}</span>
-                  </td>
-                  <td className="py-2">{fmtNdvi(r.ndvi)}</td>
-                  <td className="py-2">
-                    {r.meanTHa === null ? (
-                      <span className="text-tinta-2">{t("ui.yieldVigorNoCells")}</span>
-                    ) : (
-                      <>
-                        {t1(r.meanTHa)} t/ha
-                        <span className="block text-xs text-tinta-2">{t("ui.yieldVigorCells", { n: r.nCells })}</span>
-                      </>
-                    )}
-                  </td>
+          <ExportableTable name="rinde-y-vigor">
+            <table className="num w-full text-left">
+              <thead className="text-xs text-tinta-2">
+                <tr>
+                  <th className="py-1 font-medium">{t("ui.yieldVigorZone")}</th>
+                  <th className="py-1 font-medium">{t("ui.yieldVigorNdvi")}</th>
+                  <th className="py-1 font-medium">{t("ui.yieldVigorYield")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-linea border-y border-linea">
+                {rows.map((r) => (
+                  <tr key={r.zone}>
+                    <td className="py-2">
+                      {tk(`ui.zonesLevel_${r.zone}`)}
+                      <span className="block text-xs text-tinta-2">{fmtHa(r.areaHa)}</span>
+                    </td>
+                    <td className="py-2">{fmtNdvi(r.ndvi)}</td>
+                    <td className="py-2">
+                      {r.meanTHa === null ? (
+                        <span className="text-tinta-2">{t("ui.yieldVigorNoCells")}</span>
+                      ) : (
+                        <>
+                          {t1(r.meanTHa)} t/ha
+                          <span className="block text-xs text-tinta-2">{t("ui.yieldVigorCells", { n: r.nCells })}</span>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
           <p className={reading.kind === "inverse" ? "font-medium text-peligro" : ""}>
             {reading.kind === "insufficient"
               ? t("ui.yieldVigorInsufficient", { min: MIN_CELLS_PER_ZONE })

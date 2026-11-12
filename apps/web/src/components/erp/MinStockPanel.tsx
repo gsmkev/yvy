@@ -7,6 +7,7 @@ import { fmtQty } from "../../lib/money";
 import { useProducts } from "../ProductsPanel";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
 import { useWarehouses } from "./WarehousesPanel";
+import { ExportableTable } from "../ExportableTable";
 
 interface Minimum {
   id: string;
@@ -54,51 +55,55 @@ export function MinStockPanel() {
       {low.data && low.data.length > 0 && (
         <div className="flex flex-col gap-2">
           <h2 className="border-b border-linea pb-2 font-serif text-lg font-semibold">{t("ui.minStockLowTitle")}</h2>
-          <table className="w-full text-sm">
-            <tbody>
-              {low.data.map((l) => (
-                <tr key={`${l.productId}-${l.warehouseId}`} className="border-b border-linea">
-                  <td className="py-2.5 pr-4 font-medium">{prod(l.productId)?.name}</td>
-                  <td className="py-2.5 pr-4 text-tinta-2">{wh(l.warehouseId)}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtQty(l.qty, unit(l.productId))}</td>
-                  <td className="py-2.5 text-right text-trigo-texto">{t("ui.minStockMissing", { qty: fmtQty(l.missing, unit(l.productId)) })}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ExportableTable name="stock-bajo">
+            <table className="w-full text-sm">
+              <tbody>
+                {low.data.map((l) => (
+                  <tr key={`${l.productId}-${l.warehouseId}`} className="border-b border-linea">
+                    <td className="py-2.5 pr-4 font-medium">{prod(l.productId)?.name}</td>
+                    <td className="py-2.5 pr-4 text-tinta-2">{wh(l.warehouseId)}</td>
+                    <td className="num py-2.5 pr-4 text-right">{fmtQty(l.qty, unit(l.productId))}</td>
+                    <td className="py-2.5 text-right text-trigo-texto">{t("ui.minStockMissing", { qty: fmtQty(l.missing, unit(l.productId)) })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
       )}
       {(mins.data ?? []).length === 0 ? (
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-linea text-left text-tinta-2">
-                <th className="py-2 pr-4 font-medium">{t("ui.stockProduct")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.stockWhere")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.minStockMin")}</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {(mins.data ?? []).map((m) => (
-                <tr key={m.id} className="border-b border-linea">
-                  <td className="py-2.5 pr-4 font-medium">{prod(m.productId)?.name}</td>
-                  <td className="py-2.5 pr-4">{wh(m.warehouseId)}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtQty(m.minQty, unit(m.productId))}</td>
-                  <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
-                    <button className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setEditing(m)}>
-                      {t("ui.erpEdit")}
-                    </button>
-                    <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(m)}>
-                      {t("ui.delete")}
-                    </button>
-                  </td>
+          <ExportableTable name="stock-minimo">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-linea text-left text-tinta-2">
+                  <th className="py-2 pr-4 font-medium">{t("ui.stockProduct")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("ui.stockWhere")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.minStockMin")}</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {(mins.data ?? []).map((m) => (
+                  <tr key={m.id} className="border-b border-linea">
+                    <td className="py-2.5 pr-4 font-medium">{prod(m.productId)?.name}</td>
+                    <td className="py-2.5 pr-4">{wh(m.warehouseId)}</td>
+                    <td className="num py-2.5 pr-4 text-right">{fmtQty(m.minQty, unit(m.productId))}</td>
+                    <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
+                      <button className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setEditing(m)}>
+                        {t("ui.erpEdit")}
+                      </button>
+                      <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(m)}>
+                        {t("ui.delete")}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
       )}
       {editing && <MinModal row={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}

@@ -5,6 +5,7 @@ import { get } from "../lib/api";
 import { fmtDay } from "../lib/format";
 import { t } from "../lib/i18n";
 import { Empty, ErrorBox, Spinner } from "./ui";
+import { ExportableTable } from "./ExportableTable";
 
 const dec1 = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 1 });
 const dec2 = new Intl.NumberFormat("es-PY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -14,32 +15,34 @@ export const adgText = (v: number | null) => (v === null ? "—" : `${dec2.forma
 function SeriesTable({ rows, firstHeader }: { rows: WeightSeries[]; firstHeader: string }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[640px] text-sm">
-        <thead>
-          <tr className="text-left text-xs text-tinta-2">
-            <th className="pb-2 font-medium">{firstHeader}</th>
-            <th className="pb-2 text-right font-medium">{t("ui.weighCount")}</th>
-            <th className="pb-2 text-right font-medium">{t("ui.weighFirst")}</th>
-            <th className="pb-2 text-right font-medium">{t("ui.weighLast")}</th>
-            <th className="pb-2 text-right font-medium">{t("ui.weighDays")}</th>
-            <th className="pb-2 text-right font-medium">{t("ui.weighAdg")}</th>
-            <th className="pb-2 text-right font-medium">{t("ui.weighAdgRecent")}</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-linea border-t border-linea">
-          {rows.map((r) => (
-            <tr key={r.key}>
-              <td className="py-2.5 font-medium">{r.label ?? t("ui.weighNoGroup")}</td>
-              <td className="num py-2.5 text-right">{r.points.length}</td>
-              <td className="num py-2.5 text-right">{r.firstKg === null ? "—" : `${dec1.format(r.firstKg)} kg · ${fmtDay(r.firstAt!)}`}</td>
-              <td className="num py-2.5 text-right">{r.lastKg === null ? "—" : `${dec1.format(r.lastKg)} kg · ${fmtDay(r.lastAt!)}`}</td>
-              <td className="num py-2.5 text-right">{r.days === null ? "—" : dec1.format(r.days)}</td>
-              <td className="num py-2.5 text-right font-medium">{adgText(r.adgKg)}</td>
-              <td className="num py-2.5 text-right text-tinta-2">{adgText(r.lastAdgKg)}</td>
+      <ExportableTable name="pesadas">
+        <table className="w-full min-w-[640px] text-sm">
+          <thead>
+            <tr className="text-left text-xs text-tinta-2">
+              <th className="pb-2 font-medium">{firstHeader}</th>
+              <th className="pb-2 text-right font-medium">{t("ui.weighCount")}</th>
+              <th className="pb-2 text-right font-medium">{t("ui.weighFirst")}</th>
+              <th className="pb-2 text-right font-medium">{t("ui.weighLast")}</th>
+              <th className="pb-2 text-right font-medium">{t("ui.weighDays")}</th>
+              <th className="pb-2 text-right font-medium">{t("ui.weighAdg")}</th>
+              <th className="pb-2 text-right font-medium">{t("ui.weighAdgRecent")}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-linea border-t border-linea">
+            {rows.map((r) => (
+              <tr key={r.key}>
+                <td className="py-2.5 font-medium">{r.label ?? t("ui.weighNoGroup")}</td>
+                <td className="num py-2.5 text-right">{r.points.length}</td>
+                <td className="num py-2.5 text-right">{r.firstKg === null ? "—" : `${dec1.format(r.firstKg)} kg · ${fmtDay(r.firstAt!)}`}</td>
+                <td className="num py-2.5 text-right">{r.lastKg === null ? "—" : `${dec1.format(r.lastKg)} kg · ${fmtDay(r.lastAt!)}`}</td>
+                <td className="num py-2.5 text-right">{r.days === null ? "—" : dec1.format(r.days)}</td>
+                <td className="num py-2.5 text-right font-medium">{adgText(r.adgKg)}</td>
+                <td className="num py-2.5 text-right text-tinta-2">{adgText(r.lastAdgKg)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </ExportableTable>
     </div>
   );
 }

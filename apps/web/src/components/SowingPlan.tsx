@@ -5,6 +5,7 @@ import { t, tk } from "../lib/i18n";
 import { useSeasons } from "../lib/queries";
 import type { Plot } from "../lib/types";
 import { Empty, ErrorBox, Input, Select, Spinner } from "./ui";
+import { ExportableTable } from "./ExportableTable";
 
 type Crop = (typeof CROPS)[number];
 
@@ -59,38 +60,40 @@ export function SowingPlan({ farmId, plots }: { farmId: string; plots: Plot[] })
             <p className="text-sm text-tinta-2">{t("ui.sowPlanEmpty")}</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-left text-tinta-2">
-                  <tr>
-                    <th className="py-2 pr-3 font-medium">{t("ui.crop")}</th>
-                    <th className="py-2 pr-3 font-medium">{t("ui.seasonVariety")}</th>
-                    <th className="num py-2 pr-3 text-right font-medium">{t("ui.sowPlanPlots")}</th>
-                    <th className="num py-2 pr-3 text-right font-medium">{t("ui.sowPlanArea")}</th>
-                    <th className="py-2 pr-3 font-medium">{t("ui.sowPlanRate")}</th>
-                    <th className="num py-2 text-right font-medium">{t("ui.sowPlanSeed")}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-linea border-y border-linea">
-                  {plan.rows.map((r) => (
-                    <tr key={`${r.crop}-${r.variety ?? ""}`}>
-                      <td className="py-2.5 pr-3">{tk(`fields.crop_${r.crop}`)}</td>
-                      <td className="py-2.5 pr-3">{r.variety ?? t("ui.sowPlanNoVariety")}</td>
-                      <td className="num py-2.5 pr-3 text-right">{r.plots}</td>
-                      <td className="num py-2.5 pr-3 text-right">{fmtHa(r.areaHa)}</td>
-                      <td className="py-2.5 pr-3">
-                        <Input
-                          aria-label={t("ui.sowPlanRateFor", { crop: tk(`fields.crop_${r.crop}`) })}
-                          className="num h-8 w-20"
-                          inputMode="decimal"
-                          value={rates[r.crop] ?? String(SEED_RATE_KG_HA[r.crop])}
-                          onChange={(e) => setRates({ ...rates, [r.crop]: e.target.value })}
-                        />
-                      </td>
-                      <td className="num py-2.5 text-right font-medium">{fmtNum(r.seedKg)} kg</td>
+              <ExportableTable name="plan-de-siembra">
+                <table className="w-full text-sm">
+                  <thead className="text-left text-tinta-2">
+                    <tr>
+                      <th className="py-2 pr-3 font-medium">{t("ui.crop")}</th>
+                      <th className="py-2 pr-3 font-medium">{t("ui.seasonVariety")}</th>
+                      <th className="num py-2 pr-3 text-right font-medium">{t("ui.sowPlanPlots")}</th>
+                      <th className="num py-2 pr-3 text-right font-medium">{t("ui.sowPlanArea")}</th>
+                      <th className="py-2 pr-3 font-medium">{t("ui.sowPlanRate")}</th>
+                      <th className="num py-2 text-right font-medium">{t("ui.sowPlanSeed")}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-linea border-y border-linea">
+                    {plan.rows.map((r) => (
+                      <tr key={`${r.crop}-${r.variety ?? ""}`}>
+                        <td className="py-2.5 pr-3">{tk(`fields.crop_${r.crop}`)}</td>
+                        <td className="py-2.5 pr-3">{r.variety ?? t("ui.sowPlanNoVariety")}</td>
+                        <td className="num py-2.5 pr-3 text-right">{r.plots}</td>
+                        <td className="num py-2.5 pr-3 text-right">{fmtHa(r.areaHa)}</td>
+                        <td className="py-2.5 pr-3">
+                          <Input
+                            aria-label={t("ui.sowPlanRateFor", { crop: tk(`fields.crop_${r.crop}`) })}
+                            className="num h-8 w-20"
+                            inputMode="decimal"
+                            value={rates[r.crop] ?? String(SEED_RATE_KG_HA[r.crop])}
+                            onChange={(e) => setRates({ ...rates, [r.crop]: e.target.value })}
+                          />
+                        </td>
+                        <td className="num py-2.5 text-right font-medium">{fmtNum(r.seedKg)} kg</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ExportableTable>
             </div>
           )}
           <p className="num text-sm">

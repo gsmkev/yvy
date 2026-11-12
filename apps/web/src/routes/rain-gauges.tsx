@@ -17,6 +17,7 @@ import {
 import { get } from "../lib/api";
 import { t } from "../lib/i18n";
 import { useFarm } from "../lib/queries";
+import { ExportableTable } from "../components/ExportableTable";
 
 const monthName = new Intl.DateTimeFormat("es-PY", { month: "short", year: "2-digit", timeZone: "UTC" });
 const monthLabel = (key: string) => monthName.format(new Date(`${key}-15T12:00:00Z`)).replace(".", "");
@@ -34,28 +35,30 @@ function GaugeSection({ name, months, season }: { name: string; months: GaugeRow
       <h2 className="font-serif text-xl font-semibold">{name}</h2>
       {noData && <p className="mt-1 text-sm text-tinta-2">{t("ui.gaugesNoData")}</p>}
       <div className="mt-3 overflow-x-auto">
-        <table className="num w-full text-sm">
-          <thead>
-            <tr className="border-b border-linea text-left text-tinta-2">
-              <th className="py-1.5 pr-3 font-normal">{t("ui.gaugesMonth")}</th>
-              <th className="px-3 py-1.5 text-right font-normal">{t("ui.gauge")}</th>
-              <th className="px-3 py-1.5 text-right font-normal">{t("ui.satelliteRain")}</th>
-              <th className="px-3 py-1.5 text-right font-normal">{t("ui.rainNormal")}</th>
-              <th className="py-1.5 pl-3 text-right font-normal">{t("ui.gaugesVsSat")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.key} className={`border-b border-linea/60 ${r.key === "season" ? "font-semibold" : ""}`}>
-                <td className="py-1.5 pr-3">{r.label}</td>
-                <td className="px-3 py-1.5 text-right">{mm(r.gaugeMm)}</td>
-                <td className="px-3 py-1.5 text-right">{mm(r.satMm)}</td>
-                <td className="px-3 py-1.5 text-right">{mm(r.normalMm)}</td>
-                <td className="py-1.5 pl-3 text-right">{diff(r)}</td>
+        <ExportableTable name="pluviometros">
+          <table className="num w-full text-sm">
+            <thead>
+              <tr className="border-b border-linea text-left text-tinta-2">
+                <th className="py-1.5 pr-3 font-normal">{t("ui.gaugesMonth")}</th>
+                <th className="px-3 py-1.5 text-right font-normal">{t("ui.gauge")}</th>
+                <th className="px-3 py-1.5 text-right font-normal">{t("ui.satelliteRain")}</th>
+                <th className="px-3 py-1.5 text-right font-normal">{t("ui.rainNormal")}</th>
+                <th className="py-1.5 pl-3 text-right font-normal">{t("ui.gaugesVsSat")}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.key} className={`border-b border-linea/60 ${r.key === "season" ? "font-semibold" : ""}`}>
+                  <td className="py-1.5 pr-3">{r.label}</td>
+                  <td className="px-3 py-1.5 text-right">{mm(r.gaugeMm)}</td>
+                  <td className="px-3 py-1.5 text-right">{mm(r.satMm)}</td>
+                  <td className="px-3 py-1.5 text-right">{mm(r.normalMm)}</td>
+                  <td className="py-1.5 pl-3 text-right">{diff(r)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </ExportableTable>
       </div>
       <div className="mt-4">
         <MonthlyRainChart

@@ -12,6 +12,7 @@ import { useProducts } from "../ProductsPanel";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
 import { useContractors } from "./ContractorsPanel";
 import { useMachines } from "./MachinesPanel";
+import { ExportableTable } from "../ExportableTable";
 
 export function OrdersPanel() {
   const [creating, setCreating] = useState(false);
@@ -33,60 +34,62 @@ export function OrdersPanel() {
       {q.data && q.data.length === 0 && <Empty>{t("ui.erpEmpty")}</Empty>}
       {groups.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-linea text-left text-tinta-2">
-                <th className="py-2 pr-4 font-medium">{t("ui.orderLabor")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.orderPlots")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.orderExecutor")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.orderMachine")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.orderProducts")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.orderDue")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.orderStatus")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.orderPlanned")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.orderActual")}</th>
-                {hasCost && <th className="py-2 pr-4 text-right font-medium">{t("ui.orderCost")}</th>}
-                <th className="py-2" />
-              </tr>
-            </thead>
-            <tbody>
-              {groups.map((g) => (
-                <tr key={g.key} className="border-b border-linea align-top">
-                  <td className="py-2.5 pr-4 font-medium">{tk(`ui.orderLabor_${g.labor}`)}</td>
-                  <td className="py-2.5 pr-4">{plotsLabel(g.plotNames)}</td>
-                  <td className="py-2.5 pr-4">
-                    {g.contractorName ? (
-                      <>
-                        {g.contractorName}
-                        <span className="block text-xs text-tinta-2">{g.assigneeName}</span>
-                      </>
-                    ) : (
-                      g.assigneeName
-                    )}
-                  </td>
-                  <td className="py-2.5 pr-4">{g.machine ?? ""}</td>
-                  <td className="py-2.5 pr-4">{productsLabel(g.order)}</td>
-                  <td className="num py-2.5 pr-4">{fmtIsoDate(g.dueDate)}</td>
-                  <td className="py-2.5 pr-4">
-                    {g.status === "open" && g.done > 0
-                      ? t("ui.orderProgress", { done: g.done, total: g.rows.length })
-                      : tk(`ui.orderStatus_${g.status}`)}
-                  </td>
-                  <td className="num py-2.5 pr-4 text-right">{g.plannedHa !== null ? `${g.plannedHa.toLocaleString("es-PY", { maximumFractionDigits: 1 })} ha` : ""}</td>
-                  <td className="num py-2.5 pr-4 text-right">{g.actualHa !== null ? `${g.actualHa.toLocaleString("es-PY", { maximumFractionDigits: 1 })} ha` : ""}</td>
-                  {hasCost && <td className="num py-2.5 pr-4 text-right">{g.done > 0 && g.costPyg !== undefined ? fmtGs(g.costPyg) : ""}</td>}
-                  <td className="py-2.5 text-right">
-                    <button
-                      className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline print:hidden"
-                      onClick={() => printOrder(g, farmName(g.farmId))}
-                    >
-                      {t("ui.orderPrint")}
-                    </button>
-                  </td>
+          <ExportableTable name="ordenes-de-trabajo">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-linea text-left text-tinta-2">
+                  <th className="py-2 pr-4 font-medium">{t("ui.orderLabor")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("ui.orderPlots")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("ui.orderExecutor")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("ui.orderMachine")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("ui.orderProducts")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("ui.orderDue")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("ui.orderStatus")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.orderPlanned")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.orderActual")}</th>
+                  {hasCost && <th className="py-2 pr-4 text-right font-medium">{t("ui.orderCost")}</th>}
+                  <th className="py-2" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {groups.map((g) => (
+                  <tr key={g.key} className="border-b border-linea align-top">
+                    <td className="py-2.5 pr-4 font-medium">{tk(`ui.orderLabor_${g.labor}`)}</td>
+                    <td className="py-2.5 pr-4">{plotsLabel(g.plotNames)}</td>
+                    <td className="py-2.5 pr-4">
+                      {g.contractorName ? (
+                        <>
+                          {g.contractorName}
+                          <span className="block text-xs text-tinta-2">{g.assigneeName}</span>
+                        </>
+                      ) : (
+                        g.assigneeName
+                      )}
+                    </td>
+                    <td className="py-2.5 pr-4">{g.machine ?? ""}</td>
+                    <td className="py-2.5 pr-4">{productsLabel(g.order)}</td>
+                    <td className="num py-2.5 pr-4">{fmtIsoDate(g.dueDate)}</td>
+                    <td className="py-2.5 pr-4">
+                      {g.status === "open" && g.done > 0
+                        ? t("ui.orderProgress", { done: g.done, total: g.rows.length })
+                        : tk(`ui.orderStatus_${g.status}`)}
+                    </td>
+                    <td className="num py-2.5 pr-4 text-right">{g.plannedHa !== null ? `${g.plannedHa.toLocaleString("es-PY", { maximumFractionDigits: 1 })} ha` : ""}</td>
+                    <td className="num py-2.5 pr-4 text-right">{g.actualHa !== null ? `${g.actualHa.toLocaleString("es-PY", { maximumFractionDigits: 1 })} ha` : ""}</td>
+                    {hasCost && <td className="num py-2.5 pr-4 text-right">{g.done > 0 && g.costPyg !== undefined ? fmtGs(g.costPyg) : ""}</td>}
+                    <td className="py-2.5 text-right">
+                      <button
+                        className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline print:hidden"
+                        onClick={() => printOrder(g, farmName(g.farmId))}
+                      >
+                        {t("ui.orderPrint")}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
       )}
       {creating && <OrderModal onClose={() => setCreating(false)} />}

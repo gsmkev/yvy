@@ -7,6 +7,7 @@ import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
 import { useMachines } from "./MachinesPanel";
+import { ExportableTable } from "../ExportableTable";
 
 interface Row {
   machineId: string;
@@ -56,71 +57,73 @@ export function LaborCostPanel() {
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-linea text-left text-tinta-2">
-                <th className="py-2 pr-4 font-medium">{t("ui.laborMachine")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.laborFuel")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.laborOperator")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.laborDepreciation")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.laborOwnHour")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.laborOwnHa")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.laborContractor")}</th>
-                <th className="py-2 font-medium">{t("ui.laborVerdict")}</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {(rows.data ?? []).map((r) => (
-                <tr key={r.machineId} className="border-b border-linea align-top">
-                  <td className="py-2.5 pr-4">
-                    <div className="font-medium">{r.machine}</div>
-                    <div className="text-tinta-2">{tk(`ui.contractorService_${r.service}`)}</div>
-                  </td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtGs(r.own.fuelPerHour)}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtGs(r.own.operatorPerHour)}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtGs(r.own.depreciationPerHour)}</td>
-                  <td className="num py-2.5 pr-4 text-right font-medium">{fmtGs(r.own.totalPerHour)}</td>
-                  <td className="num py-2.5 pr-4 text-right font-medium">{r.own.perHa === null ? "—" : fmtGs(r.own.perHa)}</td>
-                  <td className="py-2.5 pr-4">
-                    {r.contractor ? (
-                      <>
-                        <div>{r.contractor.name}</div>
-                        <div className="num text-tinta-2">
-                          {r.contractor.perHa !== null ? `${fmtGs(r.contractor.perHa)} / ha` : `${fmtGs(r.contractor.perHour ?? 0)} / h`}
-                        </div>
-                      </>
-                    ) : (
-                      <span className="text-tinta-2">{t("ui.laborNoContractor")}</span>
-                    )}
-                  </td>
-                  <td className="py-2.5">
-                    {r.verdict ? (
-                      <span className={r.verdict.cheaper === "own" ? "text-accion" : "text-trigo-texto"}>
-                        {t(r.verdict.cheaper === "own" ? "ui.laborOwnCheaper" : "ui.laborContractorCheaper", {
-                          n: fmtGs(Math.abs(r.verdict.savingPyg)),
-                          unit: r.verdict.basis === "ha" ? "ha" : "h",
-                        })}
-                      </span>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
-                    <button
-                      className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline"
-                      onClick={() => setEditing(profiles.data?.find((p) => p.machineId === r.machineId) ?? null)}
-                    >
-                      {t("ui.erpEdit")}
-                    </button>
-                    <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => remove.mutate(r.machineId)}>
-                      {t("ui.delete")}
-                    </button>
-                  </td>
+          <ExportableTable name="mano-de-obra">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-linea text-left text-tinta-2">
+                  <th className="py-2 pr-4 font-medium">{t("ui.laborMachine")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.laborFuel")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.laborOperator")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.laborDepreciation")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.laborOwnHour")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.laborOwnHa")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("ui.laborContractor")}</th>
+                  <th className="py-2 font-medium">{t("ui.laborVerdict")}</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {(rows.data ?? []).map((r) => (
+                  <tr key={r.machineId} className="border-b border-linea align-top">
+                    <td className="py-2.5 pr-4">
+                      <div className="font-medium">{r.machine}</div>
+                      <div className="text-tinta-2">{tk(`ui.contractorService_${r.service}`)}</div>
+                    </td>
+                    <td className="num py-2.5 pr-4 text-right">{fmtGs(r.own.fuelPerHour)}</td>
+                    <td className="num py-2.5 pr-4 text-right">{fmtGs(r.own.operatorPerHour)}</td>
+                    <td className="num py-2.5 pr-4 text-right">{fmtGs(r.own.depreciationPerHour)}</td>
+                    <td className="num py-2.5 pr-4 text-right font-medium">{fmtGs(r.own.totalPerHour)}</td>
+                    <td className="num py-2.5 pr-4 text-right font-medium">{r.own.perHa === null ? "—" : fmtGs(r.own.perHa)}</td>
+                    <td className="py-2.5 pr-4">
+                      {r.contractor ? (
+                        <>
+                          <div>{r.contractor.name}</div>
+                          <div className="num text-tinta-2">
+                            {r.contractor.perHa !== null ? `${fmtGs(r.contractor.perHa)} / ha` : `${fmtGs(r.contractor.perHour ?? 0)} / h`}
+                          </div>
+                        </>
+                      ) : (
+                        <span className="text-tinta-2">{t("ui.laborNoContractor")}</span>
+                      )}
+                    </td>
+                    <td className="py-2.5">
+                      {r.verdict ? (
+                        <span className={r.verdict.cheaper === "own" ? "text-accion" : "text-trigo-texto"}>
+                          {t(r.verdict.cheaper === "own" ? "ui.laborOwnCheaper" : "ui.laborContractorCheaper", {
+                            n: fmtGs(Math.abs(r.verdict.savingPyg)),
+                            unit: r.verdict.basis === "ha" ? "ha" : "h",
+                          })}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
+                      <button
+                        className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline"
+                        onClick={() => setEditing(profiles.data?.find((p) => p.machineId === r.machineId) ?? null)}
+                      >
+                        {t("ui.erpEdit")}
+                      </button>
+                      <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => remove.mutate(r.machineId)}>
+                        {t("ui.delete")}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
       )}
       <p className="text-xs text-tinta-2">{t("ui.laborNote")}</p>

@@ -3,6 +3,7 @@ import { Link, useParams } from "@tanstack/react-router";
 import { Button } from "../components/ui";
 import { AnimalCountIllustration, HailIllustration, InfraIllustration, StandCountIllustration, WeedsIllustration } from "../components/labs/illustrations";
 import { t, tk } from "../lib/i18n";
+import { ExportableTable } from "../components/ExportableTable";
 
 type ToolId = "animals" | "stand" | "weeds" | "ask" | "summary" | "rust" | "hail" | "infra" | "yield" | "advice";
 const TOOLS: ToolId[] = ["animals", "stand", "weeds", "ask", "summary", "rust", "hail", "infra", "yield", "advice"];
@@ -144,28 +145,30 @@ function Figure({ value, label }: { value: string; label: string }) {
 
 function Table({ head, rows }: { head: string[]; rows: string[][] }) {
   return (
-    <table className="num w-full text-sm">
-      <thead>
-        <tr className="border-b border-linea text-left text-tinta-2">
-          {head.map((h, i) => (
-            <th key={h} className={`py-2 font-medium ${i > 0 ? "text-right" : ""}`}>
-              {h}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((r) => (
-          <tr key={r[0]} className="border-b border-linea">
-            {r.map((c, i) => (
-              <td key={i} className={`py-2 ${i > 0 ? "text-right" : ""}`}>
-                {c}
-              </td>
+    <ExportableTable name="laboratorio">
+      <table className="num w-full text-sm">
+        <thead>
+          <tr className="border-b border-linea text-left text-tinta-2">
+            {head.map((h, i) => (
+              <th key={h} className={`py-2 font-medium ${i > 0 ? "text-right" : ""}`}>
+                {h}
+              </th>
             ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r[0]} className="border-b border-linea">
+              {r.map((c, i) => (
+                <td key={i} className={`py-2 ${i > 0 ? "text-right" : ""}`}>
+                  {c}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </ExportableTable>
   );
 }
 

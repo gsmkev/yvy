@@ -5,6 +5,7 @@ import { get } from "../lib/api";
 import { fmtDay } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { Empty, ErrorBox, Spinner } from "./ui";
+import { ExportableTable } from "./ExportableTable";
 
 const dec = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 });
 const days = (v: number | null) => (v === null ? "—" : dec.format(v));
@@ -35,37 +36,39 @@ export function RotationPanel({ farmId }: { farmId: string }) {
       )}
       {d.truncated && <p className="text-sm text-tinta-2">{t("ui.herdTruncated")}</p>}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[680px] text-sm">
-          <thead>
-            <tr className="text-left text-xs text-tinta-2">
-              <th className="pb-2 font-medium">{t("ui.plot")}</th>
-              <th className="pb-2 font-medium">{t("ui.rotState")}</th>
-              <th className="pb-2 text-right font-medium">{t("ui.herdTotal")}</th>
-              <th className="pb-2 text-right font-medium">{t("ui.rotStay")}</th>
-              <th className="pb-2 text-right font-medium">{t("ui.rotRest")}</th>
-              <th className="pb-2 text-right font-medium">{t("ui.rotYear")}</th>
-              <th className="pb-2 text-right font-medium">{t("ui.rotPasture")}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-linea border-t border-linea">
-            {d.plots.map((p) => (
-              <tr key={p.plotId}>
-                <td className="py-2.5 font-medium">{p.name}</td>
-                <td className={`py-2.5 ${p.state === "overdue" ? "font-medium text-peligro" : ""}`}>
-                  {tk(`ui.rotState_${p.state}`)}
-                  {d.suggested?.plotId === p.plotId ? ` · ${t("ui.rotNext")}` : ""}
-                </td>
-                <td className="num py-2.5 text-right">{p.head || "—"}</td>
-                <td className="num py-2.5 text-right">{days(p.stayDays)}</td>
-                <td className="num py-2.5 text-right">{days(p.restDays)}</td>
-                <td className="num py-2.5 text-right">{days(p.occupiedDays)}</td>
-                <td className="num py-2.5 text-right text-tinta-2">
-                  {p.pasture ? `${p.pasture.heightCm} cm · ${tk(`fields.level_${p.pasture.cover}`).toLowerCase()} · ${fmtDay(p.pasture.at)}` : "—"}
-                </td>
+        <ExportableTable name="rotacion">
+          <table className="w-full min-w-[680px] text-sm">
+            <thead>
+              <tr className="text-left text-xs text-tinta-2">
+                <th className="pb-2 font-medium">{t("ui.plot")}</th>
+                <th className="pb-2 font-medium">{t("ui.rotState")}</th>
+                <th className="pb-2 text-right font-medium">{t("ui.herdTotal")}</th>
+                <th className="pb-2 text-right font-medium">{t("ui.rotStay")}</th>
+                <th className="pb-2 text-right font-medium">{t("ui.rotRest")}</th>
+                <th className="pb-2 text-right font-medium">{t("ui.rotYear")}</th>
+                <th className="pb-2 text-right font-medium">{t("ui.rotPasture")}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-linea border-t border-linea">
+              {d.plots.map((p) => (
+                <tr key={p.plotId}>
+                  <td className="py-2.5 font-medium">{p.name}</td>
+                  <td className={`py-2.5 ${p.state === "overdue" ? "font-medium text-peligro" : ""}`}>
+                    {tk(`ui.rotState_${p.state}`)}
+                    {d.suggested?.plotId === p.plotId ? ` · ${t("ui.rotNext")}` : ""}
+                  </td>
+                  <td className="num py-2.5 text-right">{p.head || "—"}</td>
+                  <td className="num py-2.5 text-right">{days(p.stayDays)}</td>
+                  <td className="num py-2.5 text-right">{days(p.restDays)}</td>
+                  <td className="num py-2.5 text-right">{days(p.occupiedDays)}</td>
+                  <td className="num py-2.5 text-right text-tinta-2">
+                    {p.pasture ? `${p.pasture.heightCm} cm · ${tk(`fields.level_${p.pasture.cover}`).toLowerCase()} · ${fmtDay(p.pasture.at)}` : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </ExportableTable>
       </div>
       <p className="text-xs text-tinta-2">
         {t("ui.rotHint", {

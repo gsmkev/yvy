@@ -5,6 +5,7 @@ import { fromMinor, toMinor, type Currency } from "@yvy/shared";
 import { del, get, patch, post } from "../../lib/api";
 import { t } from "../../lib/i18n";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { ExportableTable } from "../ExportableTable";
 
 export interface FieldDef {
   key: string;
@@ -179,39 +180,41 @@ export function MasterPanel<T extends Row>({
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-linea text-left text-tinta-2">
-                {columns.map((c) => (
-                  <th key={c.header} className={`py-2 pr-4 font-medium ${c.right ? "text-right" : ""}`}>
-                    {c.header}
-                  </th>
-                ))}
-                {canEdit && <th />}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id} className="border-b border-linea">
+          <ExportableTable name="maestro">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-linea text-left text-tinta-2">
                   {columns.map((c) => (
-                    <td key={c.header} className={`py-2.5 pr-4 ${c.right ? "num text-right" : ""}`}>
-                      {c.cell(r)}
-                    </td>
+                    <th key={c.header} className={`py-2 pr-4 font-medium ${c.right ? "text-right" : ""}`}>
+                      {c.header}
+                    </th>
                   ))}
-                  {canEdit && (
-                    <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
-                      <button className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setEditing(r)}>
-                        {t("ui.erpEdit")}
-                      </button>
-                      <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(r)}>
-                        {t("ui.delete")}
-                      </button>
-                    </td>
-                  )}
+                  {canEdit && <th />}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id} className="border-b border-linea">
+                    {columns.map((c) => (
+                      <td key={c.header} className={`py-2.5 pr-4 ${c.right ? "num text-right" : ""}`}>
+                        {c.cell(r)}
+                      </td>
+                    ))}
+                    {canEdit && (
+                      <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
+                        <button className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setEditing(r)}>
+                          {t("ui.erpEdit")}
+                        </button>
+                        <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(r)}>
+                          {t("ui.delete")}
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
       )}
       {editing && (

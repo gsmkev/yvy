@@ -12,6 +12,7 @@ import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spi
 import { InvoicePhoto } from "./InvoicePhoto";
 import { useParties } from "./PartiesPanel";
 import { useWarehouses } from "./WarehousesPanel";
+import { ExportableTable } from "../ExportableTable";
 
 interface Line {
   id: string;
@@ -66,24 +67,26 @@ export function PurchasesPanel() {
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <tbody>
-              {(q.data ?? []).map((p) => (
-                <tr key={p.id} className="border-b border-linea">
-                  <td className="num py-2.5 pr-4">{fmtIsoDate(p.orderDate)}</td>
-                  <td className="py-2.5 pr-4 font-medium">{party(p.partyId) || "—"}</td>
-                  <td className="py-2.5 pr-4 text-tinta-2">{p.invoiceNumber ?? ""}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtMoney(p.totalAmount, p.currency)}</td>
-                  <td className={`py-2.5 pr-4 ${STATUS_TONE[p.status]}`}>{tk(`ui.purchStatus_${p.status}`)}</td>
-                  <td className="py-2.5 text-right">
-                    <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline" onClick={() => setOpen(p.id)}>
-                      {t("ui.purchOpen")}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ExportableTable name="compras">
+            <table className="w-full text-sm">
+              <tbody>
+                {(q.data ?? []).map((p) => (
+                  <tr key={p.id} className="border-b border-linea">
+                    <td className="num py-2.5 pr-4">{fmtIsoDate(p.orderDate)}</td>
+                    <td className="py-2.5 pr-4 font-medium">{party(p.partyId) || "—"}</td>
+                    <td className="py-2.5 pr-4 text-tinta-2">{p.invoiceNumber ?? ""}</td>
+                    <td className="num py-2.5 pr-4 text-right">{fmtMoney(p.totalAmount, p.currency)}</td>
+                    <td className={`py-2.5 pr-4 ${STATUS_TONE[p.status]}`}>{tk(`ui.purchStatus_${p.status}`)}</td>
+                    <td className="py-2.5 text-right">
+                      <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline" onClick={() => setOpen(p.id)}>
+                        {t("ui.purchOpen")}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
       )}
       {creating && <NewPurchase onClose={() => setCreating(false)} />}
@@ -263,27 +266,29 @@ function PurchaseDetail({ id, onClose }: { id: string; onClose: () => void }) {
         <Spinner />
       ) : (
         <div className="flex flex-col gap-4">
-          <table className="w-full text-sm">
-            <tbody>
-              {p.lines.map((l) => (
-                <tr key={l.id} className="border-b border-linea align-top">
-                  <td className="py-2 pr-3 font-medium">
-                    {prod(l.productId)?.name ?? l.description}
-                    {l.productId && p.receivedAt === null && (
-                      <div className="mt-1 flex gap-2">
-                        <Input aria-label={t("ui.purchQtyReceived")} placeholder={t("ui.purchQtyReceived")} type="number" min={0} step="any" value={received[l.id]?.qty ?? ""} onChange={(e) => setRow(l.id, { qty: e.target.value })} />
-                        <Input aria-label={t("ui.purchLot")} placeholder={t("ui.purchLot")} value={received[l.id]?.lot ?? l.lot ?? ""} onChange={(e) => setRow(l.id, { lot: e.target.value })} />
-                        <Input aria-label={t("ui.purchExpires")} type="date" value={received[l.id]?.expiresOn ?? l.expiresOn ?? ""} onChange={(e) => setRow(l.id, { expiresOn: e.target.value })} />
-                      </div>
-                    )}
-                  </td>
-                  <td className="num py-2 pr-3 text-right">{fmtQty(l.receivedQty ?? l.qty, l.productId ? tk(`fields.productUnit_${prod(l.productId)?.unit ?? "l"}`) : "")}</td>
-                  <td className="num py-2 pr-3 text-right">{fmtMoney(l.unitPrice, p.currency)}</td>
-                  <td className="num py-2 text-right">{fmtMoney(lineAmount(l.receivedQty ?? l.qty, l.unitPrice), p.currency)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ExportableTable name="compra-detalle">
+            <table className="w-full text-sm">
+              <tbody>
+                {p.lines.map((l) => (
+                  <tr key={l.id} className="border-b border-linea align-top">
+                    <td className="py-2 pr-3 font-medium">
+                      {prod(l.productId)?.name ?? l.description}
+                      {l.productId && p.receivedAt === null && (
+                        <div className="mt-1 flex gap-2">
+                          <Input aria-label={t("ui.purchQtyReceived")} placeholder={t("ui.purchQtyReceived")} type="number" min={0} step="any" value={received[l.id]?.qty ?? ""} onChange={(e) => setRow(l.id, { qty: e.target.value })} />
+                          <Input aria-label={t("ui.purchLot")} placeholder={t("ui.purchLot")} value={received[l.id]?.lot ?? l.lot ?? ""} onChange={(e) => setRow(l.id, { lot: e.target.value })} />
+                          <Input aria-label={t("ui.purchExpires")} type="date" value={received[l.id]?.expiresOn ?? l.expiresOn ?? ""} onChange={(e) => setRow(l.id, { expiresOn: e.target.value })} />
+                        </div>
+                      )}
+                    </td>
+                    <td className="num py-2 pr-3 text-right">{fmtQty(l.receivedQty ?? l.qty, l.productId ? tk(`fields.productUnit_${prod(l.productId)?.unit ?? "l"}`) : "")}</td>
+                    <td className="num py-2 pr-3 text-right">{fmtMoney(l.unitPrice, p.currency)}</td>
+                    <td className="num py-2 text-right">{fmtMoney(lineAmount(l.receivedQty ?? l.qty, l.unitPrice), p.currency)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
           <div className="num text-right font-medium">{fmtMoney(p.totalAmount, p.currency)}</div>
           <div className="flex flex-col gap-2 border-t border-linea pt-3">
             <h3 className="font-serif text-base font-semibold">{t("ui.purchInvoice")}</h3>

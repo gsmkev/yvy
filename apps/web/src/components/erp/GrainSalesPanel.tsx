@@ -11,6 +11,7 @@ import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } 
 import { useParties } from "./PartiesPanel";
 import { RowModal, type FieldDef } from "./MasterPanel";
 import { useSeasonList } from "./CostsPanel";
+import { ExportableTable } from "../ExportableTable";
 
 interface Contract {
   id: string;
@@ -100,90 +101,96 @@ export function GrainSalesPanel() {
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-linea text-left text-tinta-2">
-                <th className="py-2 pr-4 font-medium">{t("ui.grainContract")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.grainTons")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.grainDelivered")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.grainSettled")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.grainPrice")}</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {(contracts.data ?? []).map((c) => (
-                <tr key={c.id} className="border-b border-linea">
-                  <td className="py-2.5 pr-4">
-                    <div className="font-medium">
-                      {tk(`fields.crop_${c.crop}`)} {c.number ? `· ${c.number}` : ""}
-                    </div>
-                    <div className="text-tinta-2">{party(c.partyId)}</div>
-                  </td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtNum(c.tons)}</td>
-                  <td className="num py-2.5 pr-4 text-right">{t("ui.grainOf", { a: fmtNum(c.deliveredTons), b: fmtNum(c.toDeliverTons) })}</td>
-                  <td className="num py-2.5 pr-4 text-right">{t("ui.grainOf", { a: fmtNum(c.settledTons), b: fmtNum(c.toSettleTons) })}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtMoney(c.priceMinor, c.currency)}</td>
-                  <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
-                    <button className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setAction({ kind: "delivery", contract: c })}>
-                      {t("ui.grainAddDelivery")}
-                    </button>
-                    <button className="cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setAction({ kind: "settlement", contract: c })}>
-                      {t("ui.grainAddSettlement")}
-                    </button>
-                  </td>
+          <ExportableTable name="contratos-de-granos">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-linea text-left text-tinta-2">
+                  <th className="py-2 pr-4 font-medium">{t("ui.grainContract")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.grainTons")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.grainDelivered")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.grainSettled")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.grainPrice")}</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {(contracts.data ?? []).map((c) => (
+                  <tr key={c.id} className="border-b border-linea">
+                    <td className="py-2.5 pr-4">
+                      <div className="font-medium">
+                        {tk(`fields.crop_${c.crop}`)} {c.number ? `· ${c.number}` : ""}
+                      </div>
+                      <div className="text-tinta-2">{party(c.partyId)}</div>
+                    </td>
+                    <td className="num py-2.5 pr-4 text-right">{fmtNum(c.tons)}</td>
+                    <td className="num py-2.5 pr-4 text-right">{t("ui.grainOf", { a: fmtNum(c.deliveredTons), b: fmtNum(c.toDeliverTons) })}</td>
+                    <td className="num py-2.5 pr-4 text-right">{t("ui.grainOf", { a: fmtNum(c.settledTons), b: fmtNum(c.toSettleTons) })}</td>
+                    <td className="num py-2.5 pr-4 text-right">{fmtMoney(c.priceMinor, c.currency)}</td>
+                    <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
+                      <button className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setAction({ kind: "delivery", contract: c })}>
+                        {t("ui.grainAddDelivery")}
+                      </button>
+                      <button className="cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setAction({ kind: "settlement", contract: c })}>
+                        {t("ui.grainAddSettlement")}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
       )}
       <h2 className="border-b border-linea pb-2 font-serif text-lg font-semibold">{t("ui.grainDeliveries")}</h2>
       {(deliveries.data ?? []).length === 0 ? (
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
-        <table className="w-full text-sm">
-          <tbody>
-            {(deliveries.data ?? []).map((d) => (
-              <tr key={d.id} className="border-b border-linea">
-                <td className="num py-2.5 pr-4">{fmtIsoDate(d.date)}</td>
-                <td className="py-2.5 pr-4 font-medium">{label(d.contractId)}</td>
-                <td className="py-2.5 pr-4 text-tinta-2">{d.ticket ?? ""}</td>
-                <td className="num py-2.5 pr-4 text-right">{fmtNum(d.tons)} t</td>
-                <td className="num py-2.5 pr-4 text-right text-tinta-2">{d.moisturePct === null ? "" : `${d.moisturePct} %`}</td>
-                <td className="py-2.5 text-right">
-                  <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => removeD.mutate(d.id)}>
-                    {t("ui.delete")}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ExportableTable name="entregas-de-granos">
+          <table className="w-full text-sm">
+            <tbody>
+              {(deliveries.data ?? []).map((d) => (
+                <tr key={d.id} className="border-b border-linea">
+                  <td className="num py-2.5 pr-4">{fmtIsoDate(d.date)}</td>
+                  <td className="py-2.5 pr-4 font-medium">{label(d.contractId)}</td>
+                  <td className="py-2.5 pr-4 text-tinta-2">{d.ticket ?? ""}</td>
+                  <td className="num py-2.5 pr-4 text-right">{fmtNum(d.tons)} t</td>
+                  <td className="num py-2.5 pr-4 text-right text-tinta-2">{d.moisturePct === null ? "" : `${d.moisturePct} %`}</td>
+                  <td className="py-2.5 text-right">
+                    <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => removeD.mutate(d.id)}>
+                      {t("ui.delete")}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </ExportableTable>
       )}
       <h2 className="border-b border-linea pb-2 font-serif text-lg font-semibold">{t("ui.grainSettlements")}</h2>
       {(settlements.data ?? []).length === 0 ? (
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
-        <table className="w-full text-sm">
-          <tbody>
-            {(settlements.data ?? []).map((l) => (
-              <tr key={l.id} className="border-b border-linea">
-                <td className="num py-2.5 pr-4">{fmtIsoDate(l.date)}</td>
-                <td className="py-2.5 pr-4 font-medium">{label(l.contractId)}</td>
-                <td className="num py-2.5 pr-4 text-right">{fmtNum(l.tons)} t</td>
-                <td className="num py-2.5 pr-4 text-right">{fmtMoney(l.netAmount, l.currency)}</td>
-                <td className="num py-2.5 pr-4 text-right text-tinta-2">{fmtGs(l.netPyg)}</td>
-                <td className="py-2.5 pr-4 text-tinta-2">{l.dueDate ? t("ui.purchDue", { date: fmtIsoDate(l.dueDate) }) : ""}</td>
-                <td className="py-2.5 text-right">
-                  <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => removeS.mutate(l.id)}>
-                    {t("ui.delete")}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ExportableTable name="liquidaciones">
+          <table className="w-full text-sm">
+            <tbody>
+              {(settlements.data ?? []).map((l) => (
+                <tr key={l.id} className="border-b border-linea">
+                  <td className="num py-2.5 pr-4">{fmtIsoDate(l.date)}</td>
+                  <td className="py-2.5 pr-4 font-medium">{label(l.contractId)}</td>
+                  <td className="num py-2.5 pr-4 text-right">{fmtNum(l.tons)} t</td>
+                  <td className="num py-2.5 pr-4 text-right">{fmtMoney(l.netAmount, l.currency)}</td>
+                  <td className="num py-2.5 pr-4 text-right text-tinta-2">{fmtGs(l.netPyg)}</td>
+                  <td className="py-2.5 pr-4 text-tinta-2">{l.dueDate ? t("ui.purchDue", { date: fmtIsoDate(l.dueDate) }) : ""}</td>
+                  <td className="py-2.5 text-right">
+                    <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => removeS.mutate(l.id)}>
+                      {t("ui.delete")}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </ExportableTable>
       )}
       {(removeD.error || removeS.error) && <ErrorBox error={removeD.error ?? removeS.error} />}
       {newContract && <RowModal title={t("ui.grainNew")} fields={fields} row={null} path="grain-contracts" onClose={() => setNewContract(false)} />}

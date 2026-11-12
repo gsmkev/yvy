@@ -15,6 +15,7 @@ import { SupplementPanel } from "./SupplementPanel";
 import { TheftPanel } from "./TheftPanel";
 import { WeighingsPanel } from "./WeighingsPanel";
 import { Button, Empty, ErrorBox, Field, Input, Spinner, Tabs, toast } from "./ui";
+import { ExportableTable } from "./ExportableTable";
 
 const dec = new Intl.NumberFormat("es-PY", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const int = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 });
@@ -70,40 +71,42 @@ function StockSection({ farmId }: { farmId: string }) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] text-sm">
-          <thead>
-            <tr className="text-left text-xs text-tinta-2">
-              <th className="pb-2 font-medium">{t("ui.plot")}</th>
-              {HERD_CATEGORIES.map((c) => (
-                <th key={c} className="pb-2 text-right font-medium">
-                  {tk(`fields.herd_${c}`)}
-                </th>
-              ))}
-              <th className="pb-2 text-right font-medium">{t("ui.herdTotal")}</th>
-              <th className="pb-2 text-right font-medium">{t("ui.herdUaPerHaHead")}</th>
-              <th className="pb-2 text-right font-medium">{t("ui.herdLastCount")}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-linea border-t border-linea">
-            {d.plots.map((p) => (
-              <tr key={p.plotId}>
-                <td className="py-2.5 font-medium">{p.name}</td>
+        <ExportableTable name="hacienda">
+          <table className="w-full min-w-[640px] text-sm">
+            <thead>
+              <tr className="text-left text-xs text-tinta-2">
+                <th className="pb-2 font-medium">{t("ui.plot")}</th>
                 {HERD_CATEGORIES.map((c) => (
-                  <td key={c} className="num py-2.5 text-right">
-                    {p.counts[c] || "—"}
-                  </td>
+                  <th key={c} className="pb-2 text-right font-medium">
+                    {tk(`fields.herd_${c}`)}
+                  </th>
                 ))}
-                <td className="num py-2.5 text-right font-medium">{int.format(p.total)}</td>
-                <td className={`num py-2.5 text-right ${p.overLimit ? "font-medium text-peligro" : ""}`}>
-                  {p.uaPerHa === null ? "—" : dec.format(p.uaPerHa)}
-                </td>
-                <td className="num py-2.5 text-right text-tinta-2">
-                  {p.lastCountAt ? fmtDay(p.lastCountAt) : t("ui.herdNeverCounted")}
-                </td>
+                <th className="pb-2 text-right font-medium">{t("ui.herdTotal")}</th>
+                <th className="pb-2 text-right font-medium">{t("ui.herdUaPerHaHead")}</th>
+                <th className="pb-2 text-right font-medium">{t("ui.herdLastCount")}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-linea border-t border-linea">
+              {d.plots.map((p) => (
+                <tr key={p.plotId}>
+                  <td className="py-2.5 font-medium">{p.name}</td>
+                  {HERD_CATEGORIES.map((c) => (
+                    <td key={c} className="num py-2.5 text-right">
+                      {p.counts[c] || "—"}
+                    </td>
+                  ))}
+                  <td className="num py-2.5 text-right font-medium">{int.format(p.total)}</td>
+                  <td className={`num py-2.5 text-right ${p.overLimit ? "font-medium text-peligro" : ""}`}>
+                    {p.uaPerHa === null ? "—" : dec.format(p.uaPerHa)}
+                  </td>
+                  <td className="num py-2.5 text-right text-tinta-2">
+                    {p.lastCountAt ? fmtDay(p.lastCountAt) : t("ui.herdNeverCounted")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </ExportableTable>
       </div>
 
       <form

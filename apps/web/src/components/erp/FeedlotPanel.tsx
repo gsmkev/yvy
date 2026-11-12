@@ -8,6 +8,7 @@ import { t, tk } from "../../lib/i18n";
 import { useFarm, useFarms } from "../../lib/queries";
 import { useProducts } from "../ProductsPanel";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { ExportableTable } from "../ExportableTable";
 
 interface Ration {
   id: string;
@@ -314,39 +315,41 @@ function CorralReport() {
       {q.data && rows.length === 0 && <Empty>{t("ui.feedlotNoFeeds")}</Empty>}
       {rows.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-left text-tinta-2">
-              <tr>
-                <th className="py-2 pr-4 font-medium">{t("ui.feedlotCorral")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.feedlotColDm")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.feedlotColAsFed")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.feedlotColGain")}</th>
-                <th className="py-2 text-right font-medium">{t("ui.feedlotColConversion")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((c) => (
-                <tr key={c.plotId} className="border-t border-linea align-top">
-                  <td className="py-2.5 pr-4 font-medium">{c.plotName}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtNum(c.feedKgDm)}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtNum(c.feedKgAsFed)}</td>
-                  <td className="num py-2.5 pr-4 text-right">{c.gainKg !== null ? `${fmtNum(c.gainKg)} kg` : "—"}</td>
-                  <td className="num py-2.5 text-right">
-                    {c.conversion !== null ? (
-                      <>
-                        {fmtNum(c.conversion)}
-                        <span className="block text-xs text-tinta-2">
-                          {t("ui.feedlotWindow", { from: fmtDate(c.firstAt!), to: fmtDate(c.lastAt!), head: c.head ?? 0 })}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-tinta-2">{tk(`ui.feedlotStatus_${c.status}`)}</span>
-                    )}
-                  </td>
+          <ExportableTable name="feedlot">
+            <table className="w-full text-sm">
+              <thead className="text-left text-tinta-2">
+                <tr>
+                  <th className="py-2 pr-4 font-medium">{t("ui.feedlotCorral")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.feedlotColDm")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.feedlotColAsFed")}</th>
+                  <th className="py-2 pr-4 text-right font-medium">{t("ui.feedlotColGain")}</th>
+                  <th className="py-2 text-right font-medium">{t("ui.feedlotColConversion")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((c) => (
+                  <tr key={c.plotId} className="border-t border-linea align-top">
+                    <td className="py-2.5 pr-4 font-medium">{c.plotName}</td>
+                    <td className="num py-2.5 pr-4 text-right">{fmtNum(c.feedKgDm)}</td>
+                    <td className="num py-2.5 pr-4 text-right">{fmtNum(c.feedKgAsFed)}</td>
+                    <td className="num py-2.5 pr-4 text-right">{c.gainKg !== null ? `${fmtNum(c.gainKg)} kg` : "—"}</td>
+                    <td className="num py-2.5 text-right">
+                      {c.conversion !== null ? (
+                        <>
+                          {fmtNum(c.conversion)}
+                          <span className="block text-xs text-tinta-2">
+                            {t("ui.feedlotWindow", { from: fmtDate(c.firstAt!), to: fmtDate(c.lastAt!), head: c.head ?? 0 })}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-tinta-2">{tk(`ui.feedlotStatus_${c.status}`)}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ExportableTable>
         </div>
       )}
       {q.data?.truncated && <p className="text-xs text-tinta-2">{t("ui.feedlotTruncated")}</p>}

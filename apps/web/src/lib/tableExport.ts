@@ -11,6 +11,9 @@ export interface TableData {
 
 const stamp = () => new Date().toISOString().slice(0, 10);
 
+/** Nombre apto para una hoja de Excel y para un archivo: sin barras, signos de pregunta, asterisco, corchetes ni dos puntos. */
+export const safeName = (s: string): string => s.replace(/[\\/?*[\]:]/g, "-").trim() || "tabla";
+
 /** Evita que Excel interprete texto como fórmula (=, +, -, @) y escapa comillas. */
 function csvCell(v: Cell): string {
   if (v === null || v === undefined) return "";
@@ -23,13 +26,13 @@ export const toCsv = (d: TableData): string => [d.headers, ...d.rows].map((r) =>
 
 export function tableToCsv(d: TableData) {
   // BOM para que Excel abra bien las tildes
-  download(new Blob(["﻿", toCsv(d)], { type: "text/csv;charset=utf-8" }), `${d.name}-${stamp()}.csv`);
+  download(new Blob(["﻿", toCsv(d)], { type: "text/csv;charset=utf-8" }), `${safeName(d.name)}-${stamp()}.csv`);
 }
 
 export async function tableToExcel(d: TableData) {
   const ExcelJS = (await import("exceljs")).default;
   const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet(d.name.slice(0, 31));
+  const ws = wb.addWorksheet(safeName(d.name).slice(0, 31));
   ws.columns = d.headers.map((header, i) => ({
     header,
     key: `c${i}`,
@@ -40,7 +43,7 @@ export async function tableToExcel(d: TableData) {
   const buf = await wb.xlsx.writeBuffer();
   download(
     new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
-    `${d.name}-${stamp()}.xlsx`,
+    `${safeName(d.name)}-${stamp()}.xlsx`,
   );
 }
 
@@ -49,7 +52,7 @@ export async function tablesToExcel(baseName: string, tables: TableData[]) {
   const ExcelJS = (await import("exceljs")).default;
   const wb = new ExcelJS.Workbook();
   for (const d of tables) {
-    const ws = wb.addWorksheet(d.name.slice(0, 31));
+    const ws = wb.addWorksheet(safeName(d.name).slice(0, 31));
     ws.columns = d.headers.map((header, i) => ({
       header,
       key: `c${i}`,
@@ -62,3 +65,47 @@ export async function tablesToExcel(baseName: string, tables: TableData[]) {
   const buf = await wb.xlsx.writeBuffer();
   download(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `${baseName}-${stamp()}.xlsx`);
 }
+
+/**
+ * Número en formato es-PY ("1.234,5", "-12", "0,75") o null si el texto no es un número. Los textos con cero a la
+ * izquierda ("0981 123", "007") y los que mezclan letras se dejan como texto: son códigos, no cantidades.
+ */
+export function parseEsNumber(text: string): number | null {
+  const t = text.trim();
+  if (!/^-?(0|[1-9]\d{0,2}(\.\d{3})+|[1-9]\d*)(,\d+)?$/.test(t)) return null;
+  return Number(t.replace(/\./g, "").replace(",", "."));
+}
+
+const cellText = (el: Element) => (el.textContent ?? "").replace(/\s+/g, " ").trim();
+
+/**
+ * Lee una tabla HTML ya dibujada y la pasa a TableData (U-28): encabezados de la última fila de `thead`, filas de
+ * `tbody` y `tfoot`. Las columnas sin encabezado (acciones, casillas) no se exportan. Una celda con `data-value`
+ * exporta ese valor en lugar del texto; los números escritos en es-PY salen como números para que Excel sume.
+ */
+export function tableFromElement(table: HTMLTableElement, name: string): TableData {
+  const headRows = [...table.querySelectorAll("thead tr")];
+  const headCells = headRows.length ? [...headRows[headRows.length - 1]!.children] : [];
+  const keep = headCells.map((h, i) => (cellText(h) ? i : -1)).filter((i) => i >= 0);
+  const rows: Cell[][] = [];
+  for (const tr of table.querySelectorAll("tbody tr, tfoot tr")) {
+    const cells = [...tr.children];
+    const idx = keep.length ? keep : cells.map((_, i) => i);
+    rows.push(
+      idx.map((i) => {
+        const c = cells[i];
+        if (!c) return "";
+        const raw = c.getAttribute("data-value");
+        if (raw !== null) return raw.trim() !== "" && Number.isFinite(Number(raw)) ? Number(raw) : raw;
+        const text = cellText(c);
+        return parseEsNumber(text) ?? text;
+      }),
+    );
+  }
+  return {
+    name,
+    headers: (keep.length ? keep : headCells.map((_, i) => i)).map((i) => cellText(headCells[i]!)),
+    rows,
+  };
+}
+

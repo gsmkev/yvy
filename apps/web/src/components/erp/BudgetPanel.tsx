@@ -8,6 +8,7 @@ import { fmtGs } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
 import { useSeasonList } from "./CostsPanel";
+import { ExportableTable } from "../ExportableTable";
 
 interface Row {
   id: string;
@@ -72,43 +73,45 @@ export function BudgetPanel() {
                 <Empty>{t("ui.erpEmpty")}</Empty>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-linea text-left text-tinta-2">
-                        <th className="py-2 pr-4 font-medium">{t("ui.budgetScope")}</th>
-                        <th className="py-2 pr-4 font-medium">{t("ui.costCategory")}</th>
-                        <th className="py-2 pr-4 text-right font-medium">{t("ui.budgetPlanned")}</th>
-                        <th className="py-2 pr-4 text-right font-medium">{t("ui.budgetActual")}</th>
-                        <th className="py-2 pr-4 text-right font-medium">{t("ui.budgetDiff")}</th>
-                        <th className="py-2 pr-4 text-right font-medium">%</th>
-                        <th />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {q.data.rows.map((r) => {
-                        const income = r.category === "sale";
-                        const bad = income ? r.diffPyg < 0 : r.diffPyg > 0;
-                        return (
-                          <tr key={r.id} className="border-b border-linea">
-                            <td className="py-2.5 pr-4">
-                              {r.plotId ? (r.plotName ?? t("ui.budgetPlot")) : r.crop ? tk(`fields.crop_${r.crop}`) : t("ui.budgetWhole")}
-                              {r.activity ? <span className="text-tinta-2"> · {tk(`ui.activity_${r.activity}`)}</span> : null}
-                            </td>
-                            <td className="py-2.5 pr-4">{tk(`ui.costCategory_${r.category}`)}</td>
-                            <td className="num py-2.5 pr-4 text-right">{fmtGs(r.amountPyg)}</td>
-                            <td className="num py-2.5 pr-4 text-right">{fmtGs(r.actualPyg)}</td>
-                            <td className={`num py-2.5 pr-4 text-right ${bad ? "text-peligro" : ""}`}>{fmtGs(r.diffPyg)}</td>
-                            <td className="num py-2.5 pr-4 text-right">{r.pct === null ? "" : `${r.pct}`}</td>
-                            <td className="py-2.5 text-right">
-                              <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => remove.mutate(r.id)}>
-                                {t("ui.delete")}
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                  <ExportableTable name="presupuesto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-linea text-left text-tinta-2">
+                          <th className="py-2 pr-4 font-medium">{t("ui.budgetScope")}</th>
+                          <th className="py-2 pr-4 font-medium">{t("ui.costCategory")}</th>
+                          <th className="py-2 pr-4 text-right font-medium">{t("ui.budgetPlanned")}</th>
+                          <th className="py-2 pr-4 text-right font-medium">{t("ui.budgetActual")}</th>
+                          <th className="py-2 pr-4 text-right font-medium">{t("ui.budgetDiff")}</th>
+                          <th className="py-2 pr-4 text-right font-medium">%</th>
+                          <th />
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {q.data.rows.map((r) => {
+                          const income = r.category === "sale";
+                          const bad = income ? r.diffPyg < 0 : r.diffPyg > 0;
+                          return (
+                            <tr key={r.id} className="border-b border-linea">
+                              <td className="py-2.5 pr-4">
+                                {r.plotId ? (r.plotName ?? t("ui.budgetPlot")) : r.crop ? tk(`fields.crop_${r.crop}`) : t("ui.budgetWhole")}
+                                {r.activity ? <span className="text-tinta-2"> · {tk(`ui.activity_${r.activity}`)}</span> : null}
+                              </td>
+                              <td className="py-2.5 pr-4">{tk(`ui.costCategory_${r.category}`)}</td>
+                              <td className="num py-2.5 pr-4 text-right">{fmtGs(r.amountPyg)}</td>
+                              <td className="num py-2.5 pr-4 text-right">{fmtGs(r.actualPyg)}</td>
+                              <td className={`num py-2.5 pr-4 text-right ${bad ? "text-peligro" : ""}`}>{fmtGs(r.diffPyg)}</td>
+                              <td className="num py-2.5 pr-4 text-right">{r.pct === null ? "" : `${r.pct}`}</td>
+                              <td className="py-2.5 text-right">
+                                <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => remove.mutate(r.id)}>
+                                  {t("ui.delete")}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </ExportableTable>
                 </div>
               )}
             </>

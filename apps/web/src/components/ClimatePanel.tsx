@@ -10,6 +10,7 @@ import { LineChart, RainChart } from "./charts";
 import { CloudRain, CloudSun } from "lucide-react";
 import { SprayWindows } from "./SprayWindows";
 import { Empty, ErrorBox, Spinner, Stat } from "./ui";
+import { ExportableTable } from "./ExportableTable";
 
 interface Climate {
   daily: {
@@ -145,41 +146,43 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
               ]}
             />
             <div className="mt-3 overflow-x-auto">
-              <table className="num w-full text-xs">
-                <thead>
-                  <tr className="text-tinta-2">
-                    <th className="pr-2 text-left font-normal" />
-                    {c.forecast.map((f) => (
-                      <th key={f.validDate} className="px-1 pb-1 text-center font-normal capitalize">
-                        {wd.format(new Date(`${f.validDate}T12:00:00Z`)).replace(".", "")}
-                        <span className="block">{fmtIsoDate(f.validDate).slice(0, 2)}</span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="border-t border-linea">
-                  {[
-                    [
-                      t("ui.tmax"),
-                      (f: (typeof c.forecast)[number]) => (f.tmaxC === null ? "—" : `${Math.round(f.tmaxC)}°`),
-                    ],
-                    [
-                      t("ui.tmin"),
-                      (f: (typeof c.forecast)[number]) => (f.tminC === null ? "—" : `${Math.round(f.tminC)}°`),
-                    ],
-                    [t("ui.rainMm"), (f: (typeof c.forecast)[number]) => (f.precipMm ? fmtNum(f.precipMm) : "·")],
-                  ].map(([label, fn]) => (
-                    <tr key={label as string}>
-                      <th className="py-1 pr-2 text-left font-normal text-tinta-2">{label as string}</th>
+              <ExportableTable name="clima">
+                <table className="num w-full text-xs">
+                  <thead>
+                    <tr className="text-tinta-2">
+                      <th className="pr-2 text-left font-normal" />
                       {c.forecast.map((f) => (
-                        <td key={f.validDate} className="px-1 py-1 text-center">
-                          {(fn as (x: typeof f) => string)(f)}
-                        </td>
+                        <th key={f.validDate} className="px-1 pb-1 text-center font-normal capitalize">
+                          {wd.format(new Date(`${f.validDate}T12:00:00Z`)).replace(".", "")}
+                          <span className="block">{fmtIsoDate(f.validDate).slice(0, 2)}</span>
+                        </th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="border-t border-linea">
+                    {[
+                      [
+                        t("ui.tmax"),
+                        (f: (typeof c.forecast)[number]) => (f.tmaxC === null ? "—" : `${Math.round(f.tmaxC)}°`),
+                      ],
+                      [
+                        t("ui.tmin"),
+                        (f: (typeof c.forecast)[number]) => (f.tminC === null ? "—" : `${Math.round(f.tminC)}°`),
+                      ],
+                      [t("ui.rainMm"), (f: (typeof c.forecast)[number]) => (f.precipMm ? fmtNum(f.precipMm) : "·")],
+                    ].map(([label, fn]) => (
+                      <tr key={label as string}>
+                        <th className="py-1 pr-2 text-left font-normal text-tinta-2">{label as string}</th>
+                        {c.forecast.map((f) => (
+                          <td key={f.validDate} className="px-1 py-1 text-center">
+                            {(fn as (x: typeof f) => string)(f)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ExportableTable>
             </div>
             <p className="mt-2 text-[11px] text-tinta-2">{_t("attribution.metNorway")}</p>
           </>

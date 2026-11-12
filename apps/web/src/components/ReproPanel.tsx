@@ -6,6 +6,7 @@ import { get } from "../lib/api";
 import { fmtDay } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { Empty, ErrorBox, Field, Select, Spinner, Stat } from "./ui";
+import { ExportableTable } from "./ExportableTable";
 
 const DAY = 86_400_000;
 const pctText = (v: number | null) => (v === null ? "—" : `${new Intl.NumberFormat("es-PY", { maximumFractionDigits: 1 }).format(v)} %`);
@@ -44,37 +45,39 @@ export function ReproPanel({ farmId }: { farmId: string }) {
           </div>
           {d.truncated && <p className="text-sm text-tinta-2">{t("ui.herdTruncated")}</p>}
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-sm">
-              <thead>
-                <tr className="text-left text-xs text-tinta-2">
-                  <th className="pb-2 font-medium">{t("ui.theftDate")}</th>
-                  <th className="pb-2 font-medium">{t("fields.reproEvent")}</th>
-                  <th className="pb-2 font-medium">{t("ui.plot")}</th>
-                  <th className="pb-2 text-right font-medium">{t("fields.head")}</th>
-                  <th className="pb-2 font-medium">{t("ui.reproDetail")}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-linea border-t border-linea">
-                {d.rows.map((r) => (
-                  <tr key={r.id}>
-                    <td className="num py-2.5">{fmtDay(r.capturedAt)}</td>
-                    <td className="py-2.5 font-medium">{tk(`fields.reproEvent_${r.event}`)}</td>
-                    <td className="py-2.5">{r.plotName ?? "—"}</td>
-                    <td className="num py-2.5 text-right">{r.head}</td>
-                    <td className="py-2.5 text-tinta-2">
-                      {[
-                        r.method ? tk(`fields.reproMethod_${r.method}`) : null,
-                        r.pregnant !== null ? t("fields.reproPregnantValue", { n: r.pregnant }) : null,
-                        r.calves !== null ? t("fields.reproCalvesValue", { n: r.calves }) : null,
-                        r.tag ? t("fields.tagValue", { n: r.tag }) : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ") || "—"}
-                    </td>
+            <ExportableTable name="reproduccion">
+              <table className="w-full min-w-[560px] text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-tinta-2">
+                    <th className="pb-2 font-medium">{t("ui.theftDate")}</th>
+                    <th className="pb-2 font-medium">{t("fields.reproEvent")}</th>
+                    <th className="pb-2 font-medium">{t("ui.plot")}</th>
+                    <th className="pb-2 text-right font-medium">{t("fields.head")}</th>
+                    <th className="pb-2 font-medium">{t("ui.reproDetail")}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-linea border-t border-linea">
+                  {d.rows.map((r) => (
+                    <tr key={r.id}>
+                      <td className="num py-2.5">{fmtDay(r.capturedAt)}</td>
+                      <td className="py-2.5 font-medium">{tk(`fields.reproEvent_${r.event}`)}</td>
+                      <td className="py-2.5">{r.plotName ?? "—"}</td>
+                      <td className="num py-2.5 text-right">{r.head}</td>
+                      <td className="py-2.5 text-tinta-2">
+                        {[
+                          r.method ? tk(`fields.reproMethod_${r.method}`) : null,
+                          r.pregnant !== null ? t("fields.reproPregnantValue", { n: r.pregnant }) : null,
+                          r.calves !== null ? t("fields.reproCalvesValue", { n: r.calves }) : null,
+                          r.tag ? t("fields.tagValue", { n: r.tag }) : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </ExportableTable>
           </div>
           <p className="text-xs text-tinta-2">{t("ui.reproHint")}</p>
         </>

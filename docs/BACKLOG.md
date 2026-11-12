@@ -343,7 +343,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 |---|---|---|---|---|
 | K-01 | Selector de organización para agrónomos con varios clientes | P0 | S | Falta (la API lo soporta) |
 | K-02 | Vista del agrónomo: todos sus clientes en un mapa con avisos | P1 | M | Falta |
-| K-03 | Contratista externo con acceso a ciertos lotes y tareas | P2 | M | Falta |
+| K-03 | Contratista externo con acceso a ciertos lotes y tareas | P2 | M | Hecho |
 | K-04 | Enlace temporal de solo lectura para un banco, auditor o comprador | P1 | S | Falta |
 | K-05 | Permisos finos por estancia | P2 | M | Hecho |
 | K-06 | Registro de auditoría: quién cambió qué y cuándo | P2 | M | Falta |

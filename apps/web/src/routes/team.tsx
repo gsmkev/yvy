@@ -56,6 +56,11 @@ export function TeamPage() {
               rows: members.data!.map((m) => [m.fullName, tk(`ui.role_${m.role}`), m.email, m.phone]),
             })}
           />
+          {me.data?.role === "owner" && (
+            <Link to="/cambios" className="text-sm underline underline-offset-4">
+              {t("ui.auditTitle")}
+            </Link>
+          )}
           {canManage && (
             <Link to="/formularios" className="text-sm font-medium text-accion underline underline-offset-2">
               {t("ui.formsLink")}

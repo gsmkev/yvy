@@ -172,6 +172,12 @@ export const LIMITS = {
      */
     maxEffectMovesPerPush: 60,
   },
+  /** K-06: registro de cambios de la organización. */
+  audit: {
+    pageSize: 50,
+    /** Campos con valor corto que se guardan tal cual en el detalle de un cambio; el resto solo se nombra. */
+    maxValueLength: 80,
+  },
   share: {
     /** Duraciones permitidas del enlace de solo lectura (K-04), en días. */
     linkDays: [7, 30],

@@ -173,5 +173,8 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE UNIQUE INDEX `management_zones_plot_zone_uq` ON `management_zones` (`plot_id`,`zone`);",
   "CREATE INDEX `management_zones_farm_idx` ON `management_zones` (`farm_id`);",
   "CREATE TABLE `farm_access` (\n\t`organization_id` text NOT NULL,\n\t`user_id` text NOT NULL,\n\t`farm_id` text NOT NULL,\n\t`level` text DEFAULT 'edit' NOT NULL,\n\t`created_at` integer NOT NULL,\n\tPRIMARY KEY(`organization_id`, `user_id`, `farm_id`)\n);",
-  "CREATE INDEX `farm_access_farm_idx` ON `farm_access` (`farm_id`);"
+  "CREATE INDEX `farm_access_farm_idx` ON `farm_access` (`farm_id`);",
+  "ALTER TABLE `audit_log` ADD `entity` text;",
+  "ALTER TABLE `audit_log` ADD `entity_id` text;",
+  "CREATE INDEX `audit_log_entity_idx` ON `audit_log` (`organization_id`,`entity`,`entity_id`);"
 ];

@@ -1283,7 +1283,10 @@ export const notificationPrefs = sqliteTable("notification_prefs", {
   updatedAt: integer("updated_at").notNull(),
 });
 
-/** P-12: registro de auditoría de acciones del equipo de Yvy sobre organizaciones de clientes. */
+/**
+ * Registro de auditoría. P-12: acciones del equipo de Yvy sobre organizaciones de clientes. K-06: quién cambió qué y
+ * cuándo dentro de la organización (estancias, lotes, miembros, tareas, borrado de registros).
+ */
 export const auditLog = sqliteTable(
   "audit_log",
   {
@@ -1291,10 +1294,16 @@ export const auditLog = sqliteTable(
     actorUserId: text("actor_user_id").notNull(),
     action: text("action").notNull(),
     organizationId: text("organization_id"),
+    /** K-06: qué se tocó (`farm`, `plot`, `member`, `task`, `record`...) y su id. Las acciones del equipo de Yvy no lo llevan. */
+    entity: text("entity"),
+    entityId: text("entity_id"),
     detail: text("detail").notNull().default("{}"),
     createdAt: integer("created_at").notNull(),
   },
-  (t) => [index("audit_log_org_idx").on(t.organizationId, t.createdAt)],
+  (t) => [
+    index("audit_log_org_idx").on(t.organizationId, t.createdAt),
+    index("audit_log_entity_idx").on(t.organizationId, t.entity, t.entityId),
+  ],
 );
 
 // ---------- Reportes ----------

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, Card, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../components/ui";
 import { enterSupport, get, post, qs, type Session } from "../lib/api";
 import { fmtDate, fmtDateTime, fmtHa, fmtNum } from "../lib/format";
+import { AuditList, type AuditEntryRow } from "../components/AuditList";
 import { t, tk } from "../lib/i18n";
 
 interface OrgMetrics {
@@ -32,6 +33,7 @@ interface OrgMetrics {
 /** Métricas del PRD §4 por organización (solo equipo Yvy). */
 export function InternalPage() {
   const [editing, setEditing] = useState<OrgMetrics | null>(null);
+  const [changes, setChanges] = useState<OrgMetrics | null>(null);
   const [search, setSearch] = useState("");
   const [term, setTerm] = useState("");
   // Busca en el servidor cuando se deja de escribir
@@ -159,6 +161,9 @@ export function InternalPage() {
                       {t("ui.internalExtend")}
                     </button>
                   )}
+                  <button className="cursor-pointer underline underline-offset-4" onClick={() => setChanges(o)}>
+                    {t("ui.internalChanges")}
+                  </button>
                   <button
                     className="cursor-pointer underline underline-offset-4 disabled:opacity-50"
                     disabled={support.isPending}
@@ -173,6 +178,7 @@ export function InternalPage() {
         </table>
       </div>
       {editing && <PlanModal org={editing} onClose={() => setEditing(null)} />}
+      {changes && <OrgChanges org={changes} onClose={() => setChanges(null)} />}
       <Funnel />
       <AuditLog />
     </div>
@@ -302,6 +308,22 @@ function PlanModal({ org, onClose }: { org: OrgMetrics; onClose: () => void }) {
           {t("ui.save")}
         </Button>
       </form>
+    </Modal>
+  );
+}
+
+/** K-06: últimos cambios que hicieron las personas de una organización (solo lectura, para soporte). */
+function OrgChanges({ org, onClose }: { org: OrgMetrics; onClose: () => void }) {
+  const q = useQuery({
+    queryKey: ["admin-audit-org", org.id],
+    queryFn: () => get<AuditEntryRow[]>(`/admin/audit${qs({ orgId: org.id, scope: "org" })}`),
+  });
+  return (
+    <Modal title={`${t("ui.internalChanges")} · ${org.name}`} onClose={onClose}>
+      {q.isPending && <Spinner />}
+      {q.error && <ErrorBox error={q.error} />}
+      {q.data && !q.data.length && <p className="text-sm text-tinta-2">{t("ui.auditEmpty")}</p>}
+      {q.data && <AuditList rows={q.data} />}
     </Modal>
   );
 }

@@ -6,6 +6,7 @@ import { t, tk } from "../lib/i18n";
 import type { Plot } from "../lib/types";
 import { LineChart } from "./charts";
 import { DamageReportModal } from "./DamageReportModal";
+import { YieldVigorSection } from "./YieldVigorSection";
 import { YieldMapSection } from "./YieldMapSection";
 import { ZonesSection } from "./ZonesSection";
 import { Button, ErrorBox, Spinner } from "./ui";
@@ -21,6 +22,7 @@ export function PlotAgro({ plot }: { plot: Plot }) {
       <WaterBalanceSection plotId={plot.id} />
       <ZonesSection plot={plot} />
       <YieldMapSection plot={plot} />
+      <YieldVigorSection plot={plot} />
       <DamageSection plot={plot} />
     </>
   );

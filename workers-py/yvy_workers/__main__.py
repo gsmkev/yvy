@@ -9,7 +9,7 @@ import sys
 from .ingest import IngestClient
 from .jobs.constants import BACKFILL_DAYS, BASEMAP_DAYS, DAILY_DAYS
 
-JOBS = ["s2_ingest", "s2_basemap", "country_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "weekly_report", "new_farm", "eudr", "s2_history", "burned_area", "cover_change", "power_daily", "spi", "mgmt_zones"]
+JOBS = ["s2_ingest", "s2_basemap", "country_basemap", "chirps_daily", "firms_hotspots", "climatology_build", "risk_report", "weekly_report", "new_farm", "eudr", "s2_history", "burned_area", "cover_change", "power_daily", "spi", "mgmt_zones", "boundaries"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -45,6 +45,12 @@ def main(argv: list[str] | None = None) -> int:
         from .jobs.country import country_basemap
 
         country_basemap()
+        return 0
+
+    if args.job == "boundaries":  # límites administrativos: no dependen de las estancias ni de la API
+        from .jobs.boundaries import boundaries
+
+        log.info("límites publicados: %d niveles", boundaries())
         return 0
 
     api = IngestClient()

@@ -49,6 +49,8 @@ export interface FarmMapProps {
   /** Varias estancias a la vez (inicio): perímetro, nombre y fondo satelital propio. */
   farms?: { id: string; name: string; geometry: string; basemapPath?: string | null; alert?: boolean }[];
   layers?: Layer[];
+  /** M-16: límites administrativos (geoBoundaries); sin datos, la capa no existe. */
+  boundaries?: FeatureCollection | null;
   tilesBaseUrl?: string;
   showNdvi?: boolean;
   /** S-07: índice que muestra la capa de vigor (NDVI por defecto). */
@@ -304,6 +306,12 @@ export function FarmMap(props: FarmMapProps) {
         map.on("mouseenter", l, () => (map.getCanvas().style.cursor = "pointer"));
         map.on("mouseleave", l, () => (map.getCanvas().style.cursor = ""));
       }
+      const hoverName = new maplibregl.Popup({ closeButton: false, closeOnClick: false });
+      map.on("mousemove", "boundaries-fill", (e: MapLayerMouseEvent) => {
+        const name = e.features?.[0]?.properties?.name as string | undefined;
+        if (name && !cb.current.drawing && !cb.current.measuring) hoverName.setLngLat(e.lngLat).setText(name).addTo(map);
+      });
+      map.on("mouseleave", "boundaries-fill", () => hoverName.remove());
       map.on("move", (e) => {
         // Solo lo que mueve la persona: el salto que aplica la cámara del otro mapa no rebota.
         if (!e.originalEvent) return;
@@ -353,6 +361,7 @@ export function FarmMap(props: FarmMapProps) {
         })),
       ]),
     );
+    syncBoundaries(map, p.boundaries ?? null);
     // Nombres sobre el mapa (marcadores HTML: no dependen de un servidor de fuentes)
     for (const m of labelsRef.current) m.remove();
     const plotsShown = (p.plots ?? []).filter((pl) => pl.id !== p.editPlot?.id);
@@ -464,6 +473,7 @@ export function FarmMap(props: FarmMapProps) {
     props.pickedPlotIds,
     props.editPlot?.id,
     props.layers,
+    props.boundaries,
     props.showNdvi,
     props.indexKind,
     props.layerIds,
@@ -607,6 +617,33 @@ export function FarmMap(props: FarmMapProps) {
       className={props.className ?? "h-full w-full"}
       data-testid="map"
     />
+  );
+}
+
+/** M-16: la fuente se agrega solo con datos, así la atribución "geoBoundaries" aparece únicamente con la capa activa. */
+function syncBoundaries(map: MlMap, data: FeatureCollection | null) {
+  const src = map.getSource("boundaries") as GeoJSONSource | undefined;
+  if (!data) {
+    if (map.getLayer("boundaries-line")) map.removeLayer("boundaries-line");
+    if (map.getLayer("boundaries-fill")) map.removeLayer("boundaries-fill");
+    if (src) map.removeSource("boundaries");
+    return;
+  }
+  if (src) return src.setData(data);
+  map.addSource("boundaries", { type: "geojson", data, attribution: t("attribution.geoBoundaries") });
+  const before = map.getLayer("plots-fill") ? "plots-fill" : undefined;
+  map.addLayer(
+    { id: "boundaries-fill", type: "fill", source: "boundaries", paint: { "fill-color": "#000", "fill-opacity": 0 } },
+    before,
+  );
+  map.addLayer(
+    {
+      id: "boundaries-line",
+      type: "line",
+      source: "boundaries",
+      paint: { "line-color": BRAND.cielo, "line-width": 1.5, "line-opacity": 0.9 },
+    },
+    before,
   );
 }
 

@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 
-def upload_tiles(local: Path, key: str) -> None:
+def upload_tiles(local: Path, key: str, cache_control: str = "public, max-age=31536000, immutable") -> None:
     import boto3  # importación diferida: los tests no la necesitan
 
     s3 = boto3.client(
@@ -20,5 +20,59 @@ def upload_tiles(local: Path, key: str) -> None:
         str(local),
         os.environ.get("R2_TILES_BUCKET", "yvy-tiles"),
         key,
-        ExtraArgs={"ContentType": "application/vnd.pmtiles", "CacheControl": "public, max-age=31536000, immutable"},
+        ExtraArgs={"ContentType": "application/vnd.pmtiles", "CacheControl": cache_control},
     )
+
+
+def upload_report(local: Path, key: str) -> None:
+    """PDF del parte semanal al bucket privado de fotos y reportes (yvy-media): el Worker lo firma al mandar el email."""
+    import boto3
+
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=f"https://{os.environ['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
+        aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"],
+        aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"],
+        region_name="auto",
+    )
+    s3.upload_file(str(local), os.environ.get("R2_MEDIA_BUCKET", "yvy-media"), key, ExtraArgs={"ContentType": "application/pdf"})
+
+
+def upload_json(local: Path, key: str) -> None:
+    """GeoJSON estático (límites administrativos) al bucket público de teselas; se renueva una vez al año."""
+    import boto3
+
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=f"https://{os.environ['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
+        aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"],
+        aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"],
+        region_name="auto",
+    )
+    s3.upload_file(
+        str(local),
+        os.environ.get("R2_TILES_BUCKET", "yvy-tiles"),
+        key,
+        ExtraArgs={"ContentType": "application/geo+json", "CacheControl": "public, max-age=86400"},
+    )
+
+
+def _media_client():
+    import boto3
+
+    return boto3.client(
+        "s3",
+        endpoint_url=f"https://{os.environ['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
+        aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"],
+        aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"],
+        region_name="auto",
+    )
+
+
+def download_media(key: str, local: Path) -> None:
+    """Archivo del bucket privado yvy-media (capas propias subidas desde la web, M-17)."""
+    _media_client().download_file(os.environ.get("R2_MEDIA_BUCKET", "yvy-media"), key, str(local))
+
+
+def upload_media(local: Path, key: str, content_type: str) -> None:
+    _media_client().upload_file(str(local), os.environ.get("R2_MEDIA_BUCKET", "yvy-media"), key, ExtraArgs={"ContentType": content_type})

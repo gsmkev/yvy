@@ -15,8 +15,12 @@
       "/org/*",
       "/media/*",
       "/ingest/*",
+      "/public/*",
+      "/v1/*",
       "/admin/*",
       "/me",
+      "/me/*",
+      "/events",
       "/devices",
       "/health",
       "/descargar-app",
@@ -27,7 +31,7 @@
       "binding": "DB",
       "database_name": "yvy",
       // Reemplazar por el id que devuelve `wrangler d1 create yvy`
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "16461d64-a4d7-4f19-ab75-6a67c216e376",
       "migrations_dir": "migrations",
     },
   ],
@@ -54,5 +58,6 @@
     "OPS_EMAIL": "",
     // Emails del equipo de Yvy con acceso al panel interno (separados por coma)
     "ADMIN_EMAILS": "",
+    // Demo pública (V-02): agregar DEMO_ORG_ID y DEMO_USER_ID (dueño de esa organización, plan 'demo') para activarla.
   },
 }

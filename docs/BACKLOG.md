@@ -96,8 +96,8 @@ Detalles que un usuario espera sin pedirlos.
 | M-13 | Zoom al lote al elegirlo en la app | Coherencia con la web | App | P1 | S | Falta |
 | M-14 | Curvas de nivel y pendiente (Copernicus DEM, necesita ADR) | Erosión, terrazas, siembra | Web, Jobs | P2 | M | Falta |
 | M-15 | Caminos, arroyos y localidades de fondo (OpenStreetMap, necesita ADR) | Orientarse | Web, App | P2 | M | Falta |
-| M-16 | Límites de departamentos y distritos | Contexto y búsqueda | Web | P3 | S | Falta |
-| M-17 | Capas personalizadas: subir una imagen de dron o un mapa de suelos | Productores grandes | Web | P3 | M | Falta |
+| M-16 | Límites de departamentos y distritos | Contexto y búsqueda | Web | P3 | S | Hecho |
+| M-17 | Capas personalizadas: subir una imagen de dron o un mapa de suelos | Productores grandes | Web | P3 | M | Hecho |
 | M-18 | Grilla de muestreo de suelo sobre el lote (cada 5 o 10 ha) con puntos numerados | Planificar análisis | Web, App | P2 | M | Falta |
 | M-19 | Puntos de interés con más tipos: silo, galpón, tranquera, puente, molino, bebedero, manga, embarcadero | Mapa del campo completo | Web, App | P1 | S | Parcial |
 | M-20 | Líneas en el mapa: alambrados, caminos internos, cañerías, con su largo | Mantenimiento | Web | P2 | M | Falta |
@@ -160,16 +160,16 @@ Detalles que un usuario espera sin pedirlos.
 | A-16 | Fertilización: producto, kg/ha, momento y método | Costo y nutrición | Web, App | P1 | S | Falta |
 | A-20 | Cosecha por lote: toneladas, humedad, descuentos, rinde por hectárea | El resultado final | Web, App | P1 | M | Falta |
 | A-21 | Importar mapas de rendimiento de la cosechadora (shapefile) | Variabilidad real | Web, Jobs | P2 | L | Falta |
-| A-22 | Comparar rinde con vigor satelital por zona del lote | Validar las zonas | Web | P3 | M | Falta |
+| A-22 | Comparar rinde con vigor satelital por zona del lote | Validar las zonas | Web | P3 | M | Hecho |
 | A-23 | Entregas a acopio: ticket de balanza, silo, humedad, descuentos | Cerrar el ciclo con la venta | Web | P2 | M | Falta |
 | A-30 | Análisis de suelo: cargar resultados de laboratorio por punto o lote | Fertilidad | Web | P2 | M | Falta |
-| A-31 | Mapas de fertilidad interpolados (pH, fósforo, potasio, materia orgánica) | Prescripción | Web, Jobs | P3 | L | Falta |
+| A-31 | Mapas de fertilidad interpolados (pH, fósforo, potasio, materia orgánica) | Prescripción | Web, Jobs | P3 | L | Hecho |
 | A-32 | Zonas de manejo a partir de varias campañas de vigor | Agricultura de precisión básica | Web, Jobs | P2 | L | Falta |
-| A-33 | Prescripción de dosis variable exportable a la maquinaria (shapefile o ISOXML) | Ahorro de insumos | Web, Jobs | P3 | L | Falta |
+| A-33 | Prescripción de dosis variable exportable a la maquinaria (shapefile o ISOXML) | Ahorro de insumos | Web, Jobs | P3 | L | Hecho |
 | A-40 | Alerta de roya asiática por horas de mojado foliar y temperatura | Enfermedad clave en soja | API, Jobs | P2 | M | Falta |
 | A-41 | Umbral de daño económico por plaga con aviso cuando el monitoreo lo supera | Manejo integrado de plagas | API | P1 | S | Falta |
 | A-42 | Mapa de focos de plaga del último mes sobre los lotes | Ver la dispersión | Web | P1 | S | Parcial |
-| A-43 | Riego: láminas aplicadas y balance hídrico por lote | Para quien riega | Web | P3 | M | Falta |
+| A-43 | Riego: láminas aplicadas y balance hídrico por lote | Para quien riega | Web | P3 | M | Hecho |
 
 ---
 
@@ -194,7 +194,7 @@ Detalles que un usuario espera sin pedirlos.
 | G-30 | Aguadas: nivel de tajamares, bebederos y molinos con alerta de seca | Sequía en el Chaco | App, Web | P1 | S | Parcial (registro de aguada) |
 | G-31 | Suplementación y sal mineral: consumo por potrero | Costo | App, Web | P2 | S | Falta |
 | G-32 | Índice de estrés térmico del ganado (temperatura y humedad) con aviso | Olas de calor | API | P2 | S | Falta |
-| G-33 | Feedlot: raciones, consumo y conversión | Engorde intensivo | Web | P3 | L | Falta |
+| G-33 | Feedlot: raciones, consumo y conversión | Engorde intensivo | Web | P3 | L | Hecho |
 | G-40 | Compras y ventas de hacienda con guías de traslado | Movimiento de dinero | Web | P2 | M | Falta (ver ERP) |
 
 ---
@@ -243,7 +243,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 |---|---|---|---|---|
 | E-25 | Asistencia y jornales por día, con lote o labor | P2 | M | Falta |
 | E-26 | Adelantos, pagos y saldo por empleado | P2 | M | Falta |
-| E-27 | Planilla simple exportable para el contador (sin cálculo de aportes, que lo hace el contador) | P3 | M | Falta |
+| E-27 | Planilla simple exportable para el contador (sin cálculo de aportes, que lo hace el contador) | P3 | M | Hecho |
 
 **6.5 Compras, ventas y tesorería**
 
@@ -268,15 +268,15 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | ID | Qué | Por qué | Dónde | Prio | Esf | Estado |
 |---|---|---|---|---|---|---|
 | C-01 | Pronóstico de 10 días por estancia | Base | Web | — | — | Hecho |
-| C-02 | Pronóstico de 10 días en la app, sin señal con la última descarga | El empleado también decide | App | P1 | S | Falta |
+| C-02 | Pronóstico de 10 días en la app, sin señal con la última descarga | El empleado también decide | App | P1 | S | Hecho |
 | C-03 | Pronóstico por lote en estancias de más de 2.000 ha (RF-61) | Variación interna | Jobs, Web | P2 | M | Falta |
 | C-04 | Avisos configurables: el usuario elige umbrales (helada a 2 °C, lluvia de 50 mm) | Cada cultivo es distinto | Web, API | P1 | M | Falta |
-| C-05 | Comparar los pluviómetros propios con el satélite y con la normal | Confianza en el dato | Web | P1 | S | Parcial |
-| C-06 | Acumulado por campaña y por mes en la ficha del pluviómetro | Pregunta diaria | Web, App | P1 | S | Falta |
+| C-05 | Comparar los pluviómetros propios con el satélite y con la normal | Confianza en el dato | Web | P1 | S | Hecho |
+| C-06 | Acumulado por campaña y por mes en la ficha del pluviómetro | Pregunta diaria | Web, App | P1 | S | Hecho |
 | C-07 | Índice de sequía estandarizado (SPI) a 1, 3 y 6 meses | Sequía con números | Jobs, Web | P2 | M | Falta |
 | C-08 | Balance hídrico simple por lote (lluvia menos consumo del cultivo) | Riesgo de estrés | Jobs, Web | P2 | M | Falta |
 | C-09 | Informe de daños con fecha, evidencia satelital y fotos para el seguro agrícola | Cobrar el seguro | Web | P2 | M | Falta |
-| C-10 | Informe de riesgo climático del campo: heladas por año, lluvia frente a la normal, sequías, focos de fuego, a partir de 30 años de NASA POWER | Imán de clientes y para el banco | Web, Jobs | P1 | M | Falta |
+| C-10 | Informe de riesgo climático del campo: heladas por año, lluvia frente a la normal, sequías, focos de fuego, a partir de 30 años de NASA POWER | Imán de clientes y para el banco | Web, Jobs | P1 | M | Hecho |
 | C-11 | Estaciones meteorológicas propias (Davis u otras) conectadas | Productores grandes | API | P3 | L | Falta |
 | C-12 | Sensores de nivel de tanque o tajamar (LoRa) | Ganadería extensiva | API | P3 | L | Falta |
 
@@ -289,13 +289,13 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | S-01 | Al crear la estancia, procesar los últimos 6 meses de Sentinel-2 | Curva de campaña desde el primer día | Jobs, API | P0 | M | Falta |
 | S-02 | Disparar los jobs desde el Worker (GitHub `workflow_dispatch`) al crear la estancia, con estado "procesando" | No esperar al cron | API, Web | P0 | S | Falta |
 | S-03 | Historia desde 2017 a pedido: vigor de campañas anteriores | Comparar años | Jobs, Web | P2 | M | Falta |
-| S-04 | Selector de fecha con miniaturas y comparación de dos fechas con cortina | Ver el cambio | Web | P1 | M | Falta |
+| S-04 | Selector de fecha con miniaturas y comparación de dos fechas con cortina | Ver el cambio | Web | P1 | M | Parcial (fechas y cortina; sin miniaturas) |
 | S-05 | Vigor actual por lote en la tabla, con color de la rampa NDVI | Ver todo de un vistazo | Web | P0 | S | Falta |
 | S-06 | Lotes con caída de vigor mayor a 15 % entre dos pasadas (RF-54), con aviso | Encontrar el problema temprano | API, Web | P1 | S | Falta |
 | S-07 | Otros índices: NDRE (nitrógeno), NDMI (humedad), EVI | Más diagnóstico | Jobs, Web | P2 | M | Falta |
-| S-08 | Áreas problema dentro del lote (pixeles muy por debajo de la mediana) marcadas para ir a ver | Recorrida dirigida | Jobs, Web, App | P1 | M | Falta |
-| S-09 | Enviar esas áreas como tarea al empleado con el punto en la app | Del satélite al campo | Web, App | P1 | S | Falta |
-| S-10 | Animación de la campaña (timelapse) | Impacto en presentaciones | Web | P3 | M | Falta |
+| S-08 | Áreas problema dentro del lote (pixeles muy por debajo de la mediana) marcadas para ir a ver | Recorrida dirigida | Jobs, Web, App | P1 | M | Hecho (web; en la app llega por S-09) |
+| S-09 | Enviar esas áreas como tarea al empleado con el punto en la app | Del satélite al campo | Web, App | P1 | S | Hecho |
+| S-10 | Animación de la campaña (timelapse) | Impacto en presentaciones | Web | P3 | M | Hecho |
 | S-11 | Lotes finos: usar todos los pixeles tocados o avisar que el dato no es confiable | Calidad | Jobs | P2 | S | Falta |
 | S-12 | Imágenes en días nublados con Sentinel-1 radar (necesita ADR) | Verano lluvioso | Jobs | P3 | L | Falta |
 | S-20 | Área quemada después de un foco de fuego | Pérdidas en el Chaco | Jobs, Web | P2 | M | Falta |
@@ -310,13 +310,13 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 |---|---|---|---|---|
 | T-01 | Asignar tarea tocando lotes en el mapa | P1 | S | Falta |
 | T-02 | Prioridad, fecha límite con hora y comentarios en la tarea | P1 | S | Parcial |
-| T-03 | Foto y ubicación obligatorias para cerrar ciertas tareas | P2 | S | Falta |
-| T-04 | Calendario semanal de labores por estancia | P2 | M | Falta |
+| T-03 | Foto y ubicación obligatorias para cerrar ciertas tareas | P2 | S | Hecho |
+| T-04 | Calendario semanal de labores por estancia | P2 | M | Hecho |
 | T-05 | Tareas vencidas por empleado con contador en Equipo | P1 | S | Parcial |
 | T-06 | Actividad del empleado: días activos, registros, lotes visitados, última conexión | P1 | S | Parcial |
 | T-07 | Lotes sin visitar hace más de N días, en la web | P1 | S | Parcial (solo app) |
-| T-08 | Comentarios y menciones en registros ("@Ramón mirá esto") | P2 | M | Falta |
-| T-09 | Supervisor por estancia con permisos intermedios (capataz) | P2 | M | Falta |
+| T-08 | Comentarios y menciones en registros ("@Ramón mirá esto") | P2 | M | Hecho |
+| T-09 | Supervisor por estancia con permisos intermedios (capataz) | P2 | M | Hecho |
 
 ---
 
@@ -325,15 +325,15 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | ID | Qué | Prio | Esf | Estado |
 |---|---|---|---|---|
 | R-01 | Parte semanal PDF | — | — | Hecho |
-| R-02 | Parte semanal por email los lunes con el PDF adjunto | P1 | M | Parcial (texto con enlace) |
+| R-02 | Parte semanal por email los lunes con el PDF adjunto | P1 | M | Hecho |
 | R-03 | Resumen de campaña por lote en PDF (RF-81): siembra, aplicaciones, lluvia, vigor, cosecha | P1 | M | Falta |
 | R-04 | Informe para el banco: superficie, historia productiva, vigor, clima, sin deforestación | P1 | M | Falta |
-| R-05 | Informe de auditoría para certificaciones (soja responsable, buenas prácticas) | P2 | M | Falta |
+| R-05 | Informe de auditoría para certificaciones (soja responsable, buenas prácticas) | P2 | M | Hecho |
 | R-06 | Tablero del dueño: superficie por cultivo, lluvia, avisos, actividad, margen | P1 | M | Parcial |
-| R-07 | Comparación entre estancias y entre campañas | P2 | M | Falta |
-| R-08 | Comparación anónima con la zona (vigor y lluvia de campos vecinos) | P3 | M | Falta |
+| R-07 | Comparación entre estancias y entre campañas | P2 | M | Hecho |
+| R-08 | Comparación anónima con la zona (vigor y lluvia de campos vecinos) | P3 | M | Hecho |
 | R-09 | Exportación completa de la organización (Excel, KML, fotos en ZIP) | P1 | M | Falta |
-| R-10 | Informes programados por email a terceros (socio, agrónomo, banco) | P2 | S | Falta |
+| R-10 | Informes programados por email a terceros (socio, agrónomo, banco) | P2 | S | Hecho |
 
 ---
 
@@ -343,10 +343,10 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 |---|---|---|---|---|
 | K-01 | Selector de organización para agrónomos con varios clientes | P0 | S | Falta (la API lo soporta) |
 | K-02 | Vista del agrónomo: todos sus clientes en un mapa con avisos | P1 | M | Falta |
-| K-03 | Contratista externo con acceso a ciertos lotes y tareas | P2 | M | Falta |
+| K-03 | Contratista externo con acceso a ciertos lotes y tareas | P2 | M | Hecho |
 | K-04 | Enlace temporal de solo lectura para un banco, auditor o comprador | P1 | S | Falta |
-| K-05 | Permisos finos por estancia | P2 | M | Parcial |
-| K-06 | Registro de auditoría: quién cambió qué y cuándo | P2 | M | Falta |
+| K-05 | Permisos finos por estancia | P2 | M | Hecho |
+| K-06 | Registro de auditoría: quién cambió qué y cuándo | P2 | M | Hecho |
 | K-10 | Compartir un registro por WhatsApp: texto, foto y ubicación | P1 | S | Falta |
 | K-11 | Compartir el parte semanal y avisos por WhatsApp | P1 | S | Falta |
 | K-12 | Cargar registros por WhatsApp (bot que recibe lluvia, foto y ubicación) | P3 | L | Falta |
@@ -358,7 +358,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 
 | ID | Qué | Prio | Esf | Estado |
 |---|---|---|---|---|
-| I-01 | API pública con tokens por organización | P2 | M | Falta |
+| I-01 | API pública con tokens por organización | P2 | M | Hecho |
 | I-02 | Webhooks (aviso nuevo, registro nuevo) | P3 | S | Falta |
 | I-03 | Plataformas de maquinaria (John Deere Operations Center y similares): lotes, labores, rindes | P3 | L | Falta |
 | I-04 | Calendario (Google, Outlook) para tareas | P3 | S | Falta |
@@ -377,8 +377,8 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | P-03 | Analítica de producto: qué pantallas se usan, embudo de activación | P1 | S | Parcial (métricas del PRD) |
 | P-04 | Página de estado del servicio | P3 | S | Falta |
 | P-05 | Copias de seguridad verificadas con restauración probada | P1 | S | Parcial |
-| P-06 | Archivado de datos viejos de D1 a R2 | P2 | M | Falta |
-| P-07 | Ingreso con Google | P2 | S | Falta |
+| P-06 | Archivado de datos viejos de D1 a R2 | P2 | M | Hecho |
+| P-07 | Ingreso con Google | P2 | S | Hecho |
 | P-08 | Segundo factor para dueños | P3 | S | Falta |
 | P-09 | Baja de la cuenta y borrado de datos | P1 | S | Falta |
 | P-10 | Planes con límites por hectáreas y usuarios, y cambio de plan desde la web | P1 | M | Parcial (manual) |
@@ -389,7 +389,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | P-20 | Pruebas automáticas de la app en un Android real (Maestro) | P1 | M | Falta |
 | P-21 | Pruebas de carga del sync con 10 empleados y 1.000 registros | P1 | S | Falta |
 | P-30 | Publicar en Play Store (cuenta de desarrollador) | P1 | S | Falta (cuenta) |
-| P-31 | Actualización de la app sin tienda (EAS Update) | P2 | S | Falta |
+| P-31 | Actualización de la app sin tienda (EAS Update) | P2 | S | Hecho |
 | P-32 | Versión iOS para dueños y agrónomos | P3 | M | Falta |
 
 ---
@@ -401,13 +401,13 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | V-01 | Landing pública con la promesa, precio por hectárea, WhatsApp y descarga | P0 | M | Falta |
 | V-02 | Demo pública de solo lectura con una estancia de ejemplo | P0 | S | Falta |
 | V-03 | Términos de uso, política de privacidad y tratamiento de datos | P0 | S | Falta |
-| V-04 | Informe gratis de riesgo climático y vigor a cambio del email (usa C-10 y S-01) | P1 | M | Falta |
+| V-04 | Informe gratis de riesgo climático y vigor a cambio del email (usa C-10 y S-01) | P1 | M | Parcial (sección en la landing; sin captura de email) |
 | V-05 | Programa para agrónomos: cuenta gratis o comisión por cliente que traen | P1 | S | Falta |
-| V-06 | Referidos entre productores | P2 | S | Falta |
+| V-06 | Referidos entre productores | P2 | S | Hecho |
 | V-07 | Casos de éxito con números del piloto | P1 | S | Falta |
 | V-08 | Video de 2 minutos de la historia completa | P0 | S | Falta |
 | V-09 | Calculadora de precio en la landing | P2 | S | Falta |
-| V-10 | Academia: videos cortos por función, en español y guaraní | P2 | M | Falta |
+| V-10 | Academia: videos cortos por función, en español y guaraní | P2 | M | Hecho |
 
 ---
 

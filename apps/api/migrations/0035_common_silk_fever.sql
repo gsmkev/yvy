@@ -1,0 +1,1 @@
+ALTER TABLE `tasks` ADD `work_order` text;

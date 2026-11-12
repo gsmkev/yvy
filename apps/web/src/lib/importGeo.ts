@@ -5,7 +5,8 @@
 import { kml } from "@tmcw/togeojson";
 import JSZip from "jszip";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
-import { areaHa, validatePolygon, type Area, type ValidationError } from "@yvy/geo";
+import { t } from "./i18n";
+import { areaHa, cleanArea, validatePolygon, type Area, type ValidationError } from "@yvy/geo";
 
 export interface ImportedPolygon {
   index: number;
@@ -13,6 +14,8 @@ export interface ImportedPolygon {
   geometry: Area;
   areaHa: number;
   error: ValidationError | null;
+  /** Vértices duplicados o espigas quitados al limpiar (M-11). */
+  fixed: number;
 }
 
 const NAME_KEYS = ["name", "Name", "NOMBRE", "nombre", "LOTE", "lote", "id", "ID"];
@@ -40,7 +43,8 @@ export function toPolygons(fc: FeatureCollection): ImportedPolygon[] {
   return flatten(fc)
     .filter((f) => f.geometry && (f.geometry.type === "Polygon" || f.geometry.type === "MultiPolygon"))
     .map((f, index) => {
-      const geometry = strip2d(f.geometry!) as Area;
+      const cleaned = cleanArea(strip2d(f.geometry!) as Area);
+      const geometry = cleaned.geometry;
       const props = (f.properties ?? {}) as Record<string, unknown>;
       const key = NAME_KEYS.find((k) => props[k] !== undefined && props[k] !== "");
       const error = validatePolygon(geometry);
@@ -50,9 +54,34 @@ export function toPolygons(fc: FeatureCollection): ImportedPolygon[] {
         geometry,
         areaHa: error ? 0 : areaHa(geometry),
         error,
+        fixed: cleaned.removed,
       };
     });
 }
+
+const fromKml = (text: string): ImportedPolygon[] =>
+  toPolygons(kml(new DOMParser().parseFromString(text, "text/xml")) as FeatureCollection);
+
+/**
+ * Sistema de coordenadas de un .prj: WGS84 (o SIRGAS 2000, equivalente a efectos prácticos),
+ * UTM zona 20S/21S (las de Paraguay) u otro, que no se importa.
+ */
+export function classifyPrj(prj: string): "wgs84" | "utm" | "unsupported" {
+  const txt = prj.trim();
+  if (/PROJCS|PROJCRS/i.test(txt)) {
+    const utm = /UTM[\s_]*zone[\s_]*(20|21)[\s_]*S/i.test(txt) || /\bEPSG\D{0,3}(327(20|21)|319(80|81))\b/i.test(txt);
+    const meridian = /central_meridian",\s*-?(63|57)\b/i.test(txt) && /false_northing",\s*10000000/i.test(txt);
+    return utm || meridian ? "utm" : "unsupported";
+  }
+  if (/GEOGCS|GEODCRS|GEOGCRS/i.test(txt) && /WGS[_\s]?(19)?84|SIRGAS|EPSG\D{0,3}(4326|4674)/i.test(txt)) return "wgs84";
+  return "unsupported";
+}
+
+const inWgs84Range = (fc: FeatureCollection): boolean => {
+  const ok = (v: unknown): boolean =>
+    Array.isArray(v) ? (typeof v[0] === "number" ? Math.abs(v[0]) <= 180 && Math.abs(v[1] as number) <= 90 : v.every(ok)) : true;
+  return fc.features.every((f) => !f.geometry || f.geometry.type === "GeometryCollection" || ok(f.geometry.coordinates));
+};
 
 export async function parseFile(file: File): Promise<ImportedPolygon[]> {
   const name = file.name.toLowerCase();
@@ -66,19 +95,39 @@ export async function parseFile(file: File): Promise<ImportedPolygon[]> {
           : { type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: json as Geometry }] };
     return toPolygons(fc);
   }
-  if (name.endsWith(".kml"))
-    return toPolygons(kml(new DOMParser().parseFromString(await file.text(), "text/xml")) as FeatureCollection);
+  if (name.endsWith(".kml")) return fromKml(await file.text());
   if (name.endsWith(".kmz")) {
     const zip = await JSZip.loadAsync(await file.arrayBuffer());
     const entry = Object.values(zip.files).find((f) => f.name.toLowerCase().endsWith(".kml"));
-    if (!entry) throw new Error("El KMZ no tiene un archivo KML adentro");
-    return toPolygons(kml(new DOMParser().parseFromString(await entry.async("text"), "text/xml")) as FeatureCollection);
+    if (!entry) throw new Error(t("ui.importKmzNoKml"));
+    return fromKml(await entry.async("text"));
   }
   if (name.endsWith(".zip")) {
+    const buf = await file.arrayBuffer();
+    const zip = await JSZip.loadAsync(buf);
+    const files = Object.values(zip.files).filter((f) => !f.dir);
+    if (!files.some((f) => f.name.toLowerCase().endsWith(".shp"))) {
+      const kmlEntry = files.find((f) => f.name.toLowerCase().endsWith(".kml"));
+      if (kmlEntry) return fromKml(await kmlEntry.async("text"));
+      throw new Error(t("ui.importZipNoShp"));
+    }
+    // Solo WGS84 o UTM 20S/21S; shpjs (proj4, carga diferida) reproyecta a WGS84 con el .prj.
+    for (const prj of files.filter((f) => f.name.toLowerCase().endsWith(".prj"))) {
+      if (classifyPrj(await prj.async("text")) === "unsupported") throw new Error(t("ui.importCrsUnsupported"));
+    }
     const shp = (await import("shpjs")).default;
-    const result = (await shp(await file.arrayBuffer())) as FeatureCollection | FeatureCollection[];
+    const result = (await shp(buf)) as FeatureCollection | FeatureCollection[];
     const fcs = Array.isArray(result) ? result : [result];
-    return toPolygons({ type: "FeatureCollection", features: fcs.flatMap((f) => f.features) });
+    const fc: FeatureCollection = { type: "FeatureCollection", features: fcs.flatMap((f) => f.features) };
+    if (!inWgs84Range(fc)) throw new Error(t("ui.importCrsUnknown"));
+    return toPolygons(fc);
   }
-  throw new Error("Formato no soportado. Usá KML, KMZ, GeoJSON o shapefile en .zip");
+  throw new Error(t("ui.importUnsupported"));
+}
+
+/** Une varias figuras en una sola: un Polygon si hay una, un MultiPolygon si hay varias partes (M-09). */
+export function combineAreas(areas: Area[]): Area | null {
+  const polys = areas.flatMap((a) => (a.type === "Polygon" ? [a.coordinates] : a.coordinates));
+  if (!polys.length) return null;
+  return polys.length === 1 ? { type: "Polygon", coordinates: polys[0]! } : { type: "MultiPolygon", coordinates: polys };
 }

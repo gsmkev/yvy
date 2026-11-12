@@ -242,3 +242,16 @@ Si el cambio toca código nativo (un plugin o permiso nuevo, una dependencia con
 publicar una actualización incompatible con el nativo instalado podría romper la app. En desarrollo (`expo start`) no se usa.
 Canales: `production` (APK de producción) y `preview` (pruebas internas), definidos en `apps/mobile/eas.json`.
 
+## Academia: videos en /ayuda (opcional, V-10)
+
+La sección **Videos** de `/ayuda` lista los temas (mapa, registros, sin señal, tareas, avisos, informes, equipo). Sin configurar, cada tema
+dice "Próximamente": no hay videos de relleno. Para enlazar los reales, cargá la variable de GitHub (Settings → Variables)
+`ACADEMY_VIDEOS` con un JSON; `deploy.yml` la compila en la web como `VITE_ACADEMY_VIDEOS` (no es un secreto: los enlaces son públicos):
+
+```json
+{"map": "https://youtu.be/…", "record": {"es": "https://…", "gn": "https://…"}, "offline": "https://…"}
+```
+
+Las claves son `map`, `record`, `offline`, `tasks`, `alerts`, `reports`, `team`; cada valor es un enlace (se muestra como español) o un objeto con `es`
+y/o `gn`. Solo se aceptan enlaces `https`. Para probar en local: `VITE_ACADEMY_VIDEOS='{...}' pnpm --filter web dev`.
+

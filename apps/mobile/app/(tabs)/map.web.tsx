@@ -1,26 +1,30 @@
 // Vista previa web del mapa de la app: MapLibre GL JS con el mismo estilo que MapLibre Native.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { router, useFocusEffect } from "expo-router";
-import { Button } from "../../src/ui/kit";
-import { StyleSheet, Text, View } from "react-native";
+import { FarmLine } from "../../src/ui/FarmLine";
+import { Button, Text } from "../../src/ui/kit";
+import { LayerSwitch, NdviLegend } from "../../src/ui/MapLayerControls";
+import { StyleSheet, View } from "react-native";
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Protocol } from "pmtiles";
 import { BRAND, t } from "@yvy/shared";
 import { containsPoint, type Area } from "@yvy/geo";
 import { getDb } from "../../src/lib/db";
-import { tilesBaseUrl } from "../../src/lib/offline";
+import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
+import { layerSource, tilesBaseUrl, type MapLayer } from "../../src/lib/offline";
 import { setFabHidden } from "../../src/lib/fab";
 import { useLocal } from "../../src/lib/useLocal";
-import { C, T } from "../../src/ui/theme";
+import { C, RADIUS, T } from "../../src/ui/theme";
 
 let protocol = false;
 
 export default function MapScreen() {
   const ref = useRef<HTMLDivElement | null>(null);
-  const farms = useLocal(() => getDb().farms());
-  const plots = useLocal(() => getDb().plots());
-  const records = useLocal(() => getDb().records(300));
+  const { farmId, current } = useFarmChoice();
+  const farms = useLocal(() => byFarm(getDb().farms().map((f) => ({ ...f, farmId: f.id })), farmId), [farmId]);
+  const plots = useLocal(() => byFarm(getDb().plots(), farmId), [farmId]);
+  const records = useLocal(() => byFarm(getDb().records(300), farmId), [farmId]);
   const [base, setBase] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   useFocusEffect(
@@ -29,7 +33,15 @@ export default function MapScreen() {
       return () => setFabHidden(false);
     }, [selected]),
   );
-  const farm = farms[0];
+  const farm = current ?? farms[0];
+  const lastSel = useRef<string | null>(null);
+  const view = useRef<{ farmId: string; center: [number, number]; zoom: number } | null>(null);
+  const [mode, setModeState] = useState<MapLayer>(() => (getDb().getKv("map_layer") === "ndvi" ? "ndvi" : "true_color"));
+  const setMode = (m: MapLayer) => {
+    setModeState(m);
+    getDb().setKv("map_layer", m);
+  };
+  const ndvi = farm && mode === "ndvi" ? layerSource(farm.id, "ndvi", base) : null;
   useEffect(() => {
     tilesBaseUrl().then(setBase, () => setBase(null));
   }, []);
@@ -41,20 +53,23 @@ export default function MapScreen() {
       maplibregl.addProtocol("pmtiles", new Protocol().tile);
       protocol = true;
     }
-    const layer = getDb()
-      .latestLayers(farm.id)
-      .find((l) => l.layer === "true_color");
+    const layer = layerSource(farm.id, mode, base);
     const fc = (features: GeoJSON.Feature[]) => ({ type: "FeatureCollection" as const, features });
+    // M-13: al elegir un lote se ajusta a sus límites; al cambiar otra cosa se conserva la vista.
+    const sel = plots.find((p) => p.id === selected);
+    const fitPlot = sel && selected !== lastSel.current;
+    lastSel.current = selected;
+    const keep = !fitPlot && view.current?.farmId === farm.id ? view.current : null;
     const map = new maplibregl.Map({
       container: ref.current,
       attributionControl: false,
-      bounds: [farm.minLon, farm.minLat, farm.maxLon, farm.maxLat],
-      fitBoundsOptions: { padding: 24 },
+      ...(keep ? { center: keep.center, zoom: keep.zoom } : { bounds: fitPlot ? ([sel.minLon, sel.minLat, sel.maxLon, sel.maxLat] as [number, number, number, number]) : ([farm.minLon, farm.minLat, farm.maxLon, farm.maxLat] as [number, number, number, number]) }),
+      fitBoundsOptions: fitPlot ? { padding: { top: 80, bottom: 280, left: 40, right: 40 } } : { padding: 24 },
       style: {
         version: 8,
         sources: {
-          ...(layer && base
-            ? { base: { type: "raster" as const, url: `pmtiles://${base}/${layer.pmtilesPath}`, tileSize: 256 } }
+          ...(layer
+            ? { base: { type: "raster" as const, url: layer.url, tileSize: 256 } }
             : {}),
           farms: {
             type: "geojson",
@@ -85,7 +100,7 @@ export default function MapScreen() {
         },
         layers: [
           { id: "bg", type: "background", paint: { "background-color": "#141a12" } },
-          ...(layer && base ? [{ id: "base", type: "raster" as const, source: "base" }] : []),
+          ...(layer ? [{ id: "base", type: "raster" as const, source: "base" }] : []),
           { id: "farms", type: "line", source: "farms", paint: { "line-color": "rgba(255,255,255,0.9)", "line-width": 2 } },
           { id: "plots-fill", type: "fill", source: "plots", paint: { "fill-color": "#ffffff", "fill-opacity": ["case", ["==", ["get", "sel"], 1], 0.28, 0.04] } },
           {
@@ -130,13 +145,21 @@ export default function MapScreen() {
         .setLngLat([(p.minLon + p.maxLon) / 2, (p.minLat + p.maxLat) / 2])
         .addTo(map);
     }
-    return () => map.remove();
-  }, [farm?.id, plots, records, base, selected]);
+    return () => {
+      view.current = { farmId: farm.id, center: map.getCenter().toArray() as [number, number], zoom: map.getZoom() };
+      map.remove();
+    };
+  }, [farm?.id, plots, records, base, selected, mode]);
 
   const plot = plots.find((p) => p.id === selected);
   return (
     <View style={{ flex: 1, backgroundColor: "#141a12" }}>
       <div ref={ref} style={{ position: "absolute", inset: 0 }} />
+      <View style={s.topLeft} pointerEvents="box-none">
+        <FarmLine style={s.panel} />
+        <LayerSwitch value={mode} onChange={setMode} />
+        {mode === "ndvi" && <NdviLegend acquiredAt={ndvi?.acquiredAt ?? null} missing={!ndvi} />}
+      </View>
       {plot && (
         <View style={s.sheet}>
           <Text style={s.title}>{plot.name}</Text>
@@ -151,6 +174,8 @@ export default function MapScreen() {
 }
 
 const s = StyleSheet.create({
+  topLeft: { position: "absolute", top: 12, left: 12, right: 12, gap: 8 },
+  panel: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14 },
   sheet: { position: "absolute", left: 12, right: 12, bottom: 12, backgroundColor: C.papel, borderRadius: 16, padding: 20 },
   title: { ...T.title },
   sub: { ...T.small, marginTop: 2 },

@@ -509,3 +509,37 @@ export const attendanceDayInput = z.object({
 
 /** Jornal por los días trabajados, en guaraníes enteros. */
 export const wageFor = (dailyWagePyg: number, days: number): number => Math.round(dailyWagePyg * days);
+
+// ---------- Adelantos, pagos y saldo por empleado (E-26) ----------
+
+export const EMPLOYEE_PAYMENT_KINDS = ["advance", "payment"] as const;
+export type EmployeePaymentKind = (typeof EMPLOYEE_PAYMENT_KINDS)[number];
+
+export const employeePaymentInput = z.object({
+  employeeId: uuid,
+  date: isoDate,
+  kind: z.enum(EMPLOYEE_PAYMENT_KINDS),
+  amountPyg: minorAmount.refine((n) => n > 0, "El monto tiene que ser mayor que cero"),
+  note: optText(200),
+});
+
+/** Saldo = devengado - adelantos - pagos. Positivo: se le debe al empleado; negativo: tiene adelantos de más. */
+export const employeeBalance = (accruedPyg: number, advancesPyg: number, paymentsPyg: number): number => accruedPyg - advancesPyg - paymentsPyg;
+
+export interface StatementLine {
+  date: string;
+  kind: "wage" | EmployeePaymentKind;
+  /** Con signo: el jornal suma, los adelantos y pagos restan. */
+  amountPyg: number;
+  note: string | null;
+  id: string;
+}
+
+/** Cuenta corriente: líneas por fecha (a igual fecha, primero el jornal) con el saldo acumulado. */
+export function statement(lines: StatementLine[]): (StatementLine & { balancePyg: number })[] {
+  const order = (l: StatementLine) => (l.kind === "wage" ? 0 : 1);
+  let bal = 0;
+  return [...lines]
+    .sort((a, b) => a.date.localeCompare(b.date) || order(a) - order(b) || a.id.localeCompare(b.id))
+    .map((l) => ({ ...l, balancePyg: (bal += l.amountPyg) }));
+}

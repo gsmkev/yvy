@@ -12,7 +12,7 @@
  *   El pull pagina por (version, id): equivale al "updated_at + desempate por id" del PRD §11
  *   pero sin depender de relojes de distintos datacenters.
  */
-import { ACTIVITIES, CONTRACTOR_SERVICES, COST_CATEGORIES, CURRENCIES, MACHINE_TYPES, MAINTENANCE_KINDS, METER_KINDS, PARTY_KINDS, RATE_UNITS, STOCK_ORIGINS, WAREHOUSE_TYPES } from "./erp";
+import { ACTIVITIES, CONTRACTOR_SERVICES, COST_CATEGORIES, CURRENCIES, EMPLOYEE_PAYMENT_KINDS, MACHINE_TYPES, MAINTENANCE_KINDS, METER_KINDS, PARTY_KINDS, RATE_UNITS, STOCK_ORIGINS, WAREHOUSE_TYPES } from "./erp";
 import { ANIMAL_SEXES } from "./animals";
 import { HEALTH_REASONS, HERD_CATEGORIES } from "./livestock";
 import { sql } from "drizzle-orm";
@@ -1613,4 +1613,22 @@ export const attendance = sqliteTable(
     index("attendance_date_idx").on(t.organizationId, t.date),
     index("attendance_employee_idx").on(t.organizationId, t.employeeId, t.date),
   ],
+);
+
+/** Adelantos y pagos a un empleado, en guaraníes (E-26). El saldo es lo devengado (asistencia) menos esto. */
+export const employeePayments = sqliteTable(
+  "employee_payments",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    employeeId: text("employee_id").notNull(),
+    /** "YYYY-MM-DD". */
+    date: text("date").notNull(),
+    kind: text("kind", { enum: EMPLOYEE_PAYMENT_KINDS }).notNull(),
+    amountPyg: integer("amount_pyg").notNull(),
+    note: text("note"),
+    createdBy: text("created_by").notNull(),
+    ...timestamps,
+  },
+  (t) => [index("employee_payments_idx").on(t.organizationId, t.employeeId, t.date)],
 );

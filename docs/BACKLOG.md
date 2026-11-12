@@ -311,7 +311,7 @@ Todo lo que se registra en el campo (aplicación, cosecha, movimiento de haciend
 | T-01 | Asignar tarea tocando lotes en el mapa | P1 | S | Falta |
 | T-02 | Prioridad, fecha límite con hora y comentarios en la tarea | P1 | S | Parcial |
 | T-03 | Foto y ubicación obligatorias para cerrar ciertas tareas | P2 | S | Hecho |
-| T-04 | Calendario semanal de labores por estancia | P2 | M | Falta |
+| T-04 | Calendario semanal de labores por estancia | P2 | M | Hecho |
 | T-05 | Tareas vencidas por empleado con contador en Equipo | P1 | S | Parcial |
 | T-06 | Actividad del empleado: días activos, registros, lotes visitados, última conexión | P1 | S | Parcial |
 | T-07 | Lotes sin visitar hace más de N días, en la web | P1 | S | Parcial (solo app) |

@@ -107,6 +107,42 @@ describe("tablero del dueño (R-06)", () => {
     expect(b.farmId).toBeTruthy();
   });
 
+  it("margen de 12 meses: ventas menos costos, solo con permiso de montos y sin filas viejas ni borradas", async () => {
+    const owner = await createOrgWithOwner();
+    const now = Date.now();
+    const entry = (over: Partial<typeof s.costEntries.$inferInsert>) => ({
+      id: newId(),
+      organizationId: owner.orgId,
+      occurredAt: now - 86_400_000,
+      activity: "agricultura" as const,
+      category: "input" as const,
+      amount: 100,
+      amountPyg: 100,
+      createdBy: owner.userId,
+      createdAt: now,
+      updatedAt: now,
+      ...over,
+    });
+    await db()
+      .insert(s.costEntries)
+      .values([
+        entry({ category: "sale", amount: 1000, amountPyg: 1000 }),
+        entry({ amount: 300, amountPyg: 300 }),
+        entry({ occurredAt: now - 400 * 86_400_000, amount: 9999, amountPyg: 9999 }), // fuera de los 12 meses
+        entry({ deletedAt: now, amount: 5555, amountPyg: 5555 }), // borrada
+      ]);
+    const r = await call<any>("GET", "/org/dashboard", { token: owner.token });
+    expect(r.body.margin).toMatchObject({ incomePyg: 1000, costPyg: 300, marginPyg: 700, entries: 2 });
+    const other = await createOrgWithOwner("Otra");
+    expect((await call<any>("GET", "/org/dashboard", { token: other.token })).body.margin).toMatchObject({
+      marginPyg: 0,
+      entries: 0,
+    });
+    // administrador con permiso de montos también; el margen nunca llega a quien no puede ver el tablero
+    const admin = await addMemberAndLogin(owner.token, "admin");
+    expect((await call<any>("GET", "/org/dashboard", { token: admin.token })).body.margin.marginPyg).toBe(700);
+  });
+
   it("sin datos devuelve ceros y lluvia nula", async () => {
     const owner = await createOrgWithOwner();
     const r = await call<any>("GET", "/org/dashboard", { token: owner.token });

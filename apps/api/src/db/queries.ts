@@ -706,8 +706,23 @@ export async function ownerDashboard(sdb: ScopedDb) {
   const rainMm = avg(both.map((r) => Number(r.mm)));
   const normalMm = avg(both.map((r) => normalBy.get(r.farm_id)!));
   const workers = members.find((m) => m.role === "worker");
+  // Margen de los últimos 12 meses (ventas menos costos, en Gs.). Son montos: solo con el permiso del ERP.
+  let margin: { incomePyg: number; costPyg: number; marginPyg: number; entries: number; sinceMs: number } | null = null;
+  if (can.manageErp(sdb.auth.role)) {
+    const sinceMs = now - 365 * 86_400_000;
+    const farmScope = sdb.farmScopeSql("cost_entries.farm_id");
+    const [m] = await sdb.db.all<{ income: number; cost: number; n: number }>(sql`
+      SELECT coalesce(sum(CASE WHEN category = 'sale' THEN amount_pyg END), 0) AS income,
+        coalesce(sum(CASE WHEN category <> 'sale' THEN amount_pyg END), 0) AS cost, count(*) AS n
+      FROM cost_entries
+      WHERE organization_id = ${org} AND deleted_at IS NULL AND occurred_at >= ${sinceMs} AND ${farmScope ?? sql`1`}`);
+    const income = Number(m?.income ?? 0);
+    const cost = Number(m?.cost ?? 0);
+    margin = { incomePyg: income, costPyg: cost, marginPyg: income - cost, entries: Number(m?.n ?? 0), sinceMs };
+  }
   return {
     generatedAt: now,
+    margin,
     areaByCrop: byCrop.map((r) => ({ crop: r.crop, kind: r.kind, ha: Number(r.ha), plots: Number(r.plots) })),
     rain: {
       month: monthStart.slice(0, 7),

@@ -34,6 +34,9 @@ export function LegalLinks({ className = "" }: { className?: string }) {
       <Link to="/privacidad" className="underline-offset-4 hover:text-surco hover:underline">
         {t("ui.publicFooterPrivacy")}
       </Link>
+      <Link to="/estado" className="underline-offset-4 hover:text-surco hover:underline">
+        {t("ui.publicFooterStatus")}
+      </Link>
     </nav>
   );
 }

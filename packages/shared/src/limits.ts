@@ -155,6 +155,13 @@ export const LIMITS = {
     blocked: { maxHa: 100_000, maxUsers: 25 },
     demo: { maxHa: null, maxUsers: null },
   },
+  status: {
+    /** Horas sin una corrida buena a partir de las cuales un job de datos figura "atrasado" (P-04). */
+    staleAfterHours: { sentinel2: 7 * 24, chirps: 3 * 24, firms: 2 * 24 },
+    /** /ingest anota la corrida de un job a lo sumo una vez por este tiempo. */
+    recordEveryMs: 60_000,
+    probeTimeoutMs: 3_000,
+  },
   webhooks: {
     maxPerOrg: 5,
     /** Pausa del envío tras tantos fallos seguidos (el dueño la reactiva desde Cuenta). */

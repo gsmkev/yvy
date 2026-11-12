@@ -505,6 +505,13 @@
       "when": 1794496867940,
       "tag": "0071_lying_quasar",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "6",
+      "when": 1794497126251,
+      "tag": "0072_right_frank_castle",
+      "breakpoints": true
     }
   ]
 }

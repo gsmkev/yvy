@@ -2047,3 +2047,14 @@ export const calendarFeeds = sqliteTable(
   },
   (t) => [uniqueIndex("calendar_feeds_hash_uq").on(t.tokenHash), index("calendar_feeds_user_idx").on(t.userId, t.organizationId)],
 );
+
+/**
+ * P-04: última corrida de cada job de datos (sentinel2, chirps, firms), anotada por /ingest en cada pedido firmado.
+ * Alimenta la página pública de estado; no guarda nada de clientes. No se sincroniza.
+ */
+export const jobRuns = sqliteTable("job_runs", {
+  job: text("job").primaryKey(),
+  lastOkAt: integer("last_ok_at"),
+  lastFailAt: integer("last_fail_at"),
+  lastFailStatus: integer("last_fail_status"),
+});

@@ -6,7 +6,7 @@ import { CalendarFeed } from "../../components/CalendarFeed";
 import { WebhooksPanel } from "../../components/Webhooks";
 import { Preferences } from "../../components/Preferences";
 import { AdminTotpPolicy, TotpSection } from "../../components/Totp";
-import { ConfirmModal, Spinner } from "../../components/ui";
+import { ConfirmModal, Spinner, toast } from "../../components/ui";
 import { get, post } from "../../lib/api";
 import { t } from "../../lib/i18n";
 import { useMe } from "../../lib/queries";
@@ -57,7 +57,10 @@ export function AccountPage() {
   const [confirming, setConfirming] = useState(false);
   const request = useMutation({
     mutationFn: () => post("/org/delete-request"),
-    onSuccess: () => setConfirming(false),
+    onSuccess: () => {
+      setConfirming(false);
+      toast(t("ui.toastDeleteRequested"));
+    },
   });
 
   if (me.isLoading)

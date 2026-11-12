@@ -17,6 +17,7 @@ import { readVotes, recordVote } from "../../src/lib/votes";
 import { useLocal } from "../../src/lib/useLocal";
 import { FarmLine } from "../../src/ui/FarmLine";
 import { ForecastStrip } from "../../src/ui/ForecastStrip";
+import { toastSaved } from "../../src/lib/toast";
 import { Button, Row, s as k, Text } from "../../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
 
@@ -201,6 +202,7 @@ export default function Today() {
                 else {
                   getDb().completeTask(task.id, null);
                   localChanged();
+                  toastSaved();
                 }
               }}
               right={<View style={st.circle} />}

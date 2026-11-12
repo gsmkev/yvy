@@ -11,6 +11,7 @@ import { getDb } from "../src/lib/db";
 import { addContact, emergencyText, parseContacts, smsUrl, type EmergencyContact } from "../src/lib/emergencySms";
 import { currentFix, type Fix } from "../src/lib/location";
 import { getSession } from "../src/lib/session";
+import { showToast } from "../src/lib/toast";
 import { Button, Row, s as k, Text, TextInput } from "../src/ui/kit";
 import { C, GUTTER, RADIUS, T } from "../src/ui/theme";
 
@@ -25,6 +26,7 @@ export default function Emergency() {
   const save = (list: EmergencyContact[]) => {
     setContacts(list);
     getDb().setKv(KEY, JSON.stringify(list));
+    showToast(t("app.toastSavedLocal"));
   };
 
   const add = () => {

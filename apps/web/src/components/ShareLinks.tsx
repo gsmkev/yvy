@@ -5,7 +5,7 @@ import { del, get, post } from "../lib/api";
 import { fmtDate } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useMe } from "../lib/queries";
-import { Button, ErrorBox } from "./ui";
+import { Button, ErrorBox, toast } from "./ui";
 
 interface LinkRow {
   id: string;
@@ -30,13 +30,17 @@ export function ShareLinksSection({ farmId }: { farmId: string }) {
       post<{ token: string }>(`/org/farms/${farmId}/share-links`, { days }),
     onSuccess: (r) => {
       setCopied(false);
+      toast(t("ui.toastShareCreated"));
       setFresh(`${window.location.origin}/compartido/${r.token}`);
       return qc.invalidateQueries({ queryKey: ["share-links", farmId] });
     },
   });
   const revoke = useMutation({
     mutationFn: (id: string) => del(`/org/share-links/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["share-links", farmId] }),
+    onSuccess: () => {
+      toast(t("ui.toastShareRevoked"));
+      return qc.invalidateQueries({ queryKey: ["share-links", farmId] });
+    },
   });
   if (!isOwner) return null;
   const now = Date.now();

@@ -14,7 +14,7 @@ import { ReproPanel } from "./ReproPanel";
 import { SupplementPanel } from "./SupplementPanel";
 import { TheftPanel } from "./TheftPanel";
 import { WeighingsPanel } from "./WeighingsPanel";
-import { Button, Empty, ErrorBox, Field, Input, Spinner, Tabs } from "./ui";
+import { Button, Empty, ErrorBox, Field, Input, Spinner, Tabs, toast } from "./ui";
 
 const dec = new Intl.NumberFormat("es-PY", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const int = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 });
@@ -36,7 +36,10 @@ function StockSection({ farmId }: { farmId: string }) {
     limit.trim() !== "" && num(limit) >= MAX_UA_PER_HA_LIMITS.min && num(limit) <= MAX_UA_PER_HA_LIMITS.max;
   const save = useMutation({
     mutationFn: () => put(`/org/farms/${farmId}/livestock-settings`, { maxUaPerHa: num(limit) }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["stock", farmId] }),
+    onSuccess: () => {
+      toast(t("ui.toastLimitSaved"));
+      return qc.invalidateQueries({ queryKey: ["stock", farmId] });
+    },
   });
 
   if (stock.isLoading) return <Spinner rows={5} h={56} />;

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
 import { get, post, put, getSession, setSession, type Session } from "../lib/api";
 import { t } from "../lib/i18n";
-import { Button, ErrorBox, Field, Input } from "./ui";
+import { Button, ErrorBox, Field, Input, toast } from "./ui";
 
 interface Status {
   enabled: boolean;
@@ -61,15 +61,22 @@ export function TotpSection({ forced = false }: { forced?: boolean }) {
     onSuccess: async (r) => {
       setFresh(r.recoveryCodes);
       done();
+      toast(t("ui.toastTotpOn"));
       await refreshSession();
     },
   });
-  const disable = useMutation({ mutationFn: () => post("/auth/totp/disable", { code }), onSuccess: done });
+  const disable = useMutation({ mutationFn: () => post("/auth/totp/disable", { code }),
+    onSuccess: () => {
+      done();
+      toast(t("ui.toastTotpOff"));
+    },
+  });
   const regen = useMutation({
     mutationFn: () => post<{ recoveryCodes: string[] }>("/auth/totp/recovery-codes", { code }),
     onSuccess: (r) => {
       setFresh(r.recoveryCodes);
       done();
+      toast(t("ui.toastTotpCodes"));
     },
   });
   const s = status.data;
@@ -176,7 +183,10 @@ export function AdminTotpPolicy() {
   const q = useQuery({ queryKey: ["org-security"], queryFn: () => get<Security>("/org/security") });
   const set = useMutation({
     mutationFn: (v: boolean) => put("/org/security", { requireAdminTotp: v }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["org-security"] }),
+    onSuccess: () => {
+      toast(t("ui.toastTotpPolicy"));
+      return qc.invalidateQueries({ queryKey: ["org-security"] });
+    },
   });
   if (!q.data) return null;
   return (

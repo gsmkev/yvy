@@ -14,6 +14,7 @@ import { useSession } from "../../src/lib/session";
 import { localChanged, syncNow } from "../../src/lib/sync";
 import { useLocal } from "../../src/lib/useLocal";
 import { Button, s as k, Text, TextInput } from "../../src/ui/kit";
+import { showToast, toastSaved } from "../../src/lib/toast";
 import { VoicePlayer } from "../../src/ui/VoicePlayer";
 import { T } from "../../src/ui/theme";
 
@@ -66,6 +67,7 @@ export default function RecordDetail() {
           getDb().deleteRecord(record.id);
           localChanged();
           syncNow();
+          showToast(t("ui.toastRecordDeleted"));
           router.back();
         },
       },
@@ -131,6 +133,7 @@ export default function RecordDetail() {
           getDb().addComment(session.user.id, session.organization.id, session.user.fullName, record.id, draft.trim());
           setDraft("");
           localChanged();
+          toastSaved();
         }}
         style={{ marginTop: 8 }}
       />

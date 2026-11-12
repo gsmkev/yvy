@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isFieldRole } from "@yvy/shared";
 import { RecordModal } from "../components/RecordsList";
-import { Button, Empty, ErrorBox, Spinner } from "../components/ui";
+import { Button, Empty, ErrorBox, Spinner, toast } from "../components/ui";
 import { get, post } from "../lib/api";
 import { describeData } from "../lib/exports";
 import { fmtDateTime } from "../lib/format";
@@ -57,7 +57,10 @@ export function ReviewPage() {
   const [open, setOpen] = useState<RecordRow | null>(null);
   const ok = useMutation({
     mutationFn: (id: string) => post(`/org/review/${id}/ok`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["review"] }),
+    onSuccess: () => {
+      toast(t("ui.toastReviewed"));
+      return qc.invalidateQueries({ queryKey: ["review"] });
+    },
   });
   if (me.data && !allowed) return <div className="p-6">{t("ui.reviewNotAllowed")}</div>;
   return (

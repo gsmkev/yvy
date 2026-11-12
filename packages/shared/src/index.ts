@@ -8,6 +8,7 @@ export * from "./heat";
 export * from "./grazing";
 export * from "./animals";
 export * from "./repro";
+export * from "./rotation";
 export * from "./sanitary";
 export * from "./erp";
 export * from "./risk";

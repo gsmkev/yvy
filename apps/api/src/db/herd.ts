@@ -2,7 +2,7 @@
  * Ganadería, segunda tanda (gan-p2): consultas de estrés térmico, abigeato, suplementación, pesadas,
  * reproducción, rotación y oferta de pasto. Cada función hace pocas consultas (presupuesto D1) y pasa por ScopedDb.
  */
-import { and, asc, desc, eq, gte, isNull, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import {
   emptyCounts,
   HEAT_ALERT,
@@ -17,6 +17,17 @@ import {
   type TheftResponse,
   MINERAL_SALT_REFERENCE_G,
   summarizeSupplements,
+  estimateForage,
+  paddockTimelines,
+  rotationPlan,
+  ROTATION_DEFAULTS,
+  FORAGE,
+  type ForageResponse,
+  type HerdCounts,
+  type HerdEvent,
+  type PastureCover,
+  type PastureReading,
+  type RotationResponse,
   reproIndices,
   type ReproEvent,
   type ReproductionResponse,
@@ -240,5 +251,132 @@ export async function farmReproduction(sdb: ScopedDb, farmId: string, from?: num
     indices: reproIndices(out.map((r) => ({ event: r.event, head: r.head, pregnant: r.pregnant ?? undefined, calves: r.calves ?? undefined }))),
     rows: out.slice(0, 50),
     truncated: rows.length > MAX_ROWS * 2,
+  };
+}
+
+/** Última medición de pasto (`pasture_status`) de cada potrero de la estancia (1 consulta). */
+async function latestPastureReadings(sdb: ScopedDb, farmId: string): Promise<Map<string, PastureReading>> {
+  const rows = await sdb.db
+    .select({ plotId: s.records.plotId, capturedAt: s.records.capturedAt, data: s.records.data })
+    .from(s.records)
+    .where(
+      and(
+        eq(s.records.organizationId, sdb.auth.orgId),
+        eq(s.records.farmId, farmId),
+        eq(s.records.kind, "pasture_status"),
+        isNull(s.records.deletedAt),
+        sql`${s.records.plotId} IS NOT NULL`,
+        sql`${s.records.capturedAt} = (SELECT max(r2.captured_at) FROM records r2 WHERE r2.plot_id = ${s.records.plotId} AND r2.kind = 'pasture_status' AND r2.deleted_at IS NULL)`,
+      ),
+    );
+  const out = new Map<string, PastureReading>();
+  for (const r of rows) {
+    const d = parse<{ heightCm?: number; cover?: PastureCover }>(r.data);
+    if (r.plotId && typeof d?.heightCm === "number" && d.cover && !out.has(r.plotId))
+      out.set(r.plotId, { heightCm: d.heightCm, cover: d.cover, at: r.capturedAt });
+  }
+  return out;
+}
+
+/**
+ * G-04: días de ocupación y descanso de cada potrero (reconstruidos del último año de conteos, movimientos,
+ * mortandad y abigeato) y próximo potrero sugerido. 3 consultas por estancia.
+ */
+export async function farmRotation(sdb: ScopedDb, farmId: string): Promise<RotationResponse> {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const org = sdb.auth.orgId;
+  const now = sdb.now();
+  const [plots, events, readings] = await Promise.all([
+    sdb.db
+      .select({ id: s.plots.id, name: s.plots.name, areaHa: s.plots.areaHa })
+      .from(s.plots)
+      .where(and(eq(s.plots.farmId, farmId), eq(s.plots.organizationId, org), eq(s.plots.kind, "pasture"), isNull(s.plots.deletedAt)))
+      .orderBy(asc(s.plots.name)),
+    sdb.db
+      .select({ kind: s.records.kind, plotId: s.records.plotId, capturedAt: s.records.capturedAt, data: s.records.data })
+      .from(s.records)
+      .where(
+        and(
+          eq(s.records.organizationId, org),
+          eq(s.records.farmId, farmId),
+          inArray(s.records.kind, ["herd_count", "herd_move", "mortality", "theft"]),
+          isNull(s.records.deletedAt),
+          gte(s.records.capturedAt, now - 365 * DAY),
+        ),
+      )
+      .orderBy(desc(s.records.capturedAt))
+      .limit(5001),
+    latestPastureReadings(sdb, farmId),
+  ]);
+  const evs: HerdEvent[] = [];
+  for (const r of events.slice(0, 5000)) {
+    const d = parse<{ counts?: HerdCounts; toPlotId?: string; category?: HerdCategory; head?: number }>(r.data);
+    if (!d) continue;
+    if (r.kind === "herd_count" && r.plotId && d.counts) evs.push({ at: r.capturedAt, type: "count", plotId: r.plotId, counts: d.counts });
+    else if (r.kind === "herd_move" && d.counts)
+      evs.push({ at: r.capturedAt, type: "move", fromPlotId: r.plotId, toPlotId: d.toPlotId ?? null, counts: d.counts });
+    else if ((r.kind === "mortality" || r.kind === "theft") && r.plotId && d.category && typeof d.head === "number")
+      evs.push({ at: r.capturedAt, type: "loss", plotId: r.plotId, category: d.category, head: d.head });
+  }
+  const timelines = paddockTimelines(plots.map((p) => p.id), evs, now);
+  const plan = rotationPlan(plots.map((p) => ({ plotId: p.id, name: p.name, areaHa: p.areaHa })), timelines, readings, now);
+  return { defaults: ROTATION_DEFAULTS, ...plan, truncated: events.length > 5000 };
+}
+
+/**
+ * G-05: oferta de forraje (kg de materia seca por hectárea) de cada potrero con la última altura y cobertura
+ * medidas y el último NDVI de satélite, y días de pasto con la hacienda de hoy. 6 consultas por estancia.
+ */
+export async function farmForage(sdb: ScopedDb, farmId: string): Promise<ForageResponse> {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const now = sdb.now();
+  const [stock, readings, ndviRows] = await Promise.all([
+    farmStockSummary(sdb, farmId),
+    latestPastureReadings(sdb, farmId),
+    sdb.db
+      .select({ plotId: s.plotIndexStats.plotId, mean: s.plotIndexStats.mean, acquiredAt: s.plotIndexStats.acquiredAt })
+      .from(s.plotIndexStats)
+      .where(
+        and(
+          eq(s.plotIndexStats.organizationId, sdb.auth.orgId),
+          eq(s.plotIndexStats.idx, "ndvi"),
+          isNull(s.plotIndexStats.deletedAt),
+          sql`${s.plotIndexStats.plotId} IN (SELECT id FROM plots WHERE farm_id = ${farmId} AND kind = 'pasture' AND deleted_at IS NULL)`,
+          sql`${s.plotIndexStats.acquiredAt} = (SELECT max(p2.acquired_at) FROM plot_index_stats p2 WHERE p2.plot_id = ${s.plotIndexStats.plotId} AND p2.idx = 'ndvi' AND p2.deleted_at IS NULL)`,
+        ),
+      ),
+  ]);
+  const ndvi = new Map(ndviRows.map((r) => [r.plotId, r] as const));
+  return {
+    coefficients: FORAGE,
+    plots: stock.plots.map((p) => {
+      const h = readings.get(p.plotId);
+      const n = ndvi.get(p.plotId);
+      const est = estimateForage({
+        heightCm: h?.heightCm ?? null,
+        cover: h?.cover ?? null,
+        heightAt: h?.at ?? null,
+        ndvi: n?.mean ?? null,
+        ndviAt: n?.acquiredAt ?? null,
+        areaHa: p.areaHa,
+        ua: p.ua,
+        now,
+      });
+      return {
+        plotId: p.plotId,
+        name: p.name,
+        areaHa: p.areaHa,
+        head: p.total,
+        ua: Math.round(p.ua * 10) / 10,
+        heightCm: h?.heightCm ?? null,
+        cover: h?.cover ?? null,
+        heightAt: h?.at ?? null,
+        ndvi: n ? Math.round(n.mean * 100) / 100 : null,
+        ndviAt: n?.acquiredAt ?? null,
+        ...est,
+      };
+    }),
   };
 }

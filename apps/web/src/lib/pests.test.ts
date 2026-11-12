@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BRAND } from "@yvy/shared";
-import { pestCounts, pestPoints, PEST_COLORS } from "./pests";
+import { pestCounts, pestIntensity, pestPoints, pestsByPlot, PEST_COLORS, PEST_RADIUS } from "./pests";
 
 const NOW = Date.parse("2026-11-11T12:00:00Z");
 const DAY = 86_400_000;
@@ -71,3 +71,47 @@ describe("focos de plaga", () => {
     ]);
   });
 });
+
+describe("intensidad y lotes afectados (A-42)", () => {
+  it("toma la intensidad anotada o la compara con el umbral de la plaga", () => {
+    expect(pestIntensity({ pest: "chinche", intensity: "low" })).toBe("low");
+    // umbral de la chinche: 2 por metro
+    expect(pestIntensity({ pest: "chinche", perMeter: 1 })).toBe("low");
+    expect(pestIntensity({ pest: "chinche", perMeter: 3 })).toBe("medium");
+    expect(pestIntensity({ pest: "chinche", perMeter: 4 })).toBe("high");
+    expect(pestIntensity({ pest: "otra" })).toBe("medium");
+  });
+
+  it("el punto es más grande cuanto más fuerte el foco", () => {
+    const pts = pestPoints(
+      [
+        rec({ id: "a", lon: -55.1, lat: -27.1, data: { pest: "chinche", intensity: "low" } }),
+        rec({ id: "b", lon: -55.1, lat: -27.1, data: { pest: "chinche", intensity: "high" } }),
+      ],
+      [],
+      NOW,
+    );
+    expect(pts.map((p) => p.radius)).toEqual([PEST_RADIUS.low, PEST_RADIUS.high]);
+    expect(PEST_RADIUS.low).toBeLessThan(PEST_RADIUS.medium);
+    expect(PEST_RADIUS.medium).toBeLessThan(PEST_RADIUS.high);
+  });
+
+  it("ordena los lotes por la intensidad máxima y después por cantidad, y deja afuera los focos sin lote", () => {
+    const at = { lon: -55.1, lat: -27.1 };
+    const pts = pestPoints(
+      [
+        rec({ id: "1", plotId: "p1", ...at, data: { pest: "chinche", intensity: "low" } }),
+        rec({ id: "2", plotId: "p1", ...at, data: { pest: "oruga", intensity: "low" } }),
+        rec({ id: "3", plotId: "p2", ...at, data: { pest: "chinche", intensity: "high" } }),
+        rec({ id: "4", plotId: null, ...at, data: { pest: "chinche", intensity: "high" } }),
+      ],
+      [],
+      NOW,
+    );
+    expect(pestsByPlot(pts)).toEqual([
+      { plotId: "p2", n: 1, worst: "high" },
+      { plotId: "p1", n: 2, worst: "low" },
+    ]);
+  });
+});
+

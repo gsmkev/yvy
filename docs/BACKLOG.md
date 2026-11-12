@@ -168,7 +168,7 @@ Detalles que un usuario espera sin pedirlos.
 | A-33 | Prescripción de dosis variable exportable a la maquinaria (shapefile o ISOXML) | Ahorro de insumos | Web, Jobs | P3 | L | Hecho |
 | A-40 | Alerta de roya asiática por horas de mojado foliar y temperatura | Enfermedad clave en soja | API, Jobs | P2 | M | Hecho |
 | A-41 | Umbral de daño económico por plaga con aviso cuando el monitoreo lo supera | Manejo integrado de plagas | API | P1 | S | Hecho |
-| A-42 | Mapa de focos de plaga del último mes sobre los lotes | Ver la dispersión | Web | P1 | S | Parcial |
+| A-42 | Mapa de focos de plaga del último mes sobre los lotes | Ver la dispersión | Web | P1 | S | Hecho |
 | A-43 | Riego: láminas aplicadas y balance hídrico por lote | Para quien riega | Web | P3 | M | Hecho |
 
 ---

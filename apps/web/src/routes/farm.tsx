@@ -46,7 +46,7 @@ import { PoiQrModal } from "../components/PoiQr";
 import { heatPoints, summarizeTracks, TRACK_WINDOW_MS } from "../lib/trackHeat";
 import { useCustomLayerImages, useCustomLayers } from "../lib/customLayers";
 import { useBoundaries, type BoundaryLevel } from "../lib/boundaries";
-import { PEST_COLORS, PEST_WINDOW_MS, pestCounts, pestPoints } from "../lib/pests";
+import { PEST_COLORS, PEST_WINDOW_MS, pestCounts, pestPoints, pestsByPlot } from "../lib/pests";
 import type { FarmDetail, Layer, RecordRow } from "../lib/types";
 
 /** Días sin anotaciones para considerar un lote sin visitar. */
@@ -504,6 +504,29 @@ export function FarmPage() {
                     </li>
                   ))}
                 </ul>
+              )}
+              {pestPts.length > 0 && (
+                <>
+                  <p className="mt-2 text-lino/70">{t("ui.pestsSizeHint")}</p>
+                  <p className="mt-2 mb-1 font-medium">{t("ui.pestsByPlotTitle")}</p>
+                  <ul className="flex flex-col gap-0.5">
+                    {pestsByPlot(pestPts)
+                      .slice(0, 5)
+                      .map((c) => (
+                        <li key={c.plotId}>
+                          <button
+                            className="num flex w-full cursor-pointer items-baseline gap-2 text-left underline-offset-4 hover:underline"
+                            onClick={() => setSelected(c.plotId)}
+                          >
+                            <span className="min-w-0 flex-1 truncate">{d.plots.find((p) => p.id === c.plotId)?.name ?? "—"}</span>
+                            <span className="text-lino/70">
+                              {t("ui.pestsPlotCount", { n: c.n })} · {tk(`ui.pestIntensity_${c.worst}`)}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                </>
               )}
             </div>
           )}

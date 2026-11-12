@@ -2038,6 +2038,12 @@ export const esPY = {
     boundariesMissing: "Los límites todavía no están publicados en este servidor.",
     pestsLegendTitle: "Plagas de los últimos 30 días",
     pestsNone: "No hay plagas anotadas en los últimos 30 días.",
+    pestsSizeHint: "Cuanto más grande el punto, más fuerte el foco.",
+    pestsByPlotTitle: "Lotes más afectados",
+    pestsPlotCount: "Focos: {{n}}",
+    pestIntensity_low: "leve",
+    pestIntensity_medium: "media",
+    pestIntensity_high: "alta",
     // plataforma
     taskPriority: "Prioridad",
     taskPriority_low: "Baja",

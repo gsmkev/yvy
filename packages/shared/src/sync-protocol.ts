@@ -197,3 +197,4 @@ export interface SyncState {
 }
 
 export { POI_KINDS };
+export type { PoiKind } from "./schema";

@@ -13,6 +13,7 @@ import type { Feature, FeatureCollection, LineString, MultiPolygon, Polygon } fr
 import { BRAND } from "@yvy/shared";
 import pointOnFeature from "@turf/point-on-feature";
 import { t } from "../lib/i18n";
+import { addPoiImages } from "../lib/poiMarkers";
 import { cameraDiffers, pickLayer, type Camera } from "../lib/scenes";
 import type { Layer, Plot, Poi } from "../lib/types";
 
@@ -240,12 +241,20 @@ export function FarmMap(props: FarmMapProps) {
         type: "circle",
         source: "pois",
         paint: {
-          "circle-radius": 6,
+          "circle-radius": 13,
           "circle-color": BRAND.cielo,
           "circle-stroke-color": BRAND.surco,
           "circle-stroke-width": 2,
         },
       });
+      // M-19: el ícono del tipo va sobre el punto; mientras se rasteriza queda el disco.
+      map.addLayer({
+        id: "pois-icon",
+        type: "symbol",
+        source: "pois",
+        layout: { "icon-image": ["concat", "poi-", ["get", "kind"]], "icon-allow-overlap": true },
+      });
+      void addPoiImages(map);
       map.addLayer({
         id: "points",
         type: "circle",
@@ -415,7 +424,7 @@ export function FarmMap(props: FarmMapProps) {
       fc(
         (p.pois ?? []).map((x) => ({
           type: "Feature",
-          properties: { id: x.id, name: x.name },
+          properties: { id: x.id, name: x.name, kind: x.kind },
           geometry: { type: "Point", coordinates: [x.lon, x.lat] },
         })),
       ),

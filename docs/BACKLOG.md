@@ -99,7 +99,7 @@ Detalles que un usuario espera sin pedirlos.
 | M-16 | Límites de departamentos y distritos | Contexto y búsqueda | Web | P3 | S | Hecho |
 | M-17 | Capas personalizadas: subir una imagen de dron o un mapa de suelos | Productores grandes | Web | P3 | M | Hecho |
 | M-18 | Grilla de muestreo de suelo sobre el lote (cada 5 o 10 ha) con puntos numerados | Planificar análisis | Web, App | P2 | M | Hecho |
-| M-19 | Puntos de interés con más tipos: silo, galpón, tranquera, puente, molino, bebedero, manga, embarcadero | Mapa del campo completo | Web, App | P1 | S | Parcial |
+| M-19 | Puntos de interés con más tipos: silo, galpón, tranquera, puente, molino, bebedero, manga, embarcadero | Mapa del campo completo | Web, App | P1 | S | Hecho |
 | M-20 | Líneas en el mapa: alambrados, caminos internos, cañerías, con su largo | Mantenimiento | Web | P2 | M | Hecho |
 | M-21 | Exportar lotes y puntos a KML, shapefile y GeoJSON para maquinaria y agrimensores | Interoperabilidad | Web | P1 | S | Parcial (KML) |
 

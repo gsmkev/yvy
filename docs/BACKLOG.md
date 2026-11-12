@@ -65,7 +65,7 @@ Detalles que un usuario espera sin pedirlos.
 | U-19 | Alturas reservadas mientras carga, sin saltos | Sensación de calidad | Web | P2 | S | Parcial |
 | U-20 | Modo oscuro | De noche en el campo la pantalla blanca encandila | App, Web | P2 | M | Falta |
 | U-21 | Respetar el tamaño de letra del sistema | Usuarios mayores | App | P1 | M | Falta |
-| U-22 | Guaraní (gn-PY) con selector de idioma | Diferencial real con el empleado | App, Web | P2 | M | Falta |
+| U-22 | Guaraní (gn-PY) con selector de idioma | Diferencial real con el empleado | App, Web | P2 | M | Parcial (navegación y Anotar) |
 | U-23 | Unidades configurables: hectáreas o cuadras, mm, °C, kg o arrobas | Costumbres locales | Web, App | P2 | S | Falta |
 | U-24 | Recorrido guiado de primera vez (4 pasos con estado) | Activación sin acompañamiento | Web | P1 | M | Parcial |
 | U-25 | Centro de ayuda con videos cortos y botón de WhatsApp de soporte | Soporte barato | Web, App | P1 | S | Falta |

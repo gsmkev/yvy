@@ -1,21 +1,31 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { isFieldRole } from "@yvy/shared";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, ChevronRight, Plus } from "lucide-react";
 import { FarmMap } from "../components/FarmMap";
-import { Button, Empty, ErrorBox, SectionHead, Spinner, Stat } from "../components/ui";
-import { fmtDate, fmtNum } from "../lib/format";
+import { FirstRunGuide, guideSteps } from "../components/FirstRunGuide";
+import { OwnerDashboard } from "../components/OwnerDashboard";
+import { Button, Empty, ErrorBox, SectionHead, Skeleton, Spinner, Stat } from "../components/ui";
+import { areaUnitLabel, fmtAreaValue, fmtDate, fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
-import { useFarms, useMe } from "../lib/queries";
+import { loadPrefs, savePrefs } from "../lib/prefs";
+import { useFarms, useMe, useMembers } from "../lib/queries";
 
 /** Inicio multi estancia (RF-90). */
 export function HomePage() {
   const farms = useFarms();
   const me = useMe();
   const navigate = useNavigate();
-  const canEdit = me.data && me.data.role !== "worker";
+  const canEdit = me.data && !isFieldRole(me.data.role);
   const list = farms.data ?? [];
-  // Con una sola estancia, el mapa de esa estancia es el inicio
-  const only = list.length === 1 ? list[0]!.id : null;
+  const members = useMembers(!!canEdit);
+  const [dismissed, setDismissed] = useState(() => !!loadPrefs().guideDismissed);
+  // Guía de primera vez: solo para quien edita, hasta completar los 4 pasos o descartarla
+  const steps = canEdit && farms.data && members.data ? guideSteps(list, members.data) : null;
+  const guide = steps && !dismissed && steps.some((s) => !s.done) ? steps : null;
+  const ready = !!me.data && (!canEdit || !!members.data || members.isError);
+  // Con una sola estancia, el mapa de esa estancia es el inicio (salvo que falte completar la guía)
+  const only = list.length === 1 && ready && !guide ? list[0]!.id : null;
   useEffect(() => {
     if (only) navigate({ to: "/estancias/$farmId", params: { farmId: only }, replace: true });
   }, [only]);
@@ -63,17 +73,29 @@ export function HomePage() {
           )}
         </header>
 
+        {farms.isLoading && <Skeleton h={89} />}
         {list.length > 0 && (
           <div className="grid grid-cols-3 gap-4 border-y border-linea py-4">
-            <Stat label={t("ui.area")} value={fmtNum(totalHa)} unit="ha" />
+            <Stat label={t("ui.area")} value={fmtAreaValue(totalHa)} unit={areaUnitLabel()} />
             <Stat label={t("ui.records7d")} value={records} />
             <Stat label={t("ui.activeAlerts")} value={alerts} tone={alerts ? "danger" : undefined} />
           </div>
         )}
 
-        {farms.isLoading && <Spinner />}
+        {list.length > 1 && (me.data?.role === "owner" || me.data?.role === "admin") && <OwnerDashboard />}
+
+        {farms.isLoading && <Spinner rows={3} h={84} />}
         {farms.error && <ErrorBox error={farms.error} />}
-        {farms.data && list.length === 0 && (
+        {guide && (
+          <FirstRunGuide
+            steps={guide}
+            onDismiss={() => {
+              savePrefs({ guideDismissed: true });
+              setDismissed(true);
+            }}
+          />
+        )}
+        {farms.data && list.length === 0 && !guide && (
           <Empty title={t("ui.onboardingTitle")}>
             <ol className="mt-1 flex list-decimal flex-col gap-1.5 pl-5">
               <li>{t("ui.onboarding1")}</li>
@@ -107,7 +129,7 @@ export function HomePage() {
                         {f.department && <span className="text-sm text-tinta-2">{f.department}</span>}
                       </div>
                       <p className="num mt-1 text-xs text-tinta-2">
-                        {fmtNum(f.areaHa)} ha · {f.plots} {t("ui.plots").toLowerCase()} · {f.workers}{" "}
+                        {fmtHa(f.areaHa)} · {f.plots} {t("ui.plots").toLowerCase()} · {f.workers}{" "}
                         {t("ui.workers").toLowerCase()} ·{" "}
                         {f.lastRecordAt
                           ? `${t("ui.lastRecord").toLowerCase()} ${fmtDate(f.lastRecordAt)}`

@@ -206,7 +206,7 @@ export class LocalDb implements SyncStore {
         if (this.hasPending(String(row.id))) continue;
         this.sql.run(
           insert,
-          cols.map((c) => (row[c.key] === undefined ? null : (row[c.key] as Param))),
+          cols.map((c) => (row[c.key] === undefined ? null : typeof row[c.key] === "boolean" ? (row[c.key] ? 1 : 0) : (row[c.key] as Param))),
         );
       }
       if (cursor) {

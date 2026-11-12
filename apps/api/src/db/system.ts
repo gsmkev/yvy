@@ -178,6 +178,7 @@ export class SystemDb {
       p10: number;
       p90: number;
       validPct: number;
+      lowConfidence?: boolean;
     }[],
   ): Promise<{ written: number; unknownPlots: string[] }> {
     const plots = await this.db
@@ -209,6 +210,7 @@ export class SystemDb {
               p10: sql`excluded.p10`,
               p90: sql`excluded.p90`,
               validPct: sql`excluded.valid_pct`,
+              lowConfidence: sql`excluded.low_confidence`,
               updatedAt: ts,
               version: currentVersion,
             },

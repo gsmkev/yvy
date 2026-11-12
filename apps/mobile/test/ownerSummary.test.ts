@@ -94,6 +94,7 @@ describe("pasadas de vigor locales", () => {
       p10: 0,
       p90: 1,
       validPct: 100,
+      lowConfidence: false,
       createdAt: 1,
       updatedAt: 1,
       deletedAt: null,

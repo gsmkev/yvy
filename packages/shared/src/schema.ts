@@ -740,6 +740,8 @@ export const plotIndexStats = sqliteTable(
     p10: real("p10").notNull(),
     p90: real("p90").notNull(),
     validPct: real("valid_pct").notNull(),
+    /** S-11: lote de menos de 30 m de ancho; los píxeles mezclan con el borde y el dato es poco confiable. */
+    lowConfidence: integer("low_confidence", { mode: "boolean" }).notNull().default(false),
     ...synced,
   },
   (t) => [

@@ -1632,3 +1632,23 @@ export const employeePayments = sqliteTable(
   },
   (t) => [index("employee_payments_idx").on(t.organizationId, t.employeeId, t.date)],
 );
+
+/** Presupuesto de campaña: una línea por lote, cultivo o toda la campaña, con actividad y rubro (E-32). */
+export const budgetLines = sqliteTable(
+  "budget_lines",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    seasonId: text("season_id").notNull(),
+    /** Alcance: un lote, un cultivo, o ninguno de los dos (toda la campaña). */
+    plotId: text("plot_id"),
+    crop: text("crop"),
+    activity: text("activity", { enum: ACTIVITIES }),
+    category: text("category", { enum: COST_CATEGORIES }).notNull(),
+    /** Monto presupuestado en guaraníes. */
+    amountPyg: integer("amount_pyg").notNull(),
+    note: text("note"),
+    ...timestamps,
+  },
+  (t) => [index("budget_lines_season_idx").on(t.organizationId, t.seasonId)],
+);

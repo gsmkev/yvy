@@ -1,6 +1,7 @@
 /** Administración (ADR 0004): maestros, stock, costos y márgenes. Solo dueño y administradores. */
 import type { ReactNode } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
+import { BudgetPanel } from "../components/erp/BudgetPanel";
 import { ContractorsPanel } from "../components/erp/ContractorsPanel";
 import { CostsPanel } from "../components/erp/CostsPanel";
 import { StaffPanel } from "../components/erp/StaffPanel";
@@ -39,6 +40,7 @@ const SECTIONS: Section[] = [
   { id: "staff", label: "ui.adminSection_staff", render: () => <StaffPanel /> },
   { id: "fuel", label: "ui.adminSection_fuel", render: () => <FuelPanel /> },
   { id: "orders", label: "ui.adminSection_orders", render: () => <OrdersPanel /> },
+  { id: "budget", label: "ui.adminSection_budget", render: () => <BudgetPanel /> },
   { id: "results", label: "ui.adminSection_results", render: () => <ResultsPanel /> },
   { id: "contractors", label: "ui.adminSection_contractors", render: () => <ContractorsPanel /> },
   { id: "rates", label: "ui.adminSection_rates", render: () => <ExchangeRatesPanel /> },

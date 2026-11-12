@@ -363,7 +363,14 @@ export function belowMinimum(
   for (const m of minimums) {
     if (m.minQty <= 0) continue;
     const qty = have.get(`${m.productId}|${m.warehouseId}`) ?? 0;
-    if (qty <= m.minQty + 1e-9) out.push({ productId: m.productId, warehouseId: m.warehouseId, qty, minQty: m.minQty, missing: Math.round((m.minQty - qty) * 1000) / 1000 });
+    if (qty <= m.minQty + 1e-9)
+      out.push({
+        productId: m.productId,
+        warehouseId: m.warehouseId,
+        qty,
+        minQty: m.minQty,
+        missing: Math.round((m.minQty - qty) * 1000) / 1000,
+      });
   }
   return out.sort((a, b) => b.missing - a.missing);
 }
@@ -404,7 +411,8 @@ export function maintenanceStatus(p: { meter: number; lastDoneMeter: number; eve
 } {
   const dueAt = p.lastDoneMeter + p.everyUnits;
   const remaining = Math.round((dueAt - p.meter) * 100) / 100;
-  const status: MaintenanceStatus = remaining <= 0 ? "overdue" : remaining <= p.everyUnits * MAINTENANCE_WARN_FRACTION ? "soon" : "ok";
+  const status: MaintenanceStatus =
+    remaining <= 0 ? "overdue" : remaining <= p.everyUnits * MAINTENANCE_WARN_FRACTION ? "soon" : "ok";
   return { dueAt, remaining, status };
 }
 
@@ -442,7 +450,8 @@ export interface OwnCost {
 /** Costo propio por hora: combustible + operario + amortización lineal ((compra - reventa) / vida útil). Guaraníes enteros. */
 export function ownLaborCost(i: OwnCostInput): OwnCost {
   const fuelPerHour = Math.round((i.fuelLitersPerHour ?? 0) * (i.fuelPricePyg ?? 0));
-  const depreciationPerHour = i.lifeHours > 0 ? Math.round(Math.max(0, i.purchasePricePyg - i.residualPyg) / i.lifeHours) : 0;
+  const depreciationPerHour =
+    i.lifeHours > 0 ? Math.round(Math.max(0, i.purchasePricePyg - i.residualPyg) / i.lifeHours) : 0;
   const totalPerHour = fuelPerHour + i.operatorPerHourPyg + depreciationPerHour;
   return {
     fuelPerHour,
@@ -467,7 +476,11 @@ export function contractorRatePer(
 /** Quién conviene: compara por hectárea si ambos la tienen y si no por hora. `savingPyg` > 0 = lo propio es más barato. */
 export function laborVerdict(own: OwnCost, contractorPerHa: number | null, contractorPerHour: number | null) {
   if (own.perHa !== null && contractorPerHa !== null)
-    return { basis: "ha" as const, savingPyg: contractorPerHa - own.perHa, cheaper: own.perHa <= contractorPerHa ? ("own" as const) : ("contractor" as const) };
+    return {
+      basis: "ha" as const,
+      savingPyg: contractorPerHa - own.perHa,
+      cheaper: own.perHa <= contractorPerHa ? ("own" as const) : ("contractor" as const),
+    };
   if (contractorPerHour !== null)
     return {
       basis: "hour" as const,
@@ -524,7 +537,8 @@ export const employeePaymentInput = z.object({
 });
 
 /** Saldo = devengado - adelantos - pagos. Positivo: se le debe al empleado; negativo: tiene adelantos de más. */
-export const employeeBalance = (accruedPyg: number, advancesPyg: number, paymentsPyg: number): number => accruedPyg - advancesPyg - paymentsPyg;
+export const employeeBalance = (accruedPyg: number, advancesPyg: number, paymentsPyg: number): number =>
+  accruedPyg - advancesPyg - paymentsPyg;
 
 export interface StatementLine {
   date: string;
@@ -542,4 +556,67 @@ export function statement(lines: StatementLine[]): (StatementLine & { balancePyg
   return [...lines]
     .sort((a, b) => a.date.localeCompare(b.date) || order(a) - order(b) || a.id.localeCompare(b.id))
     .map((l) => ({ ...l, balancePyg: (bal += l.amountPyg) }));
+}
+
+// ---------- Presupuesto de campaña (E-32) ----------
+
+/** Un lote o un cultivo, no los dos: la API deja solo el que se mandó (ver normalize en la ruta). */
+export const budgetLineInput = z.object({
+  seasonId: uuid,
+  plotId: uuid.nullish(),
+  crop: z.string().trim().min(1).max(40).nullish(),
+  activity: z.enum(ACTIVITIES).nullish(),
+  category: z.enum(COST_CATEGORIES),
+  amountPyg: minorAmount.refine((n) => n > 0, "El monto tiene que ser mayor que cero"),
+  note: optText(200),
+});
+
+export interface BudgetLine {
+  id: string;
+  plotId: string | null;
+  crop: string | null;
+  activity: Activity | null;
+  category: CostCategory;
+  amountPyg: number;
+}
+export interface ActualGroup {
+  plotId: string | null;
+  activity: Activity;
+  category: CostCategory;
+  amountPyg: number;
+}
+export interface BudgetRow extends BudgetLine {
+  actualPyg: number;
+  /** Real menos presupuesto: positivo en un costo = se pasó; positivo en una venta = superó lo previsto. */
+  diffPyg: number;
+  /** Real sobre presupuesto, en %; null sin presupuesto. */
+  pct: number | null;
+}
+
+/**
+ * Compara cada línea con lo real. `cropOf` da el cultivo de cada lote en la campaña. Una línea de un lote suma lo
+ * de ese lote; de un cultivo, lo de los lotes de ese cultivo; sin alcance, todo lo de la campaña. Filtra por
+ * actividad si la línea la trae y siempre por rubro.
+ */
+export function budgetVsActual(
+  lines: BudgetLine[],
+  actual: ActualGroup[],
+  cropOf: Map<string, string | null>,
+): BudgetRow[] {
+  return lines.map((l) => {
+    let sum = 0;
+    for (const a of actual) {
+      if (a.category !== l.category) continue;
+      if (l.activity && a.activity !== l.activity) continue;
+      if (l.plotId && a.plotId !== l.plotId) continue;
+      if (l.crop && !(a.plotId && cropOf.get(a.plotId) === l.crop)) continue;
+      sum += a.amountPyg;
+    }
+    return {
+      ...l,
+      actualPyg: sum,
+      diffPyg: sum - l.amountPyg,
+      pct: l.amountPyg > 0 ? Math.round((sum / l.amountPyg) * 1000) / 10 : null,
+    };
+  });
 }

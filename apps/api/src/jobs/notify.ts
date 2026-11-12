@@ -3,9 +3,9 @@
  * cada corrida usa 2 subrequests. Email con tope diario (Resend gratis: 100/día).
  */
 import { and, asc, eq, gte, inArray, isNotNull, sql } from "drizzle-orm";
-import { t } from "@yvy/shared";
+import { inQuietHours, localTime, parseNotificationPrefs, t } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
-import { runBatch, type DB, type Stmt } from "../db/client";
+import { chunkForParams, runBatch, type DB, type Stmt } from "../db/client";
 import type { Bindings } from "../types";
 
 export const EMAIL_DAILY_CAP = 90;
@@ -55,6 +55,7 @@ export async function sendPending(
       probability: s.alerts.probability,
       source: s.alerts.source,
       farmName: s.farms.name,
+      tz: s.farms.timezone,
       alertId: s.alerts.id,
     })
     .from(s.notifications)
@@ -63,7 +64,24 @@ export async function sendPending(
     .innerJoin(s.farms, eq(s.farms.id, s.alerts.farmId))
     .where(eq(s.notifications.status, "pending"))
     .orderBy(asc(s.notifications.createdAt))
-    .limit(BATCH);
+    .limit(BATCH * 3);
+  // U-29: el push dentro del horario de silencio del usuario (hora de la estancia) queda pendiente hasta que termine.
+  const quiet = new Map<string, ReturnType<typeof parseNotificationPrefs>["quiet"]>();
+  const pushUsers = [...new Set(pending.filter((p) => p.channel === "push").map((p) => p.userId))];
+  for (const chunk of chunkForParams(pushUsers, 1)) {
+    const found = await db
+      .select({ userId: s.notificationPrefs.userId, prefs: s.notificationPrefs.prefs })
+      .from(s.notificationPrefs)
+      .where(inArray(s.notificationPrefs.userId, chunk));
+    for (const f of found) quiet.set(f.userId, parseNotificationPrefs(f.prefs).quiet);
+  }
+  const held = (p: (typeof pending)[number]) => {
+    const q = quiet.get(p.userId);
+    return p.channel === "push" && !!q && inQuietHours(q, localTime(now, p.tz));
+  };
+  const batch = pending.filter((p) => !held(p)).slice(0, BATCH);
+  pending.length = 0;
+  pending.push(...batch);
   if (!pending.length) return { push: 0, email: 0 };
 
   const title = (p: (typeof pending)[number]) => `${KIND_LABEL[p.kind] ?? p.kind} · ${p.farmName}`;
@@ -107,9 +125,17 @@ export async function sendPending(
       (res.ok ? sent : failed).push(...pushes.map((p) => p.id));
       if (res.ok) {
         // B9: Expo responde 200 con un estado por mensaje; los tokens inválidos se borran.
-        const dead = await deadTokens(res, messages.slice(0, 100).map((m) => m.to));
+        const dead = await deadTokens(
+          res,
+          messages.slice(0, 100).map((m) => m.to),
+        );
         for (let i = 0; i < dead.length; i += 90)
-          cleanup.push(db.update(s.devices).set({ pushToken: null }).where(inArray(s.devices.pushToken, dead.slice(i, i + 90))));
+          cleanup.push(
+            db
+              .update(s.devices)
+              .set({ pushToken: null })
+              .where(inArray(s.devices.pushToken, dead.slice(i, i + 90))),
+          );
       }
     } else {
       sent.push(...pushes.map((p) => p.id)); // sin dispositivos: nada que mandar

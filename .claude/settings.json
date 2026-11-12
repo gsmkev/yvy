@@ -12,8 +12,13 @@
       "Bash(ls:*)",
       "Bash(cat:*)",
       "Bash(grep:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(gh api -X PUT repos/gsmkev/yvy/pulls/*/merge*)"
     ],
-    "deny": ["Bash(npx wrangler deploy:*)", "Bash(npx wrangler secret:*)", "Bash(git push --force:*)"]
+    "deny": [
+      "Bash(npx wrangler deploy:*)",
+      "Bash(npx wrangler secret:*)",
+      "Bash(git push --force:*)"
+    ]
   }
 }

@@ -2,10 +2,11 @@
  * Acceso de sistema (sin usuario): /ingest firmado por HMAC y crons. Única excepción a scopedDb.
  * Cada escritura deriva organization_id de la fila padre (lote o estancia), nunca del request.
  */
-import { and, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
-import { newId } from "@yvy/shared";
+import { and, desc, eq, gte, inArray, isNull, lt, or, sql } from "drizzle-orm";
+import { addDays, DEFAULT_ALERT_SETTINGS, localDate, newId, type AlertSettings } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { upsertAlert } from "../jobs/alerts";
+import { dayOfYear, ndviAt } from "./queries";
 import { bumpVersion, chunkForParams, currentVersion, runBatch, type DB, type Stmt } from "./client";
 
 export class SystemDb {
@@ -24,10 +25,117 @@ export class SystemDb {
         maxLon: s.farms.maxLon,
         maxLat: s.farms.maxLat,
         hasClimatology: sql<boolean>`EXISTS (SELECT 1 FROM climatology c WHERE c.farm_id = farms.id)`,
+        /** Informe de riesgo calculado en los últimos 90 días (C-10); pasado ese tiempo se recalcula. */
+        hasRisk: sql<boolean>`EXISTS (SELECT 1 FROM farm_risk r WHERE r.farm_id = farms.id AND r.computed_at > ${Date.now() - 90 * 86_400_000})`,
+        /** R-02: hay alguien del equipo con email a quien mandarle el parte semanal. */
+        hasReportRecipient: sql<boolean>`EXISTS (SELECT 1 FROM memberships m JOIN users u ON u.id = m.user_id WHERE m.organization_id = farms.organization_id AND m.role IN ('owner', 'admin') AND m.deleted_at IS NULL AND u.email IS NOT NULL)`,
         hasBasemap: sql<boolean>`EXISTS (SELECT 1 FROM farm_layers l WHERE l.farm_id = farms.id AND l.layer = 'true_color' AND l.deleted_at IS NULL)`,
       })
       .from(s.farms)
       .where(isNull(s.farms.deletedAt));
+  }
+
+  /**
+   * Resumen público de una estancia para un enlace de solo lectura (K-04). Devuelve el motivo si el enlace no sirve.
+   * No incluye registros, personas ni geometrías: solo lotes, superficie, vigor, lluvia y avisos.
+   */
+  async sharedSummary(tokenHash: string, now: number) {
+    const [link] = await this.db
+      .select({
+        farmId: s.shareLinks.farmId,
+        expiresAt: s.shareLinks.expiresAt,
+        revokedAt: s.shareLinks.revokedAt,
+        name: s.farms.name,
+        department: s.farms.department,
+        areaHa: s.farms.areaHa,
+      })
+      .from(s.shareLinks)
+      .innerJoin(s.farms, and(eq(s.farms.id, s.shareLinks.farmId), isNull(s.farms.deletedAt)))
+      .where(eq(s.shareLinks.tokenHash, tokenHash))
+      .limit(1);
+    if (!link) return { error: "not_found" as const };
+    if (link.revokedAt !== null) return { error: "revoked" as const };
+    if (link.expiresAt <= now) return { error: "expired" as const };
+    const farmId = link.farmId;
+    const today = localDate(now);
+    const from30 = addDays(today, -30);
+    const [plots, rain, alerts] = await Promise.all([
+      this.db
+        .select({
+          name: s.plots.name,
+          kind: s.plots.kind,
+          crop: s.plots.crop,
+          areaHa: s.plots.areaHa,
+          ndvi: sql<number | null>`(SELECT mean FROM plot_index_stats i WHERE i.plot_id = plots.id AND i.idx = 'ndvi' ORDER BY i.acquired_at DESC LIMIT 1)`,
+          ndviAt: sql<number | null>`(SELECT acquired_at FROM plot_index_stats i WHERE i.plot_id = plots.id AND i.idx = 'ndvi' ORDER BY i.acquired_at DESC LIMIT 1)`,
+        })
+        .from(s.plots)
+        .where(and(eq(s.plots.farmId, farmId), isNull(s.plots.deletedAt)))
+        .orderBy(s.plots.name)
+        .limit(500),
+      this.db
+        .select({ mm: sql<number | null>`sum(${s.climateDaily.precipMm})`, n: sql<number>`count(*)` })
+        .from(s.climateDaily)
+        .where(
+          and(
+            eq(s.climateDaily.farmId, farmId),
+            eq(s.climateDaily.plotId, ""),
+            inArray(s.climateDaily.source, ["chirps", "chirps_prelim"]),
+            gte(s.climateDaily.date, from30),
+          ),
+        ),
+      this.db
+        .select({
+          kind: s.alerts.kind,
+          severity: s.alerts.severity,
+          summary: s.alerts.summary,
+          validFrom: s.alerts.validFrom,
+          validTo: s.alerts.validTo,
+        })
+        .from(s.alerts)
+        .where(
+          and(
+            eq(s.alerts.farmId, farmId),
+            isNull(s.alerts.resolvedAt),
+            or(isNull(s.alerts.validTo), sql`${s.alerts.validTo} >= ${now}`),
+          ),
+        )
+        .orderBy(desc(s.alerts.validFrom))
+        .limit(50),
+    ]);
+    const doys = Array.from({ length: 30 }, (_, i) => dayOfYear(addDays(today, -i)));
+    const clim = await this.db
+      .select({ mean: s.climatology.mean })
+      .from(s.climatology)
+      .where(
+        and(eq(s.climatology.farmId, farmId), eq(s.climatology.plotId, ""), eq(s.climatology.variable, "precip"), inArray(s.climatology.dayOfYear, doys)),
+      );
+    const normal = clim.length ? clim.reduce((a, c) => a + (c.mean ?? 0), 0) : null;
+    return {
+      farm: { name: link.name, department: link.department, areaHa: link.areaHa, plotCount: plots.length },
+      plots,
+      rain30: { mm: rain[0] && rain[0].n >= 25 ? (rain[0].mm ?? 0) : null, normalMm: normal },
+      alerts,
+      generatedAt: now,
+      expiresAt: link.expiresAt,
+      today,
+    };
+  }
+
+  /** Umbrales de avisos de la estancia (C-04); por defecto si no hay fila. */
+  async alertSettings(farmId: string): Promise<AlertSettings> {
+    const [row] = await this.db
+      .select()
+      .from(s.farmAlertSettings)
+      .where(eq(s.farmAlertSettings.farmId, farmId))
+      .limit(1);
+    return row
+      ? {
+          frostTminC: row.frostTminC,
+          excessRainMm24h: row.excessRainMm24h,
+          droughtDeficitPct: row.droughtDeficitPct,
+        }
+      : { ...DEFAULT_ALERT_SETTINGS };
   }
 
   farmGeometry(farmId: string) {
@@ -70,6 +178,7 @@ export class SystemDb {
       p10: number;
       p90: number;
       validPct: number;
+      lowConfidence?: boolean;
     }[],
   ): Promise<{ written: number; unknownPlots: string[] }> {
     const plots = await this.db
@@ -101,6 +210,7 @@ export class SystemDb {
               p10: sql`excluded.p10`,
               p90: sql`excluded.p90`,
               validPct: sql`excluded.valid_pct`,
+              lowConfidence: sql`excluded.low_confidence`,
               updatedAt: ts,
               version: currentVersion,
             },
@@ -133,7 +243,7 @@ export class SystemDb {
 
   async addFarmLayer(x: {
     farmId: string;
-    layer: "true_color" | "ndvi";
+    layer: (typeof s.LAYERS)[number];
     acquiredAt: number;
     pmtilesPath: string;
     bytes: number;
@@ -156,8 +266,35 @@ export class SystemDb {
         .update(s.farms)
         .set({ offlinePackVersion: sql`${s.farms.offlinePackVersion} + 1`, updatedAt: ts, version: currentVersion })
         .where(eq(s.farms.id, x.farmId)),
+      // El mapa base marca el fin del primer procesamiento (S-02)
+      ...(x.layer === "true_color" ? [this.imageryUpsert(x.farmId, "ready", ts)] : []),
     ]);
     return { id };
+  }
+
+  private imageryUpsert(farmId: string, status: (typeof s.IMAGERY_STATUSES)[number], ts: number) {
+    return this.db
+      .insert(s.farmImagery)
+      .values({ farmId, status, requestedAt: ts, updatedAt: ts })
+      .onConflictDoUpdate({ target: s.farmImagery.farmId, set: { status, updatedAt: ts } });
+  }
+
+  /** Estado del procesamiento satelital inicial. Devuelve false si la estancia no existe. */
+  async setImageryStatus(farmId: string, status: (typeof s.IMAGERY_STATUSES)[number]): Promise<boolean> {
+    const [farm] = await this.db.select({ id: s.farms.id }).from(s.farms).where(eq(s.farms.id, farmId)).limit(1);
+    if (!farm) return false;
+    await this.imageryUpsert(farmId, status, Date.now());
+    return true;
+  }
+
+  /** S-03: el job de historia avisa que terminó (done) o falló. */
+  async setHistoryStatus(farmId: string, status: "done" | "failed"): Promise<boolean> {
+    const res = await this.db
+      .update(s.farmHistory)
+      .set({ status, updatedAt: Date.now() })
+      .where(eq(s.farmHistory.farmId, farmId))
+      .returning({ id: s.farmHistory.farmId });
+    return res.length > 0;
   }
 
   climateLatest() {
@@ -184,6 +321,217 @@ export class SystemDb {
     );
     await runBatch(this.db, stmts);
     return rows.length;
+  }
+
+  /**
+   * S-08: reemplaza las áreas problema de un lote por las de la escena `acquiredAt` (lista vacía = las limpia).
+   * Si ya hay áreas de una escena más nueva, no pisa nada. La organización sale del lote, no del request.
+   */
+  async replaceProblemAreas(
+    plotId: string,
+    acquiredAt: number,
+    areas: Omit<typeof s.problemAreas.$inferInsert, "id" | "organizationId" | "farmId" | "plotId" | "acquiredAt" | "createdAt">[],
+  ): Promise<number | null> {
+    const [plot] = await this.db
+      .select({ org: s.plots.organizationId, farmId: s.plots.farmId })
+      .from(s.plots)
+      .where(and(eq(s.plots.id, plotId), isNull(s.plots.deletedAt)))
+      .limit(1);
+    if (!plot) return null;
+    const [newer] = await this.db
+      .select({ n: sql<number>`count(*)` })
+      .from(s.problemAreas)
+      .where(and(eq(s.problemAreas.plotId, plotId), gte(s.problemAreas.acquiredAt, acquiredAt + 1)));
+    if (newer && newer.n > 0) return 0;
+    const ts = Date.now();
+    await runBatch(this.db, [
+      this.db.delete(s.problemAreas).where(eq(s.problemAreas.plotId, plotId)),
+      ...areas.map((a) =>
+        this.db.insert(s.problemAreas).values({
+          ...a,
+          id: newId(),
+          organizationId: plot.org,
+          farmId: plot.farmId,
+          plotId,
+          acquiredAt,
+          createdAt: ts,
+        }),
+      ),
+    ]);
+    return areas.length;
+  }
+
+  /**
+   * R-02: datos del parte semanal de una estancia para el PDF que arma workers-py. Son pocas consultas
+   * agregadas; el armado del PDF (lo pesado) no pasa por el Worker. `from` y `to` son fechas locales (UTC-3).
+   */
+  async weeklySummary(farmId: string, from: string, to: string) {
+    const [farm] = await this.db
+      .select({
+        name: s.farms.name,
+        areaHa: s.farms.areaHa,
+        department: s.farms.department,
+        district: s.farms.district,
+      })
+      .from(s.farms)
+      .where(and(eq(s.farms.id, farmId), isNull(s.farms.deletedAt)))
+      .limit(1);
+    if (!farm) return null;
+    const fromMs = Date.parse(`${from}T00:00:00-03:00`);
+    const toMs = Date.parse(`${to}T23:59:59-03:00`);
+    const inWeek = and(
+      eq(s.records.farmId, farmId),
+      isNull(s.records.deletedAt),
+      gte(s.records.capturedAt, fromMs),
+      lt(s.records.capturedAt, toMs + 1),
+    );
+    const doys = [...new Set(Array.from({ length: 7 }, (_, i) => dayOfYear(addDays(from, i))))];
+    const [byKind, [authors], [sat], normal, gauge, alerts, plots, problems] = await Promise.all([
+      this.db.select({ kind: s.records.kind, n: sql<number>`count(*)` }).from(s.records).where(inWeek).groupBy(s.records.kind),
+      this.db.select({ n: sql<number>`count(DISTINCT ${s.records.authorId})` }).from(s.records).where(inWeek),
+      this.db
+        .select({ mm: sql<number | null>`sum(${s.climateDaily.precipMm})`, n: sql<number>`count(*)` })
+        .from(s.climateDaily)
+        .where(
+          and(
+            eq(s.climateDaily.farmId, farmId),
+            eq(s.climateDaily.plotId, ""),
+            inArray(s.climateDaily.source, ["chirps", "chirps_prelim"]),
+            gte(s.climateDaily.date, from),
+            lt(s.climateDaily.date, addDays(to, 1)),
+          ),
+        ),
+      this.db
+        .select({ mean: s.climatology.mean })
+        .from(s.climatology)
+        .where(
+          and(eq(s.climatology.farmId, farmId), eq(s.climatology.plotId, ""), eq(s.climatology.variable, "precip"), inArray(s.climatology.dayOfYear, doys)),
+        ),
+      this.db
+        .select({ data: s.records.data })
+        .from(s.records)
+        .where(and(inWeek, eq(s.records.kind, "rain"))),
+      this.db
+        .select({ kind: s.alerts.kind, severity: s.alerts.severity, summary: s.alerts.summary })
+        .from(s.alerts)
+        .where(and(eq(s.alerts.farmId, farmId), gte(s.alerts.updatedAt, fromMs)))
+        .limit(20),
+      this.db
+        .select({
+          id: s.plots.id,
+          name: s.plots.name,
+          crop: s.plots.crop,
+          kind: s.plots.kind,
+          areaHa: s.plots.areaHa,
+          ndvi: ndviAt("mean", 0),
+          ndviPrev: ndviAt("mean", 1),
+        })
+        .from(s.plots)
+        .where(and(eq(s.plots.farmId, farmId), isNull(s.plots.deletedAt)))
+        .orderBy(s.plots.name)
+        .limit(300),
+      this.db
+        .select({ plotName: s.plots.name, areaHa: s.problemAreas.areaHa })
+        .from(s.problemAreas)
+        .innerJoin(s.plots, eq(s.plots.id, s.problemAreas.plotId))
+        .where(eq(s.problemAreas.farmId, farmId))
+        .limit(100),
+    ]);
+    const normalMm = normal.reduce((a, r) => a + (r.mean ?? 0), 0);
+    const gaugeMm = gauge.reduce((a, r) => a + ((JSON.parse(r.data) as { mm?: number }).mm ?? 0), 0);
+    return {
+      farm,
+      period: { from, to },
+      records: { total: byKind.reduce((a, k) => a + k.n, 0), authors: authors?.n ?? 0, byKind },
+      rain: {
+        satMm: sat && sat.n > 0 ? (sat.mm ?? 0) : null,
+        normalMm: normal.length ? normalMm : null,
+        gaugeMm: gauge.length ? gaugeMm : null,
+      },
+      alerts,
+      plots,
+      problemAreas: problems,
+    };
+  }
+
+  /** R-02: registra el PDF semanal ya subido a R2 (reemplaza el del mismo período). */
+  async saveWeeklyReport(farmId: string, periodStart: string, periodEnd: string, storagePath: string, now: number) {
+    const [farm] = await this.db
+      .select({ org: s.farms.organizationId })
+      .from(s.farms)
+      .where(and(eq(s.farms.id, farmId), isNull(s.farms.deletedAt)))
+      .limit(1);
+    if (!farm) return false;
+    await runBatch(this.db, [
+      this.db
+        .delete(s.reports)
+        .where(and(eq(s.reports.farmId, farmId), eq(s.reports.kind, "weekly"), eq(s.reports.periodStart, periodStart))),
+      this.db.insert(s.reports).values({
+        id: newId(),
+        organizationId: farm.org,
+        farmId,
+        kind: "weekly",
+        periodStart,
+        periodEnd,
+        storagePath,
+        status: "done",
+        createdAt: now,
+      }),
+    ]);
+    return true;
+  }
+
+  /** R-02: PDF semanal generado en los últimos `maxAgeMs` (para adjuntarlo al email del lunes). */
+  async latestWeeklyReport(farmId: string, now: number, maxAgeMs: number) {
+    const [r] = await this.db
+      .select({ storagePath: s.reports.storagePath, periodStart: s.reports.periodStart, periodEnd: s.reports.periodEnd })
+      .from(s.reports)
+      .where(
+        and(
+          eq(s.reports.farmId, farmId),
+          eq(s.reports.kind, "weekly"),
+          eq(s.reports.status, "done"),
+          gte(s.reports.createdAt, now - maxAgeMs),
+        ),
+      )
+      .orderBy(desc(s.reports.createdAt))
+      .limit(1);
+    return r?.storagePath ? { ...r, storagePath: r.storagePath } : null;
+  }
+
+  /** C-10: guarda (reemplaza) el informe de riesgo de la estancia. */
+  async upsertFarmRisk(farmId: string, report: string, now: number): Promise<boolean> {
+    const [f] = await this.db
+      .select({ id: s.farms.id })
+      .from(s.farms)
+      .where(and(eq(s.farms.id, farmId), isNull(s.farms.deletedAt)))
+      .limit(1);
+    if (!f) return false;
+    await this.db
+      .insert(s.farmRisk)
+      .values({ farmId, computedAt: now, report })
+      .onConflictDoUpdate({ target: s.farmRisk.farmId, set: { computedAt: now, report } });
+    return true;
+  }
+
+  /** S-30: guarda (reemplaza) el indicador EUDR de un lote. La organización sale del lote, no del request. */
+  async upsertEudrResult(
+    plotId: string,
+    r: Omit<typeof s.eudrResults.$inferInsert, "id" | "organizationId" | "farmId" | "plotId" | "computedAt">,
+  ): Promise<boolean> {
+    const [plot] = await this.db
+      .select({ org: s.plots.organizationId, farmId: s.plots.farmId })
+      .from(s.plots)
+      .where(and(eq(s.plots.id, plotId), isNull(s.plots.deletedAt)))
+      .limit(1);
+    if (!plot) return false;
+    const row = { ...r, organizationId: plot.org, farmId: plot.farmId, plotId, computedAt: Date.now() };
+    const { plotId: _p, ...set } = row;
+    await this.db
+      .insert(s.eudrResults)
+      .values({ ...row, id: newId() })
+      .onConflictDoUpdate({ target: s.eudrResults.plotId, set });
+    return true;
   }
 
   async fireAlert(x: {

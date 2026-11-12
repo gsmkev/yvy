@@ -7,8 +7,8 @@ import { Hono } from "hono";
 import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
-import { LAYERS } from "@yvy/shared/schema";
-import { LIMITS } from "@yvy/shared";
+import { INDEX_KINDS, LAYERS } from "@yvy/shared/schema";
+import { farmRiskSchema, LIMITS } from "@yvy/shared";
 import { getDb } from "../db/client";
 import { SystemDb } from "../db/system";
 import { hmacVerifyHex } from "../lib/crypto";
@@ -60,6 +60,20 @@ ingest.get("/farms/:id/geometry", async (c) => {
   return c.json({ farm: JSON.parse(row.farm), plots: JSON.parse(row.plots) });
 });
 
+/** El job new_farm avisa que empezó (processing) o que el mapa base falló (failed). `ready` lo pone /farm-layers. */
+ingest.post("/farms/:id/imagery-status", async (c) => {
+  const b = parse(z.object({ status: z.enum(["pending", "processing", "failed"]) }), json(c.var.body));
+  if (!(await c.var.sys.setImageryStatus(c.req.param("id"), b.status))) throw new HTTPException(404);
+  return c.json({ ok: true });
+});
+
+/** S-03: el job s2_history termina; solo cambia el estado de un pedido existente. */
+ingest.post("/farms/:id/history-status", async (c) => {
+  const b = parse(z.object({ status: z.enum(["done", "failed"]) }), json(c.var.body));
+  if (!(await c.var.sys.setHistoryStatus(c.req.param("id"), b.status))) throw new HTTPException(404);
+  return c.json({ ok: true });
+});
+
 ingest.post("/scenes", async (c) => {
   const b = parse(
     z.object({
@@ -87,11 +101,12 @@ ingest.post("/plot-index-stats", async (c) => {
             plotId: uuid,
             sceneId: z.string(),
             acquiredAt: z.number().int(),
-            idx: z.literal("ndvi"),
+            idx: z.enum(INDEX_KINDS),
             mean: z.number().min(-1).max(1),
             p10: z.number().min(-1).max(1),
             p90: z.number().min(-1).max(1),
             validPct: z.number().min(0).max(100),
+            lowConfidence: z.boolean().default(false),
           }),
         )
         .min(1)
@@ -196,4 +211,112 @@ ingest.post("/fire-alerts", async (c) => {
   const res = await c.var.sys.fireAlert(b);
   if (!res) throw new HTTPException(404, { message: "Estancia inexistente" });
   return c.json(res);
+});
+
+/** Informe de riesgo climático (job risk_report): ya viene calculado, el Worker solo valida la forma y lo guarda. */
+ingest.post("/farm-risk", async (c) => {
+  const b = parse(z.object({ farmId: uuid, report: farmRiskSchema }), json(c.var.body));
+  if (c.var.body.length > 30_000) throw new HTTPException(413, { message: "Informe demasiado grande" });
+  if (!(await c.var.sys.upsertFarmRisk(b.farmId, JSON.stringify(b.report), Date.now())))
+    throw new HTTPException(404, { message: "Estancia inexistente" });
+  return c.json({ ok: true });
+});
+
+/** Áreas problema de un lote (job s2_ingest, S-08): polígonos chicos ya calculados. */
+ingest.post("/problem-areas", async (c) => {
+  const pos = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
+  const b = parse(
+    z.object({
+      plotId: uuid,
+      acquiredAt: z.number().int(),
+      areas: z
+        .array(
+          z.object({
+            geometry: z.object({ type: z.literal("Polygon"), coordinates: z.array(z.array(pos).min(4).max(300)).min(1).max(4) }),
+            areaHa: z.number().positive().max(100_000),
+            lon: z.number().min(-180).max(180),
+            lat: z.number().min(-90).max(90),
+            meanNdvi: z.number().min(-1).max(1),
+            plotMedianNdvi: z.number().min(-1).max(1),
+          }),
+        )
+        .max(10),
+    }),
+    json(c.var.body),
+  );
+  const written = await c.var.sys.replaceProblemAreas(
+    b.plotId,
+    b.acquiredAt,
+    b.areas.map(({ geometry, ...a }) => ({ ...a, geometry: JSON.stringify(geometry) })),
+  );
+  if (written === null) throw new HTTPException(404, { message: "Lote inexistente" });
+  return c.json({ written });
+});
+
+/** Indicador EUDR de un lote (job eudr, S-30): ya viene calculado; el Worker valida la forma y lo guarda. */
+ingest.post("/eudr", async (c) => {
+  if (c.var.body.length > 80_000) throw new HTTPException(413, { message: "Resultado demasiado grande" });
+  const pos = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
+  const ms = z.number().int().nullable();
+  const b = parse(
+    z.object({
+      plotId: uuid,
+      status: z.enum(["no_change", "possible_loss", "no_data"]),
+      plotAreaHa: z.number().min(0).max(1_000_000),
+      forestRefHa: z.number().min(0).max(1_000_000),
+      lossHa: z.number().min(0).max(1_000_000),
+      validPct: z.number().min(0).max(100),
+      refYear: z.number().int().min(2018).max(2100),
+      curYear: z.number().int().min(2018).max(2100),
+      refFromAt: ms,
+      refToAt: ms,
+      curFromAt: ms,
+      curToAt: ms,
+      refScenes: z.number().int().min(0).max(1000),
+      curScenes: z.number().int().min(0).max(1000),
+      changes: z
+        .array(
+          z.object({
+            geometry: z.object({ type: z.literal("Polygon"), coordinates: z.array(z.array(pos).min(4).max(300)).min(1).max(4) }),
+            areaHa: z.number().positive().max(100_000),
+          }),
+        )
+        .max(20),
+    }),
+    json(c.var.body),
+  );
+  const { plotId, changes, ...rest } = b;
+  const fc = {
+    type: "FeatureCollection",
+    features: changes.map((a) => ({ type: "Feature", properties: { areaHa: a.areaHa }, geometry: a.geometry })),
+  };
+  if (!(await c.var.sys.upsertEudrResult(plotId, { ...rest, changes: JSON.stringify(fc) })))
+    throw new HTTPException(404, { message: "Lote inexistente" });
+  return c.json({ ok: true });
+});
+
+const isoDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+/** Datos del parte semanal (job weekly_report): agregados de la semana, sin registros ni personas. */
+ingest.get("/farms/:id/weekly-summary", async (c) => {
+  const q = parse(z.object({ from: isoDay, to: isoDay }), c.req.query());
+  const res = await c.var.sys.weeklySummary(c.req.param("id"), q.from, q.to);
+  if (!res) throw new HTTPException(404, { message: "Estancia inexistente" });
+  return c.json(res);
+});
+
+/** El job ya subió el PDF a R2: queda registrado para adjuntarlo al email del lunes. */
+ingest.post("/weekly-reports", async (c) => {
+  const b = parse(
+    z.object({
+      farmId: uuid,
+      periodStart: isoDay,
+      periodEnd: isoDay,
+      storagePath: z.string().max(300).regex(/^reports\/[\w./-]+\.pdf$/),
+    }),
+    json(c.var.body),
+  );
+  if (!(await c.var.sys.saveWeeklyReport(b.farmId, b.periodStart, b.periodEnd, b.storagePath, Date.now())))
+    throw new HTTPException(404, { message: "Estancia inexistente" });
+  return c.json({ ok: true }, 201);
 });

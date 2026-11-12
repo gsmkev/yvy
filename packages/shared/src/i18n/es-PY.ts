@@ -2542,6 +2542,13 @@ export const esPY = {
     closeNeedsPhotoLocation: "Para cerrar esta tarea, el registro tiene que llevar foto y ubicación.",
     closeNeedsPhoto: "Para cerrar esta tarea, el registro tiene que llevar foto.",
     closeNeedsLocation: "Para cerrar esta tarea, el registro tiene que llevar ubicación.",
+    mentionTitle: "{{name}} te mencionó en un comentario",
+    comments: "Comentarios",
+    commentPlaceholder: "Escribí un comentario…",
+    commentSend: "Comentar",
+    commentMention: "Mencionar a…",
+    commentNone: "Todavía no hay comentarios.",
+    commentDeleteConfirm: "¿Borrar el comentario?",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

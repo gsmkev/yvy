@@ -4,6 +4,7 @@ import { and, eq, gte, isNull, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { areaHa, bboxOf } from "@yvy/geo";
+import { addComment, deleteComment, listComments } from "../db/comments";
 import { alertSettingsSchema, formConfigSchema, referralCode, CROPS, FUNNEL_EVENTS, newId, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import {
@@ -166,6 +167,22 @@ web.get("/me/clients", async (c) =>
   ),
 );
 web.get("/org/dashboard", async (c) => c.json(await ownerDashboard(c.var.sdb)));
+/** T-08: comentarios y menciones en un registro. */
+web.get("/org/records/:id/comments", async (c) => c.json(await listComments(c.var.sdb, c.req.param("id"))));
+web.post("/org/records/:id/comments", async (c) => {
+  const b = parse(
+    z.object({
+      body: z.string().trim().min(1).max(LIMITS.comments.maxLength),
+      mentions: z.array(z.string().uuid()).max(LIMITS.comments.maxMentions).default([]),
+    }),
+    await readJson(c.req),
+  );
+  return c.json(await addComment(c.var.sdb, c.req.param("id"), b.body, b.mentions), 201);
+});
+web.delete("/org/comments/:id", async (c) => {
+  await deleteComment(c.var.sdb, c.req.param("id"));
+  return c.json({ ok: true });
+});
 web.get("/org/audit", async (c) =>
   c.json(
     await listAudit(c.var.sdb, {

@@ -11,7 +11,7 @@ import { sendEmail, type EmailAttachment } from "../lib/email";
 import { presign } from "../lib/r2";
 import type { Bindings, JobMessage } from "../types";
 import { saveForecastStmts, saveHourlyStmts, upsertAlert } from "./alerts";
-import { sendPending } from "./notify";
+import { sendMentions, sendPending } from "./notify";
 import { pestAlertDraft } from "./pests";
 import { evaluateHeatStress } from "./heat";
 import { plotForecastJob, plotsNeedingForecast } from "./plot-forecast";
@@ -66,6 +66,7 @@ export async function scheduled(controller: { cron: string }, env: Bindings, dep
       return;
     case CRONS.notify:
       await sendPending(getDb(env.DB), env, deps.fetch, deps.now());
+      await sendMentions(getDb(env.DB), env, deps.fetch, deps.now());
       return;
     case CRONS.maintenance:
       await new SystemDb(getDb(env.DB)).purgeExpiredAuth(deps.now());

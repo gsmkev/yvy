@@ -93,6 +93,7 @@ const SYNCED: Record<PullTable, SyncedTable> = {
   products: { table: s.products, org: s.products.organizationId, version: s.products.version, id: s.products.id },
   machines: { table: s.machines, org: s.machines.organizationId, version: s.machines.version, id: s.machines.id },
   animals: { table: s.animals, org: s.animals.organizationId, version: s.animals.version, id: s.animals.id },
+  comments: { table: s.comments, org: s.comments.organizationId, version: s.comments.version, id: s.comments.id },
 };
 
 /** Tabla Drizzle → nombre de tabla sincronizable (para aplicar el alcance por estancia al editar). */
@@ -264,6 +265,8 @@ export class ScopedDb {
         return undefined; // las máquinas son de toda la organización: el empleado las elige al cargar combustible
       case "animals":
         return sql`animals.farm_id IN ${this.workerFarmsSql()}`;
+      case "comments":
+        return sql`comments.record_id IN (SELECT id FROM records WHERE organization_id = ${this.auth.orgId} AND ${this.recordsVisibleSql()})`;
     }
   }
 
@@ -300,6 +303,10 @@ export class ScopedDb {
         return viaPlots("plot_seasons.plot_id");
       case "animals":
         return sc("animals.farm_id");
+      case "comments": {
+        const f = sc("records.farm_id");
+        return f ? sql`comments.record_id IN (SELECT id FROM records WHERE ${f})` : undefined;
+      }
       case "seasons":
       case "products":
       case "machines":

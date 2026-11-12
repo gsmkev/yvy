@@ -10,6 +10,7 @@ import { fetchRecordsPage, useFarms, useMe, type RecordFilters } from "../lib/qu
 import type { RecordRow } from "../lib/types";
 import { Clock } from "lucide-react";
 import { DeleteRecordConfirm, RecordEditForm } from "./RecordEdit";
+import { RecordComments } from "./RecordComments";
 import { RecordDetails } from "./RecordDetails";
 import { ShareWhatsappButton } from "./ShareButton";
 import { StationsView, stationsOf } from "./StationsView";
@@ -208,6 +209,7 @@ export function RecordModal({ record: r, onClose }: { record: RecordRow; onClose
             ))}
           </>
         )}
+        {!editing && <RecordComments recordId={r.id} />}
         {!editing && (
           <div className="mt-5">
             <ShareWhatsappButton text={shareText} />

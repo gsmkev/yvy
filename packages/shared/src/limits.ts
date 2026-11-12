@@ -172,6 +172,13 @@ export const LIMITS = {
      */
     maxEffectMovesPerPush: 60,
   },
+  /** T-08: comentarios en registros. */
+  comments: {
+    maxLength: 1000,
+    maxMentions: 10,
+    /** Comentarios por registro (tope para que el celular no cargue hilos eternos). */
+    maxPerRecord: 200,
+  },
   /** K-06: registro de cambios de la organización. */
   audit: {
     pageSize: 50,

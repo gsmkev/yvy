@@ -180,5 +180,7 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `comments` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`record_id` text NOT NULL,\n\t`author_id` text NOT NULL,\n\t`author_name` text DEFAULT '' NOT NULL,\n\t`body` text NOT NULL,\n\t`mentions` text DEFAULT '[]' NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL,\n\t`deleted_at` integer,\n\t`version` integer DEFAULT 0 NOT NULL\n);",
   "CREATE INDEX `comments_sync_idx` ON `comments` (`organization_id`,`version`,`id`);",
   "CREATE INDEX `comments_record_idx` ON `comments` (`record_id`,`created_at`);",
-  "ALTER TABLE `notifications` ADD `comment_id` text;"
+  "ALTER TABLE `notifications` ADD `comment_id` text;",
+  "CREATE TABLE `report_schedules` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`farm_id` text,\n\t`name` text NOT NULL,\n\t`email` text NOT NULL,\n\t`frequency` text NOT NULL,\n\t`last_sent_at` integer,\n\t`created_by` text NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`deleted_at` integer\n);",
+  "CREATE INDEX `report_schedules_org_idx` ON `report_schedules` (`organization_id`,`farm_id`);"
 ];

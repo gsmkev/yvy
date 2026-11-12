@@ -351,6 +351,13 @@
       "when": 1794476919740,
       "tag": "0049_purple_dreaming_celestial",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "6",
+      "when": 1794477430382,
+      "tag": "0050_small_captain_america",
+      "breakpoints": true
     }
   ]
 }

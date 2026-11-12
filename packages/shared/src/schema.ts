@@ -1352,6 +1352,27 @@ export const reports = sqliteTable(
   (t) => [index("reports_farm_idx").on(t.farmId, t.periodStart)],
 );
 
+/**
+ * R-10: destinatarios externos (socio, agrónomo, banco) del parte semanal con PDF. `farmId` null = todas las
+ * estancias de la organización. No se sincroniza.
+ */
+export const reportSchedules = sqliteTable(
+  "report_schedules",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    farmId: text("farm_id"),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    frequency: text("frequency", { enum: ["weekly", "monthly"] }).notNull(),
+    lastSentAt: integer("last_sent_at"),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at").notNull(),
+    deletedAt: integer("deleted_at"),
+  },
+  (t) => [index("report_schedules_org_idx").on(t.organizationId, t.farmId)],
+);
+
 // ---------- Operación ----------
 
 /** Un registro por usuario y día con actividad (métricas del PRD §4; 1 escritura por día). */

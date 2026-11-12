@@ -137,6 +137,7 @@ const FIELDS: Record<RecordKind, FieldDef[]> = {
     { key: "meterValue", label: f("meterValue"), type: "number", optional: true },
     NOTE,
   ],
+  stock_count: [],
   harvest: [
     { key: "tons", label: f("tons"), type: "number" },
     { key: "moisturePct", label: f("moisturePct"), type: "number", optional: true },

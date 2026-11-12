@@ -94,6 +94,7 @@ const SYNCED: Record<PullTable, SyncedTable> = {
   machines: { table: s.machines, org: s.machines.organizationId, version: s.machines.version, id: s.machines.id },
   animals: { table: s.animals, org: s.animals.organizationId, version: s.animals.version, id: s.animals.id },
   comments: { table: s.comments, org: s.comments.organizationId, version: s.comments.version, id: s.comments.id },
+  warehouses: { table: s.warehouses, org: s.warehouses.organizationId, version: s.warehouses.version, id: s.warehouses.id },
 };
 
 /** Tabla Drizzle → nombre de tabla sincronizable (para aplicar el alcance por estancia al editar). */
@@ -267,6 +268,8 @@ export class ScopedDb {
         return sql`animals.farm_id IN ${this.workerFarmsSql()}`;
       case "comments":
         return sql`comments.record_id IN (SELECT id FROM records WHERE organization_id = ${this.auth.orgId} AND ${this.recordsVisibleSql()})`;
+      case "warehouses":
+        return sql`0`; // los depósitos son para el recuento (E-15): el empleado no entra al ERP
     }
   }
 
@@ -311,6 +314,8 @@ export class ScopedDb {
       case "products":
       case "machines":
         return undefined;
+      case "warehouses":
+        return this.auth.role === "supervisor" ? sql`0` : undefined; // el supervisor tampoco entra al ERP (E-15)
     }
   }
 

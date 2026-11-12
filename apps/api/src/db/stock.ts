@@ -4,6 +4,7 @@
  */
 import { and, eq, isNull, ne } from "drizzle-orm";
 import * as s from "@yvy/shared/schema";
+import { bumpVersion, currentVersion, runBatch } from "./client";
 import type { ScopedDb } from "./scoped";
 
 /**
@@ -19,8 +20,12 @@ export async function fixDefaultWarehouse(sdb: ScopedDb, id: string) {
     .limit(1);
   if (!w) return;
   const farm = and(eq(s.warehouses.organizationId, org), eq(s.warehouses.farmId, w.farmId), isNull(s.warehouses.deletedAt));
+  // Los depósitos bajan al celular (E-15): cada cambio lleva versión.
   if (w.isDefault) {
-    await sdb.db.update(s.warehouses).set({ isDefault: false }).where(and(farm, ne(s.warehouses.id, id)));
+    await runBatch(sdb.db, [
+      bumpVersion(sdb.db),
+      sdb.db.update(s.warehouses).set({ isDefault: false, updatedAt: sdb.now(), version: currentVersion }).where(and(farm, ne(s.warehouses.id, id), eq(s.warehouses.isDefault, true))),
+    ]);
     return;
   }
   const [other] = await sdb.db
@@ -28,5 +33,9 @@ export async function fixDefaultWarehouse(sdb: ScopedDb, id: string) {
     .from(s.warehouses)
     .where(and(farm, eq(s.warehouses.isDefault, true)))
     .limit(1);
-  if (!other) await sdb.db.update(s.warehouses).set({ isDefault: true }).where(eq(s.warehouses.id, id));
+  if (!other)
+    await runBatch(sdb.db, [
+      bumpVersion(sdb.db),
+      sdb.db.update(s.warehouses).set({ isDefault: true, updatedAt: sdb.now(), version: currentVersion }).where(eq(s.warehouses.id, id)),
+    ]);
 }

@@ -251,6 +251,8 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     { key: "meterValue", kind: "number", question: "app.fuelMeterQuestion", hint: "app.fuelMeterHint", unit: "", max: 10_000_000, optional: true },
     { key: "note", kind: "text", question: "app.addNote", optional: true },
   ],
+  // Recuento de depósito (E-15): tiene su propia pantalla, no pasa por este asistente.
+  stock_count: [],
   harvest: [
     { key: "seasonId", kind: "season", question: "app.seasonQuestion", skipIf: (_a, ctx) => !ctx.askSeason },
     { key: "tons", kind: "number", question: "app.tonsQuestion", hint: "app.tonsHint", unit: "t", max: 1_000_000 },

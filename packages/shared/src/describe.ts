@@ -136,6 +136,9 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
       if (typeof d.meterValue === "number") parts.push(t("fields.meterReading", { n: dec(d.meterValue) }));
       break;
     }
+    case "stock_count":
+      if (Array.isArray(d.lines)) parts.push(t("ui.countSummary", { n: d.lines.length }));
+      break;
     case "note":
       if (str("text")) parts.push(d.text as string);
       break;

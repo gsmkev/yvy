@@ -301,6 +301,8 @@ export async function deleteMove(sdb: ScopedDb, id: string) {
   if (!m) throw new NotFoundError("No existe");
   if (m.origin === "consumption" && m.originId)
     throw new HTTPException(409, { message: "Este consumo lo generó un registro de campo: corregí el registro" });
+  if (m.origin === "adjustment" && m.originId)
+    throw new HTTPException(409, { message: "Este ajuste lo generó un recuento: corregí el recuento" });
   const ts = sdb.now();
   const gone = { deletedAt: ts, updatedAt: ts };
   const stmts: Stmt[] = [

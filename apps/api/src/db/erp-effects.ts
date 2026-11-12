@@ -48,7 +48,7 @@ export const consumes = (kind: string) => (CONSUMING_KINDS as readonly string[])
  * Registros con efectos en el ERP: los que consumen insumos y los que cierran una orden de trabajo y pueden
  * cargar el costo del contratista (siembra y cosecha). Se revisan todos para poder revertir si el registro cambia.
  */
-export const hasEffects = (kind: string) => consumes(kind) || kind === "sowing" || kind === "harvest";
+export const hasEffects = (kind: string) => consumes(kind) || kind === "sowing" || kind === "harvest" || kind === "stock_count";
 
 /**
  * Parámetros que ocupa una fila en un INSERT de drizzle: las columnas que se mandan más las omitidas que tienen valor
@@ -67,7 +67,7 @@ export async function recordEffects(sdb: ScopedDb, upserts: EffectRecord[], dele
   const deleted = new Set(deletedIds);
   // El último gana por id; un registro que se borra en el mismo envío no deja efectos.
   const byId = new Map<string, EffectRecord>();
-  for (const r of upserts) if (hasEffects(r.kind) && !deleted.has(r.id)) byId.set(r.id, r);
+  for (const r of upserts) if (hasEffects(r.kind) && r.kind !== "stock_count" && !deleted.has(r.id)) byId.set(r.id, r);
   const recs = [...byId.values()];
   if (!recs.length && !deletedIds.length) return [];
 

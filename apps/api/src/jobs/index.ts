@@ -7,12 +7,17 @@ import * as s from "@yvy/shared/schema";
 import { getDb, runBatch, type DB } from "../db/client";
 import { dayOfYear } from "../db/queries";
 import { SystemDb } from "../db/system";
-import { sendEmail } from "../lib/email";
+import { sendEmail, type EmailAttachment } from "../lib/email";
+import { presign } from "../lib/r2";
 import type { Bindings, JobMessage } from "../types";
-import { saveForecastStmts, upsertAlert } from "./alerts";
-import { sendPending } from "./notify";
+import { saveForecastStmts, saveHourlyStmts, upsertAlert } from "./alerts";
+import { sendMentions, sendPending } from "./notify";
+import { pestAlertDraft } from "./pests";
+import { evaluateHeatStress } from "./heat";
+import { plotForecastJob, plotsNeedingForecast } from "./plot-forecast";
+import { evaluateRust } from "./rust";
 import { evaluateDrought, evaluateExcessRain, evaluateFrost } from "./rules";
-import { dailyFromMet, dailyFromPower, fetchMet, powerUrl, type DailyForecast } from "./weather";
+import { dailyFromMet, hourlyFromMet, dailyFromPower, fetchMet, powerUrl, type DailyForecast } from "./weather";
 
 export const CRONS = {
   forecast: "0 */3 * * *",
@@ -29,7 +34,7 @@ export interface JobDeps {
 
 const defaultDeps = (): JobDeps => ({ fetch: (...a) => fetch(...a), now: Date.now });
 
-async function enqueuePerFarm(env: Bindings, type: JobMessage["type"]): Promise<number> {
+async function enqueuePerFarm(env: Bindings, type: Exclude<JobMessage["type"], "plot_forecast">): Promise<number> {
   const farms = await new SystemDb(getDb(env.DB)).activeFarms();
   for (let i = 0; i < farms.length; i += 100) {
     await env.JOBS.sendBatch(
@@ -41,20 +46,34 @@ async function enqueuePerFarm(env: Bindings, type: JobMessage["type"]): Promise<
 
 export async function scheduled(controller: { cron: string }, env: Bindings, deps = defaultDeps()): Promise<void> {
   switch (controller.cron) {
-    case CRONS.forecast:
+    case CRONS.forecast: {
       await enqueuePerFarm(env, "forecast");
+      // C-03: estancias de más de 2.000 ha: un mensaje por lote
+      const plots = await plotsNeedingForecast(getDb(env.DB));
+      for (let i = 0; i < plots.length; i += 100) {
+        await env.JOBS.sendBatch(
+          plots.slice(i, i + 100).map((p) => ({ body: { type: "plot_forecast", ...p } satisfies JobMessage })),
+        );
+      }
       return;
+    }
     case CRONS.drought:
       await enqueuePerFarm(env, "drought");
+      await enqueuePerFarm(env, "pest");
       return;
     case CRONS.weeklyReports:
       await enqueuePerFarm(env, "weekly_report");
       return;
     case CRONS.notify:
       await sendPending(getDb(env.DB), env, deps.fetch, deps.now());
+      await sendMentions(getDb(env.DB), env, deps.fetch, deps.now());
       return;
     case CRONS.maintenance:
       await new SystemDb(getDb(env.DB)).purgeExpiredAuth(deps.now());
+      // P-03: los eventos de uso viejos se borran; los del embudo quedan
+      await getDb(env.DB).run(
+        sql`DELETE FROM events WHERE ts < ${deps.now() - LIMITS.events.retentionMs} AND name NOT IN ('signup', 'farm_created', 'plots_created', 'member_added', 'first_record')`,
+      );
       await recordUsage(env, deps.now());
       return;
   }
@@ -82,6 +101,11 @@ export async function runJob(msg: JobMessage, env: Bindings, deps = defaultDeps(
       return droughtJob(db, deps, farm);
     case "weekly_report":
       return weeklyReportJob(db, env, deps, farm);
+    case "pest":
+      return pestJob(db, deps, farm);
+    case "plot_forecast":
+      await plotForecastJob(db, env, deps, farm, msg.plotId);
+      return;
   }
 }
 
@@ -139,11 +163,39 @@ async function forecastJob(db: DB, env: Bindings, deps: JobDeps, farm: Farm): Pr
   const now = deps.now();
   const met = await fetchMet(deps.fetch, env.MET_USER_AGENT, farm.lat, farm.lon);
   const days = dailyFromMet(met, farm.tz);
-  await runBatch(db, saveForecastStmts(db, farm.id, now, days, LIMITS.weather.forecastRunsKept));
+  const hours = hourlyFromMet(met, now, LIMITS.weather.hourlyHorizonHours);
+  await runBatch(db, [
+    ...saveForecastStmts(db, farm.id, now, days, LIMITS.weather.forecastRunsKept),
+    ...saveHourlyStmts(db, farm.id, hours),
+  ]);
   const runs = await recentRuns(db, farm.id, LIMITS.weather.forecastRunsKept);
   const today = localDate(now, farm.tz);
-  for (const draft of [evaluateFrost(runs, today), evaluateExcessRain(days, today)]) {
+  const cfg = await new SystemDb(db).alertSettings(farm.id);
+  // A-40: roya asiática solo si la estancia tiene soja
+  const soy = await db
+    .select({ id: s.plots.id })
+    .from(s.plots)
+    .where(
+      and(eq(s.plots.farmId, farm.id), eq(s.plots.kind, "crop"), eq(s.plots.crop, "soja"), isNull(s.plots.deletedAt)),
+    );
+  for (const draft of [
+    evaluateFrost(runs, today, cfg.frostTminC),
+    evaluateExcessRain(days, today, cfg.excessRainMm24h),
+    evaluateRust(hours, farm.tz, soy.map((p) => p.id)),
+  ]) {
     if (draft) await upsertAlert(db, farm, draft, now);
+  }
+  // G-32: estrés térmico del ganado (THI). Solo para estancias con potreros, y el aviso es de los potreros.
+  const heat = evaluateHeatStress(hours, now, farm.tz);
+  if (heat) {
+    const pastures = await db
+      .select({ id: s.plots.id })
+      .from(s.plots)
+      .where(and(eq(s.plots.farmId, farm.id), eq(s.plots.kind, "pasture"), isNull(s.plots.deletedAt)));
+    if (pastures.length) {
+      heat.details.plotIds = pastures.map((p) => p.id);
+      await upsertAlert(db, farm, heat, now);
+    }
   }
 }
 
@@ -191,19 +243,30 @@ async function droughtJob(db: DB, deps: JobDeps, farm: Farm): Promise<void> {
   const soilP20 = clim.find((c) => c.variable === "soil_top" && c.dayOfYear === dayOfYear(today))?.p20 ?? null;
   const soilNow = [...power].reverse().find((d) => d.soilTop !== null)?.soilTop ?? null;
   const [latest] = await recentRuns(db, farm.id, 1);
-  const draft = evaluateDrought({
-    today,
-    // Exigimos al menos 25 de 30 días de CHIRPS para no avisar con datos incompletos.
-    rain30: rain && rain.n >= 25 ? (rain.mm ?? 0) : null,
-    normal30: normal30 || null,
-    soilNow,
-    soilP20,
-    forecast: latest ?? [],
-  });
+  const cfg = await new SystemDb(db).alertSettings(farm.id);
+  const draft = evaluateDrought(
+    {
+      today,
+      // Exigimos al menos 25 de 30 días de CHIRPS para no avisar con datos incompletos.
+      rain30: rain && rain.n >= 25 ? (rain.mm ?? 0) : null,
+      normal30: normal30 || null,
+      soilNow,
+      soilP20,
+      forecast: latest ?? [],
+    },
+    cfg.droughtDeficitPct,
+  );
   if (draft) await upsertAlert(db, farm, draft, now);
 }
 
-/** Parte semanal por email (RF-83): resumen y enlace; el PDF se genera en la web (anexo §4.9). */
+/** Monitoreos de plagas de los últimos 7 días contra el umbral por plaga (A-41). */
+async function pestJob(db: DB, deps: JobDeps, farm: Farm): Promise<void> {
+  const now = deps.now();
+  const draft = await pestAlertDraft(db, farm.id, now, localDate(now, farm.tz));
+  if (draft) await upsertAlert(db, farm, draft, now);
+}
+
+/** Parte semanal por email (RF-83): resumen y enlace; el PDF lo arma workers-py (R-02) y va adjunto; si todavía no está, se manda el enlace a la web. */
 async function weeklyReportJob(db: DB, env: Bindings, deps: JobDeps, farm: Farm): Promise<void> {
   const now = deps.now();
   const since = now - 7 * 86_400_000;
@@ -248,8 +311,22 @@ async function weeklyReportJob(db: DB, env: Bindings, deps: JobDeps, farm: Farm)
     "",
     `PDF con mapa, tabla y fotos: ${env.APP_URL}/estancias/${farm.id}/parte?desde=${from}&hasta=${to}`,
   ].join("\n");
+  // R-02: si workers-py ya armó el PDF de la semana, va adjunto y con enlace (válido 7 días). Resend lo baja
+  // desde la URL firmada de R2, así que el Worker no carga el archivo. Sin PDF (o sin credenciales) sale el texto.
+  let attachments: EmailAttachment[] = [];
+  let body = text;
+  const pdf = await new SystemDb(db).latestWeeklyReport(farm.id, now, 3 * 86_400_000);
+  if (pdf) {
+    try {
+      const url = await presign(env, "GET", pdf.storagePath, 7 * 86_400_000 / 1000);
+      attachments = [{ filename: `parte-${farm.name}-${pdf.periodEnd}.pdf`.replace(/[^\w.-]+/g, "-"), path: url }];
+      body = `${text}\n\nPDF del parte (el enlace vale 7 días): ${url}`;
+    } catch (e) {
+      console.error("no se pudo firmar el PDF semanal", e);
+    }
+  }
   for (const r of recipients) {
-    if (r.email) await sendEmail(env, r.email, `Yvy · Parte semanal · ${farm.name}`, text);
+    if (r.email) await sendEmail(env, r.email, `Yvy · Parte semanal · ${farm.name}`, body, attachments);
   }
 }
 

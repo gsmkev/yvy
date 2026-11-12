@@ -9,6 +9,8 @@ export const BRAND = {
 } as const;
 
 /** Rampa NDVI de bajo a alto vigor. */
+/** Rampa de humedad (NDMI, S-07): trigo (seco) a cielo (húmedo). */
+export const NDMI_RAMP = ["#D9A93A", "#F1EEE4", "#8DB3C7"] as const;
 export const NDVI_RAMP = ["#B5562E", "#D9A93A", "#C9C46A", "#7A9A3F", "#3F6B35"] as const;
 
 /** Firma visual: pendiente = punteado trigo; sincronizado = sólido soja (RF-33). */

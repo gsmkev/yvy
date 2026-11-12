@@ -1,0 +1,32 @@
+# Verifica cada mes que el último backup de D1 (R2) se puede restaurar (P-05): esquema contra las migraciones y filas
+# en las tablas clave. Si falla, el workflow queda en rojo y GitHub avisa. Ver docs/DEPLOY.md, "Restaurar un backup".
+name: Verificar backup D1
+on:
+  schedule: [{ cron: "40 7 2 * *" }]
+  workflow_dispatch:
+jobs:
+  verify:
+    if: ${{ vars.DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: apps/api } }
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Bajar el último backup y restaurarlo
+        shell: bash
+        run: node scripts/restore-backup.mjs --latest --db "$RUNNER_TEMP/restaurada.sqlite" | tee "$RUNNER_TEMP/resultado.txt"
+      - name: Resumen
+        if: always()
+        run: |
+          {
+            echo "### Verificación del backup"
+            echo '```'
+            cat "$RUNNER_TEMP/resultado.txt" 2>/dev/null || echo "No se pudo restaurar"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

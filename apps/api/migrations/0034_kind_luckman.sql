@@ -1,0 +1,1 @@
+ALTER TABLE `stock_moves` ADD `photo_path` text;

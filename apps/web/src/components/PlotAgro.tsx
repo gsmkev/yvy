@@ -1,12 +1,14 @@
 import { CHART } from "@yvy/shared";
+import { useState } from "react";
 import { fmtIsoDate, fmtDate, fmtDay, fmtMm, fmtNum, fmtTemp } from "../lib/format";
 import { usePhenology, usePlotForecast, useWaterBalance, useWithdrawal } from "../lib/agri2";
 import { t, tk } from "../lib/i18n";
 import type { Plot } from "../lib/types";
 import { LineChart } from "./charts";
+import { DamageReportModal } from "./DamageReportModal";
 import { YieldMapSection } from "./YieldMapSection";
 import { ZonesSection } from "./ZonesSection";
-import { ErrorBox, Spinner } from "./ui";
+import { Button, ErrorBox, Spinner } from "./ui";
 
 /** Secciones agronómicas de la ficha de un lote de cultivo (agri-p2). Solo para quien edita el campo. */
 export function PlotAgro({ plot }: { plot: Plot }) {
@@ -19,6 +21,7 @@ export function PlotAgro({ plot }: { plot: Plot }) {
       <WaterBalanceSection plotId={plot.id} />
       <ZonesSection plot={plot} />
       <YieldMapSection plot={plot} />
+      <DamageSection plot={plot} />
     </>
   );
 }
@@ -177,6 +180,17 @@ function PlotForecastSection({ plot }: { plot: Plot }) {
       <p className="mt-1 text-xs text-tinta-2">
         {t("ui.plotFcNote", { date: fmtDate(f.runAt) })} {t("attribution.metNorway")}
       </p>
+    </Section>
+  );
+}
+
+/** C-09: informe de daños para el seguro agrícola. */
+function DamageSection({ plot }: { plot: Plot }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Section title={t("ui.damageTitle")}>
+      <Button onClick={() => setOpen(true)}>{t("ui.damageOpen")}</Button>
+      {open && <DamageReportModal plot={plot} onClose={() => setOpen(false)} />}
     </Section>
   );
 }

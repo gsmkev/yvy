@@ -4,11 +4,11 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import { Camera, Map, type CameraRef, type StyleSpecification } from "@maplibre/maplibre-react-native";
+import { Camera, Map, Marker, type CameraRef, type StyleSpecification } from "@maplibre/maplibre-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { Compass, LocateFixed, Navigation, X } from "lucide-react-native";
 import { BRAND, describeRecord, t, uaPerHa } from "@yvy/shared";
-import { centroidOf, containsPoint, type Area } from "@yvy/geo";
+import { centroidOf, containsPoint, labelPoint, type Area } from "@yvy/geo";
 import { distanceM } from "../../src/lib/bearing";
 import { useRef } from "react";
 import { mapBearingFor, shouldRotate } from "../../src/lib/heading";
@@ -30,6 +30,7 @@ import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
 
 const FIT_PADDING = { top: 120, bottom: 40, left: 24, right: 24 };
 const PLOT_PADDING = { top: 120, bottom: 320, left: 40, right: 40 };
+const MAX_LABELS = 60;
 const daysAgo = (ms: number) => Math.floor((Date.now() - ms) / 86_400_000);
 
 export default function MapScreen() {
@@ -95,6 +96,16 @@ export default function MapScreen() {
   useEffect(() => {
     tilesBaseUrl().then(setRemoteBase, () => setRemoteBase(null));
   }, []);
+
+  // M-12: la etiqueta va en un punto garantizado adentro del lote (el centro del bbox cae afuera en lotes en L o U).
+  // Son vistas nativas: con muchos lotes solo se rotulan los de la estancia elegida y hasta MAX_LABELS.
+  const labels = useMemo(
+    () =>
+      (farmId ? plots : plots.filter((p) => p.farmId === farm?.id))
+        .slice(0, MAX_LABELS)
+        .map((p) => ({ id: p.id, name: p.name, ...labelPoint(JSON.parse(p.geometry) as Area) })),
+    [plots, farm?.id, farmId],
+  );
 
   const ndvi = useMemo(() => (farm && mode === "ndvi" ? layerSource(farm.id, "ndvi", remoteBase) : null), [farm?.id, mode, remoteBase]);
 
@@ -211,6 +222,13 @@ export default function MapScreen() {
         }}
       >
         <Camera ref={camera} initialViewState={{ bounds: [farm.minLon, farm.minLat, farm.maxLon, farm.maxLat], padding: { top: 40, bottom: 40, left: 24, right: 24 } }} />
+        {labels.map((l) => (
+          <Marker key={l.id} lngLat={[l.lon, l.lat]}>
+            <Text numberOfLines={1} style={st.label} pointerEvents="none">
+              {l.name}
+            </Text>
+          </Marker>
+        ))}
       </Map>
       <View style={st.topLeft} pointerEvents="box-none">
         <FarmLine style={st.panel} />
@@ -319,5 +337,6 @@ const st = StyleSheet.create({
   topLeft: { position: "absolute", top: 12, left: 12, right: 76, gap: 8 },
   coords: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14, minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
   panel: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14 },
+  label: { fontFamily: F.sansMedium, fontSize: 12, color: "#ffffff", textShadowColor: "rgba(0,0,0,0.85)", textShadowRadius: 3, textShadowOffset: { width: 0, height: 1 }, maxWidth: 110 },
   attr: { position: "absolute", bottom: 6, left: 12, fontFamily: F.sans, fontSize: 11, color: "rgba(255,255,255,0.7)" },
 });

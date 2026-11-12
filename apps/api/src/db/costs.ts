@@ -24,7 +24,7 @@ export interface CostInput {
 }
 
 /** Valida que lote, estancia, campaña y tercero sean de la organización. Un lote fija su estancia. */
-async function resolveCenter(sdb: ScopedDb, v: Pick<CostInput, "farmId" | "plotId" | "seasonId" | "partyId">) {
+export async function resolveCenter(sdb: ScopedDb, v: Pick<CostInput, "farmId" | "plotId" | "seasonId" | "partyId">) {
   let farmId = v.farmId ?? null;
   if (v.plotId) {
     const [p] = await sdb.db

@@ -117,6 +117,8 @@ export const esPY = {
     backToToday: "Volver a Hoy",
     whereAmI: "Dónde estoy",
     syncTitle: "Sincronización",
+    mapLayers: "Capas",
+    mapTools: "Herramientas del mapa",
     sectionField: "Campo",
     sectionTools: "Herramientas",
     sectionAccount: "Cuenta y app",

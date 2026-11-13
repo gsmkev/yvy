@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Camera, Map, Marker, type CameraRef, type StyleSpecification } from "@maplibre/maplibre-react-native";
 import { router, useFocusEffect } from "expo-router";
-import { Compass, LocateFixed, Navigation, X } from "lucide-react-native";
+import { Compass, Layers, LocateFixed, Navigation, Wrench, X } from "lucide-react-native";
 import { BRAND, LIMITS, isFieldRole, describeRecord, t, uaPerHa } from "@yvy/shared";
 import { containsPoint, samplingGrid, type Area } from "@yvy/geo";
 import { distanceM } from "../../src/lib/bearing";
@@ -26,7 +26,8 @@ import { useLocal } from "../../src/lib/useLocal";
 import { FarmLine } from "../../src/ui/FarmLine";
 import { LayerSwitch, NdviLegend } from "../../src/ui/MapLayerControls";
 import { showToast } from "../../src/lib/toast";
-import { Button, Text } from "../../src/ui/kit";
+import { Button, Row, Text } from "../../src/ui/kit";
+import { MapPanel, MapToolbar, MapToolButton } from "../../src/ui/MapToolbar";
 import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
 import { useReadOnly } from "../../src/lib/readOnly";
 import { plotLabels, plotTarget } from "../../src/lib/plotLabels";
@@ -66,6 +67,8 @@ export default function MapScreen() {
   const [gridHa, setGridHa] = useState<5 | 10 | null>(null);
   const [me, setMe] = useState<Fix | null>(null);
   const [copied, setCopied] = useState(false);
+  // Los paneles de la barra arrancan cerrados: el mapa va despejado.
+  const [panel, setPanel] = useState<"layers" | "tools" | null>(null);
   const camera = useRef<CameraRef>(null);
   // F-04: brújula y mapa que gira con el rumbo (se activa a mano; el sensor solo corre mientras está activo).
   const [follow, setFollow] = useState(false);
@@ -258,44 +261,37 @@ export default function MapScreen() {
       </Map>
       <View style={st.topLeft} pointerEvents="box-none">
         <FarmLine style={st.panel} />
-        <LayerSwitch value={mode} onChange={setMode} />
-        {me && (
-          <Pressable accessibilityRole="button" accessibilityLabel={`${formatFix(me)}. ${t("app.coordsCopy")}`} onPress={copyMe} style={st.coords}>
-            <Text style={T.small}>{copied ? t("app.copied") : formatFix(me)}</Text>
-          </Pressable>
+        {panel === "layers" && (
+          <>
+            <LayerSwitch value={mode} onChange={setMode} />
+            {me && (
+              <Pressable accessibilityRole="button" accessibilityLabel={`${formatFix(me)}. ${t("app.coordsCopy")}`} onPress={copyMe} style={st.coords}>
+                <Text style={T.small}>{copied ? t("app.copied") : formatFix(me)}</Text>
+              </Pressable>
+            )}
+          </>
+        )}
+        {panel === "tools" && (
+          <MapPanel>
+            <Row title={t("app.poiScan")} onPress={() => router.push("/scan-poi")} />
+            {canMarkPoi && <Row title={t("app.poiMark")} onPress={() => router.push("/poi")} />}
+            {canMarkPoi && <Row title={t("app.plotDrawStart")} onPress={() => router.push("/plot-draw")} />}
+            {canMarkPoi && <Row title={t("app.perimWalkMenu")} onPress={() => router.push({ pathname: "/plot-draw", params: { mode: "walk" } })} />}
+          </MapPanel>
         )}
         {mode === "ndvi" && <NdviLegend acquiredAt={ndvi?.acquiredAt ?? null} missing={!ndvi} />}
       </View>
       <Text style={st.attr}>Sentinel-2 · Copernicus</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel={t("app.whereAmI")} onPress={locate} style={st.locate}>
-        <LocateFixed size={22} color={C.tinta} strokeWidth={2} />
-      </Pressable>
 
-      <View style={st.compassCol} pointerEvents="box-none">
-        <Pressable accessibilityRole="button" accessibilityLabel={t("app.compassNorth")} onPress={northUp} style={st.round}>
-          <View style={{ transform: [{ rotate: `${-bearing}deg` }] }}>
-            <Compass size={22} color={C.tinta} strokeWidth={2} />
-          </View>
-        </Pressable>
-        <Pressable
-          accessibilityRole="switch"
-          accessibilityState={{ checked: follow }}
-          accessibilityLabel={follow ? t("app.compassFollowOff") : t("app.compassFollowOn")}
-          onPress={() => setFollow((v) => !v)}
-          style={[st.round, follow && { backgroundColor: C.accion }]}
-        >
-          <Navigation size={22} color={follow ? C.blanco : C.tinta} strokeWidth={2} />
-        </Pressable>
+      <View style={st.toolbar} pointerEvents="box-none">
+        <MapToolbar>
+          <MapToolButton icon={LocateFixed} label={t("app.whereAmI")} onPress={locate} />
+          <MapToolButton icon={Compass} label={t("app.compassNorth")} onPress={northUp} rotate={-bearing} />
+          <MapToolButton icon={Navigation} label={follow ? t("app.compassFollowOff") : t("app.compassFollowOn")} role="switch" active={follow} onPress={() => setFollow((v) => !v)} />
+          <MapToolButton icon={Layers} label={t("app.mapLayers")} active={panel === "layers"} onPress={() => setPanel((p) => (p === "layers" ? null : "layers"))} />
+          <MapToolButton icon={Wrench} label={t("app.mapTools")} active={panel === "tools"} onPress={() => setPanel((p) => (p === "tools" ? null : "tools"))} />
+        </MapToolbar>
       </View>
-
-      {!plot && (
-        <View style={st.mark}>
-          <Button kind="secondary" title={t("app.poiScan")} onPress={() => router.push("/scan-poi")} />
-          {canMarkPoi && <Button kind="secondary" title={t("app.poiMark")} onPress={() => router.push("/poi")} style={{ marginTop: 8 }} />}
-          {canMarkPoi && <Button kind="secondary" title={t("app.plotDrawStart")} onPress={() => router.push("/plot-draw")} style={{ marginTop: 8 }} />}
-          {canMarkPoi && <Button kind="secondary" title={t("app.perimWalkMenu")} onPress={() => router.push({ pathname: "/plot-draw", params: { mode: "walk" } })} style={{ marginTop: 8 }} />}
-        </View>
-      )}
 
       {plot && (
         <View style={st.sheet}>
@@ -309,7 +305,7 @@ export default function MapScreen() {
                   : ` · ${t("app.noVisits").toLowerCase()}`}
               </Text>
             </View>
-            <Pressable onPress={() => setSelected(null)} hitSlop={12} accessibilityLabel={t("ui.close")}>
+            <Pressable onPress={() => setSelected(null)} hitSlop={13} accessibilityRole="button" accessibilityLabel={t("ui.close")}>
               <X size={22} color={C.tinta2} />
             </Pressable>
           </View>
@@ -337,25 +333,25 @@ export default function MapScreen() {
           ))}
           {!readOnly && <Button big title={t("app.annotateIn", { plot: plot.name })} onPress={() => router.push({ pathname: "/annotate", params: { plotId: plot.id } })} style={{ marginTop: 16 }} />}
           <Button kind={readOnly ? "primary" : "secondary"} title={t("app.plotSheetOpen")} onPress={() => router.push({ pathname: "/plot/[id]", params: { id: plot.id } })} style={{ marginTop: readOnly ? 16 : 8 }} />
-          <Button
-            kind="text"
-            title={gridHa === null ? t("app.samplingShow5") : gridHa === 5 ? t("app.samplingShow10") : t("app.samplingHide")}
-            onPress={() => setGridHa(gridHa === null ? 5 : gridHa === 5 ? 10 : null)}
-            style={{ marginTop: 4 }}
-          />
+          <View style={st.sheetLinks}>
+            <Button
+              kind="text"
+              title={gridHa === null ? t("app.samplingShow5") : gridHa === 5 ? t("app.samplingShow10") : t("app.samplingHide")}
+              onPress={() => setGridHa(gridHa === null ? 5 : gridHa === 5 ? 10 : null)}
+              style={st.sheetLink}
+            />
+            {canMarkPoi && <Button kind="text" title={t("app.plotDrawEdit")} onPress={() => router.push({ pathname: "/plot-draw", params: { plotId: plot.id } })} style={st.sheetLink} />}
+            <Button
+              kind="text"
+              title={t("app.gotoButton")}
+              onPress={() => {
+                const c = plotTarget(plot.geometry);
+                router.push({ pathname: "/goto", params: { lon: String(c.lon), lat: String(c.lat), name: plot.name } });
+              }}
+              style={st.sheetLink}
+            />
+          </View>
           {gridHa !== null && <Text style={T.small}>{t("app.samplingInfo", { n: samples.length })}</Text>}
-          {canMarkPoi && (
-            <Button kind="text" title={t("app.plotDrawEdit")} onPress={() => router.push({ pathname: "/plot-draw", params: { plotId: plot.id } })} style={{ marginTop: 4 }} />
-          )}
-          <Button
-            kind="text"
-            title={t("app.gotoButton")}
-            onPress={() => {
-              const c = plotTarget(plot.geometry);
-              router.push({ pathname: "/goto", params: { lon: String(c.lon), lat: String(c.lat), name: plot.name } });
-            }}
-            style={{ marginTop: 4 }}
-          />
         </View>
       )}
     </View>
@@ -365,10 +361,9 @@ export default function MapScreen() {
 const st = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   sheet: { position: "absolute", left: 12, right: 12, bottom: 12, backgroundColor: C.papel, borderRadius: RADIUS + 4, padding: GUTTER, elevation: 8, shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } },
-  mark: { position: "absolute", left: 12, right: 12, bottom: 12 },
-  locate: { position: "absolute", top: 16, right: 16, width: 48, height: 48, borderRadius: 24, backgroundColor: C.papel, alignItems: "center", justifyContent: "center", elevation: 4, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
-  compassCol: { position: "absolute", top: 76, right: 16, gap: 10 },
-  round: { width: 48, height: 48, borderRadius: 24, backgroundColor: C.papel, alignItems: "center", justifyContent: "center", elevation: 4, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
+  sheetLinks: { flexDirection: "row", flexWrap: "wrap", marginTop: 4 },
+  sheetLink: { paddingHorizontal: 0, marginRight: 20 },
+  toolbar: { position: "absolute", top: 12, right: 12 },
   topLeft: { position: "absolute", top: 12, left: 12, right: 76, gap: 8 },
   coords: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14, minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
   panel: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14 },

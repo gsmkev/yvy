@@ -2,6 +2,7 @@ import {
   useEffect,
   useId,
   useRef,
+  useState,
   useSyncExternalStore,
   type ButtonHTMLAttributes,
   type InputHTMLAttributes,
@@ -10,6 +11,7 @@ import {
 } from "react";
 import { AlertTriangle, CircleAlert, X, type LucideIcon } from "lucide-react";
 import { t, tk } from "../lib/i18n";
+import { displayToIso, isoToDisplay, maskDate } from "../lib/dateInput";
 
 type Variant = "primary" | "secondary" | "quiet" | "danger";
 
@@ -53,9 +55,68 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
 const inputCls =
   "h-10 rounded-md border border-linea bg-papel px-3 text-[15px] outline-none transition-colors placeholder:text-tinta-2/60 focus:border-accion focus:ring-2 focus:ring-accion/20";
 
-export const Input = (p: InputHTMLAttributes<HTMLInputElement>) => (
-  <input {...p} className={`${inputCls} ${p.className ?? ""}`} />
-);
+export const Input = (p: InputHTMLAttributes<HTMLInputElement>) =>
+  p.type === "date" ? (
+    <DateInput {...p} value={String(p.value ?? "")} />
+  ) : (
+    <input {...p} className={`${inputCls} ${p.className ?? ""}`} />
+  );
+
+/**
+ * Fecha en dd/mm/aaaa (el campo nativo muestra mm/dd/yyyy según el navegador). El valor es siempre ISO (aaaa-mm-dd),
+ * como el de `<input type="date">`: `Input type="date"` usa este componente, así que los formularios no cambian.
+ * Mientras la fecha esté incompleta o no exista, el valor es "" y el campo queda inválido (avisa al enviar).
+ */
+export function DateInput({
+  value,
+  onChange,
+  onValueChange,
+  min,
+  max,
+  className = "",
+  type: _type,
+  ...p
+}: Omit<InputHTMLAttributes<HTMLInputElement>, "value"> & {
+  value?: string;
+  /** Recibe la fecha ISO ("" si no es válida). */
+  onValueChange?: (iso: string) => void;
+}) {
+  const [text, setText] = useState(isoToDisplay(value ?? ""));
+  const ref = useRef<HTMLInputElement>(null);
+  // Un valor que cambia desde afuera (limpiar el formulario, cargar un registro) reemplaza lo escrito
+  useEffect(() => {
+    if ((value ?? "") !== (displayToIso(text) ?? "")) setText(isoToDisplay(value ?? ""));
+  }, [value]);
+  const iso = displayToIso(text);
+  const range = iso && ((min && iso < String(min)) || (max && iso > String(max)));
+  useEffect(() => {
+    ref.current?.setCustomValidity(text && !iso ? t("ui.dateInvalid") : range ? t("ui.dateOutOfRange") : "");
+  }, [text, iso, range]);
+  return (
+    <input
+      {...p}
+      ref={ref}
+      type="text"
+      inputMode="numeric"
+      autoComplete="off"
+      placeholder={t("ui.datePlaceholder")}
+      maxLength={10}
+      size={10}
+      value={text}
+      onChange={(e) => {
+        const next = maskDate(e.target.value);
+        setText(next);
+        const v = displayToIso(next) ?? "";
+        if (v === (value ?? "")) return;
+        onValueChange?.(v);
+        // Los formularios leen e.target.value: se entrega el mismo evento con la fecha ISO
+        const target = { value: v, name: e.target.name, id: e.target.id } as HTMLInputElement;
+        onChange?.({ ...e, target, currentTarget: target });
+      }}
+      className={`${inputCls} min-w-0 !px-2.5 !text-sm ${className}`}
+    />
+  );
+}
 
 export const Select = ({
   options,
@@ -343,7 +404,7 @@ export function Toaster() {
   return (
     <div
       aria-live="polite"
-      className="pointer-events-none print:hidden fixed inset-x-0 bottom-4 z-[60] flex flex-col items-center gap-2 px-4"
+      className="pointer-events-none print:hidden fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] lg:bottom-4 flex flex-col items-center gap-2 px-4"
     >
       {list.map((x) => (
         <div
@@ -365,7 +426,7 @@ export function Toaster() {
   );
 }
 
-export const Tabs = <T extends string>({
+export function Tabs<T extends string>({
   tabs,
   value,
   onChange,
@@ -373,35 +434,126 @@ export const Tabs = <T extends string>({
   tabs: { id: T; label: string; count?: number }[];
   value: T;
   onChange: (v: T) => void;
-}) => (
-  <div
-    role="tablist"
-    className="flex shrink-0 gap-5 overflow-x-auto border-b border-linea print:hidden"
-    onKeyDown={(e) => {
-      // Flechas, Inicio y Fin pasan de una pestaña a otra
-      const i = tabs.findIndex((x) => x.id === value);
-      const to =
-        e.key === "ArrowRight" ? i + 1 : e.key === "ArrowLeft" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : null;
-      if (to === null) return;
-      e.preventDefault();
-      const next = tabs[(to + tabs.length) % tabs.length]!;
-      onChange(next.id);
-      setTimeout(() => document.getElementById(`tab-${next.id}`)?.focus(), 0);
-    }}
-  >
-    {tabs.map((tb) => (
-      <button
-        key={tb.id}
-        id={`tab-${tb.id}`}
-        role="tab"
-        tabIndex={value === tb.id ? 0 : -1}
-        aria-selected={value === tb.id}
-        onClick={() => onChange(tb.id)}
-        className={`-mb-px cursor-pointer border-b-2 pt-1 pb-2.5 text-sm font-medium whitespace-nowrap transition-colors ${value === tb.id ? "border-surco text-surco" : "border-transparent text-tinta-2 hover:text-surco"}`}
-      >
-        {tb.label}
-        {tb.count !== undefined && <span className="num ml-1.5 text-xs text-tinta-2">{tb.count}</span>}
-      </button>
-    ))}
-  </div>
-);
+}) {
+  const scroller = useRef<HTMLDivElement>(null);
+  const [edge, setEdge] = useState({ left: false, right: false });
+  // Si no entran, se desplazan de costado y el borde que tiene más pestañas se desvanece
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    const measure = () =>
+      setEdge({ left: el.scrollLeft > 1, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 1 });
+    measure();
+    el.addEventListener("scroll", measure, { passive: true });
+    const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    ro?.observe(el);
+    return () => {
+      el.removeEventListener("scroll", measure);
+      ro?.disconnect();
+    };
+  }, [tabs.length]);
+  // La pestaña activa siempre queda a la vista
+  useEffect(() => {
+    document.getElementById(`tab-${value}`)?.scrollIntoView?.({ inline: "nearest", block: "nearest" });
+  }, [value]);
+  const fade = (on: boolean) => (on ? "transparent 0, #000 28px" : "#000 0, #000 0");
+  const fadeEnd = (on: boolean) => (on ? "#000 calc(100% - 28px), transparent 100%" : "#000 100%, #000 100%");
+  const mask = `linear-gradient(to right, ${fade(edge.left)}, ${fadeEnd(edge.right)})`;
+  return (
+    <div
+      ref={scroller}
+      role="tablist"
+      style={edge.left || edge.right ? { maskImage: mask, WebkitMaskImage: mask } : undefined}
+      className="flex shrink-0 gap-5 overflow-x-auto border-b border-linea [scrollbar-width:none] print:hidden [&::-webkit-scrollbar]:hidden"
+      onKeyDown={(e) => {
+        // Flechas, Inicio y Fin pasan de una pestaña a otra
+        const i = tabs.findIndex((x) => x.id === value);
+        const to =
+          e.key === "ArrowRight" ? i + 1 : e.key === "ArrowLeft" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : null;
+        if (to === null) return;
+        e.preventDefault();
+        const next = tabs[(to + tabs.length) % tabs.length]!;
+        onChange(next.id);
+        setTimeout(() => document.getElementById(`tab-${next.id}`)?.focus(), 0);
+      }}
+    >
+      {tabs.map((tb) => (
+        <button
+          key={tb.id}
+          id={`tab-${tb.id}`}
+          role="tab"
+          tabIndex={value === tb.id ? 0 : -1}
+          aria-selected={value === tb.id}
+          onClick={() => onChange(tb.id)}
+          className={`-mb-px inline-flex h-10 shrink-0 cursor-pointer items-center border-b-2 text-sm font-medium whitespace-nowrap transition-colors ${value === tb.id ? "border-surco text-surco" : "border-transparent text-tinta-2 hover:text-surco"}`}
+        >
+          {tb.label}
+          {tb.count !== undefined && <span className="num ml-1.5 text-xs text-tinta-2">{tb.count}</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Encabezado de página: título en una línea (truncado, completo en el tooltip), un primario y un menú. */
+export function PageHeader({
+  title,
+  titleAction,
+  primary,
+  menu,
+  stacked = false,
+  className = "",
+}: {
+  title: string;
+  /** Junto al título: por ejemplo el menú para cambiar de estancia. */
+  titleAction?: ReactNode;
+  /** La acción principal de la pantalla: un solo botón relleno. */
+  primary?: ReactNode;
+  /** Lo demás: `ActionMenu` y `ExportMenu`. */
+  menu?: ReactNode;
+  /** Las acciones van debajo del título (paneles angostos, donde no entran al lado). */
+  stacked?: boolean;
+  className?: string;
+}) {
+  const actions = (primary || menu) && (
+    <div className="flex shrink-0 items-center gap-2 print:hidden">
+      {primary}
+      {menu}
+    </div>
+  );
+  return (
+    <header className={`flex min-w-0 gap-3 ${stacked ? "flex-col items-stretch" : "items-center"} ${className}`}>
+      <div className="flex min-w-0 flex-1 items-center gap-1">
+        <h1 title={title} className="min-w-0 truncate text-[28px] leading-8">
+          {title}
+        </h1>
+        {titleAction && <div className="shrink-0 print:hidden">{titleAction}</div>}
+      </div>
+      {actions}
+    </header>
+  );
+}
+
+/** Vacío con salida: qué es esta sección y la acción para empezar. */
+export function EmptyState({
+  title,
+  children,
+  action,
+  className = "",
+}: {
+  title: string;
+  /** Una o dos líneas que explican para qué sirve. */
+  children?: ReactNode;
+  action?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`flex flex-col items-start gap-3 rounded-lg border border-dashed border-linea p-5 ${className}`}>
+      <div className="flex flex-col gap-1">
+        <p className="text-[18px] leading-6 font-medium text-surco">{title}</p>
+        {children && <div className="text-sm text-tinta-2">{children}</div>}
+      </div>
+      {action}
+    </div>
+  );
+}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isFieldRole } from "@yvy/shared";
-import { ExportButtons } from "../components/ExportButtons";
+import { TableExportMenu } from "../components/TableExportMenu";
 import { Empty, ErrorBox, Spinner, Tabs } from "../components/ui";
 import { get } from "../lib/api";
 import { fmtHa, fmtNum } from "../lib/format";
@@ -83,7 +83,7 @@ function FarmsTable({ rows }: { rows: FarmRow[] }) {
   return (
     <>
       <div className="mb-2 flex justify-end">
-        <ExportButtons
+        <TableExportMenu
           data={() => ({
             name: t("ui.compareFile"),
             headers,
@@ -129,7 +129,7 @@ function SeasonsTable({ rows }: { rows: SeasonRow[] }) {
   return (
     <>
       <div className="mb-2 flex justify-end">
-        <ExportButtons
+        <TableExportMenu
           data={() => ({
             name: t("ui.compareSeasonsFile"),
             headers,

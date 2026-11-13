@@ -33,7 +33,15 @@ const MAX_PER_GROUP = 6;
 const MAX_FARMS_SCANNED = 30;
 
 /** Buscador de la barra superior: usa lo que la API ya devuelve (estancias, lotes, equipo, puntos) y la última página de registros. */
-export function GlobalSearch({ inputRef }: { inputRef: React.RefObject<HTMLInputElement | null> }) {
+export function GlobalSearch({
+  inputRef,
+  className = "relative w-full",
+  listClassName = "min-w-80 lg:min-w-96",
+}: {
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  className?: string;
+  listClassName?: string;
+}) {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
@@ -156,7 +164,7 @@ export function GlobalSearch({ inputRef }: { inputRef: React.RefObject<HTMLInput
   };
 
   return (
-    <div ref={box} className="relative hidden w-56 shrink-0 md:block lg:w-72">
+    <div ref={box} className={`relative ${className}`}>
       <input
         ref={inputRef}
         type="search"
@@ -165,6 +173,7 @@ export function GlobalSearch({ inputRef }: { inputRef: React.RefObject<HTMLInput
         aria-controls="search-results"
         aria-label={t("ui.searchLabel")}
         title={t("ui.searchShortcutHint")}
+        aria-keyshortcuts="/ Control+K"
         placeholder={t("ui.searchPlaceholder")}
         value={q}
         onChange={(e) => {
@@ -173,13 +182,21 @@ export function GlobalSearch({ inputRef }: { inputRef: React.RefObject<HTMLInput
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKey}
-        className="h-9 w-full rounded-md border border-linea bg-papel px-3 text-sm outline-none placeholder:text-tinta-2/60 focus:border-accion focus:ring-2 focus:ring-accion/20"
+        className="h-10 w-full rounded-md border border-linea bg-papel pr-8 pl-3 text-sm outline-none placeholder:text-tinta-2/60 focus:border-accion focus:ring-2 focus:ring-accion/20"
       />
+      {!q && (
+        <kbd
+          aria-hidden
+          className="pointer-events-none absolute top-1/2 right-2.5 hidden h-5 -translate-y-1/2 items-center rounded border border-linea px-1.5 font-sans text-xs text-tinta-2 lg:flex"
+        >
+          /
+        </kbd>
+      )}
       {active && (
         <div
           id="search-results"
           role="listbox"
-          className="absolute top-full right-0 left-0 z-30 mt-1 max-h-[70vh] min-w-80 overflow-auto rounded-md border border-linea bg-papel lg:min-w-96"
+          className={`absolute top-full right-0 left-0 z-30 mt-1 max-h-[70vh] overflow-auto rounded-md border border-linea bg-papel ${listClassName}`}
         >
           {hits.length === 0 && (
             <p className="px-3 py-3 text-sm text-tinta-2">{loading ? t("ui.searching") : t("ui.searchNoResults")}</p>

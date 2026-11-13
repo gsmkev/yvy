@@ -25,6 +25,7 @@ export function AccountMenu({
   sub?: string | null;
   onLogout: () => void;
 }) {
+  // Al pie de la barra lateral: el menú se abre hacia arriba
   const orgs = useOrganizations();
   const current = useSyncExternalStore(
     (cb) => onSession(cb),
@@ -95,7 +96,7 @@ export function AccountMenu({
   };
 
   const itemCls =
-    "block w-full cursor-pointer border-b border-linea px-3 py-2 text-left text-sm hover:bg-surco/[0.05] focus-visible:bg-surco/[0.05] last:border-0";
+    "block min-h-12 w-full cursor-pointer border-b border-linea px-3 py-3 text-left lg:min-h-10 lg:py-2 text-sm hover:bg-surco/[0.05] focus-visible:bg-surco/[0.05] last:border-0";
 
   return (
     <div ref={box} className="relative">
@@ -112,10 +113,10 @@ export function AccountMenu({
             setOpen(true);
           }
         }}
-        className="max-w-48 cursor-pointer text-right text-sm leading-tight underline-offset-4 hover:underline"
+        className="flex min-h-12 w-full cursor-pointer flex-col justify-center rounded-md px-3 text-left text-sm leading-tight hover:bg-surco/[0.05] lg:min-h-10"
       >
         <span className="block truncate font-medium">{name}</span>
-        {sub && <span className="hidden truncate text-xs text-tinta-2 md:block">{sub}</span>}
+        {sub && <span className="truncate text-xs text-tinta-2">{sub}</span>}
       </button>
       {open && (
         <div
@@ -123,7 +124,7 @@ export function AccountMenu({
           role="menu"
           aria-label={t("ui.accountMenu")}
           onKeyDown={onMenuKey}
-          className="absolute top-full right-0 z-30 mt-2 w-64 rounded-md border border-linea bg-papel"
+          className="absolute bottom-full left-0 z-50 mb-2 w-64 max-w-[calc(100vw-2rem)] rounded-md border border-linea bg-papel shadow-lg"
         >
           {orgs.length > 1 && (
             <>

@@ -168,7 +168,7 @@ export function SceneControls(props: {
   useEffect(() => setAnimating(false), [props.kind, props.compare === null]);
   if (dates.length === 0) return null;
   return (
-    <div className="flex w-56 flex-col gap-2 rounded-md border border-white/15 bg-surco/85 p-2.5 text-xs text-lino backdrop-blur">
+    <div className="flex flex-col gap-2 text-xs text-lino">
       {animating && !props.compare ? (
         <Timelapse frames={timelapseFrames(props.layers, props.kind)} onPick={props.onPick} onClose={() => setAnimating(false)} />
       ) : props.compare ? (

@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isFieldRole, isWaterPoi, LIMITS, stalePlots, staleDaysOrDefault } from "@yvy/shared";
-import { Link, useParams, useSearch } from "@tanstack/react-router";
+import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LineString, MultiPolygon, Polygon } from "geojson";
-import { MapPinPlus, PenLine, Upload, X } from "lucide-react";
+import { X } from "lucide-react";
 import { areaHa, bboxOf, validatePolygon, type Area } from "@yvy/geo";
 import { BRAND, FERT_LAYERS, FERT_LAYER_PARAM, FERT_STYLE, INDEX_KINDS, NDMI_RAMP, NDVI_RAMP, POI_KINDS, SOIL_RANGES, type FertLayerKey } from "@yvy/shared";
 import { CustomLayersControl, type ActiveLayers } from "../components/CustomLayersControl";
 import { BoundariesControl } from "../components/BoundariesControl";
+import { LayerSwitch, LayersPanel, MapToolbar, PanelSection, toolBtn } from "../components/MapTools";
 
 /** Capas que se ven en Vigor: índices de vegetación (S-07) y mapas de fertilidad (A-31). */
 const OVERLAYS = [...INDEX_KINDS, ...FERT_LAYERS] as const;
@@ -19,7 +20,7 @@ import { CopyCoords } from "../components/CopyCoords";
 import { ClimatePanel } from "../components/ClimatePanel";
 import { boundsOf, FarmMap } from "../components/FarmMap";
 import { FullscreenButton } from "../components/FullscreenButton";
-import { ExportButtons } from "../components/ExportButtons";
+import { TableExportMenu } from "../components/TableExportMenu";
 import { ImportPlots } from "../components/ImportPlots";
 import { PlotPanel } from "../components/PlotPanel";
 import { LinesPanel, NewLineModal } from "../components/LinesPanel";
@@ -32,7 +33,8 @@ import { ProductsPanel } from "../components/ProductsPanel";
 import { RecordsList } from "../components/RecordsList";
 import { SeasonsPanel } from "../components/SeasonsPanel";
 import { TasksPanel } from "../components/TasksPanel";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Skeleton, Spinner, Tabs, toast } from "../components/ui";
+import { ActionMenu, ExportMenu } from "../components/menus";
+import { Button, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Skeleton, Spinner, Tabs, toast } from "../components/ui";
 import { del, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
 import { download, plotsToGeoJson, plotsToKml, plotsToShapefileZip } from "../lib/exports";
@@ -55,6 +57,7 @@ const TABS: Tab[] = ["plots", "seasons", "products", "records", "tasks", "climat
 
 export function FarmPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId" });
+  const navigate = useNavigate();
   const farm = useFarm(farmId);
   const lines = useFarmLines(farmId);
   const farms = useFarms();
@@ -78,6 +81,9 @@ export function FarmPage() {
     savePrefs({ staleDays: n });
   };
   const mapBox = useRef<HTMLDivElement>(null);
+  const mapApi = useRef<{ zoom: (dir: 1 | -1) => void } | null>(null);
+  // El panel de capas arranca cerrado: el mapa es lo primero que se ve
+  const [layersOpen, setLayersOpen] = useState(false);
   // M-05: dividir (dibuja una línea sobre el lote) y unir (se elige el lote contiguo en el mapa)
   const [splitting, setSplitting] = useState<string | null>(null);
   const [splitLine, setSplitLine] = useState<LineString | null>(null);
@@ -284,9 +290,10 @@ export function FarmPage() {
         ))}
       </div>
       <div ref={mapBox} className={`relative min-h-0 flex-1 bg-lino lg:h-full print:hidden ${view === "list" ? "max-lg:hidden" : ""}`}>
-        <FullscreenButton target={mapBox} className="absolute right-3 bottom-8 z-10" />
         <FarmMap
           snapshotRef={snapshotRef}
+          apiRef={mapApi}
+          navControl={false}
           outline={d.farm.geometry}
           plots={d.plots}
           pois={d.pois}
@@ -357,263 +364,259 @@ export function FarmPage() {
             }}
           />
         )}
-        {/* Capas: control segmentado compacto, con leyenda cuando corresponde */}
-        <div className="absolute top-3 left-3 flex flex-col gap-2">
-          <div className="flex w-56 flex-col gap-1.5 rounded-md border border-white/15 bg-surco/85 p-0.5 text-xs font-medium text-lino backdrop-blur">
-            {!measuring ? (
-              <button
-                onClick={() => setMeasuring(true)}
-                className="cursor-pointer rounded px-3 py-1.5 text-left hover:bg-white/10"
-              >
-                {t("ui.measure")}
-              </button>
-            ) : (
-              <div className="flex flex-col gap-2 p-2.5 font-normal">
-                {mPoints.length === 0 ? (
-                  <p className="text-lino/80">{t("ui.measureHint")}</p>
-                ) : (
-                  <>
-                    <p className="num">
-                      {mClosed ? t("ui.measurePerimeter") : t("ui.measureDistance")}:{" "}
-                      <strong className="font-semibold">{fmtDistance(pathLengthM(mPoints, mClosed))}</strong>
-                    </p>
-                    {mClosed && (
-                      <p className="num">
-                        {t("ui.area")}: <strong className="font-semibold">{fmtHa(closedAreaHa(mPoints) ?? 0)}</strong>
-                      </p>
-                    )}
-                  </>
-                )}
-                <div className="flex gap-4 font-medium">
-                  {mPoints.length >= 3 && !mClosed && (
-                    <button
-                      className="cursor-pointer underline-offset-4 hover:underline"
-                      onClick={() => setMClosed(true)}
-                    >
-                      {t("ui.measureClose")}
-                    </button>
-                  )}
-                  {mPoints.length > 0 && (
-                    <button
-                      className="cursor-pointer underline-offset-4 hover:underline"
-                      onClick={() => {
-                        setMClosed(false);
-                        setMPoints((ps) => ps.slice(0, -1));
-                      }}
-                    >
-                      {t("ui.measureUndo")}
-                    </button>
-                  )}
-                  <button className="cursor-pointer underline-offset-4 hover:underline" onClick={endMeasure}>
-                    {t("ui.measureDone")}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+        <MapToolbar
+          measuring={measuring}
+          onMeasure={() => (measuring ? endMeasure() : setMeasuring(true))}
+          layersOpen={layersOpen}
+          onLayers={() => setLayersOpen(!layersOpen)}
+          onZoom={(dir) => mapApi.current?.zoom(dir)}
+          fullscreen={<FullscreenButton target={mapBox} className={toolBtn} />}
+        />
+        {measuring && (
           <div
-            role="radiogroup"
-            aria-label={t("ui.layers")}
-            className="flex rounded-md border border-white/15 bg-surco/85 p-0.5 text-xs font-medium text-lino backdrop-blur"
+            role="status"
+            className="absolute bottom-8 left-3 z-10 flex w-56 flex-col gap-2 rounded-md border border-white/15 bg-surco/85 p-2.5 text-xs text-lino backdrop-blur print:hidden"
           >
-            {(["satellite", "ndvi"] as const).map((l) => (
-              <button
-                key={l}
-                role="radio"
-                aria-checked={layer === l}
-                disabled={l === "ndvi" && !ndviLayer}
-                onClick={() => {
-                  setLayer(l);
-                  setCompare(null);
-                  savePrefs({ layer: l });
-                }}
-                className={`cursor-pointer rounded px-3 py-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${layer === l ? "bg-lino text-surco" : "hover:bg-white/10"}`}
-              >
-                {l === "satellite" ? t("ui.layerSatellite") : t("ui.layerNdvi")}
-              </button>
-            ))}
-          </div>
-          {layer === "ndvi" && OVERLAYS.filter(hasIndex).length > 1 && (
-            <label className="flex w-56 flex-col gap-1 rounded-md border border-white/15 bg-surco/85 p-2.5 text-xs text-lino backdrop-blur">
-              <span className="text-lino/70">{t("ui.indexPick")}</span>
-              <select
-                className="h-8 w-full cursor-pointer rounded border border-white/20 bg-surco px-2 text-xs text-lino outline-none focus:border-lino"
-                value={shownIndex}
-                onChange={(e) => {
-                  setIndexKind(e.target.value as Overlay);
-                  setCompare(null);
-                }}
-              >
-                {OVERLAYS.filter(hasIndex).map((k) => (
-                  <option key={k} value={k}>
-                    {isFert(k) ? t(`ui.fertLayer_${k}` as "ui.fertLayer_fert_ph") : t(`ui.index_${k}`)}
-                  </option>
-                ))}
-              </select>
-              {!isFert(shownIndex) && <span className="text-lino/60">{t(`ui.indexHint_${shownIndex}`)}</span>}
-            </label>
-          )}
-          <SceneControls
-            layers={d.layers}
-            kind={kind}
-            picked={pickLayer(d.layers, kind, pickedIds[kind])?.id ?? ""}
-            onPick={(id) => setPickedIds((p) => ({ ...p, [kind]: id }))}
-            compare={compare}
-            canCompare={layerDates(d.layers, kind).length > 1}
-            onToggleCompare={() => {
-              if (compare) return setCompare(null);
-              setCurtain(50);
-              setCompare(defaultCompare(d.layers, kind));
-            }}
-            onCompare={setCompare}
-            tilesBaseUrl={me.data?.tilesBaseUrl}
-            farmBounds={boundsOf(d.farm)}
-          />
-          <BoundariesControl
-            level={boundaryLevel}
-            onLevel={setBoundaryLevel}
-            loading={!!boundaryLevel && boundaries.isLoading}
-            missing={!!boundaryLevel && boundaries.isFetched && !boundaries.data}
-          />
-          <CustomLayersControl
-            farmId={farmId}
-            layers={customLayers.data ?? []}
-            active={customActive}
-            onActive={setCustomActive}
-            canManage={!!me.data && ["owner", "admin", "agronomist"].includes(me.data.role)}
-            farmBounds={boundsOf(d.farm)}
-          />
-          <button
-            aria-pressed={showPests}
-            onClick={() => setShowPests(!showPests)}
-            className={`w-56 cursor-pointer rounded-md border border-white/15 px-3 py-1.5 text-left text-xs font-medium backdrop-blur transition-colors ${showPests ? "bg-lino text-surco" : "bg-surco/85 text-lino hover:bg-white/10"}`}
-          >
-            {t("ui.layerPests")}
-          </button>
-          {showPests && (
-            <div className="w-56 rounded-md border border-white/15 bg-surco/85 p-2.5 text-[11px] text-lino backdrop-blur">
-              <p className="mb-1 font-medium">{t("ui.pestsLegendTitle")}</p>
-              {pests.isLoading ? (
-                <p className="text-lino/70">{t("ui.loading")}</p>
-              ) : pestPts.length === 0 ? (
-                <p className="text-lino/70">{t("ui.pestsNone")}</p>
-              ) : (
-                <ul className="flex flex-col gap-1">
-                  {pestCounts(pestPts).map((c) => (
-                    <li key={c.pest} className="num flex items-center gap-2">
-                      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: PEST_COLORS[c.pest] }} aria-hidden />
-                      {tk(`fields.pest_${c.pest}`)}
-                      <span className="ml-auto text-lino/70">{c.n}</span>
-                    </li>
-                  ))}
-                </ul>
+            {mPoints.length === 0 ? (
+              <p className="text-lino/80">{t("ui.measureHint")}</p>
+            ) : (
+              <>
+                <p className="num">
+                  {mClosed ? t("ui.measurePerimeter") : t("ui.measureDistance")}:{" "}
+                  <strong className="font-semibold">{fmtDistance(pathLengthM(mPoints, mClosed))}</strong>
+                </p>
+                {mClosed && (
+                  <p className="num">
+                    {t("ui.area")}: <strong className="font-semibold">{fmtHa(closedAreaHa(mPoints) ?? 0)}</strong>
+                  </p>
+                )}
+              </>
+            )}
+            <div className="flex gap-4 font-medium">
+              {mPoints.length >= 3 && !mClosed && (
+                <button className="cursor-pointer underline-offset-4 hover:underline" onClick={() => setMClosed(true)}>
+                  {t("ui.measureClose")}
+                </button>
               )}
-              {pestPts.length > 0 && (
-                <>
-                  <p className="mt-2 text-lino/70">{t("ui.pestsSizeHint")}</p>
-                  <p className="mt-2 mb-1 font-medium">{t("ui.pestsByPlotTitle")}</p>
-                  <ul className="flex flex-col gap-0.5">
-                    {pestsByPlot(pestPts)
-                      .slice(0, 5)
-                      .map((c) => (
-                        <li key={c.plotId}>
-                          <button
-                            className="num flex w-full cursor-pointer items-baseline gap-2 text-left underline-offset-4 hover:underline"
-                            onClick={() => setSelected(c.plotId)}
-                          >
-                            <span className="min-w-0 flex-1 truncate">{d.plots.find((p) => p.id === c.plotId)?.name ?? "—"}</span>
-                            <span className="text-lino/70">
-                              {t("ui.pestsPlotCount", { n: c.n })} · {tk(`ui.pestIntensity_${c.worst}`)}
-                            </span>
-                          </button>
+              {mPoints.length > 0 && (
+                <button
+                  className="cursor-pointer underline-offset-4 hover:underline"
+                  onClick={() => {
+                    setMClosed(false);
+                    setMPoints((ps) => ps.slice(0, -1));
+                  }}
+                >
+                  {t("ui.measureUndo")}
+                </button>
+              )}
+              <button className="cursor-pointer underline-offset-4 hover:underline" onClick={endMeasure}>
+                {t("ui.measureDone")}
+              </button>
+            </div>
+          </div>
+        )}
+        {layersOpen && (
+          <LayersPanel>
+            <PanelSection title={t("ui.layersBackground")}>
+              <div role="radiogroup" aria-label={t("ui.layersBackground")} className="flex gap-1.5 font-medium">
+                {(["satellite", "ndvi"] as const).map((l) => (
+                  <button
+                    key={l}
+                    role="radio"
+                    aria-checked={layer === l}
+                    disabled={l === "ndvi" && !ndviLayer}
+                    onClick={() => {
+                      setLayer(l);
+                      setCompare(null);
+                      savePrefs({ layer: l });
+                    }}
+                    className={`h-10 flex-1 cursor-pointer rounded px-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${layer === l ? "bg-lino text-surco" : "border border-white/20 hover:bg-white/10"}`}
+                  >
+                    {l === "satellite" ? t("ui.layerSatellite") : t("ui.layerNdvi")}
+                  </button>
+                ))}
+              </div>
+              {layer === "ndvi" && OVERLAYS.filter(hasIndex).length > 1 && (
+                <label className="flex flex-col gap-1">
+                  <span className="text-lino/70">{t("ui.indexPick")}</span>
+                  <select
+                    className="h-10 w-full cursor-pointer rounded border border-white/20 bg-surco px-2 text-xs text-lino outline-none focus:border-lino"
+                    value={shownIndex}
+                    onChange={(e) => {
+                      setIndexKind(e.target.value as Overlay);
+                      setCompare(null);
+                    }}
+                  >
+                    {OVERLAYS.filter(hasIndex).map((k) => (
+                      <option key={k} value={k}>
+                        {isFert(k) ? t(`ui.fertLayer_${k}` as "ui.fertLayer_fert_ph") : t(`ui.index_${k}`)}
+                      </option>
+                    ))}
+                  </select>
+                  {!isFert(shownIndex) && <span className="text-lino/60">{t(`ui.indexHint_${shownIndex}`)}</span>}
+                </label>
+              )}
+              <SceneControls
+                layers={d.layers}
+                kind={kind}
+                picked={pickLayer(d.layers, kind, pickedIds[kind])?.id ?? ""}
+                onPick={(id) => setPickedIds((p) => ({ ...p, [kind]: id }))}
+                compare={compare}
+                canCompare={layerDates(d.layers, kind).length > 1}
+                onToggleCompare={() => {
+                  if (compare) return setCompare(null);
+                  setCurtain(50);
+                  setCompare(defaultCompare(d.layers, kind));
+                }}
+                onCompare={setCompare}
+                tilesBaseUrl={me.data?.tilesBaseUrl}
+                farmBounds={boundsOf(d.farm)}
+              />
+              {layer === "ndvi" && ndviLayer && (
+                <div className="text-[11px]">
+                  <div
+                    className="h-2 rounded-sm"
+                    style={{
+                      background: `linear-gradient(90deg, ${(isFert(shownIndex) ? FERT_STYLE[shownIndex].ramp : shownIndex === "ndmi" ? NDMI_RAMP : NDVI_RAMP).join(",")})`,
+                    }}
+                  />
+                  {isFert(shownIndex) ? (
+                    <>
+                      <div className="num mt-1 flex justify-between text-lino/70">
+                        <span>
+                          {shownIndex === "fert_ph" ? t("ui.fertLegendPh") : t("ui.fertLegendLow")} {fmtNum(FERT_STYLE[shownIndex].lo)}
+                        </span>
+                        <span>
+                          {fmtNum(FERT_STYLE[shownIndex].hi)} {FERT_STYLE[shownIndex].unit}
+                        </span>
+                      </div>
+                      <p className="num mt-1 text-lino/70">
+                        {t("ui.soilLevel_low")} &lt; {fmtNum(SOIL_RANGES[FERT_LAYER_PARAM[shownIndex]][0])} · {t("ui.soilLevel_high")} &gt;{" "}
+                        {fmtNum(SOIL_RANGES[FERT_LAYER_PARAM[shownIndex]][1])}
+                      </p>
+                      <p className="mt-1 text-lino/60">{t("ui.fertLegendNote")}</p>
+                    </>
+                  ) : (
+                    <div className="num mt-1 flex justify-between text-lino/70">
+                      <span>{shownIndex === "ndmi" ? t("ui.ndmiLegendLow") : t("ui.ndviLegendLow")}</span>
+                      <span>{shownIndex === "ndmi" ? t("ui.ndmiLegendHigh") : t("ui.ndviLegendHigh")}</span>
+                    </div>
+                  )}
+                  <p className="num mt-1.5 text-lino/70">
+                    {t("ui.imageDate", { date: fmtDate((pickLayer(d.layers, shownIndex, pickedIds[shownIndex]) ?? ndviLayer).acquiredAt) })} · {isFert(shownIndex) ? t("ui.soilTitle") : "Sentinel-2"}
+                  </p>
+                </div>
+              )}
+              {!hasBasemap && (
+                <p className="text-lino/70">
+                  {d.imageryStatus === "pending" || d.imageryStatus === "processing"
+                    ? t("ui.imageryProcessing")
+                    : d.imageryStatus === "failed"
+                      ? t("ui.imageryFailed")
+                      : t("ui.noBasemap")}
+                </p>
+              )}
+            </PanelSection>
+            <PanelSection title={t("ui.layerBoundaries")} defaultOpen={false}>
+              <BoundariesControl
+                level={boundaryLevel}
+                onLevel={setBoundaryLevel}
+                loading={!!boundaryLevel && boundaries.isLoading}
+                missing={!!boundaryLevel && boundaries.isFetched && !boundaries.data}
+              />
+            </PanelSection>
+            {((customLayers.data?.length ?? 0) > 0 || (!!me.data && ["owner", "admin", "agronomist"].includes(me.data.role))) && (
+              <PanelSection title={t("ui.customLayersTitle")} defaultOpen={false}>
+                <CustomLayersControl
+                  farmId={farmId}
+                  layers={customLayers.data ?? []}
+                  active={customActive}
+                  onActive={setCustomActive}
+                  canManage={!!me.data && ["owner", "admin", "agronomist"].includes(me.data.role)}
+                  farmBounds={boundsOf(d.farm)}
+                />
+              </PanelSection>
+            )}
+            <PanelSection title={t("ui.layerPests")} defaultOpen={false}>
+              <LayerSwitch label={t("ui.layerPests")} on={showPests} onToggle={() => setShowPests(!showPests)} />
+              {showPests && (
+                <div className="text-[11px]">
+                  <p className="mb-1 font-medium">{t("ui.pestsLegendTitle")}</p>
+                  {pests.isLoading ? (
+                    <p className="text-lino/70">{t("ui.loading")}</p>
+                  ) : pestPts.length === 0 ? (
+                    <p className="text-lino/70">{t("ui.pestsNone")}</p>
+                  ) : (
+                    <ul className="flex flex-col gap-1">
+                      {pestCounts(pestPts).map((c) => (
+                        <li key={c.pest} className="num flex items-center gap-2">
+                          <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: PEST_COLORS[c.pest] }} aria-hidden />
+                          {tk(`fields.pest_${c.pest}`)}
+                          <span className="ml-auto text-lino/70">{c.n}</span>
                         </li>
                       ))}
-                  </ul>
-                </>
-              )}
-            </div>
-          )}
-          <button
-            aria-pressed={showTracks}
-            onClick={() => setShowTracks(!showTracks)}
-            className={`w-56 cursor-pointer rounded-md border border-white/15 px-3 py-1.5 text-left text-xs font-medium backdrop-blur transition-colors ${showTracks ? "bg-lino text-surco" : "bg-surco/85 text-lino hover:bg-white/10"}`}
-          >
-            {t("app.layerTracks")}
-          </button>
-          {showTracks && (
-            <div className="w-56 rounded-md border border-white/15 bg-surco/85 p-2.5 text-[11px] text-lino backdrop-blur">
-              <p className="mb-1 font-medium">{t("app.tracksLegendTitle")}</p>
-              {tracks.isLoading ? (
-                <p className="text-lino/70">{t("ui.loading")}</p>
-              ) : !trackSummary || trackSummary.walks === 0 ? (
-                <p className="text-lino/70">{t("app.tracksNone")}</p>
-              ) : (
-                <>
-                  <p className="num">
-                    {t(trackSummary.walks === 1 ? "app.tracksSummaryOne" : "app.tracksSummary", {
-                      n: trackSummary.walks,
-                      km: trackSummary.km.toLocaleString("es-PY", { maximumFractionDigits: 1 }),
-                    })}
-                  </p>
-                  {trackSummary.unvisited.length > 0 && (
-                    <p className="mt-1 text-lino/70">
-                      {t("app.tracksUnvisited", {
-                        names: trackSummary.unvisited
-                          .map((id) => d.plots.find((p) => p.id === id)?.name)
-                          .filter(Boolean)
-                          .join(", "),
-                      })}
-                    </p>
+                    </ul>
                   )}
-                </>
-              )}
-            </div>
-          )}
-          {layer === "ndvi" && ndviLayer && (
-            <div className="w-56 rounded-md border border-white/15 bg-surco/85 p-2.5 text-[11px] text-lino backdrop-blur">
-              <div
-                className="h-2 rounded-sm"
-                style={{
-                  background: `linear-gradient(90deg, ${(isFert(shownIndex) ? FERT_STYLE[shownIndex].ramp : shownIndex === "ndmi" ? NDMI_RAMP : NDVI_RAMP).join(",")})`,
-                }}
-              />
-              {isFert(shownIndex) ? (
-                <>
-                  <div className="num mt-1 flex justify-between text-lino/70">
-                    <span>
-                      {shownIndex === "fert_ph" ? t("ui.fertLegendPh") : t("ui.fertLegendLow")} {fmtNum(FERT_STYLE[shownIndex].lo)}
-                    </span>
-                    <span>
-                      {fmtNum(FERT_STYLE[shownIndex].hi)} {FERT_STYLE[shownIndex].unit}
-                    </span>
-                  </div>
-                  <p className="num mt-1 text-lino/70">
-                    {t("ui.soilLevel_low")} &lt; {fmtNum(SOIL_RANGES[FERT_LAYER_PARAM[shownIndex]][0])} · {t("ui.soilLevel_high")} &gt;{" "}
-                    {fmtNum(SOIL_RANGES[FERT_LAYER_PARAM[shownIndex]][1])}
-                  </p>
-                  <p className="mt-1 text-lino/60">{t("ui.fertLegendNote")}</p>
-                </>
-              ) : (
-                <div className="num mt-1 flex justify-between text-lino/70">
-                  <span>{shownIndex === "ndmi" ? t("ui.ndmiLegendLow") : t("ui.ndviLegendLow")}</span>
-                  <span>{shownIndex === "ndmi" ? t("ui.ndmiLegendHigh") : t("ui.ndviLegendHigh")}</span>
+                  {pestPts.length > 0 && (
+                    <>
+                      <p className="mt-2 text-lino/70">{t("ui.pestsSizeHint")}</p>
+                      <p className="mt-2 mb-1 font-medium">{t("ui.pestsByPlotTitle")}</p>
+                      <ul className="flex flex-col gap-0.5">
+                        {pestsByPlot(pestPts)
+                          .slice(0, 5)
+                          .map((c) => (
+                            <li key={c.plotId}>
+                              <button
+                                className="num flex min-h-8 w-full cursor-pointer items-baseline gap-2 text-left underline-offset-4 hover:underline"
+                                onClick={() => setSelected(c.plotId)}
+                              >
+                                <span className="min-w-0 flex-1 truncate">{d.plots.find((p) => p.id === c.plotId)?.name ?? "—"}</span>
+                                <span className="text-lino/70">
+                                  {t("ui.pestsPlotCount", { n: c.n })} · {tk(`ui.pestIntensity_${c.worst}`)}
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                      </ul>
+                    </>
+                  )}
                 </div>
               )}
-              <p className="num mt-1.5 text-lino/70">
-                {t("ui.imageDate", { date: fmtDate((pickLayer(d.layers, shownIndex, pickedIds[shownIndex]) ?? ndviLayer).acquiredAt) })} · {isFert(shownIndex) ? t("ui.soilTitle") : "Sentinel-2"}
-              </p>
-            </div>
-          )}
-          {!hasBasemap && (
-            <p className="w-56 rounded-md bg-surco/85 p-2.5 text-[11px] text-lino/80">
-              {d.imageryStatus === "pending" || d.imageryStatus === "processing"
-                ? t("ui.imageryProcessing")
-                : d.imageryStatus === "failed"
-                  ? t("ui.imageryFailed")
-                  : t("ui.noBasemap")}
-            </p>
-          )}
-        </div>
+            </PanelSection>
+            <PanelSection title={t("app.layerTracks")} defaultOpen={false}>
+              <LayerSwitch label={t("app.layerTracks")} on={showTracks} onToggle={() => setShowTracks(!showTracks)} />
+              {showTracks && (
+                <div className="text-[11px]">
+                  <p className="mb-1 font-medium">{t("app.tracksLegendTitle")}</p>
+                  {tracks.isLoading ? (
+                    <p className="text-lino/70">{t("ui.loading")}</p>
+                  ) : !trackSummary || trackSummary.walks === 0 ? (
+                    <p className="text-lino/70">{t("app.tracksNone")}</p>
+                  ) : (
+                    <>
+                      <p className="num">
+                        {t(trackSummary.walks === 1 ? "app.tracksSummaryOne" : "app.tracksSummary", {
+                          n: trackSummary.walks,
+                          km: trackSummary.km.toLocaleString("es-PY", { maximumFractionDigits: 1 }),
+                        })}
+                      </p>
+                      {trackSummary.unvisited.length > 0 && (
+                        <p className="mt-1 text-lino/70">
+                          {t("app.tracksUnvisited", {
+                            names: trackSummary.unvisited
+                              .map((id) => d.plots.find((p) => p.id === id)?.name)
+                              .filter(Boolean)
+                              .join(", "),
+                          })}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </PanelSection>
+          </LayersPanel>
+        )}
         {shapeEdit && (
           <ShapeEditBar
             plotId={shapeEdit.id}
@@ -682,32 +685,75 @@ export function FarmPage() {
             />
           )}
         </div>
-        <header>
-          <div className="flex items-baseline justify-between gap-3">
-            <h1 className="text-[28px] leading-tight">{d.farm.name}</h1>
-            <span className="flex shrink-0 gap-4 text-sm print:hidden">
-              <button
-                type="button"
-                onClick={printPage}
-                className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
-              >
-                {t("ui.print")}
-              </button>
-              {(farms.data?.length ?? 0) > 1 && (
-                <Link to="/" className="text-tinta-2 underline-offset-4 hover:text-surco hover:underline">
-                  {t("ui.allFarms")}
-                </Link>
-              )}
-              {canEdit && (
-                <Link
-                  to="/estancias/nueva"
-                  className="text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
-                >
-                  {t("ui.newFarm")}
-                </Link>
-              )}
-            </span>
-          </div>
+        <div>
+          <PageHeader
+            title={d.farm.name}
+            stacked
+            titleAction={
+              <ActionMenu
+                icon="chevron"
+                label={t("ui.farmSwitch")}
+                items={[
+                  (farms.data?.length ?? 0) > 1 && { label: t("ui.allFarms"), onSelect: () => navigate({ to: "/" }) },
+                  ...(farms.data ?? []).map((f) => ({
+                    label: f.name,
+                    disabled: f.id === farmId,
+                    onSelect: () => navigate({ to: "/estancias/$farmId", params: { farmId: f.id }, search: {} }),
+                  })),
+                  canEdit && { label: t("ui.newFarm"), onSelect: () => navigate({ to: "/estancias/nueva" }) },
+                ]}
+              />
+            }
+            primary={
+              canEdit && (
+                <Button variant="primary" onClick={() => setMode(mode === "draw" ? "none" : "draw")}>
+                  {t("ui.newPlot")}
+                </Button>
+              )
+            }
+            menu={
+              <>
+                <ActionMenu
+                  label={t("ui.moreActions")}
+                  items={[
+                    canEdit && { label: t("ui.importShort"), onSelect: () => setMode("import") },
+                    canEdit && { label: t("ui.addPoi"), onSelect: () => setMode(mode === "poi" ? "none" : "poi") },
+                    canEdit && {
+                      label: t("ui.tabReport"),
+                      onSelect: () => navigate({ to: "/estancias/$farmId/parte", params: { farmId }, search: { desde: undefined, hasta: undefined } }),
+                    },
+                    { label: t("ui.print"), onSelect: () => void printPage() },
+                  ]}
+                />
+                {canEdit && (
+                  <ExportMenu
+                    formats={[
+                      {
+                        label: t("ui.exportFormatKml"),
+                        run: () =>
+                          download(
+                            new Blob([plotsToKml(d.plots, d.farm.name)], { type: "application/vnd.google-earth.kml+xml" }),
+                            `${d.farm.name}.kml`,
+                          ),
+                      },
+                      {
+                        label: t("ui.exportFormatGeojson"),
+                        run: () =>
+                          download(
+                            new Blob([plotsToGeoJson(d.plots, d.pois)], { type: "application/geo+json" }),
+                            `${d.farm.name}.geojson`,
+                          ),
+                      },
+                      {
+                        label: t("ui.exportFormatShapefile"),
+                        run: async () => download(await plotsToShapefileZip(d.plots, d.pois), `${d.farm.name}-shapefile.zip`),
+                      },
+                    ]}
+                  />
+                )}
+              </>
+            }
+          />
           <p className="num mt-1 text-sm text-tinta-2">
             {[d.farm.district, d.farm.department].filter(Boolean).join(", ")}
             {(d.farm.district || d.farm.department) && " · "}
@@ -715,52 +761,7 @@ export function FarmPage() {
             {cropHa > 0 && ` · ${fmtHa(cropHa)} ${t("ui.crop").toLowerCase()}`}
             {pastureHa > 0 && ` · ${fmtHa(pastureHa)} ${t("ui.pasture").toLowerCase()}`}
           </p>
-        </header>
-
-        {canEdit && (
-          <div className="flex flex-wrap items-center gap-2 border-b border-linea pb-5 print:hidden">
-            <Button variant="primary" icon={PenLine} onClick={() => setMode(mode === "draw" ? "none" : "draw")}>
-              {t("ui.newPlot")}
-            </Button>
-            <Button icon={Upload} onClick={() => setMode("import")}>
-              {t("ui.importShort")}
-            </Button>
-            <Button icon={MapPinPlus} onClick={() => setMode(mode === "poi" ? "none" : "poi")}>
-              {t("ui.addPoi")}
-            </Button>
-            <Link to="/estancias/$farmId/parte" params={{ farmId }} search={{ desde: undefined, hasta: undefined }}>
-              <Button variant="quiet">{t("ui.tabReport")}</Button>
-            </Link>
-            <Button
-              variant="quiet"
-              onClick={() =>
-                download(
-                  new Blob([plotsToKml(d.plots, d.farm.name)], { type: "application/vnd.google-earth.kml+xml" }),
-                  `${d.farm.name}.kml`,
-                )
-              }
-            >
-              KML
-            </Button>
-            <Button
-              variant="quiet"
-              onClick={() =>
-                download(
-                  new Blob([plotsToGeoJson(d.plots, d.pois)], { type: "application/geo+json" }),
-                  `${d.farm.name}.geojson`,
-                )
-              }
-            >
-              GeoJSON
-            </Button>
-            <Button
-              variant="quiet"
-              onClick={async () => download(await plotsToShapefileZip(d.plots, d.pois), `${d.farm.name}-shapefile.zip`)}
-            >
-              Shapefile
-            </Button>
-          </div>
-        )}
+        </div>
 
         <Tabs<Tab>
           value={tab}
@@ -813,7 +814,18 @@ export function FarmPage() {
               }}
             />
           ) : d.plots.length === 0 ? (
-            <Empty title={t("ui.noPlots")} />
+            <EmptyState
+              title={t("ui.noPlotsTitle")}
+              action={
+                canEdit && (
+                  <Button variant="primary" onClick={() => setMode("draw")}>
+                    {t("ui.newPlot")}
+                  </Button>
+                )
+              }
+            >
+              {t("ui.noPlotsHelp")}
+            </EmptyState>
           ) : (
             <>
             <table className="hidden w-full text-sm print:table">
@@ -861,7 +873,7 @@ export function FarmPage() {
                   onChange={(e) => setStaleDays(staleDaysOrDefault(Number(e.target.value)))}
                   options={LIMITS.visits.staleDayOptions.map((n) => ({ value: String(n), label: t("ui.daysN", { n }) }))}
                 />
-                <ExportButtons
+                <TableExportMenu
                   data={() => ({
                     name: t("ui.plotsFile"),
                     headers: [

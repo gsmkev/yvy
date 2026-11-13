@@ -35,7 +35,8 @@ test("dueño: registro, estancia, importación de 20 lotes y empleado", async ({
   await page.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByRole("heading", { name: "Estancia E2E" })).toBeVisible();
 
-  await page.getByRole("button", { name: /Importar/ }).click();
+  await page.getByRole("button", { name: "Más acciones" }).click();
+  await page.getByRole("menuitem", { name: "Importar" }).click();
   await page.getByTestId("import-input").setInputFiles("e2e/lotes.kml");
   await expect(page.getByText("Encontramos 20 polígonos")).toBeVisible();
   await page.getByRole("button", { name: "Importar 20 lotes" }).click();
@@ -65,7 +66,7 @@ test("dueño: registro, estancia, importación de 20 lotes y empleado", async ({
   await page.getByRole("link", { name: "Tareas" }).click();
   await page.getByRole("button", { name: /Nueva tarea/ }).click();
   await page.getByRole("textbox", { name: "Tarea" }).fill("Medir lluvia");
-  await page.getByLabel("Estancia").selectOption({ label: "Estancia E2E" });
+  await page.getByRole("combobox", { name: /^Estancia/ }).selectOption({ label: "Estancia E2E" });
   await page.getByLabel("Responsable").selectOption({ label: "Ramón" });
   await page.getByLabel("Repetición").selectOption({ label: "Todos los días" });
   await page.getByRole("button", { name: "Guardar" }).click();
@@ -87,7 +88,8 @@ test("dueño: registro, estancia, importación de 20 lotes y empleado", async ({
   await page.getByRole("tab", { name: "Clima" }).click();
   await expect(page.getByText("Lluvia 30 días").first()).toBeVisible();
   await page.screenshot({ path: "e2e/out/clima.png" });
-  await page.getByRole("button", { name: /Parte semanal/ }).click();
+  await page.getByRole("button", { name: "Más acciones" }).click();
+  await page.getByRole("menuitem", { name: "Parte semanal" }).click();
   const dl = page.waitForEvent("download");
   await page.getByRole("button", { name: /Descargar PDF/ }).click();
   const file = await dl;

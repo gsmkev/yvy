@@ -8,7 +8,7 @@ import { t, tk } from "../lib/i18n";
 import { useFarms, useMembers, useTasks } from "../lib/queries";
 import type { Plot, Task } from "../lib/types";
 import { CheckCircle2, Circle, Plus } from "lucide-react";
-import { ExportButtons } from "./ExportButtons";
+import { TableExportMenu } from "./TableExportMenu";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "./ui";
 
 /** T-01: selección de lotes en el mapa de la estancia; la maneja la pantalla que tiene el mapa. */
@@ -64,7 +64,7 @@ export function TasksPanel({ farmId, plots, pick }: { farmId?: string; plots?: P
         <Button variant="primary" icon={Plus} onClick={() => setCreating(true)}>
           {t("ui.newTask")}
         </Button>
-        <ExportButtons
+        <TableExportMenu
           data={() => ({
             name: t("ui.tasksFile"),
             headers: [

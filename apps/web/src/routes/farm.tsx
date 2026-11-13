@@ -19,7 +19,7 @@ import { CopyCoords } from "../components/CopyCoords";
 import { ClimatePanel } from "../components/ClimatePanel";
 import { boundsOf, FarmMap } from "../components/FarmMap";
 import { FullscreenButton } from "../components/FullscreenButton";
-import { ExportButtons } from "../components/ExportButtons";
+import { TableExportMenu } from "../components/TableExportMenu";
 import { ImportPlots } from "../components/ImportPlots";
 import { PlotPanel } from "../components/PlotPanel";
 import { LinesPanel, NewLineModal } from "../components/LinesPanel";
@@ -861,7 +861,7 @@ export function FarmPage() {
                   onChange={(e) => setStaleDays(staleDaysOrDefault(Number(e.target.value)))}
                   options={LIMITS.visits.staleDayOptions.map((n) => ({ value: String(n), label: t("ui.daysN", { n }) }))}
                 />
-                <ExportButtons
+                <TableExportMenu
                   data={() => ({
                     name: t("ui.plotsFile"),
                     headers: [

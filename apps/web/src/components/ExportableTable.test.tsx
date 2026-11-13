@@ -57,6 +57,12 @@ function Demo() {
 }
 
 describe("exportar cualquier tabla (U-28)", () => {
+  it("hay un solo control de exportar por tabla, no dos botones", () => {
+    render(<Demo />);
+    expect(screen.getAllByRole("button", { name: /Exportar/ })).toHaveLength(1);
+    expect(screen.queryByRole("menuitem")).toBeNull();
+  });
+
   it("parseEsNumber: números es-PY como números y códigos como texto", () => {
     expect(parseEsNumber("1.250")).toBe(1250);
     expect(parseEsNumber("1.234.567,89")).toBe(1234567.89);
@@ -87,18 +93,20 @@ describe("exportar cualquier tabla (U-28)", () => {
     });
   });
 
-  it("el botón CSV baja lo que se ve en pantalla, con números como números y fórmulas neutralizadas", async () => {
+  it("el menú Exportar baja el CSV con lo que se ve en pantalla, con números como números y fórmulas neutralizadas", async () => {
     render(<Demo />);
-    fireEvent.click(screen.getByRole("button", { name: "Exportar CSV" }));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "CSV" }));
     await waitFor(() => expect(saved).toHaveLength(1));
     expect(saved[0]!.name).toMatch(/^hacienda - potreros-\d{4}-\d{2}-\d{2}\.csv$/);
     const csv = (await readText(saved[0]!.blob)).replace(/^\uFEFF/, "");
     expect(csv).toBe("Potrero,Cabezas,Superficie\r\nNorte,1250,12.5\r\n'=Sur,0981 123,—");
   });
 
-  it("el botón Excel genera un .xlsx", async () => {
+  it("el menú Exportar genera un .xlsx", async () => {
     render(<Demo />);
-    fireEvent.click(screen.getByRole("button", { name: "Exportar Excel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Excel (.xlsx)" }));
     // La librería de Excel se carga con import dinámico: en CI puede tardar más que el segundo por defecto de waitFor
     await waitFor(() => expect(saved).toHaveLength(1), { timeout: 15_000 });
     expect(saved[0]!.name).toMatch(/\.xlsx$/);

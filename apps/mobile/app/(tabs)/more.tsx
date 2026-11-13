@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, ScrollView, StyleSheet, Switch, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import { getLocale, LIMITS, LOCALES, LOCALE_NAMES, t, type MessageKey } from "@yvy/shared";
 import { FEATURES } from "../../src/lib/features";
@@ -17,8 +17,8 @@ import { fitsBudget } from "../../src/lib/offlinePlan";
 import { localChanged, stopAutoSync, syncNow, syncNowMobileData, useSyncStatus } from "../../src/lib/sync";
 import { canCount } from "../../src/lib/stock-count";
 import { useLocal } from "../../src/lib/useLocal";
-import { Button, Row, s as k, Text } from "../../src/ui/kit";
-import { C, F, T } from "../../src/ui/theme";
+import { Button, Row, SectionHeader, SwitchRow, s as k, Text } from "../../src/ui/kit";
+import { C, T } from "../../src/ui/theme";
 import { setReadOnly, useReadOnly } from "../../src/lib/readOnly";
 
 export default function More() {
@@ -96,20 +96,33 @@ export default function More() {
       ]),
     );
 
+  const [labsOpen, setLabsOpen] = useState(false);
+  const labs: { title: string; hint: string; to: string }[] = [
+    { title: t("app.labsRustTitle"), hint: t("app.labsRustRow"), to: "/labs/roya" },
+    { title: t("app.labsBugsTitle"), hint: t("app.labsBugsRow"), to: "/labs/chinches" },
+    { title: t("app.labsGrassTitle"), hint: t("app.labsGrassRow"), to: "/labs/pasto" },
+    { title: t("app.labsCowTitle"), hint: t("app.labsCowRow"), to: "/labs/vaca" },
+    { title: t("app.labsVoiceTitle"), hint: t("app.labsVoiceRow"), to: "/labs/voz" },
+    { title: t("app.labsWeedIdTitle"), hint: t("app.labsWeedIdRow"), to: "/labs/malezas" },
+    { title: t("app.labsTagTitle"), hint: t("app.labsTagRow"), to: "/labs/caravana" },
+    { title: t("app.labsStageTitle"), hint: t("app.labsStageRow"), to: "/labs/fenologia" },
+    { title: t("app.labsTranslateTitle"), hint: t("app.labsTranslateRow"), to: "/labs/guarani" },
+  ];
+
   return (
     <ScrollView style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 120 }]}>
       <Text style={T.small}>{session?.organization.name}</Text>
       <Text style={[T.display, { marginTop: 2 }]}>{session?.user.fullName}</Text>
 
+      <SectionHeader title={t("app.sectionField")} />
       <Row title={t("app.emergencyTitle")} subtitle={t("app.emergencyRowHint")} onPress={() => router.push("/emergency")} />
+      <Row title={t("app.walkRow")} subtitle={t("app.walkRowHint")} onPress={() => router.push("/walk")} />
+      <Row title={t("app.animalsRow")} subtitle={t("app.animalsRowHint")} onPress={() => router.push("/animals")} />
+      {canCount(session?.organization.role) && <Row title={t("ui.countRow")} subtitle={t("ui.countRowHint")} onPress={() => router.push("/stock-count")} />}
 
-      <Text style={st.section}>{t("app.syncTitle")}</Text>
+      <SectionHeader title={t("app.sectionTools")} />
       <Row title={t("app.lastSyncAt", { when: lastSync })} subtitle={sync.pending > 0 ? t("app.pendingCount", { n: sync.pending }) : t("app.allSent")} onPress={syncNow} />
       <Outbox items={outbox} plotName={(id) => plots.find((p) => p.id === id)?.name} wifiOnly={wifiOnly} error={sync.error} stuck={stuck} />
-      <View style={st.switchRow}>
-        <Text style={[T.body, { flex: 1 }]}>{t("app.photosWifiOnly")}</Text>
-        <Switch value={wifiOnly} accessibilityLabel={t("app.photosWifiOnly")} onValueChange={(v) => (setWifiOnly(v), getDb().setKv("photos_wifi_only", v ? "1" : "0"))} trackColor={{ true: C.accion }} />
-      </View>
       {rejected.map((r) => (
         <View key={r.mutationId} style={st.rejected}>
           <Text style={[T.bodyMedium, { color: C.peligro }]}>{t("app.rejected")}</Text>
@@ -117,8 +130,7 @@ export default function More() {
           <Button kind="text" title={t("app.dismiss")} onPress={() => (getDb().dismissRejected(r.mutationId), localChanged())} style={{ alignSelf: "flex-start", marginTop: 4 }} />
         </View>
       ))}
-
-      <Text style={st.section}>{t("app.offlinePack")}</Text>
+      <SwitchRow title={t("app.photosWifiOnly")} value={wifiOnly} onValueChange={(v) => (setWifiOnly(v), getDb().setKv("photos_wifi_only", v ? "1" : "0"))} />
       {farms.map((f) => {
         const p = packStatus(f.id);
         const pct = progress[f.id];
@@ -129,9 +141,9 @@ export default function More() {
             : pct !== undefined
               ? `${Math.round(pct * 100)} %`
               : t("app.offlinePackSize", { mb: (p.missingBytes / 1e6).toLocaleString("es-PY", { maximumFractionDigits: 1 }) });
-        return <Row key={f.id} title={f.name} subtitle={subtitle} onPress={p.layers.length && !p.upToDate && pct === undefined ? () => download(f.id) : undefined} right={p.layers.length && !p.upToDate && pct === undefined ? <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{t("app.download")}</Text> : undefined} />;
+        const canDownload = p.layers.length > 0 && !p.upToDate && pct === undefined;
+        return <Row key={f.id} title={`${t("app.offlinePack")}: ${f.name}`} subtitle={subtitle} onPress={canDownload ? () => download(f.id) : undefined} right={canDownload ? <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{t("app.download")}</Text> : undefined} />;
       })}
-
       {farms.length > 1 && plan.farms.length > 0 && (
         <Button
           kind="secondary"
@@ -144,37 +156,21 @@ export default function More() {
       {plan.overBudget.length > 0 && (
         <Text style={[T.small, { paddingVertical: 8 }]}>{t("app.offlineOverLimitFarms", { names: plan.overBudget.map((f) => f.name).join(", "), mb: Math.round(LIMITS.offline.maxMapBytes / 1e6) })}</Text>
       )}
-      {farms.length > 1 && plan.farms.length === 0 && plan.overBudget.length === 0 && plan.withoutImagery < farms.length && <Text style={[T.small, { paddingVertical: 8 }]}>{t("app.offlineAllReady")}</Text>}
-
       <Storage />
 
-      {isOwnerMode(session?.organization.role) && (
-        <View style={st.switchRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={T.body}>{t("app.readOnlySwitch")}</Text>
-            <Text style={T.small}>{t("app.readOnlyHint")}</Text>
-          </View>
-          <Switch value={readOnly} accessibilityLabel={t("app.readOnlySwitch")} onValueChange={setReadOnly} trackColor={{ true: C.accion }} />
-        </View>
-      )}
-
-      <View style={st.switchRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={T.body}>{t("app.remindersSwitch")}</Text>
-          <Text style={T.small}>{t("app.remindersHint")}</Text>
-        </View>
-        <Switch
-          value={reminders}
-          accessibilityLabel={t("app.remindersSwitch")}
-          onValueChange={async (v) => {
-            const on = await setRemindersEnabled(v);
-            setReminders(on);
-            if (v && !on) Alert.alert(t("app.remindersDenied"));
-          }}
-          trackColor={{ true: C.accion }}
-        />
-      </View>
-
+      <SectionHeader title={t("app.sectionAccount")} />
+      <Row title={t("app.notifRow")} subtitle={t("app.notifRowHint")} onPress={() => router.push("/notifications")} />
+      <SwitchRow
+        title={t("app.remindersSwitch")}
+        hint={t("app.remindersHint")}
+        value={reminders}
+        onValueChange={async (v) => {
+          const on = await setRemindersEnabled(v);
+          setReminders(on);
+          if (v && !on) Alert.alert(t("app.remindersDenied"));
+        }}
+      />
+      {isOwnerMode(session?.organization.role) && <SwitchRow title={t("app.readOnlySwitch")} hint={t("app.readOnlyHint")} value={readOnly} onValueChange={setReadOnly} />}
       <Row
         title={t("app.language")}
         subtitle={LOCALE_NAMES[getLocale()]}
@@ -192,29 +188,16 @@ export default function More() {
           )
         }
       />
-
-      <Row title={t("app.walkRow")} subtitle={t("app.walkRowHint")} onPress={() => router.push("/walk")} />
-      <Row title={t("app.animalsRow")} subtitle={t("app.animalsRowHint")} onPress={() => router.push("/animals")} />
-      {canCount(session?.organization.role) && <Row title={t("ui.countRow")} subtitle={t("ui.countRowHint")} onPress={() => router.push("/stock-count")} />}
-      <Row title={t("app.notifRow")} subtitle={t("app.notifRowHint")} onPress={() => router.push("/notifications")} />
+      <Row title={t("app.switchUser")} subtitle={t("app.switchUserHint")} onPress={switchUser} />
+      <Button kind="danger" title={t("app.logout")} onPress={logout} style={{ marginTop: 16 }} />
 
       {FEATURES.labs && (
         <>
-          <Text style={st.section}>{t("app.labsSection")}</Text>
-          <Row title={t("app.labsRustTitle")} subtitle={t("app.labsRustRow")} onPress={() => router.push("/labs/roya")} />
-          <Row title={t("app.labsBugsTitle")} subtitle={t("app.labsBugsRow")} onPress={() => router.push("/labs/chinches")} />
-          <Row title={t("app.labsGrassTitle")} subtitle={t("app.labsGrassRow")} onPress={() => router.push("/labs/pasto")} />
-          <Row title={t("app.labsCowTitle")} subtitle={t("app.labsCowRow")} onPress={() => router.push("/labs/vaca")} />
-          <Row title={t("app.labsVoiceTitle")} subtitle={t("app.labsVoiceRow")} onPress={() => router.push("/labs/voz")} />
-          <Row title={t("app.labsWeedIdTitle")} subtitle={t("app.labsWeedIdRow")} onPress={() => router.push("/labs/malezas")} />
-          <Row title={t("app.labsTagTitle")} subtitle={t("app.labsTagRow")} onPress={() => router.push("/labs/caravana")} />
-          <Row title={t("app.labsStageTitle")} subtitle={t("app.labsStageRow")} onPress={() => router.push("/labs/fenologia")} />
-          <Row title={t("app.labsTranslateTitle")} subtitle={t("app.labsTranslateRow")} onPress={() => router.push("/labs/guarani")} />
+          <SectionHeader title={t("app.labsSection")} action={labsOpen ? t("app.labsHide") : t("app.labsShow")} onAction={() => setLabsOpen((o) => !o)} />
+          {labsOpen && labs.map((l) => <Row key={l.to} title={l.title} subtitle={l.hint} onPress={() => router.push(l.to as never)} />)}
         </>
       )}
 
-      <Row title={t("app.switchUser")} subtitle={t("app.switchUserHint")} onPress={switchUser} />
-      <Button kind="danger" title={t("app.logout")} onPress={logout} style={{ marginTop: 32 }} />
       <Text style={[T.small, { marginTop: 28, color: C.tinta3 }]}>
         {t("attribution.metNorway")} · {t("attribution.copernicus")} · {t("attribution.chirps")} · {t("attribution.firms")}
       </Text>
@@ -249,9 +232,7 @@ function Outbox({
   const label = (i: OutboxItem) =>
     i.what === "record_delete" ? t("app.outboxRecordDelete") : i.what === "task" ? t("app.outboxTask") : i.what === "poi" ? t("app.outboxPoi") : i.what === "plot" ? t("app.outboxPlot") : i.recordKind ? t(`recordKinds.${i.recordKind}` as MessageKey) : t("app.outboxPhotosOnly");
   return (
-    <View style={{ marginTop: 8 }}>
-      <Text style={st.sub}>{t("app.outboxTitle")}</Text>
-      {items.length === 0 && stuck.n === 0 && <Text style={[T.small, { paddingVertical: 8 }]}>{t("app.outboxEmpty")}</Text>}
+    <View>
       {items.length > 0 && (
         <Text style={[T.smallMedium, { paddingVertical: 6 }]}>
           {photoBytes > 0 ? t("app.outboxSummary", { n: items.length, size: size(photoBytes) }) : t("app.outboxSummaryNoPhotos", { n: items.length })}
@@ -297,7 +278,6 @@ function Storage() {
     void refresh();
   }, [version, refresh]);
   if (!usage) return null;
-  const line = (n: number, bytes: number) => (n === 0 && bytes === 0 ? t("app.storageNone") : t("app.storageCount", { n, size: size(bytes) }));
   const free = () =>
     Alert.alert(t("app.storageDeleteTitle"), t("app.storageDeleteBody", { size: size(usage.reclaimable.bytes) }), [
       { text: t("ui.cancel"), style: "cancel" },
@@ -313,28 +293,20 @@ function Storage() {
         },
       },
     ]);
+  const parts = [
+    usage.photos.n > 0 ? `${t("app.storagePhotos")} ${size(usage.photos.bytes)}` : null,
+    usage.voice.n > 0 ? `${t("app.storageVoice")} ${size(usage.voice.bytes)}` : null,
+    usage.maps.n > 0 ? `${t("app.storageMaps")} ${size(usage.maps.bytes)}` : null,
+    `${t("app.storageDb")} ${size(usage.database)}`,
+  ].filter(Boolean);
   return (
     <>
-      <Text style={st.section}>{t("app.storageTitle")}</Text>
-      <Row title={t("app.storagePhotos")} subtitle={line(usage.photos.n, usage.photos.bytes)} />
-      <Row title={t("app.storageVoice")} subtitle={line(usage.voice.n, usage.voice.bytes)} />
-      <Row title={t("app.storageMaps")} subtitle={line(usage.maps.n, usage.maps.bytes)} />
-      <Row title={t("app.storageDb")} subtitle={size(usage.database)} />
-      <Button
-        kind="secondary"
-        title={usage.reclaimable.n > 0 ? t("app.storageDelete", { size: size(usage.reclaimable.bytes) }) : t("app.storageDeleteNothing")}
-        disabled={usage.reclaimable.n === 0 || busy}
-        loading={busy}
-        onPress={free}
-        style={{ marginTop: 12 }}
-      />
+      <Row title={t("app.storageTitle")} subtitle={parts.join(" · ")} />
+      {usage.reclaimable.n > 0 && <Button kind="secondary" title={t("app.storageDelete", { size: size(usage.reclaimable.bytes) })} disabled={busy} loading={busy} onPress={free} style={{ marginTop: 12 }} />}
     </>
   );
 }
 
 const st = StyleSheet.create({
-  sub: { fontFamily: F.sansMedium, fontSize: 15, color: C.tinta2, marginTop: 8 },
-  section: { fontFamily: F.sansSemi, fontSize: 15, color: C.tinta2, marginTop: 32, marginBottom: 4 },
   rejected: { backgroundColor: C.peligroSuave, borderRadius: 12, padding: 16, marginTop: 12 },
-  switchRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.linea },
 });

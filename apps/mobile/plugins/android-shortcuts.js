@@ -5,7 +5,7 @@
  */
 const fs = require("fs");
 const path = require("path");
-const { AndroidConfig, withAndroidManifest, withDangerousMod, withStringsXml } = require("@expo/config-plugins");
+const { AndroidConfig, withAndroidManifest, withDangerousMod, withStringsXml } = require("expo/config-plugins");
 const { shortcutsXml, rainKeys } = require("./shortcuts-xml");
 
 const MAIN_ACTIVITY = ".MainActivity";

@@ -101,6 +101,7 @@ export function DateInput({
       autoComplete="off"
       placeholder={t("ui.datePlaceholder")}
       maxLength={10}
+      size={10}
       value={text}
       onChange={(e) => {
         const next = maskDate(e.target.value);
@@ -112,7 +113,7 @@ export function DateInput({
         const target = { value: v, name: e.target.name, id: e.target.id } as HTMLInputElement;
         onChange?.({ ...e, target, currentTarget: target });
       }}
-      className={`${inputCls} w-36 ${className}`}
+      className={`${inputCls} min-w-0 !px-2.5 !text-sm ${className}`}
     />
   );
 }

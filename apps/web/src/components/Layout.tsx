@@ -92,12 +92,12 @@ export function Layout() {
       onLogout={logout}
     />
   );
-  const link = (n: NavItem, cls: (active: boolean) => string) => {
+  const link = (n: NavItem, cls: (active: boolean) => string, tab = false) => {
     const active = n.to === "/" ? onMap : n.to === path || path.startsWith(`${n.to}/`);
     const body = (
       <>
         {t(n.label)}
-        {n.to === "/avisos" && nAlerts > 0 && <span className="num ml-auto font-semibold text-peligro">{nAlerts}</span>}
+        {n.to === "/avisos" && nAlerts > 0 && <span className={`num font-semibold text-peligro ${tab ? "ml-1" : "ml-auto"}`}>{nAlerts}</span>}
       </>
     );
     return n.to === "/" && lastFarm ? (
@@ -115,7 +115,7 @@ export function Layout() {
   const sheetCls = (active: boolean) =>
     `flex h-12 items-center rounded-md px-3 text-[15px] ${active ? "bg-surco/[0.07] font-medium text-surco" : "text-surco"}`;
   const tabCls = (active: boolean) =>
-    `flex h-14 flex-1 items-center justify-center gap-1.5 border-t-2 px-1 text-xs ${active ? "border-surco font-medium text-surco" : "border-transparent text-tinta-2"}`;
+    `flex h-14 min-w-0 flex-1 basis-0 items-center justify-center gap-1.5 border-t-2 px-1 text-xs ${active ? "border-surco font-medium text-surco" : "border-transparent text-tinta-2"}`;
 
   return (
     <div className="flex h-full flex-col lg:flex-row print:block print:h-auto">
@@ -205,7 +205,7 @@ export function Layout() {
           <nav aria-label={t("ui.navMain")} className="flex shrink-0 border-t border-linea bg-lino pb-[env(safe-area-inset-bottom)] print:hidden">
             {MOBILE_TABS.map((to) => {
               const n = nav.main.flatMap((g) => g.items).find((i) => i.to === to);
-              return n ? link(n, tabCls) : null;
+              return n ? link(n, tabCls, true) : null;
             })}
             <button
               type="button"

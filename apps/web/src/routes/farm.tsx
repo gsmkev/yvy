@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isFieldRole, isWaterPoi, LIMITS, stalePlots, staleDaysOrDefault } from "@yvy/shared";
-import { Link, useParams, useSearch } from "@tanstack/react-router";
+import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LineString, MultiPolygon, Polygon } from "geojson";
-import { MapPinPlus, PenLine, Upload, X } from "lucide-react";
+import { X } from "lucide-react";
 import { areaHa, bboxOf, validatePolygon, type Area } from "@yvy/geo";
 import { BRAND, FERT_LAYERS, FERT_LAYER_PARAM, FERT_STYLE, INDEX_KINDS, NDMI_RAMP, NDVI_RAMP, POI_KINDS, SOIL_RANGES, type FertLayerKey } from "@yvy/shared";
 import { CustomLayersControl, type ActiveLayers } from "../components/CustomLayersControl";
@@ -33,7 +33,8 @@ import { ProductsPanel } from "../components/ProductsPanel";
 import { RecordsList } from "../components/RecordsList";
 import { SeasonsPanel } from "../components/SeasonsPanel";
 import { TasksPanel } from "../components/TasksPanel";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Skeleton, Spinner, Tabs, toast } from "../components/ui";
+import { ActionMenu, ExportMenu } from "../components/menus";
+import { Button, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Skeleton, Spinner, Tabs, toast } from "../components/ui";
 import { del, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
 import { download, plotsToGeoJson, plotsToKml, plotsToShapefileZip } from "../lib/exports";
@@ -56,6 +57,7 @@ const TABS: Tab[] = ["plots", "seasons", "products", "records", "tasks", "climat
 
 export function FarmPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId" });
+  const navigate = useNavigate();
   const farm = useFarm(farmId);
   const lines = useFarmLines(farmId);
   const farms = useFarms();
@@ -80,8 +82,8 @@ export function FarmPage() {
   };
   const mapBox = useRef<HTMLDivElement>(null);
   const mapApi = useRef<{ zoom: (dir: 1 | -1) => void } | null>(null);
-  // El panel de capas arranca abierto en escritorio y cerrado en el celular, donde taparía el mapa
-  const [layersOpen, setLayersOpen] = useState(() => window.matchMedia?.("(min-width: 1024px)").matches ?? false);
+  // El panel de capas arranca cerrado: el mapa es lo primero que se ve
+  const [layersOpen, setLayersOpen] = useState(false);
   // M-05: dividir (dibuja una línea sobre el lote) y unir (se elige el lote contiguo en el mapa)
   const [splitting, setSplitting] = useState<string | null>(null);
   const [splitLine, setSplitLine] = useState<LineString | null>(null);
@@ -683,32 +685,75 @@ export function FarmPage() {
             />
           )}
         </div>
-        <header>
-          <div className="flex items-baseline justify-between gap-3">
-            <h1 className="text-[28px] leading-tight">{d.farm.name}</h1>
-            <span className="flex shrink-0 gap-4 text-sm print:hidden">
-              <button
-                type="button"
-                onClick={printPage}
-                className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
-              >
-                {t("ui.print")}
-              </button>
-              {(farms.data?.length ?? 0) > 1 && (
-                <Link to="/" className="text-tinta-2 underline-offset-4 hover:text-surco hover:underline">
-                  {t("ui.allFarms")}
-                </Link>
-              )}
-              {canEdit && (
-                <Link
-                  to="/estancias/nueva"
-                  className="text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
-                >
-                  {t("ui.newFarm")}
-                </Link>
-              )}
-            </span>
-          </div>
+        <div>
+          <PageHeader
+            title={d.farm.name}
+            stacked
+            titleAction={
+              <ActionMenu
+                icon="chevron"
+                label={t("ui.farmSwitch")}
+                items={[
+                  (farms.data?.length ?? 0) > 1 && { label: t("ui.allFarms"), onSelect: () => navigate({ to: "/" }) },
+                  ...(farms.data ?? []).map((f) => ({
+                    label: f.name,
+                    disabled: f.id === farmId,
+                    onSelect: () => navigate({ to: "/estancias/$farmId", params: { farmId: f.id }, search: {} }),
+                  })),
+                  canEdit && { label: t("ui.newFarm"), onSelect: () => navigate({ to: "/estancias/nueva" }) },
+                ]}
+              />
+            }
+            primary={
+              canEdit && (
+                <Button variant="primary" onClick={() => setMode(mode === "draw" ? "none" : "draw")}>
+                  {t("ui.newPlot")}
+                </Button>
+              )
+            }
+            menu={
+              <>
+                <ActionMenu
+                  label={t("ui.moreActions")}
+                  items={[
+                    canEdit && { label: t("ui.importShort"), onSelect: () => setMode("import") },
+                    canEdit && { label: t("ui.addPoi"), onSelect: () => setMode(mode === "poi" ? "none" : "poi") },
+                    canEdit && {
+                      label: t("ui.tabReport"),
+                      onSelect: () => navigate({ to: "/estancias/$farmId/parte", params: { farmId }, search: { desde: undefined, hasta: undefined } }),
+                    },
+                    { label: t("ui.print"), onSelect: () => void printPage() },
+                  ]}
+                />
+                {canEdit && (
+                  <ExportMenu
+                    formats={[
+                      {
+                        label: t("ui.exportFormatKml"),
+                        run: () =>
+                          download(
+                            new Blob([plotsToKml(d.plots, d.farm.name)], { type: "application/vnd.google-earth.kml+xml" }),
+                            `${d.farm.name}.kml`,
+                          ),
+                      },
+                      {
+                        label: t("ui.exportFormatGeojson"),
+                        run: () =>
+                          download(
+                            new Blob([plotsToGeoJson(d.plots, d.pois)], { type: "application/geo+json" }),
+                            `${d.farm.name}.geojson`,
+                          ),
+                      },
+                      {
+                        label: t("ui.exportFormatShapefile"),
+                        run: async () => download(await plotsToShapefileZip(d.plots, d.pois), `${d.farm.name}-shapefile.zip`),
+                      },
+                    ]}
+                  />
+                )}
+              </>
+            }
+          />
           <p className="num mt-1 text-sm text-tinta-2">
             {[d.farm.district, d.farm.department].filter(Boolean).join(", ")}
             {(d.farm.district || d.farm.department) && " · "}
@@ -716,52 +761,7 @@ export function FarmPage() {
             {cropHa > 0 && ` · ${fmtHa(cropHa)} ${t("ui.crop").toLowerCase()}`}
             {pastureHa > 0 && ` · ${fmtHa(pastureHa)} ${t("ui.pasture").toLowerCase()}`}
           </p>
-        </header>
-
-        {canEdit && (
-          <div className="flex flex-wrap items-center gap-2 border-b border-linea pb-5 print:hidden">
-            <Button variant="primary" icon={PenLine} onClick={() => setMode(mode === "draw" ? "none" : "draw")}>
-              {t("ui.newPlot")}
-            </Button>
-            <Button icon={Upload} onClick={() => setMode("import")}>
-              {t("ui.importShort")}
-            </Button>
-            <Button icon={MapPinPlus} onClick={() => setMode(mode === "poi" ? "none" : "poi")}>
-              {t("ui.addPoi")}
-            </Button>
-            <Link to="/estancias/$farmId/parte" params={{ farmId }} search={{ desde: undefined, hasta: undefined }}>
-              <Button variant="quiet">{t("ui.tabReport")}</Button>
-            </Link>
-            <Button
-              variant="quiet"
-              onClick={() =>
-                download(
-                  new Blob([plotsToKml(d.plots, d.farm.name)], { type: "application/vnd.google-earth.kml+xml" }),
-                  `${d.farm.name}.kml`,
-                )
-              }
-            >
-              KML
-            </Button>
-            <Button
-              variant="quiet"
-              onClick={() =>
-                download(
-                  new Blob([plotsToGeoJson(d.plots, d.pois)], { type: "application/geo+json" }),
-                  `${d.farm.name}.geojson`,
-                )
-              }
-            >
-              GeoJSON
-            </Button>
-            <Button
-              variant="quiet"
-              onClick={async () => download(await plotsToShapefileZip(d.plots, d.pois), `${d.farm.name}-shapefile.zip`)}
-            >
-              Shapefile
-            </Button>
-          </div>
-        )}
+        </div>
 
         <Tabs<Tab>
           value={tab}
@@ -814,7 +814,18 @@ export function FarmPage() {
               }}
             />
           ) : d.plots.length === 0 ? (
-            <Empty title={t("ui.noPlots")} />
+            <EmptyState
+              title={t("ui.noPlotsTitle")}
+              action={
+                canEdit && (
+                  <Button variant="primary" onClick={() => setMode("draw")}>
+                    {t("ui.newPlot")}
+                  </Button>
+                )
+              }
+            >
+              {t("ui.noPlotsHelp")}
+            </EmptyState>
           ) : (
             <>
             <table className="hidden w-full text-sm print:table">

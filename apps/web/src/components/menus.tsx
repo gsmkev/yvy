@@ -23,6 +23,7 @@ export function ActionMenu({
   align = "right",
   className = "",
   quiet = false,
+  icon = "dots",
 }: {
   /** Nombre accesible y tooltip del botón. */
   label: string;
@@ -35,6 +36,8 @@ export function ActionMenu({
   className?: string;
   /** Botón sin borde (barras de tabla). */
   quiet?: boolean;
+  /** Ícono del botón cuando no tiene texto: tres puntos (más acciones) o flecha (elegir de una lista). */
+  icon?: "dots" | "chevron";
 }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -115,6 +118,8 @@ export function ActionMenu({
             {text}
             <ChevronDown size={14} aria-hidden />
           </>
+        ) : icon === "chevron" ? (
+          <ChevronDown size={18} aria-hidden />
         ) : (
           <MoreHorizontal size={18} aria-hidden />
         )}
@@ -126,11 +131,11 @@ export function ActionMenu({
           role="menu"
           aria-label={label}
           onKeyDown={onMenuKey}
-          className={`absolute z-40 min-w-48 overflow-hidden rounded-md border border-linea bg-papel py-1 shadow-lg ${up ? "bottom-full mb-1" : "top-full mt-1"} ${align === "right" ? "right-0" : "left-0"}`}
+          className={`absolute z-40 max-h-80 min-w-48 overflow-y-auto rounded-md border border-linea bg-papel py-1 shadow-lg ${up ? "bottom-full mb-1" : "top-full mt-1"} ${align === "right" ? "right-0" : "left-0"}`}
         >
-          {list.map((it) => (
+          {list.map((it, i) => (
             <button
-              key={it.label}
+              key={`${i}-${it.label}`}
               type="button"
               role="menuitem"
               tabIndex={-1}

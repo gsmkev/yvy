@@ -35,7 +35,8 @@ test("dueño: registro, estancia, importación de 20 lotes y empleado", async ({
   await page.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByRole("heading", { name: "Estancia E2E" })).toBeVisible();
 
-  await page.getByRole("button", { name: /Importar/ }).click();
+  await page.getByRole("button", { name: "Más acciones" }).click();
+  await page.getByRole("menuitem", { name: "Importar" }).click();
   await page.getByTestId("import-input").setInputFiles("e2e/lotes.kml");
   await expect(page.getByText("Encontramos 20 polígonos")).toBeVisible();
   await page.getByRole("button", { name: "Importar 20 lotes" }).click();

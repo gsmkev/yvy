@@ -497,28 +497,38 @@ export function Tabs<T extends string>({
 /** Encabezado de página: título en una línea (truncado, completo en el tooltip), un primario y un menú. */
 export function PageHeader({
   title,
+  titleAction,
   primary,
   menu,
+  stacked = false,
   className = "",
 }: {
   title: string;
+  /** Junto al título: por ejemplo el menú para cambiar de estancia. */
+  titleAction?: ReactNode;
   /** La acción principal de la pantalla: un solo botón relleno. */
   primary?: ReactNode;
   /** Lo demás: `ActionMenu` y `ExportMenu`. */
   menu?: ReactNode;
+  /** Las acciones van debajo del título (paneles angostos, donde no entran al lado). */
+  stacked?: boolean;
   className?: string;
 }) {
+  const actions = (primary || menu) && (
+    <div className="flex shrink-0 items-center gap-2 print:hidden">
+      {primary}
+      {menu}
+    </div>
+  );
   return (
-    <header className={`flex min-w-0 items-center gap-3 ${className}`}>
-      <h1 title={title} className="min-w-0 flex-1 truncate text-[28px] leading-8">
-        {title}
-      </h1>
-      {(primary || menu) && (
-        <div className="flex shrink-0 items-center gap-2 print:hidden">
-          {primary}
-          {menu}
-        </div>
-      )}
+    <header className={`flex min-w-0 gap-3 ${stacked ? "flex-col items-stretch" : "items-center"} ${className}`}>
+      <div className="flex min-w-0 flex-1 items-center gap-1">
+        <h1 title={title} className="min-w-0 truncate text-[28px] leading-8">
+          {title}
+        </h1>
+        {titleAction && <div className="shrink-0 print:hidden">{titleAction}</div>}
+      </div>
+      {actions}
     </header>
   );
 }

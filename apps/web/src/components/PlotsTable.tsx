@@ -6,7 +6,6 @@ import { t } from "../lib/i18n";
 import { defaultDir, sortPlots, type SortDir, type SortKey } from "../lib/plotsSort";
 import { Input } from "./ui";
 import { ndviColor, vigorDrop } from "../lib/vigor";
-import { ExportableTable } from "./ExportableTable";
 
 /** Muestra del color de la rampa NDVI junto al valor; sin pasadas procesadas, un guion. */
 export function Vigor({ value }: { value: number | null }) {
@@ -89,7 +88,6 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
         className="mb-3 w-full"
       />
       {rows.length === 0 && <p className="py-4 text-sm text-tinta-2">{t("ui.noPlotMatch")}</p>}
-      <ExportableTable name="lotes">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-xs text-tinta-2">
@@ -125,7 +123,6 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
             ))}
           </tbody>
         </table>
-      </ExportableTable>
     </>
   );
 }

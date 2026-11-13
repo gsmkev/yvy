@@ -48,7 +48,7 @@ import { sprayPrefill } from "../../src/lib/sprayHours";
 import { showToast, toastSaved } from "../../src/lib/toast";
 import { seedCounts } from "../../src/lib/counter";
 import { HerdCounter } from "../../src/ui/Counter";
-import { Button, RadioGroup, Row, s as k, Text, TextInput } from "../../src/ui/kit";
+import { Button, RadioGroup, Row, ScreenBody, s as k, Text, TextInput } from "../../src/ui/kit";
 import { Stations } from "../../src/ui/Stations";
 import { C, F, GUTTER, RADIUS, T, TOUCH } from "../../src/ui/theme";
 import { gpsHintText, useGpsStage } from "../../src/lib/gpsHint";
@@ -330,11 +330,10 @@ function Annotate() {
         {header}
         <ScrollView contentContainerStyle={k.pad} keyboardShouldPersistTaps="handled">
           <Text style={T.title}>{t("app.whichPlot")}</Text>
-          <Text style={[T.small, { marginTop: 6, marginBottom: (fix === "searching" && gpsHint) || !fix ? 6 : 20 }]}>
+          <Text style={[T.small, { marginTop: 6, marginBottom: fix === "searching" && gpsHint ? 6 : 20 }]}>
             {fix === "searching" ? t("app.gpsSearching") : guesses.length ? t("app.detectedByGps") : fix ? t("app.noPlotNearby") : t("app.gpsNone")}
           </Text>
           {fix === "searching" && gpsHint && <Text style={[T.small, { marginBottom: 20 }]}>{gpsHint}</Text>}
-          {!fix && <Text style={[T.small, { marginBottom: 20 }]}>{t("app.gpsNoneHint")}</Text>}
           {plots.length > SEARCH_FROM && (
             <TextInput
               value={query}
@@ -604,46 +603,33 @@ function Annotate() {
       <View style={k.screen}>
         {header}
         <Progress i={stationMode ? 1 : steps.length} n={stationMode ? 2 : steps.length + 1} />
-        <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]}>
+        <ScreenBody
+          footer={
+            <>
+              {(missingPhoto || missingLocation) && (
+                <Text style={T.small}>
+                  {missingPhoto && missingLocation ? t("app.taskNeedsPhotoAndLocation") : missingPhoto ? t("app.taskNeedsPhoto") : t("app.taskNeedsLocation")}
+                </Text>
+              )}
+              {photos.length < maxNewPhotos && <Button kind="secondary" title={t("app.takePhoto")} onPress={() => setCamera(true)} />}
+              <Button big disabled={missingPhoto || missingLocation} title={editing ? t("app.recordSave") : photos.length || voice ? t("app.done") : t("app.skipPhoto")} onPress={save} />
+            </>
+          }
+        >
           <Text style={T.title}>{t("app.addPhoto")}</Text>
-          <Text style={[T.small, { marginTop: 6 }]}>{t("app.photosCount", { n: photos.length + existingPhotos, max: LIMITS.photos.maxPerRecord })}</Text>
+          {photos.length + existingPhotos > 0 && <Text style={[T.small, { marginTop: 6 }]}>{t("app.photosCount", { n: photos.length + existingPhotos, max: LIMITS.photos.maxPerRecord })}</Text>}
           <View style={st.photos}>
             {photos.map((p, i) => (
               <View key={p.thumbUri}>
                 <Image source={{ uri: p.thumbUri }} style={st.thumb} />
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t("app.photoDiscard")}
-                  onPress={() => removePhoto(i)}
-                  style={st.thumbX}
-                  hitSlop={6}
-                >
+                <Pressable accessibilityRole="button" accessibilityLabel={t("app.photoDiscard")} onPress={() => removePhoto(i)} style={st.thumbX} hitSlop={6}>
                   <X size={18} color={C.blanco} />
                 </Pressable>
               </View>
             ))}
           </View>
           {!hasVoice && <VoiceRecorder value={voice} onChange={setVoice} />}
-          <View style={{ flex: 1 }} />
-          {photos.length < maxNewPhotos && (
-            <Button kind="secondary" big title={t("app.takePhoto")} onPress={() => setCamera(true)} style={{ marginBottom: 12 }} />
-          )}
-          {(missingPhoto || missingLocation) && (
-            <Text style={[T.small, { marginBottom: 10 }]}>
-              {missingPhoto && missingLocation
-                ? t("app.taskNeedsPhotoAndLocation")
-                : missingPhoto
-                  ? t("app.taskNeedsPhoto")
-                  : t("app.taskNeedsLocation")}
-            </Text>
-          )}
-          <Button
-            big
-            disabled={missingPhoto || missingLocation}
-            title={editing ? t("app.recordSave") : photos.length || voice ? t("app.done") : t("app.skipPhoto")}
-            onPress={save}
-          />
-        </ScrollView>
+        </ScreenBody>
       </View>
     );
   }
@@ -663,15 +649,18 @@ function plotSubtitle(p: Plot) {
   const last = getDb().lastVisitByPlot().get(p.id);
   if (!last) return t("app.noVisits");
   const days = Math.floor((Date.now() - last) / 86_400_000);
-  return days === 0 ? t("app.lastVisitToday") : t("app.lastVisit", { days });
+  return days === 0 ? t("app.lastVisitToday") : days === 1 ? t("app.lastVisitYesterday") : t("app.lastVisit", { days });
 }
 
 function Progress({ i, n }: { i: number; n: number }) {
   return (
-    <View style={st.progress} accessibilityLabel={`${i + 1} / ${n}`}>
-      {Array.from({ length: n }, (_, j) => (
-        <View key={j} style={[st.progressDot, j <= i && { backgroundColor: C.accion }]} />
-      ))}
+    <View style={st.progressWrap} accessibilityLabel={t("app.stepOf", { i: i + 1, n })}>
+      <View style={st.progress}>
+        {Array.from({ length: n }, (_, j) => (
+          <View key={j} style={[st.progressDot, j <= i && { backgroundColor: C.accion }]} />
+        ))}
+      </View>
+      <Text style={[T.small, { marginTop: 6 }]}>{t("app.stepOf", { i: i + 1, n })}</Text>
     </View>
   );
 }
@@ -751,14 +740,16 @@ function StepScreen({ step, value, answers, prefilled, plotAreaHa, seasons, onAn
   }
   if (step.kind === "yesno") {
     return (
-      <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]}>
+      <ScreenBody
+        footer={
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <Button big kind="secondary" title={t("app.no")} onPress={() => onAnswer(false)} style={{ flex: 1 }} />
+            <Button big title={t("app.yes")} onPress={() => onAnswer(true)} style={{ flex: 1 }} />
+          </View>
+        }
+      >
         <Text style={T.title}>{tr(step.question)}</Text>
-        <View style={{ flex: 1 }} />
-        <View style={{ flexDirection: "row", gap: 12 }}>
-          <Button big kind="secondary" title={t("app.no")} onPress={() => onAnswer(false)} style={{ flex: 1 }} />
-          <Button big title={t("app.yes")} onPress={() => onAnswer(true)} style={{ flex: 1 }} />
-        </View>
-      </ScrollView>
+      </ScreenBody>
     );
   }
   if (step.kind === "number") {
@@ -774,7 +765,15 @@ function StepScreen({ step, value, answers, prefilled, plotAreaHa, seasons, onAn
             ? sprayWarningTexts({ deltaT: deltaT(answers.tempC, n) })
             : [];
     return (
-      <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
+      <ScreenBody
+        footer={
+          step.optional && text === "" ? (
+            <Button big kind="secondary" title={t("app.skip")} onPress={() => onAnswer(undefined)} />
+          ) : (
+            <Button big title={t("app.next")} disabled={!ok} onPress={() => onAnswer(n)} />
+          )
+        }
+      >
         <Text style={T.title}>{tr(step.question)}</Text>
         {step.hint && <Text style={[T.small, { marginTop: 6 }]}>{tr(step.hint)}</Text>}
         {prefilled && <Text style={[T.small, { marginTop: 6 }]}>{t("ui.sprayPrefilled")}</Text>}
@@ -797,17 +796,19 @@ function StepScreen({ step, value, answers, prefilled, plotAreaHa, seasons, onAn
             {w}
           </Text>
         ))}
-        <View style={{ flex: 1 }} />
-        {step.optional && text === "" ? (
-          <Button big kind="secondary" title={t("app.skip")} onPress={() => onAnswer(undefined)} />
-        ) : (
-          <Button big title={t("app.next")} disabled={!ok} onPress={() => onAnswer(n)} />
-        )}
-      </ScrollView>
+      </ScreenBody>
     );
   }
   return (
-    <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
+    <ScreenBody
+      footer={
+        step.optional && !text.trim() ? (
+          <Button big kind="secondary" title={t("app.skip")} onPress={() => onAnswer(undefined)} />
+        ) : (
+          <Button big title={t("app.next")} disabled={!text.trim() || (!!step.pattern && !step.pattern.test(text.trim()))} onPress={() => onAnswer(text.trim())} />
+        )
+      }
+    >
       <Text style={T.title}>{tr(step.question)}</Text>
       <TextInput
         ref={input}
@@ -820,18 +821,7 @@ function StepScreen({ step, value, answers, prefilled, plotAreaHa, seasons, onAn
         placeholder={step.optional ? t("app.optional") : undefined}
         placeholderTextColor={C.tinta3}
       />
-      <View style={{ flex: 1 }} />
-      {step.optional && !text.trim() ? (
-        <Button big kind="secondary" title={t("app.skip")} onPress={() => onAnswer(undefined)} />
-      ) : (
-        <Button
-          big
-          title={t("app.next")}
-          disabled={!text.trim() || (!!step.pattern && !step.pattern.test(text.trim()))}
-          onPress={() => onAnswer(text.trim())}
-        />
-      )}
-    </ScrollView>
+    </ScreenBody>
   );
 }
 
@@ -847,7 +837,7 @@ function UsageStep({ question, hint, products, areaHa, onAnswer }: { question: s
   const done = () => onAnswer(products.map((p, i) => ({ ...p, usedQty: texts[i] ? parse(texts[i]!) : undefined })));
   const anyText = texts.some((x) => x !== "");
   return (
-    <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
+    <ScreenBody footer={<Button big title={anyText ? t("app.next") : t("app.usageAsPlanned")} disabled={!texts.every(valid)} onPress={done} />}>
       <Text style={T.title}>{tr(question)}</Text>
       {hint && <Text style={[T.small, { marginTop: 6, marginBottom: 16 }]}>{tr(hint)}</Text>}
       {products.map((p, i) => {
@@ -872,9 +862,7 @@ function UsageStep({ question, hint, products, areaHa, onAnswer }: { question: s
           </View>
         );
       })}
-      <View style={{ flex: 1 }} />
-      <Button big title={anyText ? t("app.next") : t("app.usageAsPlanned")} disabled={!texts.every(valid)} onPress={done} />
-    </ScrollView>
+    </ScreenBody>
   );
 }
 
@@ -1118,7 +1106,8 @@ function PhotoCamera({ onDone }: { onDone: (p: LocalPhoto | null) => void }) {
 
 const st = StyleSheet.create({
   warn: { marginTop: 16, padding: 12, borderRadius: RADIUS, backgroundColor: C.atencionSuave, color: C.atencion, fontFamily: F.sansMedium, fontSize: 15, lineHeight: 21 },
-  progress: { flexDirection: "row", gap: 6, paddingHorizontal: GUTTER, paddingTop: 12 },
+  progressWrap: { paddingHorizontal: GUTTER, paddingTop: 12 },
+  progress: { flexDirection: "row", gap: 6 },
   progressDot: { flex: 1, height: 4, borderRadius: 2, backgroundColor: C.linea },
   numberRow: { flexDirection: "row", alignItems: "baseline", gap: 10, marginTop: 28, borderBottomWidth: 2, borderBottomColor: C.tinta, paddingBottom: 6 },
   numberInput: { ...T.number, flex: 1, flexBasis: 0, minWidth: 0, width: 0, padding: 0, minHeight: 72, borderWidth: 0, backgroundColor: "transparent", ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : {}) },

@@ -301,7 +301,7 @@ export default function MapScreen() {
               <Text style={[T.small, { marginTop: 2 }]}>
                 {plot.kind === "pasture" ? t("ui.pasture") : (plot.crop ?? t("ui.crop"))} · {t("ui.ha", { value: plot.areaHa.toLocaleString("es-PY", { maximumFractionDigits: 0 }) })}
                 {lastVisit.get(plot.id)
-                  ? ` · ${daysAgo(lastVisit.get(plot.id)!) === 0 ? t("app.lastVisitToday").toLowerCase() : t("app.lastVisit", { days: daysAgo(lastVisit.get(plot.id)!) }).toLowerCase()}`
+                  ? ` · ${[t("app.lastVisitToday"), t("app.lastVisitYesterday")][daysAgo(lastVisit.get(plot.id)!)]?.toLowerCase() ?? t("app.lastVisit", { days: daysAgo(lastVisit.get(plot.id)!) }).toLowerCase()}`
                   : ` · ${t("app.noVisits").toLowerCase()}`}
               </Text>
             </View>

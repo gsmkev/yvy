@@ -2,6 +2,7 @@ import type { ComponentProps, ReactNode } from "react";
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   StyleSheet,
   Switch,
   Text as RNText,
@@ -176,6 +177,19 @@ export function SwitchRow({ title, hint, value, onValueChange }: { title: string
   );
 }
 
+/** Cuerpo de un paso: el contenido se desplaza y la acción principal queda fija abajo, siempre a la vista (también con el teclado abierto o con textos largos). */
+export function ScreenBody({ children, footer }: { children: ReactNode; footer: ReactNode }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={s.pad} keyboardShouldPersistTaps="handled">
+        {children}
+      </ScrollView>
+      <View style={[s.footer, { paddingBottom: Math.max(12, insets.bottom) }]}>{footer}</View>
+    </View>
+  );
+}
+
 /** U-26: agrupa opciones de una sola respuesta para que TalkBack diga "opción 2 de 4" y el nombre del grupo. */
 export function RadioGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -273,5 +287,6 @@ export const s = StyleSheet.create({
   rowRight: { alignItems: "flex-end" },
   bar: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 8, paddingHorizontal: GUTTER },
   toast: { position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: C.tinta, paddingHorizontal: GUTTER, paddingTop: 14 },
+  footer: { paddingHorizontal: GUTTER, paddingTop: 12, backgroundColor: C.papel, borderTopWidth: 1, borderTopColor: C.linea, gap: 8 },
   divider: { height: 1, backgroundColor: C.linea, marginVertical: 16 },
 });

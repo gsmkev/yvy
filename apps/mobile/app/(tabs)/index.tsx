@@ -18,8 +18,8 @@ import { useLocal } from "../../src/lib/useLocal";
 import { FarmLine } from "../../src/ui/FarmLine";
 import { ForecastStrip } from "../../src/ui/ForecastStrip";
 import { toastSaved } from "../../src/lib/toast";
-import { Button, Row, s as k, Text } from "../../src/ui/kit";
-import { C, F, GUTTER, RADIUS, T } from "../../src/ui/theme";
+import { Button, EmptyState, Row, SectionHeader, s as k, Text } from "../../src/ui/kit";
+import { C, RADIUS, T } from "../../src/ui/theme";
 import { useReadOnly } from "../../src/lib/readOnly";
 
 const dayLabel = () => {
@@ -31,6 +31,8 @@ const commentsLabel = (json: string): string | null => {
   const n = parseTaskComments(json).length;
   return n === 0 ? null : n === 1 ? t("app.taskCommentsOne") : t("app.taskComments", { n });
 };
+/** Primer nombre sin el tratamiento ("Ing. Ana Villalba" -> "Ana"). */
+const firstName = (full: string) => full.replace(/^\s*(ing|dr|dra|lic|sr|sra|don|doña)\.?\s+/i, "").split(" ")[0] ?? "";
 const hhmm = (ms: number) => new Date(ms).toLocaleTimeString("es-PY", { hour: "2-digit", minute: "2-digit", hour12: false });
 
 export default function Today() {
@@ -86,51 +88,26 @@ export default function Today() {
     if (alertId) scrollToAlert(alertId);
   }, [alertId, alerts.length]);
 
+  const taskSubtitle = (task: (typeof open)[number]) =>
+    [
+      task.priority === "high" ? t("app.taskHighPriority") : null,
+      task.dueTime ? t("app.taskDueAt", { time: task.dueTime }) : null,
+      task.kind ? t(`recordKinds.${task.kind}`) : null,
+      task.plotId ? plotName(task.plotId) : null,
+      parseChecklist(task.checklist).length ? t("app.checklistProgress", checklistProgress(parseChecklist(task.checklist))) : null,
+      commentsLabel(task.comments),
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  const showOwner = !!summary && (summary.byAuthor.length > 0 || worse.length > 0);
+
   return (
     <ScrollView ref={scroller} style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 120 }]}>
       <FarmLine />
       <Text style={T.small}>{dayLabel()}</Text>
-      <Text style={[T.display, { marginTop: 2, marginBottom: 4 }]}>{session?.user.fullName.split(" ")[0]}</Text>
-      {/* La lluvia es lo que más se anota: un toque, directo a los milímetros (lluvia de la estancia, sin lote).
-          El mismo destino lo abre el atajo de Android (yvy://annotate?kind=rain&farmLevel=1). */}
-      {!readOnly && (
-        <Button
-          kind="secondary"
-          title={t("app.quickRain")}
-          onPress={() => router.push({ pathname: "/annotate", params: { kind: "rain", farmLevel: "1" } })}
-          style={{ marginTop: 12, marginBottom: 16 }}
-        />
-      )}
+      <Text style={[T.display, { marginTop: 2 }]}>{firstName(session?.user.fullName ?? "")}</Text>
 
-      {summary && (
-        <>
-          <Text style={st.section}>{t("app.ownerTitle")}</Text>
-          <Row
-            title={alerts.length === 0 ? t("app.ownerAlertsNone") : alerts.length === 1 ? t("app.ownerAlertsOne") : t("app.ownerAlerts", { n: alerts.length })}
-            subtitle={alerts.length ? t("app.ownerAlertsHint") : undefined}
-          />
-          <Text style={[T.smallMedium, { marginTop: 16, marginBottom: 4 }]}>{t("app.ownerRecordsTitle")}</Text>
-          {summary.byAuthor.length === 0 && <Text style={T.small}>{t("app.ownerRecordsNone")}</Text>}
-          {summary.byAuthor.map((a) => (
-            <Row
-              key={a.authorId}
-              title={authorName(a.authorId, userId, summary.names)}
-              subtitle={t(a.count === 1 ? "app.ownerRecordsOne" : "app.ownerRecordsMany", { n: a.count })}
-            />
-          ))}
-          {worse.length > 0 && <Text style={[T.smallMedium, { marginTop: 16, marginBottom: 4 }]}>{t("app.ownerWorseTitle")}</Text>}
-          {worse.map((w) => (
-            <Row
-              key={w.plotId}
-              title={plotName(w.plotId)}
-              subtitle={t("app.ownerWorseLine", { pct: w.pct, date: new Date(w.since).toLocaleDateString("es-PY", { day: "numeric", month: "short" }) })}
-              onPress={() => router.push("/(tabs)/map")}
-            />
-          ))}
-        </>
-      )}
-      <ForecastStrip farmId={farmId ?? plots[0]?.farmId ?? null} />
-
+      {/* Primero lo que pide acción: avisos. */}
       {alerts.map((a) => {
         const strong = a.severity === "warning";
         return (
@@ -177,89 +154,99 @@ export default function Today() {
         );
       })}
 
-      {empty && (
-        <View style={st.empty}>
-          <Text style={T.heading}>{t("app.nothingToday")}</Text>
-          <Text style={[T.small, { marginTop: 4 }]}>{t("app.nothingTodayHint")}</Text>
-        </View>
+      {/* La lluvia es lo que más se anota: un toque, directo a los milímetros (lluvia de la estancia, sin lote).
+          El mismo destino lo abre el atajo de Android (yvy://annotate?kind=rain&farmLevel=1). */}
+      {!readOnly && (
+        <Button
+          kind="secondary"
+          title={t("app.quickRain")}
+          onPress={() => router.push({ pathname: "/annotate", params: { kind: "rain", farmLevel: "1" } })}
+          style={{ marginTop: 16 }}
+        />
       )}
+
+      {empty && <EmptyState title={t("app.nothingToday")} hint={t("app.nothingTodayHint")} />}
 
       {open.length > 0 && (
         <>
-          <Text style={st.section}>{t("app.tasksToday")}</Text>
+          <SectionHeader title={t("app.tasksToday")} />
           {open.map((task) => (
             <View key={task.id}>
-            <Row
-              title={task.title}
-              subtitle={[
-                task.priority === "high" ? t("app.taskHighPriority") : null,
-                task.dueTime ? t("app.taskDueAt", { time: task.dueTime }) : null,
-                task.kind ? t(`recordKinds.${task.kind}`) : null,
-                task.plotId ? plotName(task.plotId) : null,
-                parseChecklist(task.checklist).length ? t("app.checklistProgress", checklistProgress(parseChecklist(task.checklist))) : null,
-                commentsLabel(task.comments),
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-              onPress={() => {
-                if (parseChecklist(task.checklist).length) router.push({ pathname: "/task/[id]", params: { id: task.id } });
-                else if (readOnly) return;
-                else if (task.kind) router.push({ pathname: "/annotate", params: { kind: task.kind, taskId: task.id, plotId: task.plotId ?? "" } });
-                else {
-                  getDb().completeTask(task.id, null);
-                  localChanged();
-                  toastSaved();
-                }
-              }}
-              right={<View style={st.circle} />}
-            />
-            <Button
-              kind="text"
-              title={commentsLabel(task.comments) ?? t("app.taskCommentsOpen")}
-              onPress={() => router.push({ pathname: "/task/[id]", params: { id: task.id } })}
-              style={{ alignSelf: "flex-start", paddingHorizontal: 0 }}
-            />
-            {task.lon !== null && task.lat !== null && (
-              <Button
-                kind="text"
-                title={t("app.gotoButton")}
-                onPress={() => router.push({ pathname: "/goto", params: { lon: String(task.lon), lat: String(task.lat), name: task.title } })}
-                style={{ alignSelf: "flex-start", paddingHorizontal: 0 }}
+              <Row
+                title={task.title}
+                subtitle={taskSubtitle(task)}
+                onPress={() => {
+                  if (parseChecklist(task.checklist).length) router.push({ pathname: "/task/[id]", params: { id: task.id } });
+                  else if (readOnly) return;
+                  else if (task.kind) router.push({ pathname: "/annotate", params: { kind: task.kind, taskId: task.id, plotId: task.plotId ?? "" } });
+                  else {
+                    getDb().completeTask(task.id, null);
+                    localChanged();
+                    toastSaved();
+                  }
+                }}
+                right={<View style={st.circle} />}
               />
-            )}
+              <View style={st.taskActions}>
+                <Button kind="text" title={commentsLabel(task.comments) ?? t("app.taskCommentsOpen")} onPress={() => router.push({ pathname: "/task/[id]", params: { id: task.id } })} style={st.taskAction} />
+                {task.lon !== null && task.lat !== null && (
+                  <Button kind="text" title={t("app.gotoButton")} onPress={() => router.push({ pathname: "/goto", params: { lon: String(task.lon), lat: String(task.lat), name: task.title } })} style={st.taskAction} />
+                )}
+              </View>
             </View>
+          ))}
+        </>
+      )}
+
+      {showOwner && summary && (
+        <>
+          {summary.byAuthor.length > 0 && <SectionHeader title={t("app.ownerRecordsTitle")} />}
+          {summary.byAuthor.map((a) => (
+            <Row key={a.authorId} title={authorName(a.authorId, userId, summary.names)} subtitle={t(a.count === 1 ? "app.ownerRecordsOne" : "app.ownerRecordsMany", { n: a.count })} />
+          ))}
+          {worse.length > 0 && <SectionHeader title={t("app.ownerWorseTitle")} />}
+          {worse.map((w) => (
+            <Row
+              key={w.plotId}
+              title={plotName(w.plotId)}
+              subtitle={t("app.ownerWorseLine", { pct: w.pct, date: new Date(w.since).toLocaleDateString("es-PY", { day: "numeric", month: "short" }) })}
+              onPress={() => router.push("/(tabs)/map")}
+            />
           ))}
         </>
       )}
 
       {(todayRecords.length > 0 || done.length > 0) && (
         <>
-          <Text style={st.section}>{t("app.yourDay")}</Text>
+          <SectionHeader title={t("app.yourDay")} />
           {done.map((task) => (
             <Row key={task.id} title={task.title} subtitle={t("ui.status_done")} left={<Check size={20} color={C.accion} strokeWidth={2.5} />} />
           ))}
           {todayRecords.map((r) => (
             <Row
               key={r.id}
+              status={r.rejected ? "rejected" : r.pending ? "pending" : "synced"}
               title={describeRecord(r.kind, JSON.parse(r.data))}
               subtitle={[t(`recordKinds.${r.kind}`), plotName(r.plotId), hhmm(r.capturedAt)].filter(Boolean).join(" · ")}
-              right={r.pending ? <Text style={[T.small, { color: C.atencion }]}>{t("app.pending")}</Text> : undefined}
+              onPress={() => router.push({ pathname: "/record/[id]", params: { id: r.id } })}
             />
           ))}
         </>
       )}
+
+      <ForecastStrip farmId={farmId ?? plots[0]?.farmId ?? null} />
     </ScrollView>
   );
 }
 
 const st = StyleSheet.create({
-  section: { fontFamily: F.sansSemi, fontSize: 15, color: C.tinta2, marginTop: 28, marginBottom: 4 },
-  alert: { borderRadius: RADIUS, padding: GUTTER, marginBottom: 12 },
+  alert: { borderRadius: RADIUS, padding: 16, marginTop: 16 },
   alertStrong: { backgroundColor: C.peligro },
   alertSoft: { backgroundColor: C.atencionSuave },
   vote: { flexDirection: "row", alignItems: "center", gap: 20, marginTop: 4, minHeight: 44 },
   voteBtn: { minHeight: 44, minWidth: 44, justifyContent: "center", alignItems: "center" },
   alertPicked: { borderWidth: 3, borderColor: C.tinta },
-  empty: { paddingVertical: 32 },
+  taskActions: { flexDirection: "row", gap: 8, marginTop: -4 },
+  taskAction: { paddingHorizontal: 0, marginRight: 12 },
   circle: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.lineaFuerte },
 });

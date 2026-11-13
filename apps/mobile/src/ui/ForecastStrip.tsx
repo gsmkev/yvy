@@ -6,7 +6,7 @@ import { refreshSprayHours } from "../lib/sprayHours";
 import { daysOld, readForecast, refreshForecast, upcoming, type CachedForecast } from "../lib/forecast";
 import { api } from "../lib/session";
 import { useSyncStatus } from "../lib/sync";
-import { Text } from "./kit";
+import { SectionHeader, Text } from "./kit";
 import { C, F, RADIUS, T } from "./theme";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -51,13 +51,13 @@ export function ForecastStrip({ farmId }: { farmId: string | null }) {
   const sameDay = downloaded ? localToday(downloaded) === localToday() : false;
   const time = downloaded?.toLocaleTimeString("es-PY", { hour: "2-digit", minute: "2-digit", hour12: false }) ?? "";
   const old = data ? daysOld(data.fetchedAt, now) : 0;
+  // Sin pronóstico bajado no hay nada que mostrar: no se ocupa lugar con un aviso de que falta.
+  if (days.length === 0) return null;
 
   return (
-    <View style={st.wrap} accessibilityLabel={t("app.forecastTitle")}>
-      <Text style={st.title}>{t("app.forecastTitle")}</Text>
-      {days.length === 0 ? (
-        <Text style={T.small}>{t("app.forecastNone")}</Text>
-      ) : (
+    <View accessibilityLabel={t("app.forecastTitle")}>
+      <SectionHeader title={t("app.forecastTitle")} />
+      {days.length > 0 && (
         <>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.row}>
             {days.map((d) => (
@@ -81,8 +81,6 @@ export function ForecastStrip({ farmId }: { farmId: string | null }) {
 }
 
 const st = StyleSheet.create({
-  wrap: { marginBottom: 16 },
-  title: { fontFamily: F.sansSemi, fontSize: 15, color: C.tinta2, marginBottom: 6 },
   row: { gap: 8 },
   day: { width: 64, alignItems: "center", paddingVertical: 10, borderRadius: RADIUS, borderWidth: 1, borderColor: C.linea, backgroundColor: C.blanco },
   max: { fontFamily: F.serif, fontSize: 22, lineHeight: 28, color: C.tinta },

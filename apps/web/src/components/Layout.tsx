@@ -1,31 +1,20 @@
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { ChevronDown, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { isFieldRole } from "@yvy/shared";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { exitSupport, getSession, isNetworkDown, onNetworkChange, onSession, post, setSession } from "../lib/api";
 import { Toaster } from "./ui";
 import { FEATURES } from "../lib/features";
+import { buildNav, MOBILE_TABS, type NavGroup, type NavItem } from "../lib/nav";
 import { fmtDate } from "../lib/format";
-import { t, type MessageKey } from "../lib/i18n";
+import { t } from "../lib/i18n";
 import { useAlerts, useFarms, useMe } from "../lib/queries";
 import { loadPrefs } from "../lib/prefs";
 import { trackView } from "../lib/track";
 import { GlobalSearch } from "./GlobalSearch";
 import { AccountMenu, useOrganizations } from "./AccountMenu";
 import { TotpSection } from "./Totp";
-
-const NAV: { to: string; label: MessageKey }[] = [
-  { to: "/", label: "ui.navMap" },
-  { to: "/registros", label: "ui.navRecords" },
-  { to: "/tareas", label: "ui.navTasks" },
-  { to: "/calendario", label: "ui.navCalendar" },
-  { to: "/comparar", label: "ui.navCompare" },
-  { to: "/sanidad", label: "ui.navSanitary" },
-  { to: "/avisos", label: "ui.navAlerts" },
-  { to: "/equipo", label: "ui.navTeam" },
-  { to: "/administracion", label: "ui.navAdmin" },
-  ...(FEATURES.labs ? [{ to: "/laboratorio", label: "ui.navLabs" as MessageKey }] : []),
-];
 
 export function Logo({ className = "h-7 w-7" }: { className?: string }) {
   return <img src="/favicon.svg" alt="" className={className} />;
@@ -77,29 +66,59 @@ export function Layout() {
   // K-02: el agrónomo con más de un cliente tiene una pantalla con todos juntos
   const orgs = useOrganizations();
   const hasClients = orgs.filter((o) => !isFieldRole(o.role)).length > 1;
-  const base = [
-    ...NAV,
-    ...(hasClients ? [{ to: "/clientes", label: "ui.navClients" as MessageKey }] : []),
-    ...(me.data?.isStaff ? [{ to: "/interno", label: "ui.navInternal" as MessageKey }] : []),
-  ];
-  // El calendario sanitario no es para el empleado (G-10).
-  const role = me.data?.role;
-  const items = base.filter(
-    (i) =>
-      (i.to !== "/sanidad" || !(role && isFieldRole(role))) &&
-      (i.to !== "/comparar" || !(role && isFieldRole(role))) &&
-      // La administración (ERP) es solo del dueño y los administradores.
-      (i.to !== "/administracion" || role === "owner" || role === "admin"),
-  );
+  const nav = buildNav({
+    role: me.data?.role,
+    farms: farms.data?.length ?? null,
+    plots: farms.data ? farms.data.reduce((n, f) => n + f.plots, 0) : null,
+    hasClients,
+    isStaff: !!me.data?.isStaff,
+    labs: FEATURES.labs,
+  });
   const nAlerts = alerts.data?.length ?? 0;
   const path = useRouterState({ select: (s) => s.location.pathname });
   // Con varias estancias, "Mapa" vuelve a la última que se miró
   const lastFarm = (farms.data?.length ?? 0) > 1 ? farms.data!.find((f) => f.id === loadPrefs().farmId)?.id : undefined;
   const onMap = path === "/" || path.startsWith("/estancias");
   useEffect(() => trackView(path), [path]);
+  const desktop = useIsDesktop();
+  const [sheet, setSheet] = useState(false);
+  const [sideHidden, setSideHidden] = useStoredFlag("yvy.navHidden");
+  useEffect(() => setSheet(false), [path, desktop]);
+
+  const account = (
+    <AccountMenu
+      name={me.data?.organization.name}
+      sub={trial ? t("ui.trialEnds", { date: fmtDate(trial) }) : me.data?.user.fullName}
+      onLogout={logout}
+    />
+  );
+  const link = (n: NavItem, cls: (active: boolean) => string) => {
+    const active = n.to === "/" ? onMap : n.to === path || path.startsWith(`${n.to}/`);
+    const body = (
+      <>
+        {t(n.label)}
+        {n.to === "/avisos" && nAlerts > 0 && <span className="num ml-auto font-semibold text-peligro">{nAlerts}</span>}
+      </>
+    );
+    return n.to === "/" && lastFarm ? (
+      <Link key={n.to} to="/estancias/$farmId" params={{ farmId: lastFarm }} aria-current={active ? "page" : undefined} className={cls(active)}>
+        {body}
+      </Link>
+    ) : (
+      <Link key={n.to} to={n.to} aria-current={active ? "page" : undefined} className={cls(active)}>
+        {body}
+      </Link>
+    );
+  };
+  const sideCls = (active: boolean) =>
+    `flex h-10 items-center rounded-md px-3 text-sm transition-colors ${active ? "bg-surco/[0.07] font-medium text-surco" : "text-tinta-2 hover:bg-surco/[0.04] hover:text-surco"}`;
+  const sheetCls = (active: boolean) =>
+    `flex h-12 items-center rounded-md px-3 text-[15px] ${active ? "bg-surco/[0.07] font-medium text-surco" : "text-surco"}`;
+  const tabCls = (active: boolean) =>
+    `flex h-14 flex-1 items-center justify-center gap-1.5 border-t-2 px-1 text-xs ${active ? "border-surco font-medium text-surco" : "border-transparent text-tinta-2"}`;
 
   return (
-    <div className="flex h-full flex-col print:block print:h-auto">
+    <div className="flex h-full flex-col lg:flex-row print:block print:h-auto">
       <a
         href="#main"
         onClick={(e) => {
@@ -110,45 +129,50 @@ export function Layout() {
       >
         {t("ui.skipToContent")}
       </a>
-      <header className="flex h-14 print:hidden shrink-0 items-center gap-6 border-b border-linea bg-lino px-4 lg:px-6">
-        <Link to="/" className="font-serif text-[22px] leading-none font-semibold tracking-tight">
-          {t("ui.appName")}
-        </Link>
-        <nav aria-label="Principal" className="flex h-full flex-1 gap-5 overflow-x-auto">
-          {items.map((n) => {
-            const cls = `-mb-px flex items-center border-b-2 text-[15px] whitespace-nowrap transition-colors hover:text-surco ${
-              n.to === "/" && onMap ? "border-surco font-medium text-surco" : "border-transparent text-tinta-2"
-            }`;
-            if (n.to === "/" && lastFarm)
-              return (
-                <Link key={n.to} to="/estancias/$farmId" params={{ farmId: lastFarm }} className={cls}>
-                  {t(n.label)}
-                </Link>
-              );
-            return (
-              <Link
-                key={n.to}
-                to={n.to}
-                className={cls}
-                activeProps={n.to === "/" ? {} : { className: "!border-surco !text-surco font-medium" }}
-              >
-                {t(n.label)}
-                {n.to === "/avisos" && nAlerts > 0 && (
-                  <span className="num ml-1.5 rounded-full bg-peligro px-1.5 text-xs leading-5 font-semibold text-sobre">
-                    {nAlerts}
-                  </span>
-                )}
+      {desktop &&
+        (sideHidden ? (
+          <div className="flex w-12 shrink-0 flex-col items-center gap-3 border-r border-linea bg-lino py-3 print:hidden">
+            <button
+              type="button"
+              aria-label={t("ui.navShow")}
+              title={t("ui.navShow")}
+              onClick={() => setSideHidden(false)}
+              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-tinta-2 hover:bg-surco/5 hover:text-surco"
+            >
+              <PanelLeftOpen size={18} aria-hidden />
+            </button>
+          </div>
+        ) : (
+          <aside className="relative z-20 flex w-60 shrink-0 flex-col border-r border-linea bg-lino print:hidden">
+            <div className="flex h-14 shrink-0 items-center justify-between pr-2 pl-4">
+              <Link to="/" className="font-serif text-[22px] leading-none font-semibold tracking-tight">
+                {t("ui.appName")}
               </Link>
-            );
-          })}
-        </nav>
-        <GlobalSearch inputRef={searchRef} />
-        <AccountMenu
-          name={me.data?.organization.name}
-          sub={trial ? t("ui.trialEnds", { date: fmtDate(trial) }) : me.data?.user.fullName}
-          onLogout={logout}
-        />
-      </header>
+              <button
+                type="button"
+                aria-label={t("ui.navHide")}
+                title={t("ui.navHide")}
+                onClick={() => setSideHidden(true)}
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-tinta-2 hover:bg-surco/5 hover:text-surco"
+              >
+                <PanelLeftClose size={18} aria-hidden />
+              </button>
+            </div>
+            <div className="px-3 pb-3">
+              <GlobalSearch inputRef={searchRef} />
+            </div>
+            <nav aria-label={t("ui.navMain")} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-3">
+              {nav.main.map((g) => (
+                <SideGroup key={g.id} group={g} render={(n) => link(n, sideCls)} />
+              ))}
+              {nav.bottom.length > 0 && (
+                <div className="mt-auto flex flex-col gap-0.5 border-t border-linea pt-3">{nav.bottom.map((n) => link(n, sideCls))}</div>
+              )}
+            </nav>
+            <div className="shrink-0 border-t border-linea p-3">{account}</div>
+          </aside>
+        ))}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       {me.data?.support && (
         <p role="status" className="shrink-0 border-b border-trigo/40 bg-trigo/15 px-4 py-1.5 print:hidden text-center text-sm text-surco">
           {t("ui.supportBanner", { name: me.data.organization.name })}{" "}
@@ -175,7 +199,151 @@ export function Layout() {
           <Outlet />
         )}
       </main>
+      </div>
+      {!desktop && (
+        <>
+          <nav aria-label={t("ui.navMain")} className="flex shrink-0 border-t border-linea bg-lino pb-[env(safe-area-inset-bottom)] print:hidden">
+            {MOBILE_TABS.map((to) => {
+              const n = nav.main.flatMap((g) => g.items).find((i) => i.to === to);
+              return n ? link(n, tabCls) : null;
+            })}
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={sheet}
+              onClick={() => setSheet(true)}
+              className={`${tabCls(false)} cursor-pointer`}
+            >
+              {t("ui.navMore")}
+            </button>
+          </nav>
+          {sheet && (
+            <MoreSheet onClose={() => setSheet(false)}>
+              <GlobalSearch inputRef={searchRef} listClassName="min-w-0" />
+              {nav.main.map((g) => (
+                <SideGroup key={g.id} group={g} render={(n) => link(n, sheetCls)} />
+              ))}
+              {nav.bottom.length > 0 && (
+                <div className="flex flex-col gap-0.5 border-t border-linea pt-3">{nav.bottom.map((n) => link(n, sheetCls))}</div>
+              )}
+              <div className="border-t border-linea pt-3">{account}</div>
+            </MoreSheet>
+          )}
+        </>
+      )}
       <Toaster />
     </div>
   );
 }
+
+/** Bajo lg la navegación es una barra inferior; desde lg, la barra lateral. */
+function useIsDesktop() {
+  return useSyncExternalStore(
+    (cb) => {
+      const m = window.matchMedia?.("(min-width: 1024px)");
+      m?.addEventListener("change", cb);
+      return () => m?.removeEventListener("change", cb);
+    },
+    () => window.matchMedia?.("(min-width: 1024px)").matches ?? true,
+    () => true,
+  );
+}
+
+/** Bandera booleana recordada en este navegador (si el almacenamiento falla, vale hasta recargar). */
+function useStoredFlag(key: string): [boolean, (v: boolean) => void] {
+  const [v, setV] = useState(() => {
+    try {
+      return localStorage.getItem(key) === "1";
+    } catch {
+      return false;
+    }
+  });
+  return [
+    v,
+    (n) => {
+      setV(n);
+      try {
+        localStorage.setItem(key, n ? "1" : "0");
+      } catch {
+        /* sin almacenamiento */
+      }
+    },
+  ];
+}
+
+/** Grupo de la navegación: el título pliega y despliega sus ítems (se recuerda por navegador). */
+function SideGroup({ group, render }: { group: NavGroup; render: (n: NavItem) => React.ReactNode }) {
+  const [closed, setClosed] = useStoredFlag(`yvy.navClosed.${group.id}`);
+  if (!group.label) return <div className="flex flex-col gap-0.5">{group.items.map(render)}</div>;
+  return (
+    <div className="flex flex-col gap-0.5">
+      <button
+        type="button"
+        aria-expanded={!closed}
+        onClick={() => setClosed(!closed)}
+        className="flex h-8 cursor-pointer items-center justify-between rounded-md px-3 text-xs font-semibold text-tinta-2 hover:text-surco"
+      >
+        {t(group.label)}
+        <ChevronDown size={14} aria-hidden className={`transition-transform ${closed ? "-rotate-90" : ""}`} />
+      </button>
+      {!closed && group.items.map(render)}
+    </div>
+  );
+}
+
+/** Hoja inferior del celular con el resto de la navegación. Escape cierra, Tab queda adentro, el foco vuelve a "Más". */
+function MoreSheet({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+  const box = useRef<HTMLDivElement>(null);
+  const close = useRef(onClose);
+  close.current = onClose;
+  useEffect(() => {
+    const before = document.activeElement as HTMLElement | null;
+    const el = box.current;
+    el?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close.current();
+      else if (e.key === "Tab" && el) {
+        const items = Array.from(el.querySelectorAll<HTMLElement>("a[href],button:not([disabled]),input:not([disabled])"));
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (!first || !last) return;
+        if (e.shiftKey && (document.activeElement === first || document.activeElement === el)) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      if (before && document.contains(before)) before.focus();
+    };
+  }, []);
+  return (
+    <div className="fixed inset-0 z-50 flex items-end bg-surco/55 print:hidden" onClick={onClose}>
+      <div
+        ref={box}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("ui.navMore")}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+        className="flex max-h-[85vh] w-full flex-col gap-3 overflow-y-auto rounded-t-xl bg-lino p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] outline-none"
+      >
+        <button
+          type="button"
+          aria-label={t("ui.close")}
+          onClick={onClose}
+          className="flex h-12 w-12 cursor-pointer items-center justify-center self-end rounded-md text-tinta-2 hover:bg-surco/5"
+        >
+          <X size={20} aria-hidden />
+        </button>
+        {children}
+      </div>
+    </div>
+  );
+}
+

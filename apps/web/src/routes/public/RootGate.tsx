@@ -13,10 +13,12 @@ export function RootGate() {
   );
   if (session)
     return (
-      <>
-        <Layout />
+      <div className="flex h-full flex-col print:block print:h-auto">
+        <div className="min-h-0 flex-1 print:h-auto">
+          <Layout />
+        </div>
         <DemoNotice />
-      </>
+      </div>
     );
   return (
     <Suspense fallback={null}>

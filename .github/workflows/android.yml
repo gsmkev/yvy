@@ -46,7 +46,12 @@ jobs:
           echo "$KEYSTORE_B64" | base64 -d > yvy.keystore
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
           "$BT/zipalign" -f -p 4 app-release.apk aligned.apk
-          "$BT/apksigner" sign --ks yvy.keystore --ks-pass env:KS_PASS --ks-key-alias "$KEY_ALIAS" --key-pass env:KEY_PASS --out yvy.apk aligned.apk
+          # Tolerante a secretos mal cargados: en un keystore PKCS12 (el formato por defecto de keytool) la clave usa la
+          # misma contraseña que el keystore, y si el alias no existe se toma el único que haya.
+          ALIASES=$(keytool -list -keystore yvy.keystore -storepass:env KS_PASS | sed -n 's/^\([^,]*\), .*PrivateKeyEntry.*/\1/p')
+          echo "$ALIASES" | grep -qxF "$KEY_ALIAS" || { echo "El alias de ANDROID_KEY_ALIAS no está en el keystore; uso el primero que hay"; KEY_ALIAS=$(echo "$ALIASES" | head -1); }
+          sign() { "$BT/apksigner" sign --ks yvy.keystore --ks-pass env:KS_PASS --ks-key-alias "$KEY_ALIAS" --key-pass "env:$1" --out yvy.apk aligned.apk; }
+          if [ -n "$KEY_PASS" ] && sign KEY_PASS; then :; else echo "ANDROID_KEY_PASSWORD no abre la clave; pruebo con la del keystore"; sign KS_PASS; fi
           "$BT/apksigner" verify --print-certs yvy.apk | head -3
           rm yvy.keystore
           ls -la yvy.apk

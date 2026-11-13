@@ -23,13 +23,18 @@ jobs:
         with: { node-version: 22, cache: pnpm }
       - uses: actions/setup-java@v6
         with: { distribution: temurin, java-version: 17 }
+      # Guarda entre corridas las dependencias de Gradle, el wrapper y la caché de compilación (~/.gradle):
+      # sin esto cada APK bajaba todo y recompilaba el código nativo desde cero (~16 min)
+      - uses: gradle/actions/setup-gradle@v4
       - run: pnpm install --frozen-lockfile
       - name: Prebuild
         working-directory: apps/mobile
         run: npx expo prebuild --platform android --clean --no-install
       - name: Gradle assembleRelease
         working-directory: apps/mobile/android
-        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+        # Solo arm64: los celulares Android de los últimos años son todos de 64 bits y compilar una sola arquitectura
+        # nativa reduce a la mitad el tiempo y el tamaño del APK. --build-cache reusa tareas de la corrida anterior.
+        run: ./gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitectures=arm64-v8a
       - name: Firmar con la clave de Yvy
         working-directory: apps/mobile/android/app/build/outputs/apk/release
         env:

@@ -121,7 +121,7 @@ export const esPY = {
     mapLayers: "Capas",
     mapTools: "Herramientas del mapa",
     stepOf: "Paso {{i}} de {{n}}",
-    sectionField: "Campo",
+    sectionSync: "Envío y datos sin conexión",
     sectionTools: "Herramientas",
     sectionAccount: "Cuenta y app",
     labsShow: "Mostrar",

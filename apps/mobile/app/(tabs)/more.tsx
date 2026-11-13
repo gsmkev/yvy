@@ -114,13 +114,13 @@ export default function More() {
       <Text style={T.small}>{session?.organization.name}</Text>
       <Text style={[T.display, { marginTop: 2 }]}>{session?.user.fullName}</Text>
 
-      <SectionHeader title={t("app.sectionField")} />
+      <SectionHeader first title={t("app.sectionTools")} />
       <Row title={t("app.emergencyTitle")} subtitle={t("app.emergencyRowHint")} onPress={() => router.push("/emergency")} />
       <Row title={t("app.walkRow")} subtitle={t("app.walkRowHint")} onPress={() => router.push("/walk")} />
       <Row title={t("app.animalsRow")} subtitle={t("app.animalsRowHint")} onPress={() => router.push("/animals")} />
       {canCount(session?.organization.role) && <Row title={t("ui.countRow")} subtitle={t("ui.countRowHint")} onPress={() => router.push("/stock-count")} />}
 
-      <SectionHeader title={t("app.sectionTools")} />
+      <SectionHeader title={t("app.sectionSync")} />
       <Row title={t("app.lastSyncAt", { when: lastSync })} subtitle={sync.pending > 0 ? t("app.pendingCount", { n: sync.pending }) : t("app.allSent")} onPress={syncNow} />
       <Outbox items={outbox} plotName={(id) => plots.find((p) => p.id === id)?.name} wifiOnly={wifiOnly} error={sync.error} stuck={stuck} />
       {rejected.map((r) => (

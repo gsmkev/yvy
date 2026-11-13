@@ -140,7 +140,7 @@ export function StatusEdge({ status }: { status: SyncState }) {
 /** Encabezado de sección: texto de 15 px en tinta secundaria, con `action` opcional a la derecha (un texto tocable). */
 export function SectionHeader({ title, action, onAction, first }: { title: string; action?: string; onAction?: () => void; first?: boolean }) {
   return (
-    <View style={[s.section, first && { marginTop: 4 }]}>
+    <View style={[s.section, first && { marginTop: 20 }]}>
       <Text accessibilityRole="header" style={s.sectionText}>
         {title}
       </Text>

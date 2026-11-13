@@ -13,6 +13,7 @@ import type { Feature, FeatureCollection, LineString, MultiPolygon, Polygon } fr
 import { BRAND } from "@yvy/shared";
 import pointOnFeature from "@turf/point-on-feature";
 import { t } from "../lib/i18n";
+import { placeLabels } from "../lib/labelLayout";
 import { addPoiImages } from "../lib/poiMarkers";
 import { cameraDiffers, pickLayer, type Camera } from "../lib/scenes";
 import type { Layer, Plot, Poi } from "../lib/types";
@@ -96,6 +97,10 @@ export interface FarmMapProps {
   className?: string;
   /** U-27: se llena con una función que devuelve la captura del mapa (PNG en data URL) o null si no se puede. */
   snapshotRef?: { current: (() => Promise<string | null>) | null };
+  /** Botones + y − de MapLibre arriba a la derecha (por defecto sí). Sin ellos, el mapa se acerca con `apiRef`. */
+  navControl?: boolean;
+  /** Se llena con funciones para manejar el mapa desde afuera (zoom de la barra de herramientas). */
+  apiRef?: { current: { zoom: (dir: 1 | -1) => void } | null };
 }
 
 const fc = (features: Feature[]): FeatureCollection => ({ type: "FeatureCollection", features });
@@ -140,7 +145,10 @@ export function FarmMap(props: FarmMapProps) {
       fitBoundsOptions: { padding: 40 },
       attributionControl: { compact: true },
     });
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+    if (props.navControl !== false) map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+    if (props.apiRef) props.apiRef.current = { zoom: (dir) => (dir > 0 ? map.zoomIn() : map.zoomOut()) };
+    // Los nombres de los lotes se acomodan al mover o acercar para no pisar los íconos
+    map.on("moveend", () => layoutLabels());
     map.on("load", () => {
       map.addSource("outline", { type: "geojson", data: fc([]) });
       map.addSource("plots", { type: "geojson", data: fc([]) });
@@ -360,8 +368,30 @@ export function FarmMap(props: FarmMapProps) {
       drawRef.current?.stop();
       map.remove();
       mapRef.current = null;
+      if (cb.current.apiRef) cb.current.apiRef.current = null;
     };
   }, []);
+
+  /** Corre u oculta cada nombre de lote para que no quede debajo de un ícono ni de otro nombre. */
+  function layoutLabels() {
+    const map = mapRef.current;
+    if (!map) return;
+    const markers = labelsRef.current;
+    const p = cb.current;
+    const obstacles = [
+      ...(p.pois ?? []).map((o) => ({ ...map.project([o.lon, o.lat]), r: 14 })),
+      ...(p.points ?? []).slice(0, 300).map((o) => ({ ...map.project([o.lon, o.lat]), r: (o.radius ?? 6) + 1 })),
+    ].map((o) => ({ x: o.x, y: o.y, r: o.r }));
+    const boxes = markers.map((m) => {
+      const el = m.getElement();
+      const c = map.project(m.getLngLat());
+      return { x: c.x, y: c.y, w: el.offsetWidth, h: el.offsetHeight };
+    });
+    placeLabels(boxes, obstacles).forEach((pl, i) => {
+      markers[i]!.setOffset([pl.dx, pl.dy]);
+      markers[i]!.getElement().style.visibility = pl.hidden ? "hidden" : "";
+    });
+  }
 
   // ---- actualizar datos ----
   const sync = () => {
@@ -393,6 +423,7 @@ export function FarmMap(props: FarmMapProps) {
       el.textContent = name;
       return new maplibregl.Marker({ element: el }).setLngLat(labelPoint(JSON.parse(geometry))).addTo(map);
     });
+    layoutLabels();
     (map.getSource("plots") as GeoJSONSource).setData(
       fc(
         plotsShown.map((pl) => ({

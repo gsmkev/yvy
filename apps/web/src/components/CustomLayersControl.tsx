@@ -45,8 +45,7 @@ export function CustomLayersControl({
   // Sin capas y sin permiso para subir no hay nada que mostrar
   if (layers.length === 0 && !canManage) return null;
   return (
-    <div className="flex w-56 flex-col gap-2 rounded-md border border-white/15 bg-surco/85 p-2.5 text-xs text-lino backdrop-blur">
-      <p className="font-medium">{t("ui.customLayersTitle")}</p>
+    <div className="flex flex-col gap-2 text-xs text-lino">
       {layers.length === 0 && <p className="text-lino/70">{t("ui.customLayersNone")}</p>}
       <ul className="flex flex-col gap-2">
         {layers.map((l) => {

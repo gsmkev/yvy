@@ -1,6 +1,6 @@
 /** E-16: carga de combustible (fuel_load): descuenta stock, carga costo, actualiza el horómetro y informa litros por hora. */
 import { describe, expect, it } from "vitest";
-import { newId } from "@yvy/shared";
+import { localDate, newId } from "@yvy/shared";
 import { call } from "./helpers";
 import { erpGet, erpPost, stockSetup } from "./erp-helpers";
 import { fuelRate } from "../src/db/fuel";
@@ -92,8 +92,8 @@ describe("combustible (E-16)", () => {
     expect(jd).toMatchObject({ name: "John Deere", loads: 3, liters: 300, firstMeter: 1000, lastMeter: 1250, litersPerUnit: 0.8, meterKind: "hours" });
     const pick = r.find((x) => x.machineId === null);
     expect(pick).toMatchObject({ loads: 2, liters: 60, litersPerUnit: null });
-    // período
-    const recent = (await erpGet<any[]>(s.owner.token, `fuel/report?from=${new Date(now - day - 3600_000).toISOString().slice(0, 10)}`)).body;
+    // período: `from` es un día de Asunción (no UTC); entre las 00 y las 03 UTC el día UTC ya cambió
+    const recent = (await erpGet<any[]>(s.owner.token, `fuel/report?from=${localDate(now - day)}`)).body;
     expect(recent.find((x) => x.machineId === s.machineId)).toMatchObject({ loads: 1, litersPerUnit: null });
   });
 

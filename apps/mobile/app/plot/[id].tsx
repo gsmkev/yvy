@@ -57,7 +57,7 @@ export default function PlotSheet() {
         {[
           plot.kind === "pasture" ? t("ui.pasture") : (plot.crop ?? t("ui.crop")),
           t("ui.ha", { value: plot.areaHa.toLocaleString("es-PY", { maximumFractionDigits: 0 }) }),
-          visitDays === null ? t("app.noVisits") : visitDays === 0 ? t("app.lastVisitToday") : t("app.lastVisit", { days: visitDays }),
+          visitDays === null ? t("app.noVisits") : visitDays === 0 ? t("app.lastVisitToday") : visitDays === 1 ? t("app.lastVisitYesterday") : t("app.lastVisit", { days: visitDays }),
         ].join(" · ")}
       </Text>
 

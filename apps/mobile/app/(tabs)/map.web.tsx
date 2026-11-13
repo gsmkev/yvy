@@ -4,11 +4,13 @@ import { router, useFocusEffect } from "expo-router";
 import { FarmLine } from "../../src/ui/FarmLine";
 import { Button, Text } from "../../src/ui/kit";
 import { LayerSwitch, NdviLegend } from "../../src/ui/MapLayerControls";
+import { MapToolbar, MapToolButton } from "../../src/ui/MapToolbar";
+import { Layers } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Protocol } from "pmtiles";
-import { BRAND, t } from "@yvy/shared";
+import { BRAND, LIMITS, t } from "@yvy/shared";
 import { containsPoint, type Area } from "@yvy/geo";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
@@ -25,8 +27,10 @@ export default function MapScreen() {
   const farms = useLocal(() => byFarm(getDb().farms().map((f) => ({ ...f, farmId: f.id })), farmId), [farmId]);
   const plots = useLocal(() => byFarm(getDb().plots(), farmId), [farmId]);
   const records = useLocal(() => byFarm(getDb().records(300), farmId), [farmId]);
+  const lastVisit = useLocal(() => getDb().lastVisitByPlot());
   const [base, setBase] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  const [panel, setPanel] = useState(false);
   useFocusEffect(
     useCallback(() => {
       setFabHidden(!!selected);
@@ -80,7 +84,7 @@ export default function MapScreen() {
             data: fc(
               plots.map((p) => ({
                 type: "Feature",
-                properties: { kind: p.kind, sel: p.id === selected ? 1 : 0 },
+                properties: { kind: p.kind, sel: p.id === selected ? 1 : 0, stale: (lastVisit.get(p.id) ? Math.floor((Date.now() - lastVisit.get(p.id)!) / 86_400_000) : 99) >= LIMITS.visits.defaultStaleDays ? 1 : 0 },
                 geometry: JSON.parse(p.geometry),
               })),
             ),
@@ -108,7 +112,7 @@ export default function MapScreen() {
             type: "line",
             source: "plots",
             paint: {
-              "line-color": ["case", ["==", ["get", "sel"], 1], "#ffffff", "rgba(255,255,255,0.7)"],
+              "line-color": ["case", ["==", ["get", "sel"], 1], "#ffffff", ["==", ["get", "stale"], 1], BRAND.trigo, "rgba(255,255,255,0.7)"],
               "line-width": ["case", ["==", ["get", "sel"], 1], 3, 1.5],
             },
           },
@@ -149,7 +153,7 @@ export default function MapScreen() {
       view.current = { farmId: farm.id, center: map.getCenter().toArray() as [number, number], zoom: map.getZoom() };
       map.remove();
     };
-  }, [farm?.id, plots, records, base, selected, mode]);
+  }, [farm?.id, plots, records, lastVisit, base, selected, mode]);
 
   const plot = plots.find((p) => p.id === selected);
   return (
@@ -157,8 +161,13 @@ export default function MapScreen() {
       <div ref={ref} style={{ position: "absolute", inset: 0 }} />
       <View style={s.topLeft} pointerEvents="box-none">
         <FarmLine style={s.panel} />
-        <LayerSwitch value={mode} onChange={setMode} />
+        {panel && <LayerSwitch value={mode} onChange={setMode} />}
         {mode === "ndvi" && <NdviLegend acquiredAt={ndvi?.acquiredAt ?? null} missing={!ndvi} />}
+      </View>
+      <View style={s.toolbar} pointerEvents="box-none">
+        <MapToolbar>
+          <MapToolButton icon={Layers} label={t("app.mapLayers")} active={panel} onPress={() => setPanel((p) => !p)} />
+        </MapToolbar>
       </View>
       {plot && (
         <View style={s.sheet}>
@@ -174,7 +183,8 @@ export default function MapScreen() {
 }
 
 const s = StyleSheet.create({
-  topLeft: { position: "absolute", top: 12, left: 12, right: 12, gap: 8 },
+  toolbar: { position: "absolute", top: 12, right: 12 },
+  topLeft: { position: "absolute", top: 12, left: 12, right: 72, gap: 8 },
   panel: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14 },
   sheet: { position: "absolute", left: 12, right: 12, bottom: 12, backgroundColor: C.papel, borderRadius: 16, padding: 20 },
   title: { ...T.title },

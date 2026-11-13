@@ -2,7 +2,9 @@ import type { ComponentProps, ReactNode } from "react";
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   StyleSheet,
+  Switch,
   Text as RNText,
   TextInput as RNTextInput,
   View,
@@ -83,9 +85,12 @@ export function Row({
   selected,
   disabled,
   choice,
+  status,
 }: {
   title: string;
   subtitle?: string;
+  /** Estado de envío de lo que muestra la fila: pendiente = borde punteado trigo, enviado = sólido soja, rechazado = sólido alerta. */
+  status?: SyncState;
   onPress?: () => void;
   left?: ReactNode;
   right?: ReactNode;
@@ -103,6 +108,7 @@ export function Row({
       disabled={disabled || !onPress}
       style={({ pressed }) => [s.row, selected && s.rowSelected, pressed && s.rowPressed, disabled && { opacity: 0.5 }]}
     >
+      {status && <StatusEdge status={status} />}
       {left && <View style={s.rowLeft}>{left}</View>}
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={[T.bodyMedium, selected && { color: C.accionOscuro }]} numberOfLines={2}>
@@ -116,6 +122,71 @@ export function Row({
       </View>
       {right && <View style={s.rowRight}>{right}</View>}
     </Pressable>
+  );
+}
+
+export type SyncState = "pending" | "synced" | "rejected";
+
+/** Borde izquierdo de una fila con su estado de envío (paleta: pendiente punteado trigo, enviado sólido soja). */
+export function StatusEdge({ status }: { status: SyncState }) {
+  const color = status === "pending" ? C.trigo : status === "rejected" ? C.peligro : C.soja;
+  return (
+    <View style={s.edge} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      {status === "pending" ? Array.from({ length: 16 }, (_, i) => <View key={i} style={[s.dash, { backgroundColor: color }]} />) : <View style={{ flex: 1, backgroundColor: color }} />}
+    </View>
+  );
+}
+
+/** Encabezado de sección: texto de 15 px en tinta secundaria, con `action` opcional a la derecha (un texto tocable). */
+export function SectionHeader({ title, action, onAction, first }: { title: string; action?: string; onAction?: () => void; first?: boolean }) {
+  return (
+    <View style={[s.section, first && { marginTop: 20 }]}>
+      <Text accessibilityRole="header" style={s.sectionText}>
+        {title}
+      </Text>
+      {action && onAction ? (
+        <Pressable accessibilityRole="button" accessibilityLabel={action} onPress={onAction} hitSlop={8} style={s.sectionAction}>
+          <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{action}</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+/** Estado vacío: qué pasa y, si hay una salida, el botón para hacerla. */
+export function EmptyState({ title, hint, action, onAction }: { title: string; hint?: string; action?: string; onAction?: () => void }) {
+  return (
+    <View style={s.empty}>
+      <Text style={T.heading}>{title}</Text>
+      {hint ? <Text style={[T.small, { marginTop: 4 }]}>{hint}</Text> : null}
+      {action && onAction ? <Button kind="secondary" title={action} onPress={onAction} style={{ marginTop: 16, alignSelf: "flex-start" }} /> : null}
+    </View>
+  );
+}
+
+/** Fila con interruptor (ajustes). */
+export function SwitchRow({ title, hint, value, onValueChange }: { title: string; hint?: string; value: boolean; onValueChange: (v: boolean) => void }) {
+  return (
+    <View style={s.switchRow}>
+      <View style={{ flex: 1 }}>
+        <Text style={T.body}>{title}</Text>
+        {hint ? <Text style={T.small}>{hint}</Text> : null}
+      </View>
+      <Switch value={value} accessibilityLabel={title} onValueChange={onValueChange} trackColor={{ true: C.accion }} />
+    </View>
+  );
+}
+
+/** Cuerpo de un paso: el contenido se desplaza y la acción principal queda fija abajo, siempre a la vista (también con el teclado abierto o con textos largos). */
+export function ScreenBody({ children, footer }: { children: ReactNode; footer: ReactNode }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={s.pad} keyboardShouldPersistTaps="handled">
+        {children}
+      </ScrollView>
+      <View style={[s.footer, { paddingBottom: Math.max(12, insets.bottom) }]}>{footer}</View>
+    </View>
   );
 }
 
@@ -205,9 +276,17 @@ export const s = StyleSheet.create({
   },
   rowSelected: { backgroundColor: C.accionSuave, marginHorizontal: -GUTTER, paddingHorizontal: GUTTER, borderBottomColor: "transparent", borderRadius: RADIUS },
   rowPressed: { opacity: 0.7 },
+  edge: { width: 3, alignSelf: "stretch", overflow: "hidden", gap: 4, borderRadius: 2, marginRight: -4 },
+  dash: { height: 6 },
+  section: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 28, marginBottom: 4, minHeight: 24 },
+  sectionText: { fontFamily: F.sansSemi, fontSize: 15, color: C.tinta2 },
+  sectionAction: { minHeight: 48, justifyContent: "center", marginVertical: -12 },
+  empty: { paddingVertical: 32 },
+  switchRow: { flexDirection: "row", alignItems: "center", gap: 12, minHeight: TOUCH + 8, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.linea },
   rowLeft: { width: 32, alignItems: "center" },
   rowRight: { alignItems: "flex-end" },
   bar: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 8, paddingHorizontal: GUTTER },
   toast: { position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: C.tinta, paddingHorizontal: GUTTER, paddingTop: 14 },
+  footer: { paddingHorizontal: GUTTER, paddingTop: 12, backgroundColor: C.papel, borderTopWidth: 1, borderTopColor: C.linea, gap: 8 },
   divider: { height: 1, backgroundColor: C.linea, marginVertical: 16 },
 });

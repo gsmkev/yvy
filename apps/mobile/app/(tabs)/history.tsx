@@ -1,4 +1,4 @@
-/** Historial: 30 días agrupados por día. Lo pendiente de mandar se distingue por el color del punto. */
+/** Historial: 30 días agrupados por día. El estado de envío va en el borde izquierdo: pendiente punteado trigo, enviado sólido soja. */
 import { useState } from "react";
 import { Image, Pressable, ScrollView, SectionList, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
@@ -9,8 +9,8 @@ import { memberNames } from "../../src/lib/members";
 import { authorName, isOwnerMode } from "../../src/lib/ownerSummary";
 import { useSession } from "../../src/lib/session";
 import { useLocal } from "../../src/lib/useLocal";
-import { Row, s as k, Text } from "../../src/ui/kit";
-import { C, F, T } from "../../src/ui/theme";
+import { EmptyState, Row, SectionHeader, s as k, Text } from "../../src/ui/kit";
+import { C, T } from "../../src/ui/theme";
 
 const dayKey = (ms: number) => new Date(ms - 3 * 3_600_000).toISOString().slice(0, 10);
 const dayTitle = (key: string) => {
@@ -72,18 +72,15 @@ export default function History() {
         </View>
       }
       ListEmptyComponent={
-        <View style={{ paddingVertical: 32 }}>
-          <Text style={T.heading}>{t("app.noRecordsYet")}</Text>
-          <Text style={[T.small, { marginTop: 4 }]}>{t("app.noRecordsHint")}</Text>
-        </View>
+        <EmptyState title={t("app.noRecordsYet")} hint={t("app.noRecordsHint")} action={t("app.annotate")} onAction={() => router.push("/annotate")} />
       }
-      renderSectionHeader={({ section }) => <Text style={st.day}>{section.title}</Text>}
+      renderSectionHeader={({ section }) => <SectionHeader title={section.title} />}
       renderItem={({ item: r }) => (
         <Row
           title={describeRecord(r.kind, JSON.parse(r.data))}
           subtitle={[t(`recordKinds.${r.kind}`), owner ? authorName(r.authorId, session?.user.id, names) : null, plots.find((p) => p.id === r.plotId)?.name, hhmm(r.capturedAt)].filter(Boolean).join(" · ")}
           onPress={() => router.push({ pathname: "/record/[id]", params: { id: r.id } })}
-          left={<View style={[st.dot, { backgroundColor: r.rejected ? C.peligro : r.pending ? C.trigo : C.accion }]} />}
+          status={r.rejected ? "rejected" : r.pending ? "pending" : "synced"}
           right={
             r.rejected ? (
               <Text style={[T.small, { color: C.peligro }]}>{t("app.rejected")}</Text>
@@ -103,10 +100,8 @@ export default function History() {
 }
 
 const st = StyleSheet.create({
-  day: { fontFamily: F.sansSemi, fontSize: 15, color: C.tinta2, marginTop: 28, marginBottom: 4 },
   filters: { marginHorizontal: -20, paddingHorizontal: 20, flexGrow: 0 },
   filter: { minHeight: 48, justifyContent: "center", borderBottomWidth: 3, borderBottomColor: "transparent" },
   filterActive: { borderBottomColor: C.tinta },
   thumb: { width: 48, height: 48, borderRadius: 8 },
-  dot: { width: 12, height: 12, borderRadius: 6 },
 });

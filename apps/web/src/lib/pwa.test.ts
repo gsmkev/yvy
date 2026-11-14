@@ -1,66 +1,86 @@
-import { readFileSync } from "node:fs";
+// @vitest-environment node
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { bootAssets, buildPrecache } from "../../scripts/pwa-plugin";
 
 const root = join(__dirname, "../..");
-const swSource = readFileSync(join(root, "public/sw.js"), "utf8");
 
-/** Carga sw.js con un `self` falso y devuelve su manejador de fetch. */
-function loadFetchHandler() {
-  let handler: ((e: unknown) => void) | undefined;
-  const self = {
-    location: { origin: "https://yvy.test" },
-    addEventListener: (type: string, fn: (e: unknown) => void) => {
-      if (type === "fetch") handler = fn;
-    },
-  };
-  new Function("self", "caches", "fetch", "URL", swSource)(self, { open: () => Promise.reject(new Error("sin cache")) }, () => {}, URL);
-  return handler!;
-}
-
-const intercepted = (handler: (e: unknown) => void, path: string, mode = "cors", method = "GET") => {
-  let called = false;
-  handler({
-    request: { method, url: `https://yvy.test${path}`, mode },
-    respondWith: (p: Promise<unknown>) => {
-      p.catch(() => {});
-      called = true;
-    },
+describe("manifiesto", () => {
+  const m = JSON.parse(readFileSync(join(root, "public/manifest.webmanifest"), "utf8"));
+  it("es instalable: nombre, inicio, modo y colores de marca", () => {
+    expect(m.name).toMatch(/^Yvy/);
+    expect(m.short_name).toBe("Yvy");
+    expect(m.lang).toBe("es-PY");
+    expect(m.display).toBe("standalone");
+    expect(m.start_url).toMatch(/^\//);
+    expect(m.scope).toBe("/");
+    expect(m.id).toBe("/");
+    expect(m.theme_color).toBe("#F1EEE4"); // lino
+    expect(m.background_color).toBe("#F1EEE4");
   });
-  return called;
-};
-
-describe("service worker", () => {
-  const handler = loadFetchHandler();
-
-  it("no toca ninguna ruta de run_worker_first (salvo las lecturas de estancias)", () => {
-    const wrangler = readFileSync(join(root, "../api/wrangler.jsonc"), "utf8");
-    const list = /"run_worker_first":\s*\[([^\]]*)\]/.exec(wrangler)![1]!;
-    const globs = [...list.matchAll(/"([^"]+)"/g)].map((m) => m[1]!);
-    expect(globs.length).toBeGreaterThan(5);
-    for (const g of globs) {
-      const path = g.replace("/*", "/algo");
-      expect(intercepted(handler, path, "navigate"), path).toBe(false);
-      expect(intercepted(handler, path), path).toBe(false);
+  it("trae los íconos que pide Chrome (192, 512 y maskable)", () => {
+    const has = (sizes: string, purpose?: string) =>
+      m.icons.some((i: { sizes: string; purpose?: string }) => i.sizes === sizes && (purpose ? i.purpose === purpose : i.purpose !== "maskable"));
+    expect(has("192x192")).toBe(true);
+    expect(has("512x512")).toBe(true);
+    expect(has("512x512", "maskable")).toBe(true);
+    for (const i of m.icons) {
+      const file = join(root, "public", i.src);
+      expect(() => readFileSync(file), i.src).not.toThrow();
     }
-    expect(intercepted(handler, "/org/tasks")).toBe(false);
-    expect(intercepted(handler, "/org/farms/abc/problem-areas")).toBe(false);
   });
-  it("solo guarda GET /org/farms y /org/farms/:id", () => {
-    expect(intercepted(handler, "/org/farms")).toBe(true);
-    expect(intercepted(handler, "/org/farms/abc")).toBe(true);
-    expect(intercepted(handler, "/org/farms/abc", "cors", "POST")).toBe(false);
+});
+
+describe("precache de la build", () => {
+  const out = mkdtempSync(join(tmpdir(), "yvy-pwa-"));
+  mkdirSync(join(out, "assets"));
+  mkdirSync(join(out, "landing"));
+  mkdirSync(join(out, "maplibre"));
+  writeFileSync(
+    join(out, "index.html"),
+    '<link rel="icon" href="/favicon.svg"><link rel="manifest" href="/manifest.webmanifest"><script type="module" src="/assets/index-A.js"></script><link rel="stylesheet" href="/assets/index-A.css"><link href="https://fonts.googleapis.com/css2?x" rel="stylesheet">',
+  );
+  for (const [f, c] of Object.entries({
+    "assets/index-A.js": "js",
+    "assets/index-A.css": "css",
+    "assets/lazy-B.js": "lazy",
+    "assets/lazy-B.js.map": "map",
+    "manifest.webmanifest": "{}",
+    "favicon.svg": "<svg/>",
+    "maplibre/worker.mjs": "w",
+    "landing/foto.webp": "img",
+    "sw.js": "viejo",
+    ".gitkeep": "",
+  }))
+    writeFileSync(join(out, f), c);
+
+  it("lista todo menos el service worker, los mapas de fuente y la landing", () => {
+    const p = buildPrecache(out);
+    expect(p.urls).toEqual([
+      "/assets/index-A.css",
+      "/assets/index-A.js",
+      "/assets/lazy-B.js",
+      "/favicon.svg",
+      "/",
+      "/manifest.webmanifest",
+      "/maplibre/worker.mjs",
+    ]);
   });
-  it("maneja las navegaciones de la app y los archivos con hash", () => {
-    expect(intercepted(handler, "/estancias/abc", "navigate")).toBe(true);
-    expect(intercepted(handler, "/assets/index-abc123.js")).toBe(true);
-    expect(intercepted(handler, "/favicon.svg")).toBe(false);
+  it("lo crítico es el index.html, el manifiesto y lo que carga al arrancar", () => {
+    const p = buildPrecache(out);
+    expect(p.critical).toEqual(["/", "/manifest.webmanifest", "/favicon.svg", "/assets/index-A.js", "/assets/index-A.css"]);
+    expect(p.critical.every((u) => p.urls.includes(u))).toBe(true);
   });
-  it("el manifiesto tiene nombre, colores e íconos", () => {
-    const m = JSON.parse(readFileSync(join(root, "public/manifest.webmanifest"), "utf8"));
-    expect(m.name).toBe("Yvy");
-    expect(m.theme_color).toBe("#FBFAF5");
-    expect(m.icons.some((i: { sizes: string }) => i.sizes === "512x512")).toBe(true);
-    expect(m.icons.some((i: { sizes: string }) => i.sizes === "192x192")).toBe(true);
+  it("la versión cambia si cambia cualquier archivo y se mantiene si no", () => {
+    const a = buildPrecache(out).version;
+    expect(buildPrecache(out).version).toBe(a);
+    expect(a).toMatch(/^[0-9a-f]{12}$/);
+    writeFileSync(join(out, "assets/lazy-B.js"), "lazy2");
+    expect(buildPrecache(out).version).not.toBe(a);
+  });
+  it("bootAssets ignora otros orígenes", () => {
+    expect(bootAssets('<script src="/a.js"></script><link href="https://x.y/z.css"><link href="//cdn/z.css">')).toEqual(["/a.js"]);
   });
 });

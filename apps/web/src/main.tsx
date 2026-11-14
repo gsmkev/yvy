@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { NetworkError } from "./lib/api";
+import { PwaUpdate } from "./components/PwaUpdate";
 import { initMonitoring } from "./lib/monitoring";
 import { registerServiceWorker } from "./lib/pwa";
 import { router } from "./router";
@@ -27,6 +28,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
+      <PwaUpdate />
     </QueryClientProvider>
   </StrictMode>,
 );

@@ -85,6 +85,38 @@ export const LIMITS = {
   offline: {
     maxMapBytes: 600 * 1024 * 1024,
   },
+  /**
+   * La web sin conexión (ADR 0005). Los topes cuentan lo que el navegador guarda en este dispositivo; al llegar al
+   * tope se descarta lo más viejo (lecturas y rangos de mapa) o se avisa (mapas guardados a mano y pendientes).
+   */
+  webOffline: {
+    /** Vigencia de la copia de lecturas (RF-45: la app funciona 30 días sin conexión). */
+    queryCacheMaxAgeMs: 30 * 24 * 60 * 60 * 1000,
+    /** Tamaño máximo de la copia de lecturas en IndexedDB; sobre eso se descartan primero las consultas más pesadas. */
+    queryCacheMaxBytes: 25 * 1024 * 1024,
+    /** Cada cuánto se escribe la copia de lecturas como mucho. */
+    persistThrottleMs: 1_000,
+    /** Copias de respuestas GET de /org y /me en el service worker (las más viejas se descartan). */
+    dataCacheMaxEntries: 400,
+    /** Mapas guardados a mano ("Guardar esta estancia"): suma de todas las estancias. */
+    mapMaxBytes: 300 * 1024 * 1024,
+    /** Rangos sueltos de PMTiles que el service worker guarda al mirar el mapa con conexión. */
+    mapRangeCacheMaxBytes: 100 * 1024 * 1024,
+    /** Zoom máximo del fondo de todo el país que se guarda con una estancia (zonas lejanas quedan en bajo zoom). */
+    countryMaxZoom: 9,
+    /** Hasta este zoom se guarda el país entero; más arriba, solo alrededor de la estancia. */
+    countryFullZoom: 6,
+    /** Margen (grados) alrededor de la estancia para el fondo del país. */
+    countryPadDeg: 1,
+    /** Teselas del fondo del país que se piden como mucho por estancia. */
+    countryMaxTiles: 1_500,
+    /** Peso estimado de una tesela del fondo del país, para mostrar el tamaño antes de bajar. */
+    countryTileBytesEstimate: 30 * 1024,
+    /** Anotaciones sin mandar que se aceptan en el dispositivo; después se pide conectarse. */
+    maxPendingMutations: 2_000,
+    /** Espera entre reintentos automáticos del envío sin conexión. */
+    retryDelaysMs: [5_000, 15_000, 60_000, 300_000],
+  },
   storage: {
     /**
      * Cuántas versiones de cada capa ráster se guardan por estancia en R2 (las más nuevas). Cada pasada de Sentinel-2

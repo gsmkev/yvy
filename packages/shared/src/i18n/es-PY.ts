@@ -3876,6 +3876,12 @@ export const esPY = {
       navLabel: "Navegación",
     },
   },
+  /** La web como PWA: versión nueva, conexión, pendientes y mapas guardados (ADR 0005). */
+  offline: {
+    updateAvailable: "Hay una versión nueva",
+    updateAction: "Actualizar",
+    updateLater: "Después",
+  },
   attribution: {
     metNorway: "Datos de MET Norway",
     copernicus: "Contiene datos modificados de Copernicus Sentinel",

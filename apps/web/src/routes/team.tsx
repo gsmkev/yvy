@@ -1,11 +1,11 @@
-import { Building2, KeyRound, MapPinned, QrCode, UserPlus } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
 import { isFieldRole, ROLES, type FarmAccessLevel } from "@yvy/shared";
 import { TableExportMenu } from "../components/TableExportMenu";
-import { Button, ConfirmModal, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../components/ui";
+import { ActionMenu } from "../components/menus";
+import { Button, ConfirmModal, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, toast } from "../components/ui";
 import { del, get, post, put } from "../lib/api";
 import { fmtDateTime, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -14,7 +14,14 @@ import type { FarmDetail, Member } from "../lib/types";
 
 export function TeamPage() {
   const me = useMe();
+  const navigate = useNavigate();
   const members = useMembers();
+  const farms = useFarms();
+  const access = useQuery({
+    enabled: me.data?.role === "owner",
+    queryKey: ["farm-access"],
+    queryFn: () => get<{ userId: string; farmId: string; level: FarmAccessLevel }[]>("/org/farm-access"),
+  });
   const qc = useQueryClient();
   const [adding, setAdding] = useState(false);
   const [qr, setQr] = useState<{ member: Member; qr: string; expiresAt: number } | null>(null);
@@ -37,90 +44,111 @@ export function TeamPage() {
     },
   });
 
-  if (members.isLoading) return <Spinner />;
+  if (members.isLoading) return <Spinner rows={5} h={64} />;
   if (members.error) return <ErrorBox error={members.error} />;
+  const owner = me.data?.role === "owner";
+  const scoped = (m: Member) => m.role === "supervisor" || m.role === "admin" || m.role === "agronomist";
+  // Estancias que ve cada persona con acceso por estancia: solo el dueño las administra
+  const farmsOf = (m: Member) => {
+    if (!scoped(m)) return "";
+    const mine = (access.data ?? []).filter((a) => a.userId === m.userId).map((a) => farms.data?.find((f) => f.id === a.farmId)?.name);
+    if (mine.length === 0) return t(m.role === "supervisor" ? "ui.teamFarmsNone" : "ui.teamFarmsAll");
+    return mine.filter(Boolean).join(", ");
+  };
+  const activity = (m: Member) => {
+    const parts = [
+      m.activeDays7 > 0 ? t("ui.activityDays", { n: m.activeDays7 }) : "",
+      m.records7d > 0 ? t(m.records7d === 1 ? "ui.activityRecordsOne" : "ui.activityRecords", { n: m.records7d }) : "",
+      m.plotsVisited7d > 0 ? t(m.plotsVisited7d === 1 ? "ui.activityPlotsOne" : "ui.activityPlots", { n: m.plotsVisited7d }) : "",
+    ].filter(Boolean);
+    return parts.length ? parts.join(" · ") : t("ui.teamNoActivity");
+  };
+  const cols = owner ? "md:grid-cols-[minmax(0,2fr)_10rem_minmax(0,1fr)_minmax(0,1.6fr)_2.5rem]" : "md:grid-cols-[minmax(0,2fr)_10rem_minmax(0,1.6fr)_2.5rem]";
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-3 p-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">{t("ui.teamTitle")}</h1>
-        <div className="flex items-center gap-2">
-          <TableExportMenu
-            data={() => ({
-              name: t("ui.teamFile"),
-              headers: [t("ui.name"), t("ui.role"), t("ui.emailCol"), t("ui.phone")],
-              rows: members.data!.map((m) => [m.fullName, tk(`ui.role_${m.role}`), m.email, m.phone]),
-            })}
-          />
-          {me.data?.role === "owner" && (
-            <>
-              <Link to="/cambios" className="text-sm underline underline-offset-4">
-                {t("ui.auditTitle")}
-              </Link>
-              <Link to="/api-publica" className="text-sm underline underline-offset-4">
-                {t("ui.apiTokensTitle")}
-              </Link>
-            </>
-          )}
-          {canManage && (
-            <Link to="/formularios" className="text-sm font-medium text-accion underline underline-offset-2">
-              {t("ui.formsLink")}
-            </Link>
-          )}
-          {canManage && (
-            <Button variant="primary" icon={UserPlus} onClick={() => setAdding(true)}>
+    <div className="mx-auto flex max-w-5xl flex-col gap-5 p-4 lg:p-6">
+      <PageHeader
+        className="max-sm:flex-wrap"
+        title={t("ui.teamTitle")}
+        primary={
+          canManage ? (
+            <Button variant="primary" onClick={() => setAdding(true)}>
               {t("ui.addMember")}
             </Button>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+        menu={
+          <>
+            <TableExportMenu
+              data={() => ({
+                name: t("ui.teamFile"),
+                headers: [t("ui.name"), t("ui.role"), t("ui.emailCol"), t("ui.phone")],
+                rows: members.data!.map((m) => [m.fullName, tk(`ui.role_${m.role}`), m.email, m.phone]),
+              })}
+            />
+            <ActionMenu
+              label={t("ui.moreActions")}
+              items={[
+                owner && { label: t("ui.auditTitle"), onSelect: () => void navigate({ to: "/cambios" }) },
+                owner && { label: t("ui.apiTokensTitle"), onSelect: () => void navigate({ to: "/api-publica" }) },
+                canManage && { label: t("ui.formsLink"), onSelect: () => void navigate({ to: "/formularios" }) },
+              ]}
+            />
+          </>
+        }
+      />
       {link.error && <ErrorBox error={link.error} />}
-      {members.data!.map((m) => (
-        <div key={m.userId} className="flex flex-wrap items-center gap-3 border-b border-linea py-4">
-          <div className="flex-1">
-            <div className="font-semibold">{m.fullName}</div>
-            <div className="text-sm text-tinta-2">
-              {tk(`ui.role_${m.role}`)} {m.email ? `· ${m.email}` : ""} {m.phone ? `· ${m.phone}` : ""}
-            </div>
-            {m.role === "worker" && canManage && (
-              <div className="mt-0.5 text-xs text-tinta-2">{m.hasPin ? t("app.teamPinHas") : t("app.teamPinNone")}</div>
-            )}
-            <div className="num mt-0.5 text-xs text-tinta-2">
-              {t("ui.activityDays", { n: m.activeDays7 })} ·{" "}
-              {t(m.records7d === 1 ? "ui.activityRecordsOne" : "ui.activityRecords", { n: m.records7d })} ·{" "}
-              {t(m.plotsVisited7d === 1 ? "ui.activityPlotsOne" : "ui.activityPlots", { n: m.plotsVisited7d })} ·{" "}
-              {m.lastSyncAt ? t("ui.lastSync", { date: fmtDateTime(m.lastSyncAt) }) : t("ui.neverSynced")}
-            </div>
-            {m.overdueTasks > 0 && (
-              <div className="num mt-0.5 text-sm font-medium text-peligro">
-                {t(m.overdueTasks === 1 ? "ui.overdueCountOne" : "ui.overdueCountMany", { n: m.overdueTasks })}
-              </div>
-            )}
+      {members.data!.length === 0 ? (
+        <EmptyState
+          title={t("ui.teamEmpty")}
+          action={canManage ? <Button onClick={() => setAdding(true)}>{t("ui.addMember")}</Button> : undefined}
+        />
+      ) : (
+        <div>
+          <div className={`hidden gap-4 border-b border-linea pb-2 text-xs text-tinta-2 md:grid ${cols}`}>
+            <span>{t("ui.name")}</span>
+            <span>{t("ui.role")}</span>
+            {owner && <span>{t("ui.farmAccess")}</span>}
+            <span>{t("ui.teamColActivity")}</span>
+            <span />
           </div>
-          <Button icon={MapPinned} onClick={() => setAssigning(m)}>
-            {t("ui.assignPlots")}
-          </Button>
-          {me.data?.role === "owner" && (m.role === "supervisor" || m.role === "admin" || m.role === "agronomist") && (
-            <Button icon={Building2} onClick={() => setScoping(m)}>
-              {t("ui.farmAccess")}
-            </Button>
-          )}
-          {canManage && isFieldRole(m.role) && (
-            <Button icon={QrCode} onClick={() => link.mutate(m)}>
-              {t("ui.linkDevice")}
-            </Button>
-          )}
-          {canManage && m.role === "worker" && (
-            <Button icon={KeyRound} onClick={() => setPinFor(m)}>
-              {m.hasPin ? t("app.teamPinChange") : t("app.teamPinSet")}
-            </Button>
-          )}
-          {canManage && m.userId !== me.data?.user.id && (
-            <Button variant="danger" onClick={() => setRemoving(m)}>
-              {t("ui.removeMember")}
-            </Button>
-          )}
+          <ul>
+            {members.data!.map((m) => (
+              <li key={m.userId} className={`grid items-start gap-x-4 gap-y-1 border-b border-linea py-3 md:items-center ${cols} grid-cols-[minmax(0,1fr)_2.5rem]`}>
+                <div className="min-w-0">
+                  <div className="truncate font-medium">{m.fullName}</div>
+                  <div className="truncate text-sm text-tinta-2">{[m.email, m.phone].filter(Boolean).join(" · ")}</div>
+                </div>
+                <div className="col-start-1 row-start-2 text-sm md:col-start-auto md:row-start-auto">
+                  {tk(`ui.role_${m.role}`)}
+                  {m.role === "worker" && canManage && !m.hasPin && <span className="text-tinta-2"> · {t("app.teamPinNone")}</span>}
+                </div>
+                {owner && <div className="hidden min-w-0 truncate text-sm text-tinta-2 md:block">{farmsOf(m)}</div>}
+                <div className="col-start-1 row-start-3 min-w-0 text-sm md:col-start-auto md:row-start-auto">
+                  <div className="num text-tinta-2">{activity(m)}</div>
+                  <div className="num text-xs text-tinta-2">{m.lastSyncAt ? t("ui.lastSync", { date: fmtDateTime(m.lastSyncAt) }) : t("ui.neverSynced")}</div>
+                  {m.overdueTasks > 0 && (
+                    <div className="num text-sm font-medium text-peligro">
+                      {t(m.overdueTasks === 1 ? "ui.overdueCountOne" : "ui.overdueCountMany", { n: m.overdueTasks })}
+                    </div>
+                  )}
+                </div>
+                <div className="col-start-2 row-start-1 justify-self-end md:col-start-auto md:row-start-auto">
+                  <ActionMenu
+                    label={t("ui.rowActions", { name: m.fullName })}
+                    items={[
+                      { label: t("ui.assignPlots"), onSelect: () => setAssigning(m) },
+                      owner && scoped(m) && { label: t("ui.farmAccess"), onSelect: () => setScoping(m) },
+                      canManage && isFieldRole(m.role) && { label: t("ui.linkDevice"), onSelect: () => link.mutate(m) },
+                      canManage && m.role === "worker" && { label: m.hasPin ? t("app.teamPinChange") : t("app.teamPinSet"), onSelect: () => setPinFor(m) },
+                      canManage && m.userId !== me.data?.user.id && { label: t("ui.removeMember"), onSelect: () => setRemoving(m), danger: true },
+                    ]}
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
-      ))}
+      )}
       {removing && (
         <ConfirmModal
           title={removing.fullName}

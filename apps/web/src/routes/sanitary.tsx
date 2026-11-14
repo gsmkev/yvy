@@ -7,7 +7,9 @@ import { del, get, post } from "../lib/api";
 import { fmtDate, fmtIsoDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useFarms, useMe } from "../lib/queries";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../components/ui";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { RowMenu } from "../components/menus";
+import { Button, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, toast } from "../components/ui";
 
 interface EventRow {
   id: string;
@@ -55,64 +57,56 @@ export function SanitaryPage() {
     id ? (farms.data?.find((f) => f.id === id)?.name ?? "") : t("ui.sanitaryAllFarms");
 
   if (me.data && !canPlan) return <div className="mx-auto max-w-3xl p-4 text-sm text-tinta-2">{t("ui.sanitaryNoAccess")}</div>;
+  const manyFarms = (farms.data?.length ?? 0) > 1;
   return (
-    <div className="mx-auto max-w-3xl p-4">
-      <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="font-serif text-xl font-semibold">{t("ui.sanitaryTitle")}</h1>
-        <Button variant="primary" onClick={() => setCreating(true)}>
-          {t("ui.sanitaryNew")}
-        </Button>
-      </div>
-      <p className="mb-4 text-sm text-tinta-2">{t("ui.sanitaryIntro")}</p>
-      <div className="mb-3 flex items-center gap-3">
-        <Button variant="quiet" onClick={() => setMonth(shiftMonth(month, -1))}>
-          {t("ui.sanitaryPrev")}
-        </Button>
-        <span className="min-w-36 text-center font-medium" aria-live="polite">
+    <div className="mx-auto flex max-w-3xl flex-col gap-5 p-4 lg:p-6">
+      <PageHeader
+        title={t("ui.sanitaryTitle")}
+        primary={
+          <Button variant="primary" onClick={() => setCreating(true)}>
+            {t("ui.sanitaryNew")}
+          </Button>
+        }
+      />
+      <div className="flex items-center gap-1">
+        <Button variant="quiet" icon={ChevronLeft} className="w-10 !px-0" aria-label={t("ui.sanitaryPrev")} title={t("ui.sanitaryPrev")} onClick={() => setMonth(shiftMonth(month, -1))} />
+        <span className="min-w-40 text-center text-[18px] leading-6 font-semibold" aria-live="polite">
           {monthLabel(month)}
         </span>
-        <Button variant="quiet" onClick={() => setMonth(shiftMonth(month, 1))}>
-          {t("ui.sanitaryNext")}
-        </Button>
+        <Button variant="quiet" icon={ChevronRight} className="w-10 !px-0" aria-label={t("ui.sanitaryNext")} title={t("ui.sanitaryNext")} onClick={() => setMonth(shiftMonth(month, 1))} />
       </div>
-      {events.isLoading && <Spinner />}
+      {events.isLoading && <Spinner rows={4} h={64} />}
       {events.error ? <ErrorBox error={events.error} /> : null}
-      {events.data && events.data.length === 0 && <Empty title={t("ui.sanitaryEmpty")}>{t("ui.sanitaryEmptyHint")}</Empty>}
+      {events.data && events.data.length === 0 && (
+        <EmptyState title={t("ui.sanitaryEmpty")}>{t("ui.sanitaryEmptyHint")}</EmptyState>
+      )}
       {events.data && events.data.length > 0 && (
         <ul className="divide-y divide-linea border-y border-linea">
-          {events.data.map((e) => (
-            <li key={e.id} className="flex flex-wrap items-start justify-between gap-3 py-3">
-              <div className="min-w-0">
-                <p className="font-medium">
-                  <span className="num mr-2 text-tinta-2">{fmtIsoDate(e.plannedDate)}</span>
-                  {tk(`fields.healthReason_${e.reason}`)}
-                  {e.product ? `: ${e.product}` : ""}
-                </p>
-                <p className="mt-0.5 text-sm text-tinta-2">
-                  {farmName(e.farmId)} ·{" "}
-                  {e.categories.length
-                    ? e.categories.map((c) => tk(`fields.herd_${c}`).toLowerCase()).join(", ")
-                    : t("ui.sanitaryAllCategories")}
-                  {e.tasksCreated > 0 ? ` · ${t("ui.sanitaryTasks", { n: e.tasksCreated })}` : ""}
-                </p>
-                {e.note && <p className="mt-0.5 text-sm text-tinta-2">{e.note}</p>}
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <span
-                  className={
-                    e.state === "overdue" ? "font-medium text-peligro" : e.state === "done" ? "font-medium text-accion" : "text-tinta-2"
-                  }
-                >
-                  {e.state === "done" && e.doneAt
-                    ? t("ui.sanitaryDoneOn", { date: fmtDate(e.doneAt) })
-                    : tk(`ui.sanitaryState_${e.state}`)}
-                </span>
-                <Button variant="quiet" onClick={() => remove.mutate(e.id)} disabled={remove.isPending}>
-                  {t("ui.delete")}
-                </Button>
-              </div>
-            </li>
-          ))}
+          {events.data.map((e) => {
+            const meta = [
+              manyFarms ? farmName(e.farmId) : "",
+              e.categories.map((c) => tk(`fields.herd_${c}`).toLowerCase()).join(", "),
+              e.tasksCreated > 0 ? t("ui.sanitaryTasks", { n: e.tasksCreated }) : "",
+            ].filter(Boolean);
+            return (
+              <li key={e.id} className="flex items-center gap-3 py-2">
+                <span className="num w-24 shrink-0 text-sm text-tinta-2">{fmtIsoDate(e.plannedDate)}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">
+                    {tk(`fields.healthReason_${e.reason}`)}
+                    {e.product ? `: ${e.product}` : ""}
+                  </p>
+                  {meta.length > 0 && <p className="text-sm text-tinta-2">{meta.join(" · ")}</p>}
+                  {e.note && <p className="text-sm text-tinta-2">{e.note}</p>}
+                </div>
+                {e.state === "overdue" && <span className="shrink-0 text-sm font-medium text-peligro">{t("ui.sanitaryState_overdue")}</span>}
+                {e.state === "done" && e.doneAt && (
+                  <span className="shrink-0 text-sm text-accion">{t("ui.sanitaryDoneOn", { date: fmtDate(e.doneAt) })}</span>
+                )}
+                <RowMenu name={tk(`fields.healthReason_${e.reason}`)} onDelete={() => remove.mutate(e.id)} />
+              </li>
+            );
+          })}
         </ul>
       )}
       {creating && (

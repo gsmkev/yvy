@@ -9,7 +9,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { Protocol } from "pmtiles";
 import { TerraDraw, TerraDrawLineStringMode, TerraDrawPolygonMode, TerraDrawSelectMode } from "terra-draw";
 import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter";
-import type { Feature, FeatureCollection, LineString, MultiPolygon, Polygon } from "geojson";
+import type { Feature, FeatureCollection, LineString, MultiPolygon, Point, Polygon } from "geojson";
 import { BRAND } from "@yvy/shared";
 import pointOnFeature from "@turf/point-on-feature";
 import { t } from "../lib/i18n";
@@ -48,6 +48,8 @@ export interface FarmMapProps {
   /** Áreas problema del lote (S-08): borde punteado de alerta. */
   problemAreas?: { id: string; geometry: string }[];
   points?: MapPoint[];
+  /** Agrupa los puntos que se superponen (con el número de puntos); al tocar un grupo, el mapa se acerca. */
+  clusterPoints?: boolean;
   /** Mapa de calor de recorridas (F-06): puntos a lo largo de las recorridas grabadas. */
   heat?: [number, number][];
   /** Varias estancias a la vez (inicio): perímetro, nombre y fondo satelital propio. */
@@ -154,7 +156,12 @@ export function FarmMap(props: FarmMapProps) {
       map.addSource("plots", { type: "geojson", data: fc([]) });
       map.addSource("pois", { type: "geojson", data: fc([]) });
       map.addSource("problems", { type: "geojson", data: fc([]) });
-      map.addSource("points", { type: "geojson", data: fc([]) });
+      map.addSource(
+        "points",
+        cb.current.clusterPoints
+          ? { type: "geojson", data: fc([]), cluster: true, clusterRadius: 32, clusterMaxZoom: 15 }
+          : { type: "geojson", data: fc([]) },
+      );
       map.addSource("measure", { type: "geojson", data: fc([]) });
       map.addSource("lines", { type: "geojson", data: fc([]) });
       map.addSource("heat", { type: "geojson", data: fc([]) });
@@ -273,6 +280,7 @@ export function FarmMap(props: FarmMapProps) {
         id: "points",
         type: "circle",
         source: "points",
+        filter: ["!", ["has", "point_count"]],
         paint: {
           "circle-radius": ["coalesce", ["get", "radius"], 6],
           "circle-color": ["coalesce", ["get", "color"], BRAND.trigo],
@@ -280,6 +288,55 @@ export function FarmMap(props: FarmMapProps) {
           "circle-stroke-width": 1.5,
         },
       });
+      if (cb.current.clusterPoints) {
+        map.addLayer({
+          id: "points-cluster",
+          type: "circle",
+          source: "points",
+          filter: ["has", "point_count"],
+          paint: {
+            "circle-radius": ["step", ["get", "point_count"], 13, 10, 17, 30, 21],
+            "circle-color": BRAND.lino,
+            "circle-stroke-color": BRAND.surco,
+            "circle-stroke-width": 2,
+          },
+        });
+        const counts = new Map<number, maplibregl.Marker>();
+        const showCounts = () => {
+          if (!map.getSource("points") || !map.isSourceLoaded("points")) return;
+          const seen = new Set<number>();
+          for (const f of map.querySourceFeatures("points", { filter: ["has", "point_count"] })) {
+            const id = f.properties?.cluster_id as number;
+            if (seen.has(id)) continue;
+            seen.add(id);
+            const at = (f.geometry as Point).coordinates as [number, number];
+            let m = counts.get(id);
+            if (!m) {
+              const el = document.createElement("div");
+              el.className = "pointer-events-none text-xs font-semibold text-surco";
+              el.textContent = String(f.properties?.point_count);
+              m = new maplibregl.Marker({ element: el }).setLngLat(at).addTo(map);
+              counts.set(id, m);
+            }
+          }
+          for (const [id, m] of counts)
+            if (!seen.has(id)) {
+              m.remove();
+              counts.delete(id);
+            }
+        };
+        map.on("render", showCounts);
+        map.on("click", "points-cluster", (e: MapLayerMouseEvent) => {
+          const f = e.features?.[0];
+          if (!f) return;
+          const src = map.getSource("points") as GeoJSONSource;
+          void src.getClusterExpansionZoom(f.properties?.cluster_id as number).then((zoom) =>
+            map.easeTo({ center: (f.geometry as Point).coordinates as [number, number], zoom: zoom + 0.5 }),
+          );
+        });
+        map.on("mouseenter", "points-cluster", () => (map.getCanvas().style.cursor = "pointer"));
+        map.on("mouseleave", "points-cluster", () => (map.getCanvas().style.cursor = ""));
+      }
       map.addLayer({
         id: "measure-fill",
         type: "fill",

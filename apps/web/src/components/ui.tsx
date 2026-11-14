@@ -182,7 +182,18 @@ const FOCUSABLE =
  * Diálogo accesible (U-26): al abrir pasa el foco al primer campo (o al diálogo), Tab queda dentro,
  * Escape cierra y al cerrar el foco vuelve a lo que lo abrió.
  */
-export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+export function Modal({
+  title,
+  onClose,
+  children,
+  sheet = false,
+}: {
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+  /** En el celular sube desde abajo como una hoja. */
+  sheet?: boolean;
+}) {
   const box = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const close = useRef(onClose);
@@ -219,7 +230,7 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
   }, []);
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-surco/55 p-4 backdrop-blur-[2px]"
+      className={`fixed inset-0 z-50 flex justify-center bg-surco/55 backdrop-blur-[2px] ${sheet ? "items-end p-0 sm:items-center sm:p-4" : "items-center p-4"}`}
       onClick={onClose}
     >
       <div
@@ -228,7 +239,7 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="max-h-[90vh] w-full max-w-lg overflow-auto rounded-xl bg-lino shadow-xl outline-none"
+        className={`max-h-[90vh] w-full max-w-lg overflow-auto bg-lino shadow-xl outline-none ${sheet ? "rounded-t-xl sm:rounded-xl" : "rounded-xl"}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 flex items-center justify-between border-b border-linea bg-lino px-5 py-3.5">

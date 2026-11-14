@@ -2,6 +2,7 @@
 import { describeRecord } from "@yvy/shared";
 import { tk } from "./i18n";
 import { fmtDateTime } from "./format";
+import type { TableData } from "./tableExport";
 import type { Plot, RecordRow } from "./types";
 
 export function download(blob: Blob, filename: string) {
@@ -13,6 +14,24 @@ export function download(blob: Blob, filename: string) {
 }
 
 export const describeData = (kind: string, d: Record<string, unknown>): string => describeRecord(kind, d);
+
+/** Los registros como tabla simple (para CSV). */
+export function recordsTable(rows: RecordRow[]): TableData {
+  return {
+    name: "Registros",
+    headers: ["Fecha", "Tipo", "Lote", "Empleado", "Observación", "Latitud", "Longitud", "Fotos"],
+    rows: rows.map((r) => [
+      fmtDateTime(r.capturedAt),
+      tk(`recordKinds.${r.kind}`),
+      r.plotName ?? "",
+      r.authorName ?? "",
+      describeData(r.kind, r.data),
+      r.lat,
+      r.lon,
+      r.attachments.length,
+    ]),
+  };
+}
 
 export async function recordsToExcel(rows: RecordRow[], filename: string) {
   const ExcelJS = (await import("exceljs")).default;

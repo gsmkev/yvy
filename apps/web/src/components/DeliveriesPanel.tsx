@@ -45,10 +45,9 @@ export function DeliveriesPanel({ farmId, plots }: { farmId: string; plots: Plot
   const d = q.data;
   return (
     <section aria-labelledby="deliv-h" className="flex flex-col gap-3">
-      <h3 id="deliv-h" className="font-serif text-lg font-semibold">
+      <h3 id="deliv-h" className="text-[18px] leading-6 font-semibold">
         {t("ui.delivTitle")}
       </h3>
-      <p className="text-sm text-tinta-2">{t("ui.delivIntro")}</p>
       <div>
         <Button variant="primary" onClick={() => setAdding(true)}>
           {t("ui.delivAdd")}

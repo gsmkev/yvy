@@ -69,7 +69,7 @@ export function CoverSection({ farmId }: { farmId: string }) {
 
   return (
     <section className="flex flex-col gap-4 border-t border-linea pt-6">
-      <h2 className="font-serif text-xl font-semibold">{t("ui.coverTitle")}</h2>
+      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.coverTitle")}</h2>
       <p className="text-sm text-tinta-2">{t("ui.coverIntro")}</p>
       {canRequest && (
         <div className="flex flex-wrap items-end gap-3">

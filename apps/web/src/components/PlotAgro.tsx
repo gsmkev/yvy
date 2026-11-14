@@ -43,11 +43,15 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function PhenologySection({ plotId }: { plotId: string }) {
   const q = usePhenology(plotId);
   const d = q.data;
+  // Sin referencia ni temperaturas no hay nada que la persona pueda hacer: la sección no aplica
+  if (d && (d.status === "no_reference" || d.status === "no_data")) return null;
   return (
     <Section title={t("ui.phenoTitle")}>
       {q.isLoading && <Spinner rows={2} h={24} />}
       {q.error && <ErrorBox error={q.error} />}
-      {d && d.status !== "ok" && <p className="text-sm text-tinta-2">{t(`ui.phenoStatus_${d.status}` as "ui.phenoStatus_no_crop")}</p>}
+      {d && (d.status === "no_crop" || d.status === "no_sowing_date") && (
+        <p className="text-sm text-tinta-2">{t(`ui.phenoStatus_${d.status}` as "ui.phenoStatus_no_crop")}</p>
+      )}
       {d && d.status === "ok" && d.gdd !== null && d.estimatedStage && (
         <div className="flex flex-col gap-1.5 text-sm">
           <p>
@@ -109,7 +113,9 @@ function WaterBalanceSection({ plot }: { plot: Plot }) {
         </div>
       )}
       {irrigating && <IrrigationModal plot={plot} onClose={() => setIrrigating(false)} />}
-      {d && !b && <p className="text-sm text-tinta-2">{t(`ui.waterBalStatus_${d.status === "ok" ? "no_data" : d.status}` as "ui.waterBalStatus_no_data")}</p>}
+      {d && !b && (d.status === "no_crop" || d.status === "no_sowing_date") && (
+        <p className="text-sm text-tinta-2">{t(`ui.waterBalStatus_${d.status}` as "ui.waterBalStatus_no_crop")}</p>
+      )}
       {b && (
         <div className="flex flex-col gap-2 text-sm">
           <p className="num">

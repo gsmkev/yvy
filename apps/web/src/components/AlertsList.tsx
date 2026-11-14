@@ -61,7 +61,8 @@ export function AlertsList({
             </p>
             <div className="mt-1.5 flex flex-wrap items-center gap-x-1 text-sm">
               <ShareWhatsappButton
-                variant="secondary"
+                variant="quiet"
+                className="-ml-3.5"
                 text={alertShareText({
                   kindLabel: tk(`ui.alertKind_${a.kind}`),
                   severityLabel: tk(`ui.severity_${a.severity}`),

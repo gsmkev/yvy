@@ -37,6 +37,8 @@ export function YieldVigorSection({ plot }: { plot: Plot }) {
     [map?.id, zonesQ.data],
   );
   if (zonesQ.isLoading || maps.isLoading) return <Skeleton h={120} />;
+  // Sin zonas o sin mapa de rinde no hay qué cruzar: la sección no aplica
+  if (zones.length === 0 || !map) return null;
   const reading = readYieldVigor(rows);
   const harvest = harvests.data ? harvestYield(harvests.data, plot.areaHa, map?.seasonId ?? null) : null;
   const seasonYears = zones[0]

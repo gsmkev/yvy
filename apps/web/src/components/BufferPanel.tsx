@@ -70,7 +70,7 @@ export function BufferPanel({ farmId, plots, pois }: { farmId: string; plots: Pl
 
   return (
     <section aria-labelledby="buffer-h" className="flex flex-col gap-3">
-      <h3 id="buffer-h" className="font-serif text-lg font-semibold">
+      <h3 id="buffer-h" className="text-[18px] leading-6 font-semibold">
         {t("ui.bufferTitle")}
       </h3>
       <p className="text-sm text-tinta-2">{t("ui.bufferIntro")}</p>

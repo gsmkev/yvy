@@ -9,10 +9,9 @@ export function WithdrawalPanel({ farmId }: { farmId: string }) {
   const d = q.data;
   return (
     <section aria-labelledby="withdrawal-h" className="flex flex-col gap-3">
-      <h3 id="withdrawal-h" className="font-serif text-lg font-semibold">
+      <h3 id="withdrawal-h" className="text-[18px] leading-6 font-semibold">
         {t("ui.withdrawalTitle")}
       </h3>
-      <p className="text-sm text-tinta-2">{t("ui.withdrawalIntro")}</p>
       {q.isLoading && <Spinner rows={2} h={32} />}
       {q.error && <ErrorBox error={q.error} />}
       {d && d.restrictions.length === 0 && d.violations.length === 0 && (

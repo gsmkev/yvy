@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type { Plot } from "../lib/types";
 import { BRAND } from "@yvy/shared";
 import { areaUnitLabel, fmtAreaValue, fmtDay, fmtNdvi } from "../lib/format";
@@ -25,7 +25,19 @@ const norm = (s: string) =>
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 
-export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: string) => void }) {
+export function PlotsTable({
+  plots,
+  onSelect,
+  toolbar,
+  filters,
+}: {
+  plots: Plot[];
+  onSelect: (id: string) => void;
+  /** Junto al buscador: el menú Exportar. */
+  toolbar?: ReactNode;
+  /** Entre el buscador y la tabla: filtros como "sin visitar". */
+  filters?: ReactNode;
+}) {
   const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({ key: "name", dir: "asc" });
   const [q, setQ] = useState("");
   const rows = useMemo(() => {
@@ -79,16 +91,20 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
           </ul>
         </div>
       )}
-      <Input
-        type="search"
-        aria-label={t("ui.filterPlots")}
-        placeholder={t("ui.filterPlots")}
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        className="mb-3 w-full"
-      />
+      <div className="mb-2 flex items-center gap-2">
+        <Input
+          type="search"
+          aria-label={t("ui.filterPlots")}
+          placeholder={t("ui.filterPlots")}
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          className="min-w-0 flex-1"
+        />
+        {toolbar}
+      </div>
+      {filters}
       {rows.length === 0 && <p className="py-4 text-sm text-tinta-2">{t("ui.noPlotMatch")}</p>}
-        <table className="w-full text-sm">
+        <table className="mt-1 w-full text-sm">
           <thead>
             <tr className="text-left text-xs text-tinta-2">
               {head("name", t("ui.plot"))}

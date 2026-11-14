@@ -52,10 +52,9 @@ export function SoilPanel({ farmId, plots }: { farmId: string; plots: Plot[] }) 
   };
   return (
     <section aria-labelledby="soil-h" className="flex flex-col gap-3">
-      <h3 id="soil-h" className="font-serif text-lg font-semibold">
+      <h3 id="soil-h" className="text-[18px] leading-6 font-semibold">
         {t("ui.soilTitle")}
       </h3>
-      <p className="text-sm text-tinta-2">{t("ui.soilIntro")}</p>
       <div>
         <Button variant="primary" onClick={() => setAdding(true)}>
           {t("ui.soilAdd")}

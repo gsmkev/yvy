@@ -6,7 +6,8 @@ import { del, get, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
 import type { FarmDetail } from "../lib/types";
 import { fmtDate, fmtDay, fmtHa, fmtIsoDate, fmtNdvi, fmtNum, fmtPct, toIso } from "../lib/format";
-import { Minus, Pencil, Satellite, Trash2, TrendingDown, TrendingUp } from "lucide-react";
+import { Minus, TrendingDown, TrendingUp } from "lucide-react";
+import { ActionMenu } from "./menus";
 import { t, tk } from "../lib/i18n";
 import { fmtDensity } from "./SeasonsPanel";
 import type { Farm, Member, Plot, PlotHistoryRow, ProblemArea } from "../lib/types";
@@ -16,7 +17,7 @@ import { PlotResults } from "./PlotResults";
 import { LineChart } from "./charts";
 import { SamplingGrid } from "./SamplingGrid";
 import { VigorSeasons } from "./VigorSeasons";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Select, Spinner, Stat, toast } from "./ui";
+import { Button, ConfirmModal, ErrorBox, Field, Input, Select, Spinner, Stat, toast } from "./ui";
 
 interface Ndvi {
   series: { acquiredAt: number; mean: number; p10: number; p90: number; validPct: number; lowConfidence: boolean }[];
@@ -131,6 +132,7 @@ export function PlotPanel({
   const set = (k: keyof typeof form) => (e: { target: { value: string } }) => setForm({ ...form, [k]: e.target.value });
 
   const delta = ndvi.data?.deltaVsFarmPct ?? null;
+  const isPolygon = JSON.parse(plot.geometry).type === "Polygon";
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -140,9 +142,25 @@ export function PlotPanel({
         >
           ← {t("ui.allPlots")}
         </button>
-        <h2 ref={heading} tabIndex={-1} className="mt-3 font-serif text-[24px] leading-tight font-semibold outline-none">
-          {plot.name}
-        </h2>
+        <div className="mt-3 flex items-start justify-between gap-3">
+          <h2 ref={heading} tabIndex={-1} className="min-w-0 font-serif text-[24px] leading-8 font-semibold outline-none">
+            {plot.name}
+          </h2>
+          {canEdit && !editing && (
+            <div className="flex shrink-0 items-center gap-1 print:hidden">
+              <Button onClick={() => setEditing(true)}>{t("ui.edit")}</Button>
+              <ActionMenu
+                label={t("ui.rowActions", { name: plot.name })}
+                items={[
+                  onEditShape && { label: t("ui.plotEditShape"), onSelect: onEditShape },
+                  onSplit && isPolygon && { label: t("ui.splitPlot"), onSelect: onSplit },
+                  onMerge && isPolygon && { label: t("ui.mergePlots"), onSelect: onMerge },
+                  { label: t("ui.delete"), onSelect: () => setConfirming(true), danger: true },
+                ]}
+              />
+            </div>
+          )}
+        </div>
         <p className="num mt-1 text-sm text-tinta-2">
           {plot.kind === "pasture" ? t("ui.pasture") : (plot.crop ?? t("ui.crop"))} · {fmtHa(plot.areaHa)}
           {plot.season ? ` · ${plot.season}` : ""}
@@ -226,7 +244,7 @@ export function PlotPanel({
               <p className="mt-1 text-[11px] text-tinta-2">{t("attribution.copernicus")}</p>
             </>
           ) : (
-            <Empty icon={Satellite}>{t("ui.noNdvi")}</Empty>
+            <p className="text-sm text-tinta-2">{t("ui.noNdvi")}</p>
           )}
         </div>
       )}
@@ -327,25 +345,6 @@ export function PlotPanel({
 
       {canEdit && <PlotAgro plot={plot} />}
 
-      {canEdit && !editing && (
-        <div className="flex flex-wrap gap-2 border-t border-linea pt-4">
-          <Button icon={Pencil} onClick={() => setEditing(true)}>
-            {t("ui.edit")}
-          </Button>
-          {onEditShape && (
-            <Button onClick={onEditShape}>{t("ui.plotEditShape")}</Button>
-          )}
-          {onSplit && JSON.parse(plot.geometry).type === "Polygon" && (
-            <Button onClick={onSplit}>{t("ui.splitPlot")}</Button>
-          )}
-          {onMerge && JSON.parse(plot.geometry).type === "Polygon" && (
-            <Button onClick={onMerge}>{t("ui.mergePlots")}</Button>
-          )}
-          <Button variant="danger" icon={Trash2} onClick={() => setConfirming(true)}>
-            {t("ui.delete")}
-          </Button>
-        </div>
-      )}
       {editing && (
         <form
           className="flex flex-col gap-3 border-t border-linea pt-4"

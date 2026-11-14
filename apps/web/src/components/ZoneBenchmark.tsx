@@ -32,7 +32,7 @@ export function ZoneBenchmark({ farmId }: { farmId: string }) {
   ] as const;
   return (
     <section aria-labelledby="bench-h" className="flex flex-col gap-2 border-t border-linea pt-5">
-      <h3 id="bench-h" className="font-serif text-lg font-semibold">
+      <h3 id="bench-h" className="text-[18px] leading-6 font-semibold">
         {t("ui.benchTitle")}
       </h3>
       <p className="text-sm text-tinta-2">

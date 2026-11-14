@@ -12,7 +12,7 @@ export function SowingWindow({ farmId }: { farmId: string }) {
   const d = q.data;
   return (
     <section aria-labelledby="sowing-window-h" className="flex flex-col gap-3">
-      <h3 id="sowing-window-h" className="font-serif text-lg font-semibold">
+      <h3 id="sowing-window-h" className="text-[18px] leading-6 font-semibold">
         {t("ui.sowWinTitle")}
       </h3>
       <p className="text-sm text-tinta-2">{t("ui.sowWinIntro")}</p>

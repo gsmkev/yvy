@@ -20,7 +20,7 @@ import { CopyCoords } from "../components/CopyCoords";
 import { ClimatePanel } from "../components/ClimatePanel";
 import { boundsOf, FarmMap } from "../components/FarmMap";
 import { FullscreenButton } from "../components/FullscreenButton";
-import { TableExportMenu } from "../components/TableExportMenu";
+import { tableToCsv, tableToExcel, type TableData } from "../lib/tableExport";
 import { ImportPlots } from "../components/ImportPlots";
 import { PlotPanel } from "../components/PlotPanel";
 import { LinesPanel, NewLineModal } from "../components/LinesPanel";
@@ -247,6 +247,19 @@ export function FarmPage() {
   const d = farm.data!;
   const unvisited = stalePlots(d.plots, staleDays, Date.now());
   const shownPlots = onlyUnvisited ? unvisited : d.plots;
+  const plotsTable = (): TableData => ({
+    name: t("ui.plotsFile"),
+    headers: [t("ui.plot"), t("ui.kind"), t("ui.crop"), t("ui.season"), t("ui.sowingDate"), "ha", t("ui.lastVisit")],
+    rows: shownPlots.map((p) => [
+      p.name,
+      p.kind === "pasture" ? t("ui.pasture") : t("ui.crop"),
+      p.crop ?? p.pastureType,
+      p.season,
+      p.sowingDate,
+      Math.round(p.areaHa * 100) / 100,
+      p.lastRecordAt ? fmtDate(p.lastRecordAt) : t("ui.neverVisited"),
+    ]),
+  });
   const removePoi = (id: string) =>
     deleteWithUndo({
       qc,
@@ -705,53 +718,34 @@ export function FarmPage() {
               />
             }
             primary={
-              canEdit && (
+              canEdit &&
+              tab === "plots" && (
                 <Button variant="primary" onClick={() => setMode(mode === "draw" ? "none" : "draw")}>
                   {t("ui.newPlot")}
                 </Button>
               )
             }
             menu={
-              <>
-                <ActionMenu
-                  label={t("ui.moreActions")}
-                  items={[
-                    canEdit && { label: t("ui.importShort"), onSelect: () => setMode("import") },
-                    canEdit && { label: t("ui.addPoi"), onSelect: () => setMode(mode === "poi" ? "none" : "poi") },
-                    canEdit && {
-                      label: t("ui.tabReport"),
-                      onSelect: () => navigate({ to: "/estancias/$farmId/parte", params: { farmId }, search: { desde: undefined, hasta: undefined } }),
+              <ActionMenu
+                label={t("ui.moreActions")}
+                items={[
+                  canEdit &&
+                    tab !== "plots" && {
+                      label: t("ui.newPlot"),
+                      onSelect: () => {
+                        setTab("plots");
+                        setMode("draw");
+                      },
                     },
-                    { label: t("ui.print"), onSelect: () => void printPage() },
-                  ]}
-                />
-                {canEdit && (
-                  <ExportMenu
-                    formats={[
-                      {
-                        label: t("ui.exportFormatKml"),
-                        run: () =>
-                          download(
-                            new Blob([plotsToKml(d.plots, d.farm.name)], { type: "application/vnd.google-earth.kml+xml" }),
-                            `${d.farm.name}.kml`,
-                          ),
-                      },
-                      {
-                        label: t("ui.exportFormatGeojson"),
-                        run: () =>
-                          download(
-                            new Blob([plotsToGeoJson(d.plots, d.pois)], { type: "application/geo+json" }),
-                            `${d.farm.name}.geojson`,
-                          ),
-                      },
-                      {
-                        label: t("ui.exportFormatShapefile"),
-                        run: async () => download(await plotsToShapefileZip(d.plots, d.pois), `${d.farm.name}-shapefile.zip`),
-                      },
-                    ]}
-                  />
-                )}
-              </>
+                  canEdit && { label: t("ui.importShort"), onSelect: () => setMode("import") },
+                  canEdit && { label: t("ui.addPoi"), onSelect: () => setMode(mode === "poi" ? "none" : "poi") },
+                  canEdit && {
+                    label: t("ui.tabReport"),
+                    onSelect: () => navigate({ to: "/estancias/$farmId/parte", params: { farmId }, search: { desde: undefined, hasta: undefined } }),
+                  },
+                  { label: t("ui.print"), onSelect: () => void printPage() },
+                ]}
+              />
             }
           />
           <p className="num mt-1 text-sm text-tinta-2">
@@ -771,12 +765,14 @@ export function FarmPage() {
           }}
           tabs={[
             { id: "plots", label: t("ui.tabPlots"), count: d.plots.length },
-            { id: "seasons", label: t("ui.tabSeasons") },
-            { id: "products", label: t("ui.tabProducts") },
             { id: "records", label: t("ui.tabRecords") },
             { id: "tasks", label: t("ui.tabTasks") },
             { id: "climate", label: t("ui.tabClimate") },
             { id: "alerts", label: t("ui.tabAlerts"), count: alerts.data?.length || undefined },
+          ]}
+          more={[
+            { id: "seasons", label: t("ui.tabSeasons") },
+            { id: "products", label: t("ui.tabProducts") },
             ...(canEdit ? [{ id: "herd" as const, label: t("ui.tabHerd") }] : []),
             ...(canEdit ? [{ id: "agro" as const, label: t("ui.tabAgro") }] : []),
           ]}
@@ -850,54 +846,66 @@ export function FarmPage() {
               </tbody>
             </table>
             <div className="print:hidden">
-              <div className="mb-1 flex items-baseline justify-between gap-3">
-                {unvisited.length > 0 ? (
-                  <button
-                    className="cursor-pointer text-left text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
-                    aria-pressed={onlyUnvisited}
-                    onClick={() => setOnlyUnvisited(!onlyUnvisited)}
-                  >
-                    {onlyUnvisited
-                      ? t("ui.unvisitedShowAll")
-                      : t(unvisited.length === 1 ? "ui.unvisitedOne" : "ui.unvisitedMany", {
-                          n: unvisited.length,
-                          days: staleDays,
-                        })}
-                  </button>
-                ) : (
-                  <span />
-                )}
-                <Select
-                  aria-label={t("ui.unvisitedAfter")}
-                  value={String(staleDays)}
-                  onChange={(e) => setStaleDays(staleDaysOrDefault(Number(e.target.value)))}
-                  options={LIMITS.visits.staleDayOptions.map((n) => ({ value: String(n), label: t("ui.daysN", { n }) }))}
-                />
-                <TableExportMenu
-                  data={() => ({
-                    name: t("ui.plotsFile"),
-                    headers: [
-                      t("ui.plot"),
-                      t("ui.kind"),
-                      t("ui.crop"),
-                      t("ui.season"),
-                      t("ui.sowingDate"),
-                      "ha",
-                      t("ui.lastVisit"),
-                    ],
-                    rows: shownPlots.map((p) => [
-                      p.name,
-                      p.kind === "pasture" ? t("ui.pasture") : t("ui.crop"),
-                      p.crop ?? p.pastureType,
-                      p.season,
-                      p.sowingDate,
-                      Math.round(p.areaHa * 100) / 100,
-                      p.lastRecordAt ? fmtDate(p.lastRecordAt) : t("ui.neverVisited"),
-                    ]),
-                  })}
-                />
-              </div>
-              <PlotsTable plots={shownPlots} onSelect={setSelected} />
+              <PlotsTable
+                plots={shownPlots}
+                onSelect={setSelected}
+                toolbar={
+                  <ExportMenu
+                    quiet
+                    formats={[
+                      {
+                        label: t("ui.exportFormatExcel"),
+                        run: () => tableToExcel(plotsTable()),
+                      },
+                      { label: t("ui.exportFormatCsv"), run: () => tableToCsv(plotsTable()) },
+                      {
+                        label: t("ui.exportFormatKml"),
+                        run: () =>
+                          download(
+                            new Blob([plotsToKml(d.plots, d.farm.name)], { type: "application/vnd.google-earth.kml+xml" }),
+                            `${d.farm.name}.kml`,
+                          ),
+                      },
+                      {
+                        label: t("ui.exportFormatGeojson"),
+                        run: () =>
+                          download(
+                            new Blob([plotsToGeoJson(d.plots, d.pois)], { type: "application/geo+json" }),
+                            `${d.farm.name}.geojson`,
+                          ),
+                      },
+                      {
+                        label: t("ui.exportFormatShapefile"),
+                        run: async () => download(await plotsToShapefileZip(d.plots, d.pois), `${d.farm.name}-shapefile.zip`),
+                      },
+                    ]}
+                  />
+                }
+                filters={
+                  unvisited.length > 0 && (
+                    <div className="mb-1 flex items-center justify-between gap-3">
+                      <button
+                        className="min-w-0 cursor-pointer py-2 text-left text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
+                        aria-pressed={onlyUnvisited}
+                        onClick={() => setOnlyUnvisited(!onlyUnvisited)}
+                      >
+                        {onlyUnvisited
+                          ? t("ui.unvisitedShowAll")
+                          : t(unvisited.length === 1 ? "ui.unvisitedOne" : "ui.unvisitedMany", {
+                              n: unvisited.length,
+                              days: staleDays,
+                            })}
+                      </button>
+                      <Select
+                        aria-label={t("ui.unvisitedAfter")}
+                        value={String(staleDays)}
+                        onChange={(e) => setStaleDays(staleDaysOrDefault(Number(e.target.value)))}
+                        options={LIMITS.visits.staleDayOptions.map((n) => ({ value: String(n), label: t("ui.daysN", { n }) }))}
+                      />
+                    </div>
+                  )
+                }
+              />
               <div className="mt-6">
                 <LinesPanel farmId={farmId} lines={lines.data ?? []} canEdit={!!canEdit} onDraw={() => setLineDraw(true)} />
               </div>

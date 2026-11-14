@@ -41,17 +41,18 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
   const list = (q.data ?? []).filter((p) => !type || p.type === type);
   return (
     <div className="flex flex-col gap-4">
-      {canEdit && (
-        <HeaderActions>
-          <Button variant="primary" onClick={() => setEditing("new")}>
-            {t("ui.productNew")}
-          </Button>
-          {farmId && plots && <Button onClick={() => setPrescribing(true)}>{t("ui.prescriptionNew")}</Button>}
-        </HeaderActions>
-      )}
-      <div className="max-w-60">
+      <div className="flex flex-wrap items-center gap-2">
+        {canEdit && (
+          <HeaderActions>
+            <Button variant="primary" onClick={() => setEditing("new")}>
+              {t("ui.productNew")}
+            </Button>
+            {farmId && plots && <Button onClick={() => setPrescribing(true)}>{t("ui.prescriptionNew")}</Button>}
+          </HeaderActions>
+        )}
         <Select
           aria-label={t("ui.productType")}
+          className="ml-auto"
           value={type}
           onChange={(e) => setType(e.target.value)}
           options={[

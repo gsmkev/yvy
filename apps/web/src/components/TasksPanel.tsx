@@ -128,9 +128,7 @@ export function TasksPanel({
           { id: "overdue", label: t("ui.filterOverdue"), count: nOverdue },
         ]}
       />
-      {!sorted.length && (
-        <EmptyState title={t("ui.noTasks")} action={<Button onClick={() => setCreating(true)}>{t("ui.newTask")}</Button>} />
-      )}
+      {!sorted.length && <EmptyState title={t("ui.noTasks")} />}
       {[...byAssignee.entries()].map(([name, list]) => (
         <section key={name} aria-label={name}>
           <h3 className="mb-1 flex items-baseline gap-2 text-sm font-semibold">

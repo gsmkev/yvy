@@ -2144,6 +2144,7 @@ export const esPY = {
     taskCommentsCount: "{{n}} comentarios",
     taskCommentPlaceholder: "Escribí un comentario para esta tarea",
     taskCommentSend: "Comentar",
+    taskCommentNone: "Todavía no hay comentarios.",
     taskCommentSaved: "Comentario guardado",
     colPriority: "Prioridad",
     taskPickOnMap: "Elegir lotes en el mapa",

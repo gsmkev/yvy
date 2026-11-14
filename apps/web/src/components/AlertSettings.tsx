@@ -1,5 +1,6 @@
 /** Umbrales de avisos de una estancia (C-04). Los edita el dueño o un administrador; el resto los ve. */
 import { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { isFieldRole } from "@yvy/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ALERT_SETTINGS_LIMITS, DEFAULT_ALERT_SETTINGS, type AlertSettings } from "@yvy/shared";
@@ -25,7 +26,7 @@ const toDraft = (v: AlertSettings): Draft => ({
 });
 const num = (v: string) => Number(v.replace(",", "."));
 
-export function AlertSettingsSection() {
+export function AlertSettingsSection({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const farms = useFarms();
   const me = useMe();
   const [farmId, setFarmId] = useState("");
@@ -67,12 +68,20 @@ export function AlertSettingsSection() {
 
   if ((me.data && isFieldRole(me.data.role)) || !farms.data?.length) return null;
   return (
-    <section className="mt-10 border-t border-linea pt-6" aria-labelledby="alert-settings-title">
-      <h2 id="alert-settings-title" className="font-serif text-xl font-semibold">
-        {t("ui.alertSettingsTitle")}
+    <section className="mt-8 border-t border-linea pt-2" aria-labelledby="alert-settings-title">
+      <h2 id="alert-settings-title" className="text-[18px] leading-6 font-semibold">
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={onToggle}
+          className="flex h-12 w-full cursor-pointer items-center gap-1.5 text-left sm:h-10"
+        >
+          <ChevronDown size={18} aria-hidden className={`transition-transform ${open ? "" : "-rotate-90"}`} />
+          {t("ui.alertSettingsTitle")}
+        </button>
       </h2>
-      <p className="mt-1 text-sm text-tinta-2">{t("ui.alertSettingsIntro")}</p>
-      {farms.data.length > 1 && (
+      {open && <p className="mt-1 text-sm text-tinta-2">{t("ui.alertSettingsIntro")}</p>}
+      {open && farms.data.length > 1 && (
         <div className="mt-4 max-w-xs">
           <Field label={t("ui.farm")}>
             <Select
@@ -83,9 +92,9 @@ export function AlertSettingsSection() {
           </Field>
         </div>
       )}
-      {settings.isLoading && <Spinner />}
-      {settings.error ? <ErrorBox error={settings.error} /> : null}
-      {draft && (
+      {open && settings.isLoading && <Spinner />}
+      {open && settings.error ? <ErrorBox error={settings.error} /> : null}
+      {open && draft && (
         <form
           className="mt-4 flex max-w-xl flex-col gap-4"
           onSubmit={(e) => {

@@ -3,13 +3,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { checklistProgress, closeRequirements, isOverdue as taskOverdue, LIMITS, localDate, localTime, parseChecklist, parseTaskComments, RECORD_KINDS, RECURRENCES, TASK_PRIORITIES } from "@yvy/shared";
 import { del, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
-import { fmtDateTime, fmtIsoDate } from "../lib/format";
+import { dueLabel } from "../lib/dueLabel";
+import { fmtDate, fmtDateTime, fmtIsoDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useFarms, useMembers, useTasks } from "../lib/queries";
 import type { Plot, Task } from "../lib/types";
-import { CheckCircle2, Circle, Plus } from "lucide-react";
+import { CheckCircle2, ChevronDown, Circle, Flag, MessageSquare, Plus } from "lucide-react";
+import { ActionMenu } from "./menus";
 import { TableExportMenu } from "./TableExportMenu";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "./ui";
+import { Button, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, Tabs, toast } from "./ui";
 
 /** T-01: selección de lotes en el mapa de la estancia; la maneja la pantalla que tiene el mapa. */
 export interface PlotPick {
@@ -19,11 +21,23 @@ export interface PlotPick {
   setPicking: (v: boolean) => void;
 }
 
-export function TasksPanel({ farmId, plots, pick }: { farmId?: string; plots?: Plot[]; pick?: PlotPick }) {
+export function TasksPanel({
+  farmId,
+  plots,
+  pick,
+  title,
+}: {
+  farmId?: string;
+  plots?: Plot[];
+  pick?: PlotPick;
+  /** Si se pasa, el panel arma el encabezado de la página (título, Nueva tarea y Exportar). */
+  title?: string;
+}) {
   const tasks = useTasks({ farmId });
   const members = useMembers();
   const [creating, setCreating] = useState(false);
   const [filter, setFilter] = useState<"all" | "overdue">("all");
+  const [showDone, setShowDone] = useState(false);
   const qc = useQueryClient();
   const today = localDate(Date.now());
   // Las repetitivas se cancelan (PATCH) y las únicas se borran (DELETE); ambas se pueden deshacer
@@ -46,7 +60,7 @@ export function TasksPanel({ farmId, plots, pick }: { farmId?: string; plots?: P
     (x) => x.status !== "cancelled" && (x.status === "open" || x.dueDate >= localDate(Date.now() - 7 * 86_400_000)),
   );
   const nOverdue = shown.filter(isOverdue).length;
-  const visible = (filter === "overdue" ? shown.filter(isOverdue) : shown)
+  const sorted = (filter === "overdue" ? shown.filter(isOverdue) : shown)
     .slice()
     .sort(
       (a, b) =>
@@ -54,44 +68,58 @@ export function TasksPanel({ farmId, plots, pick }: { farmId?: string; plots?: P
         (a.dueTime ?? "24:00").localeCompare(b.dueTime ?? "24:00") ||
         PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority],
     );
+  // Las hechas van aparte, plegadas al final
+  const visible = sorted.filter((x) => x.status !== "done");
+  const done = sorted.filter((x) => x.status === "done").sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0));
   const byAssignee = new Map<string, Task[]>();
   for (const x of visible)
     byAssignee.set(x.assigneeName ?? x.assigneeId, [...(byAssignee.get(x.assigneeName ?? x.assigneeId) ?? []), x]);
 
+  const newButton = (
+    <Button variant="primary" icon={Plus} onClick={() => setCreating(true)}>
+      {t("ui.newTask")}
+    </Button>
+  );
+  const exportMenu = (
+    <TableExportMenu
+      data={() => ({
+        name: t("ui.tasksFile"),
+        headers: [
+          t("ui.assignee"),
+          t("ui.taskTitle"),
+          t("ui.plot"),
+          t("ui.dueDate"),
+          t("ui.dueTime"),
+          t("ui.taskPriority"),
+          t("ui.recurrence"),
+          t("ui.statusCol"),
+          t("ui.opensRecord"),
+        ],
+        rows: sorted.map((x) => [
+          x.assigneeName ?? x.assigneeId,
+          x.title,
+          x.plotName,
+          fmtIsoDate(x.dueDate),
+          x.dueTime ?? "",
+          tk(`ui.taskPriority_${x.priority}`),
+          tk(`ui.recurrence_${x.recurrence}`),
+          isOverdue(x) ? t("ui.overdue") : tk(`ui.status_${x.status}`),
+          x.kind ? tk(`recordKinds.${x.kind}`) : "",
+        ]),
+      })}
+    />
+  );
+
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-2">
-        <Button variant="primary" icon={Plus} onClick={() => setCreating(true)}>
-          {t("ui.newTask")}
-        </Button>
-        <TableExportMenu
-          data={() => ({
-            name: t("ui.tasksFile"),
-            headers: [
-              t("ui.assignee"),
-              t("ui.taskTitle"),
-              t("ui.plot"),
-              t("ui.dueDate"),
-              t("ui.dueTime"),
-              t("ui.taskPriority"),
-              t("ui.recurrence"),
-              t("ui.statusCol"),
-              t("ui.opensRecord"),
-            ],
-            rows: visible.map((x) => [
-              x.assigneeName ?? x.assigneeId,
-              x.title,
-              x.plotName,
-              fmtIsoDate(x.dueDate),
-              x.dueTime ?? "",
-              tk(`ui.taskPriority_${x.priority}`),
-              tk(`ui.recurrence_${x.recurrence}`),
-              isOverdue(x) ? t("ui.overdue") : tk(`ui.status_${x.status}`),
-              x.kind ? tk(`recordKinds.${x.kind}`) : "",
-            ]),
-          })}
-        />
-      </div>
+    <div className="flex flex-col gap-4">
+      {title ? (
+        <PageHeader title={title} primary={newButton} menu={exportMenu} />
+      ) : (
+        <div className="flex items-center justify-between gap-2">
+          {newButton}
+          {exportMenu}
+        </div>
+      )}
       <Tabs
         value={filter}
         onChange={setFilter}
@@ -100,27 +128,43 @@ export function TasksPanel({ farmId, plots, pick }: { farmId?: string; plots?: P
           { id: "overdue", label: t("ui.filterOverdue"), count: nOverdue },
         ]}
       />
-      {!visible.length && <Empty title={t("ui.noTasks")} />}
-      {[...byAssignee.entries()].map(([name, list]) => {
-        const overdue = list.filter(isOverdue).length;
-        return (
-          <section key={name} className="border-t border-linea pt-3">
-            <h3 className="mb-2 flex items-baseline justify-between gap-2 font-semibold">
-              {name}
-              {overdue > 0 && (
-                <span className="text-sm font-medium text-peligro">
-                  {overdue} {t("ui.overdue").toLowerCase()}
-                </span>
-              )}
-            </h3>
-            <ul className="flex flex-col gap-1.5">
-              {list.map((x) => (
-                <TaskRow key={x.id} x={x} overdue={isOverdue(x)} onDelete={() => removeTask(x)} />
+      {!sorted.length && (
+        <EmptyState title={t("ui.noTasks")} action={<Button onClick={() => setCreating(true)}>{t("ui.newTask")}</Button>} />
+      )}
+      {[...byAssignee.entries()].map(([name, list]) => (
+        <section key={name} aria-label={name}>
+          <h3 className="mb-1 flex items-baseline gap-2 text-sm font-semibold">
+            {name}
+            <span className="num text-xs font-normal text-tinta-2">{list.length}</span>
+          </h3>
+          <ul className="divide-y divide-linea border-y border-linea">
+            {list.map((x) => (
+              <TaskRow key={x.id} x={x} today={today} overdue={isOverdue(x)} onDelete={() => removeTask(x)} />
+            ))}
+          </ul>
+        </section>
+      ))}
+      {done.length > 0 && (
+        <section aria-label={t("ui.taskDoneSection")}>
+          <button
+            type="button"
+            aria-expanded={showDone}
+            onClick={() => setShowDone(!showDone)}
+            className="flex h-10 cursor-pointer items-center gap-1.5 text-sm font-semibold text-tinta-2 hover:text-surco"
+          >
+            <ChevronDown size={16} aria-hidden className={`transition-transform ${showDone ? "" : "-rotate-90"}`} />
+            {t("ui.taskDoneSection")}
+            <span className="num text-xs font-normal">{done.length}</span>
+          </button>
+          {showDone && (
+            <ul className="divide-y divide-linea border-y border-linea">
+              {done.map((x) => (
+                <TaskRow key={x.id} x={x} today={today} overdue={false} onDelete={() => removeTask(x)} />
               ))}
             </ul>
-          </section>
-        );
-      })}
+          )}
+        </section>
+      )}
       {creating && (
         <NewTaskModal
           farmId={farmId}
@@ -170,11 +214,12 @@ function ChecklistProgress({ task }: { task: Task }) {
 
 const PRIORITY_RANK = { high: 0, normal: 1, low: 2 } as const;
 
-function TaskRow({ x, overdue, onDelete }: { x: Task; overdue: boolean; onDelete: () => void }) {
+function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: string; overdue: boolean; onDelete: () => void }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const qc = useQueryClient();
   const comments = parseTaskComments(x.comments);
+  const isDone = x.status === "done";
   const send = useMutation({
     mutationFn: () => post(`/org/tasks/${x.id}/comments`, { text }),
     onSuccess: () => {
@@ -183,42 +228,60 @@ function TaskRow({ x, overdue, onDelete }: { x: Task; overdue: boolean; onDelete
       toast(t("ui.taskCommentSaved"));
     },
   });
-  const when = [fmtIsoDate(x.dueDate), x.dueTime ? t("ui.dueAtTime", { time: x.dueTime }) : null]
-    .filter(Boolean)
-    .join(" ");
+  const when = isDone
+    ? t("ui.taskDoneOn", { date: fmtDate(x.completedAt ?? Date.parse(`${x.dueDate}T12:00:00-03:00`)) })
+    : [dueLabel(x.dueDate, today, overdue), x.dueTime ? t("ui.dueAtTime", { time: x.dueTime }) : null]
+        .filter(Boolean)
+        .join(" · ");
   return (
-    <li className="flex flex-col gap-1.5 text-sm">
-      <div className="flex items-center gap-2">
-        <span className={x.status === "done" ? "text-soja" : overdue ? "text-peligro" : "text-tinta-2"}>
-          {x.status === "done" ? (
+    <li className="flex flex-col py-1.5 text-sm">
+      <div className="flex min-h-10 items-start gap-2">
+        <span className={`mt-1.5 shrink-0 ${isDone ? "text-soja" : overdue ? "text-peligro" : "text-tinta-2"}`}>
+          {isDone ? (
             <CheckCircle2 size={18} aria-label={t("ui.status_done")} />
           ) : (
             <Circle size={18} aria-label={t("ui.status_open")} />
           )}
         </span>
-        <span className={`flex-1 ${x.status === "done" ? "text-tinta-2 line-through" : ""}`}>
-          {x.title}
-          <span className="block text-xs text-tinta-2">
-            {when} · {tk(`ui.recurrence_${x.recurrence}`)}
+        <div className="min-w-0 flex-1 py-1">
+          <p className={`flex items-center gap-1.5 leading-5 ${isDone ? "text-tinta-2" : "text-surco"}`}>
+            <span className="min-w-0">{x.title}</span>
+            {x.priority === "high" && !isDone && (
+              <Flag size={14} className="shrink-0 text-trigo" role="img" aria-label={t("ui.taskPriorityHigh")}>
+                <title>{t("ui.taskPriorityHigh")}</title>
+              </Flag>
+            )}
+          </p>
+          <p className="text-xs leading-4 text-tinta-2">
+            <span className={overdue ? "font-medium text-peligro" : ""}>{when}</span>
+            {x.recurrence !== "none" && ` · ${tk(`ui.recurrence_${x.recurrence}`)}`}
             {x.plotName ? ` · ${x.plotName}` : ""}
-            {x.kind ? ` · ${t("ui.opensRecord")}: ${tk(`recordKinds.${x.kind}`)}` : ""}
-            {x.priority === "high" && <span className="font-medium text-peligro"> · {t("ui.taskPriorityHigh")}</span>}
-            {x.priority === "low" && ` · ${t("ui.taskPriorityLow")}`}
-          </span>
+          </p>
           <ChecklistProgress task={x} />
-        </span>
-        <button className="text-xs text-tinta-2 hover:text-surco" aria-expanded={open} onClick={() => setOpen(!open)}>
-          {open ? t("ui.taskCommentsHide") : t("ui.taskCommentsCount", { n: comments.length })}
-        </button>
-        {x.status === "open" && (
-          <button className="text-xs text-tinta-2 hover:text-peligro" onClick={onDelete}>
-            {t("ui.delete")}
+        </div>
+        {comments.length > 0 && (
+          <button
+            type="button"
+            className="inline-flex h-10 shrink-0 cursor-pointer items-center gap-1 rounded-md px-2 text-xs text-tinta-2 hover:bg-surco/5 hover:text-surco"
+            aria-expanded={open}
+            aria-label={t("ui.taskCommentsCount", { n: comments.length })}
+            title={t("ui.taskCommentsCount", { n: comments.length })}
+            onClick={() => setOpen(!open)}
+          >
+            <MessageSquare size={14} aria-hidden />
+            <span className="num">{comments.length}</span>
           </button>
         )}
+        <ActionMenu
+          label={t("ui.taskActions")}
+          items={[
+            { label: t("ui.taskCommentSend"), onSelect: () => setOpen(true) },
+            x.status === "open" && { label: t("ui.delete"), onSelect: onDelete, danger: true },
+          ]}
+        />
       </div>
       {open && (
-        <div className="ml-7 flex flex-col gap-2 border-l border-linea pl-3">
-          {!comments.length && <p className="text-xs text-tinta-2">{t("ui.taskCommentNone")}</p>}
+        <div className="mb-1 ml-7 flex flex-col gap-2 border-l border-linea pl-3">
           {comments.map((c) => (
             <p key={c.id} className="text-sm">
               <span className="font-medium">{c.name}</span>

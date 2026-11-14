@@ -4,6 +4,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { get } from "../lib/api";
 import { describeData } from "../lib/exports";
 import { fmtDateTime } from "../lib/format";
+import { recordColor } from "../lib/recordColors";
 import { t, tk } from "../lib/i18n";
 import { isAudioMime, recordShareText } from "@yvy/shared";
 import { fetchRecordsPage, useFarms, useMe, type RecordFilters } from "../lib/queries";
@@ -14,7 +15,7 @@ import { RecordComments } from "./RecordComments";
 import { RecordDetails } from "./RecordDetails";
 import { ShareWhatsappButton } from "./ShareButton";
 import { StationsView, stationsOf } from "./StationsView";
-import { Button, Empty, ErrorBox, Modal, Spinner } from "./ui";
+import { Button, EmptyState, ErrorBox, Modal, Spinner } from "./ui";
 
 export function useRecords(filters: RecordFilters) {
   return useInfiniteQuery({
@@ -32,7 +33,7 @@ export function RecordsList({ filters, onRows }: { filters: RecordFilters; onRow
   useEffect(() => onRows?.(rows), [q.data]);
   if (q.isLoading) return <Spinner rows={6} h={68} />;
   if (q.error) return <ErrorBox error={q.error} />;
-  if (!rows.length) return <Empty title={t("ui.noRecords")} />;
+  if (!rows.length) return <EmptyState title={t("ui.noRecords")} />;
   return (
     <div className="flex flex-col gap-3">
       <ul className="divide-y divide-linea border-y border-linea">
@@ -40,23 +41,28 @@ export function RecordsList({ filters, onRows }: { filters: RecordFilters; onRow
           return (
             <li key={r.id}>
               <button
-                className="flex w-full cursor-pointer items-start gap-3 py-3.5 text-left hover:bg-surco/[0.03]"
+                className="flex w-full cursor-pointer flex-col gap-1 py-3 text-left hover:bg-surco/[0.03]"
                 onClick={() => setOpen(r)}
               >
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-baseline justify-between gap-3">
-                    <span className="truncate text-[15px] font-medium">{describeData(r.kind, r.data)}</span>
-                    <span className="num shrink-0 text-xs text-tinta-2">{fmtDateTime(r.capturedAt)}</span>
+                <span className="flex items-baseline justify-between gap-3">
+                  <span className="truncate text-sm leading-5 font-medium">{describeData(r.kind, r.data)}</span>
+                  <span className="num shrink-0 text-xs text-tinta-2">{fmtDateTime(r.capturedAt)}</span>
+                </span>
+                <span className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-x-3 text-xs leading-4 text-tinta-2">
+                  <span className="flex items-center gap-1.5 truncate text-surco">
+                    <span
+                      aria-hidden
+                      className="size-2 shrink-0 rounded-full border border-surco/40"
+                      style={{ background: recordColor(r.kind) }}
+                    />
+                    <span className="truncate">{tk(`recordKinds.${r.kind}`)}</span>
                   </span>
-                  <span className="mt-0.5 flex items-center gap-2 text-sm text-tinta-2">
-                    {tk(`recordKinds.${r.kind}`)} · {r.authorName ?? "—"}
-                    {r.plotName && <span>· {r.plotName}</span>}
-                    {photosOf(r).length > 0 && (
-                      <span>
-                        · {t(photosOf(r).length === 1 ? "ui.photoOne" : "ui.photosMany", { n: photosOf(r).length })}
-                      </span>
-                    )}
-                    {voiceOf(r).length > 0 && <span>· {t("app.voiceNote")}</span>}
+                  <span className="truncate">{r.authorName ?? "—"}</span>
+                  <span className="truncate">
+                    {r.plotName ?? ""}
+                    {photosOf(r).length > 0 &&
+                      `${r.plotName ? " · " : ""}${t(photosOf(r).length === 1 ? "ui.photoOne" : "ui.photosMany", { n: photosOf(r).length })}`}
+                    {voiceOf(r).length > 0 && ` · ${t("app.voiceNote")}`}
                   </span>
                 </span>
               </button>

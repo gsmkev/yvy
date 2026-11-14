@@ -3,7 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isFieldRole } from "@yvy/shared";
 import { RecordModal } from "../components/RecordsList";
-import { Button, Empty, ErrorBox, Spinner, toast } from "../components/ui";
+import { Button, EmptyState, ErrorBox, PageHeader, Spinner, toast } from "../components/ui";
+import { sortReview } from "../lib/alertRank";
 import { get, post } from "../lib/api";
 import { describeData } from "../lib/exports";
 import { fmtDateTime } from "../lib/format";
@@ -64,34 +65,54 @@ export function ReviewPage() {
   });
   if (me.data && !allowed) return <div className="p-6">{t("ui.reviewNotAllowed")}</div>;
   return (
-    <div className="mx-auto w-full max-w-3xl p-4 sm:p-6">
-      <Link to="/registros" className="text-sm text-accion underline underline-offset-4">
-        {t("ui.navRecords")}
-      </Link>
-      <h1 className="mt-2 text-[28px] leading-tight">{t("ui.reviewTitle")}</h1>
-      <p className="mt-2 text-tinta-2">{t("ui.reviewIntro")}</p>
-      {q.isLoading && <Spinner rows={4} h={72} />}
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4 sm:p-6">
+      <div>
+        <Link to="/registros" className="text-sm text-accion underline underline-offset-4">
+          {t("ui.navRecords")}
+        </Link>
+        <PageHeader className="mt-1" title={t("ui.reviewTitle")} />
+      </div>
+      {q.isLoading && <Spinner rows={3} h={96} />}
       {q.error ? <ErrorBox error={q.error} /> : null}
-      {q.data && q.data.length === 0 && <Empty title={t("ui.reviewEmptyTitle")}>{t("ui.reviewEmpty")}</Empty>}
+      {q.data && q.data.length === 0 && (
+        <EmptyState
+          title={t("ui.reviewEmptyTitle")}
+          action={
+            <Link
+              to="/registros"
+              className="inline-flex h-10 items-center rounded-md border border-linea bg-papel px-3.5 text-sm font-medium text-surco hover:border-tinta-2/40 hover:bg-lino"
+            >
+              {t("ui.navRecords")}
+            </Link>
+          }
+        >
+          {t("ui.reviewEmpty")}
+        </EmptyState>
+      )}
       {q.data && q.data.length > 0 && (
-        <ul className="mt-4 divide-y divide-linea border-y border-linea">
-          {q.data.map((i) => (
-            <li key={i.recordId} className="py-4">
-              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <button type="button" className="cursor-pointer text-left font-medium underline-offset-4 hover:underline" onClick={() => setOpen(i.record)}>
+        <ul className="divide-y divide-linea border-y border-linea">
+          {sortReview(q.data).map((i) => (
+            <li key={i.recordId} className="flex flex-col gap-2 border-l-[3px] border-trigo py-3 pl-3 sm:flex-row sm:items-start sm:gap-4">
+              <div className="min-w-0 flex-1">
+                {i.oddities.map((o, k) => (
+                  <p key={k} className="text-sm leading-5 font-medium">
+                    {reason(o)}
+                  </p>
+                ))}
+                <button
+                  type="button"
+                  className="mt-1 block max-w-full cursor-pointer truncate text-left text-sm leading-5 text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
+                  onClick={() => setOpen(i.record)}
+                >
                   {describeData(i.kind, i.data)}
                 </button>
-                <span className="num text-xs text-tinta-2">{fmtDateTime(i.capturedAt)}</span>
+                <p className="text-xs leading-4 text-tinta-2">
+                  {[tk(`recordKinds.${i.kind}`), i.farmName, i.plotName, i.authorName, fmtDateTime(i.capturedAt)]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
               </div>
-              <p className="mt-0.5 text-sm text-tinta-2">
-                {[tk(`recordKinds.${i.kind}`), i.farmName, i.plotName, i.authorName].filter(Boolean).join(" · ")}
-              </p>
-              <ul className="mt-2 border-l-2 border-trigo pl-3 text-sm">
-                {i.oddities.map((o, k) => (
-                  <li key={k}>{reason(o)}</li>
-                ))}
-              </ul>
-              <div className="mt-3 flex gap-2">
+              <div className="flex shrink-0 gap-2">
                 <Button onClick={() => ok.mutate(i.recordId)} disabled={ok.isPending}>
                   {t("ui.reviewOk")}
                 </Button>

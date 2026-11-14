@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isFieldRole } from "@yvy/shared";
 import { TableExportMenu } from "../components/TableExportMenu";
-import { Empty, ErrorBox, Spinner, Tabs } from "../components/ui";
+import { Link } from "@tanstack/react-router";
+import { EmptyState, ErrorBox, PageHeader, Skeleton, Tabs } from "../components/ui";
 import { get } from "../lib/api";
 import { fmtHa, fmtNum } from "../lib/format";
 import { t } from "../lib/i18n";
@@ -53,10 +54,23 @@ export function ComparePage() {
   const farms = useQuery({ enabled: allowed && tab === "farms", queryKey: ["compare", "farms"], queryFn: () => get<FarmRow[]>("/org/compare/farms") });
   const seasons = useQuery({ enabled: allowed && tab === "seasons", queryKey: ["compare", "seasons"], queryFn: () => get<SeasonRow[]>("/org/compare/seasons") });
   const q = tab === "farms" ? farms : seasons;
+  const exportData =
+    tab === "farms" && farms.data && farms.data.length >= 2
+      ? () => farmsTable(farms.data!)
+      : tab === "seasons" && seasons.data?.length
+        ? () => seasonsTable(seasons.data!)
+        : null;
+  const toList = (
+    <Link
+      to="/"
+      className="inline-flex h-10 items-center rounded-md border border-linea bg-papel px-3.5 text-sm font-medium text-surco hover:border-tinta-2/40 hover:bg-lino"
+    >
+      {t("ui.farmsTitle")}
+    </Link>
+  );
   return (
-    <div className="mx-auto max-w-5xl p-4">
-      <h1 className="mb-1 text-xl font-semibold">{t("ui.compareTitle")}</h1>
-      <p className="mb-3 text-sm text-tinta-2">{tab === "farms" ? t("ui.compareFarmsHint") : t("ui.compareSeasonsHint")}</p>
+    <div className="mx-auto flex max-w-5xl flex-col gap-4 p-4">
+      <PageHeader title={t("ui.compareTitle")} menu={exportData && <TableExportMenu data={exportData} />} />
       <Tabs
         tabs={[
           { id: "farms", label: t("ui.compareFarms") },
@@ -65,34 +79,64 @@ export function ComparePage() {
         value={tab}
         onChange={setTab}
       />
-      <div className="mt-3">
-        {q.isLoading && <Spinner rows={4} h={40} />}
+      <div>
+        {q.isLoading && <Skeleton h={120} />}
         {q.error && <ErrorBox error={q.error} />}
-        {tab === "farms" && farms.data && (farms.data.length < 2 ? <Empty>{t("ui.compareNeedTwoFarms")}</Empty> : <FarmsTable rows={farms.data} />)}
-        {tab === "seasons" && seasons.data && (seasons.data.length === 0 ? <Empty>{t("ui.compareNoSeasons")}</Empty> : <SeasonsTable rows={seasons.data} />)}
+        {tab === "farms" &&
+          farms.data &&
+          (farms.data.length < 2 ? (
+            <EmptyState
+              title={t("ui.compareNeedTwoFarms")}
+              action={
+                <Link
+                  to="/estancias/nueva"
+                  className="inline-flex h-10 items-center rounded-md bg-accion px-3.5 text-sm font-medium text-sobre hover:bg-accion-2"
+                >
+                  {t("ui.newFarm")}
+                </Link>
+              }
+            >
+              {t("ui.compareNeedTwoFarmsHint")}
+            </EmptyState>
+          ) : (
+            <FarmsTable rows={farms.data} />
+          ))}
+        {tab === "seasons" &&
+          seasons.data &&
+          (seasons.data.length === 0 ? (
+            <EmptyState title={t("ui.compareNoSeasons")} action={toList}>
+              {t("ui.compareNoSeasonsHint")}
+            </EmptyState>
+          ) : (
+            <SeasonsTable rows={seasons.data} />
+          ))}
       </div>
     </div>
   );
 }
 
+const farmsHeaders = () => [t("ui.farm"), t("ui.area"), t("ui.plots"), t("ui.compareRain30"), t("ui.compareNdvi30"), t("ui.compareRecords30"), t("ui.compareAlerts")];
+const farmsTable = (rows: FarmRow[]) => ({
+  name: t("ui.compareFile"),
+  headers: farmsHeaders(),
+  rows: rows.map((r) => [r.name, r.areaHa, r.plots, r.rain30Mm, r.ndvi30, r.records30d, r.activeAlerts]),
+});
+const seasonsHeaders = () => [t("ui.season"), t("ui.compareHaPlanned"), t("ui.compareHaHarvested"), t("ui.compareTons"), t("ui.compareYield"), t("ui.compareTarget"), t("ui.compareApplications")];
+const seasonsTable = (rows: SeasonRow[]) => ({
+  name: t("ui.compareSeasonsFile"),
+  headers: seasonsHeaders(),
+  rows: rows.map((r) => [r.name, r.plannedHa, r.harvestedHa, r.harvestTons, r.yieldTHa, r.targetYieldTHa, r.applications]),
+});
+
 function FarmsTable({ rows }: { rows: FarmRow[] }) {
   const maxRain = maxOf(rows.map((r) => r.rain30Mm));
   const maxNdvi = maxOf(rows.map((r) => r.ndvi30));
   const maxRecs = maxOf(rows.map((r) => r.records30d));
-  const headers = [t("ui.farm"), t("ui.area"), t("ui.plots"), t("ui.compareRain30"), t("ui.compareNdvi30"), t("ui.compareRecords30"), t("ui.compareAlerts")];
+  const headers = farmsHeaders();
   return (
     <>
-      <div className="mb-2 flex justify-end">
-        <TableExportMenu
-          data={() => ({
-            name: t("ui.compareFile"),
-            headers,
-            rows: rows.map((r) => [r.name, r.areaHa, r.plots, r.rain30Mm, r.ndvi30, r.records30d, r.activeAlerts]),
-          })}
-        />
-      </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
+        <table className="w-full text-left text-sm whitespace-nowrap">
           <thead>
             <tr className="border-b border-linea text-tinta-2">
               {headers.map((h) => (
@@ -105,7 +149,7 @@ function FarmsTable({ rows }: { rows: FarmRow[] }) {
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} className="border-b border-linea">
-                <th scope="row" className="py-2 pr-3 text-left font-medium">
+                <th scope="row" className="sticky left-0 bg-lino py-2 pr-3 text-left font-medium">
                   {r.name}
                 </th>
                 <td className="num pr-3">{fmtHa(r.areaHa)}</td>
@@ -125,20 +169,11 @@ function FarmsTable({ rows }: { rows: FarmRow[] }) {
 
 function SeasonsTable({ rows }: { rows: SeasonRow[] }) {
   const maxYield = maxOf(rows.flatMap((r) => [r.yieldTHa, r.targetYieldTHa]));
-  const headers = [t("ui.season"), t("ui.compareHaPlanned"), t("ui.compareHaHarvested"), t("ui.compareTons"), t("ui.compareYield"), t("ui.compareTarget"), t("ui.compareApplications")];
+  const headers = seasonsHeaders();
   return (
     <>
-      <div className="mb-2 flex justify-end">
-        <TableExportMenu
-          data={() => ({
-            name: t("ui.compareSeasonsFile"),
-            headers,
-            rows: rows.map((r) => [r.name, r.plannedHa, r.harvestedHa, r.harvestTons, r.yieldTHa, r.targetYieldTHa, r.applications]),
-          })}
-        />
-      </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
+        <table className="w-full text-left text-sm whitespace-nowrap">
           <thead>
             <tr className="border-b border-linea text-tinta-2">
               {headers.map((h) => (
@@ -151,7 +186,7 @@ function SeasonsTable({ rows }: { rows: SeasonRow[] }) {
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} className="border-b border-linea">
-                <th scope="row" className="py-2 pr-3 text-left font-medium">
+                <th scope="row" className="sticky left-0 bg-lino py-2 pr-3 text-left font-medium">
                   {r.name}
                 </th>
                 <td className="num pr-3">{fmtHa(r.plannedHa)}</td>

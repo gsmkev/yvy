@@ -1,15 +1,26 @@
+import type { ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { post } from "../lib/api";
 import { alertShareText } from "@yvy/shared";
+import { sortAlerts } from "../lib/alertRank";
 import { fmtDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useAlerts } from "../lib/queries";
-import { AlertTriangle, Check, ShieldCheck, ThumbsDown, ThumbsUp } from "lucide-react";
-import { ALERT_ICON } from "../lib/icons";
 import { ShareWhatsappButton } from "./ShareButton";
-import { Button, Empty, ErrorBox, SeverityBadge, Spinner, toast } from "./ui";
+import { Button, EmptyState, ErrorBox, Spinner, toast } from "./ui";
 
-export function AlertsList({ farmId, farmNames }: { farmId?: string; farmNames?: Record<string, string> }) {
+const BAR = { warning: "border-peligro", watch: "border-trigo", info: "border-cielo" } as const;
+
+export function AlertsList({
+  farmId,
+  farmNames,
+  emptyAction,
+}: {
+  farmId?: string;
+  farmNames?: Record<string, string>;
+  /** Acción para salir del vacío (por ejemplo, ajustar los umbrales). */
+  emptyAction?: ReactNode;
+}) {
   const q = useAlerts({ farmId, active: true });
   const qc = useQueryClient();
   const feedback = useMutation({
@@ -19,79 +30,58 @@ export function AlertsList({ farmId, farmNames }: { farmId?: string; farmNames?:
       return qc.invalidateQueries({ queryKey: ["alerts"] });
     },
   });
-  if (q.isLoading) return <Spinner rows={5} h={56} />;
+  if (q.isLoading) return <Spinner rows={3} h={104} />;
   if (q.error) return <ErrorBox error={q.error} />;
-  if (!q.data?.length) return <Empty icon={ShieldCheck} title={t("ui.noAlerts")} />;
+  if (!q.data?.length)
+    return (
+      <EmptyState title={t("ui.noAlerts")} action={emptyAction}>
+        {t("ui.noAlertsHint")}
+      </EmptyState>
+    );
   return (
-    <ul className="flex flex-col gap-3">
-      {q.data.map((a) => {
-        const Icon = ALERT_ICON[a.kind] ?? AlertTriangle;
+    <ul className="divide-y divide-linea border-y border-linea">
+      {sortAlerts(q.data).map((a) => {
+        const validity = `${fmtDate(a.validFrom)}${a.validTo && a.validTo - a.validFrom > 86_400_000 ? ` – ${fmtDate(a.validTo)}` : ""}`;
         return (
-          <li
-            key={a.id}
-            className={`rounded-lg border bg-papel p-4 ${a.severity === "warning" ? "border-peligro/50 border-l-4" : "border-linea"}`}
-          >
-            <div className="flex items-start gap-3">
-              <span
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${a.severity === "warning" ? "bg-peligro text-sobre" : "bg-trigo/20 text-trigo-texto"}`}
-              >
-                <Icon size={18} aria-hidden />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold">{tk(`ui.alertKind_${a.kind}`)}</span>
-                  <SeverityBadge severity={a.severity} />
-                  {farmNames?.[a.farmId] && <span className="text-sm text-tinta-2">{farmNames[a.farmId]}</span>}
-                  <span className="num ml-auto text-xs text-tinta-2">
-                    {fmtDate(a.validFrom)}
-                    {a.validTo && a.validTo - a.validFrom > 86_400_000 ? ` – ${fmtDate(a.validTo)}` : ""}
-                  </span>
-                </div>
-                <p className="mt-1.5 text-[15px]">{a.summary}</p>
-                <p className="mt-1 text-xs text-tinta-2">
-                  {a.probability ? `${tk(`ui.probability_${a.probability}`)} · ` : ""}
-                  {a.plotIds.length} {t("ui.plots").toLowerCase()} · {t("ui.orientative", { source: a.source })}
-                </p>
-                <div className="mt-3 flex items-center gap-2 text-sm">
-                  {a.useful === null ? (
-                    <>
-                      <span className="mr-1 text-tinta-2">{t("ui.useful")}</span>
-                      <Button
-                        variant="secondary"
-                        icon={ThumbsUp}
-                        className="h-8"
-                        onClick={() => feedback.mutate({ id: a.id, useful: true })}
-                      >
-                        {t("ui.yes")}
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        icon={ThumbsDown}
-                        className="h-8"
-                        onClick={() => feedback.mutate({ id: a.id, useful: false })}
-                      >
-                        {t("ui.no")}
-                      </Button>
-                    </>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 text-tinta-2">
-                      <Check size={14} aria-hidden /> {t("ui.thanks")}
-                    </span>
-                  )}
-                  <ShareWhatsappButton
-                    variant="quiet"
-                    className="ml-auto h-8"
-                    text={alertShareText({
-                      kindLabel: tk(`ui.alertKind_${a.kind}`),
-                      severityLabel: tk(`ui.severity_${a.severity}`),
-                      summary: a.summary,
-                      farmName: farmNames?.[a.farmId],
-                      validity: `${fmtDate(a.validFrom)}${a.validTo && a.validTo - a.validFrom > 86_400_000 ? ` – ${fmtDate(a.validTo)}` : ""}`,
-                      link: `${window.location.origin}/avisos`,
-                    })}
-                  />
-                </div>
-              </div>
+          <li key={a.id} className={`border-l-[3px] py-3 pl-3 ${BAR[a.severity]}`}>
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span className="text-[15px] leading-5 font-semibold">{tk(`ui.alertKind_${a.kind}`)}</span>
+              {a.severity !== "info" && (
+                <span className={`text-sm font-medium ${a.severity === "warning" ? "text-peligro" : "text-trigo-texto"}`}>
+                  {tk(`ui.severity_${a.severity}`)}
+                </span>
+              )}
+              {farmNames?.[a.farmId] && <span className="text-sm text-tinta-2">{farmNames[a.farmId]}</span>}
+              <span className="num ml-auto text-xs text-tinta-2">{validity}</span>
+            </div>
+            <p className="mt-1 text-sm leading-5">{a.summary}</p>
+            <p className="mt-0.5 text-xs leading-4 text-tinta-2">
+              {a.probability ? `${tk(`ui.probability_${a.probability}`)} · ` : ""}
+              {a.plotIds.length} {t("ui.plots").toLowerCase()} · {t("ui.orientative", { source: a.source })}
+            </p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-1 text-sm">
+              <ShareWhatsappButton
+                variant="secondary"
+                text={alertShareText({
+                  kindLabel: tk(`ui.alertKind_${a.kind}`),
+                  severityLabel: tk(`ui.severity_${a.severity}`),
+                  summary: a.summary,
+                  farmName: farmNames?.[a.farmId],
+                  validity,
+                  link: `${window.location.origin}/avisos`,
+                })}
+              />
+              {a.useful === null && (
+                <span className="ml-auto flex items-center gap-1 text-tinta-2">
+                  {t("ui.useful")}
+                  <Button variant="quiet" onClick={() => feedback.mutate({ id: a.id, useful: true })}>
+                    {t("ui.yes")}
+                  </Button>
+                  <Button variant="quiet" onClick={() => feedback.mutate({ id: a.id, useful: false })}>
+                    {t("ui.no")}
+                  </Button>
+                </span>
+              )}
             </div>
           </li>
         );

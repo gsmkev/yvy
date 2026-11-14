@@ -2,11 +2,10 @@ import { useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isFieldRole } from "@yvy/shared";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, ChevronRight, Plus } from "lucide-react";
 import { FarmMap } from "../components/FarmMap";
 import { FirstRunGuide, guideSteps } from "../components/FirstRunGuide";
 import { OwnerDashboard } from "../components/OwnerDashboard";
-import { Button, Empty, ErrorBox, SectionHead, Skeleton, Spinner, Stat } from "../components/ui";
+import { Button, EmptyState, ErrorBox, PageHeader, Spinner, Stat } from "../components/ui";
 import { areaUnitLabel, fmtAreaValue, fmtDate, fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { loadPrefs, savePrefs } from "../lib/prefs";
@@ -51,6 +50,8 @@ export function HomePage() {
   const totalHa = list.reduce((a, f) => a + f.areaHa, 0);
   const alerts = list.reduce((a, f) => a + f.activeAlerts, 0);
   const records = list.reduce((a, f) => a + f.records7d, 0);
+  // El resumen del dueño ya trae superficie por cultivo, avisos y registros: no se repiten arriba
+  const summary = me.data?.role === "owner" || me.data?.role === "admin";
 
   return (
     <div className="grid h-full lg:grid-cols-[minmax(0,1fr)_440px]">
@@ -69,32 +70,19 @@ export function HomePage() {
           onPointClick={(id) => navigate({ to: "/estancias/$farmId", params: { farmId: id } })}
         />
       </div>
-      <section className="flex flex-col gap-6 overflow-auto border-l border-linea p-6 *:shrink-0">
-        <header className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-[28px] leading-tight">{t("ui.homeTitle")}</h1>
-          </div>
-          {canEdit && (
-            <Link to="/estancias/nueva">
-              <Button variant="primary" icon={Plus}>
-                {t("ui.newFarm")}
-              </Button>
-            </Link>
-          )}
-        </header>
+      <section className="flex flex-col gap-6 overflow-auto border-l border-linea p-4 sm:p-6 *:shrink-0">
+        <PageHeader
+          title={t("ui.homeTitle")}
+          primary={
+            canEdit ? (
+              <Link to="/estancias/nueva">
+                <Button variant="primary">{t("ui.newFarm")}</Button>
+              </Link>
+            ) : undefined
+          }
+        />
 
-        {farms.isLoading && <Skeleton h={89} />}
-        {list.length > 0 && (
-          <div className="grid grid-cols-3 gap-4 border-y border-linea py-4">
-            <Stat label={t("ui.area")} value={fmtAreaValue(totalHa)} unit={areaUnitLabel()} />
-            <Stat label={t("ui.records7d")} value={records} />
-            <Stat label={t("ui.activeAlerts")} value={alerts} tone={alerts ? "danger" : undefined} />
-          </div>
-        )}
-
-        {list.length > 1 && (me.data?.role === "owner" || me.data?.role === "admin") && <OwnerDashboard />}
-
-        {farms.isLoading && <Spinner rows={3} h={84} />}
+        {farms.isLoading && <Spinner rows={3} h={72} />}
         {farms.error && <ErrorBox error={farms.error} />}
         {guide && (
           <FirstRunGuide
@@ -107,68 +95,72 @@ export function HomePage() {
         )}
         {steps && dismissed && steps.some((s) => !s.done) && (
           <button
-            className="cursor-pointer self-start text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
+            className="flex h-10 cursor-pointer items-center self-start text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
             onClick={() => setGuide.mutate(false)}
           >
             {t("ui.guideShow")}
           </button>
         )}
         {farms.data && list.length === 0 && !guide && (
-          <Empty title={t("ui.onboardingTitle")}>
-            <ol className="mt-1 flex list-decimal flex-col gap-1.5 pl-5">
+          <EmptyState
+            title={t("ui.onboardingTitle")}
+            action={
+              canEdit ? (
+                <Link to="/estancias/nueva">
+                  <Button variant="primary">{t("ui.newFarm")}</Button>
+                </Link>
+              ) : undefined
+            }
+          >
+            <ol className="flex list-decimal flex-col gap-1.5 pl-5">
               <li>{t("ui.onboarding1")}</li>
               <li>{t("ui.onboarding2")}</li>
               <li>{t("ui.onboarding3")}</li>
               <li>{t("ui.onboarding4")}</li>
             </ol>
-            <a
-              href="/descargar-app"
-              className="mt-3 inline-flex items-center gap-1.5 font-medium text-accion hover:underline"
-            >
+            <a href="/descargar-app" className="mt-3 inline-flex items-center gap-1.5 font-medium text-accion hover:underline">
               {t("ui.downloadApp")}
             </a>
-          </Empty>
+          </EmptyState>
         )}
 
         {list.length > 0 && (
-          <div>
-            <SectionHead title={t("ui.farmsTitle")} count={list.length} />
-            <ul className="divide-y divide-linea">
-              {list.map((f) => (
-                <li key={f.id}>
-                  <Link
-                    to="/estancias/$farmId"
-                    params={{ farmId: f.id }}
-                    className="group flex items-center gap-4 py-4"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-baseline gap-2">
-                        <h2 className="truncate font-semibold group-hover:underline">{f.name}</h2>
-                        {f.department && <span className="text-sm text-tinta-2">{f.department}</span>}
-                      </div>
-                      <p className="num mt-1 text-xs text-tinta-2">
-                        {fmtHa(f.areaHa)} · {f.plots} {t("ui.plots").toLowerCase()} · {f.workers}{" "}
-                        {t("ui.workers").toLowerCase()} ·{" "}
-                        {f.lastRecordAt
+          <ul className="-mt-2 divide-y divide-linea border-y border-linea">
+            {list.map((f) => (
+              <li key={f.id}>
+                <Link to="/estancias/$farmId" params={{ farmId: f.id }} className="group flex min-h-14 items-center gap-3 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="truncate text-[15px] leading-5 font-semibold group-hover:underline">{f.name}</h2>
+                    <p className="num text-xs leading-4 text-tinta-2">
+                      {[
+                        f.department,
+                        fmtHa(f.areaHa),
+                        `${f.plots} ${t("ui.plots").toLowerCase()}`,
+                        f.lastRecordAt
                           ? `${t("ui.lastRecord").toLowerCase()} ${fmtDate(f.lastRecordAt)}`
-                          : t("ui.neverRecorded").toLowerCase()}
-                      </p>
-                      {f.activeAlerts > 0 && (
-                        <p className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-peligro">
-                          <AlertTriangle size={13} aria-hidden />{" "}
-                          {t(f.activeAlerts === 1 ? "ui.alertsCountOne" : "ui.alertsCountMany", { n: f.activeAlerts })}
-                        </p>
-                      )}
-                    </div>
-                    <ChevronRight
-                      size={18}
-                      className="text-tinta-2 transition-transform group-hover:translate-x-0.5"
-                      aria-hidden
-                    />
-                  </Link>
-                </li>
-              ))}
-            </ul>
+                          : t("ui.neverRecorded").toLowerCase(),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  </div>
+                  {f.activeAlerts > 0 && (
+                    <span className="shrink-0 text-xs font-medium text-peligro">
+                      {t(f.activeAlerts === 1 ? "ui.alertsCountOne" : "ui.alertsCountMany", { n: f.activeAlerts })}
+                    </span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {list.length > 1 && summary && <OwnerDashboard />}
+        {list.length > 0 && !summary && (
+          <div className="grid grid-cols-3 gap-4">
+            <Stat label={t("ui.area")} value={fmtAreaValue(totalHa)} unit={areaUnitLabel()} />
+            <Stat label={t("ui.records7d")} value={records} />
+            <Stat label={t("ui.activeAlerts")} value={alerts} tone={alerts ? "danger" : undefined} />
           </div>
         )}
       </section>

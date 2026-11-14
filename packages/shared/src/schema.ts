@@ -1179,6 +1179,38 @@ export const leads = sqliteTable(
   ],
 );
 
+/**
+ * Pedidos de prueba desde la landing (formulario del cierre). No son de una organización ni se sincronizan: el equipo de Yvy
+ * los ve en el panel interno y escribe por WhatsApp. El teléfono se guarda solo para eso (consentimiento en `consentAt`) y se
+ * borra pasado LIMITS.trialRequests.retentionMs. La IP se guarda como hash para el tope por conexión.
+ */
+export const trialRequests = sqliteTable(
+  "trial_requests",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    /** Solo dígitos, con código de país (595...). */
+    whatsapp: text("whatsapp").notNull(),
+    company: text("company"),
+    /** JSON con la lista de cultivos o rubros elegidos. */
+    crops: text("crops").notNull().default("[]"),
+    hectares: real("hectares"),
+    employees: integer("employees"),
+    department: text("department"),
+    consentAt: integer("consent_at").notNull(),
+    consentVersion: text("consent_version").notNull(),
+    ipHash: text("ip_hash"),
+    /** new (sin atender) o contacted (el equipo ya escribió). */
+    status: text("status").notNull().default("new"),
+    createdAt: integer("created_at").notNull(),
+    contactedAt: integer("contacted_at"),
+  },
+  (t) => [
+    index("trial_requests_ip_idx").on(t.ipHash, t.createdAt),
+    index("trial_requests_status_idx").on(t.status, t.createdAt),
+  ],
+);
+
 /** SPI a 1, 3 y 6 meses por estancia (C-07): JSON validado con farmSpiSchema. Una fila por estancia; no se sincroniza. */
 export const farmSpi = sqliteTable("farm_spi", {
   farmId: text("farm_id").primaryKey(),

@@ -131,6 +131,20 @@ export const LIMITS = {
     /** Rectángulo de Paraguay: el informe usa focos de calor de NASA FIRMS solo de ese país. */
     bbox: { minLon: -62.7, maxLon: -54.2, minLat: -27.7, maxLat: -19.2 },
   },
+  /** Pedido de prueba desde la landing: formulario del cierre. */
+  trialRequests: {
+    /** Pedidos por conexión (IP) en 24 h. */
+    perIpPerDay: 5,
+    /** El teléfono y los datos del pedido se borran pasado este tiempo. */
+    retentionMs: 180 * 24 * 60 * 60 * 1000,
+    /** Versión del texto de consentimiento que aceptó la persona (se guarda con el pedido). */
+    consentVersion: "2026-11",
+    maxCrops: 8,
+    maxHa: 10_000_000,
+    maxEmployees: 100_000,
+    /** Pedidos que muestra el panel interno. */
+    listLimit: 50,
+  },
   /** F-14: formularios configurables por la organización. */
   forms: {
     maxFieldsPerKind: 10,
@@ -182,6 +196,8 @@ export const LIMITS = {
     /** Lotes que se pueden elegir de una vez en el mapa al crear tareas (T-01). */
     maxPlotsPerBatch: 40,
   },
+  /** Días de prueba gratis al crear una cuenta (el alta y la landing usan este mismo número). Fuera de `plans` para no ser un plan. */
+  trialDays: 60,
   /**
    * Topes por plan (P-10): hectáreas de estancias y personas con acceso (todos los roles). `null` = sin tope.
    * El equipo de Yvy puede fijar topes propios por organización desde el panel interno (organizations.max_ha / max_users).

@@ -14,7 +14,7 @@ test("dueño: registro, estancia, importación de 20 lotes y empleado", async ({
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
   const email = `e2e-${Date.now()}@yvy.test`;
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /el campo no tiene señal/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /el mapa vivo de tu campo/i })).toBeVisible();
   await page.getByRole("link", { name: "Crear cuenta" }).first().click();
   await expect(page).toHaveURL(/ingresar/);
   await page.getByLabel("Nombre de la organización").fill("Agro E2E");

@@ -268,5 +268,8 @@ export const SERVER_SCHEMA: string[] = [
   "ALTER TABLE `events` DROP COLUMN `user_id`;",
   "CREATE TABLE `plan_requests` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`organization_id` text NOT NULL,\n\t`requested_by` text NOT NULL,\n\t`plan` text NOT NULL,\n\t`max_ha` real,\n\t`max_users` integer,\n\t`note` text,\n\t`status` text DEFAULT 'pending' NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`resolved_at` integer,\n\t`resolved_by` text,\n\t`resolution_note` text\n);",
   "CREATE UNIQUE INDEX `plan_requests_pending_uq` ON `plan_requests` (`organization_id`) WHERE status = 'pending';",
-  "CREATE INDEX `plan_requests_status_idx` ON `plan_requests` (`status`,`created_at`);"
+  "CREATE INDEX `plan_requests_status_idx` ON `plan_requests` (`status`,`created_at`);",
+  "CREATE TABLE `trial_requests` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`name` text NOT NULL,\n\t`whatsapp` text NOT NULL,\n\t`company` text,\n\t`crops` text DEFAULT '[]' NOT NULL,\n\t`hectares` real,\n\t`employees` integer,\n\t`department` text,\n\t`consent_at` integer NOT NULL,\n\t`consent_version` text NOT NULL,\n\t`ip_hash` text,\n\t`status` text DEFAULT 'new' NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`contacted_at` integer\n);",
+  "CREATE INDEX `trial_requests_ip_idx` ON `trial_requests` (`ip_hash`,`created_at`);",
+  "CREATE INDEX `trial_requests_status_idx` ON `trial_requests` (`status`,`created_at`);"
 ];

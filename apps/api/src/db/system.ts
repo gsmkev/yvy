@@ -914,6 +914,8 @@ export class SystemDb {
     await runBatch(this.db, [
       // V-04: el email del pedido y su informe no se guardan más allá de la retención
       this.db.delete(s.leads).where(lt(s.leads.createdAt, now - LIMITS.leads.retentionMs)),
+      // El teléfono del pedido de prueba tampoco se guarda más allá de su retención
+      this.db.delete(s.trialRequests).where(lt(s.trialRequests.createdAt, now - LIMITS.trialRequests.retentionMs)),
       this.db.delete(s.emailCodes).where(lt(s.emailCodes.expiresAt, now)),
       this.db.delete(s.linkCodes).where(or(lt(s.linkCodes.expiresAt, now), sql`${s.linkCodes.usedAt} IS NOT NULL`)),
       this.db

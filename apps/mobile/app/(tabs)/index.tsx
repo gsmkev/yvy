@@ -3,7 +3,7 @@
  * después lo que ya anotó. Sin secciones vacías: si no hay nada, lo dice una sola vez.
  */
 import { useEffect, useRef, type ElementRef } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Check } from "lucide-react-native";
 import { checklistProgress, describeRecord, parseChecklist, parseTaskComments, t } from "@yvy/shared";
@@ -15,11 +15,12 @@ import { useSession } from "../../src/lib/session";
 import { flushAlertVotes, localChanged } from "../../src/lib/sync";
 import { readVotes, recordVote } from "../../src/lib/votes";
 import { useLocal } from "../../src/lib/useLocal";
+import { AlertCard } from "../../src/ui/AlertCard";
 import { FarmLine } from "../../src/ui/FarmLine";
 import { ForecastStrip } from "../../src/ui/ForecastStrip";
 import { toastSaved } from "../../src/lib/toast";
 import { Button, EmptyState, Row, SectionHeader, s as k, Text } from "../../src/ui/kit";
-import { C, RADIUS, T } from "../../src/ui/theme";
+import { C, T } from "../../src/ui/theme";
 import { useReadOnly } from "../../src/lib/readOnly";
 
 const dayLabel = () => {
@@ -108,51 +109,23 @@ export default function Today() {
       <Text style={[T.display, { marginTop: 2 }]}>{firstName(session?.user.fullName ?? "")}</Text>
 
       {/* Primero lo que pide acción: avisos. */}
-      {alerts.map((a) => {
-        const strong = a.severity === "warning";
-        return (
-          <View
-            key={a.id}
-            onLayout={(e) => {
-              alertY.current[a.id] = e.nativeEvent.layout.y;
-              if (a.id === alertId) scrollToAlert(a.id);
-            }}
-            style={[st.alert, strong ? st.alertStrong : st.alertSoft, a.id === alertId && st.alertPicked]}
-          >
-            <Text style={[T.heading, { color: strong ? C.blanco : C.atencion }]}>
-              {t(`ui.alertKind_${a.kind}` as never)}
-              {a.probability ? ` · ${t(`ui.probability_${a.probability}` as never).toLowerCase()}` : ""}
-            </Text>
-            <Text style={[T.body, { color: strong ? C.blanco : C.tinta, marginTop: 4 }]}>{a.summary}</Text>
-            <Text style={[T.small, { color: strong ? "rgba(255,255,255,0.8)" : C.tinta2, marginTop: 8 }]}>{t("ui.orientative", { source: a.source })}</Text>
-            <View style={st.vote}>
-              {votes[a.id] === undefined ? (
-                <>
-                  <Text style={[T.small, { color: strong ? C.blanco : C.tinta2 }]}>{t("ui.useful")}</Text>
-                  {([true, false] as const).map((useful) => (
-                    <Pressable
-                      key={String(useful)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${t("ui.useful")} ${useful ? t("app.yes") : t("app.no")}`}
-                      hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-                      onPress={() => {
-                        recordVote(getDb(), a.id, useful);
-                        localChanged();
-                        flushAlertVotes();
-                      }}
-                      style={st.voteBtn}
-                    >
-                      <Text style={[T.smallMedium, { color: strong ? C.blanco : C.tinta, textDecorationLine: "underline" }]}>{useful ? t("app.yes") : t("app.no")}</Text>
-                    </Pressable>
-                  ))}
-                </>
-              ) : (
-                <Text style={[T.small, { color: strong ? C.blanco : C.tinta2 }]}>{t("app.thanks")}</Text>
-              )}
-            </View>
-          </View>
-        );
-      })}
+      {alerts.map((a) => (
+        <AlertCard
+          key={a.id}
+          alert={a}
+          voted={votes[a.id]}
+          picked={a.id === alertId}
+          onVote={(useful) => {
+            recordVote(getDb(), a.id, useful);
+            localChanged();
+            flushAlertVotes();
+          }}
+          onLayout={(e) => {
+            alertY.current[a.id] = e.nativeEvent.layout.y;
+            if (a.id === alertId) scrollToAlert(a.id);
+          }}
+        />
+      ))}
 
       {/* La lluvia es lo que más se anota: un toque, directo a los milímetros (lluvia de la estancia, sin lote).
           El mismo destino lo abre el atajo de Android (yvy://annotate?kind=rain&farmLevel=1). */}
@@ -240,12 +213,6 @@ export default function Today() {
 }
 
 const st = StyleSheet.create({
-  alert: { borderRadius: RADIUS, padding: 16, marginTop: 16 },
-  alertStrong: { backgroundColor: C.peligro },
-  alertSoft: { backgroundColor: C.atencionSuave },
-  vote: { flexDirection: "row", alignItems: "center", gap: 20, marginTop: 4, minHeight: 44 },
-  voteBtn: { minHeight: 44, minWidth: 44, justifyContent: "center", alignItems: "center" },
-  alertPicked: { borderWidth: 3, borderColor: C.tinta },
   taskActions: { flexDirection: "row", gap: 8, marginTop: -4 },
   taskAction: { paddingHorizontal: 0, marginRight: 12 },
   circle: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.lineaFuerte },

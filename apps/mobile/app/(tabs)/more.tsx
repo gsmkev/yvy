@@ -16,6 +16,7 @@ import { isOwnerMode } from "../../src/lib/ownerSummary";
 import { fitsBudget } from "../../src/lib/offlinePlan";
 import { localChanged, stopAutoSync, syncNow, syncNowMobileData, useSyncStatus } from "../../src/lib/sync";
 import { canCount } from "../../src/lib/stock-count";
+import { orgOptions } from "../../src/lib/orgSwitch";
 import { useLocal } from "../../src/lib/useLocal";
 import { Button, Row, SectionHeader, SwitchRow, s as k, Text } from "../../src/ui/kit";
 import { C, T } from "../../src/ui/theme";
@@ -188,6 +189,7 @@ export default function More() {
           )
         }
       />
+      {orgOptions(session).length > 0 && <Row title={t("app.orgSwitchRow", { name: session?.organization.name ?? "" })} subtitle={t("app.orgSwitchHint")} onPress={() => router.push("/orgs")} />}
       <Row title={t("app.switchUser")} subtitle={t("app.switchUserHint")} onPress={switchUser} />
       <Button kind="danger" title={t("app.logout")} onPress={logout} style={{ marginTop: 16 }} />
 

@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import { Pressable, StyleSheet, type ColorValue } from "react-native";
 import { Redirect, Tabs, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ClipboardList, Map, MoreHorizontal, Plus, Sun, type LucideIcon } from "lucide-react-native";
-import { t } from "@yvy/shared";
+import { ClipboardList, LayoutGrid, Map, MoreHorizontal, Plus, Sun, type LucideIcon } from "lucide-react-native";
+import { hasManageTab, t } from "@yvy/shared";
 import { useSession } from "../../src/lib/session";
 import { useFabHidden } from "../../src/lib/fab";
 import { startAutoSync, useSyncStatus } from "../../src/lib/sync";
@@ -22,8 +22,12 @@ export default function TabsLayout() {
   const session = useSession();
   const { pending } = useSyncStatus();
   const fabHidden = useFabHidden() || useReadOnly();
-  useEffect(() => (session ? startAutoSync() : undefined), [!!session]);
+  useEffect(() => (session && !session.mfaSetupRequired ? startAutoSync() : undefined), [!!session, !!session?.mfaSetupRequired]);
   if (!session) return <Redirect href="/login" />;
+  // P-08: sin segundo factor activado la API rechaza todo; mejor decirlo que dejar la app en blanco.
+  if (session.mfaSetupRequired) return <Redirect href="/mfa-required" />;
+  // Gestión es de la oficina; el empleado y el contratista siguen con las cuatro pestañas de siempre.
+  const showManage = hasManageTab(session.organization.role);
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: C.papel }}>
       <SyncBar />
@@ -55,6 +59,7 @@ export default function TabsLayout() {
             tabBarBadgeStyle: { backgroundColor: C.atencionSuave, color: C.atencion, fontFamily: F.sansSemi },
           }}
         />
+        <Tabs.Screen name="manage" options={{ title: t("app.manage"), tabBarIcon: icon(LayoutGrid), href: showManage ? undefined : null }} />
         <Tabs.Screen name="more" options={{ title: t("app.more"), tabBarIcon: icon(MoreHorizontal) }} />
       </Tabs>
       {/* Una sola acción principal en toda la app */}

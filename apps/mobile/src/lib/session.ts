@@ -2,6 +2,7 @@
 import Constants from "expo-constants";
 import { secureDel, secureGet, secureSet } from "./secure";
 import { useSyncExternalStore } from "react";
+import { HttpError, OfflineError } from "./errors";
 
 export const API_URL: string = (Constants.expoConfig?.extra?.apiUrl as string) ?? "http://10.0.2.2:8787";
 
@@ -12,6 +13,10 @@ export interface Session {
   refreshTokenExpiresAt: number;
   user: { id: string; fullName: string; email: string | null };
   organization: { id: string; name: string; role: string };
+  /** Todas las organizaciones de la persona (selector de organización). Una sesión vieja no lo trae hasta renovarse. */
+  organizations?: { id: string; name: string; role: string }[];
+  /** P-08: la organización exige segundo factor a los administradores y este todavía no lo activó; la API rechaza todo salvo /auth/totp. */
+  mfaSetupRequired?: boolean;
 }
 
 const KEY = "yvy.session";
@@ -55,15 +60,7 @@ export const useSessionLoaded = () =>
     () => loaded,
   );
 
-export class OfflineError extends Error {}
-export class HttpError extends Error {
-  constructor(
-    readonly status: number,
-    message: string,
-  ) {
-    super(message);
-  }
-}
+export { HttpError, OfflineError };
 
 let refreshing: Promise<string> | null = null;
 

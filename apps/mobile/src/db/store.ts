@@ -44,6 +44,7 @@ import {
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import type { SyncStore } from "@yvy/sync";
+import { clearCache } from "../lib/httpCache";
 import { SERVER_SCHEMA } from "./schema-sql";
 import { LOCAL_SCHEMA, type Param, type Sql } from "./sql";
 
@@ -162,6 +163,11 @@ export class LocalDb implements SyncStore {
         key,
         value,
       ]);
+  }
+
+  /** Borra las claves que empiezan con `prefix` (por ejemplo `forecast:` al cambiar de organización). */
+  deleteKvPrefix(prefix: string): void {
+    this.sql.run("DELETE FROM kv WHERE substr(key, 1, ?) = ?", [prefix.length, prefix]);
   }
 
   // ---------- SyncStore ----------
@@ -785,6 +791,17 @@ export class LocalDb implements SyncStore {
       .map((r) => fromRow<Alert>(s.alerts, r));
   }
 
+  /** Avisos de los últimos `sinceMs` ms (activos y ya terminados), para la lista completa de Gestión. */
+  alertsSince(sinceMs: number): Alert[] {
+    const now = this.now();
+    return this.sql
+      .all(
+        "SELECT * FROM alerts WHERE (resolved_at IS NULL AND (valid_to IS NULL OR valid_to >= ?)) OR valid_from >= ? OR (valid_to IS NOT NULL AND valid_to >= ?) ORDER BY valid_from DESC",
+        [now, now - sinceMs, now - sinceMs],
+      )
+      .map((r) => fromRow<Alert>(s.alerts, r));
+  }
+
   /** Receta de una tarea (A-11), ya validada; null si no tiene o está dañada. */
   prescriptionOf(taskId: string): Prescription | null {
     const r = this.sql.get<{ prescription: string | null }>("SELECT prescription FROM tasks WHERE id = ?", [taskId]);
@@ -960,6 +977,8 @@ export class LocalDb implements SyncStore {
       for (const t of Object.keys(TABLES)) this.sql.run(`DELETE FROM ${t} WHERE id NOT IN (SELECT row_id FROM outbox)`);
       this.sql.run("DELETE FROM sync_cursors");
       this.sql.run("DELETE FROM kv WHERE key = 'assignments_version'");
+      // Lo que se bajó por REST (oficina) es de la persona que cierra: no se queda para la siguiente.
+      clearCache(this);
     });
   }
 

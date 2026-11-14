@@ -69,3 +69,5 @@ export * from "./export-format";
 export * from "./grain";
 export * from "./spi";
 export * from "./visits";
+export * from "./api-types";
+export * from "./manage";

@@ -77,6 +77,9 @@ export default function RootLayout() {
         <Stack.Screen name="labs/caravana" options={{ title: "" }} />
         <Stack.Screen name="labs/fenologia" options={{ title: "" }} />
         <Stack.Screen name="labs/guarani" options={{ title: "" }} />
+        <Stack.Screen name="mfa-required" options={{ headerShown: false }} />
+        <Stack.Screen name="orgs" options={{ title: "" }} />
+        <Stack.Screen name="manage/dashboard" options={{ title: "" }} />
         <Stack.Screen name="annotate/index" options={{ title: "", presentation: "modal" }} />
       </Stack>
       <Toast />

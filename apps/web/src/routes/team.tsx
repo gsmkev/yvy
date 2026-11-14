@@ -63,11 +63,11 @@ export function TeamPage() {
     ].filter(Boolean);
     return parts.length ? parts.join(" · ") : t("ui.teamNoActivity");
   };
-  const cols = owner ? "md:grid-cols-[minmax(0,2fr)_10rem_minmax(0,1fr)_minmax(0,1.6fr)_2.5rem]" : "md:grid-cols-[minmax(0,2fr)_10rem_minmax(0,1.6fr)_2.5rem]";
+  const cols = owner ? "md:grid-cols-[minmax(0,2fr)_9rem_minmax(0,1fr)_minmax(0,1.6fr)_9rem_2.5rem]" : "md:grid-cols-[minmax(0,2fr)_9rem_minmax(0,1.6fr)_9rem_2.5rem]";
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-5 p-4 lg:p-6">
       <PageHeader
-        className="max-sm:flex-wrap"
+        className="max-sm:flex-wrap max-sm:[&>div:first-child]:basis-full"
         title={t("ui.teamTitle")}
         primary={
           canManage ? (
@@ -109,6 +109,7 @@ export function TeamPage() {
             <span>{t("ui.role")}</span>
             {owner && <span>{t("ui.farmAccess")}</span>}
             <span>{t("ui.teamColActivity")}</span>
+            <span>{t("ui.teamColLastSync")}</span>
             <span />
           </div>
           <ul>
@@ -125,12 +126,15 @@ export function TeamPage() {
                 {owner && <div className="hidden min-w-0 truncate text-sm text-tinta-2 md:block">{farmsOf(m)}</div>}
                 <div className="col-start-1 row-start-3 min-w-0 text-sm md:col-start-auto md:row-start-auto">
                   <div className="num text-tinta-2">{activity(m)}</div>
-                  <div className="num text-xs text-tinta-2">{m.lastSyncAt ? t("ui.lastSync", { date: fmtDateTime(m.lastSyncAt) }) : t("ui.neverSynced")}</div>
+                  {m.lastSyncAt && <div className="num text-xs text-tinta-2 md:hidden">{t("ui.lastSync", { date: fmtDateTime(m.lastSyncAt) })}</div>}
                   {m.overdueTasks > 0 && (
                     <div className="num text-sm font-medium text-peligro">
                       {t(m.overdueTasks === 1 ? "ui.overdueCountOne" : "ui.overdueCountMany", { n: m.overdueTasks })}
                     </div>
                   )}
+                </div>
+                <div className="num hidden text-sm text-tinta-2 md:block">
+                  {m.lastSyncAt ? fmtDateTime(m.lastSyncAt) : <span title={t("ui.neverSyncedHint")}>{t("ui.neverSynced")}</span>}
                 </div>
                 <div className="col-start-2 row-start-1 justify-self-end md:col-start-auto md:row-start-auto">
                   <ActionMenu

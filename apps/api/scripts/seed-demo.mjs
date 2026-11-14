@@ -11,7 +11,7 @@
 // - Cada `data` de los registros se valida con parseRecordData: si algo no valida, el script falla.
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { areaHa, bboxOf, centroidOf, containsPoint } from "@yvy/geo";
+import { areaHa, bboxOf, centroidOf, containsPoint, overlapRatio } from "@yvy/geo";
 import { parseRecordData, prescriptionSchema, RECORD_SCHEMA_VERSION } from "@yvy/shared";
 
 // ---------- utilidades ----------
@@ -120,9 +120,9 @@ const FARM_ID = id("farm", 1);
 // ~5 x 5 km en Itapúa), siguiendo los bordes reales de chacras y potreros. Los píxeles se pasaron a lon/lat con la
 // transformación del ráster (UTM 21 S, 10 m). Siete lotes agrícolas (el 6 en L) y dos potreros; el perímetro de la
 // estancia los envuelve con unos 90 m de margen. Las áreas se recalculan abajo con @yvy/geo.
-const FARM_RING = [[-55.907251, -27.150688], [-55.911088, -27.15283], [-55.916471, -27.1583], [-55.913707, -27.167978], [-55.909425, -27.172174], [-55.907172, -27.173084], [-55.889068, -27.172034], [-55.888051, -27.16935], [-55.894387, -27.154597], [-55.896792, -27.152599], [-55.907251, -27.150688]];
+const FARM_RING = [[-55.907232, -27.150688], [-55.91102, -27.152774], [-55.916471, -27.1583], [-55.913707, -27.167978], [-55.909425, -27.172174], [-55.907172, -27.173084], [-55.889068, -27.172034], [-55.888051, -27.16935], [-55.894387, -27.154597], [-55.896792, -27.152599], [-55.907232, -27.150688]];
 const LOT_RINGS = {
-  l1: [[-55.908843, -27.152656], [-55.907205, -27.15153], [-55.903739, -27.155144], [-55.903695, -27.156227], [-55.906985, -27.153394], [-55.908843, -27.152656]],
+  l1: [[-55.908676, -27.152474], [-55.907205, -27.15153], [-55.903739, -27.155144], [-55.903663, -27.156046], [-55.906683, -27.153301], [-55.908676, -27.152474]],
   l2: [[-55.90314, -27.157847], [-55.901603, -27.156872], [-55.898617, -27.159407], [-55.895494, -27.162241], [-55.896798, -27.163154], [-55.89985, -27.16068], [-55.90314, -27.157847]],
   l3: [[-55.90347, -27.158572], [-55.897606, -27.16301], [-55.899138, -27.164677], [-55.901321, -27.164995], [-55.904033, -27.16291], [-55.906042, -27.160428], [-55.90347, -27.158572]],
   l4: [[-55.912937, -27.167493], [-55.910572, -27.165097], [-55.908532, -27.163817], [-55.902908, -27.167836], [-55.901951, -27.169423], [-55.903617, -27.171031], [-55.90697, -27.172261], [-55.908827, -27.171523], [-55.910354, -27.170181], [-55.912937, -27.167493]],
@@ -225,7 +225,16 @@ for (const p of Object.values(poiDefs)) {
   });
 }
 
-// Control de la geografía: lotes dentro de la estancia y sin solaparse, y los puntos donde corresponde.
+// Control de la geografía: ningún lote ni potrero se superpone con otro, todos están dentro de la estancia y los puntos caen donde corresponde.
+{
+  const list = Object.values(plots);
+  for (let i = 0; i < list.length; i++)
+    for (let j = i + 1; j < list.length; j++) {
+      const ratio = overlapRatio(list[i].geom, list[j].geom);
+      // Más de 1e-9 (fracción del más chico): ignora el ruido numérico de dos bordes que se tocan.
+      if (ratio > 1e-9) throw new Error(`${list[i].name} y ${list[j].name} se superponen (${(ratio * 100).toFixed(2)} % del más chico)`);
+    }
+}
 for (const p of Object.values(plots)) {
   const ring = p.geom.coordinates[0];
   if (!ring.every(([lon, lat]) => containsPoint(farmGeom, lon, lat))) throw new Error(`${p.name} se sale del perímetro de la estancia`);

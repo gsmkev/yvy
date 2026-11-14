@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { PMTiles } from "pmtiles";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FakeCacheStorage } from "./fake-caches";
+import { tinyPmtiles } from "./tiny-pmtiles";
 import { classify, createHandlers, type PrecacheManifest } from "./handlers";
 import { DATA_CACHE, FROM_CACHE_HEADER, SAVED_AT_HEADER, SHELL_PREFIX, TILE_FILES_CACHE, TILE_RANGES_CACHE } from "./names";
 import { isCacheableData, isPersistableQueryKey, isWorkerFirst, WORKER_FIRST } from "./policy";
@@ -237,64 +238,6 @@ describe("lecturas GET /org y /me", () => {
     expect(await w.caches.keys()).toEqual([]);
   });
 });
-
-// ---- PMTiles de mentira: 2 teselas, para ver pasar los pedidos por rango ----
-const te = new TextEncoder();
-function varint(n: number): number[] {
-  const out: number[] = [];
-  while (n >= 128) {
-    out.push((n & 127) | 128);
-    n = Math.floor(n / 128);
-  }
-  out.push(n);
-  return out;
-}
-export function tinyPmtiles(tiles: string[]): Uint8Array<ArrayBuffer> {
-  const data = tiles.map((t) => te.encode(t));
-  // directorio raíz sin comprimir: n, deltas de tileId, runLength, length, offset+1 (0 = contiguo)
-  const dir = [
-    ...varint(tiles.length),
-    ...tiles.map((_, i) => (i === 0 ? 0 : 1)).flatMap((d) => varint(d)),
-    ...tiles.flatMap(() => varint(1)),
-    ...data.flatMap((d) => varint(d.length)),
-    ...data.flatMap((_, i) => varint(i === 0 ? 1 : 0)),
-  ];
-  const dirOffset = 127;
-  const tileOffset = dirOffset + dir.length;
-  const total = tileOffset + data.reduce((a, d) => a + d.length, 0);
-  const buf = new Uint8Array(total);
-  const dv = new DataView(buf.buffer);
-  buf.set(te.encode("PMTiles"), 0);
-  dv.setUint8(7, 3);
-  const u64 = (o: number, v: number) => {
-    dv.setUint32(o, v >>> 0, true);
-    dv.setUint32(o + 4, Math.floor(v / 2 ** 32), true);
-  };
-  u64(8, dirOffset);
-  u64(16, dir.length);
-  u64(24, tileOffset); // metadata vacía
-  u64(32, 0);
-  u64(40, tileOffset); // sin hojas
-  u64(48, 0);
-  u64(56, tileOffset);
-  u64(64, total - tileOffset);
-  u64(72, tiles.length);
-  u64(80, tiles.length);
-  u64(88, tiles.length);
-  dv.setUint8(96, 1);
-  dv.setUint8(97, 1); // directorios sin comprimir
-  dv.setUint8(98, 1); // teselas sin comprimir
-  dv.setUint8(99, 3); // jpeg
-  dv.setUint8(100, 0);
-  dv.setUint8(101, 1);
-  buf.set(dir, dirOffset);
-  let at = tileOffset;
-  for (const d of data) {
-    buf.set(d, at);
-    at += d.length;
-  }
-  return buf;
-}
 
 describe("mapa: PMTiles por rango", () => {
   const archive = tinyPmtiles(["TESELA-RAIZ", "TESELA-UNO"]);

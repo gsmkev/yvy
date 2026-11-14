@@ -14,6 +14,7 @@ import { BRAND } from "@yvy/shared";
 import pointOnFeature from "@turf/point-on-feature";
 import { t } from "../lib/i18n";
 import { placeLabels } from "../lib/labelLayout";
+import { COUNTRY_BASEMAP } from "../lib/offline/tilePlan";
 import { addPoiImages } from "../lib/poiMarkers";
 import { cameraDiffers, pickLayer, type Camera } from "../lib/scenes";
 import type { Layer, Plot, Poi } from "../lib/types";
@@ -26,8 +27,8 @@ function ensureProtocol() {
   protocolAdded = true;
 }
 
-/** Mapa base de Paraguay en R2 (bucket yvy-tiles), publicado por el job country_basemap. */
-export const COUNTRY_BASEMAP = "base/paraguay.pmtiles";
+/** Mapa base de Paraguay en R2 (bucket yvy-tiles), publicado por el job country_basemap. Lo comparte "Guardar para usar sin conexión". */
+export { COUNTRY_BASEMAP };
 const DEV_BASEMAP = import.meta.env.DEV || import.meta.env.VITE_DEV_BASEMAP === "1";
 const PARAGUAY: [number, number, number, number] = [-62.7, -27.7, -54.2, -19.2];
 

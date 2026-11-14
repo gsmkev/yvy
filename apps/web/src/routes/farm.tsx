@@ -31,6 +31,7 @@ import { PlotsTable } from "../components/PlotsTable";
 import { CompareOverlay, SceneControls } from "../components/SceneControls";
 import { ProductsPanel } from "../components/ProductsPanel";
 import { RecordsList } from "../components/RecordsList";
+import { SaveOfflineButton } from "../components/SaveOfflineButton";
 import { SeasonsPanel } from "../components/SeasonsPanel";
 import { TasksPanel } from "../components/TasksPanel";
 import { ActionMenu, ExportMenu } from "../components/menus";
@@ -755,6 +756,7 @@ export function FarmPage() {
             {cropHa > 0 && ` · ${fmtHa(cropHa)} ${t("ui.crop").toLowerCase()}`}
             {pastureHa > 0 && ` · ${fmtHa(pastureHa)} ${t("ui.pasture").toLowerCase()}`}
           </p>
+          <SaveOfflineButton detail={d} tilesBaseUrl={me.data?.tilesBaseUrl} />
         </div>
 
         <Tabs<Tab>

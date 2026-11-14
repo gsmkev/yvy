@@ -7,7 +7,7 @@ import { fmtDateTime } from "../lib/format";
 import { recordColor } from "../lib/recordColors";
 import { t, tk } from "../lib/i18n";
 import { isAudioMime, recordShareText } from "@yvy/shared";
-import { fetchRecordsPage, useFarms, useMe, type RecordFilters } from "../lib/queries";
+import { recordsQuery, useFarms, useMe, type RecordFilters } from "../lib/queries";
 import type { RecordRow } from "../lib/types";
 import { Clock } from "lucide-react";
 import { DeleteRecordConfirm, RecordEditForm } from "./RecordEdit";
@@ -18,12 +18,7 @@ import { StationsView, stationsOf } from "./StationsView";
 import { Button, EmptyState, ErrorBox, Modal, Spinner } from "./ui";
 
 export function useRecords(filters: RecordFilters) {
-  return useInfiniteQuery({
-    queryKey: ["records", filters],
-    queryFn: ({ pageParam }) => fetchRecordsPage(filters, pageParam),
-    initialPageParam: null as { capturedAt: number; id: string } | null,
-    getNextPageParam: (last) => last.nextCursor,
-  });
+  return useInfiniteQuery(recordsQuery(filters));
 }
 
 export function RecordsList({ filters, onRows }: { filters: RecordFilters; onRows?: (rows: RecordRow[]) => void }) {

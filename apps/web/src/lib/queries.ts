@@ -8,18 +8,23 @@ export const useFarms = () => useQuery({ queryKey: ["farms"], queryFn: () => get
 const natural = new Intl.Collator("es-PY", { numeric: true, sensitivity: "base" });
 export const byName = <T extends { name: string }>(a: T, b: T) => natural.compare(a.name, b.name);
 
+/** Opciones de la consulta de una estancia: las comparte la pantalla y "Guardar para usar sin conexión". */
+export const farmQuery = (id: string) => ({
+  queryKey: ["farm", id] as const,
+  queryFn: async () => {
+    const d = await get<FarmDetail>(`/org/farms/${id}`);
+    return {
+      ...d,
+      plots: d.plots.filter((p) => !isPendingDelete(p.id)).sort(byName),
+      pois: d.pois.filter((p) => !isPendingDelete(p.id)),
+    };
+  },
+});
+
 export const useFarm = (id: string, enabled = true) =>
   useQuery({
     enabled,
-    queryKey: ["farm", id],
-    queryFn: async () => {
-      const d = await get<FarmDetail>(`/org/farms/${id}`);
-      return {
-        ...d,
-        plots: d.plots.filter((p) => !isPendingDelete(p.id)).sort(byName),
-        pois: d.pois.filter((p) => !isPendingDelete(p.id)),
-      };
-    },
+    ...farmQuery(id),
     // Mientras se procesan las imágenes de una estancia nueva, volver a mirar cada minuto
     refetchInterval: (q) =>
       q.state.data?.imageryStatus === "pending" || q.state.data?.imageryStatus === "processing" ? 60_000 : false,
@@ -38,11 +43,11 @@ export const useProblemAreas = (farmId: string, enabled = true) =>
   });
 export const useMembers = (enabled = true) =>
   useQuery({ queryKey: ["members"], queryFn: () => get<Member[]>("/org/members"), enabled });
-export const useTasks = (f: { farmId?: string; assigneeId?: string; status?: string } = {}) =>
-  useQuery({
-    queryKey: ["tasks", f],
-    queryFn: async () => (await get<Task[]>(`/org/tasks${qs(f)}`)).filter((x) => !isPendingDelete(x.id)),
-  });
+export const tasksQuery = (f: { farmId?: string; assigneeId?: string; status?: string } = {}) => ({
+  queryKey: ["tasks", f] as const,
+  queryFn: async () => (await get<Task[]>(`/org/tasks${qs(f)}`)).filter((x) => !isPendingDelete(x.id)),
+});
+export const useTasks = (f: { farmId?: string; assigneeId?: string; status?: string } = {}) => useQuery(tasksQuery(f));
 export const useAlerts = (f: { farmId?: string; active?: boolean } = {}) =>
   useQuery({
     queryKey: ["alerts", f],
@@ -61,6 +66,14 @@ export const fetchRecordsPage = (f: RecordFilters, cursor?: { capturedAt: number
   get<{ rows: RecordRow[]; nextCursor: { capturedAt: number; id: string } | null }>(
     `/org/records${qs({ ...f, limit, cursorAt: cursor?.capturedAt, cursorId: cursor?.id })}`,
   );
+
+/** Opciones de la lista de registros: las comparte la pantalla y "Guardar para usar sin conexión". */
+export const recordsQuery = (filters: RecordFilters) => ({
+  queryKey: ["records", filters] as const,
+  queryFn: ({ pageParam }: { pageParam: { capturedAt: number; id: string } | null }) => fetchRecordsPage(filters, pageParam),
+  initialPageParam: null as { capturedAt: number; id: string } | null,
+  getNextPageParam: (last: { nextCursor: { capturedAt: number; id: string } | null }) => last.nextCursor,
+});
 
 /** Todas las páginas (para exportar), con tope. */
 export async function fetchAllRecords(f: RecordFilters, max = 5000): Promise<RecordRow[]> {

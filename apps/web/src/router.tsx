@@ -2,6 +2,7 @@ import { createRootRoute, createRoute, createRouter, lazyRouteComponent, redirec
 import { parseReferralCode } from "@yvy/shared";
 import { getSession } from "./lib/api";
 import { RootGate } from "./routes/public/RootGate";
+import { requireConnection } from "./components/NeedsConnection";
 import { Spinner } from "./components/ui";
 
 const rootRoute = createRootRoute();
@@ -143,7 +144,7 @@ const sanitary = createRoute({
 const admin = createRoute({
   getParentRoute: () => appRoute,
   path: "/administracion",
-  component: lazyRouteComponent(() => import("./routes/admin-erp"), "AdminPage"),
+  component: requireConnection(lazyRouteComponent(() => import("./routes/admin-erp"), "AdminPage")),
   validateSearch: (s: Record<string, unknown>): { s?: string } => (typeof s.s === "string" ? { s: s.s } : {}),
 });
 const team = createRoute({
@@ -175,7 +176,7 @@ const compare = createRoute({
 const apiTokens = createRoute({
   getParentRoute: () => appRoute,
   path: "/api-publica",
-  component: lazyRouteComponent(() => import("./routes/api-tokens"), "ApiTokensPage"),
+  component: requireConnection(lazyRouteComponent(() => import("./routes/api-tokens"), "ApiTokensPage")),
 });
 const audit = createRoute({
   getParentRoute: () => appRoute,
@@ -205,17 +206,17 @@ const alerts = createRoute({
 const account = createRoute({
   getParentRoute: () => appRoute,
   path: "/cuenta",
-  component: lazyRouteComponent(() => import("./routes/public/account"), "AccountPage"),
+  component: requireConnection(lazyRouteComponent(() => import("./routes/public/account"), "AccountPage")),
 });
 const clients = createRoute({
   getParentRoute: () => appRoute,
   path: "/clientes",
-  component: lazyRouteComponent(() => import("./routes/clients"), "ClientsPage"),
+  component: requireConnection(lazyRouteComponent(() => import("./routes/clients"), "ClientsPage")),
 });
 const internal = createRoute({
   getParentRoute: () => appRoute,
   path: "/interno",
-  component: lazyRouteComponent(() => import("./routes/internal"), "InternalPage"),
+  component: requireConnection(lazyRouteComponent(() => import("./routes/internal"), "InternalPage")),
 });
 
 const routeTree = rootRoute.addChildren([

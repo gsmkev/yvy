@@ -78,6 +78,11 @@ export class SyncEngine {
       deviceId: string;
       uploader?: AttachmentUploader;
       now?: () => number;
+      /**
+       * Tablas que se bajan con el pull (todas por defecto). La web lee de endpoints agregados y solo manda: pasa [] y el
+       * ciclo es push + fotos, sin consultar el estado ni bajar nada (ADR 0005).
+       */
+      pullTables?: readonly PullTable[];
     },
   ) {}
 
@@ -101,17 +106,20 @@ export class SyncEngine {
     const { store, transport } = this.opts;
     const report: SyncReport = { pushed: 0, rejected: 0, pulled: {}, reset: false, uploaded: 0, finishedAt: 0 };
 
-    const state = await transport.state();
+    const tables = this.opts.pullTables ?? PULL_TABLES;
+    const state = tables.length ? await transport.state() : null;
     // Push antes del reset: lo pendiente del outbox nunca se pierde.
     await this.pushAll(report);
 
-    const known = await store.getAssignmentsVersion();
-    if (known !== null && known !== state.assignmentsVersion) {
-      await store.resetTables(ASSIGNMENT_SCOPED_TABLES);
-      report.reset = true;
+    if (state) {
+      const known = await store.getAssignmentsVersion();
+      if (known !== null && known !== state.assignmentsVersion) {
+        await store.resetTables(ASSIGNMENT_SCOPED_TABLES.filter((t) => tables.includes(t)));
+        report.reset = true;
+      }
+      for (const table of tables) report.pulled[table] = await this.pullTable(table);
+      await store.setAssignmentsVersion(state.assignmentsVersion);
     }
-    for (const table of PULL_TABLES) report.pulled[table] = await this.pullTable(table);
-    await store.setAssignmentsVersion(state.assignmentsVersion);
 
     if (this.opts.uploader) report.uploaded = await this.opts.uploader.uploadPending();
     report.finishedAt = (this.opts.now ?? Date.now)();

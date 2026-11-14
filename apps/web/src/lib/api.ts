@@ -88,11 +88,12 @@ export class NetworkError extends Error {
   }
 }
 
-let networkDown = false;
+let networkDown = typeof navigator !== "undefined" && navigator.onLine === false;
 const netListeners = new Set<() => void>();
 const setNetworkDown = (v: boolean) => {
   if (v === networkDown) return;
   networkDown = v;
+  if (!v) copyAt = null; // terminó el corte: las copias de ese corte ya no cuentan
   netListeners.forEach((l) => l());
 };
 export const isNetworkDown = () => networkDown;
@@ -107,10 +108,51 @@ if (typeof window !== "undefined") {
   window.addEventListener("online", () => setNetworkDown(false));
 }
 
+// ---- "Sin conexión · mostrando lo guardado el …" (ADR 0005) ----
+const ONLINE_KEY = "yvy.last-online";
+let lastOnlineWritten = 0;
+/** Fecha de la copia más vieja que el service worker sirvió durante este corte. */
+let copyAt: number | null = null;
+
+/** Anota que hubo respuesta del servidor (a lo sumo una vez por medio minuto). */
+function markOnline() {
+  const now = Date.now();
+  if (now - lastOnlineWritten < 30_000) return;
+  lastOnlineWritten = now;
+  try {
+    localStorage.setItem(ONLINE_KEY, String(now));
+  } catch {
+    /* modo privado */
+  }
+}
+
+/** Fecha de lo que se está mostrando: la copia más vieja servida en este corte o, si no, la última vez con servidor. */
+export function offlineSavedAt(): number | null {
+  if (copyAt !== null) return copyAt;
+  try {
+    const v = Number(localStorage.getItem(ONLINE_KEY));
+    return v > 0 ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+/** El service worker marca con esta cabecera las respuestas que sirvió de su copia porque no hubo red. */
+const FROM_CACHE = "x-yvy-from-cache";
+
 async function netFetch(input: string, init: RequestInit): Promise<Response> {
   try {
     const res = await fetch(input, init);
-    setNetworkDown(false);
+    const from = res.headers.get(FROM_CACHE);
+    if (from) {
+      const at = Number(from);
+      if (at > 0) copyAt = copyAt === null ? at : Math.min(copyAt, at);
+      setNetworkDown(true);
+      netListeners.forEach((l) => l());
+    } else {
+      setNetworkDown(false);
+      markOnline();
+    }
     return res;
   } catch {
     setNetworkDown(true);

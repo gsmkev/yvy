@@ -178,6 +178,48 @@ describe("SyncEngine · PRD §11", () => {
     expect([...store.rejected.values()]).toEqual(["forbidden"]);
   });
 
+  it("pullTables vacío: solo manda (sin consultar el estado ni bajar tablas)", async () => {
+    const calls: string[] = [];
+    const server = new FakeServer();
+    const base = server.transport();
+    const store = new MemStore();
+    const engine = new SyncEngine({
+      store,
+      deviceId: "web",
+      pullTables: [],
+      transport: {
+        state: async () => (calls.push("state"), base.state()),
+        push: async (d, ms) => (calls.push("push"), base.push(d, ms)),
+        pull: async (t, c) => (calls.push(`pull:${t}`), base.pull(t, c)),
+      },
+    });
+    store.enqueue(recordUpsert());
+    const r = await engine.sync();
+    expect(r.pushed).toBe(1);
+    expect(calls).toEqual(["push"]);
+    expect(server.table("records").size).toBe(1);
+    expect(store.assignmentsVersion).toBeNull();
+    expect(r.pulled).toEqual({});
+  });
+
+  it("pullTables parcial: baja solo esas tablas y rehace solo las suyas si cambian las asignaciones", async () => {
+    const server = new FakeServer();
+    const store = new MemStore();
+    const pulled: string[] = [];
+    const base = server.transport();
+    const engine = new SyncEngine({
+      store,
+      deviceId: "web",
+      pullTables: ["tasks", "records"],
+      transport: { ...base, pull: async (t, c) => (pulled.push(t), base.pull(t, c)) },
+    });
+    store.assignmentsVersion = 1;
+    server.assignmentsVersion = 2;
+    await engine.sync();
+    expect(pulled).toEqual(["tasks", "records"]);
+    expect(store.resets).toEqual([["records"]]); // de las tablas con asignaciones, solo las que este cliente baja
+  });
+
   it("ciclos concurrentes comparten la misma ejecución", async () => {
     const { store, engine } = setup();
     store.enqueue(recordUpsert());

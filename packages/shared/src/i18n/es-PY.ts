@@ -3881,6 +3881,11 @@ export const esPY = {
     updateAvailable: "Hay una versión nueva",
     updateAction: "Actualizar",
     updateLater: "Después",
+    barSaved: "Sin conexión · mostrando lo guardado el {{date}}",
+    barNoDate: "Sin conexión · mostrando lo guardado",
+    needsConnection: "Necesita conexión",
+    needsConnectionBody: "Necesita conexión: esto no se puede hacer sin internet. Probá de nuevo cuando tengas señal.",
+    needsConnectionPage: "Esta pantalla necesita conexión. Los montos, los pagos y la administración no se guardan en el dispositivo; volvé a entrar cuando tengas señal.",
   },
   attribution: {
     metNorway: "Datos de MET Norway",

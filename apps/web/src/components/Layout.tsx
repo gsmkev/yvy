@@ -3,7 +3,8 @@ import { ChevronDown, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { isFieldRole } from "@yvy/shared";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { exitSupport, getSession, isNetworkDown, onNetworkChange, onSession, post, setSession } from "../lib/api";
+import { exitSupport, getSession, onSession, post, setSession } from "../lib/api";
+import { ConnectionBar } from "./ConnectionBar";
 import { Toaster } from "./ui";
 import { FEATURES } from "../lib/features";
 import { buildNav, MOBILE_TABS, type NavGroup, type NavItem } from "../lib/nav";
@@ -28,7 +29,6 @@ export function Layout() {
   const alerts = useAlerts({ active: true });
   const searchRef = useRef<HTMLInputElement>(null);
   const farms = useFarms();
-  const offline = useSyncExternalStore(onNetworkChange, isNetworkDown);
   useEffect(() => {
     const off = onSession((s) => {
       if (!s) {
@@ -189,14 +189,7 @@ export function Layout() {
           </button>
         </p>
       )}
-      {offline && (
-        <p
-          role="status"
-          className="shrink-0 border-b border-trigo/40 bg-trigo/15 px-4 py-1 text-center text-xs text-surco"
-        >
-          {t("ui.offlineBanner")}
-        </p>
-      )}
+      <ConnectionBar />
       <main id="main" tabIndex={-1} className="min-h-0 min-w-0 flex-1 overflow-auto outline-none print:overflow-visible">
         {mfaGate ? (
           <div className="mx-auto w-full max-w-2xl p-4 sm:p-6">

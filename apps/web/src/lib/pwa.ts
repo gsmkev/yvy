@@ -3,8 +3,6 @@
  * La versión nueva queda esperando; la persona la activa con "Actualizar" (mensaje skip-waiting).
  */
 import { MSG_SKIP_WAITING } from "../sw/names";
-import { getSession, onSession } from "./api";
-import { clearLocalData } from "./offline/clear";
 
 let waiting: ServiceWorker | null = null;
 let reloading = false;
@@ -63,13 +61,5 @@ export function registerServiceWorker() {
   });
   navigator.serviceWorker.addEventListener("controllerchange", () => {
     if (reloading) window.location.reload();
-  });
-  // Los datos guardados para usar sin conexión son de una sola organización y de una sola persona:
-  // se borran al cerrar sesión o cambiar de organización.
-  let org = getSession()?.organization.id;
-  onSession((s) => {
-    const next = s?.organization.id;
-    if (next !== org) void clearLocalData();
-    org = next;
   });
 }

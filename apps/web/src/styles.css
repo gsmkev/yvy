@@ -21,6 +21,15 @@
   --color-peligro: #b5391f;
   /* Texto sobre fondos accion/peligro (blanco en claro, tinta en oscuro) */
   --color-sobre: #ffffff;
+  /*
+   * Tokens que solo usa la landing (routes/public/landing). Los valores reales y las tipografías las fija
+   * .yvy-landing en landing.css; el producto no los usa.
+   */
+  --color-lino-2: #e6e1d2;
+  --color-surco-2: #273021;
+  --color-linea-claro: rgba(30, 36, 25, 0.14);
+  --color-linea-oscuro: rgba(241, 238, 228, 0.14);
+  --font-display: "Young Serif", Georgia, serif;
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Fraunces", ui-serif, Georgia, serif;

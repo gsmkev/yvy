@@ -1,0 +1,209 @@
+/*
+ * Estilos de la landing. Todo cuelga de la clase raíz .yvy-landing: los tokens (lino, surco, soja...) y las tipografías
+ * pisan a los del producto solo dentro de la landing, y la app con sesión no los ve. Las utilidades de Tailwind
+ * (bg-lino, text-surco, font-display...) salen de los tokens de styles.css; acá se redefinen sus valores.
+ * Paleta: lino #F1EEE4, surco #1E2419, soja #7A9A3F, trigo #D9A93A, cielo #8DB3C7, alerta #D2462B.
+ */
+.yvy-landing {
+  --lino: #f1eee4;
+  --lino-2: #e6e1d2;
+  --surco: #1e2419;
+  --surco-2: #273021;
+  --soja: #7a9a3f;
+  --trigo: #d9a93a;
+  /* Trigo oscuro para texto chico sobre lino (el trigo claro no llega a AA sobre fondo claro). */
+  --trigo-texto: #7a5b0e;
+  --cielo: #8db3c7;
+  --alerta: #d2462b;
+  --linea-claro: rgba(30, 36, 25, 0.14);
+  --linea-oscuro: rgba(241, 238, 228, 0.14);
+  --vigor-1: #b5562e;
+  --vigor-2: #d9a93a;
+  --vigor-3: #c9c46a;
+  --vigor-4: #7a9a3f;
+  --vigor-5: #3f6b35;
+  --ease-yvy: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --color-lino: var(--lino);
+  --color-lino-2: var(--lino-2);
+  --color-surco: var(--surco);
+  --color-surco-2: var(--surco-2);
+  --color-soja: var(--soja);
+  --color-trigo: var(--trigo);
+  --color-trigo-texto: var(--trigo-texto);
+  --color-cielo: var(--cielo);
+  --color-alerta: var(--alerta);
+  --color-linea-claro: var(--linea-claro);
+  --color-linea-oscuro: var(--linea-oscuro);
+  --font-display: "Young Serif", Georgia, serif;
+  --font-sans: "Hanken Grotesk", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+
+  background-color: var(--surco);
+  color: var(--surco);
+  font-family: var(--font-sans);
+  font-size: 18px;
+  line-height: 1.55;
+  overflow-x: clip;
+}
+.yvy-landing ::selection {
+  background: var(--trigo);
+  color: var(--surco);
+}
+/* Más específico que el h1 global del producto (serif 600). */
+.yvy-landing h1,
+.yvy-landing h2,
+.yvy-landing h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+/* Foco visible con el color del texto: se lee sobre lino y sobre surco. */
+.yvy-landing :focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+body.has-landing {
+  background-color: #1e2419;
+}
+@media (pointer: fine) {
+  body.has-cursor .yvy-landing,
+  body.has-cursor .yvy-landing a,
+  body.has-cursor .yvy-landing button,
+  body.has-cursor .yvy-landing label {
+    cursor: none;
+  }
+}
+
+@layer components {
+  .yvy-landing .h1-yvy {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    line-height: 0.95;
+    letter-spacing: 0;
+    font-weight: 400;
+  }
+  .yvy-landing .h2-yvy {
+    font-family: var(--font-display);
+    font-size: clamp(2.3rem, 6vw, 5.5rem);
+    line-height: 0.95;
+    letter-spacing: 0;
+    font-weight: 400;
+  }
+  .yvy-landing .mono-yvy {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    line-height: 1.5;
+  }
+  .yvy-landing .body-yvy {
+    font-family: var(--font-sans);
+    font-size: clamp(17px, 1.3vw, 19px);
+    line-height: 1.55;
+    max-width: 58ch;
+  }
+  .yvy-landing .em-dark {
+    color: var(--soja);
+  }
+  .yvy-landing .em-light {
+    color: var(--surco);
+    background-image: linear-gradient(var(--trigo), var(--trigo));
+    background-repeat: no-repeat;
+    background-size: 100% 0.08em;
+    background-position: 0 92%;
+  }
+  .yvy-landing .link-yvy {
+    position: relative;
+    display: inline-block;
+  }
+  .yvy-landing .link-yvy::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.12em;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.6s var(--ease-yvy);
+  }
+  .yvy-landing .link-yvy:hover::after,
+  .yvy-landing .link-yvy:focus-visible::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  .yvy-landing .link-on::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  /* Pendiente = borde punteado trigo; sincronizado = sólido soja. */
+  .yvy-landing .lp-pending {
+    outline: 1px dashed var(--trigo);
+    outline-offset: -1px;
+  }
+  .yvy-landing .lp-synced {
+    outline: 1px solid var(--soja);
+    outline-offset: -1px;
+  }
+  .yvy-landing .media-treat {
+    filter: saturate(0.75) contrast(1.12) sepia(0.08);
+  }
+  .yvy-landing .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .yvy-landing .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .yvy-landing .numeral-yvy {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    font-variant-numeric: slashed-zero tabular-nums;
+    letter-spacing: 0;
+  }
+}
+
+@keyframes sync-fill {
+  from {
+    background-size: 0% 100%;
+  }
+  to {
+    background-size: 100% 100%;
+  }
+}
+
+.yvy-landing .hero-yvy > header {
+  min-height: 26svh;
+}
+.yvy-landing .hero-copy .h1-yvy {
+  font-size: 2.5rem;
+  line-height: 1.06;
+}
+.yvy-landing .trial-title.h2-yvy {
+  font-family: var(--font-sans);
+  font-size: 2.5rem;
+  font-weight: 500;
+  line-height: 1.1;
+}
+.yvy-landing .trial-title .numeral-yvy {
+  font-family: inherit;
+  font-size: inherit;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+@media (min-width: 768px) {
+  .yvy-landing .trial-title.h2-yvy {
+    font-size: 4rem;
+  }
+  .yvy-landing .hero-yvy > header {
+    min-height: 42svh;
+  }
+  .yvy-landing .hero-copy .h1-yvy {
+    font-size: 4rem;
+  }
+}
+@media (min-width: 1280px) {
+  .yvy-landing .hero-copy .h1-yvy {
+    font-size: 5rem;
+  }
+}

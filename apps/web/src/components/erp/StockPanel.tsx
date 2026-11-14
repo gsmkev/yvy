@@ -8,7 +8,7 @@ import { t, tk } from "../../lib/i18n";
 import { fmtGs, fmtMoney, fmtQty } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
 import { useProducts } from "../ProductsPanel";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, FormActions, Input, Modal, Select, Spinner, toast } from "../ui";
 import { PhotoRowMenu } from "./InvoicePhoto";
 import { HeaderActions, RowMenu } from "./adminSlot";
 import { ActionMenu } from "../menus";
@@ -352,11 +352,7 @@ function MoveModal({ mode, onClose }: { mode: Mode; onClose: () => void }) {
             <ErrorBox error={save.error} />
           </div>
         ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormActions className="col-span-2" onCancel={onClose} disabled={save.isPending} />
       </form>
     </Modal>
   );

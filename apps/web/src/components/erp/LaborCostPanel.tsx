@@ -5,7 +5,7 @@ import { CONTRACTOR_SERVICES } from "@yvy/shared";
 import { del, get, put } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, Empty, ErrorBox, Field, FormActions, Input, Modal, Select, Spinner, toast } from "../ui";
 import { useMachines } from "./MachinesPanel";
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions, RowMenu } from "./adminSlot";
@@ -203,11 +203,7 @@ function ProfileModal({ row, onClose }: { row: Profile | null; onClose: () => vo
             <ErrorBox error={save.error} />
           </div>
         ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending || !f.machineId}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormActions className="col-span-2" onCancel={onClose} disabled={save.isPending || !f.machineId} />
       </form>
     </Modal>
   );

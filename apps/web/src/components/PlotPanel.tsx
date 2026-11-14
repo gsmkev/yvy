@@ -17,7 +17,7 @@ import { PlotResults } from "./PlotResults";
 import { LineChart } from "./charts";
 import { SamplingGrid } from "./SamplingGrid";
 import { VigorSeasons } from "./VigorSeasons";
-import { Button, ConfirmModal, ErrorBox, Field, Input, Select, Spinner, Stat, toast } from "./ui";
+import { Button, ConfirmModal, ErrorBox, Field, FormActions, Input, Select, Spinner, Stat, toast } from "./ui";
 
 interface Ndvi {
   series: { acquiredAt: number; mean: number; p10: number; p90: number; validPct: number; lowConfidence: boolean }[];
@@ -142,35 +142,87 @@ export function PlotPanel({
         >
           ← {t("ui.allPlots")}
         </button>
-        <div className="mt-3 flex items-start justify-between gap-3">
-          <h2 ref={heading} tabIndex={-1} className="min-w-0 font-serif text-[24px] leading-8 font-semibold outline-none">
-            {plot.name}
-          </h2>
-          {canEdit && !editing && (
-            <div className="flex shrink-0 items-center gap-1 print:hidden">
-              <Button onClick={() => setEditing(true)}>{t("ui.edit")}</Button>
-              <ActionMenu
-                label={t("ui.rowActions", { name: plot.name })}
-                items={[
-                  onEditShape && { label: t("ui.plotEditShape"), onSelect: onEditShape },
-                  onSplit && isPolygon && { label: t("ui.splitPlot"), onSelect: onSplit },
-                  onMerge && isPolygon && { label: t("ui.mergePlots"), onSelect: onMerge },
-                  { label: t("ui.delete"), onSelect: () => setConfirming(true), danger: true },
-                ]}
-              />
-            </div>
-          )}
-        </div>
-        <p className="num mt-1 text-sm text-tinta-2">
-          {plot.kind === "pasture" ? t("ui.pasture") : (plot.crop ?? t("ui.crop"))} · {fmtHa(plot.areaHa)}
-          {plot.season ? ` · ${plot.season}` : ""}
-        </p>
-        <p className="mt-1 text-sm text-tinta-2">
-          {workers.length
-            ? `${t("ui.assignedTo")} ${workers.map((w) => w.fullName).join(", ")}`
-            : t("ui.nobodyAssigned")}
-        </p>
-        <CopyCoords className="mt-2" {...centroidOf(JSON.parse(plot.geometry) as Area)} />
+        {editing ? (
+          <div className="mt-3">
+            <form
+              className="flex flex-col gap-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                save.mutate();
+              }}
+            >
+              <Field label={t("ui.plot")}>
+                <Input value={form.name} onChange={set("name")} required />
+              </Field>
+              <Field label={t("ui.plotKind")}>
+                <Select
+                  value={form.kind}
+                  onChange={set("kind")}
+                  options={PLOT_KINDS.map((k) => ({ value: k, label: k === "crop" ? t("ui.crop") : t("ui.pasture") }))}
+                />
+              </Field>
+              {form.kind === "crop" ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label={t("ui.crop")}>
+                    <Select
+                      value={form.crop}
+                      onChange={set("crop")}
+                      options={[{ value: "", label: "—" }, ...CROPS.map((c) => ({ value: c, label: c }))]}
+                    />
+                  </Field>
+                  <Field label={t("ui.season")}>
+                    <Select
+                      value={form.season}
+                      onChange={set("season")}
+                      options={[{ value: "", label: "—" }, ...SEASONS.map((c) => ({ value: c, label: c }))]}
+                    />
+                  </Field>
+                  <Field label={t("ui.sowingDate")}>
+                    <Input type="date" value={form.sowingDate} onChange={set("sowingDate")} />
+                  </Field>
+                </div>
+              ) : (
+                <Field label={t("ui.pastureType")}>
+                  <Input value={form.pastureType} onChange={set("pastureType")} />
+                </Field>
+              )}
+              {save.error && <ErrorBox error={save.error} />}
+              <FormActions onCancel={() => setEditing(false)} disabled={save.isPending} />
+            </form>
+          </div>
+        ) : (
+          <>
+          <div className="mt-3 flex items-start justify-between gap-3">
+            <h2 ref={heading} tabIndex={-1} className="min-w-0 font-serif text-[24px] leading-8 font-semibold outline-none">
+              {plot.name}
+            </h2>
+            {canEdit && !editing && (
+              <div className="flex shrink-0 items-center gap-1 print:hidden">
+                <Button onClick={() => setEditing(true)}>{t("ui.edit")}</Button>
+                <ActionMenu
+                  label={t("ui.rowActions", { name: plot.name })}
+                  items={[
+                    onEditShape && { label: t("ui.plotEditShape"), onSelect: onEditShape },
+                    onSplit && isPolygon && { label: t("ui.splitPlot"), onSelect: onSplit },
+                    onMerge && isPolygon && { label: t("ui.mergePlots"), onSelect: onMerge },
+                    { label: t("ui.delete"), onSelect: () => setConfirming(true), danger: true },
+                  ]}
+                />
+              </div>
+            )}
+          </div>
+          <p className="num mt-1 text-sm text-tinta-2">
+            {plot.kind === "pasture" ? t("ui.pasture") : (plot.crop ?? t("ui.crop"))} · {fmtHa(plot.areaHa)}
+            {plot.season ? ` · ${plot.season}` : ""}
+          </p>
+          <p className="mt-1 text-sm text-tinta-2">
+            {workers.length
+              ? `${t("ui.assignedTo")} ${workers.map((w) => w.fullName).join(", ")}`
+              : t("ui.nobodyAssigned")}
+          </p>
+          <CopyCoords className="mt-2" {...centroidOf(JSON.parse(plot.geometry) as Area)} />
+          </>
+        )}
       </div>
 
       {canEdit && ndvi.isLoading && <Spinner />}
@@ -345,60 +397,6 @@ export function PlotPanel({
 
       {canEdit && <PlotAgro plot={plot} />}
 
-      {editing && (
-        <form
-          className="flex flex-col gap-3 border-t border-linea pt-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            save.mutate();
-          }}
-        >
-          <Field label={t("ui.plot")}>
-            <Input value={form.name} onChange={set("name")} required />
-          </Field>
-          <Field label={t("ui.plotKind")}>
-            <Select
-              value={form.kind}
-              onChange={set("kind")}
-              options={PLOT_KINDS.map((k) => ({ value: k, label: k === "crop" ? t("ui.crop") : t("ui.pasture") }))}
-            />
-          </Field>
-          {form.kind === "crop" ? (
-            <div className="grid grid-cols-2 gap-3">
-              <Field label={t("ui.crop")}>
-                <Select
-                  value={form.crop}
-                  onChange={set("crop")}
-                  options={[{ value: "", label: "—" }, ...CROPS.map((c) => ({ value: c, label: c }))]}
-                />
-              </Field>
-              <Field label={t("ui.season")}>
-                <Select
-                  value={form.season}
-                  onChange={set("season")}
-                  options={[{ value: "", label: "—" }, ...SEASONS.map((c) => ({ value: c, label: c }))]}
-                />
-              </Field>
-              <Field label={t("ui.sowingDate")}>
-                <Input type="date" value={form.sowingDate} onChange={set("sowingDate")} />
-              </Field>
-            </div>
-          ) : (
-            <Field label={t("ui.pastureType")}>
-              <Input value={form.pastureType} onChange={set("pastureType")} />
-            </Field>
-          )}
-          {save.error && <ErrorBox error={save.error} />}
-          <div className="flex gap-2">
-            <Button type="submit" variant="primary" disabled={save.isPending}>
-              {t("ui.save")}
-            </Button>
-            <Button variant="quiet" onClick={() => setEditing(false)}>
-              {t("ui.cancel")}
-            </Button>
-          </div>
-        </form>
-      )}
       {confirming && (
         <ConfirmModal
           title={plot.name}

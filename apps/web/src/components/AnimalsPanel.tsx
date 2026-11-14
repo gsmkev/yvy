@@ -12,7 +12,7 @@ import {
 import { del, get, patch, post } from "../lib/api";
 import { fmtDateTime } from "../lib/format";
 import { t, tk } from "../lib/i18n";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Select, Spinner, toast } from "./ui";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, FormActions, Input, Select, Spinner, toast } from "./ui";
 import { adgText } from "./WeighingsPanel";
 
 const empty = { tag: "", category: "vaca", sex: "hembra", birthDate: "", note: "" };
@@ -71,14 +71,7 @@ function AnimalForm({
         <Input value={f.note} onChange={set("note")} maxLength={500} />
       </Field>
       {error ? <ErrorBox error={error} /> : null}
-      <div className="flex gap-2">
-        <Button type="submit" variant="primary" disabled={pending || !f.tag.trim()}>
-          {t("ui.save")}
-        </Button>
-        <Button variant="quiet" onClick={onCancel}>
-          {t("ui.cancel")}
-        </Button>
-      </div>
+      <FormActions onCancel={onCancel} disabled={pending || !f.tag.trim()} />
     </form>
   );
 }

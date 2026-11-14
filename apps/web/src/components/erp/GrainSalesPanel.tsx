@@ -7,7 +7,7 @@ import { fmtIsoDate, fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs, fmtMoney } from "../../lib/money";
 import { useFarms } from "../../lib/queries";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, Empty, ErrorBox, Field, FormActions, Input, Modal, Select, Spinner, toast } from "../ui";
 import { useParties } from "./PartiesPanel";
 import { RowModal, type FieldDef } from "./MasterPanel";
 import { useSeasonList } from "./CostsPanel";
@@ -280,11 +280,7 @@ function ActionModal({ kind, contract, onClose }: { kind: "delivery" | "settleme
             <ErrorBox error={save.error} />
           </div>
         ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormActions className="col-span-2" onCancel={onClose} disabled={save.isPending} />
       </form>
     </Modal>
   );

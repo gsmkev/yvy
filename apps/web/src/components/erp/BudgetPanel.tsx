@@ -6,7 +6,7 @@ import { del, get, post } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
+import { Button, Empty, ErrorBox, Field, FormActions, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
 import { useSeasonList } from "./CostsPanel";
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions, RowMenu } from "./adminSlot";
@@ -201,11 +201,11 @@ function LineModal({ seasonId, onClose }: { seasonId: string; onClose: () => voi
             <ErrorBox error={save.error} />
           </div>
         ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending || (scope === "plot" && !plotId)}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormActions
+          className="col-span-2"
+          onCancel={onClose}
+          disabled={save.isPending || (scope === "plot" && !plotId)}
+        />
       </form>
     </Modal>
   );

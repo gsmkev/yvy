@@ -5,7 +5,7 @@ import { del, get, post } from "../lib/api";
 import { fmtIsoDate, fmtNum, toIso } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import type { Plot } from "../lib/types";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, FormActions, Input, Modal, Select, Spinner, toast } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
 interface Delivery {
@@ -226,14 +226,7 @@ function DeliveryModal({ farmId, plots, onClose }: { farmId: string; plots: Plot
           </p>
         )}
         {save.error && <ErrorBox error={save.error} />}
-        <div className="flex gap-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-          <Button variant="quiet" onClick={onClose}>
-            {t("ui.cancel")}
-          </Button>
-        </div>
+        <FormActions onCancel={onClose} disabled={save.isPending} />
       </form>
     </Modal>
   );

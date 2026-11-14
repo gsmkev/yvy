@@ -34,7 +34,7 @@ import { RecordsList } from "../components/RecordsList";
 import { SeasonsPanel } from "../components/SeasonsPanel";
 import { TasksPanel } from "../components/TasksPanel";
 import { ActionMenu, ExportMenu } from "../components/menus";
-import { Button, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Skeleton, Spinner, Tabs, toast } from "../components/ui";
+import { Button, EmptyState, ErrorBox, Field, FormActions, Input, Modal, PageHeader, Select, Skeleton, Spinner, Tabs, toast } from "../components/ui";
 import { del, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
 import { download, plotsToGeoJson, plotsToKml, plotsToShapefileZip } from "../lib/exports";
@@ -1084,9 +1084,7 @@ function NewPlotModal({
           />
         </Field>
         {save.error && <ErrorBox error={save.error} />}
-        <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.save")}
-        </Button>
+        <FormActions onCancel={onClose} disabled={save.isPending} />
       </form>
     </Modal>
   );
@@ -1191,9 +1189,7 @@ function NewPoiModal({
           <Input required autoFocus value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
         {save.error && <ErrorBox error={save.error} />}
-        <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.save")}
-        </Button>
+        <FormActions onCancel={onClose} disabled={save.isPending} />
       </form>
     </Modal>
   );

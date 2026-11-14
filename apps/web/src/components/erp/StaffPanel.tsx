@@ -8,7 +8,7 @@ import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { tablesToExcel } from "../../lib/tableExport";
 import { useFarm, useFarms } from "../../lib/queries";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
+import { Button, Empty, ErrorBox, Field, FormActions, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
 import { MasterPanel, useErpList, type FieldDef } from "./MasterPanel";
 import { RowMenu } from "./adminSlot";
 
@@ -324,11 +324,7 @@ function PayModal({ row, onClose }: { row: Balance; onClose: () => void }) {
             <ErrorBox error={save.error} />
           </div>
         ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormActions className="col-span-2" onCancel={onClose} disabled={save.isPending} />
       </form>
     </Modal>
   );

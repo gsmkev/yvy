@@ -9,7 +9,7 @@ import { t, tk } from "../lib/i18n";
 import { useFarms, useMe } from "../lib/queries";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { RowMenu } from "../components/menus";
-import { Button, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, toast } from "../components/ui";
+import { Button, EmptyState, ErrorBox, Field, FormActions, Input, Modal, PageHeader, Select, Spinner, toast } from "../components/ui";
 
 interface EventRow {
   id: string;
@@ -214,14 +214,7 @@ function NewEvent({
           {t("ui.sanitaryCreateTasks")}
         </label>
         {create.error && <ErrorBox error={create.error} />}
-        <div className="flex gap-2">
-          <Button type="submit" variant="primary" disabled={create.isPending}>
-            {t("ui.save")}
-          </Button>
-          <Button variant="quiet" onClick={onClose}>
-            {t("ui.cancel")}
-          </Button>
-        </div>
+        <FormActions onCancel={onClose} disabled={create.isPending} />
       </form>
     </Modal>
   );

@@ -53,6 +53,35 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
   );
 }
 
+/** Pie de un formulario: Cancelar y un solo primario, abajo a la derecha. */
+export function FormActions({
+  onCancel,
+  label,
+  disabled,
+  extra,
+  className = "",
+}: {
+  onCancel: () => void;
+  /** Acción secundaria a la izquierda del pie (por ejemplo, quitar algo). */
+  extra?: ReactNode;
+  /** Texto del primario; por defecto "Guardar". */
+  label?: string;
+  disabled?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={`mt-1 flex items-center justify-end gap-2 border-t border-linea pt-4 ${className}`}>
+      {extra && <div className="mr-auto">{extra}</div>}
+      <Button variant="quiet" onClick={onCancel}>
+        {t("ui.cancel")}
+      </Button>
+      <Button type="submit" variant="primary" disabled={disabled}>
+        {label ?? t("ui.save")}
+      </Button>
+    </div>
+  );
+}
+
 const inputCls =
   "h-10 rounded-md border border-linea bg-papel px-3 text-[15px] outline-none transition-colors placeholder:text-tinta-2/60 focus:border-accion focus:ring-2 focus:ring-accion/20";
 

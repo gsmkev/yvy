@@ -32,7 +32,7 @@ import { post } from "../lib/api";
 import { fmtDateTime, toIso } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import type { RecordRow } from "../lib/types";
-import { Button, ConfirmModal, ErrorBox, Field, Input, Select, toast } from "./ui";
+import { ConfirmModal, ErrorBox, Field, FormActions, Input, Select, toast } from "./ui";
 
 type Opt = { value: string; label: string };
 type FieldDef =
@@ -328,14 +328,7 @@ export function RecordEditForm({
       ))}
       <p className="text-xs text-tinta-2">{t("ui.editRecordHint")}</p>
       {invalid ? <ErrorBox error={new Error(invalid)} /> : null}
-      <div className="flex gap-2">
-        <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.save")}
-        </Button>
-        <Button variant="quiet" onClick={onCancel}>
-          {t("ui.cancel")}
-        </Button>
-      </div>
+      <FormActions onCancel={onCancel} disabled={save.isPending} />
     </form>
   );
 }

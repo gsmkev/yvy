@@ -8,7 +8,20 @@ import { t, tk } from "../../lib/i18n";
 import { fmtGs, fmtMoney } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
 import type { Season } from "../../lib/types";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
+import {
+  Button,
+  ConfirmModal,
+  Empty,
+  ErrorBox,
+  Field,
+  FormActions,
+  Input,
+  Modal,
+  Select,
+  Spinner,
+  Stat,
+  toast,
+} from "../ui";
 import { PhotoRowMenu } from "./InvoicePhoto";
 import { HeaderActions } from "./adminSlot";
 import { useParties } from "./PartiesPanel";
@@ -258,11 +271,7 @@ function CostModal({ entry, onClose }: { entry: CostEntry | null; onClose: () =>
             <ErrorBox error={save.error} />
           </div>
         ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormActions className="col-span-2" onCancel={onClose} disabled={save.isPending} />
       </form>
     </Modal>
   );

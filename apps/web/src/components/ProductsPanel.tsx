@@ -5,7 +5,7 @@ import { del, get, patch, post, put } from "../lib/api";
 import { t, tk } from "../lib/i18n";
 import type { Plot, Product } from "../lib/types";
 import { PrescriptionModal } from "./PrescriptionModal";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, FormActions, Input, Modal, Select, Spinner, toast } from "./ui";
 import { HeaderActions, RowMenu } from "./erp/adminSlot";
 
 interface DoseRange {
@@ -203,9 +203,7 @@ function ProductModal({ product, range, onClose }: { product: Product | null; ra
           </div>
         </fieldset>
         {save.error && <ErrorBox error={save.error} />}
-        <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.save")}
-        </Button>
+        <FormActions onCancel={onClose} disabled={save.isPending} />
       </form>
     </Modal>
   );

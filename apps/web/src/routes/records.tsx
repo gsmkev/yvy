@@ -5,7 +5,7 @@ import { isFieldRole, RECORD_KINDS } from "@yvy/shared";
 import { FarmMap } from "../components/FarmMap";
 import { ActionMenu, ExportMenu } from "../components/menus";
 import { RecordsList } from "../components/RecordsList";
-import { Button, ErrorBox, Field, Input, Modal, PageHeader, Select } from "../components/ui";
+import { Button, ErrorBox, Field, FormActions, Input, Modal, PageHeader, Select } from "../components/ui";
 import { recordsTable, recordsToExcel } from "../lib/exports";
 import { DEFAULT_TZ, dayToMs } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -267,9 +267,7 @@ export function RecordsPage() {
             <Field label={t("ui.savedFilterName")}>
               <Input value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
             </Field>
-            <Button type="submit" variant="primary" disabled={!name.trim()}>
-              {t("ui.save")}
-            </Button>
+            <FormActions onCancel={() => setNaming(false)} disabled={!name.trim()} />
           </form>
         </Modal>
       )}

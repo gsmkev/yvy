@@ -5,7 +5,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { isFieldRole, ROLES, type FarmAccessLevel } from "@yvy/shared";
 import { TableExportMenu } from "../components/TableExportMenu";
 import { ActionMenu } from "../components/menus";
-import { Button, ConfirmModal, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, toast } from "../components/ui";
+import { Button, ConfirmModal, EmptyState, ErrorBox, Field, FormActions, Input, Modal, PageHeader, Select, Spinner, toast } from "../components/ui";
 import { del, get, post, put } from "../lib/api";
 import { fmtDateTime, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -202,7 +202,7 @@ function AddMember({ canAddAdmins, onClose }: { canAddAdmins: boolean; onClose: 
           add.mutate();
         }}
       >
-        <Field label={t("ui.fullName")}>
+        <Field label={t("ui.memberName")}>
           <Input required value={f.fullName} onChange={set("fullName")} />
         </Field>
         <Field label={t("ui.role")}>
@@ -212,16 +212,16 @@ function AddMember({ canAddAdmins, onClose }: { canAddAdmins: boolean; onClose: 
             options={roles.map((r) => ({ value: r, label: tk(`ui.role_${r}`) }))}
           />
         </Field>
-        <Field label={t("auth.emailLabel")}>
-          <Input type="email" required={!isFieldRole(f.role)} value={f.email} onChange={set("email")} />
-        </Field>
-        <Field label={t("ui.phone")}>
-          <Input type="tel" value={f.phone} onChange={set("phone")} />
-        </Field>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label={t("ui.memberEmail")}>
+            <Input type="email" required={!isFieldRole(f.role)} value={f.email} onChange={set("email")} />
+          </Field>
+          <Field label={t("ui.phone")}>
+            <Input type="tel" value={f.phone} onChange={set("phone")} />
+          </Field>
+        </div>
         {add.error && <ErrorBox error={add.error} />}
-        <Button type="submit" disabled={add.isPending}>
-          {t("ui.save")}
-        </Button>
+        <FormActions onCancel={onClose} disabled={add.isPending} />
       </form>
     </Modal>
   );
@@ -291,14 +291,17 @@ function PinDialog({ member, onClose }: { member: Member; onClose: () => void })
           )}
           {!own && <p className="text-sm text-tinta-2">{t("app.teamPinGenerate")}</p>}
           {(save.error || clear.error) && <ErrorBox error={save.error ?? clear.error} />}
-          <Button type="submit" variant="primary" disabled={save.isPending || (own && pin.length !== 6)}>
-            {t("ui.save")}
-          </Button>
-          {member.hasPin && (
-            <Button variant="danger" disabled={clear.isPending} onClick={() => clear.mutate()}>
-              {t("app.teamPinRemove")}
-            </Button>
-          )}
+          <FormActions
+            onCancel={onClose}
+            disabled={save.isPending || (own && pin.length !== 6)}
+            extra={
+              member.hasPin && (
+                <Button variant="danger" disabled={clear.isPending} onClick={() => clear.mutate()}>
+                  {t("app.teamPinRemove")}
+                </Button>
+              )
+            }
+          />
         </form>
       )}
     </Modal>

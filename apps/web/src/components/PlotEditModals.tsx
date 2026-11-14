@@ -6,7 +6,7 @@ import { post } from "../lib/api";
 import { fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import type { Plot } from "../lib/types";
-import { Button, ErrorBox, Field, Input, Modal, toast } from "./ui";
+import { Button, ErrorBox, Field, FormActions, Input, Modal, toast } from "./ui";
 
 /** M-05: confirma la división de un lote con la línea dibujada. */
 export function SplitModal({
@@ -66,14 +66,7 @@ export function SplitModal({
           ))}
           <p className="text-xs text-tinta-2">{t("ui.splitMergeNote")}</p>
           {save.error ? <ErrorBox error={save.error} /> : null}
-          <div className="flex gap-2">
-            <Button type="submit" variant="primary" disabled={!valid || save.isPending}>
-              {t("ui.splitSave")}
-            </Button>
-            <Button variant="quiet" onClick={onClose}>
-              {t("ui.cancel")}
-            </Button>
-          </div>
+          <FormActions onCancel={onClose} disabled={!valid || save.isPending} label={t("ui.splitSave")} />
         </form>
       )}
     </Modal>
@@ -134,14 +127,7 @@ export function MergeModal({
           </Field>
           <p className="text-xs text-tinta-2">{t("ui.splitMergeNote")}</p>
           {save.error ? <ErrorBox error={save.error} /> : null}
-          <div className="flex gap-2">
-            <Button type="submit" variant="primary" disabled={!name.trim() || save.isPending}>
-              {t("ui.mergeSave")}
-            </Button>
-            <Button variant="quiet" onClick={onClose}>
-              {t("ui.cancel")}
-            </Button>
-          </div>
+          <FormActions onCancel={onClose} disabled={!name.trim() || save.isPending} label={t("ui.mergeSave")} />
         </form>
       )}
     </Modal>

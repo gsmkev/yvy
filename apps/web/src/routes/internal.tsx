@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Card, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../components/ui";
+import { Button, Card, ErrorBox, Field, FormActions, Input, Modal, Select, Spinner, toast } from "../components/ui";
 import { enterSupport, get, post, qs, type Session } from "../lib/api";
 import { fmtDate, fmtDateTime, fmtHa, fmtNum } from "../lib/format";
 import { AuditList, type AuditEntryRow } from "../components/AuditList";
@@ -490,9 +490,7 @@ function PlanModal({ org, onClose }: { org: OrgMetrics; onClose: () => void }) {
           </Field>
         </div>
         {save.error && <ErrorBox error={save.error} />}
-        <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.save")}
-        </Button>
+        <FormActions onCancel={onClose} disabled={save.isPending} />
       </form>
     </Modal>
   );

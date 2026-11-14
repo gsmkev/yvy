@@ -9,8 +9,8 @@ import {
   type ReactNode,
   type SelectHTMLAttributes,
 } from "react";
-import { AlertTriangle, CircleAlert, X, type LucideIcon } from "lucide-react";
-import { t, tk } from "../lib/i18n";
+import { CircleAlert, X, type LucideIcon } from "lucide-react";
+import { t } from "../lib/i18n";
 import { displayToIso, isoToDisplay, maskDate } from "../lib/dateInput";
 
 type Variant = "primary" | "secondary" | "quiet" | "danger";
@@ -338,24 +338,6 @@ export const ErrorBox = ({ error }: { error: unknown }) => (
     {t("ui.error", { message: error instanceof Error ? error.message : String(error) })}
   </div>
 );
-
-const SEV = {
-  info: "border-cielo text-surco bg-cielo/15",
-  watch: "border-trigo text-trigo-texto bg-trigo/15",
-  warning: "border-peligro bg-peligro text-sobre",
-} as const;
-
-/** Severidad siempre con ícono + texto, nunca solo color. */
-export function SeverityBadge({ severity }: { severity: keyof typeof SEV }) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-xs font-semibold ${SEV[severity]}`}
-    >
-      <AlertTriangle size={12} aria-hidden />
-      {tk(`ui.severity_${severity}`)}
-    </span>
-  );
-}
 
 // ---------- Avisos breves (toast) ----------
 

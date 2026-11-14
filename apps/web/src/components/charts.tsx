@@ -4,6 +4,7 @@
  */
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { CHART } from "@yvy/shared";
+import { getUnits, mmToRain, rainLabel } from "../lib/units";
 
 export interface Series {
   name: string;
@@ -296,6 +297,12 @@ export function RainChart(props: {
   );
 }
 
+const rainMm = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 1 });
+const rainIn = new Intl.NumberFormat("es-PY", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+/** Lluvia para el tooltip: un decimal en mm, dos en pulgadas. */
+const rainMm1 = (v: number, inches: boolean) =>
+  new Intl.NumberFormat("es-PY", { minimumFractionDigits: inches ? 2 : 1, maximumFractionDigits: inches ? 2 : 1 }).format(v);
+
 /** Barras por mes: pluviómetro y satélite lado a lado, con la normal como marca (C-05, C-06). */
 export function MonthlyRainChart(props: {
   months: { label: string; gauge: number | null; sat: number | null; normal: number | null }[];
@@ -303,6 +310,12 @@ export function MonthlyRainChart(props: {
   ariaLabel: string;
 }) {
   const { height, pad } = FRAME;
+  // La lluvia llega en mm; se dibuja y se rotula en la unidad elegida en Preferencias
+  const inches = getUnits().rain === "in";
+  const unit = rainLabel();
+  const conv = (v: number | null) => (v === null ? null : mmToRain(v));
+  const fmtV = (v: number) => (inches ? rainIn.format(v) : rainMm.format(v));
+  const months = props.months.map((m) => ({ ...m, gauge: conv(m.gauge), sat: conv(m.sat), normal: conv(m.normal) }));
   // El lienzo mide lo mismo que la pantalla: en el celular el texto no se achica con el gráfico
   const box = useRef<HTMLElement>(null);
   const [width, setWidth] = useState(FRAME.width);
@@ -315,24 +328,24 @@ export function MonthlyRainChart(props: {
     ro?.observe(el);
     return () => ro?.disconnect();
   }, []);
-  const max = Math.max(10, ...props.months.flatMap((m) => [m.gauge ?? 0, m.sat ?? 0, m.normal ?? 0]));
-  const n = props.months.length || 1;
+  const max = Math.max(inches ? 0.4 : 10, ...months.flatMap((m) => [m.gauge ?? 0, m.sat ?? 0, m.normal ?? 0]));
+  const n = months.length || 1;
   const slot = (width - pad.l - pad.r) / n;
   const bw = Math.min(28, slot / 3);
   const sy = (v: number) => height - pad.b - (v / max) * (height - pad.t - pad.b);
   const cx = (i: number) => pad.l + i * slot + slot / 2;
   const ticks = niceTicks(0, max);
-  const hasNormal = props.months.some((m) => m.normal !== null);
+  const hasNormal = months.some((m) => m.normal !== null);
   const [hover, setHover] = useState<number | null>(null);
-  const h = hover !== null ? props.months[hover] : null;
+  const h = hover !== null ? months[hover] : null;
   return (
     <figure ref={box} className="relative">
       <Legend
         series={[
-          ...(props.months.some((m) => m.gauge !== null)
+          ...(months.some((m) => m.gauge !== null)
             ? [{ name: props.labels.gauge, color: CHART.gauge, dot: true }]
             : []),
-          ...(props.months.some((m) => m.sat !== null)
+          ...(months.some((m) => m.sat !== null)
             ? [{ name: props.labels.satellite, color: CHART.comparison, dot: true }]
             : []),
           ...(hasNormal ? [{ name: props.labels.normal, color: CHART.axis, dashed: true }] : []),
@@ -343,14 +356,14 @@ export function MonthlyRainChart(props: {
           <g key={t}>
             <line x1={pad.l} x2={width - pad.r} y1={sy(t)} y2={sy(t)} stroke={CHART.grid} />
             <text x={pad.l - 6} y={sy(t) + 4} textAnchor="end" fontSize="12" fill={CHART.axis}>
-              {t}
+              {fmtV(t)}
             </text>
           </g>
         ))}
         <text x={pad.l - 6} y={pad.t - 2} textAnchor="end" fontSize="12" fill={CHART.axis}>
-          mm
+          {unit}
         </text>
-        {props.months.map((m, i) => (
+        {months.map((m, i) => (
           <g
             key={m.label}
             onPointerEnter={() => setHover(i)}
@@ -391,12 +404,12 @@ export function MonthlyRainChart(props: {
             )}
             {m.gauge !== null && m.gauge > 0 && (
               <text x={cx(i) - bw / 2 - 1} y={sy(m.gauge) - 4} textAnchor="middle" fontSize="12" fill={CHART.axis}>
-                {Math.round(m.gauge)}
+                {fmtV(inches ? m.gauge : Math.round(m.gauge))}
               </text>
             )}
             {m.sat !== null && m.sat > 0 && (
               <text x={cx(i) + bw / 2 + 1} y={sy(m.sat) - 4} textAnchor="middle" fontSize="12" fill={CHART.axis}>
-                {Math.round(m.sat)}
+                {fmtV(inches ? m.sat : Math.round(m.sat))}
               </text>
             )}
             <text x={cx(i)} y={height - 8} textAnchor="middle" fontSize="12" fill={CHART.axis}>
@@ -408,19 +421,19 @@ export function MonthlyRainChart(props: {
       {h && (
         <div className="pointer-events-none absolute top-6 right-2 rounded-lg bg-surco px-2.5 py-1.5 text-xs text-lino">
           <div className="font-semibold">{h.label}</div>
-          {props.months.some((m) => m.gauge !== null) && (
+          {months.some((m) => m.gauge !== null) && (
             <div>
-              {props.labels.gauge}: {h.gauge === null ? "—" : `${h.gauge.toFixed(1)} mm`}
+              {props.labels.gauge}: {h.gauge === null ? "—" : `${rainMm1(h.gauge, inches)} ${unit}`}
             </div>
           )}
-          {props.months.some((m) => m.sat !== null) && (
+          {months.some((m) => m.sat !== null) && (
             <div>
-              {props.labels.satellite}: {h.sat === null ? "—" : `${h.sat.toFixed(1)} mm`}
+              {props.labels.satellite}: {h.sat === null ? "—" : `${rainMm1(h.sat, inches)} ${unit}`}
             </div>
           )}
           {h.normal !== null && (
             <div>
-              {props.labels.normal}: {h.normal.toFixed(1)} mm
+              {props.labels.normal}: {rainMm1(h.normal, inches)} {unit}
             </div>
           )}
         </div>

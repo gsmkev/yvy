@@ -9,7 +9,7 @@ import { FarmPageHeader } from "../components/FarmPageHeader";
 import { Button, EmptyState, ErrorBox, Spinner, Stat } from "../components/ui";
 import { get } from "../lib/api";
 import { download } from "../lib/exports";
-import { fmtDate, fmtMm, fmtNum } from "../lib/format";
+import { fmtDate, fmtMm, fmtNum, fmtRainValue, rainUnitLabel } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useFarm, useMe } from "../lib/queries";
 import { fireByMonth, fmtMmDd, rainByMonth, type RiskResponse } from "../lib/riskData";
@@ -63,7 +63,7 @@ export function RiskReportBody({ r }: { r: FarmRisk }) {
       </Section>
 
       <Section title={t("ui.riskRainTitle")}>
-        <Stat label={t("ui.riskRainAnnual")} value={fmtNum(r.rain.annualMeanMm)} unit="mm" />
+        <Stat label={t("ui.riskRainAnnual")} value={fmtRainValue(r.rain.annualMeanMm)} unit={rainUnitLabel()} />
         {rain.length > 0 ? (
           <>
             <MonthlyRainChart
@@ -91,7 +91,7 @@ export function RiskReportBody({ r }: { r: FarmRisk }) {
                           {m.normalMm === null ? "—" : fmtMm(m.normalMm)}
                         </td>
                         <td className="py-1.5 pl-3 text-right">
-                          {m.p20Mm === null || m.p80Mm === null ? "—" : `${Math.round(m.p20Mm)} a ${Math.round(m.p80Mm)} mm`}
+                          {m.p20Mm === null || m.p80Mm === null ? "—" : `${fmtRainValue(m.p20Mm)} a ${fmtMm(m.p80Mm)}`}
                         </td>
                       </tr>
                     ))}

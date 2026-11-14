@@ -75,6 +75,7 @@ export function MinStockPanel() {
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
         <div className="overflow-x-auto">
+          <h3 className="mb-1 text-[18px] leading-6 font-semibold">{t("ui.minStockLoaded")}</h3>
           <ExportableTable name="stock-minimo">
             <table className="w-full text-sm">
               <thead>

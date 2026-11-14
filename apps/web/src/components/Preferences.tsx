@@ -17,7 +17,7 @@ function Choice<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <fieldset className="border-b border-linea py-3">
+    <fieldset className="border-b border-linea py-4">
       <legend className="text-sm font-medium">{legend}</legend>
       <div className="mt-1.5 flex flex-wrap gap-x-5 gap-y-1">
         {options.map((o) => (

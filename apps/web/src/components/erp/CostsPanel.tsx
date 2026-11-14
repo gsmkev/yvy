@@ -84,7 +84,7 @@ export function CostsPanel() {
           {t("ui.costNew")}
         </Button>
       </HeaderActions>
-      <div className="flex flex-wrap items-end gap-3">
+      <div className="grid grid-cols-2 items-end gap-3 sm:grid-cols-3 xl:grid-cols-5">
         <Field label={t("ui.costFarm")}>
           <Select value={f.farmId} onChange={set("farmId")} options={[{ value: "", label: t("ui.costAll") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
         </Field>

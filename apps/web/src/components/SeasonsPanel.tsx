@@ -6,7 +6,8 @@ import { fmtHa, fmtIsoDate, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useSeasons } from "../lib/queries";
 import type { Plot, PlotSeason, Season } from "../lib/types";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
+import { ActionMenu } from "./menus";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, FormActions, Input, Modal, Select, Spinner, toast } from "./ui";
 
 /** Campañas de la organización y plan de cultivo por lote (A-01). */
 export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots: Plot[]; canEdit: boolean }) {
@@ -59,8 +60,21 @@ export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots
             }))}
           />
         )}
+        {canEdit && season && (
+          <ActionMenu
+            label={t("ui.rowActions", { name: season.name })}
+            items={[
+              {
+                label: season.active ? t("ui.seasonClose") : t("ui.seasonReopen"),
+                disabled: toggle.isPending,
+                onSelect: () => toggle.mutate(season),
+              },
+              { label: t("ui.seasonDelete"), onSelect: () => setConfirming(true), danger: true },
+            ]}
+          />
+        )}
         {canEdit && (
-          <Button variant="primary" onClick={() => setCreating(true)}>
+          <Button variant="primary" className="ml-auto" onClick={() => setCreating(true)}>
             {t("ui.seasonNew")}
           </Button>
         )}
@@ -73,23 +87,6 @@ export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots
           <p className="num text-sm text-tinta-2">
             {season.startDate ? fmtIsoDate(season.startDate) : "—"} → {season.endDate ? fmtIsoDate(season.endDate) : "—"}
           </p>
-          {canEdit && (
-            <div className="flex gap-4 text-sm">
-              <button
-                className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
-                disabled={toggle.isPending}
-                onClick={() => toggle.mutate(season)}
-              >
-                {season.active ? t("ui.seasonClose") : t("ui.seasonReopen")}
-              </button>
-              <button
-                className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline"
-                onClick={() => setConfirming(true)}
-              >
-                {t("ui.seasonDelete")}
-              </button>
-            </div>
-          )}
           <h3 className="eyebrow mt-2">{t("ui.seasonPlanTitle")}</h3>
           {cropPlots.length === 0 ? (
             <Empty title={t("ui.noPlots")} />
@@ -214,9 +211,7 @@ function NewSeasonModal({ onClose, onSaved }: { onClose: () => void; onSaved: (i
           </Field>
         </div>
         {create.error && <ErrorBox error={create.error} />}
-        <Button type="submit" variant="primary" disabled={create.isPending}>
-          {t("ui.save")}
-        </Button>
+        <FormActions onCancel={onClose} disabled={create.isPending} />
       </form>
     </Modal>
   );
@@ -320,16 +315,18 @@ function PlanModal({
           </Field>
         </div>
         {(save.error || clear.error) && <ErrorBox error={save.error ?? clear.error} />}
-        <div className="flex gap-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.seasonPlanSave")}
-          </Button>
-          {plan && (
-            <Button variant="quiet" disabled={clear.isPending} onClick={() => clear.mutate()}>
-              {t("ui.seasonPlanClear")}
-            </Button>
-          )}
-        </div>
+        <FormActions
+          onCancel={onClose}
+          disabled={save.isPending}
+          label={t("ui.seasonPlanSave")}
+          extra={
+            plan && (
+              <Button variant="quiet" disabled={clear.isPending} onClick={() => clear.mutate()}>
+                {t("ui.seasonPlanClear")}
+              </Button>
+            )
+          }
+        />
       </form>
     </Modal>
   );

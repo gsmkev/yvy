@@ -14,7 +14,7 @@ import { ReproPanel } from "./ReproPanel";
 import { SupplementPanel } from "./SupplementPanel";
 import { TheftPanel } from "./TheftPanel";
 import { WeighingsPanel } from "./WeighingsPanel";
-import { Button, Empty, ErrorBox, Field, Input, Spinner, Tabs, toast } from "./ui";
+import { Button, Empty, ErrorBox, Field, Input, Select, Spinner, toast } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
 const dec = new Intl.NumberFormat("es-PY", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -125,7 +125,6 @@ function StockSection({ farmId }: { farmId: string }) {
             onChange={(e) => setLimit(e.target.value)}
           />
         </Field>
-        {d.maxUaIsDefault && <p className="text-sm text-tinta-2">{t("ui.herdLimitIsDefault")}</p>}
         {canEditLimit ? (
           <div>
             <Button variant="primary" type="submit" disabled={!limitOk || save.isPending}>
@@ -156,18 +155,19 @@ export function HerdPanel({ farmId }: { farmId: string }) {
   const [section, setSection] = useState<Section>("stock");
   return (
     <div className="mt-4 flex flex-col gap-2">
-      <Tabs<Section>
+      <Select
+        aria-label={t("ui.tabHerd")}
         value={section}
-        onChange={setSection}
-        tabs={[
-          { id: "stock", label: t("ui.herdSectionStock") },
-          { id: "rotation", label: t("ui.herdSectionRotation") },
-          { id: "forage", label: t("ui.herdSectionForage") },
-          { id: "animals", label: t("ui.herdSectionAnimals") },
-          { id: "repro", label: t("ui.herdSectionRepro") },
-          { id: "weights", label: t("ui.herdSectionWeights") },
-          { id: "supplements", label: t("ui.herdSectionSupp") },
-          { id: "theft", label: t("ui.herdSectionTheft") },
+        onChange={(e) => setSection(e.target.value as Section)}
+        options={[
+          { value: "stock", label: t("ui.herdSectionStock") },
+          { value: "rotation", label: t("ui.herdSectionRotation") },
+          { value: "forage", label: t("ui.herdSectionForage") },
+          { value: "animals", label: t("ui.herdSectionAnimals") },
+          { value: "repro", label: t("ui.herdSectionRepro") },
+          { value: "weights", label: t("ui.herdSectionWeights") },
+          { value: "supplements", label: t("ui.herdSectionSupp") },
+          { value: "theft", label: t("ui.herdSectionTheft") },
         ]}
       />
       {section === "stock" && <StockSection farmId={farmId} />}

@@ -7,7 +7,9 @@ const qty = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 2 });
 
 /** `minor` en la unidad menor de la moneda: 1250000 PYG = "Gs. 1.250.000"; 12550 USD = "US$ 125,50". */
 export const fmtMoney = (minor: number, currency: Currency) =>
-  currency === "PYG" ? `Gs. ${gs.format(minor)}` : `US$ ${usd.format(fromMinor(minor, "USD"))}`;
+  currency === "PYG"
+    ? `${minor < 0 ? "-" : ""}Gs. ${gs.format(Math.abs(minor))}`
+    : `${minor < 0 ? "-" : ""}US$ ${usd.format(Math.abs(fromMinor(minor, "USD")))}`;
 
 /** Guaraníes, para montos ya convertidos (costos, márgenes). */
 export const fmtGs = (pyg: number) => fmtMoney(pyg, "PYG");

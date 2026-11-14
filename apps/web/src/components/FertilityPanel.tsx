@@ -26,7 +26,7 @@ export function FertilityPanel({ farmId }: { farmId: string }) {
     (farm.data?.layers ?? []).filter((l) => l.layer === k).sort((a, b) => b.acquiredAt - a.acquiredAt)[0]?.acquiredAt;
   return (
     <section aria-labelledby="fert-h" className="flex flex-col gap-3">
-      <h3 id="fert-h" className="font-serif text-lg font-semibold">
+      <h3 id="fert-h" className="text-[18px] leading-6 font-semibold">
         {t("ui.fertTitle")}
       </h3>
       <p className="text-sm text-tinta-2">{t("ui.fertIntro")}</p>

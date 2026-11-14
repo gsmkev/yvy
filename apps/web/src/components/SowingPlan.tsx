@@ -42,10 +42,9 @@ export function SowingPlan({ farmId, plots }: { farmId: string; plots: Plot[] })
   if (q.error) return <ErrorBox error={q.error} />;
   return (
     <section aria-labelledby="sowing-plan-h" className="flex flex-col gap-3">
-      <h3 id="sowing-plan-h" className="font-serif text-lg font-semibold">
+      <h3 id="sowing-plan-h" className="text-[18px] leading-6 font-semibold">
         {t("ui.sowPlanTitle")}
       </h3>
-      <p className="text-sm text-tinta-2">{t("ui.sowPlanIntro")}</p>
       {seasons.length === 0 || !plan ? (
         <Empty title={t("ui.sowPlanTitle")}>{t("ui.seasonNone")}</Empty>
       ) : (
@@ -78,17 +77,17 @@ export function SowingPlan({ farmId, plots }: { farmId: string; plots: Plot[] })
                         <td className="py-2.5 pr-3">{tk(`fields.crop_${r.crop}`)}</td>
                         <td className="py-2.5 pr-3">{r.variety ?? t("ui.sowPlanNoVariety")}</td>
                         <td className="num py-2.5 pr-3 text-right">{r.plots}</td>
-                        <td className="num py-2.5 pr-3 text-right">{fmtHa(r.areaHa)}</td>
+                        <td className="num py-2.5 pr-3 text-right whitespace-nowrap">{fmtHa(r.areaHa)}</td>
                         <td className="py-2.5 pr-3">
                           <Input
                             aria-label={t("ui.sowPlanRateFor", { crop: tk(`fields.crop_${r.crop}`) })}
-                            className="num h-8 w-20"
+                            className="num h-8 w-16"
                             inputMode="decimal"
                             value={rates[r.crop] ?? String(SEED_RATE_KG_HA[r.crop])}
                             onChange={(e) => setRates({ ...rates, [r.crop]: e.target.value })}
                           />
                         </td>
-                        <td className="num py-2.5 text-right font-medium">{fmtNum(r.seedKg)} kg</td>
+                        <td className="num py-2.5 text-right font-medium whitespace-nowrap">{fmtNum(r.seedKg)} kg</td>
                       </tr>
                     ))}
                   </tbody>

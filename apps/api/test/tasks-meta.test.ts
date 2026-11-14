@@ -117,3 +117,38 @@ describe("tareas: prioridad, hora límite y comentarios (T-02)", () => {
     expect(isOverdue({ status: "done", dueDate: "2026-11-01" }, "2026-11-11", "00:01")).toBe(false);
   });
 });
+
+describe("editar tarea desde la web", () => {
+  it("el dueño cambia título, responsable, lote y fecha, y el cambio baja al celular", async () => {
+    const { owner, worker, other, plotIds, task } = await setup();
+    const t = await task({ plotId: plotIds[0] });
+    const r = await call("PATCH", `/org/tasks/${t.body.id}`, {
+      token: owner.token,
+      body: { title: "Medir lluvia en el tajamar", plotId: plotIds[0], assigneeId: other.userId, dueDate: "2026-11-22" },
+    });
+    expect(r.status).toBe(200);
+    const [row] = await pullAll(other.token, "tasks");
+    expect(row).toMatchObject({ title: "Medir lluvia en el tajamar", dueDate: "2026-11-22", assigneeId: other.userId });
+    expect(await pullAll(worker.token, "tasks")).toHaveLength(0);
+    // sacar el lote
+    expect((await call("PATCH", `/org/tasks/${t.body.id}`, { token: owner.token, body: { plotId: null } })).status).toBe(200);
+  });
+
+  it("no acepta un lote de otra organización ni uno inexistente", async () => {
+    const { owner, task } = await setup();
+    const stranger = await createOrgWithOwner();
+    const foreign = await createFarmWithPlots(stranger.token, 1);
+    const t = await task();
+    for (const plotId of [foreign.plotIds[0], newId()])
+      expect((await call("PATCH", `/org/tasks/${t.body.id}`, { token: owner.token, body: { plotId } })).status).toBe(404);
+  });
+
+  it("el empleado no edita título ni lote, y otra organización no toca la tarea", async () => {
+    const { worker, plotIds, task } = await setup();
+    const t = await task();
+    for (const body of [{ title: "x" }, { plotId: plotIds[0] }])
+      expect((await call("PATCH", `/org/tasks/${t.body.id}`, { token: worker.token, body })).status).toBe(403);
+    const stranger = await createOrgWithOwner();
+    expect((await call("PATCH", `/org/tasks/${t.body.id}`, { token: stranger.token, body: { title: "x" } })).status).toBe(404);
+  });
+});

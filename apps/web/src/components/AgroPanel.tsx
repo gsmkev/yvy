@@ -10,7 +10,7 @@ import { WithdrawalPanel } from "./WithdrawalPanel";
 /** Pestaña Agronomía de la estancia: planificación y control agrícola (solo para quien edita el campo). */
 export function AgroPanel({ farmId, plots, pois }: { farmId: string; plots: Plot[]; pois: Poi[] }) {
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6 [&>section+section]:border-t [&>section+section]:border-linea [&>section+section]:pt-6">
       <SowingPlan farmId={farmId} plots={plots} />
       <SowingWindow farmId={farmId} />
       <WithdrawalPanel farmId={farmId} />

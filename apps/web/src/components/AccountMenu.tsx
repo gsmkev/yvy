@@ -20,10 +20,13 @@ export function AccountMenu({
   name,
   sub,
   onLogout,
+  down = false,
 }: {
   name?: string;
   sub?: string | null;
   onLogout: () => void;
+  /** El menú se abre hacia abajo (cuando el bloque está arriba, como en la hoja "Más" del celular). */
+  down?: boolean;
 }) {
   // Al pie de la barra lateral: el menú se abre hacia arriba
   const orgs = useOrganizations();
@@ -124,7 +127,7 @@ export function AccountMenu({
           role="menu"
           aria-label={t("ui.accountMenu")}
           onKeyDown={onMenuKey}
-          className="absolute bottom-full left-0 z-50 mb-2 w-64 max-w-[calc(100vw-2rem)] rounded-md border border-linea bg-papel shadow-lg"
+          className={`absolute left-0 z-50 w-64 max-w-[calc(100vw-2rem)] rounded-md border border-linea bg-papel shadow-lg ${down ? "top-full mt-2" : "bottom-full mb-2"}`}
         >
           {orgs.length > 1 && (
             <>

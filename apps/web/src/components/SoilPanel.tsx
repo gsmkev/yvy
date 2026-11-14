@@ -5,7 +5,7 @@ import { del, get, post } from "../lib/api";
 import { fmtIsoDate, fmtNum, toIso } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import type { Plot } from "../lib/types";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, FormActions, Input, Modal, Select, Spinner, toast } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
 export interface SoilSample {
@@ -52,10 +52,9 @@ export function SoilPanel({ farmId, plots }: { farmId: string; plots: Plot[] }) 
   };
   return (
     <section aria-labelledby="soil-h" className="flex flex-col gap-3">
-      <h3 id="soil-h" className="font-serif text-lg font-semibold">
+      <h3 id="soil-h" className="text-[18px] leading-6 font-semibold">
         {t("ui.soilTitle")}
       </h3>
-      <p className="text-sm text-tinta-2">{t("ui.soilIntro")}</p>
       <div>
         <Button variant="primary" onClick={() => setAdding(true)}>
           {t("ui.soilAdd")}
@@ -219,14 +218,7 @@ function SoilModal({ farmId, plots, onClose }: { farmId: string; plots: Plot[]; 
         </div>
         <p className="text-xs text-tinta-2">{tk("ui.soilFormHint")}</p>
         {save.error && <ErrorBox error={save.error} />}
-        <div className="flex gap-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-          <Button variant="quiet" onClick={onClose}>
-            {t("ui.cancel")}
-          </Button>
-        </div>
+        <FormActions onCancel={onClose} disabled={save.isPending} />
       </form>
     </Modal>
   );

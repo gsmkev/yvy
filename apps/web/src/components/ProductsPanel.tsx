@@ -5,7 +5,7 @@ import { del, get, patch, post, put } from "../lib/api";
 import { t, tk } from "../lib/i18n";
 import type { Plot, Product } from "../lib/types";
 import { PrescriptionModal } from "./PrescriptionModal";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, FormActions, Input, Modal, Select, Spinner, toast } from "./ui";
 import { HeaderActions, RowMenu } from "./erp/adminSlot";
 
 interface DoseRange {
@@ -41,17 +41,18 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
   const list = (q.data ?? []).filter((p) => !type || p.type === type);
   return (
     <div className="flex flex-col gap-4">
-      {canEdit && (
-        <HeaderActions>
-          <Button variant="primary" onClick={() => setEditing("new")}>
-            {t("ui.productNew")}
-          </Button>
-          {farmId && plots && <Button onClick={() => setPrescribing(true)}>{t("ui.prescriptionNew")}</Button>}
-        </HeaderActions>
-      )}
-      <div className="max-w-60">
+      <div className="flex flex-wrap items-center gap-2">
+        {canEdit && (
+          <HeaderActions>
+            <Button variant="primary" onClick={() => setEditing("new")}>
+              {t("ui.productNew")}
+            </Button>
+            {farmId && plots && <Button onClick={() => setPrescribing(true)}>{t("ui.prescriptionNew")}</Button>}
+          </HeaderActions>
+        )}
         <Select
           aria-label={t("ui.productType")}
+          className="ml-auto"
           value={type}
           onChange={(e) => setType(e.target.value)}
           options={[
@@ -202,9 +203,7 @@ function ProductModal({ product, range, onClose }: { product: Product | null; ra
           </div>
         </fieldset>
         {save.error && <ErrorBox error={save.error} />}
-        <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.save")}
-        </Button>
+        <FormActions onCancel={onClose} disabled={save.isPending} />
       </form>
     </Modal>
   );

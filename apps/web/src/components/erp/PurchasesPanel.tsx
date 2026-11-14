@@ -8,7 +8,7 @@ import { t, tk } from "../../lib/i18n";
 import { fmtMoney, fmtQty } from "../../lib/money";
 import { useFarms } from "../../lib/queries";
 import { useProducts } from "../ProductsPanel";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, FormActions, Input, Modal, Select, Spinner, toast } from "../ui";
 import { InvoicePhoto } from "./InvoicePhoto";
 import { useParties } from "./PartiesPanel";
 import { useWarehouses } from "./WarehousesPanel";
@@ -158,50 +158,58 @@ function NewPurchase({ onClose }: { onClose: () => void }) {
         <Field label={t("ui.currency")}>
           <Select value={currency} onChange={(e) => setCurrency(e.target.value as Currency)} options={CURRENCIES.map((c) => ({ value: c, label: c }))} />
         </Field>
-        <div className="col-span-2 flex flex-col gap-2">
+        <div className="col-span-2 flex flex-col gap-3">
           {lines.map((l, i) => (
-            <div key={i} className="grid grid-cols-6 items-end gap-2 border-b border-linea pb-2">
-              <div className="col-span-3">
-                <Select
-                  value={l.productId}
-                  onChange={(e) => setLine(i, { productId: e.target.value })}
-                  options={[{ value: "", label: t("ui.purchExpense") }, ...(products.data ?? []).map((p) => ({ value: p.id, label: p.name }))]}
-                />
+            <div key={i} className="flex flex-col gap-3 rounded-md border border-linea p-3">
+              <div className="flex items-end gap-2">
+                <div className="min-w-0 flex-1">
+                  <Field label={t("ui.purchLineProduct")}>
+                    <Select
+                      value={l.productId}
+                      onChange={(e) => setLine(i, { productId: e.target.value })}
+                      options={[{ value: "", label: t("ui.purchExpense") }, ...(products.data ?? []).map((p) => ({ value: p.id, label: p.name }))]}
+                    />
+                  </Field>
+                </div>
+                {lines.length > 1 && (
+                  <Button variant="quiet" onClick={() => setLines(lines.filter((_, k) => k !== i))}>
+                    {t("ui.delete")}
+                  </Button>
+                )}
               </div>
-              <Input type="number" required min={0} step="any" aria-label={t("ui.purchQty")} placeholder={t("ui.purchQty")} value={l.qty} onChange={(e) => setLine(i, { qty: e.target.value })} />
-              <Input type="number" required min={0} step="any" aria-label={t("ui.purchUnitPrice")} placeholder={t("ui.purchUnitPrice")} value={l.unitPrice} onChange={(e) => setLine(i, { unitPrice: e.target.value })} />
-              <button type="button" className="cursor-pointer text-tinta-2 hover:text-peligro" disabled={lines.length === 1} onClick={() => setLines(lines.filter((_, k) => k !== i))}>
-                {t("ui.delete")}
-              </button>
               {!l.productId && (
-                <>
-                  <div className="col-span-3">
-                    <Input required maxLength={200} placeholder={t("ui.purchDescription")} value={l.description} onChange={(e) => setLine(i, { description: e.target.value })} />
-                  </div>
-                  <div className="col-span-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label={t("ui.purchDescription")}>
+                    <Input required maxLength={200} value={l.description} onChange={(e) => setLine(i, { description: e.target.value })} />
+                  </Field>
+                  <Field label={t("ui.costCategory")}>
                     <Select value={l.category} onChange={(e) => setLine(i, { category: e.target.value })} options={COST_CATEGORIES.filter((c) => c !== "sale").map((c) => ({ value: c, label: tk(`ui.costCategory_${c}`) }))} />
-                  </div>
-                </>
+                  </Field>
+                </div>
               )}
+              <div className="grid grid-cols-2 gap-3">
+                <Field label={t("ui.purchQty")}>
+                  <Input type="number" required min={0} step="any" value={l.qty} onChange={(e) => setLine(i, { qty: e.target.value })} />
+                </Field>
+                <Field label={t("ui.purchUnitPrice")}>
+                  <Input type="number" required min={0} step="any" value={l.unitPrice} onChange={(e) => setLine(i, { unitPrice: e.target.value })} />
+                </Field>
+              </div>
             </div>
           ))}
-          <div>
+          <div className="flex items-center justify-between gap-3">
             <Button type="button" variant="secondary" disabled={lines.length >= 20} onClick={() => setLines([...lines, blankLine(products.data?.[0]?.id ?? "")])}>
               {t("ui.purchAddLine")}
             </Button>
+            <span className="num font-medium">{fmtMoney(total, currency)}</span>
           </div>
         </div>
-        <div className="col-span-2 num text-right font-medium">{fmtMoney(total, currency)}</div>
         {save.error ? (
           <div className="col-span-2">
             <ErrorBox error={save.error} />
           </div>
         ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormActions className="col-span-2" onCancel={onClose} disabled={save.isPending} />
       </form>
     </Modal>
   );

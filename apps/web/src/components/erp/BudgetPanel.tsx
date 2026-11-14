@@ -6,7 +6,7 @@ import { del, get, post } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
+import { Button, Empty, ErrorBox, Field, FormActions, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
 import { useSeasonList } from "./CostsPanel";
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions, RowMenu } from "./adminSlot";
@@ -97,14 +97,20 @@ export function BudgetPanel() {
                           return (
                             <tr key={r.id} className="border-b border-linea">
                               <td className="py-2.5 pr-4">
-                                {r.plotId ? (r.plotName ?? t("ui.budgetPlot")) : r.crop ? tk(`fields.crop_${r.crop}`) : t("ui.budgetWhole")}
-                                {r.activity ? <span className="text-tinta-2"> · {tk(`ui.activity_${r.activity}`)}</span> : null}
+                                {r.plotId
+                                  ? (r.plotName ?? t("ui.budgetPlot"))
+                                  : r.crop
+                                    ? tk(`fields.crop_${r.crop}`)
+                                    : r.activity
+                                      ? tk(`ui.activity_${r.activity}`)
+                                      : t("ui.budgetWhole")}
+                                {(r.plotId || r.crop) && r.activity ? <span className="text-tinta-2"> · {tk(`ui.activity_${r.activity}`)}</span> : null}
                               </td>
                               <td className="py-2.5 pr-4">{tk(`ui.costCategory_${r.category}`)}</td>
                               <td className="num py-2.5 pr-4 text-right">{fmtGs(r.amountPyg)}</td>
                               <td className="num py-2.5 pr-4 text-right">{fmtGs(r.actualPyg)}</td>
                               <td className={`num py-2.5 pr-4 text-right ${bad ? "text-peligro" : ""}`}>{fmtGs(r.diffPyg)}</td>
-                              <td className="num py-2.5 pr-4 text-right">{r.pct === null ? "" : `${r.pct}`}</td>
+                              <td className="num py-2.5 pr-4 text-right">{r.pct === null ? "" : `${r.pct} %`}</td>
                               <td className="sticky right-0 w-12 bg-lino py-1 text-right">
                                 <RowMenu name={r.plotName ?? tk(`ui.costCategory_${r.category}`)} onDelete={() => remove.mutate(r.id)} />
                               </td>
@@ -201,11 +207,11 @@ function LineModal({ seasonId, onClose }: { seasonId: string; onClose: () => voi
             <ErrorBox error={save.error} />
           </div>
         ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending || (scope === "plot" && !plotId)}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormActions
+          className="col-span-2"
+          onCancel={onClose}
+          disabled={save.isPending || (scope === "plot" && !plotId)}
+        />
       </form>
     </Modal>
   );

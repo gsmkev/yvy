@@ -12,6 +12,7 @@ import {
 import { CircleAlert, X, type LucideIcon } from "lucide-react";
 import { t } from "../lib/i18n";
 import { displayToIso, isoToDisplay, maskDate } from "../lib/dateInput";
+import { ActionMenu } from "./menus";
 
 type Variant = "primary" | "secondary" | "quiet" | "danger";
 
@@ -49,6 +50,35 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
       {children}
       {hint && <span className="text-xs text-tinta-2">{hint}</span>}
     </label>
+  );
+}
+
+/** Pie de un formulario: Cancelar y un solo primario, abajo a la derecha. */
+export function FormActions({
+  onCancel,
+  label,
+  disabled,
+  extra,
+  className = "",
+}: {
+  onCancel: () => void;
+  /** Acción secundaria a la izquierda del pie (por ejemplo, quitar algo). */
+  extra?: ReactNode;
+  /** Texto del primario; por defecto "Guardar". */
+  label?: string;
+  disabled?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={`mt-1 flex items-center justify-end gap-2 border-t border-linea pt-4 ${className}`}>
+      {extra && <div className="mr-auto">{extra}</div>}
+      <Button variant="quiet" onClick={onCancel}>
+        {t("ui.cancel")}
+      </Button>
+      <Button type="submit" variant="primary" disabled={disabled}>
+        {label ?? t("ui.save")}
+      </Button>
+    </div>
   );
 }
 
@@ -165,7 +195,7 @@ export function Stat({
     <div className="flex flex-col gap-0.5">
       <span className="eyebrow">{label}</span>
       <span
-        className={`num text-2xl leading-8 font-semibold ${tone === "danger" ? "text-peligro" : ""}`}
+        className={`num text-xl leading-8 font-semibold whitespace-nowrap sm:text-2xl ${tone === "danger" ? "text-peligro" : ""}`}
       >
         {value}
         {unit && <span className="ml-1 text-sm text-tinta-2">{unit}</span>}
@@ -423,10 +453,13 @@ export function Tabs<T extends string>({
   tabs,
   value,
   onChange,
+  more,
 }: {
   tabs: { id: T; label: string; count?: number }[];
   value: T;
   onChange: (v: T) => void;
+  /** Pestañas que no entran en la fila: salen de un menú "Más" al final, que muestra la elegida. */
+  more?: { id: T; label: string }[];
 }) {
   const scroller = useRef<HTMLDivElement>(null);
   const [edge, setEdge] = useState({ left: false, right: false });
@@ -452,12 +485,13 @@ export function Tabs<T extends string>({
   const fade = (on: boolean) => (on ? "transparent 0, #000 28px" : "#000 0, #000 0");
   const fadeEnd = (on: boolean) => (on ? "#000 calc(100% - 28px), transparent 100%" : "#000 100%, #000 100%");
   const mask = `linear-gradient(to right, ${fade(edge.left)}, ${fadeEnd(edge.right)})`;
-  return (
+  const moreActive = more?.find((x) => x.id === value);
+  const bar = (
     <div
       ref={scroller}
       role="tablist"
       style={edge.left || edge.right ? { maskImage: mask, WebkitMaskImage: mask } : undefined}
-      className="flex shrink-0 gap-5 overflow-x-auto border-b border-linea [scrollbar-width:none] print:hidden [&::-webkit-scrollbar]:hidden"
+      className={`flex gap-5 overflow-x-auto [scrollbar-width:none] print:hidden [&::-webkit-scrollbar]:hidden ${more?.length ? "min-w-0 flex-1" : "shrink-0 border-b border-linea"}`}
       onKeyDown={(e) => {
         // Flechas, Inicio y Fin pasan de una pestaña a otra
         const i = tabs.findIndex((x) => x.id === value);
@@ -484,6 +518,21 @@ export function Tabs<T extends string>({
           {tb.count !== undefined && <span className="num ml-1.5 text-xs text-tinta-2">{tb.count}</span>}
         </button>
       ))}
+    </div>
+  );
+  if (!more?.length) return bar;
+  return (
+    <div className="flex shrink-0 items-stretch gap-2 border-b border-linea print:hidden">
+      {bar}
+      <div className={`-mb-px flex shrink-0 items-center border-b-2 ${moreActive ? "border-surco" : "border-transparent"}`}>
+        <ActionMenu
+          quiet
+          text={moreActive?.label ?? t("ui.navMore")}
+          label={t("ui.navMore")}
+          className="[&>button]:h-9 [&>button]:px-2"
+          items={more.map((x) => ({ label: x.label, onSelect: () => onChange(x.id) }))}
+        />
+      </div>
     </div>
   );
 }
@@ -515,7 +564,8 @@ export function PageHeader({
     </div>
   );
   return (
-    <header className={`flex min-w-0 gap-3 ${stacked ? "flex-col items-stretch" : "items-center"} ${className}`}>
+    // Apilado solo si hay un primario que no entra al lado del título; un menú solo queda junto al título
+    <header className={`flex min-w-0 gap-3 ${stacked && primary ? "flex-col items-stretch" : "items-center"} ${className}`}>
       <div className="flex min-w-0 flex-1 items-center gap-1">
         <h1 title={title} className="min-w-0 truncate text-[28px] leading-8">
           {title}

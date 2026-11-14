@@ -9,7 +9,7 @@ import { t } from "../lib/i18n";
 import { LineChart, RainChart } from "./charts";
 import { CloudRain, CloudSun } from "lucide-react";
 import { SprayWindows } from "./SprayWindows";
-import { Empty, ErrorBox, Spinner, Stat } from "./ui";
+import { Empty, EmptyState, ErrorBox, Spinner, Stat } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
 interface Climate {
@@ -72,6 +72,32 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
   const hasRain = rainByDate.size > 0;
 
   const wd = new Intl.DateTimeFormat("es-PY", { weekday: "short", timeZone: "UTC" });
+  const links = (
+    <div className="flex flex-wrap gap-x-5 gap-y-1">
+      <Link
+        to="/estancias/$farmId/pluviometros"
+        params={{ farmId }}
+        className="inline-flex h-10 items-center text-sm font-medium text-accion underline underline-offset-2"
+      >
+        {t("ui.gaugesLink")}
+      </Link>
+      <Link
+        to="/estancias/$farmId/riesgo"
+        params={{ farmId }}
+        className="inline-flex h-10 items-center text-sm font-medium text-accion underline underline-offset-2"
+      >
+        {t("ui.riskLink")}
+      </Link>
+    </div>
+  );
+  // Sin lluvia ni pronóstico todavía, todo lo demás depende del mismo proceso diario: un solo aviso en vez de siete
+  if (!hasRain && !c.forecast.length && !soil)
+    return (
+      <div className="flex flex-col gap-4">
+        <EmptyState title={t("ui.noClimate")} />
+        {links}
+      </div>
+    );
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-2 gap-4 border-b border-linea pb-5">
@@ -93,7 +119,7 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
         />
       </div>
       <div>
-        <h3 className="eyebrow mb-2">{t("ui.rain30")} · 60 días</h3>
+        <h3 className="eyebrow mb-2">{t("ui.rain60")}</h3>
         {hasRain ? (
           <RainChart
             days={days}
@@ -105,20 +131,7 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
           <Empty icon={CloudRain}>{t("ui.noClimate")}</Empty>
         )}
       </div>
-      <Link
-        to="/estancias/$farmId/pluviometros"
-        params={{ farmId }}
-        className="self-start text-sm font-medium text-accion underline underline-offset-2"
-      >
-        {t("ui.gaugesLink")}
-      </Link>
-      <Link
-        to="/estancias/$farmId/riesgo"
-        params={{ farmId }}
-        className="self-start text-sm font-medium text-accion underline underline-offset-2"
-      >
-        {t("ui.riskLink")}
-      </Link>
+      {links}
       <div>
         <h3 className="eyebrow mb-2">{t("ui.sprayTitle")}</h3>
         <SprayWindows farmId={farmId} />

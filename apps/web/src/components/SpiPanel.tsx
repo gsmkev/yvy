@@ -15,7 +15,7 @@ export function SpiPanel({ farmId }: { farmId: string }) {
   const r = q.data?.report;
   return (
     <section aria-labelledby="spi-h" className="flex flex-col gap-2 border-t border-linea pt-5">
-      <h3 id="spi-h" className="font-serif text-lg font-semibold">
+      <h3 id="spi-h" className="text-[18px] leading-6 font-semibold">
         {t("ui.spiTitle")}
       </h3>
       {q.isLoading && <Spinner rows={1} h={40} />}

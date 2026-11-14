@@ -92,6 +92,14 @@ export function Layout() {
       onLogout={logout}
     />
   );
+  const accountDown = (
+    <AccountMenu
+      down
+      name={me.data?.organization.name}
+      sub={trial ? t("ui.trialEnds", { date: fmtDate(trial) }) : me.data?.user.fullName}
+      onLogout={logout}
+    />
+  );
   const link = (n: NavItem, cls: (active: boolean) => string, tab = false) => {
     const active = n.to === "/" ? onMap : n.to === path || path.startsWith(`${n.to}/`);
     const body = (
@@ -218,7 +226,7 @@ export function Layout() {
             </button>
           </nav>
           {sheet && (
-            <MoreSheet onClose={() => setSheet(false)}>
+            <MoreSheet onClose={() => setSheet(false)} header={accountDown}>
               <GlobalSearch inputRef={searchRef} listClassName="min-w-0" />
               {nav.main.map((g) => (
                 <SideGroup key={g.id} group={g} render={(n) => link(n, sheetCls)} />
@@ -226,7 +234,6 @@ export function Layout() {
               {nav.bottom.length > 0 && (
                 <div className="flex flex-col gap-0.5 border-t border-linea pt-3">{nav.bottom.map((n) => link(n, sheetCls))}</div>
               )}
-              <div className="border-t border-linea pt-3">{account}</div>
             </MoreSheet>
           )}
         </>
@@ -292,7 +299,7 @@ function SideGroup({ group, render }: { group: NavGroup; render: (n: NavItem) =>
 }
 
 /** Hoja inferior del celular con el resto de la navegación. Escape cierra, Tab queda adentro, el foco vuelve a "Más". */
-function MoreSheet({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+function MoreSheet({ onClose, header, children }: { onClose: () => void; header: React.ReactNode; children: React.ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
   close.current = onClose;
@@ -333,14 +340,17 @@ function MoreSheet({ onClose, children }: { onClose: () => void; children: React
         onClick={(e) => e.stopPropagation()}
         className="flex max-h-[85vh] w-full flex-col gap-3 overflow-y-auto rounded-t-xl bg-lino p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] outline-none"
       >
-        <button
-          type="button"
-          aria-label={t("ui.close")}
-          onClick={onClose}
-          className="flex h-12 w-12 cursor-pointer items-center justify-center self-end rounded-md text-tinta-2 hover:bg-surco/5"
-        >
-          <X size={20} aria-hidden />
-        </button>
+        <div className="flex items-center gap-2 border-b border-linea pb-3">
+          <div className="min-w-0 flex-1">{header}</div>
+          <button
+            type="button"
+            aria-label={t("ui.close")}
+            onClick={onClose}
+            className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-md text-tinta-2 hover:bg-surco/5"
+          >
+            <X size={20} aria-hidden />
+          </button>
+        </div>
         {children}
       </div>
     </div>

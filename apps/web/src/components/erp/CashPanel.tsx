@@ -6,7 +6,7 @@ import { del, get, post } from "../../lib/api";
 import { fmtIsoDate } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtMoney } from "../../lib/money";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
+import { Button, Empty, ErrorBox, Field, FormActions, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
 import { HeaderActions, RowMenu } from "./adminSlot";
 import { MasterPanel, type FieldDef } from "./MasterPanel";
 import { useParties } from "./PartiesPanel";
@@ -168,11 +168,7 @@ function MoveModal({ account, onClose }: { account: Account; onClose: () => void
             <ErrorBox error={save.error} />
           </div>
         ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormActions className="col-span-2" onCancel={onClose} disabled={save.isPending} />
       </form>
       <ExportableTable name="caja">
         <table className="mt-4 w-full text-sm">
@@ -237,11 +233,7 @@ function TransferModal({ accounts, onClose }: { accounts: Account[]; onClose: ()
             <ErrorBox error={save.error} />
           </div>
         ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormActions className="col-span-2" onCancel={onClose} disabled={save.isPending} />
       </form>
     </Modal>
   );
@@ -344,11 +336,7 @@ function SettleModal({ due, payable, onClose }: { due: Due; payable: boolean; on
               <ErrorBox error={save.error} />
             </div>
           ) : null}
-          <div className="col-span-2">
-            <Button type="submit" variant="primary" disabled={save.isPending}>
-              {t("ui.save")}
-            </Button>
-          </div>
+          <FormActions className="col-span-2" onCancel={onClose} disabled={save.isPending} />
         </form>
       )}
     </Modal>

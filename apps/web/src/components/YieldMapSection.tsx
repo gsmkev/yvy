@@ -132,7 +132,6 @@ export function YieldMapSection({ plot }: { plot: Plot }) {
   return (
     <div className="border-t border-linea pt-4">
       <h3 className="eyebrow mb-1">{t("ui.yieldMapTitle")}</h3>
-      <p className="mb-2 text-xs text-tinta-2">{t("ui.yieldMapIntro")}</p>
       {(maps.data ?? []).map((m) => (
         <div key={m.id} className="mb-3 flex flex-col gap-1.5">
           <p className="text-sm font-medium">{m.seasonName ?? t("ui.yieldMapNoSeason")}</p>
@@ -148,7 +147,12 @@ export function YieldMapSection({ plot }: { plot: Plot }) {
       ))}
       {maps.error && <ErrorBox error={maps.error} />}
       <Field label={t("ui.yieldMapFile")} hint={t("ui.yieldMapFileHint")}>
-        <Input type="file" accept=".zip,.geojson,.json" onChange={(e) => pick(e.target.files?.[0])} />
+        <Input
+          type="file"
+          accept=".zip,.geojson,.json"
+          className="!px-0 !py-0 file:mr-3 file:h-full file:cursor-pointer file:border-0 file:border-r file:border-linea file:bg-lino file:px-3 file:text-sm file:font-medium file:text-surco"
+          onChange={(e) => pick(e.target.files?.[0])}
+        />
       </Field>
       {err && <p className="mt-2 text-sm text-peligro">{err}</p>}
       {fc && (

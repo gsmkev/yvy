@@ -27,13 +27,13 @@ export function PlotResults({ plot }: { plot: Plot }) {
   });
   if (!allowed) return null;
   const r = q.data?.byPlot.find((x) => x.plotId === plot.id);
+  // Sin costos ni ventas cargados en el lote, la sección no aplica
+  if (!q.isLoading && !r) return null;
   return (
     <div className="border-t border-linea pt-4">
-      <h3 className="mb-2 font-serif text-base font-semibold">{t("ui.plotResultsTitle")}</h3>
-      {q.isLoading ? (
+      <h3 className="eyebrow mb-2">{t("ui.plotResultsTitle")}</h3>
+      {q.isLoading || !r ? (
         <Spinner rows={2} h={24} />
-      ) : !r ? (
-        <p className="text-sm text-tinta-2">{t("ui.plotResultsNone")}</p>
       ) : (
         <div className="flex flex-wrap gap-6">
           {r.costPerHa !== null && <Stat label={t("ui.resultsCostPerHa")} value={fmtGs(r.costPerHa)} />}

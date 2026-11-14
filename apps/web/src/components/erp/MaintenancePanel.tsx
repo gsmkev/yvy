@@ -6,7 +6,7 @@ import { del, get, post } from "../../lib/api";
 import { fmtIsoDate, fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, FormActions, Input, Modal, Select, Spinner, toast } from "../ui";
 import { useMachines } from "./MachinesPanel";
 import { MasterPanel, useErpList, type FieldDef } from "./MasterPanel";
 import { useParties } from "./PartiesPanel";
@@ -271,11 +271,7 @@ function LogModal({ planId, plans, onClose }: { planId: string | null; plans: Pl
             <ErrorBox error={save.error} />
           </div>
         ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormActions className="col-span-2" onCancel={onClose} disabled={save.isPending} />
       </form>
     </Modal>
   );

@@ -7,7 +7,7 @@ import { fmtDate, fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { useFarm, useFarms } from "../../lib/queries";
 import { useProducts } from "../ProductsPanel";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, FormActions, Input, Modal, Select, Spinner, toast } from "../ui";
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions, RowMenu } from "./adminSlot";
 
@@ -157,14 +157,7 @@ function RationModal({ ration, onClose }: { ration: Ration | null; onClose: () =
         </div>
         <p className="text-xs text-tinta-2">{t("ui.feedlotPctHint")}</p>
         {save.error && <ErrorBox error={save.error} />}
-        <div className="flex gap-2">
-          <Button type="submit" variant="primary" disabled={save.isPending || items.length === 0}>
-            {t("ui.save")}
-          </Button>
-          <Button variant="quiet" onClick={onClose}>
-            {t("ui.cancel")}
-          </Button>
-        </div>
+        <FormActions onCancel={onClose} disabled={save.isPending || items.length === 0} />
       </form>
     </Modal>
   );
@@ -266,11 +259,11 @@ function FeedModal({ rations, onClose }: { rations: Ration[]; onClose: () => voi
             <ErrorBox error={save.error} />
           </div>
         ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending || !plotId || !ration || lines.length === 0}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormActions
+          className="col-span-2"
+          onCancel={onClose}
+          disabled={save.isPending || !plotId || !ration || lines.length === 0}
+        />
       </form>
     </Modal>
   );

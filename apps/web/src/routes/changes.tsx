@@ -1,9 +1,10 @@
 /** Cambios en el terreno: área quemada tras un foco de fuego (S-20) y cambio de cobertura entre dos fechas (S-31). Indicativo. */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "@tanstack/react-router";
+import { useParams } from "@tanstack/react-router";
 import { CoverSection } from "../components/CoverSection";
 import { boundsOf, FarmMap } from "../components/FarmMap";
+import { FarmPageHeader } from "../components/FarmPageHeader";
 import { Empty, ErrorBox, Spinner, Stat } from "../components/ui";
 import { get } from "../lib/api";
 import { analysisAreas, burnedEvents } from "../lib/changesData";
@@ -16,7 +17,7 @@ import { ExportableTable } from "../components/ExportableTable";
 function Disclaimer() {
   return (
     <section className="border-l-2 border-trigo pl-3">
-      <h2 className="font-serif text-lg font-semibold">{t("ui.changesDisclaimerTitle")}</h2>
+      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.changesDisclaimerTitle")}</h2>
       <p className="mt-1 text-sm">{t("ui.changesDisclaimer")}</p>
     </section>
   );
@@ -40,7 +41,7 @@ function BurnedSection({ farmId }: { farmId: string }) {
 
   return (
     <section className="flex flex-col gap-4 border-t border-linea pt-6">
-      <h2 className="font-serif text-xl font-semibold">{t("ui.burnedTitle")}</h2>
+      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.burnedTitle")}</h2>
       {!ev ? (
         <Empty>{t("ui.burnedNone")}</Empty>
       ) : (
@@ -126,15 +127,8 @@ export function ChangesPage() {
   if (farm.isLoading) return <Spinner />;
   if (farm.error || !farm.data) return <ErrorBox error={farm.error} />;
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 p-4">
-      <div>
-        <Link to="/estancias/$farmId" params={{ farmId }} className="text-sm text-tinta-2 underline underline-offset-2">
-          {t("ui.gaugesBack")}
-        </Link>
-        <h1 className="mt-2 font-serif text-2xl font-semibold">
-          {t("ui.changesTitle")} · {farm.data.farm.name}
-        </h1>
-      </div>
+    <div className="mx-auto flex max-w-3xl flex-col gap-6 p-4 lg:p-6">
+      <FarmPageHeader farmId={farmId} farmName={farm.data.farm.name} title={t("ui.changesTitle")} />
       <Disclaimer />
       <BurnedSection farmId={farmId} />
       <CoverSection farmId={farmId} />

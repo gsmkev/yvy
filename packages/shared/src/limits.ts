@@ -131,6 +131,20 @@ export const LIMITS = {
     /** Rectángulo de Paraguay: el informe usa focos de calor de NASA FIRMS solo de ese país. */
     bbox: { minLon: -62.7, maxLon: -54.2, minLat: -27.7, maxLat: -19.2 },
   },
+  /** Pedido de prueba desde la landing: formulario del cierre. */
+  trialRequests: {
+    /** Pedidos por conexión (IP) en 24 h. */
+    perIpPerDay: 5,
+    /** El teléfono y los datos del pedido se borran pasado este tiempo. */
+    retentionMs: 180 * 24 * 60 * 60 * 1000,
+    /** Versión del texto de consentimiento que aceptó la persona (se guarda con el pedido). */
+    consentVersion: "2026-11",
+    maxCrops: 8,
+    maxHa: 10_000_000,
+    maxEmployees: 100_000,
+    /** Pedidos que muestra el panel interno. */
+    listLimit: 50,
+  },
   /** F-14: formularios configurables por la organización. */
   forms: {
     maxFieldsPerKind: 10,

@@ -197,10 +197,74 @@ export function InternalPage() {
       </div>
       {editing && <PlanModal org={editing} onClose={() => setEditing(null)} />}
       {changes && <OrgChanges org={changes} onClose={() => setChanges(null)} />}
+      <TrialRequests />
       <PlanRequests />
       <Funnel />
       <AuditLog />
     </div>
+  );
+}
+
+interface TrialRequestRow {
+  id: string;
+  name: string;
+  whatsapp: string;
+  company: string | null;
+  crops: string[];
+  hectares: number | null;
+  employees: number | null;
+  department: string | null;
+  createdAt: number;
+}
+
+/** Pedidos de prueba del formulario de la landing. El equipo escribe por WhatsApp y los marca como atendidos. */
+function TrialRequests() {
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ["admin-trial-requests"], queryFn: () => get<TrialRequestRow[]>("/admin/trial-requests") });
+  const done = useMutation({
+    mutationFn: (id: string) => post(`/admin/trial-requests/${id}/contacted`, {}),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-trial-requests"] });
+      toast(t("ui.internalTrialMarked"));
+    },
+  });
+  if (!q.data) return null;
+  return (
+    <section>
+      <h2 className="font-serif text-xl font-semibold">{t("ui.internalTrialRequests")}</h2>
+      {!q.data.length && <p className="mt-2 text-sm text-tinta-2">{t("ui.internalTrialRequestsNone")}</p>}
+      {done.error && <ErrorBox error={done.error} />}
+      <ul className="mt-2 divide-y divide-linea">
+        {q.data.map((r) => (
+          <li key={r.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-3 text-sm">
+            <div className="min-w-0 flex-1">
+              <p className="font-medium">
+                {r.name}
+                {r.company ? ` · ${r.company}` : ""}
+              </p>
+              <p className="num text-tinta-2">
+                <a className="underline" href={`https://wa.me/${r.whatsapp}`} target="_blank" rel="noreferrer">
+                  +{r.whatsapp}
+                </a>
+                {" · "}
+                {[
+                  r.crops.join(", "),
+                  r.hectares !== null ? fmtHa(r.hectares) : null,
+                  r.employees !== null ? t("ui.internalTrialEmployees", { n: fmtNum(r.employees) }) : null,
+                  r.department,
+                  fmtDateTime(r.createdAt),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            </div>
+            <Button disabled={done.isPending} onClick={() => done.mutate(r.id)}>
+              {t("ui.internalTrialContacted")}
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

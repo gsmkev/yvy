@@ -10,6 +10,7 @@ import { auth } from "./routes/auth";
 import { layers } from "./routes/layers";
 import { herd } from "./routes/herd";
 import { leads } from "./routes/leads";
+import { trialRequests } from "./routes/trial-requests";
 import { ingest } from "./routes/ingest";
 import { media } from "./routes/media";
 import { org } from "./routes/org";
@@ -65,6 +66,7 @@ app.route("/public", share);
 app.route("/public", calendar);
 app.route("/public", status);
 app.route("/public", leads);
+app.route("/public", trialRequests);
 // I-01: API pública de solo lectura con token de organización (no usa la sesión de la web)
 app.route("/v1", v1);
 

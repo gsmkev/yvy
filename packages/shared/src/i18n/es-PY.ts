@@ -37,6 +37,13 @@ export const esPY = {
     emailBody:
       "Hola. Este es el informe de riesgo climático del punto que marcaste: heladas, lluvia frente a lo normal, sequías y focos de fuego cercanos, con 30 años de datos de NASA POWER y NASA FIRMS.\n\n{{link}}\n\nEs orientativo. Lo mandamos porque lo pediste en Yvy; usamos tu email solo para esto y lo borramos a los {{days}} días. Si querés seguir el campo todo el año, creá tu estancia en Yvy.",
   },
+  trialRequests: {
+    consentRequired: "Para escribirte por WhatsApp tenés que aceptar que usemos tu número",
+    tooMany: "Mandaste varios pedidos desde esta conexión; probá de nuevo mañana",
+    badPhone: "Revisá el número de WhatsApp",
+    opsSubject: "Pedido de prueba: {{name}}",
+    opsBody: "{{name}} pidió probar Yvy.\nWhatsApp: +{{whatsapp}}\nEmpresa: {{company}}\nRubros: {{crops}}\nHectáreas: {{hectares}}\nEmpleados: {{employees}}\nDepartamento: {{department}}\nEstá en el panel interno.",
+  },
   recordKinds: {
     scouting: "Recorrida",
     pest: "Plaga o enfermedad",
@@ -1589,6 +1596,11 @@ export const esPY = {
     planCancelRequest: "Cancelar el pedido",
     planLastApproved: "Tu último pedido se aprobó: {{what}}.",
     planLastRejected: "Tu último pedido no se aprobó: {{what}}.",
+    internalTrialRequests: "Pedidos de prueba de la landing",
+    internalTrialRequestsNone: "No hay pedidos nuevos.",
+    internalTrialContacted: "Ya le escribí",
+    internalTrialMarked: "Pedido marcado como atendido",
+    internalTrialEmployees: "{{n}} empleados",
     internalPlanRequests: "Pedidos de plan",
     internalPlanRequestsNone: "No hay pedidos pendientes.",
     internalPlanApprove: "Aprobar",

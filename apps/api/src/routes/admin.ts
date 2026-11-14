@@ -6,7 +6,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
-import { FUNNEL_EVENTS, localDate, newId, planLimits } from "@yvy/shared";
+import { FUNNEL_EVENTS, LIMITS, localDate, newId, planLimits } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { getDb } from "../db/client";
 import { signJwt } from "../lib/crypto";
@@ -342,5 +342,41 @@ admin.post("/plan-requests/:id/reject", async (c) => {
       .where(and(eq(s.planRequests.id, r.id), eq(s.planRequests.status, "pending"))),
     audit(c, "plan_request_rejected", r.organizationId, { requestId: r.id, note: b.note ?? null }),
   ]);
+  return c.json({ ok: true });
+});
+
+/** Pedidos de prueba de la landing, los nuevos primero. `status=all` incluye los ya atendidos (los últimos 50). */
+admin.get("/trial-requests", async (c) => {
+  const all = c.req.query("status") === "all";
+  const rows = await getDb(c.env.DB)
+    .select({
+      id: s.trialRequests.id,
+      name: s.trialRequests.name,
+      whatsapp: s.trialRequests.whatsapp,
+      company: s.trialRequests.company,
+      crops: s.trialRequests.crops,
+      hectares: s.trialRequests.hectares,
+      employees: s.trialRequests.employees,
+      department: s.trialRequests.department,
+      status: s.trialRequests.status,
+      createdAt: s.trialRequests.createdAt,
+      contactedAt: s.trialRequests.contactedAt,
+    })
+    .from(s.trialRequests)
+    .where(all ? undefined : eq(s.trialRequests.status, "new"))
+    .orderBy(desc(s.trialRequests.createdAt))
+    .limit(LIMITS.trialRequests.listLimit);
+  return c.json(rows.map((r) => ({ ...r, crops: JSON.parse(r.crops) as string[] })));
+});
+
+admin.post("/trial-requests/:id/contacted", async (c) => {
+  const db = getDb(c.env.DB);
+  const id = c.req.param("id");
+  const [r] = await db.select({ id: s.trialRequests.id }).from(s.trialRequests).where(eq(s.trialRequests.id, id)).limit(1);
+  if (!r) throw new HTTPException(404, { message: "No existe" });
+  await db
+    .update(s.trialRequests)
+    .set({ status: "contacted", contactedAt: Date.now() })
+    .where(eq(s.trialRequests.id, id));
   return c.json({ ok: true });
 });

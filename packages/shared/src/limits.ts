@@ -182,6 +182,8 @@ export const LIMITS = {
     /** Lotes que se pueden elegir de una vez en el mapa al crear tareas (T-01). */
     maxPlotsPerBatch: 40,
   },
+  /** Días de prueba gratis al crear una cuenta (el alta y la landing usan este mismo número). Fuera de `plans` para no ser un plan. */
+  trialDays: 60,
   /**
    * Topes por plan (P-10): hectáreas de estancias y personas con acceso (todos los roles). `null` = sin tope.
    * El equipo de Yvy puede fijar topes propios por organización desde el panel interno (organizations.max_ha / max_users).

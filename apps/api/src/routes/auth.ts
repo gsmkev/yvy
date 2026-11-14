@@ -93,7 +93,7 @@ auth.post("/signup", async (c) => {
       name: body.organizationName,
       referredBy: refCode,
       referrerUserId,
-      trialEndsAt: ts + 60 * 86_400_000,
+      trialEndsAt: ts + LIMITS.trialDays * 86_400_000,
       createdAt: ts,
       updatedAt: ts,
     }),

@@ -1,9 +1,13 @@
 // Genera apps/api/seed/demo.sql: la organización de ejemplo (plan 'demo', solo lectura) para producción.
 // Uso: pnpm --filter api seed:demo   (corre con tsx para importar @yvy/shared y @yvy/geo)
 //
-// - Ids fijos y INSERT OR IGNORE en todo: correr el SQL dos veces no duplica ni pisa nada.
+// - Ids fijos. Casi todo es INSERT OR IGNORE; la estancia, los lotes, los puntos, los registros y las tareas (lo que
+//   depende de la geografía y de la fecha) son upserts por id (INSERT ... ON CONFLICT(id) DO UPDATE) que además avanzan
+//   `version` para que los celulares ya sincronizados vuelvan a bajarlos. No borran ni cambian ids, así que cargar el
+//   SQL sobre la demo existente reemplaza geometrías y fechas sin tocar el resto, y pasa el control de "solo
+//   inserciones" de demo.yml (rechaza líneas que empiecen con delete/drop/update/alter).
 // - Las fechas son relativas al día en que se corre el script (últimos 60 días), así que se ve vigente.
-//   Para refrescarla más adelante, borrá las filas de la organización demo y volvé a cargar demo.sql.
+//   Para refrescarla más adelante alcanza con regenerar y volver a cargar demo.sql: las fechas se corren solas.
 // - Cada `data` de los registros se valida con parseRecordData: si algo no valida, el script falla.
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -40,8 +44,12 @@ const rnd = () => {
 const between = (a, b) => a + rnd() * (b - a);
 const round = (v, d) => Math.round(v * 10 ** d) / 10 ** d;
 
+/** Expresión SQL sin comillas (la versión de sync vigente). */
+const raw = (expr) => ({ raw: expr });
+const CURRENT_VERSION = raw("(SELECT v FROM sync_seq WHERE id = 1)");
 const sql = (v) => {
   if (v === null || v === undefined) return "NULL";
+  if (typeof v === "object" && "raw" in v) return v.raw;
   if (typeof v === "number") {
     if (!Number.isFinite(v)) throw new Error(`número inválido: ${v}`);
     return String(v);
@@ -50,9 +58,18 @@ const sql = (v) => {
   return `'${String(v).replaceAll("'", "''")}'`;
 };
 const out = [];
+// Tablas que dependen de la geografía o de la fecha del día: se reemplazan al recargar.
+const UPSERT = new Set(["farms", "plots", "points_of_interest", "records", "tasks"]);
+const KEEP = new Set(["id", "organization_id", "created_at"]);
 const insert = (table, row) => {
   const cols = Object.keys(row);
-  out.push(`INSERT OR IGNORE INTO ${table} (${cols.join(", ")}) VALUES (${cols.map((c) => sql(row[c])).join(", ")});`);
+  const values = `(${cols.join(", ")}) VALUES (${cols.map((c) => sql(row[c])).join(", ")})`;
+  if (!UPSERT.has(table)) return out.push(`INSERT OR IGNORE INTO ${table} ${values};`);
+  const set = cols
+    .filter((c) => !KEEP.has(c))
+    .map((c) => `${c} = excluded.${c}`)
+    .join(", ");
+  out.push(`INSERT INTO ${table} ${values} ON CONFLICT(id) DO UPDATE SET ${set};`);
 };
 const counts = {};
 const count = (t) => (counts[t] = (counts[t] ?? 0) + 1);
@@ -69,7 +86,10 @@ const T0 = NOW - 90 * DAY; // la organización "existe" desde hace 90 días
 const ts = { created_at: T0, updated_at: T0 };
 
 out.push("-- Organización de ejemplo (demo de solo lectura). Generado por scripts/seed-demo.mjs; no editar a mano.");
-out.push(`-- Generado el ${TODAY}. Ids fijos e INSERT OR IGNORE: se puede cargar más de una vez.`);
+out.push(`-- Generado el ${TODAY}. Ids fijos: se puede cargar más de una vez (reemplaza geometrías y fechas, no borra nada).`);
+// El contador de sync nunca baja: se crea si falta y avanza una vez por carga, para que los celulares vuelvan a bajar lo reemplazado.
+out.push("INSERT OR IGNORE INTO sync_seq (id, v) VALUES (1, 1);");
+out.push("INSERT INTO sync_seq (id, v) VALUES (1, 1) ON CONFLICT(id) DO UPDATE SET v = v + 1;");
 
 ins("organizations", {
   id: ORG_ID, name: "Estancia de ejemplo", country: "PY", plan: "demo", trial_ends_at: null,
@@ -94,18 +114,31 @@ for (const p of Object.values(people)) {
 
 // ---------- estancia, lotes, puntos ----------
 
-const synced = { created_at: T0, updated_at: T0, deleted_at: null, version: 1 };
+const synced = { created_at: T0, updated_at: T0, deleted_at: null, version: CURRENT_VERSION };
 const FARM_ID = id("farm", 1);
-const rect = (w, s, e, n) => ({
-  type: "Polygon",
-  coordinates: [[[w, n], [e, n], [e, s], [w, s], [w, n]].map(([x, y]) => [round(x, 6), round(y, 6)])],
-});
+// Geometrías trazadas a mano sobre un compuesto Sentinel-2 L2A en color natural (S2C_21JXK_20261113, 13/11/2026,
+// ~5 x 5 km en Itapúa), siguiendo los bordes reales de chacras y potreros. Los píxeles se pasaron a lon/lat con la
+// transformación del ráster (UTM 21 S, 10 m). Siete lotes agrícolas (el 6 en L) y dos potreros; el perímetro de la
+// estancia los envuelve con unos 90 m de margen. Las áreas se recalculan abajo con @yvy/geo.
+const FARM_RING = [[-55.907251, -27.150688], [-55.911088, -27.15283], [-55.916471, -27.1583], [-55.913707, -27.167978], [-55.909425, -27.172174], [-55.907172, -27.173084], [-55.889068, -27.172034], [-55.888051, -27.16935], [-55.894387, -27.154597], [-55.896792, -27.152599], [-55.907251, -27.150688]];
+const LOT_RINGS = {
+  l1: [[-55.908843, -27.152656], [-55.907205, -27.15153], [-55.903739, -27.155144], [-55.903695, -27.156227], [-55.906985, -27.153394], [-55.908843, -27.152656]],
+  l2: [[-55.90314, -27.157847], [-55.901603, -27.156872], [-55.898617, -27.159407], [-55.895494, -27.162241], [-55.896798, -27.163154], [-55.89985, -27.16068], [-55.90314, -27.157847]],
+  l3: [[-55.90347, -27.158572], [-55.897606, -27.16301], [-55.899138, -27.164677], [-55.901321, -27.164995], [-55.904033, -27.16291], [-55.906042, -27.160428], [-55.90347, -27.158572]],
+  l4: [[-55.912937, -27.167493], [-55.910572, -27.165097], [-55.908532, -27.163817], [-55.902908, -27.167836], [-55.901951, -27.169423], [-55.903617, -27.171031], [-55.90697, -27.172261], [-55.908827, -27.171523], [-55.910354, -27.170181], [-55.912937, -27.167493]],
+  l5: [[-55.914381, -27.157393], [-55.912414, -27.159003], [-55.910446, -27.160703], [-55.911644, -27.162096], [-55.913646, -27.160336], [-55.91558, -27.158576], [-55.914381, -27.157393]],
+  l6: [[-55.910416, -27.15342], [-55.906985, -27.153394], [-55.903761, -27.156287], [-55.903809, -27.158334], [-55.905878, -27.160035], [-55.907097, -27.159172], [-55.908163, -27.160234], [-55.909456, -27.158739], [-55.910379, -27.157242], [-55.910416, -27.15342]],
+  l7: [[-55.898962, -27.165458], [-55.898462, -27.164972], [-55.893441, -27.169206], [-55.894336, -27.170537], [-55.89664, -27.1689], [-55.898778, -27.167081], [-55.898962, -27.165458]],
+  p1: [[-55.898841, -27.153721], [-55.897062, -27.153406], [-55.895161, -27.155077], [-55.895454, -27.156132], [-55.897877, -27.155971], [-55.899033, -27.154746], [-55.898841, -27.153721]],
+  p2: [[-55.8931, -27.169655], [-55.890622, -27.168461], [-55.888963, -27.169562], [-55.889651, -27.171373], [-55.891499, -27.171688], [-55.892515, -27.170944], [-55.8931, -27.169655]],
+};
+const polygon = (ring) => ({ type: "Polygon", coordinates: [ring] });
 const bboxCols = (g) => {
   const b = bboxOf(g);
   return { min_lon: b.minLon, min_lat: b.minLat, max_lon: b.maxLon, max_lat: b.maxLat };
 };
 
-const farmGeom = rect(-55.95, -27.21, -55.89, -27.15);
+const farmGeom = polygon(FARM_RING);
 const farmCentroid = centroidOf(farmGeom);
 ins("farms", {
   id: FARM_ID, organization_id: ORG_ID, name: "Estancia San Pedro", department: "Itapúa", district: "Hohenau",
@@ -114,40 +147,17 @@ ins("farms", {
   area_ha: round(areaHa(farmGeom), 2), timezone: "America/Asuncion", offline_pack_version: 0, ...synced,
 });
 
-// Grilla 3 x 3 de celdas de 0.02 x 0.02 grados con 0.001 de calle entre lotes.
-const COL = [-55.95, -55.93, -55.91, -55.89];
-const ROW = [-27.15, -27.17, -27.19, -27.21]; // de norte a sur
-const GAP = 0.001;
-const cell = (c, r, rowSpan = 1, halfRow = 0) => {
-  const north = ROW[r] - GAP;
-  const south = ROW[r + rowSpan] + GAP;
-  if (!halfRow) return rect(COL[c] + GAP, south, COL[c + 1] - GAP, north);
-  const mid = (ROW[r] + ROW[r + 1]) / 2;
-  return halfRow === 1
-    ? rect(COL[c] + GAP, mid + GAP / 2, COL[c + 1] - GAP, north)
-    : rect(COL[c] + GAP, south, COL[c + 1] - GAP, mid - GAP / 2);
-};
-// Lote 6 en L: la celda (2,1) más la mitad izquierda de la celda (2,2).
-const lShape = () => {
-  const w = COL[2] + GAP, e = COL[3] - GAP, mid = (COL[2] + COL[3]) / 2;
-  const n = ROW[1] - GAP, s = ROW[3] + GAP;
-  return {
-    type: "Polygon",
-    coordinates: [[[w, n], [e, n], [e, ROW[2]], [mid, ROW[2]], [mid, s], [w, s], [w, n]].map(([x, y]) => [round(x, 6), round(y, 6)])],
-  };
-};
-
 const sown = (daysAgo) => dayStr(daysAgo);
 const plotDefs = {
-  l1: { n: 1, name: "Lote 1 Norte", kind: "crop", crop: "soja", season: "zafra", sow: 48, geom: cell(0, 0), color: "#7A9A3F", worker: "ramon" },
-  l2: { n: 2, name: "Lote 2 Maíz", kind: "crop", crop: "maiz", season: "zafra", sow: 58, geom: cell(1, 0), color: "#D9A93A", worker: "ramon" },
-  l3: { n: 3, name: "Lote 3 Trigo", kind: "crop", crop: "trigo", season: null, sow: 165, geom: cell(2, 0), color: "#C9C46A", worker: "lidia" },
-  l4: { n: 4, name: "Lote 4 Soja", kind: "crop", crop: "soja", season: "zafra", sow: 42, geom: cell(0, 1), color: "#7A9A3F", worker: "ramon" },
-  l5: { n: 5, name: "Lote 5 Girasol", kind: "crop", crop: "girasol", season: "zafra", sow: 59, geom: cell(1, 1), color: "#D9A93A", worker: "lidia" },
-  l6: { n: 6, name: "Lote 6 en L", kind: "crop", crop: "soja", season: "zafra", sow: 38, geom: lShape(), color: "#3F6B35", worker: "lidia" },
-  l7: { n: 7, name: "Lote 7 Maíz zafrinha", kind: "crop", crop: "maiz", season: "zafrina", sow: 55, geom: cell(0, 2), color: "#D9A93A", worker: "lidia" },
-  p1: { n: 8, name: "Potrero Aguada", kind: "pasture", pastureType: "Brachiaria", geom: cell(1, 2, 1, 1), color: "#8DB3C7", worker: "celso" },
-  p2: { n: 9, name: "Potrero Monte", kind: "pasture", pastureType: "Panicum", geom: cell(1, 2, 1, 2), color: "#8DB3C7", worker: "celso" },
+  l1: { n: 1, name: "Lote 1 Norte", kind: "crop", crop: "soja", season: "zafra", sow: 48, geom: polygon(LOT_RINGS.l1), color: "#7A9A3F", worker: "ramon" },
+  l2: { n: 2, name: "Lote 2 Maíz", kind: "crop", crop: "maiz", season: "zafra", sow: 58, geom: polygon(LOT_RINGS.l2), color: "#D9A93A", worker: "ramon" },
+  l3: { n: 3, name: "Lote 3 Trigo", kind: "crop", crop: "trigo", season: null, sow: 165, geom: polygon(LOT_RINGS.l3), color: "#C9C46A", worker: "lidia" },
+  l4: { n: 4, name: "Lote 4 Soja", kind: "crop", crop: "soja", season: "zafra", sow: 42, geom: polygon(LOT_RINGS.l4), color: "#7A9A3F", worker: "ramon" },
+  l5: { n: 5, name: "Lote 5 Girasol", kind: "crop", crop: "girasol", season: "zafra", sow: 59, geom: polygon(LOT_RINGS.l5), color: "#D9A93A", worker: "lidia" },
+  l6: { n: 6, name: "Lote 6 en L", kind: "crop", crop: "soja", season: "zafra", sow: 38, geom: polygon(LOT_RINGS.l6), color: "#3F6B35", worker: "lidia" },
+  l7: { n: 7, name: "Lote 7 Maíz zafrinha", kind: "crop", crop: "maiz", season: "zafrina", sow: 55, geom: polygon(LOT_RINGS.l7), color: "#D9A93A", worker: "lidia" },
+  p1: { n: 8, name: "Potrero Aguada", kind: "pasture", pastureType: "Brachiaria", geom: polygon(LOT_RINGS.p1), color: "#8DB3C7", worker: "celso" },
+  p2: { n: 9, name: "Potrero Monte", kind: "pasture", pastureType: "Panicum", geom: polygon(LOT_RINGS.p2), color: "#8DB3C7", worker: "celso" },
 };
 for (const [key, p] of Object.entries(plotDefs)) {
   p.key = key;
@@ -163,20 +173,37 @@ for (const [key, p] of Object.entries(plotDefs)) {
 const plots = plotDefs;
 const cropPlots = Object.values(plots).filter((p) => p.kind === "crop");
 
-/** Punto al azar dentro de un lote, lejos del borde. */
+/** Distancia en metros de un punto al borde de un polígono (aproximación plana, de sobra para unos 5 km). */
+const edgeDistanceM = (g, lon, lat) => {
+  const kx = 111_320 * Math.cos((lat * Math.PI) / 180);
+  const ky = 110_540;
+  let best = Infinity;
+  const ring = g.coordinates[0];
+  for (let i = 0; i < ring.length - 1; i++) {
+    const [ax, ay] = [(ring[i][0] - lon) * kx, (ring[i][1] - lat) * ky];
+    const [bx, by] = [(ring[i + 1][0] - lon) * kx, (ring[i + 1][1] - lat) * ky];
+    const dx = bx - ax, dy = by - ay;
+    const t = Math.max(0, Math.min(1, -(ax * dx + ay * dy) / (dx * dx + dy * dy || 1)));
+    best = Math.min(best, Math.hypot(ax + t * dx, ay + t * dy));
+  }
+  return best;
+};
+const MARGIN_M = 20;
+
+/** Punto al azar dentro de un lote, a más de 20 m del borde. */
 const pointIn = (p) => {
   const b = bboxOf(p.geom);
-  for (let i = 0; i < 500; i++) {
+  for (let i = 0; i < 2000; i++) {
     const lon = round(between(b.minLon, b.maxLon), 6);
     const lat = round(between(b.minLat, b.maxLat), 6);
-    if (containsPoint(p.geom, lon, lat)) return { lon, lat };
+    if (containsPoint(p.geom, lon, lat) && edgeDistanceM(p.geom, lon, lat) >= MARGIN_M) return { lon, lat };
   }
   throw new Error(`sin punto dentro de ${p.name}`);
 };
 const centerOf = (p) => {
   const c = centroidOf(p.geom);
   const lon = round(c.lon, 6), lat = round(c.lat, 6);
-  if (!containsPoint(p.geom, lon, lat)) throw new Error(`el centroide de ${p.name} queda afuera`);
+  if (!containsPoint(p.geom, lon, lat) || edgeDistanceM(p.geom, lon, lat) < MARGIN_M) throw new Error(`el centroide de ${p.name} queda afuera o pegado al borde`);
   return { lon, lat };
 };
 
@@ -185,16 +212,28 @@ const poiDefs = {
   rain: { n: 1, kind: "rain_gauge", name: "Pluviómetro del Lote 2", ...centerOf(plots.l2), plot: "l2" },
   water: { n: 2, kind: "water", name: "Aguada del Potrero Aguada", ...centerOf(plots.p1), plot: "p1" },
   trough: { n: 3, kind: "trough", name: "Bebedero del Potrero Monte", ...centerOf(plots.p2), plot: "p2" },
-  house: { n: 4, kind: "house", name: "Casa principal", lon: -55.93, lat: -27.2 },
-  corral: { n: 5, kind: "corral", name: "Corral de encierro", lon: -55.93, lat: -27.2045 },
-  chute: { n: 6, kind: "chute", name: "Manga", lon: -55.93, lat: -27.2065 },
-  gate: { n: 7, kind: "gate", name: "Tranquera de entrada", lon: -55.92, lat: -27.1503 },
+  // Casco: sobre las construcciones que se ven en la imagen, entre el Lote 2 y el Potrero Aguada. La tranquera, en el camino.
+  house: { n: 4, kind: "house", name: "Casa principal", lon: -55.900628, lat: -27.156744 },
+  corral: { n: 5, kind: "corral", name: "Corral de encierro", lon: -55.901341, lat: -27.156088 },
+  chute: { n: 6, kind: "chute", name: "Manga", lon: -55.901816, lat: -27.1557 },
+  gate: { n: 7, kind: "gate", name: "Tranquera de entrada", lon: -55.897739, lat: -27.15293 },
 };
 for (const p of Object.values(poiDefs)) {
   p.id = id("poi", p.n);
   ins("points_of_interest", {
     id: p.id, organization_id: ORG_ID, farm_id: FARM_ID, kind: p.kind, name: p.name, lon: p.lon, lat: p.lat, ...synced,
   });
+}
+
+// Control de la geografía: lotes dentro de la estancia y sin solaparse, y los puntos donde corresponde.
+for (const p of Object.values(plots)) {
+  const ring = p.geom.coordinates[0];
+  if (!ring.every(([lon, lat]) => containsPoint(farmGeom, lon, lat))) throw new Error(`${p.name} se sale del perímetro de la estancia`);
+}
+for (const p of Object.values(poiDefs)) {
+  if (!containsPoint(farmGeom, p.lon, p.lat)) throw new Error(`${p.name} queda fuera de la estancia`);
+  const inPlot = p.plot ? plots[p.plot] : null;
+  if (inPlot && !containsPoint(inPlot.geom, p.lon, p.lat)) throw new Error(`${p.name} no cae dentro de ${inPlot.name}`);
 }
 
 // Asignaciones de lotes a empleados
@@ -355,17 +394,17 @@ for (const [d, lvl] of [[44, "full"], [32, "full"], [19, "half"], [9, "half"], [
 for (const [d, lvl] of [[38, "full"], [14, "full"], [3, "full"]])
   rec(`water-p2-${d}`, "water", "p2", "celso", d, 7, { level: lvl }, { poi: "trough" });
 
-const herd1 = { vaca: 62, vaquilla: 18, ternero: 41, toro: 3 };
+const herd1 = { vaca: 14, vaquilla: 4, ternero: 9, toro: 1 };
 rec("herd-p1-55", "herd_count", "p1", "celso", 55, 9, { counts: herd1 });
-rec("herd-p1-30", "herd_count", "p1", "celso", 30, 9, { counts: { vaca: 62, vaquilla: 18, ternero: 44, toro: 3 }, note: "Nacieron tres terneros." });
+rec("herd-p1-30", "herd_count", "p1", "celso", 30, 9, { counts: { vaca: 14, vaquilla: 4, ternero: 12, toro: 1 }, note: "Nacieron tres terneros." });
 rec("health-p1-40", "health", "p1", "celso", 40, 8, {
   reason: "desparasitacion", product: "Ivermectina 1 %", dose: "1 ml cada 50 kg", counts: herd1,
 });
-rec("health-p1-25", "health", "p1", "celso", 25, 8, { reason: "aftosa", product: "Vacuna antiaftosa", dose: "2 ml", counts: { vaca: 62, vaquilla: 18, ternero: 44, toro: 3 } });
+rec("health-p1-25", "health", "p1", "celso", 25, 8, { reason: "aftosa", product: "Vacuna antiaftosa", dose: "2 ml", counts: { vaca: 14, vaquilla: 4, ternero: 12, toro: 1 } });
 rec("move-p1-p2-20", "herd_move", "p1", "celso", 20, 10, {
-  toPlotId: plots.p2.id, counts: { vaca: 62, vaquilla: 18, ternero: 44, toro: 3 }, reason: "rotacion", note: "Rotación al Potrero Monte.",
+  toPlotId: plots.p2.id, counts: { vaca: 14, vaquilla: 4, ternero: 12, toro: 1 }, reason: "rotacion", note: "Rotación al Potrero Monte.",
 });
-rec("herd-p2-6", "herd_count", "p2", "celso", 6, 9, { counts: { vaca: 62, vaquilla: 18, ternero: 44, toro: 3 } });
+rec("herd-p2-6", "herd_count", "p2", "celso", 6, 9, { counts: { vaca: 14, vaquilla: 4, ternero: 12, toro: 1 } });
 rec("mort-p2-11", "mortality", "p2", "celso", 11, 17, { category: "ternero", head: 1, cause: "desconocida", note: "Encontrado por la mañana." });
 rec("note-1", "note", "l1", "ana", 3, 16, { text: "Programar aplicación de insecticida en Lote 1 y Lote 6 si el conteo sigue arriba del umbral." });
 
@@ -380,6 +419,7 @@ for (const r of recordDefs) {
     throw new Error(`registro ${r.key} (${r.kind}) no valida: ${JSON.stringify(parsed.error.issues)}`);
   }
   const pt = r.poi ? poiDefs[r.poi] : pointIn(plot);
+  if (!containsPoint(plot.geom, pt.lon, pt.lat)) throw new Error(`registro ${r.key} cae fuera de ${plot.name}`);
   const capturedAt = at(r.daysAgo, r.hour, r.minute);
   if (capturedAt > NOW) throw new Error(`registro ${r.key} en el futuro`);
   recIds[r.key] = id("record", ++recN);
@@ -389,7 +429,7 @@ for (const r of recordDefs) {
     data: JSON.stringify(parsed.data), // la forma ya normalizada (incluye deltaT en aplicaciones)
     schema_version: RECORD_SCHEMA_VERSION, lon: pt.lon, lat: pt.lat, gps_accuracy_m: round(between(3, 9), 1),
     captured_at: capturedAt, device_id: null,
-    created_at: capturedAt + 60_000, updated_at: capturedAt + 60_000, deleted_at: null, version: 1,
+    created_at: capturedAt + 60_000, updated_at: capturedAt + 60_000, deleted_at: null, version: CURRENT_VERSION,
   });
 }
 recRows.sort((a, b) => a.captured_at - b.captured_at);
@@ -462,8 +502,6 @@ for (const p of cropPlots) {
   count("alert_plots");
 }
 
-// El contador de sync nunca baja: solo se crea si no existe.
-out.push("INSERT OR IGNORE INTO sync_seq (id, v) VALUES (1, 1);");
 
 const file = fileURLToPath(new URL("../seed/demo.sql", import.meta.url));
 writeFileSync(file, out.join("\n") + "\n");

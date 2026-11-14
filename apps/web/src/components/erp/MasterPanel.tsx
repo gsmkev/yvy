@@ -4,8 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fromMinor, toMinor, type Currency } from "@yvy/shared";
 import { del, get, patch, post } from "../../lib/api";
 import { t } from "../../lib/i18n";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, ConfirmModal, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
 import { ExportableTable } from "../ExportableTable";
+import { HeaderActions, RowMenu } from "./adminSlot";
 
 export interface FieldDef {
   key: string;
@@ -133,7 +134,7 @@ export function RowModal({
 
 export function MasterPanel<T extends Row>({
   path,
-  intro,
+  inline = false,
   newLabel,
   columns,
   fields,
@@ -142,7 +143,8 @@ export function MasterPanel<T extends Row>({
   filter,
 }: {
   path: string;
-  intro: string;
+  /** Dentro de otra pantalla (no es la sección entera): el botón de alta va en el lugar, no en el encabezado. */
+  inline?: boolean;
   newLabel: string;
   columns: ColDef<T>[];
   fields: FieldDef[];
@@ -168,16 +170,20 @@ export function MasterPanel<T extends Row>({
   const rows = (q.data ?? []).filter((r) => !filter || filter(r));
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-tinta-2">{intro}</p>
-      {canEdit && (
-        <div>
-          <Button variant="primary" onClick={() => setEditing("new")}>
-            {newLabel}
-          </Button>
-        </div>
-      )}
+      {canEdit &&
+        (inline ? (
+          <div>
+            <Button onClick={() => setEditing("new")}>{newLabel}</Button>
+          </div>
+        ) : (
+          <HeaderActions>
+            <Button variant="primary" onClick={() => setEditing("new")}>
+              {newLabel}
+            </Button>
+          </HeaderActions>
+        ))}
       {rows.length === 0 ? (
-        <Empty>{t("ui.erpEmpty")}</Empty>
+        <EmptyState title={t("ui.erpEmpty")} />
       ) : (
         <div className="overflow-x-auto">
           <ExportableTable name="maestro">
@@ -189,7 +195,11 @@ export function MasterPanel<T extends Row>({
                       {c.header}
                     </th>
                   ))}
-                  {canEdit && <th />}
+                  {canEdit && (
+                    <th className="sticky right-0 w-12 bg-lino">
+                      <span className="sr-only">{t("ui.rowActionsHeader")}</span>
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -201,13 +211,8 @@ export function MasterPanel<T extends Row>({
                       </td>
                     ))}
                     {canEdit && (
-                      <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
-                        <button className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setEditing(r)}>
-                          {t("ui.erpEdit")}
-                        </button>
-                        <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(r)}>
-                          {t("ui.delete")}
-                        </button>
+                      <td className="sticky right-0 w-12 bg-lino py-1 text-right">
+                        <RowMenu name={name(r)} onEdit={() => setEditing(r)} onDelete={() => setRemoving(r)} />
                       </td>
                     )}
                   </tr>

@@ -2,7 +2,7 @@
  * Gráficos SVG livianos: un solo eje Y, líneas de 2 px, leyenda con ≥ 2 series, tooltip al pasar el mouse.
  * El texto usa tinta de texto, nunca el color de la serie.
  */
-import { useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { CHART } from "@yvy/shared";
 
 export interface Series {
@@ -302,7 +302,19 @@ export function MonthlyRainChart(props: {
   labels: { satellite: string; normal: string; gauge: string };
   ariaLabel: string;
 }) {
-  const { width, height, pad } = FRAME;
+  const { height, pad } = FRAME;
+  // El lienzo mide lo mismo que la pantalla: en el celular el texto no se achica con el gráfico
+  const box = useRef<HTMLElement>(null);
+  const [width, setWidth] = useState(FRAME.width);
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const measure = () => setWidth(Math.max(280, Math.round(el.clientWidth)));
+    measure();
+    const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    ro?.observe(el);
+    return () => ro?.disconnect();
+  }, []);
   const max = Math.max(10, ...props.months.flatMap((m) => [m.gauge ?? 0, m.sat ?? 0, m.normal ?? 0]));
   const n = props.months.length || 1;
   const slot = (width - pad.l - pad.r) / n;
@@ -314,7 +326,7 @@ export function MonthlyRainChart(props: {
   const [hover, setHover] = useState<number | null>(null);
   const h = hover !== null ? props.months[hover] : null;
   return (
-    <figure className="relative">
+    <figure ref={box} className="relative">
       <Legend
         series={[
           ...(props.months.some((m) => m.gauge !== null)
@@ -330,11 +342,14 @@ export function MonthlyRainChart(props: {
         {ticks.map((t) => (
           <g key={t}>
             <line x1={pad.l} x2={width - pad.r} y1={sy(t)} y2={sy(t)} stroke={CHART.grid} />
-            <text x={pad.l - 6} y={sy(t) + 4} textAnchor="end" fontSize="11" fill={CHART.axis}>
+            <text x={pad.l - 6} y={sy(t) + 4} textAnchor="end" fontSize="12" fill={CHART.axis}>
               {t}
             </text>
           </g>
         ))}
+        <text x={pad.l - 6} y={pad.t - 2} textAnchor="end" fontSize="12" fill={CHART.axis}>
+          mm
+        </text>
         {props.months.map((m, i) => (
           <g
             key={m.label}
@@ -374,7 +389,17 @@ export function MonthlyRainChart(props: {
                 strokeDasharray="4 3"
               />
             )}
-            <text x={cx(i)} y={height - 8} textAnchor="middle" fontSize="11" fill={CHART.axis}>
+            {m.gauge !== null && m.gauge > 0 && (
+              <text x={cx(i) - bw / 2 - 1} y={sy(m.gauge) - 4} textAnchor="middle" fontSize="12" fill={CHART.axis}>
+                {Math.round(m.gauge)}
+              </text>
+            )}
+            {m.sat !== null && m.sat > 0 && (
+              <text x={cx(i) + bw / 2 + 1} y={sy(m.sat) - 4} textAnchor="middle" fontSize="12" fill={CHART.axis}>
+                {Math.round(m.sat)}
+              </text>
+            )}
+            <text x={cx(i)} y={height - 8} textAnchor="middle" fontSize="12" fill={CHART.axis}>
               {m.label}
             </text>
           </g>

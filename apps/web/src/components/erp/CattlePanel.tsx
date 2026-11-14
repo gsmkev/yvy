@@ -9,7 +9,8 @@ import { fmtMoney } from "../../lib/money";
 import { useFarms } from "../../lib/queries";
 import { Button, Empty, ErrorBox, Spinner, toast } from "../ui";
 import { useSeasonList } from "./CostsPanel";
-import { InvoicePhoto } from "./InvoicePhoto";
+import { PhotoRowMenu } from "./InvoicePhoto";
+import { HeaderActions } from "./adminSlot";
 import { RowModal, type FieldDef } from "./MasterPanel";
 import { useParties } from "./PartiesPanel";
 import { ExportableTable } from "../ExportableTable";
@@ -63,12 +64,11 @@ export function CattlePanel() {
   const party = (id: string | null) => parties.data?.find((p) => p.id === id)?.name ?? "";
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-tinta-2">{t("ui.cattleIntro")}</p>
-      <div>
+      <HeaderActions>
         <Button variant="primary" onClick={() => setCreating(true)}>
           {t("ui.cattleNew")}
         </Button>
-      </div>
+      </HeaderActions>
       {(q.data ?? []).length === 0 ? (
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
@@ -85,7 +85,9 @@ export function CattlePanel() {
                   <th className="py-2 pr-4 text-right font-medium">{t("ui.cattlePricePerKg")}</th>
                   <th className="py-2 pr-4 text-right font-medium">{t("ui.cattleAmount")}</th>
                   <th className="py-2 pr-4 font-medium">{t("ui.cattleGuide")}</th>
-                  <th />
+                  <th className="sticky right-0 w-12 bg-lino">
+                    <span className="sr-only">{t("ui.rowActionsHeader")}</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -102,13 +104,8 @@ export function CattlePanel() {
                     <td className="num py-2.5 pr-4 text-right">{d.pricePerKg === null ? "" : fmtMoney(Math.round(d.pricePerKg), d.currency)}</td>
                     <td className="num py-2.5 pr-4 text-right font-medium">{fmtMoney(d.amount, d.currency)}</td>
                     <td className="py-2.5 pr-4 text-tinta-2">{d.guideNumber ?? ""}</td>
-                    <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
-                      <span className="mr-4">
-                        <InvoicePhoto kind="cattle-deals" id={d.id} hasPhoto={!!d.photoPath} />
-                      </span>
-                      <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => remove.mutate(d.id)}>
-                        {t("ui.delete")}
-                      </button>
+                    <td className="sticky right-0 w-12 bg-lino py-1 text-right">
+                      <PhotoRowMenu kind="cattle-deals" id={d.id} hasPhoto={!!d.photoPath} name={fmtIsoDate(d.date)} onDelete={() => remove.mutate(d.id)} />
                     </td>
                   </tr>
                 ))}

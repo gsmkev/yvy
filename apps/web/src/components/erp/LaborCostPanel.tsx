@@ -8,6 +8,7 @@ import { fmtGs } from "../../lib/money";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
 import { useMachines } from "./MachinesPanel";
 import { ExportableTable } from "../ExportableTable";
+import { HeaderActions, RowMenu } from "./adminSlot";
 
 interface Row {
   machineId: string;
@@ -47,12 +48,11 @@ export function LaborCostPanel() {
   if (rows.error) return <ErrorBox error={rows.error} />;
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-tinta-2">{t("ui.laborIntro")}</p>
-      <div>
+      <HeaderActions>
         <Button variant="primary" onClick={() => setEditing("new")}>
           {t("ui.laborNew")}
         </Button>
-      </div>
+      </HeaderActions>
       {(rows.data ?? []).length === 0 ? (
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
@@ -69,7 +69,9 @@ export function LaborCostPanel() {
                   <th className="py-2 pr-4 text-right font-medium">{t("ui.laborOwnHa")}</th>
                   <th className="py-2 pr-4 font-medium">{t("ui.laborContractor")}</th>
                   <th className="py-2 font-medium">{t("ui.laborVerdict")}</th>
-                  <th />
+                  <th className="sticky right-0 w-12 bg-lino">
+                    <span className="sr-only">{t("ui.rowActionsHeader")}</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -108,16 +110,8 @@ export function LaborCostPanel() {
                         "—"
                       )}
                     </td>
-                    <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
-                      <button
-                        className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline"
-                        onClick={() => setEditing(profiles.data?.find((p) => p.machineId === r.machineId) ?? null)}
-                      >
-                        {t("ui.erpEdit")}
-                      </button>
-                      <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => remove.mutate(r.machineId)}>
-                        {t("ui.delete")}
-                      </button>
+                    <td className="sticky right-0 w-12 bg-lino py-1 text-right">
+                      <RowMenu name={r.machine} onEdit={() => setEditing(profiles.data?.find((p) => p.machineId === r.machineId) ?? null)} onDelete={() => remove.mutate(r.machineId)} />
                     </td>
                   </tr>
                 ))}

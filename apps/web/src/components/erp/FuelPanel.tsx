@@ -10,6 +10,7 @@ import { useFarms } from "../../lib/queries";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
 import { useMachines } from "./MachinesPanel";
 import { ExportableTable } from "../ExportableTable";
+import { HeaderActions } from "./adminSlot";
 
 interface MachineFuel {
   machineId: string | null;
@@ -33,12 +34,11 @@ export function FuelPanel() {
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-tinta-2">{t("ui.fuelIntro")}</p>
-      <div>
+      <HeaderActions>
         <Button variant="primary" onClick={() => setLoading(true)}>
           {t("ui.fuelNew")}
         </Button>
-      </div>
+      </HeaderActions>
       <div className="flex flex-wrap items-end gap-3">
         <Field label={t("ui.costFarm")}>
           <Select value={f.farmId} onChange={set("farmId")} options={[{ value: "", label: t("ui.costAll") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />

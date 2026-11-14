@@ -1,6 +1,7 @@
 /** Informes de una estancia: campaña por lote (R-03), informe para el banco (R-04) y exportación completa (R-09). */
 import { useState } from "react";
 import { Link, useParams } from "@tanstack/react-router";
+import { FarmPageHeader } from "../components/FarmPageHeader";
 import { localDate } from "@yvy/shared";
 import { ReportSchedules } from "../components/ReportSchedules";
 import { Button, ErrorBox, Field, Select, Spinner } from "../components/ui";
@@ -21,6 +22,18 @@ import {
   seasonStart,
   vigorSummary,
 } from "../lib/reportsData";
+
+function Row({ title, text, stack = false, children }: { title: string; text: string; stack?: boolean; children: React.ReactNode }) {
+  return (
+    <li className={`flex flex-col gap-3 py-4 ${stack ? "" : "sm:flex-row sm:items-center sm:justify-between sm:gap-6"}`}>
+      <div className="min-w-0">
+        <h2 className="text-[18px] leading-6 font-semibold">{title}</h2>
+        <p className="mt-1 text-sm text-tinta-2">{text}</p>
+      </div>
+      <div className="flex shrink-0 flex-wrap items-end gap-3">{children}</div>
+    </li>
+  );
+}
 
 export function FarmReportsPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId/informes" });
@@ -149,15 +162,13 @@ export function FarmReportsPage() {
       download(blob, `informe-banco-${f.name}-${to}.pdf`);
     });
 
+  const openCls =
+    "inline-flex h-10 shrink-0 items-center justify-center rounded-md border border-linea bg-papel px-3.5 text-sm font-medium text-surco transition-colors hover:border-tinta-2/40 hover:bg-lino";
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-8 p-4">
-      <h1 className="text-xl font-semibold">
-        {t("ui.reportsTitle")} · {f.name}
-      </h1>
-      <section>
-        <h2 className="font-serif text-xl font-semibold">{t("ui.seasonReportTitle")}</h2>
-        <p className="mt-1 text-sm text-tinta-2">{t("ui.reportsSeasonIntro")}</p>
-        <div className="mt-3 flex flex-wrap items-end gap-3">
+    <div className="mx-auto flex max-w-3xl flex-col gap-5 p-4 lg:p-6">
+      <FarmPageHeader farmId={farmId} farmName={f.name} title={t("ui.reportsTitle")} />
+      <ul className="divide-y divide-linea border-y border-linea">
+        <Row stack title={t("ui.seasonReportTitle")} text={t("ui.reportsSeasonIntro")}>
           <Field label={t("ui.reportsPickPlot")}>
             <Select
               value={plot?.id ?? ""}
@@ -165,81 +176,45 @@ export function FarmReportsPage() {
               options={plots.map((p) => ({ value: p.id, label: p.name }))}
             />
           </Field>
-          <Button variant="primary" onClick={seasonPdf} disabled={busy || !plot}>
+          <Button onClick={seasonPdf} disabled={busy || !plot}>
             {busy ? t("ui.reportsGenerating") : t("ui.reportsSeasonPdf")}
           </Button>
-        </div>
-      </section>
-      <section>
-        <h2 className="font-serif text-xl font-semibold">{t("ui.bankReportTitle")}</h2>
-        <p className="mt-1 text-sm text-tinta-2">{t("ui.reportsBankIntro")}</p>
-        <div className="mt-3">
-          <Button variant="primary" onClick={bankPdf} disabled={busy}>
+        </Row>
+        <Row title={t("ui.bankReportTitle")} text={t("ui.reportsBankIntro")}>
+          <Button onClick={bankPdf} disabled={busy}>
             {busy ? t("ui.reportsGenerating") : t("ui.reportsBankPdf")}
           </Button>
-        </div>
-      </section>
-      <section>
-        <h2 className="font-serif text-xl font-semibold">{t("ui.auditReportTitle")}</h2>
-        <p className="mt-1 text-sm text-tinta-2">{t("ui.auditReportIntro")}</p>
-        <div className="mt-3">
-          <Button variant="primary" onClick={auditPdf} disabled={busy}>
+        </Row>
+        <Row title={t("ui.auditReportTitle")} text={t("ui.auditReportIntro")}>
+          <Button onClick={auditPdf} disabled={busy}>
             {busy ? t("ui.reportsGenerating") : t("ui.auditReportPdf")}
           </Button>
-        </div>
-      </section>
-      <section>
-        <h2 className="font-serif text-xl font-semibold">{t("ui.riskTitle")}</h2>
-        <p className="mt-1 text-sm text-tinta-2">{t("ui.riskLandingText")}</p>
-        <div className="mt-3">
-          <Link
-            to="/estancias/$farmId/riesgo"
-            params={{ farmId }}
-            className="text-sm font-medium text-accion underline underline-offset-2"
-          >
-            {t("ui.riskLink")}
+        </Row>
+        <Row title={t("ui.riskTitle")} text={t("ui.riskAppText")}>
+          <Link to="/estancias/$farmId/riesgo" params={{ farmId }} aria-label={t("ui.riskLink")} className={openCls}>
+            {t("ui.reportsOpen")}
           </Link>
-        </div>
-      </section>
-      <section>
-        <h2 className="font-serif text-xl font-semibold">{t("ui.eudrTitle")}</h2>
-        <p className="mt-1 text-sm text-tinta-2">{t("ui.eudrLandingText")}</p>
-        <div className="mt-3">
-          <Link
-            to="/estancias/$farmId/eudr"
-            params={{ farmId }}
-            className="text-sm font-medium text-accion underline underline-offset-2"
-          >
-            {t("ui.eudrLink")}
+        </Row>
+        <Row title={t("ui.eudrTitle")} text={t("ui.eudrLandingText")}>
+          <Link to="/estancias/$farmId/eudr" params={{ farmId }} aria-label={t("ui.eudrLink")} className={openCls}>
+            {t("ui.reportsOpen")}
           </Link>
-        </div>
-      </section>
-      <section>
-        <h2 className="font-serif text-xl font-semibold">{t("ui.changesTitle")}</h2>
-        <p className="mt-1 text-sm text-tinta-2">{t("ui.changesLandingText")}</p>
-        <div className="mt-3">
-          <Link
-            to="/estancias/$farmId/cambios"
-            params={{ farmId }}
-            className="text-sm font-medium text-accion underline underline-offset-2"
-          >
-            {t("ui.changesLink")}
+        </Row>
+        <Row title={t("ui.changesTitle")} text={t("ui.changesLandingText")}>
+          <Link to="/estancias/$farmId/cambios" params={{ farmId }} aria-label={t("ui.changesLink")} className={openCls}>
+            {t("ui.reportsOpen")}
           </Link>
-        </div>
-      </section>
-      {(me.data?.role === "owner" || me.data?.role === "admin") && <ReportSchedules farmId={farmId} />}
-      {me.data?.role === "owner" && (
-        <section>
-          <h2 className="font-serif text-xl font-semibold">{t("ui.exportTitle")}</h2>
-          <p className="mt-1 text-sm text-tinta-2">{t("ui.exportIntro")}</p>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <Button variant="primary" onClick={exportZip} disabled={busy}>
+        </Row>
+        {me.data?.role === "owner" && (
+          <Row title={t("ui.exportTitle")} text={t("ui.exportIntro")}>
+            {busy && progress && <span className="text-sm text-tinta-2">{progress}</span>}
+            <Button onClick={exportZip} disabled={busy}>
               {t("ui.exportDownload")}
             </Button>
-            {busy && progress && <span className="text-sm text-tinta-2">{progress}</span>}
-          </div>
-        </section>
-      )}
+          </Row>
+        )}
+      </ul>
+      {(me.data?.role === "owner" || me.data?.role === "admin") && <ReportSchedules farmId={farmId} />}
       {error ? <ErrorBox error={error} /> : null}
     </div>
   );

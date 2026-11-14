@@ -203,3 +203,28 @@ export function ExportMenu({
     />
   );
 }
+
+/** Acciones de una fila de tabla: un solo botón de tres puntos en lugar de "Editar Borrar" en cada fila. */
+export function RowMenu({
+  name,
+  onEdit,
+  onDelete,
+  extra,
+}: {
+  /** Nombre de la fila, para el nombre accesible del botón. */
+  name: string;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  extra?: MenuItem[];
+}) {
+  return (
+    <ActionMenu
+      label={t("ui.rowActions", { name })}
+      items={[
+        onEdit && { label: t("ui.erpEdit"), onSelect: onEdit },
+        ...(extra ?? []),
+        onDelete && { label: t("ui.delete"), onSelect: onDelete, danger: true },
+      ]}
+    />
+  );
+}

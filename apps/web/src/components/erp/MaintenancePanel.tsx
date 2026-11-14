@@ -11,6 +11,7 @@ import { useMachines } from "./MachinesPanel";
 import { MasterPanel, useErpList, type FieldDef } from "./MasterPanel";
 import { useParties } from "./PartiesPanel";
 import { ExportableTable } from "../ExportableTable";
+import { HeaderActions, RowMenu } from "./adminSlot";
 
 interface Due {
   planId: string;
@@ -77,10 +78,14 @@ export function MaintenancePanel() {
   ];
   return (
     <div className="flex flex-col gap-6">
-      <p className="text-sm text-tinta-2">{t("ui.maintIntro")}</p>
+      <HeaderActions>
+        <Button variant="primary" onClick={() => setLogging("new")}>
+          {t("ui.maintLogNew")}
+        </Button>
+      </HeaderActions>
       {due.data && due.data.length > 0 && (
         <div className="flex flex-col gap-2">
-          <h2 className="border-b border-linea pb-2 font-serif text-lg font-semibold">{t("ui.maintDueTitle")}</h2>
+          <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.maintDueTitle")}</h2>
           <ExportableTable name="mantenimiento-vencido">
             <table className="w-full text-sm">
               <tbody>
@@ -109,10 +114,10 @@ export function MaintenancePanel() {
         </div>
       )}
       <div className="flex flex-col gap-2">
-        <h2 className="border-b border-linea pb-2 font-serif text-lg font-semibold">{t("ui.maintPlansTitle")}</h2>
+        <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.maintPlansTitle")}</h2>
         <MasterPanel<Plan>
+          inline
           path="maintenance-plans"
-          intro={t("ui.maintPlansIntro")}
           newLabel={t("ui.maintPlanNew")}
           name={(p) => p.name}
           fields={fields}
@@ -133,12 +138,7 @@ export function MaintenancePanel() {
         />
       </div>
       <div className="flex flex-col gap-2">
-        <h2 className="border-b border-linea pb-2 font-serif text-lg font-semibold">{t("ui.maintHistoryTitle")}</h2>
-        <div>
-          <Button variant="primary" onClick={() => setLogging("new")}>
-            {t("ui.maintLogNew")}
-          </Button>
-        </div>
+        <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.maintHistoryTitle")}</h2>
         {(logs.data ?? []).length === 0 ? (
           <Empty>{t("ui.erpEmpty")}</Empty>
         ) : (
@@ -156,10 +156,8 @@ export function MaintenancePanel() {
                         {l.meterValue !== null ? `${fmtNum(l.meterValue)} ${unitOf(machine(l.machineId)?.meterKind ?? "hours")}` : ""}
                       </td>
                       <td className="num py-2.5 pr-4 text-right">{l.amountPyg ? fmtGs(l.amountPyg) : ""}</td>
-                      <td className="py-2.5 text-right">
-                        <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(l)}>
-                          {t("ui.delete")}
-                        </button>
+                      <td className="sticky right-0 w-12 bg-lino py-1 text-right">
+                        <RowMenu name={machine(l.machineId)?.name ?? ""} onDelete={() => setRemoving(l)} />
                       </td>
                     </tr>
                   ))}

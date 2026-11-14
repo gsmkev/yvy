@@ -13,6 +13,7 @@ import { InvoicePhoto } from "./InvoicePhoto";
 import { useParties } from "./PartiesPanel";
 import { useWarehouses } from "./WarehousesPanel";
 import { ExportableTable } from "../ExportableTable";
+import { HeaderActions } from "./adminSlot";
 
 interface Line {
   id: string;
@@ -57,12 +58,11 @@ export function PurchasesPanel() {
   const party = (id: string | null) => parties.data?.find((p) => p.id === id)?.name ?? "";
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-tinta-2">{t("ui.purchIntro")}</p>
-      <div>
+      <HeaderActions>
         <Button variant="primary" onClick={() => setCreating(true)}>
           {t("ui.purchNew")}
         </Button>
-      </div>
+      </HeaderActions>
       {(q.data ?? []).length === 0 ? (
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
@@ -291,7 +291,7 @@ function PurchaseDetail({ id, onClose }: { id: string; onClose: () => void }) {
           </ExportableTable>
           <div className="num text-right font-medium">{fmtMoney(p.totalAmount, p.currency)}</div>
           <div className="flex flex-col gap-2 border-t border-linea pt-3">
-            <h3 className="font-serif text-base font-semibold">{t("ui.purchInvoice")}</h3>
+            <h3 className="text-base font-semibold">{t("ui.purchInvoice")}</h3>
             {p.invoiceNumber ? (
               <p className="text-sm">
                 {p.invoiceNumber} · {p.invoiceDate ? fmtIsoDate(p.invoiceDate) : ""}
@@ -319,7 +319,7 @@ function PurchaseDetail({ id, onClose }: { id: string; onClose: () => void }) {
             {doInvoice.error ? <ErrorBox error={doInvoice.error} /> : null}
           </div>
           <div className="flex flex-col gap-2 border-t border-linea pt-3">
-            <h3 className="font-serif text-base font-semibold">{t("ui.purchReception")}</h3>
+            <h3 className="text-base font-semibold">{t("ui.purchReception")}</h3>
             {p.receivedAt ? (
               <p className="text-sm">{t("ui.purchReceivedOn", { date: fmtIsoDate(p.receivedAt) })}</p>
             ) : (

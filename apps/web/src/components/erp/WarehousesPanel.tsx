@@ -37,7 +37,6 @@ export function WarehousesPanel() {
   return (
     <MasterPanel<Warehouse>
       path="warehouses"
-      intro={t("ui.warehousesIntro")}
       newLabel={t("ui.warehouseNew")}
       name={(w) => w.name}
       fields={fields}

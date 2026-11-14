@@ -1,5 +1,5 @@
 /** Administración (ADR 0004): maestros, stock, costos y márgenes. Solo dueño y administradores. */
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { AccountantPanel } from "../components/erp/AccountantPanel";
 import { BudgetPanel } from "../components/erp/BudgetPanel";
@@ -24,7 +24,10 @@ import { MaintenancePanel } from "../components/erp/MaintenancePanel";
 import { MinStockPanel } from "../components/erp/MinStockPanel";
 import { PartiesPanel } from "../components/erp/PartiesPanel";
 import { ProductsPanel } from "../components/ProductsPanel";
-import { Tabs } from "../components/ui";
+import { AdminSlotContext } from "../components/erp/adminSlot";
+import { SectionNav } from "../components/SectionNav";
+import { PageHeader } from "../components/ui";
+import { ADMIN_GROUPS } from "../lib/adminNav";
 import { t, type MessageKey } from "../lib/i18n";
 import { useMe } from "../lib/queries";
 
@@ -65,21 +68,24 @@ export function AdminPage() {
   const me = useMe();
   const navigate = useNavigate();
   const { s } = useSearch({ strict: false }) as { s?: string };
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
   const current = SECTIONS.find((x) => x.id === s) ?? SECTIONS[0]!;
   const allowed = me.data?.role === "owner" || me.data?.role === "admin";
   if (me.data && !allowed) return <div className="mx-auto max-w-3xl p-4 text-sm text-tinta-2">{t("ui.adminNoAccess")}</div>;
+  const go = (id: string) => navigate({ to: "/administracion", search: { s: id } });
+  const label = (id: string) => t(SECTIONS.find((x) => x.id === id)!.label);
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-4 p-4">
-      <div>
-        <h1 className="font-serif text-2xl font-semibold">{t("ui.adminTitle")}</h1>
-        <p className="text-sm text-tinta-2">{t("ui.adminIntro")}</p>
-      </div>
-      <Tabs
-        tabs={SECTIONS.map((x) => ({ id: x.id, label: t(x.label) }))}
+    <div className="mx-auto flex max-w-6xl flex-col gap-4 p-4 lg:flex-row lg:gap-10 lg:p-6">
+      <SectionNav
+        label={t("ui.adminTitle")}
         value={current.id}
-        onChange={(id) => navigate({ to: "/administracion", search: { s: id } })}
+        onChange={go}
+        groups={ADMIN_GROUPS.map((g) => ({ id: g.id, label: t(g.label), items: g.sections.map((id) => ({ id, label: label(id) })) }))}
       />
-      {allowed && <div key={current.id}>{current.render()}</div>}
+      <div className="flex min-w-0 flex-1 flex-col gap-5">
+        <PageHeader className="max-lg:[&_h1]:sr-only" title={t(current.label)} primary={<div ref={setSlot} className="contents" />} />
+        <AdminSlotContext.Provider value={{ el: slot }}>{allowed && <div key={current.id}>{current.render()}</div>}</AdminSlotContext.Provider>
+      </div>
     </div>
   );
 }

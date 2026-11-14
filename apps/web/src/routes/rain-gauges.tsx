@@ -1,9 +1,10 @@
 /** Pluviómetros de la estancia: mes y campaña contra el satélite y la normal (C-05, C-06). */
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "@tanstack/react-router";
+import { useParams } from "@tanstack/react-router";
 import { localDate } from "@yvy/shared";
 import { MonthlyRainChart } from "../components/charts";
-import { Empty, ErrorBox, Spinner } from "../components/ui";
+import { FarmPageHeader } from "../components/FarmPageHeader";
+import { EmptyState, ErrorBox, Spinner } from "../components/ui";
 import { fmtIsoDate, fmtMm } from "../lib/format";
 import {
   campaignStart,
@@ -32,7 +33,7 @@ function GaugeSection({ name, months, season }: { name: string; months: GaugeRow
   const noData = season.gaugeMm === null;
   return (
     <section className="border-t border-linea pt-6">
-      <h2 className="font-serif text-xl font-semibold">{name}</h2>
+      <h2 className="text-[18px] leading-6 font-semibold">{name}</h2>
       {noData && <p className="mt-1 text-sm text-tinta-2">{t("ui.gaugesNoData")}</p>}
       <div className="mt-3 overflow-x-auto">
         <ExportableTable name="pluviometros">
@@ -89,23 +90,12 @@ export function RainGaugesPage() {
   const cutoff = lastSatDate(c.daily, today);
   const gauges = farm.data.pois.filter((p) => p.kind === "rain_gauge");
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 p-4">
+    <div className="mx-auto flex max-w-3xl flex-col gap-6 p-4 lg:p-6">
       <div>
-        <Link
-          to="/estancias/$farmId"
-          params={{ farmId }}
-          className="text-sm text-tinta-2 underline underline-offset-2"
-        >
-          {t("ui.gaugesBack")}
-        </Link>
-        <h1 className="mt-2 font-serif text-2xl font-semibold">
-          {t("ui.gaugesTitle")} · {farm.data.farm.name}
-        </h1>
-        <p className="mt-1 text-sm text-tinta-2">
-          {t("ui.gaugesIntro", { from: fmtIsoDate(from), to: fmtIsoDate(cutoff) })}
-        </p>
+        <FarmPageHeader farmId={farmId} farmName={farm.data.farm.name} title={t("ui.gaugesTitle")} />
+        <p className="text-sm text-tinta-2">{t("ui.gaugesIntro", { from: fmtIsoDate(from), to: fmtIsoDate(cutoff) })}</p>
       </div>
-      {gauges.length === 0 && <Empty>{t("ui.gaugesNone")}</Empty>}
+      {gauges.length === 0 && <EmptyState title={t("ui.gaugesNone")}>{t("ui.gaugesNoneHint")}</EmptyState>}
       {gauges.map((g) => (
         <GaugeSection key={g.id} name={g.name} {...gaugeTable(c, g.id, from, cutoff, tz)} />
       ))}

@@ -46,7 +46,7 @@ export function ShareLinksSection({ farmId }: { farmId: string }) {
   const now = Date.now();
   return (
     <section className="mt-8 border-t border-linea pt-6">
-      <h2 className="font-serif text-xl font-semibold">{t("ui.shareLinkTitle")}</h2>
+      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.shareLinkTitle")}</h2>
       <p className="mt-1 text-sm text-tinta-2">{t("ui.shareLinkIntro")}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button onClick={() => create.mutate(7)} disabled={create.isPending}>

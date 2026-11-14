@@ -12,6 +12,7 @@ import { useParties } from "./PartiesPanel";
 import { RowModal, type FieldDef } from "./MasterPanel";
 import { useSeasonList } from "./CostsPanel";
 import { ExportableTable } from "../ExportableTable";
+import { HeaderActions, RowMenu } from "./adminSlot";
 
 interface Contract {
   id: string;
@@ -91,12 +92,11 @@ export function GrainSalesPanel() {
   ];
   return (
     <div className="flex flex-col gap-5">
-      <p className="text-sm text-tinta-2">{t("ui.grainIntro")}</p>
-      <div>
+      <HeaderActions>
         <Button variant="primary" onClick={() => setNewContract(true)}>
           {t("ui.grainNew")}
         </Button>
-      </div>
+      </HeaderActions>
       {(contracts.data ?? []).length === 0 ? (
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
@@ -141,7 +141,7 @@ export function GrainSalesPanel() {
           </ExportableTable>
         </div>
       )}
-      <h2 className="border-b border-linea pb-2 font-serif text-lg font-semibold">{t("ui.grainDeliveries")}</h2>
+      <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.grainDeliveries")}</h2>
       {(deliveries.data ?? []).length === 0 ? (
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
@@ -155,10 +155,8 @@ export function GrainSalesPanel() {
                   <td className="py-2.5 pr-4 text-tinta-2">{d.ticket ?? ""}</td>
                   <td className="num py-2.5 pr-4 text-right">{fmtNum(d.tons)} t</td>
                   <td className="num py-2.5 pr-4 text-right text-tinta-2">{d.moisturePct === null ? "" : `${d.moisturePct} %`}</td>
-                  <td className="py-2.5 text-right">
-                    <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => removeD.mutate(d.id)}>
-                      {t("ui.delete")}
-                    </button>
+                  <td className="sticky right-0 w-12 bg-lino py-1 text-right">
+                    <RowMenu name={fmtIsoDate(d.date)} onDelete={() => removeD.mutate(d.id)} />
                   </td>
                 </tr>
               ))}
@@ -166,7 +164,7 @@ export function GrainSalesPanel() {
           </table>
         </ExportableTable>
       )}
-      <h2 className="border-b border-linea pb-2 font-serif text-lg font-semibold">{t("ui.grainSettlements")}</h2>
+      <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.grainSettlements")}</h2>
       {(settlements.data ?? []).length === 0 ? (
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
@@ -181,10 +179,8 @@ export function GrainSalesPanel() {
                   <td className="num py-2.5 pr-4 text-right">{fmtMoney(l.netAmount, l.currency)}</td>
                   <td className="num py-2.5 pr-4 text-right text-tinta-2">{fmtGs(l.netPyg)}</td>
                   <td className="py-2.5 pr-4 text-tinta-2">{l.dueDate ? t("ui.purchDue", { date: fmtIsoDate(l.dueDate) }) : ""}</td>
-                  <td className="py-2.5 text-right">
-                    <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => removeS.mutate(l.id)}>
-                      {t("ui.delete")}
-                    </button>
+                  <td className="sticky right-0 w-12 bg-lino py-1 text-right">
+                    <RowMenu name={fmtIsoDate(l.date)} onDelete={() => removeS.mutate(l.id)} />
                   </td>
                 </tr>
               ))}

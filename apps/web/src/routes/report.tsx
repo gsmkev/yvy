@@ -1,11 +1,12 @@
-import { FileDown } from "lucide-react";
 import { useState } from "react";
-import { Link, useParams, useSearch } from "@tanstack/react-router";
+import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { addDays, isAudioMime, localDate, weeklyShareText } from "@yvy/shared";
 
 const isUploadedPhoto = (a: { uploadStatus: string; mime?: string }) => a.uploadStatus === "uploaded" && !isAudioMime(a.mime ?? "");
-import { ShareWhatsappButton } from "../components/ShareButton";
+import { FarmPageHeader } from "../components/FarmPageHeader";
+import { ActionMenu } from "../components/menus";
+import { whatsappUrl } from "@yvy/shared";
 import { ShareLinksSection } from "../components/ShareLinks";
 import { Button, Card, ErrorBox, Field, Input, Spinner } from "../components/ui";
 import { get } from "../lib/api";
@@ -17,6 +18,7 @@ import { fetchAllRecords, useAlerts, useFarm } from "../lib/queries";
 export function ReportPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId/parte" });
   const search = useSearch({ from: "/app/estancias/$farmId/parte" });
+  const navigate = useNavigate();
   const today = localDate(Date.now());
   const [from, setFrom] = useState(search.desde ?? addDays(today, -7));
   const [to, setTo] = useState(search.hasta ?? today);
@@ -106,10 +108,26 @@ export function ReportPage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-3 p-4">
-      <h1 className="text-xl font-semibold">
-        {t("ui.reportTitle")} · {farm.data!.farm.name}
-      </h1>
+    <div className="mx-auto flex max-w-3xl flex-col gap-5 p-4 lg:p-6">
+      <FarmPageHeader
+        farmId={farmId}
+        farmName={farm.data!.farm.name}
+        title={t("ui.reportTitle")}
+        primary={
+          <Button variant="primary" onClick={generate} disabled={busy}>
+            {t("ui.downloadPdf")}
+          </Button>
+        }
+        menu={
+          <ActionMenu
+            label={t("ui.moreActions")}
+            items={[
+              { label: t("ui.shareWhatsapp"), onSelect: () => window.open(whatsappUrl(shareText), "_blank", "noopener") },
+              { label: t("ui.reportsFarmLink"), onSelect: () => void navigate({ to: "/estancias/$farmId/informes", params: { farmId } }) },
+            ]}
+          />
+        }
+      />
       <div className="flex flex-wrap items-end gap-3">
         <Field label={t("ui.from")}>
           <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
@@ -117,10 +135,6 @@ export function ReportPage() {
         <Field label={t("ui.to")}>
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
         </Field>
-        <Button variant="primary" icon={FileDown} onClick={generate} disabled={busy}>
-          {t("ui.downloadPdf")}
-        </Button>
-        <ShareWhatsappButton text={shareText} />
       </div>
       {error ? <ErrorBox error={error} /> : null}
       <div className="grid grid-cols-3 gap-3">
@@ -137,13 +151,6 @@ export function ReportPage() {
           <div className="text-2xl font-semibold">{periodAlerts.length}</div>
         </Card>
       </div>
-      <Link
-        to="/estancias/$farmId/informes"
-        params={{ farmId }}
-        className="text-sm font-medium text-accion underline underline-offset-2"
-      >
-        {t("ui.reportsFarmLink")}
-      </Link>
       <ShareLinksSection farmId={farmId} />
     </div>
   );

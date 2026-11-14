@@ -10,6 +10,7 @@ import { tablesToExcel } from "../../lib/tableExport";
 import { useFarm, useFarms } from "../../lib/queries";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
 import { MasterPanel, useErpList, type FieldDef } from "./MasterPanel";
+import { RowMenu } from "./adminSlot";
 
 export interface Employee {
   id: string;
@@ -59,7 +60,6 @@ function EmployeesList() {
   return (
     <MasterPanel<Employee>
       path="employees"
-      intro={t("ui.staffIntro")}
       newLabel={t("ui.staffNew")}
       name={(e) => e.name}
       fields={fields}
@@ -124,7 +124,6 @@ function AttendanceSheet() {
   const set = (id: string, patch: Partial<Mark>) => setMarks({ ...marks, [id]: { days: "", plotId: "", labor: "", ...marks[id], ...patch } });
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-tinta-2">{t("ui.attIntro")}</p>
       <div className="grid grid-cols-2 gap-3 sm:max-w-md">
         <Field label={t("ui.costDate")}>
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
@@ -185,7 +184,7 @@ function AttendanceSheet() {
           {t("ui.save")}
         </Button>
       </div>
-      <h2 className="border-b border-linea pb-2 font-serif text-lg font-semibold">{t("ui.attRecent")}</h2>
+      <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.attRecent")}</h2>
       {(recent.data ?? []).length === 0 ? (
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
@@ -198,10 +197,8 @@ function AttendanceSheet() {
                 <td className="num py-2.5 pr-4 text-right">{a.days === 1 ? t("ui.attFull") : t("ui.attHalf")}</td>
                 <td className="py-2.5 pr-4 text-tinta-2">{a.labor}</td>
                 <td className="num py-2.5 pr-4 text-right">{fmtGs(a.wagePyg)}</td>
-                <td className="py-2.5 text-right">
-                  <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => remove.mutate(a.id)}>
-                    {t("ui.delete")}
-                  </button>
+                <td className="sticky right-0 w-12 bg-lino py-1 text-right">
+                  <RowMenu name={fmtIsoDate(a.date)} onDelete={() => remove.mutate(a.id)} />
                 </td>
               </tr>
             ))}
@@ -364,11 +361,7 @@ function StatementModal({ row, onClose }: { row: Balance; onClose: () => void })
                 <td className={`num py-2 pr-3 text-right ${l.amountPyg < 0 ? "text-tinta-2" : ""}`}>{fmtGs(l.amountPyg)}</td>
                 <td className="num py-2 pr-3 text-right font-medium">{fmtGs(l.balancePyg)}</td>
                 <td className="py-2 text-right">
-                  {l.kind !== "wage" && (
-                    <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => remove.mutate(l.id)}>
-                      {t("ui.delete")}
-                    </button>
-                  )}
+                  {l.kind !== "wage" && <RowMenu name={fmtIsoDate(l.date)} onDelete={() => remove.mutate(l.id)} />}
                 </td>
               </tr>
             ))}

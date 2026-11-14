@@ -80,12 +80,12 @@ export function TotpSection({ forced = false }: { forced?: boolean }) {
     },
   });
   const s = status.data;
-  if (!s) return <Skeleton h={168} className="mt-8" />;
+  if (!s) return <Skeleton h={168} />;
   const lockedByOrg = forced || s.requiredByOrg;
 
   return (
-    <section id="segundo-factor" className="mt-8 scroll-mt-4">
-      <h2 className="font-serif text-xl font-semibold">{t("ui.totpTitle")}</h2>
+    <section id="segundo-factor" className="scroll-mt-4">
+      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.totpTitle")}</h2>
       <p className="mt-2 text-tinta-2">{t(lockedByOrg ? "ui.totpIntroRequired" : "ui.totpIntro")}</p>
 
       {fresh && <RecoveryCodes codes={fresh} onDone={() => setFresh(null)} />}
@@ -188,10 +188,10 @@ export function AdminTotpPolicy() {
       return qc.invalidateQueries({ queryKey: ["org-security"] });
     },
   });
-  if (!q.data) return <Skeleton h={64} className="mt-8" />;
+  if (!q.data) return <Skeleton h={64} />;
   return (
-    <section className="mt-8">
-      <h2 className="font-serif text-xl font-semibold">{t("ui.totpPolicyTitle")}</h2>
+    <section>
+      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.totpPolicyTitle")}</h2>
       <label className="mt-2 flex cursor-pointer items-start gap-2 text-[15px]">
         <input
           type="checkbox"

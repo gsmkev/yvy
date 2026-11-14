@@ -55,7 +55,6 @@ export function ContractorsPanel() {
   return (
     <MasterPanel<Contractor>
       path="contractors"
-      intro={t("ui.contractorsIntro")}
       newLabel={t("ui.contractorNew")}
       name={(c) => c.name}
       fields={fields}

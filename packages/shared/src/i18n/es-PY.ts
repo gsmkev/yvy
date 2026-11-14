@@ -2109,6 +2109,8 @@ export const esPY = {
     dueTime: "Hora límite",
     dueTimeHint: "Hora de la estancia",
     taskMoreOptions: "Más opciones",
+    taskEdit: "Editar tarea",
+    toastTaskUpdated: "Tarea actualizada",
     dueAtTime: "hasta las {{time}}",
     taskComments: "Comentarios",
     taskCommentsCount: "{{n}} comentarios",

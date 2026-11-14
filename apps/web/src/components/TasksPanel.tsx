@@ -49,6 +49,7 @@ export function TasksPanel({
   const tasks = useTasks({ farmId });
   const members = useMembers();
   const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState<Task | null>(null);
   const [filter, setFilter] = useState<"all" | "overdue">("all");
   const [showDone, setShowDone] = useState(false);
   const qc = useQueryClient();
@@ -150,7 +151,7 @@ export function TasksPanel({
           </h3>
           <ul className="divide-y divide-linea border-y border-linea">
             {list.map((x) => (
-              <TaskRow key={x.id} x={x} today={today} overdue={isOverdue(x)} onDelete={() => removeTask(x)} />
+              <TaskRow key={x.id} x={x} today={today} overdue={isOverdue(x)} onEdit={() => setEditing(x)} onDelete={() => removeTask(x)} />
             ))}
           </ul>
         </section>
@@ -170,11 +171,14 @@ export function TasksPanel({
           {showDone && (
             <ul className="divide-y divide-linea border-y border-linea">
               {done.map((x) => (
-                <TaskRow key={x.id} x={x} today={today} overdue={false} onDelete={() => removeTask(x)} />
+                <TaskRow key={x.id} x={x} today={today} overdue={false} onEdit={() => setEditing(x)} onDelete={() => removeTask(x)} />
               ))}
             </ul>
           )}
         </section>
+      )}
+      {editing && (
+        <NewTaskModal task={editing} farmId={editing.farmId} plots={plots} members={members.data ?? []} onClose={() => setEditing(null)} />
       )}
       {creating && (
         <NewTaskModal
@@ -225,7 +229,19 @@ function ChecklistProgress({ task }: { task: Task }) {
 
 const PRIORITY_RANK = { high: 0, normal: 1, low: 2 } as const;
 
-function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: string; overdue: boolean; onDelete: () => void }) {
+function TaskRow({
+  x,
+  today,
+  overdue,
+  onEdit,
+  onDelete,
+}: {
+  x: Task;
+  today: string;
+  overdue: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const qc = useQueryClient();
@@ -286,6 +302,7 @@ function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: string; over
         <ActionMenu
           label={t("ui.taskActions")}
           items={[
+            x.status === "open" && { label: t("ui.erpEdit"), onSelect: onEdit },
             { label: t("ui.taskCommentSend"), onSelect: () => setOpen(true) },
             x.status === "open" && { label: t("ui.delete"), onSelect: onDelete, danger: true },
           ]}
@@ -327,12 +344,15 @@ function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: string; over
 }
 
 function NewTaskModal({
+  task,
   farmId,
   plots,
   pick,
   members,
   onClose,
 }: {
+  /** Si se pasa, el formulario edita esa tarea en lugar de crear una. */
+  task?: Task;
   farmId?: string;
   plots?: Plot[];
   pick?: PlotPick;
@@ -342,20 +362,31 @@ function NewTaskModal({
   const farms = useFarms();
   const qc = useQueryClient();
   const [f, setF] = useState({
-    farmId: farmId ?? "",
-    plotId: "",
-    assigneeId: members[0]?.userId ?? "",
-    title: "",
-    kind: "",
-    dueDate: localDate(Date.now()),
-    dueTime: "",
-    priority: "normal",
-    recurrence: "none",
+    farmId: task?.farmId ?? farmId ?? "",
+    plotId: task?.plotId ?? "",
+    assigneeId: task?.assigneeId ?? members[0]?.userId ?? "",
+    title: task?.title ?? "",
+    kind: task?.kind ?? "",
+    dueDate: task?.dueDate ?? localDate(Date.now()),
+    dueTime: task?.dueTime ?? "",
+    priority: task?.priority ?? "normal",
+    recurrence: task?.recurrence ?? "none",
     checklist: "",
   });
   const picked = pick?.ids ?? [];
   const create = useMutation({
     mutationFn: () => {
+      if (task)
+        return patch(`/org/tasks/${task.id}`, {
+          title: f.title,
+          assigneeId: f.assigneeId,
+          ...(plots ? { plotId: f.plotId || null } : {}),
+          kind: f.kind || null,
+          dueDate: f.dueDate,
+          dueTime: f.dueTime || null,
+          priority: f.priority,
+          recurrence: f.recurrence,
+        }).then(() => ({ ids: [task.id] }));
       const { checklist, ...rest } = f;
       const items = checklist
         .split("\n")
@@ -373,7 +404,7 @@ function NewTaskModal({
     },
     onSuccess: ({ ids }) => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
-      toast(ids.length > 1 ? t("ui.toastTasksSaved", { n: ids.length }) : t("ui.toastTaskSaved"));
+      toast(task ? t("ui.toastTaskUpdated") : ids.length > 1 ? t("ui.toastTasksSaved", { n: ids.length }) : t("ui.toastTaskSaved"));
       onClose();
     },
   });
@@ -382,7 +413,7 @@ function NewTaskModal({
   // Mientras se eligen lotes en el mapa el diálogo se esconde sin desmontarse: el borrador no se pierde.
   return (
     <div hidden={!!pick?.picking}>
-      <Modal title={t("ui.newTask")} onClose={onClose}>
+      <Modal title={task ? t("ui.taskEdit") : t("ui.newTask")} onClose={onClose}>
         <form
           className="flex flex-col gap-4"
           onSubmit={(e) => {
@@ -394,7 +425,7 @@ function NewTaskModal({
             <Input required value={f.title} onChange={set("title")} maxLength={200} />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            {!farmId && (
+            {!farmId && !task && (
               <Field label={t("ui.farm")}>
                 <Select
                   required
@@ -425,7 +456,7 @@ function NewTaskModal({
               />
             </Field>
           </div>
-          {plots && pick && (
+          {plots && pick && !task && (
             <div className="flex flex-col items-start gap-1.5 text-sm">
               {picked.length > 0 && (
                 <p>
@@ -450,7 +481,10 @@ function NewTaskModal({
               <Input type="time" value={f.dueTime} onChange={set("dueTime")} />
             </Field>
           </div>
-          <details className="group rounded-md border border-linea">
+          <details
+            className="group rounded-md border border-linea"
+            open={!!task && (task.priority !== "normal" || task.recurrence !== "none" || !!task.kind)}
+          >
             <summary className="flex h-10 cursor-pointer list-none items-center justify-between px-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
               {t("ui.taskMoreOptions")}
               <ChevronDown size={16} aria-hidden className="transition-transform group-open:rotate-180" />
@@ -493,6 +527,7 @@ function NewTaskModal({
                   )}
                 </p>
               )}
+              {!task && (
               <Field label={t("ui.taskChecklist")}>
                 <textarea
                   className="min-h-20 w-full rounded-md border border-linea bg-papel px-3 py-2 text-sm outline-none focus:border-accion focus:ring-2 focus:ring-accion/20"
@@ -501,6 +536,7 @@ function NewTaskModal({
                   placeholder={t("ui.taskChecklistHint")}
                 />
               </Field>
+              )}
             </div>
           </details>
           {create.error && <ErrorBox error={create.error} />}

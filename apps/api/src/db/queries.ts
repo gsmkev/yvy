@@ -1226,6 +1226,28 @@ export async function deletePoi(sdb: ScopedDb, id: string) {
 export async function updateTask(sdb: ScopedDb, id: string, patch: Partial<typeof s.tasks.$inferInsert>) {
   sdb.require(can.assign);
   if (patch.assigneeId) await sdb.memberRole(patch.assigneeId);
+  if (patch.plotId) {
+    // El lote tiene que ser de la organización y de la misma estancia que la tarea
+    const [task] = await sdb.db
+      .select({ farmId: s.tasks.farmId })
+      .from(s.tasks)
+      .where(and(eq(s.tasks.id, id), eq(s.tasks.organizationId, sdb.auth.orgId), isNull(s.tasks.deletedAt)))
+      .limit(1);
+    if (!task) throw new NotFoundError("No existe");
+    const [plot] = await sdb.db
+      .select({ id: s.plots.id })
+      .from(s.plots)
+      .where(
+        and(
+          eq(s.plots.id, patch.plotId),
+          eq(s.plots.organizationId, sdb.auth.orgId),
+          eq(s.plots.farmId, task.farmId),
+          isNull(s.plots.deletedAt),
+        ),
+      )
+      .limit(1);
+    if (!plot) throw new NotFoundError("Lote inexistente");
+  }
   await updateSynced(sdb, s.tasks, id, patch);
 }
 

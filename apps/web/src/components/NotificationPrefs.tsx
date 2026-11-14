@@ -35,8 +35,8 @@ export function NotificationPrefs() {
   const badQuiet = prefs.quiet.enabled && prefs.quiet.start === prefs.quiet.end;
 
   return (
-    <section className="mt-8">
-      <h2 className="font-serif text-xl font-semibold">{t("ui.notifTitle")}</h2>
+    <section>
+      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.notifTitle")}</h2>
       <p className="mt-2 text-tinta-2">{t("ui.notifIntro")}</p>
       {!email && kinds.length < 5 && <p className="mt-2 text-sm text-tinta-2">{t("ui.notifWorkerNote")}</p>}
       <table className="mt-4 w-full text-sm">

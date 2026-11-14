@@ -52,8 +52,8 @@ export function WebhooksPanel() {
   };
 
   return (
-    <section id="webhooks" className="mt-8 scroll-mt-4">
-      <h2 className="font-serif text-xl font-semibold">{t("ui.webhooksTitle")}</h2>
+    <section id="webhooks" className="scroll-mt-4">
+      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.webhooksTitle")}</h2>
       <p className="mt-2 text-tinta-2">{t("ui.webhooksIntro")}</p>
 
       {secret && (

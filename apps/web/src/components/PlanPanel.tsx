@@ -71,8 +71,8 @@ export function PlanPanel() {
       .filter(Boolean)
       .join(" · ");
   return (
-    <section className="mt-8" aria-labelledby="plan-title">
-      <h2 id="plan-title" className="font-serif text-xl font-semibold">
+    <section aria-labelledby="plan-title">
+      <h2 id="plan-title" className="text-[18px] leading-6 font-semibold">
         {t("ui.planTitle")}
       </h2>
       <p className="mt-2">

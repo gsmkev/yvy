@@ -47,8 +47,8 @@ export function Preferences() {
     if (window.location.hash === "#preferencias") document.getElementById("preferencias")?.scrollIntoView();
   }, []);
   return (
-    <section id="preferencias" className="mt-8 scroll-mt-4">
-      <h2 className="font-serif text-xl font-semibold">{t("ui.prefsTitle")}</h2>
+    <section id="preferencias" className="scroll-mt-4">
+      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.prefsTitle")}</h2>
       <p className="mt-2 text-tinta-2">{t("ui.prefsIntro")}</p>
       <div className="mt-3 border-t border-linea">
         <Choice

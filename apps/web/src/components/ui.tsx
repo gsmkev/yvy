@@ -165,7 +165,7 @@ export function Stat({
     <div className="flex flex-col gap-0.5">
       <span className="eyebrow">{label}</span>
       <span
-        className={`num font-serif text-[28px] leading-tight font-semibold ${tone === "danger" ? "text-peligro" : ""}`}
+        className={`num text-2xl leading-8 font-semibold ${tone === "danger" ? "text-peligro" : ""}`}
       >
         {value}
         {unit && <span className="ml-1 text-sm text-tinta-2">{unit}</span>}

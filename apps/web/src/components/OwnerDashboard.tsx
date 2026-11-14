@@ -83,9 +83,9 @@ export function OwnerDashboard() {
               <li key={`${c.kind}-${c.crop}`} className="num flex justify-between py-1.5">
                 <span>{label(c)}</span>
                 <span>
-                  <span className="font-serif text-lg font-semibold">{fmtNum(c.ha)}</span> ha
+                  <span className="font-semibold">{fmtNum(c.ha)}</span> ha
                   <span className="ml-2 text-tinta-2">
-                    {c.plots} {t("ui.plots").toLowerCase()}
+                    {t(c.plots === 1 ? "ui.plotsCountOne" : "ui.plotsCountMany", { n: c.plots })}
                   </span>
                 </span>
               </li>

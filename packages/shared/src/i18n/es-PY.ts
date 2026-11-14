@@ -3225,7 +3225,7 @@ export const esPY = {
     calendarPrev: "Semana anterior",
     calendarNext: "Semana siguiente",
     calendarToday: "Esta semana",
-    calendarEmpty: "No hay labores esta semana.",
+    calendarEmpty: "No hay labores esta semana",
     weekday_0: "Lun",
     weekday_1: "Mar",
     weekday_2: "Mié",

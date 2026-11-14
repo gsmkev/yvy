@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "@tanstack/react-router";
-import { Button } from "../components/ui";
+import { Button, PageHeader } from "../components/ui";
 import { AnimalCountIllustration, HailIllustration, InfraIllustration, StandCountIllustration, WeedsIllustration } from "../components/labs/illustrations";
 import { t, tk } from "../lib/i18n";
 import { ExportableTable } from "../components/ExportableTable";
@@ -13,30 +13,24 @@ const nf = (n: number, digits = 0) =>
 
 /** Aviso fijo: toda pantalla del Laboratorio dice que es una vista previa con datos de muestra. */
 function PreviewNotice() {
-  return <p className="bg-trigo/15 px-4 py-3 text-sm">{t("ui.labsNotice")}</p>;
+  return <p className="border-l-2 border-trigo pl-3 text-sm text-tinta-2">{t("ui.labsNotice")}</p>;
 }
 
 export function LabsPage() {
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4">
-      <div>
-        <h1 className="text-xl font-semibold">{t("ui.labsTitle")}</h1>
-        <p className="text-sm text-tinta-2">{t("ui.labsIntro")}</p>
-      </div>
+    <div className="mx-auto flex max-w-4xl flex-col gap-5 p-4 lg:p-6">
+      <PageHeader title={t("ui.labsTitle")} />
       <PreviewNotice />
-      <ul>
+      <ul className="grid gap-3 sm:grid-cols-2">
         {TOOLS.map((id) => (
-          <li key={id} className="flex flex-wrap items-center gap-3 border-b border-linea py-4">
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold">{tk(`ui.labsTool_${id}_name`)}</div>
-              <div className="text-sm text-tinta-2">{tk(`ui.labsTool_${id}_desc`)}</div>
-            </div>
+          <li key={id}>
             <Link
               to="/laboratorio/$tool"
               params={{ tool: id }}
-              className="text-sm font-medium text-accion underline-offset-4 hover:underline"
+              className="flex h-full flex-col gap-1 rounded-lg border border-linea bg-papel p-4 transition-colors hover:border-tinta-2/40"
             >
-              {t("ui.labsOpen")}
+              <span className="font-medium">{tk(`ui.labsTool_${id}_name`)}</span>
+              <span className="text-sm text-tinta-2">{tk(`ui.labsTool_${id}_desc`)}</span>
             </Link>
           </li>
         ))}
@@ -49,8 +43,8 @@ export function LabsToolPage() {
   const { tool } = useParams({ strict: false }) as { tool: string };
   const id = TOOLS.find((x) => x === tool);
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4">
-      <Link to="/laboratorio" className="text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline">
+    <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4 lg:p-6">
+      <Link to="/laboratorio" className="inline-flex h-10 w-fit items-center text-sm text-tinta-2 hover:text-surco hover:underline">
         {t("ui.labsBack")}
       </Link>
       {!id ? (
@@ -58,7 +52,7 @@ export function LabsToolPage() {
       ) : (
         <>
           <div>
-            <h1 className="text-xl font-semibold">{tk(`ui.labsTool_${id}_name`)}</h1>
+            <PageHeader title={tk(`ui.labsTool_${id}_name`)} />
             <p className="text-sm text-tinta-2">{tk(`ui.labsTool_${id}_desc`)}</p>
           </div>
           <PreviewNotice />
@@ -117,7 +111,7 @@ function Flow({ drop = true, children }: { drop?: boolean; children: ReactNode }
       </div>
       {shown && (
         <section className="flex flex-col gap-4">
-          <h2 className="font-serif text-lg font-semibold">{t("ui.labsExampleTitle")}</h2>
+          <h2 className="text-[18px] leading-6 font-semibold">{t("ui.labsExampleTitle")}</h2>
           {children}
         </section>
       )}

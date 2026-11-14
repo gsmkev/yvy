@@ -1,5 +1,6 @@
 import { ACADEMY_TOPICS, ACADEMY_VIDEOS } from "../lib/academy";
 import { whatsappUrl } from "../lib/config";
+import { PageHeader } from "../components/ui";
 import { t, tk } from "../lib/i18n";
 
 const N = 10;
@@ -7,24 +8,34 @@ const N = 10;
 /** Centro de ayuda: preguntas frecuentes y contacto por WhatsApp. */
 export function HelpPage() {
   return (
-    <div className="mx-auto max-w-2xl p-6">
-      <h1 className="text-[28px] leading-tight">{t("ui.helpTitle")}</h1>
-      <p className="mt-1 text-sm text-tinta-2">{t("ui.helpIntro")}</p>
-      <div className="mt-6 divide-y divide-linea border-y border-linea">
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 p-4 lg:p-6">
+      <PageHeader
+        title={t("ui.helpTitle")}
+        primary={
+          <a
+            href={whatsappUrl(t("ui.publicWhatsappText"))}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-10 items-center rounded-md border border-accion bg-accion px-3.5 text-sm font-medium text-sobre transition-colors hover:bg-accion-2"
+          >
+            {t("ui.helpWhatsapp")}
+          </a>
+        }
+      />
+      <div className="divide-y divide-linea border-y border-linea">
         {Array.from({ length: N }, (_, i) => i + 1).map((n) => (
-          <details key={n} className="group py-3.5">
-            <summary className="cursor-pointer font-medium marker:content-none hover:text-accion">
+          <details key={n} className="group py-1">
+            <summary className="flex min-h-10 cursor-pointer items-center font-medium marker:content-none hover:text-accion">
               {tk(`ui.helpQ${n}`)}
             </summary>
             <p className="mt-2 text-[15px] text-tinta-2">{tk(`ui.helpA${n}`)}</p>
           </details>
         ))}
       </div>
-      <section className="mt-8" aria-labelledby="help-videos">
-        <h2 id="help-videos" className="font-serif text-xl font-semibold">
+      <section aria-labelledby="help-videos">
+        <h2 id="help-videos" className="text-[18px] leading-6 font-semibold">
           {t("ui.helpVideosTitle")}
         </h2>
-        <p className="mt-1 text-sm text-tinta-2">{t("ui.helpVideosIntro")}</p>
         <ul className="mt-3 divide-y divide-linea border-y border-linea">
           {ACADEMY_TOPICS.map((topic) => {
             const links = ACADEMY_VIDEOS[topic];
@@ -53,17 +64,6 @@ export function HelpPage() {
           })}
         </ul>
       </section>
-      <div className="mt-6">
-        <p className="text-sm text-tinta-2">{t("ui.helpWhatsappHint")}</p>
-        <a
-          href={whatsappUrl(t("ui.publicWhatsappText"))}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-1 inline-block font-medium text-accion underline-offset-4 hover:underline"
-        >
-          {t("ui.helpWhatsapp")}
-        </a>
-      </div>
     </div>
   );
 }

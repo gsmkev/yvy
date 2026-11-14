@@ -178,14 +178,14 @@ export function SwitchRow({ title, hint, value, onValueChange }: { title: string
 }
 
 /** Cuerpo de un paso: el contenido se desplaza y la acción principal queda fija abajo, siempre a la vista (también con el teclado abierto o con textos largos). */
-export function ScreenBody({ children, footer }: { children: ReactNode; footer: ReactNode }) {
+export function ScreenBody({ children, footer }: { children: ReactNode; footer?: ReactNode }) {
   const insets = useSafeAreaInsets();
   return (
     <View style={{ flex: 1 }}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={s.pad} keyboardShouldPersistTaps="handled">
         {children}
       </ScrollView>
-      <View style={[s.footer, { paddingBottom: Math.max(12, insets.bottom) }]}>{footer}</View>
+      {footer ? <View style={[s.footer, { paddingBottom: Math.max(12, insets.bottom) }]}>{footer}</View> : null}
     </View>
   );
 }

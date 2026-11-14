@@ -1,9 +1,9 @@
 /** Esqueleto común de las herramientas del laboratorio: introducción → resultado de ejemplo. Sin análisis real. */
 import { useState, type ReactNode } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { router, Stack } from "expo-router";
 import { t } from "@yvy/shared";
-import { Button, s as k, Text } from "../ui/kit";
+import { Button, ScreenBody, s as k, Text } from "../ui/kit";
 import { C, RADIUS, T } from "../ui/theme";
 
 export function PreviewNotice() {
@@ -24,29 +24,40 @@ export function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** `actions`: lo que se ofrece después del ejemplo (una pista y un botón principal); "Volver al laboratorio" pasa a secundario. */
 export function Lab({ title, intro, art, result, actions }: { title: string; intro: string; art?: ReactNode; result: ReactNode; actions?: ReactNode }) {
   const [shown, setShown] = useState(false);
   return (
-    <ScrollView style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 60 }]}>
+    <View style={k.screen}>
       <Stack.Screen options={{ title: "" }} />
-      <Text style={T.title}>{shown ? t("app.labsExampleTitle") : title}</Text>
-      {shown ? (
-        <>
-          {art ? <View style={st.art}>{art}</View> : null}
-          {result}
-          <Text style={[T.body, { marginTop: 24 }]}>{t("app.labsOffline")}</Text>
-          <PreviewNotice />
-          {actions}
-          <Button kind={actions ? "text" : "primary"} title={t("app.labsBackToLab")} onPress={() => router.back()} style={{ marginTop: 12 }} />
-        </>
-      ) : (
-        <>
-          <Text style={[T.body, { marginTop: 12 }]}>{intro}</Text>
-          <PreviewNotice />
-          <Button big title={t("app.labsTryExample")} onPress={() => setShown(true)} style={{ marginTop: 24 }} />
-        </>
-      )}
-    </ScrollView>
+      <ScreenBody
+        footer={
+          shown ? (
+            <>
+              {actions}
+              <Button kind={actions ? "secondary" : "primary"} big={!actions} title={t("app.labsBackToLab")} onPress={() => router.back()} />
+            </>
+          ) : (
+            <Button big title={t("app.labsTryExample")} onPress={() => setShown(true)} />
+          )
+        }
+      >
+        <Text style={T.title}>{shown ? t("app.labsExampleTitle") : title}</Text>
+        {shown ? (
+          <>
+            {art ? <View style={st.art}>{art}</View> : null}
+            {result}
+            <Text style={[T.body, { marginTop: 24 }]}>{t("app.labsOffline")}</Text>
+            <PreviewNotice />
+          </>
+        ) : (
+          <>
+            <Text style={[T.body, { marginTop: 12 }]}>{intro}</Text>
+            <PreviewNotice />
+          </>
+        )}
+      </ScreenBody>
+    </View>
   );
 }
 

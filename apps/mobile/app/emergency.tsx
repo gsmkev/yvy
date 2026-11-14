@@ -4,7 +4,7 @@
  * El envío lo confirma la persona en la app de mensajes; Yvy no manda nada sola.
  */
 import { useState } from "react";
-import { Alert, Linking, Platform, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, Linking, Platform, StyleSheet, View } from "react-native";
 import { Stack } from "expo-router";
 import { t } from "@yvy/shared";
 import { getDb } from "../src/lib/db";
@@ -12,8 +12,8 @@ import { addContact, emergencyText, parseContacts, smsUrl, type EmergencyContact
 import { currentFix, type Fix } from "../src/lib/location";
 import { getSession } from "../src/lib/session";
 import { showToast } from "../src/lib/toast";
-import { Button, Row, s as k, Text, TextInput } from "../src/ui/kit";
-import { C, GUTTER, RADIUS, T } from "../src/ui/theme";
+import { Button, Row, ScreenBody, SectionHeader, s as k, Text, TextInput } from "../src/ui/kit";
+import { C, RADIUS, T } from "../src/ui/theme";
 
 const KEY = "emergency_contacts";
 
@@ -58,40 +58,46 @@ export default function Emergency() {
   };
 
   return (
-    <ScrollView style={k.screen} contentContainerStyle={{ paddingHorizontal: GUTTER, paddingTop: 12, paddingBottom: 80 }} keyboardShouldPersistTaps="handled">
+    <View style={k.screen}>
       <Stack.Screen options={{ title: "" }} />
-      <Text style={T.display}>{t("app.emergencyTitle")}</Text>
-      <Text style={[T.small, { marginTop: 4 }]}>{t("app.emergencyIntro")}</Text>
+      <ScreenBody
+        footer={
+          <>
+            <Text style={[T.small, { textAlign: "center" }]}>{contacts.length ? t("app.emergencySendTo", { n: contacts.length }) : t("app.emergencyNoContacts")}</Text>
+            <Button big kind="danger" title={t("app.emergencySend")} loading={busy} onPress={send} />
+          </>
+        }
+      >
+        <Text style={T.display}>{t("app.emergencyTitle")}</Text>
+        <Text style={[T.small, { marginTop: 4 }]}>{t("app.emergencyIntro")}</Text>
 
-      <Button big kind="danger" title={t("app.emergencySend")} loading={busy} onPress={send} style={{ marginTop: 20 }} />
-      <Text style={[T.small, { marginTop: 8 }]}>{contacts.length ? t("app.emergencySendTo", { n: contacts.length }) : t("app.emergencyNoContacts")}</Text>
+        <SectionHeader title={t("app.emergencyContacts")} />
+        {contacts.map((c) => (
+          <Row key={c.phone} title={c.name || c.phone} subtitle={c.name ? c.phone : undefined} onPress={() => remove(c)} right={<Text style={[T.smallMedium, { color: C.peligro }]}>{t("app.emergencyRemove")}</Text>} />
+        ))}
 
-      <Text style={[T.bodyMedium, { marginTop: 28, marginBottom: 6 }]}>{t("app.emergencyContacts")}</Text>
-      {contacts.map((c) => (
-        <Row key={c.phone} title={c.name || c.phone} subtitle={c.name ? c.phone : undefined} onPress={() => remove(c)} right={<Text style={[T.smallMedium, { color: C.peligro }]}>{t("app.emergencyRemove")}</Text>} />
-      ))}
-
-      <View style={{ marginTop: 14, gap: 8 }}>
-        <TextInput
-          style={st.input}
-          value={name}
-          onChangeText={setName}
-          placeholder={t("app.emergencyNamePlaceholder")}
-          accessibilityLabel={t("app.emergencyNamePlaceholder")}
-          autoComplete="name"
-        />
-        <TextInput
-          style={st.input}
-          value={phone}
-          onChangeText={setPhone}
-          placeholder={t("app.emergencyPhonePlaceholder")}
-          accessibilityLabel={t("app.emergencyPhonePlaceholder")}
-          keyboardType="phone-pad"
-          autoComplete="tel"
-        />
-        <Button kind="secondary" title={t("app.emergencyAdd")} onPress={add} disabled={phone.replace(/\D/g, "").length < 6} />
-      </View>
-    </ScrollView>
+        <View style={{ marginTop: 14, gap: 8 }}>
+          <TextInput
+            style={st.input}
+            value={name}
+            onChangeText={setName}
+            placeholder={t("app.emergencyNamePlaceholder")}
+            accessibilityLabel={t("app.emergencyNamePlaceholder")}
+            autoComplete="name"
+          />
+          <TextInput
+            style={st.input}
+            value={phone}
+            onChangeText={setPhone}
+            placeholder={t("app.emergencyPhonePlaceholder")}
+            accessibilityLabel={t("app.emergencyPhonePlaceholder")}
+            keyboardType="phone-pad"
+            autoComplete="tel"
+          />
+          <Button kind="secondary" title={t("app.emergencyAdd")} onPress={add} disabled={phone.replace(/\D/g, "").length < 6} />
+        </View>
+      </ScreenBody>
+    </View>
   );
 }
 

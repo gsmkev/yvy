@@ -110,7 +110,7 @@ export const esPY = {
     noteQuestion: "Escribí lo que viste",
     addPhoto: "¿Querés sacar una foto?",
     addNote: "¿Algo más que contar?",
-    skip: "Saltar",
+    skip: "Omitir",
     next: "Seguir",
     done: "Listo",
     savedTitle: "Anotado en {{plot}}",

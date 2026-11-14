@@ -665,6 +665,28 @@ function Progress({ i, n }: { i: number; n: number }) {
   );
 }
 
+/** Paso de elegir una opción: se marca la fila, "Seguir" queda fijo abajo y lo que no aplica ("Omitir", "Otro") es la acción secundaria. */
+function ChoiceStep({ question, items, value, onAnswer, secondary }: { question: string; items: { value: string; label: string }[]; value: unknown; onAnswer: (v: unknown) => void; secondary?: string }) {
+  const [picked, setPicked] = useState<string | undefined>(typeof value === "string" ? value : undefined);
+  return (
+    <ScreenBody
+      footer={
+        <>
+          <Button big title={t("app.next")} disabled={picked === undefined} onPress={() => onAnswer(picked)} />
+          {secondary ? <Button kind="secondary" title={secondary} onPress={() => onAnswer(undefined)} /> : null}
+        </>
+      }
+    >
+      <Text style={[T.title, { marginBottom: 16 }]}>{question}</Text>
+      <RadioGroup label={question}>
+        {items.map((o) => (
+          <Row key={o.value} choice="radio" title={o.label} selected={picked === o.value} onPress={() => setPicked(o.value)} />
+        ))}
+      </RadioGroup>
+    </ScreenBody>
+  );
+}
+
 function StepScreen({ step, value, answers, prefilled, plotAreaHa, seasons, onAnswer }: { plotAreaHa: number | null; step: Step; value: unknown; answers: Record<string, unknown>; prefilled: boolean; seasons: Season[]; onAnswer: (v: unknown) => void }) {
   const [text, setText] = useState(value === undefined ? "" : String(value));
   const input = useRef<ElementRef<typeof TextInputRef>>(null);
@@ -673,64 +695,19 @@ function StepScreen({ step, value, answers, prefilled, plotAreaHa, seasons, onAn
     return () => clearTimeout(id);
   }, []);
 
-  if (step.kind === "choice") {
-    return (
-      <ScrollView contentContainerStyle={k.pad}>
-        <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
-        <RadioGroup label={tr(step.question)}>
-          {step.options.map((o) => (
-            <Row key={o.value} choice="radio" title={tr(o.label)} selected={value === o.value} onPress={() => onAnswer(o.value)} />
-          ))}
-        </RadioGroup>
-        {step.optional && <Button kind="text" title={t("app.skip")} onPress={() => onAnswer(undefined)} style={{ marginTop: 12 }} />}
-      </ScrollView>
-    );
-  }
+  if (step.kind === "choice")
+    return <ChoiceStep question={tr(step.question)} items={step.options.map((o) => ({ value: o.value, label: tr(o.label) }))} value={value} onAnswer={onAnswer} secondary={step.optional ? t("app.skip") : undefined} />;
   if (step.kind === "counter" || step.kind === "paddock" || step.kind === "poi") return null; // se dibuja con HerdCounter (pantalla completa)
-  if (step.kind === "season") {
-    return (
-      <ScrollView contentContainerStyle={k.pad}>
-        <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
-        <RadioGroup label={tr(step.question)}>
-          {seasons.map((x) => (
-            <Row key={x.id} choice="radio" title={x.name} selected={value === x.id} onPress={() => onAnswer(x.id)} />
-          ))}
-        </RadioGroup>
-        <Button kind="text" title={t("app.skip")} onPress={() => onAnswer(undefined)} style={{ marginTop: 12 }} />
-      </ScrollView>
-    );
-  }
+  if (step.kind === "season")
+    return <ChoiceStep question={tr(step.question)} items={seasons.map((x) => ({ value: x.id, label: x.name }))} value={value} onAnswer={onAnswer} secondary={t("app.skip")} />;
   if (step.kind === "catalog") {
     const items = getDb()
       .products()
       .filter((p) => step.productTypes.includes(p.type));
-    return (
-      <ScrollView contentContainerStyle={k.pad}>
-        <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
-        <RadioGroup label={tr(step.question)}>
-          {items.map((p) => (
-            <Row key={p.id} choice="radio" title={p.name} selected={value === p.id} onPress={() => onAnswer(p.id)} />
-          ))}
-        </RadioGroup>
-        <Button kind="text" title={tr(step.otherLabel)} onPress={() => onAnswer(undefined)} style={{ marginTop: 12 }} />
-      </ScrollView>
-    );
+    return <ChoiceStep question={tr(step.question)} items={items.map((p) => ({ value: p.id, label: p.name }))} value={value} onAnswer={onAnswer} secondary={tr(step.otherLabel)} />;
   }
-  if (step.kind === "machine") {
-    return (
-      <ScrollView contentContainerStyle={k.pad}>
-        <Text style={[T.title, { marginBottom: 16 }]}>{tr(step.question)}</Text>
-        <RadioGroup label={tr(step.question)}>
-          {getDb()
-            .machines()
-            .map((m) => (
-              <Row key={m.id} choice="radio" title={m.name} selected={value === m.id} onPress={() => onAnswer(m.id)} />
-            ))}
-        </RadioGroup>
-        <Button kind="text" title={tr(step.otherLabel)} onPress={() => onAnswer(undefined)} style={{ marginTop: 12 }} />
-      </ScrollView>
-    );
-  }
+  if (step.kind === "machine")
+    return <ChoiceStep question={tr(step.question)} items={getDb().machines().map((m) => ({ value: m.id, label: m.name }))} value={value} onAnswer={onAnswer} secondary={tr(step.otherLabel)} />;
   if (step.kind === "usage") {
     const area = typeof answers.areaHa === "number" ? answers.areaHa : plotAreaHa;
     return <UsageStep question={step.question} hint={step.hint} products={Array.isArray(value) ? (value as ProductDose[]) : []} areaHa={area} onAnswer={onAnswer} />;
@@ -1016,18 +993,26 @@ function Done({ plot, kind, values }: { plot: Plot | null; kind: RecordKind; val
   const rain = plot ? db.rainThisMonth(plot.farmId) : 0;
   const offline = !st2.online || st2.pending > 0;
   return (
-    <View style={[k.screen, { justifyContent: "center", paddingHorizontal: GUTTER }]}>
+    <View style={k.screen}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={st.doneMark}>
-        <Check size={36} color={C.blanco} strokeWidth={3} />
-      </View>
-      <Text style={[T.title, { marginTop: 24 }]}>{plot ? t("app.savedTitle", { plot: plot.name }) : t(`recordKinds.${kind}`)}</Text>
-      <Text style={[T.body, { marginTop: 8 }]}>{describeRecord(kind, values)}</Text>
-      {kind === "rain" && rain > 0 && <Text style={[T.heading, { marginTop: 20, color: C.accionOscuro }]}>{t("app.rainMonth", { mm: Math.round(rain) })}</Text>}
-      <Text style={[T.small, { marginTop: 20 }]}>{offline ? t("app.savedOffline") : t("app.savedOnline")}</Text>
-      <View style={{ height: 40 }} />
-      <Button big title={t("app.annotateAgain")} onPress={() => router.replace({ pathname: "/annotate", params: plot ? { plotId: plot.id } : {} })} />
-      <Button kind="text" title={t("app.backToToday")} onPress={() => router.replace("/(tabs)")} style={{ marginTop: 8 }} />
+      <ScreenBody
+        footer={
+          <>
+            <Button big title={t("app.annotateAgain")} onPress={() => router.replace({ pathname: "/annotate", params: plot ? { plotId: plot.id } : {} })} />
+            <Button kind="secondary" title={t("app.backToToday")} onPress={() => router.replace("/(tabs)")} />
+          </>
+        }
+      >
+        <View style={{ marginTop: 72 }}>
+          <View style={st.doneMark}>
+            <Check size={36} color={C.blanco} strokeWidth={3} />
+          </View>
+          <Text style={[T.title, { marginTop: 24 }]}>{plot ? t("app.savedTitle", { plot: plot.name }) : t(`recordKinds.${kind}`)}</Text>
+          <Text style={[T.body, { marginTop: 8 }]}>{describeRecord(kind, values)}</Text>
+          {kind === "rain" && rain > 0 && <Text style={[T.heading, { marginTop: 20, color: C.accionOscuro }]}>{t("app.rainMonth", { mm: Math.round(rain) })}</Text>}
+          <Text style={[T.small, { marginTop: 20 }]}>{offline ? t("app.savedOffline") : t("app.savedOnline")}</Text>
+        </View>
+      </ScreenBody>
     </View>
   );
 }

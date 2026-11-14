@@ -1,5 +1,5 @@
 /** Historial: 30 días agrupados por día. El estado de envío va en el borde izquierdo: pendiente punteado trigo, enviado sólido soja. */
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Image, Pressable, ScrollView, SectionList, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import { describeRecord, LIMITS, t, type RecordKind } from "@yvy/shared";
@@ -55,7 +55,7 @@ export default function History() {
         <View>
           <Text style={[T.display, { marginBottom: 8 }]}>{t("app.history")}</Text>
           {kinds.length > 1 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={st.filters} contentContainerStyle={{ gap: 22 }}>
+            <FadingScroll>
               {(["all", ...kinds] as const).map((kd) => (
                 <Pressable
                   key={kd}
@@ -67,7 +67,7 @@ export default function History() {
                   <Text style={[T.bodyMedium, { color: active === kd ? C.tinta : C.tinta2 }]}>{kd === "all" ? t("app.filterAll") : t(`recordKinds.${kd}`)}</Text>
                 </Pressable>
               ))}
-            </ScrollView>
+            </FadingScroll>
           )}
         </View>
       }
@@ -99,8 +99,45 @@ export default function History() {
   );
 }
 
+/** Fila que se desplaza hacia los costados; el borde que tiene más contenido se desvanece para que se note que sigue. */
+function FadingScroll({ children }: { children: ReactNode }) {
+  const [m, setM] = useState({ x: 0, w: 0, c: 0 });
+  const left = m.x > 4;
+  const right = m.c > m.w && m.x + m.w < m.c - 4;
+  return (
+    <View style={st.filtersWrap}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={st.filters}
+        contentContainerStyle={{ gap: 22, paddingRight: 56 }}
+        scrollEventThrottle={32}
+        onScroll={(e) => setM((v) => ({ ...v, x: e.nativeEvent.contentOffset.x }))}
+        onLayout={(e) => setM((v) => ({ ...v, w: e.nativeEvent.layout.width }))}
+        onContentSizeChange={(w) => setM((v) => ({ ...v, c: w }))}
+      >
+        {children}
+      </ScrollView>
+      {left && <Fade side="left" />}
+      {right && <Fade side="right" />}
+    </View>
+  );
+}
+
+function Fade({ side }: { side: "left" | "right" }) {
+  return (
+    <View pointerEvents="none" style={[st.fade, side === "left" ? { left: 0, flexDirection: "row" } : { right: 0, flexDirection: "row-reverse" }]}>
+      {Array.from({ length: 14 }, (_, i) => (
+        <View key={i} style={{ width: 4, backgroundColor: C.papel, opacity: Math.pow(1 - i / 14, 0.6) }} />
+      ))}
+    </View>
+  );
+}
+
 const st = StyleSheet.create({
-  filters: { marginHorizontal: -20, paddingHorizontal: 20, flexGrow: 0 },
+  filtersWrap: { marginHorizontal: -20 },
+  fade: { position: "absolute", top: 0, bottom: 0 },
+  filters: { paddingHorizontal: 20, flexGrow: 0 },
   filter: { minHeight: 48, justifyContent: "center", borderBottomWidth: 3, borderBottomColor: "transparent" },
   filterActive: { borderBottomColor: C.tinta },
   thumb: { width: 48, height: 48, borderRadius: 8 },

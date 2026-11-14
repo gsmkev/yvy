@@ -21,7 +21,7 @@ export default function Roya() {
       }
       actions={
         <>
-          <Text style={[T.small, { marginTop: 16, marginBottom: 8 }]}>{t("app.labsRustAnnotateHint")}</Text>
+          <Text style={[T.small, { textAlign: "center" }]}>{t("app.labsRustAnnotateHint")}</Text>
           <Button big title={t("app.labsRustAnnotate")} onPress={() => router.push({ pathname: "/annotate", params: { kind: "pest" } })} />
         </>
       }

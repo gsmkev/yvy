@@ -1,0 +1,5 @@
+- [x] Separate hero copy from plot overlays.
+- [x] Remove abstract section transitions and correct sync direction.
+- [x] Clarify problem and report headlines.
+- [x] Set trial to 30 days and distinguish numeric zero.
+- [x] Show the full footer wordmark and verify desktop/mobile.

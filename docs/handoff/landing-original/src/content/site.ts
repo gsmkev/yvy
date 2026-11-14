@@ -1,0 +1,161 @@
+const TRIAL_DAYS = 30;
+
+export const site = {
+  trialDays: TRIAL_DAYS,
+  brand: "Yvy",
+  nav: [
+    { label: "Sin señal", href: "#sin-senal" },
+    { label: "Cómo funciona", href: "#como-funciona" },
+    { label: "Satélite y clima", href: "#satelite" },
+    { label: "Imprevistos", href: "#imprevistos" },
+    { label: "Tarifas", href: "#tarifas" },
+    { label: "Probar", href: "#probar" },
+  ],
+  signal: { online: "SINCRONIZADO", offline: "SIN SEÑAL" },
+  hero: {
+    title: "El mapa vivo de tu campo, *aunque no haya señal*.",
+    lead: "Dibujá tus parcelas sobre el satélite, asigná a tu gente y recibí lo que pasa en cada lote, aunque estén a 80 km de la antena más cercana. Y enterate antes de una helada, una sequía o un incendio.",
+    cta: `Probá Yvy ${TRIAL_DAYS} días en tu campo →`,
+    note: "FUNCIONA OFFLINE · ANDROID E IOS",
+    plots: [
+      "LOTE 2 · TRIGO · 98 HA",
+      "LOTE 7 · RASTROJO · 121 HA",
+      "LOTE 4 · SOJA · 186 HA",
+      "LOTE 5 · TRIGO · 204 HA",
+      "LOTE 3 · SOJA · 166 HA",
+      "LOTE 6 · BARBECHO · 77 HA",
+      "LOTE 8 · MAÍZ COSECHADO · 142 HA",
+    ],
+  },
+  sinSenal: {
+    quote: "Sin señal, los registros quedan en cuadernos y mensajes. Revisar qué pasó en cada lote lleva tiempo.",
+    facts: [
+      { k: "SIN COBERTURA", v: "Gran parte del Chaco y del norte de la Región Oriental sigue sin 4G estable." },
+      { k: "PAPEL Y WHATSAPP", v: "Los partes diarios se pierden entre audios, fotos sueltas y cuadernos." },
+      { k: "TARDE", v: "Cuando la información llega, la helada ya pasó o el lote ya está perdido." },
+    ],
+  },
+  como: {
+    label: "CÓMO FUNCIONA · EL VIAJE DE UN DATO",
+    steps: [
+      { t: "Dibujá.", d: "Delimitá tus parcelas y potreros sobre la imagen satelital, o importá tu KML. En minutos tenés el campo entero en el mapa." },
+      { t: "Asigná.", d: "Cada empleado ve solo sus zonas y sus tareas: recorrer el lote 4, medir la lluvia, revisar el tajamar." },
+      { t: "Cargá sin señal.", d: "En el lote, sin internet, el empleado registra lo que ve: foto, plaga, estado del cultivo, lluvia del pluviómetro. Queda guardado en el celular." },
+      { t: "Sincronizá.", d: "Cuando vuelve la señal, todo sube solo. Vos lo ves en el mapa, ordenado por lote, con fecha, hora y ubicación." },
+    ],
+    people: [
+      { n: "Ramón", tasks: ["RECORRER LOTE 4", "CONTAR CHINCHES"] },
+      { n: "Celso", tasks: ["MEDIR LLUVIA", "REVISAR TAJAMAR"] },
+      { n: "Lidia", tasks: ["POTRERO 2 · PASTO", "AGUADA NORTE"] },
+    ],
+    records: [
+      "LOTE 4 · 09:14 · Chinche verde, 3 por metro · foto adjunta",
+      "PLUVIÓMETRO CASA · 07:00 · 42 mm",
+      "POTRERO 2 · 11:40 · Pasto 15 cm, aguada con agua",
+    ],
+    pending: "SIN SEÑAL · 3 REGISTROS PENDIENTES",
+    synced: "SINCRONIZADO · 11:52",
+  },
+  satelite: {
+    title: "Cada lote, *visto desde arriba* cada 5 días.",
+    lead: "Sin drones ni sensores. Yvy cruza cada parcela con imágenes satelitales y datos climáticos abiertos.",
+    layers: [
+      { id: "vigor", label: "VIGOR", text: "Detectá el lote que se está quedando atrás antes de verlo a simple vista.", source: "SENTINEL-2 · 10 M · CADA 5 DÍAS", scale: ["BAJO", "ALTO"] },
+      { id: "lluvia", label: "LLUVIA", text: "Lluvia acumulada de los últimos 30 días, comparada con el promedio de 40 años.", source: "CHIRPS · DIARIO · DESDE 1981", scale: ["0 MM", "120 MM"] },
+      { id: "temp", label: "TEMPERATURA", text: "Mínimas y máximas por lote, hora por hora.", source: "ERA5-LAND · HORARIO", scale: ["−2 °C", "38 °C"] },
+      { id: "humedad", label: "HUMEDAD DEL SUELO", text: "Cuánta agua le queda al suelo de cada parcela.", source: "ERA5-LAND · SENTINEL-1", scale: ["SECO", "SATURADO"] },
+    ],
+  },
+  imprevistos: {
+    title: "Enterate *antes*.",
+    lead: "Yvy mira el pronóstico y 40 años de historia climática de cada lote, y te avisa cuando se viene algo que puede costarte la campaña.",
+    marks: [
+      { day: 4, span: 1, tone: "alerta", text: "HELADA · 72% · MÍNIMA −1 °C · LOTES 2, 5 Y 6 (TRIGO)" },
+      { day: 9, span: 6, tone: "trigo", text: "DÉFICIT HÍDRICO · HUMEDAD DEL SUELO BAJO EL 30%" },
+      { day: 11, span: 1, tone: "alerta", text: "RIESGO DE FUEGO ALTO · VIENTO NORTE 35 KM/H" },
+    ],
+    index: [
+      { n: "Helada", d: "Para cubrir o adelantar labores en trigo, maíz zafriña y hortalizas.", a: "HASTA 5 DÍAS ANTES" },
+      { n: "Sequía", d: "Balance de agua por lote con lluvia, evaporación y humedad del suelo.", a: "HASTA 15 DÍAS ANTES" },
+      { n: "Exceso de lluvia", d: "Lotes con riesgo de anegamiento y caminos que se cortan.", a: "HASTA 7 DÍAS ANTES" },
+      { n: "Fuego", d: "Focos de calor cerca del perímetro, con dirección del viento.", a: "EN TIEMPO CASI REAL" },
+    ],
+    foot: "PRONÓSTICO CON MODELOS ABIERTOS (GFS, ERA5-LAND) Y FOCOS NASA FIRMS. PROBABILIDADES ORIENTATIVAS.",
+  },
+  estancias: {
+    title: "Todos tus campos, *en una pantalla*.",
+    list: [
+      { name: "ESTANCIA SANTA CLARA", line: "ESTANCIA SANTA CLARA · BOQUERÓN · 6.200 HA · 4 EMPLEADOS · 2 AVISOS", x: 97, y: 162, warn: true },
+      { name: "CAMPO LAS PALMAS", line: "CAMPO LAS PALMAS · PRESIDENTE HAYES · 3.100 HA · 2 EMPLEADOS · TODO EN ORDEN", x: 163, y: 243, warn: false },
+      { name: "LOTES ITAPÚA", line: "LOTES ITAPÚA · ITAPÚA · 840 HA SOJA · 3 EMPLEADOS · HELADA EN 4 DÍAS", x: 311, y: 381, warn: true },
+    ],
+  },
+  reportes: {
+    title: "Tus registros, *en un informe semanal*.",
+    lead: "Todos los registros de la semana, por lote y por empleado, con fotos, mapa y clima. En PDF para el socio, el banco o el agrónomo.",
+    formats: "PDF · EXCEL · KML · ENVÍO AUTOMÁTICO POR WHATSAPP O EMAIL",
+    rows: [
+      ["08/09", "LOTE 4", "Ramón", "Chinche verde, 3/m"],
+      ["08/09", "CASA", "Celso", "Lluvia 42 mm"],
+      ["09/09", "POTRERO 2", "Lidia", "Pasto 15 cm"],
+      ["10/09", "LOTE 6", "Ramón", "Trigo en espigazón"],
+      ["11/09", "TAJAMAR", "Celso", "Nivel 70%"],
+    ],
+  },
+  audiencias: [
+    { n: "Productores de soja, maíz y trigo", g: "VIGOR, PLAGAS Y HELADAS POR LOTE" },
+    { n: "Estancias ganaderas y mixtas", g: "POTREROS, AGUADAS Y PASTO" },
+    { n: "Administradores de varios campos", g: "TODO SIN VIAJAR" },
+    { n: "Agrónomos asesores", g: "TUS CLIENTES EN UN MAPA" },
+    { n: "Empleados de campo", g: "UNA APP SIMPLE QUE ANDA SIN SEÑAL" },
+  ],
+  datos: {
+    title: "Construido sobre *datos públicos*.",
+    rows: [
+      ["Sentinel-2 · Copernicus", "Vigor del cultivo y del pasto", "10 m · cada 5 días"],
+      ["Sentinel-1 · Copernicus", "Humedad y agua, aunque haya nubes", "10 m · 6 a 12 días"],
+      ["CHIRPS", "Lluvia diaria", "5 km · desde 1981"],
+      ["ERA5-Land · Copernicus", "Temperatura, humedad del suelo, evaporación", "9 km · horario"],
+      ["NASA POWER", "Agroclima por punto", "Diario"],
+      ["NASA FIRMS", "Focos de calor", "Horas"],
+      ["GFS · NOAA", "Pronóstico a 14 días", "4 veces por día"],
+      ["Copernicus DEM", "Relieve y drenaje", "30 m"],
+    ],
+  },
+  tarifas: {
+    title: "Pagás *por hectárea*, no por usuario.",
+    lead: "Sumá todos los empleados que quieras.",
+    rows: [
+      ["Cultivos", "US$ 0,80 / ha / año"],
+      ["Ganadería", "US$ 0,30 / ha / año"],
+      ["Mínimo por estancia", "US$ 40 / mes"],
+      ["Agrónomos (hasta 20 clientes)", "consultar"],
+      [`Primeros ${TRIAL_DAYS} días`, "sin costo"],
+    ],
+    foot: "PRECIOS DE REFERENCIA. FACTURAMOS EN GUARANÍES O DÓLARES. EMPLEADOS ILIMITADOS.",
+  },
+  faq: [
+    { q: "¿De verdad funciona sin internet?", a: "Sí. El mapa, las parcelas y los formularios quedan guardados en el celular. Se sincroniza solo cuando vuelve la señal." },
+    { q: "¿Mis empleados lo van a poder usar?", a: "Cada empleado ve solo sus zonas y sus tareas, con botones grandes y fotos. Si sabe usar WhatsApp, sabe usar Yvy." },
+    { q: "¿Qué tan seguro es el aviso de helada?", a: "Es una probabilidad basada en el pronóstico y en la historia de cada lote. Te lo decimos con su porcentaje, nunca como certeza." },
+    { q: "¿Puedo traer mis lotes de otro sistema?", a: "Sí. Importamos KML, KMZ, GeoJSON y shapefile." },
+    { q: "¿Necesito comprar sensores o drones?", a: "No. Todo lo satelital y climático sale de fuentes abiertas." },
+  ],
+  cta: {
+    title: `Probá Yvy *${TRIAL_DAYS} días* en tu campo.`,
+    lead: "Te ayudamos a cargar tus lotes y a poner en marcha a tu gente la primera semana.",
+    crops: ["Soja", "Maíz", "Trigo", "Arroz", "Ganadería", "Mixto"],
+    submit: "EMPEZAR LA PRUEBA →",
+    saving: "GUARDANDO…",
+    done: "Recibido. Te escribimos por WhatsApp.",
+    whatsapp: "https://wa.me/595XXXXXXXXX",
+    whatsappLabel: "o escribinos por WhatsApp →",
+  },
+  footer: {
+    coords: "ASUNCIÓN · 25°17′S 57°38′O",
+    contact: "hola@yvy.com.py",
+    attribution:
+      "Contiene datos modificados de Copernicus Sentinel (2015–2026). CHIRPS (UCSB/CHG). ERA5-Land (Copernicus Climate Change Service). NASA POWER. NASA FIRMS. GFS (NOAA). Copernicus DEM.",
+    copy: "© 2026 KOETI",
+  },
+};

@@ -1,0 +1,246 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Yvy design system: two worlds, "campo" (lino) and "oficina" (surco). */
+
+@theme inline {
+  --radius-sm: 1px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-lino: var(--lino);
+  --color-lino-2: var(--lino-2);
+  --color-surco: var(--surco);
+  --color-surco-2: var(--surco-2);
+  --color-soja: var(--soja);
+  --color-trigo: var(--trigo);
+  --color-cielo: var(--cielo);
+  --color-alerta: var(--alerta);
+  --color-linea-claro: var(--linea-claro);
+  --color-linea-oscuro: var(--linea-oscuro);
+  --color-vigor-1: var(--vigor-1);
+  --color-vigor-2: var(--vigor-2);
+  --color-vigor-3: var(--vigor-3);
+  --color-vigor-4: var(--vigor-4);
+  --color-vigor-5: var(--vigor-5);
+
+  --font-display: "Young Serif", Georgia, serif;
+  --font-sans: "Hanken Grotesk", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+  --ease-yvy: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root {
+  --radius: 2px;
+  --lino: #f1eee4;
+  --lino-2: #e6e1d2;
+  --surco: #1e2419;
+  --surco-2: #273021;
+  --soja: #7a9a3f;
+  --trigo: #d9a93a;
+  --cielo: #8db3c7;
+  --alerta: #d2462b;
+  --linea-claro: rgba(30, 36, 25, 0.14);
+  --linea-oscuro: rgba(241, 238, 228, 0.14);
+  --vigor-1: #b5562e;
+  --vigor-2: #d9a93a;
+  --vigor-3: #c9c46a;
+  --vigor-4: #7a9a3f;
+  --vigor-5: #3f6b35;
+
+  --background: var(--lino);
+  --foreground: var(--surco);
+  --card: var(--lino);
+  --card-foreground: var(--surco);
+  --popover: var(--lino);
+  --popover-foreground: var(--surco);
+  --primary: var(--soja);
+  --primary-foreground: var(--lino);
+  --secondary: var(--lino-2);
+  --secondary-foreground: var(--surco);
+  --muted: var(--lino-2);
+  --muted-foreground: color-mix(in oklab, var(--surco) 65%, transparent);
+  --accent: var(--trigo);
+  --accent-foreground: var(--surco);
+  --destructive: var(--alerta);
+  --destructive-foreground: var(--lino);
+  --border: var(--linea-claro);
+  --input: var(--linea-claro);
+  --ring: var(--soja);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background-color: var(--surco);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: 18px;
+    line-height: 1.55;
+    overflow-x: hidden;
+  }
+  ::selection {
+    background: var(--trigo);
+    color: var(--surco);
+  }
+  @media (pointer: fine) {
+    body.has-cursor,
+    body.has-cursor a,
+    body.has-cursor button,
+    body.has-cursor label {
+      cursor: none;
+    }
+  }
+}
+
+@utility h1-yvy {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  line-height: 0.95;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+@utility h2-yvy {
+  font-family: var(--font-display);
+  font-size: clamp(2.3rem, 6vw, 5.5rem);
+  line-height: 0.95;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+@utility mono-yvy {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+}
+@utility body-yvy {
+  font-family: var(--font-sans);
+  font-size: clamp(17px, 1.3vw, 19px);
+  line-height: 1.55;
+  max-width: 58ch;
+}
+@utility em-dark {
+  color: var(--soja);
+}
+@utility em-light {
+  color: var(--surco);
+  background-image: linear-gradient(var(--trigo), var(--trigo));
+  background-repeat: no-repeat;
+  background-size: 100% 0.08em;
+  background-position: 0 92%;
+}
+@utility link-yvy {
+  position: relative;
+  display: inline-block;
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.12em;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.6s var(--ease-yvy);
+  }
+  &:hover::after,
+  &:focus-visible::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+@utility link-on {
+  &::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+@utility pending {
+  outline: 1px dashed var(--trigo);
+  outline-offset: -1px;
+}
+@utility synced {
+  outline: 1px solid var(--soja);
+  outline-offset: -1px;
+}
+@utility media-treat {
+  filter: saturate(0.75) contrast(1.12) sepia(0.08);
+}
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes sync-fill {
+  from {
+    background-size: 0% 100%;
+  }
+  to {
+    background-size: 100% 100%;
+  }
+}
+
+.hero-yvy > header {
+  min-height: 26svh;
+}
+.hero-copy .h1-yvy {
+  font-size: 2.5rem;
+  line-height: 1.06;
+}
+.numeral-yvy {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  font-variant-numeric: slashed-zero tabular-nums;
+  letter-spacing: 0;
+}
+.trial-title.h2-yvy {
+  font-family: var(--font-sans);
+  font-size: 2.5rem;
+  font-weight: 500;
+  line-height: 1.1;
+}
+.trial-title .numeral-yvy {
+  font-family: inherit;
+  font-size: inherit;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+@media (min-width: 768px) {
+  .trial-title.h2-yvy { font-size: 4rem; }
+  .hero-yvy > header { min-height: 42svh; }
+  .hero-copy .h1-yvy { font-size: 4rem; }
+}
+@media (min-width: 1280px) {
+  .hero-copy .h1-yvy { font-size: 5rem; }
+}

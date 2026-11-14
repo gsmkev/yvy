@@ -23,6 +23,7 @@ import { fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { Button, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { HeaderActions } from "./adminSlot";
 import { ExportableTable } from "../ExportableTable";
 
 interface Saved {
@@ -111,7 +112,6 @@ export function ExportPanel() {
   };
   return (
     <div className="flex flex-col gap-6">
-      <p className="text-sm text-tinta-2">{t("ui.expIntro")}</p>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Field label={t("ui.expDataset")}>
           <Select value={dataset} onChange={(e) => changeDataset(e.target.value as ExportDataset)} options={EXPORT_DATASETS.map((d) => ({ value: d, label: tk(`ui.expDataset_${d}`) }))} />
@@ -136,7 +136,7 @@ export function ExportPanel() {
       </div>
 
       <section className="flex flex-col gap-3" aria-labelledby="exp-opts">
-        <h2 id="exp-opts" className="border-b border-linea pb-2 font-serif text-lg font-semibold">
+        <h2 id="exp-opts" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
           {t("ui.expOptions")}
         </h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -169,7 +169,7 @@ export function ExportPanel() {
       </section>
 
       <section className="flex flex-col gap-2" aria-labelledby="exp-cols">
-        <h2 id="exp-cols" className="border-b border-linea pb-2 font-serif text-lg font-semibold">
+        <h2 id="exp-cols" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
           {t("ui.expColumns")}
         </h2>
         <ul className="divide-y divide-linea border-b border-linea text-sm">
@@ -199,7 +199,7 @@ export function ExportPanel() {
 
       {dataset !== "cash" && (
         <section className="flex flex-col gap-2" aria-labelledby="exp-tax">
-          <h2 id="exp-tax" className="border-b border-linea pb-2 font-serif text-lg font-semibold">
+          <h2 id="exp-tax" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
             {t("ui.expTaxTitle")}
           </h2>
           <p className="text-sm text-tinta-2">{t("ui.expTaxIntro")}</p>
@@ -241,7 +241,7 @@ export function ExportPanel() {
       )}
 
       <section className="flex flex-col gap-2" aria-labelledby="exp-prev">
-        <h2 id="exp-prev" className="border-b border-linea pb-2 font-serif text-lg font-semibold">
+        <h2 id="exp-prev" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
           {t("ui.expPreview")}
         </h2>
         {data.isLoading && <Spinner />}
@@ -250,9 +250,11 @@ export function ExportPanel() {
         {rows.length > 0 && <pre className="num overflow-x-auto rounded-md border border-linea bg-white p-3 text-xs">{preview}</pre>}
         {data.data?.truncated && <p className="text-xs text-tinta-2">{t("ui.acctTruncated")}</p>}
         <div className="flex flex-wrap items-end gap-3">
-          <Button variant="primary" disabled={rows.length === 0} onClick={downloadFile}>
-            {t("ui.expDownload", { n: fmtNum(rows.length) })}
-          </Button>
+          <HeaderActions>
+            <Button variant="primary" disabled={rows.length === 0} onClick={downloadFile}>
+              {t("ui.expDownload", { n: fmtNum(rows.length) })}
+            </Button>
+          </HeaderActions>
           <Field label={t("ui.expFormatName")}>
             <Input value={name} maxLength={80} onChange={(e) => setName(e.target.value)} />
           </Field>

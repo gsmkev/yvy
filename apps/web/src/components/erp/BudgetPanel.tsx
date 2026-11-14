@@ -9,6 +9,7 @@ import { useFarm, useFarms } from "../../lib/queries";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
 import { useSeasonList } from "./CostsPanel";
 import { ExportableTable } from "../ExportableTable";
+import { HeaderActions, RowMenu } from "./adminSlot";
 
 interface Row {
   id: string;
@@ -44,7 +45,6 @@ export function BudgetPanel() {
   if (seasons.isLoading) return <Spinner />;
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-tinta-2">{t("ui.budgetIntro")}</p>
       {(seasons.data ?? []).length === 0 ? (
         <Empty>{t("ui.budgetNoSeason")}</Empty>
       ) : (
@@ -53,10 +53,12 @@ export function BudgetPanel() {
             <Field label={t("ui.costSeason")}>
               <Select value={season} onChange={(e) => setSeasonId(e.target.value)} options={(seasons.data ?? []).map((x) => ({ value: x.id, label: x.name }))} />
             </Field>
+          </div>
+          <HeaderActions>
             <Button variant="primary" onClick={() => setAdding(true)}>
               {t("ui.budgetNew")}
             </Button>
-          </div>
+          </HeaderActions>
           {q.isLoading ? (
             <Spinner />
           ) : q.error ? (
@@ -83,7 +85,9 @@ export function BudgetPanel() {
                           <th className="py-2 pr-4 text-right font-medium">{t("ui.budgetActual")}</th>
                           <th className="py-2 pr-4 text-right font-medium">{t("ui.budgetDiff")}</th>
                           <th className="py-2 pr-4 text-right font-medium">%</th>
-                          <th />
+                          <th className="sticky right-0 w-12 bg-lino">
+                            <span className="sr-only">{t("ui.rowActionsHeader")}</span>
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -101,10 +105,8 @@ export function BudgetPanel() {
                               <td className="num py-2.5 pr-4 text-right">{fmtGs(r.actualPyg)}</td>
                               <td className={`num py-2.5 pr-4 text-right ${bad ? "text-peligro" : ""}`}>{fmtGs(r.diffPyg)}</td>
                               <td className="num py-2.5 pr-4 text-right">{r.pct === null ? "" : `${r.pct}`}</td>
-                              <td className="py-2.5 text-right">
-                                <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => remove.mutate(r.id)}>
-                                  {t("ui.delete")}
-                                </button>
+                              <td className="sticky right-0 w-12 bg-lino py-1 text-right">
+                                <RowMenu name={r.plotName ?? tk(`ui.costCategory_${r.category}`)} onDelete={() => remove.mutate(r.id)} />
                               </td>
                             </tr>
                           );

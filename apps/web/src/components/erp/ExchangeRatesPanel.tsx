@@ -8,6 +8,7 @@ import { t } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { Button, Empty, ErrorBox, Field, Input, Spinner, toast } from "../ui";
 import { ExportableTable } from "../ExportableTable";
+import { RowMenu } from "./adminSlot";
 
 interface Rate {
   date: string;
@@ -37,7 +38,6 @@ export function ExchangeRatesPanel() {
   const latest = rates[0];
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-tinta-2">{t("ui.ratesIntro")}</p>
       <div className="flex flex-col gap-0.5">
         <span className="eyebrow">{t("ui.ratesCurrent")}</span>
         {latest ? (
@@ -84,13 +84,8 @@ export function ExchangeRatesPanel() {
                 <tr key={r.date} className="border-b border-linea">
                   <td className="num py-2.5 pr-4">{fmtIsoDate(r.date)}</td>
                   <td className="num py-2.5 pr-4 text-right">{fmtGs(r.usdToPyg)}</td>
-                  <td className="py-2.5 text-right">
-                    <button
-                      className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline"
-                      onClick={() => remove.mutate(r.date)}
-                    >
-                      {t("ui.delete")}
-                    </button>
+                  <td className="sticky right-0 w-12 bg-lino py-1 text-right">
+                    <RowMenu name={fmtIsoDate(r.date)} onDelete={() => remove.mutate(r.date)} />
                   </td>
                 </tr>
               ))}

@@ -6,6 +6,7 @@ import { t, tk } from "../lib/i18n";
 import type { Plot, Product } from "../lib/types";
 import { PrescriptionModal } from "./PrescriptionModal";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
+import { HeaderActions, RowMenu } from "./erp/adminSlot";
 
 interface DoseRange {
   productId: string;
@@ -40,14 +41,13 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
   const list = (q.data ?? []).filter((p) => !type || p.type === type);
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-tinta-2">{t("ui.productsIntro")}</p>
       {canEdit && (
-        <div className="flex gap-2">
+        <HeaderActions>
           <Button variant="primary" onClick={() => setEditing("new")}>
             {t("ui.productNew")}
           </Button>
           {farmId && plots && <Button onClick={() => setPrescribing(true)}>{t("ui.prescriptionNew")}</Button>}
-        </div>
+        </HeaderActions>
       )}
       <div className="max-w-60">
         <Select
@@ -65,7 +65,7 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
       ) : (
         <ul className="divide-y divide-linea border-y border-linea">
           {list.map((p) => (
-            <li key={p.id} className="flex items-baseline justify-between gap-3 py-3 text-sm">
+            <li key={p.id} className="flex items-center justify-between gap-3 py-1.5 text-sm">
               <span className="min-w-0">
                 <span className="font-medium">{p.name}</span>
                 <span className="mt-0.5 block text-tinta-2">
@@ -81,14 +81,7 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
                 </span>
               </span>
               {canEdit && (
-                <span className="flex shrink-0 gap-4 text-tinta-2">
-                  <button className="cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setEditing(p)}>
-                    {t("ui.productEdit")}
-                  </button>
-                  <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(p)}>
-                    {t("ui.delete")}
-                  </button>
-                </span>
+                <RowMenu name={p.name} onEdit={() => setEditing(p)} onDelete={() => setRemoving(p)} />
               )}
             </li>
           ))}

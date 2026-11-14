@@ -6,6 +6,7 @@ import { del, get, put, qs } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { tablesToExcel } from "../../lib/tableExport";
 import { Button, ErrorBox, Field, Input, Spinner, toast } from "../ui";
+import { HeaderActions } from "./adminSlot";
 
 interface MapRow {
   key: CostCategory;
@@ -101,7 +102,6 @@ export function AccountantPanel() {
   if (map.error) return <ErrorBox error={map.error} />;
   return (
     <div className="flex flex-col gap-5">
-      <p className="text-sm text-tinta-2">{t("ui.acctIntro")}</p>
       <div className="flex flex-wrap items-end gap-3">
         <Field label={t("ui.acctFrom")}>
           <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
@@ -109,12 +109,14 @@ export function AccountantPanel() {
         <Field label={t("ui.acctTo")}>
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
         </Field>
+      </div>
+      <HeaderActions>
         <Button variant="primary" disabled={busy} onClick={download}>
           {t("ui.acctDownload")}
         </Button>
-      </div>
+      </HeaderActions>
       {error ? <ErrorBox error={error} /> : null}
-      <h2 className="border-b border-linea pb-2 font-serif text-lg font-semibold">{t("ui.acctMapTitle")}</h2>
+      <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.acctMapTitle")}</h2>
       <p className="text-sm text-tinta-2">{t("ui.acctMapIntro")}</p>
       <table className="w-full text-sm">
         <tbody>

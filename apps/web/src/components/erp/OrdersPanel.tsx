@@ -13,6 +13,7 @@ import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } 
 import { useContractors } from "./ContractorsPanel";
 import { useMachines } from "./MachinesPanel";
 import { ExportableTable } from "../ExportableTable";
+import { HeaderActions } from "./adminSlot";
 
 export function OrdersPanel() {
   const [creating, setCreating] = useState(false);
@@ -23,12 +24,11 @@ export function OrdersPanel() {
   const hasCost = groups.some((g) => g.costPyg !== undefined);
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-tinta-2">{t("ui.ordersIntro")}</p>
-      <div>
+      <HeaderActions>
         <Button variant="primary" onClick={() => setCreating(true)}>
           {t("ui.orderNew")}
         </Button>
-      </div>
+      </HeaderActions>
       {q.isLoading && <Spinner />}
       {q.error ? <ErrorBox error={q.error} /> : null}
       {q.data && q.data.length === 0 && <Empty>{t("ui.erpEmpty")}</Empty>}

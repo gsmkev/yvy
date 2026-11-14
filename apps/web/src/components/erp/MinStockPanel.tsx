@@ -8,6 +8,7 @@ import { useProducts } from "../ProductsPanel";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
 import { useWarehouses } from "./WarehousesPanel";
 import { ExportableTable } from "../ExportableTable";
+import { HeaderActions, RowMenu } from "./adminSlot";
 
 interface Minimum {
   id: string;
@@ -46,15 +47,14 @@ export function MinStockPanel() {
   const unit = (id: string) => tk(`fields.productUnit_${prod(id)?.unit ?? "l"}`);
   return (
     <div className="flex flex-col gap-5">
-      <p className="text-sm text-tinta-2">{t("ui.minStockIntro")}</p>
-      <div>
+      <HeaderActions>
         <Button variant="primary" onClick={() => setEditing("new")}>
           {t("ui.minStockNew")}
         </Button>
-      </div>
+      </HeaderActions>
       {low.data && low.data.length > 0 && (
         <div className="flex flex-col gap-2">
-          <h2 className="border-b border-linea pb-2 font-serif text-lg font-semibold">{t("ui.minStockLowTitle")}</h2>
+          <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.minStockLowTitle")}</h2>
           <ExportableTable name="stock-bajo">
             <table className="w-full text-sm">
               <tbody>
@@ -82,7 +82,9 @@ export function MinStockPanel() {
                   <th className="py-2 pr-4 font-medium">{t("ui.stockProduct")}</th>
                   <th className="py-2 pr-4 font-medium">{t("ui.stockWhere")}</th>
                   <th className="py-2 pr-4 text-right font-medium">{t("ui.minStockMin")}</th>
-                  <th />
+                  <th className="sticky right-0 w-12 bg-lino">
+                    <span className="sr-only">{t("ui.rowActionsHeader")}</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -91,13 +93,8 @@ export function MinStockPanel() {
                     <td className="py-2.5 pr-4 font-medium">{prod(m.productId)?.name}</td>
                     <td className="py-2.5 pr-4">{wh(m.warehouseId)}</td>
                     <td className="num py-2.5 pr-4 text-right">{fmtQty(m.minQty, unit(m.productId))}</td>
-                    <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
-                      <button className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setEditing(m)}>
-                        {t("ui.erpEdit")}
-                      </button>
-                      <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(m)}>
-                        {t("ui.delete")}
-                      </button>
+                    <td className="sticky right-0 w-12 bg-lino py-1 text-right">
+                      <RowMenu name={prod(m.productId)?.name ?? ""} onEdit={() => setEditing(m)} onDelete={() => setRemoving(m)} />
                     </td>
                   </tr>
                 ))}

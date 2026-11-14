@@ -9,7 +9,9 @@ import { fmtGs, fmtMoney, fmtQty } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
 import { useProducts } from "../ProductsPanel";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
-import { InvoicePhoto } from "./InvoicePhoto";
+import { PhotoRowMenu } from "./InvoicePhoto";
+import { HeaderActions, RowMenu } from "./adminSlot";
+import { ActionMenu } from "../menus";
 import { useParties } from "./PartiesPanel";
 import { useWarehouses } from "./WarehousesPanel";
 import { ExportableTable } from "../ExportableTable";
@@ -77,17 +79,18 @@ export function StockPanel() {
   const list = stock.data?.products ?? [];
   return (
     <div className="flex flex-col gap-5">
-      <p className="text-sm text-tinta-2">{t("ui.stockIntro")}</p>
-      <div className="flex flex-wrap gap-2">
-        {(["purchase", "consumption", "transfer", "adjustment"] as const).map((m) => (
-          <Button key={m} variant={m === "purchase" ? "primary" : "secondary"} onClick={() => setMode(m)}>
-            {t(`ui.stockMode_${m}`)}
-          </Button>
-        ))}
-      </div>
+      <HeaderActions>
+        <Button variant="primary" onClick={() => setMode("purchase")}>
+          {t("ui.stockMode_purchase")}
+        </Button>
+        <ActionMenu
+          label={t("ui.moreActions")}
+          items={(["consumption", "transfer", "adjustment"] as const).map((m) => ({ label: t(`ui.stockMode_${m}`), onSelect: () => setMode(m) }))}
+        />
+      </HeaderActions>
       {expiring.data && expiring.data.length > 0 && (
         <div className="flex flex-col gap-2">
-          <h2 className="border-b border-linea pb-2 font-serif text-lg font-semibold">{t("ui.expiringTitle")}</h2>
+          <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.expiringTitle")}</h2>
           <ExportableTable name="stock-por-vencer">
             <table className="w-full text-sm">
               <tbody>
@@ -145,7 +148,7 @@ export function StockPanel() {
       )}
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-end justify-between gap-3 border-b border-linea pb-2">
-          <h2 className="font-serif text-lg font-semibold">{t("ui.stockMoves")}</h2>
+          <h2 className="text-[18px] leading-6 font-semibold">{t("ui.stockMoves")}</h2>
           <Select
             aria-label={t("ui.stockProduct")}
             value={productId}
@@ -181,14 +184,14 @@ export function StockPanel() {
                           {m.currency === "USD" && <span className="block text-xs text-tinta-2">{fmtGs(m.valuePyg)}</span>}
                         </td>
                       )}
-                      <td className="py-2.5 pr-4 text-right whitespace-nowrap">
-                        {m.valuePyg !== undefined && m.origin === "purchase" && <InvoicePhoto kind="stock-moves" id={m.id} hasPhoto={!!m.photoPath} />}
-                      </td>
-                      <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
-                        {!(m.origin === "consumption" && m.originId) && (
-                          <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(m)}>
-                            {t("ui.delete")}
-                          </button>
+                      <td className="sticky right-0 w-12 bg-lino py-1 text-right">
+                        {m.valuePyg !== undefined && m.origin === "purchase" ? (
+                          <PhotoRowMenu kind="stock-moves" id={m.id} hasPhoto={!!m.photoPath} name={fmtIsoDate(dayOf(m.occurredAt))} onDelete={() => setRemoving(m)} />
+                        ) : (
+                          <RowMenu
+                            name={fmtIsoDate(dayOf(m.occurredAt))}
+                            onDelete={m.origin === "consumption" && m.originId ? undefined : () => setRemoving(m)}
+                          />
                         )}
                       </td>
                     </tr>

@@ -9,7 +9,8 @@ import { fmtGs, fmtMoney } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
 import type { Season } from "../../lib/types";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
-import { InvoicePhoto } from "./InvoicePhoto";
+import { PhotoRowMenu } from "./InvoicePhoto";
+import { HeaderActions } from "./adminSlot";
 import { useParties } from "./PartiesPanel";
 import { ExportableTable } from "../ExportableTable";
 
@@ -65,12 +66,11 @@ export function CostsPanel() {
   const totals = q.data?.totals;
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-tinta-2">{t("ui.costsIntro")}</p>
-      <div>
+      <HeaderActions>
         <Button variant="primary" onClick={() => setEditing("new")}>
           {t("ui.costNew")}
         </Button>
-      </div>
+      </HeaderActions>
       <div className="flex flex-wrap items-end gap-3">
         <Field label={t("ui.costFarm")}>
           <Select value={f.farmId} onChange={set("farmId")} options={[{ value: "", label: t("ui.costAll") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
@@ -109,8 +109,9 @@ export function CostsPanel() {
                   <th className="py-2 pr-4 font-medium">{t("ui.costActivity")}</th>
                   <th className="py-2 pr-4 font-medium">{t("ui.costDescription")}</th>
                   <th className="py-2 pr-4 text-right font-medium">{t("ui.costAmount")}</th>
-                  <th />
-                  <th />
+                  <th className="sticky right-0 w-12 bg-lino">
+                    <span className="sr-only">{t("ui.rowActionsHeader")}</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -128,20 +129,15 @@ export function CostsPanel() {
                       {fmtMoney(c.amount, c.currency)}
                       {c.currency !== "PYG" && <span className="block text-xs text-tinta-2">{fmtGs(c.amountPyg)}</span>}
                     </td>
-                    <td className="py-2.5 pr-4 text-right whitespace-nowrap">
-                      <InvoicePhoto kind="cost-entries" id={c.id} hasPhoto={!!c.photoPath} />
-                    </td>
-                    <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
-                      {c.origin === "manual" && (
-                        <>
-                          <button className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setEditing(c)}>
-                            {t("ui.erpEdit")}
-                          </button>
-                          <button className="cursor-pointer underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(c)}>
-                            {t("ui.delete")}
-                          </button>
-                        </>
-                      )}
+                    <td className="sticky right-0 w-12 bg-lino py-1 text-right">
+                      <PhotoRowMenu
+                        kind="cost-entries"
+                        id={c.id}
+                        hasPhoto={!!c.photoPath}
+                        name={c.description ?? tk(`ui.costCategory_${c.category}`)}
+                        onEdit={c.origin === "manual" ? () => setEditing(c) : undefined}
+                        onDelete={c.origin === "manual" ? () => setRemoving(c) : undefined}
+                      />
                     </td>
                   </tr>
                 ))}

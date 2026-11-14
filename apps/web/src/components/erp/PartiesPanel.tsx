@@ -35,7 +35,6 @@ export function PartiesPanel() {
   return (
     <MasterPanel<Party>
       path="parties"
-      intro={t("ui.partiesIntro")}
       newLabel={t("ui.partyNew")}
       name={(p) => p.name}
       fields={fields}

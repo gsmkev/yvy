@@ -9,6 +9,7 @@ import { useFarm, useFarms } from "../../lib/queries";
 import { useProducts } from "../ProductsPanel";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
 import { ExportableTable } from "../ExportableTable";
+import { HeaderActions, RowMenu } from "./adminSlot";
 
 interface Ration {
   id: string;
@@ -56,19 +57,16 @@ export function FeedlotPanel() {
   const list = rations.data ?? [];
   return (
     <div className="flex flex-col gap-8">
-      <p className="text-sm text-tinta-2">{t("ui.feedlotIntro")}</p>
       <section className="flex flex-col gap-3" aria-labelledby="rations-h">
-        <h2 id="rations-h" className="border-b border-linea pb-2 font-serif text-lg font-semibold">
+        <h2 id="rations-h" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
           {t("ui.feedlotRations")}
         </h2>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="primary" onClick={() => setEditing("new")}>
-            {t("ui.feedlotRationNew")}
-          </Button>
-          <Button onClick={() => setFeeding(true)} disabled={list.length === 0 || !farms.data?.length}>
+        <HeaderActions>
+          <Button variant="primary" onClick={() => setFeeding(true)} disabled={list.length === 0 || !farms.data?.length}>
             {t("ui.feedlotFeed")}
           </Button>
-        </div>
+          <Button onClick={() => setEditing("new")}>{t("ui.feedlotRationNew")}</Button>
+        </HeaderActions>
         {list.length === 0 ? (
           <Empty>{t("ui.feedlotNoRations")}</Empty>
         ) : (
@@ -79,14 +77,7 @@ export function FeedlotPanel() {
                   <p className="font-medium">{r.name}</p>
                   <p className="num text-tinta-2">{r.items.map((i) => `${name(i.productId)} ${fmtNum(i.pctDm)} %`).join(" · ")}</p>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="quiet" onClick={() => setEditing(r)}>
-                    {t("ui.edit")}
-                  </Button>
-                  <Button variant="quiet" onClick={() => setRemoving(r)}>
-                    {t("ui.delete")}
-                  </Button>
-                </div>
+                <RowMenu name={r.name} onEdit={() => setEditing(r)} onDelete={() => setRemoving(r)} />
               </li>
             ))}
           </ul>
@@ -296,7 +287,7 @@ function CorralReport() {
   const rows = q.data?.corrals ?? [];
   return (
     <section className="flex flex-col gap-3" aria-labelledby="corral-h">
-      <h2 id="corral-h" className="border-b border-linea pb-2 font-serif text-lg font-semibold">
+      <h2 id="corral-h" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
         {t("ui.feedlotReport")}
       </h2>
       <div className="grid grid-cols-3 gap-3">

@@ -45,7 +45,6 @@ export function ResultsPanel() {
   const th = "py-2 pr-4 text-right font-medium";
   return (
     <div className="flex flex-col gap-5">
-      <p className="text-sm text-tinta-2">{t("ui.resultsIntro")}</p>
       <div className="flex flex-wrap items-end gap-3">
         <Field label={t("ui.costSeason")}>
           <Select value={f.seasonId} onChange={set("seasonId")} options={[{ value: "", label: t("ui.costAll") }, ...(seasons.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
@@ -158,7 +157,7 @@ export function ResultsPanel() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <h2 className="border-b border-linea pb-2 font-serif text-lg font-semibold">{title}</h2>
+      <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{title}</h2>
       <div className="overflow-x-auto">
         <ExportableTable name={title}>
           <table className="w-full text-sm">{children}</table>

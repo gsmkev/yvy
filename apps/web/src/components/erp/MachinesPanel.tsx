@@ -51,7 +51,6 @@ export function MachinesPanel() {
   return (
     <MasterPanel<Machine>
       path="machines"
-      intro={t("ui.machinesIntro")}
       newLabel={t("ui.machineNew")}
       name={(m) => m.name}
       fields={fields}

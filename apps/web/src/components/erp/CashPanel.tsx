@@ -7,6 +7,7 @@ import { fmtIsoDate } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtMoney } from "../../lib/money";
 import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
+import { HeaderActions, RowMenu } from "./adminSlot";
 import { MasterPanel, type FieldDef } from "./MasterPanel";
 import { useParties } from "./PartiesPanel";
 import { ExportableTable } from "../ExportableTable";
@@ -72,7 +73,6 @@ function Accounts() {
   if (q.error) return <ErrorBox error={q.error} />;
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-tinta-2">{t("ui.cashIntro")}</p>
       {Object.keys(q.data?.totals ?? {}).length > 0 && (
         <div className="flex flex-wrap gap-6">
           {Object.entries(q.data?.totals ?? {}).map(([cur, total]) => (
@@ -83,14 +83,8 @@ function Accounts() {
           ))}
         </div>
       )}
-      <div className="flex gap-2">
-        <Button variant="secondary" onClick={() => setTransferring(true)} disabled={(q.data?.accounts.length ?? 0) < 2}>
-          {t("ui.cashTransfer")}
-        </Button>
-      </div>
       <MasterPanel<Account>
         path="cash-accounts"
-        intro=""
         newLabel={t("ui.cashNew")}
         name={(a) => a.name}
         fields={fields}
@@ -112,6 +106,11 @@ function Accounts() {
           },
         ]}
       />
+      <HeaderActions>
+        <Button onClick={() => setTransferring(true)} disabled={(q.data?.accounts.length ?? 0) < 2}>
+          {t("ui.cashTransfer")}
+        </Button>
+      </HeaderActions>
       {move && <MoveModal account={move} onClose={() => setMove(null)} />}
       {transferring && <TransferModal accounts={q.data?.accounts ?? []} onClose={() => setTransferring(false)} />}
     </div>
@@ -184,9 +183,7 @@ function MoveModal({ account, onClose }: { account: Account; onClose: () => void
                 <td className="py-2 pr-3 text-tinta-2">{m.description}</td>
                 <td className={`num py-2 pr-3 text-right ${m.amount < 0 ? "text-peligro" : ""}`}>{fmtMoney(m.amount, account.currency)}</td>
                 <td className="py-2 text-right">
-                  <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => remove.mutate(m.id)}>
-                    {t("ui.delete")}
-                  </button>
+                  <RowMenu name={fmtIsoDate(m.date)} onDelete={() => remove.mutate(m.id)} />
                 </td>
               </tr>
             ))}
@@ -262,7 +259,6 @@ function DuesTab({ direction }: { direction: "payables" | "receivables" }) {
   const rows = q.data?.rows ?? [];
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-tinta-2">{t(direction === "payables" ? "ui.cashPayablesIntro" : "ui.cashReceivablesIntro")}</p>
       {Object.keys(q.data?.totals ?? {}).length > 0 && (
         <div className="flex flex-wrap gap-6">
           {Object.entries(q.data?.totals ?? {}).map(([cur, v]) => (

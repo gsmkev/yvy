@@ -15,13 +15,19 @@ export function AlertsPage() {
   return (
     <Page width="data" className="gap-4">
       <PageHeader title={t("ui.alertsTitle")} />
-      <AlertsList
-        farmNames={names}
-        emptyAction={
-          canTune && !settings ? <Button onClick={() => setSettings(true)}>{t("ui.alertSettingsTitle")}</Button> : undefined
-        }
-      />
-      <AlertSettingsSection open={settings} onToggle={() => setSettings(!settings)} />
+      <div className={`grid items-start gap-x-12 gap-y-6 ${canTune ? "lg:grid-cols-[minmax(0,1fr)_320px]" : ""}`}>
+        <AlertsList
+          farmNames={names}
+          emptyAction={
+            canTune && !settings ? (
+              <Button className="lg:hidden" onClick={() => setSettings(true)}>
+                {t("ui.alertSettingsTitle")}
+              </Button>
+            ) : undefined
+          }
+        />
+        <AlertSettingsSection open={settings} onToggle={() => setSettings(!settings)} />
+      </div>
     </Page>
   );
 }

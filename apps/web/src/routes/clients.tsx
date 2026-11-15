@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BRAND } from "@yvy/shared";
 import { FarmMap } from "../components/FarmMap";
 import { useMe } from "../lib/queries";
-import { Empty, ErrorBox, Spinner } from "../components/ui";
+import { EmptyState, ErrorBox, Spinner } from "../components/ui";
 import { get, getSession, post, setSession, type Session } from "../lib/api";
 import { fmtDate, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -118,7 +118,7 @@ export function ClientsPage() {
           {q.data!.truncated && <p className="mt-1 text-sm text-tinta-2">{t("ui.clientsTruncated")}</p>}
         </header>
         {error ? <ErrorBox error={error} /> : null}
-        {!clients.length && <Empty title={t("ui.clientsNone")} />}
+        {!clients.length && <EmptyState title={t("ui.clientsNone")} />}
         {clients.map((c) => (
           <section key={c.organization.id} className="border-t border-linea pt-3">
             <div className="flex items-baseline justify-between gap-3">

@@ -86,7 +86,13 @@ const cellText = (el: Element) => (el.textContent ?? "").replace(/\s+/g, " ").tr
 export function tableFromElement(table: HTMLTableElement, name: string): TableData {
   const headRows = [...table.querySelectorAll("thead tr")];
   const headCells = headRows.length ? [...headRows[headRows.length - 1]!.children] : [];
-  const keep = headCells.map((h, i) => (cellText(h) ? i : -1)).filter((i) => i >= 0);
+  // Un encabezado que solo tiene texto para lectores de pantalla (columna de acciones) tampoco se exporta
+  const visibleText = (h: Element) => {
+    const copy = h.cloneNode(true) as Element;
+    copy.querySelectorAll(".sr-only").forEach((n) => n.remove());
+    return cellText(copy);
+  };
+  const keep = headCells.map((h, i) => (visibleText(h) ? i : -1)).filter((i) => i >= 0);
   const rows: Cell[][] = [];
   for (const tr of table.querySelectorAll("tbody tr, tfoot tr")) {
     const cells = [...tr.children];

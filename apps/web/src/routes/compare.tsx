@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { isFieldRole } from "@yvy/shared";
 import { TableExportMenu } from "../components/TableExportMenu";
 import { Link } from "@tanstack/react-router";
-import { EmptyState, ErrorBox, PageHeader, Skeleton, Tabs, Page } from "../components/ui";
+import { DataTable, EmptyState, ErrorBox, PageHeader, Skeleton, Tabs, Page } from "../components/ui";
 import { get } from "../lib/api";
 import { fmtHa, fmtNum } from "../lib/format";
 import { t } from "../lib/i18n";
@@ -132,74 +132,64 @@ function FarmsTable({ rows }: { rows: FarmRow[] }) {
   const maxRain = maxOf(rows.map((r) => r.rain30Mm));
   const maxNdvi = maxOf(rows.map((r) => r.ndvi30));
   const maxRecs = maxOf(rows.map((r) => r.records30d));
-  const headers = farmsHeaders();
+  const h = farmsHeaders();
+  const num = (a: number | null, b: number | null) => (a ?? -1) - (b ?? -1);
   return (
-    <>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead>
-            <tr className="border-b border-linea text-tinta-2">
-              {headers.map((h) => (
-                <th key={h} className="py-2 pr-3 font-medium">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-b border-linea">
-                <th scope="row" className="sticky left-0 bg-lino py-2 pr-3 text-left font-medium">
-                  {r.name}
-                </th>
-                <td className="num pr-3">{fmtHa(r.areaHa)}</td>
-                <td className="num pr-3">{r.plots}</td>
-                <td className="pr-3"><Bar value={r.rain30Mm} max={maxRain} label={r.rain30Mm === null ? "" : `${fmtNum(r.rain30Mm)} mm`} /></td>
-                <td className="pr-3"><Bar value={r.ndvi30} max={maxNdvi} label={r.ndvi30 === null ? "" : fmtNum(r.ndvi30)} /></td>
-                <td className="pr-3"><Bar value={r.records30d} max={maxRecs} label={String(r.records30d)} /></td>
-                <td className="num">{r.activeAlerts}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </>
+    <DataTable
+      caption={t("ui.compareFarms")}
+      rows={rows}
+      rowKey={(r) => r.id}
+      columns={[
+        { id: "name", header: h[0], sort: (a, b) => a.name.localeCompare(b.name, "es-PY"), cell: (r) => r.name },
+        { id: "area", header: h[1], align: "right", sort: (a, b) => a.areaHa - b.areaHa, cell: (r) => fmtHa(r.areaHa) },
+        { id: "plots", header: h[2], align: "right", sort: (a, b) => a.plots - b.plots, cell: (r) => r.plots },
+        {
+          id: "rain",
+          header: h[3],
+          sort: (a, b) => num(a.rain30Mm, b.rain30Mm),
+          cell: (r) => <Bar value={r.rain30Mm} max={maxRain} label={r.rain30Mm === null ? "" : `${fmtNum(r.rain30Mm)} mm`} />,
+        },
+        {
+          id: "ndvi",
+          header: h[4],
+          hideBelow: "sm",
+          sort: (a, b) => num(a.ndvi30, b.ndvi30),
+          cell: (r) => <Bar value={r.ndvi30} max={maxNdvi} label={r.ndvi30 === null ? "" : fmtNum(r.ndvi30)} />,
+        },
+        {
+          id: "records",
+          header: h[5],
+          hideBelow: "md",
+          sort: (a, b) => a.records30d - b.records30d,
+          cell: (r) => <Bar value={r.records30d} max={maxRecs} label={String(r.records30d)} />,
+        },
+        { id: "alerts", header: h[6], align: "right", sort: (a, b) => a.activeAlerts - b.activeAlerts, cell: (r) => r.activeAlerts },
+      ]}
+    />
   );
 }
 
 function SeasonsTable({ rows }: { rows: SeasonRow[] }) {
   const maxYield = maxOf(rows.flatMap((r) => [r.yieldTHa, r.targetYieldTHa]));
-  const headers = seasonsHeaders();
+  const h = seasonsHeaders();
   return (
-    <>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead>
-            <tr className="border-b border-linea text-tinta-2">
-              {headers.map((h) => (
-                <th key={h} className="py-2 pr-3 font-medium">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-b border-linea">
-                <th scope="row" className="sticky left-0 bg-lino py-2 pr-3 text-left font-medium">
-                  {r.name}
-                </th>
-                <td className="num pr-3">{fmtHa(r.plannedHa)}</td>
-                <td className="num pr-3">{fmtHa(r.harvestedHa)}</td>
-                <td className="num pr-3">{fmtNum(r.harvestTons)} t</td>
-                <td className="pr-3"><Bar value={r.yieldTHa} max={maxYield} label={r.yieldTHa === null ? "" : `${fmtNum(r.yieldTHa)} t/ha`} /></td>
-                <td className="num pr-3">{r.targetYieldTHa === null ? "—" : `${fmtNum(r.targetYieldTHa)} t/ha`}</td>
-                <td className="num">{r.applications}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </>
+    <DataTable
+      caption={t("ui.compareSeasons")}
+      rows={rows}
+      rowKey={(r) => r.id}
+      columns={[
+        { id: "name", header: h[0], cell: (r) => r.name },
+        { id: "planned", header: h[1], align: "right", cell: (r) => fmtHa(r.plannedHa) },
+        { id: "harvested", header: h[2], align: "right", hideBelow: "sm", cell: (r) => fmtHa(r.harvestedHa) },
+        { id: "tons", header: h[3], align: "right", hideBelow: "md", cell: (r) => `${fmtNum(r.harvestTons)} t` },
+        {
+          id: "yield",
+          header: h[4],
+          cell: (r) => <Bar value={r.yieldTHa} max={maxYield} label={r.yieldTHa === null ? "" : `${fmtNum(r.yieldTHa)} t/ha`} />,
+        },
+        { id: "target", header: h[5], align: "right", hideBelow: "md", cell: (r) => (r.targetYieldTHa === null ? "—" : `${fmtNum(r.targetYieldTHa)} t/ha`) },
+        { id: "apps", header: h[6], align: "right", hideBelow: "lg", cell: (r) => r.applications },
+      ]}
+    />
   );
 }

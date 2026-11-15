@@ -191,14 +191,14 @@ export function EmptyState({ title, hint, action, onAction }: { title: string; h
 }
 
 /** Fila con interruptor (ajustes). */
-export function SwitchRow({ title, hint, value, onValueChange }: { title: string; hint?: string; value: boolean; onValueChange: (v: boolean) => void }) {
+export function SwitchRow({ title, hint, value, onValueChange, disabled }: { title: string; hint?: string; value: boolean; onValueChange: (v: boolean) => void; disabled?: boolean }) {
   return (
     <View style={s.switchRow}>
       <View style={{ flex: 1 }}>
         <Text style={T.body}>{title}</Text>
         {hint ? <Text style={T.small}>{hint}</Text> : null}
       </View>
-      <Switch value={value} accessibilityLabel={title} onValueChange={(v) => (tap(), onValueChange(v))} trackColor={{ true: C.accion }} />
+      <Switch value={value} disabled={disabled} accessibilityLabel={title} onValueChange={(v) => (tap(), onValueChange(v))} trackColor={{ false: C.lineaFuerte, true: C.accion }} thumbColor={C.blanco} {...({ activeThumbColor: C.blanco } as object)} />
     </View>
   );
 }
@@ -345,6 +345,18 @@ export function SyncBar() {
   );
 }
 
+/** Franja fina arriba mientras se mira la estancia de ejemplo (solo lectura). "Salir" cierra esa sesión. */
+export function DemoBar({ onLeave }: { onLeave: () => void }) {
+  return (
+    <View accessibilityRole="alert" style={s.demoBar}>
+      <Text style={[T.smallMedium, { color: C.papel, flexShrink: 1 }]}>{t("ui.publicDemoNotice")}</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel={t("office.demoExit")} onPress={onLeave} hitSlop={10} style={{ minHeight: 32, justifyContent: "center" }}>
+        <Text style={[T.smallMedium, { color: C.papel, textDecorationLine: "underline" }]}>{t("office.demoExit")}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 /** Confirmación breve al pie de cualquier pantalla (se monta una sola vez, en el layout raíz). */
 export function Toast() {
   const toast = useToast();
@@ -373,7 +385,8 @@ export const s = StyleSheet.create({
     justifyContent: "center",
   },
   btnBig: { minHeight: 64 },
-  btnText: { fontFamily: F.sansSemi, fontSize: 18 },
+  demoBar: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 14, paddingHorizontal: GUTTER, paddingVertical: 4, backgroundColor: C.tinta },
+  btnText: { fontFamily: F.sansSemi, fontSize: 18, textAlign: "center", flexShrink: 1 },
   btnTextBig: { fontSize: 20 },
   row: {
     minHeight: TOUCH + 8,

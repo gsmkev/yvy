@@ -8,10 +8,14 @@ import { getDb } from "../src/lib/db";
 import { remindersEnabled, setRemindersEnabled } from "../src/lib/reminders";
 import { chooseLocale } from "../src/lib/locale";
 import { api, getSession, setSession, type Session } from "../src/lib/session";
+import { signOut } from "../src/lib/signOut";
+import { useIsDemo } from "../src/lib/demo";
 import { canSwitchUser, unsentSummary } from "../src/lib/switchUser";
 import { isOwnerMode } from "../src/lib/ownerSummary";
 import { deviceId, startAutoSync, stopAutoSync } from "../src/lib/sync";
 import { setReadOnly, useReadOnly } from "../src/lib/readOnly";
+import { setUnits, useUnits } from "../src/lib/units";
+import { Segmented } from "../src/office/ui";
 import { Button, ChoiceSheet, Row, SectionHeader, SwitchRow, s as k, Text } from "../src/ui/kit";
 import { T } from "../src/ui/theme";
 
@@ -22,16 +26,11 @@ export default function Account() {
   const session = getSession();
   const orgs = session?.organizations ?? [];
   const readOnly = useReadOnly();
+  const demo = useIsDemo();
+  const units = useUnits();
 
   /** Cierra la sesión de esta persona. Solo si no queda nada sin mandar (ver lib/switchUser.ts). */
-  const leave = async () => {
-    const s = getSession();
-    if (s) await api("POST", "/auth/logout", { refreshToken: s.refreshToken }, false).catch(() => {});
-    stopAutoSync();
-    getDb().wipeSynced();
-    await setSession(null);
-    router.replace("/login");
-  };
+  const leave = signOut;
 
   const guarded = (then: () => void) => {
     const block = canSwitchUser(unsentSummary(getDb()));
@@ -101,7 +100,20 @@ export default function Account() {
           if (v && !on) Alert.alert(t("app.remindersDenied"));
         }}
       />
-      {isOwnerMode(session?.organization.role) && <SwitchRow title={t("app.readOnlySwitch")} hint={t("app.readOnlyHint")} value={readOnly} onValueChange={setReadOnly} />}
+      {demo ? (
+        <SwitchRow title={t("app.readOnlySwitch")} hint={t("office.demoReadOnlyFixed")} value disabled onValueChange={() => {}} />
+      ) : (
+        isOwnerMode(session?.organization.role) && <SwitchRow title={t("app.readOnlySwitch")} hint={t("app.readOnlyHint")} value={readOnly} onValueChange={setReadOnly} />
+      )}
+      <SectionHeader title={t("office.unitsSection")} />
+      <Text style={[T.small, { marginBottom: 4 }]}>{t("office.unitsHint")}</Text>
+      <Text style={[T.bodyMedium, { marginTop: 12 }]}>{t("ui.unitArea")}</Text>
+      <Segmented options={[{ value: "ha", label: "ha" }, { value: "cuadra", label: t("ui.unitCuadras") }]} value={units.area} onChange={(v) => setUnits({ area: v })} />
+      <Text style={[T.bodyMedium, { marginTop: 12 }]}>{t("ui.unitRain")}</Text>
+      <Segmented options={[{ value: "mm", label: "mm" }, { value: "in", label: t("ui.unitInches") }]} value={units.rain} onChange={(v) => setUnits({ rain: v })} />
+      <Text style={[T.bodyMedium, { marginTop: 12 }]}>{t("ui.unitTemp")}</Text>
+      <Segmented options={[{ value: "c", label: "°C" }, { value: "f", label: "°F" }]} value={units.temp} onChange={(v) => setUnits({ temp: v })} />
+      <SectionHeader title={t("app.language")} />
       <Row
         icon={Languages}
         title={t("app.language")}

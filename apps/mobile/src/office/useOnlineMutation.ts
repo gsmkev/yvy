@@ -1,6 +1,8 @@
 /** Escritura en línea (sin outbox): no corre sin señal, muestra el error del servidor e invalida lecturas al terminar bien. */
 import { useCallback, useRef, useState } from "react";
 import { t } from "@yvy/shared";
+import { useReadOnly } from "../lib/readOnly";
+import { useIsDemo } from "../lib/demo";
 import { success } from "../lib/haptics";
 import { api, OfflineError } from "../lib/session";
 import { useSyncStatus } from "../lib/sync";
@@ -23,17 +25,20 @@ export function useOnlineMutation<TBody = void, TRes = unknown>(
   opts: { invalidate?: string[] } = {},
 ): OnlineMutation<TBody, TRes> {
   const online = useSyncStatus().online;
+  const demo = useIsDemo();
+  const readOnly = useReadOnly();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const live = useRef({ online, path, opts });
-  live.current = { online, path, opts };
+  const live = useRef({ online, path, opts, block: null as string | null });
+  live.current = { online, path, opts, block: demo ? t("ui.publicDemoReadOnly") : readOnly ? t("office.readOnlyBlocked") : null };
   const busy = useRef(false);
 
   const fail = (msg: string): MutationResult<TRes> => (setError(msg), { ok: false, error: msg });
 
   const mutate = useCallback(async (body: TBody): Promise<MutationResult<TRes>> => {
     if (busy.current) return { ok: false, error: "" }; // doble toque: se ignora, el primero sigue en curso
-    const { online: on, path: p, opts: o } = live.current;
+    const { online: on, path: p, opts: o, block } = live.current;
+    if (block) return fail(block);
     if (!on) return fail(t("office.needsSignal"));
     busy.current = true;
     setPending(true);

@@ -5,7 +5,7 @@
 import { useEffect, useRef, type ElementRef } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { Check, CloudRain, Navigation, TrendingDown } from "lucide-react-native";
+import { Check, CloudRain, Users, Navigation, TrendingDown } from "lucide-react-native";
 import { checklistProgress, describeRecord, parseChecklist, parseTaskComments, t } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
@@ -21,6 +21,7 @@ import { ForecastStrip } from "../../src/ui/ForecastStrip";
 import { toastSaved } from "../../src/lib/toast";
 import { Button, EmptyState, Row, SectionHeader, StatTile, s as k, Text } from "../../src/ui/kit";
 import { C, RADIUS, T } from "../../src/ui/theme";
+import { isOverdue, teamTasksDue } from "../../src/lib/teamTasks";
 import { useReadOnly } from "../../src/lib/readOnly";
 
 const dayLabel = () => {
@@ -62,16 +63,22 @@ export default function Today() {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
     const recs = byFarm(getDb().records(500), farmId);
+    const today = recordsByAuthor(recs, start.getTime());
+    const weekStart = start.getTime() - 6 * 86_400_000;
     return {
-      byAuthor: recordsByAuthor(recs, start.getTime()),
+      byAuthor: today.length > 0 ? today : recordsByAuthor(recs, weekStart),
+      week: today.length === 0,
+      team: byFarm(getDb().openTasks(), farmId),
       worse: vigorDrops(getDb().lastTwoVigorPasses()),
       names: memberNames(getDb()),
     };
   }, [owner, farmId]);
   const worse = (summary?.worse ?? []).filter((w) => farmPlotIds.has(w.plotId));
+  const todayIso = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+  const team = teamTasksDue(summary?.team ?? [], userId, todayIso);
   const open = tasks.filter((x) => x.status === "open");
   const done = tasks.filter((x) => x.status === "done");
-  const empty = alerts.length === 0 && tasks.length === 0 && todayRecords.length === 0;
+  const empty = alerts.length === 0 && tasks.length === 0 && team.length === 0 && todayRecords.length === 0;
 
   // Primera vez que se entra a otra organización: decir a cuál.
   useEffect(() => {
@@ -222,9 +229,30 @@ export default function Today() {
         </>
       )}
 
+      {team.length > 0 && (
+        <>
+          <SectionHeader title={t("office.todayTeamTitle")} />
+          {team.map((task) => (
+            <Row
+              key={task.id}
+              icon={Users}
+              title={task.title}
+              subtitle={[
+                isOverdue(task, todayIso) ? t("office.todayTeamOverdue", { date: new Date(`${task.dueDate}T12:00:00`).toLocaleDateString("es-PY", { day: "numeric", month: "short" }) }) : null,
+                task.assigneeId ? t("office.todayTeamWho", { name: authorName(task.assigneeId, userId, summary?.names ?? {}) }) : t("office.todayTeamNobody"),
+                task.plotId ? plotName(task.plotId) : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+              onPress={() => router.push({ pathname: "/task/[id]", params: { id: task.id } })}
+            />
+          ))}
+        </>
+      )}
+
       {showOwner && summary && (
         <>
-          {summary.byAuthor.length > 0 && <SectionHeader title={t("app.ownerRecordsTitle")} />}
+          {summary.byAuthor.length > 0 && <SectionHeader title={summary.week ? t("office.todayWeekTitle") : t("app.ownerRecordsTitle")} />}
           {summary.byAuthor.length > 0 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.stats} style={{ marginTop: 8, flexGrow: 0 }}>
               {summary.byAuthor.map((a) => (

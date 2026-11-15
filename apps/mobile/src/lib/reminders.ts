@@ -7,6 +7,7 @@ import { Platform } from "react-native";
 import { t } from "@yvy/shared";
 import { getDb } from "./db";
 import { planReminders } from "./reminders-plan";
+import { isDemoSession } from "./demo";
 import { getSession } from "./session";
 
 const KV_OFF = "reminders_off";
@@ -26,7 +27,7 @@ export async function rescheduleReminders(): Promise<void> {
   try {
     await cancelOwn();
     const session = getSession();
-    if (!session || !remindersEnabled()) return;
+    if (!session || !remindersEnabled() || isDemoSession(session.organization.id)) return; // la demo no programa avisos en el celular
     const perm = await Notifications.getPermissionsAsync();
     if (!perm.granted) return;
     if (Platform.OS === "android") {

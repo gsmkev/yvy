@@ -475,6 +475,11 @@ export class LocalDb implements SyncStore {
     });
   }
 
+  /** Todas las tareas (la base ya viene acotada a lo que la persona puede ver): pantallas de oficina. */
+  allTasks(): Task[] {
+    return this.sql.all("SELECT * FROM tasks WHERE deleted_at IS NULL").map((r) => fromRow<Task>(s.tasks, r));
+  }
+
   taskById(id: string): Task | null {
     const r = this.sql.get<Record<string, unknown>>("SELECT * FROM tasks WHERE id = ? AND deleted_at IS NULL", [id]);
     return r ? fromRow<Task>(s.tasks, r) : null;
@@ -605,6 +610,13 @@ export class LocalDb implements SyncStore {
       .all("SELECT * FROM tasks WHERE assignee_id = ? AND deleted_at IS NULL ORDER BY due_date, title", [userId])
       .map((r) => fromRow<Task>(s.tasks, r))
       .filter((t) => isDueToday(t, today) || (t.status === "done" && localDate(t.completedAt ?? 0) === today));
+  }
+
+  /** Tareas abiertas de todo el equipo (las que bajó el servidor para este rol), para el resumen de oficina. */
+  openTasks(): Task[] {
+    return this.sql
+      .all("SELECT * FROM tasks WHERE status = 'open' AND deleted_at IS NULL ORDER BY due_date, title")
+      .map((r) => fromRow<Task>(s.tasks, r));
   }
 
   /** Tareas abiertas con punto en el mapa (S-09), para dibujarlas y llevar a la persona ahí. */

@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import { t } from "@yvy/shared";
 import campo from "../assets/campo-itapua.webp";
+import { markDemo } from "../src/lib/demo";
 import { noteOrganizationEntry } from "../src/lib/org";
 import { registerDevice } from "../src/lib/push";
-import { api, setSession, type Session } from "../src/lib/session";
+import { API_URL, api, setSession, type Session } from "../src/lib/session";
 import { deviceId } from "../src/lib/sync";
 import { Button, Text, TextInput } from "../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../src/ui/theme";
@@ -20,6 +21,19 @@ export default function Login() {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // La demo existe solo si el Worker la tiene configurada (GET /auth/demo responde ok).
+  const [demoOn, setDemoOn] = useState(false);
+  useEffect(() => {
+    let live = true;
+    fetch(`${API_URL}/auth/demo`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: { available?: boolean } | null) => live && setDemoOn(j?.available === true))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
 
   const run = async (fn: () => Promise<void>) => {
     setBusy(true);
@@ -45,6 +59,22 @@ export default function Login() {
               <Button big title={t("app.loginQr")} onPress={() => router.push("/scan")} />
               <Button kind="secondary" title={t("app.loginPhone")} onPress={() => setMode("phone")} style={{ marginTop: 10 }} />
               <Button kind="secondary" title={t("app.loginEmail")} onPress={() => setMode("email")} style={{ marginTop: 10 }} />
+              {demoOn && (
+                <Button
+                  kind="text"
+                  title={t("office.demoSeeExample")}
+                  loading={busy}
+                  style={{ marginTop: 6 }}
+                  onPress={() =>
+                    run(async () => {
+                      const session = await api<Session>("POST", "/auth/demo", undefined, false);
+                      markDemo(session.organization.id); // antes de guardar la sesión: la franja y el solo lectura ya la ven
+                      await setSession(session);
+                      router.replace("/(tabs)");
+                    })
+                  }
+                />
+              )}
             </>
           )}
           {mode === "phone" && (

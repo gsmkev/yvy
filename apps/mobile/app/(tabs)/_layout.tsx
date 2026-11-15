@@ -1,16 +1,18 @@
 import { useEffect } from "react";
 import { Pressable, StyleSheet, type ColorValue } from "react-native";
 import { Redirect, Tabs, router } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Briefcase, ClipboardList, Map, MoreHorizontal, Plus, Sun, type LucideIcon } from "lucide-react-native";
 import { isFieldRole, t } from "@yvy/shared";
 import { useSession } from "../../src/lib/session";
 import { tap } from "../../src/lib/haptics";
 import { useFabHidden } from "../../src/lib/fab";
 import { startAutoSync, useSyncStatus } from "../../src/lib/sync";
-import { SyncBar, Text } from "../../src/ui/kit";
+import { DemoBar, SyncBar, Text } from "../../src/ui/kit";
 import { WalkBanner } from "../../src/ui/WalkBanner";
 import { C, F } from "../../src/ui/theme";
+import { useIsDemo } from "../../src/lib/demo";
+import { signOut } from "../../src/lib/signOut";
 import { useReadOnly } from "../../src/lib/readOnly";
 
 const icon =
@@ -21,6 +23,8 @@ const icon =
 
 export default function TabsLayout() {
   const session = useSession();
+  const demo = useIsDemo();
+  const inset = useSafeAreaInsets().bottom;
   const { pending } = useSyncStatus();
   const fabHidden = useFabHidden() || useReadOnly();
   useEffect(() => (session ? startAutoSync() : undefined), [!!session]);
@@ -28,6 +32,7 @@ export default function TabsLayout() {
   const office = !isFieldRole(session.organization.role);
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: C.papel }}>
+      {demo && <DemoBar onLeave={() => void signOut()} />}
       <SyncBar />
       <WalkBanner />
       <Tabs
@@ -36,13 +41,13 @@ export default function TabsLayout() {
           tabBarActiveTintColor: C.tinta,
           tabBarInactiveTintColor: C.tinta3,
           tabBarStyle: {
-            height: 72,
-            paddingBottom: 12,
+            height: 78 + inset,
+            paddingBottom: 8 + inset,
             paddingTop: 8,
             backgroundColor: C.papel,
             borderTopColor: C.linea,
           },
-          tabBarLabelStyle: { fontFamily: F.sansMedium, fontSize: 12, lineHeight: 16 },
+          tabBarLabelStyle: { fontFamily: F.sansMedium, fontSize: 12, lineHeight: 18 },
           sceneStyle: { backgroundColor: C.papel },
         }}
       >
@@ -84,7 +89,7 @@ const s = StyleSheet.create({
   fab: {
     position: "absolute",
     right: 20,
-    bottom: 88,
+    bottom: 96,
     height: 60,
     paddingLeft: 18,
     paddingRight: 24,

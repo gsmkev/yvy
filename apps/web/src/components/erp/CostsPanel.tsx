@@ -8,7 +8,7 @@ import { t, tk } from "../../lib/i18n";
 import { fmtGs, fmtMoney } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
 import type { Season } from "../../lib/types";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
+import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, Select, Spinner, Stat, toast, type Column } from "../ui";
 import { PhotoRowMenu } from "./InvoicePhoto";
 import { HeaderActions } from "./adminSlot";
 import { useParties } from "./PartiesPanel";
@@ -64,32 +64,81 @@ export function CostsPanel() {
   });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   const totals = q.data?.totals;
+  const rows = q.data?.rows ?? [];
+  const filtered = Object.values(f).some(Boolean);
+  const blank = !!q.data && rows.length === 0 && !filtered;
+  const newBtn = (
+    <Button variant="primary" onClick={() => setEditing("new")}>
+      {t("ui.costNew")}
+    </Button>
+  );
+  const columns: Column<CostEntry>[] = [
+    { id: "date", header: t("ui.costDate"), cell: (c) => <span className="whitespace-nowrap">{fmtIsoDate(dayOf(c.occurredAt))}</span> },
+    { id: "category", header: t("ui.costCategory"), hideBelow: "md", cell: (c) => tk(`ui.costCategory_${c.category}`) },
+    { id: "activity", header: t("ui.costActivity"), hideBelow: "lg", cell: (c) => tk(`ui.activity_${c.activity}`) },
+    {
+      id: "description",
+      header: t("ui.costDescription"),
+      cell: (c) => (
+        <>
+          {c.description ?? <span className="md:hidden">{tk(`ui.costCategory_${c.category}`)}</span>}
+          <span className="block text-meta text-tinta-2">{[farmName(c.farmId), c.origin !== "manual" ? t("ui.costFromRecord") : ""].filter(Boolean).join(" · ")}</span>
+        </>
+      ),
+    },
+    {
+      id: "amount",
+      header: t("ui.costAmount"),
+      align: "right",
+      cell: (c) => (
+        <span className={c.category === "sale" ? "text-accion" : ""}>
+          {c.category === "sale" ? "" : "-"}
+          {fmtMoney(c.amount, c.currency)}
+          {c.currency !== "PYG" && <span className="block text-meta text-tinta-2">{fmtGs(c.amountPyg)}</span>}
+        </span>
+      ),
+    },
+    {
+      id: "_actions",
+      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      align: "right",
+      width: "3rem",
+      cell: (c) => (
+        <PhotoRowMenu
+          kind="cost-entries"
+          id={c.id}
+          hasPhoto={!!c.photoPath}
+          name={c.description ?? tk(`ui.costCategory_${c.category}`)}
+          onEdit={c.origin === "manual" ? () => setEditing(c) : undefined}
+          onDelete={c.origin === "manual" ? () => setRemoving(c) : undefined}
+        />
+      ),
+    },
+  ];
   return (
     <div className="flex flex-col gap-4">
-      <HeaderActions>
-        <Button variant="primary" onClick={() => setEditing("new")}>
-          {t("ui.costNew")}
-        </Button>
-      </HeaderActions>
-      <div className="flex flex-wrap items-end gap-3">
-        <Field label={t("ui.costFarm")}>
-          <Select value={f.farmId} onChange={set("farmId")} options={[{ value: "", label: t("ui.costAll") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
-        </Field>
-        <Field label={t("ui.costSeason")}>
-          <Select value={f.seasonId} onChange={set("seasonId")} options={[{ value: "", label: t("ui.costAll") }, ...(seasons.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
-        </Field>
-        <Field label={t("ui.costCategory")}>
-          <Select value={f.category} onChange={set("category")} options={[{ value: "", label: t("ui.costAll") }, ...COST_CATEGORIES.map((x) => ({ value: x, label: tk(`ui.costCategory_${x}`) }))]} />
-        </Field>
-        <Field label={t("ui.costFrom")}>
-          <Input type="date" value={f.from} onChange={set("from")} />
-        </Field>
-        <Field label={t("ui.costTo")}>
-          <Input type="date" value={f.to} onChange={set("to")} />
-        </Field>
-      </div>
-      {totals && (
-        <div className="flex flex-wrap gap-8">
+      {!blank && <HeaderActions>{newBtn}</HeaderActions>}
+      {!blank && (
+        <FilterBar>
+          <Field label={t("ui.costFarm")}>
+            <Select value={f.farmId} onChange={set("farmId")} options={[{ value: "", label: t("ui.costAll") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
+          </Field>
+          <Field label={t("ui.costSeason")}>
+            <Select value={f.seasonId} onChange={set("seasonId")} options={[{ value: "", label: t("ui.costAll") }, ...(seasons.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
+          </Field>
+          <Field label={t("ui.costCategory")}>
+            <Select value={f.category} onChange={set("category")} options={[{ value: "", label: t("ui.costAll") }, ...COST_CATEGORIES.map((x) => ({ value: x, label: tk(`ui.costCategory_${x}`) }))]} />
+          </Field>
+          <Field label={t("ui.costFrom")}>
+            <Input type="date" value={f.from} onChange={set("from")} />
+          </Field>
+          <Field label={t("ui.costTo")}>
+            <Input type="date" value={f.to} onChange={set("to")} />
+          </Field>
+        </FilterBar>
+      )}
+      {totals && rows.length > 0 && (
+        <div className="flex flex-wrap gap-x-10 gap-y-3">
           <Stat label={t("ui.costTotalCost")} value={fmtGs(totals.costPyg)} />
           <Stat label={t("ui.costTotalIncome")} value={fmtGs(totals.incomePyg)} />
           <Stat label={t("ui.costResult")} value={fmtGs(totals.incomePyg - totals.costPyg)} tone={totals.incomePyg - totals.costPyg < 0 ? "danger" : undefined} />
@@ -97,54 +146,23 @@ export function CostsPanel() {
       )}
       {q.isLoading && <Spinner />}
       {q.error ? <ErrorBox error={q.error} /> : null}
-      {q.data && q.data.rows.length === 0 && <Empty>{t("ui.erpEmpty")}</Empty>}
-      {q.data && q.data.rows.length > 0 && (
-        <div className="overflow-x-auto">
-          <ExportableTable name="costos">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-linea text-left text-tinta-2">
-                  <th className="py-2 pr-4 font-medium">{t("ui.costDate")}</th>
-                  <th className="py-2 pr-4 font-medium">{t("ui.costCategory")}</th>
-                  <th className="py-2 pr-4 font-medium">{t("ui.costActivity")}</th>
-                  <th className="py-2 pr-4 font-medium">{t("ui.costDescription")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.costAmount")}</th>
-                  <th className="sticky right-0 w-12 bg-lino">
-                    <span className="sr-only">{t("ui.rowActionsHeader")}</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {q.data.rows.map((c) => (
-                  <tr key={c.id} className="border-b border-linea">
-                    <td className="num py-2.5 pr-4 whitespace-nowrap">{fmtIsoDate(dayOf(c.occurredAt))}</td>
-                    <td className="py-2.5 pr-4">{tk(`ui.costCategory_${c.category}`)}</td>
-                    <td className="py-2.5 pr-4">{tk(`ui.activity_${c.activity}`)}</td>
-                    <td className="py-2.5 pr-4">
-                      {c.description}
-                      <span className="block text-xs text-tinta-2">{[farmName(c.farmId), c.origin !== "manual" ? t("ui.costFromRecord") : ""].filter(Boolean).join(" · ")}</span>
-                    </td>
-                    <td className={`num py-2.5 pr-4 text-right ${c.category === "sale" ? "text-accion" : ""}`}>
-                      {c.category === "sale" ? "" : "-"}
-                      {fmtMoney(c.amount, c.currency)}
-                      {c.currency !== "PYG" && <span className="block text-xs text-tinta-2">{fmtGs(c.amountPyg)}</span>}
-                    </td>
-                    <td className="sticky right-0 w-12 bg-lino py-1 text-right">
-                      <PhotoRowMenu
-                        kind="cost-entries"
-                        id={c.id}
-                        hasPhoto={!!c.photoPath}
-                        name={c.description ?? tk(`ui.costCategory_${c.category}`)}
-                        onEdit={c.origin === "manual" ? () => setEditing(c) : undefined}
-                        onDelete={c.origin === "manual" ? () => setRemoving(c) : undefined}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ExportableTable>
-        </div>
+      {blank && (
+        <EmptyState title={t("ui.costEmptyTitle")} action={newBtn}>
+          {t("ui.costEmptyHint")}
+        </EmptyState>
+      )}
+      {q.data && rows.length === 0 && filtered && (
+        <EmptyState
+          title={t("ui.costEmptyFiltered")}
+          action={
+            <Button onClick={() => setF({ farmId: "", seasonId: "", category: "", from: "", to: "" })}>{t("ui.costClearFilters")}</Button>
+          }
+        />
+      )}
+      {rows.length > 0 && (
+        <ExportableTable name="costos">
+          <DataTable columns={columns} rows={rows} rowKey={(c) => c.id} />
+        </ExportableTable>
       )}
       {editing && <CostModal entry={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
       {removing && (

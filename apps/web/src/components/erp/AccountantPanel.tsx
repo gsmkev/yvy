@@ -5,7 +5,7 @@ import { COST_CATEGORIES, type CostCategory } from "@yvy/shared";
 import { del, get, put, qs } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { tablesToExcel } from "../../lib/tableExport";
-import { Button, ErrorBox, Field, Input, Spinner, toast } from "../ui";
+import { Button, ErrorBox, Field, FilterBar, Input, SectionHead, Spinner, toast } from "../ui";
 import { HeaderActions } from "./adminSlot";
 
 interface MapRow {
@@ -101,31 +101,35 @@ export function AccountantPanel() {
   if (map.isLoading) return <Spinner />;
   if (map.error) return <ErrorBox error={map.error} />;
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-end gap-3">
-        <Field label={t("ui.acctFrom")}>
-          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-        </Field>
-        <Field label={t("ui.acctTo")}>
-          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-        </Field>
-      </div>
+    <div className="flex flex-col gap-8">
       <HeaderActions>
         <Button variant="primary" disabled={busy} onClick={download}>
           {t("ui.acctDownload")}
         </Button>
       </HeaderActions>
-      {error ? <ErrorBox error={error} /> : null}
-      <h2 className="border-b border-linea pb-2 text-section leading-6 font-semibold">{t("ui.acctMapTitle")}</h2>
-      <p className="text-sm text-tinta-2">{t("ui.acctMapIntro")}</p>
-      <table className="w-full text-sm">
-        <tbody>
+      <section className="flex flex-col gap-3">
+        <SectionHead title={t("ui.acctPeriodTitle")} />
+        <FilterBar>
+          <Field label={t("ui.acctFrom")}>
+            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          </Field>
+          <Field label={t("ui.acctTo")}>
+            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          </Field>
+        </FilterBar>
+        <p className="text-meta text-tinta-2">{t("ui.acctPeriodHint")}</p>
+        {error ? <ErrorBox error={error} /> : null}
+      </section>
+      <section className="flex flex-col gap-3">
+        <SectionHead title={t("ui.acctMapTitle")} />
+        <p className="text-sm text-tinta-2">{t("ui.acctMapIntro")}</p>
+        <div className="divide-y divide-linea border-y border-linea">
           {COST_CATEGORIES.map((k) => {
             const row = map.data?.find((m) => m.key === k);
             return row ? <MapLine key={`${k}-${row.code}-${row.name}`} row={row} /> : null;
           })}
-        </tbody>
-      </table>
+        </div>
+      </section>
     </div>
   );
 }
@@ -145,24 +149,24 @@ function MapLine({ row }: { row: MapRow }) {
   const reset = useMutation({ mutationFn: () => del(`/org/erp/accountant/map/${row.key}`), onSuccess: refresh });
   const dirty = code !== row.code || name !== row.name;
   return (
-    <tr className="border-b border-linea">
-      <td className="py-2 pr-4 font-medium">{tk(`ui.costCategory_${row.key}`)}</td>
-      <td className="py-2 pr-4">
+    <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2 py-2.5 md:grid-cols-[12rem_8rem_minmax(0,1fr)_9rem]">
+      <span className="text-sm font-medium">{tk(`ui.costCategory_${row.key}`)}</span>
+      <span className="order-last col-span-2 grid grid-cols-[8rem_minmax(0,1fr)] gap-2 md:contents">
         <Input aria-label={t("ui.acctColCode")} maxLength={30} value={code} onChange={(e) => setCode(e.target.value)} />
-      </td>
-      <td className="py-2 pr-4">
         <Input aria-label={t("ui.acctColAccount")} maxLength={80} value={name} onChange={(e) => setName(e.target.value)} />
-      </td>
-      <td className="py-2 text-right whitespace-nowrap text-tinta-2">
-        <button className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline disabled:opacity-40" disabled={!dirty || !code.trim() || !name.trim() || save.isPending} onClick={() => save.mutate()}>
-          {t("ui.save")}
-        </button>
-        {row.custom && (
-          <button className="cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => reset.mutate()}>
-            {t("ui.acctReset")}
-          </button>
+      </span>
+      <span className="flex justify-end gap-1">
+        {dirty && (
+          <Button size="sm" variant="secondary" disabled={!code.trim() || !name.trim() || save.isPending} onClick={() => save.mutate()}>
+            {t("ui.save")}
+          </Button>
         )}
-      </td>
-    </tr>
+        {row.custom && (
+          <Button size="sm" variant="quiet" onClick={() => reset.mutate()}>
+            {t("ui.acctReset")}
+          </Button>
+        )}
+      </span>
+    </div>
   );
 }

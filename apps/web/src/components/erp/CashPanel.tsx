@@ -6,9 +6,11 @@ import { del, get, post } from "../../lib/api";
 import { fmtIsoDate } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtMoney } from "../../lib/money";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
+import { Button, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, Stat, Tabs, toast, type Column } from "../ui";
 import { HeaderActions, RowMenu } from "./adminSlot";
-import { MasterPanel, type FieldDef } from "./MasterPanel";
+import { type FieldDef } from "./MasterPanel";
+import { RecordList } from "./RecordList";
+import { SectionButton } from "./SectionButton";
 import { useParties } from "./PartiesPanel";
 import { ExportableTable } from "../ExportableTable";
 
@@ -71,34 +73,35 @@ function Accounts() {
   ];
   if (q.isLoading) return <Spinner />;
   if (q.error) return <ErrorBox error={q.error} />;
+  const accounts = q.data?.accounts ?? [];
   return (
     <div className="flex flex-col gap-4">
-      {Object.keys(q.data?.totals ?? {}).length > 0 && (
-        <div className="flex flex-wrap gap-6">
+      {accounts.length > 0 && (
+        <div className="flex flex-wrap gap-x-10 gap-y-3">
           {Object.entries(q.data?.totals ?? {}).map(([cur, total]) => (
-            <div key={cur}>
-              <div className="text-xs text-tinta-2">{t("ui.cashTotal", { currency: cur })}</div>
-              <div className="num font-serif text-2xl font-semibold">{fmtMoney(total, cur as Currency)}</div>
-            </div>
+            <Stat key={cur} label={t("ui.cashTotal", { currency: cur })} value={fmtMoney(total, cur as Currency)} />
           ))}
         </div>
       )}
-      <MasterPanel<Account>
+      <RecordList<Account>
         path="cash-accounts"
+        exportName="cuentas"
         newLabel={t("ui.cashNew")}
+        emptyTitle={t("ui.cashEmptyTitle")}
+        emptyHint={t("ui.cashEmptyHint")}
         name={(a) => a.name}
         fields={fields}
         columns={[
-          { header: t("ui.cashName"), cell: (a) => <span className="font-medium">{a.name}</span> },
-          { header: t("ui.cashType"), cell: (a) => tk(`ui.cashType_${a.type}`) },
-          { header: t("ui.currency"), cell: (a) => a.currency },
+          { header: t("ui.cashName"), cell: (a) => a.name },
+          { header: t("ui.cashType"), hideBelow: "sm", cell: (a) => tk(`ui.cashType_${a.type}`) },
+          { header: t("ui.currency"), hideBelow: "sm", cell: (a) => a.currency },
           {
             header: t("ui.cashBalance"),
             right: true,
             cell: (a) => {
-              const bal = q.data?.accounts.find((x) => x.id === a.id)?.balance ?? a.openingBalance;
+              const bal = accounts.find((x) => x.id === a.id)?.balance ?? a.openingBalance;
               return (
-                <button className="cursor-pointer underline-offset-4 hover:underline" onClick={() => setMove(q.data?.accounts.find((x) => x.id === a.id) ?? null)}>
+                <button className="cursor-pointer underline-offset-4 hover:underline" onClick={() => setMove(accounts.find((x) => x.id === a.id) ?? null)}>
                   {fmtMoney(bal, a.currency)}
                 </button>
               );
@@ -106,11 +109,11 @@ function Accounts() {
           },
         ]}
       />
-      <HeaderActions>
-        <Button onClick={() => setTransferring(true)} disabled={(q.data?.accounts.length ?? 0) < 2}>
-          {t("ui.cashTransfer")}
-        </Button>
-      </HeaderActions>
+      {accounts.length >= 2 && (
+        <HeaderActions>
+          <Button onClick={() => setTransferring(true)}>{t("ui.cashTransfer")}</Button>
+        </HeaderActions>
+      )}
       {move && <MoveModal account={move} onClose={() => setMove(null)} />}
       {transferring && <TransferModal accounts={q.data?.accounts ?? []} onClose={() => setTransferring(false)} />}
     </div>
@@ -174,23 +177,24 @@ function MoveModal({ account, onClose }: { account: Account; onClose: () => void
           </Button>
         </div>
       </form>
-      <ExportableTable name="caja">
-        <table className="mt-4 w-full text-sm">
-          <tbody>
-            {(moves.data ?? []).map((m) => (
-              <tr key={m.id} className="border-b border-linea">
-                <td className="num py-2 pr-3">{fmtIsoDate(m.date)}</td>
-                <td className="py-2 pr-3 text-tinta-2">{m.description}</td>
-                <td className={`num py-2 pr-3 text-right ${m.amount < 0 ? "text-peligro" : ""}`}>{fmtMoney(m.amount, account.currency)}</td>
-                <td className="py-2 text-right">
-                  <RowMenu name={fmtIsoDate(m.date)} onDelete={() => remove.mutate(m.id)} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </ExportableTable>
-      {(moves.data ?? []).length === 0 && <p className="mt-3 text-sm text-tinta-2">{fromMinor(account.openingBalance, account.currency) === 0 ? t("ui.erpEmpty") : ""}</p>}
+      {(moves.data ?? []).length > 0 ? (
+        <div className="mt-4">
+          <ExportableTable name="caja">
+            <DataTable
+              columns={[
+                { id: "date", header: t("ui.costDate"), cell: (m: Move) => fmtIsoDate(m.date) },
+                { id: "desc", header: t("ui.balNote"), hideBelow: "sm", cell: (m: Move) => <span className="text-tinta-2">{m.description}</span> },
+                { id: "amount", header: t("ui.balAmount"), align: "right", cell: (m: Move) => <span className={m.amount < 0 ? "text-peligro" : ""}>{fmtMoney(m.amount, account.currency)}</span> },
+                { id: "_a", header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>, align: "right", width: "3rem", cell: (m: Move) => <RowMenu name={fmtIsoDate(m.date)} onDelete={() => remove.mutate(m.id)} /> },
+              ]}
+              rows={moves.data ?? []}
+              rowKey={(m) => m.id}
+            />
+          </ExportableTable>
+        </div>
+      ) : (
+        <p className="mt-3 text-sm text-tinta-2">{t("ui.cashNoMoves")}</p>
+      )}
     </Modal>
   );
 }
@@ -257,44 +261,58 @@ function DuesTab({ direction }: { direction: "payables" | "receivables" }) {
   if (q.error) return <ErrorBox error={q.error} />;
   const party = (id: string | null) => parties.data?.find((p) => p.id === id)?.name ?? "";
   const rows = q.data?.rows ?? [];
+  const payable = direction === "payables";
+  const cols: Column<Due>[] = [
+    { id: "due", header: t("ui.cashDue"), cell: (r) => <span className={`whitespace-nowrap ${TONE[r.status]}`}>{r.dueDate ? fmtIsoDate(r.dueDate) : t("ui.cashNoDue")}</span> },
+    {
+      id: "label",
+      header: t("ui.cashDoc"),
+      cell: (r) => (
+        <>
+          {r.label}
+          {party(r.partyId) && <span className="block text-meta font-normal text-tinta-2 md:hidden">{party(r.partyId)}</span>}
+        </>
+      ),
+    },
+    { id: "party", header: payable ? t("ui.cashSupplier") : t("ui.cashClient"), hideBelow: "md", cell: (r) => <span className="text-tinta-2">{party(r.partyId)}</span> },
+    { id: "total", header: t("ui.cashTotalCol"), align: "right", hideBelow: "lg", cell: (r) => <span className="text-tinta-2">{fmtMoney(r.total, r.currency)}</span> },
+    { id: "pending", header: t("ui.cashPendingCol"), align: "right", cell: (r) => <span className="font-medium">{fmtMoney(r.pending, r.currency)}</span> },
+    {
+      id: "_a",
+      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      align: "right",
+      cell: (r) => (
+        <Button variant="quiet" size="sm" onClick={() => setPaying(r)}>
+          {t(payable ? "ui.cashPay" : "ui.cashCollect")}
+        </Button>
+      ),
+    },
+  ];
   return (
     <div className="flex flex-col gap-4">
-      {Object.keys(q.data?.totals ?? {}).length > 0 && (
-        <div className="flex flex-wrap gap-6">
+      {rows.length > 0 && (
+        <div className="flex flex-wrap gap-x-10 gap-y-3">
           {Object.entries(q.data?.totals ?? {}).map(([cur, v]) => (
-            <div key={cur}>
-              <div className="text-xs text-tinta-2">{t("ui.cashPending", { currency: cur })}</div>
-              <div className="num font-serif text-2xl font-semibold">{fmtMoney(v.pending, cur as Currency)}</div>
-              {v.overdue > 0 && <div className="num text-sm text-peligro">{t("ui.cashOverdue", { amount: fmtMoney(v.overdue, cur as Currency) })}</div>}
-            </div>
+            <Stat
+              key={cur}
+              label={t("ui.cashPending", { currency: cur })}
+              value={fmtMoney(v.pending, cur as Currency)}
+              note={v.overdue > 0 ? <span className="text-peligro">{t("ui.cashOverdue", { amount: fmtMoney(v.overdue, cur as Currency) })}</span> : undefined}
+            />
           ))}
         </div>
       )}
       {rows.length === 0 ? (
-        <Empty>{t("ui.erpEmpty")}</Empty>
+        <EmptyState
+          title={payable ? t("ui.cashPayablesEmptyTitle") : t("ui.cashReceivablesEmptyTitle")}
+          action={<SectionButton to={payable ? "purchases" : "grain"}>{payable ? t("ui.cashGoPurchases") : t("ui.cashGoSales")}</SectionButton>}
+        >
+          {payable ? t("ui.cashPayablesEmptyHint") : t("ui.cashReceivablesEmptyHint")}
+        </EmptyState>
       ) : (
-        <div className="overflow-x-auto">
-          <ExportableTable name="caja-movimientos">
-            <table className="w-full text-sm">
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={`${r.docKind}-${r.docId}`} className="border-b border-linea">
-                    <td className={`num py-2.5 pr-4 ${TONE[r.status]}`}>{r.dueDate ? fmtIsoDate(r.dueDate) : t("ui.cashNoDue")}</td>
-                    <td className="py-2.5 pr-4 font-medium">{r.label}</td>
-                    <td className="py-2.5 pr-4 text-tinta-2">{party(r.partyId)}</td>
-                    <td className="num py-2.5 pr-4 text-right text-tinta-2">{fmtMoney(r.total, r.currency)}</td>
-                    <td className="num py-2.5 pr-4 text-right font-medium">{fmtMoney(r.pending, r.currency)}</td>
-                    <td className="py-2.5 text-right">
-                      <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline" onClick={() => setPaying(r)}>
-                        {t(direction === "payables" ? "ui.cashPay" : "ui.cashCollect")}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ExportableTable>
-        </div>
+        <ExportableTable name={payable ? "a-pagar" : "a-cobrar"}>
+          <DataTable columns={cols} rows={rows} rowKey={(r) => `${r.docKind}-${r.docId}`} caption={payable ? t("ui.cashPayables") : t("ui.cashReceivables")} />
+        </ExportableTable>
       )}
       {paying && <SettleModal due={paying} payable={direction === "payables"} onClose={() => setPaying(null)} />}
     </div>

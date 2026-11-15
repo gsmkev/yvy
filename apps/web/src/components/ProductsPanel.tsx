@@ -5,8 +5,8 @@ import { del, get, patch, post, put } from "../lib/api";
 import { t, tk } from "../lib/i18n";
 import type { Plot, Product } from "../lib/types";
 import { PrescriptionModal } from "./PrescriptionModal";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
-import { HeaderActions, RowMenu } from "./erp/adminSlot";
+import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, Select, Spinner, toast, type Column } from "./ui";
+import { HeaderActions, RowMenu, useTableExport } from "./erp/adminSlot";
 
 interface DoseRange {
   productId: string;
@@ -27,6 +27,7 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
   const [removing, setRemoving] = useState<Product | null>(null);
   const [prescribing, setPrescribing] = useState(false);
   const [type, setType] = useState("");
+  const exp = useTableExport("productos");
   const qc = useQueryClient();
   const remove = useMutation({
     mutationFn: (p: Product) => del(`/org/products/${p.id}`),
@@ -38,55 +39,64 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
   });
   if (q.isLoading) return <Spinner rows={5} h={56} />;
   if (q.error) return <ErrorBox error={q.error} />;
-  const list = (q.data ?? []).filter((p) => !type || p.type === type);
+  const all = q.data ?? [];
+  const list = all.filter((p) => !type || p.type === type);
+  const columns: Column<Product>[] = [
+    { id: "name", header: t("ui.productName"), cell: (p) => (<>{p.name}<span className="block text-xs font-normal text-tinta-2 sm:hidden">{tk(`fields.productType_${p.type}`)} · {tk(`fields.productUnit_${p.unit}`)}</span></>), sort: (a, b) => a.name.localeCompare(b.name) },
+    { id: "type", header: t("ui.productType"), hideBelow: "sm", cell: (p) => tk(`fields.productType_${p.type}`) },
+    { id: "unit", header: t("ui.productUnit"), hideBelow: "sm", cell: (p) => tk(`fields.productUnit_${p.unit}`) },
+    ...(all.some((p) => p.activeIngredient) ? [{ id: "ai", header: t("ui.productActiveIngredient"), hideBelow: "md", cell: (p: Product) => <span className="text-tinta-2">{p.activeIngredient ?? ""}</span> } satisfies Column<Product>] : []),
+    ...(all.some((p) => p.withdrawalDays !== null) ? [{ id: "wd", header: t("ui.productWithdrawal"), align: "right", hideBelow: "lg", cell: (p: Product) => (p.withdrawalDays === null ? "" : p.withdrawalDays) } satisfies Column<Product>] : []),
+    ...((ranges.data ?? []).some((r) => r.min !== null || r.max !== null)
+      ? [{ id: "dose", header: t("ui.productDoseCol"), hideBelow: "lg", cell: (p: Product) => <span className="text-tinta-2">{doseShown(p, ranges.data) ?? ""}</span> } satisfies Column<Product>]
+      : []),
+    ...(canEdit
+      ? [{ id: "menu", header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>, align: "right", width: "3rem", cell: (p: Product) => <RowMenu name={p.name} onEdit={() => setEditing(p)} onDelete={() => setRemoving(p)} /> } satisfies Column<Product>]
+      : []),
+  ];
+  const newButton = (
+    <Button variant="primary" onClick={() => setEditing("new")}>
+      {t("ui.productNew")}
+    </Button>
+  );
   return (
     <div className="flex flex-col gap-4">
-      {canEdit && (
+      {canEdit && all.length > 0 && (
         <HeaderActions>
-          <Button variant="primary" onClick={() => setEditing("new")}>
-            {t("ui.productNew")}
-          </Button>
+          {newButton}
           {farmId && plots && <Button onClick={() => setPrescribing(true)}>{t("ui.prescriptionNew")}</Button>}
         </HeaderActions>
       )}
-      <div className="max-w-60">
-        <Select
-          aria-label={t("ui.productType")}
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          options={[
-            { value: "", label: t("ui.productsAllTypes") },
-            ...PRODUCT_TYPES.map((x) => ({ value: x, label: tk(`fields.productType_${x}`) })),
-          ]}
+      {all.length > 0 && (
+        <>
+          {list.length > 0 && exp.menu}
+          <FilterBar>
+            <Select
+              aria-label={t("ui.productType")}
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              options={[{ value: "", label: t("ui.productsAllTypes") }, ...PRODUCT_TYPES.map((x) => ({ value: x, label: tk(`fields.productType_${x}`) }))]}
+            />
+          </FilterBar>
+        </>
+      )}
+      <div ref={exp.ref}>
+        <DataTable
+          columns={columns}
+          rows={list}
+          rowKey={(p) => p.id}
+          caption={t("ui.productsTitle")}
+          empty={
+            all.length === 0 ? (
+              <EmptyState title={t("ui.emptyProductsTitle")} action={canEdit ? newButton : undefined}>
+                {t("ui.emptyProductsBody")}
+              </EmptyState>
+            ) : (
+              <EmptyState compact title={t("ui.erpEmpty")} />
+            )
+          }
         />
       </div>
-      {list.length === 0 ? (
-        <Empty title={t("ui.productsTitle")}>{t("ui.productNone")}</Empty>
-      ) : (
-        <ul className="divide-y divide-linea border-y border-linea">
-          {list.map((p) => (
-            <li key={p.id} className="flex items-center justify-between gap-3 py-1.5 text-sm">
-              <span className="min-w-0">
-                <span className="font-medium">{p.name}</span>
-                <span className="mt-0.5 block text-tinta-2">
-                  {[
-                    tk(`fields.productType_${p.type}`),
-                    tk(`fields.productUnit_${p.unit}`),
-                    p.activeIngredient,
-                    p.withdrawalDays !== null ? `${t("ui.productWithdrawal")}: ${p.withdrawalDays}` : null,
-                    doseShown(p, ranges.data),
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </span>
-              </span>
-              {canEdit && (
-                <RowMenu name={p.name} onEdit={() => setEditing(p)} onDelete={() => setRemoving(p)} />
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
       {prescribing && farmId && plots && <PrescriptionModal farmId={farmId} plots={plots} onClose={() => setPrescribing(false)} />}
       {editing && <ProductModal product={editing === "new" ? null : editing} range={ranges.data?.find((r) => r.productId === (editing === "new" ? "" : editing.id))} onClose={() => setEditing(null)} />}
       {removing && (

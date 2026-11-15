@@ -2,7 +2,8 @@
 import { CONTRACTOR_SERVICES, CURRENCIES, RATE_UNITS, type Currency } from "@yvy/shared";
 import { t, tk } from "../../lib/i18n";
 import { fmtMoney } from "../../lib/money";
-import { MasterPanel, useErpList, type FieldDef } from "./MasterPanel";
+import { useErpList, type FieldDef } from "./MasterPanel";
+import { RecordList } from "./RecordList";
 import { useParties } from "./PartiesPanel";
 
 export interface Contractor {
@@ -53,8 +54,11 @@ export function ContractorsPanel() {
     { key: "note", label: t("ui.partyNote"), maxLength: 300 },
   ];
   return (
-    <MasterPanel<Contractor>
+    <RecordList<Contractor>
       path="contractors"
+      exportName="contratistas"
+      emptyTitle={t("ui.contractorEmptyTitle")}
+      emptyHint={t("ui.contractorEmptyHint")}
       newLabel={t("ui.contractorNew")}
       name={(c) => c.name}
       fields={fields}
@@ -66,7 +70,7 @@ export function ContractorsPanel() {
           right: true,
           cell: (c) => `${fmtMoney(c.rateAmount, c.currency)} ${tk(`ui.rateUnitPer_${c.rateUnit}`)}`,
         },
-        { header: t("ui.contractorParty"), cell: (c) => parties.data?.find((p) => p.id === c.partyId)?.name ?? "" },
+        { header: t("ui.contractorParty"), hideBelow: "md", cell: (c) => parties.data?.find((p) => p.id === c.partyId)?.name ?? "" },
       ]}
     />
   );

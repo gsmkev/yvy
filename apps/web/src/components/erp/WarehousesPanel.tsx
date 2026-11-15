@@ -37,13 +37,15 @@ export function WarehousesPanel() {
   return (
     <MasterPanel<Warehouse>
       path="warehouses"
+      exportName="depositos"
+      empty={{ title: t("ui.emptyWarehousesTitle"), body: t("ui.emptyWarehousesBody") }}
       newLabel={t("ui.warehouseNew")}
       name={(w) => w.name}
       fields={fields}
       columns={[
         { header: t("ui.warehouseName"), cell: (w) => <span className="font-medium">{w.name}</span> },
         { header: t("ui.warehouseType"), cell: (w) => tk(`ui.warehouseType_${w.type}`) },
-        { header: t("ui.warehouseFarm"), cell: (w) => farms.data?.find((f) => f.id === w.farmId)?.name ?? "" },
+        { header: t("ui.warehouseFarm"), hideBelow: "sm", cell: (w) => farms.data?.find((f) => f.id === w.farmId)?.name ?? "" },
         { header: t("ui.warehouseDefault"), cell: (w) => (w.isDefault ? t("ui.warehouseDefaultYes") : "") },
       ]}
     />

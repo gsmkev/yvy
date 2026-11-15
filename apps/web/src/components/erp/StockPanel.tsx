@@ -8,13 +8,12 @@ import { t, tk } from "../../lib/i18n";
 import { fmtGs, fmtMoney, fmtQty } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
 import { useProducts } from "../ProductsPanel";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, Select, Spinner, Tabs, toast, type Column } from "../ui";
 import { PhotoRowMenu } from "./InvoicePhoto";
-import { HeaderActions, RowMenu } from "./adminSlot";
+import { HeaderActions, RowMenu, useGoSection, useTableExport } from "./adminSlot";
 import { ActionMenu } from "../menus";
 import { useParties } from "./PartiesPanel";
 import { useWarehouses } from "./WarehousesPanel";
-import { ExportableTable } from "../ExportableTable";
 
 interface Summary {
   rows: { productId: string; warehouseId: string; qty: number; valuePyg?: number }[];
@@ -61,6 +60,9 @@ export function StockPanel() {
   });
   const expiring = useQuery({ queryKey: ["erp", "expiring"], queryFn: () => get<ExpiringLot[]>("/org/erp/stock/expiring") });
   const [mode, setMode] = useState<Mode | null>(null);
+  const [tab, setTab] = useState<"stock" | "moves" | "expiring">("stock");
+  const exp = useTableExport(tab === "stock" ? "stock" : tab === "moves" ? "movimientos-de-stock" : "stock-por-vencer");
+  const goSection = useGoSection();
   const [removing, setRemoving] = useState<StockMove | null>(null);
   const qc = useQueryClient();
   const remove = useMutation({
@@ -77,8 +79,123 @@ export function StockPanel() {
   const wh = (id: string) => warehouses.data?.find((w) => w.id === id)?.name ?? "";
   const unit = (id: string) => tk(`fields.productUnit_${prod(id)?.unit ?? "l"}`);
   const list = stock.data?.products ?? [];
+  const lots = expiring.data ?? [];
+  const moveRows = moves.data ?? [];
+  const needProduct = (products.data ?? []).length === 0;
+  const needWarehouse = (warehouses.data ?? []).length === 0;
+  if (needProduct || needWarehouse)
+    return (
+      <EmptyState
+        title={t(needProduct ? "ui.stockNeedProductTitle" : "ui.stockNeedWarehouseTitle")}
+        action={
+          <Button variant="primary" onClick={() => goSection(needProduct ? "products" : "warehouses")}>
+            {t(needProduct ? "ui.productLoad" : "ui.warehouseLoad")}
+          </Button>
+        }
+      >
+        {t(needProduct ? "ui.stockNeedProductBody" : "ui.stockNeedWarehouseBody")}
+      </EmptyState>
+    );
+  const stockCols: Column<Summary["products"][number]>[] = [
+    { id: "product", header: t("ui.stockProduct"), cell: (p) => prod(p.productId)?.name ?? p.productId, sort: (a, b) => (prod(a.productId)?.name ?? "").localeCompare(prod(b.productId)?.name ?? "") },
+    {
+      id: "where",
+      header: t("ui.stockWhere"),
+      hideBelow: "md",
+      cell: (p) => (
+        <span className="text-tinta-2">
+          {(stock.data?.rows ?? [])
+            .filter((r) => r.productId === p.productId && Math.abs(r.qty) > 1e-9)
+            .map((r) => `${wh(r.warehouseId)}: ${fmtQty(r.qty)}`)
+            .join(" · ")}
+        </span>
+      ),
+    },
+    { id: "qty", header: t("ui.stockQty"), align: "right", cell: (p) => <span className={p.qty < 0 ? "text-peligro" : ""}>{fmtQty(p.qty, unit(p.productId))}</span>, sort: (a, b) => a.qty - b.qty },
+    ...(list[0]?.avgCostPyg !== undefined ? [{ id: "avg", header: t("ui.stockAvgCost"), align: "right", hideBelow: "lg", cell: (p: Summary["products"][number]) => (p.avgCostPyg === undefined ? "" : fmtGs(p.avgCostPyg)) } satisfies Column<Summary["products"][number]>] : []),
+    ...(list[0]?.valuePyg !== undefined ? [{ id: "value", header: t("ui.stockValue"), align: "right", hideBelow: "sm", cell: (p: Summary["products"][number]) => (p.valuePyg === undefined ? "" : fmtGs(p.valuePyg)), sort: (a: Summary["products"][number], b: Summary["products"][number]) => (a.valuePyg ?? 0) - (b.valuePyg ?? 0) } satisfies Column<Summary["products"][number]>] : []),
+  ];
+  const moveCols: Column<StockMove>[] = [
+    { id: "date", header: t("ui.costDate"), cell: (m) => <span className="num whitespace-nowrap">{fmtIsoDate(dayOf(m.occurredAt))}</span> },
+    {
+      id: "origin",
+      header: t("ui.stockOrigin"),
+      hideBelow: "sm",
+      cell: (m) => (
+        <>
+          {tk(`ui.stockOrigin_${m.origin}`)}
+          {m.originId && m.origin === "consumption" && <span className="block text-xs text-tinta-2">{t("ui.costFromRecord")}</span>}
+        </>
+      ),
+    },
+    {
+      id: "product",
+      header: t("ui.stockProduct"),
+      cell: (m) => (
+        <>
+          {prod(m.productId)?.name}
+          <span className="block text-xs font-normal text-tinta-2">{wh(m.warehouseId)}</span>
+        </>
+      ),
+    },
+    {
+      id: "qty",
+      header: t("ui.stockQty"),
+      align: "right",
+      cell: (m) => (
+        <span className={m.qty < 0 ? "" : "text-accion"}>
+          {m.qty > 0 ? "+" : ""}
+          {fmtQty(m.qty, unit(m.productId))}
+        </span>
+      ),
+    },
+    ...(moveRows.some((m) => m.valuePyg !== undefined)
+      ? [
+          {
+            id: "value",
+            header: t("ui.stockValue"),
+            align: "right",
+            hideBelow: "md",
+            cell: (m: StockMove) =>
+              m.valuePyg === undefined ? (
+                ""
+              ) : (
+                <>
+                  {m.amount != null && m.currency ? fmtMoney(m.amount, m.currency) : fmtGs(Math.abs(m.valuePyg))}
+                  {m.currency === "USD" && <span className="block text-xs text-tinta-2">{fmtGs(m.valuePyg)}</span>}
+                </>
+              ),
+          } satisfies Column<StockMove>,
+        ]
+      : []),
+    {
+      id: "menu",
+      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      align: "right",
+      width: "3rem",
+      cell: (m) =>
+        m.valuePyg !== undefined && m.origin === "purchase" ? (
+          <PhotoRowMenu kind="stock-moves" id={m.id} hasPhoto={!!m.photoPath} name={fmtIsoDate(dayOf(m.occurredAt))} onDelete={() => setRemoving(m)} />
+        ) : (
+          <RowMenu name={fmtIsoDate(dayOf(m.occurredAt))} onDelete={m.origin === "consumption" && m.originId ? undefined : () => setRemoving(m)} />
+        ),
+    },
+  ];
+  const expiringCols: Column<ExpiringLot>[] = [
+    { id: "product", header: t("ui.stockProduct"), cell: (l) => prod(l.productId)?.name },
+    { id: "lot", header: t("ui.stockLot"), hideBelow: "sm", cell: (l) => <span className="text-tinta-2">{l.lot ?? ""}</span> },
+    { id: "qty", header: t("ui.stockQty"), align: "right", hideBelow: "sm", cell: (l) => fmtQty(l.remaining, unit(l.productId)) },
+    { id: "date", header: t("ui.stockExpires"), align: "right", cell: (l) => fmtIsoDate(l.expiresOn) },
+    {
+      id: "left",
+      header: t("ui.expiringTitle"),
+      align: "right",
+      cell: (l) => <span className={l.daysLeft < 0 ? "text-peligro" : "text-trigo-texto"}>{l.daysLeft < 0 ? t("ui.expiringExpired", { n: -l.daysLeft }) : t("ui.expiringIn", { n: l.daysLeft })}</span>,
+    },
+  ];
+  const shown = tab === "stock" ? list.length : tab === "moves" ? moveRows.length : lots.length;
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       <HeaderActions>
         <Button variant="primary" onClick={() => setMode("purchase")}>
           {t("ui.stockMode_purchase")}
@@ -88,119 +205,47 @@ export function StockPanel() {
           items={(["consumption", "transfer", "adjustment"] as const).map((m) => ({ label: t(`ui.stockMode_${m}`), onSelect: () => setMode(m) }))}
         />
       </HeaderActions>
-      {expiring.data && expiring.data.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <h2 className="border-b border-linea pb-2 text-section leading-6 font-semibold">{t("ui.expiringTitle")}</h2>
-          <ExportableTable name="stock-por-vencer">
-            <table className="w-full text-sm">
-              <tbody>
-                {expiring.data.map((l) => (
-                  <tr key={`${l.productId}-${l.lot}-${l.expiresOn}`} className="border-b border-linea">
-                    <td className="py-2.5 pr-4 font-medium">{prod(l.productId)?.name}</td>
-                    <td className="py-2.5 pr-4 text-tinta-2">{l.lot ? t("ui.expiringLot", { lot: l.lot }) : ""}</td>
-                    <td className="num py-2.5 pr-4 text-right">{fmtQty(l.remaining, unit(l.productId))}</td>
-                    <td className="num py-2.5 pr-4 text-right">{fmtIsoDate(l.expiresOn)}</td>
-                    <td className={`py-2.5 text-right ${l.daysLeft < 0 ? "text-peligro" : "text-trigo-texto"}`}>
-                      {l.daysLeft < 0 ? t("ui.expiringExpired", { n: -l.daysLeft }) : t("ui.expiringIn", { n: l.daysLeft })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ExportableTable>
-        </div>
-      )}
-      {(warehouses.data ?? []).length === 0 && <p className="text-sm text-trigo-texto">{t("ui.stockNoWarehouse")}</p>}
-      {list.length === 0 ? (
-        <Empty>{t("ui.stockEmpty")}</Empty>
-      ) : (
-        <div className="overflow-x-auto">
-          <ExportableTable name="stock">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-linea text-left text-tinta-2">
-                  <th className="py-2 pr-4 font-medium">{t("ui.stockProduct")}</th>
-                  <th className="py-2 pr-4 font-medium">{t("ui.stockWhere")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.stockQty")}</th>
-                  {list[0]?.avgCostPyg !== undefined && <th className="py-2 pr-4 text-right font-medium">{t("ui.stockAvgCost")}</th>}
-                  {list[0]?.valuePyg !== undefined && <th className="py-2 text-right font-medium">{t("ui.stockValue")}</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {list.map((p) => (
-                  <tr key={p.productId} className="border-b border-linea align-top">
-                    <td className="py-2.5 pr-4 font-medium">{prod(p.productId)?.name ?? p.productId}</td>
-                    <td className="py-2.5 pr-4 text-tinta-2">
-                      {(stock.data?.rows ?? [])
-                        .filter((r) => r.productId === p.productId && Math.abs(r.qty) > 1e-9)
-                        .map((r) => `${wh(r.warehouseId)}: ${fmtQty(r.qty)}`)
-                        .join(" · ")}
-                    </td>
-                    <td className={`num py-2.5 pr-4 text-right ${p.qty < 0 ? "text-peligro" : ""}`}>{fmtQty(p.qty, unit(p.productId))}</td>
-                    {p.avgCostPyg !== undefined && <td className="num py-2.5 pr-4 text-right">{fmtGs(p.avgCostPyg)}</td>}
-                    {p.valuePyg !== undefined && <td className="num py-2.5 text-right">{fmtGs(p.valuePyg)}</td>}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ExportableTable>
-        </div>
-      )}
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-linea pb-2">
-          <h2 className="text-section leading-6 font-semibold">{t("ui.stockMoves")}</h2>
+      {shown > 0 && exp.menu}
+      <Tabs
+        tabs={[
+          { id: "stock", label: t("ui.stockTabStock") },
+          { id: "moves", label: t("ui.stockMoves") },
+          ...(lots.length > 0 ? [{ id: "expiring" as const, label: t("ui.expiringTitle"), count: lots.length }] : []),
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
+      {tab === "moves" && (
+        <FilterBar>
           <Select
             aria-label={t("ui.stockProduct")}
             value={productId}
             onChange={(e) => setProductId(e.target.value)}
             options={[{ value: "", label: t("ui.costAll") }, ...(products.data ?? []).map((p) => ({ value: p.id, label: p.name }))]}
           />
-        </div>
-        {moves.isLoading && <Spinner />}
-        {moves.data && moves.data.length === 0 && <Empty>{t("ui.erpEmpty")}</Empty>}
-        {moves.data && moves.data.length > 0 && (
-          <div className="overflow-x-auto">
-            <ExportableTable name="movimientos-de-stock">
-              <table className="w-full text-sm">
-                <tbody>
-                  {moves.data.map((m) => (
-                    <tr key={m.id} className="border-b border-linea">
-                      <td className="num py-2.5 pr-4 whitespace-nowrap">{fmtIsoDate(dayOf(m.occurredAt))}</td>
-                      <td className="py-2.5 pr-4">
-                        {tk(`ui.stockOrigin_${m.origin}`)}
-                        {m.originId && m.origin === "consumption" && <span className="block text-xs text-tinta-2">{t("ui.costFromRecord")}</span>}
-                      </td>
-                      <td className="py-2.5 pr-4">
-                        {prod(m.productId)?.name}
-                        <span className="block text-xs text-tinta-2">{wh(m.warehouseId)}</span>
-                      </td>
-                      <td className={`num py-2.5 pr-4 text-right ${m.qty < 0 ? "" : "text-accion"}`}>
-                        {m.qty > 0 ? "+" : ""}
-                        {fmtQty(m.qty, unit(m.productId))}
-                      </td>
-                      {m.valuePyg !== undefined && (
-                        <td className="num py-2.5 pr-4 text-right">
-                          {m.amount != null && m.currency ? fmtMoney(m.amount, m.currency) : fmtGs(Math.abs(m.valuePyg))}
-                          {m.currency === "USD" && <span className="block text-xs text-tinta-2">{fmtGs(m.valuePyg)}</span>}
-                        </td>
-                      )}
-                      <td className="sticky right-0 w-12 bg-lino py-1 text-right">
-                        {m.valuePyg !== undefined && m.origin === "purchase" ? (
-                          <PhotoRowMenu kind="stock-moves" id={m.id} hasPhoto={!!m.photoPath} name={fmtIsoDate(dayOf(m.occurredAt))} onDelete={() => setRemoving(m)} />
-                        ) : (
-                          <RowMenu
-                            name={fmtIsoDate(dayOf(m.occurredAt))}
-                            onDelete={m.origin === "consumption" && m.originId ? undefined : () => setRemoving(m)}
-                          />
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </ExportableTable>
-          </div>
+        </FilterBar>
+      )}
+      <div ref={exp.ref}>
+        {tab === "stock" && (
+          <DataTable
+            columns={stockCols}
+            rows={list}
+            rowKey={(p) => p.productId}
+            caption={t("ui.stockTabStock")}
+            empty={
+              <EmptyState title={t("ui.emptyStockTitle")} action={<Button variant="primary" onClick={() => setMode("purchase")}>{t("ui.stockMode_purchase")}</Button>}>
+                {t("ui.emptyStockBody")}
+              </EmptyState>
+            }
+          />
         )}
+        {tab === "moves" &&
+          (moves.isLoading ? (
+            <Spinner />
+          ) : (
+            <DataTable columns={moveCols} rows={moveRows} rowKey={(m) => m.id} caption={t("ui.stockMoves")} empty={<EmptyState compact title={t("ui.erpEmpty")}>{t("ui.emptyMovesBody")}</EmptyState>} />
+          ))}
+        {tab === "expiring" && <DataTable columns={expiringCols} rows={lots} rowKey={(l) => `${l.productId}-${l.lot}-${l.expiresOn}`} caption={t("ui.expiringTitle")} />}
       </div>
       {mode && <MoveModal mode={mode} onClose={() => setMode(null)} />}
       {removing && (

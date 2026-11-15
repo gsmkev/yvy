@@ -9,7 +9,7 @@ import { fmtGs } from "../../lib/money";
 import { useFarm, useFarms, useMembers, useSeasons } from "../../lib/queries";
 import { groupOrders, orderSheetHtml, plotsLabel, productsLabel, type OrderGroup, type OrderRow } from "../../lib/workOrders";
 import { useProducts } from "../ProductsPanel";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, toast, type Column } from "../ui";
 import { useContractors } from "./ContractorsPanel";
 import { useMachines } from "./MachinesPanel";
 import { ExportableTable } from "../ExportableTable";
@@ -22,75 +22,77 @@ export function OrdersPanel() {
   const groups = useMemo(() => groupOrders(q.data ?? []), [q.data]);
   const farmName = (id: string) => farms.data?.find((f) => f.id === id)?.name ?? "";
   const hasCost = groups.some((g) => g.costPyg !== undefined);
+  const ha = (n: number | null) => (n !== null ? `${n.toLocaleString("es-PY", { maximumFractionDigits: 1 })} ha` : "");
+  const newBtn = (
+    <Button variant="primary" onClick={() => setCreating(true)}>
+      {t("ui.orderNew")}
+    </Button>
+  );
+  const columns: Column<OrderGroup>[] = [
+    {
+      id: "labor",
+      header: t("ui.orderLabor"),
+      cell: (g) => (
+        <>
+          {tk(`ui.orderLabor_${g.labor}`)}
+          <span className="block text-meta font-normal text-tinta-2 lg:hidden">{plotsLabel(g.plotNames)}</span>
+        </>
+      ),
+    },
+    { id: "plots", header: t("ui.orderPlots"), hideBelow: "lg", cell: (g) => plotsLabel(g.plotNames) },
+    {
+      id: "executor",
+      header: t("ui.orderExecutor"),
+      hideBelow: "md",
+      cell: (g) =>
+        g.contractorName ? (
+          <>
+            {g.contractorName}
+            <span className="block text-meta text-tinta-2">{g.assigneeName}</span>
+          </>
+        ) : (
+          g.assigneeName
+        ),
+    },
+    { id: "machine", header: t("ui.orderMachine"), hideBelow: "lg", cell: (g) => g.machine ?? "" },
+    { id: "products", header: t("ui.orderProducts"), hideBelow: "lg", cell: (g) => productsLabel(g.order) },
+    { id: "due", header: t("ui.orderDue"), cell: (g) => <span className="whitespace-nowrap">{fmtIsoDate(g.dueDate)}</span> },
+    {
+      id: "status",
+      header: t("ui.orderStatus"),
+      hideBelow: "sm",
+      cell: (g) => (g.status === "open" && g.done > 0 ? t("ui.orderProgress", { done: g.done, total: g.rows.length }) : tk(`ui.orderStatus_${g.status}`)),
+    },
+    { id: "planned", header: t("ui.orderPlanned"), align: "right", hideBelow: "md", cell: (g) => ha(g.plannedHa) },
+    { id: "actual", header: t("ui.orderActual"), align: "right", hideBelow: "lg", cell: (g) => ha(g.actualHa) },
+    ...(hasCost
+      ? [{ id: "cost", header: t("ui.orderCost"), align: "right" as const, hideBelow: "lg" as const, cell: (g: OrderGroup) => (g.done > 0 && g.costPyg !== undefined ? fmtGs(g.costPyg) : "") }]
+      : []),
+    {
+      id: "_print",
+      header: <span className="sr-only">{t("ui.orderPrint")}</span>,
+      align: "right",
+      cell: (g) => (
+        <Button variant="quiet" size="sm" onClick={() => printOrder(g, farmName(g.farmId))}>
+          {t("ui.orderPrint")}
+        </Button>
+      ),
+    },
+  ];
   return (
     <div className="flex flex-col gap-4">
-      <HeaderActions>
-        <Button variant="primary" onClick={() => setCreating(true)}>
-          {t("ui.orderNew")}
-        </Button>
-      </HeaderActions>
+      {groups.length > 0 && <HeaderActions>{newBtn}</HeaderActions>}
       {q.isLoading && <Spinner />}
       {q.error ? <ErrorBox error={q.error} /> : null}
-      {q.data && q.data.length === 0 && <Empty>{t("ui.erpEmpty")}</Empty>}
+      {q.data && q.data.length === 0 && (
+        <EmptyState title={t("ui.orderEmptyTitle")} action={newBtn}>
+          {t("ui.orderEmptyHint")}
+        </EmptyState>
+      )}
       {groups.length > 0 && (
-        <div className="overflow-x-auto">
-          <ExportableTable name="ordenes-de-trabajo">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-linea text-left text-tinta-2">
-                  <th className="py-2 pr-4 font-medium">{t("ui.orderLabor")}</th>
-                  <th className="py-2 pr-4 font-medium">{t("ui.orderPlots")}</th>
-                  <th className="py-2 pr-4 font-medium">{t("ui.orderExecutor")}</th>
-                  <th className="py-2 pr-4 font-medium">{t("ui.orderMachine")}</th>
-                  <th className="py-2 pr-4 font-medium">{t("ui.orderProducts")}</th>
-                  <th className="py-2 pr-4 font-medium">{t("ui.orderDue")}</th>
-                  <th className="py-2 pr-4 font-medium">{t("ui.orderStatus")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.orderPlanned")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.orderActual")}</th>
-                  {hasCost && <th className="py-2 pr-4 text-right font-medium">{t("ui.orderCost")}</th>}
-                  <th className="py-2" />
-                </tr>
-              </thead>
-              <tbody>
-                {groups.map((g) => (
-                  <tr key={g.key} className="border-b border-linea align-top">
-                    <td className="py-2.5 pr-4 font-medium">{tk(`ui.orderLabor_${g.labor}`)}</td>
-                    <td className="py-2.5 pr-4">{plotsLabel(g.plotNames)}</td>
-                    <td className="py-2.5 pr-4">
-                      {g.contractorName ? (
-                        <>
-                          {g.contractorName}
-                          <span className="block text-xs text-tinta-2">{g.assigneeName}</span>
-                        </>
-                      ) : (
-                        g.assigneeName
-                      )}
-                    </td>
-                    <td className="py-2.5 pr-4">{g.machine ?? ""}</td>
-                    <td className="py-2.5 pr-4">{productsLabel(g.order)}</td>
-                    <td className="num py-2.5 pr-4">{fmtIsoDate(g.dueDate)}</td>
-                    <td className="py-2.5 pr-4">
-                      {g.status === "open" && g.done > 0
-                        ? t("ui.orderProgress", { done: g.done, total: g.rows.length })
-                        : tk(`ui.orderStatus_${g.status}`)}
-                    </td>
-                    <td className="num py-2.5 pr-4 text-right">{g.plannedHa !== null ? `${g.plannedHa.toLocaleString("es-PY", { maximumFractionDigits: 1 })} ha` : ""}</td>
-                    <td className="num py-2.5 pr-4 text-right">{g.actualHa !== null ? `${g.actualHa.toLocaleString("es-PY", { maximumFractionDigits: 1 })} ha` : ""}</td>
-                    {hasCost && <td className="num py-2.5 pr-4 text-right">{g.done > 0 && g.costPyg !== undefined ? fmtGs(g.costPyg) : ""}</td>}
-                    <td className="py-2.5 text-right">
-                      <button
-                        className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline print:hidden"
-                        onClick={() => printOrder(g, farmName(g.farmId))}
-                      >
-                        {t("ui.orderPrint")}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ExportableTable>
-        </div>
+        <ExportableTable name="ordenes-de-trabajo">
+          <DataTable columns={columns} rows={groups} rowKey={(g) => g.key} caption={t("ui.adminSection_orders")} />
+        </ExportableTable>
       )}
       {creating && <OrderModal onClose={() => setCreating(false)} />}
     </div>

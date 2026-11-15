@@ -8,12 +8,11 @@ import { t, tk } from "../../lib/i18n";
 import { fmtMoney, fmtQty } from "../../lib/money";
 import { useFarms } from "../../lib/queries";
 import { useProducts } from "../ProductsPanel";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, FilterBar, Field, Input, Modal, Select, Spinner, toast, type Column } from "../ui";
 import { InvoicePhoto } from "./InvoicePhoto";
 import { useParties } from "./PartiesPanel";
 import { useWarehouses } from "./WarehousesPanel";
-import { ExportableTable } from "../ExportableTable";
-import { HeaderActions } from "./adminSlot";
+import { HeaderActions, useGoSection, useTableExport } from "./adminSlot";
 
 interface Line {
   id: string;
@@ -53,41 +52,67 @@ export function PurchasesPanel() {
   const parties = useParties();
   const [creating, setCreating] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
+  const [status, setStatus] = useState("");
+  const exp = useTableExport("compras");
   if (q.isLoading) return <Spinner />;
   if (q.error) return <ErrorBox error={q.error} />;
   const party = (id: string | null) => parties.data?.find((p) => p.id === id)?.name ?? "";
+  const all = q.data ?? [];
+  const rows = all.filter((p) => !status || p.status === status);
+  const hasInvoice = all.some((p) => p.invoiceNumber);
+  const columns: Column<Purchase>[] = [
+    { id: "date", header: t("ui.costDate"), cell: (p) => <span className="num">{fmtIsoDate(p.orderDate)}</span>, sort: (a, b) => a.orderDate.localeCompare(b.orderDate) },
+    { id: "party", header: t("ui.purchSupplier"), cell: (p) => <span className="font-medium">{party(p.partyId) || "—"}</span> },
+    ...(hasInvoice ? [{ id: "invoice", header: t("ui.purchInvoiceNumber"), hideBelow: "md", cell: (p: Purchase) => <span className="text-tinta-2">{p.invoiceNumber ?? ""}</span> } satisfies Column<Purchase>] : []),
+    { id: "total", header: t("ui.purchTotal"), align: "right", cell: (p) => fmtMoney(p.totalAmount, p.currency), sort: (a, b) => a.totalAmount - b.totalAmount },
+    { id: "status", header: t("ui.purchStatus"), hideBelow: "sm", cell: (p) => <span className={STATUS_TONE[p.status]}>{tk(`ui.purchStatus_${p.status}`)}</span> },
+    {
+      id: "open",
+      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      align: "right",
+      width: "5rem",
+      cell: (p) => (
+        <Button size="sm" variant="quiet" aria-label={`${t("ui.purchOpen")} ${fmtIsoDate(p.orderDate)}`} onClick={() => setOpen(p.id)}>
+          {t("ui.purchOpen")}
+        </Button>
+      ),
+    },
+  ];
   return (
     <div className="flex flex-col gap-4">
-      <HeaderActions>
-        <Button variant="primary" onClick={() => setCreating(true)}>
-          {t("ui.purchNew")}
-        </Button>
-      </HeaderActions>
-      {(q.data ?? []).length === 0 ? (
-        <Empty>{t("ui.erpEmpty")}</Empty>
+      {all.length > 0 && (
+        <HeaderActions>
+          <Button variant="primary" onClick={() => setCreating(true)}>
+            {t("ui.purchNew")}
+          </Button>
+        </HeaderActions>
+      )}
+      {all.length === 0 ? (
+        <EmptyState
+          title={t("ui.emptyPurchTitle")}
+          action={
+            <Button variant="primary" onClick={() => setCreating(true)}>
+              {t("ui.purchNew")}
+            </Button>
+          }
+        >
+          {t("ui.emptyPurchBody")}
+        </EmptyState>
       ) : (
-        <div className="overflow-x-auto">
-          <ExportableTable name="compras">
-            <table className="w-full text-sm">
-              <tbody>
-                {(q.data ?? []).map((p) => (
-                  <tr key={p.id} className="border-b border-linea">
-                    <td className="num py-2.5 pr-4">{fmtIsoDate(p.orderDate)}</td>
-                    <td className="py-2.5 pr-4 font-medium">{party(p.partyId) || "—"}</td>
-                    <td className="py-2.5 pr-4 text-tinta-2">{p.invoiceNumber ?? ""}</td>
-                    <td className="num py-2.5 pr-4 text-right">{fmtMoney(p.totalAmount, p.currency)}</td>
-                    <td className={`py-2.5 pr-4 ${STATUS_TONE[p.status]}`}>{tk(`ui.purchStatus_${p.status}`)}</td>
-                    <td className="py-2.5 text-right">
-                      <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline" onClick={() => setOpen(p.id)}>
-                        {t("ui.purchOpen")}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ExportableTable>
-        </div>
+        <>
+          {exp.menu}
+          <FilterBar>
+            <Select
+              aria-label={t("ui.purchStatus")}
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              options={[{ value: "", label: t("ui.costAll") }, ...(["ordered", "invoiced", "received", "complete"] as const).map((k) => ({ value: k, label: tk(`ui.purchStatus_${k}`) }))]}
+            />
+          </FilterBar>
+          <div ref={exp.ref}>
+            <DataTable columns={columns} rows={rows} rowKey={(p) => p.id} caption={t("ui.adminSection_purchases")} empty={<EmptyState compact title={t("ui.erpEmpty")} />} />
+          </div>
+        </>
       )}
       {creating && <NewPurchase onClose={() => setCreating(false)} />}
       {open && <PurchaseDetail id={open} onClose={() => setOpen(null)} />}
@@ -217,6 +242,7 @@ function PurchaseDetail({ id, onClose }: { id: string; onClose: () => void }) {
   const [warehouseId, setWarehouseId] = useState("");
   const [received, setReceived] = useState<Record<string, { qty: string; lot: string; expiresOn: string }>>({});
   const [confirm, setConfirm] = useState<"unreceive" | "delete" | null>(null);
+  const goSection = useGoSection();
   const doInvoice = useMutation({
     mutationFn: () => post(`/org/erp/purchases/${id}/invoice`, { invoiceNumber: invoice.number, invoiceDate: invoice.date, dueDate: invoice.due || null }),
     onSuccess: () => {
@@ -266,7 +292,7 @@ function PurchaseDetail({ id, onClose }: { id: string; onClose: () => void }) {
         <Spinner />
       ) : (
         <div className="flex flex-col gap-4">
-          <ExportableTable name="compra-detalle">
+          <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <tbody>
                 {p.lines.map((l) => (
@@ -288,7 +314,7 @@ function PurchaseDetail({ id, onClose }: { id: string; onClose: () => void }) {
                 ))}
               </tbody>
             </table>
-          </ExportableTable>
+          </div>
           <div className="num text-right font-medium">{fmtMoney(p.totalAmount, p.currency)}</div>
           <div className="flex flex-col gap-2 border-t border-linea pt-3">
             <h3 className="text-base font-semibold">{t("ui.purchInvoice")}</h3>
@@ -322,6 +348,10 @@ function PurchaseDetail({ id, onClose }: { id: string; onClose: () => void }) {
             <h3 className="text-base font-semibold">{t("ui.purchReception")}</h3>
             {p.receivedAt ? (
               <p className="text-sm">{t("ui.purchReceivedOn", { date: fmtIsoDate(p.receivedAt) })}</p>
+            ) : (warehouses.data ?? []).length === 0 ? (
+              <EmptyState compact title={t("ui.stockNeedWarehouseTitle")} action={<Button variant="primary" onClick={() => goSection("warehouses")}>{t("ui.warehouseLoad")}</Button>}>
+                {t("ui.stockNeedWarehouseBody")}
+              </EmptyState>
             ) : (
               <div className="flex flex-wrap items-end gap-2">
                 <Select
@@ -329,7 +359,7 @@ function PurchaseDetail({ id, onClose }: { id: string; onClose: () => void }) {
                   onChange={(e) => setWarehouseId(e.target.value)}
                   options={(warehouses.data ?? []).map((w) => ({ value: w.id, label: w.name }))}
                 />
-                <Button variant="primary" disabled={doReceive.isPending || !(warehouses.data ?? []).length} onClick={() => doReceive.mutate()}>
+                <Button variant="primary" disabled={doReceive.isPending} onClick={() => doReceive.mutate()}>
                   {t("ui.purchReceive")}
                 </Button>
               </div>

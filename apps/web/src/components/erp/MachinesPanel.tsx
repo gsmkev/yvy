@@ -3,7 +3,8 @@ import { MACHINE_TYPES, METER_KINDS } from "@yvy/shared";
 import { fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { useFarms } from "../../lib/queries";
-import { MasterPanel, useErpList, type FieldDef } from "./MasterPanel";
+import { useErpList, type FieldDef } from "./MasterPanel";
+import { RecordList } from "./RecordList";
 
 export interface Machine {
   id: string;
@@ -49,21 +50,24 @@ export function MachinesPanel() {
     },
   ];
   return (
-    <MasterPanel<Machine>
+    <RecordList<Machine>
       path="machines"
+      exportName="maquinaria"
+      emptyTitle={t("ui.machineEmptyTitle")}
+      emptyHint={t("ui.machineEmptyHint")}
       newLabel={t("ui.machineNew")}
       name={(m) => m.name}
       fields={fields}
       columns={[
         { header: t("ui.machineName"), cell: (m) => <span className="font-medium">{m.name}</span> },
         { header: t("ui.machineType"), cell: (m) => tk(`ui.machineType_${m.type}`) },
-        { header: t("ui.machineBrandModel"), cell: (m) => [m.brand, m.model, m.year].filter(Boolean).join(" ") },
+        { header: t("ui.machineBrandModel"), hideBelow: "md", cell: (m) => [m.brand, m.model, m.year].filter(Boolean).join(" ") },
         {
           header: t("ui.machineMeter"),
           right: true,
           cell: (m) => `${fmtNum(m.meterValue)} ${m.meterKind === "hours" ? "h" : "km"}`,
         },
-        { header: t("ui.machineFarm"), cell: (m) => farms.data?.find((f) => f.id === m.farmId)?.name ?? t("ui.machineAllFarms") },
+        { header: t("ui.machineFarm"), hideBelow: "lg", cell: (m) => farms.data?.find((f) => f.id === m.farmId)?.name ?? t("ui.machineAllFarms") },
       ]}
     />
   );

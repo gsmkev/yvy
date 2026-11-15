@@ -3,11 +3,12 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { get, qs } from "../../lib/api";
 import { fmtHa, fmtNum } from "../../lib/format";
-import { t, tk } from "../../lib/i18n";
+import { t, tk, type MessageKey } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { useFarms } from "../../lib/queries";
 import { ExportableTable } from "../ExportableTable";
-import { Empty, ErrorBox, Field, Select, Spinner, Stat } from "../ui";
+import { Button, DataTable, EmptyState, ErrorBox, Field, FilterBar, Select, Spinner, Stat, type Column } from "../ui";
+import { SectionButton } from "./SectionButton";
 import { useSeasonList } from "./CostsPanel";
 
 interface Figures {
@@ -33,136 +34,161 @@ interface Results {
 const gs = (n: number | null) => (n === null ? "" : fmtGs(n));
 const tone = (n: number) => (n < 0 ? "text-peligro" : "");
 
+type View = "plot" | "crop" | "season" | "activity";
+const VIEWS: { id: View; label: MessageKey }[] = [
+  { id: "plot", label: "ui.resultsByPlot" },
+  { id: "crop", label: "ui.resultsByCrop" },
+  { id: "season", label: "ui.resultsBySeason" },
+  { id: "activity", label: "ui.resultsByActivity" },
+];
+
+/** Control segmentado: cambia la vista de una sola tabla. */
+function Segmented({ value, onChange }: { value: View; onChange: (v: View) => void }) {
+  return (
+    <div role="group" aria-label={t("ui.resultsViewBy")} className="inline-flex max-w-full self-start overflow-x-auto rounded-md border border-linea p-0.5">
+      {VIEWS.map((v) => (
+        <button
+          key={v.id}
+          type="button"
+          aria-pressed={value === v.id}
+          onClick={() => onChange(v.id)}
+          className={`h-8 shrink-0 cursor-pointer rounded px-3 text-sm font-medium whitespace-nowrap transition-colors ${value === v.id ? "bg-surco text-lino" : "text-tinta-2 hover:text-surco"}`}
+        >
+          {t(v.label)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const money = <T extends { costPyg: number; incomePyg: number; marginPyg: number }>(): Column<T>[] => [
+  { id: "cost", header: t("ui.costTotalCost"), align: "right", cell: (r) => fmtGs(r.costPyg) },
+  { id: "income", header: t("ui.costTotalIncome"), align: "right", cell: (r) => fmtGs(r.incomePyg) },
+  { id: "margin", header: t("ui.resultsMargin"), align: "right", cell: (r) => <span className={tone(r.marginPyg)}>{fmtGs(r.marginPyg)}</span> },
+];
+
+const perHa = <T extends Figures>(): Column<T>[] => [
+  { id: "costHa", header: t("ui.resultsColCostHa"), align: "right", hideBelow: "lg", cell: (r) => gs(r.costPerHa) },
+  { id: "incomeHa", header: t("ui.resultsColIncomeHa"), align: "right", hideBelow: "lg", cell: (r) => gs(r.incomePerHa) },
+  { id: "marginHa", header: t("ui.resultsColMarginHa"), align: "right", hideBelow: "md", cell: (r) => <span className={tone(r.marginPerHa ?? 0)}>{gs(r.marginPerHa)}</span> },
+];
+
 export function ResultsPanel() {
   const farms = useFarms();
   const seasons = useSeasonList();
   const [f, setF] = useState({ farmId: "", seasonId: "" });
+  const [view, setView] = useState<View>("plot");
   const q = useQuery({
     queryKey: ["erp", "results", f],
     queryFn: () => get<Results>(`/org/erp/results${qs({ farmId: f.farmId || undefined, seasonId: f.seasonId || undefined })}`),
   });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
-  const th = "py-2 pr-4 text-right font-medium";
+  const d = q.data;
+  const filtered = !!(f.farmId || f.seasonId);
+  const hasData = !!d && (d.totals.costPyg !== 0 || d.totals.incomePyg !== 0 || d.byPlot.some((r) => r.costPyg !== 0 || r.incomePyg !== 0));
+  const filters = (
+    <FilterBar>
+      <Field label={t("ui.costSeason")}>
+        <Select value={f.seasonId} onChange={set("seasonId")} options={[{ value: "", label: t("ui.costAll") }, ...(seasons.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
+      </Field>
+      <Field label={t("ui.costFarm")}>
+        <Select value={f.farmId} onChange={set("farmId")} options={[{ value: "", label: t("ui.costAll") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
+      </Field>
+    </FilterBar>
+  );
+  if (q.isLoading) return <Spinner />;
+  if (q.error) return <ErrorBox error={q.error} />;
+  if (!d) return null;
+  if (!hasData)
+    return (
+      <div className="flex flex-col gap-4">
+        {filtered && filters}
+        <EmptyState
+          title={filtered ? t("ui.resultsEmptyFiltered") : t("ui.resultsEmptyTitle")}
+          action={
+            filtered ? (
+              <Button onClick={() => setF({ farmId: "", seasonId: "" })}>{t("ui.costClearFilters")}</Button>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                <SectionButton to="purchases" primary>{t("ui.resultsGoPurchases")}</SectionButton>
+                <SectionButton to="orders">{t("ui.resultsGoOrders")}</SectionButton>
+                <SectionButton to="costs">{t("ui.resultsGoCosts")}</SectionButton>
+              </div>
+            )
+          }
+        >
+          {filtered ? t("ui.resultsEmptyFilteredHint") : t("ui.resultsEmptyHint")}
+        </EmptyState>
+      </div>
+    );
+  const tt = d.totals;
+  const plotCols: Column<Results["byPlot"][number]>[] = [
+    { id: "name", header: t("ui.orderPlot"), cell: (r) => r.name ?? t("ui.resultsNoPlot") },
+    { id: "area", header: t("ui.resultsArea"), align: "right", hideBelow: "sm", cell: (r) => (r.plotId ? fmtHa(r.areaHa) : "") },
+    ...money<Results["byPlot"][number]>(),
+    ...perHa<Results["byPlot"][number]>(),
+    { id: "tons", header: t("ui.resultsTons"), align: "right", hideBelow: "lg", cell: (r) => (r.tons ? fmtNum(r.tons) : "") },
+    { id: "costTon", header: t("ui.resultsColCostTon"), align: "right", hideBelow: "lg", cell: (r) => gs(r.costPerTon) },
+  ];
+  const cropCols: Column<Results["byCrop"][number]>[] = [
+    { id: "name", header: t("ui.budgetCrop"), cell: (r) => (r.crop ? tk(`ui.cropName_${r.crop}`) : t("ui.dashNoCrop")) },
+    { id: "area", header: t("ui.resultsArea"), align: "right", hideBelow: "sm", cell: (r) => fmtHa(r.areaHa) },
+    ...money<Results["byCrop"][number]>(),
+    ...perHa<Results["byCrop"][number]>(),
+  ];
+  const seasonCols: Column<Results["bySeason"][number]>[] = [
+    { id: "name", header: t("ui.costSeason"), cell: (r) => r.name ?? t("ui.resultsNoSeason") },
+    ...money<Results["bySeason"][number]>(),
+  ];
+  const activityCols: Column<Results["byActivity"][number]>[] = [
+    { id: "name", header: t("ui.costActivity"), cell: (r) => tk(`ui.activity_${r.activity}`) },
+    ...money<Results["byActivity"][number]>(),
+  ];
+  const none = <EmptyState compact title={t("ui.resultsEmptyView")} />;
+  const table = (() => {
+    switch (view) {
+      case "plot":
+        return <DataTable columns={plotCols} rows={d.byPlot} rowKey={(r) => r.plotId ?? "none"} empty={none} caption={t("ui.resultsByPlot")} />;
+      case "crop":
+        return <DataTable columns={cropCols} rows={d.byCrop} rowKey={(r) => r.crop ?? "none"} empty={none} caption={t("ui.resultsByCrop")} />;
+      case "season":
+        return <DataTable columns={seasonCols} rows={d.bySeason} rowKey={(r) => r.seasonId ?? "none"} empty={none} caption={t("ui.resultsBySeason")} />;
+      case "activity":
+        return <DataTable columns={activityCols} rows={d.byActivity} rowKey={(r) => r.activity} empty={none} caption={t("ui.resultsByActivity")} />;
+    }
+  })();
+  const rowsInView = { plot: d.byPlot, crop: d.byCrop, season: d.bySeason, activity: d.byActivity }[view].length;
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-end gap-3">
-        <Field label={t("ui.costSeason")}>
-          <Select value={f.seasonId} onChange={set("seasonId")} options={[{ value: "", label: t("ui.costAll") }, ...(seasons.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
-        </Field>
-        <Field label={t("ui.costFarm")}>
-          <Select value={f.farmId} onChange={set("farmId")} options={[{ value: "", label: t("ui.costAll") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
-        </Field>
+      {filters}
+      <div className="grid grid-cols-1 gap-x-10 gap-y-4 sm:grid-cols-3">
+        <Stat
+          size="lg"
+          label={t("ui.costTotalCost")}
+          value={fmtGs(tt.costPyg)}
+          note={[tt.costPerHa !== null && t("ui.resultsNotePerHa", { n: fmtGs(tt.costPerHa) }), tt.costPerTon !== null && t("ui.resultsNotePerTon", { n: fmtGs(tt.costPerTon) })].filter(Boolean).join(" · ") || undefined}
+        />
+        <Stat
+          size="lg"
+          label={t("ui.costTotalIncome")}
+          value={fmtGs(tt.incomePyg)}
+          note={tt.incomePerHa !== null ? t("ui.resultsNotePerHa", { n: fmtGs(tt.incomePerHa) }) : undefined}
+        />
+        <Stat
+          size="lg"
+          label={t("ui.resultsMargin")}
+          value={fmtGs(tt.marginPyg)}
+          tone={tt.marginPyg < 0 ? "danger" : undefined}
+          note={tt.marginPerHa !== null ? t("ui.resultsNotePerHa", { n: fmtGs(tt.marginPerHa) }) : undefined}
+        />
       </div>
-      {q.isLoading && <Spinner />}
-      {q.error ? <ErrorBox error={q.error} /> : null}
-      {q.data && (
-        <>
-          <div className="flex flex-wrap gap-8">
-            <Stat label={t("ui.costTotalCost")} value={fmtGs(q.data.totals.costPyg)} />
-            <Stat label={t("ui.costTotalIncome")} value={fmtGs(q.data.totals.incomePyg)} />
-            <Stat label={t("ui.resultsMargin")} value={fmtGs(q.data.totals.marginPyg)} tone={q.data.totals.marginPyg < 0 ? "danger" : undefined} />
-            {q.data.totals.costPerHa !== null && <Stat label={t("ui.resultsCostPerHa")} value={fmtGs(q.data.totals.costPerHa)} />}
-            {q.data.totals.incomePerHa !== null && <Stat label={t("ui.resultsIncomePerHa")} value={fmtGs(q.data.totals.incomePerHa)} />}
-            {q.data.totals.costPerTon !== null && <Stat label={t("ui.resultsCostPerTon")} value={fmtGs(q.data.totals.costPerTon)} />}
-          </div>
-          {q.data.byPlot.length === 0 ? (
-            <Empty>{t("ui.erpEmpty")}</Empty>
-          ) : (
-            <>
-              <Section title={t("ui.resultsByPlot")}>
-                <thead>
-                  <tr className="border-b border-linea text-left text-tinta-2">
-                    <th className="py-2 pr-4 font-medium">{t("ui.orderPlot")}</th>
-                    <th className={th}>{t("ui.resultsArea")}</th>
-                    <th className={th}>{t("ui.costTotalCost")}</th>
-                    <th className={th}>{t("ui.costTotalIncome")}</th>
-                    <th className={th}>{t("ui.resultsMargin")}</th>
-                    <th className={th}>{t("ui.resultsCostPerHa")}</th>
-                    <th className={th}>{t("ui.resultsIncomePerHa")}</th>
-                    <th className={th}>{t("ui.resultsMarginPerHa")}</th>
-                    <th className={th}>{t("ui.resultsTons")}</th>
-                    <th className="py-2 text-right font-medium">{t("ui.resultsCostPerTon")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {q.data.byPlot.map((r) => (
-                    <tr key={r.plotId ?? "none"} className="border-b border-linea">
-                      <td className="py-2.5 pr-4 font-medium">{r.name ?? t("ui.resultsNoPlot")}</td>
-                      <td className="num py-2.5 pr-4 text-right">{r.plotId ? fmtHa(r.areaHa) : ""}</td>
-                      <td className="num py-2.5 pr-4 text-right">{fmtGs(r.costPyg)}</td>
-                      <td className="num py-2.5 pr-4 text-right">{fmtGs(r.incomePyg)}</td>
-                      <td className={`num py-2.5 pr-4 text-right ${tone(r.marginPyg)}`}>{fmtGs(r.marginPyg)}</td>
-                      <td className="num py-2.5 pr-4 text-right">{gs(r.costPerHa)}</td>
-                      <td className="num py-2.5 pr-4 text-right">{gs(r.incomePerHa)}</td>
-                      <td className={`num py-2.5 pr-4 text-right ${tone(r.marginPerHa ?? 0)}`}>{gs(r.marginPerHa)}</td>
-                      <td className="num py-2.5 pr-4 text-right">{r.tons ? fmtNum(r.tons) : ""}</td>
-                      <td className="num py-2.5 text-right">{gs(r.costPerTon)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Section>
-              <Section title={t("ui.resultsByCrop")}>
-                <tbody>
-                  {q.data.byCrop.map((r) => (
-                    <tr key={r.crop ?? "none"} className="border-b border-linea">
-                      <td className="py-2.5 pr-4 font-medium">{r.crop ? tk(`ui.cropName_${r.crop}`) : t("ui.dashNoCrop")}</td>
-                      <td className="num py-2.5 pr-4 text-right">{fmtHa(r.areaHa)}</td>
-                      <td className="num py-2.5 pr-4 text-right">{fmtGs(r.costPyg)}</td>
-                      <td className="num py-2.5 pr-4 text-right">{fmtGs(r.incomePyg)}</td>
-                      <td className={`num py-2.5 pr-4 text-right ${tone(r.marginPyg)}`}>{fmtGs(r.marginPyg)}</td>
-                      <td className="num py-2.5 pr-4 text-right">{gs(r.costPerHa)}</td>
-                      <td className="num py-2.5 pr-4 text-right">{gs(r.incomePerHa)}</td>
-                      <td className={`num py-2.5 text-right ${tone(r.marginPerHa ?? 0)}`}>{gs(r.marginPerHa)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Section>
-              <Section title={t("ui.resultsBySeason")}>
-                <tbody>
-                  {q.data.bySeason.map((r) => (
-                    <tr key={r.seasonId ?? "none"} className="border-b border-linea">
-                      <td className="py-2.5 pr-4 font-medium">{r.name ?? t("ui.resultsNoSeason")}</td>
-                      <td className="num py-2.5 pr-4 text-right">{fmtGs(r.costPyg)}</td>
-                      <td className="num py-2.5 pr-4 text-right">{fmtGs(r.incomePyg)}</td>
-                      <td className={`num py-2.5 text-right ${tone(r.marginPyg)}`}>{fmtGs(r.marginPyg)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Section>
-              <Section title={t("ui.resultsByActivity")}>
-                <tbody>
-                  {q.data.byActivity.map((r) => (
-                    <tr key={r.activity} className="border-b border-linea">
-                      <td className="py-2.5 pr-4 font-medium">{tk(`ui.activity_${r.activity}`)}</td>
-                      <td className="num py-2.5 pr-4 text-right">{fmtGs(r.costPyg)}</td>
-                      <td className="num py-2.5 pr-4 text-right">{fmtGs(r.incomePyg)}</td>
-                      <td className={`num py-2.5 text-right ${tone(r.marginPyg)}`}>{fmtGs(r.marginPyg)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Section>
-              {q.data.beef.costPerKgPyg !== null ? (
-                <p className="text-sm">{t("ui.resultsBeefKg", { cost: fmtGs(q.data.beef.costPerKgPyg), kg: q.data.beef.kgSold.toLocaleString("es-PY") })}</p>
-              ) : (
-                <p className="text-xs text-tinta-2">{t("ui.resultsBeefNote")}</p>
-              )}
-            </>
-          )}
-        </>
+      <Segmented value={view} onChange={setView} />
+      {rowsInView > 0 ? <ExportableTable name={t(VIEWS.find((v) => v.id === view)!.label)}>{table}</ExportableTable> : table}
+      {d.beef.costPerKgPyg !== null ? (
+        <p className="text-sm">{t("ui.resultsBeefKg", { cost: fmtGs(d.beef.costPerKgPyg), kg: d.beef.kgSold.toLocaleString("es-PY") })}</p>
+      ) : (
+        <p className="text-meta text-tinta-2">{t("ui.resultsBeefNote")}</p>
       )}
-    </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <h2 className="border-b border-linea pb-2 text-section leading-6 font-semibold">{title}</h2>
-      <div className="overflow-x-auto">
-        <ExportableTable name={title}>
-          <table className="w-full text-sm">{children}</table>
-        </ExportableTable>
-      </div>
     </div>
   );
 }

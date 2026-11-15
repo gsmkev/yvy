@@ -4,9 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fromMinor, toMinor, type Currency } from "@yvy/shared";
 import { del, get, patch, post } from "../../lib/api";
 import { t } from "../../lib/i18n";
-import { Button, ConfirmModal, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, toast, type Column } from "../ui";
 import { ExportableTable } from "../ExportableTable";
-import { HeaderActions, RowMenu } from "./adminSlot";
+import { HeaderActions, RowMenu, useTableExport } from "./adminSlot";
 
 export interface FieldDef {
   key: string;
@@ -30,6 +30,8 @@ export interface ColDef<T> {
   cell: (r: T) => ReactNode;
   /** Montos y cantidades: a la derecha. */
   right?: boolean;
+  /** Oculta la columna bajo ese punto de corte (celular). */
+  hideBelow?: "sm" | "md" | "lg";
 }
 
 export const useErpList = <T,>(path: string, enabled = true) =>
@@ -141,6 +143,8 @@ export function MasterPanel<T extends Row>({
   name,
   canEdit = true,
   filter,
+  empty,
+  exportName,
 }: {
   path: string;
   /** Dentro de otra pantalla (no es la sección entera): el botón de alta va en el lugar, no en el encabezado. */
@@ -152,8 +156,13 @@ export function MasterPanel<T extends Row>({
   name: (r: T) => string;
   canEdit?: boolean;
   filter?: (r: T) => boolean;
+  /** Vacío propio: título y explicación; el botón de alta va en el vacío (y no en el encabezado) mientras no hay filas. */
+  empty?: { title: string; body?: string };
+  /** Con nombre, el "Exportar" va en el encabezado de la sección (uno solo por panel); sin él, queda junto a la tabla. */
+  exportName?: string;
 }) {
   const q = useErpList<T>(path);
+  const exp = useTableExport(exportName ?? "maestro");
   const qc = useQueryClient();
   const [editing, setEditing] = useState<T | "new" | null>(null);
   const [removing, setRemoving] = useState<T | null>(null);
@@ -168,9 +177,25 @@ export function MasterPanel<T extends Row>({
   if (q.isLoading) return <Spinner />;
   if (q.error) return <ErrorBox error={q.error} />;
   const rows = (q.data ?? []).filter((r) => !filter || filter(r));
+  const cols: Column<T>[] = [
+    ...columns.map((c): Column<T> => ({ id: c.header, header: c.header, align: c.right ? "right" : "left", hideBelow: c.hideBelow, cell: c.cell })),
+    ...(canEdit
+      ? [
+          {
+            id: "actions",
+            header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+            align: "right",
+            width: "3rem",
+            cell: (r: T) => <RowMenu name={name(r)} onEdit={() => setEditing(r)} onDelete={() => setRemoving(r)} />,
+          } satisfies Column<T>,
+        ]
+      : []),
+  ];
+  const table = <DataTable columns={cols} rows={rows} rowKey={(r) => r.id} />;
   return (
     <div className="flex flex-col gap-4">
       {canEdit &&
+        !(empty && rows.length === 0 && !inline) &&
         (inline ? (
           <div>
             <Button onClick={() => setEditing("new")}>{newLabel}</Button>
@@ -183,44 +208,23 @@ export function MasterPanel<T extends Row>({
           </HeaderActions>
         ))}
       {rows.length === 0 ? (
-        <EmptyState title={t("ui.erpEmpty")} />
+        <EmptyState
+          title={empty?.title ?? t("ui.erpEmpty")}
+          action={empty && canEdit ? <Button variant="primary" onClick={() => setEditing("new")}>{newLabel}</Button> : undefined}
+        >
+          {empty?.body}
+        </EmptyState>
       ) : (
-        <div className="overflow-x-auto">
-          <ExportableTable name="maestro">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-linea text-left text-tinta-2">
-                  {columns.map((c) => (
-                    <th key={c.header} className={`py-2 pr-4 font-medium ${c.right ? "text-right" : ""}`}>
-                      {c.header}
-                    </th>
-                  ))}
-                  {canEdit && (
-                    <th className="sticky right-0 w-12 bg-lino">
-                      <span className="sr-only">{t("ui.rowActionsHeader")}</span>
-                    </th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.id} className="border-b border-linea">
-                    {columns.map((c) => (
-                      <td key={c.header} className={`py-2.5 pr-4 ${c.right ? "num text-right" : ""}`}>
-                        {c.cell(r)}
-                      </td>
-                    ))}
-                    {canEdit && (
-                      <td className="sticky right-0 w-12 bg-lino py-1 text-right">
-                        <RowMenu name={name(r)} onEdit={() => setEditing(r)} onDelete={() => setRemoving(r)} />
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ExportableTable>
-        </div>
+        <>
+          {exportName && !inline ? (
+            <>
+              {exp.menu}
+              <div ref={exp.ref}>{table}</div>
+            </>
+          ) : (
+            <ExportableTable name="maestro">{table}</ExportableTable>
+          )}
+        </>
       )}
       {editing && (
         <RowModal

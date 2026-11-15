@@ -14,7 +14,8 @@
     "typecheck": "tsc -p .",
     "lint": "eslint src test",
     "seed": "wrangler d1 execute yvy --local --file=seed/seed.sql",
-    "seed:demo": "tsx scripts/seed-demo.mjs"
+    "seed:demo": "tsx scripts/seed-demo.mjs",
+    "seed:manual": "tsx scripts/seed-manual.mjs"
   },
   "dependencies": {
     "@yvy/geo": "workspace:*",

@@ -11,6 +11,8 @@ import { isOwnerMode } from "../../src/lib/ownerSummary";
 import { useSession } from "../../src/lib/session";
 import { useLocal } from "../../src/lib/useLocal";
 import { plotTarget } from "../../src/lib/plotLabels";
+import { CloudRain, ListChecks, Satellite } from "lucide-react-native";
+import { RECORD_ICON } from "../../src/ui/icons";
 import { Button, Row, ScreenBody, SectionHeader, s as k, Text } from "../../src/ui/kit";
 import { T } from "../../src/ui/theme";
 import { useReadOnly } from "../../src/lib/readOnly";
@@ -110,6 +112,7 @@ export default function PlotSheet() {
 
         <SectionHeader title={t("app.plotSheetNow")} />
         <Row
+          icon={Satellite}
           title={t("app.plotSheetVigor")}
           subtitle={
             vigor
@@ -131,6 +134,7 @@ export default function PlotSheet() {
           }
         />
         <Row
+          icon={CloudRain}
           title={t("app.plotSheetRain")}
           subtitle={rainMonth > 0 ? t("app.plotRainMonth", { mm: Math.round(rainMonth) }) : t("app.plotSheetRainNone")}
         />
@@ -139,6 +143,7 @@ export default function PlotSheet() {
         {tasks.map((task) => (
           <Row
             key={task.id}
+            icon={ListChecks}
             title={task.title}
             subtitle={task.dueDate ? day(Date.parse(`${task.dueDate}T12:00:00-03:00`)) : undefined}
             onPress={() => router.push({ pathname: "/task/[id]", params: { id: task.id } })}
@@ -149,6 +154,7 @@ export default function PlotSheet() {
         {records.map((r) => (
           <Row
             key={r.id}
+            icon={RECORD_ICON[r.kind]}
             title={describeRecord(r.kind, JSON.parse(r.data))}
             subtitle={`${t(`recordKinds.${r.kind}`)} · ${day(r.capturedAt)}`}
             onPress={() => router.push({ pathname: "/record/[id]", params: { id: r.id } })}

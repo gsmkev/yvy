@@ -9,6 +9,7 @@ import { memberNames } from "../../src/lib/members";
 import { authorName, isOwnerMode } from "../../src/lib/ownerSummary";
 import { useSession } from "../../src/lib/session";
 import { useLocal } from "../../src/lib/useLocal";
+import { RECORD_ICON } from "../../src/ui/icons";
 import { EmptyState, Row, SectionHeader, s as k, Text } from "../../src/ui/kit";
 import { C, T } from "../../src/ui/theme";
 
@@ -77,6 +78,7 @@ export default function History() {
       renderSectionHeader={({ section }) => <SectionHeader title={section.title} />}
       renderItem={({ item: r }) => (
         <Row
+          icon={RECORD_ICON[r.kind]}
           title={describeRecord(r.kind, JSON.parse(r.data))}
           subtitle={[t(`recordKinds.${r.kind}`), owner ? authorName(r.authorId, session?.user.id, names) : null, plots.find((p) => p.id === r.plotId)?.name, hhmm(r.capturedAt)].filter(Boolean).join(" · ")}
           onPress={() => router.push({ pathname: "/record/[id]", params: { id: r.id } })}

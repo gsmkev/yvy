@@ -12,6 +12,7 @@ import { addContact, emergencyText, parseContacts, smsUrl, type EmergencyContact
 import { currentFix, type Fix } from "../src/lib/location";
 import { getSession } from "../src/lib/session";
 import { showToast } from "../src/lib/toast";
+import { Phone } from "lucide-react-native";
 import { Button, Row, ScreenBody, SectionHeader, s as k, Text, TextInput } from "../src/ui/kit";
 import { C, RADIUS, T } from "../src/ui/theme";
 
@@ -73,7 +74,7 @@ export default function Emergency() {
 
         <SectionHeader title={t("app.emergencyContacts")} />
         {contacts.map((c) => (
-          <Row key={c.phone} title={c.name || c.phone} subtitle={c.name ? c.phone : undefined} onPress={() => remove(c)} right={<Text style={[T.smallMedium, { color: C.peligro }]}>{t("app.emergencyRemove")}</Text>} />
+          <Row key={c.phone} icon={Phone} title={c.name || c.phone} subtitle={c.name ? c.phone : undefined} onPress={() => remove(c)} right={<Text style={[T.smallMedium, { color: C.peligro }]}>{t("app.emergencyRemove")}</Text>} />
         ))}
 
         <View style={{ marginTop: 14, gap: 8 }}>

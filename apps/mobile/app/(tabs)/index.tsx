@@ -5,7 +5,7 @@
 import { useEffect, useRef, type ElementRef } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { Check } from "lucide-react-native";
+import { Check, CloudRain, Navigation, TrendingDown } from "lucide-react-native";
 import { checklistProgress, describeRecord, parseChecklist, parseTaskComments, t } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
@@ -16,9 +16,10 @@ import { flushAlertVotes, localChanged } from "../../src/lib/sync";
 import { readVotes, recordVote } from "../../src/lib/votes";
 import { useLocal } from "../../src/lib/useLocal";
 import { FarmLine } from "../../src/ui/FarmLine";
+import { RECORD_ICON } from "../../src/ui/icons";
 import { ForecastStrip } from "../../src/ui/ForecastStrip";
 import { toastSaved } from "../../src/lib/toast";
-import { Button, EmptyState, Row, SectionHeader, s as k, Text } from "../../src/ui/kit";
+import { Button, EmptyState, Row, SectionHeader, StatTile, s as k, Text } from "../../src/ui/kit";
 import { C, RADIUS, T } from "../../src/ui/theme";
 import { useReadOnly } from "../../src/lib/readOnly";
 
@@ -107,6 +108,20 @@ export default function Today() {
       <Text style={T.small}>{dayLabel()}</Text>
       <Text style={[T.display, { marginTop: 2 }]}>{firstName(session?.user.fullName ?? "")}</Text>
 
+      <ForecastStrip farmId={farmId ?? plots[0]?.farmId ?? null} />
+
+      {/* La lluvia es lo que más se anota: un toque, directo a los milímetros (lluvia de la estancia, sin lote).
+          El mismo destino lo abre el atajo de Android (yvy://annotate?kind=rain&farmLevel=1). */}
+      {!readOnly && (
+        <Button
+          kind="secondary"
+          icon={CloudRain}
+          title={t("app.quickRain")}
+          onPress={() => router.push({ pathname: "/annotate", params: { kind: "rain", farmLevel: "1" } })}
+          style={{ marginTop: 16 }}
+        />
+      )}
+
       {/* Primero lo que pide acción: avisos. */}
       {alerts.map((a) => {
         const strong = a.severity === "warning";
@@ -154,60 +169,74 @@ export default function Today() {
         );
       })}
 
-      {/* La lluvia es lo que más se anota: un toque, directo a los milímetros (lluvia de la estancia, sin lote).
-          El mismo destino lo abre el atajo de Android (yvy://annotate?kind=rain&farmLevel=1). */}
-      {!readOnly && (
-        <Button
-          kind="secondary"
-          title={t("app.quickRain")}
-          onPress={() => router.push({ pathname: "/annotate", params: { kind: "rain", farmLevel: "1" } })}
-          style={{ marginTop: 16 }}
-        />
-      )}
-
       {empty && <EmptyState title={t("app.nothingToday")} hint={t("app.nothingTodayHint")} />}
 
       {open.length > 0 && (
         <>
           <SectionHeader title={t("app.tasksToday")} />
-          {open.map((task) => (
-            <View key={task.id}>
-              <Row
-                title={task.title}
-                subtitle={taskSubtitle(task)}
-                onPress={() => {
-                  if (parseChecklist(task.checklist).length) router.push({ pathname: "/task/[id]", params: { id: task.id } });
-                  else if (readOnly) return;
-                  else if (task.kind) router.push({ pathname: "/annotate", params: { kind: task.kind, taskId: task.id, plotId: task.plotId ?? "" } });
-                  else {
-                    getDb().completeTask(task.id, null);
-                    localChanged();
-                    toastSaved();
-                  }
-                }}
-                right={<View style={st.circle} />}
-              />
-              <View style={st.taskActions}>
-                <Button kind="text" title={commentsLabel(task.comments) ?? t("app.taskCommentsOpen")} onPress={() => router.push({ pathname: "/task/[id]", params: { id: task.id } })} style={st.taskAction} />
+          {open.map((task) => {
+            const check = () => {
+              if (parseChecklist(task.checklist).length) router.push({ pathname: "/task/[id]", params: { id: task.id } });
+              else if (readOnly) return;
+              else if (task.kind) router.push({ pathname: "/annotate", params: { kind: task.kind, taskId: task.id, plotId: task.plotId ?? "" } });
+              else {
+                getDb().completeTask(task.id, null);
+                localChanged();
+                toastSaved();
+              }
+            };
+            const sub = taskSubtitle(task);
+            return (
+              <View key={task.id} style={[k.row, st.task]}>
+                <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: false }} accessibilityLabel={`${t("app.taskMarkDone")}: ${task.title}`} onPress={check} hitSlop={6} style={st.checkHit}>
+                  <View style={st.circle} />
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={sub ? `${task.title}. ${sub}` : task.title}
+                  onPress={() => router.push({ pathname: "/task/[id]", params: { id: task.id } })}
+                  style={st.taskMain}
+                >
+                  <Text style={T.bodyMedium} numberOfLines={2}>
+                    {task.title}
+                  </Text>
+                  {sub ? (
+                    <Text style={T.small} numberOfLines={2}>
+                      {sub}
+                    </Text>
+                  ) : null}
+                </Pressable>
                 {task.lon !== null && task.lat !== null && (
-                  <Button kind="text" title={t("app.gotoButton")} onPress={() => router.push({ pathname: "/goto", params: { lon: String(task.lon), lat: String(task.lat), name: task.title } })} style={st.taskAction} />
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t("app.gotoButton")}: ${task.title}`}
+                    onPress={() => router.push({ pathname: "/goto", params: { lon: String(task.lon), lat: String(task.lat), name: task.title } })}
+                    style={st.checkHit}
+                  >
+                    <Navigation size={22} color={C.accionOscuro} strokeWidth={2} />
+                  </Pressable>
                 )}
               </View>
-            </View>
-          ))}
+            );
+          })}
         </>
       )}
 
       {showOwner && summary && (
         <>
           {summary.byAuthor.length > 0 && <SectionHeader title={t("app.ownerRecordsTitle")} />}
-          {summary.byAuthor.map((a) => (
-            <Row key={a.authorId} title={authorName(a.authorId, userId, summary.names)} subtitle={t(a.count === 1 ? "app.ownerRecordsOne" : "app.ownerRecordsMany", { n: a.count })} />
-          ))}
+          {summary.byAuthor.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.stats} style={{ marginTop: 8, flexGrow: 0 }}>
+              {summary.byAuthor.map((a) => (
+                <StatTile key={a.authorId} value={a.count} label={authorName(a.authorId, userId, summary.names)} />
+              ))}
+            </ScrollView>
+          )}
           {worse.length > 0 && <SectionHeader title={t("app.ownerWorseTitle")} />}
           {worse.map((w) => (
             <Row
               key={w.plotId}
+              icon={TrendingDown}
               title={plotName(w.plotId)}
               subtitle={t("app.ownerWorseLine", { pct: w.pct, date: new Date(w.since).toLocaleDateString("es-PY", { day: "numeric", month: "short" }) })}
               onPress={() => router.push("/(tabs)/map")}
@@ -225,6 +254,7 @@ export default function Today() {
           {todayRecords.map((r) => (
             <Row
               key={r.id}
+              icon={RECORD_ICON[r.kind]}
               status={r.rejected ? "rejected" : r.pending ? "pending" : "synced"}
               title={describeRecord(r.kind, JSON.parse(r.data))}
               subtitle={[t(`recordKinds.${r.kind}`), plotName(r.plotId), hhmm(r.capturedAt)].filter(Boolean).join(" · ")}
@@ -233,8 +263,6 @@ export default function Today() {
           ))}
         </>
       )}
-
-      <ForecastStrip farmId={farmId ?? plots[0]?.farmId ?? null} />
     </ScrollView>
   );
 }
@@ -246,7 +274,9 @@ const st = StyleSheet.create({
   vote: { flexDirection: "row", alignItems: "center", gap: 20, marginTop: 4, minHeight: 44 },
   voteBtn: { minHeight: 44, minWidth: 44, justifyContent: "center", alignItems: "center" },
   alertPicked: { borderWidth: 3, borderColor: C.tinta },
-  taskActions: { flexDirection: "row", gap: 8, marginTop: -4 },
-  taskAction: { paddingHorizontal: 0, marginRight: 12 },
-  circle: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.lineaFuerte },
+  task: { gap: 4, paddingVertical: 4 },
+  taskMain: { flex: 1, minWidth: 0, minHeight: 56, justifyContent: "center", paddingVertical: 4 },
+  checkHit: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
+  stats: { gap: 8, paddingRight: 8 },
+  circle: { width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: C.lineaFuerte },
 });

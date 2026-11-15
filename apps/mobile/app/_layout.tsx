@@ -62,6 +62,8 @@ export default function RootLayout() {
         <Stack.Screen name="poi" options={{ title: "" }} />
         <Stack.Screen name="plot-draw" options={{ title: "" }} />
         <Stack.Screen name="stock-count" options={{ title: "" }} />
+        <Stack.Screen name="sync" options={{ title: "" }} />
+        <Stack.Screen name="account" options={{ title: "" }} />
         <Stack.Screen name="notifications" options={{ title: "" }} />
         <Stack.Screen name="animals" options={{ title: "" }} />
         <Stack.Screen name="goto" options={{ title: "" }} />

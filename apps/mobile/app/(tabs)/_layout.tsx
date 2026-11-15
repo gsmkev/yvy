@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ClipboardList, Map, MoreHorizontal, Plus, Sun, type LucideIcon } from "lucide-react-native";
 import { t } from "@yvy/shared";
 import { useSession } from "../../src/lib/session";
+import { tap } from "../../src/lib/haptics";
 import { useFabHidden } from "../../src/lib/fab";
 import { startAutoSync, useSyncStatus } from "../../src/lib/sync";
 import { SyncBar, Text } from "../../src/ui/kit";
@@ -62,7 +63,10 @@ export default function TabsLayout() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t("app.annotate")}
-          onPress={() => router.push("/annotate")}
+          onPress={() => {
+            tap();
+            router.push("/annotate");
+          }}
           style={({ pressed }) => [s.fab, pressed && { transform: [{ scale: 0.96 }] }]}
         >
           <Plus size={26} color={C.blanco} strokeWidth={2.6} />

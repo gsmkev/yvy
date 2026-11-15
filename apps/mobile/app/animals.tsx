@@ -8,7 +8,8 @@ import { Stack } from "expo-router";
 import { describeRecord, normalizeTag, t, weightSeries, type MessageKey, type WeightPoint } from "@yvy/shared";
 import { getDb } from "../src/lib/db";
 import { useLocal } from "../src/lib/useLocal";
-import { RadioGroup, Row, s as k, Text, TextInput } from "../src/ui/kit";
+import { RECORD_ICON } from "../src/ui/icons";
+import { EmptyState, RadioGroup, Row, s as k, Text, TextInput } from "../src/ui/kit";
 import { C, RADIUS, T } from "../src/ui/theme";
 
 const when = (ms: number) => new Date(ms).toLocaleDateString("es-PY", { day: "numeric", month: "short", year: "numeric" });
@@ -47,8 +48,8 @@ export default function Animals() {
         accessibilityLabel={t("app.animalsSearch")}
         style={st.input}
       />
-      {total === 0 && <Text style={[T.small, { marginTop: 16 }]}>{t("app.animalsNone")}</Text>}
-      {total > 0 && found.length === 0 && <Text style={[T.small, { marginTop: 16 }]}>{t("app.animalsNoMatch")}</Text>}
+      {total === 0 && <EmptyState title={t("app.animalsNone")} />}
+      {total > 0 && found.length === 0 && <EmptyState title={t("app.animalsNoMatch")} />}
       <RadioGroup label={t("app.animalsTitle")}>
         {found.map((a) => (
           <Row
@@ -80,6 +81,7 @@ export default function Animals() {
           {history.map((r) => (
             <Row
               key={r.id}
+              icon={RECORD_ICON[r.kind]}
               title={t(`recordKinds.${r.kind}` as MessageKey)}
               subtitle={`${when(r.capturedAt)} · ${describeRecord(r.kind, JSON.parse(r.data))}`}
             />

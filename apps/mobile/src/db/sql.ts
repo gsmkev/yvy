@@ -37,4 +37,14 @@ export const LOCAL_SCHEMA = [
     bytes INTEGER NOT NULL,
     downloaded_at INTEGER NOT NULL
   )`,
+  // Caché de lecturas en línea de las pantallas de oficina (src/office). NO es una tabla de sync y nunca guarda /org/erp/.
+  `CREATE TABLE IF NOT EXISTS http_cache (
+    key TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    org_id TEXT NOT NULL,
+    path TEXT NOT NULL,
+    body TEXT NOT NULL,
+    bytes INTEGER NOT NULL,
+    fetched_at INTEGER NOT NULL
+  )`,
 ];

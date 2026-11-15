@@ -5,10 +5,9 @@ import { del, get, put } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { fmtQty } from "../../lib/money";
 import { useProducts } from "../ProductsPanel";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast, type Column } from "../ui";
 import { useWarehouses } from "./WarehousesPanel";
-import { ExportableTable } from "../ExportableTable";
-import { HeaderActions, RowMenu } from "./adminSlot";
+import { HeaderActions, RowMenu, useGoSection, useTableExport } from "./adminSlot";
 
 interface Minimum {
   id: string;
@@ -31,6 +30,9 @@ export function MinStockPanel() {
   const low = useQuery({ queryKey: ["erp", "stock-low"], queryFn: () => get<Low[]>("/org/erp/stock/low") });
   const [editing, setEditing] = useState<Minimum | "new" | null>(null);
   const [removing, setRemoving] = useState<Minimum | null>(null);
+  const [tab, setTab] = useState<"low" | "all">("low");
+  const exp = useTableExport(tab === "low" ? "stock-bajo" : "stock-minimo");
+  const goSection = useGoSection();
   const qc = useQueryClient();
   const remove = useMutation({
     mutationFn: (m: Minimum) => del(`/org/erp/stock/minimums/${m.id}`),
@@ -45,63 +47,74 @@ export function MinStockPanel() {
   const prod = (id: string) => products.data?.find((p) => p.id === id);
   const wh = (id: string) => warehouses.data?.find((w) => w.id === id)?.name ?? "";
   const unit = (id: string) => tk(`fields.productUnit_${prod(id)?.unit ?? "l"}`);
+  const minRows = mins.data ?? [];
+  const lowRows = low.data ?? [];
+  const needProduct = (products.data ?? []).length === 0;
+  const needWarehouse = (warehouses.data ?? []).length === 0;
+  if (needProduct || needWarehouse)
+    return (
+      <EmptyState
+        title={t(needProduct ? "ui.stockNeedProductTitle" : "ui.stockNeedWarehouseTitle")}
+        action={
+          <Button variant="primary" onClick={() => goSection(needProduct ? "products" : "warehouses")}>
+            {t(needProduct ? "ui.productLoad" : "ui.warehouseLoad")}
+          </Button>
+        }
+      >
+        {t(needProduct ? "ui.stockNeedProductBody" : "ui.stockNeedWarehouseBody")}
+      </EmptyState>
+    );
+  const newButton = (
+    <Button variant="primary" onClick={() => setEditing("new")}>
+      {t("ui.minStockNew")}
+    </Button>
+  );
+  const lowCols: Column<Low>[] = [
+    { id: "product", header: t("ui.stockProduct"), cell: (l) => prod(l.productId)?.name },
+    { id: "where", header: t("ui.stockWhere"), hideBelow: "sm", cell: (l) => <span className="text-tinta-2">{wh(l.warehouseId)}</span> },
+    { id: "qty", header: t("ui.stockQty"), align: "right", hideBelow: "sm", cell: (l) => fmtQty(l.qty, unit(l.productId)) },
+    { id: "min", header: t("ui.minStockMin"), align: "right", hideBelow: "md", cell: (l) => fmtQty(l.minQty, unit(l.productId)) },
+    { id: "missing", header: t("ui.minStockMissingHead"), align: "right", cell: (l) => <span className="text-trigo-texto">{fmtQty(l.missing, unit(l.productId))}</span>, sort: (a, b) => a.missing - b.missing },
+  ];
+  const minCols: Column<Minimum>[] = [
+    { id: "product", header: t("ui.stockProduct"), cell: (m) => prod(m.productId)?.name },
+    { id: "where", header: t("ui.stockWhere"), cell: (m) => wh(m.warehouseId) },
+    { id: "min", header: t("ui.minStockMin"), align: "right", cell: (m) => fmtQty(m.minQty, unit(m.productId)) },
+    {
+      id: "menu",
+      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      align: "right",
+      width: "3rem",
+      cell: (m) => <RowMenu name={prod(m.productId)?.name ?? ""} onEdit={() => setEditing(m)} onDelete={() => setRemoving(m)} />,
+    },
+  ];
+  const noMins = minRows.length === 0;
   return (
-    <div className="flex flex-col gap-5">
-      <HeaderActions>
-        <Button variant="primary" onClick={() => setEditing("new")}>
-          {t("ui.minStockNew")}
-        </Button>
-      </HeaderActions>
-      {low.data && low.data.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.minStockLowTitle")}</h2>
-          <ExportableTable name="stock-bajo">
-            <table className="w-full text-sm">
-              <tbody>
-                {low.data.map((l) => (
-                  <tr key={`${l.productId}-${l.warehouseId}`} className="border-b border-linea">
-                    <td className="py-2.5 pr-4 font-medium">{prod(l.productId)?.name}</td>
-                    <td className="py-2.5 pr-4 text-tinta-2">{wh(l.warehouseId)}</td>
-                    <td className="num py-2.5 pr-4 text-right">{fmtQty(l.qty, unit(l.productId))}</td>
-                    <td className="py-2.5 text-right text-trigo-texto">{t("ui.minStockMissing", { qty: fmtQty(l.missing, unit(l.productId)) })}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ExportableTable>
-        </div>
-      )}
-      {(mins.data ?? []).length === 0 ? (
-        <Empty>{t("ui.erpEmpty")}</Empty>
+    <div className="flex flex-col gap-4">
+      {!noMins && <HeaderActions>{newButton}</HeaderActions>}
+      {noMins ? (
+        <EmptyState title={t("ui.emptyMinTitle")} action={newButton}>
+          {t("ui.emptyMinBody")}
+        </EmptyState>
       ) : (
-        <div className="overflow-x-auto">
-          <ExportableTable name="stock-minimo">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-linea text-left text-tinta-2">
-                  <th className="py-2 pr-4 font-medium">{t("ui.stockProduct")}</th>
-                  <th className="py-2 pr-4 font-medium">{t("ui.stockWhere")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.minStockMin")}</th>
-                  <th className="sticky right-0 w-12 bg-lino">
-                    <span className="sr-only">{t("ui.rowActionsHeader")}</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {(mins.data ?? []).map((m) => (
-                  <tr key={m.id} className="border-b border-linea">
-                    <td className="py-2.5 pr-4 font-medium">{prod(m.productId)?.name}</td>
-                    <td className="py-2.5 pr-4">{wh(m.warehouseId)}</td>
-                    <td className="num py-2.5 pr-4 text-right">{fmtQty(m.minQty, unit(m.productId))}</td>
-                    <td className="sticky right-0 w-12 bg-lino py-1 text-right">
-                      <RowMenu name={prod(m.productId)?.name ?? ""} onEdit={() => setEditing(m)} onDelete={() => setRemoving(m)} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ExportableTable>
-        </div>
+        <>
+          {(tab === "low" ? lowRows.length : minRows.length) > 0 && exp.menu}
+          <Tabs
+            tabs={[
+              { id: "low", label: t("ui.minTabLow"), count: lowRows.length },
+              { id: "all", label: t("ui.minTabAll"), count: minRows.length },
+            ]}
+            value={tab}
+            onChange={setTab}
+          />
+          <div ref={exp.ref}>
+            {tab === "low" ? (
+              <DataTable columns={lowCols} rows={lowRows} rowKey={(l) => `${l.productId}-${l.warehouseId}`} caption={t("ui.minTabLow")} empty={<EmptyState compact title={t("ui.emptyLowTitle")}>{t("ui.emptyLowBody")}</EmptyState>} />
+            ) : (
+              <DataTable columns={minCols} rows={minRows} rowKey={(m) => m.id} caption={t("ui.minTabAll")} />
+            )}
+          </div>
+        </>
       )}
       {editing && <MinModal row={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
       {removing && (

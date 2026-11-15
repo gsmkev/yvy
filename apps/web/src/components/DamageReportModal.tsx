@@ -90,7 +90,7 @@ export function DamageReportModal({ plot, onClose }: { plot: Plot; onClose: () =
         </Field>
         <Field label={t("ui.damageDescription")}>
           <textarea
-            className="min-h-24 rounded-md border border-linea bg-papel p-3 text-[15px] outline-none focus:border-accion focus:ring-2 focus:ring-accion/20"
+            className="min-h-24 rounded-md border border-linea bg-papel p-3 text-body outline-none focus:border-accion focus:ring-2 focus:ring-accion/20"
             maxLength={1500}
             value={description}
             onChange={(e) => setDescription(e.target.value)}

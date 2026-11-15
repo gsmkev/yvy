@@ -7,7 +7,7 @@ import { fmtDate, fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { useFarm, useFarms } from "../../lib/queries";
 import { useProducts } from "../ProductsPanel";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, Select, Spinner, Tabs, toast, type Column } from "../ui";
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions, RowMenu } from "./adminSlot";
 
@@ -51,39 +51,63 @@ export function FeedlotPanel() {
       qc.invalidateQueries({ queryKey: ["erp", "feedlot"] });
     },
   });
+  const [tab, setTab] = useState("rations");
   if (rations.isLoading || products.isLoading) return <Spinner />;
   if (rations.error) return <ErrorBox error={rations.error} />;
   const name = (id: string) => products.data?.find((p) => p.id === id)?.name ?? "—";
   const list = rations.data ?? [];
+  const canFeed = list.length > 0 && !!farms.data?.length;
+  const newRation = (
+    <Button variant="primary" onClick={() => setEditing("new")}>
+      {t("ui.feedlotRationNew")}
+    </Button>
+  );
+  const composition = (r: Ration) => r.items.map((i) => `${name(i.productId)} ${fmtNum(i.pctDm)} %`).join(" · ");
+  const columns: Column<Ration>[] = [
+    {
+      id: "name",
+      header: t("ui.feedlotRationName"),
+      cell: (r) => (
+        <>
+          {r.name}
+          <span className="num block text-meta font-normal text-tinta-2 md:hidden">{composition(r)}</span>
+        </>
+      ),
+    },
+    { id: "items", header: t("ui.feedlotComposition"), hideBelow: "md", cell: (r) => <span className="num text-tinta-2">{composition(r)}</span> },
+    { id: "_actions", header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>, align: "right", width: "3rem", cell: (r) => <RowMenu name={r.name} onEdit={() => setEditing(r)} onDelete={() => setRemoving(r)} /> },
+  ];
   return (
-    <div className="flex flex-col gap-8">
-      <section className="flex flex-col gap-3" aria-labelledby="rations-h">
-        <h2 id="rations-h" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
-          {t("ui.feedlotRations")}
-        </h2>
+    <div className="flex flex-col gap-4">
+      {canFeed && (
         <HeaderActions>
-          <Button variant="primary" onClick={() => setFeeding(true)} disabled={list.length === 0 || !farms.data?.length}>
+          <Button variant="primary" onClick={() => setFeeding(true)}>
             {t("ui.feedlotFeed")}
           </Button>
-          <Button onClick={() => setEditing("new")}>{t("ui.feedlotRationNew")}</Button>
         </HeaderActions>
-        {list.length === 0 ? (
-          <Empty>{t("ui.feedlotNoRations")}</Empty>
+      )}
+      <Tabs<string>
+        tabs={[
+          { id: "rations", label: t("ui.feedlotRations"), count: list.length || undefined },
+          { id: "report", label: t("ui.feedlotReportTab") },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
+      {tab === "rations" &&
+        (list.length === 0 ? (
+          <EmptyState title={t("ui.feedlotNoRationsTitle")} action={newRation}>
+            {t("ui.feedlotNoRations")}
+          </EmptyState>
         ) : (
-          <ul className="divide-y divide-linea border-y border-linea text-sm">
-            {list.map((r) => (
-              <li key={r.id} className="flex flex-wrap items-baseline justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <p className="font-medium">{r.name}</p>
-                  <p className="num text-tinta-2">{r.items.map((i) => `${name(i.productId)} ${fmtNum(i.pctDm)} %`).join(" · ")}</p>
-                </div>
-                <RowMenu name={r.name} onEdit={() => setEditing(r)} onDelete={() => setRemoving(r)} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-      <CorralReport />
+          <>
+            <div>
+              <Button onClick={() => setEditing("new")}>{t("ui.feedlotRationNew")}</Button>
+            </div>
+            <DataTable columns={columns} rows={list} rowKey={(r) => r.id} caption={t("ui.feedlotRations")} />
+          </>
+        ))}
+      {tab === "report" && <CorralReport canFeed={canFeed} hasRations={list.length > 0} onFeed={() => setFeeding(true)} onNewRation={() => setEditing("new")} />}
       {editing && <RationModal ration={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
       {feeding && <FeedModal rations={list} onClose={() => setFeeding(false)} />}
       {removing && (
@@ -276,7 +300,7 @@ function FeedModal({ rations, onClose }: { rations: Ration[]; onClose: () => voi
   );
 }
 
-function CorralReport() {
+function CorralReport({ canFeed, hasRations, onFeed, onNewRation }: { canFeed: boolean; hasRations: boolean; onFeed: () => void; onNewRation: () => void }) {
   const farms = useFarms();
   const today = localDate(Date.now());
   const [f, setF] = useState({ farmId: "", from: localDate(Date.now() - 60 * 86_400_000), to: today });
@@ -285,12 +309,29 @@ function CorralReport() {
     queryFn: () => get<{ truncated: boolean; corrals: Corral[] }>(`/org/erp/feedlot/report${qs({ farmId: f.farmId || undefined, from: f.from, to: f.to })}`),
   });
   const rows = q.data?.corrals ?? [];
+  const columns: Column<Corral>[] = [
+    { id: "corral", header: t("ui.feedlotCorral"), cell: (c) => c.plotName },
+    { id: "dm", header: t("ui.feedlotColDm"), align: "right", hideBelow: "sm", cell: (c) => fmtNum(c.feedKgDm) },
+    { id: "asfed", header: t("ui.feedlotColAsFed"), align: "right", hideBelow: "md", cell: (c) => fmtNum(c.feedKgAsFed) },
+    { id: "gain", header: t("ui.feedlotColGain"), align: "right", hideBelow: "sm", cell: (c) => (c.gainKg !== null ? `${fmtNum(c.gainKg)} kg` : "—") },
+    {
+      id: "conv",
+      header: t("ui.feedlotColConversion"),
+      align: "right",
+      cell: (c) =>
+        c.conversion !== null ? (
+          <>
+            {fmtNum(c.conversion)}
+            <span className="block text-meta text-tinta-2">{t("ui.feedlotWindow", { from: fmtDate(c.firstAt!), to: fmtDate(c.lastAt!), head: c.head ?? 0 })}</span>
+          </>
+        ) : (
+          <span className="text-tinta-2">{tk(`ui.feedlotStatus_${c.status}`)}</span>
+        ),
+    },
+  ];
   return (
-    <section className="flex flex-col gap-3" aria-labelledby="corral-h">
-      <h2 id="corral-h" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
-        {t("ui.feedlotReport")}
-      </h2>
-      <div className="grid grid-cols-3 gap-3">
+    <div className="flex flex-col gap-4">
+      <FilterBar>
         <Field label={t("ui.costFarm")}>
           <Select value={f.farmId} onChange={(e) => setF({ ...f, farmId: e.target.value })} options={[{ value: "", label: t("ui.all") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
         </Field>
@@ -300,51 +341,36 @@ function CorralReport() {
         <Field label={t("ui.costTo")}>
           <Input type="date" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} />
         </Field>
-      </div>
+      </FilterBar>
       {q.isLoading && <Spinner />}
       {q.error && <ErrorBox error={q.error} />}
-      {q.data && rows.length === 0 && <Empty>{t("ui.feedlotNoFeeds")}</Empty>}
-      {rows.length > 0 && (
-        <div className="overflow-x-auto">
-          <ExportableTable name="feedlot">
-            <table className="w-full text-sm">
-              <thead className="text-left text-tinta-2">
-                <tr>
-                  <th className="py-2 pr-4 font-medium">{t("ui.feedlotCorral")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.feedlotColDm")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.feedlotColAsFed")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.feedlotColGain")}</th>
-                  <th className="py-2 text-right font-medium">{t("ui.feedlotColConversion")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((c) => (
-                  <tr key={c.plotId} className="border-t border-linea align-top">
-                    <td className="py-2.5 pr-4 font-medium">{c.plotName}</td>
-                    <td className="num py-2.5 pr-4 text-right">{fmtNum(c.feedKgDm)}</td>
-                    <td className="num py-2.5 pr-4 text-right">{fmtNum(c.feedKgAsFed)}</td>
-                    <td className="num py-2.5 pr-4 text-right">{c.gainKg !== null ? `${fmtNum(c.gainKg)} kg` : "—"}</td>
-                    <td className="num py-2.5 text-right">
-                      {c.conversion !== null ? (
-                        <>
-                          {fmtNum(c.conversion)}
-                          <span className="block text-xs text-tinta-2">
-                            {t("ui.feedlotWindow", { from: fmtDate(c.firstAt!), to: fmtDate(c.lastAt!), head: c.head ?? 0 })}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-tinta-2">{tk(`ui.feedlotStatus_${c.status}`)}</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ExportableTable>
-        </div>
+      {q.data && rows.length === 0 && (
+        <EmptyState
+          title={t("ui.feedlotNoFeedsTitle")}
+          action={
+            hasRations ? (
+              canFeed ? (
+                <Button variant="primary" onClick={onFeed}>
+                  {t("ui.feedlotFeed")}
+                </Button>
+              ) : undefined
+            ) : (
+              <Button variant="primary" onClick={onNewRation}>
+                {t("ui.feedlotRationNew")}
+              </Button>
+            )
+          }
+        >
+          {hasRations ? t("ui.feedlotNoFeeds") : t("ui.feedlotNoFeedsNoRations")}
+        </EmptyState>
       )}
-      {q.data?.truncated && <p className="text-xs text-tinta-2">{t("ui.feedlotTruncated")}</p>}
-      <p className="text-xs text-tinta-2">{t("ui.feedlotReportHint")}</p>
-    </section>
+      {rows.length > 0 && (
+        <ExportableTable name="feedlot">
+          <DataTable columns={columns} rows={rows} rowKey={(c) => c.plotId} caption={t("ui.feedlotReport")} />
+        </ExportableTable>
+      )}
+      {q.data?.truncated && <p className="text-meta text-tinta-2">{t("ui.feedlotTruncated")}</p>}
+      {rows.length > 0 && <p className="text-meta text-tinta-2">{t("ui.feedlotReportHint")}</p>}
+    </div>
   );
 }

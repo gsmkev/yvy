@@ -1,23 +1,22 @@
 /** Indicador de deforestación para la EUDR (S-30): por lote, con las dos fechas de los compuestos y un mapa de cambios. Indicativo. */
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { boundsOf, FarmMap } from "../components/FarmMap";
-import { FarmPageHeader } from "../components/FarmPageHeader";
-import { Button, EmptyState, ErrorBox, Spinner, Stat } from "../components/ui";
+import { PageExport } from "../components/PageExport";
+import { Button, DataTable, EmptyState, ErrorBox, SectionHead, Spinner, Stat, Page, type Column } from "../components/ui";
 import { get } from "../lib/api";
 import { changeAreas, EUDR_METHOD, fmtRatio, statusText, summarize } from "../lib/eudrData";
 import { download } from "../lib/exports";
 import { fmtDate, fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useFarm, useMe } from "../lib/queries";
-import type { EudrResponse } from "../lib/types";
-import { ExportableTable } from "../components/ExportableTable";
+import type { EudrPlot, EudrResponse } from "../lib/types";
 
 function Disclaimer() {
   return (
     <section className="border-l-2 border-trigo pl-3">
-      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.eudrDisclaimerTitle")}</h2>
+      <h2 className="text-section leading-6 font-semibold">{t("ui.eudrDisclaimerTitle")}</h2>
       <p className="mt-1 text-sm">{t("ui.eudrDisclaimer")}</p>
     </section>
   );
@@ -26,9 +25,9 @@ function Disclaimer() {
 function Method({ refYear, curYear }: { refYear: number; curYear: number }) {
   const m = EUDR_METHOD;
   return (
-    <section className="border-t border-linea pt-6">
-      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.eudrMethodTitle")}</h2>
-      <div className="mt-2 flex flex-col gap-2 text-sm text-tinta-2">
+    <section className="flex flex-col gap-2">
+      <SectionHead title={t("ui.eudrMethodTitle")} />
+      <div className="flex flex-col gap-2 text-sm text-tinta-2">
         <p>{t("ui.eudrMethodSource")}</p>
         <p>{t("ui.eudrMethodComposite", { ref: refYear, cur: curYear })}</p>
         <p>
@@ -55,6 +54,7 @@ export function EudrPage() {
   const eudr = useQuery({ queryKey: ["eudr", farmId], queryFn: () => get<EudrResponse>(`/org/farms/${farmId}/eudr`) });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const body = useRef<HTMLDivElement>(null);
   const data = eudr.data;
   const sum = useMemo(() => (data ? summarize(data) : null), [data]);
   const areas = useMemo(() => (data ? changeAreas(data.plots) : []), [data]);
@@ -82,31 +82,40 @@ export function EudrPage() {
 
   const range = (from: number | null, to: number | null) => (from === null || to === null ? "—" : [fmtDate(from), fmtDate(to)]);
 
+  const cols: Column<EudrPlot>[] = [
+    { id: "plot", header: t("ui.eudrColPlot"), cell: (p) => p.plotName },
+    { id: "area", header: t("ui.eudrColArea"), align: "right", cell: (p) => fmtHa(p.plotAreaHa), hideBelow: "sm" },
+    { id: "forest", header: t("ui.eudrColForest", { year: refYear }), align: "right", cell: (p) => (p.status === "no_data" ? "—" : fmtHa(p.forestRefHa)) },
+    {
+      id: "res",
+      header: t("ui.eudrColResult"),
+      cell: (p) => <span className={p.status === "possible_loss" ? "font-medium text-peligro" : ""}>{statusText(p.status, p.lossHa)}</span>,
+    },
+  ];
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 p-4 lg:p-6">
-      <div>
-        <FarmPageHeader
-          farmId={farmId}
-          farmName={f.name}
-          title={t("ui.eudrTitle")}
-          primary={
-            hasData ? (
-              <Button variant="primary" onClick={pdfFile} disabled={busy}>
-                {busy ? t("ui.eudrPdfWorking") : t("ui.eudrPdf")}
-              </Button>
-            ) : undefined
-          }
-        />
-        {hasData && <p className="text-sm text-tinta-2">{t("ui.eudrComputed", { date: fmtDate(data.computedAt!) })}</p>}
-      </div>
+    <Page
+      width="data"
+      className="gap-6"
+      back={{ to: `/estancias/${farmId}/informes`, label: t("ui.reportsBack") }}
+      title={t("ui.eudrTitle")}
+      primary={
+        hasData ? (
+          <Button variant="primary" onClick={pdfFile} disabled={busy}>
+            {busy ? t("ui.eudrPdfWorking") : t("ui.eudrPdf")}
+          </Button>
+        ) : undefined
+      }
+      menu={hasData ? <PageExport root={body} name={t("ui.eudrTitle")} /> : undefined}
+    >
+      {hasData && <p className="-mt-3 text-sm text-tinta-2">{f.name} · {t("ui.eudrComputed", { date: fmtDate(data.computedAt!) })}</p>}
       <Disclaimer />
       {!hasData ? (
         <EmptyState title={data.plots.length === 0 && farm.data.plots.length === 0 ? t("ui.eudrNoPlots") : t("ui.eudrPending")} />
       ) : (
-        <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <div ref={body} className="flex flex-col gap-6">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-linea py-5 sm:grid-cols-3">
             <Stat label={t("ui.eudrForest", { year: refYear })} value={fmtHa(sum.forestRefHa)} />
-            <Stat label={t("ui.eudrLoss")} value={fmtHa(sum.lossHa)} tone={sum.lossHa > 0 ? "danger" : undefined} />
+            {sum.lossHa > 0 && <Stat label={t("ui.eudrLoss")} value={fmtHa(sum.lossHa)} tone="danger" />}
             <Stat label={t("ui.eudrPlotsWithLoss")} value={`${sum.withLoss} / ${sum.plots}`} />
           </div>
           <div className="flex flex-col gap-1 text-sm text-tinta-2">
@@ -123,54 +132,30 @@ export function EudrPage() {
           </div>
           {error ? <ErrorBox error={error} /> : null}
 
-          <section className="border-t border-linea pt-6">
-            <h2 className="text-[18px] leading-6 font-semibold">{t("ui.eudrMapTitle")}</h2>
-            <div className="mt-3 h-80 overflow-hidden rounded-lg border border-linea">
-              <FarmMap
-                outline={f.geometry}
-                plots={farm.data.plots}
-                problemAreas={areas}
-                layers={farm.data.layers}
-                tilesBaseUrl={me.data?.tilesBaseUrl}
-                bounds={boundsOf(f)}
-                className="h-full w-full"
-              />
-            </div>
-            {areas.length === 0 && <p className="mt-2 text-sm text-tinta-2">{t("ui.eudrMapNone")}</p>}
-          </section>
-
-          <section className="border-t border-linea pt-6">
-            <h2 className="text-[18px] leading-6 font-semibold">{t("ui.eudrPlotsTitle")}</h2>
-            <div className="mt-3 overflow-x-auto">
-              <ExportableTable name="eudr">
-                <table className="num w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-linea text-left text-tinta-2">
-                      <th className="py-1.5 pr-3 font-normal">{t("ui.eudrColPlot")}</th>
-                      <th className="px-3 py-1.5 text-right font-normal">{t("ui.eudrColArea")}</th>
-                      <th className="px-3 py-1.5 text-right font-normal">{t("ui.eudrColForest", { year: refYear })}</th>
-                      <th className="py-1.5 pl-3 font-normal">{t("ui.eudrColResult")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.plots.map((p) => (
-                      <tr key={p.plotId} className="border-b border-linea/60">
-                        <td className="py-1.5 pr-3">{p.plotName}</td>
-                        <td className="px-3 py-1.5 text-right">{fmtHa(p.plotAreaHa)}</td>
-                        <td className="px-3 py-1.5 text-right">{p.status === "no_data" ? "—" : fmtHa(p.forestRefHa)}</td>
-                        <td className={`py-1.5 pl-3 ${p.status === "possible_loss" ? "font-medium text-peligro" : ""}`}>
-                          {statusText(p.status, p.lossHa)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </ExportableTable>
-            </div>
-          </section>
+          <div className="grid items-start gap-x-10 gap-y-6 lg:grid-cols-2">
+            <section className="flex flex-col gap-3">
+              <SectionHead title={t("ui.eudrMapTitle")} />
+              <div className="h-80 overflow-hidden rounded-lg border border-linea">
+                <FarmMap
+                  outline={f.geometry}
+                  plots={farm.data.plots}
+                  problemAreas={areas}
+                  layers={farm.data.layers}
+                  tilesBaseUrl={me.data?.tilesBaseUrl}
+                  bounds={boundsOf(f)}
+                  className="h-full w-full"
+                />
+              </div>
+              {areas.length === 0 && <p className="text-sm text-tinta-2">{t("ui.eudrMapNone")}</p>}
+            </section>
+            <section className="flex min-w-0 flex-col gap-3">
+              <SectionHead title={t("ui.eudrPlotsTitle")} />
+              <DataTable columns={cols} rows={data.plots} rowKey={(p) => p.plotId} caption={t("ui.eudrPlotsTitle")} />
+            </section>
+          </div>
           <Method refYear={refYear} curYear={curYear} />
-        </>
+        </div>
       )}
-    </div>
+    </Page>
   );
 }

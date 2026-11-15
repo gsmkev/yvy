@@ -9,7 +9,7 @@ import { t, tk } from "../lib/i18n";
 import { useFarms, useMe } from "../lib/queries";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { RowMenu } from "../components/menus";
-import { Button, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, toast } from "../components/ui";
+import { Button, DataTable, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, toast, Page } from "../components/ui";
 
 interface EventRow {
   id: string;
@@ -56,10 +56,10 @@ export function SanitaryPage() {
   const farmName = (id: string | null) =>
     id ? (farms.data?.find((f) => f.id === id)?.name ?? "") : t("ui.sanitaryAllFarms");
 
-  if (me.data && !canPlan) return <div className="mx-auto max-w-3xl p-4 text-sm text-tinta-2">{t("ui.sanitaryNoAccess")}</div>;
+  if (me.data && !canPlan) return <Page width="read"><p className="text-sm text-tinta-2">{t("ui.sanitaryNoAccess")}</p></Page>;
   const manyFarms = (farms.data?.length ?? 0) > 1;
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-5 p-4 lg:p-6">
+    <Page width="data">
       <PageHeader
         title={t("ui.sanitaryTitle")}
         primary={
@@ -70,7 +70,7 @@ export function SanitaryPage() {
       />
       <div className="flex items-center gap-1">
         <Button variant="quiet" icon={ChevronLeft} className="w-10 !px-0" aria-label={t("ui.sanitaryPrev")} title={t("ui.sanitaryPrev")} onClick={() => setMonth(shiftMonth(month, -1))} />
-        <span className="min-w-40 text-center text-[18px] leading-6 font-semibold" aria-live="polite">
+        <span className="min-w-40 text-center text-section leading-6 font-semibold" aria-live="polite">
           {monthLabel(month)}
         </span>
         <Button variant="quiet" icon={ChevronRight} className="w-10 !px-0" aria-label={t("ui.sanitaryNext")} title={t("ui.sanitaryNext")} onClick={() => setMonth(shiftMonth(month, 1))} />
@@ -78,36 +78,60 @@ export function SanitaryPage() {
       {events.isLoading && <Spinner rows={4} h={64} />}
       {events.error ? <ErrorBox error={events.error} /> : null}
       {events.data && events.data.length === 0 && (
-        <EmptyState title={t("ui.sanitaryEmpty")}>{t("ui.sanitaryEmptyHint")}</EmptyState>
+        <EmptyState title={t("ui.sanitaryEmpty")}>
+          {t("ui.sanitaryEmptyHint")}
+        </EmptyState>
       )}
       {events.data && events.data.length > 0 && (
-        <ul className="divide-y divide-linea border-y border-linea">
-          {events.data.map((e) => {
-            const meta = [
-              manyFarms ? farmName(e.farmId) : "",
-              e.categories.map((c) => tk(`fields.herd_${c}`).toLowerCase()).join(", "),
-              e.tasksCreated > 0 ? t("ui.sanitaryTasks", { n: e.tasksCreated }) : "",
-            ].filter(Boolean);
-            return (
-              <li key={e.id} className="flex items-center gap-3 py-2">
-                <span className="num w-24 shrink-0 text-sm text-tinta-2">{fmtIsoDate(e.plannedDate)}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">
-                    {tk(`fields.healthReason_${e.reason}`)}
-                    {e.product ? `: ${e.product}` : ""}
-                  </p>
-                  {meta.length > 0 && <p className="text-sm text-tinta-2">{meta.join(" · ")}</p>}
-                  {e.note && <p className="text-sm text-tinta-2">{e.note}</p>}
-                </div>
-                {e.state === "overdue" && <span className="shrink-0 text-sm font-medium text-peligro">{t("ui.sanitaryState_overdue")}</span>}
-                {e.state === "done" && e.doneAt && (
-                  <span className="shrink-0 text-sm text-accion">{t("ui.sanitaryDoneOn", { date: fmtDate(e.doneAt) })}</span>
-                )}
-                <RowMenu name={tk(`fields.healthReason_${e.reason}`)} onDelete={() => remove.mutate(e.id)} />
-              </li>
-            );
-          })}
-        </ul>
+        <DataTable
+          caption={t("ui.sanitaryTitle")}
+          rows={events.data}
+          rowKey={(e) => e.id}
+          columns={[
+            { id: "date", header: t("ui.dueDate"), width: "7rem", cell: (e) => <span className="num text-tinta-2">{fmtIsoDate(e.plannedDate)}</span> },
+            {
+              id: "event",
+              header: t("fields.healthReason"),
+              cell: (e) => (
+                <>
+                  {tk(`fields.healthReason_${e.reason}`)}
+                  {e.product ? `: ${e.product}` : ""}
+                  {e.note && <p className="text-meta font-normal text-tinta-2">{e.note}</p>}
+                </>
+              ),
+            },
+            {
+              id: "meta",
+              header: t("ui.sanitaryCategories"),
+              hideBelow: "md",
+              cell: (e) =>
+                [
+                  manyFarms ? farmName(e.farmId) : "",
+                  e.categories.map((c) => tk(`fields.herd_${c}`).toLowerCase()).join(", "),
+                  e.tasksCreated > 0 ? t("ui.sanitaryTasks", { n: e.tasksCreated }) : "",
+                ]
+                  .filter(Boolean)
+                  .join(" · "),
+            },
+            {
+              id: "state",
+              header: t("ui.statusCol"),
+              cell: (e) =>
+                e.state === "overdue" ? (
+                  <span className="font-medium text-peligro">{t("ui.sanitaryState_overdue")}</span>
+                ) : e.state === "done" && e.doneAt ? (
+                  <span className="text-accion">{t("ui.sanitaryDoneOn", { date: fmtDate(e.doneAt) })}</span>
+                ) : null,
+            },
+            {
+              id: "menu",
+              header: <span className="sr-only">{t("ui.moreActions")}</span>,
+              align: "right",
+              width: "3rem",
+              cell: (e) => <RowMenu name={tk(`fields.healthReason_${e.reason}`)} onDelete={() => remove.mutate(e.id)} />,
+            },
+          ]}
+        />
       )}
       {creating && (
         <NewEvent
@@ -122,7 +146,7 @@ export function SanitaryPage() {
           }}
         />
       )}
-    </div>
+    </Page>
   );
 }
 

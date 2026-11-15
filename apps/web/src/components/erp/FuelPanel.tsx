@@ -7,10 +7,9 @@ import { fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtQty } from "../../lib/money";
 import { useFarms } from "../../lib/queries";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, Select, Spinner, toast, type Column } from "../ui";
 import { useMachines } from "./MachinesPanel";
-import { ExportableTable } from "../ExportableTable";
-import { HeaderActions } from "./adminSlot";
+import { HeaderActions, useTableExport } from "./adminSlot";
 
 interface MachineFuel {
   machineId: string | null;
@@ -27,62 +26,67 @@ export function FuelPanel() {
   const [f, setF] = useState({ farmId: "", from: "", to: "" });
   const [loading, setLoading] = useState(false);
   const farms = useFarms();
+  const exp = useTableExport("combustible");
   const q = useQuery({
     queryKey: ["erp", "fuel", f],
     queryFn: () => get<MachineFuel[]>(`/org/erp/fuel/report${qs({ farmId: f.farmId || undefined, from: f.from || undefined, to: f.to || undefined })}`),
   });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
+  const rows = q.data ?? [];
+  const filtered = !!(f.farmId || f.from || f.to);
+  const newButton = (
+    <Button variant="primary" onClick={() => setLoading(true)}>
+      {t("ui.fuelNew")}
+    </Button>
+  );
+  const columns: Column<MachineFuel>[] = [
+    { id: "machine", header: t("ui.machineName"), cell: (m) => m.name, sort: (a, b) => a.name.localeCompare(b.name) },
+    { id: "loads", header: t("ui.fuelLoads"), align: "right", hideBelow: "sm", cell: (m) => m.loads },
+    { id: "liters", header: t("ui.fuelLiters"), align: "right", cell: (m) => fmtQty(m.liters, "l"), sort: (a, b) => a.liters - b.liters },
+    { id: "meter", header: t("ui.fuelMeterRange"), align: "right", hideBelow: "md", cell: (m) => (m.firstMeter !== null && m.lastMeter !== null ? `${fmtNum(m.firstMeter)} a ${fmtNum(m.lastMeter)}` : "") },
+    { id: "rate", header: t("ui.fuelRate"), align: "right", cell: (m) => (m.litersPerUnit === null ? "" : `${fmtQty(m.litersPerUnit)} ${m.meterKind === "hours" ? t("ui.fuelPerHour") : t("ui.fuelPer100km")}`) },
+  ];
+  const hasData = rows.length > 0 || filtered;
   return (
     <div className="flex flex-col gap-4">
-      <HeaderActions>
-        <Button variant="primary" onClick={() => setLoading(true)}>
-          {t("ui.fuelNew")}
-        </Button>
-      </HeaderActions>
-      <div className="flex flex-wrap items-end gap-3">
-        <Field label={t("ui.costFarm")}>
-          <Select value={f.farmId} onChange={set("farmId")} options={[{ value: "", label: t("ui.costAll") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
-        </Field>
-        <Field label={t("ui.costFrom")}>
-          <Input type="date" value={f.from} onChange={set("from")} />
-        </Field>
-        <Field label={t("ui.costTo")}>
-          <Input type="date" value={f.to} onChange={set("to")} />
-        </Field>
-      </div>
+      {hasData && (
+        <>
+          <HeaderActions>{newButton}</HeaderActions>
+          {rows.length > 0 && exp.menu}
+          <FilterBar>
+            <Field label={t("ui.costFarm")}>
+              <Select value={f.farmId} onChange={set("farmId")} options={[{ value: "", label: t("ui.costAll") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
+            </Field>
+            <Field label={t("ui.costFrom")}>
+              <Input type="date" value={f.from} onChange={set("from")} />
+            </Field>
+            <Field label={t("ui.costTo")}>
+              <Input type="date" value={f.to} onChange={set("to")} />
+            </Field>
+          </FilterBar>
+        </>
+      )}
       {q.isLoading && <Spinner />}
       {q.error ? <ErrorBox error={q.error} /> : null}
-      {q.data && q.data.length === 0 && <Empty>{t("ui.fuelEmpty")}</Empty>}
-      {q.data && q.data.length > 0 && (
-        <div className="overflow-x-auto">
-          <ExportableTable name="combustible">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-linea text-left text-tinta-2">
-                  <th className="py-2 pr-4 font-medium">{t("ui.machineName")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.fuelLoads")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.fuelLiters")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.fuelMeterRange")}</th>
-                  <th className="py-2 text-right font-medium">{t("ui.fuelRate")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {q.data.map((m) => (
-                  <tr key={m.machineId ?? m.name} className="border-b border-linea">
-                    <td className="py-2.5 pr-4 font-medium">{m.name}</td>
-                    <td className="num py-2.5 pr-4 text-right">{m.loads}</td>
-                    <td className="num py-2.5 pr-4 text-right">{fmtQty(m.liters, "l")}</td>
-                    <td className="num py-2.5 pr-4 text-right">
-                      {m.firstMeter !== null && m.lastMeter !== null ? `${fmtNum(m.firstMeter)} a ${fmtNum(m.lastMeter)}` : ""}
-                    </td>
-                    <td className="num py-2.5 text-right">
-                      {m.litersPerUnit === null ? "" : `${fmtQty(m.litersPerUnit)} ${m.meterKind === "hours" ? t("ui.fuelPerHour") : t("ui.fuelPer100km")}`}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ExportableTable>
+      {q.data && (
+        <div ref={exp.ref}>
+          <DataTable
+            columns={columns}
+            rows={rows}
+            rowKey={(m) => m.machineId ?? m.name}
+            caption={t("ui.adminSection_fuel")}
+            empty={
+              filtered ? (
+                <EmptyState compact title={t("ui.erpEmpty")}>
+                  {t("ui.fuelEmpty")}
+                </EmptyState>
+              ) : (
+                <EmptyState title={t("ui.emptyFuelTitle")} action={newButton}>
+                  {t("ui.emptyFuelBody")}
+                </EmptyState>
+              )
+            }
+          />
         </div>
       )}
       {loading && <FuelLoadModal onClose={() => setLoading(false)} />}

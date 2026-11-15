@@ -4,7 +4,7 @@ import { LIMITS } from "@yvy/shared";
 import { del, get, post } from "../lib/api";
 import { fmtDate, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
-import { Button, ErrorBox, Field, Input, Spinner, toast } from "./ui";
+import { Button, ErrorBox, Field, Input, SectionHead, Spinner, Stat, toast } from "./ui";
 
 interface PlanRequest {
   id: string;
@@ -72,24 +72,29 @@ export function PlanPanel() {
       .join(" · ");
   return (
     <section aria-labelledby="plan-title">
-      <h2 id="plan-title" className="text-[18px] leading-6 font-semibold">
+      <h2 id="plan-title" className="sr-only">
         {t("ui.planTitle")}
       </h2>
-      <p className="mt-2">
+      <SectionHead title={t("ui.planTitle")} />
+      <p className="mt-3">
         <span className="font-medium">{tk(`ui.planName_${p.plan}`)}</span>
         {p.plan === "trial" && p.trialEndsAt ? (
           <span className="text-tinta-2"> · {t("ui.trialEnds", { date: fmtDate(p.trialEndsAt) })}</span>
         ) : null}
       </p>
-      <dl className="num mt-3 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
-        <dt className="text-tinta-2">{t("ui.planHectares")}</dt>
-        <dd className={over(p.usage.ha, p.limits.maxHa) ? "font-medium text-peligro" : ""}>
-          {fmtNum(p.usage.ha)} / {cap(p.limits.maxHa)}
-        </dd>
-        <dt className="text-tinta-2">{t("ui.planPeople")}</dt>
-        <dd className={over(p.usage.users, p.limits.maxUsers) ? "font-medium text-peligro" : ""}>
-          {fmtNum(p.usage.users)} / {cap(p.limits.maxUsers)}
-        </dd>
+      <dl className="mt-4 grid grid-cols-2 gap-6 sm:max-w-sm">
+        <Stat
+          label={t("ui.planHectares")}
+          value={fmtNum(p.usage.ha)}
+          unit={`/ ${cap(p.limits.maxHa)}`}
+          tone={over(p.usage.ha, p.limits.maxHa) ? "danger" : undefined}
+        />
+        <Stat
+          label={t("ui.planPeople")}
+          value={fmtNum(p.usage.users)}
+          unit={`/ ${cap(p.limits.maxUsers)}`}
+          tone={over(p.usage.users, p.limits.maxUsers) ? "danger" : undefined}
+        />
       </dl>
 
       {p.pending ? (
@@ -118,13 +123,9 @@ export function PlanPanel() {
             </p>
           )}
           {!open ? (
-            <button
-              type="button"
-              className="mt-4 cursor-pointer text-sm font-medium text-accion underline underline-offset-4"
-              onClick={() => setOpen(true)}
-            >
+            <Button className="mt-4" onClick={() => setOpen(true)}>
               {t("ui.planAsk")}
-            </button>
+            </Button>
           ) : (
             <form
               className="mt-4 flex max-w-md flex-col gap-3"

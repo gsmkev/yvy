@@ -7,12 +7,11 @@ import { fmtIsoDate, fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs, fmtMoney } from "../../lib/money";
 import { useFarms } from "../../lib/queries";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast, type Column } from "../ui";
 import { useParties } from "./PartiesPanel";
 import { RowModal, type FieldDef } from "./MasterPanel";
 import { useSeasonList } from "./CostsPanel";
-import { ExportableTable } from "../ExportableTable";
-import { HeaderActions, RowMenu } from "./adminSlot";
+import { HeaderActions, RowMenu, useTableExport } from "./adminSlot";
 
 interface Contract {
   id: string;
@@ -57,6 +56,8 @@ export function GrainSalesPanel() {
   const seasons = useSeasonList();
   const [newContract, setNewContract] = useState(false);
   const [action, setAction] = useState<{ kind: "delivery" | "settlement"; contract: Contract } | null>(null);
+  const [tab, setTab] = useState<"contracts" | "deliveries" | "settlements">("contracts");
+  const exp = useTableExport(tab === "contracts" ? "contratos-de-granos" : tab === "deliveries" ? "entregas-de-granos" : "liquidaciones");
   const qc = useQueryClient();
   const removeD = useMutation({
     mutationFn: (id: string) => del(`/org/erp/grain-deliveries/${id}`),
@@ -90,103 +91,95 @@ export function GrainSalesPanel() {
     { key: "deliveryFrom", label: t("ui.grainFrom"), type: "date" },
     { key: "deliveryTo", label: t("ui.grainTo"), type: "date" },
   ];
+  const contractRows = contracts.data ?? [];
+  const deliveryRows = deliveries.data ?? [];
+  const settlementRows = settlements.data ?? [];
+  const newButton = (
+    <Button variant="primary" onClick={() => setNewContract(true)}>
+      {t("ui.grainNew")}
+    </Button>
+  );
+  const contractCols: Column<Contract>[] = [
+    {
+      id: "contract",
+      header: t("ui.grainContract"),
+      cell: (c) => (
+        <>
+          <div className="font-medium">
+            {tk(`fields.crop_${c.crop}`)} {c.number ? `· ${c.number}` : ""}
+          </div>
+          <div className="text-meta font-normal text-tinta-2">{party(c.partyId)}</div>
+        </>
+      ),
+    },
+    { id: "tons", header: t("ui.grainTons"), align: "right", cell: (c) => fmtNum(c.tons) },
+    { id: "delivered", header: t("ui.grainDelivered"), align: "right", hideBelow: "sm", cell: (c) => t("ui.grainOf", { a: fmtNum(c.deliveredTons), b: fmtNum(c.toDeliverTons) }) },
+    { id: "settled", header: t("ui.grainSettled"), align: "right", hideBelow: "md", cell: (c) => t("ui.grainOf", { a: fmtNum(c.settledTons), b: fmtNum(c.toSettleTons) }) },
+    { id: "price", header: t("ui.grainPrice"), align: "right", hideBelow: "sm", cell: (c) => fmtMoney(c.priceMinor, c.currency) },
+    {
+      id: "actions",
+      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      align: "right",
+      cell: (c) => (
+        <span className="inline-flex gap-1 whitespace-nowrap">
+          <Button size="sm" variant="quiet" onClick={() => setAction({ kind: "delivery", contract: c })}>
+            {t("ui.grainAddDelivery")}
+          </Button>
+          <Button size="sm" variant="quiet" onClick={() => setAction({ kind: "settlement", contract: c })}>
+            {t("ui.grainAddSettlement")}
+          </Button>
+        </span>
+      ),
+    },
+  ];
+  const deliveryCols: Column<Delivery>[] = [
+    { id: "date", header: t("ui.costDate"), cell: (d) => <span className="num">{fmtIsoDate(d.date)}</span>, sort: (a, b) => a.date.localeCompare(b.date) },
+    { id: "contract", header: t("ui.grainContract"), cell: (d) => <span className="font-medium">{label(d.contractId)}</span> },
+    { id: "tons", header: t("ui.grainTons"), align: "right", cell: (d) => `${fmtNum(d.tons)} t` },
+    ...(deliveryRows.some((d) => d.ticket) ? [{ id: "ticket", header: t("ui.grainTicket"), hideBelow: "sm", cell: (d: Delivery) => <span className="text-tinta-2">{d.ticket ?? ""}</span> } satisfies Column<Delivery>] : []),
+    ...(deliveryRows.some((d) => d.moisturePct !== null) ? [{ id: "moisture", header: t("ui.grainMoisture"), align: "right", hideBelow: "md", cell: (d: Delivery) => (d.moisturePct === null ? "" : `${d.moisturePct} %`) } satisfies Column<Delivery>] : []),
+    { id: "menu", header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>, align: "right", width: "3rem", cell: (d) => <RowMenu name={fmtIsoDate(d.date)} onDelete={() => removeD.mutate(d.id)} /> },
+  ];
+  const settlementCols: Column<Settlement>[] = [
+    { id: "date", header: t("ui.costDate"), cell: (l) => <span className="num">{fmtIsoDate(l.date)}</span>, sort: (a, b) => a.date.localeCompare(b.date) },
+    { id: "contract", header: t("ui.grainContract"), cell: (l) => <span className="font-medium">{label(l.contractId)}</span> },
+    { id: "tons", header: t("ui.grainTons"), align: "right", hideBelow: "sm", cell: (l) => `${fmtNum(l.tons)} t` },
+    { id: "net", header: t("ui.grainNet"), align: "right", cell: (l) => fmtMoney(l.netAmount, l.currency) },
+    { id: "netPyg", header: t("ui.grainNetPyg"), align: "right", hideBelow: "md", cell: (l) => <span className="text-tinta-2">{fmtGs(l.netPyg)}</span> },
+    { id: "due", header: t("ui.purchDueLabel"), hideBelow: "md", cell: (l) => <span className="text-tinta-2">{l.dueDate ? fmtIsoDate(l.dueDate) : ""}</span> },
+    { id: "menu", header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>, align: "right", width: "3rem", cell: (l) => <RowMenu name={fmtIsoDate(l.date)} onDelete={() => removeS.mutate(l.id)} /> },
+  ];
+  const noContracts = contractRows.length === 0;
+  const current = tab === "contracts" ? contractRows.length : tab === "deliveries" ? deliveryRows.length : settlementRows.length;
   return (
-    <div className="flex flex-col gap-5">
-      <HeaderActions>
-        <Button variant="primary" onClick={() => setNewContract(true)}>
-          {t("ui.grainNew")}
-        </Button>
-      </HeaderActions>
-      {(contracts.data ?? []).length === 0 ? (
-        <Empty>{t("ui.erpEmpty")}</Empty>
+    <div className="flex flex-col gap-4">
+      {!noContracts && <HeaderActions>{newButton}</HeaderActions>}
+      {noContracts ? (
+        <EmptyState title={t("ui.emptyGrainTitle")} action={newButton}>
+          {t("ui.emptyGrainBody")}
+        </EmptyState>
       ) : (
-        <div className="overflow-x-auto">
-          <ExportableTable name="contratos-de-granos">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-linea text-left text-tinta-2">
-                  <th className="py-2 pr-4 font-medium">{t("ui.grainContract")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.grainTons")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.grainDelivered")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.grainSettled")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.grainPrice")}</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {(contracts.data ?? []).map((c) => (
-                  <tr key={c.id} className="border-b border-linea">
-                    <td className="py-2.5 pr-4">
-                      <div className="font-medium">
-                        {tk(`fields.crop_${c.crop}`)} {c.number ? `· ${c.number}` : ""}
-                      </div>
-                      <div className="text-tinta-2">{party(c.partyId)}</div>
-                    </td>
-                    <td className="num py-2.5 pr-4 text-right">{fmtNum(c.tons)}</td>
-                    <td className="num py-2.5 pr-4 text-right">{t("ui.grainOf", { a: fmtNum(c.deliveredTons), b: fmtNum(c.toDeliverTons) })}</td>
-                    <td className="num py-2.5 pr-4 text-right">{t("ui.grainOf", { a: fmtNum(c.settledTons), b: fmtNum(c.toSettleTons) })}</td>
-                    <td className="num py-2.5 pr-4 text-right">{fmtMoney(c.priceMinor, c.currency)}</td>
-                    <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
-                      <button className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setAction({ kind: "delivery", contract: c })}>
-                        {t("ui.grainAddDelivery")}
-                      </button>
-                      <button className="cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setAction({ kind: "settlement", contract: c })}>
-                        {t("ui.grainAddSettlement")}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ExportableTable>
-        </div>
-      )}
-      <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.grainDeliveries")}</h2>
-      {(deliveries.data ?? []).length === 0 ? (
-        <Empty>{t("ui.erpEmpty")}</Empty>
-      ) : (
-        <ExportableTable name="entregas-de-granos">
-          <table className="w-full text-sm">
-            <tbody>
-              {(deliveries.data ?? []).map((d) => (
-                <tr key={d.id} className="border-b border-linea">
-                  <td className="num py-2.5 pr-4">{fmtIsoDate(d.date)}</td>
-                  <td className="py-2.5 pr-4 font-medium">{label(d.contractId)}</td>
-                  <td className="py-2.5 pr-4 text-tinta-2">{d.ticket ?? ""}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtNum(d.tons)} t</td>
-                  <td className="num py-2.5 pr-4 text-right text-tinta-2">{d.moisturePct === null ? "" : `${d.moisturePct} %`}</td>
-                  <td className="sticky right-0 w-12 bg-lino py-1 text-right">
-                    <RowMenu name={fmtIsoDate(d.date)} onDelete={() => removeD.mutate(d.id)} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </ExportableTable>
-      )}
-      <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.grainSettlements")}</h2>
-      {(settlements.data ?? []).length === 0 ? (
-        <Empty>{t("ui.erpEmpty")}</Empty>
-      ) : (
-        <ExportableTable name="liquidaciones">
-          <table className="w-full text-sm">
-            <tbody>
-              {(settlements.data ?? []).map((l) => (
-                <tr key={l.id} className="border-b border-linea">
-                  <td className="num py-2.5 pr-4">{fmtIsoDate(l.date)}</td>
-                  <td className="py-2.5 pr-4 font-medium">{label(l.contractId)}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtNum(l.tons)} t</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtMoney(l.netAmount, l.currency)}</td>
-                  <td className="num py-2.5 pr-4 text-right text-tinta-2">{fmtGs(l.netPyg)}</td>
-                  <td className="py-2.5 pr-4 text-tinta-2">{l.dueDate ? t("ui.purchDue", { date: fmtIsoDate(l.dueDate) }) : ""}</td>
-                  <td className="sticky right-0 w-12 bg-lino py-1 text-right">
-                    <RowMenu name={fmtIsoDate(l.date)} onDelete={() => removeS.mutate(l.id)} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </ExportableTable>
+        <>
+          {current > 0 && exp.menu}
+          <Tabs
+            tabs={[
+              { id: "contracts", label: t("ui.grainTabContracts"), count: contractRows.length },
+              { id: "deliveries", label: t("ui.grainDeliveries"), count: deliveryRows.length },
+              { id: "settlements", label: t("ui.grainSettlements"), count: settlementRows.length },
+            ]}
+            value={tab}
+            onChange={setTab}
+          />
+          <div ref={exp.ref}>
+            {tab === "contracts" && <DataTable columns={contractCols} rows={contractRows} rowKey={(c) => c.id} caption={t("ui.grainTabContracts")} />}
+            {tab === "deliveries" && (
+              <DataTable columns={deliveryCols} rows={deliveryRows} rowKey={(d) => d.id} caption={t("ui.grainDeliveries")} empty={<EmptyState compact title={t("ui.erpEmpty")}>{t("ui.emptyDeliveriesBody")}</EmptyState>} />
+            )}
+            {tab === "settlements" && (
+              <DataTable columns={settlementCols} rows={settlementRows} rowKey={(l) => l.id} caption={t("ui.grainSettlements")} empty={<EmptyState compact title={t("ui.erpEmpty")}>{t("ui.emptySettlementsBody")}</EmptyState>} />
+            )}
+          </div>
+        </>
       )}
       {(removeD.error || removeS.error) && <ErrorBox error={removeD.error ?? removeS.error} />}
       {newContract && <RowModal title={t("ui.grainNew")} fields={fields} row={null} path="grain-contracts" onClose={() => setNewContract(false)} />}

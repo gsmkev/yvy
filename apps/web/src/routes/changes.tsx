@@ -1,23 +1,22 @@
 /** Cambios en el terreno: área quemada tras un foco de fuego (S-20) y cambio de cobertura entre dos fechas (S-31). Indicativo. */
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { CoverSection } from "../components/CoverSection";
 import { boundsOf, FarmMap } from "../components/FarmMap";
-import { FarmPageHeader } from "../components/FarmPageHeader";
-import { Empty, ErrorBox, Spinner, Stat } from "../components/ui";
+import { PageExport } from "../components/PageExport";
+import { DataTable, EmptyState, ErrorBox, Field, Page, Select, Spinner, Stat, Tabs, type Column } from "../components/ui";
 import { get } from "../lib/api";
 import { analysisAreas, burnedEvents } from "../lib/changesData";
 import { fmtDate, fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useFarm, useMe } from "../lib/queries";
 import type { AnalysisPlot, BurnedMetrics } from "../lib/types";
-import { ExportableTable } from "../components/ExportableTable";
 
 function Disclaimer() {
   return (
     <section className="border-l-2 border-trigo pl-3">
-      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.changesDisclaimerTitle")}</h2>
+      <h2 className="text-section leading-6 font-semibold">{t("ui.changesDisclaimerTitle")}</h2>
       <p className="mt-1 text-sm">{t("ui.changesDisclaimer")}</p>
     </section>
   );
@@ -38,81 +37,58 @@ function BurnedSection({ farmId }: { farmId: string }) {
   const ev = events.find((e) => e.refKey === picked) ?? events[0];
   const f = farm.data.farm;
   const areas = analysisAreas(ev?.plots ?? []);
+  const cols: Column<AnalysisPlot<BurnedMetrics>>[] = [
+    { id: "plot", header: t("ui.eudrColPlot"), cell: (p) => p.plotName },
+    { id: "area", header: t("ui.eudrColArea"), align: "right", cell: (p) => fmtHa(p.plotAreaHa), hideBelow: "sm" },
+    { id: "burned", header: t("ui.burnedColBurned"), align: "right", cell: (p) => <span className="font-medium text-peligro">{fmtHa(p.metrics.burnedHa)}</span> },
+    { id: "high", header: t("ui.burnedColHigh"), align: "right", cell: (p) => fmtHa(p.metrics.highHa) },
+  ];
 
   return (
-    <section className="flex flex-col gap-4 border-t border-linea pt-6">
-      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.burnedTitle")}</h2>
+    <section className="flex flex-col gap-4">
       {!ev ? (
-        <Empty>{t("ui.burnedNone")}</Empty>
+        <EmptyState compact>{t("ui.burnedNone")}</EmptyState>
       ) : (
         <>
           {events.length > 1 && (
-            <label className="flex max-w-xs flex-col gap-1 text-sm">
-              <span className="text-tinta-2">{t("ui.burnedPick")}</span>
-              <select
-                className="h-9 cursor-pointer rounded border border-linea bg-white px-2"
-                value={ev.refKey}
-                onChange={(e) => setPicked(e.target.value)}
-              >
-                {events.map((e) => (
-                  <option key={e.refKey} value={e.refKey}>
-                    {t("ui.burnedEvent", { date: fmtDate(e.eventAt) })}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="max-w-xs">
+              <Field label={t("ui.burnedPick")}>
+                <Select
+                  value={ev.refKey}
+                  onChange={(e) => setPicked(e.target.value)}
+                  options={events.map((e) => ({ value: e.refKey, label: t("ui.burnedEvent", { date: fmtDate(e.eventAt) }) }))}
+                />
+              </Field>
+            </div>
           )}
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-linea py-5 sm:grid-cols-3">
             <Stat label={t("ui.burnedTotal")} value={fmtHa(ev.burnedHa)} tone={ev.burnedHa > 0 ? "danger" : undefined} />
-            <Stat label={t("ui.burnedHigh")} value={fmtHa(ev.highHa)} />
+            {ev.highHa > 0 && <Stat label={t("ui.burnedHigh")} value={fmtHa(ev.highHa)} />}
             <Stat label={t("ui.burnedPlots")} value={String(ev.plots.length)} />
           </div>
           {ev.fromAt !== null && ev.toAt !== null && (
             <p className="text-sm text-tinta-2">{t("ui.burnedImages", { from: fmtDate(ev.fromAt), to: fmtDate(ev.toAt) })}</p>
           )}
-          <div className="h-80 overflow-hidden rounded-lg border border-linea">
-            <FarmMap
-              outline={f.geometry}
-              plots={farm.data.plots}
-              problemAreas={areas}
-              layers={farm.data.layers}
-              tilesBaseUrl={me.data?.tilesBaseUrl}
-              bounds={boundsOf(f)}
-              className="h-full w-full"
-            />
-          </div>
-          {ev.plots.length > 0 && (
-            <div className="overflow-x-auto">
-              <ExportableTable name="cambios">
-                <table className="num w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-linea text-left text-tinta-2">
-                      <th className="py-1.5 pr-3 font-normal">{t("ui.eudrColPlot")}</th>
-                      <th className="px-3 py-1.5 text-right font-normal">{t("ui.eudrColArea")}</th>
-                      <th className="px-3 py-1.5 text-right font-normal">{t("ui.burnedColBurned")}</th>
-                      <th className="py-1.5 pl-3 text-right font-normal">{t("ui.burnedColHigh")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ev.plots.map((p) => (
-                      <tr key={p.plotId} className="border-b border-linea/60">
-                        <td className="py-1.5 pr-3">{p.plotName}</td>
-                        <td className="px-3 py-1.5 text-right">{fmtHa(p.plotAreaHa)}</td>
-                        <td className="px-3 py-1.5 text-right font-medium text-peligro">{fmtHa(p.metrics.burnedHa)}</td>
-                        <td className="py-1.5 pl-3 text-right">{fmtHa(p.metrics.highHa)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </ExportableTable>
+          <div className="grid items-start gap-x-10 gap-y-5 lg:grid-cols-2">
+            <div className="h-80 overflow-hidden rounded-lg border border-linea">
+              <FarmMap
+                outline={f.geometry}
+                plots={farm.data.plots}
+                problemAreas={areas}
+                layers={farm.data.layers}
+                tilesBaseUrl={me.data?.tilesBaseUrl}
+                bounds={boundsOf(f)}
+                className="h-full w-full"
+              />
             </div>
-          )}
+            {ev.plots.length > 0 && <DataTable columns={cols} rows={ev.plots} rowKey={(p) => p.plotId} caption={t("ui.burnedTitle")} />}
+          </div>
           <p className="text-sm text-tinta-2">
             {t("ui.burnedUnaffected", { n: ev.unaffected })}
             {ev.noData > 0 ? ` ${t("ui.burnedNoData", { n: ev.noData })}` : ""}
           </p>
           <p className="text-sm text-tinta-2">{t("ui.burnedMethod")}</p>
-          <p className="text-[11px] text-tinta-2">
+          <p className="text-micro text-tinta-2">
             {t("attribution.copernicus")} · {t("attribution.firms")}
           </p>
         </>
@@ -124,14 +100,29 @@ function BurnedSection({ farmId }: { farmId: string }) {
 export function ChangesPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId/cambios" });
   const farm = useFarm(farmId);
+  const [tab, setTab] = useState<"burned" | "cover">("burned");
+  const body = useRef<HTMLDivElement>(null);
   if (farm.isLoading) return <Spinner />;
   if (farm.error || !farm.data) return <ErrorBox error={farm.error} />;
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 p-4 lg:p-6">
-      <FarmPageHeader farmId={farmId} farmName={farm.data.farm.name} title={t("ui.changesTitle")} />
+    <Page
+      width="data"
+      className="gap-5"
+      back={{ to: `/estancias/${farmId}/informes`, label: t("ui.reportsBack") }}
+      title={t("ui.changesTitle")}
+      menu={<PageExport root={body} name={t("ui.changesTitle")} />}
+    >
+      <p className="-mt-3 text-sm text-tinta-2">{farm.data.farm.name}</p>
       <Disclaimer />
-      <BurnedSection farmId={farmId} />
-      <CoverSection farmId={farmId} />
-    </div>
+      <Tabs
+        tabs={[
+          { id: "burned", label: t("ui.burnedTitle") },
+          { id: "cover", label: t("ui.coverTitle") },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
+      <div ref={body}>{tab === "burned" ? <BurnedSection farmId={farmId} /> : <CoverSection farmId={farmId} />}</div>
+    </Page>
   );
 }

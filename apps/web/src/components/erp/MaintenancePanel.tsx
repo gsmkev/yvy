@@ -6,9 +6,11 @@ import { del, get, post } from "../../lib/api";
 import { fmtIsoDate, fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, Input, Modal, SectionHead, Select, Spinner, Tabs, toast, type Column } from "../ui";
 import { useMachines } from "./MachinesPanel";
-import { MasterPanel, useErpList, type FieldDef } from "./MasterPanel";
+import { useErpList, type FieldDef } from "./MasterPanel";
+import { RecordList } from "./RecordList";
+import { SectionButton } from "./SectionButton";
 import { useParties } from "./PartiesPanel";
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions, RowMenu } from "./adminSlot";
@@ -51,6 +53,7 @@ export function MaintenancePanel() {
   const logs = useQuery({ queryKey: ["erp", "maintenance-logs"], queryFn: () => get<Log[]>("/org/erp/maintenance/logs") });
   const [logging, setLogging] = useState<string | null | "new">(null);
   const [removing, setRemoving] = useState<Log | null>(null);
+  const [tab, setTab] = useState("history");
   const qc = useQueryClient();
   const remove = useMutation({
     mutationFn: (l: Log) => del(`/org/erp/maintenance/logs/${l.id}`),
@@ -76,97 +79,130 @@ export function MaintenancePanel() {
     { key: "everyUnits", label: t("ui.maintEvery"), type: "number", required: true, min: 1, hint: t("ui.maintEveryHint") },
     { key: "lastDoneMeter", label: t("ui.maintLastDone"), type: "number", min: 0, hint: t("ui.maintLastDoneHint") },
   ];
+  if ((machines.data ?? []).length === 0)
+    return (
+      <EmptyState title={t("ui.maintNoMachinesTitle")} action={<SectionButton to="machines" primary>{t("ui.maintGoMachines")}</SectionButton>}>
+        {t("ui.maintNoMachinesHint")}
+      </EmptyState>
+    );
+  const dueCols: Column<Due>[] = [
+    { id: "machine", header: t("ui.maintMachine"), cell: (d) => d.machine },
+    { id: "name", header: t("ui.maintPlanName"), hideBelow: "sm", cell: (d) => d.name },
+    {
+      id: "meter",
+      header: t("ui.maintMeter"),
+      align: "right",
+      hideBelow: "md",
+      cell: (d) => (
+        <span className="text-tinta-2">
+          {fmtNum(d.meter)} / {fmtNum(d.dueAt)} {unitOf(d.meterKind)}
+        </span>
+      ),
+    },
+    {
+      id: "left",
+      header: t("ui.maintDueCol"),
+      align: "right",
+      cell: (d) => (
+        <span className={d.status === "overdue" ? "text-peligro" : "text-trigo-texto"}>
+          {d.status === "overdue"
+            ? t("ui.maintOverdue", { n: `${fmtNum(-d.remaining)} ${unitOf(d.meterKind)}` })
+            : t("ui.maintSoon", { n: `${fmtNum(d.remaining)} ${unitOf(d.meterKind)}` })}
+        </span>
+      ),
+    },
+    {
+      id: "_a",
+      header: <span className="sr-only">{t("ui.maintDone")}</span>,
+      align: "right",
+      cell: (d) => (
+        <Button variant="quiet" size="sm" onClick={() => setLogging(d.planId)}>
+          {t("ui.maintDone")}
+        </Button>
+      ),
+    },
+  ];
+  const logCols: Column<Log>[] = [
+    { id: "date", header: t("ui.costDate"), cell: (l) => <span className="whitespace-nowrap">{fmtIsoDate(localDate(l.occurredAt))}</span> },
+    {
+      id: "machine",
+      header: t("ui.maintMachine"),
+      cell: (l) => (
+        <>
+          {machine(l.machineId)?.name}
+          <span className="block text-meta font-normal text-tinta-2 sm:hidden">{tk(`ui.maintKind_${l.kind}`)}</span>
+        </>
+      ),
+    },
+    { id: "kind", header: t("ui.maintKind"), hideBelow: "sm", cell: (l) => tk(`ui.maintKind_${l.kind}`) },
+    { id: "desc", header: t("ui.maintDescription"), hideBelow: "lg", cell: (l) => <span className="text-tinta-2">{l.description}</span> },
+    {
+      id: "meter",
+      header: t("ui.maintMeter"),
+      align: "right",
+      hideBelow: "md",
+      cell: (l) => (l.meterValue !== null ? `${fmtNum(l.meterValue)} ${unitOf(machine(l.machineId)?.meterKind ?? "hours")}` : ""),
+    },
+    { id: "cost", header: t("ui.maintCost"), align: "right", cell: (l) => (l.amountPyg ? fmtGs(l.amountPyg) : "") },
+    { id: "_a", header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>, align: "right", width: "3rem", cell: (l) => <RowMenu name={machine(l.machineId)?.name ?? ""} onDelete={() => setRemoving(l)} /> },
+  ];
+  const history = logs.data ?? [];
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <HeaderActions>
         <Button variant="primary" onClick={() => setLogging("new")}>
           {t("ui.maintLogNew")}
         </Button>
       </HeaderActions>
       {due.data && due.data.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.maintDueTitle")}</h2>
-          <ExportableTable name="mantenimiento-vencido">
-            <table className="w-full text-sm">
-              <tbody>
-                {due.data.map((d) => (
-                  <tr key={d.planId} className="border-b border-linea">
-                    <td className="py-2.5 pr-4 font-medium">{d.machine}</td>
-                    <td className="py-2.5 pr-4">{d.name}</td>
-                    <td className="num py-2.5 pr-4 text-right text-tinta-2">
-                      {fmtNum(d.meter)} / {fmtNum(d.dueAt)} {unitOf(d.meterKind)}
-                    </td>
-                    <td className={`py-2.5 pr-4 text-right ${d.status === "overdue" ? "text-peligro" : "text-trigo-texto"}`}>
-                      {d.status === "overdue"
-                        ? t("ui.maintOverdue", { n: `${fmtNum(-d.remaining)} ${unitOf(d.meterKind)}` })
-                        : t("ui.maintSoon", { n: `${fmtNum(d.remaining)} ${unitOf(d.meterKind)}` })}
-                    </td>
-                    <td className="py-2.5 text-right">
-                      <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline" onClick={() => setLogging(d.planId)}>
-                        {t("ui.maintDone")}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ExportableTable>
-        </div>
+        <section className="flex flex-col gap-2">
+          <SectionHead title={t("ui.maintDueTitle")} count={due.data.length} />
+          <DataTable columns={dueCols} rows={due.data} rowKey={(d) => d.planId} caption={t("ui.maintDueTitle")} />
+        </section>
       )}
-      <div className="flex flex-col gap-2">
-        <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.maintPlansTitle")}</h2>
-        <MasterPanel<Plan>
+      <Tabs<string>
+        tabs={[
+          { id: "history", label: t("ui.maintHistoryTitle"), count: history.length || undefined },
+          { id: "plans", label: t("ui.maintPlansTitle"), count: (plans.data ?? []).length || undefined },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
+      {tab === "history" &&
+        (history.length === 0 ? (
+          <EmptyState
+            title={t("ui.maintHistoryEmptyTitle")}
+            action={
+              <Button variant="primary" onClick={() => setLogging("new")}>
+                {t("ui.maintLogNew")}
+              </Button>
+            }
+          >
+            {t("ui.maintHistoryEmptyHint")}
+          </EmptyState>
+        ) : (
+          <ExportableTable name="mantenimiento-historial">
+            <DataTable columns={logCols} rows={history} rowKey={(l) => l.id} caption={t("ui.maintHistoryTitle")} />
+          </ExportableTable>
+        ))}
+      {tab === "plans" && (
+        <RecordList<Plan>
           inline
           path="maintenance-plans"
+          exportName="mantenimiento-planes"
           newLabel={t("ui.maintPlanNew")}
+          emptyTitle={t("ui.maintPlansEmptyTitle")}
+          emptyHint={t("ui.maintPlansEmptyHint")}
           name={(p) => p.name}
           fields={fields}
           columns={[
-            { header: t("ui.maintMachine"), cell: (p) => <span className="font-medium">{machine(p.machineId)?.name}</span> },
+            { header: t("ui.maintMachine"), cell: (p) => machine(p.machineId)?.name },
             { header: t("ui.maintPlanName"), cell: (p) => p.name },
-            {
-              header: t("ui.maintEvery"),
-              right: true,
-              cell: (p) => `${fmtNum(p.everyUnits)} ${unitOf(machine(p.machineId)?.meterKind ?? "hours")}`,
-            },
-            {
-              header: t("ui.maintLastDone"),
-              right: true,
-              cell: (p) => `${fmtNum(p.lastDoneMeter)} ${unitOf(machine(p.machineId)?.meterKind ?? "hours")}`,
-            },
+            { header: t("ui.maintEvery"), right: true, cell: (p) => `${fmtNum(p.everyUnits)} ${unitOf(machine(p.machineId)?.meterKind ?? "hours")}` },
+            { header: t("ui.maintLastDone"), right: true, hideBelow: "sm", cell: (p) => `${fmtNum(p.lastDoneMeter)} ${unitOf(machine(p.machineId)?.meterKind ?? "hours")}` },
           ]}
         />
-      </div>
-      <div className="flex flex-col gap-2">
-        <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.maintHistoryTitle")}</h2>
-        {(logs.data ?? []).length === 0 ? (
-          <Empty>{t("ui.erpEmpty")}</Empty>
-        ) : (
-          <div className="overflow-x-auto">
-            <ExportableTable name="mantenimiento-historial">
-              <table className="w-full text-sm">
-                <tbody>
-                  {(logs.data ?? []).map((l) => (
-                    <tr key={l.id} className="border-b border-linea">
-                      <td className="num py-2.5 pr-4">{fmtIsoDate(localDate(l.occurredAt))}</td>
-                      <td className="py-2.5 pr-4 font-medium">{machine(l.machineId)?.name}</td>
-                      <td className="py-2.5 pr-4">{tk(`ui.maintKind_${l.kind}`)}</td>
-                      <td className="py-2.5 pr-4 text-tinta-2">{l.description}</td>
-                      <td className="num py-2.5 pr-4 text-right">
-                        {l.meterValue !== null ? `${fmtNum(l.meterValue)} ${unitOf(machine(l.machineId)?.meterKind ?? "hours")}` : ""}
-                      </td>
-                      <td className="num py-2.5 pr-4 text-right">{l.amountPyg ? fmtGs(l.amountPyg) : ""}</td>
-                      <td className="sticky right-0 w-12 bg-lino py-1 text-right">
-                        <RowMenu name={machine(l.machineId)?.name ?? ""} onDelete={() => setRemoving(l)} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </ExportableTable>
-          </div>
-        )}
-      </div>
+      )}
       {logging && <LogModal planId={logging === "new" ? null : logging} plans={plans.data ?? []} onClose={() => setLogging(null)} />}
       {removing && (
         <ConfirmModal

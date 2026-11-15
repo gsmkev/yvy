@@ -12,7 +12,8 @@ import { buildCountData, canCount } from "../src/lib/stock-count";
 import { localChanged } from "../src/lib/sync";
 import { showToast } from "../src/lib/toast";
 import { useLocal } from "../src/lib/useLocal";
-import { Button, Row, s as k, Text, TextInput } from "../src/ui/kit";
+import { Warehouse } from "lucide-react-native";
+import { Button, EmptyState, Row, s as k, Text, TextInput } from "../src/ui/kit";
 import { C, T } from "../src/ui/theme";
 import { withWriteAccess } from "../src/ui/ReadOnlyGate";
 
@@ -37,9 +38,9 @@ function StockCount() {
         <Stack.Screen options={{ title: "" }} />
         <Text style={T.title}>{t("ui.countTitle")}</Text>
         <Text style={[T.small, { marginTop: 6, marginBottom: 16 }]}>{t("ui.countPickWarehouse")}</Text>
-        {warehouses.length === 0 && <Text style={T.body}>{t("ui.countNoWarehouse")}</Text>}
+        {warehouses.length === 0 && <EmptyState title={t("ui.countNoWarehouse")} />}
         {warehouses.map((w) => (
-          <Row key={w.id} title={w.name} subtitle={getDb().farms().find((f) => f.id === w.farmId)?.name} onPress={() => setWarehouseId(w.id)} />
+          <Row key={w.id} icon={Warehouse} title={w.name} subtitle={getDb().farms().find((f) => f.id === w.farmId)?.name} onPress={() => setWarehouseId(w.id)} />
         ))}
       </ScrollView>
     );

@@ -420,6 +420,8 @@ export function FarmMap(props: FarmMapProps) {
           });
       sync();
       if (cb.current.camera) map.jumpTo(cb.current.camera);
+      // Los límites que llegaron antes de la carga (registros, lotes) no pasaron por el efecto de abajo
+      else if (cb.current.bounds) map.fitBounds(cb.current.bounds, { padding: 60, duration: 0, maxZoom: 16 });
     });
     return () => {
       drawRef.current?.stop();

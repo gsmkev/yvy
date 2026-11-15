@@ -5,7 +5,7 @@ import { isFieldRole, RECORD_KINDS } from "@yvy/shared";
 import { FarmMap } from "../components/FarmMap";
 import { ActionMenu, ExportMenu } from "../components/menus";
 import { RecordsList } from "../components/RecordsList";
-import { Button, ErrorBox, Field, Input, Modal, PageHeader, Select } from "../components/ui";
+import { Button, ErrorBox, Field, FilterBar, Input, Modal, PageHeader, Select } from "../components/ui";
 import { recordsTable, recordsToExcel } from "../lib/exports";
 import { DEFAULT_TZ, dayToMs } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -65,11 +65,13 @@ export function RecordsPage() {
   };
 
   const fields = (labelled: boolean) => {
-    const cls = labelled ? "" : "min-w-0 max-w-56 flex-1";
+    // Un filtro con valor se distingue por el borde de acento
+    const mark = (v: string) => (!labelled && v ? "[&_select]:border-accion" : "");
+    const cls = (v: string) => (labelled ? "" : `min-w-0 max-w-56 flex-1 ${mark(v)}`);
     const farm = (
       <Select
         aria-label={t("ui.farm")}
-        className={cls}
+        className={cls(f.farmId)}
         value={f.farmId}
         onChange={set("farmId")}
         options={[{ value: "", label: t("ui.allFarms") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]}
@@ -78,7 +80,7 @@ export function RecordsPage() {
     const author = (
       <Select
         aria-label={t("ui.author")}
-        className={cls}
+        className={cls(f.authorId)}
         value={f.authorId}
         onChange={set("authorId")}
         options={[
@@ -90,7 +92,7 @@ export function RecordsPage() {
     const kind = (
       <Select
         aria-label={t("ui.kind")}
-        className={cls}
+        className={cls(f.kind)}
         value={f.kind}
         onChange={set("kind")}
         options={[
@@ -99,8 +101,8 @@ export function RecordsPage() {
         ]}
       />
     );
-    const from = <Input className="w-full" aria-label={t("ui.from")} type="date" value={f.from} onChange={set("from")} />;
-    const to = <Input className="w-full" aria-label={t("ui.to")} type="date" value={f.to} onChange={set("to")} />;
+    const from = <Input className={`w-full ${!labelled && f.from ? "!border-accion" : ""}`} aria-label={t("ui.from")} type="date" value={f.from} onChange={set("from")} />;
+    const to = <Input className={`w-full ${!labelled && f.to ? "!border-accion" : ""}`} aria-label={t("ui.to")} type="date" value={f.to} onChange={set("to")} />;
     if (labelled)
       return (
         <div className="flex flex-col gap-3">
@@ -175,14 +177,21 @@ export function RecordsPage() {
             </>
           }
         />
-        <div className="hidden items-center gap-2 lg:flex">
-          {fields(false)}
-          {active > 0 && (
-            <Button variant="quiet" onClick={() => setF(EMPTY)}>
-              {t("ui.clearFilters")}
-            </Button>
-          )}
-          {savedMenu}
+        <div className="hidden lg:block">
+          <FilterBar
+            actions={
+              <>
+                {active > 0 && (
+                  <Button variant="quiet" onClick={() => setF(EMPTY)}>
+                    {t("ui.clearFilters")}
+                  </Button>
+                )}
+                {savedMenu}
+              </>
+            }
+          >
+            {fields(false)}
+          </FilterBar>
         </div>
         <div className="flex items-center gap-2 lg:hidden">
           <Button onClick={() => setSheet(true)} className="gap-2">

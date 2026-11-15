@@ -14,10 +14,10 @@ export function RootGate() {
   if (session)
     return (
       <div className="flex h-full flex-col print:block print:h-auto">
+        <DemoNotice />
         <div className="min-h-0 flex-1 print:h-auto">
           <Layout />
         </div>
-        <DemoNotice />
       </div>
     );
   return (

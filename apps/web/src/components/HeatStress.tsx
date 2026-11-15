@@ -66,7 +66,7 @@ export function HeatStressCard({ farmId }: { farmId: string }) {
         </>
       )}
       <p className="text-xs text-tinta-2">{t("ui.heatHint")}</p>
-      <p className="text-[11px] text-tinta-2">{_t("attribution.metNorway")}</p>
+      <p className="text-micro text-tinta-2">{_t("attribution.metNorway")}</p>
     </section>
   );
 }

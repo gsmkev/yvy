@@ -2,10 +2,10 @@
  * Hoy: lo que el recorredor tiene que saber y hacer, en orden. Avisos primero (si hay), después tareas,
  * después lo que ya anotó. Sin secciones vacías: si no hay nada, lo dice una sola vez.
  */
-import { useEffect, useRef, type ElementRef } from "react";
+import { useEffect, useRef, useState, type ElementRef } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { Check } from "lucide-react-native";
+import { Check, CloudRain, Users, Navigation, TrendingDown } from "lucide-react-native";
 import { checklistProgress, describeRecord, parseChecklist, parseTaskComments, t } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
@@ -16,11 +16,14 @@ import { flushAlertVotes, localChanged } from "../../src/lib/sync";
 import { readVotes, recordVote } from "../../src/lib/votes";
 import { useLocal } from "../../src/lib/useLocal";
 import { FarmLine } from "../../src/ui/FarmLine";
+import { RECORD_ICON } from "../../src/ui/icons";
 import { ForecastStrip } from "../../src/ui/ForecastStrip";
 import { toastSaved } from "../../src/lib/toast";
-import { Button, EmptyState, Row, SectionHeader, s as k, Text } from "../../src/ui/kit";
+import { Button, EmptyState, Row, SectionHeader, StatTile, s as k, Text } from "../../src/ui/kit";
 import { C, RADIUS, T } from "../../src/ui/theme";
+import { isOverdue, teamTasksDue } from "../../src/lib/teamTasks";
 import { useReadOnly } from "../../src/lib/readOnly";
+import { isFieldRoleName } from "../../src/office/team";
 
 const dayLabel = () => {
   const d = new Date();
@@ -61,16 +64,24 @@ export default function Today() {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
     const recs = byFarm(getDb().records(500), farmId);
+    const today = recordsByAuthor(recs, start.getTime());
+    const weekStart = start.getTime() - 6 * 86_400_000;
     return {
-      byAuthor: recordsByAuthor(recs, start.getTime()),
+      byAuthor: today.length > 0 ? today : recordsByAuthor(recs, weekStart),
+      week: today.length === 0,
+      team: byFarm(getDb().openTasks(), farmId),
       worse: vigorDrops(getDb().lastTwoVigorPasses()),
       names: memberNames(getDb()),
     };
   }, [owner, farmId]);
   const worse = (summary?.worse ?? []).filter((w) => farmPlotIds.has(w.plotId));
+  const todayIso = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+  const team = teamTasksDue(summary?.team ?? [], userId, todayIso);
   const open = tasks.filter((x) => x.status === "open");
   const done = tasks.filter((x) => x.status === "done");
-  const empty = alerts.length === 0 && tasks.length === 0 && todayRecords.length === 0;
+  // Roles de oficina: 2 avisos y "Ver los N" (tienen la pantalla de Avisos); roles de campo: todos, compactos.
+  const shownAlerts = !isFieldRoleName(session?.organization.role ?? "") && alerts.length > 2 ? [...alerts].sort((x, y) => Number(y.id === alertId) - Number(x.id === alertId) || Number(y.severity === "warning") - Number(x.severity === "warning")).slice(0, 2) : alerts;
+  const empty = alerts.length === 0 && tasks.length === 0 && team.length === 0 && todayRecords.length === 0;
 
   // Primera vez que se entra a otra organización: decir a cuál.
   useEffect(() => {
@@ -107,62 +118,37 @@ export default function Today() {
       <Text style={T.small}>{dayLabel()}</Text>
       <Text style={[T.display, { marginTop: 2 }]}>{firstName(session?.user.fullName ?? "")}</Text>
 
-      {/* Primero lo que pide acción: avisos. */}
-      {alerts.map((a) => {
-        const strong = a.severity === "warning";
-        return (
-          <View
-            key={a.id}
-            onLayout={(e) => {
-              alertY.current[a.id] = e.nativeEvent.layout.y;
-              if (a.id === alertId) scrollToAlert(a.id);
-            }}
-            style={[st.alert, strong ? st.alertStrong : st.alertSoft, a.id === alertId && st.alertPicked]}
-          >
-            <Text style={[T.heading, { color: strong ? C.blanco : C.atencion }]}>
-              {t(`ui.alertKind_${a.kind}` as never)}
-              {a.probability ? ` · ${t(`ui.probability_${a.probability}` as never).toLowerCase()}` : ""}
-            </Text>
-            <Text style={[T.body, { color: strong ? C.blanco : C.tinta, marginTop: 4 }]}>{a.summary}</Text>
-            <Text style={[T.small, { color: strong ? "rgba(255,255,255,0.8)" : C.tinta2, marginTop: 8 }]}>{t("ui.orientative", { source: a.source })}</Text>
-            <View style={st.vote}>
-              {votes[a.id] === undefined ? (
-                <>
-                  <Text style={[T.small, { color: strong ? C.blanco : C.tinta2 }]}>{t("ui.useful")}</Text>
-                  {([true, false] as const).map((useful) => (
-                    <Pressable
-                      key={String(useful)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${t("ui.useful")} ${useful ? t("app.yes") : t("app.no")}`}
-                      hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-                      onPress={() => {
-                        recordVote(getDb(), a.id, useful);
-                        localChanged();
-                        flushAlertVotes();
-                      }}
-                      style={st.voteBtn}
-                    >
-                      <Text style={[T.smallMedium, { color: strong ? C.blanco : C.tinta, textDecorationLine: "underline" }]}>{useful ? t("app.yes") : t("app.no")}</Text>
-                    </Pressable>
-                  ))}
-                </>
-              ) : (
-                <Text style={[T.small, { color: strong ? C.blanco : C.tinta2 }]}>{t("app.thanks")}</Text>
-              )}
-            </View>
-          </View>
-        );
-      })}
+      <ForecastStrip farmId={farmId ?? plots[0]?.farmId ?? null} />
 
       {/* La lluvia es lo que más se anota: un toque, directo a los milímetros (lluvia de la estancia, sin lote).
           El mismo destino lo abre el atajo de Android (yvy://annotate?kind=rain&farmLevel=1). */}
       {!readOnly && (
         <Button
           kind="secondary"
+          icon={CloudRain}
           title={t("app.quickRain")}
           onPress={() => router.push({ pathname: "/annotate", params: { kind: "rain", farmLevel: "1" } })}
           style={{ marginTop: 16 }}
         />
+      )}
+
+      {/* Primero lo que pide acción: avisos. */}
+      {shownAlerts.map((a) => (
+        <AlertCard
+          key={a.id}
+          a={a}
+          voted={votes[a.id]}
+          picked={a.id === alertId}
+          onLayout={(y) => {
+            alertY.current[a.id] = y;
+            if (a.id === alertId) scrollToAlert(a.id);
+          }}
+        />
+      ))}
+      {alerts.length > shownAlerts.length && (
+        <Pressable accessibilityRole="button" onPress={() => router.push("/office/alerts" as never)} style={st.seeAll}>
+          <Text style={[T.bodyMedium, { color: C.accionOscuro }]}>{t("app.alertsSeeAll", { n: alerts.length })}</Text>
+        </Pressable>
       )}
 
       {empty && <EmptyState title={t("app.nothingToday")} hint={t("app.nothingTodayHint")} />}
@@ -170,44 +156,90 @@ export default function Today() {
       {open.length > 0 && (
         <>
           <SectionHeader title={t("app.tasksToday")} />
-          {open.map((task) => (
-            <View key={task.id}>
-              <Row
-                title={task.title}
-                subtitle={taskSubtitle(task)}
-                onPress={() => {
-                  if (parseChecklist(task.checklist).length) router.push({ pathname: "/task/[id]", params: { id: task.id } });
-                  else if (readOnly) return;
-                  else if (task.kind) router.push({ pathname: "/annotate", params: { kind: task.kind, taskId: task.id, plotId: task.plotId ?? "" } });
-                  else {
-                    getDb().completeTask(task.id, null);
-                    localChanged();
-                    toastSaved();
-                  }
-                }}
-                right={<View style={st.circle} />}
-              />
-              <View style={st.taskActions}>
-                <Button kind="text" title={commentsLabel(task.comments) ?? t("app.taskCommentsOpen")} onPress={() => router.push({ pathname: "/task/[id]", params: { id: task.id } })} style={st.taskAction} />
+          {open.map((task) => {
+            const check = () => {
+              if (parseChecklist(task.checklist).length) router.push({ pathname: "/task/[id]", params: { id: task.id } });
+              else if (readOnly) return;
+              else if (task.kind) router.push({ pathname: "/annotate", params: { kind: task.kind, taskId: task.id, plotId: task.plotId ?? "" } });
+              else {
+                getDb().completeTask(task.id, null);
+                localChanged();
+                toastSaved();
+              }
+            };
+            const sub = taskSubtitle(task);
+            return (
+              <View key={task.id} style={[k.row, st.task]}>
+                <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: false }} accessibilityLabel={`${t("app.taskMarkDone")}: ${task.title}`} onPress={check} hitSlop={6} style={st.checkHit}>
+                  <View style={st.circle} />
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={sub ? `${task.title}. ${sub}` : task.title}
+                  onPress={() => router.push({ pathname: "/task/[id]", params: { id: task.id } })}
+                  style={st.taskMain}
+                >
+                  <Text style={T.bodyMedium} numberOfLines={2}>
+                    {task.title}
+                  </Text>
+                  {sub ? (
+                    <Text style={T.small} numberOfLines={2}>
+                      {sub}
+                    </Text>
+                  ) : null}
+                </Pressable>
                 {task.lon !== null && task.lat !== null && (
-                  <Button kind="text" title={t("app.gotoButton")} onPress={() => router.push({ pathname: "/goto", params: { lon: String(task.lon), lat: String(task.lat), name: task.title } })} style={st.taskAction} />
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t("app.gotoButton")}: ${task.title}`}
+                    onPress={() => router.push({ pathname: "/goto", params: { lon: String(task.lon), lat: String(task.lat), name: task.title } })}
+                    style={st.checkHit}
+                  >
+                    <Navigation size={22} color={C.accionOscuro} strokeWidth={2} />
+                  </Pressable>
                 )}
               </View>
-            </View>
+            );
+          })}
+        </>
+      )}
+
+      {team.length > 0 && (
+        <>
+          <SectionHeader title={t("office.todayTeamTitle")} />
+          {team.map((task) => (
+            <Row
+              key={task.id}
+              icon={Users}
+              title={task.title}
+              subtitle={[
+                isOverdue(task, todayIso) ? t("office.todayTeamOverdue", { date: new Date(`${task.dueDate}T12:00:00`).toLocaleDateString("es-PY", { day: "numeric", month: "short" }) }) : null,
+                task.assigneeId ? t("office.todayTeamWho", { name: authorName(task.assigneeId, userId, summary?.names ?? {}) }) : t("office.todayTeamNobody"),
+                task.plotId ? plotName(task.plotId) : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+              onPress={() => router.push({ pathname: "/task/[id]", params: { id: task.id } })}
+            />
           ))}
         </>
       )}
 
       {showOwner && summary && (
         <>
-          {summary.byAuthor.length > 0 && <SectionHeader title={t("app.ownerRecordsTitle")} />}
-          {summary.byAuthor.map((a) => (
-            <Row key={a.authorId} title={authorName(a.authorId, userId, summary.names)} subtitle={t(a.count === 1 ? "app.ownerRecordsOne" : "app.ownerRecordsMany", { n: a.count })} />
-          ))}
+          {summary.byAuthor.length > 0 && <SectionHeader title={summary.week ? t("office.todayWeekTitle") : t("app.ownerRecordsTitle")} />}
+          {summary.byAuthor.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.stats} style={{ marginTop: 8, flexGrow: 0 }}>
+              {summary.byAuthor.map((a) => (
+                <StatTile key={a.authorId} value={a.count} label={authorName(a.authorId, userId, summary.names)} />
+              ))}
+            </ScrollView>
+          )}
           {worse.length > 0 && <SectionHeader title={t("app.ownerWorseTitle")} />}
           {worse.map((w) => (
             <Row
               key={w.plotId}
+              icon={TrendingDown}
               title={plotName(w.plotId)}
               subtitle={t("app.ownerWorseLine", { pct: w.pct, date: new Date(w.since).toLocaleDateString("es-PY", { day: "numeric", month: "short" }) })}
               onPress={() => router.push("/(tabs)/map")}
@@ -225,6 +257,7 @@ export default function Today() {
           {todayRecords.map((r) => (
             <Row
               key={r.id}
+              icon={RECORD_ICON[r.kind]}
               status={r.rejected ? "rejected" : r.pending ? "pending" : "synced"}
               title={describeRecord(r.kind, JSON.parse(r.data))}
               subtitle={[t(`recordKinds.${r.kind}`), plotName(r.plotId), hhmm(r.capturedAt)].filter(Boolean).join(" · ")}
@@ -233,20 +266,75 @@ export default function Today() {
           ))}
         </>
       )}
-
-      <ForecastStrip farmId={farmId ?? plots[0]?.farmId ?? null} />
     </ScrollView>
   );
 }
 
+type AlertRow = ReturnType<ReturnType<typeof getDb>["activeAlerts"]>[number];
+
+/** Aviso compacto: tipo + probabilidad y el resumen en 2 líneas; la fuente y "¿Te sirvió?" aparecen al tocar. */
+function AlertCard({ a, voted, picked, onLayout }: { a: AlertRow; voted: boolean | undefined; picked: boolean; onLayout: (y: number) => void }) {
+  const [open, setOpen] = useState(picked);
+  const strong = a.severity === "warning";
+  const fg = strong ? C.blanco : C.tinta;
+  const soft = strong ? "rgba(255,255,255,0.85)" : C.tinta2;
+  const title = `${t(`ui.alertKind_${a.kind}` as never)}${a.probability ? ` · ${t(`ui.probability_${a.probability}` as never).toLowerCase()}` : ""}`;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ expanded: open }}
+      accessibilityLabel={`${title}. ${a.summary}`}
+      onPress={() => setOpen((v) => !v)}
+      onLayout={(e) => onLayout(e.nativeEvent.layout.y)}
+      style={[st.alert, strong ? st.alertStrong : st.alertSoft, picked && st.alertPicked]}
+    >
+      <Text style={[T.bodyMedium, { color: strong ? C.blanco : C.atencion, fontWeight: "700" }]} numberOfLines={1}>{title}</Text>
+      <Text style={[T.small, { color: fg, marginTop: 2 }]} numberOfLines={open ? undefined : 2}>{a.summary}</Text>
+      {open && (
+        <>
+          <Text style={[T.small, { color: soft, marginTop: 6 }]}>{t("ui.orientative", { source: a.source })}</Text>
+          <View style={st.vote}>
+            {voted === undefined ? (
+              <>
+                <Text style={[T.small, { color: soft }]}>{t("ui.useful")}</Text>
+                {([true, false] as const).map((useful) => (
+                  <Pressable
+                    key={String(useful)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t("ui.useful")} ${useful ? t("app.yes") : t("app.no")}`}
+                    hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+                    onPress={() => {
+                      recordVote(getDb(), a.id, useful);
+                      localChanged();
+                      flushAlertVotes();
+                    }}
+                    style={st.voteBtn}
+                  >
+                    <Text style={[T.smallMedium, { color: fg, textDecorationLine: "underline" }]}>{useful ? t("app.yes") : t("app.no")}</Text>
+                  </Pressable>
+                ))}
+              </>
+            ) : (
+              <Text style={[T.small, { color: soft }]}>{t("app.thanks")}</Text>
+            )}
+          </View>
+        </>
+      )}
+    </Pressable>
+  );
+}
+
 const st = StyleSheet.create({
-  alert: { borderRadius: RADIUS, padding: 16, marginTop: 16 },
+  alert: { borderRadius: RADIUS, paddingHorizontal: 14, paddingVertical: 10, marginTop: 8 },
+  seeAll: { minHeight: 48, justifyContent: "center", alignItems: "center" },
   alertStrong: { backgroundColor: C.peligro },
   alertSoft: { backgroundColor: C.atencionSuave },
-  vote: { flexDirection: "row", alignItems: "center", gap: 20, marginTop: 4, minHeight: 44 },
+  vote: { flexDirection: "row", alignItems: "center", gap: 20, minHeight: 44 },
   voteBtn: { minHeight: 44, minWidth: 44, justifyContent: "center", alignItems: "center" },
   alertPicked: { borderWidth: 3, borderColor: C.tinta },
-  taskActions: { flexDirection: "row", gap: 8, marginTop: -4 },
-  taskAction: { paddingHorizontal: 0, marginRight: 12 },
-  circle: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.lineaFuerte },
+  task: { gap: 4, paddingVertical: 4 },
+  taskMain: { flex: 1, minWidth: 0, minHeight: 56, justifyContent: "center", paddingVertical: 4 },
+  checkHit: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
+  stats: { gap: 8, paddingRight: 8 },
+  circle: { width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: C.lineaFuerte },
 });

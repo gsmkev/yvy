@@ -3,7 +3,7 @@ import { getSession, post, setSession } from "../../lib/api";
 import { t } from "../../lib/i18n";
 import { useMe } from "../../lib/queries";
 
-/** Franja fina al pie (ocupa su lugar: no tapa la navegación) mientras se mira la demo de solo lectura. */
+/** Franja fina arriba, dentro del flujo (empuja el contenido: no tapa nada), mientras se mira la demo de solo lectura. */
 export function DemoNotice() {
   const me = useMe();
   const demo = (me.data as { demo?: boolean } | undefined)?.demo === true;
@@ -16,7 +16,7 @@ export function DemoNotice() {
   return (
     <div
       role="status"
-      className="flex shrink-0 flex-wrap items-center justify-center gap-x-3 gap-y-0.5 border-t border-linea bg-surco px-4 py-2 text-sm text-lino"
+      className="flex shrink-0 flex-wrap items-center justify-center gap-x-3 gap-y-0.5 bg-surco px-4 py-1.5 text-meta text-lino print:hidden"
     >
       <span>{t("ui.publicDemoNotice")}</span>
       <Link

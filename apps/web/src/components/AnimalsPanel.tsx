@@ -215,7 +215,7 @@ export function AnimalsPanel({ farmId }: { farmId: string }) {
             autoCapitalize="characters"
           />
         </Field>
-        <Button variant="primary" onClick={() => setCreating(true)}>
+        <Button variant="secondary" onClick={() => setCreating(true)}>
           {t("ui.animalAdd")}
         </Button>
       </div>

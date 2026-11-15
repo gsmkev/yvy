@@ -124,7 +124,7 @@ export function AccountMenu({
           role="menu"
           aria-label={t("ui.accountMenu")}
           onKeyDown={onMenuKey}
-          className="absolute bottom-full left-0 z-50 mb-2 w-64 max-w-[calc(100vw-2rem)] rounded-md border border-linea bg-papel shadow-lg"
+          className="anim-pop absolute bottom-full left-0 z-50 mb-2 w-64 max-w-[calc(100vw-2rem)] rounded-md border border-linea bg-papel shadow-lg"
         >
           {orgs.length > 1 && (
             <>

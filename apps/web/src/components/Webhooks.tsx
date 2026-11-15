@@ -4,7 +4,7 @@ import { WEBHOOK_EVENTS, type WebhookEvent } from "@yvy/shared";
 import { del, get, patch, post } from "../lib/api";
 import { fmtDateTime } from "../lib/format";
 import { t, tk } from "../lib/i18n";
-import { Button, ErrorBox, Field, Input, toast } from "./ui";
+import { Button, DataTable, EmptyState, ErrorBox, Field, Input, SectionHead, toast } from "./ui";
 
 interface Hook {
   id: string;
@@ -53,14 +53,14 @@ export function WebhooksPanel() {
 
   return (
     <section id="webhooks" className="scroll-mt-4">
-      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.webhooksTitle")}</h2>
-      <p className="mt-2 text-tinta-2">{t("ui.webhooksIntro")}</p>
+      <SectionHead title={t("ui.webhooksTitle")} />
+      <p className="mt-3 text-tinta-2">{t("ui.webhooksIntro")}</p>
 
       {secret && (
         <div role="status" className="mt-4 border-l-2 border-trigo pl-3">
           <p className="font-medium">{t("ui.webhooksSecretTitle")}</p>
           <p className="mt-1 text-sm text-tinta-2">{t("ui.webhooksSecretText")}</p>
-          <code className="mt-2 block font-mono text-[15px] break-all">{secret}</code>
+          <code className="mt-2 block font-mono text-body break-all">{secret}</code>
           <div className="mt-2 flex gap-2">
             <Button
               onClick={() => {
@@ -77,29 +77,53 @@ export function WebhooksPanel() {
         </div>
       )}
 
-      {list.isSuccess && rows.length === 0 && <p className="mt-4 text-sm text-tinta-2">{t("ui.webhooksEmpty")}</p>}
       {rows.length > 0 && (
-        <ul className="mt-4 divide-y divide-linea border-y border-linea text-sm">
-          {rows.map((h) => (
-            <li key={h.id} className="py-3">
-              <p className="font-medium break-all">{h.url}</p>
-              <p className="mt-0.5 text-tinta-2">{h.events.map((e) => tk(`ui.webhooksEvent_${e.replace(".", "_")}`)).join(" · ")}</p>
-              <p className={`mt-0.5 ${h.lastStatus === "error" || (!h.enabled && h.consecutiveFailures > 0) ? "text-peligro" : "text-tinta-2"}`}>{state(h)}</p>
-              <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1">
-                <button type="button" className="cursor-pointer font-medium text-accion underline underline-offset-4" onClick={() => test.mutate(h.id)}>
-                  {t("ui.webhooksTest")}
-                </button>
-                <button type="button" className="cursor-pointer font-medium text-accion underline underline-offset-4" onClick={() => toggle.mutate(h)}>
-                  {t(h.enabled ? "ui.webhooksPause" : "ui.webhooksResume")}
-                </button>
-                <button type="button" className="cursor-pointer font-medium text-peligro underline underline-offset-4" onClick={() => remove.mutate(h.id)}>
-                  {t("ui.webhooksDelete")}
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-4">
+          <DataTable
+            caption={t("ui.webhooksTitle")}
+            rows={rows}
+            rowKey={(h) => h.id}
+            columns={[
+              {
+                id: "url",
+                header: t("ui.webhooksUrl"),
+                cell: (h) => (
+                  <div className="min-w-0 max-w-[16rem] py-1 sm:max-w-xs">
+                    <p className="truncate font-medium" title={h.url}>
+                      {h.url}
+                    </p>
+                    <p className={`text-xs font-normal ${h.lastStatus === "error" || (!h.enabled && h.consecutiveFailures > 0) ? "text-peligro" : "text-tinta-2"}`}>{state(h)}</p>
+                  </div>
+                ),
+              },
+              {
+                id: "events",
+                header: t("ui.webhooksEvents"),
+                hideBelow: "lg",
+                cell: (h) => <span className="text-tinta-2">{h.events.map((e) => tk(`ui.webhooksEvent_${e.replace(".", "_")}`)).join(" · ")}</span>,
+              },
+              {
+                id: "actions",
+                header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+                cell: (h) => (
+                  <div className="flex justify-end gap-1">
+                    <Button size="sm" variant="quiet" onClick={() => test.mutate(h.id)}>
+                      {t("ui.webhooksTest")}
+                    </Button>
+                    <Button size="sm" variant="quiet" onClick={() => toggle.mutate(h)}>
+                      {t(h.enabled ? "ui.webhooksPause" : "ui.webhooksResume")}
+                    </Button>
+                    <Button size="sm" variant="quiet" className="text-peligro" onClick={() => remove.mutate(h.id)}>
+                      {t("ui.webhooksDelete")}
+                    </Button>
+                  </div>
+                ),
+              },
+            ]}
+          />
+        </div>
       )}
+      {list.isSuccess && rows.length === 0 && <EmptyState compact title={t("ui.webhooksEmpty")} />}
 
       <form
         className="mt-4 flex max-w-lg flex-col gap-3"
@@ -115,7 +139,7 @@ export function WebhooksPanel() {
           <legend className="text-sm font-medium">{t("ui.webhooksEvents")}</legend>
           <div className="mt-1.5 flex flex-wrap gap-x-5 gap-y-1">
             {WEBHOOK_EVENTS.map((ev) => (
-              <label key={ev} className="flex cursor-pointer items-center gap-2 text-[15px]">
+              <label key={ev} className="flex cursor-pointer items-center gap-2 text-body">
                 <input
                   type="checkbox"
                   className="accent-accion"

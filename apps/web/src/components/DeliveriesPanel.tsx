@@ -50,7 +50,7 @@ export function DeliveriesPanel({ farmId, plots }: { farmId: string; plots: Plot
       </h3>
       <p className="text-sm text-tinta-2">{t("ui.delivIntro")}</p>
       <div>
-        <Button variant="primary" onClick={() => setAdding(true)}>
+        <Button variant="secondary" onClick={() => setAdding(true)}>
           {t("ui.delivAdd")}
         </Button>
       </div>

@@ -228,7 +228,7 @@ export function NewFarmPage() {
             </Button>
           )}
           <label className="cursor-pointer">
-            <span className="inline-flex h-9 items-center gap-2 rounded-md border border-linea bg-papel px-3.5 text-sm font-medium hover:bg-lino">
+            <span className="inline-flex h-10 items-center gap-2 rounded-md border border-linea bg-papel px-3.5 text-sm font-medium hover:bg-lino">
                 <Upload size={16} aria-hidden />
               {t("ui.importShort")}
             </span>
@@ -263,9 +263,12 @@ export function NewFarmPage() {
           </p>
         )}
         {error ? <ErrorBox error={error} /> : null}
-        <Button type="submit" disabled={!geometry || !name || busy}>
+        <Button type="submit" variant="primary" disabled={!geometry || !name || busy}>
           {t("ui.save")}
         </Button>
+        {!busy && (!name || !geometry) && (
+          <p className="-mt-2 text-meta text-tinta-2">{[!name && t("ui.farmNeedName"), !geometry && t("ui.farmNeedPerimeter")].filter(Boolean).join(" ")}</p>
+        )}
       </form>
     </div>
   );

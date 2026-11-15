@@ -41,23 +41,25 @@ test("dueño: registro, estancia, importación de 20 lotes y empleado", async ({
   await expect(page.getByText("Encontramos 20 polígonos")).toBeVisible();
   await page.getByRole("button", { name: "Importar 20 lotes" }).click();
   await expect(page.getByRole("dialog")).toBeHidden();
-  await expect(page.getByText(/ha · 20 lotes/)).toBeVisible();
+  await expect(page.getByRole("tab", { name: /^Lotes/ })).toContainText("20");
   await expect(page.getByRole("button", { name: /^Lote 20/ })).toBeVisible();
   await page.waitForTimeout(1500); // que el mapa termine de dibujar
   await page.screenshot({ path: "e2e/out/estancia.png" });
 
   await page.getByRole("link", { name: "Equipo" }).click();
   await page.getByRole("button", { name: /Agregar persona/ }).click();
-  await page.getByLabel("Tu nombre").fill("Ramón");
+  await page.getByLabel("Nombre", { exact: true }).fill("Ramón");
   await page.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByText("Ramón")).toBeVisible();
-  await page.getByRole("button", { name: /Vincular celular/ }).click();
+  await page.getByRole("button", { name: "Acciones de Ramón" }).click();
+  await page.getByRole("menuitem", { name: /Vincular celular/ }).click();
   await expect(page.getByRole("dialog")).toContainText("escanea este código");
   await page.screenshot({ path: "e2e/out/qr.png" });
   await page.getByRole("button", { name: "Cerrar" }).click();
 
   // Asignar 3 lotes a Ramón
-  await page.getByRole("button", { name: "Lotes asignados" }).nth(1).click();
+  await page.getByRole("button", { name: "Acciones de Ramón" }).click();
+  await page.getByRole("menuitem", { name: "Lotes asignados" }).click();
   for (const n of ["Lote 1", "Lote 2", "Lote 3"]) await page.getByRole("dialog").getByText(n, { exact: true }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByRole("dialog")).toBeHidden();
@@ -85,7 +87,8 @@ test("dueño: registro, estancia, importación de 20 lotes y empleado", async ({
     .first()
     .click();
   await expect(page.getByText("Ramón")).toBeVisible();
-  await page.getByRole("tab", { name: "Clima" }).click();
+  await page.getByRole("button", { name: "Más", exact: true }).click(); // "Clima" vive en el menú "Más" de las pestañas
+  await page.getByRole("menuitem", { name: "Clima" }).click();
   await expect(page.getByText("Lluvia 30 días").first()).toBeVisible();
   await page.screenshot({ path: "e2e/out/clima.png" });
   await page.getByRole("button", { name: "Más acciones" }).click();

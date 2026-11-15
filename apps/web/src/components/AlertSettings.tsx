@@ -67,68 +67,72 @@ export function AlertSettingsSection({ open, onToggle }: { open: boolean; onTogg
   });
 
   if ((me.data && isFieldRole(me.data.role)) || !farms.data?.length) return null;
+  // En escritorio el bloque es una columna lateral siempre abierta; en el celular se despliega
+  const hide = open ? "" : "max-lg:hidden";
   return (
-    <section className="mt-8 border-t border-linea pt-2" aria-labelledby="alert-settings-title">
-      <h2 id="alert-settings-title" className="text-[18px] leading-6 font-semibold">
+    <section className="border-t border-linea pt-2 lg:border-t-0 lg:pt-0" aria-labelledby="alert-settings-title">
+      <h2 id="alert-settings-title" className="text-section leading-6 font-semibold">
         <button
           type="button"
           aria-expanded={open}
           onClick={onToggle}
-          className="flex h-12 w-full cursor-pointer items-center gap-1.5 text-left sm:h-10"
+          className="flex h-12 w-full cursor-pointer items-center gap-1.5 text-left sm:h-10 lg:pointer-events-none"
         >
-          <ChevronDown size={18} aria-hidden className={`transition-transform ${open ? "" : "-rotate-90"}`} />
+          <ChevronDown size={18} aria-hidden className={`transition-transform lg:hidden ${open ? "" : "-rotate-90"}`} />
           {t("ui.alertSettingsTitle")}
         </button>
       </h2>
-      {open && <p className="mt-1 text-sm text-tinta-2">{t("ui.alertSettingsIntro")}</p>}
-      {open && farms.data.length > 1 && (
-        <div className="mt-4 max-w-xs">
-          <Field label={t("ui.farm")}>
-            <Select
-              value={id}
-              onChange={(e) => setFarmId(e.target.value)}
-              options={farms.data.map((f) => ({ value: f.id, label: f.name }))}
-            />
-          </Field>
-        </div>
-      )}
-      {open && settings.isLoading && <Spinner />}
-      {open && settings.error ? <ErrorBox error={settings.error} /> : null}
-      {open && draft && (
-        <form
-          className="mt-4 flex max-w-xl flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (valid) save.mutate();
-          }}
-        >
-          {KEYS.map((k) => (
-            <Field key={k} label={t(LABELS[k][0])} hint={t(LABELS[k][1])}>
-              <Input
-                inputMode="decimal"
-                className="w-32"
-                value={draft[k]}
-                disabled={!canEdit}
-                onChange={(e) => {
-                  setSaved(false);
-                  setDraft({ ...draft, [k]: e.target.value });
-                }}
+      <div className={hide}>
+        <p className="mt-1 text-sm text-tinta-2">{t("ui.alertSettingsIntro")}</p>
+        {farms.data.length > 1 && (
+          <div className="mt-4">
+            <Field label={t("ui.farm")}>
+              <Select
+                value={id}
+                onChange={(e) => setFarmId(e.target.value)}
+                options={farms.data.map((f) => ({ value: f.id, label: f.name }))}
               />
             </Field>
-          ))}
-          {!canEdit && <p className="text-sm text-tinta-2">{t("ui.alertSettingsOnlyOwner")}</p>}
-          {canEdit && (
-            <div className="flex flex-wrap items-center gap-3">
-              <Button variant="primary" type="submit" disabled={!valid || save.isPending}>
-                {t("ui.save")}
-              </Button>
-              <Button onClick={() => setDraft(toDraft(DEFAULT_ALERT_SETTINGS))}>{t("ui.alertSettingsDefaults")}</Button>
-              {saved && <span className="text-sm text-tinta-2">{t("ui.alertSettingsSaved")}</span>}
-            </div>
-          )}
-          {save.error ? <ErrorBox error={save.error} /> : null}
-        </form>
-      )}
+          </div>
+        )}
+        {settings.isLoading && <Spinner />}
+        {settings.error ? <ErrorBox error={settings.error} /> : null}
+        {draft && (
+          <form
+            className="mt-4 flex flex-col gap-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (valid) save.mutate();
+            }}
+          >
+            {KEYS.map((k) => (
+              <Field key={k} label={t(LABELS[k][0])} hint={t(LABELS[k][1])}>
+                <Input
+                  inputMode="decimal"
+                  className="w-32"
+                  value={draft[k]}
+                  disabled={!canEdit}
+                  onChange={(e) => {
+                    setSaved(false);
+                    setDraft({ ...draft, [k]: e.target.value });
+                  }}
+                />
+              </Field>
+            ))}
+            {!canEdit && <p className="text-sm text-tinta-2">{t("ui.alertSettingsOnlyOwner")}</p>}
+            {canEdit && (
+              <div className="flex flex-wrap items-center gap-3">
+                <Button variant="primary" type="submit" disabled={!valid || save.isPending}>
+                  {t("ui.save")}
+                </Button>
+                <Button onClick={() => setDraft(toDraft(DEFAULT_ALERT_SETTINGS))}>{t("ui.alertSettingsDefaults")}</Button>
+                {saved && <span className="text-sm text-tinta-2">{t("ui.alertSettingsSaved")}</span>}
+              </div>
+            )}
+            {save.error ? <ErrorBox error={save.error} /> : null}
+          </form>
+        )}
+      </div>
     </section>
   );
 }

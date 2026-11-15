@@ -98,7 +98,7 @@ export function SprayWindows({ farmId }: { farmId: string }) {
       ) : (
         <p className="text-sm text-tinta-2">{t("ui.sprayNone")}</p>
       )}
-      <p className="text-[11px] text-tinta-2">{_t("attribution.metNorway")}</p>
+      <p className="text-micro text-tinta-2">{_t("attribution.metNorway")}</p>
     </div>
   );
 }

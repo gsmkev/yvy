@@ -5,6 +5,7 @@
  */
 import { useSyncExternalStore } from "react";
 import { getDb } from "./db";
+import { forceReadOnly, useIsDemo } from "./demo";
 import { resolveReadOnly } from "./ownerSummary";
 import { useSession } from "./session";
 
@@ -27,5 +28,6 @@ const snapshot = () => version;
 export function useReadOnly(): boolean {
   const role = useSession()?.organization.role;
   useSyncExternalStore(subscribe, snapshot);
-  return resolveReadOnly(role, getDb().getKv(READ_ONLY_KEY));
+  const demo = useIsDemo();
+  return forceReadOnly(demo, resolveReadOnly(role, getDb().getKv(READ_ONLY_KEY)));
 }

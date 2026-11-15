@@ -3,17 +3,18 @@ import type { MessageKey } from "./i18n";
 export interface AdminGroup {
   id: string;
   label: MessageKey;
-  /** Ids de sección, en el orden en que se muestran. */
+  /** Ids de sección, en el orden en que se muestran. La primera es la que abre el módulo. */
   sections: string[];
 }
 
-/** Navegación secundaria de Administración: 23 secciones en 7 grupos, para no tener una fila de pestañas que se corta. */
+/** Navegación de Administración en dos niveles: 5 módulos arriba y, debajo, las secciones del módulo activo. */
 export const ADMIN_GROUPS: AdminGroup[] = [
-  { id: "catalog", label: "ui.adminGroup_catalog", sections: ["products", "warehouses", "machines"] },
-  { id: "trade", label: "ui.adminGroup_trade", sections: ["parties", "purchases", "grain", "cattle"] },
-  { id: "stock", label: "ui.adminGroup_stock", sections: ["stock", "minstock", "fuel"] },
-  { id: "ops", label: "ui.adminGroup_ops", sections: ["orders", "maintenance", "labor", "contractors", "feedlot"] },
-  { id: "finance", label: "ui.adminGroup_finance", sections: ["cash", "costs", "budget", "results", "rates"] },
-  { id: "people", label: "ui.adminGroup_people", sections: ["staff"] },
-  { id: "accountant", label: "ui.adminGroup_accountant", sections: ["accountant", "export"] },
+  { id: "overview", label: "ui.adminGroup_overview", sections: ["overview"] },
+  { id: "trade", label: "ui.adminGroup_trade", sections: ["purchases", "grain", "cattle", "parties"] },
+  { id: "stock", label: "ui.adminGroup_stock", sections: ["stock", "minstock", "fuel", "products", "warehouses"] },
+  { id: "ops", label: "ui.adminGroup_ops", sections: ["orders", "maintenance", "labor", "contractors", "feedlot", "staff", "machines"] },
+  { id: "finance", label: "ui.adminGroup_finance", sections: ["cash", "costs", "budget", "results", "rates", "accountant", "export"] },
 ];
+
+/** Módulo al que pertenece una sección (Resumen si no se conoce). */
+export const groupOf = (section: string | undefined): AdminGroup => ADMIN_GROUPS.find((g) => g.sections.includes(section ?? "")) ?? ADMIN_GROUPS[0]!;

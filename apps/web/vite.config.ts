@@ -2,7 +2,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-const API = ["/auth", "/sync", "/org", "/media", "/admin", "/me", "/devices", "/health", "/descargar-app", "/public"];
+const API = ["/auth", "/sync", "/org", "/media", "^/admin(/|$)", "/me", "/devices", "/health", "/descargar-app", "/public"];
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],

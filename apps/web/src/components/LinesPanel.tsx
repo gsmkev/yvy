@@ -32,52 +32,61 @@ export function LinesPanel({
       invalidate: [["lines", farmId]],
     });
   const total = lines.reduce((a, l) => a + l.lengthM, 0);
+  const add = canEdit && (
+    <button
+      type="button"
+      onClick={onDraw}
+      className="shrink-0 cursor-pointer text-sm font-medium text-accion underline underline-offset-4 print:hidden"
+    >
+      {t("ui.linesAdd")}
+    </button>
+  );
+  // Sin líneas: una sola fila, sin encabezado aparte
+  if (lines.length === 0)
+    return (
+      <section aria-labelledby="lines-title" className="flex items-baseline justify-between gap-3 border-t border-linea pt-3">
+        <p className="text-sm text-tinta-2">
+          <span id="lines-title" className="font-medium text-surco">
+            {t("ui.linesTitle")}
+          </span>
+          {" · "}
+          {t("ui.linesNone")}
+        </p>
+        {add}
+      </section>
+    );
   return (
     <section aria-labelledby="lines-title">
       <div className="mb-2 flex items-end justify-between gap-3 border-b border-linea pb-2">
         <h3 id="lines-title" className="eyebrow">
           {t("ui.linesTitle")}
         </h3>
-        {canEdit && (
-          <button
-            type="button"
-            onClick={onDraw}
-            className="cursor-pointer text-sm font-medium text-accion underline underline-offset-4 print:hidden"
-          >
-            {t("ui.linesAdd")}
-          </button>
-        )}
+        {add}
       </div>
-      {lines.length === 0 ? (
-        <p className="py-2 text-sm text-tinta-2">{t("ui.linesNone")}</p>
-      ) : (
-        <>
-          <ul className="text-sm">
-            {lines.map((l) => (
-              <li key={l.id} className="flex items-baseline justify-between gap-3 border-b border-linea py-2">
-                <span>
-                  {l.name}
-                  <span className="ml-2 text-xs text-tinta-2">{tk(`ui.lineKind_${l.kind}`)}</span>
-                </span>
-                <span className="flex shrink-0 items-baseline gap-3">
-                  <span className="num text-xs text-tinta-2">{fmtDistance(l.lengthM)}</span>
-                  {canEdit && (
-                    <button
-                      type="button"
-                      aria-label={`${t("ui.delete")} ${l.name}`}
-                      className="cursor-pointer text-xs text-tinta-2 hover:text-peligro print:hidden"
-                      onClick={() => remove(l)}
-                    >
-                      {t("ui.delete")}
-                    </button>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <p className="num mt-2 text-xs text-tinta-2">{t("ui.linesTotal", { len: fmtDistance(total) })}</p>
-        </>
-      )}
+      <ul className="text-sm">
+        {lines.map((l) => (
+          <li key={l.id} className="flex items-baseline justify-between gap-3 border-b border-linea py-2">
+            <span>
+              {l.name}
+              <span className="ml-2 text-xs text-tinta-2">{tk(`ui.lineKind_${l.kind}`)}</span>
+            </span>
+            <span className="flex shrink-0 items-baseline gap-3">
+              <span className="num text-xs text-tinta-2">{fmtDistance(l.lengthM)}</span>
+              {canEdit && (
+                <button
+                  type="button"
+                  aria-label={`${t("ui.delete")} ${l.name}`}
+                  className="cursor-pointer text-xs text-tinta-2 hover:text-peligro print:hidden"
+                  onClick={() => remove(l)}
+                >
+                  {t("ui.delete")}
+                </button>
+              )}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="num mt-2 text-xs text-tinta-2">{t("ui.linesTotal", { len: fmtDistance(total) })}</p>
     </section>
   );
 }

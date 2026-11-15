@@ -35,6 +35,25 @@
   --font-serif: "Fraunces", ui-serif, Georgia, serif;
   --font-mono: "Inter", ui-sans-serif, system-ui, sans-serif;
 
+  /* Escala tipográfica: text-title, text-section, text-body, text-meta, text-micro */
+  --text-title: 28px;
+  --text-title--line-height: 32px;
+  --text-section: 18px;
+  --text-section--line-height: 24px;
+  --text-body: 15px;
+  --text-body--line-height: 22px;
+  --text-meta: 13px;
+  --text-meta--line-height: 18px;
+  --text-micro: 11px;
+  --text-micro--line-height: 14px;
+
+  /* Movimiento: solo transform y opacity */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --dur-press: 120ms;
+  --dur-menu: 160ms;
+  --dur-modal: 200ms;
+  --dur-sheet: 240ms;
+
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 10px;
@@ -88,6 +107,17 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 /* Títulos con serif (igual que la app); el resto en Inter */
+h1,
+h2 {
+  text-wrap: balance;
+}
+table {
+  font-variant-numeric: tabular-nums;
+}
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-accion);
+}
 h1 {
   font-family: var(--font-serif);
   font-weight: 600;
@@ -159,10 +189,54 @@ h1 {
     break-inside: avoid;
   }
 }
+/* Entradas: fundido, escala (menús, popovers, modales), hoja inferior y aviso */
+@keyframes yvy-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes yvy-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+@keyframes yvy-sheet {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes yvy-toast {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.anim-fade {
+  animation: yvy-fade var(--dur-modal) var(--ease-out);
+}
+.anim-pop {
+  animation: yvy-pop var(--dur-menu) var(--ease-out);
+}
+.anim-sheet {
+  animation: yvy-sheet var(--dur-sheet) var(--ease-out);
+}
+.anim-toast {
+  animation: yvy-toast var(--dur-modal) var(--ease-out);
+}
+/* Movimiento reducido: quedan los fundidos de opacidad; se quitan desplazamientos y escala */
 @media (prefers-reduced-motion: reduce) {
+  .anim-pop {
+    animation-name: yvy-fade;
+  }
+  .anim-toast {
+    animation-name: yvy-fade;
+  }
+  .anim-sheet {
+    animation: yvy-fade var(--dur-modal) linear;
+  }
   * {
-    transition: none !important;
-    animation: none !important;
+    transition-property: opacity, background-color, border-color, color !important;
   }
 }
 .maplibregl-ctrl-attrib {

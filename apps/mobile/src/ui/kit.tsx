@@ -1,9 +1,11 @@
 import type { ComponentProps, ReactNode } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
   Pressable,
   ScrollView,
   StyleSheet,
+  Modal,
   Switch,
   Text as RNText,
   TextInput as RNTextInput,
@@ -12,9 +14,10 @@ import {
   type TextProps,
   type ViewStyle,
 } from "react-native";
-import { CloudOff } from "lucide-react-native";
+import { Check, ChevronRight, CloudOff, type LucideIcon } from "lucide-react-native";
 import { t } from "@yvy/shared";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { tap } from "../lib/haptics";
 import { syncNow, useSyncStatus } from "../lib/sync";
 import { useToast } from "../lib/toast";
 import { C, F, GUTTER, MAX_FONT_SCALE, RADIUS, T, TOUCH } from "./theme";
@@ -37,6 +40,7 @@ export function Button({
   loading,
   style,
   big,
+  icon: Icon,
 }: {
   title: string;
   onPress: () => void;
@@ -45,6 +49,8 @@ export function Button({
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
   big?: boolean;
+  /** Ícono a la izquierda del texto. */
+  icon?: LucideIcon;
 }) {
   const palette = {
     primary: { bg: C.accion, fg: C.blanco, border: C.accion },
@@ -62,14 +68,18 @@ export function Button({
       style={({ pressed }) => [
         s.btn,
         big && s.btnBig,
-        { backgroundColor: palette.bg, borderColor: palette.border, opacity: disabled ? 0.4 : pressed ? 0.85 : 1 },
+        { backgroundColor: palette.bg, borderColor: palette.border, opacity: disabled ? 0.4 : pressed ? 0.9 : 1 },
+        pressed && !disabled && !loading && { transform: [{ scale: 0.97 }] },
         style,
       ]}
     >
       {loading ? (
         <ActivityIndicator color={palette.fg} />
       ) : (
-        <Text style={[s.btnText, big && s.btnTextBig, { color: palette.fg }]}>{title}</Text>
+        <View style={s.btnInner}>
+          {Icon ? <Icon size={22} color={palette.fg} strokeWidth={2} /> : null}
+          <Text style={[s.btnText, big && s.btnTextBig, { color: palette.fg }]}>{title}</Text>
+        </View>
       )}
     </Pressable>
   );
@@ -86,6 +96,9 @@ export function Row({
   disabled,
   choice,
   status,
+  icon: Icon,
+  tone,
+  chevron,
 }: {
   title: string;
   subtitle?: string;
@@ -98,7 +111,14 @@ export function Row({
   disabled?: boolean;
   /** U-26: la fila es una opción. "radio" (una sola, dentro de un RadioGroup) o "checkbox" (se tildan varias): TalkBack la anuncia con su estado. */
   choice?: "radio" | "checkbox";
+  /** Ícono en un cuadrado a la izquierda. */
+  icon?: LucideIcon;
+  tone?: "danger";
+  /** Flecha a la derecha. Por defecto aparece cuando la fila navega (tiene `onPress` y no tiene `right` ni `choice`). */
+  chevron?: boolean;
 }) {
+  const danger = tone === "danger";
+  const showChevron = chevron ?? (!!onPress && !right && !choice);
   return (
     <Pressable
       accessibilityRole={choice ?? (onPress ? "button" : undefined)}
@@ -109,9 +129,14 @@ export function Row({
       style={({ pressed }) => [s.row, selected && s.rowSelected, pressed && s.rowPressed, disabled && { opacity: 0.5 }]}
     >
       {status && <StatusEdge status={status} />}
+      {Icon ? (
+        <View style={[s.rowIcon, danger && { backgroundColor: C.peligroSuave }]}>
+          <Icon size={22} color={danger ? C.peligro : C.accionOscuro} strokeWidth={2} />
+        </View>
+      ) : null}
       {left && <View style={s.rowLeft}>{left}</View>}
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={[T.bodyMedium, selected && { color: C.accionOscuro }]} numberOfLines={2}>
+        <Text style={[T.bodyMedium, selected && { color: C.accionOscuro }, danger && { color: C.peligro }]} numberOfLines={2}>
           {title}
         </Text>
         {subtitle ? (
@@ -121,6 +146,7 @@ export function Row({
         ) : null}
       </View>
       {right && <View style={s.rowRight}>{right}</View>}
+      {showChevron ? <ChevronRight size={20} color={C.tinta3} strokeWidth={2} /> : null}
     </Pressable>
   );
 }
@@ -165,15 +191,99 @@ export function EmptyState({ title, hint, action, onAction }: { title: string; h
 }
 
 /** Fila con interruptor (ajustes). */
-export function SwitchRow({ title, hint, value, onValueChange }: { title: string; hint?: string; value: boolean; onValueChange: (v: boolean) => void }) {
+export function SwitchRow({ title, hint, value, onValueChange, disabled }: { title: string; hint?: string; value: boolean; onValueChange: (v: boolean) => void; disabled?: boolean }) {
   return (
     <View style={s.switchRow}>
       <View style={{ flex: 1 }}>
         <Text style={T.body}>{title}</Text>
         {hint ? <Text style={T.small}>{hint}</Text> : null}
       </View>
-      <Switch value={value} accessibilityLabel={title} onValueChange={onValueChange} trackColor={{ true: C.accion }} />
+      <Switch value={value} disabled={disabled} accessibilityLabel={title} onValueChange={(v) => (tap(), onValueChange(v))} trackColor={{ false: C.lineaFuerte, true: C.accion }} thumbColor={C.blanco} {...({ activeThumbColor: C.blanco } as object)} />
     </View>
+  );
+}
+
+/** Cifra grande con su rótulo, para resúmenes. */
+export function StatTile({ value, label, style, tone }: { value: string | number; label: string; style?: StyleProp<ViewStyle>; tone?: "danger" }) {
+  return (
+    <View accessible accessibilityLabel={`${value} ${label}`} style={[s.stat, tone === "danger" && { borderColor: C.peligro, backgroundColor: C.peligroSuave }, style]}>
+      <Text style={[s.statValue, tone === "danger" && { color: C.peligro }]}>{value}</Text>
+      <Text style={T.small} numberOfLines={2}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+/** Hoja inferior: sube desde abajo, se cierra tocando afuera o con atrás. */
+export function Sheet({
+  visible,
+  title,
+  onClose,
+  children,
+  avoidKeyboard,
+}: {
+  visible: boolean;
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+  /** Sube la hoja cuando se abre el teclado (para hojas con campos de texto). */
+  avoidKeyboard?: boolean;
+}) {
+  const insets = useSafeAreaInsets();
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+      <KeyboardAvoidingView style={s.sheetRoot} behavior={avoidKeyboard ? "padding" : undefined} enabled={!!avoidKeyboard}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t("ui.cancel")} style={s.sheetBackdrop} onPress={onClose} />
+        <View accessibilityViewIsModal style={[s.sheet, { paddingBottom: Math.max(16, insets.bottom) }]}>
+          <View style={s.sheetGrip} />
+          <Text accessibilityRole="header" style={[T.heading, { marginBottom: 8 }]}>
+            {title}
+          </Text>
+          <ScrollView keyboardShouldPersistTaps="handled" bounces={false}>
+            {children}
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+/** Hoja con una lista de opciones de una sola respuesta (reemplaza a `Alert.alert` como selector). */
+export function ChoiceSheet<V extends string>({
+  visible,
+  title,
+  options,
+  value,
+  onSelect,
+  onClose,
+}: {
+  visible: boolean;
+  title: string;
+  options: { value: V; label: string; hint?: string }[];
+  value?: V;
+  onSelect: (v: V) => void;
+  onClose: () => void;
+}) {
+  return (
+    <Sheet visible={visible} title={title} onClose={onClose}>
+      <RadioGroup label={title}>
+        {options.map((o) => (
+          <Row
+            key={o.value}
+            choice="radio"
+            title={o.label}
+            subtitle={o.hint}
+            selected={o.value === value}
+            onPress={() => {
+              tap();
+              onSelect(o.value);
+            }}
+            right={o.value === value ? <Check size={22} color={C.accionOscuro} strokeWidth={2.5} /> : undefined}
+          />
+        ))}
+      </RadioGroup>
+    </Sheet>
   );
 }
 
@@ -235,6 +345,18 @@ export function SyncBar() {
   );
 }
 
+/** Franja fina arriba mientras se mira la estancia de ejemplo (solo lectura). "Salir" cierra esa sesión. */
+export function DemoBar({ onLeave }: { onLeave: () => void }) {
+  return (
+    <View accessibilityRole="alert" style={s.demoBar}>
+      <Text style={[T.smallMedium, { color: C.papel, flexShrink: 1 }]}>{t("ui.publicDemoNotice")}</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel={t("office.demoExit")} onPress={onLeave} hitSlop={10} style={{ minHeight: 32, justifyContent: "center" }}>
+        <Text style={[T.smallMedium, { color: C.papel, textDecorationLine: "underline" }]}>{t("office.demoExit")}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 /** Confirmación breve al pie de cualquier pantalla (se monta una sola vez, en el layout raíz). */
 export function Toast() {
   const toast = useToast();
@@ -263,7 +385,8 @@ export const s = StyleSheet.create({
     justifyContent: "center",
   },
   btnBig: { minHeight: 64 },
-  btnText: { fontFamily: F.sansSemi, fontSize: 18 },
+  demoBar: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 14, paddingHorizontal: GUTTER, paddingVertical: 4, backgroundColor: C.tinta },
+  btnText: { fontFamily: F.sansSemi, fontSize: 18, textAlign: "center", flexShrink: 1 },
   btnTextBig: { fontSize: 20 },
   row: {
     minHeight: TOUCH + 8,
@@ -275,7 +398,9 @@ export const s = StyleSheet.create({
     borderBottomColor: C.linea,
   },
   rowSelected: { backgroundColor: C.accionSuave, marginHorizontal: -GUTTER, paddingHorizontal: GUTTER, borderBottomColor: "transparent", borderRadius: RADIUS },
-  rowPressed: { opacity: 0.7 },
+  rowPressed: { backgroundColor: "rgba(30,36,25,0.04)" },
+  rowIcon: { width: 40, height: 40, borderRadius: 10, backgroundColor: C.accionSuave, alignItems: "center", justifyContent: "center" },
+  btnInner: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
   edge: { width: 3, alignSelf: "stretch", overflow: "hidden", gap: 4, borderRadius: 2, marginRight: -4 },
   dash: { height: 6 },
   section: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 28, marginBottom: 4, minHeight: 24 },
@@ -288,5 +413,11 @@ export const s = StyleSheet.create({
   bar: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 8, paddingHorizontal: GUTTER },
   toast: { position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: C.tinta, paddingHorizontal: GUTTER, paddingTop: 14 },
   footer: { paddingHorizontal: GUTTER, paddingTop: 12, backgroundColor: C.papel, borderTopWidth: 1, borderTopColor: C.linea, gap: 8 },
+  stat: { minWidth: 96, paddingVertical: 12, paddingHorizontal: 16, borderRadius: RADIUS, borderWidth: 1, borderColor: C.linea, backgroundColor: C.blanco },
+  statValue: { ...T.number, fontSize: 34, lineHeight: 40 },
+  sheetRoot: { flex: 1, justifyContent: "flex-end" },
+  sheetBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(30,36,25,0.5)" },
+  sheet: { maxHeight: "80%", backgroundColor: C.papel, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: GUTTER, paddingTop: 12 },
+  sheetGrip: { alignSelf: "center", width: 40, height: 4, borderRadius: 2, backgroundColor: C.lineaFuerte, marginBottom: 12 },
   divider: { height: 1, backgroundColor: C.linea, marginVertical: 16 },
 });

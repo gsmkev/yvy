@@ -9,6 +9,11 @@ import { memberNames } from "../../src/lib/members";
 import { authorName, isOwnerMode } from "../../src/lib/ownerSummary";
 import { useSession } from "../../src/lib/session";
 import { useLocal } from "../../src/lib/useLocal";
+import { activeFilterCount, filterRecords, NO_RECORD_FILTER, type RecordFilter } from "../../src/lib/plotInfo";
+import { isoToDisplay } from "../../src/office/date";
+import { DateField, FormSheet, SelectField } from "../../src/office/ui";
+import { SlidersHorizontal, X } from "lucide-react-native";
+import { RECORD_ICON } from "../../src/ui/icons";
 import { EmptyState, Row, SectionHeader, s as k, Text } from "../../src/ui/kit";
 import { C, T } from "../../src/ui/theme";
 
@@ -29,14 +34,22 @@ export default function History() {
   // F-29: el dueño ve lo de todos, con el nombre de quien anotó.
   const owner = isOwnerMode(session?.organization.role);
   const names = useLocal(() => (owner ? memberNames(getDb()) : {}), [owner]);
-  const records = useLocal(() => byFarm(getDb().records(), farmId), [farmId]);
+  const records = useLocal(() => byFarm(getDb().records(owner ? 500 : 200), farmId), [farmId, owner]);
+  // Ola 2 (94): para oficina, filtros por estancia, autor y fechas sobre la lista local.
+  const farms = useLocal(() => getDb().farms());
+  const [rf, setRf] = useState<RecordFilter>(NO_RECORD_FILTER);
+  const [draft, setDraft] = useState<RecordFilter | null>(null);
+  const nFilters = owner ? activeFilterCount(rf) : 0;
   const plots = useLocal(() => getDb().plots());
   const thumbs = useLocal(() => getDb().thumbsByRecord(2));
   const [filter, setFilter] = useState<RecordKind | "all">("all");
   // Solo se ofrecen los tipos que hay en el historial.
   const kinds = [...new Set(records.map((r) => r.kind))];
   const active = filter !== "all" && kinds.includes(filter) ? filter : "all";
-  const shown = active === "all" ? records : records.filter((r) => r.kind === active);
+  const byKind = active === "all" ? records : records.filter((r) => r.kind === active);
+  const shown = owner ? filterRecords(byKind, rf) : byKind;
+  const authorOf = (id: string) => authorName(id, session?.user.id, names);
+  const authors = [...new Set(records.map((r) => r.authorId))];
   const sections = Object.entries(
     shown.reduce<Record<string, typeof records>>((acc, r) => {
       (acc[dayKey(r.capturedAt)] ??= []).push(r);
@@ -54,6 +67,32 @@ export default function History() {
       ListHeaderComponent={
         <View>
           <Text style={[T.display, { marginBottom: 8 }]}>{t("app.history")}</Text>
+          {owner && (
+            <View style={{ marginBottom: 8 }}>
+              <Pressable accessibilityRole="button" onPress={() => setDraft(rf)} style={st.filterBtn}>
+                <SlidersHorizontal size={20} color={C.accionOscuro} strokeWidth={2} />
+                <Text style={[T.bodyMedium, { color: C.accionOscuro }]}>{nFilters ? t("ui.filtersActive", { n: nFilters }) : t("ui.filters")}</Text>
+              </Pressable>
+              {nFilters > 0 && (
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+                  {([
+                    rf.farmId ? ["farmId", farms.find((f) => f.id === rf.farmId)?.name ?? ""] : null,
+                    rf.authorId ? ["authorId", authorOf(rf.authorId)] : null,
+                    rf.from ? ["from", `${t("office.filterFrom")} ${isoToDisplay(rf.from)}`] : null,
+                    rf.to ? ["to", `${t("office.filterTo")} ${isoToDisplay(rf.to)}`] : null,
+                  ] as ([keyof RecordFilter, string] | null)[]).filter((x): x is [keyof RecordFilter, string] => !!x).map(([key, label]) => (
+                    <Pressable key={key} accessibilityRole="button" accessibilityLabel={`${label}: ${t("ui.delete")}`} onPress={() => setRf({ ...rf, [key]: "" })} style={st.chip}>
+                      <Text style={T.smallMedium}>{label}</Text>
+                      <X size={16} color={C.tinta2} strokeWidth={2} />
+                    </Pressable>
+                  ))}
+                  <Pressable accessibilityRole="button" onPress={() => setRf(NO_RECORD_FILTER)} style={st.chip}>
+                    <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{t("office.filterClear")}</Text>
+                  </Pressable>
+                </View>
+              )}
+            </View>
+          )}
           {kinds.length > 1 && (
             <FadingScroll>
               {(["all", ...kinds] as const).map((kd) => (
@@ -72,11 +111,31 @@ export default function History() {
         </View>
       }
       ListEmptyComponent={
-        <EmptyState title={t("app.noRecordsYet")} hint={t("app.noRecordsHint")} action={t("app.annotate")} onAction={() => router.push("/annotate")} />
+        nFilters > 0 || active !== "all" ? (
+          <EmptyState title={t("office.filterNoMatch")} action={t("office.filterClear")} onAction={() => { setRf(NO_RECORD_FILTER); setFilter("all"); }} />
+        ) : (
+          <EmptyState title={t("app.noRecordsYet")} hint={t("app.noRecordsHint")} action={t("app.annotate")} onAction={() => router.push("/annotate")} />
+        )
+      }
+      ListFooterComponent={
+        <FormSheet visible={!!draft} title={t("ui.filters")} onClose={() => setDraft(null)} onSubmit={() => { if (draft) setRf(draft); setDraft(null); }} submitLabel={t("office.filterApply")}>
+          {draft ? (
+            <>
+              {farms.length > 1 ? <SelectField label={t("ui.farm")} value={draft.farmId} options={[{ value: "", label: t("ui.all") }, ...farms.map((f) => ({ value: f.id, label: f.name }))]} onChange={(v) => setDraft({ ...draft, farmId: v })} /> : null}
+              {authors.length > 1 ? <SelectField label={t("ui.author")} value={draft.authorId} options={[{ value: "", label: t("ui.all") }, ...authors.map((a) => ({ value: a, label: authorOf(a) }))]} onChange={(v) => setDraft({ ...draft, authorId: v })} /> : null}
+              <DateField label={t("office.filterFrom")} value={draft.from} onChange={(v) => setDraft({ ...draft, from: v })} />
+              <DateField label={t("office.filterTo")} value={draft.to} onChange={(v) => setDraft({ ...draft, to: v })} />
+              <Pressable accessibilityRole="button" onPress={() => setDraft(NO_RECORD_FILTER)} style={{ minHeight: 48, justifyContent: "center", marginTop: 8 }}>
+                <Text style={[T.bodyMedium, { color: C.accionOscuro }]}>{t("office.filterClear")}</Text>
+              </Pressable>
+            </>
+          ) : null}
+        </FormSheet>
       }
       renderSectionHeader={({ section }) => <SectionHeader title={section.title} />}
       renderItem={({ item: r }) => (
         <Row
+          icon={RECORD_ICON[r.kind]}
           title={describeRecord(r.kind, JSON.parse(r.data))}
           subtitle={[t(`recordKinds.${r.kind}`), owner ? authorName(r.authorId, session?.user.id, names) : null, plots.find((p) => p.id === r.plotId)?.name, hhmm(r.capturedAt)].filter(Boolean).join(" · ")}
           onPress={() => router.push({ pathname: "/record/[id]", params: { id: r.id } })}
@@ -140,5 +199,7 @@ const st = StyleSheet.create({
   filters: { paddingHorizontal: 20, flexGrow: 0 },
   filter: { minHeight: 48, justifyContent: "center", borderBottomWidth: 3, borderBottomColor: "transparent" },
   filterActive: { borderBottomColor: C.tinta },
+  filterBtn: { minHeight: 48, flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "flex-start" },
+  chip: { minHeight: 36, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 18, borderWidth: 1.5, borderColor: C.lineaFuerte, backgroundColor: C.blanco },
   thumb: { width: 48, height: 48, borderRadius: 8 },
 });

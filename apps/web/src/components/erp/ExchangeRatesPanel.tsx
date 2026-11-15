@@ -6,7 +6,7 @@ import { del, get, put } from "../../lib/api";
 import { fmtIsoDate } from "../../lib/format";
 import { t } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
-import { Button, Empty, ErrorBox, Field, Input, Spinner, toast } from "../ui";
+import { Button, DataTable, EmptyState, ErrorBox, Field, Input, SectionHead, Spinner, Stat, toast, type Column } from "../ui";
 import { ExportableTable } from "../ExportableTable";
 import { RowMenu } from "./adminSlot";
 
@@ -36,63 +36,46 @@ export function ExchangeRatesPanel() {
   if (q.error) return <ErrorBox error={q.error} />;
   const rates = q.data ?? [];
   const latest = rates[0];
+  const cols: Column<Rate>[] = [
+    { id: "date", header: t("ui.ratesDate"), cell: (r) => fmtIsoDate(r.date) },
+    { id: "value", header: t("ui.ratesValue"), align: "right", cell: (r) => fmtGs(r.usdToPyg) },
+    { id: "_a", header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>, align: "right", width: "3rem", cell: (r) => <RowMenu name={fmtIsoDate(r.date)} onDelete={() => remove.mutate(r.date)} /> },
+  ];
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-0.5">
-        <span className="eyebrow">{t("ui.ratesCurrent")}</span>
-        {latest ? (
-          <>
-            <span className="num font-serif text-[28px] leading-tight font-semibold">{fmtGs(latest.usdToPyg)}</span>
-            <span className="text-xs text-tinta-2">{t("ui.ratesCurrentNote", { date: fmtIsoDate(latest.date) })}</span>
-          </>
+    <div className="grid gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <aside className="flex flex-col gap-3 lg:col-start-2 lg:row-start-1">
+        <SectionHead title={t("ui.ratesLoadTitle")} />
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            save.mutate();
+          }}
+        >
+          <Field label={t("ui.ratesDate")}>
+            <Input type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
+          </Field>
+          <Field label={t("ui.ratesValue")}>
+            <Input type="number" required min={1} step="1" value={value} onChange={(e) => setValue(e.target.value)} />
+          </Field>
+          <div>
+            <Button type="submit" variant="primary" disabled={save.isPending}>
+              {t("ui.save")}
+            </Button>
+          </div>
+        </form>
+        {save.error ? <ErrorBox error={save.error} /> : null}
+      </aside>
+      <div className="flex min-w-0 flex-col gap-5 lg:col-start-1 lg:row-start-1">
+        {latest && <Stat size="lg" label={t("ui.ratesCurrent")} value={fmtGs(latest.usdToPyg)} note={t("ui.ratesCurrentNote", { date: fmtIsoDate(latest.date) })} />}
+        {rates.length === 0 ? (
+          <EmptyState title={t("ui.ratesNoneTitle")}>{t("ui.ratesEmptyHint")}</EmptyState>
         ) : (
-          <span className="text-sm text-tinta-2">{t("ui.ratesNone")}</span>
+          <ExportableTable name="tipos-de-cambio">
+            <DataTable columns={cols} rows={rates} rowKey={(r) => r.date} caption={t("ui.adminSection_rates")} />
+          </ExportableTable>
         )}
       </div>
-      <form
-        className="flex flex-wrap items-end gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
-        <Field label={t("ui.ratesDate")}>
-          <Input type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
-        </Field>
-        <Field label={t("ui.ratesValue")}>
-          <Input type="number" required min={1} step="1" value={value} onChange={(e) => setValue(e.target.value)} />
-        </Field>
-        <Button type="submit" variant="primary" disabled={save.isPending || !value}>
-          {t("ui.save")}
-        </Button>
-      </form>
-      {save.error ? <ErrorBox error={save.error} /> : null}
-      {rates.length === 0 ? (
-        <Empty>{t("ui.erpEmpty")}</Empty>
-      ) : (
-        <ExportableTable name="tipos-de-cambio">
-          <table className="w-full max-w-lg text-sm">
-            <thead>
-              <tr className="border-b border-linea text-left text-tinta-2">
-                <th className="py-2 pr-4 font-medium">{t("ui.ratesDate")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.ratesValue")}</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {rates.map((r) => (
-                <tr key={r.date} className="border-b border-linea">
-                  <td className="num py-2.5 pr-4">{fmtIsoDate(r.date)}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtGs(r.usdToPyg)}</td>
-                  <td className="sticky right-0 w-12 bg-lino py-1 text-right">
-                    <RowMenu name={fmtIsoDate(r.date)} onDelete={() => remove.mutate(r.date)} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </ExportableTable>
-      )}
     </div>
   );
 }

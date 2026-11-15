@@ -5,7 +5,8 @@ import { CONTRACTOR_SERVICES } from "@yvy/shared";
 import { del, get, put } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, toast, type Column } from "../ui";
+import { SectionButton } from "./SectionButton";
 import { useMachines } from "./MachinesPanel";
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions, RowMenu } from "./adminSlot";
@@ -34,6 +35,7 @@ interface Profile {
 
 export function LaborCostPanel() {
   const rows = useQuery({ queryKey: ["erp", "labor-cost"], queryFn: () => get<Row[]>("/org/erp/labor-cost") });
+  const machines = useMachines();
   const profiles = useQuery({ queryKey: ["erp", "machine-costs"], queryFn: () => get<Profile[]>("/org/erp/machine-costs") });
   const [editing, setEditing] = useState<Profile | "new" | null>(null);
   const qc = useQueryClient();
@@ -46,81 +48,79 @@ export function LaborCostPanel() {
   });
   if (rows.isLoading || profiles.isLoading) return <Spinner />;
   if (rows.error) return <ErrorBox error={rows.error} />;
+  const list = rows.data ?? [];
+  const hasHours = (machines.data ?? []).some((m) => m.meterKind === "hours");
+  const newBtn = (
+    <Button variant="primary" onClick={() => setEditing("new")}>
+      {t("ui.laborNew")}
+    </Button>
+  );
+  const cols: Column<Row>[] = [
+    {
+      id: "machine",
+      header: t("ui.laborMachine"),
+      cell: (r) => (
+        <>
+          {r.machine}
+          <span className="block text-meta font-normal text-tinta-2">{tk(`ui.contractorService_${r.service}`)}</span>
+        </>
+      ),
+    },
+    { id: "fuel", header: t("ui.laborFuel"), align: "right", hideBelow: "lg", cell: (r) => fmtGs(r.own.fuelPerHour) },
+    { id: "operator", header: t("ui.laborOperator"), align: "right", hideBelow: "lg", cell: (r) => fmtGs(r.own.operatorPerHour) },
+    { id: "depr", header: t("ui.laborDepreciation"), align: "right", hideBelow: "lg", cell: (r) => fmtGs(r.own.depreciationPerHour) },
+    { id: "hour", header: t("ui.laborOwnHour"), align: "right", hideBelow: "sm", cell: (r) => <span className="font-medium">{fmtGs(r.own.totalPerHour)}</span> },
+    { id: "ha", header: t("ui.laborOwnHa"), align: "right", cell: (r) => <span className="font-medium">{r.own.perHa === null ? "—" : fmtGs(r.own.perHa)}</span> },
+    {
+      id: "contractor",
+      header: t("ui.laborContractor"),
+      hideBelow: "md",
+      cell: (r) =>
+        r.contractor ? (
+          <>
+            {r.contractor.name}
+            <span className="num block text-meta text-tinta-2">{r.contractor.perHa !== null ? `${fmtGs(r.contractor.perHa)} / ha` : `${fmtGs(r.contractor.perHour ?? 0)} / h`}</span>
+          </>
+        ) : (
+          <span className="text-tinta-2">{t("ui.laborNoContractor")}</span>
+        ),
+    },
+    {
+      id: "verdict",
+      header: t("ui.laborVerdict"),
+      hideBelow: "md",
+      cell: (r) =>
+        r.verdict ? (
+          <span className={r.verdict.cheaper === "own" ? "text-accion" : "text-trigo-texto"}>
+            {t(r.verdict.cheaper === "own" ? "ui.laborOwnCheaper" : "ui.laborContractorCheaper", { n: fmtGs(Math.abs(r.verdict.savingPyg)), unit: r.verdict.basis === "ha" ? "ha" : "h" })}
+          </span>
+        ) : (
+          "—"
+        ),
+    },
+    {
+      id: "_a",
+      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      align: "right",
+      width: "3rem",
+      cell: (r) => <RowMenu name={r.machine} onEdit={() => setEditing(profiles.data?.find((p) => p.machineId === r.machineId) ?? null)} onDelete={() => remove.mutate(r.machineId)} />,
+    },
+  ];
   return (
     <div className="flex flex-col gap-4">
-      <HeaderActions>
-        <Button variant="primary" onClick={() => setEditing("new")}>
-          {t("ui.laborNew")}
-        </Button>
-      </HeaderActions>
-      {(rows.data ?? []).length === 0 ? (
-        <Empty>{t("ui.erpEmpty")}</Empty>
+      {list.length > 0 && <HeaderActions>{newBtn}</HeaderActions>}
+      {list.length === 0 ? (
+        <EmptyState title={t("ui.laborEmptyTitle")} action={hasHours ? newBtn : <SectionButton to="machines" primary>{t("ui.laborGoMachines")}</SectionButton>}>
+          {hasHours ? t("ui.laborEmptyHint") : t("ui.laborEmptyNoMachines")}
+        </EmptyState>
       ) : (
-        <div className="overflow-x-auto">
+        <>
           <ExportableTable name="mano-de-obra">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-linea text-left text-tinta-2">
-                  <th className="py-2 pr-4 font-medium">{t("ui.laborMachine")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.laborFuel")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.laborOperator")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.laborDepreciation")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.laborOwnHour")}</th>
-                  <th className="py-2 pr-4 text-right font-medium">{t("ui.laborOwnHa")}</th>
-                  <th className="py-2 pr-4 font-medium">{t("ui.laborContractor")}</th>
-                  <th className="py-2 font-medium">{t("ui.laborVerdict")}</th>
-                  <th className="sticky right-0 w-12 bg-lino">
-                    <span className="sr-only">{t("ui.rowActionsHeader")}</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {(rows.data ?? []).map((r) => (
-                  <tr key={r.machineId} className="border-b border-linea align-top">
-                    <td className="py-2.5 pr-4">
-                      <div className="font-medium">{r.machine}</div>
-                      <div className="text-tinta-2">{tk(`ui.contractorService_${r.service}`)}</div>
-                    </td>
-                    <td className="num py-2.5 pr-4 text-right">{fmtGs(r.own.fuelPerHour)}</td>
-                    <td className="num py-2.5 pr-4 text-right">{fmtGs(r.own.operatorPerHour)}</td>
-                    <td className="num py-2.5 pr-4 text-right">{fmtGs(r.own.depreciationPerHour)}</td>
-                    <td className="num py-2.5 pr-4 text-right font-medium">{fmtGs(r.own.totalPerHour)}</td>
-                    <td className="num py-2.5 pr-4 text-right font-medium">{r.own.perHa === null ? "—" : fmtGs(r.own.perHa)}</td>
-                    <td className="py-2.5 pr-4">
-                      {r.contractor ? (
-                        <>
-                          <div>{r.contractor.name}</div>
-                          <div className="num text-tinta-2">
-                            {r.contractor.perHa !== null ? `${fmtGs(r.contractor.perHa)} / ha` : `${fmtGs(r.contractor.perHour ?? 0)} / h`}
-                          </div>
-                        </>
-                      ) : (
-                        <span className="text-tinta-2">{t("ui.laborNoContractor")}</span>
-                      )}
-                    </td>
-                    <td className="py-2.5">
-                      {r.verdict ? (
-                        <span className={r.verdict.cheaper === "own" ? "text-accion" : "text-trigo-texto"}>
-                          {t(r.verdict.cheaper === "own" ? "ui.laborOwnCheaper" : "ui.laborContractorCheaper", {
-                            n: fmtGs(Math.abs(r.verdict.savingPyg)),
-                            unit: r.verdict.basis === "ha" ? "ha" : "h",
-                          })}
-                        </span>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td className="sticky right-0 w-12 bg-lino py-1 text-right">
-                      <RowMenu name={r.machine} onEdit={() => setEditing(profiles.data?.find((p) => p.machineId === r.machineId) ?? null)} onDelete={() => remove.mutate(r.machineId)} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataTable columns={cols} rows={list} rowKey={(r) => r.machineId} caption={t("ui.adminSection_labor")} />
           </ExportableTable>
-        </div>
+          <p className="text-meta text-tinta-2">{t("ui.laborNote")}</p>
+        </>
       )}
-      <p className="text-xs text-tinta-2">{t("ui.laborNote")}</p>
       {editing && <ProfileModal row={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
     </div>
   );

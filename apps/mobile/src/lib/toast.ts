@@ -2,6 +2,7 @@
 import { useSyncExternalStore } from "react";
 import { t } from "@yvy/shared";
 import { getDb } from "./db";
+import { success } from "./haptics";
 import { syncNow } from "./sync";
 
 export const TOAST_MS = 3000;
@@ -35,6 +36,7 @@ export const useToast = () =>
  * mientras el aviso sigue a la vista y no queda nada pendiente, lo cambia por "enviado".
  */
 export function toastSaved(): void {
+  success();
   const pendingText = t("app.toastSavedPending");
   showToast(pendingText);
   void syncNow().then(() => {

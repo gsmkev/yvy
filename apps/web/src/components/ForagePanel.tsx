@@ -4,7 +4,7 @@ import type { ForageResponse } from "@yvy/shared";
 import { get } from "../lib/api";
 import { fmtDay } from "../lib/format";
 import { t, tk } from "../lib/i18n";
-import { Empty, ErrorBox, Spinner } from "./ui";
+import { DataTable, Empty, ErrorBox, Spinner } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
 const int = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 });
@@ -22,46 +22,52 @@ export function ForagePanel({ farmId }: { farmId: string }) {
   const c = d.coefficients;
   return (
     <div className="flex flex-col gap-4">
-      <div className="overflow-x-auto">
-        <ExportableTable name="forraje">
-          <table className="w-full min-w-[760px] text-sm">
-            <thead>
-              <tr className="text-left text-xs text-tinta-2">
-                <th className="pb-2 font-medium">{t("ui.plot")}</th>
-                <th className="pb-2 text-right font-medium">{t("ui.forageHeight")}</th>
-                <th className="pb-2 text-right font-medium">NDVI</th>
-                <th className="pb-2 text-right font-medium">{t("ui.forageKgHa")}</th>
-                <th className="pb-2 text-right font-medium">{t("ui.forageUsable")}</th>
-                <th className="pb-2 text-right font-medium">{t("ui.forageDemand")}</th>
-                <th className="pb-2 text-right font-medium">{t("ui.forageDays")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-linea border-t border-linea">
-              {d.plots.map((p) => (
-                <tr key={p.plotId}>
-                  <td className="py-2.5 font-medium">{p.name}</td>
-                  <td className="num py-2.5 text-right">
-                    {p.heightCm === null ? "—" : `${p.heightCm} cm · ${tk(`fields.level_${p.cover}`).toLowerCase()}`}
-                    {p.heightAt ? <span className="block text-xs text-tinta-2">{fmtDay(p.heightAt)}</span> : null}
-                  </td>
-                  <td className="num py-2.5 text-right">
-                    {p.ndvi === null ? "—" : dec.format(p.ndvi)}
-                    {p.ndviAt ? <span className="block text-xs text-tinta-2">{fmtDay(p.ndviAt)}</span> : null}
-                  </td>
-                  <td className="num py-2.5 text-right font-medium">
-                    {p.kgDmHa === null ? t("ui.forageNoData") : int.format(p.kgDmHa)}
-                    {p.method ? <span className="block text-xs font-normal text-tinta-2">{t(`ui.forageMethod_${p.method}`)}</span> : null}
-                    {p.stale ? <span className="block text-xs font-normal text-peligro">{t("ui.forageStale")}</span> : null}
-                  </td>
-                  <td className="num py-2.5 text-right">{p.usableKgDm === null ? "—" : int.format(p.usableKgDm)}</td>
-                  <td className="num py-2.5 text-right">{p.demandKgDay ? int.format(p.demandKgDay) : "—"}</td>
-                  <td className="num py-2.5 text-right font-medium">{p.daysLeft === null ? "—" : int.format(p.daysLeft)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </ExportableTable>
-      </div>
+      <ExportableTable name="forraje">
+        <DataTable<(typeof d.plots)[number]>
+          rows={d.plots}
+          rowKey={(p) => p.plotId}
+          columns={[
+            { id: "name", header: t("ui.plot"), cell: (p) => <span className="font-medium">{p.name}</span> },
+            {
+              id: "height",
+              header: t("ui.forageHeight"),
+              align: "right",
+              cell: (p) => (
+                <>
+                  {p.heightCm === null ? "—" : `${p.heightCm} cm · ${tk(`fields.level_${p.cover}`).toLowerCase()}`}
+                  {p.heightAt ? <span className="block text-xs text-tinta-2">{fmtDay(p.heightAt)}</span> : null}
+                </>
+              ),
+            },
+            {
+              id: "ndvi",
+              header: "NDVI",
+              align: "right",
+              cell: (p) => (
+                <>
+                  {p.ndvi === null ? "—" : dec.format(p.ndvi)}
+                  {p.ndviAt ? <span className="block text-xs text-tinta-2">{fmtDay(p.ndviAt)}</span> : null}
+                </>
+              ),
+            },
+            {
+              id: "kg",
+              header: t("ui.forageKgHa"),
+              align: "right",
+              cell: (p) => (
+                <span className="font-medium">
+                  {p.kgDmHa === null ? t("ui.forageNoData") : int.format(p.kgDmHa)}
+                  {p.method ? <span className="block text-xs font-normal text-tinta-2">{t(`ui.forageMethod_${p.method}`)}</span> : null}
+                  {p.stale ? <span className="block text-xs font-normal text-peligro">{t("ui.forageStale")}</span> : null}
+                </span>
+              ),
+            },
+            { id: "usable", header: t("ui.forageUsable"), align: "right", cell: (p) => (p.usableKgDm === null ? "—" : int.format(p.usableKgDm)) },
+            { id: "demand", header: t("ui.forageDemand"), align: "right", cell: (p) => (p.demandKgDay ? int.format(p.demandKgDay) : "—") },
+            { id: "days", header: t("ui.forageDays"), align: "right", cell: (p) => <span className="font-medium">{p.daysLeft === null ? "—" : int.format(p.daysLeft)}</span> },
+          ]}
+        />
+      </ExportableTable>
       <p className="text-xs text-tinta-2">
         {t("ui.forageHint", {
           low: c.kgDmPerHaPerCm.low,

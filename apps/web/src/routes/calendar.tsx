@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { addDays, localDate } from "@yvy/shared";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button, EmptyState, ErrorBox, PageHeader, Select, Skeleton } from "../components/ui";
+import { Button, EmptyState, ErrorBox, PageHeader, Select, Skeleton, Page } from "../components/ui";
 import { tasksByDay, weekDays, weekStart } from "../lib/calendar";
 import { fmtIsoDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -21,7 +21,7 @@ export function CalendarPage() {
   const total = [...grouped.values()].reduce((n, l) => n + l.length, 0);
   const isThisWeek = monday === weekStart(today);
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-4 p-4">
+    <Page width="data" className="gap-4 md:h-full">
       <PageHeader title={t("ui.calendarTitle")} />
       <div className="flex flex-wrap items-center gap-2">
         <Button icon={ChevronLeft} onClick={() => setMonday(addDays(monday, -7))} aria-label={t("ui.calendarPrev")} />
@@ -61,24 +61,30 @@ export function CalendarPage() {
         />
       )}
       {(tasks.isLoading || total > 0) && (
-        <div className="grid grid-cols-1 gap-x-2 gap-y-1 md:grid-cols-7 md:gap-y-2">
+        <div className="grid grid-cols-1 gap-y-1 md:min-h-0 md:flex-1 md:grid-cols-7 md:grid-rows-1 md:border-t md:border-linea">
           {days.map((d, i) => {
             const list = grouped.get(d)!;
+            const isToday = d === today;
             return (
               <section
                 key={d}
                 aria-label={fmtIsoDate(d)}
-                className={`rounded-md px-2 py-2 md:min-h-32 md:border md:px-2 ${d === today ? "bg-soja/10 md:border-soja" : "md:border-linea"}`}
+                className={`px-2 py-2 md:min-h-0 md:overflow-y-auto md:border-r md:border-linea md:last:border-r-0 ${isToday ? "md:bg-soja/[0.07]" : ""} ${list.length === 0 && !isToday ? "max-md:hidden" : ""}`}
               >
-                <h2 className={`mb-1 flex items-baseline gap-1.5 text-sm ${d === today ? "font-semibold text-surco" : "font-medium text-tinta-2"}`}>
-                  {tk(`ui.weekday_${i}`)} <span className="num">{d.slice(8)}</span>
+                <h2 className={`mb-2 flex items-baseline gap-1.5 text-sm ${isToday ? "font-semibold text-surco" : "font-medium text-tinta-2"}`}>
+                  {tk(`ui.weekday_${i}`)}{" "}
+                  <span className={`num ${isToday ? "rounded-full bg-surco px-1.5 text-lino" : ""}`}>{d.slice(8)}</span>
                 </h2>
-                <ul className="flex flex-col gap-1">
+                <ul className="flex flex-col gap-1.5">
                   {list.map((x) => (
                     <li
                       key={x.id}
-                      className={`rounded-sm border-l-[3px] bg-papel px-2 py-1.5 text-sm leading-5 shadow-[0_0_0_1px_var(--color-linea)] ${
-                        x.status === "done" ? "border-linea text-tinta-2" : x.priority === "high" ? "border-trigo" : "border-soja"
+                      className={`rounded-sm border border-l-[3px] bg-papel px-2 py-1.5 text-sm leading-5 ${
+                        x.status === "done"
+                          ? "border-linea text-tinta-2"
+                          : x.priority === "high"
+                            ? "border-linea border-l-trigo"
+                            : "border-linea border-l-soja"
                       }`}
                     >
                       <p className="flex items-start gap-1 font-medium">
@@ -101,6 +107,6 @@ export function CalendarPage() {
           })}
         </div>
       )}
-    </div>
+    </Page>
   );
 }

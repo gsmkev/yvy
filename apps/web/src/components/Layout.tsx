@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { ChevronDown, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { Ellipsis, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { isFieldRole } from "@yvy/shared";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { exitSupport, getSession, isNetworkDown, onNetworkChange, onSession, post, setSession } from "../lib/api";
-import { Toaster } from "./ui";
+import { Page, Toaster } from "./ui";
 import { FEATURES } from "../lib/features";
-import { buildNav, MOBILE_TABS, type NavGroup, type NavItem } from "../lib/nav";
+import { buildNav, isMapPath, isReportsPath, MOBILE_TABS, type NavGroup, type NavItem } from "../lib/nav";
 import { fmtDate } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useAlerts, useFarms, useMe } from "../lib/queries";
@@ -78,7 +78,8 @@ export function Layout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   // Con varias estancias, "Mapa" vuelve a la última que se miró
   const lastFarm = (farms.data?.length ?? 0) > 1 ? farms.data!.find((f) => f.id === loadPrefs().farmId)?.id : undefined;
-  const onMap = path === "/" || path.startsWith("/estancias");
+  const onMap = isMapPath(path);
+  const onReports = isReportsPath(path);
   useEffect(() => trackView(path), [path]);
   const desktop = useIsDesktop();
   const [sheet, setSheet] = useState(false);
@@ -92,14 +93,31 @@ export function Layout() {
       onLogout={logout}
     />
   );
+  // Informes vive dentro de la estancia: la última mirada o la primera
+  const reportsFarm = lastFarm ?? farms.data?.find((f) => f.id === loadPrefs().farmId)?.id ?? farms.data?.[0]?.id;
   const link = (n: NavItem, cls: (active: boolean) => string, tab = false) => {
-    const active = n.to === "/" ? onMap : n.to === path || path.startsWith(`${n.to}/`);
+    const reports = n.to === "/informes";
+    const active = n.to === "/" ? onMap : reports ? onReports : n.to === path || path.startsWith(`${n.to}/`);
+    const Icon = n.icon;
+    const count = n.to === "/avisos" && nAlerts > 0 ? nAlerts : 0;
     const body = (
       <>
-        {t(n.label)}
-        {n.to === "/avisos" && nAlerts > 0 && <span className={`num font-semibold text-peligro ${tab ? "ml-1" : "ml-auto"}`}>{nAlerts}</span>}
+        <span className="relative flex shrink-0">
+          <Icon size={tab ? 22 : 18} strokeWidth={active && tab ? 2.25 : 1.75} aria-hidden />
+          {tab && count > 0 && (
+            <span className="num absolute -top-1 left-3 min-w-4 rounded-full bg-peligro px-1 text-center text-micro font-semibold text-sobre">{count}</span>
+          )}
+        </span>
+        <span className="truncate">{t(n.label)}</span>
+        {!tab && count > 0 && <span className="num ml-auto text-meta font-semibold text-peligro">{count}</span>}
       </>
     );
+    if (reports)
+      return reportsFarm ? (
+        <Link key={n.to} to="/estancias/$farmId/informes" params={{ farmId: reportsFarm }} aria-current={active ? "page" : undefined} className={cls(active)}>
+          {body}
+        </Link>
+      ) : null;
     return n.to === "/" && lastFarm ? (
       <Link key={n.to} to="/estancias/$farmId" params={{ farmId: lastFarm }} aria-current={active ? "page" : undefined} className={cls(active)}>
         {body}
@@ -111,11 +129,11 @@ export function Layout() {
     );
   };
   const sideCls = (active: boolean) =>
-    `flex h-10 items-center rounded-md px-3 text-sm transition-colors ${active ? "bg-surco/[0.07] font-medium text-surco" : "text-tinta-2 hover:bg-surco/[0.04] hover:text-surco"}`;
+    `flex h-9 items-center gap-2.5 rounded-md px-3 text-sm transition-colors ${active ? "bg-surco/[0.07] font-medium text-surco" : "text-tinta-2 hover:bg-surco/[0.04] hover:text-surco"}`;
   const sheetCls = (active: boolean) =>
-    `flex h-12 items-center rounded-md px-3 text-[15px] ${active ? "bg-surco/[0.07] font-medium text-surco" : "text-surco"}`;
+    `flex h-12 items-center gap-3 rounded-md px-3 text-body ${active ? "bg-surco/[0.07] font-medium text-surco" : "text-surco"}`;
   const tabCls = (active: boolean) =>
-    `flex h-14 min-w-0 flex-1 basis-0 items-center justify-center gap-1.5 border-t-2 px-1 text-xs ${active ? "border-surco font-medium text-surco" : "border-transparent text-tinta-2"}`;
+    `flex h-14 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 border-t-2 px-1 text-micro ${active ? "border-accion bg-accion/[0.07] font-semibold text-accion" : "border-transparent text-tinta-2"}`;
 
   return (
     <div className="flex h-full flex-col lg:flex-row print:block print:h-auto">
@@ -163,7 +181,7 @@ export function Layout() {
             </div>
             <nav aria-label={t("ui.navMain")} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-3">
               {nav.main.map((g) => (
-                <SideGroup key={g.id} group={g} render={(n) => link(n, sideCls)} />
+                <NavSection key={g.id} group={g} render={(n) => link(n, sideCls)} />
               ))}
               {nav.bottom.length > 0 && (
                 <div className="mt-auto flex flex-col gap-0.5 border-t border-linea pt-3">{nav.bottom.map((n) => link(n, sideCls))}</div>
@@ -191,10 +209,10 @@ export function Layout() {
       )}
       <main id="main" tabIndex={-1} className="min-h-0 min-w-0 flex-1 overflow-auto outline-none print:overflow-visible">
         {mfaGate ? (
-          <div className="mx-auto w-full max-w-2xl p-4 sm:p-6">
-            <h1 className="text-[28px] leading-tight">{t("ui.totpSetupGateTitle")}</h1>
+          <Page width="read">
+            <h1 className="text-title leading-tight">{t("ui.totpSetupGateTitle")}</h1>
             <TotpSection forced />
-          </div>
+          </Page>
         ) : (
           <Outlet />
         )}
@@ -212,8 +230,9 @@ export function Layout() {
               aria-haspopup="dialog"
               aria-expanded={sheet}
               onClick={() => setSheet(true)}
-              className={`${tabCls(false)} cursor-pointer`}
+              className={`${tabCls(sheet || onReports)} cursor-pointer`}
             >
+              <Ellipsis size={22} strokeWidth={1.75} aria-hidden />
               {t("ui.navMore")}
             </button>
           </nav>
@@ -221,7 +240,7 @@ export function Layout() {
             <MoreSheet onClose={() => setSheet(false)}>
               <GlobalSearch inputRef={searchRef} listClassName="min-w-0" />
               {nav.main.map((g) => (
-                <SideGroup key={g.id} group={g} render={(n) => link(n, sheetCls)} />
+                <NavSection key={g.id} group={g} render={(n) => link(n, sheetCls)} />
               ))}
               {nav.bottom.length > 0 && (
                 <div className="flex flex-col gap-0.5 border-t border-linea pt-3">{nav.bottom.map((n) => link(n, sheetCls))}</div>
@@ -271,22 +290,12 @@ function useStoredFlag(key: string): [boolean, (v: boolean) => void] {
   ];
 }
 
-/** Grupo de la navegación: el título pliega y despliega sus ítems (se recuerda por navegador). */
-function SideGroup({ group, render }: { group: NavGroup; render: (n: NavItem) => React.ReactNode }) {
-  const [closed, setClosed] = useStoredFlag(`yvy.navClosed.${group.id}`);
-  if (!group.label) return <div className="flex flex-col gap-0.5">{group.items.map(render)}</div>;
+/** Grupo de la navegación: rótulo y sus ítems, siempre a la vista. */
+function NavSection({ group, render }: { group: NavGroup; render: (n: NavItem) => React.ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <button
-        type="button"
-        aria-expanded={!closed}
-        onClick={() => setClosed(!closed)}
-        className="flex h-8 cursor-pointer items-center justify-between rounded-md px-3 text-xs font-semibold text-tinta-2 hover:text-surco"
-      >
-        {t(group.label)}
-        <ChevronDown size={14} aria-hidden className={`transition-transform ${closed ? "-rotate-90" : ""}`} />
-      </button>
-      {!closed && group.items.map(render)}
+      {group.label && <p className="px-3 pb-0.5 text-meta font-medium text-tinta-2">{t(group.label)}</p>}
+      {group.items.map(render)}
     </div>
   );
 }
@@ -323,7 +332,7 @@ function MoreSheet({ onClose, children }: { onClose: () => void; children: React
     };
   }, []);
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-surco/55 print:hidden" onClick={onClose}>
+    <div className="anim-fade fixed inset-0 z-50 flex items-end bg-surco/55 print:hidden" onClick={onClose}>
       <div
         ref={box}
         role="dialog"
@@ -331,7 +340,7 @@ function MoreSheet({ onClose, children }: { onClose: () => void; children: React
         aria-label={t("ui.navMore")}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[85vh] w-full flex-col gap-3 overflow-y-auto rounded-t-xl bg-lino p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] outline-none"
+        className="anim-sheet flex max-h-[85vh] w-full flex-col gap-3 overflow-y-auto rounded-t-xl bg-lino p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] outline-none"
       >
         <button
           type="button"

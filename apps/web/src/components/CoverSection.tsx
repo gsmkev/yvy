@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { boundsOf, FarmMap } from "./FarmMap";
-import { Button, Empty, ErrorBox, Spinner, Stat, toast } from "./ui";
+import { Button, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Select, Spinner, Stat, toast, type Column } from "./ui";
 import { get, post } from "../lib/api";
 import { analysisAreas, coverKeys, parseCoverKey, summarizeCover } from "../lib/changesData";
 import { download } from "../lib/exports";
@@ -10,7 +10,6 @@ import { fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useFarm, useMe } from "../lib/queries";
 import type { AnalysisJob, AnalysisPlot, CoverMetrics } from "../lib/types";
-import { ExportableTable } from "./ExportableTable";
 
 const CLASSES = ["forest", "pasture", "crop", "other"] as const;
 const iso = (d: Date) => d.toISOString().slice(0, 10);
@@ -67,25 +66,32 @@ export function CoverSection({ farmId }: { farmId: string }) {
     }
   };
 
+  const classRows = CLASSES.map((c) => ({ c, from: sum?.from[c] ?? 0, to: sum?.to[c] ?? 0 }));
+  const cols: Column<(typeof classRows)[number]>[] = range
+    ? [
+        { id: "class", header: t("ui.coverColClass"), cell: (r) => t(`ui.coverClass_${r.c}`) },
+        { id: "from", header: day(range.from), align: "right", cell: (r) => fmtHa(r.from) },
+        { id: "to", header: day(range.to), align: "right", cell: (r) => fmtHa(r.to) },
+        { id: "diff", header: t("ui.coverColDiff"), align: "right", cell: (r) => `${r.to - r.from > 0 ? "+" : ""}${fmtHa(r.to - r.from)}` },
+      ]
+    : [];
+
   return (
-    <section className="flex flex-col gap-4 border-t border-linea pt-6">
-      <h2 className="font-serif text-xl font-semibold">{t("ui.coverTitle")}</h2>
+    <section className="flex flex-col gap-4">
       <p className="text-sm text-tinta-2">{t("ui.coverIntro")}</p>
       {canRequest && (
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-tinta-2">{t("ui.coverFrom")}</span>
-            <input type="date" className="h-9 rounded border border-linea bg-white px-2" value={from} min="2017-01-01" onChange={(e) => setFrom(e.target.value)} />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-tinta-2">{t("ui.coverTo")}</span>
-            <input type="date" className="h-9 rounded border border-linea bg-white px-2" value={to} max={iso(new Date())} onChange={(e) => setTo(e.target.value)} />
-          </label>
+        <FilterBar>
+          <Field label={t("ui.coverFrom")}>
+            <Input type="date" value={from} min="2017-01-01" onChange={(e) => setFrom(e.target.value)} />
+          </Field>
+          <Field label={t("ui.coverTo")}>
+            <Input type="date" value={to} max={iso(new Date())} onChange={(e) => setTo(e.target.value)} />
+          </Field>
           <Button variant="secondary" disabled={!datesOk || processing || request.isPending} onClick={() => request.mutate()}>
             {t("ui.coverCompute")}
           </Button>
-          {!datesOk && <span className="text-xs text-tinta-2">{t("ui.coverDatesInvalid")}</span>}
-        </div>
+          {!datesOk && <span className="pb-2.5 text-xs text-tinta-2">{t("ui.coverDatesInvalid")}</span>}
+        </FilterBar>
       )}
       {processing && q.data.job.params && (
         <p className="text-sm text-tinta-2" role="status">
@@ -94,75 +100,57 @@ export function CoverSection({ farmId }: { farmId: string }) {
       )}
       {q.data.job.status === "failed" && <p className="text-sm text-peligro">{t("ui.coverFailed")}</p>}
       {!sum || !range ? (
-        <Empty>{t("ui.coverNone")}</Empty>
+        <EmptyState compact>{t("ui.coverNone")}</EmptyState>
       ) : (
         <>
           {keys.length > 1 && (
-            <label className="flex max-w-xs flex-col gap-1 text-sm">
-              <span className="text-tinta-2">{t("ui.coverPick")}</span>
-              <select className="h-9 cursor-pointer rounded border border-linea bg-white px-2" value={key} onChange={(e) => setPicked(e.target.value)}>
-                {keys.map((k) => {
-                  const r = parseCoverKey(k);
-                  return (
-                    <option key={k} value={k}>
-                      {r ? t("ui.coverRange", { from: day(r.from), to: day(r.to) }) : k}
-                    </option>
-                  );
-                })}
-              </select>
-            </label>
+            <div className="max-w-xs">
+              <Field label={t("ui.coverPick")}>
+                <Select
+                  value={key}
+                  onChange={(e) => setPicked(e.target.value)}
+                  options={keys.map((k) => {
+                    const r = parseCoverKey(k);
+                    return { value: k, label: r ? t("ui.coverRange", { from: day(r.from), to: day(r.to) }) : k };
+                  })}
+                />
+              </Field>
+            </div>
           )}
-          <p className="text-sm text-tinta-2">{t("ui.coverRange", { from: day(range.from), to: day(range.to) })}</p>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <Stat label={t("ui.coverForestFrom", { date: day(range.from) })} value={fmtHa(sum.from.forest)} />
-            <Stat label={t("ui.coverForestTo", { date: day(range.to) })} value={fmtHa(sum.to.forest)} />
-            <Stat label={t("ui.coverForestLost")} value={fmtHa(sum.forestLostHa)} tone={sum.forestLostHa > 0 ? "danger" : undefined} />
-          </div>
-          <ExportableTable name="cobertura">
-            <table className="num w-full text-sm">
-              <thead>
-                <tr className="border-b border-linea text-left text-tinta-2">
-                  <th className="py-1.5 pr-3 font-normal">{t("ui.coverColClass")}</th>
-                  <th className="px-3 py-1.5 text-right font-normal">{day(range.from)}</th>
-                  <th className="px-3 py-1.5 text-right font-normal">{day(range.to)}</th>
-                  <th className="py-1.5 pl-3 text-right font-normal">{t("ui.coverColDiff")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {CLASSES.map((c) => (
-                  <tr key={c} className="border-b border-linea/60">
-                    <td className="py-1.5 pr-3">{t(`ui.coverClass_${c}`)}</td>
-                    <td className="px-3 py-1.5 text-right">{fmtHa(sum.from[c])}</td>
-                    <td className="px-3 py-1.5 text-right">{fmtHa(sum.to[c])}</td>
-                    <td className="py-1.5 pl-3 text-right">{`${sum.to[c] - sum.from[c] > 0 ? "+" : ""}${fmtHa(sum.to[c] - sum.from[c])}`}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ExportableTable>
-          <p className="text-sm text-tinta-2">
-            {t("ui.coverConversions", { pasture: fmtHa(sum.forestToPasture), crop: fmtHa(sum.forestToCrop), other: fmtHa(sum.forestToOther) })}
-          </p>
-          <div className="h-80 overflow-hidden rounded-lg border border-linea">
-            <FarmMap
-              outline={f.geometry}
-              plots={farm.data.plots}
-              problemAreas={analysisAreas(rows)}
-              layers={farm.data.layers}
-              tilesBaseUrl={me.data?.tilesBaseUrl}
-              bounds={boundsOf(f)}
-              className="h-full w-full"
-            />
-          </div>
-          <div>
-            <Button variant="primary" onClick={pdfFile} disabled={busy}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-tinta-2">{t("ui.coverRange", { from: day(range.from), to: day(range.to) })}</p>
+            <Button variant="secondary" onClick={pdfFile} disabled={busy}>
               {busy ? t("ui.coverPdfWorking") : t("ui.coverPdf")}
             </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-linea py-5 sm:grid-cols-3">
+            <Stat label={t("ui.coverForestFrom", { date: day(range.from) })} value={fmtHa(sum.from.forest)} />
+            <Stat label={t("ui.coverForestTo", { date: day(range.to) })} value={fmtHa(sum.to.forest)} />
+            {sum.forestLostHa > 0 && <Stat label={t("ui.coverForestLost")} value={fmtHa(sum.forestLostHa)} tone="danger" />}
+          </div>
+          <div className="grid items-start gap-x-10 gap-y-5 lg:grid-cols-2">
+            <div className="flex flex-col gap-3">
+              <DataTable columns={cols} rows={classRows} rowKey={(r) => r.c} caption={t("ui.coverTitle")} />
+              <p className="text-sm text-tinta-2">
+                {t("ui.coverConversions", { pasture: fmtHa(sum.forestToPasture), crop: fmtHa(sum.forestToCrop), other: fmtHa(sum.forestToOther) })}
+              </p>
+            </div>
+            <div className="h-80 overflow-hidden rounded-lg border border-linea">
+              <FarmMap
+                outline={f.geometry}
+                plots={farm.data.plots}
+                problemAreas={analysisAreas(rows)}
+                layers={farm.data.layers}
+                tilesBaseUrl={me.data?.tilesBaseUrl}
+                bounds={boundsOf(f)}
+                className="h-full w-full"
+              />
+            </div>
           </div>
           {error ? <ErrorBox error={error} /> : null}
           <p className="text-sm text-tinta-2">{t("ui.coverDisclaimer")}</p>
           <p className="text-sm text-tinta-2">{t("ui.coverMethod")}</p>
-          <p className="text-[11px] text-tinta-2">{t("attribution.copernicus")}</p>
+          <p className="text-micro text-tinta-2">{t("attribution.copernicus")}</p>
         </>
       )}
     </section>

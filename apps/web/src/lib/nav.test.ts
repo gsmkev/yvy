@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildNav, type NavContext } from "./nav";
+import { buildNav, isMapPath, isReportsPath, type NavContext } from "./nav";
 
 const base: NavContext = { role: "owner", farms: 2, plots: 9, hasClients: false, isStaff: false, labs: true };
 const paths = (c: Partial<NavContext>) => {
@@ -10,9 +10,9 @@ const paths = (c: Partial<NavContext>) => {
 describe("navegación lateral", () => {
   it("el dueño con varias estancias ve todo, agrupado", () => {
     const n = buildNav(base);
-    expect(n.main.map((g) => g.id)).toEqual(["field", "livestock", "manage", "alerts"]);
+    expect(n.main.map((g) => g.id)).toEqual(["field", "manage"]);
     expect(paths({})).toEqual([
-      "/", "/registros", "/tareas", "/calendario", "/sanidad", "/administracion", "/comparar", "/equipo", "/avisos", "/laboratorio",
+      "/", "/registros", "/tareas", "/calendario", "/sanidad", "/avisos", "/informes", "/administracion", "/equipo", "/comparar", "/laboratorio",
     ]);
   });
   it("Comparar solo aparece con más de una estancia", () => {
@@ -33,8 +33,22 @@ describe("navegación lateral", () => {
     expect(paths({ hasClients: true })).toContain("/clientes");
     expect(buildNav({ ...base, isStaff: true }).bottom.map((i) => i.to)).toEqual(["/laboratorio", "/interno"]);
   });
-  it("un grupo sin ítems no se muestra", () => {
-    const n = buildNav({ ...base, role: "worker", farms: 1 });
-    expect(n.main.map((g) => g.id)).not.toContain("livestock");
+  it("Informes necesita estancias y no es del personal de campo", () => {
+    expect(paths({ farms: 0 })).not.toContain("/informes");
+    expect(paths({ farms: null })).not.toContain("/informes");
+    expect(paths({ role: "worker" })).not.toContain("/informes");
+  });
+});
+
+describe("sección activa", () => {
+  it("las pantallas de informes de la estancia no son el mapa", () => {
+    for (const s of ["informes", "parte", "riesgo", "eudr", "cambios", "pluviometros"]) {
+      expect(isReportsPath(`/estancias/f1/${s}`)).toBe(true);
+      expect(isMapPath(`/estancias/f1/${s}`)).toBe(false);
+    }
+    expect(isMapPath("/")).toBe(true);
+    expect(isMapPath("/estancias/f1")).toBe(true);
+    expect(isMapPath("/estancias/nueva")).toBe(true);
+    expect(isReportsPath("/cambios")).toBe(false);
   });
 });

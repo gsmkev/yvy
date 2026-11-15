@@ -11,7 +11,7 @@ import type { Plot, Task } from "../lib/types";
 import { CheckCircle2, ChevronDown, Circle, Flag, MessageSquare, Plus } from "lucide-react";
 import { ActionMenu } from "./menus";
 import { TableExportMenu } from "./TableExportMenu";
-import { Button, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, Tabs, toast } from "./ui";
+import { Button, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, Stat, Tabs, toast } from "./ui";
 
 /** T-01: selección de lotes en el mapa de la estancia; la maneja la pantalla que tiene el mapa. */
 export interface PlotPick {
@@ -76,7 +76,7 @@ export function TasksPanel({
     byAssignee.set(x.assigneeName ?? x.assigneeId, [...(byAssignee.get(x.assigneeName ?? x.assigneeId) ?? []), x]);
 
   const newButton = (
-    <Button variant="primary" icon={Plus} onClick={() => setCreating(true)}>
+    <Button variant={title ? "primary" : "secondary"} icon={Plus} onClick={() => setCreating(true)}>
       {t("ui.newTask")}
     </Button>
   );
@@ -110,16 +110,9 @@ export function TasksPanel({
     />
   );
 
-  return (
-    <div className="flex flex-col gap-4">
-      {title ? (
-        <PageHeader title={title} primary={newButton} menu={exportMenu} />
-      ) : (
-        <div className="flex items-center justify-between gap-2">
-          {newButton}
-          {exportMenu}
-        </div>
-      )}
+  const nToday = visible.filter((x) => x.dueDate === today).length;
+  const list = (
+    <>
       <Tabs
         value={filter}
         onChange={setFilter}
@@ -128,9 +121,7 @@ export function TasksPanel({
           { id: "overdue", label: t("ui.filterOverdue"), count: nOverdue },
         ]}
       />
-      {!sorted.length && (
-        <EmptyState title={t("ui.noTasks")} action={<Button onClick={() => setCreating(true)}>{t("ui.newTask")}</Button>} />
-      )}
+      {!sorted.length && <EmptyState title={t("ui.noTasks")} />}
       {[...byAssignee.entries()].map(([name, list]) => (
         <section key={name} aria-label={name}>
           <h3 className="mb-1 flex items-baseline gap-2 text-sm font-semibold">
@@ -164,6 +155,49 @@ export function TasksPanel({
             </ul>
           )}
         </section>
+      )}
+    </>
+  );
+  // Como página: la lista a la izquierda y, en escritorio, el resumen del día a un costado
+  const summary = (nOverdue > 0 || nToday > 0 || byAssignee.size > 0) && (
+    <aside aria-label={t("ui.tasksSummary")} className="hidden flex-col gap-5 lg:flex">
+      <div className="flex gap-8">
+        {nOverdue > 0 && <Stat label={t("ui.filterOverdue")} value={nOverdue} tone="danger" />}
+        {nToday > 0 && <Stat label={t("ui.tasksForToday")} value={nToday} />}
+      </div>
+      {byAssignee.size > 0 && (
+        <div>
+          <h3 className="eyebrow border-b border-linea pb-2">{t("ui.tasksByPerson")}</h3>
+          <ul className="text-sm">
+            {[...byAssignee.entries()].map(([name, l]) => (
+              <li key={name} className="flex items-baseline justify-between gap-3 border-b border-linea py-2">
+                {name}
+                <span className="num text-tinta-2">{l.length}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </aside>
+  );
+
+  return (
+    <div className="flex flex-col gap-4">
+      {title ? (
+        <PageHeader title={title} primary={newButton} menu={exportMenu} />
+      ) : (
+        <div className="flex items-center justify-between gap-2">
+          {newButton}
+          {exportMenu}
+        </div>
+      )}
+      {title ? (
+        <div className="grid items-start gap-x-12 gap-y-4 lg:grid-cols-[minmax(0,720px)_300px]">
+          <div className="flex flex-col gap-4">{list}</div>
+          {summary}
+        </div>
+      ) : (
+        list
       )}
       {creating && (
         <NewTaskModal
@@ -298,7 +332,7 @@ function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: string; over
           >
             <textarea
               aria-label={t("ui.taskComments")}
-              className="min-h-16 w-full rounded-md border border-linea bg-papel px-3 py-2 text-[15px] outline-none focus:border-accion focus:ring-2 focus:ring-accion/20"
+              className="min-h-16 w-full rounded-md border border-linea bg-papel px-3 py-2 text-body outline-none focus:border-accion focus:ring-2 focus:ring-accion/20"
               maxLength={LIMITS.tasks.maxCommentLength}
               placeholder={t("ui.taskCommentPlaceholder")}
               value={text}

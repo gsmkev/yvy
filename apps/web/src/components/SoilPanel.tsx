@@ -57,7 +57,7 @@ export function SoilPanel({ farmId, plots }: { farmId: string; plots: Plot[] }) 
       </h3>
       <p className="text-sm text-tinta-2">{t("ui.soilIntro")}</p>
       <div>
-        <Button variant="primary" onClick={() => setAdding(true)}>
+        <Button variant="secondary" onClick={() => setAdding(true)}>
           {t("ui.soilAdd")}
         </Button>
       </div>

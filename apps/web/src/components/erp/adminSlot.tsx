@@ -3,8 +3,11 @@
  * y la página los muestra junto al título (un primario por pantalla). Fuera de Administración
  * (por ejemplo Productos en la ficha de la estancia) se dibujan en el lugar.
  */
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "@tanstack/react-router";
+import { tableFromElement } from "../../lib/tableExport";
+import { TableExportMenu } from "../TableExportMenu";
 
 /** null: no hay encabezado de Administración. `{ el: null }`: todavía no se montó. */
 export const AdminSlotContext = createContext<{ el: HTMLElement | null } | null>(null);
@@ -16,3 +19,28 @@ export function HeaderActions({ children }: { children: ReactNode }) {
 }
 
 export { RowMenu } from "../menus";
+
+/**
+ * Un solo "Exportar" por panel, en el encabezado: exporta la tabla que se ve dentro de `ref`.
+ * Uso: `const exp = useTableExport("compras")`; `<div ref={exp.ref}><DataTable …/></div>` y `{rows.length > 0 && exp.menu}`.
+ */
+export function useTableExport(name: string) {
+  const ref = useRef<HTMLDivElement>(null);
+  const menu = (
+    <HeaderActions>
+      <TableExportMenu
+        data={() => {
+          const table = ref.current?.querySelector("table");
+          return table ? tableFromElement(table, name) : { name, headers: [], rows: [] };
+        }}
+      />
+    </HeaderActions>
+  );
+  return { ref, menu };
+}
+
+/** Va a otra sección de Administración (los requisitos previos son un botón, no un texto). */
+export function useGoSection() {
+  const navigate = useNavigate();
+  return (id: string) => void navigate({ to: "/administracion", search: { s: id } });
+}

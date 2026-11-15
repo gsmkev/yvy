@@ -3,8 +3,8 @@ import type { Plot } from "../lib/types";
 import { BRAND } from "@yvy/shared";
 import { areaUnitLabel, fmtAreaValue, fmtDay, fmtNdvi } from "../lib/format";
 import { t } from "../lib/i18n";
-import { defaultDir, sortPlots, type SortDir, type SortKey } from "../lib/plotsSort";
-import { Input } from "./ui";
+import { kindOf, sortPlots } from "../lib/plotsSort";
+import { DataTable, Input, type Column } from "./ui";
 import { ndviColor, vigorDrop } from "../lib/vigor";
 
 /** Muestra del color de la rampa NDVI junto al valor; sin pasadas procesadas, un guion. */
@@ -22,33 +22,20 @@ export function Vigor({ value }: { value: number | null }) {
 const norm = (s: string) =>
   s
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .toLowerCase();
 
+const collator = new Intl.Collator("es-PY", { sensitivity: "base", numeric: true });
+/** Sin dato cuenta como el menor: queda primero de menor a mayor y último de mayor a menor. */
+const byNum = (get: (p: Plot) => number | null) => (a: Plot, b: Plot) => (get(a) ?? -1) - (get(b) ?? -1);
+
 export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: string) => void }) {
-  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({ key: "name", dir: "asc" });
   const [q, setQ] = useState("");
   const rows = useMemo(() => {
     const needle = norm(q.trim());
     const found = needle ? plots.filter((p) => norm(`${p.name} ${p.crop ?? ""}`).includes(needle)) : plots;
-    return sortPlots(found, sort.key, sort.dir);
-  }, [plots, sort, q]);
-  const pick = (key: SortKey) =>
-    setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: defaultDir(key) }));
-  const head = (key: SortKey, label: string, right = false) => (
-    <th
-      className={`pb-2 font-medium ${right ? "text-right" : ""}`}
-      aria-sort={sort.key === key ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
-    >
-      <button
-        onClick={() => pick(key)}
-        className={`cursor-pointer font-medium underline-offset-4 hover:text-surco hover:underline ${sort.key === key ? "text-surco underline" : ""}`}
-      >
-        {label}
-        {sort.key === key && (sort.dir === "asc" ? " ↑" : " ↓")}
-      </button>
-    </th>
-  );
+    return sortPlots(found, "name", "asc");
+  }, [plots, q]);
   const worse = useMemo(
     () =>
       plots
@@ -57,8 +44,58 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
         .sort((a, b) => b.drop!.pct - a.drop!.pct),
     [plots],
   );
-  const drop = vigorDrop;
   const dropText = (d: { pct: number; since: number }) => t("ui.vigorDrop", { pct: d.pct, date: fmtDay(d.since) });
+  // Sin ninguna pasada procesada la columna Vigor sería una fila de guiones
+  const hasVigor = plots.some((p) => p.ndviMean !== null);
+  const columns: Column<Plot>[] = [
+    {
+      id: "name",
+      header: t("ui.plot"),
+      sort: (a, b) => collator.compare(a.name, b.name),
+      cell: (p) => {
+        const d = vigorDrop(p);
+        return (
+          <>
+            <button className="flex cursor-pointer items-center gap-2.5 text-left font-medium" aria-label={p.name}>
+              <span
+                className="h-3 w-3 shrink-0 rounded-sm"
+                style={{ background: p.color ?? (p.kind === "pasture" ? BRAND.trigo : BRAND.soja) }}
+              />
+              {p.name}
+            </button>
+            {d && <p className="num mt-0.5 pl-[22px] text-xs font-normal text-peligro">{dropText(d)}</p>}
+          </>
+        );
+      },
+    },
+    {
+      id: "kind",
+      header: t("ui.kind"),
+      sort: (a, b) => collator.compare(kindOf(a), kindOf(b)),
+      cell: (p) => (
+        <span className="text-tinta-2">{p.kind === "pasture" ? t("ui.pasture") : (p.crop ?? t("ui.crop"))}</span>
+      ),
+    },
+    { id: "area", header: areaUnitLabel(), align: "right", sort: (a, b) => a.areaHa - b.areaHa, cell: (p) => fmtAreaValue(p.areaHa) },
+    ...(hasVigor
+      ? [
+          {
+            id: "vigor",
+            header: t("ui.vigor"),
+            align: "right" as const,
+            sort: byNum((p) => p.ndviMean),
+            cell: (p: Plot) => <Vigor value={p.ndviMean} />,
+          },
+        ]
+      : []),
+    {
+      id: "visit",
+      header: t("ui.lastVisitShort"),
+      align: "right",
+      sort: byNum((p) => p.lastRecordAt),
+      cell: (p) => <span className="text-tinta-2">{p.lastRecordAt ? fmtDay(p.lastRecordAt) : "—"}</span>,
+    },
+  ];
   return (
     <>
       {worse.length > 0 && (
@@ -85,44 +122,16 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
         placeholder={t("ui.filterPlots")}
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        className="mb-3 w-full"
+        className="mb-2 w-full"
       />
-      {rows.length === 0 && <p className="py-4 text-sm text-tinta-2">{t("ui.noPlotMatch")}</p>}
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-tinta-2">
-              {head("name", t("ui.plot"))}
-              {head("kind", t("ui.kind"))}
-              {head("area", areaUnitLabel(), true)}
-              {head("vigor", t("ui.vigor"), true)}
-              {head("visit", t("ui.lastVisitShort"), true)}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-linea border-t border-linea">
-            {rows.map((p) => (
-              <tr key={p.id} className="cursor-pointer hover:bg-surco/[0.03]" onClick={() => onSelect(p.id)}>
-                <td className="py-2.5">
-                  <button className="flex cursor-pointer items-center gap-2.5 text-left font-medium" aria-label={p.name}>
-                    <span
-                      className="h-3 w-3 shrink-0 rounded-sm"
-                      style={{ background: p.color ?? (p.kind === "pasture" ? BRAND.trigo : BRAND.soja) }}
-                    />
-                    {p.name}
-                  </button>
-                  {drop(p) && <p className="num mt-0.5 pl-[22px] text-xs text-peligro">{dropText(drop(p)!)}</p>}
-                </td>
-                <td className="py-2.5 text-tinta-2">
-                  {p.kind === "pasture" ? t("ui.pasture") : (p.crop ?? t("ui.crop"))}
-                </td>
-                <td className="num py-2.5 text-right">{fmtAreaValue(p.areaHa)}</td>
-                <td className="py-2.5 text-right">
-                  <Vigor value={p.ndviMean} />
-                </td>
-                <td className="num py-2.5 text-right text-tinta-2">{p.lastRecordAt ? fmtDay(p.lastRecordAt) : "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(p) => p.id}
+        onRowClick={(p) => onSelect(p.id)}
+        caption={t("ui.plots")}
+        empty={<p className="py-4 text-sm text-tinta-2">{t("ui.noPlotMatch")}</p>}
+      />
     </>
   );
 }

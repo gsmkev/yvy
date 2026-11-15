@@ -8,9 +8,11 @@ import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { tablesToExcel } from "../../lib/tableExport";
 import { useFarm, useFarms } from "../../lib/queries";
-import { Button, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
-import { MasterPanel, useErpList, type FieldDef } from "./MasterPanel";
-import { RowMenu } from "./adminSlot";
+import { Button, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, SectionHead, Select, Spinner, Tabs, toast, type Column } from "../ui";
+import { ExportableTable } from "../ExportableTable";
+import { useErpList, type FieldDef } from "./MasterPanel";
+import { RecordList } from "./RecordList";
+import { HeaderActions, RowMenu } from "./adminSlot";
 
 export interface Employee {
   id: string;
@@ -34,19 +36,41 @@ interface Attendance {
 
 
 export function StaffPanel() {
-  const [tab, setTab] = useState<string>("attendance");
+  const staff = useEmployees();
+  const [tab, setTab] = useState<string | null>(null);
+  if (staff.isLoading) return <Spinner />;
+  if (staff.error) return <ErrorBox error={staff.error} />;
+  const empty = (staff.data ?? []).length === 0;
+  // Sin empleados no hay nada que asistir ni saldar: se abre en Empleados
+  const current = tab ?? (empty ? "employees" : "attendance");
   const tabs = [
     { id: "attendance", label: t("ui.staffAttendance") },
     { id: "balances", label: t("ui.staffBalances") },
-    { id: "employees", label: t("ui.staffEmployees") },
+    { id: "employees", label: t("ui.staffEmployees"), count: empty ? undefined : staff.data!.length },
   ];
+  const goEmployees = () => setTab("employees");
   return (
     <div className="flex flex-col gap-4">
-      <Tabs<string> tabs={tabs} value={tab} onChange={setTab} />
-      {tab === "attendance" && <AttendanceSheet />}
-      {tab === "employees" && <EmployeesList />}
-      {tab === "balances" && <BalancesTab />}
+      <Tabs<string> tabs={tabs} value={current} onChange={setTab} />
+      {current === "attendance" && <AttendanceSheet staff={staff.data ?? []} onGoEmployees={goEmployees} />}
+      {current === "employees" && <EmployeesList />}
+      {current === "balances" && <BalancesTab onGoEmployees={goEmployees} />}
     </div>
+  );
+}
+
+function NoStaff({ onGo }: { onGo: () => void }) {
+  return (
+    <EmptyState
+      title={t("ui.staffEmptyTitle")}
+      action={
+        <Button variant="primary" onClick={onGo}>
+          {t("ui.staffAdd")}
+        </Button>
+      }
+    >
+      {t("ui.staffEmptyHint")}
+    </EmptyState>
   );
 }
 
@@ -58,14 +82,18 @@ function EmployeesList() {
     { key: "dailyWagePyg", label: t("ui.staffWage"), type: "number", required: true, min: 0, step: "1" },
   ];
   return (
-    <MasterPanel<Employee>
+    <RecordList<Employee>
       path="employees"
-      newLabel={t("ui.staffNew")}
+      exportName="empleados"
+      newLabel={t("ui.staffAdd")}
+      emptyTitle={t("ui.staffEmptyTitle")}
+      emptyHint={t("ui.staffEmptyHint")}
       name={(e) => e.name}
       fields={fields}
       columns={[
-        { header: t("ui.staffName"), cell: (e) => <span className="font-medium">{e.name}</span> },
-        { header: t("ui.staffCi"), cell: (e) => e.ci ?? "" },
+        { header: t("ui.staffName"), cell: (e) => e.name },
+        { header: t("ui.staffCi"), hideBelow: "sm", cell: (e) => e.ci ?? "" },
+        { header: t("ui.staffPhone"), hideBelow: "md", cell: (e) => e.phone ?? "" },
         { header: t("ui.staffWage"), right: true, cell: (e) => fmtGs(e.dailyWagePyg) },
       ]}
     />
@@ -79,8 +107,7 @@ interface Mark {
 }
 
 /** Planilla del día: por cada empleado, día completo, medio día o ausente, con el lote y la labor. */
-function AttendanceSheet() {
-  const staff = useEmployees();
+function AttendanceSheet({ staff: list, onGoEmployees }: { staff: Employee[]; onGoEmployees: () => void }) {
   const farms = useFarms();
   const [date, setDate] = useState(localDate(Date.now()));
   const [farmId, setFarmId] = useState("");
@@ -89,6 +116,7 @@ function AttendanceSheet() {
   const qc = useQueryClient();
   const day = useQuery({ queryKey: ["erp", "attendance", date], queryFn: () => get<Attendance[]>(`/org/erp/attendance${qs({ from: date, to: date })}`) });
   const recent = useQuery({ queryKey: ["erp", "attendance", "recent"], queryFn: () => get<Attendance[]>("/org/erp/attendance") });
+  const marked = Object.values(marks).filter((m) => m.days).length;
   const save = useMutation({
     mutationFn: () => {
       const entries = Object.entries(marks)
@@ -115,95 +143,85 @@ function AttendanceSheet() {
       qc.invalidateQueries({ queryKey: ["erp"] });
     },
   });
-  if (staff.isLoading) return <Spinner />;
-  if (staff.error) return <ErrorBox error={staff.error} />;
-  const list = staff.data ?? [];
+  if (list.length === 0) return <NoStaff onGo={onGoEmployees} />;
   const name = (id: string) => list.find((e) => e.id === id)?.name ?? "?";
   const loaded = new Map<string, number>();
   for (const a of day.data ?? []) loaded.set(a.employeeId, (loaded.get(a.employeeId) ?? 0) + a.days);
   const set = (id: string, patch: Partial<Mark>) => setMarks({ ...marks, [id]: { days: "", plotId: "", labor: "", ...marks[id], ...patch } });
+  const sheet: Column<Employee>[] = [
+    { id: "name", header: t("ui.staffName"), cell: (e) => e.name },
+    {
+      id: "days",
+      header: t("ui.attDays"),
+      cell: (e) => (
+        <Select
+          aria-label={`${t("ui.attDays")}: ${e.name}`}
+          value={marks[e.id]?.days ?? ""}
+          onChange={(ev) => set(e.id, { days: ev.target.value as Mark["days"] })}
+          options={[
+            { value: "", label: "—" },
+            { value: "1", label: t("ui.attFull") },
+            { value: "0.5", label: t("ui.attHalf") },
+          ]}
+        />
+      ),
+    },
+    {
+      id: "plot",
+      header: t("ui.costPlot"),
+      hideBelow: "md",
+      cell: (e) => (
+        <Select
+          aria-label={`${t("ui.costPlot")}: ${e.name}`}
+          value={marks[e.id]?.plotId ?? ""}
+          onChange={(ev) => set(e.id, { plotId: ev.target.value })}
+          options={[{ value: "", label: t("ui.costNone") }, ...(farm.data?.plots ?? []).map((p) => ({ value: p.id, label: p.name }))]}
+        />
+      ),
+    },
+    {
+      id: "labor",
+      header: t("ui.attLabor"),
+      hideBelow: "md",
+      cell: (e) => <Input aria-label={`${t("ui.attLabor")}: ${e.name}`} maxLength={120} value={marks[e.id]?.labor ?? ""} onChange={(ev) => set(e.id, { labor: ev.target.value })} />,
+    },
+    { id: "loaded", header: t("ui.attLoaded"), align: "right", cell: (e) => <span className="text-tinta-2">{loaded.get(e.id) ? `${loaded.get(e.id)} d` : ""}</span> },
+  ];
+  const history: Column<Attendance>[] = [
+    { id: "date", header: t("ui.costDate"), cell: (a) => fmtIsoDate(a.date) },
+    { id: "name", header: t("ui.staffName"), cell: (a) => name(a.employeeId) },
+    { id: "days", header: t("ui.attDays"), align: "right", cell: (a) => (a.days === 1 ? t("ui.attFull") : t("ui.attHalf")) },
+    { id: "labor", header: t("ui.attLabor"), hideBelow: "md", cell: (a) => <span className="text-tinta-2">{a.labor}</span> },
+    { id: "wage", header: t("ui.staffWage"), align: "right", hideBelow: "sm", cell: (a) => fmtGs(a.wagePyg) },
+    { id: "_actions", header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>, align: "right", width: "3rem", cell: (a) => <RowMenu name={fmtIsoDate(a.date)} onDelete={() => remove.mutate(a.id)} /> },
+  ];
+  const past = (recent.data ?? []).slice(0, 40);
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-3 sm:max-w-md">
+    <div className="flex flex-col gap-5">
+      {marked > 0 && (
+        <HeaderActions>
+          <Button variant="primary" disabled={save.isPending} onClick={() => save.mutate()}>
+            {t("ui.attSave", { n: marked })}
+          </Button>
+        </HeaderActions>
+      )}
+      <FilterBar>
         <Field label={t("ui.costDate")}>
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
         <Field label={t("ui.costFarm")}>
           <Select value={farmId} onChange={(e) => setFarmId(e.target.value)} options={[{ value: "", label: t("ui.costNone") }, ...(farms.data ?? []).map((f) => ({ value: f.id, label: f.name }))]} />
         </Field>
-      </div>
-      {list.length === 0 ? (
-        <Empty>{t("ui.attNoStaff")}</Empty>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-linea text-left text-tinta-2">
-                <th className="py-2 pr-4 font-medium">{t("ui.staffName")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.attDays")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.costPlot")}</th>
-                <th className="py-2 pr-4 font-medium">{t("ui.attLabor")}</th>
-                <th className="py-2 text-right font-medium">{t("ui.attLoaded")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((e) => (
-                <tr key={e.id} className="border-b border-linea">
-                  <td className="py-2 pr-4 font-medium">{e.name}</td>
-                  <td className="py-2 pr-4">
-                    <Select
-                      value={marks[e.id]?.days ?? ""}
-                      onChange={(ev) => set(e.id, { days: ev.target.value as Mark["days"] })}
-                      options={[
-                        { value: "", label: "—" },
-                        { value: "1", label: t("ui.attFull") },
-                        { value: "0.5", label: t("ui.attHalf") },
-                      ]}
-                    />
-                  </td>
-                  <td className="py-2 pr-4">
-                    <Select
-                      value={marks[e.id]?.plotId ?? ""}
-                      onChange={(ev) => set(e.id, { plotId: ev.target.value })}
-                      options={[{ value: "", label: t("ui.costNone") }, ...(farm.data?.plots ?? []).map((p) => ({ value: p.id, label: p.name }))]}
-                    />
-                  </td>
-                  <td className="py-2 pr-4">
-                    <Input maxLength={120} value={marks[e.id]?.labor ?? ""} onChange={(ev) => set(e.id, { labor: ev.target.value })} />
-                  </td>
-                  <td className="num py-2 text-right text-tinta-2">{loaded.get(e.id) ? `${loaded.get(e.id)} d` : ""}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      </FilterBar>
+      <DataTable columns={sheet} rows={list} rowKey={(e) => e.id} caption={t("ui.staffAttendance")} />
       {save.error ? <ErrorBox error={save.error} /> : null}
-      <div>
-        <Button variant="primary" disabled={save.isPending || !Object.values(marks).some((m) => m.days)} onClick={() => save.mutate()}>
-          {t("ui.save")}
-        </Button>
-      </div>
-      <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.attRecent")}</h2>
-      {(recent.data ?? []).length === 0 ? (
-        <Empty>{t("ui.erpEmpty")}</Empty>
-      ) : (
-        <table className="w-full text-sm">
-          <tbody>
-            {(recent.data ?? []).slice(0, 40).map((a) => (
-              <tr key={a.id} className="border-b border-linea">
-                <td className="num py-2.5 pr-4">{fmtIsoDate(a.date)}</td>
-                <td className="py-2.5 pr-4 font-medium">{name(a.employeeId)}</td>
-                <td className="num py-2.5 pr-4 text-right">{a.days === 1 ? t("ui.attFull") : t("ui.attHalf")}</td>
-                <td className="py-2.5 pr-4 text-tinta-2">{a.labor}</td>
-                <td className="num py-2.5 pr-4 text-right">{fmtGs(a.wagePyg)}</td>
-                <td className="sticky right-0 w-12 bg-lino py-1 text-right">
-                  <RowMenu name={fmtIsoDate(a.date)} onDelete={() => remove.mutate(a.id)} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {past.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <SectionHead title={t("ui.attRecent")} />
+          <ExportableTable name="asistencia">
+            <DataTable columns={history} rows={past} rowKey={(a) => a.id} />
+          </ExportableTable>
+        </section>
       )}
     </div>
   );
@@ -228,56 +246,42 @@ interface Line {
 }
 
 /** Saldo por empleado (devengado - adelantos - pagos), con su cuenta corriente y el alta de adelantos y pagos. */
-function BalancesTab() {
+function BalancesTab({ onGoEmployees }: { onGoEmployees: () => void }) {
   const q = useQuery({ queryKey: ["erp", "employee-balance"], queryFn: () => get<Balance[]>("/org/erp/employees/balance") });
   const [paying, setPaying] = useState<Balance | null>(null);
   const [viewing, setViewing] = useState<Balance | null>(null);
   if (q.isLoading) return <Spinner />;
   if (q.error) return <ErrorBox error={q.error} />;
   const rows = q.data ?? [];
+  if (rows.length === 0) return <NoStaff onGo={onGoEmployees} />;
+  const cols: Column<Balance>[] = [
+    { id: "name", header: t("ui.staffName"), cell: (r) => r.name },
+    { id: "days", header: t("ui.balDays"), align: "right", hideBelow: "md", cell: (r) => r.days },
+    { id: "accrued", header: t("ui.balAccrued"), align: "right", hideBelow: "sm", cell: (r) => fmtGs(r.accruedPyg) },
+    { id: "advances", header: t("ui.balAdvances"), align: "right", hideBelow: "lg", cell: (r) => fmtGs(r.advancesPyg) },
+    { id: "payments", header: t("ui.balPayments"), align: "right", hideBelow: "lg", cell: (r) => fmtGs(r.paymentsPyg) },
+    { id: "balance", header: t("ui.balBalance"), align: "right", cell: (r) => <span className={`font-medium ${r.balancePyg < 0 ? "text-peligro" : ""}`}>{fmtGs(r.balancePyg)}</span> },
+    {
+      id: "_actions",
+      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      align: "right",
+      cell: (r) => (
+        <span className="inline-flex gap-1 whitespace-nowrap">
+          <Button variant="quiet" size="sm" onClick={() => setPaying(r)}>
+            {t("ui.balPay")}
+          </Button>
+          <Button variant="quiet" size="sm" onClick={() => setViewing(r)}>
+            {t("ui.balStatement")}
+          </Button>
+        </span>
+      ),
+    },
+  ];
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-tinta-2">{t("ui.balIntro")}</p>
       <PayrollExport />
-      {rows.length === 0 ? (
-        <Empty>{t("ui.attNoStaff")}</Empty>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-linea text-left text-tinta-2">
-                <th className="py-2 pr-4 font-medium">{t("ui.staffName")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.balDays")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.balAccrued")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.balAdvances")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.balPayments")}</th>
-                <th className="py-2 pr-4 text-right font-medium">{t("ui.balBalance")}</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.employeeId} className="border-b border-linea">
-                  <td className="py-2.5 pr-4 font-medium">{r.name}</td>
-                  <td className="num py-2.5 pr-4 text-right">{r.days}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtGs(r.accruedPyg)}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtGs(r.advancesPyg)}</td>
-                  <td className="num py-2.5 pr-4 text-right">{fmtGs(r.paymentsPyg)}</td>
-                  <td className={`num py-2.5 pr-4 text-right font-medium ${r.balancePyg < 0 ? "text-peligro" : ""}`}>{fmtGs(r.balancePyg)}</td>
-                  <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
-                    <button className="mr-4 cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setPaying(r)}>
-                      {t("ui.balPay")}
-                    </button>
-                    <button className="cursor-pointer underline-offset-4 hover:text-surco hover:underline" onClick={() => setViewing(r)}>
-                      {t("ui.balStatement")}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <DataTable columns={cols} rows={rows} rowKey={(r) => r.employeeId} caption={t("ui.staffBalances")} />
+      <p className="text-meta text-tinta-2">{t("ui.balIntro")}</p>
       {paying && <PayModal row={paying} onClose={() => setPaying(null)} />}
       {viewing && <StatementModal row={viewing} onClose={() => setViewing(null)} />}
     </div>
@@ -349,24 +353,27 @@ function StatementModal({ row, onClose }: { row: Balance; onClose: () => void })
       {q.isLoading ? (
         <Spinner />
       ) : (
-        <table className="w-full text-sm">
-          <tbody>
-            {(q.data ?? []).map((l) => (
-              <tr key={l.id} className="border-b border-linea">
-                <td className="num py-2 pr-3">{fmtIsoDate(l.date)}</td>
-                <td className="py-2 pr-3">
-                  {l.kind === "wage" ? t("ui.balKind_wage") : tk(`ui.balKind_${l.kind}`)}
+        <DataTable
+          columns={[
+            { id: "date", header: t("ui.costDate"), cell: (l: Line) => fmtIsoDate(l.date) },
+            {
+              id: "kind",
+              header: t("ui.costCategory"),
+              cell: (l: Line) => (
+                <>
+                  {tk(`ui.balKind_${l.kind}`)}
                   {l.note ? <span className="text-tinta-2">: {l.note}</span> : null}
-                </td>
-                <td className={`num py-2 pr-3 text-right ${l.amountPyg < 0 ? "text-tinta-2" : ""}`}>{fmtGs(l.amountPyg)}</td>
-                <td className="num py-2 pr-3 text-right font-medium">{fmtGs(l.balancePyg)}</td>
-                <td className="py-2 text-right">
-                  {l.kind !== "wage" && <RowMenu name={fmtIsoDate(l.date)} onDelete={() => remove.mutate(l.id)} />}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </>
+              ),
+            },
+            { id: "amount", header: t("ui.balAmount"), align: "right", cell: (l: Line) => <span className={l.amountPyg < 0 ? "text-tinta-2" : ""}>{fmtGs(l.amountPyg)}</span> },
+            { id: "balance", header: t("ui.balBalance"), align: "right", cell: (l: Line) => <span className="font-medium">{fmtGs(l.balancePyg)}</span> },
+            { id: "_actions", header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>, align: "right", width: "3rem", cell: (l: Line) => (l.kind !== "wage" ? <RowMenu name={fmtIsoDate(l.date)} onDelete={() => remove.mutate(l.id)} /> : null) },
+          ]}
+          rows={q.data ?? []}
+          rowKey={(l) => l.id}
+          empty={<EmptyState compact title={t("ui.erpEmpty")} />}
+        />
       )}
     </Modal>
   );
@@ -423,8 +430,8 @@ function PayrollExport() {
     }
   };
   return (
-    <div className="flex flex-col gap-2 border-y border-linea py-3">
-      <div className="flex flex-wrap items-end gap-3">
+    <div className="flex flex-col gap-2">
+      <FilterBar>
         <Field label={t("ui.acctFrom")}>
           <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
         </Field>
@@ -434,8 +441,8 @@ function PayrollExport() {
         <Button onClick={download} disabled={busy || !from || !to}>
           {t("ui.payExport")}
         </Button>
-      </div>
-      <p className="text-xs text-tinta-2">{t("ui.payExportHint")}</p>
+      </FilterBar>
+      <p className="text-meta text-tinta-2">{t("ui.payExportHint")}</p>
       {empty && <p className="text-sm">{t("ui.payEmpty")}</p>}
       {error ? <ErrorBox error={error} /> : null}
     </div>

@@ -223,7 +223,7 @@ export function PlotPanel({
                   },
                 ]}
               />
-              <p className="mt-1 text-[11px] text-tinta-2">{t("attribution.copernicus")}</p>
+              <p className="mt-1 text-micro text-tinta-2">{t("attribution.copernicus")}</p>
             </>
           ) : (
             <Empty icon={Satellite}>{t("ui.noNdvi")}</Empty>

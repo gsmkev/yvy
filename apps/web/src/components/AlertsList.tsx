@@ -43,23 +43,23 @@ export function AlertsList({
       {sortAlerts(q.data).map((a) => {
         const validity = `${fmtDate(a.validFrom)}${a.validTo && a.validTo - a.validFrom > 86_400_000 ? ` – ${fmtDate(a.validTo)}` : ""}`;
         return (
-          <li key={a.id} className={`border-l-[3px] py-3 pl-3 ${BAR[a.severity]}`}>
-            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="text-[15px] leading-5 font-semibold">{tk(`ui.alertKind_${a.kind}`)}</span>
+          <li key={a.id} className={`border-l-[3px] py-4 pl-4 ${BAR[a.severity]}`}>
+            <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+              <span className="text-sm font-semibold text-tinta-2">{tk(`ui.alertKind_${a.kind}`)}</span>
               {a.severity !== "info" && (
                 <span className={`text-sm font-medium ${a.severity === "warning" ? "text-peligro" : "text-trigo-texto"}`}>
                   {tk(`ui.severity_${a.severity}`)}
                 </span>
               )}
               {farmNames?.[a.farmId] && <span className="text-sm text-tinta-2">{farmNames[a.farmId]}</span>}
-              <span className="num ml-auto text-xs text-tinta-2">{validity}</span>
+              <span className="num ml-auto text-sm text-tinta-2">{validity}</span>
             </div>
-            <p className="mt-1 text-sm leading-5">{a.summary}</p>
-            <p className="mt-0.5 text-xs leading-4 text-tinta-2">
+            <p className="mt-1.5 text-body leading-6 font-medium text-surco">{a.summary}</p>
+            <p className="mt-1 text-xs leading-4 text-tinta-2">
               {a.probability ? `${tk(`ui.probability_${a.probability}`)} · ` : ""}
               {a.plotIds.length} {t("ui.plots").toLowerCase()} · {t("ui.orientative", { source: a.source })}
             </p>
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-1 text-sm">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <ShareWhatsappButton
                 variant="secondary"
                 text={alertShareText({
@@ -72,7 +72,7 @@ export function AlertsList({
                 })}
               />
               {a.useful === null && (
-                <span className="ml-auto flex items-center gap-1 text-tinta-2">
+                <span className="flex items-center gap-1 text-sm text-tinta-2">
                   {t("ui.useful")}
                   <Button variant="quiet" onClick={() => feedback.mutate({ id: a.id, useful: true })}>
                     {t("ui.yes")}

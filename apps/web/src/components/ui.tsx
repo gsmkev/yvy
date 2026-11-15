@@ -9,7 +9,8 @@ import {
   type ReactNode,
   type SelectHTMLAttributes,
 } from "react";
-import { CircleAlert, X, type LucideIcon } from "lucide-react";
+import { ArrowLeft, CircleAlert, ChevronDown, X, type LucideIcon } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { t } from "../lib/i18n";
 import { displayToIso, isoToDisplay, maskDate } from "../lib/dateInput";
 
@@ -25,15 +26,16 @@ const VARIANT: Record<Variant, string> = {
 export function Button({
   variant = "secondary",
   icon: Icon,
+  size = "md",
   className = "",
   children,
   ...p
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; icon?: LucideIcon }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; icon?: LucideIcon; size?: "sm" | "md" }) {
   return (
     <button
       type="button"
       {...p}
-      className={`inline-flex h-10 cursor-pointer print:hidden items-center justify-center gap-2 rounded-md px-3.5 text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45 ${VARIANT[variant]} ${className}`}
+      className={`inline-flex cursor-pointer print:hidden items-center justify-center gap-2 rounded-md font-medium transition-[color,background-color,border-color,transform] duration-[120ms] ease-[var(--ease-out)] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 ${size === "sm" ? "h-8 px-2.5 text-meta" : "h-10 px-3.5 text-sm"} ${VARIANT[variant]} ${className}`}
     >
       {/* Ícono solo en botones sin texto: con texto, el texto alcanza */}
       {Icon && !children && <Icon size={16} strokeWidth={2} aria-hidden />}
@@ -53,7 +55,7 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
 }
 
 const inputCls =
-  "h-10 rounded-md border border-linea bg-papel px-3 text-[15px] outline-none transition-colors placeholder:text-tinta-2/60 focus:border-accion focus:ring-2 focus:ring-accion/20";
+  "h-10 rounded-md border border-linea bg-papel px-3 text-body outline-none transition-colors placeholder:text-tinta-2/60 focus:border-accion focus:ring-2 focus:ring-accion/20";
 
 export const Input = (p: InputHTMLAttributes<HTMLInputElement>) =>
   p.type === "date" ? (
@@ -118,17 +120,33 @@ export function DateInput({
   );
 }
 
+/** Clase de un `<select>` nativo sin el control del sistema: se envuelve en `SelectBox` (o se usa `Select`). */
+export const selectCls = `${inputCls} cursor-pointer appearance-none pr-8`;
+
+/** Envuelve un `<select class={selectCls}>` suelto y le pone el chevron propio. */
+export function SelectBox({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <span className={`relative inline-flex min-w-0 ${className}`}>
+      {children}
+      <ChevronDown size={16} aria-hidden className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 opacity-60" />
+    </span>
+  );
+}
+
 export const Select = ({
   options,
+  className = "",
   ...p
 }: SelectHTMLAttributes<HTMLSelectElement> & { options: { value: string; label: string }[] }) => (
-  <select {...p} className={`${inputCls} cursor-pointer pr-8 ${p.className ?? ""}`}>
-    {options.map((o) => (
-      <option key={o.value} value={o.value}>
-        {o.label}
-      </option>
-    ))}
-  </select>
+  <SelectBox className={className}>
+    <select {...p} className={`${selectCls} w-full`}>
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  </SelectBox>
 );
 
 /** Superficie con borde fino. Sin sombras: la jerarquía la dan el espacio y la tipografía. */
@@ -154,7 +172,9 @@ export function Stat({
   unit,
   note,
   tone,
+  size = "md",
 }: {
+  size?: "md" | "lg";
   label: string;
   value: ReactNode;
   unit?: string;
@@ -165,7 +185,7 @@ export function Stat({
     <div className="flex flex-col gap-0.5">
       <span className="eyebrow">{label}</span>
       <span
-        className={`num text-2xl leading-8 font-semibold ${tone === "danger" ? "text-peligro" : ""}`}
+        className={`num font-serif font-semibold tabular-nums ${size === "lg" ? "text-title" : "text-2xl leading-8"} ${tone === "danger" ? "text-peligro" : ""}`}
       >
         {value}
         {unit && <span className="ml-1 text-sm text-tinta-2">{unit}</span>}
@@ -230,7 +250,7 @@ export function Modal({
   }, []);
   return (
     <div
-      className={`fixed inset-0 z-50 flex justify-center bg-surco/55 backdrop-blur-[2px] ${sheet ? "items-end p-0 sm:items-center sm:p-4" : "items-center p-4"}`}
+      className={`fixed inset-0 z-50 anim-fade flex justify-center bg-surco/55 backdrop-blur-[2px] ${sheet ? "items-end p-0 sm:items-center sm:p-4" : "items-center p-4"}`}
       onClick={onClose}
     >
       <div
@@ -239,7 +259,7 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`max-h-[90vh] w-full max-w-lg overflow-auto bg-lino shadow-xl outline-none ${sheet ? "rounded-t-xl sm:rounded-xl" : "rounded-xl"}`}
+        className={`max-h-[90vh] w-full max-w-lg overflow-auto bg-lino shadow-xl outline-none ${sheet ? "anim-sheet rounded-t-xl sm:anim-pop sm:rounded-xl" : "anim-pop rounded-xl"}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 flex items-center justify-between border-b border-linea bg-lino px-5 py-3.5">
@@ -280,7 +300,7 @@ export function ConfirmModal({
 }) {
   return (
     <Modal title={title} onClose={onClose}>
-      <p className="text-[15px]">{message}</p>
+      <p className="text-body">{message}</p>
       {error ? (
         <div className="mt-3">
           <ErrorBox error={error} />
@@ -315,6 +335,7 @@ export const Skeleton = ({ h, className = "" }: { h: number; className?: string 
   <div aria-hidden className={`animate-pulse rounded-md bg-surco/[0.06] ${className}`} style={{ height: h }} />
 );
 
+/** Alias fino de `EmptyState compact`: vacío dentro de una sección. */
 export function Empty({
   title,
   children,
@@ -325,10 +346,9 @@ export function Empty({
   children?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-start gap-1.5 py-6 text-sm text-tinta-2">
-      {title && <p className="font-medium text-surco">{title}</p>}
+    <EmptyState compact title={title}>
       {children}
-    </div>
+    </EmptyState>
   );
 }
 
@@ -402,7 +422,7 @@ export function Toaster() {
       {list.map((x) => (
         <div
           key={x.id}
-          className="pointer-events-auto flex items-center gap-4 rounded-md bg-surco px-4 py-2.5 text-sm text-lino"
+          className="anim-toast pointer-events-auto flex items-center gap-4 rounded-md bg-surco px-4 py-2.5 text-sm text-lino"
         >
           <span>{x.message}</span>
           {x.action && (
@@ -517,7 +537,7 @@ export function PageHeader({
   return (
     <header className={`flex min-w-0 gap-3 ${stacked ? "flex-col items-stretch" : "items-center"} ${className}`}>
       <div className="flex min-w-0 flex-1 items-center gap-1">
-        <h1 title={title} className="min-w-0 truncate text-[28px] leading-8">
+        <h1 title={title} className="min-w-0 truncate text-title leading-8">
           {title}
         </h1>
         {titleAction && <div className="shrink-0 print:hidden">{titleAction}</div>}
@@ -527,26 +547,177 @@ export function PageHeader({
   );
 }
 
-/** Vacío con salida: qué es esta sección y la acción para empezar. */
+/**
+ * El único vacío: qué es esta sección y la acción para empezar. Sin borde punteado (el punteado trigo
+ * significa "pendiente" en la marca). `compact` para vacíos dentro de una sección.
+ */
 export function EmptyState({
   title,
   children,
   action,
+  compact = false,
   className = "",
 }: {
-  title: string;
+  title?: string;
   /** Una o dos líneas que explican para qué sirve. */
   children?: ReactNode;
   action?: ReactNode;
+  compact?: boolean;
   className?: string;
 }) {
   return (
-    <div className={`flex flex-col items-start gap-3 rounded-lg border border-dashed border-linea p-5 ${className}`}>
+    <div className={`flex flex-col items-start gap-3 ${compact ? "py-4" : "py-8"} ${className}`}>
       <div className="flex flex-col gap-1">
-        <p className="text-[18px] leading-6 font-medium text-surco">{title}</p>
-        {children && <div className="text-sm text-tinta-2">{children}</div>}
+        {title && <p className={`font-medium text-surco ${compact ? "text-body" : "text-section"}`}>{title}</p>}
+        {children && <div className="text-meta text-tinta-2 sm:text-sm">{children}</div>}
       </div>
       {action}
+    </div>
+  );
+}
+
+// ---------- Marco de página ----------
+
+const WIDTH = { read: "max-w-3xl", data: "max-w-6xl", full: "" } as const;
+
+/**
+ * Envoltorio de toda pantalla del producto: alineado a la izquierda y con el mismo padding, para que el
+ * título quede en la misma posición en toda la app. `read` para formularios y ajustes, `data` para listas y tablas.
+ */
+export function Page({
+  width = "read",
+  back,
+  title,
+  titleAction,
+  primary,
+  menu,
+  className = "gap-5",
+  children,
+}: {
+  width?: "read" | "data" | "full";
+  back?: { to: string; label: string };
+  title?: string;
+  titleAction?: ReactNode;
+  primary?: ReactNode;
+  menu?: ReactNode;
+  className?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div className={`flex w-full min-w-0 flex-col px-4 py-4 lg:px-10 lg:py-8 ${WIDTH[width]} ${className}`}>
+      {back && (
+        <Link to={back.to} className="inline-flex w-fit items-center gap-1.5 text-meta text-tinta-2 hover:text-surco print:hidden">
+          <ArrowLeft size={14} aria-hidden />
+          {back.label}
+        </Link>
+      )}
+      {title && <PageHeader title={title} titleAction={titleAction} primary={primary} menu={menu} />}
+      {children}
+    </div>
+  );
+}
+
+/** Fila de filtros que envuelve; lo que va en `actions` queda a la derecha. */
+export function FilterBar({ children, actions }: { children: ReactNode; actions?: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-end gap-2 print:hidden">
+      {children}
+      {actions && <div className="ml-auto flex items-center gap-2">{actions}</div>}
+    </div>
+  );
+}
+
+// ---------- Tabla de datos ----------
+
+export interface Column<T> {
+  id: string;
+  header: ReactNode;
+  align?: "left" | "right";
+  cell: (row: T) => ReactNode;
+  /** Con comparador, el encabezado ordena al hacer clic. */
+  sort?: (a: T, b: T) => number;
+  /** Oculta la columna bajo ese punto de corte. */
+  hideBelow?: "sm" | "md" | "lg";
+  width?: string;
+}
+
+const HIDE = { sm: "hidden sm:table-cell", md: "hidden md:table-cell", lg: "hidden lg:table-cell" } as const;
+
+export function DataTable<T>({
+  columns,
+  rows,
+  rowKey,
+  onRowClick,
+  empty,
+  caption,
+}: {
+  columns: Column<T>[];
+  rows: T[];
+  rowKey: (row: T) => string;
+  onRowClick?: (row: T) => void;
+  empty?: ReactNode;
+  /** Descripción para lectores de pantalla. */
+  caption?: string;
+}) {
+  const [sort, setSort] = useState<{ id: string; dir: 1 | -1 } | null>(null);
+  const col = sort && columns.find((c) => c.id === sort.id);
+  const shown = col?.sort && sort ? [...rows].sort((a, b) => col.sort!(a, b) * sort.dir) : rows;
+  if (rows.length === 0 && empty) return <>{empty}</>;
+  const cell = (c: Column<T>, extra = "") =>
+    `${c.align === "right" ? "num text-right" : "text-left"} ${c.hideBelow ? HIDE[c.hideBelow] : ""} ${extra}`;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse text-sm">
+        {caption && <caption className="sr-only">{caption}</caption>}
+        <thead>
+          <tr className="border-b border-linea">
+            {columns.map((c, i) => {
+              const active = sort?.id === c.id;
+              return (
+                <th
+                  key={c.id}
+                  scope="col"
+                  aria-sort={c.sort ? (active ? (sort.dir === 1 ? "ascending" : "descending") : "none") : undefined}
+                  style={c.width ? { width: c.width } : undefined}
+                  className={`h-10 px-3 text-meta font-medium whitespace-nowrap text-tinta-2 ${cell(c, i === 0 ? "sticky left-0 bg-lino" : "")}`}
+                >
+                  {c.sort ? (
+                    <button
+                      type="button"
+                      onClick={() => setSort(active && sort.dir === -1 ? null : { id: c.id, dir: active ? -1 : 1 })}
+                      className="inline-flex cursor-pointer items-center gap-1 hover:text-surco"
+                    >
+                      {c.header}
+                      <ChevronDown
+                        size={12}
+                        aria-hidden
+                        className={`transition-opacity ${active ? "opacity-100" : "opacity-0"} ${active && sort.dir === 1 ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                  ) : (
+                    c.header
+                  )}
+                </th>
+              );
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {shown.map((r) => (
+            <tr
+              key={rowKey(r)}
+              onClick={onRowClick && (() => onRowClick(r))}
+              className={`group h-11 border-b border-linea ${onRowClick ? "cursor-pointer hover:bg-surco/[0.03]" : ""}`}
+            >
+              {columns.map((c, i) => (
+                <td key={c.id} className={`px-3 ${cell(c, i === 0 ? "sticky left-0 bg-lino font-medium" : "")}`}>
+                  {c.cell(r)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

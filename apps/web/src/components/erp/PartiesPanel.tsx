@@ -35,14 +35,16 @@ export function PartiesPanel() {
   return (
     <MasterPanel<Party>
       path="parties"
+      exportName="proveedores-y-clientes"
+      empty={{ title: t("ui.emptyPartiesTitle"), body: t("ui.emptyPartiesBody") }}
       newLabel={t("ui.partyNew")}
       name={(p) => p.name}
       fields={fields}
       columns={[
         { header: t("ui.partyName"), cell: (p) => <span className="font-medium">{p.name}</span> },
-        { header: t("ui.partyRuc"), cell: (p) => p.ruc ?? "" },
+        { header: t("ui.partyRuc"), hideBelow: "sm", cell: (p) => p.ruc ?? "" },
         { header: t("ui.partyKind"), cell: (p) => tk(`ui.partyKind_${p.kind}`) },
-        { header: t("ui.partyPhone"), cell: (p) => p.phone ?? "" },
+        { header: t("ui.partyPhone"), hideBelow: "md", cell: (p) => p.phone ?? "" },
       ]}
     />
   );

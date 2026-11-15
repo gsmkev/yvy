@@ -22,9 +22,9 @@ import { download } from "../../lib/exports";
 import { fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
-import { Button, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../ui";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { Button, DataTable, ErrorBox, Field, Input, Modal, SectionHead, Select, Spinner, toast, type Column } from "../ui";
 import { HeaderActions } from "./adminSlot";
-import { ExportableTable } from "../ExportableTable";
 
 interface Saved {
   id: string;
@@ -110,165 +110,178 @@ export function ExportPanel() {
     const blob = new Blob([cfg.bom ? "﻿" : "", text], { type: "text/csv;charset=utf-8" });
     download(blob, `${dataset}-${from}_${to}.${cfg.separator === "tab" ? "txt" : "csv"}`);
   };
+  const check = "h-4 w-4 shrink-0 cursor-pointer";
+  const taxCols: Column<ExportDoc>[] = [
+    { id: "date", header: t("ui.costDate"), cell: (d) => <span className="whitespace-nowrap">{d.date}</span> },
+    {
+      id: "party",
+      header: t("ui.expColParty"),
+      cell: (d) => (
+        <>
+          {d.party || "—"}
+          <span className="block text-meta font-normal text-tinta-2">
+            {d.concept}
+            {d.number ? ` · ${d.number}` : ""}
+          </span>
+        </>
+      ),
+    },
+    { id: "amount", header: t("ui.costAmount"), align: "right", cell: (d) => fmtGs(d.amountPyg) },
+    {
+      id: "status",
+      header: t("ui.expColTax"),
+      hideBelow: "sm",
+      cell: (d) => <span className="text-tinta-2">{d.gross10 === null && d.gross5 === null && d.exempt === null ? t("ui.expTaxNone") : taxMismatch(d) ? t("ui.expTaxMismatch") : t("ui.expTaxLoaded")}</span>,
+    },
+    {
+      id: "_actions",
+      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      align: "right",
+      cell: (d) => (
+        <Button variant="quiet" size="sm" onClick={() => setTaxing(d)}>
+          {t("ui.expTaxEdit")}
+        </Button>
+      ),
+    },
+  ];
   return (
-    <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Field label={t("ui.expDataset")}>
-          <Select value={dataset} onChange={(e) => changeDataset(e.target.value as ExportDataset)} options={EXPORT_DATASETS.map((d) => ({ value: d, label: tk(`ui.expDataset_${d}`) }))} />
-        </Field>
-        <Field label={t("ui.costFrom")}>
-          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-        </Field>
-        <Field label={t("ui.costTo")}>
-          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-        </Field>
-        <Field label={t("ui.expFormat")}>
-          <Select
-            value={picked}
-            onChange={(e) => choose(e.target.value)}
-            options={[
-              { value: "", label: t("ui.expCustom") },
-              ...presets.map((p) => ({ value: p.id, label: tk(`ui.expPreset_${p.id}`) })),
-              ...mine.map((x) => ({ value: x.id, label: x.name })),
-            ]}
-          />
-        </Field>
+    <div className="flex flex-col gap-8">
+      <HeaderActions>
+        <Button variant="primary" disabled={rows.length === 0} title={rows.length === 0 ? t("ui.expEmpty") : undefined} onClick={downloadFile}>
+          {t("ui.expDownload", { n: fmtNum(rows.length) })}
+        </Button>
+      </HeaderActions>
+      <div className={`grid gap-x-10 gap-y-8 ${rows.length > 0 ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]" : ""}`}>
+        <div className={`flex min-w-0 flex-col gap-8 ${rows.length > 0 ? "" : "max-w-3xl"}`}>
+          <section className="flex flex-col gap-3" aria-labelledby="exp-what">
+            <div id="exp-what">
+              <SectionHead title={t("ui.expSecWhat")} />
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="sm:col-span-3">
+                <Field label={t("ui.expDatasetLabel")}>
+                  <Select value={dataset} onChange={(e) => changeDataset(e.target.value as ExportDataset)} options={EXPORT_DATASETS.map((d) => ({ value: d, label: tk(`ui.expDataset_${d}`) }))} />
+                </Field>
+              </div>
+              <Field label={t("ui.costFrom")}>
+                <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+              </Field>
+              <Field label={t("ui.costTo")}>
+                <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+              </Field>
+            </div>
+            {data.isLoading && <Spinner />}
+            {data.error && <ErrorBox error={data.error} />}
+            {data.data && rows.length === 0 && <p className="text-sm text-tinta-2">{t("ui.expEmptyReason")}</p>}
+            {data.data?.truncated && <p className="text-meta text-tinta-2">{t("ui.acctTruncated")}</p>}
+          </section>
+
+          <section className="flex flex-col gap-3" aria-labelledby="exp-format">
+            <div id="exp-format">
+              <SectionHead title={t("ui.expSecFormat")} />
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <Field label={t("ui.expFormat")}>
+                  <Select
+                    value={picked}
+                    onChange={(e) => choose(e.target.value)}
+                    options={[
+                      { value: "", label: t("ui.expCustom") },
+                      ...presets.map((p) => ({ value: p.id, label: tk(`ui.expPreset_${p.id}`) })),
+                      ...mine.map((x) => ({ value: x.id, label: x.name })),
+                    ]}
+                  />
+                </Field>
+              </div>
+              <Field label={t("ui.expSeparator")}>
+                <Select value={cfg.separator} onChange={(e) => set("separator", e.target.value as ExportConfig["separator"])} options={(Object.keys(SEPARATORS) as (keyof typeof SEPARATORS)[]).map((k) => ({ value: k, label: tk(`ui.expSeparator_${k}`) }))} />
+              </Field>
+              <Field label={t("ui.expDateFormat")}>
+                <Select value={cfg.dateFormat} onChange={(e) => set("dateFormat", e.target.value as ExportConfig["dateFormat"])} options={DATE_FORMATS.map((f) => ({ value: f, label: `${tk(`ui.expDate_${f}`)} (${formatExportDate("2026-11-05", f)})` }))} />
+              </Field>
+              <Field label={t("ui.expDecimal")}>
+                <Select value={cfg.decimal} onChange={(e) => set("decimal", e.target.value as ExportConfig["decimal"])} options={[{ value: ",", label: t("ui.expComma") }, { value: ".", label: t("ui.expDot") }]} />
+              </Field>
+              <Field label={t("ui.expThousands")}>
+                <Select
+                  value={cfg.thousands}
+                  onChange={(e) => set("thousands", e.target.value as ExportConfig["thousands"])}
+                  options={[{ value: "", label: t("ui.expNone") }, { value: ".", label: t("ui.expDot") }, { value: ",", label: t("ui.expComma") }, { value: " ", label: t("ui.expSpace") }]}
+                />
+              </Field>
+            </div>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+              {(["header", "bom", "quoteAll"] as const).map((k) => (
+                <label key={k} className="flex cursor-pointer items-center gap-2">
+                  <input type="checkbox" className={check} checked={cfg[k]} onChange={(e) => set(k, e.target.checked)} />
+                  {t(`ui.expOpt_${k}`)}
+                </label>
+              ))}
+            </div>
+            <p className="text-meta text-tinta-2">{t("ui.expNumbersHint")}</p>
+            <div className="flex flex-wrap items-end gap-2">
+              <Field label={t("ui.expFormatName")}>
+                <Input value={name} maxLength={80} onChange={(e) => setName(e.target.value)} />
+              </Field>
+              <Button disabled={!name.trim() || save.isPending} title={!name.trim() ? t("ui.expNameFirst") : undefined} onClick={() => save.mutate()}>
+                {t("ui.expSaveFormat")}
+              </Button>
+              {saved.data?.some((x) => x.id === picked) && (
+                <Button variant="quiet" onClick={() => remove.mutate(picked)}>
+                  {t("ui.expDeleteFormat")}
+                </Button>
+              )}
+            </div>
+            {save.error ? <ErrorBox error={save.error} /> : null}
+          </section>
+
+          <section className="flex flex-col gap-3" aria-labelledby="exp-cols">
+            <div id="exp-cols">
+              <SectionHead title={t("ui.expColumns")} count={cfg.columns.length} />
+            </div>
+            <ul className="divide-y divide-linea border-y border-linea text-sm">
+              {cfg.columns.map((c, i) => (
+                <li key={c.key} className="flex items-center gap-2 py-1.5">
+                  <input type="checkbox" className={check} aria-label={c.key} checked onChange={() => cfg.columns.length > 1 && set("columns", cfg.columns.filter((x) => x.key !== c.key))} />
+                  <Input aria-label={t("ui.expColumnLabel")} className="min-w-0 max-w-56 flex-1" value={c.label} maxLength={60} onChange={(e) => set("columns", cfg.columns.map((x) => (x.key === c.key ? { ...x, label: e.target.value } : x)))} />
+                  <span className="hidden min-w-0 truncate text-meta text-tinta-2 md:inline">{available.find((a) => a.key === c.key)?.label}</span>
+                  <span className="ml-auto flex shrink-0 gap-1">
+                    <Button variant="quiet" size="sm" icon={ChevronUp} disabled={i === 0} onClick={() => move(i, -1)} aria-label={t("ui.expUp")} title={t("ui.expUp")} />
+                    <Button variant="quiet" size="sm" icon={ChevronDown} disabled={i === cfg.columns.length - 1} onClick={() => move(i, 1)} aria-label={t("ui.expDown")} title={t("ui.expDown")} />
+                  </span>
+                </li>
+              ))}
+              {rest.map((c) => (
+                <li key={c.key} className="flex items-center gap-2 py-1.5 text-tinta-2">
+                  <input type="checkbox" className={check} aria-label={c.key} checked={false} onChange={() => set("columns", [...cfg.columns, { key: c.key, label: c.label }])} />
+                  <span>{c.label}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+
+        {rows.length > 0 && (
+          <aside className="min-w-0 lg:sticky lg:top-4 lg:self-start" aria-labelledby="exp-prev">
+            <div id="exp-prev">
+              <SectionHead title={t("ui.expPreview")} />
+            </div>
+            <pre className="num mt-3 overflow-x-auto rounded-md border border-linea bg-papel p-3 text-xs">{preview}</pre>
+          </aside>
+        )}
       </div>
 
-      <section className="flex flex-col gap-3" aria-labelledby="exp-opts">
-        <h2 id="exp-opts" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
-          {t("ui.expOptions")}
-        </h2>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Field label={t("ui.expSeparator")}>
-            <Select value={cfg.separator} onChange={(e) => set("separator", e.target.value as ExportConfig["separator"])} options={(Object.keys(SEPARATORS) as (keyof typeof SEPARATORS)[]).map((k) => ({ value: k, label: tk(`ui.expSeparator_${k}`) }))} />
-          </Field>
-          <Field label={t("ui.expDateFormat")}>
-            <Select value={cfg.dateFormat} onChange={(e) => set("dateFormat", e.target.value as ExportConfig["dateFormat"])} options={DATE_FORMATS.map((f) => ({ value: f, label: `${tk(`ui.expDate_${f}`)} (${formatExportDate("2026-11-05", f)})` }))} />
-          </Field>
-          <Field label={t("ui.expDecimal")}>
-            <Select value={cfg.decimal} onChange={(e) => set("decimal", e.target.value as ExportConfig["decimal"])} options={[{ value: ",", label: t("ui.expComma") }, { value: ".", label: t("ui.expDot") }]} />
-          </Field>
-          <Field label={t("ui.expThousands")}>
-            <Select
-              value={cfg.thousands}
-              onChange={(e) => set("thousands", e.target.value as ExportConfig["thousands"])}
-              options={[{ value: "", label: t("ui.expNone") }, { value: ".", label: t("ui.expDot") }, { value: ",", label: t("ui.expComma") }, { value: " ", label: t("ui.expSpace") }]}
-            />
-          </Field>
-        </div>
-        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-          {(["header", "bom", "quoteAll"] as const).map((k) => (
-            <label key={k} className="flex cursor-pointer items-center gap-2">
-              <input type="checkbox" checked={cfg[k]} onChange={(e) => set(k, e.target.checked)} />
-              {t(`ui.expOpt_${k}`)}
-            </label>
-          ))}
-        </div>
-        <p className="text-xs text-tinta-2">{t("ui.expNumbersHint")}</p>
-      </section>
-
-      <section className="flex flex-col gap-2" aria-labelledby="exp-cols">
-        <h2 id="exp-cols" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
-          {t("ui.expColumns")}
-        </h2>
-        <ul className="divide-y divide-linea border-b border-linea text-sm">
-          {cfg.columns.map((c, i) => (
-            <li key={c.key} className="flex items-center gap-2 py-1.5">
-              <input type="checkbox" aria-label={c.key} checked onChange={() => cfg.columns.length > 1 && set("columns", cfg.columns.filter((x) => x.key !== c.key))} />
-              <Input aria-label={t("ui.expColumnLabel")} className="max-w-56" value={c.label} maxLength={60} onChange={(e) => set("columns", cfg.columns.map((x) => (x.key === c.key ? { ...x, label: e.target.value } : x)))} />
-              <span className="text-tinta-2">{available.find((a) => a.key === c.key)?.label}</span>
-              <span className="ml-auto flex gap-1">
-                <Button variant="quiet" disabled={i === 0} onClick={() => move(i, -1)} aria-label={t("ui.expUp")}>
-                  {t("ui.expUp")}
-                </Button>
-                <Button variant="quiet" disabled={i === cfg.columns.length - 1} onClick={() => move(i, 1)} aria-label={t("ui.expDown")}>
-                  {t("ui.expDown")}
-                </Button>
-              </span>
-            </li>
-          ))}
-          {rest.map((c) => (
-            <li key={c.key} className="flex items-center gap-2 py-1.5 text-tinta-2">
-              <input type="checkbox" aria-label={c.key} checked={false} onChange={() => set("columns", [...cfg.columns, { key: c.key, label: c.label }])} />
-              <span>{c.label}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {dataset !== "cash" && (
-        <section className="flex flex-col gap-2" aria-labelledby="exp-tax">
-          <h2 id="exp-tax" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
-            {t("ui.expTaxTitle")}
-          </h2>
+      {dataset !== "cash" && docs.length > 0 && (
+        <section className="flex flex-col gap-3" aria-labelledby="exp-tax">
+          <div id="exp-tax">
+            <SectionHead title={t("ui.expTaxTitle")} count={docs.length} />
+          </div>
           <p className="text-sm text-tinta-2">{t("ui.expTaxIntro")}</p>
-          {docs.length > 0 && (
-            <>
-              <p className="text-sm">{missingTax > 0 ? t("ui.expTaxMissing", { n: missingTax }) : t("ui.expTaxComplete")}</p>
-              <div className="overflow-x-auto">
-                <ExportableTable name="comprobantes">
-                  <table className="w-full text-sm">
-                    <tbody>
-                      {docs.map((d) => (
-                        <tr key={`${d.docKind}-${d.docId}`} className="border-t border-linea">
-                          <td className="num py-2 pr-3">{d.date}</td>
-                          <td className="py-2 pr-3">
-                            <span className="font-medium">{d.party || "—"}</span>
-                            <span className="block text-xs text-tinta-2">
-                              {d.concept}
-                              {d.number ? ` · ${d.number}` : ""}
-                            </span>
-                          </td>
-                          <td className="num py-2 pr-3 text-right">{fmtGs(d.amountPyg)}</td>
-                          <td className="py-2 pr-3 text-xs text-tinta-2">
-                            {d.gross10 === null && d.gross5 === null && d.exempt === null ? t("ui.expTaxNone") : taxMismatch(d) ? t("ui.expTaxMismatch") : t("ui.expTaxLoaded")}
-                          </td>
-                          <td className="py-2 text-right">
-                            <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline" onClick={() => setTaxing(d)}>
-                              {t("ui.expTaxEdit")}
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </ExportableTable>
-              </div>
-            </>
-          )}
+          <p className="text-sm">{missingTax > 0 ? t("ui.expTaxMissing", { n: missingTax }) : t("ui.expTaxComplete")}</p>
+          <DataTable columns={taxCols} rows={docs} rowKey={(d) => `${d.docKind}-${d.docId}`} caption={t("ui.expTaxTitle")} />
         </section>
       )}
-
-      <section className="flex flex-col gap-2" aria-labelledby="exp-prev">
-        <h2 id="exp-prev" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
-          {t("ui.expPreview")}
-        </h2>
-        {data.isLoading && <Spinner />}
-        {data.error && <ErrorBox error={data.error} />}
-        {data.data && rows.length === 0 && <p className="text-sm text-tinta-2">{t("ui.expEmpty")}</p>}
-        {rows.length > 0 && <pre className="num overflow-x-auto rounded-md border border-linea bg-white p-3 text-xs">{preview}</pre>}
-        {data.data?.truncated && <p className="text-xs text-tinta-2">{t("ui.acctTruncated")}</p>}
-        <div className="flex flex-wrap items-end gap-3">
-          <HeaderActions>
-            <Button variant="primary" disabled={rows.length === 0} onClick={downloadFile}>
-              {t("ui.expDownload", { n: fmtNum(rows.length) })}
-            </Button>
-          </HeaderActions>
-          <Field label={t("ui.expFormatName")}>
-            <Input value={name} maxLength={80} onChange={(e) => setName(e.target.value)} />
-          </Field>
-          <Button disabled={!name.trim() || save.isPending} onClick={() => save.mutate()}>
-            {t("ui.expSaveFormat")}
-          </Button>
-          {saved.data?.some((x) => x.id === picked) && (
-            <Button variant="quiet" onClick={() => remove.mutate(picked)}>
-              {t("ui.expDeleteFormat")}
-            </Button>
-          )}
-        </div>
-        {save.error ? <ErrorBox error={save.error} /> : null}
-      </section>
       {taxing && <TaxModal doc={taxing} onClose={() => setTaxing(null)} />}
     </div>
   );

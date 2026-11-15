@@ -1,48 +1,58 @@
 /** Informe de riesgo climático de la estancia (C-10): heladas, lluvia frente a lo normal, sequías y focos de calor. */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { isFieldRole } from "@yvy/shared";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { CHART, type FarmRisk } from "@yvy/shared";
 import { ColumnChart, MonthlyRainChart } from "../components/charts";
-import { FarmPageHeader } from "../components/FarmPageHeader";
-import { Button, EmptyState, ErrorBox, Spinner, Stat } from "../components/ui";
+import { PageExport } from "../components/PageExport";
+import { Button, DataTable, EmptyState, ErrorBox, SectionHead, Spinner, Stat, Page, type Column } from "../components/ui";
 import { get } from "../lib/api";
 import { download } from "../lib/exports";
 import { fmtDate, fmtMm, fmtNum } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useFarm, useMe } from "../lib/queries";
 import { fireByMonth, fmtMmDd, rainByMonth, type RiskResponse } from "../lib/riskData";
-import { ExportableTable } from "../components/ExportableTable";
 
-function Section({ title, lead, children }: { title: string; lead?: string; children: React.ReactNode }) {
+function Section({ title, lead, wide = false, children }: { title: string; lead?: string; wide?: boolean; children: React.ReactNode }) {
   return (
-    <section className="border-t border-linea pt-6">
-      <h2 className="text-[18px] leading-6 font-semibold">{title}</h2>
-      {lead && <p className="mt-1 text-sm text-tinta-2">{lead}</p>}
-      <div className="mt-4 flex flex-col gap-5">{children}</div>
+    <section className={`flex min-w-0 flex-col gap-4 ${wide ? "@3xl:col-span-2" : ""}`}>
+      <div className="flex flex-col gap-1">
+        <SectionHead title={title} />
+        {lead && <p className="text-sm text-tinta-2">{lead}</p>}
+      </div>
+      {children}
     </section>
   );
 }
 
 const Grid = ({ children }: { children: React.ReactNode }) => (
-  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">{children}</div>
+  <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4 @3xl:grid-cols-2 @5xl:grid-cols-4">{children}</div>
 );
+
+type RainRow = ReturnType<typeof rainByMonth>[number];
 
 export function RiskReportBody({ r }: { r: FarmRisk }) {
   const rain = rainByMonth(r.rain);
   const fire = r.fire;
+  const rainCols: Column<RainRow>[] = [
+    { id: "m", header: t("ui.gaugesMonth"), cell: (m) => m.label },
+    { id: "recent", header: t("ui.riskRainRecent"), align: "right", cell: (m) => fmtMm(m.mm) },
+    { id: "normal", header: t("ui.riskRainNormal"), align: "right", cell: (m) => (m.normalMm === null ? "—" : fmtMm(m.normalMm)) },
+    {
+      id: "range",
+      header: t("ui.riskRainRange"),
+      align: "right",
+      hideBelow: "sm",
+      cell: (m) => (m.p20Mm === null || m.p80Mm === null ? "—" : `${Math.round(m.p20Mm)} a ${Math.round(m.p80Mm)} mm`),
+    },
+  ];
   return (
-    <>
+    <div className="@container grid gap-x-10 gap-y-8 @3xl:grid-cols-2">
       <Section title={t("ui.riskFrostTitle")} lead={t("ui.riskFrostLead", { c: r.frost.thresholdC })}>
         <Grid>
           <Stat label={t("ui.riskFrostMean")} value={fmtNum(r.frost.meanPerYear)} unit="días" />
-          <Stat
-            label={t("ui.riskFrostWorst")}
-            value={r.frost.worst ? r.frost.worst.days : "—"}
-            unit={r.frost.worst ? "días" : undefined}
-            note={r.frost.worst ? String(r.frost.worst.year) : undefined}
-          />
+          {r.frost.worst && <Stat label={t("ui.riskFrostWorst")} value={r.frost.worst.days} unit="días" note={String(r.frost.worst.year)} />}
           <Stat label={t("ui.riskFrostYears")} value={r.frost.yearsWithFrostPct} unit="%" />
           <Stat
             label={t("ui.riskFrostFirst")}
@@ -62,64 +72,33 @@ export function RiskReportBody({ r }: { r: FarmRisk }) {
         </div>
       </Section>
 
-      <Section title={t("ui.riskRainTitle")}>
-        <Stat label={t("ui.riskRainAnnual")} value={fmtNum(r.rain.annualMeanMm)} unit="mm" />
-        {rain.length > 0 ? (
-          <>
-            <MonthlyRainChart
-              ariaLabel={t("ui.riskRainTitle")}
-              labels={{ gauge: t("ui.riskRainRecent"), satellite: "", normal: t("ui.riskRainNormal") }}
-              months={rain.map((m) => ({ label: m.label, gauge: m.mm, sat: null, normal: m.normalMm }))}
-            />
-            <div className="overflow-x-auto">
-              <ExportableTable name="riesgo">
-                <table className="num w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-linea text-left text-tinta-2">
-                      <th className="py-1.5 pr-3 font-normal">{t("ui.gaugesMonth")}</th>
-                      <th className="px-3 py-1.5 text-right font-normal">{t("ui.riskRainRecent")}</th>
-                      <th className="px-3 py-1.5 text-right font-normal">{t("ui.riskRainNormal")}</th>
-                      <th className="py-1.5 pl-3 text-right font-normal">{t("ui.riskRainRange")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rain.map((m) => (
-                      <tr key={m.key} className="border-b border-linea/60">
-                        <td className="py-1.5 pr-3">{m.label}</td>
-                        <td className="px-3 py-1.5 text-right">{fmtMm(m.mm)}</td>
-                        <td className="px-3 py-1.5 text-right">
-                          {m.normalMm === null ? "—" : fmtMm(m.normalMm)}
-                        </td>
-                        <td className="py-1.5 pl-3 text-right">
-                          {m.p20Mm === null || m.p80Mm === null ? "—" : `${Math.round(m.p20Mm)} a ${Math.round(m.p80Mm)} mm`}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </ExportableTable>
-            </div>
-          </>
-        ) : null}
-      </Section>
-
       <Section title={t("ui.riskDryTitle")} lead={t("ui.riskDryLead", { mm: r.dry.thresholdMm })}>
         <Grid>
           <Stat label={t("ui.riskDryMean")} value={fmtNum(r.dry.meanLongestDays)} unit="días" />
-          <Stat
-            label={t("ui.riskDryWorst")}
-            value={r.dry.worst ? r.dry.worst.days : "—"}
-            unit={r.dry.worst ? "días" : undefined}
-            note={r.dry.worst ? String(r.dry.worst.year) : undefined}
-          />
+          {r.dry.worst && <Stat label={t("ui.riskDryWorst")} value={r.dry.worst.days} unit="días" note={String(r.dry.worst.year)} />}
           <Stat label={t("ui.riskDrySummer")} value={fmtNum(r.dry.summerMeanLongestDays)} unit="días" />
           <Stat label={t("ui.riskDrySpells")} value={fmtNum(r.dry.spells15PerYear)} />
         </Grid>
       </Section>
 
+      <Section title={t("ui.riskRainTitle")} wide>
+        <Stat label={t("ui.riskRainAnnual")} value={fmtNum(r.rain.annualMeanMm)} unit="mm" />
+        {rain.length > 0 ? (
+          <div className="grid items-start gap-x-10 gap-y-5 @3xl:grid-cols-2">
+            <MonthlyRainChart
+              ariaLabel={t("ui.riskRainTitle")}
+              labels={{ gauge: t("ui.riskRainRecent"), satellite: "", normal: t("ui.riskRainNormal") }}
+              months={rain.map((m) => ({ label: m.label, gauge: m.mm, sat: null, normal: m.normalMm }))}
+            />
+            <DataTable columns={rainCols} rows={rain} rowKey={(m) => m.key} caption={t("ui.riskRainTitle")} />
+          </div>
+        ) : null}
+      </Section>
+
       <Section
         title={t("ui.riskFireTitle")}
         lead={fire ? t("ui.riskFireLead", { km: fire.radiusKm, years: fire.years }) : undefined}
+        wide
       >
         {!fire ? (
           <p className="text-sm text-tinta-2">{t("ui.riskFireMissing")}</p>
@@ -127,12 +106,8 @@ export function RiskReportBody({ r }: { r: FarmRisk }) {
           <>
             <Grid>
               <Stat label={t("ui.riskFireTotal")} value={fire.total} />
-              <Stat
-                label={t("ui.riskFireNearest")}
-                value={fire.nearestKm === null ? "—" : fmtNum(fire.nearestKm)}
-                unit={fire.nearestKm === null ? undefined : "km"}
-              />
-              <Stat label={t("ui.riskFireLast")} value={fire.lastAt ? fmtDate(fire.lastAt) : "—"} />
+              {fire.nearestKm !== null && <Stat label={t("ui.riskFireNearest")} value={fmtNum(fire.nearestKm)} unit="km" />}
+              {fire.lastAt && <Stat label={t("ui.riskFireLast")} value={fmtDate(fire.lastAt)} />}
             </Grid>
             {fire.total === 0 ? (
               <p className="text-sm text-tinta-2">{t("ui.riskFireNone")}</p>
@@ -150,7 +125,7 @@ export function RiskReportBody({ r }: { r: FarmRisk }) {
           </>
         )}
       </Section>
-    </>
+    </div>
   );
 }
 
@@ -161,6 +136,7 @@ export function RiskPage() {
   const risk = useQuery({ queryKey: ["risk", farmId], queryFn: () => get<RiskResponse>(`/org/farms/${farmId}/risk`) });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const body = useRef<HTMLDivElement>(null);
   if (farm.isLoading || risk.isLoading) return <Spinner />;
   if (farm.error || !farm.data) return <ErrorBox error={farm.error} />;
   if (risk.error || !risk.data) return <ErrorBox error={risk.error} />;
@@ -184,31 +160,30 @@ export function RiskPage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 p-4 lg:p-6">
-      <div>
-        <FarmPageHeader
-          farmId={farmId}
-          farmName={f.name}
-          title={t("ui.riskTitle")}
-          primary={
-            canPdf ? (
-              <Button variant="primary" onClick={pdfFile} disabled={busy}>
-                {busy ? t("ui.riskPdfWorking") : t("ui.riskPdf")}
-              </Button>
-            ) : undefined
-          }
-        />
-        {report && computedAt !== null && <p className="text-sm text-tinta-2">{t("ui.riskComputed", { date: fmtDate(computedAt) })}</p>}
-      </div>
+    <Page
+      width="data"
+      className="gap-6"
+      back={{ to: `/estancias/${farmId}/informes`, label: t("ui.reportsBack") }}
+      title={t("ui.riskTitle")}
+      primary={
+        canPdf ? (
+          <Button variant="primary" onClick={pdfFile} disabled={busy}>
+            {busy ? t("ui.riskPdfWorking") : t("ui.riskPdf")}
+          </Button>
+        ) : undefined
+      }
+      menu={report ? <PageExport root={body} name={t("ui.riskTitle")} /> : undefined}
+    >
+      {report && computedAt !== null && <p className="-mt-3 text-sm text-tinta-2">{f.name} · {t("ui.riskComputed", { date: fmtDate(computedAt) })}</p>}
       {report === null ? (
         <EmptyState title={t("ui.riskPending")}>{t("ui.riskPendingHint")}</EmptyState>
       ) : (
-        <>
+        <div ref={body} className="flex flex-col gap-6">
           {error ? <ErrorBox error={error} /> : null}
           <RiskReportBody r={report} />
           <p className="text-xs text-tinta-2">{t("ui.riskIntro", { from: report.normalFrom, to: report.normalTo })}</p>
-        </>
+        </div>
       )}
-    </div>
+    </Page>
   );
 }

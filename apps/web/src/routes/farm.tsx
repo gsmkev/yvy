@@ -673,7 +673,7 @@ export function FarmPage() {
           </div>
         )}
         {mode !== "none" && mode !== "import" && !picking && (
-          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-md bg-surco px-4 py-2.5 text-sm text-lino shadow-lg">
+          <div className="anim-fade absolute bottom-12 left-1/2 max-w-[calc(100%-2rem)] flex -translate-x-1/2 items-center gap-3 rounded-md bg-surco px-4 py-2.5 text-sm text-lino shadow-lg">
             {mode === "poi" ? t("ui.clickMapForPoi") : t("ui.drawHint")}
             <button
               aria-label={t("ui.cancel")}

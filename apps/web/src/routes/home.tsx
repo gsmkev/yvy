@@ -74,7 +74,8 @@ export function HomePage() {
         <PageHeader
           title={t("ui.homeTitle")}
           primary={
-            canEdit ? (
+            // sin estancias, el estado vacío ya lleva el mismo botón: una sola acción primaria
+            canEdit && !(farms.data && list.length === 0 && !guide) ? (
               <Link to="/estancias/nueva">
                 <Button variant="primary">{t("ui.newFarm")}</Button>
               </Link>

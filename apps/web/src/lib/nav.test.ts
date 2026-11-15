@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildNav, type NavContext } from "./nav";
+import { buildNav, isMapPath, isReportsPath, type NavContext } from "./nav";
 
 const base: NavContext = { role: "owner", farms: 2, plots: 9, hasClients: false, isStaff: false, labs: true };
 const paths = (c: Partial<NavContext>) => {
@@ -37,5 +37,18 @@ describe("navegación lateral", () => {
     expect(paths({ farms: 0 })).not.toContain("/informes");
     expect(paths({ farms: null })).not.toContain("/informes");
     expect(paths({ role: "worker" })).not.toContain("/informes");
+  });
+});
+
+describe("sección activa", () => {
+  it("las pantallas de informes de la estancia no son el mapa", () => {
+    for (const s of ["informes", "parte", "riesgo", "eudr", "cambios", "pluviometros"]) {
+      expect(isReportsPath(`/estancias/f1/${s}`)).toBe(true);
+      expect(isMapPath(`/estancias/f1/${s}`)).toBe(false);
+    }
+    expect(isMapPath("/")).toBe(true);
+    expect(isMapPath("/estancias/f1")).toBe(true);
+    expect(isMapPath("/estancias/nueva")).toBe(true);
+    expect(isReportsPath("/cambios")).toBe(false);
   });
 });

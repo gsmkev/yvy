@@ -33,13 +33,20 @@ type Row = GaugeRow & { label: string };
 function GaugeSection({ name, months, season }: { name: string; months: GaugeRow[]; season: GaugeRow }) {
   const rows: Row[] = [...months.map((m) => ({ ...m, label: monthLabel(m.key) })), { ...season, label: t("ui.gaugesSeason") }];
   const noData = season.gaugeMm === null;
-  const cols: Column<Row>[] = [
+  const all: Column<Row>[] = [
     { id: "m", header: t("ui.gaugesMonth"), cell: (r) => <span className={r.key === "season" ? "font-semibold" : ""}>{r.label}</span> },
     { id: "gauge", header: t("ui.gauge"), align: "right", cell: (r) => mm(r.gaugeMm) },
     { id: "sat", header: t("ui.satelliteRain"), align: "right", cell: (r) => mm(r.satMm) },
     { id: "normal", header: t("ui.rainNormal"), align: "right", cell: (r) => mm(r.normalMm), hideBelow: "sm" },
     { id: "diff", header: t("ui.gaugesVsSat"), align: "right", cell: diff, hideBelow: "sm" },
   ];
+  const cols = all.filter((c) => {
+    // columnas sin ningún dato en la tabla no se muestran
+    if (c.id === "sat") return rows.some((r) => r.satMm !== null);
+    if (c.id === "normal") return rows.some((r) => r.normalMm !== null);
+    if (c.id === "diff") return rows.some((r) => gaugeVsSat(r) !== null);
+    return true;
+  });
   return (
     <section className="flex min-w-0 flex-col gap-3">
       <SectionHead title={name} />

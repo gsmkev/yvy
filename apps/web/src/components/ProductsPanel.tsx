@@ -41,12 +41,16 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
   if (q.error) return <ErrorBox error={q.error} />;
   const all = q.data ?? [];
   const list = all.filter((p) => !type || p.type === type);
+  // Ficha de la estancia: el panel es angosto, así que tipo, unidad y principio activo van bajo el nombre
+  const compact = !!farmId;
   const columns: Column<Product>[] = [
-    { id: "name", header: t("ui.productName"), cell: (p) => (<>{p.name}<span className="block text-xs font-normal text-tinta-2 sm:hidden">{tk(`fields.productType_${p.type}`)} · {tk(`fields.productUnit_${p.unit}`)}</span></>), sort: (a, b) => a.name.localeCompare(b.name) },
-    { id: "type", header: t("ui.productType"), hideBelow: "sm", cell: (p) => tk(`fields.productType_${p.type}`) },
-    { id: "unit", header: t("ui.productUnit"), hideBelow: "sm", cell: (p) => tk(`fields.productUnit_${p.unit}`) },
-    ...(all.some((p) => p.activeIngredient) ? [{ id: "ai", header: t("ui.productActiveIngredient"), hideBelow: "md", cell: (p: Product) => <span className="text-tinta-2">{p.activeIngredient ?? ""}</span> } satisfies Column<Product>] : []),
-    ...(all.some((p) => p.withdrawalDays !== null) ? [{ id: "wd", header: t("ui.productWithdrawal"), align: "right", hideBelow: "lg", cell: (p: Product) => (p.withdrawalDays === null ? "" : p.withdrawalDays) } satisfies Column<Product>] : []),
+    { id: "name", header: t("ui.productName"), cell: (p) => (<>{p.name}<span className={`block text-xs font-normal text-tinta-2 ${compact ? "" : "sm:hidden"}`}>{tk(`fields.productType_${p.type}`)} · {tk(`fields.productUnit_${p.unit}`)}{compact && p.activeIngredient ? ` · ${p.activeIngredient}` : ""}</span></>), sort: (a, b) => a.name.localeCompare(b.name) },
+    ...(compact ? [] : [
+      { id: "type", header: t("ui.productType"), hideBelow: "sm", cell: (p: Product) => tk(`fields.productType_${p.type}`) } satisfies Column<Product>,
+      { id: "unit", header: t("ui.productUnit"), hideBelow: "sm", cell: (p: Product) => tk(`fields.productUnit_${p.unit}`) } satisfies Column<Product>,
+    ]),
+    ...(!compact && all.some((p) => p.activeIngredient) ? [{ id: "ai", header: t("ui.productActiveIngredient"), hideBelow: "md", cell: (p: Product) => <span className="text-tinta-2">{p.activeIngredient ?? ""}</span> } satisfies Column<Product>] : []),
+    ...(all.some((p) => p.withdrawalDays !== null) ? [{ id: "wd", header: t("ui.productWithdrawal"), align: "right", hideBelow: compact ? undefined : "lg", cell: (p: Product) => (p.withdrawalDays === null ? "" : p.withdrawalDays) } satisfies Column<Product>] : []),
     ...((ranges.data ?? []).some((r) => r.min !== null || r.max !== null)
       ? [{ id: "dose", header: t("ui.productDoseCol"), hideBelow: "lg", cell: (p: Product) => <span className="text-tinta-2">{doseShown(p, ranges.data) ?? ""}</span> } satisfies Column<Product>]
       : []),
@@ -55,7 +59,7 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
       : []),
   ];
   const newButton = (
-    <Button variant="primary" onClick={() => setEditing("new")}>
+    <Button variant={farmId ? "secondary" : "primary"} onClick={() => setEditing("new")}>
       {t("ui.productNew")}
     </Button>
   );

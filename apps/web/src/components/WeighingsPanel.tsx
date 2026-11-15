@@ -4,7 +4,7 @@ import type { WeighingsResponse, WeightSeries } from "@yvy/shared";
 import { get } from "../lib/api";
 import { fmtDay } from "../lib/format";
 import { t } from "../lib/i18n";
-import { Empty, ErrorBox, Spinner } from "./ui";
+import { DataTable, Empty, ErrorBox, Spinner } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
 const dec1 = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 1 });
@@ -14,36 +14,21 @@ export const adgText = (v: number | null) => (v === null ? "—" : `${dec2.forma
 
 function SeriesTable({ rows, firstHeader }: { rows: WeightSeries[]; firstHeader: string }) {
   return (
-    <div className="overflow-x-auto">
-      <ExportableTable name="pesadas">
-        <table className="w-full min-w-[640px] text-sm">
-          <thead>
-            <tr className="text-left text-xs text-tinta-2">
-              <th className="pb-2 font-medium">{firstHeader}</th>
-              <th className="pb-2 text-right font-medium">{t("ui.weighCount")}</th>
-              <th className="pb-2 text-right font-medium">{t("ui.weighFirst")}</th>
-              <th className="pb-2 text-right font-medium">{t("ui.weighLast")}</th>
-              <th className="pb-2 text-right font-medium">{t("ui.weighDays")}</th>
-              <th className="pb-2 text-right font-medium">{t("ui.weighAdg")}</th>
-              <th className="pb-2 text-right font-medium">{t("ui.weighAdgRecent")}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-linea border-t border-linea">
-            {rows.map((r) => (
-              <tr key={r.key}>
-                <td className="py-2.5 font-medium">{r.label ?? t("ui.weighNoGroup")}</td>
-                <td className="num py-2.5 text-right">{r.points.length}</td>
-                <td className="num py-2.5 text-right">{r.firstKg === null ? "—" : `${dec1.format(r.firstKg)} kg · ${fmtDay(r.firstAt!)}`}</td>
-                <td className="num py-2.5 text-right">{r.lastKg === null ? "—" : `${dec1.format(r.lastKg)} kg · ${fmtDay(r.lastAt!)}`}</td>
-                <td className="num py-2.5 text-right">{r.days === null ? "—" : dec1.format(r.days)}</td>
-                <td className="num py-2.5 text-right font-medium">{adgText(r.adgKg)}</td>
-                <td className="num py-2.5 text-right text-tinta-2">{adgText(r.lastAdgKg)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </ExportableTable>
-    </div>
+    <ExportableTable name="pesadas">
+      <DataTable<WeightSeries>
+        rows={rows}
+        rowKey={(r) => r.key}
+        columns={[
+          { id: "label", header: firstHeader, cell: (r) => <span className="font-medium">{r.label ?? t("ui.weighNoGroup")}</span> },
+          { id: "count", header: t("ui.weighCount"), align: "right", cell: (r) => r.points.length },
+          { id: "first", header: t("ui.weighFirst"), align: "right", cell: (r) => (r.firstKg === null ? "—" : `${dec1.format(r.firstKg)} kg · ${fmtDay(r.firstAt!)}`) },
+          { id: "last", header: t("ui.weighLast"), align: "right", cell: (r) => (r.lastKg === null ? "—" : `${dec1.format(r.lastKg)} kg · ${fmtDay(r.lastAt!)}`) },
+          { id: "days", header: t("ui.weighDays"), align: "right", cell: (r) => (r.days === null ? "—" : dec1.format(r.days)) },
+          { id: "adg", header: t("ui.weighAdg"), align: "right", cell: (r) => <span className="font-medium">{adgText(r.adgKg)}</span> },
+          { id: "recent", header: t("ui.weighAdgRecent"), align: "right", cell: (r) => <span className="text-tinta-2">{adgText(r.lastAdgKg)}</span> },
+        ]}
+      />
+    </ExportableTable>
   );
 }
 

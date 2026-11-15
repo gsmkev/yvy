@@ -60,7 +60,7 @@ export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots
           />
         )}
         {canEdit && (
-          <Button variant="primary" onClick={() => setCreating(true)}>
+          <Button variant="secondary" onClick={() => setCreating(true)}>
             {t("ui.seasonNew")}
           </Button>
         )}

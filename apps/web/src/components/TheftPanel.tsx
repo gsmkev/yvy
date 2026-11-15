@@ -4,7 +4,7 @@ import { HERD_CATEGORIES, type TheftResponse } from "@yvy/shared";
 import { get } from "../lib/api";
 import { fmtDay } from "../lib/format";
 import { t, tk } from "../lib/i18n";
-import { Empty, ErrorBox, Spinner } from "./ui";
+import { DataTable, Empty, ErrorBox, Spinner } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
 export function TheftPanel({ farmId }: { farmId: string }) {
@@ -32,38 +32,28 @@ export function TheftPanel({ farmId }: { farmId: string }) {
         </p>
       )}
       {d.truncated && <p className="text-sm text-tinta-2">{t("ui.herdTruncated")}</p>}
-      <div className="overflow-x-auto">
-        <ExportableTable name="abigeato">
-          <table className="w-full min-w-[560px] text-sm">
-            <thead>
-              <tr className="text-left text-xs text-tinta-2">
-                <th className="pb-2 font-medium">{t("ui.theftDate")}</th>
-                <th className="pb-2 font-medium">{t("ui.plot")}</th>
-                <th className="pb-2 font-medium">{t("fields.herdCategory")}</th>
-                <th className="pb-2 text-right font-medium">{t("fields.head")}</th>
-                <th className="pb-2 font-medium">{t("ui.theftReport")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-linea border-t border-linea">
-              {d.rows.map((r) => (
-                <tr key={r.id}>
-                  <td className="num py-2.5">{fmtDay(r.capturedAt)}</td>
-                  <td className="py-2.5 font-medium">{r.plotName ?? "—"}</td>
-                  <td className="py-2.5">{tk(`fields.herd_${r.category}`)}</td>
-                  <td className="num py-2.5 text-right">{r.head}</td>
-                  <td className="num py-2.5">
-                    {r.policeReport ? (
-                      `${r.policeReport}${r.reportedAt ? ` · ${fmtDay(r.reportedAt)}` : ""}`
-                    ) : (
-                      <span className="text-peligro">{t("ui.theftNoReport")}</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </ExportableTable>
-      </div>
+      <ExportableTable name="abigeato">
+        <DataTable<(typeof d.rows)[number]>
+          rows={d.rows}
+          rowKey={(r) => r.id}
+          columns={[
+            { id: "date", header: t("ui.theftDate"), cell: (r) => <span className="num">{fmtDay(r.capturedAt)}</span> },
+            { id: "plot", header: t("ui.plot"), cell: (r) => <span className="font-medium">{r.plotName ?? "—"}</span> },
+            { id: "cat", header: t("fields.herdCategory"), cell: (r) => tk(`fields.herd_${r.category}`) },
+            { id: "head", header: t("fields.head"), align: "right", cell: (r) => r.head },
+            {
+              id: "report",
+              header: t("ui.theftReport"),
+              cell: (r) =>
+                r.policeReport ? (
+                  <span className="num">{`${r.policeReport}${r.reportedAt ? ` · ${fmtDay(r.reportedAt)}` : ""}`}</span>
+                ) : (
+                  <span className="text-peligro">{t("ui.theftNoReport")}</span>
+                ),
+            },
+          ]}
+        />
+      </ExportableTable>
       <p className="text-xs text-tinta-2">{t("ui.theftHint")}</p>
     </div>
   );

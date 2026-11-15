@@ -76,7 +76,7 @@ export function TasksPanel({
     byAssignee.set(x.assigneeName ?? x.assigneeId, [...(byAssignee.get(x.assigneeName ?? x.assigneeId) ?? []), x]);
 
   const newButton = (
-    <Button variant="primary" icon={Plus} onClick={() => setCreating(true)}>
+    <Button variant={title ? "primary" : "secondary"} icon={Plus} onClick={() => setCreating(true)}>
       {t("ui.newTask")}
     </Button>
   );
@@ -121,9 +121,7 @@ export function TasksPanel({
           { id: "overdue", label: t("ui.filterOverdue"), count: nOverdue },
         ]}
       />
-      {!sorted.length && (
-        <EmptyState title={t("ui.noTasks")} action={<Button onClick={() => setCreating(true)}>{t("ui.newTask")}</Button>} />
-      )}
+      {!sorted.length && <EmptyState title={t("ui.noTasks")} />}
       {[...byAssignee.entries()].map(([name, list]) => (
         <section key={name} aria-label={name}>
           <h3 className="mb-1 flex items-baseline gap-2 text-sm font-semibold">

@@ -8,7 +8,7 @@ import { Preferences } from "../../components/Preferences";
 import { PlanPanel } from "../../components/PlanPanel";
 import { AdminTotpPolicy, TotpSection } from "../../components/Totp";
 import { SectionNav } from "../../components/SectionNav";
-import { Button, ConfirmModal, Page, PageHeader, SectionHead, Spinner, toast } from "../../components/ui";
+import { Button, ConfirmModal, Page, SectionHead, Spinner, toast } from "../../components/ui";
 import { get, post } from "../../lib/api";
 import { t, type MessageKey } from "../../lib/i18n";
 import { useMe } from "../../lib/queries";
@@ -139,7 +139,8 @@ export function AccountPage() {
     }
   };
   return (
-    <Page width="data" className="gap-4 lg:flex-row lg:gap-10">
+    <Page width="data" title={t("ui.accountTitle")} className="gap-4 lg:gap-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:gap-10">
       <SectionNav
         label={t("ui.accountTitle")}
         value={current.id}
@@ -155,8 +156,8 @@ export function AccountPage() {
           .filter((g) => g.items.length > 0)}
       />
       <div className="flex min-w-0 max-w-2xl flex-1 flex-col gap-5">
-        <PageHeader title={t("ui.accountTitle")} />
         <div key={current.id}>{current.render()}</div>
+      </div>
       </div>
       {confirming && (
         <ConfirmModal

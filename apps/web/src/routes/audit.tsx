@@ -25,7 +25,7 @@ export function AuditPage() {
   return (
     <Page width="data" title={t("ui.auditTitle")} back={{ to: "/equipo", label: t("ui.teamTitle") }}>
       <p className="-mt-2 text-sm text-tinta-2">{t("ui.auditIntro")}</p>
-      <FilterBar>
+      {(entity || rows.length > 0) && <FilterBar>
         <div className="w-56">
           <Select
             aria-label={t("ui.auditFilter")}
@@ -34,7 +34,7 @@ export function AuditPage() {
             options={ENTITIES.map((e) => ({ value: e, label: e ? tk(`ui.auditEntity_${e}`) : t("ui.auditAll") }))}
           />
         </div>
-      </FilterBar>
+      </FilterBar>}
       {q.isPending && me.data?.role === "owner" && <Spinner />}
       {q.error && <ErrorBox error={q.error} />}
       {q.data && !rows.length ? <EmptyState title={t("ui.auditEmpty")} /> : <AuditList rows={rows} />}

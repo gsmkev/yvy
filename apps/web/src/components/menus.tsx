@@ -1,7 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { ChevronDown, MoreHorizontal } from "lucide-react";
 import { t } from "../lib/i18n";
-import { placeMenu, visibleArea, type Placement } from "../lib/menuPlacement";
+import { placeMenu, type Placement } from "../lib/menuPlacement";
 import { toast } from "./ui";
 
 export interface MenuItem {
@@ -46,13 +46,32 @@ export function ActionMenu({
   const menu = useRef<HTMLDivElement>(null);
   const menuId = useId();
   const [place, setPlace] = useState<Placement>({ align, up });
+  // Posición fija respecto de la ventana: así una tabla con pocas filas (que recorta lo que sobra) no corta el menú
+  const [pos, setPos] = useState<{ top?: number; bottom?: number; left?: number; right?: number }>({});
   // El menú se acomoda dentro de la pantalla: del otro lado del botón o hacia arriba si no entra
   useLayoutEffect(() => {
     if (!open || !trigger.current || !menu.current) return;
     const r = trigger.current.getBoundingClientRect();
     const m = menu.current;
-    setPlace(placeMenu(r, { w: m.offsetWidth, h: Math.min(m.scrollHeight, 320) }, visibleArea(trigger.current), align, 8, 4, up));
+    const win = { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight };
+    const pl = placeMenu(r, { w: m.offsetWidth, h: Math.min(m.scrollHeight, 320) }, win, align, 8, 4, up);
+    setPlace(pl);
+    setPos({
+      ...(pl.up ? { bottom: window.innerHeight - r.top + 4 } : { top: r.bottom + 4 }),
+      ...(pl.align === "right" ? { right: window.innerWidth - r.right } : { left: r.left }),
+    });
   }, [open, align, up]);
+  // Con posición fija, un desplazamiento o cambio de tamaño cierra el menú en vez de dejarlo flotando
+  useEffect(() => {
+    if (!open) return;
+    const off = () => setOpen(false);
+    window.addEventListener("scroll", off, true);
+    window.addEventListener("resize", off);
+    return () => {
+      window.removeEventListener("scroll", off, true);
+      window.removeEventListener("resize", off);
+    };
+  }, [open]);
   const list = items.filter((i): i is MenuItem => !!i);
 
   const close = (refocus = true) => {
@@ -63,7 +82,7 @@ export function ActionMenu({
 
   useEffect(() => {
     if (!open) return;
-    entries()[0]?.focus();
+    entries()[0]?.focus({ preventScroll: true });
     const onDown = (e: MouseEvent) => {
       if (!box.current?.contains(e.target as Node)) setOpen(false);
     };
@@ -140,8 +159,8 @@ export function ActionMenu({
           role="menu"
           aria-label={label}
           onKeyDown={onMenuKey}
-          className={`anim-pop absolute z-40 max-h-80 min-w-48 overflow-y-auto rounded-md border border-linea bg-papel py-1 shadow-lg ${place.up ? "bottom-full mb-1" : "top-full mt-1"} ${place.align === "right" ? "right-0" : "left-0"}`}
-          style={{ transformOrigin: `${place.up ? "bottom" : "top"} ${place.align}` }}
+          className="anim-pop fixed z-40 max-h-80 min-w-48 overflow-y-auto rounded-md border border-linea bg-papel py-1 shadow-lg"
+          style={{ ...pos, transformOrigin: `${place.up ? "bottom" : "top"} ${place.align}` }}
         >
           {list.map((it, i) => (
             <button

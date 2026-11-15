@@ -86,3 +86,13 @@ export function buildNav(c: NavContext): { main: NavGroup[]; bottom: NavItem[] }
 
 /** Destinos de la barra inferior del celular: el resto va en "Más". */
 export const MOBILE_TABS = ["/", "/registros", "/tareas", "/avisos"] as const;
+
+/** Pantallas de informes de una estancia: parte, riesgo, EUDR, cambios, pluviómetros y el centro de informes. */
+export function isReportsPath(path: string): boolean {
+  return /^\/estancias\/[^/]+\/(informes|parte|riesgo|eudr|cambios|pluviometros)(\/|$)/.test(path);
+}
+
+/** "Mapa" es la raíz y la estancia, salvo sus pantallas de informes. */
+export function isMapPath(path: string): boolean {
+  return path === "/" || (path.startsWith("/estancias") && !isReportsPath(path));
+}

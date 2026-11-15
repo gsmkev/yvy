@@ -78,10 +78,7 @@ export function SanitaryPage() {
       {events.isLoading && <Spinner rows={4} h={64} />}
       {events.error ? <ErrorBox error={events.error} /> : null}
       {events.data && events.data.length === 0 && (
-        <EmptyState
-          title={t("ui.sanitaryEmpty")}
-          action={<Button onClick={() => setCreating(true)}>{t("ui.sanitaryNew")}</Button>}
-        >
+        <EmptyState title={t("ui.sanitaryEmpty")}>
           {t("ui.sanitaryEmptyHint")}
         </EmptyState>
       )}

@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { exitSupport, getSession, isNetworkDown, onNetworkChange, onSession, post, setSession } from "../lib/api";
 import { Page, Toaster } from "./ui";
 import { FEATURES } from "../lib/features";
-import { buildNav, MOBILE_TABS, type NavGroup, type NavItem } from "../lib/nav";
+import { buildNav, isMapPath, isReportsPath, MOBILE_TABS, type NavGroup, type NavItem } from "../lib/nav";
 import { fmtDate } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useAlerts, useFarms, useMe } from "../lib/queries";
@@ -78,7 +78,8 @@ export function Layout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   // Con varias estancias, "Mapa" vuelve a la última que se miró
   const lastFarm = (farms.data?.length ?? 0) > 1 ? farms.data!.find((f) => f.id === loadPrefs().farmId)?.id : undefined;
-  const onMap = path === "/" || (path.startsWith("/estancias") && !/\/informes(\/|$)/.test(path));
+  const onMap = isMapPath(path);
+  const onReports = isReportsPath(path);
   useEffect(() => trackView(path), [path]);
   const desktop = useIsDesktop();
   const [sheet, setSheet] = useState(false);
@@ -96,7 +97,7 @@ export function Layout() {
   const reportsFarm = lastFarm ?? farms.data?.find((f) => f.id === loadPrefs().farmId)?.id ?? farms.data?.[0]?.id;
   const link = (n: NavItem, cls: (active: boolean) => string, tab = false) => {
     const reports = n.to === "/informes";
-    const active = n.to === "/" ? onMap : reports ? /^\/estancias\/[^/]+\/informes/.test(path) : n.to === path || path.startsWith(`${n.to}/`);
+    const active = n.to === "/" ? onMap : reports ? onReports : n.to === path || path.startsWith(`${n.to}/`);
     const Icon = n.icon;
     const count = n.to === "/avisos" && nAlerts > 0 ? nAlerts : 0;
     const body = (
@@ -229,7 +230,7 @@ export function Layout() {
               aria-haspopup="dialog"
               aria-expanded={sheet}
               onClick={() => setSheet(true)}
-              className={`${tabCls(sheet)} cursor-pointer`}
+              className={`${tabCls(sheet || onReports)} cursor-pointer`}
             >
               <Ellipsis size={22} strokeWidth={1.75} aria-hidden />
               {t("ui.navMore")}

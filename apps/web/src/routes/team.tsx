@@ -186,7 +186,7 @@ export function TeamPage() {
           action={canManage ? <Button onClick={() => setAdding(true)}>{t("ui.addMember")}</Button> : undefined}
         />
       ) : (
-        <DataTable columns={columns} rows={members.data!} rowKey={(m) => m.userId} caption={t("ui.teamTitle")} />
+        <DataTable columns={columns.filter((c) => c.id !== "last" || members.data!.some((m) => m.lastSyncAt))} rows={members.data!} rowKey={(m) => m.userId} caption={t("ui.teamTitle")} />
       )}
       {removing && (
         <ConfirmModal
@@ -241,7 +241,7 @@ function AddMember({ canAddAdmins, onClose }: { canAddAdmins: boolean; onClose: 
           add.mutate();
         }}
       >
-        <Field label={t("ui.fullName")}>
+        <Field label={t("ui.memberName")}>
           <Input required value={f.fullName} onChange={set("fullName")} />
         </Field>
         <Field label={t("ui.role")}>
@@ -251,14 +251,14 @@ function AddMember({ canAddAdmins, onClose }: { canAddAdmins: boolean; onClose: 
             options={roles.map((r) => ({ value: r, label: tk(`ui.role_${r}`) }))}
           />
         </Field>
-        <Field label={t("auth.emailLabel")}>
+        <Field label={t("ui.memberEmail")}>
           <Input type="email" required={!isFieldRole(f.role)} value={f.email} onChange={set("email")} />
         </Field>
         <Field label={t("ui.phone")}>
           <Input type="tel" value={f.phone} onChange={set("phone")} />
         </Field>
         {add.error && <ErrorBox error={add.error} />}
-        <Button type="submit" disabled={add.isPending}>
+        <Button type="submit" variant="primary" disabled={add.isPending}>
           {t("ui.save")}
         </Button>
       </form>

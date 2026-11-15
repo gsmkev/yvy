@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import { Pressable, StyleSheet, type ColorValue } from "react-native";
 import { Redirect, Tabs, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ClipboardList, Map, MoreHorizontal, Plus, Sun, type LucideIcon } from "lucide-react-native";
-import { t } from "@yvy/shared";
+import { Briefcase, ClipboardList, Map, MoreHorizontal, Plus, Sun, type LucideIcon } from "lucide-react-native";
+import { isFieldRole, t } from "@yvy/shared";
 import { useSession } from "../../src/lib/session";
 import { tap } from "../../src/lib/haptics";
 import { useFabHidden } from "../../src/lib/fab";
@@ -25,6 +25,7 @@ export default function TabsLayout() {
   const fabHidden = useFabHidden() || useReadOnly();
   useEffect(() => (session ? startAutoSync() : undefined), [!!session]);
   if (!session) return <Redirect href="/login" />;
+  const office = !isFieldRole(session.organization.role);
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: C.papel }}>
       <SyncBar />
@@ -56,6 +57,8 @@ export default function TabsLayout() {
             tabBarBadgeStyle: { backgroundColor: C.atencionSuave, color: C.atencion, fontFamily: F.sansSemi },
           }}
         />
+        {/* Gestión: solo roles de oficina (dueño, administrador, agrónomo, supervisor). Para campo la pestaña no existe. */}
+        <Tabs.Screen name="office" options={{ title: t("office.tab"), tabBarIcon: icon(Briefcase), href: office ? undefined : null }} />
         <Tabs.Screen name="more" options={{ title: t("app.more"), tabBarIcon: icon(MoreHorizontal) }} />
       </Tabs>
       {/* Una sola acción principal en toda la app */}

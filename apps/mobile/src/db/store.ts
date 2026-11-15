@@ -960,6 +960,7 @@ export class LocalDb implements SyncStore {
       for (const t of Object.keys(TABLES)) this.sql.run(`DELETE FROM ${t} WHERE id NOT IN (SELECT row_id FROM outbox)`);
       this.sql.run("DELETE FROM sync_cursors");
       this.sql.run("DELETE FROM kv WHERE key = 'assignments_version'");
+      this.sql.run("DELETE FROM http_cache"); // lecturas en línea de oficina (src/office): son de este usuario y organización
     });
   }
 

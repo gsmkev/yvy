@@ -12,6 +12,8 @@ export interface Session {
   refreshTokenExpiresAt: number;
   user: { id: string; fullName: string; email: string | null };
   organization: { id: string; name: string; role: string };
+  /** Todas las organizaciones del usuario (la API las manda siempre; sesiones viejas guardadas pueden no traerlas). */
+  organizations?: { id: string; name: string; role: string }[];
 }
 
 const KEY = "yvy.session";

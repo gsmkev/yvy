@@ -13,7 +13,8 @@ import { initMonitoring } from "../src/lib/monitoring";
 import { useNotificationTap } from "../src/lib/push";
 import { loadSession } from "../src/lib/session";
 import { Toast } from "../src/ui/kit";
-import { C, F } from "../src/ui/theme";
+import { STACK_SCREEN_OPTIONS } from "../src/ui/stackOptions";
+import { C } from "../src/ui/theme";
 
 initMonitoring();
 
@@ -43,15 +44,7 @@ export default function RootLayout() {
     <SafeAreaProvider key={locale}>
       <StatusBar style="dark" />
       <NotificationTap />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: C.papel },
-          headerShadowVisible: false,
-          headerTintColor: C.tinta,
-          headerTitleStyle: { fontFamily: F.sansSemi, fontSize: 18 },
-          contentStyle: { backgroundColor: C.papel },
-        }}
-      >
+      <Stack screenOptions={STACK_SCREEN_OPTIONS}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="scan" options={{ title: "" }} />
@@ -79,6 +72,8 @@ export default function RootLayout() {
         <Stack.Screen name="labs/caravana" options={{ title: "" }} />
         <Stack.Screen name="labs/fenologia" options={{ title: "" }} />
         <Stack.Screen name="labs/guarani" options={{ title: "" }} />
+        {/* Pantallas de oficina: el grupo trae su propio Stack (app/office/_layout.tsx); agregar app/office/x.tsx no toca este archivo. */}
+        <Stack.Screen name="office" options={{ headerShown: false }} />
         <Stack.Screen name="annotate/index" options={{ title: "", presentation: "modal" }} />
       </Stack>
       <Toast />

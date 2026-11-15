@@ -1,6 +1,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -203,10 +204,10 @@ export function SwitchRow({ title, hint, value, onValueChange }: { title: string
 }
 
 /** Cifra grande con su rótulo, para resúmenes. */
-export function StatTile({ value, label, style }: { value: string | number; label: string; style?: StyleProp<ViewStyle> }) {
+export function StatTile({ value, label, style, tone }: { value: string | number; label: string; style?: StyleProp<ViewStyle>; tone?: "danger" }) {
   return (
-    <View accessible accessibilityLabel={`${value} ${label}`} style={[s.stat, style]}>
-      <Text style={s.statValue}>{value}</Text>
+    <View accessible accessibilityLabel={`${value} ${label}`} style={[s.stat, tone === "danger" && { borderColor: C.peligro, backgroundColor: C.peligroSuave }, style]}>
+      <Text style={[s.statValue, tone === "danger" && { color: C.peligro }]}>{value}</Text>
       <Text style={T.small} numberOfLines={2}>
         {label}
       </Text>
@@ -215,11 +216,24 @@ export function StatTile({ value, label, style }: { value: string | number; labe
 }
 
 /** Hoja inferior: sube desde abajo, se cierra tocando afuera o con atrás. */
-export function Sheet({ visible, title, onClose, children }: { visible: boolean; title: string; onClose: () => void; children: ReactNode }) {
+export function Sheet({
+  visible,
+  title,
+  onClose,
+  children,
+  avoidKeyboard,
+}: {
+  visible: boolean;
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+  /** Sube la hoja cuando se abre el teclado (para hojas con campos de texto). */
+  avoidKeyboard?: boolean;
+}) {
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <View style={s.sheetRoot}>
+      <KeyboardAvoidingView style={s.sheetRoot} behavior={avoidKeyboard ? "padding" : undefined} enabled={!!avoidKeyboard}>
         <Pressable accessibilityRole="button" accessibilityLabel={t("ui.cancel")} style={s.sheetBackdrop} onPress={onClose} />
         <View accessibilityViewIsModal style={[s.sheet, { paddingBottom: Math.max(16, insets.bottom) }]}>
           <View style={s.sheetGrip} />
@@ -230,7 +244,7 @@ export function Sheet({ visible, title, onClose, children }: { visible: boolean;
             {children}
           </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

@@ -5,9 +5,9 @@ import { QRCodeSVG } from "qrcode.react";
 import { isFieldRole, ROLES, type FarmAccessLevel } from "@yvy/shared";
 import { TableExportMenu } from "../components/TableExportMenu";
 import { ActionMenu } from "../components/menus";
-import { Button, ConfirmModal, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, toast, Page } from "../components/ui";
+import { Button, ConfirmModal, DataTable, type Column, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, toast, Page } from "../components/ui";
 import { del, get, post, put } from "../lib/api";
-import { fmtDateTime, fmtHa } from "../lib/format";
+import { fmtDate, fmtDateTime, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useFarms, useMe, useMembers } from "../lib/queries";
 import type { FarmDetail, Member } from "../lib/types";
@@ -55,15 +55,93 @@ export function TeamPage() {
     if (mine.length === 0) return t(m.role === "supervisor" ? "ui.teamFarmsNone" : "ui.teamFarmsAll");
     return mine.filter(Boolean).join(", ");
   };
-  const activity = (m: Member) => {
-    const parts = [
-      m.activeDays7 > 0 ? t("ui.activityDays", { n: m.activeDays7 }) : "",
-      m.records7d > 0 ? t(m.records7d === 1 ? "ui.activityRecordsOne" : "ui.activityRecords", { n: m.records7d }) : "",
-      m.plotsVisited7d > 0 ? t(m.plotsVisited7d === 1 ? "ui.activityPlotsOne" : "ui.activityPlots", { n: m.plotsVisited7d }) : "",
-    ].filter(Boolean);
-    return parts.length ? parts.join(" · ") : t("ui.teamNoActivity");
+  const since = (ms: number) => {
+    const h = Math.floor((Date.now() - ms) / 3_600_000);
+    if (h < 1) return t("ui.teamJustNow");
+    if (h < 24) return t("ui.teamHoursAgo", { n: h });
+    const d = Math.floor(h / 24);
+    return d === 1 ? t("app.yesterday") : d < 30 ? t("ui.teamDaysAgo", { n: d }) : fmtDate(ms);
   };
-  const cols = owner ? "md:grid-cols-[minmax(0,2fr)_10rem_minmax(0,1fr)_minmax(0,1.6fr)_2.5rem]" : "md:grid-cols-[minmax(0,2fr)_10rem_minmax(0,1.6fr)_2.5rem]";
+  const columns: Column<Member>[] = [
+    {
+      id: "person",
+      header: t("ui.name"),
+      cell: (m) => (
+        <div className="min-w-0 max-w-[8rem] py-1 sm:max-w-none">
+          <div className="truncate font-medium">{m.fullName}</div>
+          <div className="truncate text-xs font-normal text-tinta-2">{[m.email, m.phone].filter(Boolean).join(" · ")}</div>
+          <div className="truncate text-xs sm:hidden">
+            {tk(`ui.role_${m.role}`)}
+            {m.role === "worker" && canManage && !m.hasPin && <span className="text-trigo-texto"> · {t("app.teamPinNone")}</span>}
+          </div>
+          {m.overdueTasks > 0 && (
+            <div className="num text-xs font-medium text-peligro sm:hidden">
+              {t(m.overdueTasks === 1 ? "ui.overdueCountOne" : "ui.overdueCountMany", { n: m.overdueTasks })}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "role",
+      header: t("ui.role"),
+      hideBelow: "sm",
+      cell: (m) => (
+        <div className="whitespace-nowrap">
+          {tk(`ui.role_${m.role}`)}
+          {m.role === "worker" && canManage && !m.hasPin && <div className="text-xs text-trigo-texto">{t("app.teamPinNone")}</div>}
+        </div>
+      ),
+    },
+    ...(owner
+      ? [
+          {
+            id: "farms",
+            header: t("ui.farmAccess"),
+            hideBelow: "lg" as const,
+            cell: (m: Member) => <span className="line-clamp-2 text-tinta-2">{farmsOf(m) || "—"}</span>,
+          },
+        ]
+      : []),
+    { id: "records", header: t("ui.teamColRecords"), align: "right", cell: (m) => m.records7d, sort: (a, b) => a.records7d - b.records7d },
+    { id: "plots", header: t("ui.teamColPlots"), align: "right", hideBelow: "md", cell: (m) => m.plotsVisited7d },
+    {
+      id: "last",
+      header: t("ui.teamColLastSync"),
+      hideBelow: "md",
+      cell: (m) => (
+        <span className="whitespace-nowrap text-tinta-2" title={m.lastSyncAt ? fmtDateTime(m.lastSyncAt) : undefined}>
+          {m.lastSyncAt ? since(m.lastSyncAt) : t("ui.neverVisited")}
+        </span>
+      ),
+    },
+    {
+      id: "overdue",
+      header: t("ui.teamColOverdue"),
+      align: "right",
+      hideBelow: "sm",
+      cell: (m) => (m.overdueTasks > 0 ? <span className="font-medium text-peligro">{m.overdueTasks}</span> : <span className="text-tinta-2">0</span>),
+    },
+    {
+      id: "actions",
+      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      width: "3rem",
+      cell: (m) => (
+        <div className="flex justify-end">
+          <ActionMenu
+            label={t("ui.rowActions", { name: m.fullName })}
+            items={[
+              { label: t("ui.assignPlots"), onSelect: () => setAssigning(m) },
+              owner && scoped(m) && { label: t("ui.farmAccess"), onSelect: () => setScoping(m) },
+              canManage && isFieldRole(m.role) && { label: t("ui.linkDevice"), onSelect: () => link.mutate(m) },
+              canManage && m.role === "worker" && { label: m.hasPin ? t("app.teamPinChange") : t("app.teamPinSet"), onSelect: () => setPinFor(m) },
+              canManage && m.userId !== me.data?.user.id && { label: t("ui.removeMember"), onSelect: () => setRemoving(m), danger: true },
+            ]}
+          />
+        </div>
+      ),
+    },
+  ];
   return (
     <Page width="data">
       <PageHeader
@@ -71,7 +149,7 @@ export function TeamPage() {
         title={t("ui.teamTitle")}
         primary={
           canManage ? (
-            <Button variant="primary" onClick={() => setAdding(true)}>
+            <Button variant="primary" className="max-sm:hidden" onClick={() => setAdding(true)}>
               {t("ui.addMember")}
             </Button>
           ) : undefined
@@ -96,6 +174,11 @@ export function TeamPage() {
           </>
         }
       />
+      {canManage && (
+        <Button variant="primary" className="sm:hidden" onClick={() => setAdding(true)}>
+          {t("ui.addMember")}
+        </Button>
+      )}
       {link.error && <ErrorBox error={link.error} />}
       {members.data!.length === 0 ? (
         <EmptyState
@@ -103,51 +186,7 @@ export function TeamPage() {
           action={canManage ? <Button onClick={() => setAdding(true)}>{t("ui.addMember")}</Button> : undefined}
         />
       ) : (
-        <div>
-          <div className={`hidden gap-4 border-b border-linea pb-2 text-xs text-tinta-2 md:grid ${cols}`}>
-            <span>{t("ui.name")}</span>
-            <span>{t("ui.role")}</span>
-            {owner && <span>{t("ui.farmAccess")}</span>}
-            <span>{t("ui.teamColActivity")}</span>
-            <span />
-          </div>
-          <ul>
-            {members.data!.map((m) => (
-              <li key={m.userId} className={`grid items-start gap-x-4 gap-y-1 border-b border-linea py-3 md:items-center ${cols} grid-cols-[minmax(0,1fr)_2.5rem]`}>
-                <div className="min-w-0">
-                  <div className="truncate font-medium">{m.fullName}</div>
-                  <div className="truncate text-sm text-tinta-2">{[m.email, m.phone].filter(Boolean).join(" · ")}</div>
-                </div>
-                <div className="col-start-1 row-start-2 text-sm md:col-start-auto md:row-start-auto">
-                  {tk(`ui.role_${m.role}`)}
-                  {m.role === "worker" && canManage && !m.hasPin && <span className="text-tinta-2"> · {t("app.teamPinNone")}</span>}
-                </div>
-                {owner && <div className="hidden min-w-0 truncate text-sm text-tinta-2 md:block">{farmsOf(m)}</div>}
-                <div className="col-start-1 row-start-3 min-w-0 text-sm md:col-start-auto md:row-start-auto">
-                  <div className="num text-tinta-2">{activity(m)}</div>
-                  <div className="num text-xs text-tinta-2">{m.lastSyncAt ? t("ui.lastSync", { date: fmtDateTime(m.lastSyncAt) }) : t("ui.neverSynced")}</div>
-                  {m.overdueTasks > 0 && (
-                    <div className="num text-sm font-medium text-peligro">
-                      {t(m.overdueTasks === 1 ? "ui.overdueCountOne" : "ui.overdueCountMany", { n: m.overdueTasks })}
-                    </div>
-                  )}
-                </div>
-                <div className="col-start-2 row-start-1 justify-self-end md:col-start-auto md:row-start-auto">
-                  <ActionMenu
-                    label={t("ui.rowActions", { name: m.fullName })}
-                    items={[
-                      { label: t("ui.assignPlots"), onSelect: () => setAssigning(m) },
-                      owner && scoped(m) && { label: t("ui.farmAccess"), onSelect: () => setScoping(m) },
-                      canManage && isFieldRole(m.role) && { label: t("ui.linkDevice"), onSelect: () => link.mutate(m) },
-                      canManage && m.role === "worker" && { label: m.hasPin ? t("app.teamPinChange") : t("app.teamPinSet"), onSelect: () => setPinFor(m) },
-                      canManage && m.userId !== me.data?.user.id && { label: t("ui.removeMember"), onSelect: () => setRemoving(m), danger: true },
-                    ]}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <DataTable columns={columns} rows={members.data!} rowKey={(m) => m.userId} caption={t("ui.teamTitle")} />
       )}
       {removing && (
         <ConfirmModal

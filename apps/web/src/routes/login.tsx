@@ -87,9 +87,8 @@ export function LoginPage() {
     <div className="grid min-h-full bg-lino lg:grid-cols-[1.1fr_1fr]">
       <div className="relative hidden overflow-hidden bg-surco lg:block">
         <img src="/campo-itapua.webp" alt="" className="absolute inset-0 h-full w-full object-cover opacity-90" />
-        <div className="absolute inset-0 bg-gradient-to-t from-surco via-surco/20 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-10 text-lino">
-          <p className="max-w-md font-serif text-[34px] leading-tight font-semibold">{t("ui.tagline")}.</p>
+        <div className="absolute inset-x-0 bottom-0 bg-surco/85 p-10 text-lino">
+          <p className="max-w-md font-serif text-title leading-tight font-semibold">{t("ui.tagline")}.</p>
           <p className="mt-3 text-xs text-lino/60">
             Itapúa · Sentinel-2 L2A, compuesto de 90 días · {t("attribution.copernicus")}
           </p>
@@ -97,9 +96,9 @@ export function LoginPage() {
       </div>
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
-          <p className="mb-10 font-serif text-title leading-none font-semibold">Yvy</p>
-          <h1 className="text-[26px] leading-tight">{t(mode === "login" ? "ui.loginTitle" : "ui.signupTitle")}</h1>
-          <p className="mt-1 mb-6 text-sm text-tinta-2">
+          <p className="mb-8 font-serif text-title leading-none font-semibold">Yvy</p>
+          <h1 className="text-title leading-tight">{t(mode === "login" ? "ui.loginTitle" : "ui.signupTitle")}</h1>
+          <p className="mt-2 mb-6 text-sm text-tinta-2">
             {step === "email" ? t("ui.loginHelp") : step === "totp" ? t("ui.totpLoginHelp") : t("auth.codeSent", { email })}
           </p>
           <form
@@ -138,6 +137,12 @@ export function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </Field>
+                {search.google_error && (
+                  <p role="alert" className="text-sm text-peligro">
+                        {tk(`ui.googleError_${search.google_error}`)}
+                  </p>
+                )}
+                    {error ? <ErrorBox error={error} /> : null}
                 <Button type="submit" variant="primary" disabled={busy} className="h-11">
                   {t("auth.sendCode")}
                 </Button>
@@ -162,6 +167,12 @@ export function LoginPage() {
                     className="num h-14 text-center text-2xl tracking-[0.3em]"
                   />
                 </Field>
+                {search.google_error && (
+                  <p role="alert" className="text-sm text-peligro">
+                        {tk(`ui.googleError_${search.google_error}`)}
+                  </p>
+                )}
+                    {error ? <ErrorBox error={error} /> : null}
                 <Button type="submit" variant="primary" disabled={busy || totpCode.trim().length < 6} className="h-11">
                   {t("ui.verify")}
                 </Button>
@@ -181,6 +192,12 @@ export function LoginPage() {
                     className="num h-14 text-center text-2xl tracking-[0.5em]"
                   />
                 </Field>
+                {search.google_error && (
+                  <p role="alert" className="text-sm text-peligro">
+                        {tk(`ui.googleError_${search.google_error}`)}
+                  </p>
+                )}
+                    {error ? <ErrorBox error={error} /> : null}
                 <Button type="submit" variant="primary" disabled={busy || code.length !== 6} className="h-11">
                   {t("ui.verify")}
                 </Button>
@@ -193,12 +210,6 @@ export function LoginPage() {
                 </button>
               </>
             )}
-            {search.google_error && (
-              <p role="alert" className="text-sm text-peligro">
-                {tk(`ui.googleError_${search.google_error}`)}
-              </p>
-            )}
-            {error ? <ErrorBox error={error} /> : null}
           </form>
           {google.data?.enabled && mode === "login" && step === "email" && (
             <a
@@ -208,7 +219,7 @@ export function LoginPage() {
               {t("ui.googleSignIn")}
             </a>
           )}
-          <LegalLinks className="mt-10 text-sm text-tinta-2" />
+          <LegalLinks className="mt-10 flex-wrap text-meta text-tinta-2" />
         </div>
       </div>
     </div>

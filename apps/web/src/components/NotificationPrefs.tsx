@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DEFAULT_NOTIFICATION_PREFS, type NotificationPrefs as Prefs, type NotifyKind } from "@yvy/shared";
 import { get, put } from "../lib/api";
 import { t, tk } from "../lib/i18n";
-import { Button, ErrorBox, Input, Spinner, toast } from "./ui";
+import { Button, DataTable, ErrorBox, Input, SectionHead, Spinner, toast } from "./ui";
 
 interface Resp {
   prefs: Prefs;
@@ -36,39 +36,36 @@ export function NotificationPrefs() {
 
   return (
     <section>
-      <h2 className="text-section leading-6 font-semibold">{t("ui.notifTitle")}</h2>
-      <p className="mt-2 text-tinta-2">{t("ui.notifIntro")}</p>
+      <SectionHead title={t("ui.notifTitle")} />
+      <p className="mt-3 text-tinta-2">{t("ui.notifIntro")}</p>
       {!email && kinds.length < 5 && <p className="mt-2 text-sm text-tinta-2">{t("ui.notifWorkerNote")}</p>}
-      <table className="mt-4 w-full text-sm">
-        <thead className="text-left text-tinta-2">
-          <tr>
-            <th className="py-2 font-medium">{t("ui.notifKind")}</th>
-            <th className="py-2 font-medium">{t("ui.notifPush")}</th>
-            {email && <th className="py-2 font-medium">{t("ui.notifEmail")}</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {kinds.map((k) => (
-            <tr key={k} className="border-t border-linea">
-              <td className="py-2.5">{tk(`ui.notifKind_${k}`)}</td>
-              {(email ? (["push", "email"] as const) : (["push"] as const)).map((ch) => (
-                <td key={ch} className="py-2.5">
-                  <input
-                    type="checkbox"
-                    className="size-4 cursor-pointer accent-[#7A9A3F]"
-                    aria-label={`${tk(`ui.notifKind_${k}`)}: ${ch === "push" ? t("ui.notifPush") : t("ui.notifEmail")}`}
-                    checked={prefs.kinds[k][ch]}
-                    onChange={(e) => setChannel(k, ch, e.target.checked)}
-                  />
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="mt-3">
+        <DataTable
+          caption={t("ui.notifTitle")}
+          rows={kinds}
+          rowKey={(k) => k}
+          columns={[
+            { id: "kind", header: t("ui.notifKind"), cell: (k) => <span className="font-normal">{tk(`ui.notifKind_${k}`)}</span> },
+            ...(email ? (["push", "email"] as const) : (["push"] as const)).map((ch) => ({
+              id: ch,
+              header: ch === "push" ? t("ui.notifPush") : t("ui.notifEmail"),
+              width: "5.5rem",
+              cell: (k: NotifyKind) => (
+                <input
+                  type="checkbox"
+                  className="size-4 cursor-pointer accent-[#7A9A3F]"
+                  aria-label={`${tk(`ui.notifKind_${k}`)}: ${ch === "push" ? t("ui.notifPush") : t("ui.notifEmail")}`}
+                  checked={prefs.kinds[k][ch]}
+                  onChange={(e) => setChannel(k, ch, e.target.checked)}
+                />
+              ),
+            })),
+          ]}
+        />
+      </div>
 
-      <h3 className="mt-6 font-semibold">{t("ui.notifQuietTitle")}</h3>
-      <label className="mt-2 flex items-center gap-2 text-sm">
+      <div className="mt-8"><SectionHead title={t("ui.notifQuietTitle")} /></div>
+      <label className="mt-3 flex items-center gap-2 text-sm">
         <input
           type="checkbox"
           className="size-4 cursor-pointer accent-[#7A9A3F]"

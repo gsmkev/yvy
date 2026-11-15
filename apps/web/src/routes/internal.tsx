@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Card, ErrorBox, Field, Input, Modal, Page, Select, Spinner, toast } from "../components/ui";
+import { ActionMenu } from "../components/menus";
+import { Button, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, Page, SectionHead, Select, Spinner, Stat, toast } from "../components/ui";
 import { enterSupport, get, post, qs, type Session } from "../lib/api";
 import { fmtDate, fmtDateTime, fmtHa, fmtNum } from "../lib/format";
 import { AuditList, type AuditEntryRow } from "../components/AuditList";
@@ -71,130 +72,120 @@ export function InternalPage() {
   if (q.isLoading) return <Spinner />;
   if (q.error) return <ErrorBox error={q.error} />;
   const d = q.data!;
+  const usageLabel = (m: string) => (m === "d1_bytes" || m === "r2_photo_bytes" ? t(`ui.usageMetric_${m}`) : m);
   const pct = (v: number | null) => (v === null ? "—" : `${Math.round(v)} %`);
   return (
-    <Page width="data" className="gap-4">
-      <h1 className="font-serif text-2xl font-semibold">{t("ui.internalTitle")}</h1>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+    <Page width="data" title={t("ui.internalTitle")}>
+      <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
         {d.usage.map((u) => (
-          <Card key={u.metric}>
-            <div className="eyebrow">{u.metric}</div>
-            <div className="text-xl font-semibold">{u.limit ? pct((100 * u.value) / u.limit) : fmtNum(u.value)}</div>
-          </Card>
+          <Stat
+            key={u.metric}
+            label={usageLabel(u.metric)}
+            value={u.limit ? pct((100 * u.value) / u.limit) : fmtNum(u.value)}
+          />
         ))}
       </div>
-      <Field label={t("ui.internalSearch")}>
-        <Input
-          type="search"
-          className="max-w-md"
-          placeholder={t("ui.internalSearchHint")}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </Field>
+      <FilterBar>
+        <Field label={t("ui.internalSearch")}>
+          <Input
+            type="search"
+            className="w-full min-w-64 sm:w-96"
+            placeholder={t("ui.internalSearchHint")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </Field>
+      </FilterBar>
       {extend.error && <ErrorBox error={extend.error} />}
       {support.error && <ErrorBox error={support.error} />}
-      {!d.organizations.length && <p className="text-sm text-tinta-2">{t("ui.internalNoResults")}</p>}
-      <div className="overflow-auto rounded-lg border border-linea bg-papel">
-        <table className="w-full text-sm">
-          <thead className="eyebrow bg-lino text-left">
-            <tr>
-              {(
-                [
-                  "internalOrg",
-                  "internalPlan",
-                  "internalFarms",
-                  "internalArea",
-                  "internalWorkers",
-                  "internalRecords7d",
-                  "internalPerWorker",
-                  "internalOwnersActive",
-                  "internalUseful",
-                  "internalLastActive",
-                  "internalReferral",
-                  "internalLimits",
-                  "internalActions",
-                ] as const
-              )
-                .map((k) => t(`ui.${k}`))
-                .map((h) => (
-                  <th key={h} className="px-3 py-2 font-medium">
-                    {h}
-                  </th>
-                ))}
-            </tr>
-          </thead>
-          <tbody>
-            {d.organizations.map((o) => (
-              <tr key={o.id} className="border-t border-surco/10">
-                <td className="px-3 py-2 font-medium">{o.name}</td>
-                <td className="px-3 py-2">
-                  {o.plan}
-                  {o.plan === "trial" && o.trialEndsAt ? ` · ${fmtDate(o.trialEndsAt)}` : ""}
-                </td>
-                <td className="px-3 py-2">{o.farms}</td>
-                <td className="px-3 py-2">{fmtHa(o.ha)}</td>
-                <td className="px-3 py-2">{o.workers}</td>
-                <td className="px-3 py-2">{o.records7d}</td>
-                <td
-                  className={`px-3 py-2 ${o.recordsPerActiveWorker !== null && o.recordsPerActiveWorker < 10 ? "text-alerta" : ""}`}
-                >
-                  {o.recordsPerActiveWorker === null ? "—" : fmtNum(o.recordsPerActiveWorker)}
-                </td>
-                <td
-                  className={`px-3 py-2 ${o.ownersActivePct !== null && o.ownersActivePct < 70 ? "text-alerta" : ""}`}
-                >
-                  {pct(o.ownersActivePct)}
-                </td>
-                <td className="px-3 py-2">{pct(o.usefulPct)}</td>
-                <td className="px-3 py-2">{o.lastActive ?? "—"}</td>
-                <td className="px-3 py-2">
-                  {o.referredBy ? `${o.referrerName ?? t("ui.internalReferralUnknown")} · ${o.referredBy}` : "—"}
-                  {o.referrerUserId && (
-                    <div className="text-xs">
-                      {o.referralCreditedAt ? `${t("ui.internalReferralCredited", { date: fmtDate(o.referralCreditedAt) })} · ` : ""}
-                      <button
-                        className="cursor-pointer underline underline-offset-4"
-                        onClick={() => credit.mutate({ id: o.id, credited: !o.referralCreditedAt })}
-                      >
-                        {o.referralCreditedAt ? t("ui.internalReferralCreditUndo") : t("ui.internalReferralCredit")}
-                      </button>
-                    </div>
-                  )}
-                </td>
-                <td className="num px-3 py-2">
-                  {o.limits.maxHa === null ? "∞" : fmtNum(o.limits.maxHa)} ha · {o.users}/
-                  {o.limits.maxUsers === null ? "∞" : o.limits.maxUsers}
-                </td>
-                <td className="flex gap-4 px-3 py-2 whitespace-nowrap">
-                  <button className="cursor-pointer underline underline-offset-4" onClick={() => setEditing(o)}>
-                    {t("ui.internalEditPlan")}
-                  </button>
-                  {o.plan !== "active" && o.plan !== "demo" && (
-                    <button
-                      className="cursor-pointer underline underline-offset-4 disabled:opacity-50"
-                      disabled={extend.isPending}
-                      onClick={() => extend.mutate(o.id)}
-                    >
-                      {t("ui.internalExtend")}
+      <DataTable
+        caption={t("ui.internalTitle")}
+        rows={d.organizations}
+        rowKey={(o) => o.id}
+        empty={<EmptyState compact title={t("ui.internalNoResults")} />}
+        columns={[
+          { id: "org", header: t("ui.internalOrg"), sort: (a, b) => a.name.localeCompare(b.name), cell: (o) => <span className="whitespace-nowrap">{o.name}</span> },
+          {
+            id: "plan",
+            header: t("ui.internalPlan"),
+            cell: (o) => (
+              <span className="whitespace-nowrap font-normal">
+                {o.plan}
+                {o.plan === "trial" && o.trialEndsAt ? ` · ${fmtDate(o.trialEndsAt)}` : ""}
+              </span>
+            ),
+          },
+          { id: "farms", header: t("ui.internalFarms"), align: "right", hideBelow: "md", cell: (o) => o.farms },
+          { id: "ha", header: t("ui.internalArea"), align: "right", hideBelow: "md", cell: (o) => fmtHa(o.ha) },
+          { id: "workers", header: t("ui.internalWorkers"), align: "right", hideBelow: "lg", cell: (o) => o.workers },
+          { id: "records", header: t("ui.internalRecords7d"), align: "right", sort: (a, b) => a.records7d - b.records7d, cell: (o) => o.records7d },
+          {
+            id: "perWorker",
+            header: t("ui.internalPerWorker"),
+            align: "right",
+            hideBelow: "lg",
+            cell: (o) => (
+              <span className={o.recordsPerActiveWorker !== null && o.recordsPerActiveWorker < 10 ? "text-alerta" : ""}>
+                {o.recordsPerActiveWorker === null ? "—" : fmtNum(o.recordsPerActiveWorker)}
+              </span>
+            ),
+          },
+          {
+            id: "ownersActive",
+            header: t("ui.internalOwnersActive"),
+            align: "right",
+            hideBelow: "lg",
+            cell: (o) => <span className={o.ownersActivePct !== null && o.ownersActivePct < 70 ? "text-alerta" : ""}>{pct(o.ownersActivePct)}</span>,
+          },
+          { id: "useful", header: t("ui.internalUseful"), align: "right", hideBelow: "lg", cell: (o) => pct(o.usefulPct) },
+          { id: "last", header: t("ui.internalLastActive"), hideBelow: "md", cell: (o) => <span className="whitespace-nowrap font-normal">{o.lastActive ?? "—"}</span> },
+          {
+            id: "referral",
+            header: t("ui.internalReferral"),
+            hideBelow: "lg",
+            cell: (o) => (
+              <div className="font-normal">
+                {o.referredBy ? `${o.referrerName ?? t("ui.internalReferralUnknown")} · ${o.referredBy}` : "—"}
+                {o.referrerUserId && (
+                  <div className="text-xs text-tinta-2">
+                    {o.referralCreditedAt ? `${t("ui.internalReferralCredited", { date: fmtDate(o.referralCreditedAt) })} · ` : ""}
+                    <button className="cursor-pointer underline underline-offset-4" onClick={() => credit.mutate({ id: o.id, credited: !o.referralCreditedAt })}>
+                      {o.referralCreditedAt ? t("ui.internalReferralCreditUndo") : t("ui.internalReferralCredit")}
                     </button>
-                  )}
-                  <button className="cursor-pointer underline underline-offset-4" onClick={() => setChanges(o)}>
-                    {t("ui.internalChanges")}
-                  </button>
-                  <button
-                    className="cursor-pointer underline underline-offset-4 disabled:opacity-50"
-                    disabled={support.isPending}
-                    onClick={() => support.mutate(o.id)}
-                  >
-                    {t("ui.internalSupport")}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                  </div>
+                )}
+              </div>
+            ),
+          },
+          {
+            id: "limits",
+            header: t("ui.internalLimits"),
+            hideBelow: "lg",
+            cell: (o) => (
+              <span className="num whitespace-nowrap font-normal">
+                {o.limits.maxHa === null ? "∞" : fmtNum(o.limits.maxHa)} ha · {o.users}/{o.limits.maxUsers === null ? "∞" : o.limits.maxUsers}
+              </span>
+            ),
+          },
+          {
+            id: "actions",
+            header: <span className="sr-only">{t("ui.internalActions")}</span>,
+            cell: (o) => (
+              <div className="flex justify-end">
+                <ActionMenu
+                  label={t("ui.rowActions", { name: o.name })}
+                  items={[
+                    { label: t("ui.internalEditPlan"), onSelect: () => setEditing(o) },
+                    o.plan !== "active" && o.plan !== "demo" && { label: t("ui.internalExtend"), onSelect: () => extend.mutate(o.id) },
+                    { label: t("ui.internalChanges"), onSelect: () => setChanges(o) },
+                    { label: t("ui.internalSupport"), onSelect: () => support.mutate(o.id) },
+                  ]}
+                />
+              </div>
+            ),
+          },
+        ]}
+      />
       {editing && <PlanModal org={editing} onClose={() => setEditing(null)} />}
       {changes && <OrgChanges org={changes} onClose={() => setChanges(null)} />}
       <TrialRequests />
@@ -231,8 +222,8 @@ function TrialRequests() {
   if (!q.data) return null;
   return (
     <section>
-      <h2 className="font-serif text-xl font-semibold">{t("ui.internalTrialRequests")}</h2>
-      {!q.data.length && <p className="mt-2 text-sm text-tinta-2">{t("ui.internalTrialRequestsNone")}</p>}
+      <SectionHead title={t("ui.internalTrialRequests")} />
+      {!q.data.length && <EmptyState compact title={t("ui.internalTrialRequestsNone")} />}
       {done.error && <ErrorBox error={done.error} />}
       <ul className="mt-2 divide-y divide-linea">
         {q.data.map((r) => (
@@ -302,8 +293,8 @@ function PlanRequests() {
   if (!q.data) return null;
   return (
     <section>
-      <h2 className="font-serif text-xl font-semibold">{t("ui.internalPlanRequests")}</h2>
-      {!q.data.length && <p className="mt-2 text-sm text-tinta-2">{t("ui.internalPlanRequestsNone")}</p>}
+      <SectionHead title={t("ui.internalPlanRequests")} />
+      {!q.data.length && <EmptyState compact title={t("ui.internalPlanRequestsNone")} />}
       {(approve.error || reject.error) && <ErrorBox error={approve.error ?? reject.error} />}
       <ul className="mt-2 divide-y divide-linea">
         {q.data.map((r) => (
@@ -371,19 +362,15 @@ function Funnel() {
   const first = q.data.steps[0]?.orgs ?? 0;
   return (
     <section>
-      <h2 className="font-serif text-xl font-semibold">{t("ui.internalFunnel", { days: q.data.days })}</h2>
-      <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-5">
+      <SectionHead title={t("ui.internalFunnel", { days: q.data.days })} />
+      <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-5">
         {q.data.steps.map((st) => (
-          <div key={st.name} className="flex flex-col gap-0.5">
-            <span className="eyebrow">{tk(`ui.funnel_${st.name}`)}</span>
-            <span className="num font-serif text-title leading-tight font-semibold">{st.orgs}</span>
-            <span className="text-xs text-tinta-2">{first ? `${Math.round((100 * st.orgs) / first)} %` : "—"}</span>
-          </div>
+          <Stat key={st.name} label={tk(`ui.funnel_${st.name}`)} value={st.orgs} note={first ? `${Math.round((100 * st.orgs) / first)} %` : "—"} size="lg" />
         ))}
       </div>
       {q.data.views.length > 0 && (
         <>
-          <h3 className="mt-5 font-semibold">{t("ui.internalViews")}</h3>
+          <div className="mt-6"><SectionHead title={t("ui.internalViews")} /></div>
           <p className="text-xs text-tinta-2">{t("ui.internalViewsNote")}</p>
           <ul className="mt-1 flex flex-col gap-0.5 text-sm">
             {q.data.views.map((v) => (
@@ -396,7 +383,7 @@ function Funnel() {
       )}
       {q.data.daily.length > 0 && (
         <>
-          <h3 className="mt-5 font-semibold">{t("ui.internalViewsDaily")}</h3>
+          <div className="mt-6"><SectionHead title={t("ui.internalViewsDaily")} /></div>
           <ul className="mt-1 flex flex-wrap gap-x-5 gap-y-0.5 text-sm">
             {q.data.daily.map((d) => (
               <li key={d.day} className="num">
@@ -425,7 +412,7 @@ function AuditLog() {
   if (!q.data?.length) return null;
   return (
     <section>
-      <h2 className="font-serif text-xl font-semibold">{t("ui.internalAudit")}</h2>
+      <SectionHead title={t("ui.internalAudit")} />
       <ul className="mt-2 flex flex-col gap-1 text-sm">
         {q.data.slice(0, 20).map((r) => (
           <li key={r.id} className="num">
@@ -508,7 +495,7 @@ function OrgChanges({ org, onClose }: { org: OrgMetrics; onClose: () => void }) 
     <Modal title={`${t("ui.internalChanges")} · ${org.name}`} onClose={onClose}>
       {q.isPending && <Spinner />}
       {q.error && <ErrorBox error={q.error} />}
-      {q.data && !q.data.length && <p className="text-sm text-tinta-2">{t("ui.auditEmpty")}</p>}
+      {q.data && !q.data.length && <EmptyState compact title={t("ui.auditEmpty")} />}
       {q.data && <AuditList rows={q.data} />}
     </Modal>
   );

@@ -1,5 +1,6 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { getLocale, LOCALES, LOCALE_NAMES } from "@yvy/shared";
+import { SectionHead } from "./ui";
 import { chooseLocale } from "../lib/locale";
 import { t } from "../lib/i18n";
 import { getTheme, setTheme, subscribeTheme } from "../lib/theme";
@@ -10,30 +11,34 @@ function Choice<T extends string>({
   value,
   options,
   onChange,
+  help,
 }: {
   legend: string;
   value: T;
   options: { value: T; label: string }[];
   onChange: (v: T) => void;
+  help?: string;
 }) {
   return (
-    <fieldset className="border-b border-linea py-3">
-      <legend className="text-sm font-medium">{legend}</legend>
-      <div className="mt-1.5 flex flex-wrap gap-x-5 gap-y-1">
-        {options.map((o) => (
-          <label key={o.value} className="flex cursor-pointer items-center gap-2 text-body">
-            <input
-              type="radio"
-              name={legend}
-              checked={value === o.value}
-              onChange={() => onChange(o.value)}
-              className="accent-accion"
-            />
-            {o.label}
-          </label>
-        ))}
+    <div className="border-b border-linea py-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <span id={`pref-${legend}`} className="text-sm font-medium">
+          {legend}
+        </span>
+        <div role="radiogroup" aria-labelledby={`pref-${legend}`} className="inline-flex rounded-md border border-linea bg-papel p-0.5">
+          {options.map((o) => (
+            <label
+              key={o.value}
+              className={`flex h-8 cursor-pointer items-center rounded px-3 text-sm transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accion/40 ${value === o.value ? "bg-surco text-lino" : "text-tinta-2 hover:text-surco"}`}
+            >
+              <input type="radio" name={legend} checked={value === o.value} onChange={() => onChange(o.value)} className="sr-only" />
+              {o.label}
+            </label>
+          ))}
+        </div>
       </div>
-    </fieldset>
+      {help && <p className="mt-1.5 text-xs text-tinta-2">{help}</p>}
+    </div>
   );
 }
 
@@ -48,9 +53,9 @@ export function Preferences() {
   }, []);
   return (
     <section id="preferencias" className="scroll-mt-4">
-      <h2 className="text-section leading-6 font-semibold">{t("ui.prefsTitle")}</h2>
-      <p className="mt-2 text-tinta-2">{t("ui.prefsIntro")}</p>
-      <div className="mt-3 border-t border-linea">
+      <SectionHead title={t("ui.prefsTitle")} />
+      <p className="mt-3 text-tinta-2">{t("ui.prefsIntro")}</p>
+      <div className="mt-2">
         <Choice
           legend={t("ui.languageLabel")}
           value={getLocale()}
@@ -69,6 +74,7 @@ export function Preferences() {
         />
         <Choice
           legend={t("ui.unitArea")}
+          help={units.area === "cuadra" ? t("ui.unitCuadraNote") : undefined}
           value={units.area}
           onChange={(area) => set({ area })}
           options={[
@@ -95,7 +101,6 @@ export function Preferences() {
           ]}
         />
       </div>
-      <p className="mt-2 text-xs text-tinta-2">{t("ui.unitCuadraNote")}</p>
     </section>
   );
 }

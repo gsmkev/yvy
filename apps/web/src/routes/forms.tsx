@@ -1,9 +1,8 @@
 /** Formularios configurables (F-14): campos propios que cada tipo de registro pregunta después de las preguntas estándar. */
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FORM_FIELD_TYPES, FIELD_ID, LIMITS, RECORD_KINDS, formConfigSchema, type FormConfig, type FormField, type RecordKind } from "@yvy/shared";
-import { Button, Empty, ErrorBox, Field, Input, Select, Spinner, toast, Page } from "../components/ui";
+import { Button, EmptyState, ErrorBox, Field, Input, Select, Spinner, toast, Page } from "../components/ui";
 import { get, put } from "../lib/api";
 import { t, tk } from "../lib/i18n";
 import { useMe } from "../lib/queries";
@@ -66,14 +65,8 @@ export function FormsPage() {
   };
 
   return (
-    <Page width="read" className="gap-4">
-      <div>
-        <Link to="/equipo" className="text-sm text-tinta-2 underline underline-offset-2">
-          {t("ui.formsBack")}
-        </Link>
-        <h1 className="mt-2 text-xl font-semibold">{t("ui.formsTitle")}</h1>
-        <p className="mt-1 text-sm text-tinta-2">{t("ui.formsIntro", { max: LIMITS.forms.maxFieldsPerKind })}</p>
-      </div>
+    <Page width="read" back={{ to: "/equipo", label: t("ui.formsBack") }} title={t("ui.formsTitle")}>
+      <p className="-mt-2 text-sm text-tinta-2">{t("ui.formsIntro", { max: LIMITS.forms.maxFieldsPerKind })}</p>
       <Field label={t("ui.formsKind")}>
         <Select
           value={kind}
@@ -81,7 +74,7 @@ export function FormsPage() {
           options={RECORD_KINDS.map((k) => ({ value: k, label: `${tk(`recordKinds.${k}`)}${(cfg[k]?.length ?? 0) > 0 ? ` (${cfg[k]!.length})` : ""}` }))}
         />
       </Field>
-      {fields.length === 0 && <Empty>{t("ui.formsNone")}</Empty>}
+      {fields.length === 0 && <EmptyState compact title={t("ui.formsNone")} />}
       {fields.map((f, i) => (
         <fieldset key={f.id} className="flex flex-col gap-3 rounded-lg border border-linea p-3">
           <legend className="px-1 text-xs text-tinta-2">{t("ui.formsFieldN", { n: i + 1 })}</legend>

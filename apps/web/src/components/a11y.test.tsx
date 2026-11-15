@@ -79,7 +79,7 @@ describe("accesibilidad", () => {
 
   it("Preferencias: grupos de opciones con leyenda y sin infracciones", async () => {
     const { container } = render(<Preferences />);
-    expect(screen.getAllByRole("group").length).toBeGreaterThanOrEqual(4);
+    expect(screen.getAllByRole("radiogroup").length).toBeGreaterThanOrEqual(4);
     expect(await violations(container)).toEqual([]);
   });
 });

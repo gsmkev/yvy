@@ -43,10 +43,7 @@ export function LabsToolPage() {
   const { tool } = useParams({ strict: false }) as { tool: string };
   const id = TOOLS.find((x) => x === tool);
   return (
-    <Page width="data" className="gap-4">
-      <Link to="/laboratorio" className="inline-flex h-10 w-fit items-center text-sm text-tinta-2 hover:text-surco hover:underline">
-        {t("ui.labsBack")}
-      </Link>
+    <Page width="data" className="gap-4" back={{ to: "/laboratorio", label: t("ui.labsBack") }}>
       {!id ? (
         <p>{t("ui.labsUnknownTool")}</p>
       ) : (

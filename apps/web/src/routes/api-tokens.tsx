@@ -5,7 +5,7 @@ import { del, get, post } from "../lib/api";
 import { fmtDateTime } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useMe } from "../lib/queries";
-import { Button, ErrorBox, Field, Input, toast, Page } from "../components/ui";
+import { Button, DataTable, EmptyState, ErrorBox, Field, Input, toast, Page } from "../components/ui";
 
 interface Token {
   id: string;
@@ -37,16 +37,15 @@ export function ApiTokensPage() {
   });
   if (me.data && !owner) return <div className="p-6">{t("ui.apiOwnerOnly")}</div>;
   return (
-    <Page width="read" className="">
-      <h1 className="mb-1 text-xl font-semibold">{t("ui.apiTokensTitle")}</h1>
-      <p className="mb-3 text-sm text-tinta-2">
+    <Page width="read" back={{ to: "/equipo", label: t("ui.teamTitle") }} title={t("ui.apiTokensTitle")}>
+      <p className="-mt-2 text-sm text-tinta-2">
         {t("ui.apiTokensIntro")}{" "}
         <Link to="/api-docs" className="underline underline-offset-4">
           {t("ui.apiDocsTitle")}
         </Link>
       </p>
       {fresh && (
-        <div role="status" className="mb-4 rounded-md border border-soja/50 bg-soja/10 p-3 text-sm">
+        <div role="status" className="border-l-2 border-soja pl-3 text-sm">
           <p className="font-medium">{t("ui.apiTokenCreated")}</p>
           <code className="mt-1 block break-all">{fresh}</code>
           <div className="mt-2 flex gap-2">
@@ -58,25 +57,41 @@ export function ApiTokensPage() {
             >
               {t("ui.apiTokenCopy")}
             </Button>
-            <Button onClick={() => setFresh(null)}>{t("ui.apiTokenHide")}</Button>
+            <Button variant="quiet" onClick={() => setFresh(null)}>{t("ui.apiTokenHide")}</Button>
           </div>
         </div>
       )}
-      <ul className="flex flex-col divide-y divide-linea text-sm">
-        {list.data?.map((k) => (
-          <li key={k.id} className="flex flex-wrap items-center gap-2 py-2">
-            <span className="flex-1">
-              <strong>{k.name}</strong> · <code>{k.prefix}…</code> · {fmtDateTime(k.createdAt)}
-              {k.lastUsedAt ? ` · ${t("ui.apiTokenLastUsed", { date: fmtDateTime(k.lastUsedAt) })}` : ` · ${t("ui.apiTokenNeverUsed")}`}
-            </span>
-            <Button variant="danger" onClick={() => revoke.mutate(k.id)}>
-              {t("ui.apiTokenRevoke")}
-            </Button>
-          </li>
-        ))}
-      </ul>
+      {list.data && (
+        <DataTable
+          caption={t("ui.apiTokensTitle")}
+          rows={list.data}
+          rowKey={(k) => k.id}
+          empty={<EmptyState compact title={t("ui.apiTokensEmpty")} />}
+          columns={[
+            { id: "name", header: t("ui.apiTokenName"), cell: (k) => k.name },
+            { id: "prefix", header: t("ui.apiTokenPrefix"), hideBelow: "sm", cell: (k) => <code className="font-normal">{k.prefix}…</code> },
+            { id: "created", header: t("ui.apiTokenCreatedCol"), hideBelow: "md", cell: (k) => <span className="text-tinta-2">{fmtDateTime(k.createdAt)}</span> },
+            {
+              id: "used",
+              header: t("ui.apiTokenUsedCol"),
+              cell: (k) => <span className="text-tinta-2">{k.lastUsedAt ? fmtDateTime(k.lastUsedAt) : t("ui.apiTokenNeverUsed")}</span>,
+            },
+            {
+              id: "revoke",
+              header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+              cell: (k) => (
+                <div className="flex justify-end">
+                  <Button size="sm" variant="danger" onClick={() => revoke.mutate(k.id)}>
+                    {t("ui.apiTokenRevoke")}
+                  </Button>
+                </div>
+              ),
+            },
+          ]}
+        />
+      )}
       <form
-        className="mt-4 flex items-end gap-2"
+        className="flex items-end gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           create.mutate();

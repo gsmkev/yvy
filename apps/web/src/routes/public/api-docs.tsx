@@ -24,14 +24,14 @@ export function ApiDocsPage() {
         <Link to="/" className="text-sm text-accion underline-offset-4 hover:underline">
           {t("ui.legalBack")}
         </Link>
-        <h1 className="mt-6 text-[32px] leading-tight">{t("ui.apiDocsTitle")}</h1>
+        <h1 className="mt-6 text-title leading-tight">{t("ui.apiDocsTitle")}</h1>
         <p className="mt-3 text-tinta-2">{t("ui.apiDocsIntro")}</p>
 
-        <h2 className="mt-8 font-serif text-xl font-semibold">{t("ui.apiDocsAuthTitle")}</h2>
+        <h2 className="mt-8 text-section font-semibold">{t("ui.apiDocsAuthTitle")}</h2>
         <p className="mt-2">{t("ui.apiDocsAuth")}</p>
         <Code>{`curl https://TU-DOMINIO/v1/farms \\\n  -H "Authorization: Bearer yvy_..."`}</Code>
 
-        <h2 className="mt-8 font-serif text-xl font-semibold">{t("ui.apiDocsEndpoints")}</h2>
+        <h2 className="mt-8 text-section font-semibold">{t("ui.apiDocsEndpoints")}</h2>
         <ul className="mt-2 flex flex-col gap-4">
           {ENDPOINTS.map((e) => (
             <li key={e.path}>
@@ -42,11 +42,11 @@ export function ApiDocsPage() {
           ))}
         </ul>
 
-        <h2 className="mt-8 font-serif text-xl font-semibold">{t("ui.apiDocsPagingTitle")}</h2>
+        <h2 className="mt-8 text-section font-semibold">{t("ui.apiDocsPagingTitle")}</h2>
         <p className="mt-2">{t("ui.apiDocsPaging", { max: LIMITS.api.maxPageSize })}</p>
         <Code>{`{ "data": [ ... ], "nextCursor": "1767225600000.0193..." }`}</Code>
 
-        <h2 className="mt-8 font-serif text-xl font-semibold">{t("ui.apiDocsLimitsTitle")}</h2>
+        <h2 className="mt-8 text-section font-semibold">{t("ui.apiDocsLimitsTitle")}</h2>
         <p className="mt-2">{t("ui.apiDocsLimits", { n: LIMITS.api.perMinute })}</p>
         <ul className="mt-2 list-disc pl-5 text-sm">
           <li>401: {t("ui.apiDocsE401")}</li>

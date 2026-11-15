@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { del, get, post } from "../lib/api";
 import { fmtDateTime } from "../lib/format";
 import { t } from "../lib/i18n";
-import { Button, ErrorBox, Skeleton, toast } from "./ui";
+import { Button, ErrorBox, SectionHead, Skeleton, toast } from "./ui";
 
 interface Status {
   active: boolean;
@@ -35,8 +35,8 @@ export function CalendarFeed() {
   if (!s) return <Skeleton h={132} />;
   return (
     <section id="calendario" className="scroll-mt-4">
-      <h2 className="text-section leading-6 font-semibold">{t("ui.calendarFeedTitle")}</h2>
-      <p className="mt-2 text-tinta-2">{t("ui.calendarFeedIntro")}</p>
+      <SectionHead title={t("ui.calendarFeedTitle")} />
+      <p className="mt-3 text-tinta-2">{t("ui.calendarFeedIntro")}</p>
 
       {url && (
         <div role="status" className="mt-4 border-l-2 border-trigo pl-3">

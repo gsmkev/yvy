@@ -1,5 +1,6 @@
 import { fmtDateTime } from "../lib/format";
 import { t, tk } from "../lib/i18n";
+import { DataTable, type Column } from "./ui";
 
 export interface AuditEntryRow {
   id: string;
@@ -32,17 +33,16 @@ export function auditSummary(detail: string): string {
 
 /** Lista de cambios para el dueño (K-06) y para el panel interno. */
 export function AuditList({ rows }: { rows: AuditEntryRow[] }) {
-  return (
-    <ul className="flex flex-col divide-y divide-linea text-sm">
-      {rows.map((r) => (
-        <li key={r.id} className="flex flex-col gap-0.5 py-2">
-          <span>
-            <span className="num text-tinta-2">{fmtDateTime(r.createdAt)}</span> · <strong>{r.actor ?? "—"}</strong> ·{" "}
-            {tk(`ui.internalAudit_${r.action}`)}
-          </span>
-          <span className="text-xs text-tinta-2">{auditSummary(r.detail)}</span>
-        </li>
-      ))}
-    </ul>
-  );
+  const columns: Column<AuditEntryRow>[] = [
+    { id: "when", header: t("ui.auditColWhen"), cell: (r) => <span className="num whitespace-nowrap text-tinta-2">{fmtDateTime(r.createdAt)}</span> },
+    { id: "actor", header: t("ui.auditColActor"), cell: (r) => r.actor ?? "—" },
+    { id: "action", header: t("ui.auditColAction"), cell: (r) => <span className="font-normal">{tk(`ui.internalAudit_${r.action}`)}</span> },
+    {
+      id: "detail",
+      header: t("ui.auditColDetail"),
+      hideBelow: "md",
+      cell: (r) => <span className="line-clamp-2 text-xs text-tinta-2">{auditSummary(r.detail)}</span>,
+    },
+  ];
+  return <DataTable columns={columns} rows={rows} rowKey={(r) => r.id} caption={t("ui.auditTitle")} />;
 }

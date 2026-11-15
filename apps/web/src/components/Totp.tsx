@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
 import { get, post, put, getSession, setSession, type Session } from "../lib/api";
 import { t } from "../lib/i18n";
-import { Button, ErrorBox, Field, Input, Skeleton, toast } from "./ui";
+import { Button, ErrorBox, Field, Input, SectionHead, Skeleton, toast } from "./ui";
 
 interface Status {
   enabled: boolean;
@@ -85,8 +85,8 @@ export function TotpSection({ forced = false }: { forced?: boolean }) {
 
   return (
     <section id="segundo-factor" className="scroll-mt-4">
-      <h2 className="text-section leading-6 font-semibold">{t("ui.totpTitle")}</h2>
-      <p className="mt-2 text-tinta-2">{t(lockedByOrg ? "ui.totpIntroRequired" : "ui.totpIntro")}</p>
+      <SectionHead title={t("ui.totpTitle")} />
+      <p className="mt-3 text-tinta-2">{t(lockedByOrg ? "ui.totpIntroRequired" : "ui.totpIntro")}</p>
 
       {fresh && <RecoveryCodes codes={fresh} onDone={() => setFresh(null)} />}
 
@@ -191,7 +191,7 @@ export function AdminTotpPolicy() {
   if (!q.data) return <Skeleton h={64} />;
   return (
     <section>
-      <h2 className="text-section leading-6 font-semibold">{t("ui.totpPolicyTitle")}</h2>
+      <SectionHead title={t("ui.totpPolicyTitle")} />
       <label className="mt-2 flex cursor-pointer items-start gap-2 text-body">
         <input
           type="checkbox"

@@ -14,6 +14,7 @@ import { isFieldRoleName, type Member } from "../../../src/office/team";
 import { useOnline } from "../../../src/office/useOnline";
 import { useOnlineMutation } from "../../../src/office/useOnlineMutation";
 import { FormSheet, KeyValue, StatRow, TextField } from "../../../src/office/ui";
+import { FarmAccessSheet, isScopedRole } from "../../../src/office/FarmAccessSheet";
 import { QrCode } from "../../../src/ui/QrCode";
 import { Button, EmptyState, Row, SectionHeader, Sheet, Text } from "../../../src/ui/kit";
 import { C, T } from "../../../src/ui/theme";
@@ -35,7 +36,7 @@ export default function MemberScreen() {
 }
 
 function Detail({ m, self, manage }: { m: Member; self: boolean; manage: boolean }) {
-  const [sheet, setSheet] = useState<null | "link" | "pin" | "plots" | "remove">(null);
+  const [sheet, setSheet] = useState<null | "link" | "pin" | "plots" | "remove" | "farms">(null);
   const field = isFieldRoleName(m.role);
   const rows = [
     { label: t("ui.phone"), value: m.phone ?? "—" },
@@ -55,12 +56,14 @@ function Detail({ m, self, manage }: { m: Member; self: boolean; manage: boolean
       {stats.length ? <StatRow items={stats} /> : <Text style={T.small}>{t("ui.neverVisited")}</Text>}
       <SectionHeader title={t("office.teamActionsTitle")} />
       <Row title={t("ui.assignPlots")} onPress={() => setSheet("plots")} />
+      {getSession()?.organization.role === "owner" && isScopedRole(m.role) ? <Row title={t("office.teamFarmsTitle")} onPress={() => setSheet("farms")} /> : null}
       {manage && field ? <Row title={t("ui.linkDevice")} onPress={() => setSheet("link")} /> : null}
       {manage && m.role === "worker" ? <Row title={m.hasPin ? t("app.teamPinChange") : t("app.teamPinSet")} onPress={() => setSheet("pin")} /> : null}
       {manage && !self ? <Row title={t("ui.removeMember")} tone="danger" onPress={() => setSheet("remove")} /> : null}
       <LinkSheet m={m} visible={sheet === "link"} onClose={() => setSheet(null)} />
       <PinSheet m={m} visible={sheet === "pin"} onClose={() => setSheet(null)} />
       <PlotsSheet m={m} visible={sheet === "plots"} onClose={() => setSheet(null)} />
+      <FarmAccessSheet m={m} visible={sheet === "farms"} onClose={() => setSheet(null)} />
       <RemoveSheet m={m} visible={sheet === "remove"} onClose={() => setSheet(null)} />
     </>
   );

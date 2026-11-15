@@ -1,0 +1,19 @@
+/** Dinero en pantalla (ADR 0004): guaraníes enteros y dólares con centavos. Copia mínima de apps/web/src/lib/money.ts, sin Intl. */
+import { fromMinor, type Currency } from "@yvy/shared";
+import { fmtNumber } from "./format";
+
+const group = (n: number) => Math.round(Math.abs(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+/** `minor` en la unidad menor: 1250000 PYG = "Gs. 1.250.000"; 12550 USD = "US$ 125,50". */
+export function fmtMoney(minor: number, currency: Currency): string {
+  if (currency === "PYG") return `${minor < 0 ? "-" : ""}Gs. ${group(minor)}`;
+  const major = fromMinor(minor, "USD");
+  const [int = "0", dec = "00"] = Math.abs(major).toFixed(2).split(".");
+  return `${major < 0 ? "-" : ""}US$ ${int.replace(/\B(?=(\d{3})+(?!\d))/g, ".")},${dec}`;
+}
+
+/** Guaraníes, para montos ya convertidos (costos, márgenes). */
+export const fmtGs = (pyg: number) => fmtMoney(pyg, "PYG");
+
+/** Cantidad con hasta 2 decimales y su unidad ("12,5 l"). */
+export const fmtQty = (n: number, unit?: string) => `${fmtNumber(n, 2)}${unit ? ` ${unit}` : ""}`;

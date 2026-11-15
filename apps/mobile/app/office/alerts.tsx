@@ -3,12 +3,13 @@
  * así que anda sin señal). Plantilla de pantalla LOCAL: useLocal + OfficeScreen + FilterChips + acciones por fila.
  */
 import { useState } from "react";
-import { Linking, Share, View } from "react-native";
-import { Share2 } from "lucide-react-native";
+import { Linking, Pressable, Share, View } from "react-native";
+import { router, Stack } from "expo-router";
+import { Settings, Share2 } from "lucide-react-native";
 import { alertShareText, t, whatsappUrl, type MessageKey } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { tap } from "../../src/lib/haptics";
-import { API_URL } from "../../src/lib/session";
+import { API_URL, getSession } from "../../src/lib/session";
 import { flushAlertVotes } from "../../src/lib/sync";
 import { showToast } from "../../src/lib/toast";
 import { useLocal } from "../../src/lib/useLocal";
@@ -32,6 +33,8 @@ export default function Alerts() {
       .sort((a, b) => (RANK[a.severity] ?? 3) - (RANK[b.severity] ?? 3) || b.validFrom - a.validFrom);
     return { alerts, farms };
   });
+  const role = getSession()?.organization.role;
+  const canTune = role === "owner" || role === "admin";
   const [farmId, setFarmId] = useState("all");
   const [votes, setVotes] = useState(() => readVotes(getDb()));
 
@@ -61,6 +64,17 @@ export default function Alerts() {
 
   return (
     <OfficeScreen title={t("ui.alertsTitle")}>
+      {canTune ? (
+        <Stack.Screen
+          options={{
+            headerRight: () => (
+              <Pressable accessibilityRole="button" accessibilityLabel={t("ui.alertSettingsTitle")} hitSlop={12} onPress={() => router.push("/office/alert-settings" as never)} style={{ minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" }}>
+                <Settings size={24} color={C.tinta} strokeWidth={2} />
+              </Pressable>
+            ),
+          }}
+        />
+      ) : null}
       {farmsWithAlerts.length > 1 && (
         <FilterChips
           value={farmId}

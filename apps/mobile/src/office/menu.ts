@@ -1,4 +1,4 @@
-import { Search, Sprout, Package, CalendarRange, AlertTriangle, BarChart3, Beef, Building2, CalendarDays, ClipboardCheck, Columns3, HeartPulse, ListChecks, Trees, Users, Wheat } from "lucide-react-native";
+import { Landmark, LifeBuoy, Search, Sprout, Package, CalendarRange, AlertTriangle, BarChart3, Beef, Building2, CalendarDays, ClipboardCheck, Columns3, HeartPulse, ListChecks, Trees, Users, Wheat } from "lucide-react-native";
 import { isFieldRole } from "@yvy/shared";
 import { groupMenu, GROUP_TITLE, type MenuCtx, type MenuGroup, type OfficeMenuItem } from "./menuLogic";
 
@@ -30,4 +30,6 @@ export const OFFICE_MENU: OfficeMenuItem[] = [
   { group: "campo", id: "plots", title: "office.plotsTitle", hint: "office.plotsRowHint", icon: Sprout, href: "/office/plots", show: (c) => c.plots > 0 },
   { group: "campo", id: "seasons", title: "ui.seasonsTitle", hint: "office.seasonsRowHint", icon: CalendarRange, href: "/office/seasons" },
   { group: "campo", id: "products", title: "ui.productsTitle", hint: "office.productsRowHint", icon: Package, href: "/office/products" },
+  { group: "cuenta", id: "more-account", title: "office.moreAccountTitle", hint: "office.moreAccountHint", icon: LifeBuoy, href: "/office/more-account" },
+  { group: "admin", id: "admin", title: "ui.navAdmin", hint: "office.admMenuHint", icon: Landmark, href: "/office/admin", show: (c) => c.role === "owner" || c.role === "admin" || c.role === "agronomist" },
 ];

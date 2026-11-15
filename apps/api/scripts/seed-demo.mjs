@@ -9,10 +9,13 @@
 // - Las fechas son relativas al día en que se corre el script (últimos 60 días), así que se ve vigente.
 //   Para refrescarla más adelante alcanza con regenerar y volver a cargar demo.sql: las fechas se corren solas.
 // - Cada `data` de los registros se valida con parseRecordData: si algo no valida, el script falla.
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { areaHa, bboxOf, centroidOf, containsPoint, overlapRatio } from "@yvy/geo";
-import { parseRecordData, prescriptionSchema, RECORD_SCHEMA_VERSION } from "@yvy/shared";
+import {
+  checklistSchema, exportFormatInput, feedRationInput, formConfigSchema, notificationPrefsSchema, orderSchema, parseRecordData,
+  prescriptionSchema, RECORD_SCHEMA_VERSION,
+} from "@yvy/shared";
 
 // ---------- utilidades ----------
 
@@ -102,13 +105,16 @@ const people = {
   ramon: { n: 3, email: null, name: "Ramón Benítez", role: "worker" },
   lidia: { n: 4, email: null, name: "Lidia Ortiz", role: "worker" },
   celso: { n: 5, email: null, name: "Celso Gamarra", role: "worker" },
+  carlos: { n: 6, email: "carlos.duarte@yvy.invalid", name: "Carlos Duarte", role: "supervisor" },
+  maria: { n: 7, email: "maria.fernandez@yvy.invalid", name: "María Fernández", role: "admin" },
+  hugo: { n: 8, email: "hugo.ferreira@yvy.invalid", name: "Hugo Ferreira", role: "contractor" },
 };
 for (const p of Object.values(people)) {
   p.id = id("user", p.n);
   ins("users", { id: p.id, email: p.email, full_name: p.name, phone: null, locale: "es-PY", ...ts });
   ins("memberships", {
     id: id("membership", p.n), organization_id: ORG_ID, user_id: p.id, role: p.role, status: "active",
-    assignments_version: p.role === "worker" ? 1 : 0, ...ts,
+    assignments_version: p.role === "worker" || p.role === "contractor" ? 1 : 0, ...ts,
   });
 }
 
@@ -247,253 +253,186 @@ for (const p of Object.values(poiDefs)) {
 
 // Asignaciones de lotes a empleados
 let an = 0;
+const assignments = [];
 for (const p of Object.values(plots)) {
-  ins("plot_assignments", {
-    id: id("assignment", ++an), organization_id: ORG_ID, plot_id: p.id, user_id: people[p.worker].id, ...synced,
-  });
+  const a = { id: id("assignment", ++an), plot: p.id, user: people[p.worker].id };
+  assignments.push(a);
+  ins("plot_assignments", { id: a.id, organization_id: ORG_ID, plot_id: a.plot, user_id: a.user, ...synced });
 }
 
-// ---------- campaña y productos ----------
+// ---------- el resto de la organización: fixture volcada de la API real ----------
+// seed/demo-fixture.json (lo genera scripts/dump-demo-fixture.mjs desde la base que llena seed-manual.mjs) trae las filas de
+// una organización completa: el campo, las compras, el stock, los costos, la hacienda, el personal, lo que producen los jobs.
+// Acá se rearma como la demo: ids fijos (UUIDv7 con el helper id), personas y lotes de arriba, fechas corridas hasta hoy,
+// nombres de empresas inventados. Los derivados (stock, costos, resultados) ya salen coherentes porque los calculó la API.
 
+// La campaña en curso la define la demo; la anterior (cerrada) viene de la fixture.
 const SEASON_ID = id("season", 1);
 ins("seasons", {
   id: SEASON_ID, organization_id: ORG_ID, name: "Zafra 2026/27", start_date: "2026-09-01", end_date: "2027-06-30",
   active: true, ...synced,
 });
-const planning = {
-  l1: ["TMG 7062 IPRO", 3.6], l2: ["Pioneer P3707", 9.5], l3: ["Biointa 1005", 3.2], l4: ["Nidera 5909", 3.5],
-  l5: ["Paraíso 33", 2.4], l6: ["Brasmax Desafio", 3.7], l7: ["DKB 390", 7.8],
+
+const fx = JSON.parse(readFileSync(new URL("../seed/demo-fixture.json", import.meta.url), "utf8"));
+const FX = Object.fromEntries(Object.entries(fx.tables).map(([t, rows]) => [t, rows.filter((r) => !r.deleted_at)]));
+const SHIFT_MS = Math.round((Date.parse(TODAY) - Date.parse(fx.d0)) / DAY) * DAY;
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g;
+const MAP = new Map(); // id de la fixture -> id de la demo
+const skipIds = new Set(); // filas de la fixture que la demo ya trae armadas arriba
+
+MAP.set(FX.memberships[0].organization_id, ORG_ID);
+const USER_KEY = {
+  "Rodrigo Báez": "owner", "Ing. Ana Villalba": "ana", "Ramón Benítez": "ramon", "Lidia Ortiz": "lidia", "Celso Gamarra": "celso",
+  "Carlos Duarte": "carlos", "María Fernández": "maria", "Hugo Ferreira": "hugo",
 };
-let psn = 0;
-for (const [key, [variety, target]] of Object.entries(planning)) {
-  const p = plots[key];
-  ins("plot_seasons", {
-    id: id("plotSeason", ++psn), organization_id: ORG_ID, plot_id: p.id, season_id: SEASON_ID, crop: p.crop,
-    variety, planned_sowing_date: sown(p.sow), target_yield_t_ha: target, ...synced,
-  });
+for (const u of FX.users) MAP.set(u.id, people[USER_KEY[u.full_name]].id);
+const fxFarm = (name) => FX.farms.find((f) => f.name === name);
+const FARM2_ID = id("farm", 2);
+MAP.set(fxFarm("Estancia San Pedro").id, FARM_ID);
+skipIds.add(fxFarm("Estancia San Pedro").id);
+MAP.set(fxFarm("Estancia San Pedro Norte").id, FARM2_ID);
+for (const r of FX.plots) {
+  const own = Object.values(plots).find((p) => p.name === r.name);
+  if (own) { MAP.set(r.id, own.id); skipIds.add(r.id); }
 }
+const SEASON_OLD_ID = id("season", 2);
+for (const s of FX.seasons) {
+  const cur = s.name === "Zafra 2026/27";
+  MAP.set(s.id, cur ? SEASON_ID : SEASON_OLD_ID);
+  if (cur) skipIds.add(s.id);
+}
+// Productos que la demo ya tenía en producción (mismos ids).
+const PRODUCT_PRE = { "Glifosato 48 %": 1, "Engeo Pleno": 2, "Urea 46": 3, "Semilla de soja TMG 7062 IPRO": 4 };
+for (const p of FX.products) if (PRODUCT_PRE[p.name]) MAP.set(p.id, id("product", PRODUCT_PRE[p.name]));
+// Puntos de interés que ya existen arriba (mismo ids); el galpón se corre porque la fixture lo puso sobre el corral.
+const POI_PRE = { "Pluviómetro del Lote 2": poiDefs.rain, "Aguada del Potrero Aguada": poiDefs.water, "Aguada del Potrero Monte": poiDefs.trough, "Casco de la estancia": poiDefs.house, "Corral y manga": poiDefs.corral, "Tranquera de entrada": poiDefs.gate };
+for (const p of FX.points_of_interest) if (POI_PRE[p.name]) { MAP.set(p.id, POI_PRE[p.name].id); skipIds.add(p.id); }
+for (const t of ["users", "memberships"]) for (const r of FX[t]) skipIds.add(r.id);
+// Un lote tiene un solo plan por campaña y un empleado una sola asignación por lote: se reusan los ids de arriba.
+const cropOrder = ["l1", "l2", "l3", "l4", "l5", "l6", "l7"].map((k) => plots[k].id);
+const assignIdByPair = new Map(assignments.map((a) => [`${a.user}|${a.plot}`, a.id]));
 
-const prodDefs = {
-  glifo: { n: 1, name: "Glifosato 48 %", type: "agrochemical", unit: "l", activeIngredient: "Glifosato", withdrawalDays: 14, toxClass: "IV" },
-  lambda: { n: 2, name: "Engeo Pleno", type: "agrochemical", unit: "l", activeIngredient: "Lambda-cialotrina + Tiametoxam", withdrawalDays: 21, toxClass: "II" },
-  urea: { n: 3, name: "Urea 46", type: "fertilizer", unit: "kg", activeIngredient: "Nitrógeno 46 %", withdrawalDays: null, toxClass: null },
-  semilla: { n: 4, name: "Semilla de soja", type: "seed", unit: "kg", activeIngredient: null, withdrawalDays: null, toxClass: null },
+const TABLE_CAT = { farms: "farm", plots: "plot", points_of_interest: "poi", plot_assignments: "assignment", seasons: "season", plot_seasons: "plotSeason", products: "product", tasks: "task", records: "record", alerts: "alert" };
+const used = { farm: 1, plot: 9, poi: 7, assignment: 9, season: 2, plotSeason: 7, product: 4, task: 0, record: 0, alert: 1 };
+let nextCat = 20;
+const catOf = (t) => {
+  if (!TABLE_CAT[t]) { CAT[`fx_${t}`] = nextCat++; TABLE_CAT[t] = `fx_${t}`; }
+  return TABLE_CAT[t];
 };
-for (const p of Object.values(prodDefs)) {
-  p.id = id("product", p.n);
-  ins("products", {
-    id: p.id, organization_id: ORG_ID, name: p.name, type: p.type, unit: p.unit,
-    active_ingredient: p.activeIngredient, withdrawal_days: p.withdrawalDays, tox_class: p.toxClass, ...synced,
-  });
+for (const [t, rows] of Object.entries(FX)) {
+  if (!rows.length || !("id" in rows[0]) || t === "users" || t === "memberships") continue;
+  const cat = catOf(t);
+  used[cat] ??= 0;
+  for (const r of rows) {
+    if (MAP.has(r.id)) continue;
+    if (t === "plot_seasons" && MAP.get(r.season_id) === SEASON_ID && cropOrder.includes(MAP.get(r.plot_id))) {
+      MAP.set(r.id, id("plotSeason", cropOrder.indexOf(MAP.get(r.plot_id)) + 1));
+      continue;
+    }
+    if (t === "plot_assignments" && assignIdByPair.has(`${MAP.get(r.user_id)}|${MAP.get(r.plot_id)}`)) {
+      MAP.set(r.id, assignIdByPair.get(`${MAP.get(r.user_id)}|${MAP.get(r.plot_id)}`));
+      skipIds.add(r.id);
+      continue;
+    }
+    MAP.set(r.id, id(cat, ++used[cat]));
+  }
 }
-
-// ---------- registros ----------
-
-const recordDefs = []; // { key, kind, plot, author, daysAgo, hour, data, poi }
-const rec = (key, kind, plotKey, authorKey, daysAgo, hour, data, extra = {}) =>
-  recordDefs.push({ key, kind, plotKey, authorKey, daysAgo, hour, minute: Math.floor(rnd() * 60), data, ...extra });
-const worker = (k) => plots[k].worker;
-
-// Lluvia: ~11 días en 60, leídos a las 7 h en el pluviómetro del Lote 2.
-const rainDays = [[2, 12], [5, 4], [6, 31], [10, 18], [15, 7], [16, 46], [22, 9], [28, 23], [35, 14], [41, 38], [47, 6], [53, 21]];
-for (const [d, mm] of rainDays) {
-  const w = d % 2 === 0 ? "ramon" : "lidia";
-  const hour = 7;
-  rec(`rain-${d}`, "rain", "l2", w, d, hour, { mm, readAt: at(d, 7, 5) }, { poi: "rain" });
-}
-
-// Siembras (solo las que caen dentro de los 60 días) y una fertilización
-for (const key of ["l1", "l2", "l4", "l5", "l6", "l7"]) {
-  const p = plots[key];
-  const density = p.crop === "soja" ? { density: 14, densityUnit: "seeds_m" } : p.crop === "girasol" ? { density: 4, densityUnit: "kg_ha" } : { density: 3.2, densityUnit: "seeds_m" };
-  rec(`sowing-${key}`, "sowing", key, worker(key), p.sow, 8, {
-    seasonId: SEASON_ID, crop: p.crop, variety: planning[key][0], ...density, areaHa: p.areaHa,
-  });
-}
-rec("fert-l2", "fertilization", "l2", "ramon", 30, 9, {
-  seasonId: SEASON_ID,
-  products: [{ productId: prodDefs.urea.id, name: prodDefs.urea.name, dose: 120, unit: "kg_ha" }],
-  method: "broadcast", areaHa: plots.l2.areaHa, note: "Cobertura al voleo antes de la lluvia.",
-});
-rec("fert-l7", "fertilization", "l7", "lidia", 25, 9, {
-  seasonId: SEASON_ID,
-  products: [{ productId: prodDefs.urea.id, name: prodDefs.urea.name, dose: 100, unit: "kg_ha" }],
-  method: "banded", areaHa: plots.l7.areaHa,
-});
-
-// Aplicaciones
-rec("app-l1-herb", "application", "l1", "ramon", 30, 7, {
-  seasonId: SEASON_ID,
-  products: [{ productId: prodDefs.glifo.id, name: prodDefs.glifo.name, dose: 2.5, unit: "l_ha" }],
-  volumeLHa: 80, areaHa: plots.l1.areaHa, windKmh: 9, tempC: 24, humidityPct: 68, machine: "Pulverizadora autopropulsada",
-});
-rec("app-l4-herb", "application", "l4", "ramon", 24, 7, {
-  seasonId: SEASON_ID,
-  products: [{ productId: prodDefs.glifo.id, name: prodDefs.glifo.name, dose: 2.5, unit: "l_ha" }],
-  volumeLHa: 80, areaHa: plots.l4.areaHa, windKmh: 7, tempC: 22, humidityPct: 72, machine: "Pulverizadora autopropulsada",
-});
-rec("app-l6-herb", "application", "l6", "lidia", 20, 8, {
-  seasonId: SEASON_ID,
-  products: [{ productId: prodDefs.glifo.id, name: prodDefs.glifo.name, dose: 2, unit: "l_ha" }],
-  volumeLHa: 80, areaHa: plots.l6.areaHa, windKmh: 11, tempC: 26, humidityPct: 61,
-});
-rec("app-l6-chinche", "application", "l6", "lidia", 4, 8, {
-  seasonId: SEASON_ID,
-  products: [{ productId: prodDefs.lambda.id, name: prodDefs.lambda.name, dose: 0.2, unit: "l_ha" }],
-  volumeLHa: 70, areaHa: plots.l6.areaHa, windKmh: 8, tempC: 25, humidityPct: 65, note: "Foco de chinche en el borde norte.",
-});
-
-// Cosecha de trigo
-rec("harvest-l3", "harvest", "l3", "lidia", 5, 10, {
-  seasonId: SEASON_ID, tons: round(plots.l3.areaHa * 3.1, 1), moisturePct: 13.2, areaHa: plots.l3.areaHa, destination: "acopio",
-  note: "Cosecha terminada, rinde por encima del objetivo.",
-});
-
-// Monitoreo: chinche en soja con tendencia creciente
-const chinche = {
-  l1: [[26, 0.4, "low", "ana"], [18, 0.8, "low", "ramon"], [11, 1.6, "medium", "ana"], [6, 2.4, "medium", "ramon"], [2, 3.1, "high", "ana"]],
-  l4: [[22, 0.2, "low", "ramon"], [14, 0.6, "low", "ramon"], [7, 1.1, "medium", "ana"], [3, 1.4, "medium", "ramon"]],
-  l6: [[15, 0.5, "low", "lidia"], [9, 1.2, "medium", "lidia"], [5, 3.4, "high", "ana"], [1, 0.3, "low", "lidia"]],
+// Un uuid que no es de ninguna fila (el grupo de una transferencia de stock, por ejemplo) recibe un id propio la primera vez que aparece.
+CAT.ref = 19;
+CAT.pastAlert = 18;
+CAT.scene = 16;
+CAT.stat = 15;
+CAT.comment = 17;
+let refN = 0;
+const mapId = (u) => {
+  if (!MAP.has(u)) MAP.set(u, id("ref", ++refN));
+  return MAP.get(u);
 };
-for (const [key, list] of Object.entries(chinche))
-  for (const [d, perMeter, intensity, a] of list)
-    rec(`pest-${key}-${d}`, "pest", key, a, d, 9 + (d % 5), {
-      pest: "chinche", intensity, perMeter, crop: "soja",
-      note: intensity === "high" ? "Supera el umbral; se programa aplicación." : undefined,
-    });
-rec("pest-l2-oruga", "pest", "l2", "ramon", 12, 10, { pest: "oruga", intensity: "low", crop: "maiz", note: "Spodoptera en hojas bajas." });
-rec("pest-l7-malezas", "pest", "l7", "lidia", 18, 11, { pest: "malezas", intensity: "medium", crop: "maiz" });
-rec("pest-l3-roya", "pest", "l3", "ana", 40, 10, { pest: "roya", intensity: "low", crop: "trigo", note: "Pústulas aisladas en hoja bandera." });
 
-// Estado del cultivo
-const stageAt = {
-  l1: [[30, "vegetativo", "good"], [8, "vegetativo", "good"]],
-  l2: [[45, "vegetativo", "good"], [20, "floracion", "good"], [3, "floracion", "fair"]],
-  l3: [[50, "llenado", "good"], [20, "madurez", "good"]],
-  l4: [[25, "emergencia", "good"], [7, "vegetativo", "fair"]],
-  l5: [[40, "vegetativo", "good"], [10, "floracion", "good"]],
-  l6: [[28, "emergencia", "good"], [9, "vegetativo", "good"], [2, "vegetativo", "fair"]],
-  l7: [[35, "emergencia", "good"], [12, "vegetativo", "good"]],
-};
-for (const [key, list] of Object.entries(stageAt))
-  for (const [d, stage, cond] of list)
-    rec(`crop-${key}-${d}`, "crop_status", key, worker(key), d, 14, { stage, condition: cond });
-
-// Recorridas (scouting)
-const scouts = [
-  ["l1", "ramon", 33, "good", "Buena emergencia y uniforme."],
-  ["l2", "ramon", 27, "good", "Parejo, sin manchones."],
-  ["l4", "ramon", 13, "fair", "Manchón con menos plantas cerca del alambrado."],
-  ["l5", "lidia", 21, "good", "Capítulos bien formados."],
-  ["l6", "lidia", 7, "fair", "Hojas con daño de insectos en la cabecera norte."],
-  ["l7", "lidia", 16, "good", undefined],
-  ["l3", "lidia", 9, "good", "Granos llenos, casi lista para cosecha."],
-  ["l2", "ana", 1, "good", "Recorrida de rutina con el agrónomo."],
+// Nombres inventados para empresas, bancos y laboratorios reales, y correos de prueba.
+const RENAME = [
+  ["ADM Paraguay S.R.L.", "Granos del Sur S.R.L."], ["ADM Villeta", "Granos del Sur · Villeta"], ["ADM-2026", "GDS-2026"],
+  ["Cargill Paraguay S.A.", "Exportadora Paraná S.A."], ["CPA-26", "EXP-26"],
+  ["Copetrol S.A.", "Combustibles del Este S.A."], ["Frigorífico Concepción S.A.", "Frigorífico del Norte S.A."],
+  ["Cooperativa Colonias Unidas", "Cooperativa Agrícola del Sur"], ["CCU-", "CAS-"],
+  ["Banco Itaú", "Banco del Sur"], ["Banco Continental", "Banco Guaraní"],
+  ["Laboratorio de suelos UNA", "Laboratorio de suelos regional"], ["@sanpedro.test", "@yvy.invalid"], ["@proveedor.test", "@yvy.invalid"],
 ];
-for (const [key, a, d, cond, note] of scouts) rec(`scout-${key}-${d}`, "scouting", key, a, d, 15, { condition: cond, note });
-
-// Potreros y hacienda
-for (const [d, h, cover, present] of [[50, 22, "medium", true], [30, 18, "medium", true], [12, 9, "low", true]])
-  rec(`pasture-p1-${d}`, "pasture_status", "p1", "celso", d, 8, { heightCm: h, cover, livestockPresent: present });
-for (const [d, h, cover, present] of [[46, 41, "high", false], [20, 36, "high", false], [6, 28, "high", true]])
-  rec(`pasture-p2-${d}`, "pasture_status", "p2", "celso", d, 8, { heightCm: h, cover, livestockPresent: present });
-
-for (const [d, lvl] of [[44, "full"], [32, "full"], [19, "half"], [9, "half"], [2, "low"]])
-  rec(`water-p1-${d}`, "water", "p1", "celso", d, 7, { level: lvl, note: lvl === "low" ? "Hay que revisar el molino." : undefined }, { poi: "water" });
-for (const [d, lvl] of [[38, "full"], [14, "full"], [3, "full"]])
-  rec(`water-p2-${d}`, "water", "p2", "celso", d, 7, { level: lvl }, { poi: "trough" });
-
-const herd1 = { vaca: 14, vaquilla: 4, ternero: 9, toro: 1 };
-rec("herd-p1-55", "herd_count", "p1", "celso", 55, 9, { counts: herd1 });
-rec("herd-p1-30", "herd_count", "p1", "celso", 30, 9, { counts: { vaca: 14, vaquilla: 4, ternero: 12, toro: 1 }, note: "Nacieron tres terneros." });
-rec("health-p1-40", "health", "p1", "celso", 40, 8, {
-  reason: "desparasitacion", product: "Ivermectina 1 %", dose: "1 ml cada 50 kg", counts: herd1,
-});
-rec("health-p1-25", "health", "p1", "celso", 25, 8, { reason: "aftosa", product: "Vacuna antiaftosa", dose: "2 ml", counts: { vaca: 14, vaquilla: 4, ternero: 12, toro: 1 } });
-rec("move-p1-p2-20", "herd_move", "p1", "celso", 20, 10, {
-  toPlotId: plots.p2.id, counts: { vaca: 14, vaquilla: 4, ternero: 12, toro: 1 }, reason: "rotacion", note: "Rotación al Potrero Monte.",
-});
-rec("herd-p2-6", "herd_count", "p2", "celso", 6, 9, { counts: { vaca: 14, vaquilla: 4, ternero: 12, toro: 1 } });
-rec("mort-p2-11", "mortality", "p2", "celso", 11, 17, { category: "ternero", head: 1, cause: "desconocida", note: "Encontrado por la mañana." });
-rec("note-1", "note", "l1", "ana", 3, 16, { text: "Programar aplicación de insecticida en Lote 1 y Lote 6 si el conteo sigue arriba del umbral." });
-
-// Validar todo y emitir
-let recN = 0;
-const recIds = {};
-const recRows = [];
-for (const r of recordDefs) {
-  const plot = plots[r.plotKey];
-  const parsed = parseRecordData(r.kind, r.data);
-  if (!parsed.success) {
-    throw new Error(`registro ${r.key} (${r.kind}) no valida: ${JSON.stringify(parsed.error.issues)}`);
-  }
-  const pt = r.poi ? poiDefs[r.poi] : pointIn(plot);
-  if (!containsPoint(plot.geom, pt.lon, pt.lat)) throw new Error(`registro ${r.key} cae fuera de ${plot.name}`);
-  const capturedAt = at(r.daysAgo, r.hour, r.minute);
-  if (capturedAt > NOW) throw new Error(`registro ${r.key} en el futuro`);
-  recIds[r.key] = id("record", ++recN);
-  recRows.push({
-    id: recIds[r.key], organization_id: ORG_ID, farm_id: FARM_ID, plot_id: plot.id, poi_id: r.poi ? poiDefs[r.poi].id : null,
-    author_id: people[r.authorKey].id, kind: r.kind,
-    data: JSON.stringify(parsed.data), // la forma ya normalizada (incluye deltaT en aplicaciones)
-    schema_version: RECORD_SCHEMA_VERSION, lon: pt.lon, lat: pt.lat, gps_accuracy_m: round(between(3, 9), 1),
-    captured_at: capturedAt, device_id: null,
-    created_at: capturedAt + 60_000, updated_at: capturedAt + 60_000, deleted_at: null, version: CURRENT_VERSION,
-  });
-}
-recRows.sort((a, b) => a.captured_at - b.captured_at);
-for (const row of recRows) ins("records", row);
-
-// ---------- tareas ----------
-
-const dueIn = (n) => ymdLocal(NOW + n * DAY);
-const taskBase = { organization_id: ORG_ID, farm_id: FARM_ID, comments: "[]", checklist: null, prescription: null, lon: null, lat: null, ...synced };
-let tn = 0;
-const task = (o) => {
-  const p = o.plot ? plots[o.plot] : null;
-  const row = {
-    id: id("task", ++tn), ...taskBase,
-    plot_id: p?.id ?? null, assignee_id: people[o.assignee].id, title: o.title, kind: o.kind ?? null,
-    due_date: o.due, due_time: o.dueTime ?? null, priority: o.priority ?? "normal", recurrence: o.recurrence ?? "none",
-    status: o.status ?? "open", completed_at: o.completedAt ?? null, completed_by: o.completedBy ? people[o.completedBy].id : null,
-    record_id: o.recordKey ? recIds[o.recordKey] : null, created_by: people[o.createdBy].id,
-    created_at: o.createdAt ?? NOW - 5 * DAY, updated_at: o.completedAt ?? o.createdAt ?? NOW - 5 * DAY,
-  };
-  if (o.point) { row.lon = o.point.lon; row.lat = o.point.lat; }
-  if (o.prescription) {
-    const pr = prescriptionSchema.safeParse(o.prescription);
-    if (!pr.success) throw new Error(`receta inválida: ${JSON.stringify(pr.error.issues)}`);
-    row.prescription = JSON.stringify(pr.data);
-  }
-  ins("tasks", row);
+const NO_SHIFT = {
+  seasons: ["start_date", "end_date"], eudr_results: ["ref_from_at", "ref_to_at"],
 };
-task({ title: "Leer el pluviómetro", plot: "l2", assignee: "ramon", kind: "rain", due: TODAY, dueTime: "08:00", recurrence: "daily", createdBy: "owner", createdAt: NOW - 55 * DAY });
-task({
-  title: "Revisar chinches en Lote 1", plot: "l1", assignee: "ramon", kind: "pest", due: dueIn(-3), priority: "high",
-  createdBy: "ana", point: pointIn(plots.l1), createdAt: NOW - 6 * DAY,
-});
-task({
-  title: "Aplicar insecticida en Lote 6", plot: "l6", assignee: "lidia", kind: "application", due: dueIn(2), priority: "high",
-  createdBy: "ana", createdAt: NOW - 1 * DAY,
-  prescription: { seasonId: SEASON_ID, products: [{ productId: prodDefs.lambda.id, name: prodDefs.lambda.name, dose: 0.2, unit: "l_ha" }], volumeLHa: 70, note: "Aplicar con viento menor a 12 km/h." },
-});
-task({ title: "Chequear el molino de la aguada", plot: "p1", assignee: "celso", kind: "water", due: dueIn(1), priority: "high", createdBy: "owner", createdAt: NOW - 2 * DAY });
-task({ title: "Contar la hacienda del Potrero Monte", plot: "p2", assignee: "celso", kind: "herd_count", due: dueIn(5), createdBy: "owner", createdAt: NOW - 1 * DAY });
-task({
-  title: "Contar la hacienda del Potrero Monte (control)", plot: "p2", assignee: "celso", kind: "herd_count", due: dayStr(6), status: "done",
-  completedAt: at(6, 9, 20), completedBy: "celso", recordKey: "herd-p2-6", createdBy: "owner", createdAt: NOW - 9 * DAY,
-});
-task({
-  title: "Cosechar el trigo del Lote 3", plot: "l3", assignee: "lidia", kind: "harvest", due: dayStr(5), status: "done",
-  completedAt: at(5, 16, 30), completedBy: "lidia", recordKey: "harvest-l3", createdBy: "ana", createdAt: NOW - 12 * DAY,
-});
-task({
-  title: "Recorrer el Lote 5 de girasol", plot: "l5", assignee: "lidia", kind: "scouting", due: dayStr(21), status: "done",
-  completedAt: at(21, 15, 40), completedBy: "lidia", recordKey: "scout-l5-21", createdBy: "ana", createdAt: NOW - 25 * DAY,
-});
+const noShift = (t, col, row) => NO_SHIFT[t]?.includes(col) || (t === "plot_analyses" && row.kind === "cover_change" && ["from_at", "to_at", "ref_key"].includes(col));
+const shiftYmd = (s) => new Date(Date.parse(`${s}T00:00:00Z`) + SHIFT_MS).toISOString().slice(0, 10);
+const mapValue = (t, col, v, row) => {
+  if (v === null || v === undefined) return null;
+  if (typeof v === "number") return Number.isInteger(v) && v >= 1.6e12 && v < 1.9e12 && !noShift(t, col, row) ? v + SHIFT_MS : v;
+  if (typeof v !== "string") return v;
+  let s = v.replace(UUID_RE, mapId);
+  if (!noShift(t, col, row)) s = s.replace(/\b20\d\d-\d\d-\d\d\b/g, shiftYmd).replace(/\b1[6-8]\d{11}\b/g, (m) => String(Number(m) + SHIFT_MS));
+  for (const [a, b] of RENAME) if (s.includes(a)) s = s.replaceAll(a, b);
+  return s;
+};
+
+const must = (what, r) => {
+  if (!r.success) throw new Error(`${what} no valida: ${JSON.stringify(r.error.issues.slice(0, 3))}`);
+  return r.data;
+};
+const json = (s) => (s == null ? null : JSON.parse(s));
+let ordinal = {};
+const FIX = {
+  seasons: (r) => { if (r.name === "Zafra 2025/26") { r.start_date = "2025-09-01"; r.end_date = "2026-08-31"; } },
+  points_of_interest: (r) => { if (r.name === "Galpón de máquinas") { r.lon = -55.8999; r.lat = -27.1561; } },
+  parties: (r) => { ordinal.party = (ordinal.party ?? 0) + 1; r.phone = `+595 21 555 ${String(100 + ordinal.party).padStart(4, "0")}`; },
+  employees: (r) => { ordinal.emp = (ordinal.emp ?? 0) + 1; r.ci = `9.000.${String(ordinal.emp).padStart(3, "0")}`; r.phone = `+595 900 000 ${String(ordinal.emp).padStart(3, "0")}`; },
+  records: (r) => {
+    const parsed = must(`registro ${r.kind} del ${r.captured_at}`, parseRecordData(r.kind, json(r.data)));
+    r.data = JSON.stringify(parsed);
+    r.device_id = null;
+    r.schema_version = RECORD_SCHEMA_VERSION;
+    // En la fixture el agrónomo no tiene sesión propia: una de cada tres recorridas y monitoreos pasa a su nombre.
+    if (["pest", "scouting", "crop_status"].includes(r.kind) && (ordinal.field = (ordinal.field ?? 0) + 1) % 3 === 0) r.author_id = people.ana.id;
+    if (r.captured_at > NOW) throw new Error(`registro ${r.kind} en el futuro`);
+  },
+  tasks: (r) => {
+    // Pocas vencidas: las tres más viejas quedan vencidas y el resto se reparte en los próximos días.
+    if (r.status === "open" && r.recurrence === "none" && r.due_date < TODAY && (ordinal.late = (ordinal.late ?? 0) + 1) > 3) r.due_date = ymdLocal(NOW + (1 + (ordinal.late % 9)) * DAY);
+    if (r.prescription) r.prescription = JSON.stringify(must("receta", prescriptionSchema.safeParse(json(r.prescription))));
+    if (r.checklist) must("checklist", checklistSchema.safeParse(json(r.checklist)));
+    if (r.work_order) must("orden de trabajo", orderSchema.safeParse(json(r.work_order)));
+  },
+  scenes: (r) => { ordinal.scene = (ordinal.scene ?? 0) + 1; r.item_id = `DEMO_S2_${String(ordinal.scene).padStart(3, "0")}`; },
+  feed_rations: (r) => { must("ración", feedRationInput.safeParse({ name: r.name, items: json(r.items), note: r.note ?? undefined })); },
+  export_formats: (r) => { must("formato de exporte", exportFormatInput.safeParse({ name: r.name, dataset: r.dataset, config: json(r.config) })); },
+  form_configs: (r) => { must("formularios propios", formConfigSchema.safeParse(json(r.config))); },
+  notification_prefs: (r) => { must("preferencias", notificationPrefsSchema.safeParse(json(r.prefs))); },
+};
+// Tablas que también escriben los jobs reales o cuyo dato es por clave natural: INSERT OR IGNORE, no pisan lo que ya hay.
+const IGNORE_TABLES = new Set([
+  "climate_daily", "forecasts", "forecast_hours", "plot_forecasts", "farm_risk", "farm_spi", "zone_benchmarks", "exchange_rates",
+  "farm_access", "alert_plots", "alert_feedback", "notification_prefs", "form_configs", "farm_alert_settings", "farm_livestock_settings",
+  "product_dose_ranges", "record_reviews", "fire_hotspots", "alerts", "eudr_results", "plot_analyses", "management_zones", "problem_areas",
+]);
+for (const [t, rows] of Object.entries(FX)) if (rows[0] && "id" in rows[0] && !IGNORE_TABLES.has(t)) UPSERT.add(t);
+
+const imp = {}; // filas ya armadas por tabla, para lo que se arma después
+const REGENERATED = new Set(["scenes", "plot_index_stats"]); // se rehacen abajo con la curva de cada cultivo
+for (const [t, rows] of Object.entries(FX)) {
+  if (REGENERATED.has(t)) continue;
+  for (const r0 of rows) {
+    if (skipIds.has(r0.id)) continue;
+    if (t === "climate_daily" && r0.source === "nasa_power") continue; // se rehace abajo, con humedad de suelo coherente con la lluvia
+    const row = {};
+    for (const [col, v] of Object.entries(r0)) row[col] = mapValue(t, col, v, r0);
+    FIX[t]?.(row);
+    if ("version" in row) row.version = CURRENT_VERSION;
+    ins(t, row);
+    (imp[t] ??= []).push(row);
+  }
+}
 
 // ---------- aviso de helada ----------
 
+const dueIn = (n) => ymdLocal(NOW + n * DAY);
 const frostDays = [[1, 2.0], [2, 1.2], [3, 2.0]];
 const alertId = id("alert", 1);
 const frostFrom = dueIn(1);
@@ -510,6 +449,161 @@ for (const p of cropPlots) {
   out.push(`INSERT OR IGNORE INTO alert_plots (alert_id, plot_id) VALUES (${sql(alertId)}, ${sql(p.id)});`);
   count("alert_plots");
 }
+
+
+// ---------- lo que la fixture no trae: clima de todo el año, avisos pasados, actividad, comentarios ----------
+
+const FARMS = [FARM_ID, FARM2_ID];
+const MONTH_MM = [168, 132, 140, 148, 118, 96, 72, 58, 110, 160, 172, 180]; // lluvia mensual normal (mm), Itapúa
+const MONTH_TMIN = [20, 19.8, 18.5, 15, 11.5, 9, 8.5, 9.5, 12, 15.5, 17.5, 19.5];
+const doyOf = (ymd) => Math.round((Date.parse(`${ymd}T00:00:00Z`) - Date.parse(`${ymd.slice(0, 4)}-01-01T00:00:00Z`)) / DAY) + 1;
+const daysIn = (m) => [31, 28.25, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m];
+
+// Escenas Sentinel-2 y estadísticas de vigor por lote (las escribe el job s2_stats): 17 meses, una escena cada ~5 días sin nubes.
+// La curva de cada lote sigue su ciclo real: siembra, pico, senescencia, cosecha y rastrojo; los potreros varían con la estación.
+{
+  const CYCLE = { soja: 120, maiz: 140, girasol: 115, trigo: 160 };
+  const mappedPlot = (oldId) => MAP.get(oldId);
+  const info = new Map(); // plot id -> { kind, cycles: [{ sow, len }] } (días atrás)
+  const fxPlotById = new Map(FX.plots.map((r) => [MAP.get(r.id), r]));
+  for (const [pid, r] of fxPlotById) {
+    if (r.kind === "pasture") { info.set(pid, { kind: "pasture", cycles: [] }); continue; }
+    const own = Object.values(plots).find((p) => p.id === pid);
+    const sowAgo = own ? own.sow : Math.round((Date.parse(TODAY) - Date.parse(shiftYmd(r.sowing_date))) / DAY);
+    const cycles = [{ sow: sowAgo, len: CYCLE[r.crop] }];
+    const oldPs = FX.plot_seasons.find((ps) => mappedPlot(ps.plot_id) === pid && MAP.get(ps.season_id) === SEASON_OLD_ID);
+    const oldHarvest = (imp.records ?? []).find((x) => x.kind === "harvest" && x.plot_id === pid && JSON.parse(x.data).seasonId === SEASON_OLD_ID);
+    if (oldPs && oldHarvest) {
+      const hAgo = Math.round((NOW - oldHarvest.captured_at) / DAY);
+      cycles.push({ sow: hAgo + CYCLE[oldPs.crop], len: CYCLE[oldPs.crop] });
+    }
+    info.set(pid, { kind: "crop", cycles });
+  }
+  const ndviOn = (pi, ago) => {
+    const month = Number(dayStr(ago).slice(5, 7)) - 1;
+    if (pi.kind === "pasture") return 0.6 + 0.09 * Math.cos(((month - 0.5) / 12) * 2 * Math.PI) + 0.03 * Math.sin(ago / 17);
+    for (const c of pi.cycles) {
+      const a = c.sow - ago, x = a / c.len;
+      if (a < 0 || x > 1) continue;
+      const v = 0.2 + 0.68 / (1 + Math.exp(-(x - 0.28) / 0.08));
+      return x > 0.62 ? v - ((x - 0.62) / 0.38) * 0.5 : v;
+    }
+    return 0.25 + 0.03 * Math.sin(ago / 23); // rastrojo o barbecho
+  };
+  let sceneN = 0, statN = 0;
+  for (let ago = 2; ago <= 520; ago += 5) {
+    if (ago > 3 && rnd() < 0.17) continue; // día con nubes: sin escena útil
+    const acquiredAt = at(ago, 13, 40);
+    const sceneId = id("scene", ++sceneN);
+    ins("scenes", { id: sceneId, source: "sentinel-2", item_id: `DEMO_S2_${String(sceneN).padStart(3, "0")}`, acquired_at: acquiredAt, cloud_pct: round(between(0, 22), 1), processed_at: acquiredAt + 6 * 3_600_000 });
+    for (const [pid, pi] of info) {
+      const v = Math.min(0.92, Math.max(0.1, ndviOn(pi, ago) + between(-0.025, 0.025)));
+      const stat = (idx, mean, p10, p90) => ins("plot_index_stats", {
+        id: id("stat", ++statN), organization_id: ORG_ID, plot_id: pid, scene_id: sceneId, acquired_at: acquiredAt, idx, mean: round(mean, 3), p10: round(p10, 3), p90: round(p90, 3),
+        valid_pct: round(between(88, 100), 1), created_at: acquiredAt + 6 * 3_600_000, updated_at: acquiredAt + 6 * 3_600_000, deleted_at: null, version: CURRENT_VERSION, low_confidence: false,
+      });
+      stat("ndvi", v, v - 0.07, Math.min(0.95, v + 0.06));
+      const m = 0.1 + v * 0.45 + between(-0.03, 0.03);
+      stat("ndmi", m, v * 0.45 - 0.02, v * 0.45 + 0.2);
+    }
+  }
+}
+
+// Normales 1991-2020 por día del año (el job real las calcula con CHIRPS y NASA POWER).
+for (const farmId of FARMS)
+  for (let doy = 1; doy <= 366; doy++) {
+    const m = new Date(Date.UTC(2024, 0, doy)).getUTCMonth();
+    const mean = MONTH_MM[m] / daysIn(m);
+    const tm = MONTH_TMIN[m];
+    const base = { farm_id: farmId, plot_id: "", day_of_year: doy };
+    ins("climatology", { ...base, var: "precip", p20: round(mean * 0.25, 2), p50: round(mean * 0.7, 2), p80: round(mean * 1.7, 2), mean: round(mean, 2) });
+    ins("climatology", { ...base, var: "tmin", p20: round(tm - 3.5, 1), p50: tm, p80: round(tm + 3, 1), mean: tm });
+    ins("climatology", { ...base, var: "soil_top", p20: 0.26, p50: 0.33, p80: 0.4, mean: 0.33 });
+    ins("climatology", { ...base, var: "soil_root", p20: 0.27, p50: 0.34, p80: 0.41, mean: 0.34 });
+  }
+
+// Lluvia (CHIRPS) y temperatura/humedad de suelo (NASA POWER) diarias: la fixture trae 150 días; acá se completan hasta 14 meses atrás.
+// La humedad de suelo se recalcula con un balde simple (sube con la lluvia, baja con la evapotranspiración) para toda la serie.
+{
+  const have = new Map(); // `${farm}|${date}` -> mm de la fixture
+  for (const r of imp.climate_daily ?? []) if (r.source === "chirps" || r.source === "chirps_prelim") have.set(`${r.farm_id}|${r.date}`, r.precip_mm);
+  const days = [];
+  for (let d = 430; d >= 1; d--) days.push(dayStr(d));
+  for (const farmId of FARMS) {
+    let top = 0.3, root = 0.32;
+    for (const date of days) {
+      const month = Number(date.slice(5, 7)) - 1;
+      let mm = have.get(`${farmId}|${date}`);
+      const real = mm !== undefined;
+      if (!real) {
+        // día de lluvia con la probabilidad y el monto del mes, para que lo mensual dé cerca de lo normal
+        const pRain = Math.min(0.45, MONTH_MM[month] / 330);
+        mm = rnd() < pRain ? round(Math.min(70, (MONTH_MM[month] / daysIn(month) / pRain) * between(0.15, 1.9)), 1) : 0;
+      }
+      const et = [11, 0, 1].includes(month) ? 0.011 : [5, 6, 7].includes(month) ? 0.004 : 0.007;
+      top = Math.min(0.44, Math.max(0.17, top + mm * 0.006 - et));
+      root = Math.min(0.42, Math.max(0.2, root + (top - root) * 0.12));
+      const warm = [10, 11, 0, 1, 2].includes(month) ? 7 : [3, 8, 9].includes(month) ? 2 : [4, 7].includes(month) ? -2 : -5;
+      if (!real) ins("climate_daily", { farm_id: farmId, plot_id: "", date, source: "chirps", precip_mm: mm, tmin_c: null, tmax_c: null, soil_moisture_0_7: null, soil_moisture_7_28: null });
+      const t = MONTH_TMIN[month];
+      // NASA POWER: la fila de la fixture (si la hay) se reemplaza por una con humedad coherente; INSERT OR IGNORE no pisa lo que ya escribió el job real
+      ins("climate_daily", { farm_id: farmId, plot_id: "", date, source: "nasa_power", precip_mm: null,
+        tmin_c: round(t + between(-3.5, 3.5) + (mm > 8 ? -1.5 : 0), 1), tmax_c: round(t + 11 + warm * 0.4 + between(-4, 5) - (mm > 8 ? 4 : 0), 1),
+        soil_moisture_0_7: round(top, 3), soil_moisture_7_28: round(root, 3) });
+    }
+  }
+}
+
+// Avisos pasados (ya resueltos) con los votos de "¿Te sirvió?".
+const pastAlerts = [
+  { kind: "frost", severity: "watch", probability: "medium", from: 26, to: 24, summary: "Posible helada: mínima de 1,8 °C", source: "MET Norway", votes: [["owner", 1, null], ["ana", 1, "Llegó con tiempo para tapar el semillero."]] },
+  { kind: "excess_rain", severity: "watch", probability: "high", from: 33, to: 30, summary: "Exceso de lluvia: 74 mm pronosticados (72 h)", source: "MET Norway", votes: [["owner", 1, null], ["maria", 0, "Cayeron 40 mm, menos de lo avisado."]] },
+  { kind: "fire", severity: "warning", probability: null, from: 41, to: 41, summary: "Foco de calor a 6,4 km de la estancia", source: "NASA FIRMS", votes: [["ana", 1, null]] },
+  { kind: "pest_threshold", severity: "watch", probability: null, from: 12, to: 6, summary: "Chinche sobre el umbral en el Lote 1 Norte", source: "Registros de monitoreo", votes: [["owner", 1, "Justo antes de la aplicación."], ["ana", 1, null]] },
+  { kind: "drought", severity: "watch", probability: "medium", from: 58, to: 50, summary: "Déficit de lluvia de 52 % en 30 días", source: "CHIRPS", votes: [["owner", 0, "Ya habíamos regado."]] },
+];
+pastAlerts.forEach((a, i) => {
+  const aid = id("pastAlert", i + 1);
+  const plotIds = a.kind === "pest_threshold" ? [plots.l1.id] : cropPlots.map((p) => p.id);
+  const created = at(a.from, 6, 30);
+  ins("alerts", {
+    id: aid, organization_id: ORG_ID, farm_id: FARM_ID, kind: a.kind, severity: a.severity, probability: a.probability,
+    valid_from: created, valid_to: at(a.to, 23, 59), plot_ids: JSON.stringify(plotIds), summary: a.summary, details: JSON.stringify({ plotIds }),
+    source: a.source, dedupe_key: `demo:${FARM_ID}:past:${i + 1}`, resolved_at: at(a.to, 23, 59), created_at: created, updated_at: at(a.to, 23, 59),
+    deleted_at: null, version: CURRENT_VERSION,
+  });
+  for (const pid of plotIds) ins("alert_plots", { alert_id: aid, plot_id: pid });
+  for (const [who, useful, comment] of a.votes) ins("alert_feedback", { alert_id: aid, user_id: people[who].id, useful, comment });
+});
+
+// Actividad de las personas en los últimos días (lo que muestra "Empleados activos" y la columna de Equipo).
+for (let d = 0; d < 14; d++) {
+  const dow = new Date(NOW - d * DAY).getUTCDay();
+  const rolesToday = [["owner", d % 2 === 0], ["ana", d % 3 !== 1], ["maria", d % 2 === 1 || d < 3], ["carlos", d % 4 === 0],
+    ["ramon", dow !== 0], ["lidia", dow !== 0 && d !== 5], ["celso", dow !== 0 && d !== 3], ["hugo", d === 2 || d === 9]];
+  for (const [who, on] of rolesToday) if (on) ins("activity_daily", { user_id: people[who].id, organization_id: ORG_ID, day: dayStr(d), role: people[who].role });
+}
+
+// Comentarios sobre registros (con @menciones).
+{
+  const first = (kind, pred = () => true) => (imp.records ?? []).filter((r) => r.kind === kind && pred(JSON.parse(r.data))).sort((a, b) => b.captured_at - a.captured_at)[0];
+  const picks = [
+    [first("pest", (d) => d.intensity === "high"), "ana", "Supera el umbral. Programemos la aplicación para esta semana.", [], 20],
+    [first("pest", (d) => d.intensity === "high"), "owner", `Dale, que sea con el Engeo. @[${people.ana.name}] avisame cuando esté lista la receta.`, [people.ana.id], 140],
+    [first("application"), "ramon", "Se aplicó con viento de 8 km/h, sin deriva hacia el camino.", [], 30],
+    [first("weighing", (d) => d.head > 50), "owner", "Buena ganancia diaria en el corral, seguimos con la misma ración.", [], 60],
+    [first("note"), "lidia", "Confirmo: pasé por el lote el sábado y estaba en condiciones.", [], 15],
+  ].filter(([rec]) => rec);
+  picks.forEach(([rec, who, body, mentions, mins], i) => {
+    const t = rec.captured_at + mins * 60_000 + i * 3_600_000;
+    if (t > NOW) return;
+    ins("comments", { id: id("comment", i + 1), organization_id: ORG_ID, record_id: rec.id, author_id: people[who].id, author_name: people[who].name, body, mentions: JSON.stringify(mentions), created_at: t, updated_at: t, deleted_at: null, version: CURRENT_VERSION });
+  });
+}
+
+// Comparación con la zona (job zone_benchmarks): vigor y lluvia de las estancias vecinas.
+for (const [farmId, ndvi, mm] of [[FARM_ID, 0.6, 158], [FARM2_ID, 0.66, 171]])
+  ins("zone_benchmarks", { farm_id: farmId, organization_id: ORG_ID, computed_at: NOW - 6 * 3_600_000, radius_km: 10, window_days: 30, n_farms: 14, ndvi, ndvi_median: round(ndvi - 0.03, 2), rain_mm: mm, rain_median_mm: round(mm * 0.92, 0) });
 
 
 const file = fileURLToPath(new URL("../seed/demo.sql", import.meta.url));

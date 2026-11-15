@@ -23,7 +23,7 @@ function RecoveryCodes({ codes, onDone }: { codes: string[]; onDone: () => void 
     <div className="mt-4 border-l-2 border-trigo pl-3">
       <p className="font-medium">{t("ui.totpRecoveryTitle")}</p>
       <p className="mt-1 text-sm text-tinta-2">{t("ui.totpRecoveryText")}</p>
-      <ul className="num mt-3 grid max-w-xs grid-cols-2 gap-x-6 gap-y-1 font-mono text-[15px]">
+      <ul className="num mt-3 grid max-w-xs grid-cols-2 gap-x-6 gap-y-1 font-mono text-body">
         {codes.map((c) => (
           <li key={c}>{c}</li>
         ))}
@@ -85,7 +85,7 @@ export function TotpSection({ forced = false }: { forced?: boolean }) {
 
   return (
     <section id="segundo-factor" className="scroll-mt-4">
-      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.totpTitle")}</h2>
+      <h2 className="text-section leading-6 font-semibold">{t("ui.totpTitle")}</h2>
       <p className="mt-2 text-tinta-2">{t(lockedByOrg ? "ui.totpIntroRequired" : "ui.totpIntro")}</p>
 
       {fresh && <RecoveryCodes codes={fresh} onDone={() => setFresh(null)} />}
@@ -191,8 +191,8 @@ export function AdminTotpPolicy() {
   if (!q.data) return <Skeleton h={64} />;
   return (
     <section>
-      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.totpPolicyTitle")}</h2>
-      <label className="mt-2 flex cursor-pointer items-start gap-2 text-[15px]">
+      <h2 className="text-section leading-6 font-semibold">{t("ui.totpPolicyTitle")}</h2>
+      <label className="mt-2 flex cursor-pointer items-start gap-2 text-body">
         <input
           type="checkbox"
           className="mt-1 accent-accion"

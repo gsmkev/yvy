@@ -21,7 +21,7 @@ function Choice<T extends string>({
       <legend className="text-sm font-medium">{legend}</legend>
       <div className="mt-1.5 flex flex-wrap gap-x-5 gap-y-1">
         {options.map((o) => (
-          <label key={o.value} className="flex cursor-pointer items-center gap-2 text-[15px]">
+          <label key={o.value} className="flex cursor-pointer items-center gap-2 text-body">
             <input
               type="radio"
               name={legend}
@@ -48,7 +48,7 @@ export function Preferences() {
   }, []);
   return (
     <section id="preferencias" className="scroll-mt-4">
-      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.prefsTitle")}</h2>
+      <h2 className="text-section leading-6 font-semibold">{t("ui.prefsTitle")}</h2>
       <p className="mt-2 text-tinta-2">{t("ui.prefsIntro")}</p>
       <div className="mt-3 border-t border-linea">
         <Choice

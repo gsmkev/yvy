@@ -97,7 +97,7 @@ export function LoginPage() {
       </div>
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
-          <p className="mb-10 font-serif text-[28px] leading-none font-semibold">Yvy</p>
+          <p className="mb-10 font-serif text-title leading-none font-semibold">Yvy</p>
           <h1 className="text-[26px] leading-tight">{t(mode === "login" ? "ui.loginTitle" : "ui.signupTitle")}</h1>
           <p className="mt-1 mb-6 text-sm text-tinta-2">
             {step === "email" ? t("ui.loginHelp") : step === "totp" ? t("ui.totpLoginHelp") : t("auth.codeSent", { email })}

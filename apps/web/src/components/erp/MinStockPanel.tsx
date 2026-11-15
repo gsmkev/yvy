@@ -54,7 +54,7 @@ export function MinStockPanel() {
       </HeaderActions>
       {low.data && low.data.length > 0 && (
         <div className="flex flex-col gap-2">
-          <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.minStockLowTitle")}</h2>
+          <h2 className="border-b border-linea pb-2 text-section leading-6 font-semibold">{t("ui.minStockLowTitle")}</h2>
           <ExportableTable name="stock-bajo">
             <table className="w-full text-sm">
               <tbody>

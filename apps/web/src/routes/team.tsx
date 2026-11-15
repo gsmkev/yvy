@@ -5,7 +5,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { isFieldRole, ROLES, type FarmAccessLevel } from "@yvy/shared";
 import { TableExportMenu } from "../components/TableExportMenu";
 import { ActionMenu } from "../components/menus";
-import { Button, ConfirmModal, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, toast } from "../components/ui";
+import { Button, ConfirmModal, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, toast, Page } from "../components/ui";
 import { del, get, post, put } from "../lib/api";
 import { fmtDateTime, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -65,7 +65,7 @@ export function TeamPage() {
   };
   const cols = owner ? "md:grid-cols-[minmax(0,2fr)_10rem_minmax(0,1fr)_minmax(0,1.6fr)_2.5rem]" : "md:grid-cols-[minmax(0,2fr)_10rem_minmax(0,1.6fr)_2.5rem]";
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-5 p-4 lg:p-6">
+    <Page width="data">
       <PageHeader
         className="max-sm:flex-wrap"
         title={t("ui.teamTitle")}
@@ -175,7 +175,7 @@ export function TeamPage() {
           </div>
         </Modal>
       )}
-    </div>
+    </Page>
   );
 }
 

@@ -111,7 +111,7 @@ export function ClientsPage() {
       </div>
       <section className="flex min-h-0 flex-col gap-5 overflow-auto border-l border-linea p-6 *:shrink-0">
         <header>
-          <h1 className="text-[28px] leading-tight">{t("ui.clientsTitle")}</h1>
+          <h1 className="text-title leading-tight">{t("ui.clientsTitle")}</h1>
           <p className="num mt-1 text-sm text-tinta-2">
             {t("ui.clientsSummary", { orgs: clients.length, alerts: nAlerts })}
           </p>

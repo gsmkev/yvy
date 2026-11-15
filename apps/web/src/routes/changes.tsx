@@ -5,7 +5,7 @@ import { useParams } from "@tanstack/react-router";
 import { CoverSection } from "../components/CoverSection";
 import { boundsOf, FarmMap } from "../components/FarmMap";
 import { FarmPageHeader } from "../components/FarmPageHeader";
-import { Empty, ErrorBox, Spinner, Stat } from "../components/ui";
+import { Empty, ErrorBox, Spinner, Stat, SelectBox, Page } from "../components/ui";
 import { get } from "../lib/api";
 import { analysisAreas, burnedEvents } from "../lib/changesData";
 import { fmtDate, fmtHa } from "../lib/format";
@@ -17,7 +17,7 @@ import { ExportableTable } from "../components/ExportableTable";
 function Disclaimer() {
   return (
     <section className="border-l-2 border-trigo pl-3">
-      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.changesDisclaimerTitle")}</h2>
+      <h2 className="text-section leading-6 font-semibold">{t("ui.changesDisclaimerTitle")}</h2>
       <p className="mt-1 text-sm">{t("ui.changesDisclaimer")}</p>
     </section>
   );
@@ -41,7 +41,7 @@ function BurnedSection({ farmId }: { farmId: string }) {
 
   return (
     <section className="flex flex-col gap-4 border-t border-linea pt-6">
-      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.burnedTitle")}</h2>
+      <h2 className="text-section leading-6 font-semibold">{t("ui.burnedTitle")}</h2>
       {!ev ? (
         <Empty>{t("ui.burnedNone")}</Empty>
       ) : (
@@ -49,8 +49,8 @@ function BurnedSection({ farmId }: { farmId: string }) {
           {events.length > 1 && (
             <label className="flex max-w-xs flex-col gap-1 text-sm">
               <span className="text-tinta-2">{t("ui.burnedPick")}</span>
-              <select
-                className="h-9 cursor-pointer rounded border border-linea bg-white px-2"
+              <SelectBox><select
+                className="appearance-none pr-8 h-9 cursor-pointer rounded border border-linea bg-white px-2"
                 value={ev.refKey}
                 onChange={(e) => setPicked(e.target.value)}
               >
@@ -59,7 +59,7 @@ function BurnedSection({ farmId }: { farmId: string }) {
                     {t("ui.burnedEvent", { date: fmtDate(e.eventAt) })}
                   </option>
                 ))}
-              </select>
+              </select></SelectBox>
             </label>
           )}
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
@@ -112,7 +112,7 @@ function BurnedSection({ farmId }: { farmId: string }) {
             {ev.noData > 0 ? ` ${t("ui.burnedNoData", { n: ev.noData })}` : ""}
           </p>
           <p className="text-sm text-tinta-2">{t("ui.burnedMethod")}</p>
-          <p className="text-[11px] text-tinta-2">
+          <p className="text-micro text-tinta-2">
             {t("attribution.copernicus")} · {t("attribution.firms")}
           </p>
         </>
@@ -127,11 +127,11 @@ export function ChangesPage() {
   if (farm.isLoading) return <Spinner />;
   if (farm.error || !farm.data) return <ErrorBox error={farm.error} />;
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 p-4 lg:p-6">
+    <Page width="data" className="gap-6">
       <FarmPageHeader farmId={farmId} farmName={farm.data.farm.name} title={t("ui.changesTitle")} />
       <Disclaimer />
       <BurnedSection farmId={farmId} />
       <CoverSection farmId={farmId} />
-    </div>
+    </Page>
   );
 }

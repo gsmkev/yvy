@@ -35,7 +35,7 @@ export function CalendarFeed() {
   if (!s) return <Skeleton h={132} />;
   return (
     <section id="calendario" className="scroll-mt-4">
-      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.calendarFeedTitle")}</h2>
+      <h2 className="text-section leading-6 font-semibold">{t("ui.calendarFeedTitle")}</h2>
       <p className="mt-2 text-tinta-2">{t("ui.calendarFeedIntro")}</p>
 
       {url && (

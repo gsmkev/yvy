@@ -5,7 +5,7 @@ import { del, get, post } from "../lib/api";
 import { fmtDateTime } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useMe } from "../lib/queries";
-import { Button, ErrorBox, Field, Input, toast } from "../components/ui";
+import { Button, ErrorBox, Field, Input, toast, Page } from "../components/ui";
 
 interface Token {
   id: string;
@@ -37,7 +37,7 @@ export function ApiTokensPage() {
   });
   if (me.data && !owner) return <div className="p-6">{t("ui.apiOwnerOnly")}</div>;
   return (
-    <div className="mx-auto max-w-3xl p-4">
+    <Page width="read" className="">
       <h1 className="mb-1 text-xl font-semibold">{t("ui.apiTokensTitle")}</h1>
       <p className="mb-3 text-sm text-tinta-2">
         {t("ui.apiTokensIntro")}{" "}
@@ -90,6 +90,6 @@ export function ApiTokensPage() {
         </Button>
       </form>
       {(create.error || revoke.error || list.error) && <ErrorBox error={create.error ?? revoke.error ?? list.error} />}
-    </div>
+    </Page>
   );
 }

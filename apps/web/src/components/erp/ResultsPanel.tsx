@@ -157,7 +157,7 @@ export function ResultsPanel() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{title}</h2>
+      <h2 className="border-b border-linea pb-2 text-section leading-6 font-semibold">{title}</h2>
       <div className="overflow-x-auto">
         <ExportableTable name={title}>
           <table className="w-full text-sm">{children}</table>

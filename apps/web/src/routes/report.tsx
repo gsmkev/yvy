@@ -8,7 +8,7 @@ import { FarmPageHeader } from "../components/FarmPageHeader";
 import { ActionMenu } from "../components/menus";
 import { whatsappUrl } from "@yvy/shared";
 import { ShareLinksSection } from "../components/ShareLinks";
-import { Button, Card, ErrorBox, Field, Input, Spinner } from "../components/ui";
+import { Button, Card, ErrorBox, Field, Input, Spinner, Page } from "../components/ui";
 import { get } from "../lib/api";
 import { download } from "../lib/exports";
 import { fmtIsoDate, fmtMm } from "../lib/format";
@@ -108,7 +108,7 @@ export function ReportPage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-5 p-4 lg:p-6">
+    <Page width="read">
       <FarmPageHeader
         farmId={farmId}
         farmName={farm.data!.farm.name}
@@ -152,6 +152,6 @@ export function ReportPage() {
         </Card>
       </div>
       <ShareLinksSection farmId={farmId} />
-    </div>
+    </Page>
   );
 }

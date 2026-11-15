@@ -69,7 +69,7 @@ export function AlertSettingsSection({ open, onToggle }: { open: boolean; onTogg
   if ((me.data && isFieldRole(me.data.role)) || !farms.data?.length) return null;
   return (
     <section className="mt-8 border-t border-linea pt-2" aria-labelledby="alert-settings-title">
-      <h2 id="alert-settings-title" className="text-[18px] leading-6 font-semibold">
+      <h2 id="alert-settings-title" className="text-section leading-6 font-semibold">
         <button
           type="button"
           aria-expanded={open}

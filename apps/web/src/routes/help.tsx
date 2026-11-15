@@ -1,6 +1,6 @@
 import { ACADEMY_TOPICS, ACADEMY_VIDEOS } from "../lib/academy";
 import { whatsappUrl } from "../lib/config";
-import { PageHeader } from "../components/ui";
+import { PageHeader, Page } from "../components/ui";
 import { t, tk } from "../lib/i18n";
 
 const N = 10;
@@ -8,7 +8,7 @@ const N = 10;
 /** Centro de ayuda: preguntas frecuentes y contacto por WhatsApp. */
 export function HelpPage() {
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 p-4 lg:p-6">
+    <Page width="read" className="gap-8">
       <PageHeader
         title={t("ui.helpTitle")}
         primary={
@@ -28,12 +28,12 @@ export function HelpPage() {
             <summary className="flex min-h-10 cursor-pointer items-center font-medium marker:content-none hover:text-accion">
               {tk(`ui.helpQ${n}`)}
             </summary>
-            <p className="mt-2 text-[15px] text-tinta-2">{tk(`ui.helpA${n}`)}</p>
+            <p className="mt-2 text-body text-tinta-2">{tk(`ui.helpA${n}`)}</p>
           </details>
         ))}
       </div>
       <section aria-labelledby="help-videos">
-        <h2 id="help-videos" className="text-[18px] leading-6 font-semibold">
+        <h2 id="help-videos" className="text-section leading-6 font-semibold">
           {t("ui.helpVideosTitle")}
         </h2>
         <ul className="mt-3 divide-y divide-linea border-y border-linea">
@@ -64,6 +64,6 @@ export function HelpPage() {
           })}
         </ul>
       </section>
-    </div>
+    </Page>
   );
 }

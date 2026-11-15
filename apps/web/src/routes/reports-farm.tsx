@@ -4,7 +4,7 @@ import { Link, useParams } from "@tanstack/react-router";
 import { FarmPageHeader } from "../components/FarmPageHeader";
 import { localDate } from "@yvy/shared";
 import { ReportSchedules } from "../components/ReportSchedules";
-import { Button, ErrorBox, Field, Select, Spinner } from "../components/ui";
+import { Button, ErrorBox, Field, Select, Spinner, Page } from "../components/ui";
 import { download } from "../lib/exports";
 import { buildExportZip, collectExportData } from "../lib/reportsExport";
 import { t } from "../lib/i18n";
@@ -27,7 +27,7 @@ function Row({ title, text, stack = false, children }: { title: string; text: st
   return (
     <li className={`flex flex-col gap-3 py-4 ${stack ? "" : "sm:flex-row sm:items-center sm:justify-between sm:gap-6"}`}>
       <div className="min-w-0">
-        <h2 className="text-[18px] leading-6 font-semibold">{title}</h2>
+        <h2 className="text-section leading-6 font-semibold">{title}</h2>
         <p className="mt-1 text-sm text-tinta-2">{text}</p>
       </div>
       <div className="flex shrink-0 flex-wrap items-end gap-3">{children}</div>
@@ -165,7 +165,7 @@ export function FarmReportsPage() {
   const openCls =
     "inline-flex h-10 shrink-0 items-center justify-center rounded-md border border-linea bg-papel px-3.5 text-sm font-medium text-surco transition-colors hover:border-tinta-2/40 hover:bg-lino";
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-5 p-4 lg:p-6">
+    <Page width="read">
       <FarmPageHeader farmId={farmId} farmName={f.name} title={t("ui.reportsTitle")} />
       <ul className="divide-y divide-linea border-y border-linea">
         <Row stack title={t("ui.seasonReportTitle")} text={t("ui.reportsSeasonIntro")}>
@@ -216,6 +216,6 @@ export function FarmReportsPage() {
       </ul>
       {(me.data?.role === "owner" || me.data?.role === "admin") && <ReportSchedules farmId={farmId} />}
       {error ? <ErrorBox error={error} /> : null}
-    </div>
+    </Page>
   );
 }

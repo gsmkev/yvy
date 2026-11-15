@@ -53,14 +53,14 @@ export function WebhooksPanel() {
 
   return (
     <section id="webhooks" className="scroll-mt-4">
-      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.webhooksTitle")}</h2>
+      <h2 className="text-section leading-6 font-semibold">{t("ui.webhooksTitle")}</h2>
       <p className="mt-2 text-tinta-2">{t("ui.webhooksIntro")}</p>
 
       {secret && (
         <div role="status" className="mt-4 border-l-2 border-trigo pl-3">
           <p className="font-medium">{t("ui.webhooksSecretTitle")}</p>
           <p className="mt-1 text-sm text-tinta-2">{t("ui.webhooksSecretText")}</p>
-          <code className="mt-2 block font-mono text-[15px] break-all">{secret}</code>
+          <code className="mt-2 block font-mono text-body break-all">{secret}</code>
           <div className="mt-2 flex gap-2">
             <Button
               onClick={() => {
@@ -115,7 +115,7 @@ export function WebhooksPanel() {
           <legend className="text-sm font-medium">{t("ui.webhooksEvents")}</legend>
           <div className="mt-1.5 flex flex-wrap gap-x-5 gap-y-1">
             {WEBHOOK_EVENTS.map((ev) => (
-              <label key={ev} className="flex cursor-pointer items-center gap-2 text-[15px]">
+              <label key={ev} className="flex cursor-pointer items-center gap-2 text-body">
                 <input
                   type="checkbox"
                   className="accent-accion"

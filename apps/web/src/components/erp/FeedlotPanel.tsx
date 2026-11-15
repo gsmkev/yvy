@@ -58,7 +58,7 @@ export function FeedlotPanel() {
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-3" aria-labelledby="rations-h">
-        <h2 id="rations-h" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
+        <h2 id="rations-h" className="border-b border-linea pb-2 text-section leading-6 font-semibold">
           {t("ui.feedlotRations")}
         </h2>
         <HeaderActions>
@@ -287,7 +287,7 @@ function CorralReport() {
   const rows = q.data?.corrals ?? [];
   return (
     <section className="flex flex-col gap-3" aria-labelledby="corral-h">
-      <h2 id="corral-h" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
+      <h2 id="corral-h" className="border-b border-linea pb-2 text-section leading-6 font-semibold">
         {t("ui.feedlotReport")}
       </h2>
       <div className="grid grid-cols-3 gap-3">

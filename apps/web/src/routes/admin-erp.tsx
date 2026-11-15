@@ -26,7 +26,7 @@ import { PartiesPanel } from "../components/erp/PartiesPanel";
 import { ProductsPanel } from "../components/ProductsPanel";
 import { AdminSlotContext } from "../components/erp/adminSlot";
 import { SectionNav } from "../components/SectionNav";
-import { PageHeader } from "../components/ui";
+import { PageHeader, Page } from "../components/ui";
 import { ADMIN_GROUPS } from "../lib/adminNav";
 import { t, type MessageKey } from "../lib/i18n";
 import { useMe } from "../lib/queries";
@@ -71,11 +71,11 @@ export function AdminPage() {
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   const current = SECTIONS.find((x) => x.id === s) ?? SECTIONS[0]!;
   const allowed = me.data?.role === "owner" || me.data?.role === "admin";
-  if (me.data && !allowed) return <div className="mx-auto max-w-3xl p-4 text-sm text-tinta-2">{t("ui.adminNoAccess")}</div>;
+  if (me.data && !allowed) return <Page width="read"><p className="text-sm text-tinta-2">{t("ui.adminNoAccess")}</p></Page>;
   const go = (id: string) => navigate({ to: "/administracion", search: { s: id } });
   const label = (id: string) => t(SECTIONS.find((x) => x.id === id)!.label);
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-4 p-4 lg:flex-row lg:gap-10 lg:p-6">
+    <Page width="data" className="gap-4 lg:flex-row lg:gap-10">
       <SectionNav
         label={t("ui.adminTitle")}
         value={current.id}
@@ -86,6 +86,6 @@ export function AdminPage() {
         <PageHeader className="max-lg:[&_h1]:sr-only" title={t(current.label)} primary={<div ref={setSlot} className="contents" />} />
         <AdminSlotContext.Provider value={{ el: slot }}>{allowed && <div key={current.id}>{current.render()}</div>}</AdminSlotContext.Provider>
       </div>
-    </div>
+    </Page>
   );
 }

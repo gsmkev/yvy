@@ -130,7 +130,7 @@ export function HomePage() {
               <li key={f.id}>
                 <Link to="/estancias/$farmId" params={{ farmId: f.id }} className="group flex min-h-14 items-center gap-3 py-2.5">
                   <div className="min-w-0 flex-1">
-                    <h2 className="truncate text-[15px] leading-5 font-semibold group-hover:underline">{f.name}</h2>
+                    <h2 className="truncate text-body leading-5 font-semibold group-hover:underline">{f.name}</h2>
                     <p className="num text-xs leading-4 text-tinta-2">
                       {[
                         f.department,

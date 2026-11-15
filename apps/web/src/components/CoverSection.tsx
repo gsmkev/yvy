@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { boundsOf, FarmMap } from "./FarmMap";
-import { Button, Empty, ErrorBox, Spinner, Stat, toast } from "./ui";
+import { Button, Empty, ErrorBox, Spinner, Stat, toast, SelectBox } from "./ui";
 import { get, post } from "../lib/api";
 import { analysisAreas, coverKeys, parseCoverKey, summarizeCover } from "../lib/changesData";
 import { download } from "../lib/exports";
@@ -100,7 +100,7 @@ export function CoverSection({ farmId }: { farmId: string }) {
           {keys.length > 1 && (
             <label className="flex max-w-xs flex-col gap-1 text-sm">
               <span className="text-tinta-2">{t("ui.coverPick")}</span>
-              <select className="h-9 cursor-pointer rounded border border-linea bg-white px-2" value={key} onChange={(e) => setPicked(e.target.value)}>
+              <SelectBox><select className="appearance-none pr-8 h-9 cursor-pointer rounded border border-linea bg-white px-2" value={key} onChange={(e) => setPicked(e.target.value)}>
                 {keys.map((k) => {
                   const r = parseCoverKey(k);
                   return (
@@ -109,7 +109,7 @@ export function CoverSection({ farmId }: { farmId: string }) {
                     </option>
                   );
                 })}
-              </select>
+              </select></SelectBox>
             </label>
           )}
           <p className="text-sm text-tinta-2">{t("ui.coverRange", { from: day(range.from), to: day(range.to) })}</p>
@@ -162,7 +162,7 @@ export function CoverSection({ farmId }: { farmId: string }) {
           {error ? <ErrorBox error={error} /> : null}
           <p className="text-sm text-tinta-2">{t("ui.coverDisclaimer")}</p>
           <p className="text-sm text-tinta-2">{t("ui.coverMethod")}</p>
-          <p className="text-[11px] text-tinta-2">{t("attribution.copernicus")}</p>
+          <p className="text-micro text-tinta-2">{t("attribution.copernicus")}</p>
         </>
       )}
     </section>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { AuditList, type AuditEntryRow } from "../components/AuditList";
-import { Button, Empty, ErrorBox, Select, Spinner } from "../components/ui";
+import { Button, Empty, ErrorBox, Select, Spinner, Page } from "../components/ui";
 import { get, qs } from "../lib/api";
 import { t, tk } from "../lib/i18n";
 import { useMe } from "../lib/queries";
@@ -23,7 +23,7 @@ export function AuditPage() {
   if (me.data && me.data.role !== "owner") return <div className="p-6">{t("ui.auditOwnerOnly")}</div>;
   const rows = q.data?.pages.flatMap((p) => p.rows) ?? [];
   return (
-    <div className="mx-auto max-w-3xl p-4">
+    <Page width="data" className="">
       <h1 className="mb-1 text-xl font-semibold">{t("ui.auditTitle")}</h1>
       <p className="mb-3 text-sm text-tinta-2">{t("ui.auditIntro")}</p>
       <div className="mb-3 w-56">
@@ -45,6 +45,6 @@ export function AuditPage() {
           </Button>
         </div>
       )}
-    </div>
+    </Page>
   );
 }

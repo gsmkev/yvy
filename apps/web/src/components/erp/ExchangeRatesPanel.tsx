@@ -42,7 +42,7 @@ export function ExchangeRatesPanel() {
         <span className="eyebrow">{t("ui.ratesCurrent")}</span>
         {latest ? (
           <>
-            <span className="num font-serif text-[28px] leading-tight font-semibold">{fmtGs(latest.usdToPyg)}</span>
+            <span className="num font-serif text-title leading-tight font-semibold">{fmtGs(latest.usdToPyg)}</span>
             <span className="text-xs text-tinta-2">{t("ui.ratesCurrentNote", { date: fmtIsoDate(latest.date) })}</span>
           </>
         ) : (

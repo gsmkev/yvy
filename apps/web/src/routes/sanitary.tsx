@@ -9,7 +9,7 @@ import { t, tk } from "../lib/i18n";
 import { useFarms, useMe } from "../lib/queries";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { RowMenu } from "../components/menus";
-import { Button, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, toast } from "../components/ui";
+import { Button, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, toast, Page } from "../components/ui";
 
 interface EventRow {
   id: string;
@@ -56,10 +56,10 @@ export function SanitaryPage() {
   const farmName = (id: string | null) =>
     id ? (farms.data?.find((f) => f.id === id)?.name ?? "") : t("ui.sanitaryAllFarms");
 
-  if (me.data && !canPlan) return <div className="mx-auto max-w-3xl p-4 text-sm text-tinta-2">{t("ui.sanitaryNoAccess")}</div>;
+  if (me.data && !canPlan) return <Page width="read"><p className="text-sm text-tinta-2">{t("ui.sanitaryNoAccess")}</p></Page>;
   const manyFarms = (farms.data?.length ?? 0) > 1;
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-5 p-4 lg:p-6">
+    <Page width="data">
       <PageHeader
         title={t("ui.sanitaryTitle")}
         primary={
@@ -70,7 +70,7 @@ export function SanitaryPage() {
       />
       <div className="flex items-center gap-1">
         <Button variant="quiet" icon={ChevronLeft} className="w-10 !px-0" aria-label={t("ui.sanitaryPrev")} title={t("ui.sanitaryPrev")} onClick={() => setMonth(shiftMonth(month, -1))} />
-        <span className="min-w-40 text-center text-[18px] leading-6 font-semibold" aria-live="polite">
+        <span className="min-w-40 text-center text-section leading-6 font-semibold" aria-live="polite">
           {monthLabel(month)}
         </span>
         <Button variant="quiet" icon={ChevronRight} className="w-10 !px-0" aria-label={t("ui.sanitaryNext")} title={t("ui.sanitaryNext")} onClick={() => setMonth(shiftMonth(month, 1))} />
@@ -122,7 +122,7 @@ export function SanitaryPage() {
           }}
         />
       )}
-    </div>
+    </Page>
   );
 }
 

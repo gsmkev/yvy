@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { boundsOf, FarmMap } from "../components/FarmMap";
 import { FarmPageHeader } from "../components/FarmPageHeader";
-import { Button, EmptyState, ErrorBox, Spinner, Stat } from "../components/ui";
+import { Button, EmptyState, ErrorBox, Spinner, Stat, Page } from "../components/ui";
 import { get } from "../lib/api";
 import { changeAreas, EUDR_METHOD, fmtRatio, statusText, summarize } from "../lib/eudrData";
 import { download } from "../lib/exports";
@@ -17,7 +17,7 @@ import { ExportableTable } from "../components/ExportableTable";
 function Disclaimer() {
   return (
     <section className="border-l-2 border-trigo pl-3">
-      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.eudrDisclaimerTitle")}</h2>
+      <h2 className="text-section leading-6 font-semibold">{t("ui.eudrDisclaimerTitle")}</h2>
       <p className="mt-1 text-sm">{t("ui.eudrDisclaimer")}</p>
     </section>
   );
@@ -27,7 +27,7 @@ function Method({ refYear, curYear }: { refYear: number; curYear: number }) {
   const m = EUDR_METHOD;
   return (
     <section className="border-t border-linea pt-6">
-      <h2 className="text-[18px] leading-6 font-semibold">{t("ui.eudrMethodTitle")}</h2>
+      <h2 className="text-section leading-6 font-semibold">{t("ui.eudrMethodTitle")}</h2>
       <div className="mt-2 flex flex-col gap-2 text-sm text-tinta-2">
         <p>{t("ui.eudrMethodSource")}</p>
         <p>{t("ui.eudrMethodComposite", { ref: refYear, cur: curYear })}</p>
@@ -83,7 +83,7 @@ export function EudrPage() {
   const range = (from: number | null, to: number | null) => (from === null || to === null ? "—" : [fmtDate(from), fmtDate(to)]);
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 p-4 lg:p-6">
+    <Page width="data" className="gap-6">
       <div>
         <FarmPageHeader
           farmId={farmId}
@@ -124,7 +124,7 @@ export function EudrPage() {
           {error ? <ErrorBox error={error} /> : null}
 
           <section className="border-t border-linea pt-6">
-            <h2 className="text-[18px] leading-6 font-semibold">{t("ui.eudrMapTitle")}</h2>
+            <h2 className="text-section leading-6 font-semibold">{t("ui.eudrMapTitle")}</h2>
             <div className="mt-3 h-80 overflow-hidden rounded-lg border border-linea">
               <FarmMap
                 outline={f.geometry}
@@ -140,7 +140,7 @@ export function EudrPage() {
           </section>
 
           <section className="border-t border-linea pt-6">
-            <h2 className="text-[18px] leading-6 font-semibold">{t("ui.eudrPlotsTitle")}</h2>
+            <h2 className="text-section leading-6 font-semibold">{t("ui.eudrPlotsTitle")}</h2>
             <div className="mt-3 overflow-x-auto">
               <ExportableTable name="eudr">
                 <table className="num w-full text-sm">
@@ -171,6 +171,6 @@ export function EudrPage() {
           <Method refYear={refYear} curYear={curYear} />
         </>
       )}
-    </div>
+    </Page>
   );
 }

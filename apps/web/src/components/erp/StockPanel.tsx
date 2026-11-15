@@ -90,7 +90,7 @@ export function StockPanel() {
       </HeaderActions>
       {expiring.data && expiring.data.length > 0 && (
         <div className="flex flex-col gap-2">
-          <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.expiringTitle")}</h2>
+          <h2 className="border-b border-linea pb-2 text-section leading-6 font-semibold">{t("ui.expiringTitle")}</h2>
           <ExportableTable name="stock-por-vencer">
             <table className="w-full text-sm">
               <tbody>
@@ -148,7 +148,7 @@ export function StockPanel() {
       )}
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-end justify-between gap-3 border-b border-linea pb-2">
-          <h2 className="text-[18px] leading-6 font-semibold">{t("ui.stockMoves")}</h2>
+          <h2 className="text-section leading-6 font-semibold">{t("ui.stockMoves")}</h2>
           <Select
             aria-label={t("ui.stockProduct")}
             value={productId}

@@ -72,7 +72,7 @@ export function PlanPanel() {
       .join(" · ");
   return (
     <section aria-labelledby="plan-title">
-      <h2 id="plan-title" className="text-[18px] leading-6 font-semibold">
+      <h2 id="plan-title" className="text-section leading-6 font-semibold">
         {t("ui.planTitle")}
       </h2>
       <p className="mt-2">

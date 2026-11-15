@@ -141,7 +141,7 @@ export function GrainSalesPanel() {
           </ExportableTable>
         </div>
       )}
-      <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.grainDeliveries")}</h2>
+      <h2 className="border-b border-linea pb-2 text-section leading-6 font-semibold">{t("ui.grainDeliveries")}</h2>
       {(deliveries.data ?? []).length === 0 ? (
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (
@@ -164,7 +164,7 @@ export function GrainSalesPanel() {
           </table>
         </ExportableTable>
       )}
-      <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.grainSettlements")}</h2>
+      <h2 className="border-b border-linea pb-2 text-section leading-6 font-semibold">{t("ui.grainSettlements")}</h2>
       {(settlements.data ?? []).length === 0 ? (
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (

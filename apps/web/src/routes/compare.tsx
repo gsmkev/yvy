@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { isFieldRole } from "@yvy/shared";
 import { TableExportMenu } from "../components/TableExportMenu";
 import { Link } from "@tanstack/react-router";
-import { EmptyState, ErrorBox, PageHeader, Skeleton, Tabs } from "../components/ui";
+import { EmptyState, ErrorBox, PageHeader, Skeleton, Tabs, Page } from "../components/ui";
 import { get } from "../lib/api";
 import { fmtHa, fmtNum } from "../lib/format";
 import { t } from "../lib/i18n";
@@ -69,7 +69,7 @@ export function ComparePage() {
     </Link>
   );
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-4 p-4">
+    <Page width="data" className="gap-4">
       <PageHeader title={t("ui.compareTitle")} menu={exportData && <TableExportMenu data={exportData} />} />
       <Tabs
         tabs={[
@@ -111,7 +111,7 @@ export function ComparePage() {
             <SeasonsTable rows={seasons.data} />
           ))}
       </div>
-    </div>
+    </Page>
   );
 }
 

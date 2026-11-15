@@ -6,7 +6,7 @@ import { useParams } from "@tanstack/react-router";
 import { CHART, type FarmRisk } from "@yvy/shared";
 import { ColumnChart, MonthlyRainChart } from "../components/charts";
 import { FarmPageHeader } from "../components/FarmPageHeader";
-import { Button, EmptyState, ErrorBox, Spinner, Stat } from "../components/ui";
+import { Button, EmptyState, ErrorBox, Spinner, Stat, Page } from "../components/ui";
 import { get } from "../lib/api";
 import { download } from "../lib/exports";
 import { fmtDate, fmtMm, fmtNum } from "../lib/format";
@@ -18,7 +18,7 @@ import { ExportableTable } from "../components/ExportableTable";
 function Section({ title, lead, children }: { title: string; lead?: string; children: React.ReactNode }) {
   return (
     <section className="border-t border-linea pt-6">
-      <h2 className="text-[18px] leading-6 font-semibold">{title}</h2>
+      <h2 className="text-section leading-6 font-semibold">{title}</h2>
       {lead && <p className="mt-1 text-sm text-tinta-2">{lead}</p>}
       <div className="mt-4 flex flex-col gap-5">{children}</div>
     </section>
@@ -184,7 +184,7 @@ export function RiskPage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 p-4 lg:p-6">
+    <Page width="data" className="gap-6">
       <div>
         <FarmPageHeader
           farmId={farmId}
@@ -209,6 +209,6 @@ export function RiskPage() {
           <p className="text-xs text-tinta-2">{t("ui.riskIntro", { from: report.normalFrom, to: report.normalTo })}</p>
         </>
       )}
-    </div>
+    </Page>
   );
 }

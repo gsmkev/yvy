@@ -45,7 +45,7 @@ export function AlertsList({
         return (
           <li key={a.id} className={`border-l-[3px] py-3 pl-3 ${BAR[a.severity]}`}>
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="text-[15px] leading-5 font-semibold">{tk(`ui.alertKind_${a.kind}`)}</span>
+              <span className="text-body leading-5 font-semibold">{tk(`ui.alertKind_${a.kind}`)}</span>
               {a.severity !== "info" && (
                 <span className={`text-sm font-medium ${a.severity === "warning" ? "text-peligro" : "text-trigo-texto"}`}>
                   {tk(`ui.severity_${a.severity}`)}

@@ -116,7 +116,7 @@ export function AccountantPanel() {
         </Button>
       </HeaderActions>
       {error ? <ErrorBox error={error} /> : null}
-      <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.acctMapTitle")}</h2>
+      <h2 className="border-b border-linea pb-2 text-section leading-6 font-semibold">{t("ui.acctMapTitle")}</h2>
       <p className="text-sm text-tinta-2">{t("ui.acctMapIntro")}</p>
       <table className="w-full text-sm">
         <tbody>

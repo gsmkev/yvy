@@ -298,7 +298,7 @@ function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: string; over
           >
             <textarea
               aria-label={t("ui.taskComments")}
-              className="min-h-16 w-full rounded-md border border-linea bg-papel px-3 py-2 text-[15px] outline-none focus:border-accion focus:ring-2 focus:ring-accion/20"
+              className="min-h-16 w-full rounded-md border border-linea bg-papel px-3 py-2 text-body outline-none focus:border-accion focus:ring-2 focus:ring-accion/20"
               maxLength={LIMITS.tasks.maxCommentLength}
               placeholder={t("ui.taskCommentPlaceholder")}
               value={text}

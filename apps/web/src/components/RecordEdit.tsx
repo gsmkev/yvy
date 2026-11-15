@@ -308,7 +308,7 @@ export function RecordEditForm({
               value={form[d.key]}
               onChange={set(d.key)}
               rows={3}
-              className="rounded-md border border-linea bg-papel px-3 py-2 text-[15px] outline-none focus:border-accion focus:ring-2 focus:ring-accion/20"
+              className="rounded-md border border-linea bg-papel px-3 py-2 text-body outline-none focus:border-accion focus:ring-2 focus:ring-accion/20"
             />
           ) : (
             <Input

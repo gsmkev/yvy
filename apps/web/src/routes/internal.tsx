@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Card, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "../components/ui";
+import { Button, Card, ErrorBox, Field, Input, Modal, Page, Select, Spinner, toast } from "../components/ui";
 import { enterSupport, get, post, qs, type Session } from "../lib/api";
 import { fmtDate, fmtDateTime, fmtHa, fmtNum } from "../lib/format";
 import { AuditList, type AuditEntryRow } from "../components/AuditList";
@@ -73,7 +73,7 @@ export function InternalPage() {
   const d = q.data!;
   const pct = (v: number | null) => (v === null ? "—" : `${Math.round(v)} %`);
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <Page width="data" className="gap-4">
       <h1 className="font-serif text-2xl font-semibold">{t("ui.internalTitle")}</h1>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {d.usage.map((u) => (
@@ -201,7 +201,7 @@ export function InternalPage() {
       <PlanRequests />
       <Funnel />
       <AuditLog />
-    </div>
+    </Page>
   );
 }
 
@@ -376,7 +376,7 @@ function Funnel() {
         {q.data.steps.map((st) => (
           <div key={st.name} className="flex flex-col gap-0.5">
             <span className="eyebrow">{tk(`ui.funnel_${st.name}`)}</span>
-            <span className="num font-serif text-[28px] leading-tight font-semibold">{st.orgs}</span>
+            <span className="num font-serif text-title leading-tight font-semibold">{st.orgs}</span>
             <span className="text-xs text-tinta-2">{first ? `${Math.round((100 * st.orgs) / first)} %` : "—"}</span>
           </div>
         ))}

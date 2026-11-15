@@ -7,8 +7,8 @@ import { WebhooksPanel } from "../../components/Webhooks";
 import { Preferences } from "../../components/Preferences";
 import { PlanPanel } from "../../components/PlanPanel";
 import { AdminTotpPolicy, TotpSection } from "../../components/Totp";
-import { SectionNav, sectionLayoutCls } from "../../components/SectionNav";
-import { Button, ConfirmModal, PageHeader, Spinner, toast } from "../../components/ui";
+import { SectionNav } from "../../components/SectionNav";
+import { Button, ConfirmModal, Page, PageHeader, Spinner, toast } from "../../components/ui";
 import { get, post } from "../../lib/api";
 import { t, type MessageKey } from "../../lib/i18n";
 import { useMe } from "../../lib/queries";
@@ -32,7 +32,7 @@ function Referral() {
   };
   return (
     <section>
-      <h2 className="text-[18px] leading-6 font-semibold">{t(me.data?.role === "owner" ? "ui.accountReferralTitleProducer" : "ui.accountReferralTitle")}</h2>
+      <h2 className="text-section leading-6 font-semibold">{t(me.data?.role === "owner" ? "ui.accountReferralTitleProducer" : "ui.accountReferralTitle")}</h2>
       <p className="mt-2 text-tinta-2">{t(me.data?.role === "owner" ? "ui.accountReferralTextProducer" : "ui.accountReferralText")}</p>
       <p className="mt-4 text-sm text-tinta-2">{t("ui.accountReferralCode")}</p>
       <p className="num text-2xl font-semibold tracking-wider">{code}</p>
@@ -114,7 +114,7 @@ export function AccountPage() {
       show: owner,
       render: () => (
         <section>
-          <h2 className="text-[18px] leading-6 font-semibold">{t("ui.accountDeleteTitle")}</h2>
+          <h2 className="text-section leading-6 font-semibold">{t("ui.accountDeleteTitle")}</h2>
           <p className="mt-2 text-tinta-2">{t("ui.accountDeleteText")}</p>
           {request.isSuccess ? (
             <p role="status" className="mt-4 border-l-2 border-soja pl-3">
@@ -139,7 +139,7 @@ export function AccountPage() {
     }
   };
   return (
-    <div className={`${sectionLayoutCls} max-w-5xl`}>
+    <Page width="data" className="gap-4 lg:flex-row lg:gap-10">
       <SectionNav
         label={t("ui.accountTitle")}
         value={current.id}
@@ -167,6 +167,6 @@ export function AccountPage() {
           onClose={() => setConfirming(false)}
         />
       )}
-    </div>
+    </Page>
   );
 }

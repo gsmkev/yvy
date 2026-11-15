@@ -6,9 +6,10 @@ import { t, tk } from "../lib/i18n";
 import { layerDates, nextFrame, TIMELAPSE_SPEEDS, timelapseFrames, type Camera } from "../lib/scenes";
 import type { Layer } from "../lib/types";
 import { FarmMap, type FarmMapProps } from "./FarmMap";
+import { SelectBox } from "./ui";
 
 const sel =
-  "h-8 w-full cursor-pointer rounded border border-white/20 bg-surco px-2 text-xs text-lino outline-none focus:border-lino";
+  "h-8 w-full cursor-pointer appearance-none rounded border border-white/20 bg-surco pl-2 pr-7 text-xs text-lino outline-none focus:border-lino";
 
 /** Miniatura de una fecha: una tesela del archivo de esa capa, pedida solo cuando se ve. */
 function Thumb({ layer, tilesBaseUrl, bounds }: { layer: Layer; tilesBaseUrl: string; bounds: Bounds }) {
@@ -51,13 +52,13 @@ function DatePick({
     <div className="flex flex-col gap-1">
       <label className="flex flex-col gap-1">
         <span className="text-lino/70">{label}</span>
-        <select className={sel} value={value} onChange={(e) => onChange(e.target.value)}>
+        <SelectBox><select className={sel} value={value} onChange={(e) => onChange(e.target.value)}>
           {layers.map((l) => (
             <option key={l.id} value={l.id}>
               {fmtDate(l.acquiredAt)}
             </option>
           ))}
-        </select>
+        </select></SelectBox>
       </label>
       {thumbs && (
         <>
@@ -126,7 +127,7 @@ function Timelapse({ frames, onPick, onClose }: { frames: Layer[]; onPick: (id: 
         <button className="cursor-pointer font-medium underline-offset-4 hover:underline" onClick={() => setPlaying(!playing)}>
           {playing ? t("ui.timelapsePause") : t("ui.timelapsePlay")}
         </button>
-        <select
+        <SelectBox><select
           aria-label={t("ui.timelapseSpeed")}
           className={`${sel} !w-auto`}
           value={speed}
@@ -137,7 +138,7 @@ function Timelapse({ frames, onPick, onClose }: { frames: Layer[]; onPick: (id: 
               {tk(`ui.timelapseSpeed_${s.key}`)}
             </option>
           ))}
-        </select>
+        </select></SelectBox>
         <button className="ml-auto cursor-pointer text-lino/70 underline-offset-4 hover:underline" onClick={onClose}>
           {t("ui.timelapseStop")}
         </button>

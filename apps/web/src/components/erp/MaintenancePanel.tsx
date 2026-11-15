@@ -85,7 +85,7 @@ export function MaintenancePanel() {
       </HeaderActions>
       {due.data && due.data.length > 0 && (
         <div className="flex flex-col gap-2">
-          <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.maintDueTitle")}</h2>
+          <h2 className="border-b border-linea pb-2 text-section leading-6 font-semibold">{t("ui.maintDueTitle")}</h2>
           <ExportableTable name="mantenimiento-vencido">
             <table className="w-full text-sm">
               <tbody>
@@ -114,7 +114,7 @@ export function MaintenancePanel() {
         </div>
       )}
       <div className="flex flex-col gap-2">
-        <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.maintPlansTitle")}</h2>
+        <h2 className="border-b border-linea pb-2 text-section leading-6 font-semibold">{t("ui.maintPlansTitle")}</h2>
         <MasterPanel<Plan>
           inline
           path="maintenance-plans"
@@ -138,7 +138,7 @@ export function MaintenancePanel() {
         />
       </div>
       <div className="flex flex-col gap-2">
-        <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.maintHistoryTitle")}</h2>
+        <h2 className="border-b border-linea pb-2 text-section leading-6 font-semibold">{t("ui.maintHistoryTitle")}</h2>
         {(logs.data ?? []).length === 0 ? (
           <Empty>{t("ui.erpEmpty")}</Empty>
         ) : (

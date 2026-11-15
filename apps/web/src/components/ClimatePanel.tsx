@@ -184,7 +184,7 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
                 </table>
               </ExportableTable>
             </div>
-            <p className="mt-2 text-[11px] text-tinta-2">{_t("attribution.metNorway")}</p>
+            <p className="mt-2 text-micro text-tinta-2">{_t("attribution.metNorway")}</p>
           </>
         ) : (
           <Empty icon={CloudSun}>{t("ui.noClimate")}</Empty>

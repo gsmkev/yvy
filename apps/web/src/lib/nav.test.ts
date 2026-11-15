@@ -10,9 +10,9 @@ const paths = (c: Partial<NavContext>) => {
 describe("navegación lateral", () => {
   it("el dueño con varias estancias ve todo, agrupado", () => {
     const n = buildNav(base);
-    expect(n.main.map((g) => g.id)).toEqual(["field", "livestock", "manage", "alerts"]);
+    expect(n.main.map((g) => g.id)).toEqual(["field", "manage"]);
     expect(paths({})).toEqual([
-      "/", "/registros", "/tareas", "/calendario", "/sanidad", "/administracion", "/comparar", "/equipo", "/avisos", "/laboratorio",
+      "/", "/registros", "/tareas", "/calendario", "/sanidad", "/avisos", "/informes", "/administracion", "/equipo", "/comparar", "/laboratorio",
     ]);
   });
   it("Comparar solo aparece con más de una estancia", () => {
@@ -33,8 +33,9 @@ describe("navegación lateral", () => {
     expect(paths({ hasClients: true })).toContain("/clientes");
     expect(buildNav({ ...base, isStaff: true }).bottom.map((i) => i.to)).toEqual(["/laboratorio", "/interno"]);
   });
-  it("un grupo sin ítems no se muestra", () => {
-    const n = buildNav({ ...base, role: "worker", farms: 1 });
-    expect(n.main.map((g) => g.id)).not.toContain("livestock");
+  it("Informes necesita estancias y no es del personal de campo", () => {
+    expect(paths({ farms: 0 })).not.toContain("/informes");
+    expect(paths({ farms: null })).not.toContain("/informes");
+    expect(paths({ role: "worker" })).not.toContain("/informes");
   });
 });

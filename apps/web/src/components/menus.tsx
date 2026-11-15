@@ -140,7 +140,8 @@ export function ActionMenu({
           role="menu"
           aria-label={label}
           onKeyDown={onMenuKey}
-          className={`absolute z-40 max-h-80 min-w-48 overflow-y-auto rounded-md border border-linea bg-papel py-1 shadow-lg ${place.up ? "bottom-full mb-1" : "top-full mt-1"} ${place.align === "right" ? "right-0" : "left-0"}`}
+          className={`anim-pop absolute z-40 max-h-80 min-w-48 overflow-y-auto rounded-md border border-linea bg-papel py-1 shadow-lg ${place.up ? "bottom-full mb-1" : "top-full mt-1"} ${place.align === "right" ? "right-0" : "left-0"}`}
+          style={{ transformOrigin: `${place.up ? "bottom" : "top"} ${place.align}` }}
         >
           {list.map((it, i) => (
             <button

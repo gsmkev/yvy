@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FORM_FIELD_TYPES, FIELD_ID, LIMITS, RECORD_KINDS, formConfigSchema, type FormConfig, type FormField, type RecordKind } from "@yvy/shared";
-import { Button, Empty, ErrorBox, Field, Input, Select, Spinner, toast } from "../components/ui";
+import { Button, Empty, ErrorBox, Field, Input, Select, Spinner, toast, Page } from "../components/ui";
 import { get, put } from "../lib/api";
 import { t, tk } from "../lib/i18n";
 import { useMe } from "../lib/queries";
@@ -66,7 +66,7 @@ export function FormsPage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4">
+    <Page width="read" className="gap-4">
       <div>
         <Link to="/equipo" className="text-sm text-tinta-2 underline underline-offset-2">
           {t("ui.formsBack")}
@@ -112,7 +112,7 @@ export function FormsPage() {
           {f.type === "choice" && (
             <Field label={t("ui.formsOptions")} hint={t("ui.formsOptionsHint", { max: LIMITS.forms.maxOptions })}>
               <textarea
-                className="min-h-20 rounded-md border border-linea bg-papel px-3 py-2 text-[15px]"
+                className="min-h-20 rounded-md border border-linea bg-papel px-3 py-2 text-body"
                 disabled={!canEdit}
                 value={(f.options ?? []).join("\n")}
                 onChange={(e) => patch(i, { options: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean).slice(0, LIMITS.forms.maxOptions) })}
@@ -144,6 +144,6 @@ export function FormsPage() {
       )}
       {error && <p role="alert" className="text-sm text-peligro">{error}</p>}
       <p className="text-xs text-tinta-2">{t("ui.formsNote")}</p>
-    </div>
+    </Page>
   );
 }

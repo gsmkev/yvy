@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { addDays, localDate } from "@yvy/shared";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button, EmptyState, ErrorBox, PageHeader, Select, Skeleton } from "../components/ui";
+import { Button, EmptyState, ErrorBox, PageHeader, Select, Skeleton, Page } from "../components/ui";
 import { tasksByDay, weekDays, weekStart } from "../lib/calendar";
 import { fmtIsoDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -21,7 +21,7 @@ export function CalendarPage() {
   const total = [...grouped.values()].reduce((n, l) => n + l.length, 0);
   const isThisWeek = monday === weekStart(today);
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-4 p-4">
+    <Page width="data" className="gap-4">
       <PageHeader title={t("ui.calendarTitle")} />
       <div className="flex flex-wrap items-center gap-2">
         <Button icon={ChevronLeft} onClick={() => setMonday(addDays(monday, -7))} aria-label={t("ui.calendarPrev")} />
@@ -101,6 +101,6 @@ export function CalendarPage() {
           })}
         </div>
       )}
-    </div>
+    </Page>
   );
 }

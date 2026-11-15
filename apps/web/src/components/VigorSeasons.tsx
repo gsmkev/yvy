@@ -69,13 +69,13 @@ export function VigorSeasons({ plotId, farmId }: { plotId: string; farmId: strin
             <Button variant="secondary" disabled={request.isPending} onClick={() => request.mutate()}>
               {t("ui.historyRequest")}
             </Button>
-            <span className="text-[11px] text-tinta-2">
+            <span className="text-micro text-tinta-2">
               {status.data?.status === "failed" ? t("ui.historyFailed") : t("ui.historyHint")}
             </span>
           </div>
         )
       )}
-      <p className="mt-1 text-[11px] text-tinta-2">{t("attribution.copernicus")}</p>
+      <p className="mt-1 text-micro text-tinta-2">{t("attribution.copernicus")}</p>
     </div>
   );
 }

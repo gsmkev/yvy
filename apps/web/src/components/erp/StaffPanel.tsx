@@ -184,7 +184,7 @@ function AttendanceSheet() {
           {t("ui.save")}
         </Button>
       </div>
-      <h2 className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">{t("ui.attRecent")}</h2>
+      <h2 className="border-b border-linea pb-2 text-section leading-6 font-semibold">{t("ui.attRecent")}</h2>
       {(recent.data ?? []).length === 0 ? (
         <Empty>{t("ui.erpEmpty")}</Empty>
       ) : (

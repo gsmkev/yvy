@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isFieldRole } from "@yvy/shared";
 import { RecordModal } from "../components/RecordsList";
-import { Button, EmptyState, ErrorBox, PageHeader, Spinner, toast } from "../components/ui";
+import { Button, EmptyState, ErrorBox, PageHeader, Spinner, toast, Page } from "../components/ui";
 import { sortReview } from "../lib/alertRank";
 import { get, post } from "../lib/api";
 import { describeData } from "../lib/exports";
@@ -65,7 +65,7 @@ export function ReviewPage() {
   });
   if (me.data && !allowed) return <div className="p-6">{t("ui.reviewNotAllowed")}</div>;
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4 sm:p-6">
+    <Page width="read" className="gap-4">
       <div>
         <Link to="/registros" className="text-sm text-accion underline underline-offset-4">
           {t("ui.navRecords")}
@@ -126,6 +126,6 @@ export function ReviewPage() {
       )}
       {ok.error ? <ErrorBox error={ok.error} /> : null}
       {open && <RecordModal record={open} onClose={() => setOpen(null)} />}
-    </div>
+    </Page>
   );
 }

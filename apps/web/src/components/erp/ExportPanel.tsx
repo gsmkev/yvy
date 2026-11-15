@@ -136,7 +136,7 @@ export function ExportPanel() {
       </div>
 
       <section className="flex flex-col gap-3" aria-labelledby="exp-opts">
-        <h2 id="exp-opts" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
+        <h2 id="exp-opts" className="border-b border-linea pb-2 text-section leading-6 font-semibold">
           {t("ui.expOptions")}
         </h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -169,7 +169,7 @@ export function ExportPanel() {
       </section>
 
       <section className="flex flex-col gap-2" aria-labelledby="exp-cols">
-        <h2 id="exp-cols" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
+        <h2 id="exp-cols" className="border-b border-linea pb-2 text-section leading-6 font-semibold">
           {t("ui.expColumns")}
         </h2>
         <ul className="divide-y divide-linea border-b border-linea text-sm">
@@ -199,7 +199,7 @@ export function ExportPanel() {
 
       {dataset !== "cash" && (
         <section className="flex flex-col gap-2" aria-labelledby="exp-tax">
-          <h2 id="exp-tax" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
+          <h2 id="exp-tax" className="border-b border-linea pb-2 text-section leading-6 font-semibold">
             {t("ui.expTaxTitle")}
           </h2>
           <p className="text-sm text-tinta-2">{t("ui.expTaxIntro")}</p>
@@ -241,7 +241,7 @@ export function ExportPanel() {
       )}
 
       <section className="flex flex-col gap-2" aria-labelledby="exp-prev">
-        <h2 id="exp-prev" className="border-b border-linea pb-2 text-[18px] leading-6 font-semibold">
+        <h2 id="exp-prev" className="border-b border-linea pb-2 text-section leading-6 font-semibold">
           {t("ui.expPreview")}
         </h2>
         {data.isLoading && <Spinner />}

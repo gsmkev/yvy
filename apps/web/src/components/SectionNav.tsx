@@ -1,3 +1,5 @@
+import { SelectBox } from "./ui";
+
 export interface SectionGroup {
   id: string;
   /** Sin título (o con un solo ítem) el grupo no lleva encabezado. */
@@ -24,11 +26,11 @@ export function SectionNav({
   return (
     <>
       <div className="lg:hidden print:hidden">
-        <select
+        <SelectBox className="w-full"><select
           aria-label={label}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-12 w-full cursor-pointer rounded-md border border-linea bg-papel px-3 text-[15px] outline-none focus:border-accion focus:ring-2 focus:ring-accion/20"
+          className="appearance-none pr-8 h-12 w-full cursor-pointer rounded-md border border-linea bg-papel px-3 text-body outline-none focus:border-accion focus:ring-2 focus:ring-accion/20"
         >
           {groups.map((g) => (
             <optgroup key={g.id} label={g.label ?? ""}>
@@ -39,7 +41,7 @@ export function SectionNav({
               ))}
             </optgroup>
           ))}
-        </select>
+        </select></SelectBox>
       </div>
       <nav
         aria-label={label}
@@ -69,4 +71,4 @@ export function SectionNav({
   );
 }
 
-export const sectionLayoutCls = "mx-auto flex w-full flex-col gap-4 p-4 lg:flex-row lg:gap-10 lg:p-6";
+

@@ -34,7 +34,7 @@ import { RecordsList } from "../components/RecordsList";
 import { SeasonsPanel } from "../components/SeasonsPanel";
 import { TasksPanel } from "../components/TasksPanel";
 import { ActionMenu, ExportMenu } from "../components/menus";
-import { Button, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Skeleton, Spinner, Tabs, toast } from "../components/ui";
+import { Button, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Skeleton, Spinner, Tabs, toast, SelectBox } from "../components/ui";
 import { del, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
 import { download, plotsToGeoJson, plotsToKml, plotsToShapefileZip } from "../lib/exports";
@@ -439,8 +439,8 @@ export function FarmPage() {
               {layer === "ndvi" && OVERLAYS.filter(hasIndex).length > 1 && (
                 <label className="flex flex-col gap-1">
                   <span className="text-lino/70">{t("ui.indexPick")}</span>
-                  <select
-                    className="h-10 w-full cursor-pointer rounded border border-white/20 bg-surco px-2 text-xs text-lino outline-none focus:border-lino"
+                  <SelectBox><select
+                    className="appearance-none pr-8 h-10 w-full cursor-pointer rounded border border-white/20 bg-surco px-2 text-xs text-lino outline-none focus:border-lino"
                     value={shownIndex}
                     onChange={(e) => {
                       setIndexKind(e.target.value as Overlay);
@@ -452,7 +452,7 @@ export function FarmPage() {
                         {isFert(k) ? t(`ui.fertLayer_${k}` as "ui.fertLayer_fert_ph") : t(`ui.index_${k}`)}
                       </option>
                     ))}
-                  </select>
+                  </select></SelectBox>
                   {!isFert(shownIndex) && <span className="text-lino/60">{t(`ui.indexHint_${shownIndex}`)}</span>}
                 </label>
               )}
@@ -473,7 +473,7 @@ export function FarmPage() {
                 farmBounds={boundsOf(d.farm)}
               />
               {layer === "ndvi" && ndviLayer && (
-                <div className="text-[11px]">
+                <div className="text-micro">
                   <div
                     className="h-2 rounded-sm"
                     style={{
@@ -540,7 +540,7 @@ export function FarmPage() {
             <PanelSection title={t("ui.layerPests")} defaultOpen={false}>
               <LayerSwitch label={t("ui.layerPests")} on={showPests} onToggle={() => setShowPests(!showPests)} />
               {showPests && (
-                <div className="text-[11px]">
+                <div className="text-micro">
                   <p className="mb-1 font-medium">{t("ui.pestsLegendTitle")}</p>
                   {pests.isLoading ? (
                     <p className="text-lino/70">{t("ui.loading")}</p>
@@ -586,7 +586,7 @@ export function FarmPage() {
             <PanelSection title={t("app.layerTracks")} defaultOpen={false}>
               <LayerSwitch label={t("app.layerTracks")} on={showTracks} onToggle={() => setShowTracks(!showTracks)} />
               {showTracks && (
-                <div className="text-[11px]">
+                <div className="text-micro">
                   <p className="mb-1 font-medium">{t("app.tracksLegendTitle")}</p>
                   {tracks.isLoading ? (
                     <p className="text-lino/70">{t("ui.loading")}</p>

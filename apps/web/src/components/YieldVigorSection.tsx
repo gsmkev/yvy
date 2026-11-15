@@ -8,7 +8,7 @@ import { fetchAllRecords } from "../lib/queries";
 import type { Plot } from "../lib/types";
 import { harvestYield, MIN_CELLS_PER_ZONE, readYieldVigor, zoneYields } from "../lib/yieldZones";
 import { useManagementZones } from "./ZonesSection";
-import { Skeleton } from "./ui";
+import { Skeleton, SelectBox } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
 interface SavedMap {
@@ -54,8 +54,8 @@ export function YieldVigorSection({ plot }: { plot: Plot }) {
           {list.length > 1 && (
             <label className="flex flex-col gap-1">
               <span className="font-medium">{t("ui.yieldVigorSeason")}</span>
-              <select
-                className="h-9 rounded-md border border-linea bg-papel px-2"
+              <SelectBox><select
+                className="appearance-none pr-8 h-9 rounded-md border border-linea bg-papel px-2"
                 value={map.id}
                 onChange={(e) => setPicked(e.target.value)}
               >
@@ -64,7 +64,7 @@ export function YieldVigorSection({ plot }: { plot: Plot }) {
                     {m.seasonName ?? t("ui.yieldVigorNoSeason")} · {m.fileName}
                   </option>
                 ))}
-              </select>
+              </select></SelectBox>
             </label>
           )}
           <ExportableTable name="rinde-y-vigor">

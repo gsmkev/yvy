@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "@tanstack/react-router";
-import { Button, PageHeader } from "../components/ui";
+import { Button, PageHeader, Page } from "../components/ui";
 import { AnimalCountIllustration, HailIllustration, InfraIllustration, StandCountIllustration, WeedsIllustration } from "../components/labs/illustrations";
 import { t, tk } from "../lib/i18n";
 import { ExportableTable } from "../components/ExportableTable";
@@ -18,7 +18,7 @@ function PreviewNotice() {
 
 export function LabsPage() {
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-5 p-4 lg:p-6">
+    <Page width="data">
       <PageHeader title={t("ui.labsTitle")} />
       <PreviewNotice />
       <ul className="grid gap-3 sm:grid-cols-2">
@@ -35,7 +35,7 @@ export function LabsPage() {
           </li>
         ))}
       </ul>
-    </div>
+    </Page>
   );
 }
 
@@ -43,7 +43,7 @@ export function LabsToolPage() {
   const { tool } = useParams({ strict: false }) as { tool: string };
   const id = TOOLS.find((x) => x === tool);
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4 lg:p-6">
+    <Page width="data" className="gap-4">
       <Link to="/laboratorio" className="inline-flex h-10 w-fit items-center text-sm text-tinta-2 hover:text-surco hover:underline">
         {t("ui.labsBack")}
       </Link>
@@ -59,7 +59,7 @@ export function LabsToolPage() {
           <ToolBody id={id} />
         </>
       )}
-    </div>
+    </Page>
   );
 }
 
@@ -111,7 +111,7 @@ function Flow({ drop = true, children }: { drop?: boolean; children: ReactNode }
       </div>
       {shown && (
         <section className="flex flex-col gap-4">
-          <h2 className="text-[18px] leading-6 font-semibold">{t("ui.labsExampleTitle")}</h2>
+          <h2 className="text-section leading-6 font-semibold">{t("ui.labsExampleTitle")}</h2>
           {children}
         </section>
       )}

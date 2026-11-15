@@ -4,7 +4,7 @@ import { useParams } from "@tanstack/react-router";
 import { localDate } from "@yvy/shared";
 import { MonthlyRainChart } from "../components/charts";
 import { FarmPageHeader } from "../components/FarmPageHeader";
-import { EmptyState, ErrorBox, Spinner } from "../components/ui";
+import { EmptyState, ErrorBox, Spinner, Page } from "../components/ui";
 import { fmtIsoDate, fmtMm } from "../lib/format";
 import {
   campaignStart,
@@ -33,7 +33,7 @@ function GaugeSection({ name, months, season }: { name: string; months: GaugeRow
   const noData = season.gaugeMm === null;
   return (
     <section className="border-t border-linea pt-6">
-      <h2 className="text-[18px] leading-6 font-semibold">{name}</h2>
+      <h2 className="text-section leading-6 font-semibold">{name}</h2>
       {noData && <p className="mt-1 text-sm text-tinta-2">{t("ui.gaugesNoData")}</p>}
       <div className="mt-3 overflow-x-auto">
         <ExportableTable name="pluviometros">
@@ -90,7 +90,7 @@ export function RainGaugesPage() {
   const cutoff = lastSatDate(c.daily, today);
   const gauges = farm.data.pois.filter((p) => p.kind === "rain_gauge");
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 p-4 lg:p-6">
+    <Page width="data" className="gap-6">
       <div>
         <FarmPageHeader farmId={farmId} farmName={farm.data.farm.name} title={t("ui.gaugesTitle")} />
         <p className="text-sm text-tinta-2">{t("ui.gaugesIntro", { from: fmtIsoDate(from), to: fmtIsoDate(cutoff) })}</p>
@@ -102,6 +102,6 @@ export function RainGaugesPage() {
       {hasUnassignedRain(c) && (
         <GaugeSection name={t("ui.gaugesUnassigned")} {...gaugeTable(c, null, from, cutoff, tz)} />
       )}
-    </div>
+    </Page>
   );
 }

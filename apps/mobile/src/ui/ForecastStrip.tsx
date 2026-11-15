@@ -7,6 +7,7 @@ import { daysOld, readForecast, refreshForecast, upcoming, type CachedForecast }
 import { api } from "../lib/session";
 import { useSyncStatus } from "../lib/sync";
 import { SectionHeader, Text } from "./kit";
+import { cToTemp, mmToRain, rainLabel, useUnits, type RainUnit, type TempUnit } from "../lib/units";
 import { C, F, RADIUS, T } from "./theme";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -16,11 +17,16 @@ const weekday = (iso: string) => {
   const d = new Date(`${iso}T12:00:00`);
   return d.toLocaleDateString("es-PY", { weekday: "short" }).replace(".", "");
 };
-const temp = (v: number | null) => (v === null ? "–" : `${Math.round(v)}°`);
+const temp = (v: number | null, u: TempUnit = "c") => (v === null ? "–" : `${Math.round(cToTemp(v, u))}°`);
+const rainText = (mm: number | null, u: RainUnit) => {
+  const v = mmToRain(mm ?? 0, u);
+  return `${u === "in" ? (Math.round(v * 10) / 10).toLocaleString("es-PY") : Math.round(v)} ${rainLabel(u)}`;
+};
 
 /** Franja de pronóstico de 10 días en Hoy: mínima, máxima y lluvia por día; se lee sin señal. */
 export function ForecastStrip({ farmId }: { farmId: string | null }) {
   const sync = useSyncStatus();
+  const units = useUnits();
   const [data, setData] = useState<CachedForecast | null>(() => (farmId ? readForecast(getDb(), farmId) : null));
 
   useEffect(() => {
@@ -61,11 +67,11 @@ export function ForecastStrip({ farmId }: { farmId: string | null }) {
         <>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.row}>
             {days.map((d) => (
-              <View key={d.date} style={st.day} accessible accessibilityLabel={`${weekday(d.date)} ${d.date.slice(8)}: mínima ${temp(d.tminC)}, máxima ${temp(d.tmaxC)}, lluvia ${Math.round(d.precipMm ?? 0)} milímetros`}>
+              <View key={d.date} style={st.day} accessible accessibilityLabel={`${weekday(d.date)} ${d.date.slice(8)}: mínima ${temp(d.tminC, units.temp)}, máxima ${temp(d.tmaxC, units.temp)}, lluvia ${rainText(d.precipMm, units.rain)}`}>
                 <Text style={T.smallMedium}>{weekday(d.date)}</Text>
-                <Text style={st.max}>{temp(d.tmaxC)}</Text>
-                <Text style={T.small}>{temp(d.tminC)}</Text>
-                <Text style={[T.small, (d.precipMm ?? 0) >= 1 && { color: C.tinta, fontFamily: F.sansSemi }]}>{t("app.forecastRain", { mm: Math.round(d.precipMm ?? 0) })}</Text>
+                <Text style={st.max}>{temp(d.tmaxC, units.temp)}</Text>
+                <Text style={T.small}>{temp(d.tminC, units.temp)}</Text>
+                <Text style={[T.small, (d.precipMm ?? 0) >= 1 && { color: C.tinta, fontFamily: F.sansSemi }]}>{rainText(d.precipMm, units.rain)}</Text>
               </View>
             ))}
           </ScrollView>

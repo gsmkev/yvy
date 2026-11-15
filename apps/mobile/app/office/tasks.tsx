@@ -174,6 +174,7 @@ export default function TeamTasks() {
                       title={x.title}
                       subtitle={[when, sub, cl.total ? t("app.checklistProgress", cl) : null].filter(Boolean).join(" · ")}
                       tone={over ? "danger" : undefined}
+                      chevron={false}
                       onPress={() => router.push({ pathname: "/task/[id]", params: { id: x.id } })}
                     />
                   </View>

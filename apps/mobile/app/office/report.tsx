@@ -23,6 +23,7 @@ import { fmtDate, fmtNumber } from "../../src/office/format";
 import { OfficeScreen } from "../../src/office/OfficeScreen";
 import { OnlineState } from "../../src/office/state";
 import { useOnline } from "../../src/office/useOnline";
+import { mmToRain, rainLabel, useUnits } from "../../src/lib/units";
 import { BarList, DataList, DateField, LineChart, Segmented, StatRow, type StatItem } from "../../src/office/ui";
 import { EmptyState, Row, SectionHeader } from "../../src/ui/kit";
 
@@ -56,6 +57,7 @@ const ddmm = (iso: string) => `${iso.slice(8)}/${iso.slice(5, 7)}`;
 const ddmmyyyy = (iso: string) => `${iso.slice(8)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
 
 export default function Report() {
+  const units = useUnits();
   const { farms, farm, setFarmId } = useFarmPick();
   const today = localDate(Date.now());
   const thisMonday = mondayOf(today);
@@ -135,7 +137,7 @@ export default function Report() {
 
   const stats: StatItem[] = [];
   if (rows.length > 0) stats.push({ label: t("ui.navRecords"), value: rows.length });
-  if (rain !== null && rain > 0) stats.push({ label: t("ui.rainWeek"), value: fmtNumber(rain), unit: "mm" });
+  if (rain !== null && rain > 0) stats.push({ label: t("ui.rainWeek"), value: fmtNumber(mmToRain(rain, units.rain)), unit: rainLabel(units.rain) });
   if (periodAlerts.length > 0) stats.push({ label: t("ui.alertsTitle"), value: periodAlerts.length });
   if (done > 0) stats.push({ label: t("ui.reportTasksDone"), value: done });
   if (late > 0) stats.push({ label: t("ui.reportTasksOverdue"), value: late, tone: "danger" });
@@ -199,19 +201,19 @@ export default function Report() {
                 <>
                   <SectionHeader title={t("ui.reportRainDaily")} />
                   <LineChart
-                    yUnit="mm"
+                    yUnit={rainLabel(units.rain)}
                     series={[
                       {
                         label: t("ui.satelliteRain"),
                         color: CHART.comparison,
-                        points: model.rainDays.map((d) => ({ x: ddmm(d), y: model.sat.get(d) ?? null })),
+                        points: model.rainDays.map((d) => ({ x: ddmm(d), y: model.sat.has(d) ? mmToRain(model.sat.get(d)!, units.rain) : null })),
                       },
                       ...(model.gaugeByDay.size
                         ? [
                             {
                               label: t("ui.gauge"),
                               color: CHART.gauge,
-                              points: model.rainDays.map((d) => ({ x: ddmm(d), y: model.gaugeByDay.get(d) ?? null })),
+                              points: model.rainDays.map((d) => ({ x: ddmm(d), y: model.gaugeByDay.has(d) ? mmToRain(model.gaugeByDay.get(d)!, units.rain) : null })),
                             },
                           ]
                         : []),

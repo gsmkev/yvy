@@ -2,7 +2,7 @@
  * Hoy: lo que el recorredor tiene que saber y hacer, en orden. Avisos primero (si hay), después tareas,
  * después lo que ya anotó. Sin secciones vacías: si no hay nada, lo dice una sola vez.
  */
-import { useEffect, useRef, type ElementRef } from "react";
+import { useEffect, useRef, useState, type ElementRef } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Check, CloudRain, Users, Navigation, TrendingDown } from "lucide-react-native";
@@ -23,6 +23,7 @@ import { Button, EmptyState, Row, SectionHeader, StatTile, s as k, Text } from "
 import { C, RADIUS, T } from "../../src/ui/theme";
 import { isOverdue, teamTasksDue } from "../../src/lib/teamTasks";
 import { useReadOnly } from "../../src/lib/readOnly";
+import { isFieldRoleName } from "../../src/office/team";
 
 const dayLabel = () => {
   const d = new Date();
@@ -78,6 +79,8 @@ export default function Today() {
   const team = teamTasksDue(summary?.team ?? [], userId, todayIso);
   const open = tasks.filter((x) => x.status === "open");
   const done = tasks.filter((x) => x.status === "done");
+  // Roles de oficina: 2 avisos y "Ver los N" (tienen la pantalla de Avisos); roles de campo: todos, compactos.
+  const shownAlerts = !isFieldRoleName(session?.organization.role ?? "") && alerts.length > 2 ? [...alerts].sort((x, y) => Number(y.id === alertId) - Number(x.id === alertId) || Number(y.severity === "warning") - Number(x.severity === "warning")).slice(0, 2) : alerts;
   const empty = alerts.length === 0 && tasks.length === 0 && team.length === 0 && todayRecords.length === 0;
 
   // Primera vez que se entra a otra organización: decir a cuál.
@@ -130,51 +133,23 @@ export default function Today() {
       )}
 
       {/* Primero lo que pide acción: avisos. */}
-      {alerts.map((a) => {
-        const strong = a.severity === "warning";
-        return (
-          <View
-            key={a.id}
-            onLayout={(e) => {
-              alertY.current[a.id] = e.nativeEvent.layout.y;
-              if (a.id === alertId) scrollToAlert(a.id);
-            }}
-            style={[st.alert, strong ? st.alertStrong : st.alertSoft, a.id === alertId && st.alertPicked]}
-          >
-            <Text style={[T.heading, { color: strong ? C.blanco : C.atencion }]}>
-              {t(`ui.alertKind_${a.kind}` as never)}
-              {a.probability ? ` · ${t(`ui.probability_${a.probability}` as never).toLowerCase()}` : ""}
-            </Text>
-            <Text style={[T.body, { color: strong ? C.blanco : C.tinta, marginTop: 4 }]}>{a.summary}</Text>
-            <Text style={[T.small, { color: strong ? "rgba(255,255,255,0.8)" : C.tinta2, marginTop: 8 }]}>{t("ui.orientative", { source: a.source })}</Text>
-            <View style={st.vote}>
-              {votes[a.id] === undefined ? (
-                <>
-                  <Text style={[T.small, { color: strong ? C.blanco : C.tinta2 }]}>{t("ui.useful")}</Text>
-                  {([true, false] as const).map((useful) => (
-                    <Pressable
-                      key={String(useful)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${t("ui.useful")} ${useful ? t("app.yes") : t("app.no")}`}
-                      hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-                      onPress={() => {
-                        recordVote(getDb(), a.id, useful);
-                        localChanged();
-                        flushAlertVotes();
-                      }}
-                      style={st.voteBtn}
-                    >
-                      <Text style={[T.smallMedium, { color: strong ? C.blanco : C.tinta, textDecorationLine: "underline" }]}>{useful ? t("app.yes") : t("app.no")}</Text>
-                    </Pressable>
-                  ))}
-                </>
-              ) : (
-                <Text style={[T.small, { color: strong ? C.blanco : C.tinta2 }]}>{t("app.thanks")}</Text>
-              )}
-            </View>
-          </View>
-        );
-      })}
+      {shownAlerts.map((a) => (
+        <AlertCard
+          key={a.id}
+          a={a}
+          voted={votes[a.id]}
+          picked={a.id === alertId}
+          onLayout={(y) => {
+            alertY.current[a.id] = y;
+            if (a.id === alertId) scrollToAlert(a.id);
+          }}
+        />
+      ))}
+      {alerts.length > shownAlerts.length && (
+        <Pressable accessibilityRole="button" onPress={() => router.push("/office/alerts" as never)} style={st.seeAll}>
+          <Text style={[T.bodyMedium, { color: C.accionOscuro }]}>{t("app.alertsSeeAll", { n: alerts.length })}</Text>
+        </Pressable>
+      )}
 
       {empty && <EmptyState title={t("app.nothingToday")} hint={t("app.nothingTodayHint")} />}
 
@@ -295,11 +270,66 @@ export default function Today() {
   );
 }
 
+type AlertRow = ReturnType<ReturnType<typeof getDb>["activeAlerts"]>[number];
+
+/** Aviso compacto: tipo + probabilidad y el resumen en 2 líneas; la fuente y "¿Te sirvió?" aparecen al tocar. */
+function AlertCard({ a, voted, picked, onLayout }: { a: AlertRow; voted: boolean | undefined; picked: boolean; onLayout: (y: number) => void }) {
+  const [open, setOpen] = useState(picked);
+  const strong = a.severity === "warning";
+  const fg = strong ? C.blanco : C.tinta;
+  const soft = strong ? "rgba(255,255,255,0.85)" : C.tinta2;
+  const title = `${t(`ui.alertKind_${a.kind}` as never)}${a.probability ? ` · ${t(`ui.probability_${a.probability}` as never).toLowerCase()}` : ""}`;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ expanded: open }}
+      accessibilityLabel={`${title}. ${a.summary}`}
+      onPress={() => setOpen((v) => !v)}
+      onLayout={(e) => onLayout(e.nativeEvent.layout.y)}
+      style={[st.alert, strong ? st.alertStrong : st.alertSoft, picked && st.alertPicked]}
+    >
+      <Text style={[T.bodyMedium, { color: strong ? C.blanco : C.atencion, fontWeight: "700" }]} numberOfLines={1}>{title}</Text>
+      <Text style={[T.small, { color: fg, marginTop: 2 }]} numberOfLines={open ? undefined : 2}>{a.summary}</Text>
+      {open && (
+        <>
+          <Text style={[T.small, { color: soft, marginTop: 6 }]}>{t("ui.orientative", { source: a.source })}</Text>
+          <View style={st.vote}>
+            {voted === undefined ? (
+              <>
+                <Text style={[T.small, { color: soft }]}>{t("ui.useful")}</Text>
+                {([true, false] as const).map((useful) => (
+                  <Pressable
+                    key={String(useful)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t("ui.useful")} ${useful ? t("app.yes") : t("app.no")}`}
+                    hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+                    onPress={() => {
+                      recordVote(getDb(), a.id, useful);
+                      localChanged();
+                      flushAlertVotes();
+                    }}
+                    style={st.voteBtn}
+                  >
+                    <Text style={[T.smallMedium, { color: fg, textDecorationLine: "underline" }]}>{useful ? t("app.yes") : t("app.no")}</Text>
+                  </Pressable>
+                ))}
+              </>
+            ) : (
+              <Text style={[T.small, { color: soft }]}>{t("app.thanks")}</Text>
+            )}
+          </View>
+        </>
+      )}
+    </Pressable>
+  );
+}
+
 const st = StyleSheet.create({
-  alert: { borderRadius: RADIUS, padding: 16, marginTop: 16 },
+  alert: { borderRadius: RADIUS, paddingHorizontal: 14, paddingVertical: 10, marginTop: 8 },
+  seeAll: { minHeight: 48, justifyContent: "center", alignItems: "center" },
   alertStrong: { backgroundColor: C.peligro },
   alertSoft: { backgroundColor: C.atencionSuave },
-  vote: { flexDirection: "row", alignItems: "center", gap: 20, marginTop: 4, minHeight: 44 },
+  vote: { flexDirection: "row", alignItems: "center", gap: 20, minHeight: 44 },
   voteBtn: { minHeight: 44, minWidth: 44, justifyContent: "center", alignItems: "center" },
   alertPicked: { borderWidth: 3, borderColor: C.tinta },
   task: { gap: 4, paddingVertical: 4 },

@@ -18,15 +18,25 @@ export interface StatItem {
   value: string | number;
   unit?: string;
   tone?: "danger";
+  /** Si está, la cifra se toca y lleva a su pantalla. */
+  onPress?: () => void;
 }
 
 /** Fila de cifras: 2 por fila, envuelve. La unidad va junto al rótulo ("Lluvia · mm"). */
 export function StatRow({ items }: { items: StatItem[] }) {
   return (
     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 16 }}>
-      {items.map((i) => (
-        <StatTile key={i.label} value={i.value} label={i.unit ? `${i.label} · ${i.unit}` : i.label} tone={i.tone} style={{ flexBasis: "47%", flexGrow: 1 }} />
-      ))}
+      {items.map((i) => {
+        const label = i.unit ? `${i.label} · ${i.unit}` : i.label;
+        const flex = { flexBasis: "47%", flexGrow: 1 } as const;
+        return i.onPress ? (
+          <Pressable key={i.label} accessibilityRole="button" onPress={i.onPress} style={({ pressed }) => [flex, { opacity: pressed ? 0.7 : 1 }]}>
+            <StatTile value={i.value} label={label} tone={i.tone} />
+          </Pressable>
+        ) : (
+          <StatTile key={i.label} value={i.value} label={label} tone={i.tone} style={flex} />
+        );
+      })}
     </View>
   );
 }

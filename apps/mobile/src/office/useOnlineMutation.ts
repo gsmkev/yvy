@@ -1,7 +1,6 @@
-/** Escritura en línea (sin outbox): no corre sin señal, muestra el error del servidor e invalida lecturas al terminar bien. */
+/** Escritura en línea (sin outbox): no corre sin señal ni en la demo (el modo solo lectura del dueño no la frena: solo bloquea anotaciones de campo), muestra el error del servidor e invalida lecturas al terminar bien. */
 import { useCallback, useRef, useState } from "react";
 import { t } from "@yvy/shared";
-import { useReadOnly } from "../lib/readOnly";
 import { useIsDemo } from "../lib/demo";
 import { success } from "../lib/haptics";
 import { api, OfflineError } from "../lib/session";
@@ -26,11 +25,10 @@ export function useOnlineMutation<TBody = void, TRes = unknown>(
 ): OnlineMutation<TBody, TRes> {
   const online = useSyncStatus().online;
   const demo = useIsDemo();
-  const readOnly = useReadOnly();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const live = useRef({ online, path, opts, block: null as string | null });
-  live.current = { online, path, opts, block: demo ? t("ui.publicDemoReadOnly") : readOnly ? t("office.readOnlyBlocked") : null };
+  live.current = { online, path, opts, block: demo ? t("ui.publicDemoReadOnly") : null };
   const busy = useRef(false);
 
   const fail = (msg: string): MutationResult<TRes> => (setError(msg), { ok: false, error: msg });

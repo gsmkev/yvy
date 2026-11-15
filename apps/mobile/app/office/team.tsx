@@ -1,4 +1,4 @@
-/** Equipo (función 104) y alta de personas (105). GET /org/members, POST /org/members, PUT /org/members/:id/pin. Solo dueño y administrador. */
+/** Equipo (función 104) y alta de personas (105). GET /org/members, POST /org/members, PUT /org/members/:id/pin. Dueño, administrador, agrónomo y supervisor lo ven; solo dueño y administrador dan de alta. */
 import { useState } from "react";
 import { router } from "expo-router";
 import { UserPlus } from "lucide-react-native";
@@ -20,7 +20,8 @@ const role = (r: string) => t(`ui.role_${r}` as MessageKey);
 
 export default function Team() {
   const me = getSession()?.organization.role ?? "";
-  const allowed = me === "owner" || me === "admin";
+  const allowed = ["owner", "admin", "agronomist", "supervisor"].includes(me);
+  const canAdd = me === "owner" || me === "admin";
   const q = useOnline<Member[]>(allowed ? "/org/members" : null);
   const [open, setOpen] = useState(false);
   const [f, setF] = useState({ fullName: "", role: "worker", phone: "", pin: "" });
@@ -49,7 +50,7 @@ export default function Team() {
   };
 
   return (
-    <OfficeScreen title={t("ui.teamTitle")} query={q} action={{ label: t("office.teamAddTitle"), icon: UserPlus, onPress: () => { add.reset(); setFormError(null); setOpen(true); } }}>
+    <OfficeScreen title={t("ui.teamTitle")} query={q} action={canAdd ? { label: t("office.teamAddTitle"), icon: UserPlus, onPress: () => { add.reset(); setFormError(null); setOpen(true); } } : undefined}>
       <OnlineState query={q} empty={{ title: t("ui.teamEmpty") }}>
         {(rows) => (
           <DataList

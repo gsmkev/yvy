@@ -11,6 +11,7 @@ import { fmtNumber } from "../../src/office/format";
 import { OfficeScreen } from "../../src/office/OfficeScreen";
 import { OnlineState } from "../../src/office/state";
 import { useOnline } from "../../src/office/useOnline";
+import { cToTemp, mmToRain, rainLabel, tempLabel, useUnits } from "../../src/lib/units";
 import { BarList, KeyValue, LineChart, StatRow, type StatItem } from "../../src/office/ui";
 import { ForecastStrip } from "../../src/ui/ForecastStrip";
 import { EmptyState, SectionHeader, Text } from "../../src/ui/kit";
@@ -21,6 +22,9 @@ const ddmm = (iso: string) => `${iso.slice(8)}/${iso.slice(5, 7)}`;
 type Daily = ClimateData["daily"][number];
 
 export default function Climate() {
+  const units = useUnits();
+  const rainU = (mm: number) => mmToRain(mm, units.rain);
+  const rl = rainLabel(units.rain);
   const { farms, farm, setFarmId } = useFarmPick();
   const id = farm?.id;
   const q = useOnline<ClimateData>(id ? `/org/farms/${id}/climate?days=180` : null);
@@ -46,8 +50,8 @@ export default function Climate() {
   }, [q.data]);
 
   const stats: StatItem[] = [];
-  if (model?.hasRain) stats.push({ label: t("ui.rain30"), value: fmtNumber(model.rain30), unit: "mm" });
-  if (model?.hasRain && model.normal30 > 0) stats.push({ label: t("ui.rainNormal"), value: `${Math.round((model.rain30 / model.normal30) * 100)} %`, unit: `${fmtNumber(model.normal30)} mm` });
+  if (model?.hasRain) stats.push({ label: t("ui.rain30"), value: fmtNumber(rainU(model.rain30)), unit: rl });
+  if (model?.hasRain && model.normal30 > 0) stats.push({ label: t("ui.rainNormal"), value: `${Math.round((model.rain30 / model.normal30) * 100)} %`, unit: `${fmtNumber(rainU(model.normal30))} ${rl}` });
   if (model?.soil?.soilMoisture0_7 != null) stats.push({ label: t("ui.soilMoisture"), value: Math.round(model.soil.soilMoisture0_7 * 100), unit: "%" });
 
   return (
@@ -69,14 +73,14 @@ export default function Climate() {
                     <>
                       <SectionHeader title={t("office.climateRain60")} />
                       <LineChart
-                        yUnit="mm"
+                        yUnit={rl}
                         series={[
-                          { label: t("ui.satelliteRain"), color: CHART.comparison, points: model.days.map((d) => ({ x: ddmm(d), y: model.rain.get(d) ?? null })) },
-                          ...(model.hasGauge ? [{ label: t("ui.gauge"), color: CHART.gauge, points: model.days.map((d) => ({ x: ddmm(d), y: model.gauge.get(d) ?? null })) }] : []),
+                          { label: t("ui.satelliteRain"), color: CHART.comparison, points: model.days.map((d) => ({ x: ddmm(d), y: model.rain.has(d) ? rainU(model.rain.get(d)!) : null })) },
+                          ...(model.hasGauge ? [{ label: t("ui.gauge"), color: CHART.gauge, points: model.days.map((d) => ({ x: ddmm(d), y: model.gauge.has(d) ? rainU(model.gauge.get(d)!) : null })) }] : []),
                         ]}
                       />
                       <SectionHeader title={t("office.climateRainMonthly")} />
-                      <BarList unit="mm" rows={model.months.map(([m, v]) => ({ label: `${MONTHS[Number(m.slice(5)) - 1]} ${m.slice(2, 4)}`, value: Math.round(v) }))} />
+                      <BarList unit={rl} rows={model.months.map(([m, v]) => ({ label: `${MONTHS[Number(m.slice(5)) - 1]} ${m.slice(2, 4)}`, value: Math.round(rainU(v) * 10) / 10 }))} />
                       <Text style={[T.small, { marginTop: 8 }]}>{t("attribution.chirps")}</Text>
                     </>
                   )}
@@ -84,10 +88,10 @@ export default function Climate() {
                     <>
                       <SectionHeader title={t("office.climateForecastTemp")} />
                       <LineChart
-                        yUnit="°C"
+                        yUnit={tempLabel(units.temp)}
                         series={[
-                          { label: t("ui.tmax"), color: CHART.warm, points: model.temps.map((d) => ({ x: ddmm(d.date), y: d.tmaxC ?? null })) },
-                          { label: t("ui.tmin"), color: CHART.comparison, points: model.temps.map((d) => ({ x: ddmm(d.date), y: d.tminC ?? null })) },
+                          { label: t("ui.tmax"), color: CHART.warm, points: model.temps.map((d) => ({ x: ddmm(d.date), y: d.tmaxC == null ? null : cToTemp(d.tmaxC, units.temp) })) },
+                          { label: t("ui.tmin"), color: CHART.comparison, points: model.temps.map((d) => ({ x: ddmm(d.date), y: d.tminC == null ? null : cToTemp(d.tminC, units.temp) })) },
                         ]}
                       />
                       <Text style={[T.small, { marginTop: 8 }]}>{t("attribution.nasaPower")}</Text>

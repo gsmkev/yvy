@@ -14,26 +14,27 @@ import { isFieldRoleName, type Member } from "../../../src/office/team";
 import { useOnline } from "../../../src/office/useOnline";
 import { useOnlineMutation } from "../../../src/office/useOnlineMutation";
 import { FormSheet, KeyValue, StatRow, TextField } from "../../../src/office/ui";
+import { QrCode } from "../../../src/ui/QrCode";
 import { Button, EmptyState, Row, SectionHeader, Sheet, Text } from "../../../src/ui/kit";
 import { C, T } from "../../../src/ui/theme";
 
 export default function MemberScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const me = getSession()?.organization.role ?? "";
-  const allowed = me === "owner" || me === "admin";
+  const allowed = ["owner", "admin", "agronomist", "supervisor"].includes(me);
   const q = useOnline<Member[]>(allowed ? "/org/members" : null);
   if (!allowed) return <OfficeScreen title={t("ui.teamTitle")}><EmptyState title={t("office.teamNotAllowed")} /></OfficeScreen>;
   const m = q.data?.find((x) => x.userId === id);
   return (
     <OfficeScreen title={m?.fullName ?? t("ui.teamTitle")} subtitle={m ? t(`ui.role_${m.role}` as MessageKey) : undefined} query={q}>
       <OnlineState query={q} isEmpty={() => !m} empty={{ title: t("ui.teamEmpty") }}>
-        {() => (m ? <Detail m={m} self={getSession()?.user.id === m.userId} /> : null)}
+        {() => (m ? <Detail m={m} self={getSession()?.user.id === m.userId} manage={me === "owner" || me === "admin"} /> : null)}
       </OnlineState>
     </OfficeScreen>
   );
 }
 
-function Detail({ m, self }: { m: Member; self: boolean }) {
+function Detail({ m, self, manage }: { m: Member; self: boolean; manage: boolean }) {
   const [sheet, setSheet] = useState<null | "link" | "pin" | "plots" | "remove">(null);
   const field = isFieldRoleName(m.role);
   const rows = [
@@ -54,9 +55,9 @@ function Detail({ m, self }: { m: Member; self: boolean }) {
       {stats.length ? <StatRow items={stats} /> : <Text style={T.small}>{t("ui.neverVisited")}</Text>}
       <SectionHeader title={t("office.teamActionsTitle")} />
       <Row title={t("ui.assignPlots")} onPress={() => setSheet("plots")} />
-      {field ? <Row title={t("ui.linkDevice")} onPress={() => setSheet("link")} /> : null}
-      {m.role === "worker" ? <Row title={m.hasPin ? t("app.teamPinChange") : t("app.teamPinSet")} onPress={() => setSheet("pin")} /> : null}
-      {!self ? <Row title={t("ui.removeMember")} tone="danger" onPress={() => setSheet("remove")} /> : null}
+      {manage && field ? <Row title={t("ui.linkDevice")} onPress={() => setSheet("link")} /> : null}
+      {manage && m.role === "worker" ? <Row title={m.hasPin ? t("app.teamPinChange") : t("app.teamPinSet")} onPress={() => setSheet("pin")} /> : null}
+      {manage && !self ? <Row title={t("ui.removeMember")} tone="danger" onPress={() => setSheet("remove")} /> : null}
       <LinkSheet m={m} visible={sheet === "link"} onClose={() => setSheet(null)} />
       <PinSheet m={m} visible={sheet === "pin"} onClose={() => setSheet(null)} />
       <PlotsSheet m={m} visible={sheet === "plots"} onClose={() => setSheet(null)} />
@@ -65,7 +66,7 @@ function Detail({ m, self }: { m: Member; self: boolean }) {
   );
 }
 
-/** El QR no se dibuja (no hay librería de QR utilizable en la app): se muestra el enlace y se comparte. */
+/** QR con el enlace yvy://link?c=… (lo lee app/scan.tsx en el otro teléfono); debajo, el enlace y Compartir como alternativa. */
 function LinkSheet({ m, visible, onClose }: { m: Member; visible: boolean; onClose: () => void }) {
   const gen = useOnlineMutation<{ userId: string }, { qr: string; expiresAt: number }>("POST", "/auth/link");
   const [res, setRes] = useState<{ qr: string; expiresAt: number } | null>(null);
@@ -79,10 +80,11 @@ function LinkSheet({ m, visible, onClose }: { m: Member; visible: boolean; onClo
       <Text style={T.body}>{t("ui.linkHelp")}</Text>
       {res ? (
         <>
+          <View style={{ marginTop: 12 }}><QrCode value={res.qr} size={240} label={t("office.teamLinkQrLabel", { name: m.fullName })} /></View>
+          <Text style={[T.small, { marginTop: 8, textAlign: "center" }]}>{t("ui.expires", { date: fmtDateTime(res.expiresAt) })}</Text>
           <Text selectable style={[T.small, { marginTop: 12, padding: 12, backgroundColor: C.blanco, borderWidth: 1, borderColor: C.linea, borderRadius: 8 }]}>{res.qr}</Text>
-          <Text style={[T.small, { marginTop: 8 }]}>{t("ui.expires", { date: fmtDateTime(res.expiresAt) })}</Text>
           <Text style={[T.small, { marginTop: 8 }]}>{t("office.teamLinkNoQr")}</Text>
-          <Button title={t("office.teamLinkShare")} onPress={() => void Share.share({ message: res.qr })} style={{ marginTop: 16 }} />
+          <Button kind="secondary" title={t("office.teamLinkShare")} onPress={() => void Share.share({ message: res.qr })} style={{ marginTop: 16 }} />
         </>
       ) : gen.error ? (
         <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 12 }]}>{gen.error}</Text>

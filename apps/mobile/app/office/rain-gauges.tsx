@@ -14,22 +14,25 @@ import { fmtNumber } from "../../src/office/format";
 import { OfficeScreen } from "../../src/office/OfficeScreen";
 import { OnlineState } from "../../src/office/state";
 import { useOnline } from "../../src/office/useOnline";
+import { mmToRain, rainLabel, useUnits } from "../../src/lib/units";
 import { BarList, StatRow, type StatItem } from "../../src/office/ui";
 import { EmptyState, SectionHeader, Text } from "../../src/ui/kit";
 import { T } from "../../src/ui/theme";
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const monthLabel = (key: string) => `${MONTHS[Number(key.slice(5)) - 1]} ${key.slice(2, 4)}`;
-const mm = (v: number) => fmtNumber(Math.round(v * 10) / 10);
 
 function Gauge({ name, months, season }: { name: string; months: GaugeRow[]; season: GaugeRow }) {
+  const units = useUnits();
+  const mm = (v: number) => fmtNumber(Math.round(mmToRain(v, units.rain) * 10) / 10);
+  const rl = rainLabel(units.rain);
   const current = months[months.length - 1];
   const stats: StatItem[] = [];
-  if (current?.gaugeMm != null) stats.push({ label: t("office.gaugesMonthTotal"), value: mm(current.gaugeMm), unit: "mm" });
-  if (season.gaugeMm != null) stats.push({ label: t("ui.gaugesSeason"), value: mm(season.gaugeMm), unit: "mm" });
-  if (season.gaugeMm != null && season.satMm != null) stats.push({ label: t("ui.satelliteRain"), value: mm(season.satMm), unit: "mm" });
-  if (season.gaugeMm != null && season.normalMm != null) stats.push({ label: t("ui.rainNormal"), value: mm(season.normalMm), unit: "mm" });
-  const bars = months.filter((m) => m.gaugeMm != null).map((m) => ({ label: monthLabel(m.key), value: m.gaugeMm! }));
+  if (current?.gaugeMm != null) stats.push({ label: t("office.gaugesMonthTotal"), value: mm(current.gaugeMm), unit: rl });
+  if (season.gaugeMm != null) stats.push({ label: t("ui.gaugesSeason"), value: mm(season.gaugeMm), unit: rl });
+  if (season.gaugeMm != null && season.satMm != null) stats.push({ label: t("ui.satelliteRain"), value: mm(season.satMm), unit: rl });
+  if (season.gaugeMm != null && season.normalMm != null) stats.push({ label: t("ui.rainNormal"), value: mm(season.normalMm), unit: rl });
+  const bars = months.filter((m) => m.gaugeMm != null).map((m) => ({ label: monthLabel(m.key), value: Math.round(mmToRain(m.gaugeMm!, units.rain) * 10) / 10 }));
   return (
     <View>
       <SectionHeader title={name} />
@@ -38,7 +41,7 @@ function Gauge({ name, months, season }: { name: string; months: GaugeRow[]; sea
       ) : (
         <>
           <StatRow items={stats} />
-          {bars.length > 0 && <BarList rows={bars} unit="mm" />}
+          {bars.length > 0 && <BarList rows={bars} unit={rl} />}
         </>
       )}
     </View>

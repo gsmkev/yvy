@@ -33,12 +33,14 @@ type Row = GaugeRow & { label: string };
 function GaugeSection({ name, months, season }: { name: string; months: GaugeRow[]; season: GaugeRow }) {
   const rows: Row[] = [...months.map((m) => ({ ...m, label: monthLabel(m.key) })), { ...season, label: t("ui.gaugesSeason") }];
   const noData = season.gaugeMm === null;
+  // Los valores no se parten en dos líneas: la tabla se desplaza de costado dentro de su contenedor si no entra
+  const nowrap = (s: string) => <span className="whitespace-nowrap">{s}</span>;
   const all: Column<Row>[] = [
-    { id: "m", header: t("ui.gaugesMonth"), cell: (r) => <span className={r.key === "season" ? "font-semibold" : ""}>{r.label}</span> },
-    { id: "gauge", header: t("ui.gauge"), align: "right", cell: (r) => mm(r.gaugeMm) },
-    { id: "sat", header: t("ui.satelliteRain"), align: "right", cell: (r) => mm(r.satMm) },
-    { id: "normal", header: t("ui.rainNormal"), align: "right", cell: (r) => mm(r.normalMm), hideBelow: "sm" },
-    { id: "diff", header: t("ui.gaugesVsSat"), align: "right", cell: diff, hideBelow: "sm" },
+    { id: "m", header: t("ui.gaugesMonth"), cell: (r) => <span className={`whitespace-nowrap ${r.key === "season" ? "font-semibold" : ""}`}>{r.label}</span> },
+    { id: "gauge", header: t("ui.gauge"), align: "right", cell: (r) => nowrap(mm(r.gaugeMm)) },
+    { id: "sat", header: t("ui.satelliteRain"), align: "right", cell: (r) => nowrap(mm(r.satMm)) },
+    { id: "normal", header: t("ui.rainNormal"), align: "right", cell: (r) => nowrap(mm(r.normalMm)), hideBelow: "sm" },
+    { id: "diff", header: t("ui.gaugesVsSat"), align: "right", cell: (r) => nowrap(diff(r)), hideBelow: "sm" },
   ];
   const cols = all.filter((c) => {
     // columnas sin ningún dato en la tabla no se muestran
@@ -51,7 +53,7 @@ function GaugeSection({ name, months, season }: { name: string; months: GaugeRow
     <section className="flex min-w-0 flex-col gap-3">
       <SectionHead title={name} />
       {noData && <p className="text-sm text-tinta-2">{t("ui.gaugesNoData")}</p>}
-      <div className="grid items-start gap-x-10 gap-y-5 lg:grid-cols-2">
+      <div className="grid items-start gap-x-10 gap-y-5 2xl:grid-cols-2">
         <DataTable columns={cols} rows={rows} rowKey={(r) => r.key} caption={name} />
         <MonthlyRainChart
           ariaLabel={t("ui.gaugesChartLabel", { name })}

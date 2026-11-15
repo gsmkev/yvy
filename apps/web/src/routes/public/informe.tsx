@@ -35,7 +35,7 @@ export function LeadReportPage() {
         ) : (
           <>
             <div>
-              <h1 className="font-serif text-[32px] leading-tight font-semibold">{t("ui.leadReportTitle")}</h1>
+              <h1 className="text-title leading-8">{t("ui.leadReportTitle")}</h1>
               <p className="mt-2 text-tinta-2">{t("ui.leadReportIntro")}</p>
               <p className="mt-1 text-sm text-tinta-2">{t("ui.riskComputed", { date: fmtDate(q.data.computedAt) })}</p>
             </div>

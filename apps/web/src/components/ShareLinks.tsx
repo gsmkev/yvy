@@ -5,7 +5,7 @@ import { del, get, post } from "../lib/api";
 import { fmtDate } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useMe } from "../lib/queries";
-import { Button, ErrorBox, toast } from "./ui";
+import { Button, ErrorBox, Modal, toast } from "./ui";
 
 interface LinkRow {
   id: string;
@@ -14,7 +14,7 @@ interface LinkRow {
   revokedAt: number | null;
 }
 
-export function ShareLinksSection({ farmId }: { farmId: string }) {
+export function ShareLinksModal({ farmId, onClose }: { farmId: string; onClose: () => void }) {
   const me = useMe();
   const qc = useQueryClient();
   const isOwner = me.data?.role === "owner";
@@ -45,14 +45,13 @@ export function ShareLinksSection({ farmId }: { farmId: string }) {
   if (!isOwner) return null;
   const now = Date.now();
   return (
-    <section className="mt-8 border-t border-linea pt-6">
-      <h2 className="text-section leading-6 font-semibold">{t("ui.shareLinkTitle")}</h2>
-      <p className="mt-1 text-sm text-tinta-2">{t("ui.shareLinkIntro")}</p>
+    <Modal title={t("ui.shareLinkTitle")} onClose={onClose}>
+      <p className="text-sm text-tinta-2">{t("ui.shareLinkIntro")}</p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button onClick={() => create.mutate(7)} disabled={create.isPending}>
+        <Button variant="primary" onClick={() => create.mutate(7)} disabled={create.isPending}>
           {t("ui.shareLinkCreate7")}
         </Button>
-        <Button onClick={() => create.mutate(30)} disabled={create.isPending}>
+        <Button variant="secondary" onClick={() => create.mutate(30)} disabled={create.isPending}>
           {t("ui.shareLinkCreate30")}
         </Button>
       </div>
@@ -103,6 +102,6 @@ export function ShareLinksSection({ farmId }: { farmId: string }) {
           </ul>
         </>
       )}
-    </section>
+    </Modal>
   );
 }

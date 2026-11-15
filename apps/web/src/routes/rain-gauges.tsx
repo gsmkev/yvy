@@ -1,10 +1,11 @@
 /** Pluviómetros de la estancia: mes y campaña contra el satélite y la normal (C-05, C-06). */
+import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { localDate } from "@yvy/shared";
 import { MonthlyRainChart } from "../components/charts";
-import { FarmPageHeader } from "../components/FarmPageHeader";
-import { EmptyState, ErrorBox, Spinner, Page } from "../components/ui";
+import { PageExport } from "../components/PageExport";
+import { DataTable, EmptyState, ErrorBox, SectionHead, Spinner, Page, type Column } from "../components/ui";
 import { fmtIsoDate, fmtMm } from "../lib/format";
 import {
   campaignStart,
@@ -18,7 +19,6 @@ import {
 import { get } from "../lib/api";
 import { t } from "../lib/i18n";
 import { useFarm } from "../lib/queries";
-import { ExportableTable } from "../components/ExportableTable";
 
 const monthName = new Intl.DateTimeFormat("es-PY", { month: "short", year: "2-digit", timeZone: "UTC" });
 const monthLabel = (key: string) => monthName.format(new Date(`${key}-15T12:00:00Z`)).replace(".", "");
@@ -28,40 +28,24 @@ const diff = (r: GaugeRow) => {
   return d === null ? "—" : `${d > 0 ? "+" : ""}${Math.round(d)} %`;
 };
 
+type Row = GaugeRow & { label: string };
+
 function GaugeSection({ name, months, season }: { name: string; months: GaugeRow[]; season: GaugeRow }) {
-  const rows = [...months.map((m) => ({ ...m, label: monthLabel(m.key) })), { ...season, label: t("ui.gaugesSeason") }];
+  const rows: Row[] = [...months.map((m) => ({ ...m, label: monthLabel(m.key) })), { ...season, label: t("ui.gaugesSeason") }];
   const noData = season.gaugeMm === null;
+  const cols: Column<Row>[] = [
+    { id: "m", header: t("ui.gaugesMonth"), cell: (r) => <span className={r.key === "season" ? "font-semibold" : ""}>{r.label}</span> },
+    { id: "gauge", header: t("ui.gauge"), align: "right", cell: (r) => mm(r.gaugeMm) },
+    { id: "sat", header: t("ui.satelliteRain"), align: "right", cell: (r) => mm(r.satMm) },
+    { id: "normal", header: t("ui.rainNormal"), align: "right", cell: (r) => mm(r.normalMm), hideBelow: "sm" },
+    { id: "diff", header: t("ui.gaugesVsSat"), align: "right", cell: diff, hideBelow: "sm" },
+  ];
   return (
-    <section className="border-t border-linea pt-6">
-      <h2 className="text-section leading-6 font-semibold">{name}</h2>
-      {noData && <p className="mt-1 text-sm text-tinta-2">{t("ui.gaugesNoData")}</p>}
-      <div className="mt-3 overflow-x-auto">
-        <ExportableTable name="pluviometros">
-          <table className="num w-full text-sm">
-            <thead>
-              <tr className="border-b border-linea text-left text-tinta-2">
-                <th className="py-1.5 pr-3 font-normal">{t("ui.gaugesMonth")}</th>
-                <th className="px-3 py-1.5 text-right font-normal">{t("ui.gauge")}</th>
-                <th className="px-3 py-1.5 text-right font-normal">{t("ui.satelliteRain")}</th>
-                <th className="px-3 py-1.5 text-right font-normal">{t("ui.rainNormal")}</th>
-                <th className="py-1.5 pl-3 text-right font-normal">{t("ui.gaugesVsSat")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.key} className={`border-b border-linea/60 ${r.key === "season" ? "font-semibold" : ""}`}>
-                  <td className="py-1.5 pr-3">{r.label}</td>
-                  <td className="px-3 py-1.5 text-right">{mm(r.gaugeMm)}</td>
-                  <td className="px-3 py-1.5 text-right">{mm(r.satMm)}</td>
-                  <td className="px-3 py-1.5 text-right">{mm(r.normalMm)}</td>
-                  <td className="py-1.5 pl-3 text-right">{diff(r)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </ExportableTable>
-      </div>
-      <div className="mt-4">
+    <section className="flex min-w-0 flex-col gap-3">
+      <SectionHead title={name} />
+      {noData && <p className="text-sm text-tinta-2">{t("ui.gaugesNoData")}</p>}
+      <div className="grid items-start gap-x-10 gap-y-5 lg:grid-cols-2">
+        <DataTable columns={cols} rows={rows} rowKey={(r) => r.key} caption={name} />
         <MonthlyRainChart
           ariaLabel={t("ui.gaugesChartLabel", { name })}
           labels={{ satellite: t("ui.satelliteRain"), normal: t("ui.rainNormal"), gauge: t("ui.gauge") }}
@@ -75,6 +59,7 @@ function GaugeSection({ name, months, season }: { name: string; months: GaugeRow
 export function RainGaugesPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId/pluviometros" });
   const farm = useFarm(farmId);
+  const body = useRef<HTMLDivElement>(null);
   const today = localDate(Date.now());
   const from = campaignStart(today);
   const days = Math.ceil((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000) + 3;
@@ -90,18 +75,23 @@ export function RainGaugesPage() {
   const cutoff = lastSatDate(c.daily, today);
   const gauges = farm.data.pois.filter((p) => p.kind === "rain_gauge");
   return (
-    <Page width="data" className="gap-6">
-      <div>
-        <FarmPageHeader farmId={farmId} farmName={farm.data.farm.name} title={t("ui.gaugesTitle")} />
-        <p className="text-sm text-tinta-2">{t("ui.gaugesIntro", { from: fmtIsoDate(from), to: fmtIsoDate(cutoff) })}</p>
-      </div>
+    <Page
+      width="data"
+      className="gap-6"
+      back={{ to: `/estancias/${farmId}/informes`, label: t("ui.reportsBack") }}
+      title={t("ui.gaugesTitle")}
+      menu={gauges.length > 0 ? <PageExport root={body} name={t("ui.gaugesTitle")} /> : undefined}
+    >
+      <p className="-mt-3 text-sm text-tinta-2">{farm.data.farm.name} · {t("ui.gaugesIntro", { from: fmtIsoDate(from), to: fmtIsoDate(cutoff) })}</p>
       {gauges.length === 0 && <EmptyState title={t("ui.gaugesNone")}>{t("ui.gaugesNoneHint")}</EmptyState>}
-      {gauges.map((g) => (
-        <GaugeSection key={g.id} name={g.name} {...gaugeTable(c, g.id, from, cutoff, tz)} />
-      ))}
-      {hasUnassignedRain(c) && (
-        <GaugeSection name={t("ui.gaugesUnassigned")} {...gaugeTable(c, null, from, cutoff, tz)} />
-      )}
+      <div ref={body} className="flex flex-col gap-8">
+        {gauges.map((g) => (
+          <GaugeSection key={g.id} name={g.name} {...gaugeTable(c, g.id, from, cutoff, tz)} />
+        ))}
+        {hasUnassignedRain(c) && (
+          <GaugeSection name={t("ui.gaugesUnassigned")} {...gaugeTable(c, null, from, cutoff, tz)} />
+        )}
+      </div>
     </Page>
   );
 }

@@ -1,10 +1,11 @@
 /** Resumen público de solo lectura de una estancia (K-04): /compartido/:token, sin sesión ni menú. */
+import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { fmtDate, fmtHa, fmtMm, fmtNdvi } from "../lib/format";
-import { Spinner } from "../components/ui";
+import { DataTable, SectionHead, Spinner, Stat, type Column } from "../components/ui";
 import { t, tk } from "../lib/i18n";
-import { ExportableTable } from "../components/ExportableTable";
+import { PageExport } from "../components/PageExport";
 
 interface SharedSummary {
   farm: { name: string; department: string | null; areaHa: number; plotCount: number };
@@ -14,6 +15,8 @@ interface SharedSummary {
   generatedAt: number;
   expiresAt: number;
 }
+
+type SharedPlot = SharedSummary["plots"][number];
 
 class SharedError extends Error {
   constructor(
@@ -36,17 +39,33 @@ async function fetchShared(token: string): Promise<SharedSummary> {
 export function SharedPage() {
   const { token } = useParams({ from: "/compartido/$token" });
   const q = useQuery({ queryKey: ["shared", token], queryFn: () => fetchShared(token), retry: false });
+  const body = useRef<HTMLDivElement>(null);
   const d = q.data;
+  const cols: Column<SharedPlot>[] = [
+    { id: "plot", header: t("ui.plot"), cell: (p) => p.name },
+    { id: "crop", header: t("ui.crop"), cell: (p) => <span className="capitalize">{p.kind === "pasture" ? t("ui.pasture") : (p.crop ?? "—")}</span>, hideBelow: "sm" },
+    { id: "area", header: t("ui.area"), align: "right", cell: (p) => fmtHa(p.areaHa) },
+    {
+      id: "ndvi",
+      header: t("ui.sharedVigor"),
+      align: "right",
+      cell: (p) =>
+        p.ndvi === null ? (
+          "—"
+        ) : (
+          <>
+            {fmtNdvi(p.ndvi)}
+            {p.ndviAt ? <span className="ml-2 text-xs text-tinta-2">{fmtDate(p.ndviAt)}</span> : null}
+          </>
+        ),
+    },
+  ];
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8">
+    <main className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8 lg:px-10">
       <p className="font-serif text-2xl font-semibold">Yvy</p>
-      {q.isLoading && (
-        <div className="mt-6">
-          <Spinner rows={4} h={72} />
-        </div>
-      )}
+      {q.isLoading && <Spinner rows={4} h={72} />}
       {q.error && (
-        <p className="mt-6 text-lg">
+        <p className="text-lg">
           {q.error instanceof SharedError && q.error.reason === "expired"
             ? t("ui.sharedExpiredMsg")
             : q.error instanceof SharedError && q.error.reason === "revoked"
@@ -56,86 +75,58 @@ export function SharedPage() {
       )}
       {d && (
         <>
-          <h1 className="mt-6 text-3xl leading-tight">{d.farm.name}</h1>
-          <p className="mt-1 text-sm text-tinta-2">
-            {t("ui.sharedTitle")}
-            {d.farm.department ? ` · ${d.farm.department}` : ""} · {t("ui.sharedReadOnly")}
-          </p>
-          <dl className="num mt-6 grid grid-cols-2 gap-x-6 gap-y-4 border-y border-linea py-4 sm:grid-cols-4">
-            <Fact label={t("ui.area")} value={fmtHa(d.farm.areaHa)} />
-            <Fact label={t("ui.plots")} value={String(d.farm.plotCount)} />
-            <Fact
+          <header className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-title leading-8">{d.farm.name}</h1>
+              <p className="mt-1 text-sm text-tinta-2">
+                {t("ui.sharedTitle")}
+                {d.farm.department ? ` · ${d.farm.department}` : ""} · {t("ui.sharedReadOnly")}
+              </p>
+            </div>
+            {d.plots.length > 0 && <PageExport root={body} name={d.farm.name} />}
+          </header>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-linea py-5 sm:grid-cols-4">
+            <Stat label={t("ui.area")} value={fmtHa(d.farm.areaHa)} />
+            <Stat label={t("ui.plots")} value={d.farm.plotCount} />
+            <Stat
               label={t("ui.sharedRain30")}
               value={d.rain30.mm === null ? t("ui.sharedNoData") : fmtMm(d.rain30.mm)}
-              note={
-                d.rain30.normalMm
-                  ? `${t("ui.sharedRainNormal")}: ${fmtMm(d.rain30.normalMm)}`
-                  : undefined
-              }
+              note={d.rain30.normalMm ? `${t("ui.sharedRainNormal")}: ${fmtMm(d.rain30.normalMm)}` : undefined}
             />
-            <Fact label={t("ui.alertsTitle")} value={String(d.alerts.length)} />
-          </dl>
-
-          <h2 className="mt-8 font-serif text-xl font-semibold">{t("ui.plots")}</h2>
-          <div className="mt-2 overflow-x-auto">
-            <ExportableTable name="informes-compartidos">
-              <table className="num w-full text-left text-sm">
-                <thead className="border-b border-linea text-tinta-2">
-                  <tr>
-                    <th className="py-2 pr-3 font-medium">{t("ui.plot")}</th>
-                    <th className="py-2 pr-3 font-medium">{t("ui.crop")}</th>
-                    <th className="py-2 pr-3 text-right font-medium">{t("ui.area")}</th>
-                    <th className="py-2 text-right font-medium">{t("ui.sharedVigor")}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-linea">
-                  {d.plots.map((p, i) => (
-                    <tr key={i}>
-                      <td className="py-2 pr-3">{p.name}</td>
-                      <td className="py-2 pr-3 capitalize">{p.kind === "pasture" ? t("ui.pasture") : (p.crop ?? "—")}</td>
-                      <td className="py-2 pr-3 text-right">{fmtHa(p.areaHa)}</td>
-                      <td className="py-2 text-right">
-                        {p.ndvi === null ? "—" : fmtNdvi(p.ndvi)}
-                        {p.ndviAt ? <span className="ml-2 text-xs text-tinta-2">{fmtDate(p.ndviAt)}</span> : null}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </ExportableTable>
+            {d.alerts.length > 0 && <Stat label={t("ui.alertsTitle")} value={d.alerts.length} />}
           </div>
 
-          <h2 className="mt-8 font-serif text-xl font-semibold">{t("ui.alertsTitle")}</h2>
-          {d.alerts.length === 0 ? (
-            <p className="mt-2 text-sm text-tinta-2">{t("ui.sharedNoAlerts")}</p>
-          ) : (
-            <ul className="mt-2 divide-y divide-linea border-y border-linea text-sm">
-              {d.alerts.map((a, i) => (
-                <li key={i} className="py-2">
-                  <span className="font-medium">{tk(`ui.alertKind_${a.kind}`)}</span> · {a.summary}
-                </li>
-              ))}
-            </ul>
-          )}
+          <div className="grid items-start gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+            <section ref={body} className="flex min-w-0 flex-col gap-2">
+              <SectionHead title={t("ui.plots")} />
+              <DataTable columns={cols} rows={d.plots} rowKey={(p) => `${p.name}|${p.areaHa}|${p.crop ?? ""}`} caption={t("ui.plots")} />
+            </section>
+            <section className="flex min-w-0 flex-col gap-2">
+              <SectionHead title={t("ui.alertsTitle")} />
+              {d.alerts.length === 0 ? (
+                <p className="text-sm text-tinta-2">{t("ui.sharedNoAlerts")}</p>
+              ) : (
+                <ul className="flex flex-col text-sm">
+                  {d.alerts.map((a, i) => (
+                    <li key={i} className="border-b border-linea py-2.5">
+                      <span className="font-medium">{tk(`ui.alertKind_${a.kind}`)}</span> · {a.summary}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
 
-          <p className="mt-10 text-xs text-tinta-2">
-            {t("ui.sharedGenerated", { date: fmtDate(d.generatedAt) })} · {t("ui.sharedExpires", { date: fmtDate(d.expiresAt) })}
-          </p>
-          <p className="mt-1 text-xs text-tinta-2">
-            {t("attribution.copernicus")} · {t("attribution.chirps")}
-          </p>
+          <footer className="flex flex-col gap-1 text-xs text-tinta-2">
+            <p>
+              {t("ui.sharedGenerated", { date: fmtDate(d.generatedAt) })} · {t("ui.sharedExpires", { date: fmtDate(d.expiresAt) })}
+            </p>
+            <p>
+              {t("attribution.copernicus")} · {t("attribution.chirps")}
+            </p>
+          </footer>
         </>
       )}
     </main>
-  );
-}
-
-function Fact({ label, value, note }: { label: string; value: string; note?: string }) {
-  return (
-    <div>
-      <dt className="text-sm text-tinta-2">{label}</dt>
-      <dd className="text-xl font-semibold">{value}</dd>
-      {note && <dd className="text-xs text-tinta-2">{note}</dd>}
-    </div>
   );
 }

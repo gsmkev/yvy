@@ -39,25 +39,27 @@ export function ReportSchedules({ farmId }: { farmId: string }) {
   });
   return (
     <section>
-      <h2 className="text-section leading-6 font-semibold">{t("ui.scheduleTitle")}</h2>
-      <p className="mt-1 text-sm text-tinta-2">{t("ui.scheduleIntro")}</p>
+      <p className="mt-2 text-sm text-tinta-2">{t("ui.scheduleIntro")}</p>
       {list.error && <ErrorBox error={list.error} />}
       <ul className="mt-2 flex flex-col divide-y divide-linea text-sm">
         {list.data?.map((r) => (
-          <li key={r.id} className="flex flex-wrap items-center gap-2 py-2">
-            <span className="flex-1">
-              <strong>{r.name}</strong> · {r.email} · {tk(`ui.scheduleFreq_${r.frequency}`)} ·{" "}
-              {r.farmId ? t("ui.scheduleThisFarm") : t("ui.scheduleAllFarms")}
-              {r.lastSentAt ? ` · ${t("ui.scheduleLast", { date: fmtDate(r.lastSentAt) })}` : ""}
+          <li key={r.id} className="flex items-start justify-between gap-2 py-2.5">
+            <span className="min-w-0">
+              <strong className="block truncate font-medium">{r.name}</strong>
+              <span className="block truncate text-tinta-2">{r.email}</span>
+              <span className="block text-meta text-tinta-2">
+                {tk(`ui.scheduleFreq_${r.frequency}`)} · {r.farmId ? t("ui.scheduleThisFarm") : t("ui.scheduleAllFarms")}
+                {r.lastSentAt ? ` · ${t("ui.scheduleLast", { date: fmtDate(r.lastSentAt) })}` : ""}
+              </span>
             </span>
-            <Button variant="danger" onClick={() => remove.mutate(r.id)}>
+            <Button size="sm" variant="danger" onClick={() => remove.mutate(r.id)}>
               {t("ui.delete")}
             </Button>
           </li>
         ))}
       </ul>
       <form
-        className="mt-3 grid gap-3 sm:grid-cols-2"
+        className="mt-3 grid gap-3"
         onSubmit={(e) => {
           e.preventDefault();
           add.mutate();
@@ -86,7 +88,7 @@ export function ReportSchedules({ farmId }: { farmId: string }) {
             ]}
           />
         </Field>
-        <div className="sm:col-span-2">
+        <div>
           <Button type="submit" variant="primary" disabled={add.isPending}>
             {t("ui.scheduleAdd")}
           </Button>

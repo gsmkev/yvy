@@ -2,45 +2,35 @@
  * Unidades de visualización (U-23). Los datos siempre se guardan en ha, mm y °C;
  * la preferencia (por usuario, en localStorage) solo cambia cómo se muestran.
  */
+import {
+  areaLabel as areaLabelOf,
+  cToTemp as cToTempOf,
+  haToArea as haToAreaOf,
+  mmToRain as mmToRainOf,
+  parseUnits,
+  rainLabel as rainLabelOf,
+  tempLabel as tempLabelOf,
+  type AreaUnit,
+  type RainUnit,
+  type TempUnit,
+  type Units,
+} from "@yvy/shared";
 import { getSession } from "./api";
 
-/**
- * Cuadra cuadrada paraguaya: 100 varas x 100 varas, con 1 vara = 0,866 m (norma técnica PNA 65 001 21;
- * ver https://en.wikipedia.org/wiki/Paraguayan_units_of_measurement). 86,6 m x 86,6 m = 7.499,56 m², que en la
- * práctica se redondea a 0,75 ha exactas. Ojo: el 0,7438 que circula en algunos pedidos no coincide con esa norma.
- */
-export const CUADRA_HA = 0.75;
-const MM_PER_INCH = 25.4;
-
-type AreaUnit = "ha" | "cuadra";
-export type RainUnit = "mm" | "in";
-export type TempUnit = "c" | "f";
-export interface Units {
-  area: AreaUnit;
-  rain: RainUnit;
-  temp: TempUnit;
-}
-const DEFAULT_UNITS: Units = { area: "ha", rain: "mm", temp: "c" };
+export { CUADRA_HA, type Units } from "@yvy/shared";
 
 const key = () => `yvy.units.${getSession()?.user.id ?? "anon"}`;
 const listeners = new Set<() => void>();
 let cache: { k: string; v: Units } | null = null;
 
-const pick = <T extends string>(v: unknown, ok: readonly T[], d: T): T => (ok.includes(v as T) ? (v as T) : d);
-
 export function getUnits(): Units {
   const k = key();
   if (cache?.k === k) return cache.v;
-  let v = DEFAULT_UNITS;
+  let v = parseUnits(null);
   try {
-    const raw = JSON.parse(localStorage.getItem(k) ?? "{}") as Partial<Record<keyof Units, unknown>>;
-    v = {
-      area: pick(raw.area, ["ha", "cuadra"], "ha"),
-      rain: pick(raw.rain, ["mm", "in"], "mm"),
-      temp: pick(raw.temp, ["c", "f"], "c"),
-    };
+    v = parseUnits(localStorage.getItem(k));
   } catch {
-    /* sin storage o dato corrupto: valores por defecto */
+    /* sin storage: valores por defecto */
   }
   cache = { k, v };
   return v;
@@ -69,9 +59,9 @@ export const resetUnitsCache = () => {
   cache = null;
 };
 
-export const haToArea = (ha: number, u: AreaUnit = getUnits().area) => (u === "cuadra" ? ha / CUADRA_HA : ha);
-export const mmToRain = (mm: number, u: RainUnit = getUnits().rain) => (u === "in" ? mm / MM_PER_INCH : mm);
-export const cToTemp = (c: number, u: TempUnit = getUnits().temp) => (u === "f" ? (c * 9) / 5 + 32 : c);
-export const areaLabel = (u: AreaUnit = getUnits().area) => (u === "cuadra" ? "cuadras" : "ha");
-export const rainLabel = (u: RainUnit = getUnits().rain) => (u === "in" ? "pulg" : "mm");
-export const tempLabel = (u: TempUnit = getUnits().temp) => (u === "f" ? "°F" : "°C");
+export const haToArea = (ha: number, u: AreaUnit = getUnits().area) => haToAreaOf(ha, u);
+export const mmToRain = (mm: number, u: RainUnit = getUnits().rain) => mmToRainOf(mm, u);
+export const cToTemp = (c: number, u: TempUnit = getUnits().temp) => cToTempOf(c, u);
+export const areaLabel = (u: AreaUnit = getUnits().area) => areaLabelOf(u);
+export const rainLabel = (u: RainUnit = getUnits().rain) => rainLabelOf(u);
+export const tempLabel = (u: TempUnit = getUnits().temp) => tempLabelOf(u);

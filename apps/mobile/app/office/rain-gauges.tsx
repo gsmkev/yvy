@@ -5,16 +5,15 @@
  */
 import { useMemo } from "react";
 import { View } from "react-native";
-import { localDate, t } from "@yvy/shared";
+import { localDate, t, mmToRain, rainLabel, campaignStart, gaugeTable, hasUnassignedRain, lastSatDate, type ClimateData, type GaugeRow } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { useLocal } from "../../src/lib/useLocal";
-import { campaignStart, gaugeTable, hasUnassignedRain, lastSatDate, type ClimateData, type GaugeRow } from "../../src/lib/climateData";
 import { FarmChips, useFarmPick } from "../../src/office/farmPick";
 import { fmtNumber } from "../../src/office/format";
 import { OfficeScreen } from "../../src/office/OfficeScreen";
 import { OnlineState } from "../../src/office/state";
 import { useOnline } from "../../src/office/useOnline";
-import { mmToRain, rainLabel, useUnits } from "../../src/lib/units";
+import { useUnits } from "../../src/lib/units";
 import { BarList, StatRow, type StatItem } from "../../src/office/ui";
 import { EmptyState, SectionHeader, Text } from "../../src/ui/kit";
 import { T } from "../../src/ui/theme";

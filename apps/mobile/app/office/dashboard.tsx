@@ -1,8 +1,8 @@
 /** Tablero del dueño (función 19): GET /org/dashboard. Cifras, avisos y superficie por cultivo. */
 import { View } from "react-native";
-import { isFieldRole, t, type MessageKey } from "@yvy/shared";
+import { isFieldRole, t, type MessageKey, areaLabel, haToArea, mmToRain, rainLabel } from "@yvy/shared";
 import { getSession } from "../../src/lib/session";
-import { areaLabel, haToArea, mmToRain, rainLabel, useUnits } from "../../src/lib/units";
+import { useUnits } from "../../src/lib/units";
 import { fmtNumber } from "../../src/office/format";
 import { OfficeScreen } from "../../src/office/OfficeScreen";
 import { OnlineState } from "../../src/office/state";

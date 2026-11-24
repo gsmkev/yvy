@@ -6,24 +6,14 @@ import { useMemo, useState } from "react";
 import { Linking, Share, View } from "react-native";
 import { router } from "expo-router";
 import { MessageCircle } from "lucide-react-native";
-import {
-  addDays,
-  CHART,
-  describeRecord,
-  localDate,
-  t,
-  weeklyShareText,
-  whatsappUrl,
-  type MessageKey,
-} from "@yvy/shared";
-import { mondayOf, rainByDate, type ClimateData } from "../../src/lib/climateData";
+import { addDays, CHART, describeRecord, localDate, t, weeklyShareText, whatsappUrl, type MessageKey, mmToRain, rainLabel, mondayOf, rainByDate, type ClimateData } from "@yvy/shared";
 import { API_URL } from "../../src/lib/session";
 import { FarmChips, useFarmPick } from "../../src/office/farmPick";
 import { fmtDate, fmtNumber } from "../../src/office/format";
 import { OfficeScreen } from "../../src/office/OfficeScreen";
 import { OnlineState } from "../../src/office/state";
 import { useOnline } from "../../src/office/useOnline";
-import { mmToRain, rainLabel, useUnits } from "../../src/lib/units";
+import { useUnits } from "../../src/lib/units";
 import { BarList, DataList, DateField, LineChart, Segmented, StatRow, type StatItem } from "../../src/office/ui";
 import { EmptyState, Row, SectionHeader } from "../../src/ui/kit";
 

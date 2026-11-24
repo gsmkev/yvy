@@ -5,7 +5,7 @@
 import { NDVI_RAMP } from "@yvy/shared";
 import type { LocalDb } from "../db/store";
 import { fmtNumber } from "../office/format";
-import { areaLabel, cToTemp, haToArea, mmToRain, rainLabel, tempLabel, type Units } from "./unitsLogic";
+import { areaLabel, cToTemp, haToArea, mmToRain, rainLabel, tempLabel, type Units } from "@yvy/shared";
 
 // ---------- Unidades elegidas (superficie, lluvia, temperatura) ----------
 

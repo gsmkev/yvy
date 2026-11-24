@@ -5,7 +5,7 @@
  */
 import { View } from "react-native";
 import { router } from "expo-router";
-import { describeRecord, isFieldRole, t, type MessageKey } from "@yvy/shared";
+import { describeRecord, isFieldRole, t, type MessageKey, type Oddity } from "@yvy/shared";
 import { getSession } from "../../src/lib/session";
 import { showToast } from "../../src/lib/toast";
 import { fmtDateTime, fmtNumber } from "../../src/office/format";
@@ -15,12 +15,6 @@ import { useOnline } from "../../src/office/useOnline";
 import { useOnlineMutation } from "../../src/office/useOnlineMutation";
 import { Button, EmptyState, Text } from "../../src/ui/kit";
 import { C, RADIUS, T } from "../../src/ui/theme";
-
-type Oddity =
-  | { rule: "rain_high"; mm: number; max: number }
-  | { rule: "pest_off_season"; pest: string; month: number }
-  | { rule: "dose_out_of_range"; product: string; dose: number; unit: string; min: number | null; max: number | null; baseUnit: "l" | "kg" }
-  | { rule: "yield_impossible"; tHa: number; max: number; crop: string };
 
 interface ReviewItem {
   recordId: string;

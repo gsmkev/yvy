@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { isFieldRole } from "@yvy/shared";
+import { isFieldRole, type Oddity } from "@yvy/shared";
 import { RecordModal } from "../components/RecordsList";
 import { Button, EmptyState, ErrorBox, Spinner, toast, Page } from "../components/ui";
 import { sortReview } from "../lib/alertRank";
@@ -11,12 +11,6 @@ import { fmtDateTime } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useMe } from "../lib/queries";
 import type { RecordRow } from "../lib/types";
-
-type Oddity =
-  | { rule: "rain_high"; mm: number; max: number }
-  | { rule: "pest_off_season"; pest: string; month: number }
-  | { rule: "dose_out_of_range"; product: string; dose: number; unit: string; min: number | null; max: number | null; baseUnit: "l" | "kg" }
-  | { rule: "yield_impossible"; tHa: number; max: number; crop: string };
 
 interface Item {
   recordId: string;

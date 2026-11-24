@@ -2,20 +2,12 @@
 import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
-import { localDate } from "@yvy/shared";
+import { localDate, campaignStart, gaugeVsSat, hasUnassignedRain, lastSatDate, type GaugeRow } from "@yvy/shared";
 import { MonthlyRainChart } from "../components/charts";
 import { PageExport } from "../components/PageExport";
 import { DataTable, EmptyState, ErrorBox, SectionHead, Spinner, Page, type Column } from "../components/ui";
 import { fmtIsoDate, fmtMm } from "../lib/format";
-import {
-  campaignStart,
-  gaugeTable,
-  gaugeVsSat,
-  hasUnassignedRain,
-  lastSatDate,
-  type GaugeClimate,
-  type GaugeRow,
-} from "../lib/gaugeData";
+import { gaugeTable, type GaugeClimate } from "../lib/gaugeData";
 import { get } from "../lib/api";
 import { t } from "../lib/i18n";
 import { useFarm } from "../lib/queries";

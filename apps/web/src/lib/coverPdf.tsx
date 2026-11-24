@@ -1,7 +1,7 @@
 /** Cambio de cobertura entre dos fechas en PDF (S-31) para informes ambientales y de bancos. Análisis indicativo. */
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { BRAND } from "@yvy/shared";
-import { analysisAreas, summarizeCover } from "./changesData";
+import { analysisAreas, summarizeCover } from "@yvy/shared";
 import { fmtDate, fmtHa } from "./format";
 import { t } from "./i18n";
 import { ChangeMap } from "./eudrPdf";

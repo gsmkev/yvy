@@ -1,5 +1,7 @@
-/** Órdenes de trabajo (E-20): una orden con varios lotes se guarda como una tarea por lote; acá se vuelve a juntar. Copia de apps/web/src/lib/workOrders.ts (sin la hoja imprimible). */
-import { doseText, t, type WorkOrder } from "@yvy/shared";
+/** Órdenes de trabajo (E-20): una orden con varios lotes se guarda como una tarea por lote; acá se vuelve a juntar. */
+import { doseText } from "./describe";
+import { t } from "./i18n";
+import type { WorkOrder } from "./records";
 
 export interface OrderRow {
   id: string;
@@ -43,7 +45,10 @@ const sum = (xs: (number | null)[]): number | null => {
   return v.length ? v.reduce((a, b) => a + b, 0) : null;
 };
 
-/** Junta las tareas de una misma orden (mismo momento de alta, operario y contenido); la más reciente primero. */
+/**
+ * Junta las tareas que salieron de una misma orden: mismo momento de alta, mismo operario y el mismo contenido.
+ * Las órdenes quedan de la más reciente a la más vieja y los lotes en el orden en que vienen.
+ */
 export function groupOrders(rows: OrderRow[]): OrderGroup[] {
   const groups = new Map<string, OrderRow[]>();
   for (const r of rows) {
@@ -77,7 +82,7 @@ export function groupOrders(rows: OrderRow[]): OrderGroup[] {
     .sort((a, b) => b.rows[0]!.createdAt - a.rows[0]!.createdAt || b.dueDate.localeCompare(a.dueDate));
 }
 
-/** "A, B y 2 más" para una fila. */
+/** "A, B y 2 más" para una celda de tabla. */
 export function plotsLabel(names: string[], max = 3): string {
   if (names.length <= max) return names.join(", ");
   return `${names.slice(0, max).join(", ")} ${t("ui.orderPlotsMore", { n: names.length - max })}`;

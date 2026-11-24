@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { Download } from "lucide-react";
-import { localDate } from "@yvy/shared";
+import { localDate, gaugeBetween, normalBetween, rainBetween } from "@yvy/shared";
 import { ActionMenu } from "../components/menus";
 import { ReportSchedules } from "../components/ReportSchedules";
 import { ShareLinksModal } from "../components/ShareLinks";
@@ -14,16 +14,7 @@ import { get } from "../lib/api";
 import { fetchAllRecords, useFarm, useFarms, useMe } from "../lib/queries";
 import type { Alert, Poi, Product } from "../lib/types";
 import { buildAuditReport } from "../lib/auditReportData";
-import {
-  fetchClimate,
-  fetchNdvi,
-  gaugeBetween,
-  mapLimit,
-  normalBetween,
-  rainBetween,
-  seasonStart,
-  vigorSummary,
-} from "../lib/reportsData";
+import { fetchClimate, fetchNdvi, mapLimit, seasonStart, vigorSummary } from "../lib/reportsData";
 
 const openCls =
   "inline-flex h-8 shrink-0 items-center justify-center rounded-md border border-linea bg-papel px-2.5 text-meta font-medium text-surco transition-colors hover:border-tinta-2/40 hover:bg-lino";

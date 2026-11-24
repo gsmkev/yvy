@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { burnedEvents, coverKeys, parseCoverKey, summarizeCover, type AnalysisPlot, type BurnedMetrics, type CoverMetrics } from "../src/lib/changesData";
+import { analysisAreas, burnedEvents, coverKeys, parseCoverKey, summarizeCover, type AnalysisPlot, type BurnedMetrics, type CoverMetrics } from "../src/changes";
 
 const base = { fromAt: 1, toAt: 2, validPct: 95, changes: '{"type":"FeatureCollection","features":[]}', computedAt: 3 };
 const burn = (plotId: string, refKey: string, burnedHa: number, validPct = 95): AnalysisPlot<BurnedMetrics> => ({
@@ -25,6 +25,15 @@ describe("cambios en el terreno", () => {
     expect(ev[0]).toMatchObject({ burnedHa: 14, highHa: 7, unaffected: 1, noData: 1 });
     expect(ev[0]!.plots.map((p) => p.plotId)).toEqual(["b", "a"]);
     expect(ev[1]!.burnedHa).toBe(1.23);
+  });
+
+  it("junta los polígonos para el mapa e ignora JSON roto", () => {
+    const fc = (n: number) => JSON.stringify({ type: "FeatureCollection", features: Array.from({ length: n }, () => ({ geometry: { type: "Polygon", coordinates: [] } })) });
+    const areas = analysisAreas([
+      { plotId: "a", changes: fc(2) },
+      { plotId: "b", changes: "no es json" },
+    ]);
+    expect(areas.map((a) => a.id)).toEqual(["a-0", "a-1"]);
   });
 
   it("suma el cambio de cobertura de la estancia", () => {

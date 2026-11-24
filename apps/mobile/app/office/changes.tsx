@@ -7,7 +7,7 @@ import { View } from "react-native";
 import { router } from "expo-router";
 import { Link2 } from "lucide-react-native";
 import { t } from "@yvy/shared";
-import { burnedEvents, coverKeys, parseCoverKey, summarizeCover, type AnalysisPlot, type BurnedMetrics, type CoverMetrics } from "../../src/lib/changesData";
+import { burnedEvents, coverKeys, parseCoverKey, summarizeCover, type AnalysisPlot, type BurnedMetrics, type CoverMetrics } from "@yvy/shared";
 import { getSession } from "../../src/lib/session";
 import { FarmChips, useFarmPick } from "../../src/office/farmPick";
 import { fmtDate, fmtNumber } from "../../src/office/format";

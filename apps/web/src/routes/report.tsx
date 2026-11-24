@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { addDays, isAudioMime, localDate, weeklyShareText, whatsappUrl } from "@yvy/shared";
+import { addDays, isAudioMime, localDate, mondayOf, weeklyShareText, whatsappUrl } from "@yvy/shared";
 import { BarList } from "../components/BarList";
 import { RainChart } from "../components/charts";
 import { ActionMenu } from "../components/menus";
@@ -19,12 +19,6 @@ const isUploadedPhoto = (a: { uploadStatus: string; mime?: string }) => a.upload
 /** Tipos que conviene mirar primero en el parte. */
 const HIGHLIGHT_KINDS = ["pest", "mortality", "theft"];
 const DAY = 86_400_000;
-
-/** Lunes de la semana de `iso` (la semana laboral empieza el lunes). */
-const mondayOf = (iso: string) => {
-  const dow = new Date(`${iso}T00:00:00Z`).getUTCDay();
-  return addDays(iso, -((dow + 6) % 7));
-};
 
 function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (

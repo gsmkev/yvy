@@ -1,9 +1,9 @@
 /** Plan de siembra (función 76): superficie por cultivo y variedad y semilla a comprar. GET /org/seasons?farmId= más los lotes del celular. */
 import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
-import { CROPS, sowingPlan, t, type MessageKey } from "@yvy/shared";
+import { CROPS, sowingPlan, t, type MessageKey, areaLabel, haToArea } from "@yvy/shared";
 import { getDb } from "../../../src/lib/db";
-import { areaLabel, haToArea, useUnits } from "../../../src/lib/units";
+import { useUnits } from "../../../src/lib/units";
 import { useLocal } from "../../../src/lib/useLocal";
 import { useFarmPick } from "../../../src/office/farmPick";
 import { fmtNumber } from "../../../src/office/format";

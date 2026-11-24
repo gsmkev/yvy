@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { LIMITS } from "@yvy/shared";
-import { BUFFER_KINDS, bufferAnalysis, cleanDistances, type BufferDistances, type BufferKind } from "../lib/buffer";
+import { BUFFER_KINDS, bufferAnalysis, cleanDistances, type BufferDistances, type BufferKind } from "@yvy/geo";
 import { fmtDate, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { fetchAllRecords, useFarmLines } from "../lib/queries";

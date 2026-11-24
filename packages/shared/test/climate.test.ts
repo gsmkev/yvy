@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { campaignStart, gaugeTable, hasUnassignedRain, lastSatDate, mondayOf, normalBetween, rainBetween, type ClimateData } from "../src/lib/climateData";
+import { campaignStart, gaugeTable, hasUnassignedRain, lastSatDate, mondayOf, normalBetween, rainBetween, gaugeVsSat, type ClimateData } from "../src/climate";
 
 const at = (iso: string) => Date.parse(`${iso}T12:00:00-03:00`);
 const climate: ClimateData = {
@@ -44,5 +44,45 @@ describe("lluvia de informes", () => {
     expect(gaugeTable(climate, null, "2026-09-01", "2026-10-06").season.gaugeMm).toBe(4);
     expect(gaugeTable(climate, "p3", "2026-09-01", "2026-10-06").season.gaugeMm).toBeNull();
     expect(hasUnassignedRain(climate)).toBe(true);
+  });
+});
+
+describe("lluvia de informes (casos de la web)", () => {
+  it("lluvia: prefiere CHIRPS y no duplica días", () => {
+    const daily = [
+      { date: "2026-11-01", source: "nasa_power", precipMm: 9 },
+      { date: "2026-11-01", source: "chirps", precipMm: 4 },
+      { date: "2026-11-02", source: "chirps_prelim", precipMm: 6 },
+      { date: "2026-12-01", source: "chirps", precipMm: 50 },
+    ];
+    expect(rainBetween(daily, "2026-11-01", "2026-11-30")).toBe(10);
+    expect(rainBetween(daily, "2025-01-01", "2025-01-31")).toBeNull();
+  });
+
+  it("normal: suma solo los días con climatología", () => {
+    const clim = [
+      { dayOfYear: 305, variable: "precip", mean: 3 },
+      { dayOfYear: 306, variable: "precip", mean: 2 },
+      { dayOfYear: 306, variable: "soil_top", mean: 0.3 },
+    ];
+    expect(normalBetween(clim, "2026-11-01", "2026-11-02")).toBe(5);
+    expect(normalBetween([], "2026-11-01", "2026-11-02")).toBeNull();
+  });
+
+  it("la campaña arranca el 1 de septiembre", () => {
+    expect(campaignStart("2026-11-10")).toBe("2026-09-01");
+    expect(campaignStart("2026-03-02")).toBe("2025-09-01");
+    expect(campaignStart("2026-09-01")).toBe("2026-09-01");
+  });
+
+  it("el tramo comparado termina en el último día con CHIRPS", () => {
+    expect(lastSatDate(climate.daily, "2026-11-10")).toBe("2026-10-06");
+    expect(lastSatDate([], "2026-11-10")).toBe("2026-11-10");
+  });
+
+  it("diferencia contra el satélite", () => {
+    expect(gaugeVsSat({ gaugeMm: 55, satMm: 50 })).toBeCloseTo(10);
+    expect(gaugeVsSat({ gaugeMm: null, satMm: 50 })).toBeNull();
+    expect(gaugeVsSat({ gaugeMm: 5, satMm: 0 })).toBeNull();
   });
 });

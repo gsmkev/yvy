@@ -12,7 +12,7 @@ import {
 import { ArrowLeft, CircleAlert, ChevronDown, X, type LucideIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { t } from "../lib/i18n";
-import { displayToIso, isoToDisplay, maskDate } from "../lib/dateInput";
+import { displayToIso, isoToDisplay, maskDate } from "@yvy/shared";
 
 type Variant = "primary" | "secondary" | "quiet" | "danger";
 

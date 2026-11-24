@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { t } from "@yvy/shared";
+import { t, cToTemp, mmToRain, rainLabel, type RainUnit, type TempUnit } from "@yvy/shared";
 import { getDb } from "../lib/db";
 import { refreshSprayHours } from "../lib/sprayHours";
 import { daysOld, readForecast, refreshForecast, upcoming, type CachedForecast } from "../lib/forecast";
 import { api } from "../lib/session";
 import { useSyncStatus } from "../lib/sync";
 import { SectionHeader, Text } from "./kit";
-import { cToTemp, mmToRain, rainLabel, useUnits, type RainUnit, type TempUnit } from "../lib/units";
+import { useUnits } from "../lib/units";
 import { C, F, RADIUS, T } from "./theme";
 
 const pad = (n: number) => String(n).padStart(2, "0");

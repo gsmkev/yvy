@@ -1,24 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { displayToIso, isoToDisplay, maskDate } from "../src/office/date";
 import { ageText, fmtNumber, parseDecimal } from "../src/office/format";
 import { barFractions, buildChart, niceMax, segmentPath } from "../src/office/chartMath";
 import { groupMenu, type OfficeMenuItem } from "../src/office/menuLogic";
-
-describe("fecha dd/mm/aaaa", () => {
-  it("convierte y valida", () => {
-    expect(isoToDisplay("2026-11-12")).toBe("12/11/2026");
-    expect(isoToDisplay("x")).toBe("");
-    expect(displayToIso("12/11/2026")).toBe("2026-11-12");
-    expect(displayToIso("31/02/2026")).toBeNull();
-    expect(displayToIso("12/11/26")).toBeNull();
-    expect(displayToIso("12/11/1800")).toBeNull();
-  });
-  it("máscara", () => {
-    expect(maskDate("1211")).toBe("12/11/");
-    expect(maskDate("12112026999")).toBe("12/11/2026");
-    expect(maskDate("1a2")).toBe("12/");
-  });
-});
 
 describe("formatos", () => {
   it("edad", () => {

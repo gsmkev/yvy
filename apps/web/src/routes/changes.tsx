@@ -7,7 +7,7 @@ import { boundsOf, FarmMap } from "../components/FarmMap";
 import { PageExport } from "../components/PageExport";
 import { DataTable, EmptyState, ErrorBox, Field, Page, Select, Spinner, Stat, Tabs, type Column } from "../components/ui";
 import { get } from "../lib/api";
-import { analysisAreas, burnedEvents } from "../lib/changesData";
+import { analysisAreas, burnedEvents } from "@yvy/shared";
 import { fmtDate, fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useFarm, useMe } from "../lib/queries";

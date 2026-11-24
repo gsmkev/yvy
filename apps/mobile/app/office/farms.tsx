@@ -4,11 +4,11 @@
  */
 import { router } from "expo-router";
 import { Trees } from "lucide-react-native";
-import { t } from "@yvy/shared";
+import { t, areaLabel, haToArea } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { summarizeFarms } from "../../src/lib/farmSummary";
 import { setSelectedFarm } from "../../src/lib/farmFilter";
-import { areaLabel, haToArea, useUnits } from "../../src/lib/units";
+import { useUnits } from "../../src/lib/units";
 import { useLocal } from "../../src/lib/useLocal";
 import { fmtDate, fmtNumber } from "../../src/office/format";
 import { OfficeScreen } from "../../src/office/OfficeScreen";

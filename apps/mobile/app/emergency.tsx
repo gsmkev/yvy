@@ -1,5 +1,5 @@
 /**
- * Emergencia (F-30): un botón que arma un SMS con la ubicación y la hora y abre la app de mensajes con los contactos
+ * Emergencia: un botón que arma un SMS con la ubicación y la hora y abre la app de mensajes con los contactos
  * de emergencia. Anda sin datos (solo hace falta señal de voz): el GPS no usa internet y el SMS sale por la red celular.
  * El envío lo confirma la persona en la app de mensajes; Yvy no manda nada sola.
  */
@@ -18,6 +18,7 @@ import { C, RADIUS, T } from "../src/ui/theme";
 
 const KEY = "emergency_contacts";
 
+/** Emergencia: envío de un SMS con la ubicación a los contactos configurados. */
 export default function Emergency() {
   const [contacts, setContacts] = useState<EmergencyContact[]>(() => parseContacts(getDb().getKv(KEY)));
   const [name, setName] = useState("");

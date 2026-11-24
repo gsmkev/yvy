@@ -1,3 +1,4 @@
+/** Pestaña Más: emergencia, laboratorios, sincronización y cuenta. */
 import { useState } from "react";
 import { ScrollView } from "react-native";
 import { router } from "expo-router";
@@ -10,6 +11,7 @@ import { useSyncStatus } from "../../src/lib/sync";
 import { Row, SectionHeader, s as k, Text } from "../../src/ui/kit";
 import { C, T } from "../../src/ui/theme";
 
+/** Pantalla de la pestaña Más. */
 export default function More() {
   const sync = useSyncStatus();
   const session = getSession();

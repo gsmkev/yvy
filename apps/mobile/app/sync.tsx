@@ -13,6 +13,7 @@ import { useLocal } from "../src/lib/useLocal";
 import { Button, Row, SectionHeader, SwitchRow, s as k, Text } from "../src/ui/kit";
 import { C, T } from "../src/ui/theme";
 
+/** Pantalla de sincronización y almacenamiento. */
 export default function SyncScreen() {
   const farms = useLocal(() => getDb().farms());
   const rejected = useLocal(() => getDb().rejected());
@@ -40,7 +41,7 @@ export default function SyncScreen() {
     }
   };
 
-  // F-26: bajar los mapas de todas las estancias de una vez (por wifi).
+  // Bajar los mapas de todas las estancias de una vez (por wifi).
   const [allProgress, setAllProgress] = useState<number | null>(null);
   const plan = allPacksPlan();
   const downloadAll = async () => {
@@ -115,7 +116,7 @@ const when = (ms: number) =>
     hour12: false,
   });
 
-/** Cola de envío (F-18): qué falta mandar, cuánto pesan las fotos y cómo mandarlo ya. */
+/** Cola de envío: qué falta mandar, cuánto pesan las fotos y cómo mandarlo ya. */
 function Outbox({
   items,
   plotName,
@@ -174,7 +175,7 @@ function Outbox({
   );
 }
 
-/** Uso de almacenamiento (F-19) y "Borrar fotos ya subidas". */
+/** Uso de almacenamiento y "Borrar fotos ya subidas". */
 function Storage() {
   const [usage, setUsage] = useState<StorageUsage | null>(null);
   const [busy, setBusy] = useState(false);

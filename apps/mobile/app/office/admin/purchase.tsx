@@ -1,5 +1,5 @@
 /**
- * Detalle de una compra (función 117): proveedor, fecha, líneas, total, factura, recepción y foto de la factura.
+ * Detalle de una compra: proveedor, fecha, líneas, total, factura, recepción y foto de la factura.
  * /org/erp/purchases/:id, POST .../invoice y .../receive, y /org/erp/photos/purchases/:id.
  */
 import { useState } from "react";
@@ -48,6 +48,7 @@ interface Purchase {
   lines: Line[];
 }
 
+/** Detalle de una compra: renglones, pagos y foto de la factura. */
 export default function PurchaseDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const q = useOnline<Purchase>(id ? `/org/erp/purchases/${id}` : null);

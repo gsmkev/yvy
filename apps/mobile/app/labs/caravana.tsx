@@ -1,9 +1,11 @@
+/** Laboratorio: lectura de la caravana de un animal. */
 import { t } from "@yvy/shared";
 import { Lab, Fact } from "../../src/labs/Lab";
 import { TagLabelIllustration } from "../../src/labs/illustrations";
 import { T } from "../../src/ui/theme";
 import { Text } from "../../src/ui/kit";
 
+/** Pantalla del laboratorio de caravanas. */
 export default function Caravana() {
   return (
     <Lab

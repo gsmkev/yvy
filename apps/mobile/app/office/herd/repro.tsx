@@ -1,4 +1,4 @@
-/** Reproducción (función 71): índices de preñez, parición y destete y los últimos eventos. GET /org/farms/:id/reproduction. El alta es Anotar, Reproducción. */
+/** Reproducción: índices de preñez, parición y destete y los últimos eventos. GET /org/farms/:id/reproduction. El alta es Anotar, Reproducción. */
 import { useState } from "react";
 import { View } from "react-native";
 import { t, type MessageKey, type ReproductionResponse } from "@yvy/shared";
@@ -14,6 +14,7 @@ import { T } from "../../../src/ui/theme";
 const DAY = 86_400_000;
 const pct = (v: number | null) => (v === null ? null : `${fmtNumber(v)} %`);
 
+/** Reproducción del rodeo: servicios, tactos y partos. */
 export default function Repro() {
   const { farms, farm, setFarmId } = useFarmPick();
   const [days, setDays] = useState("365");

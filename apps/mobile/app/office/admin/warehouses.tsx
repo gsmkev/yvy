@@ -1,4 +1,4 @@
-/** Depósitos (función 114): lista, alta y edición. /org/erp/warehouses (los ve también el agrónomo; edita dueño y administrador). */
+/** Depósitos: lista, alta y edición. /org/erp/warehouses (los ve también el agrónomo; edita dueño y administrador). */
 import { useState } from "react";
 import { Plus } from "lucide-react-native";
 import { WAREHOUSE_TYPES, t } from "@yvy/shared";
@@ -20,6 +20,7 @@ interface Draft {
   type: WType;
 }
 
+/** Depósitos: alta y listado. */
 export default function Warehouses() {
   const { manage } = useAdminAccess();
   const q = useWarehouses();

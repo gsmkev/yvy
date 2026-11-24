@@ -1,5 +1,5 @@
 /**
- * Alta rápida de una compra en el campo (función 117): proveedor (lista o nuevo), fecha, líneas, depósito de
+ * Alta rápida de una compra en el campo: proveedor (lista o nuevo), fecha, líneas, depósito de
  * recepción y foto de la factura con la cámara. POST /org/erp/purchases y, según lo cargado, .../invoice, .../receive
  * y la foto (URL firmada de /org/erp/photos/purchases/:id). Nada se guarda en el celular.
  */
@@ -31,6 +31,7 @@ interface LineDraft {
 const blankLine = (): LineDraft => ({ productId: "", description: "", qty: "", price: "" });
 const NEW = "__new__";
 
+/** Alta de una compra con sus renglones y, si hace falta, la foto de la factura. */
 export default function PurchaseNew() {
   const parties = useParties();
   const warehouses = useWarehouses();

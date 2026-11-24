@@ -1,4 +1,4 @@
-/** Entregas de cosecha al acopio (función 82): lectura y alta con el neto calculado. GET/POST /org/farms/:id/deliveries. */
+/** Entregas de cosecha al acopio: lectura y alta con el neto calculado. GET/POST /org/farms/:id/deliveries. */
 import { useState } from "react";
 import { View } from "react-native";
 import { Plus } from "lucide-react-native";
@@ -36,6 +36,7 @@ const tons = (kg: number) => fmtNumber(Math.round(kg / 10) / 100, 2);
 const dmy = (iso: string) => `${iso.slice(8)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
 const blank = (crop: Crop, plotId: string) => ({ plotId, crop: crop as string, ticket: "", silo: "", deliveredOn: localDate(Date.now()), grossKg: "", moisturePct: "", baseMoisturePct: String(BASE_MOISTURE_PCT[crop]), impuritiesPct: "0", otherKg: "0" });
 
+/** Entregas de cosecha a acopios. */
 export default function Deliveries() {
   const { farms, farm, setFarmId } = useFarmPick();
   const path = farm ? `/org/farms/${farm.id}/deliveries` : null;

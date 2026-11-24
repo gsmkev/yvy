@@ -1,5 +1,5 @@
 /**
- * Resultados y márgenes (función 131): costos, ventas y margen bruto por lote, cultivo, campaña y actividad.
+ * Resultados y márgenes: costos, ventas y margen bruto por lote, cultivo, campaña y actividad.
  * API: GET /org/erp/results?farmId&seasonId (apps/api/src/routes/erp/). Solo lectura.
  */
 import { useState } from "react";
@@ -41,6 +41,7 @@ const rowsOf = (d: Results, view: View_): Line[] => {
   }
 };
 
+/** Resultado económico por estancia y campaña. */
 export default function ResultsScreen() {
   const allowed = useManageErp();
   const [farmId, setFarmId] = useState("");

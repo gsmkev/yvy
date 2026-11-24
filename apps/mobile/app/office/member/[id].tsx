@@ -1,4 +1,4 @@
-/** Ficha de una persona (104): datos, actividad, vincular celular con QR/enlace (105), PIN, lotes asignados (106) y baja. */
+/** Ficha de una persona: datos, actividad, vincular celular con QR/enlace, PIN, lotes asignados y baja. */
 import { useEffect, useState } from "react";
 import { Share, View } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
@@ -19,6 +19,7 @@ import { QrCode } from "../../../src/ui/QrCode";
 import { Button, EmptyState, Row, SectionHeader, Sheet, Text } from "../../../src/ui/kit";
 import { C, T } from "../../../src/ui/theme";
 
+/** Ficha de un miembro del equipo. */
 export default function MemberScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const me = getSession()?.organization.role ?? "";

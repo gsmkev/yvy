@@ -1,5 +1,5 @@
 /**
- * Campañas (función 59): campañas y plan de cultivo por lote desde la base local (anda sin señal). Crear campaña,
+ * Campañas: campañas y plan de cultivo por lote desde la base local (anda sin señal). Crear campaña,
  * planificar un lote, cerrar/reabrir y borrar van por REST (POST/PATCH/DELETE /org/seasons, PUT /org/seasons/:id/plots/:id)
  * y solo para dueño, administrador y agrónomo; el supervisor las ve. Después de guardar se sincroniza.
  */
@@ -45,6 +45,7 @@ const planText = (p: PlanLite | undefined): string => {
   return parts.length ? parts.join(" · ") : t("ui.season.planEmpty");
 };
 
+/** Campañas: listado, alta y cierre. */
 export default function Seasons() {
   const role = useSession()?.organization.role;
   const canEdit = !!role && !isFieldRole(role) && can(role);

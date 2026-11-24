@@ -1,3 +1,4 @@
+/** Laboratorio: evaluación de la condición corporal de una vaca. */
 import { StyleSheet, View } from "react-native";
 import { t } from "@yvy/shared";
 import { Lab, Fact } from "../../src/labs/Lab";
@@ -7,6 +8,7 @@ import { Text } from "../../src/ui/kit";
 
 const EXAMPLE = 3.5;
 
+/** Pantalla del laboratorio de condición corporal. */
 export default function Vaca() {
   return (
     <Lab

@@ -1,6 +1,6 @@
 /**
- * Marcar punto de interés (F-07): ubicación actual del GPS, tipo y nombre. Se guarda local y se manda con señal.
- * Solo roles que no son empleado (PRD §9); el servidor también lo exige.
+ * Marcar punto de interés: ubicación actual del GPS, tipo y nombre. Se guarda local y se manda con señal.
+ * Solo roles que no son empleado; el servidor también lo exige.
  */
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
@@ -80,5 +80,5 @@ const st = StyleSheet.create({
   input: { ...T.body, minHeight: 56, borderWidth: 1.5, borderColor: C.lineaFuerte, borderRadius: RADIUS, paddingHorizontal: 14, backgroundColor: C.blanco },
 });
 
-/** F-29: en solo lectura esta pantalla no se abre. */
+/** En solo lectura esta pantalla no se abre. */
 export default withWriteAccess(MarkPoi);

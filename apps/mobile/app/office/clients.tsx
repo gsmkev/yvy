@@ -1,4 +1,4 @@
-/** Clientes del agrónomo (función 5): GET /me/clients. Tocar una estancia cambia de organización y entra. */
+/** Clientes del agrónomo: GET /me/clients. Tocar una estancia cambia de organización y entra. */
 import { useState } from "react";
 import { Alert, View } from "react-native";
 import { t, type MessageKey, areaLabel, haToArea } from "@yvy/shared";
@@ -32,6 +32,7 @@ interface Clients {
   truncated: boolean;
 }
 
+/** Pantalla de clientes del contador: las organizaciones a las que tiene acceso y el cambio de una a otra. */
 export default function ClientsScreen() {
   const q = useOnline<Clients>("/me/clients");
   const units = useUnits();

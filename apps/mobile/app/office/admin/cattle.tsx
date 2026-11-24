@@ -1,4 +1,4 @@
-/** Hacienda: compra y venta de animales (función 119): cabezas, kilos, precio por kilo y guía. /org/erp/cattle-deals (solo dueño y administrador). */
+/** Hacienda: compra y venta de animales; cabezas, kilos, precio por kilo y guía. /org/erp/cattle-deals (solo dueño y administrador). */
 import { useState } from "react";
 import { View } from "react-native";
 import { Plus } from "lucide-react-native";
@@ -44,6 +44,7 @@ interface Draft {
 }
 const blank = (): Draft => ({ kind: "sell", date: today(), partyId: "", category: "", heads: "", totalKg: "", currency: "PYG", amount: "", guide: "" });
 
+/** Compra y venta de hacienda. */
 export default function Cattle() {
   const q = useOnline<Deal[]>("/org/erp/cattle-deals");
   const parties = useParties();

@@ -1,3 +1,4 @@
+/** Raíz de la app: polyfills, fuentes, sesión, base local, sincronización y la pila de pantallas. */
 import "../src/lib/polyfills";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { ActivityIndicator, View } from "react-native";
@@ -23,12 +24,13 @@ function NotificationTap() {
   return null;
 }
 
+/** Layout raíz: carga el idioma guardado, prepara la sesión y la base local y dibuja la pila de navegación. */
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
   const [fontsReady] = useFonts({ Fraunces_400Regular, Fraunces_600SemiBold, Inter_400Regular, Inter_500Medium, Inter_600SemiBold });
   useEffect(() => {
     Promise.all([dbReady(), loadSession()]).then(() => {
-      loadLocale(getDb()); // U-22: el idioma guardado, antes de dibujar la primera pantalla
+      loadLocale(getDb()); // el idioma guardado, antes de dibujar la primera pantalla
       setReady(true);
     });
   }, []);

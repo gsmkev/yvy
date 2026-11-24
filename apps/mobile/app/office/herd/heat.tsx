@@ -1,4 +1,4 @@
-/** Estrés calórico del ganado, ITH (función 75): lectura de las próximas 48 horas. GET /org/farms/:id/heat-stress. Datos de MET Norway. */
+/** Estrés calórico del ganado, ITH: lectura de las próximas 48 horas. GET /org/farms/:id/heat-stress. Datos de MET Norway. */
 import { View } from "react-native";
 import { CHART, t, type FarmHeatStressResponse, type MessageKey, cToTemp, tempLabel, ATTRIBUTION } from "@yvy/shared";
 import { useUnits } from "../../../src/lib/units";
@@ -16,6 +16,7 @@ const stamp = (ms: number) => {
   return `${d.getDate()}/${d.getMonth() + 1} ${String(d.getHours()).padStart(2, "0")}h`;
 };
 
+/** Estrés por calor del rodeo según el clima. */
 export default function Heat() {
   const units = useUnits();
   const { farms, farm, setFarmId } = useFarmPick();

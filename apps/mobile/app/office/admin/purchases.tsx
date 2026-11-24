@@ -1,4 +1,4 @@
-/** Compras (función 117): lista por estado; cada compra abre su detalle. /org/erp/purchases (solo dueño y administrador). */
+/** Compras: lista por estado; cada compra abre su detalle. /org/erp/purchases (solo dueño y administrador). */
 import { useState } from "react";
 import { router, type Href } from "expo-router";
 import { Plus } from "lucide-react-native";
@@ -11,6 +11,7 @@ import { OnlineState } from "../../../src/office/state";
 import { DataList, FilterChips } from "../../../src/office/ui";
 import { useOnline } from "../../../src/office/useOnline";
 
+/** Fila de una compra tal como la devuelve el servidor. */
 export interface PurchaseRow {
   id: string;
   partyId: string | null;
@@ -25,6 +26,7 @@ export interface PurchaseRow {
 
 const STATUSES = ["ordered", "invoiced", "received", "complete"] as const;
 
+/** Listado de compras. */
 export default function Purchases() {
   const q = useOnline<PurchaseRow[]>("/org/erp/purchases");
   const parties = useParties();

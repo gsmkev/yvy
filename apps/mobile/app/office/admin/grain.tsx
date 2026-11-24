@@ -1,5 +1,5 @@
 /**
- * Venta de granos (función 118): contratos con su avance, entregas con ticket y liquidaciones. Alta de lo más frecuente:
+ * Venta de granos: contratos con su avance, entregas con ticket y liquidaciones. Alta de lo más frecuente:
  * una entrega contra contrato (y la liquidación). /org/erp/grain-contracts/summary, /grain-deliveries, /grain-settlements.
  * Solo dueño y administrador. El contrato nuevo se carga desde la web.
  */
@@ -59,6 +59,7 @@ interface Draft {
   farmId: string;
 }
 
+/** Contratos de granos y su resumen. */
 export default function Grain() {
   const contracts = useOnline<Contract[]>("/org/erp/grain-contracts/summary");
   const deliveries = useOnline<Delivery[]>("/org/erp/grain-deliveries");

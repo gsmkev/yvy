@@ -1,5 +1,5 @@
 /**
- * Stock mínimo y faltantes (función 121): lo que hay que reponer y el mínimo de cada producto y depósito.
+ * Stock mínimo y faltantes: lo que hay que reponer y el mínimo de cada producto y depósito.
  * Lo ven dueño, administrador y agrónomo; cargar o quitar mínimos, dueño y administrador.
  * /org/erp/stock/low, /stock/minimums (GET, PUT) y DELETE /stock/minimums/:id.
  */
@@ -39,6 +39,7 @@ interface Draft {
   minQty: string;
 }
 
+/** Stock mínimo por producto y depósito. */
 export default function MinStock() {
   const { manage } = useAdminAccess();
   const mins = useOnline<Minimum[]>("/org/erp/stock/minimums");

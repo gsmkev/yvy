@@ -1,5 +1,5 @@
 /**
- * Tareas del equipo (funciones 98 y 62): todas las tareas de todas las estancias desde la base local, agrupadas por
+ * Tareas del equipo: todas las tareas de todas las estancias desde la base local, agrupadas por
  * persona. Crear, editar/reasignar y borrar van por REST (POST/PATCH/DELETE /org/tasks) y después se sincroniza.
  */
 import { useMemo, useState } from "react";
@@ -39,6 +39,7 @@ interface Draft {
   checklist: string;
 }
 
+/** Tareas del equipo: asignación, seguimiento y estado. */
 export default function TeamTasks() {
   const today = localDate(Date.now());
   const nowTime = localTime(Date.now());

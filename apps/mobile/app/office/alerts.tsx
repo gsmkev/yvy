@@ -1,5 +1,5 @@
 /**
- * Avisos (función 109): todos los avisos activos de todas las estancias, desde la base local (ya sincroniza `alerts`,
+ * Avisos: todos los avisos activos de todas las estancias, desde la base local (ya sincroniza `alerts`,
  * así que anda sin señal). Plantilla de pantalla LOCAL: useLocal + OfficeScreen + FilterChips + acciones por fila.
  */
 import { useState } from "react";
@@ -23,6 +23,7 @@ import { C, F, RADIUS, T } from "../../src/ui/theme";
 const RANK: Record<string, number> = { warning: 0, watch: 1, info: 2 };
 const EDGE: Record<string, string> = { warning: C.peligro, watch: C.trigo, info: C.soja };
 
+/** Avisos activos de la organización, con acceso a su configuración. */
 export default function Alerts() {
   const data = useLocal(() => {
     const db = getDb();

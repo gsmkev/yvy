@@ -18,6 +18,7 @@ import { ForecastStrip } from "../../src/ui/ForecastStrip";
 import { Button, EmptyState, s as k, Text } from "../../src/ui/kit";
 import { C, T } from "../../src/ui/theme";
 
+/** Pestaña Hoy: tareas, avisos y resumen del día. */
 export default function Today() {
   const { alertId } = useLocalSearchParams<{ alertId?: string }>();
   const scroller = useRef<ElementRef<typeof ScrollView>>(null);

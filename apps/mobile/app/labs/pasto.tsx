@@ -1,9 +1,11 @@
+/** Laboratorio: identificación de pasturas. */
 import { t } from "@yvy/shared";
 import { Lab, Fact } from "../../src/labs/Lab";
 import { PastureIllustration } from "../../src/labs/illustrations";
 import { T } from "../../src/ui/theme";
 import { Text } from "../../src/ui/kit";
 
+/** Pantalla del laboratorio de pasturas. */
 export default function Pasto() {
   return (
     <Lab

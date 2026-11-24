@@ -1,5 +1,5 @@
 /**
- * Stock (función 120): existencias por depósito y producto, movimientos recientes, vencimientos y ajuste por recuento
+ * Stock: existencias por depósito y producto, movimientos recientes, vencimientos y ajuste por recuento
  * (dueño y administrador). El agrónomo ve cantidades: la API no le manda montos y esta pantalla tampoco los pide.
  * /org/erp/stock, /stock/moves, /stock/expiring y POST /stock/adjustments.
  */
@@ -54,6 +54,7 @@ interface Draft {
   note: string;
 }
 
+/** Existencias de insumos por depósito y sus movimientos. */
 export default function Stock() {
   const { manage } = useAdminAccess();
   const stock = useOnline<Summary>("/org/erp/stock");

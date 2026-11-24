@@ -1,5 +1,5 @@
 /**
- * Calendario sanitario (función 102): eventos del mes con estado (atrasado en peligro), planificar un tratamiento (con tareas para
+ * Calendario sanitario: eventos del mes con estado (atrasado en peligro), planificar un tratamiento (con tareas para
  * los empleados) y borrarlo. GET/POST /org/sanitary-events, DELETE /org/sanitary-events/:id.
  */
 import { useState } from "react";
@@ -55,6 +55,7 @@ function MonthStep({ dir, onPress }: { dir: -1 | 1; onPress: () => void }) {
   );
 }
 
+/** Eventos sanitarios del rodeo. */
 export default function Sanitary() {
   const allowed = !isFieldRole(getSession()?.organization.role ?? "");
   const online = useOnlineFlag();

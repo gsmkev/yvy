@@ -1,5 +1,5 @@
 /**
- * Ficha del lote (F-23): lo que conviene saber antes de anotar, todo desde el celular y sin señal: vigor, lluvia del
+ * Ficha del lote: lo que conviene saber antes de anotar, todo desde el celular y sin señal: vigor, lluvia del
  * mes, tareas abiertas y las últimas anotaciones. Para roles de oficina suma (ola 2): vigor contra la estancia y su
  * curva, historial de campañas, carencia, fenología, balance hídrico, pronóstico, edición de atributos y borrado.
  */
@@ -14,6 +14,7 @@ import { usePlotData } from "../../src/plotSheet/usePlotData";
 import { ScreenBody, s as k, Text } from "../../src/ui/kit";
 import { T } from "../../src/ui/theme";
 
+/** Ficha de un lote. */
 export default function PlotSheet() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const session = useSession();

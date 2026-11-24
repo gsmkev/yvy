@@ -1,3 +1,4 @@
+/** Laboratorio: detección de roya en soja. */
 import { router } from "expo-router";
 import { t } from "@yvy/shared";
 import { Lab, Fact } from "../../src/labs/Lab";
@@ -5,6 +6,7 @@ import { LeafIllustration } from "../../src/labs/illustrations";
 import { Button, Text } from "../../src/ui/kit";
 import { T } from "../../src/ui/theme";
 
+/** Pantalla del laboratorio de roya. */
 export default function Roya() {
   return (
     <Lab

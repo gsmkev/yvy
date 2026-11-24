@@ -1,4 +1,4 @@
-/** Equipo (función 104) y alta de personas (105). GET /org/members, POST /org/members, PUT /org/members/:id/pin. Dueño, administrador, agrónomo y supervisor lo ven; solo dueño y administrador dan de alta. */
+/** Equipo y alta de personas. GET /org/members, POST /org/members, PUT /org/members/:id/pin. Dueño, administrador, agrónomo y supervisor lo ven; solo dueño y administrador dan de alta. */
 import { useState } from "react";
 import { router } from "expo-router";
 import { Briefcase, UserPlus } from "lucide-react-native";
@@ -18,6 +18,7 @@ import { Text } from "react-native";
 
 const role = (r: string) => t(`ui.role.${r}` as MessageKey);
 
+/** Equipo de la organización: miembros, roles y acceso a estancias. */
 export default function Team() {
   const me = getSession()?.organization.role ?? "";
   const allowed = ["owner", "admin", "agronomist", "supervisor"].includes(me);

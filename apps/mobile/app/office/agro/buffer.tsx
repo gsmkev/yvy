@@ -1,5 +1,5 @@
 /**
- * Zonas de amortiguación (función 79): lotes cerca de casas, escuelas, aguadas y cursos de agua, y aplicaciones de los últimos
+ * Zonas de amortiguación: lotes cerca de casas, escuelas, aguadas y cursos de agua, y aplicaciones de los últimos
  * 6 meses dentro de la distancia. Lotes, puntos y aplicaciones salen de la base local; los cursos de agua, de GET /org/farms/:id/lines.
  */
 import { useMemo } from "react";
@@ -20,6 +20,7 @@ const DAY = 86_400_000;
 const kindName = (k: BufferKind) => t((k === "stream" ? "ui.line.kind_stream" : `ui.poi.kinds_${k}`) as MessageKey);
 const hitText = (h: BufferHit) => t("ui.buffer.hit", { kind: kindName(h.kind), name: h.name, m: fmtNumber(h.distanceM, 0) });
 
+/** Franjas de resguardo para aplicaciones. */
 export default function Buffer() {
   const { farms, farm, setFarmId } = useFarmPick();
   const lines = useOnline<{ kind: string; name: string; geometry: string }[]>(farm ? `/org/farms/${farm.id}/lines` : null);

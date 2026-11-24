@@ -1,9 +1,11 @@
+/** Laboratorio: traducción al guaraní. */
 import { StyleSheet, View } from "react-native";
 import { t } from "@yvy/shared";
 import { Lab } from "../../src/labs/Lab";
 import { C, T } from "../../src/ui/theme";
 import { Text } from "../../src/ui/kit";
 
+/** Pantalla del laboratorio de traducción. */
 export default function Guarani() {
   return (
     <Lab

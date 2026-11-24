@@ -1,4 +1,4 @@
-/** Análisis de suelo (función 80): lectura y alta. GET/POST /org/farms/:id/soil-samples. */
+/** Análisis de suelo: lectura y alta. GET/POST /org/farms/:id/soil-samples. */
 import { useState } from "react";
 import { View } from "react-native";
 import { Plus } from "lucide-react-native";
@@ -35,6 +35,7 @@ const cell = (p: SoilParam, v: number | null) => (v === null ? null : `${SHORT[p
 
 const blank = () => ({ plotId: "", pointLabel: "", sampledOn: localDate(Date.now()), depthCm: "20", lab: "", ph: "", pMgKg: "", kCmolKg: "", omPct: "" });
 
+/** Análisis de suelo por lote. */
 export default function Soil() {
   const { farms, farm, setFarmId } = useFarmPick();
   const path = farm ? `/org/farms/${farm.id}/soil-samples` : null;

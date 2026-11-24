@@ -1,4 +1,4 @@
-/** Plan reproductivo (ADR 0005): estación de servicio, línea de tiempo del ciclo, tareas e indicadores. GET /org/farms/:id/repro-plan. */
+/** Plan reproductivo: estación de servicio, línea de tiempo del ciclo, tareas e indicadores. GET /org/farms/:id/repro-plan. */
 import { useState } from "react";
 import { View } from "react-native";
 import { Settings2 } from "lucide-react-native";
@@ -18,6 +18,7 @@ import { C, T } from "../../../src/ui/theme";
 const dmy = (iso: string) => `${iso.slice(8)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
 const dates = (s: PlanStage) => (s.from === s.to ? dmy(s.from) : t("ui.repro.planDates", { from: dmy(s.from), to: dmy(s.to) }));
 
+/** Plan reproductivo del rodeo. */
 export default function Plan() {
   const { farms, farm, setFarmId } = useFarmPick();
   const session = getSession();

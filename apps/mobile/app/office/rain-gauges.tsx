@@ -1,5 +1,5 @@
 /**
- * Pluviómetros (función 90): total del mes y de la campaña por pluviómetro, y lluvia por mes, contra el satélite y lo normal.
+ * Pluviómetros: total del mes y de la campaña por pluviómetro, y lluvia por mes, contra el satélite y lo normal.
  * Los pluviómetros salen de la base local; la lluvia anotada de toda la campaña, de GET /org/farms/:id/climate
  * (la base local solo guarda 30 días de registros, no alcanza para la campaña).
  */
@@ -47,6 +47,7 @@ function Gauge({ name, table: { months, season } }: { name: string; table: { mon
   );
 }
 
+/** Pluviómetros de las estancias y sus lecturas. */
 export default function RainGauges() {
   const { farms, farm, setFarmId } = useFarmPick();
   const id = farm?.id;

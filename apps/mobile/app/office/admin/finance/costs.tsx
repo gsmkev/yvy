@@ -1,5 +1,5 @@
 /**
- * Libro de costos y ventas (función 129): filtro por estancia y campaña, totales y alta de un costo o una venta.
+ * Libro de costos y ventas: filtro por estancia y campaña, totales y alta de un costo o una venta.
  * API: GET /org/erp/costs?farmId&seasonId, POST /org/erp/costs, GET /org/erp/parties (apps/api/src/routes/erp/).
  */
 import { useMemo, useState } from "react";
@@ -40,6 +40,7 @@ interface CostList {
 const key = (k: string) => k as MessageKey;
 const dayOf = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
+/** Costos: carga de gastos imputados a lotes o estancias. */
 export default function Costs() {
   const allowed = useManageErp();
   const [farmId, setFarmId] = useState("");

@@ -1,4 +1,4 @@
-/** Suplementación y sal mineral (función 73): kilos por potrero y sal por cabeza y día. GET /org/farms/:id/supplements. El alta es Anotar, Suplementación. */
+/** Suplementación y sal mineral: kilos por potrero y sal por cabeza y día. GET /org/farms/:id/supplements. El alta es Anotar, Suplementación. */
 import { useState } from "react";
 import { View } from "react-native";
 import { SUPPLEMENT_TYPES, t, type MessageKey, type SupplementResponse } from "@yvy/shared";
@@ -13,6 +13,7 @@ import { C, T } from "../../../src/ui/theme";
 
 const DAY = 86_400_000;
 
+/** Suplementación del rodeo. */
 export default function Supplements() {
   const { farms, farm, setFarmId } = useFarmPick();
   const [days, setDays] = useState("30");

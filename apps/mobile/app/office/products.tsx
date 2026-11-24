@@ -1,5 +1,5 @@
 /**
- * Productos (función 60): catálogo desde la base local (anda sin señal) con carencia y dosis habitual (esta última por
+ * Productos: catálogo desde la base local (anda sin señal) con carencia y dosis habitual (esta última por
  * REST: no se sincroniza). Alta, edición y borrado por REST para quien la API deja (dueño, administrador y agrónomo);
  * el supervisor ve. La receta agronómica la arma cualquiera de oficina y se manda como tareas a un empleado.
  */
@@ -53,6 +53,7 @@ function doseText(p: Product, r: DoseRange | undefined): string | null {
   return t("ui.product.doseShown", { range, unit: doseUnit(p.unit) });
 }
 
+/** Catálogo de productos del establecimiento con sus rangos de dosis. */
 export default function Products() {
   const role = useSession()?.organization.role;
   const canEdit = role === "owner" || role === "admin" || role === "agronomist";

@@ -1,5 +1,5 @@
 /**
- * Enlaces de solo lectura (función 84, solo dueño): lista de vigentes, crear por 7 o 30 días, compartir y revocar.
+ * Enlaces de solo lectura (solo dueño): lista de vigentes, crear por 7 o 30 días, compartir y revocar.
  * Reemplaza al PDF en el teléfono. API: GET/POST /org/farms/:id/share-links, DELETE /org/share-links/:id.
  */
 import { useState } from "react";
@@ -24,6 +24,7 @@ interface LinkRow {
   revokedAt: number | null;
 }
 
+/** Enlaces para compartir información con terceros. */
 export default function ShareLinks() {
   const owner = getSession()?.organization.role === "owner";
   const { farms, farm, setFarmId } = useFarmPick();

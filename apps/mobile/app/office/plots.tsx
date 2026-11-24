@@ -1,5 +1,5 @@
 /**
- * Lotes (función 58): tabla de lotes de la estancia elegida desde la base local (anda sin señal). Orden elegible,
+ * Lotes: tabla de lotes de la estancia elegida desde la base local (anda sin señal). Orden elegible,
  * filtro por días sin visitar y resumen de superficie por cultivo. Tocar un lote abre su ficha.
  */
 import { useMemo, useState } from "react";
@@ -19,6 +19,7 @@ import { EmptyState, SectionHeader } from "../../src/ui/kit";
 type Days = "all" | "7" | "14" | "30";
 const k = (s: string) => s as MessageKey;
 
+/** Listado de lotes con orden y filtros; abre la ficha de cada uno. */
 export default function Plots() {
   const units = useUnits();
   const { farms, farm, setFarmId } = useFarmPick();

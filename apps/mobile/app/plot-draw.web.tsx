@@ -1,9 +1,9 @@
-// Vista previa web: el dibujo de lotes usa MapLibre Native, que no existe en el navegador.
-// ponytail: aviso en vez de un segundo editor; si la vista web pasa a ser producto, portar con MapLibre GL JS como map.web.tsx.
+/** Vista previa web del dibujo de lotes: el editor usa MapLibre Native, que no existe en el navegador, así que solo muestra un aviso. */
 import { View } from "react-native";
 import { t } from "@yvy/shared";
 import { EmptyState, s as k } from "../src/ui/kit";
 
+/** Aviso en lugar del editor de lotes en la vista web. */
 export default function PlotDrawWeb() {
   return (
     <View style={[k.screen, k.pad]}>

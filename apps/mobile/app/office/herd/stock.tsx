@@ -1,4 +1,4 @@
-/** Existencias por potrero, UA y límite de carga (función 67). Se calcula con los conteos y movimientos del celular; el límite viene de la estancia. */
+/** Existencias por potrero, UA y límite de carga. Se calcula con los conteos y movimientos del celular; el límite viene de la estancia. */
 import { useState } from "react";
 import { Settings2 } from "lucide-react-native";
 import { DEFAULT_MAX_UA_PER_HA, MAX_UA_PER_HA_LIMITS, PRODUCTION_SYSTEMS, indicatorLabel, indicatorValueText, type ProductionResponse, type ProductionSystem, uaPerHa, t, type FarmStockResponse, type MessageKey } from "@yvy/shared";
@@ -16,6 +16,7 @@ import { DataList, FormSheet, SelectField, StatRow, TextField } from "../../../s
 import { SectionHeader, Text } from "../../../src/ui/kit";
 import { C, T } from "../../../src/ui/theme";
 
+/** Hacienda por potrero, calculada con los conteos del celular. */
 export default function Stock() {
   const units = useUnits();
   const { farms, farm, setFarmId } = useFarmPick();

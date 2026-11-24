@@ -1,4 +1,4 @@
-/** Proveedores y clientes (función 116): lista, alta y edición. /org/erp/parties (solo dueño y administrador). */
+/** Proveedores y clientes: lista, alta y edición. /org/erp/parties (solo dueño y administrador). */
 import { useState } from "react";
 import { Plus } from "lucide-react-native";
 import { PARTY_KINDS, partyInput, t } from "@yvy/shared";
@@ -24,6 +24,7 @@ interface Draft {
 const blank: Draft = { id: null, name: "", ruc: "", kind: "supplier", phone: "", email: "", address: "", note: "" };
 const kindOptions = () => PARTY_KINDS.map((v) => ({ value: v, label: t(k(`ui.party.kind_${v}`)) }));
 
+/** Clientes y proveedores. */
 export default function Parties() {
   const q = useParties();
   const [filter, setFilter] = useState<"all" | Kind>("all");

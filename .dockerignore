@@ -1,0 +1,13 @@
+**/node_modules
+**/.venv
+**/dist
+**/.turbo
+**/.wrangler
+**/.expo
+apps/api/public
+apps/mobile/android
+apps/mobile/ios
+docs-site/site
+docs-site/docs/ts
+.git
+.claude

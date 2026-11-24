@@ -10,7 +10,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "docs": "node docs-site/build.mjs",
-    "docs:serve": "node docs-site/build.mjs --serve"
+    "docs:serve": "node docs-site/build.mjs --serve",
+    "docs:docker": "docker compose up --build docs"
   },
   "devDependencies": {
     "typescript": "5.9.3",
@@ -21,12 +22,6 @@
     "prettier": "3.9.10",
     "typedoc": "0.28.20",
     "typedoc-plugin-markdown": "4.14.1"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "workerd"
-    ]
   },
   "type": "module"
 }

@@ -1,5 +1,5 @@
 /**
- * P-08: segundo factor TOTP. Corre junto con el ingreso (antes de que haya sesión) o sobre la cuenta propia de quien
+ * Segundo factor TOTP. Corre junto con el ingreso (antes de que haya sesión) o sobre la cuenta propia de quien
  * ya ingresó, por eso usa la base directa y no ScopedDb: nunca toca datos de la organización, solo del propio usuario.
  */
 import { and, count, eq, isNull, lt, lte, or, sql } from "drizzle-orm";
@@ -9,8 +9,10 @@ import { runBatch, type DB } from "../db/client";
 import { openSecret, sealSecret } from "../lib/crypto";
 import { matchTotp, newRecoveryCode, newTotpSecret, normalizeRecoveryCode, otpauthUri, recoveryHash } from "../lib/totp";
 
+/** Resultado de verificar un segundo factor: aceptado, incorrecto o cuenta bloqueada por demasiados intentos. */
 type SecondFactor = "ok" | "bad" | "locked";
 
+/** ¿El usuario tiene el segundo factor dado de alta y confirmado? */
 export async function totpEnabled(db: DB, userId: string): Promise<boolean> {
   const [row] = await db
     .select({ at: s.userTotp.enabledAt })
@@ -133,6 +135,7 @@ export async function issueRecoveryCodes(db: DB, userId: string, now: number): P
   return codes;
 }
 
+/** Quita el segundo factor y sus códigos de recuperación. */
 export async function disableTotp(db: DB, userId: string): Promise<void> {
   await runBatch(db, [
     db.delete(s.userTotp).where(eq(s.userTotp.userId, userId)),
@@ -140,6 +143,7 @@ export async function disableTotp(db: DB, userId: string): Promise<void> {
   ]);
 }
 
+/** Estado del segundo factor: si está activo y cuántos códigos de recuperación quedan sin usar. */
 export async function totpStatus(db: DB, userId: string) {
   const enabled = await totpEnabled(db, userId);
   if (!enabled) return { enabled, recoveryLeft: 0 };

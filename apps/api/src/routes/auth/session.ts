@@ -1,4 +1,6 @@
-/** Con sesión: cambiar de organización y generar el QR de vinculación. */
+/**
+ * Con sesión: cambiar de organización y generar el QR de vinculación.
+ */
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { LIMITS, newId } from "@yvy/shared";
@@ -13,11 +15,12 @@ import type { AppEnv } from "../../types";
 import { deviceId } from "./shared";
 import { Hono } from "hono";
 
+/** Rutas de `/auth` que exigen sesión: cambio de organización y QR de vinculación. */
 export const routes = new Hono<AppEnv>();
 
 // ---------- Con sesión ----------
 
-/** RF-02: cambiar de organización. */
+/** Cambiar de organización. */
 routes.post("/switch", requireAuth, async (c) => {
   const body = parse(z.object({ organizationId: z.string(), deviceId }), await readJson(c.req));
   const session = await issueSession(getDb(c.env.DB), c.env.JWT_SECRET, c.var.auth.userId, body);

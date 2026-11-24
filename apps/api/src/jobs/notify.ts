@@ -116,7 +116,7 @@ interface Outcome {
   cleanup: Stmt[];
 }
 
-/** U-29: el push dentro del horario de silencio del usuario (hora de la estancia) queda pendiente hasta que termine. */
+/** El push dentro del horario de silencio del usuario (hora de la estancia) queda pendiente hasta que termine. */
 async function dropHeldPushes<P extends { channel: string; userId: string; tz: string }>(db: DB, pending: P[], now: number): Promise<P[]> {
   const quiet = new Map<string, ReturnType<typeof parseNotificationPrefs>["quiet"]>();
   const pushUsers = [...new Set(pending.filter((p) => p.channel === "push").map((p) => p.userId))];
@@ -145,7 +145,7 @@ interface AlertText<P> {
   body: (p: P) => string;
 }
 
-/** Push de avisos agronómicos: un lote a Expo; los tokens que Expo marca inválidos se borran (B9). */
+/** Push de avisos agronómicos: un lote a Expo; los tokens que Expo marca inválidos se borran. */
 async function pushAlerts<P extends AlertNotice>(db: DB, fetchFn: typeof fetch, pushes: P[], text: AlertText<P>, out: Outcome) {
   if (!pushes.length) return;
   const tokens = await pushTokens(db, pushes);
@@ -163,7 +163,7 @@ async function pushAlerts<P extends AlertNotice>(db: DB, fetchFn: typeof fetch, 
   const res = await sendExpo(fetchFn, messages);
   (res.ok ? out.sent : out.failed).push(...pushes.map((p) => p.id));
   if (!res.ok) return;
-  // B9: Expo responde 200 con un estado por mensaje; los tokens inválidos se borran.
+  // Expo responde 200 con un estado por mensaje; los tokens inválidos se borran.
   const dead = await deadTokens(
     res,
     messages.slice(0, 100).map((m) => m.to),
@@ -207,6 +207,11 @@ async function emailAlerts<P extends AlertNotice>(
   (res.ok ? out.sent : out.failed).push(...toSend.map((e) => e.id));
 }
 
+/**
+ * Envía las notificaciones de avisos agronómicos pendientes (push por Expo, email por Resend) y las marca como
+ * enviadas o fallidas. Los push dentro del horario de silencio del usuario quedan pendientes.
+ * @returns cuántas notificaciones salieron por canal.
+ */
 export async function sendPending(
   db: DB,
   env: Bindings,
@@ -248,7 +253,7 @@ export async function sendPending(
 }
 
 /**
- * T-08: avisos de mención en comentarios (push y email). Salen en la misma corrida de 15 min que los avisos
+ * Avisos de mención en comentarios (push y email). Salen en la misma corrida de 15 min que los avisos
  * agronómicos; el email comparte el tope diario. Sin RESEND_API_KEY (desarrollo) el email se imprime.
  */
 export async function sendMentions(

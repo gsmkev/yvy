@@ -1,5 +1,5 @@
 /**
- * Aviso por umbral de plagas (A-41): promedio de las observaciones con número por metro de los últimos 7 días,
+ * Aviso por umbral de plagas: promedio de las observaciones con número por metro de los últimos 7 días,
  * por lote y plaga, contra PEST_THRESHOLDS (valores por defecto, a revisar por un agrónomo).
  */
 import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
@@ -127,7 +127,7 @@ export async function pestAlertDraft(db: DB, farmId: string, now: number, today:
   return evaluatePests(averages, plots, stageByPlot, today);
 }
 
-/** Monitoreos de plagas de los últimos 7 días contra el umbral por plaga (A-41). */
+/** Monitoreos de plagas de los últimos 7 días contra el umbral por plaga. */
 export async function pestJob(db: DB, deps: JobDeps, farm: Farm): Promise<void> {
   const now = deps.now();
   const draft = await pestAlertDraft(db, farm.id, now, localDate(now, farm.tz));

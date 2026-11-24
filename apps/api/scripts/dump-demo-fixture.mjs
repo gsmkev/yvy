@@ -1,11 +1,13 @@
-// Vuelca a apps/api/seed/demo-fixture.json las filas de la organización que carga seed-manual.mjs (la base local de
-// wrangler dev), para que seed-demo.mjs las rearme como la demo pública. Las filas salen de la API real, así que los
-// derivados (stock, costos, resultados) ya son coherentes entre sí. Las fechas quedan como estaban ese día ("d0"):
-// seed-demo las corre hasta hoy.
-//
-// Uso (Node 22.5+ por node:sqlite):
-//   node apps/api/scripts/dump-demo-fixture.mjs <base.sqlite> [email del dueño = dueno@sanpedro.test]
-// La base está en <persist-to>/v3/d1/miniflare-D1DatabaseObject/<hash>.sqlite (copiala antes de leerla).
+/**
+ * Vuelca a apps/api/seed/demo-fixture.json las filas de la organización que carga seed-manual.mjs (la base local de
+ * wrangler dev), para que seed-demo.mjs las rearme como la demo pública. Las filas salen de la API real, así que los
+ * derivados (stock, costos, resultados) ya son coherentes entre sí. Las fechas quedan como estaban ese día ("d0"):
+ * seed-demo las corre hasta hoy.
+ *
+ * Uso (Node 22.5+ por node:sqlite):
+ *   node apps/api/scripts/dump-demo-fixture.mjs <base.sqlite> [email del dueño = dueno@sanpedro.test]
+ * La base está en <persist-to>/v3/d1/miniflare-D1DatabaseObject/<hash>.sqlite (copiala antes de leerla).
+ */
 import { DatabaseSync } from "node:sqlite";
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";

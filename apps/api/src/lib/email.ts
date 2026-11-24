@@ -1,5 +1,9 @@
+/**
+ * Envío de emails transaccionales por Resend, con salida a consola en desarrollo.
+ */
 import type { Bindings } from "../types";
 
+/** Adjunto de un email: nombre y URL que Resend descarga. */
 export interface EmailAttachment {
   filename: string;
   /** URL que Resend descarga al enviar (por ejemplo una URL firmada de R2): el Worker no carga el archivo. */

@@ -1,4 +1,6 @@
-/** Segundo paso, vinculación de empleados, PIN y sesión. */
+/**
+ * Rutas de ingreso: segundo paso del segundo factor, canje del QR de vinculación, ingreso con PIN, refresh y logout.
+ */
 import { HTTPException } from "hono/http-exception";
 import { and, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -15,9 +17,10 @@ import type { AppEnv } from "../../types";
 import { deviceId } from "./shared";
 import { Hono } from "hono";
 
+/** Rutas de ingreso sin sesión previa. */
 export const routes = new Hono<AppEnv>();
 
-/** P-08: segundo paso del ingreso. Código de 6 dígitos de la app, o un código de recuperación (de un solo uso). */
+/** Segundo paso del ingreso. Código de 6 dígitos de la app, o un código de recuperación (de un solo uso). */
 routes.post("/totp/login", async (c) => {
   const body = parse(z.object({ ticket: z.string().min(20).max(1000), code: z.string().trim().min(6).max(20) }), await readJson(c.req));
   const db = getDb(c.env.DB);
@@ -70,7 +73,7 @@ routes.post("/link/redeem", async (c) => {
 });
 
 /**
- * F-24: ingreso del empleado con teléfono y PIN de 6 dígitos, como alternativa al QR. Cada intento se cuenta ANTES de
+ * Ingreso del empleado con teléfono y PIN de 6 dígitos, como alternativa al QR. Cada intento se cuenta ANTES de
  * mirar el PIN (un UPDATE atómico), así que ráfagas en paralelo no se pasan del tope: a lo sumo `pinMaxAttempts`
  * comparaciones por ventana de bloqueo. La respuesta es la misma para un teléfono sin PIN y para un PIN errado.
  */

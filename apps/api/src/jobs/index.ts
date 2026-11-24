@@ -1,5 +1,5 @@
 /**
- * Crons y cola (PRD-cloudflare §4.8). Cada mensaje de la cola = una estancia, para quedar bajo 10 ms de CPU.
+ * Crons y cola. Cada mensaje de la cola = una estancia, para quedar bajo 10 ms de CPU.
  * El despacho es por tabla: CRON_HANDLERS por expresión cron y JOB_HANDLERS por tipo de mensaje.
  */
 import { and, eq, isNull, sql } from "drizzle-orm";
@@ -22,8 +22,10 @@ import { senacsaJob } from "./senacsa";
 import { recordUsage } from "./usage";
 import { weeklyReportJob } from "./weekly-report";
 
+/** Reexporte de `isFirstMondayOfMonth` (ver weekly-report). */
 export { isFirstMondayOfMonth } from "./weekly-report";
 
+/** Expresiones cron del Worker; deben coincidir con `triggers.crons` de wrangler. */
 export const CRONS = {
   forecast: "0 */3 * * *",
   drought: "0 11 * * *",
@@ -55,7 +57,7 @@ const enqueueAll =
     for (const type of types) await enqueuePerFarm(env, type);
   };
 
-/** C-03: estancias de más de 2.000 ha: un mensaje por lote. */
+/** Un mensaje de pronóstico por estancia y, para las de más de 2.000 ha, uno más por lote. */
 async function enqueueForecasts(env: Bindings): Promise<void> {
   await enqueuePerFarm(env, "forecast");
   const plots = await plotsNeedingForecast(getDb(env.DB));
@@ -65,16 +67,16 @@ async function enqueueForecasts(env: Bindings): Promise<void> {
 async function notifyCron(env: Bindings, deps: JobDeps): Promise<void> {
   await sendPending(getDb(env.DB), env, deps.fetch, deps.now());
   await sendMentions(getDb(env.DB), env, deps.fetch, deps.now());
-  // I-02: avisos nuevos que esperan en el buzón pasan a la cola de webhooks
+  // avisos nuevos que esperan en el buzón pasan a la cola de webhooks
   await drainOutbox(env, getDb(env.DB), deps.now());
 }
 
 async function maintenanceCron(env: Bindings, deps: JobDeps): Promise<void> {
   await new SystemDb(getDb(env.DB)).purgeExpiredAuth(deps.now());
-  // P-03: las cuentas diarias de pantallas viejas se borran; los pasos del embudo quedan
+  // las cuentas diarias de pantallas viejas se borran; los pasos del embudo quedan
   await getDb(env.DB).run(sql`DELETE FROM events_daily WHERE day < ${localDate(deps.now() - LIMITS.events.retentionMs)}`);
   await purgeApiRate(getDb(env.DB), deps.now());
-  // P-06: pasa a R2 una tanda de datos viejos (solo si ARCHIVE_AFTER_MONTHS está configurada)
+  // pasa a R2 una tanda de datos viejos (solo si ARCHIVE_AFTER_MONTHS está configurada)
   await archiveOld(env, getDb(env.DB), deps.now());
   await recordUsage(env, deps.now());
 }
@@ -87,6 +89,7 @@ const CRON_HANDLERS = new Map<string, (env: Bindings, deps: JobDeps) => Promise<
   [CRONS.maintenance, maintenanceCron],
 ]);
 
+/** Handler `scheduled`: ejecuta la tarea asociada a la expresión cron recibida (ignora las desconocidas). */
 export async function scheduled(controller: { cron: string }, env: Bindings, deps = defaultDeps()): Promise<void> {
   await CRON_HANDLERS.get(controller.cron)?.(env, deps);
 }
@@ -110,6 +113,7 @@ const JOB_HANDLERS = new Map(
   Object.entries(JOB_HANDLER_TABLE) as [FarmJob["type"], (env: Bindings, deps: JobDeps, farm: Farm, msg: FarmJob) => Promise<unknown>][],
 );
 
+/** Ejecuta un trabajo de estancia; si la estancia ya no existe o fue borrada, no hace nada. */
 export async function runJob(msg: FarmJob, env: Bindings, deps = defaultDeps()): Promise<void> {
   const [farm] = await getDb(env.DB)
     .select({
@@ -127,6 +131,10 @@ export async function runJob(msg: FarmJob, env: Bindings, deps = defaultDeps()):
   await JOB_HANDLERS.get(msg.type)!(env, deps, farm, msg);
 }
 
+/**
+ * Handler `queue`: procesa cada mensaje y lo confirma; si falla lo reintenta (webhooks con espera creciente de
+ * 30 s, 5 min y 30 min; el resto a los 10 minutos).
+ */
 export async function queue(batch: MessageBatch<JobMessage>, env: Bindings): Promise<void> {
   for (const msg of batch.messages) {
     const body = msg.body;
@@ -136,7 +144,7 @@ export async function queue(batch: MessageBatch<JobMessage>, env: Bindings): Pro
       msg.ack();
     } catch (err) {
       console.error("[job]", body.type, body.type === "webhook" ? `endpoint=${body.endpointId}` : `farm=${body.farmId}`, err);
-      // I-02: los webhooks reintentan con espera creciente (30 s, 5 min, 30 min); el resto, a los 10 minutos
+      // los webhooks reintentan con espera creciente (30 s, 5 min, 30 min); el resto, a los 10 minutos
       msg.retry({ delaySeconds: body.type === "webhook" ? webhookRetryDelay(msg.attempts) : 600 });
     }
   }

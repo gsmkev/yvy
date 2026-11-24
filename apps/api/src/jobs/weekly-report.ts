@@ -1,3 +1,7 @@
+/**
+ * Parte semanal por email: resumen de la semana de cada estancia con el PDF adjunto cuando está disponible,
+ * y envío a destinatarios externos programados.
+ */
 import { and, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import { localDate } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -8,7 +12,7 @@ import { presign } from "../lib/r2";
 import type { Bindings } from "../types";
 import type { Farm, JobDeps } from "./farm";
 
-/** Parte semanal por email (RF-83): resumen y enlace; el PDF lo arma workers-py (R-02) y va adjunto; si todavía no está, se manda el enlace a la web. */
+/** Parte semanal por email: resumen y enlace; el PDF lo arma workers-py y va adjunto; si todavía no está, se manda el enlace a la web. */
 export async function weeklyReportJob(db: DB, env: Bindings, deps: JobDeps, farm: Farm): Promise<void> {
   const now = deps.now();
   const since = now - 7 * 86_400_000;
@@ -53,7 +57,7 @@ export async function weeklyReportJob(db: DB, env: Bindings, deps: JobDeps, farm
     "",
     `PDF con mapa, tabla y fotos: ${env.APP_URL}/estancias/${farm.id}/parte?desde=${from}&hasta=${to}`,
   ].join("\n");
-  // R-02: si workers-py ya armó el PDF de la semana, va adjunto y con enlace (válido 7 días). Resend lo baja
+  // Si workers-py ya armó el PDF de la semana, va adjunto y con enlace (válido 7 días). Resend lo baja
   // desde la URL firmada de R2, así que el Worker no carga el archivo. Sin PDF (o sin credenciales) sale el texto.
   let attachments: EmailAttachment[] = [];
   let body = text;
@@ -77,7 +81,7 @@ export async function weeklyReportJob(db: DB, env: Bindings, deps: JobDeps, farm
 export const isFirstMondayOfMonth = (ms: number, tz: string): boolean => Number(localDate(ms, tz).slice(8)) <= 7;
 
 /**
- * R-10: el mismo parte (texto y PDF) a los destinatarios externos que programó el dueño: socio, agrónomo, banco.
+ * El mismo parte (texto y PDF) a los destinatarios externos que programó el dueño: socio, agrónomo, banco.
  * Los semanales lo reciben todos los lunes; los mensuales, solo el primer lunes del mes.
  */
 async function sendToExternalRecipients(

@@ -1,5 +1,5 @@
 /**
- * Fotos (PRD §11 y PRD-cloudflare §4.4): URLs firmadas de R2, el archivo no pasa por el Worker.
+ * Fotos y notas de voz: URLs firmadas de R2, el archivo no pasa por el Worker.
  * Firmar con SigV4 es HMAC: barato en CPU.
  */
 import { Hono } from "hono";
@@ -8,13 +8,14 @@ import { isAudioMime, LIMITS } from "@yvy/shared";
 import { presign } from "../lib/r2";
 import type { AppEnv } from "../types";
 
+/** Rutas `/media/*`: URLs firmadas de subida y descarga de adjuntos. */
 export const media = new Hono<AppEnv>();
 
 /** URLs de subida de la foto y su miniatura (después de un push exitoso del adjunto). */
 media.post("/attachments/:id/upload-url", async (c) => {
   const a = await c.var.sdb.getAttachment(c.req.param("id"));
   const ttl = LIMITS.photos.uploadUrlTtlSeconds;
-  // La nota de voz (F-09) es un solo archivo: `photo` apunta a él y no hay miniatura.
+  // La nota de voz es un solo archivo: `photo` apunta a él y no hay miniatura.
   return c.json({
     photo: await presign(c.env, "PUT", a.storagePath, ttl),
     thumb: a.thumbPath ? await presign(c.env, "PUT", a.thumbPath, ttl) : null,

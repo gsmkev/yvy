@@ -19,6 +19,7 @@ import type { AppEnv } from "../types";
 const DAY = 86_400_000;
 
 /** Solo dígitos con código de país; un número paraguayo sin él (09xx, 9xx) se completa con 595. */
+/** Normaliza un teléfono paraguayo a `595…`; null si no tiene forma de número válido. */
 export const normalizePhone = (raw: string): string | null => {
   let d = raw.replace(/\D/g, "");
   if (d.startsWith("00")) d = d.slice(2);
@@ -46,6 +47,7 @@ const body = z.object({
   website: z.string().max(200).optional(),
 });
 
+/** Ruta pública `POST /trial-requests`: pedido de prueba desde la landing. */
 export const trialRequests = new Hono<AppEnv>();
 
 trialRequests.post("/trial-requests", async (c) => {

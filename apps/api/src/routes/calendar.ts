@@ -1,9 +1,12 @@
-/** I-04: el .ics de tareas lo piden Google Calendar y Outlook sin sesión; el token secreto de la URL es la credencial. */
+/**
+ * El .ics de tareas lo piden Google Calendar y Outlook sin sesión; el token secreto de la URL es la credencial.
+ */
 import { Hono } from "hono";
 import { getDb } from "../db/client";
 import { renderFeed } from "../db/calendar-feed";
 import type { AppEnv } from "../types";
 
+/** Ruta pública `GET /calendar/:token.ics`: feed iCalendar de las tareas. */
 export const calendar = new Hono<AppEnv>();
 
 calendar.get("/calendar/:file", async (c) => {

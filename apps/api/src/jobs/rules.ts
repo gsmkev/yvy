@@ -1,6 +1,6 @@
 /**
- * Reglas de avisos (PRD RF-70, ajustadas al anexo Cloudflare §4.8). Funciones puras: se prueban sin red.
- * La probabilidad es cualitativa (baja/media/alta) y siempre orientativa (RF-74).
+ * Reglas de avisos de helada, exceso de lluvia y sequía. Funciones puras: se prueban sin red.
+ * La probabilidad es cualitativa (baja/media/alta) y siempre orientativa.
  */
 import { addDays, DEFAULT_ALERT_SETTINGS } from "@yvy/shared";
 import type { DailyForecast } from "./weather";
@@ -15,6 +15,7 @@ const RULES = {
 type Severity = "info" | "watch" | "warning";
 type Probability = "low" | "medium" | "high";
 
+/** Aviso calculado por una regla, todavía sin guardar (`upsertAlert` lo persiste). Las fechas son locales `YYYY-MM-DD`. */
 export interface AlertDraft {
   kind: "frost" | "excess_rain" | "drought" | "fire" | "pest_threshold" | "water_low" | "heat_stress" | "rust_risk" | "senacsa";
   severity: Severity;
@@ -128,7 +129,7 @@ export function evaluateDrought(
   };
 }
 
-/** Lotes afectados: para helada, primero los cultivos sensibles (RF-71). */
+/** Lotes afectados: para helada, primero los cultivos sensibles. */
 export function affectedPlots(
   kind: AlertDraft["kind"],
   plots: { id: string; kind: string; crop: string | null }[],
@@ -142,4 +143,5 @@ export function affectedPlots(
   ].map((p) => p.id);
 }
 
+/** Orden numérico de la severidad (info < watch < warning), para comparar si un aviso empeoró. */
 export const severityRank = (s: Severity) => ({ info: 0, watch: 1, warning: 2 })[s];

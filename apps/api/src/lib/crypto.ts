@@ -18,9 +18,11 @@ const fromB64url = (s: string): Uint8Array => {
   return Uint8Array.from(bin, (c) => c.charCodeAt(0));
 };
 
+/** SHA-256 del texto, en hexadecimal. */
 export const sha256Hex = async (s: string): Promise<string> =>
   toHex(await crypto.subtle.digest("SHA-256", enc.encode(s)));
 
+/** Token aleatorio (bytes del CSPRNG) en base64url sin relleno. */
 export const randomToken = (bytes = 32): string => b64url(crypto.getRandomValues(new Uint8Array(bytes)));
 
 /** Código numérico uniforme de n dígitos. */
@@ -45,12 +47,14 @@ const aesKey = async (jwtSecret: string) =>
 const toB64 = (b: Uint8Array) => btoa(String.fromCharCode(...b));
 const fromB64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
+/** Cifra un secreto con AES-GCM (clave derivada de `jwtSecret`); devuelve `iv.cifrado` en base64. */
 export async function sealSecret(jwtSecret: string, secretBase32: string): Promise<string> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await aesKey(jwtSecret), enc.encode(secretBase32)));
   return `${toB64(iv)}.${toB64(ct)}`;
 }
 
+/** Descifra lo producido por `sealSecret`; null si el texto está corrupto o la clave cambió. */
 export async function openSecret(jwtSecret: string, sealed: string): Promise<string | null> {
   try {
     const [iv, ct] = sealed.split(".");
@@ -75,36 +79,41 @@ const hmacKey = (secret: string): Promise<CryptoKey> => {
   return k;
 };
 
+/** HMAC-SHA256 de `data` con `secret`, en hexadecimal. */
 export const hmacHex = async (secret: string, data: string): Promise<string> =>
   toHex(await crypto.subtle.sign("HMAC", await hmacKey(secret), enc.encode(data)));
 
+/** Verifica en tiempo constante una firma HMAC-SHA256 en hexadecimal. */
 export const hmacVerifyHex = async (secret: string, data: string, sigHex: string): Promise<boolean> => {
   if (!/^[0-9a-f]{64}$/.test(sigHex)) return false;
   const sig = Uint8Array.from(sigHex.match(/../g)!, (h) => parseInt(h, 16));
   return crypto.subtle.verify("HMAC", await hmacKey(secret), sig, enc.encode(data));
 };
 
+/** Claims del JWT de acceso. */
 interface JwtClaims {
   sub: string;
   org: string;
   role: string;
   iat: number;
   exp: number;
-  /** P-12: sesión de soporte de solo lectura. `sup` es el usuario del equipo que la pidió. */
+  /** Sesión de soporte de solo lectura. `sup` es el usuario del equipo que la pidió. */
   ro?: boolean;
   sup?: string;
-  /** P-08: el administrador debe dar de alta su segundo factor; hasta entonces solo puede usar /auth/totp. */
+  /** El administrador debe dar de alta su segundo factor; hasta entonces solo puede usar /auth/totp. */
   tsr?: boolean;
 }
 
 const JWT_HEADER = b64url(enc.encode(JSON.stringify({ alg: "HS256", typ: "JWT" })));
 
+/** Firma un JWT HS256 con los claims dados. */
 export const signJwt = async (secret: string, claims: JwtClaims): Promise<string> => {
   const body = `${JWT_HEADER}.${b64url(enc.encode(JSON.stringify(claims)))}`;
   const sig = await crypto.subtle.sign("HMAC", await hmacKey(secret), enc.encode(body));
   return `${body}.${b64url(new Uint8Array(sig))}`;
 };
 
+/** Verifica firma y vencimiento (`nowSec` en segundos); devuelve los claims o null si el token no sirve. */
 export const verifyJwt = async (secret: string, token: string, nowSec: number): Promise<JwtClaims | null> => {
   const parts = token.split(".");
   if (parts.length !== 3 || parts[0] !== JWT_HEADER) return null;

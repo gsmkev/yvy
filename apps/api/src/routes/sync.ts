@@ -1,3 +1,6 @@
+/**
+ * Rutas de sincronización de la app móvil: estado, push de mutaciones del outbox y pull paginado por versión.
+ */
 import { Hono } from "hono";
 import { pullRequest, pushRequest } from "@yvy/shared";
 import { localDate } from "@yvy/shared";
@@ -9,6 +12,7 @@ import { touchActivity } from "../auth/plan";
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
 
+/** Rutas `/sync/*`: estado, push y pull del motor de sincronización. */
 export const sync = new Hono<AppEnv>();
 
 sync.get("/state", async (c) => {
@@ -20,7 +24,7 @@ sync.post("/push", async (c) => {
   const body = parse(pushRequest, await readJson(c.req));
   const created: Parameters<typeof applyPush>[4] = [];
   const res = await applyPush(c.var.sdb, body.deviceId, body.mutations, Date.now(), created);
-  // I-02: registros nuevos → webhooks de la organización (en segundo plano: no demora la respuesta al celular)
+  // Registros nuevos → webhooks de la organización (en segundo plano: no demora la respuesta al celular)
   if (created.length) {
     const { db, auth } = c.var.sdb;
     await inBackground(
@@ -42,7 +46,7 @@ sync.post("/push", async (c) => {
       ),
     );
   }
-  // G-30: un registro de agua de una aguada puede abrir o cerrar el aviso de aguada baja de la estancia.
+  // Un registro de agua de una aguada puede abrir o cerrar el aviso de aguada baja de la estancia.
   const waterFarms = new Set<string>();
   body.mutations.forEach((m, i) => {
     if (m.kind === "records.upsert" && m.row.kind === "water" && m.row.poiId && res.results[i]?.status === "applied")

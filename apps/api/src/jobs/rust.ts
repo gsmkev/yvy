@@ -1,5 +1,5 @@
 /**
- * Aviso de roya asiática de la soja (A-40). La infección necesita hojas mojadas varias horas seguidas con
+ * Aviso de roya asiática de la soja. La infección necesita hojas mojadas varias horas seguidas con
  * temperatura templada. No hay sensor de mojado foliar: se estima con el pronóstico horario de MET Norway
  * (humedad relativa >= LIMITS.rust.humidityPct o lluvia en la hora) con la temperatura dentro del rango de la roya.
  * Solo avisa si la estancia tiene lotes de soja. Valores de referencia en LIMITS.rust, a revisar por un agrónomo.
@@ -27,6 +27,10 @@ export function wetHoursByDay(hours: HourlyForecast[], tz: string): RustDay[] {
   return [...days.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, wetHours]) => ({ date, wetHours }));
 }
 
+/**
+ * Aviso de roya si hay horas de hoja mojada y temperatura favorable suficientes en algún día del pronóstico.
+ * @param soyPlotIds lotes de soja de la estancia; sin ellos no hay aviso.
+ */
 export function evaluateRust(hours: HourlyForecast[], tz: string, soyPlotIds: string[]): AlertDraft | null {
   if (!soyPlotIds.length) return null;
   const L = LIMITS.rust;

@@ -1,4 +1,6 @@
-/** Stock, fotos de comprobantes, combustible y feedlot. */
+/**
+ * Rutas del ERP: stock, fotos de comprobantes, combustible y feedlot.
+ */
 import { z } from "zod";
 import { LIMITS } from "@yvy/shared";
 import { feedRationInput, noonAsuncion, isoDate, stockAdjustmentInput, stockMinimumInput, stockConsumptionInput, stockPurchaseInput, stockTransferInput } from "@yvy/shared";
@@ -17,9 +19,10 @@ import type { AppEnv } from "../../types";
 import { uuid } from "../schemas";
 import { Hono } from "hono";
 
+/** Rutas de stock, fotos de comprobantes, combustible y feedlot. */
 export const routes = new Hono<AppEnv>();
 
-// ---------- Stock (E-11) ----------
+// ---------- Stock ----------
 // Ver cantidades: dueño, administrador y agrónomo (sin montos). Cargar o borrar movimientos: dueño y administrador.
 
 routes.get("/stock", async (c) => c.json(await stockSummary(c.var.sdb)));
@@ -54,7 +57,7 @@ routes.delete("/stock/moves/:id", async (c) => {
   return c.json({ ok: true });
 });
 
-// ---------- Foto de la factura o el ticket (E-37) ----------
+// ---------- Foto de la factura o el ticket ----------
 
 const photoKind = (v: string): PhotoKind => parse(z.enum(PHOTO_KINDS), v);
 
@@ -93,13 +96,13 @@ routes.delete("/photos/:kind/:id", async (c) => {
   return c.json({ ok: true });
 });
 
-// ---------- Combustible (E-16) ----------
+// ---------- Combustible ----------
 
 routes.get("/fuel/report", async (c) =>
   c.json(await fuelReport(c.var.sdb, parse(z.object({ farmId: uuid.optional(), from: isoDate.optional(), to: isoDate.optional() }), c.req.query()))),
 );
 
-// ---------- Feedlot (G-33) ----------
+// ---------- Feedlot ----------
 // Raciones (maestro de oficina) y resumen por corral. Los suministros son registros `feed` que llegan por /sync/push.
 
 const rationRow = async (sdb: ScopedDb, v: z.infer<typeof feedRationInput>) => {

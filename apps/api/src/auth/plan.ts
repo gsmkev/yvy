@@ -1,5 +1,5 @@
 /**
- * Prueba gratis de 60 días (PRD Fase 8). Al vencer: bloqueo suave = la gestión queda en solo lectura.
+ * Prueba gratis de 60 días. Al vencer: bloqueo suave = la gestión queda en solo lectura.
  * El push del celular nunca se bloquea: lo que cargan los empleados en el campo no se pierde.
  */
 import { createMiddleware } from "hono/factory";
@@ -23,6 +23,10 @@ export const readOnlyDemo = createMiddleware<AppEnv>(async (c, next) => {
   await next();
 });
 
+/**
+ * Con la prueba vencida o el plan bloqueado, rechaza toda escritura (402), salvo pedir la baja o un plan.
+ * También bloquea escrituras en la demo (403).
+ */
 export const readOnlyWhenExpired = createMiddleware<AppEnv>(async (c, next) => {
   if (c.req.method !== "GET") {
     const [org] = await getDb(c.env.DB)

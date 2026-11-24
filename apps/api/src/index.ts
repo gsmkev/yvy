@@ -1,3 +1,7 @@
+/**
+ * Punto de entrada del Worker: conecta `fetch`, el cron y la cola de trabajos, y reporta sus errores a Sentry.
+ * @module
+ */
 import { app } from "./app";
 import { queue, scheduled } from "./jobs";
 import { captureError } from "./lib/monitoring";

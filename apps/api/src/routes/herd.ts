@@ -1,4 +1,6 @@
-/** Ganadería, segunda tanda (gan-p2): rotación, pasto, reproducción, pesadas, animales, abigeato, suplementos, calor. */
+/**
+ * Rutas de ganadería: rotación, pasto, reproducción, pesadas, animales, abigeato, suplementos, calor.
+ */
 import { Hono } from "hono";
 import { z } from "zod";
 import { animalInput } from "@yvy/shared";
@@ -7,9 +9,10 @@ import { farmForage, farmHeatStress, farmProduction, farmReproPlan, farmReproduc
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
 
+/** Rutas de ganadería bajo `/org`. */
 export const herd = new Hono<AppEnv>();
 
-// G-32: estrés térmico (THI) de las próximas 48 horas.
+// Estrés térmico (THI) de las próximas 48 horas.
 herd.get("/farms/:id/heat-stress", async (c) => c.json(await farmHeatStress(c.var.sdb, c.req.param("id"))));
 
 /** Rango opcional de fechas (epoch ms) de los listados. */
@@ -18,31 +21,31 @@ const range = z.object({
   to: z.coerce.number().int().nonnegative().optional(),
 });
 
-// G-13: abigeato (faltantes y denuncias).
+// Abigeato (faltantes y denuncias).
 herd.get("/farms/:id/theft", async (c) => {
   const q = parse(range, c.req.query());
   return c.json(await farmTheft(c.var.sdb, c.req.param("id"), q.from, q.to));
 });
 
-// G-31: suplementación y sal mineral por potrero.
+// Suplementación y sal mineral por potrero.
 herd.get("/farms/:id/supplements", async (c) => {
   const q = parse(range, c.req.query());
   return c.json(await farmSupplements(c.var.sdb, c.req.param("id"), q.from, q.to));
 });
 
-// G-22: pesadas y ganancia diaria de peso.
+// Pesadas y ganancia diaria de peso.
 herd.get("/farms/:id/weighings", async (c) => {
   const q = parse(range, c.req.query());
   return c.json(await farmWeighings(c.var.sdb, c.req.param("id"), q.from, q.to));
 });
 
-// G-20: reproducción (servicio, tacto, parición, destete) e índices.
+// Reproducción (servicio, tacto, parición, destete) e índices.
 herd.get("/farms/:id/reproduction", async (c) => {
   const q = parse(range, c.req.query());
   return c.json(await farmReproduction(c.var.sdb, c.req.param("id"), q.from, q.to));
 });
 
-// G-21: animales con caravana (búsqueda, alta, edición, baja e historial).
+// Animales con caravana (búsqueda, alta, edición, baja e historial).
 herd.get("/farms/:id/animals", async (c) => {
   const q = parse(z.object({ q: z.string().max(40).optional() }), c.req.query());
   return c.json(await listAnimals(c.var.sdb, c.req.param("id"), q.q));
@@ -62,12 +65,12 @@ herd.delete("/animals/:id", async (c) => {
 });
 herd.get("/animals/:id/history", async (c) => c.json(await animalHistory(c.var.sdb, c.req.param("id"))));
 
-// G-04: rotación de potreros (ocupación, descanso y próximo potrero).
+// Rotación de potreros (ocupación, descanso y próximo potrero).
 herd.get("/farms/:id/rotation", async (c) => c.json(await farmRotation(c.var.sdb, c.req.param("id"))));
-// G-05: oferta de forraje estimada por potrero.
+// Oferta de forraje estimada por potrero.
 herd.get("/farms/:id/forage", async (c) => c.json(await farmForage(c.var.sdb, c.req.param("id"))));
 
-// ADR 0005: indicadores del sistema productivo.
+// Indicadores del sistema productivo.
 herd.get("/farms/:id/production", async (c) => c.json(await farmProduction(c.var.sdb, c.req.param("id"))));
-// ADR 0005: plan reproductivo (estación de servicio e indicadores del ciclo).
+// Plan reproductivo (estación de servicio e indicadores del ciclo).
 herd.get("/farms/:id/repro-plan", async (c) => c.json(await farmReproPlan(c.var.sdb, c.req.param("id"))));

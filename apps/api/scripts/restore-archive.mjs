@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * P-06: vuelve a cargar en D1 los datos archivados en R2 (archive/<tabla>/AAAA-MM/*.ndjson). Genera SQL: no toca ninguna
+ * Vuelve a cargar en D1 los datos archivados en R2 (archive/<tabla>/AAAA-MM/*.ndjson). Genera SQL: no toca ninguna
  * base. Las filas se insertan con INSERT OR IGNORE (si el id ya existe no se pisa) y con una versión de sync nueva, así
  * los celulares las vuelven a bajar.
  *
@@ -16,6 +16,7 @@ import { fileURLToPath } from "node:url";
 export const TABLES = { records: true, attachments: true, comments: true, plot_index_stats: true };
 const IDENT = /^[a-z_][a-z0-9_]*$/;
 
+/** Valor de JS como literal SQL (NULL, número, texto escapado o JSON). */
 export const literal = (v) => {
   if (v === null || v === undefined) return "NULL";
   if (typeof v === "number") {
@@ -46,6 +47,7 @@ export function ndjsonToSql(text) {
   return out;
 }
 
+/** SQL completo de restauración a partir de uno o más archivos NDJSON: una versión de sync nueva y los INSERT. */
 export function buildRestoreSql(texts) {
   const body = texts.flatMap(ndjsonToSql);
   if (!body.length) return "";

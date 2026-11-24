@@ -1,11 +1,13 @@
-// Carga una organización de ejemplo completa ("Agropecuaria San Pedro") contra una API local en marcha, para sacar
-// capturas del manual de la web. Usa los mismos endpoints que la web y la app (el campo entra por /sync/push; lo que
-// viene de jobs externos, por /ingest firmado). Fechas relativas a hoy.
-//
-// Uso:  (con tsx, porque importa @yvy/shared)  API_URL=http://localhost:8787 DEV_LOG=<log de wrangler dev> pnpm --filter api seed:manual
-// Opcionales: OWNER_EMAIL (por defecto dueno@sanpedro.test; si ya existe se crea otra organización con sufijo),
-//             INGEST_SECRET (por defecto el de apps/api/.dev.vars).
-// Al final imprime el email del dueño y la sesión (JSON) lista para localStorage["yvy.session"].
+/**
+ * Carga una organización de ejemplo completa ("Agropecuaria San Pedro") contra una API local en marcha, para sacar
+ * capturas del manual de la web. Usa los mismos endpoints que la web y la app (el campo entra por /sync/push; lo que
+ * viene de jobs externos, por /ingest firmado). Fechas relativas a hoy.
+ *
+ * Uso:  (con tsx, porque importa @yvy/shared)  API_URL=http://localhost:8787 DEV_LOG=<log de wrangler dev> pnpm --filter api seed:manual
+ * Opcionales: OWNER_EMAIL (por defecto dueno@sanpedro.test; si ya existe se crea otra organización con sufijo),
+ *             INGEST_SECRET (por defecto el de apps/api/.dev.vars).
+ * Al final imprime el email del dueño y la sesión (JSON) lista para localStorage["yvy.session"].
+ */
 import { createHmac, randomBytes } from "node:crypto";
 import { readFileSync, existsSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -476,11 +478,11 @@ async function stepErpMasters2() {
   await ct("hugoSiembra", { name: "Hugo Ferreira · Siembra", service: "sowing", rateUnit: "ha", rateAmount: 150_000 });
   await ct("pulve", { name: "Aeroaplicaciones Itapúa", service: "spraying", rateUnit: "ha", rateAmount: 38_000 });
   await ct("flete", { name: "Transportes Paraná", service: "freight", rateUnit: "ton", rateAmount: 95_000, note: "Flete al puerto de Encarnación" });
-  // labor propia frente a contratista (E-23)
+  // labor propia frente a contratista
   await o.put(e(`machine-costs/${M.pulve.id}`), { service: "spraying", purchasePricePyg: 780_000_000, residualPyg: 250_000_000, lifeHours: 10000, operatorPerHourPyg: 28_000, haPerHour: 28, fuelLitersPerHour: 14 });
   await o.put(e(`machine-costs/${M.cosech.id}`), { service: "harvest", purchasePricePyg: 950_000_000, residualPyg: 300_000_000, lifeHours: 8000, operatorPerHourPyg: 35_000, haPerHour: 4.5, fuelLitersPerHour: 38 });
   await o.put(e(`machine-costs/${M.sembr.id}`), { service: "sowing", purchasePricePyg: 310_000_000, residualPyg: 120_000_000, lifeHours: 6000, operatorPerHourPyg: 26_000, haPerHour: 6, fuelLitersPerHour: 18 });
-  // mantenimiento preventivo (E-22)
+  // mantenimiento preventivo
   S.plans = {};
   const plan = async (k, m, name, every, last) => (S.plans[k] = (await o.post(e("maintenance-plans"), { machineId: M[m].id, name, everyUnits: every, lastDoneMeter: last })).id);
   await plan("tAceite", "tractor", "Cambio de aceite y filtros", 250, 4540); // vencido (toca a las 4790 h y va por 4820)
@@ -493,7 +495,7 @@ async function stepErpMasters2() {
   await o.post(e("maintenance/logs"), { machineId: M.pulve.id, kind: "repair", date: dayStr(33), meterValue: 3150, description: "Cambio de bomba de pulverización", partyId: S.party.repuestos, amount: 4_200_000, currency: "PYG" });
   await o.post(e("maintenance/logs"), { machineId: M.hilux.id, planId: S.plans.hAceite, kind: "preventive", date: dayStr(70), meterValue: 80000, description: "Service de 80.000 km", amount: 1_950_000, currency: "PYG" });
   await o.post(e("maintenance/logs"), { machineId: M.cosech.id, planId: S.plans.cEngrase, kind: "preventive", date: dayStr(15), meterValue: 6900, description: "Engrase general previo a la cosecha de trigo", amount: 380_000, currency: "PYG" });
-  // personal (E-25) y raciones (G-33)
+  // personal y raciones
   S.emp = {};
   const emp = async (k, name, ci, wage) => (S.emp[k] = (await o.post(e("employees"), { name, ci, phone: "+595 981 " + (200000 + Math.floor(rnd() * 99999)), dailyWagePyg: wage })).id);
   await emp("ramon", "Ramón Benítez", "3.456.789", 135_000); await emp("lidia", "Lidia Ortiz", "4.120.553", 135_000); await emp("celso", "Celso Gamarra", "2.998.014", 130_000);
@@ -708,7 +710,7 @@ async function stepFeed() {
 
 async function stepSanitary() {
   const o = S.owner;
-  // calendario sanitario (G-10)
+  // calendario sanitario
   const E = (reason, plannedDate, categories, product, extra = {}) => o.post("/org/sanitary-events", { reason, plannedDate, farmId: S.farms[1].id, categories, product, createTasks: false, ...extra });
   await E("aftosa", dayStr(41), ["vaca", "vaquilla", "novillo", "ternero", "toro"], "Vacuna antiaftosa");
   await E("brucelosis", dayStr(70), ["vaquilla"], "Vacuna B19");
@@ -757,7 +759,7 @@ async function stepErpMoney() {
   await cost({ date: dayStr(33), farmId: F1, activity: "ganaderia", category: "other", amount: 4_850_000, description: "Honorarios veterinarios" });
   await cost({ date: dayStr(12), farmId: F1, activity: "ganaderia", category: "contractor", amount: 6_200_000, description: "Flete de hacienda a la feria" });
   await cost({ date: dayStr(45), farmId: S.farms[2].id, seasonId: S.seasons.cur, activity: "agricultura", category: "contractor", amount: 9_800_000, description: "Aplicación aérea de herbicida", currency: "PYG" });
-  // venta de granos (E-34)
+  // venta de granos
   const oldSoy = crops.filter((k) => S.oldPlan[k]?.[0] === "soja"), oldMaiz = crops.filter((k) => S.oldPlan[k]?.[0] === "maiz"), oldTrigo = crops.filter((k) => S.oldPlan[k]?.[0] === "trigo");
   const sum = (ks) => round(ks.reduce((a, k) => a + S.oldHarvest[k].tons, 0), 1);
   const contract = async (d) => (await o.post(e("grain-contracts"), d)).id;
@@ -783,12 +785,12 @@ async function stepErpMoney() {
   await o.post(e("grain-deliveries"), { contractId: cTriCur, date: dayStr(12), tons: round(curTri - half, 1), farmId: F1, plotId: PL.l3.id, ticket: "T-4611", destination: "Cooperativa Colonias Unidas", moisturePct: 12.8 });
   const rs = await o.post(e("grain-settlements"), { contractId: cTriCur, number: "LQ-2644", date: dayStr(10), tons: half, priceMinor: 2_150_000, deductionsMinor: 2_300_000, farmId: F1, plotId: PL.l3.id, dueDate: dayStr(-12) });
   S.settlementOpen = rs.id;
-  // hacienda: compras y ventas (E-35)
+  // hacienda: compras y ventas
   const deal = (d) => o.post(e("cattle-deals"), { currency: "PYG", farmId: F1, seasonId: S.seasons.cur, ...d });
   await deal({ kind: "buy", date: dayStr(64), partyId: Y.cabana, category: "Novillos de recría", heads: 60, totalKg: 15_600, amount: 210_600_000, guideNumber: "GT-2026-8821", dueDate: dayStr(34) });
   await deal({ kind: "sell", date: dayStr(22), partyId: Y.frigo, category: "Novillos gordos", heads: 35, totalKg: 17_150, amount: 253_820_000, guideNumber: "GT-2026-9302", dueDate: dayStr(-10) });
   await deal({ kind: "sell", date: dayStr(118), partyId: Y.frigo, category: "Vacas de descarte", heads: 28, totalKg: 12_880, amount: 164_864_000, guideNumber: "GT-2026-7011", dueDate: dayStr(103) });
-  // caja y bancos (E-36)
+  // caja y bancos
   S.cash = {};
   const acc = async (k, d) => (S.cash[k] = (await o.post(e("cash-accounts"), d)).id);
   await acc("caja", { name: "Caja chica", type: "cash", currency: "PYG", openingBalance: 8_000_000 });
@@ -829,7 +831,7 @@ async function stepErpMoney2() {
     await o.post(e("employee-payments"), { employeeId: S.emp[k], date: dayStr(38), kind: "advance", amountPyg: 400_000, note: "Adelanto de quincena" });
     await o.post(e("employee-payments"), { employeeId: S.emp[k], date: dayStr(22), kind: "payment", amountPyg: 1_900_000, note: "Pago del mes anterior" });
   }
-  // presupuesto de la campaña en curso (E-32)
+  // presupuesto de la campaña en curso
   const bl = (d) => o.post(e("budget-lines"), { seasonId: S.seasons.cur, ...d });
   for (const [crop, input, fuel, contractor, labor] of [["soja", 240_000_000, 42_000_000, 68_000_000, 26_000_000], ["maiz", 130_000_000, 24_000_000, 38_000_000, 14_000_000], ["girasol", 34_000_000, 7_000_000, 9_000_000, 4_000_000], ["trigo", 46_000_000, 9_000_000, 14_000_000, 5_000_000]]) {
     await bl({ crop, activity: "agricultura", category: "input", amountPyg: input }); await bl({ crop, activity: "agricultura", category: "fuel", amountPyg: fuel });
@@ -837,7 +839,7 @@ async function stepErpMoney2() {
   }
   await bl({ activity: "ganaderia", category: "other", amountPyg: 30_000_000, note: "Sanidad y suplementación" }); await bl({ activity: "administracion", category: "other", amountPyg: 40_000_000, note: "Asesoría, energía y seguros" });
   await bl({ plotId: PL.l1.id, category: "input", amountPyg: 48_000_000, note: "Insumos del Lote 1" });
-  // contador y sistemas contables (E-38, I-06)
+  // contador y sistemas contables
   await o.put(e("accountant/map/input"), { code: "5.1.01", name: "Insumos agrícolas" }); await o.put(e("accountant/map/labor"), { code: "5.2.01", name: "Sueldos y jornales del personal" }); await o.put(e("accountant/map/sale"), { code: "4.1.01", name: "Ventas de granos y hacienda" });
   await o.post(e("export/formats"), { name: "Libro IVA compras", dataset: "purchases", config: libroIvaConfig("purchases") });
   await o.post(e("export/formats"), { name: "Libro IVA ventas", dataset: "sales", config: libroIvaConfig("sales") });
@@ -854,11 +856,11 @@ async function stepAgri() {
     await o.post(`/org/farms/${F1}/soil-samples`, { plotId: PL[k].id, pointLabel: `Punto ${i + 1}`, lon: jitter(c.lon, 0.0006), lat: jitter(c.lat, 0.0004), sampledOn: dayStr(120 - i * 3), depthCm: 20, lab: "Laboratorio de suelos UNA", ph, pMgKg: pm, kCmolKg: kc, omPct: om, note: i === 0 ? "Muestra compuesta de 15 submuestras" : undefined });
   }
   for (const [i, [k, ph, pm, kc, om]] of [["n1", 6.0, 17, 0.4, 3.1], ["n2", 5.9, 20, 0.36, 3.3], ["n4", 5.5, 10, 0.26, 2.6]].entries()) await o.post(`/org/farms/${F2}/soil-samples`, { plotId: PL[k].id, pointLabel: `Norte ${i + 1}`, sampledOn: dayStr(100 - i * 5), depthCm: 20, lab: "Laboratorio de suelos UNA", ph, pMgKg: pm, kCmolKg: kc, omPct: om });
-  // entregas a acopio con descuentos de balanza (A-23)
+  // entregas a acopio con descuentos de balanza
   const del = (k, ago, kg, moist, base, imp, silo, crop = PL[k].crop, seasonId = S.seasons.cur) => o.post(`/org/farms/${PL[k].farmId}/deliveries`, { plotId: PL[k].id, seasonId, crop, ticket: `B-${7000 + Math.floor(rnd() * 999)}`, silo, deliveredOn: dayStr(ago), grossKg: kg, moisturePct: moist, baseMoisturePct: base, impuritiesPct: imp, otherKg: 0 });
   for (const [ago, kg, m] of [[16, 30_200, 13.4], [16, 31_850, 12.8], [15, 29_900, 13.1], [14, 32_400, 12.6]]) await del("l3", ago, kg, m, 13, 1.2, "Cooperativa Colonias Unidas");
   for (const [k, ago, kg, m] of [["l2", 255, 29_700, 16.1], ["l2", 254, 30_500, 15.4], ["l4", 252, 31_000, 15.8], ["l1", 251, 28_900, 14.6]]) await del(k, ago, kg, m, 14, 1.5, "ADM Villeta", "maiz", S.seasons.old);
-  // mapas de rinde de la campaña anterior (A-24)
+  // mapas de rinde de la campaña anterior
   for (const k of ["l4", "l1"]) {
     const ring = PL[k].ring, bb = ring.reduce((b, [x, y]) => [Math.min(b[0], x), Math.min(b[1], y), Math.max(b[2], x), Math.max(b[3], y)], [999, 999, -999, -999]);
     const cells = [], ctr = centerOfRing(ring);
@@ -866,7 +868,7 @@ async function stepAgri() {
     const ys = cells.map((c) => c[2]).sort((a, b) => a - b), mean = round(ys.reduce((a, b) => a + b, 0) / ys.length, 2);
     await o.post(`/org/plots/${PL[k].id}/yield-maps`, { seasonId: S.seasons.old, fileName: `rinde-${PL[k].name.replace(/\W+/g, "-").toLowerCase()}-2026.csv`, nPoints: 4120, nDropped: 96, meanTHa: mean, p10THa: ys[Math.floor(ys.length * 0.1)], p90THa: ys[Math.floor(ys.length * 0.9)], minTHa: ys[0], maxTHa: ys.at(-1), cvPct: 14.2, cellM: 30, cells });
   }
-  // recetas del agrónomo (A-11)
+  // recetas del agrónomo
   const rx = (plotKeys, who, due, products, note) => o.post("/org/prescriptions", { farmId: PL[plotKeys[0]].farmId, plotIds: plotKeys.map((k) => PL[k].id), assigneeId: S.team[who].userId, dueDate: dayStr(due), prescription: { seasonId: S.seasons.cur, products, volumeLHa: 80, note } });
   await rx(["l1", "l6"], "ramon", -1, [{ productId: P.engeo.id, name: P.engeo.name, dose: 0.25, unit: "l_ha" }, { productId: P.glifo.id, name: P.glifo.name, dose: 1.5, unit: "l_ha" }], "Aplicar con viento menor a 12 km/h");
   await rx(["n4"], "ramon", 2, [{ productId: P.fungi.id, name: P.fungi.name, dose: 0.4, unit: "l_ha" }], "Preventivo antes de R3");

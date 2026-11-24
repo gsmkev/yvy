@@ -1,5 +1,5 @@
 /**
- * Sesiones (PRD-cloudflare §4.2): access JWT HS256 de 1 h + refresh aleatorio de 90 días guardado como
+ * Sesiones: access JWT HS256 de 1 h + refresh aleatorio de 90 días guardado como
  * SHA-256, rotado en cada uso. Este módulo corre antes de que exista un usuario autenticado, por eso
  * usa la base directa y no scopedDb.
  */
@@ -10,6 +10,7 @@ import type { DB } from "../db/client";
 import { randomToken, sha256Hex, signJwt } from "../lib/crypto";
 import { totpSetupRequired } from "./totp";
 
+/** Sesión emitida: tokens con su vencimiento, el usuario y las organizaciones a las que pertenece. */
 export interface Session {
   accessToken: string;
   accessTokenExpiresAt: number;
@@ -18,10 +19,11 @@ export interface Session {
   user: { id: string; fullName: string; email: string | null };
   organization: { id: string; name: string; role: Role };
   organizations: { id: string; name: string; role: Role }[];
-  /** P-08: la organización exige segundo factor a los administradores y este todavía no lo dio de alta. */
+  /** La organización exige segundo factor a los administradores y este todavía no lo dio de alta. */
   mfaSetupRequired?: true;
 }
 
+/** Organizaciones donde el usuario es miembro activo, de la más antigua a la más nueva. */
 export async function membershipsOf(db: DB, userId: string) {
   return db
     .select({ id: s.organizations.id, name: s.organizations.name, role: s.memberships.role })
@@ -101,6 +103,7 @@ export async function rotateRefresh(
   return issueSession(db, jwtSecret, row.userId, { organizationId: row.organizationId, deviceId: row.deviceId, now });
 }
 
+/** Revoca un refresh token (cierre de sesión); no falla si el token no existe. */
 export async function revokeRefresh(db: DB, token: string, now = Date.now()): Promise<void> {
   await db
     .update(s.refreshTokens)

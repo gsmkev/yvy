@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Prueba de carga del sync (P-21): N empleados mandan en paralelo M registros con metadatos de fotos contra un
+ * Prueba de carga del sync: N empleados mandan en paralelo M registros con metadatos de fotos contra un
  * `wrangler dev` y se mide tiempo por push, rendimiento y fallas. Sin dependencias (Node 22).
  *
  * Uso (con `pnpm --filter api dev > /tmp/dev.log 2>&1` andando y las migraciones locales aplicadas):
@@ -16,7 +16,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 
-// Mismo valor que LIMITS.sync.maxMutationsPerPush (packages/shared/src/limits.ts)
+/** Mismo valor que LIMITS.sync.maxMutationsPerPush (packages/shared/src/limits.ts). */
 export const MAX_MUTATIONS_PER_PUSH = 40;
 
 // ---------- Cálculos puros (probados en load-sync.test.mjs) ----------
@@ -211,6 +211,10 @@ async function pullAll(api, token, table) {
   }
 }
 
+/**
+ * Corre la prueba de carga completa: crea la organización, manda los registros en paralelo y verifica el resultado.
+ * @returns `{ ok, summary, check }` con el resumen de tiempos y la comprobación contra el servidor.
+ */
 export async function runLoadTest({ api, log, workers = 10, records = 1000, photos = 2, out = console.log }) {
   out(`Preparando organización de prueba (${workers} empleados)…`);
   const env = await setup({ api, log, workers });
@@ -262,6 +266,7 @@ export async function runLoadTest({ api, log, workers = 10, records = 1000, phot
   return { ok, summary, check };
 }
 
+/** Texto del informe final de la prueba, listo para imprimir. */
 export function formatReport({ ok, summary: s, check: c }) {
   const lines = [
     "",

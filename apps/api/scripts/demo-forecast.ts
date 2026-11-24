@@ -1,5 +1,7 @@
-// Carga en D1 local un pronóstico real de MET Norway procesado con la misma función del Worker.
-// Uso: curl ... > met.json && npx tsx scripts/demo-forecast.ts met.json <farmId> > forecast.sql
+/**
+ * Carga en D1 local un pronóstico real de MET Norway procesado con la misma función del Worker.
+ * Uso: curl ... > met.json && npx tsx scripts/demo-forecast.ts met.json <farmId> > forecast.sql
+ */
 import { readFileSync } from "node:fs";
 import { dailyFromMet, type MetResponse } from "../src/jobs/weather";
 

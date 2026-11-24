@@ -8,9 +8,10 @@ import { type IngestEnv, json } from "./shared";
 import { uuid, isoDate } from "../schemas";
 import { Hono } from "hono";
 
+/** Rutas de ingesta de EUDR, focos de calor, análisis, parte semanal, SPI y zonas de manejo. */
 export const routes = new Hono<IngestEnv>();
 
-/** Indicador EUDR de un lote (job eudr, S-30): ya viene calculado; el Worker valida la forma y lo guarda. */
+/** Indicador EUDR de un lote (job eudr): ya viene calculado; el Worker valida la forma y lo guarda. */
 routes.post("/eudr", async (c) => {
   if (c.var.body.length > 80_000) throw new HTTPException(413, { message: "Resultado demasiado grande" });
   const pos = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
@@ -53,7 +54,7 @@ routes.post("/eudr", async (c) => {
 });
 
 
-/** Focos de calor guardados cerca de la estancia (job burned_area, S-20). */
+/** Focos de calor guardados cerca de la estancia (job burned_area). */
 routes.get("/farms/:id/hotspots", async (c) => {
   const q = parse(z.object({ days: z.coerce.number().int().min(1).max(400).default(120) }), c.req.query());
   const res = await c.var.sys.farmHotspots(c.req.param("id"), Date.now() - q.days * 86_400_000);
@@ -155,13 +156,13 @@ routes.post("/weekly-reports", async (c) => {
   return c.json({ ok: true }, 201);
 });
 
-/** C-07: lluvia diaria de la estancia (CHIRPS) para que el job calcule el SPI. */
+/** Lluvia diaria de la estancia (CHIRPS) para que el job calcule el SPI. */
 routes.get("/farms/:id/precip", async (c) => {
   const q = parse(z.object({ from: isoDate }), c.req.query());
   return c.json(await c.var.sys.farmPrecip(c.req.param("id"), q.from));
 });
 
-/** SPI a 1, 3 y 6 meses (job spi, C-07): ya viene calculado; el Worker valida la forma y lo guarda. */
+/** SPI a 1, 3 y 6 meses (job spi): ya viene calculado; el Worker valida la forma y lo guarda. */
 routes.post("/farm-spi", async (c) => {
   const b = parse(z.object({ farmId: uuid, report: farmSpiSchema }), json(c.var.body));
   if (c.var.body.length > 5_000) throw new HTTPException(413, { message: "Informe demasiado grande" });
@@ -170,7 +171,7 @@ routes.post("/farm-spi", async (c) => {
   return c.json({ ok: true });
 });
 
-/** Zonas de manejo de un lote (job mgmt_zones, A-32): ya vienen calculadas; el Worker valida la forma y las guarda. */
+/** Zonas de manejo de un lote (job mgmt_zones): ya vienen calculadas; el Worker valida la forma y las guarda. */
 routes.post("/management-zones", async (c) => {
   if (c.var.body.length > 150_000) throw new HTTPException(413, { message: "Resultado demasiado grande" });
   const pos = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);

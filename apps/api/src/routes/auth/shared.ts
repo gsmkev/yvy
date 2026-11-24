@@ -9,12 +9,15 @@ import { totpEnabled } from "../../auth/totp";
 import { signTicket } from "../../lib/totp";
 import { getDb } from "../../db/client";
 
+/** Email normalizado (sin espacios, en minúsculas). */
 export const email = z.string().trim().toLowerCase().email().max(254);
+/** Identificador opcional del dispositivo que pide la sesión. */
 export const deviceId = z.string().min(1).max(64).nullish();
+/** Códigos de email que se pueden pedir por ventana de vigencia del código. */
 export const MAX_CODES_PER_WINDOW = 3;
 
 /**
- * V-05 / V-06: usuario con rol de agrónomo o dueño (productor) en alguna organización cuyo código de referido es `code`.
+ * Usuario con rol de agrónomo o dueño (productor) en alguna organización cuyo código de referido es `code`.
  * El código son los últimos 8 caracteres del id (ver referralCode), así que se busca por sufijo.
  */
 export async function findReferrer(db: ReturnType<typeof getDb>, code: string): Promise<string | null> {
@@ -28,7 +31,7 @@ export async function findReferrer(db: ReturnType<typeof getDb>, code: string): 
 }
 
 /**
- * P-08: tras el código de email (o Google), quien tiene segundo factor no recibe sesión sino un pase de 5 minutos que
+ * Tras el código de email (o Google), quien tiene segundo factor no recibe sesión sino un pase de 5 minutos que
  * se canjea en /auth/totp/login con el código de la app. Sin segundo factor, la sesión sale como siempre.
  */
 export async function sessionOrChallenge(
@@ -50,9 +53,11 @@ export async function sessionOrChallenge(
   return session ? { session } : null;
 }
 
-// ---------- Segundo factor (P-08) ----------
+// ---------- Segundo factor ----------
 
+/** Error 429 de cuenta bloqueada por demasiados intentos de segundo factor. */
 export const locked = () => new HTTPException(429, { message: t("totp.common.locked", { min: Math.ceil(LIMITS.auth.totpLockMs / 60_000) }) });
+/** ¿La organización exige segundo factor a sus administradores? */
 export const orgRequiresTotp = async (db: ReturnType<typeof getDb>, orgId: string) => {
   const [org] = await db
     .select({ on: s.organizations.requireAdminTotp })

@@ -1,8 +1,8 @@
 /**
- * P-06: archivado de datos viejos de D1 a R2. Con `ARCHIVE_AFTER_MONTHS` (opcional) el cron diario de mantenimiento
+ * Archivado de datos viejos de D1 a R2. Con `ARCHIVE_AFTER_MONTHS` (opcional) el cron diario de mantenimiento
  * mueve, de a pocos por corrida (presupuesto de CPU y de queries), los registros y las estadísticas de vigor más viejos
  * que ese plazo a archivos NDJSON por mes en `archive/<tabla>/AAAA-MM/` del bucket privado de medios, y recién
- * entonces los borra de D1. Restaurar: `node apps/api/scripts/restore-archive.mjs` (ver docs/DEPLOY.md).
+ * entonces los borra de D1. Restaurar: `node apps/api/scripts/restore-archive.mjs`.
  *
  * No se archivan los tipos de registro que el celular y la web leen siempre para sus cuentas (stock de hacienda,
  * historial de siembra, aplicaciones y cosecha): ver KEEP_KINDS.

@@ -1,4 +1,6 @@
-/** Presupuesto, compras, granos, hacienda, caja y contador. */
+/**
+ * Rutas del ERP: presupuesto, compras, venta de granos, hacienda, caja y bancos, y exportación al contador.
+ */
 import { z } from "zod";
 import { accountMapInput, cashAccountInput, cashMoveInput, cashTransferInput, settleInput, CATTLE_DEAL_KINDS, cattleDealInput, grainContractInput, grainDeliveryInput, grainSettlementInput, purchaseInput, purchaseInvoiceInput, purchaseReceiveInput, budgetLineInput, isoDate } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -15,9 +17,10 @@ import { master } from "./master";
 import { uuid } from "../schemas";
 import { Hono } from "hono";
 
+/** Rutas de presupuesto, compras, granos, hacienda, caja y contador. */
 export const routes = new Hono<AppEnv>();
 
-// ---------- Presupuesto de campaña (E-32) ----------
+// ---------- Presupuesto de campaña ----------
 
 master(routes, "budget-lines", s.budgetLines, budgetLineInput, [s.budgetLines.category], {
   normalize: (v) => (typeof v.plotId === "string" ? { ...v, crop: null } : typeof v.crop === "string" ? { ...v, plotId: null } : v),
@@ -28,7 +31,7 @@ master(routes, "budget-lines", s.budgetLines, budgetLineInput, [s.budgetLines.ca
 });
 routes.get("/budget/compare", async (c) => c.json(await budgetCompare(c.var.sdb, parse(uuid, c.req.query("seasonId")))));
 
-// ---------- Compras: orden, factura y recepción (E-33) ----------
+// ---------- Compras: orden, factura y recepción ----------
 
 routes.get("/purchases", async (c) => c.json(await listPurchases(c.var.sdb, { status: c.req.query("status") })));
 routes.post("/purchases", async (c) => c.json(await createPurchase(c.var.sdb, parse(purchaseInput, await readJson(c.req))), 201));
@@ -49,7 +52,7 @@ routes.delete("/purchases/:id", async (c) => {
   return c.json({ ok: true });
 });
 
-// ---------- Venta de granos (E-34) ----------
+// ---------- Venta de granos ----------
 
 master(routes, "grain-contracts", s.grainContracts, grainContractInput, [s.grainContracts.createdAt], {
   check: (sdb, v) => checkContractRefs(sdb, v),
@@ -68,7 +71,7 @@ routes.delete("/grain-settlements/:id", async (c) => {
   return c.json({ ok: true });
 });
 
-// ---------- Compras y ventas de hacienda (E-35, G-40) ----------
+// ---------- Compras y ventas de hacienda ----------
 
 routes.get("/cattle-deals", async (c) => c.json(await listDeals(c.var.sdb, parse(z.enum(CATTLE_DEAL_KINDS).optional(), c.req.query("kind")))));
 routes.post("/cattle-deals", async (c) => c.json(await createDeal(c.var.sdb, parse(cattleDealInput, await readJson(c.req))), 201));
@@ -77,7 +80,7 @@ routes.delete("/cattle-deals/:id", async (c) => {
   return c.json({ ok: true });
 });
 
-// ---------- Caja y bancos, cuentas a pagar y a cobrar (E-36) ----------
+// ---------- Caja y bancos, cuentas a pagar y a cobrar ----------
 
 master(routes, "cash-accounts", s.cashAccounts, cashAccountInput, [s.cashAccounts.name], {
   normalize: (v) => (v.openingBalance === null ? { ...v, openingBalance: 0 } : v),
@@ -95,7 +98,7 @@ routes.delete("/cash/moves/:id", async (c) => {
 routes.get("/payables", async (c) => c.json(await dues(c.var.sdb, "payable")));
 routes.get("/receivables", async (c) => c.json(await dues(c.var.sdb, "receivable")));
 
-// ---------- Exportación al contador (E-38) ----------
+// ---------- Exportación al contador ----------
 
 routes.get("/accountant/map", async (c) => c.json(await listMap(c.var.sdb)));
 routes.put("/accountant/map/:key", async (c) => {

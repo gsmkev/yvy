@@ -1,14 +1,16 @@
-// Genera apps/api/seed/demo.sql: la organización de ejemplo (plan 'demo', solo lectura) para producción.
-// Uso: pnpm --filter api seed:demo   (corre con tsx para importar @yvy/shared y @yvy/geo)
-//
-// - Ids fijos. Casi todo es INSERT OR IGNORE; la estancia, los lotes, los puntos, los registros y las tareas (lo que
-//   depende de la geografía y de la fecha) son upserts por id (INSERT ... ON CONFLICT(id) DO UPDATE) que además avanzan
-//   `version` para que los celulares ya sincronizados vuelvan a bajarlos. No borran ni cambian ids, así que cargar el
-//   SQL sobre la demo existente reemplaza geometrías y fechas sin tocar el resto, y pasa el control de "solo
-//   inserciones" de demo.yml (rechaza líneas que empiecen con delete/drop/update/alter).
-// - Las fechas son relativas al día en que se corre el script (últimos 60 días), así que se ve vigente.
-//   Para refrescarla más adelante alcanza con regenerar y volver a cargar demo.sql: las fechas se corren solas.
-// - Cada `data` de los registros se valida con parseRecordData: si algo no valida, el script falla.
+/**
+ * Genera apps/api/seed/demo.sql: la organización de ejemplo (plan 'demo', solo lectura) para producción.
+ * Uso: pnpm --filter api seed:demo   (corre con tsx para importar @yvy/shared y @yvy/geo)
+ *
+ * - Ids fijos. Casi todo es INSERT OR IGNORE; la estancia, los lotes, los puntos, los registros y las tareas (lo que
+ *   depende de la geografía y de la fecha) son upserts por id (INSERT ... ON CONFLICT(id) DO UPDATE) que además avanzan
+ *   `version` para que los celulares ya sincronizados vuelvan a bajarlos. No borran ni cambian ids, así que cargar el
+ *   SQL sobre la demo existente reemplaza geometrías y fechas sin tocar el resto, y pasa el control de "solo
+ *   inserciones" de demo.yml (rechaza líneas que empiecen con delete/drop/update/alter).
+ * - Las fechas son relativas al día en que se corre el script (últimos 60 días), así que se ve vigente.
+ *   Para refrescarla más adelante alcanza con regenerar y volver a cargar demo.sql: las fechas se corren solas.
+ * - Cada `data` de los registros se valida con parseRecordData: si algo no valida, el script falla.
+ */
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { areaHa, bboxOf, centroidOf, containsPoint, overlapRatio } from "@yvy/geo";
@@ -282,7 +284,7 @@ ins("seasons", {
 const fx = JSON.parse(readFileSync(new URL("../seed/demo-fixture.json", import.meta.url), "utf8"));
 const FX = Object.fromEntries(Object.entries(fx.tables).map(([t, rows]) => [t, rows.filter((r) => !r.deleted_at)]));
 const SHIFT_MS = Math.round((Date.parse(TODAY) - Date.parse(fx.d0)) / DAY) * DAY;
-// ADR 0005: la fixture trae un solo parto (6 terneros) contra 56 servicios; se suma la parición grande de la parición anterior para que el % de parición del ciclo tenga sentido.
+// La fixture trae un solo parto (6 terneros) contra 56 servicios; se suma la parición grande de la parición anterior para que el % de parición del ciclo tenga sentido.
 {
   const tpl = FX.records.find((r) => r.kind === "reproduction" && JSON.parse(r.data).event === "calving");
   FX.records.push({ ...tpl, id: "01a1df2a-ffff-7000-8000-00000000c411", data: JSON.stringify({ event: "calving", head: 38, calves: 38 }), captured_at: tpl.captured_at - 13 * DAY });
@@ -391,7 +393,7 @@ const must = (what, r) => {
 const json = (s) => (s == null ? null : JSON.parse(s));
 let ordinal = {};
 const FIX = {
-  // ADR 0005: sistema productivo (ciclo completo: cría, recría y corral) y estación de servicio que abarca el servicio registrado hace unos 80 días.
+  // Sistema productivo (ciclo completo: cría, recría y corral) y estación de servicio que abarca el servicio registrado hace unos 80 días.
   farm_livestock_settings: (r) => {
     r.system = "ciclo_completo";
     r.breeding_start = dayStr(80).slice(5);

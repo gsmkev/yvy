@@ -1,7 +1,7 @@
 /**
- * I-01: API pública de solo lectura, con tokens por organización (`Authorization: Bearer yvy_…`).
+ * API pública de solo lectura, con tokens por organización (`Authorization: Bearer yvy_…`).
  * Pasa por ScopedDb como un administrador de solo lectura de la organización del token, así que ve lo mismo que la web
- * sin poder escribir. Documentación: /api-docs (web) y docs/API.md.
+ * sin poder escribir. Documentación: /api-docs (web).
  */
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -15,6 +15,7 @@ import { listAlerts, listRecords, farmSummaries } from "../db/queries";
 import { ScopedDb } from "../db/scoped";
 import type { AppEnv } from "../types";
 
+/** API pública `/v1`: solo GET, autenticada con token de organización y limitada por minuto. */
 export const v1 = new Hono<AppEnv>();
 
 v1.use("*", async (c, next) => {

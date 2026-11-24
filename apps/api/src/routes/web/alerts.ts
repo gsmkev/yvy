@@ -8,6 +8,7 @@ import { parse, readJson } from "../../lib/http";
 import type { AppEnv } from "../../types";
 import { Hono } from "hono";
 
+/** Rutas de avisos, enlaces compartidos, hacienda, sanidad y dispositivos. */
 export const routes = new Hono<AppEnv>();
 
 routes.get("/org/alerts", async (c) => {
@@ -30,7 +31,7 @@ routes.delete("/org/share-links/:id", async (c) => {
   await revokeShareLink(c.var.sdb, c.req.param("id"));
   return c.json({ ok: true });
 });
-// Hacienda calculada (G-03) y carga máxima configurable.
+// Hacienda calculada y carga máxima configurable.
 routes.get("/org/farms/:id/stock", async (c) => c.json(await farmStockSummary(c.var.sdb, c.req.param("id"))));
 routes.put("/org/farms/:id/livestock-settings", async (c) => {
   const load = z.number().min(RECOMMENDED_LOAD_LIMITS.min).max(RECOMMENDED_LOAD_LIMITS.max);
@@ -49,8 +50,8 @@ routes.put("/org/farms/:id/livestock-settings", async (c) => {
   return c.json({ ok: true });
 });
 
-// Calendario sanitario (G-10).
-// ADR 0005: campañas oficiales de SENACSA.
+// Calendario sanitario.
+// Campañas oficiales de SENACSA.
 routes.get("/org/senacsa", async (c) => {
   const q = parse(z.object({ year: z.coerce.number().int().min(2020).max(2100) }), c.req.query());
   return c.json(await senacsaForOrg(c.var.sdb, q.year));

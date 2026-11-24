@@ -9,9 +9,10 @@ import { type IngestEnv, json, max } from "./shared";
 import { uuid } from "../schemas";
 import { Hono } from "hono";
 
+/** Rutas de ingesta de avisos de fuego, riesgo, pedidos de informe y áreas problema. */
 export const routes = new Hono<IngestEnv>();
 
-/** Aviso de fuego calculado por el job de FIRMS (anexo §4.8). */
+/** Aviso de fuego calculado por el job de FIRMS. */
 routes.post("/fire-alerts", async (c) => {
   const b = parse(
     z.object({
@@ -49,10 +50,10 @@ routes.post("/farm-risk", async (c) => {
   return c.json({ ok: true });
 });
 
-/** V-04: pedidos del informe gratis pendientes (solo el punto: el email no sale de la base). */
+/** Pedidos del informe gratis pendientes (solo el punto: el email no sale de la base). */
 routes.get("/leads", async (c) => c.json(await c.var.sys.pendingLeads(Date.now())));
 
-/** V-04: informe del pedido ya calculado. Se guarda y se manda por email con el enlace; si el envío falla queda para el próximo intento. */
+/** Informe del pedido ya calculado. Se guarda y se manda por email con el enlace; si el envío falla queda para el próximo intento. */
 routes.post("/leads/:id/report", async (c) => {
   const id = c.req.param("id");
   const b = parse(z.object({ report: farmRiskSchema }), json(c.var.body));
@@ -71,7 +72,7 @@ routes.post("/leads/:id/report", async (c) => {
   }
 });
 
-/** Áreas problema de un lote (job s2_ingest, S-08): polígonos chicos ya calculados. */
+/** Áreas problema de un lote (job s2_ingest): polígonos chicos ya calculados. */
 routes.post("/problem-areas", async (c) => {
   const pos = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
   const b = parse(

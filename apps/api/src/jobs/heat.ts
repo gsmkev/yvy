@@ -1,10 +1,16 @@
 /**
- * Aviso de estrés térmico del ganado (G-32): THI calculado con la temperatura y la humedad horarias de MET Norway.
+ * Aviso de estrés térmico del ganado: THI calculado con la temperatura y la humedad horarias de MET Norway.
  * Función pura: se prueba sin red. Los umbrales y reglas están en packages/shared/src/heat.ts (valores por defecto).
  */
 import { heatAlertSeverity, heatHours, HEAT_ALERT, HEAT_THRESHOLDS, localDate, summarizeHeat } from "@yvy/shared";
 import type { AlertDraft } from "./rules";
 
+/**
+ * Evalúa las horas de las próximas horas y devuelve el aviso de estrés térmico, o null si el THI no llega al umbral.
+ * @param hours pronóstico horario (`validAt` en epoch ms).
+ * @param now instante actual; la ventana arranca en la hora en punto.
+ * @param tz zona horaria de la estancia, para las fechas del aviso.
+ */
 export function evaluateHeatStress(
   hours: readonly { validAt: number; tempC: number | null; humidityPct: number | null }[],
   now: number,

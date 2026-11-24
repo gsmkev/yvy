@@ -1,5 +1,5 @@
 /**
- * Monitoreo de errores (P-02) con Sentry vía toucan-js. Sin SENTRY_DSN no se crea el cliente y no sale nada de
+ * Monitoreo de errores con Sentry vía toucan-js. Sin SENTRY_DSN no se crea el cliente y no sale nada de
  * la red. Solo se informan errores inesperados (500, jobs y cola); los 4xx y las validaciones no.
  * Se sacan encabezados, cookies, cuerpo y query string: nunca viajan tokens ni datos del campo a Sentry.
  */
@@ -8,8 +8,10 @@ import type { Bindings } from "../types";
 
 type Ctx = { waitUntil(p: Promise<unknown>): void } | undefined;
 
+/** ¿Hay un DSN de Sentry configurado? */
 export const monitoringEnabled = (env: Pick<Bindings, "SENTRY_DSN">): boolean => !!env.SENTRY_DSN?.trim();
 
+/** Informa un error a Sentry sin datos personales; no hace nada sin DSN y nunca lanza. */
 export function captureError(
   env: Pick<Bindings, "SENTRY_DSN" | "APP_ENV">,
   err: unknown,

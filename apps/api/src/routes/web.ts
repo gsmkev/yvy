@@ -7,7 +7,7 @@ import { areaHa, bboxOf } from "@yvy/geo";
 import { createFeed, feedStatus, revokeFeed } from "../db/calendar-feed";
 import { compareFarms, compareSeasons } from "../db/compare";
 import { addComment, deleteComment, listComments } from "../db/comments";
-import { alertSettingsSchema, formConfigSchema, referralCode, CROPS, localDate, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
+import { alertSettingsSchema, formConfigSchema, referralCode, CROPS, localDate, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, PASTURE_CLASSES, PRODUCTION_SYSTEMS, RECOMMENDED_LOAD_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import {
   addTaskComment,
@@ -520,11 +520,17 @@ web.delete("/org/share-links/:id", async (c) => {
 // Hacienda calculada (G-03) y carga máxima configurable.
 web.get("/org/farms/:id/stock", async (c) => c.json(await farmStockSummary(c.var.sdb, c.req.param("id"))));
 web.put("/org/farms/:id/livestock-settings", async (c) => {
+  const load = z.number().min(RECOMMENDED_LOAD_LIMITS.min).max(RECOMMENDED_LOAD_LIMITS.max);
   const b = parse(
-    z.object({ maxUaPerHa: z.number().min(MAX_UA_PER_HA_LIMITS.min).max(MAX_UA_PER_HA_LIMITS.max) }),
+    z.object({
+      maxUaPerHa: z.number().min(MAX_UA_PER_HA_LIMITS.min).max(MAX_UA_PER_HA_LIMITS.max).optional(),
+      system: z.enum(PRODUCTION_SYSTEMS).optional(),
+      pastureDefault: z.enum(PASTURE_CLASSES).optional(),
+      pastureLoads: z.object({ natural: load.optional(), implantada: load.optional(), mejorada: load.optional() }).strict().optional(),
+    }),
     await readJson(c.req),
   );
-  await saveLivestockSettings(c.var.sdb, c.req.param("id"), b.maxUaPerHa);
+  await saveLivestockSettings(c.var.sdb, c.req.param("id"), b);
   return c.json({ ok: true });
 });
 

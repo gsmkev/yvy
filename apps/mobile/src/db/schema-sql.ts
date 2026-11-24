@@ -271,5 +271,8 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `plan_requests_status_idx` ON `plan_requests` (`status`,`created_at`);",
   "CREATE TABLE `trial_requests` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`name` text NOT NULL,\n\t`whatsapp` text NOT NULL,\n\t`company` text,\n\t`crops` text DEFAULT '[]' NOT NULL,\n\t`hectares` real,\n\t`employees` integer,\n\t`department` text,\n\t`consent_at` integer NOT NULL,\n\t`consent_version` text NOT NULL,\n\t`ip_hash` text,\n\t`status` text DEFAULT 'new' NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`contacted_at` integer\n);",
   "CREATE INDEX `trial_requests_ip_idx` ON `trial_requests` (`ip_hash`,`created_at`);",
-  "CREATE INDEX `trial_requests_status_idx` ON `trial_requests` (`status`,`created_at`);"
+  "CREATE INDEX `trial_requests_status_idx` ON `trial_requests` (`status`,`created_at`);",
+  "ALTER TABLE `farm_livestock_settings` ADD `system` text;",
+  "ALTER TABLE `farm_livestock_settings` ADD `pasture_default` text;",
+  "ALTER TABLE `farm_livestock_settings` ADD `pasture_loads` text;"
 ];

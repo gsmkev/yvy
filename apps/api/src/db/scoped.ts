@@ -127,6 +127,8 @@ export const can = {
   dashboard: (r: Role) => r === "owner" || r === "admin",
   /** C-04: solo dueño y administrador cambian los umbrales de avisos. */
   alertSettings: (r: Role) => r === "owner" || r === "admin",
+  /** ADR 0005: sistema productivo, carga máxima y cargas recomendadas de la estancia: dueño y administrador. */
+  livestockSettings: (r: Role) => r === "owner" || r === "admin",
   /** G-10: planificar el calendario sanitario (y crear sus tareas): todos menos los roles de campo. */
   planSanitary: (r: Role) => !isFieldRole(r),
   /** ADR 0004: campañas y su plan por lote; el supervisor y los roles de campo solo las ven. */

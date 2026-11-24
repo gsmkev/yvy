@@ -1343,6 +1343,12 @@ export const farmLivestockSettings = sqliteTable("farm_livestock_settings", {
   farmId: text("farm_id").primaryKey(),
   organizationId: text("organization_id").notNull(),
   maxUaPerHa: real("max_ua_per_ha").notNull().default(1),
+  /** Sistema productivo (ADR 0005): cria, recria, invernada, ciclo_completo, feedlot o tambo. Nulo = sin elegir. */
+  system: text("system"),
+  /** Tipo de pastura de los potreros sin "tipo de pastura" reconocible: natural, implantada o mejorada. */
+  pastureDefault: text("pasture_default"),
+  /** JSON {natural?, implantada?, mejorada?}: UA/ha recomendadas propias de la estancia (vacío = las de referencia). */
+  pastureLoads: text("pasture_loads"),
   updatedAt: integer("updated_at").notNull(),
   updatedBy: text("updated_by"),
 });

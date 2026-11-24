@@ -1,7 +1,7 @@
 /** Pestaña Hacienda (G-03): hacienda calculada por potrero, carga animal y límite configurable. */
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { HERD_CATEGORIES, MAX_UA_PER_HA_LIMITS, UA_EQUIVALENTS, type FarmStockResponse } from "@yvy/shared";
+import { HERD_CATEGORIES, MAX_UA_PER_HA_LIMITS, SYSTEM_SECTION_ORDER, UA_EQUIVALENTS, type FarmStockResponse } from "@yvy/shared";
 import { get, put } from "../lib/api";
 import { fmtDay, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -14,6 +14,7 @@ import { ReproPanel } from "./ReproPanel";
 import { SupplementPanel } from "./SupplementPanel";
 import { TheftPanel } from "./TheftPanel";
 import { WeighingsPanel } from "./WeighingsPanel";
+import { LoadEditor, SystemBar, SystemIndicators, useSystem } from "./HerdSystem";
 import { Button, Empty, ErrorBox, Field, Input, Spinner, toast } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
@@ -72,7 +73,7 @@ function StockSection({ farmId }: { farmId: string }) {
 
       <div className="overflow-x-auto">
         <ExportableTable name="hacienda">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="text-left text-xs text-tinta-2">
                 <th className="pb-2 font-medium">{t("ui.plot")}</th>
@@ -83,6 +84,8 @@ function StockSection({ farmId }: { farmId: string }) {
                 ))}
                 <th className="pb-2 text-right font-medium">{t("ui.herdTotal")}</th>
                 <th className="pb-2 text-right font-medium">{t("ui.herdUaPerHaHead")}</th>
+                <th className="pb-2 text-right font-medium">{t("ui.herdLoadRecommended")}</th>
+                <th className="pb-2 text-right font-medium">{t("ui.herdLoadDiff")}</th>
                 <th className="pb-2 text-right font-medium">{t("ui.herdLastCount")}</th>
               </tr>
             </thead>
@@ -98,6 +101,18 @@ function StockSection({ farmId }: { farmId: string }) {
                   <td className="num py-2.5 text-right font-medium">{int.format(p.total)}</td>
                   <td className={`num py-2.5 text-right ${p.overLimit ? "font-medium text-peligro" : ""}`}>
                     {p.uaPerHa === null ? "—" : dec.format(p.uaPerHa)}
+                  </td>
+                  <td className="num py-2.5 text-right" title={tk(`ui.herdLoadClass_${p.pastureClass}`)}>
+                    {dec.format(p.recommendedUaPerHa)}
+                  </td>
+                  <td className="num py-2.5 text-right text-tinta-2">
+                    {p.total === 0
+                      ? "—"
+                      : Math.abs(p.diffUa) < 0.5
+                        ? t("ui.herdLoadOk")
+                        : p.diffUa > 0
+                          ? t("ui.herdLoadSurplus", { n: dec.format(p.diffUa) })
+                          : t("ui.herdLoadShortfall", { n: dec.format(-p.diffUa) })}
                   </td>
                   <td className="num py-2.5 text-right text-tinta-2">
                     {p.lastCountAt ? fmtDay(p.lastCountAt) : t("ui.herdNeverCounted")}
@@ -137,6 +152,12 @@ function StockSection({ farmId }: { farmId: string }) {
         )}
         {save.error ? <ErrorBox error={save.error} /> : null}
       </form>
+
+      <p className="-mt-3 text-xs text-tinta-2">
+        {t("ui.herdLoadHint")}
+        {d.winter && ` ${t("ui.herdLoadWinter")}`}
+      </p>
+      {canEditLimit && <LoadEditor key={`${d.pastureDefault}|${JSON.stringify(d.pastureLoads)}`} farmId={farmId} d={d} />}
 
       <HeatStressCard farmId={farmId} />
 
@@ -186,12 +207,17 @@ function SectionPills({ items, value, onChange }: { items: { id: Section; label:
 /** Pestaña Hacienda: hacienda calculada y, abajo, cada módulo de ganadería en su sección. */
 export function HerdPanel({ farmId }: { farmId: string }) {
   const [section, setSection] = useState<Section>("stock");
+  const system = useSystem(farmId).data ?? null;
+  const first: readonly string[] = system ? SYSTEM_SECTION_ORDER[system] : [];
+  const rank = (id: string) => (id === "stock" ? -1 : first.includes(id) ? first.indexOf(id) : first.length);
   return (
     <div className="mt-4 flex flex-col gap-2">
+      <SystemBar farmId={farmId} system={system} />
+      <SystemIndicators farmId={farmId} system={system} />
       <SectionPills
         value={section}
         onChange={setSection}
-        items={[
+        items={([
           { id: "stock", label: t("ui.herdSectionStock") },
           { id: "rotation", label: t("ui.herdSectionRotation") },
           { id: "forage", label: t("ui.herdSectionForage") },
@@ -200,7 +226,7 @@ export function HerdPanel({ farmId }: { farmId: string }) {
           { id: "weights", label: t("ui.herdSectionWeights") },
           { id: "supplements", label: t("ui.herdSectionSupp") },
           { id: "theft", label: t("ui.herdSectionTheft") },
-        ]}
+        ] as { id: Section; label: string }[]).sort((a, b) => rank(a.id) - rank(b.id))}
       />
       {section === "stock" && <StockSection farmId={farmId} />}
       {section === "rotation" && <RotationPanel farmId={farmId} />}

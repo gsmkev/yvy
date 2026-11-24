@@ -1,6 +1,7 @@
 /** Un solo set de íconos (Lucide, trazo 2 px) para todo el producto. */
 import {
   Anchor,
+  Syringe,
   Beef,
   Bug,
   CloudRain,
@@ -48,6 +49,7 @@ export const ALERT_ICON: Record<string, LucideIcon> = {
   water_low: Waves,
   heat_stress: Thermometer,
   rust_risk: Bug,
+  senacsa: Syringe,
 };
 
 /** M-19: un ícono por tipo de punto de interés; el mapa, las listas y la app usan el mismo. */

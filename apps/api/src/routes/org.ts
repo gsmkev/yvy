@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { areaHa, bboxOf, centroidOf, checkPlots, validateShape, type Area } from "@yvy/geo";
-import { WEBHOOK_EVENTS, REQUESTABLE_PLANS, CROPS, doseText, FARM_ACCESS_LEVELS, isWeakPin, LIMITS, PIN_LENGTH, PIN_REGEX, phoneKey, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, TASK_PRIORITIES, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
+import { BILLINGS, WEBHOOK_EVENTS, REQUESTABLE_PLANS, CROPS, doseText, FARM_ACCESS_LEVELS, isWeakPin, LIMITS, PIN_LENGTH, PIN_REGEX, phoneKey, newChecklist, prescriptionSchema, serializeChecklist, t, PLOT_KINDS, TASK_PRIORITIES, POI_KINDS, RECORD_KINDS, RECURRENCES, ROLES, SEASONS } from "@yvy/shared";
 import { can } from "../db/scoped";
 import { randomDigits, randomToken } from "../lib/crypto";
 import { createApiToken, listApiTokens, revokeApiToken } from "../db/api-tokens";
@@ -85,16 +85,20 @@ org.post("/plan-request", async (c) => {
       maxHa: z.number().positive().max(LIMITS.planRequest.maxHa).nullish(),
       maxUsers: z.number().int().positive().max(LIMITS.planRequest.maxUsers).nullish(),
       note: z.string().trim().max(LIMITS.planRequest.noteLength).nullish(),
+      billing: z.enum(BILLINGS).nullish(),
     }),
     await readJson(c.req),
   );
-  const res = await createPlanRequest(c.var.sdb, b);
+  // Sin cambiar el esquema: la forma de pago va al final del texto de la nota ("Forma de pago: Anual").
+  const billingText = b.billing ? `Forma de pago: ${t(`ui.planBilling_${b.billing}`)}` : null;
+  const note = [b.note, billingText].filter(Boolean).join(". ") || null;
+  const res = await createPlanRequest(c.var.sdb, { ...b, note });
   if (c.env.OPS_EMAIL) {
     await sendEmail(
       c.env,
       c.env.OPS_EMAIL,
       `Pedido de plan: ${res.orgName}`,
-      `La organización "${res.orgName}" (${c.var.auth.orgId}) pidió el plan ${b.plan}${b.maxHa ? `, hasta ${b.maxHa} ha` : ""}${b.maxUsers ? `, hasta ${b.maxUsers} personas` : ""}.${b.note ? ` Nota: ${b.note}` : ""} Se aprueba en el panel interno.`,
+      `La organización "${res.orgName}" (${c.var.auth.orgId}) pidió el plan ${b.plan}${b.maxHa ? `, hasta ${b.maxHa} ha` : ""}${b.maxUsers ? `, hasta ${b.maxUsers} personas` : ""}.${b.billing ? ` Forma de pago: ${t(`ui.planBilling_${b.billing}`)}.` : ""}${b.note ? ` Nota: ${b.note}` : ""} Se aprueba en el panel interno.`,
     ).catch((e) => console.error("plan-request email", e));
   }
   return c.json({ id: res.id }, 201);

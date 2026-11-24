@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
-import { HEALTH_REASONS, HERD_CATEGORIES, isFieldRole, localDate, t, type HerdCategory, type MessageKey, type SanitaryState } from "@yvy/shared";
+import { HEALTH_REASONS, HERD_CATEGORIES, isFieldRole, localDate, senacsaNote, senacsaPlanDate, t, type HerdCategory, type SenacsaCampaign, type SenacsaResponse, type MessageKey, type SanitaryState } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { tap } from "../../src/lib/haptics";
 import { getSession } from "../../src/lib/session";
@@ -82,6 +82,18 @@ export default function Sanitary() {
   const [removing, setRemoving] = useState<EventRow | null>(null);
   const create = useOnlineMutation<Record<string, unknown>, { tasksCreated: number }>("POST", "/org/sanitary-events", { invalidate: ["/org/sanitary-events", "/org/tasks"] });
   const remove = useOnlineMutation<{ id: string }, unknown>("DELETE", (b) => `/org/sanitary-events/${b.id}`, { invalidate: ["/org/sanitary-events"] });
+  const year = Number(today.slice(0, 4));
+  const senacsa = useOnline<SenacsaResponse>(allowed ? `/org/senacsa?year=${year}` : null);
+  const planCampaign = useOnlineMutation<Record<string, unknown>, { tasksCreated: number }>("POST", "/org/sanitary-events", { invalidate: ["/org/sanitary-events", "/org/senacsa", "/org/tasks"] });
+  const planSenacsa = async (c: SenacsaCampaign) => {
+    const r = await planCampaign.mutate({ reason: c.reason, plannedDate: senacsaPlanDate(c, today), farmId: farms.length === 1 ? farms[0]!.id : null, categories: c.categories, note: senacsaNote(c), createTasks: true });
+    if (r.ok) {
+      showToast(t("ui.senacsaPlanSaved"));
+      if (r.data.tasksCreated > 0) void syncNow();
+      void senacsa.refresh();
+    } else showToast(r.error);
+  };
+  const openCampaigns = (senacsa.data?.campaigns ?? []).filter((c) => c.to >= today);
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
 
   if (!allowed) return <OfficeScreen title={t("ui.sanitaryTitle")}><EmptyState title={t("ui.sanitaryNoAccess")} /></OfficeScreen>;
@@ -114,6 +126,25 @@ export default function Sanitary() {
   return (
     <OfficeScreen title={t("ui.sanitaryTitle")} query={q} action={{ label: t("ui.sanitaryNew"), icon: Plus, onPress: openNew, disabled: !online }}>
       <NeedsSignalNote />
+      {openCampaigns.length > 0 && (
+        <View style={{ marginTop: 16, gap: 8 }}>
+          <Text style={T.heading}>{t("ui.senacsaTitle")}</Text>
+          {openCampaigns.map((c) => (
+            <View key={c.id} style={{ borderWidth: 1, borderColor: C.linea, borderRadius: RADIUS, padding: 12, gap: 4 }}>
+              <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{t("ui.senacsaBadge")}</Text>
+              <Text style={T.bodyMedium}>{`${t(`ui.senacsaName_${c.reason}` as MessageKey)} · ${t("ui.senacsaPeriod", { n: c.period })}`}</Text>
+              <Text style={T.small}>{`${t("ui.senacsaDates", { from: dmy(c.from), to: dmy(c.to) })}${c.registerUntil ? ` · ${t("ui.senacsaRegister", { date: dmy(c.registerUntil) })}` : ""}`}</Text>
+              <Text style={T.small}>{c.appliesTo}</Text>
+              {senacsa.data!.planned.includes(c.id) ? (
+                <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{t("ui.senacsaPlanned")}</Text>
+              ) : (
+                <Button kind="secondary" title={t("ui.senacsaPlan")} loading={planCampaign.pending} disabled={!online} onPress={() => planSenacsa(c)} />
+              )}
+            </View>
+          ))}
+          <Text style={T.small}>{t("ui.senacsaDisclaimer")}</Text>
+        </View>
+      )}
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 16 }}>
         <MonthStep dir={-1} onPress={() => setMonth(shiftMonth(month, -1))} />
         <Text accessibilityLiveRegion="polite" style={T.heading}>

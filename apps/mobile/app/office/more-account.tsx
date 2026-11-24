@@ -6,14 +6,15 @@
 import { useState } from "react";
 import { Linking, View } from "react-native";
 import { CalendarDays, FileText, MessageCircle, PlayCircle, ShieldCheck } from "lucide-react-native";
-import { isFieldRole, LIMITS, t, type MessageKey } from "@yvy/shared";
+import { BILLINGS, isFieldRole, LIMITS, priceFor, t, usdToGs, type Billing, type MessageKey } from "@yvy/shared";
 import { copyText } from "../../src/lib/copy";
 import { API_URL, getSession } from "../../src/lib/session";
 import { showToast } from "../../src/lib/toast";
 import { NoSignalNote, useNoSignalReason } from "../../src/office/erpCommon";
 import { fmtDate, fmtDateTime, fmtNumber, parseDecimal } from "../../src/office/format";
 import { OfficeScreen } from "../../src/office/OfficeScreen";
-import { FormSheet, KeyValue, StatRow, TextField } from "../../src/office/ui";
+import { fmtGs } from "../../src/office/money";
+import { FormSheet, KeyValue, Segmented, StatRow, TextField } from "../../src/office/ui";
 import { useOnline } from "../../src/office/useOnline";
 import { useOnlineMutation } from "../../src/office/useOnlineMutation";
 import { Button, Row, SectionHeader, Text } from "../../src/ui/kit";
@@ -73,6 +74,7 @@ export default function MoreAccount() {
 function PlanSection() {
   const q = useOnline<PlanView>("/org/plan", { cache: false });
   const [asking, setAsking] = useState(false);
+  const [billing, setBilling] = useState<Billing>("annual");
   const cancel = useOnlineMutation<void, unknown>("DELETE", "/org/plan-request", { invalidate: ["/org/plan"] });
   const p = q.data;
   const requested = (r: PlanRequest) => [t(key(`ui.planName_${r.plan}`)), r.maxHa ? t("ui.planUpToHa", { n: fmtNumber(r.maxHa, 0) }) : null, r.maxUsers ? t("ui.planUpToUsers", { n: fmtNumber(r.maxUsers, 0) }) : null].filter(Boolean).join(" · ");
@@ -92,6 +94,7 @@ function PlanSection() {
               { label: `${t("ui.planPeople")} ${t("office.planOf", { n: cap(p.limits.maxUsers) })}`, value: fmtNumber(p.usage.users, 0), tone: over(p.usage.users, p.limits.maxUsers) ? "danger" : undefined },
             ]}
           />
+          <PriceSection billing={billing} onBilling={setBilling} />
           {p.pending ? (
             <View style={{ marginTop: 16, paddingLeft: 12, borderLeftWidth: 3, borderLeftColor: C.trigo }}>
               <Text style={T.bodyMedium}>{t("ui.planPending", { date: fmtDate(p.pending.createdAt) })}</Text>
@@ -107,14 +110,56 @@ function PlanSection() {
               <NoSignalNote />
             </>
           )}
-          {asking ? <AskSheet intro={t("ui.planAskIntro", { ha: cap(p.plans.active.maxHa), users: cap(p.plans.active.maxUsers) })} onClose={() => setAsking(false)} onSent={() => void q.refresh()} /> : null}
+          {asking ? <AskSheet billing={billing} intro={t("ui.planAskIntro", { ha: cap(p.plans.active.maxHa), users: cap(p.plans.active.maxUsers) })} onClose={() => setAsking(false)} onSent={() => void q.refresh()} /> : null}
         </>
       )}
     </>
   );
 }
 
-function AskSheet({ intro, onClose, onSent }: { intro: string; onClose: () => void; onSent: () => void }) {
+const usd = (n: number) => `US$ ${fmtNumber(n, 0)}`;
+
+/** ADR 0005 §5: el precio por año y por cuota con las hectáreas reales (tablero) y una calculadora. Informativo: el cobro es manual. */
+function PriceSection({ billing, onBilling }: { billing: Billing; onBilling: (b: Billing) => void }) {
+  const dash = useOnline<{ areaByCrop: { kind: "crop" | "pasture"; ha: number }[] }>("/org/dashboard", { cache: false });
+  const rates = useOnline<{ date: string; usdToPyg: number }[]>("/org/erp/exchange-rates", { cache: false });
+  const rate = rates.data?.[0]?.usdToPyg ?? LIMITS.pricing.usdToPyg;
+  const [calc, setCalc] = useState({ crops: "", cattle: "" });
+  const sum = (kind: "crop" | "pasture") => Math.round((dash.data?.areaByCrop ?? []).filter((a) => a.kind === kind).reduce((n, a) => n + a.ha, 0));
+  const crops = sum("crop");
+  const cattle = sum("pasture");
+  const quote = (c: number, g: number) => {
+    const q = priceFor(c, g, billing);
+    return [
+      { label: t("ui.planPriceYear"), value: fmtGs(usdToGs(q.year, rate)) },
+      { label: `${t("ui.planPriceInstallment")} · ${t(key(`ui.planPriceInstallments_${billing}`))}`, value: fmtGs(usdToGs(q.perInstallment, rate)) },
+      { label: "US$", value: `${usd(q.year)} · ${usd(q.perInstallment)}` },
+      { label: t("ui.planPricePerHa", { n: fmtNumber(q.perHa, 2) }), value: q.minApplied ? t("ui.planPriceMin") : "" },
+    ];
+  };
+  return (
+    <>
+      <SectionHeader title={t("ui.planPriceTitle")} />
+      <Text style={T.small}>{t("ui.planPriceIntro")}</Text>
+      <Text style={[T.smallMedium, { marginTop: 12, marginBottom: 6 }]}>{t("ui.planBilling")}</Text>
+      <Segmented options={BILLINGS.map((b) => ({ value: b, label: t(key(`ui.planBilling_${b}`)) }))} value={billing} onChange={onBilling} />
+      {billing === "annual" ? <Text style={[T.small, { marginTop: 6 }]}>{t("ui.planBillingGift")}</Text> : null}
+      {dash.data ? (
+        <>
+          <Text style={[T.small, { marginTop: 12 }]}>{t("ui.planPriceYours", { crops: fmtNumber(crops, 0), cattle: fmtNumber(cattle, 0) })}</Text>
+          <KeyValue rows={quote(crops, cattle)} />
+        </>
+      ) : null}
+      <Text style={[T.smallMedium, { marginTop: 16 }]}>{t("ui.planCalcTitle")}</Text>
+      <TextField label={t("ui.planCalcCrops")} value={calc.crops} onChangeText={(v) => setCalc({ ...calc, crops: v })} kind="decimal" />
+      <TextField label={t("ui.planCalcCattle")} value={calc.cattle} onChangeText={(v) => setCalc({ ...calc, cattle: v })} kind="decimal" />
+      <KeyValue rows={quote(Math.max(0, parseDecimal(calc.crops) ?? 0), Math.max(0, parseDecimal(calc.cattle) ?? 0))} />
+      <Text style={[T.small, { marginTop: 8 }]}>{t("ui.planPriceNote", { rate: fmtNumber(rate, 0) })}</Text>
+    </>
+  );
+}
+
+function AskSheet({ billing, intro, onClose, onSent }: { billing: Billing; intro: string; onClose: () => void; onSent: () => void }) {
   const [f, setF] = useState({ ha: "", users: "", note: "" });
   const [error, setError] = useState<string | null>(null);
   const send = useOnlineMutation<Record<string, unknown>, unknown>("POST", "/org/plan-request", { invalidate: ["/org/plan"] });
@@ -123,7 +168,7 @@ function AskSheet({ intro, onClose, onSent }: { intro: string; onClose: () => vo
     const users = f.users.trim() ? parseDecimal(f.users) : null;
     if ((f.ha.trim() && (ha === null || ha <= 0)) || (f.users.trim() && (users === null || users <= 0 || !Number.isInteger(users)))) return setError(t("office.planBadNumbers"));
     setError(null);
-    const r = await send.mutate({ plan: "active", maxHa: ha, maxUsers: users, note: f.note.trim() || null });
+    const r = await send.mutate({ plan: "active", maxHa: ha, maxUsers: users, note: f.note.trim() || null, billing });
     if (r.ok) {
       showToast(t("ui.planRequestSent"));
       onSent();

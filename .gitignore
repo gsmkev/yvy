@@ -168,3 +168,4 @@ apps/mobile/ios/
 apps/mobile/dist/
 apps/mobile/public/maplibre/
 .claude/worktrees/
+.claude/settings.local.json

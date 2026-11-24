@@ -159,7 +159,7 @@ export interface Task {
 export interface Alert {
   id: string;
   farmId: string;
-  kind: "frost" | "excess_rain" | "drought" | "fire" | "pest_threshold" | "water_low" | "heat_stress" | "rust_risk";
+  kind: "frost" | "excess_rain" | "drought" | "fire" | "pest_threshold" | "water_low" | "heat_stress" | "rust_risk" | "senacsa";
   severity: "info" | "watch" | "warning";
   probability: "low" | "medium" | "high" | null;
   validFrom: number;

@@ -98,7 +98,7 @@ export const PRODUCT_TYPES = ["seed", "agrochemical", "fertilizer", "fuel", "vet
 /** Unidad base del producto: litros o kilos. */
 export const PRODUCT_UNITS = ["l", "kg"] as const;
 export const UPLOAD_STATUS = ["pending", "uploaded"] as const;
-export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_threshold", "water_low", "heat_stress", "rust_risk"] as const;
+export const ALERT_KINDS = ["frost", "excess_rain", "drought", "fire", "pest_threshold", "water_low", "heat_stress", "rust_risk", "senacsa"] as const;
 export const ALERT_SEVERITIES = ["info", "watch", "warning"] as const;
 /** Con MET Norway no hay ensemble: probabilidad cualitativa (PRD-cloudflare §4.8). */
 export const ALERT_PROBABILITIES = ["low", "medium", "high"] as const;
@@ -1343,6 +1343,15 @@ export const farmLivestockSettings = sqliteTable("farm_livestock_settings", {
   farmId: text("farm_id").primaryKey(),
   organizationId: text("organization_id").notNull(),
   maxUaPerHa: real("max_ua_per_ha").notNull().default(1),
+  /** Sistema productivo (ADR 0005): cria, recria, invernada, ciclo_completo, feedlot o tambo. Nulo = sin elegir. */
+  system: text("system"),
+  /** Tipo de pastura de los potreros sin "tipo de pastura" reconocible: natural, implantada o mejorada. */
+  pastureDefault: text("pasture_default"),
+  /** JSON {natural?, implantada?, mejorada?}: UA/ha recomendadas propias de la estancia (vacío = las de referencia). */
+  pastureLoads: text("pasture_loads"),
+  /** Estación de servicio (ADR 0005): inicio "MM-DD" y días. Nulo = 11-01 y 90. */
+  breedingStart: text("breeding_start"),
+  breedingDays: integer("breeding_days"),
   updatedAt: integer("updated_at").notNull(),
   updatedBy: text("updated_by"),
 });

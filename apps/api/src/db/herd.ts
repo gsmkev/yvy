@@ -33,11 +33,18 @@ import {
   type ReproductionResponse,
   type ServiceMethod,
   groupWeighings,
+  productionIndicators,
+  currentCycleYear,
+  cycleWindow,
+  localDate,
+  type ReproPlanResponse,
+  type ProductionResponse,
   type WeighingEvent,
   type WeighingsResponse,
 } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
-import { farmStockSummary } from "./livestock";
+import { feedlotReport } from "./feedlot";
+import { farmStockSummary, getLivestockSettings } from "./livestock";
 import { can, type ScopedDb } from "./scoped";
 
 /** G-32: THI de las próximas 48 horas con el pronóstico horario guardado (MET Norway). */
@@ -403,5 +410,58 @@ export async function farmForage(sdb: ScopedDb, farmId: string): Promise<ForageR
         ...est,
       };
     }),
+  };
+}
+
+/**
+ * ADR 0005: indicadores del sistema productivo con lo que ya se registra (último año). Reproducción y pesadas
+ * salen de las mismas consultas de esas pestañas; el feedlot solo para quien ve el ERP. Unas 12 consultas.
+ */
+export async function farmProduction(sdb: ScopedDb, farmId: string): Promise<ProductionResponse> {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const now = sdb.now();
+  const from = now - 365 * DAY;
+  const settings = await getLivestockSettings(sdb, farmId);
+  const system = settings.system;
+  if (!system) return { system, indicators: [] };
+  const wants = (...ids: string[]) => ids.includes(system);
+  const [repro, weigh, ha, lot] = await Promise.all([
+    wants("cria", "ciclo_completo") ? farmReproduction(sdb, farmId, from, now) : null,
+    wants("recria", "invernada", "ciclo_completo") ? farmWeighings(sdb, farmId, from, now) : null,
+    wants("recria", "invernada", "ciclo_completo")
+      ? sdb.db
+          .select({ ha: sql<number>`COALESCE(SUM(${s.plots.areaHa}), 0)` })
+          .from(s.plots)
+          .where(and(eq(s.plots.farmId, farmId), eq(s.plots.organizationId, sdb.auth.orgId), eq(s.plots.kind, "pasture"), isNull(s.plots.deletedAt)))
+      : null,
+    wants("feedlot") && can.manageErp(sdb.auth.role) ? feedlotReport(sdb, { farmId, from, to: now }) : null,
+  ]);
+  return {
+    system,
+    indicators: productionIndicators(system, {
+      repro: repro?.indices,
+      weights: weigh?.groups,
+      pastureHa: ha?.[0]?.ha ?? 0,
+      feedlot: lot?.corrals,
+    }),
+  };
+}
+
+/** ADR 0005: estación de servicio de la estancia e indicadores del ciclo actual (tactos, pariciones y destetes registrados). */
+export async function farmReproPlan(sdb: ScopedDb, farmId: string): Promise<ReproPlanResponse> {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const st = await getLivestockSettings(sdb, farmId);
+  const today = localDate(sdb.now());
+  const cycleYear = currentCycleYear(today, st.breedingStart, st.breedingDays);
+  const w = cycleWindow(cycleYear, st.breedingStart, st.breedingDays);
+  const repro = await farmReproduction(sdb, farmId, Date.parse(`${w.from}T00:00:00-03:00`), Math.min(sdb.now(), Date.parse(`${w.to}T23:59:59-03:00`)));
+  return {
+    breedingStart: st.breedingStart,
+    breedingDays: st.breedingDays,
+    isDefault: st.breedingIsDefault,
+    cycleYear,
+    indicators: productionIndicators("cria", { repro: repro.indices }),
   };
 }

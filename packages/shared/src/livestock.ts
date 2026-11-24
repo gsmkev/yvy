@@ -4,6 +4,8 @@
  * posteriores (ver computeStock). Los potreros son lotes con kind = "pasture".
  */
 
+import type { PastureClass, PastureLoads, ProductionSystem } from "./production";
+
 /** Categorías de hacienda, en el orden en que se muestran. */
 export const HERD_CATEGORIES = ["vaca", "vaquilla", "novillo", "ternero", "toro"] as const;
 export type HerdCategory = (typeof HERD_CATEGORIES)[number];
@@ -197,11 +199,23 @@ export interface PlotStockRow {
   uaPerHa: number | null;
   lastCountAt: number | null;
   overLimit: boolean;
+  /** Tipo de pastura (del texto del potrero o el de la estancia) y carga recomendada (ADR 0005, sección 4). */
+  pastureClass: PastureClass;
+  recommendedUaPerHa: number;
+  recommendedUa: number;
+  /** UA actuales menos las recomendadas: positivo = sobran, negativo = faltan. */
+  diffUa: number;
 }
 
 export interface FarmStockResponse {
   maxUaPerHa: number;
   maxUaIsDefault: boolean;
+  /** Sistema productivo de la estancia (null = sin elegir), tipo de pastura por defecto y cargas propias. */
+  system: ProductionSystem | null;
+  pastureDefault: PastureClass;
+  pastureLoads: PastureLoads;
+  /** La recomendación de hoy es la de invierno (30 % menos). */
+  winter: boolean;
   plots: PlotStockRow[];
   farm: {
     counts: Record<HerdCategory, number>;

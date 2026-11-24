@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { LIMITS } from "@yvy/shared";
+import { LIMITS, type Billing } from "@yvy/shared";
 import { del, get, post } from "../lib/api";
 import { fmtDate, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
+import { PlanPrice } from "./PlanPrice";
 import { Button, ErrorBox, Field, Input, SectionHead, Spinner, Stat, toast } from "./ui";
 
 interface PlanRequest {
@@ -34,6 +35,7 @@ export function PlanPanel() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["plan"], queryFn: () => get<PlanView>("/org/plan") });
   const [open, setOpen] = useState(false);
+  const [billing, setBilling] = useState<Billing>("annual");
   const [f, setF] = useState({ maxHa: "", maxUsers: "", note: "" });
   const refresh = () => qc.invalidateQueries({ queryKey: ["plan"] });
   const send = useMutation({
@@ -43,6 +45,7 @@ export function PlanPanel() {
         maxHa: f.maxHa ? Number(f.maxHa.replace(/\./g, "").replace(",", ".")) : null,
         maxUsers: f.maxUsers ? Number(f.maxUsers) : null,
         note: f.note.trim() || null,
+        billing,
       }),
     onSuccess: () => {
       setOpen(false);
@@ -96,6 +99,8 @@ export function PlanPanel() {
           tone={over(p.usage.users, p.limits.maxUsers) ? "danger" : undefined}
         />
       </dl>
+
+      <PlanPrice billing={billing} onBilling={setBilling} />
 
       {p.pending ? (
         <div role="status" className="mt-4 border-l-2 border-trigo pl-3 text-sm">

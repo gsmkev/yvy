@@ -6,8 +6,20 @@
 import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
 import {
   computeStock,
+  DEFAULT_BREEDING_DAYS,
+  DEFAULT_BREEDING_START,
   DEFAULT_MAX_UA_PER_HA,
+  isBreedingStart,
   farmStock,
+  isWinterMonth,
+  monthInParaguay,
+  pastureClassOf,
+  plotLoad,
+  PASTURE_CLASSES,
+  PRODUCTION_SYSTEMS,
+  type PastureClass,
+  type PastureLoads,
+  type ProductionSystem,
   uaOf,
   UA_EQUIVALENTS,
   type CountEvent,
@@ -32,20 +44,56 @@ const parse = <T>(text: string): T | null => {
   }
 };
 
+const isSystem = (v: unknown): v is ProductionSystem => (PRODUCTION_SYSTEMS as readonly unknown[]).includes(v);
+const isClass = (v: unknown): v is PastureClass => (PASTURE_CLASSES as readonly unknown[]).includes(v);
+
 export async function getLivestockSettings(sdb: ScopedDb, farmId: string) {
   const [row] = await sdb.db
-    .select({ maxUaPerHa: s.farmLivestockSettings.maxUaPerHa })
+    .select({
+      maxUaPerHa: s.farmLivestockSettings.maxUaPerHa,
+      system: s.farmLivestockSettings.system,
+      pastureDefault: s.farmLivestockSettings.pastureDefault,
+      pastureLoads: s.farmLivestockSettings.pastureLoads,
+      breedingStart: s.farmLivestockSettings.breedingStart,
+      breedingDays: s.farmLivestockSettings.breedingDays,
+    })
     .from(s.farmLivestockSettings)
     .where(and(eq(s.farmLivestockSettings.farmId, farmId), eq(s.farmLivestockSettings.organizationId, sdb.auth.orgId)))
     .limit(1);
-  return { maxUaPerHa: row?.maxUaPerHa ?? DEFAULT_MAX_UA_PER_HA, isDefault: !row };
+  return {
+    maxUaPerHa: row?.maxUaPerHa ?? DEFAULT_MAX_UA_PER_HA,
+    isDefault: !row,
+    system: isSystem(row?.system) ? row.system : null,
+    pastureDefault: isClass(row?.pastureDefault) ? row.pastureDefault : ("natural" as PastureClass),
+    breedingStart: row?.breedingStart && isBreedingStart(row.breedingStart) ? row.breedingStart : DEFAULT_BREEDING_START,
+    breedingDays: row?.breedingDays ?? DEFAULT_BREEDING_DAYS,
+    breedingIsDefault: !row?.breedingStart && !row?.breedingDays,
+    pastureLoads: (row?.pastureLoads ? (parse<PastureLoads>(row.pastureLoads) ?? {}) : {}) as PastureLoads,
+  };
 }
 
-/** Solo dueño y administrador cambian la carga máxima (igual que los umbrales de avisos). */
-export async function saveLivestockSettings(sdb: ScopedDb, farmId: string, maxUaPerHa: number) {
-  sdb.require(can.alertSettings, "Solo el dueño o un administrador cambian la carga máxima");
+export interface LivestockSettingsPatch {
+  maxUaPerHa?: number;
+  system?: ProductionSystem;
+  pastureDefault?: PastureClass;
+  pastureLoads?: PastureLoads;
+  breedingStart?: string;
+  breedingDays?: number;
+}
+
+/** Solo dueño y administrador cambian la carga máxima, el sistema y las cargas recomendadas (como los umbrales de avisos). */
+export async function saveLivestockSettings(sdb: ScopedDb, farmId: string, patch: LivestockSettingsPatch) {
+  sdb.require(can.livestockSettings, "Solo el dueño o un administrador cambian la configuración de hacienda");
   await sdb.requireFarm(farmId);
-  const row = { maxUaPerHa, organizationId: sdb.auth.orgId, updatedAt: sdb.now(), updatedBy: sdb.auth.userId };
+  const change = {
+    ...(patch.maxUaPerHa !== undefined && { maxUaPerHa: patch.maxUaPerHa }),
+    ...(patch.system !== undefined && { system: patch.system }),
+    ...(patch.pastureDefault !== undefined && { pastureDefault: patch.pastureDefault }),
+    ...(patch.breedingStart !== undefined && { breedingStart: patch.breedingStart }),
+    ...(patch.breedingDays !== undefined && { breedingDays: patch.breedingDays }),
+    ...(patch.pastureLoads !== undefined && { pastureLoads: JSON.stringify(patch.pastureLoads) }),
+  };
+  const row = { ...change, organizationId: sdb.auth.orgId, updatedAt: sdb.now(), updatedBy: sdb.auth.userId };
   await sdb.db
     .insert(s.farmLivestockSettings)
     .values({ farmId, ...row })
@@ -59,7 +107,7 @@ export async function farmStockSummary(sdb: ScopedDb, farmId: string): Promise<F
   const org = sdb.auth.orgId;
   const [plots, settings, countRows] = await Promise.all([
     sdb.db
-      .select({ id: s.plots.id, name: s.plots.name, areaHa: s.plots.areaHa })
+      .select({ id: s.plots.id, name: s.plots.name, areaHa: s.plots.areaHa, pastureType: s.plots.pastureType })
       .from(s.plots)
       .where(
         and(eq(s.plots.farmId, farmId), eq(s.plots.organizationId, org), eq(s.plots.kind, "pasture"), isNull(s.plots.deletedAt)),
@@ -123,10 +171,12 @@ export async function farmStockSummary(sdb: ScopedDb, farmId: string): Promise<F
     deaths,
   );
   const max = settings.maxUaPerHa;
+  const month = monthInParaguay(sdb.now());
   const rows: PlotStockRow[] = plots.map((p) => {
     const st = stock.get(p.id)!;
     const ua = uaOf(st.counts);
     const perHa = p.areaHa > 0 ? ua / p.areaHa : null;
+    const pastureClass = pastureClassOf(p.pastureType, settings.pastureDefault);
     return {
       plotId: p.id,
       name: p.name,
@@ -137,12 +187,18 @@ export async function farmStockSummary(sdb: ScopedDb, farmId: string): Promise<F
       uaPerHa: perHa,
       lastCountAt: st.lastCountAt,
       overLimit: perHa !== null && perHa > max,
+      pastureClass,
+      ...plotLoad(ua, p.areaHa, pastureClass, month, settings.pastureLoads),
     };
   });
   const f = farmStock(stock.values(), new Map(plots.map((p) => [p.id, p.areaHa])));
   return {
     maxUaPerHa: max,
     maxUaIsDefault: settings.isDefault,
+    system: settings.system,
+    pastureDefault: settings.pastureDefault,
+    pastureLoads: settings.pastureLoads,
+    winter: isWinterMonth(month),
     plots: rows,
     farm: { ...f, overLimit: f.uaPerHa !== null && f.uaPerHa > max },
     uaEquivalents: { ...UA_EQUIVALENTS },

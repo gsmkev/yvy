@@ -7,7 +7,7 @@ import { areaHa, bboxOf } from "@yvy/geo";
 import { createFeed, feedStatus, revokeFeed } from "../db/calendar-feed";
 import { compareFarms, compareSeasons } from "../db/compare";
 import { addComment, deleteComment, listComments } from "../db/comments";
-import { alertSettingsSchema, formConfigSchema, referralCode, CROPS, localDate, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
+import { alertSettingsSchema, formConfigSchema, referralCode, CROPS, localDate, notificationPrefsSchema, LIMITS, BREEDING_DAYS_LIMITS, isBreedingStart, MAX_UA_PER_HA_LIMITS, PASTURE_CLASSES, PRODUCTION_SYSTEMS, RECOMMENDED_LOAD_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import {
   addTaskComment,
@@ -58,7 +58,7 @@ import {
   updateTask,
 } from "../db/queries";
 import { farmStockSummary, saveLivestockSettings } from "../db/livestock";
-import { createSanitaryEvent, deleteSanitaryEvent, listSanitaryEvents } from "../db/sanitary";
+import { createSanitaryEvent, deleteSanitaryEvent, listSanitaryEvents, senacsaForOrg } from "../db/sanitary";
 import { clientsOverview } from "../db/clients";
 import { createLine, deleteLine, listFarmLines, updateLine } from "../db/lines";
 import { parse, readJson, timeOfDay } from "../lib/http";
@@ -520,15 +520,28 @@ web.delete("/org/share-links/:id", async (c) => {
 // Hacienda calculada (G-03) y carga máxima configurable.
 web.get("/org/farms/:id/stock", async (c) => c.json(await farmStockSummary(c.var.sdb, c.req.param("id"))));
 web.put("/org/farms/:id/livestock-settings", async (c) => {
+  const load = z.number().min(RECOMMENDED_LOAD_LIMITS.min).max(RECOMMENDED_LOAD_LIMITS.max);
   const b = parse(
-    z.object({ maxUaPerHa: z.number().min(MAX_UA_PER_HA_LIMITS.min).max(MAX_UA_PER_HA_LIMITS.max) }),
+    z.object({
+      maxUaPerHa: z.number().min(MAX_UA_PER_HA_LIMITS.min).max(MAX_UA_PER_HA_LIMITS.max).optional(),
+      system: z.enum(PRODUCTION_SYSTEMS).optional(),
+      pastureDefault: z.enum(PASTURE_CLASSES).optional(),
+      breedingStart: z.string().refine(isBreedingStart, "Fecha inválida (MM-DD)").optional(),
+      breedingDays: z.number().int().min(BREEDING_DAYS_LIMITS.min).max(BREEDING_DAYS_LIMITS.max).optional(),
+      pastureLoads: z.object({ natural: load.optional(), implantada: load.optional(), mejorada: load.optional() }).strict().optional(),
+    }),
     await readJson(c.req),
   );
-  await saveLivestockSettings(c.var.sdb, c.req.param("id"), b.maxUaPerHa);
+  await saveLivestockSettings(c.var.sdb, c.req.param("id"), b);
   return c.json({ ok: true });
 });
 
 // Calendario sanitario (G-10).
+// ADR 0005: campañas oficiales de SENACSA.
+web.get("/org/senacsa", async (c) => {
+  const q = parse(z.object({ year: z.coerce.number().int().min(2020).max(2100) }), c.req.query());
+  return c.json(await senacsaForOrg(c.var.sdb, q.year));
+});
 web.get("/org/sanitary-events", async (c) => {
   const q = parse(
     z.object({ month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/), farmId: z.string().uuid().optional() }),

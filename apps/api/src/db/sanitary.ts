@@ -3,12 +3,15 @@
  * tareas (kind "health") para los empleados asignados a algún potrero, que sí bajan al celular.
  * El estado hecho o vencido se calcula contra los registros `health` (sanitaryState en packages/shared).
  */
-import { and, asc, eq, getTableColumns, gte, isNull, sql } from "drizzle-orm";
+import { and, asc, eq, getTableColumns, gte, inArray, isNull, sql } from "drizzle-orm";
 import {
   HEALTH_REASONS,
   newId,
   sanitaryState,
   matchingHealth,
+  officialCampaigns,
+  senacsaIdFromNote,
+  type SenacsaResponse,
   SANITARY_EARLY_DAYS,
   t,
   type HealthRecordLite,
@@ -182,4 +185,31 @@ export async function deleteSanitaryEvent(sdb: ScopedDb, id: string) {
     )
     .returning({ id: s.sanitaryEvents.id });
   if (!res.length) throw new NotFoundError("Evento inexistente");
+}
+
+/** ADR 0005: campañas oficiales de SENACSA del año si la organización tiene hacienda registrada, y cuáles ya se planificaron (2 consultas). */
+export async function senacsaForOrg(sdb: ScopedDb, year: number): Promise<SenacsaResponse> {
+  sdb.require(can.viewAll);
+  const org = sdb.auth.orgId;
+  const [has] = await sdb.db
+    .select({ id: s.records.id })
+    .from(s.records)
+    .where(and(eq(s.records.organizationId, org), inArray(s.records.kind, ["herd_count", "herd_move"]), isNull(s.records.deletedAt)))
+    .limit(1);
+  const campaigns = officialCampaigns(year, { hasLivestock: !!has });
+  if (!campaigns.length) return { campaigns, planned: [] };
+  const notes = await sdb.db
+    .select({ note: s.sanitaryEvents.note })
+    .from(s.sanitaryEvents)
+    .where(
+      and(
+        eq(s.sanitaryEvents.organizationId, org),
+        isNull(s.sanitaryEvents.deletedAt),
+        gte(s.sanitaryEvents.plannedDate, `${year}-01-01`),
+        sql`${s.sanitaryEvents.plannedDate} <= ${`${year}-12-31`}`,
+        sql`${s.sanitaryEvents.note} LIKE 'Oficial · SENACSA%'`,
+      ),
+    )
+    .limit(100);
+  return { campaigns, planned: [...new Set(notes.map((n) => senacsaIdFromNote(n.note)).filter((x): x is string => !!x))] };
 }

@@ -13,6 +13,7 @@ import { RecordList } from "./RecordList";
 import { SectionButton } from "./SectionButton";
 import { useParties } from "./PartiesPanel";
 import { ExportableTable } from "../ExportableTable";
+import type { DueRow as Due, DuesResponse as Dues } from "@yvy/shared";
 
 interface Account {
   id: string;
@@ -21,22 +22,6 @@ interface Account {
   currency: Currency;
   openingBalance: number;
   balance: number;
-}
-interface Due {
-  docKind: "purchase" | "settlement" | "cattle";
-  docId: string;
-  partyId: string | null;
-  label: string;
-  currency: Currency;
-  total: number;
-  pending: number;
-  dueDate: string | null;
-  status: "none" | "overdue" | "soon" | "ok";
-  daysLeft: number | null;
-}
-interface Dues {
-  rows: Due[];
-  totals: Record<string, { pending: number; overdue: number }>;
 }
 
 export function CashPanel() {

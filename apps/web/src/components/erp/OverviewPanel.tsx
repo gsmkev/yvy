@@ -12,19 +12,8 @@ import { EmptyState, ErrorBox, SectionHead, Spinner, Stat } from "../ui";
 import { useParties } from "./PartiesPanel";
 import { useWarehouses } from "./WarehousesPanel";
 import { groupOrders, plotsLabel, type OrderRow } from "@yvy/shared";
+import type { BalancesResponse as Balances, DuesTotalsResponse as Dues, LowStockApiRow as Low } from "@yvy/shared";
 
-interface Balances {
-  accounts: { id: string }[];
-  totals: Record<string, number>;
-}
-interface Dues {
-  totals: Record<string, { pending: number; overdue: number }>;
-}
-interface Low {
-  productId: string;
-  warehouseId: string;
-  missing: number;
-}
 interface Purchase {
   id: string;
   partyId: string | null;

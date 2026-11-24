@@ -6,27 +6,7 @@ import { fmtDate, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { PlanPrice } from "./PlanPrice";
 import { Button, ErrorBox, Field, Input, SectionHead, Spinner, Stat, toast } from "./ui";
-
-interface PlanRequest {
-  id: string;
-  plan: string;
-  maxHa: number | null;
-  maxUsers: number | null;
-  note: string | null;
-  status: string;
-  createdAt: number;
-  resolutionNote: string | null;
-}
-
-interface PlanView {
-  plan: string;
-  trialEndsAt: number | null;
-  limits: { maxHa: number | null; maxUsers: number | null };
-  usage: { ha: number; users: number };
-  plans: { active: { maxHa: number | null; maxUsers: number | null } };
-  pending: PlanRequest | null;
-  lastResolved: PlanRequest | null;
-}
+import type { PlanRequestRow as PlanRequest, PlanView } from "@yvy/shared";
 
 const cap = (n: number | null) => (n === null ? t("ui.planNoCap") : fmtNum(n));
 

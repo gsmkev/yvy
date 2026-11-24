@@ -14,35 +14,7 @@ import { SectionButton } from "./SectionButton";
 import { useParties } from "./PartiesPanel";
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions, RowMenu } from "./adminSlot";
-
-interface Due {
-  planId: string;
-  machineId: string;
-  machine: string;
-  name: string;
-  meterKind: "hours" | "km";
-  meter: number;
-  dueAt: number;
-  remaining: number;
-  status: "ok" | "soon" | "overdue";
-}
-interface Plan {
-  id: string;
-  machineId: string;
-  name: string;
-  everyUnits: number;
-  lastDoneMeter: number;
-}
-interface Log {
-  id: string;
-  machineId: string;
-  planId: string | null;
-  kind: (typeof MAINTENANCE_KINDS)[number];
-  occurredAt: number;
-  meterValue: number | null;
-  description: string | null;
-  amountPyg?: number | null;
-}
+import type { MaintenanceDue as Due, MaintenancePlanRow as Plan, MaintenanceLogRow as Log } from "@yvy/shared";
 
 const unitOf = (k: "hours" | "km") => (k === "hours" ? "h" : "km");
 

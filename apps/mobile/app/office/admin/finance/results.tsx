@@ -15,26 +15,7 @@ import { OnlineState } from "../../../../src/office/state";
 import { BarList, DataList, Segmented, SelectField } from "../../../../src/office/ui";
 import { SectionHeader, Text } from "../../../../src/ui/kit";
 import { C, T } from "../../../../src/ui/theme";
-
-interface Figures {
-  costPyg: number;
-  incomePyg: number;
-  marginPyg: number;
-  areaHa: number;
-  tons: number;
-  costPerHa: number | null;
-  incomePerHa: number | null;
-  marginPerHa: number | null;
-  costPerTon: number | null;
-}
-interface Results {
-  totals: Figures;
-  byPlot: (Figures & { plotId: string | null; name: string | null; crop: string | null })[];
-  byCrop: (Figures & { crop: string | null })[];
-  byActivity: { activity: string; costPyg: number; incomePyg: number; marginPyg: number }[];
-  bySeason: { seasonId: string | null; name: string | null; costPyg: number; incomePyg: number; marginPyg: number }[];
-  beef: { kgSold: number; costPyg: number; incomePyg: number; costPerKgPyg: number | null };
-}
+import type { ResultsResponse as Results } from "@yvy/shared";
 
 type View_ = "plot" | "crop" | "season" | "activity";
 const key = (k: string) => k as MessageKey;

@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
-import { HEALTH_REASONS, HERD_CATEGORIES, isFieldRole, localDate, senacsaNote, senacsaPlanDate, t, type HerdCategory, type SenacsaCampaign, type SenacsaResponse, type MessageKey, type SanitaryState } from "@yvy/shared";
+import { HEALTH_REASONS, HERD_CATEGORIES, isFieldRole, localDate, senacsaNote, senacsaPlanDate, t, type HerdCategory, type SenacsaCampaign, type SenacsaResponse, type MessageKey } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { tap } from "../../src/lib/haptics";
 import { getSession } from "../../src/lib/session";
@@ -21,19 +21,7 @@ import { useOnlineMutation } from "../../src/office/useOnlineMutation";
 import { DataList, DateField, FormSheet, SelectField, TextField } from "../../src/office/ui";
 import { Button, EmptyState, Row, Sheet, SwitchRow, Text } from "../../src/ui/kit";
 import { C, RADIUS, T, TOUCH } from "../../src/ui/theme";
-
-interface EventRow {
-  id: string;
-  farmId: string | null;
-  reason: (typeof HEALTH_REASONS)[number];
-  plannedDate: string;
-  categories: HerdCategory[];
-  product: string | null;
-  note: string | null;
-  tasksCreated: number;
-  state: SanitaryState;
-  doneAt: number | null;
-}
+import type { SanitaryEventRow as EventRow } from "@yvy/shared";
 
 const shiftMonth = (month: string, by: number) => {
   const [y, m] = month.split("-").map(Number) as [number, number];

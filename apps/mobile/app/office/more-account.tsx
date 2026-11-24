@@ -19,30 +19,12 @@ import { useOnline } from "../../src/office/useOnline";
 import { useOnlineMutation } from "../../src/office/useOnlineMutation";
 import { Button, Row, SectionHeader, Text } from "../../src/ui/kit";
 import { C, T } from "../../src/ui/theme";
+import type { PlanRequestRow as PlanRequest, PlanView } from "@yvy/shared";
 
 /** Mismo número provisorio que la web (apps/web/src/lib/config.ts): hay que reemplazarlo por el real de Yvy. */
 const SUPPORT_WHATSAPP = "595000000000"; // provisorio: falta el número real y la app no lo lee de una variable de entorno
 const key = (k: string) => k as MessageKey;
 
-interface PlanRequest {
-  id: string;
-  plan: string;
-  maxHa: number | null;
-  maxUsers: number | null;
-  note: string | null;
-  status: string;
-  createdAt: number;
-  resolutionNote: string | null;
-}
-interface PlanView {
-  plan: string;
-  trialEndsAt: number | null;
-  limits: { maxHa: number | null; maxUsers: number | null };
-  usage: { ha: number; users: number };
-  plans: { active: { maxHa: number | null; maxUsers: number | null } };
-  pending: PlanRequest | null;
-  lastResolved: PlanRequest | null;
-}
 interface FeedStatus {
   active: boolean;
   createdAt: number | null;

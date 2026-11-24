@@ -10,26 +10,7 @@ import { ExportableTable } from "../ExportableTable";
 import { Button, DataTable, EmptyState, ErrorBox, Field, FilterBar, Select, Spinner, Stat, type Column } from "../ui";
 import { SectionButton } from "./SectionButton";
 import { useSeasonList } from "./CostsPanel";
-
-interface Figures {
-  costPyg: number;
-  incomePyg: number;
-  marginPyg: number;
-  areaHa: number;
-  tons: number;
-  costPerHa: number | null;
-  incomePerHa: number | null;
-  marginPerHa: number | null;
-  costPerTon: number | null;
-}
-interface Results {
-  totals: Figures;
-  byPlot: (Figures & { plotId: string | null; name: string | null; crop: string | null })[];
-  byCrop: (Figures & { crop: string | null })[];
-  byActivity: { activity: string; costPyg: number; incomePyg: number; marginPyg: number }[];
-  bySeason: { seasonId: string | null; name: string | null; costPyg: number; incomePyg: number; marginPyg: number }[];
-  beef: { kgSold: number; costPyg: number; incomePyg: number; costPerKgPyg: number | null };
-}
+import type { ResultsFigures as Figures, ResultsResponse as Results } from "@yvy/shared";
 
 const gs = (n: number | null) => (n === null ? "" : fmtGs(n));
 const tone = (n: number) => (n < 0 ? "text-peligro" : "");

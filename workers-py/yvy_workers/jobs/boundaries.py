@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+import shapely
 from shapely.geometry import mapping, shape
 
 log = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ def simplify_collection(fc: dict[str, Any], tolerance: float, decimals: int = DE
         if not name or not f.get("geometry"):
             continue
         geom = shape(f["geometry"]).simplify(tolerance, preserve_topology=True)
-        if geom.is_empty or geom.geom_type not in ("Polygon", "MultiPolygon"):
+        if shapely.is_empty(geom) or geom.geom_type not in ("Polygon", "MultiPolygon"):
             continue
         out.append({"type": "Feature", "properties": {"name": str(name)}, "geometry": _round(mapping(geom), decimals)})
     out.sort(key=lambda x: x["properties"]["name"])

@@ -66,7 +66,7 @@ class IngestClient:
                 log.warning("ingest %s %s: %s, reintento en %ds", method, path, type(e).__name__, wait)
                 time.sleep(wait)
         assert res is not None
-        if res.is_error:
+        if res.status_code >= 400:
             # Incluir la respuesta del Worker (mensaje de validación) para que el log del job diga qué falló
             raise httpx.HTTPStatusError(f"{res.status_code} en {method} {path}: {res.text[:500]}", request=res.request, response=res)
         return res.json()

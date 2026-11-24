@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
+import shapely
 from rasterio.features import geometry_mask
 from shapely.geometry.base import BaseGeometry
 
@@ -24,7 +25,7 @@ def compute_ndvi(red: np.ndarray, nir: np.ndarray, valid: np.ndarray) -> tuple[n
 
 def is_thin(geom: BaseGeometry, width_m: float = THIN_PLOT_M) -> bool:
     """S-11: ¿el lote es más angosto que `width_m` en algún tramo? (geom en metros): si no sobrevive a un retroceso de medio ancho."""
-    return geom.buffer(-width_m / 2).is_empty
+    return bool(shapely.is_empty(geom.buffer(-width_m / 2)))
 
 
 def compute_indices(bands: dict[str, np.ndarray], valid: np.ndarray, wanted: tuple[str, ...] = INDICES) -> dict[str, tuple[np.ndarray, np.ndarray]]:

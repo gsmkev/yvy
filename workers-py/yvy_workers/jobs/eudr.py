@@ -23,6 +23,7 @@ from datetime import date, datetime, timezone
 from typing import Any
 
 import numpy as np
+import shapely
 from rasterio.features import geometry_mask, shapes
 from shapely.geometry import mapping, shape
 from shapely.geometry.base import BaseGeometry
@@ -91,10 +92,10 @@ def outline(poly: BaseGeometry, tolerance: float = SIMPLIFY_M, max_points: int =
     exterior = Polygon(poly.exterior) if poly.geom_type == "Polygon" else Polygon(max(poly.geoms, key=lambda g: g.area).exterior)
     tol = tolerance
     simple = exterior.simplify(tol)
-    while (simple.is_empty or simple.geom_type != "Polygon" or len(simple.exterior.coords) > max_points) and tol < 10_000:
+    while (shapely.is_empty(simple) or simple.geom_type != "Polygon" or len(simple.exterior.coords) > max_points) and tol < 10_000:
         tol *= 2
         simple = exterior.simplify(tol)
-    if simple.is_empty or simple.geom_type != "Polygon" or len(simple.exterior.coords) < 4:
+    if shapely.is_empty(simple) or simple.geom_type != "Polygon" or len(simple.exterior.coords) < 4:
         simple = exterior.envelope
     return simple
 

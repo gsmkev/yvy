@@ -36,6 +36,7 @@ DRY_MM = 1.0
 LONG_SPELL_DAYS = 15
 FIRE_RADIUS_KM = 10.0
 FIRE_YEARS = 3
+Seconds = float
 FIRMS_CHUNK_DAYS = 5
 SP_LAG_DAYS = 95  # el procesamiento estándar (SP) llega con ~3 meses de atraso; lo reciente es NRT
 
@@ -197,7 +198,7 @@ def firms_windows(start: date, end: date, today: date) -> list[tuple[str, date, 
     return out
 
 
-def fetch_hotspot_history(map_key: str, today: date, client: httpx.Client | None = None, pause: float = 0.0) -> list[dict[str, Any]]:
+def fetch_hotspot_history(map_key: str, today: date, client: httpx.Client | None = None, pause: Seconds = 0.0) -> list[dict[str, Any]]:
     c = client or httpx.Client(timeout=90)
     start = today - timedelta(days=365 * FIRE_YEARS)
     hotspots: list[dict[str, Any]] = []

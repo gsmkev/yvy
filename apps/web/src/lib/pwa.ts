@@ -1,6 +1,7 @@
-/** Service worker (U-17): solo en la versión de producción. Nunca en dev ni en tests. */
+/** Service worker: solo en la versión de producción. Nunca en dev ni en tests. */
 import { getSession, onSession } from "./api";
 
+/** Registra /sw.js al terminar de cargar la página y le pide descartar los datos guardados sin conexión al cerrar sesión o cambiar de organización. No hace nada fuera de producción ni sin soporte del navegador. */
 export function registerServiceWorker() {
   if (!import.meta.env.PROD || !("serviceWorker" in navigator)) return;
   window.addEventListener("load", () => {

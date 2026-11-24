@@ -1,4 +1,4 @@
-/** Personal: empleados con su jornal y asistencia diaria con lote y labor (E-25). */
+/** Personal: empleados con su jornal y asistencia diaria con lote y labor. */
 import { useState } from "react";
 import { t } from "../../lib/i18n";
 import { ErrorBox, Spinner, Tabs } from "../ui";
@@ -6,6 +6,7 @@ import { AttendanceSheet } from "./staff/AttendanceSheet";
 import { BalancesTab } from "./staff/BalancesTab";
 import { EmployeesList, useEmployees } from "./staff/employees";
 
+/** Personal: empleados, asistencia diaria, saldos y planilla. */
 export function StaffPanel() {
   const staff = useEmployees();
   const [tab, setTab] = useState<string | null>(null);

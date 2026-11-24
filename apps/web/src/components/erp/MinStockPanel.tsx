@@ -1,4 +1,4 @@
-/** Stock mínimo por producto y depósito, con la lista de lo que hay que reponer (E-14). */
+/** Stock mínimo por producto y depósito, con la lista de lo que hay que reponer. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { del, get, put } from "../../lib/api";
@@ -48,6 +48,7 @@ function minColumns({ prod, wh, unit }: { prod: (id: string) => { name: string }
   ];
 }
 
+/** Stock mínimo por producto y depósito y lista de lo que hay que reponer. */
 export function MinStockPanel() {
   const products = useProducts();
   const warehouses = useWarehouses();

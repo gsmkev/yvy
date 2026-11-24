@@ -1,3 +1,4 @@
+/** Sección de vigor de la ficha del lote: gráfico de NDVI y comparación con la estancia. */
 import { CHART, ATTRIBUTION } from "@yvy/shared";
 import { fmtDate, fmtDay, fmtNdvi, fmtPct } from "../../lib/format";
 import { Minus, Satellite, TrendingDown, TrendingUp } from "lucide-react";
@@ -7,6 +8,7 @@ import { Empty, Stat } from "../ui";
 import type { Plot } from "../../lib/types";
 import type { Ndvi } from "./usePlotData";
 
+/** Gráfico de NDVI del lote con su variación respecto del promedio de la estancia. */
 export function NdviSection({ plot, data }: { plot: Plot; data: Ndvi }) {
   const delta = data.deltaVsFarmPct ?? null;
   return (

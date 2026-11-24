@@ -1,4 +1,4 @@
-/** Oferta de forraje estimada (G-05): kg de materia seca por hectárea y días de pasto. */
+/** Oferta de forraje estimada: kg de materia seca por hectárea y días de pasto. */
 import { useQuery } from "@tanstack/react-query";
 import type { ForageResponse } from "@yvy/shared";
 import { get } from "../lib/api";
@@ -10,6 +10,7 @@ import { ExportableTable } from "./ExportableTable";
 const int = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 });
 const dec = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 2 });
 
+/** Oferta de forraje de los potreros de una estancia. */
 export function ForagePanel({ farmId }: { farmId: string }) {
   const q = useQuery({
     queryKey: ["forage", farmId],

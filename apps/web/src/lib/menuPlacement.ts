@@ -1,4 +1,6 @@
-/** Posición de un menú desplegable para que quede siempre dentro de la pantalla. */
+/** Cálculo de la posición de un menú desplegable para que quede siempre dentro de la pantalla. */
+
+/** Rectángulo en coordenadas de pantalla. */
 export interface Box {
   left: number;
   right: number;
@@ -6,6 +8,7 @@ export interface Box {
   bottom: number;
 }
 
+/** Dónde abrir un menú respecto de su botón: alineación horizontal y si se abre hacia arriba. */
 export interface Placement {
   /** "right": el borde derecho del menú con el del botón (se abre hacia la izquierda); "left": borde izquierdo con borde izquierdo. */
   align: "left" | "right";

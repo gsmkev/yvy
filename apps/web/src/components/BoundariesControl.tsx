@@ -1,7 +1,13 @@
-/** M-16: elige qué límites administrativos se dibujan sobre el mapa (ninguno, departamentos o distritos). */
+/** Elige qué límites administrativos se dibujan sobre el mapa (ninguno, departamentos o distritos). */
 import { BOUNDARY_LEVELS, type BoundaryLevel } from "../lib/boundaries";
 import { t } from "../lib/i18n";
 
+/**
+ * Selector del nivel de límites administrativos del mapa.
+ * @param level nivel activo, o null si no hay ninguno.
+ * @param loading indica que se están descargando.
+ * @param missing indica que no hay datos de límites disponibles.
+ */
 export function BoundariesControl({
   level,
   onLevel,

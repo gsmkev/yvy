@@ -1,11 +1,12 @@
 /**
- * Idioma de la interfaz (U-22). Se guarda en este navegador. Se importa primero en main.tsx para que el idioma esté
+ * Idioma de la interfaz. Se guarda en este navegador. Se importa primero en main.tsx para que el idioma esté
  * puesto antes de que cualquier pantalla arme sus textos; cambiarlo recarga la página.
  */
 import { DEFAULT_LOCALE, getLocale, isLocale, setLocale, type Locale } from "@yvy/shared";
 
 const KEY = "yvy.locale";
 
+/** Idioma guardado en este navegador, o el predeterminado. */
 export function readLocale(): Locale {
   try {
     const v = localStorage.getItem(KEY);

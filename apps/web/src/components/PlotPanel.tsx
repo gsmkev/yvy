@@ -1,3 +1,4 @@
+/** Ficha del lote seleccionado en el mapa: datos, edición y secciones agronómicas. */
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { centroidOf, type Area } from "@yvy/geo";
@@ -20,6 +21,17 @@ import { ProblemAreasSection } from "./plot/ProblemAreasSection";
 import { RotationSection } from "./plot/RotationSection";
 import { usePlotForm, usePlotHistory, usePlotNdvi, useProblemTask } from "./plot/usePlotData";
 
+/**
+ * Panel lateral con la ficha de un lote.
+ * @param workers personas a las que se puede asignar una tarea.
+ * @param canEdit habilita editar el lote.
+ * @param problemAreas áreas problema del lote.
+ * @param onShowArea centra el mapa en un área problema.
+ * @param onEditShape pasa el mapa a edición de vértices.
+ * @param onSplit empieza a dividir el lote con una línea.
+ * @param onMerge empieza a unir el lote con otro contiguo.
+ * @param farm estancia del lote, para el encabezado de la grilla de muestreo.
+ */
 export function PlotPanel({
   plot,
   workers,
@@ -36,12 +48,12 @@ export function PlotPanel({
   workers: Member[];
   canEdit: boolean;
   onClose: () => void;
-  /** Áreas problema de este lote (S-08). */
+  /** Áreas problema de este lote. */
   problemAreas?: ProblemArea[];
   onShowArea?: (a: ProblemArea) => void;
-  /** M-02: pasa el mapa a edición de vértices de este lote. */
+  /** Pasa el mapa a edición de vértices de este lote. */
   onEditShape?: () => void;
-  /** M-05: dibujar una línea para dividir el lote / elegir otro lote para unir. */
+  /** Dibujar una línea para dividir el lote / elegir otro lote para unir. */
   onSplit?: () => void;
   onMerge?: () => void;
   /** Estancia del lote (encabezado de la grilla de muestreo). */

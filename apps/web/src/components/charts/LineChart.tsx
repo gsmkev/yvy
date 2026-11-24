@@ -1,3 +1,4 @@
+/** Gráfico de líneas sobre un eje temporal. */
 import { useMemo } from "react";
 import { CHART } from "@yvy/shared";
 import { FRAME, Legend, YGrid, niceTicks, useHover, type Series } from "./common";

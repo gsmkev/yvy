@@ -1,3 +1,4 @@
+/** Hooks de la estructura de la aplicación: tamaño de pantalla, preferencias de la barra, sesión y atajos. */
 import { useEffect, useState, useSyncExternalStore, type RefObject } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";

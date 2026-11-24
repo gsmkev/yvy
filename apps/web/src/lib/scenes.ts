@@ -1,4 +1,4 @@
-/** Fechas de imagen disponibles de una estancia y elección para comparar (S-04). */
+/** Fechas de imagen disponibles de una estancia y elección para comparar. */
 import type { Layer } from "./types";
 
 type Kind = Layer["layer"];
@@ -24,6 +24,7 @@ export function defaultCompare(layers: Layer[], kind: Kind): { left: string; rig
   return all.length < 2 ? null : { left: all[1]!.id, right: all[0]!.id };
 }
 
+/** Vista del mapa: centro, zoom, rumbo e inclinación. */
 export interface Camera {
   center: [number, number];
   zoom: number;
@@ -42,7 +43,7 @@ export function cameraDiffers(a: Camera, b: Camera): boolean {
   );
 }
 
-/** S-10: cuadros del timelapse, de la fecha más vieja a la más nueva (una por fecha). */
+/** Cuadros del timelapse, de la fecha más vieja a la más nueva (una por fecha). */
 export function timelapseFrames(layers: Layer[], kind: Kind): Layer[] {
   return layerDates(layers, kind).reverse();
 }

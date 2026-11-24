@@ -1,4 +1,4 @@
-/** Compras y ventas de hacienda: cabezas, kilos, precio y guía de traslado (E-35). */
+/** Compras y ventas de hacienda: cabezas, kilos, precio y guía de traslado. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CATTLE_DEAL_KINDS, CURRENCIES, localDate, type Currency } from "@yvy/shared";
@@ -30,6 +30,7 @@ interface Deal {
   photoPath: string | null;
 }
 
+/** Compras y ventas de hacienda con guía de traslado. */
 export function CattlePanel() {
   const q = useQuery({ queryKey: ["erp", "cattle-deals"], queryFn: () => get<Deal[]>("/org/erp/cattle-deals") });
   const parties = useParties();

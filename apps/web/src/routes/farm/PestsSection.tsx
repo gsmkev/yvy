@@ -1,9 +1,14 @@
+/** Sección del panel de capas con los focos de plaga de los últimos 30 días. */
 import { LayerSwitch, PanelSection } from "../../components/MapTools";
 import { PEST_COLORS, pestCounts, pestsByPlot } from "../../lib/pests";
 import { t, tk } from "../../lib/i18n";
 import type { Plot } from "../../lib/types";
 import type { useFarmPests } from "./useFarmOverlays";
 
+/**
+ * Leyenda y lista de focos de plaga.
+ * @param onSelect centra el mapa en el lote.
+ */
 export function PestsSection({
   pests,
   plots,

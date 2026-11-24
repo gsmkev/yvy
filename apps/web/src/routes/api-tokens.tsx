@@ -15,7 +15,7 @@ interface Token {
   lastUsedAt: number | null;
 }
 
-/** I-01: tokens de la API pública (solo el dueño). El token completo se muestra una sola vez. */
+/** Tokens de la API pública (solo el dueño). El token completo se muestra una sola vez. */
 export function ApiTokensPage() {
   const me = useMe();
   const qc = useQueryClient();

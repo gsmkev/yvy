@@ -1,4 +1,4 @@
-/** Proveedores y clientes con RUC (E-02). */
+/** Proveedores y clientes con RUC. */
 import { PARTY_KINDS } from "@yvy/shared";
 import { t, tk } from "../../lib/i18n";
 import { MasterPanel, useErpList, type FieldDef } from "./MasterPanel";
@@ -14,8 +14,10 @@ interface Party {
   note: string | null;
 }
 
+/** Proveedores y clientes de la organización. */
 export const useParties = () => useErpList<Party>("parties");
 
+/** Alta, cambio y baja de proveedores y clientes. */
 export function PartiesPanel() {
   const fields: FieldDef[] = [
     { key: "name", label: t("ui.party.name"), required: true, maxLength: 120 },

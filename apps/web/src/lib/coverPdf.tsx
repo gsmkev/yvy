@@ -1,4 +1,4 @@
-/** Cambio de cobertura entre dos fechas en PDF (S-31) para informes ambientales y de bancos. Análisis indicativo. */
+/** Cambio de cobertura entre dos fechas en PDF para informes ambientales y de bancos. Análisis indicativo. */
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { BRAND, ATTRIBUTION } from "@yvy/shared";
 import { analysisAreas, summarizeCover } from "@yvy/shared";
@@ -21,6 +21,7 @@ interface CoverReportData {
 
 const CLASSES = ["forest", "pasture", "crop", "other"] as const;
 
+/** Documento PDF del cambio de cobertura entre dos fechas. */
 export function CoverReport({ farm, rows, from, to, plots, generatedAt }: CoverReportData) {
   const sum = summarizeCover(rows);
   const areas = analysisAreas(rows);

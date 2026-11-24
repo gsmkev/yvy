@@ -3,6 +3,7 @@ import { fmtDateTime } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { DataTable, type Column } from "./ui";
 
+/** Una entrada del registro de cambios con su actor, entidad y detalle. */
 export interface AuditEntryRow {
   id: string;
   action: string;
@@ -13,7 +14,7 @@ export interface AuditEntryRow {
   actor: string | null;
 }
 
-/** Lista de cambios para el dueño (K-06) y para el panel interno. */
+/** Lista de cambios para el dueño y para el panel interno. */
 export function AuditList({ rows }: { rows: AuditEntryRow[] }) {
   const columns: Column<AuditEntryRow>[] = [
     { id: "when", header: t("ui.audit.colWhen"), cell: (r) => <span className="num whitespace-nowrap text-tinta-2">{fmtDateTime(r.createdAt)}</span> },

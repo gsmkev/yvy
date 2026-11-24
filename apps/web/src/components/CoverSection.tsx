@@ -1,4 +1,4 @@
-/** Cambio de cobertura entre dos fechas (S-31): pedido a demanda, resultado por clase, mapa y PDF. */
+/** Cambio de cobertura entre dos fechas: pedido a demanda, resultado por clase, mapa y PDF. */
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { coverKeys, parseCoverKey, summarizeCover } from "@yvy/shared";
@@ -11,6 +11,7 @@ import { CoverResult } from "./cover/CoverResult";
 import { day, iso } from "./cover/util";
 import { EmptyState, ErrorBox, Spinner, toast } from "./ui";
 
+/** Sección del cambio de cobertura de una estancia: pedido, resultado y PDF. */
 export function CoverSection({ farmId }: { farmId: string }) {
   const qc = useQueryClient();
   const farm = useFarm(farmId);

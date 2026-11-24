@@ -17,7 +17,7 @@ interface DoseRange {
 const useDoseRanges = (enabled = true) =>
   useQuery({ enabled, queryKey: ["dose-ranges"], queryFn: () => get<DoseRange[]>("/org/products/dose-ranges") });
 
-/** Catálogo de productos de la organización (A-10): lo usa el celular para cargar aplicaciones. */
+/** Catálogo de productos de la organización: lo usa el celular para cargar aplicaciones. */
 export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; farmId?: string; plots?: Plot[] }) {
   const q = useProducts();
   const ranges = useDoseRanges();
@@ -148,7 +148,7 @@ function ProductModal({ product, range, onClose }: { product: Product | null; ra
         toxClass: f.toxClass.trim() || null,
       };
       const saved = product ? patch(`/org/products/${product.id}`, body).then(() => product.id) : post<{ id: string }>("/org/products", body).then((r) => r.id);
-      // X-26: la dosis habitual va aparte del producto (no se sincroniza al celular)
+      // La dosis habitual va aparte del producto (no se sincroniza al celular)
       return saved.then((id) =>
         put(`/org/products/${id}/dose-range`, {
           min: f.doseMin === "" ? null : Number(f.doseMin),

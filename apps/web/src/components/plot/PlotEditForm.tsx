@@ -1,8 +1,14 @@
+/** Formulario de edición de los datos de un lote. */
 import { CROPS, PLOT_KINDS, SEASONS } from "@yvy/shared";
 import { t } from "../../lib/i18n";
 import { Button, ErrorBox, Field, Form, Input, Select } from "../ui";
 import type { PlotForm } from "./usePlotData";
 
+/**
+ * Formulario de edición.
+ * @param f estado del formulario (de `usePlotForm`).
+ * @param onCancel se llama al cancelar.
+ */
 export function PlotEditForm({ f, onCancel }: { f: PlotForm; onCancel: () => void }) {
   const { form, set, save } = f;
   return (

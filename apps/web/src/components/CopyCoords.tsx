@@ -1,3 +1,4 @@
+/** Botón que copia las coordenadas de un punto al portapapeles. */
 import { useEffect, useRef, useState } from "react";
 import { t } from "../lib/i18n";
 

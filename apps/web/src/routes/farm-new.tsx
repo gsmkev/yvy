@@ -1,3 +1,4 @@
+/** Alta de una estancia: nombre, ubicación en el mapa o desde un archivo de lotes. */
 import { PenLine, Upload, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
@@ -15,6 +16,7 @@ import { PlaceSearch } from "./farm-new/PlaceSearch";
 import { combineAreas, parseFile, type ImportedPolygon } from "../lib/importGeo";
 import type { Area } from "../lib/types";
 
+/** Pantalla para crear una estancia, con la opción de importar sus lotes en el mismo paso. */
 export function NewFarmPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -26,7 +28,7 @@ export function NewFarmPage() {
   const [parts, setParts] = useState<Area[]>([]);
   const geometry = useMemo(() => combineAreas(parts), [parts]);
   const [fileOptions, setFileOptions] = useState<ImportedPolygon[] | null>(null);
-  // M-08: los demás polígonos del archivo, para importarlos como lotes en el mismo paso.
+  // Los demás polígonos del archivo, para importarlos como lotes en el mismo paso.
   const [withPlots, setWithPlots] = useState(true);
   const filePlots = (fileOptions ?? [])
     .slice(1)

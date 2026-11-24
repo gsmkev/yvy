@@ -1,4 +1,4 @@
-/** Exportación al contador: Excel con el libro de movimientos, cuentas a pagar y a cobrar, con el plan de cuentas configurable (E-38). */
+/** Exportación al contador: Excel con el libro de movimientos, cuentas a pagar y a cobrar, con el plan de cuentas configurable. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { COST_CATEGORIES, type CostCategory } from "@yvy/shared";
@@ -48,6 +48,7 @@ interface Export {
 /** Monto en unidad menor a lo que se lee en una planilla: guaraníes enteros, dólares con dos decimales. */
 const major = (minor: number, currency: string) => (currency === "USD" ? minor / 100 : minor);
 
+/** Exportación al contador con el plan de cuentas configurable. */
 export function AccountantPanel() {
   const map = useQuery({ queryKey: ["erp", "account-map"], queryFn: () => get<MapRow[]>("/org/erp/accountant/map") });
   const [from, setFrom] = useState("");

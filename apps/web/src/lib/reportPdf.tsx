@@ -1,4 +1,4 @@
-/** Parte semanal en PDF (RF-80), generado en el navegador con @react-pdf/renderer (anexo §4.9). */
+/** Parte semanal en PDF generado en el navegador con @react-pdf/renderer. */
 import { Document, Image, Page, Path, StyleSheet, Svg, Text, View, Circle } from "@react-pdf/renderer";
 import { BRAND, ATTRIBUTION } from "@yvy/shared";
 import { describeData } from "./exports";
@@ -6,6 +6,7 @@ import { fmtDateTime, fmtHa, fmtIsoDate } from "./format";
 import { t, tk } from "./i18n";
 import type { Alert, Farm, Plot, RecordRow } from "./types";
 
+/** Estilos compartidos por los informes PDF. */
 export const s = StyleSheet.create({
   page: { padding: 28, fontSize: 9, color: BRAND.surco, fontFamily: "Helvetica" },
   h1: { fontSize: 16, fontFamily: "Helvetica-Bold" },
@@ -36,6 +37,7 @@ export const s = StyleSheet.create({
   },
 });
 
+/** Croquis SVG de la estancia con sus lotes para el parte semanal. */
 export function MiniMap({
   farm,
   plots,
@@ -106,6 +108,7 @@ interface ReportData {
   photoUrls: string[];
 }
 
+/** Documento PDF del parte semanal de una estancia. */
 export function WeeklyReport(d: ReportData) {
   const authors = new Set(d.records.map((r) => r.authorId)).size;
   return (

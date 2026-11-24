@@ -1,6 +1,8 @@
+/** Piezas compartidas de los gráficos SVG: marco, marcas de los ejes, leyenda y seguimiento del puntero. */
 import { useRef, useState } from "react";
 import { CHART } from "@yvy/shared";
 
+/** Serie de un gráfico: nombre, color y si se dibuja con trazo discontinuo. */
 export interface Series {
   name: string;
   color: string;
@@ -8,14 +10,17 @@ export interface Series {
   points: { x: number; y: number | null }[];
 }
 
+/** Dimensiones del lienzo SVG y sus márgenes interiores. */
 export interface Frame {
   width: number;
   height: number;
   pad: { l: number; r: number; t: number; b: number };
 }
 
+/** Marco por defecto de los gráficos. */
 export const FRAME: Frame = { width: 640, height: 220, pad: { l: 40, r: 12, t: 12, b: 26 } };
 
+/** Marcas "redondas" para un eje entre `min` y `max`, unas `n` en total. */
 export function niceTicks(min: number, max: number, n = 4): number[] {
   if (min === max) return [min];
   const step0 = (max - min) / n;
@@ -26,6 +31,7 @@ export function niceTicks(min: number, max: number, n = 4): number[] {
   return out;
 }
 
+/** Leyenda de las series; no se dibuja si hay menos de dos. */
 export function Legend({ series }: { series: { name: string; color: string; dashed?: boolean; dot?: boolean }[] }) {
   if (series.length < 2) return null;
   return (
@@ -56,6 +62,11 @@ export function Legend({ series }: { series: { name: string; color: string; dash
   );
 }
 
+/**
+ * Índice del punto más cercano al puntero sobre el SVG.
+ * @param xs posiciones x de los puntos, en las unidades del eje.
+ * @returns el índice activo (`i`) y su setter, el ref del SVG y `onMove`, que recibe el evento y la proyección de x a píxeles.
+ */
 export function useHover(xs: number[]) {
   const [i, setI] = useState<number | null>(null);
   const svg = useRef<SVGSVGElement>(null);

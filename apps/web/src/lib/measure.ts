@@ -1,6 +1,8 @@
+/** Medición de distancias sobre el mapa con la fórmula de haversine, en metros. */
 import type { Polygon } from "geojson";
 import { areaHa } from "@yvy/geo";
 
+/** Punto [longitud, latitud] en grados. */
 export type LonLat = [number, number];
 
 const R = 6_371_008.8; // radio medio de la Tierra, m

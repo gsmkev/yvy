@@ -1,4 +1,4 @@
-/** Grilla de muestreo de suelo sobre el lote (M-18): un punto cada 5 o 10 ha, numerados, para imprimir o bajar. */
+/** Grilla de muestreo de suelo sobre el lote: un punto cada 5 o 10 ha, numerados, para imprimir o bajar. */
 import { useMemo, useState } from "react";
 import { samplingGrid, SAMPLING_HA, type Area } from "@yvy/geo";
 import { BRAND } from "@yvy/shared";
@@ -12,6 +12,10 @@ import { Button, ErrorBox } from "./ui";
 const W = 320;
 const H = 220;
 
+/**
+ * Generador de la grilla de muestreo de un lote.
+ * @param farm estancia del lote, para el encabezado del PDF.
+ */
 export function SamplingGrid({ plot, farm }: { plot: Plot; farm: Farm | undefined }) {
   const [open, setOpen] = useState(false);
   const [ha, setHa] = useState<number>(SAMPLING_HA[0]);

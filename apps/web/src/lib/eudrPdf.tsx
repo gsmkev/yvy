@@ -1,4 +1,4 @@
-/** Indicador EUDR en PDF (S-30), con los estilos del parte semanal. Análisis indicativo, no una certificación. */
+/** Indicador EUDR en PDF, con los estilos del parte semanal. Análisis indicativo, no una certificación. */
 import { Document, Page, Path, Svg, Text, View } from "@react-pdf/renderer";
 import { BRAND, ATTRIBUTION } from "@yvy/shared";
 import { changeAreas, EUDR_METHOD, fmtRatio, statusText, summarize } from "./eudrData";
@@ -52,6 +52,7 @@ export function ChangeMap({ farm, plots, areas, width = 539, height = 260 }: { f
   );
 }
 
+/** Documento PDF del indicador EUDR por lote. */
 export function EudrReport({ farm, data, plots, generatedAt }: EudrReportData) {
   const sum = summarize(data);
   const refYear = sum.refYear ?? 2020;

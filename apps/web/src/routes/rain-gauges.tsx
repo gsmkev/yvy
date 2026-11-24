@@ -1,4 +1,4 @@
-/** Pluviómetros de la estancia: mes y campaña contra el satélite y la normal (C-05, C-06). */
+/** Pluviómetros de la estancia: mes y campaña contra el satélite y la normal. */
 import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
@@ -57,6 +57,7 @@ function GaugeSection({ name, table: { months, season } }: { name: string; table
   );
 }
 
+/** Pantalla de pluviómetros de la estancia. */
 export function RainGaugesPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId/pluviometros" });
   const farm = useFarm(farmId);

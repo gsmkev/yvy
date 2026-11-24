@@ -26,6 +26,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
   );
 }
 
+/** Enlaces a términos y privacidad. */
 export function LegalLinks({ className = "" }: { className?: string }) {
   return (
     <nav aria-label="Legal" className={`flex gap-x-5 gap-y-1 whitespace-nowrap ${className}`}>

@@ -1,3 +1,4 @@
+/** Herramientas de dibujo y edición sobre el mapa con terra-draw: polígonos, líneas y vértices. */
 import { useEffect, type MutableRefObject } from "react";
 import type { Map as MlMap } from "maplibre-gl";
 import type { LineString, MultiPolygon, Polygon } from "geojson";
@@ -39,7 +40,7 @@ export function useDrawPolygon({ props, mapRef, cb, drawRef }: DrawCtx) {
   }, [props.drawing, mapRef.current]);
 }
 
-/** Dibujo de líneas (M-05, M-20). */
+/** Dibujo de líneas. */
 export function useDrawLine({ props, mapRef, cb }: DrawCtx) {
   useEffect(() => {
     const map = mapRef.current;
@@ -59,7 +60,7 @@ export function useDrawLine({ props, mapRef, cb }: DrawCtx) {
   }, [props.drawingLine, mapRef.current]);
 }
 
-/** Edición de vértices (M-02). */
+/** Edición de vértices. */
 export function useEditPlot({ props, mapRef, cb, editRef }: DrawCtx) {
   useEffect(() => {
     const map = mapRef.current;
@@ -93,7 +94,7 @@ export function useEditPlot({ props, mapRef, cb, editRef }: DrawCtx) {
         geometry: { type: "Polygon" as const, coordinates: rings.map((ring) => ring.map((c) => [r9(c[0]!), r9(c[1]!)])) },
       })),
     );
-    // M-09: cada parte (casco) es una figura; se informa el conjunto como Polygon o MultiPolygon.
+    // Cada parte (casco) es una figura; se informa el conjunto como Polygon o MultiPolygon.
     const ids = draw.getSnapshot().map((x) => x.id!);
     if (!ids.length) {
       draw.stop();

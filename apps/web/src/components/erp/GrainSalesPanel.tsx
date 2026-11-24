@@ -1,4 +1,4 @@
-/** Venta de granos: contratos, entregas con ticket y liquidaciones (E-34). */
+/** Venta de granos: contratos, entregas con ticket y liquidaciones. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CROPS, CURRENCIES, localDate, toMinor, type Currency } from "@yvy/shared";
@@ -41,6 +41,7 @@ interface Settlement {
   number: string | null;
 }
 
+/** Contratos, entregas con ticket y liquidaciones de venta de granos. */
 export function GrainSalesPanel() {
   const contracts = useQuery({ queryKey: ["erp", "grain-contracts-summary"], queryFn: () => get<Contract[]>("/org/erp/grain-contracts/summary") });
   const deliveries = useQuery({ queryKey: ["erp", "grain-deliveries"], queryFn: () => get<Delivery[]>("/org/erp/grain-deliveries") });
@@ -189,7 +190,7 @@ function ActionModal({ kind, contract, onClose }: { kind: "delivery" | "settleme
   const [moisture, setMoisture] = useState("");
   const [deductions, setDeductions] = useState("");
   const [due, setDue] = useState("");
-  // La entrega se registra en la estancia (A-23): con varias hay que elegir cuál
+  // La entrega se registra en la estancia: con varias hay que elegir cuál
   const farms = useFarms();
   const [farmId, setFarmId] = useState("");
   const save = useMutation({

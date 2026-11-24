@@ -7,7 +7,7 @@ import { fmtIsoDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useFarms, useTasks } from "../lib/queries";
 
-/** T-04: calendario semanal de labores de una estancia (lunes a domingo). */
+/** Calendario semanal de labores de una estancia (lunes a domingo). */
 export function CalendarPage() {
   const farms = useFarms();
   const [farmId, setFarmId] = useState("");

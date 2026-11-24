@@ -1,4 +1,4 @@
-/** Campañas oficiales de SENACSA en el calendario sanitario (ADR 0005). Planificar crea el evento y las tareas, como hoy. */
+/** Campañas oficiales de SENACSA en el calendario sanitario Planificar crea el evento y las tareas. */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { localDate, senacsaNote, senacsaPlanDate, type SenacsaCampaign, type SenacsaResponse } from "@yvy/shared";
 import { get, post } from "../lib/api";
@@ -7,6 +7,7 @@ import { t, tk } from "../lib/i18n";
 import { useFarms } from "../lib/queries";
 import { Button, Card, ErrorBox, SectionHead, toast } from "./ui";
 
+/** Campañas oficiales de SENACSA del año con el botón para planificarlas. */
 export function SenacsaCampaigns() {
   const qc = useQueryClient();
   const farms = useFarms();

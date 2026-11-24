@@ -4,6 +4,7 @@ import { LIMITS } from "@yvy/shared";
 const toBlob = (c: HTMLCanvasElement, quality: number) =>
   new Promise<Blob | null>((resolve) => c.toBlob(resolve, "image/webp", quality));
 
+/** Reduce y recomprime una foto a WebP dentro de los topes de LIMITS.photos. */
 export async function compressPhoto(file: File): Promise<Blob> {
   const bmp = await createImageBitmap(file);
   const scale = Math.min(1, LIMITS.photos.maxLongSidePx / Math.max(bmp.width, bmp.height));

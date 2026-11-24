@@ -1,3 +1,4 @@
+/** Cifras sueltas para el dueño con varias estancias. Sin tarjetas: números y una línea de contexto. */
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { get } from "../lib/api";
@@ -16,7 +17,7 @@ interface Dashboard {
   records7d: { total: number; byWorkers: number; byKind: { kind: string; n: number }[] };
 }
 
-/** R-06: cifras sueltas para el dueño con varias estancias. Sin tarjetas: números y una línea de contexto. */
+/** Cifras sueltas para el dueño con varias estancias. Sin tarjetas: números y una línea de contexto. */
 export function OwnerDashboard() {
   const q = useQuery({ queryKey: ["dashboard"], queryFn: () => get<Dashboard>("/org/dashboard"), staleTime: 60_000 });
   if (q.isLoading) return <Spinner />;

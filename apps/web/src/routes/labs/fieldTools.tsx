@@ -1,3 +1,4 @@
+/** Vistas previas del Laboratorio sobre fotos de campo: animales, plantas, malezas, granizo e infraestructura. */
 import { Button } from "../../components/ui";
 import { AnimalCountIllustration, HailIllustration, InfraIllustration, StandCountIllustration, WeedsIllustration } from "../../components/labs/illustrations";
 import { t, tk } from "../../lib/i18n";
@@ -9,6 +10,7 @@ const PADDOCKS = [
   { id: "aguada", ha: 15, n: 58 },
 ];
 
+/** Vista previa del conteo de animales. */
 export function Animals() {
   const total = PADDOCKS.reduce((s, p) => s + p.n, 0);
   return (
@@ -34,6 +36,7 @@ const ZONES = [
   { id: "sur", perM: 12.8, gaps: 3.2 },
 ];
 
+/** Vista previa del conteo de plantas. */
 export function Stand() {
   const avg = (k: "perM" | "gaps") => ZONES.reduce((s, z) => s + z[k], 0) / ZONES.length;
   return (
@@ -53,6 +56,7 @@ export function Stand() {
   );
 }
 
+/** Vista previa de la detección de malezas. */
 export function Weeds() {
   const lot = 48;
   const affected = 6.7;
@@ -78,6 +82,7 @@ const HAIL = [
   { id: "moderate", ha: 11.5, color: "#D9A93A" },
 ] as const;
 
+/** Vista previa de la evaluación de granizo. */
 export function Hail() {
   const lot = 48;
   const damaged = HAIL.reduce((s, h) => s + h.ha, 0);
@@ -108,6 +113,7 @@ export function Hail() {
   );
 }
 
+/** Vista previa del estado de la infraestructura. */
 export function Infra() {
   const rows = [
     [t("ui.labs.infraFence"), t("ui.labs.infraFencePlace"), t("ui.labs.infraFenceSize")],

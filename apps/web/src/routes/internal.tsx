@@ -12,7 +12,7 @@ import { Funnel } from "./internal/Funnel";
 import { AuditLog } from "./internal/AuditLog";
 import { OrgChanges, PlanModal } from "./internal/PlanModal";
 
-/** Métricas del PRD §4 por organización (solo equipo Yvy). */
+/** Métricas de uso por organización (solo equipo Yvy). */
 export function InternalPage() {
   const [editing, setEditing] = useState<OrgMetrics | null>(null);
   const [changes, setChanges] = useState<OrgMetrics | null>(null);

@@ -1,3 +1,4 @@
+/** Pestañas de la ficha de la estancia: las principales a la vista y el resto en "Más". La pestaña activa que está en "Más" se muestra en la barra, así siempre se ve dónde estás. */
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { t } from "../lib/i18n";

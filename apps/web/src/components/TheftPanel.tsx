@@ -1,4 +1,4 @@
-/** Abigeato (G-13): avisos de faltantes con fecha, categoría, cabezas y número de denuncia. */
+/** Abigeato: avisos de faltantes con fecha, categoría, cabezas y número de denuncia. */
 import { useQuery } from "@tanstack/react-query";
 import { HERD_CATEGORIES, type TheftResponse } from "@yvy/shared";
 import { get } from "../lib/api";
@@ -7,6 +7,7 @@ import { t, tk } from "../lib/i18n";
 import { DataTable, Empty, ErrorBox, Spinner } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
+/** Avisos de faltantes de hacienda de una estancia. */
 export function TheftPanel({ farmId }: { farmId: string }) {
   const q = useQuery({
     queryKey: ["theft", farmId],

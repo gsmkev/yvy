@@ -1,3 +1,4 @@
+/** Columnas de las tablas del inventario: existencias, movimientos y lotes por vencer. */
 import { fmtIsoDate } from "../../../lib/format";
 import { t, tk } from "../../../lib/i18n";
 import { fmtGs, fmtMoney, fmtQty } from "../../../lib/money";
@@ -6,12 +7,14 @@ import { PhotoRowMenu } from "../InvoicePhoto";
 import { RowMenu } from "../adminSlot";
 import { dayOf, type ExpiringLot, type StockMove, type Summary } from "./types";
 
+/** Nombres de productos y depósitos para rotular las filas. */
 export interface StockLookup {
   prod: (id: string) => { name: string; unit?: string } | undefined;
   wh: (id: string) => string;
   unit: (id: string) => string;
 }
 
+/** Columnas de la tabla de existencias. */
 export function stockColumns(lk: StockLookup, rows: Summary["rows"], list: Summary["products"]): Column<Summary["products"][number]>[] {
   const { prod, wh, unit } = lk;
   return [
@@ -35,6 +38,10 @@ export function stockColumns(lk: StockLookup, rows: Summary["rows"], list: Summa
     ];
 }
 
+/**
+ * Columnas de la tabla de movimientos.
+ * @param onRemove se llama al quitar un movimiento.
+ */
 export function moveColumns(lk: StockLookup, moveRows: StockMove[], onRemove: (m: StockMove) => void): Column<StockMove>[] {
   const { prod, wh, unit } = lk;
   return [
@@ -105,6 +112,7 @@ export function moveColumns(lk: StockLookup, moveRows: StockMove[], onRemove: (m
     ];
 }
 
+/** Columnas de la tabla de lotes por vencer. */
 export function expiringColumns(lk: StockLookup): Column<ExpiringLot>[] {
   const { prod, unit } = lk;
   return [

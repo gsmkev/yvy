@@ -3,6 +3,7 @@ import { Button } from "../../components/ui";
 import { t } from "../../lib/i18n";
 import { ExportableTable } from "../../components/ExportableTable";
 
+/** Número en es-PY con la cantidad de decimales indicada. */
 export const nf = (n: number, digits = 0) =>
   n.toLocaleString("es-PY", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 
@@ -37,6 +38,7 @@ export function Flow({ drop = true, children }: { drop?: boolean; children: Reac
   );
 }
 
+/** Muestra de color con su texto. */
 export function Legend({ color, label }: { color: string; label: string }) {
   return (
     <p className="flex items-center gap-2 text-sm text-tinta-2">
@@ -46,6 +48,7 @@ export function Legend({ color, label }: { color: string; label: string }) {
   );
 }
 
+/** Cifra grande con su etiqueta. */
 export function Figure({ value, label }: { value: string; label: string }) {
   return (
     <div className="border-b border-linea pb-3">
@@ -55,6 +58,7 @@ export function Figure({ value, label }: { value: string; label: string }) {
   );
 }
 
+/** Tabla de ejemplo con encabezados y filas de texto. */
 export function Table({ head, rows }: { head: string[]; rows: string[][] }) {
   return (
     <ExportableTable name="laboratorio">

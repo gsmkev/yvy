@@ -1,4 +1,4 @@
-/** Ficha de costo y margen de un lote (E-31): costo, ingreso y margen por hectárea. Solo dueño y administrador (como los montos). */
+/** Ficha de costo y margen de un lote: costo, ingreso y margen por hectárea. Solo dueño y administrador (como los montos). */
 import { useQuery } from "@tanstack/react-query";
 import { get, withQs } from "../lib/api";
 import { t } from "../lib/i18n";
@@ -17,6 +17,7 @@ interface Row {
   marginPerHa: number | null;
 }
 
+/** Costo, ingreso y margen por hectárea de un lote. No muestra nada si el rol no ve montos. */
 export function PlotResults({ plot }: { plot: Plot }) {
   const me = useMe();
   const allowed = me.data?.role === "owner" || me.data?.role === "admin";

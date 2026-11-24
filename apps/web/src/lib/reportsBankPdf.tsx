@@ -1,4 +1,4 @@
-/** Informe para el banco en PDF (R-04), con los estilos del parte semanal. */
+/** Informe para el banco en PDF, con los estilos del parte semanal. */
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { fmtDate, fmtHa, fmtIsoDate, fmtNdvi, fmtNum } from "./format";
 import { t, tk } from "./i18n";
@@ -24,6 +24,7 @@ interface BankReportData {
 const pct = (v: number | null, n: number | null) =>
   v !== null && n ? `${fmtNum(Math.round((v / n) * 100))} % ${t("ui.bank.ofNormal")}` : undefined;
 
+/** Documento PDF del informe para el banco. Recibe los datos ya calculados. */
 export function BankReport(d: BankReportData) {
   const byCrop = new Map<string, { n: number; ha: number }>();
   for (const p of d.plots) {

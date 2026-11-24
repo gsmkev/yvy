@@ -1,3 +1,4 @@
+/** Registros que las reglas simples marcaron como raros. "Está bien" los saca hasta que se editen. */
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -43,7 +44,7 @@ function reason(o: Oddity): string {
   }
 }
 
-/** X-26: registros que las reglas simples marcaron como raros. "Está bien" los saca hasta que se editen. */
+/** Registros que las reglas simples marcaron como raros. "Está bien" los saca hasta que se editen. */
 export function ReviewPage() {
   const me = useMe();
   const qc = useQueryClient();

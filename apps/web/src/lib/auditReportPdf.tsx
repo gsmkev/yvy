@@ -1,4 +1,4 @@
-/** Informe de auditoría para certificaciones en PDF (R-05), con los estilos del parte semanal. */
+/** Informe de auditoría para certificaciones en PDF, con los estilos del parte semanal. */
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import type { AuditReportData } from "./auditReportData";
 import { BUFFER_M } from "./auditReportData";
@@ -8,6 +8,7 @@ import { s } from "./reportPdf";
 import { Footer, Kpi } from "./reportsPdf";
 import type { Farm } from "./types";
 
+/** Documento PDF del informe de auditoría para certificaciones. */
 export function AuditReport(d: AuditReportData & { farm: Farm; generatedAt: number }) {
   return (
     <Document title={`${t("ui.audit.reportTitle")} · ${d.farm.name}`} author="Yvy" language="es-PY">

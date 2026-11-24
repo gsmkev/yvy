@@ -7,7 +7,7 @@ import type { Plot } from "../lib/types";
 import { Button, ErrorBox, Field, Input, Modal, Select } from "./ui";
 import type { ManagementZone } from "../lib/managementZones";
 
-/** Prescripción de dosis variable (A-33): una dosis por zona de manejo, exportada en el navegador. */
+/** Prescripción de dosis variable: una dosis por zona de manejo, exportada en el navegador. */
 export function RatePrescription({ plot, zones, onClose }: { plot: Plot; zones: ManagementZone[]; onClose: () => void }) {
   const [product, setProduct] = useState("");
   const [unit, setUnit] = useState<RateUnit>("kg_ha");

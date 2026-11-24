@@ -1,3 +1,4 @@
+/** Declaraciones de tipos para módulos sin tipos propios. */
 declare module "shpjs" {
   const shp: (
     data: ArrayBuffer,

@@ -14,7 +14,7 @@ import { fetchAllRecords, useFarm, useMe } from "../lib/queries";
 import type { Plot } from "../lib/types";
 import { Button, ErrorBox, Field, Form, Input, Modal, Select } from "./ui";
 
-/** Informe de daños para el seguro agrícola (C-09): fecha del evento, vigor antes y después, registros y fotos en un PDF. */
+/** Informe de daños para el seguro agrícola: fecha del evento, vigor antes y después, registros y fotos en un PDF. */
 export function DamageReportModal({ plot, onClose }: { plot: Plot; onClose: () => void }) {
   const farm = useFarm(plot.farmId);
   const me = useMe();

@@ -1,4 +1,4 @@
-/** Hoja imprimible de una orden de trabajo (E-20). La agrupación de las tareas está en @yvy/shared. */
+/** Hoja imprimible de una orden de trabajo. La agrupación de las tareas está en @yvy/shared. */
 import { doseText, safeHtml, type OrderGroup } from "@yvy/shared";
 import { fmtIsoDate } from "./format";
 import { t, tk } from "./i18n";

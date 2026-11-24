@@ -1,4 +1,4 @@
-/** Exportación para sistemas contables locales (I-06): compras, ventas y caja con formato configurable y libro IVA de Paraguay. */
+/** Exportación para sistemas contables locales: compras, ventas y caja con formato configurable y libro IVA de Paraguay. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -39,6 +39,7 @@ interface Rows {
 
 const monthStart = () => localDate(Date.now()).slice(0, 8) + "01";
 
+/** Exportación para sistemas contables locales con formato configurable. */
 export function ExportPanel() {
   const qc = useQueryClient();
   const [dataset, setDataset] = useState<ExportDataset>("purchases");

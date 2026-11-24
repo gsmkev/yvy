@@ -1,3 +1,4 @@
+/** Lista de avisos vigentes con el pedido de opinión sobre su utilidad. */
 import type { ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { post } from "../lib/api";
@@ -11,6 +12,11 @@ import { Button, EmptyState, ErrorBox, Spinner, toast } from "./ui";
 
 const BAR = { warning: "border-peligro", watch: "border-trigo", info: "border-cielo" } as const;
 
+/**
+ * Avisos vigentes de una estancia o de toda la organización.
+ * @param farmNames nombre de cada estancia por id, para rotular avisos de varias estancias.
+ * @param emptyAction acción que se ofrece cuando no hay avisos.
+ */
 export function AlertsList({
   farmId,
   farmNames,

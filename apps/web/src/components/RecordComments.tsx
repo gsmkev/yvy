@@ -16,7 +16,7 @@ interface Comment {
   createdAt: number;
 }
 
-/** T-08: comentarios de un registro. Para mencionar se elige a la persona; "@Nombre" queda en el texto. */
+/** Comentarios de un registro. Para mencionar se elige a la persona; "@Nombre" queda en el texto. */
 export function RecordComments({ recordId }: { recordId: string }) {
   const me = useMe();
   const qc = useQueryClient();

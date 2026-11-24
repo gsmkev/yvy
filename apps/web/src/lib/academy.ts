@@ -1,8 +1,10 @@
 /**
- * V-10: Academia. Los temas son fijos (textos en i18n); los videos se cargan al compilar con VITE_ACADEMY_VIDEOS, un JSON
+ * Academia. Los temas son fijos (textos en i18n); los videos se cargan al compilar con VITE_ACADEMY_VIDEOS, un JSON
  * `{ "mapa": "https://…", "registro": { "es": "https://…", "gn": "https://…" } }`. Solo se aceptan enlaces https. Un tema
  * sin enlace se muestra como "Próximamente": no hay videos de relleno.
  */
+
+/** Temas de la Academia, en el orden en que se muestran. */
 export const ACADEMY_TOPICS = ["map", "record", "offline", "tasks", "alerts", "reports", "team"] as const;
 type AcademyTopic = (typeof ACADEMY_TOPICS)[number];
 type AcademyLang = "es" | "gn";
@@ -18,6 +20,10 @@ const httpsUrl = (v: unknown): string | null => {
   }
 };
 
+/**
+ * Lee el JSON de videos por tema.
+ * @param raw el valor de VITE_ACADEMY_VIDEOS; con un valor vacío o inválido devuelve un objeto vacío.
+ */
 export function parseAcademyVideos(raw: string | undefined): AcademyLinks {
   if (!raw) return {};
   let json: unknown;
@@ -45,4 +51,5 @@ export function parseAcademyVideos(raw: string | undefined): AcademyLinks {
   return out;
 }
 
+/** Videos de la Academia configurados al compilar. */
 export const ACADEMY_VIDEOS: AcademyLinks = parseAcademyVideos(import.meta.env.VITE_ACADEMY_VIDEOS);

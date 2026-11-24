@@ -1,3 +1,4 @@
+/** Navegación secundaria de una pantalla con muchas secciones (Administración, Cuenta): columna izquierda desde lg, y en el celular una fila de pills desplazable (o un selector agrupado si son más de 8). Muestra una sección por vez. */
 import { SelectBox } from "./ui";
 
 interface SectionGroup {

@@ -1,3 +1,4 @@
+/** Lista de lotes de la pestaña Lotes con sus filtros, líneas y puntos de interés. */
 import { LIMITS, staleDaysOrDefault } from "@yvy/shared";
 import { LinesPanel } from "../../components/LinesPanel";
 import { ExportMenu } from "../../components/menus";
@@ -67,6 +68,11 @@ function PrintPlots({ plots }: { plots: Plot[] }) {
   );
 }
 
+/**
+ * Lista de lotes con filtro de no visitados y herramientas de líneas y puntos.
+ * @param shownPlots lotes ya filtrados.
+ * @param staleDays días sin visita para marcar un lote.
+ */
 export function PlotsList({
   d,
   farmId,

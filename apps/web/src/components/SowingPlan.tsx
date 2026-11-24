@@ -9,7 +9,7 @@ import { ExportableTable } from "./ExportableTable";
 
 type Crop = (typeof CROPS)[number];
 
-/** Plan de siembra de la campaña (A-03): superficie por cultivo y variedad y semilla que hay que comprar. */
+/** Plan de siembra de la campaña: superficie por cultivo y variedad y semilla que hay que comprar. */
 export function SowingPlan({ farmId, plots }: { farmId: string; plots: Plot[] }) {
   const q = useSeasons(farmId);
   const [seasonId, setSeasonId] = useState<string | null>(null);

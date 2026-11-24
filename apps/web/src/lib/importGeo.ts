@@ -1,5 +1,5 @@
 /**
- * Importación de lotes (RF-11): KML, KMZ, GeoJSON y shapefile zipeado, parseados en el navegador.
+ * Importación de lotes: KML, KMZ, GeoJSON y shapefile zipeado, parseados en el navegador.
  * Cada polígono se valida (cerrado, sin autointersección) y se calcula su superficie geodésica.
  */
 import { kml } from "@tmcw/togeojson";
@@ -8,13 +8,14 @@ import type { Feature, FeatureCollection, Geometry } from "geojson";
 import { t } from "./i18n";
 import { areaHa, cleanArea, validatePolygon, type Area, type ValidationError } from "@yvy/geo";
 
+/** Polígono leído de un archivo, con su superficie y avisos de validación. */
 export interface ImportedPolygon {
   index: number;
   name: string;
   geometry: Area;
   areaHa: number;
   error: ValidationError | null;
-  /** Vértices duplicados o espigas quitados al limpiar (M-11). */
+  /** Vértices duplicados o espigas quitados al limpiar. */
   fixed: number;
 }
 
@@ -83,6 +84,10 @@ const inWgs84Range = (fc: FeatureCollection): boolean => {
   return fc.features.every((f) => !f.geometry || f.geometry.type === "GeometryCollection" || ok(f.geometry.coordinates));
 };
 
+/**
+ * Lee un KML, KMZ, GeoJSON o shapefile zipeado y devuelve sus polígonos validados.
+ * @throws si el formato no se reconoce o el archivo no se puede leer.
+ */
 export async function parseFile(file: File): Promise<ImportedPolygon[]> {
   const name = file.name.toLowerCase();
   if (name.endsWith(".geojson") || name.endsWith(".json")) {
@@ -125,7 +130,7 @@ export async function parseFile(file: File): Promise<ImportedPolygon[]> {
   throw new Error(t("ui.import.unsupported"));
 }
 
-/** Une varias figuras en una sola: un Polygon si hay una, un MultiPolygon si hay varias partes (M-09). */
+/** Une varias figuras en una sola: un Polygon si hay una, un MultiPolygon si hay varias partes. */
 export function combineAreas(areas: Area[]): Area | null {
   const polys = areas.flatMap((a) => (a.type === "Polygon" ? [a.coordinates] : a.coordinates));
   if (!polys.length) return null;

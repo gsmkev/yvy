@@ -1,3 +1,4 @@
+/** Cuenta (solo dueño): por ahora, el pedido de baja. No borra nada. */
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isFieldRole } from "@yvy/shared";
@@ -13,7 +14,7 @@ import { get, post } from "../../lib/api";
 import { t, type MessageKey } from "../../lib/i18n";
 import { useMe } from "../../lib/queries";
 
-/** V-05: código personal de referido del agrónomo y el enlace de registro que lo lleva. */
+/** Código personal de referido del agrónomo y el enlace de registro que lo lleva. */
 function Referral() {
   const q = useQuery({ queryKey: ["referral"], queryFn: () => get<{ code: string | null; referred: number; credited: number }>("/me/referral") });
   const [copied, setCopied] = useState(false);
@@ -66,7 +67,7 @@ const HASH_TO_SECTION: Record<string, string> = {
 };
 const HASHES: Record<string, string> = Object.fromEntries(Object.entries(HASH_TO_SECTION).map(([h, id]) => [id, h]));
 
-/** Cuenta (solo dueño): por ahora, el pedido de baja (P-09). No borra nada. */
+/** Cuenta (solo dueño): por ahora, el pedido de baja. No borra nada. */
 export function AccountPage() {
   const me = useMe();
   const [confirming, setConfirming] = useState(false);

@@ -8,7 +8,7 @@ import { useMe } from "../lib/queries";
 
 const ENTITIES = ["", "farm", "plot", "member", "task", "record", "poi", "product", "season"] as const;
 
-/** K-06: quién cambió qué y cuándo (solo el dueño). */
+/** Quién cambió qué y cuándo (solo el dueño). */
 export function AuditPage() {
   const me = useMe();
   const [entity, setEntity] = useState("");

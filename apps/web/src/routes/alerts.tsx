@@ -1,3 +1,4 @@
+/** Pantalla de avisos vigentes y sus umbrales. */
 import { useState } from "react";
 import { isFieldRole } from "@yvy/shared";
 import { AlertSettingsSection } from "../components/AlertSettings";
@@ -6,6 +7,7 @@ import { Button, PageHeader, Page } from "../components/ui";
 import { t } from "../lib/i18n";
 import { useFarms, useMe } from "../lib/queries";
 
+/** Avisos de todas las estancias con la sección de umbrales. */
 export function AlertsPage() {
   const farms = useFarms();
   const me = useMe();

@@ -1,3 +1,4 @@
+/** Alta de las fuentes y capas vectoriales del mapa. El orden de agregado es el orden de apilado. */
 import * as maplibregl from "maplibre-gl";
 import type { GeoJSONSource, Map as MlMap, MapLayerMouseEvent } from "maplibre-gl";
 import type { Point } from "geojson";
@@ -5,6 +6,10 @@ import { BRAND } from "@yvy/shared";
 import { addPoiImages } from "../../lib/poiMarkers";
 import { fc } from "./geo";
 
+/**
+ * Crea las fuentes GeoJSON vacías del mapa.
+ * @param clusterPoints agrupa los puntos de interés cercanos.
+ */
 export function addSources(map: MlMap, clusterPoints: boolean | undefined) {
   map.addSource("outline", { type: "geojson", data: fc([]) });
   map.addSource("plots", { type: "geojson", data: fc([]) });
@@ -137,7 +142,7 @@ function addPoiLayers(map: MlMap) {
       "circle-stroke-width": 2,
     },
   });
-  // M-19: el ícono del tipo va sobre el punto; mientras se rasteriza queda el disco.
+  // El ícono del tipo va sobre el punto; mientras se rasteriza queda el disco.
   map.addLayer({
     id: "pois-icon",
     type: "symbol",

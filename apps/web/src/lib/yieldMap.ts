@@ -1,5 +1,5 @@
 /**
- * Mapas de rendimiento de la cosechadora (A-21): shapefile (zip) o GeoJSON con puntos o polígonos y un campo de
+ * Mapas de rendimiento de la cosechadora: shapefile (zip) o GeoJSON con puntos o polígonos y un campo de
  * rendimiento. Se parsea en el navegador (el Worker no procesa archivos): se limpia, se recorta al lote, se pasa a
  * t/ha y se resume en una grilla chica que es lo único que se manda a guardar.
  */
@@ -8,12 +8,15 @@ import type { Feature, FeatureCollection, Geometry, Position } from "geojson";
 import { centroidOf, containsPoint, type Area } from "@yvy/geo";
 import { t } from "./i18n";
 
+/** Unidad del rinde del archivo: t/ha, kg/ha o bu/ac. */
 export type YieldUnit = "t_ha" | "kg_ha" | "bu_ac";
+/** Unidades de rinde admitidas. */
 export const YIELD_UNITS: readonly YieldUnit[] = ["t_ha", "kg_ha", "bu_ac"];
 
 /** t/ha por bushel/acre según el cultivo (soja y trigo 60 lb/bu; maíz 56 lb/bu). */
 const BU_AC_TO_T_HA: Record<string, number> = { soja: 0.06725, trigo: 0.06725, maiz: 0.06277, default: 0.06725 };
 
+/** Máximo de celdas que se guardan por mapa de rinde. */
 export const MAX_CELLS = 800;
 
 /** Nombres habituales del campo de rendimiento en monitores de cosechadora (John Deere, Case, New Holland, Trimble). */
@@ -70,6 +73,7 @@ export function extractPoints(fc: FeatureCollection, field: string): YieldPoint[
   return out;
 }
 
+/** Convierte un rinde a t/ha; para bu/ac usa el factor del cultivo. */
 export const toTHa = (v: number, unit: YieldUnit, crop: string | null): number =>
   unit === "t_ha" ? v : unit === "kg_ha" ? v / 1000 : v * (BU_AC_TO_T_HA[crop ?? "default"] ?? BU_AC_TO_T_HA.default!);
 
@@ -81,6 +85,7 @@ const quantile = (sorted: number[], q: number) => {
 };
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
+/** Resumen del mapa de rinde de un lote. */
 export interface YieldSummary {
   /** Puntos que entraron (adentro del lote y sin valores absurdos). */
   nPoints: number;

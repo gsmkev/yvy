@@ -1,4 +1,4 @@
-/** Informes de una estancia: campaña por lote (R-03), informe para el banco (R-04) y exportación completa (R-09). */
+/** Informes de una estancia: campaña por lote, informe para el banco y exportación completa. */
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { Download } from "lucide-react";
@@ -42,6 +42,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
+/** Informes de una estancia: campaña por lote, informe para el banco y exportación completa. */
 export function FarmReportsPage() {
   const navigate = useNavigate();
   const farms = useFarms();
@@ -104,7 +105,7 @@ export function FarmReportsPage() {
       download(blob, `campana-${plot.name}-${to}.pdf`);
     });
 
-  /** R-05: aplicaciones del año con productos, dosis, carencia, distancia a agua o vivienda y operadores. */
+  /** Aplicaciones del año con productos, dosis, carencia, distancia a agua o vivienda y operadores. */
   const auditPdf = () =>
     run("audit", async () => {
       const to = localDate(Date.now());

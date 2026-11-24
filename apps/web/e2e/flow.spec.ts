@@ -1,5 +1,5 @@
 /**
- * Flujo de la Fase 1 en un navegador real contra `wrangler dev` (ver playwright.config.ts).
+ * Flujo principal en un navegador real contra `wrangler dev` (ver playwright.config.ts).
  * El código de ingreso se lee del log de wrangler (en desarrollo no se manda email).
  */
 import { readFileSync } from "node:fs";
@@ -76,7 +76,7 @@ test("dueño: registro, estancia, importación de 20 lotes y empleado", async ({
   await expect(page.getByText(/Todos los días/)).toBeVisible();
 
   // Estancia: Ramón figura en el lote, clima y parte semanal
-  // Mientras la guía de primeros pasos no esté completa, "Mapa" muestra el inicio con la guía (U-24);
+  // Mientras la guía de primeros pasos no esté completa, "Mapa" muestra el inicio con la guía;
   // después abre la única estancia directamente.
   await page.getByRole("link", { name: "Mapa" }).click();
   await expect(page.getByRole("region", { name: "Primeros pasos" })).toBeVisible();

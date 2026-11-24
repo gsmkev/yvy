@@ -1,4 +1,4 @@
-/** Pesadas y ganancia diaria de peso (G-22) por lote de animales y por animal con caravana. */
+/** Pesadas y ganancia diaria de peso por lote de animales y por animal con caravana. */
 import { useQuery } from "@tanstack/react-query";
 import type { WeighingsResponse, WeightSeries } from "@yvy/shared";
 import { get } from "../lib/api";
@@ -10,6 +10,7 @@ import { ExportableTable } from "./ExportableTable";
 const dec1 = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 1 });
 const dec2 = new Intl.NumberFormat("es-PY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+/** Ganancia diaria de peso en kg, o "—" si no hay dato. */
 export const adgText = (v: number | null) => (v === null ? "—" : `${dec2.format(v)} kg`);
 
 function SeriesTable({ rows, firstHeader }: { rows: WeightSeries[]; firstHeader: string }) {
@@ -32,6 +33,7 @@ function SeriesTable({ rows, firstHeader }: { rows: WeightSeries[]; firstHeader:
   );
 }
 
+/** Pesadas y ganancia diaria de peso de una estancia. */
 export function WeighingsPanel({ farmId }: { farmId: string }) {
   const q = useQuery({
     queryKey: ["weighings", farmId],

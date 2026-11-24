@@ -19,7 +19,7 @@ function loadDistances(): BufferDistances {
   }
 }
 
-/** Zonas de amortiguación (A-15): aplicaciones cerca de casas, escuelas y cursos de agua. */
+/** Zonas de amortiguación: aplicaciones cerca de casas, escuelas y cursos de agua. */
 export function BufferPanel({ farmId, plots, pois }: { farmId: string; plots: Plot[]; pois: Poi[] }) {
   const [raw, setRaw] = useState<Record<BufferKind, string>>(() => {
     const d = loadDistances();

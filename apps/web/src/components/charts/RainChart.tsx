@@ -1,3 +1,4 @@
+/** Gráfico de barras de lluvia diaria. */
 import { CHART } from "@yvy/shared";
 import { FRAME, Legend, YGrid, niceTicks, useHover } from "./common";
 

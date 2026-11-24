@@ -1,4 +1,4 @@
-/** K-06: detalle legible de un cambio del registro (sin IDs, con etiquetas y fechas). */
+/** Detalle legible de un cambio del registro (sin IDs, con etiquetas y fechas). */
 import { t, tk } from "./i18n";
 import { fmtDateTime } from "./format";
 

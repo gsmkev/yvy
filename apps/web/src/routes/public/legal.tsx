@@ -1,3 +1,4 @@
+/** Páginas de términos y de privacidad. */
 import { Link } from "@tanstack/react-router";
 import { t, tk } from "../../lib/i18n";
 import { PublicShell } from "./PublicShell";
@@ -25,5 +26,7 @@ function LegalPage({ prefix }: { prefix: "terms" | "privacy" }) {
   );
 }
 
+/** Términos y condiciones. */
 export const TermsPage = () => <LegalPage prefix="terms" />;
+/** Política de privacidad. */
 export const PrivacyPage = () => <LegalPage prefix="privacy" />;

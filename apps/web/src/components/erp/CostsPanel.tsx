@@ -1,4 +1,4 @@
-/** Costos y ventas con centro de costo: estancia, lote, campaña y actividad (E-05). */
+/** Costos y ventas con centro de costo: estancia, lote, campaña y actividad. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -47,6 +47,7 @@ interface CostList {
   totals: { costPyg: number; incomePyg: number };
 }
 
+/** Campañas de la organización para elegir el centro de costo. */
 export const useSeasonList = () =>
   useQuery({ queryKey: ["erp", "seasons"], queryFn: async () => (await get<{ seasons: Season[] }>("/org/seasons")).seasons });
 
@@ -98,6 +99,7 @@ function costColumns(farmName: (id: string | null) => string, onEdit: (c: CostEn
   ];
 }
 
+/** Costos y ventas con su centro de costo. */
 export function CostsPanel() {
   const farms = useFarms();
   const seasons = useSeasonList();

@@ -1,5 +1,7 @@
+/** Monitoreo de errores con Sentry, cargado solo si hay DSN. */
+
 /**
- * Monitoreo de errores (P-02). Sin VITE_SENTRY_DSN no se carga ni se inicia nada: cero pedidos de red.
+ * Monitoreo de errores. Sin VITE_SENTRY_DSN no se carga ni se inicia nada: cero pedidos de red.
  * Con DSN, Sentry se baja aparte (import dinámico) para no pesar en el arranque. No se mandan datos personales.
  */
 export function initMonitoring(dsn: string | undefined = import.meta.env.VITE_SENTRY_DSN): void {

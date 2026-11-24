@@ -13,7 +13,7 @@ interface Status {
 
 const tone = (ok: boolean) => (ok ? "text-soja" : "text-peligro");
 
-/** P-04: estado del servicio. Pública y sin datos de clientes. */
+/** Estado del servicio. Pública y sin datos de clientes. */
 export function StatusPage() {
   const q = useQuery({
     queryKey: ["public-status"],

@@ -1,4 +1,4 @@
-/** Informe de riesgo climático del pedido gratis (V-04): se abre con el enlace del email, sin sesión. */
+/** Informe de riesgo climático del pedido gratis: se abre con el enlace del email, sin sesión. */
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import type { FarmRisk } from "@yvy/shared";
@@ -20,6 +20,7 @@ async function fetchReport(id: string, sig: string): Promise<Res | null> {
   return (await res.json()) as Res;
 }
 
+/** Informe de riesgo climático al que se llega con el enlace del email. */
 export function LeadReportPage() {
   const { id, sig } = useParams({ from: "/informe/$id/$sig" });
   const q = useQuery({ queryKey: ["lead-report", id], queryFn: () => fetchReport(id, sig), retry: false });

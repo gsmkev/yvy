@@ -19,7 +19,9 @@ import { DEV_BASEMAP } from "./farmMap/rasters";
 import { syncMap } from "./farmMap/sync";
 import type { FarmMapProps } from "./farmMap/types";
 
+/** Caja envolvente de una geometría (reexportada de farmMap/geo). */
 export { boundsOf } from "./farmMap/geo";
+/** Propiedades del mapa de la estancia (tipo reexportado). */
 export type { FarmMapProps, MapPoint } from "./farmMap/types";
 
 let protocolAdded = false;
@@ -54,6 +56,7 @@ const baseStyle = (): maplibregl.StyleSpecification => ({
   ],
 });
 
+/** Mapa de la estancia con lotes, puntos, capas, dibujo y edición. */
 export function FarmMap(props: FarmMapProps) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);

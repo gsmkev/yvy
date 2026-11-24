@@ -1,4 +1,4 @@
-/** Informe de riesgo climático en PDF (C-10), con los estilos del parte semanal y del informe para el banco. */
+/** Informe de riesgo climático en PDF, con los estilos del parte semanal y del informe para el banco. */
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { BRAND } from "@yvy/shared";
 import { fmtDate, fmtHa, fmtNum } from "./format";
@@ -32,6 +32,7 @@ function Bar({ value, max, color = BRAND.cielo }: { value: number; max: number; 
   );
 }
 
+/** Documento PDF del informe de riesgo climático. */
 export function RiskReport({ farm, risk, computedAt, generatedAt }: RiskReportData) {
   const frostMax = Math.max(1, ...risk.frost.perYear.map((p) => p.days));
   const rain = rainByMonth(risk.rain);

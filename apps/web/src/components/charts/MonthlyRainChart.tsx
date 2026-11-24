@@ -1,9 +1,10 @@
+/** Gráfico de barras de lluvia mensual con la normal como referencia. */
 import { useLayoutEffect, useRef, useState } from "react";
 import { CHART } from "@yvy/shared";
 import { t } from "../../lib/i18n";
 import { FRAME, Legend, YGrid, niceTicks } from "./common";
 
-/** Barras por mes: pluviómetro y satélite lado a lado, con la normal como marca (C-05, C-06). */
+/** Barras por mes: pluviómetro y satélite lado a lado, con la normal como marca. */
 export function MonthlyRainChart(props: {
   months: { label: string; gauge: number | null; sat: number | null; normal: number | null }[];
   labels: { satellite: string; normal: string; gauge: string };

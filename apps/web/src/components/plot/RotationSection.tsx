@@ -1,3 +1,4 @@
+/** Sección de rotación de la ficha del lote. */
 import { fmtDate, fmtIsoDate, fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtDensity } from "../SeasonsPanel";
@@ -5,6 +6,10 @@ import { ErrorBox, Spinner } from "../ui";
 import type { UseQueryResult } from "@tanstack/react-query";
 import type { PlotHistoryRow } from "../../lib/types";
 
+/**
+ * Historial de rotación de cultivos del lote.
+ * @param history consulta del historial.
+ */
 export function RotationSection({ history }: { history: UseQueryResult<PlotHistoryRow[]> }) {
   return (
     <div className="border-t border-linea pt-4">

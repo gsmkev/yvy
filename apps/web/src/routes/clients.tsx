@@ -29,7 +29,7 @@ interface Client {
   alerts: { id: string; farmId: string; kind: string; severity: string; summary: string }[];
 }
 
-/** K-02: todos los clientes del agrónomo en un mapa, con sus avisos. Un clic cambia de organización y abre la estancia. */
+/** Todos los clientes del agrónomo en un mapa, con sus avisos. Un clic cambia de organización y abre la estancia. */
 export function ClientsPage() {
   const q = useQuery({ queryKey: ["clients"], queryFn: () => get<{ clients: Client[]; truncated: boolean }>("/me/clients") });
   const navigate = useNavigate();

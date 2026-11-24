@@ -1,11 +1,12 @@
 /**
- * Miniaturas del selector de fecha (S-04): por cada fecha se pide UNA sola tesela del PMTiles de esa capa
+ * Miniaturas del selector de fecha: por cada fecha se pide UNA sola tesela del PMTiles de esa capa
  * (la que cubre el centro de la estancia, al zoom en que la tesela entra completa en la estancia o el más
  * cercano que tenga el archivo) y se guarda en memoria. Una fecha, una tesela, una sola vez.
  */
 import { PMTiles, TileType } from "pmtiles";
 import type { Layer } from "./types";
 
+/** Caja [oeste, sur, este, norte] en grados. */
 export type Bounds = [number, number, number, number];
 
 /** Posición de la tesela XYZ que contiene el punto, al zoom z. */
@@ -42,6 +43,7 @@ const cache = new Map<string, Promise<string | null>>();
 
 /** Cuántas miniaturas están en memoria (para pruebas). */
 export const thumbCacheSize = () => cache.size;
+/** Vacía la caché de miniaturas. */
 export const clearThumbCache = () => cache.clear();
 
 /**

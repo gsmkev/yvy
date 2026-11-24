@@ -14,6 +14,7 @@ const pending = new Set<string>();
 /** Las consultas descartan estos ids para que un refetch no los muestre mientras dura el aviso. */
 export const isPendingDelete = (id: string) => pending.has(id);
 
+/** Muestra un aviso con "Deshacer" y, si vence sin que se use, manda el DELETE y refresca la caché. Si se deshace no se llama a la API. */
 export function deleteWithUndo({
   qc,
   id,

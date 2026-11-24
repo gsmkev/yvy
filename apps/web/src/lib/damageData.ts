@@ -1,11 +1,14 @@
-/** Datos del informe de daños para el seguro agrícola (C-09): vigor antes y después del evento y registros de alrededor. */
+/** Datos del informe de daños para el seguro agrícola: vigor antes y después del evento y registros de alrededor. */
 import { addDays } from "@yvy/shared";
 import { toIso } from "./format";
 import type { RecordRow } from "./types";
 
+/** Causas de daño que se pueden declarar. */
 export const DAMAGE_CAUSES = ["frost", "drought", "hail", "excess_rain", "fire", "pest", "wind", "other"] as const;
+/** Una de las causas de daño. */
 export type DamageCause = (typeof DAMAGE_CAUSES)[number];
 
+/** Pasada de satélite usada para comparar antes y después. */
 export interface NdviPass {
   acquiredAt: number;
   mean: number;
@@ -29,6 +32,10 @@ const MIN_VALID_PCT = 60;
 /** Fin del día del evento en milisegundos (hora de Paraguay, UTC-3). */
 export const endOfEventDay = (isoDay: string) => Date.parse(`${isoDay}T23:59:59-03:00`);
 
+/**
+ * Vigor antes y después del evento.
+ * @param eventDay día del evento (aaaa-mm-dd).
+ */
 export function damageSatellite(series: NdviPass[], eventDay: string): DamageSatellite {
   const end = endOfEventDay(eventDay);
   const valid = series.filter((p) => p.validPct >= MIN_VALID_PCT).sort((a, b) => a.acquiredAt - b.acquiredAt);
@@ -48,6 +55,7 @@ export const recordsRange = (eventDay: string) => ({
   to: Date.parse(`${addDays(eventDay, 45)}T23:59:59-03:00`),
 });
 
+/** Registros de alrededor del evento. */
 export interface DamageEvidence {
   records: RecordRow[];
   /** Registros con foto ya subida, los más cercanos al evento primero (con tope). */
@@ -65,4 +73,5 @@ export function damageEvidence(rows: RecordRow[], eventDay: string, maxPhotos = 
   return { records, withPhotos };
 }
 
+/** Hoy en formato ISO, en hora de Paraguay. */
 export const todayIso = () => toIso(Date.now());

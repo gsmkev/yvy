@@ -1,3 +1,4 @@
+/** Segundo factor propio. Alta con QR (otpauth://), códigos de recuperación y baja. Con `forced` (el dueño lo exige a los administradores) no hay baja y es lo único que se ve hasta completar el alta. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
@@ -39,7 +40,7 @@ function RecoveryCodes({ codes, onDone }: { codes: string[]; onDone: () => void 
 }
 
 /**
- * P-08: segundo factor propio. Alta con QR (otpauth://), códigos de recuperación y baja. Con `forced` (el dueño lo exige
+ * Segundo factor propio. Alta con QR (otpauth://), códigos de recuperación y baja. Con `forced` (el dueño lo exige
  * a los administradores) no hay baja y es lo único que se ve hasta completar el alta.
  */
 export function TotpSection({ forced = false }: { forced?: boolean }) {
@@ -165,7 +166,7 @@ interface Security {
   admins: { userId: string; fullName: string; totp: boolean }[];
 }
 
-/** P-08: el dueño exige el segundo factor a los administradores y ve quién ya lo activó. */
+/** El dueño exige el segundo factor a los administradores y ve quién ya lo activó. */
 export function AdminTotpPolicy() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["org-security"], queryFn: () => get<Security>("/org/security") });

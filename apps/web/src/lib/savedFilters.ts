@@ -1,6 +1,7 @@
-/** Filtros guardados de Registros (U-05): nombre + filtros, por usuario, en localStorage. */
+/** Filtros guardados de Registros: nombre + filtros, por usuario, en localStorage. */
 import { getSession } from "./api";
 
+/** Valores de los filtros de la lista de registros. */
 export interface RecordFilterValues {
   farmId: string;
   authorId: string;
@@ -8,6 +9,7 @@ export interface RecordFilterValues {
   from: string;
   to: string;
 }
+/** Filtro con nombre guardado por la persona. */
 export interface SavedFilter {
   id: string;
   name: string;
@@ -18,6 +20,7 @@ const MAX_SAVED_FILTERS = 20;
 const key = () => `yvy.savedFilters.${getSession()?.user.id ?? "anon"}`;
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
+/** Filtros guardados del usuario actual. */
 export function loadSavedFilters(): SavedFilter[] {
   try {
     const v = JSON.parse(localStorage.getItem(key()) ?? "[]") as unknown;
@@ -68,6 +71,10 @@ export function saveFilter(name: string, filters: RecordFilterValues): SavedFilt
   return next;
 }
 
+/**
+ * Borra un filtro guardado.
+ * @returns la lista restante.
+ */
 export function deleteFilter(id: string): SavedFilter[] {
   const next = loadSavedFilters().filter((x) => x.id !== id);
   write(next);

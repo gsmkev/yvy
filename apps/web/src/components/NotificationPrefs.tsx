@@ -11,7 +11,7 @@ interface Resp {
   email: boolean;
 }
 
-/** U-29: qué avisos llegan por celular y por email, y el horario de silencio del push. */
+/** Qué avisos llegan por celular y por email, y el horario de silencio del push. */
 export function NotificationPrefs() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["notification-prefs"], queryFn: () => get<Resp>("/me/notification-prefs") });

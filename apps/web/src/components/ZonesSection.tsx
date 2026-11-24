@@ -1,3 +1,4 @@
+/** Zonas de manejo de un lote: 3 zonas calculadas con varias campañas de vigor. */
 import { useState } from "react";
 import type { MultiPolygon, Position } from "geojson";
 import { fmtDate, fmtHa, fmtNdvi } from "../lib/format";
@@ -11,7 +12,7 @@ import { ATTRIBUTION } from "@yvy/shared";
 /** De la zona más baja a la más alta, con la rampa de vigor de la marca. */
 const ZONE_COLOR: Record<number, string> = { 1: "#B5562E", 2: "#C9C46A", 3: "#3F6B35" };
 
-/** Zonas de manejo de un lote (A-32): 3 zonas calculadas con varias campañas de vigor. */
+/** Zonas de manejo de un lote: 3 zonas calculadas con varias campañas de vigor. */
 export function ZonesSection({ plot }: { plot: Plot }) {
   const q = useManagementZones(plot.farmId);
   const [rx, setRx] = useState(false);

@@ -1,3 +1,4 @@
+/** Comparación entre estancias (últimos 30 días) y entre campañas (superficie, rinde, aplicaciones). */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isFieldRole } from "@yvy/shared";
@@ -46,7 +47,7 @@ function Bar({ value, max, label }: { value: number | null; max: number; label: 
 
 const maxOf = (xs: (number | null)[]) => Math.max(0, ...xs.filter((x): x is number => x !== null));
 
-/** R-07: comparación entre estancias (últimos 30 días) y entre campañas (superficie, rinde, aplicaciones). */
+/** Comparación entre estancias (últimos 30 días) y entre campañas (superficie, rinde, aplicaciones). */
 export function ComparePage() {
   const me = useMe();
   const [tab, setTab] = useState<"farms" | "seasons">("farms");

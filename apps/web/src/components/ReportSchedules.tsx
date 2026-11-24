@@ -14,7 +14,7 @@ interface Schedule {
   lastSentAt: number | null;
 }
 
-/** R-10: a quién le llega el parte semanal con PDF (socio, agrónomo, banco), cada semana o el primer lunes del mes. */
+/** A quién le llega el parte semanal con PDF (socio, agrónomo, banco), cada semana o el primer lunes del mes. */
 export function ReportSchedules({ farmId }: { farmId: string }) {
   const qc = useQueryClient();
   const list = useQuery({ queryKey: ["report-schedules"], queryFn: () => get<Schedule[]>("/org/report-schedules") });

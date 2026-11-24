@@ -1,3 +1,4 @@
+/** Ordenamiento de la lista de lotes por nombre, tipo, superficie, vigor o última visita, con comparación es-PY. */
 import type { Plot } from "./types";
 
 type SortKey = "name" | "kind" | "area" | "vigor" | "visit";

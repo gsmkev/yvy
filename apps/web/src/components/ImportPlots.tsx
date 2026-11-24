@@ -1,3 +1,4 @@
+/** Importación de lotes desde un archivo: vista previa, elección de polígonos, nombre y tipo. */
 import { Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -11,7 +12,7 @@ import type { Plot } from "../lib/types";
 import { FarmMap } from "./FarmMap";
 import { Button, ErrorBox, Input, Modal, Select } from "./ui";
 
-/** RF-11: previsualizar, elegir polígonos, poner nombre y tipo. */
+/** Vista previa de los polígonos del archivo: se eligen, se les pone nombre y se define su tipo. */
 export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () => void }) {
   const qc = useQueryClient();
   const [items, setItems] = useState<(ImportedPolygon & { selected: boolean; kind: "crop" | "pasture" })[] | null>(
@@ -68,7 +69,7 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
   const selected = items?.filter((i) => i.selected && !i.error) ?? [];
   const farm = useFarm(farmId);
 
-  // Avisos no bloqueantes (M-10): superposición entre lotes y lotes fuera de la estancia.
+  // Avisos no bloqueantes: superposición entre lotes y lotes fuera de la estancia.
   const warnings = useMemo(() => {
     if (!selected.length) return [] as string[];
     const out: string[] = [];

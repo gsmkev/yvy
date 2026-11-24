@@ -30,7 +30,7 @@ const useSoilSamples = (farmId: string) =>
 
 const toNum = (v: string) => (v.trim() === "" ? null : Number(v.replace(",", ".")));
 
-/** Análisis de suelo de laboratorio por lote o punto de muestreo (A-30). */
+/** Análisis de suelo de laboratorio por lote o punto de muestreo. */
 export function SoilPanel({ farmId, plots }: { farmId: string; plots: Plot[] }) {
   const q = useSoilSamples(farmId);
   const qc = useQueryClient();

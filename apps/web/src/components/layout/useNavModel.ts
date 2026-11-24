@@ -1,3 +1,4 @@
+/** Modelo de la navegación: qué ítems ve la persona y con qué contexto se dibujan. */
 import { isFieldRole } from "@yvy/shared";
 import { useRouterState } from "@tanstack/react-router";
 import { FEATURES } from "../../lib/features";
@@ -12,7 +13,7 @@ export function useNavModel() {
   const me = useMe();
   const alerts = useAlerts({ active: true });
   const farms = useFarms();
-  // K-02: el agrónomo con más de un cliente tiene una pantalla con todos juntos
+  // El agrónomo con más de un cliente tiene una pantalla con todos juntos
   const orgs = useOrganizations();
   const hasClients = orgs.filter((o) => !isFieldRole(o.role)).length > 1;
   const nav = buildNav({

@@ -1,3 +1,4 @@
+/** Ilustraciones SVG de las vistas previas del Laboratorio. */
 import { useMemo } from "react";
 
 /** Colores de marca: gráficos planos, sin degradados. */
@@ -31,6 +32,7 @@ const PADDOCKS = [
   { x: 20, y: 230, w: 560, h: 110, n: 58 },
 ] as const;
 
+/** Potreros con animales marcados para la vista previa de conteo de animales. */
 export function AnimalCountIllustration({ label, className }: Props) {
   const marks = useMemo(() => {
     const r = rng(7);
@@ -77,6 +79,7 @@ const ZONES = [
   { y: 250, gap: 0.03 },
 ] as const;
 
+/** Lote con plantas y fallas para la vista previa de conteo de plantas. */
 export function StandCountIllustration({ label, className }: Props) {
   const { plants, gaps } = useMemo(() => {
     const r = rng(11);
@@ -136,6 +139,7 @@ const PATCHES = [
 ];
 const ROWS = Array.from({ length: 22 }, (_, i) => 14 + i * 16);
 
+/** Lote con manchones de malezas. */
 export function WeedsIllustration({ label, className }: Props) {
   return (
     <svg viewBox="0 0 600 360" role="img" aria-label={label} className={className}>
@@ -169,6 +173,7 @@ const HAIL_SEVERE = [
   "M60,214 L118,206 L136,246 L92,276 L40,262 Z",
 ];
 
+/** Lote con daño de granizo. */
 export function HailIllustration({ label, className }: Props) {
   return (
     <svg viewBox="0 0 600 360" role="img" aria-label={label} className={className}>

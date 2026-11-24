@@ -1,4 +1,4 @@
-/** Maquinaria y vehículos con horómetro u odómetro (E-03). */
+/** Maquinaria y vehículos con horómetro u odómetro. */
 import { MACHINE_TYPES, METER_KINDS } from "@yvy/shared";
 import { fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
@@ -18,8 +18,10 @@ interface Machine {
   meterValue: number;
 }
 
+/** Máquinas y vehículos de la organización. */
 export const useMachines = () => useErpList<Machine>("machines");
 
+/** Maquinaria con horómetro u odómetro. */
 export function MachinesPanel() {
   const farms = useFarms();
   const fields: FieldDef[] = [

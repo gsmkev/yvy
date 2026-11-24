@@ -1,3 +1,4 @@
+/** Diálogos de confirmación para dividir un lote con una línea y para unir dos lotes contiguos. */
 import { useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import type { LineString, Polygon } from "geojson";
@@ -8,7 +9,7 @@ import { t, tk } from "../lib/i18n";
 import type { Plot } from "../lib/types";
 import { Button, ErrorBox, Field, Form, Input, Modal, toast } from "./ui";
 
-/** M-05: confirma la división de un lote con la línea dibujada. */
+/** Confirma la división de un lote con la línea dibujada. */
 export function SplitModal({
   plot,
   line,
@@ -74,7 +75,7 @@ export function SplitModal({
   );
 }
 
-/** M-05: confirma la unión de dos lotes contiguos. */
+/** Confirma la unión de dos lotes contiguos. */
 export function MergeModal({
   a,
   b,

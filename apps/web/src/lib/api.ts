@@ -1,6 +1,7 @@
 /** Cliente de la API del Worker con renovación automática de sesión. */
 import { t } from "./i18n";
 
+/** Sesión guardada: tokens, vencimiento del de acceso, usuario, organización activa y las demás organizaciones. */
 export interface Session {
   accessToken: string;
   accessTokenExpiresAt: number;
@@ -8,9 +9,9 @@ export interface Session {
   user: { id: string; fullName: string; email: string | null };
   organization: { id: string; name: string; role: string };
   organizations: { id: string; name: string; role: string }[];
-  /** P-12: sesión de soporte (solo lectura, sin renovación). */
+  /** Sesión de soporte (solo lectura, sin renovación). */
   support?: boolean;
-  /** P-08: la organización exige segundo factor a los administradores y este todavía no lo activó. */
+  /** La organización exige segundo factor a los administradores y este todavía no lo activó. */
   mfaSetupRequired?: boolean;
 }
 
@@ -27,9 +28,10 @@ function load(): Session | null {
   }
 }
 
+/** Sesión actual en memoria, o null. */
 export const getSession = () => session;
 
-// ---- P-12: "ver como soporte" ----
+// ---- "ver como soporte" ----
 const STAFF_KEY = "yvy.staff-session";
 
 /** Pasa a la sesión de soporte; la del equipo queda guardada en esta pestaña para volver. */
@@ -56,6 +58,7 @@ export function exitSupport() {
   window.location.assign(back ? "/interno" : "/ingresar");
 }
 
+/** Reemplaza la sesión, la guarda y avisa a los suscriptores. */
 export function setSession(s: Session | null) {
   session = s;
   try {
@@ -67,11 +70,16 @@ export function setSession(s: Session | null) {
   listeners.forEach((l) => l(s));
 }
 
+/**
+ * Suscripción a los cambios de sesión.
+ * @returns la función que cancela.
+ */
 export const onSession = (fn: (s: Session | null) => void) => {
   listeners.add(fn);
   return () => listeners.delete(fn);
 };
 
+/** Error de una respuesta HTTP no exitosa, con el estado y el código que manda el Worker. */
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -95,7 +103,12 @@ const setNetworkDown = (v: boolean) => {
   networkDown = v;
   netListeners.forEach((l) => l());
 };
+/** Si el último intento de llegar al servidor falló por red. */
 export const isNetworkDown = () => networkDown;
+/**
+ * Suscripción a los cambios de conectividad.
+ * @returns la función que cancela.
+ */
 export const onNetworkChange = (fn: () => void) => {
   netListeners.add(fn);
   return () => {
@@ -143,6 +156,10 @@ async function refresh(): Promise<boolean> {
   return refreshing;
 }
 
+/**
+ * Llama a la API con el token de acceso (renovándolo si está por vencer) y reintenta una vez si la sesión venció.
+ * @throws ApiError si la respuesta no es exitosa.
+ */
 export async function api<T>(method: string, path: string, body?: unknown, retry = true): Promise<T> {
   if (session && session.accessTokenExpiresAt - Date.now() < 60_000) await refresh();
   const res = await netFetch(path, {
@@ -160,12 +177,21 @@ export async function api<T>(method: string, path: string, body?: unknown, retry
   return data as T;
 }
 
+/** GET a la API. */
 export const get = <T>(path: string) => api<T>("GET", path);
+/** POST a la API con cuerpo JSON (vacío por defecto). */
 export const post = <T>(path: string, body?: unknown) => api<T>("POST", path, body ?? {});
+/** PATCH a la API. */
 export const patch = <T>(path: string, body: unknown) => api<T>("PATCH", path, body);
+/** PUT a la API. */
 export const put = <T>(path: string, body: unknown) => api<T>("PUT", path, body);
+/** DELETE a la API. */
 export const del = <T>(path: string) => api<T>("DELETE", path);
 
+/**
+ * Arma una cadena de consulta omitiendo los valores vacíos.
+ * @returns "" o "?a=1&b=2".
+ */
 export const qs = (params: Record<string, string | number | undefined | null>) => {
   const p = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== null && v !== "") p.set(k, String(v));

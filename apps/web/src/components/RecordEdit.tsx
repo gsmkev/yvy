@@ -51,7 +51,7 @@ const NOTE: FieldDef = { key: "note", label: t("app.common.note"), type: "textar
 const HERD_FIELDS = (root: string): FieldDef[] =>
   HERD_CATEGORIES.map((c) => ({ key: `${root}.${c}`, label: f(`herd.${c}`), type: "number", optional: true }));
 
-/** `track` se graba en el celular (F-05) y no se edita a mano. */
+/** `track` se graba en el celular y no se edita a mano. */
 const FIELDS: Record<RecordKind, FieldDef[]> = {
   track: [],
   scouting: [{ key: "condition", label: f("common.condition"), type: "select", options: CONDITION }, NOTE],
@@ -252,6 +252,11 @@ async function push(m: Mutation) {
   }
 }
 
+/**
+ * Formulario de edición de un registro según los campos de su tipo. Valida con el esquema compartido y guarda por sincronización.
+ * @param onDone se llama al guardar.
+ * @param onCancel se llama al cancelar.
+ */
 export function RecordEditForm({
   record: r,
   onDone,
@@ -294,7 +299,7 @@ export function RecordEditForm({
     },
     onError: (e) => setInvalid(e instanceof Error ? e.message : String(e)),
   });
-  // A-12: avisos de viento y Delta T al editar las condiciones de una aplicación
+  // Avisos de viento y Delta T al editar las condiciones de una aplicación
   const num = (k: string) => (form[k] === undefined || form[k] === "" ? null : Number(form[k]));
   const warnings =
     r.kind === "application"
@@ -363,6 +368,11 @@ export function RecordEditForm({
   );
 }
 
+/**
+ * Confirmación para borrar un registro.
+ * @param onDone se llama tras borrar.
+ * @param onClose se llama al cerrar sin borrar.
+ */
 export function DeleteRecordConfirm({
   record: r,
   onDone,

@@ -32,4 +32,5 @@ export function useMeasure() {
     close: () => setClosed(true),
   };
 }
+/** Resultado de `useMeasure`. */
 export type Measure = ReturnType<typeof useMeasure>;

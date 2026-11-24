@@ -1,4 +1,4 @@
-/** Resumen público de solo lectura de una estancia (K-04): /compartido/:token, sin sesión ni menú. */
+/** Resumen público de solo lectura de una estancia: /compartido/:token, sin sesión ni menú. */
 import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
@@ -37,6 +37,7 @@ async function fetchShared(token: string): Promise<SharedSummary> {
   return (await res.json()) as SharedSummary;
 }
 
+/** Resumen público de solo lectura al que se llega con el enlace compartido. */
 export function SharedPage() {
   const { token } = useParams({ from: "/compartido/$token" });
   const q = useQuery({ queryKey: ["shared", token], queryFn: () => fetchShared(token), retry: false });

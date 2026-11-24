@@ -2,7 +2,7 @@ import { useEffect, useState, type RefObject } from "react";
 import { Maximize, Minimize } from "lucide-react";
 import { t } from "../lib/i18n";
 
-/** Pantalla completa del contenedor del mapa (U-15), como botón de ícono de la barra. Oculto si el navegador no la soporta. */
+/** Pantalla completa del contenedor del mapa como botón de ícono de la barra. Oculto si el navegador no la soporta. */
 export function FullscreenButton({
   target,
   className = "",

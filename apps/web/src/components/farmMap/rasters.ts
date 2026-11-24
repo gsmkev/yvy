@@ -1,3 +1,4 @@
+/** Capas raster del mapa (satélite, índices, límites administrativos e imágenes propias) y su visibilidad. */
 import type { FeatureCollection } from "geojson";
 import type { GeoJSONSource, Map as MlMap } from "maplibre-gl";
 import { BRAND } from "@yvy/shared";
@@ -8,9 +9,10 @@ import type { FarmMapProps } from "./types";
 
 /** Mapa base de Paraguay en R2 (bucket yvy-tiles), publicado por el job country_basemap. */
 const COUNTRY_BASEMAP = "base/paraguay.pmtiles";
+/** Si se usa el mapa base de desarrollo en lugar del satélite de producción. */
 export const DEV_BASEMAP = import.meta.env.DEV || import.meta.env.VITE_DEV_BASEMAP === "1";
 
-/** M-16: la fuente se agrega solo con datos, así la atribución "geoBoundaries" aparece únicamente con la capa activa. */
+/** La fuente se agrega solo con datos, así la atribución "geoBoundaries" aparece únicamente con la capa activa. */
 export function syncBoundaries(map: MlMap, data: FeatureCollection | null) {
   const src = map.getSource("boundaries") as GeoJSONSource | undefined;
   if (!data) {
@@ -37,7 +39,7 @@ export function syncBoundaries(map: MlMap, data: FeatureCollection | null) {
   );
 }
 
-/** M-17: cada imagen propia es una fuente `image` con sus 4 esquinas; se quitan las que ya no están activas. */
+/** Cada imagen propia es una fuente `image` con sus 4 esquinas; se quitan las que ya no están activas. */
 export function syncCustomImages(map: MlMap, images: NonNullable<FarmMapProps["customImages"]>) {
   const want = new Set(images.map((i) => `custom-${i.id}`));
   for (const l of map.getStyle().layers ?? [])
@@ -59,6 +61,7 @@ export function syncCustomImages(map: MlMap, images: NonNullable<FarmMapProps["c
   }
 }
 
+/** Agrega, actualiza o quita las fuentes y capas raster según las props del mapa. */
 export function syncRasters(map: MlMap, p: FarmMapProps) {
   const latest = (layer: Layer["layer"]) => pickLayer(p.layers ?? [], layer, p.layerIds?.[layer]);
   const set = (id: string, layer: Layer | undefined, visible: boolean, before: string) => {

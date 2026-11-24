@@ -1,4 +1,4 @@
-/** Indicador de deforestación para la EUDR (S-30): por lote, con las dos fechas de los compuestos y un mapa de cambios. Indicativo. */
+/** Indicador de deforestación para la EUDR: por lote, con las dos fechas de los compuestos y un mapa de cambios. Indicativo. */
 import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
@@ -48,6 +48,7 @@ function Method({ refYear, curYear }: { refYear: number; curYear: number }) {
   );
 }
 
+/** Pantalla del indicador EUDR de la estancia. */
 export function EudrPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId/eudr" });
   const farm = useFarm(farmId);

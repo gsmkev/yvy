@@ -1,3 +1,4 @@
+/** Parte de una estancia entre dos fechas, con su PDF. */
 import { useState } from "react";
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { addDays, localDate, mondayOf, weeklyShareText, whatsappUrl } from "@yvy/shared";
@@ -21,6 +22,7 @@ const columns: Column<RecordRow>[] = [
   { id: "data", header: "", cell: (r) => <span className="text-tinta-2">{describeData(r.kind, r.data)}</span>, hideBelow: "lg" },
 ];
 
+/** Parte con registros, lluvia, avisos y tareas del período elegido; las fechas van en la URL. */
 export function ReportPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId/parte" });
   const search = useSearch({ from: "/app/estancias/$farmId/parte" });

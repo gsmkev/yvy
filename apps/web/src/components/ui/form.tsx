@@ -1,3 +1,4 @@
+/** Controles de formulario con el estilo de la aplicación: campo, entrada, fecha, selector y pie con errores. */
 import { Button } from "./Button";
 import { ErrorBox } from "./feedback";
 import { useEffect, useRef, useState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from "react";
@@ -5,6 +6,7 @@ import { ChevronDown } from "lucide-react";
 import { displayToIso, isoToDisplay, maskDate } from "@yvy/shared";
 import { t } from "../../lib/i18n";
 
+/** Etiqueta que envuelve un control y muestra una ayuda opcional. */
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1.5 text-sm">
@@ -18,6 +20,7 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
 const inputCls =
   "h-10 rounded-md border border-linea bg-papel px-3 text-body outline-none transition-colors placeholder:text-tinta-2/60 focus:border-accion focus:ring-2 focus:ring-accion/20";
 
+/** Entrada de texto; para `type="date"` usa DateInput. */
 export const Input = (p: InputHTMLAttributes<HTMLInputElement>) =>
   p.type === "date" ? (
     // nosemgrep: react-props-spreading -- envoltorio que reenvía al elemento nativo todas sus props
@@ -97,6 +100,10 @@ export function SelectBox({ children, className = "" }: { children: ReactNode; c
   );
 }
 
+/**
+ * Selector nativo con estilo.
+ * @param options valor y texto de cada opción.
+ */
 export const Select = ({
   options,
   className = "",

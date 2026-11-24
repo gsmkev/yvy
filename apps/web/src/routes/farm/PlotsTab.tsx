@@ -7,6 +7,7 @@ import type { FarmEditing } from "./useFarmEditing";
 
 type ListProps = Parameters<typeof PlotsList>[0];
 
+/** Props de la pestaña Lotes: la estancia, su estado de edición y la lista de lotes. */
 export interface PlotsTabProps {
   d: FarmDetail;
   farmId: string;

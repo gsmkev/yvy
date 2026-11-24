@@ -4,7 +4,7 @@ import { loadPrefs, savePrefs } from "../../lib/prefs";
 import type { Layer } from "../../lib/types";
 import type { Overlay } from "./overlays";
 
-/** Capa de fondo (satélite o vigor), índice elegido, fechas por tipo y comparación con cortina (S-04, S-07). */
+/** Capa de fondo (satélite o vigor), índice elegido, fechas por tipo y comparación con cortina. */
 export function useFarmScene(layers: Layer[] | undefined) {
   const [wantedLayer, setWantedLayer] = useState<"satellite" | "ndvi">(() =>
     loadPrefs().layer === "ndvi" ? "ndvi" : "satellite",
@@ -45,4 +45,5 @@ export function useFarmScene(layers: Layer[] | undefined) {
     },
   };
 }
+/** Resultado de `useFarmScene`. */
 export type FarmScene = ReturnType<typeof useFarmScene>;

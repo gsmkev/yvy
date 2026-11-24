@@ -1,9 +1,10 @@
-/** M-17: capas propias (imagen georreferenciada) de una estancia. */
+/** Capas propias (imagen georreferenciada) de una estancia. */
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { LIMITS } from "@yvy/shared";
 import { get, getBlob } from "./api";
 import { parseLocation } from "./coords";
 
+/** Capa propia georreferenciada de una estancia. */
 export interface CustomLayer {
   id: string;
   name: string;
@@ -15,6 +16,7 @@ export interface CustomLayer {
   createdAt: number;
 }
 
+/** Capas propias de una estancia. */
 export const useCustomLayers = (farmId: string, enabled = true) =>
   useQuery({
     queryKey: ["custom-layers", farmId],
@@ -47,6 +49,7 @@ export function customFileMime(f: { name: string; type: string }): string | null
   return null;
 }
 
+/** Tamaño máximo de archivo según el tipo MIME (GeoTIFF o imagen). */
 export const customMaxBytes = (mime: string) =>
   mime === "image/tiff" ? LIMITS.customLayers.geotiffMaxBytes : LIMITS.customLayers.imageMaxBytes;
 

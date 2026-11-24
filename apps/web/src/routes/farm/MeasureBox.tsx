@@ -1,8 +1,13 @@
+/** Cuadro flotante con la medida de distancia o área sobre el mapa. */
 import { t } from "../../lib/i18n";
 import { fmtHa } from "../../lib/format";
 import { closedAreaHa, fmtDistance, pathLengthM } from "../../lib/measure";
 import type { Measure } from "./useMeasure";
 
+/**
+ * Muestra la distancia o, si la forma está cerrada, el perímetro y la superficie.
+ * @param m estado de la medición (de `useMeasure`).
+ */
 export function MeasureBox({ m }: { m: Measure }) {
   const { points, closed } = m;
   return (

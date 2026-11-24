@@ -1,3 +1,4 @@
+/** Tabla de lotes con búsqueda, orden y vigor por lote. */
 import { useMemo, useState } from "react";
 import type { Plot } from "../lib/types";
 import { BRAND } from "@yvy/shared";
@@ -29,6 +30,10 @@ const collator = new Intl.Collator("es-PY", { sensitivity: "base", numeric: true
 /** Sin dato cuenta como el menor: queda primero de menor a mayor y último de mayor a menor. */
 const byNum = (get: (p: Plot) => number | null) => (a: Plot, b: Plot) => (get(a) ?? -1) - (get(b) ?? -1);
 
+/**
+ * Tabla de lotes con búsqueda y orden.
+ * @param onSelect se llama con el id del lote elegido.
+ */
 export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: string) => void }) {
   const [q, setQ] = useState("");
   const rows = useMemo(() => {

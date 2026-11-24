@@ -1,8 +1,10 @@
+/** Sección del panel de capas con las recorridas grabadas en el celular. */
 import { LayerSwitch, PanelSection } from "../../components/MapTools";
 import { t } from "../../lib/i18n";
 import type { Plot } from "../../lib/types";
 import type { useFarmTracks } from "./useFarmOverlays";
 
+/** Resumen de recorridas y lotes sin visitar. */
 export function TracksSection({ tracks, plots }: { tracks: ReturnType<typeof useFarmTracks>; plots: Plot[] }) {
   const trackSummary = tracks.summary;
   return (

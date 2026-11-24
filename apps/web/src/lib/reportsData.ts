@@ -1,7 +1,8 @@
-/** Datos y cálculos de los informes de campaña, del banco y de la exportación (R-03, R-04, R-09). */
+/** Datos y cálculos de los informes de campaña, del banco y de la exportación. */
 import { addDays, localDate, type ClimateData } from "@yvy/shared";
 import { get } from "./api";
 
+/** Pasada de satélite: fecha y NDVI medio del lote. */
 export interface NdviPoint {
   acquiredAt: number;
   mean: number;
@@ -16,8 +17,10 @@ interface NdviData {
   deltaVsFarmPct: number | null;
 }
 
+/** Clima de una estancia de los últimos `days` días (acotado a 1-400). */
 export const fetchClimate = (farmId: string, days: number) =>
   get<ClimateData>(`/org/farms/${farmId}/climate?days=${Math.min(Math.max(Math.round(days), 1), 400)}`);
+/** Serie de NDVI de un lote. */
 export const fetchNdvi = (plotId: string) => get<NdviData>(`/org/plots/${plotId}/ndvi`);
 
 /** Inicio de campaña: fecha de siembra, o 180 días atrás si no hay. */
@@ -27,6 +30,7 @@ export function seasonStart(sowingDate: string | null, today = localDate(Date.no
   return sowingDate < addDays(today, -365) ? addDays(today, -365) : sowingDate;
 }
 
+/** Resumen de una serie de NDVI: cantidad, último valor y fecha, máximo, mínimo y media. */
 export interface VigorSummary {
   n: number;
   last: number | null;
@@ -36,6 +40,7 @@ export interface VigorSummary {
   mean: number | null;
 }
 
+/** Resume una serie de NDVI; con la serie vacía devuelve cantidad 0 y el resto en null. */
 export function vigorSummary(series: NdviPoint[]): VigorSummary {
   if (!series.length) return { n: 0, last: null, lastAt: null, max: null, min: null, mean: null };
   const sorted = [...series].sort((a, b) => a.acquiredAt - b.acquiredAt);

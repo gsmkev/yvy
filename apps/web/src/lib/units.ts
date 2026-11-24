@@ -1,5 +1,5 @@
 /**
- * Unidades de visualización (U-23). Los datos siempre se guardan en ha, mm y °C;
+ * Unidades de visualización. Los datos siempre se guardan en ha, mm y °C;
  * la preferencia (por usuario, en localStorage) solo cambia cómo se muestran.
  */
 import {
@@ -17,12 +17,14 @@ import {
 } from "@yvy/shared";
 import { getSession } from "./api";
 
+/** Hectáreas de una cuadra (constante y tipo `Units` de @yvy/shared, reexportados). */
 export { CUADRA_HA, type Units } from "@yvy/shared";
 
 const key = () => `yvy.units.${getSession()?.user.id ?? "anon"}`;
 const listeners = new Set<() => void>();
 let cache: { k: string; v: Units } | null = null;
 
+/** Unidades de visualización del usuario actual. */
 export function getUnits(): Units {
   const k = key();
   if (cache?.k === k) return cache.v;
@@ -36,6 +38,7 @@ export function getUnits(): Units {
   return v;
 }
 
+/** Cambia parte de las unidades, las guarda y avisa a los suscriptores. */
 export function setUnits(patch: Partial<Units>) {
   const v = { ...getUnits(), ...patch };
   cache = { k: key(), v };
@@ -47,6 +50,10 @@ export function setUnits(patch: Partial<Units>) {
   listeners.forEach((l) => l());
 }
 
+/**
+ * Suscripción para `useSyncExternalStore`.
+ * @returns la función que cancela.
+ */
 export const subscribeUnits = (cb: () => void) => {
   listeners.add(cb);
   return () => {
@@ -59,9 +66,15 @@ export const resetUnitsCache = () => {
   cache = null;
 };
 
+/** Convierte hectáreas a la unidad de área elegida. */
 export const haToArea = (ha: number, u: AreaUnit = getUnits().area) => haToAreaOf(ha, u);
+/** Convierte milímetros a la unidad de lluvia elegida. */
 export const mmToRain = (mm: number, u: RainUnit = getUnits().rain) => mmToRainOf(mm, u);
+/** Convierte grados Celsius a la unidad de temperatura elegida. */
 export const cToTemp = (c: number, u: TempUnit = getUnits().temp) => cToTempOf(c, u);
+/** Etiqueta de la unidad de área. */
 export const areaLabel = (u: AreaUnit = getUnits().area) => areaLabelOf(u);
+/** Etiqueta de la unidad de lluvia. */
 export const rainLabel = (u: RainUnit = getUnits().rain) => rainLabelOf(u);
+/** Etiqueta de la unidad de temperatura. */
 export const tempLabel = (u: TempUnit = getUnits().temp) => tempLabelOf(u);

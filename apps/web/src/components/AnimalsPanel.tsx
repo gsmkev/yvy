@@ -1,4 +1,4 @@
-/** Animales con caravana (G-21): búsqueda por caravana, alta, edición, baja e historial con ganancia de peso. */
+/** Animales con caravana: búsqueda por caravana, alta, edición, baja e historial con ganancia de peso. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -180,6 +180,7 @@ function AnimalDetail({ animal, onClose }: { animal: AnimalRow; onClose: () => v
   );
 }
 
+/** Animales con caravana de una estancia: búsqueda, alta, edición y baja. */
 export function AnimalsPanel({ farmId }: { farmId: string }) {
   const qc = useQueryClient();
   const [q, setQ] = useState("");

@@ -1,4 +1,4 @@
-/** Cambios en el terreno: área quemada tras un foco de fuego (S-20) y cambio de cobertura entre dos fechas (S-31). Indicativo. */
+/** Cambios en el terreno: área quemada tras un foco de fuego y cambio de cobertura entre dos fechas. Indicativo. */
 import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
@@ -97,6 +97,7 @@ function BurnedSection({ farmId }: { farmId: string }) {
   );
 }
 
+/** Pantalla de cambios en el terreno: área quemada y cambio de cobertura. */
 export function ChangesPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId/cambios" });
   const farm = useFarm(farmId);

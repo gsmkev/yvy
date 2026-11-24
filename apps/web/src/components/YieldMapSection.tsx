@@ -1,3 +1,4 @@
+/** Mapa de rendimiento de la cosechadora por lote y campaña: se sube el shapefile y se ve la variabilidad. */
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { FeatureCollection } from "geojson";
@@ -78,7 +79,7 @@ const Stats = ({ s }: { s: Pick<YieldSummary, "meanTHa" | "p10THa" | "p90THa" | 
   </p>
 );
 
-/** Mapa de rendimiento de la cosechadora por lote y campaña (A-21): se sube el shapefile y se ve la variabilidad. */
+/** Mapa de rendimiento de la cosechadora por lote y campaña: se sube el shapefile y se ve la variabilidad. */
 export function YieldMapSection({ plot }: { plot: Plot }) {
   const qc = useQueryClient();
   const maps = useQuery({ queryKey: ["yield-maps", plot.id], queryFn: () => get<SavedMap[]>(`/org/plots/${plot.id}/yield-maps`) });

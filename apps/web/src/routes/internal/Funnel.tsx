@@ -11,7 +11,7 @@ interface FunnelData {
   daily: { day: string; n: number }[];
 }
 
-/** P-03: embudo de activación (organizaciones nuevas de los últimos 90 días) y pantallas más usadas. */
+/** Embudo de activación (organizaciones nuevas de los últimos 90 días) y pantallas más usadas. */
 export function Funnel() {
   const q = useQuery({ queryKey: ["admin-funnel"], queryFn: () => get<FunnelData>("/admin/funnel") });
   if (!q.data) return null;

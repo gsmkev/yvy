@@ -10,7 +10,7 @@ import type { PlanRequestRow as PlanRequest, PlanView } from "@yvy/shared";
 
 const cap = (n: number | null) => (n === null ? t("ui.plan.noCap") : fmtNum(n));
 
-/** P-10: plan, topes y uso de la organización, y el pedido de cambio (solo el dueño). No cobra: el pedido lo aprueba el equipo de Yvy. */
+/** Plan, topes y uso de la organización, y el pedido de cambio (solo el dueño). No cobra: el pedido lo aprueba el equipo de Yvy. */
 export function PlanPanel() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["plan"], queryFn: () => get<PlanView>("/org/plan") });

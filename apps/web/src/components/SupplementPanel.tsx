@@ -1,4 +1,4 @@
-/** Suplementación y sal mineral por potrero (G-31). */
+/** Suplementación y sal mineral por potrero. */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SUPPLEMENT_TYPES, type SupplementResponse } from "@yvy/shared";
@@ -12,6 +12,7 @@ const int = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 });
 const dec = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 1 });
 const DAY = 86_400_000;
 
+/** Suplementación por potrero en el período elegido. */
 export function SupplementPanel({ farmId }: { farmId: string }) {
   const [days, setDays] = useState("30");
   const q = useQuery({

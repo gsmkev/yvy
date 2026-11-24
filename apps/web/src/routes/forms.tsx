@@ -1,4 +1,4 @@
-/** Formularios configurables (F-14): campos propios que cada tipo de registro pregunta después de las preguntas estándar. */
+/** Formularios configurables: campos propios que cada tipo de registro pregunta después de las preguntas estándar. */
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FORM_FIELD_TYPES, FIELD_ID, LIMITS, RECORD_KINDS, formConfigSchema, type FormConfig, type FormField, type RecordKind } from "@yvy/shared";
@@ -31,6 +31,7 @@ const compactField = (f: FormField): FormField => {
   return Object.fromEntries(Object.entries(kept).filter(([, v]) => v !== undefined)) as FormField;
 };
 
+/** Campos propios que cada tipo de registro pregunta después de las preguntas estándar. */
 export function FormsPage() {
   const me = useMe();
   const qc = useQueryClient();

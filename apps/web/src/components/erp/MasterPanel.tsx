@@ -8,6 +8,7 @@ import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Fie
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions, RowMenu, useTableExport } from "./adminSlot";
 
+/** Campo del formulario de un maestro. `type` "money" convierte a la unidad menor de la moneda indicada por `currencyKey`. */
 export interface FieldDef {
   key: string;
   label: string;
@@ -25,6 +26,7 @@ export interface FieldDef {
   initial?: string;
 }
 
+/** Columna de la tabla de un maestro; `right` alinea a la derecha los montos y las cantidades. */
 export interface ColDef<T> {
   header: string;
   cell: (r: T) => ReactNode;
@@ -34,6 +36,11 @@ export interface ColDef<T> {
   hideBelow?: "sm" | "md" | "lg";
 }
 
+/**
+ * Lista de un recurso del ERP.
+ * @param path ruta bajo /org/erp.
+ * @param enabled en false evita la consulta.
+ */
 export const useErpList = <T,>(path: string, enabled = true) =>
   useQuery({ enabled, queryKey: ["erp", path], queryFn: () => get<T[]>(`/org/erp/${path}`) });
 
@@ -60,6 +67,10 @@ const toBody = (fields: FieldDef[], form: Record<string, string>) =>
     }),
   );
 
+/**
+ * Diálogo de alta o edición de una fila.
+ * @param row fila a editar, o null para un alta.
+ */
 export function RowModal({
   title,
   fields,
@@ -119,6 +130,13 @@ export function RowModal({
   );
 }
 
+/**
+ * Panel completo de un maestro: tabla, alta, edición, baja y exportación.
+ * @param path ruta del maestro en la API.
+ * @param canEdit permite alta, cambio y baja.
+ * @param filter deja pasar solo algunas filas.
+ * @param empty contenido del estado vacío.
+ */
 export function MasterPanel<T extends Row>({
   path,
   inline = false,

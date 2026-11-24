@@ -1,4 +1,4 @@
-/** Foto de la factura o el ticket de un movimiento o un costo (E-37): adjuntar, ver y quitar. */
+/** Foto de la factura o el ticket de un movimiento o un costo: adjuntar, ver y quitar. */
 import { useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { del, get, post } from "../../lib/api";
@@ -86,6 +86,12 @@ export function PhotoRowMenu({
   );
 }
 
+/**
+ * Adjunta, muestra y quita la foto de una factura.
+ * @param kind tipo de documento al que pertenece.
+ * @param id id del documento.
+ * @param hasPhoto si ya tiene foto.
+ */
 export function InvoicePhoto({ kind, id, hasPhoto }: { kind: PhotoKind; id: string; hasPhoto: boolean }) {
   const { input: hidden, pick, upload, view, remove } = usePhoto(kind, id);
   const link = "cursor-pointer underline-offset-4 hover:text-surco hover:underline";

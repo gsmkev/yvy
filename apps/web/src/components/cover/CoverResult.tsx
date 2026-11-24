@@ -1,3 +1,4 @@
+/** Resultado del análisis de cobertura: clases, conversiones, mapa y PDF. */
 import { useState } from "react";
 import { analysisAreas, ATTRIBUTION, parseCoverKey, summarizeCover } from "@yvy/shared";
 import { download } from "../../lib/exports";

@@ -1,3 +1,4 @@
+/** Punto de entrada de la web: monitoreo, cliente de consultas, service worker y montaje de la aplicación. */
 import "./lib/locale"; // primero: fija el idioma antes de que otros módulos armen textos
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";

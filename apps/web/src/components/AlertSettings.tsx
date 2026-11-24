@@ -1,4 +1,4 @@
-/** Umbrales de avisos de una estancia (C-04). Los edita el dueño o un administrador; el resto los ve. */
+/** Umbrales de avisos de una estancia. Los edita el dueño o un administrador; el resto los ve. */
 import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { isFieldRole } from "@yvy/shared";
@@ -20,6 +20,11 @@ const toDraft = (v: AlertSettings): Draft => ({
 });
 const num = (v: string) => Number(v.replace(",", "."));
 
+/**
+ * Sección plegable con los umbrales de avisos de una estancia.
+ * @param open si está desplegada.
+ * @param onToggle alterna el despliegue.
+ */
 export function AlertSettingsSection({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const farms = useFarms();
   const me = useMe();

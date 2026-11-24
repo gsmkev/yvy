@@ -1,4 +1,4 @@
-/** Costo por hectárea y por tonelada, y margen bruto por lote, cultivo y actividad (E-30, E-31). */
+/** Costo por hectárea y por tonelada, y margen bruto por lote, cultivo y actividad. */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { get, withQs } from "../../lib/api";
@@ -54,6 +54,7 @@ const perHa = <T extends Figures>(): Column<T>[] => [
   { id: "marginHa", header: t("ui.results.colMarginHa"), align: "right", hideBelow: "md", cell: (r) => <span className={tone(r.marginPerHa ?? 0)}>{gs(r.marginPerHa)}</span> },
 ];
 
+/** Costo por hectárea y por tonelada y margen bruto. */
 export function ResultsPanel() {
   const farms = useFarms();
   const seasons = useSeasonList();

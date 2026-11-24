@@ -1,3 +1,4 @@
+/** Definición de la navegación principal: grupos y entradas del menú según el rol, la cantidad de estancias y las funciones disponibles. */
 import { isFieldRole, type Role } from "@yvy/shared";
 import {
   Bell,
@@ -17,11 +18,13 @@ import {
 } from "lucide-react";
 import type { MessageKey } from "./i18n";
 
+/** Entrada del menú: ruta, texto e ícono. */
 export interface NavItem {
   to: string;
   label: MessageKey;
   icon: LucideIcon;
 }
+/** Grupo de entradas del menú; sin `label` son entradas sueltas. */
 export interface NavGroup {
   id: string;
   /** Sin título: ítems sueltos. */
@@ -29,6 +32,7 @@ export interface NavGroup {
   items: NavItem[];
 }
 
+/** Datos que deciden qué entradas se muestran: rol, cantidad de estancias y de lotes (null mientras cargan) y banderas de funciones. */
 export interface NavContext {
   role?: Role;
   /** Estancias de la organización; null mientras carga. */
@@ -57,7 +61,7 @@ export function buildNav(c: NavContext): { main: NavGroup[]; bottom: NavItem[] }
         { to: "/registros", label: "ui.nav.records", icon: ClipboardList },
         { to: "/tareas", label: "ui.nav.tasks", icon: ListChecks },
         { to: "/calendario", label: "ui.nav.calendar", icon: CalendarDays },
-        // El calendario sanitario no es para el empleado (G-10) ni tiene sentido sin lotes
+        // El calendario sanitario no es para el empleado ni tiene sentido sin lotes
         ...(!field && c.plots !== 0 ? [{ to: "/sanidad", label: "ui.nav.sanitary" as MessageKey, icon: HeartPulse }] : []),
         { to: "/avisos", label: "ui.nav.alerts", icon: Bell },
       ],

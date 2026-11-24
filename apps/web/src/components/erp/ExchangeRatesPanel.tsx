@@ -1,4 +1,4 @@
-/** Tipo de cambio diario, carga manual (E-06): guaraníes por dólar. El más reciente se usa por defecto. */
+/** Tipo de cambio diario, carga manual: guaraníes por dólar. El más reciente se usa por defecto. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { localDate } from "@yvy/shared";
@@ -15,8 +15,10 @@ interface Rate {
   usdToPyg: number;
 }
 
+/** Tipos de cambio cargados. */
 export const useRates = () => useQuery({ queryKey: ["erp", "exchange-rates"], queryFn: () => get<Rate[]>("/org/erp/exchange-rates") });
 
+/** Carga manual del tipo de cambio diario y su historial. */
 export function ExchangeRatesPanel() {
   const q = useRates();
   const qc = useQueryClient();

@@ -1,4 +1,4 @@
-/** Datos del indicador EUDR (S-30), compartidos por la pantalla y el PDF. */
+/** Datos del indicador EUDR, compartidos por la pantalla y el PDF. */
 import { tk } from "./i18n";
 import type { EudrPlot, EudrResponse } from "./types";
 
@@ -14,6 +14,7 @@ export const EUDR_METHOD = {
   minPatchHa: 0.5,
 } as const;
 
+/** Número con coma decimal, sin redondear. */
 export const fmtRatio = (n: number) => String(n).replace(".", ",");
 
 /** "Sin cambio", "Posible pérdida de bosque: 3,2 ha" o "Sin datos suficientes por nubes". */
@@ -40,6 +41,7 @@ interface EudrSummary {
 const min = (a: number | null, b: number | null) => (a === null ? b : b === null ? a : Math.min(a, b));
 const max = (a: number | null, b: number | null) => (a === null ? b : b === null ? a : Math.max(a, b));
 
+/** Resume el indicador EUDR de una estancia a partir de sus lotes. */
 export function summarize(d: EudrResponse): EudrSummary {
   const out: EudrSummary = {
     plots: d.plots.length,

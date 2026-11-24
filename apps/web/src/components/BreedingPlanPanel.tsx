@@ -1,4 +1,4 @@
-/** Plan reproductivo (ADR 0005): estación de servicio, línea de tiempo del ciclo, tareas y indicadores. */
+/** Plan reproductivo: estación de servicio, línea de tiempo del ciclo, tareas y indicadores. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -49,6 +49,7 @@ function Settings({ farmId, d }: { farmId: string; d: ReproPlanResponse }) {
   );
 }
 
+/** Plan reproductivo de una estancia; solo dueño y administradores lo editan. */
 export function BreedingPlanPanel({ farmId }: { farmId: string }) {
   const me = useMe();
   const qc = useQueryClient();

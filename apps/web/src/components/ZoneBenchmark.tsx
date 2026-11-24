@@ -1,4 +1,4 @@
-/** R-08: vigor y lluvia de la estancia frente a la mediana anónima de las estancias vecinas de otras organizaciones. */
+/** Vigor y lluvia de la estancia frente a la mediana anónima de las estancias vecinas de otras organizaciones. */
 import { useQuery } from "@tanstack/react-query";
 import { get } from "../lib/api";
 import { compareToZone } from "../lib/benchmark";
@@ -17,6 +17,7 @@ interface Benchmark {
   rainMedianMm: number | null;
 }
 
+/** Comparación anónima del vigor y la lluvia de la estancia con la zona. */
 export function ZoneBenchmark({ farmId }: { farmId: string }) {
   const q = useQuery({
     queryKey: ["zone-benchmark", farmId],

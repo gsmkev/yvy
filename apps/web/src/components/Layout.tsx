@@ -1,3 +1,4 @@
+/** Estructura de las pantallas autenticadas: barra superior, navegación y contenido. */
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Ellipsis } from "lucide-react";
 import { Outlet } from "@tanstack/react-router";
@@ -58,7 +59,7 @@ export function Layout() {
   const offline = useSyncExternalStore(onNetworkChange, isNetworkDown);
   useSignedOutRedirect();
   useSearchShortcut(searchRef);
-  // P-08: el dueño exige segundo factor y este administrador todavía no lo activó: no ve otra cosa hasta activarlo
+  // El dueño exige segundo factor y este administrador todavía no lo activó: no ve otra cosa hasta activarlo
   const mfaGate = useSyncExternalStore(onSession, () => getSession()?.mfaSetupRequired === true);
   const { nav, ctx } = useNavModel();
   const path = ctx.path;

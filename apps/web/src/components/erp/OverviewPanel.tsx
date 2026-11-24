@@ -118,6 +118,7 @@ function OverviewLists({ d }: { d: OverviewData }) {
   );
 }
 
+/** Resumen de Administración: compras, cuentas, stock bajo y vencimientos. */
 export function OverviewPanel() {
   const d = useOverviewData();
   if (d.loading) return <Spinner rows={4} h={72} />;

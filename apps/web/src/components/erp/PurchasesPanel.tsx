@@ -1,4 +1,3 @@
-/** Compras: orden, factura del proveedor y recepción en depósito (E-33). */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { COST_CATEGORIES, CURRENCIES, lineAmount, localDate, toMinor, type Currency, type PurchaseStatus } from "@yvy/shared";
@@ -47,6 +46,7 @@ const STATUS_TONE: Record<PurchaseStatus, string> = {
   complete: "text-accion",
 };
 
+/** Compras: orden, factura del proveedor y recepción en depósito. */
 export function PurchasesPanel() {
   const q = useQuery({ queryKey: ["erp", "purchases"], queryFn: () => get<Purchase[]>("/org/erp/purchases") });
   const parties = useParties();

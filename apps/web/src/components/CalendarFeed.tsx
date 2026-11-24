@@ -11,7 +11,7 @@ interface Status {
   lastUsedAt: number | null;
 }
 
-/** I-04: enlace .ics con las tareas del usuario, para suscribirse desde Google Calendar u Outlook. */
+/** Enlace .ics con las tareas del usuario, para suscribirse desde Google Calendar u Outlook. */
 export function CalendarFeed() {
   const qc = useQueryClient();
   const status = useQuery({ queryKey: ["calendar-feed"], queryFn: () => get<Status>("/me/calendar-feed") });

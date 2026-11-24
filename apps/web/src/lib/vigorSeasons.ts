@@ -1,4 +1,4 @@
-/** Comparación de campañas de vigor (S-03): una curva de NDVI por campaña, superpuestas desde el inicio de la campaña. */
+/** Comparación de campañas de vigor: una curva de NDVI por campaña, superpuestas desde el inicio de la campaña. */
 
 /** La campaña agrícola va de julio a junio: la 2024/25 empieza el 1 de julio de 2024. */
 const START_MONTH = 6; // julio (0-based)
@@ -17,11 +17,13 @@ interface CampaignSeries {
   points: { x: number; y: number }[];
 }
 
+/** Año de inicio de la campaña a la que pertenece una fecha. */
 export function campaignStartYear(ts: number): number {
   const d = new Date(ts);
   return d.getUTCMonth() >= START_MONTH ? d.getUTCFullYear() : d.getUTCFullYear() - 1;
 }
 
+/** Etiqueta "2024/25" de una campaña a partir de su año de inicio. */
 export const campaignLabel = (startYear: number): string => `${startYear}/${String((startYear + 1) % 100).padStart(2, "0")}`;
 
 /** Días desde el 1 de julio de la campaña. */

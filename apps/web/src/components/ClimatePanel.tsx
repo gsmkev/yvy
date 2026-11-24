@@ -1,3 +1,4 @@
+/** Clima de la estancia de los últimos 90 días. */
 import { ZoneBenchmark } from "./ZoneBenchmark";
 import { SpiPanel } from "./SpiPanel";
 import { useQuery } from "@tanstack/react-query";
@@ -37,6 +38,7 @@ const doy = (date: string) =>
   Math.floor((Date.parse(`${date}T00:00:00Z`) - Date.parse(`${date.slice(0, 4)}-01-01T00:00:00Z`)) / 86_400_000) + 1;
 const day = (d: string) => Date.parse(`${d}T12:00:00Z`);
 
+/** Panel de clima de una estancia. */
 export function ClimatePanel({ farmId }: { farmId: string }) {
   const q = useQuery({
     queryKey: ["climate", farmId],

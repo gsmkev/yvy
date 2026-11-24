@@ -1,4 +1,4 @@
-/** Sistema productivo de la estancia (ADR 0005): la pregunta de la primera vez, el sistema elegido y sus indicadores. */
+/** Sistema productivo de la estancia: la pregunta de la primera vez, el sistema elegido y sus indicadores. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {

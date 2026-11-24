@@ -1,14 +1,17 @@
 /**
- * M-16: límites de departamentos (ADM1) y distritos (ADM2) de geoBoundaries (CC BY 4.0).
+ * Límites de departamentos (ADM1) y distritos (ADM2) de geoBoundaries (CC BY 4.0).
  * El job `boundaries` de workers-py los baja, los simplifica y los sube a R2 junto a las teselas;
  * la web los lee de ahí y, si todavía no existen, la capa queda como "no disponible" sin romper nada.
  */
 import { useQuery } from "@tanstack/react-query";
 import type { FeatureCollection } from "geojson";
 
+/** Nivel de límite administrativo: departamentos (adm1) o distritos (adm2). */
 export type BoundaryLevel = "adm1" | "adm2";
+/** Niveles disponibles, en orden. */
 export const BOUNDARY_LEVELS: BoundaryLevel[] = ["adm1", "adm2"];
 
+/** URL del GeoJSON de límites en las teselas, o null si no hay base de teselas. */
 export const boundaryUrl = (tilesBaseUrl: string | undefined, level: BoundaryLevel): string | null =>
   tilesBaseUrl ? `${tilesBaseUrl.replace(/\/$/, "")}/boundaries/pry-${level}.geojson` : null;
 
@@ -35,6 +38,7 @@ async function fetchBoundaries(url: string): Promise<FeatureCollection | null> {
   }
 }
 
+/** Descarga los límites del nivel elegido; sin nivel no consulta. */
 export const useBoundaries = (level: BoundaryLevel | null, tilesBaseUrl: string | undefined) => {
   const url = level ? boundaryUrl(tilesBaseUrl, level) : null;
   return useQuery({

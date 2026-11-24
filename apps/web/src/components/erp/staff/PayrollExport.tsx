@@ -1,3 +1,4 @@
+/** Exportación de la planilla del personal para el contador. */
 import { useState } from "react";
 import { localDate, type PayrollRow } from "@yvy/shared";
 import { get, withQs } from "../../../lib/api";
@@ -10,7 +11,7 @@ const monthStart = (back: number) => {
   return localDate(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - back, 1));
 };
 
-/** Planilla para el contador (E-27): Excel con jornales, adelantos y pagos por empleado y mes. Sin aportes. */
+/** Planilla para el contador: Excel con jornales, adelantos y pagos por empleado y mes. Sin aportes. */
 export function PayrollExport() {
   const [from, setFrom] = useState(monthStart(2));
   const [to, setTo] = useState(localDate(Date.now()));

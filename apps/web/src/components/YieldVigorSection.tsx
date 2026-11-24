@@ -1,4 +1,4 @@
-/** A-22: rinde frente a vigor satelital por zona de manejo del lote, con una lectura honesta si faltan datos. */
+/** Rinde frente a vigor satelital por zona de manejo del lote, con una lectura honesta si faltan datos. */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "../lib/api";
@@ -21,6 +21,7 @@ interface SavedMap {
 
 const t1 = (n: number) => fmtNum(Math.round(n * 10) / 10);
 
+/** Sección del lote que compara el rinde cosechado con el vigor de cada zona de manejo. */
 export function YieldVigorSection({ plot }: { plot: Plot }) {
   const zonesQ = useManagementZones(plot.farmId);
   const maps = useQuery({ queryKey: ["yield-maps", plot.id], queryFn: () => get<SavedMap[]>(`/org/plots/${plot.id}/yield-maps`) });

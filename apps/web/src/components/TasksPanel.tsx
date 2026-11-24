@@ -1,3 +1,4 @@
+/** Panel de tareas de una estancia o de toda la organización: filtro, lista agrupada y alta de tareas. */
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -13,6 +14,13 @@ import { TasksExport } from "./tasks/TasksExport";
 import { TasksSummary } from "./tasks/TasksSummary";
 import { Button, ErrorBox, PageHeader, Spinner } from "./ui";
 
+/**
+ * Lista de tareas con filtro y alta.
+ * @param farmId limita a una estancia; sin él muestra todas.
+ * @param plots lotes elegibles al crear una tarea.
+ * @param pick selección de lotes sobre el mapa, si la pantalla tiene uno.
+ * @param title si se pasa, el panel arma el encabezado de la página (título, Nueva tarea y Exportar).
+ */
 export function TasksPanel({
   farmId,
   plots,

@@ -1,9 +1,11 @@
+/** Empleados: lista, alta y consulta compartida con las demás pestañas del personal. */
 import { t } from "../../../lib/i18n";
 import { fmtGs } from "../../../lib/money";
 import { Button, EmptyState } from "../../ui";
 import { useErpList, type FieldDef } from "../MasterPanel";
 import { RecordList } from "../RecordList";
 
+/** Empleado con su jornal. */
 export interface Employee {
   id: string;
   name: string;
@@ -11,9 +13,14 @@ export interface Employee {
   phone: string | null;
   dailyWagePyg: number;
 }
+/** Empleados de la organización. */
 export const useEmployees = () => useErpList<Employee>("employees");
 
 
+/**
+ * Aviso cuando no hay empleados, con el botón para ir a cargarlos.
+ * @param onGo se llama al tocar el botón.
+ */
 export function NoStaff({ onGo }: { onGo: () => void }) {
   return (
     <EmptyState
@@ -29,6 +36,7 @@ export function NoStaff({ onGo }: { onGo: () => void }) {
   );
 }
 
+/** Lista de empleados con alta, cambio y baja. */
 export function EmployeesList() {
   const fields: FieldDef[] = [
     { key: "name", label: t("ui.staff.name"), required: true, maxLength: 120 },

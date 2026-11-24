@@ -1,3 +1,4 @@
+/** Datos del parte de la estancia entre `from` y `to` (fechas ISO): registros, lluvia, alertas y tareas. */
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { addDays, localDate } from "@yvy/shared";
@@ -95,4 +96,5 @@ export function useReportData(farmId: string, from: string, to: string) {
     workers: new Set(rows.map((r) => r.authorId)).size,
   };
 }
+/** Resultado de `useReportData`. */
 export type ReportData = ReturnType<typeof useReportData>;

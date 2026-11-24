@@ -15,7 +15,7 @@ interface Line {
   unit: DoseUnit;
 }
 
-/** Receta del agrónomo (A-11): lotes, productos y dosis → una tarea de aplicación por lote para el empleado. */
+/** Receta del agrónomo: lotes, productos y dosis → una tarea de aplicación por lote para el empleado. */
 export function PrescriptionModal({
   farmId,
   plots,

@@ -1,4 +1,4 @@
-/** Rotación de potreros (G-04): ocupación, descanso y próximo potrero sugerido. */
+/** Rotación de potreros: ocupación, descanso y próximo potrero sugerido. */
 import { useQuery } from "@tanstack/react-query";
 import type { RotationResponse } from "@yvy/shared";
 import { get } from "../lib/api";
@@ -10,6 +10,7 @@ import { ExportableTable } from "./ExportableTable";
 const dec = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 });
 const days = (v: number | null) => (v === null ? "—" : dec.format(v));
 
+/** Rotación de potreros de una estancia. */
 export function RotationPanel({ farmId }: { farmId: string }) {
   const q = useQuery({
     queryKey: ["rotation", farmId],

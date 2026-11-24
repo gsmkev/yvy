@@ -1,3 +1,4 @@
+/** Saldo por empleado con su cuenta corriente, adelantos y pagos. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EMPLOYEE_PAYMENT_KINDS, localDate } from "@yvy/shared";

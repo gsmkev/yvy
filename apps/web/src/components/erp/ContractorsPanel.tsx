@@ -1,4 +1,4 @@
-/** Contratistas con tarifas por hectárea, por hora o por tonelada (E-04). */
+/** Contratistas con tarifas por hectárea, por hora o por tonelada. */
 import { CONTRACTOR_SERVICES, CURRENCIES, RATE_UNITS, type Currency } from "@yvy/shared";
 import { t, tk } from "../../lib/i18n";
 import { fmtMoney } from "../../lib/money";
@@ -17,8 +17,10 @@ interface Contractor {
   note: string | null;
 }
 
+/** Contratistas de la organización. */
 export const useContractors = () => useErpList<Contractor>("contractors");
 
+/** Alta, cambio y baja de contratistas con sus tarifas. */
 export function ContractorsPanel() {
   const parties = useParties();
   const fields: FieldDef[] = [

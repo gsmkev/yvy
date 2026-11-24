@@ -1,3 +1,4 @@
+/** Botones de la barra de herramientas del mapa de la estancia. */
 import { useId, useState, type ReactNode } from "react";
 import { ChevronDown, Layers, Minus, Plus, Ruler } from "lucide-react";
 import { t } from "../lib/i18n";

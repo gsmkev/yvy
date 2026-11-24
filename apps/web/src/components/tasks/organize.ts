@@ -1,8 +1,10 @@
+/** Filtrado, orden y agrupación de las tareas para la lista. */
 import { isOverdue as taskOverdue, localDate, localTime } from "@yvy/shared";
 import type { Task } from "../../lib/types";
 
 const PRIORITY_RANK = { high: 0, normal: 1, low: 2 } as const;
 
+/** Filtro de la lista de tareas. */
 export type TaskFilter = "all" | "overdue";
 
 /** Filtra, ordena (fecha, hora, prioridad) y agrupa las tareas: pendientes por responsable y hechas aparte. */
@@ -31,4 +33,5 @@ export function organizeTasks(tasks: Task[], filter: TaskFilter) {
   const nToday = visible.filter((x) => x.dueDate === today).length;
   return { today, isOverdue, nOverdue, sorted, visible, done, byAssignee, nToday };
 }
+/** Filtra, ordena por fecha, hora y prioridad, y agrupa las tareas: pendientes por responsable y hechas aparte. */
 export type Organized = ReturnType<typeof organizeTasks>;

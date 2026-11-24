@@ -1,3 +1,4 @@
+/** Navegación de Administración: módulos y secciones que contiene cada uno. */
 import type { MessageKey } from "./i18n";
 
 interface AdminGroup {

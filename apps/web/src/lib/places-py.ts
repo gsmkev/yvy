@@ -1,4 +1,6 @@
 /** Lista incluida de departamentos y ciudades principales de Paraguay (aprox.), para buscar sin conexión. */
+
+/** Lugar de la lista: departamento o ciudad con su ubicación. */
 export interface Place {
   name: string;
   /** Departamento al que pertenece (en los departamentos, el mismo nombre). */
@@ -187,6 +189,7 @@ const DEPARTMENTS: { name: string; capital: Row; cities: Row[] }[] = [
   },
 ];
 
+/** Departamentos y ciudades principales de Paraguay con coordenadas aproximadas. */
 export const PLACES_PY: Place[] = DEPARTMENTS.flatMap((d) => [
   {
     name: d.name,

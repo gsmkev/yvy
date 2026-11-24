@@ -1,3 +1,4 @@
+/** Fila de una tarea con su detalle, comentarios y acciones. */
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { checklistProgress, LIMITS, parseChecklist, parseTaskComments, dueLabel } from "@yvy/shared";
@@ -41,6 +42,12 @@ function ChecklistProgress({ task }: { task: Task }) {
 }
 
 
+/**
+ * Una tarea de la lista.
+ * @param today fecha de hoy (aaaa-mm-dd).
+ * @param overdue si está vencida.
+ * @param onDelete se llama al borrarla.
+ */
 export function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: string; overdue: boolean; onDelete: () => void }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");

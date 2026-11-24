@@ -1,5 +1,5 @@
 /**
- * F-11: atajo estático de Android ("app shortcut") que se ve al mantener apretado el ícono de la app.
+ * Atajo estático de Android ("app shortcut") que se ve al mantener apretado el ícono de la app.
  * Parte pura del config plugin (sin dependencias) para poder probarla sin compilar la app.
  */
 

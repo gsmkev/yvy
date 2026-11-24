@@ -1,5 +1,5 @@
 /**
- * Config plugin (F-11): agrega el atajo "Anotar lluvia" al ícono de la app en Android.
+ * Config plugin: agrega el atajo "Anotar lluvia" al ícono de la app en Android.
  * Props: { rainShort, rainLong } con los textos en es-PY (salen de i18n en app.config.ts).
  * Solo toca el proyecto nativo que Expo genera en `prebuild`; no agrega ningún módulo nativo.
  */

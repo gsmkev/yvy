@@ -1,5 +1,6 @@
 /** Forma de una tabla simple exportable (Excel/CSV). */
 export type Cell = string | number | null | undefined;
+/** Tabla simple exportable: nombre, encabezados y filas de texto. */
 export interface TableData {
   /** Nombre de la hoja y base del archivo. */
   name: string;

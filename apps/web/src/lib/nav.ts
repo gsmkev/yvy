@@ -1,3 +1,4 @@
+/** Definición de la navegación principal: grupos y entradas del menú según el rol, la cantidad de estancias y las funciones disponibles. */
 import { isFieldRole, type Role } from "@yvy/shared";
 import {
   Bell,
@@ -17,11 +18,13 @@ import {
 } from "lucide-react";
 import type { MessageKey } from "./i18n";
 
+/** Entrada del menú: ruta, texto e ícono. */
 export interface NavItem {
   to: string;
   label: MessageKey;
   icon: LucideIcon;
 }
+/** Grupo de entradas del menú; sin `label` son entradas sueltas. */
 export interface NavGroup {
   id: string;
   /** Sin título: ítems sueltos. */
@@ -29,6 +32,7 @@ export interface NavGroup {
   items: NavItem[];
 }
 
+/** Datos que deciden qué entradas se muestran: rol, cantidad de estancias y de lotes (null mientras cargan) y banderas de funciones. */
 export interface NavContext {
   role?: Role;
   /** Estancias de la organización; null mientras carga. */

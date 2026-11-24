@@ -8,6 +8,7 @@ import type { NdviPoint } from "./reportsData";
 import type { Farm, Plot, RecordRow } from "./types";
 import { ATTRIBUTION } from "@yvy/shared";
 
+/** Pie fijo de las páginas del informe. */
 export const Footer = () => (
   <View style={s.footer} fixed>
     <Text>{t("ui.reports.footerCredit", { copernicus: t(ATTRIBUTION.copernicus), chirps: t(ATTRIBUTION.chirps) })}</Text>
@@ -15,8 +16,10 @@ export const Footer = () => (
   </View>
 );
 
+/** Milímetros con su unidad; "—" si no hay dato. */
 export const mm = (v: number | null) => (v === null ? "—" : `${fmtNum(Math.round(v))} mm`);
 
+/** Cifra destacada con su etiqueta y una nota opcional. */
 export function Kpi({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
     <View style={s.kpi}>
@@ -41,6 +44,7 @@ interface SeasonReportData {
   ndvi: NdviPoint[];
 }
 
+/** Documento PDF del resumen de campaña por lote. */
 export function SeasonReport(d: SeasonReportData) {
   const byKind = new Map<string, RecordRow[]>();
   for (const r of d.records) byKind.set(r.kind, [...(byKind.get(r.kind) ?? []), r]);

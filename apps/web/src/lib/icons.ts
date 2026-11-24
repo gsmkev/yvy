@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import type { PoiKind } from "@yvy/shared";
 
+/** Ícono de cada tipo de registro. */
 export const RECORD_ICON: Record<string, LucideIcon> = {
   scouting: Footprints,
   pest: Bug,

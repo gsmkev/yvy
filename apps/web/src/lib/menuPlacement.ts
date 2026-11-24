@@ -6,6 +6,7 @@ export interface Box {
   bottom: number;
 }
 
+/** Dónde abrir un menú respecto de su botón: alineación horizontal y si se abre hacia arriba. */
 export interface Placement {
   /** "right": el borde derecho del menú con el del botón (se abre hacia la izquierda); "left": borde izquierdo con borde izquierdo. */
   align: "left" | "right";

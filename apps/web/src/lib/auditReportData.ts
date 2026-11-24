@@ -40,6 +40,7 @@ interface AuditApplication {
   flags: AuditFlag[];
 }
 
+/** Datos ya calculados del informe de auditoría. */
 export interface AuditReportData {
   from: string;
   to: string;
@@ -58,6 +59,7 @@ export function distanceM(lon1: number, lat1: number, lon2: number, lat2: number
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
+/** Arma el informe de auditoría del período a partir de los registros de la estancia. */
 export function buildAuditReport(input: {
   from: string;
   to: string;

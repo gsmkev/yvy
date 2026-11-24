@@ -69,6 +69,7 @@ const Footer = () => (
   </View>
 );
 
+/** Documento PDF del informe de daños con vigor antes y después, registros y fotos. */
 export function DamageReport(d: DamageReportData) {
   const sat = damageSatellite(d.series, d.eventDay);
   const eventMs = Date.parse(`${d.eventDay}T12:00:00-03:00`);

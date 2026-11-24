@@ -18,6 +18,7 @@ export function parseCoords(text: string): Point | null {
   return Math.abs(lat) <= 90 && Math.abs(lon) <= 180 ? { lat, lon } : null;
 }
 
+/** Si un punto cae dentro de la caja que cubre Paraguay. */
 export function inParaguay(p: Point): boolean {
   const b = LIMITS.leads.bbox;
   return p.lon >= b.minLon && p.lon <= b.maxLon && p.lat >= b.minLat && p.lat <= b.maxLat;

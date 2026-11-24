@@ -187,6 +187,7 @@ const DEPARTMENTS: { name: string; capital: Row; cities: Row[] }[] = [
   },
 ];
 
+/** Departamentos y ciudades principales de Paraguay con coordenadas aproximadas. */
 export const PLACES_PY: Place[] = DEPARTMENTS.flatMap((d) => [
   {
     name: d.name,

@@ -3,6 +3,7 @@ import type { LonLat } from "@yvy/geo";
 import { trackLengthM } from "@yvy/geo";
 import type { RecordRow } from "./types";
 
+/** Ventana de las recorridas que se muestran: 30 días. */
 export const TRACK_WINDOW_MS = 30 * 86_400_000;
 
 type TrackRow = Pick<RecordRow, "id" | "kind" | "data" | "plotId" | "capturedAt">;
@@ -55,6 +56,7 @@ interface TrackSummary {
   unvisited: string[];
 }
 
+/** Cuenta recorridas y kilómetros y las recorridas por lote; `plotIds` fija los lotes que se informan y los que no tuvieron ninguna quedan en `unvisited`. */
 export function summarizeTracks(rows: TrackRow[], plotIds: string[], now = Date.now()): TrackSummary {
   const byPlot = new Map<string, number>();
   let walks = 0;

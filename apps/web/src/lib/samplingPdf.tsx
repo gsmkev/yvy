@@ -30,6 +30,7 @@ export function projector(plot: Plot, width: number, height: number) {
   return { px: (lon: number) => ox + (lon - x0) * mLon * k, py: (lat: number) => oy + (y1 - lat) * k };
 }
 
+/** Contorno de un lote como trazo SVG, proyectado con las funciones `px` y `py`. */
 export function plotPath(plot: Plot, px: (lon: number) => number, py: (lat: number) => number): string {
   const g = JSON.parse(plot.geometry) as Geo;
   const polys = g.type === "Polygon" ? [g.coordinates as number[][][]] : (g.coordinates as number[][][][]);
@@ -40,6 +41,7 @@ export function plotPath(plot: Plot, px: (lon: number) => number, py: (lat: numb
 
 const COL = { n: 40, lon: 110, lat: 110 };
 
+/** Documento PDF de la grilla de muestreo: croquis con los puntos numerados y tabla de coordenadas. */
 export function SamplingReport({ farm, plot, haPerPoint, points, generatedAt }: SamplingPdfData) {
   const W = 539;
   const H = 360;

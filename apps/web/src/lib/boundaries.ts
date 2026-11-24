@@ -6,9 +6,12 @@
 import { useQuery } from "@tanstack/react-query";
 import type { FeatureCollection } from "geojson";
 
+/** Nivel de límite administrativo: departamentos (adm1) o distritos (adm2). */
 export type BoundaryLevel = "adm1" | "adm2";
+/** Niveles disponibles, en orden. */
 export const BOUNDARY_LEVELS: BoundaryLevel[] = ["adm1", "adm2"];
 
+/** URL del GeoJSON de límites en las teselas, o null si no hay base de teselas. */
 export const boundaryUrl = (tilesBaseUrl: string | undefined, level: BoundaryLevel): string | null =>
   tilesBaseUrl ? `${tilesBaseUrl.replace(/\/$/, "")}/boundaries/pry-${level}.geojson` : null;
 
@@ -35,6 +38,7 @@ async function fetchBoundaries(url: string): Promise<FeatureCollection | null> {
   }
 }
 
+/** Descarga los límites del nivel elegido; sin nivel no consulta. */
 export const useBoundaries = (level: BoundaryLevel | null, tilesBaseUrl: string | undefined) => {
   const url = level ? boundaryUrl(tilesBaseUrl, level) : null;
   return useQuery({

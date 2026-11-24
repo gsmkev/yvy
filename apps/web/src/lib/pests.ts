@@ -3,8 +3,10 @@ import { centroidOf, type Area } from "@yvy/geo";
 import { BRAND, PEST_THRESHOLDS, PESTS } from "@yvy/shared";
 import type { RecordRow } from "./types";
 
+/** Ventana de los focos de plaga: 30 días. */
 export const PEST_WINDOW_MS = 30 * 86_400_000;
 
+/** Color de cada plaga en el mapa. */
 export const PEST_COLORS: Record<(typeof PESTS)[number], string> = {
   chinche: BRAND.alerta,
   oruga: BRAND.trigo,

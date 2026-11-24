@@ -5,4 +5,5 @@
  */
 const WHATSAPP_NUMBER: string = import.meta.env.VITE_WHATSAPP_NUMBER ?? "595000000000"; // provisorio, ver arriba
 
+/** Enlace de WhatsApp con el texto ya codificado. */
 export const whatsappUrl = (text: string) => `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;

@@ -7,6 +7,7 @@ import { POI_ICON } from "./icons";
 const SIZE = 28;
 const RATIO = 2;
 
+/** Id de la imagen del mapa para un tipo de punto de interés. */
 export const poiImageId = (kind: string) => `poi-${kind}`;
 
 /** Ícono del tipo en surco sobre fondo transparente; el disco lo pone la capa de círculos. */

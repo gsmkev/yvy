@@ -17,11 +17,13 @@ interface CampaignSeries {
   points: { x: number; y: number }[];
 }
 
+/** Año de inicio de la campaña a la que pertenece una fecha. */
 export function campaignStartYear(ts: number): number {
   const d = new Date(ts);
   return d.getUTCMonth() >= START_MONTH ? d.getUTCFullYear() : d.getUTCFullYear() - 1;
 }
 
+/** Etiqueta "2024/25" de una campaña a partir de su año de inicio. */
 export const campaignLabel = (startYear: number): string => `${startYear}/${String((startYear + 1) % 100).padStart(2, "0")}`;
 
 /** Días desde el 1 de julio de la campaña. */

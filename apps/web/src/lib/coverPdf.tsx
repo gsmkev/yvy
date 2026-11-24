@@ -21,6 +21,7 @@ interface CoverReportData {
 
 const CLASSES = ["forest", "pasture", "crop", "other"] as const;
 
+/** Documento PDF del cambio de cobertura entre dos fechas. */
 export function CoverReport({ farm, rows, from, to, plots, generatedAt }: CoverReportData) {
   const sum = summarizeCover(rows);
   const areas = analysisAreas(rows);

@@ -24,6 +24,7 @@ interface BankReportData {
 const pct = (v: number | null, n: number | null) =>
   v !== null && n ? `${fmtNum(Math.round((v / n) * 100))} % ${t("ui.bank.ofNormal")}` : undefined;
 
+/** Documento PDF del informe para el banco. Recibe los datos ya calculados. */
 export function BankReport(d: BankReportData) {
   const byCrop = new Map<string, { n: number; ha: number }>();
   for (const p of d.plots) {

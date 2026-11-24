@@ -8,6 +8,7 @@ import type { Feature, FeatureCollection, Geometry } from "geojson";
 import { t } from "./i18n";
 import { areaHa, cleanArea, validatePolygon, type Area, type ValidationError } from "@yvy/geo";
 
+/** Polígono leído de un archivo, con su superficie y avisos de validación. */
 export interface ImportedPolygon {
   index: number;
   name: string;
@@ -83,6 +84,10 @@ const inWgs84Range = (fc: FeatureCollection): boolean => {
   return fc.features.every((f) => !f.geometry || f.geometry.type === "GeometryCollection" || ok(f.geometry.coordinates));
 };
 
+/**
+ * Lee un KML, KMZ, GeoJSON o shapefile zipeado y devuelve sus polígonos validados.
+ * @throws si el formato no se reconoce o el archivo no se puede leer.
+ */
 export async function parseFile(file: File): Promise<ImportedPolygon[]> {
   const name = file.name.toLowerCase();
   if (name.endsWith(".geojson") || name.endsWith(".json")) {

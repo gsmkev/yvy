@@ -1,3 +1,4 @@
+/** Formato de números, fechas y unidades en es-PY, con la zona horaria de Paraguay. */
 import { areaLabel, cToTemp, getUnits, haToArea, mmToRain, rainLabel, tempLabel } from "./units";
 
 const nf = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 1 });
@@ -20,31 +21,42 @@ const dtf = new Intl.DateTimeFormat("es-PY", {
   timeZone: "America/Asuncion",
 });
 
+/** Número con hasta un decimal. */
 export const fmtNum = (n: number) => nf.format(n);
+/** NDVI con dos decimales. */
 export const fmtNdvi = (n: number) => nf2.format(n);
+/** Porcentaje con signo salvo cero. */
 export const fmtPct = (n: number) => `${pct1.format(n)} %`;
 /** Superficie en la unidad elegida (ha o cuadras), con su sufijo. */
 export const fmtHa = (n: number) => `${nf.format(haToArea(n))} ${areaLabel()}`;
 /** Solo el número de la superficie (en la unidad elegida) y la unidad, por separado. */
 export const fmtAreaValue = (ha: number) => nf.format(haToArea(ha));
+/** Etiqueta de la unidad de área elegida. */
 export const areaUnitLabel = () => areaLabel();
 /** Lluvia en mm o pulgadas (estas con dos decimales). */
 export const fmtMm = (mm: number) =>
   getUnits().rain === "in" ? `${nf2.format(mmToRain(mm))} ${rainLabel()}` : `${nf.format(mm)} ${rainLabel()}`;
 /** Solo el número de la lluvia, y la unidad por separado. */
 export const fmtRainValue = (mm: number) => (getUnits().rain === "in" ? nf2.format(mmToRain(mm)) : nf.format(Math.round(mm)));
+/** Etiqueta de la unidad de lluvia elegida. */
 export const rainUnitLabel = () => rainLabel();
 /** Temperatura en °C o °F. */
 export const fmtTemp = (c: number) => `${nf.format(cToTemp(c))} ${tempLabel()}`;
+/** Fecha dd/mm/aaaa en hora de Paraguay. */
 export const fmtDate = (ms: number) => df.format(new Date(ms));
+/** Día y mes abreviado. */
 export const fmtDay = (ms: number) => dShort.format(new Date(ms)).replace(".", "");
+/** Fecha y hora abreviadas. */
 export const fmtDateTime = (ms: number) => dtf.format(new Date(ms)).replace(".", "");
+/** Convierte "aaaa-mm-dd" a dd/mm/aaaa. */
 export const fmtIsoDate = (iso: string) => {
   const [y, m, d] = iso.split("-");
   return `${d}/${m}/${y}`;
 };
+/** Fecha ISO (aaaa-mm-dd) de un instante en hora de Paraguay. */
 export const toIso = (ms: number) => new Date(ms - 3 * 3_600_000).toISOString().slice(0, 10);
 
+/** Zona horaria por defecto de las estancias. */
 export const DEFAULT_TZ = "America/Asuncion";
 
 /** Epoch ms del inicio o fin de un día "AAAA-MM-DD" en la zona horaria de la estancia. */

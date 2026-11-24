@@ -1,3 +1,4 @@
+/** Color de la rampa NDVI para pintar el vigor. */
 import { LIMITS, NDVI_RAMP } from "@yvy/shared";
 import type { Plot } from "./types";
 

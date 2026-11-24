@@ -18,6 +18,10 @@ const httpsUrl = (v: unknown): string | null => {
   }
 };
 
+/**
+ * Lee el JSON de videos por tema.
+ * @param raw el valor de VITE_ACADEMY_VIDEOS; con un valor vacío o inválido devuelve un objeto vacío.
+ */
 export function parseAcademyVideos(raw: string | undefined): AcademyLinks {
   if (!raw) return {};
   let json: unknown;
@@ -45,4 +49,5 @@ export function parseAcademyVideos(raw: string | undefined): AcademyLinks {
   return out;
 }
 
+/** Videos de la Academia configurados al compilar. */
 export const ACADEMY_VIDEOS: AcademyLinks = parseAcademyVideos(import.meta.env.VITE_ACADEMY_VIDEOS);

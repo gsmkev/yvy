@@ -24,6 +24,7 @@ export function defaultCompare(layers: Layer[], kind: Kind): { left: string; rig
   return all.length < 2 ? null : { left: all[1]!.id, right: all[0]!.id };
 }
 
+/** Vista del mapa: centro, zoom, rumbo e inclinación. */
 export interface Camera {
   center: [number, number];
   zoom: number;

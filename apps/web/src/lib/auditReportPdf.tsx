@@ -8,6 +8,7 @@ import { s } from "./reportPdf";
 import { Footer, Kpi } from "./reportsPdf";
 import type { Farm } from "./types";
 
+/** Documento PDF del informe de auditoría para certificaciones. */
 export function AuditReport(d: AuditReportData & { farm: Farm; generatedAt: number }) {
   return (
     <Document title={`${t("ui.audit.reportTitle")} · ${d.farm.name}`} author="Yvy" language="es-PY">

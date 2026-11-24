@@ -35,6 +35,7 @@ function hitsRect(a: { cx: number; cy: number; w: number; h: number }, b: { cx: 
   return Math.abs(a.cx - b.cx) < (a.w + b.w) / 2 + PAD && Math.abs(a.cy - b.cy) < (a.h + b.h) / 2 + PAD;
 }
 
+/** Acomoda etiquetas de un croquis sin pisar obstáculos circulares ni otras etiquetas. */
 export function placeLabels(labels: LabelBox[], obstacles: Obstacle[]): Placement[] {
   const placed: { cx: number; cy: number; w: number; h: number }[] = [];
   const rmax = obstacles.reduce((m, o) => Math.max(m, o.r), 0);

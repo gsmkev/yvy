@@ -5,6 +5,7 @@ import { fmtDateTime } from "./format";
 import type { TableData } from "./tableData";
 import type { Plot, RecordRow } from "./types";
 
+/** Descarga un blob en el navegador con el nombre indicado. */
 export function download(blob: Blob, filename: string) {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -13,6 +14,7 @@ export function download(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 
+/** Texto legible del dato libre de un registro según su tipo. */
 export const describeData = (kind: string, d: Record<string, unknown>): string => describeRecord(kind, d);
 
 /** Los registros como tabla simple (para CSV). */
@@ -33,6 +35,7 @@ export function recordsTable(rows: RecordRow[]): TableData {
   };
 }
 
+/** Genera y descarga un Excel con los registros. ExcelJS se carga bajo demanda. */
 export async function recordsToExcel(rows: RecordRow[], filename: string) {
   const ExcelJS = (await import("exceljs")).default;
   const wb = new ExcelJS.Workbook();
@@ -64,6 +67,7 @@ export async function recordsToExcel(rows: RecordRow[], filename: string) {
   download(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), filename);
 }
 
+/** KML de los lotes de una estancia, un Placemark por lote. */
 export function plotsToKml(plots: Plot[], farmName: string): string {
   const ring = (r: number[][]) =>
     safeXml`<LinearRing><coordinates>${r.map((p) => `${p[0]},${p[1]}`).join(" ")}</coordinates></LinearRing>`;
@@ -93,6 +97,7 @@ interface ExportPoint {
   lat: number;
 }
 
+/** GeoJSON de lotes y puntos de interés, como texto. */
 export function plotsToGeoJson(plots: Plot[], points: ExportPoint[] = []): string {
   const features = [
     ...plots.map((p) => ({

@@ -12,6 +12,7 @@ interface ZoneInput {
   geometry: string;
 }
 
+/** Rinde de una zona de manejo calculado con las celdas que caen dentro. */
 export interface ZoneYield {
   zone: 1 | 2 | 3;
   areaHa: number;
@@ -26,6 +27,7 @@ export const MIN_CELLS_PER_ZONE = 5;
 /** Diferencia entre la zona alta y la baja (en %) por debajo de la cual no se habla de diferencia. */
 const FLAT_PCT = 5;
 
+/** Calcula el rinde de cada zona con las celdas del mapa de rinde que caen dentro de ella. */
 export function zoneYields(zones: ZoneInput[], cells: [number, number, number, number][]): ZoneYield[] {
   return [...zones]
     .sort((a, b) => a.zone - b.zone)

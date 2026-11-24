@@ -17,6 +17,7 @@ interface Phenology {
   comparison: "ahead" | "on_track" | "behind" | null;
 }
 
+/** Fenología estimada por grados-día de un lote. */
 export const usePhenology = (plotId: string, enabled = true) =>
   useQuery({
     enabled,
@@ -33,6 +34,7 @@ interface SowingWindowResponse {
   best: { from: string; to: string } | null;
 }
 
+/** Ventana de siembra de un cultivo en una estancia. */
 export const useSowingWindow = (farmId: string, crop: string) =>
   useQuery({
     queryKey: ["sowing-window", farmId, crop],
@@ -56,6 +58,7 @@ interface WaterBalance {
   } | null;
 }
 
+/** Balance hídrico del lote desde la siembra. */
 export const useWaterBalance = (plotId: string, enabled = true) =>
   useQuery({
     enabled,
@@ -70,6 +73,7 @@ interface WithdrawalResponse {
   unknown: { plotId: string; plotName: string; product: string; appliedOn: string }[];
 }
 
+/** Lotes con carencia vigente y cosechas hechas antes de cumplirla. */
 export const useWithdrawal = (farmId: string, enabled = true) =>
   useQuery({
     enabled,
@@ -88,6 +92,7 @@ interface PlotForecastResponse {
   }[];
 }
 
+/** Pronóstico propio de cada lote de la estancia. */
 export const usePlotForecast = (farmId: string, enabled = true) =>
   useQuery({
     enabled,

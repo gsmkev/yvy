@@ -24,6 +24,7 @@ interface PhotoLink {
   url: string;
 }
 
+/** Datos de la organización que entran al ZIP de exportación. */
 export interface ExportData {
   orgName: string;
   farms: ExportFarm[];
@@ -37,6 +38,7 @@ export interface ExportData {
 const MAX_RECORDS_PER_FARM = 20_000;
 const MAX_PHOTO_LINKS = 1000;
 
+/** GeoJSON con los lotes de varias estancias. */
 export function plotsToGeoJson(farms: ExportFarm[]): FeatureCollection {
   const features: Feature[] = farms.flatMap((f) =>
     f.plots.map((p) => ({
@@ -120,6 +122,7 @@ async function buildWorkbook(d: ExportData): Promise<ArrayBuffer> {
   return wb.xlsx.writeBuffer() as Promise<ArrayBuffer>;
 }
 
+/** Arma el ZIP con Excel, KML y GeoJSON en el navegador (JSZip y ExcelJS se cargan bajo demanda). */
 export async function buildExportZip(d: ExportData): Promise<Blob> {
   const JSZip = (await import("jszip")).default;
   const zip = new JSZip();

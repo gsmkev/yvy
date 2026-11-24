@@ -12,6 +12,7 @@ interface Prefs {
 
 const key = () => `yvy.prefs.${getSession()?.user.id ?? "anon"}`;
 
+/** Preferencias guardadas del usuario actual; vacías si no hay storage. */
 export function loadPrefs(): Prefs {
   try {
     const raw = localStorage.getItem(key());
@@ -22,6 +23,7 @@ export function loadPrefs(): Prefs {
   }
 }
 
+/** Combina un cambio con lo guardado. */
 export function savePrefs(patch: Prefs) {
   try {
     localStorage.setItem(key(), JSON.stringify({ ...loadPrefs(), ...patch }));

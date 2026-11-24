@@ -2,6 +2,7 @@
 import { gaugeTable as gaugeTableOf, type ClimateData, type GaugeRow } from "@yvy/shared";
 import { dayToMs } from "./format";
 
+/** Clima de la estancia con las lecturas del pluviómetro. */
 export type GaugeClimate = Omit<ClimateData, "gauge"> & { gauge: { capturedAt: number; mm: number; poiId?: string | null }[] };
 
 /** Filas por mes y total de campaña para un pluviómetro (`poiId`), o para la lluvia anotada sin pluviómetro (null). */

@@ -1,3 +1,4 @@
+/** Color de cada familia de registros, compartido por el mapa, la leyenda y las listas. */
 import { BRAND, RECORD_KINDS } from "@yvy/shared";
 
 /** Familias de registros con un color de la paleta cada una (mapa, leyenda y lista). */
@@ -37,6 +38,8 @@ const GROUP_OF: Record<(typeof RECORD_KINDS)[number], RecordGroupId> = {
   fuel_load: "other",
 };
 
+/** Familia a la que pertenece un tipo de registro; "other" si no está mapeado. */
 export const recordGroup = (kind: string): RecordGroupId => GROUP_OF[kind as keyof typeof GROUP_OF] ?? "other";
 
+/** Color de la paleta que corresponde a un tipo de registro. */
 export const recordColor = (kind: string): string => RECORD_GROUPS.find((g) => g.id === recordGroup(kind))!.color;

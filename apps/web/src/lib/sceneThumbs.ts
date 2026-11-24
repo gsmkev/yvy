@@ -6,6 +6,7 @@
 import { PMTiles, TileType } from "pmtiles";
 import type { Layer } from "./types";
 
+/** Caja [oeste, sur, este, norte] en grados. */
 export type Bounds = [number, number, number, number];
 
 /** Posición de la tesela XYZ que contiene el punto, al zoom z. */
@@ -42,6 +43,7 @@ const cache = new Map<string, Promise<string | null>>();
 
 /** Cuántas miniaturas están en memoria (para pruebas). */
 export const thumbCacheSize = () => cache.size;
+/** Vacía la caché de miniaturas. */
 export const clearThumbCache = () => cache.clear();
 
 /**

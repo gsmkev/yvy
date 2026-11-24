@@ -2,6 +2,7 @@
 import { download } from "./exports";
 import type { Cell, TableData } from "./tableData";
 
+/** Forma de la tabla exportable (reexportada). */
 export type { TableData };
 
 const stamp = () => new Date().toISOString().slice(0, 10);
@@ -17,13 +18,16 @@ function csvCell(v: Cell): string {
   return /[",\n\r;]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
+/** Convierte una tabla a CSV con saltos CRLF. */
 export const toCsv = (d: TableData): string => [d.headers, ...d.rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
 
+/** Descarga la tabla como CSV. */
 export function tableToCsv(d: TableData) {
   // BOM para que Excel abra bien las tildes
   download(new Blob(["﻿", toCsv(d)], { type: "text/csv;charset=utf-8" }), `${safeName(d.name)}-${stamp()}.csv`);
 }
 
+/** Descarga la tabla como Excel; ExcelJS se carga bajo demanda. */
 export async function tableToExcel(d: TableData) {
   const ExcelJS = (await import("exceljs")).default;
   const wb = new ExcelJS.Workbook();

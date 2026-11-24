@@ -52,6 +52,7 @@ export function ChangeMap({ farm, plots, areas, width = 539, height = 260 }: { f
   );
 }
 
+/** Documento PDF del indicador EUDR por lote. */
 export function EudrReport({ farm, data, plots, generatedAt }: EudrReportData) {
   const sum = summarize(data);
   const refYear = sum.refYear ?? 2020;

@@ -54,7 +54,7 @@ export function AuditReport(d: AuditReportData & { farm: Farm; generatedAt: numb
                 <Text key={i}>
                   {p.name}
                   {p.activeIngredient ? ` (${p.activeIngredient}${p.toxClass ? `, ${p.toxClass}` : ""})` : ""} · {fmtNum(p.dose)}{" "}
-                  {tk(`ui.doseUnit_${p.unit}`)} ·{" "}
+                  {tk(`fields.dose.unit_${p.unit}`)} ·{" "}
                   {p.withdrawalDays === null ? t("ui.audit.noWithdrawal") : t("ui.audit.withdrawalDays", { n: p.withdrawalDays })}
                 </Text>
               ))}

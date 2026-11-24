@@ -47,14 +47,14 @@ export default function Productos() {
   const create = useOnlineMutation<{ name: string }, { id: string }>("POST", "/org/products", { invalidate: ["/org/products"] });
   const submit = async () => {
     const r = await create.mutate({ name });
-    if (r.ok) { setOpen(false); showToast(t("ui.saved" as MessageKey)); }
+    if (r.ok) { setOpen(false); showToast(t("ui.common.saved")); }
   };
   return (
     <OfficeScreen title="Productos" query={q} action={{ label: "Nuevo", icon: Plus, onPress: () => setOpen(true) }}>
       <OnlineState query={q} empty={{ title: "Sin productos" }}>
         {(rows) => <DataList rows={rows} keyOf={(r) => r.id} title={(r) => r.name} right={(r) => String(r.stock)} empty={{ title: "Sin productos" }} />}
       </OnlineState>
-      <FormSheet visible={open} title="Nuevo producto" onClose={() => setOpen(false)} onSubmit={submit} submitLabel={t("ui.save")} pending={create.pending} error={create.error}>
+      <FormSheet visible={open} title="Nuevo producto" onClose={() => setOpen(false)} onSubmit={submit} submitLabel={t("ui.common.save")} pending={create.pending} error={create.error}>
         <TextField label="Nombre" value={name} onChangeText={setName} />
       </FormSheet>
     </OfficeScreen>

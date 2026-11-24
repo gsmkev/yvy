@@ -1,0 +1,20 @@
+[project]
+name = "yvy-docs"
+version = "0.1.0"
+description = "Sitio de documentación generada de Yvy (MkDocs)"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+docs = [
+  "mkdocs==1.6.1",
+  "mkdocs-material==9.8.1",
+  "mkdocstrings[python]==1.0.8",
+  "mkdocstrings-python==2.0.10",
+  "mkdocs-gen-files==0.6.1",
+  "mkdocs-literate-nav==0.6.3",
+]
+
+[tool.uv]
+package = false
+exclude-newer = "2026-11-10T00:00:00Z"

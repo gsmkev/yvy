@@ -17,7 +17,7 @@ from typing import Any
 
 import numpy as np
 from rasterio.features import geometry_mask, shapes
-from shapely.geometry import MultiPolygon, mapping, shape
+from shapely.geometry import MultiPolygon, Polygon, mapping, shape
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
 
@@ -34,6 +34,7 @@ MIN_PIXELS = 150
 MIN_HA = 0.5
 SIMPLIFY_M = 10.0
 MAX_PARTS = 15
+MAX_HOLES = 19  # la API acepta hasta 20 anillos por polígono (exterior + 19 huecos)
 PASSES_PER_SEASON = 10
 SEASON_CLOUD = 60.0
 STD_FLOOR = 0.02
@@ -96,6 +97,14 @@ def cluster_plot(stack: np.ndarray, inside: np.ndarray, k: int = K) -> tuple[np.
     return majority_filter(grid, pix, k), len(seasons_ok)
 
 
+def trim_holes(poly: Polygon) -> Polygon:
+    """Saca los huecos menores a MIN_HA y deja como mucho MAX_HOLES (los más grandes): una zona muy
+    fragmentada puede tener cientos de huecos chicos y la API rechazaba el lote entero."""
+    holes = sorted((Polygon(r) for r in poly.interiors), key=lambda h: -h.area)
+    keep = [h.exterior.coords for h in holes if h.area / 10_000 >= MIN_HA][:MAX_HOLES]
+    return Polygon(poly.exterior.coords, keep)
+
+
 def zone_polygons(labels: np.ndarray, ndvi_mean: np.ndarray, transform: Any, crs: Any, k: int = K) -> list[dict[str, Any]]:
     """Una entrada por zona: superficie, porcentaje, NDVI medio y la geometría (WGS84) sin partes menores a 0,5 ha."""
     total = int((labels > 0).sum())
@@ -120,6 +129,7 @@ def zone_polygons(labels: np.ndarray, ndvi_mean: np.ndarray, transform: Any, crs
             merged = MultiPolygon([merged])
         elif merged.geom_type != "MultiPolygon":
             continue
+        merged = MultiPolygon([trim_holes(p) for p in merged.geoms])
         wgs = from_crs(merged, crs)
         out.append(
             {

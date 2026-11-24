@@ -17,6 +17,7 @@ from typing import Any
 
 import numpy as np
 import rasterio
+import rasterio.errors
 from rasterio.enums import Resampling
 from rasterio.features import geometry_mask
 from rasterio.transform import from_origin
@@ -270,7 +271,12 @@ def ingest_range(
         if scene["processed"]:
             continue
         t0 = time.time()
-        mosaics = mosaic_indices(group, grid, indices)
+        try:
+            mosaics = mosaic_indices(group, grid, indices)
+        except rasterio.errors.RasterioIOError:
+            # Pasadas viejas del archivo público a veces no tienen alguna banda: se saltea sin marcarla procesada
+            log.warning("pasada %s: falta un archivo en el origen, se saltea", key)
+            continue
         stats: list[dict[str, Any]] = []
         for idx, (values, ok) in mosaics.items():
             stats += plot_stats(values, ok, grid, idx)

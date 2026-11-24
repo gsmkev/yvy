@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+/** Pruebas de accesibilidad. */
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import axe from "axe-core";
 import { useState } from "react";

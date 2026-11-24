@@ -1,8 +1,9 @@
+/** Pruebas de ids de campos propios. */
 import { describe, expect, it } from "vitest";
 import { FIELD_ID } from "@yvy/shared";
 import { fieldIdFrom } from "../routes/forms";
 
-describe("ids de campos propios (F-14)", () => {
+describe("ids de campos propios", () => {
   it("salen de la etiqueta, sin tildes ni símbolos, y siempre cumplen el formato", () => {
     expect(fieldIdFrom("Altura de plantas (cm)", [])).toBe("altura_de_plantas_cm");
     expect(fieldIdFrom("¿Regó el lote?", [])).toBe("rego_el_lote");

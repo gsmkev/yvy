@@ -1,4 +1,5 @@
 // @vitest-environment node
+/** Pruebas de PDF de resumen de campaña. */
 import { describe, expect, it } from "vitest";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { SeasonReport } from "./reportsPdf";

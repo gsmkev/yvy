@@ -1,3 +1,4 @@
+/** Pruebas de mapas de rendimiento. */
 import { describe, expect, it } from "vitest";
 import type { FeatureCollection, Polygon } from "geojson";
 import { extractPoints, MAX_CELLS, numericFields, summarizeYield, toTHa } from "./yieldMap";
@@ -13,7 +14,7 @@ const pt = (lon: number, lat: number, props: Record<string, unknown>) => ({
 });
 const fc = (features: ReturnType<typeof pt>[]): FeatureCollection => ({ type: "FeatureCollection", features });
 
-describe("mapas de rendimiento (A-21)", () => {
+describe("mapas de rendimiento", () => {
   it("propone primero el campo que parece rendimiento", () => {
     const f = fc([pt(-55.895, -27.205, { Elevation: 120, Speed: 6.1, Yld_Vol_Dr: 55.2, Name: "x" })]);
     expect(numericFields(f)[0]).toBe("Yld_Vol_Dr");

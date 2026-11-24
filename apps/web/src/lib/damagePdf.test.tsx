@@ -1,4 +1,5 @@
 // @vitest-environment node
+/** Pruebas de informe de daños. */
 import { describe, expect, it } from "vitest";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { DamageReport } from "./damagePdf";
@@ -30,7 +31,7 @@ const pass = (offsetDays: number, mean: number, validPct = 95) => ({ acquiredAt:
 const rec = (id: string, at: number, photo = false) =>
   ({ id, kind: "note", data: { text: "Granizo fuerte" }, capturedAt: at, lon: -55.895, lat: -27.205, attachments: photo ? [{ id: `a-${id}`, uploadStatus: "uploaded" }] : [] }) as unknown as RecordRow;
 
-describe("C-09 · informe de daños", () => {
+describe("informe de daños", () => {
   it("toma la última pasada válida antes y la primera después del evento", () => {
     const s = damageSatellite([pass(-12, 0.8), pass(-3, 0.78), pass(-1, 0.3, 20), pass(4, 0.5, 30), pass(6, 0.55), pass(20, 0.6)], event);
     expect(s.before?.mean).toBe(0.78);

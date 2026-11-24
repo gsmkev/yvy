@@ -1,3 +1,4 @@
+/** Pruebas de tema. */
 import { beforeEach, describe, expect, it } from "vitest";
 import { getTheme, setTheme } from "./theme";
 

@@ -1,3 +1,4 @@
+/** Pruebas de auditSummary; auditLabel. */
 import { describe, expect, it } from "vitest";
 import { auditLabel, auditSummary } from "./auditDetail";
 

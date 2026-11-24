@@ -1,3 +1,4 @@
+/** Pruebas de fechas de imagen; timelapse. */
 import { describe, expect, it } from "vitest";
 import { cameraDiffers, defaultCompare, layerDates, nextFrame, pickLayer, timelapseFrames } from "./scenes";
 import type { Layer } from "./types";
@@ -37,7 +38,7 @@ describe("fechas de imagen", () => {
   });
 });
 
-describe("timelapse (S-10)", () => {
+describe("timelapse", () => {
   it("ordena los cuadros de la fecha más vieja a la más nueva", () => {
     expect(timelapseFrames(layers, "ndvi").map((l) => l.id)).toEqual(["a", "c", "b"]);
     expect(timelapseFrames(layers, "evi")).toEqual([]);

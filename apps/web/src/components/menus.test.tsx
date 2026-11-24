@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+/** Pruebas de actionMenu; exportMenu. */
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import axe from "axe-core";
 import { useState } from "react";

@@ -1,3 +1,4 @@
+/** Pruebas de hoja imprimible de la orden. */
 import { describe, expect, it } from "vitest";
 import { groupOrders, type OrderRow, type WorkOrder } from "@yvy/shared";
 import { orderSheetHtml } from "./workOrders";
@@ -26,7 +27,7 @@ const row = (over: Partial<OrderRow>): OrderRow => ({
   ...over,
 });
 
-describe("hoja imprimible de la orden (E-20)", () => {
+describe("hoja imprimible de la orden", () => {
   it("la hoja imprimible trae labor, lotes con superficie, insumos con cantidad total, máquina, ejecutor y notas", () => {
     const [g] = groupOrders([row({ plotName: "Lote Norte", plannedAreaHa: 10 }), row({ plotName: "Lote Sur", plannedAreaHa: 30 })]);
     const html = orderSheetHtml(g!, "Estancia La Esperanza");

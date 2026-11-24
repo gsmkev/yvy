@@ -1,3 +1,4 @@
+/** Pruebas de informe de auditoría. */
 import { describe, expect, it } from "vitest";
 import { buildAuditReport, distanceM } from "./auditReportData";
 import type { Poi, Product, RecordRow } from "./types";
@@ -7,7 +8,7 @@ const rec = (o: Partial<RecordRow> & { data: Record<string, unknown> }): RecordR
   ({ id: "r", farmId: "f", plotId: "p1", poiId: null, authorId: "u", authorName: "Ramón", plotName: "Lote 1", kind: "application", lon: -55.9, lat: -27.2, gpsAccuracyM: null, capturedAt: 1_000 * DAY, attachments: [], ...o }) as RecordRow;
 const prod: Product = { id: "glifo", name: "Glifosato", type: "agrochemical", unit: "l", activeIngredient: "glifosato", withdrawalDays: 20, toxClass: "III" };
 
-describe("informe de auditoría (R-05)", () => {
+describe("informe de auditoría", () => {
   it("distancia haversine en metros", () => {
     expect(Math.round(distanceM(-55.9, -27.2, -55.9, -27.199))).toBeGreaterThan(105);
     expect(distanceM(1, 1, 1, 1)).toBe(0);

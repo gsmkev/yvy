@@ -1,3 +1,4 @@
+/** Pruebas de recordColors. */
 import { describe, expect, it } from "vitest";
 import { BRAND, RECORD_KINDS } from "@yvy/shared";
 import { recordColor, recordGroup } from "./recordColors";

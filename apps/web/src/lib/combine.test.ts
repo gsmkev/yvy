@@ -1,3 +1,4 @@
+/** Pruebas de perímetro de varias partes. */
 import { describe, expect, it } from "vitest";
 import { combineAreas } from "./importGeo";
 
@@ -14,7 +15,7 @@ const sq = (x: number) => ({
   ],
 });
 
-describe("M-09: perímetro de varias partes", () => {
+describe("perímetro de varias partes", () => {
   it("una figura queda Polygon, varias pasan a MultiPolygon (aplanando multipolígonos)", () => {
     expect(combineAreas([])).toBeNull();
     expect(combineAreas([sq(0)])).toEqual(sq(0));

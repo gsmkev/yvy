@@ -1,3 +1,4 @@
+/** Pruebas de focos de plaga; intensidad y lotes afectados. */
 import { describe, expect, it } from "vitest";
 import { BRAND } from "@yvy/shared";
 import { pestCounts, pestIntensity, pestPoints, pestsByPlot, PEST_COLORS, PEST_RADIUS } from "./pests";
@@ -72,7 +73,7 @@ describe("focos de plaga", () => {
   });
 });
 
-describe("intensidad y lotes afectados (A-42)", () => {
+describe("intensidad y lotes afectados", () => {
   it("toma la intensidad anotada o la compara con el umbral de la plaga", () => {
     expect(pestIntensity({ pest: "chinche", intensity: "low" })).toBe("low");
     // umbral de la chinche: 2 por metro

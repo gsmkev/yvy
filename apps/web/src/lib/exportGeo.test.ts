@@ -1,3 +1,4 @@
+/** Pruebas de exportar GeoJSON y shapefile. */
 import JSZip from "jszip";
 import { describe, expect, it } from "vitest";
 import { plotsToGeoJson, plotsToShapefileZip } from "./exports";
@@ -37,7 +38,7 @@ const readBlob = (b: Blob) =>
   });
 const pts = [{ name: "Aguada", kind: "water", lon: -55.94, lat: -27.16 }];
 
-describe("M-21: exportar GeoJSON y shapefile", () => {
+describe("exportar GeoJSON y shapefile", () => {
   it("GeoJSON trae lotes y puntos", () => {
     const fc = JSON.parse(plotsToGeoJson([plot], pts));
     expect(fc.features).toHaveLength(2);

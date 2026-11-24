@@ -1,7 +1,8 @@
+/** Pruebas de academia. */
 import { describe, expect, it } from "vitest";
 import { parseAcademyVideos } from "./academy";
 
-describe("Academia (V-10)", () => {
+describe("Academia", () => {
   it("sin configurar no hay videos", () => {
     expect(parseAcademyVideos(undefined)).toEqual({});
     expect(parseAcademyVideos("")).toEqual({});

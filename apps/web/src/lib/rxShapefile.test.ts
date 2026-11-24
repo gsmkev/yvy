@@ -1,3 +1,4 @@
+/** Pruebas de shapefile de prescripción. */
 import JSZip from "jszip";
 import { describe, expect, it } from "vitest";
 import { polygonsToShapefileZip } from "./exports";
@@ -12,7 +13,7 @@ const readBlob = (b: Blob) =>
   });
 const sq = (x: number) => [[[x, -27.2], [x, -27.201], [x + 0.001, -27.201], [x + 0.001, -27.2], [x, -27.2]]];
 
-describe("A-33: shapefile de prescripción", () => {
+describe("shapefile de prescripción", () => {
   it("trae .shp, .shx, .dbf y .prj, con la dosis en la columna RATE", async () => {
     const blob = await polygonsToShapefileZip(
       "prescripcion",

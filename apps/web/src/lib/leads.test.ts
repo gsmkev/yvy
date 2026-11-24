@@ -1,7 +1,8 @@
+/** Pruebas de coordenadas del informe gratis. */
 import { describe, expect, it } from "vitest";
 import { inParaguay, parseCoords } from "./leads";
 
-describe("coordenadas del informe gratis (V-04)", () => {
+describe("coordenadas del informe gratis", () => {
   it("entiende punto o coma decimal y los separadores habituales", () => {
     expect(parseCoords("-27.3, -55.9")).toEqual({ lat: -27.3, lon: -55.9 });
     expect(parseCoords("-27,3 -55,9")).toEqual({ lat: -27.3, lon: -55.9 });

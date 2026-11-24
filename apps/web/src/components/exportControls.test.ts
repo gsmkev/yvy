@@ -1,3 +1,4 @@
+/** Pruebas de exportar tablas. */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -9,7 +10,7 @@ const files = (dir: string): string[] =>
     return statSync(p).isDirectory() ? files(p) : p.endsWith(".tsx") && !p.endsWith(".test.tsx") ? [p] : [];
   });
 
-describe("exportar tablas (U-28)", () => {
+describe("exportar tablas", () => {
   const sources = files(root).map((p) => ({ p: p.slice(root.length + 1), s: readFileSync(p, "utf8") }));
 
   it("ninguna pantalla pone a la vez ExportableTable y su propio menú de exportar (saldría duplicado)", () => {

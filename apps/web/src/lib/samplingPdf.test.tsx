@@ -1,4 +1,5 @@
 // @vitest-environment node
+/** Pruebas de grilla de muestreo. */
 import { describe, expect, it } from "vitest";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { samplingGrid, type Area } from "@yvy/geo";
@@ -13,7 +14,7 @@ const geometry = {
 const plot = { id: "p", name: "Lote en L", areaHa: 120, geometry: JSON.stringify(geometry), minLon: -55.9, minLat: -27.22, maxLon: -55.88, maxLat: -27.2 } as unknown as Plot;
 const farm = { id: "f", name: "La Esperanza", areaHa: 500 } as unknown as Farm;
 
-describe("grilla de muestreo (M-18)", () => {
+describe("grilla de muestreo", () => {
   it("el croquis proyecta los puntos dentro del lienzo", () => {
     const { px, py } = projector(plot, 320, 220);
     const pts = samplingGrid(geometry as Area, 5);

@@ -1,3 +1,4 @@
+/** Pruebas de posición del menú. */
 import { describe, expect, it } from "vitest";
 import { placeMenu, type Box } from "./menuPlacement";
 

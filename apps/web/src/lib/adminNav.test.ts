@@ -1,3 +1,4 @@
+/** Pruebas de ADMIN_GROUPS. */
 import { describe, expect, it } from "vitest";
 import { ADMIN_GROUPS, groupOf } from "./adminNav";
 

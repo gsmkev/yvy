@@ -1,3 +1,4 @@
+/** Pruebas de compartir por WhatsApp. */
 import { describe, expect, it } from "vitest";
 import { alertShareText, mapsLink, recordShareText, weeklyShareText, whatsappUrl } from "@yvy/shared";
 

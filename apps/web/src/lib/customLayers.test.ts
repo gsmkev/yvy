@@ -1,3 +1,4 @@
+/** Pruebas de capas propias. */
 import { describe, expect, it } from "vitest";
 import { customFileMime, customMaxBytes, parseCornerInputs } from "./customLayers";
 

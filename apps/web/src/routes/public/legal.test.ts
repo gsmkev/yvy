@@ -1,3 +1,4 @@
+/** Pruebas de textos legales. */
 import { describe, expect, it } from "vitest";
 import { tk } from "../../lib/i18n";
 

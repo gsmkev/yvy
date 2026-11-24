@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+/** Pruebas de exportar cualquier tabla. */
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -56,7 +57,7 @@ function Demo() {
   );
 }
 
-describe("exportar cualquier tabla (U-28)", () => {
+describe("exportar cualquier tabla", () => {
   it("hay un solo control de exportar por tabla, no dos botones", () => {
     render(<Demo />);
     expect(screen.getAllByRole("button", { name: /Exportar/ })).toHaveLength(1);

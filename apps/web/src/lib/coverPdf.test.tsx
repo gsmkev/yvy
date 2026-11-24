@@ -1,4 +1,5 @@
 // @vitest-environment node
+/** Pruebas de PDF de cambio de cobertura. */
 import { describe, expect, it } from "vitest";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { CoverReport } from "./coverPdf";

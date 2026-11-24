@@ -1,3 +1,4 @@
+/** Pruebas de importación de lotes; shapefile y proyecciones. */
 import JSZip from "jszip";
 import { describe, expect, it } from "vitest";
 import { classifyPrj, parseFile } from "./importGeo";
@@ -68,21 +69,21 @@ describe("importación de lotes", () => {
     expect(kml).toContain("-55.95,-27.15");
   });
 
-  it("M-11: limpia vértices repetidos y cuenta lo corregido", async () => {
+  it("limpia vértices repetidos y cuenta lo corregido", async () => {
     const dirty = `<kml xmlns="http://www.opengis.net/kml/2.2"><Placemark><name>Sucio</name><Polygon><outerBoundaryIs><LinearRing><coordinates>-55.95,-27.15 -55.93,-27.15 -55.93,-27.15 -55.93,-27.17 -55.95,-27.17 -55.95,-27.15</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark></kml>`;
     const [p] = await parseFile(new File([dirty], "sucio.kml"));
     expect(p).toMatchObject({ error: null, fixed: 1 });
     expect((p!.geometry.coordinates[0] as number[][]).length).toBe(5);
   });
 
-  it("M-07: KMZ con doc.kml", async () => {
+  it("KMZ con doc.kml", async () => {
     const z = new JSZip();
     z.file("doc.kml", KML);
     const polys = await parseFile(new File([await z.generateAsync({ type: "arraybuffer" })], "lotes.kmz"));
     expect(polys.map((p) => p.name)).toEqual(["Lote Norte", "Moño"]);
   });
 
-  describe("M-07: shapefile y proyecciones", () => {
+  describe("shapefile y proyecciones", () => {
     /** Shapefile mínimo de un polígono (tipo 5) sin .dbf. */
     const shpOf = (ring: number[][]) => {
       const n = ring.length;

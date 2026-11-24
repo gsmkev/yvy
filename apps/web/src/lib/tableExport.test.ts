@@ -1,3 +1,4 @@
+/** Pruebas de toCsv. */
 import { describe, expect, it } from "vitest";
 import { toCsv } from "./tableExport";
 

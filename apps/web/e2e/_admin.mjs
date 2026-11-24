@@ -1,4 +1,4 @@
-// Temporal (auditoría UI): /administracion choca con el proxy /admin de vite, así que se navega del lado del cliente.
+// Script de apoyo para capturas: /administracion choca con el proxy /admin de vite, así que se navega del lado del cliente.
 import { chromium } from "@playwright/test";
 const out = process.argv[2];
 const ADMIN = ["overview","products","warehouses","machines","parties","purchases","grain","cattle","stock","minstock","fuel","orders","maintenance","labor","contractors","feedlot","cash","costs","budget","results","rates","staff","accountant","export"];

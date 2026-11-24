@@ -1,3 +1,4 @@
+/** Pruebas de unidades. */
 import { beforeEach, describe, expect, it } from "vitest";
 import { fmtHa, fmtMm, fmtTemp } from "./format";
 import { CUADRA_HA, getUnits, resetUnitsCache, setUnits } from "./units";

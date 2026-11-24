@@ -1,9 +1,10 @@
+/** Pruebas de atajo de Android para anotar lluvia. */
 import { describe, expect, it } from "vitest";
 import { t } from "@yvy/shared";
 import config, { SHORTCUT_LABELS } from "../app.config";
 import { shortcutsXml, rainKeys, RAIN_URI } from "../plugins/shortcuts-xml";
 
-describe("F-11 · atajo de Android para anotar lluvia", () => {
+describe("atajo de Android para anotar lluvia", () => {
   it("los textos de la config salen de i18n", () => {
     expect(SHORTCUT_LABELS.rainShort).toBe(t("app.shortcut.rainShort"));
     expect(SHORTCUT_LABELS.rainLong).toBe(t("app.shortcut.rainLong"));

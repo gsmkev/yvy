@@ -1,7 +1,8 @@
+/** Pruebas de dibujo sobre la foto. */
 import { describe, expect, it } from "vitest";
 import { arrowHead, circleRadius, fitContain, flattenSize, isMeaningful, normalize, undo, type Mark } from "../src/lib/markup";
 
-describe("dibujo sobre la foto (F-08)", () => {
+describe("dibujo sobre la foto", () => {
   it("ajusta la foto a la caja sin deformarla", () => {
     expect(fitContain(4000, 3000, 400, 800)).toEqual({ width: 400, height: 300 });
     expect(fitContain(3000, 4000, 400, 400)).toEqual({ width: 300, height: 400 });

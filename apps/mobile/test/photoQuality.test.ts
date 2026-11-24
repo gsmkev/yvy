@@ -1,3 +1,4 @@
+/** Pruebas de calidad de la foto. */
 import { encode } from "jpeg-js";
 import { describe, expect, it } from "vitest";
 import { analyzeJpeg, analyzeLuma, base64ToBytes, photoIssueMessage, photoIssues, toLuma } from "../src/lib/photoQuality";
@@ -61,7 +62,7 @@ const viaJpeg = (d: Uint8Array) => {
   return analyzeJpeg(new Uint8Array(jpg.data))!;
 };
 
-describe("calidad de la foto (X-09)", () => {
+describe("calidad de la foto", () => {
   it("una foto nítida y con luz no avisa nada", () => {
     expect(photoIssues(stats(sharp()))).toEqual([]);
     expect(photoIssueMessage(photoIssues(stats(sharp())))).toBeNull();

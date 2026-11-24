@@ -1,3 +1,4 @@
+/** Pruebas de precarga de condiciones al aplicar. */
 import { describe, expect, it } from "vitest";
 import type { Kv } from "../src/lib/forecast";
 import { refreshSprayHours, sprayPrefill } from "../src/lib/sprayHours";
@@ -12,7 +13,7 @@ const hours = [
   { at: 11 * H, tempC: 26, windKmh: null, humidityPct: 50 },
 ];
 
-describe("precarga de condiciones al aplicar (A-12)", () => {
+describe("precarga de condiciones al aplicar", () => {
   it("baja las horas, las guarda y precarga la de ahora sin señal", async () => {
     const kv = memKv();
     await refreshSprayHours(kv, "f1", async () => ({ hours }), 10 * H);

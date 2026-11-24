@@ -1,5 +1,5 @@
 /**
- * Fase 2 · aceptación (sin dispositivo): el almacén del celular carga 15 registros sin señal y, al volver
+ * Aceptación (sin dispositivo): el almacén del celular carga 15 registros sin señal y, al volver
  * la señal, quedan exactamente 15 en el servidor aunque el envío se corte y se reintente.
  * Corre contra `wrangler dev` cuando YVY_E2E_API y E2E_DEV_LOG están definidos.
  */

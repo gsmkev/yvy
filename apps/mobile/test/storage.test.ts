@@ -1,3 +1,4 @@
+/** Pruebas de almacenamiento. */
 import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";
 import { LocalDb, type NewRecord } from "../src/db/store";
@@ -24,7 +25,7 @@ function sent(db: LocalDb, attachmentIds: string[]) {
 }
 const attachmentIds = (db: LocalDb) => db.sql.all<{ id: string }>("SELECT id FROM attachments ORDER BY created_at, rowid").map((r) => r.id);
 
-describe("almacenamiento (F-19)", () => {
+describe("almacenamiento", () => {
   it("suma fotos, notas de voz y mapas", () => {
     const db = setup();
     db.saveRecord(USER, ORG, rec, [photo(1), photo(2)], undefined, { uri: "file:///v.m4a", bytes: 50_000 });

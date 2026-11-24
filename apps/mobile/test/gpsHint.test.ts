@@ -1,8 +1,9 @@
+/** Pruebas de aviso de GPS lento. */
 import { describe, expect, it } from "vitest";
 import { t } from "@yvy/shared";
 import { gpsHintText, gpsStage, GPS_COLD_MS, GPS_SLOW_MS } from "../src/lib/gpsHint";
 
-describe("F-01 aviso de GPS lento", () => {
+describe("aviso de GPS lento", () => {
   it("pasa de buscando a lento y a arranque en frío", () => {
     expect(gpsStage(0)).toBe("searching");
     expect(gpsStage(GPS_SLOW_MS - 1)).toBe("searching");

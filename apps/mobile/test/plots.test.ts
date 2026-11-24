@@ -1,3 +1,4 @@
+/** Pruebas de lotes dibujados en el celular. */
 import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";
 import { LocalDb } from "../src/db/store";
@@ -15,7 +16,7 @@ const setup = () => {
 
 const SQUARE: V[] = [[-55.9, -27.2], [-55.89, -27.2], [-55.89, -27.21], [-55.9, -27.21]];
 
-describe("M-03 · lotes dibujados en el celular", () => {
+describe("lotes dibujados en el celular", () => {
   it("agrega vértices al final al dibujar y en el lado más cercano al editar", () => {
     expect(addVertex(SQUARE, [-55.88, -27.25], false)).toHaveLength(5);
     expect(addVertex(SQUARE, [-55.88, -27.25], false)[4]).toEqual([-55.88, -27.25]);

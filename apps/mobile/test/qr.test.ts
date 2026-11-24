@@ -1,3 +1,4 @@
+/** Pruebas de QR. */
 import { describe, expect, it } from "vitest";
 import { qrMatrix, qrPath } from "../src/ui/qrMatrix";
 

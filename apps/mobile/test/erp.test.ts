@@ -1,3 +1,4 @@
+/** Pruebas de tratamiento sanitario con producto del catálogo; máquinas en el celular. */
 import { describe, expect, it } from "vitest";
 import { newId, parseRecordData } from "@yvy/shared";
 import { KINDS_FOR, stepsFor } from "../src/lib/annotate";
@@ -11,7 +12,7 @@ const setup = () => {
   return db;
 };
 
-describe("tratamiento sanitario con producto del catálogo (E-13)", () => {
+describe("tratamiento sanitario con producto del catálogo", () => {
   it("con productos veterinarios en el catálogo pregunta cuál y cuánto; el nombre a mano se salta", () => {
     const keys = (a: Record<string, unknown>, vet: boolean) => stepsFor("health", a, { waterPois: 0, vetProducts: vet }).map((s) => s.key);
     // "Otro producto" deja productId sin valor: sigue el nombre a mano
@@ -30,7 +31,7 @@ describe("tratamiento sanitario con producto del catálogo (E-13)", () => {
   });
 });
 
-describe("máquinas en el celular (E-03)", () => {
+describe("máquinas en el celular", () => {
   it("bajan con el pull de la tabla machines", async () => {
     const db = setup();
     const row = {
@@ -54,7 +55,7 @@ describe("máquinas en el celular (E-03)", () => {
   });
 });
 
-describe("carga de combustible en el celular (E-16)", () => {
+describe("carga de combustible en el celular", () => {
   it("con máquinas en el catálogo se elige una; sin catálogo se escribe el nombre", () => {
     const keys = (a: Record<string, unknown>, machines: boolean) =>
       stepsFor("fuel_load", a, { waterPois: 0, machines }).map((s) => s.key);
@@ -70,7 +71,7 @@ describe("carga de combustible en el celular (E-16)", () => {
   });
 });
 
-describe("orden de trabajo en la tarea (E-20, E-21)", () => {
+describe("orden de trabajo en la tarea", () => {
   const task = (workOrder: string | null) => ({
     id: newId(),
     organizationId: ORG,
@@ -109,7 +110,7 @@ describe("orden de trabajo en la tarea (E-20, E-21)", () => {
   });
 });
 
-describe("recuento de depósito (E-15)", () => {
+describe("recuento de depósito", () => {
   it("canCount: dueño, administrador y agrónomo; el empleado no", async () => {
     const { canCount } = await import("../src/lib/stock-count");
     expect(["owner", "admin", "agronomist", "worker", undefined].map(canCount)).toEqual([true, true, true, false, false]);

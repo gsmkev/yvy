@@ -1,7 +1,8 @@
+/** Pruebas de actualizaciones sin tienda. */
 import { describe, expect, it } from "vitest";
 import config, { updatesConfig } from "../app.config";
 
-describe("P-31 · actualizaciones sin tienda", () => {
+describe("actualizaciones sin tienda", () => {
   it("sin EAS_UPDATE_URL quedan apagadas", () => {
     expect(updatesConfig({})).toEqual({ enabled: false });
     expect(updatesConfig({ EAS_UPDATE_URL: "" })).toEqual({ enabled: false });

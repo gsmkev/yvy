@@ -1,3 +1,4 @@
+/** Pruebas de modo dueño; nombres de miembros. */
 import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";
 import { LocalDb } from "../src/db/store";
@@ -105,7 +106,7 @@ describe("pasadas de vigor locales", () => {
   });
 });
 
-describe("F-29 solo lectura", () => {
+describe("solo lectura", () => {
   it("el dueño arranca en solo lectura; administrador y agrónomo, no", () => {
     expect(resolveReadOnly("owner", null)).toBe(true);
     expect(resolveReadOnly("admin", null)).toBe(false);

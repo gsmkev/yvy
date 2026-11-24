@@ -1,3 +1,4 @@
+/** Pruebas de demo; tareas del equipo en Hoy. */
 import { describe, expect, it } from "vitest";
 import { forceReadOnly, isDemoOrg } from "../src/lib/demoLogic";
 import { summarizeFarms } from "../src/lib/farmSummary";

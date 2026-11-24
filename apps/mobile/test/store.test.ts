@@ -1,3 +1,4 @@
+/** Pruebas de localDb: hacienda calculada sin señal; localDb. */
 import { describe, expect, it } from "vitest";
 import { addDays, LIMITS, localDate, newId, nextOccurrenceId, parseChecklist, parseTaskComments } from "@yvy/shared";
 import { LocalDb } from "../src/db/store";
@@ -94,7 +95,7 @@ describe("LocalDb", () => {
     expect(thumbs.has(without)).toBe(false);
   });
 
-  it("F-17 Historial: hasta dos miniaturas por registro, en orden", () => {
+  it("Historial: hasta dos miniaturas por registro, en orden", () => {
     const db = setup();
     const id = db.saveRecord(USER, ORG, rec, ["a", "b", "c"].map((n) => ({ ...photo, thumbUri: `file:///${n}_t.webp` })));
     expect(db.thumbsByRecord(2).get(id)).toEqual(["file:///a_t.webp", "file:///b_t.webp"]);
@@ -115,7 +116,7 @@ describe("LocalDb", () => {
     expect(id).toBeTruthy();
   });
 
-  it("F-18 fotos trabadas: se cuentan tras los intentos máximos y Reintentar las rehabilita", async () => {
+  it("fotos trabadas: se cuentan tras los intentos máximos y Reintentar las rehabilita", async () => {
     const db = setup();
     const id = db.saveRecord(USER, ORG, rec, [photo]);
     await db.removeMutations((await db.pendingMutations(40)).map((m) => m.mutationId));
@@ -130,7 +131,7 @@ describe("LocalDb", () => {
     expect(id).toBeTruthy();
   });
 
-  it("F-23 tareas abiertas de un lote: solo las abiertas, por fecha", () => {
+  it("tareas abiertas de un lote: solo las abiertas, por fecha", () => {
     const db = setup();
     expect(db.openTasksListOfPlot(PLOT)).toEqual([]);
     expect(db.openTasksOfPlot(PLOT)).toBe(0);
@@ -178,7 +179,7 @@ describe("LocalDb", () => {
     expect(plan[0]!.titles).toContain("Revisar aguada");
   });
 
-  it("tareas con punto (S-09): solo las abiertas y propias con coordenadas, y la siguiente ocurrencia conserva el punto", async () => {
+  it("tareas con punto: solo las abiertas y propias con coordenadas, y la siguiente ocurrencia conserva el punto", async () => {
     const now = new Date(2026, 5, 10, 8, 0, 0).getTime();
     const db = setup(() => now);
     const task = (title: string, over: Record<string, unknown> = {}) => ({
@@ -298,7 +299,7 @@ describe("LocalDb", () => {
     expect(db.tasksToday(USER, today).map((t) => t.status)).toEqual(["done"]);
     const tomorrow = db.tasksToday(USER, addDays(today, 1));
     expect(tomorrow.map((t) => [t.id, t.status])).toEqual([[nextOccurrenceId(taskId), "open"]]);
-    // T-02: la siguiente conserva prioridad y hora límite
+    // la siguiente conserva prioridad y hora límite
     expect(tomorrow[0]).toMatchObject({ priority: "high", dueTime: "08:00" });
     const kinds = (await db.pendingMutations(10)).map((m) => m.kind);
     expect(kinds).toEqual(["records.upsert", "tasks.status"]);

@@ -1,3 +1,4 @@
+/** Pruebas de idioma de la app. */
 import { afterEach, describe, expect, it } from "vitest";
 import { DEFAULT_LOCALE, getLocale, setLocale, t } from "@yvy/shared";
 import type { Kv } from "../src/lib/forecast";
@@ -10,7 +11,7 @@ const memKv = (): Kv => {
 
 afterEach(() => setLocale(DEFAULT_LOCALE));
 
-describe("idioma de la app (U-22)", () => {
+describe("idioma de la app", () => {
   it("sin elección usa es-PY; ignora un valor guardado que no es un idioma", () => {
     const kv = memKv();
     expect(readLocale(kv)).toBe("es-PY");

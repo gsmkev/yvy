@@ -1,3 +1,4 @@
+/** Pruebas de campos propios en el flujo de anotar. */
 import { describe, expect, it } from "vitest";
 import { flattenExtra, parseRecordData, splitExtraAnswers, type FormField } from "@yvy/shared";
 import { extraSteps, FLOWS, RAW, stepsFor } from "../src/lib/annotate";
@@ -15,7 +16,7 @@ const kv = () => {
   return { getKv: (k: string) => m.get(k) ?? null, setKv: (k: string, v: string | null) => void (v === null ? m.delete(k) : m.set(k, v)) };
 };
 
-describe("F-14 · campos propios en el flujo de anotar", () => {
+describe("campos propios en el flujo de anotar", () => {
   it("se preguntan después de las estándar, con textos escritos por la organización", () => {
     const steps = stepsFor("scouting", {}, { waterPois: 0, extraFields: fields });
     const std = FLOWS.scouting.length;

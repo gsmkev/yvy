@@ -1,3 +1,4 @@
+/** Pruebas de campañas en el celular; flujo de siembra. */
 import { describe, expect, it } from "vitest";
 import { newId, parseRecordData } from "@yvy/shared";
 import { FLOWS, visibleSteps } from "../src/lib/annotate";
@@ -148,7 +149,7 @@ describe("flujo de cosecha", () => {
   });
 });
 
-describe("receta en la tarea (A-11)", () => {
+describe("receta en la tarea", () => {
   const task = (prescription: string | null) => ({
     id: newId(),
     organizationId: ORG,

@@ -1,3 +1,4 @@
+/** Pruebas de pronóstico en Hoy. */
 import { describe, expect, it } from "vitest";
 import { FORECAST_TTL_MS, daysOld, readForecast, refreshForecast, saveForecast, upcoming, type Kv } from "../src/lib/forecast";
 

@@ -1,3 +1,4 @@
+/** Pruebas de cambiar de usuario en un celular compartido. */
 import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";
 import { LocalDb, type NewRecord } from "../src/db/store";
@@ -14,7 +15,7 @@ function setup() {
   return db;
 }
 
-describe("cambiar de usuario en un celular compartido (F-25)", () => {
+describe("cambiar de usuario en un celular compartido", () => {
   it("con todo mandado se puede cambiar", () => {
     const db = setup();
     expect(canSwitchUser(unsentSummary(db))).toEqual({ blocked: false });

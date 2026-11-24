@@ -1,3 +1,4 @@
+/** Pruebas de etiquetas por punto interior. */
 import { describe, expect, it } from "vitest";
 import { centroidOf, containsPoint, type Area } from "@yvy/geo";
 import { plotLabels, plotTarget } from "../src/lib/plotLabels";
@@ -10,7 +11,7 @@ const L: Area = {
 const square = (x: number): Area => ({ type: "Polygon", coordinates: [[[x, 0], [x + 0.001, 0], [x + 0.001, 0.001], [x, 0.001], [x, 0]]] });
 const plot = (id: string, g: Area, areaHa: number) => ({ id, name: id, geometry: JSON.stringify(g), areaHa });
 
-describe("M-12 etiquetas por punto interior", () => {
+describe("etiquetas por punto interior", () => {
   it("el punto cae adentro del lote en L aunque el centroide caiga afuera", () => {
     const c = centroidOf(L);
     expect(containsPoint(L, c.lon, c.lat)).toBe(false);

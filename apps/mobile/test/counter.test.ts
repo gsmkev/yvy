@@ -1,3 +1,4 @@
+/** Pruebas de contador rápido de hacienda. */
 import { describe, expect, it } from "vitest";
 import { MAX_HEAD_PER_CATEGORY, parseRecordData } from "@yvy/shared";
 import { allZero, bump, canContinue, counterTotal, seedCounts, setTyped } from "../src/lib/counter";

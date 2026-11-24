@@ -18,14 +18,14 @@ jobs:
       EXPO_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_APP }}
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
       - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
       - uses: actions/setup-java@v6
         with: { distribution: temurin, java-version: 17 }
       # Guarda entre corridas las dependencias de Gradle, el wrapper y la caché de compilación (~/.gradle):
       # sin esto cada APK bajaba todo y recompilaba el código nativo desde cero (~16 min)
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
       - run: pnpm install --frozen-lockfile
       - name: Prebuild
         working-directory: apps/mobile

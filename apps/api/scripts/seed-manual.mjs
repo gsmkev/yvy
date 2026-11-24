@@ -457,7 +457,7 @@ async function stepPurchases() {
   for (const [k, g10, g5, ex] of [["agro", 0.9, 0.1, 0], ["ferti", 1, 0, 0], ["gasoil", 1, 0, 0], ["repuestos", 1, 0, 0]]) {
     const d = await o.get(e(`purchases/${S.purchases[k].id}`));
     const total = d.totalPyg ?? d.amountPyg ?? 0;
-    if (total) await o.put(e("export/taxes"), { docKind: "purchase", docId: S.purchases[k].id, timbrado: "15894476", gross10: Math.round(total * g10 * (g5 ? 1 : 1)), gross5: Math.round(total * g5), exempt: ex }).catch((er) => log("IVA:", er.message.slice(0, 120)));
+    if (total) await o.put(e("export/taxes"), { docKind: "purchase", docId: S.purchases[k].id, timbrado: "15894476", gross10: Math.round(total * g10), gross5: Math.round(total * g5), exempt: ex }).catch((er) => log("IVA:", er.message.slice(0, 120)));
   }
   log("compras y recepciones");
 }

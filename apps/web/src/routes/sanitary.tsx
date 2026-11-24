@@ -8,6 +8,7 @@ import { fmtDate, fmtIsoDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useFarms, useMe } from "../lib/queries";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { SenacsaCampaigns } from "../components/SenacsaCampaigns";
 import { RowMenu } from "../components/menus";
 import { Button, DataTable, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, toast, Page } from "../components/ui";
 
@@ -68,6 +69,7 @@ export function SanitaryPage() {
           </Button>
         }
       />
+      <SenacsaCampaigns />
       <div className="flex items-center gap-1">
         <Button variant="quiet" icon={ChevronLeft} className="w-10 !px-0" aria-label={t("ui.sanitaryPrev")} title={t("ui.sanitaryPrev")} onClick={() => setMonth(shiftMonth(month, -1))} />
         <span className="min-w-40 text-center text-section leading-6 font-semibold" aria-live="polite">

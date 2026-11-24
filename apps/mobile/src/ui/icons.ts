@@ -73,6 +73,7 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
 export const ALERT_ICON: Record<string, LucideIcon> = {
   water_low: Droplets,
   heat_stress: Thermometer,
+  senacsa: Syringe,
   frost: Snowflake,
   excess_rain: CloudRainWind,
   drought: SunDim,

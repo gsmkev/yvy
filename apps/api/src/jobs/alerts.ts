@@ -22,6 +22,7 @@ const SOURCES: Record<AlertDraft["kind"], string> = {
   water_low: "Registros de aguadas",
   heat_stress: "MET Norway",
   rust_risk: "MET Norway (humedad y temperatura horarias)",
+  senacsa: "SENACSA, calendario oficial de vacunación",
 };
 
 export async function upsertAlert(
@@ -38,12 +39,12 @@ export async function upsertAlert(
       .where(and(eq(s.plots.farmId, farm.id), isNull(s.plots.deletedAt))),
   );
   const plotIds = (draft.details.plotIds as string[] | undefined) ?? affectedPlots(draft.kind, plots);
-  const dedupeKey = `${farm.id}:${draft.kind}:${draft.validFrom}`;
+  const dedupeKey = draft.dedupeKey ?? `${farm.id}:${draft.kind}:${draft.validFrom}`;
   const validFrom = Date.parse(`${draft.validFrom}T00:00:00-03:00`);
   const validTo = Date.parse(`${draft.validTo}T23:59:59-03:00`);
   let [existing] = await db.select().from(s.alerts).where(eq(s.alerts.dedupeKey, dedupeKey)).limit(1);
   // B8: un aviso que se corre día a día se actualiza en vez de duplicarse si la ventana se solapa.
-  if (!existing)
+  if (!existing && !draft.dedupeKey)
     [existing] = await db
       .select()
       .from(s.alerts)

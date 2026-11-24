@@ -71,3 +71,4 @@ export * from "./grain";
 export * from "./spi";
 export * from "./visits";
 export * from "./production";
+export * from "./senacsa";

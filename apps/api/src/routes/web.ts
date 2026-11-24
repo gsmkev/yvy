@@ -58,7 +58,7 @@ import {
   updateTask,
 } from "../db/queries";
 import { farmStockSummary, saveLivestockSettings } from "../db/livestock";
-import { createSanitaryEvent, deleteSanitaryEvent, listSanitaryEvents } from "../db/sanitary";
+import { createSanitaryEvent, deleteSanitaryEvent, listSanitaryEvents, senacsaForOrg } from "../db/sanitary";
 import { clientsOverview } from "../db/clients";
 import { createLine, deleteLine, listFarmLines, updateLine } from "../db/lines";
 import { parse, readJson, timeOfDay } from "../lib/http";
@@ -535,6 +535,11 @@ web.put("/org/farms/:id/livestock-settings", async (c) => {
 });
 
 // Calendario sanitario (G-10).
+// ADR 0005: campañas oficiales de SENACSA.
+web.get("/org/senacsa", async (c) => {
+  const q = parse(z.object({ year: z.coerce.number().int().min(2020).max(2100) }), c.req.query());
+  return c.json(await senacsaForOrg(c.var.sdb, q.year));
+});
 web.get("/org/sanitary-events", async (c) => {
   const q = parse(
     z.object({ month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/), farmId: z.string().uuid().optional() }),

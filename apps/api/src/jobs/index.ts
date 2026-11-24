@@ -18,6 +18,7 @@ import { archiveOld } from "./archive";
 import { benchmarkJob } from "./benchmark";
 import { sendMentions, sendPending } from "./notify";
 import { pestAlertDraft } from "./pests";
+import { senacsaJob } from "./senacsa";
 import { evaluateHeatStress } from "./heat";
 import { plotForecastJob, plotsNeedingForecast } from "./plot-forecast";
 import { evaluateRust } from "./rust";
@@ -65,6 +66,7 @@ export async function scheduled(controller: { cron: string }, env: Bindings, dep
     case CRONS.drought:
       await enqueuePerFarm(env, "drought");
       await enqueuePerFarm(env, "pest");
+      await enqueuePerFarm(env, "senacsa");
       return;
     case CRONS.weeklyReports:
       await enqueuePerFarm(env, "weekly_report");
@@ -114,6 +116,8 @@ export async function runJob(msg: Exclude<JobMessage, { type: "webhook" }>, env:
       return weeklyReportJob(db, env, deps, farm);
     case "pest":
       return pestJob(db, deps, farm);
+    case "senacsa":
+      return senacsaJob(db, deps, farm);
     case "benchmark":
       await benchmarkJob(new SystemDb(db), farm, deps.now());
       return;

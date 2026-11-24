@@ -4,8 +4,6 @@ import { useEffect, useRef, useState } from "react";
 /**
  * Pestañas controladas.
  * @param tabs pestañas con su id, texto y contador opcional.
- * @param value id de la pestaña activa.
- * @param onChange recibe el id elegido.
  */
 export function Tabs<T extends string>({
   tabs,
@@ -13,8 +11,10 @@ export function Tabs<T extends string>({
   onChange,
 }: {
   tabs: { id: T; label: string; count?: number }[];
-  value: T;
-  onChange: (v: T) => void;
+  /** Id de la pestaña activa. */
+value: T;
+  /** Recibe el id elegido. */
+onChange: (v: T) => void;
 }) {
   const scroller = useRef<HTMLDivElement>(null);
   const [edge, setEdge] = useState({ left: false, right: false });

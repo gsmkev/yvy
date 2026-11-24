@@ -8,7 +8,6 @@ import type { ProblemTask } from "./usePlotData";
 /**
  * Lista de áreas problema con la opción de mandar una recorrida a una persona.
  * @param task estado de la tarea (de `useProblemTask`).
- * @param onShowArea centra el mapa en el área.
  */
 export function ProblemAreasSection({
   workers,
@@ -19,7 +18,8 @@ export function ProblemAreasSection({
   workers: Member[];
   problemAreas: ProblemArea[];
   task: ProblemTask;
-  onShowArea?: (a: ProblemArea) => void;
+  /** Centra el mapa en el área. */
+onShowArea?: (a: ProblemArea) => void;
 }) {
   const { assigneeId, setAssigneeId, sendArea } = task;
   return (

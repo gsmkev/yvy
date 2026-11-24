@@ -6,9 +6,8 @@ import { Button } from "../ui";
 /**
  * Botón que lleva a otra sección de Administración.
  * @param to id de la sección.
- * @param primary lo dibuja como acción principal.
  */
-export function SectionButton({ to, children, primary = false }: { to: string; children: ReactNode; primary?: boolean }) {
+export function SectionButton({ to, children, primary = false }: { to: string; children: ReactNode; /** Lo dibuja como acción principal. */ primary?: boolean }) {
   const navigate = useNavigate();
   return (
     <Button variant={primary ? "primary" : "secondary"} onClick={() => navigate({ to: "/administracion", search: { s: to } })}>

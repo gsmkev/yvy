@@ -23,9 +23,8 @@ const num = (v: string) => Number(v.replace(",", "."));
 /**
  * Sección plegable con los umbrales de avisos de una estancia.
  * @param open si está desplegada.
- * @param onToggle alterna el despliegue.
  */
-export function AlertSettingsSection({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+export function AlertSettingsSection({ open, onToggle }: { open: boolean; /** Alterna el despliegue. */ onToggle: () => void }) {
   const farms = useFarms();
   const me = useMe();
   const [farmId, setFarmId] = useState("");

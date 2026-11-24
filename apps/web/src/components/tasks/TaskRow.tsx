@@ -45,10 +45,8 @@ function ChecklistProgress({ task }: { task: Task }) {
 /**
  * Una tarea de la lista.
  * @param today fecha de hoy (aaaa-mm-dd).
- * @param overdue si está vencida.
- * @param onDelete se llama al borrarla.
  */
-export function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: string; overdue: boolean; onDelete: () => void }) {
+export function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: string; /** Si está vencida. */ overdue: boolean; /** Se llama al borrarla. */ onDelete: () => void }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const qc = useQueryClient();

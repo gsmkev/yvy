@@ -20,8 +20,6 @@ const HIDE = { sm: "hidden sm:table-cell", md: "hidden md:table-cell", lg: "hidd
 /**
  * Tabla accesible.
  * @param rowKey clave estable de cada fila.
- * @param onRowClick si se pasa, las filas son clicables.
- * @param empty contenido cuando no hay filas.
  */
 export function DataTable<T>({
   columns,
@@ -34,8 +32,10 @@ export function DataTable<T>({
   columns: Column<T>[];
   rows: T[];
   rowKey: (row: T) => string;
-  onRowClick?: (row: T) => void;
-  empty?: ReactNode;
+  /** Si se pasa, las filas son clicables. */
+onRowClick?: (row: T) => void;
+  /** Contenido cuando no hay filas. */
+empty?: ReactNode;
   /** Descripción para lectores de pantalla. */
   caption?: string;
 }) {

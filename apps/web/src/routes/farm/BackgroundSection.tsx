@@ -53,7 +53,6 @@ const imageryNote = (s: FarmDetail["imageryStatus"]) =>
 /**
  * Selector de fondo e índice.
  * @param scene estado del fondo (de `useFarmScene`).
- * @param tilesBaseUrl base de las teselas; sin ella no hay miniaturas.
  */
 export function BackgroundSection({
   d,
@@ -62,7 +61,8 @@ export function BackgroundSection({
 }: {
   d: FarmDetail;
   scene: FarmScene;
-  tilesBaseUrl: string | undefined;
+  /** Base de las teselas; sin ella no hay miniaturas. */
+tilesBaseUrl: string | undefined;
 }) {
   const { layer, kind, shownIndex, ndviLayer, hasIndex, compare } = scene;
   const available = OVERLAYS.filter(hasIndex);

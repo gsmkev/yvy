@@ -63,9 +63,8 @@ export function guideSteps(farms: FarmSummary[], members: Member[]): GuideStep[]
 /**
  * Muestra los pasos de la guía con su estado.
  * @param steps pasos ya calculados con su estado.
- * @param onDismiss se llama al ocultar la guía.
  */
-export function FirstRunGuide({ steps, onDismiss }: { steps: GuideStep[]; onDismiss: () => void }) {
+export function FirstRunGuide({ steps, onDismiss }: { steps: GuideStep[]; /** Se llama al ocultar la guía. */ onDismiss: () => void }) {
   return (
     <section aria-label={t("ui.guide.title")}>
       <div className="flex items-end justify-between gap-3 border-b border-linea pb-2">

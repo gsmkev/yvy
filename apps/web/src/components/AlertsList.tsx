@@ -15,7 +15,6 @@ const BAR = { warning: "border-peligro", watch: "border-trigo", info: "border-ci
 /**
  * Avisos vigentes de una estancia o de toda la organización.
  * @param farmNames nombre de cada estancia por id, para rotular avisos de varias estancias.
- * @param emptyAction acción que se ofrece cuando no hay avisos.
  */
 export function AlertsList({
   farmId,

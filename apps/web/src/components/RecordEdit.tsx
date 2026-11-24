@@ -255,7 +255,6 @@ async function push(m: Mutation) {
 /**
  * Formulario de edición de un registro según los campos de su tipo. Valida con el esquema compartido y guarda por sincronización.
  * @param onDone se llama al guardar.
- * @param onCancel se llama al cancelar.
  */
 export function RecordEditForm({
   record: r,
@@ -264,7 +263,8 @@ export function RecordEditForm({
 }: {
   record: RecordRow;
   onDone: () => void;
-  onCancel: () => void;
+  /** Se llama al cancelar. */
+onCancel: () => void;
 }) {
   const defs = FIELDS[r.kind as RecordKind] ?? [];
   const qc = useQueryClient();
@@ -371,7 +371,6 @@ export function RecordEditForm({
 /**
  * Confirmación para borrar un registro.
  * @param onDone se llama tras borrar.
- * @param onClose se llama al cerrar sin borrar.
  */
 export function DeleteRecordConfirm({
   record: r,
@@ -380,7 +379,8 @@ export function DeleteRecordConfirm({
 }: {
   record: RecordRow;
   onDone: () => void;
-  onClose: () => void;
+  /** Se llama al cerrar sin borrar. */
+onClose: () => void;
 }) {
   const qc = useQueryClient();
   const remove = useMutation({

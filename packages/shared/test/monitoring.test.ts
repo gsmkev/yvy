@@ -25,10 +25,10 @@ describe("plantillas de monitoreo", () => {
   });
   it("todas las claves tienen texto en es-PY", () => {
     for (const crop of MONITOR_CROPS) {
-      expect(hasKey(`app.monitorCrop_${crop}`)).toBe(true);
+      expect(hasKey(`app.monitor.crop_${crop}`)).toBe(true);
       for (const i of MONITOR_TEMPLATES[crop]) {
-        expect(hasKey(`app.monitor_${i.key}`)).toBe(true);
-        expect(hasKey(`app.monitorUnit_${i.unit}`)).toBe(true);
+        expect(hasKey(`app.monitor.${i.key}`)).toBe(true);
+        expect(hasKey(`app.monitor.unit_${i.unit}`)).toBe(true);
       }
     }
   });

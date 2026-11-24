@@ -85,7 +85,7 @@ export function groupOrders(rows: OrderRow[]): OrderGroup[] {
 /** "A, B y 2 más" para una celda de tabla. */
 export function plotsLabel(names: string[], max = 3): string {
   if (names.length <= max) return names.join(", ");
-  return `${names.slice(0, max).join(", ")} ${t("ui.orderPlotsMore", { n: names.length - max })}`;
+  return names.slice(0, max).join(", ") + " " + t("ui.order.plotsMore", { n: names.length - max });
 }
 
 /** Insumos de la orden como texto: "Glifosato 2 l/ha + Aceite 0,5 l/ha". Vacío si no hay. */

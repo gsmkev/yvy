@@ -163,13 +163,13 @@ export interface ProductionResponse {
 
 const nf = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 2 });
 const INDICATOR_TEXT: Record<IndicatorUnit, MessageKey> = {
-  pct: "ui.herdIndPct",
-  kg_day: "ui.herdIndKgDay",
-  kg_ha_year: "ui.herdIndKgHaYear",
-  days: "ui.herdIndDays",
-  ratio: "ui.herdIndRatio",
+  pct: "ui.herd.indPct",
+  kg_day: "ui.herd.indKgDay",
+  kg_ha_year: "ui.herd.indKgHaYear",
+  days: "ui.herd.indDays",
+  ratio: "ui.herd.indRatio",
 };
 /** Valor con su unidad, en es-PY ("80 %", "0,5 kg/día"). */
 export const indicatorValueText = (i: Indicator): string => t(INDICATOR_TEXT[i.unit], { v: nf.format(i.value) });
 /** Nombre del indicador. */
-export const indicatorLabel = (i: Indicator): string => t(`ui.herdInd_${i.id}` as MessageKey);
+export const indicatorLabel = (i: Indicator): string => t(`ui.herd.ind_${i.id}` as MessageKey);

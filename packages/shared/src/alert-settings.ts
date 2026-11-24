@@ -49,7 +49,7 @@ export const PEST_WINDOW_DAYS = 7;
 /** Los tres umbrales en el orden en que se muestran, con las claves de texto de cada uno (título y ayuda). */
 export const ALERT_SETTING_KEYS = ["frostTminC", "excessRainMm24h", "droughtDeficitPct"] as const;
 export const ALERT_SETTING_LABELS = {
-  frostTminC: ["ui.alertSettingsFrost", "ui.alertSettingsFrostHint"],
-  excessRainMm24h: ["ui.alertSettingsRain", "ui.alertSettingsRainHint"],
-  droughtDeficitPct: ["ui.alertSettingsDrought", "ui.alertSettingsDroughtHint"],
+  frostTminC: ["ui.alert.settingsFrost", "ui.alert.settingsFrostHint"],
+  excessRainMm24h: ["ui.alert.settingsRain", "ui.alert.settingsRainHint"],
+  droughtDeficitPct: ["ui.alert.settingsDrought", "ui.alert.settingsDroughtHint"],
 } as const;

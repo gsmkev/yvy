@@ -22,12 +22,12 @@ export interface RecordShareInput {
 export function recordShareText(x: RecordShareInput): string {
   const lines = [`*${x.kindLabel}* · ${x.when}`, x.description];
   const where = [
-    x.plotName ? `${t("ui.plot")}: ${x.plotName}` : null,
-    x.farmName ? `${t("ui.farm")}: ${x.farmName}` : null,
+    x.plotName ? `${t("ui.common.plot")}: ${x.plotName}` : null,
+    x.farmName ? `${t("ui.common.farm")}: ${x.farmName}` : null,
   ].filter(Boolean);
   if (where.length) lines.push(where.join(" · "));
-  if (x.lat != null && x.lon != null) lines.push(`${t("ui.location")}: ${mapsLink(x.lat, x.lon)}`);
-  lines.push("", t("ui.shareSignature"));
+  if (x.lat != null && x.lon != null) lines.push(`${t("ui.common.location")}: ${mapsLink(x.lat, x.lon)}`);
+  lines.push("", t("ui.share.signature"));
   return lines.join("\n");
 }
 
@@ -43,8 +43,8 @@ export interface AlertShareInput {
 
 export function alertShareText(x: AlertShareInput): string {
   const lines = [`*${x.kindLabel}* (${x.severityLabel})`, x.summary];
-  if (x.farmName) lines.push(`${t("ui.farm")}: ${x.farmName}`);
-  lines.push(x.validity, t("ui.shareAlertOrientative"), "", `${t("ui.shareSeeInApp")}: ${x.link}`);
+  if (x.farmName) lines.push(`${t("ui.common.farm")}: ${x.farmName}`);
+  lines.push(x.validity, t("ui.share.alertOrientative"), "", `${t("ui.share.seeInApp")}: ${x.link}`);
   return lines.join("\n");
 }
 
@@ -61,13 +61,13 @@ export interface WeeklyShareInput {
 
 export function weeklyShareText(x: WeeklyShareInput): string {
   const lines = [
-    `*${t("ui.reportTitle")} · ${x.farmName}*`,
+    `*${t("ui.report.title")} · ${x.farmName}*`,
     `${x.from} – ${x.to}`,
-    `${t("ui.navRecords")}: ${x.records} (${x.workers} ${t("ui.workers").toLowerCase()})`,
-    `${t("ui.rainWeek")}: ${x.rainMm === null ? "—" : `${Math.round(x.rainMm)} mm`}`,
-    `${t("ui.alertsTitle")}: ${x.alerts.length ? x.alerts.join("; ") : t("ui.shareNoAlerts")}`,
+    `${t("ui.nav.records")}: ${x.records} (${x.workers} ${t("ui.common.workers").toLowerCase()})`,
+    `${t("ui.rain.week")}: ${x.rainMm === null ? "—" : `${Math.round(x.rainMm)} mm`}`,
+    `${t("ui.alerts.title")}: ${x.alerts.length ? x.alerts.join("; ") : t("ui.share.noAlerts")}`,
     "",
-    `${t("ui.shareSeeInApp")}: ${x.link}`,
+    `${t("ui.share.seeInApp")}: ${x.link}`,
   ];
   return lines.join("\n");
 }

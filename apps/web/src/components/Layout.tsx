@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Ellipsis, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { Ellipsis } from "lucide-react";
 import { isFieldRole } from "@yvy/shared";
-import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { Outlet, useRouterState } from "@tanstack/react-router";
 import { exitSupport, getSession, isNetworkDown, onNetworkChange, onSession, post, setSession } from "../lib/api";
 import { Page, Toaster } from "./ui";
 import { FEATURES } from "../lib/features";
-import { buildNav, isMapPath, isReportsPath, MOBILE_TABS, type NavGroup, type NavItem } from "../lib/nav";
+import { buildNav, isMapPath, isReportsPath, MOBILE_TABS, type NavItem } from "../lib/nav";
 import { fmtDate } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useAlerts, useFarms, useMe } from "../lib/queries";
@@ -15,49 +14,56 @@ import { trackView } from "../lib/track";
 import { GlobalSearch } from "./GlobalSearch";
 import { AccountMenu, useOrganizations } from "./AccountMenu";
 import { TotpSection } from "./Totp";
+import { useIsDesktop, useSearchShortcut, useSignedOutRedirect, useStoredFlag } from "./layout/hooks";
+import { MoreSheet, NavSection } from "./layout/MoreSheet";
+import { NavLink, type NavContext } from "./layout/NavLink";
+import { Sidebar } from "./layout/Sidebar";
+
+const sideCls = (active: boolean) =>
+  `flex h-9 items-center gap-2.5 rounded-md px-3 text-sm transition-colors ${active ? "bg-surco/[0.07] font-medium text-surco" : "text-tinta-2 hover:bg-surco/[0.04] hover:text-surco"}`;
+const sheetCls = (active: boolean) =>
+  `flex h-12 items-center gap-3 rounded-md px-3 text-body ${active ? "bg-surco/[0.07] font-medium text-surco" : "text-surco"}`;
+const tabCls = (active: boolean) =>
+  `flex h-14 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 border-t-2 px-1 text-micro ${active ? "border-accion bg-accion/[0.07] font-semibold text-accion" : "border-transparent text-tinta-2"}`;
+
+const logout = async () => {
+  const s = getSession();
+  if (s) await post("/auth/logout", { refreshToken: s.refreshToken }).catch(() => {});
+  setSession(null);
+};
+
+/** Avisos fijos sobre el contenido: soporte (sesión de un técnico) y sin conexión. */
+function Banners({ support, orgName, offline }: { support: boolean; orgName: string | undefined; offline: boolean }) {
+  return (
+    <>
+      {support && (
+        <p role="status" className="shrink-0 border-b border-trigo/40 bg-trigo/15 px-4 py-1.5 print:hidden text-center text-sm text-surco">
+          {t("ui.supportBanner", { name: orgName ?? "" })}{" "}
+          <button className="cursor-pointer font-medium underline underline-offset-4" onClick={exitSupport}>
+            {t("ui.supportExit")}
+          </button>
+        </p>
+      )}
+      {offline && (
+        <p role="status" className="shrink-0 border-b border-trigo/40 bg-trigo/15 px-4 py-1 text-center text-xs text-surco">
+          {t("ui.offlineBanner")}
+        </p>
+      )}
+    </>
+  );
+}
 
 /** Barra superior fina: la pantalla es del mapa y los datos, no de la navegación. */
 export function Layout() {
-  const navigate = useNavigate();
-  const qc = useQueryClient();
   const me = useMe();
   const alerts = useAlerts({ active: true });
   const searchRef = useRef<HTMLInputElement>(null);
   const farms = useFarms();
   const offline = useSyncExternalStore(onNetworkChange, isNetworkDown);
-  useEffect(() => {
-    const off = onSession((s) => {
-      if (!s) {
-        qc.clear();
-        navigate({ to: "/ingresar" });
-      }
-    });
-    return () => {
-      off();
-    };
-  }, []);
-  // "/" o Ctrl/Cmd+K enfocan el buscador (salvo que ya se esté escribiendo en otro campo)
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const el = e.target as HTMLElement | null;
-      const typing = !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
-      const k = e.key.toLowerCase();
-      if ((k === "k" && (e.ctrlKey || e.metaKey)) || (k === "/" && !typing && !e.ctrlKey && !e.metaKey && !e.altKey)) {
-        e.preventDefault();
-        searchRef.current?.focus();
-        searchRef.current?.select();
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, []);
+  useSignedOutRedirect();
+  useSearchShortcut(searchRef);
   // P-08: el dueño exige segundo factor y este administrador todavía no lo activó: no ve otra cosa hasta activarlo
   const mfaGate = useSyncExternalStore(onSession, () => getSession()?.mfaSetupRequired === true);
-  const logout = async () => {
-    const s = getSession();
-    if (s) await post("/auth/logout", { refreshToken: s.refreshToken }).catch(() => {});
-    setSession(null);
-  };
   const trial = me.data?.organization.plan === "trial" && me.data.organization.trialEndsAt;
   // K-02: el agrónomo con más de un cliente tiene una pantalla con todos juntos
   const orgs = useOrganizations();
@@ -70,11 +76,9 @@ export function Layout() {
     isStaff: !!me.data?.isStaff,
     labs: FEATURES.labs,
   });
-  const nAlerts = alerts.data?.length ?? 0;
   const path = useRouterState({ select: (s) => s.location.pathname });
   // Con varias estancias, "Mapa" vuelve a la última que se miró
   const lastFarm = (farms.data?.length ?? 0) > 1 ? farms.data!.find((f) => f.id === loadPrefs().farmId)?.id : undefined;
-  const onMap = isMapPath(path);
   const onReports = isReportsPath(path);
   useEffect(() => trackView(path), [path]);
   const desktop = useIsDesktop();
@@ -89,47 +93,18 @@ export function Layout() {
       onLogout={logout}
     />
   );
-  // Informes vive dentro de la estancia: la última mirada o la primera
-  const reportsFarm = lastFarm ?? farms.data?.find((f) => f.id === loadPrefs().farmId)?.id ?? farms.data?.[0]?.id;
-  const link = (n: NavItem, cls: (active: boolean) => string, tab = false) => {
-    const reports = n.to === "/informes";
-    const active = n.to === "/" ? onMap : reports ? onReports : n.to === path || path.startsWith(`${n.to}/`);
-    const Icon = n.icon;
-    const count = n.to === "/avisos" && nAlerts > 0 ? nAlerts : 0;
-    const body = (
-      <>
-        <span className="relative flex shrink-0">
-          <Icon size={tab ? 22 : 18} strokeWidth={active && tab ? 2.25 : 1.75} aria-hidden />
-          {tab && count > 0 && (
-            <span className="num absolute -top-1 left-3 min-w-4 rounded-full bg-peligro px-1 text-center text-micro font-semibold text-sobre">{count}</span>
-          )}
-        </span>
-        <span className="truncate">{t(n.label)}</span>
-        {!tab && count > 0 && <span className="num ml-auto text-meta font-semibold text-peligro">{count}</span>}
-      </>
-    );
-    if (reports)
-      return reportsFarm ? (
-        <Link key={n.to} to="/estancias/$farmId/informes" params={{ farmId: reportsFarm }} aria-current={active ? "page" : undefined} className={cls(active)}>
-          {body}
-        </Link>
-      ) : null;
-    return n.to === "/" && lastFarm ? (
-      <Link key={n.to} to="/estancias/$farmId" params={{ farmId: lastFarm }} aria-current={active ? "page" : undefined} className={cls(active)}>
-        {body}
-      </Link>
-    ) : (
-      <Link key={n.to} to={n.to} aria-current={active ? "page" : undefined} className={cls(active)}>
-        {body}
-      </Link>
-    );
+  const ctx: NavContext = {
+    path,
+    onMap: isMapPath(path),
+    onReports,
+    lastFarm,
+    // Informes vive dentro de la estancia: la última mirada o la primera
+    reportsFarm: lastFarm ?? farms.data?.find((f) => f.id === loadPrefs().farmId)?.id ?? farms.data?.[0]?.id,
+    nAlerts: alerts.data?.length ?? 0,
   };
-  const sideCls = (active: boolean) =>
-    `flex h-9 items-center gap-2.5 rounded-md px-3 text-sm transition-colors ${active ? "bg-surco/[0.07] font-medium text-surco" : "text-tinta-2 hover:bg-surco/[0.04] hover:text-surco"}`;
-  const sheetCls = (active: boolean) =>
-    `flex h-12 items-center gap-3 rounded-md px-3 text-body ${active ? "bg-surco/[0.07] font-medium text-surco" : "text-surco"}`;
-  const tabCls = (active: boolean) =>
-    `flex h-14 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 border-t-2 px-1 text-micro ${active ? "border-accion bg-accion/[0.07] font-semibold text-accion" : "border-transparent text-tinta-2"}`;
+  const linkWith = (cls: (active: boolean) => string, tab = false) => (n: NavItem) => (
+    <NavLink key={n.to} n={n} ctx={ctx} cls={cls} tab={tab} />
+  );
 
   return (
     <div className="flex h-full flex-col lg:flex-row print:block print:h-auto">
@@ -143,83 +118,28 @@ export function Layout() {
       >
         {t("ui.skipToContent")}
       </a>
-      {desktop &&
-        (sideHidden ? (
-          <div className="flex w-12 shrink-0 flex-col items-center gap-3 border-r border-linea bg-lino py-3 print:hidden">
-            <button
-              type="button"
-              aria-label={t("ui.navShow")}
-              title={t("ui.navShow")}
-              onClick={() => setSideHidden(false)}
-              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-tinta-2 hover:bg-surco/5 hover:text-surco"
-            >
-              <PanelLeftOpen size={18} aria-hidden />
-            </button>
-          </div>
-        ) : (
-          <aside className="relative z-20 flex w-60 shrink-0 flex-col border-r border-linea bg-lino print:hidden">
-            <div className="flex h-14 shrink-0 items-center justify-between pr-2 pl-4">
-              <Link to="/" className="font-serif text-[22px] leading-none font-semibold tracking-tight">
-                {t("ui.appName")}
-              </Link>
-              <button
-                type="button"
-                aria-label={t("ui.navHide")}
-                title={t("ui.navHide")}
-                onClick={() => setSideHidden(true)}
-                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-tinta-2 hover:bg-surco/5 hover:text-surco"
-              >
-                <PanelLeftClose size={18} aria-hidden />
-              </button>
-            </div>
-            <div className="px-3 pb-3">
-              <GlobalSearch inputRef={searchRef} />
-            </div>
-            <nav aria-label={t("ui.navMain")} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-3">
-              {nav.main.map((g) => (
-                <NavSection key={g.id} group={g} render={(n) => link(n, sideCls)} />
-              ))}
-              {nav.bottom.length > 0 && (
-                <div className="mt-auto flex flex-col gap-0.5 border-t border-linea pt-3">{nav.bottom.map((n) => link(n, sideCls))}</div>
-              )}
-            </nav>
-            <div className="shrink-0 border-t border-linea p-3">{account}</div>
-          </aside>
-        ))}
+      {desktop && (
+        <Sidebar hidden={sideHidden} onHidden={setSideHidden} nav={nav} searchRef={searchRef} renderLink={linkWith(sideCls)} account={account} />
+      )}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      {me.data?.support && (
-        <p role="status" className="shrink-0 border-b border-trigo/40 bg-trigo/15 px-4 py-1.5 print:hidden text-center text-sm text-surco">
-          {t("ui.supportBanner", { name: me.data.organization.name })}{" "}
-          <button className="cursor-pointer font-medium underline underline-offset-4" onClick={exitSupport}>
-            {t("ui.supportExit")}
-          </button>
-        </p>
-      )}
-      {offline && (
-        <p
-          role="status"
-          className="shrink-0 border-b border-trigo/40 bg-trigo/15 px-4 py-1 text-center text-xs text-surco"
-        >
-          {t("ui.offlineBanner")}
-        </p>
-      )}
-      <main id="main" tabIndex={-1} className="min-h-0 min-w-0 flex-1 overflow-auto outline-none print:overflow-visible">
-        {mfaGate ? (
-          <Page width="read">
-            <h1 className="text-title leading-tight">{t("ui.totpSetupGateTitle")}</h1>
-            <TotpSection forced />
-          </Page>
-        ) : (
-          <Outlet />
-        )}
-      </main>
+        <Banners support={!!me.data?.support} orgName={me.data?.organization.name} offline={offline} />
+        <main id="main" tabIndex={-1} className="min-h-0 min-w-0 flex-1 overflow-auto outline-none print:overflow-visible">
+          {mfaGate ? (
+            <Page width="read">
+              <h1 className="text-title leading-tight">{t("ui.totpSetupGateTitle")}</h1>
+              <TotpSection forced />
+            </Page>
+          ) : (
+            <Outlet />
+          )}
+        </main>
       </div>
       {!desktop && (
         <>
           <nav aria-label={t("ui.navMain")} className="flex shrink-0 border-t border-linea bg-lino pb-[env(safe-area-inset-bottom)] print:hidden">
             {MOBILE_TABS.map((to) => {
               const n = nav.main.flatMap((g) => g.items).find((i) => i.to === to);
-              return n ? link(n, tabCls, true) : null;
+              return n ? linkWith(tabCls, true)(n) : null;
             })}
             <button
               type="button"
@@ -236,10 +156,10 @@ export function Layout() {
             <MoreSheet onClose={() => setSheet(false)}>
               <GlobalSearch inputRef={searchRef} listClassName="min-w-0" />
               {nav.main.map((g) => (
-                <NavSection key={g.id} group={g} render={(n) => link(n, sheetCls)} />
+                <NavSection key={g.id} group={g} render={linkWith(sheetCls)} />
               ))}
               {nav.bottom.length > 0 && (
-                <div className="flex flex-col gap-0.5 border-t border-linea pt-3">{nav.bottom.map((n) => link(n, sheetCls))}</div>
+                <div className="flex flex-col gap-0.5 border-t border-linea pt-3">{nav.bottom.map(linkWith(sheetCls))}</div>
               )}
               <div className="border-t border-linea pt-3">{account}</div>
             </MoreSheet>
@@ -250,105 +170,3 @@ export function Layout() {
     </div>
   );
 }
-
-/** Bajo lg la navegación es una barra inferior; desde lg, la barra lateral. */
-function useIsDesktop() {
-  return useSyncExternalStore(
-    (cb) => {
-      const m = window.matchMedia?.("(min-width: 1024px)");
-      m?.addEventListener("change", cb);
-      return () => m?.removeEventListener("change", cb);
-    },
-    () => window.matchMedia?.("(min-width: 1024px)").matches ?? true,
-    () => true,
-  );
-}
-
-/** Bandera booleana recordada en este navegador (si el almacenamiento falla, vale hasta recargar). */
-function useStoredFlag(key: string): [boolean, (v: boolean) => void] {
-  const [v, setV] = useState(() => {
-    try {
-      return localStorage.getItem(key) === "1";
-    } catch {
-      return false;
-    }
-  });
-  return [
-    v,
-    (n) => {
-      setV(n);
-      try {
-        localStorage.setItem(key, n ? "1" : "0");
-      } catch {
-        /* sin almacenamiento */
-      }
-    },
-  ];
-}
-
-/** Grupo de la navegación: rótulo y sus ítems, siempre a la vista. */
-function NavSection({ group, render }: { group: NavGroup; render: (n: NavItem) => React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      {group.label && <p className="px-3 pb-0.5 text-meta font-medium text-tinta-2">{t(group.label)}</p>}
-      {group.items.map(render)}
-    </div>
-  );
-}
-
-/** Hoja inferior del celular con el resto de la navegación. Escape cierra, Tab queda adentro, el foco vuelve a "Más". */
-function MoreSheet({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
-  const box = useRef<HTMLDivElement>(null);
-  const close = useRef(onClose);
-  close.current = onClose;
-  useEffect(() => {
-    const before = document.activeElement as HTMLElement | null;
-    const el = box.current;
-    el?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close.current();
-      else if (e.key === "Tab" && el) {
-        const items = Array.from(el.querySelectorAll<HTMLElement>("a[href],button:not([disabled]),input:not([disabled])"));
-        const first = items[0];
-        const last = items[items.length - 1];
-        if (!first || !last) return;
-        if (e.shiftKey && (document.activeElement === first || document.activeElement === el)) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      if (before && document.contains(before)) before.focus();
-    };
-  }, []);
-  return (
-    <div className="anim-fade fixed inset-0 z-50 flex items-end bg-surco/55 print:hidden" onClick={onClose}>
-      <div
-        ref={box}
-        role="dialog"
-        aria-modal="true"
-        aria-label={t("ui.navMore")}
-        tabIndex={-1}
-        onClick={(e) => e.stopPropagation()}
-        className="anim-sheet flex max-h-[85vh] w-full flex-col gap-3 overflow-y-auto rounded-t-xl bg-lino p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] outline-none"
-      >
-        <button
-          type="button"
-          aria-label={t("ui.close")}
-          onClick={onClose}
-          className="flex h-12 w-12 cursor-pointer items-center justify-center self-end rounded-md text-tinta-2 hover:bg-surco/5"
-        >
-          <X size={20} aria-hidden />
-        </button>
-        {children}
-      </div>
-    </div>
-  );
-}
-

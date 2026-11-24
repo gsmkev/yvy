@@ -1,13 +1,13 @@
 /** Órdenes de trabajo (E-20, E-21): una tarea por lote con insumos, máquina y operario o contratista. */
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { DOSE_UNITS_FOR, localDate, ORDER_LABORS } from "@yvy/shared";
+import { DOSE_UNITS_FOR, localDate, ORDER_LABORS, groupOrders, plotsLabel, productsLabel, type OrderGroup, type OrderRow } from "@yvy/shared";
 import { get, post } from "../../lib/api";
 import { fmtIsoDate } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { useFarm, useFarms, useMembers, useSeasons } from "../../lib/queries";
-import { groupOrders, orderSheetHtml, plotsLabel, productsLabel, type OrderGroup, type OrderRow } from "../../lib/workOrders";
+import { orderSheetHtml } from "../../lib/workOrders";
 import { useProducts } from "../../lib/products";
 import { Button, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, toast, type Column } from "../ui";
 import { useContractors } from "./ContractorsPanel";

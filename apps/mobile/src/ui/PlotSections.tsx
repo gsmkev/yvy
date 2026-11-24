@@ -8,7 +8,7 @@ import type { Plot } from "../db/store";
 import { fmtNumber } from "../office/format";
 import { useOnline } from "../office/useOnline";
 import { DateField, FormSheet, KeyValue, LineChart, SelectField, Segmented, StatRow, TextField } from "../office/ui";
-import { cToTemp, mmToRain, rainLabel, type Units } from "../lib/unitsLogic";
+import { cToTemp, mmToRain, rainLabel, type Units } from "@yvy/shared";
 import { daysSince, vigorTrend } from "../lib/plotSheet";
 import { deltaVsFarm, fmtRain, fmtTemp, ndviColor, type RotationRow, type VigorPoint } from "../lib/plotInfo";
 import { Button, Row, SectionHeader, Text } from "./kit";

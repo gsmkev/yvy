@@ -1,9 +1,9 @@
-/** Preferencias de unidades en `kv` y hook para las pantallas (la lógica pura está en unitsLogic.ts). */
+/** Preferencias de unidades en `kv` y hook para las pantallas (la lógica pura está en @yvy/shared). */
 import { useSyncExternalStore } from "react";
 import { getDb } from "./db";
-import { parseUnits, type Units } from "./unitsLogic";
+import { parseUnits, type Units } from "@yvy/shared";
 
-export * from "./unitsLogic";
+
 const UNITS_KEY = "units";
 
 let version = 0;

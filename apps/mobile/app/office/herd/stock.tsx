@@ -1,11 +1,11 @@
 /** Existencias por potrero, UA y límite de carga (función 67). Se calcula con los conteos y movimientos del celular; el límite viene de la estancia. */
 import { useState } from "react";
 import { Settings2 } from "lucide-react-native";
-import { DEFAULT_MAX_UA_PER_HA, HERD_CATEGORIES, MAX_UA_PER_HA_LIMITS, PRODUCTION_SYSTEMS, indicatorLabel, indicatorValueText, type ProductionResponse, type ProductionSystem, uaOf, uaPerHa, t, type FarmStockResponse, type MessageKey } from "@yvy/shared";
+import { DEFAULT_MAX_UA_PER_HA, HERD_CATEGORIES, MAX_UA_PER_HA_LIMITS, PRODUCTION_SYSTEMS, indicatorLabel, indicatorValueText, type ProductionResponse, type ProductionSystem, uaOf, uaPerHa, t, type FarmStockResponse, type MessageKey, areaLabel, haToArea } from "@yvy/shared";
 import { getDb } from "../../../src/lib/db";
 import { showToast } from "../../../src/lib/toast";
 import { getSession } from "../../../src/lib/session";
-import { areaLabel, haToArea, useUnits } from "../../../src/lib/units";
+import { useUnits } from "../../../src/lib/units";
 import { useLocal } from "../../../src/lib/useLocal";
 import { useFarmPick } from "../../../src/office/farmPick";
 import { fmtDate, fmtNumber, parseDecimal } from "../../../src/office/format";

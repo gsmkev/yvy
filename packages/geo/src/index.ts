@@ -3,3 +3,4 @@ export * from "./edit";
 export * from "./track";
 export * from "./sampling";
 export * from "./distance";
+export * from "./buffer";

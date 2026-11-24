@@ -2,7 +2,7 @@
 import { useState, type ReactNode } from "react";
 import { Image, Pressable, ScrollView, SectionList, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
-import { describeRecord, LIMITS, t, type RecordKind } from "@yvy/shared";
+import { describeRecord, LIMITS, t, type RecordKind, isoToDisplay } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
 import { memberNames } from "../../src/lib/members";
@@ -10,7 +10,6 @@ import { authorName, isOwnerMode } from "../../src/lib/ownerSummary";
 import { useSession } from "../../src/lib/session";
 import { useLocal } from "../../src/lib/useLocal";
 import { activeFilterCount, filterRecords, NO_RECORD_FILTER, type RecordFilter } from "../../src/lib/plotInfo";
-import { isoToDisplay } from "../../src/office/date";
 import { DateField, FormSheet, SelectField } from "../../src/office/ui";
 import { SlidersHorizontal, X } from "lucide-react-native";
 import { RECORD_ICON } from "../../src/ui/icons";

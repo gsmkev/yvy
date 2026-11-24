@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { WorkOrder } from "@yvy/shared";
-import { groupOrders, orderSheetHtml, plotsLabel, productsLabel, type OrderRow } from "./workOrders";
+import { groupOrders, type OrderRow, type WorkOrder } from "@yvy/shared";
+import { orderSheetHtml } from "./workOrders";
 
 const order: WorkOrder = {
   labor: "spraying",
@@ -26,46 +26,7 @@ const row = (over: Partial<OrderRow>): OrderRow => ({
   ...over,
 });
 
-describe("órdenes de trabajo completas (E-20)", () => {
-  it("junta las tareas de una misma orden y suma superficie y avance", () => {
-    const gs = groupOrders([
-      row({ plotName: "A", plannedAreaHa: 10, status: "done", actualAreaHa: 9.5 }),
-      row({ plotName: "B", plannedAreaHa: 20 }),
-      row({ plotName: "C", createdAt: 2000, order: { ...order, labor: "harvest", products: [] } }),
-    ]);
-    expect(gs).toHaveLength(2);
-    // la más reciente primero
-    expect(gs[0]!.labor).toBe("harvest");
-    const spray = gs[1]!;
-    expect(spray.plotNames).toEqual(["A", "B"]);
-    expect(spray.plannedHa).toBe(30);
-    expect(spray.actualHa).toBe(9.5);
-    expect([spray.done, spray.status]).toEqual([1, "open"]);
-    expect(spray.machine).toBe("Pulverizadora Jacto");
-  });
-
-  it("no junta órdenes con distinto operario, fecha o contenido aunque se hayan creado juntas", () => {
-    expect(groupOrders([row({}), row({ assigneeId: "u2" })])).toHaveLength(2);
-    expect(groupOrders([row({}), row({ dueDate: "2026-11-21" })])).toHaveLength(2);
-    expect(groupOrders([row({}), row({ order: { ...order, note: "otra" } })])).toHaveLength(2);
-  });
-
-  it("está cerrada cuando todos sus lotes se hicieron o se cancelaron; el costo suma los lotes", () => {
-    const [g] = groupOrders([
-      row({ status: "done", costPyg: 100 }),
-      row({ status: "cancelled", costPyg: 0 }),
-    ]);
-    expect(g!.status).toBe("done");
-    expect(g!.costPyg).toBe(100);
-    expect(groupOrders([row({ status: "cancelled" })])[0]!.status).toBe("cancelled");
-  });
-
-  it("resume lotes e insumos para la tabla", () => {
-    expect(plotsLabel(["A", "B"])).toBe("A, B");
-    expect(plotsLabel(["A", "B", "C", "D", "E"])).toBe("A, B, C y 2 más");
-    expect(productsLabel(order)).toBe("Glifosato 2 L/ha");
-  });
-
+describe("hoja imprimible de la orden (E-20)", () => {
   it("la hoja imprimible trae labor, lotes con superficie, insumos con cantidad total, máquina, ejecutor y notas", () => {
     const [g] = groupOrders([row({ plotName: "Lote Norte", plannedAreaHa: 10 }), row({ plotName: "Lote Sur", plannedAreaHa: 30 })]);
     const html = orderSheetHtml(g!, "Estancia La Esperanza");

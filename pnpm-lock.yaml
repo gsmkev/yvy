@@ -359,6 +359,9 @@ importers:
       '@turf/union':
         specifier: 7.4.0
         version: 7.4.0
+      '@yvy/shared':
+        specifier: workspace:*
+        version: link:../shared
     devDependencies:
       '@types/geojson':
         specifier: 7946.0.16

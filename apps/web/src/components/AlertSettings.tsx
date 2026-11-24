@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { isFieldRole } from "@yvy/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ALERT_SETTINGS_LIMITS, DEFAULT_ALERT_SETTINGS, type AlertSettings } from "@yvy/shared";
+import { ALERT_SETTING_KEYS, ALERT_SETTING_LABELS, ALERT_SETTINGS_LIMITS, DEFAULT_ALERT_SETTINGS, type AlertSettings } from "@yvy/shared";
 import { get, put } from "../lib/api";
 import { t } from "../lib/i18n";
 import { useFarms, useMe } from "../lib/queries";
@@ -12,12 +12,6 @@ import { Button, ErrorBox, Field, Input, Select, Spinner } from "./ui";
 type Settings = AlertSettings & { isDefault: boolean };
 type Draft = Record<keyof AlertSettings, string>;
 
-const KEYS = ["frostTminC", "excessRainMm24h", "droughtDeficitPct"] as const;
-const LABELS = {
-  frostTminC: ["ui.alertSettingsFrost", "ui.alertSettingsFrostHint"],
-  excessRainMm24h: ["ui.alertSettingsRain", "ui.alertSettingsRainHint"],
-  droughtDeficitPct: ["ui.alertSettingsDrought", "ui.alertSettingsDroughtHint"],
-} as const;
 
 const toDraft = (v: AlertSettings): Draft => ({
   frostTminC: String(v.frostTminC),
@@ -46,7 +40,7 @@ export function AlertSettingsSection({ open, onToggle }: { open: boolean; onTogg
   }, [settings.data]);
 
   const valid = draft
-    ? KEYS.every(
+    ? ALERT_SETTING_KEYS.every(
         (k) =>
           draft[k].trim() !== "" &&
           num(draft[k]) >= ALERT_SETTINGS_LIMITS[k].min &&
@@ -105,8 +99,8 @@ export function AlertSettingsSection({ open, onToggle }: { open: boolean; onTogg
               if (valid) save.mutate();
             }}
           >
-            {KEYS.map((k) => (
-              <Field key={k} label={t(LABELS[k][0])} hint={t(LABELS[k][1])}>
+            {ALERT_SETTING_KEYS.map((k) => (
+              <Field key={k} label={t(ALERT_SETTING_LABELS[k][0])} hint={t(ALERT_SETTING_LABELS[k][1])}>
                 <Input
                   inputMode="decimal"
                   className="w-32"

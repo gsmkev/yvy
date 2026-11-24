@@ -1,8 +1,8 @@
 /**
- * Cálculos puros de lluvia para los informes de oficina: satélite (CHIRPS), normal, pluviómetro, por mes y por campaña.
- * Copia de apps/web/src/lib/reportsData.ts y gaugeData.ts (sin red ni Intl: Paraguay es UTC-3 todo el año).
+ * Cálculos puros de lluvia para los informes: satélite (CHIRPS), normal, pluviómetro, por mes y por campaña.
+ * Sin red ni Intl: por defecto los días se cortan en la hora de Paraguay (UTC-3 todo el año).
  */
-import { addDays, localDate } from "@yvy/shared";
+import { addDays, localDate } from "./tasks";
 
 export interface ClimateData {
   daily: { date: string; source: string; precipMm: number | null; tminC?: number | null; tmaxC?: number | null; soilMoisture0_7?: number | null }[];
@@ -49,13 +49,16 @@ export function normalBetween(clim: ClimateData["climatology"], from: string, to
   return n ? sum : null;
 }
 
-const gaugeBetween = (g: ClimateData["gauge"], fromMs: number, toMs: number): number | null => {
+export const gaugeBetween = (g: ClimateData["gauge"], fromMs: number, toMs: number): number | null => {
   const rows = g.filter((x) => x.capturedAt >= fromMs && x.capturedAt <= toMs);
   return rows.length ? rows.reduce((a, x) => a + x.mm, 0) : null;
 };
 
 /** Inicio / fin de un día "AAAA-MM-DD" en epoch ms, hora de Paraguay (UTC-3). */
-const dayToMs = (day: string, end = false): number => Date.parse(`${day}T${end ? "23:59:59" : "00:00:00"}-03:00`);
+export const dayToMsPy = (day: string, end = false): number => Date.parse(`${day}T${end ? "23:59:59" : "00:00:00"}-03:00`);
+
+/** Cómo se corta un día en epoch ms (la web lo hace con la zona de la estancia; por defecto, UTC-3). */
+export type DayToMs = (day: string, end: boolean) => number;
 
 /** Las campañas agrícolas de Paraguay arrancan el 1 de septiembre. */
 export function campaignStart(today: string = localDate(Date.now())): string {
@@ -78,7 +81,7 @@ const lastDayOfMonth = (month: string): string => {
   return new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
 };
 
-/** Última fecha con lluvia de satélite: el tramo comparado termina ahí. */
+/** Última fecha con lluvia de satélite: el tramo comparado termina ahí para que las tres columnas cubran los mismos días. */
 export function lastSatDate(daily: ClimateData["daily"], today: string): string {
   let last = "";
   for (const d of daily) if (d.source.startsWith("chirps") && d.precipMm !== null && d.date > last) last = d.date;
@@ -86,13 +89,19 @@ export function lastSatDate(daily: ClimateData["daily"], today: string): string 
 }
 
 /** Filas por mes y total de campaña de un pluviómetro (`poiId`) o de la lluvia sin pluviómetro (null). */
-export function gaugeTable(c: ClimateData, poiId: string | null, from: string, cutoff: string): { months: GaugeRow[]; season: GaugeRow } {
+export function gaugeTable(
+  c: ClimateData,
+  poiId: string | null,
+  from: string,
+  cutoff: string,
+  dayMs: DayToMs = dayToMsPy,
+): { months: GaugeRow[]; season: GaugeRow } {
   const records = c.gauge.filter((g) => (g.poiId ?? null) === poiId);
   const row = (key: string, a: string, b: string): GaugeRow => ({
     key,
     from: a,
     to: b,
-    gaugeMm: gaugeBetween(records, dayToMs(a), dayToMs(b, true)),
+    gaugeMm: gaugeBetween(records, dayMs(a, false), dayMs(b, true)),
     satMm: rainBetween(c.daily, a, b),
     normalMm: normalBetween(c.climatology, a, b),
   });
@@ -104,6 +113,10 @@ export function gaugeTable(c: ClimateData, poiId: string | null, from: string, c
   }
   return { months, season: row("season", from, cutoff) };
 }
+
+/** Diferencia en % del pluviómetro frente al satélite; null si falta alguno o el satélite es 0. */
+export const gaugeVsSat = (r: Pick<GaugeRow, "gaugeMm" | "satMm">): number | null =>
+  r.gaugeMm === null || !r.satMm ? null : ((r.gaugeMm - r.satMm) / r.satMm) * 100;
 
 export const hasUnassignedRain = (c: ClimateData): boolean => c.gauge.some((g) => !g.poiId);
 

@@ -1,4 +1,6 @@
-import { addDays } from "@yvy/shared";
+/** Fechas del calendario semanal y vencimientos en palabras (T-04). Puras: las fechas son "AAAA-MM-DD". */
+import { t } from "./i18n";
+import { addDays } from "./tasks";
 
 /** Lunes de la semana de `date` ("YYYY-MM-DD"). */
 export function weekStart(date: string): string {
@@ -26,4 +28,24 @@ export function tasksByDay<T extends { dueDate: string; dueTime: string | null; 
         (a.dueTime ?? "24:00").localeCompare(b.dueTime ?? "24:00") || (rank[a.priority] ?? 1) - (rank[b.priority] ?? 1),
     );
   return out;
+}
+
+const dayNum = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number) as [number, number, number];
+  return Math.round(Date.UTC(y, m - 1, d) / 86_400_000);
+};
+
+/** Días de `iso` respecto de `today` (negativo = ya pasó). Ambos "AAAA-MM-DD". */
+const daysFrom = (today: string, iso: string) => dayNum(iso) - dayNum(today);
+
+/** Fecha límite en palabras cuando importa la urgencia; lejos, la fecha dd/mm/aaaa. */
+export function dueLabel(iso: string, today: string, overdue = false): string {
+  const n = daysFrom(today, iso);
+  if (n === 0) return overdue ? t("ui.dueLateToday") : t("ui.dueToday");
+  if (n === 1) return t("ui.dueTomorrow");
+  if (n === -1) return t("ui.dueYesterday");
+  if (n < 0) return t("ui.dueLateDays", { n: -n });
+  if (n <= 6) return t("ui.dueInDays", { n });
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
 }

@@ -5,7 +5,7 @@
 import { useMemo } from "react";
 import { View } from "react-native";
 import { t, type MessageKey } from "@yvy/shared";
-import { bufferAnalysis, BUFFER_KINDS, DEFAULT_DISTANCES, type BufferHit, type BufferKind } from "../../../src/lib/buffer";
+import { bufferAnalysis, BUFFER_KINDS, DEFAULT_DISTANCES, type BufferHit, type BufferKind } from "@yvy/geo";
 import { getDb } from "../../../src/lib/db";
 import { useLocal } from "../../../src/lib/useLocal";
 import { useFarmPick } from "../../../src/office/farmPick";

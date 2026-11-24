@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { displayToIso, isoToDisplay, maskDate } from "./dateInput";
+import { displayToIso, isoToDisplay, maskDate } from "../src/date-input";
 
 describe("fecha dd/mm/aaaa", () => {
   it("convierte de ISO a pantalla y de vuelta", () => {
@@ -19,5 +19,18 @@ describe("fecha dd/mm/aaaa", () => {
     expect(maskDate("1211")).toBe("12/11/");
     expect(maskDate("12112026")).toBe("12/11/2026");
     expect(maskDate("12/11/20269")).toBe("12/11/2026");
+  });
+  it("convierte y valida (casos de la app)", () => {
+    expect(isoToDisplay("2026-11-12")).toBe("12/11/2026");
+    expect(isoToDisplay("x")).toBe("");
+    expect(displayToIso("12/11/2026")).toBe("2026-11-12");
+    expect(displayToIso("31/02/2026")).toBeNull();
+    expect(displayToIso("12/11/26")).toBeNull();
+    expect(displayToIso("12/11/1800")).toBeNull();
+  });
+  it("máscara (casos de la app)", () => {
+    expect(maskDate("1211")).toBe("12/11/");
+    expect(maskDate("12112026999")).toBe("12/11/2026");
+    expect(maskDate("1a2")).toBe("12/");
   });
 });

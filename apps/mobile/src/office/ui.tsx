@@ -3,12 +3,11 @@ import { useEffect, useState, type ComponentProps, type ReactNode } from "react"
 import { FlatList, Pressable, ScrollView, View } from "react-native";
 import Svg, { Circle, G, Line, Path, Text as SvgText } from "react-native-svg";
 import { ChevronDown, type LucideIcon } from "lucide-react-native";
-import { CHART, t } from "@yvy/shared";
+import { CHART, t, displayToIso, isoToDisplay, maskDate } from "@yvy/shared";
 import { tap } from "../lib/haptics";
 import { Button, ChoiceSheet, EmptyState, Row, Sheet, StatTile, Text, TextInput } from "../ui/kit";
 import { C, F, RADIUS, T, TOUCH } from "../ui/theme";
 import { barFractions, buildChart, segmentPath, type ChartSeries } from "./chartMath";
-import { displayToIso, isoToDisplay, maskDate } from "./date";
 import { fmtNumber } from "./format";
 
 // ---------- Cifras y ficha ----------

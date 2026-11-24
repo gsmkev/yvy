@@ -1,9 +1,10 @@
 /**
- * Zonas de amortiguación (A-15), copia de apps/web/src/lib/buffer.ts: qué casas, escuelas y cursos de agua quedan cerca de cada lote
- * y qué aplicaciones cayeron dentro de la distancia. Se calcula en el teléfono con packages/geo.
+ * Zonas de amortiguación (A-15): qué casas, escuelas y cursos de agua quedan cerca de cada lote y qué aplicaciones
+ * cayeron dentro de la distancia. Se calcula en el navegador o en el teléfono (el Worker no hace geometría).
  */
-import { lineToAreaM, pointToAreaM, pointToLineM, type Area } from "@yvy/geo";
 import { LIMITS } from "@yvy/shared";
+import type { Area } from "./core";
+import { lineToAreaM, pointToAreaM, pointToLineM } from "./distance";
 import type { LineString } from "geojson";
 
 export type BufferKind = "house" | "school" | "water" | "stream";

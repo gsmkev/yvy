@@ -6,7 +6,7 @@
 import { useMemo, useState } from "react";
 import { View } from "react-native";
 import { Plus } from "lucide-react-native";
-import { DOSE_UNITS_FOR, localDate, ORDER_LABORS, t, type MessageKey } from "@yvy/shared";
+import { DOSE_UNITS_FOR, localDate, ORDER_LABORS, t, type MessageKey, groupOrders, plotsLabel, productsLabel, type OrderGroup, type OrderRow } from "@yvy/shared";
 import { getDb } from "../../../../src/lib/db";
 import { syncNow } from "../../../../src/lib/sync";
 import { showToast } from "../../../../src/lib/toast";
@@ -18,7 +18,6 @@ import { OfficeScreen } from "../../../../src/office/OfficeScreen";
 import { OnlineState } from "../../../../src/office/state";
 import type { Member } from "../../../../src/office/team";
 import { useOnlineMutation } from "../../../../src/office/useOnlineMutation";
-import { groupOrders, plotsLabel, productsLabel, type OrderGroup, type OrderRow } from "../../../../src/office/workOrders";
 import { DataList, DateField, FormSheet, KeyValue, Segmented, SelectField, TextField } from "../../../../src/office/ui";
 import { Button, Row, Sheet, Text } from "../../../../src/ui/kit";
 import { C, T } from "../../../../src/ui/theme";

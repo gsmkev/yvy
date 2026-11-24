@@ -1,12 +1,12 @@
 /** Clientes del agrónomo (función 5): GET /me/clients. Tocar una estancia cambia de organización y entra. */
 import { useState } from "react";
 import { Alert, View } from "react-native";
-import { t, type MessageKey } from "@yvy/shared";
+import { t, type MessageKey, areaLabel, haToArea } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { enterOrganization } from "../../src/lib/enterOrg";
 import { getSession } from "../../src/lib/session";
 import { canSwitchUser, unsentSummary } from "../../src/lib/switchUser";
-import { areaLabel, haToArea, useUnits } from "../../src/lib/units";
+import { useUnits } from "../../src/lib/units";
 import { fmtDate, fmtNumber } from "../../src/office/format";
 import { OfficeScreen } from "../../src/office/OfficeScreen";
 import { OnlineState } from "../../src/office/state";

@@ -4,11 +4,11 @@
  */
 import { useMemo, useState } from "react";
 import { router } from "expo-router";
-import { t, type MessageKey } from "@yvy/shared";
+import { t, type MessageKey, areaLabel, haToArea } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { areaByCrop, fmtArea, latestVigorByPlot, sortPlotLines, unvisitedOver, type PlotLine, type PlotSort } from "../../src/lib/plotInfo";
 import { daysSince } from "../../src/lib/plotSheet";
-import { areaLabel, haToArea, useUnits } from "../../src/lib/units";
+import { useUnits } from "../../src/lib/units";
 import { useLocal } from "../../src/lib/useLocal";
 import { FarmChips, useFarmPick } from "../../src/office/farmPick";
 import { fmtNumber } from "../../src/office/format";

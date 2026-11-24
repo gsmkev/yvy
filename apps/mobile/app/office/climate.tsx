@@ -4,14 +4,13 @@
  */
 import { useMemo } from "react";
 import { View } from "react-native";
-import { addDays, CHART, localDate, spiCategory, t, type FarmSpi, type MessageKey } from "@yvy/shared";
-import { dayOfYear, rainByDate, type ClimateData } from "../../src/lib/climateData";
+import { addDays, CHART, localDate, spiCategory, t, type FarmSpi, type MessageKey, cToTemp, mmToRain, rainLabel, tempLabel, dayOfYear, rainByDate, type ClimateData } from "@yvy/shared";
 import { FarmChips, useFarmPick } from "../../src/office/farmPick";
 import { fmtNumber } from "../../src/office/format";
 import { OfficeScreen } from "../../src/office/OfficeScreen";
 import { OnlineState } from "../../src/office/state";
 import { useOnline } from "../../src/office/useOnline";
-import { cToTemp, mmToRain, rainLabel, tempLabel, useUnits } from "../../src/lib/units";
+import { useUnits } from "../../src/lib/units";
 import { BarList, KeyValue, LineChart, StatRow, type StatItem } from "../../src/office/ui";
 import { ForecastStrip } from "../../src/ui/ForecastStrip";
 import { EmptyState, SectionHeader, Text } from "../../src/ui/kit";

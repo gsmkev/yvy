@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { boundsOf, FarmMap } from "./FarmMap";
 import { Button, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Select, Spinner, Stat, toast, type Column } from "./ui";
 import { get, post } from "../lib/api";
-import { analysisAreas, coverKeys, parseCoverKey, summarizeCover } from "../lib/changesData";
+import { analysisAreas, coverKeys, parseCoverKey, summarizeCover } from "@yvy/shared";
 import { download } from "../lib/exports";
 import { fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";

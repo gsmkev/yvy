@@ -1,4 +1,5 @@
-/** Copia de apps/web/src/lib/changesData.ts. Datos de "Cambios en el terreno": área quemada (S-20) y cambio de cobertura (S-31). Todo indicativo. */
+/** Datos de "Cambios en el terreno": área quemada (S-20) y cambio de cobertura (S-31). Todo indicativo. */
+/** Análisis por lote de Sentinel-2 (S-20 área quemada, S-31 cambio de cobertura). Indicativos. */
 export interface AnalysisPlot<M> {
   plotId: string;
   plotName: string;
@@ -8,22 +9,25 @@ export interface AnalysisPlot<M> {
   plotAreaHa: number;
   validPct: number;
   metrics: M;
-  /** FeatureCollection (texto) con los polígonos; la app no los dibuja. */
+  /** FeatureCollection (texto) con los polígonos. */
   changes: string;
   computedAt: number;
 }
+
 export interface BurnedMetrics {
   eventAt: number;
   burnedHa: number;
   highHa: number;
   hotspots: number;
 }
+
 interface ClassHa {
   forest: number;
   pasture: number;
   crop: number;
   other: number;
 }
+
 export interface CoverMetrics {
   from: ClassHa;
   to: ClassHa;
@@ -69,6 +73,21 @@ export function burnedEvents(rows: AnalysisPlot<BurnedMetrics>[]): BurnedEvent[]
       };
     })
     .sort((a, b) => b.refKey.localeCompare(a.refKey));
+}
+
+/** Polígonos de cambio con id para el mapa (formato de FarmMap.problemAreas). */
+export function analysisAreas(plots: { plotId: string; changes: string }[]): { id: string; geometry: string }[] {
+  const out: { id: string; geometry: string }[] = [];
+  for (const p of plots) {
+    let fc: { features?: { geometry: unknown }[] };
+    try {
+      fc = JSON.parse(p.changes) as typeof fc;
+    } catch {
+      continue;
+    }
+    (fc.features ?? []).forEach((f, i) => out.push({ id: `${p.plotId}-${i}`, geometry: JSON.stringify(f.geometry) }));
+  }
+  return out;
 }
 
 interface CoverSummary {

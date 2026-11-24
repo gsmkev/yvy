@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { checklistProgress, closeRequirements, isOverdue as taskOverdue, LIMITS, localDate, localTime, parseChecklist, parseTaskComments, RECORD_KINDS, RECURRENCES, TASK_PRIORITIES } from "@yvy/shared";
+import { checklistProgress, closeRequirements, isOverdue as taskOverdue, LIMITS, localDate, localTime, parseChecklist, parseTaskComments, RECORD_KINDS, RECURRENCES, TASK_PRIORITIES, dueLabel } from "@yvy/shared";
 import { del, patch, post } from "../lib/api";
 import { deleteWithUndo } from "../lib/undo";
-import { dueLabel } from "../lib/dueLabel";
 import { fmtDate, fmtDateTime, fmtIsoDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useFarms, useMembers, useTasks } from "../lib/queries";

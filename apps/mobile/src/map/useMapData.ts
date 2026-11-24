@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
 import { isFieldRole } from "@yvy/shared";
 import { getDb } from "../lib/db";
 import { byFarm, useFarmChoice } from "../lib/farmFilter";
 import { isOwnerMode } from "../lib/ownerSummary";
-import { tilesBaseUrl } from "../lib/offline";
+import { useRemoteBase } from "../lib/useRemoteBase";
 import { useReadOnly } from "../lib/readOnly";
 import { useSession } from "../lib/session";
 import { useLocal } from "../lib/useLocal";
@@ -21,12 +20,9 @@ export function useMapData() {
   const userId = useSession()?.user.id ?? "";
   const pois = useLocal(() => byFarm(getDb().pois(), farmId), [farmId]);
   const taskPoints = useLocal(() => getDb().taskPoints(userId), [userId]);
-  const [remoteBase, setRemoteBase] = useState<string | null>(null);
+  const remoteBase = useRemoteBase();
   const farm = current ?? farms[0];
   const readOnly = useReadOnly();
   const canMarkPoi = !isFieldRole(useSession()?.organization.role ?? "worker") && !readOnly;
-  useEffect(() => {
-    tilesBaseUrl().then(setRemoteBase, () => setRemoteBase(null));
-  }, []);
   return { farmId, farms, plots, records, lastVisit, pois, taskPoints, remoteBase, farm, readOnly, canMarkPoi };
 }

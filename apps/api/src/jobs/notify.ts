@@ -8,7 +8,7 @@ import * as s from "@yvy/shared/schema";
 import { chunkForParams, runBatch, type DB, type Stmt } from "../db/client";
 import type { Bindings } from "../types";
 
-export const EMAIL_DAILY_CAP = 90;
+const EMAIL_DAILY_CAP = 90;
 const BATCH = 100;
 
 const KIND_LABEL: Record<string, string> = {

@@ -50,7 +50,7 @@ const areaWith = (check: (ha: number) => string | null) =>
     return flat;
   });
 
-export const farmArea = areaWith((ha) =>
+const farmArea = areaWith((ha) =>
   ha > LIMITS.geometry.maxFarmHa ? t("ui.farmTooBig", { max: LIMITS.geometry.maxFarmHa }) : null,
 );
 export const plotArea = areaWith((ha) =>

@@ -7,13 +7,13 @@ import { getDb } from "../db/client";
 import { SystemDb } from "../db/system";
 import type { Bindings } from "../types";
 
-export const DISPATCH_JOB = "new_farm";
+const DISPATCH_JOB = "new_farm";
 const WORKFLOW = "jobs.yml";
 const REF = "main";
 
 let warned = false;
 
-export function dispatchConfigured(env: Pick<Bindings, "GITHUB_DISPATCH_TOKEN" | "GITHUB_REPO">): boolean {
+function dispatchConfigured(env: Pick<Bindings, "GITHUB_DISPATCH_TOKEN" | "GITHUB_REPO">): boolean {
   return Boolean(env.GITHUB_DISPATCH_TOKEN && /^[\w.-]+\/[\w.-]+$/.test(env.GITHUB_REPO ?? ""));
 }
 

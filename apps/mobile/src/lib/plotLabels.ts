@@ -1,14 +1,14 @@
 /** Etiquetas de lotes en el mapa (M-12): un punto garantizado adentro de cada lote, los más grandes primero. */
 import { labelPoint, type Area } from "@yvy/geo";
 
-export interface LabelablePlot {
+interface LabelablePlot {
   id: string;
   name: string;
   geometry: string;
   areaHa: number;
 }
 
-export interface PlotLabel {
+interface PlotLabel {
   id: string;
   name: string;
   lon: number;

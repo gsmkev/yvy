@@ -10,7 +10,7 @@ import { requirePlotRow } from "./agri2";
 import { bumpVersion, currentVersion, runBatch } from "./client";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
 
-export interface YieldMapInput {
+interface YieldMapInput {
   seasonId: string | null;
   fileName: string;
   nPoints: number;

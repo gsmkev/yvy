@@ -235,7 +235,7 @@ export interface BurnedMetrics {
   hotspots: number;
 }
 
-export interface ClassHa {
+interface ClassHa {
   forest: number;
   pasture: number;
   crop: number;

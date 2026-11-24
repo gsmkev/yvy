@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { t } from "../lib/i18n";
 
-export interface FarmTab<T extends string> {
+interface FarmTab<T extends string> {
   id: T;
   label: string;
   count?: number;

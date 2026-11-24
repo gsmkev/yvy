@@ -1,7 +1,7 @@
 /** Informe gratis a cambio del email (V-04): lectura de las coordenadas que escribe la persona. */
 import { LIMITS } from "@yvy/shared";
 
-export interface Point {
+interface Point {
   lat: number;
   lon: number;
 }

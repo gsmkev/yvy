@@ -43,7 +43,7 @@ export interface EffectRecord {
   capturedAt: number;
 }
 
-export const consumes = (kind: string) => (CONSUMING_KINDS as readonly string[]).includes(kind);
+const consumes = (kind: string) => (CONSUMING_KINDS as readonly string[]).includes(kind);
 /**
  * Registros con efectos en el ERP: los que consumen insumos y los que cierran una orden de trabajo y pueden
  * cargar el costo del contratista (siembra y cosecha). Se revisan todos para poder revertir si el registro cambia.

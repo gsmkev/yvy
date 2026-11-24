@@ -19,9 +19,9 @@ export function ndviColor(v: number): string {
 }
 
 /** Caída de vigor que se avisa: más de 15 % entre las dos últimas pasadas. */
-export const DROP_THRESHOLD_PCT = LIMITS.vigor.dropThresholdPct;
+const DROP_THRESHOLD_PCT = LIMITS.vigor.dropThresholdPct;
 
-export interface VigorDrop {
+interface VigorDrop {
   /** Caída redondeada, en %. */
   pct: number;
   /** Fecha de la pasada anterior (epoch ms). */

@@ -89,7 +89,7 @@ export default function Search() {
         key: "records",
         title: t("ui.searchRecords"),
         hits: base.records
-          .map((r) => ({ r, summary: describeRecord(r.kind, safe(r.data) as never) }))
+          .map((r) => ({ r, summary: describeRecord(r.kind, safe(r.data)) }))
           .filter(({ r, summary }) => matchesQuery(query, summary, t(k(`recordKinds.${r.kind}`)), r.plotId ? names.plot.get(r.plotId) : null))
           .map(({ r, summary }) => ({ id: r.id, title: summary, subtitle: [t(k(`recordKinds.${r.kind}`)), r.plotId ? names.plot.get(r.plotId) : names.farm.get(r.farmId), day(r.capturedAt)].filter(Boolean).join(" · "), icon: RECORD_ICON[r.kind], open: () => router.push({ pathname: "/record/[id]", params: { id: r.id } }) })),
       },

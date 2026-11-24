@@ -7,7 +7,7 @@ const R = 6_371_008.8; // radio medio de la Tierra, m
 const rad = (d: number) => (d * Math.PI) / 180;
 
 /** Distancia entre dos puntos (haversine), en metros. */
-export function distanceM(a: LonLat, b: LonLat): number {
+function distanceM(a: LonLat, b: LonLat): number {
   const dLat = rad(b[1] - a[1]);
   const dLon = rad(b[0] - a[0]);
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a[1])) * Math.cos(rad(b[1])) * Math.sin(dLon / 2) ** 2;

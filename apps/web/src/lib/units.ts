@@ -9,11 +9,10 @@ import { getSession } from "./api";
  * ver https://en.wikipedia.org/wiki/Paraguayan_units_of_measurement). 86,6 m x 86,6 m = 7.499,56 m², que en la
  * práctica se redondea a 0,75 ha exactas. Ojo: el 0,7438 que circula en algunos pedidos no coincide con esa norma.
  */
-export const VARA_M = 0.866;
 export const CUADRA_HA = 0.75;
-export const MM_PER_INCH = 25.4;
+const MM_PER_INCH = 25.4;
 
-export type AreaUnit = "ha" | "cuadra";
+type AreaUnit = "ha" | "cuadra";
 export type RainUnit = "mm" | "in";
 export type TempUnit = "c" | "f";
 export interface Units {
@@ -21,7 +20,7 @@ export interface Units {
   rain: RainUnit;
   temp: TempUnit;
 }
-export const DEFAULT_UNITS: Units = { area: "ha", rain: "mm", temp: "c" };
+const DEFAULT_UNITS: Units = { area: "ha", rain: "mm", temp: "c" };
 
 const key = () => `yvy.units.${getSession()?.user.id ?? "anon"}`;
 const listeners = new Set<() => void>();

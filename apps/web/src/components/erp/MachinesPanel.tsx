@@ -6,7 +6,7 @@ import { useFarms } from "../../lib/queries";
 import { useErpList, type FieldDef } from "./MasterPanel";
 import { RecordList } from "./RecordList";
 
-export interface Machine {
+interface Machine {
   id: string;
   farmId: string | null;
   name: string;

@@ -9,7 +9,7 @@ import { costPerKgBeef, resultFigures, type Activity, type ResultFigures, type R
 import * as s from "@yvy/shared/schema";
 import { can, type ScopedDb } from "./scoped";
 
-export type ResultRow = ResultInput & ResultFigures;
+type ResultRow = ResultInput & ResultFigures;
 
 export async function results(sdb: ScopedDb, f: { farmId?: string; seasonId?: string }) {
   sdb.require(can.manageErp);

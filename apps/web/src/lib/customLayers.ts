@@ -37,8 +37,6 @@ export function useCustomLayerImages(ids: string[]) {
   return Object.fromEntries(ids.map((id, i) => [id, res[i]!.data ?? null])) as Record<string, string | null>;
 }
 
-export type CustomKind = "image" | "geotiff" | null;
-
 /** PNG/JPG o GeoTIFF por el tipo del archivo (o la extensión, que el sistema a veces no informa). */
 export function customFileMime(f: { name: string; type: string }): string | null {
   if (f.type === "image/png" || f.type === "image/jpeg" || f.type === "image/tiff") return f.type;

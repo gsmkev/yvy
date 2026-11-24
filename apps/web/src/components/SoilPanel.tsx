@@ -8,7 +8,7 @@ import type { Plot } from "../lib/types";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
-export interface SoilSample {
+interface SoilSample {
   id: string;
   plotId: string | null;
   plotName: string | null;
@@ -25,7 +25,7 @@ export interface SoilSample {
   note: string | null;
 }
 
-export const useSoilSamples = (farmId: string) =>
+const useSoilSamples = (farmId: string) =>
   useQuery({ queryKey: ["soil", farmId], queryFn: () => get<SoilSample[]>(`/org/farms/${farmId}/soil-samples`) });
 
 const toNum = (v: string) => (v.trim() === "" ? null : Number(v.replace(",", ".")));

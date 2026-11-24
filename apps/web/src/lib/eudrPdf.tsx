@@ -8,7 +8,7 @@ import { s } from "./reportPdf";
 import { Kpi } from "./reportsPdf";
 import type { EudrResponse, Farm, Plot } from "./types";
 
-export interface EudrReportData {
+interface EudrReportData {
   farm: Farm;
   data: EudrResponse;
   plots: Plot[];

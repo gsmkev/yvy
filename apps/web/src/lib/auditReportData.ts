@@ -11,9 +11,9 @@ import type { Poi, Product, RecordRow } from "./types";
 export const BUFFER_M = 30;
 const DAY = 86_400_000;
 
-export type AuditFlag = "no_location" | "near_water_or_house" | "no_withdrawal" | "wind" | "harvest_in_withdrawal";
+type AuditFlag = "no_location" | "near_water_or_house" | "no_withdrawal" | "wind" | "harvest_in_withdrawal";
 
-export interface AuditProduct {
+interface AuditProduct {
   name: string;
   activeIngredient: string | null;
   toxClass: string | null;
@@ -22,7 +22,7 @@ export interface AuditProduct {
   withdrawalDays: number | null;
 }
 
-export interface AuditApplication {
+interface AuditApplication {
   id: string;
   at: number;
   plotName: string | null;

@@ -3,7 +3,7 @@ import type { AnalysisPlot, BurnedMetrics, CoverMetrics } from "./types";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-export interface BurnedEvent {
+interface BurnedEvent {
   /** Fecha del primer foco (AAAA-MM-DD): identifica el incendio. */
   refKey: string;
   eventAt: number;
@@ -55,7 +55,7 @@ export function analysisAreas(plots: { plotId: string; changes: string }[]): { i
   return out;
 }
 
-export interface CoverSummary {
+interface CoverSummary {
   from: CoverMetrics["from"];
   to: CoverMetrics["to"];
   forestToPasture: number;

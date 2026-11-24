@@ -38,7 +38,7 @@ import { can, type ScopedDb } from "./scoped";
 const paramsPerRow = (t: SQLiteTable) => Object.keys(getTableColumns(t)).length;
 
 /** Rutas en R2. La nota de voz (F-09) es un solo archivo .m4a: no tiene miniatura (thumbPath vacío). */
-export const attachmentPaths = (orgId: string, recordId: string, attachmentId: string, mime: string = "image/webp") =>
+const attachmentPaths = (orgId: string, recordId: string, attachmentId: string, mime: string = "image/webp") =>
   isAudioMime(mime)
     ? { storagePath: `organizations/${orgId}/records/${recordId}/${attachmentId}.m4a`, thumbPath: "" }
     : {
@@ -134,7 +134,7 @@ export async function applyPush(
     }
   }
   const ids = <T>(set: Set<T>) => [...set];
-  const empty = Promise.resolve([] as never[]);
+  const empty = Promise.resolve([]);
 
   const [seenRows, recRows, attRows, taskRows, farmRows, plotRows, poiRows, assignedRows, countRows, plotUpRows, accessRows] =
     await Promise.all([

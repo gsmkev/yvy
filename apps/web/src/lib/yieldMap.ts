@@ -12,7 +12,7 @@ export type YieldUnit = "t_ha" | "kg_ha" | "bu_ac";
 export const YIELD_UNITS: readonly YieldUnit[] = ["t_ha", "kg_ha", "bu_ac"];
 
 /** t/ha por bushel/acre según el cultivo (soja y trigo 60 lb/bu; maíz 56 lb/bu). */
-export const BU_AC_TO_T_HA: Record<string, number> = { soja: 0.06725, trigo: 0.06725, maiz: 0.06277, default: 0.06725 };
+const BU_AC_TO_T_HA: Record<string, number> = { soja: 0.06725, trigo: 0.06725, maiz: 0.06277, default: 0.06725 };
 
 export const MAX_CELLS = 800;
 
@@ -32,7 +32,7 @@ const YIELD_FIELDS = [
   "productiv",
 ];
 
-export interface YieldPoint {
+interface YieldPoint {
   lon: number;
   lat: number;
   v: number;

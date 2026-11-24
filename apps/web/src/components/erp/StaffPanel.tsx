@@ -14,14 +14,14 @@ import { useErpList, type FieldDef } from "./MasterPanel";
 import { RecordList } from "./RecordList";
 import { HeaderActions, RowMenu } from "./adminSlot";
 
-export interface Employee {
+interface Employee {
   id: string;
   name: string;
   ci: string | null;
   phone: string | null;
   dailyWagePyg: number;
 }
-export const useEmployees = () => useErpList<Employee>("employees");
+const useEmployees = () => useErpList<Employee>("employees");
 
 interface Attendance {
   id: string;

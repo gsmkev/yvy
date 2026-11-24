@@ -5,7 +5,7 @@
 import { forecastHourAt, LIMITS } from "@yvy/shared";
 import type { Kv } from "./forecast";
 
-export interface SprayHour {
+interface SprayHour {
   at: number;
   tempC: number | null;
   windKmh: number | null;
@@ -19,7 +19,7 @@ interface Cached {
 
 const key = (farmId: string) => `sprayhours:${farmId}`;
 
-export function readSprayHours(kv: Kv, farmId: string): Cached | null {
+function readSprayHours(kv: Kv, farmId: string): Cached | null {
   try {
     const raw = kv.getKv(key(farmId));
     if (!raw) return null;

@@ -4,7 +4,7 @@ import { t } from "../lib/i18n";
 import { placeMenu, type Placement } from "../lib/menuPlacement";
 import { toast } from "./ui";
 
-export interface MenuItem {
+interface MenuItem {
   label: string;
   onSelect: () => void;
   disabled?: boolean;
@@ -184,7 +184,7 @@ export function ActionMenu({
   );
 }
 
-export interface ExportFormat {
+interface ExportFormat {
   label: string;
   run: () => unknown | Promise<unknown>;
 }

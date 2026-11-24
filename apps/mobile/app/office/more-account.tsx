@@ -21,7 +21,7 @@ import { Button, Row, SectionHeader, Text } from "../../src/ui/kit";
 import { C, T } from "../../src/ui/theme";
 
 /** Mismo número provisorio que la web (apps/web/src/lib/config.ts): hay que reemplazarlo por el real de Yvy. */
-const SUPPORT_WHATSAPP = "595000000000"; // TODO número real
+const SUPPORT_WHATSAPP = "595000000000"; // provisorio: falta el número real y la app no lo lee de una variable de entorno
 const key = (k: string) => k as MessageKey;
 
 interface PlanRequest {

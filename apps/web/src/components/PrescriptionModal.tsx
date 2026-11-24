@@ -6,7 +6,7 @@ import { post } from "../lib/api";
 import { t, tk } from "../lib/i18n";
 import { useMembers, useSeasons } from "../lib/queries";
 import type { Plot } from "../lib/types";
-import { useProducts } from "./ProductsPanel";
+import { useProducts } from "../lib/products";
 import { Button, ErrorBox, Field, Input, Modal, Select, toast } from "./ui";
 
 interface Line {

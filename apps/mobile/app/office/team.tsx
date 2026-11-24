@@ -82,7 +82,7 @@ export default function Team() {
                 m.lastSyncAt ? t("office.teamLastSeen", { when: ageText(Date.now() - m.lastSyncAt) }) : null,
               ].filter(Boolean).join(" · ")
             }
-            right={(m) => (m.overdueTasks > 0 ? <Text style={{ fontFamily: F.sansSemi, fontSize: 15, color: C.peligro }}>{t("office.teamOverdueN", { n: m.overdueTasks })}</Text> : undefined) as never}
+            right={(m) => (m.overdueTasks > 0 ? <Text style={{ fontFamily: F.sansSemi, fontSize: 15, color: C.peligro }}>{t("office.teamOverdueN", { n: m.overdueTasks })}</Text> : undefined)}
             onPress={(m) => router.push({ pathname: "/office/member/[id]", params: { id: m.userId } })}
             empty={{ title: t("ui.teamEmpty") }}
           />

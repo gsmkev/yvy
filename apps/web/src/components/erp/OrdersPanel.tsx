@@ -8,7 +8,7 @@ import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { useFarm, useFarms, useMembers, useSeasons } from "../../lib/queries";
 import { groupOrders, orderSheetHtml, plotsLabel, productsLabel, type OrderGroup, type OrderRow } from "../../lib/workOrders";
-import { useProducts } from "../ProductsPanel";
+import { useProducts } from "../../lib/products";
 import { Button, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, toast, type Column } from "../ui";
 import { useContractors } from "./ContractorsPanel";
 import { useMachines } from "./MachinesPanel";

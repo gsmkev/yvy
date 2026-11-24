@@ -8,7 +8,7 @@ import { LIMITS, localDate } from "@yvy/shared";
 import type { HourlyForecast } from "./weather";
 import type { AlertDraft } from "./rules";
 
-export interface RustDay {
+interface RustDay {
   date: string;
   /** Horas del día local con mojado estimado y temperatura favorable. */
   wetHours: number;

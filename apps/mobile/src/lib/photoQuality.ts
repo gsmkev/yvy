@@ -7,14 +7,14 @@
 import { decode } from "jpeg-js";
 import { LIMITS, t } from "@yvy/shared";
 
-export interface PhotoStats {
+interface PhotoStats {
   /** Luminancia media, 0 (negro) a 255 (blanco). */
   meanLuma: number;
   /** Varianza del laplaciano de la luminancia: baja = poco borde = movida o desenfocada. */
   blurVariance: number;
 }
 
-export type PhotoIssue = "dark" | "blurry";
+type PhotoIssue = "dark" | "blurry";
 
 /** RGBA → luminancia (Rec. 601). */
 export function toLuma(rgba: ArrayLike<number>, width: number, height: number): Float32Array {

@@ -78,6 +78,3 @@ export function guessPlots(plots: Plot[], fix: Fix | null): PlotGuess[] {
   }
   return out.sort((a, b) => (a.confidence === b.confidence ? 0 : a.confidence === "sure" ? -1 : 1));
 }
-
-/** Compatibilidad: el mejor candidato seguro, o null. */
-export const detectPlot = (plots: Plot[], fix: Fix | null): Plot | null => guessPlots(plots, fix).find((g) => g.confidence === "sure")?.plot ?? null;

@@ -9,7 +9,7 @@ import { forceReadOnly, useIsDemo } from "./demo";
 import { resolveReadOnly } from "./ownerSummary";
 import { useSession } from "./session";
 
-export const READ_ONLY_KEY = "read_only";
+const READ_ONLY_KEY = "read_only";
 
 let version = 0;
 const subs = new Set<() => void>();

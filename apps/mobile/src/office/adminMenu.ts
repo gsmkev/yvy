@@ -2,7 +2,7 @@
 import { Beef, BookOpen, Boxes, ClipboardList, Fuel, Handshake, Package, PackageMinus, ShoppingCart, Tractor, TrendingUp, UserCheck, Wallet, Warehouse, Wheat, Wrench, type LucideIcon } from "lucide-react-native";
 import type { MessageKey } from "@yvy/shared";
 
-export type AdminGroup = "trade" | "stock" | "ops" | "finance";
+type AdminGroup = "trade" | "stock" | "ops" | "finance";
 export const ADMIN_GROUPS: AdminGroup[] = ["trade", "stock", "ops", "finance"];
 
 export const ADMIN_GROUP_TITLE: Record<AdminGroup, MessageKey> = {
@@ -12,14 +12,14 @@ export const ADMIN_GROUP_TITLE: Record<AdminGroup, MessageKey> = {
   finance: "ui.adminGroup_finance",
 };
 
-export interface AdminMenuCtx {
+interface AdminMenuCtx {
   /** Dueño o administrador (`can.manageErp`). */
   manage: boolean;
   /** Dueño, administrador o agrónomo (`can.viewStock`: cantidades, nunca montos). */
   stock: boolean;
 }
 
-export interface AdminMenuItem {
+interface AdminMenuItem {
   group: AdminGroup;
   /** Único. */
   id: string;

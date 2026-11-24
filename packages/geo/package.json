@@ -15,7 +15,6 @@
     "@turf/bbox": "7.4.0",
     "@turf/boolean-point-in-polygon": "7.4.0",
     "@turf/centroid": "7.4.0",
-    "@turf/helpers": "7.4.0",
     "@turf/intersect": "7.4.0",
     "@turf/kinks": "7.4.0",
     "@turf/length": "7.4.0",

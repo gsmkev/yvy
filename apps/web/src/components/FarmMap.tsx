@@ -27,7 +27,7 @@ function ensureProtocol() {
 }
 
 /** Mapa base de Paraguay en R2 (bucket yvy-tiles), publicado por el job country_basemap. */
-export const COUNTRY_BASEMAP = "base/paraguay.pmtiles";
+const COUNTRY_BASEMAP = "base/paraguay.pmtiles";
 const DEV_BASEMAP = import.meta.env.DEV || import.meta.env.VITE_DEV_BASEMAP === "1";
 const PARAGUAY: [number, number, number, number] = [-62.7, -27.7, -54.2, -19.2];
 

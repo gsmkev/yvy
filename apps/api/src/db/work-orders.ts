@@ -11,7 +11,7 @@ import { chunkForParams } from "./client";
 import { requireOwned } from "./erp";
 import { can, type ScopedDb } from "./scoped";
 
-export interface WorkOrderInput {
+interface WorkOrderInput {
   farmId: string;
   plotIds: string[];
   assigneeId: string;

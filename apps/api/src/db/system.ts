@@ -932,7 +932,7 @@ export class SystemDb {
 
 const rad = (d: number) => (d * Math.PI) / 180;
 /** Rumbo inicial de 1 a 2 en grados desde el norte. */
-export function bearing(lon1: number, lat1: number, lon2: number, lat2: number): number {
+function bearing(lon1: number, lat1: number, lon2: number, lat2: number): number {
   const y = Math.sin(rad(lon2 - lon1)) * Math.cos(rad(lat2));
   const x =
     Math.cos(rad(lat1)) * Math.sin(rad(lat2)) - Math.sin(rad(lat1)) * Math.cos(rad(lat2)) * Math.cos(rad(lon2 - lon1));

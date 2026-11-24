@@ -7,7 +7,7 @@ import { t } from "./i18n";
 import { s } from "./reportPdf";
 import type { Farm, Plot } from "./types";
 
-export interface SamplingPdfData {
+interface SamplingPdfData {
   farm: Farm;
   plot: Plot;
   haPerPoint: number;

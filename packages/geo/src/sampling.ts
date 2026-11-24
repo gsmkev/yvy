@@ -1,7 +1,7 @@
 /** Puntos y trazas sobre lotes: etiqueta garantizada adentro (M-12), grilla de muestreo (M-18) y perímetro caminado (M-04). */
 import pointOnFeature from "@turf/point-on-feature";
 import type { Polygon, Position } from "geojson";
-import { areaHa, containsPoint, validatePolygon, type Area, type ValidationError } from "./index";
+import { areaHa, containsPoint, validatePolygon, type Area, type ValidationError } from "./core";
 
 /** Punto garantizado dentro del polígono (el centroide o el centro del bbox caen afuera en lotes en L o en U). */
 export function labelPoint(g: Area): { lon: number; lat: number } {

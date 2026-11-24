@@ -1,6 +1,6 @@
 import type { AuthCtx, ScopedDb } from "./db/scoped";
 
-export interface Secrets {
+interface Secrets {
   JWT_SECRET: string;
   INGEST_SECRET: string;
   RESEND_API_KEY: string;
@@ -20,7 +20,7 @@ export interface Secrets {
 }
 
 /** Demo pública (V-02): sin estos dos valores POST /auth/demo responde 404 y la landing oculta el botón. */
-export interface DemoConfig {
+interface DemoConfig {
   DEMO_ORG_ID?: string;
   DEMO_USER_ID?: string;
 }

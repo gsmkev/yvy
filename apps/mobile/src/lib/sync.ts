@@ -16,7 +16,7 @@ import { refreshFormConfig } from "./formConfig";
 import { isOwnerMode } from "./ownerSummary";
 import { accessToken, api, API_URL, getSession, HttpError, OfflineError } from "./session";
 
-export interface SyncStatus {
+interface SyncStatus {
   online: boolean;
   phase: "idle" | "syncing";
   pending: number;

@@ -1,7 +1,7 @@
 /** Sincronización y almacenamiento: qué falta mandar, fotos, mapas sin conexión y espacio usado. */
 import { useCallback, useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
-import { LIMITS, t, type MessageKey } from "@yvy/shared";
+import { LIMITS, t, tk, type MessageKey } from "@yvy/shared";
 import type { OutboxItem } from "../src/db/store";
 import { getDb } from "../src/lib/db";
 import { allPacksPlan, downloadAllPacks, downloadPack, isWifi, mapBudget, packStatus } from "../src/lib/offline";
@@ -65,7 +65,7 @@ export default function SyncScreen() {
       {rejected.map((r) => (
         <View key={r.mutationId} style={st.rejected}>
           <Text style={[T.bodyMedium, { color: C.peligro }]}>{t("app.rejected")}</Text>
-          <Text style={[T.small, { marginTop: 2 }]}>{t(`rejectReasons.${r.reason}` as never, { max: 3 })}</Text>
+          <Text style={[T.small, { marginTop: 2 }]}>{tk(`rejectReasons.${r.reason}`, { max: 3 })}</Text>
           <Button kind="text" title={t("app.dismiss")} onPress={() => (getDb().dismissRejected(r.mutationId), localChanged())} style={{ alignSelf: "flex-start", marginTop: 4 }} />
         </View>
       ))}

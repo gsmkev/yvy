@@ -6,7 +6,7 @@
 import { LIMITS, IRRIGATION_METHODS, EXTRA_PREFIX, type FormField, REPRO_EVENTS, SERVICE_METHODS, ANIMAL_TAG_RE, SUPPLEMENT_TYPES, CROPS, DENSITY_UNITS, FERT_METHODS, HARVEST_DESTINATIONS, HEALTH_REASONS, HERD_CATEGORIES, MORTALITY_CAUSES, MOVE_REASONS, PESTS, PHENO_STAGES, type RecordKind } from "@yvy/shared";
 
 /** Lo que el flujo necesita saber del campo para decidir qué preguntar. */
-export interface FlowCtx {
+interface FlowCtx {
   /** Aguadas y tajamares de la estancia (G-30): si no hay, no se pregunta cuál. */
   waterPois: number;
   /** Hay más de una campaña activa (A-01): si no, el paso de campaña no se pregunta. */

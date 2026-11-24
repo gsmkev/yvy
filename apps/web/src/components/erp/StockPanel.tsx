@@ -7,7 +7,7 @@ import { fmtIsoDate } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs, fmtMoney, fmtQty } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
-import { useProducts } from "../ProductsPanel";
+import { useProducts } from "../../lib/products";
 import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, Select, Spinner, Tabs, toast, type Column } from "../ui";
 import { PhotoRowMenu } from "./InvoicePhoto";
 import { HeaderActions, RowMenu, useGoSection, useTableExport } from "./adminSlot";
@@ -20,7 +20,7 @@ interface Summary {
   products: { productId: string; qty: number; valuePyg?: number; avgCostPyg?: number }[];
 }
 
-export interface StockMove {
+interface StockMove {
   id: string;
   productId: string;
   warehouseId: string;
@@ -45,7 +45,7 @@ interface ExpiringLot {
   remaining: number;
 }
 
-export const useStock = () => useQuery({ queryKey: ["erp", "stock"], queryFn: () => get<Summary>("/org/erp/stock") });
+const useStock = () => useQuery({ queryKey: ["erp", "stock"], queryFn: () => get<Summary>("/org/erp/stock") });
 
 const dayOf = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 

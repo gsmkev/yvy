@@ -9,7 +9,7 @@ import { s } from "./reportPdf";
 import { Kpi } from "./reportsPdf";
 import type { AnalysisPlot, CoverMetrics, Farm, Plot } from "./types";
 
-export interface CoverReportData {
+interface CoverReportData {
   farm: Farm;
   /** Resultados de una misma referencia (un par de fechas). */
   rows: AnalysisPlot<CoverMetrics>[];

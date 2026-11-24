@@ -14,7 +14,7 @@ import { HeaderActions } from "./adminSlot";
 import { useParties } from "./PartiesPanel";
 import { ExportableTable } from "../ExportableTable";
 
-export interface CostEntry {
+interface CostEntry {
   id: string;
   occurredAt: number;
   farmId: string | null;

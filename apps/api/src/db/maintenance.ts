@@ -12,7 +12,7 @@ import { pygOf } from "./costs";
 import { requireOwned } from "./erp";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
 
-export interface DuePlan {
+interface DuePlan {
   planId: string;
   machineId: string;
   machine: string;

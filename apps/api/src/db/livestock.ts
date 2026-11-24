@@ -72,7 +72,7 @@ export async function getLivestockSettings(sdb: ScopedDb, farmId: string) {
   };
 }
 
-export interface LivestockSettingsPatch {
+interface LivestockSettingsPatch {
   maxUaPerHa?: number;
   system?: ProductionSystem;
   pastureDefault?: PastureClass;

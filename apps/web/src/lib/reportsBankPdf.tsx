@@ -7,7 +7,7 @@ import { Footer, Kpi, mm } from "./reportsPdf";
 import type { VigorSummary } from "./reportsData";
 import type { Alert, Farm, Plot } from "./types";
 
-export interface BankReportData {
+interface BankReportData {
   farm: Farm;
   plots: Plot[];
   vigor: Map<string, VigorSummary>;

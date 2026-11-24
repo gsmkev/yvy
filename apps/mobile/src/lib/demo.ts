@@ -8,9 +8,9 @@ import { getDb } from "./db";
 import { isDemoOrg } from "./demoLogic";
 import { useSession } from "./session";
 
-export { forceReadOnly, isDemoOrg } from "./demoLogic";
+export { forceReadOnly } from "./demoLogic";
 
-export const DEMO_ORG_KEY = "demo_org_id";
+const DEMO_ORG_KEY = "demo_org_id";
 
 let version = 0;
 const subs = new Set<() => void>();

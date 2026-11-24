@@ -16,7 +16,7 @@ export function barFractions(values: number[]): number[] {
   return values.map((v) => (max > 0 && v > 0 ? v / max : 0));
 }
 
-export interface ChartPoint {
+interface ChartPoint {
   x: number | string;
   y: number | null;
 }
@@ -26,7 +26,7 @@ export interface ChartSeries {
   points: ChartPoint[];
 }
 
-export interface ChartModel {
+interface ChartModel {
   /** Posición (0–1) de cada x del dominio común y su texto. */
   xs: { pos: number; label: string }[];
   yMin: number;

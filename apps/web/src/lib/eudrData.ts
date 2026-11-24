@@ -20,7 +20,7 @@ export const fmtRatio = (n: number) => String(n).replace(".", ",");
 export const statusText = (status: string, lossHa: number) =>
   tk(`ui.eudrStatus_${status}`, { ha: fmtRatio(Math.round(lossHa * 100) / 100) });
 
-export interface EudrSummary {
+interface EudrSummary {
   plots: number;
   withLoss: number;
   noData: number;

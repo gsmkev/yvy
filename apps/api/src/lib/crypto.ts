@@ -84,7 +84,7 @@ export const hmacVerifyHex = async (secret: string, data: string, sigHex: string
   return crypto.subtle.verify("HMAC", await hmacKey(secret), sig, enc.encode(data));
 };
 
-export interface JwtClaims {
+interface JwtClaims {
   sub: string;
   org: string;
   role: string;

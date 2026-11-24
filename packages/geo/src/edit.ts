@@ -6,7 +6,7 @@ import turfLength from "@turf/length";
 import turfUnion from "@turf/union";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import type { LineString, Polygon, Position } from "geojson";
-import { areaHa, cleanArea, validatePolygon, type Area } from "./index";
+import { areaHa, cleanArea, validatePolygon, type Area } from "./core";
 
 export type SplitError =
   | "not_polygon"

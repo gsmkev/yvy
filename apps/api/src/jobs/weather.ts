@@ -39,7 +39,7 @@ export interface MetResponse {
 
 const round = (n: number, d = LIMITS.weather.coordDecimals) => Number(n.toFixed(d));
 
-export const metUrl = (lat: number, lon: number) =>
+const metUrl = (lat: number, lon: number) =>
   `https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${round(lat)}&lon=${round(lon)}`;
 
 export async function fetchMet(
@@ -148,7 +148,7 @@ export function dailyFromMet(met: MetResponse, tz: string): DailyForecast[] {
 
 // ---------- NASA POWER ----------
 
-export interface PowerDaily {
+interface PowerDaily {
   date: string;
   tminC: number | null;
   tmaxC: number | null;

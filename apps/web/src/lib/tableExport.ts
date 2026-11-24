@@ -1,13 +1,8 @@
 /** Exportación de tablas simples a Excel y CSV, generadas en el navegador. */
 import { download } from "./exports";
+import type { Cell, TableData } from "./tableData";
 
-export type Cell = string | number | null | undefined;
-export interface TableData {
-  /** Nombre de la hoja y base del archivo. */
-  name: string;
-  headers: string[];
-  rows: Cell[][];
-}
+export type { TableData };
 
 const stamp = () => new Date().toISOString().slice(0, 10);
 

@@ -9,7 +9,7 @@ import * as s from "@yvy/shared/schema";
 import { bumpVersion, currentVersion, runBatch } from "./client";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
 
-export interface DeliveryInput {
+interface DeliveryInput {
   plotId: string | null;
   seasonId: string | null;
   crop: (typeof CROPS)[number];

@@ -9,7 +9,7 @@ import { runBatch, type DB } from "../db/client";
 import { openSecret, sealSecret } from "../lib/crypto";
 import { matchTotp, newRecoveryCode, newTotpSecret, normalizeRecoveryCode, otpauthUri, recoveryHash } from "../lib/totp";
 
-export type SecondFactor = "ok" | "bad" | "locked";
+type SecondFactor = "ok" | "bad" | "locked";
 
 export async function totpEnabled(db: DB, userId: string): Promise<boolean> {
   const [row] = await db

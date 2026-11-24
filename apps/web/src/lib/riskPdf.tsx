@@ -8,7 +8,7 @@ import { Kpi } from "./reportsPdf";
 import { fireByMonth, fmtMmDd, monthName, pctOfNormal, rainByMonth, type RiskResponse } from "./riskData";
 import type { Farm } from "./types";
 
-export interface RiskReportData {
+interface RiskReportData {
   farm: Farm;
   risk: NonNullable<RiskResponse["report"]>;
   computedAt: number;

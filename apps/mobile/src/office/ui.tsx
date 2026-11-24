@@ -371,7 +371,7 @@ export function BarList({ rows, unit }: { rows: { label: string; value: number }
   );
 }
 
-export interface LineChartProps {
+interface LineChartProps {
   series: ChartSeries[];
   height?: number;
   /** Unidad del eje Y y del resumen accesible, p. ej. "mm". */

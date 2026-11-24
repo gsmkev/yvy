@@ -41,7 +41,7 @@ export async function deleteMachineCost(sdb: ScopedDb, machineId: string) {
   await sdb.db.delete(s.machineCosts).where(where);
 }
 
-export interface LaborRow {
+interface LaborRow {
   machineId: string;
   machine: string;
   service: string;

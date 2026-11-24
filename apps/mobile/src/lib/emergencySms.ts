@@ -11,7 +11,7 @@ export interface EmergencyContact {
   phone: string;
 }
 
-export interface EmergencyFix {
+interface EmergencyFix {
   lat: number;
   lon: number;
   accuracy: number | null;

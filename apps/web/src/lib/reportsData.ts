@@ -15,7 +15,7 @@ export interface NdviPoint {
   p90: number;
   validPct: number;
 }
-export interface NdviData {
+interface NdviData {
   series: NdviPoint[];
   farmAvg: { acquiredAt: number; mean: number }[];
   current: NdviPoint | null;
@@ -26,7 +26,7 @@ export const fetchClimate = (farmId: string, days: number) =>
   get<ClimateData>(`/org/farms/${farmId}/climate?days=${Math.min(Math.max(Math.round(days), 1), 400)}`);
 export const fetchNdvi = (plotId: string) => get<NdviData>(`/org/plots/${plotId}/ndvi`);
 
-export const dayOfYear = (date: string): number =>
+const dayOfYear = (date: string): number =>
   Math.floor((Date.parse(`${date}T00:00:00Z`) - Date.parse(`${date.slice(0, 4)}-01-01T00:00:00Z`)) / 86_400_000) + 1;
 
 /** Lluvia por satélite entre dos fechas (CHIRPS; si falta, otra fuente). null si no hay ningún dato. */

@@ -7,8 +7,10 @@ import { LIMITS } from "./limits";
 const DAY_MS = 86_400_000;
 
 /** N válido (uno de los que ofrece la pantalla); cualquier otra cosa vuelve al valor por defecto. */
-export const staleDaysOrDefault = (n: unknown): number =>
-  LIMITS.visits.staleDayOptions.includes(n as never) ? (n as number) : LIMITS.visits.defaultStaleDays;
+export const staleDaysOrDefault = (n: unknown): number => {
+  const options: readonly unknown[] = LIMITS.visits.staleDayOptions;
+  return typeof n === "number" && options.includes(n) ? n : LIMITS.visits.defaultStaleDays;
+};
 
 /** True si el lote no se visita hace más de `days` días (`lastVisitAt` en epoch ms, o null si nunca). */
 export const isStaleVisit = (lastVisitAt: number | null | undefined, days: number, now: number): boolean =>

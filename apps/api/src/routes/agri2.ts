@@ -95,7 +95,7 @@ agri2.post("/farms/:id/soil-samples", async (c) => {
 
 agri2.patch("/soil-samples/:id", async (c) => {
   const b = parse(z.object(soilFields).partial().refine(coordsTogether, { message: "Indicá longitud y latitud juntas" }), await readJson(c.req));
-  await updateSoilSample(c.var.sdb, c.req.param("id"), norm(b) as never);
+  await updateSoilSample(c.var.sdb, c.req.param("id"), norm(b));
   return c.json({ ok: true });
 });
 

@@ -7,7 +7,7 @@ import { compressPhoto } from "../../lib/photo";
 import { toast } from "../ui";
 import { RowMenu } from "./adminSlot";
 
-export type PhotoKind = "stock-moves" | "cost-entries" | "purchases" | "cattle-deals";
+type PhotoKind = "stock-moves" | "cost-entries" | "purchases" | "cattle-deals";
 
 function usePhoto(kind: PhotoKind, id: string) {
   const qc = useQueryClient();

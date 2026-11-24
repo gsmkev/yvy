@@ -8,8 +8,8 @@ import { hmacHex, hmacVerifyHex, sha256Hex } from "./crypto";
 const enc = new TextEncoder();
 const B32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
-export const TOTP_STEP_SECONDS = 30;
-export const TOTP_DIGITS = 6;
+const TOTP_STEP_SECONDS = 30;
+const TOTP_DIGITS = 6;
 
 export function base32Encode(bytes: Uint8Array): string {
   let bits = 0;
@@ -99,7 +99,7 @@ export const recoveryHash = (userId: string, normalized: string): Promise<string
 
 // ---------- Pase entre el código de email y el segundo factor ----------
 
-export interface TotpTicket {
+interface TotpTicket {
   userId: string;
   organizationId?: string;
   deviceId?: string | null;

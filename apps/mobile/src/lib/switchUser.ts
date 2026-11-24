@@ -9,7 +9,7 @@
  */
 import type { LocalDb } from "../db/store";
 
-export interface UnsentSummary {
+interface UnsentSummary {
   /** Mutaciones en la cola de envío (registros, tareas, puntos). */
   mutations: number;
   /** Fotos y notas de voz que el servidor conoce pero todavía no se subieron. */
@@ -24,7 +24,7 @@ export const unsentSummary = (db: LocalDb): UnsentSummary => ({
   rejected: db.rejected().length,
 });
 
-export type SwitchBlock = { blocked: false } | { blocked: true; reason: "pending" | "rejected"; n: number };
+type SwitchBlock = { blocked: false } | { blocked: true; reason: "pending" | "rejected"; n: number };
 
 /** ¿Se puede cambiar de usuario (o cerrar sesión) sin perder ni mezclar nada? */
 export function canSwitchUser(u: UnsentSummary): SwitchBlock {

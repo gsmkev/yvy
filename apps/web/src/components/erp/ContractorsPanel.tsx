@@ -6,7 +6,7 @@ import { useErpList, type FieldDef } from "./MasterPanel";
 import { RecordList } from "./RecordList";
 import { useParties } from "./PartiesPanel";
 
-export interface Contractor {
+interface Contractor {
   id: string;
   name: string;
   partyId: string | null;

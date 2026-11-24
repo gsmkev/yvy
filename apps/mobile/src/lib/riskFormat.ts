@@ -9,7 +9,7 @@ export interface RiskResponse {
 const LONG = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 
 /** 1..12 → "enero" / "ene". */
-export const monthName = (m: number, short = false): string => (short ? LONG[m - 1]!.slice(0, 3) : LONG[m - 1]!);
+const monthName = (m: number, short = false): string => (short ? LONG[m - 1]!.slice(0, 3) : LONG[m - 1]!);
 
 /** "06-20" → "20 de junio"; null → "—". */
 export function fmtMmDd(v: string | null): string {
@@ -19,7 +19,7 @@ export function fmtMmDd(v: string | null): string {
 }
 
 /** "2026-10" → "oct 26". */
-export const fmtYearMonth = (ym: string): string => {
+const fmtYearMonth = (ym: string): string => {
   const [y, m] = ym.split("-").map(Number) as [number, number];
   return `${monthName(m, true)} ${String(y).slice(2)}`;
 };

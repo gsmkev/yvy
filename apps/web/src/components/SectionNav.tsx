@@ -1,6 +1,6 @@
 import { SelectBox } from "./ui";
 
-export interface SectionGroup {
+interface SectionGroup {
   id: string;
   /** Sin título (o con un solo ítem) el grupo no lleva encabezado. */
   label?: string;

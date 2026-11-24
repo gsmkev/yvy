@@ -3,7 +3,7 @@
  * cada etiqueta (centrada en su lote) prueba el centro y luego arriba, abajo, izquierda y derecha de los
  * íconos; si no entra en ningún lado, se oculta (en zoom bajo no hay lugar para todos los nombres).
  */
-export interface LabelBox {
+interface LabelBox {
   /** Centro del lote en pantalla. */
   x: number;
   y: number;
@@ -11,13 +11,13 @@ export interface LabelBox {
   w: number;
   h: number;
 }
-export interface Obstacle {
+interface Obstacle {
   x: number;
   y: number;
   /** Radio del ícono. */
   r: number;
 }
-export interface Placement {
+interface Placement {
   dx: number;
   dy: number;
   hidden: boolean;

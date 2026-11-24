@@ -43,7 +43,7 @@ export function addVertex(vs: V[], p: V, onEdge: boolean): V[] {
 export const moveVertex = (vs: V[], i: number, p: V): V[] => vs.map((v, k) => (k === i ? p : v));
 export const removeVertex = (vs: V[], i: number): V[] => vs.filter((_, k) => k !== i);
 
-export type DraftError = "too_few" | "invalid" | "self_intersection" | "too_small";
+type DraftError = "too_few" | "invalid" | "self_intersection" | "too_small";
 
 /** Polígono cerrado y su superficie, o el motivo por el que todavía no se puede guardar. */
 export function checkDraft(vs: V[]): { polygon: Polygon; ha: number } | { error: DraftError } {

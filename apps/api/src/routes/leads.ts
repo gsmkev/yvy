@@ -17,7 +17,7 @@ import { parse, readJson } from "../lib/http";
 import type { AppEnv, Bindings } from "../types";
 
 const DAY = 86_400_000;
-export const LEAD_JOB = "lead_report";
+const LEAD_JOB = "lead_report";
 
 const body = z.object({
   email: z.string().trim().toLowerCase().email().max(254),

@@ -18,7 +18,7 @@ import type { EffectRecord } from "./erp-effects";
 import type { ScopedDb } from "./scoped";
 import { emptyTotals, productTotals } from "./stock-moves";
 
-export const isCount = (kind: string) => kind === "stock_count";
+const isCount = (kind: string) => kind === "stock_count";
 const EPS = 1e-9;
 
 interface CountLine {

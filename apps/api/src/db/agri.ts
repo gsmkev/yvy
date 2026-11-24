@@ -9,14 +9,14 @@ import { bumpVersion, currentVersion, runBatch } from "./client";
 import { updateSynced } from "./queries";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
 
-export interface SeasonInput {
+interface SeasonInput {
   name: string;
   startDate: string | null;
   endDate: string | null;
   active: boolean;
 }
 
-export interface PlotSeasonInput {
+interface PlotSeasonInput {
   crop: (typeof s.CROPS)[number] | null;
   variety: string | null;
   plannedSowingDate: string | null;
@@ -159,7 +159,7 @@ export async function deletePlotSeason(sdb: ScopedDb, plotId: string, seasonId: 
   ]);
 }
 
-export interface PlotHistoryRow {
+interface PlotHistoryRow {
   seasonId: string;
   seasonName: string;
   startDate: string | null;
@@ -290,7 +290,7 @@ export async function plotHistory(sdb: ScopedDb, plotId: string): Promise<PlotHi
 
 // ---------- Productos (catálogo) ----------
 
-export interface ProductInput {
+interface ProductInput {
   name: string;
   type: (typeof s.PRODUCT_TYPES)[number];
   unit: (typeof s.PRODUCT_UNITS)[number];

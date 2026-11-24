@@ -2,7 +2,7 @@
 import { describeRecord } from "@yvy/shared";
 import { tk } from "./i18n";
 import { fmtDateTime } from "./format";
-import type { TableData } from "./tableExport";
+import type { TableData } from "./tableData";
 import type { Plot, RecordRow } from "./types";
 
 export function download(blob: Blob, filename: string) {
@@ -90,7 +90,7 @@ export function plotsToKml(plots: Plot[], farmName: string): string {
 // GeoJSON y shapefile (M-21)
 // ---------------------------------------------------------------------------
 
-export interface ExportPoint {
+interface ExportPoint {
   name: string;
   kind: string;
   lon: number;
@@ -116,7 +116,7 @@ export function plotsToGeoJson(plots: Plot[], points: ExportPoint[] = []): strin
 const WGS84_PRJ =
   'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]';
 
-export interface DbfField {
+interface DbfField {
   name: string;
   /** C = texto, N = número */
   type: "C" | "N";

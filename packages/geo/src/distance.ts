@@ -4,7 +4,7 @@
  * estancia (decenas de kilómetros), de sobra para comparar con distancias de 50 a 500 m.
  */
 import type { LineString, Polygon, Position } from "geojson";
-import { containsPoint, type Area } from "./index";
+import { containsPoint, type Area } from "./core";
 
 const R = 6_371_008.8;
 const RAD = Math.PI / 180;

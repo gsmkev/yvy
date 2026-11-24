@@ -158,7 +158,7 @@ export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots
 /** "60 kg por hectárea" / "14 semillas por metro". */
 export const fmtDensity = (density: number, unit: string): string => `${fmtNum(density)} ${tk(`fields.densityUnit_${unit}`)}`;
 
-export function PlanSummary({ plan }: { plan: PlotSeason }) {
+function PlanSummary({ plan }: { plan: PlotSeason }) {
   const parts = [
     plan.crop ? tk(`fields.crop_${plan.crop}`) : null,
     plan.variety,

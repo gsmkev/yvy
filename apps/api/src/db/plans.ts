@@ -10,7 +10,7 @@ import { auditStmts } from "./audit";
 import { runBatch } from "./client";
 import { can, type ScopedDb } from "./scoped";
 
-export interface PlanRequestInput {
+interface PlanRequestInput {
   plan: (typeof REQUESTABLE_PLANS)[number];
   maxHa?: number | null;
   maxUsers?: number | null;

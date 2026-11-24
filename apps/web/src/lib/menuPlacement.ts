@@ -39,19 +39,3 @@ export function placeMenu(
   const up = preferUp ? above >= menu.h || above > below : below < menu.h && above > below;
   return { align: side, up };
 }
-
-/** Área visible para un menú que nace en `el`: la ventana, recortada por cada ancestro que oculta o desplaza lo que sobra. */
-export function visibleArea(el: HTMLElement): Box {
-  const area: Box = { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight };
-  for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
-    const st = getComputedStyle(p);
-    if (/(auto|scroll|hidden|clip)/.test(`${st.overflowX} ${st.overflowY}`)) {
-      const r = p.getBoundingClientRect();
-      area.left = Math.max(area.left, r.left);
-      area.top = Math.max(area.top, r.top);
-      area.right = Math.min(area.right, r.right);
-      area.bottom = Math.min(area.bottom, r.bottom);
-    }
-  }
-  return area;
-}

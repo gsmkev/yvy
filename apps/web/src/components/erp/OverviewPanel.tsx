@@ -8,7 +8,7 @@ import { fmtIsoDate } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs, fmtMoney, fmtQty } from "../../lib/money";
 import { groupOrders, plotsLabel, type OrderRow } from "../../lib/workOrders";
-import { useProducts } from "../ProductsPanel";
+import { useProducts } from "../../lib/products";
 import { EmptyState, ErrorBox, SectionHead, Spinner, Stat } from "../ui";
 import { useParties } from "./PartiesPanel";
 import { useWarehouses } from "./WarehousesPanel";

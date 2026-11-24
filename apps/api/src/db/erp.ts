@@ -22,7 +22,7 @@ const write = async (sdb: ScopedDb, table: ErpTable, stmt: Stmt) =>
   isSynced(table) ? runBatch(sdb.db, [bumpVersion(sdb.db), stmt]) : void (await stmt);
 
 /** "" pasa a null y lo que no vino (undefined) se descarta: un PATCH no pisa lo que no manda. */
-export const cleanRow = (o: Record<string, unknown>): Record<string, unknown> =>
+const cleanRow = (o: Record<string, unknown>): Record<string, unknown> =>
   Object.fromEntries(
     Object.entries(o)
       .filter(([, v]) => v !== undefined)
@@ -112,7 +112,7 @@ export async function erpCreate(
   const id = newId();
   const ts = sdb.now();
   const row = { ...cleanRow(values), id, organizationId: sdb.auth.orgId, createdAt: ts, updatedAt: ts };
-  await write(sdb, table, sdb.db.insert(table).values((isSynced(table) ? { ...row, version: currentVersion } : row) as never));
+  await write(sdb, table, sdb.db.insert(table).values((isSynced(table) ? { ...row, version: currentVersion } : row)));
   return { id };
 }
 
@@ -128,7 +128,7 @@ export async function erpUpdate(
   const [row] = await sdb.db.select({ id: table.id }).from(table).where(where).limit(1);
   if (!row) throw new NotFoundError("No existe");
   const set = { ...cleanRow(patch), updatedAt: sdb.now() };
-  await write(sdb, table, sdb.db.update(table).set((isSynced(table) ? { ...set, version: currentVersion } : set) as never).where(where));
+  await write(sdb, table, sdb.db.update(table).set((isSynced(table) ? { ...set, version: currentVersion } : set)).where(where));
 }
 
 export async function erpDelete(sdb: ScopedDb, table: ErpTable, canWrite: (r: Role) => boolean, id: string) {
@@ -138,5 +138,5 @@ export async function erpDelete(sdb: ScopedDb, table: ErpTable, canWrite: (r: Ro
   if (!row) throw new NotFoundError("No existe");
   const ts = sdb.now();
   const set = { deletedAt: ts, updatedAt: ts };
-  await write(sdb, table, sdb.db.update(table).set((isSynced(table) ? { ...set, version: currentVersion } : set) as never).where(where));
+  await write(sdb, table, sdb.db.update(table).set((isSynced(table) ? { ...set, version: currentVersion } : set)).where(where));
 }

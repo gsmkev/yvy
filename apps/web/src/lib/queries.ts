@@ -6,7 +6,7 @@ import type { Alert, FarmDetail, FarmLine, FarmSummary, Me, Member, PlotSeason, 
 export const useMe = () => useQuery({ queryKey: ["me"], queryFn: () => get<Me>("/me"), staleTime: 60_000 });
 export const useFarms = () => useQuery({ queryKey: ["farms"], queryFn: () => get<FarmSummary[]>("/org/farms") });
 const natural = new Intl.Collator("es-PY", { numeric: true, sensitivity: "base" });
-export const byName = <T extends { name: string }>(a: T, b: T) => natural.compare(a.name, b.name);
+const byName = <T extends { name: string }>(a: T, b: T) => natural.compare(a.name, b.name);
 
 export const useFarm = (id: string, enabled = true) =>
   useQuery({

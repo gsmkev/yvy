@@ -7,7 +7,7 @@ import type { QueryClient, QueryKey } from "@tanstack/react-query";
 import { toast } from "../components/ui";
 import { t } from "./i18n";
 
-export const UNDO_MS = 6000;
+const UNDO_MS = 6000;
 
 const pending = new Set<string>();
 

@@ -25,7 +25,7 @@ import { can, ForbiddenError, NotFoundError, type ScopedDb } from "./scoped";
 /** Tope de tareas creadas por evento (presupuesto de queries del plan gratis). */
 const MAX_TASKS_PER_EVENT = 100;
 
-export interface SanitaryEventRow {
+interface SanitaryEventRow {
   id: string;
   farmId: string | null;
   reason: (typeof HEALTH_REASONS)[number];

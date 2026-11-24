@@ -15,7 +15,7 @@ type Tbl = SQLiteTable & { id: SQLiteColumn; organizationId: SQLiteColumn; delet
 const TABLES: Record<PhotoKind, Tbl> = { "stock-moves": s.stockMoves, "cost-entries": s.costEntries, purchases: s.purchases, "cattle-deals": s.cattleDeals };
 
 /** Clave del objeto en R2: una foto por movimiento. */
-export const photoKey = (orgId: string, kind: PhotoKind, id: string) => `organizations/${orgId}/erp/${kind}/${id}.webp`;
+const photoKey = (orgId: string, kind: PhotoKind, id: string) => `organizations/${orgId}/erp/${kind}/${id}.webp`;
 
 /** Comprueba permiso y que la fila sea de la organización; devuelve la clave y la foto ya confirmada, si hay. */
 export async function photoTarget(sdb: ScopedDb, kind: PhotoKind, id: string) {
@@ -34,6 +34,6 @@ export async function setPhotoPath(sdb: ScopedDb, kind: PhotoKind, id: string, p
   const t = TABLES[kind];
   await sdb.db
     .update(t)
-    .set({ photoPath: path, updatedAt: sdb.now() } as never)
+    .set({ photoPath: path, updatedAt: sdb.now() })
     .where(and(eq(t.id, id), eq(t.organizationId, sdb.auth.orgId)));
 }

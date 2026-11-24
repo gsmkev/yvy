@@ -13,7 +13,7 @@ import { RowModal, useErpList, type ColDef, type FieldDef } from "./MasterPanel"
 
 type Row = { id: string };
 
-export interface RecordColumn<T> extends ColDef<T> {
+interface RecordColumn<T> extends ColDef<T> {
   hideBelow?: "sm" | "md" | "lg";
 }
 

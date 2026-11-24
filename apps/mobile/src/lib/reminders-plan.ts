@@ -2,11 +2,11 @@
 import { localDate } from "@yvy/shared";
 import type { LocalDb } from "../db/store";
 
-export const REMINDER_HOUR = 7;
+const REMINDER_HOUR = 7;
 /** Días hacia adelante que se programan; se rehacen después de cada sincronización. */
-export const REMINDER_DAYS = 3;
+const REMINDER_DAYS = 3;
 
-export interface ReminderPlan {
+interface ReminderPlan {
   at: Date;
   count: number;
   titles: string[];

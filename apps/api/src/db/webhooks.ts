@@ -147,14 +147,14 @@ export async function pingMessage(sdb: ScopedDb, id: string, now = sdb.now()): P
 
 // ---------- Sistema ----------
 
-export const webhookMessage = (endpointId: string, payload: WebhookPayload): JobMessage => ({
+const webhookMessage = (endpointId: string, payload: WebhookPayload): JobMessage => ({
   type: "webhook",
   endpointId,
   payload: JSON.stringify(payload),
 });
 
 /** Webhooks activos de la organización que piden el evento. */
-export async function endpointsFor(db: DB, orgId: string, event: WebhookEvent): Promise<{ id: string }[]> {
+async function endpointsFor(db: DB, orgId: string, event: WebhookEvent): Promise<{ id: string }[]> {
   const rows = await db
     .select({ id: s.webhookEndpoints.id, events: s.webhookEndpoints.events })
     .from(s.webhookEndpoints)

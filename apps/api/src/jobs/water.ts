@@ -11,9 +11,9 @@ import { upsertAlert } from "./alerts";
 import type { AlertDraft } from "./rules";
 
 /** Ventana de lecturas que se consideran vigentes. */
-export const WATER_WINDOW_DAYS = 7;
+const WATER_WINDOW_DAYS = 7;
 
-export interface WaterReading {
+interface WaterReading {
   poiId: string;
   name: string;
   level: string;
@@ -57,7 +57,7 @@ export function evaluateWater(readings: WaterReading[], plotIds: string[], today
 }
 
 /** Última lectura de agua de cada aguada o tajamar de la estancia dentro de la ventana (1 query). */
-export async function latestWaterReadings(db: DB, farmId: string, now: number): Promise<WaterReading[]> {
+async function latestWaterReadings(db: DB, farmId: string, now: number): Promise<WaterReading[]> {
   const since = now - WATER_WINDOW_DAYS * 86_400_000;
   const rows = await db
     .select({

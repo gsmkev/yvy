@@ -4,11 +4,10 @@
  * posteriores (ver computeStock). Los potreros son lotes con kind = "pasture".
  */
 
+import { HERD_CATEGORIES, type HerdCategory } from "./herd-categories";
 import type { PastureClass, PastureLoads, ProductionSystem } from "./production";
 
-/** Categorías de hacienda, en el orden en que se muestran. */
-export const HERD_CATEGORIES = ["vaca", "vaquilla", "novillo", "ternero", "toro"] as const;
-export type HerdCategory = (typeof HERD_CATEGORIES)[number];
+export { HERD_CATEGORIES, type HerdCategory };
 
 /** Cabezas por categoría. Una categoría ausente vale 0. */
 export type HerdCounts = Partial<Record<HerdCategory, number>>;

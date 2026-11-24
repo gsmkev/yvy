@@ -109,7 +109,7 @@ export default function PurchaseNew() {
       if (later.length) {
         // La compra ya está guardada: se avisa lo que faltó y se sigue en su detalle para completarlo.
         showToast(t("office.admSavedPartial"));
-        router.replace({ pathname: "/office/admin/purchase", params: { id } } as never);
+        router.replace({ pathname: "/office/admin/purchase", params: { id } });
         return;
       }
       showToast(t("ui.erpSaved"));

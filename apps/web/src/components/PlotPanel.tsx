@@ -412,5 +412,3 @@ export function PlotPanel({
     </div>
   );
 }
-
-export const kindLabel = (k: string) => tk(`recordKinds.${k}`);

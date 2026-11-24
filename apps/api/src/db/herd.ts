@@ -80,7 +80,7 @@ const DAY = 86_400_000;
 const MAX_ROWS = 500;
 
 /** Rango de fechas de los listados: por defecto, el último año. */
-export function rangeOf(sdb: ScopedDb, from?: number, to?: number) {
+function rangeOf(sdb: ScopedDb, from?: number, to?: number) {
   const end = to ?? sdb.now();
   return { from: from ?? end - 365 * DAY, to: end };
 }

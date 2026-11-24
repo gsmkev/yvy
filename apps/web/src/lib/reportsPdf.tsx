@@ -30,7 +30,7 @@ export function Kpi({ label, value, note }: { label: string; value: string; note
 
 // ---------- R-03 ----------
 
-export interface SeasonReportData {
+interface SeasonReportData {
   farm: Farm;
   plot: Plot;
   from: string;

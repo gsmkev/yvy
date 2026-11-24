@@ -1,7 +1,7 @@
 /** Hoy para oficina: tareas del equipo que vencen hoy o ya vencieron (las de la propia persona van aparte). Lógica pura. */
 import { isDueToday } from "@yvy/shared";
 
-export interface TeamTask {
+interface TeamTask {
   id: string;
   assigneeId: string | null;
   status: string;

@@ -245,7 +245,7 @@ export default function Report() {
                         .filter(Boolean)
                         .join(" · ")
                     }
-                    onPress={(r) => router.push(`/record/${r.id}` as never)}
+                    onPress={(r) => router.push(`/record/${r.id}`)}
                     empty={{ title: "" }}
                   />
                 </>

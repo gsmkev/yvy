@@ -6,7 +6,7 @@ import { randomToken, sha256Hex } from "../lib/crypto";
 import type { DB } from "./client";
 import { can, ForbiddenError, NotFoundError, type ScopedDb } from "./scoped";
 
-export const TOKEN_PREFIX = "yvy_";
+const TOKEN_PREFIX = "yvy_";
 
 export async function listApiTokens(sdb: ScopedDb) {
   sdb.require(can.manageApiTokens, "Solo el dueño gestiona la API");

@@ -6,7 +6,7 @@ import { t } from "@yvy/shared";
 import { Button, ScreenBody, s as k, Text } from "../ui/kit";
 import { C, RADIUS, T } from "../ui/theme";
 
-export function PreviewNotice() {
+function PreviewNotice() {
   return (
     <View style={st.notice}>
       <Text style={T.small}>{t("app.labsPreviewNotice")}</Text>

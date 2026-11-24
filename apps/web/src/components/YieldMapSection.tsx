@@ -37,7 +37,7 @@ interface SavedMap {
 }
 
 /** Grilla de promedios dibujada en SVG, coloreada de menos a más rendimiento con la rampa de vigor. */
-export function YieldCells({ cells, p10, p90, label }: { cells: [number, number, number, number][]; p10: number; p90: number; label: string }) {
+function YieldCells({ cells, p10, p90, label }: { cells: [number, number, number, number][]; p10: number; p90: number; label: string }) {
   const W = 300;
   const geo = useMemo(() => {
     const lons = cells.map((c) => c[0]);

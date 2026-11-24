@@ -192,7 +192,7 @@ export async function deleteMove(sdb: ScopedDb, id: string) {
   await runBatch(sdb.db, stmts);
 }
 
-export interface DueRow {
+interface DueRow {
   docKind: DocKind;
   docId: string;
   partyId: string | null;

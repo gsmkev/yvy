@@ -98,12 +98,12 @@ function DetailSheet({ group: g, farm, onClose, onClosed }: { group: OrderGroup;
     ...(g.order.note ? [{ label: t("ui.orderNote"), value: g.order.note }] : []),
     { label: t("ui.orderStatus"), value: g.status === "open" && g.done > 0 ? t("ui.orderProgress", { done: g.done, total: g.rows.length }) : t(key(`ui.orderStatus_${g.status}`)) },
   ];
-  const cancel = useOnlineMutation<{ id: string }, unknown>("PATCH", (b) => `/org/tasks/${b.id}`);
+  const cancel = useOnlineMutation<{ id: string; status: string }, unknown>("PATCH", (b) => `/org/tasks/${b.id}`);
   const cancelOrder = async () => {
     setBusy(true);
     setError(null);
     for (const r of g.rows.filter((x) => x.status === "open")) {
-      const res = await cancel.mutate({ id: r.id, status: "cancelled" } as never);
+      const res = await cancel.mutate({ id: r.id, status: "cancelled" });
       if (!res.ok) {
         setError(res.error);
         setBusy(false);

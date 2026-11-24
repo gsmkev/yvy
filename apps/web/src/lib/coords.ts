@@ -1,5 +1,5 @@
 /** Lectura de ubicaciones pegadas: decimales, grados-minutos-segundos y enlaces de Google Maps o WhatsApp. */
-export interface LonLat {
+interface LonLat {
   lon: number;
   lat: number;
 }

@@ -4,15 +4,13 @@
  * Los datos y cada sección viven en src/today/.
  */
 import { useEffect, useRef, type ElementRef } from "react";
-import { Alert, Pressable, ScrollView } from "react-native";
+import { Pressable, ScrollView } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { CloudRain } from "lucide-react-native";
 import { t } from "@yvy/shared";
-import { getDb } from "../../src/lib/db";
-import { isFieldRoleName } from "../../src/office/team";
 import { AlertCard } from "../../src/today/AlertCard";
-import { dayLabel, firstName } from "../../src/today/format";
-import { OpenTasks, OwnerSummary, TeamTasks, YourDay } from "../../src/today/Sections";
+import { alertsToShow, dayLabel, firstName, useOrgEnteredNotice } from "../../src/today/format";
+import { TodaySections } from "../../src/today/Sections";
 import { st } from "../../src/today/styles";
 import { useTodayData } from "../../src/today/useTodayData";
 import { FarmLine } from "../../src/ui/FarmLine";
@@ -24,17 +22,11 @@ export default function Today() {
   const { alertId } = useLocalSearchParams<{ alertId?: string }>();
   const scroller = useRef<ElementRef<typeof ScrollView>>(null);
   const alertY = useRef<Record<string, number>>({});
-  const { session, userId, farmId, alerts, plots, votes, todayRecords, plotName, readOnly, summary, worse, todayIso, team, open, done, empty } = useTodayData();
-  // Roles de oficina: 2 avisos y "Ver los N" (tienen la pantalla de Avisos); roles de campo: todos, compactos.
-  const shownAlerts = !isFieldRoleName(session?.organization.role ?? "") && alerts.length > 2 ? [...alerts].sort((x, y) => Number(y.id === alertId) - Number(x.id === alertId) || Number(y.severity === "warning") - Number(x.severity === "warning")).slice(0, 2) : alerts;
+  const data = useTodayData();
+  const { session, farmId, alerts, plots, votes, readOnly, empty } = data;
+  const shownAlerts = alertsToShow(alerts, session?.organization.role ?? "", alertId);
 
-  // Primera vez que se entra a otra organización: decir a cuál.
-  useEffect(() => {
-    const name = getDb().getKv("org_entered_notice");
-    if (!name) return;
-    getDb().setKv("org_entered_notice", null);
-    Alert.alert(t("app.enteredOrg", { name }));
-  }, [session?.organization.id]);
+  useOrgEnteredNotice(session?.organization.id);
 
   const scrollToAlert = (id: string) => {
     const y = alertY.current[id];
@@ -43,8 +35,6 @@ export default function Today() {
   useEffect(() => {
     if (alertId) scrollToAlert(alertId);
   }, [alertId, alerts.length]);
-
-  const showOwner = !!summary && (summary.byAuthor.length > 0 || worse.length > 0);
 
   return (
     <ScrollView ref={scroller} style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 120 }]}>
@@ -87,13 +77,7 @@ export default function Today() {
 
       {empty && <EmptyState title={t("app.nothingToday")} hint={t("app.nothingTodayHint")} />}
 
-      {open.length > 0 && <OpenTasks open={open} readOnly={readOnly} plotName={plotName} />}
-
-      {team.length > 0 && <TeamTasks team={team} todayIso={todayIso} userId={userId} names={summary?.names ?? {}} plotName={plotName} />}
-
-      {showOwner && summary && <OwnerSummary summary={summary} worse={worse} userId={userId} plotName={plotName} />}
-
-      {(todayRecords.length > 0 || done.length > 0) && <YourDay done={done} todayRecords={todayRecords} plotName={plotName} />}
+      <TodaySections data={data} />
     </ScrollView>
   );
 }

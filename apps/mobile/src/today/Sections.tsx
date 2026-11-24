@@ -12,6 +12,7 @@ import { Row, SectionHeader, StatTile, s as k, Text } from "../ui/kit";
 import { C, T } from "../ui/theme";
 import { commentsLabel, hhmm } from "./format";
 import { st } from "./styles";
+import type { useTodayData } from "./useTodayData";
 
 type TaskRow = ReturnType<ReturnType<typeof getDb>["tasksToday"]>[number];
 type TeamTask = ReturnType<ReturnType<typeof getDb>["openTasks"]>[number];
@@ -152,6 +153,23 @@ export function YourDay({ done, todayRecords, plotName }: { done: TaskRow[]; tod
         onPress={() => router.push({ pathname: "/record/[id]", params: { id: r.id } })}
       />
     ))}
+    </>
+  );
+}
+
+/** Tareas, equipo, resumen del dueño y lo hecho hoy; cada una solo si tiene algo para mostrar. */
+export function TodaySections({ data }: { data: ReturnType<typeof useTodayData> }) {
+  const { userId, todayRecords, plotName, readOnly, summary, worse, todayIso, team, open, done } = data;
+  const showOwner = !!summary && (summary.byAuthor.length > 0 || worse.length > 0);
+  return (
+    <>
+      {open.length > 0 && <OpenTasks open={open} readOnly={readOnly} plotName={plotName} />}
+
+      {team.length > 0 && <TeamTasks team={team} todayIso={todayIso} userId={userId} names={summary?.names ?? {}} plotName={plotName} />}
+
+      {showOwner && summary && <OwnerSummary summary={summary} worse={worse} userId={userId} plotName={plotName} />}
+
+      {(todayRecords.length > 0 || done.length > 0) && <YourDay done={done} todayRecords={todayRecords} plotName={plotName} />}
     </>
   );
 }

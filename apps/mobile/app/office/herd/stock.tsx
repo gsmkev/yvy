@@ -1,15 +1,15 @@
 /** Existencias por potrero, UA y límite de carga (función 67). Se calcula con los conteos y movimientos del celular; el límite viene de la estancia. */
 import { useState } from "react";
 import { Settings2 } from "lucide-react-native";
-import { DEFAULT_MAX_UA_PER_HA, HERD_CATEGORIES, MAX_UA_PER_HA_LIMITS, PRODUCTION_SYSTEMS, indicatorLabel, indicatorValueText, type ProductionResponse, type ProductionSystem, uaOf, uaPerHa, t, type FarmStockResponse, type MessageKey, areaLabel, haToArea } from "@yvy/shared";
-import { getDb } from "../../../src/lib/db";
+import { DEFAULT_MAX_UA_PER_HA, MAX_UA_PER_HA_LIMITS, PRODUCTION_SYSTEMS, indicatorLabel, indicatorValueText, type ProductionResponse, type ProductionSystem, uaPerHa, t, type FarmStockResponse, type MessageKey } from "@yvy/shared";
 import { showToast } from "../../../src/lib/toast";
 import { getSession } from "../../../src/lib/session";
 import { useUnits } from "../../../src/lib/units";
 import { useLocal } from "../../../src/lib/useLocal";
 import { useFarmPick } from "../../../src/office/farmPick";
-import { fmtDate, fmtNumber, parseDecimal } from "../../../src/office/format";
+import { fmtNumber, parseDecimal } from "../../../src/office/format";
 import { FarmFrame } from "../../../src/office/hub";
+import { herdRows, herdSubtitle, herdTotals, loadLine } from "../../../src/office/herdStock/model";
 import { useOnline } from "../../../src/office/useOnline";
 import { useOnlineMutation } from "../../../src/office/useOnlineMutation";
 import { DataList, FormSheet, SelectField, StatRow, TextField } from "../../../src/office/ui";
@@ -31,28 +31,11 @@ export default function Stock() {
   const [formError, setFormError] = useState<string | null>(null);
   const save = useOnlineMutation<{ maxUaPerHa: number }, unknown>("PUT", `/org/farms/${farm?.id}/livestock-settings`, { invalidate: [`/org/farms/${farm?.id}/stock`] });
 
-  const model = useLocal(() => {
-    if (!farm) return null;
-    const db = getDb();
-    const rows = db
-      .plots(farm.id)
-      .filter((p) => p.kind === "pasture")
-      .map((p) => {
-        const st = db.herdStock(p.id);
-        return { plot: p, st, ua: st ? uaOf(st.counts) : 0 };
-      })
-      .filter((r) => r.st && r.st.total > 0)
-      .sort((a, b) => b.ua - a.ua);
-    return rows;
-  }, [farm?.id]);
+  const model = useLocal(() => (farm ? herdRows(farm.id) : null), [farm?.id]);
 
   const maxUa = remote.data?.maxUaPerHa ?? DEFAULT_MAX_UA_PER_HA;
   const rows = model ?? [];
-  const head = rows.reduce((n, r) => n + (r.st?.total ?? 0), 0);
-  const ua = rows.reduce((n, r) => n + r.ua, 0);
-  const area = rows.reduce((n, r) => n + r.plot.areaHa, 0);
-  const farmUaHa = area > 0 ? ua / area : null;
-  const over = rows.filter((r) => uaPerHa(r.st!.counts, r.plot.areaHa) !== null && uaPerHa(r.st!.counts, r.plot.areaHa)! > maxUa);
+  const { head, ua, farmUaHa, over } = herdTotals(rows, maxUa);
 
   const system = remote.data?.system ?? null;
   const remotePlot = new Map((remote.data?.plots ?? []).map((p) => [p.plotId, p]));
@@ -128,13 +111,7 @@ export default function Stock() {
             rows={rows}
             keyOf={(r) => r.plot.id}
             title={(r) => r.plot.name}
-            subtitle={(r) =>
-              [
-                HERD_CATEGORIES.filter((c) => r.st!.counts[c] > 0).map((c) => t(`fields.herdCount_${c}` as MessageKey, { n: r.st!.counts[c] })).join(", "),
-                `${fmtNumber(haToArea(r.plot.areaHa, units.area))} ${areaLabel(units.area)}`,
-                r.st!.lastCountAt ? t("office.farmsLastRecord", { date: fmtDate(r.st!.lastCountAt) }) : t("ui.herdNeverCounted"),
-              ].join(" · ")
-            }
+            subtitle={(r) => herdSubtitle(r, units.area)}
             right={(r) => {
               const v = uaPerHa(r.st!.counts, r.plot.areaHa);
               const rp = remotePlot.get(r.plot.id);
@@ -144,7 +121,7 @@ export default function Stock() {
                   <Text style={[T.small, { textAlign: "right" }]}>{t("office.herdStockPlotLine", { head: fmtNumber(r.st!.total, 0), ua: fmtNumber(r.ua) })}</Text>
                   {rp && (
                     <Text style={[T.small, { textAlign: "right" }]}>
-                      {`${t("ui.herdLoadRecommended")} ${fmtNumber(rp.recommendedUaPerHa, 2)} · ${Math.abs(rp.diffUa) < 0.5 ? t("ui.herdLoadOk") : rp.diffUa > 0 ? t("ui.herdLoadSurplus", { n: fmtNumber(rp.diffUa, 1) }) : t("ui.herdLoadShortfall", { n: fmtNumber(-rp.diffUa, 1) })}`}
+                      {loadLine(rp)}
                     </Text>
                   )}
                 </>

@@ -17,6 +17,7 @@ interface Row {
   marginPerHa: number | null;
 }
 
+/** Costo, ingreso y margen por hectárea de un lote. No muestra nada si el rol no ve montos. */
 export function PlotResults({ plot }: { plot: Plot }) {
   const me = useMe();
   const allowed = me.data?.role === "owner" || me.data?.role === "admin";

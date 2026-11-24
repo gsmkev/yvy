@@ -7,8 +7,16 @@ import { customFileMime, customMaxBytes, parseCornerInputs, type CustomLayer } f
 import { t, tk } from "../lib/i18n";
 import { Button, Field, Input, Modal, toast } from "./ui";
 
+/** Capas propias visibles: id de la capa y su opacidad de 0 a 1. */
 export type ActiveLayers = Record<string, number>; // id → opacidad 0-1
 
+/**
+ * Lista de capas propias con interruptor y opacidad, y alta y baja para quien administra.
+ * @param active capas visibles y su opacidad.
+ * @param onActive recibe el nuevo conjunto de capas visibles.
+ * @param canManage permite subir y quitar capas.
+ * @param farmBounds límites de la estancia, o null si todavía no se conocen.
+ */
 export function CustomLayersControl({
   farmId,
   layers,

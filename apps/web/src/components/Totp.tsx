@@ -1,3 +1,4 @@
+/** Segundo factor propio. Alta con QR (otpauth://), códigos de recuperación y baja. Con `forced` (el dueño lo exige a los administradores) no hay baja y es lo único que se ve hasta completar el alta. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";

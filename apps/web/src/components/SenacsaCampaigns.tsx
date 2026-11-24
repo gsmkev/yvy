@@ -7,6 +7,7 @@ import { t, tk } from "../lib/i18n";
 import { useFarms } from "../lib/queries";
 import { Button, Card, ErrorBox, SectionHead, toast } from "./ui";
 
+/** Campañas oficiales de SENACSA del año con el botón para planificarlas. */
 export function SenacsaCampaigns() {
   const qc = useQueryClient();
   const farms = useFarms();

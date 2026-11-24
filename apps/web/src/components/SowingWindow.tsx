@@ -1,3 +1,4 @@
+/** Ventana de siembra: humedad del suelo y pronóstico de los próximos días para un cultivo. */
 import { useState } from "react";
 import { CROPS, ATTRIBUTION } from "@yvy/shared";
 import { useSowingWindow } from "../lib/agri2";

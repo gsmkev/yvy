@@ -1,3 +1,4 @@
+/** Estructura de las pantallas autenticadas: barra superior, navegación y contenido. */
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Ellipsis } from "lucide-react";
 import { Outlet } from "@tanstack/react-router";

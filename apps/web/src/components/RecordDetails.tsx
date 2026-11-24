@@ -1,3 +1,4 @@
+/** Detalle del registro: lo agrícola estructurado y las respuestas a los campos propios de la organización. */
 import { useQuery } from "@tanstack/react-query";
 import { describeExtra, doseText, sprayWarningTexts, type Extra, type FormConfig, type RecordKind } from "@yvy/shared";
 import { get } from "../lib/api";

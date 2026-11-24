@@ -1,3 +1,4 @@
+/** Estrés térmico del ganado: THI por hora de las próximas 48 horas. Datos de MET Norway. */
 import { useQuery } from "@tanstack/react-query";
 import { t as _t, type FarmHeatStressResponse, type HeatLevel, ATTRIBUTION } from "@yvy/shared";
 import { get } from "../lib/api";

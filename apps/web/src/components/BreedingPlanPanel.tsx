@@ -49,6 +49,7 @@ function Settings({ farmId, d }: { farmId: string; d: ReproPlanResponse }) {
   );
 }
 
+/** Plan reproductivo de una estancia; solo dueño y administradores lo editan. */
 export function BreedingPlanPanel({ farmId }: { farmId: string }) {
   const me = useMe();
   const qc = useQueryClient();

@@ -1,3 +1,4 @@
+/** Ícono de un tipo de punto de interés. */
 import type { PoiKind } from "@yvy/shared";
 import { POI_ICON } from "../lib/icons";
 

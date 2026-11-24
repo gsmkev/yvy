@@ -4,6 +4,11 @@ import { t } from "../lib/i18n";
 import { tableFromElement, tableToCsv, tablesToExcel, type TableData } from "../lib/tableExport";
 import { ExportMenu } from "./menus";
 
+/**
+ * Botón "Exportar" de la pantalla.
+ * @param root contenedor cuyas tablas se exportan.
+ * @param name base del nombre de archivo y de las hojas.
+ */
 export function PageExport({ root, name }: { root: RefObject<HTMLElement | null>; name: string }) {
   const tables = (): TableData[] => {
     const all = [...(root.current?.querySelectorAll("table") ?? [])];

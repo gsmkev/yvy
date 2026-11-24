@@ -1,3 +1,4 @@
+/** Línea de tiempo de las próximas horas: marca las aptas para pulverizar. Datos de MET Norway. */
 import { useQuery } from "@tanstack/react-query";
 import { t as _t, ATTRIBUTION } from "@yvy/shared";
 import { get } from "../lib/api";

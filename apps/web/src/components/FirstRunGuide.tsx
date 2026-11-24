@@ -1,3 +1,4 @@
+/** Guía de primeros pasos de la pantalla de inicio: lista de pasos con su avance, que cada persona puede ocultar. */
 import { Link } from "@tanstack/react-router";
 import { isFieldRole } from "@yvy/shared";
 import type { ReactNode } from "react";
@@ -59,6 +60,11 @@ export function guideSteps(farms: FarmSummary[], members: Member[]): GuideStep[]
   ];
 }
 
+/**
+ * Muestra los pasos de la guía con su estado.
+ * @param steps pasos ya calculados con su estado.
+ * @param onDismiss se llama al ocultar la guía.
+ */
 export function FirstRunGuide({ steps, onDismiss }: { steps: GuideStep[]; onDismiss: () => void }) {
   return (
     <section aria-label={t("ui.guide.title")}>

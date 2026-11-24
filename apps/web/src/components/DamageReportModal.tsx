@@ -1,3 +1,4 @@
+/** Informe de daños para el seguro agrícola: fecha del evento, vigor antes y después, registros y fotos en un PDF. */
 import { useState } from "react";
 import { get } from "../lib/api";
 import {

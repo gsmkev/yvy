@@ -1,3 +1,4 @@
+/** Comentarios de un registro. Para mencionar se elige a la persona; "@Nombre" queda en el texto. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isFieldRole } from "@yvy/shared";

@@ -10,6 +10,7 @@ import { ExportableTable } from "./ExportableTable";
 const dec = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 });
 const days = (v: number | null) => (v === null ? "—" : dec.format(v));
 
+/** Rotación de potreros de una estancia. */
 export function RotationPanel({ farmId }: { farmId: string }) {
   const q = useQuery({
     queryKey: ["rotation", farmId],

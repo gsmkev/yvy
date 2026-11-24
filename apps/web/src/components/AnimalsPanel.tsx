@@ -180,6 +180,7 @@ function AnimalDetail({ animal, onClose }: { animal: AnimalRow; onClose: () => v
   );
 }
 
+/** Animales con caravana de una estancia: búsqueda, alta, edición y baja. */
 export function AnimalsPanel({ farmId }: { farmId: string }) {
   const qc = useQueryClient();
   const [q, setQ] = useState("");

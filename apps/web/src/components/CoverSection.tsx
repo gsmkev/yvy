@@ -11,6 +11,7 @@ import { CoverResult } from "./cover/CoverResult";
 import { day, iso } from "./cover/util";
 import { EmptyState, ErrorBox, Spinner, toast } from "./ui";
 
+/** Sección del cambio de cobertura de una estancia: pedido, resultado y PDF. */
 export function CoverSection({ farmId }: { farmId: string }) {
   const qc = useQueryClient();
   const farm = useFarm(farmId);

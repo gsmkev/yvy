@@ -146,6 +146,14 @@ function Timelapse({ frames, onPick, onClose }: { frames: Layer[]; onPick: (id: 
   );
 }
 
+/**
+ * Selector de la fecha de la imagen, con miniaturas, comparación con cortina y reproducción.
+ * @param picked id de la capa elegida cuando no se compara.
+ * @param compare fechas izquierda y derecha, o null si no se compara.
+ * @param canCompare si hay al menos dos fechas.
+ * @param tilesBaseUrl base de las teselas; sin ella no hay miniaturas.
+ * @param farmBounds límites de la estancia para las miniaturas.
+ */
 export function SceneControls(props: {
   layers: Layer[];
   kind: Layer["layer"];

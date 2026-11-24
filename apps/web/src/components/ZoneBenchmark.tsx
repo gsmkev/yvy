@@ -17,6 +17,7 @@ interface Benchmark {
   rainMedianMm: number | null;
 }
 
+/** Comparación anónima del vigor y la lluvia de la estancia con la zona. */
 export function ZoneBenchmark({ farmId }: { farmId: string }) {
   const q = useQuery({
     queryKey: ["zone-benchmark", farmId],

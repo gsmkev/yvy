@@ -1,3 +1,4 @@
+/** Lista paginada de registros de campo con su detalle, edición y borrado. */
 import { useEffect, useState } from "react";
 import { isFieldRole } from "@yvy/shared";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -26,6 +27,11 @@ function useRecords(filters: RecordFilters) {
   });
 }
 
+/**
+ * Lista de registros con carga por páginas.
+ * @param filters filtros que se envían a la API.
+ * @param onRows se llama con las filas cargadas, por ejemplo para exportarlas.
+ */
 export function RecordsList({ filters, onRows }: { filters: RecordFilters; onRows?: (rows: RecordRow[]) => void }) {
   const q = useRecords(filters);
   const [open, setOpen] = useState<RecordRow | null>(null);
@@ -153,6 +159,7 @@ function Photo({ id }: { id: string }) {
   );
 }
 
+/** Detalle de un registro en un diálogo, con compartir, editar y borrar según el rol. */
 export function RecordModal({ record: r, onClose }: { record: RecordRow; onClose: () => void }) {
   const me = useMe();
   const farms = useFarms();

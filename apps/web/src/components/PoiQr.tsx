@@ -39,6 +39,7 @@ function printSheet(farmName: string, pois: Pick<Poi, "id" | "name" | "kind">[])
   w.print();
 }
 
+/** Diálogo con los QR imprimibles de los puntos de interés de la estancia. */
 export function PoiQrModal({ farmName, pois, onClose }: { farmName: string; pois: Poi[]; onClose: () => void }) {
   return (
     <Modal title={t("app.poi.qrTitle")} onClose={onClose}>

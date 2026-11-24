@@ -1,3 +1,4 @@
+/** Análisis de suelo de laboratorio por lote o punto de muestreo. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SOIL_PARAMS, soilAverage, soilLevel, type SoilParam } from "@yvy/shared";

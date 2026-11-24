@@ -1,3 +1,4 @@
+/** Plan, topes y uso de la organización, y el pedido de cambio (solo el dueño). No cobra: el pedido lo aprueba el equipo de Yvy. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LIMITS, type Billing } from "@yvy/shared";

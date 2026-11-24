@@ -12,6 +12,10 @@ import { Button, ErrorBox } from "./ui";
 const W = 320;
 const H = 220;
 
+/**
+ * Generador de la grilla de muestreo de un lote.
+ * @param farm estancia del lote, para el encabezado del PDF.
+ */
 export function SamplingGrid({ plot, farm }: { plot: Plot; farm: Farm | undefined }) {
   const [open, setOpen] = useState(false);
   const [ha, setHa] = useState<number>(SAMPLING_HA[0]);

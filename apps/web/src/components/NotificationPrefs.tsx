@@ -1,3 +1,4 @@
+/** Qué avisos llegan por celular y por email, y el horario de silencio del push. */
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DEFAULT_NOTIFICATION_PREFS, type NotificationPrefs as Prefs, type NotifyKind } from "@yvy/shared";

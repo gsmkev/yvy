@@ -7,6 +7,7 @@ import { t, tk } from "../lib/i18n";
 import { DataTable, Empty, ErrorBox, Spinner } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
+/** Avisos de faltantes de hacienda de una estancia. */
 export function TheftPanel({ farmId }: { farmId: string }) {
   const q = useQuery({
     queryKey: ["theft", farmId],

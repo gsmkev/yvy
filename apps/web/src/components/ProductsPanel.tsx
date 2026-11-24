@@ -1,3 +1,4 @@
+/** Catálogo de productos de la organización: lo usa el celular para cargar aplicaciones. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PRODUCT_TYPES, PRODUCT_UNITS } from "@yvy/shared";

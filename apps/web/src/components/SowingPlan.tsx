@@ -1,3 +1,4 @@
+/** Plan de siembra de la campaña: superficie por cultivo y variedad y semilla que hay que comprar. */
 import { useEffect, useMemo, useState } from "react";
 import { SEED_RATE_KG_HA, sowingPlan, CROPS } from "@yvy/shared";
 import { fmtHa, fmtNum } from "../lib/format";

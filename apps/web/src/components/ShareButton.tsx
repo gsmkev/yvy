@@ -3,6 +3,10 @@ import { whatsappUrl } from "@yvy/shared";
 import { t } from "../lib/i18n";
 import { Button } from "./ui";
 
+/**
+ * Botón que abre WhatsApp con el texto indicado.
+ * @param variant estilo del botón; por defecto "secondary".
+ */
 export function ShareWhatsappButton({
   text,
   variant = "secondary",

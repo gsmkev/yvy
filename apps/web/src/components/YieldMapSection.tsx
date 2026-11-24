@@ -1,3 +1,4 @@
+/** Mapa de rendimiento de la cosechadora por lote y campaña: se sube el shapefile y se ve la variabilidad. */
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { FeatureCollection } from "geojson";

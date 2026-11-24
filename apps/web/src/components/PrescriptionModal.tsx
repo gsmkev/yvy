@@ -1,3 +1,4 @@
+/** Receta del agrónomo: lotes, productos y dosis → una tarea de aplicación por lote para el empleado. */
 import { useState } from "react";
 import { isFieldRole } from "@yvy/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";

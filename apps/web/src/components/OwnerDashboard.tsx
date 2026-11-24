@@ -1,3 +1,4 @@
+/** Cifras sueltas para el dueño con varias estancias. Sin tarjetas: números y una línea de contexto. */
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { get } from "../lib/api";

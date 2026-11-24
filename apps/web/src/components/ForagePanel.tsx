@@ -10,6 +10,7 @@ import { ExportableTable } from "./ExportableTable";
 const int = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 });
 const dec = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 2 });
 
+/** Oferta de forraje de los potreros de una estancia. */
 export function ForagePanel({ farmId }: { farmId: string }) {
   const q = useQuery({
     queryKey: ["forage", farmId],

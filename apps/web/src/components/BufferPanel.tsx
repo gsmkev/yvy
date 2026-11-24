@@ -1,3 +1,4 @@
+/** Zonas de amortiguación: aplicaciones cerca de casas, escuelas y cursos de agua. */
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { LIMITS } from "@yvy/shared";

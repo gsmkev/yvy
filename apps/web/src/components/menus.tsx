@@ -1,3 +1,4 @@
+/** Menús desplegables accesibles que se reutilizan en toda la web. */
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { ChevronDown, MoreHorizontal } from "lucide-react";
 import { t } from "../lib/i18n";

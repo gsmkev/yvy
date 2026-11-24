@@ -1,3 +1,4 @@
+/** Mapas de fertilidad interpolados: cuántos puntos tiene cada parámetro y pedido del cálculo. */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { FERT_LAYER_KEYS, FERT_LAYER_PARAM, type FertLayerKey } from "@yvy/shared";
 import { get, post } from "../lib/api";

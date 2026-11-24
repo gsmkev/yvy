@@ -1,3 +1,4 @@
+/** Importación de lotes desde un archivo: vista previa, elección de polígonos, nombre y tipo. */
 import { Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -11,7 +12,7 @@ import type { Plot } from "../lib/types";
 import { FarmMap } from "./FarmMap";
 import { Button, ErrorBox, Input, Modal, Select } from "./ui";
 
-/** Previsualiza, elegir polígonos, poner nombre y tipo. */
+/** Vista previa de los polígonos del archivo: se eligen, se les pone nombre y se define su tipo. */
 export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () => void }) {
   const qc = useQueryClient();
   const [items, setItems] = useState<(ImportedPolygon & { selected: boolean; kind: "crop" | "pasture" })[] | null>(

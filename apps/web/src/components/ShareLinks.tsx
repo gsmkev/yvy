@@ -14,6 +14,7 @@ interface LinkRow {
   revokedAt: number | null;
 }
 
+/** Diálogo para crear y revocar enlaces de solo lectura; el enlace completo se muestra una sola vez. */
 export function ShareLinksModal({ farmId, onClose }: { farmId: string; onClose: () => void }) {
   const me = useMe();
   const qc = useQueryClient();

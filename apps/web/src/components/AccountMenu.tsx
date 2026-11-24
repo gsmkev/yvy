@@ -1,3 +1,4 @@
+/** Menú de cuenta de la barra: acceso a Cuenta, Preferencias, Ayuda y Salir, y cambio de organización. */
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";

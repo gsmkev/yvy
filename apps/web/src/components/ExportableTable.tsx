@@ -1,3 +1,4 @@
+/** Envuelve cualquier tabla de la web y le agrega un solo menú "Exportar" (Excel y CSV) con lo que se ve en pantalla (mismas filas, mismo orden, columnas sin encabezado fuera). */
 import { useRef, type ReactNode } from "react";
 import { tableFromElement } from "../lib/tableExport";
 import { TableExportMenu } from "./TableExportMenu";

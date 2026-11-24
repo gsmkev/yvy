@@ -1,3 +1,4 @@
+/** Zonas de manejo de un lote: 3 zonas calculadas con varias campañas de vigor. */
 import { useState } from "react";
 import type { MultiPolygon, Position } from "geojson";
 import { fmtDate, fmtHa, fmtNdvi } from "../lib/format";

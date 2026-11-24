@@ -1,3 +1,4 @@
+/** Preferencias de este navegador: unidades y, más abajo, el tema. Se guardan en localStorage. */
 import { useEffect, useSyncExternalStore } from "react";
 import { getLocale, LOCALES, LOCALE_NAMES } from "@yvy/shared";
 import { SectionHead } from "./ui";

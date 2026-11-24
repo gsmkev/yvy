@@ -12,6 +12,7 @@ const DAY = 86_400_000;
 const pctText = (v: number | null) =>
   v === null ? "—" : new Intl.NumberFormat("es-PY", { maximumFractionDigits: 1 }).format(v) + " %";
 
+/** Índices de reproducción de una estancia en el período elegido. */
 export function ReproPanel({ farmId }: { farmId: string }) {
   const [days, setDays] = useState("365");
   const q = useQuery({

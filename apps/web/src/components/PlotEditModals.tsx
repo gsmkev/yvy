@@ -1,3 +1,4 @@
+/** Diálogos de confirmación para dividir un lote con una línea y para unir dos lotes contiguos. */
 import { useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import type { LineString, Polygon } from "geojson";

@@ -10,9 +10,11 @@ import { ExportableTable } from "./ExportableTable";
 
 const fmt = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
 
+/** Estaciones de un registro de monitoreo, o null si no tiene. */
 export const stationsOf = (data: Record<string, unknown>): Station[] | null =>
   Array.isArray(data.stations) && data.stations.length ? (data.stations as Station[]) : null;
 
+/** Mapa de las estaciones de un registro de monitoreo y tabla de conteos por estación. */
 export function StationsView({ data }: { data: Record<string, unknown> }) {
   const stations = stationsOf(data) ?? [];
   const items = (monitorTemplate(typeof data.crop === "string" ? data.crop : null) ??

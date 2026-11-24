@@ -1,3 +1,4 @@
+/** Secciones agronómicas de la ficha de un lote de cultivo: fenología, balance hídrico, carencia, pronóstico, daños y riego. */
 import {
   CHART,
   IRRIGATION_METHODS,

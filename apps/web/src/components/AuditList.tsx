@@ -1,8 +1,10 @@
+/** Una entrada del registro de cambios con su actor, entidad y detalle. */
 import { auditSummary } from "../lib/auditDetail";
 import { fmtDateTime } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { DataTable, type Column } from "./ui";
 
+/** Una entrada del registro de cambios con su actor, entidad y detalle. */
 export interface AuditEntryRow {
   id: string;
   action: string;

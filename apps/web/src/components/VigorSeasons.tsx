@@ -17,6 +17,7 @@ interface History {
   requestedAt: number | null;
 }
 
+/** Gráfico de vigor de varias campañas de un lote, con el pedido de la historia a demanda. */
 export function VigorSeasons({ plotId, farmId }: { plotId: string; farmId: string }) {
   const qc = useQueryClient();
   const me = useMe();

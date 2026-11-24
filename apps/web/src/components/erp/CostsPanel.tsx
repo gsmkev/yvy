@@ -42,37 +42,8 @@ export const useSeasonList = () =>
 
 const dayOf = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
-export function CostsPanel() {
-  const farms = useFarms();
-  const seasons = useSeasonList();
-  const [f, setF] = useState({ farmId: "", seasonId: "", category: "", from: "", to: "" });
-  const [editing, setEditing] = useState<CostEntry | "new" | null>(null);
-  const [removing, setRemoving] = useState<CostEntry | null>(null);
-  const qc = useQueryClient();
-  const q = useQuery({
-    queryKey: ["erp", "costs", f],
-    queryFn: () => get<CostList>(`/org/erp/costs${qs({ farmId: f.farmId || undefined, seasonId: f.seasonId || undefined, category: f.category || undefined, from: f.from || undefined, to: f.to || undefined })}`),
-  });
-  const farmName = (id: string | null) => farms.data?.find((x) => x.id === id)?.name ?? "";
-  const remove = useMutation({
-    mutationFn: (c: CostEntry) => del(`/org/erp/costs/${c.id}`),
-    onSuccess: () => {
-      toast(t("ui.erpDeleted"));
-      setRemoving(null);
-      qc.invalidateQueries({ queryKey: ["erp"] });
-    },
-  });
-  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
-  const totals = q.data?.totals;
-  const rows = q.data?.rows ?? [];
-  const filtered = Object.values(f).some(Boolean);
-  const blank = !!q.data && rows.length === 0 && !filtered;
-  const newBtn = (
-    <Button variant="primary" onClick={() => setEditing("new")}>
-      {t("ui.costNew")}
-    </Button>
-  );
-  const columns: Column<CostEntry>[] = [
+function costColumns(farmName: (id: string | null) => string, onEdit: (c: CostEntry) => void, onRemove: (c: CostEntry) => void): Column<CostEntry>[] {
+  return [
     { id: "date", header: t("ui.costDate"), cell: (c) => <span className="whitespace-nowrap">{fmtIsoDate(dayOf(c.occurredAt))}</span> },
     { id: "category", header: t("ui.costCategory"), hideBelow: "md", cell: (c) => tk(`ui.costCategory_${c.category}`) },
     { id: "activity", header: t("ui.costActivity"), hideBelow: "lg", cell: (c) => tk(`ui.activity_${c.activity}`) },
@@ -109,12 +80,45 @@ export function CostsPanel() {
           id={c.id}
           hasPhoto={!!c.photoPath}
           name={c.description ?? tk(`ui.costCategory_${c.category}`)}
-          onEdit={c.origin === "manual" ? () => setEditing(c) : undefined}
-          onDelete={c.origin === "manual" ? () => setRemoving(c) : undefined}
+          onEdit={c.origin === "manual" ? () => onEdit(c) : undefined}
+          onDelete={c.origin === "manual" ? () => onRemove(c) : undefined}
         />
       ),
     },
   ];
+}
+
+export function CostsPanel() {
+  const farms = useFarms();
+  const seasons = useSeasonList();
+  const [f, setF] = useState({ farmId: "", seasonId: "", category: "", from: "", to: "" });
+  const [editing, setEditing] = useState<CostEntry | "new" | null>(null);
+  const [removing, setRemoving] = useState<CostEntry | null>(null);
+  const qc = useQueryClient();
+  const q = useQuery({
+    queryKey: ["erp", "costs", f],
+    queryFn: () => get<CostList>(`/org/erp/costs${qs({ farmId: f.farmId || undefined, seasonId: f.seasonId || undefined, category: f.category || undefined, from: f.from || undefined, to: f.to || undefined })}`),
+  });
+  const farmName = (id: string | null) => farms.data?.find((x) => x.id === id)?.name ?? "";
+  const remove = useMutation({
+    mutationFn: (c: CostEntry) => del(`/org/erp/costs/${c.id}`),
+    onSuccess: () => {
+      toast(t("ui.erpDeleted"));
+      setRemoving(null);
+      qc.invalidateQueries({ queryKey: ["erp"] });
+    },
+  });
+  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
+  const totals = q.data?.totals;
+  const rows = q.data?.rows ?? [];
+  const filtered = Object.values(f).some(Boolean);
+  const blank = !!q.data && rows.length === 0 && !filtered;
+  const newBtn = (
+    <Button variant="primary" onClick={() => setEditing("new")}>
+      {t("ui.costNew")}
+    </Button>
+  );
+  const columns = costColumns(farmName, setEditing, setRemoving);
   return (
     <div className="flex flex-col gap-4">
       {!blank && <HeaderActions>{newBtn}</HeaderActions>}

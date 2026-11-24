@@ -23,6 +23,31 @@ interface Low {
   missing: number;
 }
 
+function lowColumns({ prod, wh, unit }: { prod: (id: string) => { name: string } | undefined; wh: (id: string) => string; unit: (id: string) => string }): Column<Low>[] {
+  return [
+    { id: "product", header: t("ui.stockProduct"), cell: (l) => prod(l.productId)?.name },
+    { id: "where", header: t("ui.stockWhere"), hideBelow: "sm", cell: (l) => <span className="text-tinta-2">{wh(l.warehouseId)}</span> },
+    { id: "qty", header: t("ui.stockQty"), align: "right", hideBelow: "sm", cell: (l) => fmtQty(l.qty, unit(l.productId)) },
+    { id: "min", header: t("ui.minStockMin"), align: "right", hideBelow: "md", cell: (l) => fmtQty(l.minQty, unit(l.productId)) },
+    { id: "missing", header: t("ui.minStockMissingHead"), align: "right", cell: (l) => <span className="text-trigo-texto">{fmtQty(l.missing, unit(l.productId))}</span>, sort: (a, b) => a.missing - b.missing },
+  ];
+}
+
+function minColumns({ prod, wh, unit }: { prod: (id: string) => { name: string } | undefined; wh: (id: string) => string; unit: (id: string) => string }, onEdit: (m: Minimum) => void, onRemove: (m: Minimum) => void): Column<Minimum>[] {
+  return [
+    { id: "product", header: t("ui.stockProduct"), cell: (m) => prod(m.productId)?.name },
+    { id: "where", header: t("ui.stockWhere"), cell: (m) => wh(m.warehouseId) },
+    { id: "min", header: t("ui.minStockMin"), align: "right", cell: (m) => fmtQty(m.minQty, unit(m.productId)) },
+    {
+      id: "menu",
+      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      align: "right",
+      width: "3rem",
+      cell: (m) => <RowMenu name={prod(m.productId)?.name ?? ""} onEdit={() => onEdit(m)} onDelete={() => onRemove(m)} />,
+    },
+  ];
+}
+
 export function MinStockPanel() {
   const products = useProducts();
   const warehouses = useWarehouses();
@@ -69,25 +94,8 @@ export function MinStockPanel() {
       {t("ui.minStockNew")}
     </Button>
   );
-  const lowCols: Column<Low>[] = [
-    { id: "product", header: t("ui.stockProduct"), cell: (l) => prod(l.productId)?.name },
-    { id: "where", header: t("ui.stockWhere"), hideBelow: "sm", cell: (l) => <span className="text-tinta-2">{wh(l.warehouseId)}</span> },
-    { id: "qty", header: t("ui.stockQty"), align: "right", hideBelow: "sm", cell: (l) => fmtQty(l.qty, unit(l.productId)) },
-    { id: "min", header: t("ui.minStockMin"), align: "right", hideBelow: "md", cell: (l) => fmtQty(l.minQty, unit(l.productId)) },
-    { id: "missing", header: t("ui.minStockMissingHead"), align: "right", cell: (l) => <span className="text-trigo-texto">{fmtQty(l.missing, unit(l.productId))}</span>, sort: (a, b) => a.missing - b.missing },
-  ];
-  const minCols: Column<Minimum>[] = [
-    { id: "product", header: t("ui.stockProduct"), cell: (m) => prod(m.productId)?.name },
-    { id: "where", header: t("ui.stockWhere"), cell: (m) => wh(m.warehouseId) },
-    { id: "min", header: t("ui.minStockMin"), align: "right", cell: (m) => fmtQty(m.minQty, unit(m.productId)) },
-    {
-      id: "menu",
-      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
-      align: "right",
-      width: "3rem",
-      cell: (m) => <RowMenu name={prod(m.productId)?.name ?? ""} onEdit={() => setEditing(m)} onDelete={() => setRemoving(m)} />,
-    },
-  ];
+  const lowCols = lowColumns({ prod, wh, unit });
+  const minCols = minColumns({ prod, wh, unit }, setEditing, setRemoving);
   const noMins = minRows.length === 0;
   return (
     <div className="flex flex-col gap-4">

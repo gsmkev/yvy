@@ -18,6 +18,73 @@ import type { MaintenanceDue as Due, MaintenancePlanRow as Plan, MaintenanceLogR
 
 const unitOf = (k: "hours" | "km") => (k === "hours" ? "h" : "km");
 
+function dueColumns(onDone: (planId: string) => void): Column<Due>[] {
+  return [
+    { id: "machine", header: t("ui.maintMachine"), cell: (d) => d.machine },
+    { id: "name", header: t("ui.maintPlanName"), hideBelow: "sm", cell: (d) => d.name },
+    {
+      id: "meter",
+      header: t("ui.maintMeter"),
+      align: "right",
+      hideBelow: "md",
+      cell: (d) => (
+        <span className="text-tinta-2">
+          {fmtNum(d.meter)} / {fmtNum(d.dueAt)} {unitOf(d.meterKind)}
+        </span>
+      ),
+    },
+    {
+      id: "left",
+      header: t("ui.maintDueCol"),
+      align: "right",
+      cell: (d) => (
+        <span className={d.status === "overdue" ? "text-peligro" : "text-trigo-texto"}>
+          {d.status === "overdue"
+            ? t("ui.maintOverdue", { n: `${fmtNum(-d.remaining)} ${unitOf(d.meterKind)}` })
+            : t("ui.maintSoon", { n: `${fmtNum(d.remaining)} ${unitOf(d.meterKind)}` })}
+        </span>
+      ),
+    },
+    {
+      id: "_a",
+      header: <span className="sr-only">{t("ui.maintDone")}</span>,
+      align: "right",
+      cell: (d) => (
+        <Button variant="quiet" size="sm" onClick={() => onDone(d.planId)}>
+          {t("ui.maintDone")}
+        </Button>
+      ),
+    },
+    ];
+}
+
+function logColumns(machine: (id: string) => { name: string; meterKind: "hours" | "km" } | undefined, onRemove: (l: Log) => void): Column<Log>[] {
+  return [
+    { id: "date", header: t("ui.costDate"), cell: (l) => <span className="whitespace-nowrap">{fmtIsoDate(localDate(l.occurredAt))}</span> },
+    {
+      id: "machine",
+      header: t("ui.maintMachine"),
+      cell: (l) => (
+        <>
+          {machine(l.machineId)?.name}
+          <span className="block text-meta font-normal text-tinta-2 sm:hidden">{tk(`ui.maintKind_${l.kind}`)}</span>
+        </>
+      ),
+    },
+    { id: "kind", header: t("ui.maintKind"), hideBelow: "sm", cell: (l) => tk(`ui.maintKind_${l.kind}`) },
+    { id: "desc", header: t("ui.maintDescription"), hideBelow: "lg", cell: (l) => <span className="text-tinta-2">{l.description}</span> },
+    {
+      id: "meter",
+      header: t("ui.maintMeter"),
+      align: "right",
+      hideBelow: "md",
+      cell: (l) => (l.meterValue !== null ? `${fmtNum(l.meterValue)} ${unitOf(machine(l.machineId)?.meterKind ?? "hours")}` : ""),
+    },
+    { id: "cost", header: t("ui.maintCost"), align: "right", cell: (l) => (l.amountPyg ? fmtGs(l.amountPyg) : "") },
+    { id: "_a", header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>, align: "right", width: "3rem", cell: (l) => <RowMenu name={machine(l.machineId)?.name ?? ""} onDelete={() => onRemove(l)} /> },
+    ];
+}
+
 export function MaintenancePanel() {
   const machines = useMachines();
   const plans = useErpList<Plan>("maintenance-plans");
@@ -57,67 +124,8 @@ export function MaintenancePanel() {
         {t("ui.maintNoMachinesHint")}
       </EmptyState>
     );
-  const dueCols: Column<Due>[] = [
-    { id: "machine", header: t("ui.maintMachine"), cell: (d) => d.machine },
-    { id: "name", header: t("ui.maintPlanName"), hideBelow: "sm", cell: (d) => d.name },
-    {
-      id: "meter",
-      header: t("ui.maintMeter"),
-      align: "right",
-      hideBelow: "md",
-      cell: (d) => (
-        <span className="text-tinta-2">
-          {fmtNum(d.meter)} / {fmtNum(d.dueAt)} {unitOf(d.meterKind)}
-        </span>
-      ),
-    },
-    {
-      id: "left",
-      header: t("ui.maintDueCol"),
-      align: "right",
-      cell: (d) => (
-        <span className={d.status === "overdue" ? "text-peligro" : "text-trigo-texto"}>
-          {d.status === "overdue"
-            ? t("ui.maintOverdue", { n: `${fmtNum(-d.remaining)} ${unitOf(d.meterKind)}` })
-            : t("ui.maintSoon", { n: `${fmtNum(d.remaining)} ${unitOf(d.meterKind)}` })}
-        </span>
-      ),
-    },
-    {
-      id: "_a",
-      header: <span className="sr-only">{t("ui.maintDone")}</span>,
-      align: "right",
-      cell: (d) => (
-        <Button variant="quiet" size="sm" onClick={() => setLogging(d.planId)}>
-          {t("ui.maintDone")}
-        </Button>
-      ),
-    },
-  ];
-  const logCols: Column<Log>[] = [
-    { id: "date", header: t("ui.costDate"), cell: (l) => <span className="whitespace-nowrap">{fmtIsoDate(localDate(l.occurredAt))}</span> },
-    {
-      id: "machine",
-      header: t("ui.maintMachine"),
-      cell: (l) => (
-        <>
-          {machine(l.machineId)?.name}
-          <span className="block text-meta font-normal text-tinta-2 sm:hidden">{tk(`ui.maintKind_${l.kind}`)}</span>
-        </>
-      ),
-    },
-    { id: "kind", header: t("ui.maintKind"), hideBelow: "sm", cell: (l) => tk(`ui.maintKind_${l.kind}`) },
-    { id: "desc", header: t("ui.maintDescription"), hideBelow: "lg", cell: (l) => <span className="text-tinta-2">{l.description}</span> },
-    {
-      id: "meter",
-      header: t("ui.maintMeter"),
-      align: "right",
-      hideBelow: "md",
-      cell: (l) => (l.meterValue !== null ? `${fmtNum(l.meterValue)} ${unitOf(machine(l.machineId)?.meterKind ?? "hours")}` : ""),
-    },
-    { id: "cost", header: t("ui.maintCost"), align: "right", cell: (l) => (l.amountPyg ? fmtGs(l.amountPyg) : "") },
-    { id: "_a", header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>, align: "right", width: "3rem", cell: (l) => <RowMenu name={machine(l.machineId)?.name ?? ""} onDelete={() => setRemoving(l)} /> },
-  ];
+  const dueCols = dueColumns(setLogging);
+  const logCols = logColumns(machine, setRemoving);
   const history = logs.data ?? [];
   return (
     <div className="flex flex-col gap-5">

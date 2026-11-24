@@ -1,22 +1,20 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Ellipsis } from "lucide-react";
-import { isFieldRole } from "@yvy/shared";
-import { Outlet, useRouterState } from "@tanstack/react-router";
+import { Outlet } from "@tanstack/react-router";
 import { exitSupport, getSession, isNetworkDown, onNetworkChange, onSession, post, setSession } from "../lib/api";
 import { Page, Toaster } from "./ui";
-import { FEATURES } from "../lib/features";
-import { buildNav, isMapPath, isReportsPath, MOBILE_TABS, type NavItem } from "../lib/nav";
+import { MOBILE_TABS, type NavItem } from "../lib/nav";
 import { fmtDate } from "../lib/format";
 import { t } from "../lib/i18n";
-import { useAlerts, useFarms, useMe } from "../lib/queries";
-import { loadPrefs } from "../lib/prefs";
+import { useMe } from "../lib/queries";
 import { trackView } from "../lib/track";
 import { GlobalSearch } from "./GlobalSearch";
-import { AccountMenu, useOrganizations } from "./AccountMenu";
+import { AccountMenu } from "./AccountMenu";
 import { TotpSection } from "./Totp";
 import { useIsDesktop, useSearchShortcut, useSignedOutRedirect, useStoredFlag } from "./layout/hooks";
 import { MoreSheet, NavSection } from "./layout/MoreSheet";
-import { NavLink, type NavContext } from "./layout/NavLink";
+import { NavLink } from "./layout/NavLink";
+import { useNavModel } from "./layout/useNavModel";
 import { Sidebar } from "./layout/Sidebar";
 
 const sideCls = (active: boolean) =>
@@ -56,30 +54,16 @@ function Banners({ support, orgName, offline }: { support: boolean; orgName: str
 /** Barra superior fina: la pantalla es del mapa y los datos, no de la navegación. */
 export function Layout() {
   const me = useMe();
-  const alerts = useAlerts({ active: true });
   const searchRef = useRef<HTMLInputElement>(null);
-  const farms = useFarms();
   const offline = useSyncExternalStore(onNetworkChange, isNetworkDown);
   useSignedOutRedirect();
   useSearchShortcut(searchRef);
   // P-08: el dueño exige segundo factor y este administrador todavía no lo activó: no ve otra cosa hasta activarlo
   const mfaGate = useSyncExternalStore(onSession, () => getSession()?.mfaSetupRequired === true);
+  const { nav, ctx } = useNavModel();
+  const path = ctx.path;
+  const onReports = ctx.onReports;
   const trial = me.data?.organization.plan === "trial" && me.data.organization.trialEndsAt;
-  // K-02: el agrónomo con más de un cliente tiene una pantalla con todos juntos
-  const orgs = useOrganizations();
-  const hasClients = orgs.filter((o) => !isFieldRole(o.role)).length > 1;
-  const nav = buildNav({
-    role: me.data?.role,
-    farms: farms.data?.length ?? null,
-    plots: farms.data ? farms.data.reduce((n, f) => n + f.plots, 0) : null,
-    hasClients,
-    isStaff: !!me.data?.isStaff,
-    labs: FEATURES.labs,
-  });
-  const path = useRouterState({ select: (s) => s.location.pathname });
-  // Con varias estancias, "Mapa" vuelve a la última que se miró
-  const lastFarm = (farms.data?.length ?? 0) > 1 ? farms.data!.find((f) => f.id === loadPrefs().farmId)?.id : undefined;
-  const onReports = isReportsPath(path);
   useEffect(() => trackView(path), [path]);
   const desktop = useIsDesktop();
   const [sheet, setSheet] = useState(false);
@@ -93,15 +77,6 @@ export function Layout() {
       onLogout={logout}
     />
   );
-  const ctx: NavContext = {
-    path,
-    onMap: isMapPath(path),
-    onReports,
-    lastFarm,
-    // Informes vive dentro de la estancia: la última mirada o la primera
-    reportsFarm: lastFarm ?? farms.data?.find((f) => f.id === loadPrefs().farmId)?.id ?? farms.data?.[0]?.id,
-    nAlerts: alerts.data?.length ?? 0,
-  };
   const linkWith = (cls: (active: boolean) => string, tab = false) => (n: NavItem) => (
     <NavLink key={n.to} n={n} ctx={ctx} cls={cls} tab={tab} />
   );

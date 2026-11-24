@@ -188,7 +188,7 @@ async function main() {
   const countsFile = o.counts ?? (o.latest ? file.replace(/\.sql\.gz$/, ".counts.json") : null);
   const expectedCounts = countsFile && existsSync(countsFile) ? JSON.parse(readFileSync(countsFile, "utf8")).counts : null;
   if (o.counts && !expectedCounts) throw new Error(`No existe el archivo de conteos ${o.counts}`);
-  if (!expectedCounts) console.log("Aviso: sin conteos de D1 para comparar (copia anterior a P-05 o sin archivo).");
+  if (!expectedCounts) console.log("Aviso: sin conteos de D1 para comparar (copia hecha antes de guardar conteos, o sin archivo).");
   const res = restoreAndVerify(readBackup(file), { dbPath: o.db ?? ":memory:", minRows: o.minRows, expectedCounts });
   for (const w of res.warnings) console.log(`Aviso: ${w}`);
   console.log("Filas por tabla:");

@@ -10,7 +10,7 @@ export type SoilParam = "ph" | "pMgKg" | "kCmolKg" | "omPct";
 /** Parámetros del análisis en el orden en que se muestran. */
 export const SOIL_PARAMS: readonly SoilParam[] = ["ph", "pMgKg", "kCmolKg", "omPct"];
 
-/** [límite bajo-medio, límite medio-alto]: abajo del primero es bajo, arriba del segundo es alto. */
+/** Par (límite bajo-medio, límite medio-alto): abajo del primero es bajo, arriba del segundo es alto. */
 export const SOIL_RANGES: Record<SoilParam, [number, number]> = {
   ph: [5.0, 6.5],
   pMgKg: [8, 14],

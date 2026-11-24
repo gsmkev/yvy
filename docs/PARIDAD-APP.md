@@ -4,7 +4,7 @@
 
 **Resultado en una línea.** La web tiene 141 funciones relevantes; la app cubre 17 completas, 35 en parte y 89 no existen. De las 89 ausentes y las 35 parciales, solo una parte conviene llevar al teléfono (ver sección 7).
 
-**Cómo se hizo.** Leí `CLAUDE.md`, `docs/BACKLOG.md`, `docs/PRD-roles.md` y los ADR 0002 a 0004; recorrí `apps/web/src/router.tsx` (34 rutas: 7 públicas y 27 con sesión), `routes/*`, `components/*` y `lib/nav.ts`; en la app recorrí `apps/mobile/app` (cuatro pestañas, 15 pantallas y 9 del laboratorio), `src/lib`, `src/db/store.ts` y `src/lib/sync.ts`; y contrasté permisos con el objeto `can` de `apps/api/src/db/scoped.ts` y con `PULL_TABLES` de `packages/shared/src/sync-protocol.ts`. Una función cuenta como presente solo si encontré la pantalla o el código que la hace; donde no pude confirmarlo lo digo. No ejecuté ninguna de las dos apps.
+**Cómo se hizo.** Leí `CLAUDE.md`, `docs/BACKLOG.md`, `docs/PRD-roles.md` y los ADR 0002 a 0004; recorrí `apps/web/src/router.tsx` (34 rutas: 7 públicas y 27 con sesión), `routes/*`, `components/*` y `lib/nav.ts`; en la app recorrí `apps/mobile/app` (cuatro pestañas, 15 pantallas y 9 del laboratorio), `src/lib`, `src/db/store.ts` y `src/lib/sync.ts`; y contrasté permisos con el objeto `can` de `apps/api/src/db/scoped/permissions.ts` y con `PULL_TABLES` de `packages/shared/src/sync-protocol.ts`. Una función cuenta como presente solo si encontré la pantalla o el código que la hace; donde no pude confirmarlo lo digo. No ejecuté ninguna de las dos apps.
 
 **Leyenda.**
 

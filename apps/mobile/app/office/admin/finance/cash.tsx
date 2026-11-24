@@ -1,7 +1,7 @@
 /**
  * Caja y bancos (función 128): cuentas con saldo, movimientos recientes, por pagar y por cobrar. Alta rápida de un
  * gasto o un cobro y pago de una cuenta pendiente. API: GET /org/erp/cash/balances, /cash/moves, /payables,
- * /receivables, /parties; POST /org/erp/cash/moves y /cash/settle (apps/api/src/routes/erp.ts). Nada se guarda en el celular.
+ * /receivables, /parties; POST /org/erp/cash/moves y /cash/settle (apps/api/src/routes/erp/). Nada se guarda en el celular.
  */
 import { useState } from "react";
 import { View } from "react-native";

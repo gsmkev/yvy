@@ -3,10 +3,12 @@
  * por lote y plaga, contra PEST_THRESHOLDS (valores por defecto, a revisar por un agrónomo).
  */
 import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
-import { addDays, PEST_THRESHOLDS, PEST_WINDOW_DAYS } from "@yvy/shared";
+import { addDays, localDate, PEST_THRESHOLDS, PEST_WINDOW_DAYS } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { chunkForParams, type DB } from "../db/client";
 import { withPlanCrops } from "../db/plan-crops";
+import { upsertAlert } from "./alerts";
+import type { Farm, JobDeps } from "./farm";
 import type { AlertDraft } from "./rules";
 
 interface PestAverage {
@@ -124,3 +126,11 @@ export async function pestAlertDraft(db: DB, farmId: string, now: number, today:
   }
   return evaluatePests(averages, plots, stageByPlot, today);
 }
+
+/** Monitoreos de plagas de los últimos 7 días contra el umbral por plaga (A-41). */
+export async function pestJob(db: DB, deps: JobDeps, farm: Farm): Promise<void> {
+  const now = deps.now();
+  const draft = await pestAlertDraft(db, farm.id, now, localDate(now, farm.tz));
+  if (draft) await upsertAlert(db, farm, draft, now);
+}
+

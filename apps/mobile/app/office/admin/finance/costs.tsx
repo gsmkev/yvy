@@ -1,6 +1,6 @@
 /**
  * Libro de costos y ventas (función 129): filtro por estancia y campaña, totales y alta de un costo o una venta.
- * API: GET /org/erp/costs?farmId&seasonId, POST /org/erp/costs, GET /org/erp/parties (apps/api/src/routes/erp.ts).
+ * API: GET /org/erp/costs?farmId&seasonId, POST /org/erp/costs, GET /org/erp/parties (apps/api/src/routes/erp/).
  */
 import { useMemo, useState } from "react";
 import { View } from "react-native";

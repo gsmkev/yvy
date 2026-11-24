@@ -28,8 +28,8 @@ Mapa vivo del campo que funciona sin señal. PRD en docs/PRD.md; docs/PRD-cloudf
 
 - Plan gratis de Cloudflare: 10 ms de CPU por request. Nada de bcrypt/scrypt ni parseo grande en el Worker; lo pesado va a workers-py.
 - Máximo ~40 queries por invocación (D1: 50) y ≤ 100 parámetros por consulta (usar chunkForParams). Escrituras con db.batch().
-- Toda consulta de una ruta autenticada pasa por ScopedDb (apps/api/src/db/scoped.ts), que aplica organización y lotes asignados. Excepciones con acceso de sistema: /ingest y crons (SystemDb), /auth, /admin (panel interno, solo ADMIN_EMAILS) y el control del plan (auth/plan.ts).
-- Permisos según la matriz del PRD §9 (objeto `can` en scoped.ts). Cada cambio de permisos lleva test en apps/api/test.
+- Toda consulta de una ruta autenticada pasa por ScopedDb (apps/api/src/db/scoped/index.ts), que aplica organización y lotes asignados. Excepciones con acceso de sistema: /ingest y crons (SystemDb), /auth, /admin (panel interno, solo ADMIN_EMAILS) y el control del plan (auth/plan.ts).
+- Permisos según la matriz del PRD §9 (objeto `can` en db/scoped/permissions.ts). Cada cambio de permisos lleva test en apps/api/test.
 - Toda escritura a una tabla sincronizable: bumpVersion() primero en el batch y `version: currentVersion` en la fila. El pull pagina por (version, id).
 - Geometrías en GeoJSON texto + columnas bbox. Validación completa (kinks) en el cliente con packages/geo; el Worker solo valida forma y calcula área/bbox.
 - IDs UUIDv7 del cliente, fechas en epoch ms, borrado lógico con deleted_at.

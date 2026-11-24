@@ -1,7 +1,7 @@
 /**
  * Personal (función 133): asistencia del día (pantalla principal), saldos por persona y lista de empleados con alta.
  * La planilla y los pagos son de solo lectura: se liquidan en la web. API: GET /org/erp/employees, /attendance,
- * /employees/balance, /employees/:id/statement; POST /org/erp/attendance y /org/erp/employees (apps/api/src/routes/erp.ts).
+ * /employees/balance, /employees/:id/statement; POST /org/erp/attendance y /org/erp/employees (apps/api/src/routes/erp/).
  */
 import { useState } from "react";
 import { Pressable, View } from "react-native";

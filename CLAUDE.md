@@ -16,7 +16,7 @@ Mapa vivo del campo que funciona sin señal. PRD en docs/PRD.md; docs/PRD-cloudf
 
 - pnpm dev / pnpm test / pnpm lint / pnpm typecheck
 - pnpm --filter api dev (wrangler dev con D1 y R2 locales; copiar apps/api/.dev.vars.example a .dev.vars)
-- pnpm --filter api db:generate (tras cambiar packages/shared/src/schema.ts) y pnpm --filter api db:migrate:local
+- pnpm --filter api db:generate (tras cambiar packages/shared/src/schema/) y pnpm --filter api db:migrate:local
 - pnpm --filter api seed (organización de prueba; ingreso con dueno@yvy.test, el código sale en la consola)
 - cd workers-py && uv run pytest
 - pnpm --filter web e2e (Playwright contra `wrangler dev`; E2E_DEV_LOG=<log de wrangler dev>)

@@ -63,7 +63,8 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          RUN_NUMBER: ${{ github.run_number }}
         run: |
           APK=../mobile/android/app/build/outputs/apk/release/yvy.apk
           npx wrangler r2 object put yvy-tiles/app/yvy.apk --file "$APK" --content-type application/vnd.android.package-archive --remote
-          npx wrangler r2 object put "yvy-tiles/app/yvy-${{ github.run_number }}.apk" --file "$APK" --content-type application/vnd.android.package-archive --remote
+          npx wrangler r2 object put "yvy-tiles/app/yvy-$RUN_NUMBER.apk" --file "$APK" --content-type application/vnd.android.package-archive --remote

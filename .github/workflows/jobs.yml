@@ -76,8 +76,11 @@ jobs:
         with: { enable-cache: true }
       - name: Elegir job
         id: pick
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+          JOB: ${{ inputs.job }}
         run: |
-          case "${{ github.event.schedule }}" in
+          case "$SCHEDULE" in
             "15 13,19 * * *") echo "cmd=s2_ingest" >> $GITHUB_OUTPUT ;;
             "30 10,16,22 * * *") echo "cmd=chirps_daily" >> $GITHUB_OUTPUT ;;
             "40 */3 * * *") echo "cmd=firms_hotspots" >> $GITHUB_OUTPUT ;;
@@ -88,7 +91,7 @@ jobs:
             "30 12 * * 1") echo "cmd=burned_area" >> $GITHUB_OUTPUT ;;
             "0 6 15 1,4,7,10 *") echo "cmd=eudr" >> $GITHUB_OUTPUT ;;
             "0 7 2 1 *") echo "cmd=boundaries" >> $GITHUB_OUTPUT ;;
-            *) echo "cmd=${{ inputs.job }}" >> $GITHUB_OUTPUT ;;
+            *) echo "cmd=$JOB" >> $GITHUB_OUTPUT ;;
           esac
       - if: steps.pick.outputs.cmd == 'weekly'
         run: |

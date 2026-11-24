@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../apps/api"
 : "${CLOUDFLARE_API_TOKEN:?Falta CLOUDFLARE_API_TOKEN}"
 : "${CLOUDFLARE_ACCOUNT_ID:?Falta CLOUDFLARE_ACCOUNT_ID}"
-: "${APP_ORIGIN:?Falta APP_ORIGIN (URL pública de la web, para el CORS de las fotos)}"
+: "${APP_ORIGIN:?Falta APP_ORIGIN: la URL pública de la web, para el CORS de las fotos}"
 W() { npx wrangler "$@"; }
 
 echo "▸ Base D1"

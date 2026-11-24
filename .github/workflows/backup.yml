@@ -31,13 +31,17 @@ jobs:
           gzip "yvy-$d.sql"
       - name: Restaurar en una base temporal y verificar
         id: verify
+        env:
+          EXPORT_DATE: ${{ steps.export.outputs.d }}
         run: |
-          d="${{ steps.export.outputs.d }}"
+          d="$EXPORT_DATE"
           node scripts/restore-backup.mjs "yvy-$d.sql.gz" --counts "yvy-$d.counts.json" --db "$RUNNER_TEMP/restaurada.sqlite" | tee "$RUNNER_TEMP/resultado.txt"
       - name: Subir la copia y los conteos a R2
         if: ${{ always() && steps.export.outcome == 'success' }}
+        env:
+          EXPORT_DATE: ${{ steps.export.outputs.d }}
         run: |
-          d="${{ steps.export.outputs.d }}"
+          d="$EXPORT_DATE"
           npx wrangler r2 object put "yvy-media/backups/yvy-$d.sql.gz" --file "yvy-$d.sql.gz" --remote
           npx wrangler r2 object put "yvy-media/backups/yvy-$d.counts.json" --file "yvy-$d.counts.json" --remote
       - name: Resumen

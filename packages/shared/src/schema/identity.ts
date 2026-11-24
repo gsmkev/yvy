@@ -1,31 +1,34 @@
+/** Identidad: organizaciones, usuarios, membresías, dispositivos y credenciales de la autenticación propia. */
+
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { ROLES, MEMBERSHIP_STATUS } from "./enums";
 import { timestamps } from "./columns";
 
 // ---------- Identidad y organización ----------
 
+/** Organizaciones (cuentas de clientes) con su plan y topes. */
 export const organizations = sqliteTable("organizations", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   country: text("country").notNull().default("PY"),
   plan: text("plan").notNull().default("trial"),
   trialEndsAt: integer("trial_ends_at"),
-  /** P-10: topes propios de la organización; null = los del plan (LIMITS.plans). */
+  /** Topes propios de la organización; null = los del plan (LIMITS.plans). */
   maxHa: real("max_ha"),
   maxUsers: integer("max_users"),
-  /** V-05: código de referido con el que se registró la organización (`?ref=`), tal cual llegó si tiene forma válida. */
+  /** Código de referido con el que se registró la organización (`?ref=`), tal cual llegó si tiene forma válida. */
   referredBy: text("referred_by"),
-  /** V-05: agrónomo dueño del código, si se pudo identificar. */
+  /** Agrónomo dueño del código, si se pudo identificar. */
   referrerUserId: text("referrer_user_id"),
-  /** V-06: el equipo anotó el crédito del referido (cuando la organización referida pasó a pagar). null = sin anotar. */
+  /** El equipo anotó el crédito del referido (cuando la organización referida pasó a pagar). null = sin anotar. */
   referralCreditedAt: integer("referral_credited_at"),
-  /** P-08: el dueño exige segundo factor (TOTP) a los administradores de la organización. */
+  /** El dueño exige segundo factor (TOTP) a los administradores de la organización. */
   requireAdminTotp: integer("require_admin_totp", { mode: "boolean" }).notNull().default(false),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });
 
-/** Equivale a `profiles` del PRD (no hay auth.users: la auth es propia). */
+/** Equivale a `profiles` (no hay auth.users: la auth es propia). */
 export const users = sqliteTable(
   "users",
   {
@@ -40,6 +43,7 @@ export const users = sqliteTable(
   (t) => [uniqueIndex("users_email_uq").on(t.email)],
 );
 
+/** Pertenencia de un usuario a una organización con su rol. */
 export const memberships = sqliteTable(
   "memberships",
   {
@@ -48,7 +52,7 @@ export const memberships = sqliteTable(
     userId: text("user_id").notNull(),
     role: text("role", { enum: ROLES }).notNull(),
     status: text("status", { enum: MEMBERSHIP_STATUS }).notNull().default("active"),
-    /** Sube cada vez que cambian los lotes asignados: el cliente rehace sus tablas (PRD §11 reset). */
+    /** Sube cada vez que cambian los lotes asignados: el cliente rehace sus tablas. */
     assignmentsVersion: integer("assignments_version").notNull().default(0),
     ...timestamps,
   },
@@ -58,6 +62,7 @@ export const memberships = sqliteTable(
   ],
 );
 
+/** Dispositivos de un usuario, con el token de notificaciones push. */
 export const devices = sqliteTable(
   "devices",
   {
@@ -71,8 +76,9 @@ export const devices = sqliteTable(
   (t) => [index("devices_user_idx").on(t.userId)],
 );
 
-// ---------- Auth propia (PRD-cloudflare §4.2) ----------
+// ---------- Auth propia ----------
 
+/** Códigos de ingreso enviados por correo; solo se guarda su hash. */
 export const emailCodes = sqliteTable(
   "email_codes",
   {
@@ -105,7 +111,7 @@ export const linkCodes = sqliteTable(
 );
 
 /**
- * PIN de ingreso de un empleado (F-24). Solo existe el hash (SHA-256 con sal propia y el secreto del servidor como
+ * PIN de ingreso de un empleado. Solo existe el hash (SHA-256 con sal propia y el secreto del servidor como
  * pimienta), nunca el PIN. `phoneKey` es el teléfono normalizado (ver pin.ts). Los intentos fallidos bloquean la cuenta.
  */
 export const userPins = sqliteTable(
@@ -125,6 +131,7 @@ export const userPins = sqliteTable(
   (t) => [uniqueIndex("user_pins_phone_uq").on(t.phoneKey), index("user_pins_org_idx").on(t.organizationId)],
 );
 
+/** Tokens de refresco de sesión; solo se guarda su hash. */
 export const refreshTokens = sqliteTable(
   "refresh_tokens",
   {

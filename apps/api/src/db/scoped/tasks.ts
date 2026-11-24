@@ -7,7 +7,7 @@ import type { ScopedDb } from "./index";
 import { NotFoundError, can } from "./permissions";
 
 /**
- * Receta → órdenes de trabajo (A-11): una tarea de aplicación por lote, para el mismo empleado, con la
+ * Receta → órdenes de trabajo: una tarea de aplicación por lote, para el mismo empleado, con la
  * receta adentro. 3 lecturas y un solo batch (una fila por lote, máx. 40).
  */
 export async function createPrescription(sdb: ScopedDb, input: {
@@ -66,6 +66,7 @@ export async function createPrescription(sdb: ScopedDb, input: {
   return { ids };
 }
 
+/** Crea una tarea de un lote (o sin lote si `plotId` es null) asignada a una persona. */
 export async function createTask(sdb: ScopedDb, input: {
   farmId: string;
   plotId: string | null;
@@ -76,7 +77,7 @@ export async function createTask(sdb: ScopedDb, input: {
   dueTime?: string | null;
   priority?: (typeof s.TASK_PRIORITIES)[number];
   recurrence: (typeof s.RECURRENCES)[number];
-  /** Lista de verificación en JSON (F-15). */
+  /** Lista de verificación en JSON. */
   checklist?: string | null;
   lon?: number | null;
   lat?: number | null;
@@ -87,7 +88,7 @@ export async function createTask(sdb: ScopedDb, input: {
 }
 
 /**
- * Una tarea por lote (T-01: elegir lotes en el mapa), todas en un mismo batch. `plotIds` con `null` crea una
+ * Una tarea por lote, todas en un mismo batch. `plotIds` con `null` crea una
  * tarea sin lote. Los lotes tienen que ser de la estancia y de la organización.
  */
 export async function createTasks(sdb: ScopedDb, input: {
@@ -104,7 +105,7 @@ export async function createTasks(sdb: ScopedDb, input: {
   lon?: number | null;
   lat?: number | null;
   prescription?: string | null;
-  /** Orden de trabajo en JSON (E-20). */
+  /** Orden de trabajo en JSON. */
   workOrder?: string | null;
 }): Promise<{ ids: string[] }> {
   sdb.require(can.assign);

@@ -1,5 +1,5 @@
 /**
- * Panel interno (PRD Fase 8): métricas de la sección 4 y gestión del plan. Solo para los emails de
+ * Panel interno: métricas por organización, gestión del plan, soporte y auditoría. Solo para los emails de
  * ADMIN_EMAILS. Acceso de sistema (todas las organizaciones).
  */
 import { Hono } from "hono";
@@ -13,6 +13,7 @@ import { signJwt } from "../lib/crypto";
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
 
+/** Rutas `/admin/*`; el middleware exige que el email del usuario esté en ADMIN_EMAILS. */
 export const admin = new Hono<AppEnv>();
 
 admin.use("*", async (c, next) => {
@@ -48,7 +49,7 @@ const like = (q: string) => `%${q.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
 
 admin.get("/metrics", async (c) => {
   const db = getDb(c.env.DB);
-  // P-12: buscar por nombre de la organización, id o email de algún miembro
+  // Buscar por nombre de la organización, id o email de algún miembro
   const q = (c.req.query("q") ?? "").trim().slice(0, 80);
   const search = q
     ? sql`WHERE o.name LIKE ${like(q)} ESCAPE '\\' OR o.id = ${q} OR o.id IN (SELECT m.organization_id FROM memberships m JOIN users u ON u.id = m.user_id WHERE u.email LIKE ${like(q)} ESCAPE '\\')`
@@ -96,7 +97,7 @@ admin.post("/orgs/:id/plan", async (c) => {
     z.object({
       plan: z.enum(["trial", "active", "blocked", "demo"]),
       trialEndsAt: z.number().int().nullish(),
-      /** P-10: topes propios; null borra el tope propio y vuelve al del plan; sin el campo no se toca. */
+      /** Topes propios; null borra el tope propio y vuelve al del plan; sin el campo no se toca. */
       maxHa: z.number().positive().max(10_000_000).nullish(),
       maxUsers: z.number().int().positive().max(100_000).nullish(),
     }),
@@ -116,7 +117,7 @@ admin.post("/orgs/:id/plan", async (c) => {
   return c.json({ ok: true });
 });
 
-/** V-06: anotar (o quitar) el crédito del referido de una organización. Solo si se registró con el código de alguien. */
+/** Anotar (o quitar) el crédito del referido de una organización. Solo si se registró con el código de alguien. */
 admin.post("/orgs/:id/referral-credit", async (c) => {
   const b = parse(z.object({ credited: z.boolean() }), await readJson(c.req));
   const id = c.req.param("id");
@@ -136,7 +137,7 @@ admin.post("/orgs/:id/referral-credit", async (c) => {
   return c.json({ ok: true });
 });
 
-/** P-12: extender la prueba N días desde hoy o desde el fin actual, lo que sea posterior. Reactiva una prueba vencida o bloqueada. */
+/** Extender la prueba N días desde hoy o desde el fin actual, lo que sea posterior. Reactiva una prueba vencida o bloqueada. */
 admin.post("/orgs/:id/extend-trial", async (c) => {
   const b = parse(z.object({ days: z.number().int().min(1).max(365) }), await readJson(c.req));
   const id = c.req.param("id");
@@ -157,7 +158,7 @@ admin.post("/orgs/:id/extend-trial", async (c) => {
 });
 
 /**
- * P-12: "ver como soporte". Emite un access token de 30 min, sin refresh, a nombre del dueño de la organización y
+ * "ver como soporte". Emite un access token de 30 min, sin refresh, a nombre del dueño de la organización y
  * marcado de solo lectura (requireAuth rechaza todo lo que no sea GET). Cada pedido deja una fila en audit_log.
  */
 admin.post("/orgs/:id/support-session", async (c) => {
@@ -207,7 +208,7 @@ admin.post("/orgs/:id/support-session", async (c) => {
   });
 });
 
-/** P-12: últimas acciones del equipo (opcionalmente de una organización); con `scope=org`, los cambios que hicieron las personas de esa organización (K-06). */
+/** Últimas acciones del equipo (opcionalmente de una organización); con `scope=org`, los cambios que hicieron las personas de esa organización. */
 admin.get("/audit", async (c) => {
   const org = c.req.query("orgId");
   const rows = await getDb(c.env.DB)
@@ -235,7 +236,7 @@ admin.get("/audit", async (c) => {
 });
 
 /**
- * P-03: embudo de activación de las organizaciones que se registraron en los últimos `days` días (por defecto 90):
+ * Embudo de activación de las organizaciones que se registraron en los últimos `days` días (por defecto 90):
  * cuántas llegaron a cada paso, las pantallas más abiertas en el mismo período (conteos diarios estimados, sin personas)
  * y el total de pantallas abiertas por día en las últimas dos semanas.
  */
@@ -262,7 +263,7 @@ admin.get("/funnel", async (c) => {
   });
 });
 
-/** P-10: pedidos de cambio de plan de las organizaciones. `status=pending` (por defecto) o `all` (los últimos 50). */
+/** Pedidos de cambio de plan de las organizaciones. `status=pending` (por defecto) o `all` (los últimos 50). */
 admin.get("/plan-requests", async (c) => {
   const all = c.req.query("status") === "all";
   const rows = await getDb(c.env.DB)
@@ -291,8 +292,8 @@ admin.get("/plan-requests", async (c) => {
 });
 
 /**
- * P-10: aprueba un pedido pendiente: la organización pasa al plan pedido y se fijan los topes que pidió (o los que el
- * equipo corrija en el cuerpo). Todo en un batch, con su fila de auditoría. No cobra: el cobro es P-11.
+ * Aprueba un pedido pendiente: la organización pasa al plan pedido y se fijan los topes que pidió (o los que el
+ * equipo corrija en el cuerpo). Todo en un batch, con su fila de auditoría. No cobra.
  */
 admin.post("/plan-requests/:id/approve", async (c) => {
   const b = parse(

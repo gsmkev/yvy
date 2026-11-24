@@ -89,10 +89,8 @@ export function PhotoRowMenu({
 /**
  * Adjunta, muestra y quita la foto de una factura.
  * @param kind tipo de documento al que pertenece.
- * @param id id del documento.
- * @param hasPhoto si ya tiene foto.
  */
-export function InvoicePhoto({ kind, id, hasPhoto }: { kind: PhotoKind; id: string; hasPhoto: boolean }) {
+export function InvoicePhoto({ kind, id, hasPhoto }: { kind: PhotoKind; /** Id del documento. */ id: string; /** Si ya tiene foto. */ hasPhoto: boolean }) {
   const { input: hidden, pick, upload, view, remove } = usePhoto(kind, id);
   const link = "cursor-pointer underline-offset-4 hover:text-surco hover:underline";
   return (

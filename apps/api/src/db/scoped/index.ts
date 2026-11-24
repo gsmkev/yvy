@@ -1,5 +1,5 @@
 /**
- * Capa de acceso única: reemplaza a RLS (PRD §9, PRD-cloudflare §4.1).
+ * Capa de acceso única: reemplaza a RLS.
  * Toda consulta de una ruta autenticada pasa por acá. Siempre filtra por organization_id y,
  * para `worker`, por los lotes asignados. Nunca consultar D1 directo desde una ruta.
  */
@@ -21,6 +21,7 @@ export { SYNCED_KEYS } from "./synced-tables";
 /** Argumentos de un método sin el primero (la fachada pasa `this`). */
 type Rest<F> = F extends (first: ScopedDb, ...a: infer R) => unknown ? R : never;
 
+/** Acceso a datos de una organización en nombre de una persona: toda consulta autenticada pasa por esta clase. */
 export class ScopedDb {
   constructor(
     readonly db: DB,
@@ -41,12 +42,12 @@ export class ScopedDb {
     if (!check(this.auth.role)) throw new ForbiddenError(msg);
   }
 
-  /** K-06: filas del registro de cambios, para sumar al batch del cambio. */
+  /** Filas del registro de cambios, para sumar al batch del cambio. */
   audit(...entries: AuditEntry[]): Stmt[] {
     return auditStmts(this.db, this.auth, entries, this.now());
   }
 
-  /** Puede editar/borrar un registro (PRD §9 y RF-34). */
+  /** Puede editar/borrar un registro. */
   canEditRecord(rec: { authorId: string; createdAt: number }): RejectReason | null {
     const { role, userId } = this.auth;
     if (role === "owner" || role === "admin") return null;
@@ -67,13 +68,13 @@ export class ScopedDb {
 
   /** Empleado: registros de sus lotes, o propios (incluye los sin lote). */
   recordsVisibleSql(): SQL {
-    // K-03: el contratista solo ve lo que cargó él.
+    // El contratista solo ve lo que cargó él.
     if (this.isContractor) return sql`records.author_id = ${this.auth.userId}`;
     return sql`(records.plot_id IN ${this.assignedPlotsSql()} OR records.author_id = ${this.auth.userId})`;
   }
 
   /**
-   * T-09 / K-05: condición para limitar `col` (columna con id de estancia) a las estancias de la persona.
+   * Condición para limitar `col` (columna con id de estancia) a las estancias de la persona.
    * `undefined` = sin límite (dueño y roles de campo, que se limitan por lotes). Con `write`, solo las de nivel `edit`.
    * Supervisor: solo las de farm_access. Administrador/agrónomo: todas mientras no tengan filas.
    */
@@ -103,7 +104,7 @@ export class ScopedDb {
 
   // ---------- Filtros de visibilidad (visibility.ts) ----------
 
-  /** Condición de visibilidad por tabla: lotes asignados (roles de campo) o estancias permitidas (supervisor, K-05). */
+  /** Condición de visibilidad por tabla: lotes asignados (roles de campo) o estancias permitidas (supervisor). */
   workerFilter(...a: Rest<typeof visibility.workerFilter>) {
     return visibility.workerFilter(this, ...a);
   }
@@ -147,24 +148,24 @@ export class ScopedDb {
   }
 
   /**
-   * F-24: fija o cambia el PIN de ingreso de un empleado (solo dueño o administrador). Guarda el teléfono en su
+   * Fija o cambia el PIN de ingreso de un empleado (solo dueño o administrador). Guarda el teléfono en su
    * ficha y su clave normalizada. "phone_taken" si otra persona ya usa ese teléfono para ingresar.
    */
   setMemberPin(...a: Rest<typeof members.setMemberPin>) {
     return members.setMemberPin(this, ...a);
   }
 
-  /** F-24: quita el PIN (el empleado ya no puede ingresar con teléfono). */
+  /** Quita el PIN (el empleado ya no puede ingresar con teléfono). */
   clearMemberPin(...a: Rest<typeof members.clearMemberPin>) {
     return members.clearMemberPin(this, ...a);
   }
 
-  /** F-24: teléfono guardado en la ficha de un miembro de la organización. */
+  /** Teléfono guardado en la ficha de un miembro de la organización. */
   memberPhone(...a: Rest<typeof members.memberPhone>) {
     return members.memberPhone(this, ...a);
   }
 
-  /** F-24: quiénes de la organización ya tienen PIN (para mostrarlo en Equipo). */
+  /** Quiénes de la organización ya tienen PIN (para mostrarlo en Equipo). */
   membersWithPin(...a: Rest<typeof members.membersWithPin>) {
     return members.membersWithPin(this, ...a);
   }
@@ -239,7 +240,7 @@ export class ScopedDb {
   // ---------- Tareas (tasks.ts) ----------
 
   /**
-   * Receta → órdenes de trabajo (A-11): una tarea de aplicación por lote, para el mismo empleado, con la
+   * Receta → órdenes de trabajo: una tarea de aplicación por lote, para el mismo empleado, con la
    * receta adentro. 3 lecturas y un solo batch (una fila por lote, máx. 40).
    */
   createPrescription(...a: Rest<typeof tasks.createPrescription>) {
@@ -251,7 +252,7 @@ export class ScopedDb {
   }
 
   /**
-   * Una tarea por lote (T-01: elegir lotes en el mapa), todas en un mismo batch. `plotIds` con `null` crea una
+   * Una tarea por lote, todas en un mismo batch. `plotIds` con `null` crea una
    * tarea sin lote. Los lotes tienen que ser de la estancia y de la organización.
    */
   createTasks(...a: Rest<typeof tasks.createTasks>) {

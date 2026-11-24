@@ -1,4 +1,6 @@
-/** Alta de organizaciones, demo y código por email. */
+/**
+ * Rutas de alta de organizaciones, demo y ingreso con código por email.
+ */
 import { funnelEvent } from "../../db/events";
 import { HTTPException } from "hono/http-exception";
 import { and, count, desc, eq, gte, isNull } from "drizzle-orm";
@@ -14,6 +16,7 @@ import type { AppEnv } from "../../types";
 import { MAX_CODES_PER_WINDOW, deviceId, email, findReferrer, sessionOrChallenge } from "./shared";
 import { Hono } from "hono";
 
+/** Rutas de alta, demo y código por email. */
 export const routes = new Hono<AppEnv>();
 
 /** Alta de una organización nueva con su dueño. Después se ingresa con /auth/email/start. */
@@ -24,7 +27,7 @@ routes.post("/signup", async (c) => {
       organizationName: z.string().trim().min(2).max(120),
       fullName: z.string().trim().min(2).max(120),
       email,
-      /** V-05: código de referido de un agrónomo (`?ref=`). Si no tiene forma válida se ignora; nunca frena el registro. */
+      /** Código de referido de un agrónomo (`?ref=`). Si no tiene forma válida se ignora; nunca frena el registro. */
       ref: z.unknown().optional(),
     }),
     await readJson(c.req),

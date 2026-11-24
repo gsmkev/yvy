@@ -1,11 +1,12 @@
-/** Avisos (RF-70..75) y sus umbrales. */
+/** Avisos y sus umbrales. */
 import { and, desc, eq, gte, isNull, or, sql } from "drizzle-orm";
 import { DEFAULT_ALERT_SETTINGS, type AlertSettings } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { can, NotFoundError, type ScopedDb } from "../scoped";
 
-// ---------- Avisos (RF-70..75) ----------
+// ---------- Avisos ----------
 
+/** Avisos de la organización, de una estancia o activos, con la utilidad que marcó la persona. */
 export async function listAlerts(sdb: ScopedDb, f: { farmId?: string; active?: boolean }) {
   const now = sdb.now();
   return sdb.db
@@ -30,6 +31,7 @@ export async function listAlerts(sdb: ScopedDb, f: { farmId?: string; active?: b
     .limit(200);
 }
 
+/** Registra si un aviso le resultó útil a la persona, con un comentario opcional. */
 export async function alertFeedback(sdb: ScopedDb, alertId: string, useful: boolean, comment: string | null) {
   const [a] = await sdb.db
     .select({ id: s.alerts.id })
@@ -43,7 +45,7 @@ export async function alertFeedback(sdb: ScopedDb, alertId: string, useful: bool
     .onConflictDoUpdate({ target: [s.alertFeedback.alertId, s.alertFeedback.userId], set: { useful, comment } });
 }
 
-/** C-04: umbrales de avisos de la estancia (valores por defecto si nunca se configuraron). */
+/** Umbrales de avisos de la estancia (valores por defecto si nunca se configuraron). */
 export async function getAlertSettings(
   sdb: ScopedDb,
   farmId: string,
@@ -64,6 +66,7 @@ export async function getAlertSettings(
   };
 }
 
+/** Guarda los umbrales de avisos de una estancia. */
 export async function saveAlertSettings(sdb: ScopedDb, farmId: string, v: AlertSettings) {
   sdb.require(can.alertSettings, "Solo el dueño o un administrador cambian los avisos");
   await sdb.requireFarm(farmId);

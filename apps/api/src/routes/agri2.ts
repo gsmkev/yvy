@@ -1,4 +1,7 @@
-/** Agricultura, segunda tanda (agri-p2): fenología, ventana de siembra, carencias, amortiguación, suelo, entregas. */
+/**
+ * Rutas de agricultura avanzada: fenología, ventana de siembra, carencias, balance hídrico, suelo, fertilidad,
+ * entregas de grano, mapas de rendimiento, SPI, zonas de manejo y comparación con la zona.
+ */
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
@@ -11,24 +14,25 @@ import { dispatchJob } from "../lib/dispatch";
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
 
+/** Rutas de agricultura avanzada bajo `/org`. */
 export const agri2 = new Hono<AppEnv>();
 
-/** A-04: fenología estimada por grados-día contra lo observado en el lote. */
+/** Fenología estimada por grados-día contra lo observado en el lote. */
 agri2.get("/plots/:id/phenology", async (c) => c.json(await plotPhenology(c.var.sdb, c.req.param("id"))));
 
-/** A-05: ventana de siembra de los próximos días para un cultivo. */
+/** Ventana de siembra de los próximos días para un cultivo. */
 agri2.get("/farms/:id/sowing-window", async (c) => {
   const q = parse(z.object({ crop: z.enum(CROPS).default("soja") }), c.req.query());
   return c.json(await farmSowingWindow(c.var.sdb, c.req.param("id"), q.crop));
 });
 
-/** C-08: balance hídrico simple del lote (lluvia menos consumo del cultivo). */
+/** Balance hídrico simple del lote (lluvia menos consumo del cultivo). */
 agri2.get("/plots/:id/water-balance", async (c) => c.json(await plotWaterBalance(c.var.sdb, c.req.param("id"))));
 
-/** A-14: carencia antes de cosechar: lotes con restricción vigente y cosechas hechas antes de tiempo. */
+/** Carencia antes de cosechar: lotes con restricción vigente y cosechas hechas antes de tiempo. */
 agri2.get("/farms/:id/withdrawal", async (c) => c.json(await farmWithdrawal(c.var.sdb, c.req.param("id"))));
 
-// ---------- A-30: análisis de suelo ----------
+// ---------- Análisis de suelo ----------
 const num = (min: number, max: number) => z.number().min(min).max(max).nullish();
 const soilFields = {
   plotId: z.string().uuid().nullish(),
@@ -52,7 +56,7 @@ const norm = (b: Record<string, unknown>) =>
     Object.entries(b).map(([k, v]) => [k, v === undefined ? undefined : v === "" ? null : (v ?? null)]),
   );
 
-/** A-31: puntos por parámetro y pedido del cálculo de mapas (job fertility_maps en GitHub Actions). */
+/** Puntos por parámetro y pedido del cálculo de mapas (job fertility_maps en GitHub Actions). */
 agri2.get("/farms/:id/fertility", async (c) => c.json({ minPoints: LIMITS.fertility.minPoints, points: await fertilityPointCountsOf(c.var.sdb, c.req.param("id")) }));
 agri2.post("/farms/:id/fertility-maps", async (c) => {
   const id = c.req.param("id");
@@ -104,7 +108,7 @@ agri2.delete("/soil-samples/:id", async (c) => {
   return c.json({ ok: true });
 });
 
-// ---------- A-23: entregas de grano a acopio ----------
+// ---------- Entregas de grano a acopio ----------
 agri2.get("/farms/:id/deliveries", async (c) => c.json(await listDeliveries(c.var.sdb, c.req.param("id"))));
 
 agri2.post("/farms/:id/deliveries", async (c) => {
@@ -142,13 +146,13 @@ agri2.delete("/deliveries/:id", async (c) => {
   return c.json({ ok: true });
 });
 
-/** C-03: pronóstico por lote (solo estancias de más de 2.000 ha). */
+/** Pronóstico por lote (solo estancias de más de 2.000 ha). */
 agri2.get("/farms/:id/plot-forecast", async (c) => c.json(await farmPlotForecast(c.var.sdb, c.req.param("id"))));
 
-/** C-07: índice de precipitación estandarizado (SPI) a 1, 3 y 6 meses. */
+/** Índice de precipitación estandarizado (SPI) a 1, 3 y 6 meses. */
 agri2.get("/farms/:id/spi", async (c) => c.json(await farmSpiReport(c.var.sdb, c.req.param("id"))));
 
-// ---------- A-21: mapas de rendimiento de la cosechadora ----------
+// ---------- Mapas de rendimiento de la cosechadora ----------
 const yieldNum = z.number().min(0).max(1_000);
 agri2.get("/plots/:id/yield-maps", async (c) => c.json(await listYieldMaps(c.var.sdb, c.req.param("id"))));
 
@@ -189,8 +193,8 @@ agri2.delete("/yield-maps/:id", async (c) => {
   return c.json({ ok: true });
 });
 
-/** R-08: vigor y lluvia de la estancia frente a la mediana anónima de la zona (null si no hay al menos 3 vecinas). */
+/** Vigor y lluvia de la estancia frente a la mediana anónima de la zona (null si no hay al menos 3 vecinas). */
 agri2.get("/farms/:id/zone-benchmark", async (c) => c.json(await farmZoneBenchmark(c.var.sdb, c.req.param("id"))));
 
-/** A-32: zonas de manejo (3 por lote) calculadas con varias campañas de vigor. */
+/** Zonas de manejo (3 por lote) calculadas con varias campañas de vigor. */
 agri2.get("/farms/:id/management-zones", async (c) => c.json(await farmManagementZones(c.var.sdb, c.req.param("id"))));

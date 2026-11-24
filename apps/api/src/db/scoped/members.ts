@@ -1,4 +1,4 @@
-/** Equipo: miembros, PIN, asignaciones de lotes y baja de la cuenta (P-09). */
+/** Equipo: miembros, PIN, asignaciones de lotes y baja de la cuenta. */
 import { and, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import { isFieldRole, isOverdue, localDate, localTime, newId, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -81,7 +81,7 @@ export async function listMembers(sdb: ScopedDb) {
       )
       .groupBy(s.devices.userId),
     overdueTasksByAssignee(sdb),
-    // T-06: lotes distintos en los que anotó cada persona en 7 días
+    // Lotes distintos en los que anotó cada persona en 7 días
     sdb.db
       .select({ userId: s.records.authorId, n: sql<number>`count(distinct ${s.records.plotId})` })
       .from(s.records)
@@ -113,7 +113,7 @@ export async function listMembers(sdb: ScopedDb) {
 }
 
 /**
- * T-05: tareas abiertas vencidas por empleado. Vencida = pasó el día, o es hoy y pasó la hora límite, en la hora
+ * Tareas abiertas vencidas por empleado. Vencida = pasó el día, o es hoy y pasó la hora límite, en la hora
  * de la estancia. Las que vencieron hace 2 días o más lo están en cualquier huso (una consulta agrupada); solo las de
  * ayer a mañana se miran una por una con su huso.
  */
@@ -147,6 +147,7 @@ async function overdueTasksByAssignee(sdb: ScopedDb): Promise<Map<string, number
   return out;
 }
 
+/** Agrega una persona al equipo con un rol, dentro del límite de usuarios del plan. */
 export async function addMember(sdb: ScopedDb, input: {
   fullName: string;
   email: string | null;
@@ -200,6 +201,7 @@ export async function addMember(sdb: ScopedDb, input: {
   return { userId };
 }
 
+/** Rol activo de una persona en la organización. Falla con NotFoundError si no es miembro. */
 export async function memberRole(sdb: ScopedDb, userId: string): Promise<Role> {
   const [m] = await sdb.db
     .select({ role: s.memberships.role })
@@ -217,7 +219,7 @@ export async function memberRole(sdb: ScopedDb, userId: string): Promise<Role> {
 }
 
 /**
- * F-24: fija o cambia el PIN de ingreso de un empleado (solo dueño o administrador). Guarda el teléfono en su
+ * Fija o cambia el PIN de ingreso de un empleado (solo dueño o administrador). Guarda el teléfono en su
  * ficha y su clave normalizada. "phone_taken" si otra persona ya usa ese teléfono para ingresar.
  */
 export async function setMemberPin(sdb: ScopedDb, 
@@ -264,7 +266,7 @@ export async function setMemberPin(sdb: ScopedDb,
   return "ok";
 }
 
-/** F-24: quita el PIN (el empleado ya no puede ingresar con teléfono). */
+/** Quita el PIN (el empleado ya no puede ingresar con teléfono). */
 export async function clearMemberPin(sdb: ScopedDb, userId: string): Promise<void> {
   sdb.require(can.manageWorkers, "Solo dueño o administrador gestionan el PIN de los empleados");
   await sdb.memberRole(userId);
@@ -273,14 +275,14 @@ export async function clearMemberPin(sdb: ScopedDb, userId: string): Promise<voi
     .where(and(eq(s.userPins.userId, userId), eq(s.userPins.organizationId, sdb.auth.orgId)));
 }
 
-/** F-24: teléfono guardado en la ficha de un miembro de la organización. */
+/** Teléfono guardado en la ficha de un miembro de la organización. */
 export async function memberPhone(sdb: ScopedDb, userId: string): Promise<string | null> {
   await sdb.memberRole(userId);
   const [u] = await sdb.db.select({ phone: s.users.phone }).from(s.users).where(eq(s.users.id, userId)).limit(1);
   return u?.phone ?? null;
 }
 
-/** F-24: quiénes de la organización ya tienen PIN (para mostrarlo en Equipo). */
+/** Quiénes de la organización ya tienen PIN (para mostrarlo en Equipo). */
 export async function membersWithPin(sdb: ScopedDb): Promise<Set<string>> {
   sdb.require(can.assign);
   const rows = await sdb.db

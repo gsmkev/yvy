@@ -1,5 +1,5 @@
 /**
- * Zonas de amortiguación (A-15): qué casas, escuelas y cursos de agua quedan cerca de cada lote y qué aplicaciones
+ * Zonas de amortiguación: qué casas, escuelas y cursos de agua quedan cerca de cada lote y qué aplicaciones
  * cayeron dentro de la distancia. Se calcula en el navegador o en el teléfono (el Worker no hace geometría).
  */
 import { LIMITS } from "@yvy/shared";
@@ -7,10 +7,14 @@ import type { Area } from "./core";
 import { lineToAreaM, pointToAreaM, pointToLineM } from "./distance";
 import type { LineString } from "geojson";
 
+/** Tipo de elemento sensible que se vigila cerca de un lote. */
 export type BufferKind = "house" | "school" | "water" | "stream";
+/** Todos los tipos de elemento sensible. */
 export const BUFFER_KINDS: readonly BufferKind[] = ["house", "school", "water", "stream"];
+/** Distancia de amortiguación en metros por tipo. */
 export type BufferDistances = Record<BufferKind, number>;
 
+/** Distancias de amortiguación de referencia, tomadas de los límites compartidos. */
 export const DEFAULT_DISTANCES: BufferDistances = {
   house: LIMITS.buffer.house,
   school: LIMITS.buffer.school,
@@ -28,6 +32,7 @@ export function cleanDistances(raw: Partial<Record<BufferKind, unknown>> | null 
   return out;
 }
 
+/** Elemento sensible que queda dentro de la distancia de un lote. */
 export interface BufferHit {
   kind: BufferKind;
   name: string;

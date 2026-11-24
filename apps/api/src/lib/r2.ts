@@ -1,8 +1,14 @@
-/** URLs firmadas de R2 (SigV4 por query): firmar es HMAC, barato en CPU. El archivo no pasa por el Worker. */
+/** URLs firmadas de R2 (SigV4 por query): firmar es HMAC, barato en CPU. El archivo no pasa por el Worker.
+ */
 import { HTTPException } from "hono/http-exception";
 import { AwsClient } from "aws4fetch";
 import type { Bindings } from "../types";
 
+/**
+ * URL firmada de R2 para subir (PUT) o bajar (GET) un objeto del bucket de medios.
+ * @param ttl vigencia en segundos.
+ * @throws HTTPException 503 si faltan las credenciales S3 de R2.
+ */
 export const presign = async (
   env: Pick<Bindings, "R2_ACCESS_KEY_ID" | "R2_SECRET_ACCESS_KEY" | "R2_ACCOUNT_ID" | "MEDIA_BUCKET_NAME">,
   method: "PUT" | "GET",

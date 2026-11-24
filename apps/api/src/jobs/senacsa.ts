@@ -1,5 +1,5 @@
 /**
- * Recordatorios de las campañas oficiales de SENACSA (ADR 0005, sección 2). Corre dentro del cron diario de la
+ * Recordatorios de las campañas oficiales de SENACSA. Corre dentro del cron diario de la
  * sequía, un mensaje por estancia. Presupuesto: nada de consultas fuera de las fechas de aviso; dentro, 2 consultas
  * y un upsertAlert por aviso (el aviso no se repite: la clave es estancia + período + tipo).
  */
@@ -46,6 +46,7 @@ function senacsaDraft(farm: { id: string }, r: SenacsaReminder): AlertDraft {
   };
 }
 
+/** Crea los recordatorios de campaña vigentes para una estancia con hacienda; no hace nada fuera de las fechas de aviso. */
 export async function senacsaJob(
   db: DB,
   deps: { now: () => number },

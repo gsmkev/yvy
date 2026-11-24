@@ -1,19 +1,25 @@
 /**
- * Plan reproductivo (ADR 0005, sección 3): de la estación de servicio salen las fechas de cada etapa del ciclo.
+ * Plan reproductivo: de la estación de servicio salen las fechas de cada etapa del ciclo.
  * Valores ORIENTATIVOS (cada campo ajusta): servicio desde el 1 de noviembre por 90 días, parición 283 días después
  * de cada día de servicio, tacto 60 días después del fin del servicio, destete a los 7 meses.
  */
 import { addDays } from "./tasks";
 
+/** Inicio de la estación de servicio por defecto ("MM-DD"). */
 export const DEFAULT_BREEDING_START = "11-01";
+/** Duración por defecto de la estación de servicio, en días. */
 export const DEFAULT_BREEDING_DAYS = 90;
+/** Rango permitido para la duración de la estación de servicio, en días. */
 export const BREEDING_DAYS_LIMITS = { min: 30, max: 180 } as const;
 /** Etapas, en días y meses. */
 export const REPRO_PLAN = { prepDays: 45, tactoAfterServiceDays: 60, gestationDays: 283, weaningMonths: 7, vaccineFromMonths: 3, vaccineToMonths: 8 } as const;
 
+/** Etapas del plan reproductivo, en orden cronológico. */
 export const PLAN_STAGE_IDS = ["prep", "service", "tacto", "calving", "heifer_vaccine", "weaning"] as const;
+/** Etapa del plan reproductivo. */
 export type PlanStageId = (typeof PLAN_STAGE_IDS)[number];
 
+/** Fechas de una etapa del plan reproductivo. */
 export interface PlanStage {
   id: PlanStageId;
   /** "YYYY-MM-DD". Una etapa de un solo día tiene from = to. */

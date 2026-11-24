@@ -1,4 +1,4 @@
-/** Códigos QR de los puntos de interés (F-28): la web los imprime para pegar en un bebedero o silo; la app los escanea. */
+/** Códigos QR de los puntos de interés: la web los imprime para pegar en un bebedero o silo; la app los escanea. */
 
 const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const POI_QR = new RegExp(`^yvy://poi\\?id=(${UUID})$`, "i");

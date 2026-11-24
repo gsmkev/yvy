@@ -1,5 +1,5 @@
 /**
- * Pronóstico por lote en estancias grandes (C-03). Un mensaje de la cola por lote: pide a MET Norway el pronóstico
+ * Pronóstico por lote en estancias grandes. Un mensaje de la cola por lote: pide a MET Norway el pronóstico
  * del centro del lote (coordenadas a 4 decimales, User-Agent propio) y guarda los días de la última corrida.
  * Respeta los términos de MET Norway: no vuelve a pedir un lote con una corrida de menos de 3 horas.
  */
@@ -35,6 +35,10 @@ export async function plotsNeedingForecast(db: DB): Promise<{ farmId: string; pl
     .map(({ farmId, plotId }) => ({ farmId, plotId }));
 }
 
+/**
+ * Guarda el pronóstico diario de un lote de una estancia grande.
+ * @returns `"cached"` si la última corrida tiene menos de 3 horas, `"skipped"` si el lote no aplica o no hay días.
+ */
 export async function plotForecastJob(
   db: DB,
   env: Bindings,

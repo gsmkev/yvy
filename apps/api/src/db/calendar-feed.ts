@@ -1,5 +1,5 @@
 /**
- * I-04: feed iCalendar de tareas por usuario. El token es secreto y revocable; en la base queda solo su SHA-256.
+ * Feed iCalendar de tareas por usuario. El token es secreto y revocable; en la base queda solo su SHA-256.
  * Los programas de calendario piden el .ics sin sesión, así que el feed arma un ScopedDb con el usuario y la organización
  * del token (y su rol actual): ve lo mismo que vería en la web, ni más ni menos.
  */
@@ -19,6 +19,7 @@ const TOUCH_EVERY_MS = 10 * 60 * 1000;
 const active = (userId: string, orgId: string) =>
   and(eq(s.calendarFeeds.userId, userId), eq(s.calendarFeeds.organizationId, orgId), isNull(s.calendarFeeds.revokedAt));
 
+/** Estado del feed de calendario de la persona: si está activo y cuándo se creó y se usó por última vez. */
 export async function feedStatus(sdb: ScopedDb) {
   const [f] = await sdb.db
     .select({ createdAt: s.calendarFeeds.createdAt, lastUsedAt: s.calendarFeeds.lastUsedAt })
@@ -47,6 +48,7 @@ export async function createFeed(sdb: ScopedDb, now = sdb.now()): Promise<string
   return token;
 }
 
+/** Revoca el feed de calendario activo de la persona. */
 export async function revokeFeed(sdb: ScopedDb, now = sdb.now()): Promise<void> {
   await sdb.db.update(s.calendarFeeds).set({ revokedAt: now }).where(active(sdb.auth.userId, sdb.auth.orgId));
 }

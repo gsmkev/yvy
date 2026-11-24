@@ -1,5 +1,5 @@
 /**
- * Consumo automático (E-13): un registro de campo con productos del catálogo descuenta stock y carga costo.
+ * Consumo automático: un registro de campo con productos del catálogo descuenta stock y carga costo.
  *
  * - Una aplicación o una fertilización consume dosis por hectárea x superficie hecha; un tratamiento sanitario,
  *   la cantidad que se anotó. Cada producto genera una salida de stock del depósito predeterminado de la estancia,

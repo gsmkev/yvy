@@ -1,3 +1,5 @@
+/** Manejadores del push para las tareas: estado, comentarios y checklist. */
+
 import { and, eq } from "drizzle-orm";
 import {
   LIMITS,
@@ -31,7 +33,7 @@ const updateTask = (ctx: PushCtx, t: Task, set: Partial<typeof s.tasks.$inferIns
     .set({ ...set, updatedAt: ctx.now, version: currentVersion })
     .where(and(eq(s.tasks.id, t.id), eq(s.tasks.organizationId, ctx.org)));
 
-/** Fase 3: al completar una tarea recurrente nace la siguiente, con el mismo id que crea el celular. */
+/** Al completar una tarea recurrente nace la siguiente, con el mismo id que crea el celular. */
 const nextOccurrence = (ctx: PushCtx, t: Task, next: string) =>
   ctx.db
     .insert(s.tasks)
@@ -60,7 +62,7 @@ const nextOccurrence = (ctx: PushCtx, t: Task, next: string) =>
     })
     .onConflictDoNothing();
 
-/** T-03: ciertas tareas se cierran solo con un registro que traiga foto y/o ubicación. */
+/** Ciertas tareas se cierran solo con un registro que traiga foto y/o ubicación. */
 function closeRequirementProblem(ctx: PushCtx, t: Task, row: Of<"tasks.status">["row"]): string | null {
   const need = row.status === "done" && t.status !== "done" ? closeRequirements(t.kind) : null;
   if (!need) return null;
@@ -72,13 +74,14 @@ function closeRequirementProblem(ctx: PushCtx, t: Task, row: Of<"tasks.status">[
   );
 }
 
+/** Cambio de estado de una tarea; al completar una recurrente nace la siguiente. */
 export function tasksStatus(ctx: PushCtx, m: Of<"tasks.status">): void {
   const t = ctx.tasks.get(m.row.id);
   if (!t || t.organizationId !== ctx.org) return ctx.reject(m, "not_found");
   if (taskForbidden(ctx, t)) return ctx.reject(m, "forbidden");
   const problem = closeRequirementProblem(ctx, t, m.row);
   if (problem) return ctx.reject(m, "close_requirements", problem);
-  // PRD §11: `done` gana sobre `open`.
+  // `done` gana sobre `open`.
   if (!(t.status === "done" && m.row.status === "open")) {
     const { now } = ctx;
     const done = m.row.status === "done";
@@ -97,6 +100,7 @@ export function tasksStatus(ctx: PushCtx, m: Of<"tasks.status">): void {
   ctx.accept(m, t.id);
 }
 
+/** Comentario en una tarea. */
 export async function tasksComment(ctx: PushCtx, m: Of<"tasks.comment">): Promise<void> {
   const t = ctx.tasks.get(m.row.taskId);
   if (!t || t.organizationId !== ctx.org || t.deletedAt) return ctx.reject(m, "not_found");
@@ -111,6 +115,7 @@ export async function tasksComment(ctx: PushCtx, m: Of<"tasks.comment">): Promis
   ctx.accept(m, t.id);
 }
 
+/** Tilde de un ítem del checklist de una tarea. */
 export function tasksCheck(ctx: PushCtx, m: Of<"tasks.check">): void {
   const t = ctx.tasks.get(m.row.id);
   if (!t || t.organizationId !== ctx.org) return ctx.reject(m, "not_found");

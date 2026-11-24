@@ -9,6 +9,7 @@ import { validMentions } from "../comments";
 import { can, type ScopedDb } from "../scoped";
 import { collectIds, type PushIds } from "./ids";
 
+/** Estado mínimo de un registro ya guardado, para decidir si una mutación se acepta. */
 export interface RecordState {
   organizationId: string;
   farmId: string;
@@ -28,7 +29,7 @@ type AttachmentState = { id: string; organizationId: string; recordId: string; d
 export interface PushOut {
   recordUpserts: (typeof s.records.$inferInsert)[];
   recordDeletes: string[];
-  /** Registros que descuentan stock y cargan costo (ERP, E-13). */
+  /** Registros que descuentan stock y cargan costo (ERP). */
   effectUpserts: EffectRecord[];
   attachmentUpserts: (typeof s.attachments.$inferInsert)[];
   attachmentDeletes: string[];
@@ -41,6 +42,10 @@ export interface PushOut {
   applied: (typeof s.syncMutations.$inferInsert)[];
 }
 
+/**
+ * Contexto de un push: lecturas previas, resultados por mutación y filas por escribir, compartidos por los
+ * manejadores.
+ */
 export interface PushCtx {
   sdb: ScopedDb;
   db: DB;
@@ -49,7 +54,7 @@ export interface PushCtx {
   role: ScopedDb["auth"]["role"];
   deviceId: string;
   now: number;
-  /** I-02: recibe los registros que este push crea (no los que edita), para avisar a los webhooks. */
+  /** Recibe los registros que este push crea (no los que edita), para avisar a los webhooks. */
   created?: (typeof s.records.$inferInsert)[];
   results: MutationResult[];
   out: PushOut;
@@ -82,7 +87,7 @@ export interface PushCtx {
   accept: (m: Mutation, rowId: string) => void;
 }
 
-/** Fotos y notas de voz se cuentan aparte: una nota de voz no le quita lugar a las fotos (F-09). */
+/** Fotos y notas de voz se cuentan aparte: una nota de voz no le quita lugar a las fotos. */
 export const countKey = (recordId: string, mime: string) => `${recordId}:${isAudioMime(mime) ? "audio" : "photo"}`;
 
 const ids = <T>(set: Set<T>) => [...set];
@@ -167,7 +172,7 @@ function readTable(sdb: ScopedDb, i: PushIds, mutations: Mutation[]) {
           .from(s.plots)
           .where(inArray(s.plots.id, ids(i.plotUpsertIds)))
       : empty,
-    // T-09 / K-05: estancias permitidas (supervisor, o admin/agrónomo con lista del dueño)
+    // Estancias permitidas (supervisor, o admin/agrónomo con lista del dueño)
     auth.role === "owner" || sdb.isWorker
       ? empty
       : db
@@ -194,7 +199,7 @@ const recordsQuery = (db: DB, i: PushIds) =>
         .where(inArray(s.records.id, ids(i.recordIds)))
     : empty;
 
-/** T-08: comentarios, los registros visibles para comentar, el nombre del autor y las menciones válidas. */
+/** Comentarios, los registros visibles para comentar, el nombre del autor y las menciones válidas. */
 async function readComments(sdb: ScopedDb, i: PushIds) {
   const { db, auth } = sdb;
   const org = auth.orgId;
@@ -235,7 +240,7 @@ async function readComments(sdb: ScopedDb, i: PushIds) {
   return { commentRows, visibleForComments, authorName, validMentioned };
 }
 
-/** M-03: lotes que llegan por plots.upsert (geometría ya parseada) y si el plan alcanza para los nuevos. */
+/** Lotes que llegan por plots.upsert (geometría ya parseada) y si el plan alcanza para los nuevos. */
 async function parsePlotUpserts(sdb: ScopedDb, mutations: Mutation[], plotState: Map<string, PlotState>) {
   const parsedPlots = new Map<string, { area: Area; ha: number }>();
   let planBlocked = false;
@@ -257,6 +262,10 @@ async function parsePlotUpserts(sdb: ScopedDb, mutations: Mutation[], plotState:
   return { parsedPlots, planBlocked };
 }
 
+/**
+ * Lee de una vez todo lo que las mutaciones necesitan (registros, adjuntos, tareas, estancias, lotes) y arma el
+ * contexto.
+ */
 export async function buildContext(
   sdb: ScopedDb,
   deviceId: string,

@@ -24,13 +24,6 @@ import { usePlotForm, usePlotHistory, usePlotNdvi, useProblemTask } from "./plot
 /**
  * Panel lateral con la ficha de un lote.
  * @param workers personas a las que se puede asignar una tarea.
- * @param canEdit habilita editar el lote.
- * @param problemAreas áreas problema del lote.
- * @param onShowArea centra el mapa en un área problema.
- * @param onEditShape pasa el mapa a edición de vértices.
- * @param onSplit empieza a dividir el lote con una línea.
- * @param onMerge empieza a unir el lote con otro contiguo.
- * @param farm estancia del lote, para el encabezado de la grilla de muestreo.
  */
 export function PlotPanel({
   plot,
@@ -46,16 +39,19 @@ export function PlotPanel({
 }: {
   plot: Plot;
   workers: Member[];
-  canEdit: boolean;
+  /** Habilita editar el lote. */
+canEdit: boolean;
   onClose: () => void;
   /** Áreas problema de este lote. */
   problemAreas?: ProblemArea[];
-  onShowArea?: (a: ProblemArea) => void;
+  /** Centra el mapa en un área problema. */
+onShowArea?: (a: ProblemArea) => void;
   /** Pasa el mapa a edición de vértices de este lote. */
   onEditShape?: () => void;
   /** Dibujar una línea para dividir el lote / elegir otro lote para unir. */
   onSplit?: () => void;
-  onMerge?: () => void;
+  /** Empieza a unir el lote con otro contiguo. */
+onMerge?: () => void;
   /** Estancia del lote (encabezado de la grilla de muestreo). */
   farm?: Farm;
 }) {

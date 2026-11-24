@@ -1,3 +1,8 @@
+/**
+ * Punto de entrada de `@yvy/shared`: reexporta esquemas de registros, protocolo de sync, límites, utilidades puras e i18n.
+ * @module
+ */
+
 export * from "./limits";
 export * from "./pricing";
 export * from "./ids";

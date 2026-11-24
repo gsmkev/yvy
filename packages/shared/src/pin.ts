@@ -1,4 +1,4 @@
-/** Ingreso con teléfono y PIN para empleados (F-24): normalización del teléfono y reglas del PIN. Compartido por Worker, web y app. */
+/** Ingreso con teléfono y PIN para empleados: normalización del teléfono y reglas del PIN. Compartido por Worker, web y app. */
 
 /**
  * Clave de búsqueda de un teléfono: solo dígitos, con prefijo de país. "0981 123 456", "+595 981 123456" y
@@ -13,7 +13,9 @@ export function phoneKey(raw: string): string | null {
   return digits.length >= 10 && digits.length <= 15 ? digits : null;
 }
 
+/** Largo del PIN de ingreso. */
 export const PIN_LENGTH = 6;
+/** Formato válido de un PIN: solo dígitos, del largo `PIN_LENGTH`. */
 export const PIN_REGEX = /^\d{6}$/;
 
 /** PINs que un dueño no debería poner: repetidos (111111) o en escalera (123456, 654321). */

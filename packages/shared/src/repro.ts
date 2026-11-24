@@ -1,14 +1,19 @@
 /**
- * Reproducción del rodeo de cría (G-20): servicio, tacto, parición y destete, con sus índices.
+ * Reproducción del rodeo de cría: servicio, tacto, parición y destete, con sus índices.
  * Lógica pura compartida por el Worker y la web.
  */
 
+/** Eventos del ciclo reproductivo. */
 export const REPRO_EVENTS = ["service", "pregnancy_check", "calving", "weaning"] as const;
+/** Evento del ciclo reproductivo. */
 export type ReproEvent = (typeof REPRO_EVENTS)[number];
 
+/** Métodos de servicio: monta natural o inseminación artificial. */
 export const SERVICE_METHODS = ["natural", "ia"] as const;
+/** Método de servicio. */
 export type ServiceMethod = (typeof SERVICE_METHODS)[number];
 
+/** Evento reproductivo mínimo para calcular los índices. */
 export interface ReproRecord {
   event: ReproEvent;
   /** Vacas servidas, tactadas o que parieron; terneros destetados en un destete. */
@@ -19,6 +24,7 @@ export interface ReproRecord {
   calves?: number;
 }
 
+/** Totales del período e índices de preñez, parición y destete (en %; null sin base para calcularlos). */
 export interface ReproIndices {
   services: number;
   checked: number;
@@ -71,6 +77,7 @@ export function reproIndices(records: readonly ReproRecord[]): ReproIndices {
   };
 }
 
+/** Evento reproductivo tal como lo lista la respuesta. */
 export interface ReproRow {
   id: string;
   plotId: string | null;

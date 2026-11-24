@@ -20,14 +20,6 @@ interface RecordColumn<T> extends ColDef<T> {
 /**
  * Tabla de un maestro con alta, cambio y baja.
  * @param path ruta del maestro en la API.
- * @param inline dentro de otra pantalla: el botón de alta va en el lugar y no en el encabezado.
- * @param newLabel texto del botón de alta.
- * @param columns columnas de la tabla.
- * @param fields campos del formulario.
- * @param name nombre de una fila para el título y la confirmación de borrado.
- * @param emptyTitle título del estado vacío.
- * @param emptyHint ayuda del estado vacío.
- * @param exportName base del nombre del archivo exportado.
  */
 export function RecordList<T extends Row>({
   path,
@@ -43,15 +35,20 @@ export function RecordList<T extends Row>({
   path: string;
   /** Dentro de otro panel: el botón de alta va en el lugar y no en el encabezado. */
   inline?: boolean;
-  newLabel: string;
-  columns: RecordColumn<T>[];
-  fields: FieldDef[];
-  name: (r: T) => string;
+  /** Texto del botón de alta. */
+newLabel: string;
+  /** Columnas de la tabla. */
+columns: RecordColumn<T>[];
+  /** Campos del formulario. */
+fields: FieldDef[];
+  /** Nombre de una fila para el título y la confirmación de borrado. */
+name: (r: T) => string;
   /** Qué falta, en una frase. */
   emptyTitle?: string;
   /** Para qué sirve, en una frase. */
   emptyHint?: ReactNode;
-  exportName?: string;
+  /** Base del nombre del archivo exportado. */
+exportName?: string;
 }) {
   const q = useErpList<T>(path);
   const qc = useQueryClient();

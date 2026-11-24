@@ -1,13 +1,16 @@
 /**
- * Prescripción de dosis variable (A-33): una dosis por zona de manejo, exportable a la maquinaria.
+ * Prescripción de dosis variable: una dosis por zona de manejo, exportable a la maquinaria.
  * Todo es puro: la web arma el shapefile y el ISOXML en el navegador (nunca en el Worker).
  */
 import { LIMITS } from "./limits";
 import { safeXml } from "./markup";
 
+/** Unidades de dosis de una prescripción. */
 export const RX_RATE_UNITS = ["kg_ha", "l_ha"] as const;
+/** Unidad de dosis de una prescripción. */
 export type RateUnit = (typeof RX_RATE_UNITS)[number];
 
+/** Zona de manejo con su superficie, dosis y geometría. */
 export interface PrescriptionZone {
   zone: number;
   areaHa: number;
@@ -16,6 +19,7 @@ export interface PrescriptionZone {
   geometry: { type: "MultiPolygon"; coordinates: number[][][][] };
 }
 
+/** Prescripción de dosis variable de un lote: producto, unidad y zonas. */
 export interface RatePrescriptionPlan {
   plotName: string;
   product: string;

@@ -1,9 +1,11 @@
+/** Diccionario parcial en guaraní; lo no traducido cae a es-PY. */
+
 import type { Messages } from "./es-PY";
 
 type DeepPartial<T> = { [K in keyof T]?: T[K] extends string ? string : DeepPartial<T[K]> };
 
 /**
- * Guaraní paraguayo (U-22). Parcial a propósito: solo la navegación principal de la app y la web y la pantalla Anotar
+ * Guaraní paraguayo. Parcial a propósito: solo la navegación principal de la app y la web y la pantalla Anotar
  * (lote, qué anotar, las preguntas de lluvia, recorrida, plaga, cultivo, pasto, aguada, hacienda y nota, y la foto).
  * Todo lo que no está acá se muestra en es-PY (ver `t`). Las claves siguen el árbol de es-PY, así que el compilador
  * avisa si una no existe; los {{marcadores}} tienen que ser los mismos que en es-PY (lo controla una prueba).

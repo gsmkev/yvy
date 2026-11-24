@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Cuenta las filas de las tablas principales de D1 y las guarda en un JSON, para que la verificación del backup (P-05)
+ * Cuenta las filas de las tablas principales de D1 y las guarda en un JSON, para que la verificación del backup
  * compare contra lo que había al exportar. Son SELECT de solo lectura (nada se modifica).
  *
  * Uso: node scripts/backup-counts.mjs salida.json [--local]
@@ -14,6 +14,7 @@ import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+/** Tablas de negocio cuyas filas se cuentan. */
 export const COUNT_TABLES = [
   "organizations",
   "users",

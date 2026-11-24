@@ -1,5 +1,5 @@
 /**
- * Entregas de grano al acopio (A-23): peso neto después de los descuentos de balanza.
+ * Entregas de grano al acopio: peso neto después de los descuentos de balanza.
  * El acopio descuenta por humedad (lleva el grano a la humedad base), por impurezas y, a veces, otros conceptos.
  */
 import type { CROPS } from "./schema";
@@ -17,6 +17,7 @@ export const BASE_MOISTURE_PCT: Record<Crop, number> = {
   otro: 13,
 };
 
+/** Ticket de balanza de una entrega. */
 export interface GrainTicket {
   grossKg: number;
   moisturePct: number | null;
@@ -27,6 +28,7 @@ export interface GrainTicket {
   otherKg: number;
 }
 
+/** Neto de una entrega con el detalle de cada descuento (kg). */
 export interface GrainNet {
   /** Merma por humedad en kg (0 si la humedad no pasa la base). */
   moistureKg: number;

@@ -1,9 +1,12 @@
+/** Maquinaria y contratistas, mantenimiento preventivo y costo de labor propia frente a contratista. */
+
 import { z } from "zod";
 import { uuid } from "./internal";
 import { MACHINE_TYPES, METER_KINDS, CONTRACTOR_SERVICES, RATE_UNITS, isoDate, optText, minorAmount, currencySchema } from "./core";
 
-// ---------- Maquinaria (E-03) ----------
+// ---------- Maquinaria ----------
 
+/** Alta o cambio de una máquina o vehículo. */
 export const machineInput = z.object({
   name: z.string().trim().min(1).max(80),
   type: z.enum(MACHINE_TYPES),
@@ -15,8 +18,9 @@ export const machineInput = z.object({
   farmId: z.string().uuid().nullish(),
 });
 
-// ---------- Contratistas (E-04) ----------
+// ---------- Contratistas ----------
 
+/** Alta o cambio de la tarifa de un contratista por servicio. */
 export const contractorInput = z.object({
   name: z.string().trim().min(1).max(120),
   partyId: z.string().uuid().nullish(),
@@ -28,13 +32,16 @@ export const contractorInput = z.object({
   note: optText(300),
 });
 
-// ---------- Mantenimiento preventivo (E-22) ----------
+// ---------- Mantenimiento preventivo ----------
 
+/** Tipos de servicio de mantenimiento: preventivo o reparación. */
 export const MAINTENANCE_KINDS = ["preventive", "repair"] as const;
+/** Estado del próximo servicio de un plan de mantenimiento. */
 export type MaintenanceStatus = "ok" | "soon" | "overdue";
 /** Se avisa cuando falta esta fracción del intervalo (o menos) para el próximo servicio. */
 export const MAINTENANCE_WARN_FRACTION = 0.1;
 
+/** Plan de mantenimiento: servicio que se repite cada cierto uso del medidor. */
 export const maintenancePlanInput = z.object({
   machineId: uuid,
   name: z.string().trim().min(1).max(80),
@@ -43,6 +50,7 @@ export const maintenancePlanInput = z.object({
   lastDoneMeter: z.number().min(0).max(10_000_000).nullish(),
 });
 
+/** Servicio de mantenimiento realizado a una máquina. */
 export const maintenanceLogInput = z.object({
   machineId: uuid,
   /** Si es un servicio de un plan, el plan vuelve a contar desde `meterValue`. */
@@ -69,8 +77,9 @@ export function maintenanceStatus(p: { meter: number; lastDoneMeter: number; eve
   return { dueAt, remaining, status };
 }
 
-// ---------- Costo de labor propia frente a contratista (E-23) ----------
+// ---------- Costo de labor propia frente a contratista ----------
 
+/** Datos para comparar el costo de hacer el servicio con maquinaria propia. */
 export const machineCostInput = z.object({
   service: z.enum(CONTRACTOR_SERVICES),
   purchasePricePyg: minorAmount,
@@ -82,6 +91,7 @@ export const machineCostInput = z.object({
   fuelPricePyg: minorAmount.nullish(),
 });
 
+/** Entrada del cálculo del costo propio por hora. */
 export interface OwnCostInput {
   fuelLitersPerHour: number | null;
   fuelPricePyg: number | null;
@@ -91,6 +101,7 @@ export interface OwnCostInput {
   lifeHours: number;
   haPerHour: number | null;
 }
+/** Costo propio por hora y por hectárea. */
 export interface OwnCost {
   fuelPerHour: number;
   operatorPerHour: number;

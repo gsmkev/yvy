@@ -1,5 +1,5 @@
 /**
- * P-08: TOTP (RFC 6238 sobre HOTP de RFC 4226, HMAC-SHA1) con WebCrypto. Un código cuesta tres HMAC: barato en CPU.
+ * TOTP (RFC 6238 sobre HOTP de RFC 4226, HMAC-SHA1) con WebCrypto. Un código cuesta tres HMAC: barato en CPU.
  * El secreto se guarda cifrado con AES-GCM; la clave se deriva de JWT_SECRET, así que rotar JWT_SECRET obliga a
  * volver a dar de alta el segundo factor (igual que los PIN).
  */
@@ -11,6 +11,7 @@ const B32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 const TOTP_STEP_SECONDS = 30;
 const TOTP_DIGITS = 6;
 
+/** Codifica bytes en base32 (RFC 4648, sin relleno). */
 export function base32Encode(bytes: Uint8Array): string {
   let bits = 0;
   let value = 0;
@@ -27,6 +28,10 @@ export function base32Encode(bytes: Uint8Array): string {
   return out;
 }
 
+/**
+ * Decodifica base32 ignorando mayúsculas, espacios, guiones y relleno.
+ * @throws Error si hay caracteres fuera del alfabeto.
+ */
 export function base32Decode(text: string): Uint8Array {
   const clean = text.toUpperCase().replace(/[\s=-]/g, "");
   const out: number[] = [];
@@ -45,9 +50,10 @@ export function base32Decode(text: string): Uint8Array {
   return Uint8Array.from(out);
 }
 
+/** Secreto TOTP nuevo (20 bytes aleatorios) en base32. */
 export const newTotpSecret = (): string => base32Encode(crypto.getRandomValues(new Uint8Array(20)));
 
-/** Código de `digits` dígitos para un contador (RFC 4226 §5.3). */
+/** Código de `digits` dígitos para un contador (RFC 4226, sección 5.3). */
 export async function hotp(secret: Uint8Array, counter: number, digits = TOTP_DIGITS): Promise<string> {
   const key = await crypto.subtle.importKey("raw", secret, { name: "HMAC", hash: "SHA-1" }, false, ["sign"]);
   const msg = new ArrayBuffer(8);
@@ -60,6 +66,7 @@ export async function hotp(secret: Uint8Array, counter: number, digits = TOTP_DI
   return String(bin % 10 ** digits).padStart(digits, "0");
 }
 
+/** Número de paso de 30 s al que pertenece el instante `nowMs`. */
 export const totpStep = (nowMs: number): number => Math.floor(nowMs / 1000 / TOTP_STEP_SECONDS);
 
 /**
@@ -75,6 +82,7 @@ export async function matchTotp(secretBase32: string, code: string, nowMs: numbe
   return hit;
 }
 
+/** URI `otpauth://` para el QR de las apps de autenticación. */
 export const otpauthUri = (secretBase32: string, account: string, issuer = "Yvy"): string =>
   `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(account)}?secret=${secretBase32}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=${TOTP_DIGITS}&period=${TOTP_STEP_SECONDS}`;
 
@@ -83,6 +91,7 @@ export const otpauthUri = (secretBase32: string, account: string, issuer = "Yvy"
 /** Sin 0/O/1/I para poder dictarlos. 10 caracteres = 50 bits; se muestran como XXXXX-XXXXX. */
 const RECOVERY_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
+/** Código de recuperación nuevo con formato `XXXXX-XXXXX`. */
 export function newRecoveryCode(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(10));
   const raw = [...bytes].map((b) => RECOVERY_ALPHABET[b % RECOVERY_ALPHABET.length]).join("");
@@ -95,10 +104,12 @@ export function normalizeRecoveryCode(input: string): string | null {
   return /^[A-HJ-NP-Z2-9]{10}$/.test(raw) ? raw : null;
 }
 
+/** Hash con que se guarda un código de recuperación ya normalizado, ligado al usuario. */
 export const recoveryHash = (userId: string, normalized: string): Promise<string> => sha256Hex(`recovery:${userId}:${normalized}`);
 
 // ---------- Pase entre el código de email y el segundo factor ----------
 
+/** Contenido del pase entre el código de email y el segundo factor. */
 interface TotpTicket {
   userId: string;
   organizationId?: string;
@@ -115,6 +126,7 @@ export async function signTicket(jwtSecret: string, t: TotpTicket): Promise<stri
   return `${payload}.${await hmacHex(jwtSecret, `totp-ticket:${payload}`)}`;
 }
 
+/** Verifica la firma y el vencimiento del pase; devuelve su contenido o null. */
 export async function verifyTicket(jwtSecret: string, ticket: string, nowMs: number): Promise<TotpTicket | null> {
   const [payload, sig] = ticket.split(".");
   if (!payload || !sig || !(await hmacVerifyHex(jwtSecret, `totp-ticket:${payload}`, sig))) return null;

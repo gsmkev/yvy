@@ -1,4 +1,4 @@
-/** Fechas del calendario semanal y vencimientos en palabras (T-04). Puras: las fechas son "AAAA-MM-DD". */
+/** Fechas del calendario semanal y vencimientos en palabras. Puras: las fechas son "AAAA-MM-DD". */
 import { t } from "./i18n";
 import { addDays } from "./tasks";
 
@@ -12,7 +12,7 @@ export function weekStart(date: string): string {
 export const weekDays = (monday: string): string[] => Array.from({ length: 7 }, (_, i) => addDays(monday, i));
 
 /**
- * T-04: labores de la semana agrupadas por día. Las canceladas no se muestran; dentro del día salen primero las que
+ * Labores de la semana agrupadas por día. Las canceladas no se muestran; dentro del día salen primero las que
  * tienen hora (por hora) y después las del día entero, por prioridad.
  */
 export function tasksByDay<T extends { dueDate: string; dueTime: string | null; status: string; priority: string }>(

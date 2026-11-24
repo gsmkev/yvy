@@ -1,9 +1,14 @@
+/**
+ * Tablas operativas: actividad y uso diarios, acceso por estancia, solicitudes, segundo factor, webhooks, jobs, rangos
+ * de dosis y confirmaciones de registros.
+ */
+
 import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { FARM_ACCESS_LEVELS } from "./enums";
 
 // ---------- Operación ----------
 
-/** Un registro por usuario y día con actividad (métricas del PRD §4; 1 escritura por día). */
+/** Un registro por usuario y día con actividad (1 escritura por día). */
 export const activityDaily = sqliteTable(
   "activity_daily",
   {
@@ -15,7 +20,7 @@ export const activityDaily = sqliteTable(
   (t) => [primaryKey({ columns: [t.userId, t.day] }), index("activity_daily_org_idx").on(t.organizationId, t.day)],
 );
 
-/** P-09: el dueño pide la baja de la cuenta. Solo se registra; el borrado lo hace el equipo a mano. */
+/** El dueño pide la baja de la cuenta. Solo se registra; el borrado lo hace el equipo a mano. */
 export const deletionRequests = sqliteTable(
   "deletion_requests",
   {
@@ -28,6 +33,7 @@ export const deletionRequests = sqliteTable(
   (t) => [index("deletion_requests_org_idx").on(t.organizationId, t.createdAt)],
 );
 
+/** Métricas diarias del sistema con su límite del plan gratis. */
 export const usageDaily = sqliteTable(
   "usage_daily",
   {
@@ -40,7 +46,7 @@ export const usageDaily = sqliteTable(
 );
 
 /**
- * Zonas de manejo de un lote (A-32): 3 zonas (1 = menor vigor relativo, 3 = mayor) calculadas por workers-py con k-means
+ * Zonas de manejo de un lote: 3 zonas (1 = menor vigor relativo, 3 = mayor) calculadas por workers-py con k-means
  * sobre el NDVI máximo de varias campañas. Una fila por lote y zona; `geometry` es un MultiPolygon GeoJSON simplificado.
  * Solo las escribe /ingest; no se sincronizan.
  */
@@ -64,7 +70,7 @@ export const managementZones = sqliteTable(
 );
 
 /**
- * T-09 / K-05: estancias a las que se limita a una persona. No se sincroniza.
+ * Estancias a las que se limita a una persona. No se sincroniza.
  * `supervisor`: sin filas no ve ninguna estancia. `admin` y `agronomist`: sin filas ven todas; con filas, solo esas
  * (y `view` las deja en solo lectura). El dueño y los roles de campo no usan esta tabla.
  */
@@ -81,7 +87,7 @@ export const farmAccess = sqliteTable(
 );
 
 /**
- * Pedidos del informe gratis de riesgo climático desde la landing (V-04). No es de una organización ni se sincroniza.
+ * Pedidos del informe gratis de riesgo climático desde la landing. No es de una organización ni se sincroniza.
  * El email se guarda solo para mandar el informe (consentimiento explícito en `consentAt`) y se borra pasado
  * LIMITS.leads.retentionMs. La IP se guarda como hash para el tope por conexión. El enlace del informe se deriva de
  * `id` con HMAC; no se guarda.
@@ -144,6 +150,7 @@ export const trialRequests = sqliteTable(
   ],
 );
 
+/** Segundo factor (TOTP) de un usuario: secreto cifrado y control de intentos. */
 export const userTotp = sqliteTable("user_totp", {
   userId: text("user_id").primaryKey(),
   secretEnc: text("secret_enc").notNull(),
@@ -154,7 +161,7 @@ export const userTotp = sqliteTable("user_totp", {
   createdAt: integer("created_at").notNull(),
 });
 
-/** P-08: códigos de recuperación de un solo uso; solo queda el SHA-256. */
+/** Códigos de recuperación de un solo uso; solo queda el SHA-256. */
 export const totpRecoveryCodes = sqliteTable(
   "totp_recovery_codes",
   {
@@ -168,7 +175,7 @@ export const totpRecoveryCodes = sqliteTable(
 );
 
 /**
- * I-02: URLs a las que la organización pide que le avisen. El secreto de firma va cifrado (AES-GCM) porque el
+ * URLs a las que la organización pide que le avisen. El secreto de firma va cifrado (AES-GCM) porque el
  * Worker tiene que usarlo para firmar cada envío. `events` es un arreglo JSON de WEBHOOK_EVENTS.
  */
 export const webhookEndpoints = sqliteTable(
@@ -195,7 +202,7 @@ export const webhookEndpoints = sqliteTable(
 );
 
 /**
- * I-02: buzón de eventos de aviso nuevo. Se escribe en el mismo batch que el aviso (solo si la organización tiene
+ * Buzón de eventos de aviso nuevo. Se escribe en el mismo batch que el aviso (solo si la organización tiene
  * un webhook que lo pide) y el cron de 15 minutos lo pasa a la cola y lo vacía. No se sincroniza.
  */
 export const webhookOutbox = sqliteTable(
@@ -211,7 +218,7 @@ export const webhookOutbox = sqliteTable(
 );
 
 /**
- * I-04: enlace secreto del calendario de tareas (.ics) de un usuario en una organización. Solo se guarda el SHA-256
+ * Enlace secreto del calendario de tareas (.ics) de un usuario en una organización. Solo se guarda el SHA-256
  * del token. Hay a lo sumo uno vigente por usuario y organización; regenerarlo revoca el anterior. No se sincroniza.
  */
 export const calendarFeeds = sqliteTable(
@@ -229,7 +236,7 @@ export const calendarFeeds = sqliteTable(
 );
 
 /**
- * P-04: última corrida de cada job de datos (sentinel2, chirps, firms), anotada por /ingest en cada pedido firmado.
+ * Última corrida de cada job de datos (sentinel2, chirps, firms), anotada por /ingest en cada pedido firmado.
  * Alimenta la página pública de estado; no guarda nada de clientes. No se sincroniza.
  */
 export const jobRuns = sqliteTable("job_runs", {
@@ -240,7 +247,7 @@ export const jobRuns = sqliteTable("job_runs", {
 });
 
 /**
- * X-26: dosis habitual de un producto por hectárea, en la unidad base del producto (l o kg). La carga la organización;
+ * Dosis habitual de un producto por hectárea, en la unidad base del producto (l o kg). La carga la organización;
  * una aplicación fuera de este rango aparece en "Para revisar". Tabla de oficina: no se sincroniza.
  */
 export const productDoseRanges = sqliteTable("product_dose_ranges", {
@@ -251,7 +258,7 @@ export const productDoseRanges = sqliteTable("product_dose_ranges", {
   updatedAt: integer("updated_at").notNull(),
 });
 
-/** X-26: "Está bien" sobre un registro marcado. Vale hasta que el registro se edite (updated_at posterior). */
+/** "Está bien" sobre un registro marcado. Vale hasta que el registro se edite (updated_at posterior). */
 export const recordReviews = sqliteTable("record_reviews", {
   recordId: text("record_id").primaryKey(),
   organizationId: text("organization_id").notNull(),

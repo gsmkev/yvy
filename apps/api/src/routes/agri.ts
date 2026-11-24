@@ -1,4 +1,4 @@
-/** Agricultura desde la web (ADR 0004): campañas, plan por lote e historial del lote. */
+/** Agricultura desde la web: campañas, plan por lote e historial del lote. */
 import { listDoseRanges, setDoseRange } from "../db/review";
 import { Hono } from "hono";
 import { z } from "zod";
@@ -21,6 +21,7 @@ import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
 import { isoDate, uuid } from "./schemas";
 
+/** Rutas de agricultura bajo `/org`: campañas, plan por lote, productos y ventanas de pulverización. */
 export const agri = new Hono<AppEnv>();
 
 
@@ -113,7 +114,7 @@ const productFields = {
 
 agri.get("/products", async (c) => c.json(await listProducts(c.var.sdb)));
 
-/** X-26: dosis habitual por producto (l/ha o kg/ha). Lo que está fuera de rango aparece en "Para revisar". */
+/** Dosis habitual por producto (l/ha o kg/ha). Lo que está fuera de rango aparece en "Para revisar". */
 agri.get("/products/dose-ranges", async (c) => c.json(await listDoseRanges(c.var.sdb)));
 agri.put("/products/:id/dose-range", async (c) => {
   const dose = z.number().min(0).max(100_000).nullable();

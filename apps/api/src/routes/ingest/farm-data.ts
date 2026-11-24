@@ -7,6 +7,7 @@ import { type IngestEnv, json, max } from "./shared";
 import { uuid } from "../schemas";
 import { Hono } from "hono";
 
+/** Rutas de ingesta de estancias, escenas, índices, clima, capas y climatología. */
 export const routes = new Hono<IngestEnv>();
 
 routes.get("/farms", async (c) => c.json(await c.var.sys.activeFarms()));
@@ -14,7 +15,7 @@ routes.get("/farms", async (c) => c.json(await c.var.sys.activeFarms()));
 /** Última fecha cargada por estancia y fuente (para que los jobs bajen solo lo que falta). */
 routes.get("/climate-latest", async (c) => c.json(await c.var.sys.climateLatest()));
 
-/** A-31: análisis de suelo con coordenadas para el job fertility_maps. */
+/** Análisis de suelo con coordenadas para el job fertility_maps. */
 routes.get("/farms/:id/soil-points", async (c) => c.json(await c.var.sys.soilPoints(c.req.param("id"))));
 
 routes.get("/farms/:id/geometry", async (c) => {
@@ -30,7 +31,7 @@ routes.post("/farms/:id/imagery-status", async (c) => {
   return c.json({ ok: true });
 });
 
-/** S-03: el job s2_history termina; solo cambia el estado de un pedido existente. */
+/** El job s2_history termina; solo cambia el estado de un pedido existente. */
 routes.post("/farms/:id/history-status", async (c) => {
   const b = parse(z.object({ status: z.enum(["done", "failed"]) }), json(c.var.body));
   if (!(await c.var.sys.setHistoryStatus(c.req.param("id"), b.status))) throw new HTTPException(404);
@@ -125,10 +126,10 @@ routes.post("/farm-layers", async (c) => {
   return c.json({ ...res, pruned: stale.length }, 201);
 });
 
-/** M-17: GeoTIFF por convertir de una estancia (job custom_layers). */
+/** GeoTIFF por convertir de una estancia (job custom_layers). */
 routes.get("/farms/:id/custom-layers-pending", async (c) => c.json(await c.var.sys.pendingCustomLayers(c.req.param("id"))));
 
-/** M-17: el job termina una capa: PNG georreferenciado en R2 con sus 4 esquinas, o fallo. */
+/** El job termina una capa: PNG georreferenciado en R2 con sus 4 esquinas, o fallo. */
 routes.post("/custom-layers/:id/result", async (c) => {
   const b = parse(
     z.discriminatedUnion("status", [

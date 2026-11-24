@@ -7,9 +7,8 @@ import { ExportMenu } from "./menus";
 /**
  * Botón "Exportar" de la pantalla.
  * @param root contenedor cuyas tablas se exportan.
- * @param name base del nombre de archivo y de las hojas.
  */
-export function PageExport({ root, name }: { root: RefObject<HTMLElement | null>; name: string }) {
+export function PageExport({ root, name }: { root: RefObject<HTMLElement | null>; /** Base del nombre de archivo y de las hojas. */ name: string }) {
   const tables = (): TableData[] => {
     const all = [...(root.current?.querySelectorAll("table") ?? [])];
     return all.map((el, i) => tableFromElement(el, el.caption?.textContent?.trim() || (all.length > 1 ? `${name} ${i + 1}` : name)));

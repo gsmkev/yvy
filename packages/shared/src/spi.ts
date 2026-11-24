@@ -1,12 +1,14 @@
 /**
- * Índice de precipitación estandarizado, SPI a 1, 3 y 6 meses (C-07). Lo calcula workers-py: la lluvia reciente de
+ * Índice de precipitación estandarizado, SPI a 1, 3 y 6 meses. Lo calcula workers-py: la lluvia reciente de
  * CHIRPS contra una distribución gamma ajustada a 1991-2020 (normal climatológica de NASA POWER, la misma que usa la
  * climatología de la estancia). El Worker solo valida la forma del resultado y lo guarda.
  */
 import { z } from "zod";
 
+/** Escalas del SPI, en meses. */
 export const SPI_SCALES = [1, 3, 6] as const;
 
+/** Categorías del SPI, de la sequía extrema a la humedad extrema. */
 export const SPI_CATEGORIES = [
   "extreme_drought",
   "severe_drought",
@@ -16,6 +18,7 @@ export const SPI_CATEGORIES = [
   "very_wet",
   "extreme_wet",
 ] as const;
+/** Categoría del SPI. */
 export type SpiCategory = (typeof SPI_CATEGORIES)[number];
 
 /** Categorías de McKee et al. (1993). */
@@ -34,6 +37,7 @@ export const spiCategory = (v: number): SpiCategory =>
               ? "very_wet"
               : "extreme_wet";
 
+/** Validación del SPI de una estancia que calcula workers-py. */
 export const farmSpiSchema = z.object({
   version: z.literal(1),
   generatedAt: z.number().int(),
@@ -54,4 +58,5 @@ export const farmSpiSchema = z.object({
     )
     .max(3),
 });
+/** SPI de una estancia en las distintas escalas. */
 export type FarmSpi = z.infer<typeof farmSpiSchema>;

@@ -1,3 +1,6 @@
+/**
+ * Job de sequía: baja NASA POWER, cruza la lluvia CHIRPS con la climatología y genera el aviso.
+ */
 import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import { addDays, localDate } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";

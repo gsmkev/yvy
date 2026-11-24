@@ -1,8 +1,8 @@
 /**
- * Compras y ventas de hacienda (E-35, G-40): cabezas, kilos, precio y guía de traslado.
+ * Compras y ventas de hacienda: cabezas, kilos, precio y guía de traslado.
  * Una venta es un ingreso de ganadería (con las toneladas, kilos / 1000) y una cuenta a cobrar; una compra, un costo de
- * ganadería y una cuenta a pagar (E-36). Los kilos vendidos son la base del costo por kilo de carne (results.ts).
- * No se descuenta hacienda del potrero: el stock se recalcula desde los conteos (ADR 0004). Montos: solo dueño y administrador.
+ * ganadería y una cuenta a pagar. Los kilos vendidos son la base del costo por kilo de carne (results.ts).
+ * No se descuenta hacienda del potrero: el stock se recalcula desde los conteos. Montos: solo dueño y administrador.
  */
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { cattleFigures, LIMITS, newId, noonAsuncion, type CattleDealKind, type Currency } from "@yvy/shared";
@@ -29,6 +29,7 @@ interface Input {
   note?: string | null;
 }
 
+/** Compras y ventas de hacienda, de un tipo o de ambos. */
 export async function listDeals(sdb: ScopedDb, kind?: CattleDealKind) {
   sdb.require(can.manageErp);
   const rows = await sdb.db
@@ -40,6 +41,7 @@ export async function listDeals(sdb: ScopedDb, kind?: CattleDealKind) {
   return rows.map((r) => ({ ...r, ...cattleFigures(r.amount, r.totalKg, r.heads) }));
 }
 
+/** Registra una compra o venta de hacienda y abre su cuenta a pagar o a cobrar. */
 export async function createDeal(sdb: ScopedDb, i: Input) {
   sdb.require(can.manageErp);
   const org = sdb.auth.orgId;
@@ -96,6 +98,7 @@ export async function createDeal(sdb: ScopedDb, i: Input) {
   return { id };
 }
 
+/** Borra (lógico) una operación de hacienda. Falla con 409 si ya tiene pagos o cobros. */
 export async function deleteDeal(sdb: ScopedDb, id: string) {
   sdb.require(can.manageErp);
   const org = sdb.auth.orgId;

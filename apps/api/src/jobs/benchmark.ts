@@ -1,5 +1,5 @@
 /**
- * R-08: comparación anónima con la zona. Por estancia, la mediana de vigor (NDVI) y lluvia de las estancias de OTRAS
+ * Comparación anónima con la zona. Por estancia, la mediana de vigor (NDVI) y lluvia de las estancias de OTRAS
  * organizaciones dentro de LIMITS.benchmark.radiusKm, solo si son al menos `minFarms` de `minOrgs` organizaciones
  * distintas. Corre en el cron semanal con acceso de sistema; el resultado guarda números y un conteo, nunca ids,
  * nombres ni geometrías ajenas.
@@ -7,6 +7,7 @@
 import { LIMITS } from "@yvy/shared";
 import type { SystemDb } from "../db/system";
 
+/** Mediana de una lista de números; null si está vacía. */
 export const median = (xs: number[]): number | null => {
   if (xs.length === 0) return null;
   const s = [...xs].sort((a, b) => a - b);
@@ -14,6 +15,7 @@ export const median = (xs: number[]): number | null => {
   return s.length % 2 ? s[m]! : (s[m - 1]! + s[m]!) / 2;
 };
 
+/** Distancia en km entre dos puntos lon/lat (fórmula del haversine). */
 export const haversineKm = (lon1: number, lat1: number, lon2: number, lat2: number): number => {
   const r = (d: number) => (d * Math.PI) / 180;
   const a =
@@ -21,6 +23,7 @@ export const haversineKm = (lon1: number, lat1: number, lon2: number, lat2: numb
   return 12742 * Math.asin(Math.sqrt(a));
 };
 
+/** Estancia a comparar: su organización y su centroide. */
 interface BenchFarm {
   id: string;
   organizationId: string;
@@ -28,6 +31,7 @@ interface BenchFarm {
   lat: number;
 }
 
+/** Calcula y guarda la comparación de la estancia con la zona, o borra la anterior si no hay vecinas suficientes. */
 export async function benchmarkJob(sys: SystemDb, farm: BenchFarm, now: number): Promise<"saved" | "cleared"> {
   const { radiusKm, minFarms, minOrgs, windowDays, maxNeighbors } = LIMITS.benchmark;
   // Caja que contiene el círculo (1° de latitud ≈ 111 km); el filtro exacto es la distancia

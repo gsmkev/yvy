@@ -11,6 +11,7 @@ import type { AppEnv } from "../../types";
 import { isoDate } from "../schemas";
 import { Hono } from "hono";
 
+/** Rutas de estancias, lotes, líneas y puntos de interés. */
 export const routes = new Hono<AppEnv>();
 
 routes.get("/org/farms", async (c) => c.json(await farmSummaries(c.var.sdb)));
@@ -68,7 +69,7 @@ routes.patch("/org/plots/:id", async (c) => {
   }
   await updatePlot(c.var.sdb, c.req.param("id"), { ...rest, ...geo });
   if (!geometry) return c.json({ ok: true });
-  // M-02: cambió la forma; devuelve la superficie nueva y avisos de superposición o de lote fuera del perímetro.
+  // Cambió la forma; devuelve la superficie nueva y avisos de superposición o de lote fuera del perímetro.
   return c.json({
     ok: true,
     areaHa: areaHa(geometry),
@@ -79,7 +80,7 @@ routes.delete("/org/plots/:id", async (c) => {
   await deletePlot(c.var.sdb, c.req.param("id"));
   return c.json({ ok: true });
 });
-/** M-20: líneas del mapa (alambrados, caminos, cañerías). */
+/** Líneas del mapa (alambrados, caminos, cañerías). */
 const lineGeometry = z.unknown().transform((g, ctx) => {
   const c = (g as { type?: string; coordinates?: unknown } | null)?.coordinates;
   const ok =
@@ -122,7 +123,7 @@ routes.delete("/org/lines/:id", async (c) => {
   return c.json({ ok: true });
 });
 
-/** M-05: dividir un lote en dos. Los polígonos los calcula el cliente; el servidor valida forma y superficie. */
+/** Dividir un lote en dos. Los polígonos los calcula el cliente; el servidor valida forma y superficie. */
 routes.post("/org/plots/:id/split", async (c) => {
   const b = parse(
     z.object({
@@ -140,7 +141,7 @@ routes.post("/org/plots/:id/split", async (c) => {
   );
   return c.json(res, 201);
 });
-/** M-05: unir dos lotes contiguos de la misma estancia en uno. */
+/** Unir dos lotes contiguos de la misma estancia en uno. */
 routes.post("/org/plots/merge", async (c) => {
   const b = parse(
     z.object({
@@ -160,4 +161,3 @@ routes.post("/org/plots/merge", async (c) => {
 });
 routes.get("/org/plots/:id/vigor-history", async (c) => c.json(await plotVigorHistory(c.var.sdb, c.req.param("id"))));
 routes.get("/org/farms/:id/history", async (c) => c.json(await farmHistoryStatus(c.var.sdb, c.req.param("id"))));
-/** F-14: campos propios de los formularios. Leer: todo el equipo (el empleado los llena en la app). Editar: dueño y administrador. */

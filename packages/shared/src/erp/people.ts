@@ -1,8 +1,10 @@
+/** Terceros, personal, asistencia diaria, adelantos y pagos, y cuenta corriente por empleado. */
+
 import { z } from "zod";
 import { uuid } from "./internal";
 import { PARTY_KINDS, isoDate, optText, minorAmount } from "./core";
 
-// ---------- Terceros (E-02) ----------
+// ---------- Terceros ----------
 
 /** RUC (con dígito verificador) o cédula: solo dígitos y un guion final opcional. */
 const ruc = z
@@ -10,6 +12,7 @@ const ruc = z
   .trim()
   .regex(/^\d{3,9}(-\d)?$/, "RUC o cédula inválidos (ej. 80012345-6)");
 
+/** Alta o cambio de un proveedor o cliente. */
 export const partyInput = z.object({
   name: z.string().trim().min(1).max(120),
   ruc: ruc.nullish(),
@@ -20,8 +23,9 @@ export const partyInput = z.object({
   note: optText(500),
 });
 
-// ---------- Personal y asistencia (E-25) ----------
+// ---------- Personal y asistencia ----------
 
+/** Alta o cambio de un empleado. */
 export const employeeInput = z.object({
   name: z.string().trim().min(1).max(120),
   ci: optText(30),
@@ -31,9 +35,12 @@ export const employeeInput = z.object({
   note: optText(300),
 });
 
+/** Valores de asistencia: día completo o medio día. */
 export const ATTENDANCE_DAYS = [1, 0.5] as const;
+/** Tope de empleados en una misma carga de asistencia. */
 export const maxAttendanceEntriesPerCall = 30;
 
+/** Asistencia de un empleado en un día. */
 export const attendanceEntry = z.object({
   employeeId: uuid,
   /** Día completo o medio día. */
@@ -45,6 +52,7 @@ export const attendanceEntry = z.object({
   /** Jornal del día si no es el vigente del empleado. */
   wagePyg: minorAmount.nullish(),
 });
+/** Planilla de asistencia de un día. */
 export const attendanceDayInput = z.object({
   date: isoDate,
   entries: z.array(attendanceEntry).min(1).max(maxAttendanceEntriesPerCall),
@@ -53,11 +61,14 @@ export const attendanceDayInput = z.object({
 /** Jornal por los días trabajados, en guaraníes enteros. */
 export const wageFor = (dailyWagePyg: number, days: number): number => Math.round(dailyWagePyg * days);
 
-// ---------- Adelantos, pagos y saldo por empleado (E-26) ----------
+// ---------- Adelantos, pagos y saldo por empleado ----------
 
+/** Tipos de pago a un empleado: adelanto o pago de saldo. */
 export const EMPLOYEE_PAYMENT_KINDS = ["advance", "payment"] as const;
+/** Tipo de pago a un empleado. */
 export type EmployeePaymentKind = (typeof EMPLOYEE_PAYMENT_KINDS)[number];
 
+/** Adelanto o pago a un empleado. */
 export const employeePaymentInput = z.object({
   employeeId: uuid,
   date: isoDate,
@@ -70,6 +81,7 @@ export const employeePaymentInput = z.object({
 export const employeeBalance = (accruedPyg: number, advancesPyg: number, paymentsPyg: number): number =>
   accruedPyg - advancesPyg - paymentsPyg;
 
+/** Línea de la cuenta corriente de un empleado. */
 export interface StatementLine {
   date: string;
   kind: "wage" | EmployeePaymentKind;

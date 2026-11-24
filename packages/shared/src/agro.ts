@@ -1,5 +1,5 @@
 /**
- * Cálculos agronómicos puros (ADR 0004): Delta T y unidades de dosis.
+* Cálculos agronómicos puros: Delta T, rinde, ventanas de pulverización y unidades de dosis.
  * Sin dependencias: corren en el Worker, la web y Hermes.
  */
 
@@ -7,6 +7,7 @@ import { LIMITS } from "./limits";
 
 /** Unidad de la dosis de un producto, por hectárea. */
 export const DOSE_UNITS = ["l_ha", "ml_ha", "kg_ha", "g_ha"] as const;
+/** Unidad de dosis admitida. */
 export type DoseUnit = (typeof DOSE_UNITS)[number];
 
 /** Unidades que ofrece el celular según la unidad del producto: la grande primero. */
@@ -47,6 +48,7 @@ export function yieldTHa(harvests: { tons: number; areaHa?: number | null }[], p
   return Math.round((tons / area) * 100) / 100;
 }
 
+/** Condiciones de una hora para evaluar si se puede pulverizar (null = sin dato). */
 export interface SprayInput {
   tempC: number | null;
   windKmh: number | null;
@@ -71,10 +73,11 @@ export function sprayHour(h: SprayInput): { deltaT: number | null; ok: boolean }
 
 const HOUR_MS = 3_600_000;
 
+/** Aviso al registrar una aplicación: viento alto o Delta T fuera de rango. */
 export type SprayWarning = "windHigh" | "deltaTLow" | "deltaTHigh";
 
 /**
- * Avisos al registrar una aplicación (A-12): viento por encima de LIMITS.spray.windMaxKmh y Delta T fuera de
+ * Avisos al registrar una aplicación: viento por encima de LIMITS.spray.windMaxKmh y Delta T fuera de
  * deltaTMin..deltaTMax. Si falta un dato, no avisa de ése (el aviso es de lo que se midió).
  */
 export function sprayWarnings(c: { windKmh?: number | null; deltaT?: number | null }): SprayWarning[] {
@@ -88,6 +91,7 @@ export function sprayWarnings(c: { windKmh?: number | null; deltaT?: number | nu
   return out;
 }
 
+/** Mínimo que necesita `forecastHourAt` de una hora de pronóstico. */
 export interface ForecastHourLike {
   at: number;
   tempC: number | null;

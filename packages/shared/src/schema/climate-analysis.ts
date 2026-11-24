@@ -1,3 +1,5 @@
+/** Clima diario y climatología, pronósticos, focos de calor y análisis por lote calculados fuera del Worker. */
+
 import { HISTORY_STATUSES } from "./satellite";
 import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
@@ -18,6 +20,7 @@ export const climateDaily = sqliteTable(
   (t) => [primaryKey({ columns: [t.farmId, t.plotId, t.date, t.source] })],
 );
 
+/** Climatología por día del año y variable: percentiles de referencia de la serie histórica. */
 export const climatology = sqliteTable(
   "climatology",
   {
@@ -33,7 +36,7 @@ export const climatology = sqliteTable(
   (t) => [primaryKey({ columns: [t.farmId, t.plotId, t.dayOfYear, t.variable] })],
 );
 
-/** Áreas problema dentro de un lote en la última escena (S-08). Solo las escribe /ingest; no se sincronizan. */
+/** Áreas problema dentro de un lote en la última escena. Solo las escribe /ingest; no se sincronizan. */
 export const problemAreas = sqliteTable(
   "problem_areas",
   {
@@ -54,7 +57,7 @@ export const problemAreas = sqliteTable(
 );
 
 /**
- * Indicador EUDR por lote (S-30): hectáreas con cobertura arbórea en 2020 y con posible pérdida hasta hoy,
+ * Indicador EUDR por lote: hectáreas con cobertura arbórea en 2020 y con posible pérdida hasta hoy,
  * calculado por workers-py con Sentinel-2. Una fila por lote; `changes` es un GeoJSON chico con los polígonos
  * de cambio. Análisis indicativo, no una declaración de debida diligencia. Solo lo escribe /ingest; no se sincroniza.
  */
@@ -86,7 +89,7 @@ export const eudrResults = sqliteTable(
   (t) => [uniqueIndex("eudr_results_plot_uq").on(t.plotId), index("eudr_results_farm_idx").on(t.farmId)],
 );
 
-/** F-14: campos propios por tipo de registro de cada organización (JSON validado con formConfigSchema). No se sincroniza: la app lo pide por /org/form-config. */
+/** Campos propios por tipo de registro de cada organización (JSON validado con formConfigSchema). No se sincroniza: la app lo pide por /org/form-config. */
 export const formConfigs = sqliteTable("form_configs", {
   organizationId: text("organization_id").primaryKey(),
   config: text("config").notNull(),
@@ -94,8 +97,9 @@ export const formConfigs = sqliteTable("form_configs", {
   updatedBy: text("updated_by").notNull(),
 });
 
-/** Análisis por lote calculados por workers-py con Sentinel-2: área quemada (S-20) y cambio de cobertura (S-31). */
+/** Análisis por lote calculados por workers-py con Sentinel-2: área quemada y cambio de cobertura. */
 export const ANALYSIS_KINDS = ["burned", "cover_change"] as const;
+/** Tipo de análisis por lote que calcula workers-py. */
 export type AnalysisKind = (typeof ANALYSIS_KINDS)[number];
 
 /**
@@ -127,7 +131,7 @@ export const plotAnalyses = sqliteTable(
   ],
 );
 
-/** Pedidos a demanda de análisis pesados por estancia (S-31). No se sincroniza. */
+/** Pedidos a demanda de análisis pesados por estancia. No se sincroniza. */
 export const analysisJobs = sqliteTable(
   "analysis_jobs",
   {
@@ -143,14 +147,14 @@ export const analysisJobs = sqliteTable(
   (t) => [primaryKey({ columns: [t.farmId, t.kind] })],
 );
 
-/** Informe de riesgo climático por estancia (C-10): JSON validado con farmRiskSchema. No se sincroniza. */
+/** Informe de riesgo climático por estancia: JSON validado con farmRiskSchema. No se sincroniza. */
 export const farmRisk = sqliteTable("farm_risk", {
   farmId: text("farm_id").primaryKey(),
   computedAt: integer("computed_at").notNull(),
   report: text("report").notNull(),
 });
 
-/** SPI a 1, 3 y 6 meses por estancia (C-07): JSON validado con farmSpiSchema. Una fila por estancia; no se sincroniza. */
+/** SPI a 1, 3 y 6 meses por estancia: JSON validado con farmSpiSchema. Una fila por estancia; no se sincroniza. */
 export const farmSpi = sqliteTable("farm_spi", {
   farmId: text("farm_id").primaryKey(),
   computedAt: integer("computed_at").notNull(),
@@ -158,7 +162,7 @@ export const farmSpi = sqliteTable("farm_spi", {
 });
 
 /**
- * R-08: comparación anónima de una estancia con la mediana de las estancias de otras organizaciones dentro de un radio.
+ * Comparación anónima de una estancia con la mediana de las estancias de otras organizaciones dentro de un radio.
  * La calcula un cron con acceso de sistema; acá solo quedan números de la propia estancia, las medianas y cuántas
  * estancias entraron (nunca ids, nombres ni geometrías ajenas). Una fila por estancia; si dejan de alcanzar los
  * vecinos, la fila se borra. No se sincroniza.
@@ -176,6 +180,7 @@ export const zoneBenchmarks = sqliteTable("zone_benchmarks", {
   rainMedianMm: real("rain_median_mm"),
 });
 
+/** Pronóstico diario por estancia o lote; cada corrida reemplaza a la anterior de su fuente. */
 export const forecasts = sqliteTable(
   "forecasts",
   {
@@ -208,7 +213,7 @@ export const forecastHours = sqliteTable(
 );
 
 /**
- * Pronóstico diario de MET Norway por lote en estancias de más de 2.000 ha (C-03), en el centro del lote.
+ * Pronóstico diario de MET Norway por lote en estancias de más de 2.000 ha, en el centro del lote.
  * Solo la última corrida (se reemplaza). No se sincroniza.
  */
 export const plotForecasts = sqliteTable(
@@ -226,6 +231,7 @@ export const plotForecasts = sqliteTable(
   (t) => [primaryKey({ columns: [t.plotId, t.validDate] }), index("plot_forecasts_farm_idx").on(t.farmId)],
 );
 
+/** Focos de calor detectados por satélite. */
 export const fireHotspots = sqliteTable(
   "fire_hotspots",
   {

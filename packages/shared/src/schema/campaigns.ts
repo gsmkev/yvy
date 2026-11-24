@@ -1,3 +1,5 @@
+/** Campañas, lotes por campaña, catálogo de productos y animales; son tablas sincronizables. */
+
 import { sql } from "drizzle-orm";
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { ANIMAL_SEXES } from "../animals";
@@ -5,7 +7,7 @@ import { HERD_CATEGORIES } from "../livestock";
 import { CROPS, DENSITY_UNITS, PRODUCT_TYPES, PRODUCT_UNITS } from "./enums";
 import { synced } from "./columns";
 
-// ---------- Campañas (ADR 0004) ----------
+// ---------- Campañas ----------
 
 /** Campaña de la organización ("Zafra 2026/27"). Fechas de calendario "YYYY-MM-DD". */
 export const seasons = sqliteTable(
@@ -33,7 +35,7 @@ export const plotSeasons = sqliteTable(
     crop: text("crop", { enum: CROPS }),
     variety: text("variety"),
     plannedSowingDate: text("planned_sowing_date"),
-    /** Densidad de siembra prevista y su unidad (A-01). */
+    /** Densidad de siembra prevista y su unidad. */
     sowingDensity: real("sowing_density"),
     densityUnit: text("density_unit", { enum: DENSITY_UNITS }),
     /** Rinde objetivo en toneladas por hectárea. */
@@ -66,7 +68,7 @@ export const products = sqliteTable(
 );
 
 /**
- * Animales con caravana (G-21). La hacienda sigue contándose por potrero y categoría; esta tabla es para quien
+ * Animales con caravana. La hacienda sigue contándose por potrero y categoría; esta tabla es para quien
  * identifica a algunos animales individualmente. La caravana es única en la organización entre los no borrados.
  */
 export const animals = sqliteTable(

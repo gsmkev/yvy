@@ -1,5 +1,5 @@
 /**
- * Movimientos de stock (E-11): compra, consumo, transferencia y ajuste, a costo promedio ponderado.
+ * Movimientos de stock: compra, consumo, transferencia y ajuste, a costo promedio ponderado.
  * El stock de un producto es la suma de `qty`; el costo promedio, valor / cantidad (funciones puras en shared/erp.ts).
  * Tablas de oficina: no se sincronizan, así que no llevan bumpVersion. Escrituras con db.batch().
  */
@@ -12,6 +12,7 @@ import { pygOf } from "./costs";
 import { requireOwned } from "./erp";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
 
+/** Totales de un producto sin movimientos. */
 export const emptyTotals: StockTotals = { qty: 0, valuePyg: 0, lastUnitCost: null };
 
 /** Cantidad, valor y costo de la última compra de cada producto (una consulta por tanda de productos). */
@@ -88,6 +89,7 @@ const base = (sdb: ScopedDb, i: { productId: string; warehouseId: string; date: 
   };
 };
 
+/** Registra una compra de stock: entrada al depósito con su costo y el costo asociado. */
 export async function purchaseStock(
   sdb: ScopedDb,
   i: {
@@ -271,6 +273,7 @@ export async function stockSummary(sdb: ScopedDb) {
   };
 }
 
+/** Movimientos de stock, de un producto o de un depósito, los más recientes primero. */
 export async function listMoves(sdb: ScopedDb, f: { productId?: string; warehouseId?: string }) {
   sdb.require(can.viewStock);
   const rows = await sdb.db
@@ -326,7 +329,7 @@ export async function deleteMove(sdb: ScopedDb, id: string) {
 }
 
 /**
- * Lotes que vencen dentro de `days` días (o ya vencieron) y todavía tienen producto (E-12). Tres consultas.
+ * Lotes que vencen dentro de `days` días (o ya vencieron) y todavía tienen producto. Tres consultas.
  * Lo que queda de cada lote sale de la regla FEFO (ver lotsRemaining): se toman todas las compras de los productos
  * que tienen algún lote con vencimiento, porque los lotes sin vencimiento se consumen al final.
  */

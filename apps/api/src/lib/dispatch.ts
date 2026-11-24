@@ -1,5 +1,5 @@
 /**
- * Dispara el workflow de jobs en GitHub Actions al crear una estancia (S-02, M-01).
+ * Dispara el workflow de jobs en GitHub Actions al crear una estancia.
  * Secrets opcionales: sin ellos (desarrollo local) no hace nada y el cron semanal procesa la estancia.
  */
 import type { Context } from "hono";
@@ -17,6 +17,7 @@ function dispatchConfigured(env: Pick<Bindings, "GITHUB_DISPATCH_TOKEN" | "GITHU
   return Boolean(env.GITHUB_DISPATCH_TOKEN && /^[\w.-]+\/[\w.-]+$/.test(env.GITHUB_REPO ?? ""));
 }
 
+/** Nombre del job de GitHub Actions que baja el historial satelital de una estancia. */
 export const HISTORY_JOB = "s2_history";
 
 /** Pide a GitHub correr un job para una estancia. Nunca lanza. */
@@ -68,6 +69,7 @@ export async function dispatchNewFarm(env: Bindings, farmId: string): Promise<"s
   return "failed";
 }
 
+/** Corre `work` sin demorar la respuesta; si no hay ExecutionContext (tests) lo espera. */
 /** Corre `work` sin demorar la respuesta; si no hay ExecutionContext (tests) lo espera. */
 export async function inBackground(c: Context, work: Promise<unknown>): Promise<void> {
   let ctx: Pick<ExecutionContext, "waitUntil"> | undefined;

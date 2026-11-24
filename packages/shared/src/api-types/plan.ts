@@ -1,3 +1,6 @@
+/** Tipos de respuesta del plan de una organización y sus pedidos de cambio. */
+
+/** Pedido de cambio de plan con su estado y resolución. */
 export interface PlanRequestRow {
   id: string;
   plan: string;
@@ -9,6 +12,7 @@ export interface PlanRequestRow {
   resolutionNote: string | null;
 }
 
+/** Plan vigente, topes, uso y pedidos de cambio de una organización. */
 export interface PlanView {
   plan: string;
   trialEndsAt: number | null;

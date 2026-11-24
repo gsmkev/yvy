@@ -12,6 +12,7 @@ const dec = (n: number) => String(n).replace(".", ",");
 export const doseText = (p: { name?: unknown; dose?: unknown; unit?: unknown }): string =>
   `${String(p.name ?? "")} ${dec(Number(p.dose))} ${tr(`fields.dose.unit_${p.unit}`, String(p.unit ?? ""))}`.trim();
 
+/** Resumen en una línea de un registro de tipo `kind` a partir de sus datos, en es-PY. */
 export function describeRecord(kind: string, data: Record<string, unknown>): string {
   const d = data ?? {};
   const parts: string[] = [];
@@ -158,7 +159,7 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
   return out ? out.charAt(0).toUpperCase() + out.slice(1) : tr(`record-kinds.kind.${kind}`, kind);
 }
 
-/** Avisos de condiciones al aplicar (A-12) ya redactados, en es-PY: uno por cada umbral de LIMITS.spray que se pasó. */
+/** Avisos de condiciones al aplicar ya redactados, en es-PY: uno por cada umbral de LIMITS.spray que se pasó. */
 export function sprayWarningTexts(c: { windKmh?: number | null; deltaT?: number | null }): string[] {
   const L = LIMITS.spray;
   return sprayWarnings(c).map((w) =>

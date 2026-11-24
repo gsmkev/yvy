@@ -1,5 +1,5 @@
 /**
- * Exportación al contador (E-38): libro de movimientos con la cuenta del plan del contador, cuentas a pagar y a cobrar.
+ * Exportación al contador: libro de movimientos con la cuenta del plan del contador, cuentas a pagar y a cobrar.
  * El Worker solo arma las filas (JSON); el Excel se genera en el navegador (el plan gratis no admite ese CPU).
  * Solo dueño y administrador.
  */
@@ -10,6 +10,7 @@ import * as s from "@yvy/shared/schema";
 import { dues } from "./cash";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
 
+/** Plan de cuentas del contador: una fila por rubro de costo, con la cuenta propia o la que viene por defecto. */
 export async function listMap(sdb: ScopedDb) {
   sdb.require(can.manageErp);
   const rows = await sdb.db.select().from(s.accountMap).where(eq(s.accountMap.organizationId, sdb.auth.orgId));
@@ -19,6 +20,7 @@ export async function listMap(sdb: ScopedDb) {
   });
 }
 
+/** Guarda (o reemplaza) la cuenta del contador de un rubro. Falla con 400 si el rubro no existe. */
 export async function saveMap(sdb: ScopedDb, key: string, i: AccountRef) {
   sdb.require(can.manageErp);
   if (!(COST_CATEGORIES as readonly string[]).includes(key)) throw new HTTPException(400, { message: "Rubro desconocido" });
@@ -40,6 +42,9 @@ export async function resetMap(sdb: ScopedDb, key: string) {
   await sdb.db.delete(s.accountMap).where(where);
 }
 
+/**
+ * Arma las filas del libro de movimientos y de cuentas a pagar y a cobrar entre dos fechas, para exportar al contador.
+ */
 export async function accountantExport(sdb: ScopedDb, f: { from?: string; to?: string }) {
   sdb.require(can.manageErp);
   const org = sdb.auth.orgId;

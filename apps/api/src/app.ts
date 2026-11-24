@@ -1,3 +1,6 @@
+/**
+ * Aplicación Hono del Worker: manejo de errores, CORS de desarrollo y montaje de todas las rutas públicas y autenticadas.
+ */
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { cors } from "hono/cors";
@@ -25,6 +28,7 @@ import { captureError } from "./lib/monitoring";
 import { readOnlyDemo, readOnlyWhenExpired } from "./auth/plan";
 import type { AppEnv } from "./types";
 
+/** Aplicación Hono con todas las rutas montadas; `index.ts` la expone como `fetch` del Worker. */
 export const app = new Hono<AppEnv>();
 
 app.onError((err, c) => {
@@ -53,11 +57,11 @@ app.use("*", async (c, next) => {
 });
 
 app.get("/health", (c) => c.json({ ok: true }));
-/** APK firmado en el bucket público (anexo §4.10: distribución directa sin Play Store). */
+// APK firmado en el bucket público: distribución directa, sin Play Store.
 app.get("/descargar-app", (c) => c.redirect(`${c.env.TILES_PUBLIC_URL.replace(/\/$/, "")}/app/yvy.apk`, 302));
 // La demo no puede escribir tampoco por sync, media, dispositivos ni vinculando empleados.
 app.use("/auth/link", requireAuth, readOnlyDemo);
-// P-08: la cuenta de la demo no puede activar un segundo factor (dejaría a todos afuera)
+// la cuenta de la demo no puede activar un segundo factor (dejaría a todos afuera)
 for (const path of ["/auth/totp/setup", "/auth/totp/enable", "/auth/totp/disable", "/auth/totp/recovery-codes"])
   app.use(path, requireAuth, readOnlyDemo);
 app.route("/auth", auth);
@@ -67,7 +71,7 @@ app.route("/public", calendar);
 app.route("/public", status);
 app.route("/public", leads);
 app.route("/public", trialRequests);
-// I-01: API pública de solo lectura con token de organización (no usa la sesión de la web)
+// API pública de solo lectura con token de organización (no usa la sesión de la web)
 app.route("/v1", v1);
 
 const authed = new Hono<AppEnv>();

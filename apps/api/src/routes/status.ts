@@ -1,9 +1,12 @@
-/** P-04: estado público del servicio (JSON). Sin sesión y sin datos de clientes. */
+/**
+ * Estado público del servicio (JSON). Sin sesión y sin datos de clientes.
+ */
 import { Hono } from "hono";
 import { getDb } from "../db/client";
 import { serviceStatus } from "../db/status";
 import type { AppEnv } from "../types";
 
+/** Ruta pública `GET /status`. */
 export const status = new Hono<AppEnv>();
 
 status.get("/status", async (c) => {

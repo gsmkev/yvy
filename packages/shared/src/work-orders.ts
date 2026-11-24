@@ -1,8 +1,9 @@
-/** Órdenes de trabajo (E-20): una orden con varios lotes se guarda como una tarea por lote; acá se vuelve a juntar. */
+/** Órdenes de trabajo: una orden con varios lotes se guarda como una tarea por lote; acá se vuelve a juntar. */
 import { doseText } from "./describe";
 import { t } from "./i18n";
 import type { WorkOrder } from "./records";
 
+/** Orden de trabajo de un lote, tal como baja de la tarea que la guarda. */
 export interface OrderRow {
   id: string;
   title: string;
@@ -20,6 +21,7 @@ export interface OrderRow {
   createdAt: number;
 }
 
+/** Orden de trabajo con todos sus lotes juntos. */
 export interface OrderGroup {
   key: string;
   rows: OrderRow[];

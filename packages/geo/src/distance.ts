@@ -1,5 +1,5 @@
 /**
- * Distancias en metros entre puntos, líneas y polígonos (A-15, zonas de amortiguación).
+ * Distancias en metros entre puntos, líneas y polígonos (zonas de amortiguación).
  * Proyección local equirrectangular alrededor del punto de referencia: el error es de centímetros a escala de
  * estancia (decenas de kilómetros), de sobra para comparar con distancias de 50 a 500 m.
  */

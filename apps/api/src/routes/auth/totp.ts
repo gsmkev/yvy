@@ -1,4 +1,6 @@
-/** Segundo factor (P-08). */
+/**
+ * Rutas del segundo factor TOTP: estado, alta, confirmación, códigos de recuperación y baja.
+ */
 import { HTTPException } from "hono/http-exception";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -12,6 +14,7 @@ import type { AppEnv } from "../../types";
 import { locked, orgRequiresTotp } from "./shared";
 import { Hono } from "hono";
 
+/** Rutas `/auth/totp*` del segundo factor. */
 export const routes = new Hono<AppEnv>();
 
 /** Estado propio: si lo tiene, cuántos códigos de recuperación quedan y si la organización lo exige. */

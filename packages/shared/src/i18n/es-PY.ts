@@ -1,4 +1,6 @@
-/** Textos en español de Paraguay con voseo. Dejar listo para guaraní (gn-PY). */
+/** Diccionario de textos en español de Paraguay; es el idioma de referencia y define las claves. */
+
+/** Textos de la interfaz en español de Paraguay, con voseo. Es el idioma de referencia: las claves que falten en otro idioma se muestran con estos textos. */
 export const esPY = {
   sync: {
     common: {
@@ -5285,4 +5287,5 @@ export const esPY = {
   },
 } as const;
 
+/** Forma del diccionario: de ella salen las claves tipadas. */
 export type Messages = typeof esPY;

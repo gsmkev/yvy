@@ -1,5 +1,5 @@
 /**
- * Aviso de aguada baja (G-30): el último registro `water` de cada punto de interés tipo aguada, tajamar, bebedero o
+ * Aviso de aguada baja: el último registro `water` de cada punto de interés tipo aguada, tajamar, bebedero o
  * molino dice "bajo" o "seco". Se recalcula cuando llega un registro de agua (no hace falta esperar al cron) y el aviso se
  * resuelve solo cuando todas las aguadas vuelven a estar medio o llenas.
  */

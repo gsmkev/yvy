@@ -1,12 +1,15 @@
 /**
- * Planilla simple para el contador (E-27): jornales devengados, adelantos y pagos por empleado y mes.
+ * Planilla simple para el contador: jornales devengados, adelantos y pagos por empleado y mes.
  * No calcula aportes ni descuentos (IPS, retenciones): eso lo hace el contador. Pura: el Worker agrupa y esto arma las filas.
  */
+
+/** Empleado de la planilla. */
 export interface PayrollEmployee {
   id: string;
   name: string;
   ci: string | null;
 }
+/** Jornales devengados por un empleado en un mes. */
 export interface PayrollAccrual {
   employeeId: string;
   /** "AAAA-MM". */
@@ -14,12 +17,14 @@ export interface PayrollAccrual {
   days: number;
   wagePyg: number;
 }
+/** Adelanto o pago hecho a un empleado en un mes. */
 export interface PayrollPayment {
   employeeId: string;
   month: string;
   kind: "advance" | "payment";
   amountPyg: number;
 }
+/** Fila de la planilla: un empleado en un mes, con lo devengado, adelantado, pagado y el saldo. */
 export interface PayrollRow {
   month: string;
   employeeId: string;

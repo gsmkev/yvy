@@ -33,7 +33,7 @@ export async function requireFarm(sdb: ScopedDb, farmId: string, write = false):
         eq(s.farms.id, farmId),
         eq(s.farms.organizationId, sdb.auth.orgId),
         isNull(s.farms.deletedAt),
-        // T-09 / K-05: fuera de las estancias permitidas (o solo lectura al escribir) se responde "inexistente"/prohibido.
+        // Fuera de las estancias permitidas (o solo lectura al escribir) se responde "inexistente"/prohibido.
         sdb.farmScopeSql("farms.id", write),
       ),
     )
@@ -63,6 +63,7 @@ export async function requireFarmVisible(sdb: ScopedDb, farmId: string): Promise
   if (!f) throw new NotFoundError("Estancia inexistente");
 }
 
+/** Crea una estancia dentro del límite de hectáreas del plan. */
 export async function createFarm(sdb: ScopedDb, 
   input: Omit<typeof s.farms.$inferInsert, "id" | "organizationId" | "createdAt" | "updatedAt" | "version">,
 ) {
@@ -133,6 +134,7 @@ export async function createPlots(sdb: ScopedDb,
   return { ids, farmGeometry };
 }
 
+/** Crea un punto de interés en una estancia. */
 export async function createPoi(sdb: ScopedDb, input: {
   farmId: string;
   kind: (typeof s.POI_KINDS)[number];

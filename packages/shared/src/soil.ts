@@ -1,12 +1,16 @@
 /**
- * Análisis de suelo (A-30): interpretación de los valores de laboratorio. Rangos de referencia para suelos de
+ * Análisis de suelo: interpretación de los valores de laboratorio. Rangos de referencia para suelos de
  * soja y maíz de la Región Oriental; cada laboratorio y cada agrónomo puede usar otros, por eso son solo una guía.
  */
+
+/** Nivel interpretado de un parámetro del suelo. */
 export type SoilLevel = "low" | "medium" | "high";
+/** Parámetro de un análisis de suelo: pH, fósforo, potasio y materia orgánica. */
 export type SoilParam = "ph" | "pMgKg" | "kCmolKg" | "omPct";
+/** Parámetros del análisis en el orden en que se muestran. */
 export const SOIL_PARAMS: readonly SoilParam[] = ["ph", "pMgKg", "kCmolKg", "omPct"];
 
-/** [límite bajo-medio, límite medio-alto]: abajo del primero es bajo, arriba del segundo es alto. */
+/** Par (límite bajo-medio, límite medio-alto): abajo del primero es bajo, arriba del segundo es alto. */
 export const SOIL_RANGES: Record<SoilParam, [number, number]> = {
   ph: [5.0, 6.5],
   pMgKg: [8, 14],
@@ -14,12 +18,14 @@ export const SOIL_RANGES: Record<SoilParam, [number, number]> = {
   omPct: [1.5, 3],
 };
 
+/** Nivel (bajo, medio o alto) de un valor según los rangos de referencia; null sin dato. */
 export const soilLevel = (param: SoilParam, v: number | null): SoilLevel | null => {
   if (v === null || !Number.isFinite(v)) return null;
   const [lo, hi] = SOIL_RANGES[param];
   return v < lo ? "low" : v > hi ? "high" : "medium";
 };
 
+/** Valores de un análisis de suelo: pH, P (mg/kg), K (cmol/kg) y materia orgánica (%). */
 export interface SoilValues {
   ph: number | null;
   pMgKg: number | null;
@@ -36,9 +42,11 @@ export function soilAverage(samples: SoilValues[]): SoilValues {
   return { ph: avg("ph"), pMgKg: avg("pMgKg"), kCmolKg: avg("kCmolKg"), omPct: avg("omPct") };
 }
 
-/** A-31: capa de fertilidad de cada parámetro del análisis. */
+/** Capa de fertilidad de cada parámetro del análisis. */
 export const FERT_LAYER_PARAM = { fert_ph: "ph", fert_p: "pMgKg", fert_k: "kCmolKg", fert_om: "omPct" } as const satisfies Record<string, SoilParam>;
+/** Clave de una capa de fertilidad. */
 export type FertLayerKey = keyof typeof FERT_LAYER_PARAM;
+/** Claves de las capas de fertilidad. */
 export const FERT_LAYER_KEYS = Object.keys(FERT_LAYER_PARAM) as FertLayerKey[];
 
 const FERT_RAMP = ["#F1EEE4", "#C9C46A", "#7A9A3F", "#3F6B35"]; // de poco a mucho

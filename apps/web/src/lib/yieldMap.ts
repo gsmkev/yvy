@@ -98,7 +98,7 @@ export interface YieldSummary {
   maxTHa: number;
   cvPct: number;
   cellM: number;
-  /** [lon, lat, rinde t/ha, puntos]: grilla de promedios, máximo MAX_CELLS. */
+  /** Grilla de promedios como tuplas (lon, lat, rinde t/ha, puntos), máximo MAX_CELLS. */
   cells: [number, number, number, number][];
 }
 

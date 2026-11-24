@@ -1,7 +1,7 @@
 /**
- * Guardado de avisos con deduplicación (RF-72) y creación de notificaciones (RF-73).
+ * Guardado de avisos con deduplicación y creación de notificaciones.
  * dedupe_key = estancia + tipo + fecha de inicio de la ventana; además, un aviso activo del mismo tipo que se
- * solapa en el tiempo se actualiza en vez de crear otro (B8). Si el aviso ya existe y la severidad no
+ * solapa en el tiempo se actualiza en vez de crear otro. Si el aviso ya existe y la severidad no
  * subió, no se vuelve a notificar.
  */
 import { and, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
@@ -25,6 +25,10 @@ const SOURCES: Record<AlertDraft["kind"], string> = {
   senacsa: "SENACSA, calendario oficial de vacunación",
 };
 
+/**
+ * Crea o actualiza el aviso de una estancia (con su relación a lotes, buzón de webhooks y notificaciones) en un batch.
+ * @returns el id del aviso y si se notificó (aviso nuevo o con severidad mayor).
+ */
 export async function upsertAlert(
   db: DB,
   farm: { id: string; organizationId: string },
@@ -43,7 +47,7 @@ export async function upsertAlert(
   const validFrom = Date.parse(`${draft.validFrom}T00:00:00-03:00`);
   const validTo = Date.parse(`${draft.validTo}T23:59:59-03:00`);
   let [existing] = await db.select().from(s.alerts).where(eq(s.alerts.dedupeKey, dedupeKey)).limit(1);
-  // B8: un aviso que se corre día a día se actualiza en vez de duplicarse si la ventana se solapa.
+  // Un aviso que se corre día a día se actualiza en vez de duplicarse si la ventana se solapa.
   if (!existing && !draft.dedupeKey)
     [existing] = await db
       .select()
@@ -102,7 +106,7 @@ export async function upsertAlert(
     stmts.push(db.insert(s.alertPlots).values(plotIds.slice(i, i + 40).map((plotId) => ({ alertId: id, plotId }))));
   }
 
-  // I-02: aviso nuevo (no una actualización) → buzón de webhooks, en el mismo batch
+  // Aviso nuevo (no una actualización) → buzón de webhooks, en el mismo batch
   if (!existing)
     stmts.push(
       ...(await alertOutboxStmts(db, farm.organizationId, {
@@ -147,7 +151,7 @@ async function notificationStmts(
           .where(and(inArray(s.plotAssignments.plotId, plotIds.slice(0, 90)), isNull(s.plotAssignments.deletedAt)))
       : [];
   const workerSet = new Set(workers.map((w) => w.userId));
-  // U-29: lo que el usuario apagó para este tipo de aviso no se crea
+  // Lo que el usuario apagó para este tipo de aviso no se crea
   const prefs = new Map<string, ReturnType<typeof parseNotificationPrefs>>();
   for (const chunk of chunkForParams(members, 1)) {
     const found = await db
@@ -174,7 +178,6 @@ async function notificationStmts(
   return out;
 }
 
-/** Guarda la corrida y deja solo las últimas N por estancia. */
 /** Reemplaza el pronóstico horario de la estancia (solo la última corrida): borra todo y guarda las horas nuevas. */
 export function saveHourlyStmts(db: DB, farmId: string, hours: HourlyForecast[]): Stmt[] {
   const out: Stmt[] = [db.delete(s.forecastHours).where(eq(s.forecastHours.farmId, farmId))];
@@ -184,6 +187,7 @@ export function saveHourlyStmts(db: DB, farmId: string, hours: HourlyForecast[])
   return out;
 }
 
+/** Guarda la corrida del pronóstico diario y deja solo las últimas `keep` corridas de la estancia. */
 export function saveForecastStmts(
   db: DB,
   farmId: string,

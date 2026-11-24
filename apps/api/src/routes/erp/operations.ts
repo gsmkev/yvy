@@ -1,4 +1,6 @@
-/** Exportación, órdenes de trabajo, mantenimiento, labor y personal. */
+/**
+ * Rutas del ERP: exportación contable, órdenes de trabajo, resultados, mantenimiento, labor propia y personal.
+ */
 import { z } from "zod";
 import { LIMITS } from "@yvy/shared";
 import { attendanceDayInput, employeePaymentInput, employeeInput, machineCostInput, maintenanceLogInput, maintenancePlanInput, orderSchema, documentTaxInput, EXPORT_DATASETS, exportFormatInput, isoDate } from "@yvy/shared";
@@ -18,9 +20,10 @@ import { master } from "./master";
 import { uuid } from "../schemas";
 import { Hono } from "hono";
 
+/** Rutas de exportación, órdenes de trabajo, mantenimiento, labor y personal. */
 export const routes = new Hono<AppEnv>();
 
-// ---------- Exportación para sistemas contables (I-06) ----------
+// ---------- Exportación para sistemas contables ----------
 
 routes.get("/export/rows", async (c) => {
   const q = parse(z.object({ dataset: z.enum(EXPORT_DATASETS), from: isoDate, to: isoDate }), c.req.query());
@@ -49,7 +52,7 @@ routes.delete("/export/formats/:id", async (c) => {
   return c.json({ ok: true });
 });
 
-// ---------- Órdenes de trabajo (E-20) ----------
+// ---------- Órdenes de trabajo ----------
 // Crear y ver: quien puede asignar tareas (no el empleado). El costo se ve solo con permiso de montos.
 
 routes.get("/work-orders", async (c) =>
@@ -75,13 +78,13 @@ routes.post("/work-orders", async (c) => {
   return c.json(await createWorkOrder(c.var.sdb, b), 201);
 });
 
-// ---------- Costo por hectárea y por tonelada, margen (E-30, E-31) ----------
+// ---------- Costo por hectárea y por tonelada, margen ----------
 
 routes.get("/results", async (c) =>
   c.json(await results(c.var.sdb, parse(z.object({ farmId: uuid.optional(), seasonId: uuid.optional() }), c.req.query()))),
 );
 
-// ---------- Mantenimiento preventivo (E-22) ----------
+// ---------- Mantenimiento preventivo ----------
 // Planes y avisos: el agrónomo los ve (son horas y km). Servicios con costo: dueño y administrador.
 
 master(routes, "maintenance-plans", s.maintenancePlans, maintenancePlanInput, [s.maintenancePlans.name], {
@@ -101,7 +104,7 @@ routes.delete("/maintenance/logs/:id", async (c) => {
   return c.json({ ok: true });
 });
 
-// ---------- Labor propia frente a contratista (E-23) ----------
+// ---------- Labor propia frente a contratista ----------
 // Son montos: solo dueño y administrador.
 
 routes.get("/machine-costs", async (c) => c.json(await listMachineCosts(c.var.sdb)));
@@ -115,7 +118,7 @@ routes.delete("/machine-costs/:machineId", async (c) => {
 });
 routes.get("/labor-cost", async (c) => c.json(await laborComparison(c.var.sdb)));
 
-// ---------- Personal y asistencia (E-25) ----------
+// ---------- Personal y asistencia ----------
 // Jornales son montos: solo dueño y administrador.
 
 master(routes, "employees", s.employees, employeeInput, [s.employees.name]);
@@ -134,7 +137,7 @@ routes.delete("/attendance/:id", async (c) => {
   return c.json({ ok: true });
 });
 
-// ---------- Adelantos, pagos y saldo por empleado (E-26) ----------
+// ---------- Adelantos, pagos y saldo por empleado ----------
 
 routes.get("/employee-payments", async (c) => c.json(await listPayments(c.var.sdb, parse(uuid.optional(), c.req.query("employeeId")))));
 routes.post("/employee-payments", async (c) => c.json(await createPayment(c.var.sdb, parse(employeePaymentInput, await readJson(c.req))), 201));

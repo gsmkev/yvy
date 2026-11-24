@@ -1,3 +1,6 @@
+/**
+ * Medición diaria del uso de D1 y R2, con aviso por email al llegar a la proporción de alerta del límite gratis.
+ */
 import { eq, sql } from "drizzle-orm";
 import { LIMITS, localDate } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -5,7 +8,7 @@ import { getDb } from "../db/client";
 import { sendEmail } from "../lib/email";
 import type { Bindings } from "../types";
 
-/** Uso diario y aviso al 70 % de los límites del plan gratis (anexo §6). */
+/** Guarda el uso diario de D1 y de fotos en R2 y avisa por email a operaciones cuando alguno se acerca al límite del plan gratis. */
 export async function recordUsage(env: Bindings, now: number): Promise<void> {
   const db = getDb(env.DB);
   const day = localDate(now);

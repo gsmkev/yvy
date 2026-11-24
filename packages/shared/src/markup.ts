@@ -1,3 +1,5 @@
+/** Plantillas de HTML y XML con escape automático de los valores interpolados. */
+
 /** Marcado ya armado: al incluirlo en `safeHtml` o `safeXml` no se vuelve a escapar. */
 export class Markup {
   constructor(readonly text: string) {}

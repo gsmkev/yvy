@@ -1,8 +1,9 @@
-/** Informe de riesgo climático de una estancia (C-10): lo calcula workers-py y lo valida el Worker al guardarlo. */
+/** Informe de riesgo climático de una estancia: lo calcula workers-py y lo valida el Worker al guardarlo. */
 import { z } from "zod";
 
 const yearDays = z.object({ year: z.number().int(), days: z.number().int().min(0) });
 
+/** Validación del informe de riesgo climático que calcula workers-py. */
 export const farmRiskSchema = z.object({
   version: z.literal(1),
   generatedAt: z.number().int(),
@@ -54,4 +55,5 @@ export const farmRiskSchema = z.object({
     .nullable(),
 });
 
+/** Informe de riesgo climático de una estancia. */
 export type FarmRisk = z.infer<typeof farmRiskSchema>;

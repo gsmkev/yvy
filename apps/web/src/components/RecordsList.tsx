@@ -30,9 +30,8 @@ function useRecords(filters: RecordFilters) {
 /**
  * Lista de registros con carga por páginas.
  * @param filters filtros que se envían a la API.
- * @param onRows se llama con las filas cargadas, por ejemplo para exportarlas.
  */
-export function RecordsList({ filters, onRows }: { filters: RecordFilters; onRows?: (rows: RecordRow[]) => void }) {
+export function RecordsList({ filters, onRows }: { filters: RecordFilters; /** Se llama con las filas cargadas, por ejemplo para exportarlas. */ onRows?: (rows: RecordRow[]) => void }) {
   const q = useRecords(filters);
   const [open, setOpen] = useState<RecordRow | null>(null);
   const rows = q.data?.pages.flatMap((p) => p.rows) ?? [];

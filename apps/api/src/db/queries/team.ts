@@ -5,6 +5,7 @@ import * as s from "@yvy/shared/schema";
 import { runBatch, type Stmt } from "../client";
 import { can, ForbiddenError, type ScopedDb } from "../scoped";
 
+/** Da de baja a un miembro. Falla si es la propia persona o si no tiene permiso sobre su rol. */
 export async function removeMember(sdb: ScopedDb, userId: string) {
   const role = await sdb.memberRole(userId);
   if (isFieldRole(role)) sdb.require(can.manageWorkers);
@@ -32,6 +33,7 @@ export async function removeMember(sdb: ScopedDb, userId: string) {
 
 // ---------- Dispositivos (push) ----------
 
+/** Registra o actualiza el dispositivo de la persona y su token de notificaciones. */
 export async function registerDevice(
   sdb: ScopedDb,
   d: { id: string; platform: string; appVersion: string | null; pushToken: string | null },

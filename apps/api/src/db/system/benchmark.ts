@@ -1,10 +1,10 @@
-/** Comparación anónima con la zona (R-08). */
+/** Comparación anónima con la zona. */
 import { and, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import * as s from "@yvy/shared/schema";
 import { chunkForParams } from "../client";
 import type { SystemDb } from "./index";
 
-/** R-08: estancias de OTRAS organizaciones dentro de la caja, con su centro. Solo para calcular medianas. */
+/** Estancias de OTRAS organizaciones dentro de la caja, con su centro. Solo para calcular medianas. */
 export function benchmarkCandidates(sys: SystemDb, orgId: string, box: { minLon: number; maxLon: number; minLat: number; maxLat: number }) {
   return sys.db
     .select({ id: s.farms.id, organizationId: s.farms.organizationId, lon: s.farms.centroidLon, lat: s.farms.centroidLat })
@@ -23,7 +23,7 @@ export function benchmarkCandidates(sys: SystemDb, orgId: string, box: { minLon:
 }
 
 /**
- * R-08: vigor medio (NDVI de los lotes desde `since`) y lluvia acumulada (CHIRPS desde `sinceDate`) por estancia.
+ * Vigor medio (NDVI de los lotes desde `since`) y lluvia acumulada (CHIRPS desde `sinceDate`) por estancia.
  * 2 consultas por tanda de ≤ 90 estancias.
  */
 export async function benchmarkMetrics(sys: SystemDb, farmIds: string[], since: number, sinceDate: string) {
@@ -50,6 +50,7 @@ export async function benchmarkMetrics(sys: SystemDb, farmIds: string[], since: 
   return out;
 }
 
+/** Guarda (reemplaza) la comparación de una estancia con su zona. */
 export async function saveBenchmark(sys: SystemDb, row: typeof s.zoneBenchmarks.$inferInsert) {
   await sys.db
     .insert(s.zoneBenchmarks)
@@ -57,6 +58,7 @@ export async function saveBenchmark(sys: SystemDb, row: typeof s.zoneBenchmarks.
     .onConflictDoUpdate({ target: s.zoneBenchmarks.farmId, set: row });
 }
 
+/** Borra la comparación de zona de una estancia. */
 export async function clearBenchmark(sys: SystemDb, farmId: string) {
   await sys.db.delete(s.zoneBenchmarks).where(eq(s.zoneBenchmarks.farmId, farmId));
 }

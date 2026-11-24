@@ -1,4 +1,4 @@
-/** Puntos y trazas sobre lotes: etiqueta garantizada adentro (M-12), grilla de muestreo (M-18) y perímetro caminado (M-04). */
+/** Puntos y trazas sobre lotes: etiqueta garantizada adentro, grilla de muestreo y perímetro caminado. */
 import pointOnFeature from "@turf/point-on-feature";
 import type { Polygon, Position } from "geojson";
 import { areaHa, containsPoint, validatePolygon, type Area, type ValidationError } from "./core";
@@ -11,6 +11,7 @@ export function labelPoint(g: Area): { lon: number; lat: number } {
 
 const M_PER_DEG_LAT = 111_320;
 
+/** Punto de muestreo numerado. */
 export interface SamplePoint {
   /** Número del punto, desde 1, recorriendo la grilla en zigzag para caminarla sin saltos. */
   n: number;
@@ -18,6 +19,7 @@ export interface SamplePoint {
   lat: number;
 }
 
+/** Densidades de muestreo ofrecidas, en hectáreas por punto. */
 export const SAMPLING_HA = [5, 10] as const;
 
 /**
@@ -53,8 +55,9 @@ const round = (n: number) => Math.round(n * 1e6) / 1e6;
 /** Cuántos puntos lleva un lote con esa densidad (sin generar la grilla completa). */
 export const samplingCount = (g: Area, haPerPoint: number): number => Math.max(1, Math.round(areaHa(g) / haPerPoint));
 
-// ---------- Perímetro caminado (M-04) ----------
+// ---------- Perímetro caminado ----------
 
+/** Punto de una traza GPS caminada. */
 export interface TracePoint {
   lon: number;
   lat: number;
@@ -110,6 +113,7 @@ function distToSegmentM(p: TracePoint, a: TracePoint, b: TracePoint): number {
   return Math.hypot(px - t * bx, py - t * by);
 }
 
+/** Motivo por el que una traza caminada no forma un lote válido. */
 export type TraceError = ValidationError | "too_few_points";
 
 /**

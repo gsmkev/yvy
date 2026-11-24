@@ -71,7 +71,6 @@ function PrintPlots({ plots }: { plots: Plot[] }) {
 /**
  * Lista de lotes con filtro de no visitados y herramientas de líneas y puntos.
  * @param shownPlots lotes ya filtrados.
- * @param staleDays días sin visita para marcar un lote.
  */
 export function PlotsList({
   d,
@@ -97,7 +96,8 @@ export function PlotsList({
   unvisitedCount: number;
   onlyUnvisited: boolean;
   onToggleUnvisited: () => void;
-  staleDays: number;
+  /** Días sin visita para marcar un lote. */
+staleDays: number;
   onStaleDays: (n: number) => void;
   onSelect: (id: string) => void;
   onDrawLine: () => void;

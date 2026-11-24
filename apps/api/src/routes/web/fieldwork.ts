@@ -9,16 +9,18 @@ import type { AppEnv } from "../../types";
 import { isoDate, num } from "../schemas";
 import { Hono } from "hono";
 
+/** Rutas de formularios, análisis por lote, registros, tareas y miembros. */
 export const routes = new Hono<AppEnv>();
 
+/** Campos propios de los formularios. Leer: todo el equipo (el empleado los llena en la app). Editar: dueño y administrador. */
 routes.get("/org/form-config", async (c) => c.json(await getFormConfig(c.var.sdb)));
 routes.put("/org/form-config", async (c) => {
   const config = parse(formConfigSchema, await readJson(c.req));
   return c.json(await saveFormConfig(c.var.sdb, config));
 });
-/** S-20: área quemada por lote tras un foco de fuego (job burned_area). */
+/** Área quemada por lote tras un foco de fuego (job burned_area). */
 routes.get("/org/farms/:id/burned", async (c) => c.json(await farmAnalyses(c.var.sdb, c.req.param("id"), "burned")));
-/** S-31: cambio de cobertura entre dos fechas, a pedido. */
+/** Cambio de cobertura entre dos fechas, a pedido. */
 routes.get("/org/farms/:id/cover-change", async (c) => {
   const id = c.req.param("id");
   return c.json({ ...(await farmAnalyses(c.var.sdb, id, "cover_change")), job: await analysisStatus(c.var.sdb, id, "cover_change") });
@@ -39,7 +41,7 @@ routes.post("/org/farms/:id/cover-change", async (c) => {
   }
   return c.json({ status: "processing", already: false }, 202);
 });
-/** S-03: pide el job s2_history (Sentinel-2 desde 2017) para la estancia. */
+/** Pide el job s2_history (Sentinel-2 desde 2017) para la estancia. */
 routes.post("/org/farms/:id/history", async (c) => {
   const farmId = c.req.param("id");
   if (!(await markHistoryRequested(c.var.sdb, farmId))) return c.json({ status: "processing", already: true }, 202);
@@ -113,7 +115,7 @@ routes.patch("/org/tasks/:id", async (c) => {
   await updateTask(c.var.sdb, c.req.param("id"), b);
   return c.json({ ok: true });
 });
-/** T-02: comentario en la tarea. Lo puede hacer quien ve la tarea (el empleado solo en las suyas). */
+/** Comentario en la tarea. Lo puede hacer quien ve la tarea (el empleado solo en las suyas). */
 routes.post("/org/tasks/:id/comments", async (c) => {
   const b = parse(z.object({ text: z.string().trim().min(1).max(LIMITS.tasks.maxCommentLength) }), await readJson(c.req));
   return c.json(await addTaskComment(c.var.sdb, c.req.param("id"), b.text), 201);

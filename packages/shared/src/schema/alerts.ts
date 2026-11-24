@@ -1,3 +1,8 @@
+/**
+ * Avisos agronómicos: reglas por organización, avisos con sus lotes, opiniones y notificaciones por usuario, más
+ * preferencias, ajustes de estancia y auditoría.
+ */
+
 import { sql } from "drizzle-orm";
 import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { HEALTH_REASONS } from "../livestock";
@@ -6,6 +11,7 @@ import { timestamps, synced } from "./columns";
 
 // ---------- Avisos ----------
 
+/** Reglas de aviso de una organización: una fila por tipo con sus umbrales en JSON. */
 export const alertRules = sqliteTable("alert_rules", {
   id: text("id").primaryKey(),
   organizationId: text("organization_id").notNull(),
@@ -14,7 +20,7 @@ export const alertRules = sqliteTable("alert_rules", {
   enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
 });
 
-/** Enlace temporal de solo lectura a la ficha de una estancia (K-04). Solo se guarda el hash del token. */
+/** Enlace temporal de solo lectura a la ficha de una estancia. Solo se guarda el hash del token. */
 export const shareLinks = sqliteTable(
   "share_links",
   {
@@ -30,7 +36,7 @@ export const shareLinks = sqliteTable(
   (t) => [uniqueIndex("share_links_hash_uq").on(t.tokenHash), index("share_links_farm_idx").on(t.farmId)],
 );
 
-/** Umbrales de avisos por estancia (C-04). Sin fila = valores por defecto. No se sincroniza al celular. */
+/** Umbrales de avisos por estancia. Sin fila = valores por defecto. No se sincroniza al celular. */
 export const farmAlertSettings = sqliteTable("farm_alert_settings", {
   farmId: text("farm_id").primaryKey(),
   organizationId: text("organization_id").notNull(),
@@ -41,18 +47,18 @@ export const farmAlertSettings = sqliteTable("farm_alert_settings", {
   updatedBy: text("updated_by"),
 });
 
-/** Carga animal máxima (UA/ha) por estancia (G-03). Sin fila = DEFAULT_MAX_UA_PER_HA. No se sincroniza. */
+/** Carga animal máxima (UA/ha) por estancia. Sin fila = DEFAULT_MAX_UA_PER_HA. No se sincroniza. */
 export const farmLivestockSettings = sqliteTable("farm_livestock_settings", {
   farmId: text("farm_id").primaryKey(),
   organizationId: text("organization_id").notNull(),
   maxUaPerHa: real("max_ua_per_ha").notNull().default(1),
-  /** Sistema productivo (ADR 0005): cria, recria, invernada, ciclo_completo, feedlot o tambo. Nulo = sin elegir. */
+  /** Sistema productivo : cria, recria, invernada, ciclo_completo, feedlot o tambo. Nulo = sin elegir. */
   system: text("system"),
   /** Tipo de pastura de los potreros sin "tipo de pastura" reconocible: natural, implantada o mejorada. */
   pastureDefault: text("pasture_default"),
   /** JSON {natural?, implantada?, mejorada?}: UA/ha recomendadas propias de la estancia (vacío = las de referencia). */
   pastureLoads: text("pasture_loads"),
-  /** Estación de servicio (ADR 0005): inicio "MM-DD" y días. Nulo = 11-01 y 90. */
+  /** Estación de servicio : inicio "MM-DD" y días. Nulo = 11-01 y 90. */
   breedingStart: text("breeding_start"),
   breedingDays: integer("breeding_days"),
   updatedAt: integer("updated_at").notNull(),
@@ -60,7 +66,7 @@ export const farmLivestockSettings = sqliteTable("farm_livestock_settings", {
 });
 
 /**
- * Calendario sanitario de la organización (G-10). Solo web: el celular recibe las tareas que se crean para
+ * Calendario sanitario de la organización. Solo web: el celular recibe las tareas que se crean para
  * los empleados. farm_id vacío = toda la organización. El estado (hecho o vencido) se calcula, no se guarda.
  */
 export const sanitaryEvents = sqliteTable(
@@ -83,6 +89,7 @@ export const sanitaryEvents = sqliteTable(
   (t) => [index("sanitary_events_org_date_idx").on(t.organizationId, t.plannedDate)],
 );
 
+/** Avisos generados por las reglas para una estancia; no se sincronizan. */
 export const alerts = sqliteTable(
   "alerts",
   {
@@ -109,6 +116,7 @@ export const alerts = sqliteTable(
   ],
 );
 
+/** Lotes alcanzados por un aviso. */
 export const alertPlots = sqliteTable(
   "alert_plots",
   {
@@ -118,6 +126,7 @@ export const alertPlots = sqliteTable(
   (t) => [primaryKey({ columns: [t.alertId, t.plotId] }), index("alert_plots_plot_idx").on(t.plotId)],
 );
 
+/** Opinión de un usuario sobre si un aviso le sirvió. */
 export const alertFeedback = sqliteTable(
   "alert_feedback",
   {
@@ -129,13 +138,14 @@ export const alertFeedback = sqliteTable(
   (t) => [primaryKey({ columns: [t.alertId, t.userId] })],
 );
 
+/** Notificación para un usuario: un aviso o una mención en un comentario. */
 export const notifications = sqliteTable(
   "notifications",
   {
     id: text("id").primaryKey(),
     userId: text("user_id").notNull(),
     alertId: text("alert_id"),
-    /** T-08: aviso de mención en un comentario (en vez de un aviso agronómico). */
+    /** Aviso de mención en un comentario (en vez de un aviso agronómico). */
     commentId: text("comment_id"),
     channel: text("channel", { enum: ["push", "email"] }).notNull(),
     status: text("status", { enum: ["pending", "sent", "failed"] })
@@ -148,7 +158,7 @@ export const notifications = sqliteTable(
 );
 
 /**
- * P-03: analítica propia, sin terceros y sin datos de personas. Los pasos del embudo (FUNNEL_EVENTS) se guardan una
+ * Analítica propia, sin terceros y sin datos de personas. Los pasos del embudo (FUNNEL_EVENTS) se guardan una
  * vez por organización (índice único parcial); no llevan usuario.
  */
 export const events = sqliteTable(
@@ -168,7 +178,7 @@ export const events = sqliteTable(
 );
 
 /**
- * P-03: pantallas abiertas ("view:tareas"), agrupadas por día y nombre: una fila por día y pantalla, sin usuario ni
+ * Pantallas abiertas ("view:tareas"), agrupadas por día y nombre: una fila por día y pantalla, sin usuario ni
  * organización. `n` ya viene ponderado por el muestreo (cada evento guardado suma 1 / sampleRate). Se borran a los 90 días.
  */
 export const eventsDaily = sqliteTable(
@@ -181,7 +191,7 @@ export const eventsDaily = sqliteTable(
   (t) => [primaryKey({ columns: [t.day, t.name] })],
 );
 
-/** U-29: preferencias de notificación por usuario (JSON validado con notificationPrefsSchema). No se sincroniza. */
+/** Preferencias de notificación por usuario (JSON validado con notificationPrefsSchema). No se sincroniza. */
 export const notificationPrefs = sqliteTable("notification_prefs", {
   userId: text("user_id").primaryKey(),
   prefs: text("prefs").notNull(),
@@ -189,8 +199,8 @@ export const notificationPrefs = sqliteTable("notification_prefs", {
 });
 
 /**
- * P-10: pedido de cambio de plan o de topes, hecho por el dueño desde la web. Queda pendiente hasta que el panel interno lo
- * aprueba (aplica el plan y los topes) o lo rechaza; el cobro es aparte (P-11). Un solo pedido pendiente por organización.
+ * Pedido de cambio de plan o de topes, hecho por el dueño desde la web. Queda pendiente hasta que el panel interno lo
+ * aprueba (aplica el plan y los topes) o lo rechaza; el cobro es aparte. Un solo pedido pendiente por organización.
  */
 export const planRequests = sqliteTable(
   "plan_requests",
@@ -217,7 +227,7 @@ export const planRequests = sqliteTable(
   ],
 );
 
-/** U-24: estado del recorrido de primera vez por usuario (se oculta una vez y vale en todos sus dispositivos). No se sincroniza. */
+/** Estado del recorrido de primera vez por usuario (se oculta una vez y vale en todos sus dispositivos). No se sincroniza. */
 export const onboardingState = sqliteTable("onboarding_state", {
   userId: text("user_id").primaryKey(),
   /** Cuándo ocultó la guía; null = la ve mientras le falten pasos. */
@@ -226,7 +236,7 @@ export const onboardingState = sqliteTable("onboarding_state", {
 });
 
 /**
- * Registro de auditoría. P-12: acciones del equipo de Yvy sobre organizaciones de clientes. K-06: quién cambió qué y
+ * Registro de auditoría. Acciones del equipo de Yvy sobre organizaciones de clientes. También quién cambió qué y
  * cuándo dentro de la organización (estancias, lotes, miembros, tareas, borrado de registros).
  */
 export const auditLog = sqliteTable(
@@ -236,7 +246,7 @@ export const auditLog = sqliteTable(
     actorUserId: text("actor_user_id").notNull(),
     action: text("action").notNull(),
     organizationId: text("organization_id"),
-    /** K-06: qué se tocó (`farm`, `plot`, `member`, `task`, `record`...) y su id. Las acciones del equipo de Yvy no lo llevan. */
+    /** Qué se tocó (`farm`, `plot`, `member`, `task`, `record`...) y su id. Las acciones del equipo de Yvy no lo llevan. */
     entity: text("entity"),
     entityId: text("entity_id"),
     detail: text("detail").notNull().default("{}"),

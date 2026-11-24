@@ -1,5 +1,5 @@
 /**
- * T-08: comentarios y menciones en registros. Tabla sincronizable `comments`: una fila por comentario.
+ * Comentarios y menciones en registros. Tabla sincronizable `comments`: una fila por comentario.
  * Una mención crea un aviso (push y, si la persona tiene email, email) que envía el cron de notificaciones.
  */
 import { and, asc, eq, getTableColumns, inArray, isNull, sql } from "drizzle-orm";
@@ -63,6 +63,7 @@ async function visibleRecord(sdb: ScopedDb, recordId: string) {
   if (!r) throw new NotFoundError("Registro inexistente");
 }
 
+/** Comentarios de un registro visible para la persona. */
 export async function listComments(sdb: ScopedDb, recordId: string) {
   await visibleRecord(sdb, recordId);
   return sdb.db
@@ -79,6 +80,7 @@ export async function listComments(sdb: ScopedDb, recordId: string) {
     .orderBy(asc(s.comments.createdAt), asc(s.comments.id));
 }
 
+/** Agrega un comentario a un registro y avisa a las personas mencionadas. */
 export async function addComment(sdb: ScopedDb, recordId: string, body: string, mentionIds: string[]) {
   if (sdb.auth.readOnly) throw new ForbiddenError("Sesión de solo lectura");
   await visibleRecord(sdb, recordId);

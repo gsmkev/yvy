@@ -1,4 +1,6 @@
-/** Ingreso con Google (P-07). */
+/**
+ * Ingreso con Google (opcional).
+ */
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
 import { and, eq, gte, isNull } from "drizzle-orm";
@@ -12,9 +14,10 @@ import type { AppEnv } from "../../types";
 import { deviceId, sessionOrChallenge } from "./shared";
 import { Hono } from "hono";
 
+/** Rutas de ingreso con Google. */
 export const routes = new Hono<AppEnv>();
 
-// ---------- Ingreso con Google (P-07) ----------
+// ---------- Ingreso con Google ----------
 // Opcional: sin GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET no existe. Solo entra quien ya tiene cuenta: se vincula por el
 // email verificado por Google (no crea organizaciones). Flujo de código de autorización; el id_token llega directo del
 // endpoint de Google por HTTPS, así que alcanza con revisar sus datos (aud, iss, exp, email_verified).
@@ -60,7 +63,10 @@ routes.get("/google/start", async (c) => {
   return c.redirect(url.toString(), 302);
 });
 
-/** Datos del id_token que devuelve Google al canjear el código (sin firma: viene directo de su endpoint). */
+/**
+ * Lee y valida los datos del id_token sin verificar su firma (viene directo del endpoint de Google): emisor, audiencia, vencimiento y email verificado).
+ * @returns el email en minúsculas y el `sub`, o null si el token no sirve.
+ */
 export function googleClaims(idToken: string, clientId: string, nowSec: number) {
   try {
     const part = idToken.split(".")[1] ?? "";

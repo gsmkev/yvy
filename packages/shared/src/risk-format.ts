@@ -1,9 +1,10 @@
 /**
- * Formato del informe de riesgo climático (C-10). Lo que depende del idioma de la plataforma (el nombre del mes) lo
+ * Formato del informe de riesgo climático. Lo que depende del idioma de la plataforma (el nombre del mes) lo
  * pone cada app: la web con Intl, la app con una tabla, porque Hermes no siempre trae Intl completo.
  */
 import type { FarmRisk } from "./risk";
 
+/** Respuesta del informe de riesgo: cuándo se calculó y el informe (null si todavía no hay). */
 export interface RiskResponse {
   computedAt: number | null;
   report: FarmRisk | null;
@@ -16,6 +17,7 @@ export type MonthName = (month: number, short?: boolean) => string;
 export const pctOfNormal = (mm: number, normal: number | null): number | null =>
   normal ? Math.round((mm / normal) * 100) : null;
 
+/** Funciones de formato del informe de riesgo; `monthName` aporta el nombre del mes del idioma de la plataforma. */
 export function riskFormat(monthName: MonthName) {
   /** "06-20" → "20 de junio"; null → "—". */
   const fmtMmDd = (v: string | null): string => {

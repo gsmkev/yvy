@@ -11,6 +11,7 @@ import { touchActivity } from "../../auth/plan";
 import type { AppEnv } from "../../types";
 import { Hono } from "hono";
 
+/** Rutas del perfil y las preferencias de la persona. */
 export const routes = new Hono<AppEnv>();
 
 /** Perfil y sesión actual. */
@@ -51,7 +52,7 @@ routes.get("/me", async (c) => {
 });
 
 /**
- * V-05 / V-06: código de referido del agrónomo o del productor (dueño de una organización); null para los demás roles.
+ * Código de referido del agrónomo o del productor (dueño de una organización); null para los demás roles.
  * Con cuántas organizaciones se registraron con su código y en cuántas el equipo ya anotó el crédito.
  */
 routes.get("/me/referral", async (c) => {
@@ -83,8 +84,7 @@ routes.get("/me/referral", async (c) => {
   });
 });
 
-/** U-29: qué avisos le llegan al usuario, por qué canal y en qué horario. Valen para todas sus organizaciones. */
-/** I-04: enlace del calendario de tareas (.ics). La URL con el token se muestra una sola vez; regenerarla revoca la anterior. */
+/** Enlace del calendario de tareas (.ics). La URL con el token se muestra una sola vez; regenerarla revoca la anterior. */
 routes.get("/me/calendar-feed", async (c) => c.json(await feedStatus(c.var.sdb)));
 routes.post("/me/calendar-feed", async (c) => {
   const token = await createFeed(c.var.sdb);
@@ -99,6 +99,7 @@ routes.put("/me/onboarding", async (c) => {
   const b = parse(z.object({ dismissed: z.boolean() }), await readJson(c.req));
   return c.json(await saveOnboarding(c.var.sdb, b.dismissed));
 });
+/** Qué avisos le llegan al usuario, por qué canal y en qué horario. Valen para todas sus organizaciones. */
 routes.get("/me/notification-prefs", async (c) => c.json(await getNotificationPrefs(c.var.sdb)));
 routes.put("/me/notification-prefs", async (c) => {
   const prefs = parse(notificationPrefsSchema, await readJson(c.req));
@@ -107,7 +108,7 @@ routes.put("/me/notification-prefs", async (c) => {
 });
 
 /**
- * P-03: pantalla abierta en la web ("view:tareas"). No se guarda quién ni de qué organización: solo se suma al
+ * Pantalla abierta en la web ("view:tareas"). No se guarda quién ni de qué organización: solo se suma al
  * contador del día de esa pantalla (una fila por día y nombre). Se muestrea (cada evento guardado cuenta 1 / sampleRate)
  * y cada pantalla tiene un tope diario, así el plan gratis de D1 no se agota. Los pasos del embudo los escribe solo el
  * servidor y no entran por acá.
@@ -136,7 +137,7 @@ routes.post("/events", async (c) => {
   return c.json({ recorded: (r.meta?.changes ?? 1) > 0 }, 202);
 });
 
-/** K-02: estancias y avisos de todas las organizaciones de la persona (vista del agrónomo). */
+/** Estancias y avisos de todas las organizaciones de la persona (vista del agrónomo). */
 routes.get("/me/clients", async (c) =>
   // Una sesión de soporte ve solo la organización que se pidió, no las otras de la misma persona.
   c.json(

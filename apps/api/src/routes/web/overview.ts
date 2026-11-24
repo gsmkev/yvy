@@ -8,10 +8,11 @@ import { parse, readJson } from "../../lib/http";
 import type { AppEnv } from "../../types";
 import { Hono } from "hono";
 
+/** Rutas del tablero, comentarios, comparaciones y registro de cambios. */
 export const routes = new Hono<AppEnv>();
 
 routes.get("/org/dashboard", async (c) => c.json(await ownerDashboard(c.var.sdb)));
-/** T-08: comentarios y menciones en un registro. */
+/** Comentarios y menciones en un registro. */
 routes.get("/org/records/:id/comments", async (c) => c.json(await listComments(c.var.sdb, c.req.param("id"))));
 routes.post("/org/records/:id/comments", async (c) => {
   const b = parse(
@@ -27,7 +28,7 @@ routes.delete("/org/comments/:id", async (c) => {
   await deleteComment(c.var.sdb, c.req.param("id"));
   return c.json({ ok: true });
 });
-/** R-07: comparación entre estancias y entre campañas. */
+/** Comparación entre estancias y entre campañas. */
 routes.get("/org/compare/farms", async (c) => c.json(await compareFarms(c.var.sdb)));
 routes.get("/org/compare/seasons", async (c) => c.json(await compareSeasons(c.var.sdb)));
 routes.get("/org/audit", async (c) =>

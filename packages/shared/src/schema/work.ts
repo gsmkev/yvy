@@ -1,9 +1,12 @@
+/** Tareas, registros de campo con sus fotos, comentarios y stock mínimo. */
+
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { RECURRENCES, TASK_STATUS, TASK_PRIORITIES, RECORD_KINDS, UPLOAD_STATUS } from "./enums";
 import { timestamps, synced } from "./columns";
 
 // ---------- Trabajo ----------
 
+/** Tareas asignadas a una persona, con su lote, vencimiento y repetición. */
 export const tasks = sqliteTable(
   "tasks",
   {
@@ -26,15 +29,15 @@ export const tasks = sqliteTable(
     completedAt: integer("completed_at"),
     completedBy: text("completed_by"),
     recordId: text("record_id"),
-    /** Punto al que ir (S-09: centro de un área problema). El celular lo muestra en el mapa y en "Llevame ahí". */
+    /** Punto al que ir (centro de un área problema). El celular lo muestra en el mapa y en "Llevame ahí". */
     lon: real("lon"),
     lat: real("lat"),
     /** Receta agronómica (JSON, ver prescriptionSchema): al hacer la tarea, la aplicación sale precargada. */
     prescription: text("prescription"),
     createdBy: text("created_by").notNull(),
-    /** Lista de verificación (F-15): JSON `[{id, text, done}]` o null. Ver checklist.ts. */
+    /** Lista de verificación: JSON `[{id, text, done}]` o null. Ver checklist.ts. */
     checklist: text("checklist"),
-    /** Orden de trabajo (JSON, ver orderSchema): labor, insumos, máquina y contratista. Baja al celular (E-20). */
+    /** Orden de trabajo (JSON, ver orderSchema): labor, insumos, máquina y contratista. Baja al celular. */
     workOrder: text("work_order"),
     ...synced,
   },
@@ -44,7 +47,7 @@ export const tasks = sqliteTable(
   ],
 );
 
-/** Stock mínimo por producto y depósito (E-14). Tabla de oficina: no se sincroniza. */
+/** Stock mínimo por producto y depósito. Tabla de oficina: no se sincroniza. */
 export const stockMinimums = sqliteTable(
   "stock_minimums",
   {
@@ -60,6 +63,7 @@ export const stockMinimums = sqliteTable(
   (t) => [uniqueIndex("stock_minimums_uq").on(t.organizationId, t.productId, t.warehouseId)],
 );
 
+/** Registros de campo (siembra, aplicación, lluvia, entre otros) con su carga en JSON. */
 export const records = sqliteTable(
   "records",
   {
@@ -89,7 +93,7 @@ export const records = sqliteTable(
 );
 
 /**
- * T-08: comentarios sobre un registro, con menciones (`@Ramón mirá esto`). Se sincroniza; cada comentario es una fila
+ * Comentarios sobre un registro, con menciones (`@Ramón mirá esto`). Se sincroniza; cada comentario es una fila
  * propia (a diferencia de los de las tareas, que van en un JSON) para que dos personas comentando offline no se pisen.
  */
 export const comments = sqliteTable(
@@ -112,6 +116,7 @@ export const comments = sqliteTable(
   ],
 );
 
+/** Fotos de un registro: ruta en R2, miniatura y estado de subida. */
 export const attachments = sqliteTable(
   "attachments",
   {

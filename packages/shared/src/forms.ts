@@ -1,5 +1,5 @@
 /**
- * Formularios configurables por la organización (F-14): campos propios por tipo de registro.
+ * Formularios configurables por la organización: campos propios por tipo de registro.
  * La definición se arma en la web (dueño y administrador) y baja al celular, que los pregunta después de las
  * preguntas estándar. Las respuestas van en `data.extra` del registro, validadas con un esquema genérico (las
  * claves son los ids de los campos), así el Worker no necesita conocer cada formulario.
@@ -9,12 +9,15 @@ import { t } from "./i18n";
 import { LIMITS } from "./limits";
 import { RECORD_KINDS, type RecordKind } from "./schema";
 
+/** Tipos de campo propio que se pueden definir. */
 export const FORM_FIELD_TYPES = ["text", "number", "choice", "yesno"] as const;
+/** Tipo de campo propio. */
 export type FormFieldType = (typeof FORM_FIELD_TYPES)[number];
 
 /** Id del campo: minúsculas, números y guion bajo; es la clave en `extra`. */
 export const FIELD_ID = /^[a-z][a-z0-9_]{0,31}$/;
 
+/** Definición de un campo propio: id, tipo, rótulo y opciones si es de elección. */
 export const formFieldSchema = z
   .object({
     id: z.string().regex(FIELD_ID),
@@ -28,8 +31,10 @@ export const formFieldSchema = z
   .refine((f) => (f.type === "choice" ? !!f.options && new Set(f.options).size === f.options.length : true), {
     message: "Una pregunta de opciones necesita al menos 2 opciones distintas",
   });
+/** Campo propio de un formulario. */
 export type FormField = z.infer<typeof formFieldSchema>;
 
+/** Campos propios por tipo de registro, con tope por tipo y sin ids repetidos. */
 export const formConfigSchema = z
   .partialRecord(z.enum(RECORD_KINDS), z.array(formFieldSchema).max(LIMITS.forms.maxFieldsPerKind))
   .superRefine((cfg, ctx) => {
@@ -38,6 +43,7 @@ export const formConfigSchema = z
       if (new Set(ids).size !== ids.length) ctx.addIssue({ code: "custom", message: `Ids repetidos en ${kind}` });
     }
   });
+/** Campos propios de cada tipo de registro. */
 export type FormConfig = Partial<Record<RecordKind, FormField[]>>;
 
 /** Respuestas propias de un registro: id del campo → valor. Esquema genérico, sin conocer la configuración. */
@@ -47,6 +53,7 @@ export const extraSchema = z
     z.union([z.string().trim().max(LIMITS.forms.maxTextLength), z.number().finite().min(-1e12).max(1e12), z.boolean()]),
   )
   .refine((e) => Object.keys(e).length <= LIMITS.forms.maxFieldsPerKind, { message: "Demasiados campos propios" });
+/** Respuestas propias de un registro. */
 export type Extra = z.infer<typeof extraSchema>;
 
 /** Prefijo con que el flujo del celular guarda las respuestas propias entre las demás (`extra.<id>`). */

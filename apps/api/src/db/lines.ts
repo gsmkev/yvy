@@ -1,5 +1,5 @@
 /**
- * Líneas del mapa (M-20): alambrados, caminos internos y cañerías de una estancia, con su largo.
+ * Líneas del mapa: alambrados, caminos internos y cañerías de una estancia, con su largo.
  * Solo la web las usa por ahora (no están en el pull del sync). Escribe quien edita el campo
  * (dueño, administrador, agrónomo); el empleado las ve si tiene lotes asignados en la estancia.
  */
@@ -12,6 +12,7 @@ import type { LineString } from "geojson";
 import { bumpVersion, currentVersion, runBatch } from "./client";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
 
+/** Líneas (caminos, alambrados, cañerías) de una estancia visible para la persona. */
 export async function listFarmLines(sdb: ScopedDb, farmId: string) {
   await sdb.requireFarmVisible(farmId);
   return sdb.db
@@ -30,6 +31,7 @@ export async function listFarmLines(sdb: ScopedDb, farmId: string) {
     .orderBy(asc(s.farmLines.kind), asc(s.farmLines.name));
 }
 
+/** Crea una línea en una estancia. */
 export async function createLine(
   sdb: ScopedDb,
   farmId: string,
@@ -78,6 +80,7 @@ async function requireLine(sdb: ScopedDb, id: string) {
   if (!row) throw new NotFoundError("No existe");
 }
 
+/** Edita nombre o tipo de una línea. */
 export async function updateLine(
   sdb: ScopedDb,
   id: string,
@@ -94,6 +97,7 @@ export async function updateLine(
   ]);
 }
 
+/** Borra (lógico) una línea. */
 export async function deleteLine(sdb: ScopedDb, id: string) {
   sdb.require(can.editField);
   await requireLine(sdb, id);

@@ -19,6 +19,7 @@ import { parse, readJson, timeOfDay } from "../lib/http";
 import type { AppEnv } from "../types";
 import { isoDate, uuid } from "./schemas";
 
+/** Rutas de gestión de la organización bajo `/org`: plan, miembros, estancias, lotes, tareas, webhooks y seguridad. */
 export const org = new Hono<AppEnv>();
 
 /** Quita la altura (Z) de cada posición: MapLibre y Python esperan 2D. */
@@ -52,6 +53,7 @@ const areaWith = (check: (ha: number) => string | null) =>
 const farmArea = areaWith((ha) =>
   ha > LIMITS.geometry.maxFarmHa ? t("ui.farm.tooBig", { max: LIMITS.geometry.maxFarmHa }) : null,
 );
+/** Esquema Zod de la geometría de un lote: forma válida, sin altura, con vértices y área mínima acotados. */
 export const plotArea = areaWith((ha) =>
   ha < LIMITS.geometry.minPlotHa
     ? t("ui.plot.tooSmall", { min: String(LIMITS.geometry.minPlotHa).replace(".", ",") })
@@ -60,7 +62,7 @@ export const plotArea = areaWith((ha) =>
 
 const describe = (g: Area) => ({ geometry: JSON.stringify(g), ...bboxOf(g), areaHa: areaHa(g) });
 
-/** P-09: registra el pedido de baja y avisa al equipo. No borra nada. */
+/** Registra el pedido de baja y avisa al equipo. No borra nada. */
 org.post("/delete-request", async (c) => {
   const res = await c.var.sdb.requestDeletion();
   if (res.created && c.env.OPS_EMAIL) {
@@ -74,9 +76,9 @@ org.post("/delete-request", async (c) => {
   return c.json({ ok: true, requestId: res.id }, res.created ? 201 : 200);
 });
 
-/** P-10: plan, topes, uso y pedido de cambio (solo el dueño). */
+/** Plan, topes, uso y pedido de cambio (solo el dueño). */
 org.get("/plan", async (c) => c.json(await planOverview(c.var.sdb)));
-/** P-10: pide otro plan o más topes. No cobra ni cambia nada: queda pendiente hasta que lo aprueba el panel interno. */
+/** Pide otro plan o más topes. No cobra ni cambia nada: queda pendiente hasta que lo aprueba el panel interno. */
 org.post("/plan-request", async (c) => {
   const b = parse(
     z.object({
@@ -123,7 +125,7 @@ org.post("/members", async (c) => {
 });
 
 /**
- * F-24: PIN de ingreso del empleado. Sin `pin` en el cuerpo el servidor genera uno al azar y lo devuelve una sola vez
+ * PIN de ingreso del empleado. Sin `pin` en el cuerpo el servidor genera uno al azar y lo devuelve una sola vez
  * (después solo queda el hash). El teléfono sale del cuerpo o de la ficha del empleado.
  */
 org.put("/members/:userId/pin", async (c) => {
@@ -151,10 +153,10 @@ org.delete("/members/:userId/pin", async (c) => {
   return c.json({ ok: true });
 });
 
-/** T-09 / K-05: estancias de cada supervisor, administrador o agrónomo (solo el dueño). */
+/** Estancias de cada supervisor, administrador o agrónomo (solo el dueño). */
 org.get("/farm-access", async (c) => c.json(await c.var.sdb.listFarmAccess()));
 
-/** R-10: informes programados por email a terceros. */
+/** Informes programados por email a terceros. */
 org.get("/report-schedules", async (c) => c.json(await listSchedules(c.var.sdb)));
 org.post("/report-schedules", async (c) => {
   const b = parse(
@@ -173,7 +175,7 @@ org.delete("/report-schedules/:id", async (c) => {
   return c.json({ ok: true });
 });
 
-/** I-01: tokens de la API pública (solo el dueño). El token se muestra una sola vez al crearlo. */
+/** Tokens de la API pública (solo el dueño). El token se muestra una sola vez al crearlo. */
 org.get("/api-tokens", async (c) => c.json(await listApiTokens(c.var.sdb)));
 org.post("/api-tokens", async (c) => {
   const b = parse(z.object({ name: z.string().trim().min(2).max(80) }), await readJson(c.req));
@@ -184,14 +186,14 @@ org.delete("/api-tokens/:id", async (c) => {
   return c.json({ ok: true });
 });
 
-/** X-26: registros raros para revisar y "Está bien". */
+/** Registros raros para revisar y "Está bien". */
 org.get("/review", async (c) => c.json(await listReview(c.var.sdb)));
 org.post("/review/:recordId/ok", async (c) => {
   await markReviewed(c.var.sdb, c.req.param("recordId"));
   return c.json({ ok: true });
 });
 
-/** I-02: webhooks de la organización (dueño y administrador). El secreto de firma se muestra una sola vez. */
+/** Webhooks de la organización (dueño y administrador). El secreto de firma se muestra una sola vez. */
 const webhookEvents = z.array(z.enum(WEBHOOK_EVENTS)).min(1).max(WEBHOOK_EVENTS.length);
 org.get("/webhooks", async (c) => c.json(await listWebhooks(c.var.sdb)));
 org.post("/webhooks", async (c) => {
@@ -213,7 +215,7 @@ org.post("/webhooks/:id/test", async (c) => {
   return c.json({ ok: true }, 202);
 });
 
-/** P-08: el dueño exige segundo factor a los administradores. */
+/** El dueño exige segundo factor a los administradores. */
 org.get("/security", async (c) => c.json(await getSecurity(c.var.sdb)));
 org.put("/security", async (c) => {
   const b = parse(z.object({ requireAdminTotp: z.boolean() }), await readJson(c.req));
@@ -255,7 +257,7 @@ org.post("/farms", async (c) => {
     centroidLon: lon,
     centroidLat: lat,
   });
-  // M-01/S-02: mapa base, 6 meses de historia y climatología al instante, sin demorar la respuesta
+  // Mapa base, 6 meses de historia y climatología al instante, sin demorar la respuesta
   await inBackground(c, dispatchNewFarm(c.env, res.id));
   return c.json(res, 201);
 });
@@ -278,7 +280,7 @@ const plotInput = z.object({
 org.post("/farms/:farmId/plots", async (c) => {
   const body = parse(z.object({ plots: z.array(plotInput).min(1).max(40) }), await readJson(c.req));
   const farmId = c.req.param("farmId");
-  // Primeros lotes de la estancia: la historia de vigor se calcula por lote, así que se vuelve a pedir (S-01)
+  // Primeros lotes de la estancia: la historia de vigor se calcula por lote, así que se vuelve a pedir
   const firstPlots = (await c.var.sdb.countPlots(farmId)) === 0;
   const res = await c.var.sdb.createPlots(
     farmId,
@@ -294,7 +296,7 @@ org.post("/farms/:farmId/plots", async (c) => {
     })),
   );
   if (firstPlots) await inBackground(c, dispatchNewFarm(c.env, farmId));
-  // Avisos no bloqueantes (M-10). Presupuesto de CPU: prefiltro por bbox y como máximo 12 recortes exactos.
+  // Avisos no bloqueantes. Presupuesto de CPU: prefiltro por bbox y como máximo 12 recortes exactos.
   const warnings = checkPlots(
     body.plots.map((p) => p.geometry),
     JSON.parse(res.farmGeometry) as Area,
@@ -321,7 +323,7 @@ org.post("/farms/:farmId/pois", async (c) => {
   return c.json(await c.var.sdb.createPoi({ farmId: c.req.param("farmId"), ...body }), 201);
 });
 
-/** A-11: receta del agrónomo → una tarea de aplicación por lote para el empleado, con la receta adentro. */
+/** Receta del agrónomo → una tarea de aplicación por lote para el empleado, con la receta adentro. */
 org.post("/prescriptions", async (c) => {
   const body = parse(
     z.object({
@@ -350,7 +352,7 @@ org.post("/tasks", async (c) => {
     z.object({
       farmId: uuid,
       plotId: uuid.nullish(),
-      /** T-01: una tarea por lote (lotes elegidos en el mapa). Con esto, `plotId` se ignora. */
+      /** Una tarea por lote (lotes elegidos en el mapa). Con esto, `plotId` se ignora. */
       plotIds: z.array(uuid).min(1).max(LIMITS.tasks.maxPlotsPerBatch).optional(),
       assigneeId: z.string(),
       title: z.string().trim().min(1).max(200),
@@ -359,7 +361,7 @@ org.post("/tasks", async (c) => {
       dueTime: timeOfDay.nullish(),
       priority: z.enum(TASK_PRIORITIES).default("normal"),
       recurrence: z.enum(RECURRENCES).default("none"),
-      /** Texto de cada ítem de la lista de verificación (F-15). */
+      /** Texto de cada ítem de la lista de verificación. */
       checklist: z.array(z.string().trim().max(LIMITS.checklist.maxTextLength)).max(LIMITS.checklist.maxItems).optional(),
       lon: z.number().min(-180).max(180).nullish(),
       lat: z.number().min(-90).max(90).nullish(),

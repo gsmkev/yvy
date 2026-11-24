@@ -123,7 +123,6 @@ export function ShapeEditBar({
 /**
  * Alta de un punto de interés en la posición elegida.
  * @param at [longitud, latitud].
- * @param onSaved se llama al guardar.
  */
 export function NewPoiModal({
   farmId,
@@ -134,7 +133,8 @@ export function NewPoiModal({
   farmId: string;
   at: [number, number];
   onClose: () => void;
-  onSaved: () => void;
+  /** Se llama al guardar. */
+onSaved: () => void;
 }) {
   const [name, setName] = useState("");
   const [kind, setKind] = useState<string>("rain_gauge");

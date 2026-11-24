@@ -1,5 +1,5 @@
 /**
- * Ventana de siembra (A-05): por día de los próximos días, si conviene sembrar según la humedad del suelo
+ * Ventana de siembra: por día de los próximos días, si conviene sembrar según la humedad del suelo
  * (NASA POWER, GWETTOP en fracción de saturación 0-1), la lluvia y la temperatura mínima del pronóstico (MET Norway).
  * Los umbrales están en LIMITS.sowing y son valores de referencia: la decisión es del agrónomo.
  */
@@ -8,8 +8,10 @@ import type { CROPS } from "./schema";
 
 type Crop = (typeof CROPS)[number];
 
+/** Motivo por el que un día no es apto para sembrar. */
 export type SowingBlock = "rain_day" | "cold" | "dry" | "saturated";
 
+/** Evaluación de un día para sembrar. */
 export interface SowingDay {
   date: string;
   ok: boolean;
@@ -18,6 +20,7 @@ export interface SowingDay {
   rainAhead: boolean;
 }
 
+/** Ventana de siembra de los próximos días y la mejor racha de días aptos. */
 export interface SowingWindowResult {
   /** null = sin dato de humedad del suelo: no se bloquea por seco ni por encharcado. */
   soil: number | null;

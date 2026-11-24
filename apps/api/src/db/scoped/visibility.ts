@@ -1,5 +1,5 @@
 /**
- * Visibilidad por tabla sincronizable: lotes asignados (roles de campo) o estancias permitidas (supervisor, K-05).
+ * Visibilidad por tabla sincronizable: lotes asignados (roles de campo) o estancias permitidas (supervisor).
  * Dos tablas de reglas: `WORKER_RULES` para empleado y contratista, `SCOPE_RULES` para el resto de los roles.
  * `undefined` = sin límite más allá de la organización.
  */
@@ -22,7 +22,7 @@ const WORKER_RULES: Record<PullTable, WorkerRule> = {
   records: (sdb) => sdb.recordsVisibleSql(),
   attachments: (sdb) => viaVisibleRecords(sdb, "attachments.record_id"),
   alerts: (sdb) => sql`alerts.id IN (SELECT alert_id FROM alert_plots WHERE plot_id IN ${sdb.assignedPlotsSql()})`,
-  plot_index_stats: () => sql`0`, // PRD §11: no baja al empleado
+  plot_index_stats: () => sql`0`, // No baja al empleado
   farm_layers: (sdb) => sql`farm_layers.farm_id IN ${sdb.workerFarmsSql()}`,
   // las campañas son de toda la organización: el empleado las necesita para anotar; el contratista no
   seasons: (sdb) => (sdb.isContractor ? sql`0` : undefined),
@@ -31,7 +31,7 @@ const WORKER_RULES: Record<PullTable, WorkerRule> = {
   machines: () => undefined, // las máquinas son de toda la organización: el empleado las elige al cargar combustible
   animals: (sdb) => sql`animals.farm_id IN ${sdb.workerFarmsSql()}`,
   comments: (sdb) => viaVisibleRecords(sdb, "comments.record_id"),
-  warehouses: () => sql`0`, // los depósitos son para el recuento (E-15): el empleado no entra al ERP
+  warehouses: () => sql`0`, // los depósitos son para el recuento: el empleado no entra al ERP
 };
 
 /** Tabla con la estancia en una columna propia, o a través de lotes o de registros. */
@@ -70,13 +70,13 @@ const SCOPE_RULES: Record<PullTable, ScopeRule> = {
   seasons: () => undefined,
   products: () => undefined,
   machines: () => undefined,
-  warehouses: (sdb) => (sdb.auth.role === "supervisor" ? sql`0` : undefined), // el supervisor tampoco entra al ERP (E-15)
+  warehouses: (sdb) => (sdb.auth.role === "supervisor" ? sql`0` : undefined), // el supervisor tampoco entra al ERP
 };
 
 const workerRules = new Map(Object.entries(WORKER_RULES) as [PullTable, WorkerRule][]);
 const scopeRules = new Map(Object.entries(SCOPE_RULES) as [PullTable, ScopeRule][]);
 
-/** Condición de visibilidad por tabla: lotes asignados (roles de campo) o estancias permitidas (supervisor, K-05). */
+/** Condición de visibilidad por tabla: lotes asignados (roles de campo) o estancias permitidas (supervisor). */
 export function workerFilter(sdb: ScopedDb, table: PullTable, write = false): SQL | undefined {
   return sdb.isWorker ? workerRules.get(table)!(sdb) : scopeRules.get(table)!(sdb, write);
 }

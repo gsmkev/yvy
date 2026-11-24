@@ -1,5 +1,5 @@
 /**
- * Feedlot (G-33): raciones de ingredientes del catálogo (% de la materia seca), suministro diario por corral y
+ * Feedlot: raciones de ingredientes del catálogo (% de la materia seca), suministro diario por corral y
  * conversión alimenticia (kg de materia seca por kg de peso ganado, con las pesadas del corral).
  * Los kilos de cada ingrediente salen de la materia seca suministrada: kg tal cual = kg MS x % de la ración / MS del producto.
  */
@@ -8,6 +8,7 @@ import { LIMITS } from "./limits";
 
 const uuid = z.string().uuid();
 
+/** Ingrediente de una ración: producto del depósito, su parte de la materia seca y su materia seca propia. */
 export const rationItemSchema = z.object({
   productId: uuid,
   /** Parte de la materia seca de la ración, en %. */
@@ -15,8 +16,10 @@ export const rationItemSchema = z.object({
   /** Materia seca del producto tal como se guarda en el depósito, en % (maíz grano 88, silaje 35...). */
   dmPct: z.number().min(1).max(100).default(100),
 });
+/** Ingrediente de una ración. */
 export type RationItem = z.infer<typeof rationItemSchema>;
 
+/** Entrada para crear o editar una ración: sin ingredientes repetidos y con los porcentajes sumando 100. */
 export const feedRationInput = z
   .object({
     name: z.string().trim().min(1).max(80),
@@ -38,12 +41,14 @@ export function rationLines(items: RationItem[], kgDm: number): { productId: str
   return items.map((i) => ({ productId: i.productId, kg: round2((kgDm * (i.pctDm / 100)) / (i.dmPct / 100)) })).filter((l) => l.kg > 0);
 }
 
+/** Suministro de alimento a un corral (kg de materia seca y tal cual). */
 export interface FeedEntry {
   plotId: string;
   at: number;
   kgDm: number;
   kgAsFed: number;
 }
+/** Pesada de un corral usada para calcular la ganancia. */
 export interface WeighingEntry {
   plotId: string;
   at: number;
@@ -51,7 +56,9 @@ export interface WeighingEntry {
   kg: number;
   head: number | null;
 }
+/** Por qué un corral tiene o no conversión: "ok", sin pesadas suficientes, sin cabezas o sin ganancia. */
 export type CorralStatus = "ok" | "no_weighings" | "no_head" | "no_gain";
+/** Resumen de alimentación, ganancia y conversión de un corral en un período. */
 export interface CorralRow {
   plotId: string;
   /** Todo lo suministrado en el período. */

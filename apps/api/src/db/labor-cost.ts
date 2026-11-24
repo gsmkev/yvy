@@ -1,5 +1,5 @@
 /**
- * Costo de la labor propia (combustible + operario + amortización) frente al contratista del mismo servicio (E-23).
+ * Costo de la labor propia (combustible + operario + amortización) frente al contratista del mismo servicio.
  * Solo dueño y administrador: son montos. Cinco consultas como mucho.
  */
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
@@ -11,6 +11,7 @@ import { can, NotFoundError, type ScopedDb } from "./scoped";
 
 type Input = Omit<typeof s.machineCosts.$inferInsert, "id" | "organizationId" | "machineId" | "createdBy" | "createdAt" | "updatedAt" | "deletedAt">;
 
+/** Perfiles de costo de las máquinas de la organización. */
 export async function listMachineCosts(sdb: ScopedDb) {
   sdb.require(can.manageErp);
   return sdb.db
@@ -19,6 +20,9 @@ export async function listMachineCosts(sdb: ScopedDb) {
     .where(and(eq(s.machineCosts.organizationId, sdb.auth.orgId), isNull(s.machineCosts.deletedAt)));
 }
 
+/**
+ * Crea o reemplaza el perfil de costo de una máquina. Falla con NotFoundError si la máquina no es de la organización.
+ */
 export async function saveMachineCost(sdb: ScopedDb, machineId: string, i: Input) {
   sdb.require(can.manageErp);
   await requireOwned(sdb, s.machines, machineId, "La máquina");
@@ -33,6 +37,7 @@ export async function saveMachineCost(sdb: ScopedDb, machineId: string, i: Input
     });
 }
 
+/** Borra el perfil de costo de una máquina. Falla con NotFoundError si no tiene perfil. */
 export async function deleteMachineCost(sdb: ScopedDb, machineId: string) {
   sdb.require(can.manageErp);
   const where = and(eq(s.machineCosts.organizationId, sdb.auth.orgId), eq(s.machineCosts.machineId, machineId));
@@ -53,6 +58,7 @@ interface LaborRow {
   verdict: ReturnType<typeof laborVerdict>;
 }
 
+/** Compara por máquina el costo de la labor propia con el del contratista del mismo servicio. */
 export async function laborComparison(sdb: ScopedDb): Promise<LaborRow[]> {
   sdb.require(can.manageErp);
   const org = sdb.auth.orgId;

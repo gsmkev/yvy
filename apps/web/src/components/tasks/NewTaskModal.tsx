@@ -20,9 +20,6 @@ export interface PlotPick {
 /**
  * Diálogo para crear una tarea.
  * @param farmId estancia fija; sin ella se elige.
- * @param plots lotes elegibles.
- * @param pick selección de lotes sobre el mapa.
- * @param members personas a las que se puede asignar.
  */
 export function NewTaskModal({
   farmId,
@@ -32,9 +29,12 @@ export function NewTaskModal({
   onClose,
 }: {
   farmId?: string;
-  plots?: Plot[];
-  pick?: PlotPick;
-  members: { userId: string; fullName: string }[];
+  /** Lotes elegibles. */
+plots?: Plot[];
+  /** Selección de lotes sobre el mapa. */
+pick?: PlotPick;
+  /** Personas a las que se puede asignar. */
+members: { userId: string; fullName: string }[];
   onClose: () => void;
 }) {
   const farms = useFarms();

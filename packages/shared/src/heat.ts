@@ -1,5 +1,5 @@
 /**
- * Estrés térmico del ganado (backlog G-32). Funciones puras compartidas por el Worker y la web.
+ * Estrés térmico del ganado. Funciones puras compartidas por el Worker y la web.
  *
  * Índice de temperatura y humedad (THI) de Mader et al. (2006) con temperatura en °C y humedad relativa en %:
  *   THI = 0,8 · T + (HR / 100) · (T − 14,4) + 46,4
@@ -8,7 +8,9 @@
  * británicas), el pelaje, la sombra y la aclimatación; no son una recomendación para un rodeo en particular.
  */
 
+/** Niveles de estrés térmico, de menor a mayor. */
 export const HEAT_LEVELS = ["normal", "alert", "danger", "emergency"] as const;
+/** Nivel de estrés térmico. */
 export type HeatLevel = (typeof HEAT_LEVELS)[number];
 
 /** Límite inferior (THI) de cada nivel. Debajo de `alert` el ganado no está en estrés. */
@@ -23,9 +25,11 @@ export const HEAT_ALERT = {
   emergencyHours: 2,
 } as const;
 
+/** Índice de temperatura y humedad (THI) con temperatura en °C y humedad relativa en %. */
 export const thi = (tempC: number, humidityPct: number): number =>
   0.8 * tempC + (humidityPct / 100) * (tempC - 14.4) + 46.4;
 
+/** Nivel de estrés que corresponde a un valor de THI. */
 export function heatLevel(value: number): HeatLevel {
   if (value >= HEAT_THRESHOLDS.emergency) return "emergency";
   if (value >= HEAT_THRESHOLDS.danger) return "danger";
@@ -33,6 +37,7 @@ export function heatLevel(value: number): HeatLevel {
   return "normal";
 }
 
+/** THI y nivel de una hora del pronóstico. */
 export interface HeatHour {
   at: number;
   tempC: number;
@@ -54,6 +59,7 @@ export function heatHours(
   return out;
 }
 
+/** Resumen del estrés térmico de la ventana de pronóstico. */
 export interface HeatSummary {
   maxThi: number | null;
   maxLevel: HeatLevel;

@@ -1,7 +1,9 @@
-/** Precio público (ADR 0005 §5): US$ por hectárea y año, escalones de ganadería, mínimo y forma de pago. */
+/** Precio público: US$ por hectárea y año, escalones de ganadería, mínimo y forma de pago. */
 import { LIMITS } from "./limits";
 
+/** Formas de pago: mensual, por ciclo (cuotas) o anual. */
 export const BILLINGS = ["monthly", "cycle", "annual"] as const;
+/** Forma de pago. */
 export type Billing = (typeof BILLINGS)[number];
 
 const ok = (n: number) => (Number.isFinite(n) && n > 0 ? n : 0);
@@ -21,6 +23,7 @@ export function cattleYear(ha: number): number {
   return total;
 }
 
+/** Precio de un año para las hectáreas de agricultura y de ganadería: total, por cuota, por hectárea y si se aplicó el mínimo mensual. */
 export function priceFor(cropsHa: number, cattleHa: number, billing: Billing = "monthly") {
   const P = LIMITS.pricing;
   const raw = ok(cropsHa) * P.cropsHaYear + cattleYear(cattleHa);

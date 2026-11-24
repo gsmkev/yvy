@@ -4,8 +4,9 @@ import * as s from "@yvy/shared/schema";
 import { chunkForParams } from "../client";
 import { can, NotFoundError, type ScopedDb } from "../scoped";
 
-// ---------- Clima (RF-60..63) ----------
+// ---------- Clima ----------
 
+/** Clima diario de una estancia de los últimos `days` días, con la última corrida y el pluviómetro. */
 export async function farmClimate(sdb: ScopedDb, farmId: string, days = 90) {
   await sdb.requireFarm(farmId);
   const since = new Date(sdb.now() - days * 86_400_000).toISOString().slice(0, 10);
@@ -19,7 +20,7 @@ export async function farmClimate(sdb: ScopedDb, farmId: string, days = 90) {
       .select({ runAt: sql<number>`max(${s.forecasts.runAt})` })
       .from(s.forecasts)
       .where(eq(s.forecasts.farmId, farmId)),
-    // RF-63: lluvia de pluviómetro cargada por los empleados.
+    // Lluvia de pluviómetro cargada por los empleados.
     sdb.db
       .select({ capturedAt: s.records.capturedAt, data: s.records.data, poiId: s.records.poiId })
       .from(s.records)
@@ -67,7 +68,7 @@ export async function farmClimate(sdb: ScopedDb, farmId: string, days = 90) {
   };
 }
 
-/** C-02: último pronóstico de la estancia, liviano, para que la app lo guarde y lo lea sin señal. */
+/** Último pronóstico de la estancia, liviano, para que la app lo guarde y lo lea sin señal. */
 export async function farmForecast(sdb: ScopedDb, farmId: string) {
   const [farm] = await sdb.db
     .select({ id: s.farms.id })
@@ -107,7 +108,7 @@ export async function farmForecast(sdb: ScopedDb, farmId: string) {
   };
 }
 
-/** C-10: informe de riesgo climático ya calculado (workers-py). Solo roles con vista completa. */
+/** Informe de riesgo climático ya calculado (workers-py). Solo roles con vista completa. */
 export async function farmRiskReport(sdb: ScopedDb, farmId: string) {
   sdb.require(can.viewAll);
   await sdb.requireFarm(farmId);
@@ -116,6 +117,7 @@ export async function farmRiskReport(sdb: ScopedDb, farmId: string) {
   return { computedAt: row.computedAt, report: JSON.parse(row.report) as unknown };
 }
 
+/** Día del año (1 a 366) de una fecha `YYYY-MM-DD`. */
 export const dayOfYear = (date: string): number => {
   const d = Date.parse(`${date}T00:00:00Z`);
   return Math.floor((d - Date.parse(`${date.slice(0, 4)}-01-01T00:00:00Z`)) / 86_400_000) + 1;

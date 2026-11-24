@@ -1,20 +1,25 @@
 /**
- * Caravanas (G-21) y pesadas (G-22). Lógica pura compartida por el Worker, la web y la app.
+ * Caravanas y pesadas de animales. Lógica pura compartida por el Worker, la web y la app.
  */
 import { z } from "zod";
 import { HERD_CATEGORIES } from "./herd-categories";
 
 /** Caravana: letras, números y guiones (ej. "PY-0012345" o "1234"). Se guarda en mayúsculas. */
+/** Formato válido de una caravana. */
 export const ANIMAL_TAG_RE = /^[A-Za-z0-9-]{1,20}$/;
+/** Esquema de una caravana: valida el formato y la guarda en mayúsculas. */
 export const animalTag = z
   .string()
   .trim()
   .regex(ANIMAL_TAG_RE, "La caravana lleva letras, números y guiones (hasta 20)")
   .transform((s) => s.toUpperCase());
 
+/** Normaliza una caravana para comparar o buscar (sin espacios, en mayúsculas). */
 export const normalizeTag = (s: string): string => s.trim().toUpperCase();
 
+/** Sexos admitidos de un animal. */
 export const ANIMAL_SEXES = ["hembra", "macho"] as const;
+/** Sexo de un animal. */
 export type AnimalSex = (typeof ANIMAL_SEXES)[number];
 
 /** Entrada para crear o editar un animal. La categoría es la misma lista que la hacienda por potrero. */
@@ -29,18 +34,22 @@ export const animalInput = z.object({
     .nullish(),
   note: z.string().trim().max(500).nullish(),
 });
+/** Datos de un animal al crearlo o editarlo. */
 export type AnimalInput = z.infer<typeof animalInput>;
 
 /** Tipos de registro que pueden llevar la caravana de un animal (y por eso forman su historial). */
+/** Tipos de registro que pueden llevar caravana. */
 export const TAGGED_RECORD_KINDS = ["weighing", "reproduction", "health"] as const;
 
-// ---------- Pesadas y ganancia diaria de peso (G-22) ----------
+// ---------- Pesadas y ganancia diaria de peso ----------
 
+/** Peso máximo aceptado por cabeza (kg). */
 export const MAX_WEIGHT_KG = 2000;
 const DAY_MS = 86_400_000;
 /** Dos pesadas con menos de este tiempo entre sí no alcanzan para calcular una ganancia diaria. */
 export const MIN_ADG_SPAN_MS = DAY_MS;
 
+/** Una pesada (o el promedio de las del día) de una serie. */
 export interface WeightPoint {
   at: number;
   /** Peso promedio por cabeza (kg). */
@@ -49,6 +58,7 @@ export interface WeightPoint {
   head: number;
 }
 
+/** Serie de pesadas de un lote o de un animal, con su ganancia diaria de peso. */
 export interface WeightSeries {
   key: string;
   label: string | null;
@@ -106,6 +116,7 @@ export function weightSeries(key: string, label: string | null, raw: readonly We
   };
 }
 
+/** Pesada tal como llega de los registros, antes de agrupar. */
 export interface WeighingEvent {
   capturedAt: number;
   kg: number;
@@ -164,6 +175,7 @@ export interface AnimalHistoryResponse {
   truncated: boolean;
 }
 
+/** Respuesta del listado de pesadas: series por lote y por animal en el período `from`..`to`. */
 export interface WeighingsResponse {
   from: number;
   to: number;

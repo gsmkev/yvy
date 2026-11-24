@@ -1,5 +1,5 @@
 /**
- * Animales con caravana (G-21). Tabla sincronizable: toda escritura hace bumpVersion() primero y guarda
+ * Animales con caravana. Tabla sincronizable: toda escritura hace bumpVersion() primero y guarda
  * `version: currentVersion`. El historial sale de los registros que llevan la caravana (no hay tabla de historial).
  */
 import { and, asc, desc, eq, inArray, isNull, like, ne, sql } from "drizzle-orm";
@@ -74,6 +74,7 @@ async function tagTaken(sdb: ScopedDb, tag: string, exceptId?: string): Promise<
 
 const conflict = () => new HTTPException(409, { message: "Ya hay un animal con esa caravana" });
 
+/** Crea un animal en una estancia. Falla con 409 si la caravana ya existe. */
 export async function createAnimal(sdb: ScopedDb, farmId: string, input: AnimalInput) {
   sdb.require(can.editAnimals, "Solo el dueño, un administrador o un agrónomo cargan animales");
   await sdb.requireFarm(farmId);
@@ -99,12 +100,14 @@ export async function createAnimal(sdb: ScopedDb, farmId: string, input: AnimalI
   return { id };
 }
 
+/** Edita un animal. Falla con 409 si la nueva caravana ya existe. */
 export async function updateAnimal(sdb: ScopedDb, id: string, patch: Partial<AnimalInput>) {
   sdb.require(can.editAnimals, "Solo el dueño, un administrador o un agrónomo editan animales");
   if (patch.tag && (await tagTaken(sdb, patch.tag, id))) throw conflict();
   await updateSynced(sdb, s.animals, id, patch);
 }
 
+/** Borra (lógico) un animal. */
 export async function deleteAnimal(sdb: ScopedDb, id: string) {
   sdb.require(can.editAnimals, "Solo el dueño, un administrador o un agrónomo borran animales");
   await updateSynced(sdb, s.animals, id, { deletedAt: sdb.now() });

@@ -10,6 +10,7 @@ import { productTotals } from "./stock-moves";
 export const inChunks = <T>(ids: string[], query: (chunk: string[]) => PromiseLike<T[]>): Promise<T[]> =>
   Promise.all(chunkForParams(ids, 2).map(query)).then((r) => r.flat());
 
+/** Registro de campo del que se derivan efectos en el ERP (consumo de stock y costos). */
 export interface EffectRecord {
   id: string;
   farmId: string;
@@ -19,6 +20,7 @@ export interface EffectRecord {
   capturedAt: number;
 }
 
+/** Datos auxiliares leídos de una sola vez para calcular los efectos de un conjunto de registros. */
 export interface EffectData {
   fuelProductId: string | null;
   units: Map<string, BaseUnit>;
@@ -42,6 +44,7 @@ async function singleFuelProduct(sdb: ScopedDb, recs: EffectRecord[]): Promise<s
   return fuels.length === 1 ? fuels[0]!.id : null;
 }
 
+/** Lee en pocas consultas los productos, unidades, lotes y depósitos que necesitan los efectos de `recs`. */
 export async function readEffectData(sdb: ScopedDb, recs: EffectRecord[]): Promise<EffectData> {
   const { db } = sdb;
   const org = sdb.auth.orgId;

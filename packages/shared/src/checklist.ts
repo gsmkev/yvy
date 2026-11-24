@@ -1,18 +1,21 @@
 /**
- * Listas de verificación en tareas (F-15). Se guardan como JSON en tasks.checklist; el empleado tilda ítems
+ * Listas de verificación en tareas. Se guardan como JSON en tasks.checklist; el empleado tilda ítems
  * sin señal y cada tilde viaja como una mutación `tasks.check` (id de tarea + id de ítem), así dos celulares
  * que tildan ítems distintos no se pisan.
  */
 import { z } from "zod";
 import { LIMITS } from "./limits";
 
+/** Un ítem de la lista: id estable, texto y estado. */
 export const checklistItemSchema = z.object({
   id: z.string().min(1).max(24),
   text: z.string().trim().min(1).max(LIMITS.checklist.maxTextLength),
   done: z.boolean(),
 });
+/** Ítem de una lista de verificación. */
 export type ChecklistItem = z.infer<typeof checklistItemSchema>;
 
+/** Lista de ítems acotada por `LIMITS.checklist.maxItems`. */
 export const checklistSchema = z.array(checklistItemSchema).max(LIMITS.checklist.maxItems);
 
 /** Texto de cada ítem → lista nueva, con ids estables por posición. Ignora líneas vacías. */
@@ -35,6 +38,7 @@ export function parseChecklist(raw: string | null | undefined): ChecklistItem[] 
   }
 }
 
+/** Serializa la lista para la columna JSON; null si está vacía. */
 export const serializeChecklist = (list: readonly ChecklistItem[]): string | null => (list.length ? JSON.stringify(list) : null);
 
 /** Devuelve la lista con el ítem tildado o destildado, o null si el ítem no existe. */
@@ -43,6 +47,7 @@ export function setChecklistItem(list: readonly ChecklistItem[], itemId: string,
   return list.map((i) => (i.id === itemId ? { ...i, done } : i));
 }
 
+/** Ítems tildados y total de la lista. */
 export const checklistProgress = (list: readonly ChecklistItem[]) => ({
   done: list.filter((i) => i.done).length,
   total: list.length,

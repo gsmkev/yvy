@@ -13,9 +13,6 @@ export type ActiveLayers = Record<string, number>; // id → opacidad 0-1
 /**
  * Lista de capas propias con interruptor y opacidad, y alta y baja para quien administra.
  * @param active capas visibles y su opacidad.
- * @param onActive recibe el nuevo conjunto de capas visibles.
- * @param canManage permite subir y quitar capas.
- * @param farmBounds límites de la estancia, o null si todavía no se conocen.
  */
 export function CustomLayersControl({
   farmId,
@@ -28,9 +25,12 @@ export function CustomLayersControl({
   farmId: string;
   layers: CustomLayer[];
   active: ActiveLayers;
-  onActive: (a: ActiveLayers) => void;
-  canManage: boolean;
-  farmBounds: [number, number, number, number] | null;
+  /** Recibe el nuevo conjunto de capas visibles. */
+onActive: (a: ActiveLayers) => void;
+  /** Permite subir y quitar capas. */
+canManage: boolean;
+  /** Límites de la estancia, o null si todavía no se conocen. */
+farmBounds: [number, number, number, number] | null;
 }) {
   const [adding, setAdding] = useState(false);
   const [removing, setRemoving] = useState<CustomLayer | null>(null);

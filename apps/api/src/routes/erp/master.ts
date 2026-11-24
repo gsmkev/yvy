@@ -1,4 +1,6 @@
-/** Alta, listado, cambio y baja de un maestro con su esquema Zod. */
+/**
+ * Generador de rutas CRUD para los maestros del ERP.
+ */
 import type { Hono } from "hono";
 import type { AppEnv } from "../../types";
 import { z } from "zod";
@@ -7,6 +9,7 @@ import { erpCreate, erpDelete, erpList, erpUpdate, type ErpTable } from "../../d
 import { can, type ScopedDb } from "../../db/scoped";
 import { parse, readJson } from "../../lib/http";
 
+/** Opciones de un maestro: permisos de lectura y escritura y ganchos antes y después de guardar. */
 interface MasterOpts {
   read?: (r: Role) => boolean;
   write?: (r: Role) => boolean;
@@ -20,7 +23,11 @@ interface MasterOpts {
   beforeDelete?: (sdb: ScopedDb, id: string) => Promise<void>;
 }
 
-/** Alta, listado, cambio y baja de un maestro con su esquema Zod. */
+/**
+ * Registra en `erp` las rutas GET, POST, PATCH y DELETE de un maestro, validadas con `schema`.
+ * @param path segmento de la URL (`/${path}`).
+ * @param order columnas por las que se ordena el listado.
+ */
 export function master(erp: Hono<AppEnv>, path: string, table: ErpTable, schema: z.ZodObject, order: Parameters<typeof erpList>[3], o: MasterOpts = {}) {
   const read = o.read ?? can.manageErp;
   const write = o.write ?? can.manageErp;

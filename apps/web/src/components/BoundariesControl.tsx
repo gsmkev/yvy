@@ -5,8 +5,6 @@ import { t } from "../lib/i18n";
 /**
  * Selector del nivel de límites administrativos del mapa.
  * @param level nivel activo, o null si no hay ninguno.
- * @param loading indica que se están descargando.
- * @param missing indica que no hay datos de límites disponibles.
  */
 export function BoundariesControl({
   level,
@@ -16,8 +14,10 @@ export function BoundariesControl({
 }: {
   level: BoundaryLevel | null;
   onLevel: (l: BoundaryLevel | null) => void;
-  loading: boolean;
-  missing: boolean;
+  /** Indica que se están descargando. */
+loading: boolean;
+  /** Indica que no hay datos de límites disponibles. */
+missing: boolean;
 }) {
   return (
     <div className="flex flex-col gap-1.5 text-xs font-medium text-lino">

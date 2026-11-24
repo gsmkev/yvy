@@ -1,5 +1,5 @@
 /**
- * Hacienda calculada (ADR 0004, G-03): nunca se guarda un stock. Sale del último `herd_count` de cada potrero más
+ * Hacienda calculada: nunca se guarda un stock. Sale del último `herd_count` de cada potrero más
  * los `herd_move` y `mortality` posteriores (computeStock, en packages/shared). Un conteo nuevo corrige todo.
  * Presupuesto: 4 queries por estancia, sin importar la cantidad de potreros.
  */
@@ -47,6 +47,7 @@ const parse = <T>(text: string): T | null => {
 const isSystem = (v: unknown): v is ProductionSystem => (PRODUCTION_SYSTEMS as readonly unknown[]).includes(v);
 const isClass = (v: unknown): v is PastureClass => (PASTURE_CLASSES as readonly unknown[]).includes(v);
 
+/** Ajustes de hacienda de una estancia: sistema productivo, carga máxima en UA/ha y pastura por defecto. */
 export async function getLivestockSettings(sdb: ScopedDb, farmId: string) {
   const [row] = await sdb.db
     .select({
@@ -100,6 +101,10 @@ export async function saveLivestockSettings(sdb: ScopedDb, farmId: string, patch
     .onConflictDoUpdate({ target: s.farmLivestockSettings.farmId, set: row });
 }
 
+/**
+ * Hacienda calculada de la estancia: stock por potrero desde el último conteo y sus movimientos, y comparación con la
+ * carga máxima.
+ */
 export async function farmStockSummary(sdb: ScopedDb, farmId: string): Promise<FarmStockResponse> {
   // El stock mezcla registros de todos los potreros: solo quien ve todo (el empleado lo ve en su celular).
   sdb.require(can.viewAll);

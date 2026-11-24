@@ -1,5 +1,5 @@
 /**
- * Exportación para sistemas contables locales (I-06): compras, ventas y caja en texto delimitado con formato
+ * Exportación para sistemas contables locales: compras, ventas y caja en texto delimitado con formato
  * configurable (columnas, separador, formato de fecha y de números) y plantillas para el libro IVA de Paraguay.
  * Todo puro: el Worker entrega filas (JSON) y el texto se arma en el navegador.
  */
@@ -7,14 +7,22 @@ import { z } from "zod";
 import { fromMinor, type Currency } from "./erp";
 import { LIMITS } from "./limits";
 
+/** Conjuntos de datos exportables. */
 export const EXPORT_DATASETS = ["purchases", "sales", "cash"] as const;
+/** Conjunto de datos exportable. */
 export type ExportDataset = (typeof EXPORT_DATASETS)[number];
+/** Tipos de documento al que se le carga el desglose de IVA. */
 export const TAX_DOC_KINDS = ["purchase", "settlement", "cattle"] as const;
+/** Tipo de documento con desglose de IVA. */
 export type TaxDocKind = (typeof TAX_DOC_KINDS)[number];
 
+/** Caracter separador de campos para cada opción de configuración. */
 export const SEPARATORS = { comma: ",", semicolon: ";", tab: "\t", pipe: "|" } as const;
+/** Clave de un separador de campos. */
 export type SeparatorKey = keyof typeof SEPARATORS;
+/** Formatos de fecha disponibles en la exportación. */
 export const DATE_FORMATS = ["iso", "dmy_slash", "dmy_dash", "ymd_compact"] as const;
+/** Formato de fecha de la exportación. */
 export type DateFormat = (typeof DATE_FORMATS)[number];
 
 /** Una fila de compras o ventas: un documento con su tercero, su número y el desglose de IVA si se cargó. */
@@ -50,7 +58,9 @@ export interface ExportCashMove {
   amountMinor: number;
 }
 
+/** Tipo de valor de una columna, que decide cómo se formatea. */
 export type ColumnKind = "text" | "date" | "money" | "pyg";
+/** Columna disponible de un conjunto de datos. */
 export interface ColumnDef {
   key: string;
   kind: ColumnKind;
@@ -91,6 +101,7 @@ const CASH_COLUMNS: ColumnDef[] = [
 /** Columnas disponibles de cada conjunto de datos. */
 export const EXPORT_COLUMNS: Record<ExportDataset, ColumnDef[]> = { purchases: DOC_COLUMNS, sales: DOC_COLUMNS, cash: CASH_COLUMNS };
 
+/** Configuración de formato de una exportación: separadores, fechas, números, cabecera y columnas elegidas. */
 export const exportConfigSchema = z.object({
   separator: z.enum(["comma", "semicolon", "tab", "pipe"]),
   dateFormat: z.enum(DATE_FORMATS),
@@ -106,8 +117,10 @@ export const exportConfigSchema = z.object({
     .min(1)
     .max(LIMITS.exportFormat.maxColumns),
 });
+/** Configuración de formato de una exportación. */
 export type ExportConfig = z.infer<typeof exportConfigSchema>;
 
+/** Entrada para guardar un formato de exportación con nombre. */
 export const exportFormatInput = z.object({
   name: z.string().trim().min(1).max(80),
   dataset: z.enum(EXPORT_DATASETS),
@@ -155,6 +168,7 @@ export const defaultExportConfig = (dataset: ExportDataset): ExportConfig => ({
   columns: EXPORT_COLUMNS[dataset].map((c) => ({ key: c.key, label: c.label })),
 });
 
+/** Formatos predefinidos que se ofrecen a la organización. */
 export const EXPORT_PRESETS = [
   { id: "libro_iva_compras", dataset: "purchases", config: () => libroIvaConfig("purchases") },
   { id: "libro_iva_ventas", dataset: "sales", config: () => libroIvaConfig("sales") },
@@ -162,6 +176,7 @@ export const EXPORT_PRESETS = [
 
 // ---------- Formato de valores ----------
 
+/** Fecha "AAAA-MM-DD" en el formato pedido; texto vacío si no es una fecha válida. */
 export function formatExportDate(iso: string | null, f: DateFormat): string {
   if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return "";
   const [y, m, d] = iso.slice(0, 10).split("-") as [string, string, string];
@@ -286,6 +301,7 @@ export function renderExport(dataset: ExportDataset, rows: (ExportDoc | ExportCa
 export const taxMismatch = (d: Pick<ExportDoc, "gross10" | "gross5" | "exempt" | "amountPyg">): boolean =>
   !(d.gross10 === null && d.gross5 === null && d.exempt === null) && Math.abs((d.gross10 ?? 0) + (d.gross5 ?? 0) + (d.exempt ?? 0) - d.amountPyg) > LIMITS.exportFormat.taxToleranceGs;
 
+/** Entrada para cargar el desglose de IVA (gravadas 10 %, 5 % y exentas, en guaraníes) de un documento. */
 export const documentTaxInput = z.object({
   docKind: z.enum(TAX_DOC_KINDS),
   docId: z.string().uuid(),

@@ -1,11 +1,13 @@
 /**
- * Pastoreo y suplementación (gan-p2: G-04, G-05, G-31). Lógica pura compartida por el Worker y la web.
+ * Pastoreo y suplementación. Lógica pura compartida por el Worker y la web.
  * Todos los coeficientes son VALORES POR DEFECTO A REVISAR POR UN TÉCNICO: son referencias generales de pasturas
  * tropicales para cría y engorde extensivos, no una recomendación para un campo en particular.
  */
-// ---------- Suplementación y sal mineral (G-31) ----------
+// ---------- Suplementación y sal mineral ----------
 
+/** Tipos de suplemento registrables. */
 export const SUPPLEMENT_TYPES = ["sal_mineral", "sal_proteinada", "balanceado", "silaje", "heno", "otro"] as const;
+/** Tipo de suplemento. */
 export type SupplementType = (typeof SUPPLEMENT_TYPES)[number];
 
 /** Tope de kilos en un solo registro (evita errores de tipeo). */
@@ -17,6 +19,7 @@ export const MAX_SUPPLEMENT_KG = 100_000;
  */
 export const MINERAL_SALT_REFERENCE_G = { min: 60, max: 100 } as const;
 
+/** Suplementación registrada en un potrero. */
 export interface SupplementEvent {
   plotId: string;
   capturedAt: number;
@@ -24,6 +27,7 @@ export interface SupplementEvent {
   kg: number;
 }
 
+/** Suplementación de un potrero en el período, con consumo por cabeza y estado de la sal mineral. */
 export interface SupplementPlotRow {
   plotId: string;
   name: string;
@@ -40,6 +44,7 @@ export interface SupplementPlotRow {
   saltStatus: "low" | "ok" | "high" | null;
 }
 
+/** Respuesta del resumen de suplementación del período `from`..`to`. */
 export interface SupplementResponse {
   from: number;
   to: number;
@@ -52,6 +57,7 @@ export interface SupplementResponse {
 
 const DAY_MS = 86_400_000;
 
+/** Compara el consumo de sal mineral (g/cabeza/día) con la referencia: "low", "ok" o "high"; null sin dato. */
 export function saltStatus(gPerHeadDay: number | null): "low" | "ok" | "high" | null {
   if (gPerHeadDay === null) return null;
   if (gPerHeadDay < MINERAL_SALT_REFERENCE_G.min) return "low";

@@ -7,8 +7,10 @@ import intersect from "@turf/intersect";
 import kinks from "@turf/kinks";
 import type { LineString, MultiPolygon, Polygon, Position } from "geojson";
 
+/** Superficie de un lote o estancia: polígono o multipolígono. */
 export type Area = Polygon | MultiPolygon;
 
+/** Caja envolvente en grados. */
 export interface BBox {
   minLon: number;
   minLat: number;
@@ -19,18 +21,22 @@ export interface BBox {
 /** Área geodésica en hectáreas. */
 export const areaHa = (g: Area): number => turfArea(g) / 10_000;
 
+/** Caja envolvente de una superficie o una línea. */
 export const bboxOf = (g: Area | LineString): BBox => {
   const [minLon, minLat, maxLon, maxLat] = turfBbox(g);
   return { minLon, minLat, maxLon, maxLat };
 };
 
+/** Centroide geométrico; puede caer afuera en lotes cóncavos (ver `labelPoint` para una etiqueta). */
 export const centroidOf = (g: Area): { lon: number; lat: number } => {
   const [lon, lat] = turfCentroid(g).geometry.coordinates as [number, number];
   return { lon, lat };
 };
 
+/** Si el punto (lon, lat) cae dentro de la superficie. */
 export const containsPoint = (g: Area, lon: number, lat: number): boolean => booleanPointInPolygon([lon, lat], g);
 
+/** Motivo por el que una geometría no es válida. */
 export type ValidationError =
   "not_polygon" | "ring_too_short" | "ring_not_closed" | "coord_out_of_range" | "self_intersection";
 
@@ -81,7 +87,7 @@ export const describeArea = (g: Area) => ({
 });
 
 // ---------------------------------------------------------------------------
-// Limpieza de anillos (M-11)
+// Limpieza de anillos
 // ---------------------------------------------------------------------------
 
 const EPS = 1e-9;
@@ -148,7 +154,7 @@ export const cleanArea = (g: Area): { geometry: Area; removed: number } => {
 };
 
 // ---------------------------------------------------------------------------
-// Superposición y contención (M-10)
+// Superposición y contención
 // ---------------------------------------------------------------------------
 
 type Box = [number, number, number, number];
@@ -193,10 +199,12 @@ export const withinRatio = (inner: Area, outer: Area): number => {
   return area > 0 ? Math.min(1, intersectionHa(inner, outer) / area) : 1;
 };
 
+/** Parte mínima del lote más chico que tiene que superponerse con otro para avisar. */
 export const OVERLAP_WARN_RATIO = 0.01;
 /** Un lote avisa como "fuera" si menos de esta parte de su superficie queda adentro de la estancia. */
 export const WITHIN_WARN_RATIO = 0.99;
 
+/** Aviso no bloqueante sobre la posición de un lote. */
 export interface GeoWarning {
   kind: "overlap" | "outside";
   /** Índices en la lista de entrada. */

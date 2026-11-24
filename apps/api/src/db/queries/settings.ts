@@ -5,7 +5,7 @@ import * as s from "@yvy/shared/schema";
 import type { FormConfig } from "@yvy/shared";
 import { can, type ScopedDb } from "../scoped";
 
-// ---------- Preferencias de notificación (U-29) ----------
+// ---------- Preferencias de notificación ----------
 
 /** Preferencias del usuario de la sesión (valen para todas sus organizaciones) y qué le llega según su rol. */
 export async function getNotificationPrefs(sdb: ScopedDb) {
@@ -27,6 +27,7 @@ export async function getNotificationPrefs(sdb: ScopedDb) {
   };
 }
 
+/** Guarda las preferencias de notificación de la persona. */
 export async function saveNotificationPrefs(sdb: ScopedDb, prefs: NotificationPrefs) {
   const ts = sdb.now();
   await sdb.db
@@ -38,7 +39,7 @@ export async function saveNotificationPrefs(sdb: ScopedDb, prefs: NotificationPr
     });
 }
 
-// ---------- Recorrido de primera vez (U-24) ----------
+// ---------- Recorrido de primera vez ----------
 
 /** El estado de la guía de los 4 pasos es de la persona, no del navegador: se oculta una vez y vale en todos sus dispositivos. */
 export async function getOnboarding(sdb: ScopedDb) {
@@ -50,6 +51,7 @@ export async function getOnboarding(sdb: ScopedDb) {
   return { dismissedAt: row?.dismissedAt ?? null };
 }
 
+/** Guarda si la persona descartó el recorrido de primera vez. */
 export async function saveOnboarding(sdb: ScopedDb, dismissed: boolean) {
   const ts = sdb.now();
   const dismissedAt = dismissed ? ts : null;
@@ -60,7 +62,7 @@ export async function saveOnboarding(sdb: ScopedDb, dismissed: boolean) {
   return { dismissedAt };
 }
 
-// ---------- Formularios configurables (F-14) ----------
+// ---------- Formularios configurables ----------
 
 /** Campos propios de la organización por tipo de registro. Los lee todo el equipo: el empleado los llena en la app. */
 export async function getFormConfig(sdb: ScopedDb): Promise<{ config: FormConfig; updatedAt: number | null }> {
@@ -72,6 +74,7 @@ export async function getFormConfig(sdb: ScopedDb): Promise<{ config: FormConfig
   return row ? { config: JSON.parse(row.config) as FormConfig, updatedAt: row.updatedAt } : { config: {}, updatedAt: null };
 }
 
+/** Guarda la configuración de formularios de la organización. */
 export async function saveFormConfig(sdb: ScopedDb, config: FormConfig): Promise<{ updatedAt: number }> {
   sdb.require(can.manageForms, "Solo el dueño o el administrador definen los formularios");
   const updatedAt = sdb.now();

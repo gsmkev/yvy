@@ -22,7 +22,6 @@ export function SectionHead({ title, count, action }: { title: string; count?: n
 /**
  * Cifra con su etiqueta, unidad y nota.
  * @param tone "danger" la pinta como alerta.
- * @param size tamaño de la cifra.
  */
 export function Stat({
   label,
@@ -32,7 +31,8 @@ export function Stat({
   tone,
   size = "md",
 }: {
-  size?: "md" | "lg";
+  /** Tamaño de la cifra. */
+size?: "md" | "lg";
   label: string;
   value: ReactNode;
   unit?: string;

@@ -13,9 +13,6 @@ const VARIANT: Record<Variant, string> = {
 
 /**
  * Botón nativo con estilo. Acepta las props de `button`.
- * @param variant estilo visual.
- * @param icon ícono; solo se dibuja cuando el botón no tiene texto.
- * @param size "sm" o "md".
  */
 export function Button({
   variant = "secondary",
@@ -24,7 +21,14 @@ export function Button({
   className = "",
   children,
   ...p
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; icon?: LucideIcon; size?: "sm" | "md" }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  /** Estilo visual. */
+  variant?: Variant;
+  /** Ícono; solo se dibuja cuando el botón no tiene texto. */
+  icon?: LucideIcon;
+  /** Tamaño: "sm" o "md". */
+  size?: "sm" | "md";
+}) {
   return (
     <button
       type="button"

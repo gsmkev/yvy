@@ -1,4 +1,6 @@
-/** Tokens de marca (PRD §14). */
+/** Tokens de marca: paleta, rampas de color, estilo de sincronización y colores de gráficos. */
+
+/** Paleta de marca. */
 export const BRAND = {
   lino: "#F1EEE4",
   surco: "#1E2419",
@@ -8,17 +10,18 @@ export const BRAND = {
   alerta: "#D2462B",
 } as const;
 
-/** Rampa NDVI de bajo a alto vigor. */
-/** Rampa de humedad (NDMI, S-07): trigo (seco) a cielo (húmedo). */
+/** Rampa de humedad (NDMI): trigo (seco) a cielo (húmedo). */
 export const NDMI_RAMP = ["#D9A93A", "#F1EEE4", "#8DB3C7"] as const;
+/** Rampa NDVI de bajo a alto vigor. */
 export const NDVI_RAMP = ["#B5562E", "#D9A93A", "#C9C46A", "#7A9A3F", "#3F6B35"] as const;
 
-/** Firma visual: pendiente = punteado trigo; sincronizado = sólido soja (RF-33). */
+/** Firma visual: pendiente = punteado trigo; sincronizado = sólido soja. */
 export const SYNC_BORDER = {
   pending: { color: BRAND.trigo, style: "dashed" },
   synced: { color: BRAND.soja, style: "solid" },
 } as const;
 
+/** Tamaño mínimo (px) de un objetivo táctil. */
 export const MIN_TOUCH_TARGET_PX = 56;
 
 /** Colores de series de gráficos, validados (contraste y daltonismo) con la paleta de marca. */

@@ -1,4 +1,6 @@
-/** Maestros, tipo de cambio, costos y depósitos. */
+/**
+ * Rutas del ERP: maestros (proveedores, máquinas, contratistas), tipo de cambio, costos y depósitos.
+ */
 import { z } from "zod";
 import { contractorInput, COST_CATEGORIES, costEntryInput, exchangeRateInput, isoDate, machineInput, partyInput, warehouseInput } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -13,6 +15,7 @@ import { farmCheck, master } from "./master";
 import { uuid } from "../schemas";
 import { Hono } from "hono";
 
+/** Rutas de maestros, tipo de cambio, costos y depósitos. */
 export const routes = new Hono<AppEnv>();
 
 master(routes, "parties", s.parties, partyInput, [s.parties.name]);
@@ -31,7 +34,7 @@ master(routes, "contractors", s.contractors, contractorInput, [s.contractors.nam
   },
 });
 
-// ---------- Tipo de cambio (E-06) ----------
+// ---------- Tipo de cambio ----------
 
 routes.get("/exchange-rates", async (c) => c.json(await listRates(c.var.sdb)));
 routes.put("/exchange-rates/:date", async (c) => {
@@ -45,7 +48,7 @@ routes.delete("/exchange-rates/:date", async (c) => {
   return c.json({ ok: true });
 });
 
-// ---------- Costos y ventas (E-05) ----------
+// ---------- Costos y ventas ----------
 
 routes.get("/costs", async (c) => {
   const q = parse(
@@ -71,7 +74,7 @@ routes.delete("/costs/:id", async (c) => {
   return c.json({ ok: true });
 });
 
-// ---------- Depósitos (E-10) ----------
+// ---------- Depósitos ----------
 
 // El agrónomo ve los depósitos (para entender el stock); dueño y administrador los editan.
 master(routes, "warehouses", s.warehouses, warehouseInput, [s.warehouses.name], {

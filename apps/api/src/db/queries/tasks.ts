@@ -1,4 +1,4 @@
-/** Tareas (RF-22): listado, edición, comentarios y borrado. */
+/** Tareas: listado, edición, comentarios y borrado. */
 import { and, asc, eq, gte, isNull, lte } from "drizzle-orm";
 import { LIMITS, parseTaskComments, type TaskComment } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -6,8 +6,9 @@ import { newId } from "@yvy/shared";
 import { can, ForbiddenError, NotFoundError, type ScopedDb } from "../scoped";
 import { updateSynced } from "./farm-edits";
 
-// ---------- Tareas (RF-22) ----------
+// ---------- Tareas ----------
 
+/** Tareas de la organización con filtros; el empleado ve solo las suyas. */
 export async function listTasks(
   sdb: ScopedDb,
   f: { farmId?: string; assigneeId?: string; status?: string; from?: string; to?: string },
@@ -33,6 +34,7 @@ export async function listTasks(
     .limit(500);
 }
 
+/** Edita una tarea; si cambia la persona asignada, debe ser miembro. */
 export async function updateTask(sdb: ScopedDb, id: string, patch: Partial<typeof s.tasks.$inferInsert>) {
   sdb.require(can.assign);
   if (patch.assigneeId) await sdb.memberRole(patch.assigneeId);
@@ -40,7 +42,7 @@ export async function updateTask(sdb: ScopedDb, id: string, patch: Partial<typeo
 }
 
 /**
- * Agrega un comentario a la tarea (T-02). Los comentarios son un JSON dentro de la tarea: se reescribe con
+ * Agrega un comentario a la tarea. Los comentarios son un JSON dentro de la tarea: se reescribe con
  * bumpVersion para que baje al celular. Lectura y escritura son dos pasos; si dos personas comentan a la vez
  * gana la última escritura (aceptable con ≤ 50 comentarios de uso ocasional).
  */
@@ -70,6 +72,7 @@ export async function addTaskComment(sdb: ScopedDb, id: string, text: string) {
   return comment;
 }
 
+/** Borra (lógico) una tarea. */
 export async function deleteTask(sdb: ScopedDb, id: string) {
   sdb.require(can.assign);
   await updateSynced(sdb, s.tasks, id, { deletedAt: sdb.now() });

@@ -1,5 +1,5 @@
 /**
- * Compras (E-33): orden, factura del proveedor y recepción en un depósito.
+ * Compras: orden, factura del proveedor y recepción en un depósito.
  * La recepción crea un movimiento de compra de stock por cada línea con producto (el costo llega al consumirlo, a costo
  * promedio) y un costo por cada línea sin producto (servicio, flete, repuesto...). Con la recepción revertida,
  * todo eso se borra. Solo dueño y administrador: son montos. Las escrituras van en un db.batch().
@@ -26,6 +26,7 @@ interface LineIn {
 
 const total = (lines: { qty: number; unitPrice: number }[]) => lines.reduce((a, l) => a + lineAmount(l.qty, l.unitPrice), 0);
 
+/** Crea una compra con sus líneas en estado pendiente. */
 export async function createPurchase(
   sdb: ScopedDb,
   i: { partyId?: string | null; farmId?: string | null; orderDate: string; expectedDate?: string | null; currency: Currency; note?: string | null; lines: LineIn[] },
@@ -82,6 +83,7 @@ export async function createPurchase(
   return { id };
 }
 
+/** Compras de la organización, más recientes primero, con su estado derivado; se pueden filtrar por estado. */
 export async function listPurchases(sdb: ScopedDb, f: { status?: string }) {
   sdb.require(can.manageErp);
   const rows = await sdb.db
@@ -108,6 +110,7 @@ async function load(sdb: ScopedDb, id: string) {
   return { p, lines };
 }
 
+/** Una compra con sus líneas y su estado derivado. */
 export async function getPurchase(sdb: ScopedDb, id: string) {
   sdb.require(can.manageErp);
   const { p, lines } = await load(sdb, id);
@@ -234,6 +237,7 @@ export async function revertReception(sdb: ScopedDb, id: string) {
   ]);
 }
 
+/** Borra (lógico) una compra. Falla con 409 si ya se recibió o tiene pagos. */
 export async function deletePurchase(sdb: ScopedDb, id: string) {
   sdb.require(can.manageErp);
   const { p } = await load(sdb, id);

@@ -1,7 +1,10 @@
+/** Informes generados por estancia, destinatarios programados y tokens de la API pública. */
+
 import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // ---------- Reportes ----------
 
+/** Informes semanales o de campaña generados por estancia, con su PDF en R2. */
 export const reports = sqliteTable(
   "reports",
   {
@@ -21,7 +24,7 @@ export const reports = sqliteTable(
 );
 
 /**
- * R-10: destinatarios externos (socio, agrónomo, banco) del parte semanal con PDF. `farmId` null = todas las
+ * Destinatarios externos (socio, agrónomo, banco) del parte semanal con PDF. `farmId` null = todas las
  * estancias de la organización. No se sincroniza.
  */
 export const reportSchedules = sqliteTable(
@@ -42,7 +45,7 @@ export const reportSchedules = sqliteTable(
 );
 
 /**
- * I-01: tokens de la API pública (solo lectura) por organización. Solo se guarda el SHA-256 del token; `prefix` son
+ * Tokens de la API pública (solo lectura) por organización. Solo se guarda el SHA-256 del token; `prefix` son
  * los primeros caracteres, para reconocerlo en la lista. No se sincroniza.
  */
 export const apiTokens = sqliteTable(
@@ -61,7 +64,7 @@ export const apiTokens = sqliteTable(
   (t) => [uniqueIndex("api_tokens_hash_uq").on(t.tokenHash), index("api_tokens_org_idx").on(t.organizationId)],
 );
 
-/** I-01: pedidos por token y minuto (ventana fija) para el límite de uso. Se limpia en el cron diario. */
+/** Pedidos por token y minuto (ventana fija) para el límite de uso. Se limpia en el cron diario. */
 export const apiRate = sqliteTable(
   "api_rate",
   {

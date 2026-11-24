@@ -1,5 +1,5 @@
 /**
- * Capas propias de la estancia (M-17). El Worker valida tipo y tamaño y pasa el archivo a R2 sin leerlo entero:
+ * Capas propias de la estancia. El Worker valida tipo y tamaño y pasa el archivo a R2 sin leerlo entero:
  * un GeoTIFF pesado lo convierte workers-py (job custom_layers).
  */
 import { Hono } from "hono";
@@ -20,6 +20,7 @@ import {
 import { dispatchJob } from "../lib/dispatch";
 import type { AppEnv } from "../types";
 
+/** Rutas de capas propias: listar, subir, ver la imagen y borrar. */
 export const layers = new Hono<AppEnv>();
 
 layers.get("/farms/:id/custom-layers", async (c) => c.json(await listCustomLayers(c.var.sdb, c.req.param("id"))));

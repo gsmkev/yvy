@@ -1,5 +1,5 @@
 /**
- * Edición de lotes (M-05): dividir un lote con una línea y unir dos lotes contiguos.
+ * Edición de lotes: dividir un lote con una línea y unir dos lotes contiguos.
  * Lado cliente (web): el Worker solo recibe los polígonos ya resultantes.
  */
 import turfLength from "@turf/length";
@@ -8,6 +8,7 @@ import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import type { LineString, Polygon, Position } from "geojson";
 import { areaHa, cleanArea, validatePolygon, type Area } from "./core";
 
+/** Motivo por el que no se pudo dividir un lote. */
 export type SplitError =
   | "not_polygon"
   | "line_too_short"
@@ -15,6 +16,7 @@ export type SplitError =
   | "crosses_hole"
   | "degenerate";
 
+/** Motivo por el que no se pudieron unir dos lotes. */
 export type MergeError = "not_adjacent" | "not_polygon" | "degenerate";
 
 /** Largo de una línea en metros (geodésico). */

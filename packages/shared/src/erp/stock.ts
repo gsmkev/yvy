@@ -1,10 +1,13 @@
+/** Depósitos, compras al stock, lotes y vencimientos, consumo automático desde registros de campo y stock mínimo. */
+
 import { z } from "zod";
 import type { DoseUnit } from "../agro";
 import { uuid } from "./internal";
 import { WAREHOUSE_TYPES, isoDate, optText, minorAmount, currencySchema } from "./core";
 
-// ---------- Depósitos (E-10) ----------
+// ---------- Depósitos ----------
 
+/** Alta o cambio de un depósito. */
 export const warehouseInput = z.object({
   farmId: uuid,
   name: z.string().trim().min(1).max(80),
@@ -12,9 +15,10 @@ export const warehouseInput = z.object({
   isDefault: z.boolean().optional(),
 });
 
-// ---------- Stock (E-11) ----------
+// ---------- Stock ----------
 
 const stockQty = z.number().positive().max(1_000_000_000);
+/** Compra de un producto a un depósito. */
 export const stockPurchaseInput = z.object({
   productId: uuid,
   warehouseId: uuid,
@@ -24,7 +28,7 @@ export const stockPurchaseInput = z.object({
   amount: minorAmount,
   currency: currencySchema,
   partyId: uuid.nullish(),
-  /** Lote y vencimiento del producto comprado (E-12). */
+  /** Lote y vencimiento del producto comprado. */
   lot: optText(40),
   expiresOn: isoDate.nullish(),
   note: optText(200),
@@ -39,6 +43,7 @@ export const stockConsumptionInput = z.object({
   seasonId: uuid.nullish(),
   note: optText(200),
 });
+/** Transferencia de stock entre dos depósitos. */
 export const stockTransferInput = z.object({
   productId: uuid,
   fromWarehouseId: uuid,
@@ -80,8 +85,9 @@ export function avgUnitCost(t: StockTotals): number {
 /** Valor en guaraníes de mover `qty` unidades al costo promedio `avg` (siempre positivo). */
 export const moveValue = (qty: number, avg: number): number => Math.round(Math.abs(qty) * avg);
 
-// ---------- Lotes y vencimientos (E-12) ----------
+// ---------- Lotes y vencimientos ----------
 
+/** Lote comprado con su vencimiento y cantidad. */
 export interface PurchaseLot {
   lot: string | null;
   expiresOn: string | null;
@@ -107,8 +113,9 @@ export function lotsRemaining<T extends PurchaseLot>(lots: T[], stockQty: number
 export const daysUntil = (from: string, to: string): number =>
   Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
 
-// ---------- Consumo automático desde los registros de campo (E-13) ----------
+// ---------- Consumo automático desde los registros de campo ----------
 
+/** Unidad base de stock: litros o kilos. */
 export type BaseUnit = "l" | "kg";
 /** Registros de campo que descuentan stock y cargan costo. */
 export const CONSUMING_KINDS = ["application", "fertilization", "health", "fuel_load", "feed"] as const;
@@ -126,7 +133,7 @@ interface DoseLike {
   productId?: string;
   dose: number;
   unit: DoseUnit;
-  /** Cantidad total realmente usada (E-21), en la unidad de la dosis sin "/ha". */
+  /** Cantidad total realmente usada, en la unidad de la dosis sin "/ha". */
   usedQty?: number;
 }
 
@@ -142,7 +149,7 @@ export function consumptionProductIds(kind: string, data: Record<string, unknown
 /**
  * Cantidades de insumos que consume un registro, en la unidad base del producto (l o kg).
  * - application y fertilization: dosis por hectárea x superficie hecha (`areaHa` del registro o, si falta, la del lote),
- *   o la cantidad real usada del producto (`usedQty`) si el operario la anotó al cerrar la orden (E-21).
+ *   o la cantidad real usada del producto (`usedQty`) si el operario la anotó al cerrar la orden.
  * - health: la cantidad del registro (`quantity`).
  * - fuel_load: los litros de la carga, del combustible indicado o del único combustible del catálogo.
  * Solo cuentan los productos del catálogo (`units`: id a unidad). Un producto cuya dosis no es de la misma familia que
@@ -164,7 +171,7 @@ export function consumptionLines(
       const unit = p.productId ? ctx.units.get(p.productId) : undefined;
       const conv = DOSE_TO_BASE[p.unit];
       if (!(p.productId && unit && conv && conv.unit === unit)) continue;
-      // Con la cantidad real que anotó el operario (E-21) no hace falta la superficie.
+      // Con la cantidad real que anotó el operario no hace falta la superficie.
       if (typeof p.usedQty === "number" && p.usedQty > 0) add(p.productId, p.usedQty * conv.factor);
       else if (area && area > 0) add(p.productId, p.dose * conv.factor * area);
     }
@@ -183,8 +190,9 @@ export function consumptionLines(
   return [...acc].map(([productId, qty]) => ({ productId, qty: round3(qty) })).filter((l) => l.qty > 0);
 }
 
-// ---------- Stock mínimo (E-14) ----------
+// ---------- Stock mínimo ----------
 
+/** Stock mínimo de un producto en un depósito. */
 export const stockMinimumInput = z.object({
   productId: uuid,
   warehouseId: uuid,
@@ -192,6 +200,7 @@ export const stockMinimumInput = z.object({
   minQty: z.number().min(0).max(1_000_000_000),
 });
 
+/** Producto por debajo de su stock mínimo. */
 export interface LowStockRow {
   productId: string;
   warehouseId: string;

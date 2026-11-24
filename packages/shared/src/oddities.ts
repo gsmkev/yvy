@@ -1,12 +1,14 @@
 /**
- * X-26: registros raros para revisar. Reglas simples y explicables, sin IA: marcan un registro para que una persona lo
+ * Registros raros para revisar. Reglas simples y explicables, sin modelos: marcan un registro para que una persona lo
  * mire en la web; no lo cambian ni lo rechazan. Todos los umbrales están en LIMITS.oddities (valores por defecto
  * generales, a revisar por un agrónomo; la dosis habitual de cada producto la carga la organización).
  */
 import { LIMITS } from "./limits";
 import { localDate } from "./tasks";
 
+/** Reglas que marcan un registro como raro. */
 export const ODDITY_RULES = ["rain_high", "pest_off_season", "dose_out_of_range", "yield_impossible"] as const;
+/** Regla de registros raros. */
 export type OddityRule = (typeof ODDITY_RULES)[number];
 
 /** Dosis habitual de un producto por hectárea, en la unidad base del producto (l o kg). null = sin tope de ese lado. */
@@ -16,6 +18,7 @@ export interface DoseRange {
   unit: "l" | "kg";
 }
 
+/** Datos externos al registro que necesitan las reglas: el lote y las dosis habituales por producto. */
 export interface OddityContext {
   /** Lote del registro, para el rinde de una cosecha. */
   plot?: { crop: string | null; areaHa: number } | null;
@@ -23,6 +26,7 @@ export interface OddityContext {
   doseRanges?: ReadonlyMap<string, DoseRange>;
 }
 
+/** Registro marcado como raro, con los valores que dispararon la regla. */
 export type Oddity =
   | { rule: "rain_high"; mm: number; max: number }
   | { rule: "pest_off_season"; pest: string; month: number }

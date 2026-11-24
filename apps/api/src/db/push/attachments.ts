@@ -1,3 +1,5 @@
+/** Manejadores del push para los adjuntos (fotos y notas de voz) de los registros. */
+
 import { eq } from "drizzle-orm";
 import { LIMITS, isAudioMime, type Mutation } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -5,7 +7,7 @@ import { countKey, type PushCtx } from "./context";
 
 type Of<K extends Mutation["kind"]> = Extract<Mutation, { kind: K }>;
 
-/** Rutas en R2. La nota de voz (F-09) es un solo archivo .m4a: no tiene miniatura (thumbPath vacío). */
+/** Rutas en R2. La nota de voz es un solo archivo .m4a: no tiene miniatura (thumbPath vacío). */
 const attachmentPaths = (orgId: string, recordId: string, attachmentId: string, mime: string = "image/webp") =>
   isAudioMime(mime)
     ? { storagePath: `organizations/${orgId}/records/${recordId}/${attachmentId}.m4a`, thumbPath: "" }
@@ -14,6 +16,7 @@ const attachmentPaths = (orgId: string, recordId: string, attachmentId: string, 
         thumbPath: `organizations/${orgId}/records/${recordId}/${attachmentId}_t.webp`,
       };
 
+/** Alta de un adjunto: valida el registro, el límite del plan y deja la fila pendiente de subir a R2. */
 export function attachmentsUpsert(ctx: PushCtx, m: Of<"attachments.upsert">): void {
   const a = m.row;
   const { org, now } = ctx;
@@ -48,6 +51,7 @@ export function attachmentsUpsert(ctx: PushCtx, m: Of<"attachments.upsert">): vo
   ctx.accept(m, a.id);
 }
 
+/** Baja (lógica) de un adjunto. */
 export async function attachmentsDelete(ctx: PushCtx, m: Of<"attachments.delete">): Promise<void> {
   const existing = ctx.attachments.get(m.row.id);
   const rec = existing && ctx.records.get(existing.recordId);

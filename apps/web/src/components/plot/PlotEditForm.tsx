@@ -7,9 +7,8 @@ import type { PlotForm } from "./usePlotData";
 /**
  * Formulario de edición.
  * @param f estado del formulario (de `usePlotForm`).
- * @param onCancel se llama al cancelar.
  */
-export function PlotEditForm({ f, onCancel }: { f: PlotForm; onCancel: () => void }) {
+export function PlotEditForm({ f, onCancel }: { f: PlotForm; /** Se llama al cancelar. */ onCancel: () => void }) {
   const { form, set, save } = f;
   return (
     <Form className="flex flex-col gap-3 border-t border-linea pt-4" onSubmit={() => save.mutate()}>

@@ -1,5 +1,5 @@
 /**
- * Plan de siembra de la campaña (A-03): superficie por cultivo y variedad y semilla necesaria.
+ * Plan de siembra de la campaña: superficie por cultivo y variedad y semilla necesaria.
  * Función pura: corre igual en la web, el celular y el Worker.
  */
 import type { CROPS } from "./schema";
@@ -17,6 +17,7 @@ export const SEED_RATE_KG_HA: Record<Crop, number> = {
   otro: 0,
 };
 
+/** Superficie y semilla necesaria de un cultivo y variedad. */
 export interface SowingPlanRow {
   crop: Crop;
   /** null = sin variedad definida. */
@@ -24,12 +25,13 @@ export interface SowingPlanRow {
   plots: number;
   areaHa: number;
   /**
-   * kg de semilla. Cada lote usa su densidad planificada si está en kg/ha (A-01) y, si no, la de referencia
+   * kg de semilla. Cada lote usa su densidad planificada si está en kg/ha y, si no, la de referencia
    * del cultivo (o la que se pase en `rates`).
    */
   seedKg: number;
 }
 
+/** Plan de siembra de la campaña: filas por cultivo y variedad, y lo que quedó sin planificar. */
 export interface SowingPlanResult {
   rows: SowingPlanRow[];
   plannedHa: number;

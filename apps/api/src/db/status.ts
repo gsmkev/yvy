@@ -1,5 +1,5 @@
 /**
- * P-04: estado público del servicio. Sin datos de clientes: solo si el Worker, D1 y R2 responden y cuándo fue la última
+ * Estado público del servicio. Sin datos de clientes: solo si el Worker, D1 y R2 responden y cuándo fue la última
  * corrida de cada job de datos. /ingest anota cada pedido firmado de los jobs de GitHub Actions (job_runs); el estado de
  * cada job sale de esas anotaciones y de lo que se espera de él (LIMITS.status).
  */
@@ -41,6 +41,7 @@ export async function recordIngest(db: DB, path: string, httpStatus: number, now
 
 type JobState = "ok" | "late" | "failing" | "none";
 
+/** Estado de un trabajo programado según su última corrida exitosa o fallida y su frecuencia esperada. */
 export function jobState(
   job: StatusJob,
   r: { lastOkAt: number | null; lastFailAt: number | null } | undefined,
@@ -67,6 +68,7 @@ async function probe(fn: () => Promise<unknown>): Promise<Probe> {
   }
 }
 
+/** Estado de D1, R2 y de cada trabajo programado. */
 export async function serviceStatus(env: Pick<Bindings, "DB" | "MEDIA">, db: DB, now = Date.now()) {
   const [d1, r2] = await Promise.all([
     probe(() => env.DB.prepare("SELECT 1").first()),

@@ -1,5 +1,5 @@
 /**
- * Rotación de potreros (G-04) y oferta de forraje (G-05). Lógica pura compartida por el Worker y la web.
+ * Rotación de potreros y oferta de forraje. Lógica pura compartida por el Worker y la web.
  * Todos los coeficientes son VALORES POR DEFECTO A REVISAR POR UN TÉCNICO: referencias generales de pasturas
  * tropicales (Brachiaria, Panicum) en cría y engorde extensivos, no una recomendación para un campo en particular.
  */
@@ -8,8 +8,9 @@ import { HERD_CATEGORIES, emptyCounts, totalHead, type HerdCategory, type HerdCo
 const DAY = 86_400_000;
 const round1 = (n: number) => Math.round(n * 10) / 10;
 
-// ---------- Rotación (G-04) ----------
+// ---------- Rotación ----------
 
+/** Criterios por defecto para decidir cuándo mover la hacienda y qué potrero está listo. */
 export const ROTATION_DEFAULTS = {
   /** Días de descanso mínimos antes de volver a entrar a un potrero. */
   minRestDays: 35,
@@ -27,6 +28,7 @@ export type HerdEvent =
   | { at: number; type: "move"; fromPlotId: string | null; toPlotId: string | null; counts: HerdCounts }
   | { at: number; type: "loss"; plotId: string; category: HerdCategory; head: number };
 
+/** Ocupación reconstruida de un potrero: desde cuándo está ocupado o vacío y los días de estadía y descanso. */
 export interface PaddockTimeline {
   plotId: string;
   /** ¿Tiene hacienda hoy? */
@@ -113,15 +115,19 @@ export function paddockTimelines(
   return out;
 }
 
+/** Cobertura del pasto medida: baja, media o alta. */
 export type PastureCover = "low" | "medium" | "high";
+/** Medición de pasto: altura, cobertura y fecha. */
 export interface PastureReading {
   heightCm: number;
   cover: PastureCover;
   at: number;
 }
 
+/** Estado de rotación de un potrero. */
 export type PaddockState = "occupied" | "overdue" | "ready" | "resting" | "unknown";
 
+/** Estado de rotación de un potrero, con su última medición de pasto. */
 export interface RotationRow extends PaddockTimeline {
   name: string;
   areaHa: number;
@@ -131,6 +137,7 @@ export interface RotationRow extends PaddockTimeline {
   pastureReady: boolean | null;
 }
 
+/** Respuesta de la rotación de potreros: criterios usados, estado por potrero y el que se sugiere para la próxima entrada. */
 export interface RotationResponse {
   defaults: typeof ROTATION_DEFAULTS;
   plots: RotationRow[];
@@ -173,8 +180,9 @@ export function rotationPlan(
   };
 }
 
-// ---------- Oferta de forraje (G-05) ----------
+// ---------- Oferta de forraje ----------
 
+/** Coeficientes para estimar el forraje disponible y los días de pasto. */
 export const FORAGE = {
   /** kg de materia seca por hectárea y por cm de altura, según la cobertura medida. */
   kgDmPerHaPerCm: { low: 80, medium: 120, high: 160 } as Record<PastureCover, number>,
@@ -200,8 +208,10 @@ export const FORAGE = {
   staleDays: 30,
 } as const;
 
+/** Con qué se estimó el forraje: altura, NDVI, ambos o altura calibrada con NDVI. */
 export type ForageMethod = "height" | "ndvi" | "both" | "calibrated";
 
+/** Datos de un potrero para estimar su forraje. */
 export interface ForageInput {
   heightCm: number | null;
   cover: PastureCover | null;
@@ -216,6 +226,7 @@ export interface ForageInput {
   now: number;
 }
 
+/** Forraje estimado de un potrero y los días que alcanza con la hacienda actual. */
 export interface ForageEstimate {
   method: ForageMethod | null;
   kgDmHa: number | null;
@@ -230,11 +241,14 @@ export interface ForageEstimate {
   stale: boolean;
 }
 
+/** kg de materia seca por hectárea según la altura (cm) y la cobertura del pasto. */
 export const kgDmFromHeight = (heightCm: number, cover: PastureCover): number =>
   Math.round(heightCm * FORAGE.kgDmPerHaPerCm[cover]);
+/** kg de materia seca por hectárea según el NDVI. */
 export const kgDmFromNdvi = (ndvi: number): number =>
   Math.round(Math.max(0, ndvi - FORAGE.ndviBase) * FORAGE.ndviSlopeKgDmHa);
 
+/** Estima el forraje combinando altura y NDVI (calibrados entre sí si hay imagen de la fecha de la medición). */
 export function estimateForage(i: ForageInput): ForageEstimate {
   const heightKg = i.heightCm !== null && i.cover !== null ? kgDmFromHeight(i.heightCm, i.cover) : null;
   const ndviKg = i.ndvi !== null ? kgDmFromNdvi(i.ndvi) : null;
@@ -272,6 +286,7 @@ export function estimateForage(i: ForageInput): ForageEstimate {
   };
 }
 
+/** Forraje de un potrero con los datos de los que se estimó. */
 export interface ForageRow extends ForageEstimate {
   plotId: string;
   name: string;
@@ -285,6 +300,7 @@ export interface ForageRow extends ForageEstimate {
   ndviAt: number | null;
 }
 
+/** Respuesta del forraje por potrero y los coeficientes usados. */
 export interface ForageResponse {
   plots: ForageRow[];
   coefficients: typeof FORAGE;

@@ -1,5 +1,5 @@
 /**
- * Mantenimiento preventivo y reparaciones de las máquinas (E-22).
+ * Mantenimiento preventivo y reparaciones de las máquinas.
  * Un servicio con costo carga un costo de maquinaria (categoría `machinery`) a la estancia de la máquina.
  * El agrónomo ve los planes y los avisos (son horas y kilómetros), nunca los montos.
  */
@@ -50,6 +50,7 @@ export async function duePlans(sdb: ScopedDb, all = false): Promise<DuePlan[]> {
   return out.sort((a, b) => a.remaining - b.remaining);
 }
 
+/** Bitácora de mantenimiento, de una máquina o de todas. */
 export async function listLogs(sdb: ScopedDb, machineId?: string) {
   sdb.require(can.viewStock);
   const rows = await sdb.db
@@ -67,6 +68,7 @@ export async function listLogs(sdb: ScopedDb, machineId?: string) {
   return can.manageErp(sdb.auth.role) ? rows : rows.map((r) => ({ ...r, amount: undefined, currency: undefined, amountPyg: undefined }));
 }
 
+/** Registra un mantenimiento o reparación de una máquina; puede cargar su costo y cerrar un plan de mantenimiento. */
 export async function createLog(
   sdb: ScopedDb,
   i: {
@@ -160,6 +162,7 @@ export async function createLog(
   return { id };
 }
 
+/** Borra (lógico) un registro de mantenimiento. Falla con NotFoundError si no existe. */
 export async function deleteLog(sdb: ScopedDb, id: string) {
   sdb.require(can.manageErp);
   const org = sdb.auth.orgId;

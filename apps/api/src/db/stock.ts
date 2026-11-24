@@ -1,5 +1,5 @@
 /**
- * Inventario (ADR 0004): depósitos, movimientos de stock y costo promedio ponderado.
+ * Inventario: depósitos, movimientos de stock y costo promedio ponderado.
  * Toda la lógica de cantidades y valores vive acá y en packages/shared/src/erp.ts (funciones puras).
  */
 import { and, eq, isNull, ne } from "drizzle-orm";
@@ -20,7 +20,7 @@ export async function fixDefaultWarehouse(sdb: ScopedDb, id: string) {
     .limit(1);
   if (!w) return;
   const farm = and(eq(s.warehouses.organizationId, org), eq(s.warehouses.farmId, w.farmId), isNull(s.warehouses.deletedAt));
-  // Los depósitos bajan al celular (E-15): cada cambio lleva versión.
+  // Los depósitos bajan al celular: cada cambio lleva versión.
   if (w.isDefault) {
     await runBatch(sdb.db, [
       bumpVersion(sdb.db),

@@ -1,10 +1,11 @@
 /**
- * Tareas recurrentes (PRD RF-20/21, Fase 3). Al completar una tarea diaria o semanal se crea la siguiente.
+ * Tareas recurrentes. Al completar una tarea diaria o semanal se crea la siguiente.
  * El celular la crea localmente sin red y el servidor la crea al recibir el push: las dos usan el mismo
  * id determinístico, así que nunca se duplica.
  */
 import { z } from "zod";
 
+/** Zona horaria por defecto de las estancias. */
 export const DEFAULT_TZ = "America/Asuncion";
 
 /** Fecha de calendario "YYYY-MM-DD" en la zona horaria dada. */
@@ -37,6 +38,7 @@ export const localTime = (ms: number, tz: string = DEFAULT_TZ): string => {
   }
 };
 
+/** Suma `days` (puede ser negativo) a una fecha "AAAA-MM-DD". */
 export const addDays = (date: string, days: number): string => {
   const d = new Date(`${date}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
@@ -79,6 +81,7 @@ export const deterministicUuid = (input: string): string => {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-8${hex.slice(13, 16)}-${((parseInt(hex[16]!, 16) & 0x3) | 0x8).toString(16)}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 };
 
+/** Id determinístico de la tarea siguiente de una recurrente: el celular y el servidor generan el mismo. */
 export const nextOccurrenceId = (taskId: string): string => deterministicUuid(`next:${taskId}`);
 
 /** Tareas visibles en "Hoy": abiertas con fecha ≤ hoy. */
@@ -93,6 +96,7 @@ export const taskCommentSchema = z.object({
   at: z.number().int(),
   text: z.string().min(1),
 });
+/** Comentario de una tarea. */
 export type TaskComment = z.infer<typeof taskCommentSchema>;
 
 /** Lee el JSON de comentarios sin romper si está dañado. */
@@ -116,13 +120,14 @@ export const isOverdue = (
 ): boolean => t.status === "open" && (t.dueDate < today || (t.dueDate === today && !!t.dueTime && t.dueTime < nowTime));
 
 /**
- * T-03: qué tiene que traer el registro con el que se cierra una tarea de cada tipo. Lo exige el servidor al recibir
+ * Qué tiene que traer el registro con el que se cierra una tarea de cada tipo. Lo exige el servidor al recibir
  * el cierre (`tasks.status` → `done`) y la app lo pide antes de guardar. Las tareas sin tipo no piden nada.
  */
 export interface CloseRequirements {
   photo: boolean;
   location: boolean;
 }
+/** Qué pide cada tipo de tarea al registro con el que se cierra. */
 export const TASK_CLOSE_REQUIREMENTS: Readonly<Record<string, CloseRequirements>> = {
   application: { photo: true, location: true },
   fertilization: { photo: true, location: true },
@@ -134,6 +139,7 @@ export const TASK_CLOSE_REQUIREMENTS: Readonly<Record<string, CloseRequirements>
   pasture_status: { photo: true, location: false },
 };
 
+/** Requisitos de cierre de una tarea del tipo `kind`; null si no pide nada. */
 export const closeRequirements = (kind: string | null | undefined): CloseRequirements | null =>
   (kind && TASK_CLOSE_REQUIREMENTS[kind]) || null;
 

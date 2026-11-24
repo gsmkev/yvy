@@ -84,7 +84,7 @@ function recordStmts({ db, org, userId, deviceId, now, out }: PushCtx): Stmt[] {
         },
       }),
   );
-  // K-06: el borrado de un registro deja quién y cuándo (en una o pocas sentencias)
+  // El borrado de un registro deja quién y cuándo (en una o pocas sentencias)
   const audit = auditStmts(
     db,
     { userId, orgId: org },
@@ -148,6 +148,7 @@ async function commentStmts({ db, org, now, out }: PushCtx): Promise<Stmt[]> {
   return [...upserts, ...deletes, ...(await mentionStmts(db, out.mentionRows, now))];
 }
 
+/** Convierte lo decidido en el contexto en las sentencias de escritura del batch, con su versión. */
 export async function buildWrites(ctx: PushCtx): Promise<Stmt[]> {
   const { sdb, db, org, now, out } = ctx;
   const touchesSynced =
@@ -163,12 +164,12 @@ export async function buildWrites(ctx: PushCtx): Promise<Stmt[]> {
     0;
   const stmts: Stmt[] = [];
   if (touchesSynced) stmts.push(bumpVersion(db));
-  // P-03: primer registro de la organización (una sentencia; no hace nada si ya existe)
+  // Primer registro de la organización (una sentencia; no hace nada si ya existe)
   if (out.recordUpserts.length) stmts.push(funnelEvent(db, "first_record", org, now));
   stmts.push(...plotStmts(ctx), ...poiStmts(ctx), ...recordStmts(ctx));
-  // ERP (E-13): consumo de insumos y costo de los registros que llegan, y reversión de los que se borran.
+  // ERP: consumo de insumos y costo de los registros que llegan, y reversión de los que se borran.
   stmts.push(...(await recordEffects(sdb, out.effectUpserts, out.recordDeletes)));
-  // ERP (E-15): ajustes de stock de los recuentos de depósito.
+  // ERP: ajustes de stock de los recuentos de depósito.
   stmts.push(...(await countEffects(sdb, out.effectUpserts, out.recordDeletes)));
   stmts.push(...attachmentStmts(ctx), ...(await commentStmts(ctx)), ...out.taskUpdates);
   for (const chunk of chunkForParams(out.applied, paramsPerRow(s.syncMutations))) {

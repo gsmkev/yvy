@@ -17,9 +17,6 @@ import { Button, ErrorBox, PageHeader, Spinner } from "./ui";
 /**
  * Lista de tareas con filtro y alta.
  * @param farmId limita a una estancia; sin él muestra todas.
- * @param plots lotes elegibles al crear una tarea.
- * @param pick selección de lotes sobre el mapa, si la pantalla tiene uno.
- * @param title si se pasa, el panel arma el encabezado de la página (título, Nueva tarea y Exportar).
  */
 export function TasksPanel({
   farmId,
@@ -28,8 +25,10 @@ export function TasksPanel({
   title,
 }: {
   farmId?: string;
-  plots?: Plot[];
-  pick?: PlotPick;
+  /** Lotes elegibles al crear una tarea. */
+plots?: Plot[];
+  /** Selección de lotes sobre el mapa, si la pantalla tiene uno. */
+pick?: PlotPick;
   /** Si se pasa, el panel arma el encabezado de la página (título, Nueva tarea y Exportar). */
   title?: string;
 }) {

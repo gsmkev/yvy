@@ -1,5 +1,5 @@
 /**
- * Caja y bancos por moneda, cuentas a pagar y a cobrar con vencimiento (E-36).
+ * Caja y bancos por moneda, cuentas a pagar y a cobrar con vencimiento.
  * Pagar o cobrar un documento (compra con factura, liquidación de granos, compra o venta de hacienda) mueve plata en una
  * cuenta de su misma moneda y suma a lo pagado del documento, todo en un db.batch(). Solo dueño y administrador.
  */
@@ -11,6 +11,7 @@ import { runBatch, type Stmt } from "./client";
 import { requireOwned } from "./erp";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
 
+/** Saldo de cada cuenta de caja o banco, con la suma de sus movimientos. */
 export async function accountBalances(sdb: ScopedDb) {
   sdb.require(can.manageErp);
   const org = sdb.auth.orgId;
@@ -32,6 +33,7 @@ export async function accountBalances(sdb: ScopedDb) {
   return { accounts: accounts2, totals: byCurrency };
 }
 
+/** Movimientos de caja, los más recientes primero, de una cuenta o de todas. */
 export async function listMoves(sdb: ScopedDb, accountId?: string) {
   sdb.require(can.manageErp);
   return sdb.db
@@ -52,6 +54,7 @@ async function account(sdb: ScopedDb, id: string) {
   return a;
 }
 
+/** Falla con 409 si la cuenta ya tiene movimientos. */
 export async function requireAccountUnused(sdb: ScopedDb, id: string) {
   const [m] = await sdb.db
     .select({ id: s.cashMoves.id })
@@ -61,6 +64,9 @@ export async function requireAccountUnused(sdb: ScopedDb, id: string) {
   if (m) throw new HTTPException(409, { message: "La cuenta tiene movimientos: no se puede borrar" });
 }
 
+/**
+ * Registra un movimiento manual en una cuenta de caja. Falla con NotFoundError si la cuenta o el tercero no existen.
+ */
 export async function createMove(sdb: ScopedDb, i: { accountId: string; date: string; amount: number; description?: string | null; partyId?: string | null }) {
   sdb.require(can.manageErp);
   await account(sdb, i.accountId);

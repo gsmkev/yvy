@@ -1,11 +1,12 @@
 /**
- * Clima del Worker (PRD-cloudflare §4.7):
+ * Clima del Worker:
  * - Pronóstico MET Norway Locationforecast 2.0 "complete" (9-10 días, mínimas de 6 h). Licencia CC BY 4.0;
  *   atribución "Datos de MET Norway". User-Agent propio y coordenadas a 4 decimales, como piden sus términos.
  * - NASA POWER diario: temperatura y humedad del suelo (GWETTOP/GWETROOT, fracción de saturación 0-1).
  */
 import { LIMITS, localDate } from "@yvy/shared";
 
+/** Pronóstico de un día local (`YYYY-MM-DD`): temperaturas, lluvia acumulada y viento máximo. */
 export interface DailyForecast {
   date: string;
   tminC: number | null;
@@ -33,6 +34,7 @@ interface MetStep {
   };
 }
 
+/** Parte usada de la respuesta de Locationforecast de MET Norway. */
 export interface MetResponse {
   properties: { meta: { updated_at: string }; timeseries: MetStep[] };
 }
@@ -42,6 +44,10 @@ const round = (n: number, d = LIMITS.weather.coordDecimals) => Number(n.toFixed(
 const metUrl = (lat: number, lon: number) =>
   `https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${round(lat)}&lon=${round(lon)}`;
 
+/**
+ * Pide el pronóstico de MET Norway para un punto.
+ * @throws Error si la respuesta no es 2xx.
+ */
 export async function fetchMet(
   fetchFn: typeof fetch,
   userAgent: string,
@@ -53,6 +59,7 @@ export async function fetchMet(
   return (await res.json()) as MetResponse;
 }
 
+/** Pronóstico de una hora: temperatura, viento, humedad relativa y lluvia de esa hora (`validAt` en epoch ms). */
 export interface HourlyForecast {
   validAt: number;
   tempC: number;
@@ -157,9 +164,11 @@ interface PowerDaily {
   soilRoot: number | null;
 }
 
+/** URL de NASA POWER (diario, comunidad AG) para un punto y un rango de fechas `YYYY-MM-DD`. */
 export const powerUrl = (lat: number, lon: number, start: string, end: string) =>
   `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN,T2M_MAX,GWETTOP,GWETROOT,PRECTOTCORR&community=AG&longitude=${round(lon)}&latitude=${round(lat)}&start=${start.replace(/-/g, "")}&end=${end.replace(/-/g, "")}&format=JSON`;
 
+/** Convierte la respuesta de NASA POWER a filas diarias; los valores centinela (≤ -999) pasan a null. */
 export function dailyFromPower(json: {
   properties: { parameter: Record<string, Record<string, number>> };
 }): PowerDaily[] {

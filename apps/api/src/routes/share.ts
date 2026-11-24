@@ -1,10 +1,13 @@
-/** Ruta pública (sin sesión) de los enlaces de solo lectura (K-04). El token se compara por su hash. */
+/**
+ * Ruta pública (sin sesión) de los enlaces de solo lectura. El token se compara por su hash.
+ */
 import { Hono } from "hono";
 import { getDb } from "../db/client";
 import { SystemDb } from "../db/system";
 import { sha256Hex } from "../lib/crypto";
 import type { AppEnv } from "../types";
 
+/** Ruta pública `GET /shared/:token`: resumen de solo lectura de una estancia compartida. */
 export const share = new Hono<AppEnv>();
 
 share.get("/shared/:token", async (c) => {

@@ -1,7 +1,10 @@
+/** Tablas del ERP de raciones, compras, venta de granos, hacienda y caja; son de oficina y no se sincronizan. */
+
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { ACTIVITIES, CASH_ACCOUNT_TYPES, CATTLE_DEAL_KINDS, COST_CATEGORIES, CURRENCIES } from "../erp";
 import { timestamps } from "./columns";
 
+/** Raciones de alimentación guardadas por la organización, con sus ingredientes en JSON. */
 export const feedRations = sqliteTable(
   "feed_rations",
   {
@@ -15,7 +18,7 @@ export const feedRations = sqliteTable(
   (t) => [index("feed_rations_org_idx").on(t.organizationId, t.name)],
 );
 
-/** Presupuesto de campaña: una línea por lote, cultivo o toda la campaña, con actividad y rubro (E-32). */
+/** Presupuesto de campaña: una línea por lote, cultivo o toda la campaña, con actividad y rubro. */
 export const budgetLines = sqliteTable(
   "budget_lines",
   {
@@ -35,7 +38,7 @@ export const budgetLines = sqliteTable(
   (t) => [index("budget_lines_season_idx").on(t.organizationId, t.seasonId)],
 );
 
-/** Compra a un proveedor: orden, factura y recepción en depósito (E-33). */
+/** Compra a un proveedor: orden, factura y recepción en depósito. */
 export const purchases = sqliteTable(
   "purchases",
   {
@@ -53,14 +56,14 @@ export const purchases = sqliteTable(
     totalPyg: integer("total_pyg").notNull().default(0),
     invoiceNumber: text("invoice_number"),
     invoiceDate: text("invoice_date"),
-    /** Vencimiento de la factura: de acá salen las cuentas a pagar (E-36). */
+    /** Vencimiento de la factura: de acá salen las cuentas a pagar. */
     dueDate: text("due_date"),
-    /** Lo ya pagado, en unidad menor de `currency` (E-36). */
+    /** Lo ya pagado, en unidad menor de `currency`. */
     paidAmount: integer("paid_amount").notNull().default(0),
     warehouseId: text("warehouse_id"),
     receivedAt: text("received_at"),
     note: text("note"),
-    /** Foto de la factura en R2 (E-37). */
+    /** Foto de la factura en R2. */
     photoPath: text("photo_path"),
     createdBy: text("created_by").notNull(),
     ...timestamps,
@@ -68,6 +71,7 @@ export const purchases = sqliteTable(
   (t) => [index("purchases_org_idx").on(t.organizationId, t.orderDate), index("purchases_due_idx").on(t.organizationId, t.dueDate)],
 );
 
+/** Líneas de una compra: producto con stock o gasto con rubro. */
 export const purchaseLines = sqliteTable(
   "purchase_lines",
   {
@@ -90,7 +94,7 @@ export const purchaseLines = sqliteTable(
   (t) => [index("purchase_lines_purchase_idx").on(t.organizationId, t.purchaseId)],
 );
 
-/** Contrato de venta de granos a un comprador (E-34). */
+/** Contrato de venta de granos a un comprador. */
 export const grainContracts = sqliteTable(
   "grain_contracts",
   {
@@ -113,7 +117,7 @@ export const grainContracts = sqliteTable(
   (t) => [index("grain_contracts_org_idx").on(t.organizationId, t.crop)],
 );
 
-/** Liquidación de un contrato: toneladas, precio, descuentos y neto. Es un ingreso y una cuenta a cobrar (E-34, E-36). */
+/** Liquidación de un contrato: toneladas, precio, descuentos y neto. Es un ingreso y una cuenta a cobrar. */
 export const grainSettlements = sqliteTable(
   "grain_settlements",
   {
@@ -133,7 +137,7 @@ export const grainSettlements = sqliteTable(
     plotId: text("plot_id"),
     seasonId: text("season_id"),
     dueDate: text("due_date"),
-    /** Lo ya cobrado, en unidad menor de `currency` (E-36). */
+    /** Lo ya cobrado, en unidad menor de `currency`. */
     paidAmount: integer("paid_amount").notNull().default(0),
     photoPath: text("photo_path"),
     createdBy: text("created_by").notNull(),
@@ -142,7 +146,7 @@ export const grainSettlements = sqliteTable(
   (t) => [index("grain_settlements_contract_idx").on(t.organizationId, t.contractId), index("grain_settlements_due_idx").on(t.organizationId, t.dueDate)],
 );
 
-/** Compra o venta de hacienda: cabezas, kilos, precio y guía de traslado (E-35). */
+/** Compra o venta de hacienda: cabezas, kilos, precio y guía de traslado. */
 export const cattleDeals = sqliteTable(
   "cattle_deals",
   {
@@ -165,7 +169,7 @@ export const cattleDeals = sqliteTable(
     /** Número de la guía de traslado (SENACSA). */
     guideNumber: text("guide_number"),
     dueDate: text("due_date"),
-    /** Lo ya pagado o cobrado, en unidad menor de `currency` (E-36). */
+    /** Lo ya pagado o cobrado, en unidad menor de `currency`. */
     paidAmount: integer("paid_amount").notNull().default(0),
     photoPath: text("photo_path"),
     note: text("note"),
@@ -175,7 +179,7 @@ export const cattleDeals = sqliteTable(
   (t) => [index("cattle_deals_org_idx").on(t.organizationId, t.date), index("cattle_deals_due_idx").on(t.organizationId, t.dueDate)],
 );
 
-/** Caja o cuenta bancaria en una moneda (E-36). */
+/** Caja o cuenta bancaria en una moneda. */
 export const cashAccounts = sqliteTable(
   "cash_accounts",
   {
@@ -192,7 +196,7 @@ export const cashAccounts = sqliteTable(
   (t) => [index("cash_accounts_org_idx").on(t.organizationId)],
 );
 
-/** Movimiento de una cuenta: entra con signo positivo, sale con negativo, en la moneda de la cuenta (E-36). */
+/** Movimiento de una cuenta: entra con signo positivo, sale con negativo, en la moneda de la cuenta. */
 export const cashMoves = sqliteTable(
   "cash_moves",
   {
@@ -213,7 +217,7 @@ export const cashMoves = sqliteTable(
 );
 
 /**
- * Datos de IVA de un documento (I-06): timbrado y desglose en gravadas 10 %, gravadas 5 % y exentas (guaraníes, con el
+ * Datos de IVA de un documento: timbrado y desglose en gravadas 10 %, gravadas 5 % y exentas (guaraníes, con el
  * IVA incluido). Una fila por documento de compra o venta; sin fila, el desglose no está cargado.
  */
 export const documentTaxes = sqliteTable(
@@ -234,7 +238,7 @@ export const documentTaxes = sqliteTable(
   (t) => [uniqueIndex("document_taxes_doc_uq").on(t.organizationId, t.docKind, t.docId)],
 );
 
-/** Formato de exportación guardado (I-06): conjunto de datos, columnas, separador y formatos de fecha y de números. */
+/** Formato de exportación guardado: conjunto de datos, columnas, separador y formatos de fecha y de números. */
 export const exportFormats = sqliteTable(
   "export_formats",
   {
@@ -249,7 +253,7 @@ export const exportFormats = sqliteTable(
   (t) => [index("export_formats_org_idx").on(t.organizationId, t.dataset)],
 );
 
-/** Plan de cuentas del contador: a qué cuenta va cada rubro al exportar (E-38). Sin fila, rige el plan de ejemplo. */
+/** Plan de cuentas del contador: a qué cuenta va cada rubro al exportar. Sin fila, rige el plan de ejemplo. */
 export const accountMap = sqliteTable(
   "account_map",
   {
@@ -266,6 +270,6 @@ export const accountMap = sqliteTable(
 );
 
 /**
- * P-08: segundo factor TOTP (RFC 6238) por usuario. El secreto va cifrado (AES-GCM, clave derivada de JWT_SECRET);
+ * Segundo factor TOTP (RFC 6238) por usuario. El secreto va cifrado (AES-GCM, clave derivada de JWT_SECRET);
  * `enabledAt` null = alta sin confirmar. `lastStep` evita reusar un código ya aceptado. No se sincroniza.
  */

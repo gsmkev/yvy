@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Restaura una copia de D1 (SQL de `wrangler d1 export`, sin comprimir o .gz) en una base SQLite local y la
- * verifica contra el esquema de las migraciones del repo (P-05). Sin dependencias: usa node:sqlite (Node 22+).
+ * verifica contra el esquema de las migraciones del repo. Sin dependencias: usa node:sqlite (Node 22+).
  *
  * Uso:
  *   node scripts/restore-backup.mjs yvy-2026-11-08.sql.gz [--db restaurada.sqlite] [--min-rows tabla=n ...]
@@ -24,6 +24,7 @@ import { gunzipSync } from "node:zlib";
 import { DatabaseSync } from "node:sqlite";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+/** Carpeta de migraciones SQL del repo, referencia del esquema esperado. */
 export const MIGRATIONS_DIR = resolve(HERE, "../migrations");
 
 /** Tablas que deben tener filas en una base real: si están vacías, la copia no sirve. */
@@ -53,6 +54,7 @@ export function tableColumns(db) {
   return out;
 }
 
+/** Lee una copia SQL, descomprimiéndola si termina en `.gz`. */
 export function readBackup(file) {
   const raw = readFileSync(file);
   return (file.endsWith(".gz") ? gunzipSync(raw) : raw).toString("utf8");
@@ -81,6 +83,10 @@ export function compareCounts(restored, recorded, { pct = 2, minTolerance = 5 } 
   return errors;
 }
 
+/**
+ * Restaura el SQL de la copia en una base SQLite y la compara con el esquema de las migraciones.
+ * @returns los errores y avisos encontrados y los conteos de filas restauradas.
+ */
 export function restoreAndVerify(sql, { dbPath = ":memory:", minRows = {}, expectedCounts = null, referenceDir = MIGRATIONS_DIR } = {}) {
   const errors = [];
   const warnings = [];
@@ -182,7 +188,7 @@ async function main() {
   const countsFile = o.counts ?? (o.latest ? file.replace(/\.sql\.gz$/, ".counts.json") : null);
   const expectedCounts = countsFile && existsSync(countsFile) ? JSON.parse(readFileSync(countsFile, "utf8")).counts : null;
   if (o.counts && !expectedCounts) throw new Error(`No existe el archivo de conteos ${o.counts}`);
-  if (!expectedCounts) console.log("Aviso: sin conteos de D1 para comparar (copia anterior a P-05 o sin archivo).");
+  if (!expectedCounts) console.log("Aviso: sin conteos de D1 para comparar (copia hecha antes de guardar conteos, o sin archivo).");
   const res = restoreAndVerify(readBackup(file), { dbPath: o.db ?? ":memory:", minRows: o.minRows, expectedCounts });
   for (const w of res.warnings) console.log(`Aviso: ${w}`);
   console.log("Filas por tabla:");

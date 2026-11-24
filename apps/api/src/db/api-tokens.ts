@@ -1,4 +1,4 @@
-/** I-01: tokens de la API pública. Gestión desde la web (solo el dueño) y verificación en /v1. */
+/** Tokens de la API pública. Gestión desde la web (solo el dueño) y verificación en /v1. */
 import { and, eq, isNull, lt, sql } from "drizzle-orm";
 import { LIMITS, newId } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -8,6 +8,7 @@ import { can, ForbiddenError, NotFoundError, type ScopedDb } from "./scoped";
 
 const TOKEN_PREFIX = "yvy_";
 
+/** Tokens de API de la organización (nunca el token en claro, solo su prefijo). */
 export async function listApiTokens(sdb: ScopedDb) {
   sdb.require(can.manageApiTokens, "Solo el dueño gestiona la API");
   return sdb.db
@@ -47,6 +48,7 @@ export async function createApiToken(sdb: ScopedDb, name: string) {
   return { id, token };
 }
 
+/** Revoca un token de API. */
 export async function revokeApiToken(sdb: ScopedDb, id: string) {
   sdb.require(can.manageApiTokens, "Solo el dueño gestiona la API");
   const res = await sdb.db

@@ -1,5 +1,5 @@
 /**
- * Balance hídrico simple por lote (C-08, A-43): lluvia (CHIRPS) más riego aplicado menos el consumo del cultivo (ETc).
+ * Balance hídrico simple por lote: lluvia (CHIRPS) más riego aplicado menos el consumo del cultivo (ETc).
  * La evapotranspiración de referencia (ET0) sale de la temperatura mínima y máxima de NASA POWER con Hargreaves-Samani
  * (FAO-56) y se multiplica por el coeficiente del cultivo (Kc) según los días desde la siembra.
  * Es un balance de entradas y salidas, sin suelo ni escorrentía: sirve para ver la tendencia de estrés, no para regar.
@@ -50,11 +50,13 @@ export function et0Hargreaves(tminC: number, tmaxC: number, latDeg: number, dayO
   return Math.max(0, 0.0023 * ((tmaxC + tminC) / 2 + 17.8) * Math.sqrt(range) * extraterrestrialMm(latDeg, dayOfYear));
 }
 
+/** Día del año (1 a 366) de una fecha "AAAA-MM-DD". */
 export const dayOfYearIso = (iso: string): number => {
   const t = Date.parse(`${iso}T00:00:00Z`);
   return Math.floor((t - Date.UTC(new Date(t).getUTCFullYear(), 0, 0)) / 86_400_000);
 };
 
+/** Lluvia y temperaturas de un día para el balance. */
 export interface BalanceDay {
   date: string;
   rainMm: number | null;
@@ -62,13 +64,15 @@ export interface BalanceDay {
   tmaxC: number | null;
 }
 
+/** Riesgo de estrés hídrico del cultivo. */
 export type StressRisk = "low" | "medium" | "high";
 
+/** Balance hídrico de un lote desde la siembra, con su serie diaria acumulada. */
 export interface WaterBalanceResult {
   /** Días con lluvia (los únicos que entran al balance); con `keepWithoutEt`, también los que no tienen temperatura. */
   days: number;
   rainMm: number;
-  /** Riego aplicado en esos días (A-43). */
+  /** Riego aplicado en esos días. */
   irrigationMm: number;
   etcMm: number;
   /** Días del balance sin temperatura: no restan consumo, así que el balance de esos días es solo lluvia más riego. */
@@ -81,6 +85,7 @@ export interface WaterBalanceResult {
   series: { date: string; rainMm: number; irrigationMm: number; etcMm: number | null; cumMm: number }[];
 }
 
+/** Opciones del balance: riego aplicado y tratamiento de los días sin temperatura. */
 export interface WaterBalanceOptions {
   /** Riego aplicado por fecha (mm). */
   irrigation?: Record<string, number>;

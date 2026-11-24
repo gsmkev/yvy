@@ -1,3 +1,6 @@
+/**
+ * Job de pronóstico: baja MET Norway, guarda las corridas y evalúa helada, exceso de lluvia, roya y estrés térmico.
+ */
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { LIMITS, localDate } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -12,6 +15,7 @@ import { evaluateExcessRain, evaluateFrost } from "./rules";
 import { evaluateRust } from "./rust";
 import { dailyFromMet, hourlyFromMet, fetchMet, type DailyForecast } from "./weather";
 
+/** Últimas `limit` corridas del pronóstico diario de la estancia, la más reciente primero. */
 export async function recentRuns(db: DB, farmId: string, limit: number): Promise<DailyForecast[][]> {
   const runs = await db
     .selectDistinct({ runAt: s.forecasts.runAt })
@@ -60,7 +64,7 @@ export async function forecastJob(db: DB, env: Bindings, deps: JobDeps, farm: Fa
   const runs = await recentRuns(db, farm.id, LIMITS.weather.forecastRunsKept);
   const today = localDate(now, farm.tz);
   const cfg = await new SystemDb(db).alertSettings(farm.id);
-  // A-40: roya asiática solo si la estancia tiene soja
+  // Roya asiática solo si la estancia tiene soja
   const soy = (
     await withPlanCrops(
       db,
@@ -77,7 +81,7 @@ export async function forecastJob(db: DB, env: Bindings, deps: JobDeps, farm: Fa
   ]) {
     if (draft) await upsertAlert(db, farm, draft, now);
   }
-  // G-32: estrés térmico del ganado (THI). Solo para estancias con potreros, y el aviso es de los potreros.
+  // Estrés térmico del ganado (THI). Solo para estancias con potreros, y el aviso es de los potreros.
   const heat = evaluateHeatStress(hours, now, farm.tz);
   if (heat) {
     const pastures = await db

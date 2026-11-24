@@ -1,5 +1,5 @@
 /**
- * Informe gratis de riesgo climático a cambio del email (V-04). Rutas públicas, sin sesión:
+ * Informe gratis de riesgo climático a cambio del email. Rutas públicas, sin sesión:
  * - POST /public/leads: guarda el pedido (email, punto en Paraguay, consentimiento explícito) y avisa al job.
  * - GET /public/leads/:id/:firma: el informe ya calculado. La firma es un HMAC del id; el enlace va en el email.
  * El cálculo lo hace workers-py (job lead_report) y lo sube por /ingest/leads/:id/report, que manda el email.
@@ -35,6 +35,7 @@ export async function leadLink(env: Pick<Bindings, "JWT_SECRET" | "APP_URL">, id
   return `${env.APP_URL.replace(/\/$/, "")}/informe/${id}/${await sign(env, id)}`;
 }
 
+/** Rutas públicas de pedido e informe de riesgo climático. */
 export const leads = new Hono<AppEnv>();
 
 leads.post("/leads", async (c) => {

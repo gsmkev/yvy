@@ -133,9 +133,6 @@ export function RowModal({
 /**
  * Panel completo de un maestro: tabla, alta, edición, baja y exportación.
  * @param path ruta del maestro en la API.
- * @param canEdit permite alta, cambio y baja.
- * @param filter deja pasar solo algunas filas.
- * @param empty contenido del estado vacío.
  */
 export function MasterPanel<T extends Row>({
   path,
@@ -157,8 +154,10 @@ export function MasterPanel<T extends Row>({
   fields: FieldDef[];
   /** Nombre de una fila para el título y la confirmación de borrado. */
   name: (r: T) => string;
-  canEdit?: boolean;
-  filter?: (r: T) => boolean;
+  /** Permite alta, cambio y baja. */
+canEdit?: boolean;
+  /** Deja pasar solo algunas filas. */
+filter?: (r: T) => boolean;
   /** Vacío propio: título y explicación; el botón de alta va en el vacío (y no en el encabezado) mientras no hay filas. */
   empty?: { title: string; body?: string };
   /** Con nombre, el "Exportar" va en el encabezado de la sección (uno solo por panel); sin él, queda junto a la tabla. */

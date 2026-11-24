@@ -1,5 +1,5 @@
 /**
- * Calendario oficial de SENACSA (ADR 0005, sección 2): campañas de vacunación obligatorias.
+ * Calendario oficial de SENACSA: campañas de vacunación obligatorias.
  *
  * LAS FECHAS LAS FIJA CADA AÑO UNA RESOLUCIÓN DE SENACSA Y SUELEN PRORROGARSE: son datos, no lógica. Se actualizan
  * con un cambio de código (si cambian más de dos veces por año, pasar a una tabla editable en /interno).
@@ -9,9 +9,12 @@
  */
 import type { HealthReason, HerdCategory } from "./livestock";
 
+/** Fuente que se muestra junto a las campañas oficiales. */
 export const SENACSA_SOURCE = "SENACSA, calendario oficial de vacunación";
+/** Sitio oficial de SENACSA. */
 export const SENACSA_URL = "https://www.senacsa.gov.py";
 
+/** Campaña oficial de vacunación obligatoria con sus fechas de apertura y cierre. */
 export interface SenacsaCampaign {
   /** Estable: `senacsa-<año>-<período>-<motivo>`. */
   id: string;
@@ -74,13 +77,17 @@ export function officialCampaigns(year: number, farm: { hasLivestock: boolean })
 
 // ---------- recordatorios ----------
 
+/** Tipos de recordatorio de una campaña: aviso previo, apertura y última semana. */
 export const SENACSA_REMINDER_TYPES = ["before", "open", "closing"] as const;
+/** Tipo de recordatorio de una campaña. */
 export type SenacsaReminderType = (typeof SENACSA_REMINDER_TYPES)[number];
 
-/** Días antes de la apertura del aviso previo, y antes del cierre del aviso de última semana. */
+/** Días antes de la apertura en que sale el aviso previo. */
 export const SENACSA_BEFORE_DAYS = 14;
+/** Días antes del cierre en que sale el aviso de última semana. */
 export const SENACSA_CLOSING_DAYS = 7;
 
+/** Recordatorio de una campaña que toca avisar. */
 export interface SenacsaReminder {
   /** Una clave por estancia: `<período>:<tipo>`, la usa el aviso para no repetirse. */
   key: string;
@@ -138,10 +145,13 @@ export const senacsaPlanDate = (c: SenacsaCampaign, today: string): string => (t
 
 /** Marca que lleva la nota del evento sanitario creado desde una campaña oficial (así se sabe cuáles ya se planificaron). */
 export const SENACSA_NOTE_PREFIX = "Oficial · SENACSA";
+/** Nota que identifica un evento sanitario creado desde la campaña `c`. */
 export const senacsaNote = (c: SenacsaCampaign): string => `${SENACSA_NOTE_PREFIX} · ${c.id}`;
+/** Id de la campaña oficial que figura en la nota de un evento; null si no es de una campaña. */
 export const senacsaIdFromNote = (note: string | null | undefined): string | null => /senacsa-\d{4}-[12]-[a-z]+/.exec(note ?? "")?.[0] ?? null;
 
 /** Respuesta de GET /org/senacsa?year=: campañas del año (vacío si la organización no registró hacienda) y las ya planificadas. */
+/** Respuesta del calendario oficial de un año. */
 export interface SenacsaResponse {
   campaigns: SenacsaCampaign[];
   planned: string[];

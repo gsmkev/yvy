@@ -1,5 +1,5 @@
 /**
- * Recuento físico de un depósito (E-15): un registro `stock_count` contado en el galpón (sin señal) se asienta, al llegar,
+ * Recuento físico de un depósito: un registro `stock_count` contado en el galpón (sin señal) se asienta, al llegar,
  * como ajustes de stock: por cada producto, lo contado menos lo que el sistema tiene en ese depósito en ese momento.
  *
  * - Idempotente por registro: el id del registro es el `originId` de sus ajustes. Si el registro llega de nuevo o editado,
@@ -26,6 +26,7 @@ interface CountLine {
   counted: number;
 }
 
+/** Sentencias que ajustan el stock según los conteos de inventario `upserts` y revierten los de `deletedIds`. */
 export async function countEffects(sdb: ScopedDb, upserts: EffectRecord[], deletedIds: string[]): Promise<Stmt[]> {
   const deleted = new Set(deletedIds);
   const byId = new Map<string, EffectRecord>();

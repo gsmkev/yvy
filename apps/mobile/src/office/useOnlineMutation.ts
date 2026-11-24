@@ -7,9 +7,9 @@ import { api, OfflineError } from "../lib/session";
 import { useSyncStatus } from "../lib/sync";
 import { invalidate } from "./cache";
 
-export type MutationResult<TRes> = { ok: true; data: TRes } | { ok: false; error: string };
+type MutationResult<TRes> = { ok: true; data: TRes } | { ok: false; error: string };
 
-export interface OnlineMutation<TBody, TRes> {
+interface OnlineMutation<TBody, TRes> {
   /** Nunca lanza: devuelve `{ ok, data }` o `{ ok: false, error }` (el mismo texto queda en `error`). */
   mutate: (body: TBody) => Promise<MutationResult<TRes>>;
   pending: boolean;

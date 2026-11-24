@@ -25,7 +25,7 @@ export function parseBoundaries(json: unknown): FeatureCollection | null {
   return ok ? fc : null;
 }
 
-export async function fetchBoundaries(url: string): Promise<FeatureCollection | null> {
+async function fetchBoundaries(url: string): Promise<FeatureCollection | null> {
   try {
     const res = await fetch(url);
     if (!res.ok) return null;

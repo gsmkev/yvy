@@ -3,7 +3,7 @@ import { PARTY_KINDS } from "@yvy/shared";
 import { t, tk } from "../../lib/i18n";
 import { MasterPanel, useErpList, type FieldDef } from "./MasterPanel";
 
-export interface Party {
+interface Party {
   id: string;
   name: string;
   ruc: string | null;

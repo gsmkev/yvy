@@ -1,12 +1,12 @@
 /** Ficha del lote (F-23): cálculos puros sobre lo que ya está en el celular. */
 import { LIMITS } from "@yvy/shared";
 
-export interface VigorPassLite {
+interface VigorPassLite {
   mean: number;
   acquiredAt: number;
 }
 
-export type VigorTrend = { kind: "none" } | { kind: "up" | "down" | "flat"; pct: number };
+type VigorTrend = { kind: "none" } | { kind: "up" | "down" | "flat"; pct: number };
 
 /**
  * Cómo cambió el vigor entre las dos últimas pasadas. "down" solo cuando la caída pasa el umbral compartido con la web

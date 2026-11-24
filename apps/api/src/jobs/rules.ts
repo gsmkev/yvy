@@ -5,15 +5,15 @@
 import { addDays, DEFAULT_ALERT_SETTINGS } from "@yvy/shared";
 import type { DailyForecast } from "./weather";
 
-export const RULES = {
+const RULES = {
   frost: { tminC: DEFAULT_ALERT_SETTINGS.frostTminC, severeTminC: 0, horizonDays: 5 },
   excessRain: { mm72h: 80, mm7d: 150 },
   drought: { rainRatio: 1 - DEFAULT_ALERT_SETTINGS.droughtDeficitPct / 100, soilPercentile: "p20", noRainMm: 20 },
   sensitiveCrops: ["trigo", "maiz", "girasol"] as const,
 } as const;
 
-export type Severity = "info" | "watch" | "warning";
-export type Probability = "low" | "medium" | "high";
+type Severity = "info" | "watch" | "warning";
+type Probability = "low" | "medium" | "high";
 
 export interface AlertDraft {
   kind: "frost" | "excess_rain" | "drought" | "fire" | "pest_threshold" | "water_low" | "heat_stress" | "rust_risk" | "senacsa";

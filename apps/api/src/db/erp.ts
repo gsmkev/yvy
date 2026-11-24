@@ -22,7 +22,7 @@ const write = async (sdb: ScopedDb, table: ErpTable, stmt: Stmt) =>
   isSynced(table) ? runBatch(sdb.db, [bumpVersion(sdb.db), stmt]) : void (await stmt);
 
 /** "" pasa a null y lo que no vino (undefined) se descarta: un PATCH no pisa lo que no manda. */
-export const cleanRow = (o: Record<string, unknown>): Record<string, unknown> =>
+const cleanRow = (o: Record<string, unknown>): Record<string, unknown> =>
   Object.fromEntries(
     Object.entries(o)
       .filter(([, v]) => v !== undefined)

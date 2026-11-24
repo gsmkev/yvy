@@ -5,7 +5,7 @@
 import type { Sql } from "../db/sql";
 
 export const CACHE_MAX_ENTRY_BYTES = 200 * 1024;
-export const CACHE_MAX_TOTAL_BYTES = 5 * 1024 * 1024;
+const CACHE_MAX_TOTAL_BYTES = 5 * 1024 * 1024;
 /** Cuánto dura "fresco" un dato si la pantalla no pide otra cosa. */
 export const DEFAULT_TTL_MS = 5 * 60_000;
 
@@ -44,7 +44,7 @@ export function cacheGet(sql: Sql, key: string): CacheEntry | null {
   return r ? { body: r.body, fetchedAt: r.fetched_at } : null;
 }
 
-export interface CachePutInput {
+interface CachePutInput {
   userId: string;
   orgId: string;
   path: string;

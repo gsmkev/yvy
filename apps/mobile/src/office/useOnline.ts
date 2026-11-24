@@ -10,7 +10,7 @@ import { currentKey, onInvalidate, readCache, writeCache } from "./cache";
 import { cacheDelete, DEFAULT_TTL_MS, isExpired, matchesPrefix, shouldCache } from "./httpCache";
 import { getDb } from "../lib/db";
 
-export interface OnlineOptions {
+interface OnlineOptions {
   /** Cuánto tiempo un dato guardado cuenta como fresco (no se vuelve a pedir). Por defecto 5 min. */
   ttlMs?: number;
   /** false = no guardar en el celular (para datos sensibles). /org/erp/ nunca se guarda, aunque pidas true. */

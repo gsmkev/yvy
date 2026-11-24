@@ -12,7 +12,7 @@ export interface NdviPass {
   validPct: number;
 }
 
-export interface DamageSatellite {
+interface DamageSatellite {
   /** Última pasada con 60 % o más de píxeles válidos hasta el día del evento. */
   before: NdviPass | null;
   /** Primera pasada válida desde el día siguiente al evento. */
@@ -24,7 +24,7 @@ export interface DamageSatellite {
 }
 
 const DAY = 86_400_000;
-export const MIN_VALID_PCT = 60;
+const MIN_VALID_PCT = 60;
 
 /** Fin del día del evento en milisegundos (hora de Paraguay, UTC-3). */
 export const endOfEventDay = (isoDay: string) => Date.parse(`${isoDay}T23:59:59-03:00`);

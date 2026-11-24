@@ -97,14 +97,7 @@ export interface RotationRow {
   harvestTons: number | null;
 }
 
-/** Misma forma que `GET /org/plots/:id/seasons` (rinde incluido). */
-export interface RotationApiRow extends RotationRow {
-  startDate: string | null;
-  sowingDensity: number | null;
-  densityUnit: string | null;
-}
-
-export interface SeasonLite {
+interface SeasonLite {
   id: string;
   name: string;
   startDate: string | null;
@@ -213,7 +206,7 @@ export const activeFilterCount = (f: RecordFilter): number => [f.farmId, f.autho
 
 const DAY = 86_400_000;
 /** Medianoche de Asunción (UTC-3) del día ISO, en epoch ms. */
-export const dayStart = (iso: string): number => Date.parse(`${iso}T00:00:00-03:00`);
+const dayStart = (iso: string): number => Date.parse(`${iso}T00:00:00-03:00`);
 
 export function filterRecords<R extends { farmId: string; authorId: string; capturedAt: number }>(rows: R[], f: RecordFilter): R[] {
   const from = f.from ? dayStart(f.from) : null;

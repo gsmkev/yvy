@@ -7,7 +7,7 @@ import { addDays, localDate, yieldTHa } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { can, type ScopedDb } from "./scoped";
 
-export interface FarmCompareRow {
+interface FarmCompareRow {
   id: string;
   name: string;
   areaHa: number;
@@ -20,7 +20,7 @@ export interface FarmCompareRow {
   activeAlerts: number;
 }
 
-export interface SeasonCompareRow {
+interface SeasonCompareRow {
   id: string;
   name: string;
   plannedHa: number;

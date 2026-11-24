@@ -34,7 +34,7 @@ export interface BufferHit {
   limitM: number;
 }
 
-export interface BufferFeatures {
+interface BufferFeatures {
   /** Casas, escuelas y aguadas (puntos de interés). */
   points: { kind: string; name: string; lon: number; lat: number }[];
   /** Líneas de tipo curso de agua. */
@@ -44,7 +44,7 @@ export interface BufferFeatures {
 const isBufferKind = (k: string): k is BufferKind => k === "house" || k === "school" || k === "water";
 
 /** Elementos sensibles dentro de su distancia respecto de un punto o un polígono, del más cerca al más lejos. */
-export function hitsFor(
+function hitsFor(
   target: { area: Area } | { lon: number; lat: number },
   features: BufferFeatures,
   limits: BufferDistances,
@@ -69,7 +69,7 @@ function pointToPointM(a: { lon: number; lat: number }, b: { lon: number; lat: n
   return Math.hypot((b.lon - a.lon) * rad * R * k, (b.lat - a.lat) * rad * R);
 }
 
-export interface BufferApplication {
+interface BufferApplication {
   id: string;
   plotId: string | null;
   plotName: string | null;
@@ -79,7 +79,7 @@ export interface BufferApplication {
   gpsAccuracyM: number | null;
 }
 
-export interface BufferAlert {
+interface BufferAlert {
   recordId: string;
   plotId: string | null;
   plotName: string | null;
@@ -89,7 +89,7 @@ export interface BufferAlert {
   hits: BufferHit[];
 }
 
-export interface BufferAnalysis {
+interface BufferAnalysis {
   plots: { plotId: string; hits: BufferHit[] }[];
   alerts: BufferAlert[];
 }

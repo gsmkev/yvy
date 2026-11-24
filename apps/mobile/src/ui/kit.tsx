@@ -151,10 +151,10 @@ export function Row({
   );
 }
 
-export type SyncState = "pending" | "synced" | "rejected";
+type SyncState = "pending" | "synced" | "rejected";
 
 /** Borde izquierdo de una fila con su estado de envío (paleta: pendiente punteado trigo, enviado sólido soja). */
-export function StatusEdge({ status }: { status: SyncState }) {
+function StatusEdge({ status }: { status: SyncState }) {
   const color = status === "pending" ? C.trigo : status === "rejected" ? C.peligro : C.soja;
   return (
     <View style={s.edge} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -368,10 +368,6 @@ export function Toast() {
     </View>
   );
 }
-
-export const Title = ({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) => (
-  <Text style={[T.title, style as never]}>{children}</Text>
-);
 
 export const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.papel },

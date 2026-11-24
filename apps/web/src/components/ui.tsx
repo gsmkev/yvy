@@ -121,7 +121,7 @@ export function DateInput({
 }
 
 /** Clase de un `<select>` nativo sin el control del sistema: se envuelve en `SelectBox` (o se usa `Select`). */
-export const selectCls = `${inputCls} cursor-pointer appearance-none pr-8`;
+const selectCls = `${inputCls} cursor-pointer appearance-none pr-8`;
 
 /** Envuelve un `<select class={selectCls}>` suelto y le pone el chevron propio. */
 export function SelectBox({ children, className = "" }: { children: ReactNode; className?: string }) {
@@ -380,7 +380,7 @@ let toastSeq = 0;
 const toastListeners = new Set<() => void>();
 const emitToasts = () => toastListeners.forEach((l) => l());
 
-export function dismissToast(id: number) {
+function dismissToast(id: number) {
   toasts = toasts.filter((x) => x.id !== id);
   emitToasts();
 }

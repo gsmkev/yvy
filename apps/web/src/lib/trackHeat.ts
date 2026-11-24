@@ -46,7 +46,7 @@ export function heatPoints(rows: TrackRow[], now = Date.now(), maxPoints = 40_00
   return out;
 }
 
-export interface TrackSummary {
+interface TrackSummary {
   walks: number;
   km: number;
   /** Recorridas por lote (id → cantidad), solo las que quedaron asignadas a un lote. */

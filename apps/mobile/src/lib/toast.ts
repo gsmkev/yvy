@@ -5,7 +5,7 @@ import { getDb } from "./db";
 import { success } from "./haptics";
 import { syncNow } from "./sync";
 
-export const TOAST_MS = 3000;
+const TOAST_MS = 3000;
 
 let current: { id: number; text: string } | null = null;
 let seq = 0;

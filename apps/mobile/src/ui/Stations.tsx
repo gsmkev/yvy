@@ -25,8 +25,8 @@ import { gpsHintText, useGpsStage } from "../lib/gpsHint";
 const tr = (key: string, vars?: Record<string, string | number>) => t(key as MessageKey, vars);
 const fmt = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
 
-export const itemLabel = (i: MonitorItem) => tr(`app.monitor_${i.key}`);
-export const unitLabel = (i: MonitorItem) => tr(`app.monitorUnit_${i.unit}`);
+const itemLabel = (i: MonitorItem) => tr(`app.monitor_${i.key}`);
+const unitLabel = (i: MonitorItem) => tr(`app.monitorUnit_${i.unit}`);
 
 /** Promedios contra umbral; se reutiliza en la estación y en el resumen. */
 function Averages({ items, stations, title }: { items: readonly MonitorItem[]; stations: Station[]; title: string }) {

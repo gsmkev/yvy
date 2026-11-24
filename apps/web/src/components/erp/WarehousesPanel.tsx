@@ -4,7 +4,7 @@ import { t, tk } from "../../lib/i18n";
 import { useFarms } from "../../lib/queries";
 import { MasterPanel, useErpList, type FieldDef } from "./MasterPanel";
 
-export interface Warehouse {
+interface Warehouse {
   id: string;
   farmId: string;
   name: string;

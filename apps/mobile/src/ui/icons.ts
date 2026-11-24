@@ -33,11 +33,6 @@ import {
   SprayCan,
   Sprout,
   Wheat,
-  Flame,
-  Snowflake,
-  CloudRainWind,
-  SunDim,
-  Thermometer,
   type LucideIcon,
 } from "lucide-react-native";
 import type { PoiKind, RecordKind } from "@yvy/shared";
@@ -68,16 +63,6 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
   fuel_load: Fuel,
   stock_count: ClipboardList,
   feed: Wheat,
-};
-
-export const ALERT_ICON: Record<string, LucideIcon> = {
-  water_low: Droplets,
-  heat_stress: Thermometer,
-  senacsa: Syringe,
-  frost: Snowflake,
-  excess_rain: CloudRainWind,
-  drought: SunDim,
-  fire: Flame,
 };
 
 /** M-19: el mismo ícono por tipo de punto de interés que en la web. */

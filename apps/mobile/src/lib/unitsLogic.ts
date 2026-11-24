@@ -3,10 +3,10 @@
  * la preferencia vive en `kv` y solo cambia cómo se muestran. Cuadra cuadrada paraguaya = 0,75 ha.
  */
 
-export const CUADRA_HA = 0.75;
-export const MM_PER_INCH = 25.4;
+const CUADRA_HA = 0.75;
+const MM_PER_INCH = 25.4;
 
-export type AreaUnit = "ha" | "cuadra";
+type AreaUnit = "ha" | "cuadra";
 export type RainUnit = "mm" | "in";
 export type TempUnit = "c" | "f";
 export interface Units {
@@ -14,7 +14,7 @@ export interface Units {
   rain: RainUnit;
   temp: TempUnit;
 }
-export const DEFAULT_UNITS: Units = { area: "ha", rain: "mm", temp: "c" };
+const DEFAULT_UNITS: Units = { area: "ha", rain: "mm", temp: "c" };
 
 const pick = <T extends string>(v: unknown, ok: readonly T[], d: T): T => (ok.includes(v as T) ? (v as T) : d);
 

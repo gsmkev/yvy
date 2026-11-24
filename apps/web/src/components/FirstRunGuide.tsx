@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { t } from "../lib/i18n";
 import type { FarmSummary, Member } from "../lib/types";
 
-export interface GuideStep {
+interface GuideStep {
   done: boolean;
   title: string;
   hint: string;

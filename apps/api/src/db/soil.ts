@@ -9,9 +9,9 @@ import * as s from "@yvy/shared/schema";
 import { bumpVersion, currentVersion, runBatch } from "./client";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
 
-export const MAX_SOIL_SAMPLES_PER_FARM = 5_000;
+const MAX_SOIL_SAMPLES_PER_FARM = 5_000;
 
-export interface SoilInput {
+interface SoilInput {
   plotId: string | null;
   pointLabel: string | null;
   lon: number | null;

@@ -6,7 +6,7 @@ import { trackLengthM, simplifyToMax, type LonLat } from "@yvy/geo";
 import { LIMITS, type TrackData } from "@yvy/shared";
 import { distanceM } from "./bearing";
 
-export interface WalkFix {
+interface WalkFix {
   lon: number;
   lat: number;
   accuracy: number | null;

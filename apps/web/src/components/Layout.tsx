@@ -16,10 +16,6 @@ import { GlobalSearch } from "./GlobalSearch";
 import { AccountMenu, useOrganizations } from "./AccountMenu";
 import { TotpSection } from "./Totp";
 
-export function Logo({ className = "h-7 w-7" }: { className?: string }) {
-  return <img src="/favicon.svg" alt="" className={className} />;
-}
-
 /** Barra superior fina: la pantalla es del mapa y los datos, no de la navegación. */
 export function Layout() {
   const navigate = useNavigate();

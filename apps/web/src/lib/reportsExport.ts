@@ -9,14 +9,14 @@ import { fetchAllRecords } from "./queries";
 import { mapLimit } from "./reportsData";
 import type { FarmDetail, FarmSummary, Member, Plot, RecordRow, Task } from "./types";
 
-export interface ExportFarm {
+interface ExportFarm {
   farm: { id: string; name: string };
   plots: Plot[];
   records: RecordRow[];
   tasks: Task[];
 }
 
-export interface PhotoLink {
+interface PhotoLink {
   recordId: string;
   farm: string;
   capturedAt: number;
@@ -34,8 +34,8 @@ export interface ExportData {
   generatedAt: number;
 }
 
-export const MAX_RECORDS_PER_FARM = 20_000;
-export const MAX_PHOTO_LINKS = 1000;
+const MAX_RECORDS_PER_FARM = 20_000;
+const MAX_PHOTO_LINKS = 1000;
 
 export function plotsToGeoJson(farms: ExportFarm[]): FeatureCollection {
   const features: Feature[] = farms.flatMap((f) =>
@@ -59,7 +59,7 @@ export function plotsToGeoJson(farms: ExportFarm[]): FeatureCollection {
 
 const safeName = (s: string) => s.replace(/[^\p{L}\p{N}_-]+/gu, "_").replace(/^_+|_+$/g, "") || "estancia";
 
-export async function buildWorkbook(d: ExportData): Promise<ArrayBuffer> {
+async function buildWorkbook(d: ExportData): Promise<ArrayBuffer> {
   const ExcelJS = (await import("exceljs")).default;
   const wb = new ExcelJS.Workbook();
   const sheet = (name: string, headers: string[], rows: (string | number | null)[][]) => {

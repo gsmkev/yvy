@@ -7,7 +7,7 @@ export interface Kv {
   setKv(key: string, value: string | null): void;
 }
 
-export interface ForecastDay {
+interface ForecastDay {
   date: string;
   tminC: number | null;
   tmaxC: number | null;

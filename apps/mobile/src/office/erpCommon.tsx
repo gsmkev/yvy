@@ -60,7 +60,7 @@ export interface Party {
   kind: string;
 }
 
-export interface SeasonLite {
+interface SeasonLite {
   id: string;
   name: string;
 }

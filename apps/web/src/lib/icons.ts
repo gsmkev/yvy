@@ -1,28 +1,22 @@
 /** Un solo set de íconos (Lucide, trazo 2 px) para todo el producto. */
 import {
   Anchor,
-  Syringe,
   Beef,
   Bug,
   CloudRain,
-  CloudRainWind,
   Cylinder,
   DoorOpen,
   Droplet,
   Droplets,
   Fan,
   Fence,
-  Flame,
   Footprints,
   Home,
   MapPin,
   NotebookPen,
   School,
   Spline,
-  Snowflake,
   Sprout,
-  SunDim,
-  Thermometer,
   Waves,
   Warehouse,
   Wheat,
@@ -38,18 +32,6 @@ export const RECORD_ICON: Record<string, LucideIcon> = {
   rain: CloudRain,
   water: Droplets,
   note: NotebookPen,
-};
-
-export const ALERT_ICON: Record<string, LucideIcon> = {
-  frost: Snowflake,
-  excess_rain: CloudRainWind,
-  drought: SunDim,
-  fire: Flame,
-  pest_threshold: Bug,
-  water_low: Waves,
-  heat_stress: Thermometer,
-  rust_risk: Bug,
-  senacsa: Syringe,
 };
 
 /** M-19: un ícono por tipo de punto de interés; el mapa, las listas y la app usan el mismo. */

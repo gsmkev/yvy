@@ -14,5 +14,5 @@ export interface Member {
   hasPin?: boolean;
 }
 
-export const FIELD_ROLES = ["worker", "contractor"];
+const FIELD_ROLES = ["worker", "contractor"];
 export const isFieldRoleName = (r: string): boolean => FIELD_ROLES.includes(r);

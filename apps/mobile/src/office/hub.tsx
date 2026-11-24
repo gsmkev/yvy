@@ -13,7 +13,7 @@ import { OfficeScreen } from "./OfficeScreen";
 import type { OnlineResult } from "./useOnline";
 
 /** Rol de la organización actual; los roles de campo no entran a estas pantallas. */
-export const useOfficeAccess = (): boolean => !isFieldRole(getSession()?.organization.role ?? "");
+const useOfficeAccess = (): boolean => !isFieldRole(getSession()?.organization.role ?? "");
 
 /** Aviso corto cuando no hay señal y la pantalla tiene una acción que la necesita. */
 export function NeedsSignalNote() {

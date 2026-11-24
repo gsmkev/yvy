@@ -8,7 +8,7 @@ export const RECORD_GROUPS = [
   { id: "herd", color: BRAND.trigo },
   { id: "other", color: BRAND.lino },
 ] as const;
-export type RecordGroupId = (typeof RECORD_GROUPS)[number]["id"];
+type RecordGroupId = (typeof RECORD_GROUPS)[number]["id"];
 
 const GROUP_OF: Record<(typeof RECORD_KINDS)[number], RecordGroupId> = {
   scouting: "crop",

@@ -14,7 +14,7 @@ export interface SavedFilter {
   filters: RecordFilterValues;
 }
 
-export const MAX_SAVED_FILTERS = 20;
+const MAX_SAVED_FILTERS = 20;
 const key = () => `yvy.savedFilters.${getSession()?.user.id ?? "anon"}`;
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 

@@ -9,7 +9,7 @@ import * as s from "@yvy/shared/schema";
 import { requireOwned, usdRateOn } from "./erp";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
 
-export interface CostInput {
+interface CostInput {
   date: string;
   farmId?: string | null;
   plotId?: string | null;
@@ -49,7 +49,7 @@ export async function pygOf(sdb: ScopedDb, amount: number, currency: Currency, d
   return pyg;
 }
 
-export interface CostFilter {
+interface CostFilter {
   farmId?: string;
   plotId?: string;
   seasonId?: string;

@@ -1,7 +1,7 @@
 import type { Plot } from "./types";
 
-export type SortKey = "name" | "kind" | "area" | "vigor" | "visit";
-export type SortDir = "asc" | "desc";
+type SortKey = "name" | "kind" | "area" | "vigor" | "visit";
+type SortDir = "asc" | "desc";
 
 const collator = new Intl.Collator("es-PY", { sensitivity: "base", numeric: true });
 
@@ -36,6 +36,3 @@ export function sortPlots(plots: Plot[], key: SortKey, dir: SortDir): Plot[] {
     return c === 0 ? collator.compare(a.name, b.name) : c * sign;
   });
 }
-
-/** Sentido inicial al elegir una columna: lo importante primero (más vigor, más reciente, más grande). */
-export const defaultDir = (k: SortKey): SortDir => (k === "name" || k === "kind" ? "asc" : "desc");

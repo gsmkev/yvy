@@ -5,7 +5,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { CHART } from "@yvy/shared";
 
-export interface Series {
+interface Series {
   name: string;
   color: string;
   dashed?: boolean;

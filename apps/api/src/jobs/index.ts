@@ -33,7 +33,7 @@ export const CRONS = {
   maintenance: "0 3 * * *",
 } as const;
 
-export interface JobDeps {
+interface JobDeps {
   fetch: typeof fetch;
   now: () => number;
 }

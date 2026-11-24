@@ -63,10 +63,10 @@ export async function requirePlotRow(sdb: ScopedDb, plotId: string) {
   };
 }
 
-export type PlotRow = Awaited<ReturnType<typeof requirePlotRow>>;
+type PlotRow = Awaited<ReturnType<typeof requirePlotRow>>;
 
 /** Fecha de siembra del lote: el último registro `sowing` de los últimos 400 días y, si no hay, la fecha del lote. */
-export async function plotSowing(
+async function plotSowing(
   sdb: ScopedDb,
   plot: PlotRow,
   tz = "America/Asuncion",
@@ -94,7 +94,7 @@ export async function plotSowing(
 type Stage = (typeof PHENO_STAGES)[number];
 type Crop = (typeof CROPS)[number];
 
-export interface Phenology {
+interface Phenology {
   status: "ok" | "no_crop" | "no_reference" | "no_sowing_date" | "no_data";
   crop: string | null;
   sowingDate: string | null;
@@ -182,7 +182,7 @@ export async function plotPhenology(sdb: ScopedDb, plotId: string): Promise<Phen
 }
 
 /** Estancia visible para el usuario (el empleado solo si tiene lotes en ella); 404 si no. */
-export async function requireFarmRow(sdb: ScopedDb, farmId: string) {
+async function requireFarmRow(sdb: ScopedDb, farmId: string) {
   const [farm] = await sdb.db
     .select({
       id: s.farms.id,
@@ -207,7 +207,7 @@ export async function requireFarmRow(sdb: ScopedDb, farmId: string) {
 }
 
 /** Última corrida del pronóstico diario de la estancia desde hoy (hasta `days` días). */
-export async function latestForecastDays(sdb: ScopedDb, farmId: string, today: string, days: number) {
+async function latestForecastDays(sdb: ScopedDb, farmId: string, today: string, days: number) {
   const [latest] = await sdb.db
     .select({ runAt: sql<number | null>`max(${s.forecasts.runAt})` })
     .from(s.forecasts)

@@ -21,7 +21,7 @@ export const haversineKm = (lon1: number, lat1: number, lon2: number, lat2: numb
   return 12742 * Math.asin(Math.sqrt(a));
 };
 
-export interface BenchFarm {
+interface BenchFarm {
   id: string;
   organizationId: string;
   lon: number;

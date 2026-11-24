@@ -13,12 +13,12 @@ export const PEST_COLORS: Record<(typeof PESTS)[number], string> = {
   otra: "#6B6F63",
 };
 
-export type PestIntensity = "low" | "medium" | "high";
+type PestIntensity = "low" | "medium" | "high";
 
 /** Radio del punto en el mapa según la intensidad: cuanto más fuerte el foco, más grande. */
 export const PEST_RADIUS: Record<PestIntensity, number> = { low: 5, medium: 7.5, high: 11 };
 
-export interface PestPoint {
+interface PestPoint {
   id: string;
   lon: number;
   lat: number;

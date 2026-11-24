@@ -8,7 +8,7 @@ import { C, T } from "../ui/theme";
 import { StaleBanner } from "./state";
 import type { OnlineResult } from "./useOnline";
 
-export interface OfficeScreenProps {
+interface OfficeScreenProps {
   title: string;
   subtitle?: string;
   /** Acción primaria (una por pantalla), fija abajo. */

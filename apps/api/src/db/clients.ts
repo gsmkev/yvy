@@ -11,7 +11,7 @@ import { farmSummaries } from "./queries";
 import { ScopedDb } from "./scoped";
 
 /** Tope de organizaciones por pedido: 2 consultas por organización, y D1 permite 50 por invocación. */
-export const MAX_CLIENT_ORGS = 15;
+const MAX_CLIENT_ORGS = 15;
 
 export async function clientsOverview(
   db: DB,

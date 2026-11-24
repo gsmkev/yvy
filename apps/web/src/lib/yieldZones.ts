@@ -5,7 +5,7 @@
  */
 import { containsPoint, type Area } from "@yvy/geo";
 
-export interface ZoneInput {
+interface ZoneInput {
   zone: 1 | 2 | 3;
   areaHa: number;
   meanNdvi: number;
@@ -24,7 +24,7 @@ export interface ZoneYield {
 /** Celdas mínimas dentro de una zona para fiarse de su rinde. */
 export const MIN_CELLS_PER_ZONE = 5;
 /** Diferencia entre la zona alta y la baja (en %) por debajo de la cual no se habla de diferencia. */
-export const FLAT_PCT = 5;
+const FLAT_PCT = 5;
 
 export function zoneYields(zones: ZoneInput[], cells: [number, number, number, number][]): ZoneYield[] {
   return [...zones]
@@ -44,7 +44,7 @@ export function zoneYields(zones: ZoneInput[], cells: [number, number, number, n
     });
 }
 
-export type YieldVigorReading =
+type YieldVigorReading =
   | { kind: "insufficient" }
   | { kind: "flat" | "follows" | "inverse" | "mixed"; diffPct: number; lowZone: number; highZone: number };
 

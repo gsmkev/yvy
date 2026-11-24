@@ -1,5 +1,5 @@
 /** Tema de la web (U-20): "auto" sigue al sistema; "light" y "dark" lo fijan. Se guarda en localStorage. */
-export type Theme = "auto" | "light" | "dark";
+type Theme = "auto" | "light" | "dark";
 const KEY = "yvy.theme";
 const listeners = new Set<() => void>();
 
@@ -12,7 +12,7 @@ export function getTheme(): Theme {
   }
 }
 
-export function applyTheme(theme: Theme = getTheme()) {
+function applyTheme(theme: Theme = getTheme()) {
   const el = document.documentElement;
   if (theme === "auto") delete el.dataset.theme;
   else el.dataset.theme = theme;

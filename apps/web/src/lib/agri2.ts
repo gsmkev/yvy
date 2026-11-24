@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { PHENO_STAGES } from "@yvy/shared";
 import { get } from "./api";
 
-export interface Phenology {
+interface Phenology {
   status: "ok" | "no_crop" | "no_reference" | "no_sowing_date" | "no_data";
   crop: string | null;
   sowingDate: string | null;
@@ -24,7 +24,7 @@ export const usePhenology = (plotId: string, enabled = true) =>
     queryFn: () => get<Phenology>(`/org/plots/${plotId}/phenology`),
   });
 
-export interface SowingWindowResponse {
+interface SowingWindowResponse {
   crop: string;
   soil: number | null;
   soilDate: string | null;
@@ -39,7 +39,7 @@ export const useSowingWindow = (farmId: string, crop: string) =>
     queryFn: () => get<SowingWindowResponse>(`/org/farms/${farmId}/sowing-window?crop=${crop}`),
   });
 
-export interface WaterBalance {
+interface WaterBalance {
   status: "ok" | "no_crop" | "no_reference" | "no_sowing_date" | "no_data";
   crop: string | null;
   sowingDate: string | null;
@@ -63,7 +63,7 @@ export const useWaterBalance = (plotId: string, enabled = true) =>
     queryFn: () => get<WaterBalance>(`/org/plots/${plotId}/water-balance`),
   });
 
-export interface WithdrawalResponse {
+interface WithdrawalResponse {
   today: string;
   restrictions: { plotId: string; plotName: string; safeFrom: string; daysLeft: number; product: string; appliedOn: string }[];
   violations: { plotId: string; plotName: string; harvestedOn: string; safeFrom: string; product: string; appliedOn: string }[];
@@ -77,7 +77,7 @@ export const useWithdrawal = (farmId: string, enabled = true) =>
     queryFn: () => get<WithdrawalResponse>(`/org/farms/${farmId}/withdrawal`),
   });
 
-export interface PlotForecastResponse {
+interface PlotForecastResponse {
   enabled: boolean;
   minHa: number;
   plots: {

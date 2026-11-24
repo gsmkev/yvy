@@ -5,12 +5,12 @@ const START_MONTH = 6; // julio (0-based)
 const DAY_MS = 86_400_000;
 const BUCKET_DAYS = 7;
 
-export interface VigorPoint {
+interface VigorPoint {
   acquiredAt: number;
   mean: number;
 }
 
-export interface CampaignSeries {
+interface CampaignSeries {
   startYear: number;
   label: string;
   /** x = día de la campaña (múltiplo de 7), y = NDVI medio de esa semana. */

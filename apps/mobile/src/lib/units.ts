@@ -4,7 +4,7 @@ import { getDb } from "./db";
 import { parseUnits, type Units } from "./unitsLogic";
 
 export * from "./unitsLogic";
-export const UNITS_KEY = "units";
+const UNITS_KEY = "units";
 
 let version = 0;
 const subs = new Set<() => void>();

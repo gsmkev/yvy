@@ -1,7 +1,7 @@
 /** Preferencias por usuario en localStorage (última estancia, pestaña y capa). Nunca rompe si no hay storage. */
 import { getSession } from "./api";
 
-export interface Prefs {
+interface Prefs {
   farmId?: string;
   tab?: string;
   layer?: string;

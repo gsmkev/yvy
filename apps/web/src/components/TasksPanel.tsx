@@ -14,7 +14,7 @@ import { TableExportMenu } from "./TableExportMenu";
 import { Button, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, Stat, Tabs, toast } from "./ui";
 
 /** T-01: selección de lotes en el mapa de la estancia; la maneja la pantalla que tiene el mapa. */
-export interface PlotPick {
+interface PlotPick {
   ids: string[];
   setIds: (ids: string[]) => void;
   picking: boolean;

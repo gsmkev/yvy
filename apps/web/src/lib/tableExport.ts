@@ -2,7 +2,7 @@
 import { download } from "./exports";
 import type { Cell, TableData } from "./tableData";
 
-export type { Cell, TableData };
+export type { TableData };
 
 const stamp = () => new Date().toISOString().slice(0, 10);
 

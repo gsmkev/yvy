@@ -18,13 +18,13 @@ export function resolveReadOnly(role: string | null | undefined, stored: string 
   return role === "owner";
 }
 
-export interface VigorPass {
+interface VigorPass {
   plotId: string;
   mean: number;
   acquiredAt: number;
 }
 
-export interface VigorDrop {
+interface VigorDrop {
   plotId: string;
   /** Caída redondeada, en %. */
   pct: number;
@@ -49,7 +49,7 @@ export function vigorDrops(passes: VigorPass[], thresholdPct: number = LIMITS.vi
   return out.sort((a, b) => b.pct - a.pct);
 }
 
-export interface AuthorCount {
+interface AuthorCount {
   authorId: string;
   count: number;
 }

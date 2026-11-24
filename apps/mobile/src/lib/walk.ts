@@ -7,7 +7,7 @@ import { useSyncExternalStore } from "react";
 import * as Location from "expo-location";
 import { LIMITS } from "@yvy/shared";
 import { getDb } from "./db";
-import { addFix, buildTrack, newDraft, parseDraft, serializeDraft, type WalkDraft } from "./walkTracker";
+import { addFix, newDraft, parseDraft, serializeDraft, type WalkDraft } from "./walkTracker";
 
 const DRAFT_KEY = "walk_draft";
 const CHECKPOINT_EVERY = 10;
@@ -89,4 +89,3 @@ export function recoverDraft(): WalkDraft | null {
   return state.draft ?? parseDraft(getDb().getKv(DRAFT_KEY));
 }
 
-export { buildTrack };

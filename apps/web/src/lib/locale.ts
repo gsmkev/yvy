@@ -18,7 +18,7 @@ export function readLocale(): Locale {
 /** Atributo `lang` de la página según el idioma (para lectores de pantalla y el corrector del navegador). */
 const htmlLang = (l: Locale) => (l === "gn-PY" ? "gn" : "es-PY");
 
-export function applyLocale(l: Locale): void {
+function applyLocale(l: Locale): void {
   setLocale(l);
   document.documentElement.lang = htmlLang(l);
 }

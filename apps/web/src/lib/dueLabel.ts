@@ -7,7 +7,7 @@ const dayNum = (iso: string) => {
 };
 
 /** Días de `iso` respecto de `today` (negativo = ya pasó). Ambos "AAAA-MM-DD". */
-export const daysFrom = (today: string, iso: string) => dayNum(iso) - dayNum(today);
+const daysFrom = (today: string, iso: string) => dayNum(iso) - dayNum(today);
 
 /** Fecha límite en palabras cuando importa la urgencia; lejos, la fecha dd/mm/aaaa. */
 export function dueLabel(iso: string, today: string, overdue = false): string {

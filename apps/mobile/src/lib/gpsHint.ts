@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { t } from "@yvy/shared";
 
-export type GpsStage = "searching" | "slow" | "cold";
+type GpsStage = "searching" | "slow" | "cold";
 
 /** A los 5 s se aclara que busca satélites; a los 20 s se avisa que es un arranque en frío y que puede tardar. */
 export const GPS_SLOW_MS = 5_000;

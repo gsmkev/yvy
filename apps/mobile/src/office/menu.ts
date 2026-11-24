@@ -1,9 +1,9 @@
 import { Landmark, LifeBuoy, Search, Sprout, Package, CalendarRange, AlertTriangle, BarChart3, Beef, Building2, CalendarDays, ClipboardCheck, Columns3, HeartPulse, ListChecks, Trees, Users, Wheat } from "lucide-react-native";
 import { isFieldRole } from "@yvy/shared";
-import { groupMenu, GROUP_TITLE, type MenuCtx, type MenuGroup, type OfficeMenuItem } from "./menuLogic";
+import { groupMenu, GROUP_TITLE, type MenuCtx, type OfficeMenuItem } from "./menuLogic";
 
 export { groupMenu, GROUP_TITLE };
-export type { MenuCtx, MenuGroup, OfficeMenuItem };
+export type { MenuCtx };
 
 /**
  * Registro del menú de la pestaña Gestión.

@@ -5,7 +5,7 @@ import { discardPhoto, processPhoto } from "../lib/photos";
 import { api } from "../lib/session";
 import type { PickedPhoto } from "./invoicePhoto";
 
-export type PhotoKind = "purchases" | "cattle-deals" | "stock-moves" | "cost-entries";
+type PhotoKind = "purchases" | "cattle-deals" | "stock-moves" | "cost-entries";
 
 export async function uploadInvoicePhoto(kind: PhotoKind, id: string, p: PickedPhoto): Promise<void> {
   // Lado largo 1280 px, WebP: igual que las fotos de campo (~120 KB).

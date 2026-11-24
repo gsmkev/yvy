@@ -83,7 +83,7 @@ const newFarm = createRoute({
   path: "/estancias/nueva",
   component: lazyRouteComponent(() => import("./routes/farm-new"), "NewFarmPage"),
 });
-export const farmRoute = createRoute({
+const farmRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/estancias/$farmId",
   validateSearch: (s: Record<string, unknown>): { lote?: string } => ({
@@ -91,7 +91,7 @@ export const farmRoute = createRoute({
   }),
   component: lazyRouteComponent(() => import("./routes/farm"), "FarmPage"),
 });
-export const reportRoute = createRoute({
+const reportRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/estancias/$farmId/parte",
   component: lazyRouteComponent(() => import("./routes/report"), "ReportPage"),

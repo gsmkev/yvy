@@ -12,7 +12,7 @@ import * as s from "@yvy/shared/schema";
 import { chunkForParams, runBatch, type DB, type Stmt } from "../db/client";
 import type { Bindings } from "../types";
 
-export const KEEP_KINDS = [
+const KEEP_KINDS = [
   "herd_count",
   "herd_move",
   "mortality",
@@ -23,9 +23,9 @@ export const KEEP_KINDS = [
   "harvest",
 ] as const;
 /** Filas por tanda: cada corrida del cron hace como mucho una tanda por tabla. */
-export const ARCHIVE_CHUNK = 100;
+const ARCHIVE_CHUNK = 100;
 
-export const monthOf = (ms: number): string => new Date(ms).toISOString().slice(0, 7);
+const monthOf = (ms: number): string => new Date(ms).toISOString().slice(0, 7);
 const monthStart = (month: string): number => Date.parse(`${month}-01T00:00:00Z`);
 const nextMonth = (month: string): number => {
   const d = new Date(monthStart(month));
@@ -46,7 +46,7 @@ const ndjson = (rows: { t: string; row: unknown }[]) => rows.map((r) => JSON.str
 const quoted = (xs: readonly string[]) => sql.join(xs.map((x) => sql`${x}`), sql`, `);
 
 /** Una tanda de registros (con sus adjuntos y comentarios) del mes más viejo que pasó el corte. */
-export async function archiveRecordsChunk(env: Bindings, db: DB, cutoff: number, now: number) {
+async function archiveRecordsChunk(env: Bindings, db: DB, cutoff: number, now: number) {
   const [first] = await db.all<{ at: number | null }>(
     sql`SELECT min(captured_at) AS at FROM records WHERE captured_at < ${cutoff} AND kind NOT IN (${quoted(KEEP_KINDS)})`,
   );
@@ -76,7 +76,7 @@ export async function archiveRecordsChunk(env: Bindings, db: DB, cutoff: number,
 }
 
 /** Una tanda de estadísticas de vigor del mes más viejo que pasó el corte. */
-export async function archiveStatsChunk(env: Bindings, db: DB, cutoff: number, now: number) {
+async function archiveStatsChunk(env: Bindings, db: DB, cutoff: number, now: number) {
   const [first] = await db.all<{ at: number | null }>(sql`SELECT min(acquired_at) AS at FROM plot_index_stats WHERE acquired_at < ${cutoff}`);
   if (first?.at == null) return null;
   const month = monthOf(first.at);

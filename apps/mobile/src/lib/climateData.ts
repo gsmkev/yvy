@@ -49,13 +49,13 @@ export function normalBetween(clim: ClimateData["climatology"], from: string, to
   return n ? sum : null;
 }
 
-export const gaugeBetween = (g: ClimateData["gauge"], fromMs: number, toMs: number): number | null => {
+const gaugeBetween = (g: ClimateData["gauge"], fromMs: number, toMs: number): number | null => {
   const rows = g.filter((x) => x.capturedAt >= fromMs && x.capturedAt <= toMs);
   return rows.length ? rows.reduce((a, x) => a + x.mm, 0) : null;
 };
 
 /** Inicio / fin de un día "AAAA-MM-DD" en epoch ms, hora de Paraguay (UTC-3). */
-export const dayToMs = (day: string, end = false): number => Date.parse(`${day}T${end ? "23:59:59" : "00:00:00"}-03:00`);
+const dayToMs = (day: string, end = false): number => Date.parse(`${day}T${end ? "23:59:59" : "00:00:00"}-03:00`);
 
 /** Las campañas agrícolas de Paraguay arrancan el 1 de septiembre. */
 export function campaignStart(today: string = localDate(Date.now())): string {

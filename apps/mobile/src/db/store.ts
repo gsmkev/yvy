@@ -75,7 +75,7 @@ const COLS = Object.fromEntries(Object.entries(TABLES).map(([k, t]) => [k, colum
 >;
 
 /** Fila SQL (snake_case) → objeto (camelCase) según el esquema. */
-export function fromRow<T>(table: SQLiteTable, row: Record<string, unknown>): T {
+function fromRow<T>(table: SQLiteTable, row: Record<string, unknown>): T {
   const out: Record<string, unknown> = {};
   for (const { key, name } of columnsOf(table)) out[key] = row[name];
   return out as T;
@@ -84,16 +84,16 @@ export function fromRow<T>(table: SQLiteTable, row: Record<string, unknown>): T 
 export type Farm = typeof s.farms.$inferSelect;
 export type Plot = typeof s.plots.$inferSelect;
 export type Poi = typeof s.pointsOfInterest.$inferSelect;
-export type Task = typeof s.tasks.$inferSelect;
-export type RecordRow = typeof s.records.$inferSelect & { pending: boolean; rejected: string | null; photos: number; voice: number };
-export type Alert = typeof s.alerts.$inferSelect;
-export type FarmLayer = typeof s.farmLayers.$inferSelect;
+type Task = typeof s.tasks.$inferSelect;
+type RecordRow = typeof s.records.$inferSelect & { pending: boolean; rejected: string | null; photos: number; voice: number };
+type Alert = typeof s.alerts.$inferSelect;
+type FarmLayer = typeof s.farmLayers.$inferSelect;
 export type Season = typeof s.seasons.$inferSelect;
 export type Product = typeof s.products.$inferSelect;
-export type Machine = typeof s.machines.$inferSelect;
-export type Animal = typeof s.animals.$inferSelect;
-export type Warehouse = typeof s.warehouses.$inferSelect;
-export type PlotSeason = typeof s.plotSeasons.$inferSelect;
+type Machine = typeof s.machines.$inferSelect;
+type Animal = typeof s.animals.$inferSelect;
+type Warehouse = typeof s.warehouses.$inferSelect;
+type PlotSeason = typeof s.plotSeasons.$inferSelect;
 
 export interface NewRecord {
   farmId: string;

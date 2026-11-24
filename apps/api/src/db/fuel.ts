@@ -13,7 +13,7 @@ interface Load {
   at: number;
 }
 
-export interface MachineFuel {
+interface MachineFuel {
   machineId: string | null;
   name: string;
   meterKind: "hours" | "km";

@@ -9,8 +9,8 @@ import * as s from "@yvy/shared/schema";
 import type { Bindings } from "../types";
 import type { DB } from "./client";
 
-export const STATUS_JOBS = ["sentinel2", "chirps", "firms"] as const;
-export type StatusJob = (typeof STATUS_JOBS)[number];
+const STATUS_JOBS = ["sentinel2", "chirps", "firms"] as const;
+type StatusJob = (typeof STATUS_JOBS)[number];
 
 /** Qué job de datos hace cada ruta de /ingest (las que no están acá no cuentan como corrida de un job). */
 export function jobOfIngestPath(path: string): StatusJob | null {
@@ -39,7 +39,7 @@ export async function recordIngest(db: DB, path: string, httpStatus: number, now
         OR COALESCE(job_runs.last_ok_at, 0) > job_runs.last_fail_at`);
 }
 
-export type JobState = "ok" | "late" | "failing" | "none";
+type JobState = "ok" | "late" | "failing" | "none";
 
 export function jobState(
   job: StatusJob,

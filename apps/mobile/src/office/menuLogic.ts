@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react-native";
 import type { MessageKey } from "@yvy/shared";
 
 export type MenuGroup = "campo" | "equipo" | "admin" | "informes" | "cuenta";
-export const MENU_GROUPS: MenuGroup[] = ["campo", "equipo", "admin", "informes", "cuenta"];
+const MENU_GROUPS: MenuGroup[] = ["campo", "equipo", "admin", "informes", "cuenta"];
 
 export const GROUP_TITLE: Record<MenuGroup, MessageKey> = {
   campo: "office.groupCampo",

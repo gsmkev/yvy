@@ -11,7 +11,7 @@ import { can, ForbiddenError, NotFoundError, type ScopedDb } from "./scoped";
 const KINDS = ["rain", "pest", "application", "harvest"] as const;
 const MSG = "Solo quien no es de campo revisa registros";
 
-export async function doseRanges(sdb: ScopedDb): Promise<Map<string, DoseRange>> {
+async function doseRanges(sdb: ScopedDb): Promise<Map<string, DoseRange>> {
   const rows = await sdb.db
     .select({ id: s.productDoseRanges.productId, min: s.productDoseRanges.minDose, max: s.productDoseRanges.maxDose, unit: s.products.unit })
     .from(s.productDoseRanges)
@@ -51,7 +51,7 @@ export async function setDoseRange(sdb: ScopedDb, productId: string, min: number
     .onConflictDoUpdate({ target: s.productDoseRanges.productId, set: row });
 }
 
-export interface ReviewItem {
+interface ReviewItem {
   recordId: string;
   farmId: string;
   farmName: string;

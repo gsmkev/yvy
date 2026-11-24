@@ -9,7 +9,7 @@ import { s } from "./reportPdf";
 import { Kpi } from "./reportsPdf";
 import type { Farm, Plot } from "./types";
 
-export interface DamageReportData {
+interface DamageReportData {
   farm: Farm;
   plot: Plot;
   eventDay: string;

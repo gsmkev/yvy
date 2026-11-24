@@ -94,7 +94,7 @@ export function MiniMap({
   );
 }
 
-export interface ReportData {
+interface ReportData {
   farm: Farm;
   plots: Plot[];
   records: RecordRow[];

@@ -17,7 +17,7 @@ import { ShareWhatsappButton } from "./ShareButton";
 import { StationsView, stationsOf } from "./StationsView";
 import { Button, EmptyState, ErrorBox, Modal, Spinner } from "./ui";
 
-export function useRecords(filters: RecordFilters) {
+function useRecords(filters: RecordFilters) {
   return useInfiniteQuery({
     queryKey: ["records", filters],
     queryFn: ({ pageParam }) => fetchRecordsPage(filters, pageParam),

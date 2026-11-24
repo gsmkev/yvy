@@ -11,7 +11,7 @@ export function weekStart(date: string): string {
 export const weekDays = (monday: string): string[] => Array.from({ length: 7 }, (_, i) => addDays(monday, i));
 
 const RANK: Record<string, number> = { high: 0, normal: 1, low: 2 };
-export const sortTasks = <T extends { dueTime: string | null; priority: string }>(l: T[]): T[] =>
+const sortTasks = <T extends { dueTime: string | null; priority: string }>(l: T[]): T[] =>
   l.slice().sort((a, b) => (a.dueTime ?? "24:00").localeCompare(b.dueTime ?? "24:00") || (RANK[a.priority] ?? 1) - (RANK[b.priority] ?? 1));
 
 /** Labores de la semana por día; las canceladas no van. */
@@ -26,7 +26,7 @@ const dayNum = (iso: string) => {
   const [y, m, d] = iso.split("-").map(Number) as [number, number, number];
   return Math.round(Date.UTC(y, m - 1, d) / 86_400_000);
 };
-export const daysFrom = (today: string, iso: string) => dayNum(iso) - dayNum(today);
+const daysFrom = (today: string, iso: string) => dayNum(iso) - dayNum(today);
 
 /** Vencimiento en palabras cuando importa la urgencia; lejos, dd/mm/aaaa. */
 export function dueLabel(iso: string, today: string, overdue = false): string {

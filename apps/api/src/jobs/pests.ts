@@ -9,14 +9,14 @@ import { chunkForParams, type DB } from "../db/client";
 import { withPlanCrops } from "../db/plan-crops";
 import type { AlertDraft } from "./rules";
 
-export interface PestAverage {
+interface PestAverage {
   plotId: string;
   pest: string;
   avgPerMeter: number;
   n: number;
 }
 
-export interface PestPlot {
+interface PestPlot {
   id: string;
   name: string;
   crop: string | null;

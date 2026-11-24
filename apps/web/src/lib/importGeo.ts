@@ -39,7 +39,7 @@ function strip2d(g: Geometry): Geometry {
   return g;
 }
 
-export function toPolygons(fc: FeatureCollection): ImportedPolygon[] {
+function toPolygons(fc: FeatureCollection): ImportedPolygon[] {
   return flatten(fc)
     .filter((f) => f.geometry && (f.geometry.type === "Polygon" || f.geometry.type === "MultiPolygon"))
     .map((f, index) => {

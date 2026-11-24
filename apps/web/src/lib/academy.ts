@@ -4,9 +4,9 @@
  * sin enlace se muestra como "Próximamente": no hay videos de relleno.
  */
 export const ACADEMY_TOPICS = ["map", "record", "offline", "tasks", "alerts", "reports", "team"] as const;
-export type AcademyTopic = (typeof ACADEMY_TOPICS)[number];
-export type AcademyLang = "es" | "gn";
-export type AcademyLinks = Partial<Record<AcademyTopic, Partial<Record<AcademyLang, string>>>>;
+type AcademyTopic = (typeof ACADEMY_TOPICS)[number];
+type AcademyLang = "es" | "gn";
+type AcademyLinks = Partial<Record<AcademyTopic, Partial<Record<AcademyLang, string>>>>;
 
 const httpsUrl = (v: unknown): string | null => {
   if (typeof v !== "string") return null;

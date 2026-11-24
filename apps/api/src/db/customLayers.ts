@@ -9,7 +9,7 @@ import * as s from "@yvy/shared/schema";
 import { bumpVersion, currentVersion, runBatch } from "./client";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
 
-export type Corners = [number, number][];
+type Corners = [number, number][];
 
 export const IMAGE_MIMES = ["image/png", "image/jpeg"] as const;
 export const GEOTIFF_MIME = "image/tiff";

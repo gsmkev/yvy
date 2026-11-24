@@ -24,7 +24,7 @@ const names = (cs: readonly SenacsaCampaign[]) =>
   cs.map((c) => (c.reason === "aftosa" ? "aftosa" : "brucelosis de terneras")).join(" y ");
 
 /** Texto y severidad de un recordatorio (es-PY con voseo). */
-export function senacsaDraft(farm: { id: string }, r: SenacsaReminder): AlertDraft {
+function senacsaDraft(farm: { id: string }, r: SenacsaReminder): AlertDraft {
   const from = r.campaigns.reduce((m, c) => (c.from < m ? c.from : m), r.campaigns[0]!.from);
   const to = r.campaigns.reduce((m, c) => (c.to > m ? c.to : m), r.campaigns[0]!.to);
   const what = names(r.campaigns);

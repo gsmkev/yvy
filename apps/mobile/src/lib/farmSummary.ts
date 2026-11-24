@@ -1,5 +1,5 @@
 /** Resumen por estancia para la lista de estancias (área, lotes, registros de 7 días, avisos, último registro). Puro. */
-export interface FarmSummary {
+interface FarmSummary {
   id: string;
   name: string;
   areaHa: number;
@@ -9,7 +9,7 @@ export interface FarmSummary {
   lastRecordAt: number | null;
 }
 
-export const WEEK_MS = 7 * 86_400_000;
+const WEEK_MS = 7 * 86_400_000;
 
 export function summarizeFarms(
   farms: { id: string; name: string; areaHa: number }[],

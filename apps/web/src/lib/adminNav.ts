@@ -1,6 +1,6 @@
 import type { MessageKey } from "./i18n";
 
-export interface AdminGroup {
+interface AdminGroup {
   id: string;
   label: MessageKey;
   /** Ids de sección, en el orden en que se muestran. La primera es la que abre el módulo. */

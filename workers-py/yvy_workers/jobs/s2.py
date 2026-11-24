@@ -10,182 +10,64 @@ import logging
 import tempfile
 import time
 import warnings
-from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 import numpy as np
-import rasterio
 import rasterio.errors
 from rasterio.enums import Resampling
 from rasterio.features import geometry_mask
-from rasterio.transform import from_origin
-from rasterio.vrt import WarpedVRT
-from shapely.geometry.base import BaseGeometry
 
-from ..geo import load, to_crs, utm_crs
-from .problems import find_problem_areas
 from ..ingest import IngestClient
 from ..storage import upload_tiles
-from .constants import BASEMAP_DAYS, DAILY_DAYS
 from ..tiles import index_rgba, write_pmtiles
+from .constants import BASEMAP_DAYS, DAILY_DAYS
+from .problems import find_problem_areas
+
+# Los nombres que otros módulos y los tests importan de acá viven en s2_bands / s2_indices
+from .s2_bands import (  # noqa: F401
+    ATTRIBUTION,
+    GAMMA,
+    RES,
+    SATURATION,
+    SCL_INVALID,
+    WHITE,
+    Grid,
+    _scale,
+    dilate,
+    make_grid,
+    natural_color,
+    read_band,
+    reflectance,
+    scl_valid,
+)
+from .s2_indices import (  # noqa: F401
+    BAND_FOR,
+    INDICES,
+    MIN_VALID_PCT,
+    THIN_PLOT_M,
+    compute_indices,
+    compute_ndvi,
+    is_thin,
+    mosaic_indices,
+    mosaic_ndvi,
+    plot_stats,
+)
 
 log = logging.getLogger(__name__)
 
 STAC_URL = "https://earth-search.aws.element84.com/v1"
 COLLECTION = "sentinel-2-l2a"
 SOURCE = "sentinel-2-l2a"
-# SCL: 0 sin dato, 1 saturado, 3 sombra de nube, 8-9 nube, 10 cirros, 11 nieve (PRD §12)
-SCL_INVALID = (0, 1, 3, 8, 9, 10, 11)
-MIN_VALID_PCT = 60.0  # RF-51
 MAX_SCENE_CLOUD = 80.0
-RES = 10.0
 MAX_ITEMS = 400  # 180 días x 2 satélites x hasta 3 teselas MGRS entran de sobra
-THIN_PLOT_M = 30.0  # S-11: un lote más angosto que esto casi no tiene píxeles de 10 m "puros"
 HISTORY_FIRST_YEAR = 2017  # S-03: primer año con Sentinel-2 completo (A y B)
-INDICES = ("ndvi", "ndre", "ndmi", "evi")  # S-07
-ATTRIBUTION = "Contiene datos modificados de Copernicus Sentinel"
-
-
-@dataclass
-class Grid:
-    crs: Any
-    transform: Any
-    width: int
-    height: int
-    farm: BaseGeometry  # en crs
-    plots: list[tuple[str, BaseGeometry]]  # en crs
 
 
 # Mapa base con contexto: 3 km alrededor de la estancia (con 1 km una estancia chica se veía como un recorte aislado)
 BASEMAP_BUFFER_M = 3000.0
 BASEMAP_MARGIN_DEG = 0.03
-
-
-def make_grid(geom: dict[str, Any], buffer_m: float = 200.0) -> Grid:
-    farm_wgs = load(geom["farm"])
-    crs = utm_crs(farm_wgs.centroid.x, farm_wgs.centroid.y)
-    farm = to_crs(farm_wgs, crs)
-    minx, miny, maxx, maxy = farm.buffer(buffer_m).bounds
-    minx, maxy = np.floor(minx / RES) * RES, np.ceil(maxy / RES) * RES
-    width = int(np.ceil((maxx - minx) / RES))
-    height = int(np.ceil((maxy - miny) / RES))
-    plots = [(p["id"], to_crs(load(p["geometry"]), crs)) for p in geom["plots"]]
-    return Grid(crs=crs, transform=from_origin(minx, maxy, RES, RES), width=width, height=height, farm=farm, plots=plots)
-
-
-def read_band(href: str, grid: Grid, resampling: Resampling = Resampling.bilinear) -> np.ndarray:
-    with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR", CPL_VSIL_CURL_ALLOWED_EXTENSIONS=".tif", GDAL_HTTP_MAX_RETRY="4", GDAL_HTTP_RETRY_DELAY="2"):
-        with rasterio.open(href) as src, WarpedVRT(
-            src, crs=grid.crs, transform=grid.transform, width=grid.width, height=grid.height, resampling=resampling
-        ) as vrt:
-            return vrt.read(1)
-
-
-def _scale(item: dict[str, Any], asset: str) -> tuple[float, float]:
-    bands = item["assets"][asset].get("raster:bands") or [{}]
-    scale = float(bands[0].get("scale", 0.0001))
-    # Earth Search ya armoniza los COG (resta el +1000 de la línea base 04.00): no aplicar el offset dos veces.
-    if item["properties"].get("earthsearch:boa_offset_applied"):
-        return scale, 0.0
-    return scale, float(bands[0].get("offset", 0.0))
-
-
-def reflectance(item: dict[str, Any], asset: str, grid: Grid) -> np.ndarray:
-    raw = read_band(item["assets"][asset]["href"], grid).astype("float32")
-    scale, offset = _scale(item, asset)
-    out = raw * scale + offset
-    out[raw == 0] = np.nan
-    return out
-
-
-def scl_valid(item: dict[str, Any], grid: Grid) -> np.ndarray:
-    scl = read_band(item["assets"]["scl"]["href"], grid, Resampling.nearest)
-    return ~np.isin(scl, SCL_INVALID)
-
-
-def dilate(mask: np.ndarray, px: int) -> np.ndarray:
-    """Agranda una máscara booleana `px` píxeles (para comerse los bordes de nubes)."""
-    out = mask.copy()
-    for _ in range(px):
-        grown = out.copy()
-        grown[1:] |= out[:-1]
-        grown[:-1] |= out[1:]
-        grown[:, 1:] |= out[:, :-1]
-        grown[:, :-1] |= out[:, 1:]
-        out = grown
-    return out
-
-
-def compute_ndvi(red: np.ndarray, nir: np.ndarray, valid: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    with np.errstate(divide="ignore", invalid="ignore"):
-        ndvi = (nir - red) / (nir + red)
-    ok = valid & np.isfinite(ndvi) & (np.abs(ndvi) <= 1)
-    return np.where(ok, ndvi, np.nan), ok
-
-
-def is_thin(geom: BaseGeometry, width_m: float = THIN_PLOT_M) -> bool:
-    """S-11: ¿el lote es más angosto que `width_m` en algún tramo? (geom en metros): si no sobrevive a un retroceso de medio ancho."""
-    return geom.buffer(-width_m / 2).is_empty
-
-
-def compute_indices(bands: dict[str, np.ndarray], valid: np.ndarray, wanted: tuple[str, ...] = INDICES) -> dict[str, tuple[np.ndarray, np.ndarray]]:
-    """Índices de vegetación de una escena (S-07). `bands` con reflectancia: red, nir, rededge1 (B05), nir08 (B8A),
-    swir16 (B11) y blue. Cada índice devuelve (valores con NaN donde no vale, máscara válida).
-
-    NDVI = (NIR - R) / (NIR + R)            vigor
-    NDRE = (B8A - B05) / (B8A + B05)        nitrógeno / clorofila (borde rojo)
-    NDMI = (NIR - SWIR1) / (NIR + SWIR1)    humedad de la vegetación
-    EVI  = 2,5 (NIR - R) / (NIR + 6 R - 7,5 Azul + 1)   no se satura tanto con follaje denso
-    """
-    out: dict[str, tuple[np.ndarray, np.ndarray]] = {}
-    with np.errstate(divide="ignore", invalid="ignore"):
-        for idx in wanted:
-            if idx == "ndvi":
-                v = (bands["nir"] - bands["red"]) / (bands["nir"] + bands["red"])
-            elif idx == "ndre":
-                v = (bands["nir08"] - bands["rededge1"]) / (bands["nir08"] + bands["rededge1"])
-            elif idx == "ndmi":
-                v = (bands["nir"] - bands["swir16"]) / (bands["nir"] + bands["swir16"])
-            elif idx == "evi":
-                v = 2.5 * (bands["nir"] - bands["red"]) / (bands["nir"] + 6 * bands["red"] - 7.5 * bands["blue"] + 1)
-            else:
-                raise ValueError(f"índice desconocido: {idx}")
-            ok = valid & np.isfinite(v) & (np.abs(v) <= 1)
-            out[idx] = (np.where(ok, v, np.nan).astype("float32"), ok)
-    return out
-
-
-def plot_stats(ndvi: np.ndarray, ok: np.ndarray, grid: Grid, idx: str = "ndvi") -> list[dict[str, Any]]:
-    """Media, p10, p90 y % de píxeles válidos por lote. Descarta lotes con < 60 % válido (RF-51).
-
-    Los lotes de menos de 30 m de ancho usan todos los píxeles que toca el polígono (si no, quedan sin ninguno) y
-    se marcan `lowConfidence`: esos píxeles mezclan el lote con lo de al lado (S-11).
-    """
-    out = []
-    for plot_id, geom in grid.plots:
-        thin = is_thin(geom)
-        inside = geometry_mask([geom], out_shape=(grid.height, grid.width), transform=grid.transform, invert=True, all_touched=thin)
-        total = int(inside.sum())
-        if total == 0:
-            continue
-        vals = ndvi[inside & ok]
-        valid_pct = 100.0 * vals.size / total
-        if valid_pct < MIN_VALID_PCT or vals.size == 0:
-            continue
-        out.append(
-            {
-                "plotId": plot_id,
-                "idx": idx,
-                "lowConfidence": thin,
-                "mean": round(float(np.mean(vals)), 4),
-                "p10": round(float(np.percentile(vals, 10)), 4),
-                "p90": round(float(np.percentile(vals, 90)), 4),
-                "validPct": round(valid_pct, 1),
-            }
-        )
-    return out
 
 
 def search(bbox: list[float], start: datetime, end: datetime, max_cloud: float) -> list[dict[str, Any]]:
@@ -218,33 +100,6 @@ def group_passes(items: list[dict[str, Any]]) -> list[tuple[str, list[dict[str, 
         key = f"{it['properties']['datetime'][:10]}_{it['properties'].get('platform', it['id'][:3])}"
         groups.setdefault(key, []).append(it)
     return sorted(groups.items())
-
-
-BAND_FOR = {"ndvi": ("red", "nir"), "ndre": ("nir08", "rededge1"), "ndmi": ("nir", "swir16"), "evi": ("red", "nir", "blue")}
-
-
-def mosaic_indices(items: list[dict[str, Any]], grid: Grid, wanted: tuple[str, ...] = INDICES) -> dict[str, tuple[np.ndarray, np.ndarray]]:
-    """Índices de la pasada: cada píxel toma la primera tesela con dato válido. Solo baja las bandas que hacen falta."""
-    shape = (grid.height, grid.width)
-    res = {i: (np.full(shape, np.nan, dtype="float32"), np.zeros(shape, dtype=bool)) for i in wanted}
-    names = sorted({b for i in wanted for b in BAND_FOR[i]})
-    for item in items:
-        if all(ok.all() for _, ok in res.values()):
-            break
-        valid = scl_valid(item, grid)
-        if not any(valid[~ok].any() for _, ok in res.values()):
-            continue
-        bands = {b: reflectance(item, b, grid) for b in names}
-        for idx, (vals, o) in compute_indices(bands, valid, wanted).items():
-            arr, ok = res[idx]
-            take = o & ~ok
-            arr[take] = vals[take]
-            ok |= take
-    return res
-
-
-def mosaic_ndvi(items: list[dict[str, Any]], grid: Grid) -> tuple[np.ndarray, np.ndarray]:
-    return mosaic_indices(items, grid, ("ndvi",))["ndvi"]
 
 
 Latest = dict[str, tuple[int, np.ndarray, np.ndarray]]
@@ -376,24 +231,6 @@ def s2_basemap(api: IngestClient, farm: dict[str, Any], days: int = BASEMAP_DAYS
         fallback = np.stack([np.nanmedian(np.stack(raw[b]), axis=0) for b in ("red", "green", "blue")])
     rgba = natural_color(np.where(np.isfinite(clean), clean, fallback))
     return publish_layer(api, farm, grid, "true_color", _epoch_ms(items[-1]), rgba, BASEMAP_MARGIN_DEG) if upload else 0
-
-
-# Color natural: reflectancia → sRGB. Curva compartida por el mapa base de cada estancia y el del país.
-WHITE = 0.25  # reflectancia que llega a blanco (0,3 dejaba el campo apagado)
-GAMMA = 1.6
-SATURATION = 1.25  # Sentinel-2 en color verdadero sale grisáceo por la atmósfera
-
-
-def natural_color(rgb: np.ndarray, white: float = WHITE, gamma: float = GAMMA, saturation: float = SATURATION) -> np.ndarray:
-    """(3, h, w) reflectancia con NaN sin dato → (4, h, w) uint8 RGBA."""
-    ok = np.all(np.isfinite(rgb), axis=0)
-    x = np.clip(np.nan_to_num(rgb) / white, 0, 1) ** (1 / gamma)
-    lum = 0.2126 * x[0] + 0.7152 * x[1] + 0.0722 * x[2]
-    x = np.clip(lum + (x - lum) * saturation, 0, 1)
-    out = np.zeros((4, *rgb.shape[1:]), dtype=np.uint8)
-    out[:3] = (x * 255).round().astype(np.uint8)
-    out[3] = np.where(ok, 255, 0)
-    return out
 
 
 def publish_layer(

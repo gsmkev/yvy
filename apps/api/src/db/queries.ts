@@ -973,7 +973,7 @@ export async function updateSynced(
     ...audit,
     sdb.db
       .update(table)
-      .set({ ...patch, updatedAt: ts, version: currentVersion } as never)
+      .set({ ...patch, updatedAt: ts, version: currentVersion })
       .where(where),
     ...extra,
   ]);

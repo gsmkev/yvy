@@ -52,7 +52,7 @@ export default function Reports() {
               <View key={g.title}>
                 <SectionHeader title={t(g.title)} />
                 {entries.map((e) => (
-                  <Row key={e.path} title={t(e.title)} subtitle={t(e.hint)} onPress={() => router.push(`/office/${e.path}?farmId=${farm.id}` as never)} />
+                  <Row key={e.path} title={t(e.title)} subtitle={t(e.hint)} onPress={() => router.push(`/office/${e.path}?farmId=${farm.id}`)} />
                 ))}
               </View>
             );

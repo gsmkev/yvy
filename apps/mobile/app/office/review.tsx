@@ -89,7 +89,7 @@ export default function Review() {
                       if (r.ok) showToast(t("ui.toastReviewed"));
                     }}
                   />
-                  <Button kind="secondary" title={t("ui.reviewOpen")} onPress={() => router.push(`/record/${i.recordId}` as never)} />
+                  <Button kind="secondary" title={t("ui.reviewOpen")} onPress={() => router.push(`/record/${i.recordId}`)} />
                 </View>
               </View>
             ))

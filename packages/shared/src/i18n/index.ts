@@ -51,5 +51,8 @@ export const t = (key: MessageKey, vars: Record<string, string | number> = {}, l
   return String(text).replace(/\{\{(\w+)\}\}/g, (_, k: string) => String(vars[k] ?? `{{${k}}}`));
 };
 
+/** `t` para claves armadas en tiempo de ejecución (`ui.alertKind_${kind}`): único punto donde un `string` pasa a `MessageKey`. */
+export const tk = (key: string, vars: Record<string, string | number> = {}, locale: Locale = current): string => t(key as MessageKey, vars, locale);
+
 /** ¿Existe la clave? Para textos armados dinámicamente (valores de registros). Mira es-PY, que tiene todas. */
 export const hasKey = (key: string, locale: Locale = DEFAULT_LOCALE): boolean => find(locales[locale], key) !== undefined;

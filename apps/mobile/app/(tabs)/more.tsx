@@ -52,7 +52,7 @@ export default function More() {
       {FEATURES.labs && (
         <>
           <SectionHeader title={t("app.labsSection")} action={labsOpen ? t("app.labsHide") : t("app.labsShow")} onAction={() => setLabsOpen((o) => !o)} />
-          {labsOpen && labs.map((l) => <Row key={l.to} title={l.title} subtitle={l.hint} onPress={() => router.push(l.to as never)} />)}
+          {labsOpen && labs.map((l) => <Row key={l.to} title={l.title} subtitle={l.hint} onPress={() => router.push(l.to)} />)}
         </>
       )}
 

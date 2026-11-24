@@ -4,6 +4,7 @@
  * curva, historial de campañas, carencia, fenología, balance hídrico, pronóstico, edición de atributos y borrado.
  */
 import { useState } from "react";
+import type { MultiPolygon, Polygon } from "geojson";
 import { View } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { CloudRain, Copy, ListChecks, Pencil, Satellite, Trash2 } from "lucide-react-native";
@@ -103,12 +104,12 @@ export default function PlotSheet() {
     const name = editing.name.trim();
     if (!name) return setFormError(t("office.plotNeedsName"));
     setFormError(null);
-    const geo = JSON.parse(plot.geometry) as { type: string; coordinates: unknown[] };
+    const geo = JSON.parse(plot.geometry) as Polygon | MultiPolygon;
     const same = editing.season === (plot.season ?? "") && editing.sowingDate === (plot.sowingDate ?? "") && editing.pastureType === (plot.pastureType ?? "");
     const orgId = session?.organization.id;
     // Nombre, tipo y cultivo viajan por el outbox (anda sin señal). Campaña, siembra y pastura no están en el protocolo de sync: van por REST.
     if (same && orgId && geo.type === "Polygon" && geo.coordinates.length === 1) {
-      getDb().savePlot(orgId, { id: plot.id, farmId: plot.farmId, name, kind: editing.kind, crop: editing.kind === "crop" ? ((editing.crop || null) as typeof plot.crop) : null, geometry: geo as never });
+      getDb().savePlot(orgId, { id: plot.id, farmId: plot.farmId, name, kind: editing.kind, crop: editing.kind === "crop" ? ((editing.crop || null) as typeof plot.crop) : null, geometry: geo });
       localChanged();
       setEditing(null);
       showToast(t("ui.toastPlotUpdated"));

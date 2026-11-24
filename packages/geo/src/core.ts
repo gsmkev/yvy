@@ -5,7 +5,7 @@ import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import turfCentroid from "@turf/centroid";
 import intersect from "@turf/intersect";
 import kinks from "@turf/kinks";
-import type { MultiPolygon, Polygon, Position } from "geojson";
+import type { LineString, MultiPolygon, Polygon, Position } from "geojson";
 
 export type Area = Polygon | MultiPolygon;
 
@@ -19,7 +19,7 @@ export interface BBox {
 /** Área geodésica en hectáreas. */
 export const areaHa = (g: Area): number => turfArea(g) / 10_000;
 
-export const bboxOf = (g: Area): BBox => {
+export const bboxOf = (g: Area | LineString): BBox => {
   const [minLon, minLat, maxLon, maxLat] = turfBbox(g);
   return { minLon, minLat, maxLon, maxLat };
 };

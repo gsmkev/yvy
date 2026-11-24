@@ -57,7 +57,7 @@ export async function createLine(
       kind: input.kind,
       name: input.name,
       geometry: JSON.stringify(input.geometry),
-      ...bboxOf(input.geometry as never),
+      ...bboxOf(input.geometry),
       lengthM,
       createdAt: ts,
       updatedAt: ts,

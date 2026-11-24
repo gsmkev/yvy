@@ -134,7 +134,7 @@ export async function applyPush(
     }
   }
   const ids = <T>(set: Set<T>) => [...set];
-  const empty = Promise.resolve([] as never[]);
+  const empty = Promise.resolve([]);
 
   const [seenRows, recRows, attRows, taskRows, farmRows, plotRows, poiRows, assignedRows, countRows, plotUpRows, accessRows] =
     await Promise.all([

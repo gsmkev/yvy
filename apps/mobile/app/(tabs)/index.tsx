@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, type ElementRef } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Check, CloudRain, Users, Navigation, TrendingDown } from "lucide-react-native";
-import { checklistProgress, describeRecord, parseChecklist, parseTaskComments, t } from "@yvy/shared";
+import { checklistProgress, describeRecord, parseChecklist, parseTaskComments, t, tk } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { byFarm, useFarmChoice } from "../../src/lib/farmFilter";
 import { memberNames } from "../../src/lib/members";
@@ -146,7 +146,7 @@ export default function Today() {
         />
       ))}
       {alerts.length > shownAlerts.length && (
-        <Pressable accessibilityRole="button" onPress={() => router.push("/office/alerts" as never)} style={st.seeAll}>
+        <Pressable accessibilityRole="button" onPress={() => router.push("/office/alerts")} style={st.seeAll}>
           <Text style={[T.bodyMedium, { color: C.accionOscuro }]}>{t("app.alertsSeeAll", { n: alerts.length })}</Text>
         </Pressable>
       )}
@@ -278,7 +278,7 @@ function AlertCard({ a, voted, picked, onLayout }: { a: AlertRow; voted: boolean
   const strong = a.severity === "warning";
   const fg = strong ? C.blanco : C.tinta;
   const soft = strong ? "rgba(255,255,255,0.85)" : C.tinta2;
-  const title = `${t(`ui.alertKind_${a.kind}` as never)}${a.probability ? ` · ${t(`ui.probability_${a.probability}` as never).toLowerCase()}` : ""}`;
+  const title = `${tk(`ui.alertKind_${a.kind}`)}${a.probability ? ` · ${tk(`ui.probability_${a.probability}`).toLowerCase()}` : ""}`;
   return (
     <Pressable
       accessibilityRole="button"

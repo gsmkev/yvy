@@ -34,6 +34,6 @@ export async function setPhotoPath(sdb: ScopedDb, kind: PhotoKind, id: string, p
   const t = TABLES[kind];
   await sdb.db
     .update(t)
-    .set({ photoPath: path, updatedAt: sdb.now() } as never)
+    .set({ photoPath: path, updatedAt: sdb.now() })
     .where(and(eq(t.id, id), eq(t.organizationId, sdb.auth.orgId)));
 }

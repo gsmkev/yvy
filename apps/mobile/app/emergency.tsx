@@ -32,7 +32,7 @@ export default function Emergency() {
 
   const add = () => {
     const r = addContact(contacts, name, phone);
-    if (!r.ok) return Alert.alert(t(`app.emergencyAddError_${r.reason}` as never, { n: 5 }));
+    if (!r.ok) return Alert.alert(t(`app.emergencyAddError_${r.reason}`, { n: 5 }));
     save(r.list);
     setName("");
     setPhone("");

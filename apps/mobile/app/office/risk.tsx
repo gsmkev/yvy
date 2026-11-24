@@ -27,7 +27,7 @@ export default function Risk() {
       title={t("ui.riskTitle")}
       subtitle={farm ? `${farm.name}${q.data?.computedAt ? ` · ${t("ui.riskComputed", { date: fmtDate(q.data.computedAt) })}` : ""}` : undefined}
       query={q}
-      action={owner && ready && farm ? { label: t("ui.shareLinkTitle"), icon: Link2, onPress: () => router.push(`/office/share-links?farmId=${farm.id}` as never) } : undefined}
+      action={owner && ready && farm ? { label: t("ui.shareLinkTitle"), icon: Link2, onPress: () => router.push(`/office/share-links?farmId=${farm.id}`) } : undefined}
     >
       <FarmChips farms={farms} value={id} onChange={setFarmId} />
       {!farm ? (

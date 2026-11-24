@@ -29,9 +29,9 @@ export default function Office() {
     };
   });
   const stats = [
-    { label: t("office.summaryOverdue"), value: sum.overdue, tone: "danger" as const, onPress: () => router.push("/office/tasks" as never) },
-    { label: t("office.summaryAlerts"), value: sum.alerts, onPress: () => router.push("/office/alerts" as never) },
-    { label: t("office.summaryRecords"), value: sum.records, onPress: () => router.push("/(tabs)/history" as never) },
+    { label: t("office.summaryOverdue"), value: sum.overdue, tone: "danger" as const, onPress: () => router.push("/office/tasks") },
+    { label: t("office.summaryAlerts"), value: sum.alerts, onPress: () => router.push("/office/alerts") },
+    { label: t("office.summaryRecords"), value: sum.records, onPress: () => router.push("/(tabs)/history") },
   ].filter((x) => x.value > 0);
   const groups = groupMenu(OFFICE_MENU, ctx);
   return (
@@ -46,7 +46,7 @@ export default function Office() {
         <Fragment key={g.group}>
           <SectionHeader first={i === 0} title={t(GROUP_TITLE[g.group])} />
           {(all[g.group] ? g.items : g.items.slice(0, 6)).map((it) => (
-            <Row key={it.id} icon={it.icon} title={t(it.title)} subtitle={it.hint ? t(it.hint) : undefined} onPress={() => router.push(it.href as never)} />
+            <Row key={it.id} icon={it.icon} title={t(it.title)} subtitle={it.hint ? t(it.hint) : undefined} onPress={() => router.push(it.href)} />
           ))}
           {g.items.length > 6 && <Button kind="text" title={all[g.group] ? t("office.menuSeeLess") : t("office.menuSeeAll", { n: g.items.length })} onPress={() => setAll((a) => ({ ...a, [g.group]: !a[g.group] }))} />}
         </Fragment>

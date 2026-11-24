@@ -89,7 +89,7 @@ export default function Changes() {
       title={t("ui.changesTitle")}
       subtitle={farm?.name}
       query={q}
-      action={owner && farm && q.data && q.data.plots.length > 0 ? { label: t("ui.shareLinkTitle"), icon: Link2, onPress: () => router.push(`/office/share-links?farmId=${farm.id}` as never) } : undefined}
+      action={owner && farm && q.data && q.data.plots.length > 0 ? { label: t("ui.shareLinkTitle"), icon: Link2, onPress: () => router.push(`/office/share-links?farmId=${farm.id}`) } : undefined}
     >
       <FarmChips farms={farms} value={id} onChange={setFarmId} />
       {!farm ? (

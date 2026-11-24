@@ -68,7 +68,7 @@ export default function Alerts() {
         <Stack.Screen
           options={{
             headerRight: () => (
-              <Pressable accessibilityRole="button" accessibilityLabel={t("ui.alertSettingsTitle")} hitSlop={12} onPress={() => router.push("/office/alert-settings" as never)} style={{ minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" }}>
+              <Pressable accessibilityRole="button" accessibilityLabel={t("ui.alertSettingsTitle")} hitSlop={12} onPress={() => router.push("/office/alert-settings")} style={{ minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" }}>
                 <Settings size={24} color={C.tinta} strokeWidth={2} />
               </Pressable>
             ),

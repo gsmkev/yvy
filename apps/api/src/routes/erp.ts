@@ -47,11 +47,10 @@ interface MasterOpts {
 }
 
 /** Alta, listado, cambio y baja de un maestro con su esquema Zod. */
-function master(path: string, table: ErpTable, schema: z.ZodObject, order: ErpTable[keyof ErpTable][], o: MasterOpts = {}) {
+function master(path: string, table: ErpTable, schema: z.ZodObject, order: Parameters<typeof erpList>[3], o: MasterOpts = {}) {
   const read = o.read ?? can.manageErp;
   const write = o.write ?? can.manageErp;
-  const cols = order as never as Parameters<typeof erpList>[3];
-  erp.get(`/${path}`, async (c) => c.json(await erpList(c.var.sdb, table, read, cols)));
+  erp.get(`/${path}`, async (c) => c.json(await erpList(c.var.sdb, table, read, order)));
   erp.post(`/${path}`, async (c) => {
     const b = (o.normalize ?? ((v) => v))(parse(schema, await readJson(c.req)) as Record<string, unknown>);
     c.var.sdb.require(write);
@@ -268,7 +267,7 @@ erp.delete("/export/taxes/:kind/:id", async (c) => {
   return c.json({ ok: true });
 });
 erp.get("/export/formats", async (c) => {
-  const rows = await erpList(c.var.sdb, s.exportFormats, can.manageErp, [s.exportFormats.name] as never);
+  const rows = await erpList(c.var.sdb, s.exportFormats, can.manageErp, [s.exportFormats.name]);
   return c.json(rows.map((r) => ({ ...(r as { id: string; name: string; dataset: string; config: string }), config: JSON.parse((r as { config: string }).config) })));
 });
 erp.post("/export/formats", async (c) => {

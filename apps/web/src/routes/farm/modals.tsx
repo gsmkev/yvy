@@ -1,3 +1,4 @@
+/** Diálogos y barra del mapa de la estancia: alta de lote y de punto de interés, y guardado de la edición de vértices. */
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import type { MultiPolygon, Polygon } from "geojson";
@@ -8,6 +9,10 @@ import { patch, post } from "../../lib/api";
 import { fmtHa } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 
+/**
+ * Alta de un lote con la geometría dibujada.
+ * @param onSaved se llama al guardar.
+ */
 export function NewPlotModal({
   farmId,
   geometry,
@@ -115,6 +120,11 @@ export function ShapeEditBar({
   );
 }
 
+/**
+ * Alta de un punto de interés en la posición elegida.
+ * @param at [longitud, latitud].
+ * @param onSaved se llama al guardar.
+ */
 export function NewPoiModal({
   farmId,
   at,

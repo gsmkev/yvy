@@ -1,3 +1,4 @@
+/** Registros que las reglas simples marcaron como raros. "Está bien" los saca hasta que se editen. */
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

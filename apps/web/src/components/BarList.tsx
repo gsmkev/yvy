@@ -1,3 +1,5 @@
+/** Lista de barras horizontales con valor, usada para repartos de registros. */
+
 /** Barras horizontales con etiqueta y cifra: reparto de registros por tipo o por persona. */
 export function BarList({ items, ariaLabel }: { items: { label: string; value: number }[]; ariaLabel: string }) {
   const max = Math.max(1, ...items.map((i) => i.value));

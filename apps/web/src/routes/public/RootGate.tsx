@@ -1,3 +1,4 @@
+/** En "/" sin sesión se muestra la landing pública; con sesión, la app. */
 import { lazy, Suspense, useSyncExternalStore } from "react";
 import { getSession, onSession } from "../../lib/api";
 import { Layout } from "../../components/Layout";

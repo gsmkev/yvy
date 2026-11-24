@@ -1,3 +1,4 @@
+/** Estado de las herramientas de edición del mapa: dibujar, importar, POI, dividir, unir, vértices y líneas. */
 import { useEffect, useState } from "react";
 import type { LineString, MultiPolygon, Polygon } from "geojson";
 
@@ -37,6 +38,7 @@ export function useFarmEditing() {
     drawn, setDrawn, poiAt, setPoiAt, poiQr, setPoiQr,
   };
 }
+/** Resultado de `useFarmEditing`. */
 export type FarmEditing = ReturnType<typeof useFarmEditing>;
 
 /** Lotes marcados en el mapa para una tarea nueva; `picking` esconde el diálogo mientras se elige. */
@@ -60,4 +62,5 @@ export function useTaskPicking(tab: string) {
   }, [picking]);
   return { taskPlots, setTaskPlots, picking, setPicking, togglePicked };
 }
+/** Resultado de `useTaskPicking`. */
 export type TaskPicking = ReturnType<typeof useTaskPicking>;

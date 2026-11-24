@@ -1,3 +1,4 @@
+/** Todos los clientes del agrónomo en un mapa, con sus avisos. Un clic cambia de organización y abre la estancia. */
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";

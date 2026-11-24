@@ -1,3 +1,4 @@
+/** Centro de ayuda: preguntas frecuentes y contacto por WhatsApp. */
 import { ACADEMY_TOPICS, ACADEMY_VIDEOS } from "../lib/academy";
 import { whatsappUrl } from "../lib/config";
 import { PageHeader, Page } from "../components/ui";

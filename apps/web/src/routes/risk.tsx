@@ -32,6 +32,10 @@ const Grid = ({ children }: { children: React.ReactNode }) => (
 
 type RainRow = ReturnType<typeof rainByMonth>[number];
 
+/**
+ * Cuerpo del informe de riesgo climático.
+ * @param r riesgos calculados de la estancia.
+ */
 export function RiskReportBody({ r }: { r: FarmRisk }) {
   const rain = rainByMonth(r.rain);
   const fire = r.fire;
@@ -129,6 +133,7 @@ export function RiskReportBody({ r }: { r: FarmRisk }) {
   );
 }
 
+/** Pantalla del informe de riesgo climático de la estancia, con descarga en PDF. */
 export function RiskPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId/riesgo" });
   const farm = useFarm(farmId);

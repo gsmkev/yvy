@@ -1,3 +1,4 @@
+/** Guía de primera vez (solo para quien edita, hasta completar los 4 pasos o descartarla) y el salto directo al mapa cuando hay una sola estancia. */
 import { useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";

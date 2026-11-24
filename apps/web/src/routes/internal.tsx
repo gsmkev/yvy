@@ -1,3 +1,4 @@
+/** Métricas de uso por organización (solo equipo Yvy). */
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ActionMenu } from "../components/menus";

@@ -97,6 +97,7 @@ function BurnedSection({ farmId }: { farmId: string }) {
   );
 }
 
+/** Pantalla de cambios en el terreno: área quemada y cambio de cobertura. */
 export function ChangesPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId/cambios" });
   const farm = useFarm(farmId);

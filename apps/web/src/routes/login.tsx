@@ -1,3 +1,4 @@
+/** Ingreso y registro con código por email, segundo factor y Google. */
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
@@ -7,6 +8,7 @@ import { Button, ErrorBox, Field, Input } from "../components/ui";
 import { LegalLinks } from "./public/PublicShell";
 import { ATTRIBUTION } from "@yvy/shared";
 
+/** Pantalla de ingreso y registro. Pasa por los pasos de email, código y segundo factor. */
 export function LoginPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/ingresar" });

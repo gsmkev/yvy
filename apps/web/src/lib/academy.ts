@@ -3,6 +3,8 @@
  * `{ "mapa": "https://…", "registro": { "es": "https://…", "gn": "https://…" } }`. Solo se aceptan enlaces https. Un tema
  * sin enlace se muestra como "Próximamente": no hay videos de relleno.
  */
+
+/** Temas de la Academia, en el orden en que se muestran. */
 export const ACADEMY_TOPICS = ["map", "record", "offline", "tasks", "alerts", "reports", "team"] as const;
 type AcademyTopic = (typeof ACADEMY_TOPICS)[number];
 type AcademyLang = "es" | "gn";

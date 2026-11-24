@@ -1,3 +1,4 @@
+/** Laboratorio: vistas previas ilustrativas de funciones en desarrollo. */
 import { Link, useParams } from "@tanstack/react-router";
 import { PageHeader, Page } from "../components/ui";
 import { t, tk } from "../lib/i18n";
@@ -14,6 +15,7 @@ function PreviewNotice() {
   return <p className="border-l-2 border-trigo pl-3 text-sm text-tinta-2">{t("ui.labs.notice")}</p>;
 }
 
+/** Índice de las herramientas del Laboratorio. */
 export function LabsPage() {
   return (
     <Page width="data">
@@ -37,6 +39,7 @@ export function LabsPage() {
   );
 }
 
+/** Vista previa de una herramienta del Laboratorio; la herramienta va en la URL. */
 export function LabsToolPage() {
   const { tool } = useParams({ strict: false }) as { tool: string };
   const id = TOOLS.find((x) => x === tool);

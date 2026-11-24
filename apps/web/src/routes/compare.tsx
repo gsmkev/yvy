@@ -1,3 +1,4 @@
+/** Comparación entre estancias (últimos 30 días) y entre campañas (superficie, rinde, aplicaciones). */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isFieldRole } from "@yvy/shared";

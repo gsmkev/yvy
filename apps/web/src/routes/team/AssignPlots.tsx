@@ -1,3 +1,4 @@
+/** Diálogo para asignar lotes a un miembro del equipo. */
 import { useState } from "react";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { Button, ErrorBox, Modal, Spinner, toast } from "../../components/ui";
@@ -7,6 +8,10 @@ import { t } from "../../lib/i18n";
 import { useFarms } from "../../lib/queries";
 import type { FarmDetail, Member } from "../../lib/types";
 
+/**
+ * Elige los lotes de un miembro.
+ * @param member miembro a editar.
+ */
 export function AssignPlots({ member, onClose }: { member: Member; onClose: () => void }) {
   const qc = useQueryClient();
   const farms = useFarms();

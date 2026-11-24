@@ -57,6 +57,7 @@ function GaugeSection({ name, table: { months, season } }: { name: string; table
   );
 }
 
+/** Pantalla de pluviómetros de la estancia. */
 export function RainGaugesPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId/pluviometros" });
   const farm = useFarm(farmId);

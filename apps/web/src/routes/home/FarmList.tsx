@@ -1,9 +1,14 @@
+/** Lista de estancias con su superficie, registros de la semana y avisos. */
 import { Link } from "@tanstack/react-router";
 import { Stat } from "../../components/ui";
 import { areaUnitLabel, fmtAreaValue, fmtDate, fmtHa } from "../../lib/format";
 import { t } from "../../lib/i18n";
 import type { FarmSummary } from "../../lib/types";
 
+/**
+ * Lista de estancias con su superficie, registros de la semana y avisos.
+ * @param list estancias a mostrar.
+ */
 export function FarmList({ list }: { list: FarmSummary[] }) {
   return (
     <ul className="-mt-2 divide-y divide-linea border-y border-linea">

@@ -1,3 +1,4 @@
+/** Avisos flotantes sobre el mapa mientras se elige, divide, une o dibuja. */
 import { X } from "lucide-react";
 import { t } from "../../lib/i18n";
 import type { FarmEditing, TaskPicking } from "./useFarmEditing";

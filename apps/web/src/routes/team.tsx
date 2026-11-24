@@ -1,3 +1,4 @@
+/** Equipo de la organización: miembros, roles, accesos, PIN y baja. */
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -16,6 +17,7 @@ import { PinDialog } from "./team/PinDialog";
 import { AssignPlots } from "./team/AssignPlots";
 import { FarmAccess } from "./team/FarmAccess";
 
+/** Lista de miembros con alta, cambio de acceso y baja. */
 export function TeamPage() {
   const me = useMe();
   const navigate = useNavigate();

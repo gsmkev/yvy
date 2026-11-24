@@ -1,3 +1,4 @@
+/** Pestañas del panel de la estancia. */
 import { AgroPanel } from "../../components/AgroPanel";
 import { AlertsList } from "../../components/AlertsList";
 import { ClimatePanel } from "../../components/ClimatePanel";
@@ -10,7 +11,9 @@ import type { FarmDetail, RecordRow } from "../../lib/types";
 import type { TaskPicking } from "./useFarmEditing";
 import { PlotsTab, type PlotsTabProps } from "./PlotsTab";
 
+/** Pestañas del panel de la estancia. */
 export type Tab = "plots" | "seasons" | "products" | "records" | "tasks" | "climate" | "alerts" | "herd" | "agro";
+/** Pestañas en el orden en que se muestran. */
 export const TABS: Tab[] = ["plots", "seasons", "products", "records", "tasks", "climate", "alerts", "herd", "agro"];
 
 /** Contenido de la pestaña activa del panel de la estancia. */

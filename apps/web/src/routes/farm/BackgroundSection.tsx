@@ -1,3 +1,4 @@
+/** Sección del panel de capas para elegir el fondo del mapa: satélite o índice de vegetación, y su fecha. */
 import { FERT_LAYER_PARAM, FERT_STYLE, NDMI_RAMP, NDVI_RAMP, SOIL_RANGES } from "@yvy/shared";
 import { boundsOf } from "../../components/FarmMap";
 import { PanelSection } from "../../components/MapTools";
@@ -49,6 +50,11 @@ function IndexLegend({ scene }: { scene: FarmScene }) {
 const imageryNote = (s: FarmDetail["imageryStatus"]) =>
   s === "pending" || s === "processing" ? t("ui.imagery.processing") : s === "failed" ? t("ui.imagery.failed") : t("ui.no.basemap");
 
+/**
+ * Selector de fondo e índice.
+ * @param scene estado del fondo (de `useFarmScene`).
+ * @param tilesBaseUrl base de las teselas; sin ella no hay miniaturas.
+ */
 export function BackgroundSection({
   d,
   scene,

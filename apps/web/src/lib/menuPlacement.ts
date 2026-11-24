@@ -1,4 +1,6 @@
-/** Posición de un menú desplegable para que quede siempre dentro de la pantalla. */
+/** Cálculo de la posición de un menú desplegable para que quede siempre dentro de la pantalla. */
+
+/** Rectángulo en coordenadas de pantalla. */
 export interface Box {
   left: number;
   right: number;

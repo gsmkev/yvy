@@ -1,3 +1,4 @@
+/** Pantalla de registros con filtros guardados, lista y exportación. */
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { SlidersHorizontal } from "lucide-react";
@@ -17,6 +18,7 @@ import type { RecordRow } from "../lib/types";
 
 const EMPTY: RecordFilterValues = { farmId: "", authorId: "", kind: "", from: "", to: "" };
 
+/** Registros de campo con filtros por estancia, lote, tipo y fechas. */
 export function RecordsPage() {
   const farms = useFarms();
   const me = useMe();

@@ -1,3 +1,4 @@
+/** Límites administrativos y capas propias activas con su opacidad. */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ActiveLayers } from "../../components/CustomLayersControl";
@@ -22,6 +23,7 @@ export function useFarmOverlays(farmId: string, canSeeCustom: boolean, tilesBase
   const boundaries = useBoundaries(boundaryLevel, tilesBaseUrl);
   return { boundaryLevel, setBoundaryLevel, customLayers, customActive, setCustomActive, customImages, boundaries };
 }
+/** Resultado de `useFarmOverlays`. */
 export type FarmOverlays = ReturnType<typeof useFarmOverlays>;
 
 /** Focos de plaga de los últimos 30 días sobre el mapa. */

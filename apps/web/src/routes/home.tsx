@@ -1,3 +1,4 @@
+/** Inicio multi estancia. */
 import { isFieldRole } from "@yvy/shared";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { FarmMap } from "../components/FarmMap";

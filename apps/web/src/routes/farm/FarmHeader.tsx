@@ -1,3 +1,4 @@
+/** Encabezado del panel: selector de estancia, acciones, ubicación y superficies. */
 import { useNavigate } from "@tanstack/react-router";
 import { Button, PageHeader, Stat } from "../../components/ui";
 import { ActionMenu } from "../../components/menus";

@@ -1,3 +1,4 @@
+/** Plan, fin de la prueba y topes propios de una organización (vacío = los del plan). */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, EmptyState, ErrorBox, Field, Form, Input, Modal, Select, Spinner, toast } from "../../components/ui";

@@ -1,3 +1,4 @@
+/** Cabecera y pie de las páginas públicas (landing, términos, privacidad). */
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { t } from "../../lib/i18n";
@@ -26,6 +27,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
   );
 }
 
+/** Enlaces a términos y privacidad. */
 export function LegalLinks({ className = "" }: { className?: string }) {
   return (
     <nav aria-label="Legal" className={`flex gap-x-5 gap-y-1 whitespace-nowrap ${className}`}>

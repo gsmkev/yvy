@@ -1,3 +1,4 @@
+/** Diálogos de la estancia: línea nueva, dividir, unir, QR de puntos, importar y alta de lote o punto. */
 import { useQueryClient } from "@tanstack/react-query";
 import { ImportPlots } from "../../components/ImportPlots";
 import { NewLineModal } from "../../components/LinesPanel";

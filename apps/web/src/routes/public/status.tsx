@@ -1,3 +1,4 @@
+/** Estado del servicio. Pública y sin datos de clientes. */
 import { useQuery } from "@tanstack/react-query";
 import { get } from "../../lib/api";
 import { fmtDateTime } from "../../lib/format";

@@ -1,3 +1,4 @@
+/** Vistas previas del Laboratorio sobre cultivos: rinde y recomendaciones. */
 import { Button } from "../../components/ui";
 import { t, tk } from "../../lib/i18n";
 import { Figure, Flow, Table, nf } from "./parts";
@@ -8,6 +9,7 @@ const YIELD_PLOTS = [
   { id: "Sur 2", crop: "corn", ha: 64, low: 6800, high: 8200 },
 ] as const;
 
+/** Vista previa de la estimación de rinde. */
 export function Yield() {
   const sum = (k: "low" | "high") => YIELD_PLOTS.reduce((s, p) => s + (p.ha * p[k]) / 1000, 0);
   return (
@@ -49,6 +51,7 @@ export function Yield() {
   );
 }
 
+/** Vista previa de las recomendaciones. */
 export function Advice() {
   const sources = [1, 2, 3] as const;
   return (

@@ -42,6 +42,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
+/** Informes de una estancia: campaña por lote, informe para el banco y exportación completa. */
 export function FarmReportsPage() {
   const navigate = useNavigate();
   const farms = useFarms();

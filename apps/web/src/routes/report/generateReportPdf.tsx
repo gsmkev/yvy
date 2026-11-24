@@ -1,3 +1,4 @@
+/** Arma el PDF del parte (hasta 6 fotos de los registros) y lo descarga. */
 import { isAudioMime } from "@yvy/shared";
 import { get } from "../../lib/api";
 import { download } from "../../lib/exports";

@@ -48,6 +48,7 @@ function Method({ refYear, curYear }: { refYear: number; curYear: number }) {
   );
 }
 
+/** Pantalla del indicador EUDR de la estancia. */
 export function EudrPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId/eudr" });
   const farm = useFarm(farmId);

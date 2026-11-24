@@ -1,3 +1,4 @@
+/** Props de `FarmMapPane`: el estado de la estancia, de las capas y de las herramientas que se dibujan sobre el mapa. */
 import { useRef, useState, type MutableRefObject } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { BRAND } from "@yvy/shared";
@@ -26,6 +27,7 @@ function mapPoints(showPests: boolean, pestPts: MapPoint[], tab: string, records
     .map((r) => ({ id: r.id, lon: r.lon!, lat: r.lat!, color: BRAND.trigo }));
 }
 
+/** Props de `FarmMapPane`: el estado de la estancia, de las capas y de las herramientas que se dibujan sobre el mapa. */
 export interface FarmMapPaneProps {
   d: FarmDetail;
   farmId: string;

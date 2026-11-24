@@ -26,6 +26,7 @@ const monthLabel = (month: string) => {
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
+/** Calendario sanitario por mes con el estado de cada campaña o tratamiento. */
 export function SanitaryPage() {
   const me = useMe();
   const farms = useFarms();

@@ -1,3 +1,4 @@
+/** Franja fina arriba, dentro del flujo (empuja el contenido: no tapa nada), mientras se mira la demo de solo lectura. */
 import { Link } from "@tanstack/react-router";
 import { getSession, post, setSession } from "../../lib/api";
 import { t } from "../../lib/i18n";

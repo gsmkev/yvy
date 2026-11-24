@@ -1,3 +1,4 @@
+/** Árbol de rutas de la web: rutas públicas, rutas de la aplicación con sesión y validación de los parámetros de búsqueda. */
 import { createRootRoute, createRoute, createRouter, lazyRouteComponent, redirect } from "@tanstack/react-router";
 import { parseReferralCode } from "@yvy/shared";
 import { getSession } from "./lib/api";
@@ -257,6 +258,7 @@ const routeTree = rootRoute.addChildren([
   ]),
 ]);
 
+/** Router de TanStack con el árbol de rutas y la precarga de pantallas por intención. */
 export const router = createRouter({
   routeTree,
   defaultPreload: "intent",

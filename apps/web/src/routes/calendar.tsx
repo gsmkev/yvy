@@ -1,3 +1,4 @@
+/** Calendario semanal de labores de una estancia (lunes a domingo). */
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { addDays, localDate, tasksByDay, weekDays, weekStart } from "@yvy/shared";

@@ -1,7 +1,9 @@
+/** Vistas previas del Laboratorio de consultas en lenguaje natural. */
 import { Button } from "../../components/ui";
 import { t, tk } from "../../lib/i18n";
 import { Flow } from "./parts";
 
+/** Vista previa de la consulta a la estancia. */
 export function Ask() {
   const pairs = [1, 2, 3] as const;
   return (
@@ -29,6 +31,7 @@ export function Ask() {
   );
 }
 
+/** Vista previa del resumen escrito de la estancia. */
 export function Summary() {
   return (
     <div className="flex flex-col gap-4">

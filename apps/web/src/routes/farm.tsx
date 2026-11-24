@@ -1,3 +1,4 @@
+/** Pantalla principal de una estancia: mapa, panel con pestañas y herramientas de edición. */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isFieldRole, stalePlots, staleDaysOrDefault } from "@yvy/shared";
 import { useParams, useSearch } from "@tanstack/react-router";
@@ -69,6 +70,7 @@ function useFarmBounds(farm: FarmDetail | undefined, selected: string | null) {
   }, [farm?.farm.id, selectedGeometry]);
 }
 
+/** Mapa y panel de una estancia. El lote elegido y la pestaña activa van en la URL. */
 export function FarmPage() {
   const { farmId } = useParams({ from: "/app/estancias/$farmId" });
   const { lote } = useSearch({ from: "/app/estancias/$farmId" });

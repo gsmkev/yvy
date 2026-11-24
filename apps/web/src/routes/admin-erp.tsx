@@ -65,6 +65,7 @@ const SECTIONS: Section[] = [
   { id: "costs", label: "ui.admin.section_costs", render: () => <CostsPanel /> },
 ];
 
+/** Pantalla de Administración con sus módulos y secciones; la sección va en la URL. */
 export function AdminPage() {
   const me = useMe();
   const navigate = useNavigate();

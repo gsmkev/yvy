@@ -1,3 +1,4 @@
+/** El dueño o administrador da o cambia el PIN de ingreso de un empleado (alternativa al QR). */
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, ErrorBox, Field, Form, Input, Modal, toast } from "../../components/ui";

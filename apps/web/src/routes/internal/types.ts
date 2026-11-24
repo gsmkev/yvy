@@ -1,4 +1,6 @@
+/** Tipos de las respuestas del panel interno del equipo. */
 
+/** Métricas de uso de una organización: plan, topes, usuarios, estancias, hectáreas, registros y actividad. */
 export interface OrgMetrics {
   id: string;
   name: string;

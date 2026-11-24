@@ -1,3 +1,4 @@
+/** Cifras del período: registros, lluvia, alertas y tareas. */
 import { Link } from "@tanstack/react-router";
 import { BarList } from "../../components/BarList";
 import { RainChart } from "../../components/charts";

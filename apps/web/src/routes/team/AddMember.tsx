@@ -1,3 +1,4 @@
+/** Diálogo para agregar una persona al equipo. */
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isFieldRole, ROLES } from "@yvy/shared";
@@ -5,6 +6,10 @@ import { Button, ErrorBox, Field, Form, Input, Modal, Select, toast } from "../.
 import { post } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 
+/**
+ * Alta de un miembro.
+ * @param canAddAdmins permite elegir el rol de administrador.
+ */
 export function AddMember({ canAddAdmins, onClose }: { canAddAdmins: boolean; onClose: () => void }) {
   const qc = useQueryClient();
   const [f, setF] = useState({ fullName: "", email: "", phone: "", role: "worker" });

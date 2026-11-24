@@ -1,3 +1,4 @@
+/** Cuenta (solo dueño): por ahora, el pedido de baja. No borra nada. */
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isFieldRole } from "@yvy/shared";

@@ -31,6 +31,7 @@ const compactField = (f: FormField): FormField => {
   return Object.fromEntries(Object.entries(kept).filter(([, v]) => v !== undefined)) as FormField;
 };
 
+/** Campos propios que cada tipo de registro pregunta después de las preguntas estándar. */
 export function FormsPage() {
   const me = useMe();
   const qc = useQueryClient();

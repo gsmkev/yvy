@@ -96,5 +96,6 @@ escapeArrayTypes(out);
 
 const site = ["run", "--frozen", "--project", here, "--group", "docs", "mkdocs"];
 const config = ["-f", join(here, "mkdocs.yml")];
-if (process.argv.includes("--serve")) run("uv", [...site, "serve", ...config]);
+const addr = process.env.DOCS_ADDR ?? "127.0.0.1:8010";
+if (process.argv.includes("--serve")) run("uv", [...site, "serve", "-a", addr, ...config]);
 else run("uv", [...site, "build", "--strict", ...config]);

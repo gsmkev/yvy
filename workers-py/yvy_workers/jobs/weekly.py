@@ -101,23 +101,28 @@ def plots_map(plots_geo: list[dict[str, Any]], ndvi_by_plot: dict[str, float | N
     return d
 
 
-def build_pdf(summary: dict[str, Any], plots_geo: list[dict[str, Any]], out: Path, generated_at: datetime | None = None) -> Path:
-    styles = getSampleStyleSheet()
-    h1 = ParagraphStyle("h1", parent=styles["Title"], fontName="Helvetica-Bold", fontSize=18, alignment=0, textColor=SURCO, spaceAfter=2)
-    h2 = ParagraphStyle("h2", parent=styles["Heading2"], fontName="Helvetica-Bold", fontSize=12, textColor=SURCO, spaceBefore=12, spaceAfter=4)
-    body = ParagraphStyle("body", parent=styles["BodyText"], fontName="Helvetica", fontSize=9.5, leading=13, textColor=SURCO)
-    muted = ParagraphStyle("muted", parent=body, textColor=colors.HexColor("#6B6F63"), fontSize=8.5)
+class _Styles:
+    def __init__(self) -> None:
+        styles = getSampleStyleSheet()
+        self.h1 = ParagraphStyle("h1", parent=styles["Title"], fontName="Helvetica-Bold", fontSize=18, alignment=0, textColor=SURCO, spaceAfter=2)
+        self.h2 = ParagraphStyle("h2", parent=styles["Heading2"], fontName="Helvetica-Bold", fontSize=12, textColor=SURCO, spaceBefore=12, spaceAfter=4)
+        self.body = ParagraphStyle("body", parent=styles["BodyText"], fontName="Helvetica", fontSize=9.5, leading=13, textColor=SURCO)
+        self.muted = ParagraphStyle("muted", parent=self.body, textColor=colors.HexColor("#6B6F63"), fontSize=8.5)
 
+
+def _header(summary: dict[str, Any], st: _Styles, generated_at: datetime | None) -> list[Any]:
     farm, per = summary["farm"], summary["period"]
-    rec, rain = summary["records"], summary["rain"]
     gen = (generated_at or datetime.now(timezone.utc)).strftime("%d/%m/%Y")
     place = ", ".join(x for x in (farm.get("department"), farm.get("district")) if x)
-    story: list[Any] = [
-        Paragraph(f"Parte semanal · {farm['name']}", h1),
-        Paragraph(f"Del {fmt_date(per['from'])} al {fmt_date(per['to'])}{' · ' + place if place else ''} · {fmt_num(farm['areaHa'], 0, 'ha')} · Generado el {gen}", muted),
+    return [
+        Paragraph(f"Parte semanal · {farm['name']}", st.h1),
+        Paragraph(f"Del {fmt_date(per['from'])} al {fmt_date(per['to'])}{' · ' + place if place else ''} · {fmt_num(farm['areaHa'], 0, 'ha')} · Generado el {gen}", st.muted),
         Spacer(1, 6),
     ]
 
+
+def _kpis(summary: dict[str, Any]) -> Table:
+    rec, rain = summary["records"], summary["rain"]
     pct = None if rain["satMm"] is None or not rain["normalMm"] else rain["satMm"] / rain["normalMm"] * 100
     kpis = [
         ["Anotaciones", "Personas", "Lluvia (satélite)", "Lluvia normal", "Pluviómetro"],
@@ -131,49 +136,68 @@ def build_pdf(summary: dict[str, Any], plots_geo: list[dict[str, Any]], out: Pat
     ]
     t = Table(kpis, colWidths=[34 * mm] * 5)
     t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), LINO), ("FONTNAME", (0, 0), (-1, 0), "Helvetica"), ("FONTSIZE", (0, 0), (-1, 0), 8), ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#6B6F63")), ("FONTNAME", (0, 1), (-1, 1), "Helvetica-Bold"), ("FONTSIZE", (0, 1), (-1, 1), 11), ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)]))
-    story += [t]
+    return t
 
-    story.append(Paragraph("Anotaciones por tipo", h2))
+
+def _records_and_alerts(summary: dict[str, Any], st: _Styles) -> list[Any]:
+    rec = summary["records"]
+    story: list[Any] = [Paragraph("Anotaciones por tipo", st.h2)]
     if rec["byKind"]:
-        story.append(Paragraph(" · ".join(f"{KINDS.get(k['kind'], k['kind'])}: {k['n']}" for k in rec["byKind"]), body))
+        story.append(Paragraph(" · ".join(f"{KINDS.get(k['kind'], k['kind'])}: {k['n']}" for k in rec["byKind"]), st.body))
     else:
-        story.append(Paragraph("Esta semana no se anotó nada.", body))
-
-    story.append(Paragraph("Avisos", h2))
+        story.append(Paragraph("Esta semana no se anotó nada.", st.body))
+    story.append(Paragraph("Avisos", st.h2))
     if summary["alerts"]:
         for a in summary["alerts"]:
-            story.append(Paragraph(f"• {ALERT_KINDS.get(a['kind'], a['kind'])} ({SEVERITY.get(a['severity'], a['severity'])}): {a['summary']}", body))
+            story.append(Paragraph(f"• {ALERT_KINDS.get(a['kind'], a['kind'])} ({SEVERITY.get(a['severity'], a['severity'])}): {a['summary']}", st.body))
     else:
-        story.append(Paragraph("Sin avisos esta semana.", body))
+        story.append(Paragraph("Sin avisos esta semana.", st.body))
+    return story
 
-    ndvi_by_plot = {p["id"]: p["ndvi"] for p in summary["plots"]}
-    story.append(Paragraph("Vigor por lote", h2))
-    story.append(plots_map(plots_geo, ndvi_by_plot))
+
+def _plots_table(plots: list[dict[str, Any]]) -> Table:
     rows = [["Lote", "Cultivo", "ha", "NDVI", "Cambio"]]
-    for p in summary["plots"]:
+    for p in plots:
         ch = vigor_change(p["ndvi"], p["ndviPrev"])
         rows.append([p["name"], p["crop"] or ("Pasto" if p["kind"] == "pasture" else "—"), fmt_num(p["areaHa"], 0), fmt_num(p["ndvi"], 2), "—" if ch is None else f"{ch:+.0f} %".replace(".", ",")])
-    if len(rows) > 1:
-        pt = Table(rows, colWidths=[60 * mm, 40 * mm, 20 * mm, 20 * mm, 25 * mm], repeatRows=1)
-        style = [("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"), ("FONTSIZE", (0, 0), (-1, -1), 8.5), ("LINEBELOW", (0, 0), (-1, 0), 0.8, SURCO), ("LINEBELOW", (0, 1), (-1, -1), 0.3, colors.HexColor("#DDD8C8")), ("ALIGN", (2, 0), (-1, -1), "RIGHT")]
-        for i, p in enumerate(summary["plots"], start=1):
-            ch = vigor_change(p["ndvi"], p["ndviPrev"])
-            if ch is not None and ch <= -15:  # RF-54: caída de más de 15 %
-                style.append(("TEXTCOLOR", (4, i), (4, i), ALERTA))
-        pt.setStyle(TableStyle(style))
-        story += [Spacer(1, 6), pt]
-    else:
-        story.append(Paragraph("Todavía no hay lotes cargados.", body))
+    pt = Table(rows, colWidths=[60 * mm, 40 * mm, 20 * mm, 20 * mm, 25 * mm], repeatRows=1)
+    style = [("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"), ("FONTSIZE", (0, 0), (-1, -1), 8.5), ("LINEBELOW", (0, 0), (-1, 0), 0.8, SURCO), ("LINEBELOW", (0, 1), (-1, -1), 0.3, colors.HexColor("#DDD8C8")), ("ALIGN", (2, 0), (-1, -1), "RIGHT")]
+    for i, p in enumerate(plots, start=1):
+        ch = vigor_change(p["ndvi"], p["ndviPrev"])
+        if ch is not None and ch <= -15:  # RF-54: caída de más de 15 %
+            style.append(("TEXTCOLOR", (4, i), (4, i), ALERTA))
+    pt.setStyle(TableStyle(style))
+    return pt
 
-    story.append(Paragraph("Áreas para ir a ver", h2))
+
+def _vigor_section(summary: dict[str, Any], plots_geo: list[dict[str, Any]], st: _Styles) -> list[Any]:
+    story: list[Any] = [Paragraph("Vigor por lote", st.h2), plots_map(plots_geo, {p["id"]: p["ndvi"] for p in summary["plots"]})]
+    if summary["plots"]:
+        story += [Spacer(1, 6), _plots_table(summary["plots"])]
+    else:
+        story.append(Paragraph("Todavía no hay lotes cargados.", st.body))
+    return story
+
+
+def _problem_areas(summary: dict[str, Any], st: _Styles) -> list[Any]:
+    story: list[Any] = [Paragraph("Áreas para ir a ver", st.h2)]
     if summary["problemAreas"]:
-        story.append(Paragraph(" · ".join(f"{a['plotName']}: {fmt_num(a['areaHa'], 1, 'ha')}" for a in summary["problemAreas"][:12]), body))
-        story.append(Paragraph("Partes del lote con el vigor muy por debajo del resto. Están marcadas en el mapa de la web; desde ahí se mandan a recorrer.", muted))
+        story.append(Paragraph(" · ".join(f"{a['plotName']}: {fmt_num(a['areaHa'], 1, 'ha')}" for a in summary["problemAreas"][:12]), st.body))
+        story.append(Paragraph("Partes del lote con el vigor muy por debajo del resto. Están marcadas en el mapa de la web; desde ahí se mandan a recorrer.", st.muted))
     else:
-        story.append(Paragraph("No se detectaron áreas con vigor bajo.", body))
+        story.append(Paragraph("No se detectaron áreas con vigor bajo.", st.body))
+    return story
 
-    story += [Spacer(1, 14), Paragraph("Datos: Sentinel-2 (Copernicus), CHIRPS y NASA POWER. Orientativo: un satélite puede no ver por las nubes. Contiene datos modificados de Copernicus Sentinel.", muted)]
-    doc = SimpleDocTemplate(str(out), pagesize=A4, leftMargin=20 * mm, rightMargin=20 * mm, topMargin=18 * mm, bottomMargin=18 * mm, title=f"Parte semanal · {farm['name']}", author="Yvy")
+
+def build_pdf(summary: dict[str, Any], plots_geo: list[dict[str, Any]], out: Path, generated_at: datetime | None = None) -> Path:
+    st = _Styles()
+    story: list[Any] = _header(summary, st, generated_at)
+    story.append(_kpis(summary))
+    story += _records_and_alerts(summary, st)
+    story += _vigor_section(summary, plots_geo, st)
+    story += _problem_areas(summary, st)
+    story += [Spacer(1, 14), Paragraph("Datos: Sentinel-2 (Copernicus), CHIRPS y NASA POWER. Orientativo: un satélite puede no ver por las nubes. Contiene datos modificados de Copernicus Sentinel.", st.muted)]
+    doc = SimpleDocTemplate(str(out), pagesize=A4, leftMargin=20 * mm, rightMargin=20 * mm, topMargin=18 * mm, bottomMargin=18 * mm, title=f"Parte semanal · {summary['farm']['name']}", author="Yvy")
     doc.build(story)
     return out
 

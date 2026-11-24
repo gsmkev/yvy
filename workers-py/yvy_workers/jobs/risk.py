@@ -73,23 +73,36 @@ def _mmdd(doy: float) -> str:
     return f"{d.month:02d}-{d.day:02d}"
 
 
+def _frost_year(tmin: dict[date, float], year: int, threshold: float) -> tuple[int, int | None, int | None] | None:
+    """(días de helada, día del año de la primera helada de invierno, de la última de fin de invierno) o None si el año no tiene 300 días de dato."""
+    days = {d: v for d, v in tmin.items() if d.year == year}
+    if len(days) < 300:
+        return None
+    frosts = sorted(d for d, v in days.items() if v < threshold)
+    late = [d for d in frosts if d.month <= 6]
+    early = [d for d in frosts if d.month >= 7]
+    return (
+        len(frosts),
+        early[0].timetuple().tm_yday if early else None,
+        late[-1].timetuple().tm_yday if late else None,
+    )
+
+
 def frost_stats(tmin: dict[date, float], threshold: float = FROST_C) -> dict[str, Any]:
     """Días de helada por año (1991-2020); años con menos de 300 días de dato no cuentan."""
     per_year: list[dict[str, int]] = []
     firsts: list[int] = []
     lasts: list[int] = []
     for y in range(NORMAL_FROM, NORMAL_TO + 1):
-        days = {d: v for d, v in tmin.items() if d.year == y}
-        if len(days) < 300:
+        res = _frost_year(tmin, y, threshold)
+        if res is None:
             continue
-        frosts = sorted(d for d, v in days.items() if v < threshold)
-        per_year.append({"year": y, "days": len(frosts)})
-        late = [d for d in frosts if d.month <= 6]
-        early = [d for d in frosts if d.month >= 7]
-        if late:
-            lasts.append(late[-1].timetuple().tm_yday)
-        if early:
-            firsts.append(early[0].timetuple().tm_yday)
+        n, first, last = res
+        per_year.append({"year": y, "days": n})
+        if last is not None:
+            lasts.append(last)
+        if first is not None:
+            firsts.append(first)
     counts = [p["days"] for p in per_year]
     worst = max(per_year, key=lambda p: p["days"]) if per_year else None
     return {

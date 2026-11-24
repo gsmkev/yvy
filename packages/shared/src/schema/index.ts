@@ -1,5 +1,5 @@
 /**
- * Esquema Drizzle compartido (PRD §10, adaptado a SQLite según PRD-cloudflare §4.1).
+ * Esquema Drizzle compartido (adaptado a SQLite).
  * Mismo esquema en D1 (Worker) y expo-sqlite (app).
  *
  * Convenciones:
@@ -9,7 +9,7 @@
  * - Geometrías GeoJSON en text + columnas bbox indexadas.
  * - Tablas sincronizables: organization_id, created_at, updated_at (servidor), deleted_at y
  *   `version`, contador monotónico asignado por el servidor dentro de la transacción (sync_seq).
- *   El pull pagina por (version, id): equivale al "updated_at + desempate por id" del PRD §11
+ *   El pull pagina por (version, id): equivale a "updated_at + desempate por id"
  *   pero sin depender de relojes de distintos datacenters.
  */
 export * from "./enums";

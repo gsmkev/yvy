@@ -1,9 +1,12 @@
+/** Escenas satelitales, estadísticas de índices por lote, capas de mapa y estado de la historia de vigor. */
+
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { LAYERS, CUSTOM_LAYER_KINDS, CUSTOM_LAYER_STATUSES, IMAGERY_STATUSES } from "./enums";
 import { synced } from "./columns";
 
 // ---------- Satélite y clima (escritas solo por /ingest y crons) ----------
 
+/** Escenas satelitales procesadas, compartidas entre organizaciones. */
 export const scenes = sqliteTable(
   "scenes",
   {
@@ -17,6 +20,7 @@ export const scenes = sqliteTable(
   (t) => [uniqueIndex("scenes_item_uq").on(t.source, t.itemId)],
 );
 
+/** Estadísticas de un índice de vegetación por lote y escena. */
 export const plotIndexStats = sqliteTable(
   "plot_index_stats",
   {
@@ -30,7 +34,7 @@ export const plotIndexStats = sqliteTable(
     p10: real("p10").notNull(),
     p90: real("p90").notNull(),
     validPct: real("valid_pct").notNull(),
-    /** S-11: lote de menos de 30 m de ancho; los píxeles mezclan con el borde y el dato es poco confiable. */
+    /** Lote de menos de 30 m de ancho; los píxeles mezclan con el borde y el dato es poco confiable. */
     lowConfidence: integer("low_confidence", { mode: "boolean" }).notNull().default(false),
     ...synced,
   },
@@ -40,6 +44,7 @@ export const plotIndexStats = sqliteTable(
   ],
 );
 
+/** Capas raster publicadas por estancia (índice, color real o fertilidad) para una fecha. */
 export const farmLayers = sqliteTable(
   "farm_layers",
   {
@@ -60,7 +65,7 @@ export const farmLayers = sqliteTable(
 );
 
 /**
- * Capa propia de una estancia (M-17): imagen de dron, mapa de suelos o cualquier PNG/JPG con 4 esquinas. El archivo
+ * Capa propia de una estancia: imagen de dron, mapa de suelos o cualquier PNG/JPG con 4 esquinas. El archivo
  * original va a R2 (bucket de media); un GeoTIFF lo convierte workers-py a PNG georreferenciado en WGS84.
  * `corners` = [[lon, lat] × 4] en orden arriba-izq., arriba-der., abajo-der., abajo-izq. Solo la web la usa (no está en el pull).
  */
@@ -96,8 +101,9 @@ export const farmImagery = sqliteTable("farm_imagery", {
   updatedAt: integer("updated_at").notNull(),
 });
 
-/** S-03: estado de la historia de vigor desde 2017 pedida a demanda por estancia. No se sincroniza. */
+/** Estado de la historia de vigor desde 2017 pedida a demanda por estancia. No se sincroniza. */
 export const HISTORY_STATUSES = ["processing", "done", "failed"] as const;
+/** Pedido de historia de vigor desde 2017 por estancia. */
 export const farmHistory = sqliteTable("farm_history", {
   farmId: text("farm_id").primaryKey(),
   organizationId: text("organization_id").notNull(),

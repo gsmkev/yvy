@@ -1,11 +1,16 @@
+/**
+ * Tablas maestras del ERP: terceros, maquinaria, contratistas, tipo de cambio, costos, depósitos y movimientos de
+ * stock.
+ */
+
 import { index, integer, primaryKey, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { ACTIVITIES, CONTRACTOR_SERVICES, COST_CATEGORIES, CURRENCIES, MACHINE_TYPES, METER_KINDS, PARTY_KINDS, RATE_UNITS, STOCK_ORIGINS, WAREHOUSE_TYPES } from "../erp";
 import { timestamps, synced } from "./columns";
 
-// ---------- ERP (ADR 0004) ----------
+// ---------- ERP ----------
 // Tablas de oficina: no se sincronizan al celular (salvo products y machines), así que no llevan `version`.
 
-/** Proveedores y clientes (E-02). El RUC es texto: lleva guion y dígito verificador. */
+/** Proveedores y clientes. El RUC es texto: lleva guion y dígito verificador. */
 export const parties = sqliteTable(
   "parties",
   {
@@ -23,7 +28,7 @@ export const parties = sqliteTable(
   (t) => [index("parties_org_idx").on(t.organizationId, t.name)],
 );
 
-/** Maquinaria y vehículos (E-03). Baja al celular para elegir la máquina en una carga de combustible (E-16). */
+/** Maquinaria y vehículos. Baja al celular para elegir la máquina en una carga de combustible. */
 export const machines = sqliteTable(
   "machines",
   {
@@ -44,7 +49,7 @@ export const machines = sqliteTable(
   (t) => [index("machines_sync_idx").on(t.organizationId, t.version, t.id)],
 );
 
-/** Contratistas de servicios con su tarifa (E-04): una fila por contratista y servicio. Monto en unidad menor. */
+/** Contratistas de servicios con su tarifa: una fila por contratista y servicio. Monto en unidad menor. */
 export const contractors = sqliteTable(
   "contractors",
   {
@@ -63,7 +68,7 @@ export const contractors = sqliteTable(
   (t) => [index("contractors_org_idx").on(t.organizationId, t.name)],
 );
 
-/** Tipo de cambio diario (E-06): guaraníes por dólar. Carga manual; se usa el más reciente hasta la fecha del movimiento. */
+/** Tipo de cambio diario: guaraníes por dólar. Carga manual; se usa el más reciente hasta la fecha del movimiento. */
 export const exchangeRates = sqliteTable(
   "exchange_rates",
   {
@@ -78,7 +83,7 @@ export const exchangeRates = sqliteTable(
 );
 
 /**
- * Todo costo y toda venta (E-05, E-30, E-31). Centro de costo = estancia, lote, campaña y actividad.
+ * Todo costo y toda venta. Centro de costo = estancia, lote, campaña y actividad.
  * `amount` va en unidad menor de `currency` y `amountPyg` es su valor en guaraníes con el tipo de cambio del día.
  * La venta (`category = "sale"`) es un ingreso con monto positivo. Los costos que nacen de un registro de campo
  * (consumo de insumos, combustible, contratista) llevan `origin` y `originId` = id del registro.
@@ -106,7 +111,7 @@ export const costEntries = sqliteTable(
     /** "manual", "consumption" (insumos de un registro), "fuel", "contractor" (orden de trabajo). */
     origin: text("origin").notNull().default("manual"),
     originId: text("origin_id"),
-    /** Foto de la factura o el ticket en R2 (E-37). */
+    /** Foto de la factura o el ticket en R2. */
     photoPath: text("photo_path"),
     createdBy: text("created_by").notNull(),
     ...timestamps,
@@ -118,7 +123,7 @@ export const costEntries = sqliteTable(
   ],
 );
 
-/** Depósitos de una estancia: galpón, tanque de combustible o silo (E-10). Uno por estancia es el predeterminado. */
+/** Depósitos de una estancia: galpón, tanque de combustible o silo. Uno por estancia es el predeterminado. */
 export const warehouses = sqliteTable(
   "warehouses",
   {
@@ -127,7 +132,7 @@ export const warehouses = sqliteTable(
     farmId: text("farm_id").notNull(),
     name: text("name").notNull(),
     type: text("type", { enum: WAREHOUSE_TYPES }).notNull().default("shed"),
-    /** Donde se descuentan los consumos automáticos de los registros de campo (E-13). */
+    /** Donde se descuentan los consumos automáticos de los registros de campo. */
     isDefault: integer("is_default", { mode: "boolean" }).notNull().default(false),
     ...synced,
   },
@@ -135,11 +140,11 @@ export const warehouses = sqliteTable(
 );
 
 /**
- * Movimientos de stock (E-11). El stock de un producto en un depósito es la suma de `qty`.
+ * Movimientos de stock. El stock de un producto en un depósito es la suma de `qty`.
  * `qty` va con signo en la unidad del producto (l o kg); `valuePyg` tiene el mismo signo y es el valor en guaraníes:
  * entradas por su costo de compra, salidas al costo promedio ponderado del momento.
  * Una transferencia son dos filas (salida y entrada) con el mismo `originId`. Un consumo automático de un registro de
- * campo lleva `originId` = id del registro (E-13): se reemplaza o se revierte cuando el registro cambia o se borra.
+ * campo lleva `originId` = id del registro: se reemplaza o se revierte cuando el registro cambia o se borra.
  */
 export const stockMoves = sqliteTable(
   "stock_moves",
@@ -150,7 +155,7 @@ export const stockMoves = sqliteTable(
     warehouseId: text("warehouse_id").notNull(),
     qty: real("qty").notNull(),
     valuePyg: integer("value_pyg").notNull(),
-    /** Lote y vencimiento ("YYYY-MM-DD") de lo comprado: agroquímicos y vacunas (E-12). */
+    /** Lote y vencimiento ("YYYY-MM-DD") de lo comprado: agroquímicos y vacunas. */
     lot: text("lot"),
     expiresOn: text("expires_on"),
     /** Total del comprobante en unidad menor de `currency` (solo compras). */
@@ -161,7 +166,7 @@ export const stockMoves = sqliteTable(
     originId: text("origin_id"),
     partyId: text("party_id"),
     note: text("note"),
-    /** Foto de la factura o el ticket en R2 (E-37). */
+    /** Foto de la factura o el ticket en R2. */
     photoPath: text("photo_path"),
     createdBy: text("created_by").notNull(),
     ...timestamps,

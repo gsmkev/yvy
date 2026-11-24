@@ -1,27 +1,35 @@
+/** Textos de la interfaz: idiomas, idioma activo, búsqueda de claves tipadas y claves compartidas con la landing. */
+
 import { esPY, type Messages } from "./es-PY";
 import { gnPY } from "./gn-PY";
 
-/** Idiomas de la interfaz. es-PY es el de referencia: lo que otro idioma no traduce, se muestra en es-PY (U-22). */
+/** Idiomas de la interfaz. es-PY es el de referencia: lo que otro idioma no traduce, se muestra en es-PY. */
 export const LOCALES = ["es-PY", "gn-PY"] as const;
+/** Idioma de la interfaz. */
 export type Locale = (typeof LOCALES)[number];
+/** Idioma por defecto. */
 export const DEFAULT_LOCALE: Locale = "es-PY";
 
 /** Cada idioma con su propio nombre, para el selector (no se traduce). */
 export const LOCALE_NAMES: Record<Locale, string> = { "es-PY": "Castellano", "gn-PY": "Avañe'ẽ" };
 
 type Tree = { [k: string]: string | Tree };
+/** Árbol de textos de cada idioma. */
 export const locales: Record<Locale, Tree> = { "es-PY": esPY as unknown as Tree, "gn-PY": gnPY as unknown as Tree };
 
 type Leaves<T, P extends string = ""> = {
   [K in keyof T & string]: T[K] extends string ? `${P}${K}` : Leaves<T[K], `${P}${K}.`>;
 }[keyof T & string];
+/** Clave de texto válida: ruta con puntos hasta un texto de es-PY. */
 export type MessageKey = Leaves<Messages>;
 
+/** Si `v` es un idioma admitido. */
 export const isLocale = (v: unknown): v is Locale => typeof v === "string" && (LOCALES as readonly string[]).includes(v);
 
 let current: Locale = DEFAULT_LOCALE;
 const listeners = new Set<() => void>();
 
+/** Idioma activo. */
 export const getLocale = (): Locale => current;
 
 /** Cambia el idioma de `t` y avisa a quien lo escucha (la app vuelve a dibujar todo). */
@@ -31,6 +39,7 @@ export const setLocale = (l: Locale): void => {
   for (const f of listeners) f();
 };
 
+/** Escucha los cambios de idioma; devuelve la función para dejar de escuchar. */
 export const subscribeLocale = (f: () => void): (() => void) => {
   listeners.add(f);
   return () => void listeners.delete(f);

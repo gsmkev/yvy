@@ -1,5 +1,5 @@
 /**
- * Motor de sincronización del cliente (PRD §11), TS puro: la app implementa SyncStore sobre
+ * Motor de sincronización del cliente, TS puro: la app implementa SyncStore sobre
  * expo-sqlite y los tests lo implementan en memoria.
  *
  * Un ciclo: estado → push (outbox) → pull (por tabla) → fotos. Un solo ciclo a la vez.
@@ -22,6 +22,7 @@ import {
   type SyncState,
 } from "@yvy/shared";
 
+/** Almacenamiento local que la app implementa (expo-sqlite) y las pruebas simulan en memoria. */
 export interface SyncStore {
   /** Mutaciones pendientes en orden de creación, sin las rechazadas. */
   pendingMutations(limit: number): Promise<Mutation[]>;
@@ -38,6 +39,7 @@ export interface SyncStore {
   resetTables(tables: readonly PullTable[]): Promise<void>;
 }
 
+/** Conexión con el servidor de sincronización. */
 export interface Transport {
   state(): Promise<SyncState>;
   push(deviceId: string, mutations: Mutation[]): Promise<PushResponse>;
@@ -50,14 +52,17 @@ export interface AttachmentUploader {
   uploadPending(): Promise<number>;
 }
 
+/** Error por límite de CPU del servidor; el motor divide el lote y reintenta. */
 export class CpuLimitError extends Error {
   constructor() {
     super("El servidor superó el límite de CPU");
   }
 }
 
+/** Fase del motor: en reposo o sincronizando. */
 export type SyncPhase = "idle" | "syncing";
 
+/** Resumen de un ciclo de sincronización. */
 export interface SyncReport {
   pushed: number;
   rejected: number;
@@ -67,6 +72,7 @@ export interface SyncReport {
   finishedAt: number;
 }
 
+/** Motor que ejecuta ciclos de sincronización (push, pull y fotos), uno a la vez. */
 export class SyncEngine {
   private batchSize: number = LIMITS.sync.maxMutationsPerPush;
   private running: Promise<SyncReport> | null = null;
@@ -165,7 +171,7 @@ export class SyncEngine {
   }
 }
 
-/** Texto del indicador de estado (RF-43). */
+/** Texto del indicador de estado. */
 export const syncStatusLabel = (
   s: { online: boolean; phase: SyncPhase; pending: number; lastSyncAt: number | null },
   fmtTime: (ms: number) => string,

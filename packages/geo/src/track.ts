@@ -1,5 +1,6 @@
-/** Recorridas GPS (F-05): simplificación Douglas-Peucker y largo, en metros sobre la esfera local. Sin dependencias. */
+/** Recorridas GPS: simplificación Douglas-Peucker y largo, en metros sobre la esfera local. Sin dependencias. */
 
+/** Posición [lon, lat] en grados. */
 export type LonLat = [number, number];
 
 const M_PER_DEG_LAT = 111_320;

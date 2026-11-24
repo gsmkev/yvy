@@ -1,14 +1,20 @@
+/** Caja y bancos, cuentas a pagar y a cobrar, vencimientos y mapa de cuentas para exportar al contador. */
+
 import { z } from "zod";
 import { uuid } from "./internal";
 import { type CostCategory, isoDate, optText, minorAmount, currencySchema } from "./core";
 import { daysUntil } from "./stock";
 
-// ---------- Caja y bancos, cuentas a pagar y a cobrar (E-36) ----------
+// ---------- Caja y bancos, cuentas a pagar y a cobrar ----------
 
+/** Tipos de cuenta de dinero: efectivo o banco. */
 export const CASH_ACCOUNT_TYPES = ["cash", "bank"] as const;
+/** Documentos que se pueden saldar: compra, liquidación de granos u operación de hacienda. */
 export const DOC_KINDS = ["purchase", "settlement", "cattle"] as const;
+/** Tipo de documento saldable. */
 export type DocKind = (typeof DOC_KINDS)[number];
 
+/** Alta de una cuenta de caja o banco. */
 export const cashAccountInput = z.object({
   name: z.string().trim().min(1).max(80),
   type: z.enum(CASH_ACCOUNT_TYPES),
@@ -18,6 +24,7 @@ export const cashAccountInput = z.object({
   note: optText(200),
 });
 
+/** Movimiento manual de una cuenta. */
 export const cashMoveInput = z.object({
   accountId: uuid,
   date: isoDate,
@@ -27,6 +34,7 @@ export const cashMoveInput = z.object({
   partyId: uuid.nullish(),
 });
 
+/** Transferencia entre dos cuentas. */
 export const cashTransferInput = z.object({
   fromAccountId: uuid,
   toAccountId: uuid,
@@ -35,6 +43,7 @@ export const cashTransferInput = z.object({
   description: optText(200),
 });
 
+/** Pago o cobro de un documento desde una cuenta. */
 export const settleInput = z.object({
   docKind: z.enum(DOC_KINDS),
   docId: uuid,
@@ -45,6 +54,7 @@ export const settleInput = z.object({
   description: optText(200),
 });
 
+/** Estado de un vencimiento. */
 export type DueStatus = "none" | "overdue" | "soon" | "ok";
 /** Estado de un vencimiento al día `today`: vencido, por vencer (dentro de `soonDays`) o en fecha. */
 export function dueStatus(dueDate: string | null, today: string, soonDays = 7): { status: DueStatus; daysLeft: number | null } {
@@ -53,8 +63,9 @@ export function dueStatus(dueDate: string | null, today: string, soonDays = 7): 
   return { status: daysLeft < 0 ? "overdue" : daysLeft <= soonDays ? "soon" : "ok", daysLeft };
 }
 
-// ---------- Exportación al contador (E-38) ----------
+// ---------- Exportación al contador ----------
 
+/** Código y nombre de una cuenta contable. */
 export interface AccountRef {
   code: string;
   name: string;
@@ -70,6 +81,7 @@ export const DEFAULT_ACCOUNT_MAP: Record<CostCategory, AccountRef> = {
   sale: { code: "4.1.01", name: "Ventas" },
 };
 
+/** Alta o cambio de la cuenta contable de un rubro. */
 export const accountMapInput = z.object({
   code: z.string().trim().min(1).max(30),
   name: z.string().trim().min(1).max(80),

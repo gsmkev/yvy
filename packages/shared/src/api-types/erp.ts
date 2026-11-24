@@ -1,5 +1,8 @@
+/** Tipos de respuesta de los endpoints del ERP: resultados, saldos, vencimientos, mantenimiento y entregas. */
+
 import type { Currency, MAINTENANCE_KINDS } from "../erp";
 
+/** Cifras de resultado (costo, ingreso, margen, por hectárea y por tonelada). */
 export interface ResultsFigures {
   costPyg: number;
   incomePyg: number;
@@ -12,6 +15,7 @@ export interface ResultsFigures {
   costPerTon: number | null;
 }
 
+/** Resultados de la campaña en total y por lote, cultivo, actividad y campaña. */
 export interface ResultsResponse {
   totals: ResultsFigures;
   byPlot: (ResultsFigures & { plotId: string | null; name: string | null; crop: string | null })[];
@@ -21,21 +25,25 @@ export interface ResultsResponse {
   beef: { kgSold: number; costPyg: number; incomePyg: number; costPerKgPyg: number | null };
 }
 
+/** Saldos de las cuentas de caja y totales por moneda. */
 export interface BalancesResponse {
   accounts: { id: string }[];
   totals: Record<string, number>;
 }
 
+/** Totales pendientes y vencidos por moneda. */
 export interface DuesTotalsResponse {
   totals: Record<string, { pending: number; overdue: number }>;
 }
 
+/** Producto bajo su mínimo y cantidad faltante. */
 export interface LowStockApiRow {
   productId: string;
   warehouseId: string;
   missing: number;
 }
 
+/** Documento con saldo por pagar o cobrar. */
 export interface DueRow {
   docKind: "purchase" | "settlement" | "cattle";
   docId: string;
@@ -49,11 +57,13 @@ export interface DueRow {
   daysLeft: number | null;
 }
 
+/** Documentos con saldo y totales por moneda. */
 export interface DuesResponse {
   rows: DueRow[];
   totals: Record<string, { pending: number; overdue: number }>;
 }
 
+/** Servicio de mantenimiento próximo o vencido. */
 export interface MaintenanceDue {
   planId: string;
   machineId: string;
@@ -66,6 +76,7 @@ export interface MaintenanceDue {
   status: "ok" | "soon" | "overdue";
 }
 
+/** Plan de mantenimiento con su estado. */
 export interface MaintenancePlanRow {
   id: string;
   machineId: string;
@@ -74,6 +85,7 @@ export interface MaintenancePlanRow {
   lastDoneMeter: number;
 }
 
+/** Servicio de mantenimiento registrado. */
 export interface MaintenanceLogRow {
   id: string;
   machineId: string;
@@ -85,6 +97,7 @@ export interface MaintenanceLogRow {
   amountPyg?: number | null;
 }
 
+/** Entrega de granos registrada. */
 export interface GrainDeliveryRow {
   id: string;
   contractId: string;

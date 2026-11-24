@@ -1,5 +1,5 @@
 /**
- * ERP sencillo (ADR 0004): constantes, esquemas de entrada y cálculos puros (dinero, stock, costos).
+ * ERP sencillo: constantes, esquemas de entrada y cálculos puros (dinero, stock, costos).
  * Sin dependencias de la base: corre en el Worker, la web y las pruebas.
  *
  * Dinero: siempre enteros en la unidad menor de la moneda. PYG no tiene decimales (1 = un guaraní);

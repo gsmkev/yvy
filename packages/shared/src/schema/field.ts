@@ -1,3 +1,5 @@
+/** Estancias, lotes, puntos de interés, líneas del mapa y asignaciones de lotes a personas. */
+
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { PLOT_KINDS, CROPS, SEASONS, POI_KINDS, LINE_KINDS } from "./enums";
 import { synced, bbox } from "./columns";
@@ -51,6 +53,7 @@ export const plots = sqliteTable(
   ],
 );
 
+/** Puntos de interés de una estancia: aguadas, pluviómetros, casas, entre otros. */
 export const pointsOfInterest = sqliteTable(
   "points_of_interest",
   {
@@ -67,7 +70,7 @@ export const pointsOfInterest = sqliteTable(
 );
 
 /**
- * Línea del mapa de una estancia (M-20): alambrado, camino interno o cañería, con su largo en metros.
+ * Línea del mapa de una estancia: alambrado, camino interno o cañería, con su largo en metros.
  * Por ahora solo la web la usa; no está en el pull del sync (se suma cuando la app la necesite).
  */
 export const farmLines = sqliteTable(
@@ -91,7 +94,7 @@ export const farmLines = sqliteTable(
 );
 
 /**
- * Análisis de suelo de laboratorio (A-30): por lote o por punto de muestreo. Solo la web lo usa por ahora
+ * Análisis de suelo de laboratorio: por lote o por punto de muestreo. Solo la web lo usa por ahora
  * (no está en el pull del sync). Valores nulos = el laboratorio no lo informó.
  */
 export const soilSamples = sqliteTable(
@@ -127,7 +130,7 @@ export const soilSamples = sqliteTable(
 );
 
 /**
- * Entrega de grano a un acopio o silo (A-23): ticket de balanza con humedad, descuentos y neto, por lote.
+ * Entrega de grano a un acopio o silo: ticket de balanza con humedad, descuentos y neto, por lote.
  * Pesos en kilos. Solo la web la usa (no está en el pull del sync).
  */
 export const grainDeliveries = sqliteTable(
@@ -150,7 +153,7 @@ export const grainDeliveries = sqliteTable(
     /** Calculado al guardar con grainNet (packages/shared). */
     netKg: real("net_kg").notNull(),
     note: text("note"),
-    /** E-34: contrato de venta al que se entregó (vacío = entrega a acopio sin contrato). */
+    /** Contrato de venta al que se entregó (vacío = entrega a acopio sin contrato). */
     contractId: text("contract_id"),
     ...synced,
   },
@@ -163,7 +166,7 @@ export const grainDeliveries = sqliteTable(
 );
 
 /**
- * Mapa de rendimiento de la cosechadora de un lote en una campaña (A-21). El archivo (shapefile) se procesa en el
+ * Mapa de rendimiento de la cosechadora de un lote en una campaña. El archivo (shapefile) se procesa en el
  * navegador; acá queda el resumen y una grilla de promedios en `cells` (JSON [[lon, lat, t/ha, puntos], ...]).
  * Solo la web lo usa (no está en el pull del sync).
  */
@@ -194,6 +197,7 @@ export const yieldMaps = sqliteTable(
   ],
 );
 
+/** Asignación de un lote a una persona de campo. */
 export const plotAssignments = sqliteTable(
   "plot_assignments",
   {

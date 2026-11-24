@@ -1,8 +1,10 @@
+/** Costos y ventas: esquemas de entrada, resultado por campaña (costo, margen, rinde) y presupuesto contra lo real. */
+
 import { z } from "zod";
 import { uuid } from "./internal";
 import { ACTIVITIES, type Activity, COST_CATEGORIES, type CostCategory, isoDate, optText, minorAmount, currencySchema } from "./core";
 
-// ---------- Costos y ventas (E-05) ----------
+// ---------- Costos y ventas ----------
 
 /** Alta o cambio de un costo o una venta manual. La API calcula `amountPyg` con el tipo de cambio de la fecha. */
 export const costEntryInput = z.object({
@@ -23,14 +25,16 @@ export const costEntryInput = z.object({
 /** Mediodía de Asunción (UTC-3) de un día "YYYY-MM-DD", en epoch ms. */
 export const noonAsuncion = (day: string): number => Date.parse(`${day}T12:00:00-03:00`);
 
-// ---------- Costo y margen (E-30, E-31) ----------
+// ---------- Costo y margen ----------
 
+/** Datos de una campaña o lote para calcular su resultado. */
 export interface ResultInput {
   costPyg: number;
   incomePyg: number;
   areaHa: number;
   tons: number;
 }
+/** Resultado calculado: margen y costos o ingresos por hectárea y por tonelada. */
 export interface ResultFigures {
   marginPyg: number;
   /** Guaraníes por hectárea; null sin superficie. */
@@ -53,7 +57,7 @@ export function resultFigures(r: ResultInput): ResultFigures {
   };
 }
 
-// ---------- Presupuesto de campaña (E-32) ----------
+// ---------- Presupuesto de campaña ----------
 
 /** Un lote o un cultivo, no los dos: la API deja solo el que se mandó (ver normalize en la ruta). */
 export const budgetLineInput = z.object({
@@ -66,6 +70,7 @@ export const budgetLineInput = z.object({
   note: optText(200),
 });
 
+/** Línea de presupuesto de una campaña. */
 export interface BudgetLine {
   id: string;
   plotId: string | null;
@@ -74,12 +79,14 @@ export interface BudgetLine {
   category: CostCategory;
   amountPyg: number;
 }
+/** Gasto real agrupado por lote, actividad y rubro. */
 export interface ActualGroup {
   plotId: string | null;
   activity: Activity;
   category: CostCategory;
   amountPyg: number;
 }
+/** Línea de presupuesto con su valor real y la diferencia. */
 export interface BudgetRow extends BudgetLine {
   actualPyg: number;
   /** Real menos presupuesto: positivo en un costo = se pasó; positivo en una venta = superó lo previsto. */

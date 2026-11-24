@@ -1,10 +1,12 @@
+/** Tablas del ERP sobre personal, mantenimiento y pagos; son de oficina y no se sincronizan. */
+
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { CONTRACTOR_SERVICES, CURRENCIES, EMPLOYEE_PAYMENT_KINDS, MAINTENANCE_KINDS } from "../erp";
 import { timestamps } from "./columns";
 
-// ---------- ERP, segunda tanda (ADR 0004): tablas de oficina, no se sincronizan ----------
+// ---------- ERP, segunda tanda: tablas de oficina, no se sincronizan ----------
 
-/** Plan de mantenimiento preventivo de una máquina: cada tantas horas o kilómetros (E-22). */
+/** Plan de mantenimiento preventivo de una máquina: cada tantas horas o kilómetros. */
 export const maintenancePlans = sqliteTable(
   "maintenance_plans",
   {
@@ -21,7 +23,7 @@ export const maintenancePlans = sqliteTable(
   (t) => [index("maintenance_plans_machine_idx").on(t.organizationId, t.machineId)],
 );
 
-/** Historial de servicios y reparaciones de una máquina, con su costo (E-22). */
+/** Historial de servicios y reparaciones de una máquina, con su costo. */
 export const maintenanceLogs = sqliteTable(
   "maintenance_logs",
   {
@@ -43,7 +45,7 @@ export const maintenanceLogs = sqliteTable(
   (t) => [index("maintenance_logs_machine_idx").on(t.organizationId, t.machineId, t.occurredAt)],
 );
 
-/** Datos para costear el trabajo propio de una máquina (E-23): amortización, operario, rendimiento y combustible. */
+/** Datos para costear el trabajo propio de una máquina: amortización, operario, rendimiento y combustible. */
 export const machineCosts = sqliteTable(
   "machine_costs",
   {
@@ -70,7 +72,7 @@ export const machineCosts = sqliteTable(
   (t) => [uniqueIndex("machine_costs_machine_uq").on(t.organizationId, t.machineId)],
 );
 
-/** Personal (peones, capataz, administrativos) con su jornal. Puede o no tener usuario en la app (E-25). */
+/** Personal (peones, capataz, administrativos) con su jornal. Puede o no tener usuario en la app. */
 export const employees = sqliteTable(
   "employees",
   {
@@ -90,7 +92,7 @@ export const employees = sqliteTable(
   (t) => [index("employees_org_idx").on(t.organizationId, t.name)],
 );
 
-/** Asistencia y jornal de un día, con el lote y la labor (E-25). Genera un costo de mano de obra. */
+/** Asistencia y jornal de un día, con el lote y la labor. Genera un costo de mano de obra. */
 export const attendance = sqliteTable(
   "attendance",
   {
@@ -116,7 +118,7 @@ export const attendance = sqliteTable(
   ],
 );
 
-/** Adelantos y pagos a un empleado, en guaraníes (E-26). El saldo es lo devengado (asistencia) menos esto. */
+/** Adelantos y pagos a un empleado, en guaraníes. El saldo es lo devengado (asistencia) menos esto. */
 export const employeePayments = sqliteTable(
   "employee_payments",
   {
@@ -134,4 +136,4 @@ export const employeePayments = sqliteTable(
   (t) => [index("employee_payments_idx").on(t.organizationId, t.employeeId, t.date)],
 );
 
-/** Ración de feedlot (G-33): ingredientes del catálogo con su % de materia seca, en JSON [{productId, pctDm, dmPct}]. Solo oficina. */
+/** Ración de feedlot: ingredientes del catálogo con su % de materia seca, en JSON [{productId, pctDm, dmPct}]. Solo oficina. */

@@ -1,3 +1,5 @@
+/** Registro de mutaciones aplicadas, para que reintentar un push sea idempotente. */
+
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 // ---------- Sincronización ----------

@@ -1,11 +1,18 @@
+/**
+ * Compras con orden, factura y recepción; venta de granos (contratos, entregas, liquidaciones); compra y venta de
+ * hacienda.
+ */
+
 import { z } from "zod";
 import { uuid } from "./internal";
 import { ACTIVITIES, COST_CATEGORIES, isoDate, optText, minorAmount, currencySchema } from "./core";
 
-// ---------- Compras: orden, factura y recepción (E-33) ----------
+// ---------- Compras: orden, factura y recepción ----------
 
+/** Tope de líneas por compra. */
 export const maxPurchaseLines = 20;
 
+/** Línea de una compra: producto, cantidad y precio. */
 export const purchaseLineInput = z
   .object({
     productId: uuid.nullish(),
@@ -20,6 +27,7 @@ export const purchaseLineInput = z
   })
   .refine((l) => l.productId || (l.description && l.description.trim()), "Cada línea lleva un producto o una descripción");
 
+/** Alta de una compra con sus líneas. */
 export const purchaseInput = z.object({
   partyId: uuid.nullish(),
   farmId: uuid.nullish(),
@@ -30,12 +38,14 @@ export const purchaseInput = z.object({
   lines: z.array(purchaseLineInput).min(1).max(maxPurchaseLines),
 });
 
+/** Datos de la factura de una compra. */
 export const purchaseInvoiceInput = z.object({
   invoiceNumber: z.string().trim().min(1).max(40),
   invoiceDate: isoDate,
   dueDate: isoDate.nullish(),
 });
 
+/** Recepción de una compra en un depósito. */
 export const purchaseReceiveInput = z.object({
   warehouseId: uuid,
   date: isoDate,
@@ -49,13 +59,15 @@ export const purchaseReceiveInput = z.object({
 /** Importe de una línea en unidad menor: cantidad por precio unitario, redondeado. */
 export const lineAmount = (qty: number, unitPrice: number): number => Math.round(qty * unitPrice);
 
+/** Estado de una compra. */
 export type PurchaseStatus = "ordered" | "invoiced" | "received" | "complete";
 /** Estado derivado: con factura y recepción está completa; la factura y la recepción pueden llegar en cualquier orden. */
 export const purchaseStatus = (p: { invoiceNumber: string | null; receivedAt: string | null }): PurchaseStatus =>
   p.invoiceNumber && p.receivedAt ? "complete" : p.receivedAt ? "received" : p.invoiceNumber ? "invoiced" : "ordered";
 
-// ---------- Venta de granos: contratos, entregas y liquidaciones (E-34) ----------
+// ---------- Venta de granos: contratos, entregas y liquidaciones ----------
 
+/** Alta o cambio de un contrato de venta de granos. */
 export const grainContractInput = z.object({
   partyId: uuid.nullish(),
   number: optText(40),
@@ -69,6 +81,7 @@ export const grainContractInput = z.object({
   note: optText(300),
 });
 
+/** Entrega de granos contra un contrato. */
 export const grainDeliveryInput = z.object({
   contractId: uuid,
   date: isoDate,
@@ -82,6 +95,7 @@ export const grainDeliveryInput = z.object({
   moisturePct: z.number().min(0).max(100).nullish(),
 });
 
+/** Liquidación de granos entregados. */
 export const grainSettlementInput = z.object({
   contractId: uuid,
   number: optText(40),
@@ -110,11 +124,14 @@ export function contractProgress(contractTons: number, deliveredTons: number, se
   };
 }
 
-// ---------- Compras y ventas de hacienda (E-35) ----------
+// ---------- Compras y ventas de hacienda ----------
 
+/** Tipos de operación de hacienda: compra o venta. */
 export const CATTLE_DEAL_KINDS = ["buy", "sell"] as const;
+/** Tipo de operación de hacienda. */
 export type CattleDealKind = (typeof CATTLE_DEAL_KINDS)[number];
 
+/** Compra o venta de hacienda. */
 export const cattleDealInput = z.object({
   kind: z.enum(CATTLE_DEAL_KINDS),
   date: isoDate,

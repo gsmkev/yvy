@@ -20,6 +20,7 @@ import { DataList, DateField, FormSheet, Segmented, SelectField, StatRow, TextFi
 import { useOnline } from "../../../src/office/useOnline";
 import { useOnlineMutation } from "../../../src/office/useOnlineMutation";
 import { Button } from "../../../src/ui/kit";
+import type { GrainDeliveryRow as Delivery } from "@yvy/shared";
 
 interface Contract {
   id: string;
@@ -33,14 +34,6 @@ interface Contract {
   toDeliverTons: number;
   settledTons: number;
   toSettleTons: number;
-}
-interface Delivery {
-  id: string;
-  contractId: string;
-  date: string;
-  tons: number;
-  ticket: string | null;
-  moisturePct: number | null;
 }
 interface Settlement {
   id: string;

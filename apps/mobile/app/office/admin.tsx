@@ -15,19 +15,8 @@ import { Skeleton } from "../../src/office/state";
 import { StatRow, type StatItem } from "../../src/office/ui";
 import { useOnline } from "../../src/office/useOnline";
 import { EmptyState, Row, SectionHeader } from "../../src/ui/kit";
+import type { BalancesResponse as Balances, DuesTotalsResponse as Dues, LowStockApiRow as Low } from "@yvy/shared";
 
-interface Balances {
-  accounts: { id: string }[];
-  totals: Record<string, number>;
-}
-interface Dues {
-  totals: Record<string, { pending: number; overdue: number }>;
-}
-interface Low {
-  productId: string;
-  warehouseId: string;
-  missing: number;
-}
 interface Purchase {
   id: string;
   partyId: string | null;

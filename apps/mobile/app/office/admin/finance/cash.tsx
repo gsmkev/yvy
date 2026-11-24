@@ -17,6 +17,7 @@ import { useOnlineMutation } from "../../../../src/office/useOnlineMutation";
 import { DataList, DateField, FormSheet, Segmented, SelectField, TextField } from "../../../../src/office/ui";
 import { SectionHeader, Sheet, Text } from "../../../../src/ui/kit";
 import { C, T } from "../../../../src/ui/theme";
+import type { DueRow as Due, DuesResponse as Dues } from "@yvy/shared";
 
 interface Account {
   id: string;
@@ -36,22 +37,6 @@ interface Move {
   date: string;
   amount: number;
   description: string | null;
-}
-interface Due {
-  docKind: "purchase" | "settlement" | "cattle";
-  docId: string;
-  partyId: string | null;
-  label: string;
-  currency: Currency;
-  total: number;
-  pending: number;
-  dueDate: string | null;
-  status: "none" | "overdue" | "soon" | "ok";
-  daysLeft: number | null;
-}
-interface Dues {
-  rows: Due[];
-  totals: Record<string, { pending: number; overdue: number }>;
 }
 
 type Tab = "accounts" | "payables" | "receivables";

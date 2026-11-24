@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { isFieldRole } from "@yvy/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { HEALTH_REASONS, HERD_CATEGORIES, localDate, type HerdCategory, type SanitaryState } from "@yvy/shared";
+import { HEALTH_REASONS, HERD_CATEGORIES, localDate, type HerdCategory } from "@yvy/shared";
 import { del, get, post } from "../lib/api";
 import { fmtDate, fmtIsoDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -11,19 +11,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SenacsaCampaigns } from "../components/SenacsaCampaigns";
 import { RowMenu } from "../components/menus";
 import { Button, DataTable, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, toast, Page } from "../components/ui";
-
-interface EventRow {
-  id: string;
-  farmId: string | null;
-  reason: (typeof HEALTH_REASONS)[number];
-  plannedDate: string;
-  categories: HerdCategory[];
-  product: string | null;
-  note: string | null;
-  tasksCreated: number;
-  state: SanitaryState;
-  doneAt: number | null;
-}
+import type { SanitaryEventRow as EventRow } from "@yvy/shared";
 
 const shiftMonth = (month: string, by: number) => {
   const [y, m] = month.split("-").map(Number) as [number, number];

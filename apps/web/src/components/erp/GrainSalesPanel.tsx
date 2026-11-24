@@ -12,6 +12,7 @@ import { useParties } from "./PartiesPanel";
 import { RowModal, type FieldDef } from "./MasterPanel";
 import { useSeasonList } from "./CostsPanel";
 import { HeaderActions, RowMenu, useTableExport } from "./adminSlot";
+import type { GrainDeliveryRow as Delivery } from "@yvy/shared";
 
 interface Contract {
   id: string;
@@ -26,14 +27,6 @@ interface Contract {
   settledTons: number;
   toSettleTons: number;
   settledAmount: number;
-}
-interface Delivery {
-  id: string;
-  contractId: string;
-  date: string;
-  tons: number;
-  ticket: string | null;
-  moisturePct: number | null;
 }
 interface Settlement {
   id: string;

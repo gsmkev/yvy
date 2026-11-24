@@ -17,35 +17,8 @@ import { useOnlineMutation } from "../../../../src/office/useOnlineMutation";
 import { DataList, DateField, FormSheet, Segmented, SelectField, TextField } from "../../../../src/office/ui";
 import { SectionHeader, Text } from "../../../../src/ui/kit";
 import { C, T } from "../../../../src/ui/theme";
+import type { MaintenanceDue as Due, MaintenancePlanRow as Plan, MaintenanceLogRow as Log } from "@yvy/shared";
 
-interface Due {
-  planId: string;
-  machineId: string;
-  machine: string;
-  name: string;
-  meterKind: "hours" | "km";
-  meter: number;
-  dueAt: number;
-  remaining: number;
-  status: "ok" | "soon" | "overdue";
-}
-interface Plan {
-  id: string;
-  machineId: string;
-  name: string;
-  everyUnits: number;
-  lastDoneMeter: number;
-}
-interface Log {
-  id: string;
-  machineId: string;
-  planId: string | null;
-  kind: (typeof MAINTENANCE_KINDS)[number];
-  occurredAt: number;
-  meterValue: number | null;
-  description: string | null;
-  amountPyg?: number | null;
-}
 interface Machine {
   id: string;
   name: string;

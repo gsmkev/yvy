@@ -1,4 +1,3 @@
-/** Vinculación del empleado con el QR que genera el administrador. */
 import { useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";

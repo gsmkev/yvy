@@ -1,0 +1,36 @@
+site_name: Yvy
+site_description: Documentación generada del código de Yvy
+docs_dir: docs
+site_dir: site
+theme:
+  name: material
+  language: es
+  palette:
+    - scheme: default
+      primary: green
+      toggle: { icon: material/weather-night, name: Modo oscuro }
+    - scheme: slate
+      primary: green
+      toggle: { icon: material/weather-sunny, name: Modo claro }
+  features:
+    - navigation.indexes
+    - navigation.sections
+    - content.code.copy
+plugins:
+  - search
+  - gen-files:
+      scripts:
+        - gen_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [../workers-py]
+          options:
+            docstring_style: google
+            show_source: false
+            show_root_heading: true
+            members_order: source
+            separate_signature: true
+            show_signature_annotations: true

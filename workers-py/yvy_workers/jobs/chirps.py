@@ -1,4 +1,4 @@
-"""CHIRPS v3 diario (UCSB CHC): lluvia por estancia (RF-60). PRD §12 chirps_daily.
+"""CHIRPS v3 diario (UCSB CHC): lluvia por estancia.
 
 - final (rnl): llega con ~5-6 semanas de retraso; reemplaza a la preliminar.
 - prelim (sat): llega con ~4 días de retraso.
@@ -29,10 +29,16 @@ log = logging.getLogger(__name__)
 
 BASE = "https://data.chc.ucsb.edu/products/CHIRPS/v3.0/daily"
 PRELIM_LAG_DAYS = 3
-BACKFILL_DAYS = 200  # C-07: el SPI a 6 meses necesita ~190 días; se completan de a max_files por corrida
+BACKFILL_DAYS = 200  # el SPI a 6 meses necesita ~190 días; se completan de a max_files por corrida
 
 
 def url(d: date, final: bool) -> str:
+    """URL del GeoTIFF diario de CHIRPS.
+
+    Args:
+        d: Fecha.
+        final: True para la versión final (rnl), False para la preliminar (sat).
+    """
     if final:
         return f"{BASE}/final/rnl/{d.year}/chirps-v3.0.rnl.{d:%Y.%m.%d}.tif"
     return f"{BASE}/prelim/sat/{d.year}/chirps-v3.0.prelim.{d:%Y.%m.%d}.tif"
@@ -52,6 +58,17 @@ def farm_mean(src: rasterio.io.DatasetReader, farm_geom: dict[str, Any]) -> floa
 
 
 def download(client: httpx.Client, u: str, dest: Path, tries: int = 4) -> bool:
+    """Baja un archivo reintentando ante cortes o límites del servidor (429, 503).
+
+    Args:
+        client: Cliente HTTP.
+        u: URL.
+        dest: Archivo de destino.
+        tries: Cantidad máxima de intentos.
+
+    Returns:
+        True si se bajó; False si no existe (404) o se agotaron los intentos.
+    """
     for attempt in range(tries):
         try:
             return _download_once(client, u, dest, attempt)
@@ -93,6 +110,17 @@ def missing_dates(latest: dict[tuple[str, str], str], farm_ids: list[str], sourc
 
 
 def process(client: httpx.Client, d: date, final: bool, farms: list[tuple[str, dict[str, Any]]]) -> list[dict[str, Any]] | None:
+    """Lluvia media de cada estancia para una fecha.
+
+    Args:
+        client: Cliente HTTP.
+        d: Fecha.
+        final: Versión final o preliminar.
+        farms: Pares (id, geometría de la estancia).
+
+    Returns:
+        Filas para ``/ingest/climate-daily``, o None si el archivo todavía no existe.
+    """
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "chirps.tif"
         if not download(client, url(d, final), path):
@@ -107,6 +135,18 @@ def process(client: httpx.Client, d: date, final: bool, farms: list[tuple[str, d
 
 
 def chirps_daily(api: IngestClient, farms: list[dict[str, Any]], today: date | None = None, client: httpx.Client | None = None, max_files: int = 40) -> int:
+    """Completa la lluvia diaria que falta de todas las estancias.
+
+    Args:
+        api: Cliente de ingest.
+        farms: Estancias a procesar.
+        today: Fecha de hoy (para los tests).
+        client: Cliente HTTP propio (para los tests).
+        max_files: Máximo de fechas a bajar por corrida.
+
+    Returns:
+        Cantidad de filas escritas.
+    """
     today = today or date.today()
     c = client or httpx.Client(timeout=120, follow_redirects=True)
     geoms = {f["id"]: api.farm_geometry(f["id"])["farm"] for f in farms}

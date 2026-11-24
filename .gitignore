@@ -169,3 +169,7 @@ apps/mobile/dist/
 apps/mobile/public/maplibre/
 .claude/worktrees/
 .claude/settings.local.json
+
+# Documentación generada
+/docs-site/site/
+/docs-site/docs/ts/

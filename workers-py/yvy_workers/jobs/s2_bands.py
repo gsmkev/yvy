@@ -14,7 +14,7 @@ from shapely.geometry.base import BaseGeometry
 
 from ..geo import load, to_crs, utm_crs
 
-# SCL: 0 sin dato, 1 saturado, 3 sombra de nube, 8-9 nube, 10 cirros, 11 nieve (PRD §12)
+# SCL: 0 sin dato, 1 saturado, 3 sombra de nube, 8-9 nube, 10 cirros, 11 nieve
 SCL_INVALID = (0, 1, 3, 8, 9, 10, 11)
 RES = 10.0
 ATTRIBUTION = "Contiene datos modificados de Copernicus Sentinel"
@@ -22,6 +22,16 @@ ATTRIBUTION = "Contiene datos modificados de Copernicus Sentinel"
 
 @dataclass
 class Grid:
+    """Grilla común de trabajo de una estancia.
+
+    Attributes:
+        crs: UTM local.
+        transform: Transformación afín (píxeles de 10 m).
+        width: Ancho en píxeles.
+        height: Alto en píxeles.
+        farm: Perímetro de la estancia en `crs`.
+        plots: Pares (id, geometría) de los lotes en `crs`.
+    """
     crs: Any
     transform: Any
     width: int
@@ -31,6 +41,12 @@ class Grid:
 
 
 def make_grid(geom: dict[str, Any], buffer_m: float = 200.0) -> Grid:
+    """Arma la grilla de la estancia: UTM local a 10 m sobre su bbox más un margen.
+
+    Args:
+        geom: Respuesta de ``farm_geometry`` (``farm`` y ``plots``).
+        buffer_m: Margen alrededor del bbox, en metros.
+    """
     farm_wgs = load(geom["farm"])
     crs = utm_crs(farm_wgs.centroid.x, farm_wgs.centroid.y)
     farm = to_crs(farm_wgs, crs)
@@ -43,6 +59,13 @@ def make_grid(geom: dict[str, Any], buffer_m: float = 200.0) -> Grid:
 
 
 def read_band(href: str, grid: Grid, resampling: Resampling = Resampling.bilinear) -> np.ndarray:
+    """Lee una banda COG remuestreada a la grilla.
+
+    Args:
+        href: URL del COG.
+        grid: Grilla de destino.
+        resampling: Método de remuestreo.
+    """
     with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR", CPL_VSIL_CURL_ALLOWED_EXTENSIONS=".tif", GDAL_HTTP_MAX_RETRY="4", GDAL_HTTP_RETRY_DELAY="2"):
         with rasterio.open(href) as src, WarpedVRT(
             src, crs=grid.crs, transform=grid.transform, width=grid.width, height=grid.height, resampling=resampling
@@ -60,6 +83,7 @@ def _scale(item: dict[str, Any], asset: str) -> tuple[float, float]:
 
 
 def reflectance(item: dict[str, Any], asset: str, grid: Grid) -> np.ndarray:
+    """Reflectancia (0-1) de una banda sobre la grilla; NaN donde no hay dato."""
     raw = read_band(item["assets"][asset]["href"], grid).astype("float32")
     scale, offset = _scale(item, asset)
     out = raw * scale + offset
@@ -68,6 +92,7 @@ def reflectance(item: dict[str, Any], asset: str, grid: Grid) -> np.ndarray:
 
 
 def scl_valid(item: dict[str, Any], grid: Grid) -> np.ndarray:
+    """Máscara de píxeles sin nube, sombra, nieve ni saturación según la banda SCL."""
     scl = read_band(item["assets"]["scl"]["href"], grid, Resampling.nearest)
     return ~np.isin(scl, SCL_INVALID)
 

@@ -14,11 +14,23 @@ from shapely.geometry.base import BaseGeometry
 
 
 def utm_crs(lon: float, lat: float) -> CRS:
+    """Zona UTM (WGS84) que contiene el punto.
+
+    Args:
+        lon: Longitud en grados.
+        lat: Latitud en grados; el signo decide entre hemisferio norte y sur.
+    """
     zone = int((lon + 180) // 6) + 1
     return CRS.from_epsg((32700 if lat < 0 else 32600) + zone)
 
 
 def to_crs(geom: BaseGeometry, dst: CRS | str | int) -> BaseGeometry:
+    """Reproyecta una geometría de WGS84 lon/lat a otro sistema de coordenadas.
+
+    Args:
+        geom: Geometría en EPSG:4326.
+        dst: CRS de destino.
+    """
     t = Transformer.from_crs("EPSG:4326", dst, always_xy=True)
     return shapely.transform(geom, lambda xy: np.column_stack(t.transform(xy[:, 0], xy[:, 1])))
 
@@ -30,6 +42,7 @@ def from_crs(geom: BaseGeometry, src: CRS | str | int) -> BaseGeometry:
 
 
 def load(geojson: dict[str, Any]) -> BaseGeometry:
+    """Convierte un GeoJSON (diccionario) en una geometría de Shapely."""
     return shape(geojson)
 
 

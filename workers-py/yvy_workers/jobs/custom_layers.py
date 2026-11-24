@@ -1,7 +1,7 @@
-"""M-17: convierte los GeoTIFF que se subieron como capas propias (dron, mapa de suelos) a PNG en WGS84.
+"""Convierte a PNG en WGS84 los GeoTIFF que se subieron como capas propias (dron, mapa de suelos).
 
-El Worker solo guarda el original en R2 (yvy-media, `layers/<org>/<id>/original.tif`). Acá se reproyecta a
-EPSG:4326, se achica a un tamaño que el navegador dibuje bien y se sube `image.png` junto al original. El resultado
+El Worker solo guarda el original en R2 (yvy-media, ``layers/<org>/<id>/original.tif``). Acá se reproyecta a
+EPSG:4326, se achica a un tamaño que el navegador dibuje bien y se sube ``image.png`` junto al original. El resultado
 (ruta, bytes y 4 esquinas arriba-izq., arriba-der., abajo-der., abajo-izq.) vuelve por /ingest.
 """
 

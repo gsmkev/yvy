@@ -7,6 +7,13 @@ from pathlib import Path
 
 
 def upload_tiles(local: Path, key: str, cache_control: str = "public, max-age=31536000, immutable") -> None:
+    """Sube un PMTiles al bucket público de teselas.
+
+    Args:
+        local: Archivo local.
+        key: Clave del objeto en el bucket.
+        cache_control: Encabezado de caché; por defecto inmutable por un año.
+    """
     import boto3  # importación diferida: los tests no la necesitan
 
     s3 = boto3.client(
@@ -70,9 +77,16 @@ def _media_client():
 
 
 def download_media(key: str, local: Path) -> None:
-    """Archivo del bucket privado yvy-media (capas propias subidas desde la web, M-17)."""
+    """Archivo del bucket privado yvy-media (capas propias subidas desde la web)."""
     _media_client().download_file(os.environ.get("R2_MEDIA_BUCKET", "yvy-media"), key, str(local))
 
 
 def upload_media(local: Path, key: str, content_type: str) -> None:
+    """Sube un archivo al bucket privado ``yvy-media``.
+
+    Args:
+        local: Archivo local.
+        key: Clave del objeto.
+        content_type: Tipo MIME.
+    """
     _media_client().upload_file(str(local), os.environ.get("R2_MEDIA_BUCKET", "yvy-media"), key, ExtraArgs={"ContentType": content_type})

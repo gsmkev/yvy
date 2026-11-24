@@ -1,4 +1,4 @@
-"""Cambio de cobertura entre dos fechas (S-31): monte, pastura, cultivo y otros, por lote, con Sentinel-2 L2A.
+"""Cambio de cobertura entre dos fechas: monte, pastura, cultivo y otros, por lote, con Sentinel-2 L2A.
 
 Pensado para informes ambientales y de bancos: cuántas hectáreas de monte pasaron a pastura, cultivo u otro uso.
 
@@ -58,6 +58,17 @@ FIRST_DATE = date(2017, 1, 1)  # primeras escenas Sentinel-2
 
 @dataclass
 class CoverStack:
+    """Estadísticas por píxel de las escenas de una ventana de fechas.
+
+    Attributes:
+        ndvi: Mediana del NDVI.
+        ndmi: Mediana del NDMI.
+        amp: Amplitud del NDVI (p90 - p10).
+        nobs: Observaciones válidas por píxel.
+        scenes: Cantidad de escenas usadas.
+        first_at: Fecha de la escena más antigua (epoch ms).
+        last_at: Fecha de la escena más reciente (epoch ms).
+    """
     ndvi: np.ndarray
     ndmi: np.ndarray
     amp: np.ndarray
@@ -126,6 +137,7 @@ def analyze_cover(a: np.ndarray, b: np.ndarray, grid: Grid) -> list[dict[str, An
 
 
 def stack_stats(ndvi_stack: list[np.ndarray], ndmi_stack: list[np.ndarray]) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Mediana de NDVI y NDMI, amplitud del NDVI y observaciones válidas por píxel de una pila de escenas."""
     nv, nm = np.stack(ndvi_stack), np.stack(ndmi_stack)
     with np.errstate(all="ignore"), warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
@@ -135,6 +147,11 @@ def stack_stats(ndvi_stack: list[np.ndarray], ndmi_stack: list[np.ndarray]) -> t
 
 
 def build_stack(farm: dict[str, Any], center: date, grid: Grid, now: datetime | None = None) -> CoverStack:
+    """Junta las escenas limpias alrededor de `center` y calcula sus estadísticas.
+
+    Raises:
+        RuntimeError: Si hay muy pocas escenas limpias en la ventana.
+    """
     now = now or datetime.now(timezone.utc)
     c = datetime(center.year, center.month, center.day, tzinfo=timezone.utc)
     start, end = c - timedelta(days=WINDOW_BEFORE_DAYS), min(c + timedelta(days=WINDOW_AFTER_DAYS), now)
@@ -148,6 +165,11 @@ def build_stack(farm: dict[str, Any], center: date, grid: Grid, now: datetime | 
 
 
 def validate_dates(d_from: date, d_to: date, today: date | None = None) -> None:
+    """Valida el rango pedido.
+
+    Raises:
+        ValueError: Si empieza antes de 2017, termina en el futuro o dura menos de 90 días.
+    """
     today = today or datetime.now(timezone.utc).date()
     if d_from < FIRST_DATE or d_to > today or (d_to - d_from).days < 90:
         raise ValueError("Fechas inválidas: desde 2017, no futuras y con al menos 90 días de diferencia")

@@ -1,4 +1,4 @@
-"""Sentinel-2: índices de vegetación (S-07), estadísticas por lote y mosaico de una pasada."""
+"""Sentinel-2: índices de vegetación (NDVI, NDRE, NDMI, EVI), estadísticas por lote y mosaico de una pasada."""
 
 from __future__ import annotations
 
@@ -11,12 +11,17 @@ from shapely.geometry.base import BaseGeometry
 
 from .s2_bands import Grid, reflectance, scl_valid
 
-MIN_VALID_PCT = 60.0  # RF-51
-THIN_PLOT_M = 30.0  # S-11: un lote más angosto que esto casi no tiene píxeles de 10 m "puros"
-INDICES = ("ndvi", "ndre", "ndmi", "evi")  # S-07
+MIN_VALID_PCT = 60.0  # bajo este porcentaje de píxeles válidos el lote no se reporta
+THIN_PLOT_M = 30.0  # un lote más angosto que esto casi no tiene píxeles de 10 m "puros"
+INDICES = ("ndvi", "ndre", "ndmi", "evi")
 
 
 def compute_ndvi(red: np.ndarray, nir: np.ndarray, valid: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """NDVI = (NIR - rojo) / (NIR + rojo).
+
+    Returns:
+        NDVI con NaN donde no es válido, y la máscara de validez.
+    """
     with np.errstate(divide="ignore", invalid="ignore"):
         ndvi = (nir - red) / (nir + red)
     ok = valid & np.isfinite(ndvi) & (np.abs(ndvi) <= 1)
@@ -24,12 +29,12 @@ def compute_ndvi(red: np.ndarray, nir: np.ndarray, valid: np.ndarray) -> tuple[n
 
 
 def is_thin(geom: BaseGeometry, width_m: float = THIN_PLOT_M) -> bool:
-    """S-11: ¿el lote es más angosto que `width_m` en algún tramo? (geom en metros): si no sobrevive a un retroceso de medio ancho."""
+    """¿El lote es más angosto que `width_m` en algún tramo? (geom en metros): si no sobrevive a un retroceso de medio ancho."""
     return bool(shapely.is_empty(geom.buffer(-width_m / 2)))
 
 
 def compute_indices(bands: dict[str, np.ndarray], valid: np.ndarray, wanted: tuple[str, ...] = INDICES) -> dict[str, tuple[np.ndarray, np.ndarray]]:
-    """Índices de vegetación de una escena (S-07). `bands` con reflectancia: red, nir, rededge1 (B05), nir08 (B8A),
+    """Índices de vegetación de una escena. `bands` con reflectancia: red, nir, rededge1 (B05), nir08 (B8A),
     swir16 (B11) y blue. Cada índice devuelve (valores con NaN donde no vale, máscara válida).
 
     NDVI = (NIR - R) / (NIR + R)            vigor
@@ -56,10 +61,10 @@ def compute_indices(bands: dict[str, np.ndarray], valid: np.ndarray, wanted: tup
 
 
 def plot_stats(ndvi: np.ndarray, ok: np.ndarray, grid: Grid, idx: str = "ndvi") -> list[dict[str, Any]]:
-    """Media, p10, p90 y % de píxeles válidos por lote. Descarta lotes con < 60 % válido (RF-51).
+    """Media, p10, p90 y % de píxeles válidos por lote. Descarta lotes con < 60 % válido.
 
     Los lotes de menos de 30 m de ancho usan todos los píxeles que toca el polígono (si no, quedan sin ninguno) y
-    se marcan `lowConfidence`: esos píxeles mezclan el lote con lo de al lado (S-11).
+    se marcan `lowConfidence`: esos píxeles mezclan el lote con lo de al lado.
     """
     out = []
     for plot_id, geom in grid.plots:
@@ -110,4 +115,5 @@ def mosaic_indices(items: list[dict[str, Any]], grid: Grid, wanted: tuple[str, .
 
 
 def mosaic_ndvi(items: list[dict[str, Any]], grid: Grid) -> tuple[np.ndarray, np.ndarray]:
+    """Mosaico de NDVI de una pasada; atajo de `mosaic_indices` para un solo índice."""
     return mosaic_indices(items, grid, ("ndvi",))["ndvi"]

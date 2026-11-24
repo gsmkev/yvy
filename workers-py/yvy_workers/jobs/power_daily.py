@@ -1,6 +1,6 @@
 """NASA POWER diario por estancia: temperatura mínima y máxima y humedad del suelo de la última campaña.
 
-Alimenta la fenología por grados-día (A-04), el balance hídrico (C-08) y la ventana de siembra (A-05). El Worker solo
+Alimenta la fenología por grados-día, el balance hídrico y la ventana de siembra. El Worker solo
 baja los últimos 14 días para el aviso de sequía; acá se completa la historia de la campaña (400 días por defecto) para
 que los grados-día se acumulen desde la siembra. Es idempotente: se vuelve a escribir la ventana entera (misma clave).
 """
@@ -25,6 +25,18 @@ LAG_DAYS = 2
 
 
 def fetch_power(lat: float, lon: float, start: date, end: date, client: httpx.Client | None = None) -> dict[str, dict[str, float]]:
+    """Serie diaria de NASA POWER para un punto.
+
+    Args:
+        lat: Latitud.
+        lon: Longitud.
+        start: Primer día.
+        end: Último día.
+        client: Cliente HTTP propio (para los tests).
+
+    Returns:
+        Parámetros de POWER, cada uno como ``{'AAAAMMDD': valor}``.
+    """
     c = client or httpx.Client(timeout=120)
     r = c.get(
         POWER,

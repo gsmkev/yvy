@@ -1,8 +1,8 @@
-"""Índice de precipitación estandarizado, SPI a 1, 3 y 6 meses (C-07).
+"""Índice de precipitación estandarizado, SPI a 1, 3 y 6 meses.
 
 - Lluvia reciente: CHIRPS diario de la estancia (la que ya guarda chirps_daily), por meses calendario completos.
 - Referencia: normal 1991-2020 de NASA POWER (PRECTOTCORR), la misma que usa la climatología de la estancia
-  (docs/adr/0003: CHIRPS de 30 años serían ~11.000 archivos). Se ajusta una distribución gamma a los totales de
+  (CHIRPS de 30 años serían ~11.000 archivos). Se ajusta una distribución gamma a los totales de
   cada ventana de n meses y se convierte la lluvia reciente en un puntaje z (McKee et al., 1993).
 - Si en la ventana reciente faltan días de CHIRPS (menos del 90 %), ese SPI queda en null con motivo.
 
@@ -83,6 +83,7 @@ def fit_gamma(values: list[float]) -> tuple[float, float, float] | None:
 
 
 def spi_from_fit(x: float, fit: tuple[float, float, float]) -> float:
+    """SPI de una lluvia acumulada `x` dada la gamma ajustada (forma, escala, proporción de ceros), acotado a ±4."""
     shape, scale, q = fit
     h = q + (1 - q) * gamma_cdf(x, shape, scale)
     h = min(max(h, 1e-6), 1 - 1e-6)
@@ -90,6 +91,7 @@ def spi_from_fit(x: float, fit: tuple[float, float, float]) -> float:
 
 
 def window_months(end_year: int, end_month: int, n: int) -> list[tuple[int, int]]:
+    """Los `n` meses que terminan en (end_year, end_month), del más reciente al más antiguo."""
     out = []
     y, m = end_year, end_month
     for _ in range(n):
@@ -123,6 +125,16 @@ def last_complete_month(today: date, last_data_day: date | None) -> tuple[int, i
 def compute_spi(
     chirps: dict[date, float], reference: dict[tuple[int, int], float], today: date
 ) -> dict[str, Any]:
+    """SPI de la estancia a 1, 3 y 6 meses.
+
+    Args:
+        chirps: Lluvia diaria reciente.
+        reference: Lluvia mensual de la normal (por (año, mes)).
+        today: Fecha de hoy.
+
+    Returns:
+        Informe con un SPI por escala; ``spi`` es None con el motivo en ``reason`` si falta referencia o dato reciente.
+    """
     through_y, through_m = last_complete_month(today, max(chirps) if chirps else None)
     scales: list[dict[str, Any]] = []
     for n in SCALES:

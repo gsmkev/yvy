@@ -1,4 +1,4 @@
-"""Sentinel-2 L2A desde Earth Search (AWS Open Data, COG). PRD §12 s2_ingest / s2_basemap, RF-50..55.
+"""Sentinel-2 L2A desde Earth Search (AWS Open Data, COG): índices por lote, historia y mapa base.
 
 Todo se lee sobre una grilla común: UTM local de la estancia a 10 m, recortada al bbox (+200 m).
 Solo se bajan los bloques del COG que tocan la estancia.
@@ -62,7 +62,7 @@ COLLECTION = "sentinel-2-l2a"
 SOURCE = "sentinel-2-l2a"
 MAX_SCENE_CLOUD = 80.0
 MAX_ITEMS = 400  # 180 días x 2 satélites x hasta 3 teselas MGRS entran de sobra
-HISTORY_FIRST_YEAR = 2017  # S-03: primer año con Sentinel-2 completo (A y B)
+HISTORY_FIRST_YEAR = 2017  # primer año con Sentinel-2 completo (A y B)
 
 
 # Mapa base con contexto: 3 km alrededor de la estancia (con 1 km una estancia chica se veía como un recorte aislado)
@@ -71,6 +71,17 @@ BASEMAP_MARGIN_DEG = 0.03
 
 
 def search(bbox: list[float], start: datetime, end: datetime, max_cloud: float) -> list[dict[str, Any]]:
+    """Busca escenas Sentinel-2 L2A en Earth Search.
+
+    Args:
+        bbox: [minLon, minLat, maxLon, maxLat].
+        start: Inicio del período.
+        end: Fin del período.
+        max_cloud: Nubosidad máxima de la escena, en %.
+
+    Returns:
+        Ítems STAC en orden cronológico (hasta ``MAX_ITEMS``).
+    """
     from pystac_client import Client
 
     client = Client.open(STAC_URL)
@@ -90,6 +101,7 @@ def _epoch_ms(item: dict[str, Any]) -> int:
 
 
 def farm_bbox(farm: dict[str, Any]) -> list[float]:
+    """bbox [minLon, minLat, maxLon, maxLat] de la estancia."""
     return [farm["minLon"], farm["minLat"], farm["maxLon"], farm["maxLat"]]
 
 
@@ -161,7 +173,7 @@ def s2_ingest(api: IngestClient, farm: dict[str, Any], days: int = DAILY_DAYS, u
         acquired, ndvi, valid = latest["ndvi"]
         done["problems"] = upload_problem_areas(api, grid, ndvi, valid, acquired)
     if upload:
-        # NDVI siempre; NDRE, NDMI y EVI son capas opcionales del selector: si una falla no frena el resto (S-07)
+        # NDVI siempre; NDRE, NDMI y EVI son capas opcionales del selector: si una falla no frena el resto
         for idx in INDICES:
             if idx in latest:
                 acquired, values, valid = latest[idx]
@@ -175,7 +187,7 @@ def s2_ingest(api: IngestClient, farm: dict[str, Any], days: int = DAILY_DAYS, u
 
 
 def s2_history(api: IngestClient, farm: dict[str, Any], first_year: int = HISTORY_FIRST_YEAR, today: date | None = None) -> dict[str, int]:
-    """S-03: vigor (NDVI por lote) de todas las campañas desde 2017, a pedido. Año por año para no pasar de MAX_ITEMS.
+    """Vigor (NDVI por lote) de todas las campañas desde 2017, a pedido. Año por año para no pasar de MAX_ITEMS.
     Idempotente: las pasadas ya procesadas se saltean. Sin capas ni áreas problema: solo la historia por lote."""
     now = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc) if today else datetime.now(timezone.utc)
     geom = api.farm_geometry(farm["id"])
@@ -196,7 +208,7 @@ def s2_history(api: IngestClient, farm: dict[str, Any], first_year: int = HISTOR
 
 
 def upload_problem_areas(api: IngestClient, grid: Grid, ndvi: np.ndarray, ok: np.ndarray, acquired: int) -> int:
-    """S-08: áreas muy por debajo de la mediana del lote en la última escena válida. Falla sin frenar el resto."""
+    """Áreas problema: muy por debajo de la mediana del lote en la última escena válida. Falla sin frenar el resto."""
     try:
         by_plot: dict[str, list[dict[str, Any]]] = {}
         for a in find_problem_areas(ndvi, ok, grid.plots, grid.transform, grid.crs, grid.width, grid.height):
@@ -209,7 +221,7 @@ def upload_problem_areas(api: IngestClient, grid: Grid, ndvi: np.ndarray, ok: np
 
 
 def s2_basemap(api: IngestClient, farm: dict[str, Any], days: int = BASEMAP_DAYS, upload: bool = True) -> int:
-    """Compuesto mediana de color natural con baja nubosidad (RF-55). Devuelve bytes del PMTiles."""
+    """Compuesto mediana de color natural con baja nubosidad. Devuelve bytes del PMTiles."""
     end = datetime.now(timezone.utc)
     items = search(farm_bbox(farm), end - timedelta(days=days), end, 30.0)[-12:]
     if not items:
@@ -236,6 +248,20 @@ def s2_basemap(api: IngestClient, farm: dict[str, Any], days: int = BASEMAP_DAYS
 def publish_layer(
     api: IngestClient, farm: dict[str, Any], grid: Grid, layer: str, acquired: int, rgba: np.ndarray, margin_deg: float = 0.01
 ) -> int:
+    """Escribe el PMTiles, lo sube a R2 y registra la capa.
+
+    Args:
+        api: Cliente de ingest.
+        farm: Estancia.
+        grid: Grilla de trabajo.
+        layer: Nombre de la capa (``ndvi``, ``true_color``, ...).
+        acquired: Fecha de la imagen (epoch ms).
+        rgba: Imagen (4, alto, ancho) uint8.
+        margin_deg: Margen en grados alrededor del bbox de la estancia.
+
+    Returns:
+        Tamaño del PMTiles en bytes.
+    """
     bounds = (farm["minLon"] - margin_deg, farm["minLat"] - margin_deg, farm["maxLon"] + margin_deg, farm["maxLat"] + margin_deg)
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / f"{layer}.pmtiles"

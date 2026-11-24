@@ -1,4 +1,4 @@
-"""Zonas de manejo a partir de varias campañas de vigor (A-32).
+"""Zonas de manejo a partir de varias campañas de vigor.
 
 Por campaña se arma un compuesto del NDVI máximo de la estación de cultivo (diciembre a marzo; el máximo de varias pasadas
 sorteaba nubes) a 10 m. Dentro de cada lote, el NDVI de cada campaña se pasa a puntaje z (cuánto se aparta de la media

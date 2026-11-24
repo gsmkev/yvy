@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cropKc, dayOfYearIso, et0Hargreaves, extraterrestrialMm, waterBalance, type BalanceDay } from "../src";
 
-describe("balance hídrico (C-08)", () => {
+describe("balance hídrico", () => {
   it("Kc por fase de la soja", () => {
     expect(cropKc("soja", -1)).toBeNull();
     expect(cropKc("soja", 0)).toBe(0.4);
@@ -53,7 +53,7 @@ describe("balance hídrico (C-08)", () => {
     expect(waterBalance(days(10, 5), "soja", "2026-12-01", -27)!.risk).toBeNull();
   });
 
-  it("A-43: el riego suma al balance y sin temperatura queda solo lluvia más riego", () => {
+  it("el riego suma al balance y sin temperatura queda solo lluvia más riego", () => {
     const d = days(20, 0);
     const dry = waterBalance(d, "soja", "2026-12-01", -27)!;
     const irrigated = waterBalance(d, "soja", "2026-12-01", -27, { irrigation: { "2026-12-05": 30, "2026-12-19": 20 } })!;

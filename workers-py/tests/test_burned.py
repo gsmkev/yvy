@@ -1,3 +1,5 @@
+"""Pruebas de área quemada: agrupación de focos en incendios, NBR y severidad por lote."""
+
 from datetime import datetime, timezone
 
 import numpy as np

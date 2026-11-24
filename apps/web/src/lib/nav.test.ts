@@ -1,3 +1,4 @@
+/** Pruebas de navegación lateral; sección activa. */
 import { describe, expect, it } from "vitest";
 import { buildNav, isMapPath, isReportsPath, type NavContext } from "./nav";
 

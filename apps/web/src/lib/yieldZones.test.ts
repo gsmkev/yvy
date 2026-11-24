@@ -12,7 +12,7 @@ const zones = [
 const cells = (t: [number, number, number]): [number, number, number, number][] =>
   [0, 1, 2].flatMap((z) => Array.from({ length: 6 }, (_, i): [number, number, number, number] => [z + 0.1 + i * 0.1, 0.5, t[z]!, 10]));
 
-describe("rinde por zona (A-22)", () => {
+describe("rinde por zona", () => {
   it("promedia las celdas que caen dentro de cada zona", () => {
     const r = zoneYields(zones, cells([2, 3, 4]));
     expect(r.map((x) => x.meanTHa)).toEqual([2, 3, 4]);

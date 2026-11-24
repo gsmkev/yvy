@@ -15,7 +15,7 @@ const kv = () => {
   return { getKv: (k: string) => m.get(k) ?? null, setKv: (k: string, v: string | null) => void (v === null ? m.delete(k) : m.set(k, v)) };
 };
 
-describe("F-14 · campos propios en el flujo de anotar", () => {
+describe("campos propios en el flujo de anotar", () => {
   it("se preguntan después de las estándar, con textos escritos por la organización", () => {
     const steps = stepsFor("scouting", {}, { waterPois: 0, extraFields: fields });
     const std = FLOWS.scouting.length;

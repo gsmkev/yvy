@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { POI_KINDS, t } from "@yvy/shared";
 import { call, createFarmWithPlots, createOrgWithOwner } from "./helpers";
 
-describe("tipos de punto de interés (M-19)", () => {
+describe("tipos de punto de interés", () => {
   it("incluye silo, galpón, tranquera, puente, molino, bebedero, manga y embarcadero", () => {
     for (const k of ["silo", "shed", "gate", "bridge", "mill", "trough", "chute", "dock", "school"])
       expect(POI_KINDS).toContain(k);

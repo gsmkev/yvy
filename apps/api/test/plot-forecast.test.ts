@@ -16,7 +16,7 @@ function fakeMet() {
   return { fetchFn, urls, agents };
 }
 
-describe("C-03 · pronóstico por lote en estancias grandes", () => {
+describe("pronóstico por lote en estancias grandes", () => {
   it("solo las estancias de más de 2.000 ha reciben pronóstico por lote", async () => {
     const owner = await createOrgWithOwner();
     const big = await createFarmWithPlots(owner.token, 2); // 0,2° ≈ 49.000 ha

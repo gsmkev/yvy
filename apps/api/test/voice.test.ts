@@ -1,4 +1,4 @@
-/** Nota de voz (F-09): adjunto audio/mp4 sin miniatura; no le quita lugar a las fotos y se limita a una por registro. */
+/** Nota de voz: adjunto audio/mp4 sin miniatura; no le quita lugar a las fotos y se limita a una por registro. */
 import { describe, expect, it } from "vitest";
 import { LIMITS, newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
 import { call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";

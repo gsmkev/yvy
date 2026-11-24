@@ -4,7 +4,7 @@ import { isStaleVisit, stalePlots, staleDaysOrDefault } from "../src";
 const DAY = 86_400_000;
 const now = Date.UTC(2026, 10, 12);
 
-describe("lotes sin visitar (T-07)", () => {
+describe("lotes sin visitar", () => {
   it("nunca visitado o más viejo que N días", () => {
     expect(isStaleVisit(null, 7, now)).toBe(true);
     expect(isStaleVisit(now - 8 * DAY, 7, now)).toBe(true);

@@ -1,4 +1,4 @@
-/** E-05: costos y ventas con centro de costo (estancia, lote, campaña, actividad). El agrónomo no ve montos. */
+/** Costos y ventas con centro de costo (estancia, lote, campaña, actividad). El agrónomo no ve montos. */
 import { describe, expect, it } from "vitest";
 import { call, createFarmWithPlots, createOrgWithOwner } from "./helpers";
 import { erpGet, erpPost, erpSetup } from "./erp-helpers";
@@ -13,7 +13,7 @@ const cost = (extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 
-describe("costos y ventas (E-05)", () => {
+describe("costos y ventas", () => {
   it("un lote fija la estancia; el costo guarda centro de costo, moneda y valor en guaraníes", async () => {
     const { owner, farmId, plotIds } = await erpSetup();
     const season = await call<any>("POST", "/org/seasons", { token: owner.token, body: { name: "Zafra 2026/27" } });

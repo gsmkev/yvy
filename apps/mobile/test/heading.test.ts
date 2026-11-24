@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { angleDelta, mapBearingFor, norm360, shouldRotate, smoothHeading } from "../src/lib/heading";
 
-describe("rumbo del mapa (F-04)", () => {
+describe("rumbo del mapa", () => {
   it("normaliza ángulos", () => {
     expect(norm360(-10)).toBe(350);
     expect(norm360(370)).toBe(10);

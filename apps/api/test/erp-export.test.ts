@@ -1,4 +1,4 @@
-/** I-06: exportación para sistemas contables locales: filas de compras, ventas y caja, datos de IVA y formatos guardados. */
+/** Exportación para sistemas contables locales: filas de compras, ventas y caja, datos de IVA y formatos guardados. */
 import { describe, expect, it } from "vitest";
 import { defaultExportConfig, libroIvaConfig, renderExport, type ExportDoc } from "@yvy/shared";
 import { newId } from "@yvy/shared";
@@ -16,7 +16,7 @@ async function setup() {
   return { ...s, purchaseId: o.body.id as string, supplierId: supplier.body.id as string };
 }
 
-describe("exportación para sistemas contables (I-06)", () => {
+describe("exportación para sistemas contables", () => {
   it("compras: facturas con RUC y número; el desglose de IVA se carga por documento y entra al libro IVA", async () => {
     const s = await setup();
     let r = (await rows(s.owner.token, "purchases")).body;

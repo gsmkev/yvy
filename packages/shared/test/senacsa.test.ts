@@ -1,3 +1,4 @@
+/** Pruebas de calendario oficial de SENACSA; recordatorios. */
 import { describe, expect, it } from "vitest";
 import { officialCampaigns, senacsaPlanDate, senacsaReminderWindow, senacsaReminders, SENACSA_CAMPAIGNS } from "../src";
 

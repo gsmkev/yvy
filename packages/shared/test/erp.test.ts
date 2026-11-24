@@ -1,3 +1,4 @@
+/** Pruebas de costo promedio ponderado; lotes (FEFO). */
 import { describe, expect, it } from "vitest";
 import { avgUnitCost, consumptionLines, consumptionProductIds, daysUntil, lotsRemaining, moveValue, type BaseUnit } from "../src/erp";
 

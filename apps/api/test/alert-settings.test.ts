@@ -1,3 +1,4 @@
+/** Pruebas de reglas con umbrales configurables; ajustes de avisos por estancia. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
@@ -45,7 +46,7 @@ describe("reglas con umbrales configurables", () => {
   });
 });
 
-describe("ajustes de avisos por estancia (C-04)", () => {
+describe("ajustes de avisos por estancia", () => {
   it("devuelve los valores por defecto y guarda los del dueño", async () => {
     const owner = await createOrgWithOwner();
     const { farmId } = await createFarmWithPlots(owner.token, 1);

@@ -1,4 +1,4 @@
-/** G-21: animales con caravana, búsqueda, historial y permisos. */
+/** Animales con caravana, búsqueda, historial y permisos. */
 import { describe, expect, it } from "vitest";
 import { addMemberAndLogin, call, createOrgWithOwner, pullAll } from "./helpers";
 import { DAY, setupHerd } from "./herd-helpers";

@@ -9,7 +9,7 @@ import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, creat
 const ask = (token: string, body: Record<string, unknown> = { plan: "active" }) =>
   call<{ id: string; error?: string }>("POST", "/org/plan-request", { token, body });
 
-describe("plan y pedido de cambio desde la web (P-10)", () => {
+describe("plan y pedido de cambio desde la web", () => {
   it("el dueño ve su plan, los topes efectivos y el uso", async () => {
     const owner = await createOrgWithOwner();
     await createFarmWithPlots(owner.token, 1);

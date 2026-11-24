@@ -1,3 +1,4 @@
+/** Pruebas de formatos; gráficos. */
 import { describe, expect, it } from "vitest";
 import { ageText, fmtNumber, parseDecimal } from "../src/office/format";
 import { barFractions, buildChart, niceMax, segmentPath } from "../src/office/chartMath";

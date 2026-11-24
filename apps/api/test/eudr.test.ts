@@ -35,7 +35,7 @@ const send = async (body: unknown) => {
   return call("POST", "/ingest/eudr", { body: raw, headers: await signed("POST", "/ingest/eudr", raw) });
 };
 
-describe("S-30 · indicador EUDR por lote", () => {
+describe("indicador EUDR por lote", () => {
   it("ingest guarda el resultado, lo reemplaza y la estancia lo muestra con el nombre del lote", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 2);

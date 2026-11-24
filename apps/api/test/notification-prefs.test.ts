@@ -18,7 +18,7 @@ const draft = (kind: AlertDraft["kind"], validFrom: string): AlertDraft => ({
 });
 const prefs = (over: Record<string, unknown>) => ({ ...DEFAULT_NOTIFICATION_PREFS, ...over });
 
-describe("preferencias de notificación (U-29)", () => {
+describe("preferencias de notificación", () => {
   it("GET devuelve los valores por defecto y qué le llega a cada rol", async () => {
     const owner = await createOrgWithOwner();
     const worker = await addMemberAndLogin(owner.token, "worker");

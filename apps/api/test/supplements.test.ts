@@ -1,4 +1,4 @@
-/** G-31: suplementación y sal mineral por potrero. */
+/** Suplementación y sal mineral por potrero. */
 import { describe, expect, it } from "vitest";
 import { summarizeSupplements } from "@yvy/shared";
 import { addMemberAndLogin, call, createOrgWithOwner } from "./helpers";

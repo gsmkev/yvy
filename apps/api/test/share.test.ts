@@ -10,7 +10,7 @@ async function setup() {
   return { owner, farmId };
 }
 
-describe("enlace de solo lectura (K-04)", () => {
+describe("enlace de solo lectura", () => {
   it("el dueño crea un enlace y se ve el resumen sin sesión; solo se guarda el hash", async () => {
     const { owner, farmId } = await setup();
     const created = await call<{ id: string; token: string; expiresAt: number }>(

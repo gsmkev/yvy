@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const css = readFileSync(resolve(process.cwd(), "src/styles.css"), "utf8");
 
-describe("foco visible en el mapa (U-26)", () => {
+describe("foco visible en el mapa", () => {
   it("el lienzo no pierde el foco del teclado: se marca el borde del mapa entero", () => {
     const sel = ".maplibregl-map:has(.maplibregl-canvas:focus-visible)::after";
     expect(css).toContain(sel);

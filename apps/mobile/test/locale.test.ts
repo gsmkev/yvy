@@ -10,7 +10,7 @@ const memKv = (): Kv => {
 
 afterEach(() => setLocale(DEFAULT_LOCALE));
 
-describe("idioma de la app (U-22)", () => {
+describe("idioma de la app", () => {
   it("sin elección usa es-PY; ignora un valor guardado que no es un idioma", () => {
     const kv = memKv();
     expect(readLocale(kv)).toBe("es-PY");

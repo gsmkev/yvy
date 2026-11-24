@@ -17,7 +17,7 @@ const application = (productId: string | undefined, name = "Fungicida X") => ({
   products: [{ productId, name, dose: 0.5, unit: "l_ha" }],
 });
 
-describe("A-14 · carencia antes de cosechar", () => {
+describe("carencia antes de cosechar", () => {
   it("avisa hasta cuándo no cosechar y detecta la cosecha hecha antes de tiempo", async () => {
     const { owner, farmId, plotIds, productId } = await setup();
     const t0 = Date.now();

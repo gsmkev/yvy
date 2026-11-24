@@ -1,4 +1,4 @@
-/** E-32: presupuesto de campaña por lote, cultivo y actividad frente a lo real (cost_entries). */
+/** Presupuesto de campaña por lote, cultivo y actividad frente a lo real (cost_entries). */
 import { describe, expect, it } from "vitest";
 import { budgetVsActual } from "@yvy/shared";
 import { call } from "./helpers";
@@ -15,7 +15,7 @@ const cost = (s: S, extra: Record<string, unknown>) =>
 const line = (s: S, extra: Record<string, unknown>) => erpPost(s.owner.token, "budget-lines", { seasonId: s.seasonId, category: "input", amountPyg: 5_000_000, ...extra });
 const compare = async (s: S, token = s.owner.token) => (await erpGet<any>(token, `budget/compare?seasonId=${s.seasonId}`)).body;
 
-describe("presupuesto de campaña (E-32)", () => {
+describe("presupuesto de campaña", () => {
   it("budgetVsActual: por lote, por cultivo y de toda la campaña, con actividad y rubro", () => {
     const rows = budgetVsActual(
       [

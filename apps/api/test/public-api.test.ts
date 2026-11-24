@@ -1,4 +1,4 @@
-/** I-01: API pública de solo lectura con tokens por organización. */
+/** API pública de solo lectura con tokens por organización. */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as s from "@yvy/shared/schema";
 import { eq } from "drizzle-orm";
@@ -9,7 +9,7 @@ const makeToken = async (ownerToken: string, name = "Contabilidad") =>
   (await call<{ id: string; token: string }>("POST", "/org/api-tokens", { token: ownerToken, body: { name } })).body;
 const api = (path: string, token: string, method = "GET") => call<any>(method, `/v1${path}`, { token });
 
-describe("I-01 · tokens", () => {
+describe("tokens", () => {
   it("solo el dueño los crea; se ven una vez y en la base queda solo el hash", async () => {
     const owner = await createOrgWithOwner();
     const admin = await addMemberAndLogin(owner.token, "admin");
@@ -36,7 +36,7 @@ describe("I-01 · tokens", () => {
   });
 });
 
-describe("I-01 · lectura", () => {
+describe("lectura", () => {
   it("devuelve estancias, lotes, registros y avisos de la organización del token, y nada más", async () => {
     const a = await createOrgWithOwner("A");
     const b = await createOrgWithOwner("B");

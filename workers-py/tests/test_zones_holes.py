@@ -1,3 +1,5 @@
+"""Pruebas de recorte de agujeros de los polígonos de zonas."""
+
 from shapely.geometry import Polygon
 
 from yvy_workers.jobs.zones import MAX_HOLES, trim_holes

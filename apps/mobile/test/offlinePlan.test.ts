@@ -3,7 +3,7 @@ import { fitsBudget, overallProgress, planDownloads, type PackInfo } from "../sr
 
 const pack = (farmId: string, name: string, over: Partial<PackInfo> = {}): PackInfo => ({ farmId, name, layerCount: 2, upToDate: false, missingBytes: 10_000_000, ...over });
 
-describe("mapas sin conexión de varias estancias (F-26)", () => {
+describe("mapas sin conexión de varias estancias", () => {
   it("lista solo las estancias con algo para bajar y suma el peso", () => {
     const plan = planDownloads([
       pack("b", "Santa Rita"),

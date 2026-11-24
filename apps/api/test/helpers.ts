@@ -1,3 +1,4 @@
+/** Utilidades compartidas de las pruebas del Worker: sesiones, organizaciones, estancias y llamadas a la app. */
 import { env } from "cloudflare:test";
 import { eq } from "drizzle-orm";
 import type { Polygon } from "geojson";

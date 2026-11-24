@@ -8,7 +8,7 @@ import { FLOWS, KINDS_FOR, SINGLE_PLOT_KINDS, stepsFor } from "../src/lib/annota
 const keys = (kind: Parameters<typeof stepsFor>[0], a: Record<string, unknown> = {}) =>
   stepsFor(kind, a, { waterPois: 0 }).map((s) => s.key);
 
-describe("G-13 abigeato", () => {
+describe("abigeato", () => {
   it("el flujo es categoría, cabezas y denuncia opcional; es de un solo potrero y de potreros", () => {
     expect(keys("theft")).toEqual(["category", "head", "policeReport"]);
     expect(FLOWS.theft.at(-1)).toMatchObject({ key: "policeReport", optional: true });
@@ -24,7 +24,7 @@ describe("G-13 abigeato", () => {
   });
 });
 
-describe("G-31 suplementación", () => {
+describe("suplementación", () => {
   it("el flujo es tipo y kilos, y se ofrece en potreros", () => {
     expect(keys("supplement")).toEqual(["type", "kg", "note"]);
     expect(KINDS_FOR("pasture")).toContain("supplement");
@@ -35,7 +35,7 @@ describe("G-31 suplementación", () => {
   });
 });
 
-describe("G-22 pesadas", () => {
+describe("pesadas", () => {
   it("con caravana no se pregunta el lote ni las cabezas; sin caravana sí", () => {
     expect(keys("weighing")).toEqual(["kg", "tag", "group", "head"]);
     expect(keys("weighing", { tag: "PY-1" })).toEqual(["kg", "tag"]);
@@ -51,7 +51,7 @@ describe("G-22 pesadas", () => {
   });
 });
 
-describe("G-20 reproducción", () => {
+describe("reproducción", () => {
   it("el flujo cambia según el evento y con caravana no pregunta cabezas", () => {
     expect(keys("reproduction", { event: "service" })).toEqual(["event", "tag", "head", "method"]);
     expect(keys("reproduction", { event: "pregnancy_check" })).toEqual(["event", "tag", "head", "pregnant"]);
@@ -70,7 +70,7 @@ describe("G-20 reproducción", () => {
   });
 });
 
-describe("G-21 animales en el celular", () => {
+describe("animales en el celular", () => {
   it("busca por caravana y arma el historial sin señal", async () => {
     const db = new LocalDb(nodeSql(), () => Date.now());
     db.migrate();

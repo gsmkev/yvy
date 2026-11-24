@@ -1,3 +1,4 @@
+/** Pruebas de jobs al crear la estancia; historia por lote. */
 import { env } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { hmacHex } from "../src/lib/crypto";
@@ -23,7 +24,7 @@ afterEach(() => {
   delete secrets.GITHUB_REPO;
 });
 
-describe("S-02 · jobs al crear la estancia", () => {
+describe("jobs al crear la estancia", () => {
   it("dispara new_farm en GitHub con la estancia y deja el estado en pending", async () => {
     secrets.GITHUB_DISPATCH_TOKEN = "ghp_test";
     secrets.GITHUB_REPO = "koeti/yvy";
@@ -104,7 +105,7 @@ describe("S-02 · jobs al crear la estancia", () => {
   });
 });
 
-describe("S-01 · historia por lote", () => {
+describe("historia por lote", () => {
   it("vuelve a pedir la historia al importar los primeros lotes, no en las importaciones siguientes", async () => {
     secrets.GITHUB_DISPATCH_TOKEN = "ghp_test";
     secrets.GITHUB_REPO = "koeti/yvy";

@@ -1,4 +1,4 @@
-/** Push y pull del Worker (PRD §11). */
+/** Push y pull del Worker. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
@@ -266,7 +266,7 @@ describe("sync/pull", () => {
     expect(env.DB).toBeTruthy();
   });
 
-  it("comentarios de tarea desde el celular (T-02): idempotentes, con nombre del servidor y solo en tareas propias", async () => {
+  it("comentarios de tarea desde el celular: idempotentes, con nombre del servidor y solo en tareas propias", async () => {
     const { owner, worker, farmId } = await setup();
     const other = await addMemberAndLogin(owner.token, "worker");
     const mk = (assigneeId: string) =>

@@ -1,3 +1,4 @@
+/** Pruebas de umbral de plagas (regla pura); job de plagas. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
@@ -109,7 +110,7 @@ describe("job de plagas", () => {
   });
 });
 
-describe("cultivo del plan de la campaña en los avisos (A-01)", () => {
+describe("cultivo del plan de la campaña en los avisos", () => {
   it("un lote sin cultivo en el texto libre pero con soja en el plan activo cuenta como soja", async () => {
     const owner = await createOrgWithOwner();
     const { plotIds } = await createFarmWithPlots(owner.token, 1);

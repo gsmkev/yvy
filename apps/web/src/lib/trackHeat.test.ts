@@ -11,7 +11,7 @@ const row = (id: string, plotId: string | null, over: Record<string, unknown> = 
   data: { line: [[-55, -26], [-55, -26 + 100 * M]], distanceM: 100, ...over },
 });
 
-describe("recorridas en el mapa de calor (F-06)", () => {
+describe("recorridas en el mapa de calor", () => {
   it("lee la línea y descarta datos rotos", () => {
     expect(trackLine(row("a", null))).toHaveLength(2);
     expect(trackLine({ kind: "track", data: { line: [[1, 2]] } })).toBeNull();

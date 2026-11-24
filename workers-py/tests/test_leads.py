@@ -1,3 +1,5 @@
+"""Pruebas de informe gratis de riesgo climático generado a partir de los pedidos."""
+
 import json
 from datetime import date, timedelta
 

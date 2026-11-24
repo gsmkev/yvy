@@ -1,7 +1,8 @@
+/** Pruebas de calendario semanal; calendario de la app. */
 import { describe, expect, it } from "vitest";
 import { dueLabel, tasksByDay, weekDays, weekStart } from "../src/calendar";
 
-describe("calendario semanal (T-04)", () => {
+describe("calendario semanal", () => {
   it("la semana empieza el lunes", () => {
     expect(weekStart("2026-11-11")).toBe("2026-11-09"); // miércoles
     expect(weekStart("2026-11-09")).toBe("2026-11-09");

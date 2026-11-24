@@ -1,4 +1,4 @@
-/** E-30 y E-31: costo por hectárea y por tonelada, y margen bruto por lote, cultivo, actividad y campaña. */
+/** Costo por hectárea y por tonelada, y margen bruto por lote, cultivo, actividad y campaña. */
 import { describe, expect, it } from "vitest";
 import { resultFigures } from "@yvy/shared";
 import { call, createOrgWithOwner } from "./helpers";
@@ -29,7 +29,7 @@ async function load(s: S) {
   await push(s.owner.token, [rec(s.farmId, p0, "harvest", { seasonId: s.seasonId, tons: 20 })]);
 }
 
-describe("costo y margen (E-30, E-31)", () => {
+describe("costo y margen", () => {
   it("por lote: costo por ha y por tonelada, y margen", async () => {
     const s = await setup();
     await load(s);

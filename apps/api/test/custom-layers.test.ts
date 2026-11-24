@@ -62,7 +62,7 @@ const upload = (
   );
 };
 
-describe("capas propias (M-17)", () => {
+describe("capas propias", () => {
   it("guarda un PNG con 4 esquinas, lo lista, lo sirve y lo borra", async () => {
     const { owner, farmId } = await setup();
     const res = await upload(owner.token, farmId, PNG, { query: { corners: CORNERS } });

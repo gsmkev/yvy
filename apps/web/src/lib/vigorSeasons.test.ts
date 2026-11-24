@@ -3,7 +3,7 @@ import { campaignCount, campaignDayLabel, campaignLabel, campaignStartYear, dayO
 
 const d = (iso: string) => Date.parse(`${iso}T12:00:00Z`);
 
-describe("campañas de vigor (S-03)", () => {
+describe("campañas de vigor", () => {
   it("la campaña va de julio a junio", () => {
     expect(campaignStartYear(d("2024-07-01"))).toBe(2024);
     expect(campaignStartYear(d("2025-06-30"))).toBe(2024);

@@ -14,7 +14,7 @@ import { clearThumbCache, layerThumb, thumbCacheSize, thumbTile, tileOf } from "
 
 const farm: [number, number, number, number] = [-57.01, -25.01, -56.99, -24.99]; // 0,02° de ancho
 
-describe("miniaturas del selector de fecha (S-04)", () => {
+describe("miniaturas del selector de fecha", () => {
   beforeEach(() => {
     clearThumbCache();
     getZxy.mockClear();

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { newId } from "../src/ids";
 import { parsePoiQr, poiQrPayload } from "../src/qr";
 
-describe("QR de puntos de interés (F-28)", () => {
+describe("QR de puntos de interés", () => {
   it("ida y vuelta", () => {
     const id = newId();
     expect(parsePoiQr(poiQrPayload(id))).toBe(id);

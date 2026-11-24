@@ -13,7 +13,7 @@ const get = (token: string, e: never) =>
   app.request("/org/farms", { headers: { authorization: `Bearer ${token}` } }, e);
 const tick = () => new Promise((r) => setTimeout(r, 50));
 
-describe("monitoreo de errores (P-02)", () => {
+describe("monitoreo de errores", () => {
   it("sin SENTRY_DSN no sale nada a la red y la respuesta sigue siendo 500", async () => {
     const owner = await createOrgWithOwner();
     const fetchSpy = vi.spyOn(globalThis, "fetch");

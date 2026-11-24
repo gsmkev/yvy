@@ -56,7 +56,7 @@ function Demo() {
   );
 }
 
-describe("exportar cualquier tabla (U-28)", () => {
+describe("exportar cualquier tabla", () => {
   it("hay un solo control de exportar por tabla, no dos botones", () => {
     render(<Demo />);
     expect(screen.getAllByRole("button", { name: /Exportar/ })).toHaveLength(1);

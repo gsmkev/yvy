@@ -1,3 +1,5 @@
+"""Pruebas de jobs de Sentinel-2 y CHIRPS: NDVI, estadísticas por lote y PMTiles."""
+
 from pathlib import Path
 
 import numpy as np
@@ -33,7 +35,7 @@ def test_ndvi_y_estadisticas_por_lote():
     valid[:, : grid.width // 3] = False
     ndvi, ok = compute_ndvi(red, nir, valid)
     stats = {s["plotId"]: s for s in plot_stats(ndvi, ok, grid)}
-    assert "a" not in stats  # RF-51
+    assert "a" not in stats
     assert stats["b"]["mean"] == pytest.approx(0.8, abs=1e-3)
     assert stats["b"]["validPct"] >= 99
 
@@ -155,7 +157,7 @@ def test_ingest_reintenta_errores_de_red(monkeypatch):
     assert api._call("POST", "/ingest/climate-daily", {"rows": []}) == {"written": 1}
     assert n["i"] == 3
 def test_lote_fino_usa_pixeles_tocados_y_se_marca_poco_confiable():
-    """S-11: un lote de ~20 m de ancho no tiene ningún píxel de 10 m con el centro adentro de forma fiable."""
+    """Un lote de ~20 m de ancho no tiene ningún píxel de 10 m con el centro adentro de forma fiable."""
     from yvy_workers.jobs.s2 import is_thin
 
     thin = {"id": "fino", "geometry": {"type": "Polygon", "coordinates": [[[-55.9500, -27.1500], [-55.9498, -27.1500], [-55.9498, -27.1560], [-55.9500, -27.1560], [-55.9500, -27.1500]]]}}

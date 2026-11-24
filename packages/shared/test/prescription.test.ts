@@ -12,7 +12,7 @@ const plan: RatePrescriptionPlan = {
   ],
 };
 
-describe("A-33 prescripción de dosis variable", () => {
+describe("prescripción de dosis variable", () => {
   it("total y dosis media ponderadas por superficie", () => {
     expect(totalProduct(plan.zones)).toBe(7000);
     expect(meanRate(plan.zones)).toBe(175);

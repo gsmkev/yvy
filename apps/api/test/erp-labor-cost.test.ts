@@ -1,4 +1,4 @@
-/** E-23: costo de la labor propia (combustible + operario + amortización) frente al contratista. */
+/** Costo de la labor propia (combustible + operario + amortización) frente al contratista. */
 import { describe, expect, it } from "vitest";
 import { contractorRatePer, laborVerdict, ownLaborCost } from "@yvy/shared";
 import { call } from "./helpers";
@@ -24,7 +24,7 @@ async function setup() {
   return { ...s, machineId: m.body.id as string };
 }
 
-describe("labor propia vs contratista (E-23)", () => {
+describe("labor propia vs contratista", () => {
   it("funciones puras: costo por hora, por hectárea y veredicto", () => {
     const own = ownLaborCost({ fuelLitersPerHour: 10, fuelPricePyg: 8000, operatorPerHourPyg: 15_000, purchasePricePyg: 300_000_000, residualPyg: 100_000_000, lifeHours: 10_000, haPerHour: 5 });
     expect(own).toEqual({ fuelPerHour: 80_000, operatorPerHour: 15_000, depreciationPerHour: 20_000, totalPerHour: 115_000, perHa: 23_000 });

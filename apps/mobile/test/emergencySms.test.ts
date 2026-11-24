@@ -1,3 +1,4 @@
+/** Pruebas de texto del SMS de emergencia; enlace sms:. */
 import { describe, expect, it } from "vitest";
 import { addContact, coordsText, emergencyText, normalizeContactPhone, parseContacts, smsUrl, whenText } from "../src/lib/emergencySms";
 
@@ -5,7 +6,7 @@ import { addContact, coordsText, emergencyText, normalizeContactPhone, parseCont
 const AT = Date.UTC(2026, 10, 12, 17, 32);
 const PY = 180;
 
-describe("texto del SMS de emergencia (F-30)", () => {
+describe("texto del SMS de emergencia", () => {
   it("coordenadas a 5 decimales, precisión y hora local", () => {
     const body = emergencyText("Ramón Benítez", { lat: -25.281234, lon: -57.634567, accuracy: 8.4 }, AT, PY);
     expect(body).toContain("Ramón Benítez");

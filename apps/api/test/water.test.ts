@@ -1,4 +1,4 @@
-/** Aguadas (G-30): aviso `water_low` cuando una aguada o tajamar se registra baja o seca. */
+/** Aguadas: aviso `water_low` cuando una aguada o tajamar se registra baja o seca. */
 import { describe, expect, it } from "vitest";
 import { and, eq, isNull } from "drizzle-orm";
 import * as s from "@yvy/shared/schema";
@@ -65,7 +65,7 @@ describe("aviso al registrar agua", () => {
     expect(alerts[0]!.summary).toBe("Aguada Molino seca (y 1 más)");
   });
 
-  it("G-30: bebederos y molinos también cuentan, con su nombre de tipo en el aviso", async () => {
+  it("bebederos y molinos también cuentan, con su nombre de tipo en el aviso", async () => {
     const { owner, farmId, poi } = await setup();
     const b = await poi("Bebedero Sur", "trough");
     const m = await poi("Molino Viejo", "mill");

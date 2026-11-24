@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";
 
-describe("S-09 · tarea con punto desde un área problema", () => {
+describe("tarea con punto desde un área problema", () => {
   it("el agrónomo la crea con lon y lat y le llega al empleado del lote por sync", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 1);

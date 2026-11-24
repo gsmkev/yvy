@@ -12,7 +12,7 @@ const newFarm = (token: string, size: number) =>
     body: { name: "Estancia", geometry: square(-55.9, -27.2, size) },
   });
 
-describe("topes del plan (P-10)", () => {
+describe("topes del plan", () => {
   it("planLimits: los propios mandan; sin ellos, los del plan", () => {
     expect(planLimits("trial")).toEqual(LIMITS.plans.trial);
     expect(planLimits("active", { maxHa: 100 })).toEqual({ maxHa: 100, maxUsers: LIMITS.plans.active.maxUsers });

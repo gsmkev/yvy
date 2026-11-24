@@ -1,11 +1,11 @@
-/** K-06: registro de quién cambió qué y cuándo. */
+/** Registro de quién cambió qué y cuándo. */
 import { describe, expect, it } from "vitest";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, createStaff } from "./helpers";
 import { push, rec } from "./records-helpers";
 
 type Audit = { rows: { action: string; entity: string; entityId: string; actor: string; detail: string }[]; hasMore: boolean };
 
-describe("K-06 · registro de cambios", () => {
+describe("registro de cambios", () => {
   it("anota altas, ediciones, borrados, equipo y tareas con quién las hizo", async () => {
     const owner = await createOrgWithOwner();
     const admin = await addMemberAndLogin(owner.token, "admin", "Ana Admin");

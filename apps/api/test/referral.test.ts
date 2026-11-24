@@ -11,7 +11,7 @@ const signup = (name: string, ref?: unknown) =>
 
 const orgRow = async (id: string) => (await db().select().from(s.organizations).where(eq(s.organizations.id, id)).limit(1))[0]!;
 
-describe("V-05 · programa para agrónomos", () => {
+describe("programa para agrónomos", () => {
   it("el código sale del id del usuario: 8 caracteres hexadecimales en mayúsculas", () => {
     const id = "0190f0e0-1234-7abc-8def-0123456789ab";
     expect(referralCode(id)).toBe("456789AB");
@@ -40,7 +40,7 @@ describe("V-05 · programa para agrónomos", () => {
     }
   });
 
-  it("V-06: el código de un productor (dueño) también identifica a quien refirió; el de un administrador o empleado no", async () => {
+  it("el código de un productor (dueño) también identifica a quien refirió; el de un administrador o empleado no", async () => {
     const owner = await createOrgWithOwner();
     const r = await signup("Otro", referralCode(owner.userId));
     expect(await orgRow(r.body.organizationId)).toMatchObject({ referredBy: referralCode(owner.userId), referrerUserId: owner.userId });
@@ -74,7 +74,7 @@ describe("V-05 · programa para agrónomos", () => {
     expect((await call("GET", "/org/dashboard", { token: owner.token })).body).not.toHaveProperty("referredBy");
   });
 
-  it("V-06: el crédito del referido se anota desde el panel interno y el productor ve cuántos llegaron", async () => {
+  it("el crédito del referido se anota desde el panel interno y el productor ve cuántos llegaron", async () => {
     const owner = await createOrgWithOwner();
     const res = await signup("Vecino", referralCode(owner.userId));
     const orgId = res.body.organizationId;

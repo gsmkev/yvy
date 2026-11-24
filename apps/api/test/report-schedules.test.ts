@@ -1,4 +1,4 @@
-/** R-10: informes programados por email a terceros. */
+/** Informes programados por email a terceros. */
 import { env } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { isFirstMondayOfMonth, runJob } from "../src/jobs";
@@ -19,7 +19,7 @@ const captureMail = () => {
 };
 const create = (token: string, body: unknown) => call<{ id: string }>("POST", "/org/report-schedules", { token, body });
 
-describe("R-10 · informes programados", () => {
+describe("informes programados", () => {
   it("el dueño y el administrador los programan; los demás no", async () => {
     const owner = await createOrgWithOwner();
     const { farmId } = await createFarmWithPlots(owner.token, 1);

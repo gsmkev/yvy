@@ -1,3 +1,4 @@
+/** Pruebas de computeStock (regla de stock de hacienda); carga animal. */
 import { describe, expect, it } from "vitest";
 import {
   computeStock,
@@ -32,7 +33,7 @@ const death = (plotId: string, capturedAt: number, category: MortalityEvent["cat
   head,
 });
 
-describe("computeStock (regla del ADR 0004)", () => {
+describe("computeStock (regla de stock de hacienda)", () => {
   it("último conteo + movimientos y mortandad posteriores", () => {
     const s = computeStock(
       ["A", "B"],

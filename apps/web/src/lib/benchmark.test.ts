@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { compareToZone } from "./benchmark";
 
-describe("comparación con la zona (R-08)", () => {
+describe("comparación con la zona", () => {
   it("compara contra la mediana con una banda de 10 %", () => {
     expect(compareToZone(0.7, 0.6)).toBe("above");
     expect(compareToZone(0.5, 0.6)).toBe("below");

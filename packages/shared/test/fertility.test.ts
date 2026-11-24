@@ -3,7 +3,7 @@ import { FERT_LAYERS, FERT_LAYER_KEYS, FERT_LAYER_PARAM, FERT_STYLE, fertilityPo
 
 const s = (lon: number | null, lat: number | null, over: Record<string, number | null> = {}) => ({ lon, lat, ph: 5, pMgKg: null, kCmolKg: null, omPct: null, ...over });
 
-describe("A-31 mapas de fertilidad", () => {
+describe("mapas de fertilidad", () => {
   it("cuenta ubicaciones distintas con coordenadas y valor", () => {
     const c = fertilityPointCounts([s(-55.1, -27.1), s(-55.1, -27.1), s(-55.2, -27.1, { pMgKg: 8 }), s(null, null), s(-55.3, -27.1, { ph: null })]);
     expect(c).toEqual({ fert_ph: 2, fert_p: 1, fert_k: 0, fert_om: 0 });

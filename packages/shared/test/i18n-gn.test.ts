@@ -11,7 +11,7 @@ const flat = (tree: unknown, prefix = ""): Record<string, string> =>
   }, {});
 const vars = (s: string) => [...s.matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]).sort();
 
-describe("idiomas (U-22)", () => {
+describe("idiomas", () => {
   it("por defecto es es-PY y reconoce solo los idiomas que existen", () => {
     expect(getLocale()).toBe("es-PY");
     expect(isLocale("gn-PY")).toBe(true);

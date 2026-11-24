@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { accumulateGdd, comparePheno, estimateStage, gddDay, nextStage } from "../src";
 
-describe("fenología por grados-día (A-04)", () => {
+describe("fenología por grados-día", () => {
   it("gddDay acota por la base y el tope", () => {
     expect(gddDay(20, 30, 10, 30)).toBe(15);
     expect(gddDay(5, 12, 10, 30)).toBe(1); // (10 + 12) / 2 - 10

@@ -4,7 +4,7 @@ import { daysSince, vigorTrend } from "../src/lib/plotSheet";
 
 const pass = (mean: number, acquiredAt = 0) => ({ mean, acquiredAt });
 
-describe("F-23 ficha del lote", () => {
+describe("ficha del lote", () => {
   it("sin dos pasadas no hay tendencia", () => {
     expect(vigorTrend(null, null)).toEqual({ kind: "none" });
     expect(vigorTrend(pass(0.6), null)).toEqual({ kind: "none" });

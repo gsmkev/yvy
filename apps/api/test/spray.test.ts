@@ -1,4 +1,4 @@
-/** Ventanas para pulverizar desde el pronóstico horario guardado (A-13). */
+/** Ventanas para pulverizar desde el pronóstico horario guardado. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";

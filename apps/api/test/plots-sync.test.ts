@@ -11,7 +11,7 @@ const plot = (farmId: string, over: Record<string, unknown> = {}) => ({
   row: { id: newId(), farmId, name: "Lote dibujado", kind: "crop", crop: "soja", geometry: square(-55.89, -27.21, 0.004), ...over },
 });
 
-describe("M-03 · lotes dibujados y editados desde la app (plots.upsert)", () => {
+describe("lotes dibujados y editados desde la app (plots.upsert)", () => {
   it("crea un lote con área y bbox calculados por el servidor, lo baja por pull y lo edita", async () => {
     const owner = await createOrgWithOwner();
     const { farmId } = await createFarmWithPlots(owner.token, 1);

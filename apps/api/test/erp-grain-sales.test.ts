@@ -1,4 +1,4 @@
-/** E-34: venta de granos con contratos, entregas y liquidaciones (ingreso en cost_entries). */
+/** Venta de granos con contratos, entregas y liquidaciones (ingreso en cost_entries). */
 import { describe, expect, it } from "vitest";
 import { contractProgress, settlementNet } from "@yvy/shared";
 import { call } from "./helpers";
@@ -15,7 +15,7 @@ const summary = async (s: S) => (await erpGet<any[]>(s.owner.token, "grain-contr
 const deliver = (s: S, tons: number, extra: Record<string, unknown> = {}) => erpPost(s.owner.token, "grain-deliveries", { contractId: s.contractId, date: "2026-11-05", tons, ...extra });
 const settle = (s: S, tons: number, extra: Record<string, unknown> = {}) => erpPost(s.owner.token, "grain-settlements", { contractId: s.contractId, date: "2026-11-10", tons, ...extra });
 
-describe("venta de granos (E-34)", () => {
+describe("venta de granos", () => {
   it("funciones puras: neto y avance del contrato", () => {
     expect(settlementNet(30, 2_500_000, 1_500_000)).toBe(73_500_000);
     expect(settlementNet(1, 100, 500)).toBe(0);
@@ -35,15 +35,15 @@ describe("venta de granos (E-34)", () => {
     expect((await summary(s)).deliveredTons).toBe(25.5);
   });
 
-  it("la entrega vive en las entregas a acopio de A-23: se ve en la estancia y las entregas sin contrato no suman al contrato", async () => {
+  it("la entrega vive en las entregas a acopio: se ve en la estancia y las entregas sin contrato no suman al contrato", async () => {
     const s = await setup();
     const d = await deliver(s, 12.5, { ticket: "T-200", plotId: s.plotIds[0], destination: "Silo Sur", moisturePct: 14 });
     expect(d.status).toBe(201);
-    // A-23: la misma fila aparece en la lista de la estancia con su silo y su neto en kilos
+    // la misma fila aparece en la lista de la estancia con su silo y su neto en kilos
     const acopio = (await call<any>("GET", `/org/farms/${s.farmId}/deliveries`, { token: s.owner.token })).body;
     expect(acopio.rows).toHaveLength(1);
     expect(acopio.rows[0]).toMatchObject({ ticket: "T-200", silo: "Silo Sur", plotName: "Lote 1", netKg: 12_500, crop: "soja" });
-    // una entrega a acopio sin contrato (A-23) no cuenta para el contrato ni sale en las entregas de contratos
+    // una entrega a acopio sin contrato no cuenta para el contrato ni sale en las entregas de contratos
     const plain = await call<any>("POST", `/org/farms/${s.farmId}/deliveries`, {
       token: s.owner.token,
       body: { crop: "soja", ticket: "0001", silo: "Silo Norte", deliveredOn: "2026-11-06", grossKg: 8000, moisturePct: 13, baseMoisturePct: 13, impuritiesPct: 0, otherKg: 0 },
@@ -54,7 +54,7 @@ describe("venta de granos (E-34)", () => {
     const list = (await erpGet<any[]>(s.owner.token, "grain-deliveries")).body;
     expect(list).toHaveLength(1);
     expect(list[0]).toMatchObject({ id: d.body.id, contractId: s.contractId, tons: 12.5, destination: "Silo Sur" });
-    // borrar desde el contrato la saca de la estancia; las de A-23 sin contrato no se borran por acá
+    // borrar desde el contrato la saca de la estancia; las entregas a acopio sin contrato no se borran por acá
     expect((await call("DELETE", `/org/erp/grain-deliveries/${plain.body.id}`, { token: s.owner.token })).status).toBe(404);
     expect((await call("DELETE", `/org/erp/grain-deliveries/${d.body.id}`, { token: s.owner.token })).status).toBe(200);
     expect((await call<any>("GET", `/org/farms/${s.farmId}/deliveries`, { token: s.owner.token })).body.rows).toHaveLength(1);
@@ -85,7 +85,7 @@ describe("venta de granos (E-34)", () => {
     expect(await summary(s)).toMatchObject({ settledTons: 40, toSettleTons: 0, settledAmount: 98_000_000 });
     const l = (await erpGet<any[]>(s.owner.token, "grain-settlements")).body;
     expect(l[0]).toMatchObject({ dueDate: "2026-12-10", paidAmount: 0, number: "L-77", priceMinor: 2_500_000 });
-    // el margen por lote (E-31) ve la venta
+    // el margen por lote ve la venta
     const res = (await erpGet<any>(s.owner.token, "results")).body;
     expect(res.byPlot.find((p: any) => p.plotId === s.plotIds[0]).incomePyg).toBe(98_000_000);
     await call("DELETE", `/org/erp/grain-settlements/${r.body.id}`, { token: s.owner.token });

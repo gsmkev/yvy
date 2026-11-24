@@ -9,7 +9,7 @@ const sq = [
   [0, 0],
 ];
 
-describe("cleanRing (M-11)", () => {
+describe("cleanRing", () => {
   it("no toca un anillo limpio", () => {
     expect(cleanRing(sq)).toEqual({ ring: sq, removed: 0 });
   });

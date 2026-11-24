@@ -1,4 +1,4 @@
-/** ERP y roles nuevos (T-09 supervisor, K-03 contratista): sin acceso salvo lo que el código del ERP permite. */
+/** ERP y roles de supervisor y contratista: sin acceso salvo lo que el código del ERP permite. */
 import { describe, expect, it } from "vitest";
 import { addMemberAndLogin } from "./helpers";
 import { erpGet, erpPost, erpSetup, expectListStatus } from "./erp-helpers";

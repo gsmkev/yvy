@@ -1,4 +1,4 @@
-/** E-11: movimientos de stock a costo promedio ponderado, transferencias, ajustes y permisos. */
+/** Movimientos de stock a costo promedio ponderado, transferencias, ajustes y permisos. */
 import { describe, expect, it } from "vitest";
 import { call, createOrgWithOwner } from "./helpers";
 import { buy, erpGet, erpPost, stockSetup } from "./erp-helpers";
@@ -7,7 +7,7 @@ const summary = async (token: string) => (await erpGet<any>(token, "stock")).bod
 const inWh = (sum: any, productId: string, whId: string) =>
   sum.rows.find((r: any) => r.productId === productId && r.warehouseId === whId);
 
-describe("stock a costo promedio ponderado (E-11)", () => {
+describe("stock a costo promedio ponderado", () => {
   it("el costo promedio pondera las compras y las salidas no lo cambian", async () => {
     const s = await stockSetup();
     expect((await buy(s.owner.token, s, 100, 1_000_000)).status).toBe(201); // 10.000 por l

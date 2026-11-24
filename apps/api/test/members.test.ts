@@ -1,3 +1,4 @@
+/** Pruebas de actividad por miembro en /org/members; tareas vencidas por empleado en /org/members. */
 import { describe, expect, it } from "vitest";
 import { localDate, newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -12,7 +13,7 @@ interface MemberRow {
   overdueTasks: number;
 }
 
-describe("T-06 · actividad por miembro en /org/members", () => {
+describe("actividad por miembro en /org/members", () => {
   it("cuenta días activos, registros de 7 días y última sincronización por miembro", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 1);
@@ -84,7 +85,7 @@ describe("T-06 · actividad por miembro en /org/members", () => {
   });
 });
 
-describe("T-05 · tareas vencidas por empleado en /org/members", () => {
+describe("tareas vencidas por empleado en /org/members", () => {
   it("cuenta las abiertas vencidas (día pasado u hora límite de hoy pasada) y no las hechas, futuras ni ajenas", async () => {
     const owner = await createOrgWithOwner();
     const { farmId } = await createFarmWithPlots(owner.token, 1);

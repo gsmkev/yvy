@@ -33,7 +33,7 @@ const burned = (plotId: string, over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-describe("S-20 · área quemada tras un foco de fuego", () => {
+describe("área quemada tras un foco de fuego", () => {
   it("ingest guarda el resultado por incendio, lo reemplaza y la estancia lo muestra con el nombre del lote", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 2);

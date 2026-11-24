@@ -10,7 +10,7 @@ const walk = (n: number, d: WalkDraft = newDraft(1_000)) => {
   return d;
 };
 
-describe("recorrida GPS (F-05)", () => {
+describe("recorrida GPS", () => {
   it("acumula distancia entre fixes", () => {
     const d = walk(11); // 10 tramos de 10 m
     expect(d.points).toHaveLength(11);

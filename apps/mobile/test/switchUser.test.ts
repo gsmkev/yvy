@@ -14,7 +14,7 @@ function setup() {
   return db;
 }
 
-describe("cambiar de usuario en un celular compartido (F-25)", () => {
+describe("cambiar de usuario en un celular compartido", () => {
   it("con todo mandado se puede cambiar", () => {
     const db = setup();
     expect(canSwitchUser(unsentSummary(db))).toEqual({ blocked: false });

@@ -1,3 +1,4 @@
+/** Pruebas de ndviColor; vigorDrop. */
 import { describe, expect, it } from "vitest";
 import { ndviColor, vigorDrop } from "./vigor";
 

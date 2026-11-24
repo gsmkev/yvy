@@ -1,4 +1,4 @@
-/** E-12: lote y vencimiento; lista de lo que vence en 30 días (FEFO). */
+/** Lote y vencimiento; lista de lo que vence en 30 días (FEFO). */
 import { describe, expect, it } from "vitest";
 import { addDays, localDate } from "@yvy/shared";
 import { buy, erpGet, erpPost, stockSetup } from "./erp-helpers";
@@ -6,7 +6,7 @@ import { buy, erpGet, erpPost, stockSetup } from "./erp-helpers";
 const today = () => localDate(Date.now());
 const expiring = async (token: string) => (await erpGet<any[]>(token, "stock/expiring")).body;
 
-describe("lotes y vencimientos (E-12)", () => {
+describe("lotes y vencimientos", () => {
   it("avisa los lotes que vencen en 30 días o ya vencieron; los lejanos y los sin fecha no", async () => {
     const s = await stockSetup();
     await buy(s.owner.token, s, 100, 1_000_000, { lot: "A-001", expiresOn: addDays(today(), 10) });

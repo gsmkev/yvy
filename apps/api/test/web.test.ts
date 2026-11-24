@@ -1,3 +1,4 @@
+/** Pruebas de tareas recurrentes; web. */
 import { describe, expect, it } from "vitest";
 import { localDate, newId, nextOccurrenceId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";
@@ -34,7 +35,7 @@ async function setup() {
   return { owner, worker, farmId, plotIds };
 }
 
-describe("Fase 3 · tareas recurrentes", () => {
+describe("tareas recurrentes", () => {
   it("completar una diaria crea la siguiente con el id que calcula el celular", async () => {
     const { owner, worker, farmId } = await setup();
     const today = localDate(Date.now());

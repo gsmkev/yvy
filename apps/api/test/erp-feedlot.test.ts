@@ -1,4 +1,4 @@
-/** G-33: feedlot. Raciones, suministro por corral (descuenta stock y carga costo) y conversión con las pesadas. */
+/** Feedlot. Raciones, suministro por corral (descuenta stock y carga costo) y conversión con las pesadas. */
 import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";
 import { call } from "./helpers";
@@ -45,7 +45,7 @@ const feed = (s: S, plotId: string, kgDm: number, at: number) =>
     at,
   );
 
-describe("raciones (G-33)", () => {
+describe("raciones", () => {
   it("el dueño y el administrador las cargan; los porcentajes tienen que sumar 100 y los productos ser del catálogo", async () => {
     const s = await setup();
     const ok = await erpPost(s.owner.token, "feedlot/rations", ration(s));
@@ -74,7 +74,7 @@ describe("raciones (G-33)", () => {
   });
 });
 
-describe("suministro por corral (G-33)", () => {
+describe("suministro por corral", () => {
   it("descuenta el stock de los ingredientes, carga el costo a la ganadería y se revierte al editar o borrar", async () => {
     const s = await setup();
     const m = feed(s, s.plotIds[1]!, 100, Date.now() - 1000);
@@ -100,7 +100,7 @@ describe("suministro por corral (G-33)", () => {
   });
 });
 
-describe("conversión por corral (G-33)", () => {
+describe("conversión por corral", () => {
   it("kg de materia seca por kg ganado entre la primera y la última pesada", async () => {
     const s = await setup();
     const corral = s.plotIds[1]!;

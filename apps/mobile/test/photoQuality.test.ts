@@ -61,7 +61,7 @@ const viaJpeg = (d: Uint8Array) => {
   return analyzeJpeg(new Uint8Array(jpg.data))!;
 };
 
-describe("calidad de la foto (X-09)", () => {
+describe("calidad de la foto", () => {
   it("una foto nítida y con luz no avisa nada", () => {
     expect(photoIssues(stats(sharp()))).toEqual([]);
     expect(photoIssueMessage(photoIssues(stats(sharp())))).toBeNull();

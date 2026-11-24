@@ -49,7 +49,7 @@ const post = async (farmId: string, rep: unknown) => {
   return call("POST", "/ingest/farm-risk", { body, headers: await signed("POST", "/ingest/farm-risk", body) });
 };
 
-describe("C-10 · informe de riesgo climático", () => {
+describe("informe de riesgo climático", () => {
   it("ingest guarda el informe, lo reemplaza y el dueño lo lee", async () => {
     const owner = await createOrgWithOwner();
     const { farmId } = await createFarmWithPlots(owner.token, 1);

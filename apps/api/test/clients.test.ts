@@ -30,7 +30,7 @@ const frost = (orgId: string, farmId: string, over: Partial<typeof s.alerts.$inf
   };
 };
 
-describe("vista del agrónomo con varios clientes (K-02)", () => {
+describe("vista del agrónomo con varios clientes", () => {
   it("junta las estancias y los avisos activos de cada organización, sin las ajenas ni las de empleado", async () => {
     const a = await createOrgWithOwner("Cliente A");
     const b = await createOrgWithOwner("Cliente B");

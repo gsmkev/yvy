@@ -20,7 +20,7 @@ async function farmWith(token: string, name: string, lon: number, plots: { crop:
   return { farmId: f.body.id, plotIds: r.body.ids };
 }
 
-describe("tablero del dueño (R-06)", () => {
+describe("tablero del dueño", () => {
   it("superficie por cultivo, lluvia del mes contra lo normal, avisos, actividad y registros", async () => {
     const owner = await createOrgWithOwner();
     const a = await farmWith(owner.token, "A", -56, [

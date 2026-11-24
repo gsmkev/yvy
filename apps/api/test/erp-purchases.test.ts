@@ -1,4 +1,4 @@
-/** E-33: compras (orden, factura del proveedor, recepción en depósito con movimientos de stock y costo). */
+/** Compras (orden, factura del proveedor, recepción en depósito con movimientos de stock y costo). */
 import { describe, expect, it } from "vitest";
 import { lineAmount, purchaseStatus } from "@yvy/shared";
 import { call } from "./helpers";
@@ -27,7 +27,7 @@ const receive = (s: S, id: string, body: Record<string, unknown> = {}) =>
   erpPost(s.owner.token, `purchases/${id}/receive`, { warehouseId: s.whA, date: "2026-11-05", ...body });
 const stock = async (s: S) => (await erpGet<any>(s.owner.token, "stock")).body.products.find((p: any) => p.productId === s.productId);
 
-describe("compras (E-33)", () => {
+describe("compras", () => {
   it("funciones puras: importe de línea y estado derivado", () => {
     expect(lineAmount(2.5, 1001)).toBe(2503);
     expect(purchaseStatus({ invoiceNumber: null, receivedAt: null })).toBe("ordered");

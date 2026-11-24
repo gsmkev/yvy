@@ -1,3 +1,5 @@
+"""Pruebas de detección de áreas problema por debajo de la mediana del lote."""
+
 import httpx
 import numpy as np
 import pytest

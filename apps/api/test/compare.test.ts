@@ -1,9 +1,9 @@
-/** R-07: comparación entre estancias y entre campañas. */
+/** Comparación entre estancias y entre campañas. */
 import { describe, expect, it } from "vitest";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner } from "./helpers";
 import { push, rec } from "./records-helpers";
 
-describe("R-07 · comparar", () => {
+describe("comparar", () => {
   it("compara estancias: superficie, lotes y registros de 30 días, y respeta el alcance", async () => {
     const owner = await createOrgWithOwner();
     const a = await createFarmWithPlots(owner.token, 3);

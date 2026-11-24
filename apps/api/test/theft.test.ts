@@ -1,4 +1,4 @@
-/** G-13: abigeato (cabezas faltantes y denuncias). */
+/** Abigeato (cabezas faltantes y denuncias). */
 import { describe, expect, it } from "vitest";
 import { addMemberAndLogin, call, createOrgWithOwner, pullAll } from "./helpers";
 import { DAY, setupHerd } from "./herd-helpers";

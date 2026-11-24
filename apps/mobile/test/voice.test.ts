@@ -17,7 +17,7 @@ function setup() {
   return db;
 }
 
-describe("nota de voz (F-09)", () => {
+describe("nota de voz", () => {
   it("se guarda como adjunto audio/mp4 sin miniatura y con su mutación válida en el outbox", async () => {
     const db = setup();
     const id = db.saveRecord(USER, ORG, rec, [], undefined, voice);

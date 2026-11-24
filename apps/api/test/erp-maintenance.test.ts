@@ -1,4 +1,4 @@
-/** E-22: mantenimiento preventivo por horas o kilómetros, con historial y avisos. */
+/** Mantenimiento preventivo por horas o kilómetros, con historial y avisos. */
 import { describe, expect, it } from "vitest";
 import { maintenanceStatus } from "@yvy/shared";
 import { call } from "./helpers";
@@ -14,7 +14,7 @@ type S = Awaited<ReturnType<typeof setup>>;
 const log = (token: string, s: S, extra: Record<string, unknown> = {}) =>
   erpPost(token, "maintenance/logs", { machineId: s.machineId, kind: "preventive", date: "2026-11-05", ...extra });
 
-describe("mantenimiento (E-22)", () => {
+describe("mantenimiento", () => {
   it("maintenanceStatus: ok, por vencer (último 10 %) y vencido", () => {
     const st = (meter: number) => maintenanceStatus({ meter, lastDoneMeter: 0, everyUnits: 250 }).status;
     expect([st(100), st(230), st(250), st(300)]).toEqual(["ok", "soon", "overdue", "overdue"]);

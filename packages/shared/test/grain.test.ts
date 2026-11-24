@@ -3,7 +3,7 @@ import { grainNet } from "../src";
 
 const t = { grossKg: 30_000, moisturePct: 13, baseMoisturePct: 13, impuritiesPct: 0, otherKg: 0 };
 
-describe("entregas a acopio (A-23)", () => {
+describe("entregas a acopio", () => {
   it("con humedad base y sin descuentos el neto es el bruto", () => {
     expect(grainNet(t)).toEqual({ moistureKg: 0, impuritiesKg: 0, otherKg: 0, netKg: 30_000 });
   });

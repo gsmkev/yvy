@@ -1,10 +1,10 @@
-/** K-03: contratista externo con acceso a ciertos lotes y tareas. */
+/** Contratista externo con acceso a ciertos lotes y tareas. */
 import { describe, expect, it } from "vitest";
 import { can } from "../src/db/scoped";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";
 import { push, rec } from "./records-helpers";
 
-describe("K-03 · matriz del contratista", () => {
+describe("matriz del contratista", () => {
   it("tiene los mismos límites que el empleado", () => {
     for (const k of Object.keys(can) as (keyof typeof can)[]) {
       expect(can[k]("contractor"), k).toBe(can[k]("worker"));
@@ -12,7 +12,7 @@ describe("K-03 · matriz del contratista", () => {
   });
 });
 
-describe("K-03 · contratista", () => {
+describe("contratista", () => {
   async function setup() {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 4);

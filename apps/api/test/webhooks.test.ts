@@ -1,3 +1,4 @@
+/** Pruebas de permisos; alta y panel. */
 import { env } from "cloudflare:test";
 import { eq } from "drizzle-orm";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -34,7 +35,7 @@ const fakeJobs = () => {
   return { sent, JOBS };
 };
 
-describe("permisos (I-02)", () => {
+describe("permisos", () => {
   it("solo dueño y administrador gestionan los webhooks", async () => {
     const owner = await createOrgWithOwner();
     const admin = await addMemberAndLogin(owner.token, "admin", "Admin");

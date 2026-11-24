@@ -1,3 +1,5 @@
+"""Pruebas de riesgo climático: series, heladas por año y fechas típicas."""
+
 from datetime import date, datetime, timedelta, timezone
 
 import httpx

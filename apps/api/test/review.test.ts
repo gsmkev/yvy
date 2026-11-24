@@ -1,3 +1,4 @@
+/** Pruebas de reglas de registros raros; para revisar. */
 import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LIMITS, newId, recordOddities } from "@yvy/shared";
@@ -19,7 +20,7 @@ async function product(token: string, unit: "l" | "kg" = "l") {
   return r.body.id;
 }
 
-describe("reglas de registros raros (X-26)", () => {
+describe("reglas de registros raros", () => {
   it("lluvia diaria por encima del umbral", () => {
     expect(recordOddities("rain", { mm: 80, readAt: 0 }, NOW)).toEqual([]);
     expect(recordOddities("rain", { mm: LIMITS.oddities.rainMmPerDay, readAt: 0 }, NOW)).toEqual([]);
@@ -121,7 +122,7 @@ describe("Para revisar", () => {
   });
 });
 
-describe("permisos (X-26)", () => {
+describe("permisos", () => {
   it("el empleado y el contratista no ven ni cierran revisiones; los demás roles sí", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 1);

@@ -9,7 +9,7 @@ const square: Polygon = {
 };
 const M_PER_DEG_LAT = 111_195;
 
-describe("distancias (A-15)", () => {
+describe("distancias", () => {
   it("punto a polígono: 0 adentro y la distancia al borde afuera", () => {
     expect(pointToAreaM(-55.895, -27.205, square)).toBe(0);
     // 0,001° al norte del borde superior

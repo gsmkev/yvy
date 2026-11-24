@@ -1,4 +1,4 @@
-/** E-38: exportación al contador con plan de cuentas configurable. */
+/** Exportación al contador con plan de cuentas configurable. */
 import { describe, expect, it } from "vitest";
 import { accountFor, DEFAULT_ACCOUNT_MAP } from "@yvy/shared";
 import { call } from "./helpers";
@@ -7,7 +7,7 @@ import { erpGet, erpPost, erpSetup } from "./erp-helpers";
 const put = (token: string, key: string, body: unknown) => call("PUT", `/org/erp/accountant/map/${key}`, { token, body });
 const cost = (token: string, extra: Record<string, unknown>) => erpPost(token, "costs", { date: "2026-11-05", activity: "agricultura", category: "input", amount: 1_000_000, currency: "PYG", ...extra });
 
-describe("exportación al contador (E-38)", () => {
+describe("exportación al contador", () => {
   it("accountFor usa el plan del contador y, si falta, el de ejemplo", () => {
     expect(accountFor("fuel", {})).toEqual(DEFAULT_ACCOUNT_MAP.fuel);
     expect(accountFor("fuel", { fuel: { code: "6.1", name: "Combustible" } })).toEqual({ code: "6.1", name: "Combustible" });

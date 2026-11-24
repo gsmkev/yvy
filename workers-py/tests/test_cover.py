@@ -1,3 +1,5 @@
+"""Pruebas de clases de cobertura y cambio entre dos fechas por lote."""
+
 from datetime import date
 
 import numpy as np

@@ -22,7 +22,7 @@ const point = (i: number, over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-describe("A-31 · mapas de fertilidad", () => {
+describe("mapas de fertilidad", () => {
   it("cuenta puntos con coordenadas por parámetro y el job los lee firmados", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 1);

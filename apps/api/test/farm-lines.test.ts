@@ -17,7 +17,7 @@ async function setup() {
 // Un grado de latitud ~ 111 km
 const line = { type: "LineString", coordinates: [[-55.85, -27.25], [-55.85, -27.24]] };
 
-describe("líneas del mapa (M-20)", () => {
+describe("líneas del mapa", () => {
   it("crea una línea con su largo, la lista y la borra", async () => {
     const { owner, farmId } = await setup();
     const r = await call<{ id: string; lengthM: number }>("POST", `/org/farms/${farmId}/lines`, {
@@ -36,7 +36,7 @@ describe("líneas del mapa (M-20)", () => {
     expect((await call<any[]>("GET", `/org/farms/${farmId}/lines`, { token: owner.token })).body).toEqual([]);
   });
 
-  it("acepta el curso de agua como tipo de línea (A-15)", async () => {
+  it("acepta el curso de agua como tipo de línea", async () => {
     const { owner, farmId } = await setup();
     const r = await call("POST", `/org/farms/${farmId}/lines`, { token: owner.token, body: { kind: "stream", name: "Arroyo Pytã", geometry: line } });
     expect(r.status).toBe(201);

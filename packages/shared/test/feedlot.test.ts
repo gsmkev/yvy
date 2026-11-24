@@ -5,7 +5,7 @@ const A = "11111111-1111-4111-8111-111111111111";
 const B = "22222222-2222-4222-8222-222222222222";
 const DAY = 86_400_000;
 
-describe("G-33 feedlot", () => {
+describe("feedlot", () => {
   it("la ración suma 100 % de materia seca, sin ingredientes repetidos", () => {
     const ok = { name: "Terminación", items: [{ productId: A, pctDm: 60, dmPct: 88 }, { productId: B, pctDm: 40, dmPct: 35 }] };
     expect(feedRationInput.safeParse(ok).success).toBe(true);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { addMemberAndLogin, call, createOrgWithOwner } from "./helpers";
 
-describe("recorrido de primera vez (U-24)", () => {
+describe("recorrido de primera vez", () => {
   it("el estado de la guía es de cada persona: se oculta, se vuelve a mostrar y no pasa a otros", async () => {
     const owner = await createOrgWithOwner();
     const admin = await addMemberAndLogin(owner.token, "admin");

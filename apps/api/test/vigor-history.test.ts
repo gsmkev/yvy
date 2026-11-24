@@ -30,7 +30,7 @@ afterEach(() => {
 
 const DAY = 86_400_000;
 
-describe("S-03 · historia de vigor desde 2017", () => {
+describe("historia de vigor desde 2017", () => {
   it("el dueño la pide: dispara s2_history, queda procesando y no se encola dos veces", async () => {
     const fetchMock = configure();
     const owner = await createOrgWithOwner();

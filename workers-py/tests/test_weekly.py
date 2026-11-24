@@ -1,3 +1,5 @@
+"""Pruebas de parte semanal: semana anterior, formatos, rampa y PDF."""
+
 import json
 from datetime import date
 from pathlib import Path

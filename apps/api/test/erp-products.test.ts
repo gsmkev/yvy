@@ -1,4 +1,4 @@
-/** E-01: catálogo de productos y permisos de la administración (ERP). */
+/** Catálogo de productos y permisos de la administración (ERP). */
 import { describe, expect, it } from "vitest";
 import { addMemberAndLogin, call, createOrgWithOwner } from "./helpers";
 
@@ -11,7 +11,7 @@ const body = {
   toxClass: "III",
 };
 
-describe("productos (E-01)", () => {
+describe("productos", () => {
   it("guarda tipo, unidad, principio activo, carencia y clase toxicológica", async () => {
     const owner = await createOrgWithOwner();
     const r = await call<{ id: string }>("POST", "/org/products", { token: owner.token, body });

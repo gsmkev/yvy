@@ -5,7 +5,7 @@ vi.mock("expo-location", () => ({}));
 import { traceToPolygon } from "@yvy/geo";
 import { appendFix, traceLengthM } from "../src/lib/perimeterWalk";
 
-describe("M-04 · perímetro caminado", () => {
+describe("perímetro caminado", () => {
   it("la traza solo suma fijos buenos y que avanzaron, y mide lo recorrido", () => {
     let trace = appendFix([], { lon: -55.9, lat: -27.2, accuracy: 5 });
     trace = appendFix(trace, { lon: -55.9, lat: -27.2000001, accuracy: 5 }); // quieto

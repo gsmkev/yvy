@@ -1,3 +1,4 @@
+/** Pruebas de plantillas de monitoreo; estaciones. */
 import { describe, expect, it } from "vitest";
 import {
   compareThresholds,

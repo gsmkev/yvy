@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { POI_KINDS } from "@yvy/shared";
 import { kindForPoi } from "../src/lib/poiQr";
 
-describe("anotar en un punto escaneado (F-28)", () => {
+describe("anotar en un punto escaneado", () => {
   it("el pluviómetro abre Lluvia y la aguada o el bebedero abren su nivel", () => {
     expect(kindForPoi("rain_gauge")).toBe("rain");
     expect(kindForPoi("water")).toBe("water");

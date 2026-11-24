@@ -1,3 +1,4 @@
+/** Pruebas de tareas recurrentes; registros. */
 import { describe, expect, it } from "vitest";
 import {
   deterministicUuid,

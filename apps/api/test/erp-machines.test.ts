@@ -1,4 +1,4 @@
-/** E-03: maquinaria; la editan dueño y administrador, la ve el agrónomo y baja al celular del empleado. */
+/** Maquinaria; la editan dueño y administrador, la ve el agrónomo y baja al celular del empleado. */
 import { describe, expect, it } from "vitest";
 import { call } from "./helpers";
 import { erpGet, erpPost, erpSetup } from "./erp-helpers";
@@ -6,7 +6,7 @@ import { pullAll } from "./helpers";
 
 const tractor = { name: "John Deere 6130", type: "tractor", brand: "John Deere", model: "6130J", year: 2018, meterKind: "hours", meterValue: 4200 };
 
-describe("maquinaria (E-03)", () => {
+describe("maquinaria", () => {
   it("alta con horómetro; sin lectura queda en 0", async () => {
     const { owner, farmId } = await erpSetup();
     const a = await erpPost(owner.token, "machines", { ...tractor, farmId });

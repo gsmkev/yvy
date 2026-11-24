@@ -16,7 +16,7 @@ async function setup() {
   return { owner, worker, other, farmId, plotIds, task };
 }
 
-describe("tareas: prioridad, hora límite y comentarios (T-02)", () => {
+describe("tareas: prioridad, hora límite y comentarios", () => {
   it("guarda prioridad y hora, y las rechaza si son inválidas", async () => {
     const { owner, worker, task } = await setup();
     expect((await task({ priority: "high", dueTime: "16:30" })).status).toBe(201);

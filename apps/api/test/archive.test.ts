@@ -1,4 +1,4 @@
-/** P-06: archivado de datos viejos de D1 a R2. */
+/** Archivado de datos viejos de D1 a R2. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";
@@ -23,7 +23,7 @@ async function insertRecord(orgId: string, farmId: string, userId: string, kind:
   return id;
 }
 
-describe("P-06 · archivado", () => {
+describe("archivado", () => {
   it("sin ARCHIVE_AFTER_MONTHS (o menor a 3) no hace nada", async () => {
     expect(archiveCutoff({}, NOW)).toBeNull();
     expect(archiveCutoff({ ARCHIVE_AFTER_MONTHS: "1" }, NOW)).toBeNull();

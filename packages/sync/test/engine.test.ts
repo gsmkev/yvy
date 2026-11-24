@@ -1,4 +1,4 @@
-/** Pruebas obligatorias del motor (PRD §11). */
+/** Pruebas obligatorias del motor de sincronización. */
 import { describe, expect, it } from "vitest";
 import { newId, RECORD_SCHEMA_VERSION, type Mutation } from "@yvy/shared";
 import { CpuLimitError, SyncEngine, syncStatusLabel, type Transport } from "../src";
@@ -37,7 +37,7 @@ const setup = (transport?: (s: FakeServer) => Transport) => {
   return { server, store, engine };
 };
 
-describe("SyncEngine · PRD §11", () => {
+describe("SyncEngine", () => {
   it("corte de red a mitad del push: no se pierde nada y el reintento completa", async () => {
     let calls = 0;
     const { server, store, engine } = setup((s) => ({
@@ -185,7 +185,7 @@ describe("SyncEngine · PRD §11", () => {
     expect(r1).toBe(r2);
   });
 
-  it("indicador de estado (RF-43)", () => {
+  it("indicador de estado", () => {
     const fmt = () => "11:52";
     expect(syncStatusLabel({ online: false, phase: "idle", pending: 3, lastSyncAt: null }, fmt)).toEqual({
       key: "offline",

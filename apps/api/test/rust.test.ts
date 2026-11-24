@@ -19,7 +19,7 @@ const hour = (iso: string, tempC: number, humidityPct: number, precipMm = 0): Ho
 const day = (date: string, n: number, tempC = 22, rh = 95) =>
   Array.from({ length: 24 }, (_, i) => hour(`${date}T${String(i).padStart(2, "0")}:00:00Z`, tempC, i < n ? rh : 60));
 
-describe("A-40 · roya asiática", () => {
+describe("roya asiática", () => {
   it("cuenta horas con humedad alta o lluvia y temperatura de 15 a 28 °C", () => {
     const hours = [
       hour("2026-11-12T10:00:00Z", 22, 95), // sí

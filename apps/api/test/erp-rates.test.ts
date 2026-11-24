@@ -1,4 +1,4 @@
-/** E-06: tipo de cambio diario. Se usa el último hasta la fecha del movimiento. */
+/** Tipo de cambio diario. Se usa el último hasta la fecha del movimiento. */
 import { describe, expect, it } from "vitest";
 import { rateOn, toMinor, toPyg } from "@yvy/shared";
 import { call, createOrgWithOwner } from "./helpers";
@@ -11,7 +11,7 @@ import { erpGet, erpSetup, expectListStatus } from "./erp-helpers";
 const put = (token: string, date: string, usdToPyg: number) =>
   call("PUT", `/org/erp/exchange-rates/${date}`, { token, body: { usdToPyg } });
 
-describe("tipo de cambio (E-06)", () => {
+describe("tipo de cambio", () => {
   it("una fila por día: cargar de nuevo el mismo día lo reemplaza; lista del más nuevo al más viejo", async () => {
     const { owner } = await erpSetup();
     expect((await put(owner.token, "2026-11-01", 7300)).status).toBe(200);

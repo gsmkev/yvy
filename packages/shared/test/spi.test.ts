@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { farmSpiSchema, spiCategory } from "../src";
 
-describe("SPI (C-07)", () => {
+describe("SPI", () => {
   it("categorías de McKee", () => {
     expect(spiCategory(-2.3)).toBe("extreme_drought");
     expect(spiCategory(-1.5)).toBe("severe_drought");

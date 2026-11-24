@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { LIMITS, newId } from "@yvy/shared";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";
 
-describe("asignar tareas eligiendo lotes en el mapa (T-01)", () => {
+describe("asignar tareas eligiendo lotes en el mapa", () => {
   async function setup() {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 4);

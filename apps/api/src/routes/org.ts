@@ -17,11 +17,10 @@ import { hashPin } from "../lib/pin";
 import { sendEmail } from "../lib/email";
 import { parse, readJson, timeOfDay } from "../lib/http";
 import type { AppEnv } from "../types";
+import { isoDate, uuid } from "./schemas";
 
 export const org = new Hono<AppEnv>();
 
-const uuid = z.string().uuid();
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 /** Quita la altura (Z) de cada posición: MapLibre y Python esperan 2D. */
 const to2D = (v: unknown): unknown => (Array.isArray(v) ? (typeof v[0] === "number" ? v.slice(0, 2) : v.map(to2D)) : v);
 

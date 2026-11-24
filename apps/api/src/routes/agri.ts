@@ -19,11 +19,10 @@ import {
 } from "../db/agri";
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
+import { isoDate, uuid } from "./schemas";
 
 export const agri = new Hono<AppEnv>();
 
-const uuid = z.string().uuid();
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 const seasonInput = z
   .object({

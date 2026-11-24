@@ -1,6 +1,6 @@
 # Roles y permisos (amplía PRD §9)
 
-Fuente de verdad en el código: objeto `can` en `apps/api/src/db/scoped.ts`. Cada cambio de permisos lleva un test en
+Fuente de verdad en el código: objeto `can` en `apps/api/src/db/scoped/permissions.ts`. Cada cambio de permisos lleva un test en
 `apps/api/test` (`permissions`, `supervisor`, `contractor`, `farm-access`).
 
 ## Roles

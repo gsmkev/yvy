@@ -1,7 +1,7 @@
 /**
  * Mantenimiento de máquinas (función 124): servicios por hacer (vencidos en alerta), planes y bitácora; anotar un
  * servicio o una reparación. API: GET /org/erp/maintenance/due, /maintenance/logs, /maintenance-plans, /machines;
- * POST /org/erp/maintenance/logs (apps/api/src/routes/erp.ts).
+ * POST /org/erp/maintenance/logs (apps/api/src/routes/erp/).
  */
 import { useState } from "react";
 import { View } from "react-native";

@@ -96,6 +96,12 @@ function parseOrders(orderTasks: EffectData["orderTasks"]): Map<string, WorkOrde
   return orders;
 }
 
+/** Cantidad que se le paga al contratista: por hectárea la superficie hecha; por tonelada lo cosechado; por hora las horas del registro. */
+function contractorQty(c: { rateUnit: string }, r: EffectRecord, plotAreaHa: number | null): number | null {
+  if (c.rateUnit === "ha") return typeof r.data.areaHa === "number" ? r.data.areaHa : plotAreaHa;
+  return numOr(c.rateUnit === "ton" ? r.data.tons : r.data.hours);
+}
+
 /** Costo del contratista de la orden de trabajo (E-21), al cerrar el registro de siembra o cosecha. */
 export async function contractorCosts(sdb: ScopedDb, recs: EffectRecord[], data: EffectData, now: number): Promise<Cost[]> {
   const org = sdb.auth.orgId;
@@ -116,9 +122,7 @@ export async function contractorCosts(sdb: ScopedDb, recs: EffectRecord[], data:
     const c = order?.contractorId ? contractorOf.get(order.contractorId) : undefined;
     if (!c) continue;
     const plot = r.plotId ? data.plots.get(r.plotId) : undefined;
-    const area = typeof r.data.areaHa === "number" ? r.data.areaHa : (plot?.areaHa ?? null);
-    // Por hectárea: superficie hecha; por tonelada: lo cosechado; por hora: las horas del registro (si las trae).
-    const qty = c.rateUnit === "ha" ? area : c.rateUnit === "ton" ? numOr(r.data.tons) : numOr(r.data.hours);
+    const qty = contractorQty(c, r, plot?.areaHa ?? null);
     if (!qty || qty <= 0) continue;
     const amount = Math.round(qty * c.rateAmount);
     const day = localDate(r.capturedAt);

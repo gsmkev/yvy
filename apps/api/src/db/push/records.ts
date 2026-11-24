@@ -7,25 +7,39 @@ import type { PushCtx, RecordState } from "./context";
 type Of<K extends Mutation["kind"]> = Extract<Mutation, { kind: K }>;
 type Problem = [RejectReason, string?] | null;
 
-/** Revisiones previas a parsear `data`: existencia, permisos, estancia, lote, punto y rol. */
-function accessProblem(ctx: PushCtx, r: Of<"records.upsert">["row"], existing: RecordState | undefined, now: number): Problem {
-  const { sdb } = ctx;
-  if (r.capturedAt > now + LIMITS.sync.maxFutureCaptureMs) return ["captured_in_future"];
+/** Existencia y permiso sobre un registro que ya estaba: otra organización, borrado, ventana de edición. */
+function existingProblem(ctx: PushCtx, existing: RecordState | undefined): Problem {
   if (existing && existing.organizationId !== ctx.org) return ["not_found"];
   if (existing?.deletedAt) return ["deleted"];
-  const err = existing ? sdb.canEditRecord(existing) : null;
-  if (err) return [err];
+  const err = existing ? ctx.sdb.canEditRecord(existing) : null;
+  return err ? [err] : null;
+}
+
+/** Estancia, lote y punto de interés del registro: de la organización, de la misma estancia y asignados. */
+function placementProblem(ctx: PushCtx, r: Of<"records.upsert">["row"]): Problem {
+  const { sdb } = ctx;
   if (!ctx.farms.has(r.farmId) || (sdb.isWorker && !ctx.workerFarms.has(r.farmId)) || !ctx.farmWritable(r.farmId))
     return ["forbidden", "farm"];
   if (r.plotId && (ctx.plots.get(r.plotId) !== r.farmId || (sdb.isWorker && !ctx.assignedPlots.has(r.plotId))))
     return ["forbidden", "plot"];
   if (r.poiId && ctx.pois.get(r.poiId) !== r.farmId) return ["invalid", "poi"];
+  return null;
+}
+
+/** Forma del registro y rol: punto completo, versión de esquema y tipos que son del ERP. */
+function kindProblem(ctx: PushCtx, r: Of<"records.upsert">["row"]): Problem {
   if ((r.lon === null) !== (r.lat === null) || r.schemaVersion > RECORD_SCHEMA_VERSION) return ["invalid"];
   // El recuento de depósito es del ERP: el empleado no entra (E-15).
   if (r.kind === "stock_count" && !can.viewStock(ctx.role)) return ["forbidden"];
   // El suministro de raciones (G-33) carga stock y costos: solo dueño y administrador.
   if (r.kind === "feed" && !can.manageErp(ctx.role)) return ["forbidden"];
   return null;
+}
+
+/** Revisiones previas a parsear `data`, en orden: la primera que falla rechaza. */
+function accessProblem(ctx: PushCtx, r: Of<"records.upsert">["row"], existing: RecordState | undefined, now: number): Problem {
+  if (r.capturedAt > now + LIMITS.sync.maxFutureCaptureMs) return ["captured_in_future"];
+  return existingProblem(ctx, existing) ?? placementProblem(ctx, r) ?? kindProblem(ctx, r);
 }
 
 /** Revisiones sobre `data` ya parseado: ganadería (potrero y destino del movimiento). */

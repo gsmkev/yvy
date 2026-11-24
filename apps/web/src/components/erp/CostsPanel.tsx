@@ -8,7 +8,7 @@ import { t, tk } from "../../lib/i18n";
 import { fmtGs, fmtMoney } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
 import type { Season } from "../../lib/types";
-import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, Select, Spinner, Stat, toast, type Column } from "../ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, FormFooter, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
 import { PhotoRowMenu } from "./InvoicePhoto";
 import { HeaderActions } from "./adminSlot";
 import { useParties } from "./PartiesPanel";
@@ -271,16 +271,7 @@ function CostModal({ entry, onClose }: { entry: CostEntry | null; onClose: () =>
         <Field label={t("ui.costParty")}>
           <Select value={f.partyId} onChange={set("partyId")} options={[none, ...(parties.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
         </Field>
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormFooter error={save.error} disabled={save.isPending} />
       </form>
     </Modal>
   );

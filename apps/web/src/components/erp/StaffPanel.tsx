@@ -8,7 +8,7 @@ import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { tablesToExcel } from "../../lib/tableExport";
 import { useFarm, useFarms } from "../../lib/queries";
-import { Button, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, SectionHead, Select, Spinner, Tabs, toast, type Column } from "../ui";
+import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, FilterBar, FormFooter, Input, Modal, SectionHead, Select, Spinner, Tabs, toast } from "../ui";
 import { ExportableTable } from "../ExportableTable";
 import { useErpList, type FieldDef } from "./MasterPanel";
 import { RecordList } from "./RecordList";
@@ -323,16 +323,7 @@ function PayModal({ row, onClose }: { row: Balance; onClose: () => void }) {
         <Field label={t("ui.balNote")}>
           <Input maxLength={200} value={note} onChange={(e) => setNote(e.target.value)} />
         </Field>
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormFooter error={save.error} disabled={save.isPending} />
       </form>
     </Modal>
   );

@@ -5,7 +5,7 @@ import { CONTRACTOR_SERVICES } from "@yvy/shared";
 import { del, get, put } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
-import { Button, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, toast, type Column } from "../ui";
+import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, FormFooter, Input, Modal, Select, Spinner, toast } from "../ui";
 import { SectionButton } from "./SectionButton";
 import { useMachines } from "./MachinesPanel";
 import { ExportableTable } from "../ExportableTable";
@@ -198,16 +198,7 @@ function ProfileModal({ row, onClose }: { row: Profile | null; onClose: () => vo
         <Field label={t("ui.laborPrice")} hint={t("ui.laborPriceHint")}>
           <Input type="number" min={0} step="any" value={f.price} onChange={set("price")} />
         </Field>
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending || !f.machineId}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormFooter error={save.error} disabled={save.isPending || !f.machineId} />
       </form>
     </Modal>
   );

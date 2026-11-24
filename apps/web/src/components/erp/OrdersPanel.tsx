@@ -9,7 +9,7 @@ import { fmtGs } from "../../lib/money";
 import { useFarm, useFarms, useMembers, useSeasons } from "../../lib/queries";
 import { orderSheetHtml } from "../../lib/workOrders";
 import { useProducts } from "../../lib/products";
-import { Button, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, toast, type Column } from "../ui";
+import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, FormFooter, Input, Modal, Select, Spinner, toast } from "../ui";
 import { useContractors } from "./ContractorsPanel";
 import { useMachines } from "./MachinesPanel";
 import { ExportableTable } from "../ExportableTable";
@@ -243,16 +243,7 @@ function OrderModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
         )}
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormFooter error={save.error} disabled={save.isPending} />
       </form>
     </Modal>
   );

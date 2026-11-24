@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fromMinor, toMinor, type Currency } from "@yvy/shared";
 import { del, get, patch, post } from "../../lib/api";
 import { t } from "../../lib/i18n";
-import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, toast, type Column } from "../ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FormFooter, Input, Modal, Select, Spinner, toast } from "../ui";
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions, RowMenu, useTableExport } from "./adminSlot";
 
@@ -119,16 +119,7 @@ export function RowModal({
             </div>
           );
         })}
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormFooter error={save.error} disabled={save.isPending} />
       </form>
     </Modal>
   );

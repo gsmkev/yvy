@@ -5,7 +5,7 @@ import { del, get, put } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { fmtQty } from "../../lib/money";
 import { useProducts } from "../../lib/products";
-import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast, type Column } from "../ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FormFooter, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
 import { useWarehouses } from "./WarehousesPanel";
 import { HeaderActions, RowMenu, useGoSection, useTableExport } from "./adminSlot";
 
@@ -167,16 +167,7 @@ function MinModal({ row, onClose }: { row: Minimum | null; onClose: () => void }
         <Field label={t("ui.minStockMin")}>
           <Input required type="number" min={0} step="any" value={minQty} onChange={(e) => setMinQty(e.target.value)} />
         </Field>
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormFooter error={save.error} disabled={save.isPending} />
       </form>
     </Modal>
   );

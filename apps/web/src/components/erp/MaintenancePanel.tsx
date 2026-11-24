@@ -6,7 +6,7 @@ import { del, get, post } from "../../lib/api";
 import { fmtIsoDate, fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
-import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, Input, Modal, SectionHead, Select, Spinner, Tabs, toast, type Column } from "../ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FormFooter, Input, Modal, SectionHead, Select, Spinner, Tabs, toast } from "../ui";
 import { useMachines } from "./MachinesPanel";
 import { useErpList, type FieldDef } from "./MasterPanel";
 import { RecordList } from "./RecordList";
@@ -274,16 +274,7 @@ function LogModal({ planId, plans, onClose }: { planId: string | null; plans: Pl
         <Field label={t("ui.currency")}>
           <Select value={currency} onChange={(e) => setCurrency(e.target.value as Currency)} options={CURRENCIES.map((c) => ({ value: c, label: c }))} />
         </Field>
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormFooter error={save.error} disabled={save.isPending} />
       </form>
     </Modal>
   );

@@ -7,7 +7,7 @@ import { fmtDate, fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { useFarm, useFarms } from "../../lib/queries";
 import { useProducts } from "../../lib/products";
-import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, Select, Spinner, Tabs, toast, type Column } from "../ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, FormFooter, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions, RowMenu } from "./adminSlot";
 
@@ -285,16 +285,7 @@ function FeedModal({ rations, onClose }: { rations: Ration[]; onClose: () => voi
             ))}
           </ul>
         )}
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending || !plotId || !ration || lines.length === 0}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormFooter error={save.error} disabled={save.isPending || !plotId || !ration || lines.length === 0} />
       </form>
     </Modal>
   );

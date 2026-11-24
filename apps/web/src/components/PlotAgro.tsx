@@ -11,7 +11,7 @@ import { YieldVigorSection } from "./YieldVigorSection";
 import { YieldMapSection } from "./YieldMapSection";
 import { ZonesSection } from "./ZonesSection";
 import { post } from "../lib/api";
-import { Button, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
+import { Button, ErrorBox, Field, FormFooter, Input, Modal, Select, Spinner, toast } from "./ui";
 
 /** Secciones agronómicas de la ficha de un lote de cultivo (agri-p2). Solo para quien edita el campo. */
 export function PlotAgro({ plot }: { plot: Plot }) {
@@ -284,16 +284,7 @@ function IrrigationModal({ plot, onClose }: { plot: Plot; onClose: () => void })
             />
           </Field>
         </div>
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
+        <FormFooter error={save.error} disabled={save.isPending} />
       </form>
     </Modal>
   );

@@ -23,7 +23,7 @@ const body = z.object({
   email: z.string().trim().toLowerCase().email().max(254),
   lon: z.number().finite(),
   lat: z.number().finite(),
-  consent: z.literal(true, { message: t("leads.consentRequired") }),
+  consent: z.literal(true, { message: t("leads.common.consentRequired") }),
   /** Campo trampa: las personas no lo ven; si viene con algo, es un robot. */
   website: z.string().max(200).optional(),
 });
@@ -43,7 +43,7 @@ leads.post("/leads", async (c) => {
   if (b.website) return c.json({ ok: true });
   const box = LIMITS.leads.bbox;
   if (b.lon < box.minLon || b.lon > box.maxLon || b.lat < box.minLat || b.lat > box.maxLat)
-    throw new HTTPException(400, { message: t("leads.outOfCountry") });
+    throw new HTTPException(400, { message: t("leads.common.outOfCountry") });
   const db = getDb(c.env.DB);
   const now = Date.now();
   const ip = c.req.header("CF-Connecting-IP") ?? null;
@@ -53,7 +53,7 @@ leads.post("/leads", async (c) => {
       .select({ n: count() })
       .from(s.leads)
       .where(and(eq(s.leads.ipHash, ipHash), gte(s.leads.createdAt, now - DAY)))) as [{ n: number }];
-    if (n >= LIMITS.leads.perIpPerDay) throw new HTTPException(429, { message: t("leads.tooMany") });
+    if (n >= LIMITS.leads.perIpPerDay) throw new HTTPException(429, { message: t("leads.common.tooMany") });
   }
   // Mismo email dentro del plazo: misma respuesta, sin pedido nuevo (no revela si ya había uno).
   const [recent] = await db

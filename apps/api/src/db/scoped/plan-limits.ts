@@ -33,7 +33,7 @@ export async function requireHaRoom(sdb: ScopedDb, extraHa: number, what: "farms
   const total = Number(r?.ha ?? 0) + extraHa;
   if (total > maxHa)
     throw new PlanLimitError(
-      t("ui.planLimitHa", { max: fmt(maxHa), total: fmt(Math.round(total)), extra: fmt(Math.round(extraHa)) }),
+      t("ui.plan.limitHa", { max: fmt(maxHa), total: fmt(Math.round(total)), extra: fmt(Math.round(extraHa)) }),
     );
 }
 
@@ -52,5 +52,5 @@ export async function requireUserRoom(sdb: ScopedDb, existingUserId: string | nu
       ),
     );
   if (existingUserId && rows.some((m) => m.userId === existingUserId)) return;
-  if (rows.length + 1 > maxUsers) throw new PlanLimitError(t("ui.planLimitUsers", { max: maxUsers }));
+  if (rows.length + 1 > maxUsers) throw new PlanLimitError(t("ui.plan.limitUsers", { max: maxUsers }));
 }

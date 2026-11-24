@@ -18,7 +18,7 @@ export const readOnlyDemo = createMiddleware<AppEnv>(async (c, next) => {
       .from(s.organizations)
       .where(eq(s.organizations.id, c.var.auth.orgId))
       .limit(1);
-    if (org?.plan === "demo") throw new HTTPException(403, { message: t("ui.publicDemoReadOnly") });
+    if (org?.plan === "demo") throw new HTTPException(403, { message: t("ui.public.demoReadOnly") });
   }
   await next();
 });
@@ -30,7 +30,7 @@ export const readOnlyWhenExpired = createMiddleware<AppEnv>(async (c, next) => {
       .from(s.organizations)
       .where(eq(s.organizations.id, c.var.auth.orgId))
       .limit(1);
-    if (org?.plan === "demo") throw new HTTPException(403, { message: t("ui.publicDemoReadOnly") });
+    if (org?.plan === "demo") throw new HTTPException(403, { message: t("ui.public.demoReadOnly") });
     // Pedir la baja, o pedir un plan para seguir, tiene que poder hacerse con la prueba vencida.
     if (c.req.path === "/org/delete-request" || c.req.path === "/org/plan-request") return next();
     const expired =

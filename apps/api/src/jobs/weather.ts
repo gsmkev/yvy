@@ -158,7 +158,7 @@ interface PowerDaily {
 }
 
 export const powerUrl = (lat: number, lon: number, start: string, end: string) =>
-  `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN,T2M_MAX,GWETTOP,GWETROOT,PRECTOTCORR&community=AG&longitude=${round(lon)}&latitude=${round(lat)}&start=${start.replaceAll("-", "")}&end=${end.replaceAll("-", "")}&format=JSON`;
+  `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN,T2M_MAX,GWETTOP,GWETROOT,PRECTOTCORR&community=AG&longitude=${round(lon)}&latitude=${round(lat)}&start=${start.replace(/-/g, "")}&end=${end.replace(/-/g, "")}&format=JSON`;
 
 export function dailyFromPower(json: {
   properties: { parameter: Record<string, Record<string, number>> };

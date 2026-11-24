@@ -37,7 +37,7 @@ const areaWith = (check: (ha: number) => string | null) =>
     }
     const raw = g as { type: Area["type"]; coordinates: unknown };
     if (countVertices(raw.coordinates) > LIMITS.geometry.maxVertices) {
-      ctx.addIssue({ code: "custom", message: t("ui.geomTooDetailed", { max: LIMITS.geometry.maxVertices }) });
+      ctx.addIssue({ code: "custom", message: t("ui.geom.tooDetailed", { max: LIMITS.geometry.maxVertices }) });
       return z.NEVER;
     }
     const flat = { type: raw.type, coordinates: to2D(raw.coordinates) } as Area;
@@ -50,11 +50,11 @@ const areaWith = (check: (ha: number) => string | null) =>
   });
 
 const farmArea = areaWith((ha) =>
-  ha > LIMITS.geometry.maxFarmHa ? t("ui.farmTooBig", { max: LIMITS.geometry.maxFarmHa }) : null,
+  ha > LIMITS.geometry.maxFarmHa ? t("ui.farm.tooBig", { max: LIMITS.geometry.maxFarmHa }) : null,
 );
 export const plotArea = areaWith((ha) =>
   ha < LIMITS.geometry.minPlotHa
-    ? t("ui.plotTooSmall", { min: String(LIMITS.geometry.minPlotHa).replace(".", ",") })
+    ? t("ui.plot.tooSmall", { min: String(LIMITS.geometry.minPlotHa).replace(".", ",") })
     : null,
 );
 
@@ -89,7 +89,7 @@ org.post("/plan-request", async (c) => {
     await readJson(c.req),
   );
   // Sin cambiar el esquema: la forma de pago va al final del texto de la nota ("Forma de pago: Anual").
-  const billingText = b.billing ? `Forma de pago: ${t(`ui.planBilling_${b.billing}`)}` : null;
+  const billingText = b.billing ? `Forma de pago: ${t(`ui.plan.billing_${b.billing}`)}` : null;
   const note = [b.note, billingText].filter(Boolean).join(". ") || null;
   const res = await createPlanRequest(c.var.sdb, { ...b, note });
   if (c.env.OPS_EMAIL) {
@@ -97,7 +97,7 @@ org.post("/plan-request", async (c) => {
       c.env,
       c.env.OPS_EMAIL,
       `Pedido de plan: ${res.orgName}`,
-      `La organización "${res.orgName}" (${c.var.auth.orgId}) pidió el plan ${b.plan}${b.maxHa ? `, hasta ${b.maxHa} ha` : ""}${b.maxUsers ? `, hasta ${b.maxUsers} personas` : ""}.${b.billing ? ` Forma de pago: ${t(`ui.planBilling_${b.billing}`)}.` : ""}${b.note ? ` Nota: ${b.note}` : ""} Se aprueba en el panel interno.`,
+      `La organización "${res.orgName}" (${c.var.auth.orgId}) pidió el plan ${b.plan}${b.maxHa ? `, hasta ${b.maxHa} ha` : ""}${b.maxUsers ? `, hasta ${b.maxUsers} personas` : ""}.${b.billing ? ` Forma de pago: ${t(`ui.plan.billing_${b.billing}`)}.` : ""}${b.note ? ` Nota: ${b.note}` : ""} Se aprueba en el panel interno.`,
     ).catch((e) => console.error("plan-request email", e));
   }
   return c.json({ id: res.id }, 201);
@@ -136,13 +136,13 @@ org.put("/members/:userId/pin", async (c) => {
   const userId = c.req.param("userId");
   const phone = body.phone ?? (await sdb.memberPhone(userId));
   const key = phone ? phoneKey(phone) : null;
-  if (!phone || !key) throw new HTTPException(400, { message: t("app.pinNeedsPhone") });
-  if (body.pin && isWeakPin(body.pin)) throw new HTTPException(400, { message: t("app.pinTooWeak") });
+  if (!phone || !key) throw new HTTPException(400, { message: t("app.pin.needsPhone") });
+  if (body.pin && isWeakPin(body.pin)) throw new HTTPException(400, { message: t("app.pin.tooWeak") });
   let pin = body.pin;
   while (!pin || isWeakPin(pin)) pin = randomDigits(PIN_LENGTH);
   const salt = randomToken(16);
   const res = await sdb.setMemberPin(userId, { phone, phoneKey: key, salt, pinHash: await hashPin(c.env.JWT_SECRET, salt, pin) });
-  if (res === "phone_taken") throw new HTTPException(409, { message: t("app.pinPhoneTaken") });
+  if (res === "phone_taken") throw new HTTPException(409, { message: t("app.pin.phoneTaken") });
   return c.json({ ok: true, pin: body.pin ? undefined : pin });
 });
 
@@ -339,7 +339,7 @@ org.post("/prescriptions", async (c) => {
     plotIds: body.plotIds,
     assigneeId: body.assigneeId,
     dueDate: body.dueDate,
-    title: `${t("recordKinds.application")}: ${names}`.slice(0, 200),
+    title: `${t("record-kinds.kind.application")}: ${names}`.slice(0, 200),
     prescription: JSON.stringify(body.prescription),
   });
   return c.json(res, 201);

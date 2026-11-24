@@ -58,7 +58,7 @@ const sql = (v) => {
     return String(v);
   }
   if (typeof v === "boolean") return v ? "1" : "0";
-  return `'${String(v).replaceAll("'", "''")}'`;
+  return `'${String(v).replace(/'/g, "''")}'`;
 };
 const out = [];
 // Tablas que dependen de la geografía o de la fecha del día: se reemplazan al recargar.

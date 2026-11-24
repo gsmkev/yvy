@@ -52,7 +52,7 @@ export async function sessionOrChallenge(
 
 // ---------- Segundo factor (P-08) ----------
 
-export const locked = () => new HTTPException(429, { message: t("totp.locked", { min: Math.ceil(LIMITS.auth.totpLockMs / 60_000) }) });
+export const locked = () => new HTTPException(429, { message: t("totp.common.locked", { min: Math.ceil(LIMITS.auth.totpLockMs / 60_000) }) });
 export const orgRequiresTotp = async (db: ReturnType<typeof getDb>, orgId: string) => {
   const [org] = await db
     .select({ on: s.organizations.requireAdminTotp })

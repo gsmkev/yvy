@@ -73,7 +73,10 @@ const SCOPE_RULES: Record<PullTable, ScopeRule> = {
   warehouses: (sdb) => (sdb.auth.role === "supervisor" ? sql`0` : undefined), // el supervisor tampoco entra al ERP (E-15)
 };
 
+const workerRules = new Map(Object.entries(WORKER_RULES) as [PullTable, WorkerRule][]);
+const scopeRules = new Map(Object.entries(SCOPE_RULES) as [PullTable, ScopeRule][]);
+
 /** Condición de visibilidad por tabla: lotes asignados (roles de campo) o estancias permitidas (supervisor, K-05). */
 export function workerFilter(sdb: ScopedDb, table: PullTable, write = false): SQL | undefined {
-  return sdb.isWorker ? WORKER_RULES[table](sdb) : SCOPE_RULES[table](sdb, write);
+  return sdb.isWorker ? workerRules.get(table)!(sdb) : scopeRules.get(table)!(sdb, write);
 }

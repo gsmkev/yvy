@@ -95,10 +95,10 @@ export async function createWebhook(
 ) {
   writable(sdb);
   const problem = webhookUrlProblem(url);
-  if (problem) throw new HTTPException(400, { message: t(`ui.webhookUrl_${problem}` as const) });
+  if (problem) throw new HTTPException(400, { message: t(`ui.webhook.url_${problem}` as const) });
   const existing = await listWebhooks(sdb);
   if (existing.length >= LIMITS.webhooks.maxPerOrg)
-    throw new HTTPException(409, { message: t("ui.webhookLimit", { n: LIMITS.webhooks.maxPerOrg }) });
+    throw new HTTPException(409, { message: t("ui.webhook.limit", { n: LIMITS.webhooks.maxPerOrg }) });
   const secret = `whsec_${randomToken(24)}`;
   const id = newId();
   await sdb.db.insert(s.webhookEndpoints).values({

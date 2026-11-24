@@ -41,7 +41,7 @@ const body = z.object({
   hectares: optionalNumber(LIMITS.trialRequests.maxHa),
   employees: optionalNumber(LIMITS.trialRequests.maxEmployees, true),
   department: z.string().trim().max(60).optional(),
-  consent: z.literal(true, { message: t("trialRequests.consentRequired") }),
+  consent: z.literal(true, { message: t("trial-requests.common.consentRequired") }),
   /** Campo trampa: las personas no lo ven; si viene con algo, es un robot. */
   website: z.string().max(200).optional(),
 });
@@ -53,7 +53,7 @@ trialRequests.post("/trial-requests", async (c) => {
   // Un robot que llenó el campo trampa recibe la misma respuesta y no deja nada guardado.
   if (b.website) return c.json({ ok: true });
   const phone = normalizePhone(b.whatsapp);
-  if (!phone) throw new HTTPException(400, { message: t("trialRequests.badPhone") });
+  if (!phone) throw new HTTPException(400, { message: t("trial-requests.common.badPhone") });
   const db = getDb(c.env.DB);
   const now = Date.now();
   const ip = c.req.header("CF-Connecting-IP") ?? null;
@@ -63,7 +63,7 @@ trialRequests.post("/trial-requests", async (c) => {
       .select({ n: count() })
       .from(s.trialRequests)
       .where(and(eq(s.trialRequests.ipHash, ipHash), gte(s.trialRequests.createdAt, now - DAY)))) as [{ n: number }];
-    if (n >= LIMITS.trialRequests.perIpPerDay) throw new HTTPException(429, { message: t("trialRequests.tooMany") });
+    if (n >= LIMITS.trialRequests.perIpPerDay) throw new HTTPException(429, { message: t("trial-requests.common.tooMany") });
   }
   await db.insert(s.trialRequests).values({
     id: newId(),
@@ -86,8 +86,8 @@ trialRequests.post("/trial-requests", async (c) => {
       sendEmail(
         c.env,
         c.env.OPS_EMAIL,
-        t("trialRequests.opsSubject", { name: b.name }),
-        t("trialRequests.opsBody", {
+        t("trial-requests.ops.subject", { name: b.name }),
+        t("trial-requests.ops.body", {
           name: b.name,
           whatsapp: phone,
           company: b.company || dash,

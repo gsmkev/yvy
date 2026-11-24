@@ -62,7 +62,7 @@ routes.post("/leads/:id/report", async (c) => {
   if (!lead) throw new HTTPException(404, { message: "Pedido inexistente" });
   try {
     const link = await leadLink(c.env, id);
-    await sendEmail(c.env, lead.email, t("leads.emailSubject"), t("leads.emailBody", { link, days: Math.round(LIMITS.leads.retentionMs / 86_400_000) }));
+    await sendEmail(c.env, lead.email, t("leads.email.subject"), t("leads.email.body", { link, days: Math.round(LIMITS.leads.retentionMs / 86_400_000) }));
     await c.var.sys.markLeadSent(id, now);
     return c.json({ ok: true, sent: true });
   } catch (e) {

@@ -44,7 +44,7 @@ const TABLES = {
 const tables = {};
 let rows = 0;
 for (const [t, where] of Object.entries(TABLES)) {
-  tables[t] = db.prepare(`SELECT * FROM ${t} WHERE ${where.replaceAll(":org", `'${org}'`)}`).all().map((r) => ({ ...r }));
+  tables[t] = db.prepare(`SELECT * FROM ${t} WHERE ${where.replace(/:org/g, `'${org}'`)}`).all().map((r) => ({ ...r }));
   rows += tables[t].length;
 }
 // d0: el día en que corrió seed-manual (el cultivo del Lote 5 se sembró 59 días antes).

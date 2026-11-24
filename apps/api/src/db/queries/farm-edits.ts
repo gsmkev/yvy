@@ -224,11 +224,11 @@ async function replacePlots(
     .from(s.plots)
     .where(and(eq(s.plots.organizationId, org), inArray(s.plots.id, originalIds), isNull(s.plots.deletedAt)));
   if (originals.length !== originalIds.length) throw new NotFoundError("No existe");
-  if (new Set(originals.map((p) => p.farmId)).size !== 1) throw new HTTPException(400, { message: t("ui.plotsOtherFarm") });
+  if (new Set(originals.map((p) => p.farmId)).size !== 1) throw new HTTPException(400, { message: t("ui.plots.otherFarm") });
   const [lo, hi] = expectedAreaHa(originals);
   const total = made.reduce((a, p) => a + p.areaHa, 0);
   if (total < lo * (1 - AREA_TOLERANCE) || total > hi * (1 + AREA_TOLERANCE))
-    throw new HTTPException(400, { message: t("ui.plotsAreaMismatch") });
+    throw new HTTPException(400, { message: t("ui.plots.areaMismatch") });
   const base = originals.find((p) => p.id === originalIds[0])!;
   const assigned = await sdb.db
     .select({ userId: s.plotAssignments.userId })

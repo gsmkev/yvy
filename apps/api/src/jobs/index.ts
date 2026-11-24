@@ -79,16 +79,16 @@ async function maintenanceCron(env: Bindings, deps: JobDeps): Promise<void> {
   await recordUsage(env, deps.now());
 }
 
-const CRON_HANDLERS: Record<string, (env: Bindings, deps: JobDeps) => Promise<void>> = {
-  [CRONS.forecast]: enqueueForecasts,
-  [CRONS.drought]: enqueueAll("drought", "pest", "senacsa"),
-  [CRONS.weeklyReports]: enqueueAll("weekly_report", "benchmark"),
-  [CRONS.notify]: notifyCron,
-  [CRONS.maintenance]: maintenanceCron,
-};
+const CRON_HANDLERS = new Map<string, (env: Bindings, deps: JobDeps) => Promise<void>>([
+  [CRONS.forecast, enqueueForecasts],
+  [CRONS.drought, enqueueAll("drought", "pest", "senacsa")],
+  [CRONS.weeklyReports, enqueueAll("weekly_report", "benchmark")],
+  [CRONS.notify, notifyCron],
+  [CRONS.maintenance, maintenanceCron],
+]);
 
 export async function scheduled(controller: { cron: string }, env: Bindings, deps = defaultDeps()): Promise<void> {
-  await CRON_HANDLERS[controller.cron]?.(env, deps);
+  await CRON_HANDLERS.get(controller.cron)?.(env, deps);
 }
 
 type FarmJob = Exclude<JobMessage, { type: "webhook" }>;
@@ -96,7 +96,7 @@ type JobHandlers = {
   [K in FarmJob["type"]]: (env: Bindings, deps: JobDeps, farm: Farm, msg: Extract<FarmJob, { type: K }>) => Promise<unknown>;
 };
 
-const JOB_HANDLERS: JobHandlers = {
+const JOB_HANDLER_TABLE: JobHandlers = {
   forecast: (env, deps, farm) => forecastJob(getDb(env.DB), env, deps, farm),
   drought: (env, deps, farm) => droughtJob(getDb(env.DB), deps, farm),
   weekly_report: (env, deps, farm) => weeklyReportJob(getDb(env.DB), env, deps, farm),
@@ -105,6 +105,10 @@ const JOB_HANDLERS: JobHandlers = {
   benchmark: (env, deps, farm) => benchmarkJob(new SystemDb(getDb(env.DB)), farm, deps.now()),
   plot_forecast: (env, deps, farm, msg) => plotForecastJob(getDb(env.DB), env, deps, farm, msg.plotId),
 };
+
+const JOB_HANDLERS = new Map(
+  Object.entries(JOB_HANDLER_TABLE) as [FarmJob["type"], (env: Bindings, deps: JobDeps, farm: Farm, msg: FarmJob) => Promise<unknown>][],
+);
 
 export async function runJob(msg: FarmJob, env: Bindings, deps = defaultDeps()): Promise<void> {
   const [farm] = await getDb(env.DB)
@@ -120,7 +124,7 @@ export async function runJob(msg: FarmJob, env: Bindings, deps = defaultDeps()):
     .where(and(eq(s.farms.id, msg.farmId), isNull(s.farms.deletedAt)))
     .limit(1);
   if (!farm) return;
-  await (JOB_HANDLERS[msg.type] as (env: Bindings, deps: JobDeps, farm: Farm, msg: FarmJob) => Promise<unknown>)(env, deps, farm, msg);
+  await JOB_HANDLERS.get(msg.type)!(env, deps, farm, msg);
 }
 
 export async function queue(batch: MessageBatch<JobMessage>, env: Bindings): Promise<void> {
@@ -131,7 +135,7 @@ export async function queue(batch: MessageBatch<JobMessage>, env: Bindings): Pro
       else await runJob(body, env);
       msg.ack();
     } catch (err) {
-      console.error(`[job] ${body.type} ${body.type === "webhook" ? `endpoint=${body.endpointId}` : `farm=${body.farmId}`}`, err);
+      console.error("[job]", body.type, body.type === "webhook" ? `endpoint=${body.endpointId}` : `farm=${body.farmId}`, err);
       // I-02: los webhooks reintentan con espera creciente (30 s, 5 min, 30 min); el resto, a los 10 minutos
       msg.retry({ delaySeconds: body.type === "webhook" ? webhookRetryDelay(msg.attempts) : 600 });
     }

@@ -55,7 +55,7 @@ const config: ExpoConfig = {
     "@maplibre/maplibre-react-native",
     // F-11: atajo de Android que abre la anotación de lluvia (yvy://annotate?kind=rain&farmLevel=1).
     ["./plugins/android-shortcuts", SHORTCUT_LABELS],
-    // Android 9+ (PRD §7)
+    // Android 9+
     [
       "expo-build-properties",
       {

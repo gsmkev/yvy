@@ -1,10 +1,11 @@
+/** Pruebas de consumo real al cerrar la orden. */
 import { describe, expect, it } from "vitest";
 import { consumptionLines, parseRecordData } from "../src";
 
 const id = "0190a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b";
 const units = new Map([[id, "l" as const]]);
 
-describe("consumo real al cerrar la orden (E-21)", () => {
+describe("consumo real al cerrar la orden", () => {
   it("usa la cantidad usada si está; si no, dosis por superficie", () => {
     const base = { productId: id, name: "G", dose: 2, unit: "l_ha" as const };
     expect(consumptionLines("application", { areaHa: 8, products: [base] }, { plotAreaHa: null, units })).toEqual([{ productId: id, qty: 16 }]);

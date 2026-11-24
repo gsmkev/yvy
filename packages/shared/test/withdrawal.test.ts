@@ -1,3 +1,4 @@
+/** Pruebas de período de carencia. */
 import { describe, expect, it } from "vitest";
 import { withdrawalReport } from "../src";
 
@@ -7,7 +8,7 @@ const app = (date: string, products: { name: string; withdrawalDays: number | nu
   products,
 });
 
-describe("período de carencia (A-14)", () => {
+describe("período de carencia", () => {
   it("la restricción vigente es la que libera más tarde y cuenta los días que faltan", () => {
     const r = withdrawalReport(
       [

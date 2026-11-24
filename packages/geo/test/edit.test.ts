@@ -1,3 +1,4 @@
+/** Pruebas de splitPolygon; mergePolygons. */
 import { describe, expect, it } from "vitest";
 import type { LineString, Polygon } from "geojson";
 import { areaHa, lineLengthM, mergePolygons, splitPolygon, validatePolygon } from "../src";
@@ -8,7 +9,7 @@ const rect = (x0: number, y0: number, x1: number, y1: number): Polygon => ({
 });
 const line = (...c: number[][]): LineString => ({ type: "LineString", coordinates: c });
 
-describe("splitPolygon (M-05)", () => {
+describe("splitPolygon", () => {
   const sq = rect(-57, -25, -56.99, -24.99);
 
   it("divide un cuadrado por la mitad sin perder superficie", () => {
@@ -64,7 +65,7 @@ describe("splitPolygon (M-05)", () => {
   });
 });
 
-describe("mergePolygons (M-05)", () => {
+describe("mergePolygons", () => {
   it("une dos lotes que comparten un borde", () => {
     const a = rect(-57, -25, -56.99, -24.99);
     const b = rect(-56.99, -25, -56.98, -24.99);

@@ -1,8 +1,9 @@
+/** Pruebas de priceFor. */
 import { describe, expect, it } from "vitest";
 import { cattleYear, priceFor } from "../src/pricing";
 
 describe("priceFor", () => {
-  it("ejemplo del ADR: 10.000 ha de ganadería = US$ 1.800 al año", () => {
+  it("ejemplo: 10.000 ha de ganadería = US$ 1.800 al año", () => {
     expect(cattleYear(10_000)).toBeCloseTo(1800);
     const p = priceFor(0, 10_000, "monthly");
     expect(p.year).toBeCloseTo(1800);

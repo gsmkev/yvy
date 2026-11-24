@@ -1,3 +1,4 @@
+/** Pruebas de zonas de amortiguación. */
 import { describe, expect, it } from "vitest";
 import type { LineString, Polygon } from "geojson";
 import { bufferAnalysis, cleanDistances, DEFAULT_DISTANCES } from "../src/buffer";
@@ -15,7 +16,7 @@ const house = { kind: "house", name: "Casa del puesto", lon: -55.895, lat: -27.1
 const stream: LineString = { type: "LineString", coordinates: [[-55.789, -27.19], [-55.789, -27.22]] }; // ~99 m al este de B
 const features = { points: [house, { kind: "gate", name: "Tranquera", lon: -55.895, lat: -27.1995 }], streams: [{ name: "Arroyo Pytã", geometry: stream }] };
 
-describe("zonas de amortiguación (A-15)", () => {
+describe("zonas de amortiguación", () => {
   it("marca los lotes con una casa o un curso de agua dentro de la distancia, ignorando otros puntos", () => {
     const r = bufferAnalysis(plots, features, [], { ...DEFAULT_DISTANCES, stream: 150 });
     expect(r.plots.map((p) => p.plotId).sort()).toEqual(["a", "b"]);

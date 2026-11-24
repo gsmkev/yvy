@@ -1,3 +1,4 @@
+/** Pruebas de unidades. */
 import { describe, expect, it } from "vitest";
 import { areaLabel, cToTemp, haToArea, mmToRain, parseUnits } from "../src/units";
 

@@ -1,3 +1,4 @@
+/** Pruebas de carga recomendada; indicadores por sistema. */
 import { describe, expect, it } from "vitest";
 import { pastureClassOf, plotLoad, productionIndicators, recommendedUaPerHa, weightSeries } from "../src";
 

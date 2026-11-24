@@ -1,3 +1,4 @@
+/** Pruebas de overlapRatio y withinRatio. */
 import { describe, expect, it } from "vitest";
 import type { Polygon } from "geojson";
 import { checkPlots, overlapRatio, withinRatio } from "../src";
@@ -16,7 +17,7 @@ const sq = (lon: number, lat: number, size: number): Polygon => ({
   ],
 });
 
-describe("overlapRatio y withinRatio (M-10)", () => {
+describe("overlapRatio y withinRatio", () => {
   it("cajas que no se tocan: 0", () => {
     expect(overlapRatio(sq(-55.9, -27.2, 0.01), sq(-55.5, -27.2, 0.01))).toBe(0);
   });

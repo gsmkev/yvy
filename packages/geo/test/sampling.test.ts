@@ -1,3 +1,4 @@
+/** Pruebas de punto de etiqueta interior; grilla de muestreo de suelo. */
 import { describe, expect, it } from "vitest";
 import type { Polygon } from "geojson";
 import { areaHa, containsPoint, filterFix, labelPoint, samplingCount, samplingGrid, simplifyTrace, traceToPolygon } from "../src";
@@ -12,7 +13,7 @@ const L: Polygon = {
   coordinates: [[[-55.9, -27.2], [-55.88, -27.2], [-55.88, -27.205], [-55.895, -27.205], [-55.895, -27.22], [-55.9, -27.22], [-55.9, -27.2]]],
 };
 
-describe("M-12 · punto de etiqueta interior", () => {
+describe("punto de etiqueta interior", () => {
   it("cae dentro del lote aunque sea en L o en U", () => {
     const p = labelPoint(L);
     expect(containsPoint(L, p.lon, p.lat)).toBe(true);
@@ -27,7 +28,7 @@ describe("M-12 · punto de etiqueta interior", () => {
   });
 });
 
-describe("M-18 · grilla de muestreo de suelo", () => {
+describe("grilla de muestreo de suelo", () => {
   const plot = rect(-55.9, -27.2, 0.02, 0.02); // ~ 480 ha
   it("un punto cada 5 o 10 ha, numerados desde 1, todos adentro y sin repetir", () => {
     const ha = areaHa(plot);
@@ -60,7 +61,7 @@ describe("M-18 · grilla de muestreo de suelo", () => {
   });
 });
 
-describe("M-04 · perímetro caminado", () => {
+describe("perímetro caminado", () => {
   // Cuadrado de ~100 m caminado con puntos cada ~10 m y algo de ruido
   const walk = () => {
     const pts: { lon: number; lat: number }[] = [];

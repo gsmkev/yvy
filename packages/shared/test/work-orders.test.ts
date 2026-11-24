@@ -1,3 +1,4 @@
+/** Pruebas de órdenes de trabajo completas; órdenes de trabajo (app). */
 import { describe, expect, it } from "vitest";
 import type { WorkOrder } from "@yvy/shared";
 import { groupOrders, plotsLabel, productsLabel, type OrderRow } from "../src/work-orders";
@@ -26,7 +27,7 @@ const row = (over: Partial<OrderRow>): OrderRow => ({
   ...over,
 });
 
-describe("órdenes de trabajo completas (E-20)", () => {
+describe("órdenes de trabajo completas", () => {
   it("junta las tareas de una misma orden y suma superficie y avance", () => {
     const gs = groupOrders([
       row({ plotName: "A", plannedAreaHa: 10, status: "done", actualAreaHa: 9.5 }),

@@ -1,3 +1,4 @@
+/** Pruebas de exportación para sistemas contables. */
 import { describe, expect, it } from "vitest";
 import { defaultExportConfig, EXPORT_COLUMNS, exportConfigSchema, formatExportDate, formatExportNumber, libroIvaConfig, renderExport, taxMismatch, vatIncluded, type ExportCashMove, type ExportDoc } from "../src";
 
@@ -20,7 +21,7 @@ const doc = (over: Partial<ExportDoc> = {}): ExportDoc => ({
   ...over,
 });
 
-describe("I-06 exportación para sistemas contables", () => {
+describe("exportación para sistemas contables", () => {
   it("fechas y números con el formato pedido", () => {
     expect(formatExportDate("2026-11-05", "dmy_slash")).toBe("05/11/2026");
     expect(formatExportDate("2026-11-05", "dmy_dash")).toBe("05-11-2026");

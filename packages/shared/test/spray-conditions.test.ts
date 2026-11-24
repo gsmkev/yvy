@@ -1,7 +1,8 @@
+/** Pruebas de condiciones al aplicar. */
 import { describe, expect, it } from "vitest";
 import { forecastHourAt, parseRecordData, sprayWarningTexts, sprayWarnings } from "../src";
 
-describe("condiciones al aplicar (A-12)", () => {
+describe("condiciones al aplicar", () => {
   it("avisa con viento > 15 km/h y Delta T fuera de 2 a 8", () => {
     expect(sprayWarnings({ windKmh: 15, deltaT: 2 })).toEqual([]);
     expect(sprayWarnings({ windKmh: 16, deltaT: 8.1 })).toEqual(["windHigh", "deltaTHigh"]);

@@ -1,3 +1,4 @@
+/** Pruebas de cleanRing. */
 import { describe, expect, it } from "vitest";
 import { cleanArea, cleanRing, validatePolygon } from "../src";
 
@@ -9,7 +10,7 @@ const sq = [
   [0, 0],
 ];
 
-describe("cleanRing (M-11)", () => {
+describe("cleanRing", () => {
   it("no toca un anillo limpio", () => {
     expect(cleanRing(sq)).toEqual({ ring: sq, removed: 0 });
   });

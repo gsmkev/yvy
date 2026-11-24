@@ -1,3 +1,4 @@
+/** Pruebas de campos propios. */
 import { describe, expect, it } from "vitest";
 import { describeExtra, extraSchema, flattenExtra, formConfigSchema, missingRequired, parseRecordData, splitExtraAnswers, type FormField } from "../src";
 
@@ -7,7 +8,7 @@ const fields: FormField[] = [
   { id: "riego", label: "¿Regado?", type: "yesno" },
 ];
 
-describe("F-14 · campos propios", () => {
+describe("campos propios", () => {
   it("las respuestas se separan del resto y vuelven a aplanarse al editar", () => {
     const { rest, extra } = splitExtraAnswers({ condition: "good", "extra.viento": "calmo", "extra.altura": 30, "extra.riego": false, "extra.vacio": "" });
     expect(rest).toEqual({ condition: "good" });

@@ -1,3 +1,4 @@
+/** Almacén en memoria que implementa SyncStore para probar el motor sin base de datos. */
 import type { Cursor, Mutation, PullTable, RejectReason } from "@yvy/shared";
 import type { SyncStore } from "../src";
 

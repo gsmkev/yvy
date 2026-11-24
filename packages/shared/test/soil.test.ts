@@ -1,7 +1,8 @@
+/** Pruebas de suelo. */
 import { describe, expect, it } from "vitest";
 import { soilAverage, soilLevel } from "../src";
 
-describe("suelo (A-30)", () => {
+describe("suelo", () => {
   it("clasifica por rangos de referencia", () => {
     expect(soilLevel("ph", 4.6)).toBe("low");
     expect(soilLevel("ph", 5.8)).toBe("medium");

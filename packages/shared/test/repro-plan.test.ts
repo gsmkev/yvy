@@ -1,3 +1,4 @@
+/** Pruebas de plan reproductivo; tareas del plan. */
 import { describe, expect, it } from "vitest";
 import { addMonths, currentCycleYear, cycleWindow, isBreedingStart, reproPlan } from "../src";
 

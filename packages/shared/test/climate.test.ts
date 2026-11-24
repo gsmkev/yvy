@@ -1,3 +1,4 @@
+/** Pruebas de lluvia de informes; lluvia de informes (casos de la web). */
 import { describe, expect, it } from "vitest";
 import { campaignStart, gaugeTable, hasUnassignedRain, lastSatDate, mondayOf, normalBetween, rainBetween, gaugeVsSat, type ClimateData } from "../src/climate";
 

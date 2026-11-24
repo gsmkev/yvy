@@ -1,3 +1,4 @@
+/** Pruebas de plan de siembra; densidad planificada por lote. */
 import { describe, expect, it } from "vitest";
 import { sowingPlan } from "../src";
 
@@ -15,7 +16,7 @@ const plan = (plotId: string, crop: "soja" | "maiz" | null, variety: string | nu
   variety,
 });
 
-describe("plan de siembra (A-03)", () => {
+describe("plan de siembra", () => {
   it("suma superficie por cultivo y variedad y calcula la semilla", () => {
     const r = sowingPlan(
       plots,
@@ -46,7 +47,7 @@ describe("plan de siembra (A-03)", () => {
   });
 });
 
-describe("densidad planificada por lote (A-01)", () => {
+describe("densidad planificada por lote", () => {
   it("el lote con densidad en kg/ha usa la suya; en semillas por metro usa la de referencia", () => {
     const r = sowingPlan(
       plots,

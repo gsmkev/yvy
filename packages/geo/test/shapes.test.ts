@@ -1,4 +1,4 @@
-/** Formas no cuadradas (docs/REVISION.md §1). Lo marcado como `todo` son límites conocidos. */
+/** Formas no cuadradas. Lo marcado como `todo` son límites conocidos. */
 import { describe, expect, it } from "vitest";
 import { areaHa, centroidOf, containsPoint, validatePolygon } from "../src";
 

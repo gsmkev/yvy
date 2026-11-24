@@ -1,3 +1,4 @@
+/** Pruebas de simplifyLine (Douglas-Peucker); trackLengthM. */
 import { describe, expect, it } from "vitest";
 import { trackLengthM, simplifyLine, simplifyToMax, type LonLat } from "../src/track";
 

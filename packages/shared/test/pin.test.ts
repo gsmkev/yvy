@@ -1,3 +1,4 @@
+/** Pruebas de phoneKey; isWeakPin. */
 import { describe, expect, it } from "vitest";
 import { isWeakPin, phoneKey } from "../src/pin";
 

@@ -1,10 +1,11 @@
+/** Pruebas de ventana de siembra. */
 import { describe, expect, it } from "vitest";
 import { sowingWindow } from "../src";
 
 const fc = (rows: [string, number | null, number | null][]) =>
   rows.map(([date, tminC, precipMm]) => ({ date, tminC, precipMm }));
 
-describe("ventana de siembra (A-05)", () => {
+describe("ventana de siembra", () => {
   it("marca apto cuando hay humedad, temperatura y no llueve fuerte", () => {
     const r = sowingWindow("soja", 0.6, fc([["2026-11-11", 18, 0], ["2026-11-12", 17, 2], ["2026-11-13", 16, 0]]));
     expect(r.days.every((d) => d.ok)).toBe(true);

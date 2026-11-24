@@ -43,15 +43,15 @@ describe("tablero del dueño (R-06)", () => {
       { farmId: a.farmId, plotId: "", date: today, source: "chirps", precipMm: 30 },
       { farmId: a.farmId, plotId: "", date: today, source: "power", precipMm: 30 },
     ]);
-    await db().insert(s.climatology).values(
-      Array.from({ length: dayOfYear(today) - dayOfYear(month) + 1 }, (_, i) => ({
-        farmId: a.farmId,
-        plotId: "",
-        dayOfYear: dayOfYear(month) + i,
-        variable: "precip",
-        mean: 20 / (dayOfYear(today) - dayOfYear(month) + 1),
-      })),
-    );
+    const normals = Array.from({ length: dayOfYear(today) - dayOfYear(month) + 1 }, (_, i) => ({
+      farmId: a.farmId,
+      plotId: "",
+      dayOfYear: dayOfYear(month) + i,
+      variable: "precip",
+      mean: 20 / (dayOfYear(today) - dayOfYear(month) + 1),
+    }));
+    // D1 acepta hasta 100 parámetros por consulta: a fin de mes son hasta 31 filas de 5 columnas
+    for (let i = 0; i < normals.length; i += 15) await db().insert(s.climatology).values(normals.slice(i, i + 15));
     // un aviso activo y uno resuelto
     const alert = (over: Partial<typeof s.alerts.$inferInsert>) => ({
       id: newId(),

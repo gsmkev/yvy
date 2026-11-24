@@ -115,5 +115,5 @@ def mosaic_indices(items: list[dict[str, Any]], grid: Grid, wanted: tuple[str, .
 
 
 def mosaic_ndvi(items: list[dict[str, Any]], grid: Grid) -> tuple[np.ndarray, np.ndarray]:
-    """Mosaico de NDVI de una pasada; atajo de :func:`mosaic_indices` para un solo índice."""
+    """Mosaico de NDVI de una pasada; atajo de `mosaic_indices` para un solo índice."""
     return mosaic_indices(items, grid, ("ndvi",))["ndvi"]

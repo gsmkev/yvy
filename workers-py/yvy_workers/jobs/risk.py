@@ -281,7 +281,7 @@ def build_report(power: dict[str, dict[str, float]], today: date, fire: dict[str
     Args:
         power: Series diarias de T2M_MIN y PRECTOTCORR.
         today: Fecha de hoy.
-        fire: Resultado de :func:`fire_stats`, o None si no hay datos de fuego.
+        fire: Resultado de `fire_stats`, o None si no hay datos de fuego.
         now_ms: Marca de generación (epoch ms); por defecto la hora actual.
     """
     tmin = parse_series(power.get("T2M_MIN", {}))

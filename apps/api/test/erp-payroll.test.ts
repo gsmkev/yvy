@@ -1,4 +1,4 @@
-/** E-27: planilla simple para el contador (jornales, adelantos y pagos por empleado y mes). */
+/** Planilla simple para el contador (jornales, adelantos y pagos por empleado y mes). */
 import { describe, expect, it } from "vitest";
 import { buildPayroll, monthsBetween } from "@yvy/shared";
 import { erpGet, erpPost, erpSetup } from "./erp-helpers";
@@ -6,7 +6,7 @@ import { erpGet, erpPost, erpSetup } from "./erp-helpers";
 const mark = (token: string, date: string, entries: unknown[]) => erpPost(token, "attendance", { date, entries });
 const pay = (token: string, employeeId: string, kind: string, amountPyg: number, date: string) => erpPost(token, "employee-payments", { employeeId, kind, amountPyg, date });
 
-describe("planilla para el contador (E-27)", () => {
+describe("planilla para el contador", () => {
   it("funciones puras: meses y filas por empleado y mes", () => {
     expect(monthsBetween("2026-11-15", "2027-02-01")).toEqual(["2026-11", "2026-12", "2027-01", "2027-02"]);
     const rows = buildPayroll(

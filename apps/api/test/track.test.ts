@@ -1,4 +1,4 @@
-/** Recorrida GPS (F-05): el registro `track` se valida, se guarda y vuelve en el pull. */
+/** Recorrida GPS: el registro `track` se valida, se guarda y vuelve en el pull. */
 import { describe, expect, it } from "vitest";
 import { newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";

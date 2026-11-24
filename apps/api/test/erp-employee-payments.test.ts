@@ -1,4 +1,4 @@
-/** E-26: adelantos, pagos y saldo por empleado. */
+/** Adelantos, pagos y saldo por empleado. */
 import { describe, expect, it } from "vitest";
 import { employeeBalance, statement } from "@yvy/shared";
 import { call } from "./helpers";
@@ -14,7 +14,7 @@ const pay = (token: string, employeeId: string, kind: string, amountPyg: number,
   erpPost(token, "employee-payments", { employeeId, kind, amountPyg, date });
 const mark = (token: string, date: string, entries: unknown[]) => erpPost(token, "attendance", { date, entries });
 
-describe("adelantos, pagos y saldo (E-26)", () => {
+describe("adelantos, pagos y saldo", () => {
   it("funciones puras: saldo y cuenta corriente con saldo acumulado", () => {
     expect(employeeBalance(500_000, 100_000, 300_000)).toBe(100_000);
     expect(employeeBalance(100_000, 300_000, 0)).toBe(-200_000);

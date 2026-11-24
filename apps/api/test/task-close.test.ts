@@ -1,4 +1,4 @@
-/** T-03: foto y ubicación obligatorias para cerrar ciertas tareas. */
+/** Foto y ubicación obligatorias para cerrar ciertas tareas. */
 import { describe, expect, it } from "vitest";
 import { closeProblem, closeRequirements, newId } from "@yvy/shared";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";
@@ -29,7 +29,7 @@ async function setup(kind: string | null) {
   return { farmId, plotId: plotIds[0]!, worker, taskId: t.body.id };
 }
 
-describe("T-03 · requisitos de cierre", () => {
+describe("requisitos de cierre", () => {
   it("las reglas viven en shared", () => {
     expect(closeRequirements("application")).toEqual({ photo: true, location: true });
     expect(closeRequirements("rain")).toBeNull();

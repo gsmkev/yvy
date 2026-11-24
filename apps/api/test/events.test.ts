@@ -1,3 +1,4 @@
+/** Pruebas de analítica propia. */
 import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
@@ -15,7 +16,7 @@ beforeEach(async () => {
 const mine = async (orgId: string) =>
   (await db().select().from(s.events).where(eq(s.events.organizationId, orgId))).map((e) => e.name).sort();
 
-describe("analítica propia (P-03)", () => {
+describe("analítica propia", () => {
   it("el embudo se escribe una sola vez por organización, en cada paso", async () => {
     const owner = await createOrgWithOwner(); // helper: no pasa por /auth/signup
     expect(await mine(owner.orgId)).toEqual([]);

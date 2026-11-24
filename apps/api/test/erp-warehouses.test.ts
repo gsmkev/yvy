@@ -1,9 +1,9 @@
-/** E-10: depósitos por estancia, con uno predeterminado. */
+/** Depósitos por estancia, con uno predeterminado. */
 import { describe, expect, it } from "vitest";
 import { call, createFarmWithPlots, createOrgWithOwner } from "./helpers";
 import { erpGet, erpPost, erpSetup } from "./erp-helpers";
 
-describe("depósitos (E-10)", () => {
+describe("depósitos", () => {
   it("el primero de la estancia queda predeterminado; marcar otro le quita la marca al anterior", async () => {
     const { owner, farmId } = await erpSetup();
     const a = await erpPost(owner.token, "warehouses", { farmId, name: "Galpón central", type: "shed" });

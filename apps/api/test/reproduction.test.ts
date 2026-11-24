@@ -1,4 +1,4 @@
-/** G-20: reproducción (servicio, tacto, parición, destete) e índices. */
+/** Reproducción (servicio, tacto, parición, destete) e índices. */
 import { describe, expect, it } from "vitest";
 import { parseRecordData, reproIndices } from "@yvy/shared";
 import { addMemberAndLogin, call, createOrgWithOwner } from "./helpers";

@@ -1,3 +1,4 @@
+/** Pruebas de estado del servicio. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { LIMITS } from "@yvy/shared";
@@ -16,7 +17,7 @@ const ingest = async (path: string, body: unknown) => {
 const status = () => call<any>("GET", "/public/status");
 const job = (r: any, id: string) => r.body.jobs.find((j: any) => j.id === id);
 
-describe("estado del servicio (P-04)", () => {
+describe("estado del servicio", () => {
   it("es pública y responde por el Worker, D1 y R2", async () => {
     const r = await status();
     expect(r.status).toBe(200);

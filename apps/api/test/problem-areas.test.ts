@@ -1,3 +1,4 @@
+/** Pruebas de áreas problema por lote. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { hmacHex } from "../src/lib/crypto";
@@ -25,7 +26,7 @@ const send = async (plotId: string, acquiredAt: number, areas: unknown[]) => {
   return call("POST", "/ingest/problem-areas", { body, headers: await signed("POST", "/ingest/problem-areas", body) });
 };
 
-describe("S-08 · áreas problema por lote", () => {
+describe("áreas problema por lote", () => {
   it("ingest las guarda, reemplaza las viejas y no pisa una escena más nueva", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 2);

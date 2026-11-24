@@ -1,8 +1,9 @@
+/** Pruebas de última anotación por lote en el detalle de la estancia. */
 import { describe, expect, it } from "vitest";
 import { newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner } from "./helpers";
 
-describe("T-07 · última anotación por lote en el detalle de la estancia", () => {
+describe("última anotación por lote en el detalle de la estancia", () => {
   it("trae lastRecordAt por lote (la más reciente) y null si nunca se anotó", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 3);

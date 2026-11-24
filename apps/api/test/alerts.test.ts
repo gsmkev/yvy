@@ -1,3 +1,4 @@
+/** Pruebas de parseo de fuentes reales; reglas. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";

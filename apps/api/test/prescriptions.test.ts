@@ -1,4 +1,4 @@
-/** Receta → órdenes de trabajo (ADR 0004, A-11). */
+/** Receta a órdenes de trabajo. */
 import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";
@@ -97,7 +97,7 @@ describe("recetas", () => {
               kind: "application",
               data: { ...rx, prescriptionTaskId: taskId, areaHa: 12 },
               schemaVersion: 1,
-              // T-03: una aplicación se cierra con foto y ubicación
+              // una aplicación se cierra con foto y ubicación
               lon: -55.9,
               lat: -27.2,
               gpsAccuracyM: null,

@@ -1,3 +1,4 @@
+/** Pruebas de la ruta /ingest. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { hmacHex } from "../src/lib/crypto";
@@ -142,7 +143,7 @@ describe("/ingest", () => {
     expect(b).toMatchObject({ ndviMean: null, ndviAt: null, ndviPrevMean: null, lastRecordAt: null });
   });
 
-  it("S-11: el dato de un lote fino se guarda y se muestra como poco confiable", async () => {
+  it("el dato de un lote fino se guarda y se muestra como poco confiable", async () => {
     const owner = await createOrgWithOwner();
     const { plotIds } = await createFarmWithPlots(owner.token, 2);
     const row = (plotId: string, lowConfidence?: boolean) => ({

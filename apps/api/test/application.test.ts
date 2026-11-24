@@ -1,4 +1,4 @@
-/** Productos y registros de aplicación (ADR 0004, A-10 y A-12). */
+/** Productos y registros de aplicación. */
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
@@ -147,7 +147,7 @@ describe("registro de aplicación", () => {
   });
 });
 
-describe("registro de fertilización (A-16)", () => {
+describe("registro de fertilización", () => {
   const push = (token: string, farmId: string, plotId: string | null, data: unknown) =>
     call("POST", "/sync/push", {
       token,

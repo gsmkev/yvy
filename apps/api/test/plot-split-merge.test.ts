@@ -1,3 +1,4 @@
+/** Pruebas de dividir un lote; unir lotes. */
 import { describe, expect, it } from "vitest";
 import { areaHa, mergePolygons, splitPolygon } from "@yvy/geo";
 import { addMemberAndLogin, call, createOrgWithOwner, pullAll, square } from "./helpers";
@@ -22,7 +23,7 @@ async function setup() {
 
 const cut = { type: "LineString" as const, coordinates: [[-55.88, -27.3], [-55.88, -27.0]] };
 
-describe("dividir un lote (M-05)", () => {
+describe("dividir un lote", () => {
   it("crea dos lotes con los datos del original, borra el original y baja por el sync", async () => {
     const { owner, ids } = await setup();
     const original = (await pullAll(owner.token, "plots")).find((p) => p.id === ids[0])!;
@@ -82,7 +83,7 @@ describe("dividir un lote (M-05)", () => {
   });
 });
 
-describe("unir lotes (M-05)", () => {
+describe("unir lotes", () => {
   it("crea un lote con la unión, borra los dos originales y reparte las asignaciones", async () => {
     const { owner, ids } = await setup();
     const worker = await addMemberAndLogin(owner.token, "worker");

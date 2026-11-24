@@ -1,4 +1,4 @@
-/** E-25: personal, asistencia y jornales por día, con lote y labor. */
+/** Personal, asistencia y jornales por día, con lote y labor. */
 import { describe, expect, it } from "vitest";
 import { wageFor } from "@yvy/shared";
 import { call } from "./helpers";
@@ -13,7 +13,7 @@ async function setup() {
 type S = Awaited<ReturnType<typeof setup>>;
 const mark = (token: string, date: string, entries: unknown[]) => erpPost(token, "attendance", { date, entries });
 
-describe("asistencia y jornales (E-25)", () => {
+describe("asistencia y jornales", () => {
   it("wageFor redondea al guaraní", () => {
     expect(wageFor(120_000, 0.5)).toBe(60_000);
     expect(wageFor(100_001, 0.5)).toBe(50_001);

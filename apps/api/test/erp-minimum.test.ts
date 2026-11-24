@@ -1,4 +1,4 @@
-/** E-14: stock mínimo por producto y depósito con aviso de reposición. */
+/** Stock mínimo por producto y depósito con aviso de reposición. */
 import { describe, expect, it } from "vitest";
 import { belowMinimum } from "@yvy/shared";
 import { call } from "./helpers";
@@ -6,7 +6,7 @@ import { buy, erpGet, erpPost, stockSetup } from "./erp-helpers";
 
 const put = (token: string, body: unknown) => call("PUT", "/org/erp/stock/minimums", { token, body });
 
-describe("stock mínimo (E-14)", () => {
+describe("stock mínimo", () => {
   it("belowMinimum avisa en el mínimo o por debajo, ignora mínimo 0 y ordena por faltante", () => {
     const stock = [
       { productId: "a", warehouseId: "w", qty: 5 },

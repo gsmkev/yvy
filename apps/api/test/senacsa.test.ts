@@ -1,4 +1,4 @@
-/** ADR 0005 (sección 2): recordatorios de las campañas oficiales de SENACSA en el cron diario. */
+/** Recordatorios de las campañas oficiales de SENACSA en el cron diario. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { and, eq } from "drizzle-orm";

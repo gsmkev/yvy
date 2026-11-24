@@ -1,4 +1,4 @@
-/** Matriz de permisos (PRD §9) y criterio de aceptación de la Fase 1. */
+/** Matriz de permisos por rol y criterio de aceptación del flujo completo de una estancia. */
 import { describe, expect, it } from "vitest";
 import { newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll, square } from "./helpers";
@@ -21,7 +21,7 @@ const rain = (farmId: string, plotId: string | null) => ({
   },
 });
 
-describe("Fase 1 · aceptación", () => {
+describe("aceptación del flujo completo", () => {
   it("estancia con 20 lotes, empleado con 3: no puede leer los otros 17", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 20);
@@ -160,7 +160,7 @@ describe("Fase 1 · aceptación", () => {
   });
 });
 
-describe("puntos de interés desde el celular (PRD §9 y §11)", () => {
+describe("puntos de interés desde el celular", () => {
   const poi = (farmId: string, over: Record<string, unknown> = {}) => ({
     mutationId: newId(),
     kind: "pois.upsert",

@@ -1,3 +1,4 @@
+/** Pruebas de preferencias de notificación. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { ALERT_KINDS, DEFAULT_NOTIFICATION_PREFS, inQuietHours, parseNotificationPrefs } from "@yvy/shared";
@@ -18,7 +19,7 @@ const draft = (kind: AlertDraft["kind"], validFrom: string): AlertDraft => ({
 });
 const prefs = (over: Record<string, unknown>) => ({ ...DEFAULT_NOTIFICATION_PREFS, ...over });
 
-describe("preferencias de notificación (U-29)", () => {
+describe("preferencias de notificación", () => {
   it("GET devuelve los valores por defecto y qué le llega a cada rol", async () => {
     const owner = await createOrgWithOwner();
     const worker = await addMemberAndLogin(owner.token, "worker");

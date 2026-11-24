@@ -1,3 +1,4 @@
+/** Pruebas de SPI a 1, 3 y 6 meses. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { hmacHex } from "../src/lib/crypto";
@@ -22,7 +23,7 @@ const report = {
   ],
 };
 
-describe("C-07 · SPI a 1, 3 y 6 meses", () => {
+describe("SPI a 1, 3 y 6 meses", () => {
   it("el job lo guarda firmado y el dueño lo lee", async () => {
     const owner = await createOrgWithOwner();
     const { farmId } = await createFarmWithPlots(owner.token, 1);

@@ -1,4 +1,4 @@
-/** P-09: pedido de baja de la cuenta (solo dueño, no borra nada). */
+/** Pedido de baja de la cuenta (solo dueño, no borra nada). */
 import { env } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
@@ -11,7 +11,7 @@ afterEach(() => vi.restoreAllMocks());
 const requestsOf = (orgId: string) =>
   db().select().from(s.deletionRequests).where(eq(s.deletionRequests.organizationId, orgId));
 
-describe("P-09 · pedir la baja de la cuenta", () => {
+describe("pedir la baja de la cuenta", () => {
   it("el dueño la registra una sola vez, sin borrar datos", async () => {
     const owner = await createOrgWithOwner("Agro Baja");
     await createFarmWithPlots(owner.token, 1);

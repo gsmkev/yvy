@@ -1,3 +1,4 @@
+/** Pruebas de auth por código de email. */
 import { env } from "cloudflare:test";
 import { describe, expect, it, vi } from "vitest";
 import { call } from "./helpers";

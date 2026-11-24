@@ -1,3 +1,4 @@
+/** Pruebas de otros índices (NDRE, NDMI, EVI). */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { LIMITS } from "@yvy/shared";
@@ -28,7 +29,7 @@ const send = async (rows: unknown[]) => {
   return call("POST", "/ingest/plot-index-stats", { body, headers: await signed("POST", "/ingest/plot-index-stats", body) });
 };
 
-describe("S-07 · otros índices (NDRE, NDMI, EVI)", () => {
+describe("otros índices (NDRE, NDMI, EVI)", () => {
   it("ingest acepta los índices nuevos, rechaza uno desconocido y no mezcla la curva de NDVI", async () => {
     const owner = await createOrgWithOwner();
     const { plotIds } = await createFarmWithPlots(owner.token, 1);

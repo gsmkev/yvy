@@ -1,4 +1,4 @@
-/** G-22: pesadas y ganancia diaria de peso. */
+/** Pesadas y ganancia diaria de peso. */
 import { describe, expect, it } from "vitest";
 import { groupWeighings, parseRecordData, weightSeries } from "@yvy/shared";
 import { addMemberAndLogin, call, createOrgWithOwner } from "./helpers";

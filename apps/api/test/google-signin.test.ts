@@ -1,4 +1,4 @@
-/** P-07: ingreso con Google (opcional; vincula por email verificado). */
+/** Ingreso con Google (opcional; vincula por email verificado). */
 import { env } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { app } from "../src/app";
@@ -25,7 +25,7 @@ async function flow(email: string, token: Record<string, unknown> = {}, tokenOk 
   return { start, url, location: new URL(cb.headers.get("location")!) };
 }
 
-describe("P-07 · Google", () => {
+describe("Google", () => {
   it("sin credenciales configuradas no existe", async () => {
     expect(await (await req("/auth/google", {}, env)).json()).toEqual({ enabled: false });
     expect((await req("/auth/google/start", {}, env)).status).toBe(404);

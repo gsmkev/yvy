@@ -1,3 +1,4 @@
+/** Pruebas de TOTP (RFC 6238); alta, ingreso y recuperación. */
 import { env } from "cloudflare:test";
 import { eq } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";

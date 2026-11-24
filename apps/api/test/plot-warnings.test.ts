@@ -1,7 +1,8 @@
+/** Pruebas de avisos al crear lotes. */
 import { describe, expect, it } from "vitest";
 import { call, createOrgWithOwner, square } from "./helpers";
 
-describe("avisos al crear lotes (M-10)", () => {
+describe("avisos al crear lotes", () => {
   it("devuelve warnings de superposición y de lote fuera, sin bloquear el alta", async () => {
     const owner = await createOrgWithOwner();
     const farm = await call<{ id: string }>("POST", "/org/farms", {

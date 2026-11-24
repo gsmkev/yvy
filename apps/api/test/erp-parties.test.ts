@@ -1,11 +1,11 @@
-/** E-02: proveedores y clientes con RUC; solo dueño y administrador. */
+/** Proveedores y clientes con RUC; solo dueño y administrador. */
 import { describe, expect, it } from "vitest";
 import { call, createOrgWithOwner } from "./helpers";
 import { erpGet, erpPost, erpSetup, expectListStatus } from "./erp-helpers";
 
 const party = { name: "Agrofértil S.A.", ruc: "80012345-6", kind: "supplier", phone: "0981 123 456" };
 
-describe("terceros (E-02)", () => {
+describe("terceros", () => {
   it("dueño y administrador crean, editan y borran", async () => {
     const { owner, admin } = await erpSetup();
     const a = await erpPost(owner.token, "parties", party);

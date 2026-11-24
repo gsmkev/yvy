@@ -1,4 +1,4 @@
-/** Calendario sanitario (G-10): eventos, estado hecho o vencido, tareas para empleados y permisos. */
+/** Calendario sanitario: eventos, estado hecho o vencido, tareas para empleados y permisos. */
 import { describe, expect, it } from "vitest";
 import { addDays, localDate } from "@yvy/shared";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";

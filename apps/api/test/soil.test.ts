@@ -1,3 +1,4 @@
+/** Pruebas de análisis de suelo. */
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import * as s from "@yvy/shared/schema";
@@ -14,7 +15,7 @@ const sample = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-describe("A-30 · análisis de suelo", () => {
+describe("análisis de suelo", () => {
   it("se carga por lote o por punto, se lista, edita y borra", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 2);

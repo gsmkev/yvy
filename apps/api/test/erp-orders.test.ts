@@ -1,4 +1,4 @@
-/** E-20 y E-21: órdenes de trabajo (tareas con payload) y su cierre con superficie real, consumo y costo del contratista. */
+/** órdenes de trabajo (tareas con payload) y su cierre con superficie real, consumo y costo del contratista. */
 import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";
 import { call, pullAll } from "./helpers";
@@ -27,7 +27,7 @@ const list = async (token: string) => (await erpGet<any[]>(token, "work-orders")
 /** Cierra la orden como lo hace el celular: el registro con orderTaskId y la tarea hecha con ese registro. */
 async function close(s: S, taskId: string, kind: string, data: Record<string, unknown>, plotId = s.plotIds[0]!) {
   const base = rec(s.farmId, plotId, kind, { ...data, orderTaskId: taskId });
-  // T-03: las tareas de aplicación, cosecha, etc. se cierran con foto y ubicación
+  // las tareas de aplicación, cosecha, etc. se cierran con foto y ubicación
   const m = { ...base, row: { ...base.row, lon: -55.9, lat: -27.2 } };
   const photo = { mutationId: newId(), kind: "attachments.upsert", row: { id: newId(), recordId: m.row.id, mime: "image/webp", width: 100, height: 100, bytes: 1000 } };
   const done = { mutationId: newId(), kind: "tasks.status", row: { id: taskId, status: "done", completedAt: Date.now(), recordId: m.row.id } };
@@ -37,7 +37,7 @@ async function close(s: S, taskId: string, kind: string, data: Record<string, un
   return m.row.id as string;
 }
 
-describe("órdenes de trabajo (E-20)", () => {
+describe("órdenes de trabajo", () => {
   it("crea una tarea por lote con el payload, el tipo de registro de la labor y la receta; baja al operario", async () => {
     const s = await setup();
     const r = await create(s.owner.token, order(s, { plotIds: s.plotIds }));
@@ -50,7 +50,7 @@ describe("órdenes de trabajo (E-20)", () => {
     expect(JSON.parse(tasks[0].prescription).products[0].productId).toBe(s.productId);
     const rows = await list(s.owner.token);
     expect(rows.map((x) => [x.status, x.plannedAreaHa])).toEqual([["open", 10], ["open", 10]]);
-    // E-20: la lista trae el nombre del contratista y la hora de alta, para agrupar las tareas de una misma orden.
+    // la lista trae el nombre del contratista y la hora de alta, para agrupar las tareas de una misma orden.
     expect(rows.map((x) => x.contractorName)).toEqual(["Pulverizaciones Villalba", "Pulverizaciones Villalba"]);
     expect(rows[0].createdAt).toBe(rows[1].createdAt);
   });
@@ -85,7 +85,7 @@ describe("órdenes de trabajo (E-20)", () => {
   });
 });
 
-describe("cierre de la orden (E-21)", () => {
+describe("cierre de la orden", () => {
   it("el registro con la superficie real descuenta insumos y carga el costo del contratista por hectárea", async () => {
     const s = await setup();
     const { body } = await create(s.owner.token, order(s));

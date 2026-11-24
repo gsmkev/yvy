@@ -1,4 +1,4 @@
-/** G-32: índice de estrés térmico del ganado (THI) con MET Norway y aviso `heat_stress`. */
+/** índice de estrés térmico del ganado (THI) con MET Norway y aviso `heat_stress`. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { and, eq } from "drizzle-orm";

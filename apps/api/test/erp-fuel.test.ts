@@ -1,4 +1,4 @@
-/** E-16: carga de combustible (fuel_load): descuenta stock, carga costo, actualiza el horómetro y informa litros por hora. */
+/** Carga de combustible (fuel_load): descuenta stock, carga costo, actualiza el horómetro y informa litros por hora. */
 import { describe, expect, it } from "vitest";
 import { localDate, newId } from "@yvy/shared";
 import { call } from "./helpers";
@@ -19,7 +19,7 @@ const load = (s: S, liters: number, meterValue?: number, at = Date.now() - 1000,
   rec(s.farmId, null, "fuel_load", { machineId: s.machineId, machine: "John Deere", liters, ...(meterValue === undefined ? {} : { meterValue }), ...extra }, at);
 const fuelStock = async (s: S) => (await erpGet<any>(s.owner.token, "stock")).body.products.find((p: any) => p.productId === s.fuelId);
 
-describe("combustible (E-16)", () => {
+describe("combustible", () => {
   it("la carga descuenta el único combustible del catálogo y carga un costo de combustible", async () => {
     const s = await setup();
     const m = load(s, 100, 1000);

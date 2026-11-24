@@ -1,4 +1,4 @@
-/** T-08: comentarios y menciones en registros. */
+/** Comentarios y menciones en registros. */
 import { env } from "cloudflare:test";
 import { describe, expect, it, vi } from "vitest";
 import { newId } from "@yvy/shared";
@@ -17,7 +17,7 @@ async function setup() {
   return { owner, agro, worker, farmId, plotIds, recordId: r.row.id };
 }
 
-describe("T-08 · comentarios", () => {
+describe("comentarios", () => {
   it("se comenta desde la web, con menciones válidas, y baja por sync", async () => {
     const { owner, worker, recordId } = await setup();
     const res = await call<{ id: string; mentions: string[] }>("POST", `/org/records/${recordId}/comments`, {

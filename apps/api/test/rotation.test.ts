@@ -1,4 +1,4 @@
-/** G-04 rotación de potreros y G-05 oferta de forraje. */
+/** Rotación de potreros y oferta de forraje. */
 import { describe, expect, it } from "vitest";
 import {
   estimateForage,

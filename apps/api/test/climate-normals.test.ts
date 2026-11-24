@@ -1,10 +1,11 @@
+/** Pruebas de clima de campaña completa. */
 import { describe, expect, it } from "vitest";
 import { addDays, localDate } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { dayOfYear } from "../src/db/queries";
 import { call, createFarmWithPlots, createOrgWithOwner, db } from "./helpers";
 
-describe("clima de campaña completa (R-03, R-04)", () => {
+describe("clima de campaña completa", () => {
   it("devuelve la climatología de más de 90 días y limita el parámetro days", async () => {
     const owner = await createOrgWithOwner();
     const { farmId } = await createFarmWithPlots(owner.token, 1);

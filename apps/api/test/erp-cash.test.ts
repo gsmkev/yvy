@@ -1,4 +1,4 @@
-/** E-36: caja y bancos por moneda, cuentas a pagar y a cobrar con vencimientos. */
+/** Caja y bancos por moneda, cuentas a pagar y a cobrar con vencimientos. */
 import { describe, expect, it } from "vitest";
 import { dueStatus } from "@yvy/shared";
 import { call } from "./helpers";
@@ -21,7 +21,7 @@ const purchase = async (s: S, dueDate: string | null, invoice = true) => {
 };
 const settle = (s: S, body: Record<string, unknown>) => erpPost(s.owner.token, "cash/settle", { date: "2026-11-10", ...body });
 
-describe("caja, bancos, cuentas a pagar y a cobrar (E-36)", () => {
+describe("caja, bancos, cuentas a pagar y a cobrar", () => {
   it("dueStatus: vencido, por vencer, en fecha y sin fecha", () => {
     expect(dueStatus("2026-11-09", "2026-11-10")).toEqual({ status: "overdue", daysLeft: -1 });
     expect(dueStatus("2026-11-10", "2026-11-10")).toEqual({ status: "soon", daysLeft: 0 });

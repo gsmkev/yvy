@@ -1,3 +1,4 @@
+/** Pruebas de prueba gratis y panel interno; demo pública de solo lectura. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
@@ -7,7 +8,7 @@ import { issueSession } from "../src/auth/session";
 import { app } from "../src/app";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, db, square } from "./helpers";
 
-describe("Fase 8 · prueba gratis y panel interno", () => {
+describe("prueba gratis y panel interno", () => {
   it("prueba vencida: gestión en solo lectura, el campo sigue sincronizando", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 1);
@@ -86,7 +87,7 @@ describe("Fase 8 · prueba gratis y panel interno", () => {
   });
 });
 
-describe("V-02 · demo pública de solo lectura", () => {
+describe("demo pública de solo lectura", () => {
   const req = (method: string, path: string, e: object) =>
     app.request(path, { method, headers: { "content-type": "application/json" } }, e);
 

@@ -1,3 +1,4 @@
+/** Pruebas de iCalendar (RFC 5545); enlace del calendario. */
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import * as s from "@yvy/shared/schema";
@@ -38,7 +39,7 @@ describe("iCalendar (RFC 5545)", () => {
   });
 });
 
-describe("enlace del calendario (I-04)", () => {
+describe("enlace del calendario", () => {
   it("el token sale una sola vez, en la base queda el hash, y regenerar revoca el anterior", async () => {
     const owner = await createOrgWithOwner();
     expect((await call<any>("GET", "/me/calendar-feed", { token: owner.token })).body.active).toBe(false);

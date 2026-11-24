@@ -1,3 +1,4 @@
+/** Pruebas de tareas: prioridad, hora límite y comentarios. */
 import { describe, expect, it } from "vitest";
 import { newId, parseTaskComments, isOverdue, LIMITS } from "@yvy/shared";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";
@@ -16,7 +17,7 @@ async function setup() {
   return { owner, worker, other, farmId, plotIds, task };
 }
 
-describe("tareas: prioridad, hora límite y comentarios (T-02)", () => {
+describe("tareas: prioridad, hora límite y comentarios", () => {
   it("guarda prioridad y hora, y las rechaza si son inválidas", async () => {
     const { owner, worker, task } = await setup();
     expect((await task({ priority: "high", dueTime: "16:30" })).status).toBe(201);

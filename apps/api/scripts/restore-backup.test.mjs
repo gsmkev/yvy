@@ -1,3 +1,4 @@
+/** Pruebas: una copia completa se restaura y cuenta las filas. */
 import assert from "node:assert/strict";
 import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";

@@ -1,3 +1,4 @@
+/** Pruebas de parte semanal con PDF adjunto. */
 import { env } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
@@ -31,7 +32,7 @@ const captureMail = () => {
   return sent;
 };
 
-describe("R-02 · parte semanal con PDF adjunto", () => {
+describe("parte semanal con PDF adjunto", () => {
   it("/ingest/farms/:id/weekly-summary devuelve agregados de la semana", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 2);

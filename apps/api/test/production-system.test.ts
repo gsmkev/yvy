@@ -1,4 +1,4 @@
-/** ADR 0005 (secciones 1 y 4): sistema productivo, indicadores y carga recomendada, con sus permisos. */
+/** Sistema productivo, indicadores y carga recomendada, con sus permisos. */
 import { describe, expect, it } from "vitest";
 import { addMemberAndLogin, call } from "./helpers";
 import { setupHerd, DAY } from "./herd-helpers";

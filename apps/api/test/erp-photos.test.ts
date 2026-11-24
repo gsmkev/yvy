@@ -1,4 +1,4 @@
-/** E-37: foto de la factura o el ticket en un movimiento de stock o un costo (flujo firmado de R2). */
+/** Foto de la factura o el ticket en un movimiento de stock o un costo (flujo firmado de R2). */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { LIMITS } from "@yvy/shared";
@@ -13,7 +13,7 @@ async function withMove() {
 const key = (orgId: string, kind: string, id: string) => `organizations/${orgId}/erp/${kind}/${id}.webp`;
 const url = (kind: string, id: string, suffix: string) => `/org/erp/photos/${kind}/${id}/${suffix}`;
 
-describe("foto de la factura (E-37)", () => {
+describe("foto de la factura", () => {
   it("sube con URL firmada, confirma y baja con URL firmada (movimiento de stock)", async () => {
     const s = await withMove();
     const up = await call<any>("POST", url("stock-moves", s.moveId, "upload-url"), { token: s.owner.token });

@@ -1,3 +1,4 @@
+/** Pruebas de zonas de manejo. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { hmacHex } from "../src/lib/crypto";
@@ -22,7 +23,7 @@ const zone = (n: number, extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 
-describe("A-32 · zonas de manejo", () => {
+describe("zonas de manejo", () => {
   it("el job las sube firmadas, reemplaza las anteriores y la web las lee", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 2);

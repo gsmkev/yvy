@@ -1,3 +1,4 @@
+/** Pruebas de editar los vértices de un lote. */
 import { describe, expect, it } from "vitest";
 import { areaHa } from "@yvy/geo";
 import { addMemberAndLogin, call, createOrgWithOwner, pullAll, square } from "./helpers";
@@ -16,7 +17,7 @@ async function setup() {
   return { owner, farmId: farm.body.id, ids: r.body.ids };
 }
 
-describe("editar los vértices de un lote (M-02)", () => {
+describe("editar los vértices de un lote", () => {
   it("guarda la forma nueva, recalcula superficie y bbox, y el cambio baja por el sync", async () => {
     const { owner, ids } = await setup();
     const before = (await pullAll(owner.token, "plots")).find((p) => p.id === ids[0])!;
@@ -36,7 +37,7 @@ describe("editar los vértices de un lote (M-02)", () => {
     expect(JSON.parse(after.geometry).coordinates[0]).toHaveLength(5);
   });
 
-  it("M-09: un lote con dos partes se guarda como MultiPolygon con la suma de áreas y el bbox de ambas", async () => {
+  it("un lote con dos partes se guarda como MultiPolygon con la suma de áreas y el bbox de ambas", async () => {
     const { owner, ids } = await setup();
     const a = square(-55.89, -27.21, 0.01);
     const b = square(-55.84, -27.25, 0.012);

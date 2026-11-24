@@ -1,3 +1,4 @@
+/** Pruebas: percentil por rango más cercano. */
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {

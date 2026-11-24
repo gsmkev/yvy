@@ -1,3 +1,4 @@
+/** Pruebas de cambio de cobertura entre dos fechas. */
 import { env } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { hmacHex } from "../src/lib/crypto";
@@ -48,7 +49,7 @@ const cover = (plotId: string, over: Record<string, unknown> = {}) => ({
 
 const range = { from: "2020-12-31", to: "2026-10-31" };
 
-describe("S-31 · cambio de cobertura entre dos fechas", () => {
+describe("cambio de cobertura entre dos fechas", () => {
   it("el dueño lo pide con dos fechas: dispara el job con las fechas y no se encola dos veces", async () => {
     const fetchMock = configure();
     const owner = await createOrgWithOwner();

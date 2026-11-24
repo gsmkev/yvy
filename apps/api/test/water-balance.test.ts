@@ -1,8 +1,9 @@
+/** Pruebas de balance hídrico del lote. */
 import { describe, expect, it } from "vitest";
 import { DAY, isoDay, seedClimate } from "./agri2-helpers";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner } from "./helpers";
 
-describe("C-08 · balance hídrico del lote", () => {
+describe("balance hídrico del lote", () => {
   it("resta el consumo del cultivo a la lluvia CHIRPS desde la siembra", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 1);
@@ -58,7 +59,7 @@ describe("C-08 · balance hídrico del lote", () => {
     expect((await call("GET", `/org/plots/${plotIds[1]}/water-balance`, { token: worker.token })).status).toBe(404);
   });
 
-  it("A-43: suma el riego registrado en el lote y avisa si falta la temperatura", async () => {
+  it("suma el riego registrado en el lote y avisa si falta la temperatura", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 1);
     const plotId = plotIds[0]!;

@@ -1,4 +1,4 @@
-/** E-15: recuento físico de un depósito desde la app (registro stock_count) asentado como ajustes de stock. */
+/** Recuento físico de un depósito desde la app (registro stock_count) asentado como ajustes de stock. */
 import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";
 import { call } from "./helpers";
@@ -11,7 +11,7 @@ const count = (s: S, lines: { productId: string; counted: number }[], extra: Rec
 const qty = async (s: S, token = s.owner.token) => (await erpGet<any>(token, "stock")).body.rows.find((r: any) => r.productId === s.productId && r.warehouseId === s.whA)?.qty;
 const adjustments = async (s: S) => (await erpGet<any[]>(s.owner.token, "stock/moves")).body.filter((m) => m.origin === "adjustment");
 
-describe("recuento de inventario desde la app (E-15)", () => {
+describe("recuento de inventario desde la app", () => {
   it("lo contado deja el stock igual al recuento: ajuste negativo (faltante) con valor al costo promedio", async () => {
     const s = await stockSetup();
     await buy(s.owner.token, s, 100, 1_000_000);

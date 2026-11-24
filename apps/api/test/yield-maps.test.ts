@@ -1,3 +1,4 @@
+/** Pruebas de mapas de rendimiento. */
 import { describe, expect, it } from "vitest";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner } from "./helpers";
 
@@ -20,7 +21,7 @@ async function season(token: string) {
   return (await call<{ id: string }>("POST", "/org/seasons", { token, body: { name: "Zafra 2025/26" } })).body.id;
 }
 
-describe("A-21 · mapas de rendimiento", () => {
+describe("mapas de rendimiento", () => {
   it("guarda el resumen y la grilla, y el mapa nuevo reemplaza al anterior de la misma campaña", async () => {
     const owner = await createOrgWithOwner();
     const { plotIds } = await createFarmWithPlots(owner.token, 1);

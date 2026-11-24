@@ -1,4 +1,4 @@
-/** Campañas, plan por lote e historial de rotación (ADR 0004, A-01 y A-02). */
+/** Campañas, plan por lote e historial de rotación. */
 import { describe, expect, it } from "vitest";
 import { newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";
@@ -136,7 +136,7 @@ describe("plan por lote", () => {
   });
 });
 
-describe("historial de rotación del lote (A-02)", () => {
+describe("historial de rotación del lote", () => {
   it("junta plan y siembras reales por campaña, la más reciente primero", async () => {
     const { owner, worker, plotIds, farmId } = await setup();
     const old = await newSeason(owner.token, { name: "Zafra 2025/26", startDate: "2025-09-01", endDate: "2026-04-30" });
@@ -232,7 +232,7 @@ describe("registro de siembra", () => {
   });
 });
 
-describe("cosecha y rinde por lote (A-20)", () => {
+describe("cosecha y rinde por lote", () => {
   const harvest = (token: string, farmId: string, plotId: string, data: unknown) =>
     call("POST", "/sync/push", {
       token,
@@ -285,7 +285,7 @@ describe("cosecha y rinde por lote (A-20)", () => {
   });
 });
 
-describe("densidad de siembra y plan vigente (A-01)", () => {
+describe("densidad de siembra y plan vigente", () => {
   const put = (token: string, seasonId: string, plotId: string, body: Record<string, unknown>) =>
     call("PUT", `/org/seasons/${seasonId}/plots/${plotId}`, { token, body });
 

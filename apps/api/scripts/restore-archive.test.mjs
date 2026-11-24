@@ -1,3 +1,4 @@
+/** Pruebas: escapa texto y rechaza lo que no es una tabla de datos. */
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";

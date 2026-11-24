@@ -1,4 +1,4 @@
-/** T-09: supervisor (capataz) por estancia. Matriz en docs/PRD-roles.md. */
+/** Supervisor (capataz) por estancia: matriz de permisos y alcance. */
 import { describe, expect, it } from "vitest";
 import { can } from "../src/db/scoped";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";
@@ -15,7 +15,7 @@ async function setup() {
 const give = (ownerToken: string, userId: string, farms: { farmId: string; level?: "view" | "edit" }[]) =>
   call("PUT", `/org/members/${userId}/farms`, { token: ownerToken, body: { farms } });
 
-describe("T-09 · matriz de permisos del supervisor", () => {
+describe("matriz de permisos del supervisor", () => {
   it("no gestiona la organización pero sí asigna y edita el campo", () => {
     expect(can.manageOrg("supervisor")).toBe(false);
     expect(can.manageWorkers("supervisor")).toBe(false);
@@ -32,7 +32,7 @@ describe("T-09 · matriz de permisos del supervisor", () => {
   });
 });
 
-describe("T-09 · supervisor", () => {
+describe("supervisor", () => {
   it("sin estancias asignadas no ve nada; con una, solo esa", async () => {
     const { owner, a, b, sup } = await setup();
     expect(await pullAll(sup.token, "farms")).toEqual([]);

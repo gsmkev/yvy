@@ -1,4 +1,4 @@
-/** Ganadería (ADR 0004): registros de hacienda, stock calculado y permisos. */
+/** Ganadería: registros de hacienda, stock calculado y permisos. */
 import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";
 import { push, rec } from "./records-helpers";

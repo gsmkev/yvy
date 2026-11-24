@@ -1,3 +1,4 @@
+/** Tipos del entorno de pruebas: agrega las migraciones de D1 a los bindings del Worker. */
 import type { D1Migration } from "@cloudflare/vitest-plugin";
 
 declare global {

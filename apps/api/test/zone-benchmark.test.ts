@@ -1,4 +1,4 @@
-/** R-08: comparación anónima con la zona. */
+/** Comparación anónima con la zona. */
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { newId } from "@yvy/shared";
@@ -32,7 +32,7 @@ async function farmAt(lon: number, lat: number, ndvi: number, rain: number) {
 const run = async (f: { farmId: string; orgId: string; lon: number; lat: number }) =>
   benchmarkJob(new SystemDb(db()), { id: f.farmId, organizationId: f.orgId, lon: f.lon, lat: f.lat }, NOW);
 
-describe("R-08 · comparación anónima con la zona", () => {
+describe("comparación anónima con la zona", () => {
   it("mediana, distancia y mediana de pares e impares", () => {
     expect(median([])).toBeNull();
     expect(median([3, 1, 2])).toBe(2);

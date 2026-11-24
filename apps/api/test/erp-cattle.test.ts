@@ -1,4 +1,4 @@
-/** E-35 (y G-40): compras y ventas de hacienda con cabezas, kilos, precio y guía; costo por kilo de carne. */
+/** Compras y ventas de hacienda con cabezas, kilos, precio y guía; costo por kilo de carne. */
 import { describe, expect, it } from "vitest";
 import { cattleFigures, costPerKgBeef } from "@yvy/shared";
 import { call } from "./helpers";
@@ -13,7 +13,7 @@ type S = Awaited<ReturnType<typeof setup>>;
 const deal = (s: S, extra: Record<string, unknown> = {}) =>
   erpPost(s.owner.token, "cattle-deals", { kind: "sell", date: "2026-11-05", partyId: s.partyId, farmId: s.farmId, category: "novillo", heads: 20, totalKg: 9000, amount: 72_000_000, currency: "PYG", guideNumber: "G-0001234", ...extra });
 
-describe("compra y venta de hacienda (E-35, G-40)", () => {
+describe("compra y venta de hacienda", () => {
   it("funciones puras: precio por kilo, kilos por cabeza y costo por kilo de carne", () => {
     expect(cattleFigures(72_000_000, 9000, 20)).toEqual({ pricePerKg: 8000, kgPerHead: 450 });
     expect(cattleFigures(1, 0, 0)).toEqual({ pricePerKg: null, kgPerHead: null });

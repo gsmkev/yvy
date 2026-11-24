@@ -1,4 +1,4 @@
-/** V-04: informe gratis de riesgo climático a cambio del email. */
+/** Informe gratis de riesgo climático a cambio del email. */
 import { env } from "cloudflare:test";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";

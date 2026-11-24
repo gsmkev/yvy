@@ -1,10 +1,11 @@
+/** Pruebas de fenología por grados-día. */
 import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";
 import { DAY, isoDay, seedPower } from "./agri2-helpers";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner } from "./helpers";
 import { push, rec } from "./records-helpers";
 
-describe("A-04 · fenología por grados-día", () => {
+describe("fenología por grados-día", () => {
   it("acumula desde el registro de siembra y compara con el estado observado", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 1);

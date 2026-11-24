@@ -1,3 +1,4 @@
+/** Pruebas de estancia con varios polígonos. */
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import * as s from "@yvy/shared/schema";
@@ -9,7 +10,7 @@ const multi = (...polys: ReturnType<typeof square>[]) => ({
   coordinates: polys.map((p) => p.coordinates),
 });
 
-describe("estancia con varios polígonos (M-09)", () => {
+describe("estancia con varios polígonos", () => {
   it("acepta un MultiPolygon, guarda el tipo, el bbox y la suma de las áreas", async () => {
     const owner = await createOrgWithOwner();
     const a = square(-55.9, -27.2, 0.02);

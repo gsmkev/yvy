@@ -1,3 +1,4 @@
+/** Pruebas de formularios configurables por la organización. */
 import { describe, expect, it } from "vitest";
 import { newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";
@@ -17,7 +18,7 @@ const record = (farmId: string, plotId: string, data: unknown, kind = "scouting"
   row: { id: newId(), farmId, plotId, poiId: null, kind, data, schemaVersion: RECORD_SCHEMA_VERSION, lon: null, lat: null, gpsAccuracyM: null, capturedAt: Date.now() - 1000 },
 });
 
-describe("F-14 · formularios configurables por la organización", () => {
+describe("formularios configurables por la organización", () => {
   it("dueño y administrador los definen; todo el equipo los lee; el agrónomo y el empleado no los cambian", async () => {
     const owner = await createOrgWithOwner();
     const { plotIds } = await createFarmWithPlots(owner.token, 1);

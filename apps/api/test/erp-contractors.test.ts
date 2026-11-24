@@ -1,11 +1,11 @@
-/** E-04: contratistas con tarifas. Las tarifas son montos: el agrónomo y el empleado no las ven. */
+/** Contratistas con tarifas. Las tarifas son montos: el agrónomo y el empleado no las ven. */
 import { describe, expect, it } from "vitest";
 import { call } from "./helpers";
 import { erpGet, erpPost, erpSetup, expectListStatus } from "./erp-helpers";
 
 const rate = { name: "Pulverizaciones Villalba", service: "spraying", rateUnit: "ha", rateAmount: 35000, currency: "PYG" };
 
-describe("contratistas (E-04)", () => {
+describe("contratistas", () => {
   it("guarda la tarifa en unidad menor, por hectárea, hora o tonelada", async () => {
     const { owner } = await erpSetup();
     expect((await erpPost(owner.token, "contractors", rate)).status).toBe(201);

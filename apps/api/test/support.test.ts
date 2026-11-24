@@ -1,9 +1,10 @@
+/** Pruebas de panel interno: búsqueda, prueba y soporte. */
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import * as s from "@yvy/shared/schema";
 import { call, createFarmWithPlots, createOrgWithOwner, createStaff, db, square } from "./helpers";
 
-describe("panel interno: búsqueda, prueba y soporte (P-12)", () => {
+describe("panel interno: búsqueda, prueba y soporte", () => {
   it("busca organizaciones por nombre, id o email de un miembro; el dueño no entra", async () => {
     const staff = await createStaff();
     const a = await createOrgWithOwner("Estancia Los Ñandúes");

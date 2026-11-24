@@ -1,4 +1,4 @@
-/** F-24: ingreso del empleado con teléfono y PIN. Permisos, hash con sal, bloqueo por intentos. */
+/** Ingreso del empleado con teléfono y PIN. Permisos, hash con sal, bloqueo por intentos. */
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { LIMITS } from "@yvy/shared";
@@ -19,7 +19,7 @@ async function worker(phone = uniquePhone()) {
   return { owner, w, phone };
 }
 
-describe("F-24 · PIN de empleados", () => {
+describe("PIN de empleados", () => {
   it("el dueño fija un PIN y el empleado ingresa con teléfono en cualquier formato", async () => {
     const { owner, w, phone } = await worker();
     const r = await setPin(owner.token, w.userId, { pin: "483920", phone });

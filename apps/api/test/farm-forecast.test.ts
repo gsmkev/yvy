@@ -1,8 +1,9 @@
+/** Pruebas de pronóstico liviano para la app. */
 import { describe, expect, it } from "vitest";
 import * as s from "@yvy/shared/schema";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, db } from "./helpers";
 
-describe("C-02 · pronóstico liviano para la app", () => {
+describe("pronóstico liviano para la app", () => {
   it("devuelve la última corrida y respeta la organización y los lotes asignados", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 2);

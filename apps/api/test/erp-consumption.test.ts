@@ -1,4 +1,4 @@
-/** E-13: un registro de campo con productos del catálogo descuenta stock y carga costo (idempotente, reversible). */
+/** Un registro de campo con productos del catálogo descuenta stock y carga costo (idempotente, reversible). */
 import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";
 import { call, createOrgWithOwner, pullAll } from "./helpers";
@@ -22,7 +22,7 @@ const qtyOf = async (s: S, productId: string) => (await stock(s)).products.find(
 const costs = async (s: S) => (await erpGet<any>(s.owner.token, "costs")).body;
 const activeMoves = async (s: S) => (await erpGet<any[]>(s.owner.token, "stock/moves")).body.filter((m) => m.origin === "consumption");
 
-describe("consumo automático de los registros de campo (E-13)", () => {
+describe("consumo automático de los registros de campo", () => {
   it("una aplicación descuenta dosis x superficie a costo promedio y carga un costo al lote", async () => {
     const s = await setup();
     const m = rec(s.farmId, s.plotIds[0]!, "application", app([gly(s, 2)], { areaHa: 10, seasonId: undefined }));

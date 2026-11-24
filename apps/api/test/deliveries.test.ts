@@ -1,3 +1,4 @@
+/** Pruebas de entregas a acopio. */
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import * as s from "@yvy/shared/schema";
@@ -17,7 +18,7 @@ const ticket = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-describe("A-23 · entregas a acopio", () => {
+describe("entregas a acopio", () => {
   it("calcula el neto al guardar y resume por lote contra lo cosechado", async () => {
     const owner = await createOrgWithOwner();
     const { farmId, plotIds } = await createFarmWithPlots(owner.token, 2);

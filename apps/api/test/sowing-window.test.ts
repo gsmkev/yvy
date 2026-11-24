@@ -1,3 +1,4 @@
+/** Pruebas de ventana de siembra. */
 import { describe, expect, it } from "vitest";
 import * as s from "@yvy/shared/schema";
 import { DAY, isoDay, seedPower } from "./agri2-helpers";
@@ -22,7 +23,7 @@ async function seedForecast(farmId: string, rows: { tminC: number; precipMm: num
     );
 }
 
-describe("A-05 · ventana de siembra", () => {
+describe("ventana de siembra", () => {
   it("combina humedad del suelo y pronóstico día por día", async () => {
     const owner = await createOrgWithOwner();
     const { farmId } = await createFarmWithPlots(owner.token, 1);

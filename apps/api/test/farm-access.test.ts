@@ -1,4 +1,4 @@
-/** K-05: permisos finos por estancia para administradores y agrónomos. */
+/** Permisos finos por estancia para administradores y agrónomos. */
 import { describe, expect, it } from "vitest";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";
 import { push, rec } from "./records-helpers";
@@ -13,7 +13,7 @@ async function setup(role: "admin" | "agronomist" = "admin") {
   return { owner, a, b, member, set };
 }
 
-describe("K-05 · permisos por estancia", () => {
+describe("permisos por estancia", () => {
   it("sin lista el administrador ve todo, como siempre", async () => {
     const { a, b, member } = await setup();
     const ids = (await pullAll(member.token, "farms")).map((f) => f.id).sort();

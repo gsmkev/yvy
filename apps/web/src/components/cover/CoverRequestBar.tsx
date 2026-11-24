@@ -1,3 +1,4 @@
+/** Barra para elegir las fechas del análisis de cobertura y pedir el cálculo. */
 import { Button, Field, FilterBar, Input } from "../ui";
 import { t } from "../../lib/i18n";
 import { iso } from "./util";

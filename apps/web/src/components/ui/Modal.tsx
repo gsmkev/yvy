@@ -1,3 +1,4 @@
+/** Diálogos modales accesibles: foco atrapado, cierre con Escape y confirmación. */
 import { Button } from "./Button";
 import { ErrorBox } from "./feedback";
 import { useEffect, useId, useRef, type ReactNode } from "react";

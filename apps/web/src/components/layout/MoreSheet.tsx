@@ -1,3 +1,4 @@
+/** Piezas de la navegación móvil: sección de ítems y hoja "Más". */
 import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { t } from "../../lib/i18n";

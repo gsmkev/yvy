@@ -1,3 +1,4 @@
+/** Enlace de la navegación que resuelve a dónde lleva cada entrada según la estancia actual. */
 import { Link } from "@tanstack/react-router";
 import { t } from "../../lib/i18n";
 import type { NavItem } from "../../lib/nav";

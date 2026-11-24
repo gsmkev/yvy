@@ -1,3 +1,4 @@
+/** Resumen del día de la página de tareas en escritorio. */
 import { t } from "../../lib/i18n";
 import { Stat } from "../ui";
 import type { Organized } from "./organize";

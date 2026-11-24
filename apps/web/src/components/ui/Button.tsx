@@ -1,3 +1,4 @@
+/** Botón base con variantes y tamaños. */
 import type { ButtonHTMLAttributes } from "react";
 import type { LucideIcon } from "lucide-react";
 
@@ -10,6 +11,12 @@ const VARIANT: Record<Variant, string> = {
   danger: "bg-papel text-peligro border border-peligro/40 hover:bg-peligro hover:text-sobre",
 };
 
+/**
+ * Botón nativo con estilo. Acepta las props de `button`.
+ * @param variant estilo visual.
+ * @param icon ícono; solo se dibuja cuando el botón no tiene texto.
+ * @param size "sm" o "md".
+ */
 export function Button({
   variant = "secondary",
   icon: Icon,

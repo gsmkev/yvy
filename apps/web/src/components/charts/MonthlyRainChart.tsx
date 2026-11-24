@@ -1,3 +1,4 @@
+/** Gráfico de barras de lluvia mensual con la normal como referencia. */
 import { useLayoutEffect, useRef, useState } from "react";
 import { CHART } from "@yvy/shared";
 import { t } from "../../lib/i18n";

@@ -1,6 +1,8 @@
+/** Tabla de datos genérica con columnas ordenables, columnas que se ocultan en pantallas chicas y estado vacío. */
 import { useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 
+/** Definición de una columna de DataTable. `cell` dibuja la celda de una fila, `align` alinea el contenido y `width` fija el ancho. */
 export interface Column<T> {
   id: string;
   header: ReactNode;
@@ -15,6 +17,12 @@ export interface Column<T> {
 
 const HIDE = { sm: "hidden sm:table-cell", md: "hidden md:table-cell", lg: "hidden lg:table-cell" } as const;
 
+/**
+ * Tabla accesible.
+ * @param rowKey clave estable de cada fila.
+ * @param onRowClick si se pasa, las filas son clicables.
+ * @param empty contenido cuando no hay filas.
+ */
 export function DataTable<T>({
   columns,
   rows,

@@ -1,3 +1,4 @@
+/** Modelo de la navegación: qué ítems ve la persona y con qué contexto se dibujan. */
 import { isFieldRole } from "@yvy/shared";
 import { useRouterState } from "@tanstack/react-router";
 import { FEATURES } from "../../lib/features";

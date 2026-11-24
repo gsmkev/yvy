@@ -1,3 +1,4 @@
+/** Punto de entrada de los componentes de interfaz compartidos. */
 export * from "./Button";
 export * from "./form";
 export * from "./layout";

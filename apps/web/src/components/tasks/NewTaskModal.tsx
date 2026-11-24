@@ -1,3 +1,4 @@
+/** Diálogo de alta de una tarea. */
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { closeRequirements, localDate, RECORD_KINDS, RECURRENCES, TASK_PRIORITIES } from "@yvy/shared";
@@ -16,6 +17,13 @@ export interface PlotPick {
 }
 
 
+/**
+ * Diálogo para crear una tarea.
+ * @param farmId estancia fija; sin ella se elige.
+ * @param plots lotes elegibles.
+ * @param pick selección de lotes sobre el mapa.
+ * @param members personas a las que se puede asignar.
+ */
 export function NewTaskModal({
   farmId,
   plots,

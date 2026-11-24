@@ -1,8 +1,10 @@
+/** Exportación de las tareas visibles a Excel y CSV. */
 import { fmtIsoDate } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { TableExportMenu } from "../TableExportMenu";
 import type { Organized } from "./organize";
 
+/** Menú de exportación de las tareas ordenadas. */
 export function TasksExport({ org }: { org: Organized }) {
   const { sorted, isOverdue } = org;
   return (

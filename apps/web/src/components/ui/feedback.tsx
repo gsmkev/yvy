@@ -1,3 +1,4 @@
+/** Estados de carga, vacío y error de las pantallas. */
 import { EmptyState } from "./page";
 import type { ReactNode } from "react";
 import { CircleAlert, type LucideIcon } from "lucide-react";
@@ -37,6 +38,7 @@ export function Empty({
   );
 }
 
+/** Caja de error con el mensaje de la excepción recibida. */
 export const ErrorBox = ({ error }: { error: unknown }) => (
   <div role="alert" className="flex gap-2 rounded-md border border-peligro/30 bg-peligro/5 p-3 text-sm text-peligro">
     <CircleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />

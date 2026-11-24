@@ -1,3 +1,4 @@
+/** Consultas y formularios de la ficha del lote: NDVI, historial, edición y tareas por áreas problema. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { get, patch, post } from "../../lib/api";
@@ -6,6 +7,7 @@ import { t } from "../../lib/i18n";
 import type { Member, Plot, PlotHistoryRow, ProblemArea } from "../../lib/types";
 import { toast } from "../ui";
 
+/** Respuesta de NDVI de un lote: serie, promedio de la estancia y pasada actual. */
 export interface Ndvi {
   series: { acquiredAt: number; mean: number; p10: number; p90: number; validPct: number; lowConfidence: boolean }[];
   farmAvg: { acquiredAt: number; mean: number }[];
@@ -14,6 +16,7 @@ export interface Ndvi {
   deltaVsFarmPct: number | null;
 }
 
+/** Serie de NDVI del lote. */
 export const usePlotNdvi = (plot: Plot, enabled: boolean) =>
   useQuery({
     queryKey: ["ndvi", plot.id],
@@ -21,6 +24,7 @@ export const usePlotNdvi = (plot: Plot, enabled: boolean) =>
     enabled,
   });
 
+/** Campañas pasadas del lote. */
 export const usePlotHistory = (plot: Plot) =>
   useQuery({
     queryKey: ["plot-history", plot.id],
@@ -59,6 +63,10 @@ export function usePlotForm(plot: Plot, onSaved: () => void) {
   const set = (k: keyof typeof form) => (e: { target: { value: string } }) => setForm({ ...form, [k]: e.target.value });
   return { form, set, save };
 }
+/**
+ * Borrador del formulario de edición del lote, que sobrevive a abrir y cerrar, y su guardado.
+ * @param onSaved se llama al guardar.
+ */
 export type PlotForm = ReturnType<typeof usePlotForm>;
 
 /** Manda una tarea de recorrida a quien se elija, sobre un área problema del lote. */
@@ -86,4 +94,8 @@ export function useProblemTask(plot: Plot, workers: Member[]) {
   });
   return { assigneeId, setAssigneeId, sendArea };
 }
+/**
+ * Estado para mandar una tarea de recorrida sobre un área problema.
+ * @param workers personas a las que se puede asignar.
+ */
 export type ProblemTask = ReturnType<typeof useProblemTask>;

@@ -1,3 +1,4 @@
+/** Gráfico de columnas de una sola serie. */
 import { useState } from "react";
 import { CHART } from "@yvy/shared";
 import { FRAME, YGrid, niceTicks } from "./common";

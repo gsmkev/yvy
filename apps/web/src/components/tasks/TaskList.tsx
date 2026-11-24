@@ -1,3 +1,4 @@
+/** Lista de tareas agrupada por responsable. */
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { t } from "../../lib/i18n";

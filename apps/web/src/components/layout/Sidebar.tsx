@@ -1,3 +1,4 @@
+/** Barra lateral de escritorio, completa o plegada. */
 import type { ReactNode, RefObject } from "react";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Link } from "@tanstack/react-router";

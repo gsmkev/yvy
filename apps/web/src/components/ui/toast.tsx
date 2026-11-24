@@ -1,3 +1,4 @@
+/** Avisos de texto efímeros. El estado vive fuera de React, así el aviso sigue corriendo aunque cambie la pantalla. */
 import { useSyncExternalStore } from "react";
 
 interface ToastItem {
@@ -51,6 +52,7 @@ const subscribeToasts = (cb: () => void) => {
   };
 };
 
+/** Contenedor de los avisos; se monta una sola vez en la raíz de la aplicación. */
 export function Toaster() {
   const list = useSyncExternalStore(subscribeToasts, () => toasts);
   return (

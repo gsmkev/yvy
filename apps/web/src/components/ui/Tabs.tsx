@@ -1,5 +1,12 @@
+/** Pestañas horizontales con contador y desplazamiento lateral cuando no entran. */
 import { useEffect, useRef, useState } from "react";
 
+/**
+ * Pestañas controladas.
+ * @param tabs pestañas con su id, texto y contador opcional.
+ * @param value id de la pestaña activa.
+ * @param onChange recibe el id elegido.
+ */
 export function Tabs<T extends string>({
   tabs,
   value,

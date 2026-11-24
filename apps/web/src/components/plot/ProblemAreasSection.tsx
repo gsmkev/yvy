@@ -1,9 +1,15 @@
+/** Sección de áreas problema de la ficha del lote. */
 import { fmtDate, fmtHa, fmtNdvi } from "../../lib/format";
 import { t } from "../../lib/i18n";
 import { ErrorBox, Field, Select } from "../ui";
 import type { Member, ProblemArea } from "../../lib/types";
 import type { ProblemTask } from "./usePlotData";
 
+/**
+ * Lista de áreas problema con la opción de mandar una recorrida a una persona.
+ * @param task estado de la tarea (de `useProblemTask`).
+ * @param onShowArea centra el mapa en el área.
+ */
 export function ProblemAreasSection({
   workers,
   problemAreas,

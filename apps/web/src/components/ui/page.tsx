@@ -1,3 +1,4 @@
+/** Estructura de página: encabezado, cuerpo, barra de filtros y estado vacío. */
 import type { ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";

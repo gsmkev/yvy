@@ -6,7 +6,7 @@ import { del, get, put } from "../../lib/api";
 import { fmtIsoDate } from "../../lib/format";
 import { t } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
-import { Button, DataTable, EmptyState, ErrorBox, Field, Input, SectionHead, Spinner, Stat, toast, type Column } from "../ui";
+import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, Form, Input, SectionHead, Spinner, Stat, toast } from "../ui";
 import { ExportableTable } from "../ExportableTable";
 import { RowMenu } from "./adminSlot";
 
@@ -45,13 +45,7 @@ export function ExchangeRatesPanel() {
     <div className="grid gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <aside className="flex flex-col gap-3 lg:col-start-2 lg:row-start-1">
         <SectionHead title={t("ui.ratesLoadTitle")} />
-        <form
-          className="flex flex-col gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            save.mutate();
-          }}
-        >
+        <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
           <Field label={t("ui.ratesDate")}>
             <Input type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
           </Field>
@@ -63,7 +57,7 @@ export function ExchangeRatesPanel() {
               {t("ui.save")}
             </Button>
           </div>
-        </form>
+        </Form>
         {save.error ? <ErrorBox error={save.error} /> : null}
       </aside>
       <div className="flex min-w-0 flex-col gap-5 lg:col-start-1 lg:row-start-1">

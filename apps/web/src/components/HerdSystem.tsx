@@ -16,7 +16,7 @@ import {
 import { get, put } from "../lib/api";
 import { t, tk } from "../lib/i18n";
 import { useMe } from "../lib/queries";
-import { Button, Card, ErrorBox, Field, Input, Select, Stat, toast } from "./ui";
+import { Button, Card, ErrorBox, Field, Form, Input, Select, Stat, toast } from "./ui";
 
 /** Sistema elegido (de la hacienda calculada, que ya lo trae). */
 export function useSystem(farmId: string) {
@@ -134,13 +134,7 @@ export function LoadEditor({ farmId, d }: { farmId: string; d: FarmStockResponse
     },
   });
   return (
-    <form
-      className="flex max-w-xl flex-col gap-3 border-t border-linea pt-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (ok) save.mutate();
-      }}
-    >
+    <Form className="flex max-w-xl flex-col gap-3 border-t border-linea pt-4" onSubmit={() => { if (ok) save.mutate(); }}>
       <div>
         <p className="text-sm font-medium">{t("ui.herdLoadEdit")}</p>
         <p className="text-xs text-tinta-2">{t("ui.herdLoadEditHint")}</p>
@@ -165,6 +159,6 @@ export function LoadEditor({ farmId, d }: { farmId: string; d: FarmStockResponse
         </Button>
       </div>
       {save.error ? <ErrorBox error={save.error} /> : null}
-    </form>
+    </Form>
   );
 }

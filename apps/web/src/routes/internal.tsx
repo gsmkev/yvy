@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ActionMenu } from "../components/menus";
-import { Button, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, Page, SectionHead, Select, Spinner, Stat, toast } from "../components/ui";
+import { Button, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, Input, Modal, Page, SectionHead, Select, Spinner, Stat, toast } from "../components/ui";
 import { enterSupport, get, post, qs, type Session } from "../lib/api";
 import { fmtDate, fmtDateTime, fmtHa, fmtNum } from "../lib/format";
 import { AuditList, type AuditEntryRow } from "../components/AuditList";
@@ -316,13 +316,7 @@ function PlanRequests() {
               {r.note && <p className="text-tinta-2">“{r.note}”</p>}
             </div>
             {rejecting?.id === r.id ? (
-              <form
-                className="flex items-center gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  reject.mutate(rejecting);
-                }}
-              >
+              <Form className="flex items-center gap-2" onSubmit={() => reject.mutate(rejecting)}>
                 <Input
                   aria-label={t("ui.internalPlanRejectNote")}
                   placeholder={t("ui.internalPlanRejectNote")}
@@ -332,7 +326,7 @@ function PlanRequests() {
                 <Button type="submit" variant="danger" disabled={reject.isPending}>
                   {t("ui.internalPlanReject")}
                 </Button>
-              </form>
+              </Form>
             ) : (
               <div className="flex items-center gap-2">
                 <Button variant="primary" disabled={approve.isPending} onClick={() => approve.mutate(r.id)}>
@@ -451,13 +445,7 @@ function PlanModal({ org, onClose }: { org: OrgMetrics; onClose: () => void }) {
   });
   return (
     <Modal title={`${t("ui.internalEditPlan")}: ${org.name}`} onClose={onClose}>
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
         <Field label={t("ui.internalPlan")}>
           <Select
             value={f.plan}
@@ -480,7 +468,7 @@ function PlanModal({ org, onClose }: { org: OrgMetrics; onClose: () => void }) {
         <Button type="submit" variant="primary" disabled={save.isPending}>
           {t("ui.save")}
         </Button>
-      </form>
+      </Form>
     </Modal>
   );
 }

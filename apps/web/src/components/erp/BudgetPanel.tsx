@@ -7,7 +7,7 @@ import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
 import { useNavigate } from "@tanstack/react-router";
-import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, FilterBar, FormFooter, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
+import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, FormFooter, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
 import { useSeasonList } from "./CostsPanel";
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions, RowMenu } from "./adminSlot";
@@ -156,13 +156,7 @@ function LineModal({ seasonId, onClose }: { seasonId: string; onClose: () => voi
   });
   return (
     <Modal title={t("ui.budgetNew")} onClose={onClose}>
-      <form
-        className="grid grid-cols-2 gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         <Field label={t("ui.budgetScope")}>
           <Select
             value={scope}
@@ -199,7 +193,7 @@ function LineModal({ seasonId, onClose }: { seasonId: string; onClose: () => voi
           <Input required type="number" min={1} step="1" value={amount} onChange={(e) => setAmount(e.target.value)} />
         </Field>
         <FormFooter error={save.error} disabled={save.isPending || (scope === "plot" && !plotId)} />
-      </form>
+      </Form>
     </Modal>
   );
 }

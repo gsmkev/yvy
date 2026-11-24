@@ -5,7 +5,7 @@ import { del, get, post } from "../lib/api";
 import { fmtDateTime } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useMe, useMembers } from "../lib/queries";
-import { Button, ErrorBox, Select, Spinner, toast } from "./ui";
+import { Button, ErrorBox, Form, Select, Spinner, toast } from "./ui";
 
 interface Comment {
   id: string;
@@ -71,13 +71,7 @@ export function RecordComments({ recordId }: { recordId: string }) {
           </li>
         ))}
       </ul>
-      <form
-        className="mt-3 flex flex-col gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (text.trim()) send.mutate();
-        }}
-      >
+      <Form className="mt-3 flex flex-col gap-2" onSubmit={() => { if (text.trim()) send.mutate(); }}>
         <textarea
           aria-label={t("ui.comments")}
           className="min-h-16 w-full rounded-md border border-linea bg-papel px-3 py-2 text-sm"
@@ -108,7 +102,7 @@ export function RecordComments({ recordId }: { recordId: string }) {
           </Button>
         </div>
         {send.error && <ErrorBox error={send.error} />}
-      </form>
+      </Form>
     </section>
   );
 }

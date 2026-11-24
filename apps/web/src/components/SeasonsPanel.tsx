@@ -6,7 +6,7 @@ import { fmtHa, fmtIsoDate, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useSeasons } from "../lib/queries";
 import type { Plot, PlotSeason, Season } from "../lib/types";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, Form, Input, Modal, Select, Spinner, toast } from "./ui";
 
 /** Campañas de la organización y plan de cultivo por lote (A-01). */
 export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots: Plot[]; canEdit: boolean }) {
@@ -188,13 +188,7 @@ function NewSeasonModal({ onClose, onSaved }: { onClose: () => void; onSaved: (i
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   return (
     <Modal title={t("ui.seasonNew")} onClose={onClose}>
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          create.mutate();
-        }}
-      >
+      <Form className="flex flex-col gap-3" onSubmit={() => create.mutate()}>
         <Field label={t("ui.seasonName")}>
           <Input
             required
@@ -217,7 +211,7 @@ function NewSeasonModal({ onClose, onSaved }: { onClose: () => void; onSaved: (i
         <Button type="submit" variant="primary" disabled={create.isPending}>
           {t("ui.save")}
         </Button>
-      </form>
+      </Form>
     </Modal>
   );
 }
@@ -270,13 +264,7 @@ function PlanModal({
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   return (
     <Modal title={`${plot.name} · ${season.name}`} onClose={onClose}>
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
         <div className="grid grid-cols-2 gap-3">
           <Field label={t("ui.crop")}>
             <Select
@@ -330,7 +318,7 @@ function PlanModal({
             </Button>
           )}
         </div>
-      </form>
+      </Form>
     </Modal>
   );
 }

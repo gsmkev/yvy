@@ -16,7 +16,7 @@ import { SupplementPanel } from "./SupplementPanel";
 import { TheftPanel } from "./TheftPanel";
 import { WeighingsPanel } from "./WeighingsPanel";
 import { LoadEditor, SystemBar, SystemIndicators, useSystem } from "./HerdSystem";
-import { Button, Empty, ErrorBox, Field, Input, Spinner, toast } from "./ui";
+import { Button, Empty, ErrorBox, Field, Form, Input, Spinner, toast } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
 const dec = new Intl.NumberFormat("es-PY", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -125,13 +125,7 @@ function StockSection({ farmId }: { farmId: string }) {
         </ExportableTable>
       </div>
 
-      <form
-        className="flex max-w-xl flex-col gap-3 border-t border-linea pt-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (limitOk) save.mutate();
-        }}
-      >
+      <Form className="flex max-w-xl flex-col gap-3 border-t border-linea pt-4" onSubmit={() => { if (limitOk) save.mutate(); }}>
         <Field label={t("ui.herdLimitLabel")} hint={t("ui.herdLimitHint")}>
           <Input
             inputMode="decimal"
@@ -152,7 +146,7 @@ function StockSection({ farmId }: { farmId: string }) {
           <p className="text-sm text-tinta-2">{t("ui.alertSettingsOnlyOwner")}</p>
         )}
         {save.error ? <ErrorBox error={save.error} /> : null}
-      </form>
+      </Form>
 
       <p className="-mt-3 text-xs text-tinta-2">
         {t("ui.herdLoadHint")}

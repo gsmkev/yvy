@@ -7,7 +7,7 @@ import { areaHa, bboxOf } from "@yvy/geo";
 import { LIMITS } from "@yvy/shared";
 import { FarmMap } from "../components/FarmMap";
 import { useMe } from "../lib/queries";
-import { Button, ErrorBox, Field, Input } from "../components/ui";
+import { Button, ErrorBox, Field, Form, Input } from "../components/ui";
 import { post } from "../lib/api";
 import { fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
@@ -134,13 +134,7 @@ export function NewFarmPage() {
           }}
         />
       </div>
-      <form
-        className="flex flex-col gap-3 overflow-auto p-4 *:shrink-0"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save();
-        }}
-      >
+      <Form className="flex flex-col gap-3 overflow-auto p-4 *:shrink-0" onSubmit={() => save()}>
         <h1 className="text-xl font-semibold">{t("ui.newFarm")}</h1>
         <Field label={t("ui.farmName")}>
           <Input required value={name} onChange={(e) => setName(e.target.value)} />
@@ -269,7 +263,7 @@ export function NewFarmPage() {
         {!busy && (!name || !geometry) && (
           <p className="-mt-2 text-meta text-tinta-2">{[!name && t("ui.farmNeedName"), !geometry && t("ui.farmNeedPerimeter")].filter(Boolean).join(" ")}</p>
         )}
-      </form>
+      </Form>
     </div>
   );
 }

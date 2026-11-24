@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import type { MultiPolygon, Polygon } from "geojson";
 import { areaHa, validatePolygon } from "@yvy/geo";
 import { POI_KINDS } from "@yvy/shared";
-import { Button, ErrorBox, Field, Input, Modal, Select, toast } from "../../components/ui";
+import { Button, ErrorBox, Field, Form, Input, Modal, Select, toast } from "../../components/ui";
 import { patch, post } from "../../lib/api";
 import { fmtHa } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
@@ -31,13 +31,7 @@ export function NewPlotModal({
   });
   return (
     <Modal title={t("ui.newPlot")} onClose={onClose}>
-      <form
-        className="flex flex-col gap-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="flex flex-col gap-4" onSubmit={() => save.mutate()}>
         <p className="text-sm">
           {t("ui.area")}: <strong className="num">{fmtHa(areaHa(geometry))}</strong>
         </p>
@@ -58,7 +52,7 @@ export function NewPlotModal({
         <Button type="submit" variant="primary" disabled={save.isPending}>
           {t("ui.save")}
         </Button>
-      </form>
+      </Form>
     </Modal>
   );
 }
@@ -144,13 +138,7 @@ export function NewPoiModal({
   });
   return (
     <Modal title={t("ui.addPoi")} onClose={onClose}>
-      <form
-        className="flex flex-col gap-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="flex flex-col gap-4" onSubmit={() => save.mutate()}>
         <Field label={t("ui.kind")}>
           <Select
             value={kind}
@@ -165,7 +153,7 @@ export function NewPoiModal({
         <Button type="submit" variant="primary" disabled={save.isPending}>
           {t("ui.save")}
         </Button>
-      </form>
+      </Form>
     </Modal>
   );
 }

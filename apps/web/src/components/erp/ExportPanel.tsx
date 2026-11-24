@@ -23,7 +23,7 @@ import { fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { Button, DataTable, ErrorBox, Field, Input, Modal, SectionHead, Select, Spinner, toast, type Column } from "../ui";
+import { Button, type Column, DataTable, ErrorBox, Field, Form, Input, Modal, SectionHead, Select, Spinner, toast } from "../ui";
 import { HeaderActions } from "./adminSlot";
 
 interface Saved {
@@ -314,13 +314,7 @@ function TaxModal({ doc, onClose }: { doc: ExportDoc; onClose: () => void }) {
   );
   return (
     <Modal title={t("ui.expTaxEdit")} onClose={onClose}>
-      <form
-        className="grid grid-cols-2 gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          saveTax.mutate();
-        }}
-      >
+      <Form className="grid grid-cols-2 gap-3" onSubmit={() => saveTax.mutate()}>
         <p className="col-span-2 text-sm">
           {doc.party || "—"} · {doc.concept}
           {doc.number ? ` · ${doc.number}` : ""} · {fmtGs(doc.amountPyg)}
@@ -346,7 +340,7 @@ function TaxModal({ doc, onClose }: { doc: ExportDoc; onClose: () => void }) {
             </Button>
           )}
         </div>
-      </form>
+      </Form>
     </Modal>
   );
 }

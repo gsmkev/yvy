@@ -11,7 +11,7 @@ import { YieldVigorSection } from "./YieldVigorSection";
 import { YieldMapSection } from "./YieldMapSection";
 import { ZonesSection } from "./ZonesSection";
 import { post } from "../lib/api";
-import { Button, ErrorBox, Field, FormFooter, Input, Modal, Select, Spinner, toast } from "./ui";
+import { Button, ErrorBox, Field, Form, FormFooter, Input, Modal, Select, Spinner, toast } from "./ui";
 
 /** Secciones agronómicas de la ficha de un lote de cultivo (agri-p2). Solo para quien edita el campo. */
 export function PlotAgro({ plot }: { plot: Plot }) {
@@ -262,13 +262,7 @@ function IrrigationModal({ plot, onClose }: { plot: Plot; onClose: () => void })
   });
   return (
     <Modal title={t("ui.waterBalIrrigate")} onClose={onClose}>
-      <form
-        className="grid grid-cols-2 gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         <Field label={t("fields.irrigationMm")}>
           <Input type="number" required min={0.1} max={LIMITS.irrigation.maxMm} step="any" value={f.mm} onChange={(e) => setF({ ...f, mm: e.target.value })} />
         </Field>
@@ -285,7 +279,7 @@ function IrrigationModal({ plot, onClose }: { plot: Plot; onClose: () => void })
           </Field>
         </div>
         <FormFooter error={save.error} disabled={save.isPending} />
-      </form>
+      </Form>
     </Modal>
   );
 }

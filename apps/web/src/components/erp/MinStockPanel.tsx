@@ -5,7 +5,7 @@ import { del, get, put } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { fmtQty } from "../../lib/money";
 import { useProducts } from "../../lib/products";
-import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FormFooter, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, Form, FormFooter, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
 import { useWarehouses } from "./WarehousesPanel";
 import { HeaderActions, RowMenu, useGoSection, useTableExport } from "./adminSlot";
 
@@ -149,13 +149,7 @@ function MinModal({ row, onClose }: { row: Minimum | null; onClose: () => void }
   });
   return (
     <Modal title={t("ui.minStockNew")} onClose={onClose}>
-      <form
-        className="grid grid-cols-2 gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         <div className="col-span-2">
           <Field label={t("ui.stockProduct")}>
             <Select value={productId} onChange={(e) => setProductId(e.target.value)} options={(products.data ?? []).map((p) => ({ value: p.id, label: p.name }))} />
@@ -168,7 +162,7 @@ function MinModal({ row, onClose }: { row: Minimum | null; onClose: () => void }
           <Input required type="number" min={0} step="any" value={minQty} onChange={(e) => setMinQty(e.target.value)} />
         </Field>
         <FormFooter error={save.error} disabled={save.isPending} />
-      </form>
+      </Form>
     </Modal>
   );
 }

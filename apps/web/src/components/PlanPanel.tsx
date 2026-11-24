@@ -5,7 +5,7 @@ import { del, get, post } from "../lib/api";
 import { fmtDate, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { PlanPrice } from "./PlanPrice";
-import { Button, ErrorBox, Field, Input, SectionHead, Spinner, Stat, toast } from "./ui";
+import { Button, ErrorBox, Field, Form, Input, SectionHead, Spinner, Stat, toast } from "./ui";
 import type { PlanRequestRow as PlanRequest, PlanView } from "@yvy/shared";
 
 const cap = (n: number | null) => (n === null ? t("ui.planNoCap") : fmtNum(n));
@@ -112,13 +112,7 @@ export function PlanPanel() {
               {t("ui.planAsk")}
             </Button>
           ) : (
-            <form
-              className="mt-4 flex max-w-md flex-col gap-3"
-              onSubmit={(e) => {
-                e.preventDefault();
-                send.mutate();
-              }}
-            >
+            <Form className="mt-4 flex max-w-md flex-col gap-3" onSubmit={() => send.mutate()}>
               <p className="text-sm text-tinta-2">
                 {t("ui.planAskIntro", {
                   ha: cap(p.plans.active.maxHa),
@@ -160,7 +154,7 @@ export function PlanPanel() {
                   {t("ui.cancel")}
                 </button>
               </div>
-            </form>
+            </Form>
           )}
         </>
       )}

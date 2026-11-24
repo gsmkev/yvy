@@ -5,7 +5,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { isFieldRole, ROLES, type FarmAccessLevel } from "@yvy/shared";
 import { TableExportMenu } from "../components/TableExportMenu";
 import { ActionMenu } from "../components/menus";
-import { Button, ConfirmModal, DataTable, type Column, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, toast, Page } from "../components/ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, Form, Input, Modal, Page, PageHeader, Select, Spinner, toast } from "../components/ui";
 import { del, get, post, put } from "../lib/api";
 import { fmtDate, fmtDateTime, fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -234,13 +234,7 @@ function AddMember({ canAddAdmins, onClose }: { canAddAdmins: boolean; onClose: 
   const roles = ROLES.filter((r) => r !== "owner" && (canAddAdmins || isFieldRole(r)));
   return (
     <Modal title={t("ui.addMember")} onClose={onClose}>
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          add.mutate();
-        }}
-      >
+      <Form className="flex flex-col gap-3" onSubmit={() => add.mutate()}>
         <Field label={t("ui.memberName")}>
           <Input required value={f.fullName} onChange={set("fullName")} />
         </Field>
@@ -261,7 +255,7 @@ function AddMember({ canAddAdmins, onClose }: { canAddAdmins: boolean; onClose: 
         <Button type="submit" variant="primary" disabled={add.isPending}>
           {t("ui.save")}
         </Button>
-      </form>
+      </Form>
     </Modal>
   );
 }
@@ -302,13 +296,7 @@ function PinDialog({ member, onClose }: { member: Member; onClose: () => void })
           </Button>
         </div>
       ) : (
-        <form
-          className="flex flex-col gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            save.mutate();
-          }}
-        >
+        <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
           <Field label={t("app.teamPinPhoneLabel")}>
             <Input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} />
           </Field>
@@ -338,7 +326,7 @@ function PinDialog({ member, onClose }: { member: Member; onClose: () => void })
               {t("app.teamPinRemove")}
             </Button>
           )}
-        </form>
+        </Form>
       )}
     </Modal>
   );

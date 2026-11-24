@@ -127,3 +127,18 @@ export function FormFooter({ error, disabled }: { error: unknown; disabled: bool
     </>
   );
 }
+
+/** `<form>` que corta el envío nativo y llama a `onSubmit`. */
+export function Form({ onSubmit, className, children }: { onSubmit: () => void; className?: string; children: ReactNode }) {
+  return (
+    <form
+      className={className}
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit();
+      }}
+    >
+      {children}
+    </form>
+  );
+}

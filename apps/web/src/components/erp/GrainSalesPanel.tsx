@@ -7,7 +7,7 @@ import { fmtIsoDate, fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs, fmtMoney } from "../../lib/money";
 import { useFarms } from "../../lib/queries";
-import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, FormFooter, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
+import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, Form, FormFooter, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
 import { useParties } from "./PartiesPanel";
 import { RowModal, type FieldDef } from "./MasterPanel";
 import { useSeasonList } from "./CostsPanel";
@@ -219,13 +219,7 @@ function ActionModal({ kind, contract, onClose }: { kind: "delivery" | "settleme
   });
   return (
     <Modal title={kind === "delivery" ? t("ui.grainAddDelivery") : t("ui.grainAddSettlement")} onClose={onClose}>
-      <form
-        className="grid grid-cols-2 gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         <Field label={t("ui.costDate")}>
           <Input required type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
@@ -262,7 +256,7 @@ function ActionModal({ kind, contract, onClose }: { kind: "delivery" | "settleme
           </>
         )}
         <FormFooter error={save.error} disabled={save.isPending} />
-      </form>
+      </Form>
     </Modal>
   );
 }

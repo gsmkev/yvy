@@ -10,7 +10,7 @@ import type { Plot, Task } from "../lib/types";
 import { CheckCircle2, ChevronDown, Circle, Flag, MessageSquare, Plus } from "lucide-react";
 import { ActionMenu } from "./menus";
 import { TableExportMenu } from "./TableExportMenu";
-import { Button, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, Stat, Tabs, toast } from "./ui";
+import { Button, EmptyState, ErrorBox, Field, Form, Input, Modal, PageHeader, Select, Spinner, Stat, Tabs, toast } from "./ui";
 
 /** T-01: selección de lotes en el mapa de la estancia; la maneja la pantalla que tiene el mapa. */
 interface PlotPick {
@@ -322,13 +322,7 @@ function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: string; over
               <span className="block whitespace-pre-wrap">{c.text}</span>
             </p>
           ))}
-          <form
-            className="flex flex-col items-start gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (text.trim()) send.mutate();
-            }}
-          >
+          <Form className="flex flex-col items-start gap-2" onSubmit={() => { if (text.trim()) send.mutate(); }}>
             <textarea
               aria-label={t("ui.taskComments")}
               className="min-h-16 w-full rounded-md border border-linea bg-papel px-3 py-2 text-body outline-none focus:border-accion focus:ring-2 focus:ring-accion/20"
@@ -341,7 +335,7 @@ function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: string; over
             <Button type="submit" disabled={send.isPending || !text.trim()}>
               {t("ui.taskCommentSend")}
             </Button>
-          </form>
+          </Form>
         </div>
       )}
     </li>
@@ -403,13 +397,7 @@ function NewTaskModal({
   return (
     <div hidden={!!pick?.picking}>
       <Modal title={t("ui.newTask")} onClose={onClose}>
-        <form
-          className="flex flex-col gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            create.mutate();
-          }}
-        >
+        <Form className="flex flex-col gap-3" onSubmit={() => create.mutate()}>
           <Field label={t("ui.taskTitle")}>
             <Input required value={f.title} onChange={set("title")} placeholder="Medir lluvia" />
           </Field>
@@ -515,7 +503,7 @@ function NewTaskModal({
           <Button type="submit" variant="primary" disabled={create.isPending}>
             {t("ui.save")}
           </Button>
-        </form>
+        </Form>
       </Modal>
     </div>
   );

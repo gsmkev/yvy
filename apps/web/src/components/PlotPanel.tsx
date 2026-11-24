@@ -16,7 +16,7 @@ import { PlotResults } from "./PlotResults";
 import { LineChart } from "./charts";
 import { SamplingGrid } from "./SamplingGrid";
 import { VigorSeasons } from "./VigorSeasons";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Select, Spinner, Stat, toast } from "./ui";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, Form, Input, Select, Spinner, Stat, toast } from "./ui";
 
 interface Ndvi {
   series: { acquiredAt: number; mean: number; p10: number; p90: number; validPct: number; lowConfidence: boolean }[];
@@ -347,13 +347,7 @@ export function PlotPanel({
         </div>
       )}
       {editing && (
-        <form
-          className="flex flex-col gap-3 border-t border-linea pt-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            save.mutate();
-          }}
-        >
+        <Form className="flex flex-col gap-3 border-t border-linea pt-4" onSubmit={() => save.mutate()}>
           <Field label={t("ui.plot")}>
             <Input value={form.name} onChange={set("name")} required />
           </Field>
@@ -398,7 +392,7 @@ export function PlotPanel({
               {t("ui.cancel")}
             </Button>
           </div>
-        </form>
+        </Form>
       )}
       {confirming && (
         <ConfirmModal

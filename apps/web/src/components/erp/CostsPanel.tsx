@@ -8,7 +8,7 @@ import { t, tk } from "../../lib/i18n";
 import { fmtGs, fmtMoney } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
 import type { Season } from "../../lib/types";
-import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, FormFooter, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, FormFooter, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
 import { PhotoRowMenu } from "./InvoicePhoto";
 import { HeaderActions } from "./adminSlot";
 import { useParties } from "./PartiesPanel";
@@ -227,13 +227,7 @@ function CostModal({ entry, onClose }: { entry: CostEntry | null; onClose: () =>
   const none = { value: "", label: t("ui.costNone") };
   return (
     <Modal title={entry ? t("ui.costEdit") : t("ui.costNew")} onClose={onClose}>
-      <form
-        className="grid grid-cols-2 gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         <Field label={t("ui.costDate")}>
           <Input type="date" required value={f.date} onChange={set("date")} />
         </Field>
@@ -272,7 +266,7 @@ function CostModal({ entry, onClose }: { entry: CostEntry | null; onClose: () =>
           <Select value={f.partyId} onChange={set("partyId")} options={[none, ...(parties.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
         </Field>
         <FormFooter error={save.error} disabled={save.isPending} />
-      </form>
+      </Form>
     </Modal>
   );
 }

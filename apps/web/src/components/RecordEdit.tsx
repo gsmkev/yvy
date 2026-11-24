@@ -32,7 +32,7 @@ import { post } from "../lib/api";
 import { fmtDateTime, toIso } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import type { RecordRow } from "../lib/types";
-import { Button, ConfirmModal, ErrorBox, Field, Input, Select, toast } from "./ui";
+import { Button, ConfirmModal, ErrorBox, Field, Form, Input, Select, toast } from "./ui";
 
 type Opt = { value: string; label: string };
 type FieldDef =
@@ -279,13 +279,7 @@ export function RecordEditForm({
     setForm({ ...form, [k]: e.target.value });
   };
   return (
-    <form
-      className="flex flex-col gap-3"
-      onSubmit={(e) => {
-        e.preventDefault();
-        save.mutate();
-      }}
-    >
+    <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
       {defs.map((d) => (
         <Field key={d.key} label={d.label}>
           {d.type === "select" ? (
@@ -336,7 +330,7 @@ export function RecordEditForm({
           {t("ui.cancel")}
         </Button>
       </div>
-    </form>
+    </Form>
   );
 }
 

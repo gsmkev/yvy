@@ -6,7 +6,7 @@ import { del, get, post } from "../../lib/api";
 import { fmtIsoDate, fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
-import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FormFooter, Input, Modal, SectionHead, Select, Spinner, Tabs, toast } from "../ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, Form, FormFooter, Input, Modal, SectionHead, Select, Spinner, Tabs, toast } from "../ui";
 import { useMachines } from "./MachinesPanel";
 import { useErpList, type FieldDef } from "./MasterPanel";
 import { RecordList } from "./RecordList";
@@ -227,13 +227,7 @@ function LogModal({ planId, plans, onClose }: { planId: string | null; plans: Pl
   const ofMachine = plans.filter((p) => p.machineId === machineId);
   return (
     <Modal title={t("ui.maintLogNew")} onClose={onClose}>
-      <form
-        className="grid grid-cols-2 gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         <Field label={t("ui.maintMachine")}>
           <Select
             value={machineId}
@@ -275,7 +269,7 @@ function LogModal({ planId, plans, onClose }: { planId: string | null; plans: Pl
           <Select value={currency} onChange={(e) => setCurrency(e.target.value as Currency)} options={CURRENCIES.map((c) => ({ value: c, label: c }))} />
         </Field>
         <FormFooter error={save.error} disabled={save.isPending} />
-      </form>
+      </Form>
     </Modal>
   );
 }

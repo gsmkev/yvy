@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { del, get, post } from "../lib/api";
 import { fmtDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
-import { Button, ErrorBox, Field, Input, Select, toast } from "./ui";
+import { Button, ErrorBox, Field, Form, Input, Select, toast } from "./ui";
 
 interface Schedule {
   id: string;
@@ -58,13 +58,7 @@ export function ReportSchedules({ farmId }: { farmId: string }) {
           </li>
         ))}
       </ul>
-      <form
-        className="mt-3 grid gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          add.mutate();
-        }}
-      >
+      <Form className="mt-3 grid gap-3" onSubmit={() => add.mutate()}>
         <Field label={t("ui.scheduleName")}>
           <Input required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
         </Field>
@@ -94,7 +88,7 @@ export function ReportSchedules({ farmId }: { farmId: string }) {
           </Button>
         </div>
         {add.error && <ErrorBox error={add.error} />}
-      </form>
+      </Form>
     </section>
   );
 }

@@ -4,7 +4,7 @@ import { WEBHOOK_EVENTS, type WebhookEvent } from "@yvy/shared";
 import { del, get, patch, post } from "../lib/api";
 import { fmtDateTime } from "../lib/format";
 import { t, tk } from "../lib/i18n";
-import { Button, DataTable, EmptyState, ErrorBox, Field, Input, SectionHead, toast } from "./ui";
+import { Button, DataTable, EmptyState, ErrorBox, Field, Form, Input, SectionHead, toast } from "./ui";
 
 interface Hook {
   id: string;
@@ -125,13 +125,7 @@ export function WebhooksPanel() {
       )}
       {list.isSuccess && rows.length === 0 && <EmptyState compact title={t("ui.webhooksEmpty")} />}
 
-      <form
-        className="mt-4 flex max-w-lg flex-col gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          add.mutate();
-        }}
-      >
+      <Form className="mt-4 flex max-w-lg flex-col gap-3" onSubmit={() => add.mutate()}>
         <Field label={t("ui.webhooksUrl")}>
           <Input type="url" required placeholder="https://" value={url} onChange={(e) => setUrl(e.target.value)} />
         </Field>
@@ -155,7 +149,7 @@ export function WebhooksPanel() {
           {t("ui.webhooksAdd")}
         </Button>
         {[add.error, toggle.error, remove.error, test.error].map((e, i) => (e ? <ErrorBox key={i} error={e} /> : null))}
-      </form>
+      </Form>
     </section>
   );
 }

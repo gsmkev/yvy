@@ -23,6 +23,69 @@ const PROB_LABEL: Record<string, string> = {
   high: "probabilidad alta",
 };
 
+const EXPO_URL = "https://exp.host/--/api/v2/push/send";
+
+/** Dispositivos con token de las personas a las que se les avisa (≤ 90 por consulta). */
+const pushTokens = (db: DB, pushes: { userId: string }[]) =>
+  db
+    .select({ userId: s.devices.userId, token: s.devices.pushToken })
+    .from(s.devices)
+    .where(
+      and(
+        inArray(s.devices.userId, [...new Set(pushes.map((p) => p.userId))].slice(0, 90)),
+        isNotNull(s.devices.pushToken),
+      ),
+    );
+
+/** Un mensaje por dispositivo de cada aviso; `extra` pone lo propio de cada tipo de aviso. */
+const pushMessages = <P extends { userId: string }>(
+  pushes: P[],
+  tokens: { userId: string; token: string | null }[],
+  build: (p: P) => Record<string, unknown>,
+) => pushes.flatMap((p) => tokens.filter((tk) => tk.userId === p.userId).map((tk) => ({ to: tk.token, ...build(p) })));
+
+/** Expo Push acepta lotes de hasta 100 mensajes. */
+const sendExpo = (fetchFn: typeof fetch, messages: unknown[]) =>
+  fetchFn(EXPO_URL, {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify(messages.slice(0, 100)),
+  });
+
+/** Cuántos emails entran todavía hoy bajo el tope diario. */
+async function emailRoom(db: DB, now: number): Promise<number> {
+  const [{ n }] = (await db
+    .select({ n: sql<number>`count(*)` })
+    .from(s.notifications)
+    .where(
+      and(
+        eq(s.notifications.channel, "email"),
+        eq(s.notifications.status, "sent"),
+        gte(s.notifications.sentAt, now - 86_400_000),
+      ),
+    )) as [{ n: number }];
+  return Math.max(0, EMAIL_DAILY_CAP - n);
+}
+
+/** Marca como enviadas y fallidas las notificaciones (en tandas de 90 ids) y devuelve el conteo por canal. */
+async function finish(
+  db: DB,
+  pending: { id: string; channel: string }[],
+  sent: string[],
+  failed: string[],
+  now: number,
+  before: Stmt[] = [],
+): Promise<{ push: number; email: number }> {
+  const stmts: Stmt[] = [...before];
+  for (const chunk of chunkForParams(sent, 1))
+    stmts.push(db.update(s.notifications).set({ status: "sent", sentAt: now }).where(inArray(s.notifications.id, chunk)));
+  for (const chunk of chunkForParams(failed, 1))
+    stmts.push(db.update(s.notifications).set({ status: "failed" }).where(inArray(s.notifications.id, chunk)));
+  await runBatch(db, stmts);
+  const done = (channel: string) => pending.filter((p) => p.channel === channel && sent.includes(p.id)).length;
+  return { push: done("push"), email: done("email") };
+}
+
 /** Tokens que Expo marcó como DeviceNotRegistered (la respuesta trae un ticket por mensaje, en orden). */
 async function deadTokens(res: Response, sentTo: (string | null)[]): Promise<string[]> {
   try {
@@ -95,33 +158,16 @@ export async function sendPending(
   // ---- Push ----
   const pushes = pending.filter((p) => p.channel === "push");
   if (pushes.length) {
-    const tokens = await db
-      .select({ userId: s.devices.userId, token: s.devices.pushToken })
-      .from(s.devices)
-      .where(
-        and(
-          inArray(s.devices.userId, [...new Set(pushes.map((p) => p.userId))].slice(0, 90)),
-          isNotNull(s.devices.pushToken),
-        ),
-      );
-    const messages = pushes.flatMap((p) =>
-      tokens
-        .filter((tk) => tk.userId === p.userId)
-        .map((tk) => ({
-          to: tk.token,
-          title: title(p),
-          body: body(p),
-          data: { alertId: p.alertId },
-          sound: "default",
-          priority: "high",
-        })),
-    );
+    const tokens = await pushTokens(db, pushes);
+    const messages = pushMessages(pushes, tokens, (p) => ({
+      title: title(p),
+      body: body(p),
+      data: { alertId: p.alertId },
+      sound: "default",
+      priority: "high",
+    }));
     if (messages.length) {
-      const res = await fetchFn("https://exp.host/--/api/v2/push/send", {
-        method: "POST",
-        headers: { "content-type": "application/json", accept: "application/json" },
-        body: JSON.stringify(messages.slice(0, 100)),
-      });
+      const res = await sendExpo(fetchFn, messages);
       (res.ok ? sent : failed).push(...pushes.map((p) => p.id));
       if (res.ok) {
         // B9: Expo responde 200 con un estado por mensaje; los tokens inválidos se borran.
@@ -129,13 +175,8 @@ export async function sendPending(
           res,
           messages.slice(0, 100).map((m) => m.to),
         );
-        for (let i = 0; i < dead.length; i += 90)
-          cleanup.push(
-            db
-              .update(s.devices)
-              .set({ pushToken: null })
-              .where(inArray(s.devices.pushToken, dead.slice(i, i + 90))),
-          );
+        for (const chunk of chunkForParams(dead, 1))
+          cleanup.push(db.update(s.devices).set({ pushToken: null }).where(inArray(s.devices.pushToken, chunk)));
       }
     } else {
       sent.push(...pushes.map((p) => p.id)); // sin dispositivos: nada que mandar
@@ -145,18 +186,7 @@ export async function sendPending(
   // ---- Email ----
   const emails = pending.filter((p) => p.channel === "email");
   if (emails.length) {
-    const since = now - 86_400_000;
-    const [{ n }] = (await db
-      .select({ n: sql<number>`count(*)` })
-      .from(s.notifications)
-      .where(
-        and(
-          eq(s.notifications.channel, "email"),
-          eq(s.notifications.status, "sent"),
-          gte(s.notifications.sentAt, since),
-        ),
-      )) as [{ n: number }];
-    const room = Math.max(0, EMAIL_DAILY_CAP - n);
+    const room = await emailRoom(db, now);
     const toSend = emails.filter((e) => e.email).slice(0, room);
     const skipped = emails.filter((e) => !e.email).map((e) => e.id);
     sent.push(...skipped);
@@ -182,26 +212,7 @@ export async function sendPending(
     }
   }
 
-  const stmts: Stmt[] = [...cleanup];
-  for (let i = 0; i < sent.length; i += 90)
-    stmts.push(
-      db
-        .update(s.notifications)
-        .set({ status: "sent", sentAt: now })
-        .where(inArray(s.notifications.id, sent.slice(i, i + 90))),
-    );
-  for (let i = 0; i < failed.length; i += 90)
-    stmts.push(
-      db
-        .update(s.notifications)
-        .set({ status: "failed" })
-        .where(inArray(s.notifications.id, failed.slice(i, i + 90))),
-    );
-  await runBatch(db, stmts);
-  return {
-    push: pushes.filter((p) => sent.includes(p.id)).length,
-    email: emails.filter((e) => sent.includes(e.id)).length,
-  };
+  return finish(db, pending, sent, failed, now, cleanup);
 }
 
 /**
@@ -237,49 +248,22 @@ export async function sendMentions(
 
   const pushes = pending.filter((p) => p.channel === "push");
   if (pushes.length) {
-    const tokens = await db
-      .select({ userId: s.devices.userId, token: s.devices.pushToken })
-      .from(s.devices)
-      .where(
-        and(
-          inArray(s.devices.userId, [...new Set(pushes.map((p) => p.userId))].slice(0, 90)),
-          isNotNull(s.devices.pushToken),
-        ),
-      );
-    const messages = pushes.flatMap((p) =>
-      tokens
-        .filter((tk) => tk.userId === p.userId)
-        .map((tk) => ({
-          to: tk.token,
-          title: title(p),
-          body: p.body.slice(0, 140),
-          data: { recordId: p.recordId },
-          sound: "default",
-        })),
-    );
+    const tokens = await pushTokens(db, pushes);
+    const messages = pushMessages(pushes, tokens, (p) => ({
+      title: title(p),
+      body: p.body.slice(0, 140),
+      data: { recordId: p.recordId },
+      sound: "default",
+    }));
     if (messages.length) {
-      const res = await fetchFn("https://exp.host/--/api/v2/push/send", {
-        method: "POST",
-        headers: { "content-type": "application/json", accept: "application/json" },
-        body: JSON.stringify(messages.slice(0, 100)),
-      });
+      const res = await sendExpo(fetchFn, messages);
       (res.ok ? sent : failed).push(...pushes.map((p) => p.id));
     } else sent.push(...pushes.map((p) => p.id));
   }
 
   const emails = pending.filter((p) => p.channel === "email");
   if (emails.length) {
-    const [{ n }] = (await db
-      .select({ n: sql<number>`count(*)` })
-      .from(s.notifications)
-      .where(
-        and(
-          eq(s.notifications.channel, "email"),
-          eq(s.notifications.status, "sent"),
-          gte(s.notifications.sentAt, now - 86_400_000),
-        ),
-      )) as [{ n: number }];
-    const room = Math.max(0, EMAIL_DAILY_CAP - n);
+    const room = await emailRoom(db, now);
     sent.push(...emails.filter((e) => !e.email).map((e) => e.id));
     for (const e of emails.filter((x) => x.email).slice(0, room)) {
       const text = `${e.body}\n\n${env.APP_URL}/registros`;
@@ -299,18 +283,5 @@ export async function sendMentions(
       }
     }
   }
-  const stmts: Stmt[] = [];
-  for (let i = 0; i < sent.length; i += 90)
-    stmts.push(
-      db.update(s.notifications).set({ status: "sent", sentAt: now }).where(inArray(s.notifications.id, sent.slice(i, i + 90))),
-    );
-  for (let i = 0; i < failed.length; i += 90)
-    stmts.push(
-      db.update(s.notifications).set({ status: "failed" }).where(inArray(s.notifications.id, failed.slice(i, i + 90))),
-    );
-  await runBatch(db, stmts);
-  return {
-    push: pushes.filter((p) => sent.includes(p.id)).length,
-    email: emails.filter((e) => sent.includes(e.id)).length,
-  };
+  return finish(db, pending, sent, failed, now);
 }

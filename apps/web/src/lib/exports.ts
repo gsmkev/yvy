@@ -2,7 +2,7 @@
 import { describeRecord } from "@yvy/shared";
 import { tk } from "./i18n";
 import { fmtDateTime } from "./format";
-import type { TableData } from "./tableExport";
+import type { TableData } from "./tableData";
 import type { Plot, RecordRow } from "./types";
 
 export function download(blob: Blob, filename: string) {

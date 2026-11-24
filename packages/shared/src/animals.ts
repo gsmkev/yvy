@@ -2,7 +2,7 @@
  * Caravanas (G-21) y pesadas (G-22). Lógica pura compartida por el Worker, la web y la app.
  */
 import { z } from "zod";
-import { HERD_CATEGORIES } from "./livestock";
+import { HERD_CATEGORIES } from "./herd-categories";
 
 /** Caravana: letras, números y guiones (ej. "PY-0012345" o "1234"). Se guarda en mayúsculas. */
 export const ANIMAL_TAG_RE = /^[A-Za-z0-9-]{1,20}$/;

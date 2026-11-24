@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { del, get, put } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { fmtQty } from "../../lib/money";
-import { useProducts } from "../ProductsPanel";
+import { useProducts } from "../../lib/products";
 import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast, type Column } from "../ui";
 import { useWarehouses } from "./WarehousesPanel";
 import { HeaderActions, RowMenu, useGoSection, useTableExport } from "./adminSlot";

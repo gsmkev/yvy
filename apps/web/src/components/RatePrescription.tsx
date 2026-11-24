@@ -5,7 +5,7 @@ import { fmtHa, fmtNum } from "../lib/format";
 import { t } from "../lib/i18n";
 import type { Plot } from "../lib/types";
 import { Button, ErrorBox, Field, Input, Modal, Select } from "./ui";
-import type { ManagementZone } from "./ZonesSection";
+import type { ManagementZone } from "../lib/managementZones";
 
 /** Prescripción de dosis variable (A-33): una dosis por zona de manejo, exportada en el navegador. */
 export function RatePrescription({ plot, zones, onClose }: { plot: Plot; zones: ManagementZone[]; onClose: () => void }) {

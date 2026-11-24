@@ -4,6 +4,7 @@ import { PRODUCT_TYPES, PRODUCT_UNITS } from "@yvy/shared";
 import { del, get, patch, post, put } from "../lib/api";
 import { t, tk } from "../lib/i18n";
 import type { Plot, Product } from "../lib/types";
+import { useProducts } from "../lib/products";
 import { PrescriptionModal } from "./PrescriptionModal";
 import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, Select, Spinner, toast, type Column } from "./ui";
 import { HeaderActions, RowMenu, useTableExport } from "./erp/adminSlot";
@@ -15,9 +16,6 @@ interface DoseRange {
 }
 const useDoseRanges = (enabled = true) =>
   useQuery({ enabled, queryKey: ["dose-ranges"], queryFn: () => get<DoseRange[]>("/org/products/dose-ranges") });
-
-export const useProducts = (enabled = true) =>
-  useQuery({ enabled, queryKey: ["products"], queryFn: () => get<Product[]>("/org/products") });
 
 /** Catálogo de productos de la organización (A-10): lo usa el celular para cargar aplicaciones. */
 export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; farmId?: string; plots?: Plot[] }) {

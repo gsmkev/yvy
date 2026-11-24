@@ -7,7 +7,7 @@ import { t, tk } from "../lib/i18n";
 import { fetchAllRecords } from "../lib/queries";
 import type { Plot } from "../lib/types";
 import { harvestYield, MIN_CELLS_PER_ZONE, readYieldVigor, zoneYields } from "../lib/yieldZones";
-import { useManagementZones } from "./ZonesSection";
+import { useManagementZones } from "../lib/managementZones";
 import { Skeleton, SelectBox } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 

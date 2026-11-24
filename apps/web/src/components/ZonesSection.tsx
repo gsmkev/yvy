@@ -1,30 +1,11 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import type { MultiPolygon, Position } from "geojson";
-import { get } from "../lib/api";
 import { fmtDate, fmtHa, fmtNdvi } from "../lib/format";
 import { t } from "../lib/i18n";
 import type { Plot } from "../lib/types";
+import { useManagementZones } from "../lib/managementZones";
 import { RatePrescription } from "./RatePrescription";
 import { Button } from "./ui";
-
-export interface ManagementZone {
-  plotId: string;
-  zone: 1 | 2 | 3;
-  areaHa: number;
-  pct: number;
-  meanNdvi: number;
-  seasons: string;
-  geometry: string;
-  computedAt: number;
-}
-
-export const useManagementZones = (farmId: string) =>
-  useQuery({
-    queryKey: ["management-zones", farmId],
-    queryFn: () => get<ManagementZone[]>(`/org/farms/${farmId}/management-zones`),
-    staleTime: 10 * 60_000,
-  });
 
 /** De la zona más baja a la más alta, con la rampa de vigor de la marca. */
 const ZONE_COLOR: Record<number, string> = { 1: "#B5562E", 2: "#C9C46A", 3: "#3F6B35" };

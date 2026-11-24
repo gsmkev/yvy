@@ -7,7 +7,7 @@ import { fmtIsoDate } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs, fmtMoney, fmtQty } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
-import { useProducts } from "../ProductsPanel";
+import { useProducts } from "../../lib/products";
 import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, Select, Spinner, Tabs, toast, type Column } from "../ui";
 import { PhotoRowMenu } from "./InvoicePhoto";
 import { HeaderActions, RowMenu, useGoSection, useTableExport } from "./adminSlot";

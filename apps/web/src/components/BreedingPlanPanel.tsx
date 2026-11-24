@@ -19,7 +19,7 @@ import { t, tk } from "../lib/i18n";
 import { useMe } from "../lib/queries";
 import { Button, Card, ErrorBox, Field, Form, Input, Spinner, Stat, toast } from "./ui";
 
-const stageDates = (s: PlanStage) => (s.from === s.to ? fmtIsoDate(s.from) : t("ui.reproPlanDates", { from: fmtIsoDate(s.from), to: fmtIsoDate(s.to) }));
+const stageDates = (s: PlanStage) => (s.from === s.to ? fmtIsoDate(s.from) : t("ui.repro.planDates", { from: fmtIsoDate(s.from), to: fmtIsoDate(s.to) }));
 
 function Settings({ farmId, d }: { farmId: string; d: ReproPlanResponse }) {
   const qc = useQueryClient();
@@ -29,20 +29,20 @@ function Settings({ farmId, d }: { farmId: string; d: ReproPlanResponse }) {
   const save = useMutation({
     mutationFn: () => put(`/org/farms/${farmId}/livestock-settings`, { breedingStart: start.slice(5), breedingDays: Number(days) }),
     onSuccess: () => {
-      toast(t("ui.reproPlanSaved"));
+      toast(t("ui.repro.planSaved"));
       return qc.invalidateQueries({ queryKey: ["repro-plan", farmId] });
     },
   });
   return (
     <Form className="flex flex-wrap items-end gap-3" onSubmit={() => { if (ok) save.mutate(); }}>
-      <Field label={t("ui.reproPlanStart")}>
+      <Field label={t("ui.repro.planStart")}>
         <Input type="date" value={start} onChange={(e) => setStart(e.target.value)} />
       </Field>
-      <Field label={t("ui.reproPlanDays")}>
+      <Field label={t("ui.repro.planDays")}>
         <Input inputMode="numeric" className="w-24" value={days} onChange={(e) => setDays(e.target.value)} />
       </Field>
       <Button variant="primary" type="submit" disabled={!ok || save.isPending}>
-        {t("ui.save")}
+        {t("ui.common.save")}
       </Button>
       {save.error ? <ErrorBox error={save.error} /> : null}
     </Form>
@@ -59,7 +59,7 @@ export function BreedingPlanPanel({ farmId }: { farmId: string }) {
     mutationFn: async () => {
       const d = q.data!;
       const stages = upcomingStages(reproPlan(d.cycleYear, d.breedingStart, d.breedingDays), today);
-      const title = (s: PlanStage) => t("ui.reproPlanTaskTitle", { stage: tk(`ui.reproPlanStage_${s.id}`) });
+      const title = (s: PlanStage) => t("ui.repro.planTaskTitle", { stage: tk(`ui.repro.planStage_${s.id}`) });
       // No repetir las que ya existen (mismo título y misma fecha).
       const existing = await get<{ title: string; dueDate: string }[]>(`/org/tasks?farmId=${farmId}&from=${today}&to=${stages[stages.length - 1]?.to ?? today}`);
       const have = new Set(existing.map((x) => `${x.title}|${x.dueDate}`));
@@ -69,7 +69,7 @@ export function BreedingPlanPanel({ farmId }: { farmId: string }) {
       return todo.length;
     },
     onSuccess: (n) => {
-      toast(n > 0 ? t("ui.reproPlanTasksCreated", { n }) : t("ui.reproPlanTasksNone"));
+      toast(n > 0 ? t("ui.repro.planTasksCreated", { n }) : t("ui.repro.planTasksNone"));
       return qc.invalidateQueries({ queryKey: ["tasks"] });
     },
   });
@@ -80,8 +80,8 @@ export function BreedingPlanPanel({ farmId }: { farmId: string }) {
   return (
     <div className="mt-4 flex flex-col gap-5">
       <div>
-        <h2 className="eyebrow">{t("ui.reproPlanTitle", { year: d.cycleYear })}</h2>
-        {d.isDefault && <p className="mt-1 text-sm text-tinta-2">{t("ui.reproPlanDefault")}</p>}
+        <h2 className="eyebrow">{t("ui.repro.planTitle", { year: d.cycleYear })}</h2>
+        {d.isDefault && <p className="mt-1 text-sm text-tinta-2">{t("ui.repro.planDefault")}</p>}
       </div>
       {canEdit && <Settings key={`${d.breedingStart}|${d.breedingDays}`} farmId={farmId} d={d} />}
       <ol className="flex flex-col divide-y divide-linea border-y border-linea">
@@ -91,13 +91,13 @@ export function BreedingPlanPanel({ farmId }: { farmId: string }) {
           return (
             <li key={s.id} className={`flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-3 ${past ? "text-tinta-2" : ""}`}>
               <div className="min-w-0">
-                <p className="text-sm font-medium">{tk(`ui.reproPlanStage_${s.id}`)}</p>
-                <p className="text-xs text-tinta-2">{tk(`ui.reproPlanHint_${s.id}`)}</p>
+                <p className="text-sm font-medium">{tk(`ui.repro.planStage_${s.id}`)}</p>
+                <p className="text-xs text-tinta-2">{tk(`ui.repro.planHint_${s.id}`)}</p>
               </div>
               <p className="num text-sm">
                 {stageDates(s)}
-                {now && <span className="ml-2 font-medium text-accion">{t("ui.reproPlanNow")}</span>}
-                {past && <span className="ml-2 text-xs">{t("ui.reproPlanPast")}</span>}
+                {now && <span className="ml-2 font-medium text-accion">{t("ui.repro.planNow")}</span>}
+                {past && <span className="ml-2 text-xs">{t("ui.repro.planPast")}</span>}
               </p>
             </li>
           );
@@ -105,13 +105,13 @@ export function BreedingPlanPanel({ farmId }: { farmId: string }) {
       </ol>
       <div>
         <Button variant="secondary" disabled={createTasks.isPending || !me.data} onClick={() => createTasks.mutate()}>
-          {t("ui.reproPlanCreateTasks")}
+          {t("ui.repro.planCreateTasks")}
         </Button>
         {createTasks.error ? <ErrorBox error={createTasks.error} /> : null}
       </div>
       {d.indicators.length > 0 && (
         <div>
-          <p className="eyebrow mb-2">{t("ui.reproPlanIndicators")}</p>
+          <p className="eyebrow mb-2">{t("ui.repro.planIndicators")}</p>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
             {d.indicators.map((i) => (
               <Stat key={i.id} label={indicatorLabel(i)} value={indicatorValueText(i)} />
@@ -120,8 +120,8 @@ export function BreedingPlanPanel({ farmId }: { farmId: string }) {
         </div>
       )}
       <Card>
-        <p className="text-sm font-medium">{t("ui.reproPlanWhyTitle")}</p>
-        <p className="mt-1 text-sm text-tinta-2">{t("ui.reproPlanWhy")}</p>
+        <p className="text-sm font-medium">{t("ui.repro.planWhyTitle")}</p>
+        <p className="mt-1 text-sm text-tinta-2">{t("ui.repro.planWhy")}</p>
       </Card>
     </div>
   );

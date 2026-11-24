@@ -18,19 +18,19 @@ interface Entry {
 }
 const GROUPS: { title: MessageKey; entries: Entry[] }[] = [
   {
-    title: "ui.reportsGroupTrack",
+    title: "ui.reports.groupTrack",
     entries: [
-      { path: "report", title: "ui.reportTitle", hint: "ui.reportsDescWeekly" },
-      { path: "rain-gauges", title: "ui.gaugesTitle", hint: "ui.reportsDescGauges" },
-      { path: "changes", title: "ui.changesTitle", hint: "ui.reportsDescChanges" },
+      { path: "report", title: "ui.report.title", hint: "ui.reports.descWeekly" },
+      { path: "rain-gauges", title: "ui.gauges.title", hint: "ui.reports.descGauges" },
+      { path: "changes", title: "ui.changes.title", hint: "ui.reports.descChanges" },
     ],
   },
-  { title: "ui.reportsGroupThird", entries: [{ path: "share-links", title: "ui.shareLinkTitle", hint: "ui.reportsDescShare", ownerOnly: true }] },
+  { title: "ui.reports.groupThird", entries: [{ path: "share-links", title: "ui.share.linkTitle", hint: "ui.reports.descShare", ownerOnly: true }] },
   {
-    title: "ui.reportsGroupSeason",
+    title: "ui.reports.groupSeason",
     entries: [
-      { path: "risk", title: "ui.riskTitle", hint: "ui.reportsDescRisk" },
-      { path: "climate", title: "office.climateTitle", hint: "office.climateHint" },
+      { path: "risk", title: "ui.risk.title", hint: "ui.reports.descRisk" },
+      { path: "climate", title: "office.climate.title", hint: "office.climate.hint" },
     ],
   },
 ];
@@ -39,9 +39,9 @@ export default function Reports() {
   const { farms, farm, setFarmId } = useFarmPick();
   const owner = getSession()?.organization.role === "owner";
   return (
-    <OfficeScreen title={t("ui.reportsTitle")}>
+    <OfficeScreen title={t("ui.reports.title")}>
       {!farm ? (
-        <EmptyState title={t("office.reportsNoFarms")} hint={t("office.reportsNoFarmsHint")} />
+        <EmptyState title={t("office.reports.noFarms")} hint={t("office.reports.noFarmsHint")} />
       ) : (
         <>
           <FarmChips farms={farms} value={farm.id} onChange={setFarmId} />

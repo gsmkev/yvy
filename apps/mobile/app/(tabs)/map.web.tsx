@@ -24,7 +24,16 @@ let protocol = false;
 export default function MapScreen() {
   const ref = useRef<HTMLDivElement | null>(null);
   const { farmId, current } = useFarmChoice();
-  const farms = useLocal(() => byFarm(getDb().farms().map((f) => ({ ...f, farmId: f.id })), farmId), [farmId]);
+  const farms = useLocal(
+    () =>
+      byFarm(
+        getDb()
+          .farms()
+          .map((f) => ({ ...f, farmId: f.id })),
+        farmId,
+      ),
+    [farmId],
+  );
   const plots = useLocal(() => byFarm(getDb().plots(), farmId), [farmId]);
   const records = useLocal(() => byFarm(getDb().records(300), farmId), [farmId]);
   const lastVisit = useLocal(() => getDb().lastVisitByPlot());
@@ -40,7 +49,9 @@ export default function MapScreen() {
   const farm = current ?? farms[0];
   const lastSel = useRef<string | null>(null);
   const view = useRef<{ farmId: string; center: [number, number]; zoom: number } | null>(null);
-  const [mode, setModeState] = useState<MapLayer>(() => (getDb().getKv("map_layer") === "ndvi" ? "ndvi" : "true_color"));
+  const [mode, setModeState] = useState<MapLayer>(() =>
+    getDb().getKv("map_layer") === "ndvi" ? "ndvi" : "true_color",
+  );
   const setMode = (m: MapLayer) => {
     setModeState(m);
     getDb().setKv("map_layer", m);
@@ -67,14 +78,18 @@ export default function MapScreen() {
     const map = new maplibregl.Map({
       container: ref.current,
       attributionControl: false,
-      ...(keep ? { center: keep.center, zoom: keep.zoom } : { bounds: fitPlot ? ([sel.minLon, sel.minLat, sel.maxLon, sel.maxLat] as [number, number, number, number]) : ([farm.minLon, farm.minLat, farm.maxLon, farm.maxLat] as [number, number, number, number]) }),
+      ...(keep
+        ? { center: keep.center, zoom: keep.zoom }
+        : {
+            bounds: fitPlot
+              ? ([sel.minLon, sel.minLat, sel.maxLon, sel.maxLat] as [number, number, number, number])
+              : ([farm.minLon, farm.minLat, farm.maxLon, farm.maxLat] as [number, number, number, number]),
+          }),
       fitBoundsOptions: fitPlot ? { padding: { top: 80, bottom: 280, left: 40, right: 40 } } : { padding: 24 },
       style: {
         version: 8,
         sources: {
-          ...(layer
-            ? { base: { type: "raster" as const, url: layer.url, tileSize: 256 } }
-            : {}),
+          ...(layer ? { base: { type: "raster" as const, url: layer.url, tileSize: 256 } } : {}),
           farms: {
             type: "geojson",
             data: fc(farms.map((f) => ({ type: "Feature", properties: {}, geometry: JSON.parse(f.geometry) }))),
@@ -84,7 +99,15 @@ export default function MapScreen() {
             data: fc(
               plots.map((p) => ({
                 type: "Feature",
-                properties: { kind: p.kind, sel: p.id === selected ? 1 : 0, stale: (lastVisit.get(p.id) ? Math.floor((Date.now() - lastVisit.get(p.id)!) / 86_400_000) : 99) >= LIMITS.visits.defaultStaleDays ? 1 : 0 },
+                properties: {
+                  kind: p.kind,
+                  sel: p.id === selected ? 1 : 0,
+                  stale:
+                    (lastVisit.get(p.id) ? Math.floor((Date.now() - lastVisit.get(p.id)!) / 86_400_000) : 99) >=
+                    LIMITS.visits.defaultStaleDays
+                      ? 1
+                      : 0,
+                },
                 geometry: JSON.parse(p.geometry),
               })),
             ),
@@ -105,14 +128,31 @@ export default function MapScreen() {
         layers: [
           { id: "bg", type: "background", paint: { "background-color": "#141a12" } },
           ...(layer ? [{ id: "base", type: "raster" as const, source: "base" }] : []),
-          { id: "farms", type: "line", source: "farms", paint: { "line-color": "rgba(255,255,255,0.9)", "line-width": 2 } },
-          { id: "plots-fill", type: "fill", source: "plots", paint: { "fill-color": "#ffffff", "fill-opacity": ["case", ["==", ["get", "sel"], 1], 0.28, 0.04] } },
+          {
+            id: "farms",
+            type: "line",
+            source: "farms",
+            paint: { "line-color": "rgba(255,255,255,0.9)", "line-width": 2 },
+          },
+          {
+            id: "plots-fill",
+            type: "fill",
+            source: "plots",
+            paint: { "fill-color": "#ffffff", "fill-opacity": ["case", ["==", ["get", "sel"], 1], 0.28, 0.04] },
+          },
           {
             id: "plots-line",
             type: "line",
             source: "plots",
             paint: {
-              "line-color": ["case", ["==", ["get", "sel"], 1], "#ffffff", ["==", ["get", "stale"], 1], BRAND.trigo, "rgba(255,255,255,0.7)"],
+              "line-color": [
+                "case",
+                ["==", ["get", "sel"], 1],
+                "#ffffff",
+                ["==", ["get", "stale"], 1],
+                BRAND.trigo,
+                "rgba(255,255,255,0.7)",
+              ],
               "line-width": ["case", ["==", ["get", "sel"], 1], 3, 1.5],
             },
           },
@@ -166,16 +206,22 @@ export default function MapScreen() {
       </View>
       <View style={s.toolbar} pointerEvents="box-none">
         <MapToolbar>
-          <MapToolButton icon={Layers} label={t("app.mapLayers")} active={panel} onPress={() => setPanel((p) => !p)} />
+          <MapToolButton icon={Layers} label={t("app.map.layers")} active={panel} onPress={() => setPanel((p) => !p)} />
         </MapToolbar>
       </View>
       {plot && (
         <View style={s.sheet}>
           <Text style={s.title}>{plot.name}</Text>
           <Text style={s.sub}>
-            {plot.kind === "pasture" ? t("ui.pasture") : (plot.crop ?? t("ui.crop"))} · {t("ui.ha", { value: plot.areaHa.toLocaleString("es-PY", { maximumFractionDigits: 0 }) })}
+            {plot.kind === "pasture" ? t("ui.common.pasture") : (plot.crop ?? t("ui.common.crop"))} ·{" "}
+            {t("ui.common.ha", { value: plot.areaHa.toLocaleString("es-PY", { maximumFractionDigits: 0 }) })}
           </Text>
-          <Button big title={t("app.annotateIn", { plot: plot.name })} onPress={() => router.push({ pathname: "/annotate", params: { plotId: plot.id } })} style={{ marginTop: 16 }} />
+          <Button
+            big
+            title={t("app.annotate.in", { plot: plot.name })}
+            onPress={() => router.push({ pathname: "/annotate", params: { plotId: plot.id } })}
+            style={{ marginTop: 16 }}
+          />
         </View>
       )}
     </View>
@@ -186,7 +232,15 @@ const s = StyleSheet.create({
   toolbar: { position: "absolute", top: 12, right: 12 },
   topLeft: { position: "absolute", top: 12, left: 12, right: 72, gap: 8 },
   panel: { backgroundColor: C.papel, borderRadius: RADIUS, paddingHorizontal: 14 },
-  sheet: { position: "absolute", left: 12, right: 12, bottom: 12, backgroundColor: C.papel, borderRadius: 16, padding: 20 },
+  sheet: {
+    position: "absolute",
+    left: 12,
+    right: 12,
+    bottom: 12,
+    backgroundColor: C.papel,
+    borderRadius: 16,
+    padding: 20,
+  },
   title: { ...T.title },
   sub: { ...T.small, marginTop: 2 },
 });

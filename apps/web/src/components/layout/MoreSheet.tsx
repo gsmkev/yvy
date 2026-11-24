@@ -50,14 +50,14 @@ export function MoreSheet({ onClose, children }: { onClose: () => void; children
         ref={box}
         role="dialog"
         aria-modal="true"
-        aria-label={t("ui.navMore")}
+        aria-label={t("ui.nav.more")}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         className="anim-sheet flex max-h-[85vh] w-full flex-col gap-3 overflow-y-auto rounded-t-xl bg-lino p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] outline-none"
       >
         <button
           type="button"
-          aria-label={t("ui.close")}
+          aria-label={t("ui.common.close")}
           onClick={onClose}
           className="flex h-12 w-12 cursor-pointer items-center justify-center self-end rounded-md text-tinta-2 hover:bg-surco/5"
         >

@@ -8,19 +8,19 @@ export function Ask() {
     <div className="flex flex-col gap-4">
       <input
         disabled
-        aria-label={t("ui.labsAskPlaceholder")}
-        placeholder={t("ui.labsAskPlaceholder")}
+        aria-label={t("ui.labs.askPlaceholder")}
+        placeholder={t("ui.labs.askPlaceholder")}
         className="h-10 rounded-md border border-linea bg-papel px-3 text-sm disabled:opacity-45"
       />
       <Flow drop={false}>
         <p className="text-sm text-tinta-2">
-          {t("ui.labsAskExampleLabel")} · {t("ui.labsAskFarm")}
+          {t("ui.labs.askExampleLabel")} · {t("ui.labs.askFarm")}
         </p>
         <ul>
           {pairs.map((n) => (
             <li key={n} className="flex flex-col gap-1 border-b border-linea py-4">
-              <p className="font-semibold">{tk(`ui.labsAskQ${n}`)}</p>
-              <p>{tk(`ui.labsAskA${n}`)}</p>
+              <p className="font-semibold">{tk(`ui.labs.askQ${n}`)}</p>
+              <p>{tk(`ui.labs.askA${n}`)}</p>
             </li>
           ))}
         </ul>
@@ -33,13 +33,13 @@ export function Summary() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <Button disabled>{t("ui.labsSummaryPick")}</Button>
+        <Button disabled>{t("ui.labs.summaryPick")}</Button>
       </div>
       <Flow drop={false}>
         <p className="text-sm text-tinta-2">
-          {t("ui.labsSummaryDraft")} · {t("ui.labsSummaryWeek")}
+          {t("ui.labs.summaryDraft")} · {t("ui.labs.summaryWeek")}
         </p>
-        <p className="border-b border-linea pb-4">{t("ui.labsSummaryText")}</p>
+        <p className="border-b border-linea pb-4">{t("ui.labs.summaryText")}</p>
       </Flow>
     </div>
   );

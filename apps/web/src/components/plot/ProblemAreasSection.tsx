@@ -18,12 +18,12 @@ export function ProblemAreasSection({
   const { assigneeId, setAssigneeId, sendArea } = task;
   return (
     <div className="border-t border-linea pt-4">
-      <h3 className="eyebrow mb-1">{t("ui.problemAreasTitle")}</h3>
+      <h3 className="eyebrow mb-1">{t("ui.problem.areasTitle")}</h3>
       <p className="mb-2 text-xs text-tinta-2">
-        {t("ui.problemAreasHint", { date: fmtDate(problemAreas[0]!.acquiredAt) })}
+        {t("ui.problem.areasHint", { date: fmtDate(problemAreas[0]!.acquiredAt) })}
       </p>
       {workers.length > 1 && (
-        <Field label={t("ui.problemTaskTo")}>
+        <Field label={t("ui.problem.taskTo")}>
           <Select
             value={assigneeId}
             onChange={(e) => setAssigneeId(e.target.value)}
@@ -31,26 +31,26 @@ export function ProblemAreasSection({
           />
         </Field>
       )}
-      {workers.length === 0 && <p className="mb-2 text-xs text-tinta-2">{t("ui.problemTaskNoWorker")}</p>}
+      {workers.length === 0 && <p className="mb-2 text-xs text-tinta-2">{t("ui.problem.taskNoWorker")}</p>}
       <ul className="flex flex-col gap-3 text-sm">
         {problemAreas.map((a) => (
           <li key={a.id} className="flex flex-col gap-1">
             <span className="num">
-              {fmtHa(a.areaHa)} · {t("ui.problemAreaNdvi", { v: fmtNdvi(a.meanNdvi), m: fmtNdvi(a.plotMedianNdvi) })}
+              {fmtHa(a.areaHa)} · {t("ui.problem.areaNdvi", { v: fmtNdvi(a.meanNdvi), m: fmtNdvi(a.plotMedianNdvi) })}
             </span>
             <span className="flex gap-4">
               <button
                 className="cursor-pointer text-accion underline underline-offset-2"
                 onClick={() => onShowArea?.(a)}
               >
-                {t("ui.problemAreaShow")}
+                {t("ui.problem.areaShow")}
               </button>
               <button
                 className="cursor-pointer text-accion underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-45"
                 disabled={workers.length === 0 || sendArea.isPending}
                 onClick={() => sendArea.mutate(a)}
               >
-                {sendArea.isPending ? t("ui.problemTaskSending") : t("ui.problemTaskSend")}
+                {sendArea.isPending ? t("ui.problem.taskSending") : t("ui.problem.taskSend")}
               </button>
             </span>
           </li>

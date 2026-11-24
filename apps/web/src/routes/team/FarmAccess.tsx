@@ -23,7 +23,7 @@ export function FarmAccess({ member, onClose }: { member: Member; onClose: () =>
       put(`/org/members/${member.userId}/farms`, { farms: [...current].map(([farmId, level]) => ({ farmId, level })) }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["farm-access"] });
-      toast(t("ui.farmAccessSaved"));
+      toast(t("ui.farm.accessSaved"));
       onClose();
     },
   });
@@ -34,13 +34,13 @@ export function FarmAccess({ member, onClose }: { member: Member; onClose: () =>
     setChosen(next);
   };
   return (
-    <Modal title={`${t("ui.farmAccess")} · ${member.fullName}`} onClose={onClose}>
+    <Modal title={`${t("ui.farm.access")} · ${member.fullName}`} onClose={onClose}>
       {!farms.data || !access.data ? (
         <Spinner />
       ) : (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-tinta-2">
-            {member.role === "supervisor" ? t("ui.farmAccessHintSupervisor") : t("ui.farmAccessHintOther")}
+            {member.role === "supervisor" ? t("ui.farm.accessHintSupervisor") : t("ui.farm.accessHintOther")}
           </p>
           <ul className="flex flex-col gap-1">
             {farms.data.map((f) => (
@@ -56,7 +56,7 @@ export function FarmAccess({ member, onClose }: { member: Member; onClose: () =>
                   <Select
                     value={current.get(f.id)!}
                     onChange={(e) => set(f.id, e.target.value as FarmAccessLevel)}
-                    options={(["edit", "view"] as const).map((l) => ({ value: l, label: tk(`ui.farmAccess_${l}`) }))}
+                    options={(["edit", "view"] as const).map((l) => ({ value: l, label: tk(`ui.farm.access_${l}`) }))}
                   />
                 )}
               </li>
@@ -64,7 +64,7 @@ export function FarmAccess({ member, onClose }: { member: Member; onClose: () =>
           </ul>
           {save.error && <ErrorBox error={save.error} />}
           <Button onClick={() => save.mutate()} disabled={save.isPending}>
-            {t("ui.save")}
+            {t("ui.common.save")}
           </Button>
         </div>
       )}

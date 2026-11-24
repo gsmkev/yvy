@@ -43,7 +43,7 @@ export function NewFarmPage() {
     setError(null);
     try {
       const polys = (await parseFile(file)).filter((p) => !p.error).sort((a, b) => b.areaHa - a.areaHa);
-      if (!polys.length) throw new Error(t("ui.importErrors", { count: 1 }));
+      if (!polys.length) throw new Error(t("ui.import.errors", { count: 1 }));
       if (polys.length === 1) {
         setParts([polys[0]!.geometry]);
         setFileOptions(null);
@@ -101,15 +101,15 @@ export function NewFarmPage() {
         />
       </div>
       <Form className="flex flex-col gap-3 overflow-auto p-4 *:shrink-0" onSubmit={() => save()}>
-        <h1 className="text-xl font-semibold">{t("ui.newFarm")}</h1>
-        <Field label={t("ui.farmName")}>
+        <h1 className="text-xl font-semibold">{t("ui.new.farm")}</h1>
+        <Field label={t("ui.farm.name")}>
           <Input required value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label={t("ui.department")}>
+          <Field label={t("ui.common.department")}>
             <Input value={department} onChange={(e) => setDepartment(e.target.value)} />
           </Field>
-          <Field label={t("ui.district")}>
+          <Field label={t("ui.common.district")}>
             <Input value={district} onChange={(e) => setDistrict(e.target.value)} />
           </Field>
         </div>
@@ -120,10 +120,10 @@ export function NewFarmPage() {
             if (p.kind === "city") setDistrict((d) => d || p.name);
           }}
         />
-        <p className="text-sm text-tinta-2">{t("ui.drawFarm")}</p>
+        <p className="text-sm text-tinta-2">{t("ui.draw.farm")}</p>
         <div className="flex flex-wrap gap-2">
           <Button icon={drawing ? X : PenLine} onClick={() => setDrawing(!drawing)}>
-            {drawing ? t("ui.cancel") : parts.length ? t("ui.addPart") : t("ui.draw")}
+            {drawing ? t("ui.common.cancel") : parts.length ? t("ui.add.part") : t("ui.common.draw")}
           </Button>
           {parts.length > 0 && !drawing && (
             <Button
@@ -133,13 +133,13 @@ export function NewFarmPage() {
                 setFileOptions(null);
               }}
             >
-              {t("ui.startOver")}
+              {t("ui.common.startOver")}
             </Button>
           )}
           <label className="cursor-pointer">
             <span className="inline-flex h-10 items-center gap-2 rounded-md border border-linea bg-papel px-3.5 text-sm font-medium hover:bg-lino">
                 <Upload size={16} aria-hidden />
-              {t("ui.importShort")}
+              {t("ui.import.short")}
             </span>
             <input
               type="file"
@@ -151,32 +151,32 @@ export function NewFarmPage() {
         </div>
         {fileOptions && (
           <div className="flex flex-col gap-2 border-b border-linea pb-3 text-sm">
-            <p>{t("ui.fileHasMany", { count: fileOptions.length })}</p>
+            <p>{t("ui.common.fileHasMany", { count: fileOptions.length })}</p>
             {filePlots.length > 0 && (
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={withPlots} onChange={(e) => setWithPlots(e.target.checked)} />
-                {t("ui.alsoImportPlots", { count: filePlots.length })}
+                {t("ui.common.alsoImportPlots", { count: filePlots.length })}
               </label>
             )}
             <div className="flex flex-wrap gap-2">
-              <Button onClick={() => setParts(fileOptions.map((p) => p.geometry))}>{t("ui.useAllAsParts")}</Button>
+              <Button onClick={() => setParts(fileOptions.map((p) => p.geometry))}>{t("ui.use.allAsParts")}</Button>
             </div>
           </div>
         )}
         {geometry && (
           <p className="text-sm">
-            {t("ui.area")}: <strong>{fmtHa(areaHa(geometry))}</strong>
+            {t("ui.common.area")}: <strong>{fmtHa(areaHa(geometry))}</strong>
             {parts.length > 1 || geometry.type === "MultiPolygon"
-              ? ` · ${t("ui.farmParts", { count: geometry.coordinates.length })}`
+              ? " · " + t("ui.farm.parts", { count: geometry.coordinates.length })
               : ""}
           </p>
         )}
         {error ? <ErrorBox error={error} /> : null}
         <Button type="submit" variant="primary" disabled={!geometry || !name || busy}>
-          {t("ui.save")}
+          {t("ui.common.save")}
         </Button>
         {!busy && (!name || !geometry) && (
-          <p className="-mt-2 text-meta text-tinta-2">{[!name && t("ui.farmNeedName"), !geometry && t("ui.farmNeedPerimeter")].filter(Boolean).join(" ")}</p>
+          <p className="-mt-2 text-meta text-tinta-2">{[!name && t("ui.farm.needName"), !geometry && t("ui.farm.needPerimeter")].filter(Boolean).join(" ")}</p>
         )}
       </Form>
     </div>

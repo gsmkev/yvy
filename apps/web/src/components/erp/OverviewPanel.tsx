@@ -19,7 +19,7 @@ function Block({ title, count, section, children }: { title: string; count: numb
         count={count}
         action={
           <Link to="/administracion" search={{ s: section }} className={link}>
-            {t("ui.ovSeeAll")}
+            {t("ui.ov.seeAll")}
           </Link>
         }
       />
@@ -31,13 +31,13 @@ function Block({ title, count, section, children }: { title: string; count: numb
 /** Sin datos todavía: los pasos que faltan para empezar. */
 function OverviewStart({ d }: { d: OverviewData }) {
   const steps = [
-    { s: "products", label: t("ui.ovStep1"), done: d.hasProducts },
-    { s: "purchases", label: t("ui.ovStep2"), done: d.hasPurchases },
-    { s: "cash", label: t("ui.ovStep3"), done: d.hasAccounts },
+    { s: "products", label: t("ui.ov.step1"), done: d.hasProducts },
+    { s: "purchases", label: t("ui.ov.step2"), done: d.hasPurchases },
+    { s: "cash", label: t("ui.ov.step3"), done: d.hasAccounts },
   ].filter((x) => !x.done);
   return (
-    <EmptyState title={t("ui.ovStartTitle")}>
-      {t("ui.ovStartBody")}
+    <EmptyState title={t("ui.ov.startTitle")}>
+      {t("ui.ov.startBody")}
       <ol className="mt-4 flex flex-col gap-2">
         {steps.map((x, i) => (
           <li key={x.s} className="flex items-center gap-3 text-body text-surco">
@@ -56,15 +56,15 @@ function OverviewStats({ d }: { d: OverviewData }) {
   const { cash, pay, payOverdue, rec, recOverdue, margin } = d;
   return (
     <div className="grid grid-cols-2 gap-x-6 gap-y-5 lg:grid-cols-4">
-      {cash && <Stat label={t("ui.ovCash")} value={cash.value} note={cash.rest || undefined} />}
-      {pay && <Stat label={t("ui.ovPayables")} value={pay.value} note={payOverdue ? t("ui.ovOverdue", { amount: payOverdue.value }) : t("ui.ovNoDue")} tone={payOverdue ? "danger" : undefined} />}
-      {rec && <Stat label={t("ui.ovReceivables")} value={rec.value} note={recOverdue ? t("ui.ovOverdue", { amount: recOverdue.value }) : t("ui.ovNoDue")} />}
+      {cash && <Stat label={t("ui.ov.cash")} value={cash.value} note={cash.rest || undefined} />}
+      {pay && <Stat label={t("ui.ov.payables")} value={pay.value} note={payOverdue ? t("ui.ov.overdue", { amount: payOverdue.value }) : t("ui.ov.noDue")} tone={payOverdue ? "danger" : undefined} />}
+      {rec && <Stat label={t("ui.ov.receivables")} value={rec.value} note={recOverdue ? t("ui.ov.overdue", { amount: recOverdue.value }) : t("ui.ov.noDue")} />}
       {margin && (
         <Stat
-          label={t("ui.ovMargin")}
+          label={t("ui.ov.margin")}
           value={fmtGs(margin.marginPyg)}
           tone={margin.marginPyg < 0 ? "danger" : undefined}
-          note={t("ui.dashMarginNote", { income: fmtGs(margin.incomePyg), cost: fmtGs(margin.costPyg) })}
+          note={t("ui.dash.marginNote", { income: fmtGs(margin.incomePyg), cost: fmtGs(margin.costPyg) })}
         />
       )}
     </div>
@@ -76,7 +76,7 @@ function OverviewLists({ d }: { d: OverviewData }) {
   return (
     <div className="grid gap-x-10 gap-y-8 lg:grid-cols-2">
       {lowRows.length > 0 && (
-        <Block title={t("ui.ovLow")} count={d.lowCount} section="minstock">
+        <Block title={t("ui.ov.low")} count={d.lowCount} section="minstock">
           {lowRows.map((l) => {
             const p = prodName(l.productId);
             return (
@@ -84,18 +84,18 @@ function OverviewLists({ d }: { d: OverviewData }) {
                 <span className="min-w-0 truncate">
                   <span className="font-medium">{p?.name}</span> <span className="text-tinta-2">{whName(l.warehouseId)}</span>
                 </span>
-                <span className="num shrink-0 text-trigo-texto">{t("ui.minStockMissing", { qty: fmtQty(l.missing, p ? tk(`fields.productUnit_${p.unit}`) : "") })}</span>
+                <span className="num shrink-0 text-trigo-texto">{t("ui.min.stockMissing", { qty: fmtQty(l.missing, p ? tk(`fields.product.unit_${p.unit}`) : "") })}</span>
               </li>
             );
           })}
         </Block>
       )}
       {openOrders.length > 0 && (
-        <Block title={t("ui.ovOrders")} count={openOrders.length} section="orders">
+        <Block title={t("ui.ov.orders")} count={openOrders.length} section="orders">
           {openOrders.slice(0, SHOWN).map((g) => (
             <li key={g.key} className={ROW}>
               <span className="min-w-0 truncate">
-                <span className="font-medium">{tk(`ui.orderLabor_${g.labor}`)}</span> <span className="text-tinta-2">{plotsLabel(g.plotNames)}</span>
+                <span className="font-medium">{tk(`ui.order.labor_${g.labor}`)}</span> <span className="text-tinta-2">{plotsLabel(g.plotNames)}</span>
               </span>
               <span className="num shrink-0 text-tinta-2">{fmtIsoDate(g.dueDate)}</span>
             </li>
@@ -103,7 +103,7 @@ function OverviewLists({ d }: { d: OverviewData }) {
         </Block>
       )}
       {lastPurchases.length > 0 && (
-        <Block title={t("ui.ovPurchases")} count={d.purchasesCount} section="purchases">
+        <Block title={t("ui.ov.purchases")} count={d.purchasesCount} section="purchases">
           {lastPurchases.map((p) => (
             <li key={p.id} className={ROW}>
               <span className="min-w-0 truncate">

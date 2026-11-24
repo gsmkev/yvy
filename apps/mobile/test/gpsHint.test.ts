@@ -11,9 +11,9 @@ describe("F-01 aviso de GPS lento", () => {
   });
   it("explica que no necesita internet y no dice nada al principio", () => {
     expect(gpsHintText("searching")).toBeNull();
-    expect(gpsHintText("slow")).toBe(t("app.gpsSlowHint"));
-    expect(gpsHintText("cold")).toBe(t("app.gpsColdHint"));
-    expect(t("app.gpsColdHint")).toMatch(/internet/);
-    expect(t("app.gpsNoneHint")).toMatch(/internet/);
+    expect(gpsHintText("slow")).toBe(t("app.gps.slowHint"));
+    expect(gpsHintText("cold")).toBe(t("app.gps.coldHint"));
+    expect(t("app.gps.coldHint")).toMatch(/internet/);
+    expect(t("app.gps.noneHint")).toMatch(/internet/);
   });
 });

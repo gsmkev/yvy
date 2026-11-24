@@ -1,6 +1,6 @@
 /** Vigor de campañas anteriores de un lote, superpuestas (S-03). La historia desde 2017 se pide a demanda por estancia. */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CHART } from "@yvy/shared";
+import { CHART, ATTRIBUTION } from "@yvy/shared";
 import { fmtDate, fmtNdvi } from "../lib/format";
 import { t } from "../lib/i18n";
 import { get, post } from "../lib/api";
@@ -33,10 +33,10 @@ export function VigorSeasons({ plotId, farmId }: { plotId: string; farmId: strin
   const request = useMutation({
     mutationFn: () => post(`/org/farms/${farmId}/history`),
     onSuccess: () => {
-      toast(t("ui.historyRequested"));
+      toast(t("ui.history.requested"));
       void qc.invalidateQueries({ queryKey: ["farm-history", farmId] });
     },
-    onError: (e) => toast(e instanceof Error ? e.message : t("ui.historyFailed")),
+    onError: (e) => toast(e instanceof Error ? e.message : t("ui.history.failed")),
   });
   if (vigor.isLoading) return <Spinner />;
   const series = vigor.data?.series ?? [];
@@ -46,10 +46,10 @@ export function VigorSeasons({ plotId, farmId }: { plotId: string; farmId: strin
 
   return (
     <div className="border-t border-linea pt-4">
-      <h3 className="eyebrow mb-1">{t("ui.vigorSeasonsTitle")}</h3>
+      <h3 className="eyebrow mb-1">{t("ui.vigor.seasonsTitle")}</h3>
       {campaignCount(series) >= 2 ? (
         <LineChart
-          ariaLabel={t("ui.vigorSeasonsTitle")}
+          ariaLabel={t("ui.vigor.seasonsTitle")}
           yLabel="NDVI"
           yDomain={[0, 1]}
           formatX={campaignDayLabel}
@@ -57,25 +57,25 @@ export function VigorSeasons({ plotId, farmId }: { plotId: string; farmId: strin
           series={campaigns.map((c, i) => ({ name: c.label, color: COLORS[i % COLORS.length]!, dashed: i > 0 && i % 2 === 0, points: c.points }))}
         />
       ) : (
-        <p className="text-sm text-tinta-2">{t("ui.vigorSeasonsNone")}</p>
+        <p className="text-sm text-tinta-2">{t("ui.vigor.seasonsNone")}</p>
       )}
       {processing ? (
         <p className="mt-2 text-xs text-tinta-2" role="status">
-          {t("ui.historyProcessing", { date: fmtDate(status.data?.requestedAt ?? Date.now()) })}
+          {t("ui.history.processing", { date: fmtDate(status.data?.requestedAt ?? Date.now()) })}
         </p>
       ) : (
         canRequest && (
           <div className="mt-2 flex flex-col items-start gap-1">
             <Button variant="secondary" disabled={request.isPending} onClick={() => request.mutate()}>
-              {t("ui.historyRequest")}
+              {t("ui.history.request")}
             </Button>
             <span className="text-micro text-tinta-2">
-              {status.data?.status === "failed" ? t("ui.historyFailed") : t("ui.historyHint")}
+              {status.data?.status === "failed" ? t("ui.history.failed") : t("ui.history.hint")}
             </span>
           </div>
         )
       )}
-      <p className="mt-1 text-micro text-tinta-2">{t("attribution.copernicus")}</p>
+      <p className="mt-1 text-micro text-tinta-2">{t(ATTRIBUTION.copernicus)}</p>
     </div>
   );
 }

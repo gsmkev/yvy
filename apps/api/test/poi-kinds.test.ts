@@ -9,7 +9,7 @@ describe("tipos de punto de interés (M-19)", () => {
   });
 
   it("todos los tipos tienen texto en es-PY", () => {
-    for (const k of POI_KINDS) expect(t(`ui.poiKinds_${k}` as never)).not.toBe(`ui.poiKinds_${k}`);
+    for (const k of POI_KINDS) expect(t(`ui.poi.kinds_${k}` as never)).not.toBe(`ui.poi.kinds_${k}`);
   });
 
   it("la API acepta cada tipo nuevo y rechaza uno desconocido", async () => {

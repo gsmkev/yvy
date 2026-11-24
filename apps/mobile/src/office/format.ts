@@ -4,11 +4,11 @@ import { t } from "@yvy/shared";
 /** "hace" corto: "un momento", "5 min", "2 h", "3 d". */
 export function ageText(ms: number): string {
   const m = Math.floor(Math.max(0, ms) / 60_000);
-  if (m < 1) return t("office.ageNow");
-  if (m < 60) return t("office.ageMin", { n: m });
+  if (m < 1) return t("office.age.now");
+  if (m < 60) return t("office.age.min", { n: m });
   const h = Math.floor(m / 60);
-  if (h < 24) return t("office.ageHour", { n: h });
-  return t("office.ageDay", { n: Math.floor(h / 24) });
+  if (h < 24) return t("office.age.hour", { n: h });
+  return t("office.age.day", { n: Math.floor(h / 24) });
 }
 
 /** Número con separador de miles (punto) y hasta `digits` decimales (coma). Hecho a mano: Hermes no siempre trae Intl completo. */

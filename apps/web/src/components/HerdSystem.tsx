@@ -32,7 +32,7 @@ function useSaveSystem(farmId: string) {
   return useMutation({
     mutationFn: (system: ProductionSystem) => put(`/org/farms/${farmId}/livestock-settings`, { system }),
     onSuccess: () => {
-      toast(t("ui.herdSysSaved"));
+      toast(t("ui.herd.sysSaved"));
       return Promise.all([qc.invalidateQueries({ queryKey: ["stock", farmId] }), qc.invalidateQueries({ queryKey: ["production", farmId] })]);
     },
   });
@@ -52,8 +52,8 @@ function SystemChoices({ farmId, current, onDone }: { farmId: string; current: P
             onClick={() => save.mutate(s, { onSuccess: onDone })}
             className={`cursor-pointer rounded-md border p-3 text-left transition-colors hover:border-accion disabled:opacity-50 ${current === s ? "border-accion bg-accion/5" : "border-linea bg-papel"}`}
           >
-            <span className="block text-sm font-medium">{tk(`ui.herdSys_${s}`)}</span>
-            <span className="block text-xs text-tinta-2">{tk(`ui.herdSysHint_${s}`)}</span>
+            <span className="block text-sm font-medium">{tk(`ui.herd.sys_${s}`)}</span>
+            <span className="block text-xs text-tinta-2">{tk(`ui.herd.sysHint_${s}`)}</span>
           </button>
         ))}
       </div>
@@ -71,18 +71,18 @@ export function SystemBar({ farmId, system }: { farmId: string; system: Producti
   if (!system || open)
     return (
       <Card className="mt-4">
-        <p className="text-sm font-medium">{t("ui.herdSysQuestion")}</p>
-        <p className="mb-3 text-xs text-tinta-2">{t("ui.herdSysQuestionHint")}</p>
+        <p className="text-sm font-medium">{t("ui.herd.sysQuestion")}</p>
+        <p className="mb-3 text-xs text-tinta-2">{t("ui.herd.sysQuestionHint")}</p>
         <SystemChoices farmId={farmId} current={system} onDone={() => setOpen(false)} />
       </Card>
     );
   return (
     <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-      <span className="text-tinta-2">{t("ui.herdSysLabel")}</span>
-      <span className="font-medium">{tk(`ui.herdSys_${system}`)}</span>
+      <span className="text-tinta-2">{t("ui.herd.sysLabel")}</span>
+      <span className="font-medium">{tk(`ui.herd.sys_${system}`)}</span>
       {canEdit && (
         <Button size="sm" variant="quiet" onClick={() => setOpen(true)}>
-          {t("ui.herdSysChange")}
+          {t("ui.herd.sysChange")}
         </Button>
       )}
     </div>
@@ -96,12 +96,12 @@ export function SystemIndicators({ farmId, system }: { farmId: string; system: P
     queryFn: () => get<ProductionResponse>(`/org/farms/${farmId}/production`),
     enabled: !!system,
   });
-  if (system === "tambo") return <p className="mt-3 text-sm text-tinta-2">{t("ui.herdSysTamboNote")}</p>;
+  if (system === "tambo") return <p className="mt-3 text-sm text-tinta-2">{t("ui.herd.sysTamboNote")}</p>;
   const list = q.data?.indicators ?? [];
   if (!list.length) return null;
   return (
     <div className="mt-4">
-      <p className="eyebrow mb-2">{t("ui.herdIndTitle")}</p>
+      <p className="eyebrow mb-2">{t("ui.herd.indTitle")}</p>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {list.map((i) => (
           <Stat key={i.id} label={indicatorLabel(i)} value={indicatorValueText(i)} />
@@ -129,33 +129,33 @@ export function LoadEditor({ farmId, d }: { farmId: string; d: FarmStockResponse
         pastureLoads: Object.fromEntries(PASTURE_CLASSES.map((c) => [c, num(vals[c])])),
       }),
     onSuccess: () => {
-      toast(t("ui.herdLoadSaved"));
+      toast(t("ui.herd.loadSaved"));
       return qc.invalidateQueries({ queryKey: ["stock", farmId] });
     },
   });
   return (
     <Form className="flex max-w-xl flex-col gap-3 border-t border-linea pt-4" onSubmit={() => { if (ok) save.mutate(); }}>
       <div>
-        <p className="text-sm font-medium">{t("ui.herdLoadEdit")}</p>
-        <p className="text-xs text-tinta-2">{t("ui.herdLoadEditHint")}</p>
+        <p className="text-sm font-medium">{t("ui.herd.loadEdit")}</p>
+        <p className="text-xs text-tinta-2">{t("ui.herd.loadEditHint")}</p>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {PASTURE_CLASSES.map((c) => (
-          <Field key={c} label={tk(`ui.herdLoadClass_${c}`)}>
+          <Field key={c} label={tk(`ui.herd.loadClass_${c}`)}>
             <Input inputMode="decimal" value={vals[c]} onChange={(e) => setVals({ ...vals, [c]: e.target.value })} />
           </Field>
         ))}
       </div>
-      <Field label={t("ui.herdLoadDefault")}>
+      <Field label={t("ui.herd.loadDefault")}>
         <Select
           value={def}
           onChange={(e) => setDef(e.target.value as PastureClass)}
-          options={PASTURE_CLASSES.map((c) => ({ value: c, label: tk(`ui.herdLoadClass_${c}`) }))}
+          options={PASTURE_CLASSES.map((c) => ({ value: c, label: tk(`ui.herd.loadClass_${c}`) }))}
         />
       </Field>
       <div>
         <Button variant="primary" type="submit" disabled={!ok || save.isPending}>
-          {t("ui.save")}
+          {t("ui.common.save")}
         </Button>
       </div>
       {save.error ? <ErrorBox error={save.error} /> : null}

@@ -1,7 +1,7 @@
 /** Horas para pulverizar (A-13): línea de horas aptas por día y ventanas. GET /org/farms/:id/spray-windows (la misma que guarda src/lib/sprayHours.ts). Datos de MET Norway. */
 import { useEffect } from "react";
 import { View } from "react-native";
-import { t } from "@yvy/shared";
+import { t, ATTRIBUTION } from "@yvy/shared";
 import { getDb } from "../../../src/lib/db";
 import { refreshSprayHours } from "../../../src/lib/sprayHours";
 import { useFarmPick } from "../../../src/office/farmPick";
@@ -23,7 +23,7 @@ const dayKey = (ms: number) => new Date(ms - 3 * 3_600_000).toISOString().slice(
 const hh = (ms: number) => new Date(ms - 3 * 3_600_000).toISOString().slice(11, 13);
 const dayLabel = (ms: number, today: string) => {
   const k = dayKey(ms);
-  if (k === today) return t("office.sprayDayToday");
+  if (k === today) return t("office.spray.dayToday");
   return new Date(ms).toLocaleDateString("es-PY", { weekday: "short", day: "numeric", timeZone: TZ }).replace(".", "");
 };
 
@@ -36,15 +36,15 @@ export default function SprayHours() {
   }, [q.data, farm?.id]);
   const today = dayKey(Date.now());
   return (
-    <FarmFrame title={t("ui.sprayTitle")} farms={farms} farm={farm} setFarmId={setFarmId} query={q}>
-      <OnlineState query={q} isEmpty={(d) => d.hours.length === 0} empty={{ title: t("ui.sprayNoData") }}>
+    <FarmFrame title={t("ui.spray.title")} farms={farms} farm={farm} setFarmId={setFarmId} query={q}>
+      <OnlineState query={q} isEmpty={(d) => d.hours.length === 0} empty={{ title: t("ui.spray.noData") }}>
         {(d) => {
           const days = new Map<string, Spray["hours"]>();
           for (const h of d.hours) days.set(dayKey(h.at), [...(days.get(dayKey(h.at)) ?? []), h]);
           return (
             <View>
-              <Text style={[T.small, { marginTop: 8 }]}>{t("ui.sprayCriteria", { wmin: d.limits.windMinKmh, wmax: d.limits.windMaxKmh, dmin: d.limits.deltaTMin, dmax: d.limits.deltaTMax })}</Text>
-              <SectionHeader title={t("office.sprayHoursNow")} />
+              <Text style={[T.small, { marginTop: 8 }]}>{t("ui.spray.criteria", { wmin: d.limits.windMinKmh, wmax: d.limits.windMaxKmh, dmin: d.limits.deltaTMin, dmax: d.limits.deltaTMax })}</Text>
+              <SectionHeader title={t("office.spray.hoursNow")} />
               {[...days.entries()].map(([key, hours]) => (
                 <View key={key} accessible accessibilityLabel={`${dayLabel(hours[0]!.at, today)}: ${hours.filter((h) => h.ok).length} / ${hours.length}`} style={{ marginBottom: 14 }}>
                   <Text style={[T.smallMedium, { textTransform: "capitalize" }]}>{dayLabel(hours[0]!.at, today)}</Text>
@@ -60,17 +60,17 @@ export default function SprayHours() {
                 </View>
               ))}
               <View style={{ flexDirection: "row", gap: 16 }}>
-                <Text style={T.small}><Text style={{ color: C.soja }}>■</Text>{` ${t("ui.sprayLegendOk")}`}</Text>
-                <Text style={T.small}><Text style={{ color: C.lineaFuerte }}>■</Text>{` ${t("ui.sprayLegendNo")}`}</Text>
+                <Text style={T.small}><Text style={{ color: C.soja }}>■</Text>{` ${t("ui.spray.legendOk")}`}</Text>
+                <Text style={T.small}><Text style={{ color: C.lineaFuerte }}>■</Text>{` ${t("ui.spray.legendNo")}`}</Text>
               </View>
-              <SectionHeader title={t("office.sprayWindowsTitle")} />
+              <SectionHeader title={t("office.spray.windowsTitle")} />
               <DataList
                 rows={d.windows}
                 keyOf={(w) => String(w.from)}
-                title={(w) => t("ui.sprayWindowLine", { day: dayLabel(w.from, today), from: `${hh(w.from)}:00`, to: `${hh(w.to)}:00` })}
-                empty={{ title: t("ui.sprayNone") }}
+                title={(w) => t("ui.spray.windowLine", { day: dayLabel(w.from, today), from: `${hh(w.from)}:00`, to: `${hh(w.to)}:00` })}
+                empty={{ title: t("ui.spray.none") }}
               />
-              <Text style={[T.small, { marginTop: 16 }]}>{t("attribution.metNorway")}</Text>
+              <Text style={[T.small, { marginTop: 16 }]}>{t(ATTRIBUTION.metNorway)}</Text>
             </View>
           );
         }}

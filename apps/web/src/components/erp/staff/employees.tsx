@@ -17,39 +17,39 @@ export const useEmployees = () => useErpList<Employee>("employees");
 export function NoStaff({ onGo }: { onGo: () => void }) {
   return (
     <EmptyState
-      title={t("ui.staffEmptyTitle")}
+      title={t("ui.staff.emptyTitle")}
       action={
         <Button variant="primary" onClick={onGo}>
-          {t("ui.staffAdd")}
+          {t("ui.staff.add")}
         </Button>
       }
     >
-      {t("ui.staffEmptyHint")}
+      {t("ui.staff.emptyHint")}
     </EmptyState>
   );
 }
 
 export function EmployeesList() {
   const fields: FieldDef[] = [
-    { key: "name", label: t("ui.staffName"), required: true, maxLength: 120 },
-    { key: "ci", label: t("ui.staffCi"), maxLength: 30 },
-    { key: "phone", label: t("ui.staffPhone"), maxLength: 40 },
-    { key: "dailyWagePyg", label: t("ui.staffWage"), type: "number", required: true, min: 0, step: "1" },
+    { key: "name", label: t("ui.staff.name"), required: true, maxLength: 120 },
+    { key: "ci", label: t("ui.staff.ci"), maxLength: 30 },
+    { key: "phone", label: t("ui.staff.phone"), maxLength: 40 },
+    { key: "dailyWagePyg", label: t("ui.staff.wage"), type: "number", required: true, min: 0, step: "1" },
   ];
   return (
     <RecordList<Employee>
       path="employees"
       exportName="empleados"
-      newLabel={t("ui.staffAdd")}
-      emptyTitle={t("ui.staffEmptyTitle")}
-      emptyHint={t("ui.staffEmptyHint")}
+      newLabel={t("ui.staff.add")}
+      emptyTitle={t("ui.staff.emptyTitle")}
+      emptyHint={t("ui.staff.emptyHint")}
       name={(e) => e.name}
       fields={fields}
       columns={[
-        { header: t("ui.staffName"), cell: (e) => e.name },
-        { header: t("ui.staffCi"), hideBelow: "sm", cell: (e) => e.ci ?? "" },
-        { header: t("ui.staffPhone"), hideBelow: "md", cell: (e) => e.phone ?? "" },
-        { header: t("ui.staffWage"), right: true, cell: (e) => fmtGs(e.dailyWagePyg) },
+        { header: t("ui.staff.name"), cell: (e) => e.name },
+        { header: t("ui.staff.ci"), hideBelow: "sm", cell: (e) => e.ci ?? "" },
+        { header: t("ui.staff.phone"), hideBelow: "md", cell: (e) => e.phone ?? "" },
+        { header: t("ui.staff.wage"), right: true, cell: (e) => fmtGs(e.dailyWagePyg) },
       ]}
     />
   );

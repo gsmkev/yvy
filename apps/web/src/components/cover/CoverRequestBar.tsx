@@ -22,16 +22,16 @@ export function CoverRequestBar({
 }) {
   return (
     <FilterBar>
-      <Field label={t("ui.coverFrom")}>
+      <Field label={t("ui.cover.from")}>
         <Input type="date" value={from} min="2017-01-01" onChange={(e) => onFrom(e.target.value)} />
       </Field>
-      <Field label={t("ui.coverTo")}>
+      <Field label={t("ui.cover.to")}>
         <Input type="date" value={to} max={iso(new Date())} onChange={(e) => onTo(e.target.value)} />
       </Field>
       <Button variant="secondary" disabled={disabled} onClick={onCompute}>
-        {t("ui.coverCompute")}
+        {t("ui.cover.compute")}
       </Button>
-      {!datesOk && <span className="pb-2.5 text-xs text-tinta-2">{t("ui.coverDatesInvalid")}</span>}
+      {!datesOk && <span className="pb-2.5 text-xs text-tinta-2">{t("ui.cover.datesInvalid")}</span>}
     </FilterBar>
   );
 }

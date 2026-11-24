@@ -39,30 +39,30 @@ interface Section {
 
 /** Cada ítem del ERP suma su sección acá. */
 const SECTIONS: Section[] = [
-  { id: "overview", label: "ui.adminSection_overview", render: () => <OverviewPanel /> },
-  { id: "products", label: "ui.adminSection_products", render: () => <ProductsPanel canEdit /> },
-  { id: "parties", label: "ui.adminSection_parties", render: () => <PartiesPanel /> },
-  { id: "machines", label: "ui.adminSection_machines", render: () => <MachinesPanel /> },
-  { id: "warehouses", label: "ui.adminSection_warehouses", render: () => <WarehousesPanel /> },
-  { id: "purchases", label: "ui.adminSection_purchases", render: () => <PurchasesPanel /> },
-  { id: "grain", label: "ui.adminSection_grain", render: () => <GrainSalesPanel /> },
-  { id: "cattle", label: "ui.adminSection_cattle", render: () => <CattlePanel /> },
-  { id: "cash", label: "ui.adminSection_cash", render: () => <CashPanel /> },
-  { id: "stock", label: "ui.adminSection_stock", render: () => <StockPanel /> },
-  { id: "minstock", label: "ui.adminSection_minstock", render: () => <MinStockPanel /> },
-  { id: "maintenance", label: "ui.adminSection_maintenance", render: () => <MaintenancePanel /> },
-  { id: "labor", label: "ui.adminSection_labor", render: () => <LaborCostPanel /> },
-  { id: "staff", label: "ui.adminSection_staff", render: () => <StaffPanel /> },
-  { id: "fuel", label: "ui.adminSection_fuel", render: () => <FuelPanel /> },
-  { id: "feedlot", label: "ui.adminSection_feedlot", render: () => <FeedlotPanel /> },
-  { id: "orders", label: "ui.adminSection_orders", render: () => <OrdersPanel /> },
-  { id: "budget", label: "ui.adminSection_budget", render: () => <BudgetPanel /> },
-  { id: "results", label: "ui.adminSection_results", render: () => <ResultsPanel /> },
-  { id: "contractors", label: "ui.adminSection_contractors", render: () => <ContractorsPanel /> },
-  { id: "accountant", label: "ui.adminSection_accountant", render: () => <AccountantPanel /> },
-  { id: "export", label: "ui.adminSection_export", render: () => <ExportPanel /> },
-  { id: "rates", label: "ui.adminSection_rates", render: () => <ExchangeRatesPanel /> },
-  { id: "costs", label: "ui.adminSection_costs", render: () => <CostsPanel /> },
+  { id: "overview", label: "ui.admin.section_overview", render: () => <OverviewPanel /> },
+  { id: "products", label: "ui.admin.section_products", render: () => <ProductsPanel canEdit /> },
+  { id: "parties", label: "ui.admin.section_parties", render: () => <PartiesPanel /> },
+  { id: "machines", label: "ui.admin.section_machines", render: () => <MachinesPanel /> },
+  { id: "warehouses", label: "ui.admin.section_warehouses", render: () => <WarehousesPanel /> },
+  { id: "purchases", label: "ui.admin.section_purchases", render: () => <PurchasesPanel /> },
+  { id: "grain", label: "ui.admin.section_grain", render: () => <GrainSalesPanel /> },
+  { id: "cattle", label: "ui.admin.section_cattle", render: () => <CattlePanel /> },
+  { id: "cash", label: "ui.admin.section_cash", render: () => <CashPanel /> },
+  { id: "stock", label: "ui.admin.section_stock", render: () => <StockPanel /> },
+  { id: "minstock", label: "ui.admin.section_minstock", render: () => <MinStockPanel /> },
+  { id: "maintenance", label: "ui.admin.section_maintenance", render: () => <MaintenancePanel /> },
+  { id: "labor", label: "ui.admin.section_labor", render: () => <LaborCostPanel /> },
+  { id: "staff", label: "ui.admin.section_staff", render: () => <StaffPanel /> },
+  { id: "fuel", label: "ui.admin.section_fuel", render: () => <FuelPanel /> },
+  { id: "feedlot", label: "ui.admin.section_feedlot", render: () => <FeedlotPanel /> },
+  { id: "orders", label: "ui.admin.section_orders", render: () => <OrdersPanel /> },
+  { id: "budget", label: "ui.admin.section_budget", render: () => <BudgetPanel /> },
+  { id: "results", label: "ui.admin.section_results", render: () => <ResultsPanel /> },
+  { id: "contractors", label: "ui.admin.section_contractors", render: () => <ContractorsPanel /> },
+  { id: "accountant", label: "ui.admin.section_accountant", render: () => <AccountantPanel /> },
+  { id: "export", label: "ui.admin.section_export", render: () => <ExportPanel /> },
+  { id: "rates", label: "ui.admin.section_rates", render: () => <ExchangeRatesPanel /> },
+  { id: "costs", label: "ui.admin.section_costs", render: () => <CostsPanel /> },
 ];
 
 export function AdminPage() {
@@ -74,11 +74,11 @@ export function AdminPage() {
   const current = SECTIONS.find((x) => x.id === s) ?? SECTIONS[0]!;
   const group = groupOf(current.id);
   const allowed = me.data?.role === "owner" || me.data?.role === "admin";
-  if (me.data && !allowed) return <Page width="read"><p className="text-sm text-tinta-2">{t("ui.adminNoAccess")}</p></Page>;
+  if (me.data && !allowed) return <Page width="read"><p className="text-sm text-tinta-2">{t("ui.admin.noAccess")}</p></Page>;
   const go = (id: string) => navigate({ to: "/administracion", search: { s: id } });
   const label = (id: string) => t(SECTIONS.find((x) => x.id === id)!.label);
   return (
-    <Page width="data" title={t("ui.adminTitle")}>
+    <Page width="data" title={t("ui.admin.title")}>
       <div className="flex flex-col gap-3">
         <Tabs
           tabs={ADMIN_GROUPS.map((g) => ({ id: g.id, label: t(g.label) }))}
@@ -87,7 +87,7 @@ export function AdminPage() {
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           {group.sections.length > 1 ? (
-            <SectionPills label={t("ui.adminSections", { module: t(group.label) })} items={group.sections.map((id) => ({ id, label: label(id) }))} value={current.id} onChange={go} />
+            <SectionPills label={t("ui.admin.sections", { module: t(group.label) })} items={group.sections.map((id) => ({ id, label: label(id) }))} value={current.id} onChange={go} />
           ) : (
             <span />
           )}

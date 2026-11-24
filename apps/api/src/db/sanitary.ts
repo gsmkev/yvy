@@ -123,7 +123,7 @@ export async function createSanitaryEvent(sdb: ScopedDb, input: SanitaryEventInp
       )
       .limit(MAX_TASKS_PER_EVENT);
   }
-  const label = t(`fields.healthReason_${input.reason}`);
+  const label = t(`fields.health.reason_${input.reason}`);
   const title = input.product ? `${label}: ${input.product}` : label;
   // bumpVersion primero, solo si hay tareas (el evento no se sincroniza, las tareas sí).
   const stmts: Stmt[] = [

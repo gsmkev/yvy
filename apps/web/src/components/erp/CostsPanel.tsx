@@ -1,8 +1,18 @@
 /** Costos y ventas con centro de costo: estancia, lote, campaña y actividad (E-05). */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ACTIVITIES, COST_CATEGORIES, CURRENCIES, fromMinor, localDate, toMinor, type Activity, type CostCategory, type Currency } from "@yvy/shared";
-import { del, get, patch, post, qs } from "../../lib/api";
+import {
+  ACTIVITIES,
+  COST_CATEGORIES,
+  CURRENCIES,
+  fromMinor,
+  localDate,
+  toMinor,
+  type Activity,
+  type CostCategory,
+  type Currency,
+} from "@yvy/shared";
+import { del, get, patch, post, withQs } from "../../lib/api";
 import { fmtIsoDate } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs, fmtMoney } from "../../lib/money";
@@ -44,22 +54,22 @@ const dayOf = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
 function costColumns(farmName: (id: string | null) => string, onEdit: (c: CostEntry) => void, onRemove: (c: CostEntry) => void): Column<CostEntry>[] {
   return [
-    { id: "date", header: t("ui.costDate"), cell: (c) => <span className="whitespace-nowrap">{fmtIsoDate(dayOf(c.occurredAt))}</span> },
-    { id: "category", header: t("ui.costCategory"), hideBelow: "md", cell: (c) => tk(`ui.costCategory_${c.category}`) },
-    { id: "activity", header: t("ui.costActivity"), hideBelow: "lg", cell: (c) => tk(`ui.activity_${c.activity}`) },
+    { id: "date", header: t("ui.cost.date"), cell: (c) => <span className="whitespace-nowrap">{fmtIsoDate(dayOf(c.occurredAt))}</span> },
+    { id: "category", header: t("ui.cost.category"), hideBelow: "md", cell: (c) => tk(`ui.cost.category_${c.category}`) },
+    { id: "activity", header: t("ui.cost.activity"), hideBelow: "lg", cell: (c) => tk(`ui.activity.${c.activity}`) },
     {
       id: "description",
-      header: t("ui.costDescription"),
+      header: t("ui.cost.description"),
       cell: (c) => (
         <>
-          {c.description ?? <span className="md:hidden">{tk(`ui.costCategory_${c.category}`)}</span>}
-          <span className="block text-meta text-tinta-2">{[farmName(c.farmId), c.origin !== "manual" ? t("ui.costFromRecord") : ""].filter(Boolean).join(" · ")}</span>
+          {c.description ?? <span className="md:hidden">{tk(`ui.cost.category_${c.category}`)}</span>}
+          <span className="block text-meta text-tinta-2">{[farmName(c.farmId), c.origin !== "manual" ? t("ui.cost.fromRecord") : ""].filter(Boolean).join(" · ")}</span>
         </>
       ),
     },
     {
       id: "amount",
-      header: t("ui.costAmount"),
+      header: t("ui.cost.amount"),
       align: "right",
       cell: (c) => (
         <span className={c.category === "sale" ? "text-accion" : ""}>
@@ -71,7 +81,7 @@ function costColumns(farmName: (id: string | null) => string, onEdit: (c: CostEn
     },
     {
       id: "_actions",
-      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      header: <span className="sr-only">{t("ui.row.actionsHeader")}</span>,
       align: "right",
       width: "3rem",
       cell: (c) => (
@@ -79,7 +89,7 @@ function costColumns(farmName: (id: string | null) => string, onEdit: (c: CostEn
           kind="cost-entries"
           id={c.id}
           hasPhoto={!!c.photoPath}
-          name={c.description ?? tk(`ui.costCategory_${c.category}`)}
+          name={c.description ?? tk(`ui.cost.category_${c.category}`)}
           onEdit={c.origin === "manual" ? () => onEdit(c) : undefined}
           onDelete={c.origin === "manual" ? () => onRemove(c) : undefined}
         />
@@ -97,13 +107,22 @@ export function CostsPanel() {
   const qc = useQueryClient();
   const q = useQuery({
     queryKey: ["erp", "costs", f],
-    queryFn: () => get<CostList>(`/org/erp/costs${qs({ farmId: f.farmId || undefined, seasonId: f.seasonId || undefined, category: f.category || undefined, from: f.from || undefined, to: f.to || undefined })}`),
+    queryFn: () =>
+      get<CostList>(
+        withQs("/org/erp/costs", {
+          farmId: f.farmId || undefined,
+          seasonId: f.seasonId || undefined,
+          category: f.category || undefined,
+          from: f.from || undefined,
+          to: f.to || undefined,
+        }),
+      ),
   });
   const farmName = (id: string | null) => farms.data?.find((x) => x.id === id)?.name ?? "";
   const remove = useMutation({
     mutationFn: (c: CostEntry) => del(`/org/erp/costs/${c.id}`),
     onSuccess: () => {
-      toast(t("ui.erpDeleted"));
+      toast(t("ui.erp.deleted"));
       setRemoving(null);
       qc.invalidateQueries({ queryKey: ["erp"] });
     },
@@ -115,7 +134,7 @@ export function CostsPanel() {
   const blank = !!q.data && rows.length === 0 && !filtered;
   const newBtn = (
     <Button variant="primary" onClick={() => setEditing("new")}>
-      {t("ui.costNew")}
+      {t("ui.cost.new")}
     </Button>
   );
   const columns = costColumns(farmName, setEditing, setRemoving);
@@ -124,42 +143,42 @@ export function CostsPanel() {
       {!blank && <HeaderActions>{newBtn}</HeaderActions>}
       {!blank && (
         <FilterBar>
-          <Field label={t("ui.costFarm")}>
-            <Select value={f.farmId} onChange={set("farmId")} options={[{ value: "", label: t("ui.costAll") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
+          <Field label={t("ui.cost.farm")}>
+            <Select value={f.farmId} onChange={set("farmId")} options={[{ value: "", label: t("ui.cost.all") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
           </Field>
-          <Field label={t("ui.costSeason")}>
-            <Select value={f.seasonId} onChange={set("seasonId")} options={[{ value: "", label: t("ui.costAll") }, ...(seasons.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
+          <Field label={t("ui.cost.season")}>
+            <Select value={f.seasonId} onChange={set("seasonId")} options={[{ value: "", label: t("ui.cost.all") }, ...(seasons.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
           </Field>
-          <Field label={t("ui.costCategory")}>
-            <Select value={f.category} onChange={set("category")} options={[{ value: "", label: t("ui.costAll") }, ...COST_CATEGORIES.map((x) => ({ value: x, label: tk(`ui.costCategory_${x}`) }))]} />
+          <Field label={t("ui.cost.category")}>
+            <Select value={f.category} onChange={set("category")} options={[{ value: "", label: t("ui.cost.all") }, ...COST_CATEGORIES.map((x) => ({ value: x, label: tk(`ui.cost.category_${x}`) }))]} />
           </Field>
-          <Field label={t("ui.costFrom")}>
+          <Field label={t("ui.cost.from")}>
             <Input type="date" value={f.from} onChange={set("from")} />
           </Field>
-          <Field label={t("ui.costTo")}>
+          <Field label={t("ui.cost.to")}>
             <Input type="date" value={f.to} onChange={set("to")} />
           </Field>
         </FilterBar>
       )}
       {totals && rows.length > 0 && (
         <div className="flex flex-wrap gap-x-10 gap-y-3">
-          <Stat label={t("ui.costTotalCost")} value={fmtGs(totals.costPyg)} />
-          <Stat label={t("ui.costTotalIncome")} value={fmtGs(totals.incomePyg)} />
-          <Stat label={t("ui.costResult")} value={fmtGs(totals.incomePyg - totals.costPyg)} tone={totals.incomePyg - totals.costPyg < 0 ? "danger" : undefined} />
+          <Stat label={t("ui.cost.totalCost")} value={fmtGs(totals.costPyg)} />
+          <Stat label={t("ui.cost.totalIncome")} value={fmtGs(totals.incomePyg)} />
+          <Stat label={t("ui.cost.result")} value={fmtGs(totals.incomePyg - totals.costPyg)} tone={totals.incomePyg - totals.costPyg < 0 ? "danger" : undefined} />
         </div>
       )}
       {q.isLoading && <Spinner />}
       {q.error ? <ErrorBox error={q.error} /> : null}
       {blank && (
-        <EmptyState title={t("ui.costEmptyTitle")} action={newBtn}>
-          {t("ui.costEmptyHint")}
+        <EmptyState title={t("ui.cost.emptyTitle")} action={newBtn}>
+          {t("ui.cost.emptyHint")}
         </EmptyState>
       )}
       {q.data && rows.length === 0 && filtered && (
         <EmptyState
-          title={t("ui.costEmptyFiltered")}
+          title={t("ui.cost.emptyFiltered")}
           action={
-            <Button onClick={() => setF({ farmId: "", seasonId: "", category: "", from: "", to: "" })}>{t("ui.costClearFilters")}</Button>
+            <Button onClick={() => setF({ farmId: "", seasonId: "", category: "", from: "", to: "" })}>{t("ui.cost.clearFilters")}</Button>
           }
         />
       )}
@@ -171,9 +190,9 @@ export function CostsPanel() {
       {editing && <CostModal entry={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
       {removing && (
         <ConfirmModal
-          title={removing.description ?? tk(`ui.costCategory_${removing.category}`)}
-          message={t("ui.erpDeleteConfirm", { name: removing.description ?? tk(`ui.costCategory_${removing.category}`) })}
-          confirmLabel={t("ui.delete")}
+          title={removing.description ?? tk(`ui.cost.category_${removing.category}`)}
+          message={t("ui.erp.deleteConfirm", { name: removing.description ?? tk(`ui.cost.category_${removing.category}`) })}
+          confirmLabel={t("ui.common.delete")}
           pending={remove.isPending}
           error={remove.error}
           onConfirm={() => remove.mutate(removing)}
@@ -221,52 +240,52 @@ function CostModal({ entry, onClose }: { entry: CostEntry | null; onClose: () =>
       return entry ? patch(`/org/erp/costs/${entry.id}`, body) : post("/org/erp/costs", body);
     },
     onSuccess: () => {
-      toast(t("ui.erpSaved"));
+      toast(t("ui.erp.saved"));
       qc.invalidateQueries({ queryKey: ["erp"] });
       onClose();
     },
   });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) =>
     setF({ ...f, [k]: e.target.value, ...(k === "farmId" ? { plotId: "" } : {}) });
-  const none = { value: "", label: t("ui.costNone") };
+  const none = { value: "", label: t("ui.cost.none") };
   return (
-    <Modal title={entry ? t("ui.costEdit") : t("ui.costNew")} onClose={onClose}>
+    <Modal title={entry ? t("ui.cost.edit") : t("ui.cost.new")} onClose={onClose}>
       <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
-        <Field label={t("ui.costDate")}>
+        <Field label={t("ui.cost.date")}>
           <Input type="date" required value={f.date} onChange={set("date")} />
         </Field>
-        <Field label={t("ui.costCategory")}>
-          <Select value={f.category} onChange={set("category")} options={COST_CATEGORIES.map((x) => ({ value: x, label: tk(`ui.costCategory_${x}`) }))} />
+        <Field label={t("ui.cost.category")}>
+          <Select value={f.category} onChange={set("category")} options={COST_CATEGORIES.map((x) => ({ value: x, label: tk(`ui.cost.category_${x}`) }))} />
         </Field>
-        <Field label={t("ui.costActivity")}>
-          <Select value={f.activity} onChange={set("activity")} options={ACTIVITIES.map((x) => ({ value: x, label: tk(`ui.activity_${x}`) }))} />
+        <Field label={t("ui.cost.activity")}>
+          <Select value={f.activity} onChange={set("activity")} options={ACTIVITIES.map((x) => ({ value: x, label: tk(`ui.activity.${x}`) }))} />
         </Field>
-        <Field label={t("ui.costSeason")}>
+        <Field label={t("ui.cost.season")}>
           <Select value={f.seasonId} onChange={set("seasonId")} options={[none, ...(seasons.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
         </Field>
-        <Field label={t("ui.costFarm")}>
+        <Field label={t("ui.cost.farm")}>
           <Select value={f.farmId} onChange={set("farmId")} options={[none, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
         </Field>
-        <Field label={t("ui.costPlot")}>
+        <Field label={t("ui.cost.plot")}>
           <Select value={f.plotId} onChange={set("plotId")} disabled={!f.farmId} options={[none, ...(farm.data?.plots ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
         </Field>
         <div className="col-span-2">
-          <Field label={t("ui.costDescription")}>
+          <Field label={t("ui.cost.description")}>
             <Input value={f.description} onChange={set("description")} maxLength={200} />
           </Field>
         </div>
-        <Field label={t("ui.currency")}>
+        <Field label={t("ui.common.currency")}>
           <Select value={f.currency} onChange={set("currency")} options={CURRENCIES.map((x) => ({ value: x, label: x }))} />
         </Field>
-        <Field label={t("ui.costAmount")}>
+        <Field label={t("ui.cost.amount")}>
           <Input type="number" required min={0} step="any" value={f.amount} onChange={set("amount")} />
         </Field>
         {f.category === "sale" && (
-          <Field label={t("ui.costTons")}>
+          <Field label={t("ui.cost.tons")}>
             <Input type="number" min={0} step="any" value={f.tons} onChange={set("tons")} />
           </Field>
         )}
-        <Field label={t("ui.costParty")}>
+        <Field label={t("ui.cost.party")}>
           <Select value={f.partyId} onChange={set("partyId")} options={[none, ...(parties.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
         </Field>
         <FormFooter error={save.error} disabled={save.isPending} />

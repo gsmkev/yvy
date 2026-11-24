@@ -42,138 +42,167 @@ type FieldDef =
 
 const f = (k: string) => tk(`fields.${k}`);
 const opts = (prefix: string, values: readonly string[]): Opt[] =>
-  values.map((v) => ({ value: v, label: f(`${prefix}_${v}`) }));
-const CONDITION = opts("condition", ["good", "fair", "bad"]);
-const LEVEL = opts("level", ["low", "medium", "high"]);
-const NOTE: FieldDef = { key: "note", label: t("app.note"), type: "textarea", optional: true };
+  values.map((v) => ({ value: v, label: f(`${prefix}${v}`) }));
+const CONDITION = opts("condition.", ["good", "fair", "bad"]);
+const LEVEL = opts("level.", ["low", "medium", "high"]);
+const NOTE: FieldDef = { key: "note", label: t("app.common.note"), type: "textarea", optional: true };
 
 /** Cabezas por categoría: una clave con punto por categoría ("counts.vaca"); ver getPath y setPath. */
 const HERD_FIELDS = (root: string): FieldDef[] =>
-  HERD_CATEGORIES.map((c) => ({ key: `${root}.${c}`, label: f(`herd_${c}`), type: "number", optional: true }));
+  HERD_CATEGORIES.map((c) => ({ key: `${root}.${c}`, label: f(`herd.${c}`), type: "number", optional: true }));
 
 /** `track` se graba en el celular (F-05) y no se edita a mano. */
 const FIELDS: Record<RecordKind, FieldDef[]> = {
   track: [],
-  scouting: [{ key: "condition", label: f("condition"), type: "select", options: CONDITION }, NOTE],
+  scouting: [{ key: "condition", label: f("common.condition"), type: "select", options: CONDITION }, NOTE],
   pest: [
-    { key: "pest", label: f("pest"), type: "select", options: opts("pest", PESTS) },
-    { key: "intensity", label: f("intensity"), type: "select", options: LEVEL, optional: true },
-    { key: "perMeter", label: f("perMeter"), type: "number", optional: true },
+    { key: "pest", label: f("common.pest"), type: "select", options: opts("pest.", PESTS) },
+    { key: "intensity", label: f("common.intensity"), type: "select", options: LEVEL, optional: true },
+    { key: "perMeter", label: f("per.meter"), type: "number", optional: true },
     NOTE,
   ],
   crop_status: [
-    { key: "stage", label: f("stage"), type: "select", options: opts("stage", PHENO_STAGES) },
-    { key: "condition", label: f("condition"), type: "select", options: CONDITION },
+    { key: "stage", label: f("common.stage"), type: "select", options: opts("stage.", PHENO_STAGES) },
+    { key: "condition", label: f("common.condition"), type: "select", options: CONDITION },
     NOTE,
   ],
   pasture_status: [
-    { key: "heightCm", label: f("heightCm"), type: "number" },
-    { key: "cover", label: f("cover"), type: "select", options: LEVEL },
-    { key: "livestockPresent", label: f("livestockPresent"), type: "bool" },
+    { key: "heightCm", label: f("height.cm"), type: "number" },
+    { key: "cover", label: f("common.cover"), type: "select", options: LEVEL },
+    { key: "livestockPresent", label: f("common.livestockPresent"), type: "bool" },
     NOTE,
   ],
-  rain: [{ key: "mm", label: f("mm"), type: "number" }],
+  rain: [{ key: "mm", label: f("common.mm"), type: "number" }],
   water: [
     {
       key: "level",
-      label: f("level"),
+      label: f("common.level"),
       type: "select",
-      options: opts("water", ["full", "half", "low", "dry"]),
+      options: opts("water.", ["full", "half", "low", "dry"]),
     },
     NOTE,
   ],
-  note: [{ key: "text", label: f("text"), type: "textarea" }],
+  note: [{ key: "text", label: f("common.text"), type: "textarea" }],
   // ganaderia
   herd_count: [...HERD_FIELDS("counts"), NOTE],
   herd_move: [
-    { key: "reason", label: f("moveReason"), type: "select", options: opts("moveReason", MOVE_REASONS) },
+    { key: "reason", label: f("move.reason"), type: "select", options: opts("move.reason_", MOVE_REASONS) },
     ...HERD_FIELDS("counts"),
     NOTE,
   ],
   mortality: [
-    { key: "category", label: f("herdCategory"), type: "select", options: opts("herd", HERD_CATEGORIES) },
-    { key: "head", label: f("head"), type: "number" },
-    { key: "cause", label: f("cause"), type: "select", options: opts("cause", MORTALITY_CAUSES) },
+    { key: "category", label: f("herd.category"), type: "select", options: opts("herd.", HERD_CATEGORIES) },
+    { key: "head", label: f("common.head"), type: "number" },
+    { key: "cause", label: f("common.cause"), type: "select", options: opts("cause.", MORTALITY_CAUSES) },
     NOTE,
   ],
   reproduction: [
-    { key: "event", label: f("reproEvent"), type: "select", options: opts("reproEvent", REPRO_EVENTS) },
-    { key: "head", label: f("head"), type: "number" },
-    { key: "method", label: f("reproMethod"), type: "select", options: opts("reproMethod", SERVICE_METHODS), optional: true },
-    { key: "pregnant", label: f("reproPregnant"), type: "number", optional: true },
-    { key: "calves", label: f("reproCalves"), type: "number", optional: true },
-    { key: "tag", label: f("tag"), type: "text", optional: true },
+    { key: "event", label: f("repro.event"), type: "select", options: opts("repro.event_", REPRO_EVENTS) },
+    { key: "head", label: f("common.head"), type: "number" },
+    {
+      key: "method",
+      label: f("repro.method"),
+      type: "select",
+      options: opts("repro.method_", SERVICE_METHODS),
+      optional: true,
+    },
+    { key: "pregnant", label: f("repro.pregnant"), type: "number", optional: true },
+    { key: "calves", label: f("repro.calves"), type: "number", optional: true },
+    { key: "tag", label: f("common.tag"), type: "text", optional: true },
     NOTE,
   ],
   weighing: [
-    { key: "kg", label: f("kg"), type: "number" },
-    { key: "tag", label: f("tag"), type: "text", optional: true },
-    { key: "group", label: f("group"), type: "text", optional: true },
-    { key: "head", label: f("head"), type: "number", optional: true },
-    { key: "category", label: f("herdCategory"), type: "select", options: opts("herd", HERD_CATEGORIES), optional: true },
+    { key: "kg", label: f("common.kg"), type: "number" },
+    { key: "tag", label: f("common.tag"), type: "text", optional: true },
+    { key: "group", label: f("common.group"), type: "text", optional: true },
+    { key: "head", label: f("common.head"), type: "number", optional: true },
+    {
+      key: "category",
+      label: f("herd.category"),
+      type: "select",
+      options: opts("herd.", HERD_CATEGORIES),
+      optional: true,
+    },
     NOTE,
   ],
   supplement: [
-    { key: "type", label: f("supplementType"), type: "select", options: opts("supplementType", SUPPLEMENT_TYPES) },
-    { key: "kg", label: f("kg"), type: "number" },
-    { key: "product", label: f("product"), type: "text", optional: true },
+    { key: "type", label: f("supplement.type"), type: "select", options: opts("supplement.type_", SUPPLEMENT_TYPES) },
+    { key: "kg", label: f("common.kg"), type: "number" },
+    { key: "product", label: f("common.product"), type: "text", optional: true },
     NOTE,
   ],
   theft: [
-    { key: "category", label: f("herdCategory"), type: "select", options: opts("herd", HERD_CATEGORIES) },
-    { key: "head", label: f("head"), type: "number" },
-    { key: "reportedAt", label: f("reportedAt"), type: "date", optional: true },
-    { key: "policeReport", label: f("policeReport"), type: "text", optional: true },
+    { key: "category", label: f("herd.category"), type: "select", options: opts("herd.", HERD_CATEGORIES) },
+    { key: "head", label: f("common.head"), type: "number" },
+    { key: "reportedAt", label: f("common.reportedAt"), type: "date", optional: true },
+    { key: "policeReport", label: f("police.report"), type: "text", optional: true },
     NOTE,
   ],
   health: [
-    { key: "reason", label: f("healthReason"), type: "select", options: opts("healthReason", HEALTH_REASONS) },
-    { key: "product", label: f("product"), type: "text" },
-    { key: "dose", label: f("dose"), type: "text", optional: true },
+    { key: "reason", label: f("health.reason"), type: "select", options: opts("health.reason_", HEALTH_REASONS) },
+    { key: "product", label: f("common.product"), type: "text" },
+    { key: "dose", label: f("common.dose"), type: "text", optional: true },
     ...HERD_FIELDS("counts"),
-    { key: "tag", label: f("tag"), type: "text", optional: true },
+    { key: "tag", label: f("common.tag"), type: "text", optional: true },
     NOTE,
   ],
   feed: [],
   irrigation: [
-    { key: "mm", label: f("irrigationMm"), type: "number" },
-    { key: "method", label: f("irrigationMethod"), type: "select", options: opts("irrigationMethod", IRRIGATION_METHODS) },
+    { key: "mm", label: f("irrigation.mm"), type: "number" },
+    {
+      key: "method",
+      label: f("irrigation.method"),
+      type: "select",
+      options: opts("irrigation.method_", IRRIGATION_METHODS),
+    },
     NOTE,
   ],
   fuel_load: [
-    { key: "machine", label: f("machine"), type: "text" },
-    { key: "liters", label: f("liters"), type: "number" },
-    { key: "meterValue", label: f("meterValue"), type: "number", optional: true },
+    { key: "machine", label: f("common.machine"), type: "text" },
+    { key: "liters", label: f("common.liters"), type: "number" },
+    { key: "meterValue", label: f("meter.value"), type: "number", optional: true },
     NOTE,
   ],
   stock_count: [],
   harvest: [
-    { key: "tons", label: f("tons"), type: "number" },
-    { key: "moisturePct", label: f("moisturePct"), type: "number", optional: true },
-    { key: "areaHa", label: f("areaDone"), type: "number", optional: true },
-    { key: "destination", label: f("destination"), type: "select", options: opts("destination", HARVEST_DESTINATIONS), optional: true },
+    { key: "tons", label: f("common.tons"), type: "number" },
+    { key: "moisturePct", label: f("moisture.pct"), type: "number", optional: true },
+    { key: "areaHa", label: f("area.done"), type: "number", optional: true },
+    {
+      key: "destination",
+      label: f("common.destination"),
+      type: "select",
+      options: opts("destination.", HARVEST_DESTINATIONS),
+      optional: true,
+    },
     NOTE,
   ],
   fertilization: [
-    { key: "method", label: f("method"), type: "select", options: opts("method", FERT_METHODS) },
-    { key: "areaHa", label: f("areaDone"), type: "number", optional: true },
+    { key: "method", label: f("common.method"), type: "select", options: opts("method.", FERT_METHODS) },
+    { key: "areaHa", label: f("area.done"), type: "number", optional: true },
     NOTE,
   ],
   application: [
-    { key: "volumeLHa", label: f("volumeLHa"), type: "number", optional: true },
-    { key: "areaHa", label: f("areaDone"), type: "number", optional: true },
-    { key: "windKmh", label: f("windKmh"), type: "number", optional: true },
-    { key: "tempC", label: f("tempC"), type: "number", optional: true },
-    { key: "humidityPct", label: f("humidityPct"), type: "number", optional: true },
-    { key: "machine", label: f("machine"), type: "text", optional: true },
+    { key: "volumeLHa", label: f("common.volumeLHa"), type: "number", optional: true },
+    { key: "areaHa", label: f("area.done"), type: "number", optional: true },
+    { key: "windKmh", label: f("common.windKmh"), type: "number", optional: true },
+    { key: "tempC", label: f("common.tempC"), type: "number", optional: true },
+    { key: "humidityPct", label: f("common.humidityPct"), type: "number", optional: true },
+    { key: "machine", label: f("common.machine"), type: "text", optional: true },
     NOTE,
   ],
   sowing: [
-    { key: "crop", label: f("crop"), type: "select", options: opts("crop", CROPS) },
-    { key: "variety", label: f("variety"), type: "text", optional: true },
-    { key: "density", label: f("density"), type: "number", optional: true },
-    { key: "densityUnit", label: f("densityUnit"), type: "select", options: opts("densityUnit", DENSITY_UNITS), optional: true },
-    { key: "areaHa", label: f("areaDone"), type: "number", optional: true },
+    { key: "crop", label: f("common.crop"), type: "select", options: opts("crop.", CROPS) },
+    { key: "variety", label: f("common.variety"), type: "text", optional: true },
+    { key: "density", label: f("common.density"), type: "number", optional: true },
+    {
+      key: "densityUnit",
+      label: f("density.unit"),
+      type: "select",
+      options: opts("density.unit_", DENSITY_UNITS),
+      optional: true,
+    },
+    { key: "areaHa", label: f("area.done"), type: "number", optional: true },
     NOTE,
   ],
 };
@@ -218,8 +247,8 @@ async function push(m: Mutation) {
   const res = await post<PushResponse>("/sync/push", { deviceId: "web", mutations: [m] });
   const r = res.results[0];
   if (r?.status === "rejected") {
-    const key = `rejectReasons.${r.reason}`;
-    throw new Error(t("ui.recordRejected", { reason: tk(key, { max: 0 }) }) + (r.detail ? ` (${r.detail})` : ""));
+    const key = `reject-reasons.reason.${r.reason}`;
+    throw new Error(t("ui.common.recordRejected", { reason: tk(key, { max: 0 }) }) + (r.detail ? ` (${r.detail})` : ""));
   }
 }
 
@@ -239,7 +268,7 @@ export function RecordEditForm({
   const save = useMutation({
     mutationFn: async () => {
       const parsed = parseRecordData(r.kind as RecordKind, fromForm(r.data, defs, form));
-      if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? t("rejectReasons.invalid"));
+      if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? t("reject-reasons.reason.invalid"));
       await push({
         mutationId: newId(),
         kind: "records.upsert",
@@ -260,7 +289,7 @@ export function RecordEditForm({
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["records"] });
-      toast(t("ui.toastRecordSaved"));
+      toast(t("ui.toast.recordSaved"));
       onDone();
     },
     onError: (e) => setInvalid(e instanceof Error ? e.message : String(e)),
@@ -293,8 +322,8 @@ export function RecordEditForm({
               value={form[d.key]}
               onChange={set(d.key)}
               options={[
-                { value: "1", label: t("app.yes") },
-                { value: "0", label: t("app.no") },
+                { value: "1", label: t("app.common.yes") },
+                { value: "0", label: t("app.common.no") },
               ]}
             />
           ) : d.type === "textarea" ? (
@@ -320,14 +349,14 @@ export function RecordEditForm({
           {w}
         </p>
       ))}
-      <p className="text-xs text-tinta-2">{t("ui.editRecordHint")}</p>
+      <p className="text-xs text-tinta-2">{t("ui.common.editRecordHint")}</p>
       {invalid ? <ErrorBox error={new Error(invalid)} /> : null}
       <div className="flex gap-2">
         <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.save")}
+          {t("ui.common.save")}
         </Button>
         <Button variant="quiet" onClick={onCancel}>
-          {t("ui.cancel")}
+          {t("ui.common.cancel")}
         </Button>
       </div>
     </Form>
@@ -348,18 +377,18 @@ export function DeleteRecordConfirm({
     mutationFn: () => push({ mutationId: newId(), kind: "records.delete", row: { id: r.id } }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["records"] });
-      toast(t("ui.toastRecordDeleted"));
+      toast(t("ui.toast.recordDeleted"));
       onDone();
     },
   });
   return (
     <ConfirmModal
-      title={tk(`recordKinds.${r.kind}`)}
-      message={t("ui.confirmDeleteRecord", {
-        kind: tk(`recordKinds.${r.kind}`).toLowerCase(),
+      title={tk(`record-kinds.kind.${r.kind}`)}
+      message={t("ui.confirm.deleteRecord", {
+        kind: tk(`record-kinds.kind.${r.kind}`).toLowerCase(),
         date: fmtDateTime(r.capturedAt),
       })}
-      confirmLabel={t("ui.delete")}
+      confirmLabel={t("ui.common.delete")}
       pending={remove.isPending}
       error={remove.error}
       onConfirm={() => remove.mutate()}

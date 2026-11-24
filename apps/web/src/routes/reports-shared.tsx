@@ -6,6 +6,7 @@ import { fmtDate, fmtHa, fmtMm, fmtNdvi } from "../lib/format";
 import { DataTable, SectionHead, Spinner, Stat, type Column } from "../components/ui";
 import { t, tk } from "../lib/i18n";
 import { PageExport } from "../components/PageExport";
+import { ATTRIBUTION } from "@yvy/shared";
 
 interface SharedSummary {
   farm: { name: string; department: string | null; areaHa: number; plotCount: number };
@@ -42,12 +43,12 @@ export function SharedPage() {
   const body = useRef<HTMLDivElement>(null);
   const d = q.data;
   const cols: Column<SharedPlot>[] = [
-    { id: "plot", header: t("ui.plot"), cell: (p) => p.name },
-    { id: "crop", header: t("ui.crop"), cell: (p) => <span className="capitalize">{p.kind === "pasture" ? t("ui.pasture") : (p.crop ?? "—")}</span>, hideBelow: "sm" },
-    { id: "area", header: t("ui.area"), align: "right", cell: (p) => fmtHa(p.areaHa) },
+    { id: "plot", header: t("ui.common.plot"), cell: (p) => p.name },
+    { id: "crop", header: t("ui.common.crop"), cell: (p) => <span className="capitalize">{p.kind === "pasture" ? t("ui.common.pasture") : (p.crop ?? "—")}</span>, hideBelow: "sm" },
+    { id: "area", header: t("ui.common.area"), align: "right", cell: (p) => fmtHa(p.areaHa) },
     {
       id: "ndvi",
-      header: t("ui.sharedVigor"),
+      header: t("ui.shared.vigor"),
       align: "right",
       cell: (p) =>
         p.ndvi === null ? (
@@ -62,15 +63,15 @@ export function SharedPage() {
   ];
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8 lg:px-10">
-      <p className="font-serif text-2xl font-semibold">Yvy</p>
+      <p className="font-serif text-2xl font-semibold">{t("ui.app.name")}</p>
       {q.isLoading && <Spinner rows={4} h={72} />}
       {q.error && (
         <p className="text-lg">
           {q.error instanceof SharedError && q.error.reason === "expired"
-            ? t("ui.sharedExpiredMsg")
+            ? t("ui.shared.expiredMsg")
             : q.error instanceof SharedError && q.error.reason === "revoked"
-              ? t("ui.sharedRevokedMsg")
-              : t("ui.sharedNotFoundMsg")}
+              ? t("ui.shared.revokedMsg")
+              : t("ui.shared.notFoundMsg")}
         </p>
       )}
       {d && (
@@ -79,37 +80,37 @@ export function SharedPage() {
             <div className="min-w-0">
               <h1 className="text-title leading-8">{d.farm.name}</h1>
               <p className="mt-1 text-sm text-tinta-2">
-                {t("ui.sharedTitle")}
-                {d.farm.department ? ` · ${d.farm.department}` : ""} · {t("ui.sharedReadOnly")}
+                {t("ui.shared.title")}
+                {d.farm.department ? ` · ${d.farm.department}` : ""} · {t("ui.shared.readOnly")}
               </p>
             </div>
             {d.plots.length > 0 && <PageExport root={body} name={d.farm.name} />}
           </header>
           <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-linea py-5 sm:grid-cols-4">
-            <Stat label={t("ui.area")} value={fmtHa(d.farm.areaHa)} />
-            <Stat label={t("ui.plots")} value={d.farm.plotCount} />
+            <Stat label={t("ui.common.area")} value={fmtHa(d.farm.areaHa)} />
+            <Stat label={t("ui.common.plots")} value={d.farm.plotCount} />
             <Stat
-              label={t("ui.sharedRain30")}
-              value={d.rain30.mm === null ? t("ui.sharedNoData") : fmtMm(d.rain30.mm)}
-              note={d.rain30.normalMm ? `${t("ui.sharedRainNormal")}: ${fmtMm(d.rain30.normalMm)}` : undefined}
+              label={t("ui.shared.rain30")}
+              value={d.rain30.mm === null ? t("ui.shared.noData") : fmtMm(d.rain30.mm)}
+              note={d.rain30.normalMm ? `${t("ui.shared.rainNormal")}: ${fmtMm(d.rain30.normalMm)}` : undefined}
             />
-            {d.alerts.length > 0 && <Stat label={t("ui.alertsTitle")} value={d.alerts.length} />}
+            {d.alerts.length > 0 && <Stat label={t("ui.alerts.title")} value={d.alerts.length} />}
           </div>
 
           <div className="grid items-start gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
             <section ref={body} className="flex min-w-0 flex-col gap-2">
-              <SectionHead title={t("ui.plots")} />
-              <DataTable columns={cols} rows={d.plots} rowKey={(p) => `${p.name}|${p.areaHa}|${p.crop ?? ""}`} caption={t("ui.plots")} />
+              <SectionHead title={t("ui.common.plots")} />
+              <DataTable columns={cols} rows={d.plots} rowKey={(p) => `${p.name}|${p.areaHa}|${p.crop ?? ""}`} caption={t("ui.common.plots")} />
             </section>
             <section className="flex min-w-0 flex-col gap-2">
-              <SectionHead title={t("ui.alertsTitle")} />
+              <SectionHead title={t("ui.alerts.title")} />
               {d.alerts.length === 0 ? (
-                <p className="text-sm text-tinta-2">{t("ui.sharedNoAlerts")}</p>
+                <p className="text-sm text-tinta-2">{t("ui.shared.noAlerts")}</p>
               ) : (
                 <ul className="flex flex-col text-sm">
                   {d.alerts.map((a, i) => (
                     <li key={i} className="border-b border-linea py-2.5">
-                      <span className="font-medium">{tk(`ui.alertKind_${a.kind}`)}</span> · {a.summary}
+                      <span className="font-medium">{tk(`ui.alert.kind_${a.kind}`)}</span> · {a.summary}
                     </li>
                   ))}
                 </ul>
@@ -119,10 +120,10 @@ export function SharedPage() {
 
           <footer className="flex flex-col gap-1 text-xs text-tinta-2">
             <p>
-              {t("ui.sharedGenerated", { date: fmtDate(d.generatedAt) })} · {t("ui.sharedExpires", { date: fmtDate(d.expiresAt) })}
+              {t("ui.shared.generated", { date: fmtDate(d.generatedAt) })} · {t("ui.shared.expires", { date: fmtDate(d.expiresAt) })}
             </p>
             <p>
-              {t("attribution.copernicus")} · {t("attribution.chirps")}
+              {t(ATTRIBUTION.copernicus)} · {t(ATTRIBUTION.chirps)}
             </p>
           </footer>
         </>

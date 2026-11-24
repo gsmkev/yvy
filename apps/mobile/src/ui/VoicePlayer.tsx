@@ -13,7 +13,7 @@ function Player({ uri }: { uri: string }) {
   return (
     <Button
       kind="secondary"
-      title={status.playing ? t("app.voicePause") : t("app.voicePlay")}
+      title={status.playing ? t("app.voice.pause") : t("app.voice.play")}
       onPress={() => {
         if (status.playing) return player.pause();
         if (status.didJustFinish || (status.duration > 0 && status.currentTime >= status.duration)) void player.seekTo(0);
@@ -29,14 +29,14 @@ export function VoicePlayer({ id, uri, uploaded }: { id: string; uri: string | n
   const source = uri ?? remote;
   return (
     <View style={{ marginTop: 20 }}>
-      <Text style={T.heading}>{t("app.voiceNote")}</Text>
+      <Text style={T.heading}>{t("app.voice.note")}</Text>
       <View style={{ marginTop: 8 }}>
         {source ? (
           <Player uri={source} />
         ) : (
           <Button
             kind="secondary"
-            title={t("app.voiceListen")}
+            title={t("app.voice.listen")}
             disabled={!uploaded}
             onPress={() =>
               api<{ url: string }>("GET", `/media/attachments/${id}`).then(
@@ -47,7 +47,7 @@ export function VoicePlayer({ id, uri, uploaded }: { id: string; uri: string | n
           />
         )}
       </View>
-      {error && <Text style={[T.small, { marginTop: 8 }]}>{t("app.voiceOtherPhone")}</Text>}
+      {error && <Text style={[T.small, { marginTop: 8 }]}>{t("app.voice.otherPhone")}</Text>}
     </View>
   );
 }

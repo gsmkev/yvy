@@ -37,7 +37,7 @@ export function deleteWithUndo({
   toast(message, {
     ms: UNDO_MS,
     action: {
-      label: t("ui.undo"),
+      label: t("ui.common.undo"),
       onClick: () => {
         pending.delete(id);
         refresh();
@@ -45,7 +45,7 @@ export function deleteWithUndo({
     },
     onExpire: () => {
       request()
-        .catch((e: unknown) => toast(t("ui.error", { message: e instanceof Error ? e.message : String(e) })))
+        .catch((e: unknown) => toast(t("ui.common.error", { message: e instanceof Error ? e.message : String(e) })))
         .finally(() => {
           pending.delete(id);
           refresh();

@@ -1,11 +1,10 @@
 /** Elegir la fecha de la imagen y comparar dos fechas con una cortina (S-04). */
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { layerThumb, type Bounds } from "../lib/sceneThumbs";
 import { fmtDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
-import { layerDates, nextFrame, TIMELAPSE_SPEEDS, timelapseFrames, type Camera } from "../lib/scenes";
+import { layerDates, nextFrame, TIMELAPSE_SPEEDS, timelapseFrames } from "../lib/scenes";
 import type { Layer } from "../lib/types";
-import { FarmMap, type FarmMapProps } from "./FarmMap";
 import { SelectBox } from "./ui";
 
 const sel =
@@ -68,7 +67,7 @@ function DatePick({
             onClick={() => setOpen(!open)}
             className="cursor-pointer self-start text-lino/70 underline-offset-4 hover:underline"
           >
-            {open ? t("ui.sceneThumbsHide") : t("ui.sceneThumbsShow")}
+            {open ? t("ui.scene.thumbsHide") : t("ui.scene.thumbsShow")}
           </button>
           {open && (
             <ul className="grid max-h-44 grid-cols-3 gap-1.5 overflow-y-auto" aria-label={label}>
@@ -116,7 +115,7 @@ function Timelapse({ frames, onPick, onClose }: { frames: Layer[]; onPick: (id: 
         min={0}
         max={frames.length - 1}
         value={i}
-        aria-label={t("ui.timelapseFrame", { n: i + 1, total: frames.length })}
+        aria-label={t("ui.timelapse.frame", { n: i + 1, total: frames.length })}
         onChange={(e) => {
           setPlaying(false);
           setI(Number(e.target.value));
@@ -125,22 +124,22 @@ function Timelapse({ frames, onPick, onClose }: { frames: Layer[]; onPick: (id: 
       />
       <div className="flex items-center gap-3">
         <button className="cursor-pointer font-medium underline-offset-4 hover:underline" onClick={() => setPlaying(!playing)}>
-          {playing ? t("ui.timelapsePause") : t("ui.timelapsePlay")}
+          {playing ? t("ui.timelapse.pause") : t("ui.timelapse.play")}
         </button>
         <SelectBox><select
-          aria-label={t("ui.timelapseSpeed")}
+          aria-label={t("ui.timelapse.speed")}
           className={`${sel} !w-auto`}
           value={speed}
           onChange={(e) => setSpeed(e.target.value as typeof speed)}
         >
           {TIMELAPSE_SPEEDS.map((s) => (
             <option key={s.key} value={s.key}>
-              {tk(`ui.timelapseSpeed_${s.key}`)}
+              {tk(`ui.timelapse.speed_${s.key}`)}
             </option>
           ))}
         </select></SelectBox>
         <button className="ml-auto cursor-pointer text-lino/70 underline-offset-4 hover:underline" onClick={onClose}>
-          {t("ui.timelapseStop")}
+          {t("ui.timelapse.stop")}
         </button>
       </div>
     </div>
@@ -175,14 +174,14 @@ export function SceneControls(props: {
       ) : props.compare ? (
         <>
           <DatePick
-            label={t("ui.compareLeft")}
+            label={t("ui.compare.left")}
             layers={dates}
             value={props.compare.left}
             onChange={(left) => props.onCompare({ ...props.compare!, left })}
             thumbs={thumbs}
           />
           <DatePick
-            label={t("ui.compareRight")}
+            label={t("ui.compare.right")}
             layers={dates}
             value={props.compare.right}
             onChange={(right) => props.onCompare({ ...props.compare!, right })}
@@ -190,7 +189,7 @@ export function SceneControls(props: {
           />
         </>
       ) : (
-        <DatePick label={t("ui.sceneDate")} layers={dates} value={props.picked} onChange={props.onPick} thumbs={thumbs} />
+        <DatePick label={t("ui.scene.date")} layers={dates} value={props.picked} onChange={props.onPick} thumbs={thumbs} />
       )}
       {props.canCompare ? (
         <div className="flex gap-4">
@@ -198,36 +197,30 @@ export function SceneControls(props: {
             className="cursor-pointer font-medium underline-offset-4 hover:underline"
             onClick={props.onToggleCompare}
           >
-            {props.compare ? t("ui.compareEnd") : t("ui.compare")}
+            {props.compare ? t("ui.compare.end") : t("ui.common.compare")}
           </button>
           {!props.compare && !animating && props.kind !== "true_color" && (
             <button
               className="cursor-pointer font-medium underline-offset-4 hover:underline"
               onClick={() => setAnimating(true)}
             >
-              {t("ui.timelapse")}
+              {t("ui.common.timelapse")}
             </button>
           )}
         </div>
       ) : (
-        <p className="text-lino/60">{t("ui.compareNeedTwo")}</p>
+        <p className="text-lino/60">{t("ui.compare.needTwo")}</p>
       )}
     </div>
   );
 }
 
 /** Segundo mapa recortado a la derecha de la cortina, con la misma cámara que el de abajo. */
-export function CompareOverlay(props: {
-  mapProps: FarmMapProps;
-  pct: number;
-  onPct: (n: number) => void;
-  camera: Camera | null;
-  onCamera: (c: Camera) => void;
-}) {
+export function CompareOverlay(props: { map: ReactNode; pct: number; onPct: (n: number) => void }) {
   return (
     <>
       <div className="absolute inset-0" style={{ clipPath: `inset(0 0 0 ${props.pct}%)` }}>
-        <FarmMap {...props.mapProps} camera={props.camera} onCamera={props.onCamera} />
+        {props.map}
       </div>
       <div
         aria-hidden
@@ -240,7 +233,7 @@ export function CompareOverlay(props: {
         max={100}
         step={1}
         value={props.pct}
-        aria-label={t("ui.compareSwipe")}
+        aria-label={t("ui.compare.swipe")}
         onChange={(e) => props.onPct(Number(e.target.value))}
         className="absolute right-4 bottom-4 left-4 z-10 cursor-ew-resize accent-[#F1EEE4]"
       />

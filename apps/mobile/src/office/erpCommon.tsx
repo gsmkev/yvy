@@ -19,7 +19,7 @@ export const useManageErp = (): boolean => {
 export function NoAdminAccess({ title }: { title: string }) {
   return (
     <OfficeScreen title={title}>
-      <EmptyState title={t("office.admNoAccess")} />
+      <EmptyState title={t("office.adm.noAccess")} />
     </OfficeScreen>
   );
 }
@@ -29,7 +29,7 @@ export const useErp = <T,>(path: string | null) => useOnline<T>(path);
 
 /** Aviso de "sin señal" para el botón de guardar; null con señal. */
 export function useNoSignalReason(): string | null {
-  return useSyncStatus().online ? null : t("office.needsSignalToSave");
+  return useSyncStatus().online ? null : t("office.needs.signalToSave");
 }
 
 export function NoSignalNote() {

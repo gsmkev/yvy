@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, EmptyState, ErrorBox, Field, Form, Input, Modal, Select, Spinner, toast } from "../../components/ui";
-import { get, post, qs } from "../../lib/api";
+import { get, post, withQs } from "../../lib/api";
 import { AuditList, type AuditEntryRow } from "../../components/AuditList";
 import { t } from "../../lib/i18n";
 import type { OrgMetrics } from "./types";
@@ -27,34 +27,34 @@ export function PlanModal({ org, onClose }: { org: OrgMetrics; onClose: () => vo
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-metrics"] });
-      toast(t("ui.internalPlanSaved"));
+      toast(t("ui.internal.planSaved"));
       onClose();
     },
   });
   return (
-    <Modal title={`${t("ui.internalEditPlan")}: ${org.name}`} onClose={onClose}>
+    <Modal title={`${t("ui.internal.editPlan")}: ${org.name}`} onClose={onClose}>
       <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
-        <Field label={t("ui.internalPlan")}>
+        <Field label={t("ui.internal.plan")}>
           <Select
             value={f.plan}
             onChange={(e) => setF({ ...f, plan: e.target.value })}
             options={["trial", "active", "blocked", "demo"].map((p) => ({ value: p, label: p }))}
           />
         </Field>
-        <Field label={t("ui.internalTrialEnds")}>
+        <Field label={t("ui.internal.trialEnds")}>
           <Input type="date" value={f.trialEndsAt} onChange={(e) => setF({ ...f, trialEndsAt: e.target.value })} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label={t("ui.internalMaxHa")} hint={t("ui.internalLimitHint")}>
+          <Field label={t("ui.internal.maxHa")} hint={t("ui.internal.limitHint")}>
             <Input inputMode="decimal" value={f.maxHa} onChange={(e) => setF({ ...f, maxHa: e.target.value })} />
           </Field>
-          <Field label={t("ui.internalMaxUsers")} hint={t("ui.internalLimitHint")}>
+          <Field label={t("ui.internal.maxUsers")} hint={t("ui.internal.limitHint")}>
             <Input inputMode="numeric" value={f.maxUsers} onChange={(e) => setF({ ...f, maxUsers: e.target.value })} />
           </Field>
         </div>
         {save.error && <ErrorBox error={save.error} />}
         <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.save")}
+          {t("ui.common.save")}
         </Button>
       </Form>
     </Modal>
@@ -65,13 +65,13 @@ export function PlanModal({ org, onClose }: { org: OrgMetrics; onClose: () => vo
 export function OrgChanges({ org, onClose }: { org: OrgMetrics; onClose: () => void }) {
   const q = useQuery({
     queryKey: ["admin-audit-org", org.id],
-    queryFn: () => get<AuditEntryRow[]>(`/admin/audit${qs({ orgId: org.id, scope: "org" })}`),
+    queryFn: () => get<AuditEntryRow[]>(withQs("/admin/audit", { orgId: org.id, scope: "org" })),
   });
   return (
-    <Modal title={`${t("ui.internalChanges")} · ${org.name}`} onClose={onClose}>
+    <Modal title={`${t("ui.internal.changes")} · ${org.name}`} onClose={onClose}>
       {q.isPending && <Spinner />}
       {q.error && <ErrorBox error={q.error} />}
-      {q.data && !q.data.length && <EmptyState compact title={t("ui.auditEmpty")} />}
+      {q.data && !q.data.length && <EmptyState compact title={t("ui.audit.empty")} />}
       {q.data && <AuditList rows={q.data} />}
     </Modal>
   );

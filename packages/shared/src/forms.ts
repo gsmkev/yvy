@@ -75,7 +75,7 @@ export function flattenExtra(data: Record<string, unknown>): Record<string, unkn
 /** Valor de una respuesta como texto legible (para el detalle del registro). */
 export function describeExtraValue(f: FormField, v: unknown): string {
   if (v === undefined || v === null || v === "") return "";
-  if (f.type === "yesno") return v === true ? t("ui.yes") : t("ui.no");
+  if (f.type === "yesno") return v === true ? t("ui.common.yes") : t("ui.common.no");
   if (f.type === "number") return f.unit ? `${v} ${f.unit}` : String(v);
   return String(v);
 }

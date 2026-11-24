@@ -91,7 +91,7 @@ async function buildWorkbook(d: ExportData): Promise<ArrayBuffer> {
         fmtDateTime(r.capturedAt),
         f.farm.name,
         r.plotName,
-        tk(`recordKinds.${r.kind}`),
+        tk(`record-kinds.kind.${r.kind}`),
         r.authorName,
         describeData(r.kind, r.data),
         r.lat,
@@ -110,7 +110,7 @@ async function buildWorkbook(d: ExportData): Promise<ArrayBuffer> {
   sheet(
     "Miembros",
     ["Nombre", "Email", "Teléfono", "Rol", "Estado"],
-    d.members.map((m) => [m.fullName, m.email, m.phone, tk(`ui.role_${m.role}`), m.status]),
+    d.members.map((m) => [m.fullName, m.email, m.phone, tk(`ui.role.${m.role}`), m.status]),
   );
   sheet(
     "Fotos",

@@ -59,7 +59,7 @@ export function DamageReportModal({ plot, onClose }: { plot: Plot; onClose: () =
           author={me.data?.user.fullName ?? ""}
         />,
       ).toBlob();
-      download(blob, `${t("ui.damageFile")}-${plot.name}-${eventDay}.pdf`);
+      download(blob, `${t("ui.damage.file")}-${plot.name}-${eventDay}.pdf`);
       onClose();
     } catch (e) {
       setError(e);
@@ -69,20 +69,20 @@ export function DamageReportModal({ plot, onClose }: { plot: Plot; onClose: () =
   };
 
   return (
-    <Modal title={t("ui.damageTitle")} onClose={onClose}>
+    <Modal title={t("ui.damage.title")} onClose={onClose}>
       <Form className="flex flex-col gap-3" onSubmit={() => void generate()}>
-        <p className="text-sm text-tinta-2">{t("ui.damageIntro")}</p>
-        <Field label={t("ui.damageEventDate")}>
+        <p className="text-sm text-tinta-2">{t("ui.damage.intro")}</p>
+        <Field label={t("ui.damage.eventDate")}>
           <Input type="date" required max={todayIso()} value={eventDay} onChange={(e) => setEventDay(e.target.value)} />
         </Field>
-        <Field label={t("ui.damageCause")}>
+        <Field label={t("ui.damage.cause")}>
           <Select
             value={cause}
             onChange={(e) => setCause(e.target.value as DamageCause)}
-            options={DAMAGE_CAUSES.map((c) => ({ value: c, label: tk(`ui.damageCause_${c}`) }))}
+            options={DAMAGE_CAUSES.map((c) => ({ value: c, label: tk(`ui.damage.cause_${c}`) }))}
           />
         </Field>
-        <Field label={t("ui.damageDescription")}>
+        <Field label={t("ui.damage.description")}>
           <textarea
             className="min-h-24 rounded-md border border-linea bg-papel p-3 text-body outline-none focus:border-accion focus:ring-2 focus:ring-accion/20"
             maxLength={1500}
@@ -93,10 +93,10 @@ export function DamageReportModal({ plot, onClose }: { plot: Plot; onClose: () =
         {error ? <ErrorBox error={error} /> : null}
         <div className="flex gap-2">
           <Button type="submit" variant="primary" disabled={busy || !farm.data}>
-            {busy ? t("ui.damageBusy") : t("ui.damageGenerate")}
+            {busy ? t("ui.damage.busy") : t("ui.damage.generate")}
           </Button>
           <Button variant="quiet" onClick={onClose}>
-            {t("ui.cancel")}
+            {t("ui.common.cancel")}
           </Button>
         </div>
       </Form>

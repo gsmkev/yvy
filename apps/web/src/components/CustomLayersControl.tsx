@@ -2,13 +2,8 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { LIMITS } from "@yvy/shared";
-import { apiFile, del, qs } from "../lib/api";
-import {
-  customFileMime,
-  customMaxBytes,
-  parseCornerInputs,
-  type CustomLayer,
-} from "../lib/customLayers";
+import { apiFile, del, withQs } from "../lib/api";
+import { customFileMime, customMaxBytes, parseCornerInputs, type CustomLayer } from "../lib/customLayers";
 import { t, tk } from "../lib/i18n";
 import { Button, Field, Input, Modal, toast } from "./ui";
 
@@ -46,7 +41,7 @@ export function CustomLayersControl({
   if (layers.length === 0 && !canManage) return null;
   return (
     <div className="flex flex-col gap-2 text-xs text-lino">
-      {layers.length === 0 && <p className="text-lino/70">{t("ui.customLayersNone")}</p>}
+      {layers.length === 0 && <p className="text-lino/70">{t("ui.custom.layersNone")}</p>}
       <ul className="flex flex-col gap-2">
         {layers.map((l) => {
           const on = l.id in active;
@@ -75,12 +70,12 @@ export function CustomLayersControl({
                     className="cursor-pointer text-lino/70 underline-offset-4 hover:text-lino hover:underline"
                     onClick={() => setRemoving(l)}
                   >
-                    {t("ui.customLayersDelete")}
+                    {t("ui.custom.layersDelete")}
                   </button>
                 )}
               </div>
-              {l.status === "processing" && <p className="pl-6 text-lino/70">{t("ui.customLayersProcessing")}</p>}
-              {l.status === "failed" && <p className="pl-6 text-lino/70">{t("ui.customLayersFailed")}</p>}
+              {l.status === "processing" && <p className="pl-6 text-lino/70">{t("ui.custom.layersProcessing")}</p>}
+              {l.status === "failed" && <p className="pl-6 text-lino/70">{t("ui.custom.layersFailed")}</p>}
               {on && (
                 <input
                   type="range"
@@ -88,7 +83,7 @@ export function CustomLayersControl({
                   max={1}
                   step={0.05}
                   value={active[l.id]}
-                  aria-label={t("ui.customLayersOpacity", { name: l.name })}
+                  aria-label={t("ui.custom.layersOpacity", { name: l.name })}
                   onChange={(e) => onActive({ ...active, [l.id]: Number(e.target.value) })}
                   className="ml-6 accent-[#7A9A3F]"
                 />
@@ -102,17 +97,17 @@ export function CustomLayersControl({
           className="cursor-pointer self-start font-medium underline-offset-4 hover:underline"
           onClick={() => setAdding(true)}
         >
-          {t("ui.customLayersAdd")}
+          {t("ui.custom.layersAdd")}
         </button>
       )}
       {adding && <UploadModal farmId={farmId} farmBounds={farmBounds} onClose={() => setAdding(false)} />}
       {removing && (
-        <Modal title={t("ui.customLayersDelete")} onClose={() => setRemoving(null)}>
-          <p className="text-sm">{t("ui.customLayersDeleteAsk", { name: removing.name })}</p>
+        <Modal title={t("ui.custom.layersDelete")} onClose={() => setRemoving(null)}>
+          <p className="text-sm">{t("ui.custom.layersDeleteAsk", { name: removing.name })}</p>
           <div className="mt-4 flex justify-end gap-2">
-            <Button onClick={() => setRemoving(null)}>{t("ui.cancel")}</Button>
+            <Button onClick={() => setRemoving(null)}>{t("ui.common.cancel")}</Button>
             <Button variant="danger" disabled={remove.isPending} onClick={() => remove.mutate(removing.id)}>
-              {t("ui.customLayersDelete")}
+              {t("ui.custom.layersDelete")}
             </Button>
           </div>
         </Modal>
@@ -140,18 +135,21 @@ function UploadModal({
 
   const upload = useMutation({
     mutationFn: async () => {
-      if (!file || !mime) throw new Error(t("ui.customLayersBadType"));
-      if (file.size > customMaxBytes(mime)) throw new Error(t("ui.customLayersTooBig"));
+      if (!file || !mime) throw new Error(t("ui.custom.layersBadType"));
+      if (file.size > customMaxBytes(mime)) throw new Error(t("ui.custom.layersTooBig"));
       const parsed = needsCorners ? parseCornerInputs(corners) : null;
-      if (needsCorners && !parsed) throw new Error(t("ui.customLayersBadCorners"));
+      if (needsCorners && !parsed) throw new Error(t("ui.custom.layersBadCorners"));
       const typed = file.type === mime ? file : new File([file], file.name, { type: mime });
       return apiFile<{ id: string; status: string }>(
-        `/org/farms/${farmId}/custom-layers${qs({ name: name.trim() || file.name.slice(0, LIMITS.customLayers.nameMaxLength), corners: parsed ? JSON.stringify(parsed) : undefined })}`,
+        withQs(`/org/farms/${farmId}/custom-layers`, {
+          name: name.trim() || file.name.slice(0, LIMITS.customLayers.nameMaxLength),
+          corners: parsed ? JSON.stringify(parsed) : undefined,
+        }),
         typed,
       );
     },
     onSuccess: (r) => {
-      toast(r.status === "processing" ? t("ui.customLayersUploadedProcessing") : t("ui.customLayersUploaded"));
+      toast(r.status === "processing" ? t("ui.custom.layersUploadedProcessing") : t("ui.custom.layersUploaded"));
       void qc.invalidateQueries({ queryKey: ["custom-layers", farmId] });
       onClose();
     },
@@ -165,7 +163,7 @@ function UploadModal({
   };
 
   return (
-    <Modal title={t("ui.customLayersAdd")} onClose={onClose}>
+    <Modal title={t("ui.custom.layersAdd")} onClose={onClose}>
       <form
         className="flex flex-col gap-4 text-surco"
         onSubmit={(e) => {
@@ -174,7 +172,7 @@ function UploadModal({
           upload.mutate();
         }}
       >
-        <Field label={t("ui.customLayersFile")} hint={t("ui.customLayersFileHint")}>
+        <Field label={t("ui.custom.layersFile")} hint={t("ui.custom.layersFileHint")}>
           <input
             type="file"
             accept=".png,.jpg,.jpeg,.tif,.tiff,image/png,image/jpeg,image/tiff"
@@ -186,15 +184,15 @@ function UploadModal({
             className="text-sm"
           />
         </Field>
-        <Field label={t("ui.customLayersName")}>
+        <Field label={t("ui.custom.layersName")}>
           <Input value={name} maxLength={LIMITS.customLayers.nameMaxLength} onChange={(e) => setName(e.target.value)} />
         </Field>
         {needsCorners && (
           <fieldset className="flex flex-col gap-3">
-            <legend className="text-sm font-medium">{t("ui.customLayersCorners")}</legend>
-            <p className="text-xs text-tinta-2">{t("ui.customLayersCornersHint")}</p>
+            <legend className="text-sm font-medium">{t("ui.custom.layersCorners")}</legend>
+            <p className="text-xs text-tinta-2">{t("ui.custom.layersCornersHint")}</p>
             {[0, 1, 2, 3].map((i) => (
-              <Field key={i} label={tk(`ui.customLayersCorner_${i}`)}>
+              <Field key={i} label={tk(`ui.custom.layersCorner_${i}`)}>
                 <Input
                   value={corners[i]}
                   inputMode="text"
@@ -209,7 +207,7 @@ function UploadModal({
                 className="cursor-pointer self-start text-sm underline underline-offset-4"
                 onClick={useFarmRect}
               >
-                {t("ui.customLayersUseFarm")}
+                {t("ui.custom.layersUseFarm")}
               </button>
             )}
           </fieldset>
@@ -220,9 +218,9 @@ function UploadModal({
           </p>
         )}
         <div className="flex justify-end gap-2">
-          <Button onClick={onClose}>{t("ui.cancel")}</Button>
+          <Button onClick={onClose}>{t("ui.common.cancel")}</Button>
           <Button type="submit" variant="primary" disabled={!file || upload.isPending}>
-            {upload.isPending ? t("ui.customLayersUploading") : t("ui.customLayersUpload")}
+            {upload.isPending ? t("ui.custom.layersUploading") : t("ui.custom.layersUpload")}
           </Button>
         </div>
       </form>

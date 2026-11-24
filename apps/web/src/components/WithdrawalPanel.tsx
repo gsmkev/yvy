@@ -10,13 +10,13 @@ export function WithdrawalPanel({ farmId }: { farmId: string }) {
   return (
     <section aria-labelledby="withdrawal-h" className="flex flex-col gap-3">
       <h3 id="withdrawal-h" className="font-serif text-lg font-semibold">
-        {t("ui.withdrawalTitle")}
+        {t("ui.withdrawal.title")}
       </h3>
-      <p className="text-sm text-tinta-2">{t("ui.withdrawalIntro")}</p>
+      <p className="text-sm text-tinta-2">{t("ui.withdrawal.intro")}</p>
       {q.isLoading && <Spinner rows={2} h={32} />}
       {q.error && <ErrorBox error={q.error} />}
       {d && d.restrictions.length === 0 && d.violations.length === 0 && (
-        <Empty title={t("ui.withdrawalTitle")}>{t("ui.withdrawalNone")}</Empty>
+        <Empty title={t("ui.withdrawal.title")}>{t("ui.withdrawal.none")}</Empty>
       )}
       {d && d.restrictions.length > 0 && (
         <ul className="divide-y divide-linea border-y border-linea text-sm">
@@ -25,12 +25,12 @@ export function WithdrawalPanel({ farmId }: { farmId: string }) {
               <span>
                 <span className="font-medium">{r.plotName}</span>
                 <span className="block text-xs text-tinta-2">
-                  {t("ui.withdrawalApplied", { product: r.product, date: fmtIsoDate(r.appliedOn) })}
+                  {t("ui.withdrawal.applied", { product: r.product, date: fmtIsoDate(r.appliedOn) })}
                 </span>
               </span>
               <span className="num font-medium text-peligro">
-                {t("ui.withdrawalUntil", { date: fmtIsoDate(r.safeFrom) })}
-                <span className="font-normal text-tinta-2"> · {t(r.daysLeft === 1 ? "ui.withdrawalDayOne" : "ui.withdrawalDays", { n: r.daysLeft })}</span>
+                {t("ui.withdrawal.until", { date: fmtIsoDate(r.safeFrom) })}
+                <span className="font-normal text-tinta-2"> · {t(r.daysLeft === 1 ? "ui.withdrawal.dayOne" : "ui.withdrawal.days", { n: r.daysLeft })}</span>
               </span>
             </li>
           ))}
@@ -38,11 +38,11 @@ export function WithdrawalPanel({ farmId }: { farmId: string }) {
       )}
       {d && d.violations.length > 0 && (
         <div>
-          <h4 className="eyebrow mb-1">{t("ui.withdrawalViolations")}</h4>
+          <h4 className="eyebrow mb-1">{t("ui.withdrawal.violations")}</h4>
           <ul className="divide-y divide-linea border-y border-linea text-sm">
             {d.violations.map((v) => (
               <li key={`${v.plotId}${v.harvestedOn}${v.product}`} className="py-2.5 text-peligro">
-                {t("ui.withdrawalViolation", {
+                {t("ui.withdrawal.violation", {
                   plot: v.plotName,
                   date: fmtIsoDate(v.harvestedOn),
                   product: v.product,
@@ -55,7 +55,7 @@ export function WithdrawalPanel({ farmId }: { farmId: string }) {
       )}
       {d && d.unknown.length > 0 && (
         <div>
-          <h4 className="eyebrow mb-1">{t("ui.withdrawalUnknown")}</h4>
+          <h4 className="eyebrow mb-1">{t("ui.withdrawal.unknown")}</h4>
           <p className="text-sm text-tinta-2">
             {d.unknown.map((u) => `${u.product} (${u.plotName})`).join(", ")}
           </p>

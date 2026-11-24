@@ -10,13 +10,14 @@ import { T } from "./theme";
 export function withWriteAccess<P extends object>(Screen: ComponentType<P>): ComponentType<P> {
   function Guarded(props: P) {
     const readOnly = useReadOnly();
+    // nosemgrep: react-props-spreading -- componente de orden superior: la pantalla envuelta recibe las props que le llegan
     if (!readOnly) return <Screen {...props} />;
     return (
       <View style={[k.screen, k.pad]}>
-        <Text style={T.title}>{t("app.readOnlyTitle")}</Text>
-        <Text style={[T.body, { marginTop: 8 }]}>{t("app.readOnlyBody")}</Text>
-        <Button big title={t("app.readOnlyLeave")} onPress={() => setReadOnly(false)} style={{ marginTop: 24 }} />
-        <Button kind="text" title={t("app.readOnlyBack")} onPress={() => router.back()} style={{ marginTop: 8 }} />
+        <Text style={T.title}>{t("app.read.onlyTitle")}</Text>
+        <Text style={[T.body, { marginTop: 8 }]}>{t("app.read.onlyBody")}</Text>
+        <Button big title={t("app.read.onlyLeave")} onPress={() => setReadOnly(false)} style={{ marginTop: 24 }} />
+        <Button kind="text" title={t("app.read.onlyBack")} onPress={() => router.back()} style={{ marginTop: 8 }} />
       </View>
     );
   }

@@ -35,7 +35,7 @@ export function CopyCoords({ lon, lat, className = "" }: { lon: number; lat: num
       aria-live="polite"
       className={`cursor-pointer text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline ${className}`}
     >
-      {done ? t("ui.copied") : t("ui.copyCoords")}
+      {done ? t("ui.common.copied") : t("ui.common.copyCoords")}
     </button>
   );
 }

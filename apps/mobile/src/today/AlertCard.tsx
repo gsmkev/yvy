@@ -16,7 +16,7 @@ export function AlertCard({ a, voted, picked, onLayout }: { a: AlertRow; voted: 
   const strong = a.severity === "warning";
   const fg = strong ? C.blanco : C.tinta;
   const soft = strong ? "rgba(255,255,255,0.85)" : C.tinta2;
-  const title = `${tk(`ui.alertKind_${a.kind}`)}${a.probability ? ` · ${tk(`ui.probability_${a.probability}`).toLowerCase()}` : ""}`;
+  const title = `${tk(`ui.alert.kind_${a.kind}`)}${a.probability ? ` · ${tk(`ui.probability.${a.probability}`).toLowerCase()}` : ""}`;
   return (
     <Pressable
       accessibilityRole="button"
@@ -30,16 +30,16 @@ export function AlertCard({ a, voted, picked, onLayout }: { a: AlertRow; voted: 
       <Text style={[T.small, { color: fg, marginTop: 2 }]} numberOfLines={open ? undefined : 2}>{a.summary}</Text>
       {open && (
         <>
-          <Text style={[T.small, { color: soft, marginTop: 6 }]}>{t("ui.orientative", { source: a.source })}</Text>
+          <Text style={[T.small, { color: soft, marginTop: 6 }]}>{t("ui.common.orientative", { source: a.source })}</Text>
           <View style={st.vote}>
             {voted === undefined ? (
               <>
-                <Text style={[T.small, { color: soft }]}>{t("ui.useful")}</Text>
+                <Text style={[T.small, { color: soft }]}>{t("ui.common.useful")}</Text>
                 {([true, false] as const).map((useful) => (
                   <Pressable
                     key={String(useful)}
                     accessibilityRole="button"
-                    accessibilityLabel={`${t("ui.useful")} ${useful ? t("app.yes") : t("app.no")}`}
+                    accessibilityLabel={`${t("ui.common.useful")} ${useful ? t("app.common.yes") : t("app.common.no")}`}
                     hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                     onPress={() => {
                       recordVote(getDb(), a.id, useful);
@@ -48,12 +48,12 @@ export function AlertCard({ a, voted, picked, onLayout }: { a: AlertRow; voted: 
                     }}
                     style={st.voteBtn}
                   >
-                    <Text style={[T.smallMedium, { color: fg, textDecorationLine: "underline" }]}>{useful ? t("app.yes") : t("app.no")}</Text>
+                    <Text style={[T.smallMedium, { color: fg, textDecorationLine: "underline" }]}>{useful ? t("app.common.yes") : t("app.common.no")}</Text>
                   </Pressable>
                 ))}
               </>
             ) : (
-              <Text style={[T.small, { color: soft }]}>{t("app.thanks")}</Text>
+              <Text style={[T.small, { color: soft }]}>{t("app.common.thanks")}</Text>
             )}
           </View>
         </>

@@ -33,7 +33,7 @@ export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots
   const remove = useMutation({
     mutationFn: (s: Season) => del(`/org/seasons/${s.id}`),
     onSuccess: () => {
-      toast(t("ui.toastSeasonDeleted"));
+      toast(t("ui.toast.seasonDeleted"));
       setConfirming(false);
       refresh();
     },
@@ -50,24 +50,24 @@ export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots
       <div className="flex flex-wrap items-center gap-2">
         {seasons.length > 0 && (
           <Select
-            aria-label={t("ui.season")}
+            aria-label={t("ui.common.season")}
             value={selected ?? ""}
             onChange={(e) => setSelected(e.target.value)}
             options={seasons.map((s) => ({
               value: s.id,
-              label: `${s.name} · ${s.active ? t("ui.seasonActive") : t("ui.seasonClosed")}`,
+              label: `${s.name} · ${s.active ? t("ui.season.active") : t("ui.season.closed")}`,
             }))}
           />
         )}
         {canEdit && (
           <Button variant="secondary" onClick={() => setCreating(true)}>
-            {t("ui.seasonNew")}
+            {t("ui.season.new")}
           </Button>
         )}
       </div>
 
       {!season ? (
-        <Empty title={t("ui.seasonsTitle")}>{t("ui.seasonNone")}</Empty>
+        <Empty title={t("ui.common.seasonsTitle")}>{t("ui.season.none")}</Empty>
       ) : (
         <>
           <p className="num text-sm text-tinta-2">
@@ -80,19 +80,19 @@ export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots
                 disabled={toggle.isPending}
                 onClick={() => toggle.mutate(season)}
               >
-                {season.active ? t("ui.seasonClose") : t("ui.seasonReopen")}
+                {season.active ? t("ui.season.close") : t("ui.season.reopen")}
               </button>
               <button
                 className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline"
                 onClick={() => setConfirming(true)}
               >
-                {t("ui.seasonDelete")}
+                {t("ui.season.delete")}
               </button>
             </div>
           )}
-          <h3 className="eyebrow mt-2">{t("ui.seasonPlanTitle")}</h3>
+          <h3 className="eyebrow mt-2">{t("ui.season.planTitle")}</h3>
           {cropPlots.length === 0 ? (
-            <Empty title={t("ui.noPlots")} />
+            <Empty title={t("ui.no.plots")} />
           ) : (
             <ul className="divide-y divide-linea border-y border-linea">
               {cropPlots.map((p) => {
@@ -103,7 +103,7 @@ export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots
                       <span className="font-medium">{p.name}</span>
                       <span className="num ml-2 text-xs text-tinta-2">{fmtHa(p.areaHa)}</span>
                       <span className="mt-0.5 block text-tinta-2">
-                        {plan ? <PlanSummary plan={plan} /> : t("ui.seasonPlanEmpty")}
+                        {plan ? <PlanSummary plan={plan} /> : t("ui.season.planEmpty")}
                       </span>
                     </span>
                     {canEdit && (
@@ -111,7 +111,7 @@ export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots
                         className="shrink-0 cursor-pointer text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
                         onClick={() => setPlanning(p)}
                       >
-                        {t("ui.seasonPlanEdit")}
+                        {t("ui.season.planEdit")}
                       </button>
                     )}
                   </li>
@@ -143,8 +143,8 @@ export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots
       {confirming && season && (
         <ConfirmModal
           title={season.name}
-          message={t("ui.seasonConfirmDelete", { name: season.name })}
-          confirmLabel={t("ui.delete")}
+          message={t("ui.season.confirmDelete", { name: season.name })}
+          confirmLabel={t("ui.common.delete")}
           pending={remove.isPending}
           error={remove.error}
           onConfirm={() => remove.mutate(season)}
@@ -156,17 +156,17 @@ export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots
 }
 
 /** "60 kg por hectárea" / "14 semillas por metro". */
-export const fmtDensity = (density: number, unit: string): string => `${fmtNum(density)} ${tk(`fields.densityUnit_${unit}`)}`;
+export const fmtDensity = (density: number, unit: string): string => `${fmtNum(density)} ${tk(`fields.density.unit_${unit}`)}`;
 
 function PlanSummary({ plan }: { plan: PlotSeason }) {
   const parts = [
-    plan.crop ? tk(`fields.crop_${plan.crop}`) : null,
+    plan.crop ? tk(`fields.crop.${plan.crop}`) : null,
     plan.variety,
-    plan.plannedSowingDate ? `${t("ui.seasonPlannedSowing")} ${fmtIsoDate(plan.plannedSowingDate)}` : null,
+    plan.plannedSowingDate ? `${t("ui.season.plannedSowing")} ${fmtIsoDate(plan.plannedSowingDate)}` : null,
     plan.sowingDensity !== null && plan.densityUnit ? fmtDensity(plan.sowingDensity, plan.densityUnit) : null,
     plan.targetYieldTHa !== null ? `${fmtNum(plan.targetYieldTHa)} t/ha` : null,
   ].filter(Boolean);
-  return <span className="num">{parts.length ? parts.join(" · ") : t("ui.seasonPlanEmpty")}</span>;
+  return <span className="num">{parts.length ? parts.join(" · ") : t("ui.season.planEmpty")}</span>;
 }
 
 function NewSeasonModal({ onClose, onSaved }: { onClose: () => void; onSaved: (id: string) => void }) {
@@ -180,36 +180,36 @@ function NewSeasonModal({ onClose, onSaved }: { onClose: () => void; onSaved: (i
         active: true,
       }),
     onSuccess: (r) => {
-      toast(t("ui.toastSeasonSaved"));
+      toast(t("ui.toast.seasonSaved"));
       onSaved(r.id);
       onClose();
     },
   });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   return (
-    <Modal title={t("ui.seasonNew")} onClose={onClose}>
+    <Modal title={t("ui.season.new")} onClose={onClose}>
       <Form className="flex flex-col gap-3" onSubmit={() => create.mutate()}>
-        <Field label={t("ui.seasonName")}>
+        <Field label={t("ui.season.name")}>
           <Input
             required
             autoFocus
             value={f.name}
             onChange={set("name")}
-            placeholder={t("ui.seasonNamePlaceholder")}
+            placeholder={t("ui.season.namePlaceholder")}
             maxLength={80}
           />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label={t("ui.seasonStart")}>
+          <Field label={t("ui.season.start")}>
             <Input type="date" value={f.startDate} onChange={set("startDate")} />
           </Field>
-          <Field label={t("ui.seasonEnd")}>
+          <Field label={t("ui.season.end")}>
             <Input type="date" value={f.endDate} min={f.startDate || undefined} onChange={set("endDate")} />
           </Field>
         </div>
         {create.error && <ErrorBox error={create.error} />}
         <Button type="submit" variant="primary" disabled={create.isPending}>
-          {t("ui.save")}
+          {t("ui.common.save")}
         </Button>
       </Form>
     </Modal>
@@ -249,7 +249,7 @@ function PlanModal({
         targetYieldTHa: f.targetYieldTHa ? Number(f.targetYieldTHa.replace(",", ".")) : null,
       }),
     onSuccess: () => {
-      toast(t("ui.toastSeasonPlanSaved"));
+      toast(t("ui.toast.seasonPlanSaved"));
       onSaved();
       onClose();
     },
@@ -266,20 +266,20 @@ function PlanModal({
     <Modal title={`${plot.name} · ${season.name}`} onClose={onClose}>
       <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
         <div className="grid grid-cols-2 gap-3">
-          <Field label={t("ui.crop")}>
+          <Field label={t("ui.common.crop")}>
             <Select
               value={f.crop}
               onChange={set("crop")}
-              options={[{ value: "", label: "—" }, ...CROPS.map((c) => ({ value: c, label: tk(`fields.crop_${c}`) }))]}
+              options={[{ value: "", label: "—" }, ...CROPS.map((c) => ({ value: c, label: tk(`fields.crop.${c}`) }))]}
             />
           </Field>
-          <Field label={t("ui.seasonVariety")}>
+          <Field label={t("ui.season.variety")}>
             <Input value={f.variety} onChange={set("variety")} maxLength={80} />
           </Field>
-          <Field label={t("ui.seasonPlannedSowing")}>
+          <Field label={t("ui.season.plannedSowing")}>
             <Input type="date" value={f.plannedSowingDate} onChange={set("plannedSowingDate")} />
           </Field>
-          <Field label={t("ui.seasonDensity")}>
+          <Field label={t("ui.season.density")}>
             <Input
               type="number"
               inputMode="decimal"
@@ -289,14 +289,14 @@ function PlanModal({
               onChange={set("sowingDensity")}
             />
           </Field>
-          <Field label={t("ui.seasonDensityUnit")}>
+          <Field label={t("ui.season.densityUnit")}>
             <Select
               value={f.densityUnit}
               onChange={set("densityUnit")}
-              options={DENSITY_UNITS.map((u) => ({ value: u, label: tk(`fields.densityUnit_${u}`) }))}
+              options={DENSITY_UNITS.map((u) => ({ value: u, label: tk(`fields.density.unit_${u}`) }))}
             />
           </Field>
-          <Field label={t("ui.seasonTargetYield")}>
+          <Field label={t("ui.season.targetYield")}>
             <Input
               type="number"
               inputMode="decimal"
@@ -310,11 +310,11 @@ function PlanModal({
         {(save.error || clear.error) && <ErrorBox error={save.error ?? clear.error} />}
         <div className="flex gap-2">
           <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.seasonPlanSave")}
+            {t("ui.season.planSave")}
           </Button>
           {plan && (
             <Button variant="quiet" disabled={clear.isPending} onClick={() => clear.mutate()}>
-              {t("ui.seasonPlanClear")}
+              {t("ui.season.planClear")}
             </Button>
           )}
         </div>

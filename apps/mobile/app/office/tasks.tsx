@@ -84,10 +84,10 @@ export default function TeamTasks() {
     .sort((a, b) => (filter === "done" ? (b.completedAt ?? 0) - (a.completedAt ?? 0) : a.dueDate.localeCompare(b.dueDate) || (a.dueTime ?? "24:00").localeCompare(b.dueTime ?? "24:00") || (PRIO_RANK[a.priority] ?? 1) - (PRIO_RANK[b.priority] ?? 1)));
   const groups = new Map<string, typeof shown>();
   for (const x of shown) groups.set(x.assigneeId, [...(groups.get(x.assigneeId) ?? []), x]);
-  const nameOf = (id: string) => names.get(id) ?? t("office.tasksPerson");
+  const nameOf = (id: string) => names.get(id) ?? t("office.tasks.person");
 
   const people = [...new Set(live.map((x) => x.assigneeId))];
-  const personOptions = [{ value: "all", label: t("office.tasksAllPeople") }, ...people.map((id) => ({ value: id, label: nameOf(id) }))];
+  const personOptions = [{ value: "all", label: t("office.tasks.allPeople") }, ...people.map((id) => ({ value: id, label: nameOf(id) }))];
   const memberOptions = (members.data ?? []).map((m) => ({ value: m.userId, label: m.fullName }));
 
   const openNew = () => {
@@ -106,11 +106,11 @@ export default function TeamTasks() {
   const submit = async () => {
     if (!draft) return;
     const title = draft.title.trim();
-    if (!title) return setFormError(t("office.taskNeedsTitle"));
-    if (!draft.assigneeId) return setFormError(t("office.taskNeedsAssignee"));
-    if (!draft.farmId) return setFormError(t("office.taskNeedsFarm"));
-    if (!draft.dueDate) return setFormError(t("office.taskNeedsDate"));
-    if (draft.dueTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(draft.dueTime)) return setFormError(t("office.taskBadTime"));
+    if (!title) return setFormError(t("office.task.needsTitle"));
+    if (!draft.assigneeId) return setFormError(t("office.task.needsAssignee"));
+    if (!draft.farmId) return setFormError(t("office.task.needsFarm"));
+    if (!draft.dueDate) return setFormError(t("office.task.needsDate"));
+    if (draft.dueTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(draft.dueTime)) return setFormError(t("office.task.badTime"));
     setFormError(null);
     const common = { title, assigneeId: draft.assigneeId, plotId: draft.plotId || null, kind: draft.kind || null, dueDate: draft.dueDate, dueTime: draft.dueTime || null, priority: draft.priority, recurrence: draft.recurrence };
     const items = draft.checklist.split("\n").map((l) => l.trim()).filter(Boolean);
@@ -119,7 +119,7 @@ export default function TeamTasks() {
       : await create.mutate({ ...common, farmId: draft.farmId, ...(items.length ? { checklist: items } : {}) });
     if (r.ok) {
       setDraft(null);
-      showToast(t(draft.id ? "office.taskSavedEdit" : "ui.toastTaskSaved"));
+      showToast(t(draft.id ? "office.task.savedEdit" : "ui.toast.taskSaved"));
       void syncNow();
     }
   };
@@ -128,35 +128,35 @@ export default function TeamTasks() {
     const r = x.recurrence === "none" ? await remove.mutate({ id: x.id }) : await edit.mutate({ id: x.id, status: "cancelled" });
     if (r.ok) {
       setConfirm(null);
-      showToast(t("ui.toastTaskDeleted"));
+      showToast(t("ui.toast.taskDeleted"));
       void syncNow();
     }
   };
 
-  const plotOptions = [{ value: "", label: t("ui.none") }, ...data.plots.filter((p) => p.farmId === draft?.farmId).map((p) => ({ value: p.id, label: p.name }))];
+  const plotOptions = [{ value: "", label: t("ui.common.none") }, ...data.plots.filter((p) => p.farmId === draft?.farmId).map((p) => ({ value: p.id, label: p.name }))];
   const err = formError ?? (draft?.id ? edit.error : create.error);
 
   return (
-    <OfficeScreen title={t("office.tasksTitle")} query={members} refreshing={false} onRefresh={async () => { await syncNow(); await members.refresh(); }} action={{ label: t("ui.newTask"), icon: Plus, onPress: openNew }}>
+    <OfficeScreen title={t("office.tasks.title")} query={members} refreshing={false} onRefresh={async () => { await syncNow(); await members.refresh(); }} action={{ label: t("ui.new.task"), icon: Plus, onPress: openNew }}>
       <FilterChips<Filter>
         value={filter}
         onChange={setFilter}
         options={[
-          { value: "all", label: t("ui.filterAll"), count: counts.all },
-          { value: "overdue", label: t("ui.filterOverdue"), count: counts.overdue },
-          { value: "today", label: t("office.tasksFilterToday"), count: counts.today },
-          { value: "done", label: t("office.tasksFilterDone"), count: counts.done },
+          { value: "all", label: t("ui.filter.all"), count: counts.all },
+          { value: "overdue", label: t("ui.filter.overdue"), count: counts.overdue },
+          { value: "today", label: t("office.tasks.filterToday"), count: counts.today },
+          { value: "done", label: t("office.tasks.filterDone"), count: counts.done },
         ]}
       />
       {people.length > 1 ? (
         <View style={{ marginTop: 12 }}>
-          <SelectField label={t("office.tasksPerson")} value={person} options={personOptions} onChange={setPerson} />
+          <SelectField label={t("office.tasks.person")} value={person} options={personOptions} onChange={setPerson} />
         </View>
       ) : null}
       {live.length === 0 ? (
-        <EmptyState title={t("office.tasksEmpty")} hint={t("office.tasksEmptyHint")} />
+        <EmptyState title={t("office.tasks.empty")} hint={t("office.tasks.emptyHint")} />
       ) : shown.length === 0 ? (
-        <EmptyState title={t("office.tasksNoMatch")} />
+        <EmptyState title={t("office.tasks.noMatch")} />
       ) : (
         [...groups.entries()].map(([id, list], i) => (
           <View key={id}>
@@ -164,20 +164,20 @@ export default function TeamTasks() {
             {list.map((x) => {
               const over = od(x);
               const cl = checklistProgress(parseChecklist(x.checklist));
-              const sub = [farmName.get(x.farmId), x.plotId ? plotName.get(x.plotId) : null, x.priority === "high" ? t("ui.taskPriorityHigh") : null].filter(Boolean).join(" · ");
-              const when = x.status === "done" ? t("ui.status_done") : [dueLabel(x.dueDate, today, over), x.dueTime ? x.dueTime : null].filter(Boolean).join(" · ");
+              const sub = [farmName.get(x.farmId), x.plotId ? plotName.get(x.plotId) : null, x.priority === "high" ? t("ui.task.priorityHigh") : null].filter(Boolean).join(" · ");
+              const when = x.status === "done" ? t("ui.status.done") : [dueLabel(x.dueDate, today, over), x.dueTime ? x.dueTime : null].filter(Boolean).join(" · ");
               return (
                 <View key={x.id} style={{ flexDirection: "row", alignItems: "center" }}>
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Row
                       title={x.title}
-                      subtitle={[when, sub, cl.total ? t("app.checklistProgress", cl) : null].filter(Boolean).join(" · ")}
+                      subtitle={[when, sub, cl.total ? t("app.common.checklistProgress", cl) : null].filter(Boolean).join(" · ")}
                       tone={over ? "danger" : undefined}
                       chevron={false}
                       onPress={() => router.push({ pathname: "/task/[id]", params: { id: x.id } })}
                     />
                   </View>
-                  <Pressable accessibilityRole="button" accessibilityLabel={t("office.taskMore")} onPress={() => setMenu(x)} style={{ width: 48, height: 56, alignItems: "center", justifyContent: "center", marginTop: 8 }}>
+                  <Pressable accessibilityRole="button" accessibilityLabel={t("office.task.more")} onPress={() => setMenu(x)} style={{ width: 48, height: 56, alignItems: "center", justifyContent: "center", marginTop: 8 }}>
                     <MoreVertical size={22} color={C.tinta2} strokeWidth={2} />
                   </Pressable>
                 </View>
@@ -187,19 +187,19 @@ export default function TeamTasks() {
         ))
       )}
 
-      <FormSheet visible={!!draft} title={draft?.id ? t("office.taskEditTitle") : t("ui.newTask")} onClose={() => setDraft(null)} onSubmit={submit} submitLabel={t("ui.save")} pending={create.pending || edit.pending} error={err}>
+      <FormSheet visible={!!draft} title={draft?.id ? t("office.task.editTitle") : t("ui.new.task")} onClose={() => setDraft(null)} onSubmit={submit} submitLabel={t("ui.common.save")} pending={create.pending || edit.pending} error={err}>
         {draft ? (
           <>
-            <TextField label={t("ui.taskTitle")} value={draft.title} onChangeText={(v) => set({ title: v })} maxLength={200} />
-            <SelectField label={t("ui.assignee")} value={draft.assigneeId} options={memberOptions} onChange={(v) => set({ assigneeId: v })} />
-            {!draft.id ? <SelectField label={t("ui.farm")} value={draft.farmId} options={data.farms.map((f) => ({ value: f.id, label: f.name }))} onChange={(v) => set({ farmId: v, plotId: "" })} /> : null}
-            <SelectField label={t("ui.plot")} value={draft.plotId} options={plotOptions} onChange={(v) => set({ plotId: v })} />
-            <DateField label={t("ui.dueDate")} value={draft.dueDate} onChange={(v) => set({ dueDate: v })} />
-            <TextField label={t("ui.dueTime")} hint={t("ui.dueTimeHint")} value={draft.dueTime} onChangeText={(v) => set({ dueTime: v.replace(/[^\d:]/g, "").slice(0, 5) })} placeholder="08:30" />
-            <SelectField label={t("ui.taskPriority")} value={draft.priority} options={TASK_PRIORITIES.map((p) => ({ value: p, label: t(key(`ui.taskPriority_${p}`)) }))} onChange={(v) => set({ priority: v })} />
-            <SelectField label={t("ui.recurrence")} value={draft.recurrence} options={RECURRENCES.map((r) => ({ value: r, label: t(key(`ui.recurrence_${r}`)) }))} onChange={(v) => set({ recurrence: v })} />
-            <SelectField label={t("ui.opensRecord")} value={draft.kind} options={[{ value: "", label: t("ui.none") }, ...RECORD_KINDS.map((k) => ({ value: k, label: t(key(`recordKinds.${k}`)) }))]} onChange={(v) => set({ kind: v })} />
-            {!draft.id ? <TextField label={t("ui.taskChecklist")} kind="multiline" hint={t("office.taskChecklistLines")} value={draft.checklist} onChangeText={(v) => set({ checklist: v })} /> : null}
+            <TextField label={t("ui.task.title")} value={draft.title} onChangeText={(v) => set({ title: v })} maxLength={200} />
+            <SelectField label={t("ui.common.assignee")} value={draft.assigneeId} options={memberOptions} onChange={(v) => set({ assigneeId: v })} />
+            {!draft.id ? <SelectField label={t("ui.common.farm")} value={draft.farmId} options={data.farms.map((f) => ({ value: f.id, label: f.name }))} onChange={(v) => set({ farmId: v, plotId: "" })} /> : null}
+            <SelectField label={t("ui.common.plot")} value={draft.plotId} options={plotOptions} onChange={(v) => set({ plotId: v })} />
+            <DateField label={t("ui.due.date")} value={draft.dueDate} onChange={(v) => set({ dueDate: v })} />
+            <TextField label={t("ui.due.time")} hint={t("ui.due.timeHint")} value={draft.dueTime} onChangeText={(v) => set({ dueTime: v.replace(/[^\d:]/g, "").slice(0, 5) })} placeholder="08:30" />
+            <SelectField label={t("ui.task.priority")} value={draft.priority} options={TASK_PRIORITIES.map((p) => ({ value: p, label: t(key(`ui.task.priority_${p}`)) }))} onChange={(v) => set({ priority: v })} />
+            <SelectField label={t("ui.common.recurrence")} value={draft.recurrence} options={RECURRENCES.map((r) => ({ value: r, label: t(key(`ui.recurrence.${r}`)) }))} onChange={(v) => set({ recurrence: v })} />
+            <SelectField label={t("ui.common.opensRecord")} value={draft.kind} options={[{ value: "", label: t("ui.common.none") }, ...RECORD_KINDS.map((k) => ({ value: k, label: t(key(`record-kinds.kind.${k}`)) }))]} onChange={(v) => set({ kind: v })} />
+            {!draft.id ? <TextField label={t("ui.task.checklist")} kind="multiline" hint={t("office.task.checklistLines")} value={draft.checklist} onChangeText={(v) => set({ checklist: v })} /> : null}
           </>
         ) : null}
       </FormSheet>
@@ -207,18 +207,18 @@ export default function TeamTasks() {
       <Sheet visible={!!menu} title={menu?.title ?? ""} onClose={() => setMenu(null)}>
         {menu ? (
           <>
-            <Row title={t("ui.edit")} onPress={() => openEdit(menu)} />
-            {menu.status === "open" ? <Row title={menu.recurrence === "none" ? t("ui.delete") : t("office.taskCancelRecurring")} tone="danger" onPress={() => { remove.reset(); edit.reset(); setConfirm(menu); setMenu(null); }} /> : null}
+            <Row title={t("ui.common.edit")} onPress={() => openEdit(menu)} />
+            {menu.status === "open" ? <Row title={menu.recurrence === "none" ? t("ui.common.delete") : t("office.task.cancelRecurring")} tone="danger" onPress={() => { remove.reset(); edit.reset(); setConfirm(menu); setMenu(null); }} /> : null}
           </>
         ) : null}
       </Sheet>
-      <Sheet visible={!!confirm} title={t("office.taskDeleteTitle")} onClose={() => setConfirm(null)}>
+      <Sheet visible={!!confirm} title={t("office.task.deleteTitle")} onClose={() => setConfirm(null)}>
         {confirm ? (
           <>
-            <Text style={T.body}>{t("office.taskDeleteBody", { title: confirm.title })}</Text>
+            <Text style={T.body}>{t("office.task.deleteBody", { title: confirm.title })}</Text>
             {remove.error || edit.error ? <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 12 }]}>{remove.error ?? edit.error}</Text> : null}
-            <Button kind="danger" title={t("ui.delete")} loading={remove.pending || edit.pending} onPress={() => void doDelete(confirm)} style={{ marginTop: 16 }} />
-            <Button kind="text" title={t("ui.cancel")} onPress={() => setConfirm(null)} style={{ marginTop: 4 }} />
+            <Button kind="danger" title={t("ui.common.delete")} loading={remove.pending || edit.pending} onPress={() => void doDelete(confirm)} style={{ marginTop: 16 }} />
+            <Button kind="text" title={t("ui.common.cancel")} onPress={() => setConfirm(null)} style={{ marginTop: 4 }} />
           </>
         ) : null}
       </Sheet>

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { get, qs } from "./api";
+import { get, withQs } from "./api";
 import { isPendingDelete } from "./undo";
 import type { Alert, FarmDetail, FarmLine, FarmSummary, Me, Member, PlotSeason, ProblemArea, RecordRow, Season, Task } from "./types";
 
@@ -41,12 +41,12 @@ export const useMembers = (enabled = true) =>
 export const useTasks = (f: { farmId?: string; assigneeId?: string; status?: string } = {}) =>
   useQuery({
     queryKey: ["tasks", f],
-    queryFn: async () => (await get<Task[]>(`/org/tasks${qs(f)}`)).filter((x) => !isPendingDelete(x.id)),
+    queryFn: async () => (await get<Task[]>(withQs("/org/tasks", f))).filter((x) => !isPendingDelete(x.id)),
   });
 export const useAlerts = (f: { farmId?: string; active?: boolean } = {}) =>
   useQuery({
     queryKey: ["alerts", f],
-    queryFn: () => get<Alert[]>(`/org/alerts${qs({ farmId: f.farmId, active: f.active ? 1 : undefined })}`),
+    queryFn: () => get<Alert[]>(withQs("/org/alerts", { farmId: f.farmId, active: f.active ? 1 : undefined })),
   });
 
 export interface RecordFilters {
@@ -59,7 +59,7 @@ export interface RecordFilters {
 }
 export const fetchRecordsPage = (f: RecordFilters, cursor?: { capturedAt: number; id: string } | null, limit = 100) =>
   get<{ rows: RecordRow[]; nextCursor: { capturedAt: number; id: string } | null }>(
-    `/org/records${qs({ ...f, limit, cursorAt: cursor?.capturedAt, cursorId: cursor?.id })}`,
+    withQs("/org/records", { ...f, limit, cursorAt: cursor?.capturedAt, cursorId: cursor?.id }),
   );
 
 /** Todas las páginas (para exportar), con tope. */
@@ -79,7 +79,7 @@ export const useSeasons = (farmId: string, enabled = true) =>
   useQuery({
     enabled,
     queryKey: ["seasons", farmId],
-    queryFn: () => get<{ seasons: Season[]; plotSeasons: PlotSeason[] }>(`/org/seasons${qs({ farmId })}`),
+    queryFn: () => get<{ seasons: Season[]; plotSeasons: PlotSeason[] }>(withQs("/org/seasons", { farmId })),
   });
 
 /** U-24: la guía de primeros pasos se oculta por persona (en el servidor), no por navegador. */

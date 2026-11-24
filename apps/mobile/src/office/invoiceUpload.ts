@@ -13,7 +13,7 @@ export async function uploadInvoicePhoto(kind: PhotoKind, id: string, p: PickedP
   try {
     const { url } = await api<{ url: string }>("POST", `/org/erp/photos/${kind}/${id}/upload-url`);
     const r = await FileSystem.uploadAsync(url, local.photoUri, { httpMethod: "PUT", uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT, headers: { "content-type": "image/webp" } });
-    if (r.status >= 300) throw new Error(t("ui.photoUploadFailed"));
+    if (r.status >= 300) throw new Error(t("ui.photo.uploadFailed"));
     await api("POST", `/org/erp/photos/${kind}/${id}/uploaded`);
   } finally {
     await discardPhoto(local);

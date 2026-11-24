@@ -73,14 +73,14 @@ export function AlertSettingsSection({ open, onToggle }: { open: boolean; onTogg
           className="flex h-12 w-full cursor-pointer items-center gap-1.5 text-left sm:h-10 lg:pointer-events-none"
         >
           <ChevronDown size={18} aria-hidden className={`transition-transform lg:hidden ${open ? "" : "-rotate-90"}`} />
-          {t("ui.alertSettingsTitle")}
+          {t("ui.alert.settingsTitle")}
         </button>
       </h2>
       <div className={hide}>
-        <p className="mt-1 text-sm text-tinta-2">{t("ui.alertSettingsIntro")}</p>
+        <p className="mt-1 text-sm text-tinta-2">{t("ui.alert.settingsIntro")}</p>
         {farms.data.length > 1 && (
           <div className="mt-4">
-            <Field label={t("ui.farm")}>
+            <Field label={t("ui.common.farm")}>
               <Select
                 value={id}
                 onChange={(e) => setFarmId(e.target.value)}
@@ -107,14 +107,14 @@ export function AlertSettingsSection({ open, onToggle }: { open: boolean; onTogg
                 />
               </Field>
             ))}
-            {!canEdit && <p className="text-sm text-tinta-2">{t("ui.alertSettingsOnlyOwner")}</p>}
+            {!canEdit && <p className="text-sm text-tinta-2">{t("ui.alert.settingsOnlyOwner")}</p>}
             {canEdit && (
               <div className="flex flex-wrap items-center gap-3">
                 <Button variant="primary" type="submit" disabled={!valid || save.isPending}>
-                  {t("ui.save")}
+                  {t("ui.common.save")}
                 </Button>
-                <Button onClick={() => setDraft(toDraft(DEFAULT_ALERT_SETTINGS))}>{t("ui.alertSettingsDefaults")}</Button>
-                {saved && <span className="text-sm text-tinta-2">{t("ui.alertSettingsSaved")}</span>}
+                <Button onClick={() => setDraft(toDraft(DEFAULT_ALERT_SETTINGS))}>{t("ui.alert.settingsDefaults")}</Button>
+                {saved && <span className="text-sm text-tinta-2">{t("ui.alert.settingsSaved")}</span>}
               </div>
             )}
             {save.error ? <ErrorBox error={save.error} /> : null}

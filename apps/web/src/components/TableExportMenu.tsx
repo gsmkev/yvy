@@ -9,8 +9,8 @@ export function TableExportMenu({ data, className }: { data: () => TableData; cl
       quiet
       className={className}
       formats={[
-        { label: t("ui.exportFormatExcel"), run: () => tableToExcel(data()) },
-        { label: t("ui.exportFormatCsv"), run: () => tableToCsv(data()) },
+        { label: t("ui.export.formatExcel"), run: () => tableToExcel(data()) },
+        { label: t("ui.export.formatCsv"), run: () => tableToCsv(data()) },
       ]}
     />
   );

@@ -18,14 +18,14 @@ export function DemoNotice() {
       role="status"
       className="flex shrink-0 flex-wrap items-center justify-center gap-x-3 gap-y-0.5 bg-surco px-4 py-1.5 text-meta text-lino print:hidden"
     >
-      <span>{t("ui.publicDemoNotice")}</span>
+      <span>{t("ui.public.demoNotice")}</span>
       <Link
         to="/ingresar"
         search={{ modo: "registro" }}
         onClick={leave}
         className="font-medium text-lino underline underline-offset-4"
       >
-        {t("ui.publicDemoCreate")}
+        {t("ui.public.demoCreate")}
       </Link>
     </div>
   );

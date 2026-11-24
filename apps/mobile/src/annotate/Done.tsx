@@ -20,8 +20,8 @@ export function Done({ plot, kind, values }: { plot: Plot | null; kind: RecordKi
       <ScreenBody
         footer={
           <>
-            <Button big title={t("app.annotateAgain")} onPress={() => router.replace({ pathname: "/annotate", params: plot ? { plotId: plot.id } : {} })} />
-            <Button kind="secondary" title={t("app.backToToday")} onPress={() => router.replace("/(tabs)")} />
+            <Button big title={t("app.annotate.again")} onPress={() => router.replace({ pathname: "/annotate", params: plot ? { plotId: plot.id } : {} })} />
+            <Button kind="secondary" title={t("app.common.backToToday")} onPress={() => router.replace("/(tabs)")} />
           </>
         }
       >
@@ -29,10 +29,10 @@ export function Done({ plot, kind, values }: { plot: Plot | null; kind: RecordKi
           <View style={st.doneMark}>
             <Check size={36} color={C.blanco} strokeWidth={3} />
           </View>
-          <Text style={[T.title, { marginTop: 24 }]}>{plot ? t("app.savedTitle", { plot: plot.name }) : t(`recordKinds.${kind}`)}</Text>
+          <Text style={[T.title, { marginTop: 24 }]}>{plot ? t("app.saved.title", { plot: plot.name }) : t(`record-kinds.kind.${kind}`)}</Text>
           <Text style={[T.body, { marginTop: 8 }]}>{describeRecord(kind, values)}</Text>
-          {kind === "rain" && rain > 0 && <Text style={[T.heading, { marginTop: 20, color: C.accionOscuro }]}>{t("app.rainMonth", { mm: Math.round(rain) })}</Text>}
-          <Text style={[T.small, { marginTop: 20 }]}>{offline ? t("app.savedOffline") : t("app.savedOnline")}</Text>
+          {kind === "rain" && rain > 0 && <Text style={[T.heading, { marginTop: 20, color: C.accionOscuro }]}>{t("app.rain.month", { mm: Math.round(rain) })}</Text>}
+          <Text style={[T.small, { marginTop: 20 }]}>{offline ? t("app.saved.offline") : t("app.saved.online")}</Text>
         </View>
       </ScreenBody>
     </View>

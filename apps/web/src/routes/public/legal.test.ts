@@ -6,7 +6,7 @@ describe("textos legales", () => {
     for (const prefix of ["terms", "privacy"]) {
       for (let n = 1; n <= 9; n++) {
         for (const part of ["Title", "Text"]) {
-          const key = `ui.${prefix}S${n}${part}`;
+          const key = `ui.${prefix}.s${n}${part}`;
           expect(tk(key), key).not.toBe(key);
         }
       }

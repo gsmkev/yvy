@@ -24,7 +24,7 @@ export default function TaskChecklist() {
     return (
       <View style={[k.screen, k.pad]}>
         <Stack.Screen options={{ title: "" }} />
-        <Text style={T.heading}>{t("app.taskGone")}</Text>
+        <Text style={T.heading}>{t("app.task.gone")}</Text>
       </View>
     );
   const list = parseChecklist(task.checklist);
@@ -54,8 +54,8 @@ export default function TaskChecklist() {
               big
               title={
                 task.kind
-                  ? t("app.taskAnnotate", { kind: t(`recordKinds.${task.kind}`).toLowerCase() })
-                  : t("app.taskFinish")
+                  ? t("app.task.annotate", { kind: t(`record-kinds.kind.${task.kind}`).toLowerCase() })
+                  : t("app.task.finish")
               }
               onPress={finish}
             />
@@ -64,7 +64,7 @@ export default function TaskChecklist() {
       >
         <Text style={T.title}>{task.title}</Text>
         {list.length > 0 && (
-          <Text style={[T.small, { marginTop: 6 }]}>{t("app.checklistProgress", { done, total })}</Text>
+          <Text style={[T.small, { marginTop: 6 }]}>{t("app.common.checklistProgress", { done, total })}</Text>
         )}
         {list.length > 0 && (
           <View style={{ marginTop: 12 }}>
@@ -84,7 +84,7 @@ export default function TaskChecklist() {
             ))}
           </View>
         )}
-        <SectionHeader title={t("ui.taskComments")} />
+        <SectionHeader title={t("ui.task.comments")} />
         {comments.map((c) => (
           <View key={c.id} style={{ marginTop: 8 }}>
             <Text style={T.small}>{c.name}</Text>
@@ -94,15 +94,15 @@ export default function TaskChecklist() {
         <TextInput
           value={draft}
           onChangeText={setDraft}
-          placeholder={t("ui.taskCommentPlaceholder")}
-          accessibilityLabel={t("ui.taskComments")}
+          placeholder={t("ui.task.commentPlaceholder")}
+          accessibilityLabel={t("ui.task.comments")}
           multiline
           maxLength={LIMITS.tasks.maxCommentLength}
           style={st.input}
         />
         <Button
           kind="secondary"
-          title={t("ui.taskCommentSend")}
+          title={t("ui.task.commentSend")}
           disabled={!draft.trim() || !session || comments.length >= LIMITS.tasks.maxComments}
           onPress={() => {
             if (!session) return;

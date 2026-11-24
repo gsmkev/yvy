@@ -55,7 +55,7 @@ export function FarmDialogs({
             edit.setSplitting(null);
             onSelect(null);
             refreshFarm();
-            toast(t("ui.splitDone"));
+            toast(t("ui.split.done"));
           }}
         />
       )}
@@ -72,7 +72,7 @@ export function FarmDialogs({
             edit.setMergeFrom(null);
             onSelect(null);
             refreshFarm();
-            toast(t("ui.mergeDone"));
+            toast(t("ui.merge.done"));
           }}
         />
       )}

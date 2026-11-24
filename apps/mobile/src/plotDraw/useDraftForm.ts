@@ -6,9 +6,10 @@ import type { V } from "../lib/plotDraft";
 
 /** Nombre, tipo y cultivo del lote; al editar se cargan del lote (que llega de la base local un instante después de abrir). */
 export function useDraftForm(editing: Plot | undefined, initial: V[] | null, setVs: (vs: V[]) => void, camera: RefObject<CameraRef | null>) {
-  const [name, setName] = useState(editing?.name ?? "");
-  const [kind, setKind] = useState<(typeof PLOT_KINDS)[number]>(editing?.kind ?? "crop");
-  const [crop, setCrop] = useState<(typeof CROPS)[number] | null>(editing?.crop ?? null);
+  const start = { name: editing?.name ?? "", kind: editing?.kind ?? "crop", crop: editing?.crop ?? null };
+  const [name, setName] = useState(start.name);
+  const [kind, setKind] = useState<(typeof PLOT_KINDS)[number]>(start.kind);
+  const [crop, setCrop] = useState<(typeof CROPS)[number] | null>(start.crop);
   const seeded = useRef(false);
   useEffect(() => {
     if (editing && !seeded.current) {

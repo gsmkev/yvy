@@ -3,7 +3,7 @@
  * cada corrida usa 2 subrequests. Email con tope diario (Resend gratis: 100/día).
  */
 import { and, asc, eq, gte, inArray, isNotNull, sql } from "drizzle-orm";
-import { inQuietHours, localTime, parseNotificationPrefs, t } from "@yvy/shared";
+import { inQuietHours, localTime, parseNotificationPrefs, t, ATTRIBUTION } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { chunkForParams, runBatch, type DB, type Stmt } from "../db/client";
 import type { Bindings } from "../types";
@@ -200,7 +200,7 @@ async function emailAlerts<P extends AlertNotice>(
         from: env.EMAIL_FROM,
         to: e.email,
         subject: `Yvy · ${text.title(e)}`,
-        text: `${text.body(e)}\n\n${t("attribution.metNorway")}`,
+        text: `${text.body(e)}\n\n${t(ATTRIBUTION.metNorway)}`,
       })),
     ),
   });
@@ -271,7 +271,7 @@ export async function sendMentions(
     .orderBy(asc(s.notifications.createdAt))
     .limit(BATCH);
   if (!pending.length) return { push: 0, email: 0 };
-  const title = (p: (typeof pending)[number]) => t("ui.mentionTitle", { name: p.author || "Alguien" });
+  const title = (p: (typeof pending)[number]) => t("ui.common.mentionTitle", { name: p.author || "Alguien" });
   const sent: string[] = [];
   const failed: string[] = [];
 

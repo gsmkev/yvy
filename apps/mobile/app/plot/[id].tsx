@@ -25,7 +25,7 @@ export default function PlotSheet() {
       <View style={k.screen}>
         <Stack.Screen options={{ title: "" }} />
         <ScreenBody>
-          <Text style={T.heading}>{t("app.plotGone")}</Text>
+          <Text style={T.heading}>{t("app.plot.gone")}</Text>
         </ScreenBody>
       </View>
     );

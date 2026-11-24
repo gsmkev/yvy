@@ -109,17 +109,19 @@ export function FarmMapPane(p: FarmMapPaneProps) {
         <CompareOverlay
           pct={scene.curtain}
           onPct={scene.setCurtain}
-          camera={scene.camera}
-          onCamera={scene.setCamera}
-          mapProps={{
-            outline: d.farm.geometry,
-            layers: d.layers,
-            layerIds: { ...pickedIds, [kind]: compare.right },
-            tilesBaseUrl: me?.tilesBaseUrl,
-            showNdvi: layer === "ndvi",
-            indexKind: shownIndex,
-            bounds: p.bounds,
-          }}
+          map={
+            <FarmMap
+              outline={d.farm.geometry}
+              layers={d.layers}
+              layerIds={{ ...pickedIds, [kind]: compare.right }}
+              tilesBaseUrl={me?.tilesBaseUrl}
+              showNdvi={layer === "ndvi"}
+              indexKind={shownIndex}
+              bounds={p.bounds}
+              camera={scene.camera}
+              onCamera={scene.setCamera}
+            />
+          }
         />
       )}
       <MapToolbar

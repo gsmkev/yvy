@@ -74,13 +74,13 @@ export function emergencyText(
   tzOffsetMinutes?: number,
 ): string {
   const when = whenText(at, tzOffsetMinutes);
-  const who = name.trim() || t("app.emergencyWhoFallback");
-  if (!fix) return t("app.emergencySmsNoFix", { name: who, when });
+  const who = name.trim() || t("app.emergency.whoFallback");
+  if (!fix) return t("app.emergency.smsNoFix", { name: who, when });
   const accuracy =
     fix.accuracy !== null && Number.isFinite(fix.accuracy) && fix.accuracy > 0
-      ? t("app.emergencySmsAccuracy", { m: Math.round(fix.accuracy) })
-      : t("app.emergencySmsNoAccuracy");
-  return t("app.emergencySms", {
+      ? t("app.emergency.smsAccuracy", { m: Math.round(fix.accuracy) })
+      : t("app.emergency.smsNoAccuracy");
+  return t("app.emergency.sms", {
     name: who,
     coords: coordsText(fix),
     accuracy,

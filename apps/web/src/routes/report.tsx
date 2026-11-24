@@ -14,10 +14,10 @@ import { ReportCharts, ReportHighlights, ReportStats } from "./report/ReportSumm
 import { useReportData } from "./report/useReportData";
 
 const columns: Column<RecordRow>[] = [
-  { id: "at", header: t("ui.capturedAt"), cell: (r) => fmtDateTime(r.capturedAt), width: "9rem" },
-  { id: "kind", header: t("ui.kind"), cell: (r) => tk(`recordKinds.${r.kind}`) },
-  { id: "plot", header: t("ui.plot"), cell: (r) => r.plotName ?? "—", hideBelow: "sm" },
-  { id: "author", header: t("ui.author"), cell: (r) => r.authorName ?? "—", hideBelow: "md" },
+  { id: "at", header: t("ui.common.capturedAt"), cell: (r) => fmtDateTime(r.capturedAt), width: "9rem" },
+  { id: "kind", header: t("ui.common.kind"), cell: (r) => tk(`record-kinds.kind.${r.kind}`) },
+  { id: "plot", header: t("ui.common.plot"), cell: (r) => r.plotName ?? "—", hideBelow: "sm" },
+  { id: "author", header: t("ui.common.author"), cell: (r) => r.authorName ?? "—", hideBelow: "md" },
   { id: "data", header: "", cell: (r) => <span className="text-tinta-2">{describeData(r.kind, r.data)}</span>, hideBelow: "lg" },
 ];
 
@@ -76,20 +76,20 @@ export function ReportPage() {
   return (
     <Page
       width="data"
-      back={{ to: `/estancias/${farmId}/informes`, label: t("ui.reportsBack") }}
-      title={t("ui.reportTitle")}
+      back={{ to: `/estancias/${farmId}/informes`, label: t("ui.reports.back") }}
+      title={t("ui.report.title")}
       primary={
-        <Button variant="primary" onClick={generate} disabled={busy} aria-label={t("ui.downloadPdf")}>
-          <span className="sm:hidden">PDF</span>
-          <span className="hidden sm:inline">{t("ui.downloadPdf")}</span>
+        <Button variant="primary" onClick={generate} disabled={busy} aria-label={t("ui.download.pdf")}>
+          <span className="sm:hidden">{t("ui.reports.pdf")}</span>
+          <span className="hidden sm:inline">{t("ui.download.pdf")}</span>
         </Button>
       }
       menu={
         <ActionMenu
-          label={t("ui.reportShare")}
+          label={t("ui.report.share")}
           items={[
-            { label: t("ui.shareWhatsapp"), onSelect: () => window.open(whatsappUrl(shareText), "_blank", "noopener") },
-            me.data?.role === "owner" && { label: t("ui.shareLinkTitle"), onSelect: () => setSharing(true) },
+            { label: t("ui.share.whatsapp"), onSelect: () => window.open(whatsappUrl(shareText), "_blank", "noopener") },
+            me.data?.role === "owner" && { label: t("ui.share.linkTitle"), onSelect: () => setSharing(true) },
           ]}
         />
       }
@@ -97,19 +97,19 @@ export function ReportPage() {
     >
       <p className="-mt-3 text-sm text-tinta-2">{farm.data.farm.name}</p>
       <FilterBar>
-        <Field label={t("ui.from")}>
+        <Field label={t("ui.common.from")}>
           <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
         </Field>
-        <Field label={t("ui.to")}>
+        <Field label={t("ui.common.to")}>
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
         </Field>
-        {quick(t("ui.reportThisWeek"), thisMonday, today)}
-        {quick(t("ui.reportLastWeek"), addDays(thisMonday, -7), addDays(thisMonday, -1))}
+        {quick(t("ui.report.thisWeek"), thisMonday, today)}
+        {quick(t("ui.report.lastWeek"), addDays(thisMonday, -7), addDays(thisMonday, -1))}
       </FilterBar>
       {error ? <ErrorBox error={error} /> : null}
       <ReportStats d={d} />
       {rows.length === 0 && weekRain === null && periodAlerts.length === 0 && (
-        <EmptyState title={t("ui.reportNoRecords")}>{t("ui.reportNoRecordsHint")}</EmptyState>
+        <EmptyState title={t("ui.report.noRecords")}>{t("ui.report.noRecordsHint")}</EmptyState>
       )}
       <ReportCharts d={d} />
       {d.highlights.length > 0 && (

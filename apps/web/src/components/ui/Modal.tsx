@@ -76,7 +76,7 @@ export function Modal({
             {title}
           </h2>
           <button
-            aria-label={t("ui.close")}
+            aria-label={t("ui.common.close")}
             className="cursor-pointer rounded p-1.5 text-tinta-2 hover:bg-surco/5 hover:text-surco"
             onClick={onClose}
           >
@@ -120,7 +120,7 @@ export function ConfirmModal({
           {confirmLabel}
         </Button>
         <Button variant="quiet" onClick={onClose}>
-          {t("ui.cancel")}
+          {t("ui.common.cancel")}
         </Button>
       </div>
     </Modal>

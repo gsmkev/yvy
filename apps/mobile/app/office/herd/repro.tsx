@@ -20,28 +20,28 @@ export default function Repro() {
   const from = Math.floor(Date.now() / DAY) * DAY - Number(days) * DAY;
   const q = useOnline<ReproductionResponse>(farm ? `/org/farms/${farm.id}/reproduction?from=${from}` : null);
   return (
-    <FarmFrame title={t("ui.herdSectionRepro")} farms={farms} farm={farm} setFarmId={setFarmId} query={q}>
+    <FarmFrame title={t("ui.herd.sectionRepro")} farms={farms} farm={farm} setFarmId={setFarmId} query={q}>
       <FilterChips
         value={days}
         onChange={setDays}
         options={[
-          { value: "180", label: t("ui.suppDays", { n: 180 }) },
-          { value: "365", label: t("ui.reproYear") },
-          { value: "730", label: t("ui.reproTwoYears") },
+          { value: "180", label: t("ui.supp.days", { n: 180 }) },
+          { value: "365", label: t("ui.repro.year") },
+          { value: "730", label: t("ui.repro.twoYears") },
         ]}
       />
-      <OnlineState query={q} isEmpty={(d) => d.rows.length === 0} empty={{ title: t("ui.reproNone"), hint: t("ui.reproNoneHint") }}>
+      <OnlineState query={q} isEmpty={(d) => d.rows.length === 0} empty={{ title: t("ui.repro.none"), hint: t("ui.repro.noneHint") }}>
         {(d) => {
           const i = d.indices;
           const stats: StatItem[] = [
-            ...(pct(i.pregnancyPct) ? [{ label: t("ui.reproPregnancy"), value: pct(i.pregnancyPct)! }] : []),
-            ...(pct(i.calvingPct) ? [{ label: t("ui.reproCalving"), value: pct(i.calvingPct)! }] : []),
-            ...(pct(i.weaningPct) ? [{ label: t("ui.reproWeaning"), value: pct(i.weaningPct)! }] : []),
+            ...(pct(i.pregnancyPct) ? [{ label: t("ui.repro.pregnancy"), value: pct(i.pregnancyPct)! }] : []),
+            ...(pct(i.calvingPct) ? [{ label: t("ui.repro.calving"), value: pct(i.calvingPct)! }] : []),
+            ...(pct(i.weaningPct) ? [{ label: t("ui.repro.weaning"), value: pct(i.weaningPct)! }] : []),
           ];
           const notes = [
-            i.pregnancyPct !== null ? t("ui.reproPregnancyHint", { p: i.pregnant, c: i.checked }) : null,
-            i.calvingPct !== null ? t("ui.reproCalvingHint", { b: i.calvesBorn, s: i.services }) : null,
-            i.weaningPct !== null ? t("ui.reproWeaningHint", { w: i.weaned, b: i.calvesBorn }) : null,
+            i.pregnancyPct !== null ? t("ui.repro.pregnancyHint", { p: i.pregnant, c: i.checked }) : null,
+            i.calvingPct !== null ? t("ui.repro.calvingHint", { b: i.calvesBorn, s: i.services }) : null,
+            i.weaningPct !== null ? t("ui.repro.weaningHint", { w: i.weaned, b: i.calvesBorn }) : null,
           ].filter(Boolean) as string[];
           return (
             <View>
@@ -53,27 +53,27 @@ export default function Repro() {
                   </Text>
                 ))}
               </View>
-              {d.truncated && <Text style={[T.small, { marginTop: 8 }]}>{t("ui.herdTruncated")}</Text>}
-              <SectionHeader title={t("ui.reproDetail")} />
+              {d.truncated && <Text style={[T.small, { marginTop: 8 }]}>{t("ui.herd.truncated")}</Text>}
+              <SectionHeader title={t("ui.repro.detail")} />
               <DataList
                 rows={d.rows}
                 keyOf={(r) => r.id}
-                title={(r) => `${t(`fields.reproEvent_${r.event}` as MessageKey)}${r.plotName ? ` · ${r.plotName}` : ""}`}
+                title={(r) => `${t(`fields.repro.event_${r.event}` as MessageKey)}${r.plotName ? ` · ${r.plotName}` : ""}`}
                 subtitle={(r) =>
                   [
                     fmtDate(r.capturedAt),
-                    r.method ? t(`fields.reproMethod_${r.method}` as MessageKey) : null,
-                    r.pregnant !== null ? t("fields.reproPregnantValue", { n: r.pregnant }) : null,
-                    r.calves !== null ? t("fields.reproCalvesValue", { n: r.calves }) : null,
-                    r.tag ? t("fields.tagValue", { n: r.tag }) : null,
+                    r.method ? t(`fields.repro.method_${r.method}` as MessageKey) : null,
+                    r.pregnant !== null ? t("fields.repro.pregnantValue", { n: r.pregnant }) : null,
+                    r.calves !== null ? t("fields.repro.calvesValue", { n: r.calves }) : null,
+                    r.tag ? t("fields.common.tagValue", { n: r.tag }) : null,
                   ]
                     .filter(Boolean)
                     .join(" · ")
                 }
-                right={(r) => t("fields.herdTotalValue", { n: r.head })}
-                empty={{ title: t("ui.reproNone") }}
+                right={(r) => t("fields.herd.totalValue", { n: r.head })}
+                empty={{ title: t("ui.repro.none") }}
               />
-              <Text style={[T.small, { marginTop: 16 }]}>{t("ui.reproHint")}</Text>
+              <Text style={[T.small, { marginTop: 16 }]}>{t("ui.repro.hint")}</Text>
             </View>
           );
         }}

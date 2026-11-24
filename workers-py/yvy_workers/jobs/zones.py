@@ -16,6 +16,7 @@ from datetime import date, datetime, timezone
 from typing import Any
 
 import numpy as np
+import shapely
 from rasterio.features import geometry_mask, shapes
 from shapely.geometry import MultiPolygon, Polygon, mapping, shape
 from shapely.geometry.base import BaseGeometry
@@ -123,7 +124,7 @@ def zone_polygons(labels: np.ndarray, ndvi_mean: np.ndarray, transform: Any, crs
             continue
         parts.sort(key=lambda p: -p[0])
         merged = unary_union([p for _, p in parts[:MAX_PARTS]]).simplify(SIMPLIFY_M)
-        if merged.is_empty:
+        if shapely.is_empty(merged):
             continue
         if merged.geom_type == "Polygon":
             merged = MultiPolygon([merged])

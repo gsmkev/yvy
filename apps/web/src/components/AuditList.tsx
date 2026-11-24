@@ -16,12 +16,12 @@ export interface AuditEntryRow {
 /** Lista de cambios para el dueño (K-06) y para el panel interno. */
 export function AuditList({ rows }: { rows: AuditEntryRow[] }) {
   const columns: Column<AuditEntryRow>[] = [
-    { id: "when", header: t("ui.auditColWhen"), cell: (r) => <span className="num whitespace-nowrap text-tinta-2">{fmtDateTime(r.createdAt)}</span> },
-    { id: "actor", header: t("ui.auditColActor"), cell: (r) => r.actor ?? "—" },
-    { id: "action", header: t("ui.auditColAction"), cell: (r) => <span className="font-normal">{tk(`ui.internalAudit_${r.action}`)}</span> },
+    { id: "when", header: t("ui.audit.colWhen"), cell: (r) => <span className="num whitespace-nowrap text-tinta-2">{fmtDateTime(r.createdAt)}</span> },
+    { id: "actor", header: t("ui.audit.colActor"), cell: (r) => r.actor ?? "—" },
+    { id: "action", header: t("ui.audit.colAction"), cell: (r) => <span className="font-normal">{tk(`ui.internal.audit_${r.action}`)}</span> },
     {
       id: "detail",
-      header: t("ui.auditColDetail"),
+      header: t("ui.audit.colDetail"),
       hideBelow: "md",
       cell: (r) => {
         const summary = auditSummary(r.detail);
@@ -33,5 +33,5 @@ export function AuditList({ rows }: { rows: AuditEntryRow[] }) {
       },
     },
   ];
-  return <DataTable columns={columns} rows={rows} rowKey={(r) => r.id} caption={t("ui.auditTitle")} />;
+  return <DataTable columns={columns} rows={rows} rowKey={(r) => r.id} caption={t("ui.audit.title")} />;
 }

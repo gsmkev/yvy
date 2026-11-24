@@ -25,43 +25,43 @@ export function StatusPage() {
   return (
     <PublicShell>
       <div className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6">
-        <h1 className="text-title leading-tight">{t("ui.statusTitle")}</h1>
+        <h1 className="text-title leading-tight">{t("ui.status.title")}</h1>
         {q.isError && (
           <p role="alert" className="mt-4 border-l-2 border-alerta pl-3">
-            {t("ui.statusLoadError")}
+            {t("ui.status.loadError")}
           </p>
         )}
         {s && (
           <>
             <p role="status" className={`mt-3 text-lg ${tone(s.overall === "ok")}`}>
-              {tk(`ui.statusOverall_${s.overall}`)}
+              {tk(`ui.status.overall_${s.overall}`)}
             </p>
-            <p className="mt-1 text-sm text-tinta-2">{t("ui.statusChecked", { date: fmtDateTime(s.checkedAt) })}</p>
+            <p className="mt-1 text-sm text-tinta-2">{t("ui.status.checked", { date: fmtDateTime(s.checkedAt) })}</p>
 
-            <h2 className="mt-10 text-section font-semibold">{t("ui.statusServicesTitle")}</h2>
+            <h2 className="mt-10 text-section font-semibold">{t("ui.status.servicesTitle")}</h2>
             <ul className="mt-2 divide-y divide-linea border-y border-linea">
               {s.services.map((x) => (
                 <li key={x.id} className="flex justify-between gap-4 py-3">
-                  <span>{tk(`ui.statusService_${x.id}`)}</span>
-                  <span className={tone(x.ok)}>{t(x.ok ? "ui.statusUp" : "ui.statusDown")}</span>
+                  <span>{tk(`ui.status.service_${x.id}`)}</span>
+                  <span className={tone(x.ok)}>{t(x.ok ? "ui.status.up" : "ui.status.down")}</span>
                 </li>
               ))}
             </ul>
 
-            <h2 className="mt-10 text-section font-semibold">{t("ui.statusJobsTitle")}</h2>
-            <p className="mt-2 text-tinta-2">{t("ui.statusJobsIntro")}</p>
+            <h2 className="mt-10 text-section font-semibold">{t("ui.status.jobsTitle")}</h2>
+            <p className="mt-2 text-tinta-2">{t("ui.status.jobsIntro")}</p>
             <ul className="mt-2 divide-y divide-linea border-y border-linea">
               {s.jobs.map((j) => (
                 <li key={j.id} className="py-3">
                   <div className="flex justify-between gap-4">
-                    <span>{tk(`ui.statusJob_${j.id}`)}</span>
+                    <span>{tk(`ui.status.job_${j.id}`)}</span>
                     <span className={j.state === "ok" ? "text-soja" : j.state === "none" ? "text-tinta-2" : "text-peligro"}>
-                      {tk(`ui.statusJobState_${j.state}`)}
+                      {tk(`ui.status.jobState_${j.state}`)}
                     </span>
                   </div>
-                  {j.lastOkAt && <p className="mt-0.5 text-sm text-tinta-2">{t("ui.statusLastOk", { date: fmtDateTime(j.lastOkAt) })}</p>}
+                  {j.lastOkAt && <p className="mt-0.5 text-sm text-tinta-2">{t("ui.status.lastOk", { date: fmtDateTime(j.lastOkAt) })}</p>}
                   {j.state === "failing" && j.lastFailAt && (
-                    <p className="mt-0.5 text-sm text-tinta-2">{t("ui.statusLastFail", { date: fmtDateTime(j.lastFailAt) })}</p>
+                    <p className="mt-0.5 text-sm text-tinta-2">{t("ui.status.lastFail", { date: fmtDateTime(j.lastFailAt) })}</p>
                   )}
                 </li>
               ))}

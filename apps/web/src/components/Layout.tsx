@@ -36,15 +36,15 @@ function Banners({ support, orgName, offline }: { support: boolean; orgName: str
     <>
       {support && (
         <p role="status" className="shrink-0 border-b border-trigo/40 bg-trigo/15 px-4 py-1.5 print:hidden text-center text-sm text-surco">
-          {t("ui.supportBanner", { name: orgName ?? "" })}{" "}
+          {t("ui.support.banner", { name: orgName ?? "" })}{" "}
           <button className="cursor-pointer font-medium underline underline-offset-4" onClick={exitSupport}>
-            {t("ui.supportExit")}
+            {t("ui.support.exit")}
           </button>
         </p>
       )}
       {offline && (
         <p role="status" className="shrink-0 border-b border-trigo/40 bg-trigo/15 px-4 py-1 text-center text-xs text-surco">
-          {t("ui.offlineBanner")}
+          {t("ui.common.offlineBanner")}
         </p>
       )}
     </>
@@ -73,7 +73,7 @@ export function Layout() {
   const account = (
     <AccountMenu
       name={me.data?.organization.name}
-      sub={trial ? t("ui.trialEnds", { date: fmtDate(trial) }) : me.data?.user.fullName}
+      sub={trial ? t("ui.common.trialEnds", { date: fmtDate(trial) }) : me.data?.user.fullName}
       onLogout={logout}
     />
   );
@@ -91,7 +91,7 @@ export function Layout() {
         }}
         className="sr-only print:hidden focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[70] focus:rounded-md focus:bg-surco focus:px-3 focus:py-2 focus:text-sm focus:text-lino"
       >
-        {t("ui.skipToContent")}
+        {t("ui.common.skipToContent")}
       </a>
       {desktop && (
         <Sidebar hidden={sideHidden} onHidden={setSideHidden} nav={nav} searchRef={searchRef} renderLink={linkWith(sideCls)} account={account} />
@@ -101,7 +101,7 @@ export function Layout() {
         <main id="main" tabIndex={-1} className="min-h-0 min-w-0 flex-1 overflow-auto outline-none print:overflow-visible">
           {mfaGate ? (
             <Page width="read">
-              <h1 className="text-title leading-tight">{t("ui.totpSetupGateTitle")}</h1>
+              <h1 className="text-title leading-tight">{t("ui.totp.setupGateTitle")}</h1>
               <TotpSection forced />
             </Page>
           ) : (
@@ -111,7 +111,7 @@ export function Layout() {
       </div>
       {!desktop && (
         <>
-          <nav aria-label={t("ui.navMain")} className="flex shrink-0 border-t border-linea bg-lino pb-[env(safe-area-inset-bottom)] print:hidden">
+          <nav aria-label={t("ui.nav.main")} className="flex shrink-0 border-t border-linea bg-lino pb-[env(safe-area-inset-bottom)] print:hidden">
             {MOBILE_TABS.map((to) => {
               const n = nav.main.flatMap((g) => g.items).find((i) => i.to === to);
               return n ? linkWith(tabCls, true)(n) : null;
@@ -124,7 +124,7 @@ export function Layout() {
               className={`${tabCls(sheet || onReports)} cursor-pointer`}
             >
               <Ellipsis size={22} strokeWidth={1.75} aria-hidden />
-              {t("ui.navMore")}
+              {t("ui.nav.more")}
             </button>
           </nav>
           {sheet && (

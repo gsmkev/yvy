@@ -41,11 +41,11 @@ const daysFrom = (today: string, iso: string) => dayNum(iso) - dayNum(today);
 /** Fecha límite en palabras cuando importa la urgencia; lejos, la fecha dd/mm/aaaa. */
 export function dueLabel(iso: string, today: string, overdue = false): string {
   const n = daysFrom(today, iso);
-  if (n === 0) return overdue ? t("ui.dueLateToday") : t("ui.dueToday");
-  if (n === 1) return t("ui.dueTomorrow");
-  if (n === -1) return t("ui.dueYesterday");
-  if (n < 0) return t("ui.dueLateDays", { n: -n });
-  if (n <= 6) return t("ui.dueInDays", { n });
+  if (n === 0) return overdue ? t("ui.due.lateToday") : t("ui.due.today");
+  if (n === 1) return t("ui.due.tomorrow");
+  if (n === -1) return t("ui.due.yesterday");
+  if (n < 0) return t("ui.due.lateDays", { n: -n });
+  if (n <= 6) return t("ui.due.inDays", { n });
   const [y, m, d] = iso.split("-");
   return `${d}/${m}/${y}`;
 }

@@ -11,23 +11,23 @@ const EXAMPLE = "R2";
 export default function Fenologia() {
   return (
     <Lab
-      title={t("app.labsStageTitle")}
-      intro={t("app.labsStageIntro")}
+      title={t("app.labs.stageTitle")}
+      intro={t("app.labs.stageIntro")}
       art={<SoyStageIllustration />}
       result={
         <>
-          <Text style={T.display}>{t("app.labsStageValue")}</Text>
-          <Fact label={t("app.labsStageCrop")} value={t("app.labsStageCropValue")} />
-          <Text style={[T.small, { marginTop: 16 }]}>{t("app.labsStageScale")}</Text>
-          <View style={st.scale} accessibilityLabel={`${t("app.labsStageScale")}: ${t("app.labsStageValue")}`}>
+          <Text style={T.display}>{t("app.labs.stageValue")}</Text>
+          <Fact label={t("app.labs.stageCrop")} value={t("app.labs.stageCropValue")} />
+          <Text style={[T.small, { marginTop: 16 }]}>{t("app.labs.stageScale")}</Text>
+          <View style={st.scale} accessibilityLabel={`${t("app.labs.stageScale")}: ${t("app.labs.stageValue")}`}>
             {STAGES.map((s) => (
               <View key={s} style={[st.step, { backgroundColor: s === EXAMPLE ? C.accion : C.linea }]}>
                 <Text style={[T.small, { color: s === EXAMPLE ? C.lino : C.tinta2 }]}>{s}</Text>
               </View>
             ))}
           </View>
-          <Fact label={t("app.labsConfidence")} value={t("app.labsConfidenceMedium")} />
-          <Text style={[T.body, { marginTop: 16 }]}>{t("app.labsStageNext")}</Text>
+          <Fact label={t("app.labs.confidence")} value={t("app.labs.confidenceMedium")} />
+          <Text style={[T.body, { marginTop: 16 }]}>{t("app.labs.stageNext")}</Text>
         </>
       }
     />

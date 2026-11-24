@@ -24,14 +24,14 @@ export function TrialRequests() {
     mutationFn: (id: string) => post(`/admin/trial-requests/${id}/contacted`, {}),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-trial-requests"] });
-      toast(t("ui.internalTrialMarked"));
+      toast(t("ui.internal.trialMarked"));
     },
   });
   if (!q.data) return null;
   return (
     <section>
-      <SectionHead title={t("ui.internalTrialRequests")} />
-      {!q.data.length && <EmptyState compact title={t("ui.internalTrialRequestsNone")} />}
+      <SectionHead title={t("ui.internal.trialRequests")} />
+      {!q.data.length && <EmptyState compact title={t("ui.internal.trialRequestsNone")} />}
       {done.error && <ErrorBox error={done.error} />}
       <ul className="mt-2 divide-y divide-linea">
         {q.data.map((r) => (
@@ -49,7 +49,7 @@ export function TrialRequests() {
                 {[
                   r.crops.join(", "),
                   r.hectares !== null ? fmtHa(r.hectares) : null,
-                  r.employees !== null ? t("ui.internalTrialEmployees", { n: fmtNum(r.employees) }) : null,
+                  r.employees !== null ? t("ui.internal.trialEmployees", { n: fmtNum(r.employees) }) : null,
                   r.department,
                   fmtDateTime(r.createdAt),
                 ]
@@ -58,7 +58,7 @@ export function TrialRequests() {
               </p>
             </div>
             <Button disabled={done.isPending} onClick={() => done.mutate(r.id)}>
-              {t("ui.internalTrialContacted")}
+              {t("ui.internal.trialContacted")}
             </Button>
           </li>
         ))}

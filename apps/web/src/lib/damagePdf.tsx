@@ -1,6 +1,6 @@
 /** Informe de daños para el seguro agrícola en PDF (C-09), con los estilos del parte semanal. Evidencia, no un peritaje. */
 import { Document, Image, Page, Path, Svg, Text, View } from "@react-pdf/renderer";
-import { BRAND } from "@yvy/shared";
+import { BRAND, ATTRIBUTION } from "@yvy/shared";
 import { damageSatellite, type DamageCause, type DamageEvidence, type NdviPass } from "./damageData";
 import { describeData } from "./exports";
 import { fmtDate, fmtDateTime, fmtHa, fmtIsoDate, fmtNdvi, fmtNum } from "./format";
@@ -64,7 +64,7 @@ function NdviLine({ series, eventMs, width = 270, height = 120 }: { series: Ndvi
 
 const Footer = () => (
   <View style={s.footer} fixed>
-    <Text>{t("ui.damageFooter")}</Text>
+    <Text>{t("ui.damage.footer")}</Text>
     <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
   </View>
 );
@@ -75,70 +75,72 @@ export function DamageReport(d: DamageReportData) {
   const gps = d.evidence.records.filter((r) => r.lon !== null && r.lat !== null).map((r) => ({ lon: r.lon!, lat: r.lat! }));
   const pass = (p: NdviPass | null) => (p ? `${fmtNdvi(p.mean)} · ${fmtDate(p.acquiredAt)}` : "—");
   return (
-    <Document title={`${t("ui.damageTitle")} · ${d.plot.name}`} author="Yvy" language="es-PY">
+    <Document title={`${t("ui.damage.title")} · ${d.plot.name}`} author="Yvy" language="es-PY">
       <Page size="A4" style={s.page}>
         <Text style={s.h1}>
-          {t("ui.damageTitle")} · {d.plot.name}
+          {t("ui.damage.title")} · {d.plot.name}
         </Text>
         <Text style={s.muted}>
           {d.farm.name}
-          {[d.farm.department, d.farm.district].filter(Boolean).length ? ` · ${[d.farm.department, d.farm.district].filter(Boolean).join(", ")}` : ""} ·{" "}
-          {fmtHa(d.plot.areaHa)} · {d.plot.crop ? tk(`fields.crop_${d.plot.crop}`) : t("ui.crop")}
-          {d.plot.sowingDate ? ` · ${t("ui.rotationSown", { date: fmtIsoDate(d.plot.sowingDate) })}` : ""}
+          {[d.farm.department, d.farm.district].filter(Boolean).length
+            ? ` · ${[d.farm.department, d.farm.district].filter(Boolean).join(", ")}`
+            : ""}{" "}
+          · {fmtHa(d.plot.areaHa)} · {d.plot.crop ? tk(`fields.crop.${d.plot.crop}`) : t("ui.common.crop")}
+          {d.plot.sowingDate ? " · " + t("ui.rotation.sown", { date: fmtIsoDate(d.plot.sowingDate) }) : ""}
         </Text>
-        <Text style={s.muted}>{t("ui.damageGenerated", { date: fmtDateTime(d.generatedAt), by: d.author })}</Text>
+        <Text style={s.muted}>{t("ui.damage.generated", { date: fmtDateTime(d.generatedAt), by: d.author })}</Text>
 
         <View style={s.kpis}>
-          <Kpi label={t("ui.damageEventDate")} value={fmtIsoDate(d.eventDay)} />
-          <Kpi label={t("ui.damageCause")} value={tk(`ui.damageCause_${d.cause}`)} />
-          <Kpi label={t("ui.damageNdviChange")} value={sat.changePct === null ? "—" : `${fmtNum(sat.changePct)} %`} />
+          <Kpi label={t("ui.damage.eventDate")} value={fmtIsoDate(d.eventDay)} />
+          <Kpi label={t("ui.damage.cause")} value={tk(`ui.damage.cause_${d.cause}`)} />
+          <Kpi label={t("ui.damage.ndviChange")} value={sat.changePct === null ? "—" : `${fmtNum(sat.changePct)} %`} />
         </View>
         {d.description.trim() !== "" && (
           <>
-            <Text style={s.h2}>{t("ui.damageDescription")}</Text>
+            <Text style={s.h2}>{t("ui.damage.description")}</Text>
             <Text>{d.description.trim()}</Text>
           </>
         )}
 
-        <Text style={s.h2}>{t("ui.damageSatellite")}</Text>
+        <Text style={s.h2}>{t("ui.damage.satellite")}</Text>
         <View style={{ flexDirection: "row", gap: 12 }}>
           <View style={{ flex: 1, gap: 3 }}>
             <Text>
-              {t("ui.damageBefore")}: <Text style={{ fontFamily: "Helvetica-Bold" }}>{pass(sat.before)}</Text>
+              {t("ui.damage.before")}: <Text style={{ fontFamily: "Helvetica-Bold" }}>{pass(sat.before)}</Text>
             </Text>
             <Text>
-              {t("ui.damageAfter")}: <Text style={{ fontFamily: "Helvetica-Bold" }}>{pass(sat.after)}</Text>
+              {t("ui.damage.after")}: <Text style={{ fontFamily: "Helvetica-Bold" }}>{pass(sat.after)}</Text>
             </Text>
-            {(!sat.before || !sat.after) && <Text style={s.muted}>{t("ui.damageNoPass")}</Text>}
-            <Text style={s.muted}>{t("ui.damageSatelliteNote")}</Text>
+            {(!sat.before || !sat.after) && <Text style={s.muted}>{t("ui.damage.noPass")}</Text>}
+            <Text style={s.muted}>{t("ui.damage.satelliteNote")}</Text>
           </View>
           <NdviLine series={sat.series} eventMs={eventMs} />
         </View>
-        <Text style={[s.muted, { marginTop: 3 }]}>{t("attribution.copernicus")}.</Text>
+        <Text style={[s.muted, { marginTop: 3 }]}>{t(ATTRIBUTION.copernicus)}.</Text>
 
-        <Text style={s.h2}>{t("ui.damageLocation")}</Text>
+        <Text style={s.h2}>{t("ui.damage.location")}</Text>
         <PlotMap farm={d.farm} plot={d.plot} points={gps} />
 
-        <Text style={s.h2}>{t("ui.damageRecords", { n: d.evidence.records.length })}</Text>
-        {d.evidence.records.length === 0 && <Text style={s.muted}>{t("ui.damageNoRecords")}</Text>}
+        <Text style={s.h2}>{t("ui.damage.records", { n: d.evidence.records.length })}</Text>
+        {d.evidence.records.length === 0 && <Text style={s.muted}>{t("ui.damage.noRecords")}</Text>}
         {d.evidence.records.length > 0 && (
           <View style={s.th}>
-            <Text style={{ width: 90 }}>{t("ui.damageColWhen")}</Text>
-            <Text style={{ width: 90 }}>{t("ui.damageColKind")}</Text>
-            <Text style={{ flex: 1 }}>{t("ui.damageColDetail")}</Text>
+            <Text style={{ width: 90 }}>{t("ui.damage.colWhen")}</Text>
+            <Text style={{ width: 90 }}>{t("ui.damage.colKind")}</Text>
+            <Text style={{ flex: 1 }}>{t("ui.damage.colDetail")}</Text>
           </View>
         )}
         {d.evidence.records.map((r) => (
           <View key={r.id} style={s.row} wrap={false}>
             <Text style={{ width: 90 }}>{fmtDateTime(r.capturedAt)}</Text>
-            <Text style={{ width: 90 }}>{tk(`recordKinds.${r.kind}`)}</Text>
+            <Text style={{ width: 90 }}>{tk(`record-kinds.kind.${r.kind}`)}</Text>
             <Text style={{ flex: 1 }}>{describeData(r.kind, r.data)}</Text>
           </View>
         ))}
 
         {d.photoUrls.length > 0 && (
           <View wrap={false}>
-            <Text style={s.h2}>{t("ui.photos")}</Text>
+            <Text style={s.h2}>{t("ui.common.photos")}</Text>
             <View style={s.photos}>
               {d.photoUrls.slice(0, 9).map((u) => (
                 <Image key={u} src={u} style={s.photo} />
@@ -146,7 +148,7 @@ export function DamageReport(d: DamageReportData) {
             </View>
           </View>
         )}
-        <Text style={[s.muted, { marginTop: 10 }]}>{t("ui.damageDisclaimer")}</Text>
+        <Text style={[s.muted, { marginTop: 10 }]}>{t("ui.damage.disclaimer")}</Text>
         <Footer />
       </Page>
     </Document>

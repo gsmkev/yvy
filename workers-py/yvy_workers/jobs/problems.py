@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
+import shapely
 from rasterio.features import geometry_mask, shapes
 from shapely.geometry import mapping, shape
 from shapely.geometry.base import BaseGeometry
@@ -55,7 +56,7 @@ def find_problem_areas(
         found.sort(key=lambda x: -x[0])
         for ha, poly in found[:MAX_PER_PLOT]:
             simple = poly.simplify(SIMPLIFY_M)
-            if simple.is_empty or simple.geom_type != "Polygon":
+            if shapely.is_empty(simple) or simple.geom_type != "Polygon":
                 simple = poly
             wgs = from_crs(simple, crs)
             point = from_crs(poly.representative_point(), crs)

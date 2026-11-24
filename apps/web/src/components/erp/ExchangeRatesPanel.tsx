@@ -26,7 +26,7 @@ export function ExchangeRatesPanel() {
   const save = useMutation({
     mutationFn: () => put(`/org/erp/exchange-rates/${date}`, { usdToPyg: Math.round(Number(value)) }),
     onSuccess: () => {
-      toast(t("ui.erpSaved"));
+      toast(t("ui.erp.saved"));
       setValue("");
       refresh();
     },
@@ -37,36 +37,36 @@ export function ExchangeRatesPanel() {
   const rates = q.data ?? [];
   const latest = rates[0];
   const cols: Column<Rate>[] = [
-    { id: "date", header: t("ui.ratesDate"), cell: (r) => fmtIsoDate(r.date) },
-    { id: "value", header: t("ui.ratesValue"), align: "right", cell: (r) => fmtGs(r.usdToPyg) },
-    { id: "_a", header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>, align: "right", width: "3rem", cell: (r) => <RowMenu name={fmtIsoDate(r.date)} onDelete={() => remove.mutate(r.date)} /> },
+    { id: "date", header: t("ui.rates.date"), cell: (r) => fmtIsoDate(r.date) },
+    { id: "value", header: t("ui.rates.value"), align: "right", cell: (r) => fmtGs(r.usdToPyg) },
+    { id: "_a", header: <span className="sr-only">{t("ui.row.actionsHeader")}</span>, align: "right", width: "3rem", cell: (r) => <RowMenu name={fmtIsoDate(r.date)} onDelete={() => remove.mutate(r.date)} /> },
   ];
   return (
     <div className="grid gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <aside className="flex flex-col gap-3 lg:col-start-2 lg:row-start-1">
-        <SectionHead title={t("ui.ratesLoadTitle")} />
+        <SectionHead title={t("ui.rates.loadTitle")} />
         <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
-          <Field label={t("ui.ratesDate")}>
+          <Field label={t("ui.rates.date")}>
             <Input type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
           </Field>
-          <Field label={t("ui.ratesValue")}>
+          <Field label={t("ui.rates.value")}>
             <Input type="number" required min={1} step="1" value={value} onChange={(e) => setValue(e.target.value)} />
           </Field>
           <div>
             <Button type="submit" variant="primary" disabled={save.isPending}>
-              {t("ui.save")}
+              {t("ui.common.save")}
             </Button>
           </div>
         </Form>
         {save.error ? <ErrorBox error={save.error} /> : null}
       </aside>
       <div className="flex min-w-0 flex-col gap-5 lg:col-start-1 lg:row-start-1">
-        {latest && <Stat size="lg" label={t("ui.ratesCurrent")} value={fmtGs(latest.usdToPyg)} note={t("ui.ratesCurrentNote", { date: fmtIsoDate(latest.date) })} />}
+        {latest && <Stat size="lg" label={t("ui.rates.current")} value={fmtGs(latest.usdToPyg)} note={t("ui.rates.currentNote", { date: fmtIsoDate(latest.date) })} />}
         {rates.length === 0 ? (
-          <EmptyState title={t("ui.ratesNoneTitle")}>{t("ui.ratesEmptyHint")}</EmptyState>
+          <EmptyState title={t("ui.rates.noneTitle")}>{t("ui.rates.emptyHint")}</EmptyState>
         ) : (
           <ExportableTable name="tipos-de-cambio">
-            <DataTable columns={cols} rows={rates} rowKey={(r) => r.date} caption={t("ui.adminSection_rates")} />
+            <DataTable columns={cols} rows={rates} rowKey={(r) => r.date} caption={t("ui.admin.section_rates")} />
           </ExportableTable>
         )}
       </div>

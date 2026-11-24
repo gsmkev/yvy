@@ -27,21 +27,21 @@ export default function Emergency() {
   const save = (list: EmergencyContact[]) => {
     setContacts(list);
     getDb().setKv(KEY, JSON.stringify(list));
-    showToast(t("app.toastSavedLocal"));
+    showToast(t("app.toast.savedLocal"));
   };
 
   const add = () => {
     const r = addContact(contacts, name, phone);
-    if (!r.ok) return Alert.alert(t(`app.emergencyAddError_${r.reason}`, { n: 5 }));
+    if (!r.ok) return Alert.alert(t(`app.emergency.addError_${r.reason}`, { n: 5 }));
     save(r.list);
     setName("");
     setPhone("");
   };
 
   const remove = (c: EmergencyContact) =>
-    Alert.alert(t("app.emergencyRemoveTitle", { name: c.name || c.phone }), undefined, [
-      { text: t("ui.cancel"), style: "cancel" },
-      { text: t("app.emergencyRemove"), style: "destructive", onPress: () => save(contacts.filter((x) => x.phone !== c.phone)) },
+    Alert.alert(t("app.emergency.removeTitle", { name: c.name || c.phone }), undefined, [
+      { text: t("ui.common.cancel"), style: "cancel" },
+      { text: t("app.emergency.remove"), style: "destructive", onPress: () => save(contacts.filter((x) => x.phone !== c.phone)) },
     ]);
 
   const send = async () => {
@@ -52,7 +52,7 @@ export default function Emergency() {
       const body = emergencyText(getSession()?.user.fullName ?? "", fix, Date.now());
       await Linking.openURL(smsUrl(contacts.map((c) => c.phone), body, Platform.OS));
     } catch {
-      Alert.alert(t("app.emergencySmsFailed"));
+      Alert.alert(t("app.emergency.smsFailed"));
     } finally {
       setBusy(false);
     }
@@ -64,17 +64,17 @@ export default function Emergency() {
       <ScreenBody
         footer={
           <>
-            <Text style={[T.small, { textAlign: "center" }]}>{contacts.length ? t("app.emergencySendTo", { n: contacts.length }) : t("app.emergencyNoContacts")}</Text>
-            <Button big kind="danger" title={t("app.emergencySend")} loading={busy} onPress={send} />
+            <Text style={[T.small, { textAlign: "center" }]}>{contacts.length ? t("app.emergency.sendTo", { n: contacts.length }) : t("app.emergency.noContacts")}</Text>
+            <Button big kind="danger" title={t("app.emergency.send")} loading={busy} onPress={send} />
           </>
         }
       >
-        <Text style={T.display}>{t("app.emergencyTitle")}</Text>
-        <Text style={[T.small, { marginTop: 4 }]}>{t("app.emergencyIntro")}</Text>
+        <Text style={T.display}>{t("app.emergency.title")}</Text>
+        <Text style={[T.small, { marginTop: 4 }]}>{t("app.emergency.intro")}</Text>
 
-        <SectionHeader title={t("app.emergencyContacts")} />
+        <SectionHeader title={t("app.emergency.contacts")} />
         {contacts.map((c) => (
-          <Row key={c.phone} icon={Phone} title={c.name || c.phone} subtitle={c.name ? c.phone : undefined} onPress={() => remove(c)} right={<Text style={[T.smallMedium, { color: C.peligro }]}>{t("app.emergencyRemove")}</Text>} />
+          <Row key={c.phone} icon={Phone} title={c.name || c.phone} subtitle={c.name ? c.phone : undefined} onPress={() => remove(c)} right={<Text style={[T.smallMedium, { color: C.peligro }]}>{t("app.emergency.remove")}</Text>} />
         ))}
 
         <View style={{ marginTop: 14, gap: 8 }}>
@@ -82,20 +82,20 @@ export default function Emergency() {
             style={st.input}
             value={name}
             onChangeText={setName}
-            placeholder={t("app.emergencyNamePlaceholder")}
-            accessibilityLabel={t("app.emergencyNamePlaceholder")}
+            placeholder={t("app.emergency.namePlaceholder")}
+            accessibilityLabel={t("app.emergency.namePlaceholder")}
             autoComplete="name"
           />
           <TextInput
             style={st.input}
             value={phone}
             onChangeText={setPhone}
-            placeholder={t("app.emergencyPhonePlaceholder")}
-            accessibilityLabel={t("app.emergencyPhonePlaceholder")}
+            placeholder={t("app.emergency.phonePlaceholder")}
+            accessibilityLabel={t("app.emergency.phonePlaceholder")}
             keyboardType="phone-pad"
             autoComplete="tel"
           />
-          <Button kind="secondary" title={t("app.emergencyAdd")} onPress={add} disabled={phone.replace(/\D/g, "").length < 6} />
+          <Button kind="secondary" title={t("app.emergency.add")} onPress={add} disabled={phone.replace(/\D/g, "").length < 6} />
         </View>
       </ScreenBody>
     </View>

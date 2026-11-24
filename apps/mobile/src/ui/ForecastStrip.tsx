@@ -61,8 +61,8 @@ export function ForecastStrip({ farmId }: { farmId: string | null }) {
   if (days.length === 0) return null;
 
   return (
-    <View accessibilityLabel={t("app.forecastTitle")}>
-      <SectionHeader title={t("app.forecastTitle")} />
+    <View accessibilityLabel={t("app.forecast.title")}>
+      <SectionHeader title={t("app.forecast.title")} />
       {days.length > 0 && (
         <>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.row}>
@@ -76,10 +76,15 @@ export function ForecastStrip({ farmId }: { farmId: string | null }) {
             ))}
           </ScrollView>
           <Text style={[T.small, { marginTop: 6 }]}>
-            {sameDay ? t("app.forecastDownloaded", { time }) : t("app.forecastDownloadedOn", { date: downloaded!.toLocaleDateString("es-PY", { day: "numeric", month: "short" }), time })}
-            {old >= 1 ? ` · ${t("app.forecastOld", { n: old })}` : ""}
+            {sameDay
+              ? t("app.forecast.downloaded", { time })
+              : t("app.forecast.downloadedOn", {
+                  date: downloaded!.toLocaleDateString("es-PY", { day: "numeric", month: "short" }),
+                  time,
+                })}
+            {old >= 1 ? " · " + t("app.forecast.old", { n: old }) : ""}
           </Text>
-          <Text style={T.small}>{t("app.forecastSource")}</Text>
+          <Text style={T.small}>{t("app.forecast.source")}</Text>
         </>
       )}
     </View>

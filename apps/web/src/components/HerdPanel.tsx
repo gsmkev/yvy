@@ -40,7 +40,7 @@ function StockSection({ farmId }: { farmId: string }) {
   const save = useMutation({
     mutationFn: () => put(`/org/farms/${farmId}/livestock-settings`, { maxUaPerHa: num(limit) }),
     onSuccess: () => {
-      toast(t("ui.toastLimitSaved"));
+      toast(t("ui.toast.limitSaved"));
       return qc.invalidateQueries({ queryKey: ["stock", farmId] });
     },
   });
@@ -49,7 +49,7 @@ function StockSection({ farmId }: { farmId: string }) {
   if (stock.error) return <ErrorBox error={stock.error} />;
   const d = stock.data;
   if (!d) return null;
-  if (!d.plots.length) return <Empty title={t("ui.herdNoPaddocks")}>{t("ui.herdNoPaddocksHint")}</Empty>;
+  if (!d.plots.length) return <Empty title={t("ui.herd.noPaddocks")}>{t("ui.herd.noPaddocksHint")}</Empty>;
   const over = d.plots.filter((p) => p.overLimit);
   const maxText = dec.format(d.maxUaPerHa);
 
@@ -57,19 +57,19 @@ function StockSection({ farmId }: { farmId: string }) {
     <div className="mt-4 flex flex-col gap-6">
       <div>
         <p className="num text-sm">
-          {t("ui.herdFarmLine", {
+          {t("ui.herd.farmLine", {
             head: int.format(d.farm.total),
             ua: dec.format(d.farm.ua),
             area: fmtHa(d.farm.areaHa),
           })}
-          {d.farm.uaPerHa !== null && ` · ${t("ui.herdUaPerHa", { v: dec.format(d.farm.uaPerHa) })}`}
+          {d.farm.uaPerHa !== null && " · " + t("ui.herd.uaPerHa", { v: dec.format(d.farm.uaPerHa) })}
         </p>
         {(d.farm.overLimit || over.length > 0) && (
           <p role="alert" className="mt-2 text-sm font-medium text-peligro">
-            {t("ui.herdOverLimit", { max: maxText, plots: over.map((p) => p.name).join(", ") || t("ui.herdWholeFarm") })}
+            {t("ui.herd.overLimit", { max: maxText, plots: over.map((p) => p.name).join(", ") || t("ui.herd.wholeFarm") })}
           </p>
         )}
-        {d.truncated && <p className="mt-2 text-sm text-tinta-2">{t("ui.herdTruncated")}</p>}
+        {d.truncated && <p className="mt-2 text-sm text-tinta-2">{t("ui.herd.truncated")}</p>}
       </div>
 
       <div className="overflow-x-auto">
@@ -77,17 +77,17 @@ function StockSection({ farmId }: { farmId: string }) {
           <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="text-left text-xs text-tinta-2">
-                <th className="pb-2 font-medium">{t("ui.plot")}</th>
+                <th className="pb-2 font-medium">{t("ui.common.plot")}</th>
                 {HERD_CATEGORIES.map((c) => (
                   <th key={c} className="pb-2 text-right font-medium">
-                    {tk(`fields.herd_${c}`)}
+                    {tk(`fields.herd.${c}`)}
                   </th>
                 ))}
-                <th className="pb-2 text-right font-medium">{t("ui.herdTotal")}</th>
-                <th className="pb-2 text-right font-medium">{t("ui.herdUaPerHaHead")}</th>
-                <th className="pb-2 text-right font-medium">{t("ui.herdLoadRecommended")}</th>
-                <th className="pb-2 text-right font-medium">{t("ui.herdLoadDiff")}</th>
-                <th className="pb-2 text-right font-medium">{t("ui.herdLastCount")}</th>
+                <th className="pb-2 text-right font-medium">{t("ui.herd.total")}</th>
+                <th className="pb-2 text-right font-medium">{t("ui.herd.uaPerHaHead")}</th>
+                <th className="pb-2 text-right font-medium">{t("ui.herd.loadRecommended")}</th>
+                <th className="pb-2 text-right font-medium">{t("ui.herd.loadDiff")}</th>
+                <th className="pb-2 text-right font-medium">{t("ui.herd.lastCount")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-linea border-t border-linea">
@@ -103,20 +103,20 @@ function StockSection({ farmId }: { farmId: string }) {
                   <td className={`num py-2.5 text-right ${p.overLimit ? "font-medium text-peligro" : ""}`}>
                     {p.uaPerHa === null ? "—" : dec.format(p.uaPerHa)}
                   </td>
-                  <td className="num py-2.5 text-right" title={tk(`ui.herdLoadClass_${p.pastureClass}`)}>
+                  <td className="num py-2.5 text-right" title={tk(`ui.herd.loadClass_${p.pastureClass}`)}>
                     {dec.format(p.recommendedUaPerHa)}
                   </td>
                   <td className="num py-2.5 text-right text-tinta-2">
                     {p.total === 0
                       ? "—"
                       : Math.abs(p.diffUa) < 0.5
-                        ? t("ui.herdLoadOk")
+                        ? t("ui.herd.loadOk")
                         : p.diffUa > 0
-                          ? t("ui.herdLoadSurplus", { n: dec.format(p.diffUa) })
-                          : t("ui.herdLoadShortfall", { n: dec.format(-p.diffUa) })}
+                          ? t("ui.herd.loadSurplus", { n: dec.format(p.diffUa) })
+                          : t("ui.herd.loadShortfall", { n: dec.format(-p.diffUa) })}
                   </td>
                   <td className="num py-2.5 text-right text-tinta-2">
-                    {p.lastCountAt ? fmtDay(p.lastCountAt) : t("ui.herdNeverCounted")}
+                    {p.lastCountAt ? fmtDay(p.lastCountAt) : t("ui.herd.neverCounted")}
                   </td>
                 </tr>
               ))}
@@ -126,7 +126,7 @@ function StockSection({ farmId }: { farmId: string }) {
       </div>
 
       <Form className="flex max-w-xl flex-col gap-3 border-t border-linea pt-4" onSubmit={() => { if (limitOk) save.mutate(); }}>
-        <Field label={t("ui.herdLimitLabel")} hint={t("ui.herdLimitHint")}>
+        <Field label={t("ui.herd.limitLabel")} hint={t("ui.herd.limitHint")}>
           <Input
             inputMode="decimal"
             className="w-32"
@@ -135,30 +135,30 @@ function StockSection({ farmId }: { farmId: string }) {
             onChange={(e) => setLimit(e.target.value)}
           />
         </Field>
-        {d.maxUaIsDefault && <p className="text-sm text-tinta-2">{t("ui.herdLimitIsDefault")}</p>}
+        {d.maxUaIsDefault && <p className="text-sm text-tinta-2">{t("ui.herd.limitIsDefault")}</p>}
         {canEditLimit ? (
           <div>
             <Button variant="primary" type="submit" disabled={!limitOk || save.isPending}>
-              {t("ui.save")}
+              {t("ui.common.save")}
             </Button>
           </div>
         ) : (
-          <p className="text-sm text-tinta-2">{t("ui.alertSettingsOnlyOwner")}</p>
+          <p className="text-sm text-tinta-2">{t("ui.alert.settingsOnlyOwner")}</p>
         )}
         {save.error ? <ErrorBox error={save.error} /> : null}
       </Form>
 
       <p className="-mt-3 text-xs text-tinta-2">
-        {t("ui.herdLoadHint")}
-        {d.winter && ` ${t("ui.herdLoadWinter")}`}
+        {t("ui.herd.loadHint")}
+        {d.winter && ` ${t("ui.herd.loadWinter")}`}
       </p>
       {canEditLimit && <LoadEditor key={`${d.pastureDefault}|${JSON.stringify(d.pastureLoads)}`} farmId={farmId} d={d} />}
 
       <HeatStressCard farmId={farmId} />
 
       <p className="text-xs text-tinta-2">
-        {t("ui.herdEquivalents", {
-          list: HERD_CATEGORIES.map((c) => `${tk(`fields.herd_${c}`).toLowerCase()} ${dec.format(UA_EQUIVALENTS[c])}`).join(", "),
+        {t("ui.herd.equivalents", {
+          list: HERD_CATEGORIES.map((c) => `${tk(`fields.herd.${c}`).toLowerCase()} ${dec.format(UA_EQUIVALENTS[c])}`).join(", "),
         })}
       </p>
     </div>
@@ -179,7 +179,7 @@ function SectionPills({ items, value, onChange }: { items: { id: Section; label:
   return (
     <div
       role="group"
-      aria-label={t("ui.herdSections")}
+      aria-label={t("ui.herd.sections")}
       className="-mx-4 flex min-w-0 gap-1 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden"
     >
       {items.map((it) => (
@@ -213,15 +213,15 @@ export function HerdPanel({ farmId }: { farmId: string }) {
         value={section}
         onChange={setSection}
         items={([
-          { id: "stock", label: t("ui.herdSectionStock") },
-          { id: "rotation", label: t("ui.herdSectionRotation") },
-          { id: "forage", label: t("ui.herdSectionForage") },
-          { id: "animals", label: t("ui.herdSectionAnimals") },
-          { id: "plan", label: t("ui.reproPlanSection") },
-          { id: "repro", label: t("ui.herdSectionRepro") },
-          { id: "weights", label: t("ui.herdSectionWeights") },
-          { id: "supplements", label: t("ui.herdSectionSupp") },
-          { id: "theft", label: t("ui.herdSectionTheft") },
+          { id: "stock", label: t("ui.herd.sectionStock") },
+          { id: "rotation", label: t("ui.herd.sectionRotation") },
+          { id: "forage", label: t("ui.herd.sectionForage") },
+          { id: "animals", label: t("ui.herd.sectionAnimals") },
+          { id: "plan", label: t("ui.repro.planSection") },
+          { id: "repro", label: t("ui.herd.sectionRepro") },
+          { id: "weights", label: t("ui.herd.sectionWeights") },
+          { id: "supplements", label: t("ui.herd.sectionSupp") },
+          { id: "theft", label: t("ui.herd.sectionTheft") },
         ] as { id: Section; label: string }[]).sort((a, b) => rank(a.id) - rank(b.id))}
       />
       {section === "stock" && <StockSection farmId={farmId} />}

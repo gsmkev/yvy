@@ -30,7 +30,7 @@ export function ReportSchedules({ farmId }: { farmId: string }) {
     onSuccess: () => {
       setF({ ...f, name: "", email: "" });
       qc.invalidateQueries({ queryKey: ["report-schedules"] });
-      toast(t("ui.scheduleAdded"));
+      toast(t("ui.schedule.added"));
     },
   });
   const remove = useMutation({
@@ -39,7 +39,7 @@ export function ReportSchedules({ farmId }: { farmId: string }) {
   });
   return (
     <section>
-      <p className="mt-2 text-sm text-tinta-2">{t("ui.scheduleIntro")}</p>
+      <p className="mt-2 text-sm text-tinta-2">{t("ui.schedule.intro")}</p>
       {list.error && <ErrorBox error={list.error} />}
       <ul className="mt-2 flex flex-col divide-y divide-linea text-sm">
         {list.data?.map((r) => (
@@ -48,43 +48,44 @@ export function ReportSchedules({ farmId }: { farmId: string }) {
               <strong className="block truncate font-medium">{r.name}</strong>
               <span className="block truncate text-tinta-2">{r.email}</span>
               <span className="block text-meta text-tinta-2">
-                {tk(`ui.scheduleFreq_${r.frequency}`)} · {r.farmId ? t("ui.scheduleThisFarm") : t("ui.scheduleAllFarms")}
-                {r.lastSentAt ? ` · ${t("ui.scheduleLast", { date: fmtDate(r.lastSentAt) })}` : ""}
+                {tk(`ui.schedule.freq_${r.frequency}`)} ·{" "}
+                {r.farmId ? t("ui.schedule.thisFarm") : t("ui.schedule.allFarms")}
+                {r.lastSentAt ? " · " + t("ui.schedule.last", { date: fmtDate(r.lastSentAt) }) : ""}
               </span>
             </span>
             <Button size="sm" variant="danger" onClick={() => remove.mutate(r.id)}>
-              {t("ui.delete")}
+              {t("ui.common.delete")}
             </Button>
           </li>
         ))}
       </ul>
       <Form className="mt-3 grid gap-3" onSubmit={() => add.mutate()}>
-        <Field label={t("ui.scheduleName")}>
+        <Field label={t("ui.schedule.name")}>
           <Input required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
         </Field>
-        <Field label={t("auth.emailLabel")}>
+        <Field label={t("auth.email.label")}>
           <Input required type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
         </Field>
-        <Field label={t("ui.scheduleFrequency")}>
+        <Field label={t("ui.schedule.frequency")}>
           <Select
             value={f.frequency}
             onChange={(e) => setF({ ...f, frequency: e.target.value })}
-            options={(["weekly", "monthly"] as const).map((v) => ({ value: v, label: tk(`ui.scheduleFreq_${v}`) }))}
+            options={(["weekly", "monthly"] as const).map((v) => ({ value: v, label: tk(`ui.schedule.freq_${v}`) }))}
           />
         </Field>
-        <Field label={t("ui.scheduleScope")}>
+        <Field label={t("ui.schedule.scope")}>
           <Select
             value={f.scope}
             onChange={(e) => setF({ ...f, scope: e.target.value })}
             options={[
-              { value: "farm", label: t("ui.scheduleThisFarm") },
-              { value: "all", label: t("ui.scheduleAllFarms") },
+              { value: "farm", label: t("ui.schedule.thisFarm") },
+              { value: "all", label: t("ui.schedule.allFarms") },
             ]}
           />
         </Field>
         <div>
           <Button type="submit" variant="primary" disabled={add.isPending}>
-            {t("ui.scheduleAdd")}
+            {t("ui.schedule.add")}
           </Button>
         </div>
         {add.error && <ErrorBox error={add.error} />}

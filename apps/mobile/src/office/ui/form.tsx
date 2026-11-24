@@ -68,6 +68,7 @@ export function TextField({
           multiline={kind === "multiline"}
           placeholderTextColor={C.tinta3}
           style={[inputText, kind === "multiline" && { minHeight: 96, textAlignVertical: "top" }]}
+          // nosemgrep: react-props-spreading -- envoltorio que reenvía al elemento nativo todas sus props
           {...rest}
         />
       </View>
@@ -99,7 +100,7 @@ export function SelectField<V extends string>({
     <Field label={label} hint={hint} error={error}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${label}: ${current?.label ?? placeholder ?? t("office.selectPlaceholder")}`}
+        accessibilityLabel={`${label}: ${current?.label ?? placeholder ?? t("office.common.selectPlaceholder")}`}
         onPress={() => {
           tap();
           setOpen(true);
@@ -107,7 +108,7 @@ export function SelectField<V extends string>({
         style={inputBox(error)}
       >
         <Text style={[inputText, !current && { color: C.tinta3 }]} numberOfLines={1}>
-          {current?.label ?? placeholder ?? t("office.selectPlaceholder")}
+          {current?.label ?? placeholder ?? t("office.common.selectPlaceholder")}
         </Text>
         <ChevronDown size={22} color={C.tinta3} strokeWidth={2} />
       </Pressable>
@@ -138,14 +139,14 @@ export function DateField({ label, value, onChange, hint, error }: { label: stri
   }, [value]);
   const invalid = text.length === 10 && displayToIso(text) === null;
   return (
-    <Field label={label} hint={hint ?? t("office.datePlaceholder")} error={error ?? (invalid ? t("office.invalidDate") : undefined)}>
+    <Field label={label} hint={hint ?? t("office.common.datePlaceholder")} error={error ?? (invalid ? t("office.common.invalidDate") : undefined)}>
       <View style={inputBox(error ?? (invalid ? "x" : undefined))}>
         <TextInput
           accessibilityLabel={label}
           value={text}
           keyboardType="number-pad"
           maxLength={10}
-          placeholder={t("office.datePlaceholder")}
+          placeholder={t("office.common.datePlaceholder")}
           placeholderTextColor={C.tinta3}
           style={inputText}
           onChangeText={(raw) => {
@@ -188,7 +189,7 @@ export function FormSheet({
         </Text>
       ) : null}
       <Button title={submitLabel} onPress={onSubmit} loading={pending} style={{ marginTop: 20 }} />
-      <Button kind="text" title={t("ui.cancel")} onPress={onClose} disabled={pending} style={{ marginTop: 4 }} />
+      <Button kind="text" title={t("ui.common.cancel")} onPress={onClose} disabled={pending} style={{ marginTop: 4 }} />
     </Sheet>
   );
 }

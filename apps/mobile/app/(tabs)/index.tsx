@@ -50,7 +50,7 @@ export default function Today() {
         <Button
           kind="secondary"
           icon={CloudRain}
-          title={t("app.quickRain")}
+          title={t("app.common.quickRain")}
           onPress={() => router.push({ pathname: "/annotate", params: { kind: "rain", farmLevel: "1" } })}
           style={{ marginTop: 16 }}
         />
@@ -71,11 +71,13 @@ export default function Today() {
       ))}
       {alerts.length > shownAlerts.length && (
         <Pressable accessibilityRole="button" onPress={() => router.push("/office/alerts")} style={st.seeAll}>
-          <Text style={[T.bodyMedium, { color: C.accionOscuro }]}>{t("app.alertsSeeAll", { n: alerts.length })}</Text>
+          <Text style={[T.bodyMedium, { color: C.accionOscuro }]}>
+            {t("app.common.alertsSeeAll", { n: alerts.length })}
+          </Text>
         </Pressable>
       )}
 
-      {empty && <EmptyState title={t("app.nothingToday")} hint={t("app.nothingTodayHint")} />}
+      {empty && <EmptyState title={t("app.nothing.today")} hint={t("app.nothing.todayHint")} />}
 
       <TodaySections data={data} />
     </ScrollView>

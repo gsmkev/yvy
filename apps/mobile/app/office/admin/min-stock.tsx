@@ -66,15 +66,15 @@ export default function MinStock() {
   };
   const submit = async () => {
     if (!draft) return;
-    if (!draft.productId) return setFormError(t("office.admNeedsProduct"));
-    if (!draft.warehouseId) return setFormError(t("ui.stockNoWarehouse"));
+    if (!draft.productId) return setFormError(t("office.adm.needsProduct"));
+    if (!draft.warehouseId) return setFormError(t("ui.stock.noWarehouse"));
     const n = parseDecimal(draft.minQty);
-    if (n === null || n < 0) return setFormError(t("office.admBadQty"));
+    if (n === null || n < 0) return setFormError(t("office.adm.badQty"));
     setFormError(null);
     const r = await save.mutate({ productId: draft.productId, warehouseId: draft.warehouseId, minQty: n });
     if (r.ok) {
       setDraft(null);
-      showToast(t("ui.erpSaved"));
+      showToast(t("ui.erp.saved"));
     }
   };
   const doRemove = async () => {
@@ -82,7 +82,7 @@ export default function MinStock() {
     const r = await remove.mutate({ id: draft.id });
     if (r.ok) {
       setDraft(null);
-      showToast(t("ui.erpDeleted"));
+      showToast(t("ui.erp.deleted"));
     }
   };
 
@@ -91,37 +91,44 @@ export default function MinStock() {
   const needWarehouse = wh.data !== null && warehouses.length === 0;
   const err = formError ?? save.error ?? remove.error;
   return (
-    <AdminGate need="stock" title={t("ui.adminSection_minstock")}>
+    <AdminGate need="stock" title={t("ui.admin.section_minstock")}>
       <OfficeScreen
-        title={t("ui.adminSection_minstock")}
+        title={t("ui.admin.section_minstock")}
         query={mins}
         onRefresh={async () => {
           await Promise.all([mins.refresh(), low.refresh(), wh.refresh()]);
         }}
-        action={manage && !needProduct && !needWarehouse ? { label: t("ui.minStockNew"), icon: Plus, onPress: () => open(null), disabled: !!noSignal } : undefined}
+        action={manage && !needProduct && !needWarehouse ? { label: t("ui.min.stockNew"), icon: Plus, onPress: () => open(null), disabled: !!noSignal } : undefined}
       >
         {manage ? <NoSignalNote /> : null}
         {loading ? (
           <Skeleton rows={4} />
         ) : mins.error && mins.data === null ? (
-          <EmptyState title={t("office.loadFailed")} hint={mins.error} action={t("office.retry")} onAction={() => void mins.refresh()} />
+          <EmptyState title={t("office.common.loadFailed")} hint={mins.error} action={t("office.common.retry")} onAction={() => void mins.refresh()} />
         ) : needProduct || needWarehouse ? (
-          <EmptyState title={t(needProduct ? "ui.stockNeedProductTitle" : "ui.stockNeedWarehouseTitle")} hint={t(needProduct ? "ui.stockNeedProductBody" : "ui.stockNeedWarehouseBody")} />
+          <EmptyState title={t(needProduct ? "ui.stock.needProductTitle" : "ui.stock.needWarehouseTitle")} hint={t(needProduct ? "ui.stock.needProductBody" : "ui.stock.needWarehouseBody")} />
         ) : minRows.length === 0 ? (
-          <EmptyState title={t("ui.emptyMinTitle")} hint={t("ui.emptyMinBody")} />
+          <EmptyState title={t("ui.empty.minTitle")} hint={t("ui.empty.minBody")} />
         ) : (
           <>
             <View style={{ marginTop: 16 }}>
-              <Segmented<"low" | "all"> value={tab} onChange={setTab} options={[{ value: "low", label: `${t("ui.minTabLow")} · ${lowRows.length}` }, { value: "all", label: `${t("ui.minTabAll")} · ${minRows.length}` }]} />
+              <Segmented<"low" | "all"> value={tab} onChange={setTab} options={[{ value: "low", label: `${t("ui.min.tabLow")} · ${lowRows.length}` }, { value: "all", label: `${t("ui.min.tabAll")} · ${minRows.length}` }]} />
             </View>
             {tab === "low" ? (
               <DataList
                 rows={lowRows}
                 keyOf={(l) => `${l.productId}-${l.warehouseId}`}
                 title={(l) => byId.get(l.productId)?.name ?? "—"}
-                subtitle={(l) => `${whName(l.warehouseId)} · ${t("office.admHaveOfMin", { qty: fmtQty(l.qty, unitOf(byId.get(l.productId))), min: fmtQty(l.minQty) })}`}
-                right={(l) => t("ui.minStockMissing", { qty: fmtQty(l.missing, unitOf(byId.get(l.productId))) })}
-                empty={{ title: t("ui.emptyLowTitle"), hint: t("ui.emptyLowBody") }}
+                subtitle={(l) =>
+                  whName(l.warehouseId) +
+                  " · " +
+                  t("office.adm.haveOfMin", {
+                    qty: fmtQty(l.qty, unitOf(byId.get(l.productId))),
+                    min: fmtQty(l.minQty),
+                  })
+                }
+                right={(l) => t("ui.min.stockMissing", { qty: fmtQty(l.missing, unitOf(byId.get(l.productId))) })}
+                empty={{ title: t("ui.empty.lowTitle"), hint: t("ui.empty.lowBody") }}
               />
             ) : (
               <DataList
@@ -131,16 +138,16 @@ export default function MinStock() {
                 subtitle={(m) => whName(m.warehouseId)}
                 right={(m) => fmtQty(m.minQty, unitOf(byId.get(m.productId)))}
                 onPress={manage ? open : undefined}
-                empty={{ title: t("ui.emptyMinTitle") }}
+                empty={{ title: t("ui.empty.minTitle") }}
               />
             )}
           </>
         )}
-        <FormSheet visible={!!draft} title={t("ui.minStockNew")} onClose={() => setDraft(null)} onSubmit={submit} submitLabel={t("ui.save")} pending={save.pending} error={err}>
-          <SelectField label={t("ui.stockProduct")} value={draft?.productId} placeholder={t("ui.stockPick")} options={products.map((p) => ({ value: p.id, label: p.name }))} onChange={(v) => set({ productId: v })} />
-          <SelectField label={t("ui.stockWarehouse")} value={draft?.warehouseId} options={warehouses.map((w) => ({ value: w.id, label: w.name }))} onChange={(v) => set({ warehouseId: v })} />
-          <TextField label={t("ui.minStockMin")} value={draft?.minQty ?? ""} onChangeText={(v) => set({ minQty: v })} kind="decimal" />
-          {draft?.id ? <Button kind="danger" title={t("ui.delete")} onPress={doRemove} loading={remove.pending} style={{ marginTop: 16 }} /> : null}
+        <FormSheet visible={!!draft} title={t("ui.min.stockNew")} onClose={() => setDraft(null)} onSubmit={submit} submitLabel={t("ui.common.save")} pending={save.pending} error={err}>
+          <SelectField label={t("ui.stock.product")} value={draft?.productId} placeholder={t("ui.stock.pick")} options={products.map((p) => ({ value: p.id, label: p.name }))} onChange={(v) => set({ productId: v })} />
+          <SelectField label={t("ui.stock.warehouse")} value={draft?.warehouseId} options={warehouses.map((w) => ({ value: w.id, label: w.name }))} onChange={(v) => set({ warehouseId: v })} />
+          <TextField label={t("ui.min.stockMin")} value={draft?.minQty ?? ""} onChangeText={(v) => set({ minQty: v })} kind="decimal" />
+          {draft?.id ? <Button kind="danger" title={t("ui.common.delete")} onPress={doRemove} loading={remove.pending} style={{ marginTop: 16 }} /> : null}
         </FormSheet>
       </OfficeScreen>
     </AdminGate>

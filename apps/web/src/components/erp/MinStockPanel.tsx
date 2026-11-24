@@ -25,22 +25,22 @@ interface Low {
 
 function lowColumns({ prod, wh, unit }: { prod: (id: string) => { name: string } | undefined; wh: (id: string) => string; unit: (id: string) => string }): Column<Low>[] {
   return [
-    { id: "product", header: t("ui.stockProduct"), cell: (l) => prod(l.productId)?.name },
-    { id: "where", header: t("ui.stockWhere"), hideBelow: "sm", cell: (l) => <span className="text-tinta-2">{wh(l.warehouseId)}</span> },
-    { id: "qty", header: t("ui.stockQty"), align: "right", hideBelow: "sm", cell: (l) => fmtQty(l.qty, unit(l.productId)) },
-    { id: "min", header: t("ui.minStockMin"), align: "right", hideBelow: "md", cell: (l) => fmtQty(l.minQty, unit(l.productId)) },
-    { id: "missing", header: t("ui.minStockMissingHead"), align: "right", cell: (l) => <span className="text-trigo-texto">{fmtQty(l.missing, unit(l.productId))}</span>, sort: (a, b) => a.missing - b.missing },
+    { id: "product", header: t("ui.stock.product"), cell: (l) => prod(l.productId)?.name },
+    { id: "where", header: t("ui.stock.where"), hideBelow: "sm", cell: (l) => <span className="text-tinta-2">{wh(l.warehouseId)}</span> },
+    { id: "qty", header: t("ui.stock.qty"), align: "right", hideBelow: "sm", cell: (l) => fmtQty(l.qty, unit(l.productId)) },
+    { id: "min", header: t("ui.min.stockMin"), align: "right", hideBelow: "md", cell: (l) => fmtQty(l.minQty, unit(l.productId)) },
+    { id: "missing", header: t("ui.min.stockMissingHead"), align: "right", cell: (l) => <span className="text-trigo-texto">{fmtQty(l.missing, unit(l.productId))}</span>, sort: (a, b) => a.missing - b.missing },
   ];
 }
 
 function minColumns({ prod, wh, unit }: { prod: (id: string) => { name: string } | undefined; wh: (id: string) => string; unit: (id: string) => string }, onEdit: (m: Minimum) => void, onRemove: (m: Minimum) => void): Column<Minimum>[] {
   return [
-    { id: "product", header: t("ui.stockProduct"), cell: (m) => prod(m.productId)?.name },
-    { id: "where", header: t("ui.stockWhere"), cell: (m) => wh(m.warehouseId) },
-    { id: "min", header: t("ui.minStockMin"), align: "right", cell: (m) => fmtQty(m.minQty, unit(m.productId)) },
+    { id: "product", header: t("ui.stock.product"), cell: (m) => prod(m.productId)?.name },
+    { id: "where", header: t("ui.stock.where"), cell: (m) => wh(m.warehouseId) },
+    { id: "min", header: t("ui.min.stockMin"), align: "right", cell: (m) => fmtQty(m.minQty, unit(m.productId)) },
     {
       id: "menu",
-      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      header: <span className="sr-only">{t("ui.row.actionsHeader")}</span>,
       align: "right",
       width: "3rem",
       cell: (m) => <RowMenu name={prod(m.productId)?.name ?? ""} onEdit={() => onEdit(m)} onDelete={() => onRemove(m)} />,
@@ -62,7 +62,7 @@ export function MinStockPanel() {
   const remove = useMutation({
     mutationFn: (m: Minimum) => del(`/org/erp/stock/minimums/${m.id}`),
     onSuccess: () => {
-      toast(t("ui.erpDeleted"));
+      toast(t("ui.erp.deleted"));
       setRemoving(null);
       qc.invalidateQueries({ queryKey: ["erp"] });
     },
@@ -71,7 +71,7 @@ export function MinStockPanel() {
   if (mins.error) return <ErrorBox error={mins.error} />;
   const prod = (id: string) => products.data?.find((p) => p.id === id);
   const wh = (id: string) => warehouses.data?.find((w) => w.id === id)?.name ?? "";
-  const unit = (id: string) => tk(`fields.productUnit_${prod(id)?.unit ?? "l"}`);
+  const unit = (id: string) => tk(`fields.product.unit_${prod(id)?.unit ?? "l"}`);
   const minRows = mins.data ?? [];
   const lowRows = low.data ?? [];
   const needProduct = (products.data ?? []).length === 0;
@@ -79,19 +79,19 @@ export function MinStockPanel() {
   if (needProduct || needWarehouse)
     return (
       <EmptyState
-        title={t(needProduct ? "ui.stockNeedProductTitle" : "ui.stockNeedWarehouseTitle")}
+        title={t(needProduct ? "ui.stock.needProductTitle" : "ui.stock.needWarehouseTitle")}
         action={
           <Button variant="primary" onClick={() => goSection(needProduct ? "products" : "warehouses")}>
-            {t(needProduct ? "ui.productLoad" : "ui.warehouseLoad")}
+            {t(needProduct ? "ui.product.load" : "ui.warehouse.load")}
           </Button>
         }
       >
-        {t(needProduct ? "ui.stockNeedProductBody" : "ui.stockNeedWarehouseBody")}
+        {t(needProduct ? "ui.stock.needProductBody" : "ui.stock.needWarehouseBody")}
       </EmptyState>
     );
   const newButton = (
     <Button variant="primary" onClick={() => setEditing("new")}>
-      {t("ui.minStockNew")}
+      {t("ui.min.stockNew")}
     </Button>
   );
   const lowCols = lowColumns({ prod, wh, unit });
@@ -101,25 +101,25 @@ export function MinStockPanel() {
     <div className="flex flex-col gap-4">
       {!noMins && <HeaderActions>{newButton}</HeaderActions>}
       {noMins ? (
-        <EmptyState title={t("ui.emptyMinTitle")} action={newButton}>
-          {t("ui.emptyMinBody")}
+        <EmptyState title={t("ui.empty.minTitle")} action={newButton}>
+          {t("ui.empty.minBody")}
         </EmptyState>
       ) : (
         <>
           {(tab === "low" ? lowRows.length : minRows.length) > 0 && exp.menu}
           <Tabs
             tabs={[
-              { id: "low", label: t("ui.minTabLow"), count: lowRows.length },
-              { id: "all", label: t("ui.minTabAll"), count: minRows.length },
+              { id: "low", label: t("ui.min.tabLow"), count: lowRows.length },
+              { id: "all", label: t("ui.min.tabAll"), count: minRows.length },
             ]}
             value={tab}
             onChange={setTab}
           />
           <div ref={exp.ref}>
             {tab === "low" ? (
-              <DataTable columns={lowCols} rows={lowRows} rowKey={(l) => `${l.productId}-${l.warehouseId}`} caption={t("ui.minTabLow")} empty={<EmptyState compact title={t("ui.emptyLowTitle")}>{t("ui.emptyLowBody")}</EmptyState>} />
+              <DataTable columns={lowCols} rows={lowRows} rowKey={(l) => `${l.productId}-${l.warehouseId}`} caption={t("ui.min.tabLow")} empty={<EmptyState compact title={t("ui.empty.lowTitle")}>{t("ui.empty.lowBody")}</EmptyState>} />
             ) : (
-              <DataTable columns={minCols} rows={minRows} rowKey={(m) => m.id} caption={t("ui.minTabAll")} />
+              <DataTable columns={minCols} rows={minRows} rowKey={(m) => m.id} caption={t("ui.min.tabAll")} />
             )}
           </div>
         </>
@@ -128,8 +128,8 @@ export function MinStockPanel() {
       {removing && (
         <ConfirmModal
           title={prod(removing.productId)?.name ?? ""}
-          message={t("ui.erpDeleteConfirm", { name: prod(removing.productId)?.name ?? "" })}
-          confirmLabel={t("ui.delete")}
+          message={t("ui.erp.deleteConfirm", { name: prod(removing.productId)?.name ?? "" })}
+          confirmLabel={t("ui.common.delete")}
           pending={remove.isPending}
           error={remove.error}
           onConfirm={() => remove.mutate(removing)}
@@ -150,23 +150,23 @@ function MinModal({ row, onClose }: { row: Minimum | null; onClose: () => void }
   const save = useMutation({
     mutationFn: () => put("/org/erp/stock/minimums", { productId, warehouseId, minQty: Number(minQty) }),
     onSuccess: () => {
-      toast(t("ui.erpSaved"));
+      toast(t("ui.erp.saved"));
       qc.invalidateQueries({ queryKey: ["erp"] });
       onClose();
     },
   });
   return (
-    <Modal title={t("ui.minStockNew")} onClose={onClose}>
+    <Modal title={t("ui.min.stockNew")} onClose={onClose}>
       <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         <div className="col-span-2">
-          <Field label={t("ui.stockProduct")}>
+          <Field label={t("ui.stock.product")}>
             <Select value={productId} onChange={(e) => setProductId(e.target.value)} options={(products.data ?? []).map((p) => ({ value: p.id, label: p.name }))} />
           </Field>
         </div>
-        <Field label={t("ui.stockWhere")}>
+        <Field label={t("ui.stock.where")}>
           <Select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} options={(warehouses.data ?? []).map((w) => ({ value: w.id, label: w.name }))} />
         </Field>
-        <Field label={t("ui.minStockMin")}>
+        <Field label={t("ui.min.stockMin")}>
           <Input required type="number" min={0} step="any" value={minQty} onChange={(e) => setMinQty(e.target.value)} />
         </Field>
         <FormFooter error={save.error} disabled={save.isPending} />

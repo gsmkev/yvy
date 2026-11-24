@@ -58,31 +58,31 @@ export default function GoTo() {
   return (
     <View style={[k.screen, { paddingHorizontal: GUTTER, paddingTop: 12 }]}>
       <Stack.Screen options={{ title: "" }} />
-      <Text style={T.small}>{t("app.gotoTo")}</Text>
-      <Text style={[T.title, { marginTop: 2 }]}>{params.name || t("app.gotoThere")}</Text>
+      <Text style={T.small}>{t("app.goto.to")}</Text>
+      <Text style={[T.title, { marginTop: 2 }]}>{params.name || t("app.goto.there")}</Text>
       <View style={st.center}>
         {denied ? (
-          <Text style={T.body}>{t("app.gotoDenied")}</Text>
+          <Text style={T.body}>{t("app.goto.denied")}</Text>
         ) : dist === null ? (
           <>
-            <Text style={T.heading}>{t("app.gpsSearching")}</Text>
-            <Text style={[T.small, { marginTop: 6, textAlign: "center" }]}>{gpsHintText(stage) ?? t("app.gpsSlowHint")}</Text>
+            <Text style={T.heading}>{t("app.gps.searching")}</Text>
+            <Text style={[T.small, { marginTop: 6, textAlign: "center" }]}>{gpsHintText(stage) ?? t("app.gps.slowHint")}</Text>
           </>
         ) : arrived ? (
-          <Text style={T.display}>{t("app.gotoArrived")}</Text>
+          <Text style={T.display}>{t("app.goto.arrived")}</Text>
         ) : (
           <>
-            <View style={{ transform: [{ rotate: `${rotation}deg` }] }} accessibilityLabel={t("app.gotoArrowLabel", { dir: cardinal(bearing!) })}>
+            <View style={{ transform: [{ rotate: `${rotation}deg` }] }} accessibilityLabel={t("app.goto.arrowLabel", { dir: cardinal(bearing!) })}>
               <ArrowUp size={200} color={C.accion} strokeWidth={2.2} />
             </View>
             <Text style={[T.number, { marginTop: 24 }]}>{formatDistance(dist)}</Text>
-            <Text style={[T.body, { marginTop: 4, color: C.tinta2 }]}>{t("app.gotoBearing", { dir: cardinal(bearing!), deg: Math.round(bearing!) })}</Text>
-            {heading === null && <Text style={[T.small, { marginTop: 12, textAlign: "center" }]}>{t("app.gotoNoCompass")}</Text>}
+            <Text style={[T.body, { marginTop: 4, color: C.tinta2 }]}>{t("app.goto.bearing", { dir: cardinal(bearing!), deg: Math.round(bearing!) })}</Text>
+            {heading === null && <Text style={[T.small, { marginTop: 12, textAlign: "center" }]}>{t("app.goto.noCompass")}</Text>}
           </>
         )}
       </View>
-      {me?.accuracy ? <Text style={[T.small, { textAlign: "center", marginBottom: 24 }]}>{t("app.gpsOk", { m: Math.round(me.accuracy) })}</Text> : null}
-      <Text style={[T.small, { textAlign: "center", marginBottom: 24 }]}>{t("app.gotoOffline")}</Text>
+      {me?.accuracy ? <Text style={[T.small, { textAlign: "center", marginBottom: 24 }]}>{t("app.gps.ok", { m: Math.round(me.accuracy) })}</Text> : null}
+      <Text style={[T.small, { textAlign: "center", marginBottom: 24 }]}>{t("app.goto.offline")}</Text>
     </View>
   );
 }

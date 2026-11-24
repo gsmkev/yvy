@@ -35,8 +35,8 @@ export default function Account() {
   const guarded = (then: () => void) => {
     const block = canSwitchUser(unsentSummary(getDb()));
     if (!block.blocked) return then();
-    if (block.reason === "rejected") return Alert.alert(t("app.switchBlockedRejected", { n: block.n }));
-    Alert.alert(t(block.n === 1 ? "app.switchBlockedPendingOne" : "app.switchBlockedPending", { n: block.n }));
+    if (block.reason === "rejected") return Alert.alert(t("app.switch.blockedRejected", { n: block.n }));
+    Alert.alert(t(block.n === 1 ? "app.switch.blockedPendingOne" : "app.switch.blockedPending", { n: block.n }));
   };
 
   const logout = () =>
@@ -46,9 +46,9 @@ export default function Account() {
 
   const switchUser = () =>
     guarded(() =>
-      Alert.alert(t("app.switchConfirmTitle"), t("app.switchConfirmBody"), [
-        { text: t("ui.cancel"), style: "cancel" },
-        { text: t("app.switchConfirmYes"), onPress: () => void leave() },
+      Alert.alert(t("app.switch.confirmTitle"), t("app.switch.confirmBody"), [
+        { text: t("ui.common.cancel"), style: "cancel" },
+        { text: t("app.switch.confirmYes"), onPress: () => void leave() },
       ]),
     );
 
@@ -59,13 +59,13 @@ export default function Account() {
     if (!target || id === session?.organization.id) return;
     const block = canSwitchUser(unsentSummary(getDb()));
     if (block.blocked) {
-      const key: MessageKey = block.reason === "rejected" ? "office.orgSwitchBlockedRejected" : "office.orgSwitchBlockedPending";
+      const key: MessageKey = block.reason === "rejected" ? "office.org.switchBlockedRejected" : "office.org.switchBlockedPending";
       return Alert.alert(t(key, { n: block.n }));
     }
-    Alert.alert(t("office.orgSwitchConfirmTitle", { name: target.name }), t("office.orgSwitchConfirmBody"), [
-      { text: t("ui.cancel"), style: "cancel" },
+    Alert.alert(t("office.org.switchConfirmTitle", { name: target.name }), t("office.org.switchConfirmBody"), [
+      { text: t("ui.common.cancel"), style: "cancel" },
       {
-        text: t("office.orgSwitchConfirmYes"),
+        text: t("office.org.switchConfirmYes"),
         onPress: async () => {
           try {
             // Primero el servidor: si falla, no se toca nada local.
@@ -76,7 +76,7 @@ export default function Account() {
             startAutoSync();
             router.replace("/");
           } catch {
-            Alert.alert(t("ui.orgSwitchFailed"));
+            Alert.alert(t("ui.org.switchFailed"));
           }
         },
       },
@@ -86,55 +86,55 @@ export default function Account() {
   return (
     <ScrollView style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 80 }]}>
       <Text style={T.small}>{session?.organization.name}</Text>
-      <Text style={[T.title, { marginTop: 2 }]}>{t("app.accountRow")}</Text>
+      <Text style={[T.title, { marginTop: 2 }]}>{t("app.account.row")}</Text>
 
-      <SectionHeader first title={t("app.sectionAccount")} />
-      <Row icon={Bell} title={t("app.notifRow")} subtitle={t("app.notifRowHint")} onPress={() => router.push("/notifications")} />
+      <SectionHeader first title={t("app.section.account")} />
+      <Row icon={Bell} title={t("app.notif.row")} subtitle={t("app.notif.rowHint")} onPress={() => router.push("/notifications")} />
       <SwitchRow
-        title={t("app.remindersSwitch")}
-        hint={t("app.remindersHint")}
+        title={t("app.reminders.switch")}
+        hint={t("app.reminders.hint")}
         value={reminders}
         onValueChange={async (v) => {
           const on = await setRemindersEnabled(v);
           setReminders(on);
-          if (v && !on) Alert.alert(t("app.remindersDenied"));
+          if (v && !on) Alert.alert(t("app.reminders.denied"));
         }}
       />
       {demo ? (
-        <SwitchRow title={t("app.readOnlySwitch")} hint={t("office.demoReadOnlyFixed")} value disabled onValueChange={() => {}} />
+        <SwitchRow title={t("app.read.onlySwitch")} hint={t("office.demo.readOnlyFixed")} value disabled onValueChange={() => {}} />
       ) : (
-        isOwnerMode(session?.organization.role) && <SwitchRow title={t("app.readOnlySwitch")} hint={t("app.readOnlyHint")} value={readOnly} onValueChange={setReadOnly} />
+        isOwnerMode(session?.organization.role) && <SwitchRow title={t("app.read.onlySwitch")} hint={t("app.read.onlyHint")} value={readOnly} onValueChange={setReadOnly} />
       )}
-      <SectionHeader title={t("office.unitsSection")} />
-      <Text style={[T.small, { marginBottom: 4 }]}>{t("office.unitsHint")}</Text>
-      <Text style={[T.bodyMedium, { marginTop: 12 }]}>{t("ui.unitArea")}</Text>
-      <Segmented options={[{ value: "ha", label: "ha" }, { value: "cuadra", label: t("ui.unitCuadras") }]} value={units.area} onChange={(v) => setUnits({ area: v })} />
-      <Text style={[T.bodyMedium, { marginTop: 12 }]}>{t("ui.unitRain")}</Text>
-      <Segmented options={[{ value: "mm", label: "mm" }, { value: "in", label: t("ui.unitInches") }]} value={units.rain} onChange={(v) => setUnits({ rain: v })} />
-      <Text style={[T.bodyMedium, { marginTop: 12 }]}>{t("ui.unitTemp")}</Text>
+      <SectionHeader title={t("office.units.section")} />
+      <Text style={[T.small, { marginBottom: 4 }]}>{t("office.units.hint")}</Text>
+      <Text style={[T.bodyMedium, { marginTop: 12 }]}>{t("ui.unit.area")}</Text>
+      <Segmented options={[{ value: "ha", label: "ha" }, { value: "cuadra", label: t("ui.unit.cuadras") }]} value={units.area} onChange={(v) => setUnits({ area: v })} />
+      <Text style={[T.bodyMedium, { marginTop: 12 }]}>{t("ui.unit.rain")}</Text>
+      <Segmented options={[{ value: "mm", label: "mm" }, { value: "in", label: t("ui.unit.inches") }]} value={units.rain} onChange={(v) => setUnits({ rain: v })} />
+      <Text style={[T.bodyMedium, { marginTop: 12 }]}>{t("ui.unit.temp")}</Text>
       <Segmented options={[{ value: "c", label: "°C" }, { value: "f", label: "°F" }]} value={units.temp} onChange={(v) => setUnits({ temp: v })} />
-      <SectionHeader title={t("app.language")} />
+      <SectionHeader title={t("app.common.language")} />
       <Row
         icon={Languages}
-        title={t("app.language")}
+        title={t("app.common.language")}
         subtitle={LOCALE_NAMES[getLocale()]}
         onPress={() => setLangOpen(true)}
       />
-      {orgs.length > 1 && <Row icon={Building2} title={t("ui.orgSwitch")} subtitle={t("office.orgSwitchHint", { name: session?.organization.name ?? "" })} onPress={() => setOrgOpen(true)} />}
-      <Row icon={UserRoundCog} title={t("app.switchUser")} subtitle={t("app.switchUserHint")} onPress={switchUser} />
-      <Button kind="danger" title={t("app.logout")} onPress={logout} style={{ marginTop: 32 }} />
+      {orgs.length > 1 && <Row icon={Building2} title={t("ui.org.switch")} subtitle={t("office.org.switchHint", { name: session?.organization.name ?? "" })} onPress={() => setOrgOpen(true)} />}
+      <Row icon={UserRoundCog} title={t("app.switch.user")} subtitle={t("app.switch.userHint")} onPress={switchUser} />
+      <Button kind="danger" title={t("app.common.logout")} onPress={logout} style={{ marginTop: 32 }} />
 
       <ChoiceSheet
         visible={orgOpen}
-        title={t("ui.orgSwitch")}
+        title={t("ui.org.switch")}
         value={session?.organization.id}
-        options={orgs.map((o) => ({ value: o.id, label: o.name, hint: o.id === session?.organization.id ? t("ui.orgCurrent") : t(`ui.role_${o.role}` as MessageKey) }))}
+        options={orgs.map((o) => ({ value: o.id, label: o.name, hint: o.id === session?.organization.id ? t("ui.org.current") : t(`ui.role.${o.role}` as MessageKey) }))}
         onClose={() => setOrgOpen(false)}
         onSelect={switchOrg}
       />
       <ChoiceSheet
         visible={langOpen}
-        title={t("app.languageChoose")}
+        title={t("app.common.languageChoose")}
         value={getLocale()}
         options={LOCALES.map((l) => ({ value: l, label: LOCALE_NAMES[l] }))}
         onClose={() => setLangOpen(false)}

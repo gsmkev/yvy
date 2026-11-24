@@ -84,7 +84,7 @@ export class ApiError extends Error {
 /** Falla de red (sin respuesta del servidor): distinta de un error HTTP. */
 export class NetworkError extends Error {
   constructor() {
-    super(t("ui.networkError"));
+    super(t("ui.common.networkError"));
   }
 }
 
@@ -172,6 +172,9 @@ export const qs = (params: Record<string, string | number | undefined | null>) =
   const s = p.toString();
   return s ? `?${s}` : "";
 };
+
+/** `path` con la query armada desde `params` (los vacíos se omiten). */
+export const withQs = (path: string, params: Record<string, string | number | undefined | null>) => path + qs(params);
 
 /** Cuerpo binario (un archivo) con la misma sesión: la API lo recibe tal cual, con su tipo y tamaño. */
 export async function apiFile<T>(path: string, file: Blob, retry = true): Promise<T> {

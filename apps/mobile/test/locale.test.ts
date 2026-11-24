@@ -21,7 +21,7 @@ describe("idioma de la app (U-22)", () => {
   it("la elección queda guardada sin señal y se recupera al abrir la app", () => {
     const kv = memKv();
     chooseLocale(kv, "gn-PY");
-    expect(t("app.annotate")).toBe("Ehai");
+    expect(t("app.common.annotate")).toBe("Ehai");
     setLocale("es-PY"); // la app se cierra y se vuelve a abrir
     expect(loadLocale(kv)).toBe("gn-PY");
     expect(getLocale()).toBe("gn-PY");
@@ -29,7 +29,7 @@ describe("idioma de la app (U-22)", () => {
 
   it("la pantalla Anotar cae a es-PY en lo que no está traducido", () => {
     setLocale("gn-PY");
-    expect(t("app.whatHappened")).toBe("¿Mba'e rehaíta?");
-    expect(t("app.supplementTypeQuestion")).toBe("¿Qué le diste al ganado?");
+    expect(t("app.common.whatHappened")).toBe("¿Mba'e rehaíta?");
+    expect(t("app.supplement.typeQuestion")).toBe("¿Qué le diste al ganado?");
   });
 });

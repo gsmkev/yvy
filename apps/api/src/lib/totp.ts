@@ -67,7 +67,7 @@ export const totpStep = (nowMs: number): number => Math.floor(nowMs / 1000 / TOT
  * Se miran los tres pasos siempre, para que el tiempo de respuesta no delate cuál acertó.
  */
 export async function matchTotp(secretBase32: string, code: string, nowMs: number, digits = TOTP_DIGITS): Promise<number | null> {
-  if (!new RegExp(`^\\d{${digits}}$`).test(code)) return null;
+  if (code.length !== digits || !/^\d+$/.test(code)) return null;
   const secret = base32Decode(secretBase32);
   const step = totpStep(nowMs);
   let hit: number | null = null;

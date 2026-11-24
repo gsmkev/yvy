@@ -25,8 +25,8 @@ import { gpsHintText, useGpsStage } from "../lib/gpsHint";
 const tr = (key: string, vars?: Record<string, string | number>) => t(key as MessageKey, vars);
 const fmt = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
 
-const itemLabel = (i: MonitorItem) => tr(`app.monitor_${i.key}`);
-const unitLabel = (i: MonitorItem) => tr(`app.monitorUnit_${i.unit}`);
+const itemLabel = (i: MonitorItem) => tr(`app.monitor.${i.key}`);
+const unitLabel = (i: MonitorItem) => tr(`app.monitor.unit_${i.unit}`);
 
 /** Promedios contra umbral; se reutiliza en la estación y en el resumen. */
 function Averages({ items, stations, title }: { items: readonly MonitorItem[]; stations: Station[]; title: string }) {
@@ -42,15 +42,15 @@ function Averages({ items, stations, title }: { items: readonly MonitorItem[]; s
           <View key={i.key} style={st.avgRow}>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={T.bodyMedium}>{itemLabel(i)}</Text>
-              <Text style={T.small}>{t("app.stationsLine", { avg: fmt(c.average), unit: unitLabel(i), thr: fmt(c.threshold) })}</Text>
+              <Text style={T.small}>{t("app.stations.line", { avg: fmt(c.average), unit: unitLabel(i), thr: fmt(c.threshold) })}</Text>
             </View>
             <Text style={[T.bodyMedium, { color: c.over ? C.peligro : C.accionOscuro }]}>
-              {c.over ? t("app.stationOver") : t("app.stationUnder")}
+              {c.over ? t("app.station.over") : t("app.station.under")}
             </Text>
           </View>
         );
       })}
-      <Text style={[T.small, { marginTop: 8 }]}>{t("app.stationsDefaults")}</Text>
+      <Text style={[T.small, { marginTop: 8 }]}>{t("app.stations.defaults")}</Text>
     </View>
   );
 }
@@ -65,7 +65,7 @@ function Counter({ item, value, onChange }: { item: MonitorItem; value: number; 
       </View>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={t("app.stationMinus", { pest: itemLabel(item) })}
+        accessibilityLabel={t("app.station.minus", { pest: itemLabel(item) })}
         onPress={() => onChange(Math.max(0, value - item.step))}
         style={st.stepBtn}
         hitSlop={4}
@@ -77,7 +77,7 @@ function Counter({ item, value, onChange }: { item: MonitorItem; value: number; 
       </Text>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={t("app.stationPlus", { pest: itemLabel(item) })}
+        accessibilityLabel={t("app.station.plus", { pest: itemLabel(item) })}
         onPress={() => onChange(Math.min(max, value + item.step))}
         style={[st.stepBtn, { backgroundColor: C.accionSuave, borderColor: C.accion }]}
         hitSlop={4}
@@ -122,13 +122,13 @@ export function Stations({
   if (summary) {
     return (
       <ScrollView contentContainerStyle={k.pad}>
-        <Text style={T.title}>{t("app.stationsDoneTitle")}</Text>
-        <Text style={[T.small, { marginTop: 6 }]}>{t(stations.length === 1 ? "app.stationsValueOne" : "app.stationsValue", { n: stations.length })}</Text>
-        <Averages items={items} stations={stations} title={t("app.stationsAverageOf", { n: stations.length })} />
+        <Text style={T.title}>{t("app.stations.doneTitle")}</Text>
+        <Text style={[T.small, { marginTop: 6 }]}>{t(stations.length === 1 ? "app.stations.valueOne" : "app.stations.value", { n: stations.length })}</Text>
+        <Averages items={items} stations={stations} title={t("app.stations.averageOf", { n: stations.length })} />
         <View style={{ height: 20 }} />
-        <Button big title={t("app.stationsContinue")} onPress={onDone} />
+        <Button big title={t("app.stations.continue")} onPress={onDone} />
         {stations.length < LIMITS.monitoring.maxStations && (
-          <Button kind="secondary" title={t("app.stationsAddAnother")} onPress={() => setSummary(false)} style={{ marginTop: 12 }} />
+          <Button kind="secondary" title={t("app.stations.addAnother")} onPress={() => setSummary(false)} style={{ marginTop: 12 }} />
         )}
       </ScrollView>
     );
@@ -148,24 +148,24 @@ export function Stations({
   };
 
   const live = [...stations, { counts }];
-  const gps = fix === "searching" ? [t("app.stationGpsSearching"), gpsHint].filter(Boolean).join(" ") : fix ? accuracyLabel(fix.accuracy) : `${t("app.stationGpsNone")}. ${t("app.gpsNoneHint")}`;
+  const gps = fix === "searching" ? [t("app.station.gpsSearching"), gpsHint].filter(Boolean).join(" ") : fix ? accuracyLabel(fix.accuracy) : `${t("app.station.gpsNone")}. ${t("app.gps.noneHint")}`;
   return (
     <ScrollView contentContainerStyle={[k.pad, { paddingBottom: 40 }]}>
       <Text style={T.title}>
-        {n <= target ? t("app.stationTitle", { n, total: target }) : t("app.stationTitleExtra", { n })}
+        {n <= target ? t("app.station.title", { n, total: target }) : t("app.station.titleExtra", { n })}
       </Text>
-      <Text style={[T.small, { marginTop: 6 }]}>{t("app.stationHint")}</Text>
+      <Text style={[T.small, { marginTop: 6 }]}>{t("app.station.hint")}</Text>
       <Text style={[T.small, { marginTop: 2, marginBottom: 12 }]}>{gps}</Text>
       {items.map((i) => (
         <Counter key={i.key} item={i} value={counts[i.key] ?? 0} onChange={(v) => setCounts((c) => ({ ...c, [i.key]: v }))} />
       ))}
-      <Averages items={items} stations={live} title={t("app.stationsAverageTitle")} />
+      <Averages items={items} stations={live} title={t("app.stations.averageTitle")} />
       <View style={{ height: 20 }} />
-      <Button big title={t("app.stationSave")} onPress={save} />
+      <Button big title={t("app.station.save")} onPress={save} />
       {stations.length > 0 && (
         <Button
           kind="text"
-          title={t(stations.length === 1 ? "app.stationsFinishOne" : "app.stationsFinish", { n: stations.length })}
+          title={t(stations.length === 1 ? "app.stations.finishOne" : "app.stations.finish", { n: stations.length })}
           onPress={() => setSummary(true)}
           style={{ marginTop: 8 }}
         />

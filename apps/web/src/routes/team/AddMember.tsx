@@ -13,34 +13,34 @@ export function AddMember({ canAddAdmins, onClose }: { canAddAdmins: boolean; on
       post("/org/members", { fullName: f.fullName, email: f.email || null, phone: f.phone || null, role: f.role }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["members"] });
-      toast(t("ui.toastMemberAdded"));
+      toast(t("ui.toast.memberAdded"));
       onClose();
     },
   });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   const roles = ROLES.filter((r) => r !== "owner" && (canAddAdmins || isFieldRole(r)));
   return (
-    <Modal title={t("ui.addMember")} onClose={onClose}>
+    <Modal title={t("ui.add.member")} onClose={onClose}>
       <Form className="flex flex-col gap-3" onSubmit={() => add.mutate()}>
-        <Field label={t("ui.memberName")}>
+        <Field label={t("ui.member.name")}>
           <Input required value={f.fullName} onChange={set("fullName")} />
         </Field>
-        <Field label={t("ui.role")}>
+        <Field label={t("ui.common.role")}>
           <Select
             value={f.role}
             onChange={set("role")}
-            options={roles.map((r) => ({ value: r, label: tk(`ui.role_${r}`) }))}
+            options={roles.map((r) => ({ value: r, label: tk(`ui.role.${r}`) }))}
           />
         </Field>
-        <Field label={t("ui.memberEmail")}>
+        <Field label={t("ui.member.email")}>
           <Input type="email" required={!isFieldRole(f.role)} value={f.email} onChange={set("email")} />
         </Field>
-        <Field label={t("ui.phone")}>
+        <Field label={t("ui.common.phone")}>
           <Input type="tel" value={f.phone} onChange={set("phone")} />
         </Field>
         {add.error && <ErrorBox error={add.error} />}
         <Button type="submit" variant="primary" disabled={add.isPending}>
-          {t("ui.save")}
+          {t("ui.common.save")}
         </Button>
       </Form>
     </Modal>

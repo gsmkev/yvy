@@ -30,7 +30,7 @@ export function ShareLinksModal({ farmId, onClose }: { farmId: string; onClose: 
       post<{ token: string }>(`/org/farms/${farmId}/share-links`, { days }),
     onSuccess: (r) => {
       setCopied(false);
-      toast(t("ui.toastShareCreated"));
+      toast(t("ui.toast.shareCreated"));
       setFresh(`${window.location.origin}/compartido/${r.token}`);
       return qc.invalidateQueries({ queryKey: ["share-links", farmId] });
     },
@@ -38,28 +38,28 @@ export function ShareLinksModal({ farmId, onClose }: { farmId: string; onClose: 
   const revoke = useMutation({
     mutationFn: (id: string) => del(`/org/share-links/${id}`),
     onSuccess: () => {
-      toast(t("ui.toastShareRevoked"));
+      toast(t("ui.toast.shareRevoked"));
       return qc.invalidateQueries({ queryKey: ["share-links", farmId] });
     },
   });
   if (!isOwner) return null;
   const now = Date.now();
   return (
-    <Modal title={t("ui.shareLinkTitle")} onClose={onClose}>
-      <p className="text-sm text-tinta-2">{t("ui.shareLinkIntro")}</p>
+    <Modal title={t("ui.share.linkTitle")} onClose={onClose}>
+      <p className="text-sm text-tinta-2">{t("ui.share.linkIntro")}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button variant="primary" onClick={() => create.mutate(7)} disabled={create.isPending}>
-          {t("ui.shareLinkCreate7")}
+          {t("ui.share.linkCreate7")}
         </Button>
         <Button variant="secondary" onClick={() => create.mutate(30)} disabled={create.isPending}>
-          {t("ui.shareLinkCreate30")}
+          {t("ui.share.linkCreate30")}
         </Button>
       </div>
       {create.error ? <ErrorBox error={create.error} /> : null}
       {fresh && (
         <div className="mt-4 rounded-lg border border-linea bg-papel p-3">
           <p className="num text-sm break-all">{fresh}</p>
-          <p className="mt-1 text-xs text-tinta-2">{t("ui.shareLinkNewNote")}</p>
+          <p className="mt-1 text-xs text-tinta-2">{t("ui.share.linkNewNote")}</p>
           <div className="mt-2 flex items-center gap-3">
             <Button
               onClick={() =>
@@ -69,15 +69,15 @@ export function ShareLinksModal({ farmId, onClose }: { farmId: string; onClose: 
                 )
               }
             >
-              {t("ui.shareLinkCopy")}
+              {t("ui.share.linkCopy")}
             </Button>
-            {copied && <span className="text-sm text-tinta-2">{t("ui.shareLinkCopied")}</span>}
+            {copied && <span className="text-sm text-tinta-2">{t("ui.share.linkCopied")}</span>}
           </div>
         </div>
       )}
       {links.data && links.data.length > 0 && (
         <>
-          <h3 className="mt-6 text-sm font-semibold text-tinta-2">{t("ui.shareLinkList")}</h3>
+          <h3 className="mt-6 text-sm font-semibold text-tinta-2">{t("ui.share.linkList")}</h3>
           <ul className="mt-1 divide-y divide-linea border-y border-linea text-sm">
             {links.data.map((l) => {
               const live = l.revokedAt === null && l.expiresAt > now;
@@ -86,14 +86,14 @@ export function ShareLinksModal({ farmId, onClose }: { farmId: string; onClose: 
                   <span className="num">
                     {fmtDate(l.createdAt)} ·{" "}
                     {l.revokedAt !== null
-                      ? t("ui.shareLinkRevoked")
+                      ? t("ui.share.linkRevoked")
                       : live
-                        ? t("ui.shareLinkActive", { date: fmtDate(l.expiresAt) })
-                        : t("ui.shareLinkExpired", { date: fmtDate(l.expiresAt) })}
+                        ? t("ui.share.linkActive", { date: fmtDate(l.expiresAt) })
+                        : t("ui.share.linkExpired", { date: fmtDate(l.expiresAt) })}
                   </span>
                   {live && (
                     <Button variant="danger" className="h-8" onClick={() => revoke.mutate(l.id)}>
-                      {t("ui.shareLinkRevoke")}
+                      {t("ui.share.linkRevoke")}
                     </Button>
                   )}
                 </li>

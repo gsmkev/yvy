@@ -12,7 +12,7 @@ interface Dashboard {
   areaByCrop: { kind: "crop" | "pasture"; ha: number }[];
 }
 
-const usd = (n: number) => `US$ ${new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 }).format(n)}`;
+const usd = (n: number) => "US$ " + new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 }).format(n);
 const num = (s: string) => {
   const n = Number(s.replace(/\./g, "").replace(",", "."));
   return Number.isFinite(n) && n > 0 ? n : 0;
@@ -32,38 +32,38 @@ export function PlanPrice({ billing, onBilling }: { billing: Billing; onBilling:
   const other = priceFor(num(calc.crops), num(calc.cattle), billing);
   return (
     <div className="mt-8">
-      <SectionHead title={t("ui.planPriceTitle")} />
-      <p className="mt-3 text-sm text-tinta-2">{t("ui.planPriceIntro")}</p>
+      <SectionHead title={t("ui.plan.priceTitle")} />
+      <p className="mt-3 text-sm text-tinta-2">{t("ui.plan.priceIntro")}</p>
       <div className="mt-4">
-        <span className="eyebrow">{t("ui.planBilling")}</span>
+        <span className="eyebrow">{t("ui.plan.billing")}</span>
         <Tabs<Billing>
-          tabs={BILLINGS.map((b) => ({ id: b, label: t(`ui.planBilling_${b}`) }))}
+          tabs={BILLINGS.map((b) => ({ id: b, label: t(`ui.plan.billing_${b}`) }))}
           value={billing}
           onChange={onBilling}
         />
-        {billing === "annual" && <p className="mt-1 text-sm text-tinta-2">{t("ui.planBillingGift")}</p>}
+        {billing === "annual" && <p className="mt-1 text-sm text-tinta-2">{t("ui.plan.billingGift")}</p>}
       </div>
       {dash.data && (
         <div className="mt-4">
           <p className="text-sm text-tinta-2">
-            {t("ui.planPriceYours", { crops: fmtNum(crops), cattle: fmtNum(cattle) })}
+            {t("ui.plan.priceYours", { crops: fmtNum(crops), cattle: fmtNum(cattle) })}
           </p>
           <Quote q={mine} billing={billing} rate={rate} />
         </div>
       )}
       <div className="mt-6 max-w-md">
-        <span className="eyebrow">{t("ui.planCalcTitle")}</span>
+        <span className="eyebrow">{t("ui.plan.calcTitle")}</span>
         <div className="mt-2 grid grid-cols-2 gap-3">
-          <Field label={t("ui.planCalcCrops")}>
+          <Field label={t("ui.plan.calcCrops")}>
             <Input inputMode="decimal" value={calc.crops} onChange={(e) => setCalc({ ...calc, crops: e.target.value })} />
           </Field>
-          <Field label={t("ui.planCalcCattle")}>
+          <Field label={t("ui.plan.calcCattle")}>
             <Input inputMode="decimal" value={calc.cattle} onChange={(e) => setCalc({ ...calc, cattle: e.target.value })} />
           </Field>
         </div>
         <Quote q={other} billing={billing} rate={rate} />
       </div>
-      <p className="mt-4 text-xs text-tinta-2">{t("ui.planPriceNote", { rate: fmtNum(rate) })}</p>
+      <p className="mt-4 text-xs text-tinta-2">{t("ui.plan.priceNote", { rate: fmtNum(rate) })}</p>
     </div>
   );
 }
@@ -80,16 +80,16 @@ function Quote({
   return (
     <>
       <dl className="mt-3 grid gap-4 sm:grid-cols-2">
-        <Stat label={t("ui.planPriceYear")} value={fmtGs(usdToGs(q.year, rate))} note={usd(q.year)} />
+        <Stat label={t("ui.plan.priceYear")} value={fmtGs(usdToGs(q.year, rate))} note={usd(q.year)} />
         <Stat
-          label={t("ui.planPriceInstallment")}
+          label={t("ui.plan.priceInstallment")}
           value={fmtGs(usdToGs(q.perInstallment, rate))}
-          note={`${usd(q.perInstallment)} · ${t(`ui.planPriceInstallments_${billing}`)}`}
+          note={`${usd(q.perInstallment)} · ${t(`ui.plan.priceInstallments_${billing}`)}`}
         />
       </dl>
       <p className="mt-2 text-xs text-tinta-2">
-        {t("ui.planPricePerHa", { n: new Intl.NumberFormat("es-PY", { maximumFractionDigits: 2 }).format(q.perHa) })}
-        {q.minApplied ? ` · ${t("ui.planPriceMin")}` : ""}
+        {t("ui.plan.pricePerHa", { n: new Intl.NumberFormat("es-PY", { maximumFractionDigits: 2 }).format(q.perHa) })}
+        {q.minApplied ? ` · ${t("ui.plan.priceMin")}` : ""}
       </p>
     </>
   );

@@ -33,7 +33,8 @@ const MAX_LABELS = 60;
 const MAX_SAMPLES = 150;
 
 export default function MapScreen() {
-  const { farmId, farms, plots, records, lastVisit, pois, taskPoints, remoteBase, farm, readOnly, canMarkPoi } = useMapData();
+  const { farmId, farms, plots, records, lastVisit, pois, taskPoints, remoteBase, farm, readOnly, canMarkPoi } =
+    useMapData();
   const [selected, setSelected] = useState<string | null>(null);
   useFocusEffect(
     useCallback(() => {
@@ -41,7 +42,9 @@ export default function MapScreen() {
       return () => setFabHidden(false);
     }, [selected]),
   );
-  const [mode, setModeState] = useState<MapLayer>(() => (getDb().getKv("map_layer") === "ndvi" ? "ndvi" : "true_color"));
+  const [mode, setModeState] = useState<MapLayer>(() =>
+    getDb().getKv("map_layer") === "ndvi" ? "ndvi" : "true_color",
+  );
   const setMode = (m: MapLayer) => {
     setModeState(m);
     getDb().setKv("map_layer", m);
@@ -57,7 +60,8 @@ export default function MapScreen() {
   // M-13: al elegir un lote la cámara se ajusta a sus límites, dejando lugar a la ficha de abajo.
   useEffect(() => {
     const p = plots.find((x) => x.id === selected);
-    if (p) camera.current?.fitBounds([p.minLon, p.minLat, p.maxLon, p.maxLat], { padding: PLOT_PADDING, duration: 600 });
+    if (p)
+      camera.current?.fitBounds([p.minLon, p.minLat, p.maxLon, p.maxLat], { padding: PLOT_PADDING, duration: 600 });
   }, [selected]);
   const firstFarm = useRef(true);
   useEffect(() => {
@@ -66,7 +70,11 @@ export default function MapScreen() {
       return;
     }
     setSelected(null);
-    if (farm) camera.current?.fitBounds([farm.minLon, farm.minLat, farm.maxLon, farm.maxLat], { padding: FIT_PADDING, duration: 600 });
+    if (farm)
+      camera.current?.fitBounds([farm.minLon, farm.minLat, farm.maxLon, farm.maxLat], {
+        padding: FIT_PADDING,
+        duration: 600,
+      });
   }, [farm?.id]);
 
   // M-12: la etiqueta va en un punto garantizado adentro del lote (el centro del bbox cae afuera en lotes en L o U).
@@ -81,7 +89,10 @@ export default function MapScreen() {
     return p && gridHa ? samplingGrid(JSON.parse(p.geometry) as Area, gridHa).slice(0, MAX_SAMPLES) : [];
   }, [plots, selected, gridHa]);
 
-  const ndvi = useMemo(() => (farm && mode === "ndvi" ? layerSource(farm.id, "ndvi", remoteBase) : null), [farm?.id, mode, remoteBase]);
+  const ndvi = useMemo(
+    () => (farm && mode === "ndvi" ? layerSource(farm.id, "ndvi", remoteBase) : null),
+    [farm?.id, mode, remoteBase],
+  );
 
   const style = useMemo(
     () => buildMapStyle({ farms, plots, records, pois, taskPoints, me, selected, lastVisit, mode, remoteBase }),
@@ -91,7 +102,7 @@ export default function MapScreen() {
   if (!farm) {
     return (
       <View style={[st.center, { backgroundColor: C.papel }]}>
-        <Text style={T.body}>{t("ui.loading")}</Text>
+        <Text style={T.body}>{t("ui.common.loading")}</Text>
       </View>
     );
   }
@@ -106,9 +117,9 @@ export default function MapScreen() {
   };
 
   const locate = async () => {
-    showToast(t("app.gpsSearching"), 8000);
+    showToast(t("app.gps.searching"), 8000);
     const f = await currentFix(8000);
-    if (!f) return showToast(t("app.gpsNoneHint"), 6000);
+    if (!f) return showToast(t("app.gps.noneHint"), 6000);
     setMe(f);
     camera.current?.flyTo({ center: [f.lon, f.lat], zoom: 15, duration: 800 });
   };
@@ -116,7 +127,11 @@ export default function MapScreen() {
   const onMapPress = (lon: number, lat: number) => {
     // Un toque cerca de una tarea con punto (S-09) lleva ahí
     const task = taskPoints.find((p) => distanceM({ lon, lat }, p) < 40);
-    if (task) return router.push({ pathname: "/goto", params: { lon: String(task.lon), lat: String(task.lat), name: task.title } });
+    if (task)
+      return router.push({
+        pathname: "/goto",
+        params: { lon: String(task.lon), lat: String(task.lat), name: task.title },
+      });
     setSelected(plots.find((p) => containsPoint(JSON.parse(p.geometry) as Area, lon, lat))?.id ?? null);
   };
 
@@ -131,10 +146,16 @@ export default function MapScreen() {
         onRegionIsChanging={(e) => onBearing(e.nativeEvent.bearing)}
         onPress={(e) => onMapPress(...(e.nativeEvent.lngLat as unknown as [number, number]))}
       >
-        <Camera ref={camera} initialViewState={{ bounds: [farm.minLon, farm.minLat, farm.maxLon, farm.maxLat], padding: { top: 40, bottom: 40, left: 24, right: 24 } }} />
+        <Camera
+          ref={camera}
+          initialViewState={{
+            bounds: [farm.minLon, farm.minLat, farm.maxLon, farm.maxLat],
+            padding: { top: 40, bottom: 40, left: 24, right: 24 },
+          }}
+        />
         {samples.map((p) => (
           <Marker key={`s${p.n}`} lngLat={[p.lon, p.lat]}>
-            <View style={st.sample} accessible accessibilityLabel={t("app.samplingPoint", { n: p.n })}>
+            <View style={st.sample} accessible accessibilityLabel={t("app.sampling.point", { n: p.n })}>
               <Text style={st.sampleText}>{p.n}</Text>
             </View>
           </Marker>
@@ -147,9 +168,26 @@ export default function MapScreen() {
           </Marker>
         ))}
       </Map>
-      <MapTopPanels panel={panel} mode={mode} setMode={setMode} me={me} copied={copied} copyMe={copyMe} canMarkPoi={canMarkPoi} ndvi={ndvi} />
-      <Text style={st.attr}>Sentinel-2 · Copernicus</Text>
-      <MapTools panel={panel} setPanel={setPanel} bearing={bearing} follow={follow} setFollow={setFollow} locate={locate} northUp={northUp} />
+      <MapTopPanels
+        panel={panel}
+        mode={mode}
+        setMode={setMode}
+        me={me}
+        copied={copied}
+        copyMe={copyMe}
+        canMarkPoi={canMarkPoi}
+        ndvi={ndvi}
+      />
+      <Text style={st.attr}>{t("app.map.imageryCredit")}</Text>
+      <MapTools
+        panel={panel}
+        setPanel={setPanel}
+        bearing={bearing}
+        follow={follow}
+        setFollow={setFollow}
+        locate={locate}
+        northUp={northUp}
+      />
       {plot && (
         <MapPlotSheet
           plot={plot}

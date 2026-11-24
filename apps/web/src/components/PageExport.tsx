@@ -12,8 +12,8 @@ export function PageExport({ root, name }: { root: RefObject<HTMLElement | null>
   return (
     <ExportMenu
       formats={[
-        { label: t("ui.exportFormatExcel"), run: () => tablesToExcel(name, tables()) },
-        { label: t("ui.exportFormatCsv"), run: () => tables().forEach((d) => tableToCsv(d)) },
+        { label: t("ui.export.formatExcel"), run: () => tablesToExcel(name, tables()) },
+        { label: t("ui.export.formatCsv"), run: () => tables().forEach((d) => tableToCsv(d)) },
       ]}
     />
   );

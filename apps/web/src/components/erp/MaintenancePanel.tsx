@@ -20,11 +20,11 @@ const unitOf = (k: "hours" | "km") => (k === "hours" ? "h" : "km");
 
 function dueColumns(onDone: (planId: string) => void): Column<Due>[] {
   return [
-    { id: "machine", header: t("ui.maintMachine"), cell: (d) => d.machine },
-    { id: "name", header: t("ui.maintPlanName"), hideBelow: "sm", cell: (d) => d.name },
+    { id: "machine", header: t("ui.maint.machine"), cell: (d) => d.machine },
+    { id: "name", header: t("ui.maint.planName"), hideBelow: "sm", cell: (d) => d.name },
     {
       id: "meter",
-      header: t("ui.maintMeter"),
+      header: t("ui.maint.meter"),
       align: "right",
       hideBelow: "md",
       cell: (d) => (
@@ -35,23 +35,23 @@ function dueColumns(onDone: (planId: string) => void): Column<Due>[] {
     },
     {
       id: "left",
-      header: t("ui.maintDueCol"),
+      header: t("ui.maint.dueCol"),
       align: "right",
       cell: (d) => (
         <span className={d.status === "overdue" ? "text-peligro" : "text-trigo-texto"}>
           {d.status === "overdue"
-            ? t("ui.maintOverdue", { n: `${fmtNum(-d.remaining)} ${unitOf(d.meterKind)}` })
-            : t("ui.maintSoon", { n: `${fmtNum(d.remaining)} ${unitOf(d.meterKind)}` })}
+            ? t("ui.maint.overdue", { n: `${fmtNum(-d.remaining)} ${unitOf(d.meterKind)}` })
+            : t("ui.maint.soon", { n: `${fmtNum(d.remaining)} ${unitOf(d.meterKind)}` })}
         </span>
       ),
     },
     {
       id: "_a",
-      header: <span className="sr-only">{t("ui.maintDone")}</span>,
+      header: <span className="sr-only">{t("ui.maint.done")}</span>,
       align: "right",
       cell: (d) => (
         <Button variant="quiet" size="sm" onClick={() => onDone(d.planId)}>
-          {t("ui.maintDone")}
+          {t("ui.maint.done")}
         </Button>
       ),
     },
@@ -60,28 +60,28 @@ function dueColumns(onDone: (planId: string) => void): Column<Due>[] {
 
 function logColumns(machine: (id: string) => { name: string; meterKind: "hours" | "km" } | undefined, onRemove: (l: Log) => void): Column<Log>[] {
   return [
-    { id: "date", header: t("ui.costDate"), cell: (l) => <span className="whitespace-nowrap">{fmtIsoDate(localDate(l.occurredAt))}</span> },
+    { id: "date", header: t("ui.cost.date"), cell: (l) => <span className="whitespace-nowrap">{fmtIsoDate(localDate(l.occurredAt))}</span> },
     {
       id: "machine",
-      header: t("ui.maintMachine"),
+      header: t("ui.maint.machine"),
       cell: (l) => (
         <>
           {machine(l.machineId)?.name}
-          <span className="block text-meta font-normal text-tinta-2 sm:hidden">{tk(`ui.maintKind_${l.kind}`)}</span>
+          <span className="block text-meta font-normal text-tinta-2 sm:hidden">{tk(`ui.maint.kind_${l.kind}`)}</span>
         </>
       ),
     },
-    { id: "kind", header: t("ui.maintKind"), hideBelow: "sm", cell: (l) => tk(`ui.maintKind_${l.kind}`) },
-    { id: "desc", header: t("ui.maintDescription"), hideBelow: "lg", cell: (l) => <span className="text-tinta-2">{l.description}</span> },
+    { id: "kind", header: t("ui.maint.kind"), hideBelow: "sm", cell: (l) => tk(`ui.maint.kind_${l.kind}`) },
+    { id: "desc", header: t("ui.maint.description"), hideBelow: "lg", cell: (l) => <span className="text-tinta-2">{l.description}</span> },
     {
       id: "meter",
-      header: t("ui.maintMeter"),
+      header: t("ui.maint.meter"),
       align: "right",
       hideBelow: "md",
       cell: (l) => (l.meterValue !== null ? `${fmtNum(l.meterValue)} ${unitOf(machine(l.machineId)?.meterKind ?? "hours")}` : ""),
     },
-    { id: "cost", header: t("ui.maintCost"), align: "right", cell: (l) => (l.amountPyg ? fmtGs(l.amountPyg) : "") },
-    { id: "_a", header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>, align: "right", width: "3rem", cell: (l) => <RowMenu name={machine(l.machineId)?.name ?? ""} onDelete={() => onRemove(l)} /> },
+    { id: "cost", header: t("ui.maint.cost"), align: "right", cell: (l) => (l.amountPyg ? fmtGs(l.amountPyg) : "") },
+    { id: "_a", header: <span className="sr-only">{t("ui.row.actionsHeader")}</span>, align: "right", width: "3rem", cell: (l) => <RowMenu name={machine(l.machineId)?.name ?? ""} onDelete={() => onRemove(l)} /> },
     ];
 }
 
@@ -97,7 +97,7 @@ export function MaintenancePanel() {
   const remove = useMutation({
     mutationFn: (l: Log) => del(`/org/erp/maintenance/logs/${l.id}`),
     onSuccess: () => {
-      toast(t("ui.erpDeleted"));
+      toast(t("ui.erp.deleted"));
       setRemoving(null);
       qc.invalidateQueries({ queryKey: ["erp"] });
     },
@@ -108,20 +108,20 @@ export function MaintenancePanel() {
   const fields: FieldDef[] = [
     {
       key: "machineId",
-      label: t("ui.maintMachine"),
+      label: t("ui.maint.machine"),
       type: "select",
       required: true,
       initial: machines.data?.[0]?.id ?? "",
       options: (machines.data ?? []).map((m) => ({ value: m.id, label: m.name })),
     },
-    { key: "name", label: t("ui.maintPlanName"), required: true, maxLength: 80 },
-    { key: "everyUnits", label: t("ui.maintEvery"), type: "number", required: true, min: 1, hint: t("ui.maintEveryHint") },
-    { key: "lastDoneMeter", label: t("ui.maintLastDone"), type: "number", min: 0, hint: t("ui.maintLastDoneHint") },
+    { key: "name", label: t("ui.maint.planName"), required: true, maxLength: 80 },
+    { key: "everyUnits", label: t("ui.maint.every"), type: "number", required: true, min: 1, hint: t("ui.maint.everyHint") },
+    { key: "lastDoneMeter", label: t("ui.maint.lastDone"), type: "number", min: 0, hint: t("ui.maint.lastDoneHint") },
   ];
   if ((machines.data ?? []).length === 0)
     return (
-      <EmptyState title={t("ui.maintNoMachinesTitle")} action={<SectionButton to="machines" primary>{t("ui.maintGoMachines")}</SectionButton>}>
-        {t("ui.maintNoMachinesHint")}
+      <EmptyState title={t("ui.maint.noMachinesTitle")} action={<SectionButton to="machines" primary>{t("ui.maint.goMachines")}</SectionButton>}>
+        {t("ui.maint.noMachinesHint")}
       </EmptyState>
     );
   const dueCols = dueColumns(setLogging);
@@ -131,19 +131,19 @@ export function MaintenancePanel() {
     <div className="flex flex-col gap-5">
       <HeaderActions>
         <Button variant="primary" onClick={() => setLogging("new")}>
-          {t("ui.maintLogNew")}
+          {t("ui.maint.logNew")}
         </Button>
       </HeaderActions>
       {due.data && due.data.length > 0 && (
         <section className="flex flex-col gap-2">
-          <SectionHead title={t("ui.maintDueTitle")} count={due.data.length} />
-          <DataTable columns={dueCols} rows={due.data} rowKey={(d) => d.planId} caption={t("ui.maintDueTitle")} />
+          <SectionHead title={t("ui.maint.dueTitle")} count={due.data.length} />
+          <DataTable columns={dueCols} rows={due.data} rowKey={(d) => d.planId} caption={t("ui.maint.dueTitle")} />
         </section>
       )}
       <Tabs<string>
         tabs={[
-          { id: "history", label: t("ui.maintHistoryTitle"), count: history.length || undefined },
-          { id: "plans", label: t("ui.maintPlansTitle"), count: (plans.data ?? []).length || undefined },
+          { id: "history", label: t("ui.maint.historyTitle"), count: history.length || undefined },
+          { id: "plans", label: t("ui.maint.plansTitle"), count: (plans.data ?? []).length || undefined },
         ]}
         value={tab}
         onChange={setTab}
@@ -151,18 +151,18 @@ export function MaintenancePanel() {
       {tab === "history" &&
         (history.length === 0 ? (
           <EmptyState
-            title={t("ui.maintHistoryEmptyTitle")}
+            title={t("ui.maint.historyEmptyTitle")}
             action={
               <Button variant="primary" onClick={() => setLogging("new")}>
-                {t("ui.maintLogNew")}
+                {t("ui.maint.logNew")}
               </Button>
             }
           >
-            {t("ui.maintHistoryEmptyHint")}
+            {t("ui.maint.historyEmptyHint")}
           </EmptyState>
         ) : (
           <ExportableTable name="mantenimiento-historial">
-            <DataTable columns={logCols} rows={history} rowKey={(l) => l.id} caption={t("ui.maintHistoryTitle")} />
+            <DataTable columns={logCols} rows={history} rowKey={(l) => l.id} caption={t("ui.maint.historyTitle")} />
           </ExportableTable>
         ))}
       {tab === "plans" && (
@@ -170,16 +170,16 @@ export function MaintenancePanel() {
           inline
           path="maintenance-plans"
           exportName="mantenimiento-planes"
-          newLabel={t("ui.maintPlanNew")}
-          emptyTitle={t("ui.maintPlansEmptyTitle")}
-          emptyHint={t("ui.maintPlansEmptyHint")}
+          newLabel={t("ui.maint.planNew")}
+          emptyTitle={t("ui.maint.plansEmptyTitle")}
+          emptyHint={t("ui.maint.plansEmptyHint")}
           name={(p) => p.name}
           fields={fields}
           columns={[
-            { header: t("ui.maintMachine"), cell: (p) => machine(p.machineId)?.name },
-            { header: t("ui.maintPlanName"), cell: (p) => p.name },
-            { header: t("ui.maintEvery"), right: true, cell: (p) => `${fmtNum(p.everyUnits)} ${unitOf(machine(p.machineId)?.meterKind ?? "hours")}` },
-            { header: t("ui.maintLastDone"), right: true, hideBelow: "sm", cell: (p) => `${fmtNum(p.lastDoneMeter)} ${unitOf(machine(p.machineId)?.meterKind ?? "hours")}` },
+            { header: t("ui.maint.machine"), cell: (p) => machine(p.machineId)?.name },
+            { header: t("ui.maint.planName"), cell: (p) => p.name },
+            { header: t("ui.maint.every"), right: true, cell: (p) => `${fmtNum(p.everyUnits)} ${unitOf(machine(p.machineId)?.meterKind ?? "hours")}` },
+            { header: t("ui.maint.lastDone"), right: true, hideBelow: "sm", cell: (p) => `${fmtNum(p.lastDoneMeter)} ${unitOf(machine(p.machineId)?.meterKind ?? "hours")}` },
           ]}
         />
       )}
@@ -187,8 +187,8 @@ export function MaintenancePanel() {
       {removing && (
         <ConfirmModal
           title={machine(removing.machineId)?.name ?? ""}
-          message={t("ui.erpDeleteConfirm", { name: machine(removing.machineId)?.name ?? "" })}
-          confirmLabel={t("ui.delete")}
+          message={t("ui.erp.deleteConfirm", { name: machine(removing.machineId)?.name ?? "" })}
+          confirmLabel={t("ui.common.delete")}
           pending={remove.isPending}
           error={remove.error}
           onConfirm={() => remove.mutate(removing)}
@@ -227,16 +227,16 @@ function LogModal({ planId, plans, onClose }: { planId: string | null; plans: Pl
         currency: amount === "" ? null : currency,
       }),
     onSuccess: () => {
-      toast(t("ui.erpSaved"));
+      toast(t("ui.erp.saved"));
       qc.invalidateQueries({ queryKey: ["erp"] });
       onClose();
     },
   });
   const ofMachine = plans.filter((p) => p.machineId === machineId);
   return (
-    <Modal title={t("ui.maintLogNew")} onClose={onClose}>
+    <Modal title={t("ui.maint.logNew")} onClose={onClose}>
       <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
-        <Field label={t("ui.maintMachine")}>
+        <Field label={t("ui.maint.machine")}>
           <Select
             value={machineId}
             onChange={(e) => {
@@ -246,34 +246,34 @@ function LogModal({ planId, plans, onClose }: { planId: string | null; plans: Pl
             options={(machines.data ?? []).map((m) => ({ value: m.id, label: m.name }))}
           />
         </Field>
-        <Field label={t("ui.maintKind")}>
-          <Select value={kind} onChange={(e) => setKind(e.target.value)} options={MAINTENANCE_KINDS.map((k) => ({ value: k, label: tk(`ui.maintKind_${k}`) }))} />
+        <Field label={t("ui.maint.kind")}>
+          <Select value={kind} onChange={(e) => setKind(e.target.value)} options={MAINTENANCE_KINDS.map((k) => ({ value: k, label: tk(`ui.maint.kind_${k}`) }))} />
         </Field>
         <div className="col-span-2">
-          <Field label={t("ui.maintPlanName")}>
-            <Select value={pid} onChange={(e) => setPid(e.target.value)} options={[{ value: "", label: t("ui.maintNoPlan") }, ...ofMachine.map((p) => ({ value: p.id, label: p.name }))]} />
+          <Field label={t("ui.maint.planName")}>
+            <Select value={pid} onChange={(e) => setPid(e.target.value)} options={[{ value: "", label: t("ui.maint.noPlan") }, ...ofMachine.map((p) => ({ value: p.id, label: p.name }))]} />
           </Field>
         </div>
-        <Field label={t("ui.costDate")}>
+        <Field label={t("ui.cost.date")}>
           <Input required type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
-        <Field label={t("ui.maintMeter")}>
+        <Field label={t("ui.maint.meter")}>
           <Input type="number" min={0} step="any" value={meter} onChange={(e) => setMeter(e.target.value)} />
         </Field>
         <div className="col-span-2">
-          <Field label={t("ui.maintDescription")}>
+          <Field label={t("ui.maint.description")}>
             <Input maxLength={300} value={description} onChange={(e) => setDescription(e.target.value)} />
           </Field>
         </div>
         <div className="col-span-2">
-          <Field label={t("ui.maintWorkshop")}>
+          <Field label={t("ui.maint.workshop")}>
             <Select value={partyId} onChange={(e) => setPartyId(e.target.value)} options={[{ value: "", label: "—" }, ...(parties.data ?? []).map((p) => ({ value: p.id, label: p.name }))]} />
           </Field>
         </div>
-        <Field label={t("ui.maintCost")}>
+        <Field label={t("ui.maint.cost")}>
           <Input type="number" min={0} step="any" value={amount} onChange={(e) => setAmount(e.target.value)} />
         </Field>
-        <Field label={t("ui.currency")}>
+        <Field label={t("ui.common.currency")}>
           <Select value={currency} onChange={(e) => setCurrency(e.target.value as Currency)} options={CURRENCIES.map((c) => ({ value: c, label: c }))} />
         </Field>
         <FormFooter error={save.error} disabled={save.isPending} />

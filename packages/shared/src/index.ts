@@ -18,6 +18,7 @@ export * from "./referral";
 export * from "./sync-protocol";
 export * from "./webhooks";
 export * from "./i18n";
+export * from "./markup";
 export {
   ROLES,
   FIELD_ROLES,

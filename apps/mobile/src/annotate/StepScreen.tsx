@@ -10,10 +10,10 @@ import { NumberStep, TextStep, YesNoStep } from "./TypedSteps";
 
 export function StepScreen({ step, value, answers, prefilled, plotAreaHa, seasons, onAnswer }: { plotAreaHa: number | null; step: Step; value: unknown; answers: Record<string, unknown>; prefilled: boolean; seasons: Season[]; onAnswer: (v: unknown) => void }) {
   if (step.kind === "choice")
-    return <ChoiceStep question={tr(step.question)} items={step.options.map((o) => ({ value: o.value, label: tr(o.label) }))} value={value} onAnswer={onAnswer} secondary={step.optional ? t("app.skip") : undefined} />;
+    return <ChoiceStep question={tr(step.question)} items={step.options.map((o) => ({ value: o.value, label: tr(o.label) }))} value={value} onAnswer={onAnswer} secondary={step.optional ? t("app.common.skip") : undefined} />;
   if (step.kind === "counter" || step.kind === "paddock" || step.kind === "poi") return null; // se dibuja con HerdCounter (pantalla completa)
   if (step.kind === "season")
-    return <ChoiceStep question={tr(step.question)} items={seasons.map((x) => ({ value: x.id, label: x.name }))} value={value} onAnswer={onAnswer} secondary={t("app.skip")} />;
+    return <ChoiceStep question={tr(step.question)} items={seasons.map((x) => ({ value: x.id, label: x.name }))} value={value} onAnswer={onAnswer} secondary={t("app.common.skip")} />;
   if (step.kind === "catalog") {
     const items = getDb()
       .products()

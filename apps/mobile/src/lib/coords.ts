@@ -4,8 +4,8 @@ import { t } from "@yvy/shared";
 export function formatFix(fix: { lat: number; lon: number; accuracy: number | null }): string {
   const coords = `${fix.lat.toFixed(5)}, ${fix.lon.toFixed(5)}`;
   return fix.accuracy !== null && Number.isFinite(fix.accuracy) && fix.accuracy > 0
-    ? t("app.coordsAccuracy", { coords, m: Math.round(fix.accuracy) })
-    : t("app.coordsNoAccuracy", { coords });
+    ? t("app.coords.accuracy", { coords, m: Math.round(fix.accuracy) })
+    : t("app.coords.noAccuracy", { coords });
 }
 
 /** Solo las coordenadas, para copiar. */

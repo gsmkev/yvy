@@ -29,7 +29,7 @@ function ExtraDetails({ kind, extra }: { kind: string; extra: Extra | undefined 
   if (rows.length === 0) return null;
   return (
     <div className="mt-4 text-sm">
-      <h3 className="eyebrow mb-1">{t("ui.extraTitle")}</h3>
+      <h3 className="eyebrow mb-1">{t("ui.common.extraTitle")}</h3>
       <dl className="num grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
         {rows.map((r) => (
           <div key={r.label} className="contents">
@@ -47,25 +47,25 @@ function AgroDetails({ kind, data }: { kind: string; data: Data }) {
   if (kind !== "application" && kind !== "fertilization") return null;
   const products = Array.isArray(data.products) ? (data.products as Data[]) : [];
   const rows: [string, string][] = [];
-  if (num(data.volumeLHa) !== null) rows.push([t("ui.appVolume"), `${fmtNum(data.volumeLHa as number)} L/ha`]);
-  if (num(data.areaHa) !== null) rows.push([t("ui.appArea"), fmtHa(data.areaHa as number)]);
-  if (typeof data.method === "string") rows.push([t("fields.method"), tk(`fields.method_${data.method}`)]);
-  if (typeof data.machine === "string") rows.push([t("fields.machine"), data.machine]);
+  if (num(data.volumeLHa) !== null) rows.push([t("ui.app.volume"), `${fmtNum(data.volumeLHa as number)} L/ha`]);
+  if (num(data.areaHa) !== null) rows.push([t("ui.app.area"), fmtHa(data.areaHa as number)]);
+  if (typeof data.method === "string") rows.push([t("fields.common.method"), tk(`fields.method.${data.method}`)]);
+  if (typeof data.machine === "string") rows.push([t("fields.common.machine"), data.machine]);
   const cond: [string, string][] = [];
-  if (num(data.windKmh) !== null) cond.push([t("ui.appWind"), `${fmtNum(data.windKmh as number)} km/h`]);
-  if (num(data.tempC) !== null) cond.push([t("ui.appTemp"), fmtTemp(data.tempC as number)]);
-  if (num(data.humidityPct) !== null) cond.push([t("ui.appHumidity"), `${fmtNum(data.humidityPct as number)} %`]);
-  if (num(data.deltaT) !== null) cond.push([t("ui.appDeltaT"), `${fmtNum(data.deltaT as number)} °C`]);
+  if (num(data.windKmh) !== null) cond.push([t("ui.app.wind"), `${fmtNum(data.windKmh as number)} km/h`]);
+  if (num(data.tempC) !== null) cond.push([t("ui.app.temp"), fmtTemp(data.tempC as number)]);
+  if (num(data.humidityPct) !== null) cond.push([t("ui.app.humidity"), `${fmtNum(data.humidityPct as number)} %`]);
+  if (num(data.deltaT) !== null) cond.push([t("ui.app.deltaT"), `${fmtNum(data.deltaT as number)} °C`]);
   return (
     <div className="mt-4 flex flex-col gap-4 text-sm">
       {products.length > 0 && (
         <div>
-          <h3 className="eyebrow mb-1">{t("ui.appProducts")}</h3>
+          <h3 className="eyebrow mb-1">{t("ui.app.products")}</h3>
           <ul className="divide-y divide-linea border-y border-linea">
             {products.map((p, i) => (
               <li key={i} className="num py-2">
                 {doseText(p)}
-                {num(p.usedQty) !== null ? ` · ${t("ui.appUsed", { qty: `${fmtNum(p.usedQty as number)} ${tk(`fields.usageUnit_${String(p.unit)}`)}` })}` : ""}
+                {num(p.usedQty) !== null ? ` · ${t("ui.app.used", { qty: `${fmtNum(p.usedQty as number)} ${tk(`fields.usage.unit_${String(p.unit)}`)}` })}` : ""}
               </li>
             ))}
           </ul>
@@ -73,7 +73,7 @@ function AgroDetails({ kind, data }: { kind: string; data: Data }) {
       )}
       {[
         { title: null, list: rows },
-        { title: t("ui.appConditions"), list: cond },
+        { title: t("ui.app.conditions"), list: cond },
       ]
         .filter((g) => g.list.length > 0)
         .map((g, i) => (
@@ -95,7 +95,7 @@ function AgroDetails({ kind, data }: { kind: string; data: Data }) {
             {w}
           </p>
         ))}
-      {typeof data.prescriptionTaskId === "string" && <p className="text-tinta-2">{t("ui.appPrescription")}</p>}
+      {typeof data.prescriptionTaskId === "string" && <p className="text-tinta-2">{t("ui.app.prescription")}</p>}
     </div>
   );
 }

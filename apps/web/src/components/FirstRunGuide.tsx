@@ -18,41 +18,41 @@ export function guideSteps(farms: FarmSummary[], members: Member[]): GuideStep[]
   return [
     {
       done: farms.length > 0,
-      title: t("ui.guideStep1"),
-      hint: t("ui.guideStep1Hint"),
+      title: t("ui.guide.step1"),
+      hint: t("ui.guide.step1Hint"),
       action: (
         <Link to="/estancias/nueva" className={cls}>
-          {t("ui.guideDo")}
+          {t("ui.guide.do")}
         </Link>
       ),
     },
     {
       done: farms.some((f) => f.plots > 0),
-      title: t("ui.guideStep2"),
-      hint: t("ui.guideStep2Hint"),
+      title: t("ui.guide.step2"),
+      hint: t("ui.guide.step2Hint"),
       action: first && (
         <Link to="/estancias/$farmId" params={{ farmId: first.id }} className={cls}>
-          {t("ui.guideDo")}
+          {t("ui.guide.do")}
         </Link>
       ),
     },
     {
       done: members.some((m) => isFieldRole(m.role)),
-      title: t("ui.guideStep3"),
-      hint: t("ui.guideStep3Hint"),
+      title: t("ui.guide.step3"),
+      hint: t("ui.guide.step3Hint"),
       action: (
         <Link to="/equipo" className={cls}>
-          {t("ui.guideDo")}
+          {t("ui.guide.do")}
         </Link>
       ),
     },
     {
       done: farms.some((f) => f.lastRecordAt !== null),
-      title: t("ui.guideStep4"),
-      hint: t("ui.guideStep4Hint"),
+      title: t("ui.guide.step4"),
+      hint: t("ui.guide.step4Hint"),
       action: (
         <a href="/descargar-app" className={cls}>
-          {t("ui.downloadApp")}
+          {t("ui.download.app")}
         </a>
       ),
     },
@@ -61,14 +61,14 @@ export function guideSteps(farms: FarmSummary[], members: Member[]): GuideStep[]
 
 export function FirstRunGuide({ steps, onDismiss }: { steps: GuideStep[]; onDismiss: () => void }) {
   return (
-    <section aria-label={t("ui.guideTitle")}>
+    <section aria-label={t("ui.guide.title")}>
       <div className="flex items-end justify-between gap-3 border-b border-linea pb-2">
-        <h2 className="font-serif text-xl font-semibold">{t("ui.guideTitle")}</h2>
+        <h2 className="font-serif text-xl font-semibold">{t("ui.guide.title")}</h2>
         <button
           className="cursor-pointer text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
           onClick={onDismiss}
         >
-          {t("ui.guideDismiss")}
+          {t("ui.guide.dismiss")}
         </button>
       </div>
       <ol className="divide-y divide-linea">
@@ -81,7 +81,7 @@ export function FirstRunGuide({ steps, onDismiss }: { steps: GuideStep[]; onDism
               <p className={`font-medium ${s.done ? "text-tinta-2 line-through" : ""}`}>{s.title}</p>
               {!s.done && <p className="mt-0.5 text-sm text-tinta-2">{s.hint}</p>}
             </div>
-            {s.done ? <span className="text-sm text-accion">{t("ui.guideDone")}</span> : s.action}
+            {s.done ? <span className="text-sm text-accion">{t("ui.guide.done")}</span> : s.action}
           </li>
         ))}
       </ol>

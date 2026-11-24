@@ -35,7 +35,7 @@ export function TasksPanel({
     deleteWithUndo({
       qc,
       id: x.id,
-      message: t("ui.toastTaskDeleted"),
+      message: t("ui.toast.taskDeleted"),
       hide: () => qc.setQueriesData<Task[]>({ queryKey: ["tasks"] }, (l) => l?.filter((y) => y.id !== x.id)),
       request: () =>
         x.recurrence === "none" ? del(`/org/tasks/${x.id}`) : patch(`/org/tasks/${x.id}`, { status: "cancelled" }),
@@ -48,7 +48,7 @@ export function TasksPanel({
 
   const newButton = (
     <Button variant={title ? "primary" : "secondary"} icon={Plus} onClick={() => setCreating(true)}>
-      {t("ui.newTask")}
+      {t("ui.new.task")}
     </Button>
   );
   const exportMenu = <TasksExport org={org} />;

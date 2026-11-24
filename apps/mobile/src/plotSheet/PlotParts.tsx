@@ -20,24 +20,24 @@ export function VigorRow({ vigor, trend, office }: { vigor: Data["vigor"]; trend
   return (
     <Row
       icon={Satellite}
-      title={t("app.plotSheetVigor")}
+      title={t("app.plot.sheetVigor")}
       subtitle={
         vigor
           ? [
-              t("app.plotVigor", { value: num(vigor.mean, 2), date: day(vigor.acquiredAt) }),
+              t("app.plot.vigor", { value: num(vigor.mean, 2), date: day(vigor.acquiredAt) }),
               trend.kind === "down"
-                ? t("app.plotSheetVigorDown", { pct: Math.round(trend.pct) })
+                ? t("app.plot.sheetVigorDown", { pct: Math.round(trend.pct) })
                 : trend.kind === "up"
-                  ? t("app.plotSheetVigorUp", { pct: Math.round(trend.pct) })
+                  ? t("app.plot.sheetVigorUp", { pct: Math.round(trend.pct) })
                   : trend.kind === "flat"
-                    ? t("app.plotSheetVigorFlat")
+                    ? t("app.plot.sheetVigorFlat")
                     : null,
             ]
               .filter(Boolean)
               .join(" · ")
           : office
-            ? t("app.plotSheetVigorNone")
-            : t("app.plotSheetVigorOwnersOnly")
+            ? t("app.plot.sheetVigorNone")
+            : t("app.plot.sheetVigorOwnersOnly")
       }
     />
   );
@@ -63,7 +63,7 @@ export function OfficeSections({ plot, office, readOnly, units, rotation }: { pl
 export function PlotLists({ tasks, records }: { tasks: Data["tasks"]; records: Data["records"] }) {
   return (
     <>
-      {tasks.length > 0 && <SectionHeader title={t("app.plotSheetTasks")} />}
+      {tasks.length > 0 && <SectionHeader title={t("app.plot.sheetTasks")} />}
       {tasks.map((task) => (
         <Row
           key={task.id}
@@ -74,13 +74,13 @@ export function PlotLists({ tasks, records }: { tasks: Data["tasks"]; records: D
         />
       ))}
 
-      {records.length > 0 && <SectionHeader title={t("app.plotSheetRecent")} />}
+      {records.length > 0 && <SectionHeader title={t("app.plot.sheetRecent")} />}
       {records.map((r) => (
         <Row
           key={r.id}
           icon={RECORD_ICON[r.kind]}
           title={describeRecord(r.kind, JSON.parse(r.data))}
-          subtitle={`${t(`recordKinds.${r.kind}`)} · ${day(r.capturedAt)}`}
+          subtitle={`${t(`record-kinds.kind.${r.kind}`)} · ${day(r.capturedAt)}`}
           onPress={() => router.push({ pathname: "/record/[id]", params: { id: r.id } })}
         />
       ))}
@@ -93,18 +93,18 @@ export function PlotLists({ tasks, records }: { tasks: Data["tasks"]; records: D
 export function DeleteSheet({ plot, a }: { plot: Plot; a: ReturnType<typeof usePlotActions> }) {
   const { remove, typed, setTyped, confirming, setConfirming, doDelete } = a;
   return (
-    <Sheet visible={confirming} title={t("office.plotDeleteTitle")} onClose={() => setConfirming(false)} avoidKeyboard>
-      <Text style={T.body}>{t("office.plotDeleteBody", { name: plot.name })}</Text>
+    <Sheet visible={confirming} title={t("office.plot.deleteTitle")} onClose={() => setConfirming(false)} avoidKeyboard>
+      <Text style={T.body}>{t("office.plot.deleteBody", { name: plot.name })}</Text>
       <View style={{ marginTop: 8 }}>
-        <TextField label={t("office.plotDeleteType", { name: plot.name })} value={typed} onChangeText={setTyped} autoCapitalize="none" />
+        <TextField label={t("office.plot.deleteType", { name: plot.name })} value={typed} onChangeText={setTyped} autoCapitalize="none" />
       </View>
       {remove.error ? (
         <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 12 }]}>
           {remove.error}
         </Text>
       ) : null}
-      <Button kind="danger" title={t("office.plotDelete")} disabled={typed.trim().toLowerCase() !== plot.name.trim().toLowerCase()} loading={remove.pending} onPress={() => void doDelete()} style={{ marginTop: 16 }} />
-      <Button kind="text" title={t("ui.cancel")} onPress={() => setConfirming(false)} style={{ marginTop: 4 }} />
+      <Button kind="danger" title={t("office.plot.delete")} disabled={typed.trim().toLowerCase() !== plot.name.trim().toLowerCase()} loading={remove.pending} onPress={() => void doDelete()} style={{ marginTop: 16 }} />
+      <Button kind="text" title={t("ui.common.cancel")} onPress={() => setConfirming(false)} style={{ marginTop: 4 }} />
     </Sheet>
   );
 }

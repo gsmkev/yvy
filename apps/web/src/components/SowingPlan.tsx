@@ -43,45 +43,45 @@ export function SowingPlan({ farmId, plots }: { farmId: string; plots: Plot[] })
   return (
     <section aria-labelledby="sowing-plan-h" className="flex flex-col gap-3">
       <h3 id="sowing-plan-h" className="font-serif text-lg font-semibold">
-        {t("ui.sowPlanTitle")}
+        {t("ui.sow.planTitle")}
       </h3>
-      <p className="text-sm text-tinta-2">{t("ui.sowPlanIntro")}</p>
+      <p className="text-sm text-tinta-2">{t("ui.sow.planIntro")}</p>
       {seasons.length === 0 || !plan ? (
-        <Empty title={t("ui.sowPlanTitle")}>{t("ui.seasonNone")}</Empty>
+        <Empty title={t("ui.sow.planTitle")}>{t("ui.season.none")}</Empty>
       ) : (
         <>
           <Select
-            aria-label={t("ui.season")}
+            aria-label={t("ui.common.season")}
             value={seasonId ?? ""}
             onChange={(e) => setSeasonId(e.target.value)}
             options={seasons.map((s) => ({ value: s.id, label: s.name }))}
           />
           {plan.rows.length === 0 ? (
-            <p className="text-sm text-tinta-2">{t("ui.sowPlanEmpty")}</p>
+            <p className="text-sm text-tinta-2">{t("ui.sow.planEmpty")}</p>
           ) : (
             <div className="overflow-x-auto">
               <ExportableTable name="plan-de-siembra">
                 <table className="w-full text-sm">
                   <thead className="text-left text-tinta-2">
                     <tr>
-                      <th className="py-2 pr-3 font-medium">{t("ui.crop")}</th>
-                      <th className="py-2 pr-3 font-medium">{t("ui.seasonVariety")}</th>
-                      <th className="num py-2 pr-3 text-right font-medium">{t("ui.sowPlanPlots")}</th>
-                      <th className="num py-2 pr-3 text-right font-medium">{t("ui.sowPlanArea")}</th>
-                      <th className="py-2 pr-3 font-medium">{t("ui.sowPlanRate")}</th>
-                      <th className="num py-2 text-right font-medium">{t("ui.sowPlanSeed")}</th>
+                      <th className="py-2 pr-3 font-medium">{t("ui.common.crop")}</th>
+                      <th className="py-2 pr-3 font-medium">{t("ui.season.variety")}</th>
+                      <th className="num py-2 pr-3 text-right font-medium">{t("ui.sow.planPlots")}</th>
+                      <th className="num py-2 pr-3 text-right font-medium">{t("ui.sow.planArea")}</th>
+                      <th className="py-2 pr-3 font-medium">{t("ui.sow.planRate")}</th>
+                      <th className="num py-2 text-right font-medium">{t("ui.sow.planSeed")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-linea border-y border-linea">
                     {plan.rows.map((r) => (
                       <tr key={`${r.crop}-${r.variety ?? ""}`}>
-                        <td className="py-2.5 pr-3">{tk(`fields.crop_${r.crop}`)}</td>
-                        <td className="py-2.5 pr-3">{r.variety ?? t("ui.sowPlanNoVariety")}</td>
+                        <td className="py-2.5 pr-3">{tk(`fields.crop.${r.crop}`)}</td>
+                        <td className="py-2.5 pr-3">{r.variety ?? t("ui.sow.planNoVariety")}</td>
                         <td className="num py-2.5 pr-3 text-right">{r.plots}</td>
                         <td className="num py-2.5 pr-3 text-right">{fmtHa(r.areaHa)}</td>
                         <td className="py-2.5 pr-3">
                           <Input
-                            aria-label={t("ui.sowPlanRateFor", { crop: tk(`fields.crop_${r.crop}`) })}
+                            aria-label={t("ui.sow.planRateFor", { crop: tk(`fields.crop.${r.crop}`) })}
                             className="num h-8 w-20"
                             inputMode="decimal"
                             value={rates[r.crop] ?? String(SEED_RATE_KG_HA[r.crop])}
@@ -97,15 +97,15 @@ export function SowingPlan({ farmId, plots }: { farmId: string; plots: Plot[] })
             </div>
           )}
           <p className="num text-sm">
-            {t("ui.sowPlanTotal", { area: fmtHa(plan.plannedHa) })}
+            {t("ui.sow.planTotal", { area: fmtHa(plan.plannedHa) })}
             {plan.unplannedPlots > 0 && (
               <span className="text-tinta-2">
                 {" · "}
-                {t("ui.sowPlanUnplanned", { n: plan.unplannedPlots, area: fmtHa(plan.unplannedHa) })}
+                {t("ui.sow.planUnplanned", { n: plan.unplannedPlots, area: fmtHa(plan.unplannedHa) })}
               </span>
             )}
           </p>
-          <p className="text-xs text-tinta-2">{t("ui.sowPlanRateNote")}</p>
+          <p className="text-xs text-tinta-2">{t("ui.sow.planRateNote")}</p>
         </>
       )}
     </section>

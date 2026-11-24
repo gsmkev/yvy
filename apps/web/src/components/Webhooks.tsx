@@ -44,34 +44,34 @@ export function WebhooksPanel() {
   const rows = list.data ?? [];
 
   const state = (h: Hook) => {
-    if (!h.enabled) return h.consecutiveFailures > 0 ? t("ui.webhooksPaused") : t("ui.webhooksPausedByYou");
-    if (!h.lastAttemptAt) return t("ui.webhooksNeverSent");
+    if (!h.enabled) return h.consecutiveFailures > 0 ? t("ui.webhooks.paused") : t("ui.webhooks.pausedByYou");
+    if (!h.lastAttemptAt) return t("ui.webhooks.neverSent");
     return h.lastStatus === "ok"
-      ? t("ui.webhooksOk", { date: fmtDateTime(h.lastAttemptAt) })
-      : t("ui.webhooksFail", { error: h.lastError ?? "?", date: fmtDateTime(h.lastAttemptAt) });
+      ? t("ui.webhooks.ok", { date: fmtDateTime(h.lastAttemptAt) })
+      : t("ui.webhooks.fail", { error: h.lastError ?? "?", date: fmtDateTime(h.lastAttemptAt) });
   };
 
   return (
     <section id="webhooks" className="scroll-mt-4">
-      <SectionHead title={t("ui.webhooksTitle")} />
-      <p className="mt-3 text-tinta-2">{t("ui.webhooksIntro")}</p>
+      <SectionHead title={t("ui.webhooks.title")} />
+      <p className="mt-3 text-tinta-2">{t("ui.webhooks.intro")}</p>
 
       {secret && (
         <div role="status" className="mt-4 border-l-2 border-trigo pl-3">
-          <p className="font-medium">{t("ui.webhooksSecretTitle")}</p>
-          <p className="mt-1 text-sm text-tinta-2">{t("ui.webhooksSecretText")}</p>
+          <p className="font-medium">{t("ui.webhooks.secretTitle")}</p>
+          <p className="mt-1 text-sm text-tinta-2">{t("ui.webhooks.secretText")}</p>
           <code className="mt-2 block font-mono text-body break-all">{secret}</code>
           <div className="mt-2 flex gap-2">
             <Button
               onClick={() => {
                 void navigator.clipboard?.writeText(secret);
-                toast(t("ui.copied"));
+                toast(t("ui.common.copied"));
               }}
             >
-              {t("ui.totpRecoveryCopy")}
+              {t("ui.totp.recoveryCopy")}
             </Button>
             <Button variant="primary" onClick={() => setSecret(null)}>
-              {t("ui.totpRecoverySaved")}
+              {t("ui.totp.recoverySaved")}
             </Button>
           </div>
         </div>
@@ -80,13 +80,13 @@ export function WebhooksPanel() {
       {rows.length > 0 && (
         <div className="mt-4">
           <DataTable
-            caption={t("ui.webhooksTitle")}
+            caption={t("ui.webhooks.title")}
             rows={rows}
             rowKey={(h) => h.id}
             columns={[
               {
                 id: "url",
-                header: t("ui.webhooksUrl"),
+                header: t("ui.webhooks.url"),
                 cell: (h) => (
                   <div className="min-w-0 max-w-[16rem] py-1 sm:max-w-xs">
                     <p className="truncate font-medium" title={h.url}>
@@ -98,23 +98,23 @@ export function WebhooksPanel() {
               },
               {
                 id: "events",
-                header: t("ui.webhooksEvents"),
+                header: t("ui.webhooks.events"),
                 hideBelow: "lg",
-                cell: (h) => <span className="text-tinta-2">{h.events.map((e) => tk(`ui.webhooksEvent_${e.replace(".", "_")}`)).join(" · ")}</span>,
+                cell: (h) => <span className="text-tinta-2">{h.events.map((e) => tk(`ui.webhooks.event_${e.replace(".", "_")}`)).join(" · ")}</span>,
               },
               {
                 id: "actions",
-                header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+                header: <span className="sr-only">{t("ui.row.actionsHeader")}</span>,
                 cell: (h) => (
                   <div className="flex justify-end gap-1">
                     <Button size="sm" variant="quiet" onClick={() => test.mutate(h.id)}>
-                      {t("ui.webhooksTest")}
+                      {t("ui.webhooks.test")}
                     </Button>
                     <Button size="sm" variant="quiet" onClick={() => toggle.mutate(h)}>
-                      {t(h.enabled ? "ui.webhooksPause" : "ui.webhooksResume")}
+                      {t(h.enabled ? "ui.webhooks.pause" : "ui.webhooks.resume")}
                     </Button>
                     <Button size="sm" variant="quiet" className="text-peligro" onClick={() => remove.mutate(h.id)}>
-                      {t("ui.webhooksDelete")}
+                      {t("ui.webhooks.delete")}
                     </Button>
                   </div>
                 ),
@@ -123,14 +123,14 @@ export function WebhooksPanel() {
           />
         </div>
       )}
-      {list.isSuccess && rows.length === 0 && <EmptyState compact title={t("ui.webhooksEmpty")} />}
+      {list.isSuccess && rows.length === 0 && <EmptyState compact title={t("ui.webhooks.empty")} />}
 
       <Form className="mt-4 flex max-w-lg flex-col gap-3" onSubmit={() => add.mutate()}>
-        <Field label={t("ui.webhooksUrl")}>
+        <Field label={t("ui.webhooks.url")}>
           <Input type="url" required placeholder="https://" value={url} onChange={(e) => setUrl(e.target.value)} />
         </Field>
         <fieldset>
-          <legend className="text-sm font-medium">{t("ui.webhooksEvents")}</legend>
+          <legend className="text-sm font-medium">{t("ui.webhooks.events")}</legend>
           <div className="mt-1.5 flex flex-wrap gap-x-5 gap-y-1">
             {WEBHOOK_EVENTS.map((ev) => (
               <label key={ev} className="flex cursor-pointer items-center gap-2 text-body">
@@ -140,13 +140,13 @@ export function WebhooksPanel() {
                   checked={events.includes(ev)}
                   onChange={(e) => setEvents(e.target.checked ? [...events, ev] : events.filter((x) => x !== ev))}
                 />
-                {tk(`ui.webhooksEvent_${ev.replace(".", "_")}`)}
+                {tk(`ui.webhooks.event_${ev.replace(".", "_")}`)}
               </label>
             ))}
           </div>
         </fieldset>
         <Button type="submit" variant="primary" className="self-start" disabled={add.isPending || events.length === 0 || !url.trim()}>
-          {t("ui.webhooksAdd")}
+          {t("ui.webhooks.add")}
         </Button>
         {[add.error, toggle.error, remove.error, test.error].map((e, i) => (e ? <ErrorBox key={i} error={e} /> : null))}
       </Form>

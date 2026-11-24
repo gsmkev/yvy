@@ -51,35 +51,35 @@ export function buildNav(c: NavContext): { main: NavGroup[]; bottom: NavItem[] }
   const main: NavGroup[] = [
     {
       id: "field",
-      label: "ui.navGroupField",
+      label: "ui.nav.groupField",
       items: [
-        { to: "/", label: "ui.navMap", icon: Map },
-        { to: "/registros", label: "ui.navRecords", icon: ClipboardList },
-        { to: "/tareas", label: "ui.navTasks", icon: ListChecks },
-        { to: "/calendario", label: "ui.navCalendar", icon: CalendarDays },
+        { to: "/", label: "ui.nav.map", icon: Map },
+        { to: "/registros", label: "ui.nav.records", icon: ClipboardList },
+        { to: "/tareas", label: "ui.nav.tasks", icon: ListChecks },
+        { to: "/calendario", label: "ui.nav.calendar", icon: CalendarDays },
         // El calendario sanitario no es para el empleado (G-10) ni tiene sentido sin lotes
-        ...(!field && c.plots !== 0 ? [{ to: "/sanidad", label: "ui.navSanitary" as MessageKey, icon: HeartPulse }] : []),
-        { to: "/avisos", label: "ui.navAlerts", icon: Bell },
+        ...(!field && c.plots !== 0 ? [{ to: "/sanidad", label: "ui.nav.sanitary" as MessageKey, icon: HeartPulse }] : []),
+        { to: "/avisos", label: "ui.nav.alerts", icon: Bell },
       ],
     },
     {
       id: "manage",
-      label: "ui.navGroupManage",
+      label: "ui.nav.groupManage",
       items: [
         // Informes vive dentro de cada estancia: el ítem lleva a la última mirada (o la primera)
-        ...(!field && (c.farms ?? 0) > 0 ? [{ to: "/informes", label: "ui.reportsTitle" as MessageKey, icon: FileText }] : []),
-        ...(admin ? [{ to: "/administracion", label: "ui.navAdmin" as MessageKey, icon: Wallet }] : []),
-        { to: "/equipo", label: "ui.navTeam", icon: Users },
-        ...(!field && (c.farms ?? 0) > 1 ? [{ to: "/comparar", label: "ui.navCompare" as MessageKey, icon: GitCompareArrows }] : []),
-        ...(c.hasClients ? [{ to: "/clientes", label: "ui.navClients" as MessageKey, icon: Briefcase }] : []),
+        ...(!field && (c.farms ?? 0) > 0 ? [{ to: "/informes", label: "ui.reports.title" as MessageKey, icon: FileText }] : []),
+        ...(admin ? [{ to: "/administracion", label: "ui.nav.admin" as MessageKey, icon: Wallet }] : []),
+        { to: "/equipo", label: "ui.nav.team", icon: Users },
+        ...(!field && (c.farms ?? 0) > 1 ? [{ to: "/comparar", label: "ui.nav.compare" as MessageKey, icon: GitCompareArrows }] : []),
+        ...(c.hasClients ? [{ to: "/clientes", label: "ui.nav.clients" as MessageKey, icon: Briefcase }] : []),
       ],
     },
   ];
   return {
     main: main.filter((g) => g.items.length > 0),
     bottom: [
-      ...(c.labs ? [{ to: "/laboratorio", label: "ui.navLabs" as MessageKey, icon: FlaskConical }] : []),
-      ...(c.isStaff ? [{ to: "/interno", label: "ui.navInternal" as MessageKey, icon: Shield }] : []),
+      ...(c.labs ? [{ to: "/laboratorio", label: "ui.nav.labs" as MessageKey, icon: FlaskConical }] : []),
+      ...(c.isStaff ? [{ to: "/interno", label: "ui.nav.internal" as MessageKey, icon: Shield }] : []),
     ],
   };
 }

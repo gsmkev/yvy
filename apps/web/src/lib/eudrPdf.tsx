@@ -1,6 +1,6 @@
 /** Indicador EUDR en PDF (S-30), con los estilos del parte semanal. Análisis indicativo, no una certificación. */
 import { Document, Page, Path, Svg, Text, View } from "@react-pdf/renderer";
-import { BRAND } from "@yvy/shared";
+import { BRAND, ATTRIBUTION } from "@yvy/shared";
 import { changeAreas, EUDR_METHOD, fmtRatio, statusText, summarize } from "./eudrData";
 import { fmtDate, fmtHa } from "./format";
 import { t } from "./i18n";
@@ -17,7 +17,7 @@ interface EudrReportData {
 
 const Footer = () => (
   <View style={s.footer} fixed>
-    <Text>{t("ui.eudrFooter")}</Text>
+    <Text>{t("ui.eudr.footer")}</Text>
     <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
   </View>
 );
@@ -62,41 +62,41 @@ export function EudrReport({ farm, data, plots, generatedAt }: EudrReportData) {
   const c = range(sum.curFromAt, sum.curToAt);
   const areas = changeAreas(data.plots);
   return (
-    <Document title={`${t("ui.eudrTitle")} · ${farm.name}`} author="Yvy" language="es-PY">
+    <Document title={`${t("ui.eudr.title")} · ${farm.name}`} author="Yvy" language="es-PY">
       <Page size="A4" style={s.page}>
         <Text style={s.h1}>
-          {t("ui.eudrTitle")} · {farm.name}
+          {t("ui.eudr.title")} · {farm.name}
         </Text>
         <Text style={s.muted}>
           {[farm.department, farm.district].filter(Boolean).join(", ")}
           {farm.department || farm.district ? " · " : ""}
-          {fmtHa(farm.areaHa)} · {t("ui.sharedGenerated", { date: fmtDate(generatedAt) })}
-          {data.computedAt !== null ? ` · ${t("ui.eudrComputed", { date: fmtDate(data.computedAt) })}` : ""}
+          {fmtHa(farm.areaHa)} · {t("ui.shared.generated", { date: fmtDate(generatedAt) })}
+          {data.computedAt !== null ? " · " + t("ui.eudr.computed", { date: fmtDate(data.computedAt) }) : ""}
         </Text>
 
         <View style={{ marginTop: 8, borderLeftWidth: 2, borderLeftColor: BRAND.trigo, paddingLeft: 6 }}>
-          <Text style={{ fontFamily: "Helvetica-Bold" }}>{t("ui.eudrDisclaimerTitle")}</Text>
-          <Text>{t("ui.eudrDisclaimer")}</Text>
+          <Text style={{ fontFamily: "Helvetica-Bold" }}>{t("ui.eudr.disclaimerTitle")}</Text>
+          <Text>{t("ui.eudr.disclaimer")}</Text>
         </View>
 
         <View style={s.kpis}>
-          <Kpi label={t("ui.eudrForest", { year: refYear })} value={fmtHa(sum.forestRefHa)} />
-          <Kpi label={t("ui.eudrLoss")} value={fmtHa(sum.lossHa)} />
-          <Kpi label={t("ui.eudrPlotsWithLoss")} value={`${sum.withLoss} / ${sum.plots}`} />
+          <Kpi label={t("ui.eudr.forest", { year: refYear })} value={fmtHa(sum.forestRefHa)} />
+          <Kpi label={t("ui.eudr.loss")} value={fmtHa(sum.lossHa)} />
+          <Kpi label={t("ui.eudr.plotsWithLoss")} value={`${sum.withLoss} / ${sum.plots}`} />
         </View>
-        <Text style={[s.muted, { marginTop: 6 }]}>{t("ui.eudrRefComposite", { year: refYear, from: r[0]!, to: r[1]!, n: sum.refScenes })}</Text>
-        <Text style={s.muted}>{t("ui.eudrCurComposite", { year: curYear, from: c[0]!, to: c[1]!, n: sum.curScenes })}</Text>
+        <Text style={[s.muted, { marginTop: 6 }]}>{t("ui.eudr.refComposite", { year: refYear, from: r[0]!, to: r[1]!, n: sum.refScenes })}</Text>
+        <Text style={s.muted}>{t("ui.eudr.curComposite", { year: curYear, from: c[0]!, to: c[1]!, n: sum.curScenes })}</Text>
 
-        <Text style={s.h2}>{t("ui.eudrMapTitle")}</Text>
+        <Text style={s.h2}>{t("ui.eudr.mapTitle")}</Text>
         <ChangeMap farm={farm} plots={plots} areas={areas} />
-        {areas.length === 0 && <Text style={s.muted}>{t("ui.eudrMapNone")}</Text>}
+        {areas.length === 0 && <Text style={s.muted}>{t("ui.eudr.mapNone")}</Text>}
 
-        <Text style={s.h2}>{t("ui.eudrPlotsTitle")}</Text>
+        <Text style={s.h2}>{t("ui.eudr.plotsTitle")}</Text>
         <View style={s.th}>
-          <Text style={{ width: 120 }}>{t("ui.eudrColPlot")}</Text>
-          <Text style={{ width: 70 }}>{t("ui.eudrColArea")}</Text>
-          <Text style={{ width: 90 }}>{t("ui.eudrColForest", { year: refYear })}</Text>
-          <Text style={{ flex: 1 }}>{t("ui.eudrColResult")}</Text>
+          <Text style={{ width: 120 }}>{t("ui.eudr.colPlot")}</Text>
+          <Text style={{ width: 70 }}>{t("ui.eudr.colArea")}</Text>
+          <Text style={{ width: 90 }}>{t("ui.eudr.colForest", { year: refYear })}</Text>
+          <Text style={{ flex: 1 }}>{t("ui.eudr.colResult")}</Text>
         </View>
         {data.plots.map((p) => (
           <View key={p.plotId} style={s.row} wrap={false}>
@@ -108,11 +108,11 @@ export function EudrReport({ farm, data, plots, generatedAt }: EudrReportData) {
         ))}
 
         <View wrap={false}>
-          <Text style={s.h2}>{t("ui.eudrMethodTitle")}</Text>
-          <Text>{t("ui.eudrMethodSource")}</Text>
-          <Text style={{ marginTop: 3 }}>{t("ui.eudrMethodComposite", { ref: refYear, cur: curYear })}</Text>
+          <Text style={s.h2}>{t("ui.eudr.methodTitle")}</Text>
+          <Text>{t("ui.eudr.methodSource")}</Text>
+          <Text style={{ marginTop: 3 }}>{t("ui.eudr.methodComposite", { ref: refYear, cur: curYear })}</Text>
           <Text style={{ marginTop: 3 }}>
-            {t("ui.eudrMethodRule", {
+            {t("ui.eudr.methodRule", {
               ndvi: fmtRatio(m.forestNdviMin),
               ndmi: fmtRatio(m.forestNdmiMin),
               ref: refYear,
@@ -121,8 +121,8 @@ export function EudrReport({ farm, data, plots, generatedAt }: EudrReportData) {
               min: fmtRatio(m.minPatchHa),
             })}
           </Text>
-          <Text style={{ marginTop: 3 }}>{t("ui.eudrMethodLimits")}</Text>
-          <Text style={[s.muted, { marginTop: 3 }]}>{t("attribution.copernicus")}.</Text>
+          <Text style={{ marginTop: 3 }}>{t("ui.eudr.methodLimits")}</Text>
+          <Text style={[s.muted, { marginTop: 3 }]}>{t(ATTRIBUTION.copernicus)}.</Text>
         </View>
         <Footer />
       </Page>

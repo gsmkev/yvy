@@ -29,22 +29,22 @@ export function MapToolbar({
   return (
     <div
       role="toolbar"
-      aria-label={t("ui.mapTools")}
+      aria-label={t("ui.map.tools")}
       aria-orientation="vertical"
       className="absolute top-3 right-3 z-10 flex flex-col divide-y divide-white/15 overflow-hidden rounded-md border border-white/15 bg-surco/85 backdrop-blur print:hidden"
     >
-      <button type="button" className={toolBtn} aria-label={t("ui.mapZoomIn")} title={t("ui.mapZoomIn")} onClick={() => onZoom(1)}>
+      <button type="button" className={toolBtn} aria-label={t("ui.map.zoomIn")} title={t("ui.map.zoomIn")} onClick={() => onZoom(1)}>
         <Plus size={18} aria-hidden />
       </button>
-      <button type="button" className={toolBtn} aria-label={t("ui.mapZoomOut")} title={t("ui.mapZoomOut")} onClick={() => onZoom(-1)}>
+      <button type="button" className={toolBtn} aria-label={t("ui.map.zoomOut")} title={t("ui.map.zoomOut")} onClick={() => onZoom(-1)}>
         <Minus size={18} aria-hidden />
       </button>
       <button
         type="button"
         className={toolBtn}
         aria-pressed={measuring}
-        aria-label={t("ui.measure")}
-        title={t("ui.measure")}
+        aria-label={t("ui.common.measure")}
+        title={t("ui.common.measure")}
         onClick={onMeasure}
       >
         <Ruler size={18} aria-hidden />
@@ -54,8 +54,8 @@ export function MapToolbar({
         type="button"
         className={toolBtn}
         aria-expanded={layersOpen}
-        aria-label={t("ui.layers")}
-        title={t("ui.layers")}
+        aria-label={t("ui.common.layers")}
+        title={t("ui.common.layers")}
         onClick={onLayers}
       >
         <Layers size={18} aria-hidden />
@@ -69,7 +69,7 @@ export function LayersPanel({ children }: { children: ReactNode }) {
   return (
     <div
       role="region"
-      aria-label={t("ui.layers")}
+      aria-label={t("ui.common.layers")}
       className="absolute top-3 right-[4.5rem] left-3 z-10 flex max-h-[calc(100%-1.5rem)] flex-col overflow-y-auto rounded-md border border-white/15 bg-surco/90 px-3 text-xs text-lino backdrop-blur sm:left-auto sm:w-72 lg:right-16 print:hidden"
     >
       {children}

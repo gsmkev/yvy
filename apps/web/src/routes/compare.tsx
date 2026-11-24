@@ -65,16 +65,16 @@ export function ComparePage() {
       to="/"
       className="inline-flex h-10 items-center rounded-md border border-linea bg-papel px-3.5 text-sm font-medium text-surco hover:border-tinta-2/40 hover:bg-lino"
     >
-      {t("ui.farmsTitle")}
+      {t("ui.common.farmsTitle")}
     </Link>
   );
   return (
     <Page width="data" className="gap-4">
-      <PageHeader title={t("ui.compareTitle")} menu={exportData && <TableExportMenu data={exportData} />} />
+      <PageHeader title={t("ui.compare.title")} menu={exportData && <TableExportMenu data={exportData} />} />
       <Tabs
         tabs={[
-          { id: "farms", label: t("ui.compareFarms") },
-          { id: "seasons", label: t("ui.compareSeasons") },
+          { id: "farms", label: t("ui.compare.farms") },
+          { id: "seasons", label: t("ui.compare.seasons") },
         ]}
         value={tab}
         onChange={setTab}
@@ -86,17 +86,17 @@ export function ComparePage() {
           farms.data &&
           (farms.data.length < 2 ? (
             <EmptyState
-              title={t("ui.compareNeedTwoFarms")}
+              title={t("ui.compare.needTwoFarms")}
               action={
                 <Link
                   to="/estancias/nueva"
                   className="inline-flex h-10 items-center rounded-md bg-accion px-3.5 text-sm font-medium text-sobre hover:bg-accion-2"
                 >
-                  {t("ui.newFarm")}
+                  {t("ui.new.farm")}
                 </Link>
               }
             >
-              {t("ui.compareNeedTwoFarmsHint")}
+              {t("ui.compare.needTwoFarmsHint")}
             </EmptyState>
           ) : (
             <FarmsTable rows={farms.data} />
@@ -104,8 +104,8 @@ export function ComparePage() {
         {tab === "seasons" &&
           seasons.data &&
           (seasons.data.length === 0 ? (
-            <EmptyState title={t("ui.compareNoSeasons")} action={toList}>
-              {t("ui.compareNoSeasonsHint")}
+            <EmptyState title={t("ui.compare.noSeasons")} action={toList}>
+              {t("ui.compare.noSeasonsHint")}
             </EmptyState>
           ) : (
             <SeasonsTable rows={seasons.data} />
@@ -115,15 +115,15 @@ export function ComparePage() {
   );
 }
 
-const farmsHeaders = () => [t("ui.farm"), t("ui.area"), t("ui.plots"), t("ui.compareRain30"), t("ui.compareNdvi30"), t("ui.compareRecords30"), t("ui.compareAlerts")];
+const farmsHeaders = () => [t("ui.common.farm"), t("ui.common.area"), t("ui.common.plots"), t("ui.compare.rain30"), t("ui.compare.ndvi30"), t("ui.compare.records30"), t("ui.compare.alerts")];
 const farmsTable = (rows: FarmRow[]) => ({
-  name: t("ui.compareFile"),
+  name: t("ui.compare.file"),
   headers: farmsHeaders(),
   rows: rows.map((r) => [r.name, r.areaHa, r.plots, r.rain30Mm, r.ndvi30, r.records30d, r.activeAlerts]),
 });
-const seasonsHeaders = () => [t("ui.season"), t("ui.compareHaPlanned"), t("ui.compareHaHarvested"), t("ui.compareTons"), t("ui.compareYield"), t("ui.compareTarget"), t("ui.compareApplications")];
+const seasonsHeaders = () => [t("ui.common.season"), t("ui.compare.haPlanned"), t("ui.compare.haHarvested"), t("ui.compare.tons"), t("ui.compare.yield"), t("ui.compare.target"), t("ui.compare.applications")];
 const seasonsTable = (rows: SeasonRow[]) => ({
-  name: t("ui.compareSeasonsFile"),
+  name: t("ui.compare.seasonsFile"),
   headers: seasonsHeaders(),
   rows: rows.map((r) => [r.name, r.plannedHa, r.harvestedHa, r.harvestTons, r.yieldTHa, r.targetYieldTHa, r.applications]),
 });
@@ -136,7 +136,7 @@ function FarmsTable({ rows }: { rows: FarmRow[] }) {
   const num = (a: number | null, b: number | null) => (a ?? -1) - (b ?? -1);
   return (
     <DataTable
-      caption={t("ui.compareFarms")}
+      caption={t("ui.compare.farms")}
       rows={rows}
       rowKey={(r) => r.id}
       columns={[
@@ -174,7 +174,7 @@ function SeasonsTable({ rows }: { rows: SeasonRow[] }) {
   const h = seasonsHeaders();
   return (
     <DataTable
-      caption={t("ui.compareSeasons")}
+      caption={t("ui.compare.seasons")}
       rows={rows}
       rowKey={(r) => r.id}
       columns={[

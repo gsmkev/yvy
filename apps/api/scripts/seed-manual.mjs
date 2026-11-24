@@ -62,8 +62,13 @@ async function raw(method, path, body, token, headers = {}) {
 // ---------- ingreso por código (el código sale del log de wrangler en desarrollo) ----------
 const readCode = (email) => {
   if (!DEV_LOG || !existsSync(DEV_LOG)) throw new Error("Falta DEV_LOG (log de wrangler dev) para leer el código de ingreso");
-  const all = [...readFileSync(DEV_LOG, "utf8").matchAll(new RegExp(`para=${email.replace(/[.+]/g, "\\$&")}[^\\n]*\\n[^\\n]*?código es (\\d{6})`, "g"))];
-  return all.map((m) => m[1]);
+  const lines = readFileSync(DEV_LOG, "utf8").split("\n");
+  const codes = [];
+  lines.forEach((line, i) => {
+    const m = line.includes(`para=${email}`) ? /código es (\d{6})/.exec(lines[i + 1] ?? "") : null;
+    if (m) codes.push(m[1]);
+  });
+  return codes;
 };
 async function login(email, organizationId) {
   const before = existsSync(DEV_LOG) ? readCode(email).length : 0;
@@ -102,9 +107,9 @@ function client(session) {
 function devVar(name) {
   if (process.env[name]) return process.env[name];
   const f = fileURLToPath(new URL("../.dev.vars", import.meta.url));
-  const m = existsSync(f) && readFileSync(f, "utf8").match(new RegExp(`^${name}=(.*)$`, "m"));
-  if (!m) throw new Error(`Falta ${name} (variable de entorno o apps/api/.dev.vars)`);
-  return m[1].trim();
+  const line = existsSync(f) ? readFileSync(f, "utf8").split("\n").find((l) => l.startsWith(`${name}=`)) : undefined;
+  if (line === undefined) throw new Error(`Falta ${name} (variable de entorno o apps/api/.dev.vars)`);
+  return line.slice(name.length + 1).trim();
 }
 async function ingest(method, path, body) {
   const secret = devVar("INGEST_SECRET");
@@ -457,7 +462,7 @@ async function stepPurchases() {
   for (const [k, g10, g5, ex] of [["agro", 0.9, 0.1, 0], ["ferti", 1, 0, 0], ["gasoil", 1, 0, 0], ["repuestos", 1, 0, 0]]) {
     const d = await o.get(e(`purchases/${S.purchases[k].id}`));
     const total = d.totalPyg ?? d.amountPyg ?? 0;
-    if (total) await o.put(e("export/taxes"), { docKind: "purchase", docId: S.purchases[k].id, timbrado: "15894476", gross10: Math.round(total * g10 * (g5 ? 1 : 1)), gross5: Math.round(total * g5), exempt: ex }).catch((er) => log("IVA:", er.message.slice(0, 120)));
+    if (total) await o.put(e("export/taxes"), { docKind: "purchase", docId: S.purchases[k].id, timbrado: "15894476", gross10: Math.round(total * g10), gross5: Math.round(total * g5), exempt: ex }).catch((er) => log("IVA:", er.message.slice(0, 120)));
   }
   log("compras y recepciones");
 }
@@ -904,7 +909,7 @@ async function stepIngest() {
   for (let d = 140; d >= 2; d -= 5) {
     if (rnd() < 0.18) continue; // día con nubes: sin escena útil
     const acquiredAt = at(d, 13, 40);
-    const sc = await ingest("POST", "/ingest/scenes", { source: "sentinel-2", itemId: `S2B_21JXK_${dayStr(d).replaceAll("-", "")}_0_L2A`, acquiredAt, cloudPct: round(between(0, 22), 1) });
+    const sc = await ingest("POST", "/ingest/scenes", { source: "sentinel-2", itemId: `S2B_21JXK_${dayStr(d).replace(/-/g, "")}_0_L2A`, acquiredAt, cloudPct: round(between(0, 22), 1) });
     const sceneId = sc.id ?? sc.sceneId ?? String(sc);
     lastScene.id = sceneId; lastScene.at = acquiredAt;
     for (const p of plotList) {
@@ -995,7 +1000,7 @@ async function stepIngestHistory() {
   for (let t = t0; t < t1; t += 12 * DAY) {
     if (rnd() < 0.2) continue;
     const d = new Date(t), year = d.getUTCFullYear();
-    const sc = await ingest("POST", "/ingest/scenes", { source: "sentinel-2", itemId: `S2A_21JXK_${d.toISOString().slice(0, 10).replaceAll("-", "")}_0_L2A`, acquiredAt: t, cloudPct: round(between(0, 25), 1) });
+    const sc = await ingest("POST", "/ingest/scenes", { source: "sentinel-2", itemId: `S2A_21JXK_${d.toISOString().slice(0, 10).replace(/-/g, "")}_0_L2A`, acquiredAt: t, cloudPct: round(between(0, 25), 1) });
     const sceneId = sc.id ?? sc.sceneId ?? String(sc);
     const dd = (Date.UTC(year, d.getUTCMonth(), d.getUTCDate()) - Date.UTC(year - (d.getUTCMonth() < 9 ? 1 : 0), 9, 10)) / DAY;
     const yearFactor = 0.9 + ((year * 7919) % 100) / 500;

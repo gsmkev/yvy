@@ -34,15 +34,15 @@ interface PlanDraft {
 }
 
 const planText = (p: PlanLite | undefined): string => {
-  if (!p) return t("ui.seasonPlanEmpty");
+  if (!p) return t("ui.season.planEmpty");
   const parts = [
-    p.crop ? t(k(`fields.crop_${p.crop}`)) : null,
+    p.crop ? t(k(`fields.crop.${p.crop}`)) : null,
     p.variety,
-    p.plannedSowingDate ? `${t("ui.seasonPlannedSowing")} ${isoToDisplay(p.plannedSowingDate)}` : null,
-    p.sowingDensity !== null && p.densityUnit ? `${fmtNumber(p.sowingDensity, 1)} ${t(k(`fields.densityUnit_${p.densityUnit}`))}` : null,
+    p.plannedSowingDate ? `${t("ui.season.plannedSowing")} ${isoToDisplay(p.plannedSowingDate)}` : null,
+    p.sowingDensity !== null && p.densityUnit ? `${fmtNumber(p.sowingDensity, 1)} ${t(k(`fields.density.unit_${p.densityUnit}`))}` : null,
     p.targetYieldTHa !== null ? `${fmtNumber(p.targetYieldTHa, 1)} t/ha` : null,
   ].filter(Boolean);
-  return parts.length ? parts.join(" · ") : t("ui.seasonPlanEmpty");
+  return parts.length ? parts.join(" · ") : t("ui.season.planEmpty");
 };
 
 export default function Seasons() {
@@ -78,14 +78,14 @@ export default function Seasons() {
   const submitCreate = async () => {
     if (!creating) return;
     const name = creating.name.trim();
-    if (!name) return setFormError(t("office.seasonNeedsName"));
-    if (creating.start && creating.end && creating.end < creating.start) return setFormError(t("office.seasonEndBeforeStart"));
+    if (!name) return setFormError(t("office.season.needsName"));
+    if (creating.start && creating.end && creating.end < creating.start) return setFormError(t("office.season.endBeforeStart"));
     setFormError(null);
     const r = await create.mutate({ name, startDate: creating.start || null, endDate: creating.end || null, active: true });
     if (r.ok) {
       setPicked(r.data.id);
       setCreating(null);
-      done("ui.toastSeasonSaved");
+      done("ui.toast.seasonSaved");
     }
   };
 
@@ -102,12 +102,12 @@ export default function Seasons() {
     const d = planning.draft;
     const density = d.density.trim() ? parseDecimal(d.density) : null;
     const target = d.target.trim() ? parseDecimal(d.target) : null;
-    if ((density !== null && density <= 0) || (target !== null && target <= 0) || (d.density.trim() && density === null) || (d.target.trim() && target === null)) return setFormError(t("office.seasonBadNumber"));
+    if ((density !== null && density <= 0) || (target !== null && target <= 0) || (d.density.trim() && density === null) || (d.target.trim() && target === null)) return setFormError(t("office.season.badNumber"));
     setFormError(null);
     const r = await savePlan.mutate({ seasonId: season.id, plotId: planning.plotId, crop: d.crop || null, variety: d.variety.trim() || null, plannedSowingDate: d.sowing || null, sowingDensity: density, densityUnit: density !== null ? d.unit : null, targetYieldTHa: target });
     if (r.ok) {
       setPlanning(null);
-      done("ui.toastSeasonPlanSaved");
+      done("ui.toast.seasonPlanSaved");
     }
   };
 
@@ -116,7 +116,7 @@ export default function Seasons() {
     const r = await clearPlan.mutate({ seasonId: season.id, plotId: planning.plotId });
     if (r.ok) {
       setPlanning(null);
-      done("ui.toastSeasonPlanSaved");
+      done("ui.toast.seasonPlanSaved");
     }
   };
 
@@ -126,35 +126,35 @@ export default function Seasons() {
   const mutErr = formError ?? savePlan.error ?? clearPlan.error;
 
   return (
-    <OfficeScreen title={t("ui.seasonsTitle")} action={canEdit ? { label: t("ui.seasonNew"), icon: Plus, onPress: () => { create.reset(); setFormError(null); setCreating({ name: "", start: "", end: "" }); } } : undefined}>
+    <OfficeScreen title={t("ui.common.seasonsTitle")} action={canEdit ? { label: t("ui.season.new"), icon: Plus, onPress: () => { create.reset(); setFormError(null); setCreating({ name: "", start: "", end: "" }); } } : undefined}>
       {data.seasons.length === 0 ? (
-        <EmptyState title={t("office.seasonsEmpty")} hint={canEdit ? t("ui.seasonNone") : t("office.seasonsEmptyView")} />
+        <EmptyState title={t("office.seasons.empty")} hint={canEdit ? t("ui.season.none") : t("office.seasons.emptyView")} />
       ) : (
         <>
-          <FilterChips value={season?.id ?? ""} onChange={setPicked} options={data.seasons.map((s) => ({ value: s.id, label: s.active ? s.name : `${s.name} · ${t("ui.seasonClosed")}` }))} />
+          <FilterChips value={season?.id ?? ""} onChange={setPicked} options={data.seasons.map((s) => ({ value: s.id, label: s.active ? s.name : `${s.name} · ${t("ui.season.closed")}` }))} />
           {season && (
             <>
               <Text style={[T.small, { marginTop: 12 }]}>
-                {[season.active ? t("ui.seasonActive") : t("ui.seasonClosed"), season.startDate || season.endDate ? `${season.startDate ? isoToDisplay(season.startDate) : "—"} → ${season.endDate ? isoToDisplay(season.endDate) : "—"}` : null].filter(Boolean).join(" · ")}
+                {[season.active ? t("ui.season.active") : t("ui.season.closed"), season.startDate || season.endDate ? `${season.startDate ? isoToDisplay(season.startDate) : "—"} → ${season.endDate ? isoToDisplay(season.endDate) : "—"}` : null].filter(Boolean).join(" · ")}
               </Text>
               <FarmChips farms={farms} value={farm?.id} onChange={setFarmId} />
               {plots.length > 0 && withPlan > 0 && (
-                <StatRow items={[{ label: t("office.seasonsWithPlan"), value: `${withPlan}/${plots.length}` }, { label: t("office.seasonsPlanArea"), value: fmtNumber(haToArea(planArea, units.area), 0), unit: areaLabel(units.area) }]} />
+                <StatRow items={[{ label: t("office.seasons.withPlan"), value: `${withPlan}/${plots.length}` }, { label: t("office.seasons.planArea"), value: fmtNumber(haToArea(planArea, units.area), 0), unit: areaLabel(units.area) }]} />
               )}
-              <SectionHeader title={t("ui.seasonPlanTitle")} />
+              <SectionHeader title={t("ui.season.planTitle")} />
               <DataList
                 rows={plots}
                 keyOf={(p) => p.id}
                 title={(p) => p.name}
                 subtitle={(p) => planText(planOf(p.id))}
                 onPress={canEdit ? openPlan : undefined}
-                empty={{ title: t("ui.noPlots") }}
+                empty={{ title: t("ui.no.plots") }}
               />
               {canEdit && (
                 <>
-                  <SectionHeader title={t("office.seasonManage")} />
-                  <Row title={season.active ? t("ui.seasonClose") : t("ui.seasonReopen")} subtitle={season.active ? t("office.seasonCloseHint") : undefined} chevron onPress={() => void toggle.mutate({ id: season.id, active: !season.active }).then((r) => r.ok && done("ui.toastSeasonSaved"))} />
-                  <Row title={t("ui.seasonDelete")} tone="danger" onPress={() => { remove.reset(); setConfirmDelete(true); }} />
+                  <SectionHeader title={t("office.season.manage")} />
+                  <Row title={season.active ? t("ui.season.close") : t("ui.season.reopen")} subtitle={season.active ? t("office.season.closeHint") : undefined} chevron onPress={() => void toggle.mutate({ id: season.id, active: !season.active }).then((r) => r.ok && done("ui.toast.seasonSaved"))} />
+                  <Row title={t("ui.season.delete")} tone="danger" onPress={() => { remove.reset(); setConfirmDelete(true); }} />
                   {toggle.error ? (
                     <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 8 }]}>
                       {toggle.error}
@@ -167,34 +167,34 @@ export default function Seasons() {
         </>
       )}
 
-      <FormSheet visible={!!creating} title={t("ui.seasonNew")} onClose={() => setCreating(null)} onSubmit={submitCreate} submitLabel={t("ui.save")} pending={create.pending} error={formError ?? create.error}>
+      <FormSheet visible={!!creating} title={t("ui.season.new")} onClose={() => setCreating(null)} onSubmit={submitCreate} submitLabel={t("ui.common.save")} pending={create.pending} error={formError ?? create.error}>
         {creating ? (
           <>
-            <TextField label={t("ui.seasonName")} placeholder={t("ui.seasonNamePlaceholder")} value={creating.name} onChangeText={(v) => setCreating({ ...creating, name: v })} maxLength={80} />
-            <DateField label={t("ui.seasonStart")} value={creating.start} onChange={(v) => setCreating({ ...creating, start: v })} />
-            <DateField label={t("ui.seasonEnd")} value={creating.end} onChange={(v) => setCreating({ ...creating, end: v })} />
+            <TextField label={t("ui.season.name")} placeholder={t("ui.season.namePlaceholder")} value={creating.name} onChangeText={(v) => setCreating({ ...creating, name: v })} maxLength={80} />
+            <DateField label={t("ui.season.start")} value={creating.start} onChange={(v) => setCreating({ ...creating, start: v })} />
+            <DateField label={t("ui.season.end")} value={creating.end} onChange={(v) => setCreating({ ...creating, end: v })} />
           </>
         ) : null}
       </FormSheet>
 
-      <FormSheet visible={!!planning} title={planning && season ? `${planning.name} · ${season.name}` : ""} onClose={() => setPlanning(null)} onSubmit={submitPlan} submitLabel={t("ui.seasonPlanSave")} pending={savePlan.pending} error={mutErr}>
+      <FormSheet visible={!!planning} title={planning && season ? `${planning.name} · ${season.name}` : ""} onClose={() => setPlanning(null)} onSubmit={submitPlan} submitLabel={t("ui.season.planSave")} pending={savePlan.pending} error={mutErr}>
         {planning ? (
           <>
-            <SelectField label={t("ui.crop")} value={planning.draft.crop} options={[{ value: "", label: t("ui.none") }, ...CROPS.map((c) => ({ value: c as string, label: t(k(`fields.crop_${c}`)) }))]} onChange={(v) => set({ crop: v })} />
-            <TextField label={t("ui.seasonVariety")} value={planning.draft.variety} onChangeText={(v) => set({ variety: v })} maxLength={80} />
-            <DateField label={t("ui.seasonPlannedSowing")} value={planning.draft.sowing} onChange={(v) => set({ sowing: v })} />
-            <TextField label={t("ui.seasonDensity")} kind="decimal" value={planning.draft.density} onChangeText={(v) => set({ density: v })} />
-            <SelectField label={t("ui.seasonDensityUnit")} value={planning.draft.unit} options={DENSITY_UNITS.map((u) => ({ value: u as string, label: t(k(`fields.densityUnit_${u}`)) }))} onChange={(v) => set({ unit: v })} />
-            <TextField label={t("ui.seasonTargetYield")} kind="decimal" value={planning.draft.target} onChangeText={(v) => set({ target: v })} />
-            {planOf(planning.plotId) ? <Button kind="text" title={t("ui.seasonPlanClear")} loading={clearPlan.pending} onPress={() => void removePlan()} style={{ marginTop: 8 }} /> : null}
+            <SelectField label={t("ui.common.crop")} value={planning.draft.crop} options={[{ value: "", label: t("ui.common.none") }, ...CROPS.map((c) => ({ value: c as string, label: t(k(`fields.crop.${c}`)) }))]} onChange={(v) => set({ crop: v })} />
+            <TextField label={t("ui.season.variety")} value={planning.draft.variety} onChangeText={(v) => set({ variety: v })} maxLength={80} />
+            <DateField label={t("ui.season.plannedSowing")} value={planning.draft.sowing} onChange={(v) => set({ sowing: v })} />
+            <TextField label={t("ui.season.density")} kind="decimal" value={planning.draft.density} onChangeText={(v) => set({ density: v })} />
+            <SelectField label={t("ui.season.densityUnit")} value={planning.draft.unit} options={DENSITY_UNITS.map((u) => ({ value: u as string, label: t(k(`fields.density.unit_${u}`)) }))} onChange={(v) => set({ unit: v })} />
+            <TextField label={t("ui.season.targetYield")} kind="decimal" value={planning.draft.target} onChangeText={(v) => set({ target: v })} />
+            {planOf(planning.plotId) ? <Button kind="text" title={t("ui.season.planClear")} loading={clearPlan.pending} onPress={() => void removePlan()} style={{ marginTop: 8 }} /> : null}
           </>
         ) : null}
       </FormSheet>
 
-      <Sheet visible={confirmDelete} title={t("ui.seasonDelete")} onClose={() => setConfirmDelete(false)}>
+      <Sheet visible={confirmDelete} title={t("ui.season.delete")} onClose={() => setConfirmDelete(false)}>
         {season ? (
           <>
-            <Text style={T.body}>{t("ui.seasonConfirmDelete", { name: season.name })}</Text>
+            <Text style={T.body}>{t("ui.season.confirmDelete", { name: season.name })}</Text>
             {remove.error ? (
               <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 12 }]}>
                 {remove.error}
@@ -202,20 +202,20 @@ export default function Seasons() {
             ) : null}
             <Button
               kind="danger"
-              title={t("ui.delete")}
+              title={t("ui.common.delete")}
               loading={remove.pending}
               onPress={() =>
                 void remove.mutate({ id: season.id }).then((r) => {
                   if (r.ok) {
                     setConfirmDelete(false);
                     setPicked(null);
-                    done("ui.toastSeasonDeleted");
+                    done("ui.toast.seasonDeleted");
                   }
                 })
               }
               style={{ marginTop: 16 }}
             />
-            <Button kind="text" title={t("ui.cancel")} onPress={() => setConfirmDelete(false)} style={{ marginTop: 4 }} />
+            <Button kind="text" title={t("ui.common.cancel")} onPress={() => setConfirmDelete(false)} style={{ marginTop: 4 }} />
           </>
         ) : null}
       </Sheet>

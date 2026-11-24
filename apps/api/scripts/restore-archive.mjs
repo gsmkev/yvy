@@ -23,7 +23,7 @@ export const literal = (v) => {
     return String(v);
   }
   if (typeof v === "boolean") return v ? "1" : "0";
-  return `'${String(v).replaceAll("'", "''")}'`;
+  return `'${String(v).replace(/'/g, "''")}'`;
 };
 
 /** Convierte el texto NDJSON de un archivo del archivo en sentencias INSERT OR IGNORE. */

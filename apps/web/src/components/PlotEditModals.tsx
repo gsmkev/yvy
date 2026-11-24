@@ -24,33 +24,33 @@ export function SplitModal({
   const [names, setNames] = useState<[string, string]>([`${plot.name} A`, `${plot.name} B`]);
   const save = useMutation({
     mutationFn: () => {
-      if (!result.ok) throw new Error(tk(`ui.splitError_${result.error}`));
+      if (!result.ok) throw new Error(tk(`ui.split.error_${result.error}`));
       return post(`/org/plots/${plot.id}/split`, {
         parts: result.parts.map((geometry, i) => ({ name: names[i]!.trim(), geometry })),
       });
     },
     onSuccess: () => {
-      toast(t("ui.toastPlotSplit"));
+      toast(t("ui.toast.plotSplit"));
       onDone();
     },
   });
   const valid = names.every((n) => n.trim());
   return (
-    <Modal title={t("ui.splitPlot")} onClose={onClose}>
+    <Modal title={t("ui.split.plot")} onClose={onClose}>
       {!result.ok ? (
         <div className="flex flex-col gap-4">
           <p role="alert" className="text-peligro">
-            {tk(`ui.splitError_${result.error}`)}
+            {tk(`ui.split.error_${result.error}`)}
           </p>
           <div>
-            <Button onClick={onClose}>{t("ui.close")}</Button>
+            <Button onClick={onClose}>{t("ui.common.close")}</Button>
           </div>
         </div>
       ) : (
         <Form className="flex flex-col gap-4" onSubmit={() => { if (valid) save.mutate(); }}>
           <p className="text-sm text-tinta-2">{plot.name}</p>
           {result.parts.map((p, i) => (
-            <Field key={i} label={`${t("ui.splitName")} ${i + 1}`} hint={fmtHa(areaHa(p))}>
+            <Field key={i} label={`${t("ui.split.name")} ${i + 1}`} hint={fmtHa(areaHa(p))}>
               <Input
                 value={names[i]}
                 maxLength={120}
@@ -58,14 +58,14 @@ export function SplitModal({
               />
             </Field>
           ))}
-          <p className="text-xs text-tinta-2">{t("ui.splitMergeNote")}</p>
+          <p className="text-xs text-tinta-2">{t("ui.split.mergeNote")}</p>
           {save.error ? <ErrorBox error={save.error} /> : null}
           <div className="flex gap-2">
             <Button type="submit" variant="primary" disabled={!valid || save.isPending}>
-              {t("ui.splitSave")}
+              {t("ui.split.save")}
             </Button>
             <Button variant="quiet" onClick={onClose}>
-              {t("ui.cancel")}
+              {t("ui.common.cancel")}
             </Button>
           </div>
         </Form>
@@ -93,23 +93,23 @@ export function MergeModal({
   const [name, setName] = useState(a.name);
   const save = useMutation({
     mutationFn: () => {
-      if (!result.ok) throw new Error(tk(`ui.mergeError_${result.error}`));
+      if (!result.ok) throw new Error(tk(`ui.merge.error_${result.error}`));
       return post("/org/plots/merge", { ids: [a.id, b.id], name: name.trim(), geometry: result.polygon });
     },
     onSuccess: () => {
-      toast(t("ui.toastPlotsMerged"));
+      toast(t("ui.toast.plotsMerged"));
       onDone();
     },
   });
   return (
-    <Modal title={t("ui.mergePlots")} onClose={onClose}>
+    <Modal title={t("ui.merge.plots")} onClose={onClose}>
       {!result.ok ? (
         <div className="flex flex-col gap-4">
           <p role="alert" className="text-peligro">
-            {tk(`ui.mergeError_${result.error}`)}
+            {tk(`ui.merge.error_${result.error}`)}
           </p>
           <div>
-            <Button onClick={onClose}>{t("ui.close")}</Button>
+            <Button onClick={onClose}>{t("ui.common.close")}</Button>
           </div>
         </div>
       ) : (
@@ -117,17 +117,17 @@ export function MergeModal({
           <p className="text-sm text-tinta-2">
             {a.name} + {b.name}
           </p>
-          <Field label={t("ui.mergeName")} hint={fmtHa(areaHa(result.polygon))}>
+          <Field label={t("ui.merge.name")} hint={fmtHa(areaHa(result.polygon))}>
             <Input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} />
           </Field>
-          <p className="text-xs text-tinta-2">{t("ui.splitMergeNote")}</p>
+          <p className="text-xs text-tinta-2">{t("ui.split.mergeNote")}</p>
           {save.error ? <ErrorBox error={save.error} /> : null}
           <div className="flex gap-2">
             <Button type="submit" variant="primary" disabled={!name.trim() || save.isPending}>
-              {t("ui.mergeSave")}
+              {t("ui.merge.save")}
             </Button>
             <Button variant="quiet" onClick={onClose}>
-              {t("ui.cancel")}
+              {t("ui.common.cancel")}
             </Button>
           </div>
         </Form>

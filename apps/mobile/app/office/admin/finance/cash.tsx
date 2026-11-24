@@ -55,7 +55,7 @@ export default function Cash() {
   const receivables = useErp<Dues>(allowed && tab === "receivables" ? "/org/erp/receivables" : null);
   const parties = useErp<Party[]>(allowed ? "/org/erp/parties" : null);
   const noSignal = useNoSignalReason();
-  if (!allowed) return <NoAdminAccess title={t("ui.adminSection_cash")} />;
+  if (!allowed) return <NoAdminAccess title={t("ui.admin.section_cash")} />;
 
   const accounts = balances.data?.accounts ?? [];
   const partyName = (id: string | null) => parties.data?.find((p) => p.id === id)?.name;
@@ -65,20 +65,20 @@ export default function Cash() {
 
   return (
     <OfficeScreen
-      title={t("ui.adminSection_cash")}
+      title={t("ui.admin.section_cash")}
       query={query}
       onRefresh={async () => {
         await Promise.all([balances.refresh(), moves.refresh(), tab === "accounts" ? undefined : dueQuery.refresh()]);
       }}
-      action={accounts.length > 0 ? { label: t("office.cashAddMove"), icon: Plus, onPress: () => setAdding(true), disabled: !!noSignal } : undefined}
+      action={accounts.length > 0 ? { label: t("office.cash.addMove"), icon: Plus, onPress: () => setAdding(true), disabled: !!noSignal } : undefined}
       footer={accounts.length > 0 ? <NoSignalNote /> : undefined}
     >
       <View style={{ marginTop: 16 }}>
         <Segmented<Tab>
           options={[
-            { value: "accounts", label: t("ui.cashAccounts") },
-            { value: "payables", label: t("ui.cashPayables") },
-            { value: "receivables", label: t("ui.cashReceivables") },
+            { value: "accounts", label: t("ui.cash.accounts") },
+            { value: "payables", label: t("ui.cash.payables") },
+            { value: "receivables", label: t("ui.cash.receivables") },
           ]}
           value={tab}
           onChange={setTab}
@@ -86,30 +86,30 @@ export default function Cash() {
       </View>
 
       {tab === "accounts" ? (
-        <OnlineState query={balances} empty={{ title: t("ui.cashEmptyTitle"), hint: t("office.cashEmptyHintApp") }} isEmpty={(d) => d.accounts.length === 0}>
+        <OnlineState query={balances} empty={{ title: t("ui.cash.emptyTitle"), hint: t("office.cash.emptyHintApp") }} isEmpty={(d) => d.accounts.length === 0}>
           {(d) => (
             <>
-              <MoneyStats items={Object.entries(d.totals).map(([cur, total]) => ({ label: t("ui.cashTotal", { currency: cur }), value: fmtMoney(total, cur as Currency), tone: total < 0 ? ("danger" as const) : undefined }))} />
-              <SectionHeader title={t("ui.cashAccounts")} />
+              <MoneyStats items={Object.entries(d.totals).map(([cur, total]) => ({ label: t("ui.cash.total", { currency: cur }), value: fmtMoney(total, cur as Currency), tone: total < 0 ? ("danger" as const) : undefined }))} />
+              <SectionHeader title={t("ui.cash.accounts")} />
               <DataList
                 rows={d.accounts}
                 keyOf={(a) => a.id}
                 title={(a) => a.name}
-                subtitle={(a) => `${t(key(`ui.cashType_${a.type}`))} · ${a.currency}`}
+                subtitle={(a) => `${t(key(`ui.cash.type_${a.type}`))} · ${a.currency}`}
                 right={(a) => <Text style={[T.bodyMedium, a.balance < 0 && { color: C.peligro }]}>{fmtMoney(a.balance, a.currency)}</Text>}
                 onPress={setAccount}
-                empty={{ title: t("ui.cashEmptyTitle") }}
+                empty={{ title: t("ui.cash.emptyTitle") }}
               />
               {(moves.data ?? []).length > 0 ? (
                 <>
-                  <SectionHeader title={t("office.cashRecentMoves")} />
+                  <SectionHeader title={t("office.cash.recentMoves")} />
                   <DataList
                     rows={(moves.data ?? []).slice(0, 8)}
                     keyOf={(m) => m.id}
-                    title={(m) => m.description || (m.amount < 0 ? t("ui.cashOut") : t("ui.cashIn"))}
+                    title={(m) => m.description || (m.amount < 0 ? t("ui.cash.out") : t("ui.cash.in"))}
                     subtitle={(m) => `${isoShort(m.date)} · ${accName(m.accountId)?.name ?? ""}`}
                     right={(m) => <Text style={[T.bodyMedium, m.amount < 0 && { color: C.peligro }]}>{fmtMoney(m.amount, accName(m.accountId)?.currency ?? "PYG")}</Text>}
-                    empty={{ title: t("ui.cashNoMoves") }}
+                    empty={{ title: t("ui.cash.noMoves") }}
                   />
                 </>
               ) : null}
@@ -120,25 +120,25 @@ export default function Cash() {
         <OnlineState
           query={dueQuery}
           isEmpty={(d) => d.rows.length === 0}
-          empty={tab === "payables" ? { title: t("ui.cashPayablesEmptyTitle"), hint: t("ui.cashPayablesEmptyHint") } : { title: t("ui.cashReceivablesEmptyTitle"), hint: t("ui.cashReceivablesEmptyHint") }}
+          empty={tab === "payables" ? { title: t("ui.cash.payablesEmptyTitle"), hint: t("ui.cash.payablesEmptyHint") } : { title: t("ui.cash.receivablesEmptyTitle"), hint: t("ui.cash.receivablesEmptyHint") }}
         >
           {(d) => (
             <>
               <MoneyStats
                 items={Object.entries(d.totals).flatMap(([cur, v]) => [
-                  { label: t("ui.cashPending", { currency: cur }), value: fmtMoney(v.pending, cur as Currency) },
-                  ...(v.overdue > 0 ? [{ label: t("office.cashOverdueLabel", { currency: cur }), value: fmtMoney(v.overdue, cur as Currency), tone: "danger" as const }] : []),
+                  { label: t("ui.cash.pending", { currency: cur }), value: fmtMoney(v.pending, cur as Currency) },
+                  ...(v.overdue > 0 ? [{ label: t("office.cash.overdueLabel", { currency: cur }), value: fmtMoney(v.overdue, cur as Currency), tone: "danger" as const }] : []),
                 ])}
               />
-              <SectionHeader title={tab === "payables" ? t("ui.cashPayables") : t("ui.cashReceivables")} />
+              <SectionHeader title={tab === "payables" ? t("ui.cash.payables") : t("ui.cash.receivables")} />
               <DataList
                 rows={d.rows}
                 keyOf={(r) => `${r.docKind}-${r.docId}`}
                 title={(r) => r.label}
-                subtitle={(r) => [partyName(r.partyId), r.dueDate ? `${t("ui.cashDue")} ${isoShort(r.dueDate)}` : t("ui.cashNoDue")].filter(Boolean).join(" · ")}
+                subtitle={(r) => [partyName(r.partyId), r.dueDate ? `${t("ui.cash.due")} ${isoShort(r.dueDate)}` : t("ui.cash.noDue")].filter(Boolean).join(" · ")}
                 right={(r) => <Text style={[T.bodyMedium, r.status === "overdue" && { color: C.peligro }]}>{fmtMoney(r.pending, r.currency)}</Text>}
                 onPress={setPaying}
-                empty={{ title: t("ui.erpEmpty") }}
+                empty={{ title: t("ui.erp.empty") }}
               />
             </>
           )}
@@ -157,16 +157,16 @@ function AccountSheet({ account, onClose }: { account: Account; onClose: () => v
   const q = useErp<Move[]>(`/org/erp/cash/moves?accountId=${account.id}`);
   return (
     <Sheet visible title={account.name} onClose={onClose}>
-      <Text style={T.small}>{`${t("ui.cashBalance")}: ${fmtMoney(account.balance, account.currency)}`}</Text>
-      <OnlineState query={q} skeletonRows={3} empty={{ title: t("ui.cashNoMoves") }} isEmpty={(d) => d.length === 0}>
+      <Text style={T.small}>{`${t("ui.cash.balance")}: ${fmtMoney(account.balance, account.currency)}`}</Text>
+      <OnlineState query={q} skeletonRows={3} empty={{ title: t("ui.cash.noMoves") }} isEmpty={(d) => d.length === 0}>
         {(rows) => (
           <DataList
             rows={rows.slice(0, 30)}
             keyOf={(m) => m.id}
-            title={(m) => m.description || (m.amount < 0 ? t("ui.cashOut") : t("ui.cashIn"))}
+            title={(m) => m.description || (m.amount < 0 ? t("ui.cash.out") : t("ui.cash.in"))}
             subtitle={(m) => isoShort(m.date)}
             right={(m) => <Text style={[T.bodyMedium, m.amount < 0 && { color: C.peligro }]}>{fmtMoney(m.amount, account.currency)}</Text>}
-            empty={{ title: t("ui.cashNoMoves") }}
+            empty={{ title: t("ui.cash.noMoves") }}
           />
         )}
       </OnlineState>
@@ -189,34 +189,34 @@ function MoveSheet({ accounts, parties, onClose }: { accounts: Account[]; partie
     if (!acc) return;
     const minor = parseMinor(amount, acc.currency);
     const e: typeof errors = {};
-    if (minor === null) e.amount = t("office.moneyNeedsAmount");
-    if (!date) e.date = t("office.invalidDate");
-    if (!description.trim()) e.description = t("office.cashNeedsConcept");
+    if (minor === null) e.amount = t("office.common.moneyNeedsAmount");
+    if (!date) e.date = t("office.common.invalidDate");
+    if (!description.trim()) e.description = t("office.cash.needsConcept");
     setErrors(e);
     if (Object.keys(e).length || minor === null) return;
     const r = await save.mutate({ accountId, date, amount: dir === "out" ? -minor : minor, description: description.trim(), partyId: partyId || null });
     if (r.ok) {
-      showToast(t("ui.erpSaved"));
+      showToast(t("ui.erp.saved"));
       onClose();
     }
   };
   return (
-    <FormSheet visible title={t("office.cashAddMove")} onClose={onClose} onSubmit={submit} submitLabel={t("ui.save")} pending={save.pending} error={save.error}>
+    <FormSheet visible title={t("office.cash.addMove")} onClose={onClose} onSubmit={submit} submitLabel={t("ui.common.save")} pending={save.pending} error={save.error}>
       <View style={{ marginTop: 8 }}>
         <Segmented
           options={[
-            { value: "out", label: t("office.cashExpense") },
-            { value: "in", label: t("office.cashIncome") },
+            { value: "out", label: t("office.cash.expense") },
+            { value: "in", label: t("office.cash.income") },
           ]}
           value={dir}
           onChange={setDir}
         />
       </View>
-      <SelectField label={t("ui.cashAccount")} value={accountId} options={accounts.map((a) => ({ value: a.id, label: `${a.name} · ${a.currency}` }))} onChange={setAccountId} />
-      <TextField label={t("office.cashConcept")} value={description} onChangeText={setDescription} maxLength={200} error={errors.description} />
-      <TextField label={t("office.cashAmountIn", { currency: acc?.currency ?? "PYG" })} value={amount} onChangeText={setAmount} kind="decimal" error={errors.amount} placeholder="0" />
-      <DateField label={t("ui.costDate")} value={date} onChange={setDate} error={errors.date} />
-      <SelectField label={t("office.cashParty")} value={partyId} placeholder={t("ui.none")} options={[{ value: "", label: t("ui.none") }, ...parties.map((p) => ({ value: p.id, label: p.name }))]} onChange={setPartyId} />
+      <SelectField label={t("ui.cash.account")} value={accountId} options={accounts.map((a) => ({ value: a.id, label: `${a.name} · ${a.currency}` }))} onChange={setAccountId} />
+      <TextField label={t("office.cash.concept")} value={description} onChangeText={setDescription} maxLength={200} error={errors.description} />
+      <TextField label={t("office.cash.amountIn", { currency: acc?.currency ?? "PYG" })} value={amount} onChangeText={setAmount} kind="decimal" error={errors.amount} placeholder="0" />
+      <DateField label={t("ui.cost.date")} value={date} onChange={setDate} error={errors.date} />
+      <SelectField label={t("office.cash.party")} value={partyId} placeholder={t("ui.common.none")} options={[{ value: "", label: t("ui.common.none") }, ...parties.map((p) => ({ value: p.id, label: p.name }))]} onChange={setPartyId} />
     </FormSheet>
   );
 }
@@ -229,31 +229,31 @@ function SettleSheet({ due, accounts, payable, onClose }: { due: Due; accounts: 
   const [date, setDate] = useState(localDate(Date.now()));
   const [error, setError] = useState<string | null>(null);
   const save = useOnlineMutation<Record<string, unknown>, unknown>("POST", "/org/erp/cash/settle", { invalidate: INVALIDATE });
-  const title = `${t(payable ? "ui.cashPay" : "ui.cashCollect")}: ${due.label}`;
+  const title = `${t(payable ? "ui.cash.pay" : "ui.cash.collect")}: ${due.label}`;
   const submit = async () => {
     const minor = parseMinor(amount, due.currency);
-    if (minor === null) return setError(t("office.moneyNeedsAmount"));
-    if (minor > due.pending) return setError(t("office.cashOverSettle"));
-    if (!date) return setError(t("office.invalidDate"));
+    if (minor === null) return setError(t("office.common.moneyNeedsAmount"));
+    if (minor > due.pending) return setError(t("office.cash.overSettle"));
+    if (!date) return setError(t("office.common.invalidDate"));
     setError(null);
     const r = await save.mutate({ docKind: due.docKind, docId: due.docId, accountId, date, amount: minor });
     if (r.ok) {
-      showToast(t("ui.erpSaved"));
+      showToast(t("ui.erp.saved"));
       onClose();
     }
   };
   if (options.length === 0)
     return (
       <Sheet visible title={title} onClose={onClose}>
-        <Text style={T.body}>{t("ui.cashNoAccount", { currency: due.currency })}</Text>
+        <Text style={T.body}>{t("ui.cash.noAccount", { currency: due.currency })}</Text>
       </Sheet>
     );
   return (
-    <FormSheet visible title={title} onClose={onClose} onSubmit={submit} submitLabel={t(payable ? "ui.cashPay" : "ui.cashCollect")} pending={save.pending} error={error ?? save.error}>
-      <Text style={[T.small, { marginTop: 4 }]}>{`${t("ui.cashPendingCol")}: ${fmtMoney(due.pending, due.currency)}`}</Text>
-      <SelectField label={t("ui.cashAccount")} value={accountId} options={options.map((a) => ({ value: a.id, label: a.name }))} onChange={setAccountId} />
-      <TextField label={t("office.cashAmountIn", { currency: due.currency })} value={amount} onChangeText={setAmount} kind="decimal" />
-      <DateField label={t("ui.costDate")} value={date} onChange={setDate} />
+    <FormSheet visible title={title} onClose={onClose} onSubmit={submit} submitLabel={t(payable ? "ui.cash.pay" : "ui.cash.collect")} pending={save.pending} error={error ?? save.error}>
+      <Text style={[T.small, { marginTop: 4 }]}>{`${t("ui.cash.pendingCol")}: ${fmtMoney(due.pending, due.currency)}`}</Text>
+      <SelectField label={t("ui.cash.account")} value={accountId} options={options.map((a) => ({ value: a.id, label: a.name }))} onChange={setAccountId} />
+      <TextField label={t("office.cash.amountIn", { currency: due.currency })} value={amount} onChangeText={setAmount} kind="decimal" />
+      <DateField label={t("ui.cost.date")} value={date} onChange={setDate} />
     </FormSheet>
   );
 }

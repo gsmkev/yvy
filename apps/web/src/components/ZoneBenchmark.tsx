@@ -33,27 +33,27 @@ export function ZoneBenchmark({ farmId }: { farmId: string }) {
   return (
     <section aria-labelledby="bench-h" className="flex flex-col gap-2 border-t border-linea pt-5">
       <h3 id="bench-h" className="font-serif text-lg font-semibold">
-        {t("ui.benchTitle")}
+        {t("ui.bench.title")}
       </h3>
       <p className="text-sm text-tinta-2">
-        {t("ui.benchIntro", { n: b.nFarms, km: b.radiusKm, days: b.windowDays })}
+        {t("ui.bench.intro", { n: b.nFarms, km: b.radiusKm, days: b.windowDays })}
       </p>
       <ExportableTable name="comparacion-de-zona">
         <table className="num w-full text-left text-sm">
           <thead className="text-xs text-tinta-2">
             <tr>
               <th className="py-1 font-medium" />
-              <th className="py-1 font-medium">{t("ui.benchYours")}</th>
-              <th className="py-1 font-medium">{t("ui.benchZone")}</th>
+              <th className="py-1 font-medium">{t("ui.bench.yours")}</th>
+              <th className="py-1 font-medium">{t("ui.bench.zone")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-linea border-y border-linea">
             {rows.map((r) => (
               <tr key={r.key}>
-                <th className="py-2 font-normal">{t(r.key === "Vigor" ? "ui.benchVigor" : "ui.benchRain")}</th>
-                <td className="py-2">{r.own === null ? <span className="text-tinta-2">{t("ui.benchNoOwn")}</span> : r.fmt(r.own)}</td>
+                <th className="py-2 font-normal">{t(r.key === "Vigor" ? "ui.bench.vigor" : "ui.bench.rain")}</th>
+                <td className="py-2">{r.own === null ? <span className="text-tinta-2">{t("ui.bench.noOwn")}</span> : r.fmt(r.own)}</td>
                 <td className="py-2">
-                  {r.med === null ? <span className="text-tinta-2">{t("ui.benchNoMedian")}</span> : r.fmt(r.med)}
+                  {r.med === null ? <span className="text-tinta-2">{t("ui.bench.noMedian")}</span> : r.fmt(r.med)}
                 </td>
               </tr>
             ))}
@@ -63,10 +63,10 @@ export function ZoneBenchmark({ farmId }: { farmId: string }) {
       <ul className="flex flex-col gap-0.5 text-sm">
         {rows.map((r) => {
           const v = compareToZone(r.own, r.med);
-          return v ? <li key={r.key}>{tk(`ui.bench${r.key}${v[0]!.toUpperCase()}${v.slice(1)}`)}</li> : null;
+          return v ? <li key={r.key}>{tk(`ui.bench.${r.key}${v[0]!.toUpperCase()}${v.slice(1)}`)}</li> : null;
         })}
       </ul>
-      <p className="text-xs text-tinta-2">{t("ui.benchDate", { date: fmtDate(b.computedAt) })}</p>
+      <p className="text-xs text-tinta-2">{t("ui.bench.date", { date: fmtDate(b.computedAt) })}</p>
     </section>
   );
 }

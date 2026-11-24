@@ -99,7 +99,7 @@ export async function renderFeed(db: DB, token: string, appUrl: string, now = Da
       time: task.dueTime,
       tz: farm.tz,
       summary: task.title,
-      description: [where, assigneeName && assigneeName !== "" ? t("ui.calendarFeedAssignee", { name: assigneeName }) : null]
+      description: [where, assigneeName && assigneeName !== "" ? t("ui.calendar.feedAssignee", { name: assigneeName }) : null]
         .filter(Boolean)
         .join("\n"),
       priority: task.priority === "high" ? 1 : task.priority === "low" ? 9 : 5,
@@ -107,6 +107,6 @@ export async function renderFeed(db: DB, token: string, appUrl: string, now = Da
       url: `${appUrl.replace(/\/$/, "")}/tareas`,
     };
   });
-  return buildCalendar(t("ui.calendarFeedName", { org: org?.name ?? "Yvy" }), events);
+  return buildCalendar(t("ui.calendar.feedName", { org: org?.name ?? "Yvy" }), events);
 }
 

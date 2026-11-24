@@ -22,7 +22,7 @@ export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
   if (auth.readOnly && !["GET", "HEAD"].includes(c.req.method))
     throw new HTTPException(403, { message: "Modo soporte: solo lectura" });
   // P-08: con el segundo factor exigido y sin dar de alta, lo único permitido es darlo de alta.
-  if (claims.tsr && !c.req.path.startsWith("/auth/totp")) throw new HTTPException(403, { message: t("totp.setupRequired") });
+  if (claims.tsr && !c.req.path.startsWith("/auth/totp")) throw new HTTPException(403, { message: t("totp.common.setupRequired") });
   c.set("auth", auth);
   c.set("sdb", new ScopedDb(getDb(c.env.DB), auth));
   await next();

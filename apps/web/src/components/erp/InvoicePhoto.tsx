@@ -19,11 +19,11 @@ function usePhoto(kind: PhotoKind, id: string) {
       const blob = await compressPhoto(file);
       const { url } = await post<{ url: string }>(`${base}/upload-url`);
       const put = await fetch(url, { method: "PUT", body: blob, headers: { "content-type": "image/webp" } });
-      if (!put.ok) throw new Error(t("ui.photoUploadFailed"));
+      if (!put.ok) throw new Error(t("ui.photo.uploadFailed"));
       await post(`${base}/uploaded`);
     },
     onSuccess: () => {
-      toast(t("ui.photoSaved"));
+      toast(t("ui.photo.saved"));
       refresh();
     },
   });
@@ -37,7 +37,7 @@ function usePhoto(kind: PhotoKind, id: string) {
       ref={input}
       type="file"
       accept="image/*"
-      aria-label={t("ui.photoAttach")}
+      aria-label={t("ui.photo.attach")}
       className="hidden"
       onChange={(e) => {
         const f = e.target.files?.[0];
@@ -76,10 +76,10 @@ export function PhotoRowMenu({
         extra={
           hasPhoto
             ? [
-                { label: t("ui.photoView"), onSelect: () => p.view.mutate(), disabled: p.view.isPending },
-                { label: t("ui.photoRemove"), onSelect: () => p.remove.mutate() },
+                { label: t("ui.photo.view"), onSelect: () => p.view.mutate(), disabled: p.view.isPending },
+                { label: t("ui.photo.remove"), onSelect: () => p.remove.mutate() },
               ]
-            : [{ label: t("ui.photoAttach"), onSelect: p.pick, disabled: p.upload.isPending }]
+            : [{ label: t("ui.photo.attach"), onSelect: p.pick, disabled: p.upload.isPending }]
         }
       />
     </>
@@ -95,15 +95,15 @@ export function InvoicePhoto({ kind, id, hasPhoto }: { kind: PhotoKind; id: stri
       {hasPhoto ? (
         <>
           <button className={link} disabled={view.isPending} onClick={() => view.mutate()}>
-            {t("ui.photoView")}
+            {t("ui.photo.view")}
           </button>
           <button className={`${link} hover:!text-peligro`} onClick={() => remove.mutate()}>
-            {t("ui.photoRemove")}
+            {t("ui.photo.remove")}
           </button>
         </>
       ) : (
         <button className={link} disabled={upload.isPending} onClick={() => pick()}>
-          {upload.isPending ? t("ui.photoUploading") : t("ui.photoAttach")}
+          {upload.isPending ? t("ui.photo.uploading") : t("ui.photo.attach")}
         </button>
       )}
     </span>

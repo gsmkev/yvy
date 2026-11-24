@@ -3,7 +3,7 @@
  * Cada una se oculta si no tiene nada que decir: la ficha nunca muestra secciones vacías.
  */
 import { View } from "react-native";
-import { CHART, CROPS, PLOT_KINDS, SEASONS, t, type MessageKey } from "@yvy/shared";
+import { CHART, CROPS, PLOT_KINDS, SEASONS, t, type MessageKey, ATTRIBUTION } from "@yvy/shared";
 import type { Plot } from "../db/store";
 import { fmtNumber } from "../office/format";
 import { useOnline } from "../office/useOnline";
@@ -30,33 +30,42 @@ export function VigorSection({ history, farmMeans, plotName }: { history: VigorP
   const trend = vigorTrend(cur, prev);
   const delta = deltaVsFarm(cur.mean, farmMeans);
   const stats = [
-    { label: t("ui.ndviCurrent"), value: num2(cur.mean) },
-    ...(delta === null ? [] : [{ label: t("ui.farmAverage"), value: Math.abs(delta) < 0.5 ? t("ui.sameAsFarm") : `${delta > 0 ? "+" : ""}${fmtNumber(delta, 1)} %`, tone: delta < -5 ? ("danger" as const) : undefined }]),
+    { label: t("ui.ndvi.current"), value: num2(cur.mean) },
+    ...(delta === null ? [] : [{ label: t("ui.farm.average"), value: Math.abs(delta) < 0.5 ? t("ui.common.sameAsFarm") : `${delta > 0 ? "+" : ""}${fmtNumber(delta, 1)} %`, tone: delta < -5 ? ("danger" as const) : undefined }]),
   ];
   const sub = [
-    t("app.plotVigor", { value: num2(cur.mean), date: dayShort(cur.acquiredAt) }),
-    trend.kind === "down" ? t("app.plotSheetVigorDown", { pct: Math.round(trend.pct) }) : trend.kind === "up" ? t("app.plotSheetVigorUp", { pct: Math.round(trend.pct) }) : trend.kind === "flat" ? t("app.plotSheetVigorFlat") : null,
+    t("app.plot.vigor", { value: num2(cur.mean), date: dayShort(cur.acquiredAt) }),
+    trend.kind === "down" ? t("app.plot.sheetVigorDown", { pct: Math.round(trend.pct) }) : trend.kind === "up" ? t("app.plot.sheetVigorUp", { pct: Math.round(trend.pct) }) : trend.kind === "flat" ? t("app.plot.sheetVigorFlat") : null,
   ]
     .filter(Boolean)
     .join(" · ");
   return (
     <>
-      <SectionHeader title={t("app.plotSheetVigor")} />
+      <SectionHeader title={t("app.plot.sheetVigor")} />
       <StatRow items={stats} />
       <Text style={[T.small, { marginTop: 8 }]}>{sub}</Text>
       {cur.lowConfidence ? (
         <View accessibilityRole="alert" style={{ marginTop: 12, padding: 12, borderRadius: 12, backgroundColor: C.atencionSuave }}>
           <Text style={[T.small, { color: C.atencion }]}>
-            <Text style={[T.smallMedium, { color: C.atencion }]}>{t("ui.lowConfidence")}. </Text>
-            {t("ui.lowConfidenceNote")}
+            <Text style={[T.smallMedium, { color: C.atencion }]}>{t("ui.low.confidence")}. </Text>
+            {t("ui.low.confidenceNote")}
           </Text>
         </View>
       ) : null}
       {history.length > 1 ? (
         <>
-          <SectionHeader title={t("ui.ndviCurve")} />
-          <LineChart height={180} series={[{ label: plotName, color: ndviColor(cur.mean), points: history.map((p) => ({ x: dayShort(p.acquiredAt), y: p.mean })) }]} />
-          <Text style={[T.small, { marginTop: 4 }]}>{t("attribution.copernicus")}</Text>
+          <SectionHeader title={t("ui.ndvi.curve")} />
+          <LineChart
+            height={180}
+            series={[
+              {
+                label: plotName,
+                color: ndviColor(cur.mean),
+                points: history.map((p) => ({ x: dayShort(p.acquiredAt), y: p.mean })),
+              },
+            ]}
+          />
+          <Text style={[T.small, { marginTop: 4 }]}>{t(ATTRIBUTION.copernicus)}</Text>
         </>
       ) : null}
     </>
@@ -78,12 +87,34 @@ export function RotationSection({ plotId, local }: { plotId: string; local: Rota
   if (rows.length === 0) return null;
   return (
     <>
-      <SectionHeader title={t("ui.rotationTitle")} />
+      <SectionHeader title={t("ui.rotation.title")} />
       {rows.map((r) => {
-        const sown = r.sownOn ? t("ui.rotationSown", { date: dayShort(r.sownOn) }) : r.plannedSowingDate ? t("ui.rotationPlanned", { date: isoFull(r.plannedSowingDate) }) : null;
-        const yieldLine = r.yieldTHa !== null ? `${t("ui.yieldPerHa")}: ${fmtNumber(r.yieldTHa, 1)} t/ha${r.harvestTons !== null ? ` · ${t("ui.rotationHarvest", { tons: fmtNumber(r.harvestTons, 1) })}` : ""}` : null;
-        const target = r.targetYieldTHa !== null ? (r.yieldTHa !== null ? t("ui.yieldVsTarget", { n: fmtNumber(r.targetYieldTHa, 1) }) : `${t("ui.seasonTargetYield").replace(" (t/ha)", "")}: ${fmtNumber(r.targetYieldTHa, 1)} t/ha`) : null;
-        return <Row key={r.seasonId} title={`${r.seasonName} · ${r.crop ? t(k(`fields.crop_${r.crop}`)) : "—"}`} subtitle={[yieldLine, target, r.variety, sown].filter(Boolean).join(" · ") || undefined} />;
+        const sown = r.sownOn
+          ? t("ui.rotation.sown", { date: dayShort(r.sownOn) })
+          : r.plannedSowingDate
+            ? t("ui.rotation.planned", { date: isoFull(r.plannedSowingDate) })
+            : null;
+        const yieldLine =
+          r.yieldTHa !== null
+            ? t("ui.yield.perHa") +
+              ": " +
+              fmtNumber(r.yieldTHa, 1) +
+              " t/ha" +
+              (r.harvestTons !== null ? " · " + t("ui.rotation.harvest", { tons: fmtNumber(r.harvestTons, 1) }) : "")
+            : null;
+        const target =
+          r.targetYieldTHa !== null
+            ? r.yieldTHa !== null
+              ? t("ui.yield.vsTarget", { n: fmtNumber(r.targetYieldTHa, 1) })
+              : `${t("ui.season.targetYield").replace(" (t/ha)", "")}: ${fmtNumber(r.targetYieldTHa, 1)} t/ha`
+            : null;
+        return (
+          <Row
+            key={r.seasonId}
+            title={`${r.seasonName} · ${r.crop ? t(k(`fields.crop.${r.crop}`)) : "—"}`}
+            subtitle={[yieldLine, target, r.variety, sown].filter(Boolean).join(" · ") || undefined}
+          />
+        );
       })}
     </>
   );
@@ -103,10 +134,20 @@ export function WithdrawalSection({ plot }: { plot: Plot }) {
   if (!r && v.length === 0) return null;
   return (
     <>
-      <SectionHeader title={t("ui.withdrawalTitle")} />
-      {r ? <Row tone="danger" title={t("ui.withdrawalUntil", { date: isoFull(r.safeFrom) })} subtitle={`${r.product} · ${r.daysLeft === 1 ? t("ui.withdrawalDayOne") : t("ui.withdrawalDays", { n: r.daysLeft })}`} /> : null}
+      <SectionHeader title={t("ui.withdrawal.title")} />
+      {r ? (
+        <Row
+          tone="danger"
+          title={t("ui.withdrawal.until", { date: isoFull(r.safeFrom) })}
+          subtitle={
+            r.product +
+            " · " +
+            (r.daysLeft === 1 ? t("ui.withdrawal.dayOne") : t("ui.withdrawal.days", { n: r.daysLeft }))
+          }
+        />
+      ) : null}
       {v.map((x) => (
-        <Row key={`${x.harvestedOn}${x.product}`} tone="danger" title={t("ui.withdrawalViolation", { plot: plot.name, date: isoFull(x.harvestedOn), product: x.product, safe: isoFull(x.safeFrom) })} />
+        <Row key={`${x.harvestedOn}${x.product}`} tone="danger" title={t("ui.withdrawal.violation", { plot: plot.name, date: isoFull(x.harvestedOn), product: x.product, safe: isoFull(x.safeFrom) })} />
       ))}
     </>
   );
@@ -131,25 +172,27 @@ export function PhenologySection({ plotId }: { plotId: string }) {
   if (d.status !== "ok" || d.gdd === null || !d.estimatedStage)
     return (
       <>
-        <SectionHeader title={t("ui.phenoTitle")} />
-        <Text style={T.small}>{t(k(`ui.phenoStatus_${d.status === "ok" ? "no_data" : d.status}`))}</Text>
+        <SectionHeader title={t("ui.pheno.title")} />
+        <Text style={T.small}>{t(k(`ui.pheno.status_${d.status === "ok" ? "no_data" : d.status}`))}</Text>
       </>
     );
   const rows = [
-    { label: t("ui.phenoEstimated"), value: t(k(`fields.stage_${d.estimatedStage}`)) },
-    { label: t("ui.phenoObserved"), value: d.observed ? `${t(k(`fields.stage_${d.observed.stage}`))} · ${dayShort(d.observed.at)}` : t("ui.phenoNoObserved") },
+    { label: t("ui.pheno.estimated"), value: t(k(`fields.stage.${d.estimatedStage}`)) },
+    { label: t("ui.pheno.observed"), value: d.observed ? `${t(k(`fields.stage.${d.observed.stage}`))} · ${dayShort(d.observed.at)}` : t("ui.pheno.noObserved") },
   ];
   return (
     <>
-      <SectionHeader title={t("ui.phenoTitle")} />
+      <SectionHeader title={t("ui.pheno.title")} />
       <KeyValue rows={rows} />
-      {d.next ? <Text style={[T.small, { marginTop: 8 }]}>{t("ui.phenoNext", { stage: t(k(`fields.stage_${d.next.stage}`)), gdd: fmtNumber(d.next.gddLeft, 0) })}</Text> : null}
-      {d.comparison ? <Text style={[T.bodyMedium, { marginTop: 8 }, d.comparison !== "on_track" && { color: C.peligro }]}>{t(k(`ui.phenoCompare_${d.comparison}`))}</Text> : null}
+      {d.next ? <Text style={[T.small, { marginTop: 8 }]}>{t("ui.pheno.next", { stage: t(k(`fields.stage.${d.next.stage}`)), gdd: fmtNumber(d.next.gddLeft, 0) })}</Text> : null}
+      {d.comparison ? <Text style={[T.bodyMedium, { marginTop: 8 }, d.comparison !== "on_track" && { color: C.peligro }]}>{t(k(`ui.pheno.compare_${d.comparison}`))}</Text> : null}
       <Text style={[T.small, { marginTop: 8 }]}>
-        {t("ui.phenoSince", { date: d.sowingDate ? isoFull(d.sowingDate) : "—", base: d.baseC ?? 0 })}
-        {d.coverage && d.coverage.days < d.coverage.of * 0.8 ? ` · ${t("ui.phenoPartial", { days: d.coverage.days, of: d.coverage.of })}` : ""}
+        {t("ui.pheno.since", { date: d.sowingDate ? isoFull(d.sowingDate) : "—", base: d.baseC ?? 0 })}
+        {d.coverage && d.coverage.days < d.coverage.of * 0.8
+          ? " · " + t("ui.pheno.partial", { days: d.coverage.days, of: d.coverage.of })
+          : ""}
       </Text>
-      <Text style={[T.small, { marginTop: 4 }]}>{t("attribution.nasaPower")}</Text>
+      <Text style={[T.small, { marginTop: 4 }]}>{t(ATTRIBUTION.nasaPower)}</Text>
     </>
   );
 }
@@ -176,44 +219,44 @@ export function WaterBalanceSection({ plotId, units, onIrrigate }: { plotId: str
   const b = d.balance;
   const unit = rainLabel(units.rain);
   const conv = (mm: number) => Math.round(mmToRain(mm, units.rain) * 100) / 100;
-  const irrigate = onIrrigate ? <Button kind="secondary" title={t("ui.waterBalIrrigate")} onPress={onIrrigate} style={{ marginTop: 12 }} /> : null;
+  const irrigate = onIrrigate ? <Button kind="secondary" title={t("ui.water.balIrrigate")} onPress={onIrrigate} style={{ marginTop: 12 }} /> : null;
   if (!b)
     return (
       <>
-        <SectionHeader title={t("ui.waterBalTitle")} />
-        <Text style={T.small}>{t(k(`ui.waterBalStatus_${d.status === "ok" ? "no_data" : d.status}`))}</Text>
+        <SectionHeader title={t("ui.water.balTitle")} />
+        <Text style={T.small}>{t(k(`ui.water.balStatus_${d.status === "ok" ? "no_data" : d.status}`))}</Text>
         {irrigate}
       </>
     );
   const totals =
     b.etMissingDays === b.days
-      ? t("ui.waterBalTotalsNoEt", { rain: fmtRain(b.rainMm, units), irr: fmtRain(b.irrigationMm, units), days: b.days })
+      ? t("ui.water.balTotalsNoEt", { rain: fmtRain(b.rainMm, units), irr: fmtRain(b.irrigationMm, units), days: b.days })
       : b.irrigationMm > 0
-        ? t("ui.waterBalTotalsIrr", { rain: fmtRain(b.rainMm, units), irr: fmtRain(b.irrigationMm, units), etc: fmtRain(b.etcMm, units), days: b.days })
-        : t("ui.waterBalTotals", { rain: fmtRain(b.rainMm, units), etc: fmtRain(b.etcMm, units), days: b.days });
+        ? t("ui.water.balTotalsIrr", { rain: fmtRain(b.rainMm, units), irr: fmtRain(b.irrigationMm, units), etc: fmtRain(b.etcMm, units), days: b.days })
+        : t("ui.water.balTotals", { rain: fmtRain(b.rainMm, units), etc: fmtRain(b.etcMm, units), days: b.days });
   return (
     <>
-      <SectionHeader title={t("ui.waterBalTitle")} />
-      <StatRow items={[{ label: t("ui.waterBalBalance"), value: fmtNumber(mmToRain(b.balanceMm, units.rain), units.rain === "in" ? 2 : 0), unit, tone: b.risk && b.risk !== "low" ? "danger" : undefined }, ...(b.balance14Mm !== null ? [{ label: t("office.plotWaterLast14"), value: fmtNumber(mmToRain(b.balance14Mm, units.rain), units.rain === "in" ? 2 : 0), unit }] : [])]} />
+      <SectionHeader title={t("ui.water.balTitle")} />
+      <StatRow items={[{ label: t("ui.water.balBalance"), value: fmtNumber(mmToRain(b.balanceMm, units.rain), units.rain === "in" ? 2 : 0), unit, tone: b.risk && b.risk !== "low" ? "danger" : undefined }, ...(b.balance14Mm !== null ? [{ label: t("office.plot.waterLast14"), value: fmtNumber(mmToRain(b.balance14Mm, units.rain), units.rain === "in" ? 2 : 0), unit }] : [])]} />
       <Text style={[T.small, { marginTop: 8 }]}>{totals}</Text>
-      {b.etMissingDays > 0 ? <Text style={[T.small, { marginTop: 4 }]}>{t("ui.waterBalNoEt", { n: b.etMissingDays })}</Text> : null}
-      {b.risk ? <Text style={[T.bodyMedium, { marginTop: 8 }, b.risk !== "low" && { color: C.peligro }]}>{t(k(`ui.waterBalRisk_${b.risk}`))}</Text> : null}
+      {b.etMissingDays > 0 ? <Text style={[T.small, { marginTop: 4 }]}>{t("ui.water.balNoEt", { n: b.etMissingDays })}</Text> : null}
+      {b.risk ? <Text style={[T.bodyMedium, { marginTop: 8 }, b.risk !== "low" && { color: C.peligro }]}>{t(k(`ui.water.balRisk_${b.risk}`))}</Text> : null}
       {b.series.length > 1 ? (
         <LineChart
           height={180}
           yUnit={unit}
           series={[
-            { label: t("ui.waterBalCum").replace("(mm)", `(${unit})`), color: CHART.primary, points: b.series.map((p) => ({ x: isoShort(p.date), y: conv(p.cumMm) })) },
+            { label: t("ui.water.balCum").replace("(mm)", `(${unit})`), color: CHART.primary, points: b.series.map((p) => ({ x: isoShort(p.date), y: conv(p.cumMm) })) },
             ...(b.irrigationMm > 0
-              ? [{ label: t("ui.waterBalIrrCum").replace("(mm)", `(${unit})`), color: CHART.comparison, points: b.series.map((p, i) => ({ x: isoShort(p.date), y: conv(b.series.slice(0, i + 1).reduce((a, x) => a + x.irrigationMm, 0)) })) }]
+              ? [{ label: t("ui.water.balIrrCum").replace("(mm)", `(${unit})`), color: CHART.comparison, points: b.series.map((p, i) => ({ x: isoShort(p.date), y: conv(b.series.slice(0, i + 1).reduce((a, x) => a + x.irrigationMm, 0)) })) }]
               : []),
           ]}
         />
       ) : null}
       {irrigate}
-      <Text style={[T.small, { marginTop: 8 }]}>{t("ui.waterBalNote")}</Text>
+      <Text style={[T.small, { marginTop: 8 }]}>{t("ui.water.balNote")}</Text>
       <Text style={[T.small, { marginTop: 4 }]}>
-        {t("attribution.chirps")} · {t("attribution.nasaPower")}
+        {t(ATTRIBUTION.chirps)} · {t(ATTRIBUTION.nasaPower)}
       </Text>
     </>
   );
@@ -230,7 +273,7 @@ export function ForecastSection({ plot, units }: { plot: Plot; units: Units }) {
   if (!f || f.days.length === 0) return null;
   return (
     <>
-      <SectionHeader title={t("ui.plotFcTitle")} />
+      <SectionHeader title={t("ui.plot.fcTitle")} />
       <KeyValue
         rows={f.days.slice(0, 7).map((d) => ({
           label: isoShort(d.date),
@@ -238,7 +281,7 @@ export function ForecastSection({ plot, units }: { plot: Plot; units: Units }) {
         }))}
       />
       <Text style={[T.small, { marginTop: 8 }]}>
-        {t("ui.plotFcNote", { date: dayShort(f.runAt) })} {t("attribution.metNorway")}
+        {t("ui.plot.fcNote", { date: dayShort(f.runAt) })} {t(ATTRIBUTION.metNorway)}
       </Text>
     </>
   );
@@ -260,19 +303,19 @@ export const editFromPlot = (p: Plot): PlotEdit => ({ name: p.name, kind: p.kind
 /** Hoja de edición de los atributos del lote. */
 export function EditPlotSheet({ visible, draft, onChange, onClose, onSubmit, pending, error }: { visible: boolean; draft: PlotEdit; onChange: (patch: Partial<PlotEdit>) => void; onClose: () => void; onSubmit: () => void; pending: boolean; error: string | null }) {
   return (
-    <FormSheet visible={visible} title={t("office.plotEditTitle")} onClose={onClose} onSubmit={onSubmit} submitLabel={t("ui.save")} pending={pending} error={error}>
-      <TextField label={t("app.plotDrawName")} value={draft.name} onChangeText={(v) => onChange({ name: v })} maxLength={120} />
+    <FormSheet visible={visible} title={t("office.plot.editTitle")} onClose={onClose} onSubmit={onSubmit} submitLabel={t("ui.common.save")} pending={pending} error={error}>
+      <TextField label={t("app.plot.drawName")} value={draft.name} onChangeText={(v) => onChange({ name: v })} maxLength={120} />
       <View style={{ marginTop: 16 }}>
-        <Segmented value={draft.kind} onChange={(v) => onChange({ kind: v })} options={PLOT_KINDS.map((x) => ({ value: x, label: x === "crop" ? t("ui.crop") : t("ui.pasture") }))} />
+        <Segmented value={draft.kind} onChange={(v) => onChange({ kind: v })} options={PLOT_KINDS.map((x) => ({ value: x, label: x === "crop" ? t("ui.common.crop") : t("ui.common.pasture") }))} />
       </View>
       {draft.kind === "crop" ? (
         <>
-          <SelectField label={t("ui.crop")} value={draft.crop} options={[{ value: "", label: t("ui.none") }, ...CROPS.map((c) => ({ value: c as string, label: t(k(`fields.crop_${c}`)) }))]} onChange={(v) => onChange({ crop: v })} />
-          <SelectField label={t("ui.season")} value={draft.season} options={[{ value: "", label: t("ui.none") }, ...SEASONS.map((c) => ({ value: c as string, label: t(k(`office.plotSeason_${c}`)) }))]} onChange={(v) => onChange({ season: v })} />
-          <DateField label={t("ui.sowingDate")} value={draft.sowingDate} onChange={(v) => onChange({ sowingDate: v })} />
+          <SelectField label={t("ui.common.crop")} value={draft.crop} options={[{ value: "", label: t("ui.common.none") }, ...CROPS.map((c) => ({ value: c as string, label: t(k(`fields.crop.${c}`)) }))]} onChange={(v) => onChange({ crop: v })} />
+          <SelectField label={t("ui.common.season")} value={draft.season} options={[{ value: "", label: t("ui.common.none") }, ...SEASONS.map((c) => ({ value: c as string, label: t(k(`office.plot.season_${c}`)) }))]} onChange={(v) => onChange({ season: v })} />
+          <DateField label={t("ui.common.sowingDate")} value={draft.sowingDate} onChange={(v) => onChange({ sowingDate: v })} />
         </>
       ) : (
-        <TextField label={t("ui.pastureType")} value={draft.pastureType} onChangeText={(v) => onChange({ pastureType: v })} maxLength={60} />
+        <TextField label={t("ui.common.pastureType")} value={draft.pastureType} onChangeText={(v) => onChange({ pastureType: v })} maxLength={60} />
       )}
     </FormSheet>
   );
@@ -280,7 +323,7 @@ export function EditPlotSheet({ visible, draft, onChange, onClose, onSubmit, pen
 
 /** Días sin visitar en palabras ("hoy", "ayer", "hace 9 días"). */
 export function visitText(lastVisit: number | null): string {
-  if (lastVisit === null) return t("app.noVisits");
+  if (lastVisit === null) return t("app.no.visits");
   const d = daysSince(lastVisit);
-  return d === 0 ? t("app.lastVisitToday") : d === 1 ? t("app.lastVisitYesterday") : t("app.lastVisit", { days: d });
+  return d === 0 ? t("app.last.visitToday") : d === 1 ? t("app.last.visitYesterday") : t("app.last.visit", { days: d });
 }

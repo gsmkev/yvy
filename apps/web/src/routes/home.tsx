@@ -12,22 +12,22 @@ import { useHomeGuide } from "./home/useHomeGuide";
 
 const NewFarmButton = () => (
   <Link to="/estancias/nueva">
-    <Button variant="primary">{t("ui.newFarm")}</Button>
+    <Button variant="primary">{t("ui.new.farm")}</Button>
   </Link>
 );
 
 /** Primeros pasos cuando todavía no hay estancias. */
 function OnboardingEmpty({ canEdit }: { canEdit: boolean }) {
   return (
-    <EmptyState title={t("ui.onboardingTitle")} action={canEdit ? <NewFarmButton /> : undefined}>
+    <EmptyState title={t("ui.onboarding.title")} action={canEdit ? <NewFarmButton /> : undefined}>
       <ol className="flex list-decimal flex-col gap-1.5 pl-5">
-        <li>{t("ui.onboarding1")}</li>
-        <li>{t("ui.onboarding2")}</li>
-        <li>{t("ui.onboarding3")}</li>
-        <li>{t("ui.onboarding4")}</li>
+        <li>{t("ui.onboarding.1")}</li>
+        <li>{t("ui.onboarding.2")}</li>
+        <li>{t("ui.onboarding.3")}</li>
+        <li>{t("ui.onboarding.4")}</li>
       </ol>
       <a href="/descargar-app" className="mt-3 inline-flex items-center gap-1.5 font-medium text-accion hover:underline">
-        {t("ui.downloadApp")}
+        {t("ui.download.app")}
       </a>
     </EmptyState>
   );
@@ -63,7 +63,7 @@ export function HomePage() {
       </div>
       <section className="flex flex-col gap-6 overflow-auto border-l border-linea p-4 sm:p-6 *:shrink-0">
         <PageHeader
-          title={t("ui.homeTitle")}
+          title={t("ui.common.homeTitle")}
           // sin estancias, el estado vacío ya lleva el mismo botón: una sola acción primaria
           primary={canEdit && !(farms.data && list.length === 0 && !guide) ? <NewFarmButton /> : undefined}
         />
@@ -84,7 +84,7 @@ export function HomePage() {
             className="flex h-10 cursor-pointer items-center self-start text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
             onClick={() => setGuide.mutate(false)}
           >
-            {t("ui.guideShow")}
+            {t("ui.guide.show")}
           </button>
         )}
         {farms.data && list.length === 0 && !guide && <OnboardingEmpty canEdit={canEdit} />}

@@ -25,8 +25,8 @@ export default function SyncScreen() {
   const lastSync = sync.lastSyncAt ? new Date(sync.lastSyncAt).toLocaleString("es-PY", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }) : "—";
 
   const download = async (farmId: string) => {
-    if (!(await isWifi())) return Alert.alert(t("app.offlinePackNeedsWifi"));
-    if (!fitsBudget(packStatus(farmId).missingBytes, mapBudget())) return Alert.alert(t("app.offlineOverLimit", { mb: Math.round(LIMITS.offline.maxMapBytes / 1e6) }));
+    if (!(await isWifi())) return Alert.alert(t("app.offline.packNeedsWifi"));
+    if (!fitsBudget(packStatus(farmId).missingBytes, mapBudget())) return Alert.alert(t("app.offline.overLimit", { mb: Math.round(LIMITS.offline.maxMapBytes / 1e6) }));
     try {
       await downloadPack(farmId, (f) => setProgress((p) => ({ ...p, [farmId]: f })));
       localChanged();
@@ -44,12 +44,12 @@ export default function SyncScreen() {
   const [allProgress, setAllProgress] = useState<number | null>(null);
   const plan = allPacksPlan();
   const downloadAll = async () => {
-    if (!(await isWifi())) return Alert.alert(t("app.offlinePackNeedsWifi"));
+    if (!(await isWifi())) return Alert.alert(t("app.offline.packNeedsWifi"));
     setAllProgress(0);
     try {
       const { failed } = await downloadAllPacks(setAllProgress);
       localChanged();
-      if (failed.length) Alert.alert(t("app.offlineAllFailed", { names: failed.join(", ") }));
+      if (failed.length) Alert.alert(t("app.offline.allFailed", { names: failed.join(", ") }));
     } finally {
       setAllProgress(null);
     }
@@ -57,43 +57,43 @@ export default function SyncScreen() {
 
   return (
     <ScrollView style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 80 }]}>
-      <Text style={T.title}>{t("app.syncStorageRow")}</Text>
+      <Text style={T.title}>{t("app.common.syncStorageRow")}</Text>
 
-      <SectionHeader first title={t("app.sectionSync")} />
-      <Row chevron={false} title={t("app.lastSyncAt", { when: lastSync })} subtitle={sync.pending > 0 ? t("app.pendingCount", { n: sync.pending }) : t("app.allSent")} onPress={syncNow} />
+      <SectionHeader first title={t("app.section.sync")} />
+      <Row chevron={false} title={t("app.last.syncAt", { when: lastSync })} subtitle={sync.pending > 0 ? t("app.common.pendingCount", { n: sync.pending }) : t("app.common.allSent")} onPress={syncNow} />
       <Outbox items={outbox} plotName={(id) => plots.find((p) => p.id === id)?.name} wifiOnly={wifiOnly} error={sync.error} stuck={stuck} />
       {rejected.map((r) => (
         <View key={r.mutationId} style={st.rejected}>
-          <Text style={[T.bodyMedium, { color: C.peligro }]}>{t("app.rejected")}</Text>
-          <Text style={[T.small, { marginTop: 2 }]}>{tk(`rejectReasons.${r.reason}`, { max: 3 })}</Text>
-          <Button kind="text" title={t("app.dismiss")} onPress={() => (getDb().dismissRejected(r.mutationId), localChanged())} style={{ alignSelf: "flex-start", marginTop: 4 }} />
+          <Text style={[T.bodyMedium, { color: C.peligro }]}>{t("app.common.rejected")}</Text>
+          <Text style={[T.small, { marginTop: 2 }]}>{tk(`reject-reasons.reason.${r.reason}`, { max: 3 })}</Text>
+          <Button kind="text" title={t("app.common.dismiss")} onPress={() => (getDb().dismissRejected(r.mutationId), localChanged())} style={{ alignSelf: "flex-start", marginTop: 4 }} />
         </View>
       ))}
-      <SwitchRow title={t("app.photosWifiOnly")} value={wifiOnly} onValueChange={(v) => (setWifiOnly(v), getDb().setKv("photos_wifi_only", v ? "1" : "0"))} />
+      <SwitchRow title={t("app.photos.wifiOnly")} value={wifiOnly} onValueChange={(v) => (setWifiOnly(v), getDb().setKv("photos_wifi_only", v ? "1" : "0"))} />
       {farms.map((f) => {
         const p = packStatus(f.id);
         const pct = progress[f.id];
         const subtitle = !p.layers.length
-          ? t("app.offlinePackNone")
+          ? t("app.offline.packNone")
           : p.upToDate
-            ? t("app.offlinePackReady")
+            ? t("app.offline.packReady")
             : pct !== undefined
               ? `${Math.round(pct * 100)} %`
-              : t("app.offlinePackSize", { mb: (p.missingBytes / 1e6).toLocaleString("es-PY", { maximumFractionDigits: 1 }) });
+              : t("app.offline.packSize", { mb: (p.missingBytes / 1e6).toLocaleString("es-PY", { maximumFractionDigits: 1 }) });
         const canDownload = p.layers.length > 0 && !p.upToDate && pct === undefined;
-        return <Row key={f.id} title={`${t("app.offlinePack")}: ${f.name}`} subtitle={subtitle} onPress={canDownload ? () => download(f.id) : undefined} right={canDownload ? <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{t("app.download")}</Text> : undefined} />;
+        return <Row key={f.id} title={`${t("app.offline.pack")}: ${f.name}`} subtitle={subtitle} onPress={canDownload ? () => download(f.id) : undefined} right={canDownload ? <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{t("app.common.download")}</Text> : undefined} />;
       })}
       {farms.length > 1 && plan.farms.length > 0 && (
         <Button
           kind="secondary"
-          title={allProgress !== null ? `${Math.round(allProgress * 100)} %` : t("app.offlineAll", { n: plan.farms.length, mb: (plan.totalBytes / 1e6).toLocaleString("es-PY", { maximumFractionDigits: 1 }) })}
+          title={allProgress !== null ? `${Math.round(allProgress * 100)} %` : t("app.offline.all", { n: plan.farms.length, mb: (plan.totalBytes / 1e6).toLocaleString("es-PY", { maximumFractionDigits: 1 }) })}
           loading={allProgress !== null}
           onPress={downloadAll}
           style={{ marginTop: 12 }}
         />
       )}
       {plan.overBudget.length > 0 && (
-        <Text style={[T.small, { paddingVertical: 8 }]}>{t("app.offlineOverLimitFarms", { names: plan.overBudget.map((f) => f.name).join(", "), mb: Math.round(LIMITS.offline.maxMapBytes / 1e6) })}</Text>
+        <Text style={[T.small, { paddingVertical: 8 }]}>{t("app.offline.overLimitFarms", { names: plan.overBudget.map((f) => f.name).join(", "), mb: Math.round(LIMITS.offline.maxMapBytes / 1e6) })}</Text>
       )}
       <Storage />
 
@@ -102,8 +102,18 @@ export default function SyncScreen() {
 }
 
 const OUTBOX_SHOWN = 8;
-const size = (bytes: number) => (bytes >= 1e6 ? `${(bytes / 1e6).toLocaleString("es-PY", { maximumFractionDigits: 1 })} MB` : `${Math.max(1, Math.round(bytes / 1e3))} KB`);
-const when = (ms: number) => new Date(ms).toLocaleString("es-PY", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false });
+const size = (bytes: number) =>
+  bytes >= 1e6
+    ? (bytes / 1e6).toLocaleString("es-PY", { maximumFractionDigits: 1 }) + " MB"
+    : `${Math.max(1, Math.round(bytes / 1e3))} KB`;
+const when = (ms: number) =>
+  new Date(ms).toLocaleString("es-PY", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 
 /** Cola de envío (F-18): qué falta mandar, cuánto pesan las fotos y cómo mandarlo ya. */
 function Outbox({
@@ -126,36 +136,36 @@ function Outbox({
     void syncNow();
   };
   const label = (i: OutboxItem) =>
-    i.what === "record_delete" ? t("app.outboxRecordDelete") : i.what === "task" ? t("app.outboxTask") : i.what === "poi" ? t("app.outboxPoi") : i.what === "plot" ? t("app.outboxPlot") : i.recordKind ? t(`recordKinds.${i.recordKind}` as MessageKey) : t("app.outboxPhotosOnly");
+    i.what === "record_delete" ? t("app.outbox.recordDelete") : i.what === "task" ? t("app.outbox.task") : i.what === "poi" ? t("app.outbox.poi") : i.what === "plot" ? t("app.outbox.plot") : i.recordKind ? t(`record-kinds.kind.${i.recordKind}` as MessageKey) : t("app.outbox.photosOnly");
   return (
     <View>
       {items.length > 0 && (
         <Text style={[T.smallMedium, { paddingVertical: 6 }]}>
-          {photoBytes > 0 ? t("app.outboxSummary", { n: items.length, size: size(photoBytes) }) : t("app.outboxSummaryNoPhotos", { n: items.length })}
+          {photoBytes > 0 ? t("app.outbox.summary", { n: items.length, size: size(photoBytes) }) : t("app.outbox.summaryNoPhotos", { n: items.length })}
         </Text>
       )}
-      {error && <Text style={[T.small, { color: C.peligro, paddingVertical: 4 }]}>{error === "cpu" ? t("app.outboxErrorCpu") : t("app.outboxError")}</Text>}
+      {error && <Text style={[T.small, { color: C.peligro, paddingVertical: 4 }]}>{error === "cpu" ? t("app.outbox.errorCpu") : t("app.outbox.error")}</Text>}
       {items.slice(0, OUTBOX_SHOWN).map((i) => (
         <Row
           key={i.id}
           title={label(i)}
-          subtitle={[plotName(i.plotId), when(i.at), i.photos > 0 ? t("app.outboxPhotoSize", { n: i.photos, size: size(i.photoBytes) }) : null, i.photos > 0 && wifiOnly ? t("app.outboxWaitingWifi") : null].filter(Boolean).join(" · ")}
+          subtitle={[plotName(i.plotId), when(i.at), i.photos > 0 ? t("app.outbox.photoSize", { n: i.photos, size: size(i.photoBytes) }) : null, i.photos > 0 && wifiOnly ? t("app.outbox.waitingWifi") : null].filter(Boolean).join(" · ")}
         />
       ))}
-      {items.length > OUTBOX_SHOWN && <Text style={[T.small, { paddingVertical: 8 }]}>{t("app.outboxMore", { n: items.length - OUTBOX_SHOWN })}</Text>}
+      {items.length > OUTBOX_SHOWN && <Text style={[T.small, { paddingVertical: 8 }]}>{t("app.outbox.more", { n: items.length - OUTBOX_SHOWN })}</Text>}
       {stuck.n > 0 && (
         <>
-          <Text style={[T.small, { paddingVertical: 6 }]}>{t("app.outboxStuck", { n: stuck.n, size: size(stuck.bytes) })}</Text>
-          <Button kind="secondary" title={t("app.outboxStuckRetry")} onPress={retryStuck} style={{ marginTop: 4 }} />
+          <Text style={[T.small, { paddingVertical: 6 }]}>{t("app.outbox.stuck", { n: stuck.n, size: size(stuck.bytes) })}</Text>
+          <Button kind="secondary" title={t("app.outbox.stuckRetry")} onPress={retryStuck} style={{ marginTop: 4 }} />
         </>
       )}
       {items.length > 0 && (
         <>
-          <Button kind="secondary" title={error ? t("app.outboxRetry") : t("app.outboxSendNow")} onPress={syncNow} style={{ marginTop: 12 }} />
+          <Button kind="secondary" title={error ? t("app.outbox.retry") : t("app.outbox.sendNow")} onPress={syncNow} style={{ marginTop: 12 }} />
           {photoBytes > 0 && wifiOnly && (
             <>
-              <Button kind="text" title={t("app.outboxSendMobile")} onPress={syncNowMobileData} style={{ marginTop: 4 }} />
-              <Text style={T.small}>{t("app.outboxMobileHint")}</Text>
+              <Button kind="text" title={t("app.outbox.sendMobile")} onPress={syncNowMobileData} style={{ marginTop: 4 }} />
+              <Text style={T.small}>{t("app.outbox.mobileHint")}</Text>
             </>
           )}
         </>
@@ -175,30 +185,30 @@ function Storage() {
   }, [version, refresh]);
   if (!usage) return null;
   const free = () =>
-    Alert.alert(t("app.storageDeleteTitle"), t("app.storageDeleteBody", { size: size(usage.reclaimable.bytes) }), [
-      { text: t("ui.cancel"), style: "cancel" },
+    Alert.alert(t("app.storage.deleteTitle"), t("app.storage.deleteBody", { size: size(usage.reclaimable.bytes) }), [
+      { text: t("ui.common.cancel"), style: "cancel" },
       {
-        text: t("app.storageDeleteConfirm"),
+        text: t("app.storage.deleteConfirm"),
         style: "destructive",
         onPress: async () => {
           setBusy(true);
           const r = await deleteUploadedFiles();
           setBusy(false);
-          showToast(t("app.storageDeleted", { size: size(r.bytes) }));
+          showToast(t("app.storage.deleted", { size: size(r.bytes) }));
           await refresh();
         },
       },
     ]);
   const parts = [
-    usage.photos.n > 0 ? `${t("app.storagePhotos")} ${size(usage.photos.bytes)}` : null,
-    usage.voice.n > 0 ? `${t("app.storageVoice")} ${size(usage.voice.bytes)}` : null,
-    usage.maps.n > 0 ? `${t("app.storageMaps")} ${size(usage.maps.bytes)}` : null,
-    `${t("app.storageDb")} ${size(usage.database)}`,
+    usage.photos.n > 0 ? `${t("app.storage.photos")} ${size(usage.photos.bytes)}` : null,
+    usage.voice.n > 0 ? `${t("app.storage.voice")} ${size(usage.voice.bytes)}` : null,
+    usage.maps.n > 0 ? `${t("app.storage.maps")} ${size(usage.maps.bytes)}` : null,
+    `${t("app.storage.db")} ${size(usage.database)}`,
   ].filter(Boolean);
   return (
     <>
-      <Row title={t("app.storageTitle")} subtitle={parts.join(" · ")} />
-      {usage.reclaimable.n > 0 && <Button kind="secondary" title={t("app.storageDelete", { size: size(usage.reclaimable.bytes) })} disabled={busy} loading={busy} onPress={free} style={{ marginTop: 12 }} />}
+      <Row title={t("app.storage.title")} subtitle={parts.join(" · ")} />
+      {usage.reclaimable.n > 0 && <Button kind="secondary" title={t("app.storage.delete", { size: size(usage.reclaimable.bytes) })} disabled={busy} loading={busy} onPress={free} style={{ marginTop: 12 }} />}
     </>
   );
 }

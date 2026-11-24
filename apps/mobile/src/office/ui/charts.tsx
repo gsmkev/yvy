@@ -53,11 +53,11 @@ export function LineChart({ series, height = 200, yUnit }: LineChartProps) {
   const summary = series
     .map((s) => {
       const ys = s.points.map((p) => p.y).filter((y): y is number => y !== null);
-      if (!ys.length) return t("office.chartSummaryNoData", { label: s.label });
-      return t("office.chartSummary", { label: s.label, n: ys.length, min: fmtNumber(Math.min(...ys)), max: fmtNumber(Math.max(...ys)), last: fmtNumber(ys[ys.length - 1]!), unit });
+      if (!ys.length) return t("office.chart.summaryNoData", { label: s.label });
+      return t("office.chart.summary", { label: s.label, n: ys.length, min: fmtNumber(Math.min(...ys)), max: fmtNumber(Math.max(...ys)), last: fmtNumber(ys[ys.length - 1]!), unit });
     })
     .join(". ");
-  if (m.empty) return <EmptyState title={t("office.chartEmpty")} />;
+  if (m.empty) return <EmptyState title={t("office.chart.empty")} />;
   const padL = 44;
   const padR = 12;
   const padT = 8;

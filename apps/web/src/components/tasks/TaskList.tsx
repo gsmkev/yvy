@@ -26,11 +26,11 @@ export function TaskList({
         value={filter}
         onChange={onFilter}
         tabs={[
-          { id: "all", label: t("ui.filterAll") },
-          { id: "overdue", label: t("ui.filterOverdue"), count: nOverdue },
+          { id: "all", label: t("ui.filter.all") },
+          { id: "overdue", label: t("ui.filter.overdue"), count: nOverdue },
         ]}
       />
-      {!sorted.length && <EmptyState title={t("ui.noTasks")} />}
+      {!sorted.length && <EmptyState title={t("ui.no.tasks")} />}
       {[...byAssignee.entries()].map(([name, list]) => (
         <section key={name} aria-label={name}>
           <h3 className="mb-1 flex items-baseline gap-2 text-sm font-semibold">
@@ -45,7 +45,7 @@ export function TaskList({
         </section>
       ))}
       {done.length > 0 && (
-        <section aria-label={t("ui.taskDoneSection")}>
+        <section aria-label={t("ui.task.doneSection")}>
           <button
             type="button"
             aria-expanded={showDone}
@@ -53,7 +53,7 @@ export function TaskList({
             className="flex h-10 cursor-pointer items-center gap-1.5 text-sm font-semibold text-tinta-2 hover:text-surco"
           >
             <ChevronDown size={16} aria-hidden className={`transition-transform ${showDone ? "" : "-rotate-90"}`} />
-            {t("ui.taskDoneSection")}
+            {t("ui.task.doneSection")}
             <span className="num text-xs font-normal">{done.length}</span>
           </button>
           {showDone && (

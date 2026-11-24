@@ -70,48 +70,48 @@ export function RecordsPage() {
     const cls = (v: string) => (labelled ? "" : `min-w-0 max-w-56 flex-1 ${mark(v)}`);
     const farm = (
       <Select
-        aria-label={t("ui.farm")}
+        aria-label={t("ui.common.farm")}
         className={cls(f.farmId)}
         value={f.farmId}
         onChange={set("farmId")}
-        options={[{ value: "", label: t("ui.allFarms") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]}
+        options={[{ value: "", label: t("ui.all.farms") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]}
       />
     );
     const author = (
       <Select
-        aria-label={t("ui.author")}
+        aria-label={t("ui.common.author")}
         className={cls(f.authorId)}
         value={f.authorId}
         onChange={set("authorId")}
         options={[
-          { value: "", label: t("ui.allAuthors") },
+          { value: "", label: t("ui.all.authors") },
           ...(members.data ?? []).map((m) => ({ value: m.userId, label: m.fullName })),
         ]}
       />
     );
     const kind = (
       <Select
-        aria-label={t("ui.kind")}
+        aria-label={t("ui.common.kind")}
         className={cls(f.kind)}
         value={f.kind}
         onChange={set("kind")}
         options={[
-          { value: "", label: t("ui.allKinds") },
-          ...RECORD_KINDS.map((k) => ({ value: k, label: tk(`recordKinds.${k}`) })),
+          { value: "", label: t("ui.all.kinds") },
+          ...RECORD_KINDS.map((k) => ({ value: k, label: tk(`record-kinds.kind.${k}`) })),
         ]}
       />
     );
-    const from = <Input className={`w-full ${!labelled && f.from ? "!border-accion" : ""}`} aria-label={t("ui.from")} type="date" value={f.from} onChange={set("from")} />;
-    const to = <Input className={`w-full ${!labelled && f.to ? "!border-accion" : ""}`} aria-label={t("ui.to")} type="date" value={f.to} onChange={set("to")} />;
+    const from = <Input className={`w-full ${!labelled && f.from ? "!border-accion" : ""}`} aria-label={t("ui.common.from")} type="date" value={f.from} onChange={set("from")} />;
+    const to = <Input className={`w-full ${!labelled && f.to ? "!border-accion" : ""}`} aria-label={t("ui.common.to")} type="date" value={f.to} onChange={set("to")} />;
     if (labelled)
       return (
         <div className="flex flex-col gap-3">
-          <Field label={t("ui.farm")}>{farm}</Field>
-          <Field label={t("ui.author")}>{author}</Field>
-          <Field label={t("ui.kind")}>{kind}</Field>
+          <Field label={t("ui.common.farm")}>{farm}</Field>
+          <Field label={t("ui.common.author")}>{author}</Field>
+          <Field label={t("ui.common.kind")}>{kind}</Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label={t("ui.from")}>{from}</Field>
-            <Field label={t("ui.to")}>{to}</Field>
+            <Field label={t("ui.common.from")}>{from}</Field>
+            <Field label={t("ui.common.to")}>{to}</Field>
           </div>
         </div>
       );
@@ -121,11 +121,11 @@ export function RecordsPage() {
         {author}
         {kind}
         <label className="flex shrink-0 items-center gap-1.5 text-sm text-tinta-2">
-          {t("ui.from")}
+          {t("ui.common.from")}
           <span className="w-32">{from}</span>
         </label>
         <label className="flex shrink-0 items-center gap-1.5 text-sm text-tinta-2">
-          {t("ui.to")}
+          {t("ui.common.to")}
           <span className="w-32">{to}</span>
         </label>
       </>
@@ -134,15 +134,15 @@ export function RecordsPage() {
 
   const savedMenu = (
     <ActionMenu
-      label={t("ui.savedFilters")}
+      label={t("ui.saved.filters")}
       items={[
         ...saved.map((sf) => ({
-          label: t("ui.applySavedFilter", { name: sf.name }),
+          label: t("ui.common.applySavedFilter", { name: sf.name }),
           onSelect: () => setF(sf.filters),
         })),
-        { label: t("ui.savedFilterSave"), onSelect: () => setNaming(true) },
+        { label: t("ui.saved.filterSave"), onSelect: () => setNaming(true) },
         ...saved.map((sf) => ({
-          label: t("ui.savedFilterDelete", { name: sf.name }),
+          label: t("ui.saved.filterDelete", { name: sf.name }),
           onSelect: () => setSaved(deleteFilter(sf.id)),
           danger: true,
         })),
@@ -154,7 +154,7 @@ export function RecordsPage() {
     <div className="flex h-full min-h-0 flex-col overflow-auto lg:overflow-hidden">
       <div className="flex shrink-0 flex-col gap-3 px-4 pt-4 pb-3">
         <PageHeader
-          title={t("ui.navRecords")}
+          title={t("ui.nav.records")}
           menu={
             <>
               {review && (
@@ -162,16 +162,16 @@ export function RecordsPage() {
                   to="/para-revisar"
                   className="hidden h-10 lg:inline-flex items-center rounded-md border border-linea bg-papel px-3.5 text-sm font-medium text-surco hover:border-tinta-2/40 hover:bg-lino"
                 >
-                  {t("ui.reviewTitle")}
+                  {t("ui.review.title")}
                 </Link>
               )}
               <ExportMenu
                 formats={[
                   {
-                    label: t("ui.exportFormatExcel"),
+                    label: t("ui.export.formatExcel"),
                     run: async () => recordsToExcel(await all(), `registros-${stamp()}.xlsx`),
                   },
-                  { label: t("ui.exportFormatCsv"), run: async () => tableToCsv(recordsTable(await all())) },
+                  { label: t("ui.export.formatCsv"), run: async () => tableToCsv(recordsTable(await all())) },
                 ]}
               />
             </>
@@ -183,7 +183,7 @@ export function RecordsPage() {
               <>
                 {active > 0 && (
                   <Button variant="quiet" onClick={() => setF(EMPTY)}>
-                    {t("ui.clearFilters")}
+                    {t("ui.common.clearFilters")}
                   </Button>
                 )}
                 {savedMenu}
@@ -196,7 +196,7 @@ export function RecordsPage() {
         <div className="flex items-center gap-2 lg:hidden">
           <Button onClick={() => setSheet(true)} className="gap-2">
             <SlidersHorizontal size={16} aria-hidden />
-            {active > 0 ? t("ui.filtersActive", { n: active }) : t("ui.filters")}
+            {active > 0 ? t("ui.common.filtersActive", { n: active }) : t("ui.common.filters")}
           </Button>
           {savedMenu}
           {review && (
@@ -204,7 +204,7 @@ export function RecordsPage() {
               to="/para-revisar"
               className="ml-auto inline-flex h-12 items-center rounded-md px-3 text-sm font-medium text-accion underline underline-offset-4"
             >
-              {t("ui.reviewTitle")}
+              {t("ui.review.title")}
             </Link>
           )}
         </div>
@@ -226,7 +226,7 @@ export function RecordsPage() {
           />
           {present.length > 0 && (
             <ul
-              aria-label={t("ui.recordsLegend")}
+              aria-label={t("ui.records.legend")}
               className="absolute bottom-6 left-2 flex max-w-[calc(100%-1rem)] flex-wrap gap-x-3 gap-y-1 rounded-md bg-lino/90 px-2.5 py-1.5 text-xs text-surco"
             >
               {present.map((g) => (
@@ -236,7 +236,7 @@ export function RecordsPage() {
                     className="size-2.5 rounded-full border border-surco/40"
                     style={{ background: g.color }}
                   />
-                  {tk(`ui.recGroup_${g.id}`)}
+                  {tk(`ui.rec.group_${g.id}`)}
                 </li>
               ))}
             </ul>
@@ -247,22 +247,22 @@ export function RecordsPage() {
         </section>
       </div>
       {sheet && (
-        <Modal sheet title={t("ui.filters")} onClose={() => setSheet(false)}>
+        <Modal sheet title={t("ui.common.filters")} onClose={() => setSheet(false)}>
           {fields(true)}
           <div className="mt-4 flex gap-2">
             <Button variant="primary" onClick={() => setSheet(false)}>
-              {t("ui.apply")}
+              {t("ui.common.apply")}
             </Button>
             {active > 0 && (
               <Button variant="quiet" onClick={() => setF(EMPTY)}>
-                {t("ui.clearFilters")}
+                {t("ui.common.clearFilters")}
               </Button>
             )}
           </div>
         </Modal>
       )}
       {naming && (
-        <Modal title={t("ui.savedFilterSave")} onClose={() => setNaming(false)}>
+        <Modal title={t("ui.saved.filterSave")} onClose={() => setNaming(false)}>
           <form
             className="flex flex-col gap-3"
             onSubmit={(e) => {
@@ -273,11 +273,11 @@ export function RecordsPage() {
               setNaming(false);
             }}
           >
-            <Field label={t("ui.savedFilterName")}>
+            <Field label={t("ui.saved.filterName")}>
               <Input value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
             </Field>
             <Button type="submit" variant="primary" disabled={!name.trim()}>
-              {t("ui.save")}
+              {t("ui.common.save")}
             </Button>
           </form>
         </Modal>

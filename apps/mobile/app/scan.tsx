@@ -20,8 +20,8 @@ export default function Scan() {
   if (!perm.granted)
     return (
       <View style={s.center}>
-        <Text style={s.text}>{t("app.cameraDenied")}</Text>
-        <Button title={t("app.allowCamera")} onPress={request} />
+        <Text style={s.text}>{t("app.common.cameraDenied")}</Text>
+        <Button title={t("app.common.allowCamera")} onPress={request} />
       </View>
     );
 
@@ -53,8 +53,8 @@ export default function Scan() {
         }}
       />
       <View style={s.overlay}>
-        <Text style={s.title}>{t("app.scanTitle")}</Text>
-        <Text style={s.text}>{t("app.scanHelp")}</Text>
+        <Text style={s.title}>{t("app.scan.title")}</Text>
+        <Text style={s.text}>{t("app.scan.help")}</Text>
         {error && <Text style={s.error}>{error}</Text>}
       </View>
     </View>

@@ -10,7 +10,7 @@ export function ChoiceStep({ question, items, value, onAnswer, secondary }: { qu
     <ScreenBody
       footer={
         <>
-          <Button big title={t("app.next")} disabled={picked === undefined} onPress={() => onAnswer(picked)} />
+          <Button big title={t("app.common.next")} disabled={picked === undefined} onPress={() => onAnswer(picked)} />
           {secondary ? <Button kind="secondary" title={secondary} onPress={() => onAnswer(undefined)} /> : null}
         </>
       }

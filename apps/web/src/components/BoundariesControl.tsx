@@ -15,7 +15,7 @@ export function BoundariesControl({
 }) {
   return (
     <div className="flex flex-col gap-1.5 text-xs font-medium text-lino">
-      <div role="group" aria-label={t("ui.layerBoundaries")} className="flex gap-1.5">
+      <div role="group" aria-label={t("ui.layer.boundaries")} className="flex gap-1.5">
         {BOUNDARY_LEVELS.map((l) => (
           <button
             key={l}
@@ -23,12 +23,12 @@ export function BoundariesControl({
             onClick={() => onLevel(level === l ? null : l)}
             className={`h-10 flex-1 cursor-pointer rounded px-2 transition-colors ${level === l ? "bg-lino text-surco" : "border border-white/20 hover:bg-white/10"}`}
           >
-            {t(l === "adm1" ? "ui.boundariesAdm1" : "ui.boundariesAdm2")}
+            {t(l === "adm1" ? "ui.boundaries.adm1" : "ui.boundaries.adm2")}
           </button>
         ))}
       </div>
-      {loading && <p className="font-normal text-lino/70">{t("ui.boundariesLoading")}</p>}
-      {missing && <p className="font-normal text-lino/70">{t("ui.boundariesMissing")}</p>}
+      {loading && <p className="font-normal text-lino/70">{t("ui.boundaries.loading")}</p>}
+      {missing && <p className="font-normal text-lino/70">{t("ui.boundaries.missing")}</p>}
     </div>
   );
 }

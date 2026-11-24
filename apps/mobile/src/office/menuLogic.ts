@@ -6,11 +6,11 @@ export type MenuGroup = "campo" | "equipo" | "admin" | "informes" | "cuenta";
 const MENU_GROUPS: MenuGroup[] = ["campo", "equipo", "admin", "informes", "cuenta"];
 
 export const GROUP_TITLE: Record<MenuGroup, MessageKey> = {
-  campo: "office.groupCampo",
-  equipo: "office.groupEquipo",
-  admin: "office.groupAdmin",
-  informes: "office.groupInformes",
-  cuenta: "office.groupCuenta",
+  campo: "office.group.campo",
+  equipo: "office.group.equipo",
+  admin: "office.group.admin",
+  informes: "office.group.informes",
+  cuenta: "office.group.cuenta",
 };
 
 export interface MenuCtx {

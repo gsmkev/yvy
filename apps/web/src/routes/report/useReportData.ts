@@ -19,7 +19,7 @@ function groupCounts(rows: { kind: string; authorName: string | null }[]) {
   const sorted = (m: Map<string, number>, label: (k: string) => string) =>
     [...m].map(([k, value]) => ({ label: label(k), value })).sort((a, b) => b.value - a.value);
   return {
-    byKind: sorted(count((r) => r.kind), (k) => tk(`recordKinds.${k}`)),
+    byKind: sorted(count((r) => r.kind), (k) => tk(`record-kinds.kind.${k}`)),
     byAuthor: sorted(count((r) => r.authorName ?? "—"), (k) => k),
   };
 }

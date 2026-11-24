@@ -28,7 +28,7 @@ function StockCount() {
     return (
       <View style={[k.screen, k.pad]}>
         <Stack.Screen options={{ title: "" }} />
-        <Text style={T.heading}>{t("ui.adminNoAccess")}</Text>
+        <Text style={T.heading}>{t("ui.admin.noAccess")}</Text>
       </View>
     );
   const warehouse = warehouses.find((w) => w.id === warehouseId);
@@ -36,9 +36,9 @@ function StockCount() {
     return (
       <ScrollView style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 60 }]}>
         <Stack.Screen options={{ title: "" }} />
-        <Text style={T.title}>{t("ui.countTitle")}</Text>
-        <Text style={[T.small, { marginTop: 6, marginBottom: 16 }]}>{t("ui.countPickWarehouse")}</Text>
-        {warehouses.length === 0 && <EmptyState title={t("ui.countNoWarehouse")} />}
+        <Text style={T.title}>{t("ui.count.title")}</Text>
+        <Text style={[T.small, { marginTop: 6, marginBottom: 16 }]}>{t("ui.count.pickWarehouse")}</Text>
+        {warehouses.length === 0 && <EmptyState title={t("ui.count.noWarehouse")} />}
         {warehouses.map((w) => (
           <Row key={w.id} icon={Warehouse} title={w.name} subtitle={getDb().farms().find((f) => f.id === w.farmId)?.name} onPress={() => setWarehouseId(w.id)} />
         ))}
@@ -47,7 +47,7 @@ function StockCount() {
   const shown = products.filter((p) => p.name.toLowerCase().includes(filter.trim().toLowerCase()));
   const save = () => {
     const data = buildCountData(warehouse.id, values);
-    if (!data) return Alert.alert(t("ui.countNothing"));
+    if (!data) return Alert.alert(t("ui.count.nothing"));
     getDb().saveRecord(session.user.id, session.organization.id, {
       farmId: warehouse.farmId,
       plotId: null,
@@ -60,21 +60,21 @@ function StockCount() {
       capturedAt: Date.now(),
     });
     localChanged();
-    showToast(t("ui.countSaved"));
+    showToast(t("ui.count.saved"));
     router.back();
   };
   return (
     <ScrollView style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 120 }]} keyboardShouldPersistTaps="handled">
       <Stack.Screen options={{ title: "" }} />
       <Text style={T.title}>{warehouse.name}</Text>
-      <Text style={[T.small, { marginTop: 6, marginBottom: 12 }]}>{t("ui.countHint")}</Text>
-      <TextInput value={filter} onChangeText={setFilter} placeholder={t("ui.countFilter")} style={{ marginBottom: 12 }} />
-      {products.length === 0 && <Text style={T.body}>{t("ui.countNoProducts")}</Text>}
+      <Text style={[T.small, { marginTop: 6, marginBottom: 12 }]}>{t("ui.count.hint")}</Text>
+      <TextInput value={filter} onChangeText={setFilter} placeholder={t("ui.count.filter")} style={{ marginBottom: 12 }} />
+      {products.length === 0 && <Text style={T.body}>{t("ui.count.noProducts")}</Text>}
       {shown.map((p) => (
         <View key={p.id} style={st.line}>
           <View style={{ flex: 1 }}>
             <Text style={T.bodyMedium}>{p.name}</Text>
-            <Text style={T.small}>{p.unit === "kg" ? t("ui.countUnitKg") : t("ui.countUnitL")}</Text>
+            <Text style={T.small}>{p.unit === "kg" ? t("ui.count.unitKg") : t("ui.count.unitL")}</Text>
           </View>
           <TextInput
             value={values[p.id] ?? ""}
@@ -85,7 +85,7 @@ function StockCount() {
           />
         </View>
       ))}
-      <Button big title={t("ui.countSave")} onPress={save} style={{ marginTop: 20 }} />
+      <Button big title={t("ui.count.save")} onPress={save} style={{ marginTop: 20 }} />
     </ScrollView>
   );
 }

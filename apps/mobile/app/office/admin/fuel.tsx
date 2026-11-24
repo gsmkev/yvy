@@ -36,22 +36,22 @@ export default function FuelScreen() {
   const loads = rows.reduce((a, r) => a + r.loads, 0);
   const load = () => router.push({ pathname: "/annotate", params: { kind: "fuel_load", farmLevel: "1" } } as Href);
   return (
-    <AdminGate need="stock" title={t("ui.adminSection_fuel")}>
-      <OfficeScreen title={t("ui.adminSection_fuel")} query={q} action={{ label: t("ui.fuelNew"), icon: Fuel, onPress: load }}>
-        {farms.length > 1 ? <FilterChips value={farmId} onChange={setFarmId} options={[{ value: "", label: t("ui.costAll") }, ...farms.map(([id, name]) => ({ value: id, label: name }))]} /> : null}
-        <OnlineState query={q} empty={{ title: t("ui.emptyFuelTitle"), hint: t("ui.emptyFuelBody") }}>
+    <AdminGate need="stock" title={t("ui.admin.section_fuel")}>
+      <OfficeScreen title={t("ui.admin.section_fuel")} query={q} action={{ label: t("ui.fuel.new"), icon: Fuel, onPress: load }}>
+        {farms.length > 1 ? <FilterChips value={farmId} onChange={setFarmId} options={[{ value: "", label: t("ui.cost.all") }, ...farms.map(([id, name]) => ({ value: id, label: name }))]} /> : null}
+        <OnlineState query={q} empty={{ title: t("ui.empty.fuelTitle"), hint: t("ui.empty.fuelBody") }}>
           {(data) => (
             <>
-              <StatRow items={[{ label: `${t("ui.fuelLiters")} · l`, value: fmtNumber(liters, 0) }, { label: t("ui.fuelLoads"), value: loads }]} />
+              <StatRow items={[{ label: `${t("ui.fuel.liters")} · l`, value: fmtNumber(liters, 0) }, { label: t("ui.fuel.loads"), value: loads }]} />
               <DataList
                 rows={data}
                 keyOf={(m) => m.machineId ?? m.name}
                 title={(m) => m.name}
                 subtitle={(m) =>
-                  [t("office.admFuelLoads", { n: m.loads }), m.firstMeter !== null && m.lastMeter !== null ? `${fmtNumber(m.firstMeter)} a ${fmtNumber(m.lastMeter)} ${m.meterKind === "hours" ? "h" : "km"}` : null, m.litersPerUnit !== null ? `${fmtQty(m.litersPerUnit)} ${m.meterKind === "hours" ? t("ui.fuelPerHour") : t("ui.fuelPer100km")}` : null].filter(Boolean).join(" · ")
+                  [t("office.adm.fuelLoads", { n: m.loads }), m.firstMeter !== null && m.lastMeter !== null ? `${fmtNumber(m.firstMeter)} a ${fmtNumber(m.lastMeter)} ${m.meterKind === "hours" ? "h" : "km"}` : null, m.litersPerUnit !== null ? `${fmtQty(m.litersPerUnit)} ${m.meterKind === "hours" ? t("ui.fuel.perHour") : t("ui.fuel.per100km")}` : null].filter(Boolean).join(" · ")
                 }
                 right={(m) => fmtQty(m.liters, "l")}
-                empty={{ title: t("ui.fuelEmpty") }}
+                empty={{ title: t("ui.fuel.empty") }}
               />
             </>
           )}

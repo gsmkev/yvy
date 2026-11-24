@@ -17,8 +17,8 @@ import { EmptyState, SectionHeader, Text } from "../../../src/ui/kit";
 import { C, T } from "../../../src/ui/theme";
 
 const DAY = 86_400_000;
-const kindName = (k: BufferKind) => t((k === "stream" ? "ui.lineKind_stream" : `ui.poiKinds_${k}`) as MessageKey);
-const hitText = (h: BufferHit) => t("ui.bufferHit", { kind: kindName(h.kind), name: h.name, m: fmtNumber(h.distanceM, 0) });
+const kindName = (k: BufferKind) => t((k === "stream" ? "ui.line.kind_stream" : `ui.poi.kinds_${k}`) as MessageKey);
+const hitText = (h: BufferHit) => t("ui.buffer.hit", { kind: kindName(h.kind), name: h.name, m: fmtNumber(h.distanceM, 0) });
 
 export default function Buffer() {
   const { farms, farm, setFarmId } = useFarmPick();
@@ -53,36 +53,36 @@ export default function Buffer() {
   const plotName = (id: string) => local?.plots.find((p) => p.id === id)?.name ?? "";
 
   return (
-    <FarmFrame title={t("ui.bufferTitle")} subtitle={t("ui.bufferIntro")} farms={farms} farm={farm} setFarmId={setFarmId}>
+    <FarmFrame title={t("ui.buffer.title")} subtitle={t("ui.buffer.intro")} farms={farms} farm={farm} setFarmId={setFarmId}>
       {!hasFeatures || !result ? (
-        <EmptyState title={t("office.bufferNothing")} hint={t("office.bufferNothingHint")} />
+        <EmptyState title={t("office.buffer.nothing")} hint={t("office.buffer.nothingHint")} />
       ) : (
         <View>
-          {lines.data === null && !lines.loading && <Text style={[T.small, { marginTop: 12 }]}>{t("office.bufferLinesFail")}</Text>}
-          <StatRow items={[...(result.alerts.length > 0 ? [{ label: t("ui.bufferAlerts"), value: result.alerts.length, tone: "danger" as const }] : []), ...(result.plots.length > 0 ? [{ label: t("ui.bufferPlots"), value: result.plots.length }] : [])]} />
+          {lines.data === null && !lines.loading && <Text style={[T.small, { marginTop: 12 }]}>{t("office.buffer.linesFail")}</Text>}
+          <StatRow items={[...(result.alerts.length > 0 ? [{ label: t("ui.buffer.alerts"), value: result.alerts.length, tone: "danger" as const }] : []), ...(result.plots.length > 0 ? [{ label: t("ui.buffer.plots"), value: result.plots.length }] : [])]} />
           {result.alerts.length === 0 ? (
-            <Text style={[T.body, { marginTop: 12 }]}>{t("ui.bufferNoAlerts")}</Text>
+            <Text style={[T.body, { marginTop: 12 }]}>{t("ui.buffer.noAlerts")}</Text>
           ) : (
             <>
-              <SectionHeader title={t("ui.bufferAlerts")} />
+              <SectionHeader title={t("ui.buffer.alerts")} />
               <DataList
                 rows={result.alerts}
                 keyOf={(a) => a.recordId}
-                title={(a) => `${a.plotName ?? t("ui.bufferNoPlot")} · ${fmtDate(a.capturedAt)}`}
-                subtitle={(a) => `${a.hits.map(hitText).join("; ")}. ${t(a.basis === "gps" ? "ui.bufferBasisGps" : "ui.bufferBasisPlot")}`}
-                empty={{ title: t("ui.bufferNoAlerts") }}
+                title={(a) => `${a.plotName ?? t("ui.buffer.noPlot")} · ${fmtDate(a.capturedAt)}`}
+                subtitle={(a) => `${a.hits.map(hitText).join("; ")}. ${t(a.basis === "gps" ? "ui.buffer.basisGps" : "ui.buffer.basisPlot")}`}
+                empty={{ title: t("ui.buffer.noAlerts") }}
               />
             </>
           )}
           {result.plots.length > 0 && (
             <>
-              <SectionHeader title={t("ui.bufferPlots")} />
-              <DataList rows={result.plots} keyOf={(p) => p.plotId} title={(p) => plotName(p.plotId)} subtitle={(p) => p.hits.map(hitText).join("; ")} empty={{ title: t("ui.bufferNoAlerts") }} />
+              <SectionHeader title={t("ui.buffer.plots")} />
+              <DataList rows={result.plots} keyOf={(p) => p.plotId} title={(p) => plotName(p.plotId)} subtitle={(p) => p.hits.map(hitText).join("; ")} empty={{ title: t("ui.buffer.noAlerts") }} />
             </>
           )}
-          <SectionHeader title={t("office.bufferDistancesTitle")} />
+          <SectionHeader title={t("office.buffer.distancesTitle")} />
           <KeyValue rows={BUFFER_KINDS.map((k) => ({ label: kindName(k), value: `${DEFAULT_DISTANCES[k]} m` }))} />
-          <Text style={[T.small, { marginTop: 8, color: C.tinta2 }]}>{t("office.bufferDistancesNote")}</Text>
+          <Text style={[T.small, { marginTop: 8, color: C.tinta2 }]}>{t("office.buffer.distancesNote")}</Text>
         </View>
       )}
     </FarmFrame>

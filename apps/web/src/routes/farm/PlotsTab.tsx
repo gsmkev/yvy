@@ -55,16 +55,16 @@ export function PlotsTab({ d, farmId, canEdit, edit, plot, members, problems, li
   if (d.plots.length === 0)
     return (
       <EmptyState
-        title={t("ui.noPlotsTitle")}
+        title={t("ui.no.plotsTitle")}
         action={
           canEdit && (
             <Button variant="primary" onClick={() => edit.setMode("draw")}>
-              {t("ui.newPlot")}
+              {t("ui.new.plot")}
             </Button>
           )
         }
       >
-        {t("ui.noPlotsHelp")}
+        {t("ui.no.plotsHelp")}
       </EmptyState>
     );
   return (
@@ -76,7 +76,13 @@ export function PlotsTab({ d, farmId, canEdit, edit, plot, members, problems, li
       onSelect={onSelect}
       onDrawLine={() => edit.setLineDraw(true)}
       onPoiQr={() => edit.setPoiQr(true)}
-      {...list}
+      shownPlots={list.shownPlots}
+      unvisitedCount={list.unvisitedCount}
+      onlyUnvisited={list.onlyUnvisited}
+      onToggleUnvisited={list.onToggleUnvisited}
+      staleDays={list.staleDays}
+      onStaleDays={list.onStaleDays}
+      onRemovePoi={list.onRemovePoi}
     />
   );
 }

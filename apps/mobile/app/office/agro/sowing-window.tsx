@@ -1,7 +1,7 @@
 /** Ventana de siembra (función 77): humedad del suelo y pronóstico para un cultivo. GET /org/farms/:id/sowing-window?crop=. */
 import { useState } from "react";
 import { View } from "react-native";
-import { CROPS, t, type MessageKey } from "@yvy/shared";
+import { CROPS, t, type MessageKey, ATTRIBUTION } from "@yvy/shared";
 import { useFarmPick } from "../../../src/office/farmPick";
 import { fmtDate, fmtNumber } from "../../../src/office/format";
 import { FarmFrame } from "../../../src/office/hub";
@@ -26,28 +26,33 @@ export default function SowingWindow() {
   const [crop, setCrop] = useState<string>("soja");
   const q = useOnline<Resp>(farm ? `/org/farms/${farm.id}/sowing-window?crop=${crop}` : null);
   return (
-    <FarmFrame title={t("ui.sowWinTitle")} subtitle={t("ui.sowWinIntro")} farms={farms} farm={farm} setFarmId={setFarmId} query={q}>
-      <FilterChips value={crop} onChange={setCrop} options={CROPS.filter((c) => c !== "otro").map((c) => ({ value: c as string, label: t(`fields.crop_${c}` as MessageKey) }))} />
-      <OnlineState query={q} isEmpty={(d) => d.days.length === 0} empty={{ title: t("office.sowWinNoDays"), hint: t("ui.sowWinNoForecast") }}>
+    <FarmFrame title={t("ui.sow.winTitle")} subtitle={t("ui.sow.winIntro")} farms={farms} farm={farm} setFarmId={setFarmId} query={q}>
+      <FilterChips value={crop} onChange={setCrop} options={CROPS.filter((c) => c !== "otro").map((c) => ({ value: c as string, label: t(`fields.crop.${c}` as MessageKey) }))} />
+      <OnlineState query={q} isEmpty={(d) => d.days.length === 0} empty={{ title: t("office.sow.winNoDays"), hint: t("ui.sow.winNoForecast") }}>
         {(d) => (
           <View>
             <Text style={[T.heading, { marginTop: 20 }]}>
-              {d.best ? t(d.best.from === d.best.to ? "ui.sowWinBestOne" : "ui.sowWinBest", { from: dmy(d.best.from), to: dmy(d.best.to) }) : t("ui.sowWinNone")}
+              {d.best ? t(d.best.from === d.best.to ? "ui.sow.winBestOne" : "ui.sow.winBest", { from: dmy(d.best.from), to: dmy(d.best.to) }) : t("ui.sow.winNone")}
             </Text>
             <Text style={[T.small, { marginTop: 4 }]}>
-              {d.soil === null ? t("ui.sowWinNoSoil") : t("ui.sowWinSoil", { pct: `${fmtNumber(d.soil * 100, 0)} %`, date: d.soilDate ? dmy(d.soilDate) : "—" })}
-              {d.forecastRunAt ? ` · ${t("ui.sowWinForecast", { date: fmtDate(d.forecastRunAt) })}` : ""}
+              {d.soil === null
+                ? t("ui.sow.winNoSoil")
+                : t("ui.sow.winSoil", {
+                    pct: `${fmtNumber(d.soil * 100, 0)} %`,
+                    date: d.soilDate ? dmy(d.soilDate) : "—",
+                  })}
+              {d.forecastRunAt ? " · " + t("ui.sow.winForecast", { date: fmtDate(d.forecastRunAt) }) : ""}
             </Text>
             <DataList
               rows={d.days}
               keyOf={(r) => r.date}
               title={(r) => dmy(r.date)}
-              subtitle={(r) => (r.ok ? (r.rainAhead ? t("ui.sowWinRainAhead") : undefined) : r.reasons.map((x) => t(`ui.sowWinReason_${x}` as MessageKey)).join(", "))}
-              right={(r) => <Text style={[T.bodyMedium, { textAlign: "right", color: r.ok ? C.accionOscuro : C.tinta2 }]}>{r.ok ? t("ui.sowWinOk") : t("ui.sowWinWait")}</Text>}
-              empty={{ title: t("office.sowWinNoDays") }}
+              subtitle={(r) => (r.ok ? (r.rainAhead ? t("ui.sow.winRainAhead") : undefined) : r.reasons.map((x) => t(`ui.sow.winReason_${x}` as MessageKey)).join(", "))}
+              right={(r) => <Text style={[T.bodyMedium, { textAlign: "right", color: r.ok ? C.accionOscuro : C.tinta2 }]}>{r.ok ? t("ui.sow.winOk") : t("ui.sow.winWait")}</Text>}
+              empty={{ title: t("office.sow.winNoDays") }}
             />
             <Text style={[T.small, { marginTop: 16 }]}>
-              {t("ui.sowWinNote")} {t("attribution.nasaPower")} · {t("attribution.metNorway")}
+              {t("ui.sow.winNote")} {t(ATTRIBUTION.nasaPower)} · {t(ATTRIBUTION.metNorway)}
             </Text>
           </View>
         )}

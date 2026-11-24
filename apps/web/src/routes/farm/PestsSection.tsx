@@ -15,21 +15,21 @@ export function PestsSection({
 }) {
   const pestPts = pests.points;
   return (
-    <PanelSection title={t("ui.layerPests")} defaultOpen={false}>
-      <LayerSwitch label={t("ui.layerPests")} on={pests.show} onToggle={pests.toggle} />
+    <PanelSection title={t("ui.layer.pests")} defaultOpen={false}>
+      <LayerSwitch label={t("ui.layer.pests")} on={pests.show} onToggle={pests.toggle} />
       {pests.show && (
         <div className="text-micro">
-          <p className="mb-1 font-medium">{t("ui.pestsLegendTitle")}</p>
+          <p className="mb-1 font-medium">{t("ui.pests.legendTitle")}</p>
           {pests.isLoading ? (
-            <p className="text-lino/70">{t("ui.loading")}</p>
+            <p className="text-lino/70">{t("ui.common.loading")}</p>
           ) : pestPts.length === 0 ? (
-            <p className="text-lino/70">{t("ui.pestsNone")}</p>
+            <p className="text-lino/70">{t("ui.pests.none")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {pestCounts(pestPts).map((c) => (
                 <li key={c.pest} className="num flex items-center gap-2">
                   <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: PEST_COLORS[c.pest] }} aria-hidden />
-                  {tk(`fields.pest_${c.pest}`)}
+                  {tk(`fields.pest.${c.pest}`)}
                   <span className="ml-auto text-lino/70">{c.n}</span>
                 </li>
               ))}
@@ -37,8 +37,8 @@ export function PestsSection({
           )}
           {pestPts.length > 0 && (
             <>
-              <p className="mt-2 text-lino/70">{t("ui.pestsSizeHint")}</p>
-              <p className="mt-2 mb-1 font-medium">{t("ui.pestsByPlotTitle")}</p>
+              <p className="mt-2 text-lino/70">{t("ui.pests.sizeHint")}</p>
+              <p className="mt-2 mb-1 font-medium">{t("ui.pests.byPlotTitle")}</p>
               <ul className="flex flex-col gap-0.5">
                 {pestsByPlot(pestPts)
                   .slice(0, 5)
@@ -50,7 +50,7 @@ export function PestsSection({
                       >
                         <span className="min-w-0 flex-1 truncate">{plots.find((p) => p.id === c.plotId)?.name ?? "—"}</span>
                         <span className="text-lino/70">
-                          {t("ui.pestsPlotCount", { n: c.n })} · {tk(`ui.pestIntensity_${c.worst}`)}
+                          {t("ui.pests.plotCount", { n: c.n })} · {tk(`ui.pest.intensity_${c.worst}`)}
                         </span>
                       </button>
                     </li>

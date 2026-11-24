@@ -90,7 +90,7 @@ export default function Report() {
     const rainDays: string[] = [];
     if (range) for (let d = range.from; d <= range.to && rainDays.length < 62; d = addDays(d, 1)) rainDays.push(d);
     return {
-      byKind: sorted(byKind, (k) => t(key(`recordKinds.${k}`))),
+      byKind: sorted(byKind, (k) => t(key(`record-kinds.kind.${k}`))),
       byAuthor: sorted(byAuthor, (k) => k),
       satTotal: sat.size ? [...sat.values()].reduce((a, b) => a + b, 0) : null,
       gaugeTotal: gaugeByDay.size ? [...gaugeByDay.values()].reduce((a, b) => a + b, 0) : null,
@@ -126,11 +126,11 @@ export default function Report() {
   };
 
   const stats: StatItem[] = [];
-  if (rows.length > 0) stats.push({ label: t("ui.navRecords"), value: rows.length });
-  if (rain !== null && rain > 0) stats.push({ label: t("ui.rainWeek"), value: fmtNumber(mmToRain(rain, units.rain)), unit: rainLabel(units.rain) });
-  if (periodAlerts.length > 0) stats.push({ label: t("ui.alertsTitle"), value: periodAlerts.length });
-  if (done > 0) stats.push({ label: t("ui.reportTasksDone"), value: done });
-  if (late > 0) stats.push({ label: t("ui.reportTasksOverdue"), value: late, tone: "danger" });
+  if (rows.length > 0) stats.push({ label: t("ui.nav.records"), value: rows.length });
+  if (rain !== null && rain > 0) stats.push({ label: t("ui.rain.week"), value: fmtNumber(mmToRain(rain, units.rain)), unit: rainLabel(units.rain) });
+  if (periodAlerts.length > 0) stats.push({ label: t("ui.alerts.title"), value: periodAlerts.length });
+  if (done > 0) stats.push({ label: t("ui.report.tasksDone"), value: done });
+  if (late > 0) stats.push({ label: t("ui.report.tasksOverdue"), value: late, tone: "danger" });
 
   const preset =
     from === thisMonday && to === today
@@ -141,17 +141,17 @@ export default function Report() {
 
   return (
     <OfficeScreen
-      title={t("ui.reportTitle")}
+      title={t("ui.report.title")}
       subtitle={farm?.name}
       query={records}
-      action={{ label: t("ui.shareWhatsapp"), icon: MessageCircle, onPress: share, disabled: !range || !records.data }}
+      action={{ label: t("ui.share.whatsapp"), icon: MessageCircle, onPress: share, disabled: !range || !records.data }}
     >
       <FarmChips farms={farms} value={id} onChange={setFarmId} />
       <View style={{ marginTop: 16 }}>
         <Segmented<"this" | "last" | "custom">
           options={[
-            { value: "this", label: t("ui.reportThisWeek") },
-            { value: "last", label: t("ui.reportLastWeek") },
+            { value: "this", label: t("ui.report.thisWeek") },
+            { value: "last", label: t("ui.report.lastWeek") },
           ]}
           value={preset}
           onChange={(v) => {
@@ -160,48 +160,48 @@ export default function Report() {
           }}
         />
       </View>
-      <DateField label={t("ui.from")} value={from} onChange={setFrom} />
-      <DateField label={t("ui.to")} value={to} onChange={setTo} />
+      <DateField label={t("ui.common.from")} value={from} onChange={setFrom} />
+      <DateField label={t("ui.common.to")} value={to} onChange={setTo} />
       {!farm ? (
-        <EmptyState title={t("office.reportsNoFarms")} />
+        <EmptyState title={t("office.reports.noFarms")} />
       ) : !range ? (
-        <EmptyState title={t("office.invalidDate")} />
+        <EmptyState title={t("office.common.invalidDate")} />
       ) : (
-        <OnlineState query={records} isEmpty={() => false} empty={{ title: t("ui.reportNoRecords") }}>
+        <OnlineState query={records} isEmpty={() => false} empty={{ title: t("ui.report.noRecords") }}>
           {() => (
             <>
               {stats.length > 0 ? (
                 <StatRow items={stats} />
               ) : (
-                <EmptyState title={t("ui.reportNoRecords")} hint={t("ui.reportNoRecordsHint")} />
+                <EmptyState title={t("ui.report.noRecords")} hint={t("ui.report.noRecordsHint")} />
               )}
               {model.byKind.length > 0 && (
                 <>
-                  <SectionHeader title={t("ui.reportByKind")} />
+                  <SectionHeader title={t("ui.report.byKind")} />
                   <BarList rows={model.byKind.slice(0, 8)} />
                 </>
               )}
               {model.byAuthor.length > 1 && (
                 <>
-                  <SectionHeader title={t("ui.reportByAuthor")} />
+                  <SectionHeader title={t("ui.report.byAuthor")} />
                   <BarList rows={model.byAuthor.slice(0, 8)} />
                 </>
               )}
               {hasRainDays && (
                 <>
-                  <SectionHeader title={t("ui.reportRainDaily")} />
+                  <SectionHeader title={t("ui.report.rainDaily")} />
                   <LineChart
                     yUnit={rainLabel(units.rain)}
                     series={[
                       {
-                        label: t("ui.satelliteRain"),
+                        label: t("ui.common.satelliteRain"),
                         color: CHART.comparison,
                         points: model.rainDays.map((d) => ({ x: ddmm(d), y: model.sat.has(d) ? mmToRain(model.sat.get(d)!, units.rain) : null })),
                       },
                       ...(model.gaugeByDay.size
                         ? [
                             {
-                              label: t("ui.gauge"),
+                              label: t("ui.common.gauge"),
                               color: CHART.gauge,
                               points: model.rainDays.map((d) => ({ x: ddmm(d), y: model.gaugeByDay.has(d) ? mmToRain(model.gaugeByDay.get(d)!, units.rain) : null })),
                             },
@@ -213,11 +213,11 @@ export default function Report() {
               )}
               {periodAlerts.length > 0 && (
                 <>
-                  <SectionHeader title={t("ui.alertsTitle")} />
+                  <SectionHeader title={t("ui.alerts.title")} />
                   {periodAlerts.map((a) => (
                     <Row
                       key={a.id}
-                      title={`${t(key(`ui.alertKind_${a.kind}`))} · ${t(key(`ui.severity_${a.severity}`))}`}
+                      title={`${t(key(`ui.alert.kind_${a.kind}`))} · ${t(key(`ui.severity.${a.severity}`))}`}
                       subtitle={`${a.summary} (${fmtDate(a.validFrom)})`}
                     />
                   ))}
@@ -225,13 +225,13 @@ export default function Report() {
               )}
               {highlights.length > 0 && (
                 <>
-                  <SectionHeader title={t("ui.reportHighlights")} />
+                  <SectionHeader title={t("ui.report.highlights")} />
                   <DataList
                     rows={highlights}
                     keyOf={(r) => r.id}
                     title={(r) => describeRecord(r.kind, r.data)}
                     subtitle={(r) =>
-                      [t(key(`recordKinds.${r.kind}`)), r.plotName, r.authorName, fmtDate(r.capturedAt)]
+                      [t(key(`record-kinds.kind.${r.kind}`)), r.plotName, r.authorName, fmtDate(r.capturedAt)]
                         .filter(Boolean)
                         .join(" · ")
                     }

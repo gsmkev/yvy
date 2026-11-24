@@ -3,6 +3,7 @@
  * Todo es puro: la web arma el shapefile y el ISOXML en el navegador (nunca en el Worker).
  */
 import { LIMITS } from "./limits";
+import { safeXml } from "./markup";
 
 export const RX_RATE_UNITS = ["kg_ha", "l_ha"] as const;
 export type RateUnit = (typeof RX_RATE_UNITS)[number];
@@ -44,7 +45,6 @@ export const isoRate = (unit: RateUnit, rate: number): { ddi: string; value: num
   value: Math.round(rate * 100),
 });
 
-const esc = (s: string) => s.replace(/[<>&'"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '"': "&quot;" })[c]!);
 const deg = (n: number) => n.toFixed(8);
 
 /**
@@ -54,31 +54,21 @@ const deg = (n: number) => n.toFixed(8);
  */
 export function buildIsoxml(p: RatePrescriptionPlan, now = new Date()): string {
   const polys = (z: PrescriptionZone) =>
-    z.geometry.coordinates
-      .map(
-        (poly) =>
-          `<PLN A="2">${poly
-            .map(
-              (ring, i) =>
-                `<LSG A="${i === 0 ? 1 : 2}">${ring.map((pt) => `<PNT A="2" C="${deg(pt[1]!)}" D="${deg(pt[0]!)}"/>`).join("")}</LSG>`,
-            )
-            .join("")}</PLN>`,
-      )
-      .join("");
+    z.geometry.coordinates.map(
+      (poly) =>
+        safeXml`<PLN A="2">${poly.map(
+          (ring, i) =>
+            safeXml`<LSG A="${i === 0 ? 1 : 2}">${ring.map((pt) => safeXml`<PNT A="2" C="${deg(pt[1]!)}" D="${deg(pt[0]!)}"/>`)}</LSG>`,
+        )}</PLN>`,
+    );
   const areaM2 = Math.round(p.zones.reduce((a, z) => a + z.areaHa, 0) * 10_000);
   const title = `${p.plotName} · ${p.product}`;
-  const tzn = p.zones
-    .map((z) => {
-      const r = isoRate(p.unit, z.rate);
-      return `<TZN A="${z.zone}" B="Zona ${z.zone}"><PDV A="${r.ddi}" B="${r.value}"/>${polys(z)}</TZN>`;
-    })
-    .join("");
-  return (
-    `<?xml version="1.0" encoding="UTF-8"?>\n` +
-    `<ISO11783_TaskData VersionMajor="4" VersionMinor="0" ManagementSoftwareManufacturer="Yvy" ManagementSoftwareVersion="1.0" DataTransferOrigin="1">` +
-    `<PFD A="PFD1" C="${esc(p.plotName)}" D="${areaM2}"/>` +
-    `<TSK A="TSK1" B="${esc(title)}" E="PFD1" G="1">${tzn}</TSK>` +
-    `<!-- Generado por Yvy el ${now.toISOString().slice(0, 10)} -->` +
-    `</ISO11783_TaskData>\n`
-  );
+  const tzn = p.zones.map((z) => {
+    const r = isoRate(p.unit, z.rate);
+    return safeXml`<TZN A="${z.zone}" B="Zona ${z.zone}"><PDV A="${r.ddi}" B="${r.value}"/>${polys(z)}</TZN>`;
+  });
+  const stamp = now.toISOString().slice(0, 10);
+  return safeXml`<?xml version="1.0" encoding="UTF-8"?>
+<ISO11783_TaskData VersionMajor="4" VersionMinor="0" ManagementSoftwareManufacturer="Yvy" ManagementSoftwareVersion="1.0" DataTransferOrigin="1"><PFD A="PFD1" C="${p.plotName}" D="${areaM2}"/><TSK A="TSK1" B="${title}" E="PFD1" G="1">${tzn}</TSK><!-- Generado por Yvy el ${stamp} --></ISO11783_TaskData>
+`.text;
 }

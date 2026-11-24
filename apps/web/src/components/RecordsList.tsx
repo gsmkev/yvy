@@ -33,7 +33,7 @@ export function RecordsList({ filters, onRows }: { filters: RecordFilters; onRow
   useEffect(() => onRows?.(rows), [q.data]);
   if (q.isLoading) return <Spinner rows={6} h={68} />;
   if (q.error) return <ErrorBox error={q.error} />;
-  if (!rows.length) return <EmptyState title={t("ui.noRecords")} />;
+  if (!rows.length) return <EmptyState title={t("ui.no.records")} />;
   return (
     <div className="flex flex-col gap-3">
       <ul className="divide-y divide-linea border-y border-linea">
@@ -55,14 +55,17 @@ export function RecordsList({ filters, onRows }: { filters: RecordFilters; onRow
                       className="size-2 shrink-0 rounded-full border border-surco/40"
                       style={{ background: recordColor(r.kind) }}
                     />
-                    <span className="truncate">{tk(`recordKinds.${r.kind}`)}</span>
+                    <span className="truncate">{tk(`record-kinds.kind.${r.kind}`)}</span>
                   </span>
                   <span className="truncate">{r.authorName ?? "—"}</span>
                   <span className="truncate">
                     {r.plotName ?? ""}
                     {photosOf(r).length > 0 &&
-                      `${r.plotName ? " · " : ""}${t(photosOf(r).length === 1 ? "ui.photoOne" : "ui.photosMany", { n: photosOf(r).length })}`}
-                    {voiceOf(r).length > 0 && ` · ${t("app.voiceNote")}`}
+                      (r.plotName ? " · " : "") +
+                        t(photosOf(r).length === 1 ? "ui.photo.one" : "ui.common.photosMany", {
+                          n: photosOf(r).length,
+                        })}
+                    {voiceOf(r).length > 0 && ` · ${t("app.voice.note")}`}
                   </span>
                 </span>
               </button>
@@ -72,7 +75,7 @@ export function RecordsList({ filters, onRows }: { filters: RecordFilters; onRow
       </ul>
       {q.hasNextPage && (
         <Button variant="quiet" onClick={() => q.fetchNextPage()} disabled={q.isFetchingNextPage}>
-          {t("ui.loadMore")}
+          {t("ui.common.loadMore")}
         </Button>
       )}
       {open && <RecordModal record={open} onClose={() => setOpen(null)} />}
@@ -90,13 +93,13 @@ function VoiceNote({ id, uploaded }: { id: string; uploaded: boolean }) {
   if (!uploaded)
     return (
       <p className="flex items-center gap-1 text-sm text-trigo-texto">
-        <Clock size={16} aria-hidden /> {t("app.pending")}
+        <Clock size={16} aria-hidden /> {t("app.common.pending")}
       </p>
     );
   if (url)
     return (
-      <audio controls autoPlay src={url} className="w-full" aria-label={t("app.voiceNote")}>
-        {t("app.voiceNote")}
+      <audio controls autoPlay src={url} className="w-full" aria-label={t("app.voice.note")}>
+        {t("app.voice.note")}
       </audio>
     );
   return (
@@ -110,9 +113,9 @@ function VoiceNote({ id, uploaded }: { id: string; uploaded: boolean }) {
           )
         }
       >
-        {t("app.voiceListen")}
+        {t("app.voice.listen")}
       </Button>
-      {failed && <p className="text-sm text-alerta">{t("app.voiceFailed")}</p>}
+      {failed && <p className="text-sm text-alerta">{t("app.voice.failed")}</p>}
     </>
   );
 }
@@ -130,7 +133,7 @@ function Photo({ id }: { id: string }) {
   if (!url)
     return (
       <div className="flex aspect-square flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-trigo text-xs text-trigo-texto">
-        <Clock size={16} aria-hidden /> {t("app.pending")}
+        <Clock size={16} aria-hidden /> {t("app.common.pending")}
       </div>
     );
   return (
@@ -155,7 +158,7 @@ export function RecordModal({ record: r, onClose }: { record: RecordRow; onClose
   const farms = useFarms();
   const canEdit = !!me.data && !isFieldRole(me.data.role);
   const shareText = recordShareText({
-    kindLabel: tk(`recordKinds.${r.kind}`),
+    kindLabel: tk(`record-kinds.kind.${r.kind}`),
     description: describeData(r.kind, r.data),
     plotName: r.plotName,
     farmName: farms.data?.find((f) => f.id === r.farmId)?.name,
@@ -167,21 +170,21 @@ export function RecordModal({ record: r, onClose }: { record: RecordRow; onClose
   const [deleting, setDeleting] = useState(false);
   return (
     <>
-      <Modal title={tk(`recordKinds.${r.kind}`)} onClose={onClose}>
+      <Modal title={tk(`record-kinds.kind.${r.kind}`)} onClose={onClose}>
         <dl className="num grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
-          <dt className="text-tinta-2">{t("ui.capturedAt")}</dt>
+          <dt className="text-tinta-2">{t("ui.common.capturedAt")}</dt>
           <dd>{fmtDateTime(r.capturedAt)}</dd>
-          <dt className="text-tinta-2">{t("ui.author")}</dt>
+          <dt className="text-tinta-2">{t("ui.common.author")}</dt>
           <dd>{r.authorName}</dd>
           {r.plotName && (
             <>
-              <dt className="text-tinta-2">{t("ui.plot")}</dt>
+              <dt className="text-tinta-2">{t("ui.common.plot")}</dt>
               <dd>{r.plotName}</dd>
             </>
           )}
           {r.lat !== null && (
             <>
-              <dt className="text-tinta-2">{t("ui.location")}</dt>
+              <dt className="text-tinta-2">{t("ui.common.location")}</dt>
               <dd>
                 {r.lat.toFixed(5)}, {r.lon!.toFixed(5)}
               </dd>
@@ -199,7 +202,7 @@ export function RecordModal({ record: r, onClose }: { record: RecordRow; onClose
         {!editing && <RecordDetails kind={r.kind} data={r.data} />}
         {photosOf(r).length > 0 && (
           <>
-            <h3 className="eyebrow mt-5 mb-2">{t("ui.photos")}</h3>
+            <h3 className="eyebrow mt-5 mb-2">{t("ui.common.photos")}</h3>
             <div className="grid grid-cols-3 gap-2">
               {photosOf(r).map((a) => (
                 <Photo key={a.id} id={a.id} />
@@ -209,7 +212,7 @@ export function RecordModal({ record: r, onClose }: { record: RecordRow; onClose
         )}
         {voiceOf(r).length > 0 && (
           <>
-            <h3 className="eyebrow mt-5 mb-2">{t("app.voiceNote")}</h3>
+            <h3 className="eyebrow mt-5 mb-2">{t("app.voice.note")}</h3>
             {voiceOf(r).map((a) => (
               <VoiceNote key={a.id} id={a.id} uploaded={a.uploadStatus === "uploaded"} />
             ))}
@@ -223,9 +226,9 @@ export function RecordModal({ record: r, onClose }: { record: RecordRow; onClose
         )}
         {canEdit && !editing && (
           <div className="mt-5 flex gap-2 border-t border-linea pt-4">
-            <Button onClick={() => setEditing(true)}>{t("ui.edit")}</Button>
+            <Button onClick={() => setEditing(true)}>{t("ui.common.edit")}</Button>
             <Button variant="danger" onClick={() => setDeleting(true)}>
-              {t("ui.delete")}
+              {t("ui.common.delete")}
             </Button>
           </div>
         )}

@@ -74,9 +74,9 @@ export default function PurchaseDetail() {
       await uploadInvoicePhoto("purchases", id!, p);
       invalidate(["/org/erp"]);
       await q.refresh();
-      showToast(t("ui.photoSaved"));
+      showToast(t("ui.photo.saved"));
     } catch (e) {
-      setPhotoError(e instanceof Error ? e.message : t("ui.photoUploadFailed"));
+      setPhotoError(e instanceof Error ? e.message : t("ui.photo.uploadFailed"));
     } finally {
       setPhotoBusy(false);
     }
@@ -88,7 +88,7 @@ export default function PurchaseDetail() {
       const r = await api<{ url: string }>("GET", `/org/erp/photos/purchases/${id}`);
       await Linking.openURL(r.url);
     } catch (e) {
-      setPhotoError(e instanceof Error ? e.message : t("office.loadFailed"));
+      setPhotoError(e instanceof Error ? e.message : t("office.common.loadFailed"));
     } finally {
       setPhotoBusy(false);
     }
@@ -100,7 +100,7 @@ export default function PurchaseDetail() {
       invalidate(["/org/erp"]);
       await q.refresh();
     } catch (e) {
-      setPhotoError(e instanceof Error ? e.message : t("office.loadFailed"));
+      setPhotoError(e instanceof Error ? e.message : t("office.common.loadFailed"));
     } finally {
       setPhotoBusy(false);
     }
@@ -109,18 +109,18 @@ export default function PurchaseDetail() {
   const doReceive = async () => {
     const r = await receive.mutate({ warehouseId: wh, date: today() });
     if (r.ok) {
-      showToast(t("ui.purchReceived"));
+      showToast(t("ui.purch.received"));
       void q.refresh();
     }
   };
   const doInvoice = async () => {
-    if (!inv.number.trim()) return setFormError(t("office.admNeedsInvoiceNumber"));
-    if (!inv.date) return setFormError(t("office.admNeedsDate"));
+    if (!inv.number.trim()) return setFormError(t("office.adm.needsInvoiceNumber"));
+    if (!inv.date) return setFormError(t("office.adm.needsDate"));
     setFormError(null);
     const r = await invoice.mutate({ invoiceNumber: inv.number.trim(), invoiceDate: inv.date, dueDate: inv.due || null });
     if (r.ok) {
       setInvoiceOpen(false);
-      showToast(t("ui.erpSaved"));
+      showToast(t("ui.erp.saved"));
       void q.refresh();
     }
   };
@@ -129,43 +129,55 @@ export default function PurchaseDetail() {
   const action = !p
     ? undefined
     : p.receivedAt === null && wh
-      ? { label: t("ui.purchReceive"), icon: PackageCheck, onPress: doReceive, loading: receive.pending, disabled: !!noSignal }
+      ? { label: t("ui.purch.receive"), icon: PackageCheck, onPress: doReceive, loading: receive.pending, disabled: !!noSignal }
       : !p.invoiceNumber
-        ? { label: t("ui.purchSaveInvoice"), icon: Receipt, onPress: () => setInvoiceOpen(true), disabled: !!noSignal }
+        ? { label: t("ui.purch.saveInvoice"), icon: Receipt, onPress: () => setInvoiceOpen(true), disabled: !!noSignal }
         : undefined;
 
   return (
-    <AdminGate need="manage" title={t("ui.purchDetail")}>
-      <OfficeScreen title={t("ui.purchDetail")} subtitle={p ? (parties.data?.find((x) => x.id === p.partyId)?.name ?? undefined) : undefined} query={q} action={action}>
+    <AdminGate need="manage" title={t("ui.purch.detail")}>
+      <OfficeScreen title={t("ui.purch.detail")} subtitle={p ? (parties.data?.find((x) => x.id === p.partyId)?.name ?? undefined) : undefined} query={q} action={action}>
         <NoSignalNote />
-        <OnlineState query={q} empty={{ title: t("ui.erpEmpty") }} isEmpty={(d) => !d}>
+        <OnlineState query={q} empty={{ title: t("ui.erp.empty") }} isEmpty={(d) => !d}>
           {(d) => (
             <>
               <KeyValue
                 rows={[
-                  { label: t("ui.costDate"), value: isoShort(d.orderDate) },
-                  { label: t("ui.purchTotal"), value: fmtMoney(d.totalAmount, d.currency) },
-                  { label: t("ui.purchStatus"), value: t(k(`ui.purchStatus_${d.status}`)) },
-                  ...(d.invoiceNumber ? [{ label: t("ui.purchInvoice"), value: [d.invoiceNumber, d.invoiceDate ? isoShort(d.invoiceDate) : null].filter(Boolean).join(" · ") }] : []),
-                  ...(d.dueDate ? [{ label: t("ui.purchDueLabel"), value: isoShort(d.dueDate) }] : []),
-                  { label: t("ui.purchReception"), value: d.receivedAt ? t("ui.purchReceivedOn", { date: isoShort(d.receivedAt.slice(0, 10)) }) : t("office.admNotReceived") },
+                  { label: t("ui.cost.date"), value: isoShort(d.orderDate) },
+                  { label: t("ui.purch.total"), value: fmtMoney(d.totalAmount, d.currency) },
+                  { label: t("ui.purch.status"), value: t(k(`ui.purch.status_${d.status}`)) },
+                  ...(d.invoiceNumber ? [{ label: t("ui.purch.invoice"), value: [d.invoiceNumber, d.invoiceDate ? isoShort(d.invoiceDate) : null].filter(Boolean).join(" · ") }] : []),
+                  ...(d.dueDate ? [{ label: t("ui.purch.dueLabel"), value: isoShort(d.dueDate) }] : []),
+                  { label: t("ui.purch.reception"), value: d.receivedAt ? t("ui.purch.receivedOn", { date: isoShort(d.receivedAt.slice(0, 10)) }) : t("office.adm.notReceived") },
                 ]}
               />
-              <SectionHeader title={t("office.admLines")} />
+              <SectionHeader title={t("office.adm.lines")} />
               {d.lines.map((l) => {
                 const prod = l.productId ? byId.get(l.productId) : undefined;
                 const qty = l.receivedQty ?? l.qty;
-                return <Row key={l.id} title={prod?.name ?? l.description ?? "—"} subtitle={`${fmtQty(qty, prod?.unit)} × ${fmtMoney(l.unitPrice, d.currency)}${l.lot ? ` · ${t("ui.expiringLot", { lot: l.lot })}` : ""}`} right={fmtMoney(lineAmount(qty, l.unitPrice), d.currency)} />;
+                return (
+                  <Row
+                    key={l.id}
+                    title={prod?.name ?? l.description ?? "—"}
+                    subtitle={
+                      fmtQty(qty, prod?.unit) +
+                      " × " +
+                      fmtMoney(l.unitPrice, d.currency) +
+                      (l.lot ? " · " + t("ui.expiring.lot", { lot: l.lot }) : "")
+                    }
+                    right={fmtMoney(lineAmount(qty, l.unitPrice), d.currency)}
+                  />
+                );
               })}
-              <SectionHeader title={t("ui.purchInvoice")} />
+              <SectionHeader title={t("ui.purch.invoice")} />
               <View style={{ gap: 12 }}>
                 {d.photoPath ? (
                   <>
-                    <Button kind="secondary" title={t("ui.photoView")} onPress={view} loading={photoBusy} />
-                    <Button kind="text" title={t("ui.photoRemove")} onPress={remove} disabled={photoBusy || !!noSignal} />
+                    <Button kind="secondary" title={t("ui.photo.view")} onPress={view} loading={photoBusy} />
+                    <Button kind="text" title={t("ui.photo.remove")} onPress={remove} disabled={photoBusy || !!noSignal} />
                   </>
                 ) : (
-                  <InvoicePhotoButton title={HAS_CAMERA ? t("office.admTakeInvoicePhoto") : t("ui.photoAttach")} onPick={attach} loading={photoBusy} disabled={!!noSignal} />
+                  <InvoicePhotoButton title={HAS_CAMERA ? t("office.adm.takeInvoicePhoto") : t("ui.photo.attach")} onPick={attach} loading={photoBusy} disabled={!!noSignal} />
                 )}
                 {photoError ? (
                   <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro }]}>
@@ -175,8 +187,8 @@ export default function PurchaseDetail() {
               </View>
               {d.receivedAt === null && whs.length > 0 ? (
                 <>
-                  <SectionHeader title={t("ui.purchReception")} />
-                  <SelectField label={t("ui.stockWarehouse")} value={wh} options={whs.map((w) => ({ value: w.id, label: w.name }))} onChange={setWarehouseId} />
+                  <SectionHeader title={t("ui.purch.reception")} />
+                  <SelectField label={t("ui.stock.warehouse")} value={wh} options={whs.map((w) => ({ value: w.id, label: w.name }))} onChange={setWarehouseId} />
                   {receive.error ? (
                     <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 12 }]}>
                       {receive.error}
@@ -187,10 +199,10 @@ export default function PurchaseDetail() {
             </>
           )}
         </OnlineState>
-        <FormSheet visible={invoiceOpen} title={t("ui.purchInvoice")} onClose={() => setInvoiceOpen(false)} onSubmit={doInvoice} submitLabel={t("ui.save")} pending={invoice.pending} error={formError ?? invoice.error}>
-          <TextField label={t("ui.purchInvoiceNumber")} value={inv.number} onChangeText={(v) => setInv({ ...inv, number: v })} maxLength={40} autoCapitalize="none" />
-          <DateField label={t("ui.costDate")} value={inv.date} onChange={(v) => setInv({ ...inv, date: v })} />
-          <DateField label={t("ui.purchDueLabel")} value={inv.due} onChange={(v) => setInv({ ...inv, due: v })} />
+        <FormSheet visible={invoiceOpen} title={t("ui.purch.invoice")} onClose={() => setInvoiceOpen(false)} onSubmit={doInvoice} submitLabel={t("ui.common.save")} pending={invoice.pending} error={formError ?? invoice.error}>
+          <TextField label={t("ui.purch.invoiceNumber")} value={inv.number} onChangeText={(v) => setInv({ ...inv, number: v })} maxLength={40} autoCapitalize="none" />
+          <DateField label={t("ui.cost.date")} value={inv.date} onChange={(v) => setInv({ ...inv, date: v })} />
+          <DateField label={t("ui.purch.dueLabel")} value={inv.due} onChange={(v) => setInv({ ...inv, due: v })} />
         </FormSheet>
       </OfficeScreen>
     </AdminGate>

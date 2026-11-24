@@ -7,7 +7,7 @@ import { EmptyState, s as k } from "../src/ui/kit";
 export default function PlotDrawWeb() {
   return (
     <View style={[k.screen, k.pad]}>
-      <EmptyState title={t("app.webPreviewOnlyPhone")} />
+      <EmptyState title={t("app.common.webPreviewOnlyPhone")} />
     </View>
   );
 }

@@ -10,8 +10,8 @@ export const nf = (n: number, digits = 0) =>
 function DropZone() {
   return (
     <div className="flex flex-col items-start gap-2 border border-dashed border-linea px-4 py-6">
-      <Button disabled>{t("ui.labsPickFile")}</Button>
-      <p className="text-sm text-tinta-2">{t("ui.labsPickFileHelp")}</p>
+      <Button disabled>{t("ui.labs.pickFile")}</Button>
+      <p className="text-sm text-tinta-2">{t("ui.labs.pickFileHelp")}</p>
     </div>
   );
 }
@@ -24,12 +24,12 @@ export function Flow({ drop = true, children }: { drop?: boolean; children: Reac
       {drop && <DropZone />}
       <div>
         <Button variant="primary" onClick={() => setShown((v) => !v)} aria-expanded={shown}>
-          {shown ? t("ui.labsHideExample") : t("ui.labsShowExample")}
+          {shown ? t("ui.labs.hideExample") : t("ui.labs.showExample")}
         </Button>
       </div>
       {shown && (
         <section className="flex flex-col gap-4">
-          <h2 className="text-section leading-6 font-semibold">{t("ui.labsExampleTitle")}</h2>
+          <h2 className="text-section leading-6 font-semibold">{t("ui.labs.exampleTitle")}</h2>
           {children}
         </section>
       )}

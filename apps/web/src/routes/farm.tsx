@@ -130,7 +130,7 @@ export function FarmPage() {
     deleteWithUndo({
       qc,
       id,
-      message: t("ui.toastPoiDeleted"),
+      message: t("ui.toast.poiDeleted"),
       hide: () =>
         qc.setQueryData<FarmDetail>(["farm", farmId], (x) => x && { ...x, pois: x.pois.filter((p) => p.id !== id) }),
       request: () => del(`/org/pois/${id}`),
@@ -149,7 +149,7 @@ export function FarmPage() {
     <div className={`${GRID} print:block print:h-auto`}>
       <div
         role="group"
-        aria-label={t("ui.viewSwitch")}
+        aria-label={t("ui.view.switch")}
         className="flex gap-6 border-b border-linea bg-lino px-4 py-2.5 text-sm lg:hidden print:hidden"
       >
         {(["map", "list"] as const).map((v) => (
@@ -159,7 +159,7 @@ export function FarmPage() {
             onClick={() => setView(v)}
             className={`cursor-pointer underline-offset-4 ${view === v ? "font-medium text-surco underline" : "text-tinta-2"}`}
           >
-            {v === "map" ? t("ui.viewMap") : t("ui.viewList")}
+            {v === "map" ? t("ui.view.map") : t("ui.view.list")}
           </button>
         ))}
       </div>
@@ -192,11 +192,11 @@ export function FarmPage() {
         className={`flex min-h-0 flex-1 flex-col gap-5 overflow-auto border-l border-linea bg-lino p-4 *:shrink-0 lg:p-6 print:!flex print:overflow-visible print:border-0 print:p-0 ${view === "map" ? "max-lg:hidden" : ""}`}
       >
         <div className="hidden print:block">
-          <p className="text-sm text-tinta-2">{t("ui.printedOn", { date: fmtDate(Date.now()) })}</p>
+          <p className="text-sm text-tinta-2">{t("ui.common.printedOn", { date: fmtDate(Date.now()) })}</p>
           {snap && (
             <img
               src={snap}
-              alt={t("ui.printMapAlt", { name: d.farm.name })}
+              alt={t("ui.print.mapAlt", { name: d.farm.name })}
               className="mt-2 max-h-[100mm] w-full rounded-md border border-linea object-cover"
             />
           )}
@@ -209,15 +209,15 @@ export function FarmPage() {
             savePrefs({ tab: v });
           }}
           tabs={[
-            { id: "plots", label: t("ui.tabPlots"), count: d.plots.length, main: true },
-            { id: "seasons", label: t("ui.tabSeasons") },
-            { id: "products", label: t("ui.tabProducts") },
-            { id: "records", label: t("ui.tabRecords"), main: true },
-            { id: "tasks", label: t("ui.tabTasks"), main: true },
-            { id: "climate", label: t("ui.tabClimate") },
-            { id: "alerts", label: t("ui.tabAlerts"), count: alerts.data?.length || undefined, main: true },
-            ...(canEdit ? [{ id: "herd" as const, label: t("ui.tabHerd") }] : []),
-            ...(canEdit ? [{ id: "agro" as const, label: t("ui.tabAgro") }] : []),
+            { id: "plots", label: t("ui.tab.plots"), count: d.plots.length, main: true },
+            { id: "seasons", label: t("ui.tab.seasons") },
+            { id: "products", label: t("ui.tab.products") },
+            { id: "records", label: t("ui.tab.records"), main: true },
+            { id: "tasks", label: t("ui.tab.tasks"), main: true },
+            { id: "climate", label: t("ui.tab.climate") },
+            { id: "alerts", label: t("ui.tab.alerts"), count: alerts.data?.length || undefined, main: true },
+            ...(canEdit ? [{ id: "herd" as const, label: t("ui.tab.herd") }] : []),
+            ...(canEdit ? [{ id: "agro" as const, label: t("ui.tab.agro") }] : []),
           ]}
         />
         <TabBody

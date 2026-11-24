@@ -20,9 +20,9 @@ export function PoiList({
   return (
     <>
       <div className="mt-6 mb-2 flex items-center justify-between gap-2">
-        <h3 className="eyebrow">{t("ui.pois")}</h3>
+        <h3 className="eyebrow">{t("ui.common.pois")}</h3>
         <button className="cursor-pointer text-xs text-tinta-2 underline underline-offset-4 hover:text-surco" onClick={onQr}>
-          {t("app.poiQrPrint")}
+          {t("app.poi.qrPrint")}
         </button>
       </div>
       <ul className="flex flex-col gap-1.5 text-sm">
@@ -31,14 +31,14 @@ export function PoiList({
             <span>
               <PoiGlyph kind={p.kind} />
               {p.name}
-              <span className="ml-2 text-xs text-tinta-2">{tk(`ui.poiKinds_${p.kind}`)}</span>
+              <span className="ml-2 text-xs text-tinta-2">{tk(`ui.poi.kinds_${p.kind}`)}</span>
               {isWaterPoi(p.kind) && (
                 <span
                   className={`ml-2 text-xs ${p.lastWaterLevel === "low" || p.lastWaterLevel === "dry" ? "font-medium text-peligro" : "text-tinta-2"}`}
                 >
                   {p.lastWaterLevel && p.lastWaterAt
-                    ? t("ui.poiLastWater", { level: tk(`fields.water_${p.lastWaterLevel}`).toLowerCase(), date: fmtDate(p.lastWaterAt) })
-                    : t("ui.poiNoWater")}
+                    ? t("ui.poi.lastWater", { level: tk(`fields.water.${p.lastWaterLevel}`).toLowerCase(), date: fmtDate(p.lastWaterAt) })
+                    : t("ui.poi.noWater")}
                 </span>
               )}
             </span>
@@ -46,7 +46,7 @@ export function PoiList({
               <CopyCoords lon={p.lon} lat={p.lat} className="!text-xs" />
               {canEdit && (
                 <button className="cursor-pointer hover:text-peligro" onClick={() => onRemove(p.id)}>
-                  {t("ui.delete")}
+                  {t("ui.common.delete")}
                 </button>
               )}
             </span>

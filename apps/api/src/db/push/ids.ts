@@ -18,7 +18,7 @@ export interface PushIds {
 type Collector = (m: Mutation, ids: PushIds) => void;
 type Of<K extends Mutation["kind"]> = Extract<Mutation, { kind: K }>;
 
-const collectors: { [K in Mutation["kind"]]: (m: Of<K>, ids: PushIds) => void } = {
+const COLLECTORS: { [K in Mutation["kind"]]: (m: Of<K>, ids: PushIds) => void } = {
   "comments.upsert": (m, ids) => {
     ids.commentIds.add(m.row.id);
     ids.commentRecordIds.add(m.row.recordId);
@@ -72,6 +72,8 @@ const collectors: { [K in Mutation["kind"]]: (m: Of<K>, ids: PushIds) => void } 
   },
 };
 
+const collectors = new Map(Object.entries(COLLECTORS) as [Mutation["kind"], Collector][]);
+
 export function collectIds(mutations: Mutation[]): PushIds {
   const ids: PushIds = {
     recordIds: new Set(),
@@ -86,6 +88,6 @@ export function collectIds(mutations: Mutation[]): PushIds {
     commentRecordIds: new Set(),
     mentionIds: new Set(),
   };
-  for (const m of mutations) (collectors[m.kind] as Collector)(m, ids);
+  for (const m of mutations) collectors.get(m.kind)!(m, ids);
   return ids;
 }

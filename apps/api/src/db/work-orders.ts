@@ -44,7 +44,7 @@ export async function createWorkOrder(sdb: ScopedDb, input: WorkOrderInput) {
     farmId: input.farmId,
     plotIds,
     assigneeId: input.assigneeId,
-    title: input.title?.trim() || t(`ui.orderLabor_${order.labor}`),
+    title: input.title?.trim() || t(`ui.order.labor_${order.labor}`),
     kind,
     dueDate: input.dueDate,
     recurrence: "none",

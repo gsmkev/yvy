@@ -32,14 +32,14 @@ function Referral() {
   };
   return (
     <section className="flex flex-col gap-1">
-      <SectionHead title={t(me.data?.role === "owner" ? "ui.accountReferralTitleProducer" : "ui.accountReferralTitle")} />
-      <p className="mt-2 text-tinta-2">{t(me.data?.role === "owner" ? "ui.accountReferralTextProducer" : "ui.accountReferralText")}</p>
-      <p className="mt-4 text-sm text-tinta-2">{t("ui.accountReferralCode")}</p>
+      <SectionHead title={t(me.data?.role === "owner" ? "ui.account.referralTitleProducer" : "ui.account.referralTitle")} />
+      <p className="mt-2 text-tinta-2">{t(me.data?.role === "owner" ? "ui.account.referralTextProducer" : "ui.account.referralText")}</p>
+      <p className="mt-4 text-sm text-tinta-2">{t("ui.account.referralCode")}</p>
       <p className="num text-2xl font-semibold tracking-wider">{code}</p>
       {(q.data?.referred ?? 0) > 0 && (
-        <p className="mt-2 text-sm">{t("ui.accountReferralCount", { n: q.data!.referred, c: q.data!.credited })}</p>
+        <p className="mt-2 text-sm">{t("ui.account.referralCount", { n: q.data!.referred, c: q.data!.credited })}</p>
       )}
-      <p className="mt-3 text-sm text-tinta-2">{t("ui.accountReferralLink")}</p>
+      <p className="mt-3 text-sm text-tinta-2">{t("ui.account.referralLink")}</p>
       <p className="text-sm break-all">{link}</p>
       <button
         type="button"
@@ -47,7 +47,7 @@ function Referral() {
         onClick={() => void copy()}
         aria-live="polite"
       >
-        {copied ? t("ui.copied") : t("ui.accountReferralCopy")}
+        {copied ? t("ui.common.copied") : t("ui.account.referralCopy")}
       </button>
     </section>
   );
@@ -76,7 +76,7 @@ export function AccountPage() {
     mutationFn: () => post("/org/delete-request"),
     onSuccess: () => {
       setConfirming(false);
-      toast(t("ui.toastDeleteRequested"));
+      toast(t("ui.toast.deleteRequested"));
     },
   });
 
@@ -114,15 +114,15 @@ export function AccountPage() {
       show: owner,
       render: () => (
         <section>
-          <SectionHead title={t("ui.accountDeleteTitle")} />
-          <p className="mt-3 text-tinta-2">{t("ui.accountDeleteText")}</p>
+          <SectionHead title={t("ui.account.deleteTitle")} />
+          <p className="mt-3 text-tinta-2">{t("ui.account.deleteText")}</p>
           {request.isSuccess ? (
             <p role="status" className="mt-4 border-l-2 border-soja pl-3">
-              {t("ui.accountDeleteSent")}
+              {t("ui.account.deleteSent")}
             </p>
           ) : (
             <Button variant="danger" className="mt-4" onClick={() => setConfirming(true)}>
-              {t("ui.accountDeleteButton")}
+              {t("ui.account.deleteButton")}
             </Button>
           )}
         </section>
@@ -139,19 +139,19 @@ export function AccountPage() {
     }
   };
   return (
-    <Page width="data" title={t("ui.accountTitle")} className="gap-4 lg:gap-6">
+    <Page width="data" title={t("ui.account.title")} className="gap-4 lg:gap-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:gap-10">
       <SectionNav
-        label={t("ui.accountTitle")}
+        label={t("ui.account.title")}
         value={current.id}
         onChange={choose}
         groups={(["me", "security", "org", "danger"] as const)
           .map((g) => ({
             id: g,
-            label: g === "danger" ? undefined : t(`ui.accountGroup_${g}`),
+            label: g === "danger" ? undefined : t(`ui.account.group_${g}`),
             alwaysLabel: g === "security",
             danger: g === "danger",
-            items: sections.filter((x) => x.group === g).map((x) => ({ id: x.id, label: t(`ui.accountSection_${x.id}` as MessageKey) })),
+            items: sections.filter((x) => x.group === g).map((x) => ({ id: x.id, label: t(`ui.account.section_${x.id}` as MessageKey) })),
           }))
           .filter((g) => g.items.length > 0)}
       />
@@ -161,9 +161,9 @@ export function AccountPage() {
       </div>
       {confirming && (
         <ConfirmModal
-          title={t("ui.accountDeleteConfirmTitle")}
-          message={t("ui.accountDeleteConfirmText")}
-          confirmLabel={t("ui.accountDeleteConfirmButton")}
+          title={t("ui.account.deleteConfirmTitle")}
+          message={t("ui.account.deleteConfirmText")}
+          confirmLabel={t("ui.account.deleteConfirmButton")}
           pending={request.isPending}
           error={request.error}
           onConfirm={() => request.mutate()}

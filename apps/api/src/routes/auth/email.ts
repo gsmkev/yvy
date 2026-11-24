@@ -97,7 +97,7 @@ routes.post("/email/start", async (c) => {
       .where(and(eq(s.emailCodes.ip, ip), gte(s.emailCodes.createdAt, now - LIMITS.auth.emailCodesIpWindowMs)))) as [
       { n: number },
     ];
-    if (n >= LIMITS.auth.emailCodesPerIp) throw new HTTPException(429, { message: t("ui.tooManyCodesIp") });
+    if (n >= LIMITS.auth.emailCodesPerIp) throw new HTTPException(429, { message: t("ui.common.tooManyCodesIp") });
   }
   const recent = await db
     .select({ id: s.emailCodes.id })
@@ -115,7 +115,7 @@ routes.post("/email/start", async (c) => {
     expiresAt: now + LIMITS.auth.emailCodeTtlMs,
     createdAt: now,
   });
-  await sendEmail(c.env, body.email, t("auth.emailSubject", { code }), t("auth.emailBody", { code }));
+  await sendEmail(c.env, body.email, t("auth.email.subject", { code }), t("auth.email.body", { code }));
   return c.json({ ok: true });
 });
 

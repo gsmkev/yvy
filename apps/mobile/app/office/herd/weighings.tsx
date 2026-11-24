@@ -24,38 +24,38 @@ export default function Weighings() {
         <DataList
           rows={rows}
           keyOf={(r) => r.key}
-          title={(r) => r.label ?? t("ui.weighNoGroup")}
-          subtitle={(r) => (r.firstKg === null || r.lastKg === null ? undefined : t("office.weighSeriesLine", { n: r.points.length, first: fmtNumber(r.firstKg), last: fmtNumber(r.lastKg) }))}
+          title={(r) => r.label ?? t("ui.weigh.noGroup")}
+          subtitle={(r) => (r.firstKg === null || r.lastKg === null ? undefined : t("office.weigh.seriesLine", { n: r.points.length, first: fmtNumber(r.firstKg), last: fmtNumber(r.lastKg) }))}
           right={(r) => <Text style={[T.bodyMedium, { textAlign: "right" }]}>{adg(r.adgKg)}</Text>}
           onPress={(r) => setPicked(picked?.key === r.key ? null : r)}
-          empty={{ title: t("ui.weighNone") }}
+          empty={{ title: t("ui.weigh.none") }}
         />
       </>
     );
   return (
-    <FarmFrame title={t("ui.herdSectionWeights")} farms={farms} farm={farm} setFarmId={setFarmId} query={q}>
-      <OnlineState query={q} isEmpty={(d) => d.groups.length === 0 && d.animals.length === 0} empty={{ title: t("ui.weighNone"), hint: t("ui.weighNoneHint") }}>
+    <FarmFrame title={t("ui.herd.sectionWeights")} farms={farms} farm={farm} setFarmId={setFarmId} query={q}>
+      <OnlineState query={q} isEmpty={(d) => d.groups.length === 0 && d.animals.length === 0} empty={{ title: t("ui.weigh.none"), hint: t("ui.weigh.noneHint") }}>
         {(d) => (
           <View>
-            {d.truncated && <Text style={[T.small, { marginTop: 8 }]}>{t("ui.herdTruncated")}</Text>}
+            {d.truncated && <Text style={[T.small, { marginTop: 8 }]}>{t("ui.herd.truncated")}</Text>}
             {picked && (
               <View style={{ marginTop: 8 }}>
-                <SectionHeader title={`${picked.label ?? t("ui.weighNoGroup")} · ${t("office.weighPeriodChart")}`} />
-                <LineChart yUnit="kg" series={[{ label: picked.label ?? t("ui.weighNoGroup"), color: CHART.primary, points: picked.points.map((p) => ({ x: fmtDate(p.at), y: p.kg })) }]} />
+                <SectionHeader title={`${picked.label ?? t("ui.weigh.noGroup")} · ${t("office.weigh.periodChart")}`} />
+                <LineChart yUnit="kg" series={[{ label: picked.label ?? t("ui.weigh.noGroup"), color: CHART.primary, points: picked.points.map((p) => ({ x: fmtDate(p.at), y: p.kg })) }]} />
                 <KeyValue
                   rows={[
-                    ...(picked.firstKg !== null ? [{ label: t("ui.weighFirst"), value: `${fmtNumber(picked.firstKg)} kg · ${fmtDate(picked.firstAt!)}` }] : []),
-                    ...(picked.lastKg !== null ? [{ label: t("ui.weighLast"), value: `${fmtNumber(picked.lastKg)} kg · ${fmtDate(picked.lastAt!)}` }] : []),
-                    ...(picked.days !== null ? [{ label: t("ui.weighDays"), value: fmtNumber(picked.days, 0) }] : []),
-                    { label: t("ui.weighAdg"), value: adg(picked.adgKg) },
-                    ...(picked.lastAdgKg !== null ? [{ label: t("ui.weighAdgRecent"), value: adg(picked.lastAdgKg) }] : []),
+                    ...(picked.firstKg !== null ? [{ label: t("ui.weigh.first"), value: `${fmtNumber(picked.firstKg)} kg · ${fmtDate(picked.firstAt!)}` }] : []),
+                    ...(picked.lastKg !== null ? [{ label: t("ui.weigh.last"), value: `${fmtNumber(picked.lastKg)} kg · ${fmtDate(picked.lastAt!)}` }] : []),
+                    ...(picked.days !== null ? [{ label: t("ui.weigh.days"), value: fmtNumber(picked.days, 0) }] : []),
+                    { label: t("ui.weigh.adg"), value: adg(picked.adgKg) },
+                    ...(picked.lastAdgKg !== null ? [{ label: t("ui.weigh.adgRecent"), value: adg(picked.lastAdgKg) }] : []),
                   ]}
                 />
               </View>
             )}
-            {list(d.groups, t("ui.weighGroups"))}
-            {list(d.animals, t("ui.weighAnimals"))}
-            <Text style={[T.small, { marginTop: 16 }]}>{t("ui.weighHint")}</Text>
+            {list(d.groups, t("ui.weigh.groups"))}
+            {list(d.animals, t("ui.weigh.animals"))}
+            <Text style={[T.small, { marginTop: 16 }]}>{t("ui.weigh.hint")}</Text>
           </View>
         )}
       </OnlineState>

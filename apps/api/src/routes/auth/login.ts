@@ -23,11 +23,11 @@ routes.post("/totp/login", async (c) => {
   const db = getDb(c.env.DB);
   const now = Date.now();
   const ticket = await verifyTicket(c.env.JWT_SECRET, body.ticket, now);
-  if (!ticket) throw new HTTPException(401, { message: t("totp.ticketExpired") });
+  if (!ticket) throw new HTTPException(401, { message: t("totp.common.ticketExpired") });
   const res = await checkSecondFactor(db, c.env.JWT_SECRET, ticket.userId, body.code, now);
   if (res === "locked")
-    throw new HTTPException(429, { message: t("totp.locked", { min: Math.ceil(LIMITS.auth.totpLockMs / 60_000) }) });
-  if (res !== "ok") throw new HTTPException(401, { message: t("totp.bad") });
+    throw new HTTPException(429, { message: t("totp.common.locked", { min: Math.ceil(LIMITS.auth.totpLockMs / 60_000) }) });
+  if (res !== "ok") throw new HTTPException(401, { message: t("totp.common.bad") });
   const session = await issueSession(db, c.env.JWT_SECRET, ticket.userId, {
     organizationId: ticket.organizationId,
     deviceId: ticket.deviceId,
@@ -79,7 +79,7 @@ routes.post("/pin/login", async (c) => {
     z.object({ phone: z.string().trim().min(6).max(30), pin: z.string().regex(PIN_REGEX), deviceId }),
     await readJson(c.req),
   );
-  const bad = () => new HTTPException(401, { message: t("app.pinLoginBad") });
+  const bad = () => new HTTPException(401, { message: t("app.pin.loginBad") });
   const key = phoneKey(body.phone);
   if (!key) throw bad();
   const db = getDb(c.env.DB);
@@ -90,7 +90,7 @@ routes.post("/pin/login", async (c) => {
     await hashPin(c.env.JWT_SECRET, "x", body.pin);
     throw bad();
   }
-  const locked = () => new HTTPException(429, { message: t("app.pinLoginLocked", { min: Math.ceil(LIMITS.auth.pinLockMs / 60_000) }) });
+  const locked = () => new HTTPException(429, { message: t("app.pin.loginLocked", { min: Math.ceil(LIMITS.auth.pinLockMs / 60_000) }) });
   // Cuenta el intento; si está bloqueada, el UPDATE no toca ninguna fila.
   const [bumped] = await db
     .update(s.userPins)
@@ -121,7 +121,7 @@ routes.post("/pin/login", async (c) => {
     deviceId: body.deviceId,
     now,
   });
-  if (!session || session.organization.role !== "worker") throw new HTTPException(403, { message: t("app.pinLoginNoAccess") });
+  if (!session || session.organization.role !== "worker") throw new HTTPException(403, { message: t("app.pin.loginNoAccess") });
   return c.json(session);
 });
 

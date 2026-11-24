@@ -21,7 +21,7 @@ export function usePhotos() {
     if (!gone) return;
     setPhotos(photos.filter((_, j) => j !== i));
     void discardPhoto(gone);
-    showToast(t("app.photoDiscarded"));
+    showToast(t("app.photo.discarded"));
   };
   const [voice, setVoice] = useState<LocalAudio | null>(null);
   return { photos, setPhotos, removePhoto, voice, setVoice, savedRef };

@@ -14,14 +14,14 @@ export function AlertsPage() {
   const canTune = !!me.data && !isFieldRole(me.data.role);
   return (
     <Page width="data" className="gap-4">
-      <PageHeader title={t("ui.alertsTitle")} />
+      <PageHeader title={t("ui.alerts.title")} />
       <div className={`grid items-start gap-x-12 gap-y-6 ${canTune ? "lg:grid-cols-[minmax(0,1fr)_320px]" : ""}`}>
         <AlertsList
           farmNames={names}
           emptyAction={
             canTune && !settings ? (
               <Button className="lg:hidden" onClick={() => setSettings(true)}>
-                {t("ui.alertSettingsTitle")}
+                {t("ui.alert.settingsTitle")}
               </Button>
             ) : undefined
           }

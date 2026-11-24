@@ -18,8 +18,8 @@ export default function ScanPoi() {
     return (
       <View style={s.center}>
         <Stack.Screen options={{ title: "" }} />
-        <Text style={T.body}>{t("app.cameraDenied")}</Text>
-        <Button title={t("app.allowCamera")} onPress={request} />
+        <Text style={T.body}>{t("app.common.cameraDenied")}</Text>
+        <Button title={t("app.common.allowCamera")} onPress={request} />
       </View>
     );
 
@@ -37,7 +37,7 @@ export default function ScanPoi() {
           // El punto se busca en el celular: así funciona sin señal.
           const poi = getDb().pois().find((p) => p.id === id);
           if (!poi) {
-            setError(t("app.poiScanUnknown"));
+            setError(t("app.poi.scanUnknown"));
             setTimeout(() => (busy.current = false), 2500);
             return;
           }
@@ -45,8 +45,8 @@ export default function ScanPoi() {
         }}
       />
       <View style={s.overlay}>
-        <Text style={s.title}>{t("app.poiScanTitle")}</Text>
-        <Text style={s.text}>{t("app.poiScanHelp")}</Text>
+        <Text style={s.title}>{t("app.poi.scanTitle")}</Text>
+        <Text style={s.text}>{t("app.poi.scanHelp")}</Text>
         {error && <Text style={s.error}>{error}</Text>}
       </View>
     </View>

@@ -48,6 +48,7 @@ export function PlotPanel({
   farm?: Farm;
 }) {
   const qc = useQueryClient();
+  const centroid = centroidOf(JSON.parse(plot.geometry) as Area);
   const heading = useRef<HTMLHeadingElement>(null);
   // Al abrir la ficha el foco pasa al título, para que el lector de pantalla anuncie el lote
   useEffect(() => heading.current?.focus(), []);
@@ -61,7 +62,7 @@ export function PlotPanel({
     deleteWithUndo({
       qc,
       id: plot.id,
-      message: t("ui.toastPlotDeleted"),
+      message: t("ui.toast.plotDeleted"),
       hide: () =>
         qc.setQueryData<FarmDetail>(
           ["farm", plot.farmId],
@@ -79,21 +80,21 @@ export function PlotPanel({
           onClick={onClose}
           className="cursor-pointer text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline print:hidden"
         >
-          ← {t("ui.allPlots")}
+          ← {t("ui.all.plots")}
         </button>
         <h2 ref={heading} tabIndex={-1} className="mt-3 font-serif text-[24px] leading-tight font-semibold outline-none">
           {plot.name}
         </h2>
         <p className="num mt-1 text-sm text-tinta-2">
-          {plot.kind === "pasture" ? t("ui.pasture") : (plot.crop ?? t("ui.crop"))} · {fmtHa(plot.areaHa)}
+          {plot.kind === "pasture" ? t("ui.common.pasture") : (plot.crop ?? t("ui.common.crop"))} · {fmtHa(plot.areaHa)}
           {plot.season ? ` · ${plot.season}` : ""}
         </p>
         <p className="mt-1 text-sm text-tinta-2">
           {workers.length
-            ? `${t("ui.assignedTo")} ${workers.map((w) => w.fullName).join(", ")}`
-            : t("ui.nobodyAssigned")}
+            ? `${t("ui.common.assignedTo")} ${workers.map((w) => w.fullName).join(", ")}`
+            : t("ui.common.nobodyAssigned")}
         </p>
-        <CopyCoords className="mt-2" {...centroidOf(JSON.parse(plot.geometry) as Area)} />
+        <CopyCoords className="mt-2" lon={centroid.lon} lat={centroid.lat} />
       </div>
 
       {canEdit && ndvi.isLoading && <Spinner />}
@@ -115,19 +116,19 @@ export function PlotPanel({
       {canEdit && !editing && (
         <div className="flex flex-wrap gap-2 border-t border-linea pt-4">
           <Button icon={Pencil} onClick={() => setEditing(true)}>
-            {t("ui.edit")}
+            {t("ui.common.edit")}
           </Button>
           {onEditShape && (
-            <Button onClick={onEditShape}>{t("ui.plotEditShape")}</Button>
+            <Button onClick={onEditShape}>{t("ui.plot.editShape")}</Button>
           )}
           {onSplit && JSON.parse(plot.geometry).type === "Polygon" && (
-            <Button onClick={onSplit}>{t("ui.splitPlot")}</Button>
+            <Button onClick={onSplit}>{t("ui.split.plot")}</Button>
           )}
           {onMerge && JSON.parse(plot.geometry).type === "Polygon" && (
-            <Button onClick={onMerge}>{t("ui.mergePlots")}</Button>
+            <Button onClick={onMerge}>{t("ui.merge.plots")}</Button>
           )}
           <Button variant="danger" icon={Trash2} onClick={() => setConfirming(true)}>
-            {t("ui.delete")}
+            {t("ui.common.delete")}
           </Button>
         </div>
       )}
@@ -135,8 +136,8 @@ export function PlotPanel({
       {confirming && (
         <ConfirmModal
           title={plot.name}
-          message={t("ui.confirmDelete", { name: plot.name })}
-          confirmLabel={t("ui.delete")}
+          message={t("ui.confirm.delete", { name: plot.name })}
+          confirmLabel={t("ui.common.delete")}
           onConfirm={remove}
           onClose={() => setConfirming(false)}
         />

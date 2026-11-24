@@ -44,7 +44,7 @@ export async function createLine(
       and(eq(s.farmLines.farmId, farmId), eq(s.farmLines.organizationId, sdb.auth.orgId), isNull(s.farmLines.deletedAt)),
     );
   if (Number(n?.n ?? 0) >= LIMITS.geometry.maxLinesPerFarm)
-    throw new HTTPException(400, { message: t("ui.linesTooMany", { max: LIMITS.geometry.maxLinesPerFarm }) });
+    throw new HTTPException(400, { message: t("ui.lines.tooMany", { max: LIMITS.geometry.maxLinesPerFarm }) });
   const id = newId();
   const ts = sdb.now();
   const lengthM = lineLengthM(input.geometry);

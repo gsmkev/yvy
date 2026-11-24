@@ -15,9 +15,9 @@ export function StaffPanel() {
   // Sin empleados no hay nada que asistir ni saldar: se abre en Empleados
   const current = tab ?? (empty ? "employees" : "attendance");
   const tabs = [
-    { id: "attendance", label: t("ui.staffAttendance") },
-    { id: "balances", label: t("ui.staffBalances") },
-    { id: "employees", label: t("ui.staffEmployees"), count: empty ? undefined : staff.data!.length },
+    { id: "attendance", label: t("ui.staff.attendance") },
+    { id: "balances", label: t("ui.staff.balances") },
+    { id: "employees", label: t("ui.staff.employees"), count: empty ? undefined : staff.data!.length },
   ];
   const goEmployees = () => setTab("employees");
   return (

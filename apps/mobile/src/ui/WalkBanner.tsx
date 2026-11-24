@@ -18,7 +18,7 @@ export function WalkBanner() {
     return () => clearInterval(id);
   }, [recording]);
   if (!recording || !draft) return null;
-  const text = t("app.walkRecordingBanner", { dist: formatDistance(draft.distanceM), time: formatDuration(durationS(draft, Date.now())) });
+  const text = t("app.walk.recordingBanner", { dist: formatDistance(draft.distanceM), time: formatDuration(durationS(draft, Date.now())) });
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={text} onPress={() => router.push("/walk")} style={s.bar}>
       <Text style={[T.smallMedium, { color: C.blanco }]}>{text}</Text>

@@ -18,7 +18,7 @@ export const fmtRatio = (n: number) => String(n).replace(".", ",");
 
 /** "Sin cambio", "Posible pérdida de bosque: 3,2 ha" o "Sin datos suficientes por nubes". */
 export const statusText = (status: string, lossHa: number) =>
-  tk(`ui.eudrStatus_${status}`, { ha: fmtRatio(Math.round(lossHa * 100) / 100) });
+  tk(`ui.eudr.status_${status}`, { ha: fmtRatio(Math.round(lossHa * 100) / 100) });
 
 interface EudrSummary {
   plots: number;

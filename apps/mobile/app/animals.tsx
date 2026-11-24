@@ -59,13 +59,13 @@ export default function Animals() {
   const submit = async () => {
     if (!draft) return;
     const tag = normalizeTag(draft.tag);
-    if (!tag) return setFormError(t("office.animalsNeedsTag"));
+    if (!tag) return setFormError(t("office.animals.needsTag"));
     setFormError(null);
     const body = { tag, category: draft.category, sex: draft.sex, birthDate: draft.birthDate || null, note: draft.note.trim() || null };
     const r = draft.id ? await edit.mutate({ id: draft.id, ...body }) : await create.mutate(body);
     if (r.ok) {
       setDraft(null);
-      showToast(t("ui.animalSaved"));
+      showToast(t("ui.animal.saved"));
       void syncNow();
     }
   };
@@ -86,7 +86,7 @@ export default function Animals() {
     <View style={{ flex: 1, backgroundColor: C.papel }}>
     <ScrollView style={{ flex: 1 }} contentContainerStyle={[k.pad, { paddingBottom: canEdit ? 24 : 80 }]} keyboardShouldPersistTaps="handled">
       <Stack.Screen options={{ title: "" }} />
-      <Text style={T.title}>{t("app.animalsTitle")}</Text>
+      <Text style={T.title}>{t("app.animals.title")}</Text>
       <TextInput
         value={query}
         onChangeText={(v) => {
@@ -95,21 +95,21 @@ export default function Animals() {
         }}
         autoCapitalize="characters"
         autoCorrect={false}
-        placeholder={t("app.animalsSearch")}
+        placeholder={t("app.animals.search")}
         placeholderTextColor={C.tinta3}
-        accessibilityLabel={t("app.animalsSearch")}
+        accessibilityLabel={t("app.animals.search")}
         style={st.input}
       />
       {canEdit && <FarmChips farms={farms} value={farm?.id} onChange={setFarmId} />}
-      {total === 0 && <EmptyState title={canEdit ? t("office.animalsNoneOffice") : t("app.animalsNone")} />}
-      {total > 0 && found.length === 0 && <EmptyState title={t("app.animalsNoMatch")} />}
-      <RadioGroup label={t("app.animalsTitle")}>
+      {total === 0 && <EmptyState title={canEdit ? t("office.animals.noneOffice") : t("app.animals.none")} />}
+      {total > 0 && found.length === 0 && <EmptyState title={t("app.animals.noMatch")} />}
+      <RadioGroup label={t("app.animals.title")}>
         {found.map((a) => (
           <Row
             key={a.id}
             choice="radio"
             title={a.tag}
-            subtitle={`${t(`fields.herd_${a.category}` as MessageKey)} · ${t(`fields.sex_${a.sex}` as MessageKey)}`}
+            subtitle={`${t(`fields.herd.${a.category}` as MessageKey)} · ${t(`fields.sex.${a.sex}` as MessageKey)}`}
             selected={selected === a.id}
             onPress={() => setSelected(a.id)}
           />
@@ -120,44 +120,44 @@ export default function Animals() {
           <Text style={T.heading}>{animal.tag}</Text>
           <Text style={[T.small, { marginTop: 2 }]}>
             {[
-              t(`fields.herd_${animal.category}` as MessageKey),
-              t(`fields.sex_${animal.sex}` as MessageKey),
-              animal.birthDate ? t("app.animalsBorn", { date: animal.birthDate.split("-").reverse().join("/") }) : null,
+              t(`fields.herd.${animal.category}` as MessageKey),
+              t(`fields.sex.${animal.sex}` as MessageKey),
+              animal.birthDate ? t("app.animals.born", { date: animal.birthDate.split("-").reverse().join("/") }) : null,
             ]
               .filter(Boolean)
               .join(" · ")}
           </Text>
           {animal.note ? <Text style={[T.body, { marginTop: 6 }]}>{animal.note}</Text> : null}
-          {canEdit && <Button kind="secondary" title={t("ui.edit")} icon={Pencil} disabled={!online} onPress={openEdit} style={{ marginTop: 12, alignSelf: "flex-start" }} />}
-          {adg !== null && <Text style={[T.bodyMedium, { marginTop: 10 }]}>{t("app.animalsAdg", { v: adg.toFixed(2).replace(".", ",") })}</Text>}
-          <Text style={[T.heading, { marginTop: 20, marginBottom: 4 }]}>{t("app.animalsHistory")}</Text>
-          {history.length === 0 && <Text style={T.small}>{t("app.animalsNoHistory")}</Text>}
+          {canEdit && <Button kind="secondary" title={t("ui.common.edit")} icon={Pencil} disabled={!online} onPress={openEdit} style={{ marginTop: 12, alignSelf: "flex-start" }} />}
+          {adg !== null && <Text style={[T.bodyMedium, { marginTop: 10 }]}>{t("app.animals.adg", { v: adg.toFixed(2).replace(".", ",") })}</Text>}
+          <Text style={[T.heading, { marginTop: 20, marginBottom: 4 }]}>{t("app.animals.history")}</Text>
+          {history.length === 0 && <Text style={T.small}>{t("app.animals.noHistory")}</Text>}
           {history.map((r) => (
             <Row
               key={r.id}
               icon={RECORD_ICON[r.kind]}
-              title={t(`recordKinds.${r.kind}` as MessageKey)}
+              title={t(`record-kinds.kind.${r.kind}` as MessageKey)}
               subtitle={`${when(r.capturedAt)} · ${describeRecord(r.kind, JSON.parse(r.data))}`}
             />
           ))}
-          <Text style={[T.small, { marginTop: 12, color: C.tinta3 }]}>{t("app.animalsHistoryNote")}</Text>
+          <Text style={[T.small, { marginTop: 12, color: C.tinta3 }]}>{t("app.animals.historyNote")}</Text>
         </View>
       )}
     </ScrollView>
     {canEdit && (
       <View style={[k.footer, { paddingBottom: 12 }]}>
-        {!online && <Text style={[T.smallMedium, { marginBottom: 8 }]}>{t("office.animalsOfficeOnly")}</Text>}
-        <Button title={t("ui.animalAdd")} icon={Plus} disabled={!online || !farm} onPress={openNew} />
+        {!online && <Text style={[T.smallMedium, { marginBottom: 8 }]}>{t("office.animals.officeOnly")}</Text>}
+        <Button title={t("ui.animal.add")} icon={Plus} disabled={!online || !farm} onPress={openNew} />
       </View>
     )}
-    <FormSheet visible={!!draft} title={draft?.id ? t("office.animalsEditTitle") : t("office.animalsAddTitle")} onClose={() => setDraft(null)} onSubmit={submit} submitLabel={t("ui.save")} pending={create.pending || edit.pending} error={formError ?? (draft?.id ? edit.error : create.error)}>
+    <FormSheet visible={!!draft} title={draft?.id ? t("office.animals.editTitle") : t("office.animals.addTitle")} onClose={() => setDraft(null)} onSubmit={submit} submitLabel={t("ui.common.save")} pending={create.pending || edit.pending} error={formError ?? (draft?.id ? edit.error : create.error)}>
       {draft && (
         <>
-          <TextField label={t("fields.tag")} hint={t("ui.animalTagHint")} value={draft.tag} onChangeText={(v) => patch({ tag: normalizeTag(v).slice(0, 20) })} autoCapitalize="characters" maxLength={20} />
-          <SelectField label={t("fields.herdCategory")} value={draft.category} options={HERD_CATEGORIES.map((c) => ({ value: c as string, label: t(`fields.herd_${c}` as MessageKey) }))} onChange={(v) => patch({ category: v })} />
-          <SelectField label={t("fields.sex")} value={draft.sex} options={ANIMAL_SEXES.map((c) => ({ value: c as string, label: t(`fields.sex_${c}` as MessageKey) }))} onChange={(v) => patch({ sex: v })} />
-          <DateField label={t("ui.animalBirth")} value={draft.birthDate} onChange={(v) => patch({ birthDate: v })} />
-          <TextField label={t("app.note")} value={draft.note} onChangeText={(v) => patch({ note: v })} kind="multiline" maxLength={500} />
+          <TextField label={t("fields.common.tag")} hint={t("ui.animal.tagHint")} value={draft.tag} onChangeText={(v) => patch({ tag: normalizeTag(v).slice(0, 20) })} autoCapitalize="characters" maxLength={20} />
+          <SelectField label={t("fields.herd.category")} value={draft.category} options={HERD_CATEGORIES.map((c) => ({ value: c as string, label: t(`fields.herd.${c}` as MessageKey) }))} onChange={(v) => patch({ category: v })} />
+          <SelectField label={t("fields.common.sex")} value={draft.sex} options={ANIMAL_SEXES.map((c) => ({ value: c as string, label: t(`fields.sex.${c}` as MessageKey) }))} onChange={(v) => patch({ sex: v })} />
+          <DateField label={t("ui.animal.birth")} value={draft.birthDate} onChange={(v) => patch({ birthDate: v })} />
+          <TextField label={t("app.common.note")} value={draft.note} onChangeText={(v) => patch({ note: v })} kind="multiline" maxLength={500} />
         </>
       )}
     </FormSheet>

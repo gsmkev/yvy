@@ -2,7 +2,7 @@ import { ZoneBenchmark } from "./ZoneBenchmark";
 import { SpiPanel } from "./SpiPanel";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { addDays, CHART, localDate, t as _t } from "@yvy/shared";
+import { addDays, CHART, localDate, t as _t, ATTRIBUTION } from "@yvy/shared";
 import { get } from "../lib/api";
 import { fmtIsoDate, fmtMm, fmtNum, fmtRainValue, rainUnitLabel } from "../lib/format";
 import { t } from "../lib/i18n";
@@ -76,33 +76,33 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-2 gap-4 border-b border-linea pb-5">
         <Stat
-          label={t("ui.rain30")}
+          label={t("ui.rain.30")}
           value={hasRain ? fmtRainValue(rain30) : "—"}
           unit={hasRain ? rainUnitLabel() : undefined}
           note={
             normal30 > 0 && hasRain
-              ? `${t("ui.rainNormal")} ${fmtMm(normal30)} · ${Math.round((rain30 / normal30) * 100)} %`
-              : _t("attribution.chirps")
+              ? `${t("ui.rain.normal")} ${fmtMm(normal30)} · ${Math.round((rain30 / normal30) * 100)} %`
+              : _t(ATTRIBUTION.chirps)
           }
         />
         <Stat
-          label={t("ui.soilMoisture")}
+          label={t("ui.soil.moisture")}
           value={soil?.soilMoisture0_7 != null ? Math.round(soil.soilMoisture0_7 * 100) : "—"}
           unit={soil?.soilMoisture0_7 != null ? "%" : undefined}
-          note={_t("attribution.nasaPower")}
+          note={_t(ATTRIBUTION.nasaPower)}
         />
       </div>
       <div>
-        <h3 className="eyebrow mb-2">{t("ui.rain30")} · 60 días</h3>
+        <h3 className="eyebrow mb-2">{t("ui.rain.30")} · 60 días</h3>
         {hasRain ? (
           <RainChart
             days={days}
-            labels={{ satellite: t("ui.satelliteRain"), normal: t("ui.rainNormal"), gauge: t("ui.gauge") }}
+            labels={{ satellite: t("ui.common.satelliteRain"), normal: t("ui.rain.normal"), gauge: t("ui.common.gauge") }}
             formatDate={(d) => fmtIsoDate(d).slice(0, 5)}
-            ariaLabel={t("ui.rain30")}
+            ariaLabel={t("ui.rain.30")}
           />
         ) : (
-          <Empty icon={CloudRain}>{t("ui.noClimate")}</Empty>
+          <Empty icon={CloudRain}>{t("ui.no.climate")}</Empty>
         )}
       </div>
       <Link
@@ -110,36 +110,36 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
         params={{ farmId }}
         className="self-start text-sm font-medium text-accion underline underline-offset-2"
       >
-        {t("ui.gaugesLink")}
+        {t("ui.gauges.link")}
       </Link>
       <Link
         to="/estancias/$farmId/riesgo"
         params={{ farmId }}
         className="self-start text-sm font-medium text-accion underline underline-offset-2"
       >
-        {t("ui.riskLink")}
+        {t("ui.risk.link")}
       </Link>
       <div>
-        <h3 className="eyebrow mb-2">{t("ui.sprayTitle")}</h3>
+        <h3 className="eyebrow mb-2">{t("ui.spray.title")}</h3>
         <SprayWindows farmId={farmId} />
       </div>
       <div>
-        <h3 className="eyebrow mb-2">{t("ui.forecast")}</h3>
+        <h3 className="eyebrow mb-2">{t("ui.common.forecast")}</h3>
         {c.forecast.length ? (
           <>
             <LineChart
-              ariaLabel={t("ui.forecast")}
+              ariaLabel={t("ui.common.forecast")}
               yLabel="°C"
               formatX={(x) => fmtIsoDate(new Date(x).toISOString().slice(0, 10)).slice(0, 5)}
               formatY={(y) => `${Math.round(y)}°`}
               series={[
                 {
-                  name: t("ui.tmin"),
+                  name: t("ui.common.tmin"),
                   color: CHART.comparison,
                   points: c.forecast.map((f) => ({ x: day(f.validDate), y: f.tminC })),
                 },
                 {
-                  name: t("ui.tmax"),
+                  name: t("ui.common.tmax"),
                   color: CHART.warm,
                   points: c.forecast.map((f) => ({ x: day(f.validDate), y: f.tmaxC })),
                 },
@@ -162,14 +162,14 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
                   <tbody className="border-t border-linea">
                     {[
                       [
-                        t("ui.tmax"),
+                        t("ui.common.tmax"),
                         (f: (typeof c.forecast)[number]) => (f.tmaxC === null ? "—" : `${Math.round(f.tmaxC)}°`),
                       ],
                       [
-                        t("ui.tmin"),
+                        t("ui.common.tmin"),
                         (f: (typeof c.forecast)[number]) => (f.tminC === null ? "—" : `${Math.round(f.tminC)}°`),
                       ],
-                      [t("ui.rainMm"), (f: (typeof c.forecast)[number]) => (f.precipMm ? fmtNum(f.precipMm) : "·")],
+                      [t("ui.rain.mm"), (f: (typeof c.forecast)[number]) => (f.precipMm ? fmtNum(f.precipMm) : "·")],
                     ].map(([label, fn]) => (
                       <tr key={label as string}>
                         <th className="py-1 pr-2 text-left font-normal text-tinta-2">{label as string}</th>
@@ -184,10 +184,10 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
                 </table>
               </ExportableTable>
             </div>
-            <p className="mt-2 text-micro text-tinta-2">{_t("attribution.metNorway")}</p>
+            <p className="mt-2 text-micro text-tinta-2">{_t(ATTRIBUTION.metNorway)}</p>
           </>
         ) : (
-          <Empty icon={CloudSun}>{t("ui.noClimate")}</Empty>
+          <Empty icon={CloudSun}>{t("ui.no.climate")}</Empty>
         )}
       </div>
       <SpiPanel farmId={farmId} />

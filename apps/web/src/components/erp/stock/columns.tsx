@@ -15,10 +15,10 @@ export interface StockLookup {
 export function stockColumns(lk: StockLookup, rows: Summary["rows"], list: Summary["products"]): Column<Summary["products"][number]>[] {
   const { prod, wh, unit } = lk;
   return [
-    { id: "product", header: t("ui.stockProduct"), cell: (p) => prod(p.productId)?.name ?? p.productId, sort: (a, b) => (prod(a.productId)?.name ?? "").localeCompare(prod(b.productId)?.name ?? "") },
+    { id: "product", header: t("ui.stock.product"), cell: (p) => prod(p.productId)?.name ?? p.productId, sort: (a, b) => (prod(a.productId)?.name ?? "").localeCompare(prod(b.productId)?.name ?? "") },
     {
       id: "where",
-      header: t("ui.stockWhere"),
+      header: t("ui.stock.where"),
       hideBelow: "md",
       cell: (p) => (
         <span className="text-tinta-2">
@@ -29,30 +29,30 @@ export function stockColumns(lk: StockLookup, rows: Summary["rows"], list: Summa
         </span>
       ),
     },
-    { id: "qty", header: t("ui.stockQty"), align: "right", cell: (p) => <span className={p.qty < 0 ? "text-peligro" : ""}>{fmtQty(p.qty, unit(p.productId))}</span>, sort: (a, b) => a.qty - b.qty },
-    ...(list[0]?.avgCostPyg !== undefined ? [{ id: "avg", header: t("ui.stockAvgCost"), align: "right", hideBelow: "lg", cell: (p: Summary["products"][number]) => (p.avgCostPyg === undefined ? "" : fmtGs(p.avgCostPyg)) } satisfies Column<Summary["products"][number]>] : []),
-    ...(list[0]?.valuePyg !== undefined ? [{ id: "value", header: t("ui.stockValue"), align: "right", hideBelow: "sm", cell: (p: Summary["products"][number]) => (p.valuePyg === undefined ? "" : fmtGs(p.valuePyg)), sort: (a: Summary["products"][number], b: Summary["products"][number]) => (a.valuePyg ?? 0) - (b.valuePyg ?? 0) } satisfies Column<Summary["products"][number]>] : []),
+    { id: "qty", header: t("ui.stock.qty"), align: "right", cell: (p) => <span className={p.qty < 0 ? "text-peligro" : ""}>{fmtQty(p.qty, unit(p.productId))}</span>, sort: (a, b) => a.qty - b.qty },
+    ...(list[0]?.avgCostPyg !== undefined ? [{ id: "avg", header: t("ui.stock.avgCost"), align: "right", hideBelow: "lg", cell: (p: Summary["products"][number]) => (p.avgCostPyg === undefined ? "" : fmtGs(p.avgCostPyg)) } satisfies Column<Summary["products"][number]>] : []),
+    ...(list[0]?.valuePyg !== undefined ? [{ id: "value", header: t("ui.stock.value"), align: "right", hideBelow: "sm", cell: (p: Summary["products"][number]) => (p.valuePyg === undefined ? "" : fmtGs(p.valuePyg)), sort: (a: Summary["products"][number], b: Summary["products"][number]) => (a.valuePyg ?? 0) - (b.valuePyg ?? 0) } satisfies Column<Summary["products"][number]>] : []),
     ];
 }
 
 export function moveColumns(lk: StockLookup, moveRows: StockMove[], onRemove: (m: StockMove) => void): Column<StockMove>[] {
   const { prod, wh, unit } = lk;
   return [
-    { id: "date", header: t("ui.costDate"), cell: (m) => <span className="num whitespace-nowrap">{fmtIsoDate(dayOf(m.occurredAt))}</span> },
+    { id: "date", header: t("ui.cost.date"), cell: (m) => <span className="num whitespace-nowrap">{fmtIsoDate(dayOf(m.occurredAt))}</span> },
     {
       id: "origin",
-      header: t("ui.stockOrigin"),
+      header: t("ui.stock.origin"),
       hideBelow: "sm",
       cell: (m) => (
         <>
-          {tk(`ui.stockOrigin_${m.origin}`)}
-          {m.originId && m.origin === "consumption" && <span className="block text-xs text-tinta-2">{t("ui.costFromRecord")}</span>}
+          {tk(`ui.stock.origin_${m.origin}`)}
+          {m.originId && m.origin === "consumption" && <span className="block text-xs text-tinta-2">{t("ui.cost.fromRecord")}</span>}
         </>
       ),
     },
     {
       id: "product",
-      header: t("ui.stockProduct"),
+      header: t("ui.stock.product"),
       cell: (m) => (
         <>
           {prod(m.productId)?.name}
@@ -62,7 +62,7 @@ export function moveColumns(lk: StockLookup, moveRows: StockMove[], onRemove: (m
     },
     {
       id: "qty",
-      header: t("ui.stockQty"),
+      header: t("ui.stock.qty"),
       align: "right",
       cell: (m) => (
         <span className={m.qty < 0 ? "" : "text-accion"}>
@@ -75,7 +75,7 @@ export function moveColumns(lk: StockLookup, moveRows: StockMove[], onRemove: (m
       ? [
           {
             id: "value",
-            header: t("ui.stockValue"),
+            header: t("ui.stock.value"),
             align: "right",
             hideBelow: "md",
             cell: (m: StockMove) =>
@@ -92,7 +92,7 @@ export function moveColumns(lk: StockLookup, moveRows: StockMove[], onRemove: (m
       : []),
     {
       id: "menu",
-      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      header: <span className="sr-only">{t("ui.row.actionsHeader")}</span>,
       align: "right",
       width: "3rem",
       cell: (m) =>
@@ -108,15 +108,15 @@ export function moveColumns(lk: StockLookup, moveRows: StockMove[], onRemove: (m
 export function expiringColumns(lk: StockLookup): Column<ExpiringLot>[] {
   const { prod, unit } = lk;
   return [
-    { id: "product", header: t("ui.stockProduct"), cell: (l) => prod(l.productId)?.name },
-    { id: "lot", header: t("ui.stockLot"), hideBelow: "sm", cell: (l) => <span className="text-tinta-2">{l.lot ?? ""}</span> },
-    { id: "qty", header: t("ui.stockQty"), align: "right", hideBelow: "sm", cell: (l) => fmtQty(l.remaining, unit(l.productId)) },
-    { id: "date", header: t("ui.stockExpires"), align: "right", cell: (l) => fmtIsoDate(l.expiresOn) },
+    { id: "product", header: t("ui.stock.product"), cell: (l) => prod(l.productId)?.name },
+    { id: "lot", header: t("ui.stock.lot"), hideBelow: "sm", cell: (l) => <span className="text-tinta-2">{l.lot ?? ""}</span> },
+    { id: "qty", header: t("ui.stock.qty"), align: "right", hideBelow: "sm", cell: (l) => fmtQty(l.remaining, unit(l.productId)) },
+    { id: "date", header: t("ui.stock.expires"), align: "right", cell: (l) => fmtIsoDate(l.expiresOn) },
     {
       id: "left",
-      header: t("ui.expiringTitle"),
+      header: t("ui.expiring.title"),
       align: "right",
-      cell: (l) => <span className={l.daysLeft < 0 ? "text-peligro" : "text-trigo-texto"}>{l.daysLeft < 0 ? t("ui.expiringExpired", { n: -l.daysLeft }) : t("ui.expiringIn", { n: l.daysLeft })}</span>,
+      cell: (l) => <span className={l.daysLeft < 0 ? "text-peligro" : "text-trigo-texto"}>{l.daysLeft < 0 ? t("ui.expiring.expired", { n: -l.daysLeft }) : t("ui.expiring.in", { n: l.daysLeft })}</span>,
     },
     ];
 }

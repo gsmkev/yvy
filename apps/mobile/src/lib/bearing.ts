@@ -33,5 +33,5 @@ export function formatDistance(m: number): string {
     const step = m < 100 ? 1 : 10;
     return `${Math.round(m / step) * step} m`;
   }
-  return `${(m / 1000).toLocaleString("es-PY", { maximumFractionDigits: 1 })} km`;
+  return (m / 1000).toLocaleString("es-PY", { maximumFractionDigits: 1 }) + " km";
 }

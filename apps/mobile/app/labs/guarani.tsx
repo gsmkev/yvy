@@ -7,20 +7,20 @@ import { Text } from "../../src/ui/kit";
 export default function Guarani() {
   return (
     <Lab
-      title={t("app.labsTranslateTitle")}
-      intro={t("app.labsTranslateIntro")}
+      title={t("app.labs.translateTitle")}
+      intro={t("app.labs.translateIntro")}
       result={
         <>
-          <Text style={[T.small, { marginTop: 8 }]}>{t("app.labsTranslateFrom")}</Text>
+          <Text style={[T.small, { marginTop: 8 }]}>{t("app.labs.translateFrom")}</Text>
           <View style={st.quote}>
-            <Text style={T.body}>{t("app.labsTranslateFromText")}</Text>
+            <Text style={T.body}>{t("app.labs.translateFromText")}</Text>
           </View>
-          <Text style={[T.small, { marginTop: 24 }]}>{t("app.labsTranslateTo")}</Text>
+          <Text style={[T.small, { marginTop: 24 }]}>{t("app.labs.translateTo")}</Text>
           <View style={st.quote}>
-            <Text style={T.body}>{t("app.labsTranslateToText")}</Text>
+            <Text style={T.body}>{t("app.labs.translateToText")}</Text>
           </View>
-          <Text style={[T.body, { marginTop: 24 }]}>{t("app.labsTranslateWarn")}</Text>
-          <Text style={[T.small, { marginTop: 8 }]}>{t("app.labsTranslateNext")}</Text>
+          <Text style={[T.body, { marginTop: 24 }]}>{t("app.labs.translateWarn")}</Text>
+          <Text style={[T.small, { marginTop: 8 }]}>{t("app.labs.translateNext")}</Text>
         </>
       }
     />

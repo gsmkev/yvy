@@ -22,27 +22,27 @@ export function OrdersPanel() {
   const groups = useMemo(() => groupOrders(q.data ?? []), [q.data]);
   const farmName = (id: string) => farms.data?.find((f) => f.id === id)?.name ?? "";
   const hasCost = groups.some((g) => g.costPyg !== undefined);
-  const ha = (n: number | null) => (n !== null ? `${n.toLocaleString("es-PY", { maximumFractionDigits: 1 })} ha` : "");
+  const ha = (n: number | null) => (n !== null ? n.toLocaleString("es-PY", { maximumFractionDigits: 1 }) + " ha" : "");
   const newBtn = (
     <Button variant="primary" onClick={() => setCreating(true)}>
-      {t("ui.orderNew")}
+      {t("ui.order.new")}
     </Button>
   );
   const columns: Column<OrderGroup>[] = [
     {
       id: "labor",
-      header: t("ui.orderLabor"),
+      header: t("ui.order.labor"),
       cell: (g) => (
         <>
-          {tk(`ui.orderLabor_${g.labor}`)}
+          {tk(`ui.order.labor_${g.labor}`)}
           <span className="block text-meta font-normal text-tinta-2 lg:hidden">{plotsLabel(g.plotNames)}</span>
         </>
       ),
     },
-    { id: "plots", header: t("ui.orderPlots"), hideBelow: "lg", cell: (g) => plotsLabel(g.plotNames) },
+    { id: "plots", header: t("ui.order.plots"), hideBelow: "lg", cell: (g) => plotsLabel(g.plotNames) },
     {
       id: "executor",
-      header: t("ui.orderExecutor"),
+      header: t("ui.order.executor"),
       hideBelow: "md",
       cell: (g) =>
         g.contractorName ? (
@@ -54,27 +54,27 @@ export function OrdersPanel() {
           g.assigneeName
         ),
     },
-    { id: "machine", header: t("ui.orderMachine"), hideBelow: "lg", cell: (g) => g.machine ?? "" },
-    { id: "products", header: t("ui.orderProducts"), hideBelow: "lg", cell: (g) => productsLabel(g.order) },
-    { id: "due", header: t("ui.orderDue"), cell: (g) => <span className="whitespace-nowrap">{fmtIsoDate(g.dueDate)}</span> },
+    { id: "machine", header: t("ui.order.machine"), hideBelow: "lg", cell: (g) => g.machine ?? "" },
+    { id: "products", header: t("ui.order.products"), hideBelow: "lg", cell: (g) => productsLabel(g.order) },
+    { id: "due", header: t("ui.order.due"), cell: (g) => <span className="whitespace-nowrap">{fmtIsoDate(g.dueDate)}</span> },
     {
       id: "status",
-      header: t("ui.orderStatus"),
+      header: t("ui.order.status"),
       hideBelow: "sm",
-      cell: (g) => (g.status === "open" && g.done > 0 ? t("ui.orderProgress", { done: g.done, total: g.rows.length }) : tk(`ui.orderStatus_${g.status}`)),
+      cell: (g) => (g.status === "open" && g.done > 0 ? t("ui.order.progress", { done: g.done, total: g.rows.length }) : tk(`ui.order.status_${g.status}`)),
     },
-    { id: "planned", header: t("ui.orderPlanned"), align: "right", hideBelow: "md", cell: (g) => ha(g.plannedHa) },
-    { id: "actual", header: t("ui.orderActual"), align: "right", hideBelow: "lg", cell: (g) => ha(g.actualHa) },
+    { id: "planned", header: t("ui.order.planned"), align: "right", hideBelow: "md", cell: (g) => ha(g.plannedHa) },
+    { id: "actual", header: t("ui.order.actual"), align: "right", hideBelow: "lg", cell: (g) => ha(g.actualHa) },
     ...(hasCost
-      ? [{ id: "cost", header: t("ui.orderCost"), align: "right" as const, hideBelow: "lg" as const, cell: (g: OrderGroup) => (g.done > 0 && g.costPyg !== undefined ? fmtGs(g.costPyg) : "") }]
+      ? [{ id: "cost", header: t("ui.order.cost"), align: "right" as const, hideBelow: "lg" as const, cell: (g: OrderGroup) => (g.done > 0 && g.costPyg !== undefined ? fmtGs(g.costPyg) : "") }]
       : []),
     {
       id: "_print",
-      header: <span className="sr-only">{t("ui.orderPrint")}</span>,
+      header: <span className="sr-only">{t("ui.order.print")}</span>,
       align: "right",
       cell: (g) => (
         <Button variant="quiet" size="sm" onClick={() => printOrder(g, farmName(g.farmId))}>
-          {t("ui.orderPrint")}
+          {t("ui.order.print")}
         </Button>
       ),
     },
@@ -85,13 +85,13 @@ export function OrdersPanel() {
       {q.isLoading && <Spinner />}
       {q.error ? <ErrorBox error={q.error} /> : null}
       {q.data && q.data.length === 0 && (
-        <EmptyState title={t("ui.orderEmptyTitle")} action={newBtn}>
-          {t("ui.orderEmptyHint")}
+        <EmptyState title={t("ui.order.emptyTitle")} action={newBtn}>
+          {t("ui.order.emptyHint")}
         </EmptyState>
       )}
       {groups.length > 0 && (
         <ExportableTable name="ordenes-de-trabajo">
-          <DataTable columns={columns} rows={groups} rowKey={(g) => g.key} caption={t("ui.adminSection_orders")} />
+          <DataTable columns={columns} rows={groups} rowKey={(g) => g.key} caption={t("ui.admin.section_orders")} />
         </ExportableTable>
       )}
       {creating && <OrderModal onClose={() => setCreating(false)} />}
@@ -131,7 +131,7 @@ function OrderModal({ onClose }: { onClose: () => void }) {
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   const save = useMutation({
     mutationFn: async () => {
-      if (!plotIds.length) throw new Error(t("ui.orderNoPlots"));
+      if (!plotIds.length) throw new Error(t("ui.order.noPlots"));
       const catalog = products.data ?? [];
       const order = {
         labor: f.labor,
@@ -147,13 +147,13 @@ function OrderModal({ onClose }: { onClose: () => void }) {
       return post("/org/erp/work-orders", { farmId, plotIds, assigneeId: f.assigneeId || members.data?.[0]?.userId, dueDate: f.dueDate, order });
     },
     onSuccess: () => {
-      toast(t("ui.erpSaved"));
+      toast(t("ui.erp.saved"));
       qc.invalidateQueries({ queryKey: ["erp"] });
       qc.invalidateQueries({ queryKey: ["tasks"] });
       onClose();
     },
   });
-  const none = { value: "", label: t("ui.orderNoneOpt") };
+  const none = { value: "", label: t("ui.order.noneOpt") };
   const inputs = f.labor === "spraying" || f.labor === "fertilizing";
   const addDose = () => {
     const p = products.data?.[0];
@@ -161,15 +161,15 @@ function OrderModal({ onClose }: { onClose: () => void }) {
   };
   const upd = (i: number, patch: Partial<Dose>) => setDoses(doses.map((d, k) => (k === i ? { ...d, ...patch } : d)));
   return (
-    <Modal title={t("ui.orderNew")} onClose={onClose}>
+    <Modal title={t("ui.order.new")} onClose={onClose}>
       <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
-        <Field label={t("ui.orderLabor")}>
-          <Select value={f.labor} onChange={set("labor")} options={ORDER_LABORS.map((x) => ({ value: x, label: tk(`ui.orderLabor_${x}`) }))} />
+        <Field label={t("ui.order.labor")}>
+          <Select value={f.labor} onChange={set("labor")} options={ORDER_LABORS.map((x) => ({ value: x, label: tk(`ui.order.labor_${x}`) }))} />
         </Field>
-        <Field label={t("ui.orderDue")}>
+        <Field label={t("ui.order.due")}>
           <Input type="date" required value={f.dueDate} onChange={set("dueDate")} />
         </Field>
-        <Field label={t("ui.costFarm")}>
+        <Field label={t("ui.cost.farm")}>
           <Select
             value={farmId}
             onChange={(e) => {
@@ -179,11 +179,11 @@ function OrderModal({ onClose }: { onClose: () => void }) {
             options={(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))}
           />
         </Field>
-        <Field label={t("ui.orderAssignee")}>
+        <Field label={t("ui.order.assignee")}>
           <Select value={f.assigneeId || (members.data?.[0]?.userId ?? "")} onChange={set("assigneeId")} options={(members.data ?? []).map((m) => ({ value: m.userId, label: m.fullName }))} />
         </Field>
         <div className="col-span-2">
-          <Field label={t("ui.orderPlots")}>
+          <Field label={t("ui.order.plots")}>
             <div className="flex max-h-40 flex-wrap gap-x-4 gap-y-1 overflow-auto rounded-md border border-linea bg-papel p-2">
               {(farm.data?.plots ?? []).map((p) => (
                 <label key={p.id} className="flex cursor-pointer items-center gap-1.5 text-sm">
@@ -194,19 +194,19 @@ function OrderModal({ onClose }: { onClose: () => void }) {
             </div>
           </Field>
         </div>
-        <Field label={t("ui.orderArea")} hint={t("ui.orderAreaHint")}>
+        <Field label={t("ui.order.area")} hint={t("ui.order.areaHint")}>
           <Input type="number" min={0} step="any" value={f.areaHa} onChange={set("areaHa")} />
         </Field>
-        <Field label={t("ui.orderMachine")}>
+        <Field label={t("ui.order.machine")}>
           <Select value={f.machineId} onChange={set("machineId")} options={[none, ...(machines.data ?? []).map((m) => ({ value: m.id, label: m.name }))]} />
         </Field>
         <div className="col-span-2">
-          <Field label={t("ui.orderContractor")}>
+          <Field label={t("ui.order.contractor")}>
             <Select value={f.contractorId} onChange={set("contractorId")} options={[none, ...(contractors.data ?? []).map((c) => ({ value: c.id, label: c.name }))]} />
           </Field>
         </div>
         <div className="col-span-2">
-          <Field label={t("ui.season")}>
+          <Field label={t("ui.common.season")}>
             <Select
               value={f.seasonId}
               onChange={set("seasonId")}
@@ -216,7 +216,7 @@ function OrderModal({ onClose }: { onClose: () => void }) {
         </div>
         {inputs && (
           <div className="col-span-2 flex flex-col gap-2">
-            <span className="text-sm font-medium">{t("ui.orderProducts")}</span>
+            <span className="text-sm font-medium">{t("ui.order.products")}</span>
             {doses.map((d, i) => (
               <div key={i} className="grid grid-cols-[1fr_6rem_7rem] gap-2">
                 <Select
@@ -224,7 +224,7 @@ function OrderModal({ onClose }: { onClose: () => void }) {
                   onChange={(e) => upd(i, { productId: e.target.value })}
                   options={(products.data ?? []).map((p) => ({ value: p.id, label: p.name }))}
                 />
-                <Input type="number" min={0} step="any" aria-label={t("ui.orderDoseUnit")} value={d.dose} onChange={(e) => upd(i, { dose: e.target.value })} />
+                <Input type="number" min={0} step="any" aria-label={t("ui.order.doseUnit")} value={d.dose} onChange={(e) => upd(i, { dose: e.target.value })} />
                 <Select
                   value={d.unit}
                   onChange={(e) => upd(i, { unit: e.target.value })}
@@ -233,7 +233,7 @@ function OrderModal({ onClose }: { onClose: () => void }) {
               </div>
             ))}
             <div>
-              <Button onClick={addDose}>{t("ui.orderProductAdd")}</Button>
+              <Button onClick={addDose}>{t("ui.order.productAdd")}</Button>
             </div>
           </div>
         )}

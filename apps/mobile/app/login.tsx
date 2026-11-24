@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
-import { t } from "@yvy/shared";
+import { t, ATTRIBUTION } from "@yvy/shared";
 import campo from "../assets/campo-itapua.webp";
 import { markDemo } from "../src/lib/demo";
 import { noteOrganizationEntry } from "../src/lib/org";
@@ -51,18 +51,18 @@ export default function Login() {
     <ImageBackground source={campo} resizeMode="cover" style={s.root}>
       <View style={s.shade} />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={s.content}>
-        <Text style={s.brand}>Yvy</Text>
-        <Text style={s.tagline}>{t("ui.tagline")}</Text>
+        <Text style={s.brand}>{t("ui.app.name")}</Text>
+        <Text style={s.tagline}>{t("ui.common.tagline")}</Text>
         <View style={s.card}>
           {mode === "choose" && (
             <>
-              <Button big title={t("app.loginQr")} onPress={() => router.push("/scan")} />
-              <Button kind="secondary" title={t("app.loginPhone")} onPress={() => setMode("phone")} style={{ marginTop: 10 }} />
-              <Button kind="secondary" title={t("app.loginEmail")} onPress={() => setMode("email")} style={{ marginTop: 10 }} />
+              <Button big title={t("app.login.qr")} onPress={() => router.push("/scan")} />
+              <Button kind="secondary" title={t("app.login.phone")} onPress={() => setMode("phone")} style={{ marginTop: 10 }} />
+              <Button kind="secondary" title={t("app.login.email")} onPress={() => setMode("email")} style={{ marginTop: 10 }} />
               {demoOn && (
                 <Button
                   kind="text"
-                  title={t("office.demoSeeExample")}
+                  title={t("office.demo.seeExample")}
                   loading={busy}
                   style={{ marginTop: 6 }}
                   onPress={() =>
@@ -79,7 +79,7 @@ export default function Login() {
           )}
           {mode === "phone" && (
             <>
-              <Text style={T.bodyMedium}>{t("app.loginPhoneLabel")}</Text>
+              <Text style={T.bodyMedium}>{t("app.login.phoneLabel")}</Text>
               <TextInput
                 style={s.input}
                 value={phone}
@@ -87,21 +87,21 @@ export default function Login() {
                 keyboardType="phone-pad"
                 autoComplete="tel"
                 autoFocus
-                accessibilityLabel={t("app.loginPhoneLabel")}
+                accessibilityLabel={t("app.login.phoneLabel")}
               />
-              <Text style={T.bodyMedium}>{t("app.loginPinLabel")}</Text>
+              <Text style={T.bodyMedium}>{t("app.login.pinLabel")}</Text>
               <TextInput
                 style={[s.input, s.code]}
                 value={pin}
                 onChangeText={(v) => setPin(v.replace(/\D/g, "").slice(0, 6))}
                 keyboardType="number-pad"
                 secureTextEntry
-                accessibilityLabel={t("app.loginPinLabel")}
+                accessibilityLabel={t("app.login.pinLabel")}
               />
-              <Text style={[T.small, { marginBottom: 12 }]}>{t("app.loginPinHint")}</Text>
+              <Text style={[T.small, { marginBottom: 12 }]}>{t("app.login.pinHint")}</Text>
               <Button
                 big
-                title={t("app.loginPhoneSubmit")}
+                title={t("app.login.phoneSubmit")}
                 loading={busy}
                 disabled={phone.replace(/\D/g, "").length < 6 || pin.length !== 6}
                 onPress={() =>
@@ -115,12 +115,12 @@ export default function Login() {
                   })
                 }
               />
-              <Button kind="text" title={t("ui.cancel")} onPress={() => (setPin(""), setMode("choose"))} style={{ marginTop: 6 }} />
+              <Button kind="text" title={t("ui.common.cancel")} onPress={() => (setPin(""), setMode("choose"))} style={{ marginTop: 6 }} />
             </>
           )}
           {mode === "email" && (
             <>
-              <Text style={T.bodyMedium}>{t("auth.emailLabel")}</Text>
+              <Text style={T.bodyMedium}>{t("auth.email.label")}</Text>
               <TextInput
                 style={s.input}
                 value={email}
@@ -129,11 +129,11 @@ export default function Login() {
                 keyboardType="email-address"
                 autoComplete="email"
                 autoFocus
-                accessibilityLabel={t("auth.emailLabel")}
+                accessibilityLabel={t("auth.email.label")}
               />
               <Button
                 big
-                title={t("auth.sendCode")}
+                title={t("auth.common.sendCode")}
                 loading={busy}
                 disabled={!email.includes("@")}
                 onPress={() =>
@@ -143,12 +143,12 @@ export default function Login() {
                   })
                 }
               />
-              <Button kind="text" title={t("ui.cancel")} onPress={() => setMode("choose")} style={{ marginTop: 6 }} />
+              <Button kind="text" title={t("ui.common.cancel")} onPress={() => setMode("choose")} style={{ marginTop: 6 }} />
             </>
           )}
           {mode === "code" && (
             <>
-              <Text style={T.small}>{t("auth.codeSent", { email })}</Text>
+              <Text style={T.small}>{t("auth.code.sent", { email })}</Text>
               <TextInput
                 style={[s.input, s.code]}
                 value={code}
@@ -156,11 +156,11 @@ export default function Login() {
                 keyboardType="number-pad"
                 autoComplete="one-time-code"
                 autoFocus
-                accessibilityLabel={t("auth.codeLabel")}
+                accessibilityLabel={t("auth.code.label")}
               />
               <Button
                 big
-                title={t("ui.verify")}
+                title={t("ui.common.verify")}
                 loading={busy}
                 disabled={code.length !== 6}
                 onPress={() =>
@@ -179,12 +179,12 @@ export default function Login() {
                   })
                 }
               />
-              <Button kind="text" title={t("ui.resend")} onPress={() => setMode("email")} style={{ marginTop: 6 }} />
+              <Button kind="text" title={t("ui.common.resend")} onPress={() => setMode("email")} style={{ marginTop: 6 }} />
             </>
           )}
           {mode === "totp" && (
             <>
-              <Text style={T.small}>{t("ui.totpLoginHelp")}</Text>
+              <Text style={T.small}>{t("ui.totp.loginHelp")}</Text>
               <TextInput
                 style={[s.input, s.code]}
                 value={totpCode}
@@ -192,11 +192,11 @@ export default function Login() {
                 autoCapitalize="characters"
                 autoComplete="one-time-code"
                 autoFocus
-                accessibilityLabel={t("ui.totpLoginLabel")}
+                accessibilityLabel={t("ui.totp.loginLabel")}
               />
               <Button
                 big
-                title={t("ui.verify")}
+                title={t("ui.common.verify")}
                 loading={busy}
                 disabled={totpCode.length < 6}
                 onPress={() =>
@@ -210,12 +210,12 @@ export default function Login() {
                   })
                 }
               />
-              <Button kind="text" title={t("ui.cancel")} onPress={() => (setTotpCode(""), setMode("choose"))} style={{ marginTop: 6 }} />
+              <Button kind="text" title={t("ui.common.cancel")} onPress={() => (setTotpCode(""), setMode("choose"))} style={{ marginTop: 6 }} />
             </>
           )}
           {error && <Text style={[T.small, { color: C.peligro, marginTop: 10 }]}>{error}</Text>}
         </View>
-        <Text style={s.credit}>Itapúa · Sentinel-2 · {t("attribution.copernicus")}</Text>
+        <Text style={s.credit}>{t("ui.login.credit", { source: t(ATTRIBUTION.copernicus) })}</Text>
       </KeyboardAvoidingView>
     </ImageBackground>
   );

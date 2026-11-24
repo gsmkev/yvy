@@ -67,16 +67,16 @@ export function PrescriptionModal({
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
-      toast(t("ui.toastPrescriptionSaved", { n: picked.length }));
+      toast(t("ui.toast.prescriptionSaved", { n: picked.length }));
       onClose();
     },
   });
 
   return (
-    <Modal title={t("ui.prescriptionNew")} onClose={onClose}>
+    <Modal title={t("ui.prescription.new")} onClose={onClose}>
       <Form className="flex flex-col gap-4" onSubmit={() => { if (ready) create.mutate(); }}>
         <fieldset className="flex flex-col gap-1">
-          <legend className="mb-1 text-sm font-medium">{t("ui.prescriptionPlots")}</legend>
+          <legend className="mb-1 text-sm font-medium">{t("ui.prescription.plots")}</legend>
           <div className="max-h-40 overflow-auto border-y border-linea">
             {cropPlots.map((p) => (
               <label key={p.id} className="flex cursor-pointer items-center gap-2 border-b border-linea py-1.5 text-sm last:border-b-0">
@@ -92,14 +92,14 @@ export function PrescriptionModal({
         </fieldset>
 
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium">{t("ui.prescriptionProducts")}</span>
-          {catalog.length === 0 && <p className="text-sm text-tinta-2">{t("ui.prescriptionNoProducts")}</p>}
+          <span className="text-sm font-medium">{t("ui.prescription.products")}</span>
+          {catalog.length === 0 && <p className="text-sm text-tinta-2">{t("ui.prescription.noProducts")}</p>}
           {lines.map((l, i) => {
             const base = catalog.find((p) => p.id === l.productId)?.unit ?? "l";
             return (
               <div key={i} className="grid grid-cols-[1fr_90px_100px_auto] items-center gap-2">
                 <Select
-                  aria-label={t("ui.productName")}
+                  aria-label={t("ui.product.name")}
                   value={l.productId}
                   onChange={(e) => {
                     const p = catalog.find((x) => x.id === e.target.value);
@@ -108,36 +108,36 @@ export function PrescriptionModal({
                   options={catalog.map((p) => ({ value: p.id, label: p.name }))}
                 />
                 <Input
-                  aria-label={t("ui.prescriptionDose")}
+                  aria-label={t("ui.prescription.dose")}
                   inputMode="decimal"
                   value={l.dose}
                   onChange={(e) => patchLine(i, { dose: e.target.value })}
                 />
                 <Select
-                  aria-label={t("ui.productUnit")}
+                  aria-label={t("ui.product.unit")}
                   value={l.unit}
                   onChange={(e) => patchLine(i, { unit: e.target.value as DoseUnit })}
-                  options={DOSE_UNITS_FOR[base].map((u) => ({ value: u, label: tk(`fields.doseUnit_${u}`) }))}
+                  options={DOSE_UNITS_FOR[base].map((u) => ({ value: u, label: tk(`fields.dose.unit_${u}`) }))}
                 />
                 <button
                   type="button"
                   className="cursor-pointer text-sm text-tinta-2 underline-offset-4 hover:text-peligro hover:underline"
                   onClick={() => setLines(lines.filter((_, j) => j !== i))}
                 >
-                  {t("ui.delete")}
+                  {t("ui.common.delete")}
                 </button>
               </div>
             );
           })}
           <div>
             <Button disabled={catalog.length === 0} onClick={addLine}>
-              {t("ui.prescriptionAddProduct")}
+              {t("ui.prescription.addProduct")}
             </Button>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label={t("ui.assignee")}>
+          <Field label={t("ui.common.assignee")}>
             <Select
               required
               value={f.assigneeId}
@@ -148,13 +148,13 @@ export function PrescriptionModal({
               ]}
             />
           </Field>
-          <Field label={t("ui.dueDate")}>
+          <Field label={t("ui.due.date")}>
             <Input type="date" required value={f.dueDate} onChange={set("dueDate")} />
           </Field>
-          <Field label={t("fields.volumeLHa")}>
+          <Field label={t("fields.common.volumeLHa")}>
             <Input inputMode="decimal" value={f.volumeLHa} onChange={set("volumeLHa")} />
           </Field>
-          <Field label={t("ui.season")}>
+          <Field label={t("ui.common.season")}>
             <Select
               value={f.seasonId}
               onChange={set("seasonId")}
@@ -162,13 +162,13 @@ export function PrescriptionModal({
             />
           </Field>
         </div>
-        <Field label={t("app.note")}>
+        <Field label={t("app.common.note")}>
           <Input value={f.note} onChange={set("note")} maxLength={2000} />
         </Field>
-        <p className="text-xs text-tinta-2">{t("ui.prescriptionHint")}</p>
+        <p className="text-xs text-tinta-2">{t("ui.prescription.hint")}</p>
         {create.error && <ErrorBox error={create.error} />}
         <Button type="submit" variant="primary" disabled={!ready || create.isPending}>
-          {t("ui.prescriptionCreate")}
+          {t("ui.prescription.create")}
         </Button>
       </Form>
     </Modal>

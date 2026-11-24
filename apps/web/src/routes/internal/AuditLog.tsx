@@ -19,11 +19,11 @@ export function AuditLog() {
   if (!q.data?.length) return null;
   return (
     <section>
-      <SectionHead title={t("ui.internalAudit")} />
+      <SectionHead title={t("ui.internal.audit")} />
       <ul className="mt-2 flex flex-col gap-1 text-sm">
         {q.data.slice(0, 20).map((r) => (
           <li key={r.id} className="num">
-            {fmtDateTime(r.createdAt)} · {r.actor ?? "—"} · {tk(`ui.internalAudit_${r.action}`)} · {r.organizationId ?? ""}
+            {fmtDateTime(r.createdAt)} · {r.actor ?? "—"} · {tk(`ui.internal.audit_${r.action}`)} · {r.organizationId ?? ""}
           </li>
         ))}
       </ul>

@@ -44,16 +44,16 @@ export function YieldVigorSection({ plot }: { plot: Plot }) {
     : "";
   return (
     <div className="border-t border-linea pt-4">
-      <h3 className="eyebrow mb-1">{t("ui.yieldVigorTitle")}</h3>
+      <h3 className="eyebrow mb-1">{t("ui.yield.vigorTitle")}</h3>
       {zones.length === 0 ? (
-        <p className="text-sm text-tinta-2">{t("ui.yieldVigorNoZones")}</p>
+        <p className="text-sm text-tinta-2">{t("ui.yield.vigorNoZones")}</p>
       ) : !map ? (
-        <p className="text-sm text-tinta-2">{t("ui.yieldVigorNoYield")}</p>
+        <p className="text-sm text-tinta-2">{t("ui.yield.vigorNoYield")}</p>
       ) : (
         <div className="flex flex-col gap-3 text-sm">
           {list.length > 1 && (
             <label className="flex flex-col gap-1">
-              <span className="font-medium">{t("ui.yieldVigorSeason")}</span>
+              <span className="font-medium">{t("ui.yield.vigorSeason")}</span>
               <SelectBox><select
                 className="appearance-none pr-8 h-9 rounded-md border border-linea bg-papel px-2"
                 value={map.id}
@@ -61,7 +61,7 @@ export function YieldVigorSection({ plot }: { plot: Plot }) {
               >
                 {list.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {m.seasonName ?? t("ui.yieldVigorNoSeason")} · {m.fileName}
+                    {m.seasonName ?? t("ui.yield.vigorNoSeason")} · {m.fileName}
                   </option>
                 ))}
               </select></SelectBox>
@@ -71,26 +71,26 @@ export function YieldVigorSection({ plot }: { plot: Plot }) {
             <table className="num w-full text-left">
               <thead className="text-xs text-tinta-2">
                 <tr>
-                  <th className="py-1 font-medium">{t("ui.yieldVigorZone")}</th>
-                  <th className="py-1 font-medium">{t("ui.yieldVigorNdvi")}</th>
-                  <th className="py-1 font-medium">{t("ui.yieldVigorYield")}</th>
+                  <th className="py-1 font-medium">{t("ui.yield.vigorZone")}</th>
+                  <th className="py-1 font-medium">{t("ui.yield.vigorNdvi")}</th>
+                  <th className="py-1 font-medium">{t("ui.yield.vigorYield")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-linea border-y border-linea">
                 {rows.map((r) => (
                   <tr key={r.zone}>
                     <td className="py-2">
-                      {tk(`ui.zonesLevel_${r.zone}`)}
+                      {tk(`ui.zones.level_${r.zone}`)}
                       <span className="block text-xs text-tinta-2">{fmtHa(r.areaHa)}</span>
                     </td>
                     <td className="py-2">{fmtNdvi(r.ndvi)}</td>
                     <td className="py-2">
                       {r.meanTHa === null ? (
-                        <span className="text-tinta-2">{t("ui.yieldVigorNoCells")}</span>
+                        <span className="text-tinta-2">{t("ui.yield.vigorNoCells")}</span>
                       ) : (
                         <>
                           {t1(r.meanTHa)} t/ha
-                          <span className="block text-xs text-tinta-2">{t("ui.yieldVigorCells", { n: r.nCells })}</span>
+                          <span className="block text-xs text-tinta-2">{t("ui.yield.vigorCells", { n: r.nCells })}</span>
                         </>
                       )}
                     </td>
@@ -101,11 +101,11 @@ export function YieldVigorSection({ plot }: { plot: Plot }) {
           </ExportableTable>
           <p className={reading.kind === "inverse" ? "font-medium text-peligro" : ""}>
             {reading.kind === "insufficient"
-              ? t("ui.yieldVigorInsufficient", { min: MIN_CELLS_PER_ZONE })
-              : tk(`ui.yieldVigor_${reading.kind}`, { pct: Math.abs(Math.round(reading.diffPct)) })}
+              ? t("ui.yield.vigorInsufficient", { min: MIN_CELLS_PER_ZONE })
+              : tk(`ui.yield.vigor_${reading.kind}`, { pct: Math.abs(Math.round(reading.diffPct)) })}
           </p>
-          {harvest && <p className="text-tinta-2">{t("ui.yieldVigorHarvest", { tons: t1(harvest.tons), tha: t1(harvest.tHa) })}</p>}
-          <p className="text-xs text-tinta-2">{t("ui.yieldVigorNote", { seasons: seasonYears })}</p>
+          {harvest && <p className="text-tinta-2">{t("ui.yield.vigorHarvest", { tons: t1(harvest.tons), tha: t1(harvest.tHa) })}</p>}
+          <p className="text-xs text-tinta-2">{t("ui.yield.vigorNote", { seasons: seasonYears })}</p>
         </div>
       )}
     </div>

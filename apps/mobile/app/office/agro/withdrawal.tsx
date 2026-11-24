@@ -21,14 +21,14 @@ export default function Withdrawal() {
   const { farms, farm, setFarmId } = useFarmPick();
   const q = useOnline<Resp>(farm ? `/org/farms/${farm.id}/withdrawal` : null);
   return (
-    <FarmFrame title={t("ui.withdrawalTitle")} subtitle={t("ui.withdrawalIntro")} farms={farms} farm={farm} setFarmId={setFarmId} query={q}>
-      <OnlineState query={q} isEmpty={(d) => d.restrictions.length + d.violations.length + d.unknown.length === 0} empty={{ title: t("office.withdrawalEmpty"), hint: t("office.withdrawalEmptyHint") }}>
+    <FarmFrame title={t("ui.withdrawal.title")} subtitle={t("ui.withdrawal.intro")} farms={farms} farm={farm} setFarmId={setFarmId} query={q}>
+      <OnlineState query={q} isEmpty={(d) => d.restrictions.length + d.violations.length + d.unknown.length === 0} empty={{ title: t("office.withdrawal.empty"), hint: t("office.withdrawal.emptyHint") }}>
         {(d) => (
           <View>
             {(d.restrictions.length > 0 || d.violations.length > 0) && <StatRow
               items={[
-                ...(d.restrictions.length > 0 ? [{ label: t("ui.withdrawalTitle"), value: d.restrictions.length, tone: "danger" as const }] : []),
-                ...(d.violations.length > 0 ? [{ label: t("ui.withdrawalViolations"), value: d.violations.length, tone: "danger" as const }] : []),
+                ...(d.restrictions.length > 0 ? [{ label: t("ui.withdrawal.title"), value: d.restrictions.length, tone: "danger" as const }] : []),
+                ...(d.violations.length > 0 ? [{ label: t("ui.withdrawal.violations"), value: d.violations.length, tone: "danger" as const }] : []),
               ]}
             />}
             {d.restrictions.length > 0 && (
@@ -36,29 +36,29 @@ export default function Withdrawal() {
                 rows={d.restrictions}
                 keyOf={(r) => `${r.plotId}${r.product}${r.appliedOn}`}
                 title={(r) => r.plotName}
-                subtitle={(r) => `${t("ui.withdrawalApplied", { product: r.product, date: dmy(r.appliedOn) })}`}
+                subtitle={(r) => String(t("ui.withdrawal.applied", { product: r.product, date: dmy(r.appliedOn) }))}
                 right={(r) => (
                   <>
-                    <Text style={[T.smallMedium, { textAlign: "right", color: C.peligro }]}>{t("ui.withdrawalUntil", { date: dmy(r.safeFrom) })}</Text>
-                    <Text style={[T.small, { textAlign: "right" }]}>{t(r.daysLeft === 1 ? "ui.withdrawalDayOne" : "ui.withdrawalDays", { n: r.daysLeft })}</Text>
+                    <Text style={[T.smallMedium, { textAlign: "right", color: C.peligro }]}>{t("ui.withdrawal.until", { date: dmy(r.safeFrom) })}</Text>
+                    <Text style={[T.small, { textAlign: "right" }]}>{t(r.daysLeft === 1 ? "ui.withdrawal.dayOne" : "ui.withdrawal.days", { n: r.daysLeft })}</Text>
                   </>
                 )}
-                empty={{ title: t("office.withdrawalEmpty") }}
+                empty={{ title: t("office.withdrawal.empty") }}
               />
             )}
             {d.violations.length > 0 && (
               <>
-                <SectionHeader title={t("ui.withdrawalViolations")} />
+                <SectionHeader title={t("ui.withdrawal.violations")} />
                 {d.violations.map((v) => (
                   <Text key={`${v.plotId}${v.harvestedOn}${v.product}`} style={[T.body, { color: C.peligro, marginBottom: 8 }]}>
-                    {t("ui.withdrawalViolation", { plot: v.plotName, date: dmy(v.harvestedOn), product: v.product, safe: dmy(v.safeFrom) })}
+                    {t("ui.withdrawal.violation", { plot: v.plotName, date: dmy(v.harvestedOn), product: v.product, safe: dmy(v.safeFrom) })}
                   </Text>
                 ))}
               </>
             )}
             {d.unknown.length > 0 && (
               <>
-                <SectionHeader title={t("ui.withdrawalUnknown")} />
+                <SectionHeader title={t("ui.withdrawal.unknown")} />
                 <Text style={T.small}>{d.unknown.map((u) => `${u.product} (${u.plotName})`).join(", ")}</Text>
               </>
             )}

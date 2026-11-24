@@ -34,37 +34,37 @@ export function FarmHeader({
         titleAction={
           <ActionMenu
             icon="chevron"
-            label={t("ui.farmSwitch")}
+            label={t("ui.farm.switch")}
             items={[
-              (farms?.length ?? 0) > 1 && { label: t("ui.allFarms"), onSelect: () => navigate({ to: "/" }) },
+              (farms?.length ?? 0) > 1 && { label: t("ui.all.farms"), onSelect: () => navigate({ to: "/" }) },
               ...(farms ?? []).map((f) => ({
                 label: f.name,
                 disabled: f.id === farmId,
                 onSelect: () => navigate({ to: "/estancias/$farmId", params: { farmId: f.id }, search: {} }),
               })),
-              canEdit && { label: t("ui.newFarm"), onSelect: () => navigate({ to: "/estancias/nueva" }) },
+              canEdit && { label: t("ui.new.farm"), onSelect: () => navigate({ to: "/estancias/nueva" }) },
             ]}
           />
         }
         primary={
           canEdit && (
             <Button variant="primary" onClick={() => setMode(mode === "draw" ? "none" : "draw")}>
-              {t("ui.newPlot")}
+              {t("ui.new.plot")}
             </Button>
           )
         }
         menu={
           <>
             <ActionMenu
-              label={t("ui.moreActions")}
+              label={t("ui.common.moreActions")}
               items={[
-                canEdit && { label: t("ui.importShort"), onSelect: () => setMode("import") },
-                canEdit && { label: t("ui.addPoi"), onSelect: () => setMode(mode === "poi" ? "none" : "poi") },
+                canEdit && { label: t("ui.import.short"), onSelect: () => setMode("import") },
+                canEdit && { label: t("ui.add.poi"), onSelect: () => setMode(mode === "poi" ? "none" : "poi") },
                 canEdit && {
-                  label: t("ui.tabReport"),
+                  label: t("ui.tab.report"),
                   onSelect: () => navigate({ to: "/estancias/$farmId/parte", params: { farmId }, search: { desde: undefined, hasta: undefined } }),
                 },
-                { label: t("ui.print"), onSelect: onPrint },
+                { label: t("ui.common.print"), onSelect: onPrint },
               ]}
             />
           </>
@@ -74,10 +74,10 @@ export function FarmHeader({
         <p className="mt-1 text-sm text-tinta-2">{[d.farm.district, d.farm.department].filter(Boolean).join(", ")}</p>
       )}
       <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3">
-        <Stat label={t("ui.area")} value={fmtAreaValue(d.farm.areaHa)} unit={areaUnitLabel()} />
-        <Stat label={t("ui.plots")} value={d.plots.length} />
-        {cropHa > 0 && <Stat label={t("ui.crop")} value={fmtAreaValue(cropHa)} unit={areaUnitLabel()} />}
-        {pastureHa > 0 && <Stat label={t("ui.pasture")} value={fmtAreaValue(pastureHa)} unit={areaUnitLabel()} />}
+        <Stat label={t("ui.common.area")} value={fmtAreaValue(d.farm.areaHa)} unit={areaUnitLabel()} />
+        <Stat label={t("ui.common.plots")} value={d.plots.length} />
+        {cropHa > 0 && <Stat label={t("ui.common.crop")} value={fmtAreaValue(cropHa)} unit={areaUnitLabel()} />}
+        {pastureHa > 0 && <Stat label={t("ui.common.pasture")} value={fmtAreaValue(pastureHa)} unit={areaUnitLabel()} />}
       </div>
     </div>
   );

@@ -81,7 +81,7 @@ export function RowModal({
       return row ? patch(`/org/erp/${path}/${row.id}`, body) : post(`/org/erp/${path}`, body);
     },
     onSuccess: () => {
-      toast(t("ui.erpSaved"));
+      toast(t("ui.erp.saved"));
       qc.invalidateQueries({ queryKey: ["erp"] });
       onClose();
     },
@@ -154,7 +154,7 @@ export function MasterPanel<T extends Row>({
   const remove = useMutation({
     mutationFn: (r: T) => del(`/org/erp/${path}/${r.id}`),
     onSuccess: () => {
-      toast(t("ui.erpDeleted"));
+      toast(t("ui.erp.deleted"));
       setRemoving(null);
       qc.invalidateQueries({ queryKey: ["erp"] });
     },
@@ -168,7 +168,7 @@ export function MasterPanel<T extends Row>({
       ? [
           {
             id: "actions",
-            header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+            header: <span className="sr-only">{t("ui.row.actionsHeader")}</span>,
             align: "right",
             width: "3rem",
             cell: (r: T) => <RowMenu name={name(r)} onEdit={() => setEditing(r)} onDelete={() => setRemoving(r)} />,
@@ -194,7 +194,7 @@ export function MasterPanel<T extends Row>({
         ))}
       {rows.length === 0 ? (
         <EmptyState
-          title={empty?.title ?? t("ui.erpEmpty")}
+          title={empty?.title ?? t("ui.erp.empty")}
           action={empty && canEdit ? <Button variant="primary" onClick={() => setEditing("new")}>{newLabel}</Button> : undefined}
         >
           {empty?.body}
@@ -223,8 +223,8 @@ export function MasterPanel<T extends Row>({
       {removing && (
         <ConfirmModal
           title={name(removing)}
-          message={t("ui.erpDeleteConfirm", { name: name(removing) })}
-          confirmLabel={t("ui.delete")}
+          message={t("ui.erp.deleteConfirm", { name: name(removing) })}
+          confirmLabel={t("ui.common.delete")}
           pending={remove.isPending}
           error={remove.error}
           onConfirm={() => remove.mutate(removing)}

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { AuditList, type AuditEntryRow } from "../components/AuditList";
 import { Button, EmptyState, ErrorBox, FilterBar, Select, Spinner, Page } from "../components/ui";
-import { get, qs } from "../lib/api";
+import { get, withQs } from "../lib/api";
 import { t, tk } from "../lib/i18n";
 import { useMe } from "../lib/queries";
 
@@ -17,31 +17,33 @@ export function AuditPage() {
     enabled: me.data?.role === "owner",
     initialPageParam: undefined as number | undefined,
     queryFn: ({ pageParam }) =>
-      get<{ rows: AuditEntryRow[]; hasMore: boolean }>(`/org/audit${qs({ entity: entity || undefined, before: pageParam })}`),
+      get<{ rows: AuditEntryRow[]; hasMore: boolean }>(
+        withQs("/org/audit", { entity: entity || undefined, before: pageParam }),
+      ),
     getNextPageParam: (last) => (last.hasMore ? last.rows[last.rows.length - 1]?.createdAt : undefined),
   });
-  if (me.data && me.data.role !== "owner") return <div className="p-6">{t("ui.auditOwnerOnly")}</div>;
+  if (me.data && me.data.role !== "owner") return <div className="p-6">{t("ui.audit.ownerOnly")}</div>;
   const rows = q.data?.pages.flatMap((p) => p.rows) ?? [];
   return (
-    <Page width="data" title={t("ui.auditTitle")} back={{ to: "/equipo", label: t("ui.teamTitle") }}>
-      <p className="-mt-2 text-sm text-tinta-2">{t("ui.auditIntro")}</p>
+    <Page width="data" title={t("ui.audit.title")} back={{ to: "/equipo", label: t("ui.team.title") }}>
+      <p className="-mt-2 text-sm text-tinta-2">{t("ui.audit.intro")}</p>
       {(entity || rows.length > 0) && <FilterBar>
         <div className="w-56">
           <Select
-            aria-label={t("ui.auditFilter")}
+            aria-label={t("ui.audit.filter")}
             value={entity}
             onChange={(e) => setEntity(e.target.value)}
-            options={ENTITIES.map((e) => ({ value: e, label: e ? tk(`ui.auditEntity_${e}`) : t("ui.auditAll") }))}
+            options={ENTITIES.map((e) => ({ value: e, label: e ? tk(`ui.audit.entity_${e}`) : t("ui.audit.all") }))}
           />
         </div>
       </FilterBar>}
       {q.isPending && me.data?.role === "owner" && <Spinner />}
       {q.error && <ErrorBox error={q.error} />}
-      {q.data && !rows.length ? <EmptyState title={t("ui.auditEmpty")} /> : <AuditList rows={rows} />}
+      {q.data && !rows.length ? <EmptyState title={t("ui.audit.empty")} /> : <AuditList rows={rows} />}
       {q.hasNextPage && (
         <div>
           <Button onClick={() => q.fetchNextPage()} disabled={q.isFetchingNextPage}>
-            {t("ui.auditMore")}
+            {t("ui.audit.more")}
           </Button>
         </div>
       )}

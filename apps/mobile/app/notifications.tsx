@@ -56,45 +56,45 @@ export default function Notifications() {
   return (
     <ScrollView style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 80 }]} keyboardShouldPersistTaps="handled">
       <Stack.Screen options={{ title: "" }} />
-      <Text style={T.title}>{t("app.notifRow")}</Text>
-      {offline && <Text style={[T.small, { marginTop: 8, color: C.peligro }]}>{t("app.notifNeedsSignal")}</Text>}
+      <Text style={T.title}>{t("app.notif.row")}</Text>
+      {offline && <Text style={[T.small, { marginTop: 8, color: C.peligro }]}>{t("app.notif.needsSignal")}</Text>}
       {data && (
         <>
-          <Text style={[T.small, { marginTop: 6 }]}>{t("ui.notifIntro")}</Text>
+          <Text style={[T.small, { marginTop: 6 }]}>{t("ui.notif.intro")}</Text>
           {data.kinds.map((kind) => (
             <View key={kind} style={st.row}>
-              <Text style={[T.body, { flex: 1 }]}>{t(`ui.notifKind_${kind}` as MessageKey)}</Text>
+              <Text style={[T.body, { flex: 1 }]}>{t(`ui.notif.kind_${kind}` as MessageKey)}</Text>
               <View style={st.switchCol}>
-                <Text style={T.small}>{t("ui.notifPush")}</Text>
+                <Text style={T.small}>{t("ui.notif.push")}</Text>
                 <Switch value={prefs.kinds[kind].push} onValueChange={(v) => set(kind, "push", v)} trackColor={{ true: C.accion }} />
               </View>
               {data.email && (
                 <View style={st.switchCol}>
-                  <Text style={T.small}>{t("ui.notifEmail")}</Text>
+                  <Text style={T.small}>{t("ui.notif.email")}</Text>
                   <Switch value={prefs.kinds[kind].email} onValueChange={(v) => set(kind, "email", v)} trackColor={{ true: C.accion }} />
                 </View>
               )}
             </View>
           ))}
-          <Text style={[T.heading, { marginTop: 24 }]}>{t("ui.notifQuietTitle")}</Text>
+          <Text style={[T.heading, { marginTop: 24 }]}>{t("ui.notif.quietTitle")}</Text>
           <View style={st.row}>
-            <Text style={[T.body, { flex: 1 }]}>{t("ui.notifQuietSwitch")}</Text>
+            <Text style={[T.body, { flex: 1 }]}>{t("ui.notif.quietSwitch")}</Text>
             <Switch value={prefs.quiet.enabled} onValueChange={(v) => setPrefs({ ...prefs, quiet: { ...prefs.quiet, enabled: v } })} trackColor={{ true: C.accion }} />
           </View>
           {prefs.quiet.enabled && (
             <View style={{ flexDirection: "row", gap: 12, marginTop: 12 }}>
               <View style={{ flex: 1 }}>
-                <Text style={T.small}>{t("ui.notifQuietFrom")}</Text>
+                <Text style={T.small}>{t("ui.notif.quietFrom")}</Text>
                 <TextInput value={prefs.quiet.start} onChangeText={(v) => setPrefs({ ...prefs, quiet: { ...prefs.quiet, start: v } })} placeholder="21:00" keyboardType="numbers-and-punctuation" maxLength={5} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={T.small}>{t("ui.notifQuietTo")}</Text>
+                <Text style={T.small}>{t("ui.notif.quietTo")}</Text>
                 <TextInput value={prefs.quiet.end} onChangeText={(v) => setPrefs({ ...prefs, quiet: { ...prefs.quiet, end: v } })} placeholder="06:00" keyboardType="numbers-and-punctuation" maxLength={5} />
               </View>
             </View>
           )}
-          <Text style={[T.small, { marginTop: 8 }]}>{t("ui.notifQuietHint")}</Text>
-          <Button kind="primary" title={t("ui.notifSave")} onPress={save} disabled={!quietOk} style={{ marginTop: 20 }} />
+          <Text style={[T.small, { marginTop: 8 }]}>{t("ui.notif.quietHint")}</Text>
+          <Button kind="primary" title={t("ui.notif.save")} onPress={save} disabled={!quietOk} style={{ marginTop: 20 }} />
         </>
       )}
     </ScrollView>

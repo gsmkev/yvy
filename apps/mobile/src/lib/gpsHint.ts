@@ -16,8 +16,8 @@ export function gpsStage(elapsedMs: number): GpsStage {
 
 /** Texto aclaratorio para la etapa; null mientras todavía no hace falta. */
 export function gpsHintText(stage: GpsStage): string | null {
-  if (stage === "cold") return t("app.gpsColdHint");
-  if (stage === "slow") return t("app.gpsSlowHint");
+  if (stage === "cold") return t("app.gps.coldHint");
+  if (stage === "slow") return t("app.gps.slowHint");
   return null;
 }
 

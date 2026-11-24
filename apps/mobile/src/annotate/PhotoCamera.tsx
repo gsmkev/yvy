@@ -39,9 +39,9 @@ export function PhotoCamera({ onDone }: { onDone: (p: LocalPhoto | null) => void
   if (!perm.granted)
     return (
       <View style={[k.screen, k.pad, { justifyContent: "center", gap: 12 }]}>
-        <Text style={T.body}>{t("app.cameraDenied")}</Text>
-        <Button title={t("app.allowCamera")} onPress={request} />
-        <Button kind="text" title={t("ui.cancel")} onPress={() => onDone(null)} />
+        <Text style={T.body}>{t("app.common.cameraDenied")}</Text>
+        <Button title={t("app.common.allowCamera")} onPress={request} />
+        <Button kind="text" title={t("ui.common.cancel")} onPress={() => onDone(null)} />
       </View>
     );
   return (
@@ -49,12 +49,12 @@ export function PhotoCamera({ onDone }: { onDone: (p: LocalPhoto | null) => void
       <Stack.Screen options={{ headerShown: false }} />
       <CameraView ref={setRef} style={{ flex: 1 }} facing="back" />
       <View style={st.shutterRow}>
-        <Pressable onPress={() => onDone(null)} accessibilityLabel={t("ui.cancel")} hitSlop={12} style={{ width: 64 }}>
-          <Text style={[T.bodyMedium, { color: C.blanco }]}>{t("ui.cancel")}</Text>
+        <Pressable onPress={() => onDone(null)} accessibilityLabel={t("ui.common.cancel")} hitSlop={12} style={{ width: 64 }}>
+          <Text style={[T.bodyMedium, { color: C.blanco }]}>{t("ui.common.cancel")}</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={t("app.takePhoto")}
+          accessibilityLabel={t("app.common.takePhoto")}
           disabled={busy}
           style={[st.shutter, busy && { opacity: 0.5 }]}
           onPress={async () => {
@@ -68,8 +68,8 @@ export function PhotoCamera({ onDone }: { onDone: (p: LocalPhoto | null) => void
               // X-09: aviso sin bloquear. "Sacarla de nuevo" descarta esta toma; "Dejarla así" sigue con ella.
               if (!warning) return keep();
               Alert.alert(warning, undefined, [
-                { text: t("app.photoQualityRetake"), style: "cancel" },
-                { text: t("app.photoQualityKeep"), onPress: keep },
+                { text: t("app.photo.qualityRetake"), style: "cancel" },
+                { text: t("app.photo.qualityKeep"), onPress: keep },
               ]);
             } catch {
               setBusy(false);

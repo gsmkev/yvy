@@ -52,7 +52,7 @@ function PlotDraw() {
     return (
       <View style={[k.screen, k.pad]}>
         <Stack.Screen options={{ title: "" }} />
-        <Text style={T.body}>{t("app.plotDrawNoEdit")}</Text>
+        <Text style={T.body}>{t("app.plot.drawNoEdit")}</Text>
       </View>
     );
   }

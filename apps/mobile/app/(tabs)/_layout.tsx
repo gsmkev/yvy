@@ -51,26 +51,29 @@ export default function TabsLayout() {
           sceneStyle: { backgroundColor: C.papel },
         }}
       >
-        <Tabs.Screen name="index" options={{ title: t("app.today"), tabBarIcon: icon(Sun) }} />
-        <Tabs.Screen name="map" options={{ title: t("app.map"), tabBarIcon: icon(Map) }} />
+        <Tabs.Screen name="index" options={{ title: t("app.common.today"), tabBarIcon: icon(Sun) }} />
+        <Tabs.Screen name="map" options={{ title: t("app.common.map"), tabBarIcon: icon(Map) }} />
         <Tabs.Screen
           name="history"
           options={{
-            title: t("app.history"),
+            title: t("app.common.history"),
             tabBarIcon: icon(ClipboardList),
             tabBarBadge: pending > 0 ? pending : undefined,
             tabBarBadgeStyle: { backgroundColor: C.atencionSuave, color: C.atencion, fontFamily: F.sansSemi },
           }}
         />
         {/* Gestión: solo roles de oficina (dueño, administrador, agrónomo, supervisor). Para campo la pestaña no existe. */}
-        <Tabs.Screen name="office" options={{ title: t("office.tab"), tabBarIcon: icon(Briefcase), href: office ? undefined : null }} />
-        <Tabs.Screen name="more" options={{ title: t("app.more"), tabBarIcon: icon(MoreHorizontal) }} />
+        <Tabs.Screen
+          name="office"
+          options={{ title: t("office.common.tab"), tabBarIcon: icon(Briefcase), href: office ? undefined : null }}
+        />
+        <Tabs.Screen name="more" options={{ title: t("app.common.more"), tabBarIcon: icon(MoreHorizontal) }} />
       </Tabs>
       {/* Una sola acción principal en toda la app */}
       {!fabHidden && (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={t("app.annotate")}
+          accessibilityLabel={t("app.common.annotate")}
           onPress={() => {
             tap();
             router.push("/annotate");
@@ -78,7 +81,7 @@ export default function TabsLayout() {
           style={({ pressed }) => [s.fab, pressed && { transform: [{ scale: 0.96 }] }]}
         >
           <Plus size={26} color={C.blanco} strokeWidth={2.6} />
-          <Text style={s.fabText}>{t("app.annotate")}</Text>
+          <Text style={s.fabText}>{t("app.common.annotate")}</Text>
         </Pressable>
       )}
     </SafeAreaView>

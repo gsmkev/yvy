@@ -65,18 +65,18 @@ export default function Cattle() {
     const heads = parseDecimal(draft.heads);
     const kg = parseDecimal(draft.totalKg);
     const amount = parseMinor(draft.amount, draft.currency);
-    if (heads === null || !Number.isInteger(heads) || heads < 1) return setFormError(t("office.admBadHeads"));
-    if (kg === null || kg <= 0) return setFormError(t("office.admBadKg"));
-    if (amount === null) return setFormError(t("office.admBadAmount"));
-    if (!draft.date) return setFormError(t("office.admNeedsDate"));
+    if (heads === null || !Number.isInteger(heads) || heads < 1) return setFormError(t("office.adm.badHeads"));
+    if (kg === null || kg <= 0) return setFormError(t("office.adm.badKg"));
+    if (amount === null) return setFormError(t("office.adm.badAmount"));
+    if (!draft.date) return setFormError(t("office.adm.needsDate"));
     const body = { kind: draft.kind, date: draft.date, partyId: draft.partyId || null, category: draft.category.trim() || null, heads, totalKg: kg, amount, currency: draft.currency, guideNumber: draft.guide.trim() || null };
     const check = cattleDealInput.safeParse(body);
-    if (!check.success) return setFormError(t("office.admCheckFields"));
+    if (!check.success) return setFormError(t("office.adm.checkFields"));
     setFormError(null);
     const r = await create.mutate(body);
     if (r.ok) {
       setDraft(null);
-      showToast(t("ui.erpSaved"));
+      showToast(t("ui.erp.saved"));
     }
   };
 
@@ -85,51 +85,51 @@ export default function Cattle() {
   const headsOf = (kind: Kind) => (q.data ?? []).filter((d) => d.kind === kind).reduce((a, d) => a + d.heads, 0);
 
   return (
-    <AdminGate need="manage" title={t("ui.adminSection_cattle")}>
+    <AdminGate need="manage" title={t("ui.admin.section_cattle")}>
       <OfficeScreen
-        title={t("ui.adminSection_cattle")}
+        title={t("ui.admin.section_cattle")}
         query={q}
         onRefresh={async () => {
           await Promise.all([q.refresh(), parties.refresh()]);
         }}
-        action={{ label: t("ui.cattleNew"), icon: Plus, onPress: open, disabled: !!noSignal }}
+        action={{ label: t("ui.cattle.new"), icon: Plus, onPress: open, disabled: !!noSignal }}
       >
         <NoSignalNote />
-        <OnlineState query={q} empty={{ title: t("ui.emptyCattleTitle"), hint: t("ui.emptyCattleBody") }}>
+        <OnlineState query={q} empty={{ title: t("ui.empty.cattleTitle"), hint: t("ui.empty.cattleBody") }}>
           {(all) => (
             <>
-              <StatRow items={[...(headsOf("sell") > 0 ? [{ label: t("office.admHeadsSold"), value: headsOf("sell") }] : []), ...(headsOf("buy") > 0 ? [{ label: t("office.admHeadsBought"), value: headsOf("buy") }] : [])]} />
-              <FilterChips<"all" | Kind> value={filter} onChange={setFilter} options={[{ value: "all", label: t("ui.costAll"), count: all.length }, { value: "sell", label: t("ui.cattleKind_sell") }, { value: "buy", label: t("ui.cattleKind_buy") }]} />
+              <StatRow items={[...(headsOf("sell") > 0 ? [{ label: t("office.adm.headsSold"), value: headsOf("sell") }] : []), ...(headsOf("buy") > 0 ? [{ label: t("office.adm.headsBought"), value: headsOf("buy") }] : [])]} />
+              <FilterChips<"all" | Kind> value={filter} onChange={setFilter} options={[{ value: "all", label: t("ui.cost.all"), count: all.length }, { value: "sell", label: t("ui.cattle.kind_sell") }, { value: "buy", label: t("ui.cattle.kind_buy") }]} />
               <DataList
                 rows={rows}
                 keyOf={(d) => d.id}
-                title={(d) => [t(k(`ui.cattleKind_${d.kind}`)), d.category].filter(Boolean).join(" · ")}
-                subtitle={(d) => [isoShort(d.date), party(d.partyId), d.pricePerKg !== null ? `${fmtMoney(Math.round(d.pricePerKg), d.currency)}/kg` : null, d.guideNumber ? `${t("ui.cattleGuide")} ${d.guideNumber}` : null].filter(Boolean).join(" · ")}
+                title={(d) => [t(k(`ui.cattle.kind_${d.kind}`)), d.category].filter(Boolean).join(" · ")}
+                subtitle={(d) => [isoShort(d.date), party(d.partyId), d.pricePerKg !== null ? `${fmtMoney(Math.round(d.pricePerKg), d.currency)}/kg` : null, d.guideNumber ? `${t("ui.cattle.guide")} ${d.guideNumber}` : null].filter(Boolean).join(" · ")}
                 right={(d) => (
                   <View style={{ alignItems: "flex-end" }}>
                     <RightText>{fmtMoney(d.amount, d.currency)}</RightText>
-                    <Text style={T.small}>{t("office.admHeadsKg", { heads: d.heads, kg: fmtNumber(d.totalKg, 0) })}</Text>
+                    <Text style={T.small}>{t("office.adm.headsKg", { heads: d.heads, kg: fmtNumber(d.totalKg, 0) })}</Text>
                   </View>
                 )}
-                empty={{ title: t("ui.erpEmpty") }}
+                empty={{ title: t("ui.erp.empty") }}
               />
             </>
           )}
         </OnlineState>
-        <FormSheet visible={!!draft} title={t("ui.cattleNew")} onClose={() => setDraft(null)} onSubmit={submit} submitLabel={t("ui.save")} pending={create.pending} error={formError ?? create.error}>
+        <FormSheet visible={!!draft} title={t("ui.cattle.new")} onClose={() => setDraft(null)} onSubmit={submit} submitLabel={t("ui.common.save")} pending={create.pending} error={formError ?? create.error}>
           <View style={{ marginTop: 16 }}>
-            <Segmented<Kind> value={draft?.kind ?? "sell"} onChange={(v) => set({ kind: v })} options={CATTLE_DEAL_KINDS.map((v) => ({ value: v, label: t(k(`ui.cattleKind_${v}`)) }))} />
+            <Segmented<Kind> value={draft?.kind ?? "sell"} onChange={(v) => set({ kind: v })} options={CATTLE_DEAL_KINDS.map((v) => ({ value: v, label: t(k(`ui.cattle.kind_${v}`)) }))} />
           </View>
-          <DateField label={t("ui.costDate")} value={draft?.date ?? ""} onChange={(v) => set({ date: v })} />
-          <SelectField label={t("ui.cattleParty")} value={draft?.partyId ?? ""} placeholder="—" options={[{ value: "", label: "—" }, ...(parties.data ?? []).map((p) => ({ value: p.id, label: p.name }))]} onChange={(v) => set({ partyId: v })} />
-          <TextField label={t("ui.cattleCategory")} value={draft?.category ?? ""} onChangeText={(v) => set({ category: v })} maxLength={60} />
-          <TextField label={t("ui.cattleHeads")} value={draft?.heads ?? ""} onChangeText={(v) => set({ heads: v })} kind="number" />
-          <TextField label={t("ui.cattleKg")} value={draft?.totalKg ?? ""} onChangeText={(v) => set({ totalKg: v })} kind="decimal" />
+          <DateField label={t("ui.cost.date")} value={draft?.date ?? ""} onChange={(v) => set({ date: v })} />
+          <SelectField label={t("ui.cattle.party")} value={draft?.partyId ?? ""} placeholder="—" options={[{ value: "", label: "—" }, ...(parties.data ?? []).map((p) => ({ value: p.id, label: p.name }))]} onChange={(v) => set({ partyId: v })} />
+          <TextField label={t("ui.cattle.category")} value={draft?.category ?? ""} onChangeText={(v) => set({ category: v })} maxLength={60} />
+          <TextField label={t("ui.cattle.heads")} value={draft?.heads ?? ""} onChangeText={(v) => set({ heads: v })} kind="number" />
+          <TextField label={t("ui.cattle.kg")} value={draft?.totalKg ?? ""} onChangeText={(v) => set({ totalKg: v })} kind="decimal" />
           <View style={{ marginTop: 16 }}>
             <Segmented<Currency> value={draft?.currency ?? "PYG"} onChange={(v) => set({ currency: v })} options={CURRENCY_OPTIONS} />
           </View>
-          <TextField label={t("ui.cattleAmount")} value={draft?.amount ?? ""} onChangeText={(v) => set({ amount: v })} kind="decimal" />
-          <TextField label={t("ui.cattleGuide")} value={draft?.guide ?? ""} onChangeText={(v) => set({ guide: v })} maxLength={40} autoCapitalize="none" />
+          <TextField label={t("ui.cattle.amount")} value={draft?.amount ?? ""} onChangeText={(v) => set({ amount: v })} kind="decimal" />
+          <TextField label={t("ui.cattle.guide")} value={draft?.guide ?? ""} onChangeText={(v) => set({ guide: v })} maxLength={40} autoCapitalize="none" />
         </FormSheet>
       </OfficeScreen>
     </AdminGate>

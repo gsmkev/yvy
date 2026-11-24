@@ -21,18 +21,18 @@ describe("idiomas (U-22)", () => {
 
   it("en guaraní traduce lo que tiene y lo demás cae a es-PY", () => {
     setLocale("gn-PY");
-    expect(t("app.map")).toBe("Mapa");
-    expect(t("app.yes")).toBe("Heẽ");
-    expect(t("app.today")).toBe("Ko árape");
+    expect(t("app.common.map")).toBe("Mapa");
+    expect(t("app.common.yes")).toBe("Heẽ");
+    expect(t("app.common.today")).toBe("Ko árape");
     // sin traducción: es-PY
-    expect(t("app.logout")).toBe(flat(locales["es-PY"])["app.logout"]);
+    expect(t("app.common.logout")).toBe(flat(locales["es-PY"])["app.common.logout"]);
     // el idioma se puede pedir sin cambiar el activo
-    expect(t("app.yes", {}, "es-PY")).toBe("Sí");
+    expect(t("app.common.yes", {}, "es-PY")).toBe("Sí");
   });
 
   it("mantiene los marcadores {{x}} de es-PY", () => {
     setLocale("gn-PY");
-    expect(t("app.savedTitle", { plot: "Lote 4" })).toBe("Ojehai Lote 4-pe");
+    expect(t("app.saved.title", { plot: "Lote 4" })).toBe("Ojehai Lote 4-pe");
   });
 
   it("cada texto en guaraní existe en es-PY y usa los mismos marcadores", () => {
@@ -56,7 +56,7 @@ describe("idiomas (U-22)", () => {
   });
 
   it("hasKey mira es-PY, que tiene todas las claves", () => {
-    expect(hasKey("app.logout")).toBe(true);
+    expect(hasKey("app.common.logout")).toBe(true);
     expect(hasKey("app.noExiste")).toBe(false);
   });
 });

@@ -7,8 +7,8 @@ import { C, F, RADIUS, T } from "./theme";
 /** Dos opciones de texto sobre fondo papel: Satélite / Vigor. La elegida va en negrita y subrayada. */
 export function LayerSwitch({ value, onChange }: { value: MapLayer; onChange: (l: MapLayer) => void }) {
   const options: { id: MapLayer; label: string }[] = [
-    { id: "true_color", label: t("ui.layerSatellite") },
-    { id: "ndvi", label: t("ui.layerNdvi") },
+    { id: "true_color", label: t("ui.layer.satellite") },
+    { id: "ndvi", label: t("ui.layer.ndvi") },
   ];
   return (
     <View style={st.switch} accessibilityRole="radiogroup">
@@ -37,7 +37,7 @@ export function NdviLegend({ acquiredAt, missing }: { acquiredAt: number | null;
   if (missing) {
     return (
       <View style={st.legend}>
-        <Text style={T.small}>{t("app.ndviNone")}</Text>
+        <Text style={T.small}>{t("app.ndvi.none")}</Text>
       </View>
     );
   }
@@ -49,12 +49,12 @@ export function NdviLegend({ acquiredAt, missing }: { acquiredAt: number | null;
         ))}
       </View>
       <View style={st.labels}>
-        <Text style={st.label}>{t("ui.ndviLegendLow")}</Text>
-        <Text style={st.label}>{t("ui.ndviLegendHigh")}</Text>
+        <Text style={st.label}>{t("ui.ndvi.legendLow")}</Text>
+        <Text style={st.label}>{t("ui.ndvi.legendHigh")}</Text>
       </View>
       {acquiredAt !== null && (
         <Text style={[st.label, { marginTop: 4 }]}>
-          {t("app.ndviDate", { date: new Date(acquiredAt).toLocaleDateString("es-PY", { day: "numeric", month: "short", year: "numeric" }) })}
+          {t("app.ndvi.date", { date: new Date(acquiredAt).toLocaleDateString("es-PY", { day: "numeric", month: "short", year: "numeric" }) })}
         </Text>
       )}
     </View>

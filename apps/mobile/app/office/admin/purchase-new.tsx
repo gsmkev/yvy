@@ -61,7 +61,7 @@ export default function PurchaseNew() {
 
   const saveParty = async () => {
     const name = newParty?.name.trim() ?? "";
-    if (!name) return setPartyError(t("office.admPartyNeedsName"));
+    if (!name) return setPartyError(t("office.adm.partyNeedsName"));
     setPartyError(null);
     const r = await createParty.mutate({ name, ruc: newParty?.ruc.trim() || null, kind: "supplier" });
     if (r.ok) {
@@ -77,12 +77,12 @@ export default function PurchaseNew() {
     for (const l of lines) {
       const qty = parseDecimal(l.qty);
       const price = parseDecimal(l.price);
-      if (qty === null || qty <= 0) return setError(t("office.admBadQty"));
-      if (price === null || price < 0) return setError(t("office.admBadPrice"));
-      if (!l.productId && !l.description.trim()) return setError(t("office.admNeedsLineProduct"));
+      if (qty === null || qty <= 0) return setError(t("office.adm.badQty"));
+      if (price === null || price < 0) return setError(t("office.adm.badPrice"));
+      if (!l.productId && !l.description.trim()) return setError(t("office.adm.needsLineProduct"));
       body.push({ productId: l.productId || null, description: l.productId ? null : l.description.trim(), category: l.productId ? null : "other", qty, unitPrice: toMinor(price, currency) });
     }
-    if (!date) return setError(t("office.admNeedsDate"));
+    if (!date) return setError(t("office.adm.needsDate"));
     setError(null);
     setSaving(true);
     try {
@@ -102,17 +102,17 @@ export default function PurchaseNew() {
         try {
           await uploadInvoicePhoto("purchases", id, photo);
         } catch (e) {
-          later.push(e instanceof Error ? e.message : t("ui.photoUploadFailed"));
+          later.push(e instanceof Error ? e.message : t("ui.photo.uploadFailed"));
         }
       }
       invalidate(["/org/erp"]);
       if (later.length) {
         // La compra ya está guardada: se avisa lo que faltó y se sigue en su detalle para completarlo.
-        showToast(t("office.admSavedPartial"));
+        showToast(t("office.adm.savedPartial"));
         router.replace({ pathname: "/office/admin/purchase", params: { id } });
         return;
       }
-      showToast(t("ui.erpSaved"));
+      showToast(t("ui.erp.saved"));
       router.back();
     } finally {
       setSaving(false);
@@ -121,61 +121,61 @@ export default function PurchaseNew() {
 
   const pending = saving || create.pending;
   return (
-    <AdminGate need="manage" title={t("ui.purchNew")}>
-      <OfficeScreen title={t("ui.purchNew")} action={{ label: t("ui.save"), onPress: submit, loading: pending, disabled: !!noSignal }}>
+    <AdminGate need="manage" title={t("ui.purch.new")}>
+      <OfficeScreen title={t("ui.purch.new")} action={{ label: t("ui.common.save"), onPress: submit, loading: pending, disabled: !!noSignal }}>
         <NoSignalNote />
         <SelectField
-          label={t("ui.purchSupplier")}
+          label={t("ui.purch.supplier")}
           value={partyId}
           placeholder="—"
-          options={[{ value: "", label: "—" }, ...suppliers.map((p) => ({ value: p.id, label: p.name })), { value: NEW, label: t("office.admNewSupplier") }]}
+          options={[{ value: "", label: "—" }, ...suppliers.map((p) => ({ value: p.id, label: p.name })), { value: NEW, label: t("office.adm.newSupplier") }]}
           onChange={(v) => (v === NEW ? (setPartyError(null), createParty.reset(), setNewParty({ name: "", ruc: "" })) : setPartyId(v))}
         />
-        <DateField label={t("ui.costDate")} value={date} onChange={setDate} />
+        <DateField label={t("ui.cost.date")} value={date} onChange={setDate} />
         <View style={{ marginTop: 16 }}>
           <Segmented<Currency> value={currency} onChange={setCurrency} options={CURRENCY_OPTIONS} />
         </View>
 
-        <SectionHeader title={t("office.admLines")} />
+        <SectionHeader title={t("office.adm.lines")} />
         {lines.map((l, i) => {
           const prod = byId.get(l.productId);
           return (
             <View key={i} style={{ borderWidth: 1.5, borderColor: C.lineaFuerte, borderRadius: RADIUS, padding: 14, paddingTop: 2, marginTop: 12, backgroundColor: C.blanco }}>
-              <SelectField label={t("ui.stockProduct")} value={l.productId} options={[{ value: "", label: t("ui.purchExpense") }, ...products.map((p) => ({ value: p.id, label: p.name }))]} onChange={(v) => setLine(i, { productId: v })} />
-              {!l.productId ? <TextField label={t("ui.purchDescription")} value={l.description} onChangeText={(v) => setLine(i, { description: v })} maxLength={200} /> : null}
-              <TextField label={`${t("ui.purchQty")}${prod ? ` (${unitOf(prod)})` : ""}`} value={l.qty} onChangeText={(v) => setLine(i, { qty: v })} kind="decimal" />
-              <TextField label={`${t("ui.purchUnitPrice")} (${currency === "PYG" ? "Gs." : "US$"})`} value={l.price} onChangeText={(v) => setLine(i, { price: v })} kind="decimal" />
-              {lines.length > 1 ? <Button kind="text" icon={Trash2} title={t("ui.delete")} onPress={() => setLines((ls) => ls.filter((_, n) => n !== i))} style={{ marginTop: 4 }} /> : null}
+              <SelectField label={t("ui.stock.product")} value={l.productId} options={[{ value: "", label: t("ui.purch.expense") }, ...products.map((p) => ({ value: p.id, label: p.name }))]} onChange={(v) => setLine(i, { productId: v })} />
+              {!l.productId ? <TextField label={t("ui.purch.description")} value={l.description} onChangeText={(v) => setLine(i, { description: v })} maxLength={200} /> : null}
+              <TextField label={`${t("ui.purch.qty")}${prod ? ` (${unitOf(prod)})` : ""}`} value={l.qty} onChangeText={(v) => setLine(i, { qty: v })} kind="decimal" />
+              <TextField label={`${t("ui.purch.unitPrice")} (${currency === "PYG" ? "Gs." : "US$"})`} value={l.price} onChangeText={(v) => setLine(i, { price: v })} kind="decimal" />
+              {lines.length > 1 ? <Button kind="text" icon={Trash2} title={t("ui.common.delete")} onPress={() => setLines((ls) => ls.filter((_, n) => n !== i))} style={{ marginTop: 4 }} /> : null}
             </View>
           );
         })}
-        <Button kind="secondary" icon={Plus} title={t("ui.purchAddLine")} onPress={() => setLines((ls) => [...ls, blankLine()])} disabled={lines.length >= 20} style={{ marginTop: 12 }} />
+        <Button kind="secondary" icon={Plus} title={t("ui.purch.addLine")} onPress={() => setLines((ls) => [...ls, blankLine()])} disabled={lines.length >= 20} style={{ marginTop: 12 }} />
         <Text style={[T.heading, { marginTop: 16, textAlign: "right" }]}>{fmtMoney(total, currency)}</Text>
 
-        <SectionHeader title={t("ui.purchReception")} />
+        <SectionHeader title={t("ui.purch.reception")} />
         <SelectField
-          label={t("ui.stockWarehouse")}
+          label={t("ui.stock.warehouse")}
           value={warehouseId === "" ? "" : wh}
-          options={[{ value: "", label: t("office.admReceiveLater") }, ...whs.map((w) => ({ value: w.id, label: w.name }))]}
+          options={[{ value: "", label: t("office.adm.receiveLater") }, ...whs.map((w) => ({ value: w.id, label: w.name }))]}
           onChange={(v) => setWarehouseId(v)}
-          hint={whs.length === 0 ? t("ui.stockNeedWarehouseBody") : undefined}
+          hint={whs.length === 0 ? t("ui.stock.needWarehouseBody") : undefined}
         />
 
-        <SectionHeader title={t("ui.purchInvoice")} />
-        <TextField label={t("ui.purchInvoiceNumber")} value={invoiceNumber} onChangeText={setInvoiceNumber} maxLength={40} autoCapitalize="none" />
+        <SectionHeader title={t("ui.purch.invoice")} />
+        <TextField label={t("ui.purch.invoiceNumber")} value={invoiceNumber} onChangeText={setInvoiceNumber} maxLength={40} autoCapitalize="none" />
         <View style={{ marginTop: 16, gap: 12 }}>
           {photo ? (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-              <Image accessibilityLabel={t("ui.purchInvoice")} source={{ uri: photo.uri }} style={{ width: 88, height: 88, borderRadius: RADIUS, backgroundColor: C.linea }} />
+              <Image accessibilityLabel={t("ui.purch.invoice")} source={{ uri: photo.uri }} style={{ width: 88, height: 88, borderRadius: RADIUS, backgroundColor: C.linea }} />
               <View style={{ flex: 1, gap: 4 }}>
-                <InvoicePhotoButton title={HAS_CAMERA ? t("office.admRetakePhoto") : t("office.admChangePhoto")} onPick={setPhoto} />
-                <Button kind="text" title={t("ui.photoRemove")} onPress={() => setPhoto(null)} />
+                <InvoicePhotoButton title={HAS_CAMERA ? t("office.adm.retakePhoto") : t("office.adm.changePhoto")} onPick={setPhoto} />
+                <Button kind="text" title={t("ui.photo.remove")} onPress={() => setPhoto(null)} />
               </View>
             </View>
           ) : (
-            <InvoicePhotoButton title={HAS_CAMERA ? t("office.admTakeInvoicePhoto") : t("ui.photoAttach")} onPick={setPhoto} />
+            <InvoicePhotoButton title={HAS_CAMERA ? t("office.adm.takeInvoicePhoto") : t("ui.photo.attach")} onPick={setPhoto} />
           )}
-          {!HAS_CAMERA ? <Text style={T.small}>{t("office.admNoCameraWeb")}</Text> : null}
+          {!HAS_CAMERA ? <Text style={T.small}>{t("office.adm.noCameraWeb")}</Text> : null}
         </View>
         {error ? (
           <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={[T.bodyMedium, { color: C.peligro, marginTop: 16 }]}>
@@ -183,9 +183,9 @@ export default function PurchaseNew() {
           </Text>
         ) : null}
 
-        <FormSheet visible={!!newParty} title={t("office.admNewSupplier")} onClose={() => setNewParty(null)} onSubmit={saveParty} submitLabel={t("ui.save")} pending={createParty.pending} error={partyError ?? createParty.error}>
-          <TextField label={t("ui.partyName")} value={newParty?.name ?? ""} onChangeText={(v) => setNewParty((p) => (p ? { ...p, name: v } : p))} maxLength={120} />
-          <TextField label={t("ui.partyRuc")} hint={t("ui.partyRucHint")} value={newParty?.ruc ?? ""} onChangeText={(v) => setNewParty((p) => (p ? { ...p, ruc: v } : p))} maxLength={12} autoCapitalize="none" />
+        <FormSheet visible={!!newParty} title={t("office.adm.newSupplier")} onClose={() => setNewParty(null)} onSubmit={saveParty} submitLabel={t("ui.common.save")} pending={createParty.pending} error={partyError ?? createParty.error}>
+          <TextField label={t("ui.party.name")} value={newParty?.name ?? ""} onChangeText={(v) => setNewParty((p) => (p ? { ...p, name: v } : p))} maxLength={120} />
+          <TextField label={t("ui.party.ruc")} hint={t("ui.party.rucHint")} value={newParty?.ruc ?? ""} onChangeText={(v) => setNewParty((p) => (p ? { ...p, ruc: v } : p))} maxLength={12} autoCapitalize="none" />
         </FormSheet>
       </OfficeScreen>
     </AdminGate>

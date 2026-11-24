@@ -31,13 +31,13 @@ export function LeadReportPage() {
         ) : q.error ? (
           <ErrorBox error={q.error} />
         ) : !q.data ? (
-          <Empty>{t("ui.leadReportMissing")}</Empty>
+          <Empty>{t("ui.lead.reportMissing")}</Empty>
         ) : (
           <>
             <div>
-              <h1 className="text-title leading-8">{t("ui.leadReportTitle")}</h1>
-              <p className="mt-2 text-tinta-2">{t("ui.leadReportIntro")}</p>
-              <p className="mt-1 text-sm text-tinta-2">{t("ui.riskComputed", { date: fmtDate(q.data.computedAt) })}</p>
+              <h1 className="text-title leading-8">{t("ui.lead.reportTitle")}</h1>
+              <p className="mt-2 text-tinta-2">{t("ui.lead.reportIntro")}</p>
+              <p className="mt-1 text-sm text-tinta-2">{t("ui.risk.computed", { date: fmtDate(q.data.computedAt) })}</p>
             </div>
             <RiskReportBody r={q.data.report} />
             <div className="border-t border-linea pt-6">
@@ -46,7 +46,7 @@ export function LeadReportPage() {
                 search={{ modo: "registro" }}
                 className="inline-flex h-11 items-center justify-center rounded-md border border-accion bg-accion px-5 text-sm font-medium text-sobre hover:bg-accion-2"
               >
-                {t("ui.leadReportCta")}
+                {t("ui.lead.reportCta")}
               </Link>
             </div>
           </>

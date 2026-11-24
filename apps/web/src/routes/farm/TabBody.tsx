@@ -33,7 +33,21 @@ export function TabBody({
 }) {
   switch (tab) {
     case "plots":
-      return <PlotsTab {...plots} />;
+      return (
+        <PlotsTab
+          d={plots.d}
+          farmId={plots.farmId}
+          canEdit={plots.canEdit}
+          edit={plots.edit}
+          plot={plots.plot}
+          members={plots.members}
+          problems={plots.problems}
+          lines={plots.lines}
+          list={plots.list}
+          onSelect={plots.onSelect}
+          onShowArea={plots.onShowArea}
+        />
+      );
     case "seasons":
       return <SeasonsPanel farmId={farmId} plots={d.plots} canEdit={canEdit} />;
     case "products":

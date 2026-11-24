@@ -18,7 +18,7 @@ export function ForagePanel({ farmId }: { farmId: string }) {
   if (q.isLoading) return <Spinner rows={4} h={48} />;
   if (q.error) return <ErrorBox error={q.error} />;
   const d = q.data!;
-  if (!d.plots.length) return <Empty title={t("ui.herdNoPaddocks")}>{t("ui.herdNoPaddocksHint")}</Empty>;
+  if (!d.plots.length) return <Empty title={t("ui.herd.noPaddocks")}>{t("ui.herd.noPaddocksHint")}</Empty>;
   const c = d.coefficients;
   return (
     <div className="flex flex-col gap-4">
@@ -27,14 +27,14 @@ export function ForagePanel({ farmId }: { farmId: string }) {
           rows={d.plots}
           rowKey={(p) => p.plotId}
           columns={[
-            { id: "name", header: t("ui.plot"), cell: (p) => <span className="font-medium">{p.name}</span> },
+            { id: "name", header: t("ui.common.plot"), cell: (p) => <span className="font-medium">{p.name}</span> },
             {
               id: "height",
-              header: t("ui.forageHeight"),
+              header: t("ui.forage.height"),
               align: "right",
               cell: (p) => (
                 <>
-                  {p.heightCm === null ? "—" : `${p.heightCm} cm · ${tk(`fields.level_${p.cover}`).toLowerCase()}`}
+                  {p.heightCm === null ? "—" : `${p.heightCm} cm · ${tk(`fields.level.${p.cover}`).toLowerCase()}`}
                   {p.heightAt ? <span className="block text-xs text-tinta-2">{fmtDay(p.heightAt)}</span> : null}
                 </>
               ),
@@ -52,24 +52,24 @@ export function ForagePanel({ farmId }: { farmId: string }) {
             },
             {
               id: "kg",
-              header: t("ui.forageKgHa"),
+              header: t("ui.forage.kgHa"),
               align: "right",
               cell: (p) => (
                 <span className="font-medium">
-                  {p.kgDmHa === null ? t("ui.forageNoData") : int.format(p.kgDmHa)}
-                  {p.method ? <span className="block text-xs font-normal text-tinta-2">{t(`ui.forageMethod_${p.method}`)}</span> : null}
-                  {p.stale ? <span className="block text-xs font-normal text-peligro">{t("ui.forageStale")}</span> : null}
+                  {p.kgDmHa === null ? t("ui.forage.noData") : int.format(p.kgDmHa)}
+                  {p.method ? <span className="block text-xs font-normal text-tinta-2">{t(`ui.forage.method_${p.method}`)}</span> : null}
+                  {p.stale ? <span className="block text-xs font-normal text-peligro">{t("ui.forage.stale")}</span> : null}
                 </span>
               ),
             },
-            { id: "usable", header: t("ui.forageUsable"), align: "right", cell: (p) => (p.usableKgDm === null ? "—" : int.format(p.usableKgDm)) },
-            { id: "demand", header: t("ui.forageDemand"), align: "right", cell: (p) => (p.demandKgDay ? int.format(p.demandKgDay) : "—") },
-            { id: "days", header: t("ui.forageDays"), align: "right", cell: (p) => <span className="font-medium">{p.daysLeft === null ? "—" : int.format(p.daysLeft)}</span> },
+            { id: "usable", header: t("ui.forage.usable"), align: "right", cell: (p) => (p.usableKgDm === null ? "—" : int.format(p.usableKgDm)) },
+            { id: "demand", header: t("ui.forage.demand"), align: "right", cell: (p) => (p.demandKgDay ? int.format(p.demandKgDay) : "—") },
+            { id: "days", header: t("ui.forage.days"), align: "right", cell: (p) => <span className="font-medium">{p.daysLeft === null ? "—" : int.format(p.daysLeft)}</span> },
           ]}
         />
       </ExportableTable>
       <p className="text-xs text-tinta-2">
-        {t("ui.forageHint", {
+        {t("ui.forage.hint", {
           low: c.kgDmPerHaPerCm.low,
           mid: c.kgDmPerHaPerCm.medium,
           high: c.kgDmPerHaPerCm.high,

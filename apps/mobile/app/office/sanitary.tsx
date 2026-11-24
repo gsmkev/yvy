@@ -34,7 +34,7 @@ const monthLabel = (month: string) => {
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
 const dmy = (iso: string) => `${iso.slice(8)}/${iso.slice(5, 7)}`;
-const reasonName = (r: string) => t(`fields.healthReason_${r}` as MessageKey);
+const reasonName = (r: string) => t(`fields.health.reason_${r}` as MessageKey);
 
 const blank = (date: string) => ({ reason: "aftosa", plannedDate: date, farmId: "", product: "", note: "", createTasks: true, cats: [] as HerdCategory[] });
 
@@ -43,7 +43,7 @@ function MonthStep({ dir, onPress }: { dir: -1 | 1; onPress: () => void }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={t(dir < 0 ? "ui.sanitaryPrev" : "ui.sanitaryNext")}
+      accessibilityLabel={t(dir < 0 ? "ui.sanitary.prev" : "ui.sanitary.next")}
       onPress={() => {
         tap();
         onPress();
@@ -63,7 +63,7 @@ export default function Sanitary() {
   const path = `/org/sanitary-events?month=${month}`;
   const q = useOnline<EventRow[]>(allowed ? path : null);
   const farms = useLocal(() => getDb().farms());
-  const farmName = (id: string | null) => (id ? (farms.find((f) => f.id === id)?.name ?? "") : t("ui.sanitaryAllFarms"));
+  const farmName = (id: string | null) => (id ? (farms.find((f) => f.id === id)?.name ?? "") : t("ui.sanitary.allFarms"));
   const [open, setOpen] = useState(false);
   const [f, setF] = useState(blank(today));
   const [formError, setFormError] = useState<string | null>(null);
@@ -76,7 +76,7 @@ export default function Sanitary() {
   const planSenacsa = async (c: SenacsaCampaign) => {
     const r = await planCampaign.mutate({ reason: c.reason, plannedDate: senacsaPlanDate(c, today), farmId: farms.length === 1 ? farms[0]!.id : null, categories: c.categories, note: senacsaNote(c), createTasks: true });
     if (r.ok) {
-      showToast(t("ui.senacsaPlanSaved"));
+      showToast(t("ui.senacsa.planSaved"));
       if (r.data.tasksCreated > 0) void syncNow();
       void senacsa.refresh();
     } else showToast(r.error);
@@ -84,7 +84,7 @@ export default function Sanitary() {
   const openCampaigns = (senacsa.data?.campaigns ?? []).filter((c) => c.to >= today);
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
 
-  if (!allowed) return <OfficeScreen title={t("ui.sanitaryTitle")}><EmptyState title={t("ui.sanitaryNoAccess")} /></OfficeScreen>;
+  if (!allowed) return <OfficeScreen title={t("ui.sanitary.title")}><EmptyState title={t("ui.sanitary.noAccess")} /></OfficeScreen>;
 
   const openNew = () => {
     create.reset();
@@ -93,12 +93,12 @@ export default function Sanitary() {
     setOpen(true);
   };
   const submit = async () => {
-    if (!f.plannedDate) return setFormError(t("office.sanitaryNeedsDate"));
+    if (!f.plannedDate) return setFormError(t("office.sanitary.needsDate"));
     setFormError(null);
     const r = await create.mutate({ reason: f.reason, plannedDate: f.plannedDate, farmId: f.farmId || null, categories: f.cats, product: f.product.trim() || null, note: f.note.trim() || null, createTasks: f.createTasks });
     if (r.ok) {
       setOpen(false);
-      showToast(r.data.tasksCreated > 0 ? t("ui.sanitarySavedTasks", { n: r.data.tasksCreated }) : t("ui.sanitarySaved"));
+      showToast(r.data.tasksCreated > 0 ? t("ui.sanitary.savedTasks", { n: r.data.tasksCreated }) : t("ui.sanitary.saved"));
       if (r.data.tasksCreated > 0) void syncNow();
     }
   };
@@ -107,30 +107,35 @@ export default function Sanitary() {
     const r = await remove.mutate({ id: removing.id });
     if (r.ok) {
       setRemoving(null);
-      showToast(t("office.sanitaryDeleted"));
+      showToast(t("office.sanitary.deleted"));
     }
   };
 
   return (
-    <OfficeScreen title={t("ui.sanitaryTitle")} query={q} action={{ label: t("ui.sanitaryNew"), icon: Plus, onPress: openNew, disabled: !online }}>
+    <OfficeScreen title={t("ui.sanitary.title")} query={q} action={{ label: t("ui.sanitary.new"), icon: Plus, onPress: openNew, disabled: !online }}>
       <NeedsSignalNote />
       {openCampaigns.length > 0 && (
         <View style={{ marginTop: 16, gap: 8 }}>
-          <Text style={T.heading}>{t("ui.senacsaTitle")}</Text>
+          <Text style={T.heading}>{t("ui.senacsa.title")}</Text>
           {openCampaigns.map((c) => (
             <View key={c.id} style={{ borderWidth: 1, borderColor: C.linea, borderRadius: RADIUS, padding: 12, gap: 4 }}>
-              <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{t("ui.senacsaBadge")}</Text>
-              <Text style={T.bodyMedium}>{`${t(`ui.senacsaName_${c.reason}` as MessageKey)} · ${t("ui.senacsaPeriod", { n: c.period })}`}</Text>
-              <Text style={T.small}>{`${t("ui.senacsaDates", { from: dmy(c.from), to: dmy(c.to) })}${c.registerUntil ? ` · ${t("ui.senacsaRegister", { date: dmy(c.registerUntil) })}` : ""}`}</Text>
+              <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{t("ui.senacsa.badge")}</Text>
+              <Text style={T.bodyMedium}>
+                {t(`ui.senacsa.name_${c.reason}` as MessageKey) + " · " + t("ui.senacsa.period", { n: c.period })}
+              </Text>
+              <Text style={T.small}>
+                {t("ui.senacsa.dates", { from: dmy(c.from), to: dmy(c.to) }) +
+                  (c.registerUntil ? " · " + t("ui.senacsa.register", { date: dmy(c.registerUntil) }) : "")}
+              </Text>
               <Text style={T.small}>{c.appliesTo}</Text>
               {senacsa.data!.planned.includes(c.id) ? (
-                <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{t("ui.senacsaPlanned")}</Text>
+                <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{t("ui.senacsa.planned")}</Text>
               ) : (
-                <Button kind="secondary" title={t("ui.senacsaPlan")} loading={planCampaign.pending} disabled={!online} onPress={() => planSenacsa(c)} />
+                <Button kind="secondary" title={t("ui.senacsa.plan")} loading={planCampaign.pending} disabled={!online} onPress={() => planSenacsa(c)} />
               )}
             </View>
           ))}
-          <Text style={T.small}>{t("ui.senacsaDisclaimer")}</Text>
+          <Text style={T.small}>{t("ui.senacsa.disclaimer")}</Text>
         </View>
       )}
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 16 }}>
@@ -140,59 +145,59 @@ export default function Sanitary() {
         </Text>
         <MonthStep dir={1} onPress={() => setMonth(shiftMonth(month, 1))} />
       </View>
-      <OnlineState query={q} empty={{ title: t("ui.sanitaryEmpty"), hint: t("ui.sanitaryEmptyHint") }}>
+      <OnlineState query={q} empty={{ title: t("ui.sanitary.empty"), hint: t("ui.sanitary.emptyHint") }}>
         {(rows) => (
           <DataList
             rows={[...rows].sort((a, b) => a.plannedDate.localeCompare(b.plannedDate))}
             keyOf={(e) => e.id}
             title={(e) => `${reasonName(e.reason)}${e.product ? `: ${e.product}` : ""}`}
             subtitle={(e) =>
-              [dmy(e.plannedDate), farms.length > 1 ? farmName(e.farmId) : null, e.categories.map((c) => t(`fields.herd_${c}` as MessageKey).toLowerCase()).join(", "), e.tasksCreated > 0 ? t("ui.sanitaryTasks", { n: e.tasksCreated }) : null, e.note]
+              [dmy(e.plannedDate), farms.length > 1 ? farmName(e.farmId) : null, e.categories.map((c) => t(`fields.herd.${c}` as MessageKey).toLowerCase()).join(", "), e.tasksCreated > 0 ? t("ui.sanitary.tasks", { n: e.tasksCreated }) : null, e.note]
                 .filter(Boolean)
                 .join(" · ")
             }
             right={(e) =>
               e.state === "overdue" ? (
-                <Text style={{ color: C.peligro, textAlign: "right" }}>{t("ui.sanitaryState_overdue")}</Text>
+                <Text style={{ color: C.peligro, textAlign: "right" }}>{t("ui.sanitary.state_overdue")}</Text>
               ) : e.state === "done" && e.doneAt ? (
-                <Text style={[T.smallMedium, { color: C.accionOscuro, textAlign: "right" }]}>{t("ui.sanitaryDoneOn", { date: fmtDate(e.doneAt) })}</Text>
+                <Text style={[T.smallMedium, { color: C.accionOscuro, textAlign: "right" }]}>{t("ui.sanitary.doneOn", { date: fmtDate(e.doneAt) })}</Text>
               ) : null
             }
             onPress={(e) => {
               remove.reset();
               setRemoving(e);
             }}
-            empty={{ title: t("ui.sanitaryEmpty") }}
+            empty={{ title: t("ui.sanitary.empty") }}
           />
         )}
       </OnlineState>
 
-      <FormSheet visible={open} title={t("ui.sanitaryNew")} onClose={() => setOpen(false)} onSubmit={submit} submitLabel={t("ui.save")} pending={create.pending} error={formError ?? create.error}>
-        <SelectField label={t("fields.healthReason")} value={f.reason} options={HEALTH_REASONS.map((r) => ({ value: r as string, label: reasonName(r) }))} onChange={(v) => set({ reason: v })} />
-        <DateField label={t("ui.dueDate")} value={f.plannedDate} onChange={(v) => set({ plannedDate: v })} />
-        <SelectField label={t("ui.farm")} value={f.farmId} options={[{ value: "", label: t("ui.sanitaryAllFarms") }, ...farms.map((x) => ({ value: x.id, label: x.name }))]} onChange={(v) => set({ farmId: v })} />
-        <Text style={[T.smallMedium, { marginTop: 16 }]}>{t("ui.sanitaryCategories")}</Text>
-        <Text style={T.small}>{t("ui.sanitaryCategoriesHint")}</Text>
+      <FormSheet visible={open} title={t("ui.sanitary.new")} onClose={() => setOpen(false)} onSubmit={submit} submitLabel={t("ui.common.save")} pending={create.pending} error={formError ?? create.error}>
+        <SelectField label={t("fields.health.reason")} value={f.reason} options={HEALTH_REASONS.map((r) => ({ value: r as string, label: reasonName(r) }))} onChange={(v) => set({ reason: v })} />
+        <DateField label={t("ui.due.date")} value={f.plannedDate} onChange={(v) => set({ plannedDate: v })} />
+        <SelectField label={t("ui.common.farm")} value={f.farmId} options={[{ value: "", label: t("ui.sanitary.allFarms") }, ...farms.map((x) => ({ value: x.id, label: x.name }))]} onChange={(v) => set({ farmId: v })} />
+        <Text style={[T.smallMedium, { marginTop: 16 }]}>{t("ui.sanitary.categories")}</Text>
+        <Text style={T.small}>{t("ui.sanitary.categoriesHint")}</Text>
         {HERD_CATEGORIES.map((c) => (
-          <Row key={c} choice="checkbox" title={t(`fields.herd_${c}` as MessageKey)} selected={f.cats.includes(c)} onPress={() => set({ cats: f.cats.includes(c) ? f.cats.filter((x) => x !== c) : [...f.cats, c] })} />
+          <Row key={c} choice="checkbox" title={t(`fields.herd.${c}` as MessageKey)} selected={f.cats.includes(c)} onPress={() => set({ cats: f.cats.includes(c) ? f.cats.filter((x) => x !== c) : [...f.cats, c] })} />
         ))}
-        <TextField label={t("fields.product")} hint={t("office.sanitaryProductHint")} value={f.product} onChangeText={(v) => set({ product: v })} maxLength={120} />
-        <TextField label={t("app.note")} value={f.note} onChangeText={(v) => set({ note: v })} maxLength={500} />
-        <SwitchRow title={t("ui.sanitaryCreateTasks")} value={f.createTasks} onValueChange={(v) => set({ createTasks: v })} />
+        <TextField label={t("fields.common.product")} hint={t("office.sanitary.productHint")} value={f.product} onChangeText={(v) => set({ product: v })} maxLength={120} />
+        <TextField label={t("app.common.note")} value={f.note} onChangeText={(v) => set({ note: v })} maxLength={500} />
+        <SwitchRow title={t("ui.sanitary.createTasks")} value={f.createTasks} onValueChange={(v) => set({ createTasks: v })} />
       </FormSheet>
 
-      <Sheet visible={!!removing} title={t("office.sanitaryDeleteTitle")} onClose={() => setRemoving(null)}>
+      <Sheet visible={!!removing} title={t("office.sanitary.deleteTitle")} onClose={() => setRemoving(null)}>
         {removing && (
           <>
             <Text style={T.bodyMedium}>{`${reasonName(removing.reason)} · ${dmy(removing.plannedDate)}`}</Text>
-            <Text style={[T.small, { marginTop: 4 }]}>{t("office.sanitaryDeleteBody")}</Text>
+            <Text style={[T.small, { marginTop: 4 }]}>{t("office.sanitary.deleteBody")}</Text>
             {remove.error ? (
               <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 16 }]}>
                 {remove.error}
               </Text>
             ) : null}
-            <Button kind="danger" title={t("ui.delete")} loading={remove.pending} disabled={!online} onPress={doRemove} style={{ marginTop: 20 }} />
-            <Button kind="text" title={t("ui.cancel")} onPress={() => setRemoving(null)} style={{ marginTop: 4 }} />
+            <Button kind="danger" title={t("ui.common.delete")} loading={remove.pending} disabled={!online} onPress={doRemove} style={{ marginTop: 20 }} />
+            <Button kind="text" title={t("ui.common.cancel")} onPress={() => setRemoving(null)} style={{ marginTop: 4 }} />
           </>
         )}
       </Sheet>

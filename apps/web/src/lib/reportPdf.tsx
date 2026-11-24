@@ -1,6 +1,6 @@
 /** Parte semanal en PDF (RF-80), generado en el navegador con @react-pdf/renderer (anexo §4.9). */
 import { Document, Image, Page, Path, StyleSheet, Svg, Text, View, Circle } from "@react-pdf/renderer";
-import { BRAND } from "@yvy/shared";
+import { BRAND, ATTRIBUTION } from "@yvy/shared";
 import { describeData } from "./exports";
 import { fmtDateTime, fmtHa, fmtIsoDate } from "./format";
 import { t, tk } from "./i18n";
@@ -109,43 +109,43 @@ interface ReportData {
 export function WeeklyReport(d: ReportData) {
   const authors = new Set(d.records.map((r) => r.authorId)).size;
   return (
-    <Document title={`${t("ui.reportTitle")} · ${d.farm.name}`} author="Yvy" language="es-PY">
+    <Document title={`${t("ui.report.title")} · ${d.farm.name}`} author="Yvy" language="es-PY">
       <Page size="A4" style={s.page}>
         <Text style={s.h1}>
-          {t("ui.reportTitle")} · {d.farm.name}
+          {t("ui.report.title")} · {d.farm.name}
         </Text>
         <Text style={s.muted}>
           {fmtIsoDate(d.from)} – {fmtIsoDate(d.to)} · {fmtHa(d.farm.areaHa)} · {d.plots.length}{" "}
-          {t("ui.plots").toLowerCase()}
+          {t("ui.common.plots").toLowerCase()}
         </Text>
         <View style={s.kpis}>
           <View style={s.kpi}>
-            <Text style={s.muted}>{t("ui.navRecords")}</Text>
+            <Text style={s.muted}>{t("ui.nav.records")}</Text>
             <Text style={s.kpiValue}>{d.records.length}</Text>
             <Text style={s.muted}>
-              {authors} {t("ui.workers").toLowerCase()}
+              {authors} {t("ui.common.workers").toLowerCase()}
             </Text>
           </View>
           <View style={s.kpi}>
-            <Text style={s.muted}>{t("ui.rainWeek")}</Text>
+            <Text style={s.muted}>{t("ui.rain.week")}</Text>
             <Text style={s.kpiValue}>{d.rainMm === null ? "—" : `${Math.round(d.rainMm)} mm`}</Text>
             <Text style={s.muted}>
-              {d.gaugeMm !== null ? `${t("ui.gauge")}: ${Math.round(d.gaugeMm)} mm` : t("ui.satelliteRain")}
+              {d.gaugeMm !== null ? `${t("ui.common.gauge")}: ${Math.round(d.gaugeMm)} mm` : t("ui.common.satelliteRain")}
             </Text>
           </View>
           <View style={s.kpi}>
-            <Text style={s.muted}>{t("ui.alertsTitle")}</Text>
+            <Text style={s.muted}>{t("ui.alerts.title")}</Text>
             <Text style={s.kpiValue}>{d.alerts.length}</Text>
           </View>
         </View>
-        <Text style={s.h2}>{t("ui.navRecords")}</Text>
+        <Text style={s.h2}>{t("ui.nav.records")}</Text>
         <MiniMap farm={d.farm} plots={d.plots} records={d.records} />
         <View style={{ marginTop: 8 }}>
           <View style={s.th}>
-            <Text style={{ width: 62 }}>{t("ui.capturedAt")}</Text>
-            <Text style={{ width: 70 }}>{t("ui.plot")}</Text>
-            <Text style={{ width: 80 }}>{t("ui.author")}</Text>
-            <Text style={{ flex: 1 }}>{t("ui.kind")}</Text>
+            <Text style={{ width: 62 }}>{t("ui.common.capturedAt")}</Text>
+            <Text style={{ width: 70 }}>{t("ui.common.plot")}</Text>
+            <Text style={{ width: 80 }}>{t("ui.common.author")}</Text>
+            <Text style={{ flex: 1 }}>{t("ui.common.kind")}</Text>
           </View>
           {d.records.map((r) => (
             <View key={r.id} style={s.row} wrap={false}>
@@ -153,25 +153,25 @@ export function WeeklyReport(d: ReportData) {
               <Text style={{ width: 70 }}>{r.plotName ?? "—"}</Text>
               <Text style={{ width: 80 }}>{r.authorName ?? "—"}</Text>
               <Text style={{ flex: 1 }}>
-                {tk(`recordKinds.${r.kind}`)}: {describeData(r.kind, r.data)}
+                {tk(`record-kinds.kind.${r.kind}`)}: {describeData(r.kind, r.data)}
               </Text>
             </View>
           ))}
         </View>
         {d.alerts.length > 0 && (
           <View wrap={false}>
-            <Text style={s.h2}>{t("ui.alertsTitle")}</Text>
+            <Text style={s.h2}>{t("ui.alerts.title")}</Text>
             {d.alerts.map((a) => (
               <Text key={a.id}>
-                • {tk(`ui.alertKind_${a.kind}`)} ({tk(`ui.severity_${a.severity}`)}): {a.summary}.{" "}
-                {t("ui.orientative", { source: a.source })}
+                • {tk(`ui.alert.kind_${a.kind}`)} ({tk(`ui.severity.${a.severity}`)}): {a.summary}.{" "}
+                {t("ui.common.orientative", { source: a.source })}
               </Text>
             ))}
           </View>
         )}
         {d.photoUrls.length > 0 && (
           <View wrap={false}>
-            <Text style={s.h2}>{t("ui.photos")}</Text>
+            <Text style={s.h2}>{t("ui.common.photos")}</Text>
             <View style={s.photos}>
               {d.photoUrls.slice(0, 6).map((u) => (
                 <Image key={u} src={u} style={s.photo} />
@@ -180,9 +180,7 @@ export function WeeklyReport(d: ReportData) {
           </View>
         )}
         <View style={s.footer} fixed>
-          <Text>
-            Yvy · {t("attribution.copernicus")} · {t("attribution.chirps")}
-          </Text>
+          <Text>{t("ui.reports.footerCredit", { copernicus: t(ATTRIBUTION.copernicus), chirps: t(ATTRIBUTION.chirps) })}</Text>
           <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
         </View>
       </Page>

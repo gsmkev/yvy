@@ -36,12 +36,11 @@ export const subscribeLocale = (f: () => void): (() => void) => {
   return () => void listeners.delete(f);
 };
 
+const step = (node: unknown, part: string): unknown =>
+  node !== null && typeof node === "object" && Object.hasOwn(node, part) ? (node as Record<string, unknown>)[part] : undefined;
+
 const find = (tree: Tree, key: string): string | undefined => {
-  let node: unknown = tree;
-  for (const part of key.split(".")) {
-    if (node === null || typeof node !== "object") return undefined;
-    node = (node as Record<string, unknown>)[part];
-  }
+  const node = key.split(".").reduce<unknown>(step, tree);
   return typeof node === "string" ? node : undefined;
 };
 
@@ -51,8 +50,25 @@ export const t = (key: MessageKey, vars: Record<string, string | number> = {}, l
   return String(text).replace(/\{\{(\w+)\}\}/g, (_, k: string) => String(vars[k] ?? `{{${k}}}`));
 };
 
-/** `t` para claves armadas en tiempo de ejecución (`ui.alertKind_${kind}`): único punto donde un `string` pasa a `MessageKey`. */
+/** `t` para claves armadas en tiempo de ejecución (`ui.alert.kind_${kind}`): único punto donde un `string` pasa a `MessageKey`. */
 export const tk = (key: string, vars: Record<string, string | number> = {}, locale: Locale = current): string => t(key as MessageKey, vars, locale);
 
 /** ¿Existe la clave? Para textos armados dinámicamente (valores de registros). Mira es-PY, que tiene todas. */
-export const hasKey = (key: string, locale: Locale = DEFAULT_LOCALE): boolean => find(locales[locale], key) !== undefined;
+export const hasKey = (key: string, locale: Locale = DEFAULT_LOCALE): boolean =>
+  find(locales[locale], key) !== undefined;
+
+/** Claves de las atribuciones de datos; la landing las lee con estos nombres, por eso no están agrupadas. */
+export const ATTRIBUTION = {
+  copernicus: "attribution.copernicus",
+  chirps: "attribution.chirps",
+  nasaPower: "attribution.nasaPower",
+  firms: "attribution.firms",
+  metNorway: "attribution.metNorway",
+} as const satisfies Record<string, MessageKey>;
+
+/** Enlaces del pie público; la landing los lee con estos nombres. */
+export const PUBLIC_FOOTER = {
+  terms: "ui.publicFooterTerms",
+  privacy: "ui.publicFooterPrivacy",
+  status: "ui.publicFooterStatus",
+} as const satisfies Record<string, MessageKey>;

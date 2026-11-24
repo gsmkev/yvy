@@ -10,7 +10,7 @@ import { areaLabel, cToTemp, haToArea, mmToRain, rainLabel, tempLabel, type Unit
 // ---------- Unidades elegidas (superficie, lluvia, temperatura) ----------
 
 /** "1.250 ha" o "1.667 cuadras" según la preferencia. */
-export const fmtArea = (ha: number, u: Units): string => `${fmtNumber(haToArea(ha, u.area), u.area === "ha" ? 1 : 1)} ${areaLabel(u.area)}`;
+export const fmtArea = (ha: number, u: Units): string => `${fmtNumber(haToArea(ha, u.area), 1)} ${areaLabel(u.area)}`;
 /** "12 mm" o "0,47 pulg". */
 export const fmtRain = (mm: number, u: Units): string => `${fmtNumber(mmToRain(mm, u.rain), u.rain === "in" ? 2 : 0)} ${rainLabel(u.rain)}`;
 /** "31 °C" o "88 °F". */

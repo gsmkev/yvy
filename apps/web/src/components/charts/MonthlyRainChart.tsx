@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { CHART } from "@yvy/shared";
+import { t } from "../../lib/i18n";
 import { FRAME, Legend, YGrid, niceTicks } from "./common";
 
 /** Barras por mes: pluviómetro y satélite lado a lado, con la normal como marca (C-05, C-06). */
@@ -47,7 +48,7 @@ export function MonthlyRainChart(props: {
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label={props.ariaLabel}>
         <YGrid ticks={ticks} sy={sy} width={width} fontSize="12" />
         <text x={pad.l - 6} y={pad.t - 2} textAnchor="end" fontSize="12" fill={CHART.axis}>
-          mm
+          {t("ui.units.mm")}
         </text>
         {props.months.map((m, i) => (
           <g

@@ -1,15 +1,18 @@
+/** Construcción del estilo MapLibre del mapa principal a partir de los datos locales. */
 import type { StyleSpecification } from "@maplibre/maplibre-react-native";
 import { BRAND, LIMITS } from "@yvy/shared";
 import type { Farm, Plot, Poi } from "../db/store";
 import type { Fix } from "../lib/location";
 import { layerSource, type MapLayer } from "../lib/offline";
 
+/** Días enteros transcurridos desde `ms` (epoch ms). */
 export const daysAgo = (ms: number) => Math.floor((Date.now() - ms) / 86_400_000);
 
 type Sources = StyleSpecification["sources"];
 type Layers = StyleSpecification["layers"];
 type LonLat = { lon: number; lat: number };
 
+/** Datos que dibuja el mapa: estancias, lotes, anotaciones, puntos, tareas, posición actual y selección. */
 export type MapStyleInput = {
   farms: Farm[];
   plots: Plot[];

@@ -6,6 +6,7 @@ import { getDb } from "../lib/db";
 import { useLocal } from "../lib/useLocal";
 import { FilterChips } from "./ui";
 
+/** Estancia elegida en una pantalla de oficina: la del parámetro `farmId`, la elegida a mano o la primera. */
 export function useFarmPick(): { farms: Farm[]; farm: Farm | null; setFarmId: (id: string) => void } {
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
   const farms = useLocal(() => getDb().farms());

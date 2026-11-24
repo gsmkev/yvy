@@ -20,6 +20,7 @@ interface ChartPoint {
   x: number | string;
   y: number | null;
 }
+/** Serie de un gráfico: etiqueta, color y puntos. */
 export interface ChartSeries {
   label: string;
   color: string;

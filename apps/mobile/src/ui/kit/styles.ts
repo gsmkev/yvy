@@ -2,6 +2,7 @@
 import { StyleSheet } from "react-native";
 import { C, F, GUTTER, RADIUS, T, TOUCH } from "../theme";
 
+/** Hoja de estilos del kit (pantalla, botones, filas y demás). */
 export const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.papel },
   pad: { paddingHorizontal: GUTTER, paddingTop: 12, paddingBottom: 40 },

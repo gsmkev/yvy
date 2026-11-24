@@ -1,4 +1,4 @@
-/** Qué recordatorios locales hay que programar (F-16). Puro y probable: no toca expo-notifications. */
+/** Qué recordatorios locales hay que programar. Puro y probable: no toca expo-notifications. */
 import { localDate } from "@yvy/shared";
 import type { LocalDb } from "../db/store";
 

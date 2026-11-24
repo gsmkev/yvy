@@ -38,5 +38,5 @@ function Annotate() {
   return <Done plot={a.plot} kind={a.kind!} values={a.values} />;
 }
 
-/** F-29: en solo lectura esta pantalla no se abre. */
+/** En solo lectura esta pantalla no se abre. */
 export default withWriteAccess(Annotate);

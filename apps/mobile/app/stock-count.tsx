@@ -1,5 +1,5 @@
 /**
- * Recuento de inventario de un depósito (E-15). Se cuenta en el galpón, sin señal: cada producto con su cantidad y se
+ * Recuento de inventario de un depósito. Se cuenta en el galpón, sin señal: cada producto con su cantidad y se
  * guarda un registro `stock_count` en el outbox. Al sincronizar, el servidor asienta la diferencia como ajuste de stock.
  */
 import { useState } from "react";
@@ -95,5 +95,5 @@ const st = StyleSheet.create({
   qty: { width: 110, textAlign: "right" },
 });
 
-/** F-29: en solo lectura esta pantalla no se abre. */
+/** En solo lectura esta pantalla no se abre. */
 export default withWriteAccess(StockCount);

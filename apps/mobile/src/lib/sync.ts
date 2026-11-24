@@ -1,5 +1,5 @@
 /**
- * Sincronización del celular (PRD §11, RF-41/43): al abrir la app, al volver la señal, cada 30 min en
+ * Sincronización del celular: al abrir la app, al volver la señal, cada 30 min en
  * primer plano y con "Sincronizar ahora". Un solo ciclo a la vez (lo garantiza SyncEngine).
  */
 import { AppState } from "react-native";
@@ -31,6 +31,7 @@ const set = (p: Partial<SyncStatus>) => {
   status = { ...status, ...p };
   listeners.forEach((l) => l());
 };
+/** Estado de la sincronización: señal, fase, pendientes, último envío y error. */
 export const useSyncStatus = () =>
   useSyncExternalStore(
     (l) => {
@@ -61,7 +62,7 @@ const uploader: AttachmentUploader = {
           "POST",
           `/media/attachments/${f.attachmentId}/upload-url`,
         );
-        // La nota de voz (F-09) es un solo archivo m4a; la foto lleva además su miniatura.
+        // La nota de voz es un solo archivo m4a; la foto lleva además su miniatura.
         const audio = isAudioMime(f.mime);
         const parts: (readonly [string | null, string, string])[] = audio
           ? [[urls.photo, f.photoUri, LIMITS.audio.mime]]
@@ -101,6 +102,7 @@ function getEngine(): SyncEngine {
   return engine;
 }
 
+/** Identificador de este celular: se genera la primera vez y queda guardado en kv. */
 export function deviceId(): string {
   const db = getDb();
   let id = db.getKv("device_id");
@@ -119,6 +121,7 @@ export const flushAlertVotes = (): Promise<number> =>
     (e) => !(e instanceof HttpError && e.status >= 400 && e.status < 500 && e.status !== 401 && e.status !== 429),
   ).catch(() => 0);
 
+/** Corre un ciclo de sincronización; sin sesión o sin señal no hace nada. */
 export async function syncNow(): Promise<void> {
   if (!getSession()) return;
   const net = await Network.getNetworkStateAsync().catch(() => null);
@@ -132,9 +135,9 @@ export async function syncNow(): Promise<void> {
     getDb().setKv("last_sync_at", String(r.finishedAt));
     set({ online: true, lastSyncAt: r.finishedAt });
     await flushAlertVotes();
-    // F-14: campos propios de los formularios de la organización
+    // Campos propios de los formularios de la organización
     await refreshFormConfig(getDb(), () => api("GET", "/org/form-config"));
-    // F-29: el dueño necesita los nombres para ver quién anotó cada cosa.
+    // El dueño necesita los nombres para ver quién anotó cada cosa.
     if (isOwnerMode(getSession()?.organization.role)) await refreshMemberNames(getDb(), () => api("GET", "/org/members"));
   } catch (e) {
     const offline =
@@ -147,7 +150,7 @@ export async function syncNow(): Promise<void> {
     });
   } finally {
     set({ phase: "idle", pending: getDb().pendingCount(), version: status.version + 1 });
-    void rescheduleReminders(); // F-16: las tareas pudieron cambiar
+    void rescheduleReminders(); // las tareas pudieron cambiar
   }
 }
 

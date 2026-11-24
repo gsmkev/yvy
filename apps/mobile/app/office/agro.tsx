@@ -1,4 +1,4 @@
-/** Agronomía: índice con selector de estancia y una fila por herramienta agrícola (funciones 76 a 82 y horas para pulverizar). */
+/** Agronomía: índice con selector de estancia y una fila por herramienta agrícola. */
 import { CloudSun, FlaskConical, Home, Leaf, ShieldAlert, SprayCan, Truck } from "lucide-react-native";
 import { t } from "@yvy/shared";
 import { HubScreen, type HubEntry } from "../../src/office/hub";
@@ -13,6 +13,7 @@ const entries = (): HubEntry[] => [
   { id: "deliveries", title: t("ui.deliv.title"), hint: t("office.agro.rowDeliveries"), icon: Truck, path: "/office/agro/deliveries" },
 ];
 
+/** Menú de herramientas agronómicas (ventana de siembra, deriva, suelo, carencia, entregas). */
 export default function Agro() {
   return <HubScreen title={t("office.agro.menu")} entries={entries()} />;
 }

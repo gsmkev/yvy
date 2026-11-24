@@ -1,4 +1,4 @@
-/** Carencias y reingresos vigentes (función 78): lotes con restricción y cosechas hechas antes de cumplirla. GET /org/farms/:id/withdrawal. */
+/** Carencias y reingresos vigentes: lotes con restricción y cosechas hechas antes de cumplirla. GET /org/farms/:id/withdrawal. */
 import { View } from "react-native";
 import { t } from "@yvy/shared";
 import { useFarmPick } from "../../../src/office/farmPick";
@@ -17,6 +17,7 @@ interface Resp {
 }
 const dmy = (iso: string) => `${iso.slice(8)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
 
+/** Períodos de carencia vigentes por lote. */
 export default function Withdrawal() {
   const { farms, farm, setFarmId } = useFarmPick();
   const q = useOnline<Resp>(farm ? `/org/farms/${farm.id}/withdrawal` : null);

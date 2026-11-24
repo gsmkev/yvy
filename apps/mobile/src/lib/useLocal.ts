@@ -1,3 +1,4 @@
+/** Hook que relee consultas a la base local cuando cambian los datos. */
 import { useMemo } from "react";
 import { useSyncStatus } from "./sync";
 

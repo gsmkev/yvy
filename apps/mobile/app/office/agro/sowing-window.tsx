@@ -1,4 +1,4 @@
-/** Ventana de siembra (función 77): humedad del suelo y pronóstico para un cultivo. GET /org/farms/:id/sowing-window?crop=. */
+/** Ventana de siembra: humedad del suelo y pronóstico para un cultivo. GET /org/farms/:id/sowing-window?crop=. */
 import { useState } from "react";
 import { View } from "react-native";
 import { CROPS, t, type MessageKey, ATTRIBUTION } from "@yvy/shared";
@@ -21,6 +21,7 @@ interface Resp {
 }
 const dmy = (iso: string) => `${iso.slice(8)}/${iso.slice(5, 7)}`;
 
+/** Ventana de siembra por cultivo. */
 export default function SowingWindow() {
   const { farms, farm, setFarmId } = useFarmPick();
   const [crop, setCrop] = useState<string>("soja");

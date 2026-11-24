@@ -1,3 +1,4 @@
+/** Pantalla de fotos y nota de voz de la anotación. */
 import { Image, Pressable, View } from "react-native";
 import { X } from "lucide-react-native";
 import { LIMITS, t } from "@yvy/shared";

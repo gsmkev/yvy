@@ -1,5 +1,5 @@
 /**
- * Grabar una nota de voz para el registro (F-09). El micrófono solo se enciende mientras se toca "Grabar" y se apaga
+ * Grabar una nota de voz para el registro. El micrófono solo se enciende mientras se toca "Grabar" y se apaga
  * al terminar o al llegar al máximo. Funciona sin señal: el archivo queda en el celular y sube después, como las fotos.
  * No hay transcripción: necesitaría un modelo de pago y la señal que acá falta.
  */
@@ -12,6 +12,7 @@ import { describeRecording, discardRecording, sizeLabel, voiceOptions } from "..
 import { Button, Text } from "./kit";
 import { C, T } from "./theme";
 
+/** Grabador de nota de voz: el micrófono solo se enciende mientras se graba. */
 export function VoiceRecorder({ value, onChange }: { value: LocalAudio | null; onChange: (a: LocalAudio | null) => void }) {
   const recorder = useAudioRecorder(voiceOptions());
   const [recording, setRecording] = useState(false);

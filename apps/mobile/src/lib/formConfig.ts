@@ -1,4 +1,4 @@
-/** Campos propios de los formularios de la organización (F-14): se bajan con red y quedan en el celular. */
+/** Campos propios de los formularios de la organización: se bajan con red y quedan en el celular. */
 import { formConfigSchema, type FormConfig, type FormField, type RecordKind } from "@yvy/shared";
 
 interface Kv {
@@ -20,6 +20,7 @@ export function readFormConfig(db: Kv): FormConfig {
   }
 }
 
+/** Campos propios configurados para un tipo de registro (vacío si no hay). */
 export const fieldsFor = (cfg: FormConfig, kind: RecordKind | null): FormField[] => (kind ? (cfg[kind] ?? []) : []);
 
 /** Baja la configuración y la guarda. Falla en silencio sin red: se sigue con la última. */

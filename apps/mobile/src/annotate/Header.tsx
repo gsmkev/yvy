@@ -1,3 +1,4 @@
+/** Encabezado del asistente de anotación. */
 import { Pressable } from "react-native";
 import { router, Stack } from "expo-router";
 import { ArrowLeft, X } from "lucide-react-native";
@@ -5,6 +6,7 @@ import { t } from "@yvy/shared";
 import { C } from "../ui/theme";
 import type { AnnotateState } from "./useAnnotate";
 
+/** Encabezado con el título según el paso y el botón para volver. */
 export function AnnotateHeader({ a }: { a: AnnotateState }) {
   return (
     <Stack.Screen

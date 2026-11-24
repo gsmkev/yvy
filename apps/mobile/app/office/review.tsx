@@ -1,5 +1,5 @@
 /**
- * Para revisar (función 100): registros que las reglas marcaron como raros (dosis, rinde, lluvia, plaga fuera de época).
+ * Para revisar: registros que las reglas marcaron como raros (dosis, rinde, lluvia, plaga fuera de época).
  * Plantilla de pantalla EN LÍNEA: useOnline + OnlineState + useOnlineMutation + OfficeScreen.
  * API: GET /org/review y POST /org/review/:recordId/ok (apps/api/src/routes/org.ts).
  */
@@ -50,6 +50,7 @@ function reason(o: Oddity): string {
   }
 }
 
+/** Revisión de lo cargado por el equipo. */
 export default function Review() {
   const allowed = !isFieldRole(getSession()?.organization.role ?? "");
   const query = useOnline<ReviewItem[]>(allowed ? "/org/review" : null);

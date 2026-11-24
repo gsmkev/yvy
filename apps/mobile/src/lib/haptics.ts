@@ -2,6 +2,7 @@
 import { Platform } from "react-native";
 import * as Haptics from "expo-haptics";
 
+/** Vibración corta de confirmación de un toque; sin efecto en la web. */
 export function tap(): void {
   if (Platform.OS === "web") return;
   try {
@@ -11,6 +12,7 @@ export function tap(): void {
   }
 }
 
+/** Vibración de operación lograda; sin efecto en la web. */
 export function success(): void {
   if (Platform.OS === "web") return;
   try {

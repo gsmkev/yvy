@@ -1,5 +1,5 @@
 /**
- * Estancias (función 18): lista con resumen de cada una, desde la base local (anda sin señal).
+ * Estancias: lista con resumen de cada una, desde la base local (anda sin señal).
  * Tocar una la elige como estancia actual y abre el Mapa.
  */
 import { router } from "expo-router";
@@ -16,6 +16,7 @@ import { DataList } from "../../src/office/ui";
 import { C, T } from "../../src/ui/theme";
 import { Text } from "../../src/ui/kit";
 
+/** Pantalla con el resumen de cada estancia (lotes, superficie, avisos y actividad), calculado con los datos locales. */
 export default function Farms() {
   const units = useUnits();
   const rows = useLocal(() => {

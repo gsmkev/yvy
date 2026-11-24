@@ -1,5 +1,5 @@
 /**
- * Llevame ahí (F-03): una flecha grande que apunta al destino y la distancia, en vivo y sin internet.
+ * Llevame ahí: una flecha grande que apunta al destino y la distancia, en vivo y sin internet.
  * Usa el GPS y la brújula del celular; el rumbo se calcula acá (src/lib/bearing.ts).
  */
 import { useEffect, useState } from "react";
@@ -16,6 +16,7 @@ import { gpsHintText, useGpsStage } from "../src/lib/gpsHint";
 
 const ARRIVED_M = 15;
 
+/** Navegación hacia un punto o lote. */
 export default function GoTo() {
   const params = useLocalSearchParams<{ lon: string; lat: string; name?: string }>();
   const target = { lon: Number(params.lon), lat: Number(params.lat) };

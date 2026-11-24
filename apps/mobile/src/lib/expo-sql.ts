@@ -1,6 +1,8 @@
+/** Adaptador de expo-sqlite a la interfaz `Sql` de la base local. */
 import * as SQLite from "expo-sqlite";
 import type { Param, Sql } from "../db/sql";
 
+/** Abre (o crea) la base SQLite `name` en modo WAL y la expone como `Sql`. */
 export function expoSql(name = "yvy.db"): Sql {
   const db = SQLite.openDatabaseSync(name);
   db.execSync("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = OFF;");

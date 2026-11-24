@@ -32,6 +32,7 @@ export function useNoSignalReason(): string | null {
   return useSyncStatus().online ? null : t("office.needs.signalToSave");
 }
 
+/** Nota que explica por qué no se puede cargar sin señal; no muestra nada si hay señal. */
 export function NoSignalNote() {
   const reason = useNoSignalReason();
   return reason ? (
@@ -54,6 +55,7 @@ export const isoShort = (iso: string): string => {
   return y && m && d ? `${d}/${m}/${y}` : iso;
 };
 
+/** Proveedor o cliente. */
 export interface Party {
   id: string;
   name: string;

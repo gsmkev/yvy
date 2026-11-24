@@ -1,3 +1,4 @@
+/** Kit de interfaz de la app: reexporta barras, controles, diseño, hojas y estados. */
 export * from "./bars";
 export * from "./blocks";
 export * from "./controls";

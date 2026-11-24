@@ -1,4 +1,4 @@
-/** Pesadas y ganancia diaria (función 72): por lote de animales y por animal, con la curva de peso al tocar una fila. GET /org/farms/:id/weighings. */
+/** Pesadas y ganancia diaria: por lote de animales y por animal, con la curva de peso al tocar una fila. GET /org/farms/:id/weighings. */
 import { useState } from "react";
 import { View } from "react-native";
 import { CHART, t, type WeighingsResponse, type WeightSeries } from "@yvy/shared";
@@ -13,6 +13,7 @@ import { T } from "../../../src/ui/theme";
 
 const adg = (v: number | null) => (v === null ? "—" : `${fmtNumber(v, 2)} kg`);
 
+/** Pesadas del rodeo y su evolución. */
 export default function Weighings() {
   const { farms, farm, setFarmId } = useFarmPick();
   const q = useOnline<WeighingsResponse>(farm ? `/org/farms/${farm.id}/weighings` : null);

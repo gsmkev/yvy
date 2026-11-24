@@ -1,4 +1,4 @@
-/** Registro del token de Expo Push para avisos (RF-73). */
+/** Registro del token de Expo Push para avisos. */
 import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
@@ -17,6 +17,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
+/** Registra este celular en el servidor con su token de avisos, si hay permiso; los errores no se propagan. */
 export async function registerDevice(): Promise<void> {
   let pushToken: string | null = null;
   try {
@@ -55,6 +56,7 @@ function openAlert(response: Notifications.NotificationResponse | null | undefin
   syncNow(); // por si el aviso todavía no bajó
 }
 
+/** Tocar un aviso abre Hoy con ese aviso resaltado, también si la app estaba cerrada. */
 export function useNotificationTap(): void {
   useEffect(() => {
     Notifications.getLastNotificationResponseAsync().then(openAlert).catch(() => {});

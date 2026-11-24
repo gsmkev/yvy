@@ -1,5 +1,5 @@
 /**
- * Recordatorios locales de tareas (F-16): notificaciones programadas en el celular, sin internet.
+ * Recordatorios locales de tareas: notificaciones programadas en el celular, sin internet.
  * Se rehacen después de cada sincronización; el interruptor está en Más.
  */
 import * as Notifications from "expo-notifications";
@@ -13,6 +13,7 @@ import { getSession } from "./session";
 const KV_OFF = "reminders_off";
 const KV_IDS = "reminder_ids";
 
+/** Indica si el usuario tiene los recordatorios locales activados. */
 export const remindersEnabled = (): boolean => getDb().getKv(KV_OFF) !== "1";
 
 async function cancelOwn(): Promise<void> {

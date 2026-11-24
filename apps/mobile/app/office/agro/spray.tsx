@@ -1,4 +1,4 @@
-/** Horas para pulverizar (A-13): línea de horas aptas por día y ventanas. GET /org/farms/:id/spray-windows (la misma que guarda src/lib/sprayHours.ts). Datos de MET Norway. */
+/** Horas para pulverizar: línea de horas aptas por día y ventanas. GET /org/farms/:id/spray-windows (la misma que guarda src/lib/sprayHours.ts). Datos de MET Norway. */
 import { useEffect } from "react";
 import { View } from "react-native";
 import { t, ATTRIBUTION } from "@yvy/shared";
@@ -27,6 +27,7 @@ const dayLabel = (ms: number, today: string) => {
   return new Date(ms).toLocaleDateString("es-PY", { weekday: "short", day: "numeric", timeZone: TZ }).replace(".", "");
 };
 
+/** Horas aptas para aplicar según viento y temperatura. */
 export default function SprayHours() {
   const { farms, farm, setFarmId } = useFarmPick();
   const q = useOnline<Spray>(farm ? `/org/farms/${farm.id}/spray-windows` : null);

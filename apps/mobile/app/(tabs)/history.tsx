@@ -28,14 +28,15 @@ const dayTitle = (key: string) => {
 const hhmm = (ms: number) =>
   new Date(ms).toLocaleTimeString("es-PY", { hour: "2-digit", minute: "2-digit", hour12: false });
 
+/** Pestaña Historial: registros de campo con filtros. */
 export default function History() {
   const { farmId } = useFarmChoice();
   const session = useSession();
-  // F-29: el dueño ve lo de todos, con el nombre de quien anotó.
+  // El dueño ve lo de todos, con el nombre de quien anotó.
   const owner = isOwnerMode(session?.organization.role);
   const names = useLocal(() => (owner ? memberNames(getDb()) : {}), [owner]);
   const records = useLocal(() => byFarm(getDb().records(owner ? 500 : 200), farmId), [farmId, owner]);
-  // Ola 2 (94): para oficina, filtros por estancia, autor y fechas sobre la lista local.
+  // Para oficina: filtros por estancia, autor y fechas sobre la lista local.
   const farms = useLocal(() => getDb().farms());
   const [rf, setRf] = useState<RecordFilter>(NO_RECORD_FILTER);
   const [draft, setDraft] = useState<RecordFilter | null>(null);

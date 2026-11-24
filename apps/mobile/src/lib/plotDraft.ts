@@ -1,8 +1,9 @@
-/** Edición de vértices de un lote dibujado en el celular (M-03). Lógica pura: la pantalla solo la dibuja. */
+/** Edición de vértices de un lote dibujado en el celular. Lógica pura: la pantalla solo la dibuja. */
 import { areaHa, validatePolygon, type Area } from "@yvy/geo";
 import { LIMITS } from "@yvy/shared";
 import type { Polygon } from "geojson";
 
+/** Vértice `[lon, lat]`. */
 export type V = [number, number];
 
 /** Vértices del anillo exterior sin el punto de cierre. null si no se puede editar en el celular (huecos o varias partes). */
@@ -40,7 +41,9 @@ export function addVertex(vs: V[], p: V, onEdge: boolean): V[] {
   return [...vs.slice(0, best + 1), p, ...vs.slice(best + 1)];
 }
 
+/** Copia de `vs` con el vértice `i` movido a `p`. */
 export const moveVertex = (vs: V[], i: number, p: V): V[] => vs.map((v, k) => (k === i ? p : v));
+/** Copia de `vs` sin el vértice `i`. */
 export const removeVertex = (vs: V[], i: number): V[] => vs.filter((_, k) => k !== i);
 
 type DraftError = "too_few" | "invalid" | "self_intersection" | "too_small";

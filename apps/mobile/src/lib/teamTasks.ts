@@ -16,4 +16,5 @@ export function teamTasksDue<T extends TeamTask>(rows: T[], userId: string, toda
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 }
 
+/** Indica si la tarea venció antes de `today` (fecha ISO). */
 export const isOverdue = (r: Pick<TeamTask, "dueDate">, today: string): boolean => r.dueDate < today;

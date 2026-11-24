@@ -1,3 +1,4 @@
+/** Cuerpo de la ficha del lote. */
 import { View } from "react-native";
 import { router, Stack } from "expo-router";
 import { CloudRain, Copy, Pencil, Trash2 } from "lucide-react-native";

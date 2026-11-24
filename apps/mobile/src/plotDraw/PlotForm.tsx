@@ -1,3 +1,4 @@
+/** Formulario de nombre, tipo y cultivo del lote dibujado. */
 import { ScrollView } from "react-native";
 import { Stack } from "expo-router";
 import { CROPS, PLOT_KINDS, t, type MessageKey } from "@yvy/shared";

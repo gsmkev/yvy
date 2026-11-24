@@ -6,6 +6,7 @@
  */
 import { BRAND } from "@yvy/shared";
 
+/** Colores de la app. */
 export const C = {
   ...BRAND,
   papel: "#FBFAF5",
@@ -24,6 +25,7 @@ export const C = {
   blanco: "#FFFFFF",
 } as const;
 
+/** Familias tipográficas. */
 export const F = {
   serif: "Fraunces_600SemiBold",
   serifLight: "Fraunces_400Regular",
@@ -44,9 +46,12 @@ export const T = {
   number: { fontFamily: F.serif, fontSize: 56, lineHeight: 60, letterSpacing: -1, color: C.tinta },
 } as const;
 
+/** Alto mínimo de un objetivo táctil. */
 export const TOUCH = 56;
+/** Radio de borde estándar. */
 export const RADIUS = 12;
+/** Margen lateral de las pantallas. */
 export const GUTTER = 20;
 
-/** Tope del tamaño de letra del sistema (U-21): respeta la accesibilidad sin romper el diseño. */
+/** Tope del tamaño de letra del sistema: respeta la accesibilidad sin romper el diseño. */
 export const MAX_FONT_SCALE = 1.3;

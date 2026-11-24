@@ -1,7 +1,7 @@
 /**
- * Dibujar o editar un lote (M-03): tocá el mapa para marcar los vértices; tocá un vértice para elegirlo y después
+ * Dibujar o editar un lote: tocá el mapa para marcar los vértices; tocá un vértice para elegirlo y después
  * tocá el mapa para moverlo, o borralo. Se guarda local y se manda con señal (mutación plots.upsert).
- * Solo roles que no son empleado (PRD §9); el servidor también lo exige.
+ * Solo roles que no son empleado; el servidor también lo exige.
  */
 import { useMemo, useRef, useState } from "react";
 import { View } from "react-native";
@@ -120,5 +120,5 @@ function PlotDraw() {
   );
 }
 
-/** F-29: en solo lectura esta pantalla no se abre. */
+/** En solo lectura esta pantalla no se abre. */
 export default withWriteAccess(PlotDraw);

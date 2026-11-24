@@ -2,6 +2,7 @@
 import { type Mutation, type RecordKind } from "@yvy/shared";
 import { type OutboxItem, type Ctx } from "./core";
 
+/** Cantidad de mutaciones que todavía no salieron. */
 export function pendingCount(db: Ctx): number {
   return db.sql.get<{ n: number }>("SELECT count(*) n FROM outbox WHERE rejected_reason IS NULL")?.n ?? 0;
 }
@@ -84,12 +85,14 @@ export function outboxItems(db: Ctx): OutboxItem[] {
   return items.sort((a, b) => a.at - b.at);
 }
 
+/** Mutaciones que el servidor rechazó, con el motivo. */
 export function rejected(db: Ctx): { mutationId: string; kind: string; reason: string; detail: string | null }[] {
   return db.sql.all(
     "SELECT mutation_id mutationId, kind, rejected_reason reason, rejected_detail detail FROM outbox WHERE rejected_reason IS NOT NULL",
   );
 }
 
+/** Descarta una mutación rechazada. */
 export function dismissRejected(db: Ctx, mutationId: string): void {
   db.sql.run("DELETE FROM outbox WHERE mutation_id = ?", [mutationId]);
 }

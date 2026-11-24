@@ -1,6 +1,7 @@
 /** Fotos y notas de voz locales: cola de subida, almacenamiento y limpieza. */
 import { type Ctx } from "./core";
 
+/** Fotos pendientes de subir cuyo registro ya llegó al servidor. */
 export function pendingUploads(db: Ctx): { attachmentId: string; photoUri: string; thumbUri: string; attempts: number; mime: string }[] {
   // Solo las que el servidor ya conoce (su mutación salió del outbox).
   return db.sql.all(
@@ -10,12 +11,13 @@ export function pendingUploads(db: Ctx): { attachmentId: string; photoUri: strin
   );
 }
 
+/** Marca una subida como lograda, o suma un intento si falló. */
 export function markUploaded(db: Ctx, attachmentId: string, ok: boolean): void {
   if (ok) db.sql.run("UPDATE local_files SET uploaded = 1 WHERE attachment_id = ?", [attachmentId]);
   else db.sql.run("UPDATE local_files SET attempts = attempts + 1 WHERE attachment_id = ?", [attachmentId]);
 }
 
-/** F-18: fotos que ya no se reintentan solas por tantos fallos, con lo que pesan. */
+/** Fotos que ya no se reintentan solas por tantos fallos, con lo que pesan. */
 export function stuckUploads(db: Ctx, maxAttempts: number): { n: number; bytes: number } {
   return (
     db.sql.get<{ n: number; bytes: number }>(
@@ -26,12 +28,12 @@ export function stuckUploads(db: Ctx, maxAttempts: number): { n: number; bytes: 
   );
 }
 
-/** F-18: "Reintentar" las fotos trabadas: vuelven a contar desde cero. */
+/** "Reintentar" las fotos trabadas: vuelven a contar desde cero. */
 export function retryStuckUploads(db: Ctx, maxAttempts: number): void {
   db.sql.run("UPDATE local_files SET attempts = 0 WHERE uploaded = 0 AND attempts >= ?", [maxAttempts]);
 }
 
-/** Cuánto ocupa lo local que se puede medir sin tocar el disco (F-19): fotos y notas ya cargadas, mapas bajados. */
+/** Cuánto ocupa lo local que se puede medir sin tocar el disco: fotos y notas ya cargadas, mapas bajados. */
 export function storageSummary(db: Ctx): { photos: { n: number; bytes: number }; voice: { n: number; bytes: number }; maps: { n: number; bytes: number }; reclaimable: { n: number; bytes: number } } {
   const sum = (where: string) =>
     db.sql.get<{ n: number; bytes: number }>(
@@ -63,6 +65,7 @@ export function clearUploadedFiles(db: Ctx, attachmentIds: string[]): void {
   });
 }
 
+/** Miniatura local de una foto; null si no está en este celular. */
 export function localPhoto(db: Ctx, attachmentId: string): string | null {
   return (
     db.sql.get<{ thumb_uri: string }>("SELECT thumb_uri FROM local_files WHERE attachment_id = ?", [attachmentId])

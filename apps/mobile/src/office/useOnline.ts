@@ -17,6 +17,7 @@ interface OnlineOptions {
   cache?: boolean;
 }
 
+/** Resultado de una lectura a la API con caché. */
 export interface OnlineResult<T> {
   data: T | null;
   /** Primera carga sin nada que mostrar. */
@@ -35,6 +36,10 @@ export interface OnlineResult<T> {
   refresh: () => Promise<void>;
 }
 
+/**
+ * Lee una ruta de la API con caché local: devuelve lo guardado mientras llega lo nuevo y lo marca como desactualizado si no hay señal.
+ * @param path Ruta a leer; null desactiva la lectura.
+ */
 export function useOnline<T>(path: string | null, opts: OnlineOptions = {}): OnlineResult<T> {
   const ttl = opts.ttlMs ?? DEFAULT_TTL_MS;
   const useCache = path !== null && shouldCache(path, opts.cache);

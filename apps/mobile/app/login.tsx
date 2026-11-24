@@ -1,3 +1,4 @@
+/** Ingreso: código por correo o vinculación con el QR del administrador. */
 import { useEffect, useState } from "react";
 import { ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
@@ -11,6 +12,7 @@ import { deviceId } from "../src/lib/sync";
 import { Button, Text, TextInput } from "../src/ui/kit";
 import { C, F, GUTTER, RADIUS, T } from "../src/ui/theme";
 
+/** Pantalla de ingreso. */
 export default function Login() {
   const [mode, setMode] = useState<"choose" | "email" | "code" | "totp" | "phone">("choose");
   const [ticket, setTicket] = useState("");
@@ -166,7 +168,7 @@ export default function Login() {
                 onPress={() =>
                   run(async () => {
                     const res = await api<Session | { mfaRequired: true; ticket: string }>("POST", "/auth/email/verify", { email: email.trim().toLowerCase(), code, deviceId: deviceId() }, false);
-                    // P-08: con segundo factor, el servidor pide un código más antes de dar la sesión
+                    // Con segundo factor, el servidor pide un código más antes de dar la sesión
                     if ("mfaRequired" in res) {
                       setTicket(res.ticket);
                       setMode("totp");

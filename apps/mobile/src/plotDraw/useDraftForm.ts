@@ -1,3 +1,4 @@
+/** Estado del formulario del lote que se dibuja (nombre, tipo y cultivo). */
 import { useEffect, useRef, useState, type RefObject } from "react";
 import type { CameraRef } from "@maplibre/maplibre-react-native";
 import type { CROPS, PLOT_KINDS } from "@yvy/shared";

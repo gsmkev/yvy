@@ -1,9 +1,10 @@
-/** GPS solo al anotar (PRD §7: sin seguimiento continuo). */
+/** GPS solo al anotar (sin seguimiento continuo). */
 import * as Location from "expo-location";
 import { containsPoint, type Area } from "@yvy/geo";
 import { t } from "@yvy/shared";
 import type { Plot } from "../db/store";
 
+/** Posición del GPS. */
 export interface Fix {
   lon: number;
   lat: number;
@@ -19,6 +20,7 @@ export const accuracyLabel = (a: number | null | undefined): string =>
 
 const cleanAccuracy = (a: number | null | undefined): number | null => (hasAccuracy(a) ? a : null);
 
+/** Pide una posición al GPS y espera como máximo `timeoutMs`; null si no hay permiso o no llegó a tiempo. */
 export async function currentFix(timeoutMs = 12_000): Promise<Fix | null> {
   const perm = await Location.requestForegroundPermissionsAsync();
   if (perm.status !== "granted") return null;
@@ -45,6 +47,7 @@ function metersToBboxEdge(p: Plot, lon: number, lat: number): number {
   return Math.hypot(dx, dy);
 }
 
+/** Lote candidato para la posición actual. */
 export interface PlotGuess {
   plot: Plot;
   /** "sure": adentro y lejos del borde. "near": adentro pero el error del GPS llega al borde, o a menos de 50 m afuera. */
@@ -52,7 +55,7 @@ export interface PlotGuess {
 }
 
 /**
- * Lotes candidatos para la posición actual, mejores primero (RF-31).
+ * Lotes candidatos para la posición actual, mejores primero.
  * Devuelve varios cuando el punto cae en lotes superpuestos o cerca de un límite.
  */
 export function guessPlots(plots: Plot[], fix: Fix | null): PlotGuess[] {

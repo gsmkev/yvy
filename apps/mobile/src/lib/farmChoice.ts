@@ -1,5 +1,7 @@
+/** Resolución de la estancia elegida a partir de las estancias con lotes y la elección guardada. */
 import type { Farm, Plot } from "../db/store";
 
+/** Estancia elegida y las opciones entre las que se puede cambiar. */
 export interface FarmChoice {
   /** Estancias con lotes: las que se pueden elegir. */
   options: Farm[];
@@ -9,6 +11,10 @@ export interface FarmChoice {
   multi: boolean;
 }
 
+/**
+ * Resuelve la estancia actual: la guardada si sigue siendo válida, si no la primera con lotes.
+ * @param savedId Id de la estancia guardada, o null.
+ */
 export function resolveFarmChoice(farms: Farm[], plots: Pick<Plot, "farmId">[], savedId: string | null): FarmChoice {
   const withPlots = new Set(plots.map((p) => p.farmId));
   const options = farms.filter((f) => withPlots.has(f.id));

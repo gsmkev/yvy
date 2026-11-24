@@ -12,6 +12,7 @@ import { StatRow } from "../../src/office/ui";
 import { Button, EmptyState, Row, SectionHeader, s as k, Text } from "../../src/ui/kit";
 import { T } from "../../src/ui/theme";
 
+/** Pestaña Gestión: menú de la oficina según el rol. */
 export default function Office() {
   const session = getSession();
   const counts = useLocal(() => ({ farms: getDb().farms().length, plots: getDb().plots().length }));

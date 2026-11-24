@@ -1,5 +1,5 @@
 /**
- * Cambios y quemadas (función 93): área quemada tras un foco (GET /org/farms/:id/burned) y cambio de cobertura entre dos fechas
+ * Cambios y quemadas: área quemada tras un foco (GET /org/farms/:id/burned) y cambio de cobertura entre dos fechas
  * (GET /org/farms/:id/cover-change), en lectura. Sin mapa ni PDF; pedir un cálculo nuevo de cobertura sigue siendo de la web.
  */
 import { useMemo, useState } from "react";
@@ -86,6 +86,7 @@ function Cover({ plots }: { plots: AnalysisPlot<CoverMetrics>[] }) {
   );
 }
 
+/** Cambios detectados en los lotes por imágenes satelitales (quemas y desmontes). */
 export default function Changes() {
   const { farms, farm, setFarmId } = useFarmPick();
   const owner = getSession()?.organization.role === "owner";

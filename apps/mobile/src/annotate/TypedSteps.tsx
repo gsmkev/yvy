@@ -1,3 +1,4 @@
+/** Pasos de anotación por tipo de respuesta: sí/no, número y texto. */
 import { useEffect, useRef, useState, type ElementRef } from "react";
 import { View, type TextInput as TextInputRef } from "react-native";
 import { deltaT, sprayWarningTexts, t } from "@yvy/shared";
@@ -9,6 +10,7 @@ import { st } from "./styles";
 
 type OfKind<K extends Step["kind"]> = Extract<Step, { kind: K }>;
 
+/** Paso con respuesta sí o no. */
 export function YesNoStep({ step, onAnswer }: { step: OfKind<"yesno">; onAnswer: (v: unknown) => void }) {
   return (
     <ScreenBody
@@ -34,7 +36,7 @@ export function NumberStep({ step, value, answers, prefilled, onAnswer }: { step
   }, []);
   const n = Number(text.replace(",", "."));
   const ok = text !== "" && Number.isFinite(n) && n >= (step.min ?? 0) && n <= step.max && (!step.integer || Number.isInteger(n));
-  // A-12: aviso al pasar los umbrales de viento o Delta T (con la temperatura ya cargada y esta humedad).
+  // Aviso al pasar los umbrales de viento o Delta T (con la temperatura ya cargada y esta humedad).
   const warnings =
     !ok || answers === undefined
       ? []
@@ -79,6 +81,7 @@ export function NumberStep({ step, value, answers, prefilled, onAnswer }: { step
   );
 }
 
+/** Paso de respuesta con texto libre. */
 export function TextStep({ step, value, onAnswer }: { step: OfKind<"text">; value: unknown; onAnswer: (v: unknown) => void }) {
   const [text, setText] = useState(value === undefined ? "" : String(value));
   const input = useRef<ElementRef<typeof TextInputRef>>(null);

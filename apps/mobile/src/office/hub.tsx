@@ -26,8 +26,10 @@ export function NeedsSignalNote() {
   );
 }
 
+/** Indica si hay señal. */
 export const useOnlineFlag = (): boolean => useSyncStatus().online;
 
+/** Entrada de una pantalla índice: título, ayuda, ícono y destino. */
 export interface HubEntry {
   id: string;
   title: string;

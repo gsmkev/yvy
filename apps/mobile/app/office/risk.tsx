@@ -1,5 +1,5 @@
 /**
- * Riesgo climático (función 91): heladas, sequías, lluvia frente a lo normal y focos de calor. Sin PDF: el dueño comparte
+ * Riesgo climático: heladas, sequías, lluvia frente a lo normal y focos de calor. Sin PDF: el dueño comparte
  * el enlace de solo lectura. API: GET /org/farms/:id/risk (el informe lo calcula la corrida semanal).
  */
 import { router } from "expo-router";
@@ -16,6 +16,7 @@ import { BarList, LineChart, StatRow, type StatItem } from "../../src/office/ui"
 import { EmptyState, SectionHeader, Text } from "../../src/ui/kit";
 import { T } from "../../src/ui/theme";
 
+/** Riesgo climático y de incendios por estancia, con lluvia y focos por mes. */
 export default function Risk() {
   const { farms, farm, setFarmId } = useFarmPick();
   const owner = getSession()?.organization.role === "owner";

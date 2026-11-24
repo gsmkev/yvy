@@ -1,5 +1,5 @@
 /**
- * Estancia elegida (F-20). Solo hay selector si el usuario tiene lotes en más de una estancia;
+ * Estancia elegida. Solo hay selector si el usuario tiene lotes en más de una estancia;
  * con una sola no se muestra nada y todo se ve completo.
  */
 import type { LocalDb } from "../db/store";
@@ -17,11 +17,13 @@ const farmChoice = (db: LocalDb = getDb()): FarmChoice => resolveFarmChoice(db.f
 /** Id de la estancia que filtra, o null si se ve todo. */
 export const selectedFarmId = (db: LocalDb = getDb()): string | null => farmChoice(db).current?.id ?? null;
 
+/** Guarda la estancia elegida y avisa a las pantallas. */
 export function setSelectedFarm(id: string): void {
   getDb().setKv(SELECTED_FARM_KEY, id);
   localChanged();
 }
 
+/** Estancia elegida y opciones, calculadas con los datos locales; `farmId` es null si no hay. */
 export function useFarmChoice(): FarmChoice & { farmId: string | null } {
   const c = useLocal(() => farmChoice());
   return { ...c, farmId: c.current?.id ?? null };

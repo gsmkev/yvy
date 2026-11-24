@@ -1,5 +1,5 @@
 /**
- * Mantenimiento de máquinas (función 124): servicios por hacer (vencidos en alerta), planes y bitácora; anotar un
+ * Mantenimiento de máquinas: servicios por hacer (vencidos en alerta), planes y bitácora; anotar un
  * servicio o una reparación. API: GET /org/erp/maintenance/due, /maintenance/logs, /maintenance-plans, /machines;
  * POST /org/erp/maintenance/logs (apps/api/src/routes/erp/).
  */
@@ -30,6 +30,7 @@ const key = (k: string) => k as MessageKey;
 type Tab = "history" | "plans";
 const INVALIDATE = ["/org/erp/maintenance"];
 
+/** Mantenimiento de maquinaria: programación y registro. */
 export default function Maintenance() {
   const allowed = useManageErp();
   const [tab, setTab] = useState<Tab>("history");

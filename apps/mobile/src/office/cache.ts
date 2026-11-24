@@ -6,6 +6,7 @@ import { cacheGet, cacheInvalidate, cacheKey, cachePut, type CacheEntry } from "
 type Listener = (prefixes: string[]) => void;
 const listeners = new Set<Listener>();
 
+/** Suscribe `f` a las invalidaciones de la caché; devuelve la función para cancelar. */
 export const onInvalidate = (f: Listener): (() => void) => (listeners.add(f), () => listeners.delete(f));
 
 /** Clave de caché de este path para la sesión actual; null sin sesión. */
@@ -14,11 +15,13 @@ export function currentKey(path: string): string | null {
   return s ? cacheKey(s.user.id, s.organization.id, path) : null;
 }
 
+/** Entrada guardada para la ruta, o null. */
 export function readCache(path: string): CacheEntry | null {
   const k = currentKey(path);
   return k ? cacheGet(getDb().sql, k) : null;
 }
 
+/** Guarda el cuerpo de la respuesta de una ruta, si hay sesión. */
 export function writeCache(path: string, body: string): void {
   const s = getSession();
   if (s) cachePut(getDb().sql, { userId: s.user.id, orgId: s.organization.id, path, body, now: Date.now() });

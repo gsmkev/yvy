@@ -1,3 +1,4 @@
+/** Copiado de texto al portapapeles o a la hoja de compartir. */
 import { Platform, Share } from "react-native";
 
 /**

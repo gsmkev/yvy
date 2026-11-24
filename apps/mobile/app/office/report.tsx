@@ -1,5 +1,5 @@
 /**
- * Parte semanal (función 83): lo mismo que la web muestra en pantalla (registros, lluvia, avisos, tareas) y, en lugar del PDF,
+ * Parte semanal: lo mismo que la web muestra en pantalla (registros, lluvia, avisos, tareas) y, en lugar del PDF,
  * "Compartir por WhatsApp" con un resumen corto. API: /org/records, /org/farms/:id/climate, /org/tasks, /org/alerts.
  */
 import { useMemo, useState } from "react";
@@ -46,6 +46,7 @@ const key = (k: string) => k as MessageKey;
 const ddmm = (iso: string) => `${iso.slice(8)}/${iso.slice(5, 7)}`;
 const ddmmyyyy = (iso: string) => `${iso.slice(8)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
 
+/** Informe de un lote o una estancia. */
 export default function Report() {
   const units = useUnits();
   const { farms, farm, setFarmId } = useFarmPick();

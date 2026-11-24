@@ -1,5 +1,5 @@
 /**
- * Preferencias de avisos (U-29): por tipo de aviso, y horario de silencio para el push. Se guardan en el servidor
+ * Preferencias de avisos: por tipo de aviso, y horario de silencio para el push. Se guardan en el servidor
  * (valen para todos los dispositivos), así que hace falta señal para verlas y cambiarlas.
  */
 import { useEffect, useState } from "react";
@@ -24,6 +24,7 @@ interface Resp {
   email: boolean;
 }
 
+/** Preferencias de avisos. */
 export default function Notifications() {
   const [data, setData] = useState<Resp | null>(null);
   const [offline, setOffline] = useState(false);

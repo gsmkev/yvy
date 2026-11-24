@@ -18,6 +18,10 @@ interface OnlineMutation<TBody, TRes> {
   reset: () => void;
 }
 
+/**
+ * Envía un cambio a la API (necesita señal) e invalida las lecturas en caché indicadas en `opts.invalidate`.
+ * Devuelve `mutate` con su estado (`pending`, `error`, `reset`); ignora un segundo toque mientras hay uno en curso y bloquea la escritura en la cuenta de demostración.
+ */
 export function useOnlineMutation<TBody = void, TRes = unknown>(
   method: "POST" | "PUT" | "PATCH" | "DELETE",
   path: string | ((body: TBody) => string),

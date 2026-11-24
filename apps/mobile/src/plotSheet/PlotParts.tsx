@@ -1,3 +1,4 @@
+/** Partes de la ficha del lote: vigor, secciones de oficina, listas y confirmación de borrado. */
 import { View } from "react-native";
 import { router } from "expo-router";
 import { ListChecks, Satellite } from "lucide-react-native";

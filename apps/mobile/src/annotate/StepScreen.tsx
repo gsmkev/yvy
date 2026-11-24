@@ -1,3 +1,4 @@
+/** Despacho de un paso de pregunta a su componente según el tipo. */
 import { t, type ProductDose } from "@yvy/shared";
 import type { Season } from "../db/store";
 import { getDb } from "../lib/db";
@@ -8,6 +9,7 @@ import { UsageStep } from "./UsageStep";
 import { tr } from "./common";
 import { NumberStep, TextStep, YesNoStep } from "./TypedSteps";
 
+/** Dibuja el paso `step` con su control de respuesta; `onAnswer` recibe el valor elegido. */
 export function StepScreen({ step, value, answers, prefilled, plotAreaHa, seasons, onAnswer }: { plotAreaHa: number | null; step: Step; value: unknown; answers: Record<string, unknown>; prefilled: boolean; seasons: Season[]; onAnswer: (v: unknown) => void }) {
   if (step.kind === "choice")
     return <ChoiceStep question={tr(step.question)} items={step.options.map((o) => ({ value: o.value, label: tr(o.label) }))} value={value} onAnswer={onAnswer} secondary={step.optional ? t("app.common.skip") : undefined} />;

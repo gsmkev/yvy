@@ -1,3 +1,4 @@
+/** Paso de elección de una opción dentro de la anotación. */
 import { useState } from "react";
 import { t } from "@yvy/shared";
 import { Button, RadioGroup, Row, ScreenBody, Text } from "../ui/kit";

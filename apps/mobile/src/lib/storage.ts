@@ -1,7 +1,8 @@
-/** Almacenamiento del celular (F-19): cuánto ocupa la app y "Borrar fotos ya subidas". */
+/** Almacenamiento del celular: cuánto ocupa la app y "Borrar fotos ya subidas". */
 import * as FileSystem from "expo-file-system/legacy";
 import { getDb } from "./db";
 
+/** Espacio que ocupa la app, por tipo de contenido. */
 export interface StorageUsage {
   photos: { n: number; bytes: number };
   voice: { n: number; bytes: number };
@@ -16,6 +17,7 @@ async function fileSize(uri: string): Promise<number> {
   return info && info.exists ? info.size : 0;
 }
 
+/** Mide lo que ocupan fotos, notas de voz, mapas y la base. */
 export async function storageUsage(): Promise<StorageUsage> {
   const { photos, voice, maps, reclaimable } = getDb().storageSummary();
   const dir = `${FileSystem.documentDirectory}SQLite/`;

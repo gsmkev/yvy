@@ -11,6 +11,7 @@ interface FarmSummary {
 
 const WEEK_MS = 7 * 86_400_000;
 
+/** Resumen de cada estancia, con las que tienen más avisos primero. */
 export function summarizeFarms(
   farms: { id: string; name: string; areaHa: number }[],
   plots: { farmId: string }[],

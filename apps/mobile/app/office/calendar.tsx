@@ -1,5 +1,5 @@
 /**
- * Calendario (función 99): la semana en vertical, un bloque por día (solo los días con tareas y hoy), desde la base
+ * Calendario: la semana en vertical, un bloque por día (solo los días con tareas y hoy), desde la base
  * local. Lógica de fechas en src/office/calendar.ts (copia de la web).
  */
 import { useMemo, useState } from "react";
@@ -25,6 +25,7 @@ function Nav({ label, onPress, children }: { label: string; onPress: () => void;
   );
 }
 
+/** Calendario de tareas. */
 export default function Calendar() {
   const today = localDate(Date.now());
   const [monday, setMonday] = useState(weekStart(today));

@@ -7,6 +7,7 @@ import { t } from "@yvy/shared";
 import { Button, Text } from "../ui/kit";
 import { C, T, TOUCH } from "../ui/theme";
 
+/** Foto sacada: URI y medidas. */
 export interface PickedPhoto {
   uri: string;
   width: number;
@@ -16,6 +17,7 @@ export interface PickedPhoto {
 /** Hay cámara en este equipo (en la web no: ahí se elige un archivo). */
 export const HAS_CAMERA = true;
 
+/** Botón que abre la cámara para fotografiar una factura. */
 export function InvoicePhotoButton({ title, onPick, disabled, loading }: { title: string; onPick: (p: PickedPhoto) => void; disabled?: boolean; loading?: boolean }) {
   const [open, setOpen] = useState(false);
   return (

@@ -1,5 +1,5 @@
 /**
- * X-09: calidad de la foto antes de guardarla. Heurística local, sin modelo: sobre una miniatura chica se mide la
+ * Calidad de la foto antes de guardarla. Heurística local, sin modelo: sobre una miniatura chica se mide la
  * oscuridad (luminancia media) y el desenfoque (varianza del laplaciano). Solo avisa; nunca bloquea.
  * jpeg-js es JS puro (sin módulos nativos): decodifica la miniatura que ya genera expo-image-manipulator.
  * Los umbrales viven en LIMITS.photos.quality y son orientativos: conviene ajustarlos con fotos reales del campo.
@@ -23,6 +23,10 @@ export function toLuma(rgba: ArrayLike<number>, width: number, height: number): 
   return out;
 }
 
+/**
+ * Estadísticas de luminosidad y nitidez de una imagen en escala de grises.
+ * @param luma Valores de luminancia por píxel.
+ */
 export function analyzeLuma(luma: ArrayLike<number>, width: number, height: number): PhotoStats {
   const n = width * height;
   let sum = 0;
@@ -45,6 +49,7 @@ export function analyzeLuma(luma: ArrayLike<number>, width: number, height: numb
   return { meanLuma, blurVariance };
 }
 
+/** Problemas de calidad (oscura, movida) que muestran las estadísticas. */
 export function photoIssues(stats: PhotoStats): PhotoIssue[] {
   const q = LIMITS.photos.quality;
   const out: PhotoIssue[] = [];

@@ -1,3 +1,4 @@
+/** Hook con los datos locales que dibuja el mapa y lo que la persona puede hacer en él. */
 import { isFieldRole } from "@yvy/shared";
 import { getDb } from "../lib/db";
 import { byFarm, useFarmChoice } from "../lib/farmFilter";
@@ -10,7 +11,7 @@ import { useLocal } from "../lib/useLocal";
 /** Lo que el mapa dibuja y lo que la persona puede hacer, todo de la base local. */
 export function useMapData() {
   const { farmId: chosenFarm, current } = useFarmChoice();
-  // F-29: dueño, administrador y agrónomo ven todos los lotes de todas las estancias; la estancia elegida solo mueve la cámara.
+  // Dueño, administrador y agrónomo ven todos los lotes de todas las estancias; la estancia elegida solo mueve la cámara.
   const owner = isOwnerMode(useSession()?.organization.role);
   const farmId = owner ? null : chosenFarm;
   const farms = useLocal(() => byFarm(getDb().farms().map((f) => ({ ...f, farmId: f.id })), farmId), [farmId]);

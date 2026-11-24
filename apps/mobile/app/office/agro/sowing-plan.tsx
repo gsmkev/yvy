@@ -1,4 +1,4 @@
-/** Plan de siembra (función 76): superficie por cultivo y variedad y semilla a comprar. GET /org/seasons?farmId= más los lotes del celular. */
+/** Plan de siembra: superficie por cultivo y variedad y semilla a comprar. GET /org/seasons?farmId= más los lotes del celular. */
 import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
 import { CROPS, sowingPlan, t, type MessageKey, areaLabel, haToArea } from "@yvy/shared";
@@ -20,6 +20,7 @@ interface Resp {
   plotSeasons: { plotId: string; seasonId: string; crop: string | null; variety: string | null; sowingDensity: number | null; densityUnit: string | null }[];
 }
 
+/** Plan de siembra de la campaña. */
 export default function SowingPlan() {
   const units = useUnits();
   const { farms, farm, setFarmId } = useFarmPick();

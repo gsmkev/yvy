@@ -1,4 +1,4 @@
-// Generado por scripts/gen-schema.mjs desde apps/api/migrations. No editar a mano.
+/** Esquema de las tablas del servidor, generado por scripts/gen-schema.mjs desde apps/api/migrations. No editar a mano. */
 export const SERVER_SCHEMA: string[] = [
   "CREATE TABLE `alert_feedback` (\n\t`alert_id` text NOT NULL,\n\t`user_id` text NOT NULL,\n\t`useful` integer NOT NULL,\n\t`comment` text,\n\tPRIMARY KEY(`alert_id`, `user_id`)\n);",
   "CREATE TABLE `alert_plots` (\n\t`alert_id` text NOT NULL,\n\t`plot_id` text NOT NULL,\n\tPRIMARY KEY(`alert_id`, `plot_id`)\n);",

@@ -32,6 +32,7 @@ const PLOT_PADDING = { top: 120, bottom: 320, left: 40, right: 40 };
 const MAX_LABELS = 60;
 const MAX_SAMPLES = 150;
 
+/** Pestaña Mapa: estancias, lotes y registros con MapLibre Native. */
 export default function MapScreen() {
   const { farmId, farms, plots, records, lastVisit, pois, taskPoints, remoteBase, farm, readOnly, canMarkPoi } =
     useMapData();
@@ -49,7 +50,7 @@ export default function MapScreen() {
     setModeState(m);
     getDb().setKv("map_layer", m);
   };
-  // M-18: grilla de muestreo de suelo del lote elegido (hectáreas por punto), calculada en el celular
+  // Grilla de muestreo de suelo del lote elegido (hectáreas por punto), calculada en el celular
   const [gridHa, setGridHa] = useState<5 | 10 | null>(null);
   const [me, setMe] = useState<Fix | null>(null);
   const [copied, setCopied] = useState(false);
@@ -57,7 +58,7 @@ export default function MapScreen() {
   const [panel, setPanel] = useState<MapPanelName>(null);
   const camera = useRef<CameraRef>(null);
   const { follow, setFollow, bearing, northUp, onBearing } = useMapCompass(camera);
-  // M-13: al elegir un lote la cámara se ajusta a sus límites, dejando lugar a la ficha de abajo.
+  // Al elegir un lote la cámara se ajusta a sus límites, dejando lugar a la ficha de abajo.
   useEffect(() => {
     const p = plots.find((x) => x.id === selected);
     if (p)
@@ -77,7 +78,7 @@ export default function MapScreen() {
       });
   }, [farm?.id]);
 
-  // M-12: la etiqueta va en un punto garantizado adentro del lote (el centro del bbox cae afuera en lotes en L o U).
+  // La etiqueta va en un punto garantizado adentro del lote (el centro del bbox cae afuera en lotes en L o U).
   // Son vistas nativas: con muchos lotes solo se rotulan los de la estancia elegida y los MAX_LABELS más grandes.
   const labels = useMemo(
     () => plotLabels(farmId ? plots : plots.filter((p) => p.farmId === farm?.id), MAX_LABELS),
@@ -125,7 +126,7 @@ export default function MapScreen() {
   };
 
   const onMapPress = (lon: number, lat: number) => {
-    // Un toque cerca de una tarea con punto (S-09) lleva ahí
+    // Un toque cerca de una tarea con punto lleva ahí
     const task = taskPoints.find((p) => distanceM({ lon, lat }, p) < 40);
     if (task)
       return router.push({

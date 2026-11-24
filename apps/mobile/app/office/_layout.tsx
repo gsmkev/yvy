@@ -1,3 +1,4 @@
+/** Pila de pantallas de la oficina. */
 import { Stack } from "expo-router";
 import { STACK_SCREEN_OPTIONS } from "../../src/ui/stackOptions";
 

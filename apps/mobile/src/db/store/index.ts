@@ -1,5 +1,5 @@
 /**
- * Base local del celular (PRD §11): mismas tablas que D1 + outbox, cursores y archivos locales.
+ * Base local del celular: mismas tablas que D1 + outbox, cursores y archivos locales.
  * Implementa SyncStore para el motor de packages/sync. Esta clase es la fachada: cada dominio vive en su
  * módulo (records, tasks, farm, catalog, outbox, files, sync) como funciones que reciben la base.
  *
@@ -23,8 +23,10 @@ import * as records from "./records";
 import * as sync from "./sync";
 import * as tasks from "./tasks";
 
+/** Tipos de fila y de datos de la base local, reexportados para las pantallas. */
 export type { Farm, LocalAudio, LocalPhoto, NewRecord, OutboxItem, Plot, Poi, Product, Season } from "./core";
 
+/** Base local del celular: reúne los repositorios y cumple el contrato de sincronización. */
 export class LocalDb implements SyncStore {
   constructor(
     readonly sql: Sql,
@@ -70,28 +72,28 @@ export class LocalDb implements SyncStore {
     return records.saveRecord(this, userId, orgId, input, photos, recordId, audio);
   }
   /**
-   * Un registro por lote, todo en una transacción y con el mismo capturedAt (anotar en varios lotes, F-10).
+   * Un registro por lote, todo en una transacción y con el mismo capturedAt (anotar en varios lotes).
    * Las fotos van en el primero: subirlas una vez por lote sería mandar lo mismo varias veces.
    */
   saveRecords(userId: string, orgId: string, inputs: NewRecord[], photos?: LocalPhoto[], audio?: LocalAudio | null): string[] {
     return records.saveRecords(this, userId, orgId, inputs, photos, audio);
   }
-  /** Marca un punto de interés (F-07). Fila local + mutación en una sola transacción. */
+  /** Marca un punto de interés. Fila local + mutación en una sola transacción. */
   savePoi(orgId: string, input: { farmId: string; kind: Poi["kind"]; name: string; lon: number; lat: number }, poiId?: string): string {
     return farm.savePoi(this, orgId, input, poiId);
   }
   /**
-   * Lote dibujado o editado en el celular (M-03, M-04). Fila local + mutación plots.upsert en una sola transacción.
+   * Lote dibujado o editado en el celular. Fila local + mutación plots.upsert en una sola transacción.
    * Al editar solo cambian nombre, tipo, cultivo y forma: campaña, fecha de siembra y color quedan como estaban.
    */
   savePlot(orgId: string, input: { id?: string; farmId: string; name: string; kind: Plot["kind"]; crop: Plot["crop"]; geometry: Polygon }): string {
     return farm.savePlot(this, orgId, input);
   }
-  /** T-08: comentarios de un registro (los de otras personas bajan con el sync). */
+  /** Comentarios de un registro (los de otras personas bajan con el sync). */
   commentsOf(recordId: string): { id: string; authorName: string; body: string; createdAt: number }[] {
     return records.commentsOf(this, recordId);
   }
-  /** T-08: comentar sin señal. Las menciones se hacen desde la web (el celular no tiene la lista de personas). */
+  /** Comentar sin señal. Las menciones se hacen desde la web (el celular no tiene la lista de personas). */
   addComment(userId: string, orgId: string, authorName: string, recordId: string, body: string): string {
     return records.addComment(this, userId, orgId, authorName, recordId, body);
   }
@@ -109,11 +111,11 @@ export class LocalDb implements SyncStore {
   taskById(id: string): Task | null {
     return tasks.taskById(this, id);
   }
-  /** Tilda o destilda un ítem de la lista de verificación (F-15). Sin red: queda en el outbox. */
+  /** Tilda o destilda un ítem de la lista de verificación. Sin red: queda en el outbox. */
   setChecklistItem(taskId: string, itemId: string, done: boolean): void {
     return tasks.setTaskChecklistItem(this, taskId, itemId, done);
   }
-  /** T-02: comenta una tarea. Se ve ya en el celular y viaja por el outbox. */
+  /** Comenta una tarea. Se ve ya en el celular y viaja por el outbox. */
   addTaskComment(taskId: string, userId: string, authorName: string, text: string): void {
     return tasks.addTaskComment(this, taskId, userId, authorName, text);
   }
@@ -149,7 +151,7 @@ export class LocalDb implements SyncStore {
   openTasks(): Task[] {
     return tasks.openTasks(this);
   }
-  /** Tareas abiertas con punto en el mapa (S-09), para dibujarlas y llevar a la persona ahí. */
+  /** Tareas abiertas con punto en el mapa, para dibujarlas y llevar a la persona ahí. */
   taskPoints(userId: string): { id: string; title: string; lon: number; lat: number }[] {
     return tasks.taskPoints(this, userId);
   }
@@ -164,7 +166,7 @@ export class LocalDb implements SyncStore {
   photosOfRecord(recordId: string): { id: string; thumbUri: string | null }[] {
     return records.photosOfRecord(this, recordId);
   }
-  /** Nota de voz del registro (F-09): archivo local si está en este celular, y si ya se subió. */
+  /** Nota de voz del registro: archivo local si está en este celular, y si ya se subió. */
   voiceOfRecord(recordId: string): { id: string; uri: string | null; uploaded: boolean }[] {
     return records.voiceOfRecord(this, recordId);
   }
@@ -172,7 +174,7 @@ export class LocalDb implements SyncStore {
   firstThumbByRecord(): Map<string, string> {
     return records.firstThumbByRecord(this);
   }
-  /** F-17: hasta `max` miniaturas locales por registro, en el orden en que se sacaron (Historial). */
+  /** Hasta `max` miniaturas locales por registro, en el orden en que se sacaron (Historial). */
   thumbsByRecord(max?: number): Map<string, string[]> {
     return records.thumbsByRecord(this, max);
   }
@@ -181,7 +183,7 @@ export class LocalDb implements SyncStore {
     return records.recordsOfPlot(this, plotId, limit);
   }
   /**
-   * Hacienda actual de un potrero, calculada con lo que hay en el celular (ADR 0004): último conteo más
+   * Hacienda actual de un potrero, calculada con lo que hay en el celular: último conteo más
    * movimientos y mortandad posteriores. Funciona sin señal. `null` si el potrero nunca tuvo datos de hacienda.
    */
   herdStock(plotId: string): PlotStock | null {
@@ -195,7 +197,7 @@ export class LocalDb implements SyncStore {
   lastVigor(plotId: string): { mean: number; acquiredAt: number } | null {
     return farm.lastVigor(this, plotId);
   }
-  /** Las dos últimas pasadas de NDVI de cada lote, para ver cuáles empeoraron (F-29). */
+  /** Las dos últimas pasadas de NDVI de cada lote, para ver cuáles empeoraron. */
   lastTwoVigorPasses(): { plotId: string; mean: number; acquiredAt: number }[] {
     return farm.lastTwoVigorPasses(this);
   }
@@ -203,7 +205,7 @@ export class LocalDb implements SyncStore {
   openTasksOfPlot(plotId: string): number {
     return tasks.openTasksOfPlot(this, plotId);
   }
-  /** Tareas abiertas de un lote (ficha del lote, F-23), las que vencen antes primero. */
+  /** Tareas abiertas de un lote (ficha del lote), las que vencen antes primero. */
   openTasksListOfPlot(plotId: string, limit?: number): Task[] {
     return tasks.openTasksListOfPlot(this, plotId, limit);
   }
@@ -214,11 +216,11 @@ export class LocalDb implements SyncStore {
   activeAlerts(): Alert[] {
     return farm.activeAlerts(this);
   }
-  /** Receta de una tarea (A-11), ya validada; null si no tiene o está dañada. */
+  /** Receta de una tarea, ya validada; null si no tiene o está dañada. */
   prescriptionOf(taskId: string): Prescription | null {
     return tasks.prescriptionOf(this, taskId);
   }
-  /** Orden de trabajo de una tarea (E-20), ya validada; null si no tiene o está dañada. */
+  /** Orden de trabajo de una tarea, ya validada; null si no tiene o está dañada. */
   orderOf(taskId: string): WorkOrder | null {
     return tasks.orderOf(this, taskId);
   }
@@ -234,7 +236,7 @@ export class LocalDb implements SyncStore {
   machines(): Machine[] {
     return catalog.machines(this);
   }
-  /** Animales con caravana (G-21) de las estancias del celular; con `query`, los que tienen ese texto en la caravana. */
+  /** Animales con caravana de las estancias del celular; con `query`, los que tienen ese texto en la caravana. */
   animals(query?: string, limit?: number): Animal[] {
     return catalog.animals(this, query, limit);
   }
@@ -242,7 +244,7 @@ export class LocalDb implements SyncStore {
   recordsOfTag(tag: string, limit?: number): RecordRow[] {
     return records.recordsOfTag(this, tag, limit);
   }
-  /** Depósitos de la organización (para el recuento de inventario, E-15). */
+  /** Depósitos de la organización (para el recuento de inventario). */
   warehouses(): Warehouse[] {
     return catalog.warehouses(this);
   }
@@ -259,15 +261,15 @@ export class LocalDb implements SyncStore {
   markUploaded(attachmentId: string, ok: boolean): void {
     return files.markUploaded(this, attachmentId, ok);
   }
-  /** F-18: fotos que ya no se reintentan solas por tantos fallos, con lo que pesan. */
+  /** Fotos que ya no se reintentan solas por tantos fallos, con lo que pesan. */
   stuckUploads(maxAttempts: number): { n: number; bytes: number } {
     return files.stuckUploads(this, maxAttempts);
   }
-  /** F-18: "Reintentar" las fotos trabadas: vuelven a contar desde cero. */
+  /** "Reintentar" las fotos trabadas: vuelven a contar desde cero. */
   retryStuckUploads(maxAttempts: number): void {
     return files.retryStuckUploads(this, maxAttempts);
   }
-  /** Cuánto ocupa lo local que se puede medir sin tocar el disco (F-19): fotos y notas ya cargadas, mapas bajados. */
+  /** Cuánto ocupa lo local que se puede medir sin tocar el disco: fotos y notas ya cargadas, mapas bajados. */
   storageSummary(): { photos: { n: number; bytes: number }; voice: { n: number; bytes: number }; maps: { n: number; bytes: number }; reclaimable: { n: number; bytes: number } } {
     return files.storageSummary(this);
   }

@@ -1,9 +1,11 @@
+/** Laboratorio: identificación de malezas. */
 import { t } from "@yvy/shared";
 import { Lab, Fact } from "../../src/labs/Lab";
 import { WeedIllustration } from "../../src/labs/illustrations";
 import { T } from "../../src/ui/theme";
 import { Text } from "../../src/ui/kit";
 
+/** Pantalla del laboratorio de malezas. */
 export default function Malezas() {
   return (
     <Lab

@@ -1,3 +1,4 @@
+/** Layout de las pestañas principales y del botón flotante Anotar. */
 import { useEffect } from "react";
 import { Pressable, StyleSheet, type ColorValue } from "react-native";
 import { Redirect, Tabs, router } from "expo-router";
@@ -21,6 +22,7 @@ const icon =
     <I size={24} color={String(color)} strokeWidth={focused ? 2.4 : 1.8} />
   );
 
+/** Barra de pestañas con el botón Anotar. */
 export default function TabsLayout() {
   const session = useSession();
   const demo = useIsDemo();

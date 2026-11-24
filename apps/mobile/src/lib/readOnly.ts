@@ -1,5 +1,5 @@
 /**
- * Modo solo lectura (F-29): el dueño mira todo el campo sin tocar nada por accidente. Se prende solo para el rol
+ * Modo solo lectura: el dueño mira todo el campo sin tocar nada por accidente. Se prende solo para el rol
  * "owner" y se puede cambiar desde Más; administrador y agrónomo arrancan con la app completa. Los empleados no
  * tienen el modo: ellos solo anotan.
  */

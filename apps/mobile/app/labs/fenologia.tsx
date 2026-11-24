@@ -1,3 +1,4 @@
+/** Laboratorio: identificación del estado fenológico del cultivo. */
 import { StyleSheet, View } from "react-native";
 import { t } from "@yvy/shared";
 import { Lab, Fact } from "../../src/labs/Lab";
@@ -8,6 +9,7 @@ import { Text } from "../../src/ui/kit";
 const STAGES = ["VE", "V3", "V6", "R1", "R2", "R3", "R5", "R7"];
 const EXAMPLE = "R2";
 
+/** Pantalla del laboratorio de fenología. */
 export default function Fenologia() {
   return (
     <Lab

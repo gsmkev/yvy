@@ -1,5 +1,5 @@
 /**
- * Buscador (función 6): un campo que encuentra estancias, lotes, tareas, registros (por el texto del resumen),
+ * Buscador: un campo que encuentra estancias, lotes, tareas, registros (por el texto del resumen),
  * productos y animales en la base local, agrupado por tipo. Anda sin señal. Tocar un resultado abre lo que corresponde.
  */
 import { useDeferredValue, useMemo, useState } from "react";
@@ -41,6 +41,7 @@ const safe = (data: string): Record<string, unknown> => {
   }
 };
 
+/** Buscador global sin conexión: estancias, lotes, tareas y registros del celular. */
 export default function Search() {
   const [text, setText] = useState("");
   const [all, setAll] = useState<Record<string, boolean>>({});

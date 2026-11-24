@@ -1,3 +1,4 @@
+/** Ficha inferior del mapa con los datos del lote elegido. */
 import { Pressable, View } from "react-native";
 import { router } from "expo-router";
 import { X } from "lucide-react-native";
@@ -96,7 +97,7 @@ function PlotStats({ plot }: { plot: Plot }) {
   const rainMonth = getDb().rainThisMonth(plot.farmId);
   const vigor = getDb().lastVigor(plot.id);
   const openTasks = getDb().openTasksOfPlot(plot.id);
-  // G-03: hacienda del potrero, calculada en el celular (anda sin señal).
+  // Hacienda del potrero, calculada en el celular (anda sin señal).
   const herd = plot.kind === "pasture" ? getDb().herdStock(plot.id) : null;
   const herdUa = herd ? uaPerHa(herd.counts, plot.areaHa) : null;
   return (

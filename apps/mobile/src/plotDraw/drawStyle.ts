@@ -1,3 +1,4 @@
+/** Estilo MapLibre del mapa de dibujo de lotes. */
 import type { StyleSpecification } from "@maplibre/maplibre-react-native";
 import type { Farm, Plot } from "../db/store";
 import { layerSource } from "../lib/offline";

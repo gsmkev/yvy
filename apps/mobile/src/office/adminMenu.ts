@@ -3,8 +3,10 @@ import { Beef, BookOpen, Boxes, ClipboardList, Fuel, Handshake, Package, Package
 import type { MessageKey } from "@yvy/shared";
 
 type AdminGroup = "trade" | "stock" | "ops" | "finance";
+/** Grupos del menú de Administración, en orden. */
 export const ADMIN_GROUPS: AdminGroup[] = ["trade", "stock", "ops", "finance"];
 
+/** Título de cada grupo de Administración. */
 export const ADMIN_GROUP_TITLE: Record<AdminGroup, MessageKey> = {
   trade: "ui.admin.group_trade",
   stock: "ui.admin.group_stock",

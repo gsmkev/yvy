@@ -1,5 +1,5 @@
 /**
- * Combustible (función 122): litros y consumo por máquina, con filtro por estancia. /org/erp/fuel/report.
+ * Combustible: litros y consumo por máquina, con filtro por estancia. /org/erp/fuel/report.
  * La carga de combustible es el registro "carga de combustible" de Anotar (funciona sin señal y la sincroniza):
  * el botón abre ese flujo; el ERP descuenta el stock y carga el costo solo.
  */
@@ -26,6 +26,7 @@ interface MachineFuel {
   litersPerUnit: number | null;
 }
 
+/** Combustible: cargas y consumo por máquina. */
 export default function FuelScreen() {
   const farmNames = useFarmNames();
   const [farmId, setFarmId] = useState("");

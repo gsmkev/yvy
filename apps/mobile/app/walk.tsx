@@ -1,5 +1,5 @@
 /**
- * Grabar recorrida (F-05): empieza y termina la persona. Con la app abierta; sin servicio en segundo plano.
+ * Grabar recorrida: empieza y termina la persona. Con la app abierta; sin servicio en segundo plano.
  * Al terminar queda un registro `track` (línea simplificada, distancia y tiempo) en el lote donde empezó.
  */
 import { useEffect, useState } from "react";
@@ -124,5 +124,5 @@ function Walk() {
   );
 }
 
-/** F-29: en solo lectura esta pantalla no se abre. */
+/** En solo lectura esta pantalla no se abre. */
 export default withWriteAccess(Walk);

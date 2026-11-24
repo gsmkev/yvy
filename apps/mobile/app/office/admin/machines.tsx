@@ -1,4 +1,4 @@
-/** Máquinas (función 115): lista, alta y edición. /org/erp/machines (las ve también el agrónomo; edita dueño y administrador). */
+/** Máquinas: lista, alta y edición. /org/erp/machines (las ve también el agrónomo; edita dueño y administrador). */
 import { useState } from "react";
 import { Plus } from "lucide-react-native";
 import { MACHINE_TYPES, METER_KINDS, t } from "@yvy/shared";
@@ -39,6 +39,7 @@ interface Draft {
   farmId: string;
 }
 
+/** Maquinaria: alta y listado de máquinas. */
 export default function Machines() {
   const { manage } = useAdminAccess();
   const q = useOnline<Machine[]>("/org/erp/machines");

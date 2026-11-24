@@ -1,5 +1,5 @@
 /**
- * Umbrales de avisos por estancia (función 110): helada, exceso de lluvia y sequía. Los edita el dueño o un
+ * Umbrales de avisos por estancia: helada, exceso de lluvia y sequía. Los edita el dueño o un
  * administrador; el resto los ve. API: GET y PUT /org/farms/:id/alert-settings (apps/api/src/routes/org.ts).
  */
 import { useEffect, useState } from "react";
@@ -22,6 +22,7 @@ type Draft = Record<keyof AlertSettings, string>;
 
 const toDraft = (v: AlertSettings): Draft => ({ frostTminC: String(v.frostTminC).replace(".", ","), excessRainMm24h: String(v.excessRainMm24h).replace(".", ","), droughtDeficitPct: String(v.droughtDeficitPct).replace(".", ",") });
 
+/** Configuración de las reglas de avisos de cada estancia. */
 export default function AlertSettingsScreen() {
   const role = getSession()?.organization.role ?? "";
   const canEdit = role === "owner" || role === "admin";

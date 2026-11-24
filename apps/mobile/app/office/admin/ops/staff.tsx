@@ -1,5 +1,5 @@
 /**
- * Personal (función 133): asistencia del día (pantalla principal), saldos por persona y lista de empleados con alta.
+ * Personal: asistencia del día (pantalla principal), saldos por persona y lista de empleados con alta.
  * La planilla y los pagos son de solo lectura: se liquidan en la web. API: GET /org/erp/employees, /attendance,
  * /employees/balance, /employees/:id/statement; POST /org/erp/attendance y /org/erp/employees (apps/api/src/routes/erp/).
  */
@@ -58,6 +58,7 @@ type Tab = "attendance" | "balances" | "employees";
 type Mark = "full" | "half" | "absent";
 const key = (k: string) => k as MessageKey;
 
+/** Personal: empleados y sus datos. */
 export default function Staff() {
   const allowed = useManageErp();
   const [tab, setTab] = useState<Tab>("attendance");

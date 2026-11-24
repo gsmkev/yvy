@@ -1,3 +1,4 @@
+/** Pantalla para elegir varios lotes a la vez. */
 import { ScrollView, View } from "react-native";
 import { Check } from "lucide-react-native";
 import { t } from "@yvy/shared";

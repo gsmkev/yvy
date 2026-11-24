@@ -1,4 +1,4 @@
-/** Comparar estancias (función 101): una tarjeta por estancia con las métricas de los últimos 30 días. API: GET /org/compare/farms. */
+/** Comparar estancias: una tarjeta por estancia con las métricas de los últimos 30 días. API: GET /org/compare/farms. */
 import { View } from "react-native";
 import { isFieldRole, t } from "@yvy/shared";
 import { getSession } from "../../src/lib/session";
@@ -21,6 +21,7 @@ interface FarmRow {
   activeAlerts: number;
 }
 
+/** Comparación entre estancias de la organización. */
 export default function Compare() {
   const allowed = !isFieldRole(getSession()?.organization.role ?? "");
   const q = useOnline<FarmRow[]>(allowed ? "/org/compare/farms" : null);

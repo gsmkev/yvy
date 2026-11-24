@@ -1,5 +1,5 @@
 /**
- * Órdenes de trabajo (función 123): abiertas y cerradas, detalle, alta y cierre. Una orden es una tarea por lote
+ * Órdenes de trabajo: abiertas y cerradas, detalle, alta y cierre. Una orden es una tarea por lote
  * (GET/POST /org/erp/work-orders). Se cierra sola cuando el operario carga su registro de campo con foto y ubicación (la API
  * no deja marcarla hecha desde la oficina); desde acá se cancela (PATCH /org/tasks/:id con status cancelled).
  */
@@ -26,6 +26,7 @@ const key = (k: string) => k as MessageKey;
 type Tab = "open" | "closed";
 const ha = (n: number | null) => (n === null ? null : `${fmtNumber(n)} ha`);
 
+/** Órdenes de trabajo: listado y estado. */
 export default function Orders() {
   const allowed = useManageErp();
   const [tab, setTab] = useState<Tab>("open");

@@ -1,5 +1,5 @@
 /**
- * Secciones de la ficha del lote para roles de oficina (ola 2: funciones 44, 45, 47, 49 a 52, 36 y 39).
+ * Secciones de la ficha del lote para roles de oficina.
  * Cada una se oculta si no tiene nada que decir: la ficha nunca muestra secciones vacías.
  */
 import { View } from "react-native";
@@ -72,7 +72,7 @@ export function VigorSection({ history, farmMeans, plotName }: { history: VigorP
   );
 }
 
-// ---------- Campañas del lote (47) ----------
+// ---------- Campañas del lote ----------
 
 interface HistoryApiRow extends RotationRow {
   startDate: string | null;
@@ -127,6 +127,7 @@ interface Withdrawal {
   violations: { plotId: string; harvestedOn: string; safeFrom: string; product: string }[];
 }
 
+/** Carencias y reingresos vigentes del lote. */
 export function WithdrawalSection({ plot }: { plot: Plot }) {
   const q = useOnline<Withdrawal>(`/org/farms/${plot.farmId}/withdrawal`);
   const r = q.data?.restrictions.find((x) => x.plotId === plot.id);
@@ -165,6 +166,7 @@ interface Phenology {
   comparison: "ahead" | "on_track" | "behind" | null;
 }
 
+/** Estado fenológico estimado del lote. */
 export function PhenologySection({ plotId }: { plotId: string }) {
   const q = useOnline<Phenology>(`/org/plots/${plotId}/phenology`);
   const d = q.data;
@@ -212,6 +214,7 @@ interface WaterBalance {
   } | null;
 }
 
+/** Balance hídrico del lote; `onIrrigate` abre la carga de riego, o es null si no se puede. */
 export function WaterBalanceSection({ plotId, units, onIrrigate }: { plotId: string; units: Units; onIrrigate: (() => void) | null }) {
   const q = useOnline<WaterBalance>(`/org/plots/${plotId}/water-balance`);
   const d = q.data;
@@ -287,8 +290,9 @@ export function ForecastSection({ plot, units }: { plot: Plot; units: Units }) {
   );
 }
 
-// ---------- Editar atributos (36) ----------
+// ---------- Editar atributos ----------
 
+/** Atributos editables de un lote. */
 export interface PlotEdit {
   name: string;
   kind: "crop" | "pasture";
@@ -298,6 +302,7 @@ export interface PlotEdit {
   pastureType: string;
 }
 
+/** Borrador de edición a partir de un lote. */
 export const editFromPlot = (p: Plot): PlotEdit => ({ name: p.name, kind: p.kind, crop: p.crop ?? "", season: p.season ?? "", sowingDate: p.sowingDate ?? "", pastureType: p.pastureType ?? "" });
 
 /** Hoja de edición de los atributos del lote. */

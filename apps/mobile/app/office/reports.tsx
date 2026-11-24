@@ -1,5 +1,5 @@
 /**
- * Centro de informes (funciones 83-101): puerta de entrada con las mismas entradas agrupadas que la web.
+ * Centro de informes: puerta de entrada con las mismas entradas agrupadas que la web.
  * En el teléfono no se generan PDF: los informes se leen en pantalla y se comparten por enlace de solo lectura o texto.
  */
 import { View } from "react-native";
@@ -35,6 +35,7 @@ const GROUPS: { title: MessageKey; entries: Entry[] }[] = [
   },
 ];
 
+/** Menú de informes de la organización. */
 export default function Reports() {
   const { farms, farm, setFarmId } = useFarmPick();
   const owner = getSession()?.organization.role === "owner";

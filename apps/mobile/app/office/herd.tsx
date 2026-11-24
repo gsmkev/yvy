@@ -1,4 +1,4 @@
-/** Hacienda: índice con selector de estancia y una fila por módulo de ganadería (funciones 67 a 75). */
+/** Hacienda: índice con selector de estancia y una fila por módulo de ganadería. */
 import { Beef, CalendarRange, Flame, Footprints, Heart, Scale, ShieldAlert, Sprout, Wheat } from "lucide-react-native";
 import { t } from "@yvy/shared";
 import { HubScreen, type HubEntry } from "../../src/office/hub";
@@ -16,6 +16,7 @@ const entries = (): HubEntry[] => [
   { id: "heat", title: t("ui.heat.title"), hint: t("office.herd.rowHeat"), icon: Flame, path: "/office/herd/heat" },
 ];
 
+/** Menú de ganadería. */
 export default function Herd() {
   return <HubScreen title={t("office.herd.menu")} entries={entries()} />;
 }

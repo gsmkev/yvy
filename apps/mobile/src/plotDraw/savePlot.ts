@@ -1,3 +1,4 @@
+/** Guardado del lote dibujado en la base local. */
 import type { Polygon } from "geojson";
 import type { CROPS, PLOT_KINDS } from "@yvy/shared";
 import { containsPoint, type Area } from "@yvy/geo";

@@ -1,3 +1,4 @@
+/** Franja de pronóstico de 10 días de la pantalla Hoy. */
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { t, cToTemp, mmToRain, rainLabel, type RainUnit, type TempUnit } from "@yvy/shared";
@@ -42,7 +43,7 @@ export function ForecastStrip({ farmId }: { farmId: string | null }) {
       (id) => api("GET", `/org/farms/${id}/forecast`),
       Date.now(),
     ).then((f) => alive && setData(f));
-    // A-12: las horas de hoy quedan guardadas para precargar las condiciones al aplicar
+    // Las horas de hoy quedan guardadas para precargar las condiciones al aplicar
     refreshSprayHours(getDb(), farmId, (id) => api("GET", `/org/farms/${id}/spray-windows`), Date.now());
     return () => {
       alive = false;

@@ -1,3 +1,4 @@
+/** Paso de cantidades realmente usadas al cerrar una orden de trabajo. */
 import { useState } from "react";
 import { View } from "react-native";
 import { t, type ProductDose } from "@yvy/shared";
@@ -7,7 +8,7 @@ import { tr } from "./common";
 import { st } from "./styles";
 
 /**
- * Cierre de la orden (E-21): lo que realmente salió del depósito, por producto. Si no se escribe, queda lo previsto
+ * Cierre de la orden: lo que realmente salió del depósito, por producto. Si no se escribe, queda lo previsto
  * (dosis por superficie hecha) y no se guarda cantidad.
  */
 export function UsageStep({ question, hint, products, areaHa, onAnswer }: { question: string; hint?: string; products: ProductDose[]; areaHa: number | null; onAnswer: (v: unknown) => void }) {

@@ -1,4 +1,4 @@
-/** Abigeato (función 74): faltantes con fecha, categoría, cabezas y denuncia. GET /org/farms/:id/theft. El alta es Anotar, Abigeato. */
+/** Abigeato: faltantes con fecha, categoría, cabezas y denuncia. GET /org/farms/:id/theft. El alta es Anotar, Abigeato. */
 import { View } from "react-native";
 import { t, type MessageKey, type TheftResponse } from "@yvy/shared";
 import { useFarmPick } from "../../../src/office/farmPick";
@@ -10,6 +10,7 @@ import { DataList, StatRow } from "../../../src/office/ui";
 import { Text } from "../../../src/ui/kit";
 import { C, T } from "../../../src/ui/theme";
 
+/** Control de abigeato: faltantes y alertas del rodeo. */
 export default function Theft() {
   const { farms, farm, setFarmId } = useFarmPick();
   const q = useOnline<TheftResponse>(farm ? `/org/farms/${farm.id}/theft` : null);

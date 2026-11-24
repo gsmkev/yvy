@@ -66,6 +66,7 @@ function openOrders(rows: OrderRow[]) {
 
 const go = (href: string) => router.push(href as Href);
 
+/** Menú de administración (compras, stock, operaciones y finanzas) con el saldo de caja a la vista. */
 export default function Admin() {
   const access = useAdminAccess();
   const { manage } = access;

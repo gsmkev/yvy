@@ -1,3 +1,4 @@
+/** Pantalla de preguntas del asistente de anotación. */
 import { ScrollView, View } from "react-native";
 import { t, type HerdCounts } from "@yvy/shared";
 import { selectedFarmId } from "../lib/farmFilter";

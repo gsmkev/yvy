@@ -1,4 +1,4 @@
-// Vista previa web del mapa de la app: MapLibre GL JS con el mismo estilo que MapLibre Native.
+/** Vista previa web del mapa de la app: MapLibre GL JS con el mismo estilo que MapLibre Native. */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { router, useFocusEffect } from "expo-router";
 import { FarmLine } from "../../src/ui/FarmLine";
@@ -21,6 +21,7 @@ import { C, RADIUS, T } from "../../src/ui/theme";
 
 let protocol = false;
 
+/** Mapa de la vista web. */
 export default function MapScreen() {
   const ref = useRef<HTMLDivElement | null>(null);
   const { farmId, current } = useFarmChoice();
@@ -70,7 +71,7 @@ export default function MapScreen() {
     }
     const layer = layerSource(farm.id, mode, base);
     const fc = (features: GeoJSON.Feature[]) => ({ type: "FeatureCollection" as const, features });
-    // M-13: al elegir un lote se ajusta a sus límites; al cambiar otra cosa se conserva la vista.
+    // Al elegir un lote se ajusta a sus límites; al cambiar otra cosa se conserva la vista.
     const sel = plots.find((p) => p.id === selected);
     const fitPlot = sel && selected !== lastSel.current;
     lastSel.current = selected;

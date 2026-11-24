@@ -1,4 +1,4 @@
-/** Rotación de potreros (función 68): ocupación, descanso y próximo potrero sugerido. GET /org/farms/:id/rotation. */
+/** Rotación de potreros: ocupación, descanso y próximo potrero sugerido. GET /org/farms/:id/rotation. */
 import { View } from "react-native";
 import { t, type MessageKey, type RotationResponse } from "@yvy/shared";
 import { useFarmPick } from "../../../src/office/farmPick";
@@ -12,6 +12,7 @@ import { C, T } from "../../../src/ui/theme";
 
 const days = (v: number | null) => (v === null ? null : fmtNumber(v, 0));
 
+/** Rotación de potreros. */
 export default function Rotation() {
   const { farms, farm, setFarmId } = useFarmPick();
   const q = useOnline<RotationResponse>(farm ? `/org/farms/${farm.id}/rotation` : null);

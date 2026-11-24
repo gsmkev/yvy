@@ -5,12 +5,13 @@ import { ChevronRight, type LucideIcon } from "lucide-react-native";
 import { C, MAX_FONT_SCALE, T } from "../theme";
 import { s } from "./styles";
 
-/** Texto que respeta el tamaño de letra del sistema hasta 1,3 veces, para que el diseño no se rompa (U-21). */
+/** Texto que respeta el tamaño de letra del sistema hasta 1,3 veces, para que el diseño no se rompa. */
 export function Text(props: TextProps) {
   // nosemgrep: react-props-spreading -- envoltorio que reenvía al elemento nativo todas sus props
   return <RNText maxFontSizeMultiplier={MAX_FONT_SCALE} {...props} />;
 }
 
+/** Campo de texto nativo con el tope de tamaño de letra de la app. */
 export function TextInput(props: ComponentProps<typeof RNTextInput>) {
   // nosemgrep: react-props-spreading -- envoltorio que reenvía al elemento nativo todas sus props
   return <RNTextInput maxFontSizeMultiplier={MAX_FONT_SCALE} {...props} />;
@@ -94,7 +95,7 @@ export function Row({
   right?: ReactNode;
   selected?: boolean;
   disabled?: boolean;
-  /** U-26: la fila es una opción. "radio" (una sola, dentro de un RadioGroup) o "checkbox" (se tildan varias): TalkBack la anuncia con su estado. */
+  /** La fila es una opción. "radio" (una sola, dentro de un RadioGroup) o "checkbox" (se tildan varias): TalkBack la anuncia con su estado. */
   choice?: "radio" | "checkbox";
   /** Ícono en un cuadrado a la izquierda. */
   icon?: LucideIcon;

@@ -1,9 +1,10 @@
+/** Hook de la brújula del mapa. */
 import { useEffect, useRef, useState, type RefObject } from "react";
 import type { CameraRef } from "@maplibre/maplibre-react-native";
 import { mapBearingFor, shouldRotate } from "../lib/heading";
 import { useHeading } from "../lib/useHeading";
 
-/** F-04: brújula y mapa que gira con el rumbo (se activa a mano; el sensor solo corre mientras está activo). */
+/** Brújula y mapa que gira con el rumbo (se activa a mano; el sensor solo corre mientras está activo). */
 export function useMapCompass(camera: RefObject<CameraRef | null>) {
   const [follow, setFollow] = useState(false);
   const [bearing, setBearing] = useState(0);

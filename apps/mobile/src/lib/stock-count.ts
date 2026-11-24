@@ -1,4 +1,4 @@
-/** Recuento de depósito (E-15): arma el registro `stock_count` a partir de lo que se escribió. TS puro, sin React Native. */
+/** Recuento de depósito: arma el registro `stock_count` a partir de lo que se escribió. TS puro, sin React Native. */
 import { parseRecordData } from "@yvy/shared";
 
 /** Quién cuenta: dueño, administrador y agrónomo; el empleado no entra al ERP. */

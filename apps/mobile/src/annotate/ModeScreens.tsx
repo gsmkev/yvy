@@ -1,3 +1,4 @@
+/** Pantallas del monitoreo de plagas: modo, cultivo y estaciones. */
 import { Keyboard, ScrollView, View } from "react-native";
 import { MONITOR_CROPS, monitorTemplate, summarizeStations, t, type MonitorCrop } from "@yvy/shared";
 import { Row, s as k, Text } from "../ui/kit";

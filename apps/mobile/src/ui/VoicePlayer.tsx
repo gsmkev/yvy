@@ -1,4 +1,4 @@
-/** Escuchar la nota de voz de un registro (F-09): el archivo local si lo grabó este celular; si no, por URL firmada con señal. */
+/** Escuchar la nota de voz de un registro: el archivo local si lo grabó este celular; si no, por URL firmada con señal. */
 import { useState } from "react";
 import { View } from "react-native";
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
@@ -23,6 +23,7 @@ function Player({ uri }: { uri: string }) {
   );
 }
 
+/** Reproductor de la nota de voz de un registro. */
 export function VoicePlayer({ id, uri, uploaded }: { id: string; uri: string | null; uploaded: boolean }) {
   const [remote, setRemote] = useState<string | null>(null);
   const [error, setError] = useState(false);

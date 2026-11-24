@@ -1,5 +1,5 @@
 /**
- * Buscar un animal por caravana (G-21): ficha e historial con lo que bajó al celular, también sin señal.
+ * Buscar un animal por caravana: ficha e historial con lo que bajó al celular, también sin señal.
  * Los animales se cargan desde la web; acá solo se consultan.
  */
 import { useMemo, useState } from "react";
@@ -31,6 +31,7 @@ interface Draft {
 }
 const EMPTY: Draft = { id: null, tag: "", category: "vaca", sex: "hembra", birthDate: "", note: "" };
 
+/** Animales identificados: búsqueda y listado. */
 export default function Animals() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string | null>(null);

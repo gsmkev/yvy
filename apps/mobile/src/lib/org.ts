@@ -1,3 +1,4 @@
+/** Aviso de cambio de organización al ingresar. */
 import { getDb } from "./db";
 import type { Session } from "./session";
 

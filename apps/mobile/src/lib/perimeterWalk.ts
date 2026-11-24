@@ -1,6 +1,6 @@
 /**
- * Grabador del perímetro caminado (M-04). El GPS se usa solo mientras la pantalla está abierta y la persona
- * lo pidió (primer plano, nada en segundo plano): PRD §7 prohíbe el seguimiento continuo.
+ * Grabador del perímetro caminado. El GPS se usa solo mientras la pantalla está abierta y la persona
+ * lo pidió (primer plano, nada en segundo plano): no se permite el seguimiento continuo.
  */
 import * as Location from "expo-location";
 import { filterFix, type TracePoint } from "@yvy/geo";

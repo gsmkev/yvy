@@ -10,7 +10,7 @@ import { deviceId } from "../src/lib/sync";
 import { Button, Text } from "../src/ui/kit";
 import { C, T } from "../src/ui/theme";
 
-/** Vinculación del empleado con el QR que genera el administrador (anexo §4.2). */
+/** Vinculación del empleado con el QR que genera el administrador. */
 export default function Scan() {
   const [perm, request] = useCameraPermissions();
   const [error, setError] = useState<string | null>(null);

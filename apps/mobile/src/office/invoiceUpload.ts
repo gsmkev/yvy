@@ -7,6 +7,12 @@ import type { PickedPhoto } from "./invoicePhoto";
 
 type PhotoKind = "purchases" | "cattle-deals" | "stock-moves" | "cost-entries";
 
+/**
+ * Procesa la foto (WebP), la sube con la URL firmada y borra el archivo local.
+ * @param kind Tipo de documento al que pertenece.
+ * @param id Id del documento.
+ * @throws Error si la subida falla.
+ */
 export async function uploadInvoicePhoto(kind: PhotoKind, id: string, p: PickedPhoto): Promise<void> {
   // Lado largo 1280 px, WebP: igual que las fotos de campo (~120 KB).
   const local = await processPhoto(p.uri, p.width, p.height);

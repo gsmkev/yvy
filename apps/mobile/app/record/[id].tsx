@@ -1,5 +1,5 @@
 /**
- * Ficha de un registro. Editar y borrar solo para el autor y dentro de las 24 h de capturado (RF-34);
+ * Ficha de un registro. Editar y borrar solo para el autor y dentro de las 24 h de capturado;
  * pasado ese tiempo el servidor también lo rechaza.
  */
 import { useState } from "react";
@@ -19,6 +19,7 @@ import { VoicePlayer } from "../../src/ui/VoicePlayer";
 import { T } from "../../src/ui/theme";
 import { useReadOnly } from "../../src/lib/readOnly";
 
+/** Detalle de un registro de campo, con sus fotos y notas de voz. */
 export default function RecordDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const session = useSession();

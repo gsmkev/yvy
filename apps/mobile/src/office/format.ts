@@ -36,4 +36,5 @@ export function parseDecimal(text: string): number | null {
 export const fmtDateTime = (ms: number): string =>
   new Date(ms).toLocaleString("es-PY", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false });
 
+/** Fecha corta (día y mes) en es-PY. */
 export const fmtDate = (ms: number): string => new Date(ms).toLocaleDateString("es-PY", { day: "numeric", month: "short" });

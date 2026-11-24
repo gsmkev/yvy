@@ -1,5 +1,5 @@
 /**
- * Clima de la estancia (funciones 63 y 65): pronóstico de 10 días, lluvia de 30 días contra lo normal, lluvia satelital por mes,
+ * Clima de la estancia: pronóstico de 10 días, lluvia de 30 días contra lo normal, lluvia satelital por mes,
  * humedad del suelo, temperaturas y SPI. API: /org/farms/:id/climate, /org/farms/:id/spi; el pronóstico lo baja ForecastStrip.
  */
 import { useMemo } from "react";
@@ -36,6 +36,7 @@ const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "
 const ddmm = (iso: string) => `${iso.slice(8)}/${iso.slice(5, 7)}`;
 type Daily = ClimateData["daily"][number];
 
+/** Clima de la estancia: pronóstico y lluvia. */
 export default function Climate() {
   const units = useUnits();
   const rainU = (mm: number) => mmToRain(mm, units.rain);

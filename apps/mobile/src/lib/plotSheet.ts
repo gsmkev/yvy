@@ -1,4 +1,4 @@
-/** Ficha del lote (F-23): cálculos puros sobre lo que ya está en el celular. */
+/** Ficha del lote: cálculos puros sobre lo que ya está en el celular. */
 import { LIMITS } from "@yvy/shared";
 
 interface VigorPassLite {

@@ -1,3 +1,4 @@
+/** Lectura de los datos de la pantalla Hoy. */
 import { getDb } from "../lib/db";
 import { byFarm, useFarmChoice } from "../lib/farmFilter";
 import { memberNames } from "../lib/members";
@@ -23,7 +24,7 @@ export function useTodayData() {
     return byFarm(getDb().records(100), farmId).filter((r) => r.capturedAt >= start.getTime());
   }, [farmId]);
   const plotName = (id: string | null) => plots.find((p) => p.id === id)?.name ?? "";
-  // F-29: resumen del campo para dueño, administrador y agrónomo.
+  // Resumen del campo para dueño, administrador y agrónomo.
   const owner = isOwnerMode(session?.organization.role);
   const readOnly = useReadOnly();
   const farmPlotIds = new Set(byFarm(plots, farmId).map((p) => p.id));

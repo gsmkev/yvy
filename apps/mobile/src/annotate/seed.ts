@@ -1,3 +1,4 @@
+/** Valores iniciales de una anotación nueva a partir de la tarea, el plan y el pronóstico. */
 import { ORDER_LABOR_KIND, type RecordKind } from "@yvy/shared";
 import type { Plot } from "../db/store";
 import { getDb } from "../lib/db";
@@ -6,6 +7,7 @@ import type { Season } from "../db/store";
 
 type Db = ReturnType<typeof getDb>;
 
+/** Contexto con el que se precargan los valores de un registro nuevo. */
 export type SeedCtx = {
   db: Db;
   seasons: Season[];
@@ -14,7 +16,7 @@ export type SeedCtx = {
   sprayPre: Record<string, unknown> | null;
 };
 
-/** A-11: la aplicación hecha desde una tarea sale precargada con la receta del ingeniero. */
+/** La aplicación hecha desde una tarea sale precargada con la receta del ingeniero. */
 function seedPrescription(out: Record<string, unknown>, kd: RecordKind, { db, taskId }: SeedCtx) {
   const rx = kd === "application" && taskId ? db.prescriptionOf(taskId) : null;
   if (!rx) return;
@@ -24,7 +26,7 @@ function seedPrescription(out: Record<string, unknown>, kd: RecordKind, { db, ta
   out.prescriptionTaskId = taskId;
 }
 
-/** E-21: la orden de trabajo precarga insumos, campaña y superficie prevista; al guardar queda ligada a la tarea. */
+/** La orden de trabajo precarga insumos, campaña y superficie prevista; al guardar queda ligada a la tarea. */
 function seedOrder(out: Record<string, unknown>, kd: RecordKind, { db, taskId }: SeedCtx) {
   const ord = taskId ? db.orderOf(taskId) : null;
   if (!ord || ORDER_LABOR_KIND[ord.labor] !== kd) return;
@@ -35,7 +37,7 @@ function seedOrder(out: Record<string, unknown>, kd: RecordKind, { db, taskId }:
   out.orderTaskId = taskId;
 }
 
-/** A-01: la siembra sale precargada con el plan del lote en la campaña (cultivo, variedad y densidad). */
+/** La siembra sale precargada con el plan del lote en la campaña (cultivo, variedad y densidad). */
 function seedSowing(out: Record<string, unknown>, { db, plot }: SeedCtx) {
   if (!plot) return;
   const sid = out.seasonId as string | undefined;
@@ -53,7 +55,7 @@ export function buildSeed(kd: RecordKind, ctx: SeedCtx): Record<string, unknown>
   const { seasons, sprayPre } = ctx;
   const out: Record<string, unknown> = seasons.length === 1 && FLOWS[kd].some((x) => x.kind === "season") ? { seasonId: seasons[0]!.id } : {};
   seedPrescription(out, kd, ctx);
-  // A-12: viento, temperatura y humedad de esta hora según el pronóstico guardado (editables a mano).
+  // Viento, temperatura y humedad de esta hora según el pronóstico guardado (editables a mano).
   if (kd === "application") Object.assign(out, sprayPre ?? {});
   seedOrder(out, kd, ctx);
   if (kd === "sowing") seedSowing(out, ctx);

@@ -1,4 +1,4 @@
-/** Escanear el QR pegado en un punto de interés (bebedero, silo, pluviómetro) y anotar ahí (F-28). Anda sin señal. */
+/** Escanear el QR pegado en un punto de interés (bebedero, silo, pluviómetro) y anotar ahí. Anda sin señal. */
 import { useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -8,6 +8,7 @@ import { getDb } from "../src/lib/db";
 import { Button, Text } from "../src/ui/kit";
 import { C, T } from "../src/ui/theme";
 
+/** Escaneo de un código para registrar un punto de interés. */
 export default function ScanPoi() {
   const [perm, request] = useCameraPermissions();
   const [error, setError] = useState<string | null>(null);

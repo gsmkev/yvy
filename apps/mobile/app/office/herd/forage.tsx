@@ -1,4 +1,4 @@
-/** Forraje y pasturas (función 69): oferta estimada por potrero y días de pasto. GET /org/farms/:id/forage. */
+/** Forraje y pasturas: oferta estimada por potrero y días de pasto. GET /org/farms/:id/forage. */
 import { View } from "react-native";
 import { t, type ForageResponse, type MessageKey } from "@yvy/shared";
 import { useFarmPick } from "../../../src/office/farmPick";
@@ -10,6 +10,7 @@ import { DataList } from "../../../src/office/ui";
 import { Text } from "../../../src/ui/kit";
 import { C, T } from "../../../src/ui/theme";
 
+/** Forraje disponible por potrero. */
 export default function Forage() {
   const { farms, farm, setFarmId } = useFarmPick();
   const q = useOnline<ForageResponse>(farm ? `/org/farms/${farm.id}/forage` : null);

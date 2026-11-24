@@ -1,3 +1,4 @@
+/** Paso de productos y dosis de la anotación. */
 import { useMemo, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { Check } from "lucide-react-native";

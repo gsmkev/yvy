@@ -1,3 +1,4 @@
+/** Secciones de la pantalla Hoy: tareas, equipo, resumen del dueño y lo hecho. */
 import { Pressable, ScrollView, View } from "react-native";
 import { router } from "expo-router";
 import { Check, Navigation, TrendingDown, Users } from "lucide-react-native";
@@ -18,6 +19,7 @@ type TaskRow = ReturnType<ReturnType<typeof getDb>["tasksToday"]>[number];
 type TeamTask = ReturnType<ReturnType<typeof getDb>["openTasks"]>[number];
 type RecordRow = ReturnType<ReturnType<typeof getDb>["records"]>[number];
 
+/** Subtítulo de una tarea: prioridad, hora y lote. */
 export function taskSubtitle(task: TaskRow, plotName: (id: string | null) => string): string {
   return [
     task.priority === "high" ? t("app.task.highPriority") : null,

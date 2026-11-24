@@ -19,6 +19,7 @@ import { Segmented } from "../src/office/ui";
 import { Button, ChoiceSheet, Row, SectionHeader, SwitchRow, s as k, Text } from "../src/ui/kit";
 import { T } from "../src/ui/theme";
 
+/** Cuenta del usuario: datos, organización e idioma. */
 export default function Account() {
   const [reminders, setReminders] = useState(remindersEnabled());
   const [langOpen, setLangOpen] = useState(false);

@@ -15,4 +15,5 @@ export interface Member {
 }
 
 const FIELD_ROLES = ["worker", "contractor"];
+/** Indica si el rol es de campo (empleado o contratista). */
 export const isFieldRoleName = (r: string): boolean => FIELD_ROLES.includes(r);

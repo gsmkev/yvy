@@ -1,5 +1,5 @@
 /**
- * Tarea con lista de verificación (F-15): cada ítem se tilda con un toque, sin señal. Los tildes quedan en el
+ * Tarea con lista de verificación: cada ítem se tilda con un toque, sin señal. Los tildes quedan en el
  * outbox y viajan solos. Después se termina la tarea (o se anota el registro que pide).
  */
 import { useState } from "react";
@@ -15,6 +15,7 @@ import { toastSaved } from "../../src/lib/toast";
 import { Button, Row, ScreenBody, SectionHeader, s as k, Text, TextInput } from "../../src/ui/kit";
 import { C, RADIUS, T } from "../../src/ui/theme";
 
+/** Detalle de una tarea: lista de pasos y comentarios. */
 export default function TaskChecklist() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const task = useLocal(() => getDb().taskById(id), [id]);

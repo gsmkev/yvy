@@ -1,5 +1,5 @@
 /**
- * Pronóstico por hora de MET Norway (A-12): se baja de GET /org/farms/:id/spray-windows junto con el de 10 días y
+ * Pronóstico por hora de MET Norway: se baja de GET /org/farms/:id/spray-windows junto con el de 10 días y
  * se guarda en kv, así al registrar una aplicación sin señal se precargan viento, temperatura y humedad de esa hora.
  */
 import { forecastHourAt, LIMITS } from "@yvy/shared";

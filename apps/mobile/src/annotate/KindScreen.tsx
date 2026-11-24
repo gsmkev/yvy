@@ -1,3 +1,4 @@
+/** Pantalla de elección del tipo de registro. */
 import { ScrollView, View } from "react-native";
 import { t } from "@yvy/shared";
 import { KINDS_FOR, SINGLE_PLOT_KINDS } from "../lib/annotate";

@@ -1,6 +1,7 @@
 /** Interfaz SQL mínima: la implementan expo-sqlite (app) y node:sqlite (tests). */
 export type Param = string | number | null;
 
+/** Interfaz SQL mínima que necesita la base local. */
 export interface Sql {
   run(sql: string, params?: Param[]): void;
   all<T = Record<string, unknown>>(sql: string, params?: Param[]): T[];
@@ -9,6 +10,7 @@ export interface Sql {
   tx<T>(fn: () => T): T;
 }
 
+/** Tablas locales que no existen en el servidor: outbox, cursores, kv, archivos y caché. */
 export const LOCAL_SCHEMA = [
   `CREATE TABLE IF NOT EXISTS outbox (
     mutation_id TEXT PRIMARY KEY,

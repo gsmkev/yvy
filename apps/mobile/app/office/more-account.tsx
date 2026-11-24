@@ -1,5 +1,5 @@
 /**
- * Plan, calendario y ayuda (funciones 14, 10, 11, 16 y 142): uso y pedido de cambio de plan (dueño), enlace de
+ * Plan, calendario y ayuda: uso y pedido de cambio de plan (dueño), enlace de
  * calendario iCal, código de referido, ayuda (preguntas, WhatsApp, videos en la web) y términos y privacidad (abren la web).
  * API: GET /org/plan, POST y DELETE /org/plan-request, GET/POST/DELETE /me/calendar-feed, GET /me/referral.
  */
@@ -39,6 +39,7 @@ interface Referral {
 const cap = (n: number | null) => (n === null ? t("ui.plan.noCap") : fmtNumber(n, 0));
 const openWeb = (path: string) => void Linking.openURL(`${API_URL}${path}`).catch(() => showToast(t("office.more.openFail")));
 
+/** Cuenta de la organización: plan, estado del servicio y precio según las hectáreas. */
 export default function MoreAccount() {
   const role = getSession()?.organization.role ?? "";
   const owner = role === "owner";
@@ -126,7 +127,7 @@ function PlanSection() {
 
 const usd = (n: number) => `US$ ${fmtNumber(n, 0)}`;
 
-/** ADR 0005 §5: el precio por año y por cuota con las hectáreas reales (tablero) y una calculadora. Informativo: el cobro es manual. */
+/** El precio por año y por cuota con las hectáreas reales (tablero) y una calculadora. Informativo: el cobro es manual. */
 function PriceSection({ billing, onBilling }: { billing: Billing; onBilling: (b: Billing) => void }) {
   const dash = useOnline<{ areaByCrop: { kind: "crop" | "pasture"; ha: number }[] }>("/org/dashboard", { cache: false });
   const rates = useOnline<{ date: string; usdToPyg: number }[]>("/org/erp/exchange-rates", { cache: false });

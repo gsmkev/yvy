@@ -12,7 +12,9 @@ import { OfficeScreen } from "./OfficeScreen";
 import { useOnline } from "./useOnline";
 
 export { compactMoney };
+/** Convierte un texto en clave de mensaje. */
 export const k = (s: string) => s as MessageKey;
+/** Fecha de hoy local (`AAAA-MM-DD`). */
 export const today = () => localDate(Date.now());
 
 /** Mismos permisos que `can.manageErp` y `can.viewStock` de la API. */
@@ -35,6 +37,7 @@ export function AdminGate({ need, title, children }: { need: "manage" | "stock";
   return <>{children}</>;
 }
 
+/** Proveedor o cliente. */
 export interface Party {
   id: string;
   name: string;
@@ -46,6 +49,7 @@ export interface Party {
   note: string | null;
 }
 
+/** Depósito con su estancia. */
 export interface WarehouseRow {
   id: string;
   farmId: string;
@@ -73,8 +77,10 @@ export function useFarmNames(): Map<string, string> {
   return useMemo(() => new Map(farms.map((f) => [f.id, f.name])), [farms]);
 }
 
+/** Unidad de un producto: kg o l. */
 export const unitOf = (p: Product | undefined): string => (p ? (p.unit === "kg" ? "kg" : "l") : "");
 
+/** Monedas entre las que se elige. */
 export const CURRENCY_OPTIONS: { value: Currency; label: string }[] = [
   { value: "PYG", label: "Gs." },
   { value: "USD", label: "US$" },

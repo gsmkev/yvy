@@ -274,5 +274,7 @@ export const SERVER_SCHEMA: string[] = [
   "CREATE INDEX `trial_requests_status_idx` ON `trial_requests` (`status`,`created_at`);",
   "ALTER TABLE `farm_livestock_settings` ADD `system` text;",
   "ALTER TABLE `farm_livestock_settings` ADD `pasture_default` text;",
-  "ALTER TABLE `farm_livestock_settings` ADD `pasture_loads` text;"
+  "ALTER TABLE `farm_livestock_settings` ADD `pasture_loads` text;",
+  "ALTER TABLE `farm_livestock_settings` ADD `breeding_start` text;",
+  "ALTER TABLE `farm_livestock_settings` ADD `breeding_days` integer;"
 ];

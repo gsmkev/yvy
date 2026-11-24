@@ -1349,6 +1349,9 @@ export const farmLivestockSettings = sqliteTable("farm_livestock_settings", {
   pastureDefault: text("pasture_default"),
   /** JSON {natural?, implantada?, mejorada?}: UA/ha recomendadas propias de la estancia (vacío = las de referencia). */
   pastureLoads: text("pasture_loads"),
+  /** Estación de servicio (ADR 0005): inicio "MM-DD" y días. Nulo = 11-01 y 90. */
+  breedingStart: text("breeding_start"),
+  breedingDays: integer("breeding_days"),
   updatedAt: integer("updated_at").notNull(),
   updatedBy: text("updated_by"),
 });

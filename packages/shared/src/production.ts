@@ -147,10 +147,10 @@ export function productionIndicators(system: ProductionSystem | null, input: Ind
  * Ids de sección de la web: stock, rotation, forage, animals, repro, weights, supplements, theft.
  */
 export const SYSTEM_SECTION_ORDER: Record<ProductionSystem, readonly string[]> = {
-  cria: ["repro", "animals", "rotation", "forage"],
+  cria: ["plan", "repro", "animals", "rotation", "forage"],
   recria: ["weights", "rotation", "forage"],
   invernada: ["weights", "rotation", "forage"],
-  ciclo_completo: ["repro", "weights", "rotation", "forage"],
+  ciclo_completo: ["plan", "repro", "weights", "rotation", "forage"],
   feedlot: ["weights", "supplements"],
   tambo: [],
 };

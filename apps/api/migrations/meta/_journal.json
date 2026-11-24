@@ -568,6 +568,13 @@
       "when": 1795479933160,
       "tag": "0080_simple_kang",
       "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "6",
+      "when": 1795485067108,
+      "tag": "0081_tough_mikhail_rasputin",
+      "breakpoints": true
     }
   ]
 }

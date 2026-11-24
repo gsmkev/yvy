@@ -34,6 +34,10 @@ import {
   type ServiceMethod,
   groupWeighings,
   productionIndicators,
+  currentCycleYear,
+  cycleWindow,
+  localDate,
+  type ReproPlanResponse,
   type ProductionResponse,
   type WeighingEvent,
   type WeighingsResponse,
@@ -441,5 +445,23 @@ export async function farmProduction(sdb: ScopedDb, farmId: string): Promise<Pro
       pastureHa: ha?.[0]?.ha ?? 0,
       feedlot: lot?.corrals,
     }),
+  };
+}
+
+/** ADR 0005: estación de servicio de la estancia e indicadores del ciclo actual (tactos, pariciones y destetes registrados). */
+export async function farmReproPlan(sdb: ScopedDb, farmId: string): Promise<ReproPlanResponse> {
+  sdb.require(can.viewAll);
+  await sdb.requireFarm(farmId);
+  const st = await getLivestockSettings(sdb, farmId);
+  const today = localDate(sdb.now());
+  const cycleYear = currentCycleYear(today, st.breedingStart, st.breedingDays);
+  const w = cycleWindow(cycleYear, st.breedingStart, st.breedingDays);
+  const repro = await farmReproduction(sdb, farmId, Date.parse(`${w.from}T00:00:00-03:00`), Math.min(sdb.now(), Date.parse(`${w.to}T23:59:59-03:00`)));
+  return {
+    breedingStart: st.breedingStart,
+    breedingDays: st.breedingDays,
+    isDefault: st.breedingIsDefault,
+    cycleYear,
+    indicators: productionIndicators("cria", { repro: repro.indices }),
   };
 }

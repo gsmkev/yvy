@@ -70,3 +70,35 @@ describe("sistema productivo y carga recomendada", () => {
     expect(r2.body.plots.find((p: any) => p.plotId === A).recommendedUaPerHa).toBeCloseTo(2 * factor, 2);
   });
 });
+
+describe("plan reproductivo", () => {
+  const plan = (token: string, farmId: string) => call<any>("GET", `/org/farms/${farmId}/repro-plan`, { token });
+
+  it("por defecto 1/11 y 90 días; dueño y administrador la cambian, los demás no", async () => {
+    const { owner, worker, farmId } = await setupHerd();
+    const agro = await addMemberAndLogin(owner.token, "agronomist");
+    const admin = await addMemberAndLogin(owner.token, "admin");
+    const r = await plan(owner.token, farmId);
+    expect(r.body).toMatchObject({ breedingStart: "11-01", breedingDays: 90, isDefault: true, indicators: [] });
+    expect((await put(agro.token, farmId, { breedingStart: "10-15" })).status).toBe(403);
+    expect((await put(worker.token, farmId, { breedingDays: 60 })).status).toBe(403);
+    expect((await put(admin.token, farmId, { breedingStart: "10-15", breedingDays: 60 })).status).toBe(200);
+    expect((await put(owner.token, farmId, { breedingStart: "02-30" })).status).toBe(400);
+    expect((await put(owner.token, farmId, { breedingDays: 10 })).status).toBe(400);
+    expect((await plan(agro.token, farmId)).body).toMatchObject({ breedingStart: "10-15", breedingDays: 60, isDefault: false });
+    expect((await plan(worker.token, farmId)).status).toBe(403);
+  });
+
+  it("indicadores del ciclo actual con tactos, pariciones y destetes registrados", async () => {
+    const { owner, farmId, plotIds } = await setupHerd();
+    const start = new Date(Date.now() - 100 * DAY - 3 * 3_600_000).toISOString().slice(5, 10);
+    await put(owner.token, farmId, { breedingStart: start, breedingDays: 60 });
+    const now = Date.now();
+    await push(owner.token, [
+      rec(farmId, plotIds[0]!, "reproduction", { event: "service", head: 100 }, now - 90 * DAY),
+      rec(farmId, plotIds[0]!, "reproduction", { event: "pregnancy_check", head: 100, pregnant: 85 }, now - 10 * DAY),
+    ]);
+    const r = await plan(owner.token, farmId);
+    expect(r.body.indicators).toEqual([{ id: "pregnancyPct", value: 85, unit: "pct" }]);
+  });
+});

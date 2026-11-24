@@ -10,6 +10,7 @@ import { HeatStressCard } from "./HeatStress";
 import { ForagePanel } from "./ForagePanel";
 import { RotationPanel } from "./RotationPanel";
 import { AnimalsPanel } from "./AnimalsPanel";
+import { BreedingPlanPanel } from "./BreedingPlanPanel";
 import { ReproPanel } from "./ReproPanel";
 import { SupplementPanel } from "./SupplementPanel";
 import { TheftPanel } from "./TheftPanel";
@@ -170,7 +171,7 @@ function StockSection({ farmId }: { farmId: string }) {
   );
 }
 
-type Section = "stock" | "rotation" | "forage" | "animals" | "repro" | "weights" | "supplements" | "theft";
+type Section = "stock" | "plan" | "rotation" | "forage" | "animals" | "repro" | "weights" | "supplements" | "theft";
 
 /**
  * Secciones como pastillas (mismo patrón que admin-erp): en el panel angosto se desplazan de costado
@@ -222,6 +223,7 @@ export function HerdPanel({ farmId }: { farmId: string }) {
           { id: "rotation", label: t("ui.herdSectionRotation") },
           { id: "forage", label: t("ui.herdSectionForage") },
           { id: "animals", label: t("ui.herdSectionAnimals") },
+          { id: "plan", label: t("ui.reproPlanSection") },
           { id: "repro", label: t("ui.herdSectionRepro") },
           { id: "weights", label: t("ui.herdSectionWeights") },
           { id: "supplements", label: t("ui.herdSectionSupp") },
@@ -232,6 +234,7 @@ export function HerdPanel({ farmId }: { farmId: string }) {
       {section === "rotation" && <RotationPanel farmId={farmId} />}
       {section === "forage" && <ForagePanel farmId={farmId} />}
       {section === "animals" && <AnimalsPanel farmId={farmId} />}
+      {section === "plan" && <BreedingPlanPanel farmId={farmId} />}
       {section === "repro" && <ReproPanel farmId={farmId} />}
       {section === "weights" && <WeighingsPanel farmId={farmId} />}
       {section === "supplements" && <SupplementPanel farmId={farmId} />}

@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { animalInput } from "@yvy/shared";
 import { animalHistory, createAnimal, deleteAnimal, listAnimals, updateAnimal } from "../db/animals";
-import { farmForage, farmHeatStress, farmProduction, farmReproduction, farmRotation, farmSupplements, farmTheft, farmWeighings } from "../db/herd";
+import { farmForage, farmHeatStress, farmProduction, farmReproPlan, farmReproduction, farmRotation, farmSupplements, farmTheft, farmWeighings } from "../db/herd";
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
 
@@ -69,3 +69,5 @@ herd.get("/farms/:id/forage", async (c) => c.json(await farmForage(c.var.sdb, c.
 
 // ADR 0005: indicadores del sistema productivo.
 herd.get("/farms/:id/production", async (c) => c.json(await farmProduction(c.var.sdb, c.req.param("id"))));
+// ADR 0005: plan reproductivo (estación de servicio e indicadores del ciclo).
+herd.get("/farms/:id/repro-plan", async (c) => c.json(await farmReproPlan(c.var.sdb, c.req.param("id"))));

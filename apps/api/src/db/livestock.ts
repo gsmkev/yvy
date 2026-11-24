@@ -6,7 +6,10 @@
 import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
 import {
   computeStock,
+  DEFAULT_BREEDING_DAYS,
+  DEFAULT_BREEDING_START,
   DEFAULT_MAX_UA_PER_HA,
+  isBreedingStart,
   farmStock,
   isWinterMonth,
   monthInParaguay,
@@ -51,6 +54,8 @@ export async function getLivestockSettings(sdb: ScopedDb, farmId: string) {
       system: s.farmLivestockSettings.system,
       pastureDefault: s.farmLivestockSettings.pastureDefault,
       pastureLoads: s.farmLivestockSettings.pastureLoads,
+      breedingStart: s.farmLivestockSettings.breedingStart,
+      breedingDays: s.farmLivestockSettings.breedingDays,
     })
     .from(s.farmLivestockSettings)
     .where(and(eq(s.farmLivestockSettings.farmId, farmId), eq(s.farmLivestockSettings.organizationId, sdb.auth.orgId)))
@@ -60,6 +65,9 @@ export async function getLivestockSettings(sdb: ScopedDb, farmId: string) {
     isDefault: !row,
     system: isSystem(row?.system) ? row.system : null,
     pastureDefault: isClass(row?.pastureDefault) ? row.pastureDefault : ("natural" as PastureClass),
+    breedingStart: row?.breedingStart && isBreedingStart(row.breedingStart) ? row.breedingStart : DEFAULT_BREEDING_START,
+    breedingDays: row?.breedingDays ?? DEFAULT_BREEDING_DAYS,
+    breedingIsDefault: !row?.breedingStart && !row?.breedingDays,
     pastureLoads: (row?.pastureLoads ? (parse<PastureLoads>(row.pastureLoads) ?? {}) : {}) as PastureLoads,
   };
 }
@@ -69,6 +77,8 @@ export interface LivestockSettingsPatch {
   system?: ProductionSystem;
   pastureDefault?: PastureClass;
   pastureLoads?: PastureLoads;
+  breedingStart?: string;
+  breedingDays?: number;
 }
 
 /** Solo dueño y administrador cambian la carga máxima, el sistema y las cargas recomendadas (como los umbrales de avisos). */
@@ -79,6 +89,8 @@ export async function saveLivestockSettings(sdb: ScopedDb, farmId: string, patch
     ...(patch.maxUaPerHa !== undefined && { maxUaPerHa: patch.maxUaPerHa }),
     ...(patch.system !== undefined && { system: patch.system }),
     ...(patch.pastureDefault !== undefined && { pastureDefault: patch.pastureDefault }),
+    ...(patch.breedingStart !== undefined && { breedingStart: patch.breedingStart }),
+    ...(patch.breedingDays !== undefined && { breedingDays: patch.breedingDays }),
     ...(patch.pastureLoads !== undefined && { pastureLoads: JSON.stringify(patch.pastureLoads) }),
   };
   const row = { ...change, organizationId: sdb.auth.orgId, updatedAt: sdb.now(), updatedBy: sdb.auth.userId };

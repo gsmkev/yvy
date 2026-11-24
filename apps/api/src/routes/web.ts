@@ -7,7 +7,7 @@ import { areaHa, bboxOf } from "@yvy/geo";
 import { createFeed, feedStatus, revokeFeed } from "../db/calendar-feed";
 import { compareFarms, compareSeasons } from "../db/compare";
 import { addComment, deleteComment, listComments } from "../db/comments";
-import { alertSettingsSchema, formConfigSchema, referralCode, CROPS, localDate, notificationPrefsSchema, LIMITS, MAX_UA_PER_HA_LIMITS, PASTURE_CLASSES, PRODUCTION_SYSTEMS, RECOMMENDED_LOAD_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
+import { alertSettingsSchema, formConfigSchema, referralCode, CROPS, localDate, notificationPrefsSchema, LIMITS, BREEDING_DAYS_LIMITS, isBreedingStart, MAX_UA_PER_HA_LIMITS, PASTURE_CLASSES, PRODUCTION_SYSTEMS, RECOMMENDED_LOAD_LIMITS, sanitaryEventSchema, PLOT_KINDS, RECORD_KINDS, RECURRENCES, SEASONS, TASK_PRIORITIES } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import {
   addTaskComment,
@@ -526,6 +526,8 @@ web.put("/org/farms/:id/livestock-settings", async (c) => {
       maxUaPerHa: z.number().min(MAX_UA_PER_HA_LIMITS.min).max(MAX_UA_PER_HA_LIMITS.max).optional(),
       system: z.enum(PRODUCTION_SYSTEMS).optional(),
       pastureDefault: z.enum(PASTURE_CLASSES).optional(),
+      breedingStart: z.string().refine(isBreedingStart, "Fecha inválida (MM-DD)").optional(),
+      breedingDays: z.number().int().min(BREEDING_DAYS_LIMITS.min).max(BREEDING_DAYS_LIMITS.max).optional(),
       pastureLoads: z.object({ natural: load.optional(), implantada: load.optional(), mejorada: load.optional() }).strict().optional(),
     }),
     await readJson(c.req),

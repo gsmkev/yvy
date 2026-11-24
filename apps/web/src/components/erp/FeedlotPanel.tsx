@@ -7,7 +7,7 @@ import { fmtDate, fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { useFarm, useFarms } from "../../lib/queries";
 import { useProducts } from "../../lib/products";
-import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, Select, Spinner, Tabs, toast, type Column } from "../ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, FormFooter, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions, RowMenu } from "./adminSlot";
 
@@ -145,13 +145,7 @@ function RationModal({ ration, onClose }: { ration: Ration | null; onClose: () =
   const set = (i: number, k: "productId" | "pctDm" | "dmPct", v: string) => setRows(rows.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
   return (
     <Modal title={ration ? t("ui.feedlotRationEdit") : t("ui.feedlotRationNew")} onClose={onClose}>
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
         <Field label={t("ui.feedlotRationName")}>
           <Input required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
@@ -189,7 +183,7 @@ function RationModal({ ration, onClose }: { ration: Ration | null; onClose: () =
             {t("ui.cancel")}
           </Button>
         </div>
-      </form>
+      </Form>
     </Modal>
   );
 }
@@ -250,13 +244,7 @@ function FeedModal({ rations, onClose }: { rations: Ration[]; onClose: () => voi
   });
   return (
     <Modal title={t("ui.feedlotFeed")} onClose={onClose}>
-      <form
-        className="grid grid-cols-2 gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         <Field label={t("ui.costFarm")}>
           <Select value={farmId} onChange={(e) => setF({ ...f, farmId: e.target.value, plotId: "" })} options={(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))} />
         </Field>
@@ -285,17 +273,8 @@ function FeedModal({ rations, onClose }: { rations: Ration[]; onClose: () => voi
             ))}
           </ul>
         )}
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending || !plotId || !ration || lines.length === 0}>
-            {t("ui.save")}
-          </Button>
-        </div>
-      </form>
+        <FormFooter error={save.error} disabled={save.isPending || !plotId || !ration || lines.length === 0} />
+      </Form>
     </Modal>
   );
 }

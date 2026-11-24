@@ -7,7 +7,7 @@ import { ALERT_SETTING_KEYS, ALERT_SETTING_LABELS, ALERT_SETTINGS_LIMITS, DEFAUL
 import { get, put } from "../lib/api";
 import { t } from "../lib/i18n";
 import { useFarms, useMe } from "../lib/queries";
-import { Button, ErrorBox, Field, Input, Select, Spinner } from "./ui";
+import { Button, ErrorBox, Field, Form, Input, Select, Spinner } from "./ui";
 
 type Settings = AlertSettings & { isDefault: boolean };
 type Draft = Record<keyof AlertSettings, string>;
@@ -92,13 +92,7 @@ export function AlertSettingsSection({ open, onToggle }: { open: boolean; onTogg
         {settings.isLoading && <Spinner />}
         {settings.error ? <ErrorBox error={settings.error} /> : null}
         {draft && (
-          <form
-            className="mt-4 flex flex-col gap-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (valid) save.mutate();
-            }}
-          >
+          <Form className="mt-4 flex flex-col gap-4" onSubmit={() => { if (valid) save.mutate(); }}>
             {ALERT_SETTING_KEYS.map((k) => (
               <Field key={k} label={t(ALERT_SETTING_LABELS[k][0])} hint={t(ALERT_SETTING_LABELS[k][1])}>
                 <Input
@@ -124,7 +118,7 @@ export function AlertSettingsSection({ open, onToggle }: { open: boolean; onTogg
               </div>
             )}
             {save.error ? <ErrorBox error={save.error} /> : null}
-          </form>
+          </Form>
         )}
       </div>
     </section>

@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fromMinor, toMinor, type Currency } from "@yvy/shared";
 import { del, get, patch, post } from "../../lib/api";
 import { t } from "../../lib/i18n";
-import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, toast, type Column } from "../ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, Form, FormFooter, Input, Modal, Select, Spinner, toast } from "../ui";
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions, RowMenu, useTableExport } from "./adminSlot";
 
@@ -88,13 +88,7 @@ export function RowModal({
   });
   return (
     <Modal title={title} onClose={onClose}>
-      <form
-        className="grid grid-cols-2 gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         {fields.map((f, i) => {
           const set = (e: { target: { value: string } }) => setForm({ ...form, [f.key]: e.target.value });
           return (
@@ -119,17 +113,8 @@ export function RowModal({
             </div>
           );
         })}
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
-      </form>
+        <FormFooter error={save.error} disabled={save.isPending} />
+      </Form>
     </Modal>
   );
 }

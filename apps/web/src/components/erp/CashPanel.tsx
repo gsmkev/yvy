@@ -6,7 +6,7 @@ import { del, get, post } from "../../lib/api";
 import { fmtIsoDate } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtMoney } from "../../lib/money";
-import { Button, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, Stat, Tabs, toast, type Column } from "../ui";
+import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, Form, FormFooter, Input, Modal, Select, Spinner, Stat, Tabs, toast } from "../ui";
 import { HeaderActions, RowMenu } from "./adminSlot";
 import { type FieldDef } from "./MasterPanel";
 import { RecordList } from "./RecordList";
@@ -132,13 +132,7 @@ function MoveModal({ account, onClose }: { account: Account; onClose: () => void
   const remove = useMutation({ mutationFn: (id: string) => del(`/org/erp/cash/moves/${id}`), onSuccess: refresh });
   return (
     <Modal title={account.name} onClose={onClose}>
-      <form
-        className="grid grid-cols-2 gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         <Field label={t("ui.cashDirection")}>
           <Select value={dir} onChange={(e) => setDir(e.target.value)} options={[{ value: "in", label: t("ui.cashIn") }, { value: "out", label: t("ui.cashOut") }]} />
         </Field>
@@ -151,17 +145,8 @@ function MoveModal({ account, onClose }: { account: Account; onClose: () => void
         <Field label={t("ui.balNote")}>
           <Input maxLength={200} value={description} onChange={(e) => setDescription(e.target.value)} />
         </Field>
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
-      </form>
+        <FormFooter error={save.error} disabled={save.isPending} />
+      </Form>
       {(moves.data ?? []).length > 0 ? (
         <div className="mt-4">
           <ExportableTable name="caja">
@@ -202,13 +187,7 @@ function TransferModal({ accounts, onClose }: { accounts: Account[]; onClose: ()
   const opts = accounts.map((a) => ({ value: a.id, label: `${a.name} (${a.currency})` }));
   return (
     <Modal title={t("ui.cashTransfer")} onClose={onClose}>
-      <form
-        className="grid grid-cols-2 gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         <Field label={t("ui.cashFrom")}>
           <Select value={from} onChange={(e) => setFrom(e.target.value)} options={opts} />
         </Field>
@@ -221,17 +200,8 @@ function TransferModal({ accounts, onClose }: { accounts: Account[]; onClose: ()
         <Field label={t("ui.costDate")}>
           <Input required type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
-      </form>
+        <FormFooter error={save.error} disabled={save.isPending} />
+      </Form>
     </Modal>
   );
 }
@@ -326,13 +296,7 @@ function SettleModal({ due, payable, onClose }: { due: Due; payable: boolean; on
       ) : accounts.length === 0 ? (
         <p className="text-sm text-trigo-texto">{t("ui.cashNoAccount", { currency: due.currency })}</p>
       ) : (
-        <form
-          className="grid grid-cols-2 gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            save.mutate();
-          }}
-        >
+        <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
           <Field label={t("ui.cashAccount")}>
             <Select value={accountId || accounts[0]!.id} onChange={(e) => setAccountId(e.target.value)} options={accounts.map((a) => ({ value: a.id, label: a.name }))} />
           </Field>
@@ -342,17 +306,8 @@ function SettleModal({ due, payable, onClose }: { due: Due; payable: boolean; on
           <Field label={`${t("ui.balAmount")} (${due.currency})`}>
             <Input required type="number" min={0} step="any" value={amount} onChange={(e) => setAmount(e.target.value)} />
           </Field>
-          {save.error ? (
-            <div className="col-span-2">
-              <ErrorBox error={save.error} />
-            </div>
-          ) : null}
-          <div className="col-span-2">
-            <Button type="submit" variant="primary" disabled={save.isPending}>
-              {t("ui.save")}
-            </Button>
-          </div>
-        </form>
+          <FormFooter error={save.error} disabled={save.isPending} />
+        </Form>
       )}
     </Modal>
   );

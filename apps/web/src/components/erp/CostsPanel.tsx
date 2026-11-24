@@ -8,7 +8,7 @@ import { t, tk } from "../../lib/i18n";
 import { fmtGs, fmtMoney } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
 import type { Season } from "../../lib/types";
-import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, Select, Spinner, Stat, toast, type Column } from "../ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, FormFooter, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
 import { PhotoRowMenu } from "./InvoicePhoto";
 import { HeaderActions } from "./adminSlot";
 import { useParties } from "./PartiesPanel";
@@ -42,37 +42,8 @@ export const useSeasonList = () =>
 
 const dayOf = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
-export function CostsPanel() {
-  const farms = useFarms();
-  const seasons = useSeasonList();
-  const [f, setF] = useState({ farmId: "", seasonId: "", category: "", from: "", to: "" });
-  const [editing, setEditing] = useState<CostEntry | "new" | null>(null);
-  const [removing, setRemoving] = useState<CostEntry | null>(null);
-  const qc = useQueryClient();
-  const q = useQuery({
-    queryKey: ["erp", "costs", f],
-    queryFn: () => get<CostList>(`/org/erp/costs${qs({ farmId: f.farmId || undefined, seasonId: f.seasonId || undefined, category: f.category || undefined, from: f.from || undefined, to: f.to || undefined })}`),
-  });
-  const farmName = (id: string | null) => farms.data?.find((x) => x.id === id)?.name ?? "";
-  const remove = useMutation({
-    mutationFn: (c: CostEntry) => del(`/org/erp/costs/${c.id}`),
-    onSuccess: () => {
-      toast(t("ui.erpDeleted"));
-      setRemoving(null);
-      qc.invalidateQueries({ queryKey: ["erp"] });
-    },
-  });
-  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
-  const totals = q.data?.totals;
-  const rows = q.data?.rows ?? [];
-  const filtered = Object.values(f).some(Boolean);
-  const blank = !!q.data && rows.length === 0 && !filtered;
-  const newBtn = (
-    <Button variant="primary" onClick={() => setEditing("new")}>
-      {t("ui.costNew")}
-    </Button>
-  );
-  const columns: Column<CostEntry>[] = [
+function costColumns(farmName: (id: string | null) => string, onEdit: (c: CostEntry) => void, onRemove: (c: CostEntry) => void): Column<CostEntry>[] {
+  return [
     { id: "date", header: t("ui.costDate"), cell: (c) => <span className="whitespace-nowrap">{fmtIsoDate(dayOf(c.occurredAt))}</span> },
     { id: "category", header: t("ui.costCategory"), hideBelow: "md", cell: (c) => tk(`ui.costCategory_${c.category}`) },
     { id: "activity", header: t("ui.costActivity"), hideBelow: "lg", cell: (c) => tk(`ui.activity_${c.activity}`) },
@@ -109,12 +80,45 @@ export function CostsPanel() {
           id={c.id}
           hasPhoto={!!c.photoPath}
           name={c.description ?? tk(`ui.costCategory_${c.category}`)}
-          onEdit={c.origin === "manual" ? () => setEditing(c) : undefined}
-          onDelete={c.origin === "manual" ? () => setRemoving(c) : undefined}
+          onEdit={c.origin === "manual" ? () => onEdit(c) : undefined}
+          onDelete={c.origin === "manual" ? () => onRemove(c) : undefined}
         />
       ),
     },
   ];
+}
+
+export function CostsPanel() {
+  const farms = useFarms();
+  const seasons = useSeasonList();
+  const [f, setF] = useState({ farmId: "", seasonId: "", category: "", from: "", to: "" });
+  const [editing, setEditing] = useState<CostEntry | "new" | null>(null);
+  const [removing, setRemoving] = useState<CostEntry | null>(null);
+  const qc = useQueryClient();
+  const q = useQuery({
+    queryKey: ["erp", "costs", f],
+    queryFn: () => get<CostList>(`/org/erp/costs${qs({ farmId: f.farmId || undefined, seasonId: f.seasonId || undefined, category: f.category || undefined, from: f.from || undefined, to: f.to || undefined })}`),
+  });
+  const farmName = (id: string | null) => farms.data?.find((x) => x.id === id)?.name ?? "";
+  const remove = useMutation({
+    mutationFn: (c: CostEntry) => del(`/org/erp/costs/${c.id}`),
+    onSuccess: () => {
+      toast(t("ui.erpDeleted"));
+      setRemoving(null);
+      qc.invalidateQueries({ queryKey: ["erp"] });
+    },
+  });
+  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
+  const totals = q.data?.totals;
+  const rows = q.data?.rows ?? [];
+  const filtered = Object.values(f).some(Boolean);
+  const blank = !!q.data && rows.length === 0 && !filtered;
+  const newBtn = (
+    <Button variant="primary" onClick={() => setEditing("new")}>
+      {t("ui.costNew")}
+    </Button>
+  );
+  const columns = costColumns(farmName, setEditing, setRemoving);
   return (
     <div className="flex flex-col gap-4">
       {!blank && <HeaderActions>{newBtn}</HeaderActions>}
@@ -227,13 +231,7 @@ function CostModal({ entry, onClose }: { entry: CostEntry | null; onClose: () =>
   const none = { value: "", label: t("ui.costNone") };
   return (
     <Modal title={entry ? t("ui.costEdit") : t("ui.costNew")} onClose={onClose}>
-      <form
-        className="grid grid-cols-2 gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         <Field label={t("ui.costDate")}>
           <Input type="date" required value={f.date} onChange={set("date")} />
         </Field>
@@ -271,17 +269,8 @@ function CostModal({ entry, onClose }: { entry: CostEntry | null; onClose: () =>
         <Field label={t("ui.costParty")}>
           <Select value={f.partyId} onChange={set("partyId")} options={[none, ...(parties.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
         </Field>
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
-      </form>
+        <FormFooter error={save.error} disabled={save.isPending} />
+      </Form>
     </Modal>
   );
 }

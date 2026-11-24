@@ -6,7 +6,7 @@ import { post } from "../lib/api";
 import { fmtHa } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import type { Plot } from "../lib/types";
-import { Button, ErrorBox, Field, Input, Modal, toast } from "./ui";
+import { Button, ErrorBox, Field, Form, Input, Modal, toast } from "./ui";
 
 /** M-05: confirma la división de un lote con la línea dibujada. */
 export function SplitModal({
@@ -47,13 +47,7 @@ export function SplitModal({
           </div>
         </div>
       ) : (
-        <form
-          className="flex flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (valid) save.mutate();
-          }}
-        >
+        <Form className="flex flex-col gap-4" onSubmit={() => { if (valid) save.mutate(); }}>
           <p className="text-sm text-tinta-2">{plot.name}</p>
           {result.parts.map((p, i) => (
             <Field key={i} label={`${t("ui.splitName")} ${i + 1}`} hint={fmtHa(areaHa(p))}>
@@ -74,7 +68,7 @@ export function SplitModal({
               {t("ui.cancel")}
             </Button>
           </div>
-        </form>
+        </Form>
       )}
     </Modal>
   );
@@ -119,13 +113,7 @@ export function MergeModal({
           </div>
         </div>
       ) : (
-        <form
-          className="flex flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (name.trim()) save.mutate();
-          }}
-        >
+        <Form className="flex flex-col gap-4" onSubmit={() => { if (name.trim()) save.mutate(); }}>
           <p className="text-sm text-tinta-2">
             {a.name} + {b.name}
           </p>
@@ -142,7 +130,7 @@ export function MergeModal({
               {t("ui.cancel")}
             </Button>
           </div>
-        </form>
+        </Form>
       )}
     </Modal>
   );

@@ -7,7 +7,7 @@ import { fmtDistance, pathLengthM } from "../lib/measure";
 import { t, tk } from "../lib/i18n";
 import type { FarmLine } from "../lib/types";
 import { deleteWithUndo } from "../lib/undo";
-import { Button, ErrorBox, Field, Input, Modal, Select, toast } from "./ui";
+import { Button, ErrorBox, Field, Form, Input, Modal, Select, toast } from "./ui";
 
 /** M-20: alambrados, caminos internos y cañerías de la estancia, con su largo. */
 export function LinesPanel({
@@ -115,13 +115,7 @@ export function NewLineModal({
   });
   return (
     <Modal title={t("ui.linesAdd")} onClose={onClose}>
-      <form
-        className="flex flex-col gap-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (name.trim()) save.mutate();
-        }}
-      >
+      <Form className="flex flex-col gap-4" onSubmit={() => { if (name.trim()) save.mutate(); }}>
         <Field label={t("ui.lineKind")}>
           <Select
             value={kind}
@@ -141,7 +135,7 @@ export function NewLineModal({
             {t("ui.cancel")}
           </Button>
         </div>
-      </form>
+      </Form>
     </Modal>
   );
 }

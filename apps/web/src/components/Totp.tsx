@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
 import { get, post, put, getSession, setSession, type Session } from "../lib/api";
 import { t } from "../lib/i18n";
-import { Button, ErrorBox, Field, Input, SectionHead, Skeleton, toast } from "./ui";
+import { Button, ErrorBox, Field, Form, Input, SectionHead, Skeleton, toast } from "./ui";
 
 interface Status {
   enabled: boolean;
@@ -97,13 +97,7 @@ export function TotpSection({ forced = false }: { forced?: boolean }) {
       )}
 
       {!s.enabled && setup && (
-        <form
-          className="mt-4 flex max-w-sm flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            enable.mutate();
-          }}
-        >
+        <Form className="mt-4 flex max-w-sm flex-col gap-4" onSubmit={() => enable.mutate()}>
           <p className="text-sm">{t("ui.totpScan")}</p>
           <div className="w-44 bg-white p-2">
             <QRCodeSVG value={setup.otpauth} size={160} marginSize={0} />
@@ -127,7 +121,7 @@ export function TotpSection({ forced = false }: { forced?: boolean }) {
             {t("ui.totpConfirm")}
           </Button>
           {enable.error ? <ErrorBox error={enable.error} /> : null}
-        </form>
+        </Form>
       )}
 
       {s.enabled && !fresh && (
@@ -136,13 +130,7 @@ export function TotpSection({ forced = false }: { forced?: boolean }) {
             {t("ui.totpOn", { n: s.recoveryLeft })}
           </p>
           {action ? (
-            <form
-              className="mt-3 flex max-w-sm flex-col gap-3"
-              onSubmit={(e) => {
-                e.preventDefault();
-                (action === "disable" ? disable : regen).mutate();
-              }}
-            >
+            <Form className="mt-3 flex max-w-sm flex-col gap-3" onSubmit={() => (action === "disable" ? disable : regen).mutate()}>
               <Field label={t("ui.totpAskCode")}>
                 <Input required autoFocus autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value)} />
               </Field>
@@ -153,7 +141,7 @@ export function TotpSection({ forced = false }: { forced?: boolean }) {
                 <Button onClick={() => (setAction(null), setCode(""))}>{t("ui.cancel")}</Button>
               </div>
               {(disable.error ?? regen.error) ? <ErrorBox error={disable.error ?? regen.error} /> : null}
-            </form>
+            </Form>
           ) : (
             <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
               <button type="button" className="cursor-pointer font-medium text-accion underline underline-offset-4" onClick={() => setAction("regen")}>

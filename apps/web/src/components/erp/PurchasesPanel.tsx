@@ -8,7 +8,7 @@ import { t, tk } from "../../lib/i18n";
 import { fmtMoney, fmtQty } from "../../lib/money";
 import { useFarms } from "../../lib/queries";
 import { useProducts } from "../../lib/products";
-import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, FilterBar, Field, Input, Modal, Select, Spinner, toast, type Column } from "../ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, FormFooter, Input, Modal, Select, Spinner, toast } from "../ui";
 import { InvoicePhoto } from "./InvoicePhoto";
 import { useParties } from "./PartiesPanel";
 import { useWarehouses } from "./WarehousesPanel";
@@ -164,13 +164,7 @@ function NewPurchase({ onClose }: { onClose: () => void }) {
   const total = lines.reduce((a, l) => a + lineAmount(Number(l.qty) || 0, toMinor(Number(l.unitPrice) || 0, currency)), 0);
   return (
     <Modal title={t("ui.purchNew")} onClose={onClose}>
-      <form
-        className="grid grid-cols-2 gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         <Field label={t("ui.purchSupplier")}>
           <Select value={partyId} onChange={(e) => setPartyId(e.target.value)} options={[{ value: "", label: "—" }, ...(parties.data ?? []).map((p) => ({ value: p.id, label: p.name }))]} />
         </Field>
@@ -217,17 +211,8 @@ function NewPurchase({ onClose }: { onClose: () => void }) {
           </div>
         </div>
         <div className="col-span-2 num text-right font-medium">{fmtMoney(total, currency)}</div>
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
-      </form>
+        <FormFooter error={save.error} disabled={save.isPending} />
+      </Form>
     </Modal>
   );
 }
@@ -324,13 +309,7 @@ function PurchaseDetail({ id, onClose }: { id: string; onClose: () => void }) {
                 {p.dueDate ? ` · ${t("ui.purchDue", { date: fmtIsoDate(p.dueDate) })}` : ""}
               </p>
             ) : (
-              <form
-                className="grid grid-cols-3 gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  doInvoice.mutate();
-                }}
-              >
+              <Form className="grid grid-cols-3 gap-2" onSubmit={() => doInvoice.mutate()}>
                 <Input required maxLength={40} placeholder={t("ui.purchInvoiceNumber")} value={invoice.number} onChange={(e) => setInvoice({ ...invoice, number: e.target.value })} />
                 <Input required type="date" aria-label={t("ui.costDate")} value={invoice.date} onChange={(e) => setInvoice({ ...invoice, date: e.target.value })} />
                 <Input type="date" aria-label={t("ui.purchDueLabel")} value={invoice.due} onChange={(e) => setInvoice({ ...invoice, due: e.target.value })} />
@@ -339,7 +318,7 @@ function PurchaseDetail({ id, onClose }: { id: string; onClose: () => void }) {
                     {t("ui.purchSaveInvoice")}
                   </Button>
                 </div>
-              </form>
+              </Form>
             )}
             <InvoicePhoto kind="purchases" id={id} hasPhoto={!!p.photoPath} />
             {doInvoice.error ? <ErrorBox error={doInvoice.error} /> : null}

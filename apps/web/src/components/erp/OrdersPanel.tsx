@@ -9,7 +9,7 @@ import { fmtGs } from "../../lib/money";
 import { useFarm, useFarms, useMembers, useSeasons } from "../../lib/queries";
 import { orderSheetHtml } from "../../lib/workOrders";
 import { useProducts } from "../../lib/products";
-import { Button, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, toast, type Column } from "../ui";
+import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, Form, FormFooter, Input, Modal, Select, Spinner, toast } from "../ui";
 import { useContractors } from "./ContractorsPanel";
 import { useMachines } from "./MachinesPanel";
 import { ExportableTable } from "../ExportableTable";
@@ -162,13 +162,7 @@ function OrderModal({ onClose }: { onClose: () => void }) {
   const upd = (i: number, patch: Partial<Dose>) => setDoses(doses.map((d, k) => (k === i ? { ...d, ...patch } : d)));
   return (
     <Modal title={t("ui.orderNew")} onClose={onClose}>
-      <form
-        className="grid grid-cols-2 gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         <Field label={t("ui.orderLabor")}>
           <Select value={f.labor} onChange={set("labor")} options={ORDER_LABORS.map((x) => ({ value: x, label: tk(`ui.orderLabor_${x}`) }))} />
         </Field>
@@ -243,17 +237,8 @@ function OrderModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
         )}
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
-      </form>
+        <FormFooter error={save.error} disabled={save.isPending} />
+      </Form>
     </Modal>
   );
 }

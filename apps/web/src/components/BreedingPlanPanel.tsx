@@ -17,7 +17,7 @@ import { get, post, put } from "../lib/api";
 import { fmtIsoDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useMe } from "../lib/queries";
-import { Button, Card, ErrorBox, Field, Input, Spinner, Stat, toast } from "./ui";
+import { Button, Card, ErrorBox, Field, Form, Input, Spinner, Stat, toast } from "./ui";
 
 const stageDates = (s: PlanStage) => (s.from === s.to ? fmtIsoDate(s.from) : t("ui.reproPlanDates", { from: fmtIsoDate(s.from), to: fmtIsoDate(s.to) }));
 
@@ -34,13 +34,7 @@ function Settings({ farmId, d }: { farmId: string; d: ReproPlanResponse }) {
     },
   });
   return (
-    <form
-      className="flex flex-wrap items-end gap-3"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (ok) save.mutate();
-      }}
-    >
+    <Form className="flex flex-wrap items-end gap-3" onSubmit={() => { if (ok) save.mutate(); }}>
       <Field label={t("ui.reproPlanStart")}>
         <Input type="date" value={start} onChange={(e) => setStart(e.target.value)} />
       </Field>
@@ -51,7 +45,7 @@ function Settings({ farmId, d }: { farmId: string; d: ReproPlanResponse }) {
         {t("ui.save")}
       </Button>
       {save.error ? <ErrorBox error={save.error} /> : null}
-    </form>
+    </Form>
   );
 }
 

@@ -5,7 +5,7 @@ import { CONTRACTOR_SERVICES } from "@yvy/shared";
 import { del, get, put } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
-import { Button, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, toast, type Column } from "../ui";
+import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, Form, FormFooter, Input, Modal, Select, Spinner, toast } from "../ui";
 import { SectionButton } from "./SectionButton";
 import { useMachines } from "./MachinesPanel";
 import { ExportableTable } from "../ExportableTable";
@@ -164,13 +164,7 @@ function ProfileModal({ row, onClose }: { row: Profile | null; onClose: () => vo
   const hours = (machines.data ?? []).filter((m) => m.meterKind === "hours");
   return (
     <Modal title={t("ui.laborNew")} onClose={onClose}>
-      <form
-        className="grid grid-cols-2 gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         <Field label={t("ui.laborMachine")} hint={t("ui.laborHoursOnly")}>
           <Select value={f.machineId} onChange={set("machineId")} options={hours.map((m) => ({ value: m.id, label: m.name }))} />
         </Field>
@@ -198,17 +192,8 @@ function ProfileModal({ row, onClose }: { row: Profile | null; onClose: () => vo
         <Field label={t("ui.laborPrice")} hint={t("ui.laborPriceHint")}>
           <Input type="number" min={0} step="any" value={f.price} onChange={set("price")} />
         </Field>
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending || !f.machineId}>
-            {t("ui.save")}
-          </Button>
-        </div>
-      </form>
+        <FormFooter error={save.error} disabled={save.isPending || !f.machineId} />
+      </Form>
     </Modal>
   );
 }

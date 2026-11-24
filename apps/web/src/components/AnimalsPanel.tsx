@@ -12,7 +12,7 @@ import {
 import { del, get, patch, post } from "../lib/api";
 import { fmtDateTime } from "../lib/format";
 import { t, tk } from "../lib/i18n";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Select, Spinner, toast } from "./ui";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, Form, Input, Select, Spinner, toast } from "./ui";
 import { adgText } from "./WeighingsPanel";
 
 const empty = { tag: "", category: "vaca", sex: "hembra", birthDate: "", note: "" };
@@ -42,13 +42,7 @@ function AnimalForm({
   const [f, setF] = useState(initial);
   const set = (k: keyof Form) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   return (
-    <form
-      className="flex max-w-xl flex-col gap-3 border-y border-linea py-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit(f);
-      }}
-    >
+    <Form className="flex max-w-xl flex-col gap-3 border-y border-linea py-4" onSubmit={() => onSubmit(f)}>
       <Field label={t("fields.tag")} hint={t("ui.animalTagHint")}>
         <Input value={f.tag} onChange={set("tag")} maxLength={20} autoCapitalize="characters" className="w-48" required />
       </Field>
@@ -79,7 +73,7 @@ function AnimalForm({
           {t("ui.cancel")}
         </Button>
       </div>
-    </form>
+    </Form>
   );
 }
 

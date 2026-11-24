@@ -5,7 +5,7 @@ import { del, get, post } from "../lib/api";
 import { fmtDateTime } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useMe } from "../lib/queries";
-import { Button, DataTable, EmptyState, ErrorBox, Field, Input, toast, Page } from "../components/ui";
+import { Button, DataTable, EmptyState, ErrorBox, Field, Form, Input, Page, toast } from "../components/ui";
 
 interface Token {
   id: string;
@@ -90,20 +90,14 @@ export function ApiTokensPage() {
           ]}
         />
       )}
-      <form
-        className="flex items-end gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          create.mutate();
-        }}
-      >
+      <Form className="flex items-end gap-2" onSubmit={() => create.mutate()}>
         <Field label={t("ui.apiTokenName")}>
           <Input required minLength={2} value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
         <Button type="submit" variant="primary" disabled={create.isPending}>
           {t("ui.apiTokenCreate")}
         </Button>
-      </form>
+      </Form>
       {(create.error || revoke.error || list.error) && <ErrorBox error={create.error ?? revoke.error ?? list.error} />}
     </Page>
   );

@@ -5,7 +5,7 @@ import { del, get, post } from "../lib/api";
 import { fmtIsoDate, fmtNum, toIso } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import type { Plot } from "../lib/types";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Input, Modal, Select, Spinner, toast } from "./ui";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, Form, Input, Modal, Select, Spinner, toast } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
 interface SoilSample {
@@ -178,13 +178,7 @@ function SoilModal({ farmId, plots, onClose }: { farmId: string; plots: Plot[]; 
   });
   return (
     <Modal title={t("ui.soilAdd")} onClose={onClose}>
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
         <Field label={t("ui.plot")}>
           <Select
             value={f.plotId}
@@ -227,7 +221,7 @@ function SoilModal({ farmId, plots, onClose }: { farmId: string; plots: Plot[]; 
             {t("ui.cancel")}
           </Button>
         </div>
-      </form>
+      </Form>
     </Modal>
   );
 }

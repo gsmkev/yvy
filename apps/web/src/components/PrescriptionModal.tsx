@@ -7,7 +7,7 @@ import { t, tk } from "../lib/i18n";
 import { useMembers, useSeasons } from "../lib/queries";
 import type { Plot } from "../lib/types";
 import { useProducts } from "../lib/products";
-import { Button, ErrorBox, Field, Input, Modal, Select, toast } from "./ui";
+import { Button, ErrorBox, Field, Form, Input, Modal, Select, toast } from "./ui";
 
 interface Line {
   productId: string;
@@ -74,13 +74,7 @@ export function PrescriptionModal({
 
   return (
     <Modal title={t("ui.prescriptionNew")} onClose={onClose}>
-      <form
-        className="flex flex-col gap-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (ready) create.mutate();
-        }}
-      >
+      <Form className="flex flex-col gap-4" onSubmit={() => { if (ready) create.mutate(); }}>
         <fieldset className="flex flex-col gap-1">
           <legend className="mb-1 text-sm font-medium">{t("ui.prescriptionPlots")}</legend>
           <div className="max-h-40 overflow-auto border-y border-linea">
@@ -176,7 +170,7 @@ export function PrescriptionModal({
         <Button type="submit" variant="primary" disabled={!ready || create.isPending}>
           {t("ui.prescriptionCreate")}
         </Button>
-      </form>
+      </Form>
     </Modal>
   );
 }

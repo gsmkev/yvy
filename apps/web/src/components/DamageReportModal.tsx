@@ -12,7 +12,7 @@ import { download } from "../lib/exports";
 import { t, tk } from "../lib/i18n";
 import { fetchAllRecords, useFarm, useMe } from "../lib/queries";
 import type { Plot } from "../lib/types";
-import { Button, ErrorBox, Field, Input, Modal, Select } from "./ui";
+import { Button, ErrorBox, Field, Form, Input, Modal, Select } from "./ui";
 
 /** Informe de daños para el seguro agrícola (C-09): fecha del evento, vigor antes y después, registros y fotos en un PDF. */
 export function DamageReportModal({ plot, onClose }: { plot: Plot; onClose: () => void }) {
@@ -70,13 +70,7 @@ export function DamageReportModal({ plot, onClose }: { plot: Plot; onClose: () =
 
   return (
     <Modal title={t("ui.damageTitle")} onClose={onClose}>
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void generate();
-        }}
-      >
+      <Form className="flex flex-col gap-3" onSubmit={() => void generate()}>
         <p className="text-sm text-tinta-2">{t("ui.damageIntro")}</p>
         <Field label={t("ui.damageEventDate")}>
           <Input type="date" required max={todayIso()} value={eventDay} onChange={(e) => setEventDay(e.target.value)} />
@@ -105,7 +99,7 @@ export function DamageReportModal({ plot, onClose }: { plot: Plot; onClose: () =
             {t("ui.cancel")}
           </Button>
         </div>
-      </form>
+      </Form>
     </Modal>
   );
 }

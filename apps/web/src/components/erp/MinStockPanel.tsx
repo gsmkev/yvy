@@ -5,7 +5,7 @@ import { del, get, put } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { fmtQty } from "../../lib/money";
 import { useProducts } from "../../lib/products";
-import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, Input, Modal, Select, Spinner, Tabs, toast, type Column } from "../ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, Form, FormFooter, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
 import { useWarehouses } from "./WarehousesPanel";
 import { HeaderActions, RowMenu, useGoSection, useTableExport } from "./adminSlot";
 
@@ -21,6 +21,31 @@ interface Low {
   qty: number;
   minQty: number;
   missing: number;
+}
+
+function lowColumns({ prod, wh, unit }: { prod: (id: string) => { name: string } | undefined; wh: (id: string) => string; unit: (id: string) => string }): Column<Low>[] {
+  return [
+    { id: "product", header: t("ui.stockProduct"), cell: (l) => prod(l.productId)?.name },
+    { id: "where", header: t("ui.stockWhere"), hideBelow: "sm", cell: (l) => <span className="text-tinta-2">{wh(l.warehouseId)}</span> },
+    { id: "qty", header: t("ui.stockQty"), align: "right", hideBelow: "sm", cell: (l) => fmtQty(l.qty, unit(l.productId)) },
+    { id: "min", header: t("ui.minStockMin"), align: "right", hideBelow: "md", cell: (l) => fmtQty(l.minQty, unit(l.productId)) },
+    { id: "missing", header: t("ui.minStockMissingHead"), align: "right", cell: (l) => <span className="text-trigo-texto">{fmtQty(l.missing, unit(l.productId))}</span>, sort: (a, b) => a.missing - b.missing },
+  ];
+}
+
+function minColumns({ prod, wh, unit }: { prod: (id: string) => { name: string } | undefined; wh: (id: string) => string; unit: (id: string) => string }, onEdit: (m: Minimum) => void, onRemove: (m: Minimum) => void): Column<Minimum>[] {
+  return [
+    { id: "product", header: t("ui.stockProduct"), cell: (m) => prod(m.productId)?.name },
+    { id: "where", header: t("ui.stockWhere"), cell: (m) => wh(m.warehouseId) },
+    { id: "min", header: t("ui.minStockMin"), align: "right", cell: (m) => fmtQty(m.minQty, unit(m.productId)) },
+    {
+      id: "menu",
+      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      align: "right",
+      width: "3rem",
+      cell: (m) => <RowMenu name={prod(m.productId)?.name ?? ""} onEdit={() => onEdit(m)} onDelete={() => onRemove(m)} />,
+    },
+  ];
 }
 
 export function MinStockPanel() {
@@ -69,25 +94,8 @@ export function MinStockPanel() {
       {t("ui.minStockNew")}
     </Button>
   );
-  const lowCols: Column<Low>[] = [
-    { id: "product", header: t("ui.stockProduct"), cell: (l) => prod(l.productId)?.name },
-    { id: "where", header: t("ui.stockWhere"), hideBelow: "sm", cell: (l) => <span className="text-tinta-2">{wh(l.warehouseId)}</span> },
-    { id: "qty", header: t("ui.stockQty"), align: "right", hideBelow: "sm", cell: (l) => fmtQty(l.qty, unit(l.productId)) },
-    { id: "min", header: t("ui.minStockMin"), align: "right", hideBelow: "md", cell: (l) => fmtQty(l.minQty, unit(l.productId)) },
-    { id: "missing", header: t("ui.minStockMissingHead"), align: "right", cell: (l) => <span className="text-trigo-texto">{fmtQty(l.missing, unit(l.productId))}</span>, sort: (a, b) => a.missing - b.missing },
-  ];
-  const minCols: Column<Minimum>[] = [
-    { id: "product", header: t("ui.stockProduct"), cell: (m) => prod(m.productId)?.name },
-    { id: "where", header: t("ui.stockWhere"), cell: (m) => wh(m.warehouseId) },
-    { id: "min", header: t("ui.minStockMin"), align: "right", cell: (m) => fmtQty(m.minQty, unit(m.productId)) },
-    {
-      id: "menu",
-      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
-      align: "right",
-      width: "3rem",
-      cell: (m) => <RowMenu name={prod(m.productId)?.name ?? ""} onEdit={() => setEditing(m)} onDelete={() => setRemoving(m)} />,
-    },
-  ];
+  const lowCols = lowColumns({ prod, wh, unit });
+  const minCols = minColumns({ prod, wh, unit }, setEditing, setRemoving);
   const noMins = minRows.length === 0;
   return (
     <div className="flex flex-col gap-4">
@@ -149,13 +157,7 @@ function MinModal({ row, onClose }: { row: Minimum | null; onClose: () => void }
   });
   return (
     <Modal title={t("ui.minStockNew")} onClose={onClose}>
-      <form
-        className="grid grid-cols-2 gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         <div className="col-span-2">
           <Field label={t("ui.stockProduct")}>
             <Select value={productId} onChange={(e) => setProductId(e.target.value)} options={(products.data ?? []).map((p) => ({ value: p.id, label: p.name }))} />
@@ -167,17 +169,8 @@ function MinModal({ row, onClose }: { row: Minimum | null; onClose: () => void }
         <Field label={t("ui.minStockMin")}>
           <Input required type="number" min={0} step="any" value={minQty} onChange={(e) => setMinQty(e.target.value)} />
         </Field>
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
-      </form>
+        <FormFooter error={save.error} disabled={save.isPending} />
+      </Form>
     </Modal>
   );
 }

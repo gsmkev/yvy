@@ -6,7 +6,7 @@ import { t, tk } from "../lib/i18n";
 import type { Plot, Product } from "../lib/types";
 import { useProducts } from "../lib/products";
 import { PrescriptionModal } from "./PrescriptionModal";
-import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, Select, Spinner, toast, type Column } from "./ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, Input, Modal, Select, Spinner, toast } from "./ui";
 import { HeaderActions, RowMenu, useTableExport } from "./erp/adminSlot";
 
 interface DoseRange {
@@ -166,13 +166,7 @@ function ProductModal({ product, range, onClose }: { product: Product | null; ra
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   return (
     <Modal title={product ? product.name : t("ui.productNew")} onClose={onClose}>
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
         <Field label={t("ui.productName")}>
           <Input required autoFocus value={f.name} onChange={set("name")} maxLength={120} />
         </Field>
@@ -217,7 +211,7 @@ function ProductModal({ product, range, onClose }: { product: Product | null; ra
         <Button type="submit" variant="primary" disabled={save.isPending}>
           {t("ui.save")}
         </Button>
-      </form>
+      </Form>
     </Modal>
   );
 }

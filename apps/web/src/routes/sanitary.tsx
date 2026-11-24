@@ -10,7 +10,7 @@ import { useFarms, useMe } from "../lib/queries";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SenacsaCampaigns } from "../components/SenacsaCampaigns";
 import { RowMenu } from "../components/menus";
-import { Button, DataTable, EmptyState, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, toast, Page } from "../components/ui";
+import { Button, DataTable, EmptyState, ErrorBox, Field, Form, Input, Modal, Page, PageHeader, Select, Spinner, toast } from "../components/ui";
 import type { SanitaryEventRow as EventRow } from "@yvy/shared";
 
 const shiftMonth = (month: string, by: number) => {
@@ -177,13 +177,7 @@ function NewEvent({
     setF({ ...f, [k]: e.target.value });
   return (
     <Modal title={t("ui.sanitaryNew")} onClose={onClose}>
-      <form
-        className="flex flex-col gap-3 p-5"
-        onSubmit={(e) => {
-          e.preventDefault();
-          create.mutate();
-        }}
-      >
+      <Form className="flex flex-col gap-3 p-5" onSubmit={() => create.mutate()}>
         <Field label={t("fields.healthReason")}>
           <Select
             value={f.reason}
@@ -236,7 +230,7 @@ function NewEvent({
             {t("ui.cancel")}
           </Button>
         </div>
-      </form>
+      </Form>
     </Modal>
   );
 }

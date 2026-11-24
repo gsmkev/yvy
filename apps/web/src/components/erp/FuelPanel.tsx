@@ -7,7 +7,7 @@ import { fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtQty } from "../../lib/money";
 import { useFarms } from "../../lib/queries";
-import { Button, DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Modal, Select, Spinner, toast, type Column } from "../ui";
+import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, FormFooter, Input, Modal, Select, Spinner, toast } from "../ui";
 import { useMachines } from "./MachinesPanel";
 import { HeaderActions, useTableExport } from "./adminSlot";
 
@@ -146,13 +146,7 @@ function FuelLoadModal({ onClose }: { onClose: () => void }) {
   const noMachine = { value: "", label: t("ui.fuelOtherMachine") };
   return (
     <Modal title={t("ui.fuelNew")} onClose={onClose}>
-      <form
-        className="grid grid-cols-2 gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
+      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         <Field label={t("ui.costFarm")}>
           <Select value={f.farmId || (farms.data?.[0]?.id ?? "")} onChange={set("farmId")} options={(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))} />
         </Field>
@@ -173,17 +167,8 @@ function FuelLoadModal({ onClose }: { onClose: () => void }) {
         <Field label={t("ui.machineMeter")}>
           <Input type="number" min={0} step="any" value={f.meter} onChange={set("meter")} />
         </Field>
-        {save.error ? (
-          <div className="col-span-2">
-            <ErrorBox error={save.error} />
-          </div>
-        ) : null}
-        <div className="col-span-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
-          </Button>
-        </div>
-      </form>
+        <FormFooter error={save.error} disabled={save.isPending} />
+      </Form>
     </Modal>
   );
 }

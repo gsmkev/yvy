@@ -1,3 +1,5 @@
+"""Pruebas de SPI: distribución gamma, ajuste y ventanas de meses."""
+
 import math
 import random
 from datetime import date, timedelta

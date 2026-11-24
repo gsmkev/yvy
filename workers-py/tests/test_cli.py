@@ -1,3 +1,5 @@
+"""Pruebas de argumentos de la línea de comandos y ventana de días de cada job."""
+
 from yvy_workers.__main__ import build_parser, ingest_days
 
 

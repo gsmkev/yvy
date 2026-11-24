@@ -1,3 +1,5 @@
+"""Pruebas de clima diario de NASA POWER: filas válidas y tolerancia a fallas por estancia."""
+
 from datetime import date
 
 import httpx

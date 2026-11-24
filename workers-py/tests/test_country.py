@@ -1,3 +1,5 @@
+"""Pruebas de bloques y teselas que cubren el país y elección de las menos nubladas."""
+
 import numpy as np
 from pmtiles.reader import MmapSource, Reader
 from rasterio.transform import from_origin

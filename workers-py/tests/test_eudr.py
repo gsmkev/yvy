@@ -1,3 +1,5 @@
+"""Pruebas de indicador EUDR: estación seca, cobertura arbórea y pérdida."""
+
 from datetime import date, datetime, timezone
 
 import httpx

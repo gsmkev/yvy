@@ -1,3 +1,5 @@
+"""Pruebas de índices NDRE, NDMI y EVI, rampas por índice e historia de vigor."""
+
 from datetime import date
 
 import numpy as np
@@ -7,7 +9,7 @@ from tests.test_jobs import GEOM
 
 
 def test_indices_ndre_ndmi_evi():
-    """S-07: fórmulas de NDRE, NDMI y EVI sobre reflectancias conocidas, y rampas por índice."""
+    """Fórmulas de NDRE, NDMI y EVI sobre reflectancias conocidas, y rampas por índice."""
     from yvy_workers.jobs.s2 import compute_indices
     from yvy_workers.tiles import INDEX_STYLE
 
@@ -40,7 +42,7 @@ def test_capa_de_otro_indice():
 
 
 def test_historia_recorre_un_anio_por_vez_solo_ndvi(monkeypatch):
-    """S-03: desde 2017, un año por vez, y solo pide NDVI."""
+    """Desde 2017, un año por vez, y solo pide NDVI."""
     from yvy_workers.jobs import s2
 
     class Api:

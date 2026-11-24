@@ -1,3 +1,5 @@
+"""Pruebas de límites administrativos: nombres, simplificación y serialización compacta."""
+
 import json
 
 from yvy_workers.jobs.boundaries import dump, simplify_collection

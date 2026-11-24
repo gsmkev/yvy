@@ -1,3 +1,5 @@
+"""Pruebas de zonas de manejo: k-means determinístico y orden por vigor."""
+
 from datetime import date
 
 import numpy as np

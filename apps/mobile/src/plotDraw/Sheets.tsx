@@ -1,3 +1,4 @@
+/** Fichas inferiores y marcadores del editor de lotes. */
 import { Pressable, View } from "react-native";
 import { Marker } from "@maplibre/maplibre-react-native";
 import { t, type MessageKey } from "@yvy/shared";

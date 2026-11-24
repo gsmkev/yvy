@@ -1,3 +1,4 @@
+/** Pantalla de elección del lote donde se anota. */
 import { ScrollView, View } from "react-native";
 import { t } from "@yvy/shared";
 import { Button, Row, s as k, Text, TextInput } from "../ui/kit";

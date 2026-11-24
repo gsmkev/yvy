@@ -1,6 +1,8 @@
+/** Estilos compartidos de las piezas del mapa. */
 import { StyleSheet } from "react-native";
 import { C, F, GUTTER, RADIUS } from "../ui/theme";
 
+/** Hoja de estilos del mapa (centrado y ficha inferior). */
 export const st = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   sheet: { position: "absolute", left: 12, right: 12, bottom: 12, backgroundColor: C.papel, borderRadius: RADIUS + 4, padding: GUTTER, elevation: 8, shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } },

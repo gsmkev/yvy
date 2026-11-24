@@ -1,10 +1,11 @@
+/** Hook de fotos y nota de voz de la anotación. */
 import { useEffect, useRef, useState } from "react";
 import { t } from "@yvy/shared";
 import type { LocalAudio, LocalPhoto } from "../db/store";
 import { discardPhoto } from "../lib/photos";
 import { showToast } from "../lib/toast";
 
-/** Fotos y nota de voz del registro; las fotos que no llegan a guardarse no quedan ocupando lugar (F-17). */
+/** Fotos y nota de voz del registro; las fotos que no llegan a guardarse no quedan ocupando lugar. */
 export function usePhotos() {
   const [photos, setPhotos] = useState<LocalPhoto[]>([]);
   const photosRef = useRef(photos);

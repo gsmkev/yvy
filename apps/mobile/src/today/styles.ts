@@ -1,6 +1,8 @@
+/** Estilos de la pantalla Hoy. */
 import { StyleSheet } from "react-native";
 import { C, RADIUS } from "../ui/theme";
 
+/** Hoja de estilos de la pantalla Hoy. */
 export const st = StyleSheet.create({
   alert: { borderRadius: RADIUS, paddingHorizontal: 14, paddingVertical: 10, marginTop: 8 },
   seeAll: { minHeight: 48, justifyContent: "center", alignItems: "center" },

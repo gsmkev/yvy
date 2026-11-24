@@ -1,3 +1,4 @@
+/** Estado y navegación del asistente de anotación. */
 import { useEffect, useMemo, useState } from "react";
 import { Keyboard } from "react-native";
 import { router } from "expo-router";
@@ -35,7 +36,7 @@ export function useAnnotate() {
   const [values, setValues] = useState<Record<string, unknown>>(() =>
     editing ? flattenExtra(JSON.parse(editing.data) as Record<string, unknown>) : { ...(presetKind ? seed(presetKind) : {}), ...(scanPoi ? { poiId: scanPoi.id } : {}) },
   );
-  // Plaga: primero se elige entre una observación o el monitoreo por estaciones (F-12).
+  // Plaga: primero se elige entre una observación o el monitoreo por estaciones.
   const entryFor = (kd: RecordKind): Phase => (kd === "pest" && !editing ? { name: "mode" } : { name: "step", i: 0 });
   const [phase, setPhase] = useState<Phase>(() =>
     editing ? { name: "step", i: 0 } : scanPoi ? (presetKind ? entryFor(presetKind) : { name: "kind" }) : params.kind === "rain" || params.plotId ? (params.kind ? entryFor(params.kind) : { name: "kind" }) : { name: "plot" },
@@ -45,7 +46,7 @@ export function useAnnotate() {
   const [stations, setStations] = useState<Station[]>([]);
   const [camera, setCamera] = useState(false);
   const [query, setQuery] = useState("");
-  // F-10: anotar lo mismo en varios lotes a la vez.
+  // Anotar lo mismo en varios lotes a la vez.
   const [multi, setMulti] = useState<Plot[]>([]);
 
   useEffect(() => {
@@ -65,12 +66,12 @@ export function useAnnotate() {
   const missingPhoto = !!closeReq?.photo && photos.length + existingPhotos === 0;
   const missingLocation = !!closeReq?.location && (fix === "searching" || !fix);
 
-  // F-01: si el GPS tarda (arranque en frío), explicar que busca satélites y que no usa internet.
+  // Si el GPS tarda (arranque en frío), explicar que busca satélites y que no usa internet.
   const gpsHint = gpsHintText(useGpsStage(fix === "searching"));
 
   // Un registro de monitoreo por estaciones solo permite editar la nota: los conteos son de campo.
   const stationRecord = kind === "pest" && Array.isArray(values.stations);
-  // G-30: aguadas de la estancia, para preguntar de cuál es el nivel (no al editar un registro ya guardado).
+  // Aguadas de la estancia, para preguntar de cuál es el nivel (no al editar un registro ya guardado).
   const waterPois = useMemo(
     () => (editing ? [] : db.pois(plot?.farmId ?? selectedFarmId(db) ?? undefined).filter((p) => isWaterPoi(p.kind))),
     [plot?.farmId, editing],
@@ -138,4 +139,5 @@ export function useAnnotate() {
   };
 }
 
+/** Estado completo del asistente de anotación, tal como lo devuelve `useAnnotate`. */
 export type AnnotateState = ReturnType<typeof useAnnotate>;

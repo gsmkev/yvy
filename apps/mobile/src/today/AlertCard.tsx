@@ -1,3 +1,4 @@
+/** Tarjeta de un aviso de la pantalla Hoy. */
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { t, tk } from "@yvy/shared";

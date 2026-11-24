@@ -1,3 +1,4 @@
+/** Cámara de la anotación: saca la foto, la revisa y permite marcarla. */
 import { useState } from "react";
 import { Alert, Pressable, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -10,11 +11,12 @@ import { Button, s as k, Text } from "../ui/kit";
 import { C, T } from "../ui/theme";
 import { st } from "./styles";
 
+/** Cámara a pantalla completa; llama a `onDone` con la foto procesada o null si se cancela. */
 export function PhotoCamera({ onDone }: { onDone: (p: LocalPhoto | null) => void }) {
   const [perm, request] = useCameraPermissions();
   const [ref, setRef] = useState<CameraView | null>(null);
   const [busy, setBusy] = useState(false);
-  // F-08: después del disparo se puede dibujar encima (flecha, círculo) antes de procesar la foto.
+  // Después del disparo se puede dibujar encima (flecha, círculo) antes de procesar la foto.
   const [shot, setShot] = useState<{ uri: string; width: number; height: number } | null>(null);
   if (!perm) return null;
   if (shot)
@@ -65,7 +67,7 @@ export function PhotoCamera({ onDone }: { onDone: (p: LocalPhoto | null) => void
               const warning = await photoQualityWarning(pic.uri, pic.width, pic.height);
               setBusy(false);
               const keep = () => setShot({ uri: pic.uri, width: pic.width, height: pic.height });
-              // X-09: aviso sin bloquear. "Sacarla de nuevo" descarta esta toma; "Dejarla así" sigue con ella.
+              // Aviso sin bloquear. "Sacarla de nuevo" descarta esta toma; "Dejarla así" sigue con ella.
               if (!warning) return keep();
               Alert.alert(warning, undefined, [
                 { text: t("app.photo.qualityRetake"), style: "cancel" },

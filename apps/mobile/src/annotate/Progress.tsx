@@ -1,9 +1,11 @@
+/** Indicador de progreso de los pasos. */
 import { View } from "react-native";
 import { t } from "@yvy/shared";
 import { Text } from "../ui/kit";
 import { C, T } from "../ui/theme";
 import { st } from "./styles";
 
+/** Barra con un tramo por paso; `i` es el paso actual (desde 0) y `n` el total. */
 export function Progress({ i, n }: { i: number; n: number }) {
   return (
     <View style={st.progressWrap} accessibilityLabel={t("app.common.stepOf", { i: i + 1, n })}>

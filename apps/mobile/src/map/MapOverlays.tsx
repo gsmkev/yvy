@@ -1,3 +1,4 @@
+/** Paneles superpuestos al mapa: capas, coordenadas y herramientas. */
 import { Pressable, View } from "react-native";
 import { router } from "expo-router";
 import { Compass, Layers, LocateFixed, Navigation, Wrench } from "lucide-react-native";
@@ -12,6 +13,7 @@ import { MapPanel, MapToolbar, MapToolButton } from "../ui/MapToolbar";
 import { T } from "../ui/theme";
 import { st } from "./styles";
 
+/** Panel abierto en el mapa, o null si no hay ninguno. */
 export type MapPanelName = "layers" | "tools" | null;
 
 /** Arriba a la izquierda: estancia, y según el panel abierto las capas (con coordenadas) o las herramientas. */

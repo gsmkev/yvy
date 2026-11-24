@@ -1,6 +1,8 @@
+/** Estilos de las pantallas de anotación. */
 import { Platform, StyleSheet } from "react-native";
 import { C, F, GUTTER, RADIUS, T, TOUCH } from "../ui/theme";
 
+/** Hoja de estilos compartida por las pantallas de anotación. */
 export const st = StyleSheet.create({
   warn: { marginTop: 16, padding: 12, borderRadius: RADIUS, backgroundColor: C.atencionSuave, color: C.atencion, fontFamily: F.sansMedium, fontSize: 15, lineHeight: 21 },
   progressWrap: { paddingHorizontal: GUTTER, paddingTop: 12 },

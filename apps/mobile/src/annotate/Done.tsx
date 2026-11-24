@@ -1,3 +1,4 @@
+/** Pantalla de confirmación al terminar una anotación. */
 import { View } from "react-native";
 import { router, Stack } from "expo-router";
 import { Check } from "lucide-react-native";
@@ -9,6 +10,7 @@ import { Button, ScreenBody, s as k, Text } from "../ui/kit";
 import { C, T } from "../ui/theme";
 import { st } from "./styles";
 
+/** Confirma el guardado e informa si el registro ya se mandó. */
 export function Done({ plot, kind, values }: { plot: Plot | null; kind: RecordKind; values: Record<string, unknown> }) {
   const st2 = useSyncStatus();
   const db = getDb();

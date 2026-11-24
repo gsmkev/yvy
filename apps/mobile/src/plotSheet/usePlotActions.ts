@@ -1,3 +1,4 @@
+/** Acciones de la ficha del lote: editar atributos y borrar. */
 import { useState } from "react";
 import type { MultiPolygon, Polygon } from "geojson";
 import { router } from "expo-router";

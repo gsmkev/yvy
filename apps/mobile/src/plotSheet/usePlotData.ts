@@ -1,3 +1,4 @@
+/** Lectura de los datos de la ficha del lote desde la base local. */
 import { getDb } from "../lib/db";
 import { latestVigorByPlot, localPlans, localSeasons, rotationFromLocal, vigorHistory } from "../lib/plotInfo";
 import { useLocal } from "../lib/useLocal";

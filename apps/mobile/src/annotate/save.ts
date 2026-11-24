@@ -1,3 +1,4 @@
+/** Guardado de la anotación: arma los datos y los escribe en la base local. */
 import { parseRecordData, splitExtraAnswers, type RecordKind } from "@yvy/shared";
 import type { LocalAudio, LocalPhoto, Plot } from "../db/store";
 import { getDb } from "../lib/db";
@@ -9,6 +10,7 @@ import { toastSaved } from "../lib/toast";
 type Db = ReturnType<typeof getDb>;
 type Editing = NonNullable<ReturnType<Db["recordById"]>>;
 
+/** Datos necesarios para guardar una anotación. */
 export type SaveCtx = {
   db: Db;
   userId: string;
@@ -35,10 +37,10 @@ function buildData(c: SaveCtx): { data: Record<string, unknown>; entersFromOutsi
   const { poiId: pickedPoi, ...answers } = c.values;
   const { rest, extra } = splitExtraAnswers(answers);
   const data: Record<string, unknown> = { ...rest, ...(extra ? { extra } : {}) };
-  // Tratamiento con producto del catálogo: el nombre sale del catálogo (E-13).
+  // Tratamiento con producto del catálogo: el nombre sale del catálogo.
   if (kind === "health" && typeof data.productId === "string")
     data.product = db.products().find((p) => p.id === data.productId)?.name ?? data.product;
-  // Combustible: el nombre de la máquina sale del catálogo (E-16).
+  // Combustible: el nombre de la máquina sale del catálogo.
   if (kind === "fuel_load" && typeof data.machineId === "string")
     data.machine = db.machines().find((m) => m.id === data.machineId)?.name ?? data.machine;
   if (kind === "rain" && !editing) data.readAt = Date.now();

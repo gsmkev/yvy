@@ -1,4 +1,4 @@
-/** Línea de confirmación breve al pie (U-09): un solo mensaje a la vez, desaparece a los 3 s. */
+/** Línea de confirmación breve al pie: un solo mensaje a la vez, desaparece a los 3 s. */
 import { useSyncExternalStore } from "react";
 import { t } from "@yvy/shared";
 import { getDb } from "./db";
@@ -12,6 +12,10 @@ let seq = 0;
 let timer: ReturnType<typeof setTimeout> | null = null;
 const subs = new Set<() => void>();
 
+/**
+ * Muestra un mensaje breve al pie, reemplazando el que haya.
+ * @param ms Cuánto dura visible.
+ */
 export function showToast(text: string, ms = TOAST_MS): void {
   if (timer) clearTimeout(timer);
   const id = ++seq;
@@ -25,6 +29,7 @@ export function showToast(text: string, ms = TOAST_MS): void {
   }, ms);
 }
 
+/** Mensaje breve que se muestra ahora, o null. */
 export const useToast = () =>
   useSyncExternalStore(
     (f) => (subs.add(f), () => subs.delete(f)),

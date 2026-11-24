@@ -16,7 +16,7 @@ export const fmtRain = (mm: number, u: Units): string => `${fmtNumber(mmToRain(m
 /** "31 °C" o "88 °F". */
 export const fmtTemp = (c: number, u: Units): string => `${fmtNumber(cToTemp(c, u.temp), 0)} ${tempLabel(u.temp)}`;
 
-// ---------- Coordenadas (función 32) ----------
+// ---------- Coordenadas ----------
 
 const hemi = (v: number, pos: string, neg: string) => (v >= 0 ? pos : neg);
 
@@ -37,9 +37,10 @@ const dm = (v: number): string => {
 /** Grados y minutos: "25°16.874′ S, 57°38.074′ O" (en Paraguay el oeste se escribe O). */
 export const degMinCoords = (lon: number, lat: number): string => `${dm(lat)} ${hemi(lat, "N", "S")}, ${dm(lon)} ${hemi(lon, "E", "O")}`;
 
+/** Enlace a Google Maps con la ubicación. */
 export const mapsLink = (lon: number, lat: number): string => `https://www.google.com/maps?q=${lat.toFixed(5)},${lon.toFixed(5)}`;
 
-// ---------- Vigor (funciones 44 y 45) ----------
+// ---------- Vigor ----------
 
 /** Color de la rampa NDVI (marrón a verde) para un valor de 0 a 1. */
 export function ndviColor(v: number): string {
@@ -48,6 +49,7 @@ export function ndviColor(v: number): string {
   return NDVI_RAMP[i === -1 ? NDVI_RAMP.length - 1 : i]!;
 }
 
+/** Un valor de vigor (NDVI) en una fecha de imagen. */
 export interface VigorPoint {
   acquiredAt: number;
   mean: number;
@@ -83,8 +85,9 @@ export function latestVigorByPlot(db: LocalDb): Map<string, VigorPoint> {
   return new Map(rows.map((r) => [r.plot_id, { acquiredAt: r.acquired_at, mean: r.mean, lowConfidence: !!r.low_confidence }]));
 }
 
-// ---------- Campañas del lote (función 47) ----------
+// ---------- Campañas del lote ----------
 
+/** Una campaña en la rotación de un lote. */
 export interface RotationRow {
   seasonId: string;
   seasonName: string;
@@ -104,6 +107,7 @@ interface SeasonLite {
   endDate: string | null;
   active: boolean;
 }
+/** Plan de cultivo de un lote en una campaña. */
 export interface PlanLite {
   plotId: string;
   seasonId: string;
@@ -115,6 +119,7 @@ export interface PlanLite {
   targetYieldTHa: number | null;
 }
 
+/** Campañas guardadas en el celular. */
 export const localSeasons = (db: LocalDb): SeasonLite[] =>
   db.sql
     .all<{ id: string; name: string; start_date: string | null; end_date: string | null; active: number }>(
@@ -122,6 +127,7 @@ export const localSeasons = (db: LocalDb): SeasonLite[] =>
     )
     .map((r) => ({ id: r.id, name: r.name, startDate: r.start_date, endDate: r.end_date, active: !!r.active }));
 
+/** Planes de cultivo guardados en el celular. */
 export const localPlans = (db: LocalDb): PlanLite[] =>
   db.sql
     .all<{ plot_id: string; season_id: string; crop: string | null; variety: string | null; planned_sowing_date: string | null; sowing_density: number | null; density_unit: string | null; target_yield_t_ha: number | null }>(
@@ -141,10 +147,12 @@ export function rotationFromLocal(seasons: SeasonLite[], plans: PlanLite[], plot
     });
 }
 
-// ---------- Tabla de lotes (función 58) ----------
+// ---------- Tabla de lotes ----------
 
+/** Criterio de orden de la tabla de lotes. */
 export type PlotSort = "name" | "area" | "vigor" | "visit";
 
+/** Fila de la tabla de lotes. */
 export interface PlotLine {
   id: string;
   name: string;
@@ -190,8 +198,9 @@ export function areaByCrop(rows: PlotLine[]): { key: string; ha: number; plots: 
   return [...m.entries()].map(([key, v]) => ({ key, ...v })).sort((a, b) => b.ha - a.ha);
 }
 
-// ---------- Registros con filtros (función 94) ----------
+// ---------- Registros con filtros ----------
 
+/** Filtros del historial de registros; los campos vacíos no filtran. */
 export interface RecordFilter {
   farmId: string;
   authorId: string;
@@ -199,6 +208,7 @@ export interface RecordFilter {
   from: string;
   to: string;
 }
+/** Filtro que no excluye nada. */
 export const NO_RECORD_FILTER: RecordFilter = { farmId: "", authorId: "", from: "", to: "" };
 
 /** Cantidad de filtros activos. */
@@ -208,13 +218,14 @@ const DAY = 86_400_000;
 /** Medianoche de Asunción (UTC-3) del día ISO, en epoch ms. */
 const dayStart = (iso: string): number => Date.parse(`${iso}T00:00:00-03:00`);
 
+/** Registros que cumplen el filtro por estancia, autor y fechas. */
 export function filterRecords<R extends { farmId: string; authorId: string; capturedAt: number }>(rows: R[], f: RecordFilter): R[] {
   const from = f.from ? dayStart(f.from) : null;
   const to = f.to ? dayStart(f.to) + DAY : null;
   return rows.filter((r) => (!f.farmId || r.farmId === f.farmId) && (!f.authorId || r.authorId === f.authorId) && (from === null || r.capturedAt >= from) && (to === null || r.capturedAt < to));
 }
 
-// ---------- Buscador (función 6) ----------
+// ---------- Buscador ----------
 
 const fold = (s: string): string =>
   s

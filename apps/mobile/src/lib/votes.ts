@@ -1,5 +1,5 @@
 /**
- * "¿Te sirvió?" en los avisos (F-22). alert_feedback no es una tabla sincronizable (no viaja por /sync/push),
+ * "¿Te sirvió?" en los avisos. alert_feedback no es una tabla sincronizable (no viaja por /sync/push),
  * así que el voto se guarda local en kv y se manda a POST /org/alerts/:id/feedback; si no hay señal queda
  * en una cola que se reintenta después de cada sincronización.
  */
@@ -20,7 +20,9 @@ const read = <T>(kv: Kv, key: string, empty: T): T => {
   }
 };
 
+/** Votos "¿Te sirvió?" guardados, por id de aviso. */
 export const readVotes = (kv: Kv): Record<string, boolean> => read(kv, VOTES, {});
+/** Votos que todavía no llegaron al servidor. */
 export const readQueue = (kv: Kv): Record<string, boolean> => read(kv, QUEUE, {});
 
 /** Guarda el voto local y lo deja en la cola de envío. */

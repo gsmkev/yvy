@@ -1,13 +1,15 @@
 /**
- * Nombres de los miembros de la organización, para mostrar quién anotó cada registro (F-29).
+ * Nombres de los miembros de la organización, para mostrar quién anotó cada registro.
  * La base local no tiene usuarios: se guarda una lista corta {id: nombre} en kv y se renueva con señal.
  */
 import type { LocalDb } from "../db/store";
 
 const KEY = "member_names";
 const AT_KEY = "member_names_at";
+/** Cuánto dura vigente la lista de nombres antes de renovarla con señal. */
 export const MEMBERS_TTL_MS = 6 * 60 * 60 * 1000;
 
+/** Nombres de los miembros guardados en kv, por id; vacío si no hay o están dañados. */
 export function memberNames(db: LocalDb): Record<string, string> {
   try {
     return JSON.parse(db.getKv(KEY) ?? "{}") as Record<string, string>;

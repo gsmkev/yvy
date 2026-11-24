@@ -5,6 +5,7 @@ import { markDemo } from "./demo";
 import { api, getSession, setSession } from "./session";
 import { stopAutoSync } from "./sync";
 
+/** Cierra la sesión: avisa al servidor (si hay señal), borra lo bajado salvo lo no enviado, corta la sincronización y vuelve al ingreso. */
 export async function signOut(): Promise<void> {
   const s = getSession();
   if (s) await api("POST", "/auth/logout", { refreshToken: s.refreshToken }, false).catch(() => {});

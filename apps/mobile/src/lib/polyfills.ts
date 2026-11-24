@@ -1,4 +1,4 @@
-// uuidv7 necesita crypto.getRandomValues; Hermes no lo trae.
+/** Polyfill de `crypto.getRandomValues`: los UUIDv7 lo necesitan y Hermes no lo trae. */
 import * as Crypto from "expo-crypto";
 
 const g = globalThis as { crypto?: { getRandomValues?: unknown } };

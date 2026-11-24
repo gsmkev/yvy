@@ -24,7 +24,7 @@ export function machines(db: Ctx): Machine[] {
     .map((r) => fromRow<Machine>(s.machines, r));
 }
 
-/** Animales con caravana (G-21) de las estancias del celular; con `query`, los que tienen ese texto en la caravana. */
+/** Animales con caravana de las estancias del celular; con `query`, los que tienen ese texto en la caravana. */
 export function animals(db: Ctx, query = "", limit = 30): Animal[] {
   // La caravana solo lleva letras, números y guiones: lo demás no puede coincidir (y no se pasa al LIKE).
   const needle = normalizeTag(query).replace(/[^A-Z0-9-]/g, "");
@@ -33,7 +33,7 @@ export function animals(db: Ctx, query = "", limit = 30): Animal[] {
     .map((r) => fromRow<Animal>(s.animals, r));
 }
 
-/** Depósitos de la organización (para el recuento de inventario, E-15). */
+/** Depósitos de la organización (para el recuento de inventario). */
 export function warehouses(db: Ctx): Warehouse[] {
   return db.sql
     .all("SELECT * FROM warehouses WHERE deleted_at IS NULL ORDER BY name")

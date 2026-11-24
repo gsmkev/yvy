@@ -1,4 +1,4 @@
-/** Rumbo del celular para girar el mapa (F-04). Funciones puras: el sensor entra por useHeading. */
+/** Rumbo del celular para girar el mapa. Funciones puras: el sensor entra por useHeading. */
 
 /** Lleva cualquier ángulo a [0, 360). */
 export const norm360 = (deg: number): number => ((deg % 360) + 360) % 360;

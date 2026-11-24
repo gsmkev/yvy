@@ -1,3 +1,4 @@
+/** Hook con la URL base de los mosaicos en línea. */
 import { useEffect, useState } from "react";
 import { tilesBaseUrl } from "./offline";
 

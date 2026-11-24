@@ -59,12 +59,13 @@ export function allTasks(db: Ctx): Task[] {
   return db.sql.all("SELECT * FROM tasks WHERE deleted_at IS NULL").map((r) => fromRow<Task>(s.tasks, r));
 }
 
+/** Tarea por id, o null si no existe o se borró. */
 export function taskById(db: Ctx, id: string): Task | null {
   const r = db.sql.get<Record<string, unknown>>("SELECT * FROM tasks WHERE id = ? AND deleted_at IS NULL", [id]);
   return r ? fromRow<Task>(s.tasks, r) : null;
 }
 
-/** Tilda o destilda un ítem de la lista de verificación (F-15). Sin red: queda en el outbox. */
+/** Tilda o destilda un ítem de la lista de verificación. Sin red: queda en el outbox. */
 export function setTaskChecklistItem(db: Ctx, taskId: string, itemId: string, done: boolean): void {
   const task = taskById(db, taskId);
   if (!task) throw new Error("task_not_found");
@@ -77,7 +78,7 @@ export function setTaskChecklistItem(db: Ctx, taskId: string, itemId: string, do
   });
 }
 
-/** T-02: comenta una tarea. Se ve ya en el celular y viaja por el outbox. */
+/** Comenta una tarea. Se ve ya en el celular y viaja por el outbox. */
 export function addTaskComment(db: Ctx, taskId: string, userId: string, authorName: string, text: string): void {
   const task = taskById(db, taskId);
   const body = text.trim().slice(0, LIMITS.tasks.maxCommentLength);
@@ -96,6 +97,7 @@ export function addTaskComment(db: Ctx, taskId: string, userId: string, authorNa
   });
 }
 
+/** Tareas del usuario que vencen hoy o antes, o que cerró hoy, por fecha y título. */
 export function tasksToday(db: Ctx, userId: string, today = localDate(db.now())): Task[] {
   return db.sql
     .all("SELECT * FROM tasks WHERE assignee_id = ? AND deleted_at IS NULL ORDER BY due_date, title", [userId])
@@ -110,7 +112,7 @@ export function openTasks(db: Ctx): Task[] {
     .map((r) => fromRow<Task>(s.tasks, r));
 }
 
-/** Tareas abiertas con punto en el mapa (S-09), para dibujarlas y llevar a la persona ahí. */
+/** Tareas abiertas con punto en el mapa, para dibujarlas y llevar a la persona ahí. */
 export function taskPoints(db: Ctx, userId: string): { id: string; title: string; lon: number; lat: number }[] {
   return db.sql
     .all<{ id: string; title: string; lon: number; lat: number }>(
@@ -124,14 +126,14 @@ export function openTasksOfPlot(db: Ctx, plotId: string): number {
   return db.sql.get<{ n: number }>("SELECT count(*) n FROM tasks WHERE plot_id = ? AND status = 'open' AND deleted_at IS NULL", [plotId])?.n ?? 0;
 }
 
-/** Tareas abiertas de un lote (ficha del lote, F-23), las que vencen antes primero. */
+/** Tareas abiertas de un lote (ficha del lote), las que vencen antes primero. */
 export function openTasksListOfPlot(db: Ctx, plotId: string, limit = 20): Task[] {
   return db.sql
     .all("SELECT * FROM tasks WHERE plot_id = ? AND status = 'open' AND deleted_at IS NULL ORDER BY due_date, title LIMIT ?", [plotId, limit])
     .map((r) => fromRow<Task>(s.tasks, r));
 }
 
-/** Receta de una tarea (A-11), ya validada; null si no tiene o está dañada. */
+/** Receta de una tarea, ya validada; null si no tiene o está dañada. */
 export function prescriptionOf(db: Ctx, taskId: string): Prescription | null {
   const r = db.sql.get<{ prescription: string | null }>("SELECT prescription FROM tasks WHERE id = ?", [taskId]);
   if (!r?.prescription) return null;
@@ -143,7 +145,7 @@ export function prescriptionOf(db: Ctx, taskId: string): Prescription | null {
   }
 }
 
-/** Orden de trabajo de una tarea (E-20), ya validada; null si no tiene o está dañada. */
+/** Orden de trabajo de una tarea, ya validada; null si no tiene o está dañada. */
 export function orderOf(db: Ctx, taskId: string): WorkOrder | null {
   const r = db.sql.get<{ work_order: string | null }>("SELECT work_order FROM tasks WHERE id = ?", [taskId]);
   if (!r?.work_order) return null;

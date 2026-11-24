@@ -3,8 +3,10 @@ import Constants from "expo-constants";
 import { secureDel, secureGet, secureSet } from "./secure";
 import { useSyncExternalStore } from "react";
 
+/** URL base del servidor, tomada de la configuración de la app. */
 export const API_URL: string = (Constants.expoConfig?.extra?.apiUrl as string) ?? "http://10.0.2.2:8787";
 
+/** Sesión guardada: tokens, usuario y organización. */
 export interface Session {
   accessToken: string;
   accessTokenExpiresAt: number;
@@ -22,6 +24,7 @@ let loaded = false;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
+/** Lee la sesión guardada la primera vez y la devuelve; null si no hay. */
 export async function loadSession(): Promise<Session | null> {
   if (!loaded) {
     const raw = await secureGet(KEY);
@@ -32,6 +35,7 @@ export async function loadSession(): Promise<Session | null> {
   return session;
 }
 
+/** Guarda la sesión, o la borra si es null, y avisa a las pantallas. */
 export async function setSession(s: Session | null) {
   session = s;
   if (s) await secureSet(KEY, JSON.stringify(s));
@@ -39,7 +43,9 @@ export async function setSession(s: Session | null) {
   emit();
 }
 
+/** Sesión actual en memoria, o null. */
 export const getSession = () => session;
+/** Sesión actual, reactiva. */
 export const useSession = () =>
   useSyncExternalStore(
     (l) => {
@@ -48,6 +54,7 @@ export const useSession = () =>
     },
     () => session,
   );
+/** Indica si ya se terminó de leer la sesión guardada. */
 export const useSessionLoaded = () =>
   useSyncExternalStore(
     (l) => {
@@ -57,7 +64,9 @@ export const useSessionLoaded = () =>
     () => loaded,
   );
 
+/** El pedido falló por falta de señal. */
 export class OfflineError extends Error {}
+/** El servidor respondió con un estado de error; `status` es el código HTTP. */
 export class HttpError extends Error {
   constructor(
     readonly status: number,
@@ -99,6 +108,12 @@ export async function accessToken(): Promise<string> {
   return refreshing;
 }
 
+/**
+ * Pide a la API con el token de la sesión y lo renueva si hace falta.
+ * @param auth Si es false no manda el token.
+ * @throws OfflineError sin señal.
+ * @throws HttpError si el servidor responde con error.
+ */
 export async function api<T>(method: string, path: string, body?: unknown, auth = true): Promise<T> {
   let res: Response;
   try {

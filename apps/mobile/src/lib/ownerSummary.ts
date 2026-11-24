@@ -1,5 +1,5 @@
 /**
- * Modo dueño (F-29): el resumen del campo que ve quien no es empleado. Lógica pura sobre lo que ya bajó al celular
+ * Modo dueño: el resumen del campo que ve quien no es empleado. Lógica pura sobre lo que ya bajó al celular
  * (registros de todos, estadísticas de vigor, avisos), así anda sin señal.
  */
 import { isFieldRole, LIMITS, t } from "@yvy/shared";
@@ -8,7 +8,7 @@ import { isFieldRole, LIMITS, t } from "@yvy/shared";
 export const isOwnerMode = (role: string | null | undefined): boolean => !!role && !isFieldRole(role);
 
 /**
- * Solo lectura (F-29): la elección guardada ("1" o "0") manda; sin elección, solo el dueño arranca en solo lectura.
+ * Solo lectura: la elección guardada ("1" o "0") manda; sin elección, solo el dueño arranca en solo lectura.
  * Administrador y agrónomo arrancan con la app completa y los empleados no tienen el modo.
  */
 export function resolveReadOnly(role: string | null | undefined, stored: string | null): boolean {

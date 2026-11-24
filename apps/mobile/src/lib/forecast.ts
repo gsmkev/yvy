@@ -1,5 +1,5 @@
 /**
- * Pronóstico de 10 días en Hoy (C-02). No es una tabla sincronizable: se baja de GET /org/farms/:id/forecast
+ * Pronóstico de 10 días en Hoy. No es una tabla sincronizable: se baja de GET /org/farms/:id/forecast
  * cuando hay señal y se guarda en kv con la hora de descarga, así se lee igual sin internet.
  */
 export interface Kv {
@@ -14,6 +14,7 @@ interface ForecastDay {
   precipMm: number | null;
 }
 
+/** Pronóstico de 10 días guardado en el celular. */
 export interface CachedForecast {
   farmId: string;
   /** Corrida del servidor (epoch ms). */
@@ -28,9 +29,11 @@ interface Remote {
   days: ForecastDay[];
 }
 
+/** Cuánto dura vigente el pronóstico guardado: el servidor lo renueva cada 3 h. */
 export const FORECAST_TTL_MS = 3 * 3_600_000; // el servidor la renueva cada 3 h
 const key = (farmId: string) => `forecast:${farmId}`;
 
+/** Pronóstico guardado de una estancia; null si no hay o está dañado. */
 export function readForecast(kv: Kv, farmId: string): CachedForecast | null {
   try {
     const raw = kv.getKv(key(farmId));
@@ -42,6 +45,7 @@ export function readForecast(kv: Kv, farmId: string): CachedForecast | null {
   }
 }
 
+/** Guarda los primeros 10 días del pronóstico recibido y devuelve lo guardado. */
 export function saveForecast(kv: Kv, farmId: string, remote: Remote, now: number): CachedForecast {
   const value: CachedForecast = { farmId, runAt: remote.runAt, fetchedAt: now, days: remote.days.slice(0, 10) };
   kv.setKv(key(farmId), JSON.stringify(value));
@@ -70,4 +74,5 @@ export async function refreshForecast(
 /** Días desde `today` (el pronóstico guardado puede traer días que ya pasaron). */
 export const upcoming = (f: CachedForecast, today: string): ForecastDay[] => f.days.filter((d) => d.date >= today);
 
+/** Días enteros que pasaron desde `fetchedAt`. */
 export const daysOld = (fetchedAt: number, now: number): number => Math.floor((now - fetchedAt) / 86_400_000);

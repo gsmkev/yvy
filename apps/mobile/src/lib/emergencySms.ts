@@ -1,10 +1,11 @@
 /**
- * F-30: SMS de emergencia. Arma el texto (coordenadas a 5 decimales, precisión y hora) y el enlace `sms:` que abre la
+ * SMS de emergencia. Arma el texto (coordenadas a 5 decimales, precisión y hora) y el enlace `sms:` que abre la
  * app de mensajes del celular con los contactos de emergencia. No usa datos: el GPS y el SMS andan con señal de voz.
  * Todo lo de acá es TS puro para poder probarlo; el GPS y Linking están en la pantalla (app/emergency.tsx).
  */
 import { LIMITS, t } from "@yvy/shared";
 
+/** Contacto al que se manda el SMS de emergencia. */
 export interface EmergencyContact {
   name: string;
   /** Solo dígitos, con "+" al comienzo si lo tenía. */

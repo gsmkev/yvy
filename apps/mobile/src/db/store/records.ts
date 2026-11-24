@@ -94,13 +94,14 @@ export function saveRecord(db: Ctx, userId: string, orgId: string, input: NewRec
 }
 
 /**
- * Un registro por lote, todo en una transacción y con el mismo capturedAt (anotar en varios lotes, F-10).
+ * Un registro por lote, todo en una transacción y con el mismo capturedAt (anotar en varios lotes).
  * Las fotos van en el primero: subirlas una vez por lote sería mandar lo mismo varias veces.
  */
 export function saveRecords(db: Ctx, userId: string, orgId: string, inputs: NewRecord[], photos: LocalPhoto[] = [], audio: LocalAudio | null = null): string[] {
   return db.sql.tx(() => inputs.map((input, i) => saveRecord(db, userId, orgId, input, i === 0 ? photos : [], undefined, i === 0 ? audio : null)));
 }
 
+/** Borra un registro (borrado lógico) junto con su mutación. */
 export function deleteRecord(db: Ctx, recordId: string): void {
   const ts = db.now();
   db.sql.tx(() => {
@@ -109,7 +110,7 @@ export function deleteRecord(db: Ctx, recordId: string): void {
   });
 }
 
-/** T-08: comentarios de un registro (los de otras personas bajan con el sync). */
+/** Comentarios de un registro (los de otras personas bajan con el sync). */
 export function commentsOf(db: Ctx, recordId: string): { id: string; authorName: string; body: string; createdAt: number }[] {
   return db.sql.all(
     "SELECT id, author_name AS authorName, body, created_at AS createdAt FROM comments WHERE record_id = ? AND deleted_at IS NULL ORDER BY created_at, id",
@@ -117,7 +118,7 @@ export function commentsOf(db: Ctx, recordId: string): { id: string; authorName:
   );
 }
 
-/** T-08: comentar sin señal. Las menciones se hacen desde la web (el celular no tiene la lista de personas). */
+/** Comentar sin señal. Las menciones se hacen desde la web (el celular no tiene la lista de personas). */
 export function addComment(db: Ctx, userId: string, orgId: string, authorName: string, recordId: string, body: string): string {
   const id = newId();
   const ts = db.now();
@@ -131,6 +132,7 @@ export function addComment(db: Ctx, userId: string, orgId: string, authorName: s
   return id;
 }
 
+/** Registros recientes dentro de la ventana de historial, hasta `limit`. */
 export function records(db: Ctx, limit = 200): RecordRow[] {
   const since = db.now() - LIMITS.sync.recordsHistoryMs;
   return db.sql
@@ -164,7 +166,7 @@ export function photosOfRecord(db: Ctx, recordId: string): { id: string; thumbUr
     .map((a) => ({ id: a.id, thumbUri: localPhoto(db, a.id) }));
 }
 
-/** Nota de voz del registro (F-09): archivo local si está en este celular, y si ya se subió. */
+/** Nota de voz del registro: archivo local si está en este celular, y si ya se subió. */
 export function voiceOfRecord(db: Ctx, recordId: string): { id: string; uri: string | null; uploaded: boolean }[] {
   return db.sql
     .all<{ id: string; upload_status: string }>(
@@ -188,7 +190,7 @@ export function firstThumbByRecord(db: Ctx): Map<string, string> {
   return new Map(rows.map((r) => [r.record_id, r.thumb_uri] as const));
 }
 
-/** F-17: hasta `max` miniaturas locales por registro, en el orden en que se sacaron (Historial). */
+/** Hasta `max` miniaturas locales por registro, en el orden en que se sacaron (Historial). */
 export function thumbsByRecord(db: Ctx, max = 2): Map<string, string[]> {
   const rows = db.sql.all<{ record_id: string; thumb_uri: string }>(
     `SELECT a.record_id, f.thumb_uri FROM attachments a JOIN local_files f ON f.attachment_id = a.id
@@ -208,7 +210,7 @@ export function recordsOfPlot(db: Ctx, plotId: string, limit = 20): RecordRow[] 
 }
 
 /**
- * Hacienda actual de un potrero, calculada con lo que hay en el celular (ADR 0004): último conteo más
+ * Hacienda actual de un potrero, calculada con lo que hay en el celular: último conteo más
  * movimientos y mortandad posteriores. Funciona sin señal. `null` si el potrero nunca tuvo datos de hacienda.
  */
 export function herdStock(db: Ctx, plotId: string): PlotStock | null {

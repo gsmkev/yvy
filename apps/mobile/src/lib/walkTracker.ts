@@ -1,5 +1,5 @@
 /**
- * Recorrida GPS (F-05): acumula fixes, descarta los malos y arma el registro `track`.
+ * Recorrida GPS: acumula fixes, descarta los malos y arma el registro `track`.
  * Lógica pura y sin sensores: la pantalla (walk.ts) le pasa los fixes. Así se prueba sin celular.
  */
 import { trackLengthM, simplifyToMax, type LonLat } from "@yvy/geo";
@@ -13,6 +13,7 @@ interface WalkFix {
   at: number;
 }
 
+/** Borrador de la recorrida: puntos aceptados, distancia y último instante. */
 export interface WalkDraft {
   startedAt: number;
   points: LonLat[];
@@ -22,6 +23,7 @@ export interface WalkDraft {
   lastAt: number;
 }
 
+/** Borrador vacío que empieza en `startedAt`. */
 export const newDraft = (startedAt: number): WalkDraft => ({ startedAt, points: [], distanceM: 0, lastAt: startedAt });
 
 /**
@@ -39,6 +41,7 @@ export function addFix(d: WalkDraft, fix: WalkFix): WalkDraft {
   return { ...d, points: [...d.points, [fix.lon, fix.lat]], distanceM: d.distanceM + step, lastAt: fix.at };
 }
 
+/** Segundos transcurridos desde el inicio del borrador. */
 export const durationS = (d: WalkDraft, now: number): number => Math.max(0, Math.round((now - d.startedAt) / 1000));
 
 /** ¿Hay recorrida que guardar? Menos de 2 puntos o menos de 20 m no prueba nada. */
@@ -57,8 +60,10 @@ export function buildTrack(d: WalkDraft, endedAt: number): TrackData {
   };
 }
 
+/** Borrador como texto JSON, para guardarlo en kv. */
 export const serializeDraft = (d: WalkDraft): string => JSON.stringify(d);
 
+/** Borrador a partir del JSON guardado; null si falta o está dañado. */
 export function parseDraft(raw: string | null): WalkDraft | null {
   if (!raw) return null;
   try {

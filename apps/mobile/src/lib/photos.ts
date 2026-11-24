@@ -1,4 +1,4 @@
-/** Fotos (anexo §4.4): lado largo 1280 px, WebP 0,6 (~120 KB) + miniatura de 320 px, en el celular. */
+/** Fotos: lado largo 1280 px, WebP 0,6 (~120 KB) + miniatura de 320 px, en el celular. */
 import * as FileSystem from "expo-file-system/legacy";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import { LIMITS, newId } from "@yvy/shared";
@@ -15,6 +15,7 @@ async function resize(uri: string, w: number, h: number, longSide: number) {
   return img.saveAsync({ format: SaveFormat.WEBP, compress: LIMITS.photos.webpQuality });
 }
 
+/** Redimensiona la foto, la pasa a WebP, saca la miniatura y las deja en el almacenamiento de la app. */
 export async function processPhoto(uri: string, width: number, height: number): Promise<LocalPhoto> {
   await FileSystem.makeDirectoryAsync(DIR, { intermediates: true }).catch(() => {});
   const id = newId();
@@ -28,13 +29,13 @@ export async function processPhoto(uri: string, width: number, height: number): 
   return { photoUri, thumbUri, width: big.width, height: big.height, bytes: info.exists ? info.size : 0 };
 }
 
-/** F-17: borra del celular los archivos de una foto que se descartó antes de guardar el registro. */
+/** Borra del celular los archivos de una foto que se descartó antes de guardar el registro. */
 export async function discardPhoto(p: LocalPhoto): Promise<void> {
   await Promise.all([FileSystem.deleteAsync(p.photoUri, { idempotent: true }), FileSystem.deleteAsync(p.thumbUri, { idempotent: true })]).catch(() => {});
 }
 
 /**
- * X-09: revisa la foto recién sacada sobre una miniatura. Devuelve el aviso en es-PY si salió oscura o movida, o null si
+ * Revisa la foto recién sacada sobre una miniatura. Devuelve el aviso en es-PY si salió oscura o movida, o null si
  * está bien (o si no se pudo revisar: ante la duda no se molesta). Nunca lanza ni bloquea.
  */
 export async function photoQualityWarning(uri: string, width: number, height: number): Promise<string | null> {

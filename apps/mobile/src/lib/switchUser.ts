@@ -1,5 +1,5 @@
 /**
- * Celular compartido (F-25): cambiar de usuario.
+ * Celular compartido: cambiar de usuario.
  *
  * Decisión: NO se guardan varias sesiones en el celular. Lo pendiente de cada persona se manda con SU sesión (el
  * servidor decide permisos y autoría por el token), y las tablas locales (lotes asignados, tareas) son de un solo
@@ -18,6 +18,7 @@ interface UnsentSummary {
   rejected: number;
 }
 
+/** Resumen de lo que todavía no salió del celular (mutaciones y subidas). */
 export const unsentSummary = (db: LocalDb): UnsentSummary => ({
   mutations: db.pendingCount(),
   uploads: db.pendingUploads().length,

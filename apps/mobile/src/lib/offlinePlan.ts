@@ -1,5 +1,6 @@
-/** Mapas sin conexión de varias estancias (F-26): qué falta bajar y cuánto pesa. Puro; la descarga está en offline.ts. */
+/** Mapas sin conexión de varias estancias: qué falta bajar y cuánto pesa. Puro; la descarga está en offline.ts. */
 
+/** Paquete de mapas de una estancia: cuánto pesa y si está al día. */
 export interface PackInfo {
   farmId: string;
   name: string;
@@ -9,6 +10,7 @@ export interface PackInfo {
   missingBytes: number;
 }
 
+/** Qué estancias bajar y cuáles quedan fuera por el tope. */
 export interface DownloadPlan {
   /** Estancias con algo para bajar y que entran en el tope de mapas, en orden alfabético. */
   farms: PackInfo[];
@@ -19,6 +21,7 @@ export interface DownloadPlan {
   withoutImagery: number;
 }
 
+/** Tope de espacio para los mapas. */
 export interface Budget {
   /** Lo que ya ocupan los mapas bajados. */
   usedBytes: number;
@@ -28,6 +31,7 @@ export interface Budget {
 /** ¿Entra `missingBytes` más sin pasar el tope de mapas? */
 export const fitsBudget = (missingBytes: number, b: Budget): boolean => b.usedBytes + missingBytes <= b.maxBytes;
 
+/** Elige qué estancias bajar sin pasar el tope, en orden alfabético. */
 export function planDownloads(packs: PackInfo[], budget: Budget = { usedBytes: 0, maxBytes: Infinity }): DownloadPlan {
   const pending = packs
     .filter((p) => p.layerCount > 0 && !p.upToDate)

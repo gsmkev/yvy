@@ -1,5 +1,5 @@
 /**
- * Paquete offline de la estancia (RF-44): baja los PMTiles de fondo y NDVI una sola vez por wifi.
+ * Paquete offline de la estancia: baja los PMTiles de fondo y NDVI una sola vez por wifi.
  * MapLibre Native los lee locales con pmtiles://file://...
  */
 import * as FileSystem from "expo-file-system/legacy";
@@ -11,6 +11,7 @@ import { api } from "./session";
 
 const DIR = `${FileSystem.documentDirectory}tiles/`;
 
+/** URL base de los mosaicos, guardada en kv tras la primera consulta. */
 export async function tilesBaseUrl(): Promise<string> {
   const cached = getDb().getKv("tiles_base_url");
   if (cached) return cached;
@@ -19,6 +20,7 @@ export async function tilesBaseUrl(): Promise<string> {
   return me.tilesBaseUrl;
 }
 
+/** Estado del paquete sin conexión de una estancia: capas, tamaño y si está al día. */
 export function packStatus(farmId: string) {
   const db = getDb();
   const layers = db.latestLayers(farmId);
@@ -41,6 +43,7 @@ export function packStatus(farmId: string) {
   };
 }
 
+/** Capa ráster del mapa. */
 export type MapLayer = "true_color" | "ndvi";
 
 /** Fuente PMTiles de una capa para el mapa: el archivo local si se bajó, si no el remoto. null si no hay imagen. */
@@ -54,11 +57,16 @@ export function layerSource(farmId: string, layer: MapLayer, remoteBase: string 
   return null;
 }
 
+/** Indica si la conexión actual es wifi o ethernet. */
 export async function isWifi(): Promise<boolean> {
   const n = await Network.getNetworkStateAsync();
   return n.type === Network.NetworkStateType.WIFI || n.type === Network.NetworkStateType.ETHERNET;
 }
 
+/**
+ * Baja los mapas de una estancia al celular.
+ * @param onProgress Recibe el avance de 0 a 1.
+ */
 export async function downloadPack(farmId: string, onProgress: (fraction: number) => void): Promise<void> {
   const db = getDb();
   const base = (await tilesBaseUrl()).replace(/\/$/, "");
@@ -107,7 +115,7 @@ export function allPacksPlan(): DownloadPlan {
 }
 
 /**
- * Baja en fila los mapas de todas las estancias que faltan (F-26). Si una falla se sigue con las demás y se avisa
+ * Baja en fila los mapas de todas las estancias que faltan. Si una falla se sigue con las demás y se avisa
  * cuáles quedaron; lo ya bajado no se repite. Los caminos entre estancias no se bajan: no hay fuente de rutas.
  */
 export async function downloadAllPacks(onProgress: (fraction: number) => void): Promise<{ failed: string[] }> {

@@ -1,4 +1,4 @@
-/** Anotar en un punto de interés escaneando su QR (F-28). */
+/** Anotar en un punto de interés escaneando su QR. */
 import type { RecordKind } from "@yvy/shared";
 import type { Poi } from "../db/store";
 

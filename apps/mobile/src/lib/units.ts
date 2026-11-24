@@ -8,9 +8,11 @@ const UNITS_KEY = "units";
 
 let version = 0;
 const subs = new Set<() => void>();
+/** Unidades elegidas por la persona (superficie, lluvia, temperatura). */
 export function getUnits(): Units {
   return parseUnits(getDb().getKv(UNITS_KEY));
 }
+/** Cambia las unidades indicadas en `patch` y avisa a las pantallas. */
 export function setUnits(patch: Partial<Units>): void {
   getDb().setKv(UNITS_KEY, JSON.stringify({ ...getUnits(), ...patch }));
   version++;

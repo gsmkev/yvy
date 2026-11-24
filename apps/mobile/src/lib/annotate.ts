@@ -7,15 +7,15 @@ import { LIMITS, IRRIGATION_METHODS, EXTRA_PREFIX, type FormField, REPRO_EVENTS,
 
 /** Lo que el flujo necesita saber del campo para decidir qué preguntar. */
 interface FlowCtx {
-  /** Aguadas y tajamares de la estancia (G-30): si no hay, no se pregunta cuál. */
+  /** Aguadas y tajamares de la estancia: si no hay, no se pregunta cuál. */
   waterPois: number;
-  /** Hay más de una campaña activa (A-01): si no, el paso de campaña no se pregunta. */
+  /** Hay más de una campaña activa: si no, el paso de campaña no se pregunta. */
   askSeason?: boolean;
-  /** Hay productos veterinarios en el catálogo (E-13): si no, el tratamiento se escribe a mano. */
+  /** Hay productos veterinarios en el catálogo: si no, el tratamiento se escribe a mano. */
   vetProducts?: boolean;
-  /** Hay máquinas en el catálogo (E-16): si no, la máquina se escribe a mano. */
+  /** Hay máquinas en el catálogo: si no, la máquina se escribe a mano. */
   machines?: boolean;
-  /** F-14: campos propios de la organización para este tipo de registro; se preguntan después de los estándar. */
+  /** Campos propios de la organización para este tipo de registro; se preguntan después de los estándar. */
   extraFields?: FormField[];
 }
 
@@ -24,19 +24,20 @@ type StepBase = {
   skipIf?: (answers: Record<string, unknown>, ctx: FlowCtx) => boolean;
 };
 
+/** Paso de pregunta del asistente de anotación, según el tipo de respuesta. */
 export type Step = StepBase &
   (
   | { key: string; kind: "choice"; question: string; options: { value: string; label: string }[]; optional?: boolean }
   | { key: string; kind: "number"; question: string; hint?: string; unit: string; max: number; integer?: boolean; min?: number; optional?: boolean }
   | { key: string; kind: "yesno"; question: string }
   | { key: string; kind: "text"; question: string; optional?: boolean; /** Si se pide, el texto tiene que cumplirlo para seguir. */ pattern?: RegExp }
-  /** Contador grande por categoría de hacienda (G-06): el valor es { vaca: 3, toro: 1, ... }. */
+  /** Contador grande por categoría de hacienda: el valor es { vaca: 3, toro: 1, ... }. */
   | { key: string; kind: "counter"; question: string; hint?: string }
   /** Campaña: se elige entre las activas que bajaron al celular. */
   | { key: string; kind: "season"; question: string }
   /** Productos de la mezcla con su dosis (catálogo del celular, o a mano). Guarda ProductDose[]. */
   | { key: string; kind: "products"; question: string; fixedUnit?: "kg_ha"; productTypes?: string[] }
-  /** Cierre de la orden de trabajo (E-21): cantidad real gastada por producto. Reescribe `products` con `usedQty`. */
+  /** Cierre de la orden de trabajo: cantidad real gastada por producto. Reescribe `products` con `usedQty`. */
   | { key: "products"; kind: "usage"; question: string; hint?: string }
   /** Un producto del catálogo de ciertos tipos (guarda su id; "otro" salta el paso y se escribe a mano). */
   | { key: string; kind: "catalog"; question: string; productTypes: string[]; otherLabel: string }
@@ -52,7 +53,7 @@ const lvl = (prefix: string) => ["low", "medium", "high"].map((v) => ({ value: v
 const cond = ["good", "fair", "bad"].map((v) => ({ value: v, label: `fields.condition.${v}` }));
 
 /** Las etiquetas son claves de i18n; la pantalla las traduce. */
-/** `track` no se carga con preguntas: lo graba la pantalla de recorrida (F-05). */
+/** `track` no se carga con preguntas: lo graba la pantalla de recorrida. */
 export const FLOWS: Record<RecordKind, Step[]> = {
   track: [],
   rain: [{ key: "mm", kind: "number", question: "app.rain.question", hint: "app.rain.hint", unit: "mm", max: 1000 }],
@@ -212,7 +213,7 @@ export const FLOWS: Record<RecordKind, Step[]> = {
       question: "app.health.reasonQuestion",
       options: HEALTH_REASONS.map((v) => ({ value: v, label: `fields.health.reason_${v}` })),
     },
-    // Con un producto del catálogo el ERP descuenta el stock (E-13); si no, se escribe a mano como siempre.
+    // Con un producto del catálogo el ERP descuenta el stock; si no, se escribe a mano como siempre.
     {
       key: "productId",
       kind: "catalog",
@@ -247,13 +248,13 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     { key: "products", kind: "usage", question: "app.usage.question", hint: "app.usage.hint", skipIf: (a) => !a.orderTaskId },
     { key: "note", kind: "text", question: "app.add.note", optional: true },
   ],
-  // Riego (A-43): la lámina y el método; la fecha es la de la carga (appliedAt, en annotate/index.tsx).
+  // Riego: la lámina y el método; la fecha es la de la carga (appliedAt, en annotate/index.tsx).
   irrigation: [
     { key: "mm", kind: "number", question: "app.irrigation.mmQuestion", hint: "app.irrigation.mmHint", unit: "mm", max: LIMITS.irrigation.maxMm },
     { key: "method", kind: "choice", question: "app.irrigation.methodQuestion", options: IRRIGATION_METHODS.map((v) => ({ value: v, label: `fields.irrigation.method_${v}` })) },
     { key: "note", kind: "text", question: "app.add.note", optional: true },
   ],
-  // Combustible (E-16): máquina, litros y horómetro. El ERP descuenta el stock y carga el costo.
+  // Combustible: máquina, litros y horómetro. El ERP descuenta el stock y carga el costo.
   fuel_load: [
     { key: "machineId", kind: "machine", question: "app.fuel.machineQuestion", otherLabel: "app.fuel.machineOther", skipIf: (_a, ctx) => !ctx.machines },
     { key: "machine", kind: "text", question: "app.fuel.machineQuestion", skipIf: (a) => !!a.machineId },
@@ -261,9 +262,9 @@ export const FLOWS: Record<RecordKind, Step[]> = {
     { key: "meterValue", kind: "number", question: "app.fuel.meterQuestion", hint: "app.fuel.meterHint", unit: "", max: 10_000_000, optional: true },
     { key: "note", kind: "text", question: "app.add.note", optional: true },
   ],
-  // Recuento de depósito (E-15): tiene su propia pantalla, no pasa por este asistente.
+  // Recuento de depósito: tiene su propia pantalla, no pasa por este asistente.
   stock_count: [],
-  // Ración suministrada (G-33): se carga desde la web.
+  // Ración suministrada: se carga desde la web.
   feed: [],
   harvest: [
     { key: "seasonId", kind: "season", question: "app.common.seasonQuestion", skipIf: (_a, ctx) => !ctx.askSeason },
@@ -299,7 +300,7 @@ export const FLOWS: Record<RecordKind, Step[]> = {
 /** Prefijo de los textos que ya vienen escritos por la organización (no son claves de i18n). */
 export const RAW = "raw:";
 
-/** F-14: un paso por cada campo propio. Las respuestas quedan en `extra.<id>` y al guardar pasan a `data.extra`. */
+/** Un paso por cada campo propio. Las respuestas quedan en `extra.<id>` y al guardar pasan a `data.extra`. */
 export const extraSteps = (fields: FormField[] = []): Step[] =>
   fields.map((f): Step => {
     const key = `${EXTRA_PREFIX}${f.id}`;
@@ -327,5 +328,5 @@ export const KINDS_FOR = (plotKind: "crop" | "pasture" | null): RecordKind[] =>
       ? ["scouting", "pest", "crop_status", "application", "fertilization", "irrigation", "sowing", "harvest", "fuel_load", "rain", "water", "note"]
       : ["rain", "scouting", "water", "weighing", "reproduction", "health", "note", "pest", "crop_status", "pasture_status", "application", "fertilization", "irrigation", "sowing", "harvest", "fuel_load"];
 
-/** Registros de hacienda: son de un solo potrero, no se cargan en varios a la vez (F-10). */
+/** Registros de hacienda: son de un solo potrero, no se cargan en varios a la vez. */
 export const SINGLE_PLOT_KINDS: readonly RecordKind[] = ["herd_count", "herd_move", "mortality", "theft", "supplement", "weighing", "reproduction", "health"];

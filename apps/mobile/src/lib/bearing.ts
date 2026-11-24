@@ -1,4 +1,4 @@
-/** Rumbo y distancia a un destino, sin red (F-03 "Llevame ahí"). Funciones puras. */
+/** Rumbo y distancia a un destino, sin red ("Llevame ahí"). Funciones puras. */
 const R = 6_371_008.8;
 const rad = (d: number) => (d * Math.PI) / 180;
 
@@ -25,6 +25,7 @@ export function turnDeg(bearing: number, heading: number): number {
 }
 
 const POINTS = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"] as const;
+/** Punto cardinal de 8 vientos para un rumbo en grados. */
 export const cardinal = (deg: number): (typeof POINTS)[number] => POINTS[Math.round((((deg % 360) + 360) % 360) / 45) % 8]!;
 
 /** "42 m", "350 m" o "1,2 km". */

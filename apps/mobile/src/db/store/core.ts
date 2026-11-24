@@ -22,6 +22,7 @@ export function enqueue(db: Ctx, m: Mutation, rowId: string): void {
   ]);
 }
 
+/** Tabla Drizzle de cada tabla sincronizable. */
 export const TABLES: Record<PullTable, SQLiteTable> = {
   farms: s.farms,
   plots: s.plots,
@@ -44,6 +45,7 @@ export const TABLES: Record<PullTable, SQLiteTable> = {
 
 /** jsKey → columna SQL, sacado del esquema compartido. */
 const columnsOf = (t: SQLiteTable) => Object.entries(getTableColumns(t)).map(([key, col]) => ({ key, name: col.name }));
+/** Columnas de cada tabla sincronizable. */
 export const COLS = Object.fromEntries(Object.entries(TABLES).map(([k, t]) => [k, columnsOf(t)])) as Record<
   PullTable,
   { key: string; name: string }[]
@@ -56,20 +58,34 @@ export function fromRow<T>(table: SQLiteTable, row: Record<string, unknown>): T 
   return out as T;
 }
 
+/** Fila de una estancia. */
 export type Farm = typeof s.farms.$inferSelect;
+/** Fila de un lote. */
 export type Plot = typeof s.plots.$inferSelect;
+/** Fila de un punto de interés. */
 export type Poi = typeof s.pointsOfInterest.$inferSelect;
+/** Fila de una tarea. */
 export type Task = typeof s.tasks.$inferSelect;
+/** Fila de un registro; `pending` indica si todavía no salió. */
 export type RecordRow = typeof s.records.$inferSelect & { pending: boolean; rejected: string | null; photos: number; voice: number };
+/** Fila de un aviso. */
 export type Alert = typeof s.alerts.$inferSelect;
+/** Fila de una capa de imagen de una estancia. */
 export type FarmLayer = typeof s.farmLayers.$inferSelect;
+/** Fila de una campaña. */
 export type Season = typeof s.seasons.$inferSelect;
+/** Fila de un producto. */
 export type Product = typeof s.products.$inferSelect;
+/** Fila de una máquina. */
 export type Machine = typeof s.machines.$inferSelect;
+/** Fila de un animal. */
 export type Animal = typeof s.animals.$inferSelect;
+/** Fila de un depósito. */
 export type Warehouse = typeof s.warehouses.$inferSelect;
+/** Fila del plan de un lote en una campaña. */
 export type PlotSeason = typeof s.plotSeasons.$inferSelect;
 
+/** Datos de un registro nuevo antes de guardarlo. */
 export interface NewRecord {
   farmId: string;
   plotId: string | null;
@@ -82,12 +98,13 @@ export interface NewRecord {
   capturedAt: number;
 }
 
-/** Nota de voz grabada en el celular (F-09): un .m4a local, sin miniatura. */
+/** Nota de voz grabada en el celular: un .m4a local, sin miniatura. */
 export interface LocalAudio {
   uri: string;
   bytes: number;
 }
 
+/** Foto sacada en el celular: archivo, miniatura y medidas. */
 export interface LocalPhoto {
   photoUri: string;
   thumbUri: string;

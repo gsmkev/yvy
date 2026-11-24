@@ -5,7 +5,7 @@ import { describeArea } from "@yvy/geo";
 import type { Polygon } from "geojson";
 import { type Farm, type Plot, type Poi, type Alert, type FarmLayer, type Ctx, enqueue, fromRow } from "./core";
 
-/** Marca un punto de interés (F-07). Fila local + mutación en una sola transacción. */
+/** Marca un punto de interés. Fila local + mutación en una sola transacción. */
 export function savePoi(db: Ctx, orgId: string, input: { farmId: string; kind: Poi["kind"]; name: string; lon: number; lat: number }, poiId = newId()): string {
   const ts = db.now();
   const name = input.name.trim();
@@ -22,7 +22,7 @@ export function savePoi(db: Ctx, orgId: string, input: { farmId: string; kind: P
 }
 
 /**
- * Lote dibujado o editado en el celular (M-03, M-04). Fila local + mutación plots.upsert en una sola transacción.
+ * Lote dibujado o editado en el celular. Fila local + mutación plots.upsert en una sola transacción.
  * Al editar solo cambian nombre, tipo, cultivo y forma: campaña, fecha de siembra y color quedan como estaban.
  */
 export function savePlot(db: Ctx, 
@@ -51,12 +51,14 @@ export function savePlot(db: Ctx,
   return id;
 }
 
+/** Estancias, por nombre. */
 export function farms(db: Ctx): Farm[] {
   return db.sql
     .all("SELECT * FROM farms WHERE deleted_at IS NULL ORDER BY name")
     .map((r) => fromRow<Farm>(s.farms, r));
 }
 
+/** Lotes, de una estancia o de todas. */
 export function plots(db: Ctx, farmId?: string): Plot[] {
   return db.sql
     .all(
@@ -66,6 +68,7 @@ export function plots(db: Ctx, farmId?: string): Plot[] {
     .map((r) => fromRow<Plot>(s.plots, r));
 }
 
+/** Puntos de interés, de una estancia o de todas. */
 export function pois(db: Ctx, farmId?: string): Poi[] {
   return db.sql
     .all(
@@ -84,7 +87,7 @@ export function lastVigor(db: Ctx, plotId: string): { mean: number; acquiredAt: 
   return r ? { mean: r.mean, acquiredAt: r.acquired_at } : null;
 }
 
-/** Las dos últimas pasadas de NDVI de cada lote, para ver cuáles empeoraron (F-29). */
+/** Las dos últimas pasadas de NDVI de cada lote, para ver cuáles empeoraron. */
 export function lastTwoVigorPasses(db: Ctx): { plotId: string; mean: number; acquiredAt: number }[] {
   return db.sql
     .all<{ plot_id: string; mean: number; acquired_at: number }>(
@@ -97,6 +100,7 @@ export function lastTwoVigorPasses(db: Ctx): { plotId: string; mean: number; acq
     .map((r) => ({ plotId: r.plot_id, mean: r.mean, acquiredAt: r.acquired_at }));
 }
 
+/** Avisos activos. */
 export function activeAlerts(db: Ctx): Alert[] {
   return db.sql
     .all(
@@ -106,6 +110,7 @@ export function activeAlerts(db: Ctx): Alert[] {
     .map((r) => fromRow<Alert>(s.alerts, r));
 }
 
+/** Última capa de cada tipo de una estancia. */
 export function latestLayers(db: Ctx, farmId: string): FarmLayer[] {
   return db.sql
     .all(

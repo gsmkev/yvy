@@ -1,3 +1,4 @@
+/** Hook del rumbo del celular a partir de la brújula. */
 import { useEffect, useState } from "react";
 import * as Location from "expo-location";
 import { smoothHeading } from "./heading";

@@ -14,10 +14,12 @@ export function migrate(db: Ctx): void {
   });
 }
 
+/** Valor guardado bajo `key`, o null. */
 export function getKv(db: Ctx, key: string): string | null {
   return db.sql.get<{ value: string }>("SELECT value FROM kv WHERE key = ?", [key])?.value ?? null;
 }
 
+/** Guarda un valor bajo `key`; con null lo borra. */
 export function setKv(db: Ctx, key: string, value: string | null): void {
   if (value === null) db.sql.run("DELETE FROM kv WHERE key = ?", [key]);
   else
@@ -27,6 +29,7 @@ export function setKv(db: Ctx, key: string, value: string | null): void {
     ]);
 }
 
+/** Hasta `limit` mutaciones por mandar, sin las rechazadas, en orden. */
 export async function pendingMutations(db: Ctx, limit: number): Promise<Mutation[]> {
   return db.sql
     .all<{ payload: string }>(
@@ -36,12 +39,14 @@ export async function pendingMutations(db: Ctx, limit: number): Promise<Mutation
     .map((r) => JSON.parse(r.payload) as Mutation);
 }
 
+/** Saca del outbox las mutaciones ya aceptadas. */
 export async function removeMutations(db: Ctx, ids: string[]): Promise<void> {
   db.sql.tx(() => {
     for (const id of ids) db.sql.run("DELETE FROM outbox WHERE mutation_id = ?", [id]);
   });
 }
 
+/** Marca como rechazadas las mutaciones que el servidor no aceptó, con el motivo. */
 export async function markRejected(db: Ctx, rejections: { mutationId: string; reason: RejectReason; detail?: string }[]): Promise<void> {
   db.sql.tx(() => {
     for (const r of rejections)
@@ -53,6 +58,7 @@ export async function markRejected(db: Ctx, rejections: { mutationId: string; re
   });
 }
 
+/** Cursor de la última página bajada de una tabla; null si nunca se bajó. */
 export async function getCursor(db: Ctx, table: PullTable): Promise<Cursor | null> {
   const c = db.sql.get<{ version: number; id: string }>("SELECT version, id FROM sync_cursors WHERE tbl = ?", [
     table,
@@ -60,6 +66,7 @@ export async function getCursor(db: Ctx, table: PullTable): Promise<Cursor | nul
   return c ? { version: c.version, id: c.id } : null;
 }
 
+/** Aplica una página bajada, sin pisar las filas con mutaciones pendientes, y avanza el cursor. */
 export async function applyPull(db: Ctx, table: PullTable, rows: Record<string, unknown>[], cursor: Cursor | null): Promise<void> {
   const cols = COLS[table];
   const names = cols.map((c) => c.name);
@@ -85,15 +92,18 @@ export async function applyPull(db: Ctx, table: PullTable, rows: Record<string, 
   });
 }
 
+/** Versión de las asignaciones de lotes ya aplicadas; null si no hay. */
 export async function getAssignmentsVersion(db: Ctx): Promise<number | null> {
   const v = getKv(db, "assignments_version");
   return v === null ? null : Number(v);
 }
 
+/** Guarda la versión de las asignaciones aplicadas. */
 export async function setAssignmentsVersion(db: Ctx, v: number): Promise<void> {
   setKv(db, "assignments_version", String(v));
 }
 
+/** Vacía las tablas indicadas, salvo las filas con mutaciones en el outbox, y sus cursores, para volver a bajarlas. */
 export async function resetTables(db: Ctx, tables: readonly PullTable[]): Promise<void> {
   db.sql.tx(() => {
     for (const t of tables) {
@@ -103,6 +113,7 @@ export async function resetTables(db: Ctx, tables: readonly PullTable[]): Promis
   });
 }
 
+/** Indica si la fila tiene una mutación pendiente sin rechazar. */
 export function hasPending(db: Ctx, rowId: string): boolean {
   return !!db.sql.get("SELECT 1 FROM outbox WHERE row_id = ? AND rejected_reason IS NULL LIMIT 1", [rowId]);
 }

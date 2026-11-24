@@ -1,4 +1,4 @@
-/** F-01: qué explicar mientras el GPS busca. El GPS no usa internet; tras prender el celular o viajar lejos puede tardar. */
+/** Qué explicar mientras el GPS busca. El GPS no usa internet; tras prender el celular o viajar lejos puede tardar. */
 import { useEffect, useState } from "react";
 import { t } from "@yvy/shared";
 
@@ -6,8 +6,10 @@ type GpsStage = "searching" | "slow" | "cold";
 
 /** A los 5 s se aclara que busca satélites; a los 20 s se avisa que es un arranque en frío y que puede tardar. */
 export const GPS_SLOW_MS = 5_000;
+/** Tiempo de espera del GPS a partir del cual se considera arranque en frío. */
 export const GPS_COLD_MS = 20_000;
 
+/** Etapa de la búsqueda de GPS según el tiempo transcurrido. */
 export function gpsStage(elapsedMs: number): GpsStage {
   if (elapsedMs >= GPS_COLD_MS) return "cold";
   if (elapsedMs >= GPS_SLOW_MS) return "slow";

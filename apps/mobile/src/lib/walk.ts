@@ -1,5 +1,5 @@
 /**
- * Recorrida GPS a pedido (F-05). Solo graba entre "Empezar" y "Terminar", con la app abierta:
+ * Recorrida GPS a pedido. Solo graba entre "Empezar" y "Terminar", con la app abierta:
  * no usa servicio en segundo plano. La barra visible (ui/WalkBanner) está siempre mientras graba.
  * Cada tanto se guarda un borrador en kv: si el sistema cierra la app, la recorrida se puede recuperar y guardar.
  */
@@ -24,6 +24,7 @@ const set = (s: State) => {
   subs.forEach((f) => f());
 };
 
+/** Estado de la recorrida GPS en curso. */
 export const useWalk = (): State =>
   useSyncExternalStore(
     (f) => (subs.add(f), () => subs.delete(f)),
@@ -76,6 +77,7 @@ export function stopWalk(): WalkDraft | null {
   return draft;
 }
 
+/** Corta el seguimiento y descarta el borrador de la recorrida. */
 export function discardWalk(): void {
   sub?.remove();
   sub = null;

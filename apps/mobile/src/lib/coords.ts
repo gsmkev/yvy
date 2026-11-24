@@ -1,3 +1,4 @@
+/** Formato de coordenadas del GPS para mostrar y copiar. */
 import { t } from "@yvy/shared";
 
 /** "-25.28123, -57.63456 · ± 8 m", o "… · sin precisión" si el GPS no informó. */

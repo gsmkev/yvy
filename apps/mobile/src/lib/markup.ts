@@ -1,13 +1,15 @@
 /**
- * Dibujo sobre la foto (F-08): flecha y círculo. Las marcas se guardan normalizadas (0 a 1 sobre la foto)
+ * Dibujo sobre la foto: flecha y círculo. Las marcas se guardan normalizadas (0 a 1 sobre la foto)
  * para que el dibujo no dependa del tamaño de pantalla; al guardar se aplanan en la imagen. Funciones puras.
  */
 
+/** Punto normalizado: `x` e `y` van de 0 a 1 sobre la foto. */
 export interface Pt {
   x: number;
   y: number;
 }
 
+/** Marca dibujada sobre la foto: flecha o círculo. */
 export type Mark = { kind: "arrow"; from: Pt; to: Pt } | { kind: "circle"; center: Pt; edge: Pt };
 
 /** Ajusta una imagen a una caja manteniendo la proporción (como resizeMode "contain"). */

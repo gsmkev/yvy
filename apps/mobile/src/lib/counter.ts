@@ -1,4 +1,4 @@
-/** Lógica pura del contador rápido de hacienda (G-06): sin React, para probarla sin dispositivo. */
+/** Lógica pura del contador rápido de hacienda: sin React, para probarla sin dispositivo. */
 import { HERD_CATEGORIES, MAX_HEAD_PER_CATEGORY, totalHead, type HerdCategory, type HerdCounts } from "@yvy/shared";
 
 /** Suma `delta` cabezas a una categoría, sin bajar de 0 ni pasar del tope. Marca la categoría como contada. */

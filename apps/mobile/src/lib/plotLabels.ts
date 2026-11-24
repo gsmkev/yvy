@@ -1,4 +1,4 @@
-/** Etiquetas de lotes en el mapa (M-12): un punto garantizado adentro de cada lote, los más grandes primero. */
+/** Etiquetas de lotes en el mapa: un punto garantizado adentro de cada lote, los más grandes primero. */
 import { labelPoint, type Area } from "@yvy/geo";
 
 interface LabelablePlot {

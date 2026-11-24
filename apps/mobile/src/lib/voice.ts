@@ -1,9 +1,10 @@
-/** Nota de voz (F-09): AAC mono de bajo peso (~4 KB por segundo), un solo archivo .m4a por registro. */
+/** Nota de voz: AAC mono de bajo peso (~4 KB por segundo), un solo archivo .m4a por registro. */
 import * as FileSystem from "expo-file-system/legacy";
 import { AudioQuality, IOSOutputFormat, type RecordingOptions } from "expo-audio";
 import { LIMITS, newId } from "@yvy/shared";
 import type { LocalAudio } from "../db/store";
 
+/** Opciones de grabación de la nota de voz; el nombre del archivo es único. */
 export const voiceOptions = (): RecordingOptions => ({
   directory: "document",
   fileName: `voz-${newId()}`,
@@ -28,8 +29,10 @@ export async function describeRecording(uri: string): Promise<LocalAudio | null>
   return { uri, bytes: info.size };
 }
 
+/** Borra el archivo de una nota de voz grabada. */
 export const discardRecording = (a: LocalAudio): Promise<void> => FileSystem.deleteAsync(a.uri, { idempotent: true });
 
+/** Tamaño en bytes con unidad legible (KB o MB). */
 export const sizeLabel = (bytes: number): string =>
   bytes >= 1e6
     ? (bytes / 1e6).toLocaleString("es-PY", { maximumFractionDigits: 1 }) + " MB"

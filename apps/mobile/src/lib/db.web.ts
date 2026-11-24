@@ -1,4 +1,4 @@
-// Vista previa web de la app: SQLite en memoria con sql.js (WebAssembly), misma lógica de LocalDb.
+/** Base local de la vista previa web: SQLite en memoria con sql.js (WebAssembly), con la misma lógica de `LocalDb`. */
 import initSqlJs, { type Database } from "sql.js";
 import { LocalDb } from "../db/store";
 import type { Param, Sql } from "../db/sql";
@@ -43,6 +43,7 @@ function wrap(db: Database): Sql {
   };
 }
 
+/** Promesa que se resuelve cuando sql.js terminó de cargar; hay que esperarla antes de `getDb`. */
 export function dbReady(): Promise<void> {
   loading ??= initSqlJs({ locateFile: () => "/sql-wasm.wasm" }).then((SQL) => {
     instance = new LocalDb(wrap(new SQL.Database()));
@@ -51,6 +52,10 @@ export function dbReady(): Promise<void> {
   return loading;
 }
 
+/**
+ * Devuelve la base local.
+ * @throws Error si todavía no se esperó `dbReady`.
+ */
 export function getDb(): LocalDb {
   if (!instance) throw new Error("Base local no inicializada (dbReady)");
   return instance;

@@ -16,15 +16,18 @@ let version = 0;
 const subs = new Set<() => void>();
 const bump = () => (version++, subs.forEach((f) => f()));
 
+/** Marca la organización como de demostración (o la desmarca con null). */
 export function markDemo(orgId: string | null): void {
   getDb().setKv(DEMO_ORG_KEY, orgId);
   bump();
 }
 
+/** Indica si `orgId` es la organización de demostración marcada. */
 export function isDemoSession(orgId: string | null | undefined): boolean {
   return isDemoOrg(getDb().getKv(DEMO_ORG_KEY), orgId);
 }
 
+/** Indica si la sesión actual es de demostración. */
 export function useIsDemo(): boolean {
   const orgId = useSession()?.organization.id;
   useSyncExternalStore(

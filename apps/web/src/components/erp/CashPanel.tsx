@@ -24,6 +24,7 @@ interface Account {
   balance: number;
 }
 
+/** Caja y bancos por moneda, y cuentas a pagar y a cobrar. */
 export function CashPanel() {
   const [tab, setTab] = useState("accounts");
   return (

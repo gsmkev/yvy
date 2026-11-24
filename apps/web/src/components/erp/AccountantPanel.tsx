@@ -48,6 +48,7 @@ interface Export {
 /** Monto en unidad menor a lo que se lee en una planilla: guaraníes enteros, dólares con dos decimales. */
 const major = (minor: number, currency: string) => (currency === "USD" ? minor / 100 : minor);
 
+/** Exportación al contador con el plan de cuentas configurable. */
 export function AccountantPanel() {
   const map = useQuery({ queryKey: ["erp", "account-map"], queryFn: () => get<MapRow[]>("/org/erp/accountant/map") });
   const [from, setFrom] = useState("");

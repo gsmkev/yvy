@@ -17,8 +17,10 @@ interface Contractor {
   note: string | null;
 }
 
+/** Contratistas de la organización. */
 export const useContractors = () => useErpList<Contractor>("contractors");
 
+/** Alta, cambio y baja de contratistas con sus tarifas. */
 export function ContractorsPanel() {
   const parties = useParties();
   const fields: FieldDef[] = [

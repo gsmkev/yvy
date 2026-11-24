@@ -22,6 +22,7 @@ interface MachineFuel {
   litersPerUnit: number | null;
 }
 
+/** Cargas de combustible por máquina y litros por hora. */
 export function FuelPanel() {
   const [f, setF] = useState({ farmId: "", from: "", to: "" });
   const [loading, setLoading] = useState(false);

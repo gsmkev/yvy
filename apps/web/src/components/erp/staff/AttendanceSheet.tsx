@@ -1,3 +1,4 @@
+/** Planilla de asistencia del día. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { localDate } from "@yvy/shared";

@@ -48,6 +48,7 @@ function minColumns({ prod, wh, unit }: { prod: (id: string) => { name: string }
   ];
 }
 
+/** Stock mínimo por producto y depósito y lista de lo que hay que reponer. */
 export function MinStockPanel() {
   const products = useProducts();
   const warehouses = useWarehouses();

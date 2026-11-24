@@ -1,3 +1,4 @@
+/** Acomodo de los nombres de los lotes para que no queden debajo de un ícono ni de otro nombre. */
 import * as maplibregl from "maplibre-gl";
 import type { Map as MlMap } from "maplibre-gl";
 import { placeLabels } from "../../lib/labelLayout";

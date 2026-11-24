@@ -14,8 +14,10 @@ interface Party {
   note: string | null;
 }
 
+/** Proveedores y clientes de la organización. */
 export const useParties = () => useErpList<Party>("parties");
 
+/** Alta, cambio y baja de proveedores y clientes. */
 export function PartiesPanel() {
   const fields: FieldDef[] = [
     { key: "name", label: t("ui.party.name"), required: true, maxLength: 120 },

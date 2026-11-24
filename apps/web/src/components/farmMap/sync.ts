@@ -1,3 +1,4 @@
+/** Vuelca las props del mapa a sus fuentes GeoJSON, rasters y marcadores de nombres. */
 import type { GeoJSONSource, Map as MlMap, Marker } from "maplibre-gl";
 import { fc } from "./geo";
 import { layoutLabels, rebuildLabels } from "./labels";

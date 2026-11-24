@@ -30,6 +30,7 @@ interface Deal {
   photoPath: string | null;
 }
 
+/** Compras y ventas de hacienda con guía de traslado. */
 export function CattlePanel() {
   const q = useQuery({ queryKey: ["erp", "cattle-deals"], queryFn: () => get<Deal[]>("/org/erp/cattle-deals") });
   const parties = useParties();

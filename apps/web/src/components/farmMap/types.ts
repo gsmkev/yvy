@@ -1,7 +1,9 @@
+/** Tipos de las propiedades del mapa de la estancia. */
 import type { FeatureCollection, LineString, MultiPolygon, Polygon } from "geojson";
 import type { Camera } from "../../lib/scenes";
 import type { Layer, Plot, Poi } from "../../lib/types";
 
+/** Punto suelto que se dibuja sobre el mapa, con etiqueta y color opcionales. */
 export interface MapPoint {
   id: string;
   lon: number;
@@ -12,6 +14,7 @@ export interface MapPoint {
   radius?: number;
 }
 
+/** Propiedades de `FarmMap`: datos a dibujar, capas, modos de dibujo y edición, y devoluciones de llamada. */
 export interface FarmMapProps {
   outline?: string | null; // GeoJSON de la estancia
   plots?: Plot[];

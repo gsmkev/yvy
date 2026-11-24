@@ -39,6 +39,7 @@ interface Rows {
 
 const monthStart = () => localDate(Date.now()).slice(0, 8) + "01";
 
+/** Exportación para sistemas contables locales con formato configurable. */
 export function ExportPanel() {
   const qc = useQueryClient();
   const [dataset, setDataset] = useState<ExportDataset>("purchases");

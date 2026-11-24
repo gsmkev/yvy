@@ -17,6 +17,18 @@ interface RecordColumn<T> extends ColDef<T> {
   hideBelow?: "sm" | "md" | "lg";
 }
 
+/**
+ * Tabla de un maestro con alta, cambio y baja.
+ * @param path ruta del maestro en la API.
+ * @param inline dentro de otra pantalla: el botón de alta va en el lugar y no en el encabezado.
+ * @param newLabel texto del botón de alta.
+ * @param columns columnas de la tabla.
+ * @param fields campos del formulario.
+ * @param name nombre de una fila para el título y la confirmación de borrado.
+ * @param emptyTitle título del estado vacío.
+ * @param emptyHint ayuda del estado vacío.
+ * @param exportName base del nombre del archivo exportado.
+ */
 export function RecordList<T extends Row>({
   path,
   inline = false,

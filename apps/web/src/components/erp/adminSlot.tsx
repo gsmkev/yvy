@@ -12,12 +12,14 @@ import { TableExportMenu } from "../TableExportMenu";
 /** null: no hay encabezado de Administración. `{ el: null }`: todavía no se montó. */
 export const AdminSlotContext = createContext<{ el: HTMLElement | null } | null>(null);
 
+/** Muestra sus hijos en el encabezado de Administración; fuera de ella los dibuja en el lugar. */
 export function HeaderActions({ children }: { children: ReactNode }) {
   const slot = useContext(AdminSlotContext);
   if (!slot) return <div className="flex flex-wrap items-center gap-2">{children}</div>;
   return slot.el ? createPortal(children, slot.el) : null;
 }
 
+/** Menú de acciones de una fila (reexportado de menus). */
 export { RowMenu } from "../menus";
 
 /**

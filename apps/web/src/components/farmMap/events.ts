@@ -1,3 +1,4 @@
+/** Eventos del mapa de la estancia: clics, hover, cámara compartida y captura de pantalla. Los datos llegan por `cb`, que siempre apunta a las últimas props. */
 import * as maplibregl from "maplibre-gl";
 import type { Map as MlMap, MapLayerMouseEvent, MapMouseEvent } from "maplibre-gl";
 import type { MutableRefObject } from "react";

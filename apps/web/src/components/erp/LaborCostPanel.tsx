@@ -33,6 +33,7 @@ interface Profile {
   fuelPricePyg: number | null;
 }
 
+/** Costo de la labor propia frente al del contratista. */
 export function LaborCostPanel() {
   const rows = useQuery({ queryKey: ["erp", "labor-cost"], queryFn: () => get<Row[]>("/org/erp/labor-cost") });
   const machines = useMachines();

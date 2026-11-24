@@ -29,6 +29,7 @@ interface Compare {
   totals: { costPlannedPyg: number; costActualPyg: number; incomePlannedPyg: number; incomeActualPyg: number };
 }
 
+/** Presupuesto de campaña frente a lo real. */
 export function BudgetPanel() {
   const seasons = useSeasonList();
   const [seasonId, setSeasonId] = useState("");

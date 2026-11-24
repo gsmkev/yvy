@@ -18,8 +18,10 @@ interface Machine {
   meterValue: number;
 }
 
+/** Máquinas y vehículos de la organización. */
 export const useMachines = () => useErpList<Machine>("machines");
 
+/** Maquinaria con horómetro u odómetro. */
 export function MachinesPanel() {
   const farms = useFarms();
   const fields: FieldDef[] = [

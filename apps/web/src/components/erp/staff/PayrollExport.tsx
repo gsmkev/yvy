@@ -1,3 +1,4 @@
+/** Exportación de la planilla del personal para el contador. */
 import { useState } from "react";
 import { localDate, type PayrollRow } from "@yvy/shared";
 import { get, withQs } from "../../../lib/api";

@@ -12,8 +12,10 @@ interface Warehouse {
   isDefault: boolean;
 }
 
+/** Depósitos de la organización. */
 export const useWarehouses = () => useErpList<Warehouse>("warehouses");
 
+/** Depósitos por estancia: galpón, tanque o silo. */
 export function WarehousesPanel() {
   const farms = useFarms();
   const fields: FieldDef[] = [

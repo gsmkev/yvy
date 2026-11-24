@@ -47,6 +47,7 @@ const STATUS_TONE: Record<PurchaseStatus, string> = {
   complete: "text-accion",
 };
 
+/** Compras: orden, factura del proveedor y recepción en depósito. */
 export function PurchasesPanel() {
   const q = useQuery({ queryKey: ["erp", "purchases"], queryFn: () => get<Purchase[]>("/org/erp/purchases") });
   const parties = useParties();

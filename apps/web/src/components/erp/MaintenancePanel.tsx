@@ -85,6 +85,7 @@ function logColumns(machine: (id: string) => { name: string; meterKind: "hours" 
     ];
 }
 
+/** Mantenimiento preventivo, servicios y reparaciones de las máquinas. */
 export function MaintenancePanel() {
   const machines = useMachines();
   const plans = useErpList<Plan>("maintenance-plans");

@@ -1,3 +1,4 @@
+/** Diálogo para cargar un movimiento de stock. */
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CURRENCIES, localDate, toMinor, type Currency } from "@yvy/shared";
@@ -10,6 +11,10 @@ import { useParties } from "../PartiesPanel";
 import { useWarehouses } from "../WarehousesPanel";
 import type { Mode } from "./types";
 
+/**
+ * Alta de un movimiento.
+ * @param mode tipo de movimiento.
+ */
 export function MoveModal({ mode, onClose }: { mode: Mode; onClose: () => void }) {
   const qc = useQueryClient();
   const products = useProducts();

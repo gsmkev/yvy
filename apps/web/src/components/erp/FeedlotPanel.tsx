@@ -45,6 +45,7 @@ interface Corral {
 
 const useRations = () => useQuery({ queryKey: ["erp", "feedlot", "rations"], queryFn: () => get<Ration[]>("/org/erp/feedlot/rations") });
 
+/** Raciones, suministro por corral y conversión alimenticia. */
 export function FeedlotPanel() {
   const rations = useRations();
   const products = useProducts();

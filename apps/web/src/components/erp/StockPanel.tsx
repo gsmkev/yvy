@@ -31,6 +31,7 @@ function NeedSetup({ needProduct, onGo }: { needProduct: boolean; onGo: (section
   );
 }
 
+/** Inventario por producto y depósito con sus movimientos. */
 export function StockPanel() {
   const stock = useStock();
   const products = useProducts();

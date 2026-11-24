@@ -54,6 +54,7 @@ const perHa = <T extends Figures>(): Column<T>[] => [
   { id: "marginHa", header: t("ui.results.colMarginHa"), align: "right", hideBelow: "md", cell: (r) => <span className={tone(r.marginPerHa ?? 0)}>{gs(r.marginPerHa)}</span> },
 ];
 
+/** Costo por hectárea y por tonelada y margen bruto. */
 export function ResultsPanel() {
   const farms = useFarms();
   const seasons = useSeasonList();

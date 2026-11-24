@@ -41,6 +41,7 @@ interface Settlement {
   number: string | null;
 }
 
+/** Contratos, entregas con ticket y liquidaciones de venta de granos. */
 export function GrainSalesPanel() {
   const contracts = useQuery({ queryKey: ["erp", "grain-contracts-summary"], queryFn: () => get<Contract[]>("/org/erp/grain-contracts/summary") });
   const deliveries = useQuery({ queryKey: ["erp", "grain-deliveries"], queryFn: () => get<Delivery[]>("/org/erp/grain-deliveries") });

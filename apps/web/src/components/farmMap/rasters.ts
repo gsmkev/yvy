@@ -1,3 +1,4 @@
+/** Capas raster del mapa (satélite, índices, límites administrativos e imágenes propias) y su visibilidad. */
 import type { FeatureCollection } from "geojson";
 import type { GeoJSONSource, Map as MlMap } from "maplibre-gl";
 import { BRAND } from "@yvy/shared";
@@ -8,6 +9,7 @@ import type { FarmMapProps } from "./types";
 
 /** Mapa base de Paraguay en R2 (bucket yvy-tiles), publicado por el job country_basemap. */
 const COUNTRY_BASEMAP = "base/paraguay.pmtiles";
+/** Si se usa el mapa base de desarrollo en lugar del satélite de producción. */
 export const DEV_BASEMAP = import.meta.env.DEV || import.meta.env.VITE_DEV_BASEMAP === "1";
 
 /** La fuente se agrega solo con datos, así la atribución "geoBoundaries" aparece únicamente con la capa activa. */
@@ -59,6 +61,7 @@ export function syncCustomImages(map: MlMap, images: NonNullable<FarmMapProps["c
   }
 }
 
+/** Agrega, actualiza o quita las fuentes y capas raster según las props del mapa. */
 export function syncRasters(map: MlMap, p: FarmMapProps) {
   const latest = (layer: Layer["layer"]) => pickLayer(p.layers ?? [], layer, p.layerIds?.[layer]);
   const set = (id: string, layer: Layer | undefined, visible: boolean, before: string) => {

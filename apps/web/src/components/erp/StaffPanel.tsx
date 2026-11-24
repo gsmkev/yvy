@@ -6,6 +6,7 @@ import { AttendanceSheet } from "./staff/AttendanceSheet";
 import { BalancesTab } from "./staff/BalancesTab";
 import { EmployeesList, useEmployees } from "./staff/employees";
 
+/** Personal: empleados, asistencia diaria, saldos y planilla. */
 export function StaffPanel() {
   const staff = useEmployees();
   const [tab, setTab] = useState<string | null>(null);

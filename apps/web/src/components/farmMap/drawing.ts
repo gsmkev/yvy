@@ -1,3 +1,4 @@
+/** Herramientas de dibujo y edición sobre el mapa con terra-draw: polígonos, líneas y vértices. */
 import { useEffect, type MutableRefObject } from "react";
 import type { Map as MlMap } from "maplibre-gl";
 import type { LineString, MultiPolygon, Polygon } from "geojson";

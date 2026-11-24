@@ -15,6 +15,7 @@ import { useMachines } from "./MachinesPanel";
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions } from "./adminSlot";
 
+/** Órdenes de trabajo agrupadas por tarea, con su hoja imprimible. */
 export function OrdersPanel() {
   const [creating, setCreating] = useState(false);
   const farms = useFarms();

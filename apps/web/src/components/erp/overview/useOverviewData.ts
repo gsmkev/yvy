@@ -1,3 +1,4 @@
+/** Datos que consulta el resumen de Administración, ya listos para dibujar. */
 import { useQuery } from "@tanstack/react-query";
 import { groupOrders, type BalancesResponse as Balances, type Currency, type DuesTotalsResponse as Dues, type LowStockApiRow as Low, type OrderRow, type PurchaseStatus } from "@yvy/shared";
 import { get } from "../../../lib/api";
@@ -6,6 +7,7 @@ import { useProducts } from "../../../lib/products";
 import { useParties } from "../PartiesPanel";
 import { useWarehouses } from "../WarehousesPanel";
 
+/** Compra tal como la usa el resumen. */
 export interface Purchase {
   id: string;
   partyId: string | null;
@@ -18,6 +20,7 @@ interface Dashboard {
   margin: { marginPyg: number; incomePyg: number; costPyg: number; entries: number } | null;
 }
 
+/** Cantidad de filas que muestra cada lista del resumen. */
 export const SHOWN = 5;
 
 /** Pesos primero; las demás monedas van en la nota. Null si no hay nada distinto de cero. */
@@ -75,4 +78,5 @@ export function useOverviewData() {
     hasAccounts: (balances.data?.accounts ?? []).length > 0,
   };
 }
+/** Resultado de `useOverviewData`. */
 export type OverviewData = ReturnType<typeof useOverviewData>;

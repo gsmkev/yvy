@@ -17,17 +17,10 @@ import { CONSUMING_KINDS, LIMITS, type StockTotals } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { chunkForParams, currentVersion, type Stmt } from "./client";
 import { contractorCosts, consumptionEntries } from "./erp-effects-costs";
-import { readEffectData } from "./erp-effects-data";
+import { readEffectData, type EffectRecord } from "./erp-effects-data";
 import type { ScopedDb } from "./scoped";
 
-export interface EffectRecord {
-  id: string;
-  farmId: string;
-  plotId: string | null;
-  kind: string;
-  data: Record<string, unknown>;
-  capturedAt: number;
-}
+export type { EffectRecord } from "./erp-effects-data";
 
 const consumes = (kind: string) => (CONSUMING_KINDS as readonly string[]).includes(kind);
 /**

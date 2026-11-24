@@ -101,6 +101,112 @@ async function deadTokens(res: Response, sentTo: (string | null)[]): Promise<str
   }
 }
 
+/** Columnas comunes de las notificaciones pendientes (el resto depende del tipo de aviso). */
+const notificationBase = {
+  id: s.notifications.id,
+  channel: s.notifications.channel,
+  userId: s.notifications.userId,
+  email: s.users.email,
+};
+
+/** Qué se envió bien y qué falló, y las sentencias de limpieza (tokens muertos). */
+interface Outcome {
+  sent: string[];
+  failed: string[];
+  cleanup: Stmt[];
+}
+
+/** U-29: el push dentro del horario de silencio del usuario (hora de la estancia) queda pendiente hasta que termine. */
+async function dropHeldPushes<P extends { channel: string; userId: string; tz: string }>(db: DB, pending: P[], now: number): Promise<P[]> {
+  const quiet = new Map<string, ReturnType<typeof parseNotificationPrefs>["quiet"]>();
+  const pushUsers = [...new Set(pending.filter((p) => p.channel === "push").map((p) => p.userId))];
+  for (const chunk of chunkForParams(pushUsers, 1)) {
+    const found = await db
+      .select({ userId: s.notificationPrefs.userId, prefs: s.notificationPrefs.prefs })
+      .from(s.notificationPrefs)
+      .where(inArray(s.notificationPrefs.userId, chunk));
+    for (const f of found) quiet.set(f.userId, parseNotificationPrefs(f.prefs).quiet);
+  }
+  const held = (p: P) => {
+    const q = quiet.get(p.userId);
+    return p.channel === "push" && !!q && inQuietHours(q, localTime(now, p.tz));
+  };
+  return pending.filter((p) => !held(p));
+}
+
+type AlertNotice = {
+  id: string;
+  userId: string;
+  email: string | null;
+  alertId: string;
+};
+interface AlertText<P> {
+  title: (p: P) => string;
+  body: (p: P) => string;
+}
+
+/** Push de avisos agronómicos: un lote a Expo; los tokens que Expo marca inválidos se borran (B9). */
+async function pushAlerts<P extends AlertNotice>(db: DB, fetchFn: typeof fetch, pushes: P[], text: AlertText<P>, out: Outcome) {
+  if (!pushes.length) return;
+  const tokens = await pushTokens(db, pushes);
+  const messages = pushMessages(pushes, tokens, (p) => ({
+    title: text.title(p),
+    body: text.body(p),
+    data: { alertId: p.alertId },
+    sound: "default",
+    priority: "high",
+  }));
+  if (!messages.length) {
+    out.sent.push(...pushes.map((p) => p.id)); // sin dispositivos: nada que mandar
+    return;
+  }
+  const res = await sendExpo(fetchFn, messages);
+  (res.ok ? out.sent : out.failed).push(...pushes.map((p) => p.id));
+  if (!res.ok) return;
+  // B9: Expo responde 200 con un estado por mensaje; los tokens inválidos se borran.
+  const dead = await deadTokens(
+    res,
+    messages.slice(0, 100).map((m) => m.to),
+  );
+  for (const chunk of chunkForParams(dead, 1))
+    out.cleanup.push(db.update(s.devices).set({ pushToken: null }).where(inArray(s.devices.pushToken, chunk)));
+}
+
+/** Email de avisos agronómicos: en lote por Resend, con tope diario; sin clave (desarrollo) se imprime. */
+async function emailAlerts<P extends AlertNotice>(
+  db: DB,
+  env: Bindings,
+  fetchFn: typeof fetch,
+  now: number,
+  emails: P[],
+  text: AlertText<P>,
+  out: Outcome,
+) {
+  if (!emails.length) return;
+  const room = await emailRoom(db, now);
+  const toSend = emails.filter((e) => e.email).slice(0, room);
+  out.sent.push(...emails.filter((e) => !e.email).map((e) => e.id));
+  if (!toSend.length) return;
+  if (!env.RESEND_API_KEY) {
+    for (const e of toSend) console.log(`[email:dev] ${e.email}: ${text.title(e)} — ${text.body(e)}`);
+    out.sent.push(...toSend.map((e) => e.id));
+    return;
+  }
+  const res = await fetchFn("https://api.resend.com/emails/batch", {
+    method: "POST",
+    headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
+    body: JSON.stringify(
+      toSend.map((e) => ({
+        from: env.EMAIL_FROM,
+        to: e.email,
+        subject: `Yvy · ${text.title(e)}`,
+        text: `${text.body(e)}\n\n${t("attribution.metNorway")}`,
+      })),
+    ),
+  });
+  (res.ok ? out.sent : out.failed).push(...toSend.map((e) => e.id));
+}
+
 export async function sendPending(
   db: DB,
   env: Bindings,
@@ -109,10 +215,7 @@ export async function sendPending(
 ): Promise<{ push: number; email: number }> {
   const pending = await db
     .select({
-      id: s.notifications.id,
-      channel: s.notifications.channel,
-      userId: s.notifications.userId,
-      email: s.users.email,
+      ...notificationBase,
       kind: s.alerts.kind,
       summary: s.alerts.summary,
       probability: s.alerts.probability,
@@ -128,21 +231,7 @@ export async function sendPending(
     .where(eq(s.notifications.status, "pending"))
     .orderBy(asc(s.notifications.createdAt))
     .limit(BATCH * 3);
-  // U-29: el push dentro del horario de silencio del usuario (hora de la estancia) queda pendiente hasta que termine.
-  const quiet = new Map<string, ReturnType<typeof parseNotificationPrefs>["quiet"]>();
-  const pushUsers = [...new Set(pending.filter((p) => p.channel === "push").map((p) => p.userId))];
-  for (const chunk of chunkForParams(pushUsers, 1)) {
-    const found = await db
-      .select({ userId: s.notificationPrefs.userId, prefs: s.notificationPrefs.prefs })
-      .from(s.notificationPrefs)
-      .where(inArray(s.notificationPrefs.userId, chunk));
-    for (const f of found) quiet.set(f.userId, parseNotificationPrefs(f.prefs).quiet);
-  }
-  const held = (p: (typeof pending)[number]) => {
-    const q = quiet.get(p.userId);
-    return p.channel === "push" && !!q && inQuietHours(q, localTime(now, p.tz));
-  };
-  const batch = pending.filter((p) => !held(p)).slice(0, BATCH);
+  const batch = (await dropHeldPushes(db, pending, now)).slice(0, BATCH);
   pending.length = 0;
   pending.push(...batch);
   if (!pending.length) return { push: 0, email: 0 };
@@ -151,68 +240,11 @@ export async function sendPending(
   const body = (p: (typeof pending)[number]) =>
     `${p.summary}${p.probability ? ` (${PROB_LABEL[p.probability]})` : ""}. Orientativo. Fuente: ${p.source}.`;
 
-  const sent: string[] = [];
-  const failed: string[] = [];
-  const cleanup: Stmt[] = [];
-
-  // ---- Push ----
-  const pushes = pending.filter((p) => p.channel === "push");
-  if (pushes.length) {
-    const tokens = await pushTokens(db, pushes);
-    const messages = pushMessages(pushes, tokens, (p) => ({
-      title: title(p),
-      body: body(p),
-      data: { alertId: p.alertId },
-      sound: "default",
-      priority: "high",
-    }));
-    if (messages.length) {
-      const res = await sendExpo(fetchFn, messages);
-      (res.ok ? sent : failed).push(...pushes.map((p) => p.id));
-      if (res.ok) {
-        // B9: Expo responde 200 con un estado por mensaje; los tokens inválidos se borran.
-        const dead = await deadTokens(
-          res,
-          messages.slice(0, 100).map((m) => m.to),
-        );
-        for (const chunk of chunkForParams(dead, 1))
-          cleanup.push(db.update(s.devices).set({ pushToken: null }).where(inArray(s.devices.pushToken, chunk)));
-      }
-    } else {
-      sent.push(...pushes.map((p) => p.id)); // sin dispositivos: nada que mandar
-    }
-  }
-
-  // ---- Email ----
-  const emails = pending.filter((p) => p.channel === "email");
-  if (emails.length) {
-    const room = await emailRoom(db, now);
-    const toSend = emails.filter((e) => e.email).slice(0, room);
-    const skipped = emails.filter((e) => !e.email).map((e) => e.id);
-    sent.push(...skipped);
-    if (toSend.length) {
-      if (!env.RESEND_API_KEY) {
-        for (const e of toSend) console.log(`[email:dev] ${e.email}: ${title(e)} — ${body(e)}`);
-        sent.push(...toSend.map((e) => e.id));
-      } else {
-        const res = await fetchFn("https://api.resend.com/emails/batch", {
-          method: "POST",
-          headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
-          body: JSON.stringify(
-            toSend.map((e) => ({
-              from: env.EMAIL_FROM,
-              to: e.email,
-              subject: `Yvy · ${title(e)}`,
-              text: `${body(e)}\n\n${t("attribution.metNorway")}`,
-            })),
-          ),
-        });
-        (res.ok ? sent : failed).push(...toSend.map((e) => e.id));
-      }
-    }
-  }
-
-  return finish(db, pending, sent, failed, now, cleanup);
+  const out: Outcome = { sent: [], failed: [], cleanup: [] };
+  const text = { title, body };
+  await pushAlerts(db, fetchFn, pending.filter((p) => p.channel === "push"), text, out);
+  await emailAlerts(db, env, fetchFn, now, pending.filter((p) => p.channel === "email"), text, out);
+  return finish(db, pending, out.sent, out.failed, now, out.cleanup);
 }
 
 /**
@@ -227,10 +259,7 @@ export async function sendMentions(
 ): Promise<{ push: number; email: number }> {
   const pending = await db
     .select({
-      id: s.notifications.id,
-      channel: s.notifications.channel,
-      userId: s.notifications.userId,
-      email: s.users.email,
+      ...notificationBase,
       body: s.comments.body,
       author: s.comments.authorName,
       recordId: s.comments.recordId,

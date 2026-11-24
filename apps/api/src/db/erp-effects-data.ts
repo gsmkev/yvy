@@ -3,13 +3,21 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 import { consumptionProductIds, type BaseUnit, type StockTotals } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { chunkForParams } from "./client";
-import type { EffectRecord } from "./erp-effects";
 import type { ScopedDb } from "./scoped";
 import { productTotals } from "./stock-moves";
 
 /** Una consulta por tanda de ids (≤ 100 parámetros), resultados juntos. */
 export const inChunks = <T>(ids: string[], query: (chunk: string[]) => PromiseLike<T[]>): Promise<T[]> =>
   Promise.all(chunkForParams(ids, 2).map(query)).then((r) => r.flat());
+
+export interface EffectRecord {
+  id: string;
+  farmId: string;
+  plotId: string | null;
+  kind: string;
+  data: Record<string, unknown>;
+  capturedAt: number;
+}
 
 export interface EffectData {
   fuelProductId: string | null;

@@ -3,8 +3,7 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 import { avgUnitCost, consumptionLines, localDate, moveValue, newId, orderSchema, toPyg, type StockTotals, type WorkOrder } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { usdRateOn } from "./erp";
-import type { EffectRecord } from "./erp-effects";
-import { inChunks, type EffectData } from "./erp-effects-data";
+import { inChunks, type EffectData, type EffectRecord } from "./erp-effects-data";
 import type { ScopedDb } from "./scoped";
 import { emptyTotals } from "./stock-moves";
 

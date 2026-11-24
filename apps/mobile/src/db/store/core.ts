@@ -1,0 +1,110 @@
+/** Tipos, tablas y ayudas que comparten los repositorios de la base local. */
+import { getTableColumns } from "drizzle-orm";
+import type { SQLiteTable } from "drizzle-orm/sqlite-core";
+import type { Mutation, PullTable, RecordKind } from "@yvy/shared";
+import * as s from "@yvy/shared/schema";
+import type { Sql } from "../sql";
+
+/** Lo que necesita cada repositorio de la base: el acceso SQL y el reloj. */
+export interface Ctx {
+  readonly sql: Sql;
+  readonly now: () => number;
+}
+
+/** Encola una mutación en el outbox (siempre dentro de la transacción de la escritura). */
+export function enqueue(db: Ctx, m: Mutation, rowId: string): void {
+  db.sql.run("INSERT INTO outbox (mutation_id, kind, row_id, payload, created_at) VALUES (?, ?, ?, ?, ?)", [
+    m.mutationId,
+    m.kind,
+    rowId,
+    JSON.stringify(m),
+    db.now(),
+  ]);
+}
+
+export const TABLES: Record<PullTable, SQLiteTable> = {
+  farms: s.farms,
+  plots: s.plots,
+  points_of_interest: s.pointsOfInterest,
+  plot_assignments: s.plotAssignments,
+  tasks: s.tasks,
+  records: s.records,
+  attachments: s.attachments,
+  alerts: s.alerts,
+  plot_index_stats: s.plotIndexStats,
+  farm_layers: s.farmLayers,
+  seasons: s.seasons,
+  plot_seasons: s.plotSeasons,
+  products: s.products,
+  machines: s.machines,
+  animals: s.animals,
+  comments: s.comments,
+  warehouses: s.warehouses,
+};
+
+/** jsKey → columna SQL, sacado del esquema compartido. */
+const columnsOf = (t: SQLiteTable) => Object.entries(getTableColumns(t)).map(([key, col]) => ({ key, name: col.name }));
+export const COLS = Object.fromEntries(Object.entries(TABLES).map(([k, t]) => [k, columnsOf(t)])) as Record<
+  PullTable,
+  { key: string; name: string }[]
+>;
+
+/** Fila SQL (snake_case) → objeto (camelCase) según el esquema. */
+export function fromRow<T>(table: SQLiteTable, row: Record<string, unknown>): T {
+  const out: Record<string, unknown> = {};
+  for (const { key, name } of columnsOf(table)) out[key] = row[name];
+  return out as T;
+}
+
+export type Farm = typeof s.farms.$inferSelect;
+export type Plot = typeof s.plots.$inferSelect;
+export type Poi = typeof s.pointsOfInterest.$inferSelect;
+export type Task = typeof s.tasks.$inferSelect;
+export type RecordRow = typeof s.records.$inferSelect & { pending: boolean; rejected: string | null; photos: number; voice: number };
+export type Alert = typeof s.alerts.$inferSelect;
+export type FarmLayer = typeof s.farmLayers.$inferSelect;
+export type Season = typeof s.seasons.$inferSelect;
+export type Product = typeof s.products.$inferSelect;
+export type Machine = typeof s.machines.$inferSelect;
+export type Animal = typeof s.animals.$inferSelect;
+export type Warehouse = typeof s.warehouses.$inferSelect;
+export type PlotSeason = typeof s.plotSeasons.$inferSelect;
+
+export interface NewRecord {
+  farmId: string;
+  plotId: string | null;
+  poiId: string | null;
+  kind: RecordKind;
+  data: Record<string, unknown>;
+  lon: number | null;
+  lat: number | null;
+  gpsAccuracyM: number | null;
+  capturedAt: number;
+}
+
+/** Nota de voz grabada en el celular (F-09): un .m4a local, sin miniatura. */
+export interface LocalAudio {
+  uri: string;
+  bytes: number;
+}
+
+export interface LocalPhoto {
+  photoUri: string;
+  thumbUri: string;
+  width: number;
+  height: number;
+  bytes: number;
+}
+
+/** Una cosa pendiente de mandar, tal como la ve la persona (pantalla Más). */
+export interface OutboxItem {
+  id: string;
+  /** Qué es: un registro nuevo o editado, un borrado, una tarea hecha, o solo fotos. */
+  what: "record" | "record_delete" | "task" | "photos" | "poi" | "plot";
+  recordKind: RecordKind | null;
+  plotId: string | null;
+  at: number;
+  photos: number;
+  photoBytes: number;
+}
+

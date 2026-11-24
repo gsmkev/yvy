@@ -182,6 +182,24 @@ export const LIMITS = {
     maxItems: 30,
     maxTextLength: 120,
   },
+  /**
+   * Precio público (ADR 0005 §5), US$ por hectárea y año. Ganadería con escalones: cada tramo paga su precio hasta `upToHa`.
+   * `minMonth`: mínimo por mes equivalente. `annualMonths`: el pago anual paga 10 de 12 meses.
+   * ponytail: `usdToPyg` es una referencia fija para mostrar guaraníes; techo: cuando la organización carga su tipo
+   * de cambio en el ERP se usa ese, y esto queda de respaldo (revisar cada año).
+   */
+  pricing: {
+    cropsHaYear: 0.8,
+    cattleTiers: [
+      { upToHa: 2_000, haYear: 0.3 },
+      { upToHa: 10_000, haYear: 0.15 },
+      { upToHa: null, haYear: 0.08 },
+    ] as { upToHa: number | null; haYear: number }[],
+    minMonth: 40,
+    annualMonths: 10,
+    cycleInstallments: 2,
+    usdToPyg: 7_800,
+  },
   /** P-10: pedido de cambio de plan. */
   planRequest: { noteLength: 500, maxHa: 10_000_000, maxUsers: 100_000 },
   /** T-07: lotes sin visitar. Días que se pueden elegir y el que vale por defecto. */

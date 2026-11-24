@@ -1,7 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { env } from "cloudflare:test";
+import { describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { LIMITS } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
+import { app } from "../src/app";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, createStaff, db } from "./helpers";
 
 const ask = (token: string, body: Record<string, unknown> = { plan: "active" }) =>
@@ -49,6 +51,29 @@ describe("plan y pedido de cambio desde la web (P-10)", () => {
     expect((await call("DELETE", "/org/plan-request", { token: owner.token })).status).toBe(200);
     expect((await call<any>("GET", "/org/plan", { token: owner.token })).body.pending).toBeNull();
     expect((await ask(owner.token)).status).toBe(201);
+  });
+
+  it("la forma de pago se valida y queda en la nota y en el email a operaciones", async () => {
+    const owner = await createOrgWithOwner();
+    expect((await ask(owner.token, { plan: "active", billing: "quincenal" })).status).toBe(400);
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const res = await app.request(
+      "/org/plan-request",
+      {
+        method: "POST",
+        headers: { authorization: `Bearer ${owner.token}`, "content-type": "application/json" },
+        body: JSON.stringify({ plan: "active", billing: "annual", note: "Sumo una estancia" }),
+      },
+      { ...env, OPS_EMAIL: "ops@yvy.test", RESEND_API_KEY: "" },
+    );
+    expect(res.status).toBe(201);
+    expect(log.mock.calls.flat().join("\n")).toContain("Forma de pago: Anual");
+    log.mockRestore();
+    const view = await call<any>("GET", "/org/plan", { token: owner.token });
+    expect(view.body.pending.note).toBe("Sumo una estancia. Forma de pago: Anual");
+    await call("DELETE", "/org/plan-request", { token: owner.token });
+    expect((await ask(owner.token, { plan: "active", billing: "cycle" })).status).toBe(201);
+    expect((await call<any>("GET", "/org/plan", { token: owner.token })).body.pending.note).toBe("Forma de pago: Por zafra");
   });
 
   it("no deja pedir lo que ya tiene", async () => {

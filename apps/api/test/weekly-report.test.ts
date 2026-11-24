@@ -1,4 +1,3 @@
-/** Pruebas de parte semanal con PDF adjunto. */
 import { env } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";

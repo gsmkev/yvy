@@ -1,4 +1,3 @@
-/** Pruebas de cifras de tarjeta. */
 import { describe, expect, it } from "vitest";
 import { compactMoney } from "../src/office/adminMoney";
 

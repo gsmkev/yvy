@@ -1,4 +1,3 @@
-/** Pruebas de programa para agrónomos. */
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { newId, parseReferralCode, referralCode } from "@yvy/shared";

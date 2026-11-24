@@ -1,4 +1,3 @@
-/** Pruebas de lotes dibujados y editados desde la app (plots.upsert). */
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";

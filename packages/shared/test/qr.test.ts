@@ -1,4 +1,3 @@
-/** Pruebas de QR de puntos de interés. */
 import { describe, expect, it } from "vitest";
 import { newId } from "../src/ids";
 import { parsePoiQr, poiQrPayload } from "../src/qr";

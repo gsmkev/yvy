@@ -1,4 +1,3 @@
-/** Pruebas de anotar en un punto escaneado. */
 import { describe, expect, it } from "vitest";
 import { POI_KINDS } from "@yvy/shared";
 import { kindForPoi } from "../src/lib/poiQr";

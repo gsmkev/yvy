@@ -1,4 +1,3 @@
-/** Pruebas de preferencias de notificación. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { ALERT_KINDS, DEFAULT_NOTIFICATION_PREFS, inQuietHours, parseNotificationPrefs } from "@yvy/shared";

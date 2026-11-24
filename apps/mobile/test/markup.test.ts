@@ -1,4 +1,3 @@
-/** Pruebas de dibujo sobre la foto. */
 import { describe, expect, it } from "vitest";
 import { arrowHead, circleRadius, fitContain, flattenSize, isMeaningful, normalize, undo, type Mark } from "../src/lib/markup";
 

@@ -1,4 +1,3 @@
-/** Pruebas de tareas: prioridad, hora límite y comentarios. */
 import { describe, expect, it } from "vitest";
 import { newId, parseTaskComments, isOverdue, LIMITS } from "@yvy/shared";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";

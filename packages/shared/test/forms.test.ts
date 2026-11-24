@@ -1,4 +1,3 @@
-/** Pruebas de campos propios. */
 import { describe, expect, it } from "vitest";
 import { describeExtra, extraSchema, flattenExtra, formConfigSchema, missingRequired, parseRecordData, splitExtraAnswers, type FormField } from "../src";
 

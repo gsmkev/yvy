@@ -1,4 +1,3 @@
-/** Pruebas de etiquetas por punto interior. */
 import { describe, expect, it } from "vitest";
 import { centroidOf, containsPoint, type Area } from "@yvy/geo";
 import { plotLabels, plotTarget } from "../src/lib/plotLabels";

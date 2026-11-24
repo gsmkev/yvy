@@ -1,4 +1,3 @@
-/** Pruebas de idiomas. */
 import { afterEach, describe, expect, it } from "vitest";
 import { DEFAULT_LOCALE, getLocale, hasKey, isLocale, locales, setLocale, subscribeLocale, t } from "../src";
 

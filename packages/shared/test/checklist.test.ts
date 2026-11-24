@@ -1,4 +1,3 @@
-/** Pruebas de lista de verificación. */
 import { describe, expect, it } from "vitest";
 import {
   checklistProgress,

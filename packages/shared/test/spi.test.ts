@@ -1,4 +1,3 @@
-/** Pruebas de SPI. */
 import { describe, expect, it } from "vitest";
 import { farmSpiSchema, spiCategory } from "../src";
 

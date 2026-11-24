@@ -1,4 +1,3 @@
-/** Pruebas de ventana de siembra. */
 import { describe, expect, it } from "vitest";
 import { sowingWindow } from "../src";
 

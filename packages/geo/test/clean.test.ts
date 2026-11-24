@@ -1,4 +1,3 @@
-/** Pruebas de cleanRing. */
 import { describe, expect, it } from "vitest";
 import { cleanArea, cleanRing, validatePolygon } from "../src";
 

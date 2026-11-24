@@ -1,4 +1,3 @@
-/** Pruebas de clima de campaña completa. */
 import { describe, expect, it } from "vitest";
 import { addDays, localDate } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";

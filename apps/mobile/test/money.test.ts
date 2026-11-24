@@ -1,4 +1,3 @@
-/** Pruebas de dinero en pantalla. */
 import { describe, expect, it } from "vitest";
 import { fmtGs, fmtMoney, fmtQty } from "../src/office/money";
 

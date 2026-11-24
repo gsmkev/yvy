@@ -1,4 +1,3 @@
-/** Pruebas de tipos de punto de interés. */
 import { describe, expect, it } from "vitest";
 import { POI_KINDS, t } from "@yvy/shared";
 import { call, createFarmWithPlots, createOrgWithOwner } from "./helpers";

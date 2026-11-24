@@ -1,4 +1,3 @@
-/** Pruebas de vista del agrónomo con varios clientes. */
 import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";

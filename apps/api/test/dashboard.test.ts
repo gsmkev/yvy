@@ -1,4 +1,3 @@
-/** Pruebas de tablero del dueño. */
 import { describe, expect, it } from "vitest";
 import { localDate, newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";

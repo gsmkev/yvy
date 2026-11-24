@@ -1,4 +1,3 @@
-/** Pruebas de places-py. */
 import { describe, expect, it } from "vitest";
 import { PLACES_PY, searchPlaces } from "./places-py";
 

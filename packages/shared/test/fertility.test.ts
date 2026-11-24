@@ -1,4 +1,3 @@
-/** Pruebas de mapas de fertilidad. */
 import { describe, expect, it } from "vitest";
 import { FERT_LAYERS, FERT_LAYER_KEYS, FERT_LAYER_PARAM, FERT_STYLE, fertilityPointCounts } from "../src";
 

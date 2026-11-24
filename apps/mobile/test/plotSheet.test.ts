@@ -1,4 +1,3 @@
-/** Pruebas de ficha del lote. */
 import { describe, expect, it } from "vitest";
 import { LIMITS } from "@yvy/shared";
 import { daysSince, vigorTrend } from "../src/lib/plotSheet";

@@ -1,4 +1,3 @@
-/** Pruebas de lotes dibujados en el celular. */
 import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";
 import { LocalDb } from "../src/db/store";

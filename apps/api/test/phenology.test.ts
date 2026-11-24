@@ -1,4 +1,3 @@
-/** Pruebas de fenología por grados-día. */
 import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";
 import { DAY, isoDay, seedPower } from "./agri2-helpers";

@@ -1,4 +1,3 @@
-/** Pruebas de precarga de condiciones al aplicar. */
 import { describe, expect, it } from "vitest";
 import type { Kv } from "../src/lib/forecast";
 import { refreshSprayHours, sprayPrefill } from "../src/lib/sprayHours";

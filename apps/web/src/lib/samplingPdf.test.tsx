@@ -1,5 +1,4 @@
 // @vitest-environment node
-/** Pruebas de grilla de muestreo. */
 import { describe, expect, it } from "vitest";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { samplingGrid, type Area } from "@yvy/geo";

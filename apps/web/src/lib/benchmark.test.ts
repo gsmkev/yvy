@@ -1,4 +1,3 @@
-/** Pruebas de comparación con la zona. */
 import { describe, expect, it } from "vitest";
 import { compareToZone } from "./benchmark";
 

@@ -1,4 +1,3 @@
-/** Pruebas de otros índices (NDRE, NDMI, EVI). */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { LIMITS } from "@yvy/shared";

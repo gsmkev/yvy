@@ -1,4 +1,3 @@
-/** Pruebas de estado del servicio. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { LIMITS } from "@yvy/shared";

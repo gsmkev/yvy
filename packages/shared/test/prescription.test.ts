@@ -1,4 +1,3 @@
-/** Pruebas de prescripción de dosis variable. */
 import { describe, expect, it } from "vitest";
 import { buildIsoxml, isoRate, meanRate, totalProduct, validRate, type RatePrescriptionPlan } from "../src";
 

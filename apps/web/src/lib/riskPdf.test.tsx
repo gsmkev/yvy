@@ -1,5 +1,4 @@
 // @vitest-environment node
-/** Pruebas de informe de riesgo climático. */
 import { describe, expect, it } from "vitest";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { farmRiskSchema, type FarmRisk } from "@yvy/shared";

@@ -1,4 +1,3 @@
-/** Pruebas de fenología por grados-día. */
 import { describe, expect, it } from "vitest";
 import { accumulateGdd, comparePheno, estimateStage, gddDay, nextStage } from "../src";
 

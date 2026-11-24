@@ -1,4 +1,3 @@
-/** Pruebas de recorridas en el mapa de calor. */
 import { describe, expect, it } from "vitest";
 import { densify, heatPoints, summarizeTracks, trackLine, TRACK_WINDOW_MS } from "./trackHeat";
 

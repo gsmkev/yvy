@@ -1,4 +1,3 @@
-/** Pruebas de resolveFarmChoice. */
 import { describe, expect, it } from "vitest";
 import type { Farm } from "../src/db/store";
 import { byFarm, resolveFarmChoice } from "../src/lib/farmChoice";

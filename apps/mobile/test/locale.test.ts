@@ -1,4 +1,3 @@
-/** Pruebas de idioma de la app. */
 import { afterEach, describe, expect, it } from "vitest";
 import { DEFAULT_LOCALE, getLocale, setLocale, t } from "@yvy/shared";
 import type { Kv } from "../src/lib/forecast";

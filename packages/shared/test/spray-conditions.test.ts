@@ -1,4 +1,3 @@
-/** Pruebas de condiciones al aplicar. */
 import { describe, expect, it } from "vitest";
 import { forecastHourAt, parseRecordData, sprayWarningTexts, sprayWarnings } from "../src";
 

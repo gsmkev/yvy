@@ -1,4 +1,3 @@
-/** Pruebas de etiquetas sin choques. */
 import { describe, expect, it } from "vitest";
 import { placeLabels } from "./labelLayout";
 

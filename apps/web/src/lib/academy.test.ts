@@ -1,4 +1,3 @@
-/** Pruebas de academia. */
 import { describe, expect, it } from "vitest";
 import { parseAcademyVideos } from "./academy";
 

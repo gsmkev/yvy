@@ -1,4 +1,3 @@
-/** Pruebas de atajo de Android para anotar lluvia. */
 import { describe, expect, it } from "vitest";
 import { t } from "@yvy/shared";
 import config, { SHORTCUT_LABELS } from "../app.config";

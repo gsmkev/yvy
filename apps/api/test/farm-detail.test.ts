@@ -1,4 +1,3 @@
-/** Pruebas de última anotación por lote en el detalle de la estancia. */
 import { describe, expect, it } from "vitest";
 import { newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner } from "./helpers";

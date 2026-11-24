@@ -1,4 +1,3 @@
-/** Pruebas de almacenamiento. */
 import { describe, expect, it } from "vitest";
 import { newId } from "@yvy/shared";
 import { LocalDb, type NewRecord } from "../src/db/store";

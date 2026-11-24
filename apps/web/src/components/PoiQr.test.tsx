@@ -1,4 +1,3 @@
-/** Pruebas de hoja de QR de puntos. */
 import { describe, expect, it } from "vitest";
 import { poiQrPayload } from "@yvy/shared";
 import { poiQrSheetHtml } from "./PoiQr";

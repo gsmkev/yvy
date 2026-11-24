@@ -1,5 +1,4 @@
 // @vitest-environment node
-/** Pruebas de exportación completa. */
 import { describe, expect, it } from "vitest";
 import JSZip from "jszip";
 import ExcelJS from "exceljs";

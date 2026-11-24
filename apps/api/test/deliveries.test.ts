@@ -1,4 +1,3 @@
-/** Pruebas de entregas a acopio. */
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import * as s from "@yvy/shared/schema";

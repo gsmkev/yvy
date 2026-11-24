@@ -1,4 +1,3 @@
-/** Pruebas de overlapRatio y withinRatio. */
 import { describe, expect, it } from "vitest";
 import type { Polygon } from "geojson";
 import { checkPlots, overlapRatio, withinRatio } from "../src";

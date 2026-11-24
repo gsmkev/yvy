@@ -1,4 +1,3 @@
-/** Pruebas de pluviómetros contra satélite y normal. */
 import { describe, expect, it } from "vitest";
 import { hasUnassignedRain } from "@yvy/shared";
 import { gaugeTable, type GaugeClimate } from "./gaugeData";

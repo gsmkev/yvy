@@ -1,4 +1,3 @@
-/** Pruebas de indicador EUDR por lote. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { hmacHex } from "../src/lib/crypto";

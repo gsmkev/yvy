@@ -1,4 +1,3 @@
-/** Pruebas de fmtCoords. */
 import { describe, expect, it } from "vitest";
 import { fmtCoords } from "./CopyCoords";
 

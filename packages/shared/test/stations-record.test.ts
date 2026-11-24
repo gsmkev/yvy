@@ -1,4 +1,3 @@
-/** Pruebas de estaciones en el registro de plaga. */
 import { describe, expect, it } from "vitest";
 import { describeRecord, MONITOR_TEMPLATES, parseRecordData, summarizeStations } from "../src";
 

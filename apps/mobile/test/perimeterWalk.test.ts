@@ -1,4 +1,3 @@
-/** Pruebas de perímetro caminado. */
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("expo-location", () => ({}));

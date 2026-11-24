@@ -1,4 +1,3 @@
-/** Pruebas de suelo. */
 import { describe, expect, it } from "vitest";
 import { soilAverage, soilLevel } from "../src";
 

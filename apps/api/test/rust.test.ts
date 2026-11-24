@@ -1,4 +1,3 @@
-/** Pruebas de roya asiática. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";

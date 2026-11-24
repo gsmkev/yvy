@@ -1,4 +1,3 @@
-/** Pruebas de geo. */
 import { describe, expect, it } from "vitest";
 import type { Polygon } from "geojson";
 import { areaHa, bboxOf, containsPoint, validatePolygon, validateShape } from "../src";

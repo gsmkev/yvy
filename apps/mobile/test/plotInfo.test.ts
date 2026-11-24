@@ -1,4 +1,3 @@
-/** Pruebas de plotInfo. */
 import { describe, expect, it } from "vitest";
 import { activeFilterCount, areaByCrop, decimalCoords, degMinCoords, deltaVsFarm, filterRecords, matchesQuery, ndviColor, NO_RECORD_FILTER, sortPlotLines, unvisitedOver, type PlotLine } from "../src/lib/plotInfo";
 

@@ -1,4 +1,3 @@
-/** Pruebas de savedFilters. */
 import { beforeEach, describe, expect, it } from "vitest";
 import { deleteFilter, loadSavedFilters, saveFilter } from "./savedFilters";
 

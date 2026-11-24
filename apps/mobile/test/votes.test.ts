@@ -1,4 +1,3 @@
-/** Pruebas de votos de avisos. */
 import { describe, expect, it } from "vitest";
 import { flushVotes, readQueue, readVotes, recordVote, type Kv } from "../src/lib/votes";
 

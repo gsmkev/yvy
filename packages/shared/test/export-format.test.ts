@@ -1,4 +1,3 @@
-/** Pruebas de exportación para sistemas contables. */
 import { describe, expect, it } from "vitest";
 import { defaultExportConfig, EXPORT_COLUMNS, exportConfigSchema, formatExportDate, formatExportNumber, libroIvaConfig, renderExport, taxMismatch, vatIncluded, type ExportCashMove, type ExportDoc } from "../src";
 

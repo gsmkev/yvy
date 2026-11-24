@@ -1,4 +1,3 @@
-/** Pruebas de distancias. */
 import { describe, expect, it } from "vitest";
 import type { LineString, Polygon } from "geojson";
 import { lineToAreaM, pointToAreaM, pointToLineM } from "../src";

@@ -1,4 +1,3 @@
-/** Pruebas de balance hídrico del lote. */
 import { describe, expect, it } from "vitest";
 import { DAY, isoDay, seedClimate } from "./agri2-helpers";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner } from "./helpers";

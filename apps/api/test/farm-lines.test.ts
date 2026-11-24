@@ -1,4 +1,3 @@
-/** Pruebas de líneas del mapa. */
 import { describe, expect, it } from "vitest";
 import { addMemberAndLogin, call, createOrgWithOwner, square } from "./helpers";
 

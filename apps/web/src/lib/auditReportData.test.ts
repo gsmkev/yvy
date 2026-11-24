@@ -1,4 +1,3 @@
-/** Pruebas de informe de auditoría. */
 import { describe, expect, it } from "vitest";
 import { buildAuditReport, distanceM } from "./auditReportData";
 import type { Poi, Product, RecordRow } from "./types";

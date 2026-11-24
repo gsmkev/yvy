@@ -1,4 +1,3 @@
-/** Pruebas de entregas a acopio. */
 import { describe, expect, it } from "vitest";
 import { grainNet } from "../src";
 

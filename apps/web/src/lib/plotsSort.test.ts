@@ -1,4 +1,3 @@
-/** Pruebas de sortPlots. */
 import { describe, expect, it } from "vitest";
 import { sortPlots } from "./plotsSort";
 import type { Plot } from "./types";

@@ -1,4 +1,3 @@
-/** Pruebas de perímetro de varias partes. */
 import { describe, expect, it } from "vitest";
 import { combineAreas } from "./importGeo";
 

@@ -1,4 +1,3 @@
-/** Pruebas de monitoreo de errores. */
 import { env } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { app } from "../src/app";

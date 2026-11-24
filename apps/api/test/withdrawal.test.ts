@@ -1,4 +1,3 @@
-/** Pruebas de carencia antes de cosechar. */
 import { describe, expect, it } from "vitest";
 import { DAY } from "./agri2-helpers";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner } from "./helpers";

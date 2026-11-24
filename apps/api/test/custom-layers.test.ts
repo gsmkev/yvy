@@ -1,4 +1,3 @@
-/** Pruebas de capas propias. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { app } from "../src/app";

@@ -1,4 +1,3 @@
-/** Pruebas de alertRank. */
 import { describe, expect, it } from "vitest";
 import { sortAlerts, sortReview } from "./alertRank";
 

@@ -1,4 +1,3 @@
-/** Pruebas de rinde por zona. */
 import { describe, expect, it } from "vitest";
 import { harvestYield, readYieldVigor, zoneYields, type ZoneYield } from "./yieldZones";
 

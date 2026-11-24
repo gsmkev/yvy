@@ -1,4 +1,3 @@
-/** Pruebas de historia de vigor desde 2017. */
 import { env } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { hmacHex } from "../src/lib/crypto";

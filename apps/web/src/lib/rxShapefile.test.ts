@@ -1,4 +1,3 @@
-/** Pruebas de shapefile de prescripción. */
 import JSZip from "jszip";
 import { describe, expect, it } from "vitest";
 import { polygonsToShapefileZip } from "./exports";

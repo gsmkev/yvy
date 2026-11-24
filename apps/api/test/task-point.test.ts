@@ -1,4 +1,3 @@
-/** Pruebas de tarea con punto desde un área problema. */
 import { describe, expect, it } from "vitest";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";
 

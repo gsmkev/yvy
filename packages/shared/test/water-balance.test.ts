@@ -1,4 +1,3 @@
-/** Pruebas de balance hídrico. */
 import { describe, expect, it } from "vitest";
 import { cropKc, dayOfYearIso, et0Hargreaves, extraterrestrialMm, waterBalance, type BalanceDay } from "../src";
 

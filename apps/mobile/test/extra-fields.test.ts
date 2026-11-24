@@ -1,4 +1,3 @@
-/** Pruebas de campos propios en el flujo de anotar. */
 import { describe, expect, it } from "vitest";
 import { flattenExtra, parseRecordData, splitExtraAnswers, type FormField } from "@yvy/shared";
 import { extraSteps, FLOWS, RAW, stepsFor } from "../src/lib/annotate";

@@ -1,4 +1,3 @@
-/** Pruebas de avisos al crear lotes. */
 import { describe, expect, it } from "vitest";
 import { call, createOrgWithOwner, square } from "./helpers";
 

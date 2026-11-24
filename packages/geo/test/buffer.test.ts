@@ -1,4 +1,3 @@
-/** Pruebas de zonas de amortiguación. */
 import { describe, expect, it } from "vitest";
 import type { LineString, Polygon } from "geojson";
 import { bufferAnalysis, cleanDistances, DEFAULT_DISTANCES } from "../src/buffer";

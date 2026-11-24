@@ -1,4 +1,3 @@
-/** Pruebas de formato del informe de riesgo. */
 import { describe, expect, it } from "vitest";
 import { pctOfNormal, riskFormat, type FarmRisk } from "../src";
 

@@ -1,4 +1,3 @@
-/** Pruebas de rumbo y distancia. */
 import { describe, expect, it } from "vitest";
 import { bearingDeg, cardinal, distanceM, formatDistance, turnDeg } from "../src/lib/bearing";
 

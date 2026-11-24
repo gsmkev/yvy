@@ -1,4 +1,3 @@
-/** Pruebas de rumbo del mapa. */
 import { describe, expect, it } from "vitest";
 import { angleDelta, mapBearingFor, norm360, shouldRotate, smoothHeading } from "../src/lib/heading";
 

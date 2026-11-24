@@ -1,4 +1,3 @@
-/** Pruebas de consumo real al cerrar la orden. */
 import { describe, expect, it } from "vitest";
 import { consumptionLines, parseRecordData } from "../src";
 

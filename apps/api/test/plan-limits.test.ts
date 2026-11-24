@@ -1,4 +1,3 @@
-/** Pruebas de topes del plan. */
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { LIMITS, planLimits } from "@yvy/shared";

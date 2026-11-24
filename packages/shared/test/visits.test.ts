@@ -1,4 +1,3 @@
-/** Pruebas de lotes sin visitar. */
 import { describe, expect, it } from "vitest";
 import { isStaleVisit, stalePlots, staleDaysOrDefault } from "../src";
 

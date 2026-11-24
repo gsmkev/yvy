@@ -1,4 +1,3 @@
-/** Pruebas de campañas de vigor. */
 import { describe, expect, it } from "vitest";
 import { campaignCount, campaignDayLabel, campaignLabel, campaignStartYear, dayOfCampaign, groupCampaigns } from "./vigorSeasons";
 

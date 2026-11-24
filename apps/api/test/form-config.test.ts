@@ -1,4 +1,3 @@
-/** Pruebas de formularios configurables por la organización. */
 import { describe, expect, it } from "vitest";
 import { newId, RECORD_SCHEMA_VERSION } from "@yvy/shared";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, pullAll } from "./helpers";

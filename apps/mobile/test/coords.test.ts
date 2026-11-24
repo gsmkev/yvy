@@ -1,4 +1,3 @@
-/** Pruebas de formatFix. */
 import { describe, expect, it } from "vitest";
 import { fixCoords, formatFix } from "../src/lib/coords";
 

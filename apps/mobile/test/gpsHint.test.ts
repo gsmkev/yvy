@@ -1,4 +1,3 @@
-/** Pruebas de aviso de GPS lento. */
 import { describe, expect, it } from "vitest";
 import { t } from "@yvy/shared";
 import { gpsHintText, gpsStage, GPS_COLD_MS, GPS_SLOW_MS } from "../src/lib/gpsHint";

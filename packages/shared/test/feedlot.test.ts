@@ -1,4 +1,3 @@
-/** Pruebas de feedlot. */
 import { describe, expect, it } from "vitest";
 import { consumptionLines, corralReport, feedRationInput, rationLines, rationPctTotal, type BaseUnit } from "../src";
 

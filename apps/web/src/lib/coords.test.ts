@@ -1,4 +1,3 @@
-/** Pruebas de parseLocation. */
 import { describe, expect, it } from "vitest";
 import { parseLocation } from "./coords";
 

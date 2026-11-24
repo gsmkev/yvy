@@ -1,4 +1,3 @@
-/** Pruebas de informe de riesgo climático. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { hmacHex } from "../src/lib/crypto";

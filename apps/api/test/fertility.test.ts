@@ -1,4 +1,3 @@
-/** Pruebas de mapas de fertilidad. */
 import { env } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LIMITS } from "@yvy/shared";

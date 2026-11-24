@@ -1,5 +1,4 @@
 // @vitest-environment node
-/** Pruebas de informe de daños. */
 import { describe, expect, it } from "vitest";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { DamageReport } from "./damagePdf";

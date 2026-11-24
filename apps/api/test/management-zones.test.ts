@@ -1,4 +1,3 @@
-/** Pruebas de zonas de manejo. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { hmacHex } from "../src/lib/crypto";

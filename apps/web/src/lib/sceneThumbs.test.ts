@@ -1,4 +1,3 @@
-/** Pruebas de miniaturas del selector de fecha. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getZxy = vi.fn(async () => ({ data: new ArrayBuffer(4) }));

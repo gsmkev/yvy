@@ -1,4 +1,3 @@
-/** Pruebas de caché de lecturas en línea. */
 import { describe, expect, it } from "vitest";
 import { LOCAL_SCHEMA } from "../src/db/sql";
 import {

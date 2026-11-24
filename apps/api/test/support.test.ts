@@ -1,4 +1,3 @@
-/** Pruebas de panel interno: búsqueda, prueba y soporte. */
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import * as s from "@yvy/shared/schema";

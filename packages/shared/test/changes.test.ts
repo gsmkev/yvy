@@ -1,4 +1,3 @@
-/** Pruebas de cambios en el terreno. */
 import { describe, expect, it } from "vitest";
 import { analysisAreas, burnedEvents, coverKeys, parseCoverKey, summarizeCover, type AnalysisPlot, type BurnedMetrics, type CoverMetrics } from "../src/changes";
 

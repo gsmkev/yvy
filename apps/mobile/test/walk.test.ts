@@ -1,4 +1,3 @@
-/** Pruebas de recorrida GPS. */
 import { describe, expect, it } from "vitest";
 import { trackSchema } from "@yvy/shared";
 import { addFix, buildTrack, formatDuration, isTooShort, newDraft, parseDraft, serializeDraft, type WalkDraft } from "../src/lib/walkTracker";

@@ -1,4 +1,3 @@
-/** Pruebas de priceFor. */
 import { describe, expect, it } from "vitest";
 import { cattleYear, priceFor } from "../src/pricing";
 

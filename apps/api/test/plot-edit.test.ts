@@ -1,4 +1,3 @@
-/** Pruebas de editar los vértices de un lote. */
 import { describe, expect, it } from "vitest";
 import { areaHa } from "@yvy/geo";
 import { addMemberAndLogin, call, createOrgWithOwner, pullAll, square } from "./helpers";

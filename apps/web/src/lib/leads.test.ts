@@ -1,4 +1,3 @@
-/** Pruebas de coordenadas del informe gratis. */
 import { describe, expect, it } from "vitest";
 import { inParaguay, parseCoords } from "./leads";
 

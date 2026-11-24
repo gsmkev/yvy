@@ -1,5 +1,4 @@
 // @vitest-environment node
-/** Pruebas de PDF del informe de auditoría. */
 import { describe, expect, it } from "vitest";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { AuditReport } from "./auditReportPdf";

@@ -1,4 +1,3 @@
-/** Pruebas de período de carencia. */
 import { describe, expect, it } from "vitest";
 import { withdrawalReport } from "../src";
 

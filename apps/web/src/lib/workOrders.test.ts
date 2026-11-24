@@ -1,4 +1,3 @@
-/** Pruebas de hoja imprimible de la orden. */
 import { describe, expect, it } from "vitest";
 import { groupOrders, type OrderRow, type WorkOrder } from "@yvy/shared";
 import { orderSheetHtml } from "./workOrders";

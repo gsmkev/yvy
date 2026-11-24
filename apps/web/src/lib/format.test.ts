@@ -1,4 +1,3 @@
-/** Pruebas de format. */
 import { describe, expect, it } from "vitest";
 import { dayToMs, fmtDateTime } from "./format";
 

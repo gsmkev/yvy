@@ -1,4 +1,3 @@
-/** Pruebas de pronóstico por lote en estancias grandes. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { runJob } from "../src/jobs";

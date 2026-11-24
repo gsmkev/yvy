@@ -1,4 +1,3 @@
-/** Pruebas de calidad de la foto. */
 import { encode } from "jpeg-js";
 import { describe, expect, it } from "vitest";
 import { analyzeJpeg, analyzeLuma, base64ToBytes, photoIssueMessage, photoIssues, toLuma } from "../src/lib/photoQuality";

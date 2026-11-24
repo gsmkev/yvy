@@ -1,4 +1,3 @@
-/** Pruebas de cierre de la orden: consumo real. */
 import { describe, expect, it } from "vitest";
 import { FLOWS, visibleSteps } from "../src/lib/annotate";
 

@@ -1,4 +1,3 @@
-/** Pruebas de analítica propia. */
 import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";

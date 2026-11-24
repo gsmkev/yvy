@@ -1,4 +1,3 @@
-/** Pruebas de enlace de solo lectura. */
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import * as s from "@yvy/shared/schema";

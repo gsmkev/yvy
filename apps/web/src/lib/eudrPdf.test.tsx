@@ -1,5 +1,4 @@
 // @vitest-environment node
-/** Pruebas de indicador EUDR. */
 import { describe, expect, it } from "vitest";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { EudrReport } from "./eudrPdf";

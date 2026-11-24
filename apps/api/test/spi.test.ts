@@ -1,4 +1,3 @@
-/** Pruebas de SPI a 1, 3 y 6 meses. */
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { hmacHex } from "../src/lib/crypto";

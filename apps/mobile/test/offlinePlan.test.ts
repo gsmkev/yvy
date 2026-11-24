@@ -1,4 +1,3 @@
-/** Pruebas de mapas sin conexión de varias estancias. */
 import { describe, expect, it } from "vitest";
 import { fitsBudget, overallProgress, planDownloads, type PackInfo } from "../src/lib/offlinePlan";
 

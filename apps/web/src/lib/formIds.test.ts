@@ -1,4 +1,3 @@
-/** Pruebas de ids de campos propios. */
 import { describe, expect, it } from "vitest";
 import { FIELD_ID } from "@yvy/shared";
 import { fieldIdFrom } from "../routes/forms";

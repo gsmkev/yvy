@@ -1,4 +1,3 @@
-/** Pruebas de flujos de ganadería y aguadas. */
 import { describe, expect, it } from "vitest";
 import { FLOWS, KINDS_FOR, SINGLE_PLOT_KINDS, stepsFor } from "../src/lib/annotate";
 

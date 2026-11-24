@@ -1,4 +1,3 @@
-/** Pruebas de actualizaciones sin tienda. */
 import { describe, expect, it } from "vitest";
 import config, { updatesConfig } from "../app.config";
 

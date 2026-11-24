@@ -1,4 +1,3 @@
-/** Pruebas de nota de voz. */
 import { describe, expect, it } from "vitest";
 import { attachmentRow, LIMITS, newId } from "@yvy/shared";
 import { LocalDb, type NewRecord } from "../src/db/store";

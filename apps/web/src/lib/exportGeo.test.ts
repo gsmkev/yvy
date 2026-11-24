@@ -1,4 +1,3 @@
-/** Pruebas de exportar GeoJSON y shapefile. */
 import JSZip from "jszip";
 import { describe, expect, it } from "vitest";
 import { plotsToGeoJson, plotsToShapefileZip } from "./exports";

@@ -1,4 +1,3 @@
-/** Pruebas de recorrido de primera vez. */
 import { describe, expect, it } from "vitest";
 import { addMemberAndLogin, call, createOrgWithOwner } from "./helpers";
 

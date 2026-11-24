@@ -1,4 +1,3 @@
-/** Pruebas de cambio de cobertura entre dos fechas. */
 import { env } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { hmacHex } from "../src/lib/crypto";

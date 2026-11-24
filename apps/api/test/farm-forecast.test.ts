@@ -1,4 +1,3 @@
-/** Pruebas de pronóstico liviano para la app. */
 import { describe, expect, it } from "vitest";
 import * as s from "@yvy/shared/schema";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner, db } from "./helpers";

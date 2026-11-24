@@ -1,4 +1,3 @@
-/** Pruebas de boundaries. */
 import { describe, expect, it } from "vitest";
 import { boundaryUrl, parseBoundaries } from "./boundaries";
 

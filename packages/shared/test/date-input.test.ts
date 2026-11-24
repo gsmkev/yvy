@@ -1,4 +1,3 @@
-/** Pruebas de fecha dd/mm/aaaa. */
 import { describe, expect, it } from "vitest";
 import { displayToIso, isoToDisplay, maskDate } from "../src/date-input";
 

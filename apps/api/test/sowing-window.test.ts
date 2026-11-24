@@ -1,4 +1,3 @@
-/** Pruebas de ventana de siembra. */
 import { describe, expect, it } from "vitest";
 import * as s from "@yvy/shared/schema";
 import { DAY, isoDay, seedPower } from "./agri2-helpers";

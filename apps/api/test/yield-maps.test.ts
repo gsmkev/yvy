@@ -1,4 +1,3 @@
-/** Pruebas de mapas de rendimiento. */
 import { describe, expect, it } from "vitest";
 import { addMemberAndLogin, call, createFarmWithPlots, createOrgWithOwner } from "./helpers";
 

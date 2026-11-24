@@ -1,4 +1,3 @@
-/** Pruebas de medición. */
 import { describe, expect, it } from "vitest";
 import { closedAreaHa, fmtDistance, pathLengthM, type LonLat } from "./measure";
 

@@ -1,5 +1,4 @@
 // @vitest-environment node
-/** Pruebas de PDF del informe para el banco. */
 import { describe, expect, it } from "vitest";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { BankReport } from "./reportsBankPdf";

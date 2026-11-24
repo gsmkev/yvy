@@ -1,4 +1,3 @@
-/** Pruebas de datos de informes. */
 import { describe, expect, it } from "vitest";
 import { mapLimit, seasonStart, vigorSummary } from "./reportsData";
 

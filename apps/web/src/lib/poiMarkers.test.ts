@@ -1,4 +1,3 @@
-/** Pruebas de íconos de puntos de interés. */
 import { describe, expect, it } from "vitest";
 import { POI_KINDS } from "@yvy/shared";
 import { POI_ICON } from "./icons";

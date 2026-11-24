@@ -1,4 +1,3 @@
-/** Pruebas de plan y pedido de cambio desde la web. */
 import { env } from "cloudflare:test";
 import { describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";

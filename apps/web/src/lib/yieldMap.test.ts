@@ -1,4 +1,3 @@
-/** Pruebas de mapas de rendimiento. */
 import { describe, expect, it } from "vitest";
 import type { FeatureCollection, Polygon } from "geojson";
 import { extractPoints, MAX_CELLS, numericFields, summarizeYield, toTHa } from "./yieldMap";

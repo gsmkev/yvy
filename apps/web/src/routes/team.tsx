@@ -43,7 +43,7 @@ export function TeamPage() {
     mutationFn: (m: Member) => del(`/org/members/${m.userId}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["members"] });
-      toast(t("ui.toastMemberRemoved"));
+      toast(t("ui.toast.memberRemoved"));
       setRemoving(null);
     },
   });
@@ -56,31 +56,31 @@ export function TeamPage() {
   const farmsOf = (m: Member) => {
     if (!scoped(m)) return "";
     const mine = (access.data ?? []).filter((a) => a.userId === m.userId).map((a) => farms.data?.find((f) => f.id === a.farmId)?.name);
-    if (mine.length === 0) return t(m.role === "supervisor" ? "ui.teamFarmsNone" : "ui.teamFarmsAll");
+    if (mine.length === 0) return t(m.role === "supervisor" ? "ui.team.farmsNone" : "ui.team.farmsAll");
     return mine.filter(Boolean).join(", ");
   };
   const since = (ms: number) => {
     const h = Math.floor((Date.now() - ms) / 3_600_000);
-    if (h < 1) return t("ui.teamJustNow");
-    if (h < 24) return t("ui.teamHoursAgo", { n: h });
+    if (h < 1) return t("ui.team.justNow");
+    if (h < 24) return t("ui.team.hoursAgo", { n: h });
     const d = Math.floor(h / 24);
-    return d === 1 ? t("app.yesterday") : d < 30 ? t("ui.teamDaysAgo", { n: d }) : fmtDate(ms);
+    return d === 1 ? t("app.common.yesterday") : d < 30 ? t("ui.team.daysAgo", { n: d }) : fmtDate(ms);
   };
   const columns: Column<Member>[] = [
     {
       id: "person",
-      header: t("ui.name"),
+      header: t("ui.common.name"),
       cell: (m) => (
         <div className="min-w-0 max-w-[8rem] py-1 sm:max-w-none">
           <div className="truncate font-medium">{m.fullName}</div>
           <div className="truncate text-xs font-normal text-tinta-2">{[m.email, m.phone].filter(Boolean).join(" · ")}</div>
           <div className="truncate text-xs sm:hidden">
-            {tk(`ui.role_${m.role}`)}
-            {m.role === "worker" && canManage && !m.hasPin && <span className="text-trigo-texto"> · {t("app.teamPinNone")}</span>}
+            {tk(`ui.role.${m.role}`)}
+            {m.role === "worker" && canManage && !m.hasPin && <span className="text-trigo-texto"> · {t("app.team.pinNone")}</span>}
           </div>
           {m.overdueTasks > 0 && (
             <div className="num text-xs font-medium text-peligro sm:hidden">
-              {t(m.overdueTasks === 1 ? "ui.overdueCountOne" : "ui.overdueCountMany", { n: m.overdueTasks })}
+              {t(m.overdueTasks === 1 ? "ui.overdue.countOne" : "ui.overdue.countMany", { n: m.overdueTasks })}
             </div>
           )}
         </div>
@@ -88,12 +88,12 @@ export function TeamPage() {
     },
     {
       id: "role",
-      header: t("ui.role"),
+      header: t("ui.common.role"),
       hideBelow: "sm",
       cell: (m) => (
         <div className="whitespace-nowrap">
-          {tk(`ui.role_${m.role}`)}
-          {m.role === "worker" && canManage && !m.hasPin && <div className="text-xs text-trigo-texto">{t("app.teamPinNone")}</div>}
+          {tk(`ui.role.${m.role}`)}
+          {m.role === "worker" && canManage && !m.hasPin && <div className="text-xs text-trigo-texto">{t("app.team.pinNone")}</div>}
         </div>
       ),
     },
@@ -101,45 +101,45 @@ export function TeamPage() {
       ? [
           {
             id: "farms",
-            header: t("ui.farmAccess"),
+            header: t("ui.farm.access"),
             hideBelow: "lg" as const,
             cell: (m: Member) => <span className="line-clamp-2 text-tinta-2">{farmsOf(m) || "—"}</span>,
           },
         ]
       : []),
-    { id: "records", header: t("ui.teamColRecords"), align: "right", cell: (m) => m.records7d, sort: (a, b) => a.records7d - b.records7d },
-    { id: "plots", header: t("ui.teamColPlots"), align: "right", hideBelow: "md", cell: (m) => m.plotsVisited7d },
+    { id: "records", header: t("ui.team.colRecords"), align: "right", cell: (m) => m.records7d, sort: (a, b) => a.records7d - b.records7d },
+    { id: "plots", header: t("ui.team.colPlots"), align: "right", hideBelow: "md", cell: (m) => m.plotsVisited7d },
     {
       id: "last",
-      header: t("ui.teamColLastSync"),
+      header: t("ui.team.colLastSync"),
       hideBelow: "md",
       cell: (m) => (
         <span className="whitespace-nowrap text-tinta-2" title={m.lastSyncAt ? fmtDateTime(m.lastSyncAt) : undefined}>
-          {m.lastSyncAt ? since(m.lastSyncAt) : t("ui.neverVisited")}
+          {m.lastSyncAt ? since(m.lastSyncAt) : t("ui.never.visited")}
         </span>
       ),
     },
     {
       id: "overdue",
-      header: t("ui.teamColOverdue"),
+      header: t("ui.team.colOverdue"),
       align: "right",
       hideBelow: "sm",
       cell: (m) => (m.overdueTasks > 0 ? <span className="font-medium text-peligro">{m.overdueTasks}</span> : <span className="text-tinta-2">0</span>),
     },
     {
       id: "actions",
-      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      header: <span className="sr-only">{t("ui.row.actionsHeader")}</span>,
       width: "3rem",
       cell: (m) => (
         <div className="flex justify-end">
           <ActionMenu
-            label={t("ui.rowActions", { name: m.fullName })}
+            label={t("ui.row.actions", { name: m.fullName })}
             items={[
-              { label: t("ui.assignPlots"), onSelect: () => setAssigning(m) },
-              owner && scoped(m) && { label: t("ui.farmAccess"), onSelect: () => setScoping(m) },
-              canManage && isFieldRole(m.role) && { label: t("ui.linkDevice"), onSelect: () => link.mutate(m) },
-              canManage && m.role === "worker" && { label: m.hasPin ? t("app.teamPinChange") : t("app.teamPinSet"), onSelect: () => setPinFor(m) },
-              canManage && m.userId !== me.data?.user.id && { label: t("ui.removeMember"), onSelect: () => setRemoving(m), danger: true },
+              { label: t("ui.common.assignPlots"), onSelect: () => setAssigning(m) },
+              owner && scoped(m) && { label: t("ui.farm.access"), onSelect: () => setScoping(m) },
+              canManage && isFieldRole(m.role) && { label: t("ui.link.device"), onSelect: () => link.mutate(m) },
+              canManage && m.role === "worker" && { label: m.hasPin ? t("app.team.pinChange") : t("app.team.pinSet"), onSelect: () => setPinFor(m) },
+              canManage && m.userId !== me.data?.user.id && { label: t("ui.common.removeMember"), onSelect: () => setRemoving(m), danger: true },
             ]}
           />
         </div>
@@ -150,11 +150,11 @@ export function TeamPage() {
     <Page width="data">
       <PageHeader
         className="max-sm:flex-wrap"
-        title={t("ui.teamTitle")}
+        title={t("ui.team.title")}
         primary={
           canManage ? (
             <Button variant="primary" className="max-sm:hidden" onClick={() => setAdding(true)}>
-              {t("ui.addMember")}
+              {t("ui.add.member")}
             </Button>
           ) : undefined
         }
@@ -162,17 +162,17 @@ export function TeamPage() {
           <>
             <TableExportMenu
               data={() => ({
-                name: t("ui.teamFile"),
-                headers: [t("ui.name"), t("ui.role"), t("ui.emailCol"), t("ui.phone")],
-                rows: members.data!.map((m) => [m.fullName, tk(`ui.role_${m.role}`), m.email, m.phone]),
+                name: t("ui.team.file"),
+                headers: [t("ui.common.name"), t("ui.common.role"), t("ui.common.emailCol"), t("ui.common.phone")],
+                rows: members.data!.map((m) => [m.fullName, tk(`ui.role.${m.role}`), m.email, m.phone]),
               })}
             />
             <ActionMenu
-              label={t("ui.moreActions")}
+              label={t("ui.common.moreActions")}
               items={[
-                owner && { label: t("ui.auditTitle"), onSelect: () => void navigate({ to: "/cambios" }) },
-                owner && { label: t("ui.apiTokensTitle"), onSelect: () => void navigate({ to: "/api-publica" }) },
-                canManage && { label: t("ui.formsLink"), onSelect: () => void navigate({ to: "/formularios" }) },
+                owner && { label: t("ui.audit.title"), onSelect: () => void navigate({ to: "/cambios" }) },
+                owner && { label: t("ui.api.tokensTitle"), onSelect: () => void navigate({ to: "/api-publica" }) },
+                canManage && { label: t("ui.forms.link"), onSelect: () => void navigate({ to: "/formularios" }) },
               ]}
             />
           </>
@@ -180,23 +180,23 @@ export function TeamPage() {
       />
       {canManage && (
         <Button variant="primary" className="sm:hidden" onClick={() => setAdding(true)}>
-          {t("ui.addMember")}
+          {t("ui.add.member")}
         </Button>
       )}
       {link.error && <ErrorBox error={link.error} />}
       {members.data!.length === 0 ? (
         <EmptyState
-          title={t("ui.teamEmpty")}
-          action={canManage ? <Button onClick={() => setAdding(true)}>{t("ui.addMember")}</Button> : undefined}
+          title={t("ui.team.empty")}
+          action={canManage ? <Button onClick={() => setAdding(true)}>{t("ui.add.member")}</Button> : undefined}
         />
       ) : (
-        <DataTable columns={columns.filter((c) => c.id !== "last" || members.data!.some((m) => m.lastSyncAt))} rows={members.data!} rowKey={(m) => m.userId} caption={t("ui.teamTitle")} />
+        <DataTable columns={columns.filter((c) => c.id !== "last" || members.data!.some((m) => m.lastSyncAt))} rows={members.data!} rowKey={(m) => m.userId} caption={t("ui.team.title")} />
       )}
       {removing && (
         <ConfirmModal
           title={removing.fullName}
-          message={t("ui.confirmDelete", { name: removing.fullName })}
-          confirmLabel={t("ui.removeMember")}
+          message={t("ui.confirm.delete", { name: removing.fullName })}
+          confirmLabel={t("ui.common.removeMember")}
           pending={remove.isPending}
           error={remove.error}
           onConfirm={() => remove.mutate(removing)}
@@ -208,13 +208,13 @@ export function TeamPage() {
       {assigning && <AssignPlots member={assigning} onClose={() => setAssigning(null)} />}
       {pinFor && <PinDialog member={pinFor} onClose={() => setPinFor(null)} />}
       {qr && (
-        <Modal title={`${t("ui.linkDevice")} · ${qr.member.fullName}`} onClose={() => setQr(null)}>
+        <Modal title={`${t("ui.link.device")} · ${qr.member.fullName}`} onClose={() => setQr(null)}>
           <div className="flex flex-col items-center gap-3">
             <div className="rounded-lg border border-linea bg-papel p-4">
               <QRCodeSVG value={qr.qr} size={240} />
             </div>
-            <p className="text-center text-sm text-tinta-2">{t("ui.linkHelp")}</p>
-            <p className="num text-xs text-tinta-2">{t("ui.expires", { date: fmtDateTime(qr.expiresAt) })}</p>
+            <p className="text-center text-sm text-tinta-2">{t("ui.link.help")}</p>
+            <p className="num text-xs text-tinta-2">{t("ui.common.expires", { date: fmtDateTime(qr.expiresAt) })}</p>
           </div>
         </Modal>
       )}

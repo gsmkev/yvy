@@ -30,7 +30,7 @@ export function PlaceSearch({
   };
   const useMyLocation = () => {
     setGeoMsg(null);
-    if (!("geolocation" in navigator)) return setGeoMsg(t("ui.geoUnsupported"));
+    if (!("geolocation" in navigator)) return setGeoMsg(t("ui.geo.unsupported"));
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (p) => {
@@ -39,17 +39,17 @@ export function PlaceSearch({
       },
       (e) => {
         setLocating(false);
-        setGeoMsg(e.code === e.PERMISSION_DENIED ? t("ui.geoDenied") : t("ui.geoFailed"));
+        setGeoMsg(e.code === e.PERMISSION_DENIED ? t("ui.geo.denied") : t("ui.geo.failed"));
       },
       { enableHighAccuracy: true, timeout: 15_000 },
     );
   };
   return (
   <div className="flex flex-col gap-1.5">
-    <Field label={t("ui.placeSearch")}>
+    <Field label={t("ui.place.search")}>
       <Input
         value={place}
-        placeholder={t("ui.placeSearchPlaceholder")}
+        placeholder={t("ui.place.searchPlaceholder")}
         onChange={(e) => setPlace(e.target.value)}
         onKeyDown={(e) => {
           if (e.key !== "Enter") return;
@@ -68,14 +68,14 @@ export function PlaceSearch({
               onClick={goCoords}
               className="flex w-full cursor-pointer items-baseline justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-surco/[0.05]"
             >
-              <span className="font-medium">{t("ui.placeGoCoords")}</span>
+              <span className="font-medium">{t("ui.place.goCoords")}</span>
               <span className="num text-xs text-tinta-2">
                 {coords.lat.toFixed(5)}, {coords.lon.toFixed(5)}
               </span>
             </button>
           </li>
         )}
-        {!coords && found.length === 0 && <li className="px-3 py-2 text-sm text-tinta-2">{t("ui.placeNone")}</li>}
+        {!coords && found.length === 0 && <li className="px-3 py-2 text-sm text-tinta-2">{t("ui.place.none")}</li>}
         {found.map((p) => (
           <li key={`${p.kind}${p.name}`} className="border-b border-linea last:border-0">
             <button
@@ -85,7 +85,7 @@ export function PlaceSearch({
             >
               <span className="font-medium">{p.name}</span>
               <span className="text-xs text-tinta-2">
-                {p.kind === "department" ? t("ui.placeDepartment") : p.department}
+                {p.kind === "department" ? t("ui.place.department") : p.department}
               </span>
             </button>
           </li>
@@ -94,7 +94,7 @@ export function PlaceSearch({
     )}
     <div>
       <Button onClick={useMyLocation} disabled={locating}>
-        {locating ? t("ui.locating") : t("ui.useMyLocation")}
+        {locating ? t("ui.common.locating") : t("ui.use.myLocation")}
       </Button>
     </div>
     {geoMsg && (

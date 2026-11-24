@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { t as _t } from "@yvy/shared";
+import { t as _t, ATTRIBUTION } from "@yvy/shared";
 import { get } from "../lib/api";
 import { fmtNum } from "../lib/format";
 import { t } from "../lib/i18n";
@@ -34,7 +34,7 @@ export function SprayWindows({ farmId }: { farmId: string }) {
   if (q.isLoading) return <Spinner />;
   if (q.error) return <ErrorBox error={q.error} />;
   const s = q.data!;
-  if (!s.hours.length) return <Empty>{t("ui.sprayNoData")}</Empty>;
+  if (!s.hours.length) return <Empty>{t("ui.spray.noData")}</Empty>;
 
   const days = new Map<string, Spray["hours"]>();
   for (const h of s.hours) days.set(dayKey(h.at), [...(days.get(dayKey(h.at)) ?? []), h]);
@@ -44,14 +44,14 @@ export function SprayWindows({ farmId }: { farmId: string }) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-tinta-2">
-        {t("ui.sprayCriteria", {
+        {t("ui.spray.criteria", {
           wmin: s.limits.windMinKmh,
           wmax: s.limits.windMaxKmh,
           dmin: s.limits.deltaTMin,
           dmax: s.limits.deltaTMax,
         })}
       </p>
-      <div className="flex flex-col gap-2" role="img" aria-label={t("ui.sprayTitle")}>
+      <div className="flex flex-col gap-2" role="img" aria-label={t("ui.spray.title")}>
         {[...days.entries()].map(([key, hours]) => (
           <div key={key} className="grid grid-cols-[48px_1fr] items-center gap-2">
             <span className="text-xs text-tinta-2 capitalize">{label(hours[0]!.at)}</span>
@@ -61,7 +61,7 @@ export function SprayWindows({ farmId }: { farmId: string }) {
                   <span
                     key={h.at}
                     className={h.ok ? "bg-soja" : "bg-linea"}
-                    title={t("ui.sprayHourTip", {
+                    title={t("ui.spray.hourTip", {
                       hour: hh.format(new Date(h.at)),
                       wind: h.windKmh === null ? "—" : fmtNum(h.windKmh),
                       temp: h.tempC === null ? "—" : fmtNum(h.tempC),
@@ -81,24 +81,24 @@ export function SprayWindows({ farmId }: { farmId: string }) {
       </div>
       <div className="flex gap-4 text-xs text-tinta-2">
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 bg-soja" aria-hidden /> {t("ui.sprayLegendOk")}
+          <span className="h-3 w-3 bg-soja" aria-hidden /> {t("ui.spray.legendOk")}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 bg-linea" aria-hidden /> {t("ui.sprayLegendNo")}
+          <span className="h-3 w-3 bg-linea" aria-hidden /> {t("ui.spray.legendNo")}
         </span>
       </div>
       {s.windows.length ? (
         <ul className="num divide-y divide-linea border-y border-linea text-sm">
           {s.windows.map((w) => (
             <li key={w.from} className="py-1.5">
-              {t("ui.sprayWindowLine", { day: label(w.from), from: hh.format(new Date(w.from)), to: hh.format(new Date(w.to)) })}
+              {t("ui.spray.windowLine", { day: label(w.from), from: hh.format(new Date(w.from)), to: hh.format(new Date(w.to)) })}
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-tinta-2">{t("ui.sprayNone")}</p>
+        <p className="text-sm text-tinta-2">{t("ui.spray.none")}</p>
       )}
-      <p className="text-micro text-tinta-2">{_t("attribution.metNorway")}</p>
+      <p className="text-micro text-tinta-2">{_t(ATTRIBUTION.metNorway)}</p>
     </div>
   );
 }

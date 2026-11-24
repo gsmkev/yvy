@@ -53,46 +53,46 @@ export function Preferences() {
   }, []);
   return (
     <section id="preferencias" className="scroll-mt-4">
-      <SectionHead title={t("ui.prefsTitle")} />
-      <p className="mt-3 text-tinta-2">{t("ui.prefsIntro")}</p>
+      <SectionHead title={t("ui.prefs.title")} />
+      <p className="mt-3 text-tinta-2">{t("ui.prefs.intro")}</p>
       <div className="mt-2">
         <Choice
-          legend={t("ui.languageLabel")}
+          legend={t("ui.common.languageLabel")}
           value={getLocale()}
           onChange={chooseLocale}
           options={LOCALES.map((l) => ({ value: l, label: LOCALE_NAMES[l] }))}
         />
         <Choice
-          legend={t("ui.themeLabel")}
+          legend={t("ui.theme.label")}
           value={theme}
           onChange={setTheme}
           options={[
-            { value: "auto", label: t("ui.themeAuto") },
-            { value: "light", label: t("ui.themeLight") },
-            { value: "dark", label: t("ui.themeDark") },
+            { value: "auto", label: t("ui.theme.auto") },
+            { value: "light", label: t("ui.theme.light") },
+            { value: "dark", label: t("ui.theme.dark") },
           ]}
         />
         <Choice
-          legend={t("ui.unitArea")}
-          help={units.area === "cuadra" ? t("ui.unitCuadraNote") : undefined}
+          legend={t("ui.unit.area")}
+          help={units.area === "cuadra" ? t("ui.unit.cuadraNote") : undefined}
           value={units.area}
           onChange={(area) => set({ area })}
           options={[
-            { value: "ha", label: t("ui.unitHectares") },
-            { value: "cuadra", label: t("ui.unitCuadras") },
+            { value: "ha", label: t("ui.unit.hectares") },
+            { value: "cuadra", label: t("ui.unit.cuadras") },
           ]}
         />
         <Choice
-          legend={t("ui.unitRain")}
+          legend={t("ui.unit.rain")}
           value={units.rain}
           onChange={(rain) => set({ rain })}
           options={[
-            { value: "mm", label: t("ui.unitMm") },
-            { value: "in", label: t("ui.unitInches") },
+            { value: "mm", label: t("ui.unit.mm") },
+            { value: "in", label: t("ui.unit.inches") },
           ]}
         />
         <Choice
-          legend={t("ui.unitTemp")}
+          legend={t("ui.unit.temp")}
           value={units.temp}
           onChange={(temp) => set({ temp })}
           options={[

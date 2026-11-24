@@ -18,13 +18,14 @@ export function useIsDesktop() {
 
 /** Bandera booleana recordada en este navegador (si el almacenamiento falla, vale hasta recargar). */
 export function useStoredFlag(key: string): [boolean, (v: boolean) => void] {
-  const [v, setV] = useState(() => {
+  const read = () => {
     try {
       return localStorage.getItem(key) === "1";
     } catch {
       return false;
     }
-  });
+  };
+  const [v, setV] = useState(read);
   return [
     v,
     (n) => {

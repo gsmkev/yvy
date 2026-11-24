@@ -203,8 +203,8 @@ export function ExportMenu({
 }) {
   return (
     <ActionMenu
-      label={t("ui.exportMenu")}
-      text={t("ui.exportMenu")}
+      label={t("ui.export.menu")}
+      text={t("ui.export.menu")}
       quiet={quiet}
       up={up}
       className={className}
@@ -215,7 +215,7 @@ export function ExportMenu({
             try {
               await f.run();
             } catch (e) {
-              toast(t("ui.error", { message: e instanceof Error ? e.message : String(e) }));
+              toast(t("ui.common.error", { message: e instanceof Error ? e.message : String(e) }));
             }
           })();
         },
@@ -239,11 +239,11 @@ export function RowMenu({
 }) {
   return (
     <ActionMenu
-      label={t("ui.rowActions", { name })}
+      label={t("ui.row.actions", { name })}
       items={[
-        onEdit && { label: t("ui.erpEdit"), onSelect: onEdit },
+        onEdit && { label: t("ui.erp.edit"), onSelect: onEdit },
         ...(extra ?? []),
-        onDelete && { label: t("ui.delete"), onSelect: onDelete, danger: true },
+        onDelete && { label: t("ui.common.delete"), onSelect: onDelete, danger: true },
       ]}
     />
   );

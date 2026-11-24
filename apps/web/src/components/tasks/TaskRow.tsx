@@ -21,12 +21,12 @@ function ChecklistProgress({ task }: { task: Task }) {
           aria-valuemin={0}
           aria-valuemax={total}
           aria-valuenow={done}
-          aria-label={t("app.checklistProgress", { done, total })}
+          aria-label={t("app.common.checklistProgress", { done, total })}
           className="block h-1.5 w-24 overflow-hidden rounded-full bg-linea"
         >
           <span className="block h-full bg-soja" style={{ width: `${(done / total) * 100}%` }} />
         </span>
-        {t("app.checklistProgress", { done, total })}
+        {t("app.common.checklistProgress", { done, total })}
       </span>
       <span className="mt-1 block text-xs text-tinta-2">
         {list.map((i) => (
@@ -52,12 +52,12 @@ export function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: strin
     onSuccess: () => {
       setText("");
       qc.invalidateQueries({ queryKey: ["tasks"] });
-      toast(t("ui.taskCommentSaved"));
+      toast(t("ui.task.commentSaved"));
     },
   });
   const when = isDone
-    ? t("ui.taskDoneOn", { date: fmtDate(x.completedAt ?? Date.parse(`${x.dueDate}T12:00:00-03:00`)) })
-    : [dueLabel(x.dueDate, today, overdue), x.dueTime ? t("ui.dueAtTime", { time: x.dueTime }) : null]
+    ? t("ui.task.doneOn", { date: fmtDate(x.completedAt ?? Date.parse(`${x.dueDate}T12:00:00-03:00`)) })
+    : [dueLabel(x.dueDate, today, overdue), x.dueTime ? t("ui.due.atTime", { time: x.dueTime }) : null]
         .filter(Boolean)
         .join(" · ");
   return (
@@ -65,23 +65,23 @@ export function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: strin
       <div className="flex min-h-10 items-start gap-2">
         <span className={`mt-1.5 shrink-0 ${isDone ? "text-soja" : overdue ? "text-peligro" : "text-tinta-2"}`}>
           {isDone ? (
-            <CheckCircle2 size={18} aria-label={t("ui.status_done")} />
+            <CheckCircle2 size={18} aria-label={t("ui.status.done")} />
           ) : (
-            <Circle size={18} aria-label={t("ui.status_open")} />
+            <Circle size={18} aria-label={t("ui.status.open")} />
           )}
         </span>
         <div className="min-w-0 flex-1 py-1">
           <p className={`flex items-center gap-1.5 leading-5 ${isDone ? "text-tinta-2" : "text-surco"}`}>
             <span className="min-w-0">{x.title}</span>
             {x.priority === "high" && !isDone && (
-              <Flag size={14} className="shrink-0 text-trigo" role="img" aria-label={t("ui.taskPriorityHigh")}>
-                <title>{t("ui.taskPriorityHigh")}</title>
+              <Flag size={14} className="shrink-0 text-trigo" role="img" aria-label={t("ui.task.priorityHigh")}>
+                <title>{t("ui.task.priorityHigh")}</title>
               </Flag>
             )}
           </p>
           <p className="text-xs leading-4 text-tinta-2">
             <span className={overdue ? "font-medium text-peligro" : ""}>{when}</span>
-            {x.recurrence !== "none" && ` · ${tk(`ui.recurrence_${x.recurrence}`)}`}
+            {x.recurrence !== "none" && ` · ${tk(`ui.recurrence.${x.recurrence}`)}`}
             {x.plotName ? ` · ${x.plotName}` : ""}
           </p>
           <ChecklistProgress task={x} />
@@ -91,8 +91,8 @@ export function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: strin
             type="button"
             className="inline-flex h-10 shrink-0 cursor-pointer items-center gap-1 rounded-md px-2 text-xs text-tinta-2 hover:bg-surco/5 hover:text-surco"
             aria-expanded={open}
-            aria-label={t("ui.taskCommentsCount", { n: comments.length })}
-            title={t("ui.taskCommentsCount", { n: comments.length })}
+            aria-label={t("ui.task.commentsCount", { n: comments.length })}
+            title={t("ui.task.commentsCount", { n: comments.length })}
             onClick={() => setOpen(!open)}
           >
             <MessageSquare size={14} aria-hidden />
@@ -100,10 +100,10 @@ export function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: strin
           </button>
         )}
         <ActionMenu
-          label={t("ui.taskActions")}
+          label={t("ui.task.actions")}
           items={[
-            { label: t("ui.taskCommentSend"), onSelect: () => setOpen(true) },
-            x.status === "open" && { label: t("ui.delete"), onSelect: onDelete, danger: true },
+            { label: t("ui.task.commentSend"), onSelect: () => setOpen(true) },
+            x.status === "open" && { label: t("ui.common.delete"), onSelect: onDelete, danger: true },
           ]}
         />
       </div>
@@ -118,16 +118,16 @@ export function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: strin
           ))}
           <Form className="flex flex-col items-start gap-2" onSubmit={() => { if (text.trim()) send.mutate(); }}>
             <textarea
-              aria-label={t("ui.taskComments")}
+              aria-label={t("ui.task.comments")}
               className="min-h-16 w-full rounded-md border border-linea bg-papel px-3 py-2 text-body outline-none focus:border-accion focus:ring-2 focus:ring-accion/20"
               maxLength={LIMITS.tasks.maxCommentLength}
-              placeholder={t("ui.taskCommentPlaceholder")}
+              placeholder={t("ui.task.commentPlaceholder")}
               value={text}
               onChange={(e) => setText(e.target.value)}
             />
             {send.error && <ErrorBox error={send.error} />}
             <Button type="submit" disabled={send.isPending || !text.trim()}>
-              {t("ui.taskCommentSend")}
+              {t("ui.task.commentSend")}
             </Button>
           </Form>
         </div>

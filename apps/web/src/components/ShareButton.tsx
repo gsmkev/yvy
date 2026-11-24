@@ -14,7 +14,7 @@ export function ShareWhatsappButton({
 }) {
   return (
     <Button variant={variant} className={className} onClick={() => window.open(whatsappUrl(text), "_blank", "noopener")}>
-      {t("ui.shareWhatsapp")}
+      {t("ui.share.whatsapp")}
     </Button>
   );
 }

@@ -42,7 +42,7 @@ export function LaborCostPanel() {
   const remove = useMutation({
     mutationFn: (id: string) => del(`/org/erp/machine-costs/${id}`),
     onSuccess: () => {
-      toast(t("ui.erpDeleted"));
+      toast(t("ui.erp.deleted"));
       qc.invalidateQueries({ queryKey: ["erp"] });
     },
   });
@@ -52,28 +52,28 @@ export function LaborCostPanel() {
   const hasHours = (machines.data ?? []).some((m) => m.meterKind === "hours");
   const newBtn = (
     <Button variant="primary" onClick={() => setEditing("new")}>
-      {t("ui.laborNew")}
+      {t("ui.labor.new")}
     </Button>
   );
   const cols: Column<Row>[] = [
     {
       id: "machine",
-      header: t("ui.laborMachine"),
+      header: t("ui.labor.machine"),
       cell: (r) => (
         <>
           {r.machine}
-          <span className="block text-meta font-normal text-tinta-2">{tk(`ui.contractorService_${r.service}`)}</span>
+          <span className="block text-meta font-normal text-tinta-2">{tk(`ui.contractor.service_${r.service}`)}</span>
         </>
       ),
     },
-    { id: "fuel", header: t("ui.laborFuel"), align: "right", hideBelow: "lg", cell: (r) => fmtGs(r.own.fuelPerHour) },
-    { id: "operator", header: t("ui.laborOperator"), align: "right", hideBelow: "lg", cell: (r) => fmtGs(r.own.operatorPerHour) },
-    { id: "depr", header: t("ui.laborDepreciation"), align: "right", hideBelow: "lg", cell: (r) => fmtGs(r.own.depreciationPerHour) },
-    { id: "hour", header: t("ui.laborOwnHour"), align: "right", hideBelow: "sm", cell: (r) => <span className="font-medium">{fmtGs(r.own.totalPerHour)}</span> },
-    { id: "ha", header: t("ui.laborOwnHa"), align: "right", cell: (r) => <span className="font-medium">{r.own.perHa === null ? "—" : fmtGs(r.own.perHa)}</span> },
+    { id: "fuel", header: t("ui.labor.fuel"), align: "right", hideBelow: "lg", cell: (r) => fmtGs(r.own.fuelPerHour) },
+    { id: "operator", header: t("ui.labor.operator"), align: "right", hideBelow: "lg", cell: (r) => fmtGs(r.own.operatorPerHour) },
+    { id: "depr", header: t("ui.labor.depreciation"), align: "right", hideBelow: "lg", cell: (r) => fmtGs(r.own.depreciationPerHour) },
+    { id: "hour", header: t("ui.labor.ownHour"), align: "right", hideBelow: "sm", cell: (r) => <span className="font-medium">{fmtGs(r.own.totalPerHour)}</span> },
+    { id: "ha", header: t("ui.labor.ownHa"), align: "right", cell: (r) => <span className="font-medium">{r.own.perHa === null ? "—" : fmtGs(r.own.perHa)}</span> },
     {
       id: "contractor",
-      header: t("ui.laborContractor"),
+      header: t("ui.labor.contractor"),
       hideBelow: "md",
       cell: (r) =>
         r.contractor ? (
@@ -82,17 +82,17 @@ export function LaborCostPanel() {
             <span className="num block text-meta text-tinta-2">{r.contractor.perHa !== null ? `${fmtGs(r.contractor.perHa)} / ha` : `${fmtGs(r.contractor.perHour ?? 0)} / h`}</span>
           </>
         ) : (
-          <span className="text-tinta-2">{t("ui.laborNoContractor")}</span>
+          <span className="text-tinta-2">{t("ui.labor.noContractor")}</span>
         ),
     },
     {
       id: "verdict",
-      header: t("ui.laborVerdict"),
+      header: t("ui.labor.verdict"),
       hideBelow: "md",
       cell: (r) =>
         r.verdict ? (
           <span className={r.verdict.cheaper === "own" ? "text-accion" : "text-trigo-texto"}>
-            {t(r.verdict.cheaper === "own" ? "ui.laborOwnCheaper" : "ui.laborContractorCheaper", { n: fmtGs(Math.abs(r.verdict.savingPyg)), unit: r.verdict.basis === "ha" ? "ha" : "h" })}
+            {t(r.verdict.cheaper === "own" ? "ui.labor.ownCheaper" : "ui.labor.contractorCheaper", { n: fmtGs(Math.abs(r.verdict.savingPyg)), unit: r.verdict.basis === "ha" ? "ha" : "h" })}
           </span>
         ) : (
           "—"
@@ -100,7 +100,7 @@ export function LaborCostPanel() {
     },
     {
       id: "_a",
-      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      header: <span className="sr-only">{t("ui.row.actionsHeader")}</span>,
       align: "right",
       width: "3rem",
       cell: (r) => <RowMenu name={r.machine} onEdit={() => setEditing(profiles.data?.find((p) => p.machineId === r.machineId) ?? null)} onDelete={() => remove.mutate(r.machineId)} />,
@@ -110,15 +110,15 @@ export function LaborCostPanel() {
     <div className="flex flex-col gap-4">
       {list.length > 0 && <HeaderActions>{newBtn}</HeaderActions>}
       {list.length === 0 ? (
-        <EmptyState title={t("ui.laborEmptyTitle")} action={hasHours ? newBtn : <SectionButton to="machines" primary>{t("ui.laborGoMachines")}</SectionButton>}>
-          {hasHours ? t("ui.laborEmptyHint") : t("ui.laborEmptyNoMachines")}
+        <EmptyState title={t("ui.labor.emptyTitle")} action={hasHours ? newBtn : <SectionButton to="machines" primary>{t("ui.labor.goMachines")}</SectionButton>}>
+          {hasHours ? t("ui.labor.emptyHint") : t("ui.labor.emptyNoMachines")}
         </EmptyState>
       ) : (
         <>
           <ExportableTable name="mano-de-obra">
-            <DataTable columns={cols} rows={list} rowKey={(r) => r.machineId} caption={t("ui.adminSection_labor")} />
+            <DataTable columns={cols} rows={list} rowKey={(r) => r.machineId} caption={t("ui.admin.section_labor")} />
           </ExportableTable>
-          <p className="text-meta text-tinta-2">{t("ui.laborNote")}</p>
+          <p className="text-meta text-tinta-2">{t("ui.labor.note")}</p>
         </>
       )}
       {editing && <ProfileModal row={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
@@ -156,40 +156,40 @@ function ProfileModal({ row, onClose }: { row: Profile | null; onClose: () => vo
         fuelPricePyg: num(f.price),
       }),
     onSuccess: () => {
-      toast(t("ui.erpSaved"));
+      toast(t("ui.erp.saved"));
       qc.invalidateQueries({ queryKey: ["erp"] });
       onClose();
     },
   });
   const hours = (machines.data ?? []).filter((m) => m.meterKind === "hours");
   return (
-    <Modal title={t("ui.laborNew")} onClose={onClose}>
+    <Modal title={t("ui.labor.new")} onClose={onClose}>
       <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
-        <Field label={t("ui.laborMachine")} hint={t("ui.laborHoursOnly")}>
+        <Field label={t("ui.labor.machine")} hint={t("ui.labor.hoursOnly")}>
           <Select value={f.machineId} onChange={set("machineId")} options={hours.map((m) => ({ value: m.id, label: m.name }))} />
         </Field>
-        <Field label={t("ui.laborService")}>
-          <Select value={f.service} onChange={set("service")} options={CONTRACTOR_SERVICES.map((k) => ({ value: k, label: tk(`ui.contractorService_${k}`) }))} />
+        <Field label={t("ui.labor.service")}>
+          <Select value={f.service} onChange={set("service")} options={CONTRACTOR_SERVICES.map((k) => ({ value: k, label: tk(`ui.contractor.service_${k}`) }))} />
         </Field>
-        <Field label={t("ui.laborPurchase")}>
+        <Field label={t("ui.labor.purchase")}>
           <Input type="number" min={0} step="any" value={f.purchase} onChange={set("purchase")} />
         </Field>
-        <Field label={t("ui.laborResidual")}>
+        <Field label={t("ui.labor.residual")}>
           <Input type="number" min={0} step="any" value={f.residual} onChange={set("residual")} />
         </Field>
-        <Field label={t("ui.laborLife")}>
+        <Field label={t("ui.labor.life")}>
           <Input type="number" min={0} step="any" value={f.life} onChange={set("life")} />
         </Field>
-        <Field label={t("ui.laborOperator")}>
+        <Field label={t("ui.labor.operator")}>
           <Input type="number" min={0} step="any" value={f.operator} onChange={set("operator")} />
         </Field>
-        <Field label={t("ui.laborHaPerHour")}>
+        <Field label={t("ui.labor.haPerHour")}>
           <Input type="number" min={0} step="any" value={f.haPerHour} onChange={set("haPerHour")} />
         </Field>
-        <Field label={t("ui.laborLph")} hint={t("ui.laborLphHint")}>
+        <Field label={t("ui.labor.lph")} hint={t("ui.labor.lphHint")}>
           <Input type="number" min={0} step="any" value={f.lph} onChange={set("lph")} />
         </Field>
-        <Field label={t("ui.laborPrice")} hint={t("ui.laborPriceHint")}>
+        <Field label={t("ui.labor.price")} hint={t("ui.labor.priceHint")}>
           <Input type="number" min={0} step="any" value={f.price} onChange={set("price")} />
         </Field>
         <FormFooter error={save.error} disabled={save.isPending || !f.machineId} />

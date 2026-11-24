@@ -36,12 +36,12 @@ export function RiskReportBody({ r }: { r: FarmRisk }) {
   const rain = rainByMonth(r.rain);
   const fire = r.fire;
   const rainCols: Column<RainRow>[] = [
-    { id: "m", header: t("ui.gaugesMonth"), cell: (m) => m.label },
-    { id: "recent", header: t("ui.riskRainRecent"), align: "right", cell: (m) => fmtMm(m.mm) },
-    { id: "normal", header: t("ui.riskRainNormal"), align: "right", cell: (m) => (m.normalMm === null ? "—" : fmtMm(m.normalMm)) },
+    { id: "m", header: t("ui.gauges.month"), cell: (m) => m.label },
+    { id: "recent", header: t("ui.risk.rainRecent"), align: "right", cell: (m) => fmtMm(m.mm) },
+    { id: "normal", header: t("ui.risk.rainNormal"), align: "right", cell: (m) => (m.normalMm === null ? "—" : fmtMm(m.normalMm)) },
     {
       id: "range",
-      header: t("ui.riskRainRange"),
+      header: t("ui.risk.rainRange"),
       align: "right",
       hideBelow: "sm",
       cell: (m) => (m.p20Mm === null || m.p80Mm === null ? "—" : `${Math.round(m.p20Mm)} a ${Math.round(m.p80Mm)} mm`),
@@ -49,21 +49,21 @@ export function RiskReportBody({ r }: { r: FarmRisk }) {
   ];
   return (
     <div className="@container grid gap-x-10 gap-y-8 @3xl:grid-cols-2">
-      <Section title={t("ui.riskFrostTitle")} lead={t("ui.riskFrostLead", { c: r.frost.thresholdC })}>
+      <Section title={t("ui.risk.frostTitle")} lead={t("ui.risk.frostLead", { c: r.frost.thresholdC })}>
         <Grid>
-          <Stat label={t("ui.riskFrostMean")} value={fmtNum(r.frost.meanPerYear)} unit="días" />
-          {r.frost.worst && <Stat label={t("ui.riskFrostWorst")} value={r.frost.worst.days} unit="días" note={String(r.frost.worst.year)} />}
-          <Stat label={t("ui.riskFrostYears")} value={r.frost.yearsWithFrostPct} unit="%" />
+          <Stat label={t("ui.risk.frostMean")} value={fmtNum(r.frost.meanPerYear)} unit="días" />
+          {r.frost.worst && <Stat label={t("ui.risk.frostWorst")} value={r.frost.worst.days} unit="días" note={String(r.frost.worst.year)} />}
+          <Stat label={t("ui.risk.frostYears")} value={r.frost.yearsWithFrostPct} unit="%" />
           <Stat
-            label={t("ui.riskFrostFirst")}
+            label={t("ui.risk.frostFirst")}
             value={fmtMmDd(r.frost.typicalFirstFrost)}
-            note={`${t("ui.riskFrostLast")}: ${fmtMmDd(r.frost.typicalLastFrost)}`}
+            note={`${t("ui.risk.frostLast")}: ${fmtMmDd(r.frost.typicalLastFrost)}`}
           />
         </Grid>
         <div>
-          <h3 className="eyebrow mb-2">{t("ui.riskFrostChart")}</h3>
+          <h3 className="eyebrow mb-2">{t("ui.risk.frostChart")}</h3>
           <ColumnChart
-            ariaLabel={t("ui.riskFrostChart")}
+            ariaLabel={t("ui.risk.frostChart")}
             unit="días"
             every={3}
             color={CHART.comparison}
@@ -72,50 +72,50 @@ export function RiskReportBody({ r }: { r: FarmRisk }) {
         </div>
       </Section>
 
-      <Section title={t("ui.riskDryTitle")} lead={t("ui.riskDryLead", { mm: r.dry.thresholdMm })}>
+      <Section title={t("ui.risk.dryTitle")} lead={t("ui.risk.dryLead", { mm: r.dry.thresholdMm })}>
         <Grid>
-          <Stat label={t("ui.riskDryMean")} value={fmtNum(r.dry.meanLongestDays)} unit="días" />
-          {r.dry.worst && <Stat label={t("ui.riskDryWorst")} value={r.dry.worst.days} unit="días" note={String(r.dry.worst.year)} />}
-          <Stat label={t("ui.riskDrySummer")} value={fmtNum(r.dry.summerMeanLongestDays)} unit="días" />
-          <Stat label={t("ui.riskDrySpells")} value={fmtNum(r.dry.spells15PerYear)} />
+          <Stat label={t("ui.risk.dryMean")} value={fmtNum(r.dry.meanLongestDays)} unit="días" />
+          {r.dry.worst && <Stat label={t("ui.risk.dryWorst")} value={r.dry.worst.days} unit="días" note={String(r.dry.worst.year)} />}
+          <Stat label={t("ui.risk.drySummer")} value={fmtNum(r.dry.summerMeanLongestDays)} unit="días" />
+          <Stat label={t("ui.risk.drySpells")} value={fmtNum(r.dry.spells15PerYear)} />
         </Grid>
       </Section>
 
-      <Section title={t("ui.riskRainTitle")} wide>
-        <Stat label={t("ui.riskRainAnnual")} value={fmtNum(r.rain.annualMeanMm)} unit="mm" />
+      <Section title={t("ui.risk.rainTitle")} wide>
+        <Stat label={t("ui.risk.rainAnnual")} value={fmtNum(r.rain.annualMeanMm)} unit="mm" />
         {rain.length > 0 ? (
           <div className="grid items-start gap-x-10 gap-y-5 @3xl:grid-cols-2">
             <MonthlyRainChart
-              ariaLabel={t("ui.riskRainTitle")}
-              labels={{ gauge: t("ui.riskRainRecent"), satellite: "", normal: t("ui.riskRainNormal") }}
+              ariaLabel={t("ui.risk.rainTitle")}
+              labels={{ gauge: t("ui.risk.rainRecent"), satellite: "", normal: t("ui.risk.rainNormal") }}
               months={rain.map((m) => ({ label: m.label, gauge: m.mm, sat: null, normal: m.normalMm }))}
             />
-            <DataTable columns={rainCols} rows={rain} rowKey={(m) => m.key} caption={t("ui.riskRainTitle")} />
+            <DataTable columns={rainCols} rows={rain} rowKey={(m) => m.key} caption={t("ui.risk.rainTitle")} />
           </div>
         ) : null}
       </Section>
 
       <Section
-        title={t("ui.riskFireTitle")}
-        lead={fire ? t("ui.riskFireLead", { km: fire.radiusKm, years: fire.years }) : undefined}
+        title={t("ui.risk.fireTitle")}
+        lead={fire ? t("ui.risk.fireLead", { km: fire.radiusKm, years: fire.years }) : undefined}
         wide
       >
         {!fire ? (
-          <p className="text-sm text-tinta-2">{t("ui.riskFireMissing")}</p>
+          <p className="text-sm text-tinta-2">{t("ui.risk.fireMissing")}</p>
         ) : (
           <>
             <Grid>
-              <Stat label={t("ui.riskFireTotal")} value={fire.total} />
-              {fire.nearestKm !== null && <Stat label={t("ui.riskFireNearest")} value={fmtNum(fire.nearestKm)} unit="km" />}
-              {fire.lastAt && <Stat label={t("ui.riskFireLast")} value={fmtDate(fire.lastAt)} />}
+              <Stat label={t("ui.risk.fireTotal")} value={fire.total} />
+              {fire.nearestKm !== null && <Stat label={t("ui.risk.fireNearest")} value={fmtNum(fire.nearestKm)} unit="km" />}
+              {fire.lastAt && <Stat label={t("ui.risk.fireLast")} value={fmtDate(fire.lastAt)} />}
             </Grid>
             {fire.total === 0 ? (
-              <p className="text-sm text-tinta-2">{t("ui.riskFireNone")}</p>
+              <p className="text-sm text-tinta-2">{t("ui.risk.fireNone")}</p>
             ) : (
               <div>
-                <h3 className="eyebrow mb-2">{t("ui.riskFireByMonth")}</h3>
+                <h3 className="eyebrow mb-2">{t("ui.risk.fireByMonth")}</h3>
                 <ColumnChart
-                  ariaLabel={t("ui.riskFireByMonth")}
+                  ariaLabel={t("ui.risk.fireByMonth")}
                   unit="focos"
                   color={CHART.warm}
                   items={fireByMonth(fire.byMonth)}
@@ -151,7 +151,7 @@ export function RiskPage() {
     try {
       const [{ pdf }, { RiskReport }] = await Promise.all([import("@react-pdf/renderer"), import("../lib/riskPdf")]);
       const blob = await pdf(<RiskReport farm={f} risk={report} computedAt={computedAt} generatedAt={Date.now()} />).toBlob();
-      download(blob, `${t("ui.riskPdfFile")}-${f.name}.pdf`);
+      download(blob, `${t("ui.risk.pdfFile")}-${f.name}.pdf`);
     } catch (e) {
       setError(e);
     } finally {
@@ -163,25 +163,25 @@ export function RiskPage() {
     <Page
       width="data"
       className="gap-6"
-      back={{ to: `/estancias/${farmId}/informes`, label: t("ui.reportsBack") }}
-      title={t("ui.riskTitle")}
+      back={{ to: `/estancias/${farmId}/informes`, label: t("ui.reports.back") }}
+      title={t("ui.risk.title")}
       primary={
         canPdf ? (
           <Button variant="primary" onClick={pdfFile} disabled={busy}>
-            {busy ? t("ui.riskPdfWorking") : t("ui.riskPdf")}
+            {busy ? t("ui.risk.pdfWorking") : t("ui.risk.pdf")}
           </Button>
         ) : undefined
       }
-      menu={report ? <PageExport root={body} name={t("ui.riskTitle")} /> : undefined}
+      menu={report ? <PageExport root={body} name={t("ui.risk.title")} /> : undefined}
     >
-      {report && computedAt !== null && <p className="-mt-3 text-sm text-tinta-2">{f.name} · {t("ui.riskComputed", { date: fmtDate(computedAt) })}</p>}
+      {report && computedAt !== null && <p className="-mt-3 text-sm text-tinta-2">{f.name} · {t("ui.risk.computed", { date: fmtDate(computedAt) })}</p>}
       {report === null ? (
-        <EmptyState title={t("ui.riskPending")}>{t("ui.riskPendingHint")}</EmptyState>
+        <EmptyState title={t("ui.risk.pending")}>{t("ui.risk.pendingHint")}</EmptyState>
       ) : (
         <div ref={body} className="flex flex-col gap-6">
           {error ? <ErrorBox error={error} /> : null}
           <RiskReportBody r={report} />
-          <p className="text-xs text-tinta-2">{t("ui.riskIntro", { from: report.normalFrom, to: report.normalTo })}</p>
+          <p className="text-xs text-tinta-2">{t("ui.risk.intro", { from: report.normalFrom, to: report.normalTo })}</p>
         </div>
       )}
     </Page>

@@ -43,48 +43,48 @@ export function SanitaryPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["sanitary"] }),
   });
   const farmName = (id: string | null) =>
-    id ? (farms.data?.find((f) => f.id === id)?.name ?? "") : t("ui.sanitaryAllFarms");
+    id ? (farms.data?.find((f) => f.id === id)?.name ?? "") : t("ui.sanitary.allFarms");
 
-  if (me.data && !canPlan) return <Page width="read"><p className="text-sm text-tinta-2">{t("ui.sanitaryNoAccess")}</p></Page>;
+  if (me.data && !canPlan) return <Page width="read"><p className="text-sm text-tinta-2">{t("ui.sanitary.noAccess")}</p></Page>;
   const manyFarms = (farms.data?.length ?? 0) > 1;
   return (
     <Page width="data">
       <PageHeader
-        title={t("ui.sanitaryTitle")}
+        title={t("ui.sanitary.title")}
         primary={
           <Button variant="primary" onClick={() => setCreating(true)}>
-            {t("ui.sanitaryNew")}
+            {t("ui.sanitary.new")}
           </Button>
         }
       />
       <SenacsaCampaigns />
       <div className="flex items-center gap-1">
-        <Button variant="quiet" icon={ChevronLeft} className="w-10 !px-0" aria-label={t("ui.sanitaryPrev")} title={t("ui.sanitaryPrev")} onClick={() => setMonth(shiftMonth(month, -1))} />
+        <Button variant="quiet" icon={ChevronLeft} className="w-10 !px-0" aria-label={t("ui.sanitary.prev")} title={t("ui.sanitary.prev")} onClick={() => setMonth(shiftMonth(month, -1))} />
         <span className="min-w-40 text-center text-section leading-6 font-semibold" aria-live="polite">
           {monthLabel(month)}
         </span>
-        <Button variant="quiet" icon={ChevronRight} className="w-10 !px-0" aria-label={t("ui.sanitaryNext")} title={t("ui.sanitaryNext")} onClick={() => setMonth(shiftMonth(month, 1))} />
+        <Button variant="quiet" icon={ChevronRight} className="w-10 !px-0" aria-label={t("ui.sanitary.next")} title={t("ui.sanitary.next")} onClick={() => setMonth(shiftMonth(month, 1))} />
       </div>
       {events.isLoading && <Spinner rows={4} h={64} />}
       {events.error ? <ErrorBox error={events.error} /> : null}
       {events.data && events.data.length === 0 && (
-        <EmptyState title={t("ui.sanitaryEmpty")}>
-          {t("ui.sanitaryEmptyHint")}
+        <EmptyState title={t("ui.sanitary.empty")}>
+          {t("ui.sanitary.emptyHint")}
         </EmptyState>
       )}
       {events.data && events.data.length > 0 && (
         <DataTable
-          caption={t("ui.sanitaryTitle")}
+          caption={t("ui.sanitary.title")}
           rows={events.data}
           rowKey={(e) => e.id}
           columns={[
-            { id: "date", header: t("ui.dueDate"), width: "7rem", cell: (e) => <span className="num text-tinta-2">{fmtIsoDate(e.plannedDate)}</span> },
+            { id: "date", header: t("ui.due.date"), width: "7rem", cell: (e) => <span className="num text-tinta-2">{fmtIsoDate(e.plannedDate)}</span> },
             {
               id: "event",
-              header: t("fields.healthReason"),
+              header: t("fields.health.reason"),
               cell: (e) => (
                 <>
-                  {tk(`fields.healthReason_${e.reason}`)}
+                  {tk(`fields.health.reason_${e.reason}`)}
                   {e.product ? `: ${e.product}` : ""}
                   {e.note && <p className="text-meta font-normal text-tinta-2">{e.note}</p>}
                 </>
@@ -92,33 +92,33 @@ export function SanitaryPage() {
             },
             {
               id: "meta",
-              header: t("ui.sanitaryCategories"),
+              header: t("ui.sanitary.categories"),
               hideBelow: "md",
               cell: (e) =>
                 [
                   manyFarms ? farmName(e.farmId) : "",
-                  e.categories.map((c) => tk(`fields.herd_${c}`).toLowerCase()).join(", "),
-                  e.tasksCreated > 0 ? t("ui.sanitaryTasks", { n: e.tasksCreated }) : "",
+                  e.categories.map((c) => tk(`fields.herd.${c}`).toLowerCase()).join(", "),
+                  e.tasksCreated > 0 ? t("ui.sanitary.tasks", { n: e.tasksCreated }) : "",
                 ]
                   .filter(Boolean)
                   .join(" · "),
             },
             {
               id: "state",
-              header: t("ui.statusCol"),
+              header: t("ui.status.col"),
               cell: (e) =>
                 e.state === "overdue" ? (
-                  <span className="font-medium text-peligro">{t("ui.sanitaryState_overdue")}</span>
+                  <span className="font-medium text-peligro">{t("ui.sanitary.state_overdue")}</span>
                 ) : e.state === "done" && e.doneAt ? (
-                  <span className="text-accion">{t("ui.sanitaryDoneOn", { date: fmtDate(e.doneAt) })}</span>
+                  <span className="text-accion">{t("ui.sanitary.doneOn", { date: fmtDate(e.doneAt) })}</span>
                 ) : null,
             },
             {
               id: "menu",
-              header: <span className="sr-only">{t("ui.moreActions")}</span>,
+              header: <span className="sr-only">{t("ui.common.moreActions")}</span>,
               align: "right",
               width: "3rem",
-              cell: (e) => <RowMenu name={tk(`fields.healthReason_${e.reason}`)} onDelete={() => remove.mutate(e.id)} />,
+              cell: (e) => <RowMenu name={tk(`fields.health.reason_${e.reason}`)} onDelete={() => remove.mutate(e.id)} />,
             },
           ]}
         />
@@ -131,7 +131,7 @@ export function SanitaryPage() {
           onSaved={(n) => {
             qc.invalidateQueries({ queryKey: ["sanitary"] });
             qc.invalidateQueries({ queryKey: ["tasks"] });
-            toast(n > 0 ? t("ui.sanitarySavedTasks", { n }) : t("ui.sanitarySaved"));
+            toast(n > 0 ? t("ui.sanitary.savedTasks", { n }) : t("ui.sanitary.saved"));
             setCreating(false);
           }}
         />
@@ -176,27 +176,27 @@ function NewEvent({
   const set = (k: "reason" | "plannedDate" | "farmId" | "product" | "note") => (e: { target: { value: string } }) =>
     setF({ ...f, [k]: e.target.value });
   return (
-    <Modal title={t("ui.sanitaryNew")} onClose={onClose}>
+    <Modal title={t("ui.sanitary.new")} onClose={onClose}>
       <Form className="flex flex-col gap-3 p-5" onSubmit={() => create.mutate()}>
-        <Field label={t("fields.healthReason")}>
+        <Field label={t("fields.health.reason")}>
           <Select
             value={f.reason}
             onChange={set("reason")}
-            options={HEALTH_REASONS.map((r) => ({ value: r, label: tk(`fields.healthReason_${r}`) }))}
+            options={HEALTH_REASONS.map((r) => ({ value: r, label: tk(`fields.health.reason_${r}`) }))}
           />
         </Field>
-        <Field label={t("ui.dueDate")}>
+        <Field label={t("ui.due.date")}>
           <Input type="date" required value={f.plannedDate} onChange={set("plannedDate")} />
         </Field>
-        <Field label={t("ui.farm")}>
+        <Field label={t("ui.common.farm")}>
           <Select
             value={f.farmId}
             onChange={set("farmId")}
-            options={[{ value: "", label: t("ui.sanitaryAllFarms") }, ...farms.map((x) => ({ value: x.id, label: x.name }))]}
+            options={[{ value: "", label: t("ui.sanitary.allFarms") }, ...farms.map((x) => ({ value: x.id, label: x.name }))]}
           />
         </Field>
         <fieldset>
-          <legend className="mb-1 text-sm font-medium">{t("ui.sanitaryCategories")}</legend>
+          <legend className="mb-1 text-sm font-medium">{t("ui.sanitary.categories")}</legend>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {HERD_CATEGORIES.map((c) => (
               <label key={c} className="flex items-center gap-1.5 text-sm">
@@ -205,29 +205,29 @@ function NewEvent({
                   checked={cats.includes(c)}
                   onChange={(e) => setCats(e.target.checked ? [...cats, c] : cats.filter((x) => x !== c))}
                 />
-                {tk(`fields.herd_${c}`)}
+                {tk(`fields.herd.${c}`)}
               </label>
             ))}
           </div>
-          <p className="mt-1 text-xs text-tinta-2">{t("ui.sanitaryCategoriesHint")}</p>
+          <p className="mt-1 text-xs text-tinta-2">{t("ui.sanitary.categoriesHint")}</p>
         </fieldset>
-        <Field label={t("fields.product")}>
+        <Field label={t("fields.common.product")}>
           <Input value={f.product} onChange={set("product")} maxLength={120} />
         </Field>
-        <Field label={t("app.note")}>
+        <Field label={t("app.common.note")}>
           <Input value={f.note} onChange={set("note")} maxLength={500} />
         </Field>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={f.createTasks} onChange={(e) => setF({ ...f, createTasks: e.target.checked })} />
-          {t("ui.sanitaryCreateTasks")}
+          {t("ui.sanitary.createTasks")}
         </label>
         {create.error && <ErrorBox error={create.error} />}
         <div className="flex gap-2">
           <Button type="submit" variant="primary" disabled={create.isPending}>
-            {t("ui.save")}
+            {t("ui.common.save")}
           </Button>
           <Button variant="quiet" onClick={onClose}>
-            {t("ui.cancel")}
+            {t("ui.common.cancel")}
           </Button>
         </div>
       </Form>

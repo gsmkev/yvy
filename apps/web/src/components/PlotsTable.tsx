@@ -44,13 +44,13 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
         .sort((a, b) => b.drop!.pct - a.drop!.pct),
     [plots],
   );
-  const dropText = (d: { pct: number; since: number }) => t("ui.vigorDrop", { pct: d.pct, date: fmtDay(d.since) });
+  const dropText = (d: { pct: number; since: number }) => t("ui.vigor.drop", { pct: d.pct, date: fmtDay(d.since) });
   // Sin ninguna pasada procesada la columna Vigor sería una fila de guiones
   const hasVigor = plots.some((p) => p.ndviMean !== null);
   const columns: Column<Plot>[] = [
     {
       id: "name",
-      header: t("ui.plot"),
+      header: t("ui.common.plot"),
       sort: (a, b) => collator.compare(a.name, b.name),
       cell: (p) => {
         const d = vigorDrop(p);
@@ -70,10 +70,10 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
     },
     {
       id: "kind",
-      header: t("ui.kind"),
+      header: t("ui.common.kind"),
       sort: (a, b) => collator.compare(kindOf(a), kindOf(b)),
       cell: (p) => (
-        <span className="text-tinta-2">{p.kind === "pasture" ? t("ui.pasture") : (p.crop ?? t("ui.crop"))}</span>
+        <span className="text-tinta-2">{p.kind === "pasture" ? t("ui.common.pasture") : (p.crop ?? t("ui.common.crop"))}</span>
       ),
     },
     { id: "area", header: areaUnitLabel(), align: "right", sort: (a, b) => a.areaHa - b.areaHa, cell: (p) => fmtAreaValue(p.areaHa) },
@@ -81,7 +81,7 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
       ? [
           {
             id: "vigor",
-            header: t("ui.vigor"),
+            header: t("ui.common.vigor"),
             align: "right" as const,
             sort: byNum((p) => p.ndviMean),
             cell: (p: Plot) => <Vigor value={p.ndviMean} />,
@@ -90,7 +90,7 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
       : []),
     {
       id: "visit",
-      header: t("ui.lastVisitShort"),
+      header: t("ui.last.visitShort"),
       align: "right",
       sort: byNum((p) => p.lastRecordAt),
       cell: (p) => <span className="text-tinta-2">{p.lastRecordAt ? fmtDay(p.lastRecordAt) : "—"}</span>,
@@ -100,7 +100,7 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
     <>
       {worse.length > 0 && (
         <div className="mb-5">
-          <h3 className="eyebrow mb-1">{t("ui.worsenedPlots")}</h3>
+          <h3 className="eyebrow mb-1">{t("ui.common.worsenedPlots")}</h3>
           <ul className="divide-y divide-linea border-y border-linea text-sm">
             {worse.map(({ plot, drop }) => (
               <li key={plot.id}>
@@ -118,8 +118,8 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
       )}
       <Input
         type="search"
-        aria-label={t("ui.filterPlots")}
-        placeholder={t("ui.filterPlots")}
+        aria-label={t("ui.filter.plots")}
+        placeholder={t("ui.filter.plots")}
         value={q}
         onChange={(e) => setQ(e.target.value)}
         className="mb-2 w-full"
@@ -129,8 +129,8 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
         rows={rows}
         rowKey={(p) => p.id}
         onRowClick={(p) => onSelect(p.id)}
-        caption={t("ui.plots")}
-        empty={<p className="py-4 text-sm text-tinta-2">{t("ui.noPlotMatch")}</p>}
+        caption={t("ui.common.plots")}
+        empty={<p className="py-4 text-sm text-tinta-2">{t("ui.no.plotMatch")}</p>}
       />
     </>
   );

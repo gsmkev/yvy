@@ -22,17 +22,17 @@ const diff = (r: GaugeRow) => {
 
 type Row = GaugeRow & { label: string };
 
-function GaugeSection({ name, months, season }: { name: string; months: GaugeRow[]; season: GaugeRow }) {
-  const rows: Row[] = [...months.map((m) => ({ ...m, label: monthLabel(m.key) })), { ...season, label: t("ui.gaugesSeason") }];
+function GaugeSection({ name, table: { months, season } }: { name: string; table: { months: GaugeRow[]; season: GaugeRow } }) {
+  const rows: Row[] = [...months.map((m) => ({ ...m, label: monthLabel(m.key) })), { ...season, label: t("ui.gauges.season") }];
   const noData = season.gaugeMm === null;
   // Los valores no se parten en dos líneas: la tabla se desplaza de costado dentro de su contenedor si no entra
   const nowrap = (s: string) => <span className="whitespace-nowrap">{s}</span>;
   const all: Column<Row>[] = [
-    { id: "m", header: t("ui.gaugesMonth"), cell: (r) => <span className={`whitespace-nowrap ${r.key === "season" ? "font-semibold" : ""}`}>{r.label}</span> },
-    { id: "gauge", header: t("ui.gauge"), align: "right", cell: (r) => nowrap(mm(r.gaugeMm)) },
-    { id: "sat", header: t("ui.satelliteRain"), align: "right", cell: (r) => nowrap(mm(r.satMm)) },
-    { id: "normal", header: t("ui.rainNormal"), align: "right", cell: (r) => nowrap(mm(r.normalMm)), hideBelow: "sm" },
-    { id: "diff", header: t("ui.gaugesVsSat"), align: "right", cell: (r) => nowrap(diff(r)), hideBelow: "sm" },
+    { id: "m", header: t("ui.gauges.month"), cell: (r) => <span className={`whitespace-nowrap ${r.key === "season" ? "font-semibold" : ""}`}>{r.label}</span> },
+    { id: "gauge", header: t("ui.common.gauge"), align: "right", cell: (r) => nowrap(mm(r.gaugeMm)) },
+    { id: "sat", header: t("ui.common.satelliteRain"), align: "right", cell: (r) => nowrap(mm(r.satMm)) },
+    { id: "normal", header: t("ui.rain.normal"), align: "right", cell: (r) => nowrap(mm(r.normalMm)), hideBelow: "sm" },
+    { id: "diff", header: t("ui.gauges.vsSat"), align: "right", cell: (r) => nowrap(diff(r)), hideBelow: "sm" },
   ];
   const cols = all.filter((c) => {
     // columnas sin ningún dato en la tabla no se muestran
@@ -44,12 +44,12 @@ function GaugeSection({ name, months, season }: { name: string; months: GaugeRow
   return (
     <section className="flex min-w-0 flex-col gap-3">
       <SectionHead title={name} />
-      {noData && <p className="text-sm text-tinta-2">{t("ui.gaugesNoData")}</p>}
+      {noData && <p className="text-sm text-tinta-2">{t("ui.gauges.noData")}</p>}
       <div className="grid items-start gap-x-10 gap-y-5 2xl:grid-cols-2">
         <DataTable columns={cols} rows={rows} rowKey={(r) => r.key} caption={name} />
         <MonthlyRainChart
-          ariaLabel={t("ui.gaugesChartLabel", { name })}
-          labels={{ satellite: t("ui.satelliteRain"), normal: t("ui.rainNormal"), gauge: t("ui.gauge") }}
+          ariaLabel={t("ui.gauges.chartLabel", { name })}
+          labels={{ satellite: t("ui.common.satelliteRain"), normal: t("ui.rain.normal"), gauge: t("ui.common.gauge") }}
           months={months.map((m) => ({ label: monthLabel(m.key), gauge: m.gaugeMm, sat: m.satMm, normal: m.normalMm }))}
         />
       </div>
@@ -79,19 +79,17 @@ export function RainGaugesPage() {
     <Page
       width="data"
       className="gap-6"
-      back={{ to: `/estancias/${farmId}/informes`, label: t("ui.reportsBack") }}
-      title={t("ui.gaugesTitle")}
-      menu={gauges.length > 0 ? <PageExport root={body} name={t("ui.gaugesTitle")} /> : undefined}
+      back={{ to: `/estancias/${farmId}/informes`, label: t("ui.reports.back") }}
+      title={t("ui.gauges.title")}
+      menu={gauges.length > 0 ? <PageExport root={body} name={t("ui.gauges.title")} /> : undefined}
     >
-      <p className="-mt-3 text-sm text-tinta-2">{farm.data.farm.name} · {t("ui.gaugesIntro", { from: fmtIsoDate(from), to: fmtIsoDate(cutoff) })}</p>
-      {gauges.length === 0 && <EmptyState title={t("ui.gaugesNone")}>{t("ui.gaugesNoneHint")}</EmptyState>}
+      <p className="-mt-3 text-sm text-tinta-2">{farm.data.farm.name} · {t("ui.gauges.intro", { from: fmtIsoDate(from), to: fmtIsoDate(cutoff) })}</p>
+      {gauges.length === 0 && <EmptyState title={t("ui.gauges.none")}>{t("ui.gauges.noneHint")}</EmptyState>}
       <div ref={body} className="flex flex-col gap-8">
         {gauges.map((g) => (
-          <GaugeSection key={g.id} name={g.name} {...gaugeTable(c, g.id, from, cutoff, tz)} />
+          <GaugeSection key={g.id} name={g.name} table={gaugeTable(c, g.id, from, cutoff, tz)} />
         ))}
-        {hasUnassignedRain(c) && (
-          <GaugeSection name={t("ui.gaugesUnassigned")} {...gaugeTable(c, null, from, cutoff, tz)} />
-        )}
+        {hasUnassignedRain(c) && <GaugeSection name={t("ui.gauges.unassigned")} table={gaugeTable(c, null, from, cutoff, tz)} />}
       </div>
     </Page>
   );

@@ -24,7 +24,7 @@ export function RatePrescription({ plot, zones, onClose }: { plot: Plot; zones: 
   const ready = filled && product.trim() !== "";
   const slug = `${plot.name}-${product.trim()}`.normalize("NFD").replace(/[^\w-]+/g, "_").replace(/_+/g, "_").slice(0, 60);
   const guard = (fn: () => Promise<void> | void) => async () => {
-    if (!ready) return setError(t("ui.rxInvalid", { max: fmtNum(LIMITS.prescription.maxRate) }));
+    if (!ready) return setError(t("ui.rx.invalid", { max: fmtNum(LIMITS.prescription.maxRate) }));
     setError(null);
     await fn();
   };
@@ -34,7 +34,7 @@ export function RatePrescription({ plot, zones, onClose }: { plot: Plot; zones: 
       "prescripcion",
       p.zones.map((z) => ({
         geometry: z.geometry,
-        row: { RATE: z.rate, ZONE: z.zone, LOTE: p.plotName, PRODUCTO: p.product, UNIDAD: t(`ui.rxUnit_${p.unit}`), AREA_HA: z.areaHa },
+        row: { RATE: z.rate, ZONE: z.zone, LOTE: p.plotName, PRODUCTO: p.product, UNIDAD: t(`ui.rx.unit_${p.unit}`), AREA_HA: z.areaHa },
       })),
       [
         { name: "RATE", type: "N", length: 12, decimals: 2 },
@@ -55,42 +55,42 @@ export function RatePrescription({ plot, zones, onClose }: { plot: Plot; zones: 
   });
   const shown = zones.map((z) => ({ areaHa: z.areaHa, rate: num(z) || 0 }));
   return (
-    <Modal title={t("ui.rxTitle")} onClose={onClose}>
+    <Modal title={t("ui.rx.title")} onClose={onClose}>
       <div className="flex flex-col gap-3">
-        <p className="text-sm text-tinta-2">{t("ui.rxIntro", { plot: plot.name })}</p>
+        <p className="text-sm text-tinta-2">{t("ui.rx.intro", { plot: plot.name })}</p>
         <div className="grid grid-cols-2 gap-3">
-          <Field label={t("ui.rxProduct")}>
+          <Field label={t("ui.rx.product")}>
             <Input value={product} maxLength={60} onChange={(e) => setProduct(e.target.value)} />
           </Field>
-          <Field label={t("ui.rxUnit")}>
-            <Select value={unit} onChange={(e) => setUnit(e.target.value as RateUnit)} options={RX_RATE_UNITS.map((u) => ({ value: u, label: t(`ui.rxUnit_${u}`) }))} />
+          <Field label={t("ui.rx.unit")}>
+            <Select value={unit} onChange={(e) => setUnit(e.target.value as RateUnit)} options={RX_RATE_UNITS.map((u) => ({ value: u, label: t(`ui.rx.unit_${u}`) }))} />
           </Field>
           {zones.map((z) => (
-            <Field key={z.zone} label={t("ui.rxRate", { zone: z.zone, unit: t(`ui.rxUnit_${unit}`) })} hint={`${t(`ui.zonesLevel_${z.zone}` as "ui.zonesLevel_1")} · ${fmtHa(z.areaHa)}`}>
+            <Field key={z.zone} label={t("ui.rx.rate", { zone: z.zone, unit: t(`ui.rx.unit_${unit}`) })} hint={`${t(`ui.zones.level_${z.zone}` as "ui.zones.level_1")} · ${fmtHa(z.areaHa)}`}>
               <Input inputMode="decimal" className="num" value={rates[z.zone] ?? ""} onChange={(e) => setRates({ ...rates, [z.zone]: e.target.value })} />
             </Field>
           ))}
         </div>
         {filled && (
           <p className="num text-sm">
-            {t("ui.rxTotal", {
+            {t("ui.rx.total", {
               qty: fmtNum(totalProduct(shown)),
               u: unit === "kg_ha" ? "kg" : "l",
               area: fmtHa(zones.reduce((a, z) => a + z.areaHa, 0)),
               mean: fmtNum(meanRate(shown) ?? 0),
-              unit: t(`ui.rxUnit_${unit}`),
+              unit: t(`ui.rx.unit_${unit}`),
             })}
           </p>
         )}
         {error && <ErrorBox error={new Error(error)} />}
         <div className="flex flex-wrap gap-2">
           <Button variant="primary" onClick={shp}>
-            {t("ui.rxShp")}
+            {t("ui.rx.shp")}
           </Button>
-          <Button onClick={iso}>{t("ui.rxIso")}</Button>
+          <Button onClick={iso}>{t("ui.rx.iso")}</Button>
         </div>
-        <p className="text-xs text-tinta-2">{t("ui.rxShpNote")}</p>
-        <p className="text-xs text-tinta-2">{t("ui.rxIsoNote")}</p>
+        <p className="text-xs text-tinta-2">{t("ui.rx.shpNote")}</p>
+        <p className="text-xs text-tinta-2">{t("ui.rx.isoNote")}</p>
       </div>
     </Modal>
   );

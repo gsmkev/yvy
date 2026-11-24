@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ActionMenu } from "../components/menus";
 import { DataTable, EmptyState, ErrorBox, Field, FilterBar, Input, Page, Spinner, Stat, toast } from "../components/ui";
-import { enterSupport, get, post, qs, type Session } from "../lib/api";
+import { enterSupport, get, post, withQs, type Session } from "../lib/api";
 import { fmtDate, fmtHa, fmtNum } from "../lib/format";
 import { t } from "../lib/i18n";
 import type { OrgMetrics } from "./internal/types";
@@ -29,14 +29,14 @@ export function InternalPage() {
     placeholderData: (prev) => prev,
     queryFn: () =>
       get<{ organizations: OrgMetrics[]; usage: { metric: string; value: number; limit: number | null }[] }>(
-        `/admin/metrics${qs({ q: term })}`,
+        withQs("/admin/metrics", { q: term }),
       ),
   });
   const extend = useMutation({
     mutationFn: (id: string) => post(`/admin/orgs/${id}/extend-trial`, { days: 30 }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-metrics"] });
-      toast(t("ui.internalTrialExtended"));
+      toast(t("ui.internal.trialExtended"));
     },
   });
   const credit = useMutation({
@@ -50,10 +50,10 @@ export function InternalPage() {
   if (q.isLoading) return <Spinner />;
   if (q.error) return <ErrorBox error={q.error} />;
   const d = q.data!;
-  const usageLabel = (m: string) => (m === "d1_bytes" || m === "r2_photo_bytes" ? t(`ui.usageMetric_${m}`) : m);
+  const usageLabel = (m: string) => (m === "d1_bytes" || m === "r2_photo_bytes" ? t(`ui.usage.metric_${m}`) : m);
   const pct = (v: number | null) => (v === null ? "—" : `${Math.round(v)} %`);
   return (
-    <Page width="data" title={t("ui.internalTitle")}>
+    <Page width="data" title={t("ui.internal.title")}>
       <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
         {d.usage.map((u) => (
           <Stat
@@ -64,11 +64,11 @@ export function InternalPage() {
         ))}
       </div>
       <FilterBar>
-        <Field label={t("ui.internalSearch")}>
+        <Field label={t("ui.internal.search")}>
           <Input
             type="search"
             className="w-full min-w-64 sm:w-96"
-            placeholder={t("ui.internalSearchHint")}
+            placeholder={t("ui.internal.searchHint")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -77,15 +77,15 @@ export function InternalPage() {
       {extend.error && <ErrorBox error={extend.error} />}
       {support.error && <ErrorBox error={support.error} />}
       <DataTable
-        caption={t("ui.internalTitle")}
+        caption={t("ui.internal.title")}
         rows={d.organizations}
         rowKey={(o) => o.id}
-        empty={<EmptyState compact title={t("ui.internalNoResults")} />}
+        empty={<EmptyState compact title={t("ui.internal.noResults")} />}
         columns={[
-          { id: "org", header: t("ui.internalOrg"), sort: (a, b) => a.name.localeCompare(b.name), cell: (o) => <span className="whitespace-nowrap">{o.name}</span> },
+          { id: "org", header: t("ui.internal.org"), sort: (a, b) => a.name.localeCompare(b.name), cell: (o) => <span className="whitespace-nowrap">{o.name}</span> },
           {
             id: "plan",
-            header: t("ui.internalPlan"),
+            header: t("ui.internal.plan"),
             cell: (o) => (
               <span className="whitespace-nowrap font-normal">
                 {o.plan}
@@ -93,13 +93,13 @@ export function InternalPage() {
               </span>
             ),
           },
-          { id: "farms", header: t("ui.internalFarms"), align: "right", hideBelow: "md", cell: (o) => o.farms },
-          { id: "ha", header: t("ui.internalArea"), align: "right", hideBelow: "md", cell: (o) => fmtHa(o.ha) },
-          { id: "workers", header: t("ui.internalWorkers"), align: "right", hideBelow: "lg", cell: (o) => o.workers },
-          { id: "records", header: t("ui.internalRecords7d"), align: "right", sort: (a, b) => a.records7d - b.records7d, cell: (o) => o.records7d },
+          { id: "farms", header: t("ui.internal.farms"), align: "right", hideBelow: "md", cell: (o) => o.farms },
+          { id: "ha", header: t("ui.internal.area"), align: "right", hideBelow: "md", cell: (o) => fmtHa(o.ha) },
+          { id: "workers", header: t("ui.internal.workers"), align: "right", hideBelow: "lg", cell: (o) => o.workers },
+          { id: "records", header: t("ui.internal.records7d"), align: "right", sort: (a, b) => a.records7d - b.records7d, cell: (o) => o.records7d },
           {
             id: "perWorker",
-            header: t("ui.internalPerWorker"),
+            header: t("ui.internal.perWorker"),
             align: "right",
             hideBelow: "lg",
             cell: (o) => (
@@ -110,25 +110,30 @@ export function InternalPage() {
           },
           {
             id: "ownersActive",
-            header: t("ui.internalOwnersActive"),
+            header: t("ui.internal.ownersActive"),
             align: "right",
             hideBelow: "lg",
             cell: (o) => <span className={o.ownersActivePct !== null && o.ownersActivePct < 70 ? "text-alerta" : ""}>{pct(o.ownersActivePct)}</span>,
           },
-          { id: "useful", header: t("ui.internalUseful"), align: "right", hideBelow: "lg", cell: (o) => pct(o.usefulPct) },
-          { id: "last", header: t("ui.internalLastActive"), hideBelow: "md", cell: (o) => <span className="whitespace-nowrap font-normal">{o.lastActive ?? "—"}</span> },
+          { id: "useful", header: t("ui.internal.useful"), align: "right", hideBelow: "lg", cell: (o) => pct(o.usefulPct) },
+          { id: "last", header: t("ui.internal.lastActive"), hideBelow: "md", cell: (o) => <span className="whitespace-nowrap font-normal">{o.lastActive ?? "—"}</span> },
           {
             id: "referral",
-            header: t("ui.internalReferral"),
+            header: t("ui.internal.referral"),
             hideBelow: "lg",
             cell: (o) => (
               <div className="font-normal">
-                {o.referredBy ? `${o.referrerName ?? t("ui.internalReferralUnknown")} · ${o.referredBy}` : "—"}
+                {o.referredBy ? `${o.referrerName ?? t("ui.internal.referralUnknown")} · ${o.referredBy}` : "—"}
                 {o.referrerUserId && (
                   <div className="text-xs text-tinta-2">
-                    {o.referralCreditedAt ? `${t("ui.internalReferralCredited", { date: fmtDate(o.referralCreditedAt) })} · ` : ""}
-                    <button className="cursor-pointer underline underline-offset-4" onClick={() => credit.mutate({ id: o.id, credited: !o.referralCreditedAt })}>
-                      {o.referralCreditedAt ? t("ui.internalReferralCreditUndo") : t("ui.internalReferralCredit")}
+                    {o.referralCreditedAt
+                      ? t("ui.internal.referralCredited", { date: fmtDate(o.referralCreditedAt) }) + " · "
+                      : ""}
+                    <button
+                      className="cursor-pointer underline underline-offset-4"
+                      onClick={() => credit.mutate({ id: o.id, credited: !o.referralCreditedAt })}
+                    >
+                      {o.referralCreditedAt ? t("ui.internal.referralCreditUndo") : t("ui.internal.referralCredit")}
                     </button>
                   </div>
                 )}
@@ -137,7 +142,7 @@ export function InternalPage() {
           },
           {
             id: "limits",
-            header: t("ui.internalLimits"),
+            header: t("ui.internal.limits"),
             hideBelow: "lg",
             cell: (o) => (
               <span className="num whitespace-nowrap font-normal">
@@ -147,16 +152,16 @@ export function InternalPage() {
           },
           {
             id: "actions",
-            header: <span className="sr-only">{t("ui.internalActions")}</span>,
+            header: <span className="sr-only">{t("ui.internal.actions")}</span>,
             cell: (o) => (
               <div className="flex justify-end">
                 <ActionMenu
-                  label={t("ui.rowActions", { name: o.name })}
+                  label={t("ui.row.actions", { name: o.name })}
                   items={[
-                    { label: t("ui.internalEditPlan"), onSelect: () => setEditing(o) },
-                    o.plan !== "active" && o.plan !== "demo" && { label: t("ui.internalExtend"), onSelect: () => extend.mutate(o.id) },
-                    { label: t("ui.internalChanges"), onSelect: () => setChanges(o) },
-                    { label: t("ui.internalSupport"), onSelect: () => support.mutate(o.id) },
+                    { label: t("ui.internal.editPlan"), onSelect: () => setEditing(o) },
+                    o.plan !== "active" && o.plan !== "demo" && { label: t("ui.internal.extend"), onSelect: () => extend.mutate(o.id) },
+                    { label: t("ui.internal.changes"), onSelect: () => setChanges(o) },
+                    { label: t("ui.internal.support"), onSelect: () => support.mutate(o.id) },
                   ]}
                 />
               </div>

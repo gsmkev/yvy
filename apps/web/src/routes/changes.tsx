@@ -7,7 +7,7 @@ import { boundsOf, FarmMap } from "../components/FarmMap";
 import { PageExport } from "../components/PageExport";
 import { DataTable, EmptyState, ErrorBox, Field, Page, Select, Spinner, Stat, Tabs, type Column } from "../components/ui";
 import { get } from "../lib/api";
-import { analysisAreas, burnedEvents } from "@yvy/shared";
+import { analysisAreas, burnedEvents, ATTRIBUTION } from "@yvy/shared";
 import { fmtDate, fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useFarm, useMe } from "../lib/queries";
@@ -16,8 +16,8 @@ import type { AnalysisPlot, BurnedMetrics } from "../lib/types";
 function Disclaimer() {
   return (
     <section className="border-l-2 border-trigo pl-3">
-      <h2 className="text-section leading-6 font-semibold">{t("ui.changesDisclaimerTitle")}</h2>
-      <p className="mt-1 text-sm">{t("ui.changesDisclaimer")}</p>
+      <h2 className="text-section leading-6 font-semibold">{t("ui.changes.disclaimerTitle")}</h2>
+      <p className="mt-1 text-sm">{t("ui.changes.disclaimer")}</p>
     </section>
   );
 }
@@ -38,36 +38,36 @@ function BurnedSection({ farmId }: { farmId: string }) {
   const f = farm.data.farm;
   const areas = analysisAreas(ev?.plots ?? []);
   const cols: Column<AnalysisPlot<BurnedMetrics>>[] = [
-    { id: "plot", header: t("ui.eudrColPlot"), cell: (p) => p.plotName },
-    { id: "area", header: t("ui.eudrColArea"), align: "right", cell: (p) => fmtHa(p.plotAreaHa), hideBelow: "sm" },
-    { id: "burned", header: t("ui.burnedColBurned"), align: "right", cell: (p) => <span className="font-medium text-peligro">{fmtHa(p.metrics.burnedHa)}</span> },
-    { id: "high", header: t("ui.burnedColHigh"), align: "right", cell: (p) => fmtHa(p.metrics.highHa) },
+    { id: "plot", header: t("ui.eudr.colPlot"), cell: (p) => p.plotName },
+    { id: "area", header: t("ui.eudr.colArea"), align: "right", cell: (p) => fmtHa(p.plotAreaHa), hideBelow: "sm" },
+    { id: "burned", header: t("ui.burned.colBurned"), align: "right", cell: (p) => <span className="font-medium text-peligro">{fmtHa(p.metrics.burnedHa)}</span> },
+    { id: "high", header: t("ui.burned.colHigh"), align: "right", cell: (p) => fmtHa(p.metrics.highHa) },
   ];
 
   return (
     <section className="flex flex-col gap-4">
       {!ev ? (
-        <EmptyState compact>{t("ui.burnedNone")}</EmptyState>
+        <EmptyState compact>{t("ui.burned.none")}</EmptyState>
       ) : (
         <>
           {events.length > 1 && (
             <div className="max-w-xs">
-              <Field label={t("ui.burnedPick")}>
+              <Field label={t("ui.burned.pick")}>
                 <Select
                   value={ev.refKey}
                   onChange={(e) => setPicked(e.target.value)}
-                  options={events.map((e) => ({ value: e.refKey, label: t("ui.burnedEvent", { date: fmtDate(e.eventAt) }) }))}
+                  options={events.map((e) => ({ value: e.refKey, label: t("ui.burned.event", { date: fmtDate(e.eventAt) }) }))}
                 />
               </Field>
             </div>
           )}
           <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-linea py-5 sm:grid-cols-3">
-            <Stat label={t("ui.burnedTotal")} value={fmtHa(ev.burnedHa)} tone={ev.burnedHa > 0 ? "danger" : undefined} />
-            {ev.highHa > 0 && <Stat label={t("ui.burnedHigh")} value={fmtHa(ev.highHa)} />}
-            <Stat label={t("ui.burnedPlots")} value={String(ev.plots.length)} />
+            <Stat label={t("ui.burned.total")} value={fmtHa(ev.burnedHa)} tone={ev.burnedHa > 0 ? "danger" : undefined} />
+            {ev.highHa > 0 && <Stat label={t("ui.burned.high")} value={fmtHa(ev.highHa)} />}
+            <Stat label={t("ui.burned.plots")} value={String(ev.plots.length)} />
           </div>
           {ev.fromAt !== null && ev.toAt !== null && (
-            <p className="text-sm text-tinta-2">{t("ui.burnedImages", { from: fmtDate(ev.fromAt), to: fmtDate(ev.toAt) })}</p>
+            <p className="text-sm text-tinta-2">{t("ui.burned.images", { from: fmtDate(ev.fromAt), to: fmtDate(ev.toAt) })}</p>
           )}
           <div className="grid items-start gap-x-10 gap-y-5 lg:grid-cols-2">
             <div className="h-80 overflow-hidden rounded-lg border border-linea">
@@ -81,15 +81,15 @@ function BurnedSection({ farmId }: { farmId: string }) {
                 className="h-full w-full"
               />
             </div>
-            {ev.plots.length > 0 && <DataTable columns={cols} rows={ev.plots} rowKey={(p) => p.plotId} caption={t("ui.burnedTitle")} />}
+            {ev.plots.length > 0 && <DataTable columns={cols} rows={ev.plots} rowKey={(p) => p.plotId} caption={t("ui.burned.title")} />}
           </div>
           <p className="text-sm text-tinta-2">
-            {t("ui.burnedUnaffected", { n: ev.unaffected })}
-            {ev.noData > 0 ? ` ${t("ui.burnedNoData", { n: ev.noData })}` : ""}
+            {t("ui.burned.unaffected", { n: ev.unaffected })}
+            {ev.noData > 0 ? " " + t("ui.burned.noData", { n: ev.noData }) : ""}
           </p>
-          <p className="text-sm text-tinta-2">{t("ui.burnedMethod")}</p>
+          <p className="text-sm text-tinta-2">{t("ui.burned.method")}</p>
           <p className="text-micro text-tinta-2">
-            {t("attribution.copernicus")} · {t("attribution.firms")}
+            {t(ATTRIBUTION.copernicus)} · {t(ATTRIBUTION.firms)}
           </p>
         </>
       )}
@@ -108,16 +108,16 @@ export function ChangesPage() {
     <Page
       width="data"
       className="gap-5"
-      back={{ to: `/estancias/${farmId}/informes`, label: t("ui.reportsBack") }}
-      title={t("ui.changesTitle")}
-      menu={<PageExport root={body} name={t("ui.changesTitle")} />}
+      back={{ to: `/estancias/${farmId}/informes`, label: t("ui.reports.back") }}
+      title={t("ui.changes.title")}
+      menu={<PageExport root={body} name={t("ui.changes.title")} />}
     >
       <p className="-mt-3 text-sm text-tinta-2">{farm.data.farm.name}</p>
       <Disclaimer />
       <Tabs
         tabs={[
-          { id: "burned", label: t("ui.burnedTitle") },
-          { id: "cover", label: t("ui.coverTitle") },
+          { id: "burned", label: t("ui.burned.title") },
+          { id: "cover", label: t("ui.cover.title") },
         ]}
         value={tab}
         onChange={setTab}

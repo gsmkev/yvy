@@ -11,13 +11,13 @@ const TOOLS: ToolId[] = ["animals", "stand", "weeds", "ask", "summary", "rust", 
 
 /** Aviso fijo: toda pantalla del Laboratorio dice que es una vista previa con datos de muestra. */
 function PreviewNotice() {
-  return <p className="border-l-2 border-trigo pl-3 text-sm text-tinta-2">{t("ui.labsNotice")}</p>;
+  return <p className="border-l-2 border-trigo pl-3 text-sm text-tinta-2">{t("ui.labs.notice")}</p>;
 }
 
 export function LabsPage() {
   return (
     <Page width="data">
-      <PageHeader title={t("ui.labsTitle")} />
+      <PageHeader title={t("ui.labs.title")} />
       <PreviewNotice />
       <ul className="grid gap-3 sm:grid-cols-2">
         {TOOLS.map((id) => (
@@ -27,8 +27,8 @@ export function LabsPage() {
               params={{ tool: id }}
               className="flex h-full flex-col gap-1 rounded-lg border border-linea bg-papel p-4 transition-colors hover:border-tinta-2/40"
             >
-              <span className="font-medium">{tk(`ui.labsTool_${id}_name`)}</span>
-              <span className="text-sm text-tinta-2">{tk(`ui.labsTool_${id}_desc`)}</span>
+              <span className="font-medium">{tk(`ui.labs.tool_${id}_name`)}</span>
+              <span className="text-sm text-tinta-2">{tk(`ui.labs.tool_${id}_desc`)}</span>
             </Link>
           </li>
         ))}
@@ -41,14 +41,14 @@ export function LabsToolPage() {
   const { tool } = useParams({ strict: false }) as { tool: string };
   const id = TOOLS.find((x) => x === tool);
   return (
-    <Page width="data" className="gap-4" back={{ to: "/laboratorio", label: t("ui.labsBack") }}>
+    <Page width="data" className="gap-4" back={{ to: "/laboratorio", label: t("ui.labs.back") }}>
       {!id ? (
-        <p>{t("ui.labsUnknownTool")}</p>
+        <p>{t("ui.labs.unknownTool")}</p>
       ) : (
         <>
           <div>
-            <PageHeader title={tk(`ui.labsTool_${id}_name`)} />
-            <p className="text-sm text-tinta-2">{tk(`ui.labsTool_${id}_desc`)}</p>
+            <PageHeader title={tk(`ui.labs.tool_${id}_name`)} />
+            <p className="text-sm text-tinta-2">{tk(`ui.labs.tool_${id}_desc`)}</p>
           </div>
           <PreviewNotice />
           <ToolBody id={id} />
@@ -79,6 +79,6 @@ function ToolBody({ id }: { id: ToolId }) {
     case "advice":
       return <Advice />;
     case "rust":
-      return <p className="border-b border-linea pb-4">{t("ui.labsRustBody")}</p>;
+      return <p className="border-b border-linea pb-4">{t("ui.labs.rustBody")}</p>;
   }
 }

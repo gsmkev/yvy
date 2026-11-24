@@ -31,14 +31,15 @@ export const usePlotHistory = (plot: Plot) =>
 /** Borrador del formulario de edición del lote (sobrevive a abrir y cerrar) y su guardado por PATCH. */
 export function usePlotForm(plot: Plot, onSaved: () => void) {
   const qc = useQueryClient();
-  const [form, setForm] = useState({
+  const draft = {
     name: plot.name,
     kind: plot.kind,
     crop: plot.crop ?? "",
     season: plot.season ?? "",
     sowingDate: plot.sowingDate ?? "",
     pastureType: plot.pastureType ?? "",
-  });
+  };
+  const [form, setForm] = useState(draft);
   const save = useMutation({
     mutationFn: () =>
       patch(`/org/plots/${plot.id}`, {
@@ -51,7 +52,7 @@ export function usePlotForm(plot: Plot, onSaved: () => void) {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["farm", plot.farmId] });
-      toast(t("ui.toastPlotUpdated"));
+      toast(t("ui.toast.plotUpdated"));
       onSaved();
     },
   });
@@ -70,7 +71,7 @@ export function useProblemTask(plot: Plot, workers: Member[]) {
         farmId: plot.farmId,
         plotId: plot.id,
         assigneeId: assigneeId || workers[0]?.userId,
-        title: t("ui.problemTaskTitle", { ha: fmtNum(Math.round(a.areaHa * 10) / 10), plot: plot.name }),
+        title: t("ui.problem.taskTitle", { ha: fmtNum(Math.round(a.areaHa * 10) / 10), plot: plot.name }),
         kind: "scouting",
         dueDate: toIso(Date.now()),
         recurrence: "none",
@@ -80,7 +81,7 @@ export function useProblemTask(plot: Plot, workers: Member[]) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
       const w = workers.find((x) => x.userId === (assigneeId || workers[0]?.userId));
-      toast(t("ui.problemTaskSent", { name: w?.fullName ?? "" }));
+      toast(t("ui.problem.taskSent", { name: w?.fullName ?? "" }));
     },
   });
   return { assigneeId, setAssigneeId, sendArea };

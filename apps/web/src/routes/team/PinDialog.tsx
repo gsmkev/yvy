@@ -18,7 +18,7 @@ export function PinDialog({ member, onClose }: { member: Member; onClose: () => 
       qc.invalidateQueries({ queryKey: ["members"] });
       if (r.pin) setShown(r.pin);
       else {
-        toast(t("app.teamPinSaved"));
+        toast(t("app.team.pinSaved"));
         onClose();
       }
     },
@@ -31,26 +31,26 @@ export function PinDialog({ member, onClose }: { member: Member; onClose: () => 
     },
   });
   return (
-    <Modal title={`${t("app.teamPinTitle")} · ${member.fullName}`} onClose={onClose}>
+    <Modal title={`${t("app.team.pinTitle")} · ${member.fullName}`} onClose={onClose}>
       {shown ? (
         <div className="flex flex-col gap-4">
           <p className="num text-center text-4xl font-semibold tracking-[0.3em]">{shown}</p>
-          <p className="text-sm text-tinta-2">{t("app.teamPinShow", { name: member.fullName, pin: shown })}</p>
+          <p className="text-sm text-tinta-2">{t("app.team.pinShow", { name: member.fullName, pin: shown })}</p>
           <Button variant="primary" onClick={onClose}>
-            {t("ui.close")}
+            {t("ui.common.close")}
           </Button>
         </div>
       ) : (
         <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
-          <Field label={t("app.teamPinPhoneLabel")}>
+          <Field label={t("app.team.pinPhoneLabel")}>
             <Input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} />
           </Field>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={own} onChange={(e) => setOwn(e.target.checked)} />
-            {t("app.teamPinOwn")}
+            {t("app.team.pinOwn")}
           </label>
           {own && (
-            <Field label={t("app.loginPinLabel")}>
+            <Field label={t("app.login.pinLabel")}>
               <Input
                 inputMode="numeric"
                 pattern="[0-9]{6}"
@@ -61,14 +61,14 @@ export function PinDialog({ member, onClose }: { member: Member; onClose: () => 
               />
             </Field>
           )}
-          {!own && <p className="text-sm text-tinta-2">{t("app.teamPinGenerate")}</p>}
+          {!own && <p className="text-sm text-tinta-2">{t("app.team.pinGenerate")}</p>}
           {(save.error || clear.error) && <ErrorBox error={save.error ?? clear.error} />}
           <Button type="submit" variant="primary" disabled={save.isPending || (own && pin.length !== 6)}>
-            {t("ui.save")}
+            {t("ui.common.save")}
           </Button>
           {member.hasPin && (
             <Button variant="danger" disabled={clear.isPending} onClick={() => clear.mutate()}>
-              {t("app.teamPinRemove")}
+              {t("app.team.pinRemove")}
             </Button>
           )}
         </Form>

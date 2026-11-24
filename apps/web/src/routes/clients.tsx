@@ -111,14 +111,14 @@ export function ClientsPage() {
       </div>
       <section className="flex min-h-0 flex-col gap-5 overflow-auto border-l border-linea p-6 *:shrink-0">
         <header>
-          <h1 className="text-title leading-tight">{t("ui.clientsTitle")}</h1>
+          <h1 className="text-title leading-tight">{t("ui.clients.title")}</h1>
           <p className="num mt-1 text-sm text-tinta-2">
-            {t("ui.clientsSummary", { orgs: clients.length, alerts: nAlerts })}
+            {t("ui.clients.summary", { orgs: clients.length, alerts: nAlerts })}
           </p>
-          {q.data!.truncated && <p className="mt-1 text-sm text-tinta-2">{t("ui.clientsTruncated")}</p>}
+          {q.data!.truncated && <p className="mt-1 text-sm text-tinta-2">{t("ui.clients.truncated")}</p>}
         </header>
         {error ? <ErrorBox error={error} /> : null}
-        {!clients.length && <EmptyState title={t("ui.clientsNone")} />}
+        {!clients.length && <EmptyState title={t("ui.clients.none")} />}
         {clients.map((c) => (
           <section key={c.organization.id} className="border-t border-linea pt-3">
             <div className="flex items-baseline justify-between gap-3">
@@ -128,10 +128,10 @@ export function ClientsPage() {
                 disabled={!!busy}
                 onClick={() => open(c.organization.id)}
               >
-                {c.organization.id === current ? t("ui.orgCurrent") : t("ui.clientsOpenOrg")}
+                {c.organization.id === current ? t("ui.org.current") : t("ui.clients.openOrg")}
               </button>
             </div>
-            {!c.farms.length && <p className="mt-2 text-sm text-tinta-2">{t("ui.clientsNoFarms")}</p>}
+            {!c.farms.length && <p className="mt-2 text-sm text-tinta-2">{t("ui.clients.noFarms")}</p>}
             <ul className="mt-1 divide-y divide-linea">
               {c.farms.map((f) => {
                 const alerts = c.alerts.filter((a) => a.farmId === f.id);
@@ -147,13 +147,13 @@ export function ClientsPage() {
                         {fmtHa(f.areaHa)}
                         {f.department ? ` · ${f.department}` : ""} ·{" "}
                         {f.lastRecordAt
-                          ? `${t("ui.lastRecord").toLowerCase()} ${fmtDate(f.lastRecordAt)}`
-                          : t("ui.neverRecorded").toLowerCase()}
+                          ? `${t("ui.last.record").toLowerCase()} ${fmtDate(f.lastRecordAt)}`
+                          : t("ui.never.recorded").toLowerCase()}
                       </span>
                     </button>
                     {alerts.map((a) => (
                       <p key={a.id} className="mt-1 text-xs font-medium text-peligro">
-                        {tk(`ui.alertKind_${a.kind}`)}: {a.summary}
+                        {tk(`ui.alert.kind_${a.kind}`)}: {a.summary}
                       </p>
                     ))}
                   </li>

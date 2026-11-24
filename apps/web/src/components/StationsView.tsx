@@ -39,19 +39,19 @@ export function StationsView({ data }: { data: Record<string, unknown> }) {
     };
   }, [data]);
 
-  const label = (i: MonitorItem) => tk(`app.monitor_${i.key}`);
+  const label = (i: MonitorItem) => tk(`app.monitor.${i.key}`);
   return (
     <div className="mt-4 flex flex-col gap-4" data-testid="stations-view">
       {points.length > 0 && (
         <div>
-          <h3 className="eyebrow mb-2">{t("app.stationsMapTitle")}</h3>
+          <h3 className="eyebrow mb-2">{t("app.stations.mapTitle")}</h3>
           <div className="overflow-hidden rounded-md border border-linea">
             <FarmMap className="h-56 w-full" points={points} bounds={bounds} />
           </div>
         </div>
       )}
       <div>
-        <h3 className="eyebrow mb-2">{t("app.stationsTable")}</h3>
+        <h3 className="eyebrow mb-2">{t("app.stations.table")}</h3>
         <div className="overflow-x-auto">
           <ExportableTable name="estaciones">
             <table className="num w-full text-left text-sm">
@@ -68,7 +68,7 @@ export function StationsView({ data }: { data: Record<string, unknown> }) {
               <tbody>
                 {stations.map((s, n) => (
                   <tr key={n} className="border-b border-linea">
-                    <td className="py-1.5 pr-3" title={s.lat === undefined ? t("app.stationsNoGps") : `${s.lat.toFixed(5)}, ${s.lon!.toFixed(5)}`}>
+                    <td className="py-1.5 pr-3" title={s.lat === undefined ? t("app.stations.noGps") : `${s.lat.toFixed(5)}, ${s.lon!.toFixed(5)}`}>
                       {n + 1}
                     </td>
                     {items.map((i) => {
@@ -82,7 +82,7 @@ export function StationsView({ data }: { data: Record<string, unknown> }) {
                   </tr>
                 ))}
                 <tr className="font-medium">
-                  <td className="py-1.5 pr-3">{t("app.stationsAverageRow")}</td>
+                  <td className="py-1.5 pr-3">{t("app.stations.averageRow")}</td>
                   {items.map((i) => (
                     <td key={i.key} className={`py-1.5 pr-3 ${(avg[i.key] ?? 0) > i.threshold ? "text-alerta" : ""}`}>
                       {fmt(avg[i.key] ?? 0)}
@@ -91,7 +91,7 @@ export function StationsView({ data }: { data: Record<string, unknown> }) {
                 </tr>
                 {Number.isFinite(items[0]?.threshold) && (
                   <tr className="text-tinta-2">
-                    <td className="py-1.5 pr-3">{t("app.stationsThreshold")}</td>
+                    <td className="py-1.5 pr-3">{t("app.stations.threshold")}</td>
                     {items.map((i) => (
                       <td key={i.key} className="py-1.5 pr-3">
                         {fmt(i.threshold)}
@@ -103,7 +103,7 @@ export function StationsView({ data }: { data: Record<string, unknown> }) {
             </table>
           </ExportableTable>
         </div>
-        <p className="mt-2 text-xs text-tinta-2">{t("app.stationsDefaults")}</p>
+        <p className="mt-2 text-xs text-tinta-2">{t("app.stations.defaults")}</p>
       </div>
     </div>
   );

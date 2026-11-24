@@ -16,10 +16,10 @@ export function FarmList({ list }: { list: FarmSummary[] }) {
                 {[
                   f.department,
                   fmtHa(f.areaHa),
-                  `${f.plots} ${t("ui.plots").toLowerCase()}`,
+                  `${f.plots} ${t("ui.common.plots").toLowerCase()}`,
                   f.lastRecordAt
-                    ? `${t("ui.lastRecord").toLowerCase()} ${fmtDate(f.lastRecordAt)}`
-                    : t("ui.neverRecorded").toLowerCase(),
+                    ? `${t("ui.last.record").toLowerCase()} ${fmtDate(f.lastRecordAt)}`
+                    : t("ui.never.recorded").toLowerCase(),
                 ]
                   .filter(Boolean)
                   .join(" · ")}
@@ -27,7 +27,7 @@ export function FarmList({ list }: { list: FarmSummary[] }) {
             </div>
             {f.activeAlerts > 0 && (
               <span className="shrink-0 text-xs font-medium text-peligro">
-                {t(f.activeAlerts === 1 ? "ui.alertsCountOne" : "ui.alertsCountMany", { n: f.activeAlerts })}
+                {t(f.activeAlerts === 1 ? "ui.alerts.countOne" : "ui.alerts.countMany", { n: f.activeAlerts })}
               </span>
             )}
           </Link>
@@ -44,9 +44,9 @@ export function FarmTotals({ list }: { list: FarmSummary[] }) {
   const records = list.reduce((a, f) => a + f.records7d, 0);
   return (
     <div className="grid grid-cols-3 gap-4">
-      <Stat label={t("ui.area")} value={fmtAreaValue(totalHa)} unit={areaUnitLabel()} />
-      <Stat label={t("ui.records7d")} value={records} />
-      <Stat label={t("ui.activeAlerts")} value={alerts} tone={alerts ? "danger" : undefined} />
+      <Stat label={t("ui.common.area")} value={fmtAreaValue(totalHa)} unit={areaUnitLabel()} />
+      <Stat label={t("ui.records.7d")} value={records} />
+      <Stat label={t("ui.common.activeAlerts")} value={alerts} tone={alerts ? "danger" : undefined} />
     </div>
   );
 }

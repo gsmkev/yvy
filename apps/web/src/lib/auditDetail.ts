@@ -28,7 +28,7 @@ const KNOWN_KEYS = new Set([
 
 /** Etiqueta de una clave: traducida si es conocida; si no, en minúsculas separando camelCase. */
 export function auditLabel(key: string): string {
-  if (KNOWN_KEYS.has(key)) return tk(`ui.auditKey_${key}`);
+  if (KNOWN_KEYS.has(key)) return tk(`ui.audit.key_${key}`);
   return key
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
     .replace(/_/g, " ")
@@ -62,7 +62,7 @@ export function auditSummary(detail: string): string {
   if (d.values && typeof d.values === "object") add(d.values as Record<string, unknown>);
   add(Object.fromEntries(Object.entries(d).filter(([k]) => k !== "values" && k !== "fields")));
   if (Array.isArray(d.fields) && d.fields.length) {
-    parts.push(`${t("ui.auditChanged")}: ${d.fields.map((f) => auditLabel(String(f))).join(", ")}`);
+    parts.push(`${t("ui.audit.changed")}: ${d.fields.map((f) => auditLabel(String(f))).join(", ")}`);
   }
   return parts.join(" · ");
 }

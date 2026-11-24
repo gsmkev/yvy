@@ -66,17 +66,17 @@ export function BufferPanel({ farmId, plots, pois }: { farmId: string; plots: Pl
     pois.some((p) => p.kind === "house" || p.kind === "school" || p.kind === "water") ||
     (lines.data ?? []).some((l) => l.kind === "stream");
   const label = (h: { kind: BufferKind; name: string; distanceM: number }) =>
-    t("ui.bufferHit", { kind: tk(h.kind === "stream" ? "ui.lineKind_stream" : `ui.poiKinds_${h.kind}`), name: h.name, m: fmtNum(h.distanceM) });
+    t("ui.buffer.hit", { kind: tk(h.kind === "stream" ? "ui.line.kind_stream" : `ui.poi.kinds_${h.kind}`), name: h.name, m: fmtNum(h.distanceM) });
 
   return (
     <section aria-labelledby="buffer-h" className="flex flex-col gap-3">
       <h3 id="buffer-h" className="font-serif text-lg font-semibold">
-        {t("ui.bufferTitle")}
+        {t("ui.buffer.title")}
       </h3>
-      <p className="text-sm text-tinta-2">{t("ui.bufferIntro")}</p>
+      <p className="text-sm text-tinta-2">{t("ui.buffer.intro")}</p>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {BUFFER_KINDS.map((k) => (
-          <Field key={k} label={t("ui.bufferDistance", { kind: tk(k === "stream" ? "ui.lineKind_stream" : `ui.poiKinds_${k}`) })}>
+          <Field key={k} label={t("ui.buffer.distance", { kind: tk(k === "stream" ? "ui.line.kind_stream" : `ui.poi.kinds_${k}`) })}>
             <Input
               inputMode="numeric"
               className="num"
@@ -88,34 +88,34 @@ export function BufferPanel({ farmId, plots, pois }: { farmId: string; plots: Pl
         ))}
       </div>
       <p id="buffer-note" className="text-xs text-tinta-2">
-        {t("ui.bufferNote", { max: fmtNum(LIMITS.buffer.maxM) })}
+        {t("ui.buffer.note", { max: fmtNum(LIMITS.buffer.maxM) })}
       </p>
       {(lines.isLoading || apps.isLoading) && <Spinner rows={2} h={32} />}
       {apps.error && <ErrorBox error={apps.error} />}
-      {!hasFeatures && <Empty title={t("ui.bufferTitle")}>{t("ui.bufferNoFeatures")}</Empty>}
+      {!hasFeatures && <Empty title={t("ui.buffer.title")}>{t("ui.buffer.noFeatures")}</Empty>}
       {hasFeatures && result.alerts.length > 0 && (
         <div>
-          <h4 className="eyebrow mb-1">{t("ui.bufferAlerts")}</h4>
+          <h4 className="eyebrow mb-1">{t("ui.buffer.alerts")}</h4>
           <ul className="divide-y divide-linea border-y border-linea text-sm">
             {result.alerts.map((a) => (
               <li key={a.recordId} className="py-2.5">
                 <p>
-                  <span className="font-medium text-peligro">{a.plotName ?? t("ui.bufferNoPlot")}</span>
+                  <span className="font-medium text-peligro">{a.plotName ?? t("ui.buffer.noPlot")}</span>
                   <span className="num text-tinta-2"> · {fmtDate(a.capturedAt)}</span>
                 </p>
                 <p className="text-tinta-2">{a.hits.map(label).join("; ")}</p>
-                <p className="text-xs text-tinta-2">{t(a.basis === "gps" ? "ui.bufferBasisGps" : "ui.bufferBasisPlot")}</p>
+                <p className="text-xs text-tinta-2">{t(a.basis === "gps" ? "ui.buffer.basisGps" : "ui.buffer.basisPlot")}</p>
               </li>
             ))}
           </ul>
         </div>
       )}
       {hasFeatures && !apps.isLoading && result.alerts.length === 0 && (
-        <p className="text-sm">{t("ui.bufferNoAlerts")}</p>
+        <p className="text-sm">{t("ui.buffer.noAlerts")}</p>
       )}
       {result.plots.length > 0 && (
         <div>
-          <h4 className="eyebrow mb-1">{t("ui.bufferPlots")}</h4>
+          <h4 className="eyebrow mb-1">{t("ui.buffer.plots")}</h4>
           <ul className="divide-y divide-linea border-y border-linea text-sm">
             {result.plots.map((p) => (
               <li key={p.plotId} className="py-2.5">

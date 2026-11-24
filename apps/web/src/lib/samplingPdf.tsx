@@ -45,14 +45,14 @@ export function SamplingReport({ farm, plot, haPerPoint, points, generatedAt }: 
   const H = 360;
   const { px, py } = projector(plot, W, H);
   return (
-    <Document title={`${t("ui.samplingTitle")} · ${plot.name}`} author="Yvy" language="es-PY">
+    <Document title={`${t("ui.sampling.title")} · ${plot.name}`} author="Yvy" language="es-PY">
       <Page size="A4" style={s.page}>
         <Text style={s.h1}>
-          {t("ui.samplingTitle")} · {plot.name}
+          {t("ui.sampling.title")} · {plot.name}
         </Text>
         <Text style={s.muted}>
-          {farm.name} · {fmtHa(plot.areaHa)} · {t("ui.samplingPerPoint", { ha: haPerPoint })} · {t("ui.samplingCount", { n: points.length })} ·{" "}
-          {t("ui.sharedGenerated", { date: fmtDate(generatedAt) })}
+          {farm.name} · {fmtHa(plot.areaHa)} · {t("ui.sampling.perPoint", { ha: haPerPoint })} · {t("ui.sampling.count", { n: points.length })} ·{" "}
+          {t("ui.shared.generated", { date: fmtDate(generatedAt) })}
         </Text>
         <View style={{ marginTop: 8 }}>
           <Svg width={W} height={H} style={{ backgroundColor: BRAND.lino, borderRadius: 4 }}>
@@ -67,13 +67,13 @@ export function SamplingReport({ farm, plot, haPerPoint, points, generatedAt }: 
             ))}
           </Svg>
         </View>
-        <Text style={[s.muted, { marginTop: 4 }]}>{t("ui.samplingHow")}</Text>
-        <Text style={s.h2}>{t("ui.samplingTable")}</Text>
+        <Text style={[s.muted, { marginTop: 4 }]}>{t("ui.sampling.how")}</Text>
+        <Text style={s.h2}>{t("ui.sampling.table")}</Text>
         <View style={s.th}>
-          <Text style={{ width: COL.n }}>{t("ui.samplingColN")}</Text>
-          <Text style={{ width: COL.lat }}>{t("ui.samplingColLat")}</Text>
-          <Text style={{ width: COL.lon }}>{t("ui.samplingColLon")}</Text>
-          <Text style={{ flex: 1 }}>{t("ui.samplingColNote")}</Text>
+          <Text style={{ width: COL.n }}>{t("ui.sampling.colN")}</Text>
+          <Text style={{ width: COL.lat }}>{t("ui.sampling.colLat")}</Text>
+          <Text style={{ width: COL.lon }}>{t("ui.sampling.colLon")}</Text>
+          <Text style={{ flex: 1 }}>{t("ui.sampling.colNote")}</Text>
         </View>
         {points.map((p) => (
           <View key={p.n} style={s.row} wrap={false}>
@@ -84,7 +84,7 @@ export function SamplingReport({ farm, plot, haPerPoint, points, generatedAt }: 
           </View>
         ))}
         <View style={s.footer} fixed>
-          <Text>{t("ui.samplingFooter")}</Text>
+          <Text>{t("ui.sampling.footer")}</Text>
           <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
         </View>
       </Page>

@@ -5,6 +5,7 @@ import { ApiError, get, post, setSession, type Session } from "../lib/api";
 import { t, tk } from "../lib/i18n";
 import { Button, ErrorBox, Field, Input } from "../components/ui";
 import { LegalLinks } from "./public/PublicShell";
+import { ATTRIBUTION } from "@yvy/shared";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -88,18 +89,16 @@ export function LoginPage() {
       <div className="relative hidden overflow-hidden bg-surco lg:block">
         <img src="/campo-itapua.webp" alt="" className="absolute inset-0 h-full w-full object-cover opacity-90" />
         <div className="absolute inset-x-0 bottom-0 bg-surco/85 p-10 text-lino">
-          <p className="max-w-md font-serif text-title leading-tight font-semibold">{t("ui.tagline")}.</p>
-          <p className="mt-3 text-xs text-lino/60">
-            Itapúa · Sentinel-2 L2A, compuesto de 90 días · {t("attribution.copernicus")}
-          </p>
+          <p className="max-w-md font-serif text-title leading-tight font-semibold">{t("ui.common.tagline")}.</p>
+          <p className="mt-3 text-xs text-lino/60">{t("ui.login.creditWeb", { source: t(ATTRIBUTION.copernicus) })}</p>
         </div>
       </div>
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
-          <p className="mb-8 font-serif text-title leading-none font-semibold">Yvy</p>
-          <h1 className="text-title leading-tight">{t(mode === "login" ? "ui.loginTitle" : "ui.signupTitle")}</h1>
+          <p className="mb-8 font-serif text-title leading-none font-semibold">{t("ui.app.name")}</p>
+          <h1 className="text-title leading-tight">{t(mode === "login" ? "ui.login.title" : "ui.signup.title")}</h1>
           <p className="mt-2 mb-6 text-sm text-tinta-2">
-            {step === "email" ? t("ui.loginHelp") : step === "totp" ? t("ui.totpLoginHelp") : t("auth.codeSent", { email })}
+            {step === "email" ? t("ui.login.help") : step === "totp" ? t("ui.totp.loginHelp") : t("auth.code.sent", { email })}
           </p>
           <form
             className="flex flex-col gap-4"
@@ -114,10 +113,10 @@ export function LoginPage() {
               <>
                 {mode === "signup" && (
                   <>
-                    <Field label={t("ui.orgName")}>
+                    <Field label={t("ui.org.name")}>
                       <Input required minLength={2} value={orgName} onChange={(e) => setOrgName(e.target.value)} />
                     </Field>
-                    <Field label={t("ui.fullName")}>
+                    <Field label={t("ui.common.fullName")}>
                       <Input
                         required
                         minLength={2}
@@ -128,7 +127,7 @@ export function LoginPage() {
                     </Field>
                   </>
                 )}
-                <Field label={t("auth.emailLabel")}>
+                <Field label={t("auth.email.label")}>
                   <Input
                     type="email"
                     required
@@ -139,24 +138,24 @@ export function LoginPage() {
                 </Field>
                 {search.google_error && (
                   <p role="alert" className="text-sm text-peligro">
-                        {tk(`ui.googleError_${search.google_error}`)}
+                        {tk(`ui.google.error_${search.google_error}`)}
                   </p>
                 )}
                     {error ? <ErrorBox error={error} /> : null}
                 <Button type="submit" variant="primary" disabled={busy} className="h-11">
-                  {t("auth.sendCode")}
+                  {t("auth.common.sendCode")}
                 </Button>
                 <button
                   type="button"
                   className="cursor-pointer text-left text-sm text-accion underline-offset-4 hover:underline"
                   onClick={() => setMode(mode === "login" ? "signup" : "login")}
                 >
-                  {t(mode === "login" ? "ui.signupLink" : "ui.loginLink")}
+                  {t(mode === "login" ? "ui.signup.link" : "ui.login.link")}
                 </button>
               </>
             ) : step === "totp" ? (
               <>
-                <Field label={t("ui.totpLoginLabel")}>
+                <Field label={t("ui.totp.loginLabel")}>
                   <Input
                     required
                     autoFocus
@@ -169,17 +168,17 @@ export function LoginPage() {
                 </Field>
                 {search.google_error && (
                   <p role="alert" className="text-sm text-peligro">
-                        {tk(`ui.googleError_${search.google_error}`)}
+                        {tk(`ui.google.error_${search.google_error}`)}
                   </p>
                 )}
                     {error ? <ErrorBox error={error} /> : null}
                 <Button type="submit" variant="primary" disabled={busy || totpCode.trim().length < 6} className="h-11">
-                  {t("ui.verify")}
+                  {t("ui.common.verify")}
                 </Button>
               </>
             ) : (
               <>
-                <Field label={t("auth.codeLabel")}>
+                <Field label={t("auth.code.label")}>
                   <Input
                     inputMode="numeric"
                     pattern="\d{6}"
@@ -194,19 +193,19 @@ export function LoginPage() {
                 </Field>
                 {search.google_error && (
                   <p role="alert" className="text-sm text-peligro">
-                        {tk(`ui.googleError_${search.google_error}`)}
+                        {tk(`ui.google.error_${search.google_error}`)}
                   </p>
                 )}
                     {error ? <ErrorBox error={error} /> : null}
                 <Button type="submit" variant="primary" disabled={busy || code.length !== 6} className="h-11">
-                  {t("ui.verify")}
+                  {t("ui.common.verify")}
                 </Button>
                 <button
                   type="button"
                   className="cursor-pointer text-left text-sm text-accion underline-offset-4 hover:underline"
                   onClick={() => setStep("email")}
                 >
-                  {t("ui.resend")}
+                  {t("ui.common.resend")}
                 </button>
               </>
             )}
@@ -216,7 +215,7 @@ export function LoginPage() {
               href="/auth/google/start"
               className="mt-4 flex h-11 items-center justify-center rounded-md border border-linea bg-papel text-sm font-medium hover:border-tinta-2/40"
             >
-              {t("ui.googleSignIn")}
+              {t("ui.google.signIn")}
             </a>
           )}
           <LegalLinks className="mt-10 flex-wrap text-meta text-tinta-2" />

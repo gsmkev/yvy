@@ -21,7 +21,7 @@ export function FullscreenButton({
     if (document.fullscreenElement) void document.exitFullscreen();
     else void target.current?.requestFullscreen().catch(() => {});
   };
-  const label = on ? t("ui.fullscreenExit") : t("ui.fullscreen");
+  const label = on ? t("ui.common.fullscreenExit") : t("ui.common.fullscreen");
   return (
     <button type="button" aria-pressed={on} aria-label={label} title={label} onClick={toggle} className={className}>
       {on ? <Minimize size={18} aria-hidden /> : <Maximize size={18} aria-hidden />}

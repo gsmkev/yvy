@@ -12,12 +12,13 @@ import { fmtDate, fmtHa } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useFarm, useMe } from "../lib/queries";
 import type { EudrPlot, EudrResponse } from "../lib/types";
+import { ATTRIBUTION } from "@yvy/shared";
 
 function Disclaimer() {
   return (
     <section className="border-l-2 border-trigo pl-3">
-      <h2 className="text-section leading-6 font-semibold">{t("ui.eudrDisclaimerTitle")}</h2>
-      <p className="mt-1 text-sm">{t("ui.eudrDisclaimer")}</p>
+      <h2 className="text-section leading-6 font-semibold">{t("ui.eudr.disclaimerTitle")}</h2>
+      <p className="mt-1 text-sm">{t("ui.eudr.disclaimer")}</p>
     </section>
   );
 }
@@ -26,12 +27,12 @@ function Method({ refYear, curYear }: { refYear: number; curYear: number }) {
   const m = EUDR_METHOD;
   return (
     <section className="flex flex-col gap-2">
-      <SectionHead title={t("ui.eudrMethodTitle")} />
+      <SectionHead title={t("ui.eudr.methodTitle")} />
       <div className="flex flex-col gap-2 text-sm text-tinta-2">
-        <p>{t("ui.eudrMethodSource")}</p>
-        <p>{t("ui.eudrMethodComposite", { ref: refYear, cur: curYear })}</p>
+        <p>{t("ui.eudr.methodSource")}</p>
+        <p>{t("ui.eudr.methodComposite", { ref: refYear, cur: curYear })}</p>
         <p>
-          {t("ui.eudrMethodRule", {
+          {t("ui.eudr.methodRule", {
             ndvi: fmtRatio(m.forestNdviMin),
             ndmi: fmtRatio(m.forestNdmiMin),
             ref: refYear,
@@ -40,8 +41,8 @@ function Method({ refYear, curYear }: { refYear: number; curYear: number }) {
             min: fmtRatio(m.minPatchHa),
           })}
         </p>
-        <p>{t("ui.eudrMethodLimits")}</p>
-        <p>{t("attribution.copernicus")}.</p>
+        <p>{t("ui.eudr.methodLimits")}</p>
+        <p>{t(ATTRIBUTION.copernicus)}.</p>
       </div>
     </section>
   );
@@ -72,7 +73,7 @@ export function EudrPage() {
     try {
       const [{ pdf }, { EudrReport }] = await Promise.all([import("@react-pdf/renderer"), import("../lib/eudrPdf")]);
       const blob = await pdf(<EudrReport farm={f} data={data} plots={farm.data.plots} generatedAt={Date.now()} />).toBlob();
-      download(blob, `${t("ui.eudrPdfFile")}-${f.name}.pdf`);
+      download(blob, `${t("ui.eudr.pdfFile")}-${f.name}.pdf`);
     } catch (e) {
       setError(e);
     } finally {
@@ -83,12 +84,12 @@ export function EudrPage() {
   const range = (from: number | null, to: number | null) => (from === null || to === null ? "—" : [fmtDate(from), fmtDate(to)]);
 
   const cols: Column<EudrPlot>[] = [
-    { id: "plot", header: t("ui.eudrColPlot"), cell: (p) => p.plotName },
-    { id: "area", header: t("ui.eudrColArea"), align: "right", cell: (p) => fmtHa(p.plotAreaHa), hideBelow: "sm" },
-    { id: "forest", header: t("ui.eudrColForest", { year: refYear }), align: "right", cell: (p) => (p.status === "no_data" ? "—" : fmtHa(p.forestRefHa)) },
+    { id: "plot", header: t("ui.eudr.colPlot"), cell: (p) => p.plotName },
+    { id: "area", header: t("ui.eudr.colArea"), align: "right", cell: (p) => fmtHa(p.plotAreaHa), hideBelow: "sm" },
+    { id: "forest", header: t("ui.eudr.colForest", { year: refYear }), align: "right", cell: (p) => (p.status === "no_data" ? "—" : fmtHa(p.forestRefHa)) },
     {
       id: "res",
-      header: t("ui.eudrColResult"),
+      header: t("ui.eudr.colResult"),
       cell: (p) => <span className={p.status === "possible_loss" ? "font-medium text-peligro" : ""}>{statusText(p.status, p.lossHa)}</span>,
     },
   ];
@@ -96,27 +97,27 @@ export function EudrPage() {
     <Page
       width="data"
       className="gap-6"
-      back={{ to: `/estancias/${farmId}/informes`, label: t("ui.reportsBack") }}
-      title={t("ui.eudrTitle")}
+      back={{ to: `/estancias/${farmId}/informes`, label: t("ui.reports.back") }}
+      title={t("ui.eudr.title")}
       primary={
         hasData ? (
           <Button variant="primary" onClick={pdfFile} disabled={busy}>
-            {busy ? t("ui.eudrPdfWorking") : t("ui.eudrPdf")}
+            {busy ? t("ui.eudr.pdfWorking") : t("ui.eudr.pdf")}
           </Button>
         ) : undefined
       }
-      menu={hasData ? <PageExport root={body} name={t("ui.eudrTitle")} /> : undefined}
+      menu={hasData ? <PageExport root={body} name={t("ui.eudr.title")} /> : undefined}
     >
-      {hasData && <p className="-mt-3 text-sm text-tinta-2">{f.name} · {t("ui.eudrComputed", { date: fmtDate(data.computedAt!) })}</p>}
+      {hasData && <p className="-mt-3 text-sm text-tinta-2">{f.name} · {t("ui.eudr.computed", { date: fmtDate(data.computedAt!) })}</p>}
       <Disclaimer />
       {!hasData ? (
-        <EmptyState title={data.plots.length === 0 && farm.data.plots.length === 0 ? t("ui.eudrNoPlots") : t("ui.eudrPending")} />
+        <EmptyState title={data.plots.length === 0 && farm.data.plots.length === 0 ? t("ui.eudr.noPlots") : t("ui.eudr.pending")} />
       ) : (
         <div ref={body} className="flex flex-col gap-6">
           <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-linea py-5 sm:grid-cols-3">
-            <Stat label={t("ui.eudrForest", { year: refYear })} value={fmtHa(sum.forestRefHa)} />
-            {sum.lossHa > 0 && <Stat label={t("ui.eudrLoss")} value={fmtHa(sum.lossHa)} tone="danger" />}
-            <Stat label={t("ui.eudrPlotsWithLoss")} value={`${sum.withLoss} / ${sum.plots}`} />
+            <Stat label={t("ui.eudr.forest", { year: refYear })} value={fmtHa(sum.forestRefHa)} />
+            {sum.lossHa > 0 && <Stat label={t("ui.eudr.loss")} value={fmtHa(sum.lossHa)} tone="danger" />}
+            <Stat label={t("ui.eudr.plotsWithLoss")} value={`${sum.withLoss} / ${sum.plots}`} />
           </div>
           <div className="flex flex-col gap-1 text-sm text-tinta-2">
             {(() => {
@@ -124,8 +125,8 @@ export function EudrPage() {
               const c = range(sum.curFromAt, sum.curToAt);
               return (
                 <>
-                  <p>{t("ui.eudrRefComposite", { year: refYear, from: r[0]!, to: r[1]!, n: sum.refScenes })}</p>
-                  <p>{t("ui.eudrCurComposite", { year: curYear, from: c[0]!, to: c[1]!, n: sum.curScenes })}</p>
+                  <p>{t("ui.eudr.refComposite", { year: refYear, from: r[0]!, to: r[1]!, n: sum.refScenes })}</p>
+                  <p>{t("ui.eudr.curComposite", { year: curYear, from: c[0]!, to: c[1]!, n: sum.curScenes })}</p>
                 </>
               );
             })()}
@@ -134,7 +135,7 @@ export function EudrPage() {
 
           <div className="grid items-start gap-x-10 gap-y-6 lg:grid-cols-2">
             <section className="flex flex-col gap-3">
-              <SectionHead title={t("ui.eudrMapTitle")} />
+              <SectionHead title={t("ui.eudr.mapTitle")} />
               <div className="h-80 overflow-hidden rounded-lg border border-linea">
                 <FarmMap
                   outline={f.geometry}
@@ -146,11 +147,11 @@ export function EudrPage() {
                   className="h-full w-full"
                 />
               </div>
-              {areas.length === 0 && <p className="text-sm text-tinta-2">{t("ui.eudrMapNone")}</p>}
+              {areas.length === 0 && <p className="text-sm text-tinta-2">{t("ui.eudr.mapNone")}</p>}
             </section>
             <section className="flex min-w-0 flex-col gap-3">
-              <SectionHead title={t("ui.eudrPlotsTitle")} />
-              <DataTable columns={cols} rows={data.plots} rowKey={(p) => p.plotId} caption={t("ui.eudrPlotsTitle")} />
+              <SectionHead title={t("ui.eudr.plotsTitle")} />
+              <DataTable columns={cols} rows={data.plots} rowKey={(p) => p.plotId} caption={t("ui.eudr.plotsTitle")} />
             </section>
           </div>
           <Method refYear={refYear} curYear={curYear} />

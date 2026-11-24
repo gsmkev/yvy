@@ -99,7 +99,7 @@ export async function parseFile(file: File): Promise<ImportedPolygon[]> {
   if (name.endsWith(".kmz")) {
     const zip = await JSZip.loadAsync(await file.arrayBuffer());
     const entry = Object.values(zip.files).find((f) => f.name.toLowerCase().endsWith(".kml"));
-    if (!entry) throw new Error(t("ui.importKmzNoKml"));
+    if (!entry) throw new Error(t("ui.import.kmzNoKml"));
     return fromKml(await entry.async("text"));
   }
   if (name.endsWith(".zip")) {
@@ -109,20 +109,20 @@ export async function parseFile(file: File): Promise<ImportedPolygon[]> {
     if (!files.some((f) => f.name.toLowerCase().endsWith(".shp"))) {
       const kmlEntry = files.find((f) => f.name.toLowerCase().endsWith(".kml"));
       if (kmlEntry) return fromKml(await kmlEntry.async("text"));
-      throw new Error(t("ui.importZipNoShp"));
+      throw new Error(t("ui.import.zipNoShp"));
     }
     // Solo WGS84 o UTM 20S/21S; shpjs (proj4, carga diferida) reproyecta a WGS84 con el .prj.
     for (const prj of files.filter((f) => f.name.toLowerCase().endsWith(".prj"))) {
-      if (classifyPrj(await prj.async("text")) === "unsupported") throw new Error(t("ui.importCrsUnsupported"));
+      if (classifyPrj(await prj.async("text")) === "unsupported") throw new Error(t("ui.import.crsUnsupported"));
     }
     const shp = (await import("shpjs")).default;
     const result = (await shp(buf)) as FeatureCollection | FeatureCollection[];
     const fcs = Array.isArray(result) ? result : [result];
     const fc: FeatureCollection = { type: "FeatureCollection", features: fcs.flatMap((f) => f.features) };
-    if (!inWgs84Range(fc)) throw new Error(t("ui.importCrsUnknown"));
+    if (!inWgs84Range(fc)) throw new Error(t("ui.import.crsUnknown"));
     return toPolygons(fc);
   }
-  throw new Error(t("ui.importUnsupported"));
+  throw new Error(t("ui.import.unsupported"));
 }
 
 /** Une varias figuras en una sola: un Polygon si hay una, un MultiPolygon si hay varias partes (M-09). */

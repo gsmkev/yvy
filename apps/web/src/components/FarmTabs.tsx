@@ -79,13 +79,13 @@ export function FarmTabs<T extends string>({
             onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
             className={`${tabCls(false)} gap-1`}
           >
-            {t("ui.tabMore")}
+            {t("ui.tab.more")}
             <ChevronDown size={14} aria-hidden />
           </button>
           {open && (
             <div
               role="menu"
-              aria-label={t("ui.tabMore")}
+              aria-label={t("ui.tab.more")}
               className="anim-pop absolute top-full right-0 z-40 mt-1 min-w-44 rounded-md border border-linea bg-papel py-1 shadow-lg"
               onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
             >

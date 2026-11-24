@@ -21,17 +21,17 @@ async function refreshSession() {
 function RecoveryCodes({ codes, onDone }: { codes: string[]; onDone: () => void }) {
   return (
     <div className="mt-4 border-l-2 border-trigo pl-3">
-      <p className="font-medium">{t("ui.totpRecoveryTitle")}</p>
-      <p className="mt-1 text-sm text-tinta-2">{t("ui.totpRecoveryText")}</p>
+      <p className="font-medium">{t("ui.totp.recoveryTitle")}</p>
+      <p className="mt-1 text-sm text-tinta-2">{t("ui.totp.recoveryText")}</p>
       <ul className="num mt-3 grid max-w-xs grid-cols-2 gap-x-6 gap-y-1 font-mono text-body">
         {codes.map((c) => (
           <li key={c}>{c}</li>
         ))}
       </ul>
       <div className="mt-3 flex gap-2">
-        <Button onClick={() => void navigator.clipboard?.writeText(codes.join("\n"))}>{t("ui.totpRecoveryCopy")}</Button>
+        <Button onClick={() => void navigator.clipboard?.writeText(codes.join("\n"))}>{t("ui.totp.recoveryCopy")}</Button>
         <Button variant="primary" onClick={onDone}>
-          {t("ui.totpRecoverySaved")}
+          {t("ui.totp.recoverySaved")}
         </Button>
       </div>
     </div>
@@ -61,14 +61,14 @@ export function TotpSection({ forced = false }: { forced?: boolean }) {
     onSuccess: async (r) => {
       setFresh(r.recoveryCodes);
       done();
-      toast(t("ui.toastTotpOn"));
+      toast(t("ui.toast.totpOn"));
       await refreshSession();
     },
   });
   const disable = useMutation({ mutationFn: () => post("/auth/totp/disable", { code }),
     onSuccess: () => {
       done();
-      toast(t("ui.toastTotpOff"));
+      toast(t("ui.toast.totpOff"));
     },
   });
   const regen = useMutation({
@@ -76,7 +76,7 @@ export function TotpSection({ forced = false }: { forced?: boolean }) {
     onSuccess: (r) => {
       setFresh(r.recoveryCodes);
       done();
-      toast(t("ui.toastTotpCodes"));
+      toast(t("ui.toast.totpCodes"));
     },
   });
   const s = status.data;
@@ -85,27 +85,27 @@ export function TotpSection({ forced = false }: { forced?: boolean }) {
 
   return (
     <section id="segundo-factor" className="scroll-mt-4">
-      <SectionHead title={t("ui.totpTitle")} />
-      <p className="mt-3 text-tinta-2">{t(lockedByOrg ? "ui.totpIntroRequired" : "ui.totpIntro")}</p>
+      <SectionHead title={t("ui.totp.title")} />
+      <p className="mt-3 text-tinta-2">{t(lockedByOrg ? "ui.totp.introRequired" : "ui.totp.intro")}</p>
 
       {fresh && <RecoveryCodes codes={fresh} onDone={() => setFresh(null)} />}
 
       {!fresh && !s.enabled && !setup && (
         <Button variant="primary" className="mt-4" disabled={start.isPending} onClick={() => start.mutate()}>
-          {t("ui.totpActivate")}
+          {t("ui.totp.activate")}
         </Button>
       )}
 
       {!s.enabled && setup && (
         <Form className="mt-4 flex max-w-sm flex-col gap-4" onSubmit={() => enable.mutate()}>
-          <p className="text-sm">{t("ui.totpScan")}</p>
+          <p className="text-sm">{t("ui.totp.scan")}</p>
           <div className="w-44 bg-white p-2">
             <QRCodeSVG value={setup.otpauth} size={160} marginSize={0} />
           </div>
           <p className="text-sm text-tinta-2">
-            {t("ui.totpManual")} <code className="break-all font-mono text-surco">{setup.secret}</code>
+            {t("ui.totp.manual")} <code className="break-all font-mono text-surco">{setup.secret}</code>
           </p>
-          <Field label={t("ui.totpConfirmLabel")}>
+          <Field label={t("ui.totp.confirmLabel")}>
             <Input
               inputMode="numeric"
               maxLength={6}
@@ -118,7 +118,7 @@ export function TotpSection({ forced = false }: { forced?: boolean }) {
             />
           </Field>
           <Button type="submit" variant="primary" disabled={enable.isPending || code.length !== 6}>
-            {t("ui.totpConfirm")}
+            {t("ui.totp.confirm")}
           </Button>
           {enable.error ? <ErrorBox error={enable.error} /> : null}
         </Form>
@@ -127,29 +127,29 @@ export function TotpSection({ forced = false }: { forced?: boolean }) {
       {s.enabled && !fresh && (
         <div className="mt-4">
           <p role="status" className="border-l-2 border-soja pl-3">
-            {t("ui.totpOn", { n: s.recoveryLeft })}
+            {t("ui.totp.on", { n: s.recoveryLeft })}
           </p>
           {action ? (
             <Form className="mt-3 flex max-w-sm flex-col gap-3" onSubmit={() => (action === "disable" ? disable : regen).mutate()}>
-              <Field label={t("ui.totpAskCode")}>
+              <Field label={t("ui.totp.askCode")}>
                 <Input required autoFocus autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value)} />
               </Field>
               <div className="flex gap-2">
                 <Button type="submit" variant={action === "disable" ? "danger" : "primary"} disabled={code.trim().length < 6}>
-                  {t(action === "disable" ? "ui.totpDisable" : "ui.totpRegen")}
+                  {t(action === "disable" ? "ui.totp.disable" : "ui.totp.regen")}
                 </Button>
-                <Button onClick={() => (setAction(null), setCode(""))}>{t("ui.cancel")}</Button>
+                <Button onClick={() => (setAction(null), setCode(""))}>{t("ui.common.cancel")}</Button>
               </div>
               {(disable.error ?? regen.error) ? <ErrorBox error={disable.error ?? regen.error} /> : null}
             </Form>
           ) : (
             <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
               <button type="button" className="cursor-pointer font-medium text-accion underline underline-offset-4" onClick={() => setAction("regen")}>
-                {t("ui.totpRegen")}
+                {t("ui.totp.regen")}
               </button>
               {!lockedByOrg && (
                 <button type="button" className="cursor-pointer font-medium text-peligro underline underline-offset-4" onClick={() => setAction("disable")}>
-                  {t("ui.totpDisable")}
+                  {t("ui.totp.disable")}
                 </button>
               )}
             </div>
@@ -172,14 +172,14 @@ export function AdminTotpPolicy() {
   const set = useMutation({
     mutationFn: (v: boolean) => put("/org/security", { requireAdminTotp: v }),
     onSuccess: () => {
-      toast(t("ui.toastTotpPolicy"));
+      toast(t("ui.toast.totpPolicy"));
       return qc.invalidateQueries({ queryKey: ["org-security"] });
     },
   });
   if (!q.data) return <Skeleton h={64} />;
   return (
     <section>
-      <SectionHead title={t("ui.totpPolicyTitle")} />
+      <SectionHead title={t("ui.totp.policyTitle")} />
       <label className="mt-2 flex cursor-pointer items-start gap-2 text-body">
         <input
           type="checkbox"
@@ -188,16 +188,16 @@ export function AdminTotpPolicy() {
           disabled={set.isPending}
           onChange={(e) => set.mutate(e.target.checked)}
         />
-        <span>{t("ui.totpPolicyLabel")}</span>
+        <span>{t("ui.totp.policyLabel")}</span>
       </label>
       {q.data.admins.length === 0 ? (
-        <p className="mt-2 text-sm text-tinta-2">{t("ui.totpPolicyNoAdmins")}</p>
+        <p className="mt-2 text-sm text-tinta-2">{t("ui.totp.policyNoAdmins")}</p>
       ) : (
         <ul className="mt-3 divide-y divide-linea border-y border-linea text-sm">
           {q.data.admins.map((a) => (
             <li key={a.userId} className="flex justify-between gap-3 py-2">
               <span>{a.fullName}</span>
-              <span className={a.totp ? "text-soja" : "text-tinta-2"}>{t(a.totp ? "ui.totpPolicyOn" : "ui.totpPolicyOff")}</span>
+              <span className={a.totp ? "text-soja" : "text-tinta-2"}>{t(a.totp ? "ui.totp.policyOn" : "ui.totp.policyOff")}</span>
             </li>
           ))}
         </ul>

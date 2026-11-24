@@ -57,79 +57,79 @@ export function MoveModal({ mode, onClose }: { mode: Mode; onClose: () => void }
       return post("/org/erp/stock/adjustments", { ...common, warehouseId: f.warehouseId, qty: qty * Number(f.sign) });
     },
     onSuccess: () => {
-      toast(t("ui.erpSaved"));
+      toast(t("ui.erp.saved"));
       qc.invalidateQueries({ queryKey: ["erp"] });
       onClose();
     },
   });
   const whOptions = (warehouses.data ?? []).map((w) => ({ value: w.id, label: w.name }));
-  const pick = { value: "", label: t("ui.stockPick") };
+  const pick = { value: "", label: t("ui.stock.pick") };
   return (
-    <Modal title={t(`ui.stockMode_${mode}`)} onClose={onClose}>
+    <Modal title={t(`ui.stock.mode_${mode}`)} onClose={onClose}>
       <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
         <div className="col-span-2">
-          <Field label={t("ui.stockProduct")}>
-            <Select required value={f.productId} onChange={set("productId")} options={[pick, ...(products.data ?? []).map((p) => ({ value: p.id, label: `${p.name} (${tk(`fields.productUnit_${p.unit}`)})` }))]} />
+          <Field label={t("ui.stock.product")}>
+            <Select required value={f.productId} onChange={set("productId")} options={[pick, ...(products.data ?? []).map((p) => ({ value: p.id, label: `${p.name} (${tk(`fields.product.unit_${p.unit}`)})` }))]} />
           </Field>
         </div>
-        <Field label={mode === "transfer" ? t("ui.stockFrom") : t("ui.stockWarehouse")}>
+        <Field label={mode === "transfer" ? t("ui.stock.from") : t("ui.stock.warehouse")}>
           <Select required value={f.warehouseId} onChange={set("warehouseId")} options={[pick, ...whOptions]} />
         </Field>
         {mode === "transfer" ? (
-          <Field label={t("ui.stockTo")}>
+          <Field label={t("ui.stock.to")}>
             <Select required value={f.toWarehouseId} onChange={set("toWarehouseId")} options={[pick, ...whOptions]} />
           </Field>
         ) : (
-          <Field label={t("ui.costDate")}>
+          <Field label={t("ui.cost.date")}>
             <Input type="date" required value={f.date} onChange={set("date")} />
           </Field>
         )}
         {mode === "transfer" && (
-          <Field label={t("ui.costDate")}>
+          <Field label={t("ui.cost.date")}>
             <Input type="date" required value={f.date} onChange={set("date")} />
           </Field>
         )}
         {mode === "adjustment" && (
-          <Field label={t("ui.stockAdjustSign")}>
-            <Select value={f.sign} onChange={set("sign")} options={[{ value: "1", label: t("ui.stockAdjustPlus") }, { value: "-1", label: t("ui.stockAdjustMinus") }]} />
+          <Field label={t("ui.stock.adjustSign")}>
+            <Select value={f.sign} onChange={set("sign")} options={[{ value: "1", label: t("ui.stock.adjustPlus") }, { value: "-1", label: t("ui.stock.adjustMinus") }]} />
           </Field>
         )}
-        <Field label={t("ui.stockQty")}>
+        <Field label={t("ui.stock.qty")}>
           <Input type="number" required min={0} step="any" value={f.qty} onChange={set("qty")} />
         </Field>
         {mode === "purchase" && (
           <>
-            <Field label={t("ui.currency")}>
+            <Field label={t("ui.common.currency")}>
               <Select value={f.currency} onChange={set("currency")} options={CURRENCIES.map((x) => ({ value: x, label: x }))} />
             </Field>
-            <Field label={t("ui.stockTotalAmount")}>
+            <Field label={t("ui.stock.totalAmount")}>
               <Input type="number" required min={0} step="any" value={f.amount} onChange={set("amount")} />
             </Field>
-            <Field label={t("ui.stockLot")}>
+            <Field label={t("ui.stock.lot")}>
               <Input value={f.lot} onChange={set("lot")} maxLength={40} />
             </Field>
-            <Field label={t("ui.stockExpires")}>
+            <Field label={t("ui.stock.expires")}>
               <Input type="date" value={f.expiresOn} onChange={set("expiresOn")} />
             </Field>
             <div className="col-span-2">
-              <Field label={t("ui.stockSupplier")}>
-                <Select value={f.partyId} onChange={set("partyId")} options={[{ value: "", label: t("ui.costNone") }, ...(parties.data ?? []).map((p) => ({ value: p.id, label: p.name }))]} />
+              <Field label={t("ui.stock.supplier")}>
+                <Select value={f.partyId} onChange={set("partyId")} options={[{ value: "", label: t("ui.cost.none") }, ...(parties.data ?? []).map((p) => ({ value: p.id, label: p.name }))]} />
               </Field>
             </div>
           </>
         )}
         {mode === "consumption" && (
           <>
-            <Field label={t("ui.costFarm")}>
-              <Select value={f.farmId} onChange={set("farmId")} options={[{ value: "", label: t("ui.costNone") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
+            <Field label={t("ui.cost.farm")}>
+              <Select value={f.farmId} onChange={set("farmId")} options={[{ value: "", label: t("ui.cost.none") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
             </Field>
-            <Field label={t("ui.stockChargePlot")}>
-              <Select value={f.plotId} onChange={set("plotId")} disabled={!f.farmId} options={[{ value: "", label: t("ui.costNone") }, ...(farm.data?.plots ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
+            <Field label={t("ui.stock.chargePlot")}>
+              <Select value={f.plotId} onChange={set("plotId")} disabled={!f.farmId} options={[{ value: "", label: t("ui.cost.none") }, ...(farm.data?.plots ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
             </Field>
           </>
         )}
         <div className="col-span-2">
-          <Field label={t("ui.stockNote")}>
+          <Field label={t("ui.stock.note")}>
             <Input value={f.note} onChange={set("note")} maxLength={200} />
           </Field>
         </div>

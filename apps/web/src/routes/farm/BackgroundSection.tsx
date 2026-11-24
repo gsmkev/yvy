@@ -21,33 +21,33 @@ function IndexLegend({ scene }: { scene: FarmScene }) {
         <>
           <div className="num mt-1 flex justify-between text-lino/70">
             <span>
-              {shownIndex === "fert_ph" ? t("ui.fertLegendPh") : t("ui.fertLegendLow")} {fmtNum(FERT_STYLE[shownIndex].lo)}
+              {shownIndex === "fert_ph" ? t("ui.fert.legendPh") : t("ui.fert.legendLow")} {fmtNum(FERT_STYLE[shownIndex].lo)}
             </span>
             <span>
               {fmtNum(FERT_STYLE[shownIndex].hi)} {FERT_STYLE[shownIndex].unit}
             </span>
           </div>
           <p className="num mt-1 text-lino/70">
-            {t("ui.soilLevel_low")} &lt; {fmtNum(SOIL_RANGES[FERT_LAYER_PARAM[shownIndex]][0])} · {t("ui.soilLevel_high")} &gt;{" "}
+            {t("ui.soil.level_low")} &lt; {fmtNum(SOIL_RANGES[FERT_LAYER_PARAM[shownIndex]][0])} · {t("ui.soil.level_high")} &gt;{" "}
             {fmtNum(SOIL_RANGES[FERT_LAYER_PARAM[shownIndex]][1])}
           </p>
-          <p className="mt-1 text-lino/60">{t("ui.fertLegendNote")}</p>
+          <p className="mt-1 text-lino/60">{t("ui.fert.legendNote")}</p>
         </>
       ) : (
         <div className="num mt-1 flex justify-between text-lino/70">
-          <span>{shownIndex === "ndmi" ? t("ui.ndmiLegendLow") : t("ui.ndviLegendLow")}</span>
-          <span>{shownIndex === "ndmi" ? t("ui.ndmiLegendHigh") : t("ui.ndviLegendHigh")}</span>
+          <span>{shownIndex === "ndmi" ? t("ui.ndmi.legendLow") : t("ui.ndvi.legendLow")}</span>
+          <span>{shownIndex === "ndmi" ? t("ui.ndmi.legendHigh") : t("ui.ndvi.legendHigh")}</span>
         </div>
       )}
       <p className="num mt-1.5 text-lino/70">
-        {t("ui.imageDate", { date: fmtDate((scene.pickedFor(shownIndex) ?? ndviLayer!).acquiredAt) })} · {isFert(shownIndex) ? t("ui.soilTitle") : "Sentinel-2"}
+        {t("ui.common.imageDate", { date: fmtDate((scene.pickedFor(shownIndex) ?? ndviLayer!).acquiredAt) })} · {isFert(shownIndex) ? t("ui.soil.title") : "Sentinel-2"}
       </p>
     </div>
   );
 }
 
 const imageryNote = (s: FarmDetail["imageryStatus"]) =>
-  s === "pending" || s === "processing" ? t("ui.imageryProcessing") : s === "failed" ? t("ui.imageryFailed") : t("ui.noBasemap");
+  s === "pending" || s === "processing" ? t("ui.imagery.processing") : s === "failed" ? t("ui.imagery.failed") : t("ui.no.basemap");
 
 export function BackgroundSection({
   d,
@@ -61,8 +61,8 @@ export function BackgroundSection({
   const { layer, kind, shownIndex, ndviLayer, hasIndex, compare } = scene;
   const available = OVERLAYS.filter(hasIndex);
   return (
-    <PanelSection title={t("ui.layersBackground")}>
-      <div role="radiogroup" aria-label={t("ui.layersBackground")} className="flex gap-1.5 font-medium">
+    <PanelSection title={t("ui.common.layersBackground")}>
+      <div role="radiogroup" aria-label={t("ui.common.layersBackground")} className="flex gap-1.5 font-medium">
         {(["satellite", "ndvi"] as const).map((l) => (
           <button
             key={l}
@@ -72,13 +72,13 @@ export function BackgroundSection({
             onClick={() => scene.pickBackground(l)}
             className={`h-10 flex-1 cursor-pointer rounded px-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${layer === l ? "bg-lino text-surco" : "border border-white/20 hover:bg-white/10"}`}
           >
-            {l === "satellite" ? t("ui.layerSatellite") : t("ui.layerNdvi")}
+            {l === "satellite" ? t("ui.layer.satellite") : t("ui.layer.ndvi")}
           </button>
         ))}
       </div>
       {layer === "ndvi" && available.length > 1 && (
         <label className="flex flex-col gap-1">
-          <span className="text-lino/70">{t("ui.indexPick")}</span>
+          <span className="text-lino/70">{t("ui.index.pick")}</span>
           <SelectBox><select
             className="appearance-none pr-8 h-10 w-full cursor-pointer rounded border border-white/20 bg-surco px-2 text-xs text-lino outline-none focus:border-lino"
             value={shownIndex}
@@ -86,11 +86,11 @@ export function BackgroundSection({
           >
             {available.map((k) => (
               <option key={k} value={k}>
-                {isFert(k) ? t(`ui.fertLayer_${k}` as "ui.fertLayer_fert_ph") : t(`ui.index_${k}`)}
+                {isFert(k) ? t(`ui.fert.layer_${k}` as "ui.fert.layer_fert_ph") : t(`ui.index.${k}`)}
               </option>
             ))}
           </select></SelectBox>
-          {!isFert(shownIndex) && <span className="text-lino/60">{t(`ui.indexHint_${shownIndex}`)}</span>}
+          {!isFert(shownIndex) && <span className="text-lino/60">{t(`ui.index.hint_${shownIndex}`)}</span>}
         </label>
       )}
       <SceneControls

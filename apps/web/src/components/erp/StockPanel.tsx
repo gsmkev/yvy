@@ -1,7 +1,7 @@
 /** Inventario (E-11): stock por producto y depósito, costo promedio y movimientos de compra, consumo, transferencia y ajuste. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { del, get, qs } from "../../lib/api";
+import { del, get, withQs } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { useProducts } from "../../lib/products";
 import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, FilterBar, Select, Spinner, Tabs, toast } from "../ui";
@@ -19,14 +19,14 @@ const useStock = () => useQuery({ queryKey: ["erp", "stock"], queryFn: () => get
 function NeedSetup({ needProduct, onGo }: { needProduct: boolean; onGo: (section: string) => void }) {
   return (
     <EmptyState
-      title={t(needProduct ? "ui.stockNeedProductTitle" : "ui.stockNeedWarehouseTitle")}
+      title={t(needProduct ? "ui.stock.needProductTitle" : "ui.stock.needWarehouseTitle")}
       action={
         <Button variant="primary" onClick={() => onGo(needProduct ? "products" : "warehouses")}>
-          {t(needProduct ? "ui.productLoad" : "ui.warehouseLoad")}
+          {t(needProduct ? "ui.product.load" : "ui.warehouse.load")}
         </Button>
       }
     >
-      {t(needProduct ? "ui.stockNeedProductBody" : "ui.stockNeedWarehouseBody")}
+      {t(needProduct ? "ui.stock.needProductBody" : "ui.stock.needWarehouseBody")}
     </EmptyState>
   );
 }
@@ -38,7 +38,7 @@ export function StockPanel() {
   const [productId, setProductId] = useState("");
   const moves = useQuery({
     queryKey: ["erp", "stock-moves", productId],
-    queryFn: () => get<StockMove[]>(`/org/erp/stock/moves${qs({ productId: productId || undefined })}`),
+    queryFn: () => get<StockMove[]>(withQs("/org/erp/stock/moves", { productId: productId || undefined })),
   });
   const expiring = useQuery({ queryKey: ["erp", "expiring"], queryFn: () => get<ExpiringLot[]>("/org/erp/stock/expiring") });
   const [mode, setMode] = useState<Mode | null>(null);
@@ -50,7 +50,7 @@ export function StockPanel() {
   const remove = useMutation({
     mutationFn: (m: StockMove) => del(`/org/erp/stock/moves/${m.id}`),
     onSuccess: () => {
-      toast(t("ui.erpDeleted"));
+      toast(t("ui.erp.deleted"));
       setRemoving(null);
       qc.invalidateQueries({ queryKey: ["erp"] });
     },
@@ -63,7 +63,7 @@ export function StockPanel() {
   const lk = {
     prod: (id: string) => products.data?.find((p) => p.id === id),
     wh: (id: string) => warehouses.data?.find((w) => w.id === id)?.name ?? "",
-    unit: (id: string) => tk(`fields.productUnit_${products.data?.find((p) => p.id === id)?.unit ?? "l"}`),
+    unit: (id: string) => tk(`fields.product.unit_${products.data?.find((p) => p.id === id)?.unit ?? "l"}`),
   };
   const list = stock.data?.products ?? [];
   const lots = expiring.data ?? [];
@@ -76,19 +76,19 @@ export function StockPanel() {
     <div className="flex flex-col gap-4">
       <HeaderActions>
         <Button variant="primary" onClick={() => setMode("purchase")}>
-          {t("ui.stockMode_purchase")}
+          {t("ui.stock.mode_purchase")}
         </Button>
         <ActionMenu
-          label={t("ui.moreActions")}
-          items={(["consumption", "transfer", "adjustment"] as const).map((m) => ({ label: t(`ui.stockMode_${m}`), onSelect: () => setMode(m) }))}
+          label={t("ui.common.moreActions")}
+          items={(["consumption", "transfer", "adjustment"] as const).map((m) => ({ label: t(`ui.stock.mode_${m}`), onSelect: () => setMode(m) }))}
         />
       </HeaderActions>
       {shown > 0 && exp.menu}
       <Tabs
         tabs={[
-          { id: "stock", label: t("ui.stockTabStock") },
-          { id: "moves", label: t("ui.stockMoves") },
-          ...(lots.length > 0 ? [{ id: "expiring" as const, label: t("ui.expiringTitle"), count: lots.length }] : []),
+          { id: "stock", label: t("ui.stock.tabStock") },
+          { id: "moves", label: t("ui.stock.moves") },
+          ...(lots.length > 0 ? [{ id: "expiring" as const, label: t("ui.expiring.title"), count: lots.length }] : []),
         ]}
         value={tab}
         onChange={setTab}
@@ -96,10 +96,10 @@ export function StockPanel() {
       {tab === "moves" && (
         <FilterBar>
           <Select
-            aria-label={t("ui.stockProduct")}
+            aria-label={t("ui.stock.product")}
             value={productId}
             onChange={(e) => setProductId(e.target.value)}
-            options={[{ value: "", label: t("ui.costAll") }, ...(products.data ?? []).map((p) => ({ value: p.id, label: p.name }))]}
+            options={[{ value: "", label: t("ui.cost.all") }, ...(products.data ?? []).map((p) => ({ value: p.id, label: p.name }))]}
           />
         </FilterBar>
       )}
@@ -109,10 +109,10 @@ export function StockPanel() {
             columns={stockCols}
             rows={list}
             rowKey={(p) => p.productId}
-            caption={t("ui.stockTabStock")}
+            caption={t("ui.stock.tabStock")}
             empty={
-              <EmptyState title={t("ui.emptyStockTitle")} action={<Button variant="primary" onClick={() => setMode("purchase")}>{t("ui.stockMode_purchase")}</Button>}>
-                {t("ui.emptyStockBody")}
+              <EmptyState title={t("ui.empty.stockTitle")} action={<Button variant="primary" onClick={() => setMode("purchase")}>{t("ui.stock.mode_purchase")}</Button>}>
+                {t("ui.empty.stockBody")}
               </EmptyState>
             }
           />
@@ -121,16 +121,16 @@ export function StockPanel() {
           (moves.isLoading ? (
             <Spinner />
           ) : (
-            <DataTable columns={moveCols} rows={moveRows} rowKey={(m) => m.id} caption={t("ui.stockMoves")} empty={<EmptyState compact title={t("ui.erpEmpty")}>{t("ui.emptyMovesBody")}</EmptyState>} />
+            <DataTable columns={moveCols} rows={moveRows} rowKey={(m) => m.id} caption={t("ui.stock.moves")} empty={<EmptyState compact title={t("ui.erp.empty")}>{t("ui.empty.movesBody")}</EmptyState>} />
           ))}
-        {tab === "expiring" && <DataTable columns={expiringCols} rows={lots} rowKey={(l) => `${l.productId}-${l.lot}-${l.expiresOn}`} caption={t("ui.expiringTitle")} />}
+        {tab === "expiring" && <DataTable columns={expiringCols} rows={lots} rowKey={(l) => `${l.productId}-${l.lot}-${l.expiresOn}`} caption={t("ui.expiring.title")} />}
       </div>
       {mode && <MoveModal mode={mode} onClose={() => setMode(null)} />}
       {removing && (
         <ConfirmModal
-          title={tk(`ui.stockOrigin_${removing.origin}`)}
-          message={t("ui.stockDeleteConfirm")}
-          confirmLabel={t("ui.delete")}
+          title={tk(`ui.stock.origin_${removing.origin}`)}
+          message={t("ui.stock.deleteConfirm")}
+          confirmLabel={t("ui.common.delete")}
           pending={remove.isPending}
           error={remove.error}
           onConfirm={() => remove.mutate(removing)}

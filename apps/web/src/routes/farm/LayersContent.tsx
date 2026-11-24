@@ -35,7 +35,7 @@ export function LayersContent({
   return (
     <LayersPanel>
       <BackgroundSection d={d} scene={scene} tilesBaseUrl={me?.tilesBaseUrl} />
-      <PanelSection title={t("ui.layerBoundaries")} defaultOpen={false}>
+      <PanelSection title={t("ui.layer.boundaries")} defaultOpen={false}>
         <BoundariesControl
           level={boundaryLevel}
           onLevel={overlays.setBoundaryLevel}
@@ -44,7 +44,7 @@ export function LayersContent({
         />
       </PanelSection>
       {((customLayers.data?.length ?? 0) > 0 || canManage) && (
-        <PanelSection title={t("ui.customLayersTitle")} defaultOpen={false}>
+        <PanelSection title={t("ui.custom.layersTitle")} defaultOpen={false}>
           <CustomLayersControl
             farmId={farmId}
             layers={customLayers.data ?? []}

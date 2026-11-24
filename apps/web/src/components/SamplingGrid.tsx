@@ -27,7 +27,7 @@ export function SamplingGrid({ plot, farm }: { plot: Plot; farm: Farm | undefine
     try {
       const [{ pdf }, { SamplingReport }] = await Promise.all([import("@react-pdf/renderer"), import("../lib/samplingPdf")]);
       const blob = await pdf(<SamplingReport farm={farm} plot={plot} haPerPoint={ha} points={points} generatedAt={Date.now()} />).toBlob();
-      download(blob, `${t("ui.samplingFile")}-${plot.name}.pdf`);
+      download(blob, `${t("ui.sampling.file")}-${plot.name}.pdf`);
     } catch (e) {
       setError(e);
     } finally {
@@ -37,14 +37,14 @@ export function SamplingGrid({ plot, farm }: { plot: Plot; farm: Farm | undefine
 
   return (
     <div className="border-t border-linea pt-4">
-      <h3 className="eyebrow mb-1">{t("ui.samplingTitle")}</h3>
+      <h3 className="eyebrow mb-1">{t("ui.sampling.title")}</h3>
       {!open ? (
         <Button variant="secondary" onClick={() => setOpen(true)}>
-          {t("ui.samplingOpen")}
+          {t("ui.sampling.open")}
         </Button>
       ) : (
         <div className="flex flex-col gap-3">
-          <div role="radiogroup" aria-label={t("ui.samplingDensity")} className="flex gap-2 text-sm">
+          <div role="radiogroup" aria-label={t("ui.sampling.density")} className="flex gap-2 text-sm">
             {SAMPLING_HA.map((v) => (
               <button
                 key={v}
@@ -53,11 +53,11 @@ export function SamplingGrid({ plot, farm }: { plot: Plot; farm: Farm | undefine
                 onClick={() => setHa(v)}
                 className={`cursor-pointer rounded border px-3 py-1.5 ${ha === v ? "border-surco bg-surco text-lino" : "border-linea"}`}
               >
-                {t("ui.samplingPerPoint", { ha: v })}
+                {t("ui.sampling.perPoint", { ha: v })}
               </button>
             ))}
           </div>
-          <svg viewBox={`0 0 ${W} ${H}`} className="w-full rounded bg-lino" role="img" aria-label={t("ui.samplingTitle")}>
+          <svg viewBox={`0 0 ${W} ${H}`} className="w-full rounded bg-lino" role="img" aria-label={t("ui.sampling.title")}>
             <path d={plotPath(plot, px, py)} stroke={BRAND.surco} strokeWidth="1.5" fill={BRAND.soja} fillOpacity="0.12" />
             {points.map((p) => (
               <g key={p.n}>
@@ -69,23 +69,23 @@ export function SamplingGrid({ plot, farm }: { plot: Plot; farm: Farm | undefine
             ))}
           </svg>
           <p className="text-xs text-tinta-2">
-            {t("ui.samplingCount", { n: points.length })} · {t("ui.samplingHow")}
+            {t("ui.sampling.count", { n: points.length })} · {t("ui.sampling.how")}
           </p>
           <div className="flex flex-wrap gap-2">
             <Button variant="primary" onClick={pdfFile} disabled={busy || !farm}>
-              {busy ? t("ui.samplingPdfWorking") : t("ui.samplingPdf")}
+              {busy ? t("ui.sampling.pdfWorking") : t("ui.sampling.pdf")}
             </Button>
             <Button
               variant="secondary"
               onClick={() =>
                 tableToCsv({
-                  name: `${t("ui.samplingFile")}-${plot.name}`,
-                  headers: [t("ui.samplingColN"), t("ui.samplingColLat"), t("ui.samplingColLon")],
+                  name: `${t("ui.sampling.file")}-${plot.name}`,
+                  headers: [t("ui.sampling.colN"), t("ui.sampling.colLat"), t("ui.sampling.colLon")],
                   rows: points.map((p) => [p.n, p.lat, p.lon]),
                 })
               }
             >
-              {t("ui.samplingCsv")}
+              {t("ui.sampling.csv")}
             </Button>
           </div>
           {error ? <ErrorBox error={error} /> : null}

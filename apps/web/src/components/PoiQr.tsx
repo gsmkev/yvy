@@ -5,22 +5,18 @@
 import { Printer } from "lucide-react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { QRCodeSVG } from "qrcode.react";
-import { poiQrPayload } from "@yvy/shared";
+import { poiQrPayload, raw, safeHtml } from "@yvy/shared";
 import { t, tk } from "../lib/i18n";
 import type { Poi } from "../lib/types";
 import { Button, Modal } from "./ui";
 
-const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-
 /** Hoja imprimible: una tarjeta por punto con su QR, nombre y tipo. HTML autónomo, sin depender de los estilos de la app. */
 export function poiQrSheetHtml(farmName: string, pois: Pick<Poi, "id" | "name" | "kind">[]): string {
-  const cards = pois
-    .map(
-      (p) =>
-        `<figure>${renderToStaticMarkup(<QRCodeSVG value={poiQrPayload(p.id)} size={180} marginSize={2} />)}<figcaption><strong>${escapeHtml(p.name)}</strong><br>${escapeHtml(tk(`ui.poiKinds_${p.kind}`))}</figcaption></figure>`,
-    )
-    .join("");
-  return `<!doctype html><html lang="es-PY"><head><meta charset="utf-8"><title>${escapeHtml(t("app.poiQrTitle"))} · ${escapeHtml(farmName)}</title>
+  const cards = pois.map((p) => {
+    const qr = raw(renderToStaticMarkup(<QRCodeSVG value={poiQrPayload(p.id)} size={180} marginSize={2} />));
+    return safeHtml`<figure>${qr}<figcaption><strong>${p.name}</strong><br>${tk(`ui.poi.kinds_${p.kind}`)}</figcaption></figure>`;
+  });
+  return safeHtml`<!doctype html><html lang="es-PY"><head><meta charset="utf-8"><title>${t("app.poi.qrTitle")} · ${farmName}</title>
 <style>
 body{font-family:system-ui,sans-serif;color:#1E2419;margin:16px}
 h1{font-size:16px;margin:0 0 12px}
@@ -29,7 +25,7 @@ figure{margin:0;border:1px dashed #8C9186;padding:10px;text-align:center;break-i
 figure svg{width:100%;height:auto;max-width:180px}
 figcaption{font-size:14px;margin-top:6px}
 @media print{@page{margin:10mm}}
-</style></head><body><h1>${escapeHtml(farmName)}</h1><div class="grid">${cards}</div></body></html>`;
+</style></head><body><h1>${farmName}</h1><div class="grid">${cards}</div></body></html>`.text;
 }
 
 function printSheet(farmName: string, pois: Pick<Poi, "id" | "name" | "kind">[]) {
@@ -45,21 +41,21 @@ function printSheet(farmName: string, pois: Pick<Poi, "id" | "name" | "kind">[])
 
 export function PoiQrModal({ farmName, pois, onClose }: { farmName: string; pois: Poi[]; onClose: () => void }) {
   return (
-    <Modal title={t("app.poiQrTitle")} onClose={onClose}>
+    <Modal title={t("app.poi.qrTitle")} onClose={onClose}>
       {pois.length === 0 ? (
-        <p className="text-sm text-tinta-2">{t("app.poiQrNone")}</p>
+        <p className="text-sm text-tinta-2">{t("app.poi.qrNone")}</p>
       ) : (
         <div className="flex flex-col gap-4">
-          <p className="text-sm text-tinta-2">{t("app.poiQrHelp")}</p>
+          <p className="text-sm text-tinta-2">{t("app.poi.qrHelp")}</p>
           <Button variant="primary" icon={Printer} onClick={() => printSheet(farmName, pois)}>
-            {t("app.poiQrPrint")}
+            {t("app.poi.qrPrint")}
           </Button>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {pois.map((p) => (
               <li key={p.id} className="flex flex-col items-center gap-1.5 rounded-md border border-linea bg-white p-3 text-center text-xs">
-                <QRCodeSVG value={poiQrPayload(p.id)} size={112} marginSize={1} aria-label={`${t("app.poiQrOne")} · ${p.name}`} />
+                <QRCodeSVG value={poiQrPayload(p.id)} size={112} marginSize={1} aria-label={`${t("app.poi.qrOne")} · ${p.name}`} />
                 <span className="font-medium">{p.name}</span>
-                <span className="text-tinta-2">{tk(`ui.poiKinds_${p.kind}`)}</span>
+                <span className="text-tinta-2">{tk(`ui.poi.kinds_${p.kind}`)}</span>
               </li>
             ))}
           </ul>

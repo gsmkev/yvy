@@ -27,10 +27,10 @@ export function CoverSection({ farmId }: { farmId: string }) {
   const request = useMutation({
     mutationFn: () => post(`/org/farms/${farmId}/cover-change`, { from, to }),
     onSuccess: () => {
-      toast(t("ui.coverRequested"));
+      toast(t("ui.cover.requested"));
       void qc.invalidateQueries({ queryKey: ["cover", farmId] });
     },
-    onError: (e) => toast(e instanceof Error ? e.message : t("ui.coverFailed")),
+    onError: (e) => toast(e instanceof Error ? e.message : t("ui.cover.failed")),
   });
   const keys = useMemo(() => coverKeys(q.data?.plots ?? []), [q.data]);
   if (q.isLoading || farm.isLoading) return <Spinner />;
@@ -46,7 +46,7 @@ export function CoverSection({ farmId }: { farmId: string }) {
 
   return (
     <section className="flex flex-col gap-4">
-      <p className="text-sm text-tinta-2">{t("ui.coverIntro")}</p>
+      <p className="text-sm text-tinta-2">{t("ui.cover.intro")}</p>
       {canRequest && (
         <CoverRequestBar
           from={from}
@@ -60,12 +60,12 @@ export function CoverSection({ farmId }: { farmId: string }) {
       )}
       {processing && q.data.job.params && (
         <p className="text-sm text-tinta-2" role="status">
-          {t("ui.coverComputing", { from: day(q.data.job.params.from ?? ""), to: day(q.data.job.params.to ?? "") })}
+          {t("ui.cover.computing", { from: day(q.data.job.params.from ?? ""), to: day(q.data.job.params.to ?? "") })}
         </p>
       )}
-      {q.data.job.status === "failed" && <p className="text-sm text-peligro">{t("ui.coverFailed")}</p>}
+      {q.data.job.status === "failed" && <p className="text-sm text-peligro">{t("ui.cover.failed")}</p>}
       {!sum || !range ? (
-        <EmptyState compact>{t("ui.coverNone")}</EmptyState>
+        <EmptyState compact>{t("ui.cover.none")}</EmptyState>
       ) : (
         <CoverResult farm={farm.data} me={me.data} rows={rows} sum={sum} range={range} keys={keys} keyValue={key} onPick={setPicked} />
       )}

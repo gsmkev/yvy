@@ -22,18 +22,18 @@ export function ReportStats({ d }: { d: ReportData }) {
   return (
     <div className="grid grid-cols-2 gap-x-6 gap-y-5 border-y border-linea py-5 sm:grid-cols-3 lg:grid-cols-5">
       {rows.length > 0 && (
-        <Stat label={t("ui.navRecords")} value={rows.length} note={`${workers} ${t("ui.workers").toLowerCase()}`} />
+        <Stat label={t("ui.nav.records")} value={rows.length} note={`${workers} ${t("ui.common.workers").toLowerCase()}`} />
       )}
       {weekRain !== null && (
         <Stat
-          label={t("ui.rainWeek")}
+          label={t("ui.rain.week")}
           value={fmtMm(weekRain)}
-          note={gaugeTotal !== null ? `${t("ui.gauge")}: ${fmtMm(gaugeTotal)}` : t("ui.satelliteRain")}
+          note={gaugeTotal !== null ? `${t("ui.common.gauge")}: ${fmtMm(gaugeTotal)}` : t("ui.common.satelliteRain")}
         />
       )}
-      {periodAlerts.length > 0 && <Stat label={t("ui.alertsTitle")} value={periodAlerts.length} />}
-      {tasksDone > 0 && <Stat label={t("ui.reportTasksDone")} value={tasksDone} />}
-      {tasksLate > 0 && <Stat label={t("ui.reportTasksOverdue")} value={tasksLate} tone="danger" />}
+      {periodAlerts.length > 0 && <Stat label={t("ui.alerts.title")} value={periodAlerts.length} />}
+      {tasksDone > 0 && <Stat label={t("ui.report.tasksDone")} value={tasksDone} />}
+      {tasksLate > 0 && <Stat label={t("ui.report.tasksOverdue")} value={tasksLate} tone="danger" />}
     </div>
   );
 }
@@ -45,34 +45,34 @@ export function ReportCharts({ d }: { d: ReportData }) {
     <div className="grid gap-x-10 gap-y-8 lg:grid-cols-2">
       <div className="flex min-w-0 flex-col gap-8">
         {byKind.length > 0 && (
-          <Block title={t("ui.reportByKind")}>
-            <BarList items={byKind} ariaLabel={t("ui.reportByKind")} />
+          <Block title={t("ui.report.byKind")}>
+            <BarList items={byKind} ariaLabel={t("ui.report.byKind")} />
           </Block>
         )}
         {byAuthor.length > 1 && (
-          <Block title={t("ui.reportByAuthor")}>
-            <BarList items={byAuthor} ariaLabel={t("ui.reportByAuthor")} />
+          <Block title={t("ui.report.byAuthor")}>
+            <BarList items={byAuthor} ariaLabel={t("ui.report.byAuthor")} />
           </Block>
         )}
       </div>
       <div className="flex min-w-0 flex-col gap-8">
         {hasRainDays && (
-          <Block title={t("ui.reportRainDaily")}>
+          <Block title={t("ui.report.rainDaily")}>
             <RainChart
               days={rainDays}
-              labels={{ satellite: t("ui.satelliteRain"), normal: t("ui.rainNormal"), gauge: t("ui.gauge") }}
+              labels={{ satellite: t("ui.common.satelliteRain"), normal: t("ui.rain.normal"), gauge: t("ui.common.gauge") }}
               formatDate={(d) => fmtIsoDate(d).slice(0, 5)}
-              ariaLabel={t("ui.reportRainDaily")}
+              ariaLabel={t("ui.report.rainDaily")}
             />
           </Block>
         )}
         {periodAlerts.length > 0 && (
-          <Block title={t("ui.alertsTitle")}>
+          <Block title={t("ui.alerts.title")}>
             <ul className="flex flex-col text-sm">
               {periodAlerts.map((a) => (
                 <li key={a.id} className="border-b border-linea py-2.5">
-                  <span className="font-medium">{tk(`ui.alertKind_${a.kind}`)}</span>
-                  <span className="text-tinta-2"> · {tk(`ui.severity_${a.severity}`)}</span>
+                  <span className="font-medium">{tk(`ui.alert.kind_${a.kind}`)}</span>
+                  <span className="text-tinta-2"> · {tk(`ui.severity.${a.severity}`)}</span>
                   <p className="text-tinta-2">{a.summary}</p>
                 </li>
               ))}
@@ -89,11 +89,11 @@ export function ReportHighlights({ rows, columns, onRowClick }: { rows: RecordRo
   return (
     <section className="flex flex-col gap-2">
       <SectionHead
-        title={t("ui.reportHighlights")}
+        title={t("ui.report.highlights")}
         count={rows.length}
         action={
           <Link to="/registros" className="text-meta text-tinta-2 underline-offset-4 hover:text-surco hover:underline">
-            {t("ui.reportAllRecords")}
+            {t("ui.report.allRecords")}
           </Link>
         }
       />

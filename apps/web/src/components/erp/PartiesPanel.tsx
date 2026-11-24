@@ -18,33 +18,33 @@ export const useParties = () => useErpList<Party>("parties");
 
 export function PartiesPanel() {
   const fields: FieldDef[] = [
-    { key: "name", label: t("ui.partyName"), required: true, maxLength: 120 },
-    { key: "ruc", label: t("ui.partyRuc"), maxLength: 12, hint: t("ui.partyRucHint") },
+    { key: "name", label: t("ui.party.name"), required: true, maxLength: 120 },
+    { key: "ruc", label: t("ui.party.ruc"), maxLength: 12, hint: t("ui.party.rucHint") },
     {
       key: "kind",
-      label: t("ui.partyKind"),
+      label: t("ui.party.kind"),
       type: "select",
       initial: "supplier",
-      options: PARTY_KINDS.map((k) => ({ value: k, label: tk(`ui.partyKind_${k}`) })),
+      options: PARTY_KINDS.map((k) => ({ value: k, label: tk(`ui.party.kind_${k}`) })),
     },
-    { key: "phone", label: t("ui.partyPhone"), maxLength: 40 },
-    { key: "email", label: t("ui.partyEmail"), maxLength: 120 },
-    { key: "address", label: t("ui.partyAddress"), maxLength: 200 },
-    { key: "note", label: t("ui.partyNote"), maxLength: 500 },
+    { key: "phone", label: t("ui.party.phone"), maxLength: 40 },
+    { key: "email", label: t("ui.party.email"), maxLength: 120 },
+    { key: "address", label: t("ui.party.address"), maxLength: 200 },
+    { key: "note", label: t("ui.party.note"), maxLength: 500 },
   ];
   return (
     <MasterPanel<Party>
       path="parties"
       exportName="proveedores-y-clientes"
-      empty={{ title: t("ui.emptyPartiesTitle"), body: t("ui.emptyPartiesBody") }}
-      newLabel={t("ui.partyNew")}
+      empty={{ title: t("ui.empty.partiesTitle"), body: t("ui.empty.partiesBody") }}
+      newLabel={t("ui.party.new")}
       name={(p) => p.name}
       fields={fields}
       columns={[
-        { header: t("ui.partyName"), cell: (p) => <span className="font-medium">{p.name}</span> },
-        { header: t("ui.partyRuc"), hideBelow: "sm", cell: (p) => p.ruc ?? "" },
-        { header: t("ui.partyKind"), cell: (p) => tk(`ui.partyKind_${p.kind}`) },
-        { header: t("ui.partyPhone"), hideBelow: "md", cell: (p) => p.phone ?? "" },
+        { header: t("ui.party.name"), cell: (p) => <span className="font-medium">{p.name}</span> },
+        { header: t("ui.party.ruc"), hideBelow: "sm", cell: (p) => p.ruc ?? "" },
+        { header: t("ui.party.kind"), cell: (p) => tk(`ui.party.kind_${p.kind}`) },
+        { header: t("ui.party.phone"), hideBelow: "md", cell: (p) => p.phone ?? "" },
       ]}
     />
   );

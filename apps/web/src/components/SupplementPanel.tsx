@@ -24,37 +24,37 @@ export function SupplementPanel({ farmId }: { farmId: string }) {
   const used = SUPPLEMENT_TYPES.filter((k) => (d.totals.byType[k] ?? 0) > 0);
   return (
     <div className="flex flex-col gap-4">
-      <Field label={t("ui.suppPeriod")}>
+      <Field label={t("ui.supp.period")}>
         <Select
           value={days}
           onChange={(e) => setDays(e.target.value)}
-          options={["7", "30", "90"].map((v) => ({ value: v, label: t("ui.suppDays", { n: v }) }))}
+          options={["7", "30", "90"].map((v) => ({ value: v, label: t("ui.supp.days", { n: v }) }))}
         />
       </Field>
       {!d.plots.length ? (
-        <Empty title={t("ui.herdNoPaddocks")}>{t("ui.herdNoPaddocksHint")}</Empty>
+        <Empty title={t("ui.herd.noPaddocks")}>{t("ui.herd.noPaddocksHint")}</Empty>
       ) : d.totals.kg === 0 ? (
-        <Empty title={t("ui.suppNone")}>{t("ui.suppNoneHint")}</Empty>
+        <Empty title={t("ui.supp.none")}>{t("ui.supp.noneHint")}</Empty>
       ) : (
         <>
           <p className="num text-sm">
-            {t("ui.suppTotal", {
+            {t("ui.supp.total", {
               kg: int.format(d.totals.kg),
-              list: used.map((k) => `${int.format(d.totals.byType[k] ?? 0)} kg ${tk(`fields.supplementType_${k}`).toLowerCase()}`).join(", "),
+              list: used.map((k) => `${int.format(d.totals.byType[k] ?? 0)} kg ${tk(`fields.supplement.type_${k}`).toLowerCase()}`).join(", "),
             })}
           </p>
-          {d.truncated && <p className="text-sm text-tinta-2">{t("ui.herdTruncated")}</p>}
+          {d.truncated && <p className="text-sm text-tinta-2">{t("ui.herd.truncated")}</p>}
           <div className="overflow-x-auto">
             <ExportableTable name="suplementacion">
               <table className="w-full min-w-[640px] text-sm">
                 <thead>
                   <tr className="text-left text-xs text-tinta-2">
-                    <th className="pb-2 font-medium">{t("ui.plot")}</th>
-                    <th className="pb-2 text-right font-medium">{t("ui.suppHead")}</th>
-                    <th className="pb-2 text-right font-medium">{t("ui.suppKg")}</th>
-                    <th className="pb-2 text-right font-medium">{t("ui.suppSaltKg")}</th>
-                    <th className="pb-2 text-right font-medium">{t("ui.suppSaltPerHead")}</th>
-                    <th className="pb-2 text-right font-medium">{t("ui.suppLast")}</th>
+                    <th className="pb-2 font-medium">{t("ui.common.plot")}</th>
+                    <th className="pb-2 text-right font-medium">{t("ui.supp.head")}</th>
+                    <th className="pb-2 text-right font-medium">{t("ui.supp.kg")}</th>
+                    <th className="pb-2 text-right font-medium">{t("ui.supp.saltKg")}</th>
+                    <th className="pb-2 text-right font-medium">{t("ui.supp.saltPerHead")}</th>
+                    <th className="pb-2 text-right font-medium">{t("ui.supp.last")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-linea border-t border-linea">
@@ -68,7 +68,7 @@ export function SupplementPanel({ farmId }: { farmId: string }) {
                         className={`num py-2.5 text-right ${p.saltStatus === "low" || p.saltStatus === "high" ? "font-medium text-peligro" : ""}`}
                       >
                         {p.saltGPerHeadDay === null ? "—" : `${int.format(p.saltGPerHeadDay)} g`}
-                        {p.saltStatus && p.saltStatus !== "ok" ? ` · ${t(`ui.suppSalt_${p.saltStatus}`)}` : ""}
+                        {p.saltStatus && p.saltStatus !== "ok" ? ` · ${t(`ui.supp.salt_${p.saltStatus}`)}` : ""}
                       </td>
                       <td className="num py-2.5 text-right text-tinta-2">{p.lastAt ? fmtDay(p.lastAt) : "—"}</td>
                     </tr>
@@ -77,7 +77,7 @@ export function SupplementPanel({ farmId }: { farmId: string }) {
               </table>
             </ExportableTable>
           </div>
-          <p className="text-xs text-tinta-2">{t("ui.suppHint", { min: d.reference.min, max: d.reference.max })}</p>
+          <p className="text-xs text-tinta-2">{t("ui.supp.hint", { min: d.reference.min, max: d.reference.max })}</p>
         </>
       )}
     </div>

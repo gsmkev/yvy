@@ -5,7 +5,7 @@ import { t } from "../lib/i18n";
 export function TasksPage() {
   return (
     <Page width="data" className="">
-      <TasksPanel title={t("ui.navTasks")} />
+      <TasksPanel title={t("ui.nav.tasks")} />
     </Page>
   );
 }

@@ -23,7 +23,7 @@ export function NotificationPrefs() {
     mutationFn: () => put<Resp>("/me/notification-prefs", prefs),
     onSuccess: (r) => {
       qc.setQueryData(["notification-prefs"], r);
-      toast(t("ui.notifSaved"));
+      toast(t("ui.notif.saved"));
     },
   });
   if (q.isLoading) return <Spinner />;
@@ -36,25 +36,25 @@ export function NotificationPrefs() {
 
   return (
     <section>
-      <SectionHead title={t("ui.notifTitle")} />
-      <p className="mt-3 text-tinta-2">{t("ui.notifIntro")}</p>
-      {!email && kinds.length < 5 && <p className="mt-2 text-sm text-tinta-2">{t("ui.notifWorkerNote")}</p>}
+      <SectionHead title={t("ui.notif.title")} />
+      <p className="mt-3 text-tinta-2">{t("ui.notif.intro")}</p>
+      {!email && kinds.length < 5 && <p className="mt-2 text-sm text-tinta-2">{t("ui.notif.workerNote")}</p>}
       <div className="mt-3">
         <DataTable
-          caption={t("ui.notifTitle")}
+          caption={t("ui.notif.title")}
           rows={kinds}
           rowKey={(k) => k}
           columns={[
-            { id: "kind", header: t("ui.notifKind"), cell: (k) => <span className="font-normal">{tk(`ui.notifKind_${k}`)}</span> },
+            { id: "kind", header: t("ui.notif.kind"), cell: (k) => <span className="font-normal">{tk(`ui.notif.kind_${k}`)}</span> },
             ...(email ? (["push", "email"] as const) : (["push"] as const)).map((ch) => ({
               id: ch,
-              header: ch === "push" ? t("ui.notifPush") : t("ui.notifEmail"),
+              header: ch === "push" ? t("ui.notif.push") : t("ui.notif.email"),
               width: "5.5rem",
               cell: (k: NotifyKind) => (
                 <input
                   type="checkbox"
                   className="size-4 cursor-pointer accent-[#7A9A3F]"
-                  aria-label={`${tk(`ui.notifKind_${k}`)}: ${ch === "push" ? t("ui.notifPush") : t("ui.notifEmail")}`}
+                  aria-label={`${tk(`ui.notif.kind_${k}`)}: ${ch === "push" ? t("ui.notif.push") : t("ui.notif.email")}`}
                   checked={prefs.kinds[k][ch]}
                   onChange={(e) => setChannel(k, ch, e.target.checked)}
                 />
@@ -64,7 +64,7 @@ export function NotificationPrefs() {
         />
       </div>
 
-      <div className="mt-8"><SectionHead title={t("ui.notifQuietTitle")} /></div>
+      <div className="mt-8"><SectionHead title={t("ui.notif.quietTitle")} /></div>
       <label className="mt-3 flex items-center gap-2 text-sm">
         <input
           type="checkbox"
@@ -72,28 +72,28 @@ export function NotificationPrefs() {
           checked={prefs.quiet.enabled}
           onChange={(e) => setQuiet({ enabled: e.target.checked })}
         />
-        {t("ui.notifQuietSwitch")}
+        {t("ui.notif.quietSwitch")}
       </label>
       {prefs.quiet.enabled && (
         <div className="mt-3 flex items-end gap-3 text-sm">
           <label className="flex flex-col gap-1.5">
-            <span className="font-medium">{t("ui.notifQuietFrom")}</span>
+            <span className="font-medium">{t("ui.notif.quietFrom")}</span>
             <Input type="time" required value={prefs.quiet.start} onChange={(e) => setQuiet({ start: e.target.value })} />
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="font-medium">{t("ui.notifQuietTo")}</span>
+            <span className="font-medium">{t("ui.notif.quietTo")}</span>
             <Input type="time" required value={prefs.quiet.end} onChange={(e) => setQuiet({ end: e.target.value })} />
           </label>
         </div>
       )}
-      <p className="mt-2 text-xs text-tinta-2">{t("ui.notifQuietHint")}</p>
+      <p className="mt-2 text-xs text-tinta-2">{t("ui.notif.quietHint")}</p>
       {save.error && (
         <div className="mt-3">
           <ErrorBox error={save.error} />
         </div>
       )}
       <Button className="mt-4" variant="primary" disabled={save.isPending || badQuiet} onClick={() => save.mutate()}>
-        {t("ui.notifSave")}
+        {t("ui.notif.save")}
       </Button>
     </section>
   );

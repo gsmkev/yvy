@@ -20,8 +20,10 @@ const inputCls =
 
 export const Input = (p: InputHTMLAttributes<HTMLInputElement>) =>
   p.type === "date" ? (
+    // nosemgrep: react-props-spreading -- envoltorio que reenvía al elemento nativo todas sus props
     <DateInput {...p} value={String(p.value ?? "")} />
   ) : (
+    // nosemgrep: react-props-spreading -- envoltorio que reenvía al elemento nativo todas sus props
     <input {...p} className={`${inputCls} ${p.className ?? ""}`} />
   );
 
@@ -53,16 +55,17 @@ export function DateInput({
   const iso = displayToIso(text);
   const range = iso && ((min && iso < String(min)) || (max && iso > String(max)));
   useEffect(() => {
-    ref.current?.setCustomValidity(text && !iso ? t("ui.dateInvalid") : range ? t("ui.dateOutOfRange") : "");
+    ref.current?.setCustomValidity(text && !iso ? t("ui.date.invalid") : range ? t("ui.date.outOfRange") : "");
   }, [text, iso, range]);
   return (
     <input
+      // nosemgrep: react-props-spreading -- envoltorio que reenvía al elemento nativo todas sus props
       {...p}
       ref={ref}
       type="text"
       inputMode="numeric"
       autoComplete="off"
-      placeholder={t("ui.datePlaceholder")}
+      placeholder={t("ui.date.placeholder")}
       maxLength={10}
       size={10}
       value={text}
@@ -100,6 +103,7 @@ export const Select = ({
   ...p
 }: SelectHTMLAttributes<HTMLSelectElement> & { options: { value: string; label: string }[] }) => (
   <SelectBox className={className}>
+    // nosemgrep: react-props-spreading -- envoltorio que reenvía al elemento nativo todas sus props
     <select {...p} className={`${selectCls} w-full`}>
       {options.map((o) => (
         <option key={o.value} value={o.value}>
@@ -121,7 +125,7 @@ export function FormFooter({ error, disabled }: { error: unknown; disabled: bool
       ) : null}
       <div className="col-span-2">
         <Button type="submit" variant="primary" disabled={disabled}>
-          {t("ui.save")}
+          {t("ui.common.save")}
         </Button>
       </div>
     </>

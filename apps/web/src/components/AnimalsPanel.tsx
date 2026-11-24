@@ -43,34 +43,34 @@ function AnimalForm({
   const set = (k: keyof Form) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   return (
     <Form className="flex max-w-xl flex-col gap-3 border-y border-linea py-4" onSubmit={() => onSubmit(f)}>
-      <Field label={t("fields.tag")} hint={t("ui.animalTagHint")}>
+      <Field label={t("fields.common.tag")} hint={t("ui.animal.tagHint")}>
         <Input value={f.tag} onChange={set("tag")} maxLength={20} autoCapitalize="characters" className="w-48" required />
       </Field>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field label={t("fields.herdCategory")}>
+        <Field label={t("fields.herd.category")}>
           <Select
             value={f.category}
             onChange={set("category")}
-            options={HERD_CATEGORIES.map((c) => ({ value: c, label: tk(`fields.herd_${c}`) }))}
+            options={HERD_CATEGORIES.map((c) => ({ value: c, label: tk(`fields.herd.${c}`) }))}
           />
         </Field>
-        <Field label={t("fields.sex")}>
-          <Select value={f.sex} onChange={set("sex")} options={ANIMAL_SEXES.map((c) => ({ value: c, label: tk(`fields.sex_${c}`) }))} />
+        <Field label={t("fields.common.sex")}>
+          <Select value={f.sex} onChange={set("sex")} options={ANIMAL_SEXES.map((c) => ({ value: c, label: tk(`fields.sex.${c}`) }))} />
         </Field>
       </div>
-      <Field label={t("ui.animalBirth")}>
+      <Field label={t("ui.animal.birth")}>
         <Input type="date" value={f.birthDate} onChange={set("birthDate")} className="w-48" />
       </Field>
-      <Field label={t("app.note")}>
+      <Field label={t("app.common.note")}>
         <Input value={f.note} onChange={set("note")} maxLength={500} />
       </Field>
       {error ? <ErrorBox error={error} /> : null}
       <div className="flex gap-2">
         <Button type="submit" variant="primary" disabled={pending || !f.tag.trim()}>
-          {t("ui.save")}
+          {t("ui.common.save")}
         </Button>
         <Button variant="quiet" onClick={onCancel}>
-          {t("ui.cancel")}
+          {t("ui.common.cancel")}
         </Button>
       </div>
     </Form>
@@ -94,14 +94,14 @@ function AnimalDetail({ animal, onClose }: { animal: AnimalRow; onClose: () => v
     onSuccess: () => {
       refresh();
       setEditing(false);
-      toast(t("ui.animalSaved"));
+      toast(t("ui.animal.saved"));
     },
   });
   const remove = useMutation({
     mutationFn: () => del(`/org/animals/${animal.id}`),
     onSuccess: () => {
       refresh();
-      toast(t("ui.animalDeleted"));
+      toast(t("ui.animal.deleted"));
       onClose();
     },
   });
@@ -112,18 +112,18 @@ function AnimalDetail({ animal, onClose }: { animal: AnimalRow; onClose: () => v
         <h3 className="num text-lg font-semibold">{animal.tag}</h3>
         <div className="flex gap-2">
           <Button variant="quiet" onClick={() => setEditing(!editing)}>
-            {t("ui.edit")}
+            {t("ui.common.edit")}
           </Button>
           <Button variant="quiet" onClick={() => setConfirm(true)}>
-            {t("ui.delete")}
+            {t("ui.common.delete")}
           </Button>
           <Button variant="quiet" onClick={onClose}>
-            {t("ui.close")}
+            {t("ui.common.close")}
           </Button>
         </div>
       </div>
       <p className="text-sm text-tinta-2">
-        {[tk(`fields.herd_${animal.category}`), tk(`fields.sex_${animal.sex}`), animal.birthDate ? t("ui.animalBorn", { date: animal.birthDate.split("-").reverse().join("/") }) : null]
+        {[tk(`fields.herd.${animal.category}`), tk(`fields.sex.${animal.sex}`), animal.birthDate ? t("ui.animal.born", { date: animal.birthDate.split("-").reverse().join("/") }) : null]
           .filter(Boolean)
           .join(" · ")}
         {animal.note ? ` · ${animal.note}` : ""}
@@ -145,31 +145,31 @@ function AnimalDetail({ animal, onClose }: { animal: AnimalRow; onClose: () => v
         <>
           {h.weight && h.weight.points.length > 0 && (
             <p className="num text-sm">
-              {t("ui.animalWeight", { kg: h.weight.lastKg ?? 0, n: h.weight.points.length })}
-              {h.weight.adgKg !== null && ` · ${t("ui.animalAdg", { v: adgText(h.weight.adgKg) })}`}
+              {t("ui.animal.weight", { kg: h.weight.lastKg ?? 0, n: h.weight.points.length })}
+              {h.weight.adgKg !== null && " · " + t("ui.animal.adg", { v: adgText(h.weight.adgKg) })}
             </p>
           )}
           {h.records.length === 0 ? (
-            <p className="text-sm text-tinta-2">{t("ui.animalNoHistory")}</p>
+            <p className="text-sm text-tinta-2">{t("ui.animal.noHistory")}</p>
           ) : (
             <ul className="divide-y divide-linea border-y border-linea text-sm">
               {h.records.map((r) => (
                 <li key={r.id} className="flex flex-wrap gap-x-3 py-2">
                   <span className="num w-36 text-tinta-2">{fmtDateTime(r.capturedAt)}</span>
-                  <span className="font-medium">{tk(`recordKinds.${r.kind}`)}</span>
+                  <span className="font-medium">{tk(`record-kinds.kind.${r.kind}`)}</span>
                   <span className="text-tinta-2">{describeRecord(r.kind, r.data)}</span>
                 </li>
               ))}
             </ul>
           )}
-          {h.truncated && <p className="text-sm text-tinta-2">{t("ui.herdTruncated")}</p>}
+          {h.truncated && <p className="text-sm text-tinta-2">{t("ui.herd.truncated")}</p>}
         </>
       ) : null}
       {confirm && (
         <ConfirmModal
           title={animal.tag}
-          message={t("ui.animalConfirmDelete", { tag: animal.tag })}
-          confirmLabel={t("ui.delete")}
+          message={t("ui.animal.confirmDelete", { tag: animal.tag })}
+          confirmLabel={t("ui.common.delete")}
           pending={remove.isPending}
           error={remove.error}
           onConfirm={() => remove.mutate()}
@@ -194,23 +194,23 @@ export function AnimalsPanel({ farmId }: { farmId: string }) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["animals"] });
       setCreating(false);
-      toast(t("ui.animalSaved"));
+      toast(t("ui.animal.saved"));
     },
   });
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end gap-3">
-        <Field label={t("ui.animalSearch")}>
+        <Field label={t("ui.animal.search")}>
           <Input
             value={q}
             onChange={(e) => setQ(normalizeTag(e.target.value).slice(0, 20))}
-            placeholder={t("fields.tag")}
+            placeholder={t("fields.common.tag")}
             className="w-48"
             autoCapitalize="characters"
           />
         </Field>
         <Button variant="secondary" onClick={() => setCreating(true)}>
-          {t("ui.animalAdd")}
+          {t("ui.animal.add")}
         </Button>
       </div>
       {creating && (
@@ -221,7 +221,7 @@ export function AnimalsPanel({ farmId }: { farmId: string }) {
       ) : list.error ? (
         <ErrorBox error={list.error} />
       ) : !list.data?.length ? (
-        <Empty title={q ? t("ui.animalNoMatch") : t("ui.animalNone")}>{q ? null : t("ui.animalNoneHint")}</Empty>
+        <Empty title={q ? t("ui.animal.noMatch") : t("ui.animal.none")}>{q ? null : t("ui.animal.noneHint")}</Empty>
       ) : (
         <ul className="divide-y divide-linea border-y border-linea text-sm">
           {list.data.map((a) => (
@@ -233,7 +233,7 @@ export function AnimalsPanel({ farmId }: { farmId: string }) {
                 className={`flex w-full cursor-pointer items-baseline gap-3 py-2.5 text-left hover:bg-linea/40 ${selected?.id === a.id ? "font-medium" : ""}`}
               >
                 <span className="num w-32 font-semibold">{a.tag}</span>
-                <span className="text-tinta-2">{tk(`fields.herd_${a.category}`)} · {tk(`fields.sex_${a.sex}`)}</span>
+                <span className="text-tinta-2">{tk(`fields.herd.${a.category}`)} · {tk(`fields.sex.${a.sex}`)}</span>
               </button>
             </li>
           ))}

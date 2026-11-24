@@ -62,7 +62,7 @@ export function NewTaskModal({
     },
     onSuccess: ({ ids }) => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
-      toast(ids.length > 1 ? t("ui.toastTasksSaved", { n: ids.length }) : t("ui.toastTaskSaved"));
+      toast(ids.length > 1 ? t("ui.toast.tasksSaved", { n: ids.length }) : t("ui.toast.taskSaved"));
       onClose();
     },
   });
@@ -70,13 +70,13 @@ export function NewTaskModal({
   // Mientras se eligen lotes en el mapa el diálogo se esconde sin desmontarse: el borrador no se pierde.
   return (
     <div hidden={!!pick?.picking}>
-      <Modal title={t("ui.newTask")} onClose={onClose}>
+      <Modal title={t("ui.new.task")} onClose={onClose}>
         <Form className="flex flex-col gap-3" onSubmit={() => create.mutate()}>
-          <Field label={t("ui.taskTitle")}>
+          <Field label={t("ui.task.title")}>
             <Input required value={f.title} onChange={set("title")} placeholder="Medir lluvia" />
           </Field>
           {!farmId && (
-            <Field label={t("ui.farm")}>
+            <Field label={t("ui.common.farm")}>
               <Select
                 required
                 value={f.farmId}
@@ -89,11 +89,11 @@ export function NewTaskModal({
             </Field>
           )}
           {plots && !picked.length && (
-            <Field label={t("ui.plot")}>
+            <Field label={t("ui.common.plot")}>
               <Select
                 value={f.plotId}
                 onChange={set("plotId")}
-                options={[{ value: "", label: t("ui.none") }, ...plots.map((p) => ({ value: p.id, label: p.name }))]}
+                options={[{ value: "", label: t("ui.common.none") }, ...plots.map((p) => ({ value: p.id, label: p.name }))]}
               />
             </Field>
           )}
@@ -101,7 +101,7 @@ export function NewTaskModal({
             <div className="flex flex-col items-start gap-1.5 text-sm">
               {picked.length > 0 && (
                 <p>
-                  <span className="font-medium">{t("ui.taskPickedPlots", { n: picked.length })}</span>{" "}
+                  <span className="font-medium">{t("ui.task.pickedPlots", { n: picked.length })}</span>{" "}
                   {picked
                     .map((id) => plots.find((p) => p.id === id)?.name)
                     .filter(Boolean)
@@ -109,12 +109,12 @@ export function NewTaskModal({
                 </p>
               )}
               <Button onClick={() => pick.setPicking(true)}>
-                {picked.length ? t("ui.taskPickChange") : t("ui.taskPickOnMap")}
+                {picked.length ? t("ui.task.pickChange") : t("ui.task.pickOnMap")}
               </Button>
-              {picked.length > 1 && <p className="text-xs text-tinta-2">{t("ui.taskPickOneEach")}</p>}
+              {picked.length > 1 && <p className="text-xs text-tinta-2">{t("ui.task.pickOneEach")}</p>}
             </div>
           )}
-          <Field label={t("ui.assignee")}>
+          <Field label={t("ui.common.assignee")}>
             <Select
               required
               value={f.assigneeId}
@@ -123,59 +123,59 @@ export function NewTaskModal({
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label={t("ui.dueDate")}>
+            <Field label={t("ui.due.date")}>
               <Input type="date" required value={f.dueDate} onChange={set("dueDate")} />
             </Field>
-            <Field label={t("ui.dueTime")} hint={t("ui.dueTimeHint")}>
+            <Field label={t("ui.due.time")} hint={t("ui.due.timeHint")}>
               <Input type="time" value={f.dueTime} onChange={set("dueTime")} />
             </Field>
-            <Field label={t("ui.taskPriority")}>
+            <Field label={t("ui.task.priority")}>
               <Select
                 value={f.priority}
                 onChange={set("priority")}
-                options={TASK_PRIORITIES.map((p) => ({ value: p, label: tk(`ui.taskPriority_${p}`) }))}
+                options={TASK_PRIORITIES.map((p) => ({ value: p, label: tk(`ui.task.priority_${p}`) }))}
               />
             </Field>
-            <Field label={t("ui.recurrence")}>
+            <Field label={t("ui.common.recurrence")}>
               <Select
                 value={f.recurrence}
                 onChange={set("recurrence")}
-                options={RECURRENCES.map((r) => ({ value: r, label: tk(`ui.recurrence_${r}`) }))}
+                options={RECURRENCES.map((r) => ({ value: r, label: tk(`ui.recurrence.${r}`) }))}
               />
             </Field>
           </div>
-          <Field label={t("ui.opensRecord")}>
+          <Field label={t("ui.common.opensRecord")}>
             <Select
               value={f.kind}
               onChange={set("kind")}
               options={[
-                { value: "", label: t("ui.none") },
-                ...RECORD_KINDS.map((k) => ({ value: k, label: tk(`recordKinds.${k}`) })),
+                { value: "", label: t("ui.common.none") },
+                ...RECORD_KINDS.map((k) => ({ value: k, label: tk(`record-kinds.kind.${k}`) })),
               ]}
             />
             {closeRequirements(f.kind) && (
               <p className="mt-1 text-xs text-tinta-2">
                 {t(
                   closeRequirements(f.kind)!.photo && closeRequirements(f.kind)!.location
-                    ? "ui.closeNeedsPhotoLocation"
+                    ? "ui.close.needsPhotoLocation"
                     : closeRequirements(f.kind)!.photo
-                      ? "ui.closeNeedsPhoto"
-                      : "ui.closeNeedsLocation",
+                      ? "ui.close.needsPhoto"
+                      : "ui.close.needsLocation",
                 )}
               </p>
             )}
           </Field>
-          <Field label={t("ui.taskChecklist")}>
+          <Field label={t("ui.task.checklist")}>
             <textarea
               className="min-h-20 w-full rounded-md border border-linea bg-papel px-3 py-2 text-sm"
               value={f.checklist}
               onChange={set("checklist")}
-              placeholder={t("ui.taskChecklistHint")}
+              placeholder={t("ui.task.checklistHint")}
             />
           </Field>
           {create.error && <ErrorBox error={create.error} />}
           <Button type="submit" variant="primary" disabled={create.isPending}>
-            {t("ui.save")}
+            {t("ui.common.save")}
           </Button>
         </Form>
       </Modal>

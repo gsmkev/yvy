@@ -30,7 +30,7 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
   const remove = useMutation({
     mutationFn: (p: Product) => del(`/org/products/${p.id}`),
     onSuccess: () => {
-      toast(t("ui.toastProductDeleted"));
+      toast(t("ui.toast.productDeleted"));
       setRemoving(null);
       qc.invalidateQueries({ queryKey: ["products"] });
     },
@@ -42,23 +42,23 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
   // Ficha de la estancia: el panel es angosto, así que tipo, unidad y principio activo van bajo el nombre
   const compact = !!farmId;
   const columns: Column<Product>[] = [
-    { id: "name", header: t("ui.productName"), cell: (p) => (<>{p.name}<span className={`block text-xs font-normal text-tinta-2 ${compact ? "" : "sm:hidden"}`}>{tk(`fields.productType_${p.type}`)} · {tk(`fields.productUnit_${p.unit}`)}{compact && p.activeIngredient ? ` · ${p.activeIngredient}` : ""}</span></>), sort: (a, b) => a.name.localeCompare(b.name) },
+    { id: "name", header: t("ui.product.name"), cell: (p) => (<>{p.name}<span className={`block text-xs font-normal text-tinta-2 ${compact ? "" : "sm:hidden"}`}>{tk(`fields.product.type_${p.type}`)} · {tk(`fields.product.unit_${p.unit}`)}{compact && p.activeIngredient ? ` · ${p.activeIngredient}` : ""}</span></>), sort: (a, b) => a.name.localeCompare(b.name) },
     ...(compact ? [] : [
-      { id: "type", header: t("ui.productType"), hideBelow: "sm", cell: (p: Product) => tk(`fields.productType_${p.type}`) } satisfies Column<Product>,
-      { id: "unit", header: t("ui.productUnit"), hideBelow: "sm", cell: (p: Product) => tk(`fields.productUnit_${p.unit}`) } satisfies Column<Product>,
+      { id: "type", header: t("ui.product.type"), hideBelow: "sm", cell: (p: Product) => tk(`fields.product.type_${p.type}`) } satisfies Column<Product>,
+      { id: "unit", header: t("ui.product.unit"), hideBelow: "sm", cell: (p: Product) => tk(`fields.product.unit_${p.unit}`) } satisfies Column<Product>,
     ]),
-    ...(!compact && all.some((p) => p.activeIngredient) ? [{ id: "ai", header: t("ui.productActiveIngredient"), hideBelow: "md", cell: (p: Product) => <span className="text-tinta-2">{p.activeIngredient ?? ""}</span> } satisfies Column<Product>] : []),
-    ...(all.some((p) => p.withdrawalDays !== null) ? [{ id: "wd", header: t("ui.productWithdrawal"), align: "right", hideBelow: compact ? undefined : "lg", cell: (p: Product) => (p.withdrawalDays === null ? "" : p.withdrawalDays) } satisfies Column<Product>] : []),
+    ...(!compact && all.some((p) => p.activeIngredient) ? [{ id: "ai", header: t("ui.product.activeIngredient"), hideBelow: "md", cell: (p: Product) => <span className="text-tinta-2">{p.activeIngredient ?? ""}</span> } satisfies Column<Product>] : []),
+    ...(all.some((p) => p.withdrawalDays !== null) ? [{ id: "wd", header: t("ui.product.withdrawal"), align: "right", hideBelow: compact ? undefined : "lg", cell: (p: Product) => (p.withdrawalDays === null ? "" : p.withdrawalDays) } satisfies Column<Product>] : []),
     ...((ranges.data ?? []).some((r) => r.min !== null || r.max !== null)
-      ? [{ id: "dose", header: t("ui.productDoseCol"), hideBelow: "lg", cell: (p: Product) => <span className="text-tinta-2">{doseShown(p, ranges.data) ?? ""}</span> } satisfies Column<Product>]
+      ? [{ id: "dose", header: t("ui.product.doseCol"), hideBelow: "lg", cell: (p: Product) => <span className="text-tinta-2">{doseShown(p, ranges.data) ?? ""}</span> } satisfies Column<Product>]
       : []),
     ...(canEdit
-      ? [{ id: "menu", header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>, align: "right", width: "3rem", cell: (p: Product) => <RowMenu name={p.name} onEdit={() => setEditing(p)} onDelete={() => setRemoving(p)} /> } satisfies Column<Product>]
+      ? [{ id: "menu", header: <span className="sr-only">{t("ui.row.actionsHeader")}</span>, align: "right", width: "3rem", cell: (p: Product) => <RowMenu name={p.name} onEdit={() => setEditing(p)} onDelete={() => setRemoving(p)} /> } satisfies Column<Product>]
       : []),
   ];
   const newButton = (
     <Button variant={farmId ? "secondary" : "primary"} onClick={() => setEditing("new")}>
-      {t("ui.productNew")}
+      {t("ui.product.new")}
     </Button>
   );
   return (
@@ -66,7 +66,7 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
       {canEdit && all.length > 0 && (
         <HeaderActions>
           {newButton}
-          {farmId && plots && <Button onClick={() => setPrescribing(true)}>{t("ui.prescriptionNew")}</Button>}
+          {farmId && plots && <Button onClick={() => setPrescribing(true)}>{t("ui.prescription.new")}</Button>}
         </HeaderActions>
       )}
       {all.length > 0 && (
@@ -74,10 +74,10 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
           {list.length > 0 && exp.menu}
           <FilterBar>
             <Select
-              aria-label={t("ui.productType")}
+              aria-label={t("ui.product.type")}
               value={type}
               onChange={(e) => setType(e.target.value)}
-              options={[{ value: "", label: t("ui.productsAllTypes") }, ...PRODUCT_TYPES.map((x) => ({ value: x, label: tk(`fields.productType_${x}`) }))]}
+              options={[{ value: "", label: t("ui.products.allTypes") }, ...PRODUCT_TYPES.map((x) => ({ value: x, label: tk(`fields.product.type_${x}`) }))]}
             />
           </FilterBar>
         </>
@@ -87,14 +87,14 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
           columns={columns}
           rows={list}
           rowKey={(p) => p.id}
-          caption={t("ui.productsTitle")}
+          caption={t("ui.products.title")}
           empty={
             all.length === 0 ? (
-              <EmptyState title={t("ui.emptyProductsTitle")} action={canEdit ? newButton : undefined}>
-                {t("ui.emptyProductsBody")}
+              <EmptyState title={t("ui.empty.productsTitle")} action={canEdit ? newButton : undefined}>
+                {t("ui.empty.productsBody")}
               </EmptyState>
             ) : (
-              <EmptyState compact title={t("ui.erpEmpty")} />
+              <EmptyState compact title={t("ui.erp.empty")} />
             )
           }
         />
@@ -104,8 +104,8 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
       {removing && (
         <ConfirmModal
           title={removing.name}
-          message={t("ui.productConfirmDelete", { name: removing.name })}
-          confirmLabel={t("ui.delete")}
+          message={t("ui.product.confirmDelete", { name: removing.name })}
+          confirmLabel={t("ui.common.delete")}
           pending={remove.isPending}
           error={remove.error}
           onConfirm={() => remove.mutate(removing)}
@@ -121,8 +121,8 @@ function doseShown(p: Product, ranges: DoseRange[] | undefined): string | null {
   const r = ranges?.find((x) => x.productId === p.id);
   if (!r || (r.min === null && r.max === null)) return null;
   const n = (v: number) => v.toLocaleString("es-PY", { maximumFractionDigits: 2 });
-  const range = r.min !== null && r.max !== null ? `${n(r.min)} a ${n(r.max)}` : r.min !== null ? `${t("ui.reviewAtLeast")} ${n(r.min)}` : `${t("ui.reviewUpTo")} ${n(r.max!)}`;
-  return t("ui.productDoseShown", { range, unit: p.unit === "l" ? "l/ha" : "kg/ha" });
+  const range = r.min !== null && r.max !== null ? `${n(r.min)} a ${n(r.max)}` : r.min !== null ? `${t("ui.review.atLeast")} ${n(r.min)}` : `${t("ui.review.upTo")} ${n(r.max!)}`;
+  return t("ui.product.doseShown", { range, unit: p.unit === "l" ? "l/ha" : "kg/ha" });
 }
 
 function ProductModal({ product, range, onClose }: { product: Product | null; range?: DoseRange; onClose: () => void }) {
@@ -157,7 +157,7 @@ function ProductModal({ product, range, onClose }: { product: Product | null; ra
       );
     },
     onSuccess: () => {
-      toast(t("ui.toastProductSaved"));
+      toast(t("ui.toast.productSaved"));
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["dose-ranges"] });
       onClose();
@@ -165,51 +165,51 @@ function ProductModal({ product, range, onClose }: { product: Product | null; ra
   });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   return (
-    <Modal title={product ? product.name : t("ui.productNew")} onClose={onClose}>
+    <Modal title={product ? product.name : t("ui.product.new")} onClose={onClose}>
       <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
-        <Field label={t("ui.productName")}>
+        <Field label={t("ui.product.name")}>
           <Input required autoFocus value={f.name} onChange={set("name")} maxLength={120} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label={t("ui.productType")}>
+          <Field label={t("ui.product.type")}>
             <Select
               value={f.type}
               onChange={set("type")}
-              options={PRODUCT_TYPES.map((x) => ({ value: x, label: tk(`fields.productType_${x}`) }))}
+              options={PRODUCT_TYPES.map((x) => ({ value: x, label: tk(`fields.product.type_${x}`) }))}
             />
           </Field>
-          <Field label={t("ui.productUnit")}>
+          <Field label={t("ui.product.unit")}>
             <Select
               value={f.unit}
               onChange={set("unit")}
-              options={PRODUCT_UNITS.map((x) => ({ value: x, label: tk(`fields.productUnit_${x}`) }))}
+              options={PRODUCT_UNITS.map((x) => ({ value: x, label: tk(`fields.product.unit_${x}`) }))}
             />
           </Field>
-          <Field label={t("ui.productActiveIngredient")}>
+          <Field label={t("ui.product.activeIngredient")}>
             <Input value={f.activeIngredient} onChange={set("activeIngredient")} maxLength={120} />
           </Field>
-          <Field label={t("ui.productWithdrawal")}>
+          <Field label={t("ui.product.withdrawal")}>
             <Input type="number" min={0} max={365} step={1} value={f.withdrawalDays} onChange={set("withdrawalDays")} />
           </Field>
-          <Field label={t("ui.productToxClass")}>
+          <Field label={t("ui.product.toxClass")}>
             <Input value={f.toxClass} onChange={set("toxClass")} maxLength={40} />
           </Field>
         </div>
         <fieldset className="border-t border-linea pt-3">
-          <legend className="text-sm font-medium">{t("ui.productDoseTitle")}</legend>
-          <p className="mt-1 text-xs text-tinta-2">{t("ui.productDoseHint")}</p>
+          <legend className="text-sm font-medium">{t("ui.product.doseTitle")}</legend>
+          <p className="mt-1 text-xs text-tinta-2">{t("ui.product.doseHint")}</p>
           <div className="mt-2 grid grid-cols-2 gap-3">
-            <Field label={t("ui.productDoseMin", { unit: f.unit === "l" ? "l/ha" : "kg/ha" })}>
+            <Field label={t("ui.product.doseMin", { unit: f.unit === "l" ? "l/ha" : "kg/ha" })}>
               <Input type="number" min={0} step="any" value={f.doseMin} onChange={set("doseMin")} />
             </Field>
-            <Field label={t("ui.productDoseMax", { unit: f.unit === "l" ? "l/ha" : "kg/ha" })}>
+            <Field label={t("ui.product.doseMax", { unit: f.unit === "l" ? "l/ha" : "kg/ha" })}>
               <Input type="number" min={0} step="any" value={f.doseMax} onChange={set("doseMax")} />
             </Field>
           </div>
         </fieldset>
         {save.error && <ErrorBox error={save.error} />}
         <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.save")}
+          {t("ui.common.save")}
         </Button>
       </Form>
     </Modal>

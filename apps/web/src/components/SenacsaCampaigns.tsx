@@ -24,36 +24,36 @@ export function SenacsaCampaigns() {
         createTasks: true,
       }),
     onSuccess: () => {
-      toast(t("ui.senacsaPlanSaved"));
+      toast(t("ui.senacsa.planSaved"));
       return Promise.all(["senacsa", "sanitary", "tasks"].map((k) => qc.invalidateQueries({ queryKey: [k] })));
     },
   });
   const open = (q.data?.campaigns ?? []).filter((c) => c.to >= today);
   if (!open.length) return null;
   return (
-    <section aria-label={t("ui.senacsaTitle")} className="flex flex-col gap-2">
-      <SectionHead title={t("ui.senacsaTitle")} />
+    <section aria-label={t("ui.senacsa.title")} className="flex flex-col gap-2">
+      <SectionHead title={t("ui.senacsa.title")} />
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         {open.map((c) => (
           <Card key={c.id} className="flex flex-col gap-1.5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <span className="mb-1 inline-block rounded bg-accion/10 px-1.5 py-0.5 text-xs font-medium text-accion">{t("ui.senacsaBadge")}</span>
+                <span className="mb-1 inline-block rounded bg-accion/10 px-1.5 py-0.5 text-xs font-medium text-accion">{t("ui.senacsa.badge")}</span>
                 <p className="text-sm font-medium">
-                  {tk(`ui.senacsaName_${c.reason}`)} · {t("ui.senacsaPeriod", { n: c.period })}
+                  {tk(`ui.senacsa.name_${c.reason}`)} · {t("ui.senacsa.period", { n: c.period })}
                 </p>
               </div>
               {q.data!.planned.includes(c.id) ? (
-                <span className="shrink-0 text-sm text-accion">{t("ui.senacsaPlanned")}</span>
+                <span className="shrink-0 text-sm text-accion">{t("ui.senacsa.planned")}</span>
               ) : (
                 <Button size="sm" disabled={plan.isPending} onClick={() => plan.mutate(c)}>
-                  {t("ui.senacsaPlan")}
+                  {t("ui.senacsa.plan")}
                 </Button>
               )}
             </div>
             <p className="num text-sm text-tinta-2">
-              {t("ui.senacsaDates", { from: fmtIsoDate(c.from), to: fmtIsoDate(c.to) })}
-              {c.registerUntil && ` · ${t("ui.senacsaRegister", { date: fmtIsoDate(c.registerUntil) })}`}
+              {t("ui.senacsa.dates", { from: fmtIsoDate(c.from), to: fmtIsoDate(c.to) })}
+              {c.registerUntil && " · " + t("ui.senacsa.register", { date: fmtIsoDate(c.registerUntil) })}
             </p>
             <p className="text-xs text-tinta-2">{c.appliesTo}</p>
             {c.note && <p className="text-xs text-tinta-2">{c.note}</p>}
@@ -61,7 +61,7 @@ export function SenacsaCampaigns() {
         ))}
       </div>
       <p className="text-xs text-tinta-2">
-        {t("ui.senacsaDisclaimer")} {open[0]!.source}.
+        {t("ui.senacsa.disclaimer")} {open[0]!.source}.
       </p>
       {plan.error ? <ErrorBox error={plan.error} /> : null}
     </section>

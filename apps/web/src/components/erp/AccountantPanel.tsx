@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { COST_CATEGORIES, type CostCategory } from "@yvy/shared";
-import { del, get, put, qs } from "../../lib/api";
+import { del, get, put, withQs } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { tablesToExcel } from "../../lib/tableExport";
 import { Button, ErrorBox, Field, FilterBar, Input, SectionHead, Spinner, toast } from "../ui";
@@ -58,40 +58,42 @@ export function AccountantPanel() {
     setBusy(true);
     setError(null);
     try {
-      const d = await get<Export>(`/org/erp/accountant/export${qs({ from: from || undefined, to: to || undefined })}`);
+      const d = await get<Export>(
+        withQs("/org/erp/accountant/export", { from: from || undefined, to: to || undefined }),
+      );
       const dueTable = (name: string, rows: Due[]) => ({
         name,
-        headers: [t("ui.acctColParty"), t("ui.acctColRuc"), t("ui.acctColDoc"), t("ui.acctColCurrency"), t("ui.acctColTotal"), t("ui.acctColPending"), t("ui.acctColDue")],
+        headers: [t("ui.acct.colParty"), t("ui.acct.colRuc"), t("ui.acct.colDoc"), t("ui.acct.colCurrency"), t("ui.acct.colTotal"), t("ui.acct.colPending"), t("ui.acct.colDue")],
         rows: rows.map((r) => [r.party, r.ruc, r.label, r.currency, major(r.total, r.currency), major(r.pending, r.currency), r.dueDate ?? ""]),
       });
       await tablesToExcel("contador", [
         {
-          name: t("ui.acctSheetLedger"),
+          name: t("ui.acct.sheetLedger"),
           headers: [
-            t("ui.costDate"),
-            t("ui.acctColType"),
-            t("ui.acctColCode"),
-            t("ui.acctColAccount"),
-            t("ui.acctColDescription"),
-            t("ui.acctColParty"),
-            t("ui.acctColRuc"),
-            t("ui.costFarm"),
-            t("ui.costActivity"),
-            t("ui.acctColCurrency"),
-            t("ui.acctColAmount"),
-            t("ui.acctColAmountPyg"),
+            t("ui.cost.date"),
+            t("ui.acct.colType"),
+            t("ui.acct.colCode"),
+            t("ui.acct.colAccount"),
+            t("ui.acct.colDescription"),
+            t("ui.acct.colParty"),
+            t("ui.acct.colRuc"),
+            t("ui.cost.farm"),
+            t("ui.cost.activity"),
+            t("ui.acct.colCurrency"),
+            t("ui.acct.colAmount"),
+            t("ui.acct.colAmountPyg"),
           ],
-          rows: d.ledger.map((r) => [r.date, t(r.type === "income" ? "ui.acctIncome" : "ui.acctCost"), r.accountCode, r.accountName, r.description, r.party, r.ruc, r.farm, tk(`ui.activity_${r.activity}`), r.currency, major(r.amount, r.currency), r.amountPyg]),
+          rows: d.ledger.map((r) => [r.date, t(r.type === "income" ? "ui.acct.income" : "ui.acct.cost"), r.accountCode, r.accountName, r.description, r.party, r.ruc, r.farm, tk(`ui.activity.${r.activity}`), r.currency, major(r.amount, r.currency), r.amountPyg]),
         },
-        dueTable(t("ui.acctSheetPayables"), d.payables),
-        dueTable(t("ui.acctSheetReceivables"), d.receivables),
+        dueTable(t("ui.acct.sheetPayables"), d.payables),
+        dueTable(t("ui.acct.sheetReceivables"), d.receivables),
         {
-          name: t("ui.acctSheetMap"),
-          headers: [t("ui.costCategory"), t("ui.acctColCode"), t("ui.acctColAccount")],
-          rows: (map.data ?? []).map((m) => [tk(`ui.costCategory_${m.key}`), m.code, m.name]),
+          name: t("ui.acct.sheetMap"),
+          headers: [t("ui.cost.category"), t("ui.acct.colCode"), t("ui.acct.colAccount")],
+          rows: (map.data ?? []).map((m) => [tk(`ui.cost.category_${m.key}`), m.code, m.name]),
         },
       ]);
-      if (d.truncated) toast(t("ui.acctTruncated"));
+      if (d.truncated) toast(t("ui.acct.truncated"));
     } catch (e) {
       setError(e);
     } finally {
@@ -104,25 +106,25 @@ export function AccountantPanel() {
     <div className="flex flex-col gap-8">
       <HeaderActions>
         <Button variant="primary" disabled={busy} onClick={download}>
-          {t("ui.acctDownload")}
+          {t("ui.acct.download")}
         </Button>
       </HeaderActions>
       <section className="flex flex-col gap-3">
-        <SectionHead title={t("ui.acctPeriodTitle")} />
+        <SectionHead title={t("ui.acct.periodTitle")} />
         <FilterBar>
-          <Field label={t("ui.acctFrom")}>
+          <Field label={t("ui.acct.from")}>
             <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           </Field>
-          <Field label={t("ui.acctTo")}>
+          <Field label={t("ui.acct.to")}>
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </Field>
         </FilterBar>
-        <p className="text-meta text-tinta-2">{t("ui.acctPeriodHint")}</p>
+        <p className="text-meta text-tinta-2">{t("ui.acct.periodHint")}</p>
         {error ? <ErrorBox error={error} /> : null}
       </section>
       <section className="flex flex-col gap-3">
-        <SectionHead title={t("ui.acctMapTitle")} />
-        <p className="text-sm text-tinta-2">{t("ui.acctMapIntro")}</p>
+        <SectionHead title={t("ui.acct.mapTitle")} />
+        <p className="text-sm text-tinta-2">{t("ui.acct.mapIntro")}</p>
         <div className="divide-y divide-linea border-y border-linea">
           {COST_CATEGORIES.map((k) => {
             const row = map.data?.find((m) => m.key === k);
@@ -142,7 +144,7 @@ function MapLine({ row }: { row: MapRow }) {
   const save = useMutation({
     mutationFn: () => put(`/org/erp/accountant/map/${row.key}`, { code, name }),
     onSuccess: () => {
-      toast(t("ui.erpSaved"));
+      toast(t("ui.erp.saved"));
       refresh();
     },
   });
@@ -150,20 +152,20 @@ function MapLine({ row }: { row: MapRow }) {
   const dirty = code !== row.code || name !== row.name;
   return (
     <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2 py-2.5 md:grid-cols-[12rem_8rem_minmax(0,1fr)_9rem]">
-      <span className="text-sm font-medium">{tk(`ui.costCategory_${row.key}`)}</span>
+      <span className="text-sm font-medium">{tk(`ui.cost.category_${row.key}`)}</span>
       <span className="order-last col-span-2 grid grid-cols-[8rem_minmax(0,1fr)] gap-2 md:contents">
-        <Input aria-label={t("ui.acctColCode")} maxLength={30} value={code} onChange={(e) => setCode(e.target.value)} />
-        <Input aria-label={t("ui.acctColAccount")} maxLength={80} value={name} onChange={(e) => setName(e.target.value)} />
+        <Input aria-label={t("ui.acct.colCode")} maxLength={30} value={code} onChange={(e) => setCode(e.target.value)} />
+        <Input aria-label={t("ui.acct.colAccount")} maxLength={80} value={name} onChange={(e) => setName(e.target.value)} />
       </span>
       <span className="flex justify-end gap-1">
         {dirty && (
           <Button size="sm" variant="secondary" disabled={!code.trim() || !name.trim() || save.isPending} onClick={() => save.mutate()}>
-            {t("ui.save")}
+            {t("ui.common.save")}
           </Button>
         )}
         {row.custom && (
           <Button size="sm" variant="quiet" onClick={() => reset.mutate()}>
-            {t("ui.acctReset")}
+            {t("ui.acct.reset")}
           </Button>
         )}
       </span>

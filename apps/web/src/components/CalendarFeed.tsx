@@ -35,39 +35,39 @@ export function CalendarFeed() {
   if (!s) return <Skeleton h={132} />;
   return (
     <section id="calendario" className="scroll-mt-4">
-      <SectionHead title={t("ui.calendarFeedTitle")} />
-      <p className="mt-3 text-tinta-2">{t("ui.calendarFeedIntro")}</p>
+      <SectionHead title={t("ui.calendar.feedTitle")} />
+      <p className="mt-3 text-tinta-2">{t("ui.calendar.feedIntro")}</p>
 
       {url && (
         <div role="status" className="mt-4 border-l-2 border-trigo pl-3">
-          <p className="font-medium">{t("ui.calendarFeedNew")}</p>
-          <p className="mt-1 text-sm text-tinta-2">{t("ui.calendarFeedNewText")}</p>
+          <p className="font-medium">{t("ui.calendar.feedNew")}</p>
+          <p className="mt-1 text-sm text-tinta-2">{t("ui.calendar.feedNewText")}</p>
           <code className="mt-2 block font-mono text-sm break-all">{url}</code>
           <Button
             className="mt-2"
             onClick={() => {
               void navigator.clipboard?.writeText(url);
-              toast(t("ui.copied"));
+              toast(t("ui.common.copied"));
             }}
           >
-            {t("ui.calendarFeedCopy")}
+            {t("ui.calendar.feedCopy")}
           </Button>
-          <p className="mt-3 text-sm text-tinta-2">{t("ui.calendarFeedGoogle")}</p>
-          <p className="text-sm text-tinta-2">{t("ui.calendarFeedOutlook")}</p>
+          <p className="mt-3 text-sm text-tinta-2">{t("ui.calendar.feedGoogle")}</p>
+          <p className="text-sm text-tinta-2">{t("ui.calendar.feedOutlook")}</p>
         </div>
       )}
 
       <p className="mt-4 text-sm">
-        {s.active && s.createdAt ? t("ui.calendarFeedActive", { date: fmtDateTime(s.createdAt) }) : t("ui.calendarFeedNone")}{" "}
-        {s.active && (s.lastUsedAt ? t("ui.calendarFeedUsed", { date: fmtDateTime(s.lastUsedAt) }) : t("ui.calendarFeedNeverUsed"))}
+        {s.active && s.createdAt ? t("ui.calendar.feedActive", { date: fmtDateTime(s.createdAt) }) : t("ui.calendar.feedNone")}{" "}
+        {s.active && (s.lastUsedAt ? t("ui.calendar.feedUsed", { date: fmtDateTime(s.lastUsedAt) }) : t("ui.calendar.feedNeverUsed"))}
       </p>
       <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1">
         <Button variant={s.active ? "secondary" : "primary"} disabled={create.isPending} onClick={() => create.mutate()}>
-          {t(s.active ? "ui.calendarFeedRegen" : "ui.calendarFeedCreate")}
+          {t(s.active ? "ui.calendar.feedRegen" : "ui.calendar.feedCreate")}
         </Button>
         {s.active && (
           <Button variant="danger" disabled={revoke.isPending} onClick={() => revoke.mutate()}>
-            {t("ui.calendarFeedRevoke")}
+            {t("ui.calendar.feedRevoke")}
           </Button>
         )}
       </div>

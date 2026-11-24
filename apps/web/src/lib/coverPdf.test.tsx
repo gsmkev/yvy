@@ -41,7 +41,7 @@ describe("PDF de cambio de cobertura", () => {
       const buf = await renderToBuffer(<CoverReport farm={farm} plots={plots} rows={[r]} from="2020-12-31" to="2026-10-31" generatedAt={Date.now()} />);
       expect(buf.subarray(0, 4).toString()).toBe("%PDF");
     }
-    expect(t("ui.coverDisclaimer")).toMatch(/indicativo/);
-    expect(t("ui.coverDisclaimer")).toMatch(/No es un peritaje ni una certificación/);
+    expect(t("ui.cover.disclaimer")).toMatch(/indicativo/);
+    expect(t("ui.cover.disclaimer")).toMatch(/No es un peritaje ni una certificación/);
   });
 });

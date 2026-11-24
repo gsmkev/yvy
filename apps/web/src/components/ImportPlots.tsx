@@ -80,14 +80,14 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
       const a = selected[w.a]!.name;
       out.push(
         w.kind === "overlap"
-          ? t("ui.warnOverlap", { a, b: selected[w.b!]!.name, pct: Math.round(w.ratio * 100) })
-          : t("ui.warnOutside", { a }),
+          ? t("ui.warn.overlap", { a, b: selected[w.b!]!.name, pct: Math.round(w.ratio * 100) })
+          : t("ui.warn.outside", { a }),
       );
     }
     for (const p of selected) {
       for (const ex of farm.data?.plots ?? []) {
         const r = overlapRatio(p.geometry, JSON.parse(ex.geometry) as Area);
-        if (r > OVERLAP_WARN_RATIO) out.push(t("ui.warnOverlap", { a: p.name, b: ex.name, pct: Math.round(r * 100) }));
+        if (r > OVERLAP_WARN_RATIO) out.push(t("ui.warn.overlap", { a: p.name, b: ex.name, pct: Math.round(r * 100) }));
       }
     }
     return out;
@@ -112,11 +112,11 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
     setItems(items!.map((x, k) => (k === i ? { ...x, ...patch } : x)));
 
   return (
-    <Modal title={t("ui.importFile")} onClose={onClose}>
+    <Modal title={t("ui.import.file")} onClose={onClose}>
       {!items ? (
         <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-linea p-8 text-sm text-surco/70 hover:border-soja">
           <Upload size={22} aria-hidden />
-          {t("ui.importFile")}
+          {t("ui.import.file")}
           <input
             type="file"
             accept=".kml,.kmz,.geojson,.json,.zip"
@@ -127,15 +127,15 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
         </label>
       ) : (
         <div className="flex flex-col gap-3">
-          <p className="text-sm">{t("ui.importPreview", { count: items.length })}</p>
+          <p className="text-sm">{t("ui.import.preview", { count: items.length })}</p>
           {items.some((i) => i.fixed > 0) && (
             <p className="text-sm text-tinta-2">
-              {t("ui.importFixed", { count: items.reduce((n, i) => n + i.fixed, 0) })}
+              {t("ui.import.fixed", { count: items.reduce((n, i) => n + i.fixed, 0) })}
             </p>
           )}
           {items.some((i) => i.error) && (
             <p className="text-sm text-alerta">
-              {t("ui.importErrors", { count: items.filter((i) => i.error).length })}
+              {t("ui.import.errors", { count: items.filter((i) => i.error).length })}
             </p>
           )}
           <div className="overflow-hidden rounded-md border border-linea" data-testid="import-preview-map">
@@ -149,10 +149,10 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
               }}
             />
           </div>
-          <p className="text-xs text-tinta-2">{t("ui.importMapHint")}</p>
+          <p className="text-xs text-tinta-2">{t("ui.import.mapHint")}</p>
           {warnings.length > 0 && (
             <div className="text-sm text-surco" data-testid="import-warnings">
-              <p className="font-medium">{t("ui.warnTitle")}</p>
+              <p className="font-medium">{t("ui.warn.title")}</p>
               <ul>
                 {warnings.slice(0, 8).map((w, i) => (
                   <li key={i} className="border-b border-linea py-1">
@@ -161,7 +161,7 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
                 ))}
               </ul>
               {warnings.length > 8 && (
-                <p className="py-1 text-tinta-2">{t("ui.warnMore", { count: warnings.length - 8 })}</p>
+                <p className="py-1 text-tinta-2">{t("ui.warn.more", { count: warnings.length - 8 })}</p>
               )}
             </div>
           )}
@@ -183,8 +183,8 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
                   value={p.kind}
                   onChange={(e) => update(i, { kind: e.target.value as "crop" })}
                   options={[
-                    { value: "crop", label: t("ui.crop") },
-                    { value: "pasture", label: t("ui.pasture") },
+                    { value: "crop", label: t("ui.common.crop") },
+                    { value: "pasture", label: t("ui.common.pasture") },
                   ]}
                 />
                 <span className="num w-20 text-right text-tinta-2">{p.error ? p.error : fmtHa(p.areaHa)}</span>
@@ -192,7 +192,7 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
             ))}
           </ul>
           <Button onClick={save} disabled={!selected.length || busy}>
-            {t("ui.importSelected", { count: selected.length })}
+            {t("ui.import.selected", { count: selected.length })}
           </Button>
         </div>
       )}

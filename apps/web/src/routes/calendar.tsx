@@ -21,22 +21,22 @@ export function CalendarPage() {
   const isThisWeek = monday === weekStart(today);
   return (
     <Page width="data" className="gap-4 md:h-full">
-      <PageHeader title={t("ui.calendarTitle")} />
+      <PageHeader title={t("ui.calendar.title")} />
       <div className="flex flex-wrap items-center gap-2">
-        <Button icon={ChevronLeft} onClick={() => setMonday(addDays(monday, -7))} aria-label={t("ui.calendarPrev")} />
+        <Button icon={ChevronLeft} onClick={() => setMonday(addDays(monday, -7))} aria-label={t("ui.calendar.prev")} />
         <span className="num min-w-44 text-center text-sm font-medium">
           {fmtIsoDate(days[0]!)} – {fmtIsoDate(days[6]!)}
         </span>
-        <Button icon={ChevronRight} onClick={() => setMonday(addDays(monday, 7))} aria-label={t("ui.calendarNext")} />
+        <Button icon={ChevronRight} onClick={() => setMonday(addDays(monday, 7))} aria-label={t("ui.calendar.next")} />
         {!isThisWeek && (
           <Button variant="quiet" onClick={() => setMonday(weekStart(today))}>
-            {t("ui.calendarToday")}
+            {t("ui.calendar.today")}
           </Button>
         )}
         {(farms.data?.length ?? 0) > 1 && (
           <div className="ml-auto w-56">
             <Select
-              aria-label={t("ui.farm")}
+              aria-label={t("ui.common.farm")}
               value={selected}
               onChange={(e) => setFarmId(e.target.value)}
               options={(farms.data ?? []).map((f) => ({ value: f.id, label: f.name }))}
@@ -48,13 +48,13 @@ export function CalendarPage() {
       {tasks.error && <ErrorBox error={tasks.error} />}
       {tasks.data && total === 0 && (
         <EmptyState
-          title={t("ui.calendarEmpty")}
+          title={t("ui.calendar.empty")}
           action={
             <Link
               to="/tareas"
               className="inline-flex h-10 items-center rounded-md border border-linea bg-papel px-3.5 text-sm font-medium text-surco hover:border-tinta-2/40 hover:bg-lino"
             >
-              {t("ui.navTasks")}
+              {t("ui.nav.tasks")}
             </Link>
           }
         />
@@ -71,7 +71,7 @@ export function CalendarPage() {
                 className={`px-2 py-2 md:min-h-0 md:overflow-y-auto md:border-r md:border-linea md:last:border-r-0 ${isToday ? "md:bg-soja/[0.07]" : ""} ${list.length === 0 && !isToday ? "max-md:hidden" : ""}`}
               >
                 <h2 className={`mb-2 flex items-baseline gap-1.5 text-sm ${isToday ? "font-semibold text-surco" : "font-medium text-tinta-2"}`}>
-                  {tk(`ui.weekday_${i}`)}{" "}
+                  {tk(`ui.weekday.${i}`)}{" "}
                   <span className={`num ${isToday ? "rounded-full bg-surco px-1.5 text-lino" : ""}`}>{d.slice(8)}</span>
                 </h2>
                 <ul className="flex flex-col gap-1.5">
@@ -92,7 +92,7 @@ export function CalendarPage() {
                           {x.title}
                         </span>
                         {x.status === "done" && (
-                          <Check size={14} className="mt-1 shrink-0 text-soja" role="img" aria-label={t("ui.status_done")} />
+                          <Check size={14} className="mt-1 shrink-0 text-soja" role="img" aria-label={t("ui.status.done")} />
                         )}
                       </p>
                       <p className="text-xs leading-4 text-tinta-2">

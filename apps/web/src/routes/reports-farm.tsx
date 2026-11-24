@@ -121,14 +121,14 @@ export function FarmReportsPage() {
         import("@react-pdf/renderer"),
         import("../lib/auditReportPdf"),
       ]);
-      const blob = await pdf(<AuditReport {...data} farm={f} generatedAt={Date.now()} />).toBlob();
+      const blob = await pdf(<AuditReport from={data.from} to={data.to} applications={data.applications} operators={data.operators} totalHa={data.totalHa} flagged={data.flagged} farm={f} generatedAt={Date.now()} />).toBlob();
       download(blob, `auditoria-${f.name}-${to}.pdf`);
     });
 
   const exportZip = () =>
     run("zip", async () => {
       const data = await collectExportData(me.data?.organization.name ?? "Yvy", (farm) =>
-        setProgress(t("ui.exportWorking", { farm })),
+        setProgress(t("ui.export.working", { farm })),
       );
       download(await buildExportZip(data), `yvy-exportacion-${localDate(Date.now())}.zip`);
       setProgress("");
@@ -172,15 +172,15 @@ export function FarmReportsPage() {
       download(blob, `informe-banco-${f.name}-${to}.pdf`);
     });
 
-  const pdfBtn = (key: string, onClick: () => void, label: string, short = t("ui.reportsPdf")) => (
+  const pdfBtn = (key: string, onClick: () => void, label: string, short = t("ui.reports.pdf")) => (
     <Button size="sm" variant="secondary" aria-label={label} onClick={onClick} disabled={busy !== null}>
       <Download size={14} aria-hidden />
-      {busy === key ? t("ui.reportsGenerating") : short}
+      {busy === key ? t("ui.reports.generating") : short}
     </Button>
   );
   const open = (to: string, label: string) => (
     <Link to={to} params={{ farmId }} aria-label={label} className={openCls}>
-      {t("ui.reportsOpen")}
+      {t("ui.reports.open")}
     </Link>
   );
   const isOwner = me.data?.role === "owner";
@@ -189,13 +189,13 @@ export function FarmReportsPage() {
   return (
     <Page
       width="data"
-      title={t("ui.reportsTitle")}
+      title={t("ui.reports.title")}
       titleAction={
         many ? (
           <ActionMenu
             text={f.name}
             align="left"
-            label={t("ui.farmSwitch")}
+            label={t("ui.farm.switch")}
             items={(farms.data ?? []).map((x) => ({
               label: x.name,
               disabled: x.id === farmId,
@@ -209,74 +209,74 @@ export function FarmReportsPage() {
       {!many && <p className="-mt-3 text-sm text-tinta-2">{f.name}</p>}
       <div className={`grid items-start gap-10 ${canSchedule ? "lg:grid-cols-[minmax(0,1fr)_20rem]" : ""}`}>
         <div className="flex min-w-0 flex-col gap-8">
-          <Group title={t("ui.reportsGroupTrack")}>
+          <Group title={t("ui.reports.groupTrack")}>
             <Entry
-              title={t("ui.reportTitle")}
-              text={t("ui.reportsDescWeekly")}
+              title={t("ui.report.title")}
+              text={t("ui.reports.descWeekly")}
               action={
                 <Link
                   to="/estancias/$farmId/parte"
                   params={{ farmId }}
                   search={{ desde: undefined, hasta: undefined }}
-                  aria-label={t("ui.reportTitle")}
+                  aria-label={t("ui.report.title")}
                   className={openCls}
                 >
-                  {t("ui.reportsOpen")}
+                  {t("ui.reports.open")}
                 </Link>
               }
             />
-            <Entry title={t("ui.gaugesTitle")} text={t("ui.reportsDescGauges")} action={open("/estancias/$farmId/pluviometros", t("ui.gaugesLink"))} />
-            <Entry title={t("ui.changesTitle")} text={t("ui.reportsDescChanges")} action={open("/estancias/$farmId/cambios", t("ui.changesLink"))} />
+            <Entry title={t("ui.gauges.title")} text={t("ui.reports.descGauges")} action={open("/estancias/$farmId/pluviometros", t("ui.gauges.link"))} />
+            <Entry title={t("ui.changes.title")} text={t("ui.reports.descChanges")} action={open("/estancias/$farmId/cambios", t("ui.changes.link"))} />
           </Group>
-          <Group title={t("ui.reportsGroupThird")}>
-            <Entry title={t("ui.bankReportTitle")} text={t("ui.reportsDescBank")} action={pdfBtn("bank", bankPdf, t("ui.reportsBankPdf"))} />
-            <Entry title={t("ui.auditReportTitle")} text={t("ui.reportsDescAudit")} action={pdfBtn("audit", auditPdf, t("ui.auditReportPdf"))} />
-            <Entry title={t("ui.eudrTitle")} text={t("ui.reportsDescEudr")} action={open("/estancias/$farmId/eudr", t("ui.eudrLink"))} />
+          <Group title={t("ui.reports.groupThird")}>
+            <Entry title={t("ui.bank.reportTitle")} text={t("ui.reports.descBank")} action={pdfBtn("bank", bankPdf, t("ui.reports.bankPdf"))} />
+            <Entry title={t("ui.audit.reportTitle")} text={t("ui.reports.descAudit")} action={pdfBtn("audit", auditPdf, t("ui.audit.reportPdf"))} />
+            <Entry title={t("ui.eudr.title")} text={t("ui.reports.descEudr")} action={open("/estancias/$farmId/eudr", t("ui.eudr.link"))} />
             {isOwner && (
               <Entry
-                title={t("ui.shareLinkTitle")}
-                text={t("ui.reportsDescShare")}
+                title={t("ui.share.linkTitle")}
+                text={t("ui.reports.descShare")}
                 action={
-                  <Button size="sm" variant="secondary" aria-label={t("ui.shareLinkTitle")} onClick={() => setSharing(true)}>
-                    {t("ui.reportsOpen")}
+                  <Button size="sm" variant="secondary" aria-label={t("ui.share.linkTitle")} onClick={() => setSharing(true)}>
+                    {t("ui.reports.open")}
                   </Button>
                 }
               />
             )}
           </Group>
-          <Group title={t("ui.reportsGroupSeason")}>
+          <Group title={t("ui.reports.groupSeason")}>
             {plot && (
               <Entry
-                title={t("ui.seasonReportTitle")}
-                text={t("ui.reportsDescSeason")}
+                title={t("ui.season.reportTitle")}
+                text={t("ui.reports.descSeason")}
                 extra={
                   plots.length > 1 ? (
                     <Select
-                      aria-label={t("ui.reportsPickPlot")}
+                      aria-label={t("ui.reports.pickPlot")}
                       value={plot.id}
                       onChange={(e) => setPlotId(e.target.value)}
                       options={plots.map((p) => ({ value: p.id, label: p.name }))}
                     />
                   ) : undefined
                 }
-                action={pdfBtn("season", seasonPdf, t("ui.reportsSeasonPdf"))}
+                action={pdfBtn("season", seasonPdf, t("ui.reports.seasonPdf"))}
               />
             )}
-            <Entry title={t("ui.riskTitle")} text={t("ui.reportsDescRisk")} action={open("/estancias/$farmId/riesgo", t("ui.riskLink"))} />
+            <Entry title={t("ui.risk.title")} text={t("ui.reports.descRisk")} action={open("/estancias/$farmId/riesgo", t("ui.risk.link"))} />
           </Group>
           {isOwner && (
-            <Group title={t("ui.reportsGroupData")}>
+            <Group title={t("ui.reports.groupData")}>
               <Entry
-                title={t("ui.exportTitle")}
-                text={busy === "zip" && progress ? progress : t("ui.reportsDescExport")}
-                action={pdfBtn("zip", exportZip, t("ui.exportDownload"), "ZIP")}
+                title={t("ui.export.title")}
+                text={busy === "zip" && progress ? progress : t("ui.reports.descExport")}
+                action={pdfBtn("zip", exportZip, t("ui.export.download"), "ZIP")}
               />
             </Group>
           )}
         </div>
         {canSchedule && (
           <aside className="flex flex-col gap-1">
-            <SectionHead title={t("ui.reportsAutoSend")} />
+            <SectionHead title={t("ui.reports.autoSend")} />
             <ReportSchedules farmId={farmId} />
           </aside>
         )}

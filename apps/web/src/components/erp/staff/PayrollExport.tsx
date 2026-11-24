@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { localDate, type PayrollRow } from "@yvy/shared";
-import { get, qs } from "../../../lib/api";
+import { get, withQs } from "../../../lib/api";
 import { t } from "../../../lib/i18n";
 import { tablesToExcel } from "../../../lib/tableExport";
 import { Button, ErrorBox, Field, FilterBar, Input } from "../../ui";
@@ -22,9 +22,9 @@ export function PayrollExport() {
     setError(null);
     setEmpty(false);
     try {
-      const rows = await get<PayrollRow[]>(`/org/erp/employees/payroll${qs({ from, to })}`);
+      const rows = await get<PayrollRow[]>(withQs("/org/erp/employees/payroll", { from, to }));
       if (rows.length === 0) return setEmpty(true);
-      const headers = [t("ui.payMonth"), t("ui.staffName"), t("ui.staffCi"), t("ui.balDays"), t("ui.balAccrued"), t("ui.balAdvances"), t("ui.balPayments"), t("ui.payMonthBalance")];
+      const headers = [t("ui.pay.month"), t("ui.staff.name"), t("ui.staff.ci"), t("ui.bal.days"), t("ui.bal.accrued"), t("ui.bal.advances"), t("ui.bal.payments"), t("ui.pay.monthBalance")];
       const line = (r: PayrollRow) => [r.month, r.name, r.ci ?? "", r.days, r.accruedPyg, r.advancesPyg, r.paymentsPyg, r.balancePyg];
       const totals = new Map<string, PayrollRow>();
       for (const r of rows) {
@@ -39,12 +39,12 @@ export function PayrollExport() {
       const sum = (k: "days" | "accruedPyg" | "advancesPyg" | "paymentsPyg" | "balancePyg") => rows.reduce((a, r) => a + r[k], 0);
       await tablesToExcel(`planilla-${from.slice(0, 7)}_${to.slice(0, 7)}`, [
         {
-          name: t("ui.paySheetMonthly"),
+          name: t("ui.pay.sheetMonthly"),
           headers,
-          rows: [...rows.map(line), [], [t("ui.payTotal"), "", "", sum("days"), sum("accruedPyg"), sum("advancesPyg"), sum("paymentsPyg"), sum("balancePyg")], [], [t("ui.payNoContributions")]],
+          rows: [...rows.map(line), [], [t("ui.pay.total"), "", "", sum("days"), sum("accruedPyg"), sum("advancesPyg"), sum("paymentsPyg"), sum("balancePyg")], [], [t("ui.pay.noContributions")]],
         },
         {
-          name: t("ui.paySheetByEmployee"),
+          name: t("ui.pay.sheetByEmployee"),
           headers: headers.slice(1),
           rows: [...totals.values()].sort((a, b) => a.name.localeCompare(b.name, "es")).map((r) => line(r).slice(1)),
         },
@@ -58,18 +58,18 @@ export function PayrollExport() {
   return (
     <div className="flex flex-col gap-2">
       <FilterBar>
-        <Field label={t("ui.acctFrom")}>
+        <Field label={t("ui.acct.from")}>
           <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
         </Field>
-        <Field label={t("ui.acctTo")}>
+        <Field label={t("ui.acct.to")}>
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
         </Field>
         <Button onClick={download} disabled={busy || !from || !to}>
-          {t("ui.payExport")}
+          {t("ui.pay.export")}
         </Button>
       </FilterBar>
-      <p className="text-meta text-tinta-2">{t("ui.payExportHint")}</p>
-      {empty && <p className="text-sm">{t("ui.payEmpty")}</p>}
+      <p className="text-meta text-tinta-2">{t("ui.pay.exportHint")}</p>
+      {empty && <p className="text-sm">{t("ui.pay.empty")}</p>}
       {error ? <ErrorBox error={error} /> : null}
     </div>
   );

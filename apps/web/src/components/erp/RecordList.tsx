@@ -48,7 +48,7 @@ export function RecordList<T extends Row>({
   const remove = useMutation({
     mutationFn: (r: T) => del(`/org/erp/${path}/${r.id}`),
     onSuccess: () => {
-      toast(t("ui.erpDeleted"));
+      toast(t("ui.erp.deleted"));
       setRemoving(null);
       qc.invalidateQueries({ queryKey: ["erp"] });
     },
@@ -65,7 +65,7 @@ export function RecordList<T extends Row>({
     ...columns.map((c) => ({ id: c.header, header: c.header, align: c.right ? ("right" as const) : ("left" as const), hideBelow: c.hideBelow, cell: c.cell })),
     {
       id: "_actions",
-      header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>,
+      header: <span className="sr-only">{t("ui.row.actionsHeader")}</span>,
       align: "right" as const,
       width: "3rem",
       cell: (r: T) => <RowMenu name={name(r)} onEdit={() => setEditing(r)} onDelete={() => setRemoving(r)} />,
@@ -75,7 +75,7 @@ export function RecordList<T extends Row>({
     <div className="flex flex-col gap-4">
       {rows.length > 0 && (inline ? <div>{add}</div> : <HeaderActions>{add}</HeaderActions>)}
       {rows.length === 0 ? (
-        <EmptyState title={emptyTitle ?? t("ui.erpEmpty")} action={add}>
+        <EmptyState title={emptyTitle ?? t("ui.erp.empty")} action={add}>
           {emptyHint}
         </EmptyState>
       ) : (
@@ -89,8 +89,8 @@ export function RecordList<T extends Row>({
       {removing && (
         <ConfirmModal
           title={name(removing)}
-          message={t("ui.erpDeleteConfirm", { name: name(removing) })}
-          confirmLabel={t("ui.delete")}
+          message={t("ui.erp.deleteConfirm", { name: name(removing) })}
+          confirmLabel={t("ui.common.delete")}
           pending={remove.isPending}
           error={remove.error}
           onConfirm={() => remove.mutate(removing)}

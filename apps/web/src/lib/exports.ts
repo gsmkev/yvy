@@ -1,5 +1,5 @@
 /** Exportaciones generadas en el navegador (anexo §4.9): Excel de registros (RF-82) y KML de lotes (RF-15). */
-import { describeRecord } from "@yvy/shared";
+import { describeRecord, safeXml } from "@yvy/shared";
 import { tk } from "./i18n";
 import { fmtDateTime } from "./format";
 import type { TableData } from "./tableData";
@@ -22,7 +22,7 @@ export function recordsTable(rows: RecordRow[]): TableData {
     headers: ["Fecha", "Tipo", "Lote", "Empleado", "Observación", "Latitud", "Longitud", "Fotos"],
     rows: rows.map((r) => [
       fmtDateTime(r.capturedAt),
-      tk(`recordKinds.${r.kind}`),
+      tk(`record-kinds.kind.${r.kind}`),
       r.plotName ?? "",
       r.authorName ?? "",
       describeData(r.kind, r.data),
@@ -51,7 +51,7 @@ export async function recordsToExcel(rows: RecordRow[], filename: string) {
   for (const r of rows) {
     ws.addRow({
       date: fmtDateTime(r.capturedAt),
-      kind: tk(`recordKinds.${r.kind}`),
+      kind: tk(`record-kinds.kind.${r.kind}`),
       plot: r.plotName ?? "",
       author: r.authorName ?? "",
       obs: describeData(r.kind, r.data),
@@ -64,26 +64,22 @@ export async function recordsToExcel(rows: RecordRow[], filename: string) {
   download(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), filename);
 }
 
-const esc = (s: string) =>
-  s.replace(/[<>&'"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '"': "&quot;" })[c]!);
-
 export function plotsToKml(plots: Plot[], farmName: string): string {
   const ring = (r: number[][]) =>
-    `<LinearRing><coordinates>${r.map((p) => `${p[0]},${p[1]}`).join(" ")}</coordinates></LinearRing>`;
+    safeXml`<LinearRing><coordinates>${r.map((p) => `${p[0]},${p[1]}`).join(" ")}</coordinates></LinearRing>`;
   const poly = (rings: number[][][]) =>
-    `<Polygon><outerBoundaryIs>${ring(rings[0]!)}</outerBoundaryIs>${rings
-      .slice(1)
-      .map((r) => `<innerBoundaryIs>${ring(r)}</innerBoundaryIs>`)
-      .join("")}</Polygon>`;
+    safeXml`<Polygon><outerBoundaryIs>${ring(rings[0]!)}</outerBoundaryIs>${rings.slice(1).map((r) => safeXml`<innerBoundaryIs>${ring(r)}</innerBoundaryIs>`)}</Polygon>`;
   const placemarks = plots.map((p) => {
     const g = JSON.parse(p.geometry) as { type: string; coordinates: number[][][] | number[][][][] };
     const geom =
       g.type === "Polygon"
         ? poly(g.coordinates as number[][][])
-        : `<MultiGeometry>${(g.coordinates as number[][][][]).map(poly).join("")}</MultiGeometry>`;
-    return `<Placemark><name>${esc(p.name)}</name><ExtendedData><Data name="superficie_ha"><value>${p.areaHa.toFixed(2)}</value></Data><Data name="tipo"><value>${p.kind}</value></Data>${p.crop ? `<Data name="cultivo"><value>${p.crop}</value></Data>` : ""}</ExtendedData>${geom}</Placemark>`;
+        : safeXml`<MultiGeometry>${(g.coordinates as number[][][][]).map(poly)}</MultiGeometry>`;
+    const crop = p.crop ? safeXml`<Data name="cultivo"><value>${p.crop}</value></Data>` : "";
+    return safeXml`<Placemark><name>${p.name}</name><ExtendedData><Data name="superficie_ha"><value>${p.areaHa.toFixed(2)}</value></Data><Data name="tipo"><value>${p.kind}</value></Data>${crop}</ExtendedData>${geom}</Placemark>`;
   });
-  return `<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${esc(farmName)}</name>${placemarks.join("")}</Document></kml>`;
+  return safeXml`<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${farmName}</name>${placemarks}</Document></kml>`
+    .text;
 }
 
 // ---------------------------------------------------------------------------

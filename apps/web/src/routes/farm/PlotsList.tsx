@@ -11,31 +11,31 @@ import type { FarmDetail, FarmLine, Plot } from "../../lib/types";
 import { PoiList } from "./PoiList";
 
 const plotsTable = (plots: Plot[]) => ({
-  name: t("ui.plotsFile"),
-  headers: [t("ui.plot"), t("ui.kind"), t("ui.crop"), t("ui.season"), t("ui.sowingDate"), "ha", t("ui.lastVisit")],
+  name: t("ui.plots.file"),
+  headers: [t("ui.common.plot"), t("ui.common.kind"), t("ui.common.crop"), t("ui.common.season"), t("ui.common.sowingDate"), "ha", t("ui.last.visit")],
   rows: plots.map((p) => [
     p.name,
-    p.kind === "pasture" ? t("ui.pasture") : t("ui.crop"),
+    p.kind === "pasture" ? t("ui.common.pasture") : t("ui.common.crop"),
     p.crop ?? p.pastureType,
     p.season,
     p.sowingDate,
     Math.round(p.areaHa * 100) / 100,
-    p.lastRecordAt ? fmtDate(p.lastRecordAt) : t("ui.neverVisited"),
+    p.lastRecordAt ? fmtDate(p.lastRecordAt) : t("ui.never.visited"),
   ]),
 });
 
 /** Formatos con geometría: solo para quien puede editar. */
 const geoFormats = (d: FarmDetail) => [
   {
-    label: t("ui.exportFormatKml"),
+    label: t("ui.export.formatKml"),
     run: () => download(new Blob([plotsToKml(d.plots, d.farm.name)], { type: "application/vnd.google-earth.kml+xml" }), `${d.farm.name}.kml`),
   },
   {
-    label: t("ui.exportFormatGeojson"),
+    label: t("ui.export.formatGeojson"),
     run: () => download(new Blob([plotsToGeoJson(d.plots, d.pois)], { type: "application/geo+json" }), `${d.farm.name}.geojson`),
   },
   {
-    label: t("ui.exportFormatShapefile"),
+    label: t("ui.export.formatShapefile"),
     run: async () => download(await plotsToShapefileZip(d.plots, d.pois), `${d.farm.name}-shapefile.zip`),
   },
 ];
@@ -44,20 +44,20 @@ const geoFormats = (d: FarmDetail) => [
 function PrintPlots({ plots }: { plots: Plot[] }) {
   return (
     <table className="hidden w-full text-sm print:table">
-      <caption className="pb-2 text-left font-serif text-lg font-semibold">{t("ui.printPlotsTitle")}</caption>
+      <caption className="pb-2 text-left font-serif text-lg font-semibold">{t("ui.print.plotsTitle")}</caption>
       <thead>
         <tr className="border-b border-linea text-left text-xs text-tinta-2">
-          <th className="py-1.5 font-medium">{t("ui.plot")}</th>
-          <th className="py-1.5 font-medium">{t("ui.crop")}</th>
+          <th className="py-1.5 font-medium">{t("ui.common.plot")}</th>
+          <th className="py-1.5 font-medium">{t("ui.common.crop")}</th>
           <th className="py-1.5 text-right font-medium">{areaUnitLabel()}</th>
-          <th className="py-1.5 text-right font-medium">{t("ui.lastVisitShort")}</th>
+          <th className="py-1.5 text-right font-medium">{t("ui.last.visitShort")}</th>
         </tr>
       </thead>
       <tbody>
         {plots.map((p) => (
           <tr key={p.id} className="border-b border-linea">
             <td className="py-1.5 font-medium">{p.name}</td>
-            <td className="py-1.5">{p.kind === "pasture" ? t("ui.pasture") : (p.crop ?? t("ui.crop"))}</td>
+            <td className="py-1.5">{p.kind === "pasture" ? t("ui.common.pasture") : (p.crop ?? t("ui.common.crop"))}</td>
             <td className="num py-1.5 text-right">{fmtAreaValue(p.areaHa)}</td>
             <td className="num py-1.5 text-right">{p.lastRecordAt ? fmtDate(p.lastRecordAt) : "—"}</td>
           </tr>
@@ -111,25 +111,25 @@ export function PlotsList({
                 onClick={onToggleUnvisited}
               >
                 {onlyUnvisited
-                  ? t("ui.unvisitedShowAll")
-                  : t(unvisitedCount === 1 ? "ui.unvisitedOneLead" : "ui.unvisitedManyLead", { n: unvisitedCount })}
+                  ? t("ui.unvisited.showAll")
+                  : t(unvisitedCount === 1 ? "ui.unvisited.oneLead" : "ui.unvisited.manyLead", { n: unvisitedCount })}
               </button>
             ) : (
-              <span>{t("ui.unvisitedNoneLead")}</span>
+              <span>{t("ui.unvisited.noneLead")}</span>
             )}
             <Select
-              aria-label={t("ui.unvisitedAfter")}
+              aria-label={t("ui.unvisited.after")}
               value={String(staleDays)}
               onChange={(e) => onStaleDays(staleDaysOrDefault(Number(e.target.value)))}
-              options={LIMITS.visits.staleDayOptions.map((n) => ({ value: String(n), label: t("ui.daysN", { n }) }))}
+              options={LIMITS.visits.staleDayOptions.map((n) => ({ value: String(n), label: t("ui.common.daysN", { n }) }))}
               className="[&_select]:h-8 [&_select]:text-sm"
             />
           </div>
           <ExportMenu
             quiet
             formats={[
-              { label: t("ui.exportFormatExcel"), run: () => tableToExcel(plotsTable(shownPlots)) },
-              { label: t("ui.exportFormatCsv"), run: () => tableToCsv(plotsTable(shownPlots)) },
+              { label: t("ui.export.formatExcel"), run: () => tableToExcel(plotsTable(shownPlots)) },
+              { label: t("ui.export.formatCsv"), run: () => tableToCsv(plotsTable(shownPlots)) },
               ...(canEdit ? geoFormats(d) : []),
             ]}
           />

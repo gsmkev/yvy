@@ -9,11 +9,11 @@ interface AdminGroup {
 
 /** Navegación de Administración en dos niveles: 5 módulos arriba y, debajo, las secciones del módulo activo. */
 export const ADMIN_GROUPS: AdminGroup[] = [
-  { id: "overview", label: "ui.adminGroup_overview", sections: ["overview"] },
-  { id: "trade", label: "ui.adminGroup_trade", sections: ["purchases", "grain", "cattle", "parties"] },
-  { id: "stock", label: "ui.adminGroup_stock", sections: ["stock", "minstock", "fuel", "products", "warehouses"] },
-  { id: "ops", label: "ui.adminGroup_ops", sections: ["orders", "maintenance", "labor", "contractors", "feedlot", "staff", "machines"] },
-  { id: "finance", label: "ui.adminGroup_finance", sections: ["cash", "costs", "budget", "results", "rates", "accountant", "export"] },
+  { id: "overview", label: "ui.admin.group_overview", sections: ["overview"] },
+  { id: "trade", label: "ui.admin.group_trade", sections: ["purchases", "grain", "cattle", "parties"] },
+  { id: "stock", label: "ui.admin.group_stock", sections: ["stock", "minstock", "fuel", "products", "warehouses"] },
+  { id: "ops", label: "ui.admin.group_ops", sections: ["orders", "maintenance", "labor", "contractors", "feedlot", "staff", "machines"] },
+  { id: "finance", label: "ui.admin.group_finance", sections: ["cash", "costs", "budget", "results", "rates", "accountant", "export"] },
 ];
 
 /** Módulo al que pertenece una sección (Resumen si no se conoce). */

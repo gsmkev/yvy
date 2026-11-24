@@ -38,7 +38,7 @@ export function DeliveriesPanel({ farmId, plots }: { farmId: string; plots: Plot
     mutationFn: (d: Delivery) => del(`/org/deliveries/${d.id}`),
     onSuccess: () => {
       setRemoving(null);
-      toast(t("ui.delivDeleted"));
+      toast(t("ui.deliv.deleted"));
       qc.invalidateQueries({ queryKey: ["deliveries", farmId] });
     },
   });
@@ -46,25 +46,25 @@ export function DeliveriesPanel({ farmId, plots }: { farmId: string; plots: Plot
   return (
     <section aria-labelledby="deliv-h" className="flex flex-col gap-3">
       <h3 id="deliv-h" className="font-serif text-lg font-semibold">
-        {t("ui.delivTitle")}
+        {t("ui.deliv.title")}
       </h3>
-      <p className="text-sm text-tinta-2">{t("ui.delivIntro")}</p>
+      <p className="text-sm text-tinta-2">{t("ui.deliv.intro")}</p>
       <div>
         <Button variant="secondary" onClick={() => setAdding(true)}>
-          {t("ui.delivAdd")}
+          {t("ui.deliv.add")}
         </Button>
       </div>
       {q.isLoading && <Spinner rows={3} h={40} />}
       {q.error && <ErrorBox error={q.error} />}
-      {d && d.rows.length === 0 && <Empty title={t("ui.delivTitle")}>{t("ui.delivNone")}</Empty>}
+      {d && d.rows.length === 0 && <Empty title={t("ui.deliv.title")}>{t("ui.deliv.none")}</Empty>}
       {d && d.byPlot.length > 0 && (
         <ul className="divide-y divide-linea border-y border-linea text-sm">
           {d.byPlot.map((p) => (
             <li key={p.plotId} className="flex flex-wrap items-baseline justify-between gap-x-4 py-2.5">
               <span className="font-medium">{p.plotName}</span>
               <span className="num text-tinta-2">
-                {t("ui.delivByPlot", { n: p.deliveries, net: tons(p.netKg), gross: tons(p.grossKg) })}
-                {p.harvestTons !== null ? ` · ${t("ui.delivHarvested", { t: fmtNum(p.harvestTons) })}` : ""}
+                {t("ui.deliv.byPlot", { n: p.deliveries, net: tons(p.netKg), gross: tons(p.grossKg) })}
+                {p.harvestTons !== null ? " · " + t("ui.deliv.harvested", { t: fmtNum(p.harvestTons) }) : ""}
               </span>
             </li>
           ))}
@@ -76,13 +76,13 @@ export function DeliveriesPanel({ farmId, plots }: { farmId: string; plots: Plot
             <table className="w-full text-sm">
               <thead className="text-left text-tinta-2">
                 <tr>
-                  <th className="py-2 pr-3 font-medium">{t("ui.delivDate")}</th>
-                  <th className="py-2 pr-3 font-medium">{t("ui.delivTicket")}</th>
-                  <th className="py-2 pr-3 font-medium">{t("ui.delivSilo")}</th>
-                  <th className="py-2 pr-3 font-medium">{t("ui.plot")}</th>
-                  <th className="num py-2 pr-3 text-right font-medium">{t("ui.delivGross")}</th>
-                  <th className="num py-2 pr-3 text-right font-medium">{t("ui.delivMoisture")}</th>
-                  <th className="num py-2 pr-3 text-right font-medium">{t("ui.delivNet")}</th>
+                  <th className="py-2 pr-3 font-medium">{t("ui.deliv.date")}</th>
+                  <th className="py-2 pr-3 font-medium">{t("ui.deliv.ticket")}</th>
+                  <th className="py-2 pr-3 font-medium">{t("ui.deliv.silo")}</th>
+                  <th className="py-2 pr-3 font-medium">{t("ui.common.plot")}</th>
+                  <th className="num py-2 pr-3 text-right font-medium">{t("ui.deliv.gross")}</th>
+                  <th className="num py-2 pr-3 text-right font-medium">{t("ui.deliv.moisture")}</th>
+                  <th className="num py-2 pr-3 text-right font-medium">{t("ui.deliv.net")}</th>
                   <th />
                 </tr>
               </thead>
@@ -98,7 +98,7 @@ export function DeliveriesPanel({ farmId, plots }: { farmId: string; plots: Plot
                     <td className="num py-2.5 pr-3 text-right font-medium">{tons(r.netKg)}</td>
                     <td className="py-2.5 text-right">
                       <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(r)}>
-                        {t("ui.delete")}
+                        {t("ui.common.delete")}
                       </button>
                     </td>
                   </tr>
@@ -111,9 +111,9 @@ export function DeliveriesPanel({ farmId, plots }: { farmId: string; plots: Plot
       {adding && <DeliveryModal farmId={farmId} plots={plots} onClose={() => setAdding(false)} />}
       {removing && (
         <ConfirmModal
-          title={t("ui.delivTitle")}
-          message={t("ui.delivConfirmDelete", { ticket: removing.ticket })}
-          confirmLabel={t("ui.delete")}
+          title={t("ui.deliv.title")}
+          message={t("ui.deliv.confirmDelete", { ticket: removing.ticket })}
+          confirmLabel={t("ui.common.delete")}
           pending={remove.isPending}
           error={remove.error}
           onConfirm={() => remove.mutate(removing)}
@@ -166,67 +166,67 @@ function DeliveryModal({ farmId, plots, onClose }: { farmId: string; plots: Plot
         otherKg: toNum(f.otherKg) ?? 0,
       }),
     onSuccess: () => {
-      toast(t("ui.delivSaved"));
+      toast(t("ui.deliv.saved"));
       qc.invalidateQueries({ queryKey: ["deliveries", farmId] });
       onClose();
     },
   });
   return (
-    <Modal title={t("ui.delivAdd")} onClose={onClose}>
+    <Modal title={t("ui.deliv.add")} onClose={onClose}>
       <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
         <div className="grid grid-cols-2 gap-3">
-          <Field label={t("ui.plot")}>
+          <Field label={t("ui.common.plot")}>
             <Select value={f.plotId} onChange={set("plotId")} options={[{ value: "", label: "—" }, ...cropPlots.map((p) => ({ value: p.id, label: p.name }))]} />
           </Field>
-          <Field label={t("ui.crop")}>
+          <Field label={t("ui.common.crop")}>
             <Select
               value={f.crop}
               onChange={(e) => {
                 const crop = e.target.value as (typeof CROPS)[number];
                 setF({ ...f, crop, baseMoisturePct: String(BASE_MOISTURE_PCT[crop]) });
               }}
-              options={CROPS.map((c) => ({ value: c, label: tk(`fields.crop_${c}`) }))}
+              options={CROPS.map((c) => ({ value: c, label: tk(`fields.crop.${c}`) }))}
             />
           </Field>
-          <Field label={t("ui.delivTicket")}>
+          <Field label={t("ui.deliv.ticket")}>
             <Input required value={f.ticket} onChange={set("ticket")} maxLength={40} />
           </Field>
-          <Field label={t("ui.delivDate")}>
+          <Field label={t("ui.deliv.date")}>
             <Input type="date" required value={f.deliveredOn} onChange={set("deliveredOn")} />
           </Field>
         </div>
-        <Field label={t("ui.delivSilo")}>
+        <Field label={t("ui.deliv.silo")}>
           <Input required value={f.silo} onChange={set("silo")} maxLength={120} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label={t("ui.delivGrossKg")}>
+          <Field label={t("ui.deliv.grossKg")}>
             <Input required inputMode="decimal" className="num" value={f.grossKg} onChange={set("grossKg")} />
           </Field>
-          <Field label={t("ui.delivMoisturePct")}>
+          <Field label={t("ui.deliv.moisturePct")}>
             <Input inputMode="decimal" className="num" value={f.moisturePct} onChange={set("moisturePct")} />
           </Field>
-          <Field label={t("ui.delivBasePct")}>
+          <Field label={t("ui.deliv.basePct")}>
             <Input required inputMode="decimal" className="num" value={f.baseMoisturePct} onChange={set("baseMoisturePct")} />
           </Field>
-          <Field label={t("ui.delivImpurities")}>
+          <Field label={t("ui.deliv.impurities")}>
             <Input inputMode="decimal" className="num" value={f.impuritiesPct} onChange={set("impuritiesPct")} />
           </Field>
-          <Field label={t("ui.delivOtherKg")}>
+          <Field label={t("ui.deliv.otherKg")}>
             <Input inputMode="decimal" className="num" value={f.otherKg} onChange={set("otherKg")} />
           </Field>
         </div>
         {preview && (
           <p className="num text-sm">
-            {t("ui.delivPreview", { net: tons(preview.netKg), moist: fmtNum(preview.moistureKg), imp: fmtNum(preview.impuritiesKg) })}
+            {t("ui.deliv.preview", { net: tons(preview.netKg), moist: fmtNum(preview.moistureKg), imp: fmtNum(preview.impuritiesKg) })}
           </p>
         )}
         {save.error && <ErrorBox error={save.error} />}
         <div className="flex gap-2">
           <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.save")}
+            {t("ui.common.save")}
           </Button>
           <Button variant="quiet" onClick={onClose}>
-            {t("ui.cancel")}
+            {t("ui.common.cancel")}
           </Button>
         </div>
       </Form>

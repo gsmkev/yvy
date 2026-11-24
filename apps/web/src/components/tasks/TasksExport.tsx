@@ -8,17 +8,17 @@ export function TasksExport({ org }: { org: Organized }) {
   return (
     <TableExportMenu
       data={() => ({
-        name: t("ui.tasksFile"),
+        name: t("ui.tasks.file"),
         headers: [
-          t("ui.assignee"),
-          t("ui.taskTitle"),
-          t("ui.plot"),
-          t("ui.dueDate"),
-          t("ui.dueTime"),
-          t("ui.taskPriority"),
-          t("ui.recurrence"),
-          t("ui.statusCol"),
-          t("ui.opensRecord"),
+          t("ui.common.assignee"),
+          t("ui.task.title"),
+          t("ui.common.plot"),
+          t("ui.due.date"),
+          t("ui.due.time"),
+          t("ui.task.priority"),
+          t("ui.common.recurrence"),
+          t("ui.status.col"),
+          t("ui.common.opensRecord"),
         ],
         rows: sorted.map((x) => [
           x.assigneeName ?? x.assigneeId,
@@ -26,10 +26,10 @@ export function TasksExport({ org }: { org: Organized }) {
           x.plotName,
           fmtIsoDate(x.dueDate),
           x.dueTime ?? "",
-          tk(`ui.taskPriority_${x.priority}`),
-          tk(`ui.recurrence_${x.recurrence}`),
-          isOverdue(x) ? t("ui.overdue") : tk(`ui.status_${x.status}`),
-          x.kind ? tk(`recordKinds.${x.kind}`) : "",
+          tk(`ui.task.priority_${x.priority}`),
+          tk(`ui.recurrence.${x.recurrence}`),
+          isOverdue(x) ? t("ui.common.overdue") : tk(`ui.status.${x.status}`),
+          x.kind ? tk(`record-kinds.kind.${x.kind}`) : "",
         ]),
       })}
     />

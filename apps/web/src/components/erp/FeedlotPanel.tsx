@@ -1,8 +1,18 @@
 /** Feedlot (G-33): raciones, suministro por corral y conversión alimenticia. Solo dueño y administrador. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { newId, noonAsuncion, rationLines, rationPctTotal, RECORD_SCHEMA_VERSION, localDate, LIMITS, type PushResponse, type RationItem } from "@yvy/shared";
-import { del, get, post, put, qs } from "../../lib/api";
+import {
+  newId,
+  noonAsuncion,
+  rationLines,
+  rationPctTotal,
+  RECORD_SCHEMA_VERSION,
+  localDate,
+  LIMITS,
+  type PushResponse,
+  type RationItem,
+} from "@yvy/shared";
+import { del, get, post, put, withQs } from "../../lib/api";
 import { fmtDate, fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { useFarm, useFarms } from "../../lib/queries";
@@ -46,7 +56,7 @@ export function FeedlotPanel() {
   const remove = useMutation({
     mutationFn: (r: Ration) => del(`/org/erp/feedlot/rations/${r.id}`),
     onSuccess: () => {
-      toast(t("ui.erpDeleted"));
+      toast(t("ui.erp.deleted"));
       setRemoving(null);
       qc.invalidateQueries({ queryKey: ["erp", "feedlot"] });
     },
@@ -59,14 +69,14 @@ export function FeedlotPanel() {
   const canFeed = list.length > 0 && !!farms.data?.length;
   const newRation = (
     <Button variant="primary" onClick={() => setEditing("new")}>
-      {t("ui.feedlotRationNew")}
+      {t("ui.feedlot.rationNew")}
     </Button>
   );
   const composition = (r: Ration) => r.items.map((i) => `${name(i.productId)} ${fmtNum(i.pctDm)} %`).join(" · ");
   const columns: Column<Ration>[] = [
     {
       id: "name",
-      header: t("ui.feedlotRationName"),
+      header: t("ui.feedlot.rationName"),
       cell: (r) => (
         <>
           {r.name}
@@ -74,37 +84,37 @@ export function FeedlotPanel() {
         </>
       ),
     },
-    { id: "items", header: t("ui.feedlotComposition"), hideBelow: "md", cell: (r) => <span className="num text-tinta-2">{composition(r)}</span> },
-    { id: "_actions", header: <span className="sr-only">{t("ui.rowActionsHeader")}</span>, align: "right", width: "3rem", cell: (r) => <RowMenu name={r.name} onEdit={() => setEditing(r)} onDelete={() => setRemoving(r)} /> },
+    { id: "items", header: t("ui.feedlot.composition"), hideBelow: "md", cell: (r) => <span className="num text-tinta-2">{composition(r)}</span> },
+    { id: "_actions", header: <span className="sr-only">{t("ui.row.actionsHeader")}</span>, align: "right", width: "3rem", cell: (r) => <RowMenu name={r.name} onEdit={() => setEditing(r)} onDelete={() => setRemoving(r)} /> },
   ];
   return (
     <div className="flex flex-col gap-4">
       {canFeed && (
         <HeaderActions>
           <Button variant="primary" onClick={() => setFeeding(true)}>
-            {t("ui.feedlotFeed")}
+            {t("ui.feedlot.feed")}
           </Button>
         </HeaderActions>
       )}
       <Tabs<string>
         tabs={[
-          { id: "rations", label: t("ui.feedlotRations"), count: list.length || undefined },
-          { id: "report", label: t("ui.feedlotReportTab") },
+          { id: "rations", label: t("ui.feedlot.rations"), count: list.length || undefined },
+          { id: "report", label: t("ui.feedlot.reportTab") },
         ]}
         value={tab}
         onChange={setTab}
       />
       {tab === "rations" &&
         (list.length === 0 ? (
-          <EmptyState title={t("ui.feedlotNoRationsTitle")} action={newRation}>
-            {t("ui.feedlotNoRations")}
+          <EmptyState title={t("ui.feedlot.noRationsTitle")} action={newRation}>
+            {t("ui.feedlot.noRations")}
           </EmptyState>
         ) : (
           <>
             <div>
-              <Button onClick={() => setEditing("new")}>{t("ui.feedlotRationNew")}</Button>
+              <Button onClick={() => setEditing("new")}>{t("ui.feedlot.rationNew")}</Button>
             </div>
-            <DataTable columns={columns} rows={list} rowKey={(r) => r.id} caption={t("ui.feedlotRations")} />
+            <DataTable columns={columns} rows={list} rowKey={(r) => r.id} caption={t("ui.feedlot.rations")} />
           </>
         ))}
       {tab === "report" && <CorralReport canFeed={canFeed} hasRations={list.length > 0} onFeed={() => setFeeding(true)} onNewRation={() => setEditing("new")} />}
@@ -112,9 +122,9 @@ export function FeedlotPanel() {
       {feeding && <FeedModal rations={list} onClose={() => setFeeding(false)} />}
       {removing && (
         <ConfirmModal
-          title={t("ui.feedlotRationDelete")}
+          title={t("ui.feedlot.rationDelete")}
           message={removing.name}
-          confirmLabel={t("ui.delete")}
+          confirmLabel={t("ui.common.delete")}
           onConfirm={() => remove.mutate(removing)}
           onClose={() => setRemoving(null)}
         />
@@ -137,50 +147,50 @@ function RationModal({ ration, onClose }: { ration: Ration | null; onClose: () =
   const save = useMutation({
     mutationFn: () => (ration ? put(`/org/erp/feedlot/rations/${ration.id}`, { name, items }) : post("/org/erp/feedlot/rations", { name, items })),
     onSuccess: () => {
-      toast(t("ui.erpSaved"));
+      toast(t("ui.erp.saved"));
       qc.invalidateQueries({ queryKey: ["erp", "feedlot"] });
       onClose();
     },
   });
   const set = (i: number, k: "productId" | "pctDm" | "dmPct", v: string) => setRows(rows.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
   return (
-    <Modal title={ration ? t("ui.feedlotRationEdit") : t("ui.feedlotRationNew")} onClose={onClose}>
+    <Modal title={ration ? t("ui.feedlot.rationEdit") : t("ui.feedlot.rationNew")} onClose={onClose}>
       <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
-        <Field label={t("ui.feedlotRationName")}>
+        <Field label={t("ui.feedlot.rationName")}>
           <Input required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
-        {kgProducts.length === 0 && <p className="text-sm text-peligro">{t("ui.feedlotNoKgProducts")}</p>}
+        {kgProducts.length === 0 && <p className="text-sm text-peligro">{t("ui.feedlot.noKgProducts")}</p>}
         {rows.map((r, i) => (
           <div key={i} className="grid grid-cols-[1fr_5.5rem_5.5rem] items-end gap-2">
-            <Field label={i === 0 ? t("ui.feedlotIngredient") : ""}>
+            <Field label={i === 0 ? t("ui.feedlot.ingredient") : ""}>
               <Select
                 value={r.productId}
                 onChange={(e) => set(i, "productId", e.target.value)}
                 options={[{ value: "", label: "—" }, ...kgProducts.map((p) => ({ value: p.id, label: p.name }))]}
               />
             </Field>
-            <Field label={i === 0 ? t("ui.feedlotPctDm") : ""}>
+            <Field label={i === 0 ? t("ui.feedlot.pctDm") : ""}>
               <Input inputMode="decimal" className="num" value={r.pctDm} onChange={(e) => set(i, "pctDm", e.target.value)} />
             </Field>
-            <Field label={i === 0 ? t("ui.feedlotProductDm") : ""}>
+            <Field label={i === 0 ? t("ui.feedlot.productDm") : ""}>
               <Input inputMode="decimal" className="num" value={r.dmPct} onChange={(e) => set(i, "dmPct", e.target.value)} />
             </Field>
           </div>
         ))}
         <div className="flex items-center justify-between">
           <Button variant="quiet" disabled={rows.length >= LIMITS.feedlot.maxRationItems} onClick={() => setRows([...rows, { productId: "", pctDm: "", dmPct: "100" }])}>
-            {t("ui.feedlotAddIngredient")}
+            {t("ui.feedlot.addIngredient")}
           </Button>
-          <p className={`num text-sm ${Math.abs(total - 100) <= LIMITS.feedlot.pctTolerance ? "" : "text-peligro"}`}>{t("ui.feedlotPctTotal", { n: fmtNum(total) })}</p>
+          <p className={`num text-sm ${Math.abs(total - 100) <= LIMITS.feedlot.pctTolerance ? "" : "text-peligro"}`}>{t("ui.feedlot.pctTotal", { n: fmtNum(total) })}</p>
         </div>
-        <p className="text-xs text-tinta-2">{t("ui.feedlotPctHint")}</p>
+        <p className="text-xs text-tinta-2">{t("ui.feedlot.pctHint")}</p>
         {save.error && <ErrorBox error={save.error} />}
         <div className="flex gap-2">
           <Button type="submit" variant="primary" disabled={save.isPending || items.length === 0}>
-            {t("ui.save")}
+            {t("ui.common.save")}
           </Button>
           <Button variant="quiet" onClick={onClose}>
-            {t("ui.cancel")}
+            {t("ui.common.cancel")}
           </Button>
         </div>
       </Form>
@@ -234,36 +244,36 @@ function FeedModal({ rations, onClose }: { rations: Ration[]; onClose: () => voi
         ],
       });
       const r = res.results[0];
-      if (r?.status === "rejected") throw new Error(r.detail ?? t("ui.fuelRejected"));
+      if (r?.status === "rejected") throw new Error(r.detail ?? t("ui.fuel.rejected"));
     },
     onSuccess: () => {
-      toast(t("ui.erpSaved"));
+      toast(t("ui.erp.saved"));
       qc.invalidateQueries({ queryKey: ["erp"] });
       onClose();
     },
   });
   return (
-    <Modal title={t("ui.feedlotFeed")} onClose={onClose}>
+    <Modal title={t("ui.feedlot.feed")} onClose={onClose}>
       <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
-        <Field label={t("ui.costFarm")}>
+        <Field label={t("ui.cost.farm")}>
           <Select value={farmId} onChange={(e) => setF({ ...f, farmId: e.target.value, plotId: "" })} options={(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))} />
         </Field>
-        <Field label={t("ui.feedlotCorral")}>
+        <Field label={t("ui.feedlot.corral")}>
           <Select value={plotId} onChange={(e) => setF({ ...f, plotId: e.target.value })} options={corrals.map((p) => ({ value: p.id, label: p.name }))} />
         </Field>
-        <Field label={t("ui.feedlotRation")}>
+        <Field label={t("ui.feedlot.ration")}>
           <Select value={f.rationId} onChange={(e) => setF({ ...f, rationId: e.target.value })} options={rations.map((r) => ({ value: r.id, label: r.name }))} />
         </Field>
-        <Field label={t("ui.costDate")}>
+        <Field label={t("ui.cost.date")}>
           <Input type="date" required value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} />
         </Field>
-        <Field label={t("ui.feedlotKgDm")}>
+        <Field label={t("ui.feedlot.kgDm")}>
           <Input type="number" required min={0} step="any" value={f.kgDm} onChange={(e) => setF({ ...f, kgDm: e.target.value })} />
         </Field>
-        <Field label={t("ui.feedlotHead")}>
+        <Field label={t("ui.feedlot.head")}>
           <Input type="number" min={1} step={1} value={f.head} onChange={(e) => setF({ ...f, head: e.target.value })} />
         </Field>
-        {corrals.length === 0 && <p className="col-span-2 text-sm text-tinta-2">{t("ui.feedlotNoCorrals")}</p>}
+        {corrals.length === 0 && <p className="col-span-2 text-sm text-tinta-2">{t("ui.feedlot.noCorrals")}</p>}
         {lines.length > 0 && (
           <ul className="num col-span-2 text-sm text-tinta-2">
             {lines.map((l) => (
@@ -285,39 +295,42 @@ function CorralReport({ canFeed, hasRations, onFeed, onNewRation }: { canFeed: b
   const [f, setF] = useState({ farmId: "", from: localDate(Date.now() - 60 * 86_400_000), to: today });
   const q = useQuery({
     queryKey: ["erp", "feedlot", "report", f],
-    queryFn: () => get<{ truncated: boolean; corrals: Corral[] }>(`/org/erp/feedlot/report${qs({ farmId: f.farmId || undefined, from: f.from, to: f.to })}`),
+    queryFn: () =>
+      get<{ truncated: boolean; corrals: Corral[] }>(
+        withQs("/org/erp/feedlot/report", { farmId: f.farmId || undefined, from: f.from, to: f.to }),
+      ),
   });
   const rows = q.data?.corrals ?? [];
   const columns: Column<Corral>[] = [
-    { id: "corral", header: t("ui.feedlotCorral"), cell: (c) => c.plotName },
-    { id: "dm", header: t("ui.feedlotColDm"), align: "right", hideBelow: "sm", cell: (c) => fmtNum(c.feedKgDm) },
-    { id: "asfed", header: t("ui.feedlotColAsFed"), align: "right", hideBelow: "md", cell: (c) => fmtNum(c.feedKgAsFed) },
-    { id: "gain", header: t("ui.feedlotColGain"), align: "right", hideBelow: "sm", cell: (c) => (c.gainKg !== null ? `${fmtNum(c.gainKg)} kg` : "—") },
+    { id: "corral", header: t("ui.feedlot.corral"), cell: (c) => c.plotName },
+    { id: "dm", header: t("ui.feedlot.colDm"), align: "right", hideBelow: "sm", cell: (c) => fmtNum(c.feedKgDm) },
+    { id: "asfed", header: t("ui.feedlot.colAsFed"), align: "right", hideBelow: "md", cell: (c) => fmtNum(c.feedKgAsFed) },
+    { id: "gain", header: t("ui.feedlot.colGain"), align: "right", hideBelow: "sm", cell: (c) => (c.gainKg !== null ? `${fmtNum(c.gainKg)} kg` : "—") },
     {
       id: "conv",
-      header: t("ui.feedlotColConversion"),
+      header: t("ui.feedlot.colConversion"),
       align: "right",
       cell: (c) =>
         c.conversion !== null ? (
           <>
             {fmtNum(c.conversion)}
-            <span className="block text-meta text-tinta-2">{t("ui.feedlotWindow", { from: fmtDate(c.firstAt!), to: fmtDate(c.lastAt!), head: c.head ?? 0 })}</span>
+            <span className="block text-meta text-tinta-2">{t("ui.feedlot.window", { from: fmtDate(c.firstAt!), to: fmtDate(c.lastAt!), head: c.head ?? 0 })}</span>
           </>
         ) : (
-          <span className="text-tinta-2">{tk(`ui.feedlotStatus_${c.status}`)}</span>
+          <span className="text-tinta-2">{tk(`ui.feedlot.status_${c.status}`)}</span>
         ),
     },
   ];
   return (
     <div className="flex flex-col gap-4">
       <FilterBar>
-        <Field label={t("ui.costFarm")}>
-          <Select value={f.farmId} onChange={(e) => setF({ ...f, farmId: e.target.value })} options={[{ value: "", label: t("ui.all") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
+        <Field label={t("ui.cost.farm")}>
+          <Select value={f.farmId} onChange={(e) => setF({ ...f, farmId: e.target.value })} options={[{ value: "", label: t("ui.common.all") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
         </Field>
-        <Field label={t("ui.costFrom")}>
+        <Field label={t("ui.cost.from")}>
           <Input type="date" value={f.from} onChange={(e) => setF({ ...f, from: e.target.value })} />
         </Field>
-        <Field label={t("ui.costTo")}>
+        <Field label={t("ui.cost.to")}>
           <Input type="date" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} />
         </Field>
       </FilterBar>
@@ -325,31 +338,31 @@ function CorralReport({ canFeed, hasRations, onFeed, onNewRation }: { canFeed: b
       {q.error && <ErrorBox error={q.error} />}
       {q.data && rows.length === 0 && (
         <EmptyState
-          title={t("ui.feedlotNoFeedsTitle")}
+          title={t("ui.feedlot.noFeedsTitle")}
           action={
             hasRations ? (
               canFeed ? (
                 <Button variant="primary" onClick={onFeed}>
-                  {t("ui.feedlotFeed")}
+                  {t("ui.feedlot.feed")}
                 </Button>
               ) : undefined
             ) : (
               <Button variant="primary" onClick={onNewRation}>
-                {t("ui.feedlotRationNew")}
+                {t("ui.feedlot.rationNew")}
               </Button>
             )
           }
         >
-          {hasRations ? t("ui.feedlotNoFeeds") : t("ui.feedlotNoFeedsNoRations")}
+          {hasRations ? t("ui.feedlot.noFeeds") : t("ui.feedlot.noFeedsNoRations")}
         </EmptyState>
       )}
       {rows.length > 0 && (
         <ExportableTable name="feedlot">
-          <DataTable columns={columns} rows={rows} rowKey={(c) => c.plotId} caption={t("ui.feedlotReport")} />
+          <DataTable columns={columns} rows={rows} rowKey={(c) => c.plotId} caption={t("ui.feedlot.report")} />
         </ExportableTable>
       )}
-      {q.data?.truncated && <p className="text-meta text-tinta-2">{t("ui.feedlotTruncated")}</p>}
-      {rows.length > 0 && <p className="text-meta text-tinta-2">{t("ui.feedlotReportHint")}</p>}
+      {q.data?.truncated && <p className="text-meta text-tinta-2">{t("ui.feedlot.truncated")}</p>}
+      {rows.length > 0 && <p className="text-meta text-tinta-2">{t("ui.feedlot.reportHint")}</p>}
     </div>
   );
 }

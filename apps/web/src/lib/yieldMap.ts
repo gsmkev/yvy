@@ -168,11 +168,11 @@ export async function readYieldFile(file: File): Promise<FeatureCollection> {
   if (name.endsWith(".zip")) {
     const buf = await file.arrayBuffer();
     const zip = await JSZip.loadAsync(buf);
-    if (!Object.values(zip.files).some((f) => f.name.toLowerCase().endsWith(".shp"))) throw new Error(t("ui.importZipNoShp"));
+    if (!Object.values(zip.files).some((f) => f.name.toLowerCase().endsWith(".shp"))) throw new Error(t("ui.import.zipNoShp"));
     const shp = (await import("shpjs")).default;
     const result = (await shp(buf)) as FeatureCollection | FeatureCollection[];
     const fcs = Array.isArray(result) ? result : [result];
     return { type: "FeatureCollection", features: fcs.flatMap((f) => f.features) };
   }
-  throw new Error(t("ui.yieldFileUnsupported"));
+  throw new Error(t("ui.yield.fileUnsupported"));
 }

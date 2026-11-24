@@ -30,16 +30,16 @@ const num = (n: number) => n.toLocaleString("es-PY", { maximumFractionDigits: 1 
 function reason(o: Oddity): string {
   switch (o.rule) {
     case "rain_high":
-      return t("ui.reviewRainHigh", { mm: num(o.mm), max: num(o.max) });
+      return t("ui.review.rainHigh", { mm: num(o.mm), max: num(o.max) });
     case "pest_off_season":
-      return t("ui.reviewPestOff", { pest: tk(`fields.pest_${o.pest}`), month: new Date(2026, o.month - 1, 1).toLocaleDateString("es-PY", { month: "long" }) });
+      return t("ui.review.pestOff", { pest: tk(`fields.pest.${o.pest}`), month: new Date(2026, o.month - 1, 1).toLocaleDateString("es-PY", { month: "long" }) });
     case "dose_out_of_range": {
       const unit = o.baseUnit === "l" ? "l/ha" : "kg/ha";
-      const range = o.min !== null && o.max !== null ? `${num(o.min)} a ${num(o.max)}` : o.min !== null ? `${t("ui.reviewAtLeast")} ${num(o.min)}` : `${t("ui.reviewUpTo")} ${num(o.max!)}`;
-      return t("ui.reviewDose", { product: o.product || "—", dose: num(o.dose), unit: tk(`fields.doseUnit_${o.unit}`), range: `${range} ${unit}` });
+      const range = o.min !== null && o.max !== null ? `${num(o.min)} a ${num(o.max)}` : o.min !== null ? `${t("ui.review.atLeast")} ${num(o.min)}` : `${t("ui.review.upTo")} ${num(o.max!)}`;
+      return t("ui.review.dose", { product: o.product || "—", dose: num(o.dose), unit: tk(`fields.dose.unit_${o.unit}`), range: `${range} ${unit}` });
     }
     case "yield_impossible":
-      return t("ui.reviewYield", { tha: num(o.tHa), crop: tk(`fields.crop_${o.crop}`), max: num(o.max) });
+      return t("ui.review.yield", { tha: num(o.tHa), crop: tk(`fields.crop.${o.crop}`), max: num(o.max) });
   }
 }
 
@@ -53,28 +53,28 @@ export function ReviewPage() {
   const ok = useMutation({
     mutationFn: (id: string) => post(`/org/review/${id}/ok`),
     onSuccess: () => {
-      toast(t("ui.toastReviewed"));
+      toast(t("ui.toast.reviewed"));
       return qc.invalidateQueries({ queryKey: ["review"] });
     },
   });
-  if (me.data && !allowed) return <div className="p-6">{t("ui.reviewNotAllowed")}</div>;
+  if (me.data && !allowed) return <div className="p-6">{t("ui.review.notAllowed")}</div>;
   return (
-    <Page width="data" back={{ to: "/registros", label: t("ui.navRecords") }} title={t("ui.reviewTitle")}>
+    <Page width="data" back={{ to: "/registros", label: t("ui.nav.records") }} title={t("ui.review.title")}>
       {q.isLoading && <Spinner rows={3} h={96} />}
       {q.error ? <ErrorBox error={q.error} /> : null}
       {q.data && q.data.length === 0 && (
         <EmptyState
-          title={t("ui.reviewEmptyTitle")}
+          title={t("ui.review.emptyTitle")}
           action={
             <Link
               to="/registros"
               className="inline-flex h-10 items-center rounded-md border border-linea bg-papel px-3.5 text-sm font-medium text-surco hover:border-tinta-2/40 hover:bg-lino"
             >
-              {t("ui.navRecords")}
+              {t("ui.nav.records")}
             </Link>
           }
         >
-          {t("ui.reviewEmpty")}
+          {t("ui.review.empty")}
         </EmptyState>
       )}
       {q.data && q.data.length > 0 && (
@@ -95,17 +95,17 @@ export function ReviewPage() {
                   {describeData(i.kind, i.data)}
                 </button>
                 <p className="text-xs leading-4 text-tinta-2">
-                  {[tk(`recordKinds.${i.kind}`), i.farmName, i.plotName, i.authorName, fmtDateTime(i.capturedAt)]
+                  {[tk(`record-kinds.kind.${i.kind}`), i.farmName, i.plotName, i.authorName, fmtDateTime(i.capturedAt)]
                     .filter(Boolean)
                     .join(" · ")}
                 </p>
               </div>
               <div className="flex shrink-0 gap-2">
                 <Button onClick={() => ok.mutate(i.recordId)} disabled={ok.isPending}>
-                  {t("ui.reviewOk")}
+                  {t("ui.review.ok")}
                 </Button>
                 <Button variant="quiet" onClick={() => setOpen(i.record)}>
-                  {t("ui.reviewOpen")}
+                  {t("ui.review.open")}
                 </Button>
               </div>
             </li>

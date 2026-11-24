@@ -20,7 +20,7 @@ export function syncBoundaries(map: MlMap, data: FeatureCollection | null) {
     return;
   }
   if (src) return src.setData(data);
-  map.addSource("boundaries", { type: "geojson", data, attribution: t("attribution.geoBoundaries") });
+  map.addSource("boundaries", { type: "geojson", data, attribution: t("attribution.common.geoBoundaries") });
   const before = map.getLayer("plots-fill") ? "plots-fill" : undefined;
   map.addLayer(
     { id: "boundaries-fill", type: "fill", source: "boundaries", paint: { "fill-color": "#000", "fill-opacity": 0 } },

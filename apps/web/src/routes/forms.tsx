@@ -25,6 +25,12 @@ export function fieldIdFrom(label: string, taken: string[]): string {
 
 const blank = (taken: string[]): FormField => ({ id: fieldIdFrom("campo", taken), label: "", type: "text" });
 
+/** El campo sin las opciones (si no es de elección) ni la unidad vacía, y sin claves con `undefined`. */
+const compactField = (f: FormField): FormField => {
+  const kept = { ...f, options: f.type === "choice" ? f.options : undefined, unit: f.unit ? f.unit : undefined };
+  return Object.fromEntries(Object.entries(kept).filter(([, v]) => v !== undefined)) as FormField;
+};
+
 export function FormsPage() {
   const me = useMe();
   const qc = useQueryClient();
@@ -38,10 +44,10 @@ export function FormsPage() {
   const save = useMutation({
     mutationFn: (c: FormConfig) => put("/org/form-config", c),
     onSuccess: () => {
-      toast(t("ui.formsSaved"));
+      toast(t("ui.forms.saved"));
       void qc.invalidateQueries({ queryKey: ["form-config"] });
     },
-    onError: (e) => setError(e instanceof Error ? e.message : t("ui.formsInvalid")),
+    onError: (e) => setError(e instanceof Error ? e.message : t("ui.forms.invalid")),
   });
   if (q.isLoading || me.isLoading) return <Spinner />;
   if (q.error) return <ErrorBox error={q.error} />;
@@ -57,53 +63,53 @@ export function FormsPage() {
     const clean: FormConfig = {};
     for (const k of RECORD_KINDS) {
       const list = (cfg[k] ?? []).filter((f) => f.label.trim());
-      if (list.length) clean[k] = list.map((f) => (f.type === "choice" ? f : { ...f, options: undefined })).map((f) => (f.unit ? f : { ...f, unit: undefined }));
+      if (list.length) clean[k] = list.map(compactField);
     }
-    const ok = formConfigSchema.safeParse(JSON.parse(JSON.stringify(clean)));
-    if (!ok.success) return setError(ok.error.issues[0]?.message ?? t("ui.formsInvalid"));
+    const ok = formConfigSchema.safeParse(clean);
+    if (!ok.success) return setError(ok.error.issues[0]?.message ?? t("ui.forms.invalid"));
     save.mutate(ok.data);
   };
 
   return (
-    <Page width="read" back={{ to: "/equipo", label: t("ui.formsBack") }} title={t("ui.formsTitle")}>
-      <p className="-mt-2 text-sm text-tinta-2">{t("ui.formsIntro", { max: LIMITS.forms.maxFieldsPerKind })}</p>
-      <Field label={t("ui.formsKind")}>
+    <Page width="read" back={{ to: "/equipo", label: t("ui.forms.back") }} title={t("ui.forms.title")}>
+      <p className="-mt-2 text-sm text-tinta-2">{t("ui.forms.intro", { max: LIMITS.forms.maxFieldsPerKind })}</p>
+      <Field label={t("ui.forms.kind")}>
         <Select
           value={kind}
           onChange={(e) => setKind(e.target.value as RecordKind)}
-          options={RECORD_KINDS.map((k) => ({ value: k, label: `${tk(`recordKinds.${k}`)}${(cfg[k]?.length ?? 0) > 0 ? ` (${cfg[k]!.length})` : ""}` }))}
+          options={RECORD_KINDS.map((k) => ({ value: k, label: `${tk(`record-kinds.kind.${k}`)}${(cfg[k]?.length ?? 0) > 0 ? ` (${cfg[k]!.length})` : ""}` }))}
         />
       </Field>
-      {fields.length === 0 && <EmptyState compact title={t("ui.formsNone")} />}
+      {fields.length === 0 && <EmptyState compact title={t("ui.forms.none")} />}
       {fields.map((f, i) => (
         <fieldset key={f.id} className="flex flex-col gap-3 rounded-lg border border-linea p-3">
-          <legend className="px-1 text-xs text-tinta-2">{t("ui.formsFieldN", { n: i + 1 })}</legend>
-          <Field label={t("ui.formsLabel")}>
+          <legend className="px-1 text-xs text-tinta-2">{t("ui.forms.fieldN", { n: i + 1 })}</legend>
+          <Field label={t("ui.forms.label")}>
             <Input
               value={f.label}
               maxLength={LIMITS.forms.maxLabel}
               disabled={!canEdit}
-              placeholder={t("ui.formsLabelPlaceholder")}
+              placeholder={t("ui.forms.labelPlaceholder")}
               onChange={(e) => patch(i, { label: e.target.value, id: q.data?.config[kind]?.some((x) => x.id === f.id) ? f.id : fieldIdFrom(e.target.value, fields.filter((_, k) => k !== i).map((x) => x.id)) })}
             />
           </Field>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label={t("ui.formsType")}>
+            <Field label={t("ui.forms.type")}>
               <Select
                 value={f.type}
                 disabled={!canEdit}
                 onChange={(e) => patch(i, { type: e.target.value as FormField["type"] })}
-                options={FORM_FIELD_TYPES.map((ty) => ({ value: ty, label: t(`ui.formsType_${ty}`) }))}
+                options={FORM_FIELD_TYPES.map((ty) => ({ value: ty, label: t(`ui.forms.type_${ty}`) }))}
               />
             </Field>
             {f.type === "number" && (
-              <Field label={t("ui.formsUnit")}>
+              <Field label={t("ui.forms.unit")}>
                 <Input value={f.unit ?? ""} maxLength={12} disabled={!canEdit} onChange={(e) => patch(i, { unit: e.target.value })} />
               </Field>
             )}
           </div>
           {f.type === "choice" && (
-            <Field label={t("ui.formsOptions")} hint={t("ui.formsOptionsHint", { max: LIMITS.forms.maxOptions })}>
+            <Field label={t("ui.forms.options")} hint={t("ui.forms.optionsHint", { max: LIMITS.forms.maxOptions })}>
               <textarea
                 className="min-h-20 rounded-md border border-linea bg-papel px-3 py-2 text-body"
                 disabled={!canEdit}
@@ -115,11 +121,11 @@ export function FormsPage() {
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={!!f.required} disabled={!canEdit} onChange={(e) => patch(i, { required: e.target.checked })} />
-              {t("ui.formsRequired")}
+              {t("ui.forms.required")}
             </label>
             {canEdit && (
               <button className="cursor-pointer text-sm text-peligro underline underline-offset-2" onClick={() => setFields(fields.filter((_, k) => k !== i))}>
-                {t("ui.formsRemove")}
+                {t("ui.forms.remove")}
               </button>
             )}
           </div>
@@ -128,15 +134,15 @@ export function FormsPage() {
       {canEdit && (
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="secondary" disabled={fields.length >= LIMITS.forms.maxFieldsPerKind} onClick={() => setFields([...fields, blank(fields.map((f) => f.id))])}>
-            {t("ui.formsAdd")}
+            {t("ui.forms.add")}
           </Button>
           <Button variant="primary" disabled={save.isPending} onClick={trySave}>
-            {t("ui.formsSave")}
+            {t("ui.forms.save")}
           </Button>
         </div>
       )}
       {error && <p role="alert" className="text-sm text-peligro">{error}</p>}
-      <p className="text-xs text-tinta-2">{t("ui.formsNote")}</p>
+      <p className="text-xs text-tinta-2">{t("ui.forms.note")}</p>
     </Page>
   );
 }

@@ -13,16 +13,16 @@ export function Animals() {
   const total = PADDOCKS.reduce((s, p) => s + p.n, 0);
   return (
     <Flow>
-      <Figure value={nf(total)} label={t("ui.labsAnimalsTotal")} />
-      <AnimalCountIllustration label={t("ui.labsAnimalsIllustrationLabel")} className="w-full border border-linea" />
-      <Legend color="#D2462B" label={t("ui.labsLegendAnimal")} />
+      <Figure value={nf(total)} label={t("ui.labs.animalsTotal")} />
+      <AnimalCountIllustration label={t("ui.labs.animalsIllustrationLabel")} className="w-full border border-linea" />
+      <Legend color="#D2462B" label={t("ui.labs.legendAnimal")} />
       <Table
-        head={[t("ui.labsPaddock"), t("ui.labsPaddockArea"), t("ui.labsAnimalsCount"), t("ui.labsAnimalsDensity")]}
-        rows={PADDOCKS.map((p) => [tk(`ui.labsPaddock_${p.id}`), `${nf(p.ha)} ha`, nf(p.n), nf(p.n / p.ha, 1)])}
+        head={[t("ui.labs.paddock"), t("ui.labs.paddockArea"), t("ui.labs.animalsCount"), t("ui.labs.animalsDensity")]}
+        rows={PADDOCKS.map((p) => [tk(`ui.labs.paddock_${p.id}`), `${nf(p.ha)} ha`, nf(p.n), nf(p.n / p.ha, 1)])}
       />
-      <p className="text-sm">{t("ui.labsAnimalsNote")}</p>
+      <p className="text-sm">{t("ui.labs.animalsNote")}</p>
       <div>
-        <Button disabled>{t("ui.labsExport")}</Button>
+        <Button disabled>{t("ui.labs.export")}</Button>
       </div>
     </Flow>
   );
@@ -39,16 +39,16 @@ export function Stand() {
   return (
     <Flow>
       <div className="grid grid-cols-2 gap-4">
-        <Figure value={nf(avg("perM"), 1)} label={t("ui.labsStandPlantsPerM")} />
-        <Figure value={`${nf(avg("gaps"), 1)} %`} label={t("ui.labsStandGaps")} />
+        <Figure value={nf(avg("perM"), 1)} label={t("ui.labs.standPlantsPerM")} />
+        <Figure value={`${nf(avg("gaps"), 1)} %`} label={t("ui.labs.standGaps")} />
       </div>
-      <StandCountIllustration label={t("ui.labsStandIllustrationLabel")} className="w-full border border-linea" />
-      <Legend color="#D2462B" label={t("ui.labsLegendGap")} />
+      <StandCountIllustration label={t("ui.labs.standIllustrationLabel")} className="w-full border border-linea" />
+      <Legend color="#D2462B" label={t("ui.labs.legendGap")} />
       <Table
-        head={[t("ui.labsStandZone"), t("ui.labsStandPlantsPerM"), t("ui.labsStandGaps")]}
-        rows={ZONES.map((z) => [tk(`ui.labsStandZone_${z.id}`), nf(z.perM, 1), `${nf(z.gaps, 1)} %`])}
+        head={[t("ui.labs.standZone"), t("ui.labs.standPlantsPerM"), t("ui.labs.standGaps")]}
+        rows={ZONES.map((z) => [tk(`ui.labs.standZone_${z.id}`), nf(z.perM, 1), `${nf(z.gaps, 1)} %`])}
       />
-      <p className="text-sm">{t("ui.labsStandNote")}</p>
+      <p className="text-sm">{t("ui.labs.standNote")}</p>
     </Flow>
   );
 }
@@ -58,16 +58,16 @@ export function Weeds() {
   const affected = 6.7;
   return (
     <Flow>
-      <p className="text-sm text-tinta-2">{t("ui.labsWeedsLot", { ha: lot })}</p>
+      <p className="text-sm text-tinta-2">{t("ui.labs.weedsLot", { ha: lot })}</p>
       <div className="grid grid-cols-2 gap-4">
-        <Figure value={`${nf(affected, 1)} ha`} label={t("ui.labsWeedsArea")} />
-        <Figure value={`${nf((affected / lot) * 100)} %`} label={t("ui.labsWeedsPct")} />
+        <Figure value={`${nf(affected, 1)} ha`} label={t("ui.labs.weedsArea")} />
+        <Figure value={`${nf((affected / lot) * 100)} %`} label={t("ui.labs.weedsPct")} />
       </div>
-      <WeedsIllustration label={t("ui.labsWeedsIllustrationLabel")} className="w-full border border-linea" />
-      <Legend color="#D2462B" label={t("ui.labsLegendWeed")} />
-      <p className="text-sm">{t("ui.labsWeedsNote")}</p>
+      <WeedsIllustration label={t("ui.labs.weedsIllustrationLabel")} className="w-full border border-linea" />
+      <Legend color="#D2462B" label={t("ui.labs.legendWeed")} />
+      <p className="text-sm">{t("ui.labs.weedsNote")}</p>
       <div>
-        <Button disabled>{t("ui.labsPrescription")}</Button>
+        <Button disabled>{t("ui.labs.prescription")}</Button>
       </div>
     </Flow>
   );
@@ -81,28 +81,28 @@ const HAIL = [
 export function Hail() {
   const lot = 48;
   const damaged = HAIL.reduce((s, h) => s + h.ha, 0);
-  const label = { severe: t("ui.labsHailSevere"), moderate: t("ui.labsHailModerate") };
+  const label = { severe: t("ui.labs.hailSevere"), moderate: t("ui.labs.hailModerate") };
   return (
     <Flow>
-      <p className="text-sm text-tinta-2">{t("ui.labsHailLot", { ha: lot })}</p>
+      <p className="text-sm text-tinta-2">{t("ui.labs.hailLot", { ha: lot })}</p>
       <div className="grid grid-cols-2 gap-4">
-        <Figure value={`${nf(damaged, 1)} ha`} label={t("ui.labsHailArea")} />
-        <Figure value={`${nf((damaged / lot) * 100)} %`} label={t("ui.labsHailPct")} />
+        <Figure value={`${nf(damaged, 1)} ha`} label={t("ui.labs.hailArea")} />
+        <Figure value={`${nf((damaged / lot) * 100)} %`} label={t("ui.labs.hailPct")} />
       </div>
-      <HailIllustration label={t("ui.labsHailIllustrationLabel")} className="w-full border border-linea" />
+      <HailIllustration label={t("ui.labs.hailIllustrationLabel")} className="w-full border border-linea" />
       {HAIL.map((h) => (
         <Legend key={h.id} color={h.color} label={label[h.id]} />
       ))}
       <Table
-        head={[t("ui.labsHailClass"), t("ui.labsPaddockArea"), t("ui.labsWeedsPct")]}
+        head={[t("ui.labs.hailClass"), t("ui.labs.paddockArea"), t("ui.labs.weedsPct")]}
         rows={[
           ...HAIL.map((h) => [label[h.id], `${nf(h.ha, 1)} ha`, `${nf((h.ha / lot) * 100)} %`]),
-          [t("ui.labsHailNone"), `${nf(lot - damaged, 1)} ha`, `${nf(((lot - damaged) / lot) * 100)} %`],
+          [t("ui.labs.hailNone"), `${nf(lot - damaged, 1)} ha`, `${nf(((lot - damaged) / lot) * 100)} %`],
         ]}
       />
-      <p className="text-sm">{t("ui.labsHailNote")}</p>
+      <p className="text-sm">{t("ui.labs.hailNote")}</p>
       <div>
-        <Button disabled>{t("ui.labsHailReport")}</Button>
+        <Button disabled>{t("ui.labs.hailReport")}</Button>
       </div>
     </Flow>
   );
@@ -110,18 +110,18 @@ export function Hail() {
 
 export function Infra() {
   const rows = [
-    [t("ui.labsInfraFence"), t("ui.labsInfraFencePlace"), t("ui.labsInfraFenceSize")],
-    [t("ui.labsInfraPond"), t("ui.labsInfraPondPlace"), t("ui.labsInfraPondSize")],
-    [t("ui.labsInfraRoad"), t("ui.labsInfraRoadPlace"), t("ui.labsInfraRoadSize")],
+    [t("ui.labs.infraFence"), t("ui.labs.infraFencePlace"), t("ui.labs.infraFenceSize")],
+    [t("ui.labs.infraPond"), t("ui.labs.infraPondPlace"), t("ui.labs.infraPondSize")],
+    [t("ui.labs.infraRoad"), t("ui.labs.infraRoadPlace"), t("ui.labs.infraRoadSize")],
   ];
   return (
     <Flow>
-      <InfraIllustration label={t("ui.labsInfraIllustrationLabel")} className="w-full border border-linea" />
-      <Legend color="#D2462B" label={t("ui.labsInfraLegend")} />
-      <Table head={[t("ui.labsInfraFinding"), t("ui.labsInfraPlace"), t("ui.labsInfraSize")]} rows={rows} />
-      <p className="text-sm">{t("ui.labsInfraNote")}</p>
+      <InfraIllustration label={t("ui.labs.infraIllustrationLabel")} className="w-full border border-linea" />
+      <Legend color="#D2462B" label={t("ui.labs.infraLegend")} />
+      <Table head={[t("ui.labs.infraFinding"), t("ui.labs.infraPlace"), t("ui.labs.infraSize")]} rows={rows} />
+      <p className="text-sm">{t("ui.labs.infraNote")}</p>
       <div>
-        <Button disabled>{t("ui.labsInfraTask")}</Button>
+        <Button disabled>{t("ui.labs.infraTask")}</Button>
       </div>
     </Flow>
   );

@@ -105,7 +105,7 @@ export function AccountMenu({
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={t("ui.accountMenu")}
+        aria-label={t("ui.account.menu")}
         onClick={() => setOpen(!open)}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown" && !open) {
@@ -122,13 +122,13 @@ export function AccountMenu({
         <div
           ref={menu}
           role="menu"
-          aria-label={t("ui.accountMenu")}
+          aria-label={t("ui.account.menu")}
           onKeyDown={onMenuKey}
           className="anim-pop absolute bottom-full left-0 z-50 mb-2 w-64 max-w-[calc(100vw-2rem)] rounded-md border border-linea bg-papel shadow-lg"
         >
           {orgs.length > 1 && (
             <>
-              <p className="px-3 pt-3 pb-1 text-xs text-tinta-2">{t("ui.orgSwitch")}</p>
+              <p className="px-3 pt-3 pb-1 text-xs text-tinta-2">{t("ui.org.switch")}</p>
               {orgs.map((o) => (
                 <button
                   key={o.id}
@@ -141,29 +141,29 @@ export function AccountMenu({
                   <span className={`block ${o.id === current ? "font-semibold" : "font-medium"}`}>{o.name}</span>
                   <span className="block text-xs text-tinta-2">
                     {busy === o.id
-                      ? t("ui.orgSwitching")
+                      ? t("ui.org.switching")
                       : o.id === current
-                        ? t("ui.orgCurrent")
-                        : tk(`ui.role_${o.role}`)}
+                        ? t("ui.org.current")
+                        : tk(`ui.role.${o.role}`)}
                   </span>
                 </button>
               ))}
               {error && (
                 <p role="alert" className="px-3 py-2 text-sm text-peligro">
-                  {t("ui.orgSwitchFailed")}
+                  {t("ui.org.switchFailed")}
                 </p>
               )}
               <div className="border-t border-linea" role="separator" />
             </>
           )}
           <Link to="/cuenta" role="menuitem" className={itemCls} onClick={() => close(false)}>
-            {t("ui.account")}
+            {t("ui.common.account")}
           </Link>
           <Link to="/cuenta" hash="preferencias" role="menuitem" className={itemCls} onClick={() => close(false)}>
-            {t("ui.preferences")}
+            {t("ui.common.preferences")}
           </Link>
           <Link to="/ayuda" role="menuitem" className={itemCls} onClick={() => close(false)}>
-            {t("ui.helpLink")}
+            {t("ui.help.link")}
           </Link>
           <button
             type="button"
@@ -174,7 +174,7 @@ export function AccountMenu({
               onLogout();
             }}
           >
-            {t("ui.logout")}
+            {t("ui.common.logout")}
           </button>
         </div>
       )}

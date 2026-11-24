@@ -43,7 +43,7 @@ const baseStyle = (): maplibregl.StyleSpecification => ({
             "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
           ],
           tileSize: 256,
-          attribution: t("attribution.esriDev"),
+          attribution: t("attribution.common.esriDev"),
           maxzoom: 18,
         },
       }
@@ -161,7 +161,7 @@ export function FarmMap(props: FarmMapProps) {
     <div
       ref={ref}
       role="region"
-      aria-label={t("ui.mapRegion")}
+      aria-label={t("ui.map.region")}
       className={props.className ?? "h-full w-full"}
       data-testid="map"
     />

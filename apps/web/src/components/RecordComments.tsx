@@ -38,23 +38,23 @@ export function RecordComments({ recordId }: { recordId: string }) {
     onSuccess: () => {
       setText("");
       setMentioned(new Map());
-      toast(t("ui.toastCommentSent"));
+      toast(t("ui.toast.commentSent"));
       qc.invalidateQueries({ queryKey: ["comments", recordId] });
     },
   });
   const remove = useMutation({
     mutationFn: (id: string) => del(`/org/comments/${id}`),
     onSuccess: () => {
-      toast(t("ui.toastCommentDeleted"));
+      toast(t("ui.toast.commentDeleted"));
       return qc.invalidateQueries({ queryKey: ["comments", recordId] });
     },
   });
   const others = (members.data ?? []).filter((m) => m.userId !== me.data?.user.id);
   return (
     <section className="mt-5 border-t border-linea pt-4">
-      <h3 className="eyebrow mb-2">{t("ui.comments")}</h3>
+      <h3 className="eyebrow mb-2">{t("ui.common.comments")}</h3>
       {list.isPending && <Spinner />}
-      {list.data && !list.data.length && <p className="text-sm text-tinta-2">{t("ui.commentNone")}</p>}
+      {list.data && !list.data.length && <p className="text-sm text-tinta-2">{t("ui.comment.none")}</p>}
       <ul className="flex flex-col gap-2">
         {list.data?.map((c) => (
           <li key={c.id} className="rounded-md bg-surco/[0.04] p-2 text-sm">
@@ -63,7 +63,7 @@ export function RecordComments({ recordId }: { recordId: string }) {
               <span className="num">{fmtDateTime(c.createdAt)}</span>
               {(c.authorId === me.data?.user.id || me.data?.role === "owner" || me.data?.role === "admin") && (
                 <button className="ml-auto cursor-pointer underline" onClick={() => remove.mutate(c.id)}>
-                  {t("ui.delete")}
+                  {t("ui.common.delete")}
                 </button>
               )}
             </div>
@@ -73,9 +73,9 @@ export function RecordComments({ recordId }: { recordId: string }) {
       </ul>
       <Form className="mt-3 flex flex-col gap-2" onSubmit={() => { if (text.trim()) send.mutate(); }}>
         <textarea
-          aria-label={t("ui.comments")}
+          aria-label={t("ui.common.comments")}
           className="min-h-16 w-full rounded-md border border-linea bg-papel px-3 py-2 text-sm"
-          placeholder={t("ui.commentPlaceholder")}
+          placeholder={t("ui.comment.placeholder")}
           value={text}
           maxLength={1000}
           onChange={(e) => setText(e.target.value)}
@@ -83,7 +83,7 @@ export function RecordComments({ recordId }: { recordId: string }) {
         <div className="flex items-center gap-2">
           {canMention && others.length > 0 && (
             <Select
-              aria-label={t("ui.commentMention")}
+              aria-label={t("ui.comment.mention")}
               value=""
               onChange={(e) => {
                 const m = others.find((x) => x.userId === e.target.value);
@@ -92,13 +92,13 @@ export function RecordComments({ recordId }: { recordId: string }) {
                 setText((x) => `${x}${x && !x.endsWith(" ") ? " " : ""}@${m.fullName} `);
               }}
               options={[
-                { value: "", label: t("ui.commentMention") },
+                { value: "", label: t("ui.comment.mention") },
                 ...others.map((m) => ({ value: m.userId, label: m.fullName })),
               ]}
             />
           )}
           <Button type="submit" variant="primary" disabled={send.isPending || !text.trim()}>
-            {t("ui.commentSend")}
+            {t("ui.comment.send")}
           </Button>
         </div>
         {send.error && <ErrorBox error={send.error} />}

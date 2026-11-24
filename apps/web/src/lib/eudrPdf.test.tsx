@@ -68,8 +68,8 @@ describe("indicador EUDR", () => {
   it("los textos de estado y el aviso dicen que es indicativo", () => {
     expect(statusText("no_change", 0)).toBe("Sin cambio");
     expect(statusText("possible_loss", 3.2)).toBe("Posible pérdida de bosque: 3,2 ha");
-    expect(t("ui.eudrDisclaimer")).toMatch(/indicativo/);
-    expect(t("ui.eudrDisclaimer")).toMatch(/No es una declaración de debida diligencia ni una certificación/);
+    expect(t("ui.eudr.disclaimer")).toMatch(/indicativo/);
+    expect(t("ui.eudr.disclaimer")).toMatch(/No es una declaración de debida diligencia ni una certificación/);
   });
 
   it("PDF con pérdida, sin cambios y sin datos", async () => {

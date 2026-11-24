@@ -27,7 +27,7 @@ export function Sidebar({
   if (hidden)
     return (
       <div className="flex w-12 shrink-0 flex-col items-center gap-3 border-r border-linea bg-lino py-3 print:hidden">
-        <button type="button" aria-label={t("ui.navShow")} title={t("ui.navShow")} onClick={() => onHidden(false)} className={RAIL_BTN}>
+        <button type="button" aria-label={t("ui.nav.show")} title={t("ui.nav.show")} onClick={() => onHidden(false)} className={RAIL_BTN}>
           <PanelLeftOpen size={18} aria-hidden />
         </button>
       </div>
@@ -36,16 +36,16 @@ export function Sidebar({
     <aside className="relative z-20 flex w-60 shrink-0 flex-col border-r border-linea bg-lino print:hidden">
       <div className="flex h-14 shrink-0 items-center justify-between pr-2 pl-4">
         <Link to="/" className="font-serif text-[22px] leading-none font-semibold tracking-tight">
-          {t("ui.appName")}
+          {t("ui.app.name")}
         </Link>
-        <button type="button" aria-label={t("ui.navHide")} title={t("ui.navHide")} onClick={() => onHidden(true)} className={RAIL_BTN}>
+        <button type="button" aria-label={t("ui.nav.hide")} title={t("ui.nav.hide")} onClick={() => onHidden(true)} className={RAIL_BTN}>
           <PanelLeftClose size={18} aria-hidden />
         </button>
       </div>
       <div className="px-3 pb-3">
         <GlobalSearch inputRef={searchRef} />
       </div>
-      <nav aria-label={t("ui.navMain")} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-3">
+      <nav aria-label={t("ui.nav.main")} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-3">
         {nav.main.map((g) => (
           <NavSection key={g.id} group={g} render={renderLink} />
         ))}

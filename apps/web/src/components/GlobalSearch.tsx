@@ -23,11 +23,11 @@ const norm = (s: string) =>
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase();
 const GROUPS: { kind: Kind; label: MessageKey }[] = [
-  { kind: "farms", label: "ui.searchFarms" },
-  { kind: "plots", label: "ui.searchPlots" },
-  { kind: "members", label: "ui.searchMembers" },
-  { kind: "pois", label: "ui.searchPois" },
-  { kind: "records", label: "ui.searchRecords" },
+  { kind: "farms", label: "ui.search.farms" },
+  { kind: "plots", label: "ui.search.plots" },
+  { kind: "members", label: "ui.search.members" },
+  { kind: "pois", label: "ui.search.pois" },
+  { kind: "records", label: "ui.search.records" },
 ];
 const MAX_PER_GROUP = 6;
 const MAX_FARMS_SCANNED = 30;
@@ -112,7 +112,7 @@ export function GlobalSearch({
             key: `o${p.id}`,
             kind: "pois",
             title: p.name,
-            sub: [farmName.get(p.farmId), tk(`ui.poiKinds_${p.kind}`)].join(" · "),
+            sub: [farmName.get(p.farmId), tk(`ui.poi.kinds_${p.kind}`)].join(" · "),
             go: toFarm(p.farmId),
           });
     }
@@ -122,7 +122,7 @@ export function GlobalSearch({
           key: `m${m.userId}`,
           kind: "members",
           title: m.fullName,
-          sub: tk(`ui.role_${m.role}`),
+          sub: tk(`ui.role.${m.role}`),
           go: () => {
             setOpen(false);
             setQ("");
@@ -131,12 +131,12 @@ export function GlobalSearch({
         });
     for (const r of recs.data?.rows ?? []) {
       const text = describeData(r.kind, r.data);
-      if (has(text, tk(`recordKinds.${r.kind}`), r.authorName, r.plotName))
+      if (has(text, tk(`record-kinds.kind.${r.kind}`), r.authorName, r.plotName))
         out.records.push({
           key: `r${r.id}`,
           kind: "records",
           title: text,
-          sub: [tk(`recordKinds.${r.kind}`), r.plotName ?? farmName.get(r.farmId)].filter(Boolean).join(" · "),
+          sub: [tk(`record-kinds.kind.${r.kind}`), r.plotName ?? farmName.get(r.farmId)].filter(Boolean).join(" · "),
           go: toFarm(r.farmId, r.plotId ?? undefined),
         });
     }
@@ -171,10 +171,10 @@ export function GlobalSearch({
         role="combobox"
         aria-expanded={active}
         aria-controls="search-results"
-        aria-label={t("ui.searchLabel")}
-        title={t("ui.searchShortcutHint")}
+        aria-label={t("ui.search.label")}
+        title={t("ui.search.shortcutHint")}
         aria-keyshortcuts="/ Control+K"
-        placeholder={t("ui.searchPlaceholder")}
+        placeholder={t("ui.search.placeholder")}
         value={q}
         onChange={(e) => {
           setQ(e.target.value);
@@ -199,7 +199,7 @@ export function GlobalSearch({
           className={`absolute top-full right-0 left-0 z-30 mt-1 max-h-[70vh] overflow-auto rounded-md border border-linea bg-papel ${listClassName}`}
         >
           {hits.length === 0 && (
-            <p className="px-3 py-3 text-sm text-tinta-2">{loading ? t("ui.searching") : t("ui.searchNoResults")}</p>
+            <p className="px-3 py-3 text-sm text-tinta-2">{loading ? t("ui.common.searching") : t("ui.search.noResults")}</p>
           )}
           {GROUPS.map((g) => {
             const rows = hits.filter((h) => h.kind === g.kind);

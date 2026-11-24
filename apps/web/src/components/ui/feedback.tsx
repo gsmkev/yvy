@@ -8,7 +8,7 @@ import { t } from "../../lib/i18n";
  * para que al llegar los datos la página no salte. `rows` y `h` (px) se ajustan a cada lista.
  */
 export const Spinner = ({ rows = 3, h = 48 }: { rows?: number; h?: number }) => (
-  <div className="flex flex-col gap-2 p-1" aria-busy="true" aria-label={t("ui.loading")}>
+  <div className="flex flex-col gap-2 p-1" aria-busy="true" aria-label={t("ui.common.loading")}>
     {Array.from({ length: rows }, (_, i) => (
       <div key={i} className="animate-pulse rounded-md bg-surco/[0.06]" style={{ height: h }} />
     ))}
@@ -40,7 +40,7 @@ export function Empty({
 export const ErrorBox = ({ error }: { error: unknown }) => (
   <div role="alert" className="flex gap-2 rounded-md border border-peligro/30 bg-peligro/5 p-3 text-sm text-peligro">
     <CircleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />
-    {t("ui.error", { message: error instanceof Error ? error.message : String(error) })}
+    {t("ui.common.error", { message: error instanceof Error ? error.message : String(error) })}
   </div>
 );
 

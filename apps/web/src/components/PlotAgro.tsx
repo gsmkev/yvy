@@ -1,4 +1,14 @@
-import { CHART, IRRIGATION_METHODS, LIMITS, localDate, newId, noonAsuncion, RECORD_SCHEMA_VERSION, type PushResponse } from "@yvy/shared";
+import {
+  CHART,
+  IRRIGATION_METHODS,
+  LIMITS,
+  localDate,
+  newId,
+  noonAsuncion,
+  RECORD_SCHEMA_VERSION,
+  type PushResponse,
+  ATTRIBUTION,
+} from "@yvy/shared";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { fmtIsoDate, fmtDate, fmtDay, fmtMm, fmtNum, fmtTemp } from "../lib/format";
@@ -44,48 +54,48 @@ function PhenologySection({ plotId }: { plotId: string }) {
   const q = usePhenology(plotId);
   const d = q.data;
   return (
-    <Section title={t("ui.phenoTitle")}>
+    <Section title={t("ui.pheno.title")}>
       {q.isLoading && <Spinner rows={2} h={24} />}
       {q.error && <ErrorBox error={q.error} />}
-      {d && d.status !== "ok" && <p className="text-sm text-tinta-2">{t(`ui.phenoStatus_${d.status}` as "ui.phenoStatus_no_crop")}</p>}
+      {d && d.status !== "ok" && <p className="text-sm text-tinta-2">{t(`ui.pheno.status_${d.status}` as "ui.pheno.status_no_crop")}</p>}
       {d && d.status === "ok" && d.gdd !== null && d.estimatedStage && (
         <div className="flex flex-col gap-1.5 text-sm">
           <p>
-            {t("ui.phenoEstimated")}: <strong>{tk(`fields.stage_${d.estimatedStage}`)}</strong>
+            {t("ui.pheno.estimated")}: <strong>{tk(`fields.stage.${d.estimatedStage}`)}</strong>
             <span className="num text-tinta-2">
               {" "}
-              · {fmtNum(d.gdd)} {t("ui.phenoGdd")}
+              · {fmtNum(d.gdd)} {t("ui.pheno.gdd")}
             </span>
           </p>
           {d.next && (
             <p className="num text-tinta-2">
-              {t("ui.phenoNext", { stage: tk(`fields.stage_${d.next.stage}`), gdd: fmtNum(d.next.gddLeft) })}
+              {t("ui.pheno.next", { stage: tk(`fields.stage.${d.next.stage}`), gdd: fmtNum(d.next.gddLeft) })}
             </p>
           )}
           <p>
-            {t("ui.phenoObserved")}:{" "}
+            {t("ui.pheno.observed")}:{" "}
             {d.observed ? (
               <>
-                <strong>{tk(`fields.stage_${d.observed.stage}`)}</strong>
+                <strong>{tk(`fields.stage.${d.observed.stage}`)}</strong>
                 <span className="text-tinta-2"> · {fmtDate(d.observed.at)}</span>
               </>
             ) : (
-              <span className="text-tinta-2">{t("ui.phenoNoObserved")}</span>
+              <span className="text-tinta-2">{t("ui.pheno.noObserved")}</span>
             )}
           </p>
           {d.comparison && (
             <p className={d.comparison === "on_track" ? "" : "font-medium text-peligro"}>
-              {t(`ui.phenoCompare_${d.comparison}` as "ui.phenoCompare_ahead")}
+              {t(`ui.pheno.compare_${d.comparison}` as "ui.pheno.compare_ahead")}
             </p>
           )}
           <p className="num text-xs text-tinta-2">
-            {t("ui.phenoSince", { date: d.sowingDate ? fmtIsoDate(d.sowingDate) : "—", base: d.baseC ?? 0 })}
+            {t("ui.pheno.since", { date: d.sowingDate ? fmtIsoDate(d.sowingDate) : "—", base: d.baseC ?? 0 })}
             {d.coverage && d.coverage.days < d.coverage.of * 0.8
-              ? ` · ${t("ui.phenoPartial", { days: d.coverage.days, of: d.coverage.of })}`
+              ? " · " + t("ui.pheno.partial", { days: d.coverage.days, of: d.coverage.of })
               : ""}
           </p>
-          <p className="text-xs text-tinta-2">{t("ui.phenoNote")}</p>
-          <p className="text-xs text-tinta-2">{t("attribution.nasaPower")}</p>
+          <p className="text-xs text-tinta-2">{t("ui.pheno.note")}</p>
+          <p className="text-xs text-tinta-2">{t(ATTRIBUTION.nasaPower)}</p>
         </div>
       )}
     </Section>
@@ -100,52 +110,52 @@ function WaterBalanceSection({ plot }: { plot: Plot }) {
   const d = q.data;
   const b = d?.balance;
   return (
-    <Section title={t("ui.waterBalTitle")}>
+    <Section title={t("ui.water.balTitle")}>
       {q.isLoading && <Spinner rows={2} h={24} />}
       {q.error && <ErrorBox error={q.error} />}
       {d && (
         <div className="mb-2">
-          <Button onClick={() => setIrrigating(true)}>{t("ui.waterBalIrrigate")}</Button>
+          <Button onClick={() => setIrrigating(true)}>{t("ui.water.balIrrigate")}</Button>
         </div>
       )}
       {irrigating && <IrrigationModal plot={plot} onClose={() => setIrrigating(false)} />}
-      {d && !b && <p className="text-sm text-tinta-2">{t(`ui.waterBalStatus_${d.status === "ok" ? "no_data" : d.status}` as "ui.waterBalStatus_no_data")}</p>}
+      {d && !b && <p className="text-sm text-tinta-2">{t(`ui.water.balStatus_${d.status === "ok" ? "no_data" : d.status}` as "ui.water.balStatus_no_data")}</p>}
       {b && (
         <div className="flex flex-col gap-2 text-sm">
           <p className="num">
             {b.etMissingDays === b.days
-              ? t("ui.waterBalTotalsNoEt", { rain: fmtMm(b.rainMm), irr: fmtMm(b.irrigationMm), days: b.days })
+              ? t("ui.water.balTotalsNoEt", { rain: fmtMm(b.rainMm), irr: fmtMm(b.irrigationMm), days: b.days })
               : b.irrigationMm > 0
-                ? t("ui.waterBalTotalsIrr", { rain: fmtMm(b.rainMm), irr: fmtMm(b.irrigationMm), etc: fmtMm(b.etcMm), days: b.days })
-                : t("ui.waterBalTotals", { rain: fmtMm(b.rainMm), etc: fmtMm(b.etcMm), days: b.days })}
+                ? t("ui.water.balTotalsIrr", { rain: fmtMm(b.rainMm), irr: fmtMm(b.irrigationMm), etc: fmtMm(b.etcMm), days: b.days })
+                : t("ui.water.balTotals", { rain: fmtMm(b.rainMm), etc: fmtMm(b.etcMm), days: b.days })}
           </p>
-          {b.etMissingDays > 0 && <p className="text-xs text-tinta-2">{t("ui.waterBalNoEt", { n: b.etMissingDays })}</p>}
+          {b.etMissingDays > 0 && <p className="text-xs text-tinta-2">{t("ui.water.balNoEt", { n: b.etMissingDays })}</p>}
           <p className="num">
-            {t("ui.waterBalBalance")}: <strong>{fmtMm(b.balanceMm)}</strong>
+            {t("ui.water.balBalance")}: <strong>{fmtMm(b.balanceMm)}</strong>
             {b.balance14Mm !== null && (
-              <span className="text-tinta-2"> · {t("ui.waterBalLast14", { mm: fmtMm(b.balance14Mm) })}</span>
+              <span className="text-tinta-2"> · {t("ui.water.balLast14", { mm: fmtMm(b.balance14Mm) })}</span>
             )}
           </p>
           {b.risk && (
             <p className={b.risk === "low" ? "" : "font-medium text-peligro"}>
-              {t(`ui.waterBalRisk_${b.risk}` as "ui.waterBalRisk_low")}
+              {t(`ui.water.balRisk_${b.risk}` as "ui.water.balRisk_low")}
             </p>
           )}
           <LineChart
-            ariaLabel={t("ui.waterBalTitle")}
+            ariaLabel={t("ui.water.balTitle")}
             yLabel="mm"
             formatX={(x) => fmtDay(x)}
             formatY={(y) => fmtNum(Math.round(y))}
             series={[
               {
-                name: t("ui.waterBalCum"),
+                name: t("ui.water.balCum"),
                 color: CHART.primary,
                 points: b.series.map((p) => ({ x: Date.parse(`${p.date}T12:00:00Z`), y: p.cumMm })),
               },
               ...(b.irrigationMm > 0
                 ? [
                     {
-                      name: t("ui.waterBalIrrCum"),
+                      name: t("ui.water.balIrrCum"),
                       color: CHART.comparison,
                       points: b.series.map((p, i) => ({ x: Date.parse(`${p.date}T12:00:00Z`), y: b.series.slice(0, i + 1).reduce((a, x) => a + x.irrigationMm, 0) })),
                     },
@@ -153,9 +163,9 @@ function WaterBalanceSection({ plot }: { plot: Plot }) {
                 : []),
             ]}
           />
-          <p className="text-xs text-tinta-2">{t("ui.waterBalNote")}</p>
+          <p className="text-xs text-tinta-2">{t("ui.water.balNote")}</p>
           <p className="text-xs text-tinta-2">
-            {t("attribution.chirps")} · {t("attribution.nasaPower")}
+            {t(ATTRIBUTION.chirps)} · {t(ATTRIBUTION.nasaPower)}
           </p>
         </div>
       )}
@@ -170,15 +180,15 @@ function WithdrawalSection({ plot }: { plot: Plot }) {
   const v = q.data?.violations.filter((x) => x.plotId === plot.id) ?? [];
   if (!r && v.length === 0) return null;
   return (
-    <Section title={t("ui.withdrawalTitle")}>
+    <Section title={t("ui.withdrawal.title")}>
       {r && (
         <p className="text-sm font-medium text-peligro">
-          {t("ui.withdrawalPlot", { date: fmtIsoDate(r.safeFrom), product: r.product, n: r.daysLeft })}
+          {t("ui.withdrawal.plot", { date: fmtIsoDate(r.safeFrom), product: r.product, n: r.daysLeft })}
         </p>
       )}
       {v.map((x) => (
         <p key={`${x.harvestedOn}${x.product}`} className="text-sm text-peligro">
-          {t("ui.withdrawalViolation", { plot: plot.name, date: fmtIsoDate(x.harvestedOn), product: x.product, safe: fmtIsoDate(x.safeFrom) })}
+          {t("ui.withdrawal.violation", { plot: plot.name, date: fmtIsoDate(x.harvestedOn), product: x.product, safe: fmtIsoDate(x.safeFrom) })}
         </p>
       ))}
     </Section>
@@ -191,7 +201,7 @@ function PlotForecastSection({ plot }: { plot: Plot }) {
   const f = q.data?.plots.find((p) => p.plotId === plot.id);
   if (!f) return null;
   return (
-    <Section title={t("ui.plotFcTitle")}>
+    <Section title={t("ui.plot.fcTitle")}>
       <ul className="divide-y divide-linea border-y border-linea text-sm">
         {f.days.slice(0, 7).map((d) => (
           <li key={d.date} className="num flex items-baseline justify-between gap-3 py-2">
@@ -204,7 +214,7 @@ function PlotForecastSection({ plot }: { plot: Plot }) {
         ))}
       </ul>
       <p className="mt-1 text-xs text-tinta-2">
-        {t("ui.plotFcNote", { date: fmtDate(f.runAt) })} {t("attribution.metNorway")}
+        {t("ui.plot.fcNote", { date: fmtDate(f.runAt) })} {t(ATTRIBUTION.metNorway)}
       </p>
     </Section>
   );
@@ -214,8 +224,8 @@ function PlotForecastSection({ plot }: { plot: Plot }) {
 function DamageSection({ plot }: { plot: Plot }) {
   const [open, setOpen] = useState(false);
   return (
-    <Section title={t("ui.damageTitle")}>
-      <Button onClick={() => setOpen(true)}>{t("ui.damageOpen")}</Button>
+    <Section title={t("ui.damage.title")}>
+      <Button onClick={() => setOpen(true)}>{t("ui.damage.open")}</Button>
       {open && <DamageReportModal plot={plot} onClose={() => setOpen(false)} />}
     </Section>
   );
@@ -251,30 +261,30 @@ function IrrigationModal({ plot, onClose }: { plot: Plot; onClose: () => void })
         ],
       });
       const r = res.results[0];
-      if (r?.status === "rejected") throw new Error(r.detail ?? t("ui.fuelRejected"));
+      if (r?.status === "rejected") throw new Error(r.detail ?? t("ui.fuel.rejected"));
     },
     onSuccess: () => {
-      toast(t("ui.waterBalIrrigateSaved"));
+      toast(t("ui.water.balIrrigateSaved"));
       qc.invalidateQueries({ queryKey: ["water-balance", plot.id] });
       qc.invalidateQueries({ queryKey: ["records"] });
       onClose();
     },
   });
   return (
-    <Modal title={t("ui.waterBalIrrigate")} onClose={onClose}>
+    <Modal title={t("ui.water.balIrrigate")} onClose={onClose}>
       <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
-        <Field label={t("fields.irrigationMm")}>
+        <Field label={t("fields.irrigation.mm")}>
           <Input type="number" required min={0.1} max={LIMITS.irrigation.maxMm} step="any" value={f.mm} onChange={(e) => setF({ ...f, mm: e.target.value })} />
         </Field>
-        <Field label={t("fields.irrigationDate")}>
+        <Field label={t("fields.irrigation.date")}>
           <Input type="date" required value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} />
         </Field>
         <div className="col-span-2">
-          <Field label={t("fields.irrigationMethod")}>
+          <Field label={t("fields.irrigation.method")}>
             <Select
               value={f.method}
               onChange={(e) => setF({ ...f, method: e.target.value })}
-              options={IRRIGATION_METHODS.map((m) => ({ value: m, label: t(`fields.irrigationMethod_${m}` as "fields.irrigationMethod_pivot") }))}
+              options={IRRIGATION_METHODS.map((m) => ({ value: m, label: t(`fields.irrigation.method_${m}` as "fields.irrigation.method_pivot") }))}
             />
           </Field>
         </div>

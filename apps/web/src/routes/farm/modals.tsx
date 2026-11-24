@@ -24,33 +24,33 @@ export function NewPlotModal({
   const save = useMutation({
     mutationFn: () => post(`/org/farms/${farmId}/plots`, { plots: [{ name, kind, geometry }] }),
     onSuccess: () => {
-      toast(t("ui.toastPlotSaved"));
+      toast(t("ui.toast.plotSaved"));
       onSaved();
       onClose();
     },
   });
   return (
-    <Modal title={t("ui.newPlot")} onClose={onClose}>
+    <Modal title={t("ui.new.plot")} onClose={onClose}>
       <Form className="flex flex-col gap-4" onSubmit={() => save.mutate()}>
         <p className="text-sm">
-          {t("ui.area")}: <strong className="num">{fmtHa(areaHa(geometry))}</strong>
+          {t("ui.common.area")}: <strong className="num">{fmtHa(areaHa(geometry))}</strong>
         </p>
-        <Field label={t("ui.plot")}>
+        <Field label={t("ui.common.plot")}>
           <Input required autoFocus value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
-        <Field label={t("ui.plotKind")}>
+        <Field label={t("ui.plot.kind")}>
           <Select
             value={kind}
             onChange={(e) => setKind(e.target.value as "crop")}
             options={[
-              { value: "crop", label: t("ui.crop") },
-              { value: "pasture", label: t("ui.pasture") },
+              { value: "crop", label: t("ui.common.crop") },
+              { value: "pasture", label: t("ui.common.pasture") },
             ]}
           />
         </Field>
         {save.error && <ErrorBox error={save.error} />}
         <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.save")}
+          {t("ui.common.save")}
         </Button>
       </Form>
     </Modal>
@@ -80,10 +80,10 @@ export function ShapeEditBar({
       ),
     onSuccess: (r) => {
       onSaved();
-      toast(t("ui.plotShapeSaved", { area: fmtHa(r.areaHa) }));
+      toast(t("ui.plot.shapeSaved", { area: fmtHa(r.areaHa) }));
       for (const w of r.warnings)
         toast(
-          w.kind === "overlap" ? t("ui.plotShapeOverlap", { name: w.plotName ?? "" }) : t("ui.plotShapeOutside"),
+          w.kind === "overlap" ? t("ui.plot.shapeOverlap", { name: w.plotName ?? "" }) : t("ui.plot.shapeOutside"),
           { ms: 6000 },
         );
       onDone();
@@ -92,12 +92,12 @@ export function ShapeEditBar({
   const area = areaHa(shape ?? (JSON.parse(original) as Polygon | MultiPolygon));
   return (
     <div className="absolute bottom-4 left-1/2 flex max-w-[calc(100%-2rem)] -translate-x-1/2 flex-col gap-2 rounded-md bg-surco px-4 py-3 text-sm text-lino">
-      <p>{t("ui.plotEditHint")}</p>
+      <p>{t("ui.plot.editHint")}</p>
       <p className="num">
-        {t("ui.area")}: <strong className="font-semibold">{fmtHa(area)}</strong>
-        {shape && <span className="text-lino/70"> · {t("ui.plotEditWas", { area: fmtHa(areaHa(JSON.parse(original) as Polygon | MultiPolygon)) })}</span>}
+        {t("ui.common.area")}: <strong className="font-semibold">{fmtHa(area)}</strong>
+        {shape && <span className="text-lino/70"> · {t("ui.plot.editWas", { area: fmtHa(areaHa(JSON.parse(original) as Polygon | MultiPolygon)) })}</span>}
       </p>
-      {problem && <p className="font-medium text-trigo">{tk(`ui.geomError_${problem}`)}</p>}
+      {problem && <p className="font-medium text-trigo">{tk(`ui.geom.error_${problem}`)}</p>}
       {save.error && <p className="font-medium text-trigo">{save.error instanceof Error ? save.error.message : String(save.error)}</p>}
       <div className="flex gap-4 font-medium">
         <button
@@ -105,10 +105,10 @@ export function ShapeEditBar({
           disabled={!shape || !!problem || save.isPending}
           onClick={() => save.mutate()}
         >
-          {t("ui.plotEditSave")}
+          {t("ui.plot.editSave")}
         </button>
         <button className="cursor-pointer underline-offset-4 hover:underline" onClick={onDone}>
-          {t("ui.cancel")}
+          {t("ui.common.cancel")}
         </button>
       </div>
     </div>
@@ -131,27 +131,27 @@ export function NewPoiModal({
   const save = useMutation({
     mutationFn: () => post(`/org/farms/${farmId}/pois`, { name, kind, lon: at[0], lat: at[1] }),
     onSuccess: () => {
-      toast(t("ui.toastPoiSaved"));
+      toast(t("ui.toast.poiSaved"));
       onSaved();
       onClose();
     },
   });
   return (
-    <Modal title={t("ui.addPoi")} onClose={onClose}>
+    <Modal title={t("ui.add.poi")} onClose={onClose}>
       <Form className="flex flex-col gap-4" onSubmit={() => save.mutate()}>
-        <Field label={t("ui.kind")}>
+        <Field label={t("ui.common.kind")}>
           <Select
             value={kind}
             onChange={(e) => setKind(e.target.value)}
-            options={POI_KINDS.map((k) => ({ value: k, label: tk(`ui.poiKinds_${k}`) }))}
+            options={POI_KINDS.map((k) => ({ value: k, label: tk(`ui.poi.kinds_${k}`) }))}
           />
         </Field>
-        <Field label={t("ui.name")}>
+        <Field label={t("ui.common.name")}>
           <Input required autoFocus value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
         {save.error && <ErrorBox error={save.error} />}
         <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.save")}
+          {t("ui.common.save")}
         </Button>
       </Form>
     </Modal>

@@ -73,8 +73,8 @@ function YieldCells({ cells, p10, p90, label }: { cells: [number, number, number
 
 const Stats = ({ s }: { s: Pick<YieldSummary, "meanTHa" | "p10THa" | "p90THa" | "cvPct" | "nPoints" | "nDropped"> }) => (
   <p className="num text-sm">
-    {t("ui.yieldMapStats", { mean: fmtNum(s.meanTHa), p10: fmtNum(s.p10THa), p90: fmtNum(s.p90THa), cv: fmtNum(s.cvPct) })}
-    <span className="block text-xs text-tinta-2">{t("ui.yieldMapPoints", { n: fmtNum(s.nPoints), dropped: fmtNum(s.nDropped) })}</span>
+    {t("ui.yield.mapStats", { mean: fmtNum(s.meanTHa), p10: fmtNum(s.p10THa), p90: fmtNum(s.p90THa), cv: fmtNum(s.cvPct) })}
+    <span className="block text-xs text-tinta-2">{t("ui.yield.mapPoints", { n: fmtNum(s.nPoints), dropped: fmtNum(s.nDropped) })}</span>
   </p>
 );
 
@@ -106,7 +106,7 @@ export function YieldMapSection({ plot }: { plot: Plot }) {
     try {
       const parsed = await readYieldFile(file);
       const f = numericFields(parsed);
-      if (!f.length) throw new Error(t("ui.yieldMapNoField"));
+      if (!f.length) throw new Error(t("ui.yield.mapNoField"));
       setFc(parsed);
       setFileName(file.name);
       setField(f[0]!);
@@ -120,7 +120,7 @@ export function YieldMapSection({ plot }: { plot: Plot }) {
       return post(`/org/plots/${plot.id}/yield-maps`, { ...rest, cells, fileName, seasonId: seasonId || null });
     },
     onSuccess: () => {
-      toast(t("ui.yieldMapSaved"));
+      toast(t("ui.yield.mapSaved"));
       reset();
       qc.invalidateQueries({ queryKey: ["yield-maps", plot.id] });
     },
@@ -131,41 +131,41 @@ export function YieldMapSection({ plot }: { plot: Plot }) {
   });
   return (
     <div className="border-t border-linea pt-4">
-      <h3 className="eyebrow mb-1">{t("ui.yieldMapTitle")}</h3>
-      <p className="mb-2 text-xs text-tinta-2">{t("ui.yieldMapIntro")}</p>
+      <h3 className="eyebrow mb-1">{t("ui.yield.mapTitle")}</h3>
+      <p className="mb-2 text-xs text-tinta-2">{t("ui.yield.mapIntro")}</p>
       {(maps.data ?? []).map((m) => (
         <div key={m.id} className="mb-3 flex flex-col gap-1.5">
-          <p className="text-sm font-medium">{m.seasonName ?? t("ui.yieldMapNoSeason")}</p>
+          <p className="text-sm font-medium">{m.seasonName ?? t("ui.yield.mapNoSeason")}</p>
           <Stats s={m} />
-          <YieldCells cells={JSON.parse(m.cells)} p10={m.p10THa} p90={m.p90THa} label={t("ui.yieldMapTitle")} />
+          <YieldCells cells={JSON.parse(m.cells)} p10={m.p10THa} p90={m.p90THa} label={t("ui.yield.mapTitle")} />
           <p className="text-xs text-tinta-2">
-            {t("ui.yieldMapLegend", { lo: fmtNum(m.p10THa), hi: fmtNum(m.p90THa), cell: m.cellM })}{" "}
+            {t("ui.yield.mapLegend", { lo: fmtNum(m.p10THa), hi: fmtNum(m.p90THa), cell: m.cellM })}{" "}
             <button className="cursor-pointer underline underline-offset-2 hover:text-peligro" onClick={() => remove.mutate(m.id)}>
-              {t("ui.delete")}
+              {t("ui.common.delete")}
             </button>
           </p>
         </div>
       ))}
       {maps.error && <ErrorBox error={maps.error} />}
-      <Field label={t("ui.yieldMapFile")} hint={t("ui.yieldMapFileHint")}>
+      <Field label={t("ui.yield.mapFile")} hint={t("ui.yield.mapFileHint")}>
         <Input type="file" accept=".zip,.geojson,.json" onChange={(e) => pick(e.target.files?.[0])} />
       </Field>
       {err && <p className="mt-2 text-sm text-peligro">{err}</p>}
       {fc && (
         <div className="mt-3 flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3">
-            <Field label={t("ui.yieldMapField")}>
+            <Field label={t("ui.yield.mapField")}>
               <Select value={field} onChange={(e) => setField(e.target.value)} options={fields.map((f) => ({ value: f, label: f }))} />
             </Field>
-            <Field label={t("ui.yieldMapUnit")}>
+            <Field label={t("ui.yield.mapUnit")}>
               <Select
                 value={unit}
                 onChange={(e) => setUnit(e.target.value as YieldUnit)}
-                options={YIELD_UNITS.map((u) => ({ value: u, label: tk(`ui.yieldUnit_${u}`) }))}
+                options={YIELD_UNITS.map((u) => ({ value: u, label: tk(`ui.yield.unit_${u}`) }))}
               />
             </Field>
           </div>
-          <Field label={t("ui.season")}>
+          <Field label={t("ui.common.season")}>
             <Select
               value={seasonId}
               onChange={(e) => setSeasonId(e.target.value)}
@@ -175,18 +175,18 @@ export function YieldMapSection({ plot }: { plot: Plot }) {
           {summary ? (
             <>
               <Stats s={summary} />
-              <YieldCells cells={summary.cells} p10={summary.p10THa} p90={summary.p90THa} label={t("ui.yieldMapTitle")} />
+              <YieldCells cells={summary.cells} p10={summary.p10THa} p90={summary.p90THa} label={t("ui.yield.mapTitle")} />
               <div className="flex gap-2">
                 <Button variant="primary" disabled={save.isPending} onClick={() => save.mutate()}>
-                  {t("ui.save")}
+                  {t("ui.common.save")}
                 </Button>
                 <Button variant="quiet" onClick={reset}>
-                  {t("ui.cancel")}
+                  {t("ui.common.cancel")}
                 </Button>
               </div>
             </>
           ) : (
-            <p className="text-sm text-tinta-2">{t("ui.yieldMapNoPoints")}</p>
+            <p className="text-sm text-tinta-2">{t("ui.yield.mapNoPoints")}</p>
           )}
           {save.error && <ErrorBox error={save.error} />}
         </div>

@@ -6,6 +6,7 @@ import type { Plot } from "../lib/types";
 import { useManagementZones } from "../lib/managementZones";
 import { RatePrescription } from "./RatePrescription";
 import { Button } from "./ui";
+import { ATTRIBUTION } from "@yvy/shared";
 
 /** De la zona más baja a la más alta, con la rampa de vigor de la marca. */
 const ZONE_COLOR: Record<number, string> = { 1: "#B5562E", 2: "#C9C46A", 3: "#3F6B35" };
@@ -31,8 +32,8 @@ export function ZonesSection({ plot }: { plot: Plot }) {
   const seasons = (JSON.parse(zones[0]!.seasons) as number[]).map((y) => `${y}/${String(y + 1).slice(2)}`).join(", ");
   return (
     <div className="border-t border-linea pt-4">
-      <h3 className="eyebrow mb-1">{t("ui.zonesTitle")}</h3>
-      <svg role="img" aria-label={t("ui.zonesTitle")} viewBox={`0 0 ${w.toFixed(0)} ${h.toFixed(0)}`} className="w-full max-w-[320px] rounded-md border border-linea bg-lino">
+      <h3 className="eyebrow mb-1">{t("ui.zones.title")}</h3>
+      <svg role="img" aria-label={t("ui.zones.title")} viewBox={`0 0 ${w.toFixed(0)} ${h.toFixed(0)}`} className="w-full max-w-[320px] rounded-md border border-linea bg-lino">
         {zones.map((z) => (
           <path
             key={z.zone}
@@ -47,14 +48,16 @@ export function ZonesSection({ plot }: { plot: Plot }) {
         {zones.map((z) => (
           <li key={z.zone} className="num flex items-center gap-2">
             <span aria-hidden className="inline-block h-3 w-3 shrink-0 rounded-sm" style={{ background: ZONE_COLOR[z.zone] }} />
-            {t(`ui.zonesLevel_${z.zone}` as "ui.zonesLevel_1")}: {fmtHa(z.areaHa)} ({z.pct} %) · NDVI {fmtNdvi(z.meanNdvi)}
+            {t(`ui.zones.level_${z.zone}` as "ui.zones.level_1")}: {fmtHa(z.areaHa)} ({z.pct} %) · NDVI {fmtNdvi(z.meanNdvi)}
           </li>
         ))}
       </ul>
-      <p className="mt-1 text-xs text-tinta-2">{t("ui.zonesNote", { seasons, date: fmtDate(zones[0]!.computedAt) })}</p>
-      <p className="text-xs text-tinta-2">{t("attribution.copernicus")}</p>
+      <p className="mt-1 text-xs text-tinta-2">
+        {t("ui.zones.note", { seasons, date: fmtDate(zones[0]!.computedAt) })}
+      </p>
+      <p className="text-xs text-tinta-2">{t(ATTRIBUTION.copernicus)}</p>
       <div className="mt-2">
-        <Button onClick={() => setRx(true)}>{t("ui.rxOpen")}</Button>
+        <Button onClick={() => setRx(true)}>{t("ui.rx.open")}</Button>
       </div>
       {rx && <RatePrescription plot={plot} zones={zones} onClose={() => setRx(false)} />}
     </div>

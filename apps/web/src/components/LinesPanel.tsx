@@ -26,7 +26,7 @@ export function LinesPanel({
     deleteWithUndo({
       qc,
       id: l.id,
-      message: t("ui.lineDeleted"),
+      message: t("ui.line.deleted"),
       hide: () => qc.setQueryData<FarmLine[]>(["lines", farmId], (x) => x?.filter((y) => y.id !== l.id)),
       request: () => del(`/org/lines/${l.id}`),
       invalidate: [["lines", farmId]],
@@ -38,7 +38,7 @@ export function LinesPanel({
       onClick={onDraw}
       className="shrink-0 cursor-pointer text-sm font-medium text-accion underline underline-offset-4 print:hidden"
     >
-      {t("ui.linesAdd")}
+      {t("ui.lines.add")}
     </button>
   );
   // Sin líneas: una sola fila, sin encabezado aparte
@@ -47,10 +47,10 @@ export function LinesPanel({
       <section aria-labelledby="lines-title" className="flex items-baseline justify-between gap-3 border-t border-linea pt-3">
         <p className="text-sm text-tinta-2">
           <span id="lines-title" className="font-medium text-surco">
-            {t("ui.linesTitle")}
+            {t("ui.lines.title")}
           </span>
           {" · "}
-          {t("ui.linesNone")}
+          {t("ui.lines.none")}
         </p>
         {add}
       </section>
@@ -59,7 +59,7 @@ export function LinesPanel({
     <section aria-labelledby="lines-title">
       <div className="mb-2 flex items-end justify-between gap-3 border-b border-linea pb-2">
         <h3 id="lines-title" className="eyebrow">
-          {t("ui.linesTitle")}
+          {t("ui.lines.title")}
         </h3>
         {add}
       </div>
@@ -68,25 +68,25 @@ export function LinesPanel({
           <li key={l.id} className="flex items-baseline justify-between gap-3 border-b border-linea py-2">
             <span>
               {l.name}
-              <span className="ml-2 text-xs text-tinta-2">{tk(`ui.lineKind_${l.kind}`)}</span>
+              <span className="ml-2 text-xs text-tinta-2">{tk(`ui.line.kind_${l.kind}`)}</span>
             </span>
             <span className="flex shrink-0 items-baseline gap-3">
               <span className="num text-xs text-tinta-2">{fmtDistance(l.lengthM)}</span>
               {canEdit && (
                 <button
                   type="button"
-                  aria-label={`${t("ui.delete")} ${l.name}`}
+                  aria-label={`${t("ui.common.delete")} ${l.name}`}
                   className="cursor-pointer text-xs text-tinta-2 hover:text-peligro print:hidden"
                   onClick={() => remove(l)}
                 >
-                  {t("ui.delete")}
+                  {t("ui.common.delete")}
                 </button>
               )}
             </span>
           </li>
         ))}
       </ul>
-      <p className="num mt-2 text-xs text-tinta-2">{t("ui.linesTotal", { len: fmtDistance(total) })}</p>
+      <p className="num mt-2 text-xs text-tinta-2">{t("ui.lines.total", { len: fmtDistance(total) })}</p>
     </section>
   );
 }
@@ -109,30 +109,30 @@ export function NewLineModal({
     mutationFn: () => post(`/org/farms/${farmId}/lines`, { kind, name: name.trim(), geometry: line }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["lines", farmId] });
-      toast(t("ui.lineSaved"));
+      toast(t("ui.line.saved"));
       onClose();
     },
   });
   return (
-    <Modal title={t("ui.linesAdd")} onClose={onClose}>
+    <Modal title={t("ui.lines.add")} onClose={onClose}>
       <Form className="flex flex-col gap-4" onSubmit={() => { if (name.trim()) save.mutate(); }}>
-        <Field label={t("ui.lineKind")}>
+        <Field label={t("ui.line.kind")}>
           <Select
             value={kind}
             onChange={(e) => setKind(e.target.value as LineKind)}
-            options={LINE_KINDS.map((k) => ({ value: k, label: tk(`ui.lineKind_${k}`) }))}
+            options={LINE_KINDS.map((k) => ({ value: k, label: tk(`ui.line.kind_${k}`) }))}
           />
         </Field>
-        <Field label={t("ui.lineName")} hint={t("ui.lineLength", { len: fmtDistance(length) })}>
+        <Field label={t("ui.line.name")} hint={t("ui.line.length", { len: fmtDistance(length) })}>
           <Input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} />
         </Field>
         {save.error ? <ErrorBox error={save.error} /> : null}
         <div className="flex gap-2">
           <Button type="submit" variant="primary" disabled={!name.trim() || save.isPending}>
-            {t("ui.lineSave")}
+            {t("ui.line.save")}
           </Button>
           <Button variant="quiet" onClick={onClose}>
-            {t("ui.cancel")}
+            {t("ui.common.cancel")}
           </Button>
         </div>
       </Form>

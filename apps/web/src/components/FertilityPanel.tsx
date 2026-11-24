@@ -17,7 +17,7 @@ export function FertilityPanel({ farmId }: { farmId: string }) {
   const farm = useFarm(farmId);
   const request = useMutation({
     mutationFn: () => post(`/org/farms/${farmId}/fertility-maps`, {}),
-    onSuccess: () => toast(t("ui.fertRequested")),
+    onSuccess: () => toast(t("ui.fert.requested")),
   });
   const d = q.data;
   const any = d ? Object.values(d.points).some((n) => n >= d.minPoints) : false;
@@ -27,12 +27,12 @@ export function FertilityPanel({ farmId }: { farmId: string }) {
   return (
     <section aria-labelledby="fert-h" className="flex flex-col gap-3">
       <h3 id="fert-h" className="font-serif text-lg font-semibold">
-        {t("ui.fertTitle")}
+        {t("ui.fert.title")}
       </h3>
-      <p className="text-sm text-tinta-2">{t("ui.fertIntro")}</p>
+      <p className="text-sm text-tinta-2">{t("ui.fert.intro")}</p>
       {q.isLoading && <Spinner rows={2} h={32} />}
       {q.error && <ErrorBox error={q.error} />}
-      {d && total === 0 && <p className="text-sm">{t("ui.fertNoneAtAll")}</p>}
+      {d && total === 0 && <p className="text-sm">{t("ui.fert.noneAtAll")}</p>}
       {d && total > 0 && (
         <>
           <ul className="divide-y divide-linea border-y border-linea text-sm">
@@ -41,22 +41,23 @@ export function FertilityPanel({ farmId }: { farmId: string }) {
               const when = published(k);
               return (
                 <li key={k} className="num flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2">
-                  <span>{t(`ui.soilParam_${FERT_LAYER_PARAM[k]}` as "ui.soilParam_ph")}</span>
+                  <span>{t(`ui.soil.param_${FERT_LAYER_PARAM[k]}` as "ui.soil.param_ph")}</span>
                   <span className="text-tinta-2">
-                    {t("ui.fertPoints", { n, min: d.minPoints })} · {n >= d.minPoints ? t("ui.fertReady") : t("ui.fertMissing", { n: d.minPoints - n })}
-                    {when ? ` · ${t("ui.fertPublished", { date: fmtDate(when) })}` : ""}
+                    {t("ui.fert.points", { n, min: d.minPoints })} ·{" "}
+                    {n >= d.minPoints ? t("ui.fert.ready") : t("ui.fert.missing", { n: d.minPoints - n })}
+                    {when ? " · " + t("ui.fert.published", { date: fmtDate(when) }) : ""}
                   </span>
                 </li>
               );
             })}
           </ul>
-          <p className="text-xs text-tinta-2">{t("ui.fertNeed", { min: d.minPoints })}</p>
+          <p className="text-xs text-tinta-2">{t("ui.fert.need", { min: d.minPoints })}</p>
         </>
       )}
       {request.error && <ErrorBox error={request.error} />}
       <div>
         <Button variant="primary" disabled={!any || request.isPending} onClick={() => request.mutate()}>
-          {t("ui.fertCompute")}
+          {t("ui.fert.compute")}
         </Button>
       </div>
     </section>

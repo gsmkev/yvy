@@ -27,7 +27,7 @@ export function AssignPlots({ member, onClose }: { member: Member; onClose: () =
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["farm"] });
       qc.invalidateQueries({ queryKey: ["farms"] });
-      toast(t("ui.toastPlotsAssigned"));
+      toast(t("ui.toast.plotsAssigned"));
       onClose();
     },
   });
@@ -38,7 +38,7 @@ export function AssignPlots({ member, onClose }: { member: Member; onClose: () =
     setChosen(next);
   };
   return (
-    <Modal title={`${t("ui.assignPlots")} · ${member.fullName}`} onClose={onClose}>
+    <Modal title={`${t("ui.common.assignPlots")} · ${member.fullName}`} onClose={onClose}>
       {!loaded ? (
         <Spinner />
       ) : (
@@ -61,7 +61,7 @@ export function AssignPlots({ member, onClose }: { member: Member; onClose: () =
           ))}
           {save.error && <ErrorBox error={save.error} />}
           <Button onClick={() => save.mutate()} disabled={save.isPending}>
-            {t("ui.save")}
+            {t("ui.common.save")}
           </Button>
         </div>
       )}

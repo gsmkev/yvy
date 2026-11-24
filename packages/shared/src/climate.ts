@@ -4,12 +4,14 @@
  */
 import { addDays, localDate } from "./tasks";
 
+/** Datos climáticos de una estancia: lluvia y temperatura diarias, climatología (normal) y registros de pluviómetro. */
 export interface ClimateData {
   daily: { date: string; source: string; precipMm: number | null; tminC?: number | null; tmaxC?: number | null; soilMoisture0_7?: number | null }[];
   climatology: { dayOfYear: number; variable: string; mean: number | null }[];
   gauge: { capturedAt: number; mm: number; poiId?: string | null }[];
 }
 
+/** Día del año (1 a 366) de una fecha "AAAA-MM-DD". */
 export const dayOfYear = (date: string): number =>
   Math.floor((Date.parse(`${date}T00:00:00Z`) - Date.parse(`${date.slice(0, 4)}-01-01T00:00:00Z`)) / 86_400_000) + 1;
 
@@ -49,6 +51,7 @@ export function normalBetween(clim: ClimateData["climatology"], from: string, to
   return n ? sum : null;
 }
 
+/** Suma de los registros de pluviómetro entre dos instantes (ms); null si no hay ninguno. */
 export const gaugeBetween = (g: ClimateData["gauge"], fromMs: number, toMs: number): number | null => {
   const rows = g.filter((x) => x.capturedAt >= fromMs && x.capturedAt <= toMs);
   return rows.length ? rows.reduce((a, x) => a + x.mm, 0) : null;
@@ -66,6 +69,7 @@ export function campaignStart(today: string = localDate(Date.now())): string {
   return today >= `${y}-09-01` ? `${y}-09-01` : `${y - 1}-09-01`;
 }
 
+/** Lluvia de un período según pluviómetro, satélite y normal, para comparar. */
 export interface GaugeRow {
   /** "AAAA-MM", o "season" para el total de la campaña. */
   key: string;
@@ -118,6 +122,7 @@ export function gaugeTable(
 export const gaugeVsSat = (r: Pick<GaugeRow, "gaugeMm" | "satMm">): number | null =>
   r.gaugeMm === null || !r.satMm ? null : ((r.gaugeMm - r.satMm) / r.satMm) * 100;
 
+/** ¿Hay registros de pluviómetro sin punto asignado? */
 export const hasUnassignedRain = (c: ClimateData): boolean => c.gauge.some((g) => !g.poiId);
 
 /** Lunes de la semana de `iso` (la semana laboral empieza el lunes). */

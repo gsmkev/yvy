@@ -1,5 +1,5 @@
 /**
- * Contrato de sincronización (PRD §11 con ajustes de PRD-cloudflare §4.3).
+ * Contrato de sincronización entre el celular y el Worker: mutaciones del push y filas del pull.
  * Push: lote ≤ LIMITS.sync.maxMutationsPerPush de mutaciones idempotentes (mutationId UUIDv7).
  * Pull: por tabla, paginado con cursor (version, id) que asigna el servidor.
  */
@@ -12,6 +12,7 @@ const epochMs = z.number().int().nonnegative();
 const lon = z.number().min(-180).max(180);
 const lat = z.number().min(-90).max(90);
 
+/** Registro de campo tal como viaja en el push y el pull. */
 export const recordRow = z.object({
   id: uuid,
   farmId: uuid,
@@ -27,10 +28,12 @@ export const recordRow = z.object({
   capturedAt: epochMs,
 });
 
-/** Tipos de adjunto: foto WebP (con miniatura) o nota de voz m4a (F-09, sin miniatura). */
+/** Tipos de adjunto: foto WebP (con miniatura) o nota de voz m4a. */
 export const ATTACHMENT_MIMES = ["image/webp", LIMITS.audio.mime] as const;
+/** ¿El tipo MIME es el de una nota de voz? */
 export const isAudioMime = (mime: string): boolean => mime === LIMITS.audio.mime;
 
+/** Adjunto (foto o nota de voz) de un registro. */
 export const attachmentRow = z
   .object({
     id: uuid,
@@ -44,7 +47,7 @@ export const attachmentRow = z
     message: "Adjunto demasiado grande",
   });
 
-/** Desde el celular las tareas solo cambian de estado (PRD §11). */
+/** Desde el celular las tareas solo cambian de estado. */
 export const taskStatusRow = z.object({
   id: uuid,
   status: z.enum(TASK_STATUS),
@@ -52,21 +55,21 @@ export const taskStatusRow = z.object({
   recordId: uuid.nullable(),
 });
 
-/** Tilde de un ítem de la lista de verificación de una tarea (F-15). */
+/** Tilde de un ítem de la lista de verificación de una tarea. */
 export const taskCheckRow = z.object({
   id: uuid,
   itemId: z.string().min(1).max(24),
   done: z.boolean(),
 });
 
-/** T-02: comentario nuevo en una tarea. El id lo pone el celular; el nombre del autor lo pone el servidor. */
+/** Comentario nuevo en una tarea. El id lo pone el celular; el nombre del autor lo pone el servidor. */
 export const taskCommentRow = z.object({
   id: z.string().min(1).max(40),
   taskId: uuid,
   text: z.string().trim().min(1).max(LIMITS.tasks.maxCommentLength),
 });
 
-/** Punto de interés marcado desde el celular (PRD §11: solo roles que no son `worker`). */
+/** Punto de interés marcado desde el celular (solo roles que no son `worker`). */
 export const poiRow = z.object({
   id: uuid,
   farmId: uuid,
@@ -77,7 +80,7 @@ export const poiRow = z.object({
 });
 
 /**
- * Lote dibujado o editado en el celular (M-03, M-04). La geometría es un Polígono GeoJSON; el servidor valida
+ * Lote dibujado o editado en el celular. La geometría es un Polígono GeoJSON; el servidor valida
  * la forma, calcula área y bbox y aplica el límite de hectáreas del plan. Solo roles que no son `worker`.
  */
 export const plotRow = z.object({
@@ -89,7 +92,7 @@ export const plotRow = z.object({
   geometry: z.unknown(),
 });
 
-/** T-08: comentario con menciones; el servidor valida que los mencionados sean de la organización. */
+/** Comentario con menciones; el servidor valida que los mencionados sean de la organización. */
 export const commentRow = z.object({
   id: uuid,
   recordId: uuid,
@@ -100,6 +103,7 @@ export const commentRow = z.object({
 const base = { mutationId: uuid };
 const del = z.object({ id: uuid });
 
+/** Mutación del push: una operación idempotente identificada por `mutationId`. */
 export const mutation = z.discriminatedUnion("kind", [
   z.object({ ...base, kind: z.literal("records.upsert"), row: recordRow }),
   z.object({ ...base, kind: z.literal("records.delete"), row: del }),
@@ -113,15 +117,20 @@ export const mutation = z.discriminatedUnion("kind", [
   z.object({ ...base, kind: z.literal("comments.upsert"), row: commentRow }),
   z.object({ ...base, kind: z.literal("comments.delete"), row: del }),
 ]);
+/** Mutación del push. */
 export type Mutation = z.infer<typeof mutation>;
+/** Tipo de mutación (por ejemplo `records.upsert`). */
 export type MutationKind = Mutation["kind"];
 
+/** Cuerpo del push: dispositivo y lote de mutaciones. */
 export const pushRequest = z.object({
   deviceId: z.string().min(1).max(64),
   mutations: z.array(mutation).min(1).max(LIMITS.sync.maxMutationsPerPush),
 });
+/** Cuerpo del push. */
 export type PushRequest = z.infer<typeof pushRequest>;
 
+/** Motivo por el que el servidor rechaza una mutación. */
 export type RejectReason =
   | "not_found"
   | "forbidden"
@@ -130,13 +139,15 @@ export type RejectReason =
   | "too_many_attachments"
   | "deleted"
   | "captured_in_future"
-  /** T-03: la tarea pide foto y/o ubicación en el registro con el que se cierra. */
+  /** La tarea pide foto y/o ubicación en el registro con el que se cierra. */
   | "close_requirements";
 
+/** Resultado de una mutación: aplicada, duplicada (ya aplicada antes) o rechazada. */
 export type MutationResult =
   | { mutationId: string; status: "applied" | "duplicate" }
   | { mutationId: string; status: "rejected"; reason: RejectReason; detail?: string };
 
+/** Respuesta del push: un resultado por mutación. */
 export interface PushResponse {
   results: MutationResult[];
 }
@@ -161,6 +172,7 @@ export const PULL_TABLES = [
   "comments",
   "warehouses",
 ] as const;
+/** Tabla del pull. */
 export type PullTable = (typeof PULL_TABLES)[number];
 
 /** Tablas que dependen de las asignaciones del empleado: se rehacen si cambian. */
@@ -178,15 +190,20 @@ export const ASSIGNMENT_SCOPED_TABLES: readonly PullTable[] = [
   "comments",
 ];
 
+/** Cursor de paginación del pull: (version, id) de la última fila recibida. */
 export const cursor = z.object({ version: z.number().int().nonnegative(), id: z.string() });
+/** Cursor de paginación del pull. */
 export type Cursor = z.infer<typeof cursor>;
 
+/** Cuerpo del pull: tabla y cursor desde el que seguir (null = desde el principio). */
 export const pullRequest = z.object({
   table: z.enum(PULL_TABLES),
   cursor: cursor.nullable(),
 });
+/** Cuerpo del pull. */
 export type PullRequest = z.infer<typeof pullRequest>;
 
+/** Una página del pull de una tabla. */
 export interface PullResponse<Row = Record<string, unknown>> {
   table: PullTable;
   rows: Row[];

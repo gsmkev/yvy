@@ -1,6 +1,7 @@
-/** Umbrales de avisos configurables por estancia (backlog C-04). Valores por defecto = reglas del servidor. */
+/** Umbrales de avisos configurables por estancia y valores de plagas. Los valores por defecto son las reglas del servidor. */
 import { z } from "zod";
 
+/** Umbrales por defecto de los avisos de clima de una estancia. */
 export const DEFAULT_ALERT_SETTINGS = {
   /** Helada: mínima pronosticada igual o menor a este valor (°C). */
   frostTminC: 2,
@@ -10,12 +11,14 @@ export const DEFAULT_ALERT_SETTINGS = {
   droughtDeficitPct: 50,
 } as const;
 
+/** Rango permitido para cada umbral configurable. */
 export const ALERT_SETTINGS_LIMITS = {
   frostTminC: { min: -5, max: 8 },
   excessRainMm24h: { min: 10, max: 300 },
   droughtDeficitPct: { min: 10, max: 90 },
 } as const;
 
+/** Validación de los umbrales configurados, dentro de `ALERT_SETTINGS_LIMITS`. */
 export const alertSettingsSchema = z.object({
   frostTminC: z.number().min(ALERT_SETTINGS_LIMITS.frostTminC.min).max(ALERT_SETTINGS_LIMITS.frostTminC.max),
   excessRainMm24h: z
@@ -28,9 +31,10 @@ export const alertSettingsSchema = z.object({
     .max(ALERT_SETTINGS_LIMITS.droughtDeficitPct.max),
 });
 
+/** Umbrales de avisos de una estancia. */
 export type AlertSettings = z.infer<typeof alertSettingsSchema>;
 /**
- * Umbrales de plagas por defecto (backlog A-41). VALORES POR DEFECTO A REVISAR POR UN AGRÓNOMO:
+ * Umbrales de plagas por defecto. VALORES POR DEFECTO A REVISAR POR UN AGRÓNOMO:
  * son referencias generales de manejo integrado de plagas en soja, no una recomendación para un lote.
  */
 export const PEST_THRESHOLDS: Record<
@@ -48,6 +52,7 @@ export const PEST_WINDOW_DAYS = 7;
 
 /** Los tres umbrales en el orden en que se muestran, con las claves de texto de cada uno (título y ayuda). */
 export const ALERT_SETTING_KEYS = ["frostTminC", "excessRainMm24h", "droughtDeficitPct"] as const;
+/** Claves i18n (título y ayuda) de cada umbral. */
 export const ALERT_SETTING_LABELS = {
   frostTminC: ["ui.alert.settingsFrost", "ui.alert.settingsFrostHint"],
   excessRainMm24h: ["ui.alert.settingsRain", "ui.alert.settingsRainHint"],

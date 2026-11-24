@@ -1,5 +1,5 @@
 /**
- * Ganadería (ADR 0004, backlog G-*). Constantes y lógica pura compartidas por app, web y Worker.
+ * Ganadería. Constantes y lógica pura compartidas por app, web y Worker.
  * La hacienda de un potrero NO se guarda: se calcula desde el último conteo más los movimientos y la mortandad
  * posteriores (ver computeStock). Los potreros son lotes con kind = "pasture".
  */
@@ -15,6 +15,7 @@ export type HerdCounts = Partial<Record<HerdCategory, number>>;
 /** Tope por categoría en un solo registro (evita errores de tipeo como un cero de más). */
 export const MAX_HEAD_PER_CATEGORY = 100_000;
 
+/** Conteo en cero de todas las categorías de hacienda. */
 export const emptyCounts = (): Record<HerdCategory, number> => ({
   vaca: 0,
   vaquilla: 0,
@@ -23,6 +24,7 @@ export const emptyCounts = (): Record<HerdCategory, number> => ({
   toro: 0,
 });
 
+/** Total de cabezas de un conteo. */
 export const totalHead = (c: HerdCounts): number => HERD_CATEGORIES.reduce((n, k) => n + (c[k] ?? 0), 0);
 
 /**
@@ -39,18 +41,22 @@ export const UA_EQUIVALENTS: Record<HerdCategory, number> = {
 
 /** Carga máxima por defecto en UA/ha. VALOR POR DEFECTO A REVISAR; cada estancia lo configura. */
 export const DEFAULT_MAX_UA_PER_HA = 1;
+/** Rango permitido para la carga máxima configurable (UA/ha). */
 export const MAX_UA_PER_HA_LIMITS = { min: 0.1, max: 10 } as const;
 
+/** Unidades animales (UA) de un conteo según `UA_EQUIVALENTS`. */
 export const uaOf = (c: HerdCounts): number => HERD_CATEGORIES.reduce((n, k) => n + (c[k] ?? 0) * UA_EQUIVALENTS[k], 0);
 
 /** UA/ha de un potrero, o null si no tiene superficie. */
 export const uaPerHa = (c: HerdCounts, areaHa: number): number | null => (areaHa > 0 ? uaOf(c) / areaHa : null);
 
+/** Conteo de la hacienda de un potrero (la manga): reemplaza lo calculado hasta ese momento. */
 export interface CountEvent {
   plotId: string;
   capturedAt: number;
   counts: HerdCounts;
 }
+/** Movimiento de hacienda entre potreros, o desde/hacia fuera del campo. */
 export interface MoveEvent {
   /** Origen: null si la hacienda entra de afuera (compra, nacimiento). */
   fromPlotId: string | null;
@@ -59,6 +65,7 @@ export interface MoveEvent {
   capturedAt: number;
   counts: HerdCounts;
 }
+/** Muertes de una categoría en un potrero. */
 export interface MortalityEvent {
   plotId: string;
   capturedAt: number;
@@ -66,6 +73,7 @@ export interface MortalityEvent {
   head: number;
 }
 
+/** Hacienda calculada de un potrero. */
 export interface PlotStock {
   plotId: string;
   counts: Record<HerdCategory, number>;
@@ -75,7 +83,7 @@ export interface PlotStock {
 }
 
 /**
- * Hacienda actual por potrero (regla del ADR 0004): último `herd_count` de cada potrero + movimientos de entrada
+ * Hacienda actual por potrero: último `herd_count` de cada potrero + movimientos de entrada
  * y salida y mortandad posteriores a ese conteo. Un conteo nuevo corrige cualquier error acumulado.
  * Si un potrero nunca se contó, se parte de cero y se aplican todos sus eventos.
  */
@@ -133,6 +141,7 @@ export function computeStock(
   return out;
 }
 
+/** Hacienda total de la estancia y su carga. */
 export interface FarmStock {
   counts: Record<HerdCategory, number>;
   total: number;
@@ -156,21 +165,25 @@ export function farmStock(stock: Iterable<PlotStock>, areaByPlot: ReadonlyMap<st
 
 /** Motivos de un movimiento de hacienda. */
 export const MOVE_REASONS = ["rotacion", "sanidad", "venta", "compra", "otro"] as const;
+/** Motivo de un movimiento de hacienda. */
 export type MoveReason = (typeof MOVE_REASONS)[number];
 
-/** Niveles de un registro de agua que disparan el aviso `water_low` (G-30). */
+/** Niveles de un registro de agua que disparan el aviso `water_low`. */
 export const WATER_LOW_LEVELS = ["low", "dry"] as const;
 
-/** Puntos de interés cuyo nivel se registra y entra al aviso de seca: aguadas y tajamares, bebederos y molinos (G-30). */
+/** Puntos de interés cuyo nivel se registra y entra al aviso de seca: aguadas y tajamares, bebederos y molinos. */
 export const WATER_POI_KINDS = ["water", "trough", "mill"] as const;
+/** ¿El tipo de punto de interés lleva registro de nivel de agua? */
 export const isWaterPoi = (kind: string): boolean => (WATER_POI_KINDS as readonly string[]).includes(kind);
 
 /** Causas de mortandad (lista cerrada para poder sumar por causa). */
 export const MORTALITY_CAUSES = ["enfermedad", "accidente", "parto", "rayo", "sequia", "vibora", "desconocida", "otra"] as const;
+/** Causa de mortandad. */
 export type MortalityCause = (typeof MORTALITY_CAUSES)[number];
 
-/** Motivos de un tratamiento sanitario (G-11) y de una campaña planificada (G-10). */
+/** Motivos de un tratamiento sanitario y de una campaña planificada. */
 export const HEALTH_REASONS = ["aftosa", "brucelosis", "carbunclo", "garrapata", "desparasitacion", "otro"] as const;
+/** Motivo de un tratamiento o campaña sanitaria. */
 export type HealthReason = (typeof HEALTH_REASONS)[number];
 
 /**
@@ -187,7 +200,7 @@ export function livestockPlotProblem(kind: string, plotId: string | null, data: 
   return null;
 }
 
-/** Respuesta de GET /org/farms/:id/stock (G-03). */
+/** Respuesta de GET /org/farms/:id/stock. */
 export interface PlotStockRow {
   plotId: string;
   name: string;
@@ -198,7 +211,7 @@ export interface PlotStockRow {
   uaPerHa: number | null;
   lastCountAt: number | null;
   overLimit: boolean;
-  /** Tipo de pastura (del texto del potrero o el de la estancia) y carga recomendada (ADR 0005, sección 4). */
+  /** Tipo de pastura (del texto del potrero o el de la estancia) y carga recomendada. */
   pastureClass: PastureClass;
   recommendedUaPerHa: number;
   recommendedUa: number;
@@ -206,6 +219,7 @@ export interface PlotStockRow {
   diffUa: number;
 }
 
+/** Respuesta del stock de hacienda de una estancia: por potrero, total, carga recomendada y estado de la carga. */
 export interface FarmStockResponse {
   maxUaPerHa: number;
   maxUaIsDefault: boolean;
@@ -230,9 +244,9 @@ export interface FarmStockResponse {
   truncated: boolean;
 }
 
-// ---------- gan-p2 ----------
+// ---------- Avisos de abigeato ----------
 
-/** Un aviso de abigeato (G-13), tal como lo lista GET /org/farms/:id/theft. */
+/** Un aviso de abigeato, tal como lo lista GET /org/farms/:id/theft. */
 export interface TheftRow {
   id: string;
   plotId: string | null;
@@ -247,6 +261,7 @@ export interface TheftRow {
   note: string | null;
 }
 
+/** Respuesta del listado de avisos de abigeato del período `from`..`to`, con totales. */
 export interface TheftResponse {
   from: number;
   to: number;

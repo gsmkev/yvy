@@ -1,18 +1,20 @@
 /**
- * Único lugar con límites operativos (docs/PRD-cloudflare.md §6).
+ * Único lugar con límites operativos del plan gratis de Cloudflare.
  * Pasar a plan pago = cambiar valores acá, nunca lógica.
  */
+
+/** Límites operativos agrupados por área (sincronización, fotos, avisos, planes, ERP). */
 export const LIMITS = {
   sync: {
     /** Mutaciones por push. D1 permite 50 queries por invocación; dejamos margen. */
     maxMutationsPerPush: 40,
-    /** Filas por página de pull. El PRD dice 500; 200 deja margen a los 10 ms de CPU. */
+    /** Filas por página de pull; 200 deja margen a los 10 ms de CPU del Worker. */
     pullPageSize: 200,
-    /** Historial de registros y adjuntos que baja al celular (PRD §11). */
+    /** Historial de registros y adjuntos que baja al celular. */
     recordsHistoryMs: 30 * 24 * 60 * 60 * 1000,
-    /** Movimientos y mortandad de hacienda que bajan al celular (G-03): el stock se calcula allá, sin señal. */
+    /** Movimientos y mortandad de hacienda que bajan al celular: el stock se calcula allá, sin señal. */
     herdEventsHistoryMs: 365 * 24 * 60 * 60 * 1000,
-    /** NDVI que baja al celular (PRD §11: último año). */
+    /** NDVI que baja al celular (el último año). */
     indexStatsHistoryMs: 365 * 24 * 60 * 60 * 1000,
     /** Un registro con capturedAt más allá de esto en el futuro se rechaza (reloj mal puesto). */
     maxFutureCaptureMs: 60 * 60 * 1000,
@@ -20,30 +22,30 @@ export const LIMITS = {
     tasksDoneHistoryMs: 30 * 24 * 60 * 60 * 1000,
     /** Largo máximo del nombre de un punto de interés. */
     maxPoiNameLength: 120,
-    /** Ventana en que el empleado puede editar o borrar sus registros (RF-34, §9). */
+    /** Ventana en que el empleado puede editar o borrar sus registros. */
     workerEditWindowMs: 24 * 60 * 60 * 1000,
-    /** Sincronización automática en primer plano (PRD: 15 min; anexo Cloudflare: 30). */
+    /** Intervalo de sincronización automática en primer plano. */
     autoSyncIntervalMs: 30 * 60 * 1000,
     /** Si el servidor responde 1102 (CPU), el cliente divide el lote por esto. */
     backoffDivisor: 2,
     minMutationsPerPush: 5,
   },
   photos: {
-    /** PRD RF-31 dice 5; el anexo Cloudflare baja a 3 por el límite de R2. */
+    /** Fotos por registro; el tope es bajo por el límite de almacenamiento de R2. */
     maxPerRecord: 3,
     maxLongSidePx: 1280,
     webpQuality: 0.6,
     thumbLongSidePx: 320,
-    /** X-09: aviso de calidad sobre una miniatura. Umbrales orientativos (luminancia 0-255; varianza del laplaciano). */
+    /** Aviso de calidad sobre una miniatura. Umbrales orientativos (luminancia 0-255; varianza del laplaciano). */
     quality: { sidePx: 128, darkMeanLuma: 45, blurLaplacianVar: 25 },
     maxBytes: 600 * 1024,
-    /** F-18: tras tantos intentos fallidos una foto deja de reintentarse sola y espera el "Reintentar" de la persona. */
+    /** Tras tantos intentos fallidos una foto deja de reintentarse sola y espera el "Reintentar" de la persona. */
     maxUploadAttempts: 8,
     uploadUrlTtlSeconds: 15 * 60,
     downloadUrlTtlSeconds: 60 * 60,
   },
   audio: {
-    /** Nota de voz (F-09): AAC en .m4a, un solo archivo por registro, sin miniatura. */
+    /** Nota de voz: AAC en .m4a, un solo archivo por registro, sin miniatura. */
     mime: "audio/mp4",
     maxSeconds: 90,
     maxBytes: 1024 * 1024,
@@ -58,10 +60,10 @@ export const LIMITS = {
     emailCodesPerIp: 10,
     emailCodesIpWindowMs: 60 * 60 * 1000,
     refreshTokenTtlMs: 90 * 24 * 60 * 60 * 1000,
-    /** Ingreso con teléfono y PIN de 6 dígitos (F-24): intentos por cuenta antes de bloquear, y cuánto dura el bloqueo. */
+    /** Ingreso con teléfono y PIN de 6 dígitos: intentos por cuenta antes de bloquear, y cuánto dura el bloqueo. */
     pinMaxAttempts: 5,
     pinLockMs: 15 * 60 * 1000,
-    /** P-08: segundo factor. Intentos por usuario antes de bloquear, bloqueo, vida del pase tras el código de email y recuperación. */
+    /** Segundo factor. Intentos por usuario antes de bloquear, bloqueo, vida del pase tras el código de email y recuperación. */
     totpMaxAttempts: 5,
     totpLockMs: 15 * 60 * 1000,
     totpTicketTtlMs: 5 * 60 * 1000,
@@ -72,7 +74,7 @@ export const LIMITS = {
     minPlotHa: 0.1,
     maxFarmHa: 100_000,
     maxVertices: 5_000,
-    /** M-20: vértices de una línea (alambrado, camino, cañería) y líneas por estancia. */
+    /** Vértices de una línea (alambrado, camino, cañería) y líneas por estancia. */
     maxLineVertices: 2_000,
     maxLinesPerFarm: 500,
   },
@@ -81,7 +83,7 @@ export const LIMITS = {
     /** Tolerancia de reloj para la firma HMAC. */
     maxSkewMs: 5 * 60 * 1000,
   },
-  /** F-26: tope de mapas sin conexión en el celular (suma de todas las estancias), para no llenarlo de a poco. */
+  /** Tope de mapas sin conexión en el celular (suma de todas las estancias), para no llenarlo de a poco. */
   offline: {
     maxMapBytes: 600 * 1024 * 1024,
   },
@@ -100,14 +102,14 @@ export const LIMITS = {
     forecastCacheMs: 3 * 60 * 60 * 1000,
     forecastRunsKept: 4,
     coordDecimals: 4,
-    /** Horas de pronóstico que se guardan para las ventanas de pulverización (A-13). */
+    /** Horas de pronóstico que se guardan para las ventanas de pulverización. */
     hourlyHorizonHours: 48,
-    /** C-03: pronóstico por lote solo en estancias de más de esta superficie (ha); como mucho esta cantidad de lotes. */
+    /** Pronóstico por lote solo en estancias de más de esta superficie (ha); como mucho esta cantidad de lotes. */
     plotForecastMinFarmHa: 2_000,
     plotForecastMaxPlots: 60,
     plotForecastDays: 10,
   },
-  /** Condiciones para pulverizar (A-13): viento en km/h, Delta T en °C y sin lluvia. */
+  /** Condiciones para pulverizar: viento en km/h, Delta T en °C y sin lluvia. */
   spray: {
     windMinKmh: 3,
     windMaxKmh: 15,
@@ -115,7 +117,7 @@ export const LIMITS = {
     deltaTMax: 8,
     maxRainMm: 0,
   },
-  /** Informe gratis a cambio del email (V-04). */
+  /** Informe gratis a cambio del email. */
   leads: {
     /** Pedidos por conexión (IP) en 24 h. */
     perIpPerDay: 3,
@@ -145,7 +147,7 @@ export const LIMITS = {
     /** Pedidos que muestra el panel interno. */
     listLimit: 50,
   },
-  /** F-14: formularios configurables por la organización. */
+  /** Formularios configurables por la organización. */
   forms: {
     maxFieldsPerKind: 10,
     maxLabel: 60,
@@ -154,14 +156,14 @@ export const LIMITS = {
     maxTextLength: 500,
   },
   monitoring: {
-    /** Estaciones de muestreo que propone la app por lote (F-12). */
+    /** Estaciones de muestreo que propone la app por lote. */
     defaultStations: 5,
     maxStations: 20,
     /** Conteo máximo por plaga en una estación. */
     maxCount: 10_000,
   },
   track: {
-    /** Recorrida GPS (F-05): puntos que se guardan tras simplificar, y tolerancia de la simplificación en metros. */
+    /** Recorrida GPS: puntos que se guardan tras simplificar, y tolerancia de la simplificación en metros. */
     maxPoints: 500,
     simplifyToleranceM: 3,
     /** Se descartan fixes con peor precisión que esto y los que no se movieron al menos esto. */
@@ -178,14 +180,14 @@ export const LIMITS = {
     dropThresholdPct: 15,
   },
   checklist: {
-    /** Ítems por tarea (F-15). */
+    /** Ítems por tarea. */
     maxItems: 30,
     maxTextLength: 120,
   },
   /**
-   * Precio público (ADR 0005 §5), US$ por hectárea y año. Ganadería con escalones: cada tramo paga su precio hasta `upToHa`.
+   * Precio público, US$ por hectárea y año. Ganadería con escalones: cada tramo paga su precio hasta `upToHa`.
    * `minMonth`: mínimo por mes equivalente. `annualMonths`: el pago anual paga 10 de 12 meses.
-   * ponytail: `usdToPyg` es una referencia fija para mostrar guaraníes; techo: cuando la organización carga su tipo
+   * `usdToPyg` es una referencia fija para mostrar guaraníes; cuando la organización carga su tipo
    * de cambio en el ERP se usa ese, y esto queda de respaldo (revisar cada año).
    */
   pricing: {
@@ -200,9 +202,9 @@ export const LIMITS = {
     cycleInstallments: 2,
     usdToPyg: 7_800,
   },
-  /** P-10: pedido de cambio de plan. */
+  /** Pedido de cambio de plan. */
   planRequest: { noteLength: 500, maxHa: 10_000_000, maxUsers: 100_000 },
-  /** T-07: lotes sin visitar. Días que se pueden elegir y el que vale por defecto. */
+  /** Lotes sin visitar. Días que se pueden elegir y el que vale por defecto. */
   visits: {
     staleDayOptions: [3, 7, 14, 30],
     defaultStaleDays: 7,
@@ -211,13 +213,13 @@ export const LIMITS = {
     /** Comentarios por tarea (se guardan como JSON en la propia tarea; ver tasks.comments). */
     maxComments: 50,
     maxCommentLength: 500,
-    /** Lotes que se pueden elegir de una vez en el mapa al crear tareas (T-01). */
+    /** Lotes que se pueden elegir de una vez en el mapa al crear tareas. */
     maxPlotsPerBatch: 40,
   },
   /** Días de prueba gratis al crear una cuenta (el alta y la landing usan este mismo número). Fuera de `plans` para no ser un plan. */
   trialDays: 60,
   /**
-   * Topes por plan (P-10): hectáreas de estancias y personas con acceso (todos los roles). `null` = sin tope.
+   * Topes por plan: hectáreas de estancias y personas con acceso (todos los roles). `null` = sin tope.
    * El equipo de Yvy puede fijar topes propios por organización desde el panel interno (organizations.max_ha / max_users).
    */
   plans: {
@@ -227,7 +229,7 @@ export const LIMITS = {
     demo: { maxHa: null, maxUsers: null },
   },
   oddities: {
-    /** X-26: se revisan los registros de los últimos días. */
+    /** Se revisan los registros de los últimos días. */
     windowDays: 90,
     maxCandidates: 500,
     /** Lluvia diaria por encima de esto (mm) se marca. Valor general: en el Chaco o el este puede haber más, y se confirma con "Está bien". */
@@ -238,11 +240,11 @@ export const LIMITS = {
     maxYieldTHa: { soja: 7, maiz: 18, trigo: 9, arroz: 14, girasol: 5, chia: 3, otro: 40 },
   },
   emergency: {
-    /** F-30: contactos de emergencia que se guardan en el celular. */
+    /** Contactos de emergencia que se guardan en el celular. */
     maxContacts: 5,
   },
   status: {
-    /** Horas sin una corrida buena a partir de las cuales un job de datos figura "atrasado" (P-04). */
+    /** Horas sin una corrida buena a partir de las cuales un job de datos figura "atrasado". */
     staleAfterHours: { sentinel2: 7 * 24, chirps: 3 * 24, firms: 2 * 24 },
     /** /ingest anota la corrida de un job a lo sumo una vez por este tiempo. */
     recordEveryMs: 60_000,
@@ -267,9 +269,9 @@ export const LIMITS = {
     /** Las cuentas diarias de pantallas se borran pasado este tiempo; los pasos del embudo quedan. */
     retentionMs: 90 * 24 * 60 * 60 * 1000,
   },
-  /** ERP sencillo (ADR 0004). */
+  /** ERP sencillo. */
   erp: {
-    /** Días de aviso antes del vencimiento de un lote de agroquímico o vacuna (E-12). */
+    /** Días de aviso antes del vencimiento de un lote de agroquímico o vacuna. */
     expiryWarnDays: 30,
     /** Filas que devuelven los listados de movimientos y costos (el plan gratis no admite más por request). */
     listLimit: 300,
@@ -280,19 +282,19 @@ export const LIMITS = {
      * por fila son ~9 sentencias; más que eso se responde 503 y el celular divide el envío.
      */
     maxEffectMovesPerPush: 60,
-    /** Asientos que entran en una exportación al contador (E-38); si hay más, se avisa que se recortó el período. */
+    /** Asientos que entran en una exportación al contador; si hay más, se avisa que se recortó el período. */
     exportLimit: 2000,
   },
-  /** T-08: comentarios en registros. */
+  /** Comentarios en registros. */
   comments: {
     maxLength: 1000,
     maxMentions: 10,
     /** Comentarios por registro (tope para que el celular no cargue hilos eternos). */
     maxPerRecord: 200,
   },
-  /** R-10: destinatarios externos de informes programados por organización. */
+  /** Destinatarios externos de informes programados por organización. */
   reportSchedules: { max: 10 },
-  /** I-01: API pública. */
+  /** API pública. */
   api: {
     /** Pedidos por token por minuto. */
     perMinute: 60,
@@ -300,42 +302,42 @@ export const LIMITS = {
     maxPageSize: 200,
     defaultPageSize: 50,
   },
-  /** K-06: registro de cambios de la organización. */
+  /** Registro de cambios de la organización. */
   audit: {
     pageSize: 50,
     /** Campos con valor corto que se guardan tal cual en el detalle de un cambio; el resto solo se nombra. */
     maxValueLength: 80,
   },
   share: {
-    /** Duraciones permitidas del enlace de solo lectura (K-04), en días. */
+    /** Duraciones permitidas del enlace de solo lectura, en días. */
     linkDays: [7, 30],
   },
   // agri-p2
-  /** Mapas de rendimiento (A-21): celdas de la grilla resumen y tamaño máximo del cuerpo que acepta el Worker. */
+  /** Mapas de rendimiento: celdas de la grilla resumen y tamaño máximo del cuerpo que acepta el Worker. */
   /**
-   * Comparación anónima con la zona (R-08): estancias de OTRAS organizaciones dentro de `radiusKm`. Solo se publica si hay
+   * Comparación anónima con la zona: estancias de OTRAS organizaciones dentro de `radiusKm`. Solo se publica si hay
    * al menos `minFarms` estancias de al menos `minOrgs` organizaciones distintas; vigor y lluvia de los últimos `windowDays`.
    */
   benchmark: { radiusKm: 30, minFarms: 3, minOrgs: 3, windowDays: 30, maxNeighbors: 300 },
   yieldMap: { maxCells: 800, maxBodyBytes: 120_000 },
   /**
-   * Capas propias (M-17): imagen georreferenciada por estancia. PNG/JPG con 4 esquinas se guardan tal cual;
+   * Capas propias: imagen georreferenciada por estancia. PNG/JPG con 4 esquinas se guardan tal cual;
    * un GeoTIFF (dron, mapa de suelos) lo convierte workers-py. El Worker solo valida tamaño y tipo.
    */
   customLayers: { maxPerFarm: 20, imageMaxBytes: 10_000_000, geotiffMaxBytes: 90_000_000, nameMaxLength: 80 },
   /**
-   * Roya asiática de la soja (A-40): mojado foliar estimado con el pronóstico horario. Una hora cuenta si la humedad
+   * Roya asiática de la soja: mojado foliar estimado con el pronóstico horario. Una hora cuenta si la humedad
    * relativa llega a `humidityPct` (o llueve `rainMm`) y la temperatura está entre `tempMinC` y `tempMaxC`.
    * Valores de referencia a revisar por un agrónomo.
    */
   rust: { humidityPct: 90, rainMm: 0.1, tempMinC: 15, tempMaxC: 28, watchHours: 8, warningHours: 12 },
   /**
-   * Zonas de amortiguación (A-15): distancia en metros a casas, escuelas y cursos de agua dentro de la cual una
+   * Zonas de amortiguación: distancia en metros a casas, escuelas y cursos de agua dentro de la cual una
    * aplicación se marca. Valores de referencia que la web deja editar: confirmá lo que exige la normativa vigente
    * y la habilitación de tu zona antes de usarlos como límite legal.
    */
   buffer: { house: 100, school: 100, water: 100, stream: 100, maxM: 2_000 },
-  /** Ventana de siembra (A-05): valores de referencia, a revisar por un agrónomo. */
+  /** Ventana de siembra: valores de referencia, a revisar por un agrónomo. */
   sowing: {
     /** Humedad del suelo superficial (NASA POWER GWETTOP, fracción de saturación 0-1): abajo no germina, arriba encharca. */
     soilMinFraction: 0.35,
@@ -349,19 +351,19 @@ export const LIMITS = {
     /** Días de pronóstico que se evalúan. */
     horizonDays: 7,
   },
-  /** Mapas de fertilidad (A-31): puntos con coordenadas y valor que pide cada parámetro para interpolar. Igual en workers-py. */
+  /** Mapas de fertilidad: puntos con coordenadas y valor que pide cada parámetro para interpolar. Igual en workers-py. */
   fertility: { minPoints: 8 },
-  /** Prescripción de dosis variable (A-33): dosis máxima por hectárea (kg o l). */
+  /** Prescripción de dosis variable: dosis máxima por hectárea (kg o l). */
   prescription: { maxRate: 100_000 },
-  /** Feedlot (G-33): ingredientes por ración, tolerancia de la suma de % de MS y tope de MS por suministro (kg). */
+  /** Feedlot: ingredientes por ración, tolerancia de la suma de % de MS y tope de MS por suministro (kg). */
   feedlot: { maxRationItems: 12, pctTolerance: 0.5, maxKgDm: 1_000_000 },
-  /** Planilla para el contador (E-27): meses como máximo por exportación. */
+  /** Planilla para el contador: meses como máximo por exportación. */
   payroll: { maxMonths: 24 },
-  /** Exportación para sistemas contables (I-06): columnas por formato y diferencia tolerada entre el desglose de IVA y el importe (Gs.). */
+  /** Exportación para sistemas contables: columnas por formato y diferencia tolerada entre el desglose de IVA y el importe (Gs.). */
   exportFormat: { maxColumns: 20, taxToleranceGs: 5 },
-  /** Riego (A-43): lámina máxima por registro, en mm. */
+  /** Riego: lámina máxima por registro, en mm. */
   irrigation: { maxMm: 500 },
-  /** Balance hídrico por lote (C-08): lluvia menos consumo del cultivo, en mm. */
+  /** Balance hídrico por lote: lluvia menos consumo del cultivo, en mm. */
   waterBalance: {
     /** Ventana reciente para el riesgo de estrés. */
     recentDays: 14,
@@ -373,8 +375,10 @@ export const LIMITS = {
   },
 } as const;
 
+/** Forma del objeto `LIMITS`. */
 export type Limits = typeof LIMITS;
 
+/** Nombre de un plan de `LIMITS.plans`. */
 export type PlanName = keyof typeof LIMITS.plans;
 
 /** Topes efectivos de una organización: los propios si los tiene, y si no los de su plan. */

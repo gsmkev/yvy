@@ -1,13 +1,16 @@
 /**
- * Plantillas de monitoreo por cultivo (F-13) y cuentas del monitoreo por estaciones (F-12).
+ * Plantillas de monitoreo por cultivo y cuentas del monitoreo por estaciones.
  * UMBRALES POR DEFECTO A REVISAR POR UN AGRÓNOMO: son referencias generales de manejo integrado de plagas,
  * no una recomendación para un lote concreto. La estancia puede decidir otros valores.
  */
 import type { PESTS } from "./records";
 
+/** Unidades en que se cuenta cada plaga. */
 export const MONITOR_UNITS = ["perMeter", "percentPlants", "percentLeafArea"] as const;
+/** Unidad de conteo de una plaga. */
 export type MonitorUnit = (typeof MONITOR_UNITS)[number];
 
+/** Plaga o enfermedad de una plantilla de monitoreo, con su unidad y umbral de daño por defecto. */
 export interface MonitorItem {
   /** Clave estable guardada en el registro (counts/averages). Su etiqueta es app.monitor_<key>. */
   key: string;
@@ -20,6 +23,7 @@ export interface MonitorItem {
   step: number;
 }
 
+/** Plantillas de monitoreo por cultivo. */
 export const MONITOR_TEMPLATES = {
   soja: [
     { key: "chinche_verde", pest: "chinche", unit: "perMeter", threshold: 2, step: 1 },
@@ -35,12 +39,16 @@ export const MONITOR_TEMPLATES = {
   ],
 } as const satisfies Record<string, readonly MonitorItem[]>;
 
+/** Cultivo que tiene plantilla de monitoreo. */
 export type MonitorCrop = keyof typeof MONITOR_TEMPLATES;
+/** Cultivos con plantilla de monitoreo. */
 export const MONITOR_CROPS = Object.keys(MONITOR_TEMPLATES) as MonitorCrop[];
 
+/** Plantilla de monitoreo del cultivo, o null si no tiene. */
 export const monitorTemplate = (crop: string | null | undefined): readonly MonitorItem[] | null =>
   crop && crop in MONITOR_TEMPLATES ? MONITOR_TEMPLATES[crop as MonitorCrop] : null;
 
+/** Conteos de una estación de monitoreo por clave de plaga. */
 export interface StationCounts {
   counts: Record<string, number>;
 }
@@ -56,6 +64,7 @@ export function stationAverages(stations: readonly StationCounts[], template: re
   return out;
 }
 
+/** Comparación del promedio de una plaga con su umbral. */
 export interface ThresholdResult {
   key: string;
   average: number;
@@ -66,6 +75,7 @@ export interface ThresholdResult {
   over: boolean;
 }
 
+/** Compara el promedio de cada ítem de la plantilla con su umbral; omite los que no tienen promedio. */
 export function compareThresholds(averages: Record<string, number>, template: readonly MonitorItem[]): ThresholdResult[] {
   return template
     .filter((i) => averages[i.key] !== undefined)

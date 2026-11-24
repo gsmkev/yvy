@@ -1,5 +1,5 @@
 /**
- * Preferencias de notificación por usuario (backlog U-29): por tipo de aviso, push y email, y un horario de
+ * Preferencias de notificación por usuario: por tipo de aviso, push y email, y un horario de
  * silencio para el push. Todo está prendido por defecto; los cambios se guardan completos (no hay "diferencias").
  */
 import { z } from "zod";
@@ -7,12 +7,15 @@ import { ALERT_KINDS } from "./schema";
 import type { Role } from "./schema";
 import { isTimeOfDay } from "./tasks";
 
+/** Tipo de aviso al que se le configuran las notificaciones. */
 export type NotifyKind = (typeof ALERT_KINDS)[number];
+/** Canal de notificación. */
 export type NotifyChannel = "push" | "email";
 
 const channels = z.object({ push: z.boolean(), email: z.boolean() });
 const hhmm = z.string().refine(isTimeOfDay, "Hora inválida (HH:MM)");
 
+/** Preferencias de notificación: canales por tipo de aviso y horario de silencio del push. */
 export const notificationPrefsSchema = z.object({
   kinds: z.object({
     frost: channels,
@@ -30,8 +33,10 @@ export const notificationPrefsSchema = z.object({
     .object({ enabled: z.boolean(), start: hhmm, end: hhmm })
     .refine((q) => !q.enabled || q.start !== q.end, "El inicio y el fin del silencio no pueden ser iguales"),
 });
+/** Preferencias de notificación de un usuario. */
 export type NotificationPrefs = z.infer<typeof notificationPrefsSchema>;
 
+/** Preferencias por defecto: todo prendido y silencio desactivado. */
 export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   kinds: Object.fromEntries(ALERT_KINDS.map((k) => [k, { push: true, email: true }])) as NotificationPrefs["kinds"],
   quiet: { enabled: false, start: "21:00", end: "06:00" },
@@ -67,7 +72,7 @@ export const inQuietHours = (q: NotificationPrefs["quiet"], time: string): boole
 };
 
 /**
- * Qué avisos y por qué canal le llegan a un rol (RF-73): dueño, administrador y agrónomo reciben todo por push y
+ * Qué avisos y por qué canal le llegan a un rol: dueño, administrador y agrónomo reciben todo por push y
  * email; el empleado solo helada y fuego de sus lotes, por push.
  */
 export const notifyOptionsFor = (role: Role): { kinds: readonly NotifyKind[]; email: boolean } =>

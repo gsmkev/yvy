@@ -1,5 +1,5 @@
 /**
- * Calendario sanitario (G-10): eventos planificados de la organización (campañas de vacunación, tratamientos).
+ * Calendario sanitario: eventos planificados de la organización (campañas de vacunación, tratamientos).
  * Un evento está hecho cuando existe un registro `health` que le corresponde (mismo motivo, misma estancia si el
  * evento es de una sola, y cargado dentro de la ventana del evento). Lógica pura: la usan el Worker y la web.
  */
@@ -9,6 +9,7 @@ import { HEALTH_REASONS, HERD_CATEGORIES } from "./livestock";
 /** Días antes de la fecha planificada en que un tratamiento ya cuenta como cumplido (se adelantó la campaña). */
 export const SANITARY_EARLY_DAYS = 15;
 
+/** Entrada para planificar un evento sanitario de la organización o de una estancia. */
 export const sanitaryEventSchema = z.object({
   reason: z.enum(HEALTH_REASONS),
   plannedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -20,15 +21,19 @@ export const sanitaryEventSchema = z.object({
   /** Crear una tarea para cada empleado asignado a un potrero. */
   createTasks: z.boolean().default(true),
 });
+/** Datos de un evento sanitario planificado. */
 export type SanitaryEventInput = z.infer<typeof sanitaryEventSchema>;
 
+/** Estado de un evento sanitario: cumplido, vencido o por venir. */
 export type SanitaryState = "done" | "overdue" | "upcoming";
 
+/** Mínimo de un evento sanitario para evaluar su estado. */
 export interface SanitaryEventLite {
   reason: string;
   plannedDate: string;
   farmId: string | null;
 }
+/** Mínimo de un registro `health` para evaluar si cumple un evento. */
 export interface HealthRecordLite {
   farmId: string;
   reason: string;
@@ -49,7 +54,7 @@ export function matchingHealth<R extends HealthRecordLite>(ev: SanitaryEventLite
   return best;
 }
 
-/** hecho si hay registro que corresponde; vencido si la fecha ya pasó (hoy cuenta como pendiente). */
+/** Cumplido si hay un registro que corresponde; vencido si la fecha ya pasó (hoy cuenta como por venir). */
 export function sanitaryState(ev: SanitaryEventLite, records: readonly HealthRecordLite[], today: string): SanitaryState {
   if (matchingHealth(ev, records)) return "done";
   return ev.plannedDate < today ? "overdue" : "upcoming";

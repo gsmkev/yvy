@@ -1,9 +1,10 @@
 /**
- * Período de carencia antes de cosechar (A-14): días que tienen que pasar entre la última aplicación de un producto
+ * Período de carencia antes de cosechar: días que tienen que pasar entre la última aplicación de un producto
  * y la cosecha. Función pura sobre las aplicaciones de un lote y los días de carencia del catálogo de productos.
  */
 import { addDays } from "./tasks";
 
+/** Aplicación de un producto en un lote, con su carencia. */
 export interface WithdrawalApplication {
   plotId: string;
   /** Fecha local de la aplicación (YYYY-MM-DD). */
@@ -12,6 +13,7 @@ export interface WithdrawalApplication {
   products: { name: string; withdrawalDays: number | null }[];
 }
 
+/** Lote que todavía no se puede cosechar por la carencia de un producto aplicado. */
 export interface WithdrawalRestriction {
   plotId: string;
   /** Primer día en que se puede cosechar. */
@@ -22,6 +24,7 @@ export interface WithdrawalRestriction {
   appliedOn: string;
 }
 
+/** Cosecha hecha antes de cumplirse la carencia de una aplicación anterior. */
 export interface WithdrawalViolation {
   plotId: string;
   harvestedOn: string;
@@ -30,6 +33,7 @@ export interface WithdrawalViolation {
   appliedOn: string;
 }
 
+/** Resultado del control de carencias: restricciones vigentes, cosechas en infracción y aplicaciones sin dato. */
 export interface WithdrawalReport {
   /** Una por lote: la que más tarde libera la cosecha. Solo las vigentes. */
   restrictions: WithdrawalRestriction[];

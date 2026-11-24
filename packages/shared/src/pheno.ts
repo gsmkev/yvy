@@ -1,5 +1,5 @@
 /**
- * Fenología estimada por grados-día (A-04). Se acumulan los grados-día de crecimiento (GDD) desde la siembra con la
+ * Fenología estimada por grados-día. Se acumulan los grados-día de crecimiento (GDD) desde la siembra con la
  * temperatura mínima y máxima diaria de NASA POWER y se comparan con el estado que anotó la gente en el campo
  * (registro `crop_status`).
  *
@@ -23,6 +23,7 @@ export const STAGE_ORDER: readonly Stage[] = [
   "cosecha",
 ];
 
+/** Parámetros de grados-día de un cultivo. */
 export interface CropGdd {
   /** Temperatura base (°C): por debajo no hay crecimiento. */
   baseC: number;
@@ -103,6 +104,7 @@ export function nextStage(crop: Crop, gdd: number): { stage: Stage; gddLeft: num
   return next ? { stage: next, gddLeft: Math.round(cfg.stages[next] - gdd) } : null;
 }
 
+/** Resultado de comparar la etapa observada con la estimada. */
 export type PhenoComparison = "ahead" | "on_track" | "behind";
 
 /**

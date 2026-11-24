@@ -1,5 +1,5 @@
 /**
- * Sistema productivo de la estancia y carga recomendada (ADR 0005, secciones 1 y 4). Lógica pura compartida.
+ * Sistema productivo de la estancia y carga recomendada. Lógica pura compartida.
  * Las cargas son una referencia ORIENTATIVA (cada campo ajusta según su suelo y su manejo), no una recomendación técnica.
  */
 import { t, type MessageKey } from "./i18n";
@@ -7,21 +7,28 @@ import type { ReproIndices } from "./repro";
 import type { WeightSeries } from "./animals";
 import type { CorralRow } from "./feedlot";
 
+/** Sistemas productivos de una estancia. */
 export const PRODUCTION_SYSTEMS = ["cria", "recria", "invernada", "ciclo_completo", "feedlot", "tambo"] as const;
+/** Sistema productivo de una estancia. */
 export type ProductionSystem = (typeof PRODUCTION_SYSTEMS)[number];
 
 // ---------- carga recomendada ----------
 
+/** Tipos de pastura. */
 export const PASTURE_CLASSES = ["natural", "implantada", "mejorada"] as const;
+/** Tipo de pastura. */
 export type PastureClass = (typeof PASTURE_CLASSES)[number];
 
 /** UA/ha de referencia por tipo de pastura, en la época normal. */
 export const RECOMMENDED_UA_PER_HA: Record<PastureClass, number> = { natural: 0.5, implantada: 1.2, mejorada: 2 };
 /** En invierno (junio a agosto) la oferta de pasto baja: 30 % menos. */
 export const WINTER_FACTOR = 0.7;
+/** Meses de invierno (1 a 12) en que baja la oferta de pasto. */
 export const WINTER_MONTHS = [6, 7, 8] as const;
+/** Rango permitido para una carga recomendada propia (UA/ha). */
 export const RECOMMENDED_LOAD_LIMITS = { min: 0.1, max: 10 } as const;
 
+/** Cargas recomendadas propias de la estancia por tipo de pastura (UA/ha). */
 export type PastureLoads = Partial<Record<PastureClass, number>>;
 
 /** Interpreta el texto libre "tipo de pastura" del potrero. Vacío = el tipo por defecto de la estancia. */
@@ -46,6 +53,7 @@ export function recommendedUaPerHa(cls: PastureClass, month: number, overrides?:
   return Math.round(base * (isWinterMonth(month) ? WINTER_FACTOR : 1) * 100) / 100;
 }
 
+/** Carga recomendada de un potrero frente a la hacienda actual. */
 export interface PlotLoad {
   /** UA/ha recomendadas para el tipo de pastura y la época. */
   recommendedUaPerHa: number;
@@ -55,6 +63,7 @@ export interface PlotLoad {
   diffUa: number;
 }
 
+/** Carga recomendada de un potrero de `areaHa` según su pastura y el mes, comparada con sus `ua` actuales. */
 export function plotLoad(ua: number, areaHa: number, cls: PastureClass, month: number, overrides?: PastureLoads | null): PlotLoad {
   const rec = recommendedUaPerHa(cls, month, overrides);
   const recUa = rec * areaHa;
@@ -66,6 +75,7 @@ export const monthInParaguay = (ms: number): number => new Date(ms - 3 * 3_600_0
 
 // ---------- indicadores por sistema ----------
 
+/** Indicador productivo calculable con lo registrado. */
 export type IndicatorId =
   | "pregnancyPct"
   | "calvingPct"
@@ -75,7 +85,9 @@ export type IndicatorId =
   | "daysInField"
   | "conversion"
   | "feedlotAdg";
+/** Unidad de un indicador productivo. */
 export type IndicatorUnit = "pct" | "kg_day" | "kg_ha_year" | "days" | "ratio";
+/** Valor de un indicador productivo. */
 export interface Indicator {
   id: IndicatorId;
   value: number;
@@ -92,6 +104,7 @@ export const SYSTEM_INDICATORS: Record<ProductionSystem, readonly IndicatorId[]>
   tambo: [],
 };
 
+/** Datos de los que se calculan los indicadores; cada uno es opcional. */
 export interface IndicatorInput {
   repro?: ReproIndices | null;
   /** Series de pesadas por lote de animales (últimos 12 meses). */

@@ -1,4 +1,4 @@
-/** Compartir por WhatsApp (K-10, K-11): armado del texto y del enlace wa.me. Lo usan la web y la app. */
+/** Compartir por WhatsApp: armado del texto y del enlace wa.me. Lo usan la web y la app. */
 import { t } from "./i18n";
 
 /** Enlace de Google Maps a un punto. */
@@ -8,6 +8,7 @@ export const mapsLink = (lat: number, lon: number): string =>
 /** wa.me sin número: WhatsApp deja elegir con quién compartir. */
 export const whatsappUrl = (text: string): string => `https://wa.me/?text=${encodeURIComponent(text)}`;
 
+/** Datos ya formateados de un registro para compartirlo por WhatsApp. */
 export interface RecordShareInput {
   kindLabel: string;
   description: string;
@@ -19,6 +20,7 @@ export interface RecordShareInput {
   lon?: number | null;
 }
 
+/** Texto para compartir un registro por WhatsApp. */
 export function recordShareText(x: RecordShareInput): string {
   const lines = [`*${x.kindLabel}* · ${x.when}`, x.description];
   const where = [
@@ -31,6 +33,7 @@ export function recordShareText(x: RecordShareInput): string {
   return lines.join("\n");
 }
 
+/** Datos ya formateados de un aviso para compartirlo por WhatsApp. */
 export interface AlertShareInput {
   kindLabel: string;
   severityLabel: string;
@@ -41,6 +44,7 @@ export interface AlertShareInput {
   link: string;
 }
 
+/** Texto para compartir un aviso por WhatsApp. */
 export function alertShareText(x: AlertShareInput): string {
   const lines = [`*${x.kindLabel}* (${x.severityLabel})`, x.summary];
   if (x.farmName) lines.push(`${t("ui.common.farm")}: ${x.farmName}`);
@@ -48,6 +52,7 @@ export function alertShareText(x: AlertShareInput): string {
   return lines.join("\n");
 }
 
+/** Datos ya formateados del resumen semanal de una estancia. */
 export interface WeeklyShareInput {
   farmName: string;
   from: string;
@@ -59,6 +64,7 @@ export interface WeeklyShareInput {
   link: string;
 }
 
+/** Texto para compartir el resumen semanal de una estancia por WhatsApp. */
 export function weeklyShareText(x: WeeklyShareInput): string {
   const lines = [
     `*${t("ui.report.title")} · ${x.farmName}*`,

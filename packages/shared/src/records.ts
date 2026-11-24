@@ -1,5 +1,5 @@
 /**
- * Esquemas de los 7 tipos de registro (PRD RF-30). Única definición: app, web y Worker importan esto.
+ * Esquemas de los tipos de registro. Única definición: app, web y Worker importan esto.
  * Subir RECORD_SCHEMA_VERSION al cambiar un esquema de forma incompatible.
  */
 import { z } from "zod";
@@ -12,6 +12,7 @@ import { CROPS, DENSITY_UNITS, type RecordKind } from "./schema";
 import { LIMITS } from "./limits";
 import { extraSchema } from "./forms";
 
+/** Versión del formato de `data` de los registros. */
 export const RECORD_SCHEMA_VERSION = 1;
 
 const note = z.string().trim().max(2000).optional();
@@ -19,7 +20,9 @@ const uuidStr = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 const condition = z.enum(["good", "fair", "bad"]);
 const level3 = z.enum(["low", "medium", "high"]);
 
+/** Grupos de plagas que se registran. */
 export const PESTS = ["chinche", "oruga", "roya", "malezas", "otra"] as const;
+/** Etapas fenológicas de un cultivo, en orden. */
 export const PHENO_STAGES = [
   "siembra",
   "emergencia",
@@ -30,15 +33,16 @@ export const PHENO_STAGES = [
   "cosecha",
 ] as const;
 
-/** Estación de un monitoreo (F-12): dónde se paró y cuánto contó de cada plaga de la plantilla del cultivo. */
+/** Estación de un monitoreo: dónde se paró y cuánto contó de cada plaga de la plantilla del cultivo. */
 export const stationSchema = z.object({
   lon: z.number().min(-180).max(180).optional(),
   lat: z.number().min(-90).max(90).optional(),
   accuracyM: z.number().nonnegative().max(100_000).optional(),
   counts: z.record(z.string().max(40), z.number().nonnegative().max(LIMITS.monitoring.maxCount)),
 });
+/** Estación de un monitoreo. */
 export type Station = z.infer<typeof stationSchema>;
-// ---------- ganaderia (ADR 0004) ----------
+// ---------- ganadería ----------
 const headCount = z.number().int().min(0).max(MAX_HEAD_PER_CATEGORY);
 /** Cabezas por categoría; al menos una categoría con dato (un 0 es un dato: "conté y no hay"). */
 export const herdCountsSchema = z
@@ -73,7 +77,7 @@ const livestockSchemas = {
     note,
   }),
   /**
-   * Producto en texto libre o del catálogo (productId): con productId y cantidad, el ERP descuenta el stock (E-13).
+   * Producto en texto libre o del catálogo (productId): con productId y cantidad, el ERP descuenta el stock.
    * `quantity` va en la unidad del producto (l o kg). El potrero es opcional.
    */
   health: z.object({
@@ -83,12 +87,12 @@ const livestockSchemas = {
     quantity: z.number().positive().max(1_000_000).optional(),
     dose: z.string().trim().max(80).optional(),
     counts: herdCountsSchema,
-    /** Caravana del animal tratado, si fue uno solo (G-21): arma su historial. */
+    /** Caravana del animal tratado, si fue uno solo: arma su historial. */
     tag: animalTag.optional(),
     note,
   }),
   /**
-   * Abigeato (G-13): cabezas que faltan después de un conteo. El potrero es records.plot_id y la fecha del aviso es
+   * Abigeato: cabezas que faltan después de un conteo. El potrero es records.plot_id y la fecha del aviso es
    * capturedAt. `reportedAt` (epoch ms) y `policeReport` (número de denuncia) se completan cuando se hace la denuncia.
    * Descuenta de la hacienda del potrero, igual que la mortandad.
    */
@@ -99,7 +103,7 @@ const livestockSchemas = {
     policeReport: z.string().trim().min(1).max(40).optional(),
     note,
   }),
-  /** Suplementación y sal mineral (G-31): kilos dados en un potrero (records.plot_id). */
+  /** Suplementación y sal mineral: kilos dados en un potrero (records.plot_id). */
   supplement: z.object({
     type: z.enum(SUPPLEMENT_TYPES),
     kg: z.number().positive().max(MAX_SUPPLEMENT_KG),
@@ -108,7 +112,7 @@ const livestockSchemas = {
     note,
   }),
   /**
-   * Pesada (G-22): peso promedio por cabeza de un lote de animales (`group`, `head`) o de un animal con caravana
+   * Pesada: peso promedio por cabeza de un lote de animales (`group`, `head`) o de un animal con caravana
    * (`tag`, un solo animal). El potrero es opcional: la manga muchas veces no está en un potrero.
    */
   weighing: z
@@ -124,7 +128,7 @@ const livestockSchemas = {
       message: "Una pesada con caravana es de un solo animal",
     }),
   /**
-   * Reproducción (G-20): servicio, tacto, parición o destete. `head` son vacas (servidas, tactadas o paridas) o
+   * Reproducción: servicio, tacto, parición o destete. `head` son vacas (servidas, tactadas o paridas) o
    * terneros destetados; con caravana es 1. Índices en packages/shared/src/repro.ts.
    */
   reproduction: z
@@ -153,7 +157,7 @@ export { DENSITY_UNITS } from "./schema";
 /** Superficie hecha en hectáreas (aplicaciones, siembra, cosecha). */
 const areaDone = z.number().positive().max(100_000);
 const seasonId = uuidStr.optional();
-/** Orden de trabajo (tarea) que se está cerrando con este registro (E-21), y horas de máquina si se cobra por hora. */
+/** Orden de trabajo (tarea) que se está cerrando con este registro, y horas de máquina si se cobra por hora. */
 const orderTaskId = uuidStr.optional();
 const hours = z.number().positive().max(1000).optional();
 
@@ -164,16 +168,20 @@ export const productDose = z.object({
   dose: z.number().positive().max(100_000),
   unit: z.enum(DOSE_UNITS),
   /**
-   * Cantidad total realmente usada (E-21), en la unidad de la dosis sin "/ha" (L, mL, kg o g). Si falta, el consumo es
+   * Cantidad total realmente usada, en la unidad de la dosis sin "/ha" (L, mL, kg o g). Si falta, el consumo es
    * la dosis por la superficie hecha; si está, descuenta el stock por esta cantidad.
    */
   usedQty: z.number().positive().max(1_000_000_000).optional(),
 });
 /** Fertilizante: siempre kg/ha. */
 export const fertilizerDose = productDose.extend({ unit: z.literal("kg_ha") });
+/** Destinos posibles de una cosecha. */
 export const HARVEST_DESTINATIONS = ["silo", "acopio", "industry", "other"] as const;
+/** Métodos de riego. */
 export const IRRIGATION_METHODS = ["pivot", "sprinkler", "drip", "furrow", "flood"] as const;
+/** Métodos de aplicación de fertilizante. */
 export const FERT_METHODS = ["broadcast", "banded", "foliar", "fertigation"] as const;
+/** Producto con su dosis por hectárea. */
 export type ProductDose = z.infer<typeof productDose>;
 
 /** Receta del agrónomo: qué aplicar y a qué dosis. Viaja dentro de la tarea (tasks.prescription). */
@@ -183,9 +191,10 @@ export const prescriptionSchema = z.object({
   volumeLHa: z.number().positive().max(2000).optional(),
   note,
 });
+/** Receta del agrónomo. */
 export type Prescription = z.infer<typeof prescriptionSchema>;
 
-/** Recorrida GPS (F-05): línea ya simplificada (Douglas-Peucker en el celular), distancia y tiempo reales. */
+/** Recorrida GPS: línea ya simplificada (Douglas-Peucker en el celular), distancia y tiempo reales. */
 export const trackSchema = z
   .object({
     line: z
@@ -199,10 +208,13 @@ export const trackSchema = z
     note,
   })
   .refine((d) => d.endedAt >= d.startedAt, { message: "La recorrida termina antes de empezar" });
+/** Datos de una recorrida GPS. */
 export type TrackData = z.infer<typeof trackSchema>;
-/** Labores de una orden de trabajo (E-20) y el tipo de registro con que se cierran (E-21). */
+/** Labores de una orden de trabajo y el tipo de registro con que se cierran. */
 export const ORDER_LABORS = ["spraying", "fertilizing", "sowing", "harvest", "other"] as const;
+/** Labor de una orden de trabajo. */
 export type OrderLabor = (typeof ORDER_LABORS)[number];
+/** Tipo de registro con que se cierra cada labor (null si no corresponde ninguno). */
 export const ORDER_LABOR_KIND: Record<OrderLabor, RecordKind | null> = {
   spraying: "application",
   fertilizing: "fertilization",
@@ -212,7 +224,7 @@ export const ORDER_LABOR_KIND: Record<OrderLabor, RecordKind | null> = {
 };
 
 /**
- * Orden de trabajo (E-20): viaja dentro de la tarea (tasks.work_order), una tarea por lote. El operario es el
+ * Orden de trabajo: viaja dentro de la tarea (tasks.work_order), una tarea por lote. El operario es el
  * responsable de la tarea; si la hace un contratista, `contractorId` define cuánto cuesta. Al cerrarla desde la app
  * se carga el registro de campo con la superficie y los consumos reales (`orderTaskId` lo liga a la tarea).
  */
@@ -228,8 +240,10 @@ export const orderSchema = z.object({
   contractorId: uuidStr.optional(),
   note,
 });
+/** Orden de trabajo. */
 export type WorkOrder = z.infer<typeof orderSchema>;
 
+/** Esquema de `data` de cada tipo de registro. */
 export const recordDataSchemas = {
   scouting: z.object({ condition, note }),
   pest: z
@@ -237,7 +251,7 @@ export const recordDataSchemas = {
       pest: z.enum(PESTS),
       intensity: level3.optional(),
       perMeter: z.number().nonnegative().max(10_000).optional(),
-      /** Monitoreo por estaciones (F-12). Campos opcionales: los registros viejos siguen siendo válidos. */
+      /** Monitoreo por estaciones. Campos opcionales: los registros viejos siguen siendo válidos. */
       crop: z.string().max(20).optional(),
       stations: z.array(stationSchema).min(1).max(LIMITS.monitoring.maxStations).optional(),
       averages: z.record(z.string().max(40), z.number().nonnegative().max(LIMITS.monitoring.maxCount)).optional(),
@@ -278,7 +292,7 @@ export const recordDataSchemas = {
       message: "Indicá la unidad de la densidad",
     }),
   /**
-   * Riego (A-43): lámina aplicada en el lote (records.plot_id), en mm sobre toda su superficie. `appliedAt` (epoch ms)
+   * Riego: lámina aplicada en el lote (records.plot_id), en mm sobre toda su superficie. `appliedAt` (epoch ms)
    * es cuándo se regó; si falta, vale capturedAt. Entra al balance hídrico del lote.
    */
   irrigation: z.object({
@@ -288,9 +302,9 @@ export const recordDataSchemas = {
     note,
   }),
   /**
-   * Ración suministrada a un corral (G-33): el corral es records.plot_id. `kgDm` es la materia seca dada; `items` son los
+   * Ración suministrada a un corral: el corral es records.plot_id. `kgDm` es la materia seca dada; `items` son los
    * kilos tal cual de cada ingrediente del catálogo (la web los calcula con la ración vigente, y quedan como historia
-   * aunque la ración cambie). Descuenta el stock de los ingredientes y carga el costo (E-13). Se carga desde la web.
+   * aunque la ración cambie). Descuenta el stock de los ingredientes y carga el costo. Se carga desde la web.
    */
   feed: z.object({
     rationId: uuidStr.optional(),
@@ -323,9 +337,9 @@ export const recordDataSchemas = {
     note,
   }),
   /**
-   * Carga de combustible de una máquina (E-16): litros y horómetro u odómetro. `machineId` es de la tabla machines
+   * Carga de combustible de una máquina: litros y horómetro u odómetro. `machineId` es de la tabla machines
    * (baja al celular); `machine` es el nombre, para cuando la máquina no está cargada. Descuenta el stock del
-   * combustible (`productId`, o el único producto de tipo combustible del catálogo) y carga el costo (E-13).
+   * combustible (`productId`, o el único producto de tipo combustible del catálogo) y carga el costo.
    */
   fuel_load: z.object({
     machineId: uuidStr.optional(),
@@ -336,7 +350,7 @@ export const recordDataSchemas = {
     note,
   }),
   /**
-   * Recuento físico de un depósito (E-15), contado en el galpón sin señal. `counted` es lo que hay, no la diferencia:
+   * Recuento físico de un depósito, contado en el galpón sin señal. `counted` es lo que hay, no la diferencia:
    * al llegar al servidor, la diferencia con el stock de ese momento se asienta como ajuste (origin "adjustment",
    * con el id del registro). Editar o borrar el registro revierte esos ajustes.
    */
@@ -361,7 +375,7 @@ export const recordDataSchemas = {
       tempC: z.number().min(-20).max(60).optional(),
       humidityPct: z.number().min(0).max(100).optional(),
       machine: z.string().trim().min(1).max(80).optional(),
-      /** Tarea con la receta que originó la aplicación (A-11). */
+      /** Tarea con la receta que originó la aplicación. */
       prescriptionTaskId: uuidStr.optional(),
       note,
     })
@@ -372,11 +386,12 @@ export const recordDataSchemas = {
     }),
 } satisfies Record<RecordKind, z.ZodType>;
 
+/** Datos validados de un registro del tipo `K`. */
 export type RecordData<K extends RecordKind> = z.infer<(typeof recordDataSchemas)[K]>;
 
 /**
- * Valida los datos de un registro. Los campos propios de la organización (F-14) van aparte, en `data.extra`, y se
- * validan con un esquema genérico; el resto, con el esquema del tipo. Sin `extra` el resultado es el de siempre.
+ * Valida los datos de un registro. Los campos propios de la organización van aparte, en `data.extra`, y se
+ * validan con un esquema genérico; el resto, con el esquema del tipo.
  */
 export const parseRecordData = (kind: RecordKind, data: unknown) => {
   if (data === null || typeof data !== "object" || Array.isArray(data) || !("extra" in data)) return recordDataSchemas[kind].safeParse(data);

@@ -1,5 +1,6 @@
-/** Datos de "Cambios en el terreno": área quemada (S-20) y cambio de cobertura (S-31). Todo indicativo. */
-/** Análisis por lote de Sentinel-2 (S-20 área quemada, S-31 cambio de cobertura). Indicativos. */
+/** Datos de "Cambios en el terreno": área quemada y cambio de cobertura detectados con Sentinel-2. Todo indicativo. */
+
+/** Resultado de un análisis de Sentinel-2 para un lote; `M` son las métricas propias del análisis. */
 export interface AnalysisPlot<M> {
   plotId: string;
   plotName: string;
@@ -14,6 +15,7 @@ export interface AnalysisPlot<M> {
   computedAt: number;
 }
 
+/** Métricas de área quemada de un lote. */
 export interface BurnedMetrics {
   eventAt: number;
   burnedHa: number;
@@ -28,6 +30,7 @@ interface ClassHa {
   other: number;
 }
 
+/** Hectáreas por clase de cobertura en dos fechas y bosque que pasó a otro uso. */
 export interface CoverMetrics {
   from: ClassHa;
   to: ClassHa;

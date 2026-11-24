@@ -1,4 +1,3 @@
-/** Entregas de grano a acopio por lote: ticket, silo, humedad, descuentos y toneladas netas. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BASE_MOISTURE_PCT, CROPS, grainNet } from "@yvy/shared";

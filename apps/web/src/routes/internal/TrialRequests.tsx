@@ -1,4 +1,3 @@
-/** Pedidos de prueba del formulario de la landing. El equipo escribe por WhatsApp y los marca como atendidos. */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, EmptyState, ErrorBox, SectionHead, toast } from "../../components/ui";
 import { get, post } from "../../lib/api";

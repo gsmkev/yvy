@@ -1,4 +1,3 @@
-/** Puntos de interés de la estancia con su último nivel de agua; QR para imprimir y borrado con deshacer. */
 import { isWaterPoi } from "@yvy/shared";
 import { CopyCoords } from "../../components/CopyCoords";
 import { PoiGlyph } from "../../components/PoiGlyph";

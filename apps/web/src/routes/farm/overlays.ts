@@ -1,4 +1,3 @@
-/** Capas que se ven en Vigor: índices de vegetación y mapas de fertilidad. */
 import { FERT_LAYERS, INDEX_KINDS, type FertLayerKey } from "@yvy/shared";
 
 /** Capas que se ven en Vigor: índices de vegetación y mapas de fertilidad. */

@@ -1,4 +1,3 @@
-/** Capa de fondo (satélite o vigor), índice elegido, fechas por tipo y comparación con cortina. */
 import { useState } from "react";
 import { defaultCompare, pickLayer, type Camera } from "../../lib/scenes";
 import { loadPrefs, savePrefs } from "../../lib/prefs";

@@ -1,4 +1,3 @@
-/** SPI a 1, 3 y 6 meses: la lluvia reciente contra la normal 1991-2020, en puntaje estandarizado. */
 import { useQuery } from "@tanstack/react-query";
 import { spiCategory, type FarmSpi, ATTRIBUTION } from "@yvy/shared";
 import { get } from "../lib/api";

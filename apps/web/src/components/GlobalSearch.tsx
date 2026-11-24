@@ -1,4 +1,3 @@
-/** Buscador de la barra superior: usa lo que la API ya devuelve (estancias, lotes, equipo, puntos) y la última página de registros. */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isFieldRole } from "@yvy/shared";
 import { useNavigate } from "@tanstack/react-router";

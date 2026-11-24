@@ -1,4 +1,3 @@
-/** Panel de capas del mapa: fondo, límites, capas propias, plagas y recorridas. */
 import { BoundariesControl } from "../../components/BoundariesControl";
 import { CustomLayersControl } from "../../components/CustomLayersControl";
 import { boundsOf } from "../../components/FarmMap";

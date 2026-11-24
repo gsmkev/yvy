@@ -1,4 +1,3 @@
-/** Estado de las herramientas de edición del mapa: dibujar, importar, POI, dividir, unir, vértices y líneas. */
 import { useEffect, useState } from "react";
 import type { LineString, MultiPolygon, Polygon } from "geojson";
 

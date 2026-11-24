@@ -1,4 +1,3 @@
-/** Pestañas del panel de la estancia. */
 import { AgroPanel } from "../../components/AgroPanel";
 import { AlertsList } from "../../components/AlertsList";
 import { ClimatePanel } from "../../components/ClimatePanel";

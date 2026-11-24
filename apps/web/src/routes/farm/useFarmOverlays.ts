@@ -1,4 +1,3 @@
-/** Límites administrativos y capas propias activas con su opacidad. */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ActiveLayers } from "../../components/CustomLayersControl";

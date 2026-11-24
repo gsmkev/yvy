@@ -1,4 +1,3 @@
-/** Cabecera y pie de las páginas públicas (landing, términos, privacidad). */
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { t } from "../../lib/i18n";

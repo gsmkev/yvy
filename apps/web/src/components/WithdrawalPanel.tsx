@@ -1,4 +1,3 @@
-/** Carencia antes de cosechar: lotes con restricción vigente y cosechas hechas antes de cumplirla. */
 import { useWithdrawal } from "../lib/agri2";
 import { fmtIsoDate } from "../lib/format";
 import { t } from "../lib/i18n";

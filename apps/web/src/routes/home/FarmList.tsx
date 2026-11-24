@@ -1,4 +1,3 @@
-/** Lista de estancias con su superficie, registros de la semana y avisos. */
 import { Link } from "@tanstack/react-router";
 import { Stat } from "../../components/ui";
 import { areaUnitLabel, fmtAreaValue, fmtDate, fmtHa } from "../../lib/format";

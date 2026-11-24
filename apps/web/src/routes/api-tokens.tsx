@@ -1,4 +1,3 @@
-/** Tokens de la API pública (solo el dueño). El token completo se muestra una sola vez. */
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

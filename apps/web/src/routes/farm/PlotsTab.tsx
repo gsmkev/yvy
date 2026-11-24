@@ -1,4 +1,3 @@
-/** Props de la pestaña Lotes: la estancia, su estado de edición y la lista de lotes. */
 import { EmptyState, Button } from "../../components/ui";
 import { PlotPanel } from "../../components/PlotPanel";
 import { t } from "../../lib/i18n";

@@ -1,4 +1,3 @@
-/** Documentación pública de la API de solo lectura. */
 import { Link } from "@tanstack/react-router";
 import { LIMITS } from "@yvy/shared";
 import { t, type MessageKey } from "../../lib/i18n";

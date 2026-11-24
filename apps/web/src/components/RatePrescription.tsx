@@ -1,4 +1,3 @@
-/** Prescripción de dosis variable: una dosis por zona de manejo, exportada en el navegador. */
 import { useState } from "react";
 import { buildIsoxml, LIMITS, meanRate, RX_RATE_UNITS, totalProduct, validRate, type RateUnit } from "@yvy/shared";
 import { download, polygonsToShapefileZip } from "../lib/exports";

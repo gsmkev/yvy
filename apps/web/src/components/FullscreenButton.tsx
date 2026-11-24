@@ -1,4 +1,3 @@
-/** Pantalla completa del contenedor del mapa como botón de ícono de la barra. Oculto si el navegador no la soporta. */
 import { useEffect, useState, type RefObject } from "react";
 import { Maximize, Minimize } from "lucide-react";
 import { t } from "../lib/i18n";

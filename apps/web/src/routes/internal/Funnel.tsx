@@ -1,4 +1,3 @@
-/** Embudo de activación (organizaciones nuevas de los últimos 90 días) y pantallas más usadas. */
 import { useQuery } from "@tanstack/react-query";
 import { SectionHead, Stat } from "../../components/ui";
 import { get } from "../../lib/api";

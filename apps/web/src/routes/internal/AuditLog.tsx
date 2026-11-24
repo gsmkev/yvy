@@ -1,4 +1,3 @@
-/** Últimas acciones del equipo sobre organizaciones de clientes. */
 import { useQuery } from "@tanstack/react-query";
 import { SectionHead } from "../../components/ui";
 import { get } from "../../lib/api";

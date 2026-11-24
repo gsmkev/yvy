@@ -1,4 +1,3 @@
-/** Lo que le corresponde a la organización por año y por cuota, y una calculadora. Es informativo: el cobro es manual. */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BILLINGS, LIMITS, priceFor, usdToGs, type Billing } from "@yvy/shared";

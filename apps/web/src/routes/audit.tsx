@@ -1,4 +1,3 @@
-/** Quién cambió qué y cuándo (solo el dueño). */
 import { useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { AuditList, type AuditEntryRow } from "../components/AuditList";

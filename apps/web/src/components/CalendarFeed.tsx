@@ -1,4 +1,3 @@
-/** Enlace .ics con las tareas del usuario, para suscribirse desde Google Calendar u Outlook. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { del, get, post } from "../lib/api";

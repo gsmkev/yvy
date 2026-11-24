@@ -1,4 +1,3 @@
-/** Alambrados, caminos internos y cañerías de la estancia, con su largo. */
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { LineString } from "geojson";

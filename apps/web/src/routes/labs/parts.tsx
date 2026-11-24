@@ -1,4 +1,3 @@
-/** Número en es-PY con la cantidad de decimales indicada. */
 import { useState, type ReactNode } from "react";
 import { Button } from "../../components/ui";
 import { t } from "../../lib/i18n";

@@ -1,4 +1,3 @@
-/** Un solo botón "Exportar" con Excel y CSV de la tabla que se está viendo. `data` se arma al exportar. */
 import { t } from "../lib/i18n";
 import { tableToCsv, tableToExcel, type TableData } from "../lib/tableExport";
 import { ExportMenu } from "./menus";

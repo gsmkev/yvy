@@ -1,4 +1,3 @@
-/** A quién le llega el parte semanal con PDF (socio, agrónomo, banco), cada semana o el primer lunes del mes. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { del, get, post } from "../lib/api";

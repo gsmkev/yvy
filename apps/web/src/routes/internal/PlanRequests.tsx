@@ -1,4 +1,3 @@
-/** Pedidos de plan que hicieron los dueños desde la web. Aprobar aplica el plan y los topes; no cobra. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, EmptyState, ErrorBox, Form, Input, SectionHead, toast } from "../../components/ui";

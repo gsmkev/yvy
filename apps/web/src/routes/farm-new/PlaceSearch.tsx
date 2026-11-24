@@ -1,4 +1,3 @@
-/** Buscador de lugares y coordenadas, y "usar mi ubicación"; el mapa se mueve con `onGoTo`. */
 import { useState } from "react";
 import { Button, Field, Input } from "../../components/ui";
 import { parseLocation } from "../../lib/coords";

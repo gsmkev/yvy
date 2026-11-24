@@ -1,4 +1,3 @@
-/** Medir: puntos marcados, forma cerrada; Esc termina. */
 import { useEffect, useState } from "react";
 import type { LonLat } from "../../lib/measure";
 

@@ -1,4 +1,3 @@
-/** Pestaña Agronomía de la estancia: planificación y control agrícola (solo para quien edita el campo). */
 import type { Plot, Poi } from "../lib/types";
 import { BufferPanel } from "./BufferPanel";
 import { DeliveriesPanel } from "./DeliveriesPanel";

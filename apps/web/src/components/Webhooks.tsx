@@ -1,4 +1,3 @@
-/** URLs que reciben un POST firmado con cada aviso o registro nuevo. Solo dueño y administrador. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { WEBHOOK_EVENTS, type WebhookEvent } from "@yvy/shared";

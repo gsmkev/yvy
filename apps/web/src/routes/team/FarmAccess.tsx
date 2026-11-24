@@ -1,4 +1,3 @@
-/** Estancias de un supervisor, administrador o agrónomo (solo el dueño). Sin ninguna marcada: supervisor no ve nada; el resto ve todas. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FarmAccessLevel } from "@yvy/shared";

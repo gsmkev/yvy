@@ -1,4 +1,3 @@
-/** Campañas de la organización y plan de cultivo por lote. */
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CROPS, DENSITY_UNITS } from "@yvy/shared";

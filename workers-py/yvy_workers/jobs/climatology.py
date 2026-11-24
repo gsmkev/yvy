@@ -1,10 +1,11 @@
-"""Climatología 1991-2020 por día del año (PRD §12 climatology_build). Una vez por estancia.
+"""Climatología 1991-2020 por día del año. Se calcula una vez por estancia.
 
 - precip: NASA POWER PRECTOTCORR diario (una sola request por punto). CHIRPS daría mejor resolución
-  pero exigiría ~11.000 archivos; ver docs/adr/0003.
+  pero exigiría ~11.000 archivos.
 - soil_top / soil_root: NASA POWER GWETTOP / GWETROOT (fracción de saturación).
 - tmin: NASA POWER T2M_MIN.
-Percentiles con una ventana móvil de ±15 días para que no sean ruidosos.
+
+Los percentiles se calculan con una ventana móvil de ±15 días para que no sean ruidosos.
 """
 
 from __future__ import annotations
@@ -23,6 +24,7 @@ WINDOW = 15
 
 
 def fetch_power(lat: float, lon: float, client: httpx.Client | None = None) -> dict[str, dict[str, float]]:
+    """Serie diaria 1991-2020 de NASA POWER (lluvia, humedad de suelo y temperatura mínima) para un punto."""
     c = client or httpx.Client(timeout=120)
     r = c.get(
         POWER,
@@ -54,6 +56,11 @@ def doy_table(series: dict[str, float]) -> list[dict[str, float | None]]:
 
 
 def climatology_build(api: IngestClient, farm: dict[str, Any], client: httpx.Client | None = None) -> int:
+    """Calcula y sube la climatología de la estancia.
+
+    Returns:
+        Cantidad de filas escritas.
+    """
     params = fetch_power(farm["centroidLat"], farm["centroidLon"], client)
     rows: list[dict[str, Any]] = []
     for power_var, var in VARS.items():

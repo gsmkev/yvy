@@ -1,4 +1,4 @@
-"""M-16: límites de departamentos (ADM1) y distritos (ADM2) de Paraguay desde geoBoundaries (CC BY 4.0).
+"""Límites de departamentos (ADM1) y distritos (ADM2) de Paraguay desde geoBoundaries (CC BY 4.0).
 
 Baja la versión simplificada de geoBoundaries, la simplifica más, deja solo el nombre y sube
 `boundaries/pry-adm1.geojson` y `boundaries/pry-adm2.geojson` al bucket público de teselas. La web los lee
@@ -53,10 +53,17 @@ def _round(obj: Any, decimals: int) -> Any:
 
 
 def dump(fc: dict[str, Any]) -> bytes:
+    """Serializa el GeoJSON compacto y en UTF-8."""
     return json.dumps(fc, ensure_ascii=False, separators=(",", ":")).encode()
 
 
 def fetch_level(client: httpx.Client, level: str) -> dict[str, Any]:
+    """Baja los límites simplificados de un nivel de geoBoundaries.
+
+    Args:
+        client: Cliente HTTP.
+        level: ``adm1`` (departamentos) o ``adm2`` (distritos).
+    """
     meta = client.get(API.format(level=LEVELS[level]), follow_redirects=True)
     meta.raise_for_status()
     url = meta.json()["simplifiedGeometryGeoJSON"]

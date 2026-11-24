@@ -1,4 +1,4 @@
-"""Mapas de fertilidad interpolados (A-31): pH, fósforo, potasio y materia orgánica a partir de los análisis de suelo con punto.
+"""Mapas de fertilidad interpolados: pH, fósforo, potasio y materia orgánica a partir de los análisis de suelo con punto.
 
 Los puntos vienen del Worker (`/ingest/farms/:id/soil-points`: solo los análisis con coordenadas). Por parámetro se
 interpola por IDW (ponderación por la inversa de la distancia al cuadrado, con los 12 vecinos más cercanos) sobre la

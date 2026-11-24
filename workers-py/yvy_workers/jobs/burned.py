@@ -1,4 +1,4 @@
-"""Área quemada después de un foco de fuego (S-20), por lote, con Sentinel-2 L2A.
+"""Área quemada después de un foco de fuego, por lote, con Sentinel-2 L2A.
 
 Método (indicativo): para cada incendio (focos de FIRMS ya guardados por el job firms_hotspots, agrupados
 por cercanía en el tiempo) que cae sobre un lote:
@@ -50,12 +50,20 @@ KIND = "burned"
 
 @dataclass
 class Event:
+    """Un incendio: focos agrupados por cercanía en el tiempo.
+
+    Attributes:
+        first_at: Momento del primer foco (epoch ms).
+        last_at: Momento del último foco (epoch ms).
+        points: Coordenadas (lon, lat) de los focos.
+    """
     first_at: int
     last_at: int
     points: list[tuple[float, float]]  # lon, lat
 
     @property
     def key(self) -> str:
+        """Fecha (ISO) del primer foco; identifica al incendio."""
         return datetime.fromtimestamp(self.first_at / 1000, tz=timezone.utc).date().isoformat()
 
 
@@ -73,18 +81,30 @@ def group_events(hotspots: list[dict[str, Any]], gap_days: int = EVENT_GAP_DAYS)
 
 
 def nbr(nir: np.ndarray, swir2: np.ndarray, valid: np.ndarray) -> np.ndarray:
+    """Índice NBR = (NIR - SWIR2) / (NIR + SWIR2).
+
+    Args:
+        nir: Reflectancia de B08.
+        swir2: Reflectancia de B12.
+        valid: Máscara de píxeles válidos.
+
+    Returns:
+        NBR en float32; NaN donde no es válido o queda fuera de [-1, 1].
+    """
     with np.errstate(divide="ignore", invalid="ignore"):
         v = (nir - swir2) / (nir + swir2)
     return np.where(valid & np.isfinite(v) & (np.abs(v) <= 1), v, np.nan).astype("float32")
 
 
 def median_nbr(stack: list[np.ndarray]) -> np.ndarray:
+    """Mediana por píxel de varios NBR, ignorando los NaN."""
     with np.errstate(all="ignore"), warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
         return np.nanmedian(np.stack(stack), axis=0).astype("float32")
 
 
 def scene_nbr(item: dict[str, Any], grid: Grid) -> np.ndarray:
+    """NBR de una escena, con nubes y sombras (y sus bordes) enmascaradas."""
     valid = scl_valid(item, grid)
     valid &= ~dilate(~valid, 2)
     return nbr(reflectance(item, "nir", grid), reflectance(item, "swir22", grid), valid)

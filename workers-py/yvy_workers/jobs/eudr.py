@@ -1,4 +1,4 @@
-"""Indicador de deforestación para la regulación europea (EUDR, S-30), por lote.
+"""Indicador de deforestación para la regulación europea (EUDR), por lote.
 
 Método (indicativo, solo Sentinel-2 L2A de Earth Search):
   1. Dos compuestos de mediana de la estación seca (1 de junio al 30 de setiembre): el de 2020 (fecha de corte
@@ -46,7 +46,7 @@ MIN_PATCH_HA = 0.5  # parche mínimo de pérdida (definición de bosque FAO)
 MIN_OBS = 2  # observaciones válidas por píxel para aceptar la mediana
 MAX_COMPOSITE_SCENES = 24  # escenas por compuesto (repartidas a lo largo de la estación)
 MAX_SEARCH_CLOUD = 50.0
-MIN_VALID_PCT = 60.0  # lote con menos de esto de píxeles válidos en ambos compuestos: sin datos (RF-51)
+MIN_VALID_PCT = 60.0  # lote con menos de esto de píxeles válidos en ambos compuestos: sin datos
 MAX_POLYS_PER_PLOT = 20
 SIMPLIFY_M = 15.0
 # El Worker acepta hasta 300 puntos por anillo y 80 KB por lote: el mapa de cambios solo necesita el contorno.
@@ -59,6 +59,7 @@ STATUS_NO_DATA = "no_data"
 
 
 def dry_season(year: int) -> tuple[datetime, datetime]:
+    """Inicio y fin de la estación seca del año dado, en UTC."""
     start = datetime(year, *DRY_START, tzinfo=timezone.utc)
     end = datetime(year, *DRY_END, 23, 59, 59, tzinfo=timezone.utc)
     return start, end
@@ -70,6 +71,7 @@ def latest_dry_season_year(today: date) -> int:
 
 
 def tree_cover(ndvi: np.ndarray, ndmi: np.ndarray) -> np.ndarray:
+    """Máscara de cobertura arbórea: NDVI y NDMI sobre sus umbrales."""
     with np.errstate(invalid="ignore"):
         return (ndvi >= FOREST_NDVI_MIN) & (ndmi >= FOREST_NDMI_MIN)
 
@@ -162,6 +164,15 @@ def analyze_plots(
 
 @dataclass
 class Composite:
+    """Compuesto de mediana de una estación seca.
+
+    Attributes:
+        ndvi: Mediana del NDVI por píxel.
+        ndmi: Mediana del NDMI por píxel.
+        scenes: Cantidad de escenas usadas.
+        first_at: Fecha de la escena más antigua (epoch ms).
+        last_at: Fecha de la escena más reciente (epoch ms).
+    """
     ndvi: np.ndarray
     ndmi: np.ndarray
     scenes: int
@@ -200,6 +211,11 @@ def scene_indices(item: dict[str, Any], grid: Grid) -> tuple[np.ndarray, np.ndar
 
 
 def build_composite(farm: dict[str, Any], year: int, grid: Grid) -> Composite:
+    """Compuesto de la estación seca de `year` para la estancia.
+
+    Raises:
+        RuntimeError: Si no hay escenas en esa estación.
+    """
     start, end = dry_season(year)
     items = thin(search(farm_bbox(farm), start, end, MAX_SEARCH_CLOUD))
     if not items:

@@ -1,8 +1,8 @@
-"""Áreas problema dentro del lote (S-08): píxeles de NDVI muy por debajo de la mediana del lote.
+"""Áreas problema dentro del lote: píxeles de NDVI muy por debajo de la mediana del lote.
 
 Un área es una región conexa de píxeles con NDVI < mediana del lote - 0,15 y al menos 0,5 ha. Se guardan
 como polígonos chicos (WGS84) para marcarlos en el mapa y mandar a alguien a recorrer. Solo el lote con
-al menos 60 % de píxeles válidos (RF-51) entra; sin eso, la mediana no es confiable.
+al menos 60 % de píxeles válidos entra; sin eso, la mediana no es confiable.
 """
 
 from __future__ import annotations

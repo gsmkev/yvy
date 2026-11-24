@@ -1,4 +1,8 @@
-"""python -m yvy_workers <job> [--farm <id>]  (PRD §12). Corre en GitHub Actions."""
+"""Línea de comandos de los jobs: ``python -m yvy_workers <job> [--farm <id>]``.
+
+Corre en GitHub Actions. Elige las estancias a procesar, ejecuta el job pedido y devuelve un código
+de salida distinto de cero si alguna estancia falló.
+"""
 
 from __future__ import annotations
 
@@ -17,6 +21,11 @@ JOBS = ["s2_ingest", "s2_basemap", "country_basemap", "chirps_daily", "firms_hot
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Arma el parser de argumentos de la línea de comandos.
+
+    Returns:
+        Parser con el job (obligatorio) y las opciones ``--farm``, ``--days``, ``--backfill``, ``--from``, ``--to`` y ``--only-missing``.
+    """
     p = argparse.ArgumentParser(prog="yvy_workers")
     p.add_argument("job", choices=JOBS)
     p.add_argument("--farm", help="Procesar solo esta estancia")
@@ -222,6 +231,14 @@ def _select_farms(api: IngestClient, args: argparse.Namespace) -> list[dict[str,
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Punto de entrada: valida los argumentos, elige las estancias y corre el job.
+
+    Args:
+        argv: Argumentos en lugar de ``sys.argv[1:]`` (para los tests).
+
+    Returns:
+        0 si todo salió bien; 1 si alguna estancia falló.
+    """
     args = build_parser().parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -234,7 +251,7 @@ def main(argv: list[str] | None = None) -> int:
         return STANDALONE[args.job]()
 
     api = IngestClient()
-    if args.job == "lead_report":  # V-04: son pedidos de la landing, no de estancias
+    if args.job == "lead_report":  # son pedidos de la landing, no de estancias
         from .jobs.leads import lead_report
 
         return 1 if lead_report(api, api.leads()) else 0

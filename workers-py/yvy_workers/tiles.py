@@ -36,7 +36,7 @@ def ndvi_rgba(ndvi: np.ndarray, valid: np.ndarray, lo: float = 0.1, hi: float = 
     return out
 
 
-# S-07: rangos y rampas por índice. NDRE y EVI usan la rampa de vigor; NDMI (humedad) va de trigo (seco) a cielo (húmedo).
+# Rangos y rampas por índice. NDRE y EVI usan la rampa de vigor; NDMI (humedad) va de trigo (seco) a cielo (húmedo).
 NDMI_RAMP = ["#D9A93A", "#F1EEE4", "#8DB3C7"]
 FERT_RAMP = ["#F1EEE4", "#C9C46A", "#7A9A3F", "#3F6B35"]  # de poco a mucho
 FERT_PH_RAMP = ["#B5562E", "#D9A93A", "#7A9A3F", "#8DB3C7"]  # de ácido a alcalino
@@ -46,7 +46,7 @@ INDEX_STYLE: dict[str, tuple[list[str], float, float]] = {
     "evi": (NDVI_RAMP, 0.05, 0.8),
     "ndmi": (NDMI_RAMP, -0.2, 0.6),
 }
-# A-31: fertilidad. Mismas rampas y rangos que FERT_STYLE en packages/shared/src/soil.ts (la leyenda de la web).
+# Fertilidad: mismas rampas y rangos que FERT_STYLE en packages/shared/src/soil.ts (la leyenda de la web).
 FERT_STYLE: dict[str, tuple[list[str], float, float]] = {
     "fert_ph": (FERT_PH_RAMP, 4.0, 8.0),
     "fert_p": (FERT_RAMP, 0.0, 30.0),
@@ -70,6 +70,7 @@ def index_rgba(values: np.ndarray, valid: np.ndarray, idx: str) -> np.ndarray:
 
 
 def lonlat_to_tile(lon: float, lat: float, z: int) -> tuple[int, int]:
+    """Índice (x, y) de la tesela del zoom `z` que contiene el punto, acotado a la grilla del zoom."""
     n = 2**z
     x = int((lon + 180) / 360 * n)
     y = int((1 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2 * n)

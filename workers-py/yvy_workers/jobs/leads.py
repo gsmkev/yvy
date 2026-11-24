@@ -1,9 +1,9 @@
-"""Informe gratis de riesgo climático para quien lo pidió en la landing (V-04).
+"""Informe gratis de riesgo climático para quien lo pidió en la landing.
 
-Es el mismo informe de la estancia (C-10: heladas, lluvia, sequías y focos de fuego a menos de 10 km), calculado para el
+Es el mismo informe de la estancia (heladas, lluvia, sequías y focos de fuego a menos de 10 km), calculado para el
 punto que marcó la persona. El Worker lo guarda y manda el email con el enlace (POST /ingest/leads/:id/report).
 Los focos de FIRMS se bajan una sola vez para todos los pedidos de la corrida; sin FIRMS_MAP_KEY el informe sale sin
-esa parte. El vigor satelital (S-01) no se incluye: necesita el perímetro de una estancia y este pedido es un punto.
+esa parte. El vigor satelital no se incluye: necesita el perímetro de una estancia y este pedido es un punto.
 """
 
 from __future__ import annotations

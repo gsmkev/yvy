@@ -1,4 +1,4 @@
-"""Parte semanal en PDF (R-02): lo arma workers-py los lunes, lo sube a R2 y el Worker lo adjunta al email.
+"""Parte semanal en PDF: lo arma workers-py los lunes, lo sube a R2 y el Worker lo adjunta al email.
 
 El PDF resume la semana anterior (lunes a domingo): anotaciones, lluvia frente a lo normal, avisos, vigor por
 lote con cambio, áreas para ir a ver y un mapa de los lotes con la rampa NDVI. Los datos agregados salen de
@@ -59,6 +59,7 @@ def ndvi_color(v: float | None) -> colors.Color:
 
 
 def fmt_num(v: float | None, decimals: int = 0, unit: str = "") -> str:
+    """Número con coma decimal y punto de miles (es-PY), con unidad opcional; "—" si es None."""
     if v is None:
         return "—"
     s = f"{v:,.{decimals}f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -66,6 +67,7 @@ def fmt_num(v: float | None, decimals: int = 0, unit: str = "") -> str:
 
 
 def fmt_date(iso: str) -> str:
+    """Convierte una fecha ISO (AAAA-MM-DD) a DD/MM/AAAA."""
     y, m, d = iso.split("-")
     return f"{d}/{m}/{y}"
 
@@ -164,7 +166,7 @@ def _plots_table(plots: list[dict[str, Any]]) -> Table:
     style = [("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"), ("FONTSIZE", (0, 0), (-1, -1), 8.5), ("LINEBELOW", (0, 0), (-1, 0), 0.8, SURCO), ("LINEBELOW", (0, 1), (-1, -1), 0.3, colors.HexColor("#DDD8C8")), ("ALIGN", (2, 0), (-1, -1), "RIGHT")]
     for i, p in enumerate(plots, start=1):
         ch = vigor_change(p["ndvi"], p["ndviPrev"])
-        if ch is not None and ch <= -15:  # RF-54: caída de más de 15 %
+        if ch is not None and ch <= -15:  # caída de más de 15 %
             style.append(("TEXTCOLOR", (4, i), (4, i), ALERTA))
     pt.setStyle(TableStyle(style))
     return pt
@@ -190,6 +192,17 @@ def _problem_areas(summary: dict[str, Any], st: _Styles) -> list[Any]:
 
 
 def build_pdf(summary: dict[str, Any], plots_geo: list[dict[str, Any]], out: Path, generated_at: datetime | None = None) -> Path:
+    """Genera el PDF del parte semanal.
+
+    Args:
+        summary: Agregados de la semana (``/ingest/farms/:id/weekly-summary``).
+        plots_geo: Lotes con su geometría, para el mapa.
+        out: Archivo de salida.
+        generated_at: Fecha de generación; por defecto la actual.
+
+    Returns:
+        La ruta del PDF escrito.
+    """
     st = _Styles()
     story: list[Any] = _header(summary, st, generated_at)
     story.append(_kpis(summary))

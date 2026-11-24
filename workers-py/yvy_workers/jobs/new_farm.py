@@ -1,4 +1,4 @@
-"""Estancia nueva (M-01, S-01, S-02): mapa base, climatología y 180 días de Sentinel-2 en una sola corrida.
+"""Estancia nueva: mapa base, climatología y 180 días de Sentinel-2 en una sola corrida.
 
 Lo dispara el Worker con workflow_dispatch al crear la estancia. El mapa base va primero: es lo que se ve
 enseguida; al subirlo el Worker pasa el estado a `ready`. Cada paso falla por separado.

@@ -1,6 +1,6 @@
-"""NASA FIRMS: focos de calor VIIRS y MODIS de las últimas 24 h en Paraguay (PRD §12 firms_hotspots).
+"""NASA FIRMS: focos de calor VIIRS y MODIS de las últimas 24 h en Paraguay.
 
-Regla (RF-70): foco a < 5 km del perímetro → aviso; alto (warning) si < 2 km. El Worker sube a alto si el
+Regla: foco a < 5 km del perímetro → aviso; alto (warning) si < 2 km. El Worker sube a alto si el
 viento pronosticado sopla hacia la estancia a > 25 km/h.
 """
 
@@ -28,6 +28,12 @@ CLOSE_KM = 2.0
 
 
 def parse_csv(text: str, source: str) -> list[dict[str, Any]]:
+    """Interpreta el CSV de FIRMS; descarta filas inválidas y focos de baja confianza.
+
+    Args:
+        text: Respuesta CSV.
+        source: Nombre del sensor/producto que se guarda en cada foco.
+    """
     out = []
     for row in csv.DictReader(io.StringIO(text)):
         try:
@@ -54,6 +60,13 @@ def confident(c: str | None) -> bool:
 
 
 def fetch_hotspots(map_key: str, client: httpx.Client | None = None, days: int = 1) -> list[dict[str, Any]]:
+    """Baja los focos de calor de Paraguay de todos los sensores.
+
+    Args:
+        map_key: Clave de la API de FIRMS.
+        client: Cliente HTTP propio (para los tests).
+        days: Días hacia atrás.
+    """
     c = client or httpx.Client(timeout=60)
     hotspots: list[dict[str, Any]] = []
     for src in SOURCES:
@@ -66,6 +79,11 @@ def fetch_hotspots(map_key: str, client: httpx.Client | None = None, days: int =
 
 
 def evaluate_farm(farm_geom: dict[str, Any], hotspots: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Evalúa los focos cercanos a una estancia.
+
+    Returns:
+        Gravedad (``watch`` o ``warning``), distancia mínima y hasta 40 focos; None si no hay ninguno a menos de 5 km.
+    """
     g = load(farm_geom)
     near = []
     for h in hotspots:
@@ -81,6 +99,17 @@ def evaluate_farm(farm_geom: dict[str, Any], hotspots: list[dict[str, Any]]) -> 
 
 
 def firms_hotspots(api: IngestClient, farms: list[dict[str, Any]], map_key: str | None = None, client: httpx.Client | None = None) -> int:
+    """Baja los focos de las últimas 24 h y emite un aviso por cada estancia con focos cerca.
+
+    Args:
+        api: Cliente de ingest.
+        farms: Estancias a evaluar.
+        map_key: Clave de FIRMS; por defecto ``FIRMS_MAP_KEY``.
+        client: Cliente HTTP propio (para los tests).
+
+    Returns:
+        Cantidad de estancias con aviso.
+    """
     key = map_key or os.environ["FIRMS_MAP_KEY"]
     hotspots = fetch_hotspots(key, client)
     today = datetime.now(timezone.utc).astimezone().date().isoformat()

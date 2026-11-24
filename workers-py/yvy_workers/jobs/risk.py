@@ -1,4 +1,4 @@
-"""Informe de riesgo climático de la estancia (C-10): 30 años de NASA POWER y focos de calor de NASA FIRMS.
+"""Informe de riesgo climático de la estancia: 30 años de NASA POWER y focos de calor de NASA FIRMS.
 
 - Heladas: días por año con T2M_MIN < 2 °C (1991-2020), peor año, fechas típicas de primera y última helada.
 - Lluvia: normal mensual (media y percentiles 20/80 entre años) y los últimos 12 meses completos.
@@ -42,6 +42,7 @@ SP_LAG_DAYS = 95  # el procesamiento estándar (SP) llega con ~3 meses de atraso
 
 
 def fetch_power(lat: float, lon: float, end: date, client: httpx.Client | None = None) -> dict[str, dict[str, float]]:
+    """Serie diaria de NASA POWER (T2M_MIN y PRECTOTCORR) desde 1991 hasta `end` para un punto."""
     c = client or httpx.Client(timeout=180)
     r = c.get(
         POWER,
@@ -118,6 +119,7 @@ def frost_stats(tmin: dict[date, float], threshold: float = FROST_C) -> dict[str
 
 
 def monthly_totals(precip: dict[date, float]) -> dict[tuple[int, int], float]:
+    """Lluvia total por (año, mes)."""
     out: dict[tuple[int, int], float] = defaultdict(float)
     for d, v in precip.items():
         out[(d.year, d.month)] += v
@@ -125,6 +127,12 @@ def monthly_totals(precip: dict[date, float]) -> dict[tuple[int, int], float]:
 
 
 def rain_stats(precip: dict[date, float], today: date) -> dict[str, Any]:
+    """Normal mensual de lluvia (media y percentiles 20/80) y totales de los últimos 12 meses completos.
+
+    Args:
+        precip: Lluvia diaria.
+        today: Fecha de hoy, para el caso sin datos.
+    """
     totals = monthly_totals(precip)
     normal = []
     for m in range(1, 13):
@@ -169,6 +177,7 @@ def longest_run(precip: dict[date, float], start: date, end: date, threshold: fl
 
 
 def dry_stats(precip: dict[date, float]) -> dict[str, Any]:
+    """Racha más larga de días secos por año y por verano, y cantidad de rachas de 15 días o más."""
     years = [y for y in range(NORMAL_FROM, NORMAL_TO + 1) if sum(1 for d in precip if d.year == y) >= 300]
     runs = {y: longest_run(precip, date(y, 1, 1), date(y, 12, 31)) for y in years}
     summers = [longest_run(precip, date(y, 11, 1), date(y + 1, 3, 31))[0] for y in years if y < NORMAL_TO]
@@ -199,6 +208,14 @@ def firms_windows(start: date, end: date, today: date) -> list[tuple[str, date, 
 
 
 def fetch_hotspot_history(map_key: str, today: date, client: httpx.Client | None = None, pause: Seconds = 0.0) -> list[dict[str, Any]]:
+    """Baja los focos VIIRS de Paraguay de los últimos tres años, de a 5 días.
+
+    Args:
+        map_key: Clave de la API de FIRMS.
+        today: Fecha de hoy.
+        client: Cliente HTTP propio (para los tests).
+        pause: Segundos de espera entre pedidos.
+    """
     c = client or httpx.Client(timeout=90)
     start = today - timedelta(days=365 * FIRE_YEARS)
     hotspots: list[dict[str, Any]] = []
@@ -218,6 +235,14 @@ def fetch_hotspot_history(map_key: str, today: date, client: httpx.Client | None
 
 
 def fire_stats(farm_geom: dict[str, Any], hotspots: list[dict[str, Any]], today: date, radius_km: float = FIRE_RADIUS_KM) -> dict[str, Any]:
+    """Focos cerca de la estancia: total, por año, por mes, distancia mínima y último.
+
+    Args:
+        farm_geom: Perímetro de la estancia (GeoJSON).
+        hotspots: Focos de todo el país.
+        today: Fecha de hoy.
+        radius_km: Distancia máxima al perímetro.
+    """
     g = load(farm_geom)
     pad = radius_km / 111 + 0.02
     near: list[tuple[float, dict[str, Any]]] = []
@@ -251,6 +276,14 @@ def fire_stats(farm_geom: dict[str, Any], hotspots: list[dict[str, Any]], today:
 
 
 def build_report(power: dict[str, dict[str, float]], today: date, fire: dict[str, Any] | None, now_ms: int | None = None) -> dict[str, Any]:
+    """Arma el informe de riesgo a partir de las series de POWER.
+
+    Args:
+        power: Series diarias de T2M_MIN y PRECTOTCORR.
+        today: Fecha de hoy.
+        fire: Resultado de :func:`fire_stats`, o None si no hay datos de fuego.
+        now_ms: Marca de generación (epoch ms); por defecto la hora actual.
+    """
     tmin = parse_series(power.get("T2M_MIN", {}))
     precip = parse_series(power.get("PRECTOTCORR", {}))
     normal_tmin = {d: v for d, v in tmin.items() if NORMAL_FROM <= d.year <= NORMAL_TO}

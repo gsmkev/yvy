@@ -53,11 +53,13 @@ HALF = 20037508.342789244  # medio ancho del mundo en Web Mercator (m)
 
 
 def tile_bounds_3857(x: int, y: int, z: int) -> tuple[float, float, float, float]:
+    """Límites (minx, miny, maxx, maxy) en Web Mercator de la tesela x/y del zoom z."""
     size = 2 * HALF / 2**z
     return (-HALF + x * size, HALF - (y + 1) * size, -HALF + (x + 1) * size, HALF - y * size)
 
 
 def lonlat_tile(lon: float, lat: float, z: int) -> tuple[int, int]:
+    """Índice (x, y) de la tesela del zoom `z` que contiene el punto, acotado a la grilla."""
     n = 2**z
     x = int((lon + 180) / 360 * n)
     y = int((1 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2 * n)
@@ -65,12 +67,14 @@ def lonlat_tile(lon: float, lat: float, z: int) -> tuple[int, int]:
 
 
 def blocks(bbox: tuple[float, float, float, float] = BBOX, z: int = BLOCK_Z) -> list[tuple[int, int]]:
+    """Bloques z10 que cubren el bbox, como pares (x, y)."""
     x0, y0 = lonlat_tile(bbox[0], bbox[3], z)
     x1, y1 = lonlat_tile(bbox[2], bbox[1], z)
     return [(x, y) for x in range(x0, x1 + 1) for y in range(y0, y1 + 1)]
 
 
 def tile_lonlat_bbox(x: int, y: int, z: int) -> list[float]:
+    """Límites (oeste, sur, este, norte) en lon/lat de la tesela x/y del zoom z."""
     n = 2**z
 
     def lat(yy: int) -> float:
@@ -80,6 +84,7 @@ def tile_lonlat_bbox(x: int, y: int, z: int) -> list[float]:
 
 
 def mgrs(item: dict[str, Any]) -> str:
+    """Tesela MGRS de un ítem de Earth Search."""
     p = item["properties"]
     return str(p.get("grid:code") or p.get("s2:mgrs_tile") or item["id"].split("_")[1])
 
@@ -162,6 +167,7 @@ def downsample(img: np.ndarray) -> np.ndarray:
 
 
 def encode(tile: np.ndarray, quality: int = QUALITY) -> bytes | None:
+    """Codifica una tesela RGBA como WebP; None si está vacía (sin píxeles con dato)."""
     if not tile[3].any():
         return None
     buf = io.BytesIO()
@@ -215,6 +221,15 @@ def build_block(x: int, y: int, start: datetime, end: datetime, out: Path) -> np
 
 
 def write_archive(tiles_dir: Path, path: Path) -> int:
+    """Junta las teselas del directorio en un PMTiles.
+
+    Args:
+        tiles_dir: Directorio con ``<id de tesela>.webp``.
+        path: PMTiles de salida.
+
+    Returns:
+        Tamaño del archivo en bytes.
+    """
     ids = sorted(int(p.stem) for p in tiles_dir.glob("*.webp"))
     with open(path, "wb") as f:
         writer = Writer(f)

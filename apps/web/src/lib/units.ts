@@ -17,7 +17,7 @@ import {
 } from "@yvy/shared";
 import { getSession } from "./api";
 
-export { CUADRA_HA, type RainUnit, type TempUnit, type Units } from "@yvy/shared";
+export { CUADRA_HA, type Units } from "@yvy/shared";
 
 const key = () => `yvy.units.${getSession()?.user.id ?? "anon"}`;
 const listeners = new Set<() => void>();

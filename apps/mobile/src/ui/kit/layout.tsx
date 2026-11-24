@@ -17,7 +17,7 @@ export function ScreenBody({ children, footer }: { children: ReactNode; footer?:
   );
 }
 
-/** U-26: agrupa opciones de una sola respuesta para que TalkBack diga "opción 2 de 4" y el nombre del grupo. */
+/** Agrupa opciones de una sola respuesta para que TalkBack diga "opción 2 de 4" y el nombre del grupo. */
 export function RadioGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={label}>

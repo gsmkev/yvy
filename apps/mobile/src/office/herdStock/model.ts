@@ -1,9 +1,11 @@
+/** Modelo de las existencias de hacienda por potrero: filas, totales y textos de resumen. */
 import { HERD_CATEGORIES, areaLabel, haToArea, t, uaOf, uaPerHa, type MessageKey } from "@yvy/shared";
 import type { Plot } from "../../db/store";
 import { getDb } from "../../lib/db";
 import { fmtDate, fmtNumber } from "../format";
 
 type Stock = NonNullable<ReturnType<ReturnType<typeof getDb>["herdStock"]>>;
+/** Potrero con su hacienda calculada (`st`, null si no hay conteo) y las UA totales. */
 export type HerdRow = { plot: Plot; st: Stock | null; ua: number };
 
 /** Potreros con hacienda de la estancia, calculados con los conteos y movimientos del celular, los de más UA primero. */

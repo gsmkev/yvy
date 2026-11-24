@@ -1,3 +1,4 @@
+/** Código QR dibujado con SVG. */
 import { useMemo } from "react";
 import { View } from "react-native";
 import Svg, { Path, Rect } from "react-native-svg";

@@ -1,3 +1,4 @@
+/** Línea con la estancia elegida y selector para cambiarla. */
 import { useState } from "react";
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import { Text } from "./kit";

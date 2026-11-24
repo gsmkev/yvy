@@ -1,6 +1,7 @@
 /** Matriz de módulos de un QR (true = oscuro). JS puro, sin React Native, para poder probarla. */
 import qrcode from "qrcode-generator";
 
+/** Matriz de módulos del QR de un texto; `true` es módulo oscuro. */
 export function qrMatrix(text: string): boolean[][] {
   const qr = qrcode(0, "M");
   qr.addData(text);

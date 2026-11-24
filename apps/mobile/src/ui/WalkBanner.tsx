@@ -1,3 +1,4 @@
+/** Banner permanente que avisa que hay una recorrida grabándose. */
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
@@ -8,7 +9,7 @@ import { durationS, formatDuration } from "../lib/walkTracker";
 import { Text } from "./kit";
 import { C, GUTTER, T } from "./theme";
 
-/** Barra siempre visible mientras se graba una recorrida (F-05): nunca se graba a escondidas. Tocarla abre la pantalla. */
+/** Barra siempre visible mientras se graba una recorrida: nunca se graba a escondidas. Tocarla abre la pantalla. */
 export function WalkBanner() {
   const { recording, draft } = useWalk();
   const [, tick] = useState(0);

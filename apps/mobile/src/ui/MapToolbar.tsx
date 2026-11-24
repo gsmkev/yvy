@@ -1,3 +1,4 @@
+/** Barra de herramientas del mapa: botón de herramienta y panel desplegable. */
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import type { LucideIcon } from "lucide-react-native";
@@ -12,6 +13,7 @@ export function MapToolbar({ children }: { children: ReactNode }) {
   );
 }
 
+/** Botón de la barra del mapa con ícono, etiqueta accesible y estado activo. */
 export function MapToolButton({ icon: Icon, label, onPress, active, rotate, role = "button" }: { icon: LucideIcon; label: string; onPress: () => void; active?: boolean; rotate?: number; role?: "button" | "switch" }) {
   return (
     <Pressable

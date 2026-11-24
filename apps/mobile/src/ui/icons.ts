@@ -1,3 +1,4 @@
+/** Íconos de la app por tipo de registro y por tipo de punto de interés. */
 import {
   Anchor,
   ArrowRightLeft,
@@ -37,6 +38,7 @@ import {
 } from "lucide-react-native";
 import type { PoiKind, RecordKind } from "@yvy/shared";
 
+/** Ícono de cada tipo de registro. */
 export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
   scouting: Footprints,
   pest: Bug,
@@ -65,7 +67,7 @@ export const RECORD_ICON: Record<RecordKind, LucideIcon> = {
   feed: Wheat,
 };
 
-/** M-19: el mismo ícono por tipo de punto de interés que en la web. */
+/** El mismo ícono por tipo de punto de interés que en la web. */
 export const POI_ICON: Record<PoiKind, LucideIcon> = {
   rain_gauge: CloudRain,
   water: Waves,

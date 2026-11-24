@@ -1,5 +1,5 @@
 /**
- * Monitoreo por estaciones (F-12): el usuario camina el lote y en cada estación cuenta cada plaga de la plantilla
+ * Monitoreo por estaciones: el usuario camina el lote y en cada estación cuenta cada plaga de la plantilla
  * del cultivo. La app muestra el promedio corriente contra el umbral por defecto. Estado controlado por la
  * pantalla de anotar para no perder las estaciones al volver atrás.
  */
@@ -88,6 +88,7 @@ function Counter({ item, value, onChange }: { item: MonitorItem; value: number; 
   );
 }
 
+/** Conteo de plagas por estación del monitoreo, con su promedio contra el umbral. */
 export function Stations({
   crop,
   stations,

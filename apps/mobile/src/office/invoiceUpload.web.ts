@@ -3,6 +3,7 @@ import { LIMITS, t } from "@yvy/shared";
 import { api } from "../lib/session";
 import type { PickedPhoto } from "./invoicePhoto";
 
+/** Tipo de documento al que se adjunta la foto. */
 export type PhotoKind = "purchases" | "cattle-deals" | "stock-moves" | "cost-entries";
 
 const toBlob = (c: HTMLCanvasElement, q: number) => new Promise<Blob | null>((ok) => c.toBlob(ok, "image/webp", q));
@@ -24,6 +25,12 @@ async function compress(uri: string): Promise<Blob> {
   return blob;
 }
 
+/**
+ * Comprime la foto a WebP y la sube con la URL firmada.
+ * @param kind Tipo de documento al que pertenece.
+ * @param id Id del documento.
+ * @throws Error si la subida falla.
+ */
 export async function uploadInvoicePhoto(kind: PhotoKind, id: string, p: PickedPhoto): Promise<void> {
   const blob = await compress(p.uri);
   const { url } = await api<{ url: string }>("POST", `/org/erp/photos/${kind}/${id}/upload-url`);

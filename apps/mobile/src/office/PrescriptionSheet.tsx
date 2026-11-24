@@ -1,5 +1,5 @@
 /**
- * Receta agronómica (A-11, función 60): lotes, productos y dosis, enviada como una tarea de aplicación por lote a un
+ * Receta agronómica: lotes, productos y dosis, enviada como una tarea de aplicación por lote a un
  * empleado. `POST /org/prescriptions` (como la web); necesita señal. La tarea llega al celular del empleado con el sync.
  */
 import { useState } from "react";
@@ -25,6 +25,7 @@ interface Line {
   unit: DoseUnit;
 }
 
+/** Hoja para armar la receta y mandarla como tarea de aplicación a un empleado. */
 export function PrescriptionSheet({ visible, onClose, farms, plots, products, seasons }: { visible: boolean; onClose: () => void; farms: Farm[]; plots: Plot[]; products: Product[]; seasons: { id: string; name: string }[] }) {
   const [farmPick, setFarmPick] = useState<string | null>(null);
   const farmId = farms.find((x) => x.id === farmPick)?.id ?? farms[0]?.id ?? "";

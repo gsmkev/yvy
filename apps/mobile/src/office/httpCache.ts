@@ -4,11 +4,13 @@
  */
 import type { Sql } from "../db/sql";
 
+/** Tamaño máximo de una entrada de la caché; las más grandes no se guardan. */
 export const CACHE_MAX_ENTRY_BYTES = 200 * 1024;
 const CACHE_MAX_TOTAL_BYTES = 5 * 1024 * 1024;
 /** Cuánto dura "fresco" un dato si la pantalla no pide otra cosa. */
 export const DEFAULT_TTL_MS = 5 * 60_000;
 
+/** Clave de una entrada: usuario, organización y ruta. */
 export const cacheKey = (userId: string, orgId: string, path: string): string => `${userId}|${orgId}|${path}`;
 
 /** Rutas que nunca se guardan: el ERP (montos, costos, caja). */
@@ -32,13 +34,16 @@ export function utf8Bytes(s: string): number {
   return n;
 }
 
+/** Indica si lo guardado en `fetchedAt` ya pasó el `ttlMs`. */
 export const isExpired = (fetchedAt: number, ttlMs: number, now: number): boolean => now - fetchedAt > ttlMs;
 
+/** Respuesta guardada y cuándo se bajó (epoch ms). */
 export interface CacheEntry {
   body: string;
   fetchedAt: number;
 }
 
+/** Entrada guardada bajo `key`, o null. */
 export function cacheGet(sql: Sql, key: string): CacheEntry | null {
   const r = sql.get<{ body: string; fetched_at: number }>("SELECT body, fetched_at FROM http_cache WHERE key = ?", [key]);
   return r ? { body: r.body, fetchedAt: r.fetched_at } : null;
@@ -100,10 +105,12 @@ export function cacheInvalidate(sql: Sql, userId: string, orgId: string, prefixe
   return n;
 }
 
+/** Borra la entrada `key`. */
 export function cacheDelete(sql: Sql, key: string): void {
   sql.run("DELETE FROM http_cache WHERE key = ?", [key]);
 }
 
+/** Vacía toda la caché. */
 export function cacheClear(sql: Sql): void {
   sql.run("DELETE FROM http_cache");
 }

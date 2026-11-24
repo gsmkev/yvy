@@ -1,5 +1,5 @@
 /**
- * Dibujar sobre la foto antes de guardarla (F-08): flecha y círculo para señalar la plaga.
+ * Dibujar sobre la foto antes de guardarla: flecha y círculo para señalar la plaga.
  * Al terminar se aplana en la imagen (react-native-view-shot), así la marca viaja con la foto por el mismo
  * camino de siempre: sin cambios de protocolo y se ve igual en la web, en el PDF y en WhatsApp.
  */
@@ -39,6 +39,7 @@ function MarkShape({ m, w, h }: { m: Mark; w: number; h: number }) {
   );
 }
 
+/** Editor para dibujar flechas y círculos sobre la foto. */
 export function PhotoMarkup({
   uri,
   width,

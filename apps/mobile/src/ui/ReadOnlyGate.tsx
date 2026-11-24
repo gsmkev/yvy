@@ -1,4 +1,4 @@
-/** F-29: las pantallas que escriben datos no se abren en modo solo lectura; se explica y se ofrece salir del modo. */
+/** Las pantallas que escriben datos no se abren en modo solo lectura; se explica y se ofrece salir del modo. */
 import type { ComponentType } from "react";
 import { View } from "react-native";
 import { router } from "expo-router";
@@ -7,6 +7,7 @@ import { setReadOnly, useReadOnly } from "../lib/readOnly";
 import { Button, s as k, Text } from "./kit";
 import { T } from "./theme";
 
+/** Envuelve una pantalla que escribe datos para que en modo solo lectura muestre un aviso en su lugar. */
 export function withWriteAccess<P extends object>(Screen: ComponentType<P>): ComponentType<P> {
   function Guarded(props: P) {
     const readOnly = useReadOnly();

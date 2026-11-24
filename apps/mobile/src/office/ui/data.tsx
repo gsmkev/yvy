@@ -5,6 +5,7 @@ import { type LucideIcon } from "lucide-react-native";
 import { EmptyState, Row, StatTile, Text } from "../../ui/kit";
 import { C, F, T } from "../../ui/theme";
 
+/** Cifra destacada con su etiqueta y unidad. */
 export interface StatItem {
   label: string;
   value: string | number;

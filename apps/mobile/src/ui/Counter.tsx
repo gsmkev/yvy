@@ -1,5 +1,5 @@
 /**
- * Contador rápido de hacienda (G-06): una fila por categoría con − y + grandes, para contar en la manga con
+ * Contador rápido de hacienda: una fila por categoría con − y + grandes, para contar en la manga con
  * guantes y sin señal. Mantener apretado repite; el número también se puede tipear. Todo es local.
  */
 import { useEffect, useRef } from "react";
@@ -38,6 +38,7 @@ function StepButton({ sign, label, onBump }: { sign: "−" | "+"; label: string;
   );
 }
 
+/** Contador de hacienda por categoría. */
 export function HerdCounter({
   question,
   hint,

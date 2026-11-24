@@ -22,6 +22,7 @@ interface OfficeScreenProps {
   children: ReactNode;
 }
 
+/** Marco común de las pantallas de oficina: título, acción fija abajo, recarga por arrastre y aviso de datos desactualizados. */
 export function OfficeScreen({ title, subtitle, action, query, refreshing, onRefresh, footer, children }: OfficeScreenProps) {
   const insets = useSafeAreaInsets();
   const refresh = onRefresh ?? (query ? () => query.refresh() : undefined);

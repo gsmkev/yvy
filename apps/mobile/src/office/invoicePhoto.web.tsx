@@ -3,14 +3,17 @@ import { useRef } from "react";
 import { Camera } from "lucide-react-native";
 import { Button } from "../ui/kit";
 
+/** Foto elegida: URI y medidas. */
 export interface PickedPhoto {
   uri: string;
   width: number;
   height: number;
 }
 
+/** Indica si hay cámara; en la web se elige un archivo. */
 export const HAS_CAMERA = false;
 
+/** Botón para elegir la foto de una factura desde un archivo. */
 export function InvoicePhotoButton({ title, onPick, disabled, loading }: { title: string; onPick: (p: PickedPhoto) => void; disabled?: boolean; loading?: boolean }) {
   const input = useRef<HTMLInputElement | null>(null);
   return (

@@ -1,3 +1,4 @@
+/** Opciones comunes de encabezado para todas las pantallas de la pila de navegación. */
 import { C, F } from "./theme";
 
 /** Encabezado de las pantallas apiladas (volver + título vacío). Lo usan app/_layout.tsx y app/office/_layout.tsx. */

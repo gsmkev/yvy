@@ -1,3 +1,4 @@
+/** Controles de capa del mapa: selector Satélite / Vigor y leyenda del vigor. */
 import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "./kit";
 import { NDVI_RAMP, t } from "@yvy/shared";

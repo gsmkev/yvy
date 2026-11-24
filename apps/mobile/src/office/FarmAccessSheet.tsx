@@ -1,4 +1,4 @@
-/** Estancias a las que entra una persona de oficina (funciones 107/108): solo el dueño. GET /org/farm-access, PUT /org/members/:id/farms. */
+/** Estancias a las que entra una persona de oficina: solo el dueño. GET /org/farm-access, PUT /org/members/:id/farms. */
 import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { t, type FarmAccessLevel } from "@yvy/shared";
@@ -17,6 +17,7 @@ type Access = { userId: string; farmId: string; level: FarmAccessLevel }[];
 /** Los roles que se limitan por estancia: capataz (sin ninguna no ve nada), administrador y agrónomo (sin ninguna ven todas). */
 export const isScopedRole = (r: string) => r === "supervisor" || r === "admin" || r === "agronomist";
 
+/** Hoja para elegir a qué estancias entra una persona del equipo y con qué nivel. */
 export function FarmAccessSheet({ m, visible, onClose }: { m: Member; visible: boolean; onClose: () => void }) {
   const farms = useLocal(() => getDb().farms());
   const access = useOnline<Access>(visible ? "/org/farm-access" : null, { cache: false });

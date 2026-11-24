@@ -2,9 +2,11 @@
 import type { LucideIcon } from "lucide-react-native";
 import type { MessageKey } from "@yvy/shared";
 
+/** Grupo del menú de Gestión. */
 export type MenuGroup = "campo" | "equipo" | "admin" | "informes" | "cuenta";
 const MENU_GROUPS: MenuGroup[] = ["campo", "equipo", "admin", "informes", "cuenta"];
 
+/** Título de cada grupo del menú. */
 export const GROUP_TITLE: Record<MenuGroup, MessageKey> = {
   campo: "office.group.campo",
   equipo: "office.group.equipo",
@@ -13,6 +15,7 @@ export const GROUP_TITLE: Record<MenuGroup, MessageKey> = {
   cuenta: "office.group.cuenta",
 };
 
+/** Contexto con el que se decide qué entradas se muestran. */
 export interface MenuCtx {
   role: string;
   /** Estancias y lotes que bajaron al celular. */
@@ -22,6 +25,7 @@ export interface MenuCtx {
   hasClients: boolean;
 }
 
+/** Entrada del menú de Gestión. */
 export interface OfficeMenuItem {
   group: MenuGroup;
   /** Único. */

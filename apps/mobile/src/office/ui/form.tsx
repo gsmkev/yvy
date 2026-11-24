@@ -39,6 +39,7 @@ const inputBox = (error?: string) =>
 
 const inputText = { flex: 1, fontFamily: F.sans, fontSize: 17, color: C.tinta, paddingVertical: 12 } as const;
 
+/** Campo de texto con etiqueta, ayuda y error para los formularios de oficina. */
 export function TextField({
   label,
   value,

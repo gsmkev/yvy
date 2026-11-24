@@ -1,4 +1,4 @@
-/** Dinero en pantalla (ADR 0004): guaraníes enteros y dólares con centavos. Copia mínima de apps/web/src/lib/money.ts, sin Intl. */
+/** Dinero en pantalla: guaraníes enteros y dólares con centavos. Copia mínima de apps/web/src/lib/money.ts, sin Intl. */
 import { fromMinor, type Currency } from "@yvy/shared";
 import { fmtNumber } from "./format";
 

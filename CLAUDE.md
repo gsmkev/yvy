@@ -15,6 +15,7 @@ Mapa vivo del campo que funciona sin señal. PRD en docs/PRD.md; docs/PRD-cloudf
 ## Comandos
 
 - pnpm dev / pnpm test / pnpm lint / pnpm typecheck
+- pnpm run docs genera la documentación (TypeDoc para TS + MkDocs/mkdocstrings para workers-py, con `--strict`) en docs-site/site; pnpm run docs:serve la sirve. Necesita uv. Con `pnpm docs` a secas pnpm abre npm: usar `run`
 - pnpm --filter api dev (wrangler dev con D1 y R2 locales; copiar apps/api/.dev.vars.example a .dev.vars)
 - pnpm --filter api db:generate (tras cambiar packages/shared/src/schema/) y pnpm --filter api db:migrate:local
 - pnpm --filter api seed (organización de prueba; ingreso con dueno@yvy.test, el código sale en la consola)

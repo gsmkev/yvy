@@ -1,5 +1,5 @@
 /**
- * Agricultura (ADR 0004): campañas, plan por lote e historial de rotación.
+ * Agricultura: campañas, plan por lote e historial de rotación.
  * Toda escritura a tablas sincronizables: bumpVersion() primero y `version: currentVersion` en la fila.
  */
 import { and, asc, desc, eq, gte, inArray, isNull } from "drizzle-orm";
@@ -57,6 +57,7 @@ export async function listSeasons(sdb: ScopedDb, farmId?: string) {
   return { seasons, plotSeasons };
 }
 
+/** Crea una campaña. */
 export async function createSeason(sdb: ScopedDb, input: SeasonInput) {
   sdb.require(can.editSeasons);
   const id = newId();
@@ -75,6 +76,7 @@ export async function createSeason(sdb: ScopedDb, input: SeasonInput) {
   return { id };
 }
 
+/** Edita una campaña. */
 export async function updateSeason(sdb: ScopedDb, id: string, patch: Partial<SeasonInput>) {
   sdb.require(can.editSeasons);
   await updateSynced(sdb, s.seasons, id, patch);
@@ -142,6 +144,7 @@ export async function upsertPlotSeason(sdb: ScopedDb, plotId: string, seasonId: 
   ]);
 }
 
+/** Quita el plan de un lote en una campaña. */
 export async function deletePlotSeason(sdb: ScopedDb, plotId: string, seasonId: string) {
   sdb.require(can.editSeasons);
   const ts = sdb.now();
@@ -178,7 +181,7 @@ interface PlotHistoryRow {
 }
 
 /**
- * Historial de rotación de un lote (A-02): una fila por campaña con lo planificado (plot_seasons) y, si
+ * Historial de rotación de un lote: una fila por campaña con lo planificado (plot_seasons) y, si
  * hay un registro de siembra de esa campaña, lo que realmente se sembró. Más reciente primero.
  * 4 consultas, sin N+1.
  */
@@ -299,6 +302,7 @@ interface ProductInput {
   toxClass: string | null;
 }
 
+/** Productos (insumos) de la organización, por nombre. */
 export async function listProducts(sdb: ScopedDb) {
   return sdb.db
     .select()
@@ -307,6 +311,7 @@ export async function listProducts(sdb: ScopedDb) {
     .orderBy(asc(s.products.name));
 }
 
+/** Crea un producto del catálogo. */
 export async function createProduct(sdb: ScopedDb, input: ProductInput) {
   sdb.require(can.editProducts);
   const id = newId();
@@ -325,17 +330,19 @@ export async function createProduct(sdb: ScopedDb, input: ProductInput) {
   return { id };
 }
 
+/** Edita un producto del catálogo. */
 export async function updateProduct(sdb: ScopedDb, id: string, patch: Partial<ProductInput>) {
   sdb.require(can.editProducts);
   await updateSynced(sdb, s.products, id, patch);
 }
 
+/** Borra (lógico) un producto del catálogo. */
 export async function deleteProduct(sdb: ScopedDb, id: string) {
   sdb.require(can.editProducts);
   await updateSynced(sdb, s.products, id, { deletedAt: sdb.now() });
 }
 
-// ---------- Ventanas para pulverizar (A-13) ----------
+// ---------- Ventanas para pulverizar ----------
 
 /** Próximas horas del pronóstico guardado, cada una marcada apta o no según LIMITS.spray, y las ventanas aptas. */
 export async function sprayForecast(sdb: ScopedDb, farmId: string) {
@@ -359,7 +366,7 @@ export async function sprayForecast(sdb: ScopedDb, farmId: string) {
 }
 
 /**
- * Plan vigente de un lote (A-01): el de la campaña activa más reciente. Es la fuente del cultivo y de la fecha
+ * Plan vigente de un lote: el de la campaña activa más reciente. Es la fuente del cultivo y de la fecha
  * de siembra prevista; el texto libre de `plots.crop` y `plots.sowing_date` queda solo como respaldo.
  */
 export async function currentPlotPlan(sdb: ScopedDb, plotId: string) {

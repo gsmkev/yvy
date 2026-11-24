@@ -1,4 +1,4 @@
-/** Topes del plan (P-10). */
+/** Topes del plan. */
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { planLimits as limitsFor, t } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";

@@ -4,6 +4,7 @@ import * as s from "@yvy/shared/schema";
 import { chunkForParams, runBatch } from "../client";
 import type { SystemDb } from "./index";
 
+/** Inserta o actualiza el clima diario por estancia y fuente; devuelve las filas escritas. */
 export async function upsertClimateDaily(sys: SystemDb, rows: (typeof s.climateDaily.$inferInsert)[]): Promise<number> {
   const stmts = chunkForParams(rows, 9).map((chunk) =>
     sys.db
@@ -24,6 +25,7 @@ export async function upsertClimateDaily(sys: SystemDb, rows: (typeof s.climateD
   return rows.length;
 }
 
+/** Última fecha de clima guardada por estancia y fuente. */
 export function climateLatest(sys: SystemDb) {
   return sys.db
     .select({
@@ -36,6 +38,7 @@ export function climateLatest(sys: SystemDb) {
     .groupBy(s.climateDaily.farmId, s.climateDaily.source);
 }
 
+/** Inserta o actualiza la climatología histórica; devuelve las filas escritas. */
 export async function upsertClimatology(sys: SystemDb, rows: (typeof s.climatology.$inferInsert)[]): Promise<number> {
   const stmts = chunkForParams(rows, 8).map((chunk) =>
     sys.db
@@ -50,7 +53,7 @@ export async function upsertClimatology(sys: SystemDb, rows: (typeof s.climatolo
   return rows.length;
 }
 
-/** C-07: guarda (reemplaza) el SPI de la estancia. */
+/** Guarda (reemplaza) el SPI de la estancia. */
 export async function upsertFarmSpi(sys: SystemDb, farmId: string, report: string, now: number): Promise<boolean> {
   const [f] = await sys.db
     .select({ id: s.farms.id })
@@ -65,6 +68,7 @@ export async function upsertFarmSpi(sys: SystemDb, farmId: string, report: strin
   return true;
 }
 
+/** Guarda el reporte de riesgo de una estancia; devuelve false si la estancia ya no existe. */
 export async function upsertFarmRisk(sys: SystemDb, farmId: string, report: string, now: number): Promise<boolean> {
   const [f] = await sys.db
     .select({ id: s.farms.id })

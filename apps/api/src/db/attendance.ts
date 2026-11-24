@@ -1,5 +1,5 @@
 /**
- * Asistencia y jornales (E-25). Cada asistencia carga un costo de mano de obra (categoría `labor`) al lote, con su
+ * Asistencia y jornales. Cada asistencia carga un costo de mano de obra (categoría `labor`) al lote, con su
  * campaña, o a administración si no hay lote. Un empleado no puede sumar más de un día por fecha.
  * Son montos: solo dueño y administrador.
  */
@@ -21,6 +21,7 @@ interface Entry {
   wagePyg?: number | null;
 }
 
+/** Lista las asistencias de la organización, filtrables por empleado y por rango de fechas. */
 export async function listAttendance(sdb: ScopedDb, f: { employeeId?: string; from?: string; to?: string }) {
   sdb.require(can.manageErp);
   return sdb.db
@@ -133,6 +134,9 @@ export async function markDay(sdb: ScopedDb, date: string, entries: Entry[]) {
   return { ids: rows.map((r) => r.id as string) };
 }
 
+/**
+ * Borra (lógico) una asistencia junto con el costo de mano de obra que generó. Falla con NotFoundError si no existe.
+ */
 export async function deleteAttendance(sdb: ScopedDb, id: string) {
   sdb.require(can.manageErp);
   const org = sdb.auth.orgId;

@@ -1,10 +1,10 @@
-/** Tablero del dueño (R-06). */
+/** Tablero del dueño. */
 import { sql } from "drizzle-orm";
 import { isFieldRole, localDate } from "@yvy/shared";
 import { can, type ScopedDb } from "../scoped";
 import { dayOfYear } from "./climate";
 
-// ---------- Tablero del dueño (R-06) ----------
+// ---------- Tablero del dueño ----------
 
 /**
  * Cifras sueltas para el inicio del dueño con varias estancias: superficie por cultivo, lluvia del mes contra lo
@@ -18,7 +18,7 @@ export async function ownerDashboard(sdb: ScopedDb) {
   const week = now - 7 * 86_400_000;
   const today = localDate(now);
   const monthStart = `${today.slice(0, 7)}-01`;
-  // K-05: el administrador con estancias limitadas ve el tablero de esas estancias
+  // El administrador con estancias limitadas ve el tablero de esas estancias
   const farmIds = sql`(SELECT id FROM farms WHERE organization_id = ${org} AND deleted_at IS NULL AND ${sdb.farmScopeSql("farms.id") ?? sql`1`})`;
   const [byCrop, rain, normal, alerts, members, records] = await Promise.all([
     sdb.db.all<{ crop: string | null; kind: string; ha: number; plots: number }>(sql`

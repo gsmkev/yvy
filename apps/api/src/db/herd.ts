@@ -47,7 +47,7 @@ import { feedlotReport } from "./feedlot";
 import { farmStockSummary, getLivestockSettings } from "./livestock";
 import { can, type ScopedDb } from "./scoped";
 
-/** G-32: THI de las próximas 48 horas con el pronóstico horario guardado (MET Norway). */
+/** THI de las próximas 48 horas con el pronóstico horario guardado (MET Norway). */
 export async function farmHeatStress(sdb: ScopedDb, farmId: string): Promise<FarmHeatStressResponse> {
   await sdb.requireFarmVisible(farmId);
   const now = sdb.now();
@@ -85,7 +85,7 @@ function rangeOf(sdb: ScopedDb, from?: number, to?: number) {
   return { from: from ?? end - 365 * DAY, to: end };
 }
 
-/** G-13: avisos de abigeato de la estancia con total de cabezas y cuáles no tienen denuncia. */
+/** Avisos de abigeato de la estancia con total de cabezas y cuáles no tienen denuncia. */
 export async function farmTheft(sdb: ScopedDb, farmId: string, from?: number, to?: number): Promise<TheftResponse> {
   sdb.require(can.viewAll);
   await sdb.requireFarm(farmId);
@@ -141,7 +141,7 @@ export async function farmTheft(sdb: ScopedDb, farmId: string, from?: number, to
 }
 
 /**
- * G-31: suplementación y sal mineral por potrero en una ventana (por defecto, los últimos 30 días).
+ * Suplementación y sal mineral por potrero en una ventana (por defecto, los últimos 30 días).
  * El consumo por cabeza usa la hacienda de hoy (stock calculado), por eso es aproximado.
  */
 export async function farmSupplements(sdb: ScopedDb, farmId: string, from?: number, to?: number): Promise<SupplementResponse> {
@@ -180,7 +180,7 @@ export async function farmSupplements(sdb: ScopedDb, farmId: string, from?: numb
   return { ...range, ...sum, reference: MINERAL_SALT_REFERENCE_G, truncated: rows.length > MAX_ROWS * 4 };
 }
 
-/** G-22: pesadas y ganancia diaria de peso por lote de animales y por animal con caravana. */
+/** Pesadas y ganancia diaria de peso por lote de animales y por animal con caravana. */
 export async function farmWeighings(sdb: ScopedDb, farmId: string, from?: number, to?: number): Promise<WeighingsResponse> {
   sdb.require(can.viewAll);
   await sdb.requireFarm(farmId);
@@ -209,7 +209,7 @@ export async function farmWeighings(sdb: ScopedDb, farmId: string, from?: number
   return { ...range, ...groupWeighings(events), truncated: rows.length > MAX_ROWS * 2 };
 }
 
-/** G-20: eventos de reproducción del período e índices de preñez, parición y destete. */
+/** Eventos de reproducción del período e índices de preñez, parición y destete. */
 export async function farmReproduction(sdb: ScopedDb, farmId: string, from?: number, to?: number): Promise<ReproductionResponse> {
   sdb.require(can.viewAll);
   await sdb.requireFarm(farmId);
@@ -286,7 +286,7 @@ async function latestPastureReadings(sdb: ScopedDb, farmId: string): Promise<Map
 }
 
 /**
- * G-04: días de ocupación y descanso de cada potrero (reconstruidos del último año de conteos, movimientos,
+ * Días de ocupación y descanso de cada potrero (reconstruidos del último año de conteos, movimientos,
  * mortandad y abigeato) y próximo potrero sugerido. 3 consultas por estancia.
  */
 export async function farmRotation(sdb: ScopedDb, farmId: string): Promise<RotationResponse> {
@@ -332,7 +332,7 @@ export async function farmRotation(sdb: ScopedDb, farmId: string): Promise<Rotat
 }
 
 /**
- * G-05: oferta de forraje (kg de materia seca por hectárea) de cada potrero con la última altura y cobertura
+ * Oferta de forraje (kg de materia seca por hectárea) de cada potrero con la última altura y cobertura
  * medidas y el último NDVI de satélite, y días de pasto con la hacienda de hoy. 7 consultas por estancia.
  */
 export async function farmForage(sdb: ScopedDb, farmId: string): Promise<ForageResponse> {
@@ -414,7 +414,7 @@ export async function farmForage(sdb: ScopedDb, farmId: string): Promise<ForageR
 }
 
 /**
- * ADR 0005: indicadores del sistema productivo con lo que ya se registra (último año). Reproducción y pesadas
+ * Indicadores del sistema productivo con lo que ya se registra (último año). Reproducción y pesadas
  * salen de las mismas consultas de esas pestañas; el feedlot solo para quien ve el ERP. Unas 12 consultas.
  */
 export async function farmProduction(sdb: ScopedDb, farmId: string): Promise<ProductionResponse> {
@@ -448,7 +448,7 @@ export async function farmProduction(sdb: ScopedDb, farmId: string): Promise<Pro
   };
 }
 
-/** ADR 0005: estación de servicio de la estancia e indicadores del ciclo actual (tactos, pariciones y destetes registrados). */
+/** Estación de servicio de la estancia e indicadores del ciclo actual (tactos, pariciones y destetes registrados). */
 export async function farmReproPlan(sdb: ScopedDb, farmId: string): Promise<ReproPlanResponse> {
   sdb.require(can.viewAll);
   await sdb.requireFarm(farmId);

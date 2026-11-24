@@ -1,6 +1,6 @@
 /**
- * Órdenes de trabajo (E-20): una tarea por lote con un payload `workOrder` (labor, insumos, máquina, contratista).
- * Es una tarea común: baja al celular del operario, que la cierra con un registro de campo (E-21).
+ * Órdenes de trabajo: una tarea por lote con un payload `workOrder` (labor, insumos, máquina, contratista).
+ * Es una tarea común: baja al celular del operario, que la cierra con un registro de campo.
  * Lo que pasa al cerrarla (consumo de insumos, costo del contratista) lo hace erp-effects.ts al llegar el registro.
  */
 import { and, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
@@ -20,6 +20,7 @@ interface WorkOrderInput {
   order: WorkOrder;
 }
 
+/** Crea una orden de trabajo con una tarea por lote. Falla con 400 si la cantidad de lotes está fuera del límite. */
 export async function createWorkOrder(sdb: ScopedDb, input: WorkOrderInput) {
   sdb.require(can.assign);
   const plotIds = [...new Set(input.plotIds)];
@@ -35,7 +36,7 @@ export async function createWorkOrder(sdb: ScopedDb, input: WorkOrderInput) {
     if (m) order.machine = m.name;
   }
   const kind = ORDER_LABOR_KIND[order.labor];
-  // La aplicación sigue usando la receta (A-11) para precargar la pantalla del celular.
+  // La aplicación sigue usando la receta para precargar la pantalla del celular.
   const prescription =
     order.labor === "spraying" && order.products.length
       ? JSON.stringify({ seasonId: order.seasonId, products: order.products, volumeLHa: order.volumeLHa, note: order.note })

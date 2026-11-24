@@ -53,7 +53,7 @@ export async function requirePlotRow(sdb: ScopedDb, plotId: string) {
     )
     .limit(1);
   if (!plot) throw new NotFoundError("Lote inexistente");
-  // A-01: el plan de la campaña activa manda sobre el texto libre del lote (que queda de respaldo).
+  // El plan de la campaña activa manda sobre el texto libre del lote (que queda de respaldo).
   const plan = await currentPlotPlan(sdb, plot.id);
   return {
     ...plot,
@@ -109,7 +109,7 @@ interface Phenology {
   comparison: "ahead" | "on_track" | "behind" | null;
 }
 
-/** A-04: GDD desde la siembra (NASA POWER) contra el último `crop_status` del lote. 3 consultas. */
+/** GDD desde la siembra (NASA POWER) contra el último `crop_status` del lote. 3 consultas. */
 export async function plotPhenology(sdb: ScopedDb, plotId: string): Promise<Phenology> {
   const plot = await requirePlotRow(sdb, plotId);
   const base: Phenology = {
@@ -229,7 +229,7 @@ async function latestForecastDays(sdb: ScopedDb, farmId: string, today: string, 
   return { runAt: latest.runAt, days: rows };
 }
 
-/** A-05: ventana de siembra de los próximos días (humedad del suelo NASA POWER + pronóstico MET Norway). 3 consultas. */
+/** Ventana de siembra de los próximos días (humedad del suelo NASA POWER + pronóstico MET Norway). 3 consultas. */
 export async function farmSowingWindow(sdb: ScopedDb, farmId: string, crop: Crop) {
   const farm = await requireFarmRow(sdb, farmId);
   const today = localDate(sdb.now(), farm.tz);
@@ -256,7 +256,7 @@ export async function farmSowingWindow(sdb: ScopedDb, farmId: string, crop: Crop
 }
 
 /**
- * C-08, A-43: balance hídrico simple del lote desde la siembra (máx. LIMITS.waterBalance.maxDays días):
+ * Balance hídrico simple del lote desde la siembra (máx. LIMITS.waterBalance.maxDays días):
  * lluvia CHIRPS de la estancia más el riego registrado menos ETc (Hargreaves con temperaturas de NASA POWER por Kc
  * del cultivo; sin temperaturas, solo lluvia más riego). 4 consultas.
  */
@@ -305,7 +305,7 @@ export async function plotWaterBalance(sdb: ScopedDb, plotId: string) {
     }
     byDate.set(r.date, d);
   }
-  // A-43: riego aplicado en el lote desde la fecha de inicio de la serie (appliedAt, o la captura si falta).
+  // Riego aplicado en el lote desde la fecha de inicio de la serie (appliedAt, o la captura si falta).
   const irrRows = await sdb.db
     .select({
       at: sql<number>`coalesce(json_extract(${s.records.data}, '$.appliedAt'), ${s.records.capturedAt})`,
@@ -341,7 +341,7 @@ export async function plotWaterBalance(sdb: ScopedDb, plotId: string) {
 }
 
 /**
- * A-14: carencia antes de cosechar por lote. Cruza las aplicaciones de los últimos 180 días (productos del catálogo
+ * Carencia antes de cosechar por lote. Cruza las aplicaciones de los últimos 180 días (productos del catálogo
  * con su carencia) con las cosechas de los últimos 90. 5 consultas, sin N+1.
  */
 export async function farmWithdrawal(sdb: ScopedDb, farmId: string) {
@@ -400,7 +400,7 @@ export async function farmWithdrawal(sdb: ScopedDb, farmId: string) {
   };
 }
 
-/** C-03: pronóstico por lote de una estancia grande (la última corrida de cada lote). 1 consulta además de la estancia. */
+/** Pronóstico por lote de una estancia grande (la última corrida de cada lote). 1 consulta además de la estancia. */
 export async function farmPlotForecast(sdb: ScopedDb, farmId: string) {
   const farm = await requireFarmRow(sdb, farmId);
   const enabled = farm.areaHa > LIMITS.weather.plotForecastMinFarmHa;
@@ -437,7 +437,7 @@ export async function farmPlotForecast(sdb: ScopedDb, farmId: string) {
   return { enabled, minHa: LIMITS.weather.plotForecastMinFarmHa, plots: [...byPlot.values()] };
 }
 
-/** C-07: SPI a 1, 3 y 6 meses calculado por workers-py. */
+/** SPI a 1, 3 y 6 meses calculado por workers-py. */
 export async function farmSpiReport(sdb: ScopedDb, farmId: string) {
   sdb.require(can.viewAll);
   await sdb.requireFarm(farmId);
@@ -446,7 +446,7 @@ export async function farmSpiReport(sdb: ScopedDb, farmId: string) {
   return { computedAt: row.computedAt, report: JSON.parse(row.report) as unknown };
 }
 
-/** R-08: comparación anónima con la zona (la calcula el cron semanal). Solo números propios y medianas, sin ids ajenos. */
+/** Comparación anónima con la zona (la calcula el cron semanal). Solo números propios y medianas, sin ids ajenos. */
 export async function farmZoneBenchmark(sdb: ScopedDb, farmId: string) {
   sdb.require(can.viewAll);
   await sdb.requireFarm(farmId);
@@ -467,7 +467,7 @@ export async function farmZoneBenchmark(sdb: ScopedDb, farmId: string) {
   return row ?? null;
 }
 
-/** A-32: zonas de manejo de los lotes de la estancia (calculadas por workers-py). 1 consulta. */
+/** Zonas de manejo de los lotes de la estancia (calculadas por workers-py). 1 consulta. */
 export async function farmManagementZones(sdb: ScopedDb, farmId: string) {
   sdb.require(can.viewAll);
   await sdb.requireFarm(farmId);

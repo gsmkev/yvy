@@ -1,5 +1,5 @@
 /**
- * Calendario sanitario (G-10). Los eventos son de la organización y solo se ven en la web; al crearlos se generan
+ * Calendario sanitario. Los eventos son de la organización y solo se ven en la web; al crearlos se generan
  * tareas (kind "health") para los empleados asignados a algún potrero, que sí bajan al celular.
  * El estado hecho o vencido se calcula contra los registros `health` (sanitaryState en packages/shared).
  */
@@ -41,6 +41,7 @@ interface SanitaryEventRow {
 
 const monthEnd = (month: string) => `${month}-31`;
 
+/** Eventos del calendario sanitario de un mes, de una estancia o de todas, con su estado. */
 export async function listSanitaryEvents(sdb: ScopedDb, month: string, farmId?: string): Promise<SanitaryEventRow[]> {
   sdb.require(can.viewAll);
   const org = sdb.auth.orgId;
@@ -91,6 +92,7 @@ export async function listSanitaryEvents(sdb: ScopedDb, month: string, farmId?: 
   });
 }
 
+/** Planifica un evento sanitario. Con acceso limitado a ciertas estancias exige elegir una estancia. */
 export async function createSanitaryEvent(sdb: ScopedDb, input: SanitaryEventInput) {
   sdb.require(can.planSanitary, "No tenés permiso para planificar el calendario sanitario");
   const org = sdb.auth.orgId;
@@ -170,6 +172,7 @@ export async function createSanitaryEvent(sdb: ScopedDb, input: SanitaryEventInp
   return { id, tasksCreated: workers.length };
 }
 
+/** Borra (lógico) un evento sanitario. */
 export async function deleteSanitaryEvent(sdb: ScopedDb, id: string) {
   sdb.require(can.planSanitary, "No tenés permiso para planificar el calendario sanitario");
   const ts = sdb.now();
@@ -187,7 +190,7 @@ export async function deleteSanitaryEvent(sdb: ScopedDb, id: string) {
   if (!res.length) throw new NotFoundError("Evento inexistente");
 }
 
-/** ADR 0005: campañas oficiales de SENACSA del año si la organización tiene hacienda registrada, y cuáles ya se planificaron (2 consultas). */
+/** Campañas oficiales de SENACSA del año si la organización tiene hacienda registrada, y cuáles ya se planificaron (2 consultas). */
 export async function senacsaForOrg(sdb: ScopedDb, year: number): Promise<SenacsaResponse> {
   sdb.require(can.viewAll);
   const org = sdb.auth.orgId;

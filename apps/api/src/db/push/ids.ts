@@ -1,3 +1,5 @@
+/** Reúne los ids que las mutaciones de un push obligan a leer antes de decidir. */
+
 import type { Mutation } from "@yvy/shared";
 
 /** Ids que las mutaciones de un push obligan a leer antes de decidir (todas las lecturas van por IN, con índices). */
@@ -53,7 +55,7 @@ const COLLECTORS: { [K in Mutation["kind"]]: (m: Of<K>, ids: PushIds) => void } 
   },
   "tasks.status": (m, ids) => {
     ids.taskIds.add(m.row.id);
-    // T-03: el registro con el que se cierra una tarea (y sus fotos) hay que mirarlo para exigir foto y ubicación
+    // El registro con el que se cierra una tarea (y sus fotos) hay que mirarlo para exigir foto y ubicación
     if (m.row.status === "done" && m.row.recordId) {
       ids.recordIds.add(m.row.recordId);
       ids.attachRecordIds.add(m.row.recordId);
@@ -74,6 +76,7 @@ const COLLECTORS: { [K in Mutation["kind"]]: (m: Of<K>, ids: PushIds) => void } 
 
 const collectors = new Map(Object.entries(COLLECTORS) as [Mutation["kind"], Collector][]);
 
+/** Recorre las mutaciones y junta los ids de cada tipo de fila que hay que leer. */
 export function collectIds(mutations: Mutation[]): PushIds {
   const ids: PushIds = {
     recordIds: new Set(),

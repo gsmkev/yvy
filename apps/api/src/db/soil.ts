@@ -1,5 +1,5 @@
 /**
- * Análisis de suelo (A-30): resultados de laboratorio por lote o por punto de muestreo.
+ * Análisis de suelo: resultados de laboratorio por lote o por punto de muestreo.
  * Solo la web los usa (no están en el pull del sync). Escribe y lee quien edita el campo (no el empleado).
  */
 import { and, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
@@ -42,6 +42,7 @@ async function requirePlotInFarm(sdb: ScopedDb, farmId: string, plotId: string) 
   if (!p) throw new NotFoundError("Lote inexistente");
 }
 
+/** Muestras de suelo de una estancia, con el nombre del lote. */
 export async function listSoilSamples(sdb: ScopedDb, farmId: string) {
   sdb.require(can.editField);
   await sdb.requireFarm(farmId);
@@ -75,7 +76,7 @@ export async function listSoilSamples(sdb: ScopedDb, farmId: string) {
     .limit(1000);
 }
 
-/** A-31: ¿hay puntos suficientes para algún mapa? Cuenta ubicaciones distintas con coordenadas y valor por parámetro. */
+/** ¿hay puntos suficientes para algún mapa? Cuenta ubicaciones distintas con coordenadas y valor por parámetro. */
 export async function fertilityPointCountsOf(sdb: ScopedDb, farmId: string) {
   sdb.require(can.editField);
   await sdb.requireFarm(farmId);
@@ -87,6 +88,7 @@ export async function fertilityPointCountsOf(sdb: ScopedDb, farmId: string) {
   return fertilityPointCounts(rows);
 }
 
+/** Crea una muestra de suelo en una estancia, dentro del límite por plan. */
 export async function createSoilSample(sdb: ScopedDb, farmId: string, input: SoilInput) {
   sdb.require(can.editField);
   await sdb.requireFarm(farmId);
@@ -136,6 +138,7 @@ async function requireSample(sdb: ScopedDb, id: string) {
   return row;
 }
 
+/** Edita una muestra de suelo. */
 export async function updateSoilSample(sdb: ScopedDb, id: string, patch: Partial<SoilInput>) {
   sdb.require(can.editField);
   const row = await requireSample(sdb, id);
@@ -149,6 +152,7 @@ export async function updateSoilSample(sdb: ScopedDb, id: string, patch: Partial
   ]);
 }
 
+/** Borra (lógico) una muestra de suelo. */
 export async function deleteSoilSample(sdb: ScopedDb, id: string) {
   sdb.require(can.editField);
   await requireSample(sdb, id);

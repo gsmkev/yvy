@@ -6,6 +6,7 @@ import type { PushCtx } from "./context";
 
 type Of<K extends Mutation["kind"]> = Extract<Mutation, { kind: K }>;
 
+/** Alta o edición de un punto de interés. */
 export function poisUpsert(ctx: PushCtx, m: Of<"pois.upsert">): void {
   const p = m.row;
   const { now, org } = ctx;
@@ -21,6 +22,7 @@ export function poisUpsert(ctx: PushCtx, m: Of<"pois.upsert">): void {
   ctx.accept(m, p.id);
 }
 
+/** Alta o edición de un lote con su geometría, dentro del límite de hectáreas del plan. */
 export function plotsUpsert(ctx: PushCtx, m: Of<"plots.upsert">): void {
   const p = m.row;
   const { now, org } = ctx;

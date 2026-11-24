@@ -1,7 +1,7 @@
 /**
- * Costo por hectárea y por tonelada, y margen bruto por lote, cultivo y actividad (E-30, E-31).
+ * Costo por hectárea y por tonelada, y margen bruto por lote, cultivo y actividad.
  * Ingresos = ventas (cost_entries.category = "sale"); costos = el resto. Todo en guaraníes.
- * Cinco consultas agrupadas, sin recorrer filas en JS. El costo por kilo de carne (E-35) es el costo de ganadería sobre
+ * Cinco consultas agrupadas, sin recorrer filas en JS. El costo por kilo de carne es el costo de ganadería sobre
  * los kilos vendidos en cattle_deals; no se valoriza la hacienda en pie, así que una compra pesa en el período en que se hace.
  */
 import { and, eq, isNull, sql } from "drizzle-orm";
@@ -11,6 +11,10 @@ import { can, type ScopedDb } from "./scoped";
 
 type ResultRow = ResultInput & ResultFigures;
 
+/**
+ * Resultado económico por centro de costo (ingresos, costos y margen), de una estancia, una campaña o toda la
+ * organización.
+ */
 export async function results(sdb: ScopedDb, f: { farmId?: string; seasonId?: string }) {
   sdb.require(can.manageErp);
   const org = sdb.auth.orgId;
@@ -57,7 +61,7 @@ export async function results(sdb: ScopedDb, f: { farmId?: string; seasonId?: st
           .from(s.plotSeasons)
           .where(and(eq(s.plotSeasons.organizationId, org), eq(s.plotSeasons.seasonId, f.seasonId), isNull(s.plotSeasons.deletedAt)))
       : Promise.resolve([] as { plotId: string; crop: string | null }[]),
-    // Kilos de hacienda vendida (E-35): base del costo por kilo de carne.
+    // Kilos de hacienda vendida: base del costo por kilo de carne.
     sdb.db
       .select({ kg: sql<number>`COALESCE(SUM(${s.cattleDeals.totalKg}), 0)` })
       .from(s.cattleDeals)
@@ -70,7 +74,7 @@ export async function results(sdb: ScopedDb, f: { farmId?: string; seasonId?: st
           f.seasonId ? eq(s.cattleDeals.seasonId, f.seasonId) : undefined,
         ),
       ),
-    // Por campaña (E-31): siempre todas las campañas de la estancia, sin el filtro de campaña.
+    // Por campaña: siempre todas las campañas de la estancia, sin el filtro de campaña.
     sdb.db
       .select({
         seasonId: ce.seasonId,

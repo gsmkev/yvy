@@ -1,5 +1,5 @@
 /**
- * Cultivo de cada lote según el plan de la campaña activa (A-01). Los trabajos programados (avisos de plagas,
+ * Cultivo de cada lote según el plan de la campaña activa. Los trabajos programados (avisos de plagas,
  * heladas, roya) lo usan en lugar del texto libre `plots.crop`, que queda como respaldo cuando el lote no
  * tiene plan. Una consulta por tanda de lotes.
  */

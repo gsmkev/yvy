@@ -1,8 +1,9 @@
-/** P-08: política de segundo factor de la organización. Solo la fija el dueño; los administradores quedan obligados. */
+/** Política de segundo factor de la organización. Solo la fija el dueño; los administradores quedan obligados. */
 import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import * as s from "@yvy/shared/schema";
 import { can, ForbiddenError, type ScopedDb } from "./scoped";
 
+/** Ajustes de seguridad de la organización (si exige verificación en dos pasos a administradores). */
 export async function getSecurity(sdb: ScopedDb) {
   sdb.require(can.manageOrg, "Solo el dueño gestiona la seguridad de la organización");
   const [org] = await sdb.db
@@ -44,6 +45,7 @@ export async function getSecurity(sdb: ScopedDb) {
   };
 }
 
+/** Activa o desactiva la verificación en dos pasos obligatoria para administradores. */
 export async function setRequireAdminTotp(sdb: ScopedDb, value: boolean) {
   sdb.require(can.manageOrg, "Solo el dueño gestiona la seguridad de la organización");
   if (sdb.auth.readOnly) throw new ForbiddenError("Sesión de solo lectura");

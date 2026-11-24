@@ -1,6 +1,6 @@
 /**
- * Costos y ventas (E-05): una fila por gasto o ingreso con su centro de costo (estancia, lote, campaña, actividad).
- * Solo dueño y administrador: el agrónomo no ve montos (ADR 0004).
+ * Costos y ventas: una fila por gasto o ingreso con su centro de costo (estancia, lote, campaña, actividad).
+ * Solo dueño y administrador: el agrónomo no ve montos.
  */
 import { and, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
@@ -87,6 +87,7 @@ export async function listCosts(sdb: ScopedDb, f: CostFilter) {
   return { rows, totals: { costPyg: tot?.costPyg ?? 0, incomePyg: tot?.incomePyg ?? 0 } };
 }
 
+/** Crea un costo manual convertido a PYG con el tipo de cambio de su fecha. */
 export async function createCost(sdb: ScopedDb, input: CostInput) {
   sdb.require(can.manageErp);
   const center = await resolveCenter(sdb, input);
@@ -126,6 +127,9 @@ async function manualEntry(sdb: ScopedDb, id: string) {
   return row;
 }
 
+/**
+ * Edita un costo manual y recalcula su monto en PYG. Solo los manuales: los que generan otros registros no se tocan.
+ */
 export async function updateCost(sdb: ScopedDb, id: string, patch: Partial<CostInput>) {
   sdb.require(can.manageErp);
   const cur = await manualEntry(sdb, id);
@@ -158,6 +162,7 @@ export async function updateCost(sdb: ScopedDb, id: string, patch: Partial<CostI
     .where(eq(s.costEntries.id, id));
 }
 
+/** Borra (lógico) un costo manual. */
 export async function deleteCost(sdb: ScopedDb, id: string) {
   sdb.require(can.manageErp);
   await manualEntry(sdb, id);

@@ -7,6 +7,9 @@ import { chunkForParams, runBatch } from "../client";
 import type { SystemDb } from "./index";
 import { bearing } from "./farms";
 
+/**
+ * Registra un aviso de incendio cercano a una estancia con sus focos de calor; devuelve null si la estancia no existe.
+ */
 export async function fireAlert(sys: SystemDb, x: {
   farmId: string;
   date: string;
@@ -41,7 +44,7 @@ export async function fireAlert(sys: SystemDb, x: {
       ),
     );
   }
-  // RF-70: alto si el viento pronosticado sopla desde el foco hacia la estancia a > 25 km/h.
+  // Alto si el viento pronosticado sopla desde el foco hacia la estancia a > 25 km/h.
   let severity = x.severity;
   let windTowardsFarm = !!x.windTowardsFarm;
   const [wind] = await sys.db
@@ -78,7 +81,7 @@ export async function fireAlert(sys: SystemDb, x: {
 }
 
 /** Mantenimiento diario: borra códigos y tokens vencidos. */
-/** V-04: pedidos del informe gratis que esperan al job (sin enviar, con intentos disponibles, de los últimos 30 días). */
+/** Pedidos del informe gratis que esperan al job (sin enviar, con intentos disponibles, de los últimos 30 días). */
 export function pendingLeads(sys: SystemDb, now: number) {
   return sys.db
     .select({ id: s.leads.id, lon: s.leads.lon, lat: s.leads.lat })
@@ -90,7 +93,7 @@ export function pendingLeads(sys: SystemDb, now: number) {
     .limit(LIMITS.leads.jobBatch);
 }
 
-/** V-04: guarda el informe del pedido y cuenta el intento. Devuelve el email, o null si no existe o ya se envió. */
+/** Guarda el informe del pedido y cuenta el intento. Devuelve el email, o null si no existe o ya se envió. */
 export async function saveLeadReport(sys: SystemDb, id: string, report: string, now: number): Promise<{ email: string } | null> {
   const [row] = await sys.db
     .update(s.leads)
@@ -100,13 +103,18 @@ export async function saveLeadReport(sys: SystemDb, id: string, report: string, 
   return row ?? null;
 }
 
+/** Marca un pedido de informe como enviado. */
 export async function markLeadSent(sys: SystemDb, id: string, now: number): Promise<void> {
   await sys.db.update(s.leads).set({ status: "sent", sentAt: now }).where(eq(s.leads.id, id));
 }
 
+/**
+ * Borra los pedidos de informe y de prueba vencidos según su retención, y los códigos de ingreso y tokens de sesión
+ * vencidos.
+ */
 export async function purgeExpiredAuth(sys: SystemDb, now = Date.now()): Promise<void> {
   await runBatch(sys.db, [
-    // V-04: el email del pedido y su informe no se guardan más allá de la retención
+    // El email del pedido y su informe no se guardan más allá de la retención
     sys.db.delete(s.leads).where(lt(s.leads.createdAt, now - LIMITS.leads.retentionMs)),
     // El teléfono del pedido de prueba tampoco se guarda más allá de su retención
     sys.db.delete(s.trialRequests).where(lt(s.trialRequests.createdAt, now - LIMITS.trialRequests.retentionMs)),

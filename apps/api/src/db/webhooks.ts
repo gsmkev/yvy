@@ -1,5 +1,5 @@
 /**
- * I-02: webhooks. Gestión desde Cuenta (solo dueño y administrador, por ScopedDb) y, aparte, el lado del sistema:
+ * Webhooks. Gestión desde Cuenta (solo dueño y administrador, por ScopedDb) y, aparte, el lado del sistema:
  * armar los mensajes de la cola, vaciar el buzón de avisos y entregar con firma HMAC-SHA256.
  */
 import { HTTPException } from "hono/http-exception";
@@ -74,6 +74,7 @@ const writable = (sdb: ScopedDb) => {
   if (sdb.auth.readOnly) throw new ForbiddenError("Sesión de solo lectura");
 };
 
+/** Webhooks de la organización, sin el secreto. */
 export async function listWebhooks(sdb: ScopedDb) {
   sdb.require(can.manageWebhooks, MSG);
   const rows = await sdb.db
@@ -113,6 +114,7 @@ export async function createWebhook(
   return { id, secret };
 }
 
+/** Activa o desactiva un webhook, o cambia los eventos que recibe. */
 export async function updateWebhook(sdb: ScopedDb, id: string, patch: { enabled?: boolean; events?: WebhookEvent[] }) {
   writable(sdb);
   await ownEndpoint(sdb, id);
@@ -126,6 +128,7 @@ export async function updateWebhook(sdb: ScopedDb, id: string, patch: { enabled?
     .where(eq(s.webhookEndpoints.id, id));
 }
 
+/** Borra (lógico) un webhook y lo deshabilita. */
 export async function deleteWebhook(sdb: ScopedDb, id: string) {
   writable(sdb);
   await ownEndpoint(sdb, id);
@@ -231,6 +234,7 @@ export async function drainOutbox(env: Pick<Bindings, "JOBS">, db: DB, now = Dat
   return sent;
 }
 
+/** Segundos de espera antes de reintentar una entrega según los intentos hechos; el último valor se repite. */
 export const webhookRetryDelay = (attempts: number): number => {
   const d = LIMITS.webhooks.retryDelaysSec;
   return d[Math.min(Math.max(attempts, 1), d.length) - 1]!;

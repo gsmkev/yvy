@@ -1,10 +1,10 @@
-/** Registro de cambios (K-06). */
+/** Registro de cambios. */
 import { and, desc, eq, lt, sql } from "drizzle-orm";
 import { LIMITS } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { can, type ScopedDb } from "../scoped";
 
-// ---------- Registro de cambios (K-06) ----------
+// ---------- Registro de cambios ----------
 
 /** El dueño ve quién cambió qué y cuándo, de más nuevo a más viejo; `before` (epoch ms) pagina. */
 export async function listAudit(sdb: ScopedDb, f: { entity?: string; before?: number; limit?: number }) {

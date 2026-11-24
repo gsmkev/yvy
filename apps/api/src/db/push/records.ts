@@ -1,3 +1,5 @@
+/** Manejadores del push para los registros de campo (alta, edición y baja con sus efectos). */
+
 import { LIMITS, RECORD_SCHEMA_VERSION, livestockPlotProblem, parseRecordData, type Mutation, type RejectReason } from "@yvy/shared";
 import type * as s from "@yvy/shared/schema";
 import { hasEffects } from "../erp-effects";
@@ -29,9 +31,9 @@ function placementProblem(ctx: PushCtx, r: Of<"records.upsert">["row"]): Problem
 /** Forma del registro y rol: punto completo, versión de esquema y tipos que son del ERP. */
 function kindProblem(ctx: PushCtx, r: Of<"records.upsert">["row"]): Problem {
   if ((r.lon === null) !== (r.lat === null) || r.schemaVersion > RECORD_SCHEMA_VERSION) return ["invalid"];
-  // El recuento de depósito es del ERP: el empleado no entra (E-15).
+  // El recuento de depósito es del ERP: el empleado no entra.
   if (r.kind === "stock_count" && !can.viewStock(ctx.role)) return ["forbidden"];
-  // El suministro de raciones (G-33) carga stock y costos: solo dueño y administrador.
+  // El suministro de raciones carga stock y costos: solo dueño y administrador.
   if (r.kind === "feed" && !can.manageErp(ctx.role)) return ["forbidden"];
   return null;
 }
@@ -53,6 +55,7 @@ function dataProblem(ctx: PushCtx, r: Of<"records.upsert">["row"], data: unknown
   return null;
 }
 
+/** Alta o edición de un registro: valida permisos, ventana de edición, esquema de datos y plan. */
 export function recordsUpsert(ctx: PushCtx, m: Of<"records.upsert">): void {
   const r = m.row;
   const { now, org, out } = ctx;
@@ -99,6 +102,7 @@ export function recordsUpsert(ctx: PushCtx, m: Of<"records.upsert">): void {
   ctx.accept(m, r.id);
 }
 
+/** Baja (lógica) de un registro, si la persona puede editarlo. */
 export function recordsDelete(ctx: PushCtx, m: Of<"records.delete">): void {
   const existing = ctx.records.get(m.row.id);
   if (!existing || existing.organizationId !== ctx.org) return ctx.reject(m, "not_found");

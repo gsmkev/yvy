@@ -3,14 +3,15 @@ import { and, asc, desc, eq, getTableColumns, isNull, sql } from "drizzle-orm";
 import * as s from "@yvy/shared/schema";
 import { NotFoundError, type ScopedDb } from "../scoped";
 
-// ---------- Inicio multi estancia (RF-90) ----------
+// ---------- Inicio multi estancia ----------
 
 type ImageryStatus = (typeof s.IMAGERY_STATUSES)[number];
-/** Estado del primer procesamiento; las estancias anteriores a S-02 con mapa base cuentan como listas. */
+/** Estado del primer procesamiento; las estancias anteriores al procesamiento con mapa base cuentan como listas. */
 const IMAGERY_SQL = sql.raw(
   `COALESCE((SELECT status FROM farm_imagery fi WHERE fi.farm_id = farms.id), CASE WHEN EXISTS (SELECT 1 FROM farm_layers l WHERE l.farm_id = farms.id AND l.layer = 'true_color' AND l.deleted_at IS NULL) THEN 'ready' END)`,
 );
 
+/** Resumen de las estancias visibles para la persona. */
 export async function farmSummaries(sdb: ScopedDb) {
   const org = sdb.auth.orgId;
   const now = sdb.now();
@@ -51,6 +52,10 @@ export const ndviAt = (col: "mean" | "acquired_at", offset: number) =>
     number | null
   >`(SELECT ${sql.raw(col)} FROM plot_index_stats x WHERE x.plot_id = plots.id AND x.idx = 'ndvi' AND x.deleted_at IS NULL ORDER BY x.acquired_at DESC LIMIT 1 OFFSET ${sql.raw(String(offset))})`;
 
+/**
+ * Detalle de una estancia con sus lotes, puntos de interés, capas y asignaciones. Falla con NotFoundError si no es
+ * visible.
+ */
 export async function farmDetail(sdb: ScopedDb, farmId: string) {
   const org = sdb.auth.orgId;
   const [farm] = await sdb.db
@@ -93,7 +98,7 @@ export async function farmDetail(sdb: ScopedDb, farmId: string) {
     sdb.db
       .select({
         ...getTableColumns(s.pointsOfInterest),
-        // G-30: último nivel de agua registrado en la aguada o tajamar.
+        // Último nivel de agua registrado en la aguada o tajamar.
         lastWaterLevel: sql<
           string | null
         >`(SELECT json_extract(r.data, '$.level') FROM records r WHERE r.poi_id = points_of_interest.id AND r.kind = 'water' AND r.deleted_at IS NULL ORDER BY r.captured_at DESC LIMIT 1)`,

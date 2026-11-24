@@ -1,4 +1,4 @@
-/** Stock mínimo por producto y depósito con aviso de reposición (E-14). El agrónomo ve cantidades; dueño y administrador editan. */
+/** Stock mínimo por producto y depósito con aviso de reposición. El agrónomo ve cantidades; dueño y administrador editan. */
 import { and, eq, isNull } from "drizzle-orm";
 import { belowMinimum, newId, type LowStockRow } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -6,6 +6,7 @@ import { requireOwned } from "./erp";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
 import { stockSummary } from "./stock-moves";
 
+/** Stock mínimo por producto y depósito. */
 export async function listMinimums(sdb: ScopedDb) {
   sdb.require(can.viewStock);
   return sdb.db.select().from(s.stockMinimums).where(eq(s.stockMinimums.organizationId, sdb.auth.orgId));
@@ -26,6 +27,7 @@ export async function saveMinimum(sdb: ScopedDb, i: { productId: string; warehou
     });
 }
 
+/** Borra un stock mínimo. Falla con NotFoundError si no existe. */
 export async function deleteMinimum(sdb: ScopedDb, id: string) {
   sdb.require(can.manageErp);
   const where = and(eq(s.stockMinimums.id, id), eq(s.stockMinimums.organizationId, sdb.auth.orgId));

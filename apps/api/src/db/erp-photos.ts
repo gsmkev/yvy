@@ -1,6 +1,6 @@
 /**
- * Foto de la factura o el ticket de un movimiento de stock o de un costo (E-37).
- * Reusa el flujo de fotos de los registros (PRD §11): URL firmada de R2, el archivo no pasa por el Worker, y una
+ * Foto de la factura o el ticket de un movimiento de stock o de un costo.
+ * Reusa el flujo de fotos de los registros: URL firmada de R2, el archivo no pasa por el Worker, y una
  * confirmación que verifica el objeto y su tamaño. Solo dueño y administrador (la factura tiene montos).
  */
 import { and, eq, isNull } from "drizzle-orm";
@@ -8,7 +8,9 @@ import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
 import * as s from "@yvy/shared/schema";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
 
+/** Tablas del ERP que admiten una foto adjunta. */
 export const PHOTO_KINDS = ["stock-moves", "cost-entries", "purchases", "cattle-deals"] as const;
+/** Nombre de una tabla del ERP que admite foto. */
 export type PhotoKind = (typeof PHOTO_KINDS)[number];
 
 type Tbl = SQLiteTable & { id: SQLiteColumn; organizationId: SQLiteColumn; deletedAt: SQLiteColumn; photoPath: SQLiteColumn };
@@ -30,6 +32,7 @@ export async function photoTarget(sdb: ScopedDb, kind: PhotoKind, id: string) {
   return { key: photoKey(sdb.auth.orgId, kind, id), photoPath: row.photoPath as string | null };
 }
 
+/** Guarda la clave de la foto en R2 de un registro (o la quita con `null`). */
 export async function setPhotoPath(sdb: ScopedDb, kind: PhotoKind, id: string, path: string | null) {
   const t = TABLES[kind];
   await sdb.db

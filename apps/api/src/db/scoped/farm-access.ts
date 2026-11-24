@@ -1,4 +1,4 @@
-/** Alcance por estancia (T-09 supervisor, K-05 permisos finos). */
+/** Alcance por estancia (supervisor y permisos finos). */
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { isFieldRole } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";

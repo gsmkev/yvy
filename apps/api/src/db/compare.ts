@@ -1,6 +1,6 @@
 /**
- * R-07: comparación entre estancias (ahora) y entre campañas. Lecturas agrupadas, sin N+1:
- * 3 consultas SQL para estancias y 3 para campañas. Respeta el alcance por estancia (K-05, T-09).
+ * Comparación entre estancias y entre campañas. Lecturas agrupadas, sin N+1:
+ * 3 consultas SQL para estancias y 3 para campañas. Respeta el alcance por estancia.
  */
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { addDays, localDate, yieldTHa } from "@yvy/shared";
@@ -35,6 +35,7 @@ interface SeasonCompareRow {
   applications: number;
 }
 
+/** Compara las estancias de la organización en los últimos 30 días. */
 export async function compareFarms(sdb: ScopedDb): Promise<FarmCompareRow[]> {
   sdb.require(can.reports, "Las comparaciones son para quienes ven todo el campo");
   const org = sdb.auth.orgId;
@@ -74,6 +75,7 @@ export async function compareFarms(sdb: ScopedDb): Promise<FarmCompareRow[]> {
   }));
 }
 
+/** Compara las campañas de la organización: costos, cosecha y aplicaciones. */
 export async function compareSeasons(sdb: ScopedDb): Promise<SeasonCompareRow[]> {
   sdb.require(can.reports, "Las comparaciones son para quienes ven todo el campo");
   const org = sdb.auth.orgId;

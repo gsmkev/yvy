@@ -1,5 +1,5 @@
 /**
- * Presupuesto de campaña frente a lo real (E-32). Lo real sale de cost_entries de la campaña, agrupado por lote,
+ * Presupuesto de campaña frente a lo real. Lo real sale de cost_entries de la campaña, agrupado por lote,
  * actividad y rubro: cuatro consultas, sin recorrer filas sueltas. Solo dueño y administrador (son montos).
  */
 import { and, eq, isNull, sql } from "drizzle-orm";
@@ -8,6 +8,7 @@ import * as s from "@yvy/shared/schema";
 import { requireOwned } from "./erp";
 import { can, type ScopedDb } from "./scoped";
 
+/** Compara el presupuesto de una campaña con lo realmente gastado, por lote, actividad y rubro. */
 export async function budgetCompare(sdb: ScopedDb, seasonId: string) {
   sdb.require(can.manageErp);
   const org = sdb.auth.orgId;

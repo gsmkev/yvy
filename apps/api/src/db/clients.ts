@@ -1,5 +1,5 @@
 /**
- * Vista del agrónomo (K-02): las estancias de todas las organizaciones donde la persona tiene acceso de oficina,
+ * Vista del agrónomo: las estancias de todas las organizaciones donde la persona tiene acceso de oficina,
  * con sus avisos activos. Cada organización se lee con su propio ScopedDb (el rol real de esa membresía), así que
  * lo que se ve es exactamente lo que se vería al cambiar de organización.
  */
@@ -13,6 +13,7 @@ import { ScopedDb } from "./scoped";
 /** Tope de organizaciones por pedido: 2 consultas por organización, y D1 permite 50 por invocación. */
 const MAX_CLIENT_ORGS = 15;
 
+/** Estancias y avisos activos de cada organización donde la persona tiene acceso de oficina, o solo de `onlyOrgId`. */
 export async function clientsOverview(
   db: DB,
   userId: string,

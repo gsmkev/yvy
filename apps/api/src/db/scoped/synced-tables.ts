@@ -10,6 +10,7 @@ interface SyncedTable {
   id: AnySQLiteColumn;
 }
 
+/** Columnas de organización, versión e id de cada tabla sincronizable. */
 export const SYNCED: Record<PullTable, SyncedTable> = {
   farms: { table: s.farms, org: s.farms.organizationId, version: s.farms.version, id: s.farms.id },
   plots: { table: s.plots, org: s.plots.organizationId, version: s.plots.version, id: s.plots.id },

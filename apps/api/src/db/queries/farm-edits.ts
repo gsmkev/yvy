@@ -27,6 +27,10 @@ const AUDITED: Partial<Record<PullTable, AuditEntity>> = {
   seasons: "season",
 };
 
+/**
+ * Actualiza una fila sincronizable (versión, auditoría y alcance por estancia en un batch); `extra` agrega sentencias
+ * al mismo batch.
+ */
 export async function updateSynced(
   sdb: ScopedDb,
   table: SyncedTbl,
@@ -35,7 +39,7 @@ export async function updateSynced(
   extra: Stmt[] = [],
 ) {
   const ts = sdb.now();
-  // T-09 / K-05: solo filas de estancias donde puede escribir (las tablas fuera de SYNCED no llevan estancia).
+  // Solo filas de estancias donde puede escribir (las tablas fuera de SYNCED no llevan estancia).
   const key = SYNCED_KEYS.get(table);
   const where = and(
     eq(table.id, id),
@@ -45,7 +49,7 @@ export async function updateSynced(
   );
   const exists = await sdb.db.select({ id: table.id }).from(table).where(where).limit(1);
   if (!exists.length) throw new NotFoundError("No existe");
-  // K-06: queda en el registro de cambios quién editó o borró qué
+  // Queda en el registro de cambios quién editó o borró qué
   const entity = key && AUDITED[key];
   const deleting = patch.deletedAt != null;
   const audit = entity
@@ -62,11 +66,13 @@ export async function updateSynced(
   ]);
 }
 
+/** Edita una estancia. */
 export async function updateFarm(sdb: ScopedDb, id: string, patch: Partial<typeof s.farms.$inferInsert>) {
   sdb.require(can.editField);
   await updateSynced(sdb, s.farms, id, patch);
 }
 
+/** Borra (lógico) una estancia con sus lotes. Solo el dueño. */
 export async function deleteFarm(sdb: ScopedDb, id: string) {
   sdb.require(can.manageOrg, "Solo el dueño borra estancias");
   const ts = sdb.now();
@@ -74,17 +80,17 @@ export async function deleteFarm(sdb: ScopedDb, id: string) {
   const farmPlots = sql`(SELECT id FROM plots WHERE farm_id = ${id} AND organization_id = ${org})`;
   await updateSynced(sdb, s.farms, id, { deletedAt: ts }, [
     ...cascadeStmts(sdb, inArray(s.plotAssignments.plotId, farmPlots), eq(s.tasks.farmId, id), ts),
-    // A-23: las entregas a acopio se van con la estancia
+    // Las entregas a acopio se van con la estancia
     sdb.db
       .update(s.grainDeliveries)
       .set({ deletedAt: ts, updatedAt: ts, version: currentVersion })
       .where(and(eq(s.grainDeliveries.farmId, id), eq(s.grainDeliveries.organizationId, org), isNull(s.grainDeliveries.deletedAt))),
-    // A-30: los análisis de suelo se van con la estancia
+    // Los análisis de suelo se van con la estancia
     sdb.db
       .update(s.soilSamples)
       .set({ deletedAt: ts, updatedAt: ts, version: currentVersion })
       .where(and(eq(s.soilSamples.farmId, id), eq(s.soilSamples.organizationId, org), isNull(s.soilSamples.deletedAt))),
-    // M-20: las líneas del mapa se van con la estancia
+    // Las líneas del mapa se van con la estancia
     sdb.db
       .update(s.farmLines)
       .set({ deletedAt: ts, updatedAt: ts, version: currentVersion })
@@ -130,13 +136,14 @@ function cascadeStmts(sdb: ScopedDb, assignWhere: SQL, taskWhere: SQL, ts: numbe
   ];
 }
 
+/** Edita un lote. */
 export async function updatePlot(sdb: ScopedDb, id: string, patch: Partial<typeof s.plots.$inferInsert>) {
   sdb.require(can.editField);
   await updateSynced(sdb, s.plots, id, patch);
 }
 
 /**
- * Avisos no bloqueantes de un lote ya guardado (M-02): cuánto se superpone con los vecinos de su estancia y si
+ * Avisos no bloqueantes de un lote ya guardado: cuánto se superpone con los vecinos de su estancia y si
  * sale del perímetro. Presupuesto de CPU: solo vecinos cuyo bbox toca al lote y como máximo 12 recortes exactos.
  */
 export async function plotGeometryWarnings(sdb: ScopedDb, plotId: string, geometry: Area) {
@@ -188,6 +195,7 @@ export async function plotGeometryWarnings(sdb: ScopedDb, plotId: string, geomet
     );
 }
 
+/** Borra (lógico) un lote. */
 export async function deletePlot(sdb: ScopedDb, id: string) {
   sdb.require(can.editField);
   const ts = sdb.now();
@@ -206,7 +214,7 @@ type PlotGeo = { geometry: string; minLon: number; minLat: number; maxLon: numbe
 const AREA_TOLERANCE = 0.02;
 
 /**
- * Reemplaza uno o dos lotes por lotes nuevos (dividir / unir, M-05). Los nuevos heredan tipo, cultivo, campaña,
+ * Reemplaza uno o dos lotes por lotes nuevos (dividir / unir). Los nuevos heredan tipo, cultivo, campaña,
  * siembra, pasto y color del primer lote original, y quienes tenían asignado un original reciben los nuevos.
  * Los originales se borran lógicamente con la misma cascada que deletePlot (asignaciones y tareas abiertas).
  * Los registros históricos quedan apuntando al lote original (ya borrado). Lecturas: 2. Un solo batch.
@@ -291,16 +299,17 @@ async function replacePlots(
   return { ids };
 }
 
-/** M-05: divide un lote en dos. La forma de las partes viene del cliente (packages/geo); acá solo se valida la superficie. */
+/** Divide un lote en dos. La forma de las partes viene del cliente (packages/geo); acá solo se valida la superficie. */
 export function splitPlot(sdb: ScopedDb, id: string, parts: ({ name: string } & PlotGeo)[]) {
   return replacePlots(sdb, [id], parts, ([o]) => [o!.areaHa, o!.areaHa]);
 }
 
-/** M-05: une dos lotes contiguos en uno (la superficie puede ser algo menor si se superponían). */
+/** Une dos lotes contiguos en uno (la superficie puede ser algo menor si se superponían). */
 export function mergePlots(sdb: ScopedDb, ids: [string, string], merged: { name: string } & PlotGeo) {
   return replacePlots(sdb, ids, [merged], (os) => [Math.max(...os.map((o) => o.areaHa)), os[0]!.areaHa + os[1]!.areaHa]);
 }
 
+/** Borra (lógico) un punto de interés. */
 export async function deletePoi(sdb: ScopedDb, id: string) {
   sdb.require(can.editField);
   await updateSynced(sdb, s.pointsOfInterest, id, { deletedAt: sdb.now() });

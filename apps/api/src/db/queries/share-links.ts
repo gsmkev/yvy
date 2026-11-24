@@ -1,4 +1,4 @@
-/** Enlaces de solo lectura (K-04). */
+/** Enlaces de solo lectura. */
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { LIMITS } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -6,7 +6,7 @@ import { newId } from "@yvy/shared";
 import { randomToken, sha256Hex } from "../../lib/crypto";
 import { can, ForbiddenError, NotFoundError, type ScopedDb } from "../scoped";
 
-// ---------- Enlaces de solo lectura (K-04) ----------
+// ---------- Enlaces de solo lectura ----------
 
 /** Crea el enlace; devuelve el token en claro una sola vez (en la base queda su hash). */
 export async function createShareLink(sdb: ScopedDb, farmId: string, days: number) {
@@ -29,6 +29,7 @@ export async function createShareLink(sdb: ScopedDb, farmId: string, days: numbe
   return { id, token, expiresAt };
 }
 
+/** Enlaces para compartir una estancia. */
 export async function listShareLinks(sdb: ScopedDb, farmId: string) {
   sdb.require(can.shareLinks, "Solo el dueño ve los enlaces para compartir");
   await sdb.requireFarm(farmId);
@@ -45,6 +46,7 @@ export async function listShareLinks(sdb: ScopedDb, farmId: string) {
     .limit(50);
 }
 
+/** Revoca un enlace para compartir. */
 export async function revokeShareLink(sdb: ScopedDb, id: string) {
   sdb.require(can.shareLinks, "Solo el dueño revoca enlaces");
   const [row] = await sdb.db

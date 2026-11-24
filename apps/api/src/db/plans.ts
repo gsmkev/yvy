@@ -1,5 +1,5 @@
 /**
- * Plan de la organización visto por el dueño (P-10): topes, uso y pedido de cambio. No hay cobro (P-11): pedir un plan
+ * Plan de la organización visto por el dueño: topes, uso y pedido de cambio. No hay cobro: pedir un plan
  * o más topes deja un pedido pendiente que el panel interno aprueba o rechaza (routes/admin.ts).
  */
 import { and, desc, eq, isNull, sql } from "drizzle-orm";

@@ -1,5 +1,5 @@
 /**
- * Feedlot (G-33): raciones y resumen por corral con conversión alimenticia. Los suministros son registros `feed`
+ * Feedlot: raciones y resumen por corral con conversión alimenticia. Los suministros son registros `feed`
  * (descuentan stock y cargan costo con el resto del ERP, ver erp-effects.ts); acá solo se leen.
  * Dueño y administrador (como el resto del ERP).
  */
@@ -23,6 +23,7 @@ export async function requireRationProducts(sdb: ScopedDb, ids: string[]) {
   return found === unique.length;
 }
 
+/** Raciones de la organización, con sus ingredientes ya parseados. */
 export async function listRations(sdb: ScopedDb) {
   sdb.require(can.manageErp);
   const rows = await sdb.db
@@ -33,6 +34,7 @@ export async function listRations(sdb: ScopedDb) {
   return rows.map((r) => ({ id: r.id, name: r.name, note: r.note, items: JSON.parse(r.items) as unknown[] }));
 }
 
+/** Informe del corral de engorde entre dos fechas: alimento consumido y ganancia de peso. */
 export async function feedlotReport(sdb: ScopedDb, f: { farmId?: string; from: number; to: number }) {
   sdb.require(can.manageErp);
   const org = sdb.auth.orgId;

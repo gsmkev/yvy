@@ -20,10 +20,12 @@ export async function upsertScene(sys: SystemDb, x: {
   return { id: row!.id, processed: row!.processedAt !== null };
 }
 
+/** Marca una escena satelital como procesada. */
 export async function markSceneProcessed(sys: SystemDb, id: string): Promise<void> {
   await sys.db.update(s.scenes).set({ processedAt: Date.now() }).where(eq(s.scenes.id, id));
 }
 
+/** Guarda (reemplaza) las estadísticas de índice de cada lote para una escena. */
 export async function upsertIndexStats(sys: SystemDb, 
   rows: {
     plotId: string;
@@ -77,6 +79,7 @@ export async function upsertIndexStats(sys: SystemDb,
   return { written: valid.length, unknownPlots: rows.filter((r) => !orgOf.has(r.plotId)).map((r) => r.plotId) };
 }
 
+/** Registra una capa de mapa PMTiles de una estancia. */
 export async function addFarmLayer(sys: SystemDb, x: {
   farmId: string;
   layer: (typeof s.LAYERS)[number];
@@ -102,7 +105,7 @@ export async function addFarmLayer(sys: SystemDb, x: {
       .update(s.farms)
       .set({ offlinePackVersion: sql`${s.farms.offlinePackVersion} + 1`, updatedAt: ts, version: currentVersion })
       .where(eq(s.farms.id, x.farmId)),
-    // El mapa base marca el fin del primer procesamiento (S-02)
+    // El mapa base marca el fin del primer procesamiento
     ...(x.layer === "true_color" ? [imageryUpsert(sys, x.farmId, "ready", ts)] : []),
   ]);
   return { id };
@@ -136,7 +139,7 @@ export async function pruneFarmLayers(sys: SystemDb, farmId: string, layer: (typ
   return old.map((o) => o.path);
 }
 
-/** M-17: GeoTIFF de una estancia esperando su conversión a PNG georreferenciado. */
+/** GeoTIFF de una estancia esperando su conversión a PNG georreferenciado. */
 export function pendingCustomLayers(sys: SystemDb, farmId: string) {
   return sys.db
     .select({ id: s.customLayers.id, originalPath: s.customLayers.originalPath, mime: s.customLayers.mime })
@@ -150,7 +153,7 @@ export function pendingCustomLayers(sys: SystemDb, farmId: string) {
     );
 }
 
-/** M-17: resultado de la conversión. Devuelve false si la capa no existe, ya no está pendiente o la ruta no es suya. */
+/** Resultado de la conversión. Devuelve false si la capa no existe, ya no está pendiente o la ruta no es suya. */
 export async function finishCustomLayer(sys: SystemDb, 
   id: string,
   r:
@@ -202,7 +205,7 @@ export async function setImageryStatus(sys: SystemDb, farmId: string, status: (t
   return true;
 }
 
-/** S-03: el job de historia avisa que terminó (done) o falló. */
+/** El job de historia avisa que terminó (done) o falló. */
 export async function setHistoryStatus(sys: SystemDb, farmId: string, status: "done" | "failed"): Promise<boolean> {
   const res = await sys.db
     .update(s.farmHistory)
@@ -213,7 +216,7 @@ export async function setHistoryStatus(sys: SystemDb, farmId: string, status: "d
 }
 
 /**
- * S-08: reemplaza las áreas problema de un lote por las de la escena `acquiredAt` (lista vacía = las limpia).
+ * Reemplaza las áreas problema de un lote por las de la escena `acquiredAt` (lista vacía = las limpia).
  * Si ya hay áreas de una escena más nueva, no pisa nada. La organización sale del lote, no del request.
  */
 export async function replaceProblemAreas(sys: SystemDb, 
@@ -250,8 +253,8 @@ export async function replaceProblemAreas(sys: SystemDb,
   return areas.length;
 }
 
-/** C-10: guarda (reemplaza) el informe de riesgo de la estancia. */
-/** A-32: reemplaza las zonas de manejo de un lote. La organización y la estancia salen del lote, no del request. */
+/** Guarda (reemplaza) el informe de riesgo de la estancia. */
+/** Reemplaza las zonas de manejo de un lote. La organización y la estancia salen del lote, no del request. */
 export async function replaceManagementZones(sys: SystemDb, 
   plotId: string,
   seasons: number[],
@@ -283,7 +286,7 @@ export async function replaceManagementZones(sys: SystemDb,
   return zones.length;
 }
 
-/** S-30: guarda (reemplaza) el indicador EUDR de un lote. La organización sale del lote, no del request. */
+/** Guarda (reemplaza) el indicador EUDR de un lote. La organización sale del lote, no del request. */
 export async function upsertEudrResult(sys: SystemDb, 
   plotId: string,
   r: Omit<typeof s.eudrResults.$inferInsert, "id" | "organizationId" | "farmId" | "plotId" | "computedAt">,
@@ -303,7 +306,7 @@ export async function upsertEudrResult(sys: SystemDb,
   return true;
 }
 
-/** S-20 y S-31: guarda (reemplaza) el análisis de un lote. La organización sale del lote, no del request. */
+/** Guarda (reemplaza) el análisis de un lote. La organización sale del lote, no del request. */
 export async function upsertAnalysis(sys: SystemDb, 
   plotId: string,
   r: Pick<typeof s.plotAnalyses.$inferInsert, "kind" | "refKey" | "fromAt" | "toAt" | "plotAreaHa" | "validPct" | "metrics" | "changes">,
@@ -323,7 +326,7 @@ export async function upsertAnalysis(sys: SystemDb,
   return true;
 }
 
-/** S-31: el job termina (o falla); solo cambia el estado de un pedido existente. */
+/** El job termina (o falla); solo cambia el estado de un pedido existente. */
 export async function setAnalysisStatus(sys: SystemDb, farmId: string, kind: s.AnalysisKind, status: "done" | "failed"): Promise<boolean> {
   const res = await sys.db
     .update(s.analysisJobs)

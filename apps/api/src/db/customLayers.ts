@@ -1,5 +1,5 @@
 /**
- * Capas propias (M-17): imagen georreferenciada por estancia (dron, mapa de suelos). El Worker solo valida tipo y tamaño
+ * Capas propias: imagen georreferenciada por estancia (dron, mapa de suelos). El Worker solo valida tipo y tamaño
  * y guarda el archivo en R2; un GeoTIFF lo convierte el job `custom_layers` de workers-py. Solo la web las usa.
  */
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
@@ -11,10 +11,13 @@ import { can, NotFoundError, type ScopedDb } from "./scoped";
 
 type Corners = [number, number][];
 
+/** Tipos de imagen que se publican directo como capa. */
 export const IMAGE_MIMES = ["image/png", "image/jpeg"] as const;
+/** Tipo de archivo GeoTIFF, que se procesa aparte antes de publicarse. */
 export const GEOTIFF_MIME = "image/tiff";
 
 const ext = (mime: string) => (mime === "image/png" ? "png" : mime === "image/jpeg" ? "jpg" : "tif");
+/** Clave en R2 del archivo de una capa propia, original o ya convertida a imagen. */
 export const layerKey = (orgId: string, id: string, kind: "original" | "image", mime: string) =>
   `layers/${orgId}/${id}/${kind}.${ext(mime)}`;
 
@@ -62,6 +65,7 @@ const cols = {
   createdAt: s.customLayers.createdAt,
 };
 
+/** Capas propias de una estancia. */
 export async function listCustomLayers(sdb: ScopedDb, farmId: string) {
   sdb.require(can.viewAll);
   await sdb.requireFarmVisible(farmId);
@@ -97,6 +101,7 @@ export async function assertCanAddLayer(sdb: ScopedDb, farmId: string) {
     throw new HTTPException(400, { message: `Máximo ${LIMITS.customLayers.maxPerFarm} capas propias por estancia` });
 }
 
+/** Inserta una capa propia; las imágenes quedan listas y los GeoTIFF en procesamiento. */
 export async function insertCustomLayer(
   sdb: ScopedDb,
   input: {

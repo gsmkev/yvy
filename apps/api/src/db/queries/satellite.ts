@@ -4,8 +4,9 @@ import { LIMITS } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { can, NotFoundError, type ScopedDb } from "../scoped";
 
-// ---------- Satélite (RF-53) ----------
+// ---------- Satélite ----------
 
+/** Serie de NDVI de un lote. */
 export async function plotNdvi(sdb: ScopedDb, plotId: string) {
   sdb.require(can.viewAll);
   const [plot] = await sdb.db
@@ -48,7 +49,7 @@ export async function plotNdvi(sdb: ScopedDb, plotId: string) {
       .groupBy(s.plotIndexStats.sceneId)
       .orderBy(asc(sql`min(${s.plotIndexStats.acquiredAt})`)),
   ]);
-  // S-07: último valor de NDRE, NDMI y EVI (los más recientes de los últimos 60 días)
+  // Último valor de NDRE, NDMI y EVI (los más recientes de los últimos 60 días)
   const otherRows = await sdb.db
     .select({
       idx: s.plotIndexStats.idx,
@@ -79,11 +80,12 @@ export async function plotNdvi(sdb: ScopedDb, plotId: string) {
   };
 }
 
-// ---------- Historia de vigor desde 2017 (S-03) ----------
+// ---------- Historia de vigor desde 2017 ----------
 
 const HISTORY_RETRY_MS = 6 * 3_600_000;
 const HISTORY_MAX_ROWS = 3000;
 
+/** Estado del procesamiento de historia satelital de una estancia. */
 export async function farmHistoryStatus(sdb: ScopedDb, farmId: string) {
   sdb.require(can.viewAll);
   await sdb.requireFarm(farmId);
@@ -117,7 +119,7 @@ export async function markHistoryFailed(sdb: ScopedDb, farmId: string): Promise<
     .where(and(eq(s.farmHistory.farmId, farmId), eq(s.farmHistory.organizationId, sdb.auth.orgId)));
 }
 
-// ---------- Análisis por lote: área quemada (S-20) y cambio de cobertura (S-31) ----------
+// ---------- Análisis por lote: área quemada y cambio de cobertura ----------
 
 /** Resultados de un tipo de análisis por lote (con el nombre del lote), los más nuevos primero. Solo roles con vista completa. */
 export async function farmAnalyses(sdb: ScopedDb, farmId: string, kind: s.AnalysisKind) {
@@ -144,6 +146,7 @@ export async function farmAnalyses(sdb: ScopedDb, farmId: string, kind: s.Analys
   return { plots: rows.map((r) => ({ ...r, metrics: JSON.parse(r.metrics) as Record<string, unknown> })) };
 }
 
+/** Estado del último análisis de un tipo para una estancia. */
 export async function analysisStatus(sdb: ScopedDb, farmId: string, kind: s.AnalysisKind) {
   sdb.require(can.viewAll);
   await sdb.requireFarm(farmId);
@@ -169,6 +172,7 @@ export async function markAnalysisRequested(sdb: ScopedDb, farmId: string, kind:
   return true;
 }
 
+/** Marca un análisis como fallido. */
 export async function markAnalysisFailed(sdb: ScopedDb, farmId: string, kind: s.AnalysisKind): Promise<void> {
   await sdb.db
     .update(s.analysisJobs)
@@ -194,7 +198,7 @@ export async function plotVigorHistory(sdb: ScopedDb, plotId: string) {
   return { series: rows };
 }
 
-/** S-08: áreas problema de la estancia (última escena por lote), con el nombre del lote. */
+/** Áreas problema de la estancia (última escena por lote), con el nombre del lote. */
 export async function farmProblemAreas(sdb: ScopedDb, farmId: string) {
   sdb.require(can.viewAll);
   await sdb.requireFarm(farmId);
@@ -218,7 +222,7 @@ export async function farmProblemAreas(sdb: ScopedDb, farmId: string) {
     .limit(200);
 }
 
-/** S-30: indicador EUDR por lote (calculado por workers-py). Solo roles con vista completa. */
+/** Indicador EUDR por lote (calculado por workers-py). Solo roles con vista completa. */
 export async function farmEudr(sdb: ScopedDb, farmId: string) {
   sdb.require(can.viewAll);
   await sdb.requireFarm(farmId);

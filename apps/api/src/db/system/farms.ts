@@ -14,6 +14,7 @@ export function bearing(lon1: number, lat1: number, lon2: number, lat2: number):
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
+/** Estancias activas de todas las organizaciones, con lo que necesitan los trabajos programados. */
 export function activeFarms(sys: SystemDb) {
   return sys.db
     .select({
@@ -27,9 +28,9 @@ export function activeFarms(sys: SystemDb) {
       maxLon: s.farms.maxLon,
       maxLat: s.farms.maxLat,
       hasClimatology: sql<boolean>`EXISTS (SELECT 1 FROM climatology c WHERE c.farm_id = farms.id)`,
-      /** Informe de riesgo calculado en los últimos 90 días (C-10); pasado ese tiempo se recalcula. */
+      /** Informe de riesgo calculado en los últimos 90 días; pasado ese tiempo se recalcula. */
       hasRisk: sql<boolean>`EXISTS (SELECT 1 FROM farm_risk r WHERE r.farm_id = farms.id AND r.computed_at > ${Date.now() - 90 * 86_400_000})`,
-      /** R-02: hay alguien del equipo con email a quien mandarle el parte semanal. */
+      /** Hay alguien del equipo con email a quien mandarle el parte semanal. */
       hasReportRecipient: sql<boolean>`EXISTS (SELECT 1 FROM memberships m JOIN users u ON u.id = m.user_id WHERE m.organization_id = farms.organization_id AND m.role IN ('owner', 'admin') AND m.deleted_at IS NULL AND u.email IS NOT NULL)`,
       hasBasemap: sql<boolean>`EXISTS (SELECT 1 FROM farm_layers l WHERE l.farm_id = farms.id AND l.layer = 'true_color' AND l.deleted_at IS NULL)`,
     })
@@ -38,7 +39,7 @@ export function activeFarms(sys: SystemDb) {
 }
 
 /**
- * Resumen público de una estancia para un enlace de solo lectura (K-04). Devuelve el motivo si el enlace no sirve.
+ * Resumen público de una estancia para un enlace de solo lectura. Devuelve el motivo si el enlace no sirve.
  * No incluye registros, personas ni geometrías: solo lotes, superficie, vigor, lluvia y avisos.
  */
 export async function sharedSummary(sys: SystemDb, tokenHash: string, now: number) {
@@ -124,7 +125,7 @@ export async function sharedSummary(sys: SystemDb, tokenHash: string, now: numbe
   };
 }
 
-/** Umbrales de avisos de la estancia (C-04); por defecto si no hay fila. */
+/** Umbrales de avisos de la estancia; por defecto si no hay fila. */
 export async function alertSettings(sys: SystemDb, farmId: string): Promise<AlertSettings> {
   const [row] = await sys.db
     .select()
@@ -140,6 +141,7 @@ export async function alertSettings(sys: SystemDb, farmId: string): Promise<Aler
     : { ...DEFAULT_ALERT_SETTINGS };
 }
 
+/** Geometría de una estancia y sus lotes en GeoJSON. */
 export function farmGeometry(sys: SystemDb, farmId: string) {
   return sys.db
     .select({
@@ -151,7 +153,7 @@ export function farmGeometry(sys: SystemDb, farmId: string) {
     .limit(1);
 }
 
-/** A-31: análisis de suelo de la estancia con coordenadas (para interpolar mapas de fertilidad). */
+/** Análisis de suelo de la estancia con coordenadas (para interpolar mapas de fertilidad). */
 export function soilPoints(sys: SystemDb, farmId: string) {
   return sys.db
     .select({
@@ -168,7 +170,7 @@ export function soilPoints(sys: SystemDb, farmId: string) {
     .limit(5000);
 }
 
-/** S-20: focos de calor guardados cerca de la estancia (bbox + ~2 km) desde `since`. */
+/** Focos de calor guardados cerca de la estancia (bbox + ~2 km) desde `since`. */
 export async function farmHotspots(sys: SystemDb, farmId: string, since: number) {
   const [f] = await sys.db
     .select({ minLon: s.farms.minLon, minLat: s.farms.minLat, maxLon: s.farms.maxLon, maxLat: s.farms.maxLat })
@@ -193,7 +195,7 @@ export async function farmHotspots(sys: SystemDb, farmId: string, since: number)
     .limit(500);
 }
 
-/** C-07: lluvia diaria de la estancia desde una fecha (CHIRPS final, o preliminar si la final todavía no salió). */
+/** Lluvia diaria de la estancia desde una fecha (CHIRPS final, o preliminar si la final todavía no salió). */
 export async function farmPrecip(sys: SystemDb, farmId: string, from: string) {
   const rows = await sys.db
     .select({ date: s.climateDaily.date, source: s.climateDaily.source, mm: s.climateDaily.precipMm })

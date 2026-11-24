@@ -1,4 +1,4 @@
-/** Adelantos, pagos y saldo por empleado (E-26). Montos: solo dueño y administrador. */
+/** Adelantos, pagos y saldo por empleado. Montos: solo dueño y administrador. */
 import { and, asc, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { buildPayroll, employeeBalance, LIMITS, monthsBetween, newId, statement, type EmployeePaymentKind, type StatementLine } from "@yvy/shared";
@@ -6,6 +6,7 @@ import * as s from "@yvy/shared/schema";
 import { requireOwned } from "./erp";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
 
+/** Registra un pago a un empleado (adelanto, sueldo u otro). Falla con NotFoundError si el empleado no existe. */
 export async function createPayment(
   sdb: ScopedDb,
   i: { employeeId: string; date: string; kind: EmployeePaymentKind; amountPyg: number; note?: string | null },
@@ -29,6 +30,7 @@ export async function createPayment(
   return { id };
 }
 
+/** Borra (lógico) un pago a un empleado. */
 export async function deletePayment(sdb: ScopedDb, id: string) {
   sdb.require(can.manageErp);
   const where = and(eq(s.employeePayments.id, id), eq(s.employeePayments.organizationId, sdb.auth.orgId), isNull(s.employeePayments.deletedAt));
@@ -38,6 +40,7 @@ export async function deletePayment(sdb: ScopedDb, id: string) {
   await sdb.db.update(s.employeePayments).set({ deletedAt: ts, updatedAt: ts }).where(where);
 }
 
+/** Pagos a empleados, de uno o de todos. */
 export async function listPayments(sdb: ScopedDb, employeeId?: string) {
   sdb.require(can.manageErp);
   return sdb.db
@@ -118,7 +121,7 @@ export async function employeeStatement(sdb: ScopedDb, employeeId: string) {
 }
 
 /**
- * Planilla para el contador (E-27): jornales, adelantos y pagos por empleado y mes entre dos fechas. Sin aportes ni
+ * Planilla para el contador: jornales, adelantos y pagos por empleado y mes entre dos fechas. Sin aportes ni
  * descuentos. Tres consultas agrupadas; el Excel se arma en el navegador. Solo dueño y administrador.
  */
 export async function payroll(sdb: ScopedDb, from: string, to: string) {

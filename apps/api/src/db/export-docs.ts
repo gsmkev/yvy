@@ -1,5 +1,5 @@
 /**
- * Exportación para sistemas contables (I-06): filas de compras, ventas y caja con el tercero (RUC) y los datos de IVA
+ * Exportación para sistemas contables: filas de compras, ventas y caja con el tercero (RUC) y los datos de IVA
  * (timbrado y gravadas 10 %, 5 % y exentas, que se cargan acá por documento). El texto final se arma en el navegador.
  * Solo dueño y administrador (son montos).
  */
@@ -29,6 +29,7 @@ export async function saveDocumentTax(sdb: ScopedDb, i: { docKind: TaxDocKind; d
   return { ok: true };
 }
 
+/** Quita los impuestos guardados de un documento. */
 export async function deleteDocumentTax(sdb: ScopedDb, docKind: TaxDocKind, docId: string) {
   sdb.require(can.manageErp);
   await sdb.db

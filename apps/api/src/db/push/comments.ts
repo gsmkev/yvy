@@ -1,9 +1,12 @@
+/** Manejadores del push para los comentarios de los registros. */
+
 import type { Mutation } from "@yvy/shared";
 import { can } from "../scoped";
 import type { PushCtx } from "./context";
 
 type Of<K extends Mutation["kind"]> = Extract<Mutation, { kind: K }>;
 
+/** Alta o edición de un comentario propio; las menciones se resuelven al armar las escrituras. */
 export function commentsUpsert(ctx: PushCtx, m: Of<"comments.upsert">): void {
   const c = m.row;
   const { org, now, userId, out } = ctx;
@@ -29,6 +32,7 @@ export function commentsUpsert(ctx: PushCtx, m: Of<"comments.upsert">): void {
   ctx.accept(m, c.id);
 }
 
+/** Baja de un comentario: lo puede hacer su autor o quien gestiona al equipo. */
 export function commentsDelete(ctx: PushCtx, m: Of<"comments.delete">): void {
   const prev = ctx.commentsById.get(m.row.id);
   if (!prev || prev.organizationId !== ctx.org) return ctx.reject(m, "not_found");

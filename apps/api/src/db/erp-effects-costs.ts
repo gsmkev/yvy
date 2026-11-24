@@ -1,4 +1,4 @@
-/** Armado de las filas que dejan los efectos ERP: salidas de stock, costo de insumos y costo del contratista (E-21). */
+/** Armado de las filas que dejan los efectos ERP: salidas de stock, costo de insumos y costo del contratista. */
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { avgUnitCost, consumptionLines, localDate, moveValue, newId, orderSchema, toPyg, type StockTotals, type WorkOrder } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
@@ -101,7 +101,7 @@ function contractorQty(c: { rateUnit: string }, r: EffectRecord, plotAreaHa: num
   return numOr(c.rateUnit === "ton" ? r.data.tons : r.data.hours);
 }
 
-/** Costo del contratista de la orden de trabajo (E-21), al cerrar el registro de siembra o cosecha. */
+/** Costo del contratista de la orden de trabajo, al cerrar el registro de siembra o cosecha. */
 export async function contractorCosts(sdb: ScopedDb, recs: EffectRecord[], data: EffectData, now: number): Promise<Cost[]> {
   const org = sdb.auth.orgId;
   const orders = parseOrders(data.orderTasks);

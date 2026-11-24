@@ -1,5 +1,5 @@
 /**
- * Entregas de grano a acopio (A-23): ticket, silo, humedad, descuentos y neto, por lote.
+ * Entregas de grano a acopio: ticket, silo, humedad, descuentos y neto, por lote.
  * Solo la web las usa. Las ve y escribe quien edita el campo (no el empleado). El neto se calcula acá con grainNet.
  */
 import { and, desc, eq, gte, isNotNull, isNull, sql } from "drizzle-orm";
@@ -26,6 +26,7 @@ interface DeliveryInput {
 
 const MAX_PER_FARM = 5_000;
 
+/** Entregas de grano de una estancia, con la cosecha registrada para contrastar. */
 export async function listDeliveries(sdb: ScopedDb, farmId: string) {
   sdb.require(can.editField);
   await sdb.requireFarm(farmId);
@@ -100,6 +101,7 @@ export async function listDeliveries(sdb: ScopedDb, farmId: string) {
   };
 }
 
+/** Registra una entrega de grano de una estancia. El lote, si viene, debe ser de esa estancia. */
 export async function createDelivery(sdb: ScopedDb, farmId: string, input: DeliveryInput) {
   sdb.require(can.editField);
   await sdb.requireFarm(farmId);
@@ -144,6 +146,7 @@ export async function createDelivery(sdb: ScopedDb, farmId: string, input: Deliv
   return { id, netKg };
 }
 
+/** Borra (lógico) una entrega de grano. */
 export async function deleteDelivery(sdb: ScopedDb, id: string) {
   sdb.require(can.editField);
   const [row] = await sdb.db

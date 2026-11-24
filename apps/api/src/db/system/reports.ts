@@ -7,7 +7,7 @@ import { runBatch } from "../client";
 import type { SystemDb } from "./index";
 
 /**
- * R-02: datos del parte semanal de una estancia para el PDF que arma workers-py. Son pocas consultas
+ * Datos del parte semanal de una estancia para el PDF que arma workers-py. Son pocas consultas
  * agregadas; el armado del PDF (lo pesado) no pasa por el Worker. `from` y `to` son fechas locales (UTC-3).
  */
 export async function weeklySummary(sys: SystemDb, farmId: string, from: string, to: string) {
@@ -99,7 +99,7 @@ export async function weeklySummary(sys: SystemDb, farmId: string, from: string,
   };
 }
 
-/** R-02: registra el PDF semanal ya subido a R2 (reemplaza el del mismo período). */
+/** Registra el PDF semanal ya subido a R2 (reemplaza el del mismo período). */
 export async function saveWeeklyReport(sys: SystemDb, farmId: string, periodStart: string, periodEnd: string, storagePath: string, now: number) {
   const [farm] = await sys.db
     .select({ org: s.farms.organizationId })
@@ -126,7 +126,7 @@ export async function saveWeeklyReport(sys: SystemDb, farmId: string, periodStar
   return true;
 }
 
-/** R-02: PDF semanal generado en los últimos `maxAgeMs` (para adjuntarlo al email del lunes). */
+/** PDF semanal generado en los últimos `maxAgeMs` (para adjuntarlo al email del lunes). */
 export async function latestWeeklyReport(sys: SystemDb, farmId: string, now: number, maxAgeMs: number) {
   const [r] = await sys.db
     .select({ storagePath: s.reports.storagePath, periodStart: s.reports.periodStart, periodEnd: s.reports.periodEnd })

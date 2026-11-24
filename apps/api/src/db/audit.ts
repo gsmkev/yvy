@@ -1,5 +1,5 @@
 /**
- * K-06: registro de quién cambió qué y cuándo. Las sentencias van dentro del mismo batch que el cambio, así que
+ * Registro de quién cambió qué y cuándo. Las sentencias van dentro del mismo batch que el cambio, así que
  * si el cambio no se aplica tampoco queda la fila. Una sola sentencia agrupa varias filas (chunkForParams) para no
  * gastar queries de D1.
  */
@@ -8,8 +8,10 @@ import { LIMITS, newId } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { chunkForParams, type DB, type Stmt } from "./client";
 
+/** Tipo de entidad afectada por una entrada de auditoría. */
 export type AuditEntity = "farm" | "plot" | "member" | "task" | "record" | "poi" | "product" | "season" | "line" | "plan";
 
+/** Una entrada del registro de auditoría de un cambio hecho por una persona. */
 export interface AuditEntry {
   /** `<entidad>_<verbo>`, por ejemplo `farm_update` o `record_delete`. */
   action: string;
@@ -20,6 +22,7 @@ export interface AuditEntry {
 
 const COLS = Object.keys(getTableColumns(s.auditLog)).length;
 
+/** Sentencias que insertan las entradas de auditoría, troceadas por el límite de parámetros de D1. */
 export function auditStmts(
   db: DB,
   who: { userId: string; orgId: string },

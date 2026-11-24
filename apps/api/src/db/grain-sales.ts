@@ -1,9 +1,9 @@
 /**
- * Venta de granos (E-34): contratos, entregas (ticket de balanza) y liquidaciones. Una liquidación es un ingreso
- * (cost_entries categoría `sale`, con toneladas, así el margen por tonelada sale solo) y una cuenta a cobrar (E-36).
+ * Venta de granos: contratos, entregas (ticket de balanza) y liquidaciones. Una liquidación es un ingreso
+ * (cost_entries categoría `sale`, con toneladas, así el margen por tonelada sale solo) y una cuenta a cobrar.
  * Todo son montos: solo dueño y administrador. La entrega no cobra nada: lo cobrable es la liquidación.
  *
- * Las entregas viven en la tabla `grain_deliveries` de A-23 (entregas de grano a silos y acopios), con `contract_id`
+ * Las entregas viven en la tabla `grain_deliveries` de entregas de grano a silos y acopios, con `contract_id`
  * apuntando al contrato. Una entrega a un contrato es una entrega a acopio como cualquier otra (aparece en la
  * pestaña Entregas de la estancia) que además suma al avance del contrato. Acá las toneladas son netas: el neto
  * de la fila es esa cantidad y no se aplican descuentos de balanza (los descuentos van en la liquidación).
@@ -55,12 +55,13 @@ export async function contractsSummary(sdb: ScopedDb) {
   });
 }
 
+/** Verifica que el comprador y la campaña del contrato, si vienen, sean de la organización. */
 export async function checkContractRefs(sdb: ScopedDb, v: { partyId?: unknown; seasonId?: unknown }) {
   if (typeof v.partyId === "string") await requireOwned(sdb, s.parties, v.partyId, "El comprador");
   if (typeof v.seasonId === "string") await requireOwned(sdb, s.seasons, v.seasonId, "La campaña");
 }
 
-/** Forma de entrega de E-34 sobre la fila de A-23: toneladas netas, destino = silo. */
+/** Forma de entrega de venta sobre la fila de entrega de grano: toneladas netas, destino = silo. */
 const asDelivery = (r: {
   id: string;
   contractId: string | null;
@@ -83,6 +84,7 @@ const asDelivery = (r: {
 const NO_TICKET = "s/n";
 const NO_SILO = "—";
 
+/** Entregas de grano de contratos, las más recientes primero, de un contrato o de todos. */
 export async function listDeliveries(sdb: ScopedDb, contractId?: string) {
   sdb.require(can.manageErp);
   const rows = await sdb.db
@@ -109,6 +111,7 @@ export async function listDeliveries(sdb: ScopedDb, contractId?: string) {
   return rows.map(asDelivery);
 }
 
+/** Registra una entrega (ticket de balanza) contra un contrato; las toneladas se guardan como kilos netos. */
 export async function createDelivery(
   sdb: ScopedDb,
   i: {
@@ -125,7 +128,7 @@ export async function createDelivery(
   sdb.require(can.manageErp);
   const org = sdb.auth.orgId;
   const c = await contract(sdb, i.contractId);
-  // A-23 pide la estancia: del lote, de la entrega o, si la organización tiene una sola, esa.
+  // La entrega de grano pide la estancia: del lote, de la entrega o, si la organización tiene una sola, esa.
   let farmId = i.farmId ?? null;
   if (i.plotId) {
     const [p] = await sdb.db
@@ -178,6 +181,7 @@ export async function createDelivery(
   return { id };
 }
 
+/** Borra (lógico) una entrega de un contrato. */
 export async function deleteDelivery(sdb: ScopedDb, id: string) {
   sdb.require(can.manageErp);
   const where = and(
@@ -195,6 +199,7 @@ export async function deleteDelivery(sdb: ScopedDb, id: string) {
   ]);
 }
 
+/** Liquidaciones de granos, las más recientes primero, de un contrato o de todos. */
 export async function listSettlements(sdb: ScopedDb, contractId?: string) {
   sdb.require(can.manageErp);
   return sdb.db
@@ -205,6 +210,10 @@ export async function listSettlements(sdb: ScopedDb, contractId?: string) {
     .limit(LIMITS.erp.listLimit);
 }
 
+/**
+ * Crea una liquidación: carga el ingreso al centro de costo y abre la cuenta a cobrar. El precio sale del contrato si
+ * no se informa.
+ */
 export async function createSettlement(
   sdb: ScopedDb,
   i: { contractId: string; number?: string | null; date: string; tons: number; priceMinor?: number | null; deductionsMinor?: number | null; farmId?: string | null; plotId?: string | null; dueDate?: string | null },
@@ -264,6 +273,7 @@ export async function createSettlement(
   return { id, netAmount: net, netPyg };
 }
 
+/** Borra (lógico) una liquidación y su ingreso. Falla con 409 si ya tiene cobros registrados. */
 export async function deleteSettlement(sdb: ScopedDb, id: string) {
   sdb.require(can.manageErp);
   const org = sdb.auth.orgId;

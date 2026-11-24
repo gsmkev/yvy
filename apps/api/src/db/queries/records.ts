@@ -1,11 +1,12 @@
-/** Listado de registros (RF-35). */
+/** Listado de registros. */
 import { and, desc, eq, gte, isNull, lt, lte, or, sql, type SQL } from "drizzle-orm";
 import type { RecordKind } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import type { ScopedDb } from "../scoped";
 
-// ---------- Registros (RF-35) ----------
+// ---------- Registros ----------
 
+/** Filtros del listado de registros. */
 export interface RecordFilters {
   farmId?: string;
   plotId?: string;
@@ -17,6 +18,7 @@ export interface RecordFilters {
   limit?: number;
 }
 
+/** Registros de la organización visibles para la persona, más recientes primero, con filtros y tope de 500. */
 export async function listRecords(sdb: ScopedDb, f: RecordFilters) {
   const limit = Math.min(f.limit ?? 50, 500);
   const conds: (SQL | undefined)[] = [

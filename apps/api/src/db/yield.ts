@@ -1,5 +1,5 @@
 /**
- * Mapas de rendimiento de la cosechadora (A-21). El archivo lo procesa el navegador (el Worker no parsea archivos
+ * Mapas de rendimiento de la cosechadora. El archivo lo procesa el navegador (el Worker no parsea archivos
  * grandes): acá solo se valida la forma del resumen y se guarda. Un mapa nuevo del mismo lote y campaña reemplaza al
  * anterior. Lo ve y escribe quien edita el campo (no el empleado).
  */
@@ -25,6 +25,7 @@ interface YieldMapInput {
   cells: [number, number, number, number][];
 }
 
+/** Mapas de rendimiento de un lote, con el nombre de su campaña. */
 export async function listYieldMaps(sdb: ScopedDb, plotId: string) {
   sdb.require(can.editField);
   await requirePlotRow(sdb, plotId);
@@ -59,6 +60,7 @@ export async function listYieldMaps(sdb: ScopedDb, plotId: string) {
     .limit(10);
 }
 
+/** Guarda el resumen de un mapa de rendimiento; si ya hay uno del mismo lote y campaña lo reemplaza. */
 export async function createYieldMap(sdb: ScopedDb, plotId: string, input: YieldMapInput) {
   sdb.require(can.editField);
   const plot = await requirePlotRow(sdb, plotId);
@@ -103,6 +105,7 @@ export async function createYieldMap(sdb: ScopedDb, plotId: string, input: Yield
   return { id };
 }
 
+/** Borra (lógico) un mapa de rendimiento. */
 export async function deleteYieldMap(sdb: ScopedDb, id: string) {
   sdb.require(can.editField);
   const [row] = await sdb.db

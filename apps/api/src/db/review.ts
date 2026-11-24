@@ -1,5 +1,5 @@
 /**
- * X-26: registros raros para revisar. Las reglas viven en packages/shared/src/oddities.ts y se evalúan al listar, sobre
+ * Registros raros para revisar. Las reglas viven en packages/shared/src/oddities.ts y se evalúan al listar, sobre
  * los registros de los últimos LIMITS.oddities.windowDays días (así no suman consultas al push del celular ni
  * al presupuesto de 10 ms por pedido). "Está bien" se guarda aparte y vale hasta que el registro se edite.
  */
@@ -21,6 +21,7 @@ async function doseRanges(sdb: ScopedDb): Promise<Map<string, DoseRange>> {
   return new Map(rows.map((r) => [r.id, { min: r.min, max: r.max, unit: r.unit }]));
 }
 
+/** Rangos de dosis por producto, para que las reglas de registros raros detecten dosis fuera de rango. */
 export async function listDoseRanges(sdb: ScopedDb) {
   const rows = await sdb.db
     .select({ productId: s.productDoseRanges.productId, min: s.productDoseRanges.minDose, max: s.productDoseRanges.maxDose })
@@ -65,6 +66,7 @@ interface ReviewItem {
   record: Record<string, unknown>;
 }
 
+/** Registros recientes con algo raro que todavía nadie revisó, con su motivo. */
 export async function listReview(sdb: ScopedDb, now = sdb.now()): Promise<ReviewItem[]> {
   sdb.require(can.reviewRecords, MSG);
   const since = now - LIMITS.oddities.windowDays * 86_400_000;

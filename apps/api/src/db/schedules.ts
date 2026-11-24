@@ -1,9 +1,10 @@
-/** R-10: informes programados por email a terceros (socio, agrónomo, banco). Solo dueño y administrador. */
+/** Informes programados por email a terceros (socio, agrónomo, banco). Solo dueño y administrador. */
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { LIMITS, newId } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { can, ForbiddenError, NotFoundError, type ScopedDb } from "./scoped";
 
+/** Informes programados de la organización. */
 export async function listSchedules(sdb: ScopedDb) {
   sdb.require(can.scheduleReports, "Solo el dueño o un administrador programan informes");
   return sdb.db
@@ -20,6 +21,7 @@ export async function listSchedules(sdb: ScopedDb) {
     .orderBy(s.reportSchedules.createdAt);
 }
 
+/** Programa el envío periódico de un informe por correo, de una estancia o de toda la organización. */
 export async function createSchedule(
   sdb: ScopedDb,
   input: { farmId: string | null; name: string; email: string; frequency: "weekly" | "monthly" },
@@ -47,6 +49,7 @@ export async function createSchedule(
   return { id };
 }
 
+/** Borra (lógico) un informe programado. */
 export async function deleteSchedule(sdb: ScopedDb, id: string) {
   sdb.require(can.scheduleReports, "Solo el dueño o un administrador programan informes");
   const res = await sdb.db

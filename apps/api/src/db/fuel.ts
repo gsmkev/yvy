@@ -1,5 +1,5 @@
 /**
- * Combustible (E-16): consumo por máquina a partir de los registros `fuel_load` (litros y horómetro u odómetro).
+ * Combustible: consumo por máquina a partir de los registros `fuel_load` (litros y horómetro u odómetro).
  * Las cargas descuentan stock y cargan costo por el consumo automático (erp-effects.ts); esto es el informe.
  */
 import { and, asc, eq, gte, isNull, lte, sql } from "drizzle-orm";
@@ -40,6 +40,7 @@ export function fuelRate(loads: Load[], meterKind: "hours" | "km"): number | nul
   return Math.round(perUnit * 100) / 100;
 }
 
+/** Consumo de combustible por máquina, con litros y costo, de una estancia o de todas, entre dos fechas. */
 export async function fuelReport(sdb: ScopedDb, f: { farmId?: string; from?: string; to?: string }): Promise<MachineFuel[]> {
   sdb.require(can.viewStock);
   const org = sdb.auth.orgId;

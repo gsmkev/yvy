@@ -7,10 +7,10 @@ import type { ScopedDb } from "./index";
 import { NotFoundError } from "./permissions";
 import { SYNCED } from "./synced-tables";
 
-/** Ventana de historial que baja al celular (PRD §11). */
+/** Ventana de historial que baja al celular. */
 function historyFilter(sdb: ScopedDb, table: PullTable): SQL | undefined {
   const now = sdb.now();
-  // Hacienda: todos los conteos y un año de movimientos y mortandad, para calcular el stock en el celular (G-03).
+  // Hacienda: todos los conteos y un año de movimientos y mortandad, para calcular el stock en el celular.
   if (table === "records")
     return or(
       gte(s.records.capturedAt, now - LIMITS.sync.recordsHistoryMs),
@@ -19,7 +19,7 @@ function historyFilter(sdb: ScopedDb, table: PullTable): SQL | undefined {
         inArray(s.records.kind, ["herd_move", "mortality", "theft"]),
         gte(s.records.capturedAt, now - LIMITS.sync.herdEventsHistoryMs),
       ),
-      // G-21: lo que lleva la caravana de un animal baja un año, para ver su historial sin señal.
+      // Lo que lleva la caravana de un animal baja un año, para ver su historial sin señal.
       and(
         inArray(s.records.kind, [...TAGGED_RECORD_KINDS]),
         sql`json_extract(${s.records.data}, '$.tag') IS NOT NULL`,
@@ -37,6 +37,7 @@ function historyFilter(sdb: ScopedDb, table: PullTable): SQL | undefined {
   return undefined;
 }
 
+/** Estado de sincronización de la persona: identidad, rol, versión de asignaciones y hora del servidor. */
 export async function syncState(sdb: ScopedDb): Promise<SyncState> {
   const [m] = await sdb.db
     .select({ v: s.memberships.assignmentsVersion })
@@ -52,6 +53,9 @@ export async function syncState(sdb: ScopedDb): Promise<SyncState> {
   };
 }
 
+/**
+ * Una página de filas de una tabla sincronizable posteriores al cursor (versión, id), ya filtradas por visibilidad.
+ */
 export async function pull(sdb: ScopedDb, table: PullTable, cursor: Cursor | null, limit: number = LIMITS.sync.pullPageSize): Promise<PullResponse> {
   const t = SYNCED[table];
   const after = cursor
@@ -69,6 +73,7 @@ export async function pull(sdb: ScopedDb, table: PullTable, cursor: Cursor | nul
   return { table, rows: page, cursor: last ? { version: last.version, id: last.id } : null, hasMore };
 }
 
+/** Adjunto de la organización. Falla con NotFoundError si no existe o se borró. */
 export async function getAttachment(sdb: ScopedDb, id: string) {
   const [row] = await sdb.db
     .select({ a: s.attachments })
@@ -86,6 +91,7 @@ export async function getAttachment(sdb: ScopedDb, id: string) {
   return row.a;
 }
 
+/** Marca un adjunto como subido a R2 y le suma versión para que baje al resto de los dispositivos. */
 export async function markAttachmentUploaded(sdb: ScopedDb, id: string, bytes: number | null): Promise<void> {
   const ts = sdb.now();
   await runBatch(sdb.db, [

@@ -1,5 +1,5 @@
 /**
- * ERP sencillo (ADR 0004): altas, cambios y bajas de los maestros de oficina (terceros, depósitos, tipos de cambio...).
+ * ERP sencillo: altas, cambios y bajas de los maestros de oficina (terceros, depósitos, tipos de cambio...).
  * Casi todas son de oficina y no se sincronizan; las que bajan al celular llevan `version`. Todo filtra por organización y usa borrado lógico.
  */
 import { and, asc, desc, eq, isNull, lte } from "drizzle-orm";
@@ -9,6 +9,10 @@ import { bumpVersion, currentVersion, runBatch, type Stmt } from "./client";
 import * as s from "@yvy/shared/schema";
 import { can, NotFoundError, type ScopedDb } from "./scoped";
 
+/**
+ * Forma mínima que debe tener una tabla del ERP para usar los helpers genéricos (`erpList`, `erpCreate`, `erpUpdate`,
+ * `erpDelete`).
+ */
 export type ErpTable = SQLiteTable & {
   id: SQLiteColumn;
   organizationId: SQLiteColumn;
@@ -39,8 +43,9 @@ export async function requireOwned(sdb: ScopedDb, table: ErpTable, id: string, w
   if (!row) throw new NotFoundError(`${what} no existe`);
 }
 
-// ---------- Tipos de cambio (E-06) ----------
+// ---------- Tipos de cambio ----------
 
+/** Tipos de cambio USD a PYG de la organización, los más recientes primero. */
 export async function listRates(sdb: ScopedDb, limit = 120) {
   sdb.require(can.manageErp);
   return sdb.db
@@ -63,6 +68,7 @@ export async function saveRate(sdb: ScopedDb, date: string, usdToPyg: number) {
     });
 }
 
+/** Borra el tipo de cambio de un día. Falla con NotFoundError si no existe. */
 export async function deleteRate(sdb: ScopedDb, date: string) {
   sdb.require(can.manageErp);
   const where = and(eq(s.exchangeRates.organizationId, sdb.auth.orgId), eq(s.exchangeRates.date, date));
@@ -93,6 +99,7 @@ export async function usdRateOn(sdb: ScopedDb, day: string): Promise<number | nu
   return oldest?.r ?? null;
 }
 
+/** Lista las filas vivas de una tabla del ERP ordenadas por `order`; exige el permiso de lectura `canRead`. */
 export async function erpList(sdb: ScopedDb, table: ErpTable, canRead: (r: Role) => boolean, order: SQLiteColumn[]) {
   sdb.require(canRead);
   return sdb.db
@@ -102,6 +109,7 @@ export async function erpList(sdb: ScopedDb, table: ErpTable, canRead: (r: Role)
     .orderBy(...order.map((c) => asc(c)));
 }
 
+/** Crea una fila en una tabla del ERP; exige `canWrite` y agrega la versión si la tabla se sincroniza. */
 export async function erpCreate(
   sdb: ScopedDb,
   table: ErpTable,
@@ -116,6 +124,7 @@ export async function erpCreate(
   return { id };
 }
 
+/** Edita una fila de una tabla del ERP; exige `canWrite`. */
 export async function erpUpdate(
   sdb: ScopedDb,
   table: ErpTable,
@@ -131,6 +140,7 @@ export async function erpUpdate(
   await write(sdb, table, sdb.db.update(table).set((isSynced(table) ? { ...set, version: currentVersion } : set)).where(where));
 }
 
+/** Borra (lógico) una fila de una tabla del ERP; exige `canWrite`. Falla con NotFoundError si no existe. */
 export async function erpDelete(sdb: ScopedDb, table: ErpTable, canWrite: (r: Role) => boolean, id: string) {
   sdb.require(canWrite);
   const where = and(eq(table.id, id), eq(table.organizationId, sdb.auth.orgId), isNull(table.deletedAt));

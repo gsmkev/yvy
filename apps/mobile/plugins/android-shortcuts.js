@@ -4,8 +4,8 @@
  * Solo toca el proyecto nativo que Expo genera en `prebuild`; no agrega ningún módulo nativo.
  */
 const fs = require("fs");
-const path = require("path");
 const { AndroidConfig, withAndroidManifest, withDangerousMod, withStringsXml } = require("expo/config-plugins");
+const path = require("path");
 const { shortcutsXml, rainKeys } = require("./shortcuts-xml");
 
 const MAIN_ACTIVITY = ".MainActivity";
@@ -27,13 +27,13 @@ module.exports = function withAndroidShortcuts(config, props) {
   config = withDangerousMod(config, [
     "android",
     (c) => {
-      const dir = path.join(c.modRequest.platformProjectRoot, "app/src/main/res/xml");
-      fs.mkdirSync(dir, { recursive: true });
+      // nosemgrep: path-join-resolve-traversal -- platformProjectRoot lo calcula Expo en prebuild; no viene de una entrada externa
+      const file = path.join(c.modRequest.platformProjectRoot, "app/src/main/res/xml/shortcuts.xml");
       const packageName = c.android?.package ?? "";
-      fs.writeFileSync(
-        path.join(dir, "shortcuts.xml"),
-        shortcutsXml({ packageName, className: `${packageName}${MAIN_ACTIVITY}` }),
-      );
+      // nosemgrep: detect-non-literal-fs-filename -- la ruta es la del proyecto nativo que genera `expo prebuild`
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      // nosemgrep: detect-non-literal-fs-filename -- la ruta es la del proyecto nativo que genera `expo prebuild`
+      fs.writeFileSync(file, shortcutsXml({ packageName, className: `${packageName}${MAIN_ACTIVITY}` }));
       return c;
     },
   ]);

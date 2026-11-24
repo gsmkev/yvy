@@ -17,8 +17,8 @@ export function MultiScreen({ a }: { a: AnnotateState }) {
     <View style={k.screen}>
       <AnnotateHeader a={a} />
       <ScrollView contentContainerStyle={k.pad}>
-        <Text style={T.title}>{t("app.severalPlotsTitle")}</Text>
-        <Text style={[T.small, { marginTop: 6, marginBottom: 16 }]}>{t("app.severalPlotsHint")}</Text>
+        <Text style={T.title}>{t("app.several.plotsTitle")}</Text>
+        <Text style={[T.small, { marginTop: 6, marginBottom: 16 }]}>{t("app.several.plotsHint")}</Text>
         {plots.map((p) => {
           const on = multi.some((x) => x.id === p.id);
           return (
@@ -36,7 +36,7 @@ export function MultiScreen({ a }: { a: AnnotateState }) {
         <Button
           big
           disabled={multi.length === 0}
-          title={multi.length === 1 ? t("app.severalPlotsContinueOne") : t("app.severalPlotsContinue", { n: multi.length })}
+          title={multi.length === 1 ? t("app.several.plotsContinueOne") : t("app.several.plotsContinue", { n: multi.length })}
           onPress={() => {
             // Un solo lote marcado es un lote común.
             setPlot(multi.length === 1 ? multi[0]! : null);

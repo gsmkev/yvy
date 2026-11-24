@@ -7,16 +7,16 @@ import { Text } from "../../src/ui/kit";
 export default function Pasto() {
   return (
     <Lab
-      title={t("app.labsGrassTitle")}
-      intro={t("app.labsGrassIntro")}
+      title={t("app.labs.grassTitle")}
+      intro={t("app.labs.grassIntro")}
       art={<PastureIllustration />}
       result={
         <>
-          <Text style={T.number}>{t("app.labsGrassCoverValue")}</Text>
-          <Text style={T.small}>{t("app.labsGrassCover")}</Text>
-          <Fact label={t("app.labsGrassHeight")} value={t("app.labsGrassHeightValue")} />
-          <Fact label={t("app.labsConfidence")} value={t("app.labsConfidenceMedium")} />
-          <Text style={[T.body, { marginTop: 16 }]}>{t("app.labsGrassNext")}</Text>
+          <Text style={T.number}>{t("app.labs.grassCoverValue")}</Text>
+          <Text style={T.small}>{t("app.labs.grassCover")}</Text>
+          <Fact label={t("app.labs.grassHeight")} value={t("app.labs.grassHeightValue")} />
+          <Fact label={t("app.labs.confidence")} value={t("app.labs.confidenceMedium")} />
+          <Text style={[T.body, { marginTop: 16 }]}>{t("app.labs.grassNext")}</Text>
         </>
       }
     />

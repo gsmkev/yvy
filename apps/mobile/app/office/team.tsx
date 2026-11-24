@@ -16,7 +16,7 @@ import { Button, EmptyState } from "../../src/ui/kit";
 import { C, F } from "../../src/ui/theme";
 import { Text } from "react-native";
 
-const role = (r: string) => t(`ui.role_${r}` as MessageKey);
+const role = (r: string) => t(`ui.role.${r}` as MessageKey);
 
 export default function Team() {
   const me = getSession()?.organization.role ?? "";
@@ -35,24 +35,24 @@ export default function Team() {
   const [invError, setInvError] = useState<string | null>(null);
   const invite = useOnlineMutation<{ fullName: string; email: string; role: string; phone: null }, { userId: string }>("POST", "/org/members", { invalidate: ["/org/members"] });
   const submitInvite = async () => {
-    if (inv.fullName.trim().length < 2) return setInvError(t("office.teamNameRequired"));
-    if (!/^\S+@\S+\.\S+$/.test(inv.email.trim())) return setInvError(t("office.teamInviteBadEmail"));
+    if (inv.fullName.trim().length < 2) return setInvError(t("office.team.nameRequired"));
+    if (!/^\S+@\S+\.\S+$/.test(inv.email.trim())) return setInvError(t("office.team.inviteBadEmail"));
     setInvError(null);
     const r = await invite.mutate({ fullName: inv.fullName.trim(), email: inv.email.trim(), role: inv.role, phone: null });
     if (!r.ok) return;
     setInviting(false);
     setInv({ fullName: "", email: "", role: "agronomist" });
-    showToast(t("ui.toastMemberAdded"));
+    showToast(t("ui.toast.memberAdded"));
     router.push({ pathname: "/office/member/[id]", params: { id: r.data.userId } });
   };
 
-  if (!allowed) return <OfficeScreen title={t("ui.teamTitle")}><EmptyState title={t("office.teamNotAllowed")} /></OfficeScreen>;
+  if (!allowed) return <OfficeScreen title={t("ui.team.title")}><EmptyState title={t("office.team.notAllowed")} /></OfficeScreen>;
 
   const submit = async () => {
     const name = f.fullName.trim();
-    if (name.length < 2) return setFormError(t("office.teamNameRequired"));
-    if (f.pin && !/^\d{6}$/.test(f.pin)) return setFormError(t("office.teamPinBad"));
-    if (f.pin && !f.phone.trim()) return setFormError(t("office.teamPinNeedsPhone"));
+    if (name.length < 2) return setFormError(t("office.team.nameRequired"));
+    if (f.pin && !/^\d{6}$/.test(f.pin)) return setFormError(t("office.team.pinBad"));
+    if (f.pin && !f.phone.trim()) return setFormError(t("office.team.pinNeedsPhone"));
     setFormError(null);
     const r = await add.mutate({ fullName: name, role: f.role, phone: f.phone.trim() || null, email: null });
     if (!r.ok) return;
@@ -62,13 +62,13 @@ export default function Team() {
     }
     setOpen(false);
     setF({ fullName: "", role: "worker", phone: "", pin: "" });
-    showToast(t("ui.toastMemberAdded"));
+    showToast(t("ui.toast.memberAdded"));
     router.push({ pathname: "/office/member/[id]", params: { id: r.data.userId } });
   };
 
   return (
-    <OfficeScreen title={t("ui.teamTitle")} query={q} footer={isOwner ? <Button kind="secondary" icon={Briefcase} title={t("office.teamInviteTitle")} onPress={() => { invite.reset(); setInvError(null); setInviting(true); }} style={{ marginTop: 8 }} /> : undefined} action={canAdd ? { label: t("office.teamAddTitle"), icon: UserPlus, onPress: () => { add.reset(); setFormError(null); setOpen(true); } } : undefined}>
-      <OnlineState query={q} empty={{ title: t("ui.teamEmpty") }}>
+    <OfficeScreen title={t("ui.team.title")} query={q} footer={isOwner ? <Button kind="secondary" icon={Briefcase} title={t("office.team.inviteTitle")} onPress={() => { invite.reset(); setInvError(null); setInviting(true); }} style={{ marginTop: 8 }} /> : undefined} action={canAdd ? { label: t("office.team.addTitle"), icon: UserPlus, onPress: () => { add.reset(); setFormError(null); setOpen(true); } } : undefined}>
+      <OnlineState query={q} empty={{ title: t("ui.team.empty") }}>
         {(rows) => (
           <DataList
             rows={rows}
@@ -77,27 +77,27 @@ export default function Team() {
             subtitle={(m) =>
               [
                 role(m.role),
-                m.role === "worker" && !m.hasPin ? t("app.teamPinNone") : null,
-                m.records7d > 0 ? t("office.teamRecords7", { n: m.records7d }) : null,
-                m.lastSyncAt ? t("office.teamLastSeen", { when: ageText(Date.now() - m.lastSyncAt) }) : null,
+                m.role === "worker" && !m.hasPin ? t("app.team.pinNone") : null,
+                m.records7d > 0 ? t("office.team.records7", { n: m.records7d }) : null,
+                m.lastSyncAt ? t("office.team.lastSeen", { when: ageText(Date.now() - m.lastSyncAt) }) : null,
               ].filter(Boolean).join(" · ")
             }
-            right={(m) => (m.overdueTasks > 0 ? <Text style={{ fontFamily: F.sansSemi, fontSize: 15, color: C.peligro }}>{t("office.teamOverdueN", { n: m.overdueTasks })}</Text> : undefined)}
+            right={(m) => (m.overdueTasks > 0 ? <Text style={{ fontFamily: F.sansSemi, fontSize: 15, color: C.peligro }}>{t("office.team.overdueN", { n: m.overdueTasks })}</Text> : undefined)}
             onPress={(m) => router.push({ pathname: "/office/member/[id]", params: { id: m.userId } })}
-            empty={{ title: t("ui.teamEmpty") }}
+            empty={{ title: t("ui.team.empty") }}
           />
         )}
       </OnlineState>
-      <FormSheet visible={open} title={t("office.teamAddTitle")} onClose={() => setOpen(false)} onSubmit={submit} submitLabel={t("ui.save")} pending={add.pending || setPin.pending} error={formError ?? add.error}>
-        <TextField label={t("ui.memberName")} value={f.fullName} onChangeText={(v) => setF({ ...f, fullName: v })} maxLength={120} />
-        <SelectField label={t("ui.role")} value={f.role} options={["worker", "contractor"].map((r) => ({ value: r, label: role(r) }))} onChange={(v) => setF({ ...f, role: v })} />
-        <TextField label={t("ui.phone")} hint={t("office.teamAddPhoneHint")} value={f.phone} onChangeText={(v) => setF({ ...f, phone: v })} maxLength={30} />
-        {isFieldRoleName(f.role) ? <TextField label={t("app.loginPinLabel")} hint={t("office.teamPinHint")} kind="number" value={f.pin} onChangeText={(v) => setF({ ...f, pin: v.replace(/\D/g, "").slice(0, 6) })} /> : null}
+      <FormSheet visible={open} title={t("office.team.addTitle")} onClose={() => setOpen(false)} onSubmit={submit} submitLabel={t("ui.common.save")} pending={add.pending || setPin.pending} error={formError ?? add.error}>
+        <TextField label={t("ui.member.name")} value={f.fullName} onChangeText={(v) => setF({ ...f, fullName: v })} maxLength={120} />
+        <SelectField label={t("ui.common.role")} value={f.role} options={["worker", "contractor"].map((r) => ({ value: r, label: role(r) }))} onChange={(v) => setF({ ...f, role: v })} />
+        <TextField label={t("ui.common.phone")} hint={t("office.team.addPhoneHint")} value={f.phone} onChangeText={(v) => setF({ ...f, phone: v })} maxLength={30} />
+        {isFieldRoleName(f.role) ? <TextField label={t("app.login.pinLabel")} hint={t("office.team.pinHint")} kind="number" value={f.pin} onChangeText={(v) => setF({ ...f, pin: v.replace(/\D/g, "").slice(0, 6) })} /> : null}
       </FormSheet>
-      <FormSheet visible={inviting} title={t("office.teamInviteTitle")} onClose={() => setInviting(false)} onSubmit={submitInvite} submitLabel={t("office.teamInviteSend")} pending={invite.pending} error={invError ?? invite.error}>
-        <TextField label={t("ui.memberName")} value={inv.fullName} onChangeText={(v) => setInv({ ...inv, fullName: v })} maxLength={120} />
-        <TextField label={t("ui.memberEmail")} hint={t("office.teamInviteEmailHint")} value={inv.email} onChangeText={(v) => setInv({ ...inv, email: v })} maxLength={200} autoCapitalize="none" />
-        <SelectField label={t("ui.role")} value={inv.role} options={["admin", "agronomist", "supervisor"].map((r) => ({ value: r, label: role(r) }))} onChange={(v) => setInv({ ...inv, role: v })} />
+      <FormSheet visible={inviting} title={t("office.team.inviteTitle")} onClose={() => setInviting(false)} onSubmit={submitInvite} submitLabel={t("office.team.inviteSend")} pending={invite.pending} error={invError ?? invite.error}>
+        <TextField label={t("ui.member.name")} value={inv.fullName} onChangeText={(v) => setInv({ ...inv, fullName: v })} maxLength={120} />
+        <TextField label={t("ui.member.email")} hint={t("office.team.inviteEmailHint")} value={inv.email} onChangeText={(v) => setInv({ ...inv, email: v })} maxLength={200} autoCapitalize="none" />
+        <SelectField label={t("ui.common.role")} value={inv.role} options={["admin", "agronomist", "supervisor"].map((r) => ({ value: r, label: role(r) }))} onChange={(v) => setInv({ ...inv, role: v })} />
       </FormSheet>
     </OfficeScreen>
   );

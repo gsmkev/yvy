@@ -8,21 +8,21 @@ import { T } from "../../src/ui/theme";
 export default function Roya() {
   return (
     <Lab
-      title={t("app.labsRustTitle")}
-      intro={t("app.labsRustIntro")}
+      title={t("app.labs.rustTitle")}
+      intro={t("app.labs.rustIntro")}
       art={<LeafIllustration />}
       result={
         <>
-          <Text style={T.display}>{t("app.labsRustLabel")}</Text>
-          <Fact label={t("app.labsRustSeverity")} value={t("app.labsRustSeverityValue")} />
-          <Fact label={t("app.labsConfidence")} value={t("app.labsConfidenceMedium")} />
-          <Fact label={t("app.labsNextStep")} value={t("app.labsRustNext")} />
+          <Text style={T.display}>{t("app.labs.rustLabel")}</Text>
+          <Fact label={t("app.labs.rustSeverity")} value={t("app.labs.rustSeverityValue")} />
+          <Fact label={t("app.labs.confidence")} value={t("app.labs.confidenceMedium")} />
+          <Fact label={t("app.labs.nextStep")} value={t("app.labs.rustNext")} />
         </>
       }
       actions={
         <>
-          <Text style={[T.small, { textAlign: "center" }]}>{t("app.labsRustAnnotateHint")}</Text>
-          <Button big title={t("app.labsRustAnnotate")} onPress={() => router.push({ pathname: "/annotate", params: { kind: "pest" } })} />
+          <Text style={[T.small, { textAlign: "center" }]}>{t("app.labs.rustAnnotateHint")}</Text>
+          <Button big title={t("app.labs.rustAnnotate")} onPress={() => router.push({ pathname: "/annotate", params: { kind: "pest" } })} />
         </>
       }
     />

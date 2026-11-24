@@ -28,27 +28,27 @@ export default function DashboardScreen() {
   const units = useUnits();
   const q = useOnline<Dashboard>(allowed ? "/org/dashboard" : null);
   return (
-    <OfficeScreen title={t("ui.dashTitle")} query={q}>
-      <OnlineState query={q} empty={{ title: t("office.loadFailed") }}>
+    <OfficeScreen title={t("ui.dash.title")} query={q}>
+      <OnlineState query={q} empty={{ title: t("office.common.loadFailed") }}>
         {(d) => {
-          const label = (c: Dashboard["areaByCrop"][number]) => (c.kind === "pasture" ? t("ui.pasture") : c.crop ? t(`ui.cropName_${c.crop}` as MessageKey) : t("ui.dashNoCrop"));
+          const label = (c: Dashboard["areaByCrop"][number]) => (c.kind === "pasture" ? t("ui.common.pasture") : c.crop ? t(`ui.crop.name_${c.crop}` as MessageKey) : t("ui.dash.noCrop"));
           const stats = [
-            ...(d.rain.mm === null ? [] : [{ label: t("ui.dashRainMonth"), value: fmtNumber(mmToRain(d.rain.mm, units.rain)), unit: rainLabel(units.rain) }]),
-            ...(d.alerts.total > 0 ? [{ label: t("ui.activeAlerts"), value: d.alerts.total, tone: "danger" as const }] : []),
-            ...(d.records7d.total > 0 ? [{ label: t("ui.dashRecords"), value: d.records7d.total }] : []),
-            ...(d.activity.workers > 0 ? [{ label: t("ui.dashActivity"), value: `${d.activity.activeWorkers7d}/${d.activity.workers}` }] : []),
+            ...(d.rain.mm === null ? [] : [{ label: t("ui.dash.rainMonth"), value: fmtNumber(mmToRain(d.rain.mm, units.rain)), unit: rainLabel(units.rain) }]),
+            ...(d.alerts.total > 0 ? [{ label: t("ui.common.activeAlerts"), value: d.alerts.total, tone: "danger" as const }] : []),
+            ...(d.records7d.total > 0 ? [{ label: t("ui.dash.records"), value: d.records7d.total }] : []),
+            ...(d.activity.workers > 0 ? [{ label: t("ui.dash.activity"), value: `${d.activity.activeWorkers7d}/${d.activity.workers}` }] : []),
             ...(d.margin && d.margin.entries > 0
-              ? [{ label: t("ui.dashMargin"), value: gs(d.margin.marginPyg), tone: d.margin.marginPyg < 0 ? ("danger" as const) : undefined }]
+              ? [{ label: t("ui.dash.margin"), value: gs(d.margin.marginPyg), tone: d.margin.marginPyg < 0 ? ("danger" as const) : undefined }]
               : []),
           ];
           const notes = [
             d.rain.normalMm === null
-              ? t("ui.dashRainNoData")
-              : t("ui.dashRainNormal", { normal: fmtNumber(mmToRain(d.rain.normalMm, units.rain)), pct: d.rain.pctOfNormal ?? 0 }).replace(" mm ", ` ${rainLabel(units.rain)} `),
-            d.alerts.total > 0 ? d.alerts.byKind.map((a) => `${a.n} ${t(`ui.alertKind_${a.kind}` as MessageKey).toLowerCase()}`).join(", ") : null,
-            d.margin && d.margin.entries > 0 ? t("ui.dashMarginNote", { income: gs(d.margin.incomePyg), cost: gs(d.margin.costPyg) }) : null,
-            d.activity.staff > 0 ? t("ui.dashActivityNote", { staff: d.activity.activeStaff7d, total: d.activity.staff }) : null,
-            d.records7d.byWorkers > 0 ? t("office.dashboardRecordsNote", { n: d.records7d.byWorkers }) : null,
+              ? t("ui.dash.rainNoData")
+              : t("ui.dash.rainNormal", { normal: fmtNumber(mmToRain(d.rain.normalMm, units.rain)), pct: d.rain.pctOfNormal ?? 0 }).replace(" mm ", ` ${rainLabel(units.rain)} `),
+            d.alerts.total > 0 ? d.alerts.byKind.map((a) => `${a.n} ${t(`ui.alert.kind_${a.kind}` as MessageKey).toLowerCase()}`).join(", ") : null,
+            d.margin && d.margin.entries > 0 ? t("ui.dash.marginNote", { income: gs(d.margin.incomePyg), cost: gs(d.margin.costPyg) }) : null,
+            d.activity.staff > 0 ? t("ui.dash.activityNote", { staff: d.activity.activeStaff7d, total: d.activity.staff }) : null,
+            d.records7d.byWorkers > 0 ? t("office.dashboard.recordsNote", { n: d.records7d.byWorkers }) : null,
           ].filter(Boolean) as string[];
           return (
             <View>
@@ -62,8 +62,17 @@ export default function DashboardScreen() {
               </View>
               {d.areaByCrop.length > 0 && (
                 <>
-                  <SectionHeader title={t("ui.dashAreaByCrop")} />
-                  <BarList rows={d.areaByCrop.map((c) => ({ label: `${label(c)} · ${t(c.plots === 1 ? "ui.plotsCountOne" : "ui.plotsCountMany", { n: c.plots })}`, value: Math.round(haToArea(c.ha, units.area) * 10) / 10 }))} unit={areaLabel(units.area)} />
+                  <SectionHeader title={t("ui.dash.areaByCrop")} />
+                  <BarList
+                    rows={d.areaByCrop.map((c) => ({
+                      label:
+                        label(c) +
+                        " · " +
+                        t(c.plots === 1 ? "ui.plots.countOne" : "ui.plots.countMany", { n: c.plots }),
+                      value: Math.round(haToArea(c.ha, units.area) * 10) / 10,
+                    }))}
+                    unit={areaLabel(units.area)}
+                  />
                 </>
               )}
             </View>

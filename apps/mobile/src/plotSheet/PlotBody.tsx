@@ -31,7 +31,7 @@ export function PlotBody({ data, office, canEdit, readOnly }: { data: Data; offi
 
   const copyCoords = async () => {
     const text = `${plot.name}\n${decimalCoords(cLon, cLat)}\n${degMinCoords(cLon, cLat)}\n${mapsLink(cLon, cLat)}`;
-    if (await copyText(text)) showToast(t("ui.copied"));
+    if (await copyText(text)) showToast(t("ui.common.copied"));
   };
 
   const vigorSection = office && history.length > 0;
@@ -45,20 +45,20 @@ export function PlotBody({ data, office, canEdit, readOnly }: { data: Data; offi
             {!readOnly && (
               <Button
                 big
-                title={t("app.annotateIn", { plot: plot.name })}
+                title={t("app.annotate.in", { plot: plot.name })}
                 onPress={() => router.push({ pathname: "/annotate", params: { plotId: plot.id } })}
               />
             )}
             <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", columnGap: 20 }}>
               <Button
                 kind={readOnly ? "primary" : "text"}
-                title={t("app.gotoButton")}
+                title={t("app.goto.button")}
                 onPress={() => router.push({ pathname: "/goto", params: { lon: String(cLon), lat: String(cLat), name: plot.name } })}
               />
               {canEdit && (
                 <Button
                   kind="text"
-                  title={t("app.plotDrawEdit")}
+                  title={t("app.plot.drawEdit")}
                   onPress={() => router.push({ pathname: "/plot-draw", params: { plotId: plot.id } })}
                 />
               )}
@@ -68,17 +68,17 @@ export function PlotBody({ data, office, canEdit, readOnly }: { data: Data; offi
       >
         <Text style={T.title}>{plot.name}</Text>
         <Text style={[T.small, { marginTop: 4 }]}>
-          {[crop ? (plot.crop ? t(`ui.cropName_${plot.crop}` as MessageKey) : t("ui.crop")) : t("ui.pasture"), fmtArea(plot.areaHa, units), plot.season ? t(`office.plotSeason_${plot.season}` as MessageKey) : null, visitText(lastVisit)].filter(Boolean).join(" · ")}
+          {[crop ? (plot.crop ? t(`ui.crop.name_${plot.crop}` as MessageKey) : t("ui.common.crop")) : t("ui.common.pasture"), fmtArea(plot.areaHa, units), plot.season ? t(`office.plot.season_${plot.season}` as MessageKey) : null, visitText(lastVisit)].filter(Boolean).join(" · ")}
         </Text>
 
-        <SectionHeader title={t("app.plotSheetNow")} />
+        <SectionHeader title={t("app.plot.sheetNow")} />
         {!vigorSection && (
           <VigorRow vigor={vigor} trend={trend} office={office} />
         )}
         <Row
           icon={CloudRain}
-          title={t("app.plotSheetRain")}
-          subtitle={rainMonth > 0 ? t("office.plotRainMonth", { value: fmtRain(rainMonth, units) }) : t("app.plotSheetRainNone")}
+          title={t("app.plot.sheetRain")}
+          subtitle={rainMonth > 0 ? t("office.plot.rainMonth", { value: fmtRain(rainMonth, units) }) : t("app.plot.sheetRainNone")}
         />
 
         {vigorSection && <VigorSection history={history} farmMeans={farmMeans} plotName={plot.name} />}
@@ -86,14 +86,14 @@ export function PlotBody({ data, office, canEdit, readOnly }: { data: Data; offi
         <OfficeSections plot={plot} office={office} readOnly={readOnly} units={units} rotation={rotation} />
 
         <PlotLists tasks={tasks} records={records} />
-        <SectionHeader title={t("office.plotMore")} />
-        <Row icon={Copy} title={t("ui.copyCoords")} subtitle={degMinCoords(cLon, cLat)} onPress={() => void copyCoords()} />
-        {canEdit && <Row icon={Pencil} title={t("office.plotEdit")} subtitle={t("office.plotEditHint")} onPress={a.openEdit} />}
+        <SectionHeader title={t("office.plot.more")} />
+        <Row icon={Copy} title={t("ui.common.copyCoords")} subtitle={degMinCoords(cLon, cLat)} onPress={() => void copyCoords()} />
+        {canEdit && <Row icon={Pencil} title={t("office.plot.edit")} subtitle={t("office.plot.editHint")} onPress={a.openEdit} />}
         {canEdit && (
           <Row
             icon={Trash2}
             tone="danger"
-            title={t("office.plotDelete")}
+            title={t("office.plot.delete")}
             onPress={a.askDelete}
           />
         )}

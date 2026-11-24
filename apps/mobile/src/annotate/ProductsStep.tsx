@@ -37,14 +37,14 @@ export function ProductsStep({ question, value, fixedUnit, types, onAnswer }: { 
   if (view === "review") {
     return (
       <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]}>
-        <Text style={T.title}>{t("app.productsReview")}</Text>
-        <Text style={[T.small, { marginTop: 6, marginBottom: 16 }]}>{t("app.productsReviewHint")}</Text>
+        <Text style={T.title}>{t("app.products.review")}</Text>
+        <Text style={[T.small, { marginTop: 6, marginBottom: 16 }]}>{t("app.products.reviewHint")}</Text>
         {doses.map((d) => (
           <Row key={`${d.productId ?? d.name}`} title={d.name} subtitle={describeRecord("application", { products: [d] }).replace(`${d.name} `, "")} />
         ))}
         <View style={{ flex: 1 }} />
-        <Button big title={t("app.next")} onPress={() => onAnswer(doses)} />
-        <Button kind="text" title={t("app.productsChange")} onPress={() => setView("pick")} style={{ marginTop: 8 }} />
+        <Button big title={t("app.common.next")} onPress={() => onAnswer(doses)} />
+        <Button kind="text" title={t("app.products.change")} onPress={() => setView("pick")} style={{ marginTop: 8 }} />
       </ScrollView>
     );
   }
@@ -52,12 +52,12 @@ export function ProductsStep({ question, value, fixedUnit, types, onAnswer }: { 
     const name = other.trim();
     return (
       <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
-        <Text style={T.title}>{t("app.productOtherQuestion")}</Text>
-        <TextInput value={other} onChangeText={setOther} autoFocus style={st.search} accessibilityLabel={t("app.productOtherQuestion")} />
+        <Text style={T.title}>{t("app.product.otherQuestion")}</Text>
+        <TextInput value={other} onChangeText={setOther} autoFocus style={st.search} accessibilityLabel={t("app.product.otherQuestion")} />
         <View style={{ flex: 1 }} />
         <Button
           big
-          title={t("app.next")}
+          title={t("app.common.next")}
           disabled={!name}
           onPress={() => {
             setDoses((ds) => [...ds, { name, dose: 0, unit: fixedUnit ?? "l_ha" }]);
@@ -85,7 +85,7 @@ export function ProductsStep({ question, value, fixedUnit, types, onAnswer }: { 
     };
     return (
       <ScrollView contentContainerStyle={[k.pad, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
-        <Text style={T.title}>{t("app.productDoseQuestion", { name: d.name })}</Text>
+        <Text style={T.title}>{t("app.product.doseQuestion", { name: d.name })}</Text>
         <View style={st.numberRow}>
           <TextInput
             value={text}
@@ -95,26 +95,26 @@ export function ProductsStep({ question, value, fixedUnit, types, onAnswer }: { 
             style={st.numberInput}
             placeholder="0"
             placeholderTextColor={C.tinta3}
-            accessibilityLabel={t("app.productDoseQuestion", { name: d.name })}
+            accessibilityLabel={t("app.product.doseQuestion", { name: d.name })}
             onSubmitEditing={() => ok && next()}
           />
-          <Text style={st.unit}>{tr(`fields.doseUnit_${unit}`)}</Text>
+          <Text style={st.unit}>{tr(`fields.dose.unit_${unit}`)}</Text>
         </View>
         {!fixedUnit && <Button
           kind="text"
-          title={t("app.productDoseChange", { unit: tr(`fields.doseUnit_${alt}`) })}
+          title={t("app.product.doseChange", { unit: tr(`fields.dose.unit_${alt}`) })}
           onPress={() => setDoses((ds) => ds.map((x, j) => (j === view ? { ...x, unit: alt } : x)))}
           style={{ marginTop: 8 }}
         />}
         <View style={{ flex: 1 }} />
-        <Button big title={t("app.next")} disabled={!ok} onPress={next} />
+        <Button big title={t("app.common.next")} disabled={!ok} onPress={next} />
       </ScrollView>
     );
   }
   return (
     <ScrollView contentContainerStyle={k.pad}>
       <Text style={T.title}>{tr(question)}</Text>
-      <Text style={[T.small, { marginTop: 6, marginBottom: 16 }]}>{catalog.length ? t("app.productsHint") : t("app.productsNone")}</Text>
+      <Text style={[T.small, { marginTop: 6, marginBottom: 16 }]}>{catalog.length ? t("app.products.hint") : t("app.products.none")}</Text>
       {catalog.map((p) => {
         const on = doses.some((d) => d.productId === p.id);
         return (
@@ -140,11 +140,11 @@ export function ProductsStep({ question, value, fixedUnit, types, onAnswer }: { 
             left={<Check size={22} color={C.accion} strokeWidth={3} />}
           />
         ))}
-      <Button kind="text" title={t("app.productOther")} onPress={() => setView("other")} style={{ marginTop: 8 }} />
+      <Button kind="text" title={t("app.product.other")} onPress={() => setView("other")} style={{ marginTop: 8 }} />
       <Button
         big
         disabled={doses.length === 0}
-        title={t("app.productsContinue", { n: doses.length })}
+        title={t("app.products.continue", { n: doses.length })}
         onPress={() => go(0)}
         style={{ marginTop: 16 }}
       />

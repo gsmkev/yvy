@@ -93,10 +93,10 @@ export default function Admin() {
   const due = (d: Dues | null, key: "pending" | "overdue") => Object.fromEntries(Object.entries(d?.totals ?? {}).map(([c, v]) => [c, v[key]]));
   const margin = dash.data?.margin && dash.data.margin.entries > 0 ? dash.data.margin : null;
   const stats: StatItem[] = [
-    ...currencyStats(t("ui.ovCash"), balances.data?.totals, undefined, press("cash")),
-    ...currencyStats(t("ui.ovPayables"), due(payables.data, "pending"), due(payables.data, "overdue"), press("cash")),
-    ...currencyStats(t("ui.ovReceivables"), due(receivables.data, "pending"), undefined, press("cash")),
-    ...(margin ? [{ label: t("ui.ovMargin"), value: compactMoney(margin.marginPyg, "PYG").value, unit: compactMoney(margin.marginPyg, "PYG").unit, tone: margin.marginPyg < 0 ? ("danger" as const) : undefined, onPress: press("results") }] : []),
+    ...currencyStats(t("ui.ov.cash"), balances.data?.totals, undefined, press("cash")),
+    ...currencyStats(t("ui.ov.payables"), due(payables.data, "pending"), due(payables.data, "overdue"), press("cash")),
+    ...currencyStats(t("ui.ov.receivables"), due(receivables.data, "pending"), undefined, press("cash")),
+    ...(margin ? [{ label: t("ui.ov.margin"), value: compactMoney(margin.marginPyg, "PYG").value, unit: compactMoney(margin.marginPyg, "PYG").unit, tone: margin.marginPyg < 0 ? ("danger" as const) : undefined, onPress: press("results") }] : []),
   ];
 
   const lowRows = (low.data ?? []).slice(0, SHOWN);
@@ -107,9 +107,9 @@ export default function Admin() {
 
   const nothing = stats.length === 0 && lowRows.length === 0 && open.length === 0 && lastPurchases.length === 0;
   const steps = [
-    { id: "products", label: t("ui.ovStep1"), done: byId.size > 0 },
-    { id: "purchases", label: t("ui.ovStep2"), done: (purchases.data ?? []).length > 0 },
-    { id: "cash", label: t("ui.ovStep3"), done: (balances.data?.accounts ?? []).length > 0 },
+    { id: "products", label: t("ui.ov.step1"), done: byId.size > 0 },
+    { id: "purchases", label: t("ui.ov.step2"), done: (purchases.data ?? []).length > 0 },
+    { id: "cash", label: t("ui.ov.step3"), done: (balances.data?.accounts ?? []).length > 0 },
   ].filter((x) => !x.done);
 
   const refresh = async () => {
@@ -119,47 +119,47 @@ export default function Admin() {
   const groups = ADMIN_GROUPS.map((g) => ({ group: g, items: ADMIN_MENU.filter((m) => m.group === g && (m.show ? m.show(access) : manage)) })).filter((g) => g.items.length > 0);
 
   return (
-    <AdminGate need="stock" title={t("ui.navAdmin")}>
-      <OfficeScreen title={t("ui.navAdmin")} query={manage ? balances : low} onRefresh={refresh}>
-        <SectionHeader title={t("ui.adminGroup_overview")} first />
+    <AdminGate need="stock" title={t("ui.nav.admin")}>
+      <OfficeScreen title={t("ui.nav.admin")} query={manage ? balances : low} onRefresh={refresh}>
+        <SectionHeader title={t("ui.admin.group_overview")} first />
         {loading ? (
           <Skeleton rows={3} />
         ) : failed ? (
-          <EmptyState title={t("office.loadFailed")} hint={balances.error ?? undefined} action={t("office.retry")} onAction={() => void refresh()} />
+          <EmptyState title={t("office.common.loadFailed")} hint={balances.error ?? undefined} action={t("office.common.retry")} onAction={() => void refresh()} />
         ) : nothing ? (
           manage ? (
             <>
-              <EmptyState title={t("ui.ovStartTitle")} hint={t("ui.ovStartBody")} />
+              <EmptyState title={t("ui.ov.startTitle")} hint={t("ui.ov.startBody")} />
               {steps.map((x, i) => (
                 <Row key={x.id} title={`${i + 1}. ${x.label}`} onPress={press(x.id) ?? (x.id === "cash" ? undefined : () => go(x.id === "products" ? "/office/products" : "/office/admin/purchases"))} />
               ))}
             </>
           ) : (
-            <EmptyState title={t("ui.emptyLowTitle")} />
+            <EmptyState title={t("ui.empty.lowTitle")} />
           )
         ) : (
           <>
             {stats.length > 0 ? <StatRow items={stats} /> : null}
             {lowRows.length > 0 ? (
               <>
-                <SectionHeader title={`${t("ui.ovLow")} · ${low.data?.length ?? 0}`} action={t("ui.ovSeeAll")} onAction={() => go("/office/admin/min-stock")} />
+                <SectionHeader title={`${t("ui.ov.low")} · ${low.data?.length ?? 0}`} action={t("ui.ov.seeAll")} onAction={() => go("/office/admin/min-stock")} />
                 {lowRows.map((l) => {
                   const p = byId.get(l.productId);
-                  return <Row key={`${l.productId}-${l.warehouseId}`} title={p?.name ?? "—"} subtitle={whName(l.warehouseId)} right={<RightText>{t("ui.minStockMissing", { qty: fmtQty(l.missing, p?.unit) })}</RightText>} onPress={() => go("/office/admin/min-stock")} />;
+                  return <Row key={`${l.productId}-${l.warehouseId}`} title={p?.name ?? "—"} subtitle={whName(l.warehouseId)} right={<RightText>{t("ui.min.stockMissing", { qty: fmtQty(l.missing, p?.unit) })}</RightText>} onPress={() => go("/office/admin/min-stock")} />;
                 })}
               </>
             ) : null}
             {open.length > 0 ? (
               <>
-                <SectionHeader title={`${t("ui.ovOrders")} · ${open.length}`} action={hrefOf("orders") ? t("ui.ovSeeAll") : undefined} onAction={press("orders")} />
+                <SectionHeader title={`${t("ui.ov.orders")} · ${open.length}`} action={hrefOf("orders") ? t("ui.ov.seeAll") : undefined} onAction={press("orders")} />
                 {open.slice(0, SHOWN).map((g) => (
-                  <Row key={g.key} title={t(k(`ui.orderLabor_${g.labor}`))} subtitle={g.plots.join(", ")} right={<RightText>{isoShort(g.dueDate)}</RightText>} onPress={press("orders")} />
+                  <Row key={g.key} title={t(k(`ui.order.labor_${g.labor}`))} subtitle={g.plots.join(", ")} right={<RightText>{isoShort(g.dueDate)}</RightText>} onPress={press("orders")} />
                 ))}
               </>
             ) : null}
             {lastPurchases.length > 0 ? (
               <>
-                <SectionHeader title={t("ui.ovPurchases")} action={t("ui.ovSeeAll")} onAction={() => go("/office/admin/purchases")} />
+                <SectionHeader title={t("ui.ov.purchases")} action={t("ui.ov.seeAll")} onAction={() => go("/office/admin/purchases")} />
                 {lastPurchases.map((p) => (
                   <Row key={p.id} title={partyName(p.partyId)} subtitle={isoShort(p.orderDate)} right={<RightText>{fmtMoney(p.totalAmount, p.currency)}</RightText>} onPress={() => go("/office/admin/purchases")} />
                 ))}

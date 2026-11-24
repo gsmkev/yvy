@@ -14,15 +14,15 @@ export function KindScreen({ a }: { a: AnnotateState }) {
     <View style={k.screen}>
       <AnnotateHeader a={a} />
       <ScrollView contentContainerStyle={k.pad}>
-        <Text style={T.title}>{t("app.whatHappened")}</Text>
-        {plot && rain > 0 && <Text style={[T.small, { marginTop: 6 }]}>{t("app.rainMonth", { mm: Math.round(rain) })}</Text>}
+        <Text style={T.title}>{t("app.common.whatHappened")}</Text>
+        {plot && rain > 0 && <Text style={[T.small, { marginTop: 6 }]}>{t("app.rain.month", { mm: Math.round(rain) })}</Text>}
         <View style={{ height: 16 }} />
         {KINDS_FOR(plot?.kind ?? (multi.length > 1 && multi.every((p) => p.kind === multi[0]!.kind) ? multi[0]!.kind : null))
           .filter((kd) => !(multi.length > 1 && SINGLE_PLOT_KINDS.includes(kd)))
           .map((kd) => (
           <Row
             key={kd}
-            title={t(`recordKinds.${kd}`)}
+            title={t(`record-kinds.kind.${kd}`)}
             onPress={() => {
               setKind(kd);
               setValues(seed(kd));

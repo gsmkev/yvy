@@ -43,38 +43,38 @@ export default function Warehouses() {
   const submit = async () => {
     if (!draft) return;
     const name = draft.name.trim();
-    if (!name) return setFormError(t("office.admNeedsName"));
-    if (!draft.farmId) return setFormError(t("office.admNeedsFarm"));
+    if (!name) return setFormError(t("office.adm.needsName"));
+    if (!draft.farmId) return setFormError(t("office.adm.needsFarm"));
     setFormError(null);
     const body = { farmId: draft.farmId, name, type: draft.type };
     const r = draft.id ? await edit.mutate({ id: draft.id, ...body }) : await create.mutate(body);
     if (r.ok) {
       setDraft(null);
-      showToast(t("ui.erpSaved"));
+      showToast(t("ui.erp.saved"));
     }
   };
 
   const err = formError ?? (draft?.id ? edit.error : create.error);
   return (
-    <AdminGate need="stock" title={t("ui.adminSection_warehouses")}>
-      <OfficeScreen title={t("ui.adminSection_warehouses")} query={q} action={manage ? { label: t("ui.warehouseNew"), icon: Plus, onPress: () => open(null), disabled: !!noSignal } : undefined}>
+    <AdminGate need="stock" title={t("ui.admin.section_warehouses")}>
+      <OfficeScreen title={t("ui.admin.section_warehouses")} query={q} action={manage ? { label: t("ui.warehouse.new"), icon: Plus, onPress: () => open(null), disabled: !!noSignal } : undefined}>
         {manage ? <NoSignalNote /> : null}
-        <OnlineState query={q} empty={{ title: t("ui.emptyWarehousesTitle"), hint: t("ui.emptyWarehousesBody") }}>
+        <OnlineState query={q} empty={{ title: t("ui.empty.warehousesTitle"), hint: t("ui.empty.warehousesBody") }}>
           {(rows) => (
             <DataList
               rows={rows}
               keyOf={(w) => w.id}
               title={(w) => w.name}
-              subtitle={(w) => [t(k(`ui.warehouseType_${w.type}`)), farmName.get(w.farmId), w.isDefault ? t("office.admDefault") : null].filter(Boolean).join(" · ")}
+              subtitle={(w) => [t(k(`ui.warehouse.type_${w.type}`)), farmName.get(w.farmId), w.isDefault ? t("office.adm.default") : null].filter(Boolean).join(" · ")}
               onPress={manage ? open : undefined}
-              empty={{ title: t("ui.erpEmpty") }}
+              empty={{ title: t("ui.erp.empty") }}
             />
           )}
         </OnlineState>
-        <FormSheet visible={!!draft} title={draft?.id ? t("ui.erpEdit") : t("ui.warehouseNew")} onClose={() => setDraft(null)} onSubmit={submit} submitLabel={t("ui.save")} pending={create.pending || edit.pending} error={err}>
-          <TextField label={t("ui.warehouseName")} value={draft?.name ?? ""} onChangeText={(v) => set({ name: v })} maxLength={80} />
-          <SelectField<WType> label={t("ui.warehouseType")} value={draft?.type} options={WAREHOUSE_TYPES.map((v) => ({ value: v, label: t(k(`ui.warehouseType_${v}`)) }))} onChange={(v) => set({ type: v })} />
-          <SelectField label={t("ui.warehouseFarm")} value={draft?.farmId} options={farms.map((f) => ({ value: f.id, label: f.name }))} onChange={(v) => set({ farmId: v })} />
+        <FormSheet visible={!!draft} title={draft?.id ? t("ui.erp.edit") : t("ui.warehouse.new")} onClose={() => setDraft(null)} onSubmit={submit} submitLabel={t("ui.common.save")} pending={create.pending || edit.pending} error={err}>
+          <TextField label={t("ui.warehouse.name")} value={draft?.name ?? ""} onChangeText={(v) => set({ name: v })} maxLength={80} />
+          <SelectField<WType> label={t("ui.warehouse.type")} value={draft?.type} options={WAREHOUSE_TYPES.map((v) => ({ value: v, label: t(k(`ui.warehouse.type_${v}`)) }))} onChange={(v) => set({ type: v })} />
+          <SelectField label={t("ui.warehouse.farm")} value={draft?.farmId} options={farms.map((f) => ({ value: f.id, label: f.name }))} onChange={(v) => set({ farmId: v })} />
         </FormSheet>
       </OfficeScreen>
     </AdminGate>

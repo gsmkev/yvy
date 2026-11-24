@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Linking, Pressable, Share, View } from "react-native";
 import { router, Stack } from "expo-router";
 import { Settings, Share2 } from "lucide-react-native";
-import { alertShareText, t, whatsappUrl, type MessageKey } from "@yvy/shared";
+import { alertShareText, t, whatsappUrl, type MessageKey, ATTRIBUTION } from "@yvy/shared";
 import { getDb } from "../../src/lib/db";
 import { tap } from "../../src/lib/haptics";
 import { API_URL, getSession } from "../../src/lib/session";
@@ -44,8 +44,8 @@ export default function Alerts() {
 
   const share = (a: (typeof shown)[number]) => {
     const text = alertShareText({
-      kindLabel: t(`ui.alertKind_${a.kind}` as MessageKey),
-      severityLabel: t(`ui.severity_${a.severity}` as MessageKey),
+      kindLabel: t(`ui.alert.kind_${a.kind}` as MessageKey),
+      severityLabel: t(`ui.severity.${a.severity}` as MessageKey),
       summary: a.summary,
       farmName: data.farms.get(a.farmId),
       validity: validity(a),
@@ -58,17 +58,17 @@ export default function Alerts() {
     tap();
     recordVote(getDb(), id, useful);
     setVotes(readVotes(getDb()));
-    showToast(t("office.alertsThanks"));
+    showToast(t("office.alerts.thanks"));
     void flushAlertVotes();
   };
 
   return (
-    <OfficeScreen title={t("ui.alertsTitle")}>
+    <OfficeScreen title={t("ui.alerts.title")}>
       {canTune ? (
         <Stack.Screen
           options={{
             headerRight: () => (
-              <Pressable accessibilityRole="button" accessibilityLabel={t("ui.alertSettingsTitle")} hitSlop={12} onPress={() => router.push("/office/alert-settings")} style={{ minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" }}>
+              <Pressable accessibilityRole="button" accessibilityLabel={t("ui.alert.settingsTitle")} hitSlop={12} onPress={() => router.push("/office/alert-settings")} style={{ minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" }}>
                 <Settings size={24} color={C.tinta} strokeWidth={2} />
               </Pressable>
             ),
@@ -80,40 +80,42 @@ export default function Alerts() {
           value={farmId}
           onChange={setFarmId}
           options={[
-            { value: "all", label: t("office.alertsAllFarms"), count: data.alerts.length },
+            { value: "all", label: t("office.alerts.allFarms"), count: data.alerts.length },
             ...farmsWithAlerts.map((id) => ({ value: id, label: data.farms.get(id) ?? "—", count: data.alerts.filter((a) => a.farmId === id).length })),
           ]}
         />
       )}
-      {shown.length === 0 && <EmptyState title={t("office.alertsEmpty")} hint={t("office.alertsEmptyHint")} />}
+      {shown.length === 0 && <EmptyState title={t("office.alerts.empty")} hint={t("office.alerts.emptyHint")} />}
       {shown.map((a) => (
         <View key={a.id} style={{ marginTop: 16, padding: 16, borderRadius: RADIUS, backgroundColor: C.blanco, borderWidth: 1, borderColor: C.linea, borderLeftWidth: 4, borderLeftColor: EDGE[a.severity] ?? C.soja }}>
           <Text style={[T.heading, a.severity === "warning" && { color: C.peligro }]}>
-            {t(`ui.alertKind_${a.kind}` as MessageKey)}
-            {a.probability ? ` · ${t(`ui.probability_${a.probability}` as MessageKey).toLowerCase()}` : ""}
+            {t(`ui.alert.kind_${a.kind}` as MessageKey)}
+            {a.probability ? ` · ${t(`ui.probability.${a.probability}` as MessageKey).toLowerCase()}` : ""}
           </Text>
           <Text style={[T.small, { marginTop: 2 }]}>{[data.farms.get(a.farmId), validity(a)].filter(Boolean).join(" · ")}</Text>
           <Text style={[T.body, { marginTop: 8 }]}>{a.summary}</Text>
-          <Text style={[T.small, { marginTop: 8 }]}>{t("ui.orientative", { source: a.source })}</Text>
+          <Text style={[T.small, { marginTop: 8 }]}>{t("ui.common.orientative", { source: a.source })}</Text>
           <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
-            <Text style={[T.small, { marginRight: 4 }]}>{t("ui.useful")}</Text>
+            <Text style={[T.small, { marginRight: 4 }]}>{t("ui.common.useful")}</Text>
             {([true, false] as const).map((useful) => {
               const on = votes[a.id] === useful;
               return (
                 <Button
                   key={String(useful)}
                   kind={on ? "primary" : "secondary"}
-                  title={useful ? t("ui.yes") : t("ui.no")}
+                  title={useful ? t("ui.common.yes") : t("ui.common.no")}
                   onPress={() => vote(a.id, useful)}
                   style={{ minWidth: 88 }}
                 />
               );
             })}
           </View>
-          <Button kind="secondary" icon={Share2} title={t("ui.shareWhatsapp")} onPress={() => share(a)} style={{ marginTop: 12 }} />
+          <Button kind="secondary" icon={Share2} title={t("ui.share.whatsapp")} onPress={() => share(a)} style={{ marginTop: 12 }} />
         </View>
       ))}
-      <Text style={{ fontFamily: F.sans, fontSize: 15, color: C.tinta3, marginTop: 24 }}>{t("attribution.metNorway")}</Text>
+      <Text style={{ fontFamily: F.sans, fontSize: 15, color: C.tinta3, marginTop: 24 }}>
+        {t(ATTRIBUTION.metNorway)}
+      </Text>
     </OfficeScreen>
   );
 }

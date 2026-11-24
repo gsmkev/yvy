@@ -6,13 +6,13 @@ import { st } from "./styles";
 
 export function Progress({ i, n }: { i: number; n: number }) {
   return (
-    <View style={st.progressWrap} accessibilityLabel={t("app.stepOf", { i: i + 1, n })}>
+    <View style={st.progressWrap} accessibilityLabel={t("app.common.stepOf", { i: i + 1, n })}>
       <View style={st.progress}>
         {Array.from({ length: n }, (_, j) => (
           <View key={j} style={[st.progressDot, j <= i && { backgroundColor: C.accion }]} />
         ))}
       </View>
-      <Text style={[T.small, { marginTop: 6 }]}>{t("app.stepOf", { i: i + 1, n })}</Text>
+      <Text style={[T.small, { marginTop: 6 }]}>{t("app.common.stepOf", { i: i + 1, n })}</Text>
     </View>
   );
 }

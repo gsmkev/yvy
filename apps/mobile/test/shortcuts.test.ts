@@ -5,8 +5,8 @@ import { shortcutsXml, rainKeys, RAIN_URI } from "../plugins/shortcuts-xml";
 
 describe("F-11 · atajo de Android para anotar lluvia", () => {
   it("los textos de la config salen de i18n", () => {
-    expect(SHORTCUT_LABELS.rainShort).toBe(t("app.shortcutRainShort"));
-    expect(SHORTCUT_LABELS.rainLong).toBe(t("app.shortcutRainLong"));
+    expect(SHORTCUT_LABELS.rainShort).toBe(t("app.shortcut.rainShort"));
+    expect(SHORTCUT_LABELS.rainLong).toBe(t("app.shortcut.rainLong"));
   });
 
   it("el plugin está registrado con esos textos", () => {

@@ -28,7 +28,7 @@ export function useOnlineMutation<TBody = void, TRes = unknown>(
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const live = useRef({ online, path, opts, block: null as string | null });
-  live.current = { online, path, opts, block: demo ? t("ui.publicDemoReadOnly") : null };
+  live.current = { online, path, opts, block: demo ? t("ui.public.demoReadOnly") : null };
   const busy = useRef(false);
 
   const fail = (msg: string): MutationResult<TRes> => (setError(msg), { ok: false, error: msg });
@@ -37,7 +37,7 @@ export function useOnlineMutation<TBody = void, TRes = unknown>(
     if (busy.current) return { ok: false, error: "" }; // doble toque: se ignora, el primero sigue en curso
     const { online: on, path: p, opts: o, block } = live.current;
     if (block) return fail(block);
-    if (!on) return fail(t("office.needsSignal"));
+    if (!on) return fail(t("office.needs.signal"));
     busy.current = true;
     setPending(true);
     setError(null);
@@ -47,7 +47,7 @@ export function useOnlineMutation<TBody = void, TRes = unknown>(
       success();
       return { ok: true, data };
     } catch (e) {
-      return fail(e instanceof OfflineError ? t("office.needsSignal") : e instanceof Error ? e.message : t("office.loadFailed"));
+      return fail(e instanceof OfflineError ? t("office.needs.signal") : e instanceof Error ? e.message : t("office.common.loadFailed"));
     } finally {
       busy.current = false;
       setPending(false);

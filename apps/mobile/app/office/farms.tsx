@@ -23,7 +23,7 @@ export default function Farms() {
     return summarizeFarms(db.farms(), db.plots(), db.records(500), db.activeAlerts(), Date.now());
   });
   return (
-    <OfficeScreen title={t("ui.farmsTitle")}>
+    <OfficeScreen title={t("ui.common.farmsTitle")}>
       <DataList
         rows={rows}
         keyOf={(f) => f.id}
@@ -31,21 +31,21 @@ export default function Farms() {
         title={(f) => f.name}
         subtitle={(f) =>
           [
-            t("office.farmsPlotsLine", { plots: f.plots, records: f.records7d }),
-            f.lastRecordAt ? t("office.farmsLastRecord", { date: fmtDate(f.lastRecordAt) }) : t("ui.neverRecorded"),
+            t("office.farms.plotsLine", { plots: f.plots, records: f.records7d }),
+            f.lastRecordAt ? t("office.farms.lastRecord", { date: fmtDate(f.lastRecordAt) }) : t("ui.never.recorded"),
           ].join(" · ")
         }
         right={(f) => (
           <>
             <Text style={[T.bodyMedium, { textAlign: "right" }]}>{`${fmtNumber(haToArea(f.areaHa, units.area))} ${areaLabel(units.area)}`}</Text>
-            {f.alerts > 0 && <Text style={[T.smallMedium, { color: C.peligro, textAlign: "right" }]}>{t("office.farmsAlertsLine", { n: f.alerts })}</Text>}
+            {f.alerts > 0 && <Text style={[T.smallMedium, { color: C.peligro, textAlign: "right" }]}>{t("office.farms.alertsLine", { n: f.alerts })}</Text>}
           </>
         )}
         onPress={(f) => {
           setSelectedFarm(f.id);
           router.navigate("/(tabs)/map");
         }}
-        empty={{ title: t("office.farmsEmpty"), hint: t("office.farmsEmptyHint") }}
+        empty={{ title: t("office.farms.empty"), hint: t("office.farms.emptyHint") }}
       />
     </OfficeScreen>
   );

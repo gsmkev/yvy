@@ -14,8 +14,8 @@ export function YesNoStep({ step, onAnswer }: { step: OfKind<"yesno">; onAnswer:
     <ScreenBody
       footer={
         <View style={{ flexDirection: "row", gap: 12 }}>
-          <Button big kind="secondary" title={t("app.no")} onPress={() => onAnswer(false)} style={{ flex: 1 }} />
-          <Button big title={t("app.yes")} onPress={() => onAnswer(true)} style={{ flex: 1 }} />
+          <Button big kind="secondary" title={t("app.common.no")} onPress={() => onAnswer(false)} style={{ flex: 1 }} />
+          <Button big title={t("app.common.yes")} onPress={() => onAnswer(true)} style={{ flex: 1 }} />
         </View>
       }
     >
@@ -47,15 +47,15 @@ export function NumberStep({ step, value, answers, prefilled, onAnswer }: { step
     <ScreenBody
       footer={
         step.optional && text === "" ? (
-          <Button big kind="secondary" title={t("app.skip")} onPress={() => onAnswer(undefined)} />
+          <Button big kind="secondary" title={t("app.common.skip")} onPress={() => onAnswer(undefined)} />
         ) : (
-          <Button big title={t("app.next")} disabled={!ok} onPress={() => onAnswer(n)} />
+          <Button big title={t("app.common.next")} disabled={!ok} onPress={() => onAnswer(n)} />
         )
       }
     >
       <Text style={T.title}>{tr(step.question)}</Text>
       {step.hint && <Text style={[T.small, { marginTop: 6 }]}>{tr(step.hint)}</Text>}
-      {prefilled && <Text style={[T.small, { marginTop: 6 }]}>{t("ui.sprayPrefilled")}</Text>}
+      {prefilled && <Text style={[T.small, { marginTop: 6 }]}>{t("ui.spray.prefilled")}</Text>}
       <View style={st.numberRow}>
         <TextInput
           ref={input}
@@ -90,9 +90,9 @@ export function TextStep({ step, value, onAnswer }: { step: OfKind<"text">; valu
     <ScreenBody
       footer={
         step.optional && !text.trim() ? (
-          <Button big kind="secondary" title={t("app.skip")} onPress={() => onAnswer(undefined)} />
+          <Button big kind="secondary" title={t("app.common.skip")} onPress={() => onAnswer(undefined)} />
         ) : (
-          <Button big title={t("app.next")} disabled={!text.trim() || (!!step.pattern && !step.pattern.test(text.trim()))} onPress={() => onAnswer(text.trim())} />
+          <Button big title={t("app.common.next")} disabled={!text.trim() || (!!step.pattern && !step.pattern.test(text.trim()))} onPress={() => onAnswer(text.trim())} />
         )
       }
     >
@@ -105,7 +105,7 @@ export function TextStep({ step, value, onAnswer }: { step: OfKind<"text">; valu
         autoCapitalize={step.pattern ? "characters" : undefined}
         style={st.textInput}
         accessibilityLabel={tr(step.question)}
-        placeholder={step.optional ? t("app.optional") : undefined}
+        placeholder={step.optional ? t("app.common.optional") : undefined}
         placeholderTextColor={C.tinta3}
       />
     </ScreenBody>

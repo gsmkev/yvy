@@ -49,8 +49,8 @@ const doseUnit = (u: string) => (u === "l" ? "l/ha" : "kg/ha");
 
 function doseText(p: Product, r: DoseRange | undefined): string | null {
   if (!r || (r.min === null && r.max === null)) return null;
-  const range = r.min !== null && r.max !== null ? `${fmtNumber(r.min, 2)} a ${fmtNumber(r.max, 2)}` : r.min !== null ? `${t("ui.reviewAtLeast")} ${fmtNumber(r.min, 2)}` : `${t("ui.reviewUpTo")} ${fmtNumber(r.max!, 2)}`;
-  return t("ui.productDoseShown", { range, unit: doseUnit(p.unit) });
+  const range = r.min !== null && r.max !== null ? `${fmtNumber(r.min, 2)} a ${fmtNumber(r.max, 2)}` : r.min !== null ? `${t("ui.review.atLeast")} ${fmtNumber(r.min, 2)}` : `${t("ui.review.upTo")} ${fmtNumber(r.max!, 2)}`;
+  return t("ui.product.doseShown", { range, unit: doseUnit(p.unit) });
 }
 
 export default function Products() {
@@ -92,12 +92,12 @@ export default function Products() {
   const submit = async () => {
     if (!draft) return;
     const name = draft.name.trim();
-    if (!name) return setFormError(t("office.productNeedsName"));
+    if (!name) return setFormError(t("office.product.needsName"));
     const wd = draft.withdrawal.trim() ? parseDecimal(draft.withdrawal) : null;
     const min = draft.doseMin.trim() ? parseDecimal(draft.doseMin) : null;
     const max = draft.doseMax.trim() ? parseDecimal(draft.doseMax) : null;
-    if ((draft.withdrawal.trim() && (wd === null || !Number.isInteger(wd) || wd < 0 || wd > 365)) || (draft.doseMin.trim() && (min === null || min < 0)) || (draft.doseMax.trim() && (max === null || max < 0))) return setFormError(t("office.seasonBadNumber"));
-    if (min !== null && max !== null && min > max) return setFormError(t("office.productDoseOrder"));
+    if ((draft.withdrawal.trim() && (wd === null || !Number.isInteger(wd) || wd < 0 || wd > 365)) || (draft.doseMin.trim() && (min === null || min < 0)) || (draft.doseMax.trim() && (max === null || max < 0))) return setFormError(t("office.season.badNumber"));
+    if (min !== null && max !== null && min > max) return setFormError(t("office.product.doseOrder"));
     setFormError(null);
     const body = { name, type: draft.type, unit: draft.unit, activeIngredient: draft.ingredient.trim() || null, withdrawalDays: wd, toxClass: draft.tox.trim() || null };
     const saved = draft.id ? await edit.mutate({ id: draft.id, ...body }).then((r) => (r.ok ? { ok: true as const, id: draft.id! } : r)) : await create.mutate(body).then((r) => (r.ok ? { ok: true as const, id: r.data.id } : r));
@@ -109,7 +109,7 @@ export default function Products() {
       if (!d.ok) return;
     }
     setDraft(null);
-    showToast(t("ui.toastProductSaved"));
+    showToast(t("ui.toast.productSaved"));
     void ranges.refresh();
     void syncNow();
   };
@@ -119,28 +119,28 @@ export default function Products() {
 
   return (
     <OfficeScreen
-      title={t("ui.productsTitle")}
+      title={t("ui.products.title")}
       query={ranges}
       onRefresh={async () => {
         await syncNow();
         await ranges.refresh();
       }}
       refreshing={false}
-      action={canPrescribe && farmId ? { label: t("ui.prescriptionNew"), icon: FilePlus2, onPress: () => setRx(true) } : canEdit ? { label: t("ui.productNew"), icon: Plus, onPress: () => openDraft(null) } : undefined}
-      footer={canPrescribe && farmId && canEdit ? <Button kind="secondary" icon={Plus} title={t("ui.productNew")} onPress={() => openDraft(null)} /> : undefined}
+      action={canPrescribe && farmId ? { label: t("ui.prescription.new"), icon: FilePlus2, onPress: () => setRx(true) } : canEdit ? { label: t("ui.product.new"), icon: Plus, onPress: () => openDraft(null) } : undefined}
+      footer={canPrescribe && farmId && canEdit ? <Button kind="secondary" icon={Plus} title={t("ui.product.new")} onPress={() => openDraft(null)} /> : undefined}
     >
       {data.products.length === 0 ? (
-        <EmptyState title={t("ui.emptyProductsTitle")} hint={t("ui.emptyProductsBody")} action={canEdit ? t("ui.productNew") : undefined} onAction={() => openDraft(null)} />
+        <EmptyState title={t("ui.empty.productsTitle")} hint={t("ui.empty.productsBody")} action={canEdit ? t("ui.product.new") : undefined} onAction={() => openDraft(null)} />
       ) : (
         <>
           <View style={{ marginTop: 16 }}>
-            <TextField label={t("ui.search")} value={query} onChangeText={setQuery} placeholder={t("office.productSearch")} autoCapitalize="none" />
+            <TextField label={t("ui.common.search")} value={query} onChangeText={setQuery} placeholder={t("office.product.search")} autoCapitalize="none" />
           </View>
           {types.length > 1 && (
             <FilterChips
               value={type}
               onChange={setType}
-              options={[{ value: "all", label: t("ui.productsAllTypes"), count: data.products.length }, ...types.map((x) => ({ value: x as string, label: t(k(`fields.productType_${x}`)), count: data.products.filter((p) => p.type === x).length }))]}
+              options={[{ value: "all", label: t("ui.products.allTypes"), count: data.products.length }, ...types.map((x) => ({ value: x as string, label: t(k(`fields.product.type_${x}`)), count: data.products.filter((p) => p.type === x).length }))]}
             />
           )}
           <DataList
@@ -148,33 +148,33 @@ export default function Products() {
             keyOf={(p) => p.id}
             title={(p) => p.name}
             subtitle={(p) =>
-              [t(k(`fields.productType_${p.type}`)), t(k(`fields.productUnit_${p.unit}`)), p.activeIngredient, p.withdrawalDays !== null ? t("office.productWithdrawal", { n: p.withdrawalDays }) : null, doseText(p, rangeOf.get(p.id))]
+              [t(k(`fields.product.type_${p.type}`)), t(k(`fields.product.unit_${p.unit}`)), p.activeIngredient, p.withdrawalDays !== null ? t("office.product.withdrawal", { n: p.withdrawalDays }) : null, doseText(p, rangeOf.get(p.id))]
                 .filter(Boolean)
                 .join(" · ")
             }
             onPress={canEdit ? openDraft : undefined}
-            empty={{ title: t("ui.erpEmpty") }}
+            empty={{ title: t("ui.erp.empty") }}
           />
         </>
       )}
 
-      <FormSheet visible={!!draft} title={draft?.id ? t("office.productEditTitle") : t("ui.productNew")} onClose={() => setDraft(null)} onSubmit={submit} submitLabel={t("ui.save")} pending={create.pending || edit.pending || dose.pending} error={err}>
+      <FormSheet visible={!!draft} title={draft?.id ? t("office.product.editTitle") : t("ui.product.new")} onClose={() => setDraft(null)} onSubmit={submit} submitLabel={t("ui.common.save")} pending={create.pending || edit.pending || dose.pending} error={err}>
         {draft ? (
           <>
-            <TextField label={t("ui.productName")} value={draft.name} onChangeText={(v) => set({ name: v })} maxLength={120} />
-            <SelectField label={t("ui.productType")} value={draft.type} options={PRODUCT_TYPES.map((x) => ({ value: x as string, label: t(k(`fields.productType_${x}`)) }))} onChange={(v) => set({ type: v })} />
-            <SelectField label={t("ui.productUnit")} value={draft.unit} options={PRODUCT_UNITS.map((x) => ({ value: x as string, label: t(k(`fields.productUnit_${x}`)) }))} onChange={(v) => set({ unit: v })} />
-            <TextField label={t("ui.productActiveIngredient")} value={draft.ingredient} onChangeText={(v) => set({ ingredient: v })} maxLength={120} />
-            <TextField label={t("ui.productWithdrawal")} kind="number" value={draft.withdrawal} onChangeText={(v) => set({ withdrawal: v.replace(/\D/g, "") })} />
-            <TextField label={t("ui.productToxClass")} value={draft.tox} onChangeText={(v) => set({ tox: v })} maxLength={40} />
-            <Text style={[T.heading, { marginTop: 24 }]}>{t("ui.productDoseTitle")}</Text>
-            <Text style={[T.small, { marginTop: 4 }]}>{t("ui.productDoseHint")}</Text>
-            <TextField label={t("ui.productDoseMin", { unit: doseUnit(draft.unit) })} kind="decimal" value={draft.doseMin} onChangeText={(v) => set({ doseMin: v })} />
-            <TextField label={t("ui.productDoseMax", { unit: doseUnit(draft.unit) })} kind="decimal" value={draft.doseMax} onChangeText={(v) => set({ doseMax: v })} />
+            <TextField label={t("ui.product.name")} value={draft.name} onChangeText={(v) => set({ name: v })} maxLength={120} />
+            <SelectField label={t("ui.product.type")} value={draft.type} options={PRODUCT_TYPES.map((x) => ({ value: x as string, label: t(k(`fields.product.type_${x}`)) }))} onChange={(v) => set({ type: v })} />
+            <SelectField label={t("ui.product.unit")} value={draft.unit} options={PRODUCT_UNITS.map((x) => ({ value: x as string, label: t(k(`fields.product.unit_${x}`)) }))} onChange={(v) => set({ unit: v })} />
+            <TextField label={t("ui.product.activeIngredient")} value={draft.ingredient} onChangeText={(v) => set({ ingredient: v })} maxLength={120} />
+            <TextField label={t("ui.product.withdrawal")} kind="number" value={draft.withdrawal} onChangeText={(v) => set({ withdrawal: v.replace(/\D/g, "") })} />
+            <TextField label={t("ui.product.toxClass")} value={draft.tox} onChangeText={(v) => set({ tox: v })} maxLength={40} />
+            <Text style={[T.heading, { marginTop: 24 }]}>{t("ui.product.doseTitle")}</Text>
+            <Text style={[T.small, { marginTop: 4 }]}>{t("ui.product.doseHint")}</Text>
+            <TextField label={t("ui.product.doseMin", { unit: doseUnit(draft.unit) })} kind="decimal" value={draft.doseMin} onChangeText={(v) => set({ doseMin: v })} />
+            <TextField label={t("ui.product.doseMax", { unit: doseUnit(draft.unit) })} kind="decimal" value={draft.doseMax} onChangeText={(v) => set({ doseMax: v })} />
             {draft.id ? (
               <Button
                 kind="text"
-                title={t("office.productDelete")}
+                title={t("office.product.delete")}
                 onPress={() => {
                   remove.reset();
                   setRemoving(data.products.find((p) => p.id === draft.id) ?? null);
@@ -187,10 +187,10 @@ export default function Products() {
         ) : null}
       </FormSheet>
 
-      <Sheet visible={!!removing} title={t("office.productDelete")} onClose={() => setRemoving(null)}>
+      <Sheet visible={!!removing} title={t("office.product.delete")} onClose={() => setRemoving(null)}>
         {removing ? (
           <>
-            <Text style={T.body}>{t("ui.productConfirmDelete", { name: removing.name })}</Text>
+            <Text style={T.body}>{t("ui.product.confirmDelete", { name: removing.name })}</Text>
             {remove.error ? (
               <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 12 }]}>
                 {remove.error}
@@ -198,20 +198,20 @@ export default function Products() {
             ) : null}
             <Button
               kind="danger"
-              title={t("ui.delete")}
+              title={t("ui.common.delete")}
               loading={remove.pending}
               onPress={() =>
                 void remove.mutate({ id: removing.id }).then((r) => {
                   if (r.ok) {
                     setRemoving(null);
-                    showToast(t("ui.toastProductDeleted"));
+                    showToast(t("ui.toast.productDeleted"));
                     void syncNow();
                   }
                 })
               }
               style={{ marginTop: 16 }}
             />
-            <Button kind="text" title={t("ui.cancel")} onPress={() => setRemoving(null)} style={{ marginTop: 4 }} />
+            <Button kind="text" title={t("ui.common.cancel")} onPress={() => setRemoving(null)} style={{ marginTop: 4 }} />
           </>
         ) : null}
       </Sheet>

@@ -63,6 +63,6 @@ export function recordsByAuthor(records: { authorId: string; capturedAt: number 
 
 /** Nombre para mostrar de quien anotó: "Vos" para uno mismo y un texto neutro si el nombre todavía no bajó. */
 export function authorName(authorId: string, me: string | undefined, names: Record<string, string>): string {
-  if (authorId === me) return t("app.authorYou");
-  return names[authorId] ?? t("app.authorUnknown");
+  if (authorId === me) return t("app.author.you");
+  return names[authorId] ?? t("app.author.unknown");
 }

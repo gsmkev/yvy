@@ -15,7 +15,7 @@ export const hasAccuracy = (a: number | null | undefined): a is number => typeof
 
 /** Texto de precisión para mostrar: "Ubicación ± 8 m" o "Ubicación sin precisión". */
 export const accuracyLabel = (a: number | null | undefined): string =>
-  hasAccuracy(a) ? t("app.gpsOk", { m: Math.round(a) }) : t("app.gpsNoAccuracy");
+  hasAccuracy(a) ? t("app.gps.ok", { m: Math.round(a) }) : t("app.gps.noAccuracy");
 
 const cleanAccuracy = (a: number | null | undefined): number | null => (hasAccuracy(a) ? a : null);
 

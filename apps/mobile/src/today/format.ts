@@ -11,7 +11,7 @@ export const dayLabel = () => {
 };
 export const commentsLabel = (json: string): string | null => {
   const n = parseTaskComments(json).length;
-  return n === 0 ? null : n === 1 ? t("app.taskCommentsOne") : t("app.taskComments", { n });
+  return n === 0 ? null : n === 1 ? t("app.task.commentsOne") : t("app.task.comments", { n });
 };
 /** Primer nombre sin el tratamiento ("Ing. Ana Villalba" -> "Ana"). */
 export const firstName = (full: string) => full.replace(/^\s*(ing|dr|dra|lic|sr|sra|don|doña)\.?\s+/i, "").split(" ")[0] ?? "";
@@ -31,6 +31,6 @@ export function useOrgEnteredNotice(orgId: string | undefined) {
     const name = getDb().getKv("org_entered_notice");
     if (!name) return;
     getDb().setKv("org_entered_notice", null);
-    Alert.alert(t("app.enteredOrg", { name }));
+    Alert.alert(t("app.common.enteredOrg", { name }));
   }, [orgId]);
 }

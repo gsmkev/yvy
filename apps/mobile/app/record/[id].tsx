@@ -33,7 +33,7 @@ export default function RecordDetail() {
     return (
       <View style={[k.screen, k.pad]}>
         <Stack.Screen options={{ title: "" }} />
-        <Text style={T.heading}>{t("app.recordGone")}</Text>
+        <Text style={T.heading}>{t("app.record.gone")}</Text>
       </View>
     );
 
@@ -47,7 +47,7 @@ export default function RecordDetail() {
   const share = () => {
     const farm = getDb().farms().find((f) => f.id === record.farmId);
     const text = recordShareText({
-      kindLabel: t(`recordKinds.${record.kind}`),
+      kindLabel: t(`record-kinds.kind.${record.kind}`),
       description: describeRecord(record.kind, data),
       plotName: plot?.name,
       farmName: farm?.name,
@@ -60,16 +60,16 @@ export default function RecordDetail() {
 
   const readOnly = useReadOnly();
   const remove = () =>
-    Alert.alert(t("app.recordDeleteTitle"), t("ui.confirmDelete", { name: t(`recordKinds.${record.kind}`).toLowerCase() }), [
-      { text: t("ui.cancel"), style: "cancel" },
+    Alert.alert(t("app.record.deleteTitle"), t("ui.confirm.delete", { name: t(`record-kinds.kind.${record.kind}`).toLowerCase() }), [
+      { text: t("ui.common.cancel"), style: "cancel" },
       {
-        text: t("ui.delete"),
+        text: t("ui.common.delete"),
         style: "destructive",
         onPress: () => {
           getDb().deleteRecord(record.id);
           localChanged();
           syncNow();
-          showToast(t("ui.toastRecordDeleted"));
+          showToast(t("ui.toast.recordDeleted"));
           router.back();
         },
       },
@@ -77,11 +77,11 @@ export default function RecordDetail() {
 
   return (
     <ScrollView style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 60 }]}>
-      <Text style={T.small}>{[t(`recordKinds.${record.kind}`), plot?.name].filter(Boolean).join(" · ")}</Text>
+      <Text style={T.small}>{[t(`record-kinds.kind.${record.kind}`), plot?.name].filter(Boolean).join(" · ")}</Text>
       <Text style={[T.title, { marginTop: 4 }]}>{describeRecord(record.kind, data)}</Text>
-      <Text style={[T.body, { marginTop: 16 }]}>{t("app.recordCapturedAt", { when })}</Text>
+      <Text style={[T.body, { marginTop: 16 }]}>{t("app.record.capturedAt", { when })}</Text>
       {isOwnerMode(session?.organization.role) && (
-        <Text style={[T.small, { marginTop: 4 }]}>{t("app.recordAuthor", { name: authorName(record.authorId, session?.user.id, memberNames(getDb())) })}</Text>
+        <Text style={[T.small, { marginTop: 4 }]}>{t("app.record.author", { name: authorName(record.authorId, session?.user.id, memberNames(getDb())) })}</Text>
       )}
       {hasPlace && <Text style={[T.small, { marginTop: 4 }]}>{accuracyLabel(record.gpsAccuracyM)}</Text>}
       {photos.length > 0 && (
@@ -95,24 +95,24 @@ export default function RecordDetail() {
       {hasPlace && (
         <Button
           kind="secondary"
-          title={t("app.gotoButton")}
+          title={t("app.goto.button")}
           onPress={() => router.push({ pathname: "/goto", params: { lon: String(record.lon), lat: String(record.lat), name: describeRecord(record.kind, data) } })}
           style={{ marginTop: 20 }}
         />
       )}
-      <Button kind="secondary" title={t("ui.shareWhatsapp")} onPress={share} style={{ marginTop: 12 }} />
+      <Button kind="secondary" title={t("ui.share.whatsapp")} onPress={share} style={{ marginTop: 12 }} />
       <View style={{ height: 32 }} />
       {editable && !readOnly ? (
         <>
-          <Button big title={t("app.recordEdit")} onPress={() => router.push({ pathname: "/annotate", params: { recordId: record.id } })} />
-          <Button kind="danger" title={t("ui.delete")} onPress={remove} style={{ marginTop: 12 }} />
-          <Text style={[T.small, { marginTop: 12 }]}>{t("app.editWindow")}</Text>
+          <Button big title={t("app.record.edit")} onPress={() => router.push({ pathname: "/annotate", params: { recordId: record.id } })} />
+          <Button kind="danger" title={t("ui.common.delete")} onPress={remove} style={{ marginTop: 12 }} />
+          <Text style={[T.small, { marginTop: 12 }]}>{t("app.common.editWindow")}</Text>
         </>
       ) : (
-        mine && !readOnly && <Text style={T.small}>{t("app.recordLocked")}</Text>
+        mine && !readOnly && <Text style={T.small}>{t("app.record.locked")}</Text>
       )}
-      <Text style={[T.heading, { marginTop: 24 }]}>{t("ui.comments")}</Text>
-      {comments.length === 0 && <Text style={T.small}>{t("ui.commentNone")}</Text>}
+      <Text style={[T.heading, { marginTop: 24 }]}>{t("ui.common.comments")}</Text>
+      {comments.length === 0 && <Text style={T.small}>{t("ui.comment.none")}</Text>}
       {comments.map((c) => (
         <View key={c.id} style={{ marginTop: 8 }}>
           <Text style={T.small}>{c.authorName}</Text>
@@ -124,13 +124,13 @@ export default function RecordDetail() {
       <TextInput
         value={draft}
         onChangeText={setDraft}
-        placeholder={t("ui.commentPlaceholder")}
+        placeholder={t("ui.comment.placeholder")}
         multiline
         maxLength={LIMITS.comments.maxLength}
         style={{ borderWidth: 1, borderRadius: 8, padding: 10, marginTop: 12, minHeight: 60 }}
       />
       <Button
-        title={t("ui.commentSend")}
+        title={t("ui.comment.send")}
         disabled={!draft.trim() || !session}
         onPress={() => {
           if (!session) return;

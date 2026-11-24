@@ -4,7 +4,23 @@
  */
 import { useMemo } from "react";
 import { View } from "react-native";
-import { addDays, CHART, localDate, spiCategory, t, type FarmSpi, type MessageKey, cToTemp, mmToRain, rainLabel, tempLabel, dayOfYear, rainByDate, type ClimateData } from "@yvy/shared";
+import {
+  addDays,
+  CHART,
+  localDate,
+  spiCategory,
+  t,
+  type FarmSpi,
+  type MessageKey,
+  cToTemp,
+  mmToRain,
+  rainLabel,
+  tempLabel,
+  dayOfYear,
+  rainByDate,
+  type ClimateData,
+  ATTRIBUTION,
+} from "@yvy/shared";
 import { FarmChips, useFarmPick } from "../../src/office/farmPick";
 import { fmtNumber } from "../../src/office/format";
 import { OfficeScreen } from "../../src/office/OfficeScreen";
@@ -49,74 +65,80 @@ export default function Climate() {
   }, [q.data]);
 
   const stats: StatItem[] = [];
-  if (model?.hasRain) stats.push({ label: t("ui.rain30"), value: fmtNumber(rainU(model.rain30)), unit: rl });
-  if (model?.hasRain && model.normal30 > 0) stats.push({ label: t("ui.rainNormal"), value: `${Math.round((model.rain30 / model.normal30) * 100)} %`, unit: `${fmtNumber(rainU(model.normal30))} ${rl}` });
-  if (model?.soil?.soilMoisture0_7 != null) stats.push({ label: t("ui.soilMoisture"), value: Math.round(model.soil.soilMoisture0_7 * 100), unit: "%" });
+  if (model?.hasRain) stats.push({ label: t("ui.rain.30"), value: fmtNumber(rainU(model.rain30)), unit: rl });
+  if (model?.hasRain && model.normal30 > 0) stats.push({ label: t("ui.rain.normal"), value: `${Math.round((model.rain30 / model.normal30) * 100)} %`, unit: `${fmtNumber(rainU(model.normal30))} ${rl}` });
+  if (model?.soil?.soilMoisture0_7 != null) stats.push({ label: t("ui.soil.moisture"), value: Math.round(model.soil.soilMoisture0_7 * 100), unit: "%" });
 
   return (
-    <OfficeScreen title={t("office.climateTitle")} subtitle={farm?.name} query={q}>
+    <OfficeScreen title={t("office.climate.title")} subtitle={farm?.name} query={q}>
       <FarmChips farms={farms} value={id} onChange={setFarmId} />
       {!farm ? (
-        <EmptyState title={t("office.reportsNoFarms")} />
+        <EmptyState title={t("office.reports.noFarms")} />
       ) : (
         <>
           <ForecastStrip farmId={farm.id} />
-          <OnlineState query={q} isEmpty={() => false} empty={{ title: t("ui.noClimate") }}>
+          <OnlineState query={q} isEmpty={() => false} empty={{ title: t("ui.no.climate") }}>
             {() =>
               !model || (!model.hasRain && stats.length === 0 && model.temps.length === 0) ? (
-                <EmptyState title={t("ui.noClimate")} />
+                <EmptyState title={t("ui.no.climate")} />
               ) : (
                 <>
                   {stats.length > 0 && <StatRow items={stats} />}
                   {model.hasRain && (
                     <>
-                      <SectionHeader title={t("office.climateRain60")} />
+                      <SectionHeader title={t("office.climate.rain60")} />
                       <LineChart
                         yUnit={rl}
                         series={[
-                          { label: t("ui.satelliteRain"), color: CHART.comparison, points: model.days.map((d) => ({ x: ddmm(d), y: model.rain.has(d) ? rainU(model.rain.get(d)!) : null })) },
-                          ...(model.hasGauge ? [{ label: t("ui.gauge"), color: CHART.gauge, points: model.days.map((d) => ({ x: ddmm(d), y: model.gauge.has(d) ? rainU(model.gauge.get(d)!) : null })) }] : []),
+                          { label: t("ui.common.satelliteRain"), color: CHART.comparison, points: model.days.map((d) => ({ x: ddmm(d), y: model.rain.has(d) ? rainU(model.rain.get(d)!) : null })) },
+                          ...(model.hasGauge ? [{ label: t("ui.common.gauge"), color: CHART.gauge, points: model.days.map((d) => ({ x: ddmm(d), y: model.gauge.has(d) ? rainU(model.gauge.get(d)!) : null })) }] : []),
                         ]}
                       />
-                      <SectionHeader title={t("office.climateRainMonthly")} />
-                      <BarList unit={rl} rows={model.months.map(([m, v]) => ({ label: `${MONTHS[Number(m.slice(5)) - 1]} ${m.slice(2, 4)}`, value: Math.round(rainU(v) * 10) / 10 }))} />
-                      <Text style={[T.small, { marginTop: 8 }]}>{t("attribution.chirps")}</Text>
+                      <SectionHeader title={t("office.climate.rainMonthly")} />
+                      <BarList
+                        unit={rl}
+                        rows={model.months.map(([m, v]) => ({
+                          label: `${MONTHS[Number(m.slice(5)) - 1]} ${m.slice(2, 4)}`,
+                          value: Math.round(rainU(v) * 10) / 10,
+                        }))}
+                      />
+                      <Text style={[T.small, { marginTop: 8 }]}>{t(ATTRIBUTION.chirps)}</Text>
                     </>
                   )}
                   {model.temps.length > 0 && (
                     <>
-                      <SectionHeader title={t("office.climateForecastTemp")} />
+                      <SectionHeader title={t("office.climate.forecastTemp")} />
                       <LineChart
                         yUnit={tempLabel(units.temp)}
                         series={[
-                          { label: t("ui.tmax"), color: CHART.warm, points: model.temps.map((d) => ({ x: ddmm(d.date), y: d.tmaxC == null ? null : cToTemp(d.tmaxC, units.temp) })) },
-                          { label: t("ui.tmin"), color: CHART.comparison, points: model.temps.map((d) => ({ x: ddmm(d.date), y: d.tminC == null ? null : cToTemp(d.tminC, units.temp) })) },
+                          { label: t("ui.common.tmax"), color: CHART.warm, points: model.temps.map((d) => ({ x: ddmm(d.date), y: d.tmaxC == null ? null : cToTemp(d.tmaxC, units.temp) })) },
+                          { label: t("ui.common.tmin"), color: CHART.comparison, points: model.temps.map((d) => ({ x: ddmm(d.date), y: d.tminC == null ? null : cToTemp(d.tminC, units.temp) })) },
                         ]}
                       />
-                      <Text style={[T.small, { marginTop: 8 }]}>{t("attribution.nasaPower")}</Text>
+                      <Text style={[T.small, { marginTop: 8 }]}>{t(ATTRIBUTION.nasaPower)}</Text>
                     </>
                   )}
                 </>
               )
             }
           </OnlineState>
-          <SectionHeader title={t("ui.spiTitle")} />
+          <SectionHeader title={t("ui.spi.title")} />
           {spi.data?.report ? (
             <View>
-              <Text style={T.small}>{t("ui.spiIntro", { month: spi.data.report.throughMonth })}</Text>
+              <Text style={T.small}>{t("ui.spi.intro", { month: spi.data.report.throughMonth })}</Text>
               <KeyValue
                 rows={spi.data.report.scales.map((s) => ({
-                  label: t("ui.spiScale", { n: s.scale }),
+                  label: t("ui.spi.scale", { n: s.scale }),
                   value:
                     s.spi === null
-                      ? t(s.reason === "no_reference" ? "ui.spiNoReference" : "ui.spiIncomplete")
-                      : `${fmtNumber(s.spi, 2)} · ${t(`ui.spiCat_${spiCategory(s.spi)}` as MessageKey)}`,
+                      ? t(s.reason === "no_reference" ? "ui.spi.noReference" : "ui.spi.incomplete")
+                      : `${fmtNumber(s.spi, 2)} · ${t(`ui.spi.cat_${spiCategory(s.spi)}` as MessageKey)}`,
                 }))}
               />
-              <Text style={[T.small, { marginTop: 8, color: C.tinta2 }]}>{t("ui.spiNote")}</Text>
+              <Text style={[T.small, { marginTop: 8, color: C.tinta2 }]}>{t("ui.spi.note")}</Text>
             </View>
           ) : spi.data ? (
-            <Text style={T.small}>{t("ui.spiNone")}</Text>
+            <Text style={T.small}>{t("ui.spi.none")}</Text>
           ) : spi.error ? (
             <Text style={T.small}>{spi.error}</Text>
           ) : null}

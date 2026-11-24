@@ -36,25 +36,29 @@ export default function SowingPlan() {
   );
   const area = (ha: number) => `${fmtNumber(haToArea(ha, units.area))} ${areaLabel(units.area)}`;
   return (
-    <FarmFrame title={t("ui.sowPlanTitle")} farms={farms} farm={farm} setFarmId={setFarmId} query={q}>
-      <OnlineState query={q} isEmpty={(d) => d.seasons.length === 0} empty={{ title: t("office.sowPlanNoSeasons"), hint: t("office.sowPlanNoSeasonsHint") }}>
+    <FarmFrame title={t("ui.sow.planTitle")} farms={farms} farm={farm} setFarmId={setFarmId} query={q}>
+      <OnlineState query={q} isEmpty={(d) => d.seasons.length === 0} empty={{ title: t("office.sow.planNoSeasons"), hint: t("office.sow.planNoSeasonsHint") }}>
         {() => (
           <View>
             {seasons.length > 1 && <FilterChips value={seasonId ?? ""} onChange={setSeasonId} options={seasons.map((s) => ({ value: s.id, label: s.name }))} />}
-            {plan && plan.rows.length === 0 && <Text style={[T.body, { marginTop: 20 }]}>{t("ui.sowPlanEmpty")}</Text>}
+            {plan && plan.rows.length === 0 && <Text style={[T.body, { marginTop: 20 }]}>{t("ui.sow.planEmpty")}</Text>}
             {plan && plan.rows.length > 0 && (
               <>
-                <StatRow items={[{ label: t("ui.sowPlanArea"), value: fmtNumber(haToArea(plan.plannedHa, units.area)), unit: areaLabel(units.area) }, { label: t("ui.sowPlanSeed"), value: fmtNumber(plan.rows.reduce((n, r) => n + r.seedKg, 0), 0), unit: "kg" }]} />
+                <StatRow items={[{ label: t("ui.sow.planArea"), value: fmtNumber(haToArea(plan.plannedHa, units.area)), unit: areaLabel(units.area) }, { label: t("ui.sow.planSeed"), value: fmtNumber(plan.rows.reduce((n, r) => n + r.seedKg, 0), 0), unit: "kg" }]} />
                 <DataList
                   rows={plan.rows}
                   keyOf={(r) => `${r.crop}-${r.variety ?? ""}`}
-                  title={(r) => `${t(`fields.crop_${r.crop}` as MessageKey)}${r.variety ? ` · ${r.variety}` : ""}`}
-                  subtitle={(r) => `${t(r.plots === 1 ? "ui.plotsCountOne" : "ui.plotsCountMany", { n: r.plots })} · ${area(r.areaHa)}`}
-                  right={(r) => t("office.sowPlanSeedKg", { kg: fmtNumber(r.seedKg, 0) })}
-                  empty={{ title: t("ui.sowPlanEmpty") }}
+                  title={(r) => `${t(`fields.crop.${r.crop}` as MessageKey)}${r.variety ? ` · ${r.variety}` : ""}`}
+                  subtitle={(r) =>
+                    t(r.plots === 1 ? "ui.plots.countOne" : "ui.plots.countMany", { n: r.plots }) +
+                    " · " +
+                    area(r.areaHa)
+                  }
+                  right={(r) => t("office.sow.planSeedKg", { kg: fmtNumber(r.seedKg, 0) })}
+                  empty={{ title: t("ui.sow.planEmpty") }}
                 />
-                {plan.unplannedPlots > 0 && <Text style={[T.small, { marginTop: 12 }]}>{t("ui.sowPlanUnplanned", { n: plan.unplannedPlots, area: area(plan.unplannedHa) })}</Text>}
-                <Text style={[T.small, { marginTop: 12 }]}>{t("ui.sowPlanRateNote")}</Text>
+                {plan.unplannedPlots > 0 && <Text style={[T.small, { marginTop: 12 }]}>{t("ui.sow.planUnplanned", { n: plan.unplannedPlots, area: area(plan.unplannedHa) })}</Text>}
+                <Text style={[T.small, { marginTop: 12 }]}>{t("ui.sow.planRateNote")}</Text>
               </>
             )}
           </View>

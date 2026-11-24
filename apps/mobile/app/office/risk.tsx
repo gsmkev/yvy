@@ -4,7 +4,7 @@
  */
 import { router } from "expo-router";
 import { Link2 } from "lucide-react-native";
-import { CHART, t } from "@yvy/shared";
+import { CHART, t, ATTRIBUTION } from "@yvy/shared";
 import { fmtMmDd, fireByMonth, rainByMonth, type RiskResponse } from "../../src/lib/riskFormat";
 import { getSession } from "../../src/lib/session";
 import { FarmChips, useFarmPick } from "../../src/office/farmPick";
@@ -24,85 +24,93 @@ export default function Risk() {
   const ready = !!q.data?.report;
   return (
     <OfficeScreen
-      title={t("ui.riskTitle")}
-      subtitle={farm ? `${farm.name}${q.data?.computedAt ? ` · ${t("ui.riskComputed", { date: fmtDate(q.data.computedAt) })}` : ""}` : undefined}
+      title={t("ui.risk.title")}
+      subtitle={
+        farm
+          ? farm.name + (q.data?.computedAt ? " · " + t("ui.risk.computed", { date: fmtDate(q.data.computedAt) }) : "")
+          : undefined
+      }
       query={q}
-      action={owner && ready && farm ? { label: t("ui.shareLinkTitle"), icon: Link2, onPress: () => router.push(`/office/share-links?farmId=${farm.id}`) } : undefined}
+      action={owner && ready && farm ? { label: t("ui.share.linkTitle"), icon: Link2, onPress: () => router.push(`/office/share-links?farmId=${farm.id}`) } : undefined}
     >
       <FarmChips farms={farms} value={id} onChange={setFarmId} />
       {!farm ? (
-        <EmptyState title={t("office.reportsNoFarms")} />
+        <EmptyState title={t("office.reports.noFarms")} />
       ) : (
-        <OnlineState query={q} isEmpty={(d) => d.report === null} empty={{ title: t("ui.riskPending"), hint: t("ui.riskPendingHint") }}>
+        <OnlineState query={q} isEmpty={(d) => d.report === null} empty={{ title: t("ui.risk.pending"), hint: t("ui.risk.pendingHint") }}>
           {({ report: r }) => {
             if (!r) return null;
             const rain = rainByMonth(r.rain);
             const fire = r.fire;
             const frost: StatItem[] = [
-              { label: t("ui.riskFrostMean"), value: fmtNumber(r.frost.meanPerYear), unit: t("office.unitDays") },
-              { label: t("ui.riskFrostYears"), value: r.frost.yearsWithFrostPct, unit: "%" },
-              ...(r.frost.worst ? [{ label: t("ui.riskFrostWorst"), value: r.frost.worst.days, unit: `${t("office.unitDays")} · ${r.frost.worst.year}` }] : []),
-              ...(r.frost.typicalFirstFrost ? [{ label: t("ui.riskFrostFirst"), value: fmtMmDd(r.frost.typicalFirstFrost) }] : []),
+              { label: t("ui.risk.frostMean"), value: fmtNumber(r.frost.meanPerYear), unit: t("office.common.unitDays") },
+              { label: t("ui.risk.frostYears"), value: r.frost.yearsWithFrostPct, unit: "%" },
+              ...(r.frost.worst ? [{ label: t("ui.risk.frostWorst"), value: r.frost.worst.days, unit: `${t("office.common.unitDays")} · ${r.frost.worst.year}` }] : []),
+              ...(r.frost.typicalFirstFrost ? [{ label: t("ui.risk.frostFirst"), value: fmtMmDd(r.frost.typicalFirstFrost) }] : []),
             ];
             const dry: StatItem[] = [
-              { label: t("ui.riskDryMean"), value: fmtNumber(r.dry.meanLongestDays), unit: t("office.unitDays") },
-              { label: t("ui.riskDrySummer"), value: fmtNumber(r.dry.summerMeanLongestDays), unit: t("office.unitDays") },
-              ...(r.dry.worst ? [{ label: t("ui.riskDryWorst"), value: r.dry.worst.days, unit: `${t("office.unitDays")} · ${r.dry.worst.year}` }] : []),
-              { label: t("ui.riskDrySpells"), value: fmtNumber(r.dry.spells15PerYear) },
+              { label: t("ui.risk.dryMean"), value: fmtNumber(r.dry.meanLongestDays), unit: t("office.common.unitDays") },
+              { label: t("ui.risk.drySummer"), value: fmtNumber(r.dry.summerMeanLongestDays), unit: t("office.common.unitDays") },
+              ...(r.dry.worst ? [{ label: t("ui.risk.dryWorst"), value: r.dry.worst.days, unit: `${t("office.common.unitDays")} · ${r.dry.worst.year}` }] : []),
+              { label: t("ui.risk.drySpells"), value: fmtNumber(r.dry.spells15PerYear) },
             ];
             const fireStats: StatItem[] = fire
               ? [
-                  ...(fire.total > 0 ? [{ label: t("ui.riskFireTotal"), value: fire.total }] : []),
-                  ...(fire.nearestKm !== null ? [{ label: t("ui.riskFireNearest"), value: fmtNumber(fire.nearestKm), unit: "km" }] : []),
-                  ...(fire.lastAt ? [{ label: t("ui.riskFireLast"), value: fmtDate(fire.lastAt) }] : []),
+                  ...(fire.total > 0 ? [{ label: t("ui.risk.fireTotal"), value: fire.total }] : []),
+                  ...(fire.nearestKm !== null ? [{ label: t("ui.risk.fireNearest"), value: fmtNumber(fire.nearestKm), unit: "km" }] : []),
+                  ...(fire.lastAt ? [{ label: t("ui.risk.fireLast"), value: fmtDate(fire.lastAt) }] : []),
                 ]
               : [];
             const fireBars = fire ? fireByMonth(fire.byMonth).filter((m) => m.value > 0) : [];
             return (
               <>
-                <SectionHeader title={t("ui.riskFrostTitle")} />
-                <Text style={T.small}>{t("ui.riskFrostLead", { c: r.frost.thresholdC })}</Text>
+                <SectionHeader title={t("ui.risk.frostTitle")} />
+                <Text style={T.small}>{t("ui.risk.frostLead", { c: r.frost.thresholdC })}</Text>
                 <StatRow items={frost} />
                 {r.frost.perYear.some((p) => p.days > 0) && (
                   <>
-                    <Text style={[T.smallMedium, { marginTop: 16 }]}>{t("ui.riskFrostChart")}</Text>
-                    <LineChart yUnit={t("office.unitDays")} series={[{ label: t("ui.riskFrostChart"), color: CHART.comparison, points: r.frost.perYear.map((p) => ({ x: String(p.year), y: p.days })) }]} />
+                    <Text style={[T.smallMedium, { marginTop: 16 }]}>{t("ui.risk.frostChart")}</Text>
+                    <LineChart yUnit={t("office.common.unitDays")} series={[{ label: t("ui.risk.frostChart"), color: CHART.comparison, points: r.frost.perYear.map((p) => ({ x: String(p.year), y: p.days })) }]} />
                   </>
                 )}
-                <SectionHeader title={t("ui.riskDryTitle")} />
-                <Text style={T.small}>{t("ui.riskDryLead", { mm: r.dry.thresholdMm })}</Text>
+                <SectionHeader title={t("ui.risk.dryTitle")} />
+                <Text style={T.small}>{t("ui.risk.dryLead", { mm: r.dry.thresholdMm })}</Text>
                 <StatRow items={dry} />
                 {rain.length > 0 && (
                   <>
-                    <SectionHeader title={t("ui.riskRainTitle")} />
-                    <StatRow items={[{ label: t("ui.riskRainAnnual"), value: fmtNumber(r.rain.annualMeanMm), unit: "mm" }]} />
+                    <SectionHeader title={t("ui.risk.rainTitle")} />
+                    <StatRow items={[{ label: t("ui.risk.rainAnnual"), value: fmtNumber(r.rain.annualMeanMm), unit: "mm" }]} />
                     <LineChart
                       yUnit="mm"
                       series={[
-                        { label: t("ui.riskRainRecent"), color: CHART.primary, points: rain.map((m) => ({ x: m.label, y: m.mm })) },
-                        { label: t("ui.riskRainNormal"), color: CHART.gauge, points: rain.map((m) => ({ x: m.label, y: m.normalMm })) },
+                        { label: t("ui.risk.rainRecent"), color: CHART.primary, points: rain.map((m) => ({ x: m.label, y: m.mm })) },
+                        { label: t("ui.risk.rainNormal"), color: CHART.gauge, points: rain.map((m) => ({ x: m.label, y: m.normalMm })) },
                       ]}
                     />
                   </>
                 )}
-                <SectionHeader title={t("ui.riskFireTitle")} />
+                <SectionHeader title={t("ui.risk.fireTitle")} />
                 {!fire ? (
-                  <Text style={T.small}>{t("ui.riskFireMissing")}</Text>
+                  <Text style={T.small}>{t("ui.risk.fireMissing")}</Text>
                 ) : (
                   <>
-                    <Text style={T.small}>{t("ui.riskFireLead", { km: fire.radiusKm, years: fire.years })}</Text>
-                    {fire.total === 0 ? <Text style={[T.body, { marginTop: 8 }]}>{t("ui.riskFireNone")}</Text> : <StatRow items={fireStats} />}
+                    <Text style={T.small}>{t("ui.risk.fireLead", { km: fire.radiusKm, years: fire.years })}</Text>
+                    {fire.total === 0 ? <Text style={[T.body, { marginTop: 8 }]}>{t("ui.risk.fireNone")}</Text> : <StatRow items={fireStats} />}
                     {fireBars.length > 0 && (
                       <>
-                        <Text style={[T.smallMedium, { marginTop: 16 }]}>{t("ui.riskFireByMonth")}</Text>
+                        <Text style={[T.smallMedium, { marginTop: 16 }]}>{t("ui.risk.fireByMonth")}</Text>
                         <BarList rows={fireBars} />
                       </>
                     )}
                   </>
                 )}
-                <Text style={[T.small, { marginTop: 16 }]}>{t("ui.riskIntro", { from: r.normalFrom, to: r.normalTo })}</Text>
-                <Text style={T.small}>{t("attribution.nasaPower")} · {t("attribution.firms")}</Text>
-                {!owner && <Text style={[T.small, { marginTop: 8 }]}>{t("office.riskShareHint")}</Text>}
+                <Text style={[T.small, { marginTop: 16 }]}>
+                  {t("ui.risk.intro", { from: r.normalFrom, to: r.normalTo })}
+                </Text>
+                <Text style={T.small}>
+                  {t(ATTRIBUTION.nasaPower)} · {t(ATTRIBUTION.firms)}
+                </Text>
+                {!owner && <Text style={[T.small, { marginTop: 8 }]}>{t("office.common.riskShareHint")}</Text>}
               </>
             );
           }}

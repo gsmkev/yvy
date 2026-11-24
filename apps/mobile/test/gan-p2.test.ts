@@ -60,8 +60,8 @@ describe("G-20 reproducción", () => {
     expect(keys("reproduction", { event: "pregnancy_check", tag: "PY-1" })).toEqual(["event", "tag", "pregnant"]);
     // El destete pregunta por terneros, no por vacas.
     const q = (a: Record<string, unknown>) => stepsFor("reproduction", a, { waterPois: 0 }).find((s) => s.key === "head")?.question;
-    expect(q({ event: "weaning" })).toBe("app.reproWeanedQuestion");
-    expect(q({ event: "service" })).toBe("app.reproHeadQuestion");
+    expect(q({ event: "weaning" })).toBe("app.repro.weanedQuestion");
+    expect(q({ event: "service" })).toBe("app.repro.headQuestion");
   });
   it("se ofrece en potreros y sin lote", () => {
     expect(KINDS_FOR("pasture")).toContain("reproduction");

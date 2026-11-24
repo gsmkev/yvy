@@ -21,7 +21,7 @@ export function seedFor(kind: RecordKind | null, plot: Plot | null, editing: unk
 
 export function plotSubtitle(p: Plot) {
   const last = getDb().lastVisitByPlot().get(p.id);
-  if (!last) return t("app.noVisits");
+  if (!last) return t("app.no.visits");
   const days = Math.floor((Date.now() - last) / 86_400_000);
-  return days === 0 ? t("app.lastVisitToday") : days === 1 ? t("app.lastVisitYesterday") : t("app.lastVisit", { days });
+  return days === 0 ? t("app.last.visitToday") : days === 1 ? t("app.last.visitYesterday") : t("app.last.visit", { days });
 }

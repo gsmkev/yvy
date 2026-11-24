@@ -33,32 +33,32 @@ export default function Purchases() {
   const sorted = [...(q.data ?? [])].sort((a, b) => b.orderDate.localeCompare(a.orderDate));
   const rows = sorted.filter((p) => status === "all" || p.status === status);
   return (
-    <AdminGate need="manage" title={t("ui.adminSection_purchases")}>
+    <AdminGate need="manage" title={t("ui.admin.section_purchases")}>
       <OfficeScreen
-        title={t("ui.adminSection_purchases")}
+        title={t("ui.admin.section_purchases")}
         query={q}
         onRefresh={async () => {
           await Promise.all([q.refresh(), parties.refresh()]);
         }}
-        action={{ label: t("ui.purchNew"), icon: Plus, onPress: () => router.push("/office/admin/purchase-new" as Href) }}
+        action={{ label: t("ui.purch.new"), icon: Plus, onPress: () => router.push("/office/admin/purchase-new" as Href) }}
       >
         <NoSignalNote />
-        <OnlineState query={q} empty={{ title: t("ui.emptyPurchTitle"), hint: t("ui.emptyPurchBody") }}>
+        <OnlineState query={q} empty={{ title: t("ui.empty.purchTitle"), hint: t("ui.empty.purchBody") }}>
           {(all) => (
             <>
               <FilterChips<"all" | PurchaseStatus>
                 value={status}
                 onChange={setStatus}
-                options={[{ value: "all", label: t("ui.costAll"), count: all.length }, ...STATUSES.map((s) => ({ value: s, label: t(k(`ui.purchStatus_${s}`)) }))]}
+                options={[{ value: "all", label: t("ui.cost.all"), count: all.length }, ...STATUSES.map((s) => ({ value: s, label: t(k(`ui.purch.status_${s}`)) }))]}
               />
               <DataList
                 rows={rows}
                 keyOf={(p) => p.id}
                 title={(p) => party(p.partyId)}
-                subtitle={(p) => [isoShort(p.orderDate), t(k(`ui.purchStatus_${p.status}`)), p.photoPath ? t("office.admWithPhoto") : null].filter(Boolean).join(" · ")}
+                subtitle={(p) => [isoShort(p.orderDate), t(k(`ui.purch.status_${p.status}`)), p.photoPath ? t("office.adm.withPhoto") : null].filter(Boolean).join(" · ")}
                 right={(p) => fmtMoney(p.totalAmount, p.currency)}
                 onPress={(p) => router.push({ pathname: "/office/admin/purchase", params: { id: p.id } } as Href)}
-                empty={{ title: t("ui.erpEmpty") }}
+                empty={{ title: t("ui.erp.empty") }}
               />
             </>
           )}

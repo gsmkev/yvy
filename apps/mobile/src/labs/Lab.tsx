@@ -9,7 +9,7 @@ import { C, RADIUS, T } from "../ui/theme";
 function PreviewNotice() {
   return (
     <View style={st.notice}>
-      <Text style={T.small}>{t("app.labsPreviewNotice")}</Text>
+      <Text style={T.small}>{t("app.labs.previewNotice")}</Text>
     </View>
   );
 }
@@ -35,19 +35,19 @@ export function Lab({ title, intro, art, result, actions }: { title: string; int
           shown ? (
             <>
               {actions}
-              <Button kind={actions ? "secondary" : "primary"} big={!actions} title={t("app.labsBackToLab")} onPress={() => router.back()} />
+              <Button kind={actions ? "secondary" : "primary"} big={!actions} title={t("app.labs.backToLab")} onPress={() => router.back()} />
             </>
           ) : (
-            <Button big title={t("app.labsTryExample")} onPress={() => setShown(true)} />
+            <Button big title={t("app.labs.tryExample")} onPress={() => setShown(true)} />
           )
         }
       >
-        <Text style={T.title}>{shown ? t("app.labsExampleTitle") : title}</Text>
+        <Text style={T.title}>{shown ? t("app.labs.exampleTitle") : title}</Text>
         {shown ? (
           <>
             {art ? <View style={st.art}>{art}</View> : null}
             {result}
-            <Text style={[T.body, { marginTop: 24 }]}>{t("app.labsOffline")}</Text>
+            <Text style={[T.body, { marginTop: 24 }]}>{t("app.labs.offline")}</Text>
             <PreviewNotice />
           </>
         ) : (

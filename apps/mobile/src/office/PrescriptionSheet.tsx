@@ -44,13 +44,13 @@ export function PrescriptionSheet({ visible, onClose, farms, plots, products, se
   const patchLine = (i: number, v: Partial<Line>) => setLines(lines.map((l, j) => (j === i ? { ...l, ...v } : l)));
 
   const submit = async () => {
-    if (picked.length === 0) return setError(t("office.rxNeedsPlots"));
-    if (lines.length === 0) return setError(t("office.rxNeedsProducts"));
-    if (lines.some((l) => !((parseDecimal(l.dose) ?? 0) > 0))) return setError(t("office.rxNeedsDose"));
-    if (!f.assigneeId) return setError(t("office.taskNeedsAssignee"));
-    if (!f.dueDate) return setError(t("office.taskNeedsDate"));
+    if (picked.length === 0) return setError(t("office.rx.needsPlots"));
+    if (lines.length === 0) return setError(t("office.rx.needsProducts"));
+    if (lines.some((l) => !((parseDecimal(l.dose) ?? 0) > 0))) return setError(t("office.rx.needsDose"));
+    if (!f.assigneeId) return setError(t("office.task.needsAssignee"));
+    if (!f.dueDate) return setError(t("office.task.needsDate"));
     const volume = f.volume.trim() ? parseDecimal(f.volume) : null;
-    if (f.volume.trim() && (volume === null || volume <= 0)) return setError(t("office.seasonBadNumber"));
+    if (f.volume.trim() && (volume === null || volume <= 0)) return setError(t("office.season.badNumber"));
     setError(null);
     const r = await create.mutate({
       farmId,
@@ -65,7 +65,7 @@ export function PrescriptionSheet({ visible, onClose, farms, plots, products, se
       },
     });
     if (r.ok) {
-      showToast(t("ui.toastPrescriptionSaved", { n: picked.length }));
+      showToast(t("ui.toast.prescriptionSaved", { n: picked.length }));
       setLines([]);
       setPicked([]);
       onClose();
@@ -74,23 +74,23 @@ export function PrescriptionSheet({ visible, onClose, farms, plots, products, se
   };
 
   return (
-    <FormSheet visible={visible} title={t("ui.prescriptionNew")} onClose={onClose} onSubmit={submit} submitLabel={t("ui.prescriptionCreate")} pending={create.pending} error={error ?? create.error}>
-      {farms.length > 1 ? <SelectField label={t("ui.farm")} value={farmId} options={farms.map((x) => ({ value: x.id, label: x.name }))} onChange={(v) => { setFarmPick(v); setPicked([]); }} /> : null}
-      <SectionHeader first={farms.length < 2} title={t("ui.prescriptionPlots")} />
-      {cropPlots.length === 0 ? <Text style={T.small}>{t("ui.noPlots")}</Text> : null}
+    <FormSheet visible={visible} title={t("ui.prescription.new")} onClose={onClose} onSubmit={submit} submitLabel={t("ui.prescription.create")} pending={create.pending} error={error ?? create.error}>
+      {farms.length > 1 ? <SelectField label={t("ui.common.farm")} value={farmId} options={farms.map((x) => ({ value: x.id, label: x.name }))} onChange={(v) => { setFarmPick(v); setPicked([]); }} /> : null}
+      <SectionHeader first={farms.length < 2} title={t("ui.prescription.plots")} />
+      {cropPlots.length === 0 ? <Text style={T.small}>{t("ui.no.plots")}</Text> : null}
       {cropPlots.map((p) => {
         const on = picked.includes(p.id);
-        return <Row key={p.id} choice="checkbox" selected={on} title={p.name} subtitle={p.crop ? t(k(`ui.cropName_${p.crop}`)) : undefined} onPress={() => setPicked(on ? picked.filter((x) => x !== p.id) : [...picked, p.id])} />;
+        return <Row key={p.id} choice="checkbox" selected={on} title={p.name} subtitle={p.crop ? t(k(`ui.crop.name_${p.crop}`)) : undefined} onPress={() => setPicked(on ? picked.filter((x) => x !== p.id) : [...picked, p.id])} />;
       })}
 
-      <SectionHeader title={t("ui.prescriptionProducts")} />
-      {products.length === 0 ? <Text style={T.small}>{t("ui.prescriptionNoProducts")}</Text> : null}
+      <SectionHeader title={t("ui.prescription.products")} />
+      {products.length === 0 ? <Text style={T.small}>{t("ui.prescription.noProducts")}</Text> : null}
       {lines.map((l, i) => {
         const base = products.find((p) => p.id === l.productId)?.unit ?? "l";
         return (
           <View key={i} style={{ marginBottom: 8 }}>
             <SelectField
-              label={t("ui.productName")}
+              label={t("ui.product.name")}
               value={l.productId}
               options={products.map((p) => ({ value: p.id, label: p.name }))}
               onChange={(v) => {
@@ -98,21 +98,21 @@ export function PrescriptionSheet({ visible, onClose, farms, plots, products, se
                 patchLine(i, { productId: v, unit: p ? DOSE_UNITS_FOR[p.unit][0] : l.unit });
               }}
             />
-            <TextField label={t("ui.prescriptionDose")} kind="decimal" value={l.dose} onChangeText={(v) => patchLine(i, { dose: v })} />
-            <SelectField label={t("ui.productUnit")} value={l.unit} options={DOSE_UNITS_FOR[base].map((u) => ({ value: u as string, label: t(k(`fields.doseUnit_${u}`)) })) as { value: DoseUnit; label: string }[]} onChange={(v) => patchLine(i, { unit: v })} />
-            <Button kind="text" title={t("ui.delete")} onPress={() => setLines(lines.filter((_, j) => j !== i))} />
+            <TextField label={t("ui.prescription.dose")} kind="decimal" value={l.dose} onChangeText={(v) => patchLine(i, { dose: v })} />
+            <SelectField label={t("ui.product.unit")} value={l.unit} options={DOSE_UNITS_FOR[base].map((u) => ({ value: u as string, label: t(k(`fields.dose.unit_${u}`)) })) as { value: DoseUnit; label: string }[]} onChange={(v) => patchLine(i, { unit: v })} />
+            <Button kind="text" title={t("ui.common.delete")} onPress={() => setLines(lines.filter((_, j) => j !== i))} />
           </View>
         );
       })}
-      <Button kind="secondary" icon={Plus} title={t("ui.prescriptionAddProduct")} disabled={products.length === 0} onPress={addLine} style={{ marginTop: 8 }} />
+      <Button kind="secondary" icon={Plus} title={t("ui.prescription.addProduct")} disabled={products.length === 0} onPress={addLine} style={{ marginTop: 8 }} />
 
-      <SectionHeader title={t("office.rxSend")} />
-      <SelectField label={t("ui.assignee")} value={f.assigneeId} options={workers.map((m) => ({ value: m.userId, label: m.fullName }))} onChange={(v) => setF({ ...f, assigneeId: v })} placeholder={members.loading ? t("office.rxLoadingPeople") : workers.length === 0 ? t("office.rxNoWorkers") : undefined} />
-      <DateField label={t("ui.dueDate")} value={f.dueDate} onChange={(v) => setF({ ...f, dueDate: v })} />
-      <TextField label={t("fields.volumeLHa")} kind="decimal" value={f.volume} onChangeText={(v) => setF({ ...f, volume: v })} />
-      {seasons.length > 0 ? <SelectField label={t("ui.season")} value={f.seasonId} options={[{ value: "", label: t("ui.none") }, ...seasons.map((s) => ({ value: s.id, label: s.name }))]} onChange={(v) => setF({ ...f, seasonId: v })} /> : null}
-      <TextField label={t("app.note")} kind="multiline" value={f.note} onChangeText={(v) => setF({ ...f, note: v })} maxLength={2000} />
-      <Text style={[T.small, { marginTop: 8 }]}>{t("ui.prescriptionHint")}</Text>
+      <SectionHeader title={t("office.rx.send")} />
+      <SelectField label={t("ui.common.assignee")} value={f.assigneeId} options={workers.map((m) => ({ value: m.userId, label: m.fullName }))} onChange={(v) => setF({ ...f, assigneeId: v })} placeholder={members.loading ? t("office.rx.loadingPeople") : workers.length === 0 ? t("office.rx.noWorkers") : undefined} />
+      <DateField label={t("ui.due.date")} value={f.dueDate} onChange={(v) => setF({ ...f, dueDate: v })} />
+      <TextField label={t("fields.common.volumeLHa")} kind="decimal" value={f.volume} onChangeText={(v) => setF({ ...f, volume: v })} />
+      {seasons.length > 0 ? <SelectField label={t("ui.common.season")} value={f.seasonId} options={[{ value: "", label: t("ui.common.none") }, ...seasons.map((s) => ({ value: s.id, label: s.name }))]} onChange={(v) => setF({ ...f, seasonId: v })} /> : null}
+      <TextField label={t("app.common.note")} kind="multiline" value={f.note} onChangeText={(v) => setF({ ...f, note: v })} maxLength={2000} />
+      <Text style={[T.small, { marginTop: 8 }]}>{t("ui.prescription.hint")}</Text>
     </FormSheet>
   );
 }

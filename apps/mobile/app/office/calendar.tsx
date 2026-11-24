@@ -40,17 +40,17 @@ export default function Calendar() {
   const shownDays = days.filter((d) => (grouped.get(d)?.length ?? 0) > 0 || d === today);
 
   return (
-    <OfficeScreen title={t("ui.calendarTitle")} subtitle={t("office.calendarWeekOf", { from: day(days[0]!), to: day(days[6]!) })}>
+    <OfficeScreen title={t("ui.calendar.title")} subtitle={t("office.calendar.weekOf", { from: day(days[0]!), to: day(days[6]!) })}>
       <View style={{ flexDirection: "row", gap: 8, marginTop: 16, alignItems: "center" }}>
-        <Nav label={t("ui.calendarPrev")} onPress={() => setMonday(addDays(monday, -7))}>
+        <Nav label={t("ui.calendar.prev")} onPress={() => setMonday(addDays(monday, -7))}>
           <ChevronLeft size={24} color={C.tinta} strokeWidth={2} />
         </Nav>
-        <Nav label={t("ui.calendarNext")} onPress={() => setMonday(addDays(monday, 7))}>
+        <Nav label={t("ui.calendar.next")} onPress={() => setMonday(addDays(monday, 7))}>
           <ChevronRight size={24} color={C.tinta} strokeWidth={2} />
         </Nav>
-        {!thisWeek ? <Button kind="secondary" title={t("ui.calendarToday")} onPress={() => setMonday(weekStart(today))} style={{ flex: 1 }} /> : null}
+        {!thisWeek ? <Button kind="secondary" title={t("ui.calendar.today")} onPress={() => setMonday(weekStart(today))} style={{ flex: 1 }} /> : null}
       </View>
-      {total === 0 ? <EmptyState title={t("ui.calendarEmpty")} /> : null}
+      {total === 0 ? <EmptyState title={t("ui.calendar.empty")} /> : null}
       {total > 0 || thisWeek
         ? shownDays.map((d) => {
             const list = grouped.get(d) ?? [];
@@ -59,11 +59,11 @@ export default function Calendar() {
             return (
               <View key={d} style={{ marginTop: 20 }}>
                 <View style={{ flexDirection: "row", alignItems: "baseline", gap: 8, paddingBottom: 6, borderBottomWidth: isToday ? 2 : 1, borderBottomColor: isToday ? C.accion : C.linea }}>
-                  <Text style={[T.heading, isToday && { color: C.accionOscuro }]}>{t(`ui.weekday_${i}` as MessageKey)} {d.slice(8)}</Text>
-                  {isToday ? <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{t("office.tasksFilterToday")}</Text> : null}
+                  <Text style={[T.heading, isToday && { color: C.accionOscuro }]}>{t(`ui.weekday.${i}` as MessageKey)} {d.slice(8)}</Text>
+                  {isToday ? <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{t("office.tasks.filterToday")}</Text> : null}
                 </View>
                 {list.length === 0 ? (
-                  <Text style={[T.small, { marginTop: 8 }]}>{t("office.calendarNothingToday")}</Text>
+                  <Text style={[T.small, { marginTop: 8 }]}>{t("office.calendar.nothingToday")}</Text>
                 ) : (
                   list.map((x) => {
                     const done = x.status === "done";
@@ -72,8 +72,8 @@ export default function Calendar() {
                       <View key={x.id} style={done ? { opacity: 0.55 } : undefined}>
                       <Row
                         title={`${x.dueTime ? `${x.dueTime}  ` : ""}${x.title}`}
-                        subtitle={[x.plotId ? plotName.get(x.plotId) : null, who].filter(Boolean).join(" · ") || (x.dueTime ? undefined : t("office.calendarAllDay"))}
-                        right={done ? <Text style={{ fontFamily: F.sansMedium, fontSize: 15, color: C.tinta3 }}>{t("ui.status_done")}</Text> : undefined}
+                        subtitle={[x.plotId ? plotName.get(x.plotId) : null, who].filter(Boolean).join(" · ") || (x.dueTime ? undefined : t("office.calendar.allDay"))}
+                        right={done ? <Text style={{ fontFamily: F.sansMedium, fontSize: 15, color: C.tinta3 }}>{t("ui.status.done")}</Text> : undefined}
                         onPress={() => router.push({ pathname: "/task/[id]", params: { id: x.id } })}
                       />
                       </View>

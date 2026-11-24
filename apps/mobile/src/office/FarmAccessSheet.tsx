@@ -39,17 +39,17 @@ export function FarmAccessSheet({ m, visible, onClose }: { m: Member; visible: b
   const submit = async () => {
     const r = await save.mutate({ farms: [...(chosen ?? [])].map(([farmId, level]) => ({ farmId, level })) });
     if (r.ok) {
-      showToast(t("ui.farmAccessSaved"));
+      showToast(t("ui.farm.accessSaved"));
       onClose();
     }
   };
   return (
-    <Sheet visible={visible} title={`${t("office.teamFarmsTitle")} · ${m.fullName}`} onClose={onClose}>
+    <Sheet visible={visible} title={`${t("office.team.farmsTitle")} · ${m.fullName}`} onClose={onClose}>
       {!chosen ? (
-        <Text style={T.small}>{access.error ?? t("ui.loading")}</Text>
+        <Text style={T.small}>{access.error ?? t("ui.common.loading")}</Text>
       ) : (
         <>
-          <Text style={T.small}>{m.role === "supervisor" ? t("ui.farmAccessHintSupervisor") : t("ui.farmAccessHintOther")}</Text>
+          <Text style={T.small}>{m.role === "supervisor" ? t("ui.farm.accessHintSupervisor") : t("ui.farm.accessHintOther")}</Text>
           {farms.map((f) => {
             const level = chosen.get(f.id);
             return (
@@ -57,14 +57,14 @@ export function FarmAccessSheet({ m, visible, onClose }: { m: Member; visible: b
                 <Row choice="checkbox" title={f.name} selected={!!level} onPress={() => set(f.id, level ? null : "edit")} right={level ? <Text style={[T.bodyMedium, { color: C.accionOscuro }]}>✓</Text> : undefined} />
                 {level ? (
                   <View style={{ marginBottom: 8 }}>
-                    <Segmented<FarmAccessLevel> options={[{ value: "edit", label: t("ui.farmAccess_edit") }, { value: "view", label: t("ui.farmAccess_view") }]} value={level} onChange={(v) => set(f.id, v)} />
+                    <Segmented<FarmAccessLevel> options={[{ value: "edit", label: t("ui.farm.access_edit") }, { value: "view", label: t("ui.farm.access_view") }]} value={level} onChange={(v) => set(f.id, v)} />
                   </View>
                 ) : null}
               </View>
             );
           })}
           {save.error ? <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 12 }]}>{save.error}</Text> : null}
-          <Button title={t("ui.save")} loading={save.pending} onPress={() => void submit()} style={{ marginTop: 16 }} />
+          <Button title={t("ui.common.save")} loading={save.pending} onPress={() => void submit()} style={{ marginTop: 16 }} />
         </>
       )}
     </Sheet>

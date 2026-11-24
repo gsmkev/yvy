@@ -22,7 +22,7 @@ interface Draft {
   note: string;
 }
 const blank: Draft = { id: null, name: "", ruc: "", kind: "supplier", phone: "", email: "", address: "", note: "" };
-const kindOptions = () => PARTY_KINDS.map((v) => ({ value: v, label: t(k(`ui.partyKind_${v}`)) }));
+const kindOptions = () => PARTY_KINDS.map((v) => ({ value: v, label: t(k(`ui.party.kind_${v}`)) }));
 
 export default function Parties() {
   const q = useParties();
@@ -52,14 +52,14 @@ export default function Parties() {
       address: draft.address.trim() || null,
       note: draft.note.trim() || null,
     };
-    if (!body.name) return setFormError(t("office.admPartyNeedsName"));
+    if (!body.name) return setFormError(t("office.adm.partyNeedsName"));
     const check = partyInput.safeParse(body);
-    if (!check.success) return setFormError(check.error.issues[0]?.path[0] === "ruc" ? t("ui.partyRucHint") : t("office.admCheckFields"));
+    if (!check.success) return setFormError(check.error.issues[0]?.path[0] === "ruc" ? t("ui.party.rucHint") : t("office.adm.checkFields"));
     setFormError(null);
     const r = draft.id ? await edit.mutate({ id: draft.id, ...body }) : await create.mutate(body);
     if (r.ok) {
       setDraft(null);
-      showToast(t("ui.erpSaved"));
+      showToast(t("ui.erp.saved"));
     }
   };
 
@@ -67,36 +67,36 @@ export default function Parties() {
   const err = formError ?? (draft?.id ? edit.error : create.error);
 
   return (
-    <AdminGate need="manage" title={t("ui.adminSection_parties")}>
-      <OfficeScreen title={t("ui.adminSection_parties")} query={q} action={{ label: t("ui.partyNew"), icon: Plus, onPress: () => open(null), disabled: !!noSignal }}>
+    <AdminGate need="manage" title={t("ui.admin.section_parties")}>
+      <OfficeScreen title={t("ui.admin.section_parties")} query={q} action={{ label: t("ui.party.new"), icon: Plus, onPress: () => open(null), disabled: !!noSignal }}>
         <NoSignalNote />
-        <OnlineState query={q} empty={{ title: t("ui.emptyPartiesTitle"), hint: t("ui.emptyPartiesBody") }}>
+        <OnlineState query={q} empty={{ title: t("ui.empty.partiesTitle"), hint: t("ui.empty.partiesBody") }}>
           {(all) => (
             <>
               <FilterChips<"all" | Kind>
                 value={filter}
                 onChange={setFilter}
-                options={[{ value: "all", label: t("ui.costAll"), count: all.length }, { value: "supplier", label: t("ui.partyKind_supplier") }, { value: "customer", label: t("ui.partyKind_customer") }]}
+                options={[{ value: "all", label: t("ui.cost.all"), count: all.length }, { value: "supplier", label: t("ui.party.kind_supplier") }, { value: "customer", label: t("ui.party.kind_customer") }]}
               />
               <DataList
                 rows={rows}
                 keyOf={(p) => p.id}
                 title={(p) => p.name}
-                subtitle={(p) => [t(k(`ui.partyKind_${p.kind}`)), p.ruc, p.phone].filter(Boolean).join(" · ")}
+                subtitle={(p) => [t(k(`ui.party.kind_${p.kind}`)), p.ruc, p.phone].filter(Boolean).join(" · ")}
                 onPress={open}
-                empty={{ title: t("ui.erpEmpty") }}
+                empty={{ title: t("ui.erp.empty") }}
               />
             </>
           )}
         </OnlineState>
-        <FormSheet visible={!!draft} title={draft?.id ? t("ui.erpEdit") : t("ui.partyNew")} onClose={() => setDraft(null)} onSubmit={submit} submitLabel={t("ui.save")} pending={create.pending || edit.pending} error={err}>
-          <TextField label={t("ui.partyName")} value={draft?.name ?? ""} onChangeText={(v) => set({ name: v })} maxLength={120} />
-          <SelectField<Kind> label={t("ui.partyKind")} value={draft?.kind} options={kindOptions()} onChange={(v) => set({ kind: v })} />
-          <TextField label={t("ui.partyRuc")} hint={t("ui.partyRucHint")} value={draft?.ruc ?? ""} onChangeText={(v) => set({ ruc: v })} maxLength={12} autoCapitalize="none" />
-          <TextField label={t("ui.partyPhone")} value={draft?.phone ?? ""} onChangeText={(v) => set({ phone: v })} maxLength={40} />
-          <TextField label={t("ui.partyEmail")} value={draft?.email ?? ""} onChangeText={(v) => set({ email: v })} maxLength={120} autoCapitalize="none" />
-          <TextField label={t("ui.partyAddress")} value={draft?.address ?? ""} onChangeText={(v) => set({ address: v })} maxLength={200} />
-          <TextField label={t("ui.partyNote")} value={draft?.note ?? ""} onChangeText={(v) => set({ note: v })} maxLength={500} kind="multiline" />
+        <FormSheet visible={!!draft} title={draft?.id ? t("ui.erp.edit") : t("ui.party.new")} onClose={() => setDraft(null)} onSubmit={submit} submitLabel={t("ui.common.save")} pending={create.pending || edit.pending} error={err}>
+          <TextField label={t("ui.party.name")} value={draft?.name ?? ""} onChangeText={(v) => set({ name: v })} maxLength={120} />
+          <SelectField<Kind> label={t("ui.party.kind")} value={draft?.kind} options={kindOptions()} onChange={(v) => set({ kind: v })} />
+          <TextField label={t("ui.party.ruc")} hint={t("ui.party.rucHint")} value={draft?.ruc ?? ""} onChangeText={(v) => set({ ruc: v })} maxLength={12} autoCapitalize="none" />
+          <TextField label={t("ui.party.phone")} value={draft?.phone ?? ""} onChangeText={(v) => set({ phone: v })} maxLength={40} />
+          <TextField label={t("ui.party.email")} value={draft?.email ?? ""} onChangeText={(v) => set({ email: v })} maxLength={120} autoCapitalize="none" />
+          <TextField label={t("ui.party.address")} value={draft?.address ?? ""} onChangeText={(v) => set({ address: v })} maxLength={200} />
+          <TextField label={t("ui.party.note")} value={draft?.note ?? ""} onChangeText={(v) => set({ note: v })} maxLength={500} kind="multiline" />
         </FormSheet>
       </OfficeScreen>
     </AdminGate>

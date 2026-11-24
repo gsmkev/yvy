@@ -21,21 +21,21 @@ export function PhotoScreen({ a }: { a: AnnotateState }) {
           <>
             {(missingPhoto || missingLocation) && (
               <Text style={T.small}>
-                {missingPhoto && missingLocation ? t("app.taskNeedsPhotoAndLocation") : missingPhoto ? t("app.taskNeedsPhoto") : t("app.taskNeedsLocation")}
+                {missingPhoto && missingLocation ? t("app.task.needsPhotoAndLocation") : missingPhoto ? t("app.task.needsPhoto") : t("app.task.needsLocation")}
               </Text>
             )}
-            {photos.length < maxNewPhotos && <Button kind="secondary" title={t("app.takePhoto")} onPress={() => setCamera(true)} />}
-            <Button big disabled={missingPhoto || missingLocation} title={editing ? t("app.recordSave") : photos.length || voice ? t("app.done") : t("app.skipPhoto")} onPress={save} />
+            {photos.length < maxNewPhotos && <Button kind="secondary" title={t("app.common.takePhoto")} onPress={() => setCamera(true)} />}
+            <Button big disabled={missingPhoto || missingLocation} title={editing ? t("app.record.save") : photos.length || voice ? t("app.common.done") : t("app.common.skipPhoto")} onPress={save} />
           </>
         }
       >
-        <Text style={T.title}>{t("app.addPhoto")}</Text>
-        {photos.length + existingPhotos > 0 && <Text style={[T.small, { marginTop: 6 }]}>{t("app.photosCount", { n: photos.length + existingPhotos, max: LIMITS.photos.maxPerRecord })}</Text>}
+        <Text style={T.title}>{t("app.add.photo")}</Text>
+        {photos.length + existingPhotos > 0 && <Text style={[T.small, { marginTop: 6 }]}>{t("app.photos.count", { n: photos.length + existingPhotos, max: LIMITS.photos.maxPerRecord })}</Text>}
         <View style={st.photos}>
           {photos.map((p, i) => (
             <View key={p.thumbUri}>
               <Image source={{ uri: p.thumbUri }} style={st.thumb} />
-              <Pressable accessibilityRole="button" accessibilityLabel={t("app.photoDiscard")} onPress={() => removePhoto(i)} style={st.thumbX} hitSlop={6}>
+              <Pressable accessibilityRole="button" accessibilityLabel={t("app.photo.discard")} onPress={() => removePhoto(i)} style={st.thumbX} hitSlop={6}>
                 <X size={18} color={C.blanco} />
               </Pressable>
             </View>

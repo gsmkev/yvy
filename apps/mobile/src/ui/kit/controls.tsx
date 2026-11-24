@@ -7,10 +7,12 @@ import { s } from "./styles";
 
 /** Texto que respeta el tamaño de letra del sistema hasta 1,3 veces, para que el diseño no se rompa (U-21). */
 export function Text(props: TextProps) {
+  // nosemgrep: react-props-spreading -- envoltorio que reenvía al elemento nativo todas sus props
   return <RNText maxFontSizeMultiplier={MAX_FONT_SCALE} {...props} />;
 }
 
 export function TextInput(props: ComponentProps<typeof RNTextInput>) {
+  // nosemgrep: react-props-spreading -- envoltorio que reenvía al elemento nativo todas sus props
   return <RNTextInput maxFontSizeMultiplier={MAX_FONT_SCALE} {...props} />;
 }
 

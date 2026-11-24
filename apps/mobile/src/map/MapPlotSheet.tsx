@@ -10,6 +10,8 @@ import { C, T } from "../ui/theme";
 import { daysAgo } from "./mapStyle";
 import { st } from "./styles";
 
+const TWO_DECIMALS = { maximumFractionDigits: 2 };
+
 type SheetRecord = { id: string; plotId: string | null; capturedAt: number; kind: Parameters<typeof describeRecord>[0]; data: string };
 
 /** Ficha del lote elegido, abajo del mapa: datos del celular (anda sin señal) y accesos para anotar, abrir e ir. */
@@ -44,19 +46,19 @@ export function MapPlotSheet({
           {new Date(r.capturedAt).toLocaleDateString("es-PY", { day: "numeric", month: "short" })} · {describeRecord(r.kind, JSON.parse(r.data))}
         </Text>
       ))}
-      {!readOnly && <Button big title={t("app.annotateIn", { plot: plot.name })} onPress={() => router.push({ pathname: "/annotate", params: { plotId: plot.id } })} style={{ marginTop: 16 }} />}
-      <Button kind={readOnly ? "primary" : "secondary"} title={t("app.plotSheetOpen")} onPress={() => router.push({ pathname: "/plot/[id]", params: { id: plot.id } })} style={{ marginTop: readOnly ? 16 : 8 }} />
+      {!readOnly && <Button big title={t("app.annotate.in", { plot: plot.name })} onPress={() => router.push({ pathname: "/annotate", params: { plotId: plot.id } })} style={{ marginTop: 16 }} />}
+      <Button kind={readOnly ? "primary" : "secondary"} title={t("app.plot.sheetOpen")} onPress={() => router.push({ pathname: "/plot/[id]", params: { id: plot.id } })} style={{ marginTop: readOnly ? 16 : 8 }} />
       <View style={st.sheetLinks}>
         <Button
           kind="text"
-          title={gridHa === null ? t("app.samplingShow5") : gridHa === 5 ? t("app.samplingShow10") : t("app.samplingHide")}
+          title={gridHa === null ? t("app.sampling.show5") : gridHa === 5 ? t("app.sampling.show10") : t("app.sampling.hide")}
           onPress={() => setGridHa(gridHa === null ? 5 : gridHa === 5 ? 10 : null)}
           style={st.sheetLink}
         />
-        {canMarkPoi && <Button kind="text" title={t("app.plotDrawEdit")} onPress={() => router.push({ pathname: "/plot-draw", params: { plotId: plot.id } })} style={st.sheetLink} />}
+        {canMarkPoi && <Button kind="text" title={t("app.plot.drawEdit")} onPress={() => router.push({ pathname: "/plot-draw", params: { plotId: plot.id } })} style={st.sheetLink} />}
         <Button
           kind="text"
-          title={t("app.gotoButton")}
+          title={t("app.goto.button")}
           onPress={() => {
             const c = plotTarget(plot.geometry);
             router.push({ pathname: "/goto", params: { lon: String(c.lon), lat: String(c.lat), name: plot.name } });
@@ -64,7 +66,7 @@ export function MapPlotSheet({
           style={st.sheetLink}
         />
       </View>
-      {gridHa !== null && <Text style={T.small}>{t("app.samplingInfo", { n: samplesCount })}</Text>}
+      {gridHa !== null && <Text style={T.small}>{t("app.sampling.info", { n: samplesCount })}</Text>}
     </View>  );
 }
 
@@ -76,13 +78,13 @@ function SheetHeading({ plot, lastVisit, onClose }: { plot: Plot; lastVisit: Map
         <View style={{ flex: 1 }}>
           <Text style={T.title}>{plot.name}</Text>
           <Text style={[T.small, { marginTop: 2 }]}>
-            {plot.kind === "pasture" ? t("ui.pasture") : (plot.crop ?? t("ui.crop"))} · {t("ui.ha", { value: plot.areaHa.toLocaleString("es-PY", { maximumFractionDigits: 0 }) })}
+            {plot.kind === "pasture" ? t("ui.common.pasture") : (plot.crop ?? t("ui.common.crop"))} · {t("ui.common.ha", { value: plot.areaHa.toLocaleString("es-PY", { maximumFractionDigits: 0 }) })}
             {lastVisit.get(plot.id)
-              ? ` · ${[t("app.lastVisitToday"), t("app.lastVisitYesterday")][daysAgo(lastVisit.get(plot.id)!)]?.toLowerCase() ?? t("app.lastVisit", { days: daysAgo(lastVisit.get(plot.id)!) }).toLowerCase()}`
-              : ` · ${t("app.noVisits").toLowerCase()}`}
+              ? " · " + ([t("app.last.visitToday"), t("app.last.visitYesterday")][daysAgo(lastVisit.get(plot.id)!)]?.toLowerCase() ?? t("app.last.visit", { days: daysAgo(lastVisit.get(plot.id)!) }).toLowerCase())
+              : ` · ${t("app.no.visits").toLowerCase()}`}
           </Text>
         </View>
-        <Pressable onPress={() => onClose()} hitSlop={13} accessibilityRole="button" accessibilityLabel={t("ui.close")}>
+        <Pressable onPress={() => onClose()} hitSlop={13} accessibilityRole="button" accessibilityLabel={t("ui.common.close")}>
           <X size={22} color={C.tinta2} />
         </Pressable>
       </View>
@@ -101,19 +103,19 @@ function PlotStats({ plot }: { plot: Plot }) {
     <>
       {herd && (
         <Text style={[T.smallMedium, { marginTop: 10 }]}>
-          {t("app.plotHerd", { n: herd.total })}
-          {herdUa !== null ? ` · ${t("app.plotHerdUa", { v: herdUa.toLocaleString("es-PY", { maximumFractionDigits: 2 }) })}` : ""}
+          {t("app.plot.herd", { n: herd.total })}
+          {herdUa !== null ? " · " + t("app.plot.herdUa", { v: herdUa.toLocaleString("es-PY", TWO_DECIMALS) }) : ""}
         </Text>
       )}
       {(rainMonth > 0 || vigor || openTasks > 0) && (
         <View style={{ marginTop: 10, gap: 2 }}>
-          {rainMonth > 0 && <Text style={T.smallMedium}>{t("app.plotRainMonth", { mm: Math.round(rainMonth) })}</Text>}
+          {rainMonth > 0 && <Text style={T.smallMedium}>{t("app.plot.rainMonth", { mm: Math.round(rainMonth) })}</Text>}
           {vigor && (
             <Text style={T.smallMedium}>
-              {t("app.plotVigor", { value: vigor.mean.toLocaleString("es-PY", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), date: new Date(vigor.acquiredAt).toLocaleDateString("es-PY", { day: "numeric", month: "short" }) })}
+              {t("app.plot.vigor", { value: vigor.mean.toLocaleString("es-PY", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), date: new Date(vigor.acquiredAt).toLocaleDateString("es-PY", { day: "numeric", month: "short" }) })}
             </Text>
           )}
-          {openTasks > 0 && <Text style={T.smallMedium}>{t("app.plotOpenTasks", { n: openTasks })}</Text>}
+          {openTasks > 0 && <Text style={T.smallMedium}>{t("app.plot.openTasks", { n: openTasks })}</Text>}
         </View>
       )}
     </>

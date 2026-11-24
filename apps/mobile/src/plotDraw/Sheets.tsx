@@ -12,10 +12,10 @@ type Draft = ReturnType<typeof checkDraft>;
 
 /** El texto que guía el dibujo según el estado del borrador. */
 export function drawHint(draft: Draft, vertexCount: number, selected: boolean): string {
-  if ("error" in draft && vertexCount >= 3) return t(`app.plotDrawErr_${draft.error}` as MessageKey);
-  if (selected) return t("app.plotDrawMoveHint");
-  if (vertexCount < 3) return t("app.plotDrawHint", { n: vertexCount });
-  return "ha" in draft ? t("app.plotDrawArea", { value: draft.ha.toLocaleString("es-PY", { maximumFractionDigits: 1 }) }) : "";
+  if ("error" in draft && vertexCount >= 3) return t(`app.plot.drawErr_${draft.error}` as MessageKey);
+  if (selected) return t("app.plot.drawMoveHint");
+  if (vertexCount < 3) return t("app.plot.drawHint", { n: vertexCount });
+  return "ha" in draft ? t("app.plot.drawArea", { value: draft.ha.toLocaleString("es-PY", { maximumFractionDigits: 1 }) }) : "";
 }
 
 /** Ficha de abajo mientras se camina el perímetro. */
@@ -30,10 +30,10 @@ export function WalkSheet({ walk, trace, walkMsg, onStart, onStop, onDrawInstead
   return (
     <View style={st.sheet}>
       <Text style={T.smallMedium}>
-        {walk === "on" ? t("app.perimWalkRecording", { points: trace.length, m: Math.round(traceLengthM(trace)) }) : (walkMsg ?? t("app.perimWalkIntro"))}
+        {walk === "on" ? t("app.perim.walkRecording", { points: trace.length, m: Math.round(traceLengthM(trace)) }) : (walkMsg ?? t("app.perim.walkIntro"))}
       </Text>
-      <Button big title={walk === "on" ? t("app.perimWalkStop") : t("app.perimWalkStart")} onPress={walk === "on" ? onStop : onStart} style={{ marginTop: 12 }} />
-      <Button kind="text" title={t("app.perimWalkDrawInstead")} onPress={onDrawInstead} style={{ marginTop: 4 }} />
+      <Button big title={walk === "on" ? t("app.perim.walkStop") : t("app.perim.walkStart")} onPress={walk === "on" ? onStop : onStart} style={{ marginTop: 12 }} />
+      <Button kind="text" title={t("app.perim.walkDrawInstead")} onPress={onDrawInstead} style={{ marginTop: 4 }} />
     </View>
   );
 }
@@ -52,10 +52,10 @@ export function DrawSheet({ hint, selected, vertexCount, canContinue, onUndo, on
       <Text style={T.smallMedium}>{hint}</Text>
       <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
         <View style={{ flex: 1 }}>
-          <Button kind="secondary" title={selected ? t("app.plotDrawDeleteVertex") : t("app.plotDrawUndo")} disabled={vertexCount === 0} onPress={onUndo} />
+          <Button kind="secondary" title={selected ? t("app.plot.drawDeleteVertex") : t("app.plot.drawUndo")} disabled={vertexCount === 0} onPress={onUndo} />
         </View>
         <View style={{ flex: 1 }}>
-          <Button kind="primary" title={t("app.plotDrawNext")} disabled={!canContinue} onPress={onNext} />
+          <Button kind="primary" title={t("app.plot.drawNext")} disabled={!canContinue} onPress={onNext} />
         </View>
       </View>
     </View>
@@ -73,7 +73,7 @@ export function VertexMarkers({ vs, sel, onPick }: { vs: V[]; sel: number | null
         <Marker key={`${i}-${v[0]}-${v[1]}`} lngLat={v}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={t("app.plotDrawVertex", { n: i + 1 })}
+            accessibilityLabel={t("app.plot.drawVertex", { n: i + 1 })}
             onPress={() => onPick(i)}
             hitSlop={14}
             style={[st.vertex, sel === i && st.vertexSel]}

@@ -30,4 +30,7 @@ export async function describeRecording(uri: string): Promise<LocalAudio | null>
 
 export const discardRecording = (a: LocalAudio): Promise<void> => FileSystem.deleteAsync(a.uri, { idempotent: true });
 
-export const sizeLabel = (bytes: number): string => (bytes >= 1e6 ? `${(bytes / 1e6).toLocaleString("es-PY", { maximumFractionDigits: 1 })} MB` : `${Math.max(1, Math.round(bytes / 1e3))} KB`);
+export const sizeLabel = (bytes: number): string =>
+  bytes >= 1e6
+    ? (bytes / 1e6).toLocaleString("es-PY", { maximumFractionDigits: 1 }) + " MB"
+    : `${Math.max(1, Math.round(bytes / 1e3))} KB`;

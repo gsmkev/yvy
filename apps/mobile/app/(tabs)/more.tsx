@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ScrollView } from "react-native";
 import { router } from "expo-router";
 import { Beef, ClipboardList, Footprints, RefreshCw, Siren, UserRound } from "lucide-react-native";
-import { t } from "@yvy/shared";
+import { t, ATTRIBUTION } from "@yvy/shared";
 import { FEATURES } from "../../src/lib/features";
 import { getSession } from "../../src/lib/session";
 import { canCount } from "../../src/lib/stock-count";
@@ -13,19 +13,27 @@ import { C, T } from "../../src/ui/theme";
 export default function More() {
   const sync = useSyncStatus();
   const session = getSession();
-  const lastSync = sync.lastSyncAt ? new Date(sync.lastSyncAt).toLocaleString("es-PY", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }) : "—";
+  const lastSync = sync.lastSyncAt
+    ? new Date(sync.lastSyncAt).toLocaleString("es-PY", {
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })
+    : "—";
 
   const [labsOpen, setLabsOpen] = useState(false);
   const labs: { title: string; hint: string; to: string }[] = [
-    { title: t("app.labsRustTitle"), hint: t("app.labsRustRow"), to: "/labs/roya" },
-    { title: t("app.labsBugsTitle"), hint: t("app.labsBugsRow"), to: "/labs/chinches" },
-    { title: t("app.labsGrassTitle"), hint: t("app.labsGrassRow"), to: "/labs/pasto" },
-    { title: t("app.labsCowTitle"), hint: t("app.labsCowRow"), to: "/labs/vaca" },
-    { title: t("app.labsVoiceTitle"), hint: t("app.labsVoiceRow"), to: "/labs/voz" },
-    { title: t("app.labsWeedIdTitle"), hint: t("app.labsWeedIdRow"), to: "/labs/malezas" },
-    { title: t("app.labsTagTitle"), hint: t("app.labsTagRow"), to: "/labs/caravana" },
-    { title: t("app.labsStageTitle"), hint: t("app.labsStageRow"), to: "/labs/fenologia" },
-    { title: t("app.labsTranslateTitle"), hint: t("app.labsTranslateRow"), to: "/labs/guarani" },
+    { title: t("app.labs.rustTitle"), hint: t("app.labs.rustRow"), to: "/labs/roya" },
+    { title: t("app.labs.bugsTitle"), hint: t("app.labs.bugsRow"), to: "/labs/chinches" },
+    { title: t("app.labs.grassTitle"), hint: t("app.labs.grassRow"), to: "/labs/pasto" },
+    { title: t("app.labs.cowTitle"), hint: t("app.labs.cowRow"), to: "/labs/vaca" },
+    { title: t("app.labs.voiceTitle"), hint: t("app.labs.voiceRow"), to: "/labs/voz" },
+    { title: t("app.labs.weedIdTitle"), hint: t("app.labs.weedIdRow"), to: "/labs/malezas" },
+    { title: t("app.labs.tagTitle"), hint: t("app.labs.tagRow"), to: "/labs/caravana" },
+    { title: t("app.labs.stageTitle"), hint: t("app.labs.stageRow"), to: "/labs/fenologia" },
+    { title: t("app.labs.translateTitle"), hint: t("app.labs.translateRow"), to: "/labs/guarani" },
   ];
 
   return (
@@ -33,31 +41,67 @@ export default function More() {
       <Text style={T.small}>{session?.organization.name}</Text>
       <Text style={[T.display, { marginTop: 2 }]}>{session?.user.fullName}</Text>
 
-      <Row icon={Siren} tone="danger" title={t("app.emergencyTitle")} subtitle={t("app.emergencyRowHint")} onPress={() => router.push("/emergency")} />
+      <Row
+        icon={Siren}
+        tone="danger"
+        title={t("app.emergency.title")}
+        subtitle={t("app.emergency.rowHint")}
+        onPress={() => router.push("/emergency")}
+      />
 
-      <SectionHeader title={t("app.sectionTools")} />
-      <Row icon={Footprints} title={t("app.walkRow")} subtitle={t("app.walkRowHint")} onPress={() => router.push("/walk")} />
-      <Row icon={Beef} title={t("app.animalsRow")} subtitle={t("app.animalsRowHint")} onPress={() => router.push("/animals")} />
-      {canCount(session?.organization.role) && <Row icon={ClipboardList} title={t("ui.countRow")} subtitle={t("ui.countRowHint")} onPress={() => router.push("/stock-count")} />}
+      <SectionHeader title={t("app.section.tools")} />
+      <Row
+        icon={Footprints}
+        title={t("app.walk.row")}
+        subtitle={t("app.walk.rowHint")}
+        onPress={() => router.push("/walk")}
+      />
+      <Row
+        icon={Beef}
+        title={t("app.animals.row")}
+        subtitle={t("app.animals.rowHint")}
+        onPress={() => router.push("/animals")}
+      />
+      {canCount(session?.organization.role) && (
+        <Row
+          icon={ClipboardList}
+          title={t("ui.count.row")}
+          subtitle={t("ui.count.rowHint")}
+          onPress={() => router.push("/stock-count")}
+        />
+      )}
 
-      <SectionHeader title={t("app.sectionAccount")} />
+      <SectionHeader title={t("app.section.account")} />
       <Row
         icon={RefreshCw}
-        title={t("app.syncStorageRow")}
-        subtitle={[t("app.lastSyncAt", { when: lastSync }), sync.pending > 0 ? t("app.pendingCount", { n: sync.pending }) : t("app.allSent")].join(" · ")}
+        title={t("app.common.syncStorageRow")}
+        subtitle={[
+          t("app.last.syncAt", { when: lastSync }),
+          sync.pending > 0 ? t("app.common.pendingCount", { n: sync.pending }) : t("app.common.allSent"),
+        ].join(" · ")}
         onPress={() => router.push("/sync")}
       />
-      <Row icon={UserRound} title={t("app.accountRow")} subtitle={t("app.accountRowHint")} onPress={() => router.push("/account")} />
+      <Row
+        icon={UserRound}
+        title={t("app.account.row")}
+        subtitle={t("app.account.rowHint")}
+        onPress={() => router.push("/account")}
+      />
 
       {FEATURES.labs && (
         <>
-          <SectionHeader title={t("app.labsSection")} action={labsOpen ? t("app.labsHide") : t("app.labsShow")} onAction={() => setLabsOpen((o) => !o)} />
-          {labsOpen && labs.map((l) => <Row key={l.to} title={l.title} subtitle={l.hint} onPress={() => router.push(l.to)} />)}
+          <SectionHeader
+            title={t("app.labs.section")}
+            action={labsOpen ? t("app.labs.hide") : t("app.labs.show")}
+            onAction={() => setLabsOpen((o) => !o)}
+          />
+          {labsOpen &&
+            labs.map((l) => <Row key={l.to} title={l.title} subtitle={l.hint} onPress={() => router.push(l.to)} />)}
         </>
       )}
 
       <Text style={[T.small, { marginTop: 28, color: C.tinta3 }]}>
-        {t("attribution.metNorway")} · {t("attribution.copernicus")} · {t("attribution.chirps")} · {t("attribution.firms")}
+        {t(ATTRIBUTION.metNorway)} · {t(ATTRIBUTION.copernicus)} · {t(ATTRIBUTION.chirps)} · {t(ATTRIBUTION.firms)}
       </Text>
     </ScrollView>
   );

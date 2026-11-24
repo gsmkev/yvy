@@ -15,24 +15,24 @@ export function SyncBar() {
   if (st.phase === "idle" && st.online && st.pending === 0 && !st.error) return null;
   const text =
     st.phase === "syncing"
-      ? t("sync.syncing")
+      ? t("sync.common.syncing")
       : !st.online
         ? st.pending === 0
-          ? t("sync.offlineNone")
+          ? t("sync.offline.none")
           : st.pending === 1
-            ? t("sync.offlineOne")
-            : t("sync.offline", { count: st.pending })
+            ? t("sync.offline.one")
+            : t("sync.common.offline", { count: st.pending })
         : st.error
-          ? t("sync.failed")
+          ? t("sync.common.failed")
           : st.pending === 1
-            ? t("sync.pendingOne")
-            : t("sync.pending", { count: st.pending });
+            ? t("sync.common.pendingOne")
+            : t("sync.common.pending", { count: st.pending });
   const warn = !st.online || !!st.error;
   return (
     <Pressable
       onPress={syncNow}
       accessibilityRole="button"
-      accessibilityLabel={`${text}. ${t("sync.syncNow")}`}
+      accessibilityLabel={`${text}. ${t("sync.common.syncNow")}`}
       style={[s.bar, { backgroundColor: warn ? C.atencionSuave : C.accionSuave }]}
     >
       {st.phase === "syncing" ? (
@@ -49,9 +49,9 @@ export function SyncBar() {
 export function DemoBar({ onLeave }: { onLeave: () => void }) {
   return (
     <View accessibilityRole="alert" style={s.demoBar}>
-      <Text style={[T.smallMedium, { color: C.papel, flexShrink: 1 }]}>{t("ui.publicDemoNotice")}</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel={t("office.demoExit")} onPress={onLeave} hitSlop={10} style={{ minHeight: 32, justifyContent: "center" }}>
-        <Text style={[T.smallMedium, { color: C.papel, textDecorationLine: "underline" }]}>{t("office.demoExit")}</Text>
+      <Text style={[T.smallMedium, { color: C.papel, flexShrink: 1 }]}>{t("ui.public.demoNotice")}</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel={t("office.demo.exit")} onPress={onLeave} hitSlop={10} style={{ minHeight: 32, justifyContent: "center" }}>
+        <Text style={[T.smallMedium, { color: C.papel, textDecorationLine: "underline" }]}>{t("office.demo.exit")}</Text>
       </Pressable>
     </View>
   );

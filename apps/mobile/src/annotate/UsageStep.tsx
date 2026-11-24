@@ -18,16 +18,16 @@ export function UsageStep({ question, hint, products, areaHa, onAnswer }: { ques
   const done = () => onAnswer(products.map((p, i) => ({ ...p, usedQty: texts[i] ? parse(texts[i]!) : undefined })));
   const anyText = texts.some((x) => x !== "");
   return (
-    <ScreenBody footer={<Button big title={anyText ? t("app.next") : t("app.usageAsPlanned")} disabled={!texts.every(valid)} onPress={done} />}>
+    <ScreenBody footer={<Button big title={anyText ? t("app.common.next") : t("app.usage.asPlanned")} disabled={!texts.every(valid)} onPress={done} />}>
       <Text style={T.title}>{tr(question)}</Text>
       {hint && <Text style={[T.small, { marginTop: 6, marginBottom: 16 }]}>{tr(hint)}</Text>}
       {products.map((p, i) => {
-        const unit = tr(`fields.usageUnit_${p.unit}`);
+        const unit = tr(`fields.usage.unit_${p.unit}`);
         const plan = planned(p);
         return (
           <View key={p.productId ?? p.name} style={{ marginBottom: 20 }}>
             <Text style={T.body}>{p.name}</Text>
-            {plan !== null && <Text style={T.small}>{t("app.usagePlanned", { qty: `${String(plan).replace(".", ",")} ${unit}` })}</Text>}
+            {plan !== null && <Text style={T.small}>{t("app.usage.planned", { qty: `${String(plan).replace(".", ",")} ${unit}` })}</Text>}
             <View style={st.numberRow}>
               <TextInput
                 value={texts[i]}

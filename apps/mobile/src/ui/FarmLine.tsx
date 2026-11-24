@@ -15,12 +15,12 @@ export function FarmLine({ style }: { style?: StyleProp<ViewStyle> }) {
     <View style={style}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={t("app.farmChange", { name: current.name })}
+        accessibilityLabel={t("app.common.farmChange", { name: current.name })}
         onPress={() => setOpen((o) => !o)}
         style={st.line}
       >
         <Text style={T.smallMedium} numberOfLines={1}>
-          {t("app.farmChange", { name: current.name })}
+          {t("app.common.farmChange", { name: current.name })}
         </Text>
       </Pressable>
       {open && (

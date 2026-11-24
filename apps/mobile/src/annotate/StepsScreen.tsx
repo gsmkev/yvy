@@ -41,7 +41,7 @@ export function StepsScreen({ a, i }: { a: AnnotateState; i: number }) {
               <Row key={p.id} choice="radio" title={p.name} selected={values[step.key] === p.id} onPress={() => advance({ ...values, [step.key]: p.id })} />
             ))}
           </RadioGroup>
-          <Button kind="text" title={t("app.waterPoiOther")} onPress={() => advance({ ...values, [step.key]: undefined })} style={{ marginTop: 12 }} />
+          <Button kind="text" title={t("app.water.poiOther")} onPress={() => advance({ ...values, [step.key]: undefined })} style={{ marginTop: 12 }} />
         </ScrollView>
       </View>
     );

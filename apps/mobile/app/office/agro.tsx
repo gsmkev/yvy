@@ -4,15 +4,15 @@ import { t } from "@yvy/shared";
 import { HubScreen, type HubEntry } from "../../src/office/hub";
 
 const entries = (): HubEntry[] => [
-  { id: "sowing-plan", title: t("ui.sowPlanTitle"), hint: t("office.agroRowSowPlan"), icon: Leaf, path: "/office/agro/sowing-plan" },
-  { id: "sowing-window", title: t("ui.sowWinTitle"), hint: t("office.agroRowSowWin"), icon: CloudSun, path: "/office/agro/sowing-window" },
-  { id: "spray", title: t("ui.sprayTitle"), hint: t("office.agroRowSpray"), icon: SprayCan, path: "/office/agro/spray" },
-  { id: "withdrawal", title: t("ui.withdrawalTitle"), hint: t("office.agroRowWithdrawal"), icon: ShieldAlert, path: "/office/agro/withdrawal" },
-  { id: "buffer", title: t("ui.bufferTitle"), hint: t("office.agroRowBuffer"), icon: Home, path: "/office/agro/buffer" },
-  { id: "soil", title: t("ui.soilTitle"), hint: t("office.agroRowSoil"), icon: FlaskConical, path: "/office/agro/soil" },
-  { id: "deliveries", title: t("ui.delivTitle"), hint: t("office.agroRowDeliveries"), icon: Truck, path: "/office/agro/deliveries" },
+  { id: "sowing-plan", title: t("ui.sow.planTitle"), hint: t("office.agro.rowSowPlan"), icon: Leaf, path: "/office/agro/sowing-plan" },
+  { id: "sowing-window", title: t("ui.sow.winTitle"), hint: t("office.agro.rowSowWin"), icon: CloudSun, path: "/office/agro/sowing-window" },
+  { id: "spray", title: t("ui.spray.title"), hint: t("office.agro.rowSpray"), icon: SprayCan, path: "/office/agro/spray" },
+  { id: "withdrawal", title: t("ui.withdrawal.title"), hint: t("office.agro.rowWithdrawal"), icon: ShieldAlert, path: "/office/agro/withdrawal" },
+  { id: "buffer", title: t("ui.buffer.title"), hint: t("office.agro.rowBuffer"), icon: Home, path: "/office/agro/buffer" },
+  { id: "soil", title: t("ui.soil.title"), hint: t("office.agro.rowSoil"), icon: FlaskConical, path: "/office/agro/soil" },
+  { id: "deliveries", title: t("ui.deliv.title"), hint: t("office.agro.rowDeliveries"), icon: Truck, path: "/office/agro/deliveries" },
 ];
 
 export default function Agro() {
-  return <HubScreen title={t("office.agroMenu")} entries={entries()} />;
+  return <HubScreen title={t("office.agro.menu")} entries={entries()} />;
 }

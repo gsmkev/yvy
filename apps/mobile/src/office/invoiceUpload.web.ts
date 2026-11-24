@@ -20,7 +20,7 @@ async function compress(uri: string): Promise<Blob> {
     blob = await toBlob(canvas, q);
     if (blob && blob.size <= LIMITS.photos.maxBytes) return blob;
   }
-  if (!blob) throw new Error(t("ui.photoUploadFailed"));
+  if (!blob) throw new Error(t("ui.photo.uploadFailed"));
   return blob;
 }
 
@@ -28,6 +28,6 @@ export async function uploadInvoicePhoto(kind: PhotoKind, id: string, p: PickedP
   const blob = await compress(p.uri);
   const { url } = await api<{ url: string }>("POST", `/org/erp/photos/${kind}/${id}/upload-url`);
   const put = await fetch(url, { method: "PUT", body: blob, headers: { "content-type": "image/webp" } });
-  if (!put.ok) throw new Error(t("ui.photoUploadFailed"));
+  if (!put.ok) throw new Error(t("ui.photo.uploadFailed"));
   await api("POST", `/org/erp/photos/${kind}/${id}/uploaded`);
 }

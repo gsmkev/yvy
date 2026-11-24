@@ -37,7 +37,7 @@ export function usePlotActions(plot: Plot) {
     getDb().savePlot(orgId, { id: plot.id, farmId: plot.farmId, name, kind: edit.kind, crop: edit.kind === "crop" ? ((edit.crop || null) as typeof plot.crop) : null, geometry: geo });
     localChanged();
     setEditing(null);
-    showToast(t("ui.toastPlotUpdated"));
+    showToast(t("ui.toast.plotUpdated"));
     void syncNow();
     return true;
   };
@@ -45,7 +45,7 @@ export function usePlotActions(plot: Plot) {
   const submitEdit = async () => {
     if (!editing) return;
     const name = editing.name.trim();
-    if (!name) return setFormError(t("office.plotNeedsName"));
+    if (!name) return setFormError(t("office.plot.needsName"));
     setFormError(null);
     // Campaña, siembra y pastura no están en el protocolo de sync: van por REST.
     if (saveOffline(editing, name)) return;
@@ -53,7 +53,7 @@ export function usePlotActions(plot: Plot) {
     const r = await patch.mutate({ name, kind: editing.kind, crop: isCrop ? editing.crop || null : null, season: isCrop ? editing.season || null : null, sowingDate: editing.sowingDate || null, pastureType: isCrop ? null : editing.pastureType.trim() || null });
     if (r.ok) {
       setEditing(null);
-      showToast(t("ui.toastPlotUpdated"));
+      showToast(t("ui.toast.plotUpdated"));
       void syncNow();
     }
   };
@@ -62,7 +62,7 @@ export function usePlotActions(plot: Plot) {
     const r = await remove.mutate();
     if (r.ok) {
       setConfirming(false);
-      showToast(t("ui.toastPlotDeleted"));
+      showToast(t("ui.toast.plotDeleted"));
       void syncNow();
       router.back();
     }

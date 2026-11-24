@@ -45,7 +45,7 @@ describe("gráficos", () => {
 });
 
 describe("menú de Gestión", () => {
-  const I = (id: string, group: OfficeMenuItem["group"], show?: OfficeMenuItem["show"]): OfficeMenuItem => ({ id, group, title: "ui.alertsTitle", icon: null as never, href: `/office/${id}`, show });
+  const I = (id: string, group: OfficeMenuItem["group"], show?: OfficeMenuItem["show"]): OfficeMenuItem => ({ id, group, title: "ui.alerts.title", icon: null as never, href: `/office/${id}`, show });
   const ctx = { role: "owner", farms: 1, plots: 0, hasClients: false };
   it("agrupa, respeta el orden y oculta grupos vacíos", () => {
     const g = groupMenu([I("a", "admin"), I("b", "campo"), I("c", "campo", (c) => c.hasClients)], ctx);

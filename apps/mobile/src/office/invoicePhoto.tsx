@@ -42,21 +42,21 @@ function CameraSheet({ onClose, onShot }: { onClose: () => void; onShot: (p: Pic
   if (!perm.granted)
     return (
       <View style={{ flex: 1, backgroundColor: C.papel, padding: 20, justifyContent: "center", gap: 12 }}>
-        <Text style={T.body}>{t("app.cameraDenied")}</Text>
-        <Button title={t("app.allowCamera")} onPress={request} />
-        <Button kind="text" title={t("ui.cancel")} onPress={onClose} />
+        <Text style={T.body}>{t("app.common.cameraDenied")}</Text>
+        <Button title={t("app.common.allowCamera")} onPress={request} />
+        <Button kind="text" title={t("ui.common.cancel")} onPress={onClose} />
       </View>
     );
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       <CameraView ref={setRef} style={{ flex: 1 }} facing="back" />
       <View style={st.row}>
-        <Pressable onPress={onClose} accessibilityLabel={t("ui.cancel")} hitSlop={12} style={{ width: 80 }}>
-          <Text style={[T.bodyMedium, { color: C.blanco }]}>{t("ui.cancel")}</Text>
+        <Pressable onPress={onClose} accessibilityLabel={t("ui.common.cancel")} hitSlop={12} style={{ width: 80 }}>
+          <Text style={[T.bodyMedium, { color: C.blanco }]}>{t("ui.common.cancel")}</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={t("app.takePhoto")}
+          accessibilityLabel={t("app.common.takePhoto")}
           disabled={busy}
           style={[st.shutter, busy && { opacity: 0.5 }]}
           onPress={async () => {

@@ -56,7 +56,7 @@ export function photoIssues(stats: PhotoStats): PhotoIssue[] {
 /** Aviso en es-PY para los problemas encontrados; null si la foto está bien. */
 export function photoIssueMessage(issues: PhotoIssue[]): string | null {
   if (!issues.length) return null;
-  return t(issues.length === 2 ? "app.photoQualityBoth" : issues[0] === "dark" ? "app.photoQualityDark" : "app.photoQualityBlurry");
+  return t(issues.length === 2 ? "app.photo.qualityBoth" : issues[0] === "dark" ? "app.photo.qualityDark" : "app.photo.qualityBlurry");
 }
 
 const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

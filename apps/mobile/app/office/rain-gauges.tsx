@@ -21,22 +21,22 @@ import { T } from "../../src/ui/theme";
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const monthLabel = (key: string) => `${MONTHS[Number(key.slice(5)) - 1]} ${key.slice(2, 4)}`;
 
-function Gauge({ name, months, season }: { name: string; months: GaugeRow[]; season: GaugeRow }) {
+function Gauge({ name, table: { months, season } }: { name: string; table: { months: GaugeRow[]; season: GaugeRow } }) {
   const units = useUnits();
   const mm = (v: number) => fmtNumber(Math.round(mmToRain(v, units.rain) * 10) / 10);
   const rl = rainLabel(units.rain);
   const current = months[months.length - 1];
   const stats: StatItem[] = [];
-  if (current?.gaugeMm != null) stats.push({ label: t("office.gaugesMonthTotal"), value: mm(current.gaugeMm), unit: rl });
-  if (season.gaugeMm != null) stats.push({ label: t("ui.gaugesSeason"), value: mm(season.gaugeMm), unit: rl });
-  if (season.gaugeMm != null && season.satMm != null) stats.push({ label: t("ui.satelliteRain"), value: mm(season.satMm), unit: rl });
-  if (season.gaugeMm != null && season.normalMm != null) stats.push({ label: t("ui.rainNormal"), value: mm(season.normalMm), unit: rl });
+  if (current?.gaugeMm != null) stats.push({ label: t("office.common.gaugesMonthTotal"), value: mm(current.gaugeMm), unit: rl });
+  if (season.gaugeMm != null) stats.push({ label: t("ui.gauges.season"), value: mm(season.gaugeMm), unit: rl });
+  if (season.gaugeMm != null && season.satMm != null) stats.push({ label: t("ui.common.satelliteRain"), value: mm(season.satMm), unit: rl });
+  if (season.gaugeMm != null && season.normalMm != null) stats.push({ label: t("ui.rain.normal"), value: mm(season.normalMm), unit: rl });
   const bars = months.filter((m) => m.gaugeMm != null).map((m) => ({ label: monthLabel(m.key), value: Math.round(mmToRain(m.gaugeMm!, units.rain) * 10) / 10 }));
   return (
     <View>
       <SectionHeader title={name} />
       {season.gaugeMm === null ? (
-        <Text style={T.small}>{t("ui.gaugesNoData")}</Text>
+        <Text style={T.small}>{t("ui.gauges.noData")}</Text>
       ) : (
         <>
           <StatRow items={stats} />
@@ -58,21 +58,21 @@ export default function RainGauges() {
   const cutoff = useMemo(() => (q.data ? lastSatDate(q.data.daily, today) : today), [q.data, today]);
 
   return (
-    <OfficeScreen title={t("ui.gaugesTitle")} subtitle={farm?.name} query={q}>
+    <OfficeScreen title={t("ui.gauges.title")} subtitle={farm?.name} query={q}>
       <FarmChips farms={farms} value={id} onChange={setFarmId} />
       {!farm ? (
-        <EmptyState title={t("office.reportsNoFarms")} />
+        <EmptyState title={t("office.reports.noFarms")} />
       ) : gauges.length === 0 ? (
-        <EmptyState title={t("ui.gaugesNone")} hint={t("ui.gaugesNoneHint")} />
+        <EmptyState title={t("ui.gauges.none")} hint={t("ui.gauges.noneHint")} />
       ) : (
-        <OnlineState query={q} isEmpty={() => false} empty={{ title: t("ui.gaugesNone") }}>
+        <OnlineState query={q} isEmpty={() => false} empty={{ title: t("ui.gauges.none") }}>
           {(c) => (
             <>
-              <Text style={[T.small, { marginTop: 8 }]}>{t("ui.gaugesIntro", { from: `${from.slice(8)}/${from.slice(5, 7)}/${from.slice(0, 4)}`, to: `${cutoff.slice(8)}/${cutoff.slice(5, 7)}/${cutoff.slice(0, 4)}` })}</Text>
+              <Text style={[T.small, { marginTop: 8 }]}>{t("ui.gauges.intro", { from: `${from.slice(8)}/${from.slice(5, 7)}/${from.slice(0, 4)}`, to: `${cutoff.slice(8)}/${cutoff.slice(5, 7)}/${cutoff.slice(0, 4)}` })}</Text>
               {gauges.map((g) => (
-                <Gauge key={g.id} name={g.name} {...gaugeTable(c, g.id, from, cutoff)} />
+                <Gauge key={g.id} name={g.name} table={gaugeTable(c, g.id, from, cutoff)} />
               ))}
-              {hasUnassignedRain(c) && <Gauge name={t("ui.gaugesUnassigned")} {...gaugeTable(c, null, from, cutoff)} />}
+              {hasUnassignedRain(c) && <Gauge name={t("ui.gauges.unassigned")} table={gaugeTable(c, null, from, cutoff)} />}
             </>
           )}
         </OnlineState>

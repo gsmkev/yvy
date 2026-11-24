@@ -25,17 +25,17 @@ export default function Compare() {
   const allowed = !isFieldRole(getSession()?.organization.role ?? "");
   const q = useOnline<FarmRow[]>(allowed ? "/org/compare/farms" : null);
   return (
-    <OfficeScreen title={t("ui.compareTitle")} subtitle={t("office.compareHint")} query={q}>
-      <OnlineState query={q} isEmpty={(d) => d.length < 2} empty={{ title: t("ui.compareNeedTwoFarms"), hint: t("ui.compareNeedTwoFarmsHint") }}>
+    <OfficeScreen title={t("ui.compare.title")} subtitle={t("office.compare.hint")} query={q}>
+      <OnlineState query={q} isEmpty={(d) => d.length < 2} empty={{ title: t("ui.compare.needTwoFarms"), hint: t("ui.compare.needTwoFarmsHint") }}>
         {(rows) =>
           rows.map((r) => {
             const lines = [
-              { label: t("ui.area"), value: `${fmtNumber(r.areaHa)} ha` },
-              { label: t("ui.plots"), value: String(r.plots) },
-              ...(r.rain30Mm !== null ? [{ label: t("ui.compareRain30"), value: `${fmtNumber(r.rain30Mm)} mm` }] : []),
-              ...(r.ndvi30 !== null ? [{ label: t("ui.compareNdvi30"), value: fmtNumber(r.ndvi30, 2) }] : []),
-              ...(r.records30d > 0 ? [{ label: t("ui.compareRecords30"), value: String(r.records30d) }] : []),
-              ...(r.activeAlerts > 0 ? [{ label: t("ui.compareAlerts"), value: String(r.activeAlerts) }] : []),
+              { label: t("ui.common.area"), value: `${fmtNumber(r.areaHa)} ha` },
+              { label: t("ui.common.plots"), value: String(r.plots) },
+              ...(r.rain30Mm !== null ? [{ label: t("ui.compare.rain30"), value: `${fmtNumber(r.rain30Mm)} mm` }] : []),
+              ...(r.ndvi30 !== null ? [{ label: t("ui.compare.ndvi30"), value: fmtNumber(r.ndvi30, 2) }] : []),
+              ...(r.records30d > 0 ? [{ label: t("ui.compare.records30"), value: String(r.records30d) }] : []),
+              ...(r.activeAlerts > 0 ? [{ label: t("ui.compare.alerts"), value: String(r.activeAlerts) }] : []),
             ];
             return (
               <View key={r.id} style={{ marginTop: 16, padding: 16, borderRadius: RADIUS, backgroundColor: C.blanco, borderWidth: 1, borderColor: C.linea }}>

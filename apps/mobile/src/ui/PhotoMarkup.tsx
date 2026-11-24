@@ -108,6 +108,7 @@ export function PhotoMarkup({
     <View style={s.root}>
       <View style={s.board} onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
         {size.width > 0 && (
+          // nosemgrep: react-props-spreading -- PanResponder entrega sus manejadores como un objeto de props
           <View ref={shot} collapsable={false} style={{ width: size.width, height: size.height }} {...pan.panHandlers}>
             <Image source={{ uri }} style={{ width: size.width, height: size.height }} resizeMode="cover" />
             <Svg width={size.width} height={size.height} style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -120,16 +121,16 @@ export function PhotoMarkup({
         )}
       </View>
       <View style={s.panel}>
-        <Text style={[T.small, { color: C.papel, marginBottom: 10 }]}>{t("app.markupHint")}</Text>
+        <Text style={[T.small, { color: C.papel, marginBottom: 10 }]}>{t("app.markup.hint")}</Text>
         <View style={s.tools}>
-          <Button kind={tool === "arrow" ? "primary" : "secondary"} title={t("app.markupArrow")} onPress={() => setTool("arrow")} style={{ flex: 1 }} />
-          <Button kind={tool === "circle" ? "primary" : "secondary"} title={t("app.markupCircle")} onPress={() => setTool("circle")} style={{ flex: 1 }} />
+          <Button kind={tool === "arrow" ? "primary" : "secondary"} title={t("app.markup.arrow")} onPress={() => setTool("arrow")} style={{ flex: 1 }} />
+          <Button kind={tool === "circle" ? "primary" : "secondary"} title={t("app.markup.circle")} onPress={() => setTool("circle")} style={{ flex: 1 }} />
         </View>
         <View style={s.tools}>
-          <Button kind="secondary" title={t("app.markupUndo")} disabled={marks.length === 0 || busy} onPress={() => setMarks(undo(marks))} style={{ flex: 1 }} />
-          <Button kind="secondary" title={t("ui.cancel")} disabled={busy} onPress={() => onDone(null)} style={{ flex: 1 }} />
+          <Button kind="secondary" title={t("app.markup.undo")} disabled={marks.length === 0 || busy} onPress={() => setMarks(undo(marks))} style={{ flex: 1 }} />
+          <Button kind="secondary" title={t("ui.common.cancel")} disabled={busy} onPress={() => onDone(null)} style={{ flex: 1 }} />
         </View>
-        <Button big title={marks.length ? t("app.markupDone") : t("app.markupNoDrawing")} loading={busy} onPress={finish} />
+        <Button big title={marks.length ? t("app.markup.done") : t("app.markup.noDrawing")} loading={busy} onPress={finish} />
       </View>
     </View>
   );

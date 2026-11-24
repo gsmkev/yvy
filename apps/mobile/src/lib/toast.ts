@@ -37,9 +37,9 @@ export const useToast = () =>
  */
 export function toastSaved(): void {
   success();
-  const pendingText = t("app.toastSavedPending");
+  const pendingText = t("app.toast.savedPending");
   showToast(pendingText);
   void syncNow().then(() => {
-    if (current?.text === pendingText && getDb().pendingCount() === 0) showToast(t("app.toastSavedSent"));
+    if (current?.text === pendingText && getDb().pendingCount() === 0) showToast(t("app.toast.savedSent"));
   });
 }

@@ -21,7 +21,7 @@ export function NeedsSignalNote() {
   if (online) return null;
   return (
     <Text accessibilityRole="alert" style={[T.smallMedium, { marginTop: 8 }]}>
-      {t("office.needsSignalToSave")}
+      {t("office.needs.signalToSave")}
     </Text>
   );
 }
@@ -43,11 +43,11 @@ export interface HubEntry {
 export function HubScreen({ title, entries }: { title: string; entries: HubEntry[] }) {
   const allowed = useOfficeAccess();
   const { farms, farm, setFarmId } = useFarmPick();
-  if (!allowed) return <OfficeScreen title={title}><EmptyState title={t("office.sanitaryNoAccess")} /></OfficeScreen>;
+  if (!allowed) return <OfficeScreen title={title}><EmptyState title={t("office.sanitary.noAccess")} /></OfficeScreen>;
   return (
     <OfficeScreen title={title} subtitle={farms.length === 1 ? farm?.name : undefined}>
       {farms.length === 0 ? (
-        <EmptyState title={t("office.hubNoFarms")} hint={t("office.hubNoFarmsHint")} />
+        <EmptyState title={t("office.hub.noFarms")} hint={t("office.hub.noFarmsHint")} />
       ) : (
         <>
           <FarmChips farms={farms} value={farm?.id} onChange={setFarmId} />
@@ -88,11 +88,11 @@ export function FarmFrame({
 }) {
   const allowed = useOfficeAccess();
   const online = useOnlineFlag();
-  if (!allowed) return <OfficeScreen title={title}><EmptyState title={t("office.sanitaryNoAccess")} /></OfficeScreen>;
+  if (!allowed) return <OfficeScreen title={title}><EmptyState title={t("office.sanitary.noAccess")} /></OfficeScreen>;
   return (
     <OfficeScreen title={title} subtitle={subtitle} query={query} action={action ? { ...action, disabled: !online } : undefined}>
       {farms.length === 0 ? (
-        <EmptyState title={t("office.hubNoFarms")} hint={t("office.hubNoFarmsHint")} />
+        <EmptyState title={t("office.hub.noFarms")} hint={t("office.hub.noFarmsHint")} />
       ) : (
         <>
           <FarmChips farms={farms} value={farm?.id} onChange={setFarmId} />

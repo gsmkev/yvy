@@ -40,6 +40,7 @@ export function SwitchRow({ title, hint, value, onValueChange, disabled }: { tit
         <Text style={T.body}>{title}</Text>
         {hint ? <Text style={T.small}>{hint}</Text> : null}
       </View>
+      {/* nosemgrep: react-props-spreading -- `activeThumbColor` no está en los tipos de Switch pero lo lee react-native-web */}
       <Switch value={value} disabled={disabled} accessibilityLabel={title} onValueChange={(v) => (tap(), onValueChange(v))} trackColor={{ false: C.lineaFuerte, true: C.accion }} thumbColor={C.blanco} {...({ activeThumbColor: C.blanco } as object)} />
     </View>
   );

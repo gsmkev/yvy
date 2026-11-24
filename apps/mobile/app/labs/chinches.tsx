@@ -7,18 +7,18 @@ import { Text } from "../../src/ui/kit";
 export default function Chinches() {
   return (
     <Lab
-      title={t("app.labsBugsTitle")}
-      intro={t("app.labsBugsIntro")}
+      title={t("app.labs.bugsTitle")}
+      intro={t("app.labs.bugsIntro")}
       art={<BeatClothIllustration />}
       result={
         <>
-          <Text style={T.display}>{t("app.labsBugsTotal")}</Text>
-          <Fact label={t("app.labsBugsSpeciesNezara")} value="4" />
-          <Fact label={t("app.labsBugsSpeciesPiezodorus")} value="2" />
-          <Fact label={t("app.labsBugsSpeciesEdessa")} value="1" />
-          <Fact label={t("app.labsBugsPerMeterLabel")} value={t("app.labsBugsPerMeter", { n: "3,5" })} />
-          <Text style={[T.body, { marginTop: 16 }]}>{t("app.labsBugsThreshold")}</Text>
-          <Text style={[T.small, { marginTop: 8 }]}>{t("app.labsBugsNext")}</Text>
+          <Text style={T.display}>{t("app.labs.bugsTotal")}</Text>
+          <Fact label={t("app.labs.bugsSpeciesNezara")} value="4" />
+          <Fact label={t("app.labs.bugsSpeciesPiezodorus")} value="2" />
+          <Fact label={t("app.labs.bugsSpeciesEdessa")} value="1" />
+          <Fact label={t("app.labs.bugsPerMeterLabel")} value={t("app.labs.bugsPerMeter", { n: "3,5" })} />
+          <Text style={[T.body, { marginTop: 16 }]}>{t("app.labs.bugsThreshold")}</Text>
+          <Text style={[T.small, { marginTop: 8 }]}>{t("app.labs.bugsNext")}</Text>
         </>
       }
     />

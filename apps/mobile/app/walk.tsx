@@ -39,7 +39,7 @@ function Walk() {
     if (isTooShort(d)) {
       discardWalk();
       setPending(null);
-      showToast(t("app.walkTooShort"));
+      showToast(t("app.walk.tooShort"));
       return router.back();
     }
     const db = getDb();
@@ -74,10 +74,10 @@ function Walk() {
     if (d) save(d);
   };
   const discard = () =>
-    Alert.alert(t("app.walkDiscardConfirm"), undefined, [
-      { text: t("ui.cancel"), style: "cancel" },
+    Alert.alert(t("app.walk.discardConfirm"), undefined, [
+      { text: t("ui.common.cancel"), style: "cancel" },
       {
-        text: t("app.walkDiscard"),
+        text: t("app.walk.discard"),
         style: "destructive",
         onPress: () => {
           discardWalk();
@@ -90,35 +90,35 @@ function Walk() {
   return (
     <ScrollView style={k.screen} contentContainerStyle={k.pad}>
       <Stack.Screen options={{ title: "" }} />
-      <Text style={T.title}>{t("app.walkTitle")}</Text>
-      {!recording && !pending && <Text style={[T.body, { marginTop: 12 }]}>{t("app.walkExplain")}</Text>}
+      <Text style={T.title}>{t("app.walk.title")}</Text>
+      {!recording && !pending && <Text style={[T.body, { marginTop: 12 }]}>{t("app.walk.explain")}</Text>}
       {shown && (
         <View style={{ marginTop: 28, gap: 20 }}>
           <View>
-            <Text style={T.small}>{t("app.walkDistance")}</Text>
+            <Text style={T.small}>{t("app.walk.distance")}</Text>
             <Text style={T.number}>{formatDistance(shown.distanceM)}</Text>
           </View>
           <View>
-            <Text style={T.small}>{t("app.walkTime")}</Text>
+            <Text style={T.small}>{t("app.walk.time")}</Text>
             <Text style={T.number}>{formatDuration(durationS(shown, recording ? Date.now() : shown.lastAt))}</Text>
           </View>
-          <Text style={T.small}>{shown.points.length === 0 ? t("app.walkWaiting") : t("app.walkPoints", { n: shown.points.length })}</Text>
+          <Text style={T.small}>{shown.points.length === 0 ? t("app.walk.waiting") : t("app.walk.points", { n: shown.points.length })}</Text>
         </View>
       )}
-      {recording && <Text style={[T.small, { marginTop: 20 }]}>{t("app.walkRecordingHint")}</Text>}
-      {denied && <Text style={[T.body, { marginTop: 16 }]}>{t("app.walkDenied")}</Text>}
+      {recording && <Text style={[T.small, { marginTop: 20 }]}>{t("app.walk.recordingHint")}</Text>}
+      {denied && <Text style={[T.body, { marginTop: 16 }]}>{t("app.walk.denied")}</Text>}
       <View style={{ marginTop: 32 }}>
         {recording ? (
-          <Button big title={t("app.walkStop")} onPress={finish} />
+          <Button big title={t("app.walk.stop")} onPress={finish} />
         ) : pending ? (
           <>
-            <Button big title={t("app.walkStop")} onPress={() => save(pending)} />
-            <Button kind="text" title={t("app.walkDiscard")} onPress={discard} style={{ marginTop: 8 }} />
+            <Button big title={t("app.walk.stop")} onPress={() => save(pending)} />
+            <Button kind="text" title={t("app.walk.discard")} onPress={discard} style={{ marginTop: 8 }} />
           </>
         ) : (
-          <Button big title={t("app.walkStart")} onPress={start} />
+          <Button big title={t("app.walk.start")} onPress={start} />
         )}
-        {recording && <Button kind="text" title={t("app.walkDiscard")} onPress={discard} style={{ marginTop: 8 }} />}
+        {recording && <Button kind="text" title={t("app.walk.discard")} onPress={discard} style={{ marginTop: 8 }} />}
       </View>
     </ScrollView>
   );

@@ -35,44 +35,44 @@ export default function AlertSettingsScreen() {
     save.reset();
   }, [q.data]);
 
-  if (isFieldRole(role)) return <OfficeScreen title={t("ui.alertSettingsTitle")}><EmptyState title={t("office.admNoAccess")} /></OfficeScreen>;
+  if (isFieldRole(role)) return <OfficeScreen title={t("ui.alert.settingsTitle")}><EmptyState title={t("office.adm.noAccess")} /></OfficeScreen>;
 
   const values = draft ? ALERT_SETTING_KEYS.map((k) => parseDecimal(draft[k])) : [];
   const errorOf = (k: (typeof ALERT_SETTING_KEYS)[number]): string | undefined => {
     if (!draft) return undefined;
     const n = parseDecimal(draft[k]);
     const { min, max } = ALERT_SETTINGS_LIMITS[k];
-    return n === null || n < min || n > max ? t("office.alertSettingsRange", { min, max }) : undefined;
+    return n === null || n < min || n > max ? t("office.common.alertSettingsRange", { min, max }) : undefined;
   };
   const valid = !!draft && ALERT_SETTING_KEYS.every((k) => !errorOf(k));
   const submit = async () => {
     if (!draft || !valid) return;
     const r = await save.mutate({ frostTminC: values[0]!, excessRainMm24h: values[1]!, droughtDeficitPct: values[2]! });
     if (r.ok) {
-      showToast(t("ui.alertSettingsSaved"));
+      showToast(t("ui.alert.settingsSaved"));
       void q.refresh();
     }
   };
 
   return (
     <OfficeScreen
-      title={t("ui.alertSettingsTitle")}
-      subtitle={t("ui.alertSettingsIntro")}
+      title={t("ui.alert.settingsTitle")}
+      subtitle={t("ui.alert.settingsIntro")}
       query={q}
-      action={canEdit && draft ? { label: t("ui.save"), onPress: () => void submit(), disabled: !valid || !!noSignal, loading: save.pending } : undefined}
+      action={canEdit && draft ? { label: t("ui.common.save"), onPress: () => void submit(), disabled: !valid || !!noSignal, loading: save.pending } : undefined}
       footer={canEdit ? <NoSignalNote /> : undefined}
     >
       <FarmChips farms={farms} value={farm?.id} onChange={setFarmId} />
-      {farms.length === 0 ? <EmptyState title={t("office.hubNoFarms")} hint={t("office.hubNoFarmsHint")} /> : null}
-      <OnlineState query={q} skeletonRows={3} empty={{ title: t("office.hubNoFarms") }} isEmpty={() => false}>
+      {farms.length === 0 ? <EmptyState title={t("office.hub.noFarms")} hint={t("office.hub.noFarmsHint")} /> : null}
+      <OnlineState query={q} skeletonRows={3} empty={{ title: t("office.hub.noFarms") }} isEmpty={() => false}>
         {() =>
           draft ? (
             <>
               {ALERT_SETTING_KEYS.map((k) => (
                 <TextField key={k} label={t(ALERT_SETTING_LABELS[k][0])} hint={t(ALERT_SETTING_LABELS[k][1])} value={draft[k]} onChangeText={(v) => setDraft({ ...draft, [k]: v })} kind="decimal" editable={canEdit} error={canEdit ? errorOf(k) : undefined} />
               ))}
-              {!canEdit ? <Text style={[T.small, { marginTop: 16 }]}>{t("ui.alertSettingsOnlyOwner")}</Text> : null}
-              {canEdit ? <Button kind="secondary" title={t("ui.alertSettingsDefaults")} onPress={() => setDraft(toDraft(DEFAULT_ALERT_SETTINGS))} style={{ marginTop: 20 }} /> : null}
+              {!canEdit ? <Text style={[T.small, { marginTop: 16 }]}>{t("ui.alert.settingsOnlyOwner")}</Text> : null}
+              {canEdit ? <Button kind="secondary" title={t("ui.alert.settingsDefaults")} onPress={() => setDraft(toDraft(DEFAULT_ALERT_SETTINGS))} style={{ marginTop: 20 }} /> : null}
               {save.error ? <Text accessibilityRole="alert" style={[T.bodyMedium, { marginTop: 16, color: C.peligro }]}>{save.error}</Text> : null}
             </>
           ) : null

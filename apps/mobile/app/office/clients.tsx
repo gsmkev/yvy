@@ -42,27 +42,27 @@ export default function ClientsScreen() {
     if (orgId === current) return;
     const block = canSwitchUser(unsentSummary(getDb()));
     if (block.blocked) {
-      const key: MessageKey = block.reason === "rejected" ? "office.orgSwitchBlockedRejected" : "office.orgSwitchBlockedPending";
+      const key: MessageKey = block.reason === "rejected" ? "office.org.switchBlockedRejected" : "office.org.switchBlockedPending";
       return Alert.alert(t(key, { n: block.n }));
     }
     setError(null);
-    enterOrganization(orgId).catch(() => setError(t("office.clientsEnterFailed")));
+    enterOrganization(orgId).catch(() => setError(t("office.clients.enterFailed")));
   };
 
   return (
-    <OfficeScreen title={t("ui.clientsTitle")} query={q}>
+    <OfficeScreen title={t("ui.clients.title")} query={q}>
       {error && <Text style={[T.small, { color: C.peligro, marginTop: 8 }]}>{error}</Text>}
-      <OnlineState query={q} isEmpty={(d) => d.clients.length === 0} empty={{ title: t("ui.clientsNone") }}>
+      <OnlineState query={q} isEmpty={(d) => d.clients.length === 0} empty={{ title: t("ui.clients.none") }}>
         {(d) => (
           <View>
             <Text style={[T.small, { marginTop: 4 }]}>
-              {t("ui.clientsSummary", { orgs: d.clients.length, alerts: d.clients.reduce((a, c) => a + c.farms.reduce((b, f) => b + f.activeAlerts, 0), 0) })}
+              {t("ui.clients.summary", { orgs: d.clients.length, alerts: d.clients.reduce((a, c) => a + c.farms.reduce((b, f) => b + f.activeAlerts, 0), 0) })}
             </Text>
-            {d.truncated && <Text style={T.small}>{t("ui.clientsTruncated")}</Text>}
+            {d.truncated && <Text style={T.small}>{t("ui.clients.truncated")}</Text>}
             {d.clients.map((c) => (
               <View key={c.organization.id}>
-                <SectionHeader title={c.organization.name} action={c.organization.id === current ? t("office.clientsCurrent") : t("ui.clientsOpenOrg")} onAction={() => open(c.organization.id)} />
-                {c.farms.length === 0 && <Text style={T.small}>{t("ui.clientsNoFarms")}</Text>}
+                <SectionHeader title={c.organization.name} action={c.organization.id === current ? t("office.clients.current") : t("ui.clients.openOrg")} onAction={() => open(c.organization.id)} />
+                {c.farms.length === 0 && <Text style={T.small}>{t("ui.clients.noFarms")}</Text>}
                 {c.farms.map((f) => {
                   const alerts = c.alerts.filter((a) => a.farmId === f.id);
                   return (
@@ -72,7 +72,7 @@ export default function ClientsScreen() {
                         subtitle={[
                           `${fmtNumber(haToArea(f.areaHa, units.area))} ${areaLabel(units.area)}`,
                           f.department,
-                          f.lastRecordAt ? `${t("ui.lastRecord")} ${fmtDate(f.lastRecordAt)}` : t("ui.neverRecorded"),
+                          f.lastRecordAt ? `${t("ui.last.record")} ${fmtDate(f.lastRecordAt)}` : t("ui.never.recorded"),
                         ]
                           .filter(Boolean)
                           .join(" · ")}
@@ -80,7 +80,7 @@ export default function ClientsScreen() {
                       />
                       {alerts.map((a) => (
                         <Text key={a.id} style={[T.smallMedium, { color: C.peligro, marginLeft: 4, marginBottom: 4 }]}>
-                          {t(`ui.alertKind_${a.kind}` as MessageKey)}: {a.summary}
+                          {t(`ui.alert.kind_${a.kind}` as MessageKey)}: {a.summary}
                         </Text>
                       ))}
                     </View>

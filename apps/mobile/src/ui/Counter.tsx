@@ -67,8 +67,8 @@ export function HerdCounter({
       <View style={{ paddingHorizontal: GUTTER, marginTop: 8 }}>
         {HERD_CATEGORIES.map((cat: HerdCategory) => (
           <View key={cat} style={st.row}>
-            <Text style={[T.heading, { flex: 1 }]}>{t(`fields.herd_${cat}`)}</Text>
-            <StepButton sign="−" label={`${t(`fields.herd_${cat}`)}: −1`} onBump={(d) => apply(bump(latest.current, cat, d))} />
+            <Text style={[T.heading, { flex: 1 }]}>{t(`fields.herd.${cat}`)}</Text>
+            <StepButton sign="−" label={`${t(`fields.herd.${cat}`)}: −1`} onBump={(d) => apply(bump(latest.current, cat, d))} />
             <TextInput
               value={counts[cat] === undefined ? "" : String(counts[cat])}
               onChangeText={(v) => apply(setTyped(latest.current, cat, v))}
@@ -76,20 +76,20 @@ export function HerdCounter({
               placeholder="0"
               placeholderTextColor={C.tinta3}
               selectTextOnFocus
-              accessibilityLabel={t(`fields.herd_${cat}`)}
+              accessibilityLabel={t(`fields.herd.${cat}`)}
               style={st.value}
             />
-            <StepButton sign="+" label={`${t(`fields.herd_${cat}`)}: +1`} onBump={(d) => apply(bump(latest.current, cat, d))} />
+            <StepButton sign="+" label={`${t(`fields.herd.${cat}`)}: +1`} onBump={(d) => apply(bump(latest.current, cat, d))} />
           </View>
         ))}
       </View>
       <View style={{ flex: 1 }} />
       <View style={{ paddingHorizontal: GUTTER, paddingBottom: 24 }}>
         <Text style={[T.heading, { textAlign: "center", marginBottom: 12 }]}>
-          {t("app.herdCounterTotal", { n: counterTotal(counts) })}
+          {t("app.herd.counterTotal", { n: counterTotal(counts) })}
         </Text>
-        <Button big title={t("app.next")} disabled={!canContinue(counts)} onPress={() => onDone(counts)} />
-        <Button kind="text" title={t("app.herdEmpty")} onPress={() => onDone(allZero())} style={{ marginTop: 4 }} />
+        <Button big title={t("app.common.next")} disabled={!canContinue(counts)} onPress={() => onDone(counts)} />
+        <Button kind="text" title={t("app.herd.empty")} onPress={() => onDone(allZero())} style={{ marginTop: 4 }} />
       </View>
     </View>
   );

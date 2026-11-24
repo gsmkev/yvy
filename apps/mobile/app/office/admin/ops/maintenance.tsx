@@ -39,25 +39,25 @@ export default function Maintenance() {
   const plans = useErp<Plan[]>(allowed ? "/org/erp/maintenance-plans" : null);
   const due = useErp<Due[]>(allowed ? "/org/erp/maintenance/due" : null);
   const logs = useErp<Log[]>(allowed ? "/org/erp/maintenance/logs" : null);
-  if (!allowed) return <NoAdminAccess title={t("ui.adminSection_maintenance")} />;
+  if (!allowed) return <NoAdminAccess title={t("ui.admin.section_maintenance")} />;
   const machine = (id: string) => machines.data?.find((m) => m.id === id);
   const unit = (id: string) => unitOf(machine(id)?.meterKind ?? "hours");
   const dueRows = due.data ?? [];
 
   return (
     <OfficeScreen
-      title={t("ui.adminSection_maintenance")}
+      title={t("ui.admin.section_maintenance")}
       query={logs}
       onRefresh={async () => void (await Promise.all([machines.refresh(), plans.refresh(), due.refresh(), logs.refresh()]))}
-      action={(machines.data ?? []).length > 0 ? { label: t("ui.maintLogNew"), icon: Plus, onPress: () => setLogging({ planId: null }), disabled: !!noSignal } : undefined}
+      action={(machines.data ?? []).length > 0 ? { label: t("ui.maint.logNew"), icon: Plus, onPress: () => setLogging({ planId: null }), disabled: !!noSignal } : undefined}
       footer={<NoSignalNote />}
     >
-      <OnlineState query={machines} isEmpty={(d) => d.length === 0} empty={{ title: t("ui.maintNoMachinesTitle"), hint: t("ui.maintNoMachinesHint") }}>
+      <OnlineState query={machines} isEmpty={(d) => d.length === 0} empty={{ title: t("ui.maint.noMachinesTitle"), hint: t("ui.maint.noMachinesHint") }}>
         {() => (
           <>
             {dueRows.length > 0 ? (
               <>
-                <SectionHeader title={t("ui.maintDueTitle")} />
+                <SectionHeader title={t("ui.maint.dueTitle")} />
                 <DataList
                   rows={dueRows}
                   keyOf={(d) => d.planId}
@@ -65,7 +65,7 @@ export default function Maintenance() {
                   subtitle={(d) => `${d.name} · ${fmtNumber(d.meter)} / ${fmtNumber(d.dueAt)} ${unitOf(d.meterKind)}`}
                   right={(d) => (
                     <Text style={[T.smallMedium, { color: d.status === "overdue" ? C.peligro : C.atencion }]}>
-                      {d.status === "overdue" ? t("ui.maintOverdue", { n: `${fmtNumber(-d.remaining)} ${unitOf(d.meterKind)}` }) : t("ui.maintSoon", { n: `${fmtNumber(d.remaining)} ${unitOf(d.meterKind)}` })}
+                      {d.status === "overdue" ? t("ui.maint.overdue", { n: `${fmtNumber(-d.remaining)} ${unitOf(d.meterKind)}` }) : t("ui.maint.soon", { n: `${fmtNumber(d.remaining)} ${unitOf(d.meterKind)}` })}
                     </Text>
                   )}
                   onPress={(d) => setLogging({ planId: d.planId })}
@@ -76,8 +76,8 @@ export default function Maintenance() {
             <View style={{ marginTop: 20 }}>
               <Segmented<Tab>
                 options={[
-                  { value: "history", label: t("ui.maintHistoryTitle") },
-                  { value: "plans", label: t("ui.maintPlansTitle") },
+                  { value: "history", label: t("ui.maint.historyTitle") },
+                  { value: "plans", label: t("ui.maint.plansTitle") },
                 ]}
                 value={tab}
                 onChange={setTab}
@@ -88,18 +88,18 @@ export default function Maintenance() {
                 rows={logs.data ?? []}
                 keyOf={(l) => l.id}
                 title={(l) => machine(l.machineId)?.name ?? ""}
-                subtitle={(l) => [isoShort(localDate(l.occurredAt)), t(key(`ui.maintKind_${l.kind}`)), l.description, l.meterValue !== null ? `${fmtNumber(l.meterValue)} ${unit(l.machineId)}` : null].filter(Boolean).join(" · ")}
+                subtitle={(l) => [isoShort(localDate(l.occurredAt)), t(key(`ui.maint.kind_${l.kind}`)), l.description, l.meterValue !== null ? `${fmtNumber(l.meterValue)} ${unit(l.machineId)}` : null].filter(Boolean).join(" · ")}
                 right={(l) => (l.amountPyg ? fmtGs(l.amountPyg) : "")}
-                empty={{ title: t("ui.maintHistoryEmptyTitle"), hint: t("ui.maintHistoryEmptyHint") }}
+                empty={{ title: t("ui.maint.historyEmptyTitle"), hint: t("ui.maint.historyEmptyHint") }}
               />
             ) : (
               <DataList
                 rows={plans.data ?? []}
                 keyOf={(p) => p.id}
                 title={(p) => p.name}
-                subtitle={(p) => `${machine(p.machineId)?.name ?? ""} · ${t("ui.maintEvery")} ${fmtNumber(p.everyUnits)} ${unit(p.machineId)} · ${t("ui.maintLastDone")} ${fmtNumber(p.lastDoneMeter)} ${unit(p.machineId)}`}
+                subtitle={(p) => `${machine(p.machineId)?.name ?? ""} · ${t("ui.maint.every")} ${fmtNumber(p.everyUnits)} ${unit(p.machineId)} · ${t("ui.maint.lastDone")} ${fmtNumber(p.lastDoneMeter)} ${unit(p.machineId)}`}
                 onPress={(p) => setLogging({ planId: p.id })}
-                empty={{ title: t("ui.maintPlansEmptyTitle"), hint: t("ui.maintPlansEmptyHint") }}
+                empty={{ title: t("ui.maint.plansEmptyTitle"), hint: t("ui.maint.plansEmptyHint") }}
               />
             )}
           </>
@@ -124,12 +124,12 @@ function LogSheet({ planId, machines, plans, onClose }: { planId: string | null;
   const save = useOnlineMutation<Record<string, unknown>, unknown>("POST", "/org/erp/maintenance/logs", { invalidate: INVALIDATE });
   const ofMachine = plans.filter((p) => p.machineId === machineId);
   const submit = async () => {
-    if (!machineId) return setError(t("ui.maintNoMachinesTitle"));
-    if (!date) return setError(t("office.invalidDate"));
+    if (!machineId) return setError(t("ui.maint.noMachinesTitle"));
+    if (!date) return setError(t("office.common.invalidDate"));
     const m = meter ? parseDecimal(meter) : null;
-    if (meter && (m === null || m < 0)) return setError(t("office.maintBadMeter"));
+    if (meter && (m === null || m < 0)) return setError(t("office.common.maintBadMeter"));
     const minor = amount ? parseMinor(amount, currency) : null;
-    if (amount && minor === null) return setError(t("office.moneyNeedsAmount"));
+    if (amount && minor === null) return setError(t("office.common.moneyNeedsAmount"));
     setError(null);
     const r = await save.mutate({
       machineId,
@@ -142,24 +142,24 @@ function LogSheet({ planId, machines, plans, onClose }: { planId: string | null;
       currency: minor === null ? null : currency,
     });
     if (r.ok) {
-      showToast(t("ui.erpSaved"));
+      showToast(t("ui.erp.saved"));
       onClose();
     }
   };
   return (
-    <FormSheet visible title={t("ui.maintLogNew")} onClose={onClose} onSubmit={submit} submitLabel={t("ui.save")} pending={save.pending} error={error ?? save.error}>
-      <SelectField label={t("ui.maintMachine")} value={machineId} options={machines.map((m) => ({ value: m.id, label: m.name }))} onChange={(v) => (setMachineId(v), setPid(""))} />
-      <SelectField label={t("ui.maintKind")} value={kind} options={MAINTENANCE_KINDS.map((k) => ({ value: k, label: t(key(`ui.maintKind_${k}`)) }))} onChange={setKind} />
-      <SelectField label={t("ui.maintPlanName")} value={pid} options={[{ value: "", label: t("ui.maintNoPlan") }, ...ofMachine.map((p) => ({ value: p.id, label: p.name }))]} onChange={setPid} />
-      <DateField label={t("ui.costDate")} value={date} onChange={setDate} />
-      <TextField label={t("ui.maintMeter")} value={meter} onChangeText={setMeter} kind="decimal" />
-      <TextField label={t("ui.maintDescription")} value={description} onChangeText={setDescription} maxLength={300} />
+    <FormSheet visible title={t("ui.maint.logNew")} onClose={onClose} onSubmit={submit} submitLabel={t("ui.common.save")} pending={save.pending} error={error ?? save.error}>
+      <SelectField label={t("ui.maint.machine")} value={machineId} options={machines.map((m) => ({ value: m.id, label: m.name }))} onChange={(v) => (setMachineId(v), setPid(""))} />
+      <SelectField label={t("ui.maint.kind")} value={kind} options={MAINTENANCE_KINDS.map((k) => ({ value: k, label: t(key(`ui.maint.kind_${k}`)) }))} onChange={setKind} />
+      <SelectField label={t("ui.maint.planName")} value={pid} options={[{ value: "", label: t("ui.maint.noPlan") }, ...ofMachine.map((p) => ({ value: p.id, label: p.name }))]} onChange={setPid} />
+      <DateField label={t("ui.cost.date")} value={date} onChange={setDate} />
+      <TextField label={t("ui.maint.meter")} value={meter} onChangeText={setMeter} kind="decimal" />
+      <TextField label={t("ui.maint.description")} value={description} onChangeText={setDescription} maxLength={300} />
       <View style={{ flexDirection: "row", gap: 12 }}>
         <View style={{ flex: 2 }}>
-          <TextField label={t("ui.maintCost")} value={amount} onChangeText={setAmount} kind="decimal" />
+          <TextField label={t("ui.maint.cost")} value={amount} onChangeText={setAmount} kind="decimal" />
         </View>
         <View style={{ flex: 1.2 }}>
-          <SelectField label={t("ui.currency")} value={currency} options={CURRENCIES.map((c) => ({ value: c, label: c }))} onChange={setCurrency} />
+          <SelectField label={t("ui.common.currency")} value={currency} options={CURRENCIES.map((c) => ({ value: c, label: c }))} onChange={setCurrency} />
         </View>
       </View>
     </FormSheet>

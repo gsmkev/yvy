@@ -25,7 +25,7 @@ export function useWalk(initial: "idle" | "off", camera: RefObject<CameraRef | n
       });
       camera.current?.flyTo({ center: [fix.lon, fix.lat], zoom: 18, duration: 400 });
     });
-    if (w === "denied") return setWalkMsg(t("app.perimWalkDenied"));
+    if (w === "denied") return setWalkMsg(t("app.perim.walkDenied"));
     walker.current = w;
     setWalk("on");
   };
@@ -34,7 +34,7 @@ export function useWalk(initial: "idle" | "off", camera: RefObject<CameraRef | n
     walker.current = null;
     const r = traceToPolygon(trace);
     if ("error" in r) {
-      setWalkMsg(r.error === "too_few_points" ? t("app.perimWalkTooShort") : r.error === "self_intersection" ? t("app.perimWalkCrossed") : t("app.perimWalkInvalid"));
+      setWalkMsg(r.error === "too_few_points" ? t("app.perim.walkTooShort") : r.error === "self_intersection" ? t("app.perim.walkCrossed") : t("app.perim.walkInvalid"));
       setWalk("idle");
       return;
     }

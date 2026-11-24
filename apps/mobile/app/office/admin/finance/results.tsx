@@ -31,13 +31,13 @@ interface Line {
 const rowsOf = (d: Results, view: View_): Line[] => {
   switch (view) {
     case "plot":
-      return d.byPlot.map((r) => ({ id: r.plotId ?? "none", name: r.name ?? t("ui.resultsNoPlot"), detail: [r.areaHa ? `${fmtNumber(r.areaHa)} ha` : null, `${t("ui.costTotalCost")} ${fmtGs(r.costPyg)}`, `${t("ui.costTotalIncome")} ${fmtGs(r.incomePyg)}`].filter(Boolean).join(" · "), margin: r.marginPyg, marginPerHa: r.marginPerHa }));
+      return d.byPlot.map((r) => ({ id: r.plotId ?? "none", name: r.name ?? t("ui.results.noPlot"), detail: [r.areaHa ? `${fmtNumber(r.areaHa)} ha` : null, `${t("ui.cost.totalCost")} ${fmtGs(r.costPyg)}`, `${t("ui.cost.totalIncome")} ${fmtGs(r.incomePyg)}`].filter(Boolean).join(" · "), margin: r.marginPyg, marginPerHa: r.marginPerHa }));
     case "crop":
-      return d.byCrop.map((r) => ({ id: r.crop ?? "none", name: r.crop ? t(key(`ui.cropName_${r.crop}`)) : t("ui.dashNoCrop"), detail: [r.areaHa ? `${fmtNumber(r.areaHa)} ha` : null, `${t("ui.costTotalCost")} ${fmtGs(r.costPyg)}`, `${t("ui.costTotalIncome")} ${fmtGs(r.incomePyg)}`].filter(Boolean).join(" · "), margin: r.marginPyg, marginPerHa: r.marginPerHa }));
+      return d.byCrop.map((r) => ({ id: r.crop ?? "none", name: r.crop ? t(key(`ui.crop.name_${r.crop}`)) : t("ui.dash.noCrop"), detail: [r.areaHa ? `${fmtNumber(r.areaHa)} ha` : null, `${t("ui.cost.totalCost")} ${fmtGs(r.costPyg)}`, `${t("ui.cost.totalIncome")} ${fmtGs(r.incomePyg)}`].filter(Boolean).join(" · "), margin: r.marginPyg, marginPerHa: r.marginPerHa }));
     case "season":
-      return d.bySeason.map((r) => ({ id: r.seasonId ?? "none", name: r.name ?? t("ui.resultsNoSeason"), detail: `${t("ui.costTotalCost")} ${fmtGs(r.costPyg)} · ${t("ui.costTotalIncome")} ${fmtGs(r.incomePyg)}`, margin: r.marginPyg }));
+      return d.bySeason.map((r) => ({ id: r.seasonId ?? "none", name: r.name ?? t("ui.results.noSeason"), detail: `${t("ui.cost.totalCost")} ${fmtGs(r.costPyg)} · ${t("ui.cost.totalIncome")} ${fmtGs(r.incomePyg)}`, margin: r.marginPyg }));
     case "activity":
-      return d.byActivity.map((r) => ({ id: r.activity, name: t(key(`ui.activity_${r.activity}`)), detail: `${t("ui.costTotalCost")} ${fmtGs(r.costPyg)} · ${t("ui.costTotalIncome")} ${fmtGs(r.incomePyg)}`, margin: r.marginPyg }));
+      return d.byActivity.map((r) => ({ id: r.activity, name: t(key(`ui.activity.${r.activity}`)), detail: `${t("ui.cost.totalCost")} ${fmtGs(r.costPyg)} · ${t("ui.cost.totalIncome")} ${fmtGs(r.incomePyg)}`, margin: r.marginPyg }));
   }
 };
 
@@ -50,25 +50,25 @@ export default function ResultsScreen() {
   const seasons = useSeasonList();
   const qs = [farmId && `farmId=${farmId}`, seasonId && `seasonId=${seasonId}`].filter(Boolean).join("&");
   const q = useErp<Results>(allowed ? `/org/erp/results${qs ? `?${qs}` : ""}` : null);
-  if (!allowed) return <NoAdminAccess title={t("ui.adminSection_results")} />;
+  if (!allowed) return <NoAdminAccess title={t("ui.admin.section_results")} />;
   const filtered = !!(farmId || seasonId);
-  const none = t("ui.costAll");
+  const none = t("ui.cost.all");
   const hasData = (d: Results) => d.totals.costPyg !== 0 || d.totals.incomePyg !== 0 || d.byPlot.some((r) => r.costPyg !== 0 || r.incomePyg !== 0);
 
   return (
-    <OfficeScreen title={t("ui.adminSection_results")} query={q}>
+    <OfficeScreen title={t("ui.admin.section_results")} query={q}>
       <View style={{ flexDirection: "row", gap: 12 }}>
         <View style={{ flex: 1 }}>
-          <SelectField label={t("ui.costSeason")} value={seasonId} options={[{ value: "", label: none }, ...(seasons.data?.seasons ?? []).map((s) => ({ value: s.id, label: s.name }))]} onChange={setSeasonId} />
+          <SelectField label={t("ui.cost.season")} value={seasonId} options={[{ value: "", label: none }, ...(seasons.data?.seasons ?? []).map((s) => ({ value: s.id, label: s.name }))]} onChange={setSeasonId} />
         </View>
         <View style={{ flex: 1 }}>
-          <SelectField label={t("ui.costFarm")} value={farmId} options={[{ value: "", label: none }, ...farms.map((f) => ({ value: f.id, label: f.name }))]} onChange={setFarmId} />
+          <SelectField label={t("ui.cost.farm")} value={farmId} options={[{ value: "", label: none }, ...farms.map((f) => ({ value: f.id, label: f.name }))]} onChange={setFarmId} />
         </View>
       </View>
       <OnlineState
         query={q}
         isEmpty={(d) => !hasData(d)}
-        empty={filtered ? { title: t("ui.resultsEmptyFiltered"), hint: t("ui.resultsEmptyFilteredHint"), action: t("ui.costClearFilters"), onAction: () => (setFarmId(""), setSeasonId("")) } : { title: t("ui.resultsEmptyTitle"), hint: t("office.resultsEmptyHintApp") }}
+        empty={filtered ? { title: t("ui.results.emptyFiltered"), hint: t("ui.results.emptyFilteredHint"), action: t("ui.cost.clearFilters"), onAction: () => (setFarmId(""), setSeasonId("")) } : { title: t("ui.results.emptyTitle"), hint: t("office.results.emptyHintApp") }}
       >
         {(d) => {
           const tt = d.totals;
@@ -78,18 +78,18 @@ export default function ResultsScreen() {
             <>
               <MoneyStats
                 items={[
-                  { label: t("ui.costTotalCost"), value: fmtGs(tt.costPyg) },
-                  { label: t("ui.costTotalIncome"), value: fmtGs(tt.incomePyg) },
-                  { label: t("ui.resultsMargin"), value: fmtGs(tt.marginPyg), tone: tt.marginPyg < 0 ? "danger" : undefined },
+                  { label: t("ui.cost.totalCost"), value: fmtGs(tt.costPyg) },
+                  { label: t("ui.cost.totalIncome"), value: fmtGs(tt.incomePyg) },
+                  { label: t("ui.results.margin"), value: fmtGs(tt.marginPyg), tone: tt.marginPyg < 0 ? "danger" : undefined },
                 ]}
               />
               <View style={{ marginTop: 20 }}>
                 <Segmented<View_>
                   options={[
-                    { value: "plot", label: t("office.resultsViewPlot") },
-                    { value: "crop", label: t("office.resultsViewCrop") },
-                    { value: "season", label: t("office.resultsViewSeason") },
-                    { value: "activity", label: t("office.resultsViewActivity") },
+                    { value: "plot", label: t("office.results.viewPlot") },
+                    { value: "crop", label: t("office.results.viewCrop") },
+                    { value: "season", label: t("office.results.viewSeason") },
+                    { value: "activity", label: t("office.results.viewActivity") },
                   ]}
                   value={view}
                   onChange={setView}
@@ -101,15 +101,15 @@ export default function ResultsScreen() {
                 title={(r) => r.name}
                 subtitle={(r) => r.detail}
                 right={(r) => <Text style={[T.bodyMedium, r.margin < 0 && { color: C.peligro }]}>{fmtGs(r.margin)}</Text>}
-                empty={{ title: t("ui.resultsEmptyView") }}
+                empty={{ title: t("ui.results.emptyView") }}
               />
               {perHa.length > 0 ? (
                 <>
-                  <SectionHeader title={t("ui.resultsMarginPerHa")} />
+                  <SectionHeader title={t("ui.results.marginPerHa")} />
                   <BarList rows={perHa} unit="Gs/ha" />
                 </>
               ) : null}
-              {d.beef.costPerKgPyg !== null ? <Text style={[T.small, { marginTop: 16 }]}>{t("ui.resultsBeefKg", { cost: fmtGs(d.beef.costPerKgPyg), kg: fmtNumber(d.beef.kgSold, 0) })}</Text> : null}
+              {d.beef.costPerKgPyg !== null ? <Text style={[T.small, { marginTop: 16 }]}>{t("ui.results.beefKg", { cost: fmtGs(d.beef.costPerKgPyg), kg: fmtNumber(d.beef.kgSold, 0) })}</Text> : null}
             </>
           );
         }}

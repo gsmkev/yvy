@@ -28,7 +28,7 @@ export function AdminGate({ need, title, children }: { need: "manage" | "stock";
   if (!a[need]) {
     return (
       <OfficeScreen title={title}>
-        <EmptyState title={t("office.admGateTitle")} hint={t(need === "manage" ? "office.admGateManage" : "office.admGateStock")} />
+        <EmptyState title={t("office.adm.gateTitle")} hint={t(need === "manage" ? "office.adm.gateManage" : "office.adm.gateStock")} />
       </OfficeScreen>
     );
   }

@@ -33,14 +33,14 @@ export function herdTotals(rows: HerdRow[], maxUa: number) {
 /** Categorías con cabezas, superficie y último conteo de un potrero. */
 export function herdSubtitle(r: HerdRow, areaUnit: Parameters<typeof haToArea>[1]): string {
   return [
-    HERD_CATEGORIES.filter((c) => r.st!.counts[c] > 0).map((c) => t(`fields.herdCount_${c}` as MessageKey, { n: r.st!.counts[c] })).join(", "),
+    HERD_CATEGORIES.filter((c) => r.st!.counts[c] > 0).map((c) => t(`fields.herd.count_${c}` as MessageKey, { n: r.st!.counts[c] })).join(", "),
     `${fmtNumber(haToArea(r.plot.areaHa, areaUnit))} ${areaLabel(areaUnit)}`,
-    r.st!.lastCountAt ? t("office.farmsLastRecord", { date: fmtDate(r.st!.lastCountAt) }) : t("ui.herdNeverCounted"),
+    r.st!.lastCountAt ? t("office.farms.lastRecord", { date: fmtDate(r.st!.lastCountAt) }) : t("ui.herd.neverCounted"),
   ].join(" · ");
 }
 
 /** Carga recomendada contra la actual: "al día", cuántas UA sobran o cuántas faltan. */
 export function loadLine(rp: { recommendedUaPerHa: number; diffUa: number }): string {
-  const verdict = Math.abs(rp.diffUa) < 0.5 ? t("ui.herdLoadOk") : rp.diffUa > 0 ? t("ui.herdLoadSurplus", { n: fmtNumber(rp.diffUa, 1) }) : t("ui.herdLoadShortfall", { n: fmtNumber(-rp.diffUa, 1) });
-  return `${t("ui.herdLoadRecommended")} ${fmtNumber(rp.recommendedUaPerHa, 2)} · ${verdict}`;
+  const verdict = Math.abs(rp.diffUa) < 0.5 ? t("ui.herd.loadOk") : rp.diffUa > 0 ? t("ui.herd.loadSurplus", { n: fmtNumber(rp.diffUa, 1) }) : t("ui.herd.loadShortfall", { n: fmtNumber(-rp.diffUa, 1) });
+  return `${t("ui.herd.loadRecommended")} ${fmtNumber(rp.recommendedUaPerHa, 2)} · ${verdict}`;
 }

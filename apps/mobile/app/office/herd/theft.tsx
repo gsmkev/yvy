@@ -14,33 +14,35 @@ export default function Theft() {
   const { farms, farm, setFarmId } = useFarmPick();
   const q = useOnline<TheftResponse>(farm ? `/org/farms/${farm.id}/theft` : null);
   return (
-    <FarmFrame title={t("ui.herdSectionTheft")} farms={farms} farm={farm} setFarmId={setFarmId} query={q}>
-      <OnlineState query={q} isEmpty={(d) => d.rows.length === 0} empty={{ title: t("ui.theftNone"), hint: t("ui.theftNoneHint") }}>
+    <FarmFrame title={t("ui.herd.sectionTheft")} farms={farms} farm={farm} setFarmId={setFarmId} query={q}>
+      <OnlineState query={q} isEmpty={(d) => d.rows.length === 0} empty={{ title: t("ui.theft.none"), hint: t("ui.theft.noneHint") }}>
         {(d) => (
           <View>
             <StatRow
               items={[
-                { label: t("fields.head"), value: d.totals.head },
-                ...(d.totals.withoutReport > 0 ? [{ label: t("ui.theftNoReport"), value: d.totals.withoutReport, tone: "danger" as const }] : []),
+                { label: t("fields.common.head"), value: d.totals.head },
+                ...(d.totals.withoutReport > 0 ? [{ label: t("ui.theft.noReport"), value: d.totals.withoutReport, tone: "danger" as const }] : []),
               ]}
             />
-            {d.totals.withoutReport > 0 && <Text style={[T.small, { marginTop: 8 }]}>{t("ui.theftWithoutReport", { n: d.totals.withoutReport })}</Text>}
-            {d.truncated && <Text style={[T.small, { marginTop: 8 }]}>{t("ui.herdTruncated")}</Text>}
+            {d.totals.withoutReport > 0 && <Text style={[T.small, { marginTop: 8 }]}>{t("ui.theft.withoutReport", { n: d.totals.withoutReport })}</Text>}
+            {d.truncated && <Text style={[T.small, { marginTop: 8 }]}>{t("ui.herd.truncated")}</Text>}
             <DataList
               rows={d.rows}
               keyOf={(r) => r.id}
-              title={(r) => `${t(`fields.herd_${r.category}` as MessageKey)} · ${t("fields.herdTotalValue", { n: r.head })}`}
+              title={(r) =>
+                t(`fields.herd.${r.category}` as MessageKey) + " · " + t("fields.herd.totalValue", { n: r.head })
+              }
               subtitle={(r) => [fmtDate(r.capturedAt), r.plotName].filter(Boolean).join(" · ")}
               right={(r) =>
                 r.policeReport ? (
                   <Text style={[T.smallMedium, { textAlign: "right" }]}>{`${r.policeReport}${r.reportedAt ? ` · ${fmtDate(r.reportedAt)}` : ""}`}</Text>
                 ) : (
-                  <Text style={[T.smallMedium, { textAlign: "right", color: C.peligro }]}>{t("ui.theftNoReport")}</Text>
+                  <Text style={[T.smallMedium, { textAlign: "right", color: C.peligro }]}>{t("ui.theft.noReport")}</Text>
                 )
               }
-              empty={{ title: t("ui.theftNone") }}
+              empty={{ title: t("ui.theft.none") }}
             />
-            <Text style={[T.small, { marginTop: 16 }]}>{t("ui.theftHint")}</Text>
+            <Text style={[T.small, { marginTop: 16 }]}>{t("ui.theft.hint")}</Text>
           </View>
         )}
       </OnlineState>

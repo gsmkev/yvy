@@ -91,16 +91,16 @@ export default function Stock() {
   };
   const submit = async () => {
     if (!draft) return;
-    if (!draft.productId) return setFormError(t("office.admNeedsProduct"));
-    if (!draft.warehouseId) return setFormError(t("ui.stockNoWarehouse"));
+    if (!draft.productId) return setFormError(t("office.adm.needsProduct"));
+    if (!draft.warehouseId) return setFormError(t("ui.stock.noWarehouse"));
     const n = parseDecimal(draft.qty);
-    if (n === null || n <= 0) return setFormError(t("office.admBadQty"));
-    if (!draft.date) return setFormError(t("office.admNeedsDate"));
+    if (n === null || n <= 0) return setFormError(t("office.adm.badQty"));
+    if (!draft.date) return setFormError(t("office.adm.needsDate"));
     setFormError(null);
     const r = await adjust.mutate({ productId: draft.productId, warehouseId: draft.warehouseId, date: draft.date, qty: draft.sign === "plus" ? n : -n, note: draft.note.trim() || null });
     if (r.ok) {
       setDraft(null);
-      showToast(t("ui.erpSaved"));
+      showToast(t("ui.erp.saved"));
     }
   };
 
@@ -108,38 +108,38 @@ export default function Stock() {
   const err = formError ?? adjust.error;
   const q = stock;
   return (
-    <AdminGate need="stock" title={t("ui.adminSection_stock")}>
+    <AdminGate need="stock" title={t("ui.admin.section_stock")}>
       <OfficeScreen
-        title={t("ui.adminSection_stock")}
+        title={t("ui.admin.section_stock")}
         query={q}
         onRefresh={async () => {
           await Promise.all([stock.refresh(), moves.refresh(), lots.refresh(), wh.refresh()]);
         }}
-        action={manage && !needSetup ? { label: t("ui.stockMode_adjustment"), icon: Plus, onPress: openAdjust, disabled: !!noSignal } : undefined}
+        action={manage && !needSetup ? { label: t("ui.stock.mode_adjustment"), icon: Plus, onPress: openAdjust, disabled: !!noSignal } : undefined}
       >
         {manage ? <NoSignalNote /> : null}
         {needSetup ? (
-          <EmptyState title={t("ui.stockNeedWarehouseTitle")} hint={t("ui.stockNeedWarehouseBody")} action={manage ? t("ui.warehouseLoad") : undefined} onAction={() => go("/office/admin/warehouses")} />
+          <EmptyState title={t("ui.stock.needWarehouseTitle")} hint={t("ui.stock.needWarehouseBody")} action={manage ? t("ui.warehouse.load") : undefined} onAction={() => go("/office/admin/warehouses")} />
         ) : (
-          <OnlineState query={stock} empty={{ title: t("ui.emptyStockTitle"), hint: t("ui.emptyStockBody") }} isEmpty={(d) => d.rows.length === 0 && d.products.length === 0}>
+          <OnlineState query={stock} empty={{ title: t("ui.empty.stockTitle"), hint: t("ui.empty.stockBody") }} isEmpty={(d) => d.rows.length === 0 && d.products.length === 0}>
             {() => (
               <>
                 <StatRow
                   items={[
-                    { label: t("office.admStockProducts"), value: sortedRows.length },
-                    ...(showValue ? [{ label: t("ui.stockValue"), value: compactMoney(totalValue, "PYG").value, unit: compactMoney(totalValue, "PYG").unit }] : []),
+                    { label: t("office.adm.stockProducts"), value: sortedRows.length },
+                    ...(showValue ? [{ label: t("ui.stock.value"), value: compactMoney(totalValue, "PYG").value, unit: compactMoney(totalValue, "PYG").unit }] : []),
                   ]}
                 />
                 {warehouses.length > 1 ? (
-                  <FilterChips value={warehouseId} onChange={setWarehouseId} options={[{ value: "", label: t("ui.costAll") }, ...warehouses.map((w) => ({ value: w.id, label: w.name }))]} />
+                  <FilterChips value={warehouseId} onChange={setWarehouseId} options={[{ value: "", label: t("ui.cost.all") }, ...warehouses.map((w) => ({ value: w.id, label: w.name }))]} />
                 ) : null}
                 <Segmented<Tab>
                   value={tab}
                   onChange={setTab}
                   options={[
-                    { value: "stock", label: t("ui.stockTabStock") },
-                    { value: "moves", label: t("ui.stockMoves") },
-                    ...(lotRows.length > 0 ? [{ value: "expiring" as const, label: t("ui.expiringTitle") }] : []),
+                    { value: "stock", label: t("ui.stock.tabStock") },
+                    { value: "moves", label: t("ui.stock.moves") },
+                    ...(lotRows.length > 0 ? [{ value: "expiring" as const, label: t("ui.expiring.title") }] : []),
                   ]}
                 />
                 {tab === "stock" ? (
@@ -149,42 +149,42 @@ export default function Stock() {
                     title={(r) => byId.get(r.productId)?.name ?? "—"}
                     subtitle={(r) => r.where || (r.valuePyg !== undefined ? fmtGs(r.valuePyg) : undefined)}
                     right={(r) => fmtQty(r.qty, unitOf(byId.get(r.productId)))}
-                    empty={{ title: t("ui.emptyStockTitle"), hint: t("ui.emptyStockBody") }}
+                    empty={{ title: t("ui.empty.stockTitle"), hint: t("ui.empty.stockBody") }}
                   />
                 ) : tab === "moves" ? (
                   <DataList
                     rows={moveRows}
                     keyOf={(m) => m.id}
                     title={(m) => byId.get(m.productId)?.name ?? "—"}
-                    subtitle={(m) => [t(k(`ui.stockOrigin_${m.origin}`)), whName(m.warehouseId), isoShort(dayOf(m.occurredAt))].filter(Boolean).join(" · ")}
+                    subtitle={(m) => [t(k(`ui.stock.origin_${m.origin}`)), whName(m.warehouseId), isoShort(dayOf(m.occurredAt))].filter(Boolean).join(" · ")}
                     right={(m) => `${m.qty > 0 ? "+" : ""}${fmtQty(m.qty, unitOf(byId.get(m.productId)))}`}
-                    empty={{ title: t("ui.erpEmpty"), hint: t("ui.emptyMovesBody") }}
+                    empty={{ title: t("ui.erp.empty"), hint: t("ui.empty.movesBody") }}
                   />
                 ) : (
                   <DataList
                     rows={lotRows}
                     keyOf={(l) => `${l.productId}-${l.lot}-${l.expiresOn}`}
                     title={(l) => byId.get(l.productId)?.name ?? "—"}
-                    subtitle={(l) => [l.lot ? t("ui.expiringLot", { lot: l.lot }) : null, fmtQty(l.remaining, unitOf(byId.get(l.productId))), isoShort(l.expiresOn)].filter(Boolean).join(" · ")}
-                    right={(l) => (l.daysLeft < 0 ? t("ui.expiringExpired", { n: -l.daysLeft }) : t("ui.expiringIn", { n: l.daysLeft }))}
-                    empty={{ title: t("ui.erpEmpty") }}
+                    subtitle={(l) => [l.lot ? t("ui.expiring.lot", { lot: l.lot }) : null, fmtQty(l.remaining, unitOf(byId.get(l.productId))), isoShort(l.expiresOn)].filter(Boolean).join(" · ")}
+                    right={(l) => (l.daysLeft < 0 ? t("ui.expiring.expired", { n: -l.daysLeft }) : t("ui.expiring.in", { n: l.daysLeft }))}
+                    empty={{ title: t("ui.erp.empty") }}
                   />
                 )}
               </>
             )}
           </OnlineState>
         )}
-        <SectionHeader title={t("office.admStockMore")} />
-        <Row icon={ClipboardCheck} title={t("ui.countTitle")} subtitle={t("office.admCountHint")} onPress={() => go("/stock-count")} />
-        <Row icon={PackageMinus} title={t("ui.adminSection_minstock")} subtitle={t("office.admMinStockHint")} onPress={() => go("/office/admin/min-stock")} />
-        <Row icon={Package} title={t("ui.adminSection_products")} subtitle={t("office.admProductsHint")} onPress={() => go("/office/products")} />
-        <FormSheet visible={!!draft} title={t("ui.stockMode_adjustment")} onClose={() => setDraft(null)} onSubmit={submit} submitLabel={t("ui.save")} pending={adjust.pending} error={err}>
-          <SelectField label={t("ui.stockProduct")} value={draft?.productId} placeholder={t("ui.stockPick")} options={products.map((p) => ({ value: p.id, label: p.name }))} onChange={(v) => set({ productId: v })} />
-          <SelectField label={t("ui.stockWarehouse")} value={draft?.warehouseId} options={warehouses.map((w) => ({ value: w.id, label: w.name }))} onChange={(v) => set({ warehouseId: v })} />
+        <SectionHeader title={t("office.adm.stockMore")} />
+        <Row icon={ClipboardCheck} title={t("ui.count.title")} subtitle={t("office.adm.countHint")} onPress={() => go("/stock-count")} />
+        <Row icon={PackageMinus} title={t("ui.admin.section_minstock")} subtitle={t("office.adm.minStockHint")} onPress={() => go("/office/admin/min-stock")} />
+        <Row icon={Package} title={t("ui.admin.section_products")} subtitle={t("office.adm.productsHint")} onPress={() => go("/office/products")} />
+        <FormSheet visible={!!draft} title={t("ui.stock.mode_adjustment")} onClose={() => setDraft(null)} onSubmit={submit} submitLabel={t("ui.common.save")} pending={adjust.pending} error={err}>
+          <SelectField label={t("ui.stock.product")} value={draft?.productId} placeholder={t("ui.stock.pick")} options={products.map((p) => ({ value: p.id, label: p.name }))} onChange={(v) => set({ productId: v })} />
+          <SelectField label={t("ui.stock.warehouse")} value={draft?.warehouseId} options={warehouses.map((w) => ({ value: w.id, label: w.name }))} onChange={(v) => set({ warehouseId: v })} />
           <SignToggle value={draft?.sign ?? "plus"} onChange={(v) => set({ sign: v })} />
-          <TextField label={`${t("ui.stockQty")}${unitOf(byId.get(draft?.productId ?? "")) ? ` (${unitOf(byId.get(draft?.productId ?? ""))})` : ""}`} value={draft?.qty ?? ""} onChangeText={(v) => set({ qty: v })} kind="decimal" />
-          <DateField label={t("ui.costDate")} value={draft?.date ?? ""} onChange={(v) => set({ date: v })} />
-          <TextField label={t("ui.stockNote")} value={draft?.note ?? ""} onChangeText={(v) => set({ note: v })} maxLength={200} />
+          <TextField label={`${t("ui.stock.qty")}${unitOf(byId.get(draft?.productId ?? "")) ? ` (${unitOf(byId.get(draft?.productId ?? ""))})` : ""}`} value={draft?.qty ?? ""} onChangeText={(v) => set({ qty: v })} kind="decimal" />
+          <DateField label={t("ui.cost.date")} value={draft?.date ?? ""} onChange={(v) => set({ date: v })} />
+          <TextField label={t("ui.stock.note")} value={draft?.note ?? ""} onChangeText={(v) => set({ note: v })} maxLength={200} />
         </FormSheet>
       </OfficeScreen>
     </AdminGate>
@@ -195,11 +195,11 @@ function SignToggle({ value, onChange }: { value: "plus" | "minus"; onChange: (v
   return (
     <>
       <SignLabel />
-      <Segmented<"plus" | "minus"> value={value} onChange={onChange} options={[{ value: "plus", label: t("ui.stockAdjustPlus") }, { value: "minus", label: t("ui.stockAdjustMinus") }]} />
+      <Segmented<"plus" | "minus"> value={value} onChange={onChange} options={[{ value: "plus", label: t("ui.stock.adjustPlus") }, { value: "minus", label: t("ui.stock.adjustMinus") }]} />
     </>
   );
 }
 
 function SignLabel() {
-  return <Text style={[T.smallMedium, { marginTop: 16, marginBottom: 6 }]}>{t("ui.stockAdjustSign")}</Text>;
+  return <Text style={[T.smallMedium, { marginTop: 16, marginBottom: 6 }]}>{t("ui.stock.adjustSign")}</Text>;
 }

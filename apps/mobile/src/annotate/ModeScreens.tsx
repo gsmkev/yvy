@@ -16,16 +16,16 @@ export function ModeScreen({ a }: { a: AnnotateState }) {
     <View style={k.screen}>
       <AnnotateHeader a={a} />
       <ScrollView contentContainerStyle={k.pad}>
-        <Text style={[T.title, { marginBottom: 16 }]}>{t("app.pestMode")}</Text>
+        <Text style={[T.title, { marginBottom: 16 }]}>{t("app.pest.mode")}</Text>
         <Row
-          title={t("app.pestModeOne")}
+          title={t("app.pest.modeOne")}
           onPress={() => {
             setStationMode(false);
             setPhase({ name: "step", i: 0 });
           }}
         />
         <Row
-          title={t("app.pestModeStations")}
+          title={t("app.pest.modeStations")}
           onPress={() => {
             setStationMode(true);
             setValues({});
@@ -45,11 +45,11 @@ export function StationsCropScreen({ a }: { a: AnnotateState }) {
     <View style={k.screen}>
       <AnnotateHeader a={a} />
       <ScrollView contentContainerStyle={k.pad}>
-        <Text style={[T.title, { marginBottom: 16 }]}>{t("app.stationsCrop")}</Text>
+        <Text style={[T.title, { marginBottom: 16 }]}>{t("app.stations.crop")}</Text>
         {MONITOR_CROPS.map((c) => (
           <Row
             key={c}
-            title={tr(`app.monitorCrop_${c}`)}
+            title={tr(`app.monitor.crop_${c}`)}
             onPress={() => {
               setCrop(c);
               setPhase({ name: "stations" });

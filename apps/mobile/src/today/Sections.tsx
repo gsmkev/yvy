@@ -20,11 +20,11 @@ type RecordRow = ReturnType<ReturnType<typeof getDb>["records"]>[number];
 
 export function taskSubtitle(task: TaskRow, plotName: (id: string | null) => string): string {
   return [
-    task.priority === "high" ? t("app.taskHighPriority") : null,
-    task.dueTime ? t("app.taskDueAt", { time: task.dueTime }) : null,
-    task.kind ? t(`recordKinds.${task.kind}`) : null,
+    task.priority === "high" ? t("app.task.highPriority") : null,
+    task.dueTime ? t("app.task.dueAt", { time: task.dueTime }) : null,
+    task.kind ? t(`record-kinds.kind.${task.kind}`) : null,
     task.plotId ? plotName(task.plotId) : null,
-    parseChecklist(task.checklist).length ? t("app.checklistProgress", checklistProgress(parseChecklist(task.checklist))) : null,
+    parseChecklist(task.checklist).length ? t("app.common.checklistProgress", checklistProgress(parseChecklist(task.checklist))) : null,
     commentsLabel(task.comments),
   ]
     .filter(Boolean)
@@ -35,7 +35,7 @@ export function taskSubtitle(task: TaskRow, plotName: (id: string | null) => str
 export function OpenTasks({ open, readOnly, plotName }: { open: TaskRow[]; readOnly: boolean; plotName: (id: string | null) => string }) {
   return (
     <>
-    <SectionHeader title={t("app.tasksToday")} />
+    <SectionHeader title={t("app.common.tasksToday")} />
     {open.map((task) => {
       const check = () => {
         if (parseChecklist(task.checklist).length) router.push({ pathname: "/task/[id]", params: { id: task.id } });
@@ -50,7 +50,7 @@ export function OpenTasks({ open, readOnly, plotName }: { open: TaskRow[]; readO
       const sub = taskSubtitle(task, plotName);
       return (
         <View key={task.id} style={[k.row, st.task]}>
-          <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: false }} accessibilityLabel={`${t("app.taskMarkDone")}: ${task.title}`} onPress={check} hitSlop={6} style={st.checkHit}>
+          <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: false }} accessibilityLabel={`${t("app.task.markDone")}: ${task.title}`} onPress={check} hitSlop={6} style={st.checkHit}>
             <View style={st.circle} />
           </Pressable>
           <Pressable
@@ -71,7 +71,7 @@ export function OpenTasks({ open, readOnly, plotName }: { open: TaskRow[]; readO
           {task.lon !== null && task.lat !== null && (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`${t("app.gotoButton")}: ${task.title}`}
+              accessibilityLabel={`${t("app.goto.button")}: ${task.title}`}
               onPress={() => router.push({ pathname: "/goto", params: { lon: String(task.lon), lat: String(task.lat), name: task.title } })}
               style={st.checkHit}
             >
@@ -89,15 +89,15 @@ export function OpenTasks({ open, readOnly, plotName }: { open: TaskRow[]; readO
 export function TeamTasks({ team, todayIso, userId, names, plotName }: { team: TeamTask[]; todayIso: string; userId: string; names: Record<string, string>; plotName: (id: string | null) => string }) {
   return (
     <>
-    <SectionHeader title={t("office.todayTeamTitle")} />
+    <SectionHeader title={t("office.today.teamTitle")} />
     {team.map((task) => (
       <Row
         key={task.id}
         icon={Users}
         title={task.title}
         subtitle={[
-          isOverdue(task, todayIso) ? t("office.todayTeamOverdue", { date: new Date(`${task.dueDate}T12:00:00`).toLocaleDateString("es-PY", { day: "numeric", month: "short" }) }) : null,
-          task.assigneeId ? t("office.todayTeamWho", { name: authorName(task.assigneeId, userId, names) }) : t("office.todayTeamNobody"),
+          isOverdue(task, todayIso) ? t("office.today.teamOverdue", { date: new Date(`${task.dueDate}T12:00:00`).toLocaleDateString("es-PY", { day: "numeric", month: "short" }) }) : null,
+          task.assigneeId ? t("office.today.teamWho", { name: authorName(task.assigneeId, userId, names) }) : t("office.today.teamNobody"),
           task.plotId ? plotName(task.plotId) : null,
         ]
           .filter(Boolean)
@@ -113,7 +113,7 @@ export function TeamTasks({ team, todayIso, userId, names, plotName }: { team: T
 export function OwnerSummary({ summary, worse, userId, plotName }: { summary: { byAuthor: { authorId: string; count: number }[]; week: boolean; names: Record<string, string> }; worse: { plotId: string; pct: number; since: number }[]; userId: string; plotName: (id: string | null) => string }) {
   return (
     <>
-    {summary.byAuthor.length > 0 && <SectionHeader title={summary.week ? t("office.todayWeekTitle") : t("app.ownerRecordsTitle")} />}
+    {summary.byAuthor.length > 0 && <SectionHeader title={summary.week ? t("office.today.weekTitle") : t("app.owner.recordsTitle")} />}
     {summary.byAuthor.length > 0 && (
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.stats} style={{ marginTop: 8, flexGrow: 0 }}>
         {summary.byAuthor.map((a) => (
@@ -121,13 +121,13 @@ export function OwnerSummary({ summary, worse, userId, plotName }: { summary: { 
         ))}
       </ScrollView>
     )}
-    {worse.length > 0 && <SectionHeader title={t("app.ownerWorseTitle")} />}
+    {worse.length > 0 && <SectionHeader title={t("app.owner.worseTitle")} />}
     {worse.map((w) => (
       <Row
         key={w.plotId}
         icon={TrendingDown}
         title={plotName(w.plotId)}
-        subtitle={t("app.ownerWorseLine", { pct: w.pct, date: new Date(w.since).toLocaleDateString("es-PY", { day: "numeric", month: "short" }) })}
+        subtitle={t("app.owner.worseLine", { pct: w.pct, date: new Date(w.since).toLocaleDateString("es-PY", { day: "numeric", month: "short" }) })}
         onPress={() => router.push("/(tabs)/map")}
       />
     ))}
@@ -139,9 +139,9 @@ export function OwnerSummary({ summary, worse, userId, plotName }: { summary: { 
 export function YourDay({ done, todayRecords, plotName }: { done: TaskRow[]; todayRecords: RecordRow[]; plotName: (id: string | null) => string }) {
   return (
     <>
-    <SectionHeader title={t("app.yourDay")} />
+    <SectionHeader title={t("app.common.yourDay")} />
     {done.map((task) => (
-      <Row key={task.id} title={task.title} subtitle={t("ui.status_done")} left={<Check size={20} color={C.accion} strokeWidth={2.5} />} />
+      <Row key={task.id} title={task.title} subtitle={t("ui.status.done")} left={<Check size={20} color={C.accion} strokeWidth={2.5} />} />
     ))}
     {todayRecords.map((r) => (
       <Row
@@ -149,7 +149,7 @@ export function YourDay({ done, todayRecords, plotName }: { done: TaskRow[]; tod
         icon={RECORD_ICON[r.kind]}
         status={r.rejected ? "rejected" : r.pending ? "pending" : "synced"}
         title={describeRecord(r.kind, JSON.parse(r.data))}
-        subtitle={[t(`recordKinds.${r.kind}`), plotName(r.plotId), hhmm(r.capturedAt)].filter(Boolean).join(" · ")}
+        subtitle={[t(`record-kinds.kind.${r.kind}`), plotName(r.plotId), hhmm(r.capturedAt)].filter(Boolean).join(" · ")}
         onPress={() => router.push({ pathname: "/record/[id]", params: { id: r.id } })}
       />
     ))}

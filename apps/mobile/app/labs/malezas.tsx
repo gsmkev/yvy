@@ -7,18 +7,18 @@ import { Text } from "../../src/ui/kit";
 export default function Malezas() {
   return (
     <Lab
-      title={t("app.labsWeedIdTitle")}
-      intro={t("app.labsWeedIdIntro")}
+      title={t("app.labs.weedIdTitle")}
+      intro={t("app.labs.weedIdIntro")}
       art={<WeedIllustration />}
       result={
         <>
-          <Text style={T.display}>{t("app.labsWeedIdName")}</Text>
-          <Text style={[T.small, { marginTop: 4 }]}>{t("app.labsWeedIdScientific")}</Text>
-          <Fact label={t("app.labsConfidence")} value={t("app.labsConfidenceMedium")} />
-          <Fact label={t("app.labsWeedIdOthers")} value={t("app.labsWeedIdOthersValue")} />
-          <Fact label={t("app.labsWeedIdStage")} value={t("app.labsWeedIdStageValue")} />
-          <Fact label={t("app.labsWeedIdControl")} value={t("app.labsWeedIdControlValue")} />
-          <Text style={[T.body, { marginTop: 16 }]}>{t("app.labsWeedIdNext")}</Text>
+          <Text style={T.display}>{t("app.labs.weedIdName")}</Text>
+          <Text style={[T.small, { marginTop: 4 }]}>{t("app.labs.weedIdScientific")}</Text>
+          <Fact label={t("app.labs.confidence")} value={t("app.labs.confidenceMedium")} />
+          <Fact label={t("app.labs.weedIdOthers")} value={t("app.labs.weedIdOthersValue")} />
+          <Fact label={t("app.labs.weedIdStage")} value={t("app.labs.weedIdStageValue")} />
+          <Fact label={t("app.labs.weedIdControl")} value={t("app.labs.weedIdControlValue")} />
+          <Text style={[T.body, { marginTop: 16 }]}>{t("app.labs.weedIdNext")}</Text>
         </>
       }
     />

@@ -7,19 +7,19 @@ import { Text } from "../../src/ui/kit";
 export default function Voz() {
   return (
     <Lab
-      title={t("app.labsVoiceTitle")}
-      intro={t("app.labsVoiceIntro")}
+      title={t("app.labs.voiceTitle")}
+      intro={t("app.labs.voiceIntro")}
       result={
         <>
-          <Text style={[T.small, { marginTop: 8 }]}>{t("app.labsVoiceHeard")}</Text>
+          <Text style={[T.small, { marginTop: 8 }]}>{t("app.labs.voiceHeard")}</Text>
           <View style={st.quote}>
-            <Text style={T.body}>{t("app.labsVoiceTranscript")}</Text>
+            <Text style={T.body}>{t("app.labs.voiceTranscript")}</Text>
           </View>
-          <Text style={[T.heading, { marginTop: 24 }]}>{t("app.labsVoiceBecomes")}</Text>
-          <Fact label={t("app.labsVoiceField1")} value={t("app.labsVoiceValue1")} />
-          <Fact label={t("app.labsVoiceField2")} value={t("app.labsVoiceValue2")} />
-          <Fact label={t("app.labsVoiceField3")} value={t("app.labsVoiceValue3")} />
-          <Text style={[T.body, { marginTop: 16 }]}>{t("app.labsVoiceNext")}</Text>
+          <Text style={[T.heading, { marginTop: 24 }]}>{t("app.labs.voiceBecomes")}</Text>
+          <Fact label={t("app.labs.voiceField1")} value={t("app.labs.voiceValue1")} />
+          <Fact label={t("app.labs.voiceField2")} value={t("app.labs.voiceValue2")} />
+          <Fact label={t("app.labs.voiceField3")} value={t("app.labs.voiceValue3")} />
+          <Text style={[T.body, { marginTop: 16 }]}>{t("app.labs.voiceNext")}</Text>
         </>
       }
     />

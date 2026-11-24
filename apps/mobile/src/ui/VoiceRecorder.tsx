@@ -72,18 +72,18 @@ export function VoiceRecorder({ value, onChange }: { value: LocalAudio | null; o
 
   return (
     <View style={{ marginTop: 20 }}>
-      <Text style={T.heading}>{t("app.voiceRecordTitle")}</Text>
+      <Text style={T.heading}>{t("app.voice.recordTitle")}</Text>
       {recording ? (
         <>
-          <Text style={[T.number, { marginTop: 8, color: C.peligro }]}>{t("app.voiceRecording", { s: seconds })}</Text>
-          <Button big title={t("app.voiceStop")} onPress={stop} style={{ marginTop: 8 }} />
+          <Text style={[T.number, { marginTop: 8, color: C.peligro }]}>{t("app.voice.recording", { s: seconds })}</Text>
+          <Button big title={t("app.voice.stop")} onPress={stop} style={{ marginTop: 8 }} />
         </>
       ) : value ? (
         <>
-          <Text style={[T.body, { marginTop: 6 }]}>{t("app.voiceSaved", { size: sizeLabel(value.bytes) })}</Text>
+          <Text style={[T.body, { marginTop: 6 }]}>{t("app.voice.saved", { size: sizeLabel(value.bytes) })}</Text>
           <Button
             kind="danger"
-            title={t("app.voiceDelete")}
+            title={t("app.voice.delete")}
             onPress={() => {
               void discardRecording(value);
               onChange(null);
@@ -93,12 +93,12 @@ export function VoiceRecorder({ value, onChange }: { value: LocalAudio | null; o
         </>
       ) : (
         <>
-          <Text style={[T.small, { marginTop: 4 }]}>{t("app.voiceHint")}</Text>
-          <Button kind="secondary" big title={t("app.voiceRecord")} onPress={start} style={{ marginTop: 8 }} />
+          <Text style={[T.small, { marginTop: 4 }]}>{t("app.voice.hint")}</Text>
+          <Button kind="secondary" big title={t("app.voice.record")} onPress={start} style={{ marginTop: 8 }} />
         </>
       )}
-      {capped && <Text style={[T.small, { marginTop: 8 }]}>{t("app.voiceTooLong", { s: LIMITS.audio.maxSeconds })}</Text>}
-      {denied && <Text style={[T.small, { marginTop: 8, color: C.peligro }]}>{t("app.voiceDenied")}</Text>}
+      {capped && <Text style={[T.small, { marginTop: 8 }]}>{t("app.voice.tooLong", { s: LIMITS.audio.maxSeconds })}</Text>}
+      {denied && <Text style={[T.small, { marginTop: 8, color: C.peligro }]}>{t("app.voice.denied")}</Text>}
     </View>
   );
 }

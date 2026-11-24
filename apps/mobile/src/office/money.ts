@@ -2,14 +2,15 @@
 import { fromMinor, type Currency } from "@yvy/shared";
 import { fmtNumber } from "./format";
 
-const group = (n: number) => Math.round(Math.abs(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+const dots = (digits: string) => digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+const group = (n: number) => dots(Math.round(Math.abs(n)).toString());
 
 /** `minor` en la unidad menor: 1250000 PYG = "Gs. 1.250.000"; 12550 USD = "US$ 125,50". */
 export function fmtMoney(minor: number, currency: Currency): string {
   if (currency === "PYG") return `${minor < 0 ? "-" : ""}Gs. ${group(minor)}`;
   const major = fromMinor(minor, "USD");
   const [int = "0", dec = "00"] = Math.abs(major).toFixed(2).split(".");
-  return `${major < 0 ? "-" : ""}US$ ${int.replace(/\B(?=(\d{3})+(?!\d))/g, ".")},${dec}`;
+  return `${major < 0 ? "-" : ""}US$ ${dots(int)},${dec}`;
 }
 
 /** Guaraníes, para montos ya convertidos (costos, márgenes). */

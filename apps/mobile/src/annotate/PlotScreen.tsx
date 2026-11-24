@@ -19,18 +19,18 @@ export function PlotScreen({ a }: { a: AnnotateState }) {
     <View style={k.screen}>
       <AnnotateHeader a={a} />
       <ScrollView contentContainerStyle={k.pad} keyboardShouldPersistTaps="handled">
-        <Text style={T.title}>{t("app.whichPlot")}</Text>
+        <Text style={T.title}>{t("app.common.whichPlot")}</Text>
         <Text style={[T.small, { marginTop: 6, marginBottom: fix === "searching" && gpsHint ? 6 : 20 }]}>
-          {fix === "searching" ? t("app.gpsSearching") : guesses.length ? t("app.detectedByGps") : fix ? t("app.noPlotNearby") : t("app.gpsNone")}
+          {fix === "searching" ? t("app.gps.searching") : guesses.length ? t("app.common.detectedByGps") : fix ? t("app.no.plotNearby") : t("app.gps.none")}
         </Text>
         {fix === "searching" && gpsHint && <Text style={[T.small, { marginBottom: 20 }]}>{gpsHint}</Text>}
         {plots.length > SEARCH_FROM && (
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder={t("app.plotSearch")}
+            placeholder={t("app.plot.search")}
             placeholderTextColor={C.tinta3}
-            accessibilityLabel={t("app.plotSearch")}
+            accessibilityLabel={t("app.plot.search")}
             autoCorrect={false}
             clearButtonMode="while-editing"
             returnKeyType="search"
@@ -41,7 +41,7 @@ export function PlotScreen({ a }: { a: AnnotateState }) {
           <Row
             key={g.plot.id}
             title={g.plot.name}
-            subtitle={g.confidence === "near" ? t("app.nearBorder") : plotSubtitle(g.plot)}
+            subtitle={g.confidence === "near" ? t("app.common.nearBorder") : plotSubtitle(g.plot)}
             onPress={() => {
               setPlot(g.plot);
               setMulti([]);
@@ -50,7 +50,7 @@ export function PlotScreen({ a }: { a: AnnotateState }) {
           />
         ))}
         {guesses.length > 0 && !searching && (
-          <Text style={[T.smallMedium, { marginTop: 24, marginBottom: 8 }]}>{t("app.changePlot")}</Text>
+          <Text style={[T.smallMedium, { marginTop: 24, marginBottom: 8 }]}>{t("app.common.changePlot")}</Text>
         )}
         {(showAll || guesses.length > 0 || searching) &&
           plots
@@ -67,12 +67,12 @@ export function PlotScreen({ a }: { a: AnnotateState }) {
                 }}
               />
             ))}
-        {searching && !plots.some((p) => fold(p.name).includes(needle)) && <Text style={[T.small, { marginTop: 8 }]}>{t("app.plotSearchNone")}</Text>}
+        {searching && !plots.some((p) => fold(p.name).includes(needle)) && <Text style={[T.small, { marginTop: 8 }]}>{t("app.plot.searchNone")}</Text>}
         <View style={{ height: 12 }} />
-        {plots.length > 1 && <Button kind="text" title={t("app.severalPlots")} onPress={() => setPhase({ name: "multi" })} />}
+        {plots.length > 1 && <Button kind="text" title={t("app.several.plots")} onPress={() => setPhase({ name: "multi" })} />}
         <Button
           kind="text"
-          title={t("app.noPlot")}
+          title={t("app.no.plot")}
           onPress={() => {
             setPlot(null);
             setMulti([]);

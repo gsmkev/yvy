@@ -37,7 +37,7 @@ export async function rescheduleReminders(): Promise<void> {
     for (const p of planReminders(getDb(), session.user.id)) {
       const id = await Notifications.scheduleNotificationAsync({
         content: {
-          title: p.count === 1 ? t("app.reminderOne") : t("app.reminderMany", { n: p.count }),
+          title: p.count === 1 ? t("app.reminder.one") : t("app.reminder.many", { n: p.count }),
           body: p.titles.join(" · "),
           data: { reminder: true },
         },

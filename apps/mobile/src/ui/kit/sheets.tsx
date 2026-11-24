@@ -29,7 +29,7 @@ export function Sheet({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <KeyboardAvoidingView style={s.sheetRoot} behavior={avoidKeyboard ? "padding" : undefined} enabled={!!avoidKeyboard}>
-        <Pressable accessibilityRole="button" accessibilityLabel={t("ui.cancel")} style={s.sheetBackdrop} onPress={onClose} />
+        <Pressable accessibilityRole="button" accessibilityLabel={t("ui.common.cancel")} style={s.sheetBackdrop} onPress={onClose} />
         <View accessibilityViewIsModal style={[s.sheet, { paddingBottom: Math.max(16, insets.bottom) }]}>
           <View style={s.sheetGrip} />
           <Text accessibilityRole="header" style={[T.heading, { marginBottom: 8 }]}>

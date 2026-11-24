@@ -1,6 +1,6 @@
 /** Estrés calórico del ganado, ITH (función 75): lectura de las próximas 48 horas. GET /org/farms/:id/heat-stress. Datos de MET Norway. */
 import { View } from "react-native";
-import { CHART, t, type FarmHeatStressResponse, type MessageKey, cToTemp, tempLabel } from "@yvy/shared";
+import { CHART, t, type FarmHeatStressResponse, type MessageKey, cToTemp, tempLabel, ATTRIBUTION } from "@yvy/shared";
 import { useUnits } from "../../../src/lib/units";
 import { useFarmPick } from "../../../src/office/farmPick";
 import { fmtDateTime, fmtNumber } from "../../../src/office/format";
@@ -21,8 +21,8 @@ export default function Heat() {
   const { farms, farm, setFarmId } = useFarmPick();
   const q = useOnline<FarmHeatStressResponse>(farm ? `/org/farms/${farm.id}/heat-stress` : null);
   return (
-    <FarmFrame title={t("ui.heatTitle")} farms={farms} farm={farm} setFarmId={setFarmId} query={q}>
-      <OnlineState query={q} isEmpty={(d) => d.hours.length === 0} empty={{ title: t("ui.heatNoData") }}>
+    <FarmFrame title={t("ui.heat.title")} farms={farms} farm={farm} setFarmId={setFarmId} query={q}>
+      <OnlineState query={q} isEmpty={(d) => d.hours.length === 0} empty={{ title: t("ui.heat.noData") }}>
         {(d) => {
           const level = d.summary.maxLevel;
           const hot = level === "danger" || level === "emergency";
@@ -31,23 +31,26 @@ export default function Heat() {
             <View>
               <StatRow
                 items={[
-                  { label: t("office.heatNow"), value: fmtNumber(d.hours[0]!.thi, 0), unit: "THI" },
-                  { label: t("office.heatMax"), value: fmtNumber(d.summary.maxThi ?? 0, 0), unit: t(`ui.heatLevel_${level}` as MessageKey), tone: hot ? "danger" : undefined },
-                  { label: t("office.heatTempMax"), value: fmtNumber(cToTemp(maxTemp, units.temp), 0), unit: tempLabel(units.temp) },
+                  { label: t("office.heat.now"), value: fmtNumber(d.hours[0]!.thi, 0), unit: "THI" },
+                  { label: t("office.heat.max"), value: fmtNumber(d.summary.maxThi ?? 0, 0), unit: t(`ui.heat.level_${level}` as MessageKey), tone: hot ? "danger" : undefined },
+                  { label: t("office.heat.tempMax"), value: fmtNumber(cToTemp(maxTemp, units.temp), 0), unit: tempLabel(units.temp) },
                 ]}
               />
               <Text accessibilityRole={hot ? "alert" : undefined} style={[hot ? T.bodyMedium : T.small, { marginTop: 12, color: hot ? C.peligro : C.tinta2 }]}>
                 {d.summary.dangerHours > 0
-                  ? `${t("ui.heatDangerHours", { n: d.summary.dangerHours })}${d.summary.firstDangerAt ? ` · ${t("ui.heatFirstDanger", { date: fmtDateTime(d.summary.firstDangerAt) })}` : ""}`
+                  ? t("ui.heat.dangerHours", { n: d.summary.dangerHours }) +
+                    (d.summary.firstDangerAt
+                      ? " · " + t("ui.heat.firstDanger", { date: fmtDateTime(d.summary.firstDangerAt) })
+                      : "")
                   : level === "alert"
-                    ? t("ui.heatMax", { v: Math.round(d.summary.maxThi ?? 0), level: t(`ui.heatLevel_${level}` as MessageKey) })
-                    : t("ui.heatCalm")}
+                    ? t("ui.heat.max", { v: Math.round(d.summary.maxThi ?? 0), level: t(`ui.heat.level_${level}` as MessageKey) })
+                    : t("ui.heat.calm")}
               </Text>
-              <SectionHeader title={t("office.heatByHour")} />
+              <SectionHeader title={t("office.heat.byHour")} />
               <LineChart series={[{ label: "THI", color: CHART.warm, points: d.hours.map((h) => ({ x: stamp(h.at), y: Math.round(h.thi) })) }]} />
-              <KeyValue rows={(["alert", "danger", "emergency"] as const).map((k) => ({ label: t(`ui.heatLevel_${k}` as MessageKey), value: `≥ ${d.thresholds[k]}` }))} />
-              <Text style={[T.small, { marginTop: 16 }]}>{t("ui.heatHint")}</Text>
-              <Text style={[T.small, { marginTop: 4 }]}>{t("attribution.metNorway")}</Text>
+              <KeyValue rows={(["alert", "danger", "emergency"] as const).map((k) => ({ label: t(`ui.heat.level_${k}` as MessageKey), value: `≥ ${d.thresholds[k]}` }))} />
+              <Text style={[T.small, { marginTop: 16 }]}>{t("ui.heat.hint")}</Text>
+              <Text style={[T.small, { marginTop: 4 }]}>{t(ATTRIBUTION.metNorway)}</Text>
             </View>
           );
         }}

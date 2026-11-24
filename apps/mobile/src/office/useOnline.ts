@@ -76,7 +76,7 @@ export function useOnline<T>(path: string | null, opts: OnlineOptions = {}): Onl
         const k = currentKey(p);
         if (k) cacheDelete(getDb().sql, k); // 403/404: lo guardado ya no vale
       }
-      const msg = e instanceof Error ? e.message : t("office.loadFailed");
+      const msg = e instanceof Error ? e.message : t("office.common.loadFailed");
       setState((s) => ({
         data: permanent ? null : s.data,
         fetchedAt: permanent ? null : s.fetchedAt,

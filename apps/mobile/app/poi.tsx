@@ -43,7 +43,7 @@ function MarkPoi() {
     const guess = guessPlots(db.plots(), here)[0]?.plot.farmId;
     const farmId = guess ?? db.farms()[0]?.id;
     if (!farmId) return;
-    db.savePoi(session.organization.id, { farmId, kind, name: name.trim() || t(`ui.poiKinds_${kind}` as MessageKey), lon: here.lon, lat: here.lat });
+    db.savePoi(session.organization.id, { farmId, kind, name: name.trim() || t(`ui.poi.kinds_${kind}` as MessageKey), lon: here.lon, lat: here.lat });
     localChanged();
     toastSaved();
     router.back();
@@ -52,26 +52,26 @@ function MarkPoi() {
   return (
     <ScrollView style={k.screen} contentContainerStyle={k.pad} keyboardShouldPersistTaps="handled">
       <Stack.Screen options={{ title: "" }} />
-      <Text style={T.title}>{t("app.poiTitle")}</Text>
-      <Text style={[T.small, { marginTop: 6 }]}>{fix === "searching" ? t("app.gpsSearching") : here ? t("app.gpsOk", { m: Math.round(here.accuracy ?? 0) }) : t("app.poiNoGps")}</Text>
+      <Text style={T.title}>{t("app.poi.title")}</Text>
+      <Text style={[T.small, { marginTop: 6 }]}>{fix === "searching" ? t("app.gps.searching") : here ? t("app.gps.ok", { m: Math.round(here.accuracy ?? 0) }) : t("app.poi.noGps")}</Text>
       {fix === "searching" && gpsHint && <Text style={[T.small, { marginTop: 6 }]}>{gpsHint}</Text>}
-      {!here && fix !== "searching" && <Text style={[T.small, { marginTop: 6 }]}>{t("app.gpsNoneHint")}</Text>}
-      <Text style={[T.heading, { marginTop: 24, marginBottom: 4 }]}>{t("app.poiWhat")}</Text>
-      <RadioGroup label={t("app.poiWhat")}>
+      {!here && fix !== "searching" && <Text style={[T.small, { marginTop: 6 }]}>{t("app.gps.noneHint")}</Text>}
+      <Text style={[T.heading, { marginTop: 24, marginBottom: 4 }]}>{t("app.poi.what")}</Text>
+      <RadioGroup label={t("app.poi.what")}>
         {POI_KINDS.map((kd) => (
-          <Row key={kd} choice="radio" title={t(`ui.poiKinds_${kd}` as MessageKey)} left={<PoiIcon kind={kd} />} selected={kind === kd} onPress={() => setKind(kd)} />
+          <Row key={kd} choice="radio" title={t(`ui.poi.kinds_${kd}` as MessageKey)} left={<PoiIcon kind={kd} />} selected={kind === kd} onPress={() => setKind(kd)} />
         ))}
       </RadioGroup>
-      <Text style={[T.heading, { marginTop: 24, marginBottom: 8 }]}>{t("app.poiName")}</Text>
+      <Text style={[T.heading, { marginTop: 24, marginBottom: 8 }]}>{t("app.poi.name")}</Text>
       <TextInput
         value={name}
         onChangeText={(v) => setName(v.slice(0, LIMITS.sync.maxPoiNameLength))}
-        placeholder={t("app.poiNamePlaceholder")}
+        placeholder={t("app.poi.namePlaceholder")}
         placeholderTextColor={C.tinta3}
-        accessibilityLabel={t("app.poiName")}
+        accessibilityLabel={t("app.poi.name")}
         style={st.input}
       />
-      <Button big title={t("app.poiSave")} disabled={!here} onPress={save} style={{ marginTop: 28 }} />
+      <Button big title={t("app.poi.save")} disabled={!here} onPress={save} style={{ marginTop: 28 }} />
     </ScrollView>
   );
 }

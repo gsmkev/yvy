@@ -32,18 +32,18 @@ export function MapTopPanels({ panel, mode, setMode, me, copied, copyMe, canMark
         <>
           <LayerSwitch value={mode} onChange={setMode} />
           {me && (
-            <Pressable accessibilityRole="button" accessibilityLabel={`${formatFix(me)}. ${t("app.coordsCopy")}`} onPress={copyMe} style={st.coords}>
-              <Text style={T.small}>{copied ? t("app.copied") : formatFix(me)}</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel={`${formatFix(me)}. ${t("app.coords.copy")}`} onPress={copyMe} style={st.coords}>
+              <Text style={T.small}>{copied ? t("app.common.copied") : formatFix(me)}</Text>
             </Pressable>
           )}
         </>
       )}
       {panel === "tools" && (
         <MapPanel>
-          <Row title={t("app.poiScan")} onPress={() => router.push("/scan-poi")} />
-          {canMarkPoi && <Row title={t("app.poiMark")} onPress={() => router.push("/poi")} />}
-          {canMarkPoi && <Row title={t("app.plotDrawStart")} onPress={() => router.push("/plot-draw")} />}
-          {canMarkPoi && <Row title={t("app.perimWalkMenu")} onPress={() => router.push({ pathname: "/plot-draw", params: { mode: "walk" } })} />}
+          <Row title={t("app.poi.scan")} onPress={() => router.push("/scan-poi")} />
+          {canMarkPoi && <Row title={t("app.poi.mark")} onPress={() => router.push("/poi")} />}
+          {canMarkPoi && <Row title={t("app.plot.drawStart")} onPress={() => router.push("/plot-draw")} />}
+          {canMarkPoi && <Row title={t("app.perim.walkMenu")} onPress={() => router.push({ pathname: "/plot-draw", params: { mode: "walk" } })} />}
         </MapPanel>
       )}
       {mode === "ndvi" && <NdviLegend acquiredAt={ndvi?.acquiredAt ?? null} missing={!ndvi} />}
@@ -63,11 +63,11 @@ export function MapTools({ panel, setPanel, bearing, follow, setFollow, locate, 
   return (
     <View style={st.toolbar} pointerEvents="box-none">
       <MapToolbar>
-        <MapToolButton icon={LocateFixed} label={t("app.whereAmI")} onPress={locate} />
-        <MapToolButton icon={Compass} label={t("app.compassNorth")} onPress={northUp} rotate={-bearing} />
-        <MapToolButton icon={Navigation} label={follow ? t("app.compassFollowOff") : t("app.compassFollowOn")} role="switch" active={follow} onPress={() => setFollow((v) => !v)} />
-        <MapToolButton icon={Layers} label={t("app.mapLayers")} active={panel === "layers"} onPress={() => setPanel((p) => (p === "layers" ? null : "layers"))} />
-        <MapToolButton icon={Wrench} label={t("app.mapTools")} active={panel === "tools"} onPress={() => setPanel((p) => (p === "tools" ? null : "tools"))} />
+        <MapToolButton icon={LocateFixed} label={t("app.common.whereAmI")} onPress={locate} />
+        <MapToolButton icon={Compass} label={t("app.compass.north")} onPress={northUp} rotate={-bearing} />
+        <MapToolButton icon={Navigation} label={follow ? t("app.compass.followOff") : t("app.compass.followOn")} role="switch" active={follow} onPress={() => setFollow((v) => !v)} />
+        <MapToolButton icon={Layers} label={t("app.map.layers")} active={panel === "layers"} onPress={() => setPanel((p) => (p === "layers" ? null : "layers"))} />
+        <MapToolButton icon={Wrench} label={t("app.map.tools")} active={panel === "tools"} onPress={() => setPanel((p) => (p === "tools" ? null : "tools"))} />
       </MapToolbar>
     </View>  );
 }

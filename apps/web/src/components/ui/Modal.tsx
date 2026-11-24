@@ -8,7 +8,7 @@ const FOCUSABLE =
   'a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
 /**
- * Diálogo accesible (U-26): al abrir pasa el foco al primer campo (o al diálogo), Tab queda dentro,
+ * Diálogo accesible: al abrir pasa el foco al primer campo (o al diálogo), Tab queda dentro,
  * Escape cierra y al cerrar el foco vuelve a lo que lo abrió.
  */
 export function Modal({

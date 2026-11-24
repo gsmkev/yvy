@@ -1,4 +1,4 @@
-/** Informe de daños para el seguro agrícola en PDF (C-09), con los estilos del parte semanal. Evidencia, no un peritaje. */
+/** Informe de daños para el seguro agrícola en PDF, con los estilos del parte semanal. Evidencia, no un peritaje. */
 import { Document, Image, Page, Path, Svg, Text, View } from "@react-pdf/renderer";
 import { BRAND, ATTRIBUTION } from "@yvy/shared";
 import { damageSatellite, type DamageCause, type DamageEvidence, type NdviPass } from "./damageData";

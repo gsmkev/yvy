@@ -1,4 +1,4 @@
-/** Combustible (E-16): cargas por máquina y litros por hora. Las cargas descuentan el stock y cargan el costo solas. */
+/** Combustible: cargas por máquina y litros por hora. Las cargas descuentan el stock y cargan el costo solas. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { newId, noonAsuncion, RECORD_SCHEMA_VERSION, localDate, type PushResponse } from "@yvy/shared";

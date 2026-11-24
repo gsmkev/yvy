@@ -137,7 +137,7 @@ function addPoiLayers(map: MlMap) {
       "circle-stroke-width": 2,
     },
   });
-  // M-19: el ícono del tipo va sobre el punto; mientras se rasteriza queda el disco.
+  // El ícono del tipo va sobre el punto; mientras se rasteriza queda el disco.
   map.addLayer({
     id: "pois-icon",
     type: "symbol",

@@ -1,4 +1,4 @@
-/** Tipo de cambio diario, carga manual (E-06): guaraníes por dólar. El más reciente se usa por defecto. */
+/** Tipo de cambio diario, carga manual: guaraníes por dólar. El más reciente se usa por defecto. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { localDate } from "@yvy/shared";

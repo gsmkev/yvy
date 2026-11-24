@@ -1,4 +1,4 @@
-/** Parte semanal en PDF (RF-80), generado en el navegador con @react-pdf/renderer (anexo §4.9). */
+/** Parte semanal en PDF generado en el navegador con @react-pdf/renderer. */
 import { Document, Image, Page, Path, StyleSheet, Svg, Text, View, Circle } from "@react-pdf/renderer";
 import { BRAND, ATTRIBUTION } from "@yvy/shared";
 import { describeData } from "./exports";

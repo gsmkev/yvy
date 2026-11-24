@@ -1,4 +1,4 @@
-/** Costo por hectárea y por tonelada, y margen bruto por lote, cultivo y actividad (E-30, E-31). */
+/** Costo por hectárea y por tonelada, y margen bruto por lote, cultivo y actividad. */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { get, withQs } from "../../lib/api";

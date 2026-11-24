@@ -1,4 +1,4 @@
-/** M-17: capas propias (imagen georreferenciada) de una estancia. */
+/** Capas propias (imagen georreferenciada) de una estancia. */
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { LIMITS } from "@yvy/shared";
 import { get, getBlob } from "./api";

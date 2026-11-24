@@ -1,4 +1,4 @@
-/** Umbrales de avisos de una estancia (C-04). Los edita el dueño o un administrador; el resto los ve. */
+/** Umbrales de avisos de una estancia. Los edita el dueño o un administrador; el resto los ve. */
 import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { isFieldRole } from "@yvy/shared";

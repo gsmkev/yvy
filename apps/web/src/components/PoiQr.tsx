@@ -1,5 +1,5 @@
 /**
- * Códigos QR de los puntos de interés (F-28): se imprimen y se pegan en el bebedero, el silo o el pluviómetro.
+ * Códigos QR de los puntos de interés: se imprimen y se pegan en el bebedero, el silo o el pluviómetro.
  * Al escanearlos con la app se abre Anotar en ese punto (sin señal también: el punto se busca en el celular).
  */
 import { Printer } from "lucide-react";

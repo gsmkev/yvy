@@ -1,4 +1,4 @@
-/** Inventario (E-11): stock por producto y depósito, costo promedio y movimientos de compra, consumo, transferencia y ajuste. */
+/** Inventario: stock por producto y depósito, costo promedio y movimientos de compra, consumo, transferencia y ajuste. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { del, get, withQs } from "../../lib/api";

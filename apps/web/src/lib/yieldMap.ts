@@ -1,5 +1,5 @@
 /**
- * Mapas de rendimiento de la cosechadora (A-21): shapefile (zip) o GeoJSON con puntos o polígonos y un campo de
+ * Mapas de rendimiento de la cosechadora: shapefile (zip) o GeoJSON con puntos o polígonos y un campo de
  * rendimiento. Se parsea en el navegador (el Worker no procesa archivos): se limpia, se recorta al lote, se pasa a
  * t/ha y se resume en una grilla chica que es lo único que se manda a guardar.
  */

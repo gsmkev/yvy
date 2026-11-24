@@ -1,4 +1,4 @@
-/** Informe gratis a cambio del email (V-04): lectura de las coordenadas que escribe la persona. */
+/** Informe gratis a cambio del email: lectura de las coordenadas que escribe la persona. */
 import { LIMITS } from "@yvy/shared";
 
 interface Point {

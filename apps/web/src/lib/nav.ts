@@ -57,7 +57,7 @@ export function buildNav(c: NavContext): { main: NavGroup[]; bottom: NavItem[] }
         { to: "/registros", label: "ui.nav.records", icon: ClipboardList },
         { to: "/tareas", label: "ui.nav.tasks", icon: ListChecks },
         { to: "/calendario", label: "ui.nav.calendar", icon: CalendarDays },
-        // El calendario sanitario no es para el empleado (G-10) ni tiene sentido sin lotes
+        // El calendario sanitario no es para el empleado ni tiene sentido sin lotes
         ...(!field && c.plots !== 0 ? [{ to: "/sanidad", label: "ui.nav.sanitary" as MessageKey, icon: HeartPulse }] : []),
         { to: "/avisos", label: "ui.nav.alerts", icon: Bell },
       ],

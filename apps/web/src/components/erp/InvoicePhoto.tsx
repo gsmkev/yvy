@@ -1,4 +1,4 @@
-/** Foto de la factura o el ticket de un movimiento o un costo (E-37): adjuntar, ver y quitar. */
+/** Foto de la factura o el ticket de un movimiento o un costo: adjuntar, ver y quitar. */
 import { useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { del, get, post } from "../../lib/api";

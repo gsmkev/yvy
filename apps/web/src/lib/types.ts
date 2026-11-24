@@ -8,7 +8,7 @@ export interface Me {
   role: Role;
   tilesBaseUrl: string;
   isStaff: boolean;
-  /** P-12: sesión de soporte de solo lectura. */
+  /** Sesión de soporte de solo lectura. */
   support?: boolean;
 }
 
@@ -94,7 +94,7 @@ export interface FarmDetail {
   pois: Poi[];
   layers: Layer[];
   assignments: { plotId: string; userId: string }[];
-  /** Procesamiento de imágenes al crear la estancia (S-02); null si es anterior a esa función. */
+  /** Procesamiento de imágenes al crear la estancia; null si es anterior a esa función. */
   imageryStatus: "pending" | "processing" | "ready" | "failed" | null;
   imageryRequestedAt: number | null;
 }
@@ -126,12 +126,12 @@ export interface Member {
   /** Días con actividad en los últimos 7. */
   activeDays7: number;
   records7d: number;
-  /** T-06: lotes distintos en los que anotó en los últimos 7 días. */
+  /** Lotes distintos en los que anotó en los últimos 7 días. */
   plotsVisited7d: number;
   lastSyncAt: number | null;
-  /** T-05: tareas abiertas vencidas (con la hora límite, en la hora de la estancia). */
+  /** Tareas abiertas vencidas (con la hora límite, en la hora de la estancia). */
   overdueTasks: number;
-  /** F-24: ingresa con teléfono y PIN. */
+  /** Ingresa con teléfono y PIN. */
   hasPin?: boolean;
 }
 
@@ -152,7 +152,7 @@ export interface Task {
   recurrence: "none" | "daily" | "weekly";
   status: "open" | "done" | "cancelled";
   completedAt: number | null;
-  /** Lista de verificación en JSON (F-15); ver parseChecklist. */
+  /** Lista de verificación en JSON; ver parseChecklist. */
   checklist: string | null;
 }
 
@@ -172,7 +172,7 @@ export interface Alert {
 
 export type Area = Polygon | MultiPolygon;
 
-/** Área del lote con vigor muy por debajo de la mediana (S-08). */
+/** Área del lote con vigor muy por debajo de la mediana. */
 export interface ProblemArea {
   id: string;
   plotId: string;
@@ -186,7 +186,7 @@ export interface ProblemArea {
   plotMedianNdvi: number;
 }
 
-/** Indicador EUDR de un lote (S-30), calculado con Sentinel-2 por workers-py. Análisis indicativo. */
+/** Indicador EUDR de un lote, calculado con Sentinel-2 por workers-py. Análisis indicativo. */
 export interface EudrPlot {
   plotId: string;
   plotName: string;
@@ -251,7 +251,7 @@ export interface PlotSeason {
   targetYieldTHa: number | null;
 }
 
-/** Una campaña en el historial de rotación de un lote (A-02). */
+/** Una campaña en el historial de rotación de un lote. */
 export interface PlotHistoryRow {
   seasonId: string;
   seasonName: string;

@@ -1,4 +1,4 @@
-/** Abigeato (G-13): avisos de faltantes con fecha, categoría, cabezas y número de denuncia. */
+/** Abigeato: avisos de faltantes con fecha, categoría, cabezas y número de denuncia. */
 import { useQuery } from "@tanstack/react-query";
 import { HERD_CATEGORIES, type TheftResponse } from "@yvy/shared";
 import { get } from "../lib/api";

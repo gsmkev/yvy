@@ -1,4 +1,4 @@
-/** Órdenes de trabajo (E-20, E-21): una tarea por lote con insumos, máquina y operario o contratista. */
+/** Órdenes de trabajo: una tarea por lote con insumos, máquina y operario o contratista. */
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DOSE_UNITS_FOR, localDate, ORDER_LABORS, groupOrders, plotsLabel, productsLabel, type OrderGroup, type OrderRow } from "@yvy/shared";

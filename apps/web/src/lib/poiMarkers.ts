@@ -1,4 +1,4 @@
-/** M-19: rasteriza los íconos de los puntos de interés (Lucide) para usarlos como imágenes del mapa. */
+/** Rasteriza los íconos de los puntos de interés (Lucide) para usarlos como imágenes del mapa. */
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { BRAND, POI_KINDS, type PoiKind } from "@yvy/shared";

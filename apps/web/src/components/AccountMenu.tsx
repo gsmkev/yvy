@@ -12,7 +12,7 @@ export const useOrganizations = () =>
   )?.organizations ?? [];
 
 /**
- * Menú de cuenta (U-30): el bloque organización + usuario abre Cuenta, Preferencias, Ayuda y Salir.
+ * Menú de cuenta: el bloque organización + usuario abre Cuenta, Preferencias, Ayuda y Salir.
  * Si el usuario pertenece a más de una organización, también permite cambiar de una a otra.
  * Teclado: Enter/Espacio/↓ abren, ↑↓ Inicio Fin recorren, Escape cierra y devuelve el foco al botón.
  */

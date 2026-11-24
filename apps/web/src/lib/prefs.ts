@@ -6,7 +6,7 @@ interface Prefs {
   tab?: string;
   layer?: string;
   guideDismissed?: boolean;
-  /** T-07: días sin visita para marcar un lote. */
+  /** Días sin visita para marcar un lote. */
   staleDays?: number;
 }
 

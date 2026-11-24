@@ -1,5 +1,5 @@
 /**
- * V-10: Academia. Los temas son fijos (textos en i18n); los videos se cargan al compilar con VITE_ACADEMY_VIDEOS, un JSON
+ * Academia. Los temas son fijos (textos en i18n); los videos se cargan al compilar con VITE_ACADEMY_VIDEOS, un JSON
  * `{ "mapa": "https://…", "registro": { "es": "https://…", "gn": "https://…" } }`. Solo se aceptan enlaces https. Un tema
  * sin enlace se muestra como "Próximamente": no hay videos de relleno.
  */

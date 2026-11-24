@@ -1,4 +1,4 @@
-/** Rotación de potreros (G-04): ocupación, descanso y próximo potrero sugerido. */
+/** Rotación de potreros: ocupación, descanso y próximo potrero sugerido. */
 import { useQuery } from "@tanstack/react-query";
 import type { RotationResponse } from "@yvy/shared";
 import { get } from "../lib/api";

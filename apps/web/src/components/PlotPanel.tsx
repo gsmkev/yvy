@@ -36,12 +36,12 @@ export function PlotPanel({
   workers: Member[];
   canEdit: boolean;
   onClose: () => void;
-  /** Áreas problema de este lote (S-08). */
+  /** Áreas problema de este lote. */
   problemAreas?: ProblemArea[];
   onShowArea?: (a: ProblemArea) => void;
-  /** M-02: pasa el mapa a edición de vértices de este lote. */
+  /** Pasa el mapa a edición de vértices de este lote. */
   onEditShape?: () => void;
-  /** M-05: dibujar una línea para dividir el lote / elegir otro lote para unir. */
+  /** Dibujar una línea para dividir el lote / elegir otro lote para unir. */
   onSplit?: () => void;
   onMerge?: () => void;
   /** Estancia del lote (encabezado de la grilla de muestreo). */

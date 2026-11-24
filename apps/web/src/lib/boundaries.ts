@@ -1,5 +1,5 @@
 /**
- * M-16: límites de departamentos (ADM1) y distritos (ADM2) de geoBoundaries (CC BY 4.0).
+ * Límites de departamentos (ADM1) y distritos (ADM2) de geoBoundaries (CC BY 4.0).
  * El job `boundaries` de workers-py los baja, los simplifica y los sube a R2 junto a las teselas;
  * la web los lee de ahí y, si todavía no existen, la capa queda como "no disponible" sin romper nada.
  */

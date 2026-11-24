@@ -1,4 +1,4 @@
-/** Personal: empleados con su jornal y asistencia diaria con lote y labor (E-25). */
+/** Personal: empleados con su jornal y asistencia diaria con lote y labor. */
 import { useState } from "react";
 import { t } from "../../lib/i18n";
 import { ErrorBox, Spinner, Tabs } from "../ui";

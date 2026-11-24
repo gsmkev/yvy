@@ -1,5 +1,5 @@
 /**
- * R-05: datos del informe de auditoría para certificaciones (soja responsable, buenas prácticas).
+ * Datos del informe de auditoría para certificaciones (soja responsable, buenas prácticas).
  * Cruza cada aplicación con el catálogo de productos (principio activo, clase tóxica, carencia), el lote, el operador
  * y la distancia a aguadas y viviendas, y marca los casos que un auditor miraría: cosecha dentro del período de
  * carencia, producto sin carencia cargada, aplicación sin ubicación, cerca de agua o vivienda, viento fuera de rango.

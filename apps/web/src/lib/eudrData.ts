@@ -1,4 +1,4 @@
-/** Datos del indicador EUDR (S-30), compartidos por la pantalla y el PDF. */
+/** Datos del indicador EUDR, compartidos por la pantalla y el PDF. */
 import { tk } from "./i18n";
 import type { EudrPlot, EudrResponse } from "./types";
 

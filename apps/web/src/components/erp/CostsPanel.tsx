@@ -1,4 +1,4 @@
-/** Costos y ventas con centro de costo: estancia, lote, campaña y actividad (E-05). */
+/** Costos y ventas con centro de costo: estancia, lote, campaña y actividad. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {

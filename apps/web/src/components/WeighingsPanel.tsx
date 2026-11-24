@@ -1,4 +1,4 @@
-/** Pesadas y ganancia diaria de peso (G-22) por lote de animales y por animal con caravana. */
+/** Pesadas y ganancia diaria de peso por lote de animales y por animal con caravana. */
 import { useQuery } from "@tanstack/react-query";
 import type { WeighingsResponse, WeightSeries } from "@yvy/shared";
 import { get } from "../lib/api";

@@ -1,4 +1,4 @@
-/** Comparación de campañas de vigor (S-03): una curva de NDVI por campaña, superpuestas desde el inicio de la campaña. */
+/** Comparación de campañas de vigor: una curva de NDVI por campaña, superpuestas desde el inicio de la campaña. */
 
 /** La campaña agrícola va de julio a junio: la 2024/25 empieza el 1 de julio de 2024. */
 const START_MONTH = 6; // julio (0-based)

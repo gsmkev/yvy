@@ -1,4 +1,4 @@
-/** Plan reproductivo (ADR 0005): estación de servicio, línea de tiempo del ciclo, tareas y indicadores. */
+/** Plan reproductivo: estación de servicio, línea de tiempo del ciclo, tareas y indicadores. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {

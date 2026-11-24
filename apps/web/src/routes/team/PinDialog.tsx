@@ -5,7 +5,7 @@ import { del, put } from "../../lib/api";
 import { t } from "../../lib/i18n";
 import type { Member } from "../../lib/types";
 
-/** F-24: el dueño o administrador da o cambia el PIN de ingreso de un empleado (alternativa al QR). */
+/** El dueño o administrador da o cambia el PIN de ingreso de un empleado (alternativa al QR). */
 export function PinDialog({ member, onClose }: { member: Member; onClose: () => void }) {
   const qc = useQueryClient();
   const [phone, setPhone] = useState(member.phone ?? "");

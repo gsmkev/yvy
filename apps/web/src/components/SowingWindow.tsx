@@ -5,7 +5,7 @@ import { fmtDate, fmtIsoDate, fmtPct } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { Empty, ErrorBox, Select, Spinner } from "./ui";
 
-/** Ventana de siembra (A-05): humedad del suelo y pronóstico de los próximos días para un cultivo. */
+/** Ventana de siembra: humedad del suelo y pronóstico de los próximos días para un cultivo. */
 export function SowingWindow({ farmId }: { farmId: string }) {
   const [crop, setCrop] = useState<(typeof CROPS)[number]>("soja");
   const q = useSowingWindow(farmId, crop);

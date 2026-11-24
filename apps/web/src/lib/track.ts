@@ -1,5 +1,5 @@
 /**
- * Analítica propia (P-03): avisa al servidor qué pantalla se abrió. Sin terceros, sin datos personales: solo el
+ * Analítica propia: avisa al servidor qué pantalla se abrió. Sin terceros, sin datos personales: solo el
  * nombre ("view:tareas"); el servidor muestrea y limita. Si falla, no pasa nada.
  */
 import { getSession, post } from "./api";

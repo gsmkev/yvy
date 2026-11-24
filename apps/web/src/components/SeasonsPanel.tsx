@@ -8,7 +8,7 @@ import { useSeasons } from "../lib/queries";
 import type { Plot, PlotSeason, Season } from "../lib/types";
 import { Button, ConfirmModal, Empty, ErrorBox, Field, Form, Input, Modal, Select, Spinner, toast } from "./ui";
 
-/** Campañas de la organización y plan de cultivo por lote (A-01). */
+/** Campañas de la organización y plan de cultivo por lote. */
 export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots: Plot[]; canEdit: boolean }) {
   const q = useSeasons(farmId);
   const qc = useQueryClient();

@@ -74,7 +74,7 @@ export async function fetchAllRecords(f: RecordFilters, max = 5000): Promise<Rec
   return out;
 }
 
-/** Campañas de la organización y el plan por lote de una estancia (ADR 0004). */
+/** Campañas de la organización y el plan por lote de una estancia. */
 export const useSeasons = (farmId: string, enabled = true) =>
   useQuery({
     enabled,
@@ -82,6 +82,6 @@ export const useSeasons = (farmId: string, enabled = true) =>
     queryFn: () => get<{ seasons: Season[]; plotSeasons: PlotSeason[] }>(withQs("/org/seasons", { farmId })),
   });
 
-/** U-24: la guía de primeros pasos se oculta por persona (en el servidor), no por navegador. */
+/** La guía de primeros pasos se oculta por persona (en el servidor), no por navegador. */
 export const useOnboarding = (enabled = true) =>
   useQuery({ queryKey: ["onboarding"], queryFn: () => get<{ dismissedAt: number | null }>("/me/onboarding"), enabled, staleTime: 5 * 60_000 });

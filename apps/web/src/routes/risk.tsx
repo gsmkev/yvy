@@ -1,4 +1,4 @@
-/** Informe de riesgo climático de la estancia (C-10): heladas, lluvia frente a lo normal, sequías y focos de calor. */
+/** Informe de riesgo climático de la estancia: heladas, lluvia frente a lo normal, sequías y focos de calor. */
 import { useRef, useState } from "react";
 import { isFieldRole } from "@yvy/shared";
 import { useQuery } from "@tanstack/react-query";

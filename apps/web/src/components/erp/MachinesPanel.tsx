@@ -1,4 +1,4 @@
-/** Maquinaria y vehículos con horómetro u odómetro (E-03). */
+/** Maquinaria y vehículos con horómetro u odómetro. */
 import { MACHINE_TYPES, METER_KINDS } from "@yvy/shared";
 import { fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";

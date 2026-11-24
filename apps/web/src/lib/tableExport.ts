@@ -74,7 +74,7 @@ export function parseEsNumber(text: string): number | null {
 const cellText = (el: Element) => (el.textContent ?? "").replace(/\s+/g, " ").trim();
 
 /**
- * Lee una tabla HTML ya dibujada y la pasa a TableData (U-28): encabezados de la última fila de `thead`, filas de
+ * Lee una tabla HTML ya dibujada y la pasa a TableData: encabezados de la última fila de `thead`, filas de
  * `tbody` y `tfoot`. Las columnas sin encabezado (acciones, casillas) no se exportan. Una celda con `data-value`
  * exporta ese valor en lugar del texto; los números escritos en es-PY salen como números para que Excel sume.
  */

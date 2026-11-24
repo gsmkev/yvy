@@ -1,6 +1,6 @@
 /**
- * A-22: rinde frente a vigor por zona de manejo. El rinde de cada zona sale de las celdas del mapa de rinde de la
- * cosechadora que caen dentro de la zona; el vigor es el NDVI medio de la zona (A-32). Sin celdas suficientes
+ * Rinde frente a vigor por zona de manejo. El rinde de cada zona sale de las celdas del mapa de rinde de la
+ * cosechadora que caen dentro de la zona; el vigor es el NDVI medio de la zona. Sin celdas suficientes
  * no se afirma nada.
  */
 import { containsPoint, type Area } from "@yvy/geo";

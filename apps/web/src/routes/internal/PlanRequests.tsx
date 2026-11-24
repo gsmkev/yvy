@@ -17,7 +17,7 @@ interface PlanRequestRow {
   requester: string | null;
 }
 
-/** P-10: pedidos de plan que hicieron los dueños desde la web. Aprobar aplica el plan y los topes; no cobra. */
+/** Pedidos de plan que hicieron los dueños desde la web. Aprobar aplica el plan y los topes; no cobra. */
 export function PlanRequests() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["admin-plan-requests"], queryFn: () => get<PlanRequestRow[]>("/admin/plan-requests") });

@@ -1,4 +1,4 @@
-/** Filtros guardados de Registros (U-05): nombre + filtros, por usuario, en localStorage. */
+/** Filtros guardados de Registros: nombre + filtros, por usuario, en localStorage. */
 import { getSession } from "./api";
 
 export interface RecordFilterValues {

@@ -1,4 +1,4 @@
-/** Depósitos por estancia: galpón, tanque de combustible o silo (E-10). */
+/** Depósitos por estancia: galpón, tanque de combustible o silo. */
 import { WAREHOUSE_TYPES } from "@yvy/shared";
 import { t, tk } from "../../lib/i18n";
 import { useFarms } from "../../lib/queries";

@@ -1,4 +1,4 @@
-/** Dinero en pantalla: guaraníes enteros y dólares con centavos (ADR 0004). Siempre cifras tabulares (clase `num`). */
+/** Dinero en pantalla: guaraníes enteros y dólares con centavos. Siempre cifras tabulares (clase `num`). */
 import { fromMinor, type Currency } from "@yvy/shared";
 
 const gs = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 });

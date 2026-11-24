@@ -1,4 +1,4 @@
-/** Mapa de calor de recorridas (F-06): registros `track` de los últimos 30 días, por estancia y por lote. */
+/** Mapa de calor de recorridas: registros `track` de los últimos 30 días, por estancia y por lote. */
 import type { LonLat } from "@yvy/geo";
 import { trackLengthM } from "@yvy/geo";
 import type { RecordRow } from "./types";

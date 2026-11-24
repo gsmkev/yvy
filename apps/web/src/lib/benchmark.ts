@@ -1,4 +1,4 @@
-/** R-08: lectura de la comparación anónima con la zona. */
+/** Lectura de la comparación anónima con la zona. */
 type Verdict = "above" | "below" | "same";
 
 /** Diferencia relativa (en fracción de la mediana) por debajo de la cual se dice "parecido". */

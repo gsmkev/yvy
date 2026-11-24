@@ -1,4 +1,4 @@
-/** M-17: capas propias de la estancia (imágenes de dron, mapas de suelos) como capas activables con opacidad. */
+/** Capas propias de la estancia (imágenes de dron, mapas de suelos) como capas activables con opacidad. */
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { LIMITS } from "@yvy/shared";

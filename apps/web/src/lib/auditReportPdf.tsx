@@ -1,4 +1,4 @@
-/** Informe de auditoría para certificaciones en PDF (R-05), con los estilos del parte semanal. */
+/** Informe de auditoría para certificaciones en PDF, con los estilos del parte semanal. */
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import type { AuditReportData } from "./auditReportData";
 import { BUFFER_M } from "./auditReportData";

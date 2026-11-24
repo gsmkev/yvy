@@ -18,7 +18,7 @@ const num = (s: string) => {
   return Number.isFinite(n) && n > 0 ? n : 0;
 };
 
-/** ADR 0005 §5: lo que le corresponde a la organización por año y por cuota, y una calculadora. Es informativo: el cobro es manual. */
+/** Lo que le corresponde a la organización por año y por cuota, y una calculadora. Es informativo: el cobro es manual. */
 export function PlanPrice({ billing, onBilling }: { billing: Billing; onBilling: (b: Billing) => void }) {
   const dash = useQuery({ queryKey: ["dashboard"], queryFn: () => get<Dashboard>("/org/dashboard"), staleTime: 60_000 });
   const rates = useRates();

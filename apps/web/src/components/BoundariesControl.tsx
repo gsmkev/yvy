@@ -1,4 +1,4 @@
-/** M-16: elige qué límites administrativos se dibujan sobre el mapa (ninguno, departamentos o distritos). */
+/** Elige qué límites administrativos se dibujan sobre el mapa (ninguno, departamentos o distritos). */
 import { BOUNDARY_LEVELS, type BoundaryLevel } from "../lib/boundaries";
 import { t } from "../lib/i18n";
 

@@ -18,7 +18,7 @@ interface Hook {
   consecutiveFailures: number;
 }
 
-/** I-02: URLs que reciben un POST firmado con cada aviso o registro nuevo. Solo dueño y administrador. */
+/** URLs que reciben un POST firmado con cada aviso o registro nuevo. Solo dueño y administrador. */
 export function WebhooksPanel() {
   const qc = useQueryClient();
   const list = useQuery({ queryKey: ["webhooks"], queryFn: () => get<Hook[]>("/org/webhooks") });

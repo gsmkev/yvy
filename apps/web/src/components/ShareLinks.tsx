@@ -1,4 +1,4 @@
-/** Enlaces temporales de solo lectura para un banco o auditor (K-04). Solo el dueño. */
+/** Enlaces temporales de solo lectura para un banco o auditor. Solo el dueño. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { del, get, post } from "../lib/api";

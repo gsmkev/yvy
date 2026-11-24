@@ -49,7 +49,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-/** A-04: fenología estimada por grados-día contra el último estado anotado. */
+/** Fenología estimada por grados-día contra el último estado anotado. */
 function PhenologySection({ plotId }: { plotId: string }) {
   const q = usePhenology(plotId);
   const d = q.data;
@@ -102,7 +102,7 @@ function PhenologySection({ plotId }: { plotId: string }) {
   );
 }
 
-/** C-08: lluvia menos consumo del cultivo desde la siembra. */
+/** Lluvia menos consumo del cultivo desde la siembra. */
 function WaterBalanceSection({ plot }: { plot: Plot }) {
   const plotId = plot.id;
   const [irrigating, setIrrigating] = useState(false);
@@ -173,7 +173,7 @@ function WaterBalanceSection({ plot }: { plot: Plot }) {
   );
 }
 
-/** A-14: si el lote tiene una carencia vigente, lo primero que se ve en la sección agronómica. */
+/** Si el lote tiene una carencia vigente, lo primero que se ve en la sección agronómica. */
 function WithdrawalSection({ plot }: { plot: Plot }) {
   const q = useWithdrawal(plot.farmId);
   const r = q.data?.restrictions.find((x) => x.plotId === plot.id);
@@ -195,7 +195,7 @@ function WithdrawalSection({ plot }: { plot: Plot }) {
   );
 }
 
-/** C-03: pronóstico propio del lote (solo estancias de más de 2.000 ha). */
+/** Pronóstico propio del lote (solo estancias de más de 2.000 ha). */
 function PlotForecastSection({ plot }: { plot: Plot }) {
   const q = usePlotForecast(plot.farmId);
   const f = q.data?.plots.find((p) => p.plotId === plot.id);
@@ -220,7 +220,7 @@ function PlotForecastSection({ plot }: { plot: Plot }) {
   );
 }
 
-/** C-09: informe de daños para el seguro agrícola. */
+/** Informe de daños para el seguro agrícola. */
 function DamageSection({ plot }: { plot: Plot }) {
   const [open, setOpen] = useState(false);
   return (
@@ -231,7 +231,7 @@ function DamageSection({ plot }: { plot: Plot }) {
   );
 }
 
-/** A-43: anota un riego del lote desde la web (el mismo registro `irrigation` que carga la app). */
+/** Anota un riego del lote desde la web (el mismo registro `irrigation` que carga la app). */
 function IrrigationModal({ plot, onClose }: { plot: Plot; onClose: () => void }) {
   const qc = useQueryClient();
   const [f, setF] = useState({ mm: "", method: "pivot", date: localDate(Date.now()) });

@@ -26,7 +26,7 @@ export function NewFarmPage() {
   const [parts, setParts] = useState<Area[]>([]);
   const geometry = useMemo(() => combineAreas(parts), [parts]);
   const [fileOptions, setFileOptions] = useState<ImportedPolygon[] | null>(null);
-  // M-08: los demás polígonos del archivo, para importarlos como lotes en el mismo paso.
+  // Los demás polígonos del archivo, para importarlos como lotes en el mismo paso.
   const [withPlots, setWithPlots] = useState(true);
   const filePlots = (fileOptions ?? [])
     .slice(1)

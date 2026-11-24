@@ -4,15 +4,15 @@ import type { LineString, MultiPolygon, Polygon } from "geojson";
 /** Estado de las herramientas de edición del mapa: dibujar, importar, POI, dividir, unir, vértices y líneas. */
 export function useFarmEditing() {
   const [mode, setMode] = useState<"none" | "draw" | "poi" | "import">("none");
-  // M-05: dividir (dibuja una línea sobre el lote) y unir (se elige el lote contiguo en el mapa)
+  // Dividir (dibuja una línea sobre el lote) y unir (se elige el lote contiguo en el mapa)
   const [splitting, setSplitting] = useState<string | null>(null);
   const [splitLine, setSplitLine] = useState<LineString | null>(null);
   const [mergeFrom, setMergeFrom] = useState<string | null>(null);
   const [mergeWith, setMergeWith] = useState<string | null>(null);
-  // M-20: trazar alambrados, caminos y cañerías
+  // Trazar alambrados, caminos y cañerías
   const [lineDraw, setLineDraw] = useState(false);
   const [newLine, setNewLine] = useState<LineString | null>(null);
-  // M-02: edición de vértices de un lote existente
+  // Edición de vértices de un lote existente
   const [shapeEdit, setShapeEdit] = useState<{ id: string; geometry: string } | null>(null);
   const [shape, setShape] = useState<Polygon | MultiPolygon | null>(null);
   const endShapeEdit = () => {
@@ -39,7 +39,7 @@ export function useFarmEditing() {
 }
 export type FarmEditing = ReturnType<typeof useFarmEditing>;
 
-/** T-01: lotes marcados en el mapa para una tarea nueva; `picking` esconde el diálogo mientras se elige. */
+/** Lotes marcados en el mapa para una tarea nueva; `picking` esconde el diálogo mientras se elige. */
 export function useTaskPicking(tab: string) {
   const [taskPlots, setTaskPlots] = useState<string[]>([]);
   const [picking, setPicking] = useState(false);

@@ -1,4 +1,4 @@
-/** Datos y cálculos de los informes de campaña, del banco y de la exportación (R-03, R-04, R-09). */
+/** Datos y cálculos de los informes de campaña, del banco y de la exportación. */
 import { addDays, localDate, type ClimateData } from "@yvy/shared";
 import { get } from "./api";
 

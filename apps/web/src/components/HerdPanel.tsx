@@ -1,4 +1,4 @@
-/** Pestaña Hacienda (G-03): hacienda calculada por potrero, carga animal y límite configurable. */
+/** Pestaña Hacienda: hacienda calculada por potrero, carga animal y límite configurable. */
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { HERD_CATEGORIES, MAX_UA_PER_HA_LIMITS, SYSTEM_SECTION_ORDER, UA_EQUIVALENTS, type FarmStockResponse } from "@yvy/shared";

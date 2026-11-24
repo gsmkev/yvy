@@ -11,7 +11,7 @@ interface FertilityResponse {
   points: Record<FertLayerKey, number>;
 }
 
-/** Mapas de fertilidad interpolados (A-31): cuántos puntos tiene cada parámetro y pedido del cálculo. */
+/** Mapas de fertilidad interpolados: cuántos puntos tiene cada parámetro y pedido del cálculo. */
 export function FertilityPanel({ farmId }: { farmId: string }) {
   const q = useQuery({ queryKey: ["fertility", farmId], queryFn: () => get<FertilityResponse>(`/org/farms/${farmId}/fertility`) });
   const farm = useFarm(farmId);

@@ -1,4 +1,4 @@
-/** Mantenimiento preventivo por horas o kilómetros, con historial de servicios y reparaciones (E-22). */
+/** Mantenimiento preventivo por horas o kilómetros, con historial de servicios y reparaciones. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CURRENCIES, MAINTENANCE_KINDS, localDate, toMinor, type Currency } from "@yvy/shared";

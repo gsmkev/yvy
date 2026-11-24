@@ -1,4 +1,4 @@
-/** Informe para el banco en PDF (R-04), con los estilos del parte semanal. */
+/** Informe para el banco en PDF, con los estilos del parte semanal. */
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { fmtDate, fmtHa, fmtIsoDate, fmtNdvi, fmtNum } from "./format";
 import { t, tk } from "./i18n";

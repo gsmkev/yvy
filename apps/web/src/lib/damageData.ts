@@ -1,4 +1,4 @@
-/** Datos del informe de daños para el seguro agrícola (C-09): vigor antes y después del evento y registros de alrededor. */
+/** Datos del informe de daños para el seguro agrícola: vigor antes y después del evento y registros de alrededor. */
 import { addDays } from "@yvy/shared";
 import { toIso } from "./format";
 import type { RecordRow } from "./types";

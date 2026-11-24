@@ -1,4 +1,4 @@
-/** Costo de la labor propia frente al contratista del mismo servicio (E-23). */
+/** Costo de la labor propia frente al contratista del mismo servicio. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CONTRACTOR_SERVICES } from "@yvy/shared";

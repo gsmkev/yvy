@@ -3,7 +3,7 @@ import { fmtIsoDate } from "../lib/format";
 import { t } from "../lib/i18n";
 import { Empty, ErrorBox, Spinner } from "./ui";
 
-/** Carencia antes de cosechar (A-14): lotes con restricción vigente y cosechas hechas antes de cumplirla. */
+/** Carencia antes de cosechar: lotes con restricción vigente y cosechas hechas antes de cumplirla. */
 export function WithdrawalPanel({ farmId }: { farmId: string }) {
   const q = useWithdrawal(farmId);
   const d = q.data;

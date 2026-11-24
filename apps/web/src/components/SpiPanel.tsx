@@ -5,7 +5,7 @@ import { fmtMm, fmtNum } from "../lib/format";
 import { t } from "../lib/i18n";
 import { ErrorBox, Spinner } from "./ui";
 
-/** SPI a 1, 3 y 6 meses (C-07): la lluvia reciente contra la normal 1991-2020, en puntaje estandarizado. */
+/** SPI a 1, 3 y 6 meses: la lluvia reciente contra la normal 1991-2020, en puntaje estandarizado. */
 export function SpiPanel({ farmId }: { farmId: string }) {
   const q = useQuery({
     queryKey: ["spi", farmId],

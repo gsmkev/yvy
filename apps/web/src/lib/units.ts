@@ -1,5 +1,5 @@
 /**
- * Unidades de visualización (U-23). Los datos siempre se guardan en ha, mm y °C;
+ * Unidades de visualización. Los datos siempre se guardan en ha, mm y °C;
  * la preferencia (por usuario, en localStorage) solo cambia cómo se muestran.
  */
 import {

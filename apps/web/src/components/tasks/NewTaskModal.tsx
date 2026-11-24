@@ -7,7 +7,7 @@ import { useFarms } from "../../lib/queries";
 import type { Plot } from "../../lib/types";
 import { Button, ErrorBox, Field, Form, Input, Modal, Select, toast } from "../ui";
 
-/** T-01: selección de lotes en el mapa de la estancia; la maneja la pantalla que tiene el mapa. */
+/** Selección de lotes en el mapa de la estancia; la maneja la pantalla que tiene el mapa. */
 export interface PlotPick {
   ids: string[];
   setIds: (ids: string[]) => void;

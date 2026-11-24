@@ -1,4 +1,4 @@
-/** Reproducción (G-20): índices de preñez, parición y destete, y los últimos eventos. */
+/** Reproducción: índices de preñez, parición y destete, y los últimos eventos. */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ReproductionResponse } from "@yvy/shared";

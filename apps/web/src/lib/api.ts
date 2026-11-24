@@ -8,9 +8,9 @@ export interface Session {
   user: { id: string; fullName: string; email: string | null };
   organization: { id: string; name: string; role: string };
   organizations: { id: string; name: string; role: string }[];
-  /** P-12: sesión de soporte (solo lectura, sin renovación). */
+  /** Sesión de soporte (solo lectura, sin renovación). */
   support?: boolean;
-  /** P-08: la organización exige segundo factor a los administradores y este todavía no lo activó. */
+  /** La organización exige segundo factor a los administradores y este todavía no lo activó. */
   mfaSetupRequired?: boolean;
 }
 
@@ -29,7 +29,7 @@ function load(): Session | null {
 
 export const getSession = () => session;
 
-// ---- P-12: "ver como soporte" ----
+// ---- "ver como soporte" ----
 const STAFF_KEY = "yvy.staff-session";
 
 /** Pasa a la sesión de soporte; la del equipo queda guardada en esta pestaña para volver. */

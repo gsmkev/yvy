@@ -1,4 +1,4 @@
-/** Elegir la fecha de la imagen y comparar dos fechas con una cortina (S-04). */
+/** Elegir la fecha de la imagen y comparar dos fechas con una cortina. */
 import { useEffect, useState, type ReactNode } from "react";
 import { layerThumb, type Bounds } from "../lib/sceneThumbs";
 import { fmtDate } from "../lib/format";
@@ -92,7 +92,7 @@ function DatePick({
   );
 }
 
-/** S-10: reproduce las fechas con imagen en orden, con play/pausa y velocidad. Cada cuadro elige la fecha del mapa. */
+/** Reproduce las fechas con imagen en orden, con play/pausa y velocidad. Cada cuadro elige la fecha del mapa. */
 function Timelapse({ frames, onPick, onClose }: { frames: Layer[]; onPick: (id: string) => void; onClose: () => void }) {
   const [i, setI] = useState(0);
   const [playing, setPlaying] = useState(true);

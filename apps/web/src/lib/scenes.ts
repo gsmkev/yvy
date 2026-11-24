@@ -1,4 +1,4 @@
-/** Fechas de imagen disponibles de una estancia y elección para comparar (S-04). */
+/** Fechas de imagen disponibles de una estancia y elección para comparar. */
 import type { Layer } from "./types";
 
 type Kind = Layer["layer"];
@@ -42,7 +42,7 @@ export function cameraDiffers(a: Camera, b: Camera): boolean {
   );
 }
 
-/** S-10: cuadros del timelapse, de la fecha más vieja a la más nueva (una por fecha). */
+/** Cuadros del timelapse, de la fecha más vieja a la más nueva (una por fecha). */
 export function timelapseFrames(layers: Layer[], kind: Kind): Layer[] {
   return layerDates(layers, kind).reverse();
 }

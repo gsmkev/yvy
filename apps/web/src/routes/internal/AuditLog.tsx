@@ -13,7 +13,7 @@ interface AuditRow {
   actor: string | null;
 }
 
-/** P-12: últimas acciones del equipo sobre organizaciones de clientes. */
+/** Últimas acciones del equipo sobre organizaciones de clientes. */
 export function AuditLog() {
   const q = useQuery({ queryKey: ["admin-audit"], queryFn: () => get<AuditRow[]>("/admin/audit") });
   if (!q.data?.length) return null;

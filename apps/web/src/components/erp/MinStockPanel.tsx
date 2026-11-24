@@ -1,4 +1,4 @@
-/** Stock mínimo por producto y depósito, con la lista de lo que hay que reponer (E-14). */
+/** Stock mínimo por producto y depósito, con la lista de lo que hay que reponer. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { del, get, put } from "../../lib/api";

@@ -1,4 +1,4 @@
-/** Administración (ADR 0004): maestros, stock, costos y márgenes. Solo dueño y administradores. */
+/** Administración: maestros, stock, costos y márgenes. Solo dueño y administradores. */
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { AccountantPanel } from "../components/erp/AccountantPanel";

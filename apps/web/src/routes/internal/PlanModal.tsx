@@ -8,7 +8,7 @@ import type { OrgMetrics } from "./types";
 
 const dayOf = (ms: number | null) => (ms ? new Date(ms).toISOString().slice(0, 10) : "");
 
-/** P-10: plan, fin de la prueba y topes propios de una organización (vacío = los del plan). */
+/** Plan, fin de la prueba y topes propios de una organización (vacío = los del plan). */
 export function PlanModal({ org, onClose }: { org: OrgMetrics; onClose: () => void }) {
   const qc = useQueryClient();
   const [f, setF] = useState({
@@ -61,7 +61,7 @@ export function PlanModal({ org, onClose }: { org: OrgMetrics; onClose: () => vo
   );
 }
 
-/** K-06: últimos cambios que hicieron las personas de una organización (solo lectura, para soporte). */
+/** Últimos cambios que hicieron las personas de una organización (solo lectura, para soporte). */
 export function OrgChanges({ org, onClose }: { org: OrgMetrics; onClose: () => void }) {
   const q = useQuery({
     queryKey: ["admin-audit-org", org.id],

@@ -1,4 +1,4 @@
-/** Exportaciones generadas en el navegador (anexo §4.9): Excel de registros (RF-82) y KML de lotes (RF-15). */
+/** Exportaciones generadas en el navegador Excel de registros y KML de lotes. */
 import { describeRecord, safeXml } from "@yvy/shared";
 import { tk } from "./i18n";
 import { fmtDateTime } from "./format";
@@ -83,7 +83,7 @@ export function plotsToKml(plots: Plot[], farmName: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// GeoJSON y shapefile (M-21)
+// GeoJSON y shapefile
 // ---------------------------------------------------------------------------
 
 interface ExportPoint {
@@ -261,7 +261,7 @@ function shpFiles(type: 1 | 5, shapes: ShpShape[]): { shp: ArrayBuffer; shx: Arr
   return { shp: shp.buffer, shx: shx.buffer };
 }
 
-/** Shapefile de polígonos en WGS84 (zip con .shp, .shx, .dbf, .prj y .cpg), con las columnas que se indiquen (A-33). */
+/** Shapefile de polígonos en WGS84 (zip con .shp, .shx, .dbf, .prj y .cpg), con las columnas que se indiquen. */
 export async function polygonsToShapefileZip(
   base: string,
   items: { geometry: { type: string; coordinates: unknown }; row: Record<string, string | number | null> }[],

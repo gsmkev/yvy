@@ -1,4 +1,4 @@
-/** Pluviómetros contra satélite y contra lo normal, por mes y por campaña (C-05, C-06). La cuenta está en @yvy/shared; acá solo el corte de los días en la zona de la estancia. */
+/** Pluviómetros contra satélite y contra lo normal, por mes y por campaña. La cuenta está en @yvy/shared; acá solo el corte de los días en la zona de la estancia. */
 import { gaugeTable as gaugeTableOf, type ClimateData, type GaugeRow } from "@yvy/shared";
 import { dayToMs } from "./format";
 

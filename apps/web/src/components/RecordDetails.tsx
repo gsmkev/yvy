@@ -7,7 +7,7 @@ import { t, tk } from "../lib/i18n";
 type Data = Record<string, unknown>;
 const num = (v: unknown): number | null => (typeof v === "number" ? v : null);
 
-/** Detalle del registro: lo agrícola estructurado y las respuestas a los campos propios de la organización (F-14). */
+/** Detalle del registro: lo agrícola estructurado y las respuestas a los campos propios de la organización. */
 export function RecordDetails({ kind, data }: { kind: string; data: Data }) {
   return (
     <>

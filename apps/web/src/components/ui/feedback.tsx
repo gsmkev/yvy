@@ -4,7 +4,7 @@ import { CircleAlert, type LucideIcon } from "lucide-react";
 import { t } from "../../lib/i18n";
 
 /**
- * Marcador de carga con alturas fijas (U-19): reserva el alto que va a ocupar el contenido real
+ * Marcador de carga con alturas fijas: reserva el alto que va a ocupar el contenido real
  * para que al llegar los datos la página no salte. `rows` y `h` (px) se ajustan a cada lista.
  */
 export const Spinner = ({ rows = 3, h = 48 }: { rows?: number; h?: number }) => (

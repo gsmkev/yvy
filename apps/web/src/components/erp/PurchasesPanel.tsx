@@ -1,4 +1,4 @@
-/** Compras: orden, factura del proveedor y recepción en depósito (E-33). */
+/** Compras: orden, factura del proveedor y recepción en depósito. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { COST_CATEGORIES, CURRENCIES, lineAmount, localDate, toMinor, type Currency, type PurchaseStatus } from "@yvy/shared";

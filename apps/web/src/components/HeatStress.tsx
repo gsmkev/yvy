@@ -15,7 +15,7 @@ const BAR: Record<HeatLevel, string> = {
 
 const hh = new Intl.DateTimeFormat("es-PY", { timeZone: "America/Asuncion", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 
-/** Estrés térmico del ganado (G-32): THI por hora de las próximas 48 horas. Datos de MET Norway. */
+/** Estrés térmico del ganado: THI por hora de las próximas 48 horas. Datos de MET Norway. */
 export function HeatStressCard({ farmId }: { farmId: string }) {
   const q = useQuery({
     queryKey: ["heat-stress", farmId],

@@ -1,4 +1,4 @@
-/** Pluviómetros de la estancia: mes y campaña contra el satélite y la normal (C-05, C-06). */
+/** Pluviómetros de la estancia: mes y campaña contra el satélite y la normal. */
 import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";

@@ -1,4 +1,4 @@
-/** Exportación para sistemas contables locales (I-06): compras, ventas y caja con formato configurable y libro IVA de Paraguay. */
+/** Exportación para sistemas contables locales: compras, ventas y caja con formato configurable y libro IVA de Paraguay. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {

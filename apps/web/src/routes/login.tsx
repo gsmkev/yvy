@@ -21,7 +21,7 @@ export function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
 
-  // P-07: botón de Google solo si el servidor lo tiene configurado; al volver trae `?google=` (código de un solo uso)
+  // Botón de Google solo si el servidor lo tiene configurado; al volver trae `?google=` (código de un solo uso)
   const google = useQuery({ queryKey: ["google-enabled"], queryFn: () => get<{ enabled: boolean }>("/auth/google"), staleTime: Infinity, retry: false });
   useEffect(() => {
     if (!search.google) return;
@@ -77,7 +77,7 @@ export function LoginPage() {
       navigate({ to: "/" });
     });
 
-  // P-08: segundo paso con el código de la app (o uno de recuperación)
+  // Segundo paso con el código de la app (o uno de recuperación)
   const verifyTotp = () =>
     run(async () => {
       setSession(await post<Session>("/auth/totp/login", { ticket, code: totpCode }));

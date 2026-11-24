@@ -1,4 +1,4 @@
-/** Service worker (U-17): solo en la versión de producción. Nunca en dev ni en tests. */
+/** Service worker: solo en la versión de producción. Nunca en dev ni en tests. */
 import { getSession, onSession } from "./api";
 
 export function registerServiceWorker() {

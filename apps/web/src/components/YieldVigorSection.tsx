@@ -1,4 +1,4 @@
-/** A-22: rinde frente a vigor satelital por zona de manejo del lote, con una lectura honesta si faltan datos. */
+/** Rinde frente a vigor satelital por zona de manejo del lote, con una lectura honesta si faltan datos. */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "../lib/api";

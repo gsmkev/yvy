@@ -1,4 +1,4 @@
-/** Cambios en el terreno: área quemada tras un foco de fuego (S-20) y cambio de cobertura entre dos fechas (S-31). Indicativo. */
+/** Cambios en el terreno: área quemada tras un foco de fuego y cambio de cobertura entre dos fechas. Indicativo. */
 import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";

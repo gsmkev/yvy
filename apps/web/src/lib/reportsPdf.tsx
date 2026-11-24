@@ -1,4 +1,4 @@
-/** Resumen de campaña por lote en PDF (R-03), con los estilos del parte semanal. */
+/** Resumen de campaña por lote en PDF, con los estilos del parte semanal. */
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { describeData } from "./exports";
 import { fmtDate, fmtDateTime, fmtHa, fmtIsoDate, fmtNdvi, fmtNum } from "./format";
@@ -27,7 +27,7 @@ export function Kpi({ label, value, note }: { label: string; value: string; note
   );
 }
 
-// ---------- R-03 ----------
+// ---------- Resumen de campaña ----------
 
 interface SeasonReportData {
   farm: Farm;

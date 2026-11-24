@@ -28,7 +28,7 @@ interface DeliveriesResponse {
 const tons = (kg: number) => `${fmtNum(Math.round(kg / 10) / 100)} t`;
 const toNum = (v: string) => (v.trim() === "" ? null : Number(v.replace(",", ".")));
 
-/** Entregas de grano a acopio por lote (A-23): ticket, silo, humedad, descuentos y toneladas netas. */
+/** Entregas de grano a acopio por lote: ticket, silo, humedad, descuentos y toneladas netas. */
 export function DeliveriesPanel({ farmId, plots }: { farmId: string; plots: Plot[] }) {
   const q = useQuery({ queryKey: ["deliveries", farmId], queryFn: () => get<DeliveriesResponse>(`/org/farms/${farmId}/deliveries`) });
   const qc = useQueryClient();

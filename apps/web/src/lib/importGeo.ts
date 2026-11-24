@@ -1,5 +1,5 @@
 /**
- * Importación de lotes (RF-11): KML, KMZ, GeoJSON y shapefile zipeado, parseados en el navegador.
+ * Importación de lotes: KML, KMZ, GeoJSON y shapefile zipeado, parseados en el navegador.
  * Cada polígono se valida (cerrado, sin autointersección) y se calcula su superficie geodésica.
  */
 import { kml } from "@tmcw/togeojson";
@@ -14,7 +14,7 @@ export interface ImportedPolygon {
   geometry: Area;
   areaHa: number;
   error: ValidationError | null;
-  /** Vértices duplicados o espigas quitados al limpiar (M-11). */
+  /** Vértices duplicados o espigas quitados al limpiar. */
   fixed: number;
 }
 
@@ -125,7 +125,7 @@ export async function parseFile(file: File): Promise<ImportedPolygon[]> {
   throw new Error(t("ui.import.unsupported"));
 }
 
-/** Une varias figuras en una sola: un Polygon si hay una, un MultiPolygon si hay varias partes (M-09). */
+/** Une varias figuras en una sola: un Polygon si hay una, un MultiPolygon si hay varias partes. */
 export function combineAreas(areas: Area[]): Area | null {
   const polys = areas.flatMap((a) => (a.type === "Polygon" ? [a.coordinates] : a.coordinates));
   if (!polys.length) return null;

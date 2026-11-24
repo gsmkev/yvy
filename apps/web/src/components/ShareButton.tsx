@@ -1,4 +1,4 @@
-/** Botón de texto que abre WhatsApp (wa.me) con un resumen ya armado (K-10, K-11). */
+/** Botón de texto que abre WhatsApp (wa.me) con un resumen ya armado. */
 import { whatsappUrl } from "@yvy/shared";
 import { t } from "../lib/i18n";
 import { Button } from "./ui";

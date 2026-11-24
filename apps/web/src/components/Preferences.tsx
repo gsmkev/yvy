@@ -42,7 +42,7 @@ function Choice<T extends string>({
   );
 }
 
-/** Preferencias de este navegador: unidades (U-23) y, más abajo, el tema (U-20). Se guardan en localStorage. */
+/** Preferencias de este navegador: unidades y, más abajo, el tema. Se guardan en localStorage. */
 export function Preferences() {
   const units = useSyncExternalStore(subscribeUnits, getUnits);
   const theme = useSyncExternalStore(subscribeTheme, getTheme);

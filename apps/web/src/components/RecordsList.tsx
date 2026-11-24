@@ -86,7 +86,7 @@ export function RecordsList({ filters, onRows }: { filters: RecordFilters; onRow
 const photosOf = (r: RecordRow) => r.attachments.filter((a) => !isAudioMime(a.mime ?? ""));
 const voiceOf = (r: RecordRow) => r.attachments.filter((a) => isAudioMime(a.mime ?? ""));
 
-/** Nota de voz (F-09): se pide la URL firmada al tocar "Escuchar", no al abrir el registro. */
+/** Nota de voz: se pide la URL firmada al tocar "Escuchar", no al abrir el registro. */
 function VoiceNote({ id, uploaded }: { id: string; uploaded: boolean }) {
   const [url, setUrl] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);

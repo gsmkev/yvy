@@ -25,7 +25,7 @@ const dayName = new Intl.DateTimeFormat("es-PY", { timeZone: TZ, weekday: "short
 const dayKey = (ms: number) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(new Date(ms));
 const hourOf = (ms: number) => Number(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", hourCycle: "h23" }).format(new Date(ms)));
 
-/** Línea de tiempo de las próximas horas: marca las aptas para pulverizar (A-13). Datos de MET Norway. */
+/** Línea de tiempo de las próximas horas: marca las aptas para pulverizar. Datos de MET Norway. */
 export function SprayWindows({ farmId }: { farmId: string }) {
   const q = useQuery({
     queryKey: ["spray", farmId],

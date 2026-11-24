@@ -1,4 +1,4 @@
-/** Calendario sanitario (G-10): lista por mes de campañas y tratamientos planificados, con estado hecho o vencido. */
+/** Calendario sanitario: lista por mes de campañas y tratamientos planificados, con estado hecho o vencido. */
 import { useState } from "react";
 import { isFieldRole } from "@yvy/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

@@ -1,4 +1,4 @@
-/** Suplementación y sal mineral por potrero (G-31). */
+/** Suplementación y sal mineral por potrero. */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SUPPLEMENT_TYPES, type SupplementResponse } from "@yvy/shared";

@@ -1,4 +1,4 @@
-/** Tema de la web (U-20): "auto" sigue al sistema; "light" y "dark" lo fijan. Se guarda en localStorage. */
+/** Tema de la web: "auto" sigue al sistema; "light" y "dark" lo fijan. Se guarda en localStorage. */
 type Theme = "auto" | "light" | "dark";
 const KEY = "yvy.theme";
 const listeners = new Set<() => void>();

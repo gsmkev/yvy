@@ -1,4 +1,4 @@
-/** Informe de riesgo climático del pedido gratis (V-04): se abre con el enlace del email, sin sesión. */
+/** Informe de riesgo climático del pedido gratis: se abre con el enlace del email, sin sesión. */
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import type { FarmRisk } from "@yvy/shared";

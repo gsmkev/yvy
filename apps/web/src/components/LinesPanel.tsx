@@ -9,7 +9,7 @@ import type { FarmLine } from "../lib/types";
 import { deleteWithUndo } from "../lib/undo";
 import { Button, ErrorBox, Field, Form, Input, Modal, Select, toast } from "./ui";
 
-/** M-20: alambrados, caminos internos y cañerías de la estancia, con su largo. */
+/** Alambrados, caminos internos y cañerías de la estancia, con su largo. */
 export function LinesPanel({
   farmId,
   lines,

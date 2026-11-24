@@ -63,7 +63,7 @@ export function bindMapEvents(map: MlMap, cb: Cb) {
   bindCameraEvents(map, cb);
 }
 
-/** U-27: deja en `snapshotRef` una función que devuelve la captura del mapa (PNG en data URL) o null. */
+/** Deja en `snapshotRef` una función que devuelve la captura del mapa (PNG en data URL) o null. */
 export function bindSnapshot(map: MlMap, cb: Cb) {
   if (cb.current.snapshotRef)
     cb.current.snapshotRef.current = () =>

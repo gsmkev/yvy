@@ -1,4 +1,4 @@
-/** Mapa de focos de plaga (A-42): registros `pest` de los últimos 30 días como puntos coloreados por plaga. */
+/** Mapa de focos de plaga: registros `pest` de los últimos 30 días como puntos coloreados por plaga. */
 import { centroidOf, type Area } from "@yvy/geo";
 import { BRAND, PEST_THRESHOLDS, PESTS } from "@yvy/shared";
 import type { RecordRow } from "./types";

@@ -1,4 +1,4 @@
-/** Resumen público de solo lectura de una estancia (K-04): /compartido/:token, sin sesión ni menú. */
+/** Resumen público de solo lectura de una estancia: /compartido/:token, sin sesión ni menú. */
 import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";

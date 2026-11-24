@@ -7,7 +7,7 @@ import { t, tk } from "../../lib/i18n";
 import { useFarms } from "../../lib/queries";
 import type { Member } from "../../lib/types";
 
-/** T-09 / K-05: estancias de un supervisor, administrador o agrónomo (solo el dueño). Sin ninguna marcada: supervisor no ve nada; el resto ve todas. */
+/** Estancias de un supervisor, administrador o agrónomo (solo el dueño). Sin ninguna marcada: supervisor no ve nada; el resto ve todas. */
 export function FarmAccess({ member, onClose }: { member: Member; onClose: () => void }) {
   const qc = useQueryClient();
   const farms = useFarms();

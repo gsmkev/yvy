@@ -1,5 +1,5 @@
 /**
- * Miniaturas del selector de fecha (S-04): por cada fecha se pide UNA sola tesela del PMTiles de esa capa
+ * Miniaturas del selector de fecha: por cada fecha se pide UNA sola tesela del PMTiles de esa capa
  * (la que cubre el centro de la estancia, al zoom en que la tesela entra completa en la estancia o el más
  * cercano que tenga el archivo) y se guarda en memoria. Una fecha, una tesela, una sola vez.
  */

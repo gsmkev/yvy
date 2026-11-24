@@ -1,4 +1,4 @@
-/** Proveedores y clientes con RUC (E-02). */
+/** Proveedores y clientes con RUC. */
 import { PARTY_KINDS } from "@yvy/shared";
 import { t, tk } from "../../lib/i18n";
 import { MasterPanel, useErpList, type FieldDef } from "./MasterPanel";

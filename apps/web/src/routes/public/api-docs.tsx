@@ -16,7 +16,7 @@ const Code = ({ children }: { children: string }) => (
   </pre>
 );
 
-/** I-01: documentación pública de la API de solo lectura. */
+/** Documentación pública de la API de solo lectura. */
 export function ApiDocsPage() {
   return (
     <PublicShell>

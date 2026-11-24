@@ -1,4 +1,4 @@
-/** Exportación completa de la organización (R-09): ZIP con Excel, KML y GeoJSON, armado en el navegador. */
+/** Exportación completa de la organización: ZIP con Excel, KML y GeoJSON, armado en el navegador. */
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 import { isAudioMime } from "@yvy/shared";
 import { get } from "./api";

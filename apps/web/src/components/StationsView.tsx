@@ -1,5 +1,5 @@
 /**
- * Vista de un registro de monitoreo por estaciones (F-12): mapa con las estaciones y tabla de conteos con el
+ * Vista de un registro de monitoreo por estaciones: mapa con las estaciones y tabla de conteos con el
  * promedio contra el umbral por defecto (a revisar por un agrónomo).
  */
 import { useMemo } from "react";

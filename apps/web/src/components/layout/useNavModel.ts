@@ -12,7 +12,7 @@ export function useNavModel() {
   const me = useMe();
   const alerts = useAlerts({ active: true });
   const farms = useFarms();
-  // K-02: el agrónomo con más de un cliente tiene una pantalla con todos juntos
+  // El agrónomo con más de un cliente tiene una pantalla con todos juntos
   const orgs = useOrganizations();
   const hasClients = orgs.filter((o) => !isFieldRole(o.role)).length > 1;
   const nav = buildNav({

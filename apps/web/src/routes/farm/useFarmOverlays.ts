@@ -8,7 +8,7 @@ import { fetchAllRecords } from "../../lib/queries";
 import { heatPoints, summarizeTracks, TRACK_WINDOW_MS } from "../../lib/trackHeat";
 import type { FarmDetail } from "../../lib/types";
 
-/** Límites administrativos (M-16) y capas propias activas con su opacidad (M-17). */
+/** Límites administrativos y capas propias activas con su opacidad. */
 export function useFarmOverlays(farmId: string, canSeeCustom: boolean, tilesBaseUrl: string | undefined) {
   const [boundaryLevel, setBoundaryLevel] = useState<BoundaryLevel | null>(null);
   const customLayers = useCustomLayers(farmId, canSeeCustom);
@@ -24,7 +24,7 @@ export function useFarmOverlays(farmId: string, canSeeCustom: boolean, tilesBase
 }
 export type FarmOverlays = ReturnType<typeof useFarmOverlays>;
 
-/** A-42: focos de plaga de los últimos 30 días sobre el mapa. */
+/** Focos de plaga de los últimos 30 días sobre el mapa. */
 export function useFarmPests(farmId: string, plots: FarmDetail["plots"] | undefined) {
   const [show, setShow] = useState(false);
   const query = useQuery({
@@ -39,7 +39,7 @@ export function useFarmPests(farmId: string, plots: FarmDetail["plots"] | undefi
   return { show, toggle: () => setShow(!show), isLoading: query.isLoading, points };
 }
 
-/** F-06: recorridas grabadas en el celular, como mapa de calor de los últimos 30 días. */
+/** Recorridas grabadas en el celular, como mapa de calor de los últimos 30 días. */
 export function useFarmTracks(farmId: string, plots: FarmDetail["plots"] | undefined) {
   const [show, setShow] = useState(false);
   const query = useQuery({

@@ -1,4 +1,4 @@
-/** Presupuesto de campaña por lote, cultivo y actividad, frente a lo real (E-32). */
+/** Presupuesto de campaña por lote, cultivo y actividad, frente a lo real. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ACTIVITIES, COST_CATEGORIES, CROPS } from "@yvy/shared";

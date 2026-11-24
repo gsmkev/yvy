@@ -34,7 +34,7 @@ export const RECORD_ICON: Record<string, LucideIcon> = {
   note: NotebookPen,
 };
 
-/** M-19: un ícono por tipo de punto de interés; el mapa, las listas y la app usan el mismo. */
+/** Un ícono por tipo de punto de interés; el mapa, las listas y la app usan el mismo. */
 export const POI_ICON: Record<PoiKind, LucideIcon> = {
   rain_gauge: CloudRain,
   water: Waves,

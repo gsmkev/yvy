@@ -1,4 +1,4 @@
-/** Grilla de muestreo de suelo (M-18) para imprimir: croquis del lote con los puntos numerados y la tabla de coordenadas. */
+/** Grilla de muestreo de suelo para imprimir: croquis del lote con los puntos numerados y la tabla de coordenadas. */
 import { Circle, Document, Page, Path, Svg, Text, View } from "@react-pdf/renderer";
 import { BRAND } from "@yvy/shared";
 import { bboxOf, type Area, type SamplePoint } from "@yvy/geo";

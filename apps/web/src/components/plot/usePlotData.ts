@@ -61,7 +61,7 @@ export function usePlotForm(plot: Plot, onSaved: () => void) {
 }
 export type PlotForm = ReturnType<typeof usePlotForm>;
 
-/** S-08: manda una tarea de recorrida a quien se elija, sobre un área problema del lote. */
+/** Manda una tarea de recorrida a quien se elija, sobre un área problema del lote. */
 export function useProblemTask(plot: Plot, workers: Member[]) {
   const qc = useQueryClient();
   const [assigneeId, setAssigneeId] = useState(workers[0]?.userId ?? "");

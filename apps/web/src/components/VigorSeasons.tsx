@@ -1,4 +1,4 @@
-/** Vigor de campañas anteriores de un lote, superpuestas (S-03). La historia desde 2017 se pide a demanda por estancia. */
+/** Vigor de campañas anteriores de un lote, superpuestas. La historia desde 2017 se pide a demanda por estancia. */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CHART, ATTRIBUTION } from "@yvy/shared";
 import { fmtDate, fmtNdvi } from "../lib/format";

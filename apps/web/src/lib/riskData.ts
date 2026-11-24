@@ -1,4 +1,4 @@
-/** Formato del informe de riesgo climático (C-10), compartido por la pantalla y el PDF. La cuenta está en @yvy/shared; acá, el nombre del mes con Intl. */
+/** Formato del informe de riesgo climático, compartido por la pantalla y el PDF. La cuenta está en @yvy/shared; acá, el nombre del mes con Intl. */
 import { pctOfNormal, riskFormat } from "@yvy/shared";
 
 export type { RiskResponse } from "@yvy/shared";

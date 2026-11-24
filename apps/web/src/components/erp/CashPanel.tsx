@@ -1,4 +1,4 @@
-/** Caja y bancos por moneda, cuentas a pagar y a cobrar con vencimientos (E-36). */
+/** Caja y bancos por moneda, cuentas a pagar y a cobrar con vencimientos. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CASH_ACCOUNT_TYPES, CURRENCIES, fromMinor, localDate, toMinor, type Currency } from "@yvy/shared";

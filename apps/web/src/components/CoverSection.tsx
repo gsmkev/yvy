@@ -1,4 +1,4 @@
-/** Cambio de cobertura entre dos fechas (S-31): pedido a demanda, resultado por clase, mapa y PDF. */
+/** Cambio de cobertura entre dos fechas: pedido a demanda, resultado por clase, mapa y PDF. */
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { coverKeys, parseCoverKey, summarizeCover } from "@yvy/shared";

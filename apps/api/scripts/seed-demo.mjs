@@ -64,9 +64,15 @@ const out = [];
 // Tablas que dependen de la geografía o de la fecha del día: se reemplazan al recargar.
 const UPSERT = new Set(["farms", "plots", "points_of_interest", "records", "tasks"]);
 const KEEP = new Set(["id", "organization_id", "created_at"]);
+// Tablas sin columna id: la clave de conflicto es otra (así la estación de servicio y el sistema de la demo se actualizan al recargar).
+const CONFLICT_KEY = { farm_livestock_settings: "farm_id" };
 const insert = (table, row) => {
   const cols = Object.keys(row);
   const values = `(${cols.join(", ")}) VALUES (${cols.map((c) => sql(row[c])).join(", ")})`;
+  if (CONFLICT_KEY[table]) {
+    const set = cols.filter((c) => c !== CONFLICT_KEY[table] && !KEEP.has(c)).map((c) => `${c} = excluded.${c}`).join(", ");
+    return out.push(`INSERT INTO ${table} ${values} ON CONFLICT(${CONFLICT_KEY[table]}) DO UPDATE SET ${set};`);
+  }
   if (!UPSERT.has(table)) return out.push(`INSERT OR IGNORE INTO ${table} ${values};`);
   const set = cols
     .filter((c) => !KEEP.has(c))
@@ -276,6 +282,11 @@ ins("seasons", {
 const fx = JSON.parse(readFileSync(new URL("../seed/demo-fixture.json", import.meta.url), "utf8"));
 const FX = Object.fromEntries(Object.entries(fx.tables).map(([t, rows]) => [t, rows.filter((r) => !r.deleted_at)]));
 const SHIFT_MS = Math.round((Date.parse(TODAY) - Date.parse(fx.d0)) / DAY) * DAY;
+// ADR 0005: la fixture trae un solo parto (6 terneros) contra 56 servicios; se suma la parición grande de la parición anterior para que el % de parición del ciclo tenga sentido.
+{
+  const tpl = FX.records.find((r) => r.kind === "reproduction" && JSON.parse(r.data).event === "calving");
+  FX.records.push({ ...tpl, id: "01a1df2a-ffff-7000-8000-00000000c411", data: JSON.stringify({ event: "calving", head: 38, calves: 38 }), captured_at: tpl.captured_at - 13 * DAY });
+}
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g;
 const MAP = new Map(); // id de la fixture -> id de la demo
 const skipIds = new Set(); // filas de la fixture que la demo ya trae armadas arriba
@@ -380,6 +391,12 @@ const must = (what, r) => {
 const json = (s) => (s == null ? null : JSON.parse(s));
 let ordinal = {};
 const FIX = {
+  // ADR 0005: sistema productivo (ciclo completo: cría, recría y corral) y estación de servicio que abarca el servicio registrado hace unos 80 días.
+  farm_livestock_settings: (r) => {
+    r.system = "ciclo_completo";
+    r.breeding_start = dayStr(80).slice(5);
+    r.breeding_days = 60;
+  },
   seasons: (r) => { if (r.name === "Zafra 2025/26") { r.start_date = "2025-09-01"; r.end_date = "2026-08-31"; } },
   points_of_interest: (r) => { if (r.name === "Galpón de máquinas") { r.lon = -55.8999; r.lat = -27.1561; } },
   parties: (r) => { ordinal.party = (ordinal.party ?? 0) + 1; r.phone = `+595 21 555 ${String(100 + ordinal.party).padStart(4, "0")}`; },
@@ -404,7 +421,13 @@ const FIX = {
   feed_rations: (r) => { must("ración", feedRationInput.safeParse({ name: r.name, items: json(r.items), note: r.note ?? undefined })); },
   export_formats: (r) => { must("formato de exporte", exportFormatInput.safeParse({ name: r.name, dataset: r.dataset, config: json(r.config) })); },
   form_configs: (r) => { must("formularios propios", formConfigSchema.safeParse(json(r.config))); },
-  notification_prefs: (r) => { must("preferencias", notificationPrefsSchema.safeParse(json(r.prefs))); },
+  notification_prefs: (r) => {
+    // Un tipo de aviso nuevo (senacsa) entra prendido: la fixture es anterior.
+    const p = json(r.prefs);
+    for (const k of ["senacsa"]) p.kinds[k] ??= { push: true, email: true };
+    r.prefs = JSON.stringify(p);
+    must("preferencias", notificationPrefsSchema.safeParse(p));
+  },
 };
 // Tablas que también escriben los jobs reales o cuyo dato es por clave natural: INSERT OR IGNORE, no pisan lo que ya hay.
 const IGNORE_TABLES = new Set([

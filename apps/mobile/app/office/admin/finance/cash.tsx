@@ -28,7 +28,6 @@ export default function Cash() {
 
   const accounts = balances.data?.accounts ?? [];
   const partyName = (id: string | null) => parties.data?.find((p) => p.id === id)?.name;
-  const accName = (id: string) => accounts.find((a) => a.id === id);
   const dueQuery = tab === "payables" ? payables : receivables;
   const query = tab === "accounts" ? balances : dueQuery;
 

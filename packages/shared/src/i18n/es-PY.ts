@@ -1006,8 +1006,8 @@ export const esPY = {
       none: "Todavía no hay imagen de vigor",
     },
     coords: {
-      accuracy: "{{coords}}, ± {{m}} m",
-      noAccuracy: "{{coords}}, sin precisión",
+      accuracy: "{{coords}} (± {{m}} m)",
+      noAccuracy: "{{coords}} (sin precisión)",
       copy: "Tocá para copiar",
     },
     toast: {

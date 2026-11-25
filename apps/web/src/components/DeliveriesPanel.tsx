@@ -71,17 +71,17 @@ export function DeliveriesPanel({ farmId, plots }: { farmId: string; plots: Plot
         </ul>
       )}
       {d && d.rows.length > 0 && (
-        <div className="overflow-x-auto">
+        <div className="@container">
           <ExportableTable name="entregas">
             <table className="w-full text-sm">
               <thead className="text-left text-tinta-2">
                 <tr>
                   <th className="py-2 pr-3 font-medium">{t("ui.deliv.date")}</th>
-                  <th className="py-2 pr-3 font-medium">{t("ui.deliv.ticket")}</th>
-                  <th className="py-2 pr-3 font-medium">{t("ui.deliv.silo")}</th>
+                  <th className="hidden py-2 pr-3 font-medium @md:table-cell">{t("ui.deliv.ticket")}</th>
+                  <th className="hidden py-2 pr-3 font-medium @md:table-cell">{t("ui.deliv.silo")}</th>
                   <th className="py-2 pr-3 font-medium">{t("ui.common.plot")}</th>
                   <th className="num py-2 pr-3 text-right font-medium">{t("ui.deliv.gross")}</th>
-                  <th className="num py-2 pr-3 text-right font-medium">{t("ui.deliv.moisture")}</th>
+                  <th className="num hidden py-2 pr-3 text-right font-medium @md:table-cell">{t("ui.deliv.moisture")}</th>
                   <th className="num py-2 pr-3 text-right font-medium">{t("ui.deliv.net")}</th>
                   <th />
                 </tr>
@@ -89,13 +89,22 @@ export function DeliveriesPanel({ farmId, plots }: { farmId: string; plots: Plot
               <tbody className="divide-y divide-linea border-y border-linea">
                 {d.rows.map((r) => (
                   <tr key={r.id}>
-                    <td className="num py-2.5 pr-3">{fmtIsoDate(r.deliveredOn)}</td>
-                    <td className="num py-2.5 pr-3">{r.ticket}</td>
-                    <td className="py-2.5 pr-3">{r.silo}</td>
-                    <td className="py-2.5 pr-3">{r.plotName ?? "—"}</td>
+                    <td className="num py-2.5 pr-3" data-value={fmtIsoDate(r.deliveredOn)}>
+                      {fmtIsoDate(r.deliveredOn)}
+                      <span className="block text-xs text-tinta-2 @md:hidden">{r.ticket}</span>
+                    </td>
+                    <td className="num hidden py-2.5 pr-3 @md:table-cell">{r.ticket}</td>
+                    <td className="hidden py-2.5 pr-3 @md:table-cell">{r.silo}</td>
+                    <td className="py-2.5 pr-3" data-value={r.plotName ?? "—"}>
+                      {r.plotName ?? "—"}
+                      <span className="block text-xs text-tinta-2 @md:hidden">{r.silo}</span>
+                    </td>
                     <td className="num py-2.5 pr-3 text-right">{tons(r.grossKg)}</td>
-                    <td className="num py-2.5 pr-3 text-right">{r.moisturePct === null ? "—" : `${fmtNum(r.moisturePct)} %`}</td>
-                    <td className="num py-2.5 pr-3 text-right font-medium">{tons(r.netKg)}</td>
+                    <td className="num hidden py-2.5 pr-3 text-right @md:table-cell">{moisture(r.moisturePct)}</td>
+                    <td className="num py-2.5 pr-3 text-right font-medium" data-value={tons(r.netKg)}>
+                      {tons(r.netKg)}
+                      <span className="block text-xs font-normal text-tinta-2 @md:hidden">{moisture(r.moisturePct)}</span>
+                    </td>
                     <td className="py-2.5 text-right">
                       <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(r)}>
                         {t("ui.common.delete")}
@@ -123,6 +132,8 @@ export function DeliveriesPanel({ farmId, plots }: { farmId: string; plots: Plot
     </section>
   );
 }
+
+const moisture = (pct: number | null) => (pct === null ? "—" : `${fmtNum(pct)} %`);
 
 function DeliveryModal({ farmId, plots, onClose }: { farmId: string; plots: Plot[]; onClose: () => void }) {
   const qc = useQueryClient();

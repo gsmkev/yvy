@@ -59,14 +59,14 @@ export function SowingPlan({ farmId, plots }: { farmId: string; plots: Plot[] })
           {plan.rows.length === 0 ? (
             <p className="text-sm text-tinta-2">{t("ui.sow.planEmpty")}</p>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="@container">
               <ExportableTable name="plan-de-siembra">
                 <table className="w-full text-sm">
                   <thead className="text-left text-tinta-2">
                     <tr>
                       <th className="py-2 pr-3 font-medium">{t("ui.common.crop")}</th>
-                      <th className="py-2 pr-3 font-medium">{t("ui.season.variety")}</th>
-                      <th className="num py-2 pr-3 text-right font-medium">{t("ui.sow.planPlots")}</th>
+                      <th className="hidden py-2 pr-3 font-medium @md:table-cell">{t("ui.season.variety")}</th>
+                      <th className="num hidden py-2 pr-3 text-right font-medium @md:table-cell">{t("ui.sow.planPlots")}</th>
                       <th className="num py-2 pr-3 text-right font-medium">{t("ui.sow.planArea")}</th>
                       <th className="py-2 pr-3 font-medium">{t("ui.sow.planRate")}</th>
                       <th className="num py-2 text-right font-medium">{t("ui.sow.planSeed")}</th>
@@ -75,10 +75,20 @@ export function SowingPlan({ farmId, plots }: { farmId: string; plots: Plot[] })
                   <tbody className="divide-y divide-linea border-y border-linea">
                     {plan.rows.map((r) => (
                       <tr key={`${r.crop}-${r.variety ?? ""}`}>
-                        <td className="py-2.5 pr-3">{tk(`fields.crop.${r.crop}`)}</td>
-                        <td className="py-2.5 pr-3">{r.variety ?? t("ui.sow.planNoVariety")}</td>
-                        <td className="num py-2.5 pr-3 text-right">{r.plots}</td>
-                        <td className="num py-2.5 pr-3 text-right">{fmtHa(r.areaHa)}</td>
+                        <td className="py-2.5 pr-3" data-value={tk(`fields.crop.${r.crop}`)}>
+                          {tk(`fields.crop.${r.crop}`)}
+                          <span className="block text-xs text-tinta-2 @md:hidden">
+                            {r.variety ?? t("ui.sow.planNoVariety")}
+                          </span>
+                        </td>
+                        <td className="hidden py-2.5 pr-3 @md:table-cell">{r.variety ?? t("ui.sow.planNoVariety")}</td>
+                        <td className="num hidden py-2.5 pr-3 text-right @md:table-cell">{r.plots}</td>
+                        <td className="num py-2.5 pr-3 text-right" data-value={fmtHa(r.areaHa)}>
+                          {fmtHa(r.areaHa)}
+                          <span className="block text-xs text-tinta-2 @md:hidden">
+                            {t(r.plots === 1 ? "ui.plots.countOne" : "ui.plots.countMany", { n: r.plots })}
+                          </span>
+                        </td>
                         <td className="py-2.5 pr-3">
                           <Input
                             aria-label={t("ui.sow.planRateFor", { crop: tk(`fields.crop.${r.crop}`) })}

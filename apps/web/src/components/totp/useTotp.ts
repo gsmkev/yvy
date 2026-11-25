@@ -19,7 +19,7 @@ export interface TotpSetup {
 }
 
 /** Acción que pide confirmar con un código. */
-export type TotpAction = "disable" | "regen";
+type TotpAction = "disable" | "regen";
 
 /** Tras activar el segundo factor la sesión se renueva: ya no tiene la marca de "falta darlo de alta". */
 async function refreshSession() {

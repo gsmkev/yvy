@@ -9,7 +9,7 @@ export interface MapRow {
   name: string;
   custom: boolean;
 }
-export interface Ledger {
+interface Ledger {
   date: string;
   type: "income" | "cost";
   accountCode: string;
@@ -24,7 +24,7 @@ export interface Ledger {
   amountPyg: number;
   origin: string;
 }
-export interface Due {
+interface Due {
   label: string;
   party: string;
   ruc: string;

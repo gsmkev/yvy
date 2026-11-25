@@ -6,7 +6,7 @@ import type { Column } from "../ui";
 import { RowMenu } from "../erp/adminSlot";
 
 /** "Dosis habitual: 1 a 3 l/ha", o null si el producto no tiene rango. */
-export function doseShown(p: Product, ranges: DoseRange[] | undefined): string | null {
+function doseShown(p: Product, ranges: DoseRange[] | undefined): string | null {
   const r = ranges?.find((x) => x.productId === p.id);
   if (!r || (r.min === null && r.max === null)) return null;
   const n = (v: number) => v.toLocaleString("es-PY", { maximumFractionDigits: 2 });
@@ -15,7 +15,7 @@ export function doseShown(p: Product, ranges: DoseRange[] | undefined): string |
 }
 
 /** Qué columnas mostrar y qué hacer con cada fila. */
-export interface ProductColumnsOptions {
+interface ProductColumnsOptions {
   /** Ficha de la estancia: el panel es angosto y el tipo, la unidad y el principio activo van bajo el nombre. */
   compact: boolean;
   products: Product[];

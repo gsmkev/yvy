@@ -25,7 +25,7 @@ export interface Mark {
 }
 
 /** Datos que necesita la planilla del día: marcas, lotes, lo ya cargado y cómo cambiar una marca. */
-export interface SheetContext {
+interface SheetContext {
   marks: Record<string, Mark>;
   plots: { id: string; name: string }[];
   loaded: Map<string, number>;

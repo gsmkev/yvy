@@ -9,7 +9,7 @@ import type { OrgMetrics } from "./types";
 export const pct = (v: number | null) => (v === null ? "—" : `${Math.round(v)} %`);
 
 /** Qué se puede hacer con una organización desde la tabla. */
-export interface OrgActions {
+interface OrgActions {
   onEditPlan: (o: OrgMetrics) => void;
   onExtend: (id: string) => void;
   onChanges: (o: OrgMetrics) => void;

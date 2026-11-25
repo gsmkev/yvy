@@ -5,7 +5,7 @@ import type { Column } from "../../ui";
 import { RowMenu } from "../adminSlot";
 
 /** Línea de presupuesto con lo real y la diferencia. */
-export interface BudgetRow {
+interface BudgetRow {
   id: string;
   plotId: string | null;
   plotName: string | null;

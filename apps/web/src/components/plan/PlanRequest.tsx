@@ -8,7 +8,7 @@ import { t, tk } from "../../lib/i18n";
 import { Button, ErrorBox, Field, Form, Input, toast } from "../ui";
 
 /** "Plan activo, hasta 500 ha, hasta 5 personas" de un pedido. */
-export const requestedText = (r: PlanRequest) =>
+const requestedText = (r: PlanRequest) =>
   [tk(`ui.plan.name_${r.plan}`), r.maxHa ? t("ui.plan.upToHa", { n: fmtNum(r.maxHa) }) : null, r.maxUsers ? t("ui.plan.upToUsers", { n: fmtNum(r.maxUsers) }) : null]
     .filter(Boolean)
     .join(", ");

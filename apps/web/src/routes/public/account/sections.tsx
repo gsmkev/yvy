@@ -10,7 +10,7 @@ import { DeleteSection } from "./DeleteSection";
 import { Referral } from "./Referral";
 
 /** Una sección de la cuenta: grupo del menú, si se muestra y cómo se dibuja. */
-export interface AccountSection {
+interface AccountSection {
   id: string;
   group: "me" | "security" | "org" | "danger";
   show: boolean;
@@ -33,7 +33,7 @@ export const HASH_TO_SECTION: Record<string, string> = {
 export const HASHES: Record<string, string> = Object.fromEntries(Object.entries(HASH_TO_SECTION).map(([h, id]) => [id, h]));
 
 /** Qué sabe la pantalla de quien mira. */
-export interface Viewer {
+interface Viewer {
   loaded: boolean;
   field: boolean;
   owner: boolean;

@@ -17,7 +17,7 @@ function since(ms: number) {
 }
 
 /** Quién mira y qué puede hacer con cada miembro. */
-export interface TeamContext {
+interface TeamContext {
   /** El dueño administra los accesos por estancia. */
   owner: boolean;
   /** Dueño o administrador: alta, PIN, vincular dispositivo y baja. */
@@ -90,7 +90,7 @@ export function teamColumns(c: TeamContext): Column<Member>[] {
   ];
   if (c.owner) cols.push({ id: "farms", header: t("ui.farm.access"), hideBelow: "lg", cell: (m) => <span className="line-clamp-2 text-tinta-2">{c.farmsOf(m) || "—"}</span> });
   cols.push(
-    { id: "records", header: t("ui.team.colRecords"), align: "right", cell: (m) => m.records7d, sort: (a, b) => a.records7d - b.records7d },
+    { id: "records", header: t("ui.team.colRecords"), align: "right", mobile: "hide", cell: (m) => m.records7d, sort: (a, b) => a.records7d - b.records7d },
     { id: "plots", header: t("ui.team.colPlots"), align: "right", hideBelow: "md", cell: (m) => m.plotsVisited7d },
   );
   if (c.anySync) {

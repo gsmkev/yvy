@@ -16,7 +16,7 @@ import { t } from "../../../lib/i18n";
 import { toast } from "../../ui";
 
 /** Formato de exportación guardado por la organización. */
-export interface SavedFormat {
+interface SavedFormat {
   id: string;
   name: string;
   dataset: ExportDataset;

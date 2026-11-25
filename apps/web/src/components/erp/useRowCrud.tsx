@@ -8,7 +8,7 @@ import { RowMenu } from "./adminSlot";
 import { RowModal, type ColDef, type FieldDef, type Row } from "./RowModal";
 
 /** Qué maestro se edita y cómo se llama cada fila. */
-export interface RowCrudOptions<T> {
+interface RowCrudOptions<T> {
   path: string;
   fields: FieldDef[];
   /** Nombre de una fila para el título y la confirmación de borrado. */

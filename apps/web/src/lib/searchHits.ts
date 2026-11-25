@@ -4,7 +4,7 @@ import { tk, type MessageKey } from "./i18n";
 import type { FarmDetail, FarmSummary, Member, RecordRow } from "./types";
 
 /** Tipos de resultado, en el orden en que se muestran los grupos. */
-export type SearchKind = "farms" | "plots" | "members" | "pois" | "records";
+type SearchKind = "farms" | "plots" | "members" | "pois" | "records";
 
 /** Un resultado de la búsqueda. */
 export interface SearchHit {
@@ -32,7 +32,7 @@ export const normSearch = (s: string) =>
     .toLowerCase();
 
 /** Datos ya cargados donde se busca, y cómo navegar al elegir un resultado. */
-export interface SearchSource {
+interface SearchSource {
   farms: FarmSummary[];
   details: FarmDetail[];
   members: Member[];

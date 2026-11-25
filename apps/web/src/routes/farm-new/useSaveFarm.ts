@@ -7,7 +7,7 @@ import type { ImportedPolygon } from "../../lib/importGeo";
 import type { Area } from "../../lib/types";
 
 /** Datos que se mandan al crear la estancia. */
-export interface NewFarm {
+interface NewFarm {
   name: string;
   department: string;
   district: string;

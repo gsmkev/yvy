@@ -6,7 +6,7 @@ import { TableExportMenu } from "../components/TableExportMenu";
 import { Link } from "@tanstack/react-router";
 import { DataTable, EmptyState, ErrorBox, PageHeader, Skeleton, Tabs, Page } from "../components/ui";
 import { get } from "../lib/api";
-import { fmtHa, fmtNum } from "../lib/format";
+import { fmtHa, fmtNdvi, fmtNum } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useMe } from "../lib/queries";
 
@@ -155,7 +155,7 @@ function FarmsTable({ rows }: { rows: FarmRow[] }) {
           header: h[4],
           hideBelow: "sm",
           sort: (a, b) => num(a.ndvi30, b.ndvi30),
-          cell: (r) => <Bar value={r.ndvi30} max={maxNdvi} label={r.ndvi30 === null ? "" : fmtNum(r.ndvi30)} />,
+          cell: (r) => <Bar value={r.ndvi30} max={maxNdvi} label={r.ndvi30 === null ? "" : fmtNdvi(r.ndvi30)} />,
         },
         {
           id: "records",

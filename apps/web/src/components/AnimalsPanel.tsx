@@ -125,8 +125,8 @@ function AnimalDetail({ animal, onClose }: { animal: AnimalRow; onClose: () => v
       <p className="text-sm text-tinta-2">
         {[tk(`fields.herd.${animal.category}`), tk(`fields.sex.${animal.sex}`), animal.birthDate ? t("ui.animal.born", { date: animal.birthDate.split("-").reverse().join("/") }) : null]
           .filter(Boolean)
-          .join(" · ")}
-        {animal.note ? ` · ${animal.note}` : ""}
+          .join(", ")}
+        {animal.note ? `, ${animal.note}` : ""}
       </p>
       {editing && (
         <AnimalForm
@@ -146,7 +146,7 @@ function AnimalDetail({ animal, onClose }: { animal: AnimalRow; onClose: () => v
           {h.weight && h.weight.points.length > 0 && (
             <p className="num text-sm">
               {t("ui.animal.weight", { kg: h.weight.lastKg ?? 0, n: h.weight.points.length })}
-              {h.weight.adgKg !== null && " · " + t("ui.animal.adg", { v: adgText(h.weight.adgKg) })}
+              {h.weight.adgKg !== null && ", " + t("ui.animal.adg", { v: adgText(h.weight.adgKg) })}
             </p>
           )}
           {h.records.length === 0 ? (
@@ -234,7 +234,7 @@ export function AnimalsPanel({ farmId }: { farmId: string }) {
                 className={`flex w-full cursor-pointer items-baseline gap-3 py-2.5 text-left hover:bg-linea/40 ${selected?.id === a.id ? "font-medium" : ""}`}
               >
                 <span className="num w-32 font-semibold">{a.tag}</span>
-                <span className="text-tinta-2">{tk(`fields.herd.${a.category}`)} · {tk(`fields.sex.${a.sex}`)}</span>
+                <span className="text-tinta-2">{tk(`fields.herd.${a.category}`)}, {tk(`fields.sex.${a.sex}`)}</span>
               </button>
             </li>
           ))}

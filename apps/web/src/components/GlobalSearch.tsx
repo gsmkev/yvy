@@ -103,7 +103,7 @@ export function GlobalSearch({
             key: `p${p.id}`,
             kind: "plots",
             title: p.name,
-            sub: [farmName.get(p.farmId), p.crop].filter(Boolean).join(" · "),
+            sub: [farmName.get(p.farmId), p.crop].filter(Boolean).join(", "),
             go: toFarm(p.farmId, p.id),
           });
       for (const p of d.data.pois)
@@ -112,7 +112,7 @@ export function GlobalSearch({
             key: `o${p.id}`,
             kind: "pois",
             title: p.name,
-            sub: [farmName.get(p.farmId), tk(`ui.poi.kinds_${p.kind}`)].join(" · "),
+            sub: [farmName.get(p.farmId), tk(`ui.poi.kinds_${p.kind}`)].join(", "),
             go: toFarm(p.farmId),
           });
     }
@@ -136,7 +136,7 @@ export function GlobalSearch({
           key: `r${r.id}`,
           kind: "records",
           title: text,
-          sub: [tk(`record-kinds.kind.${r.kind}`), r.plotName ?? farmName.get(r.farmId)].filter(Boolean).join(" · "),
+          sub: [tk(`record-kinds.kind.${r.kind}`), r.plotName ?? farmName.get(r.farmId)].filter(Boolean).join(", "),
           go: toFarm(r.farmId, r.plotId ?? undefined),
         });
     }

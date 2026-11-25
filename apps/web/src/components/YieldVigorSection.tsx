@@ -62,7 +62,7 @@ export function YieldVigorSection({ plot }: { plot: Plot }) {
               >
                 {list.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {m.seasonName ?? t("ui.yield.vigorNoSeason")} · {m.fileName}
+                    {m.seasonName ?? t("ui.yield.vigorNoSeason")}, {m.fileName}
                   </option>
                 ))}
               </select></SelectBox>

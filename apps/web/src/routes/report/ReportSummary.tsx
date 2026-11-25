@@ -72,7 +72,7 @@ export function ReportCharts({ d }: { d: ReportData }) {
               {periodAlerts.map((a) => (
                 <li key={a.id} className="border-b border-linea py-2.5">
                   <span className="font-medium">{tk(`ui.alert.kind_${a.kind}`)}</span>
-                  <span className="text-tinta-2"> · {tk(`ui.severity.${a.severity}`)}</span>
+                  <span className="text-tinta-2">, {tk(`ui.severity.${a.severity}`)}</span>
                   <p className="text-tinta-2">{a.summary}</p>
                 </li>
               ))}

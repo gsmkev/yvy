@@ -73,7 +73,7 @@ export function SamplingGrid({ plot, farm }: { plot: Plot; farm: Farm | undefine
             ))}
           </svg>
           <p className="text-xs text-tinta-2">
-            {t("ui.sampling.count", { n: points.length })} · {t("ui.sampling.how")}
+            {t("ui.sampling.count", { n: points.length })}, {t("ui.sampling.how")}
           </p>
           <div className="flex flex-wrap gap-2">
             <Button variant="primary" onClick={pdfFile} disabled={busy || !farm}>

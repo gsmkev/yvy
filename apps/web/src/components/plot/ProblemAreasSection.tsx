@@ -42,7 +42,7 @@ onShowArea?: (a: ProblemArea) => void;
         {problemAreas.map((a) => (
           <li key={a.id} className="flex flex-col gap-1">
             <span className="num">
-              {fmtHa(a.areaHa)} · {t("ui.problem.areaNdvi", { v: fmtNdvi(a.meanNdvi), m: fmtNdvi(a.plotMedianNdvi) })}
+              {fmtHa(a.areaHa)}, {t("ui.problem.areaNdvi", { v: fmtNdvi(a.meanNdvi), m: fmtNdvi(a.plotMedianNdvi) })}
             </span>
             <span className="flex gap-4">
               <button

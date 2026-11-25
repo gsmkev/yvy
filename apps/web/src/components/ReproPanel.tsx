@@ -73,7 +73,7 @@ export function ReproPanel({ farmId }: { farmId: string }) {
                           r.tag ? t("fields.common.tagValue", { n: r.tag }) : null,
                         ]
                           .filter(Boolean)
-                          .join(" · ") || "—"}
+                          .join(", ") || "—"}
                       </td>
                     </tr>
                   ))}

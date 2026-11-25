@@ -101,7 +101,7 @@ export function BufferPanel({ farmId, plots, pois }: { farmId: string; plots: Pl
               <li key={a.recordId} className="py-2.5">
                 <p>
                   <span className="font-medium text-peligro">{a.plotName ?? t("ui.buffer.noPlot")}</span>
-                  <span className="num text-tinta-2"> · {fmtDate(a.capturedAt)}</span>
+                  <span className="num text-tinta-2">, {fmtDate(a.capturedAt)}</span>
                 </p>
                 <p className="text-tinta-2">{a.hits.map(label).join("; ")}</p>
                 <p className="text-xs text-tinta-2">{t(a.basis === "gps" ? "ui.buffer.basisGps" : "ui.buffer.basisPlot")}</p>

@@ -2022,6 +2022,7 @@ export const esPY = {
     },
     rain: {
       "30": "Lluvia 30 días",
+      dailyTitle: "Lluvia diaria, últimos 60 días",
       mm: "Lluvia (mm)",
       normal: "Normal",
       week: "Lluvia de la semana",
@@ -3467,6 +3468,11 @@ export const esPY = {
       margin: "Margen de los últimos 12 meses",
       marginNote: "Ventas {{income}} menos costos {{cost}}",
       marginNone: "Todavía no cargaste ventas ni costos",
+      seeAlerts: "Ver avisos",
+      sales: "Ventas",
+      costs: "Costos",
+      rainPct: "{{pct}} % de lo normal",
+      officeNote: "Oficina: {{staff}} de {{total}}",
       noCrop: "Sin cultivo cargado",
     },
     crop: {

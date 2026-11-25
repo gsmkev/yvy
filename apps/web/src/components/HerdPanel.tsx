@@ -62,7 +62,7 @@ function StockSection({ farmId }: { farmId: string }) {
             ua: dec.format(d.farm.ua),
             area: fmtHa(d.farm.areaHa),
           })}
-          {d.farm.uaPerHa !== null && " · " + t("ui.herd.uaPerHa", { v: dec.format(d.farm.uaPerHa) })}
+          {d.farm.uaPerHa !== null && ", " + t("ui.herd.uaPerHa", { v: dec.format(d.farm.uaPerHa) })}
         </p>
         {(d.farm.overLimit || over.length > 0) && (
           <p role="alert" className="mt-2 text-sm font-medium text-peligro">

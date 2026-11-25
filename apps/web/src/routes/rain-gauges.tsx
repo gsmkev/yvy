@@ -84,7 +84,7 @@ export function RainGaugesPage() {
       title={t("ui.gauges.title")}
       menu={gauges.length > 0 ? <PageExport root={body} name={t("ui.gauges.title")} /> : undefined}
     >
-      <p className="-mt-3 text-sm text-tinta-2">{farm.data.farm.name} · {t("ui.gauges.intro", { from: fmtIsoDate(from), to: fmtIsoDate(cutoff) })}</p>
+      <p className="-mt-3 text-sm text-tinta-2"><span className="block font-medium text-surco">{farm.data.farm.name}</span>{t("ui.gauges.intro", { from: fmtIsoDate(from), to: fmtIsoDate(cutoff) })}</p>
       {gauges.length === 0 && <EmptyState title={t("ui.gauges.none")}>{t("ui.gauges.noneHint")}</EmptyState>}
       <div ref={body} className="flex flex-col gap-8">
         {gauges.map((g) => (

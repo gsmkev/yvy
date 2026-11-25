@@ -69,7 +69,7 @@ export function SupplementPanel({ farmId }: { farmId: string }) {
                         className={`num py-2.5 text-right ${p.saltStatus === "low" || p.saltStatus === "high" ? "font-medium text-peligro" : ""}`}
                       >
                         {p.saltGPerHeadDay === null ? "—" : `${int.format(p.saltGPerHeadDay)} g`}
-                        {p.saltStatus && p.saltStatus !== "ok" ? ` · ${t(`ui.supp.salt_${p.saltStatus}`)}` : ""}
+                        {p.saltStatus && p.saltStatus !== "ok" ? `, ${t(`ui.supp.salt_${p.saltStatus}`)}` : ""}
                       </td>
                       <td className="num py-2.5 text-right text-tinta-2">{p.lastAt ? fmtDay(p.lastAt) : "—"}</td>
                     </tr>

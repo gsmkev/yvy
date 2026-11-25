@@ -34,10 +34,10 @@ export function SpiPanel({ farmId }: { farmId: string }) {
                   <span className="num">
                     <strong className={s.spi <= -1 ? "text-peligro" : ""}>{fmtNum(s.spi)}</strong>
                     <span className="text-tinta-2">
-                      {" "}
-                      · {t(`ui.spi.cat_${spiCategory(s.spi)}` as "ui.spi.cat_normal")}
+                      {", "}
+                     {t(`ui.spi.cat_${spiCategory(s.spi)}` as "ui.spi.cat_normal")}
                       {s.mm !== null && s.normalMm !== null
-                        ? " · " + t("ui.spi.mm", { mm: fmtMm(s.mm), normal: fmtMm(s.normalMm) })
+                        ? ", " + t("ui.spi.mm", { mm: fmtMm(s.mm), normal: fmtMm(s.normalMm) })
                         : ""}
                     </span>
                   </span>
@@ -47,7 +47,7 @@ export function SpiPanel({ farmId }: { farmId: string }) {
           </ul>
           <p className="text-xs text-tinta-2">{t("ui.spi.note")}</p>
           <p className="text-xs text-tinta-2">
-            {t(ATTRIBUTION.chirps)} · {t(ATTRIBUTION.nasaPower)}
+            {t(ATTRIBUTION.chirps)}, {t(ATTRIBUTION.nasaPower)}
           </p>
         </>
       )}

@@ -85,7 +85,7 @@ export function ShareLinksModal({ farmId, onClose }: { farmId: string; onClose: 
               return (
                 <li key={l.id} className="flex items-center justify-between gap-3 py-2">
                   <span className="num">
-                    {fmtDate(l.createdAt)} ·{" "}
+                    {fmtDate(l.createdAt)},{" "}
                     {l.revokedAt !== null
                       ? t("ui.share.linkRevoked")
                       : live

@@ -179,7 +179,7 @@ export function RiskPage() {
       }
       menu={report ? <PageExport root={body} name={t("ui.risk.title")} /> : undefined}
     >
-      {report && computedAt !== null && <p className="-mt-3 text-sm text-tinta-2">{f.name} · {t("ui.risk.computed", { date: fmtDate(computedAt) })}</p>}
+      {report && computedAt !== null && <p className="-mt-3 text-sm text-tinta-2"><span className="block font-medium text-surco">{f.name}</span>{t("ui.risk.computed", { date: fmtDate(computedAt) })}</p>}
       {report === null ? (
         <EmptyState title={t("ui.risk.pending")}>{t("ui.risk.pendingHint")}</EmptyState>
       ) : (

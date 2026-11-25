@@ -169,7 +169,7 @@ export function NewFarmPage() {
           <p className="text-sm">
             {t("ui.common.area")}: <strong>{fmtHa(areaHa(geometry))}</strong>
             {parts.length > 1 || geometry.type === "MultiPolygon"
-              ? " · " + t("ui.farm.parts", { count: geometry.coordinates.length })
+              ? ", " + t("ui.farm.parts", { count: geometry.coordinates.length })
               : ""}
           </p>
         )}

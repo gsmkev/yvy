@@ -102,7 +102,7 @@ export function SanitaryPage() {
                   e.tasksCreated > 0 ? t("ui.sanitary.tasks", { n: e.tasksCreated }) : "",
                 ]
                   .filter(Boolean)
-                  .join(" · "),
+                  .join(", "),
             },
             {
               id: "state",

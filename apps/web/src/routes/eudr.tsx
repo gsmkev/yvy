@@ -109,7 +109,7 @@ export function EudrPage() {
       }
       menu={hasData ? <PageExport root={body} name={t("ui.eudr.title")} /> : undefined}
     >
-      {hasData && <p className="-mt-3 text-sm text-tinta-2">{f.name} · {t("ui.eudr.computed", { date: fmtDate(data.computedAt!) })}</p>}
+      {hasData && <p className="-mt-3 text-sm text-tinta-2"><span className="block font-medium text-surco">{f.name}</span>{t("ui.eudr.computed", { date: fmtDate(data.computedAt!) })}</p>}
       <Disclaimer />
       {!hasData ? (
         <EmptyState title={data.plots.length === 0 && farm.data.plots.length === 0 ? t("ui.eudr.noPlots") : t("ui.eudr.pending")} />

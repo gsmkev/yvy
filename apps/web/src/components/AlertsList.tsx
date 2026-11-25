@@ -61,8 +61,8 @@ export function AlertsList({
             </div>
             <p className="mt-1.5 text-body leading-6 font-medium text-surco">{a.summary}</p>
             <p className="mt-1 text-xs leading-4 text-tinta-2">
-              {a.probability ? `${tk(`ui.probability.${a.probability}`)} · ` : ""}
-              {a.plotIds.length} {t("ui.common.plots").toLowerCase()} · {t("ui.common.orientative", { source: a.source })}
+              {a.probability ? `${tk(`ui.probability.${a.probability}`)}, ` : ""}
+              {a.plotIds.length} {t("ui.common.plots").toLowerCase()}, {t("ui.common.orientative", { source: a.source })}
             </p>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <ShareWhatsappButton

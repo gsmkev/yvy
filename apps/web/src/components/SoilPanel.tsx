@@ -84,9 +84,9 @@ export function SoilPanel({ farmId, plots }: { farmId: string; plots: Plot[] }) 
                 {rows.map((r) => (
                   <tr key={r.id}>
                     <td className="py-2.5 pr-3">
-                      {[r.plotName, r.pointLabel].filter(Boolean).join(" · ") || t("ui.soil.farmWide")}
+                      {[r.plotName, r.pointLabel].filter(Boolean).join(", ") || t("ui.soil.farmWide")}
                       <span className="block text-xs text-tinta-2">
-                        {[`${r.depthCm} cm`, r.lab].filter(Boolean).join(" · ")}
+                        {[`${r.depthCm} cm`, r.lab].filter(Boolean).join(", ")}
                       </span>
                     </td>
                     <td className="num py-2.5 pr-3">{fmtIsoDate(r.sampledOn)}</td>

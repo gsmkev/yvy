@@ -60,11 +60,11 @@ export function RecordsList({ filters, onRows }: { filters: RecordFilters; /** S
                   <span className="truncate">
                     {r.plotName ?? ""}
                     {photosOf(r).length > 0 &&
-                      (r.plotName ? " · " : "") +
+                      (r.plotName ? ", " : "") +
                         t(photosOf(r).length === 1 ? "ui.photo.one" : "ui.common.photosMany", {
                           n: photosOf(r).length,
                         })}
-                    {voiceOf(r).length > 0 && ` · ${t("app.voice.note")}`}
+                    {voiceOf(r).length > 0 && `, ${t("app.voice.note")}`}
                   </span>
                 </span>
               </button>

@@ -97,7 +97,7 @@ export function ShapeEditBar({
       <p>{t("ui.plot.editHint")}</p>
       <p className="num">
         {t("ui.common.area")}: <strong className="font-semibold">{fmtHa(area)}</strong>
-        {shape && <span className="text-lino/70"> · {t("ui.plot.editWas", { area: fmtHa(areaHa(JSON.parse(original) as Polygon | MultiPolygon)) })}</span>}
+        {shape && <span className="text-lino/70">, {t("ui.plot.editWas", { area: fmtHa(areaHa(JSON.parse(original) as Polygon | MultiPolygon)) })}</span>}
       </p>
       {problem && <p className="font-medium text-peligro">{tk(`ui.geom.error_${problem}`)}</p>}
       {save.error && <p className="font-medium text-peligro">{save.error instanceof Error ? save.error.message : String(save.error)}</p>}

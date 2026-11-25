@@ -38,10 +38,10 @@ export function HeatStressCard({ farmId }: { farmId: string }) {
           <p className={`num text-sm ${level === "danger" || level === "emergency" ? "font-medium text-peligro" : ""}`} role={level === "normal" || level === "alert" ? undefined : "alert"}>
             {d.summary.dangerHours > 0
               ? t("ui.heat.max", { v: Math.round(d.summary.maxThi ?? 0), level: tk(`ui.heat.level_${level}`) }) +
-                " · " +
+                ", " +
                 t("ui.heat.dangerHours", { n: d.summary.dangerHours }) +
                 (d.summary.firstDangerAt
-                  ? " · " + t("ui.heat.firstDanger", { date: fmtDateTime(d.summary.firstDangerAt) })
+                  ? ", " + t("ui.heat.firstDanger", { date: fmtDateTime(d.summary.firstDangerAt) })
                   : "")
               : level === "alert"
                 ? t("ui.heat.max", { v: Math.round(d.summary.maxThi ?? 0), level: tk(`ui.heat.level_${level}`) })

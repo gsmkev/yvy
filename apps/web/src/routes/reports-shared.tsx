@@ -79,7 +79,7 @@ export function SharedPage() {
               <h1 className="text-title leading-8">{d.farm.name}</h1>
               <p className="mt-1 text-sm text-tinta-2">
                 {t("ui.shared.title")}
-                {d.farm.department ? ` · ${d.farm.department}` : ""} · {t("ui.shared.readOnly")}
+                {d.farm.department ? `, ${d.farm.department}` : ""}, {t("ui.shared.readOnly")}
               </p>
             </div>
             {d.plots.length > 0 && <PageExport root={body} name={d.farm.name} />}
@@ -108,7 +108,7 @@ export function SharedPage() {
                 <ul className="flex flex-col text-sm">
                   {d.alerts.map((a, i) => (
                     <li key={i} className="border-b border-linea py-2.5">
-                      <span className="font-medium">{tk(`ui.alert.kind_${a.kind}`)}</span> · {a.summary}
+                      <span className="font-medium">{tk(`ui.alert.kind_${a.kind}`)}</span>, {a.summary}
                     </li>
                   ))}
                 </ul>
@@ -118,10 +118,10 @@ export function SharedPage() {
 
           <footer className="flex flex-col gap-1 text-xs text-tinta-2">
             <p>
-              {t("ui.shared.generated", { date: fmtDate(d.generatedAt) })} · {t("ui.shared.expires", { date: fmtDate(d.expiresAt) })}
+              {t("ui.shared.generated", { date: fmtDate(d.generatedAt) })}, {t("ui.shared.expires", { date: fmtDate(d.expiresAt) })}
             </p>
             <p>
-              {t(ATTRIBUTION.copernicus)} · {t(ATTRIBUTION.chirps)}
+              {t(ATTRIBUTION.copernicus)}, {t(ATTRIBUTION.chirps)}
             </p>
           </footer>
         </>

@@ -43,9 +43,9 @@ export function FertilityPanel({ farmId }: { farmId: string }) {
                 <li key={k} className="num flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2">
                   <span>{t(`ui.soil.param_${FERT_LAYER_PARAM[k]}` as "ui.soil.param_ph")}</span>
                   <span className="text-tinta-2">
-                    {t("ui.fert.points", { n, min: d.minPoints })} ·{" "}
+                    {t("ui.fert.points", { n, min: d.minPoints })},{" "}
                     {n >= d.minPoints ? t("ui.fert.ready") : t("ui.fert.missing", { n: d.minPoints - n })}
-                    {when ? " · " + t("ui.fert.published", { date: fmtDate(when) }) : ""}
+                    {when ? ", " + t("ui.fert.published", { date: fmtDate(when) }) : ""}
                   </span>
                 </li>
               );

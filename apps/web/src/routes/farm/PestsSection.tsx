@@ -55,7 +55,7 @@ export function PestsSection({
                       >
                         <span className="min-w-0 flex-1 truncate">{plots.find((p) => p.id === c.plotId)?.name ?? "—"}</span>
                         <span className="text-lino/70">
-                          {t("ui.pests.plotCount", { n: c.n })} · {tk(`ui.pest.intensity_${c.worst}`)}
+                          {t("ui.pests.plotCount", { n: c.n })}, {tk(`ui.pest.intensity_${c.worst}`)}
                         </span>
                       </button>
                     </li>

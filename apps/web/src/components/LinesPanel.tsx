@@ -49,7 +49,7 @@ export function LinesPanel({
           <span id="lines-title" className="font-medium text-surco">
             {t("ui.lines.title")}
           </span>
-          {" · "}
+          {", "}
           {t("ui.lines.none")}
         </p>
         {add}

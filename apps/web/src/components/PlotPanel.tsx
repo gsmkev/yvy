@@ -94,8 +94,8 @@ onMerge?: () => void;
           {plot.name}
         </h2>
         <p className="num mt-1 text-sm text-tinta-2">
-          {plot.kind === "pasture" ? t("ui.common.pasture") : (plot.crop ?? t("ui.common.crop"))} · {fmtHa(plot.areaHa)}
-          {plot.season ? ` · ${plot.season}` : ""}
+          {plot.kind === "pasture" ? t("ui.common.pasture") : (plot.crop ?? t("ui.common.crop"))}, {fmtHa(plot.areaHa)}
+          {plot.season ? `, ${plot.season}` : ""}
         </p>
         <p className="mt-1 text-sm text-tinta-2">
           {workers.length

@@ -83,7 +83,7 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
           unit={hasRain ? rainUnitLabel() : undefined}
           note={
             normal30 > 0 && hasRain
-              ? `${t("ui.rain.normal")} ${fmtMm(normal30)} · ${Math.round((rain30 / normal30) * 100)} %`
+              ? `${t("ui.rain.normal")} ${fmtMm(normal30)}, ${Math.round((rain30 / normal30) * 100)} %`
               : _t(ATTRIBUTION.chirps)
           }
         />
@@ -95,7 +95,7 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
         />
       </StatRow>
       <div>
-        <h3 className="eyebrow mb-2">{t("ui.rain.30")} · 60 días</h3>
+        <h3 className="eyebrow mb-2">{t("ui.rain.dailyTitle")}</h3>
         {hasRain ? (
           <RainChart
             days={days}
@@ -171,7 +171,7 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
                         t("ui.common.tmin"),
                         (f: (typeof c.forecast)[number]) => (f.tminC === null ? "—" : `${Math.round(f.tminC)}°`),
                       ],
-                      [t("ui.rain.mm"), (f: (typeof c.forecast)[number]) => (f.precipMm ? fmtNum(f.precipMm) : "·")],
+                      [t("ui.rain.mm"), (f: (typeof c.forecast)[number]) => (f.precipMm ? fmtNum(f.precipMm) : "—")],
                     ].map(([label, fn]) => (
                       <tr key={label as string}>
                         <th className="py-1 pr-2 text-left font-normal text-tinta-2">{label as string}</th>

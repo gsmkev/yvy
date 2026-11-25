@@ -22,8 +22,8 @@ function SeriesTable({ rows, firstHeader }: { rows: WeightSeries[]; firstHeader:
         columns={[
           { id: "label", header: firstHeader, cell: (r) => <span className="font-medium">{r.label ?? t("ui.weigh.noGroup")}</span> },
           { id: "count", header: t("ui.weigh.count"), align: "right", cell: (r) => r.points.length },
-          { id: "first", header: t("ui.weigh.first"), align: "right", cell: (r) => (r.firstKg === null ? "—" : `${dec1.format(r.firstKg)} kg · ${fmtDay(r.firstAt!)}`) },
-          { id: "last", header: t("ui.weigh.last"), align: "right", cell: (r) => (r.lastKg === null ? "—" : `${dec1.format(r.lastKg)} kg · ${fmtDay(r.lastAt!)}`) },
+          { id: "first", header: t("ui.weigh.first"), align: "right", cell: (r) => (r.firstKg === null ? "—" : `${dec1.format(r.firstKg)} kg, ${fmtDay(r.firstAt!)}`) },
+          { id: "last", header: t("ui.weigh.last"), align: "right", cell: (r) => (r.lastKg === null ? "—" : `${dec1.format(r.lastKg)} kg, ${fmtDay(r.lastAt!)}`) },
           { id: "days", header: t("ui.weigh.days"), align: "right", cell: (r) => (r.days === null ? "—" : dec1.format(r.days)) },
           { id: "adg", header: t("ui.weigh.adg"), align: "right", cell: (r) => <span className="font-medium">{adgText(r.adgKg)}</span> },
           { id: "recent", header: t("ui.weigh.adgRecent"), align: "right", cell: (r) => <span className="text-tinta-2">{adgText(r.lastAdgKg)}</span> },

@@ -145,7 +145,7 @@ export function ClientsPage() {
                       <span className="font-medium hover:underline">{f.name}</span>
                       <span className="num text-xs text-tinta-2">
                         {fmtHa(f.areaHa)}
-                        {f.department ? ` · ${f.department}` : ""} ·{" "}
+                        {f.department ? `, ${f.department}` : ""},{" "}
                         {f.lastRecordAt
                           ? `${t("ui.last.record").toLowerCase()} ${fmtDate(f.lastRecordAt)}`
                           : t("ui.never.recorded").toLowerCase()}

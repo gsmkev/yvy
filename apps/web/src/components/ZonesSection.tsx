@@ -49,7 +49,7 @@ export function ZonesSection({ plot }: { plot: Plot }) {
         {zones.map((z) => (
           <li key={z.zone} className="num flex items-center gap-2">
             <span aria-hidden className="inline-block h-3 w-3 shrink-0 rounded-sm" style={{ background: ZONE_COLOR[z.zone] }} />
-            {t(`ui.zones.level_${z.zone}` as "ui.zones.level_1")}: {fmtHa(z.areaHa)} ({z.pct} %) · NDVI {fmtNdvi(z.meanNdvi)}
+            {t(`ui.zones.level_${z.zone}` as "ui.zones.level_1")}: {fmtHa(z.areaHa)} ({z.pct} %), NDVI {fmtNdvi(z.meanNdvi)}
           </li>
         ))}
       </ul>

@@ -5,7 +5,7 @@ import { get } from "../lib/api";
 import { fmtNum } from "../lib/format";
 import { fmtGs } from "../lib/money";
 import { t, tk } from "../lib/i18n";
-import { ErrorBox, SectionHead, Spinner, Stat, StatRow } from "./ui";
+import { ErrorBox, Spinner, Stat, StatRow } from "./ui";
 
 interface Dashboard {
   /** Solo viene con el permiso de montos (dueño y administrador); null si no. */
@@ -17,6 +17,26 @@ interface Dashboard {
   records7d: { total: number; byWorkers: number; byKind: { kind: string; n: number }[] };
 }
 
+/** Ventas, costos y margen de los últimos 12 meses, en filas. */
+function MarginRows({ margin }: { margin: NonNullable<Dashboard["margin"]> }) {
+  if (!margin.entries) return <p className="text-sm text-tinta-2">{t("ui.dash.marginNone")}</p>;
+  const rows: [string, number, boolean][] = [
+    [t("ui.dash.sales"), margin.incomePyg, false],
+    [t("ui.dash.costs"), margin.costPyg, false],
+    [t("ui.dash.margin"), margin.marginPyg, true],
+  ];
+  return (
+    <dl className="num divide-y divide-linea border-y border-linea text-sm">
+      {rows.map(([label, value, total]) => (
+        <div key={label} className="flex items-baseline justify-between gap-3 py-2">
+          <dt className={total ? "font-semibold" : "text-tinta-2"}>{label}</dt>
+          <dd className={total ? `font-serif text-lg font-semibold ${value < 0 ? "text-peligro" : ""}` : ""}>{fmtGs(value)}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 /** Cifras sueltas para el dueño con varias estancias. Sin tarjetas: números y una línea de contexto. */
 export function OwnerDashboard() {
   const q = useQuery({ queryKey: ["dashboard"], queryFn: () => get<Dashboard>("/org/dashboard"), staleTime: 60_000 });
@@ -26,48 +46,36 @@ export function OwnerDashboard() {
   const label = (c: Dashboard["areaByCrop"][number]) =>
     c.kind === "pasture" ? t("ui.common.pasture") : c.crop ? tk(`ui.crop.name_${c.crop}`) : t("ui.dash.noCrop");
   const maxHa = Math.max(1, ...d.areaByCrop.map((c) => c.ha));
-  const notes = [
-    d.rain.normalMm === null
-      ? t("ui.dash.rainNoData")
-      : t("ui.dash.rainMonth") +
-        ": " +
-        t("ui.dash.rainNormal", { normal: fmtNum(d.rain.normalMm), pct: d.rain.pctOfNormal ?? 0 }),
-    d.margin &&
-      (d.margin.entries
-        ? t("ui.dash.marginNote", { income: fmtGs(d.margin.incomePyg), cost: fmtGs(d.margin.costPyg) })
-        : t("ui.dash.marginNone")),
-    t("ui.dash.activityNote", { staff: d.activity.activeStaff7d, total: d.activity.staff }),
-  ].filter(Boolean);
   return (
-    <section className="flex flex-col gap-4">
-      <SectionHead title={t("ui.dash.title")} />
+    <section className="flex flex-col gap-4 border-t border-linea pt-5">
+      <h2 className="font-serif text-lg font-semibold">{t("ui.dash.title")}</h2>
       <StatRow>
         <Stat
           label={t("ui.dash.rainMonth")}
           value={d.rain.mm === null ? "—" : fmtNum(d.rain.mm)}
           unit={d.rain.mm === null ? undefined : "mm"}
+          note={d.rain.pctOfNormal === null ? undefined : t("ui.dash.rainPct", { pct: d.rain.pctOfNormal })}
         />
-        <Stat label={t("ui.common.activeAlerts")} value={d.alerts.total} tone={d.alerts.total ? "danger" : undefined} />
+        <Stat
+          label={t("ui.common.activeAlerts")}
+          value={d.alerts.total}
+          tone={d.alerts.total ? "danger" : undefined}
+          note={
+            d.alerts.total > 0 && (
+              <Link to="/avisos" className="underline underline-offset-4">
+                {t("ui.dash.seeAlerts")}
+              </Link>
+            )
+          }
+        />
         <Stat label={t("ui.dash.records")} value={d.records7d.total} />
-        <Stat label={t("ui.dash.activity")} value={`${d.activity.activeWorkers7d}/${d.activity.workers}`} />
-        {d.margin && (
-          <Stat
-            label={t("ui.dash.margin")}
-            value={d.margin.entries ? fmtGs(d.margin.marginPyg) : "—"}
-            tone={d.margin.entries && d.margin.marginPyg < 0 ? "danger" : undefined}
-          />
-        )}
+        <Stat
+          label={t("ui.dash.activity")}
+          value={`${d.activity.activeWorkers7d}/${d.activity.workers}`}
+          note={t("ui.dash.officeNote", { staff: d.activity.activeStaff7d, total: d.activity.staff })}
+        />
       </StatRow>
-      <div className="flex flex-col gap-0.5 text-xs text-tinta-2">
-        {d.alerts.total > 0 && (
-          <Link to="/avisos" className="underline underline-offset-4">
-            {d.alerts.byKind.map((a) => `${a.n} ${tk(`ui.alert.kind_${a.kind}`).toLowerCase()}`).join(", ")}
-          </Link>
-        )}
-        {notes.map((n) => (
-          <p key={String(n)}>{n}</p>
-        ))}
-      </div>
+      {d.margin && <MarginRows margin={d.margin} />}
       {d.areaByCrop.length > 0 && (
         <div>
           <h3 className="eyebrow mb-2">{t("ui.dash.areaByCrop")}</h3>

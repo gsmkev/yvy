@@ -42,7 +42,7 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
   // Ficha de la estancia: el panel es angosto, así que tipo, unidad y principio activo van bajo el nombre
   const compact = !!farmId;
   const columns: Column<Product>[] = [
-    { id: "name", header: t("ui.product.name"), cell: (p) => (<>{p.name}<span className={`block text-xs font-normal text-tinta-2 ${compact ? "" : "sm:hidden"}`}>{tk(`fields.product.type_${p.type}`)} · {tk(`fields.product.unit_${p.unit}`)}{compact && p.activeIngredient ? ` · ${p.activeIngredient}` : ""}</span></>), sort: (a, b) => a.name.localeCompare(b.name) },
+    { id: "name", header: t("ui.product.name"), cell: (p) => (<>{p.name}<span className={`block text-xs font-normal text-tinta-2 ${compact ? "" : "sm:hidden"}`}>{tk(`fields.product.type_${p.type}`)}, {tk(`fields.product.unit_${p.unit}`)}{compact && p.activeIngredient ? `, ${p.activeIngredient}` : ""}</span></>), sort: (a, b) => a.name.localeCompare(b.name) },
     ...(compact ? [] : [
       { id: "type", header: t("ui.product.type"), hideBelow: "sm", cell: (p: Product) => tk(`fields.product.type_${p.type}`) } satisfies Column<Product>,
       { id: "unit", header: t("ui.product.unit"), hideBelow: "sm", cell: (p: Product) => tk(`fields.product.unit_${p.unit}`) } satisfies Column<Product>,

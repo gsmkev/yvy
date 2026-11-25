@@ -47,7 +47,7 @@ export function TheftPanel({ farmId }: { farmId: string }) {
               header: t("ui.theft.report"),
               cell: (r) =>
                 r.policeReport ? (
-                  <span className="num">{`${r.policeReport}${r.reportedAt ? ` · ${fmtDay(r.reportedAt)}` : ""}`}</span>
+                  <span className="num">{`${r.policeReport}${r.reportedAt ? `, ${fmtDay(r.reportedAt)}` : ""}`}</span>
                 ) : (
                   <span className="text-peligro">{t("ui.theft.noReport")}</span>
                 ),

@@ -65,7 +65,7 @@ function AgroDetails({ kind, data }: { kind: string; data: Data }) {
             {products.map((p, i) => (
               <li key={i} className="num py-2">
                 {doseText(p)}
-                {num(p.usedQty) !== null ? ` · ${t("ui.app.used", { qty: `${fmtNum(p.usedQty as number)} ${tk(`fields.usage.unit_${String(p.unit)}`)}` })}` : ""}
+                {num(p.usedQty) !== null ? `, ${t("ui.app.used", { qty: `${fmtNum(p.usedQty as number)} ${tk(`fields.usage.unit_${String(p.unit)}`)}` })}` : ""}
               </li>
             ))}
           </ul>

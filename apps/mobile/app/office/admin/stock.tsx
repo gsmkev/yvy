@@ -43,7 +43,6 @@ export default function Stock() {
   const moveRows = (moves.data ?? []).filter((m) => !warehouseId || m.warehouseId === warehouseId);
   const totalValue = rows.reduce((a, r) => a + (r.valuePyg ?? 0), 0);
   const needSetup = !wh.loading && warehouses.length === 0 && wh.data !== null;
-  const names = { byId, whName };
   const total = compactMoney(totalValue, "PYG");
 
   return (
@@ -74,8 +73,8 @@ export default function Stock() {
                     ...(lotRows.length > 0 ? [{ value: "expiring" as const, label: t("ui.expiring.title") }] : []),
                   ]}
                 />
-                {tab === "stock" && <StockList rows={rows} {...names} />}
-                {tab === "moves" && <MovesList rows={moveRows} {...names} />}
+                {tab === "stock" && <StockList rows={rows} byId={byId} whName={whName} />}
+                {tab === "moves" && <MovesList rows={moveRows} byId={byId} whName={whName} />}
                 {tab === "expiring" && <LotsList rows={lotRows} byId={byId} />}
               </>
             )}

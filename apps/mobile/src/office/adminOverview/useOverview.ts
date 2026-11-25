@@ -7,7 +7,7 @@ import type { StatItem } from "../ui";
 import { useOnline } from "../useOnline";
 
 /** Compra reciente. */
-export interface Purchase {
+interface Purchase {
   id: string;
   partyId: string | null;
   orderDate: string;
@@ -28,7 +28,7 @@ interface Dashboard {
   margin: { marginPyg: number; incomePyg: number; costPyg: number; entries: number } | null;
 }
 /** Orden de trabajo abierta con sus lotes. */
-export interface OpenOrder {
+interface OpenOrder {
   key: string;
   labor: string;
   plots: string[];

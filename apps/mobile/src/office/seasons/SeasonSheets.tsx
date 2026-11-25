@@ -1,8 +1,7 @@
 /** Hojas de campañas: alta de campaña, plan de cultivo de un lote y confirmación de borrado. */
 import { CROPS, DENSITY_UNITS, t, type MessageKey } from "@yvy/shared";
-import { Button, Sheet, Text } from "../../ui/kit";
-import { C, T } from "../../ui/theme";
-import { DateField, FormSheet, SelectField, TextField } from "../ui";
+import { Button } from "../../ui/kit";
+import { ConfirmDeleteSheet, DateField, FormSheet, SelectField, TextField } from "../ui";
 import type { PlanDraft } from "./plan";
 import type { SeasonEditor, SeasonRef } from "./useSeasonEditor";
 
@@ -49,19 +48,14 @@ export function PlanSheet({ editor, season, hasPlan }: { editor: SeasonEditor; s
 export function DeleteSeasonSheet({ editor, season }: { editor: SeasonEditor; season: SeasonRef | null }) {
   const { removeState } = editor;
   return (
-    <Sheet visible={editor.confirmDelete} title={t("ui.season.delete")} onClose={editor.closeDelete}>
-      {season ? (
-        <>
-          <Text style={T.body}>{t("ui.season.confirmDelete", { name: season.name })}</Text>
-          {removeState.error ? (
-            <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 12 }]}>
-              {removeState.error}
-            </Text>
-          ) : null}
-          <Button kind="danger" title={t("ui.common.delete")} loading={removeState.pending} onPress={() => void editor.confirmRemove()} style={{ marginTop: 16 }} />
-          <Button kind="text" title={t("ui.common.cancel")} onPress={editor.closeDelete} style={{ marginTop: 4 }} />
-        </>
-      ) : null}
-    </Sheet>
+    <ConfirmDeleteSheet
+      visible={editor.confirmDelete}
+      title={t("ui.season.delete")}
+      message={season ? t("ui.season.confirmDelete", { name: season.name }) : ""}
+      error={removeState.error}
+      pending={removeState.pending}
+      onConfirm={() => void editor.confirmRemove()}
+      onCancel={editor.closeDelete}
+    />
   );
 }

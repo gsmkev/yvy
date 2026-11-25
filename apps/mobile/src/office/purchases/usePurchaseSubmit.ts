@@ -10,7 +10,7 @@ import { useOnlineMutation } from "../useOnlineMutation";
 import { linesBody, type LineDraft } from "./lines";
 
 /** Datos de la compra tal como están en el formulario. */
-export interface PurchaseForm {
+interface PurchaseForm {
   partyId: string;
   date: string;
   currency: Currency;

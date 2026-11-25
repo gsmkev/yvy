@@ -24,7 +24,7 @@ export interface Draft {
 }
 
 /** Cuerpo del producto y rango de dosis ya validados. */
-export interface ParsedDraft {
+interface ParsedDraft {
   body: { name: string; type: string; unit: string; activeIngredient: string | null; withdrawalDays: number | null; toxClass: string | null };
   min: number | null;
   max: number | null;

@@ -12,7 +12,7 @@ import { planText } from "./plan";
 import type { SeasonEditor } from "./useSeasonEditor";
 
 /** Campaña con sus fechas, tal como la guarda el celular. */
-export interface SeasonView {
+interface SeasonView {
   id: string;
   name: string;
   active: boolean;

@@ -1,9 +1,8 @@
 /** Hojas de tareas del equipo: formulario, menú de la fila y confirmación de borrado. */
 import { RECORD_KINDS, RECURRENCES, TASK_PRIORITIES, t, type MessageKey } from "@yvy/shared";
 import type { Farm, Plot } from "../../db/store";
-import { Button, Row, Sheet, Text } from "../../ui/kit";
-import { C, T } from "../../ui/theme";
-import { DateField, FormSheet, SelectField, TextField } from "../ui";
+import { Row, Sheet } from "../../ui/kit";
+import { ConfirmDeleteSheet, DateField, FormSheet, SelectField, TextField } from "../ui";
 import type { TaskEditor } from "./useTaskEditor";
 
 const key = (k: string) => k as MessageKey;
@@ -58,19 +57,14 @@ export function TaskMenuSheet({ editor }: { editor: TaskEditor }) {
 export function DeleteTaskSheet({ editor }: { editor: TaskEditor }) {
   const { confirm } = editor;
   return (
-    <Sheet visible={!!confirm} title={t("office.task.deleteTitle")} onClose={() => editor.setConfirm(null)}>
-      {confirm ? (
-        <>
-          <Text style={T.body}>{t("office.task.deleteBody", { title: confirm.title })}</Text>
-          {editor.deleteError ? (
-            <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 12 }]}>
-              {editor.deleteError}
-            </Text>
-          ) : null}
-          <Button kind="danger" title={t("ui.common.delete")} loading={editor.deletePending} onPress={() => void editor.doDelete(confirm)} style={{ marginTop: 16 }} />
-          <Button kind="text" title={t("ui.common.cancel")} onPress={() => editor.setConfirm(null)} style={{ marginTop: 4 }} />
-        </>
-      ) : null}
-    </Sheet>
+    <ConfirmDeleteSheet
+      visible={!!confirm}
+      title={t("office.task.deleteTitle")}
+      message={confirm ? t("office.task.deleteBody", { title: confirm.title }) : ""}
+      error={editor.deleteError}
+      pending={editor.deletePending}
+      onConfirm={() => confirm && void editor.doDelete(confirm)}
+      onCancel={() => editor.setConfirm(null)}
+    />
   );
 }

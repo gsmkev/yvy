@@ -4,7 +4,7 @@ import { addDays, localDate, rainByDate, t, type ClimateData, type MessageKey } 
 import { useOnline } from "../useOnline";
 
 /** Registro de campo tal como lo devuelve /org/records. */
-export interface Rec {
+interface Rec {
   id: string;
   kind: string;
   authorId: string;
@@ -19,7 +19,7 @@ interface TaskRow {
   dueDate: string;
 }
 /** Aviso vigente de la estancia. */
-export interface AlertRow {
+interface AlertRow {
   id: string;
   kind: string;
   severity: string;

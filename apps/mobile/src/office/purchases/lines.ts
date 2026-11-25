@@ -11,7 +11,7 @@ export interface LineDraft {
 }
 
 /** Renglón listo para mandar a la API. */
-export interface LineBody {
+interface LineBody {
   productId: string | null;
   description: string | null;
   category: string | null;

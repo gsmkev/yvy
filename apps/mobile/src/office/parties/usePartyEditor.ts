@@ -9,7 +9,7 @@ import { useOnlineMutation } from "../useOnlineMutation";
 export type Kind = (typeof PARTY_KINDS)[number];
 
 /** Campos del formulario de contraparte como texto. */
-export interface Draft {
+interface Draft {
   id: string | null;
   name: string;
   ruc: string;

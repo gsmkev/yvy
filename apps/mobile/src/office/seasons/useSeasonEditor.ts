@@ -15,13 +15,13 @@ export interface SeasonRef {
   active: boolean;
 }
 /** Campos de la campaña nueva. */
-export interface NewSeason {
+interface NewSeason {
   name: string;
   start: string;
   end: string;
 }
 /** Plan en edición: lote y borrador. */
-export interface Planning {
+interface Planning {
   plotId: string;
   name: string;
   draft: PlanDraft;

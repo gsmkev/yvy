@@ -1,8 +1,8 @@
 /** Hojas del catálogo de productos: formulario de alta y edición, y confirmación de borrado. */
 import { PRODUCT_TYPES, PRODUCT_UNITS, t, type MessageKey } from "@yvy/shared";
-import { Button, Sheet, Text } from "../../ui/kit";
-import { C, T } from "../../ui/theme";
-import { FormSheet, SelectField, TextField } from "../ui";
+import { Button, Text } from "../../ui/kit";
+import { T } from "../../ui/theme";
+import { ConfirmDeleteSheet, FormSheet, SelectField, TextField } from "../ui";
 import { doseUnit, type Draft } from "./draft";
 import type { useProductEditor } from "./useProductEditor";
 
@@ -46,19 +46,14 @@ function ProductFields({ draft, set }: { draft: Draft; set: (patch: Partial<Draf
 export function RemoveProductSheet({ editor }: { editor: Editor }) {
   const { removing, removeState } = editor;
   return (
-    <Sheet visible={!!removing} title={t("office.product.delete")} onClose={editor.cancelRemove}>
-      {removing ? (
-        <>
-          <Text style={T.body}>{t("ui.product.confirmDelete", { name: removing.name })}</Text>
-          {removeState.error ? (
-            <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 12 }]}>
-              {removeState.error}
-            </Text>
-          ) : null}
-          <Button kind="danger" title={t("ui.common.delete")} loading={removeState.pending} onPress={() => void editor.confirmRemove(removing)} style={{ marginTop: 16 }} />
-          <Button kind="text" title={t("ui.common.cancel")} onPress={editor.cancelRemove} style={{ marginTop: 4 }} />
-        </>
-      ) : null}
-    </Sheet>
+    <ConfirmDeleteSheet
+      visible={!!removing}
+      title={t("office.product.delete")}
+      message={removing ? t("ui.product.confirmDelete", { name: removing.name }) : ""}
+      error={removeState.error}
+      pending={removeState.pending}
+      onConfirm={() => removing && void editor.confirmRemove(removing)}
+      onCancel={editor.cancelRemove}
+    />
   );
 }

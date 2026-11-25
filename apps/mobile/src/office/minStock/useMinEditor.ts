@@ -14,7 +14,7 @@ export interface Minimum {
 }
 
 /** Campos del formulario de mínimo como texto. */
-export interface Draft {
+interface Draft {
   id: string | null;
   productId: string;
   warehouseId: string;

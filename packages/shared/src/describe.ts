@@ -49,7 +49,7 @@ function herdCount({ d }: Ctx) {
 }
 
 /** Cómo resumir cada tipo de registro; cada función devuelve las partes en el orden en que se muestran. */
-const DESCRIBERS: Record<string, Describer> = {
+const DESCRIBER_TABLE: Record<string, Describer> = {
   rain: (c) => [c.num("mm") === null ? null : `${c.d.mm} mm`],
   irrigation: (c) => [
     c.num("mm") === null ? null : t("fields.common.mmValue", { n: dec(c.d.mm as number) }),
@@ -139,12 +139,15 @@ const DESCRIBERS: Record<string, Describer> = {
   note: (c) => [c.str("text")],
 };
 
+/** Mapa y no objeto: un tipo como "constructor" no debe encontrar nada. */
+const DESCRIBERS = new Map(Object.entries(DESCRIBER_TABLE));
+
 /** Resumen en una línea de un registro de tipo `kind` a partir de sus datos, en es-PY. */
 export function describeRecord(kind: string, data: Record<string, unknown>): string {
   const d = data ?? {};
   const str = (k: string) => (typeof d[k] === "string" && d[k] !== "" ? (d[k] as string) : null);
   const num = (k: string) => (typeof d[k] === "number" ? (d[k] as number) : null);
-  const parts = (DESCRIBERS[kind]?.({ d, str, num }) ?? []).filter((p): p is string => p !== null);
+  const parts = (DESCRIBERS.get(kind)?.({ d, str, num }) ?? []).filter((p): p is string => p !== null);
   if (kind !== "note" && str("note")) parts.push(d.note as string);
   const out = parts.join(", ");
   return out ? out.charAt(0).toUpperCase() + out.slice(1) : tr(`record-kinds.kind.${kind}`, kind);

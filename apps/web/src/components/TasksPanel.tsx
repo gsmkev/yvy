@@ -1,10 +1,11 @@
 /** Panel de tareas de una estancia o de toda la organización: filtro, lista agrupada y alta de tareas. */
 import { useState } from "react";
+import { isFieldRole } from "@yvy/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { del, patch } from "../lib/api";
 import { t } from "../lib/i18n";
-import { useMembers, useTasks } from "../lib/queries";
+import { useMe, useMembers, useTasks } from "../lib/queries";
 import type { Plot, Task } from "../lib/types";
 import { deleteWithUndo } from "../lib/undo";
 import { NewTaskModal, type PlotPick } from "./tasks/NewTaskModal";
@@ -34,7 +35,9 @@ pick?: PlotPick;
 }) {
   const tasks = useTasks({ farmId });
   const members = useMembers();
+  const me = useMe();
   const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState<Task | null>(null);
   const [filter, setFilter] = useState<TaskFilter>("all");
   const qc = useQueryClient();
   // Las repetitivas se cancelan (PATCH) y las únicas se borran (DELETE); ambas se pueden deshacer
@@ -59,7 +62,9 @@ pick?: PlotPick;
     </Button>
   );
   const exportMenu = <TasksExport org={org} />;
-  const list = <TaskList org={org} filter={filter} onFilter={setFilter} onDelete={removeTask} />;
+  // Editar exige el mismo permiso que asignar: lo valida la API y acá no se ofrece a quien no lo tiene
+  const canAssign = !!me.data && !isFieldRole(me.data.role);
+  const list = <TaskList org={org} filter={filter} onFilter={setFilter} onEdit={canAssign ? setEditing : undefined} onDelete={removeTask} />;
 
   return (
     <div className="flex flex-col gap-4">
@@ -79,6 +84,9 @@ pick?: PlotPick;
         </div>
       ) : (
         list
+      )}
+      {editing && (
+        <NewTaskModal task={editing} farmId={editing.farmId} plots={plots} members={members.data ?? []} onClose={() => setEditing(null)} />
       )}
       {creating && (
         <NewTaskModal

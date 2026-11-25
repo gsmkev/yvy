@@ -2203,7 +2203,7 @@ export const esPY = {
       tasksDone: "Tareas hechas",
       tasksOverdue: "Tareas vencidas",
       tasksLateNote: "{{n}} vencidas",
-      otherKinds: "Otros tipos ({{n}})",
+      otherKinds: "Otros {{n}} tipos: {{total}}",
       noRecords: "No hay registros en estas fechas",
       noRecordsHint: "Probá con otro rango de fechas.",
       allRecords: "Ver registros",

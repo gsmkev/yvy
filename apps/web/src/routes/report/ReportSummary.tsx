@@ -46,25 +46,26 @@ export function ReportStats({ d }: { d: ReportData }) {
 
 const TOP_KINDS = 7;
 
-/** Los tipos más frecuentes y el resto sumado en una sola fila, para que la lista no se alargue. */
-function topKinds(items: { label: string; value: number }[]) {
-  if (items.length <= TOP_KINDS + 1) return items;
+/** Los tipos más frecuentes en barras; el resto se suma aparte para que la lista no se alargue ni una barra engañe. */
+function splitKinds(items: { label: string; value: number }[]) {
+  if (items.length <= TOP_KINDS + 1) return { top: items, rest: null };
   const rest = items.slice(TOP_KINDS);
-  return [
-    ...items.slice(0, TOP_KINDS),
-    { label: t("ui.report.otherKinds", { n: rest.length }), value: rest.reduce((a, i) => a + i.value, 0) },
-  ];
+  return { top: items.slice(0, TOP_KINDS), rest: { count: rest.length, total: rest.reduce((a, i) => a + i.value, 0) } };
 }
 
 /** Registros por tipo y autor, lluvia diaria y alertas del período. */
 export function ReportCharts({ d }: { d: ReportData }) {
   const { byKind, byAuthor, hasRainDays, rainDays, periodAlerts } = d;
+  const kinds = splitKinds(byKind);
   return (
     <div className="grid gap-x-10 gap-y-8 lg:grid-cols-2">
       <div className="flex min-w-0 flex-col gap-8">
         {byKind.length > 0 && (
           <Block title={t("ui.report.byKind")}>
-            <BarList items={topKinds(byKind)} ariaLabel={t("ui.report.byKind")} />
+            <BarList items={kinds.top} ariaLabel={t("ui.report.byKind")} />
+            {kinds.rest && (
+              <p className="num text-sm text-tinta-2">{t("ui.report.otherKinds", { n: kinds.rest.count, total: kinds.rest.total })}</p>
+            )}
           </Block>
         )}
         {byAuthor.length > 1 && (

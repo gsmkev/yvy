@@ -3,32 +3,11 @@ import { isFieldRole } from "@yvy/shared";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { get } from "../lib/api";
-import { describeData } from "../lib/exports";
-import { t, tk, type MessageKey } from "../lib/i18n";
+import { t } from "../lib/i18n";
+import { normSearch, SEARCH_GROUPS, searchHits, type SearchHit } from "../lib/searchHits";
 import { fetchRecordsPage, useFarms, useMe, useMembers } from "../lib/queries";
 import type { FarmDetail } from "../lib/types";
 
-type Kind = "farms" | "plots" | "members" | "pois" | "records";
-interface Hit {
-  key: string;
-  kind: Kind;
-  title: string;
-  sub?: string;
-  go: () => void;
-}
-
-const norm = (s: string) =>
-  s
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase();
-const GROUPS: { kind: Kind; label: MessageKey }[] = [
-  { kind: "farms", label: "ui.search.farms" },
-  { kind: "plots", label: "ui.search.plots" },
-  { kind: "members", label: "ui.search.members" },
-  { kind: "pois", label: "ui.search.pois" },
-  { kind: "records", label: "ui.search.records" },
-];
 const MAX_PER_GROUP = 6;
 const MAX_FARMS_SCANNED = 30;
 
@@ -75,72 +54,31 @@ export function GlobalSearch({
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
-  const hits = useMemo<Hit[]>(() => {
-    const n = norm(q.trim());
+  const hits = useMemo<SearchHit[]>(() => {
+    const n = normSearch(q.trim());
     if (n.length < 2) return [];
-    const has = (...s: (string | null | undefined)[]) => s.some((x) => x && norm(x).includes(n));
-    const farmName = new Map((farms.data ?? []).map((f) => [f.id, f.name]));
-    const out: Record<Kind, Hit[]> = { farms: [], plots: [], members: [], pois: [], records: [] };
-    const toFarm = (farmId: string, lote?: string) => () => {
+    const reset = () => {
       setOpen(false);
       setQ("");
-      navigate({ to: "/estancias/$farmId", params: { farmId }, search: lote ? { lote } : {} });
     };
-    for (const f of farms.data ?? [])
-      if (has(f.name, f.department))
-        out.farms.push({
-          key: `f${f.id}`,
-          kind: "farms",
-          title: f.name,
-          sub: f.department ?? undefined,
-          go: toFarm(f.id),
-        });
-    for (const d of details) {
-      if (!d.data) continue;
-      for (const p of d.data.plots)
-        if (has(p.name, p.crop))
-          out.plots.push({
-            key: `p${p.id}`,
-            kind: "plots",
-            title: p.name,
-            sub: [farmName.get(p.farmId), p.crop].filter(Boolean).join(", "),
-            go: toFarm(p.farmId, p.id),
-          });
-      for (const p of d.data.pois)
-        if (has(p.name))
-          out.pois.push({
-            key: `o${p.id}`,
-            kind: "pois",
-            title: p.name,
-            sub: [farmName.get(p.farmId), tk(`ui.poi.kinds_${p.kind}`)].join(", "),
-            go: toFarm(p.farmId),
-          });
-    }
-    for (const m of members.data ?? [])
-      if (has(m.fullName, m.email, m.phone))
-        out.members.push({
-          key: `m${m.userId}`,
-          kind: "members",
-          title: m.fullName,
-          sub: tk(`ui.role.${m.role}`),
-          go: () => {
-            setOpen(false);
-            setQ("");
-            navigate({ to: "/equipo" });
-          },
-        });
-    for (const r of recs.data?.rows ?? []) {
-      const text = describeData(r.kind, r.data);
-      if (has(text, tk(`record-kinds.kind.${r.kind}`), r.authorName, r.plotName))
-        out.records.push({
-          key: `r${r.id}`,
-          kind: "records",
-          title: text,
-          sub: [tk(`record-kinds.kind.${r.kind}`), r.plotName ?? farmName.get(r.farmId)].filter(Boolean).join(", "),
-          go: toFarm(r.farmId, r.plotId ?? undefined),
-        });
-    }
-    return GROUPS.flatMap((g) => out[g.kind].slice(0, MAX_PER_GROUP));
+    return searchHits(
+      n,
+      {
+        farms: farms.data ?? [],
+        details: details.flatMap((d) => (d.data ? [d.data] : [])),
+        members: members.data ?? [],
+        records: recs.data?.rows ?? [],
+        toFarm: (farmId, lote) => () => {
+          reset();
+          navigate({ to: "/estancias/$farmId", params: { farmId }, search: lote ? { lote } : {} });
+        },
+        toTeam: () => {
+          reset();
+          navigate({ to: "/equipo" });
+        },
+      },
+      MAX_PER_GROUP,
+    );
   }, [q, farms.data, members.data, recs.data, details.map((d) => d.dataUpdatedAt).join(",")]);
 
   useEffect(() => setCursor(0), [q]);
@@ -201,7 +139,7 @@ export function GlobalSearch({
           {hits.length === 0 && (
             <p className="px-3 py-3 text-sm text-tinta-2">{loading ? t("ui.common.searching") : t("ui.search.noResults")}</p>
           )}
-          {GROUPS.map((g) => {
+          {SEARCH_GROUPS.map((g) => {
             const rows = hits.filter((h) => h.kind === g.kind);
             if (!rows.length) return null;
             return (

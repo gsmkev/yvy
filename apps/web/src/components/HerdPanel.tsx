@@ -23,18 +23,76 @@ const dec = new Intl.NumberFormat("es-PY", { minimumFractionDigits: 0, maximumFr
 const int = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 });
 const num = (v: string) => Number(v.replace(",", "."));
 
-function StockSection({ farmId }: { farmId: string }) {
+const loadDiffText = (p: FarmStockResponse["plots"][number]) =>
+  p.total === 0
+    ? "—"
+    : Math.abs(p.diffUa) < 0.5
+      ? t("ui.herd.loadOk")
+      : p.diffUa > 0
+        ? t("ui.herd.loadSurplus", { n: dec.format(p.diffUa) })
+        : t("ui.herd.loadShortfall", { n: dec.format(-p.diffUa) });
+
+/** Tabla de hacienda por potrero con la carga y su diferencia con la recomendada. */
+function StockTable({ d }: { d: FarmStockResponse }) {
+  return (
+    <div className="overflow-x-auto">
+      <ExportableTable name="hacienda">
+        <table className="w-full min-w-[760px] text-sm">
+          <thead>
+            <tr className="text-left text-xs text-tinta-2">
+              <th className="pb-2 font-medium">{t("ui.common.plot")}</th>
+              {HERD_CATEGORIES.map((c) => (
+                <th key={c} className="pb-2 text-right font-medium">
+                  {tk(`fields.herd.${c}`)}
+                </th>
+              ))}
+              <th className="pb-2 text-right font-medium">{t("ui.herd.total")}</th>
+              <th className="pb-2 text-right font-medium">{t("ui.herd.uaPerHaHead")}</th>
+              <th className="pb-2 text-right font-medium">{t("ui.herd.loadRecommended")}</th>
+              <th className="pb-2 text-right font-medium">{t("ui.herd.loadDiff")}</th>
+              <th className="pb-2 text-right font-medium">{t("ui.herd.lastCount")}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-linea border-t border-linea">
+            {d.plots.map((p) => (
+              <tr key={p.plotId}>
+                <td className="py-2.5 font-medium">{p.name}</td>
+                {HERD_CATEGORIES.map((c) => (
+                  <td key={c} className="num py-2.5 text-right">
+                    {p.counts[c] || "—"}
+                  </td>
+                ))}
+                <td className="num py-2.5 text-right font-medium">{int.format(p.total)}</td>
+                <td className={`num py-2.5 text-right ${p.overLimit ? "font-medium text-peligro" : ""}`}>
+                  {p.uaPerHa === null ? "—" : dec.format(p.uaPerHa)}
+                </td>
+                <td className="num py-2.5 text-right" title={tk(`ui.herd.loadClass_${p.pastureClass}`)}>
+                  {dec.format(p.recommendedUaPerHa)}
+                </td>
+                <td className="num py-2.5 text-right text-tinta-2">
+                  {loadDiffText(p)}
+                </td>
+                <td className="num py-2.5 text-right text-tinta-2">
+                  {p.lastCountAt ? fmtDay(p.lastCountAt) : t("ui.herd.neverCounted")}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </ExportableTable>
+    </div>
+  );
+}
+
+/** Tope de UA por hectárea de la estancia; solo el dueño y los administradores lo cambian. */
+function LimitForm({ farmId, d }: { farmId: string; d: FarmStockResponse }) {
   const me = useMe();
   const canEditLimit = me.data?.role === "owner" || me.data?.role === "admin";
   const qc = useQueryClient();
-  const stock = useQuery({
-    queryKey: ["stock", farmId],
-    queryFn: () => get<FarmStockResponse>(`/org/farms/${farmId}/stock`),
-  });
-  const [limit, setLimit] = useState("");
+  const [limit, setLimit] = useState(String(d.maxUaPerHa).replace(".", ","));
   useEffect(() => {
-    if (stock.data) setLimit(String(stock.data.maxUaPerHa).replace(".", ","));
-  }, [stock.data?.maxUaPerHa]);
+    setLimit(String(d.maxUaPerHa).replace(".", ","));
+  }, [d.maxUaPerHa]);
   const limitOk =
     limit.trim() !== "" && num(limit) >= MAX_UA_PER_HA_LIMITS.min && num(limit) <= MAX_UA_PER_HA_LIMITS.max;
   const save = useMutation({
@@ -43,6 +101,39 @@ function StockSection({ farmId }: { farmId: string }) {
       toast(t("ui.toast.limitSaved"));
       return qc.invalidateQueries({ queryKey: ["stock", farmId] });
     },
+  });
+  return (
+    <Form className="flex max-w-xl flex-col gap-3 border-t border-linea pt-4" onSubmit={() => { if (limitOk) save.mutate(); }}>
+      <Field label={t("ui.herd.limitLabel")} hint={t("ui.herd.limitHint")}>
+        <Input
+          inputMode="decimal"
+          className="w-32"
+          value={limit}
+          disabled={!canEditLimit}
+          onChange={(e) => setLimit(e.target.value)}
+        />
+      </Field>
+      {d.maxUaIsDefault && <p className="text-sm text-tinta-2">{t("ui.herd.limitIsDefault")}</p>}
+      {canEditLimit ? (
+        <div>
+          <Button variant="primary" type="submit" disabled={!limitOk || save.isPending}>
+            {t("ui.common.save")}
+          </Button>
+        </div>
+      ) : (
+        <p className="text-sm text-tinta-2">{t("ui.alert.settingsOnlyOwner")}</p>
+      )}
+      {save.error ? <ErrorBox error={save.error} /> : null}
+    </Form>
+  );
+}
+
+function StockSection({ farmId }: { farmId: string }) {
+  const me = useMe();
+  const canEditLimit = me.data?.role === "owner" || me.data?.role === "admin";
+  const stock = useQuery({
+    queryKey: ["stock", farmId],
+    queryFn: () => get<FarmStockResponse>(`/org/farms/${farmId}/stock`),
   });
 
   if (stock.isLoading) return <Spinner rows={5} h={56} />;
@@ -69,81 +160,9 @@ function StockSection({ farmId }: { farmId: string }) {
         {d.truncated && <p className="mt-2 text-sm text-tinta-2">{t("ui.herd.truncated")}</p>}
       </div>
 
-      <div className="overflow-x-auto">
-        <ExportableTable name="hacienda">
-          <table className="w-full min-w-[760px] text-sm">
-            <thead>
-              <tr className="text-left text-xs text-tinta-2">
-                <th className="pb-2 font-medium">{t("ui.common.plot")}</th>
-                {HERD_CATEGORIES.map((c) => (
-                  <th key={c} className="pb-2 text-right font-medium">
-                    {tk(`fields.herd.${c}`)}
-                  </th>
-                ))}
-                <th className="pb-2 text-right font-medium">{t("ui.herd.total")}</th>
-                <th className="pb-2 text-right font-medium">{t("ui.herd.uaPerHaHead")}</th>
-                <th className="pb-2 text-right font-medium">{t("ui.herd.loadRecommended")}</th>
-                <th className="pb-2 text-right font-medium">{t("ui.herd.loadDiff")}</th>
-                <th className="pb-2 text-right font-medium">{t("ui.herd.lastCount")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-linea border-t border-linea">
-              {d.plots.map((p) => (
-                <tr key={p.plotId}>
-                  <td className="py-2.5 font-medium">{p.name}</td>
-                  {HERD_CATEGORIES.map((c) => (
-                    <td key={c} className="num py-2.5 text-right">
-                      {p.counts[c] || "—"}
-                    </td>
-                  ))}
-                  <td className="num py-2.5 text-right font-medium">{int.format(p.total)}</td>
-                  <td className={`num py-2.5 text-right ${p.overLimit ? "font-medium text-peligro" : ""}`}>
-                    {p.uaPerHa === null ? "—" : dec.format(p.uaPerHa)}
-                  </td>
-                  <td className="num py-2.5 text-right" title={tk(`ui.herd.loadClass_${p.pastureClass}`)}>
-                    {dec.format(p.recommendedUaPerHa)}
-                  </td>
-                  <td className="num py-2.5 text-right text-tinta-2">
-                    {p.total === 0
-                      ? "—"
-                      : Math.abs(p.diffUa) < 0.5
-                        ? t("ui.herd.loadOk")
-                        : p.diffUa > 0
-                          ? t("ui.herd.loadSurplus", { n: dec.format(p.diffUa) })
-                          : t("ui.herd.loadShortfall", { n: dec.format(-p.diffUa) })}
-                  </td>
-                  <td className="num py-2.5 text-right text-tinta-2">
-                    {p.lastCountAt ? fmtDay(p.lastCountAt) : t("ui.herd.neverCounted")}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </ExportableTable>
-      </div>
+      <StockTable d={d} />
 
-      <Form className="flex max-w-xl flex-col gap-3 border-t border-linea pt-4" onSubmit={() => { if (limitOk) save.mutate(); }}>
-        <Field label={t("ui.herd.limitLabel")} hint={t("ui.herd.limitHint")}>
-          <Input
-            inputMode="decimal"
-            className="w-32"
-            value={limit}
-            disabled={!canEditLimit}
-            onChange={(e) => setLimit(e.target.value)}
-          />
-        </Field>
-        {d.maxUaIsDefault && <p className="text-sm text-tinta-2">{t("ui.herd.limitIsDefault")}</p>}
-        {canEditLimit ? (
-          <div>
-            <Button variant="primary" type="submit" disabled={!limitOk || save.isPending}>
-              {t("ui.common.save")}
-            </Button>
-          </div>
-        ) : (
-          <p className="text-sm text-tinta-2">{t("ui.alert.settingsOnlyOwner")}</p>
-        )}
-        {save.error ? <ErrorBox error={save.error} /> : null}
-      </Form>
+      <LimitForm farmId={farmId} d={d} />
 
       <p className="-mt-3 text-xs text-tinta-2">
         {t("ui.herd.loadHint")}

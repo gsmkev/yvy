@@ -11,7 +11,7 @@ import { LIMITS, newId, t } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { getDb } from "../db/client";
 import { hmacHex } from "../lib/crypto";
-import { sendEmail } from "../lib/email";
+import { sendEmail, trialRequestEmail } from "../lib/email";
 import { inBackground } from "../lib/dispatch";
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
@@ -88,8 +88,7 @@ trialRequests.post("/trial-requests", async (c) => {
       sendEmail(
         c.env,
         c.env.OPS_EMAIL,
-        t("trial-requests.ops.subject", { name: b.name }),
-        t("trial-requests.ops.body", {
+        trialRequestEmail({
           name: b.name,
           whatsapp: phone,
           company: b.company || dash,
@@ -97,6 +96,7 @@ trialRequests.post("/trial-requests", async (c) => {
           hectares: b.hectares === undefined ? dash : String(b.hectares),
           employees: b.employees === undefined ? dash : String(b.employees),
           department: b.department || dash,
+          appUrl: c.env.APP_URL,
         }),
       ).catch((e) => console.error("trial-request email", e)),
     );

@@ -1,8 +1,8 @@
 /** Avisos de fuego, riesgo climático, pedidos de informe y áreas problema. */
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
-import { farmRiskSchema, LIMITS, t } from "@yvy/shared";
-import { sendEmail } from "../../lib/email";
+import { farmRiskSchema, LIMITS } from "@yvy/shared";
+import { leadEmail, sendEmail } from "../../lib/email";
 import { parse } from "../../lib/http";
 import { leadLink } from "../leads";
 import { type IngestEnv, json, max } from "./shared";
@@ -63,7 +63,7 @@ routes.post("/leads/:id/report", async (c) => {
   if (!lead) throw new HTTPException(404, { message: "Pedido inexistente" });
   try {
     const link = await leadLink(c.env, id);
-    await sendEmail(c.env, lead.email, t("leads.email.subject"), t("leads.email.body", { link, days: Math.round(LIMITS.leads.retentionMs / 86_400_000) }));
+    await sendEmail(c.env, lead.email, leadEmail({ link, days: Math.round(LIMITS.leads.retentionMs / 86_400_000) }));
     await c.var.sys.markLeadSent(id, now);
     return c.json({ ok: true, sent: true });
   } catch (e) {

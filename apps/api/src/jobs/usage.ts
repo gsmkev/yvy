@@ -5,7 +5,7 @@ import { eq, sql } from "drizzle-orm";
 import { LIMITS, localDate } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { getDb } from "../db/client";
-import { sendEmail } from "../lib/email";
+import { sendEmail, usageEmail } from "../lib/email";
 import type { Bindings } from "../types";
 
 /** Guarda el uso diario de D1 y de fotos en R2 y avisa por email a operaciones cuando alguno se acerca al límite del plan gratis. */
@@ -31,8 +31,7 @@ export async function recordUsage(env: Bindings, now: number): Promise<void> {
     await sendEmail(
       env,
       env.OPS_EMAIL,
-      "Yvy · Uso cerca del límite gratis",
-      over.map((m) => `${m.metric}: ${Math.round((m.value / m.limit) * 100)} %`).join("\n"),
+      usageEmail({ rows: over.map((m) => ({ metric: m.metric, pct: Math.round((m.value / m.limit) * 100) })), appUrl: env.APP_URL }),
     );
   }
 }

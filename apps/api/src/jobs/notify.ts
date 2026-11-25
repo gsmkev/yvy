@@ -3,12 +3,14 @@
  * cada corrida usa 2 subrequests. Email con tope diario (Resend gratis: 100/día).
  */
 import { and, asc, eq, gte, inArray, isNotNull, sql } from "drizzle-orm";
-import { inQuietHours, localTime, parseNotificationPrefs, t, ATTRIBUTION } from "@yvy/shared";
+import { inQuietHours, localTime, parseNotificationPrefs, t } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { chunkForParams, runBatch, type DB, type Stmt } from "../db/client";
+import { alertEmail, mentionEmail, sendEmailBatch, type EmailMessage } from "../lib/email";
 import type { Bindings } from "../types";
 
-const EMAIL_DAILY_CAP = 90;
+/** Tope diario de emails de notificaciones (Resend gratis: 100/día; el resto queda para códigos y partes). */
+export const EMAIL_DAILY_CAP = 90;
 const BATCH = 100;
 
 const KIND_LABEL: Record<string, string> = {
@@ -53,7 +55,7 @@ const sendExpo = (fetchFn: typeof fetch, messages: unknown[]) =>
   });
 
 /** Cuántos emails entran todavía hoy bajo el tope diario. */
-async function emailRoom(db: DB, now: number): Promise<number> {
+export async function emailRoom(db: DB, now: number): Promise<number> {
   const [{ n }] = (await db
     .select({ n: sql<number>`count(*)` })
     .from(s.notifications)
@@ -179,7 +181,7 @@ async function emailAlerts<P extends AlertNotice>(
   fetchFn: typeof fetch,
   now: number,
   emails: P[],
-  text: AlertText<P>,
+  build: (p: P) => EmailMessage,
   out: Outcome,
 ) {
   if (!emails.length) return;
@@ -187,24 +189,12 @@ async function emailAlerts<P extends AlertNotice>(
   const toSend = emails.filter((e) => e.email).slice(0, room);
   out.sent.push(...emails.filter((e) => !e.email).map((e) => e.id));
   if (!toSend.length) return;
-  if (!env.RESEND_API_KEY) {
-    for (const e of toSend) console.log(`[email:dev] ${e.email}: ${text.title(e)} — ${text.body(e)}`);
+  try {
+    await sendEmailBatch(env, toSend.map((e) => ({ to: e.email!, message: build(e) })), fetchFn);
     out.sent.push(...toSend.map((e) => e.id));
-    return;
+  } catch {
+    out.failed.push(...toSend.map((e) => e.id));
   }
-  const res = await fetchFn("https://api.resend.com/emails/batch", {
-    method: "POST",
-    headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
-    body: JSON.stringify(
-      toSend.map((e) => ({
-        from: env.EMAIL_FROM,
-        to: e.email,
-        subject: `Yvy · ${text.title(e)}`,
-        text: `${text.body(e)}\n\n${t(ATTRIBUTION.metNorway)}`,
-      })),
-    ),
-  });
-  (res.ok ? out.sent : out.failed).push(...toSend.map((e) => e.id));
 }
 
 /**
@@ -225,6 +215,11 @@ export async function sendPending(
       summary: s.alerts.summary,
       probability: s.alerts.probability,
       source: s.alerts.source,
+      severity: s.alerts.severity,
+      validFrom: s.alerts.validFrom,
+      validTo: s.alerts.validTo,
+      details: s.alerts.details,
+      farmId: s.alerts.farmId,
       farmName: s.farms.name,
       tz: s.farms.timezone,
       alertId: s.alerts.id,
@@ -248,7 +243,23 @@ export async function sendPending(
   const out: Outcome = { sent: [], failed: [], cleanup: [] };
   const text = { title, body };
   await pushAlerts(db, fetchFn, pending.filter((p) => p.channel === "push"), text, out);
-  await emailAlerts(db, env, fetchFn, now, pending.filter((p) => p.channel === "email"), text, out);
+  const message = (p: (typeof pending)[number]) =>
+    alertEmail({
+      kind: p.kind,
+      severity: p.severity,
+      probability: p.probability,
+      summary: p.summary,
+      details: p.details,
+      validFrom: p.validFrom,
+      validTo: p.validTo,
+      farmId: p.farmId,
+      farmName: p.farmName,
+      tz: p.tz,
+      source: p.source,
+      appUrl: env.APP_URL,
+      context: { now, days: [], hours: [], plots: [], rainDaily: [] },
+    });
+  await emailAlerts(db, env, fetchFn, now, pending.filter((p) => p.channel === "email"), message, out);
   return finish(db, pending, out.sent, out.failed, now, out.cleanup);
 }
 
@@ -299,21 +310,17 @@ export async function sendMentions(
   if (emails.length) {
     const room = await emailRoom(db, now);
     sent.push(...emails.filter((e) => !e.email).map((e) => e.id));
-    for (const e of emails.filter((x) => x.email).slice(0, room)) {
-      const text = `${e.body}\n\n${env.APP_URL}/registros`;
+    const toSend = emails.filter((x) => x.email).slice(0, room);
+    if (toSend.length) {
       try {
-        if (!env.RESEND_API_KEY) console.log(`[email:dev] ${e.email}: ${title(e)} — ${text}`);
-        else {
-          const res = await fetchFn("https://api.resend.com/emails", {
-            method: "POST",
-            headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
-            body: JSON.stringify({ from: env.EMAIL_FROM, to: e.email, subject: `Yvy · ${title(e)}`, text }),
-          });
-          if (!res.ok) throw new Error(String(res.status));
-        }
-        sent.push(e.id);
+        await sendEmailBatch(
+          env,
+          toSend.map((e) => ({ to: e.email!, message: mentionEmail({ author: e.author, body: e.body, appUrl: env.APP_URL }) })),
+          fetchFn,
+        );
+        sent.push(...toSend.map((e) => e.id));
       } catch {
-        failed.push(e.id);
+        failed.push(...toSend.map((e) => e.id));
       }
     }
   }

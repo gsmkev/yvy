@@ -31,7 +31,7 @@ const payload = (env: Bindings, to: string, m: EmailMessage) => ({
  * Dominios reservados que nunca reciben correo (RFC 2606 y 6761), como los usuarios de la demo (`.invalid`).
  * `.test` queda afuera: el seed local lo usa y en desarrollo el código se imprime en la consola.
  */
-const RESERVED = /(\.(invalid|example|localhost)|@example\.(com|net|org))$/i;
+const RESERVED = /\.(invalid|example|localhost)$/i;
 
 /** Si la dirección puede recibir correo; las de dominios reservados se descartan para no generar rebotes. */
 export const isDeliverable = (to: string | null | undefined): to is string => !!to && !RESERVED.test(to.trim());

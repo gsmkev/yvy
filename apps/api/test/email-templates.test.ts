@@ -186,7 +186,7 @@ describe("envío", () => {
   });
 
   it("no manda a dominios reservados (usuarios de la demo y de pruebas) para no generar rebotes", async () => {
-    for (const to of ["demo@yvy.invalid", "a@example.com", "b@host.localhost", "c@foo.example"]) expect(isDeliverable(to)).toBe(false);
+    for (const to of ["demo@yvy.invalid", "b@host.localhost", "c@foo.example"]) expect(isDeliverable(to)).toBe(false);
     for (const to of ["kevin@koeti.com.py", "ana@gmail.com", "x@invalid.com.py", "dueno@yvy.test"]) expect(isDeliverable(to)).toBe(true);
     const calls = capture();
     const message = loginCodeEmail({ code: "1", minutes: 1 });

@@ -72,13 +72,14 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
       {all.length > 0 && (
         <>
           {list.length > 0 && exp.menu}
-          <FilterBar>
-            <Select
-              aria-label={t("ui.product.type")}
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              options={[{ value: "", label: t("ui.products.allTypes") }, ...PRODUCT_TYPES.map((x) => ({ value: x, label: tk(`fields.product.type_${x}`) }))]}
-            />
+          <FilterBar sheet={false}>
+            <Field label={t("ui.product.type")}>
+              <Select
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                options={[{ value: "", label: t("ui.products.allTypes") }, ...PRODUCT_TYPES.map((x) => ({ value: x, label: tk(`fields.product.type_${x}`) }))]}
+              />
+            </Field>
           </FilterBar>
         </>
       )}

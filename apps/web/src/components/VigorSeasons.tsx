@@ -10,7 +10,7 @@ import { LineChart } from "./charts";
 import { Button, Spinner, toast } from "./ui";
 
 // La campaña actual con el color principal; las anteriores con la paleta de la marca, de la más a la menos reciente.
-const COLORS = [CHART.primary, "#D9A93A", "#3B78B8", "#B5562E", "#6B6F63", "#8DB3C7"];
+const COLORS = [CHART.primary, "#D9A93A", "#8DB3C7", "#B5562E", "#3F6B35", "#6B6F63"];
 
 interface History {
   status: "processing" | "done" | "failed" | null;

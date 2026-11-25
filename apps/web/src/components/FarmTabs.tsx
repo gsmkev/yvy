@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { t } from "../lib/i18n";
+import { TabIndicator, useTabIndicator } from "./ui/Tabs";
 
 interface FarmTab<T extends string> {
   id: T;
@@ -12,7 +13,7 @@ interface FarmTab<T extends string> {
 }
 
 const tabCls = (on: boolean) =>
-  `-mb-px inline-flex h-10 shrink-0 cursor-pointer items-center border-b-2 text-sm font-medium whitespace-nowrap transition-colors ${on ? "border-surco text-surco" : "border-transparent text-tinta-2 hover:text-surco"}`;
+  `relative inline-flex h-10 shrink-0 cursor-pointer items-center text-sm font-medium whitespace-nowrap transition-colors ${on ? "text-surco" : "text-tinta-2 hover:text-surco"}`;
 
 /**
  * Pestañas de la ficha de la estancia: las principales a la vista y el resto en "Más". La pestaña
@@ -37,12 +38,15 @@ export function FarmTabs<T extends string>({
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
+  const { scroller, bar, ready, maskStyle } = useTabIndicator(value, shown.map((x) => `${x.id}${x.count ?? ""}`).join("|"));
   const focusTab = (id: string) => setTimeout(() => document.getElementById(`tab-${id}`)?.focus(), 0);
   return (
     <div className="flex items-center gap-5 border-b border-linea print:hidden">
       <div
+        ref={scroller}
         role="tablist"
-        className="flex gap-5"
+        style={maskStyle}
+        className="relative flex min-w-0 gap-5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         onKeyDown={(e) => {
           // Flechas, Inicio y Fin pasan de una pestaña visible a otra
           const i = shown.findIndex((x) => x.id === value);
@@ -55,10 +59,12 @@ export function FarmTabs<T extends string>({
           focusTab(next.id);
         }}
       >
+        <TabIndicator bar={bar} ready={ready} />
         {shown.map((tb) => (
           <button
             key={tb.id}
             id={`tab-${tb.id}`}
+            data-no-press
             role="tab"
             tabIndex={value === tb.id ? 0 : -1}
             aria-selected={value === tb.id}

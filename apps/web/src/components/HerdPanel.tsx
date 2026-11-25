@@ -16,7 +16,7 @@ import { SupplementPanel } from "./SupplementPanel";
 import { TheftPanel } from "./TheftPanel";
 import { WeighingsPanel } from "./WeighingsPanel";
 import { LoadEditor, SystemBar, SystemIndicators, useSystem } from "./HerdSystem";
-import { Button, Empty, ErrorBox, Field, Form, Input, Spinner, toast } from "./ui";
+import { Button, Empty, ErrorBox, Field, Form, Input, Spinner, Tabs, toast } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
 const dec = new Intl.NumberFormat("es-PY", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -167,38 +167,6 @@ function StockSection({ farmId }: { farmId: string }) {
 
 type Section = "stock" | "plan" | "rotation" | "forage" | "animals" | "repro" | "weights" | "supplements" | "theft";
 
-/**
- * Secciones como pastillas (mismo patrón que admin-erp): en el panel angosto se desplazan de costado
- * en celular y se envuelven en escritorio, así que todas quedan a la vista.
- */
-function SectionPills({ items, value, onChange }: { items: { id: Section; label: string }[]; value: Section; onChange: (id: Section) => void }) {
-  // La sección activa siempre queda a la vista
-  useEffect(() => {
-    document.getElementById(`herd-pill-${value}`)?.scrollIntoView?.({ inline: "nearest", block: "nearest" });
-  }, [value]);
-  return (
-    <div
-      role="group"
-      aria-label={t("ui.herd.sections")}
-      className="-mx-4 flex min-w-0 gap-1 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden"
-    >
-      {items.map((it) => (
-        <Button
-          key={it.id}
-          id={`herd-pill-${it.id}`}
-          size="sm"
-          variant="quiet"
-          aria-current={value === it.id ? "page" : undefined}
-          onClick={() => onChange(it.id)}
-          className={`shrink-0 whitespace-nowrap ${value === it.id ? "!bg-surco/[0.07] !text-surco" : ""}`}
-        >
-          {it.label}
-        </Button>
-      ))}
-    </div>
-  );
-}
-
 /** Pestaña Hacienda: hacienda calculada y, abajo, cada módulo de ganadería en su sección. */
 export function HerdPanel({ farmId }: { farmId: string }) {
   const [section, setSection] = useState<Section>("stock");
@@ -209,10 +177,12 @@ export function HerdPanel({ farmId }: { farmId: string }) {
     <div className="mt-4 flex flex-col gap-2">
       <SystemBar farmId={farmId} system={system} />
       <SystemIndicators farmId={farmId} system={system} />
-      <SectionPills
+      <Tabs
+        variant="pill"
+        label={t("ui.herd.sections")}
         value={section}
         onChange={setSection}
-        items={([
+        tabs={([
           { id: "stock", label: t("ui.herd.sectionStock") },
           { id: "rotation", label: t("ui.herd.sectionRotation") },
           { id: "forage", label: t("ui.herd.sectionForage") },

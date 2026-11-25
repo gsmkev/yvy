@@ -1,16 +1,44 @@
 /** Controles de formulario con el estilo de la aplicación: campo, entrada, fecha, selector y pie con errores. */
 import { Button } from "./Button";
 import { ErrorBox } from "./feedback";
-import { useEffect, useRef, useState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from "react";
+import { createPortal } from "react-dom";
+import { CancelButton, useInModal, useModalFooter } from "./Modal";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type InputHTMLAttributes,
+  type ReactNode,
+  type SelectHTMLAttributes,
+} from "react";
 import { ChevronDown } from "lucide-react";
 import { displayToIso, isoToDisplay, maskDate } from "@yvy/shared";
 import { t } from "../../lib/i18n";
 
+/** Hace que los `Field` de una barra de filtros salgan compactos (etiqueta chica, control de 36 px). */
+export const FilterContext = createContext(false);
+
 /** Etiqueta que envuelve un control y muestra una ayuda opcional. */
-export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+export function Field({
+  label,
+  hint,
+  children,
+  wide = false,
+}: {
+  label: string;
+  hint?: string;
+  children: ReactNode;
+  /** Ocupa las dos columnas de la grilla del formulario. */ wide?: boolean;
+}) {
+  const compact = useContext(FilterContext);
   return (
-    <label className="flex flex-col gap-1.5 text-sm">
-      <span className="font-medium">{label}</span>
+    <label
+      className={`flex min-w-0 flex-col text-sm ${compact ? "gap-1 [&_input]:h-9 [&_select]:h-9" : "gap-1.5"} ${wide ? "sm:col-span-2" : ""}`}
+    >
+      <span className={compact ? "text-meta font-medium text-tinta-2" : "font-medium"}>{label}</span>
       {children}
       {hint && <span className="text-xs text-tinta-2">{hint}</span>}
     </label>
@@ -95,7 +123,11 @@ export function SelectBox({ children, className = "" }: { children: ReactNode; c
   return (
     <span className={`relative inline-flex min-w-0 ${className}`}>
       {children}
-      <ChevronDown size={16} aria-hidden className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 opacity-60" />
+      <ChevronDown
+        size={16}
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 opacity-60"
+      />
     </span>
   );
 }
@@ -124,35 +156,77 @@ export const Select = ({
   </SelectBox>
 );
 
-/** Pie de un formulario en grilla de dos columnas: el error de guardado (si hay) y el botón Guardar. */
-export function FormFooter({ error, disabled }: { error: unknown; disabled: boolean }) {
+/** Id del `<form>` actual, para que su botón de envío pueda vivir fuera de él (en el pie fijo del diálogo). */
+const FormIdContext = createContext<string | undefined>(undefined);
+
+/**
+ * Pie de un formulario de diálogo: el error de guardado (si hay) y, fijo abajo aunque el cuerpo se desplace,
+ * Cancelar a la izquierda de la acción principal. Va dentro del `Form`; en un `Modal` los botones se dibujan en el
+ * pie fijo del diálogo y envían este formulario.
+ * @param label texto de la acción principal (por defecto "Guardar").
+ */
+export function FormFooter({
+  error,
+  disabled,
+  label,
+}: {
+  error: unknown;
+  disabled: boolean;
+  /** Texto de la acción principal. */ label?: string;
+}) {
+  const footerEl = useModalFooter();
+  const inModal = useInModal();
+  const formId = useContext(FormIdContext);
+  const buttons = (
+    <>
+      {inModal && <CancelButton />}
+      <Button type="submit" form={formId} variant="primary" disabled={disabled}>
+        {label ?? t("ui.common.save")}
+      </Button>
+    </>
+  );
   return (
     <>
       {error ? (
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <ErrorBox error={error} />
         </div>
       ) : null}
-      <div className="col-span-2">
-        <Button type="submit" variant="primary" disabled={disabled}>
-          {t("ui.common.save")}
-        </Button>
-      </div>
+      {inModal ? (
+        footerEl && createPortal(buttons, footerEl)
+      ) : (
+        <div className="flex items-center justify-end gap-2 sm:col-span-2">{buttons}</div>
+      )}
     </>
   );
 }
 
-/** `<form>` que corta el envío nativo y llama a `onSubmit`. */
-export function Form({ onSubmit, className, children }: { onSubmit: () => void; className?: string; children: ReactNode }) {
+/** Grilla de un formulario de diálogo: una columna en el celular y dos desde 640 px, con las etiquetas arriba y alineadas. */
+export const FORM_GRID = "grid grid-cols-1 items-start gap-x-4 gap-y-4 sm:grid-cols-2";
+
+/** `<form>` que corta el envío nativo y llama a `onSubmit`. Sin `className` es la grilla de formulario (`FORM_GRID`). */
+export function Form({
+  onSubmit,
+  className = FORM_GRID,
+  children,
+}: {
+  onSubmit: () => void;
+  className?: string;
+  children: ReactNode;
+}) {
+  const id = useId();
   return (
-    <form
-      className={className}
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit();
-      }}
-    >
-      {children}
-    </form>
+    <FormIdContext.Provider value={id}>
+      <form
+        id={id}
+        className={className}
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSubmit();
+        }}
+      >
+        {children}
+      </form>
+    </FormIdContext.Provider>
   );
 }

@@ -133,7 +133,7 @@ function MoveModal({ account, onClose }: { account: Account; onClose: () => void
   const remove = useMutation({ mutationFn: (id: string) => del(`/org/erp/cash/moves/${id}`), onSuccess: refresh });
   return (
     <Modal title={account.name} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
+      <Form onSubmit={() => save.mutate()}>
         <Field label={t("ui.cash.direction")}>
           <Select value={dir} onChange={(e) => setDir(e.target.value)} options={[{ value: "in", label: t("ui.cash.in") }, { value: "out", label: t("ui.cash.out") }]} />
         </Field>
@@ -188,7 +188,7 @@ function TransferModal({ accounts, onClose }: { accounts: Account[]; onClose: ()
   const opts = accounts.map((a) => ({ value: a.id, label: `${a.name} (${a.currency})` }));
   return (
     <Modal title={t("ui.cash.transfer")} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
+      <Form onSubmit={() => save.mutate()}>
         <Field label={t("ui.cash.from")}>
           <Select value={from} onChange={(e) => setFrom(e.target.value)} options={opts} />
         </Field>
@@ -297,7 +297,7 @@ function SettleModal({ due, payable, onClose }: { due: Due; payable: boolean; on
       ) : accounts.length === 0 ? (
         <p className="text-sm text-trigo-texto">{t("ui.cash.noAccount", { currency: due.currency })}</p>
       ) : (
-        <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
+        <Form onSubmit={() => save.mutate()}>
           <Field label={t("ui.cash.account")}>
             <Select value={accountId || accounts[0]!.id} onChange={(e) => setAccountId(e.target.value)} options={accounts.map((a) => ({ value: a.id, label: a.name }))} />
           </Field>

@@ -1,6 +1,7 @@
-/** Tabla de datos genérica con columnas ordenables, columnas que se ocultan en pantallas chicas y estado vacío. */
-import { useState, type ReactNode } from "react";
+/** Tabla de datos genérica con columnas ordenables, estado vacío y, bajo 640 px, lista de tarjetas en lugar de tabla. */
+import { Fragment, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
+import { useIsPhone } from "./useMediaQuery";
 
 /** Definición de una columna de DataTable. `cell` dibuja la celda de una fila, `align` alinea el contenido y `width` fija el ancho. */
 export interface Column<T> {
@@ -13,12 +14,19 @@ export interface Column<T> {
   /** Oculta la columna bajo ese punto de corte. */
   hideBelow?: "sm" | "md" | "lg";
   width?: string;
+  /**
+   * Papel de la columna en la tarjeta del celular: "title" (la primera por defecto), "value" (el dato clave a la derecha;
+   * por defecto la última columna alineada a la derecha), "hide" (no se muestra). El resto va en una línea secundaria.
+   * Las columnas con `hideBelow` ya se ocultan en la tarjeta, y la de acciones (id que empieza con "_") va al final.
+   */
+  mobile?: "title" | "value" | "hide";
 }
 
 const HIDE = { sm: "hidden sm:table-cell", md: "hidden md:table-cell", lg: "hidden lg:table-cell" } as const;
 
 /**
- * Tabla accesible.
+ * Tabla accesible. Bajo 640 px dibuja cada fila como tarjeta (título, dato clave a la derecha y una línea secundaria)
+ * y deja la tabla oculta en el documento para que la exportación siga leyéndola.
  * @param rowKey clave estable de cada fila.
  */
 export function DataTable<T>({
@@ -39,14 +47,15 @@ empty?: ReactNode;
   /** Descripción para lectores de pantalla. */
   caption?: string;
 }) {
+  const phone = useIsPhone();
   const [sort, setSort] = useState<{ id: string; dir: 1 | -1 } | null>(null);
   const col = sort && columns.find((c) => c.id === sort.id);
   const shown = col?.sort && sort ? [...rows].sort((a, b) => col.sort!(a, b) * sort.dir) : rows;
   if (rows.length === 0 && empty) return <>{empty}</>;
   const cell = (c: Column<T>, extra = "") =>
     `${c.align === "right" ? "num text-right" : "text-left"} ${c.hideBelow ? HIDE[c.hideBelow] : ""} ${extra}`;
-  return (
-    <div className="overflow-x-auto">
+  const table = (
+    <div className={phone ? "hidden" : "overflow-x-auto"} aria-hidden={phone || undefined}>
       <table className="w-full border-collapse text-sm">
         {caption && <caption className="sr-only">{caption}</caption>}
         <thead>
@@ -99,5 +108,44 @@ empty?: ReactNode;
         </tbody>
       </table>
     </div>
+  );
+  if (!phone) return table;
+  const isAction = (c: Column<T>) => c.id.startsWith("_");
+  const visible = columns.filter((c) => !c.hideBelow && c.mobile !== "hide");
+  const body = visible.filter((c) => !isAction(c));
+  const actions = visible.find(isAction);
+  const title = body.find((c) => c.mobile === "title") ?? body[0];
+  const value = body.find((c) => c.mobile === "value") ?? [...body].reverse().find((c) => c.align === "right" && c !== title);
+  const rest = body.filter((c) => c !== title && c !== value);
+  return (
+    <>
+      {caption && <p className="sr-only">{caption}</p>}
+      <ul className="divide-y divide-linea border-y border-linea">
+        {shown.map((r) => (
+          <li
+            key={rowKey(r)}
+            onClick={onRowClick && (() => onRowClick(r))}
+            className={`flex items-start gap-3 py-3 ${onRowClick ? "cursor-pointer active:bg-surco/[0.03]" : ""}`}
+          >
+            <div className="min-w-0 flex-1">
+              {title && <div className="text-sm font-medium break-words">{title.cell(r)}</div>}
+              {rest.length > 0 && (
+                <div className="mt-0.5 flex flex-wrap gap-x-1.5 text-meta text-tinta-2">
+                  {rest.map((c, i) => (
+                    <Fragment key={c.id}>
+                      {i > 0 && <span aria-hidden>·</span>}
+                      <span className="break-words">{c.cell(r)}</span>
+                    </Fragment>
+                  ))}
+                </div>
+              )}
+            </div>
+            {value && <div className="num max-w-[45%] shrink-0 text-right text-sm font-medium break-words">{value.cell(r)}</div>}
+            {actions && <div className="-my-1 -mr-2 shrink-0">{actions.cell(r)}</div>}
+          </li>
+        ))}
+      </ul>
+      {table}
+    </>
   );
 }

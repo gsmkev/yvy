@@ -95,7 +95,7 @@ export function BudgetPanel() {
   return (
     <div className="flex flex-col gap-4">
       {rows.length > 0 && <HeaderActions>{newBtn}</HeaderActions>}
-      <FilterBar>
+      <FilterBar sheet={false}>
         <Field label={t("ui.cost.season")}>
           <Select value={season} onChange={(e) => setSeasonId(e.target.value)} options={(seasons.data ?? []).map((x) => ({ value: x.id, label: x.name }))} />
         </Field>
@@ -157,7 +157,7 @@ function LineModal({ seasonId, onClose }: { seasonId: string; onClose: () => voi
   });
   return (
     <Modal title={t("ui.budget.new")} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
+      <Form onSubmit={() => save.mutate()}>
         <Field label={t("ui.budget.scope")}>
           <Select
             value={scope}

@@ -4,7 +4,7 @@ import { localDate, type PayrollRow } from "@yvy/shared";
 import { get, withQs } from "../../../lib/api";
 import { t } from "../../../lib/i18n";
 import { tablesToExcel } from "../../../lib/tableExport";
-import { Button, ErrorBox, Field, FilterBar, Input } from "../../ui";
+import { Button, ErrorBox, Field, FilterBar, Input, DateRange } from "../../ui";
 
 const monthStart = (back: number) => {
   const d = new Date(Date.now() - 3 * 3_600_000);
@@ -58,13 +58,15 @@ export function PayrollExport() {
   };
   return (
     <div className="flex flex-col gap-2">
-      <FilterBar>
-        <Field label={t("ui.acct.from")}>
-          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-        </Field>
-        <Field label={t("ui.acct.to")}>
-          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-        </Field>
+      <FilterBar sheet={false} exportSlot={false}>
+        <DateRange
+          from={from}
+          to={to}
+          onChange={(r) => {
+            setFrom(r.from);
+            setTo(r.to);
+          }}
+        />
         <Button onClick={download} disabled={busy || !from || !to}>
           {t("ui.pay.export")}
         </Button>

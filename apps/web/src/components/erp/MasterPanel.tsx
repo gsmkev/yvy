@@ -99,7 +99,7 @@ export function RowModal({
   });
   return (
     <Modal title={title} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
+      <Form onSubmit={() => save.mutate()}>
         {fields.map((f, i) => {
           const set = (e: { target: { value: string } }) => setForm({ ...form, [f.key]: e.target.value });
           return (

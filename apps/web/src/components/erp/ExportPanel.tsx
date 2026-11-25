@@ -315,23 +315,23 @@ function TaxModal({ doc, onClose }: { doc: ExportDoc; onClose: () => void }) {
   );
   return (
     <Modal title={t("ui.exp.taxEdit")} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => saveTax.mutate()}>
-        <p className="col-span-2 text-sm">
+      <Form onSubmit={() => saveTax.mutate()}>
+        <p className="sm:col-span-2 text-sm">
           {doc.party || "—"} · {doc.concept}
           {doc.number ? ` · ${doc.number}` : ""} · {fmtGs(doc.amountPyg)}
         </p>
-        <div className="col-span-2">{field("timbrado", t("ui.exp.timbrado"))}</div>
+        <div className="sm:col-span-2">{field("timbrado", t("ui.exp.timbrado"))}</div>
         {field("gross10", t("ui.exp.gross10"))}
         {field("gross5", t("ui.exp.gross5"))}
         {field("exempt", t("ui.exp.exempt"))}
         <p className={`num self-end text-sm ${Math.abs(sum - doc.amountPyg) > 5 ? "text-peligro" : ""}`}>{t("ui.exp.taxSum", { sum: fmtGs(sum), total: fmtGs(doc.amountPyg) })}</p>
-        <p className="col-span-2 text-xs text-tinta-2">{t("ui.exp.taxHint")}</p>
+        <p className="sm:col-span-2 text-xs text-tinta-2">{t("ui.exp.taxHint")}</p>
         {saveTax.error || clear.error ? (
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <ErrorBox error={saveTax.error ?? clear.error} />
           </div>
         ) : null}
-        <div className="col-span-2 flex gap-2">
+        <div className="sm:col-span-2 flex gap-2">
           <Button type="submit" variant="primary" disabled={saveTax.isPending}>
             {t("ui.common.save")}
           </Button>

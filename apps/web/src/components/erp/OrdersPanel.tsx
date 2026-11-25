@@ -163,7 +163,7 @@ function OrderModal({ onClose }: { onClose: () => void }) {
   const upd = (i: number, patch: Partial<Dose>) => setDoses(doses.map((d, k) => (k === i ? { ...d, ...patch } : d)));
   return (
     <Modal title={t("ui.order.new")} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
+      <Form onSubmit={() => save.mutate()}>
         <Field label={t("ui.order.labor")}>
           <Select value={f.labor} onChange={set("labor")} options={ORDER_LABORS.map((x) => ({ value: x, label: tk(`ui.order.labor_${x}`) }))} />
         </Field>
@@ -183,7 +183,7 @@ function OrderModal({ onClose }: { onClose: () => void }) {
         <Field label={t("ui.order.assignee")}>
           <Select value={f.assigneeId || (members.data?.[0]?.userId ?? "")} onChange={set("assigneeId")} options={(members.data ?? []).map((m) => ({ value: m.userId, label: m.fullName }))} />
         </Field>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <Field label={t("ui.order.plots")}>
             <div className="flex max-h-40 flex-wrap gap-x-4 gap-y-1 overflow-auto rounded-md border border-linea bg-papel p-2">
               {(farm.data?.plots ?? []).map((p) => (
@@ -201,12 +201,12 @@ function OrderModal({ onClose }: { onClose: () => void }) {
         <Field label={t("ui.order.machine")}>
           <Select value={f.machineId} onChange={set("machineId")} options={[none, ...(machines.data ?? []).map((m) => ({ value: m.id, label: m.name }))]} />
         </Field>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <Field label={t("ui.order.contractor")}>
             <Select value={f.contractorId} onChange={set("contractorId")} options={[none, ...(contractors.data ?? []).map((c) => ({ value: c.id, label: c.name }))]} />
           </Field>
         </div>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <Field label={t("ui.common.season")}>
             <Select
               value={f.seasonId}
@@ -216,7 +216,7 @@ function OrderModal({ onClose }: { onClose: () => void }) {
           </Field>
         </div>
         {inputs && (
-          <div className="col-span-2 flex flex-col gap-2">
+          <div className="sm:col-span-2 flex flex-col gap-2">
             <span className="text-sm font-medium">{t("ui.order.products")}</span>
             {doses.map((d, i) => (
               <div key={i} className="grid grid-cols-[1fr_6rem_7rem] gap-2">

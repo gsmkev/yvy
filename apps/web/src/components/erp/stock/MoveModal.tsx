@@ -71,8 +71,8 @@ export function MoveModal({ mode, onClose }: { mode: Mode; onClose: () => void }
   const pick = { value: "", label: t("ui.stock.pick") };
   return (
     <Modal title={t(`ui.stock.mode_${mode}`)} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
-        <div className="col-span-2">
+      <Form onSubmit={() => save.mutate()}>
+        <div className="sm:col-span-2">
           <Field label={t("ui.stock.product")}>
             <Select required value={f.productId} onChange={set("productId")} options={[pick, ...(products.data ?? []).map((p) => ({ value: p.id, label: `${p.name} (${tk(`fields.product.unit_${p.unit}`)})` }))]} />
           </Field>
@@ -116,7 +116,7 @@ export function MoveModal({ mode, onClose }: { mode: Mode; onClose: () => void }
             <Field label={t("ui.stock.expires")}>
               <Input type="date" value={f.expiresOn} onChange={set("expiresOn")} />
             </Field>
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
               <Field label={t("ui.stock.supplier")}>
                 <Select value={f.partyId} onChange={set("partyId")} options={[{ value: "", label: t("ui.cost.none") }, ...(parties.data ?? []).map((p) => ({ value: p.id, label: p.name }))]} />
               </Field>
@@ -133,7 +133,7 @@ export function MoveModal({ mode, onClose }: { mode: Mode; onClose: () => void }
             </Field>
           </>
         )}
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <Field label={t("ui.stock.note")}>
             <Input value={f.note} onChange={set("note")} maxLength={200} />
           </Field>

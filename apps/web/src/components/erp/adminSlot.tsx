@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
 import { tableFromElement } from "../../lib/tableExport";
 import { TableExportMenu } from "../TableExportMenu";
+import { useExportSlot } from "../ui";
 
 /** null: no hay encabezado de Administración. `{ el: null }`: todavía no se montó. */
 export const AdminSlotContext = createContext<{ el: HTMLElement | null } | null>(null);
@@ -23,21 +24,22 @@ export function HeaderActions({ children }: { children: ReactNode }) {
 export { RowMenu } from "../menus";
 
 /**
- * Un solo "Exportar" por panel, en el encabezado: exporta la tabla que se ve dentro de `ref`.
+ * Un solo "Exportar" por panel, junto a los filtros (o en el encabezado si no hay barra): exporta la tabla que se ve dentro de `ref`.
  * Uso: `const exp = useTableExport("compras")`; `<div ref={exp.ref}><DataTable …/></div>` y `{rows.length > 0 && exp.menu}`.
  */
 export function useTableExport(name: string) {
   const ref = useRef<HTMLDivElement>(null);
-  const menu = (
-    <HeaderActions>
-      <TableExportMenu
-        data={() => {
-          const table = ref.current?.querySelector("table");
-          return table ? tableFromElement(table, name) : { name, headers: [], rows: [] };
-        }}
-      />
-    </HeaderActions>
+  const slot = useExportSlot();
+  const button = (
+    <TableExportMenu
+      data={() => {
+        const table = ref.current?.querySelector("table");
+        return table ? tableFromElement(table, name) : { name, headers: [], rows: [] };
+      }}
+    />
   );
+  // Junto a los filtros si la pantalla tiene barra; si no, en el encabezado de Administración
+  const menu = slot ? createPortal(button, slot) : <HeaderActions>{button}</HeaderActions>;
   return { ref, menu };
 }
 

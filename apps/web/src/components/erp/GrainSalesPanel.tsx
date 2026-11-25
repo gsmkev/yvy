@@ -220,7 +220,7 @@ function ActionModal({ kind, contract, onClose }: { kind: "delivery" | "settleme
   });
   return (
     <Modal title={kind === "delivery" ? t("ui.grain.addDelivery") : t("ui.grain.addSettlement")} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
+      <Form onSubmit={() => save.mutate()}>
         <Field label={t("ui.cost.date")}>
           <Input required type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>

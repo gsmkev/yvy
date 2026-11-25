@@ -4,7 +4,7 @@ import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { addDays, localDate, mondayOf, weeklyShareText, whatsappUrl } from "@yvy/shared";
 import { ActionMenu } from "../components/menus";
 import { ShareLinksModal } from "../components/ShareLinks";
-import { Button, EmptyState, ErrorBox, Field, FilterBar, Input, Page, Spinner, type Column } from "../components/ui";
+import { Button, DateRange, EmptyState, ErrorBox, FilterBar, Page, Spinner, type Column } from "../components/ui";
 import { describeData } from "../lib/exports";
 import { fmtDateTime, fmtIsoDate } from "../lib/format";
 import { t, tk } from "../lib/i18n";
@@ -98,13 +98,15 @@ export function ReportPage() {
       className="gap-6"
     >
       <p className="-mt-3 text-sm text-tinta-2">{farm.data.farm.name}</p>
-      <FilterBar>
-        <Field label={t("ui.common.from")}>
-          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-        </Field>
-        <Field label={t("ui.common.to")}>
-          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-        </Field>
+      <FilterBar sheet={false} exportSlot={false}>
+        <DateRange
+          from={from}
+          to={to}
+          onChange={(r) => {
+            setFrom(r.from);
+            setTo(r.to);
+          }}
+        />
         {quick(t("ui.report.thisWeek"), thisMonday, today)}
         {quick(t("ui.report.lastWeek"), addDays(thisMonday, -7), addDays(thisMonday, -1))}
       </FilterBar>

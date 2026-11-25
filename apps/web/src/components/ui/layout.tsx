@@ -1,5 +1,5 @@
-/** Piezas de composición: superficies, encabezados de sección y cifras destacadas. */
-import type { ReactNode } from "react";
+/** Piezas de composición: superficies, encabezados de sección y cifras destacadas (`Stat`, en filas de hasta 4 con `StatRow`). */
+import { Children, type ReactNode } from "react";
 
 /** Superficie con borde fino. Sin sombras: la jerarquía la dan el espacio y la tipografía. */
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
@@ -51,4 +51,15 @@ size?: "md" | "lg";
       {note && <span className="text-xs text-tinta-2">{note}</span>}
     </div>
   );
+}
+
+const COLS = ["", "sm:grid-cols-1", "sm:grid-cols-2", "sm:grid-cols-3", "sm:grid-cols-4"] as const;
+
+/**
+ * Fila de cifras (`Stat`): máximo 4 por fila, dos por línea en el celular, una línea de contexto como mucho en cada una.
+ * Con más de 4 hijos pasa a la fila siguiente.
+ */
+export function StatRow({ children, className = "" }: { children: ReactNode; className?: string }) {
+  const n = Math.min(4, Math.max(1, Children.toArray(children).filter(Boolean).length));
+  return <div className={`grid grid-cols-2 gap-x-6 gap-y-4 ${COLS[n]} ${className}`}>{children}</div>;
 }

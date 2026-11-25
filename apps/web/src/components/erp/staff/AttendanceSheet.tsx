@@ -135,7 +135,7 @@ export function AttendanceSheet({ staff: list, onGoEmployees }: { staff: Employe
           </Button>
         </HeaderActions>
       )}
-      <FilterBar>
+      <FilterBar sheet={false} exportSlot={false}>
         <Field label={t("ui.cost.date")}>
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>

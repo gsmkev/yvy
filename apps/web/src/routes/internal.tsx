@@ -63,7 +63,7 @@ export function InternalPage() {
           />
         ))}
       </div>
-      <FilterBar>
+      <FilterBar sheet={false} exportSlot={false}>
         <Field label={t("ui.internal.search")}>
           <Input
             type="search"

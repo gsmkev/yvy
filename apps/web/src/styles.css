@@ -50,9 +50,14 @@
   /* Movimiento: solo transform y opacity */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --dur-press: 120ms;
+  --dur-fast: 150ms;
   --dur-menu: 160ms;
   --dur-modal: 200ms;
   --dur-sheet: 240ms;
+  --dur-exit: 120ms;
+  /* Toda utilidad transition-* de Tailwind usa estos dos valores */
+  --default-transition-duration: var(--dur-fast);
+  --default-transition-timing-function: var(--ease-out);
 
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -133,6 +138,19 @@ h1 {
   font-weight: 600;
   color: var(--color-tinta-2);
 }
+@layer base {
+  /* Botones: al apretarlos se hunden un poco; el elemento puede salir con data-no-press */
+  button:not(:disabled, [data-no-press]):active,
+  [role="button"]:not([aria-disabled="true"], [data-no-press]):active {
+    transform: scale(0.97);
+  }
+  button,
+  [role="button"] {
+    transition-property: color, background-color, border-color, opacity, transform;
+    transition-duration: var(--dur-press);
+    transition-timing-function: var(--ease-out);
+  }
+}
 :focus-visible {
   outline: 2px solid var(--color-accion);
   outline-offset: 2px;
@@ -206,6 +224,22 @@ h1 {
     transform: translateY(100%);
   }
 }
+@keyframes yvy-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes yvy-pop-out {
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+@keyframes yvy-sheet-out {
+  to {
+    transform: translateY(100%);
+  }
+}
 @keyframes yvy-toast {
   from {
     opacity: 0;
@@ -224,6 +258,20 @@ h1 {
 .anim-toast {
   animation: yvy-toast var(--dur-modal) var(--ease-out);
 }
+/* Salidas: más rápidas que la entrada; el componente las pone mientras se cierra */
+.anim-fade-out {
+  animation: yvy-fade-out var(--dur-exit) ease-in forwards;
+}
+.anim-pop-out {
+  animation: yvy-pop-out var(--dur-exit) ease-in forwards;
+}
+.anim-sheet-out {
+  animation: yvy-sheet-out var(--dur-exit) ease-in forwards;
+}
+/* Cambio de contenido (pestañas, secciones): fundido corto */
+.anim-content {
+  animation: yvy-fade var(--dur-fast) var(--ease-out);
+}
 /* Movimiento reducido: quedan los fundidos de opacidad; se quitan desplazamientos y escala */
 @media (prefers-reduced-motion: reduce) {
   .anim-pop {
@@ -234,6 +282,14 @@ h1 {
   }
   .anim-sheet {
     animation: yvy-fade var(--dur-modal) linear;
+  }
+  .anim-pop-out,
+  .anim-sheet-out {
+    animation-name: yvy-fade-out;
+  }
+  button:active,
+  [role="button"]:active {
+    transform: none !important;
   }
   * {
     transition-property: opacity, background-color, border-color, color !important;

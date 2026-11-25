@@ -5,6 +5,7 @@ import { useParams } from "@tanstack/react-router";
 import { fmtDate, fmtHa, fmtMm, fmtNdvi } from "../lib/format";
 import { DataTable, SectionHead, Spinner, Stat, type Column } from "../components/ui";
 import { t, tk } from "../lib/i18n";
+import { NotFound } from "../components/NotFound";
 import { PageExport } from "../components/PageExport";
 import { ATTRIBUTION } from "@yvy/shared";
 
@@ -62,19 +63,14 @@ export function SharedPage() {
         ),
     },
   ];
+  if (q.error) {
+    const reason = q.error instanceof SharedError ? q.error.reason : null;
+    return <NotFound message={reason === "expired" ? t("ui.shared.expiredMsg") : reason === "revoked" ? t("ui.shared.revokedMsg") : t("ui.notFound.sharedBody")} />;
+  }
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8 lg:px-10">
       <p className="font-serif text-2xl font-semibold">{t("ui.app.name")}</p>
       {q.isLoading && <Spinner rows={4} h={72} />}
-      {q.error && (
-        <p className="text-lg">
-          {q.error instanceof SharedError && q.error.reason === "expired"
-            ? t("ui.shared.expiredMsg")
-            : q.error instanceof SharedError && q.error.reason === "revoked"
-              ? t("ui.shared.revokedMsg")
-              : t("ui.shared.notFoundMsg")}
-        </p>
-      )}
       {d && (
         <>
           <header className="flex items-start justify-between gap-3">

@@ -39,7 +39,7 @@ export async function rescheduleReminders(): Promise<void> {
       const id = await Notifications.scheduleNotificationAsync({
         content: {
           title: p.count === 1 ? t("app.reminder.one") : t("app.reminder.many", { n: p.count }),
-          body: p.titles.join(" · "),
+          body: p.titles.join(", "),
           data: { reminder: true },
         },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: p.at, channelId: "recordatorios" },

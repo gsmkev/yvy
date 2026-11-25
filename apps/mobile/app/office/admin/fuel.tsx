@@ -43,13 +43,13 @@ export default function FuelScreen() {
         <OnlineState query={q} empty={{ title: t("ui.empty.fuelTitle"), hint: t("ui.empty.fuelBody") }}>
           {(data) => (
             <>
-              <StatRow items={[{ label: `${t("ui.fuel.liters")} · l`, value: fmtNumber(liters, 0) }, { label: t("ui.fuel.loads"), value: loads }]} />
+              <StatRow items={[{ label: `${t("ui.fuel.liters")}, l`, value: fmtNumber(liters, 0) }, { label: t("ui.fuel.loads"), value: loads }]} />
               <DataList
                 rows={data}
                 keyOf={(m) => m.machineId ?? m.name}
                 title={(m) => m.name}
                 subtitle={(m) =>
-                  [t("office.adm.fuelLoads", { n: m.loads }), m.firstMeter !== null && m.lastMeter !== null ? `${fmtNumber(m.firstMeter)} a ${fmtNumber(m.lastMeter)} ${m.meterKind === "hours" ? "h" : "km"}` : null, m.litersPerUnit !== null ? `${fmtQty(m.litersPerUnit)} ${m.meterKind === "hours" ? t("ui.fuel.perHour") : t("ui.fuel.per100km")}` : null].filter(Boolean).join(" · ")
+                  [t("office.adm.fuelLoads", { n: m.loads }), m.firstMeter !== null && m.lastMeter !== null ? `${fmtNumber(m.firstMeter)} a ${fmtNumber(m.lastMeter)} ${m.meterKind === "hours" ? "h" : "km"}` : null, m.litersPerUnit !== null ? `${fmtQty(m.litersPerUnit)} ${m.meterKind === "hours" ? t("ui.fuel.perHour") : t("ui.fuel.per100km")}` : null].filter(Boolean).join(", ")
                 }
                 right={(m) => fmtQty(m.liters, "l")}
                 empty={{ title: t("ui.fuel.empty") }}

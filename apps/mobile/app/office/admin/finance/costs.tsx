@@ -92,7 +92,7 @@ export default function Costs() {
                 rows={d.rows}
                 keyOf={(c) => c.id}
                 title={(c) => c.description || t(key(`ui.cost.category_${c.category}`))}
-                subtitle={(c) => `${isoShort(dayOf(c.occurredAt))} · ${t(key(`ui.cost.category_${c.category}`))}`}
+                subtitle={(c) => `${isoShort(dayOf(c.occurredAt))}, ${t(key(`ui.cost.category_${c.category}`))}`}
                 detail={(c) => [
                   { label: t("ui.cost.date"), value: isoShort(dayOf(c.occurredAt)) },
                   { label: t("ui.cost.category"), value: t(key(`ui.cost.category_${c.category}`)) },

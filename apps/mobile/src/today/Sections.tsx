@@ -30,7 +30,7 @@ export function taskSubtitle(task: TaskRow, plotName: (id: string | null) => str
     commentsLabel(task.comments),
   ]
     .filter(Boolean)
-    .join(" · ");
+    .join(", ");
 }
 
 /** Tareas de hoy sin hacer: tildar, abrir o ir al punto. */
@@ -103,7 +103,7 @@ export function TeamTasks({ team, todayIso, userId, names, plotName }: { team: T
           task.plotId ? plotName(task.plotId) : null,
         ]
           .filter(Boolean)
-          .join(" · ")}
+          .join(", ")}
         onPress={() => router.push({ pathname: "/task/[id]", params: { id: task.id } })}
       />
     ))}
@@ -151,7 +151,7 @@ export function YourDay({ done, todayRecords, plotName }: { done: TaskRow[]; tod
         icon={RECORD_ICON[r.kind]}
         status={r.rejected ? "rejected" : r.pending ? "pending" : "synced"}
         title={describeRecord(r.kind, JSON.parse(r.data))}
-        subtitle={[t(`record-kinds.kind.${r.kind}`), plotName(r.plotId), hhmm(r.capturedAt)].filter(Boolean).join(" · ")}
+        subtitle={[t(`record-kinds.kind.${r.kind}`), plotName(r.plotId), hhmm(r.capturedAt)].filter(Boolean).join(", ")}
         onPress={() => router.push({ pathname: "/record/[id]", params: { id: r.id } })}
       />
     ))}

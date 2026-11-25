@@ -92,7 +92,7 @@ export default function Grain() {
   const set = (patch: Partial<Draft>) => setDraft((d) => (d ? { ...d, ...patch } : d));
 
   const list = contracts.data ?? [];
-  const label = (c: Contract | undefined) => (c ? [t(k(`fields.crop.${c.crop}`)), c.number].filter(Boolean).join(" · ") : "?");
+  const label = (c: Contract | undefined) => (c ? [t(k(`fields.crop.${c.crop}`)), c.number].filter(Boolean).join(", ") : "?");
   const labelOf = (id: string) => label(list.find((c) => c.id === id));
   const party = (id: string | null) => parties.data?.find((p) => p.id === id)?.name;
 
@@ -165,7 +165,7 @@ export default function Grain() {
                       rows={[...rows].sort((a, b) => b.date.localeCompare(a.date))}
                       keyOf={(d) => d.id}
                       title={(d) => labelOf(d.contractId)}
-                      subtitle={(d) => [isoShort(d.date), d.ticket ? `${t("ui.grain.ticket")} ${d.ticket}` : null, d.moisturePct !== null ? `${d.moisturePct} %` : null].filter(Boolean).join(" · ")}
+                      subtitle={(d) => [isoShort(d.date), d.ticket ? `${t("ui.grain.ticket")} ${d.ticket}` : null, d.moisturePct !== null ? `${d.moisturePct} %` : null].filter(Boolean).join(", ")}
                       right={(d) => `${fmtNumber(d.tons)} t`}
                       empty={{ title: t("ui.erp.empty") }}
                     />
@@ -178,7 +178,7 @@ export default function Grain() {
                       rows={[...rows].sort((a, b) => b.date.localeCompare(a.date))}
                       keyOf={(l) => l.id}
                       title={(l) => labelOf(l.contractId)}
-                      subtitle={(l) => [isoShort(l.date), `${fmtNumber(l.tons)} t`].join(" · ")}
+                      subtitle={(l) => [isoShort(l.date), `${fmtNumber(l.tons)} t`].join(", ")}
                       detail={(l) => [
                         { label: t("ui.cost.date"), value: isoShort(l.date) },
                         { label: t("ui.grain.tons"), value: `${fmtNumber(l.tons)} t` },

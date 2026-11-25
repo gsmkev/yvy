@@ -78,7 +78,7 @@ export default function Plan() {
                 rows={stages}
                 keyOf={(s) => s.id}
                 title={(s) => t(`ui.repro.planStage_${s.id}` as MessageKey)}
-                subtitle={(s) => `${dates(s)} · ${t(`ui.repro.planHint_${s.id}` as MessageKey)}`}
+                subtitle={(s) => `${dates(s)}, ${t(`ui.repro.planHint_${s.id}` as MessageKey)}`}
                 right={(s) =>
                   s.from <= today && today <= s.to ? (
                     <Text style={[T.smallMedium, { color: C.accionOscuro, textAlign: "right" }]}>{t("ui.repro.planNow")}</Text>

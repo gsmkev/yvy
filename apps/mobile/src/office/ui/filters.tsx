@@ -15,12 +15,15 @@ const ARROW_W = 52;
  */
 export function FilterChips<V extends string>({ options, value, onChange }: { options: { value: V; label: string; count?: number }[]; value: V; onChange: (v: V) => void }) {
   const ref = useRef<ScrollViewInstance>(null);
-  const [m, setM] = useState({ x: 0, w: 0, content: 0 });
-  // El final de la fila deja libre el ancho de la flecha: así el último chip no queda tapado al llegar al borde.
-  const more = m.content - ARROW_W - m.w - m.x > 8 && m.w > 0;
+  const [m, setM] = useState({ x: 0, w: 0, content: 0, full: 0 });
+  // La flecha ocupa su propio lugar al costado de la fila (no flota sobre los chips): hay lugar reservado mientras la
+  // fila no entra entera, y la flecha se oculta al llegar al final.
+  const overflow = m.full > 0 && m.content > m.full + 1;
+  const more = overflow && m.content - m.w - m.x > 8;
   return (
-    <View style={{ marginTop: 16, marginHorizontal: -20 }}>
+    <View style={{ marginTop: 16, marginHorizontal: -20, flexDirection: "row" }} onLayout={(e) => setM((p) => ({ ...p, full: e.nativeEvent.layout.width }))}>
     <ScrollView
+      style={{ flex: 1 }}
       ref={ref}
       horizontal
       showsHorizontalScrollIndicator={false}
@@ -28,11 +31,11 @@ export function FilterChips<V extends string>({ options, value, onChange }: { op
       onLayout={(e) => setM((p) => ({ ...p, w: e.nativeEvent.layout.width }))}
       onContentSizeChange={(content) => setM((p) => ({ ...p, content }))}
       onScroll={(e) => setM((p) => ({ ...p, x: e.nativeEvent.contentOffset.x }))}
-      contentContainerStyle={{ paddingLeft: 20, paddingRight: 20 + ARROW_W, gap: 8 }}
+      contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
     >
       {options.map((o) => {
         const on = o.value === value;
-        const label = o.count === undefined ? o.label : `${o.label} · ${o.count}`;
+        const label = o.count === undefined ? o.label : `${o.label}, ${o.count}`;
         return (
           <Pressable
             key={o.value}
@@ -50,17 +53,21 @@ export function FilterChips<V extends string>({ options, value, onChange }: { op
         );
       })}
     </ScrollView>
-    {more ? (
+    {overflow ? (
+      <View style={{ width: ARROW_W }}>
+      {more ? (
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={t("app.common.more")}
         onPress={() => ref.current?.scrollTo({ x: m.x + m.w * 0.7, animated: true })}
-        style={({ pressed }) => [{ position: "absolute", right: 0, top: 0, bottom: 0, width: ARROW_W, alignItems: "center", justifyContent: "center", backgroundColor: C.papel + "E6" }, pressed && k.pressed]}
+        style={({ pressed }) => [{ flex: 1, alignItems: "center", justifyContent: "center" }, pressed && k.pressed]}
       >
         <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: C.blanco, borderWidth: 1, borderColor: C.lineaFuerte, alignItems: "center", justifyContent: "center" }}>
           <ChevronRight size={18} color={C.tinta} strokeWidth={2} />
         </View>
       </Pressable>
+      ) : null}
+      </View>
     ) : null}
     </View>
   );

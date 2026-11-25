@@ -214,7 +214,7 @@ export default function MapScreen() {
         <View style={s.sheet}>
           <Text style={s.title}>{plot.name}</Text>
           <Text style={s.sub}>
-            {plot.kind === "pasture" ? t("ui.common.pasture") : (plot.crop ?? t("ui.common.crop"))} ·{" "}
+            {plot.kind === "pasture" ? t("ui.common.pasture") : (plot.crop ?? t("ui.common.crop"))},{" "}
             {t("ui.common.ha", { value: plot.areaHa.toLocaleString("es-PY", { maximumFractionDigits: 0 }) })}
           </Text>
           <Button

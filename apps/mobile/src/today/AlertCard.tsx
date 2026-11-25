@@ -27,7 +27,7 @@ export function AlertCard({ a, voted, picked, onLayout }: { a: AlertRow; voted: 
   const fg = strong ? C.blanco : C.tinta;
   const soft = strong ? "rgba(255,255,255,0.85)" : C.tinta2;
   const body = withoutKindPrefix(a.summary, tk(`ui.alert.kind_${a.kind}`));
-  const title = `${tk(`ui.alert.kind_${a.kind}`)}${a.probability ? ` · ${tk(`ui.probability.${a.probability}`).toLowerCase()}` : ""}`;
+  const title = `${tk(`ui.alert.kind_${a.kind}`)}${a.probability ? `, ${tk(`ui.probability.${a.probability}`).toLowerCase()}` : ""}`;
   return (
     <Pressable
       accessibilityRole="button"

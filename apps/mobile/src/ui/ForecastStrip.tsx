@@ -83,7 +83,7 @@ export function ForecastStrip({ farmId }: { farmId: string | null }) {
                   date: downloaded!.toLocaleDateString("es-PY", { day: "numeric", month: "short" }),
                   time,
                 })}
-            {old >= 1 ? " · " + t("app.forecast.old", { n: old }) : ""}
+            {old >= 1 ? ", " + t("app.forecast.old", { n: old }) : ""}
           </Text>
           <Text style={T.small}>{t("app.forecast.source")}</Text>
         </>

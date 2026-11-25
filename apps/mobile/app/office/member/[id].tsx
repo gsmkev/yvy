@@ -43,7 +43,7 @@ function Detail({ m, self, manage }: { m: Member; self: boolean; manage: boolean
     { label: t("ui.common.phone"), value: m.phone ?? "—" },
     ...(m.email ? [{ label: t("ui.common.emailCol"), value: m.email }] : []),
     ...(m.role === "worker" ? [{ label: t("app.team.pinTitle"), value: m.hasPin ? "✓" : t("app.team.pinNone") }] : []),
-    { label: t("ui.team.colLastSync"), value: m.lastSyncAt ? `${ageText(Date.now() - m.lastSyncAt)} · ${fmtDateTime(m.lastSyncAt)}` : t("ui.never.visited") },
+    { label: t("ui.team.colLastSync"), value: m.lastSyncAt ? `${ageText(Date.now() - m.lastSyncAt)}, ${fmtDateTime(m.lastSyncAt)}` : t("ui.never.visited") },
   ];
   const stats = [
     { label: t("ui.team.colRecords"), value: fmtNumber(m.records7d, 0) },
@@ -80,7 +80,7 @@ function LinkSheet({ m, visible, onClose }: { m: Member; visible: boolean; onClo
     void gen.mutate({ userId: m.userId }).then((r) => r.ok && setRes(r.data));
   }, [visible]);
   return (
-    <Sheet visible={visible} title={`${t("office.team.linkTitle")} · ${m.fullName}`} onClose={onClose}>
+    <Sheet visible={visible} title={`${t("office.team.linkTitle")}, ${m.fullName}`} onClose={onClose}>
       <Text style={T.body}>{t("ui.link.help")}</Text>
       {res ? (
         <>
@@ -123,7 +123,7 @@ function PinSheet({ m, visible, onClose }: { m: Member; visible: boolean; onClos
       </Sheet>
     );
   return (
-    <FormSheet visible={visible} title={`${t("app.team.pinTitle")} · ${m.fullName}`} onClose={onClose} onSubmit={submit} submitLabel={t("ui.common.save")} pending={save.pending} error={err ?? save.error ?? clear.error}>
+    <FormSheet visible={visible} title={`${t("app.team.pinTitle")}, ${m.fullName}`} onClose={onClose} onSubmit={submit} submitLabel={t("ui.common.save")} pending={save.pending} error={err ?? save.error ?? clear.error}>
       <TextField label={t("app.team.pinPhoneLabel")} value={phone} onChangeText={setPhone} maxLength={30} />
       <TextField label={t("app.login.pinLabel")} hint={t("app.team.pinGenerate")} kind="number" value={pin} onChangeText={(v) => setPin(v.replace(/\D/g, "").slice(0, 6))} />
       {m.hasPin ? <Button kind="danger" title={t("app.team.pinRemove")} loading={clear.pending} onPress={() => void clear.mutate().then((r) => r.ok && onClose())} style={{ marginTop: 12 }} /> : null}
@@ -158,7 +158,7 @@ function PlotsSheet({ m, visible, onClose }: { m: Member; visible: boolean; onCl
     if (r.ok) { showToast(t("ui.toast.plotsAssigned")); onClose(); }
   };
   return (
-    <Sheet visible={visible} title={`${t("ui.common.assignPlots")} · ${m.fullName}`} onClose={onClose}>
+    <Sheet visible={visible} title={`${t("ui.common.assignPlots")}, ${m.fullName}`} onClose={onClose}>
       {data.plots.length === 0 ? (
         <EmptyState title={t("office.team.assignEmpty")} />
       ) : loadError ? (

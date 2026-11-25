@@ -110,8 +110,8 @@ export default function Cattle() {
               <DataList
                 rows={rows}
                 keyOf={(d) => d.id}
-                title={(d) => [t(k(`ui.cattle.kind_${d.kind}`)), d.category].filter(Boolean).join(" · ")}
-                subtitle={(d) => [isoShort(d.date), party(d.partyId)].filter(Boolean).join(" · ")}
+                title={(d) => [t(k(`ui.cattle.kind_${d.kind}`)), d.category].filter(Boolean).join(", ")}
+                subtitle={(d) => [isoShort(d.date), party(d.partyId)].filter(Boolean).join(", ")}
                 detail={(d) => [
                   { label: t("ui.cost.date"), value: isoShort(d.date) },
                   ...(party(d.partyId) ? [{ label: t("ui.cattle.party"), value: party(d.partyId)! }] : []),

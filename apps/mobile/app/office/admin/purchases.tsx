@@ -57,7 +57,7 @@ export default function Purchases() {
                 rows={rows}
                 keyOf={(p) => p.id}
                 title={(p) => party(p.partyId)}
-                subtitle={(p) => [isoShort(p.orderDate), t(k(`ui.purch.status_${p.status}`)), p.photoPath ? t("office.adm.withPhoto") : null].filter(Boolean).join(" · ")}
+                subtitle={(p) => [isoShort(p.orderDate), t(k(`ui.purch.status_${p.status}`)), p.photoPath ? t("office.adm.withPhoto") : null].filter(Boolean).join(", ")}
                 right={(p) => fmtMoney(p.totalAmount, p.currency)}
                 onPress={(p) => router.push({ pathname: "/office/admin/purchase", params: { id: p.id } } as Href)}
                 empty={{ title: t("ui.erp.empty") }}

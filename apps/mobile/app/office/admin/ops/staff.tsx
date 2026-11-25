@@ -136,7 +136,7 @@ export default function Staff() {
         <OnlineState query={balances} isEmpty={(d) => d.length === 0} empty={emptyStaff}>
           {(rows) => (
             <>
-              <DataList rows={rows} keyOf={(r) => r.employeeId} title={(r) => r.name} subtitle={(r) => `${r.days} ${t("ui.bal.days").toLowerCase()} · ${t("ui.bal.accrued")} ${fmtGs(r.accruedPyg)}`} right={(r) => <Text style={[T.bodyMedium, r.balancePyg < 0 && { color: C.peligro }]}>{fmtGs(r.balancePyg)}</Text>} onPress={setStatement} empty={{ title: t("ui.erp.empty") }} />
+              <DataList rows={rows} keyOf={(r) => r.employeeId} title={(r) => r.name} subtitle={(r) => `${r.days} ${t("ui.bal.days").toLowerCase()}, ${t("ui.bal.accrued")} ${fmtGs(r.accruedPyg)}`} right={(r) => <Text style={[T.bodyMedium, r.balancePyg < 0 && { color: C.peligro }]}>{fmtGs(r.balancePyg)}</Text>} onPress={setStatement} empty={{ title: t("ui.erp.empty") }} />
               <Text style={[T.small, { marginTop: 16 }]}>{t("office.staff.webNote")}</Text>
             </>
           )}
@@ -144,7 +144,7 @@ export default function Staff() {
       ) : null}
       {tab === "employees" ? (
         <OnlineState query={staff} isEmpty={(d) => d.length === 0} empty={{ ...emptyStaff, onAction: () => setAdding(true) }}>
-          {(rows) => <DataList rows={rows} keyOf={(e) => e.id} title={(e) => e.name} subtitle={(e) => [e.ci, e.phone].filter(Boolean).join(" · ") || undefined} right={(e) => `${fmtGs(e.dailyWagePyg)}${t("office.staff.perDay")}`} empty={emptyStaff} />}
+          {(rows) => <DataList rows={rows} keyOf={(e) => e.id} title={(e) => e.name} subtitle={(e) => [e.ci, e.phone].filter(Boolean).join(", ") || undefined} right={(e) => `${fmtGs(e.dailyWagePyg)}${t("office.staff.perDay")}`} empty={emptyStaff} />}
         </OnlineState>
       ) : null}
       {adding ? <EmployeeSheet onClose={() => setAdding(false)} onSaved={() => void staff.refresh()} /> : null}
@@ -175,7 +175,7 @@ function AttendanceTab({ rows, att }: { rows: Employee[]; att: ReturnType<typeof
       {recent.length > 0 ? (
         <>
           <SectionHeader title={t("ui.att.recent")} />
-          <DataList rows={recent} keyOf={(a) => a.id} title={(a) => nameOf(a.employeeId)} subtitle={(a) => [isoShort(a.date), a.labor].filter(Boolean).join(" · ")} right={(a) => (a.days === 1 ? t("ui.att.full") : t("ui.att.half"))} empty={{ title: t("ui.erp.empty") }} />
+          <DataList rows={recent} keyOf={(a) => a.id} title={(a) => nameOf(a.employeeId)} subtitle={(a) => [isoShort(a.date), a.labor].filter(Boolean).join(", ")} right={(a) => (a.days === 1 ? t("ui.att.full") : t("ui.att.half"))} empty={{ title: t("ui.erp.empty") }} />
         </>
       ) : null}
     </>
@@ -229,7 +229,7 @@ function StatementSheet({ row, onClose }: { row: Balance; onClose: () => void })
             rows={rows.slice(0, 40)}
             keyOf={(l) => l.id}
             title={(l) => `${t(key(`ui.bal.kind_${l.kind}`))}${l.note ? `: ${l.note}` : ""}`}
-            subtitle={(l) => `${isoShort(l.date)} · ${t("ui.bal.balance")} ${fmtGs(l.balancePyg)}`}
+            subtitle={(l) => `${isoShort(l.date)}, ${t("ui.bal.balance")} ${fmtGs(l.balancePyg)}`}
             right={(l) => fmtGs(l.amountPyg)}
             empty={{ title: t("ui.erp.empty") }}
           />

@@ -212,7 +212,7 @@ export default function History() {
             hhmm(r.capturedAt),
           ]
             .filter(Boolean)
-            .join(" · ")}
+            .join(", ")}
           onPress={() => router.push({ pathname: "/record/[id]", params: { id: r.id } })}
           status={r.rejected ? "rejected" : r.pending ? "pending" : "synced"}
           right={

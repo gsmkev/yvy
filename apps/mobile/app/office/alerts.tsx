@@ -91,9 +91,9 @@ export default function Alerts() {
         <View key={a.id} style={{ marginTop: 16, padding: 16, borderRadius: RADIUS, backgroundColor: C.blanco, borderWidth: 1, borderColor: C.linea, borderLeftWidth: 4, borderLeftColor: EDGE[a.severity] ?? C.lineaFuerte }}>
           <Text style={[T.heading, a.severity === "warning" && { color: C.peligro }]}>
             {t(`ui.alert.kind_${a.kind}` as MessageKey)}
-            {a.probability ? ` · ${t(`ui.probability.${a.probability}` as MessageKey).toLowerCase()}` : ""}
+            {a.probability ? `, ${t(`ui.probability.${a.probability}` as MessageKey).toLowerCase()}` : ""}
           </Text>
-          <Text style={[T.small, { marginTop: 2 }]}>{[data.farms.get(a.farmId), validity(a)].filter(Boolean).join(" · ")}</Text>
+          <Text style={[T.small, { marginTop: 2 }]}>{[data.farms.get(a.farmId), validity(a)].filter(Boolean).join(", ")}</Text>
           <Text style={[T.body, { marginTop: 8 }]}>{a.summary}</Text>
           <Text style={[T.small, { marginTop: 8 }]}>{t("ui.common.orientative", { source: a.source })}</Text>
           <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8, marginTop: 12 }}>

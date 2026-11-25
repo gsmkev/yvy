@@ -44,7 +44,7 @@ export function MapPlotSheet({
       <PlotStats plot={plot} />
       {plotRecords.map((r) => (
         <Text key={r.id} style={[T.small, { marginTop: 8 }]} numberOfLines={1}>
-          {new Date(r.capturedAt).toLocaleDateString("es-PY", { day: "numeric", month: "short" })} · {describeRecord(r.kind, JSON.parse(r.data))}
+          {new Date(r.capturedAt).toLocaleDateString("es-PY", { day: "numeric", month: "short" })}, {describeRecord(r.kind, JSON.parse(r.data))}
         </Text>
       ))}
       {!readOnly && <Button big title={t("app.annotate.in", { plot: plot.name })} onPress={() => router.push({ pathname: "/annotate", params: { plotId: plot.id } })} style={{ marginTop: 16 }} />}
@@ -79,10 +79,10 @@ function SheetHeading({ plot, lastVisit, onClose }: { plot: Plot; lastVisit: Map
         <View style={{ flex: 1 }}>
           <Text style={T.title}>{plot.name}</Text>
           <Text style={[T.small, { marginTop: 2 }]}>
-            {plot.kind === "pasture" ? t("ui.common.pasture") : (plot.crop ?? t("ui.common.crop"))} · {t("ui.common.ha", { value: plot.areaHa.toLocaleString("es-PY", { maximumFractionDigits: 0 }) })}
+            {plot.kind === "pasture" ? t("ui.common.pasture") : (plot.crop ?? t("ui.common.crop"))}, {t("ui.common.ha", { value: plot.areaHa.toLocaleString("es-PY", { maximumFractionDigits: 0 }) })}
             {lastVisit.get(plot.id)
-              ? " · " + ([t("app.last.visitToday"), t("app.last.visitYesterday")][daysAgo(lastVisit.get(plot.id)!)]?.toLowerCase() ?? t("app.last.visit", { days: daysAgo(lastVisit.get(plot.id)!) }).toLowerCase())
-              : ` · ${t("app.no.visits").toLowerCase()}`}
+              ? ", " + ([t("app.last.visitToday"), t("app.last.visitYesterday")][daysAgo(lastVisit.get(plot.id)!)]?.toLowerCase() ?? t("app.last.visit", { days: daysAgo(lastVisit.get(plot.id)!) }).toLowerCase())
+              : `, ${t("app.no.visits").toLowerCase()}`}
           </Text>
         </View>
         <Pressable onPress={() => onClose()} hitSlop={13} accessibilityRole="button" accessibilityLabel={t("ui.common.close")}>
@@ -105,7 +105,7 @@ function PlotStats({ plot }: { plot: Plot }) {
       {herd && (
         <Text style={[T.smallMedium, { marginTop: 10 }]}>
           {t("app.plot.herd", { n: herd.total })}
-          {herdUa !== null ? " · " + t("app.plot.herdUa", { v: herdUa.toLocaleString("es-PY", TWO_DECIMALS) }) : ""}
+          {herdUa !== null ? ", " + t("app.plot.herdUa", { v: herdUa.toLocaleString("es-PY", TWO_DECIMALS) }) : ""}
         </Text>
       )}
       {(rainMonth > 0 || vigor || openTasks > 0) && (

@@ -89,7 +89,7 @@ export default function Maintenance() {
                 rows={logs.data ?? []}
                 keyOf={(l) => l.id}
                 title={(l) => machine(l.machineId)?.name ?? ""}
-                subtitle={(l) => `${isoShort(localDate(l.occurredAt))} · ${t(key(`ui.maint.kind_${l.kind}`))}`}
+                subtitle={(l) => `${isoShort(localDate(l.occurredAt))}, ${t(key(`ui.maint.kind_${l.kind}`))}`}
                 detail={(l) => [
                   { label: t("ui.cost.date"), value: isoShort(localDate(l.occurredAt)) },
                   { label: t("ui.maint.kind"), value: t(key(`ui.maint.kind_${l.kind}`)) },
@@ -104,7 +104,7 @@ export default function Maintenance() {
                 rows={plans.data ?? []}
                 keyOf={(p) => p.id}
                 title={(p) => p.name}
-                subtitle={(p) => `${machine(p.machineId)?.name ?? ""} · ${t("ui.maint.every")} ${fmtNumber(p.everyUnits)} ${unit(p.machineId)}`}
+                subtitle={(p) => `${machine(p.machineId)?.name ?? ""}, ${t("ui.maint.every")} ${fmtNumber(p.everyUnits)} ${unit(p.machineId)}`}
                 onPress={(p) => setLogging({ planId: p.id })}
                 empty={{ title: t("ui.maint.plansEmptyTitle"), hint: t("ui.maint.plansEmptyHint") }}
               />

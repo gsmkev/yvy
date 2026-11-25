@@ -57,7 +57,7 @@ export default function DashboardScreen() {
                     rows={d.areaByCrop.map((c) => ({
                       label:
                         label(c) +
-                        " · " +
+                        ", " +
                         t(c.plots === 1 ? "ui.plots.countOne" : "ui.plots.countMany", { n: c.plots }),
                       value: Math.round(haToArea(c.ha, units.area) * 10) / 10,
                     }))}

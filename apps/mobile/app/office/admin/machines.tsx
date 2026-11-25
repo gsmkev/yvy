@@ -93,7 +93,7 @@ export default function Machines() {
               rows={rows}
               keyOf={(m) => m.id}
               title={(m) => m.name}
-              subtitle={(m) => [t(k(`ui.machine.type_${m.type}`)), m.year, m.farmId ? farmName.get(m.farmId) : null].filter(Boolean).join(" · ")}
+              subtitle={(m) => [t(k(`ui.machine.type_${m.type}`)), m.year, m.farmId ? farmName.get(m.farmId) : null].filter(Boolean).join(", ")}
               right={(m) => `${fmtNumber(m.meterValue)} ${m.meterKind === "hours" ? "h" : "km"}`}
               onPress={manage ? open : undefined}
               empty={{ title: t("ui.erp.empty") }}

@@ -80,7 +80,7 @@ export default function More() {
         subtitle={[
           t("app.last.syncAt", { when: lastSync }),
           sync.pending > 0 ? t("app.common.pendingCount", { n: sync.pending }) : t("app.common.allSent"),
-        ].join(" · ")}
+        ].join(", ")}
         onPress={() => router.push("/sync")}
       />
       <Row
@@ -103,7 +103,7 @@ export default function More() {
       )}
 
       <Text style={[T.small, { marginTop: 28, color: C.tinta3 }]}>
-        {t(ATTRIBUTION.metNorway)} · {t(ATTRIBUTION.copernicus)} · {t(ATTRIBUTION.chirps)} · {t(ATTRIBUTION.firms)}
+        {t(ATTRIBUTION.metNorway)}, {t(ATTRIBUTION.copernicus)}, {t(ATTRIBUTION.chirps)}, {t(ATTRIBUTION.firms)}
       </Text>
     </ScrollView>
   );

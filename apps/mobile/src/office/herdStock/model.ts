@@ -34,7 +34,7 @@ export function herdTotals(rows: HerdRow[], maxUa: number) {
 
 /** Superficie y último conteo de un potrero (una línea; las categorías van en `herdDetail`). */
 export function herdSubtitle(r: HerdRow, areaUnit: Parameters<typeof haToArea>[1]): string {
-  return [`${fmtNumber(haToArea(r.plot.areaHa, areaUnit))} ${areaLabel(areaUnit)}`, r.st!.lastCountAt ? t("office.farms.lastRecord", { date: fmtDate(r.st!.lastCountAt) }) : t("ui.herd.neverCounted")].join(" · ");
+  return [`${fmtNumber(haToArea(r.plot.areaHa, areaUnit))} ${areaLabel(areaUnit)}`, r.st!.lastCountAt ? t("office.farms.lastRecord", { date: fmtDate(r.st!.lastCountAt) }) : t("ui.herd.neverCounted")].join(", ");
 }
 
 /** Ficha de un potrero: una fila por categoría con cabezas. */
@@ -45,5 +45,5 @@ export function herdDetail(r: HerdRow): { label: string; value: string }[] {
 /** Carga recomendada contra la actual: "al día", cuántas UA sobran o cuántas faltan. */
 export function loadLine(rp: { recommendedUaPerHa: number; diffUa: number }): string {
   const verdict = Math.abs(rp.diffUa) < 0.5 ? t("ui.herd.loadOk") : rp.diffUa > 0 ? t("ui.herd.loadSurplus", { n: fmtNumber(rp.diffUa, 1) }) : t("ui.herd.loadShortfall", { n: fmtNumber(-rp.diffUa, 1) });
-  return `${t("ui.herd.loadRecommended")} ${fmtNumber(rp.recommendedUaPerHa, 2)} · ${verdict}`;
+  return `${t("ui.herd.loadRecommended")} ${fmtNumber(rp.recommendedUaPerHa, 2)}, ${verdict}`;
 }

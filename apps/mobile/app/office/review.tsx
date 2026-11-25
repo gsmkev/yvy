@@ -73,7 +73,7 @@ export default function Review() {
                 ))}
                 <Text style={[T.body, { marginTop: 8 }]}>{describeRecord(i.kind, i.data)}</Text>
                 <Text style={[T.small, { marginTop: 4 }]}>
-                  {[t(key(`record-kinds.kind.${i.kind}`)), i.farmName, i.plotName, i.authorName, fmtDateTime(i.capturedAt)].filter(Boolean).join(" · ")}
+                  {[t(key(`record-kinds.kind.${i.kind}`)), i.farmName, i.plotName, i.authorName, fmtDateTime(i.capturedAt)].filter(Boolean).join(", ")}
                 </Text>
                 <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
                   <Button

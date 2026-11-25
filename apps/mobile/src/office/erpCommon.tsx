@@ -70,8 +70,8 @@ interface SeasonLite {
 /** Campañas de la organización (GET /org/seasons, no es del ERP). */
 export const useSeasonList = () => useOnline<{ seasons: SeasonLite[] }>("/org/seasons");
 
-/** Cifras de dinero en una tarjeta: en fila si los montos son cortos; si alguno es largo (Gs. 2.423.524.012), en 2 columnas. */
+/** Cifras de dinero en una tarjeta: en fila si los montos son cortos; si alguno es largo (Gs. 2.423.524.012), como lista rótulo–valor. */
 export function MoneyStats({ items }: { items: { label: string; value: string; tone?: "danger" }[] }) {
   const long = items.some((i) => i.value.length > 9);
-  return <StatSummary items={items} columns={long ? 2 : undefined} />;
+  return <StatSummary items={items} columns={long ? 1 : undefined} />;
 }

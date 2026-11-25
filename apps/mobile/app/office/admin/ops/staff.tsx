@@ -8,7 +8,6 @@ import { Pressable, View } from "react-native";
 import { Check, Plus } from "lucide-react-native";
 import { localDate, t, type MessageKey } from "@yvy/shared";
 import { getDb } from "../../../../src/lib/db";
-import { tap } from "../../../../src/lib/haptics";
 import { showToast } from "../../../../src/lib/toast";
 import { useLocal } from "../../../../src/lib/useLocal";
 import { isoShort, NoAdminAccess, NoSignalNote, useErp, useManageErp, useNoSignalReason } from "../../../../src/office/erpCommon";
@@ -133,7 +132,7 @@ export default function Staff() {
                 </View>
               </View>
               {rows.map((e) => (
-                <AttendanceRow key={e.id} employee={e} already={loaded.get(e.id) ?? 0} mark={marks[e.id] ?? "absent"} onMark={(m) => setMarks((x) => ({ ...x, [e.id]: m }))} />
+                <AttendanceRow key={e.id} employee={e} already={loaded.get(e.id) ?? 0} mark={marks[e.id]} onMark={(m) => setMarks((x) => ({ ...x, [e.id]: m }))} />
               ))}
               {saveDay.error ? <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 16 }]}>{saveDay.error}</Text> : null}
               {(recent.data ?? []).length > 0 ? (
@@ -189,7 +188,7 @@ export default function Staff() {
 }
 
 /** Un empleado y sus tres opciones del día: presente, medio día o ausente. */
-function AttendanceRow({ employee: e, already, mark, onMark }: { employee: Employee; already: number; mark: Mark; onMark: (m: Mark) => void }) {
+function AttendanceRow({ employee: e, already, mark, onMark }: { employee: Employee; already: number; mark?: Mark; onMark: (m: Mark) => void }) {
   const opts: { value: Mark; label: string }[] = [
     { value: "full", label: t("office.att.present") },
     { value: "half", label: t("office.att.halfShort") },
@@ -210,7 +209,7 @@ function AttendanceRow({ employee: e, already, mark, onMark }: { employee: Emplo
                 accessibilityRole="radio"
                 accessibilityState={{ checked: on }}
                 accessibilityLabel={`${e.name}: ${o.label}`}
-                onPress={() => (tap(), onMark(o.value))}
+                onPress={() => onMark(o.value)}
                 style={{ flex: 1, minHeight: 48, borderRadius: RADIUS, borderWidth: 1.5, alignItems: "center", justifyContent: "center", backgroundColor: on ? (o.value === "absent" ? C.tinta2 : C.accion) : C.blanco, borderColor: on ? (o.value === "absent" ? C.tinta2 : C.accion) : C.lineaFuerte }}
               >
                 <Text numberOfLines={1} style={{ fontFamily: F.sansMedium, fontSize: 16, color: on ? C.blanco : C.tinta }}>

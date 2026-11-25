@@ -18,11 +18,27 @@ export interface StatItem {
 /**
  * Resumen de cifras en una sola tarjeta. Con 2 o 3 cifras van en una fila, separadas por una línea fina; con 4 o más
  * se reparten en 2 columnas. Cada cifra es rótulo chico arriba del valor ("Lluvia · mm" cuando lleva unidad) y se
- * encoge antes que partirse. `columns` fuerza el reparto (para montos largos); una última cifra suelta en 2 columnas ocupa todo el ancho. Una cifra con `onPress` es tocable; con `tone: "danger"` va en rojo (y su rótulo la nombra,
+ * encoge antes que partirse. `columns` fuerza el reparto (con 1 es una lista rótulo–valor, para montos largos); una última cifra suelta en 2 columnas ocupa todo el ancho. Una cifra con `onPress` es tocable; con `tone: "danger"` va en rojo (y su rótulo la nombra,
  * no solo el color).
  */
 export function StatSummary({ items, columns }: { items: StatItem[]; columns?: 1 | 2 | 3 }) {
   const cols = columns ?? (items.length <= 3 ? Math.max(items.length, 1) : 2);
+  if (cols === 1) {
+    return (
+      <View style={{ marginTop: 16, borderRadius: RADIUS, borderWidth: 1, borderColor: C.linea, backgroundColor: C.blanco, overflow: "hidden" }}>
+        {items.map((i, n) => {
+          const label = i.unit ? `${i.label} · ${i.unit}` : i.label;
+          const danger = i.tone === "danger";
+          return (
+            <View key={i.label} accessible accessibilityLabel={`${i.value} ${label}`} style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderTopWidth: n ? 1 : 0, borderColor: C.linea, backgroundColor: danger ? C.peligroSuave : undefined }}>
+              <Text style={[T.small, danger && { color: C.peligro }]}>{label}</Text>
+              <Text style={{ fontFamily: F.serif, fontSize: 24, lineHeight: 30, letterSpacing: -0.4, color: danger ? C.peligro : C.tinta, flexShrink: 1 }}>{i.value}</Text>
+            </View>
+          );
+        })}
+      </View>
+    );
+  }
   return (
     <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 16, borderRadius: RADIUS, borderWidth: 1, borderColor: C.linea, backgroundColor: C.blanco, overflow: "hidden" }}>
       {items.map((i, n) => {

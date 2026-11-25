@@ -20,6 +20,7 @@ import { PlotEditForm } from "./plot/PlotEditForm";
 import { ProblemAreasSection } from "./plot/ProblemAreasSection";
 import { RotationSection } from "./plot/RotationSection";
 import { usePlotForm, usePlotHistory, usePlotNdvi, useProblemTask } from "./plot/usePlotData";
+import { cropName } from "../lib/crops";
 
 /**
  * Panel lateral con la ficha de un lote.
@@ -94,7 +95,7 @@ onMerge?: () => void;
           {plot.name}
         </h2>
         <p className="num mt-1 text-sm text-tinta-2">
-          {plot.kind === "pasture" ? t("ui.common.pasture") : (plot.crop ?? t("ui.common.crop"))}, {fmtHa(plot.areaHa)}
+          {plot.kind === "pasture" ? t("ui.common.pasture") : (plot.crop ? cropName(plot.crop) : t("ui.common.crop"))}, {fmtHa(plot.areaHa)}
           {plot.season ? `, ${plot.season}` : ""}
         </p>
         <p className="mt-1 text-sm text-tinta-2">

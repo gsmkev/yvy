@@ -65,6 +65,16 @@ describe("StatRow", () => {
     );
     expect(container.firstElementChild?.className).toContain("sm:grid-cols-4");
   });
+  it("con max en 2 no pasa de dos columnas", () => {
+    const { container } = render(
+      <StatRow max={2}>
+        <Stat label="A" value="1" />
+        <Stat label="B" value="2" />
+        <Stat label="C" value="3" />
+      </StatRow>,
+    );
+    expect(container.firstElementChild?.className).toContain("sm:grid-cols-2");
+  });
 });
 
 describe("Tabs", () => {

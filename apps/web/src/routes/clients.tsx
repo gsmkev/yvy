@@ -7,7 +7,7 @@ import { useMe } from "../lib/queries";
 import { EmptyState, ErrorBox, Spinner } from "../components/ui";
 import { get, getSession, post, setSession, type Session } from "../lib/api";
 import { fmtDate, fmtHa } from "../lib/format";
-import { t, tk } from "../lib/i18n";
+import { t } from "../lib/i18n";
 
 interface ClientFarm {
   id: string;
@@ -153,7 +153,7 @@ export function ClientsPage() {
                     </button>
                     {alerts.map((a) => (
                       <p key={a.id} className="mt-1 text-xs font-medium text-peligro">
-                        {tk(`ui.alert.kind_${a.kind}`)}: {a.summary}
+                        {a.summary}
                       </p>
                     ))}
                   </li>

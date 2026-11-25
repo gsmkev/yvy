@@ -72,7 +72,13 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
         <span className="text-tinta-2">{p.kind === "pasture" ? t("ui.common.pasture") : (p.crop ? cropName(p.crop) : t("ui.common.crop"))}</span>
       ),
     },
-    { id: "area", header: areaUnitLabel(), align: "right", sort: (a, b) => a.areaHa - b.areaHa, cell: (p) => fmtAreaValue(p.areaHa) },
+    { id: "area", header: areaUnitLabel(), align: "right", sort: (a, b) => a.areaHa - b.areaHa, cell: (p) => (
+        <>
+          {fmtAreaValue(p.areaHa)}
+          <span className="sm:hidden"> {areaUnitLabel()}</span>
+        </>
+      ),
+    },
     ...(hasVigor
       ? [
           {
@@ -80,7 +86,12 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
             header: t("ui.common.vigor"),
             align: "right" as const,
             sort: byNum((p) => p.ndviMean),
-            cell: (p: Plot) => <Vigor value={p.ndviMean} />,
+            cell: (p: Plot) => (
+              <>
+                <span className="sm:hidden">{t("ui.common.vigor")} </span>
+                <Vigor value={p.ndviMean} />
+              </>
+            ),
           },
         ]
       : []),

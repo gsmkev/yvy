@@ -16,7 +16,7 @@ import { SupplementPanel } from "./SupplementPanel";
 import { TheftPanel } from "./TheftPanel";
 import { WeighingsPanel } from "./WeighingsPanel";
 import { LoadEditor, SystemBar, SystemIndicators, useSystem } from "./HerdSystem";
-import { Button, Empty, ErrorBox, Field, Form, Input, Spinner, Tabs, toast } from "./ui";
+import { Button, Empty, ErrorBox, Field, Form, Input, Spinner, Stat, StatRow, Tabs, toast } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
 const dec = new Intl.NumberFormat("es-PY", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -56,14 +56,11 @@ function StockSection({ farmId }: { farmId: string }) {
   return (
     <div className="mt-4 flex flex-col gap-6">
       <div>
-        <p className="num text-sm">
-          {t("ui.herd.farmLine", {
-            head: int.format(d.farm.total),
-            ua: dec.format(d.farm.ua),
-            area: fmtHa(d.farm.areaHa),
-          })}
-          {d.farm.uaPerHa !== null && ", " + t("ui.herd.uaPerHa", { v: dec.format(d.farm.uaPerHa) })}
-        </p>
+        <StatRow max={3}>
+          <Stat label={t("ui.herd.statHead")} value={int.format(d.farm.total)} />
+          <Stat label={t("ui.herd.statUa")} value={dec.format(d.farm.ua)} note={t("ui.herd.statOnArea", { area: fmtHa(d.farm.areaHa) })} />
+          {d.farm.uaPerHa !== null && <Stat label={t("ui.herd.statUaPerHa")} value={dec.format(d.farm.uaPerHa)} />}
+        </StatRow>
         {(d.farm.overLimit || over.length > 0) && (
           <p role="alert" className="mt-2 text-sm font-medium text-peligro">
             {t("ui.herd.overLimit", { max: maxText, plots: over.map((p) => p.name).join(", ") || t("ui.herd.wholeFarm") })}

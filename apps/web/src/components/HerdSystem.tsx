@@ -16,7 +16,7 @@ import {
 import { get, put } from "../lib/api";
 import { t, tk } from "../lib/i18n";
 import { useMe } from "../lib/queries";
-import { Button, Card, ErrorBox, Field, Form, Input, Select, Stat, toast } from "./ui";
+import { Button, Card, ErrorBox, Field, Form, Input, Select, Stat, StatRow, toast } from "./ui";
 
 /** Sistema elegido (de la hacienda calculada, que ya lo trae). */
 export function useSystem(farmId: string) {
@@ -102,11 +102,11 @@ export function SystemIndicators({ farmId, system }: { farmId: string; system: P
   return (
     <div className="mt-4">
       <p className="eyebrow mb-2">{t("ui.herd.indTitle")}</p>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <StatRow max={2}>
         {list.map((i) => (
           <Stat key={i.id} label={indicatorLabel(i)} value={indicatorValueText(i)} />
         ))}
-      </div>
+      </StatRow>
     </div>
   );
 }

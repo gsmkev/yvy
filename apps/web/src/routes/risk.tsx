@@ -40,7 +40,7 @@ export function RiskReportBody({ r }: { r: FarmRisk }) {
   const rain = rainByMonth(r.rain);
   const fire = r.fire;
   const rainCols: Column<RainRow>[] = [
-    { id: "m", header: t("ui.gauges.month"), cell: (m) => m.label },
+    { id: "m", header: t("ui.gauges.month"), cell: (m) => <span className="whitespace-nowrap">{m.label}</span> },
     { id: "recent", header: t("ui.risk.rainRecent"), align: "right", cell: (m) => fmtMm(m.mm) },
     { id: "normal", header: t("ui.risk.rainNormal"), align: "right", cell: (m) => (m.normalMm === null ? "—" : fmtMm(m.normalMm)) },
     {
@@ -116,7 +116,7 @@ export function RiskReportBody({ r }: { r: FarmRisk }) {
             {fire.total === 0 ? (
               <p className="text-sm text-tinta-2">{t("ui.risk.fireNone")}</p>
             ) : (
-              <div>
+              <div className="max-w-xl">
                 <h3 className="eyebrow mb-2">{t("ui.risk.fireByMonth")}</h3>
                 <ColumnChart
                   ariaLabel={t("ui.risk.fireByMonth")}

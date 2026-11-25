@@ -44,6 +44,67 @@ interface SeasonReportData {
   ndvi: NdviPoint[];
 }
 
+/** Pasadas de vigor de la campaña con su rango p10 a p90. */
+function VigorTable({ ndvi }: { ndvi: SeasonReportData["ndvi"] }) {
+  return (
+    <>
+      <Text style={s.h2}>{t("ui.season.vigorTitle")}</Text>
+      {ndvi.length === 0 ? (
+        <Text style={s.muted}>{t("ui.shared.noData")}</Text>
+      ) : (
+        <View>
+          <View style={s.th}>
+            <Text style={{ width: 90 }}>{t("ui.common.capturedAt")}</Text>
+            <Text style={{ width: 70 }}>{t("ui.index.ndviShort")}</Text>
+            <Text style={{ flex: 1 }}>p10 – p90</Text>
+          </View>
+          {ndvi.map((p) => (
+            <View key={p.acquiredAt} style={s.row} wrap={false}>
+              <Text style={{ width: 90 }}>{fmtDate(p.acquiredAt)}</Text>
+              <Text style={{ width: 70 }}>{fmtNdvi(p.mean)}</Text>
+              <Text style={{ flex: 1 }}>
+                {fmtNdvi(p.p10)} – {fmtNdvi(p.p90)}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </>
+  );
+}
+
+/** Cantidad de registros por tipo y el último de cada uno. */
+function RecordsByKind({ byKind }: { byKind: Map<string, RecordRow[]> }) {
+  return (
+    <>
+      <Text style={s.h2}>{t("ui.season.recordsByKind")}</Text>
+      {byKind.size === 0 ? (
+        <Text style={s.muted}>{t("ui.no.records")}</Text>
+      ) : (
+        <View>
+          <View style={s.th}>
+            <Text style={{ width: 110 }}>{t("ui.common.kind")}</Text>
+            <Text style={{ width: 40 }}>{t("ui.season.count")}</Text>
+            <Text style={{ flex: 1 }}>{t("ui.season.last")}</Text>
+          </View>
+          {[...byKind.entries()].map(([kind, rows]) => {
+            const last = rows[0]!; // vienen del más nuevo al más viejo
+            return (
+              <View key={kind} style={s.row} wrap={false}>
+                <Text style={{ width: 110 }}>{tk(`record-kinds.kind.${kind}`)}</Text>
+                <Text style={{ width: 40 }}>{rows.length}</Text>
+                <Text style={{ flex: 1 }}>
+                  {fmtDateTime(last.capturedAt)}: {describeData(last.kind, last.data)}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      )}
+    </>
+  );
+}
+
 /** Documento PDF del resumen de campaña por lote. */
 export function SeasonReport(d: SeasonReportData) {
   const byKind = new Map<string, RecordRow[]>();
@@ -53,13 +114,13 @@ export function SeasonReport(d: SeasonReportData) {
     : null;
   const ndvi = [...d.ndvi].sort((a, b) => a.acquiredAt - b.acquiredAt);
   return (
-    <Document title={`${t("ui.season.reportTitle")} · ${d.plot.name}`} author="Yvy" language="es-PY">
+    <Document title={`${t("ui.season.reportTitle")}: ${d.plot.name}`} author="Yvy" language="es-PY">
       <Page size="A4" style={s.page}>
         <Text style={s.h1}>
-          {t("ui.season.reportTitle")} · {d.plot.name}
+          {t("ui.season.reportTitle")}: {d.plot.name}
         </Text>
         <Text style={s.muted}>
-          {d.farm.name} · {fmtIsoDate(d.from)} – {fmtIsoDate(d.to)}
+          {d.farm.name}, {fmtIsoDate(d.from)} – {fmtIsoDate(d.to)}
         </Text>
 
         <Text style={s.h2}>{t("ui.season.sowing")}</Text>
@@ -81,52 +142,8 @@ export function SeasonReport(d: SeasonReportData) {
           <Kpi label={t("ui.common.gauge")} value={mm(d.gaugeMm)} />
         </View>
 
-        <Text style={s.h2}>{t("ui.season.recordsByKind")}</Text>
-        {byKind.size === 0 ? (
-          <Text style={s.muted}>{t("ui.no.records")}</Text>
-        ) : (
-          <View>
-            <View style={s.th}>
-              <Text style={{ width: 110 }}>{t("ui.common.kind")}</Text>
-              <Text style={{ width: 40 }}>{t("ui.season.count")}</Text>
-              <Text style={{ flex: 1 }}>{t("ui.season.last")}</Text>
-            </View>
-            {[...byKind.entries()].map(([kind, rows]) => {
-              const last = rows[0]!; // vienen del más nuevo al más viejo
-              return (
-                <View key={kind} style={s.row} wrap={false}>
-                  <Text style={{ width: 110 }}>{tk(`record-kinds.kind.${kind}`)}</Text>
-                  <Text style={{ width: 40 }}>{rows.length}</Text>
-                  <Text style={{ flex: 1 }}>
-                    {fmtDateTime(last.capturedAt)}: {describeData(last.kind, last.data)}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-        )}
-
-        <Text style={s.h2}>{t("ui.season.vigorTitle")}</Text>
-        {ndvi.length === 0 ? (
-          <Text style={s.muted}>{t("ui.shared.noData")}</Text>
-        ) : (
-          <View>
-            <View style={s.th}>
-              <Text style={{ width: 90 }}>{t("ui.common.capturedAt")}</Text>
-              <Text style={{ width: 70 }}>{t("ui.index.ndviShort")}</Text>
-              <Text style={{ flex: 1 }}>p10 – p90</Text>
-            </View>
-            {ndvi.map((p) => (
-              <View key={p.acquiredAt} style={s.row} wrap={false}>
-                <Text style={{ width: 90 }}>{fmtDate(p.acquiredAt)}</Text>
-                <Text style={{ width: 70 }}>{fmtNdvi(p.mean)}</Text>
-                <Text style={{ flex: 1 }}>
-                  {fmtNdvi(p.p10)} – {fmtNdvi(p.p90)}
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
+        <RecordsByKind byKind={byKind} />
+        <VigorTable ndvi={ndvi} />
         <Footer />
       </Page>
     </Document>

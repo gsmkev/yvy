@@ -28,6 +28,57 @@ interface DeliveriesResponse {
 const tons = (kg: number) => `${fmtNum(Math.round(kg / 10) / 100)} t`;
 const toNum = (v: string) => (v.trim() === "" ? null : Number(v.replace(",", ".")));
 
+/** Tabla de entregas; en el panel angosto ticket, silo y humedad pasan a una segunda línea chica. */
+function DeliveriesTable({ rows, onRemove }: { rows: Delivery[]; onRemove: (r: Delivery) => void }) {
+  return (
+    <div className="@container">
+      <ExportableTable name="entregas">
+        <table className="w-full text-sm">
+          <thead className="text-left text-tinta-2">
+            <tr>
+              <th className="py-2 pr-3 font-medium">{t("ui.deliv.date")}</th>
+              <th className="hidden py-2 pr-3 font-medium @md:table-cell">{t("ui.deliv.ticket")}</th>
+              <th className="hidden py-2 pr-3 font-medium @md:table-cell">{t("ui.deliv.silo")}</th>
+              <th className="py-2 pr-3 font-medium">{t("ui.common.plot")}</th>
+              <th className="num py-2 pr-3 text-right font-medium">{t("ui.deliv.gross")}</th>
+              <th className="num hidden py-2 pr-3 text-right font-medium @md:table-cell">{t("ui.deliv.moisture")}</th>
+              <th className="num py-2 pr-3 text-right font-medium">{t("ui.deliv.net")}</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-linea border-y border-linea">
+            {rows.map((r) => (
+              <tr key={r.id}>
+                <td className="num py-2.5 pr-3" data-value={fmtIsoDate(r.deliveredOn)}>
+                  {fmtIsoDate(r.deliveredOn)}
+                  <span className="block text-xs text-tinta-2 @md:hidden">{r.ticket}</span>
+                </td>
+                <td className="num hidden py-2.5 pr-3 @md:table-cell">{r.ticket}</td>
+                <td className="hidden py-2.5 pr-3 @md:table-cell">{r.silo}</td>
+                <td className="py-2.5 pr-3" data-value={r.plotName ?? "—"}>
+                  {r.plotName ?? "—"}
+                  <span className="block text-xs text-tinta-2 @md:hidden">{r.silo}</span>
+                </td>
+                <td className="num py-2.5 pr-3 text-right">{tons(r.grossKg)}</td>
+                <td className="num hidden py-2.5 pr-3 text-right @md:table-cell">{moisture(r.moisturePct)}</td>
+                <td className="num py-2.5 pr-3 text-right font-medium" data-value={tons(r.netKg)}>
+                  {tons(r.netKg)}
+                  <span className="block text-xs font-normal text-tinta-2 @md:hidden">{moisture(r.moisturePct)}</span>
+                </td>
+                <td className="py-2.5 text-right">
+                  <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => onRemove(r)}>
+                    {t("ui.common.delete")}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </ExportableTable>
+    </div>
+  );
+}
+
 /** Entregas de grano a acopio por lote: ticket, silo, humedad, descuentos y toneladas netas. */
 export function DeliveriesPanel({ farmId, plots }: { farmId: string; plots: Plot[] }) {
   const q = useQuery({ queryKey: ["deliveries", farmId], queryFn: () => get<DeliveriesResponse>(`/org/farms/${farmId}/deliveries`) });
@@ -71,42 +122,7 @@ export function DeliveriesPanel({ farmId, plots }: { farmId: string; plots: Plot
         </ul>
       )}
       {d && d.rows.length > 0 && (
-        <div className="overflow-x-auto">
-          <ExportableTable name="entregas">
-            <table className="w-full text-sm">
-              <thead className="text-left text-tinta-2">
-                <tr>
-                  <th className="py-2 pr-3 font-medium">{t("ui.deliv.date")}</th>
-                  <th className="py-2 pr-3 font-medium">{t("ui.deliv.ticket")}</th>
-                  <th className="py-2 pr-3 font-medium">{t("ui.deliv.silo")}</th>
-                  <th className="py-2 pr-3 font-medium">{t("ui.common.plot")}</th>
-                  <th className="num py-2 pr-3 text-right font-medium">{t("ui.deliv.gross")}</th>
-                  <th className="num py-2 pr-3 text-right font-medium">{t("ui.deliv.moisture")}</th>
-                  <th className="num py-2 pr-3 text-right font-medium">{t("ui.deliv.net")}</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-linea border-y border-linea">
-                {d.rows.map((r) => (
-                  <tr key={r.id}>
-                    <td className="num py-2.5 pr-3">{fmtIsoDate(r.deliveredOn)}</td>
-                    <td className="num py-2.5 pr-3">{r.ticket}</td>
-                    <td className="py-2.5 pr-3">{r.silo}</td>
-                    <td className="py-2.5 pr-3">{r.plotName ?? "—"}</td>
-                    <td className="num py-2.5 pr-3 text-right">{tons(r.grossKg)}</td>
-                    <td className="num py-2.5 pr-3 text-right">{r.moisturePct === null ? "—" : `${fmtNum(r.moisturePct)} %`}</td>
-                    <td className="num py-2.5 pr-3 text-right font-medium">{tons(r.netKg)}</td>
-                    <td className="py-2.5 text-right">
-                      <button className="cursor-pointer text-tinta-2 underline-offset-4 hover:text-peligro hover:underline" onClick={() => setRemoving(r)}>
-                        {t("ui.common.delete")}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ExportableTable>
-        </div>
+        <DeliveriesTable rows={d.rows} onRemove={setRemoving} />
       )}
       {adding && <DeliveryModal farmId={farmId} plots={plots} onClose={() => setAdding(false)} />}
       {removing && (
@@ -124,10 +140,75 @@ export function DeliveriesPanel({ farmId, plots }: { farmId: string; plots: Plot
   );
 }
 
+const moisture = (pct: number | null) => (pct === null ? "—" : `${fmtNum(pct)} %`);
+
+type DeliveryForm = {
+  plotId: string;
+  crop: (typeof CROPS)[number];
+  ticket: string;
+  silo: string;
+  deliveredOn: string;
+  grossKg: string;
+  moisturePct: string;
+  baseMoisturePct: string;
+  impuritiesPct: string;
+  otherKg: string;
+};
+
+/** Campos del formulario de una entrega: lote, cultivo, ticket, silo y pesos. */
+function DeliveryFields({ f, setF, cropPlots }: { f: DeliveryForm; setF: (f: DeliveryForm) => void; cropPlots: Plot[] }) {
+  const set = (k: keyof DeliveryForm) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
+  return (
+    <>
+    <div className="grid grid-cols-2 gap-3">
+      <Field label={t("ui.common.plot")}>
+        <Select value={f.plotId} onChange={set("plotId")} options={[{ value: "", label: "—" }, ...cropPlots.map((p) => ({ value: p.id, label: p.name }))]} />
+      </Field>
+      <Field label={t("ui.common.crop")}>
+        <Select
+          value={f.crop}
+          onChange={(e) => {
+            const crop = e.target.value as (typeof CROPS)[number];
+            setF({ ...f, crop, baseMoisturePct: String(BASE_MOISTURE_PCT[crop]) });
+          }}
+          options={CROPS.map((c) => ({ value: c, label: tk(`fields.crop.${c}`) }))}
+        />
+      </Field>
+      <Field label={t("ui.deliv.ticket")}>
+        <Input required value={f.ticket} onChange={set("ticket")} maxLength={40} />
+      </Field>
+      <Field label={t("ui.deliv.date")}>
+        <Input type="date" required value={f.deliveredOn} onChange={set("deliveredOn")} />
+      </Field>
+    </div>
+    <Field label={t("ui.deliv.silo")}>
+      <Input required value={f.silo} onChange={set("silo")} maxLength={120} />
+    </Field>
+    <div className="grid grid-cols-2 gap-3">
+      <Field label={t("ui.deliv.grossKg")}>
+        <Input required inputMode="decimal" className="num" value={f.grossKg} onChange={set("grossKg")} />
+      </Field>
+      <Field label={t("ui.deliv.moisturePct")}>
+        <Input inputMode="decimal" className="num" value={f.moisturePct} onChange={set("moisturePct")} />
+      </Field>
+      <Field label={t("ui.deliv.basePct")}>
+        <Input required inputMode="decimal" className="num" value={f.baseMoisturePct} onChange={set("baseMoisturePct")} />
+      </Field>
+      <Field label={t("ui.deliv.impurities")}>
+        <Input inputMode="decimal" className="num" value={f.impuritiesPct} onChange={set("impuritiesPct")} />
+      </Field>
+      <Field label={t("ui.deliv.otherKg")}>
+        <Input inputMode="decimal" className="num" value={f.otherKg} onChange={set("otherKg")} />
+      </Field>
+    </div>
+    </>
+  );
+}
+
 function DeliveryModal({ farmId, plots, onClose }: { farmId: string; plots: Plot[]; onClose: () => void }) {
   const qc = useQueryClient();
   const cropPlots = plots.filter((p) => p.kind === "crop");
-  const [f, setF] = useState({
+  const [f, setF] = useState<DeliveryForm>({
     plotId: cropPlots[0]?.id ?? "",
     crop: ((cropPlots[0]?.crop as (typeof CROPS)[number] | null) ?? "soja") as (typeof CROPS)[number],
     ticket: "",
@@ -139,7 +220,6 @@ function DeliveryModal({ farmId, plots, onClose }: { farmId: string; plots: Plot
     impuritiesPct: "0",
     otherKg: "0",
   });
-  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   const gross = toNum(f.grossKg);
   const preview =
     gross && gross > 0
@@ -174,47 +254,7 @@ function DeliveryModal({ farmId, plots, onClose }: { farmId: string; plots: Plot
   return (
     <Modal title={t("ui.deliv.add")} onClose={onClose}>
       <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label={t("ui.common.plot")}>
-            <Select value={f.plotId} onChange={set("plotId")} options={[{ value: "", label: "—" }, ...cropPlots.map((p) => ({ value: p.id, label: p.name }))]} />
-          </Field>
-          <Field label={t("ui.common.crop")}>
-            <Select
-              value={f.crop}
-              onChange={(e) => {
-                const crop = e.target.value as (typeof CROPS)[number];
-                setF({ ...f, crop, baseMoisturePct: String(BASE_MOISTURE_PCT[crop]) });
-              }}
-              options={CROPS.map((c) => ({ value: c, label: tk(`fields.crop.${c}`) }))}
-            />
-          </Field>
-          <Field label={t("ui.deliv.ticket")}>
-            <Input required value={f.ticket} onChange={set("ticket")} maxLength={40} />
-          </Field>
-          <Field label={t("ui.deliv.date")}>
-            <Input type="date" required value={f.deliveredOn} onChange={set("deliveredOn")} />
-          </Field>
-        </div>
-        <Field label={t("ui.deliv.silo")}>
-          <Input required value={f.silo} onChange={set("silo")} maxLength={120} />
-        </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label={t("ui.deliv.grossKg")}>
-            <Input required inputMode="decimal" className="num" value={f.grossKg} onChange={set("grossKg")} />
-          </Field>
-          <Field label={t("ui.deliv.moisturePct")}>
-            <Input inputMode="decimal" className="num" value={f.moisturePct} onChange={set("moisturePct")} />
-          </Field>
-          <Field label={t("ui.deliv.basePct")}>
-            <Input required inputMode="decimal" className="num" value={f.baseMoisturePct} onChange={set("baseMoisturePct")} />
-          </Field>
-          <Field label={t("ui.deliv.impurities")}>
-            <Input inputMode="decimal" className="num" value={f.impuritiesPct} onChange={set("impuritiesPct")} />
-          </Field>
-          <Field label={t("ui.deliv.otherKg")}>
-            <Input inputMode="decimal" className="num" value={f.otherKg} onChange={set("otherKg")} />
-          </Field>
-        </div>
+        <DeliveryFields f={f} setF={setF} cropPlots={cropPlots} />
         {preview && (
           <p className="num text-sm">
             {t("ui.deliv.preview", { net: tons(preview.netKg), moist: fmtNum(preview.moistureKg), imp: fmtNum(preview.impuritiesKg) })}

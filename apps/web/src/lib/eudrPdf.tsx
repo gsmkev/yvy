@@ -52,6 +52,29 @@ export function ChangeMap({ farm, plots, areas, width = 539, height = 260 }: { f
   );
 }
 
+/** Tabla de lotes con el bosque de referencia y el resultado de cada uno. */
+function PlotsTable({ plots, refYear }: { plots: EudrReportData["data"]["plots"]; refYear: number }) {
+  return (
+    <>
+      <Text style={s.h2}>{t("ui.eudr.plotsTitle")}</Text>
+      <View style={s.th}>
+        <Text style={{ width: 120 }}>{t("ui.eudr.colPlot")}</Text>
+        <Text style={{ width: 70 }}>{t("ui.eudr.colArea")}</Text>
+        <Text style={{ width: 90 }}>{t("ui.eudr.colForest", { year: refYear })}</Text>
+        <Text style={{ flex: 1 }}>{t("ui.eudr.colResult")}</Text>
+      </View>
+      {plots.map((p) => (
+        <View key={p.plotId} style={s.row} wrap={false}>
+          <Text style={{ width: 120 }}>{p.plotName}</Text>
+          <Text style={{ width: 70 }}>{fmtHa(p.plotAreaHa)}</Text>
+          <Text style={{ width: 90 }}>{p.status === "no_data" ? "—" : fmtHa(p.forestRefHa)}</Text>
+          <Text style={{ flex: 1 }}>{statusText(p.status, p.lossHa)}</Text>
+        </View>
+      ))}
+    </>
+  );
+}
+
 /** Documento PDF del indicador EUDR por lote. */
 export function EudrReport({ farm, data, plots, generatedAt }: EudrReportData) {
   const sum = summarize(data);
@@ -63,16 +86,21 @@ export function EudrReport({ farm, data, plots, generatedAt }: EudrReportData) {
   const c = range(sum.curFromAt, sum.curToAt);
   const areas = changeAreas(data.plots);
   return (
-    <Document title={`${t("ui.eudr.title")} · ${farm.name}`} author="Yvy" language="es-PY">
+    <Document title={`${t("ui.eudr.title")}: ${farm.name}`} author="Yvy" language="es-PY">
       <Page size="A4" style={s.page}>
         <Text style={s.h1}>
-          {t("ui.eudr.title")} · {farm.name}
+          {t("ui.eudr.title")}: {farm.name}
         </Text>
         <Text style={s.muted}>
-          {[farm.department, farm.district].filter(Boolean).join(", ")}
-          {farm.department || farm.district ? " · " : ""}
-          {fmtHa(farm.areaHa)} · {t("ui.shared.generated", { date: fmtDate(generatedAt) })}
-          {data.computedAt !== null ? " · " + t("ui.eudr.computed", { date: fmtDate(data.computedAt) }) : ""}
+          {[
+            farm.department,
+            farm.district,
+            fmtHa(farm.areaHa),
+            t("ui.shared.generated", { date: fmtDate(generatedAt) }),
+            data.computedAt !== null ? t("ui.eudr.computed", { date: fmtDate(data.computedAt) }) : "",
+          ]
+            .filter(Boolean)
+            .join(", ")}
         </Text>
 
         <View style={{ marginTop: 8, borderLeftWidth: 2, borderLeftColor: BRAND.trigo, paddingLeft: 6 }}>
@@ -92,22 +120,7 @@ export function EudrReport({ farm, data, plots, generatedAt }: EudrReportData) {
         <ChangeMap farm={farm} plots={plots} areas={areas} />
         {areas.length === 0 && <Text style={s.muted}>{t("ui.eudr.mapNone")}</Text>}
 
-        <Text style={s.h2}>{t("ui.eudr.plotsTitle")}</Text>
-        <View style={s.th}>
-          <Text style={{ width: 120 }}>{t("ui.eudr.colPlot")}</Text>
-          <Text style={{ width: 70 }}>{t("ui.eudr.colArea")}</Text>
-          <Text style={{ width: 90 }}>{t("ui.eudr.colForest", { year: refYear })}</Text>
-          <Text style={{ flex: 1 }}>{t("ui.eudr.colResult")}</Text>
-        </View>
-        {data.plots.map((p) => (
-          <View key={p.plotId} style={s.row} wrap={false}>
-            <Text style={{ width: 120 }}>{p.plotName}</Text>
-            <Text style={{ width: 70 }}>{fmtHa(p.plotAreaHa)}</Text>
-            <Text style={{ width: 90 }}>{p.status === "no_data" ? "—" : fmtHa(p.forestRefHa)}</Text>
-            <Text style={{ flex: 1 }}>{statusText(p.status, p.lossHa)}</Text>
-          </View>
-        ))}
-
+        <PlotsTable plots={data.plots} refYear={refYear} />
         <View wrap={false}>
           <Text style={s.h2}>{t("ui.eudr.methodTitle")}</Text>
           <Text>{t("ui.eudr.methodSource")}</Text>

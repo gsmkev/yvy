@@ -59,6 +59,63 @@ export function distanceM(lon1: number, lat1: number, lon2: number, lat2: number
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
+type AppData = {
+  products?: { productId?: string; name: string; dose: number; unit: string }[];
+  areaHa?: number;
+  windKmh?: number;
+  machine?: string;
+};
+
+/** Aguada o vivienda más cercana a la aplicación, en metros; sin ubicación o sin puntos devuelve nulos. */
+function nearestSensitive(r: RecordRow, sensitive: Poi[]): { m: number | null; name: string | null } {
+  let m: number | null = null;
+  let name: string | null = null;
+  if (r.lon === null || r.lat === null) return { m, name };
+  for (const p of sensitive) {
+    const d = distanceM(r.lon, r.lat, p.lon, p.lat);
+    if (m === null || d < m) {
+      m = d;
+      name = p.name;
+    }
+  }
+  return { m, name };
+}
+
+/** Productos de una aplicación cruzados con el catálogo (por id o, si falta, por nombre). */
+function auditProducts(d: AppData, byId: Map<string, Product>, byName: Map<string, Product>): AuditProduct[] {
+  return (d.products ?? []).map((p) => {
+    const cat = (p.productId && byId.get(p.productId)) || byName.get(p.name.toLowerCase());
+    return {
+      name: p.name,
+      activeIngredient: cat?.activeIngredient ?? null,
+      toxClass: cat?.toxClass ?? null,
+      dose: p.dose,
+      unit: p.unit,
+      withdrawalDays: cat?.withdrawalDays ?? null,
+    };
+  });
+}
+
+/** Marcas que un auditor miraría en una aplicación. */
+function auditFlags(
+  r: RecordRow,
+  d: AppData,
+  products: AuditProduct[],
+  nearestM: number | null,
+  safeHarvestAt: number | null,
+  harvests: number[],
+): AuditFlag[] {
+  const flags: AuditFlag[] = [];
+  if (r.lon === null || r.lat === null) flags.push("no_location");
+  if (nearestM !== null && nearestM < BUFFER_M) flags.push("near_water_or_house");
+  if (products.some((p) => p.withdrawalDays === null)) flags.push("no_withdrawal");
+  if (d.windKmh !== undefined && (d.windKmh < LIMITS.spray.windMinKmh || d.windKmh > LIMITS.spray.windMaxKmh))
+    flags.push("wind");
+  if (safeHarvestAt !== null && harvests.some((h) => h > r.capturedAt && h < safeHarvestAt))
+    flags.push("harvest_in_withdrawal");
+  return flags;
+}
+
 /** Arma el informe de auditoría del período a partir de los registros de la estancia. */
 export function buildAuditReport(input: {
   from: string;
@@ -77,47 +134,12 @@ export function buildAuditReport(input: {
   const applications: AuditApplication[] = [...input.applications]
     .sort((a, b) => a.capturedAt - b.capturedAt)
     .map((r) => {
-      const d = r.data as {
-        products?: { productId?: string; name: string; dose: number; unit: string }[];
-        areaHa?: number;
-        windKmh?: number;
-        machine?: string;
-      };
-      const products: AuditProduct[] = (d.products ?? []).map((p) => {
-        const cat = (p.productId && byId.get(p.productId)) || byName.get(p.name.toLowerCase());
-        return {
-          name: p.name,
-          activeIngredient: cat?.activeIngredient ?? null,
-          toxClass: cat?.toxClass ?? null,
-          dose: p.dose,
-          unit: p.unit,
-          withdrawalDays: cat?.withdrawalDays ?? null,
-        };
-      });
+      const d = r.data as AppData;
+      const products = auditProducts(d, byId, byName);
       const days = products.map((p) => p.withdrawalDays).filter((x): x is number => x !== null);
       const safeHarvestAt = days.length ? r.capturedAt + Math.max(...days) * DAY : null;
-      let nearestM: number | null = null;
-      let nearestName: string | null = null;
-      if (r.lon !== null && r.lat !== null)
-        for (const p of sensitive) {
-          const m = distanceM(r.lon, r.lat, p.lon, p.lat);
-          if (nearestM === null || m < nearestM) {
-            nearestM = m;
-            nearestName = p.name;
-          }
-        }
-      const flags: AuditFlag[] = [];
-      if (r.lon === null || r.lat === null) flags.push("no_location");
-      if (nearestM !== null && nearestM < BUFFER_M) flags.push("near_water_or_house");
-      if (products.some((p) => p.withdrawalDays === null)) flags.push("no_withdrawal");
-      if (d.windKmh !== undefined && (d.windKmh < LIMITS.spray.windMinKmh || d.windKmh > LIMITS.spray.windMaxKmh))
-        flags.push("wind");
-      if (
-        safeHarvestAt !== null &&
-        r.plotId &&
-        (harvestsByPlot.get(r.plotId) ?? []).some((h) => h > r.capturedAt && h < safeHarvestAt)
-      )
-        flags.push("harvest_in_withdrawal");
+      const near = nearestSensitive(r, sensitive);
+      const plotHarvests = r.plotId ? (harvestsByPlot.get(r.plotId) ?? []) : [];
       return {
         id: r.id,
         at: r.capturedAt,
@@ -129,9 +151,9 @@ export function buildAuditReport(input: {
         windKmh: d.windKmh ?? null,
         products,
         safeHarvestAt,
-        nearestM: nearestM === null ? null : Math.round(nearestM),
-        nearestName,
-        flags,
+        nearestM: near.m === null ? null : Math.round(near.m),
+        nearestName: near.name,
+        flags: auditFlags(r, d, products, near.m, safeHarvestAt, plotHarvests),
       };
     });
   const ops = new Map<string, number>();

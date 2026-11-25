@@ -8,7 +8,7 @@ import { useParties } from "../PartiesPanel";
 import { useWarehouses } from "../WarehousesPanel";
 
 /** Compra tal como la usa el resumen. */
-export interface Purchase {
+interface Purchase {
   id: string;
   partyId: string | null;
   orderDate: string;

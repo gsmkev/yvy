@@ -202,7 +202,7 @@ export function FormFooter({
 }
 
 /** Grilla de un formulario de diálogo: una columna en el celular y dos desde 640 px, con las etiquetas arriba y alineadas. */
-export const FORM_GRID = "grid grid-cols-1 items-start gap-x-4 gap-y-4 sm:grid-cols-2";
+const FORM_GRID = "grid grid-cols-1 items-start gap-x-4 gap-y-4 sm:grid-cols-2";
 
 /** `<form>` que corta el envío nativo y llama a `onSubmit`. Sin `className` es la grilla de formulario (`FORM_GRID`). */
 export function Form({

@@ -20,16 +20,11 @@ const toDraft = (v: AlertSettings): Draft => ({
 });
 const num = (v: string) => Number(v.replace(",", "."));
 
-/**
- * Sección plegable con los umbrales de avisos de una estancia.
- * @param open si está desplegada.
- */
-export function AlertSettingsSection({ open, onToggle }: { open: boolean; /** Alterna el despliegue. */ onToggle: () => void }) {
+/** Estado de los umbrales de la estancia elegida: consulta, borrador editable y guardado. */
+function useAlertSettings(farmId: string) {
   const farms = useFarms();
   const me = useMe();
-  const [farmId, setFarmId] = useState("");
   const id = farmId || farms.data?.[0]?.id || "";
-  const canEdit = me.data?.role === "owner" || me.data?.role === "admin";
   const qc = useQueryClient();
   const settings = useQuery({
     enabled: !!id && !!me.data && !isFieldRole(me.data.role),
@@ -63,6 +58,53 @@ export function AlertSettingsSection({ open, onToggle }: { open: boolean; /** Al
       return qc.invalidateQueries({ queryKey: ["alert-settings", id] });
     },
   });
+  return { farms, me, id, settings, draft, setDraft, saved, setSaved, valid, save };
+}
+
+/** Formulario de umbrales: campos, guardar y volver a los valores por defecto. */
+function SettingsForm({ s, canEdit }: { s: ReturnType<typeof useAlertSettings>; canEdit: boolean }) {
+  const { draft, setDraft, setSaved, valid, save, saved } = s;
+  if (!draft) return null;
+  return (
+    <Form className="mt-4 flex flex-col gap-4" onSubmit={() => { if (valid) save.mutate(); }}>
+      {ALERT_SETTING_KEYS.map((k) => (
+        <Field key={k} label={t(ALERT_SETTING_LABELS[k][0])} hint={t(ALERT_SETTING_LABELS[k][1])}>
+          <Input
+            inputMode="decimal"
+            className="w-32"
+            value={draft[k]}
+            disabled={!canEdit}
+            onChange={(e) => {
+              setSaved(false);
+              setDraft({ ...draft, [k]: e.target.value });
+            }}
+          />
+        </Field>
+      ))}
+      {!canEdit && <p className="text-sm text-tinta-2">{t("ui.alert.settingsOnlyOwner")}</p>}
+      {canEdit && (
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="primary" type="submit" disabled={!valid || save.isPending}>
+            {t("ui.common.save")}
+          </Button>
+          <Button onClick={() => setDraft(toDraft(DEFAULT_ALERT_SETTINGS))}>{t("ui.alert.settingsDefaults")}</Button>
+          {saved && <span className="text-sm text-tinta-2">{t("ui.alert.settingsSaved")}</span>}
+        </div>
+      )}
+      {save.error ? <ErrorBox error={save.error} /> : null}
+    </Form>
+  );
+}
+
+/**
+ * Sección plegable con los umbrales de avisos de una estancia.
+ * @param open si está desplegada.
+ */
+export function AlertSettingsSection({ open, onToggle }: { open: boolean; /** Alterna el despliegue. */ onToggle: () => void }) {
+  const [farmId, setFarmId] = useState("");
+  const s = useAlertSettings(farmId);
+  const { farms, me, id, settings } = s;
+  const canEdit = me.data?.role === "owner" || me.data?.role === "admin";
 
   if ((me.data && isFieldRole(me.data.role)) || !farms.data?.length) return null;
   // En escritorio el bloque es una columna lateral siempre abierta; en el celular se despliega
@@ -95,35 +137,7 @@ export function AlertSettingsSection({ open, onToggle }: { open: boolean; /** Al
         )}
         {settings.isLoading && <Spinner />}
         {settings.error ? <ErrorBox error={settings.error} /> : null}
-        {draft && (
-          <Form className="mt-4 flex flex-col gap-4" onSubmit={() => { if (valid) save.mutate(); }}>
-            {ALERT_SETTING_KEYS.map((k) => (
-              <Field key={k} label={t(ALERT_SETTING_LABELS[k][0])} hint={t(ALERT_SETTING_LABELS[k][1])}>
-                <Input
-                  inputMode="decimal"
-                  className="w-32"
-                  value={draft[k]}
-                  disabled={!canEdit}
-                  onChange={(e) => {
-                    setSaved(false);
-                    setDraft({ ...draft, [k]: e.target.value });
-                  }}
-                />
-              </Field>
-            ))}
-            {!canEdit && <p className="text-sm text-tinta-2">{t("ui.alert.settingsOnlyOwner")}</p>}
-            {canEdit && (
-              <div className="flex flex-wrap items-center gap-3">
-                <Button variant="primary" type="submit" disabled={!valid || save.isPending}>
-                  {t("ui.common.save")}
-                </Button>
-                <Button onClick={() => setDraft(toDraft(DEFAULT_ALERT_SETTINGS))}>{t("ui.alert.settingsDefaults")}</Button>
-                {saved && <span className="text-sm text-tinta-2">{t("ui.alert.settingsSaved")}</span>}
-              </div>
-            )}
-            {save.error ? <ErrorBox error={save.error} /> : null}
-          </Form>
-        )}
+        <SettingsForm s={s} canEdit={canEdit} />
       </div>
     </section>
   );

@@ -41,7 +41,7 @@ export function orderSheetHtml(g: OrderGroup, farmName: string): string {
   const machine = g.machine ? safeHtml`<p>${t("ui.order.machine")}: ${g.machine}</p>` : "";
   const volume = g.order.volumeLHa ? safeHtml`<p>${t("ui.order.volume")}: ${g.order.volumeLHa} L/ha</p>` : "";
   const note = g.order.note ? safeHtml`<h2>${t("ui.order.note")}</h2><p>${g.order.note}</p>` : "";
-  return safeHtml`<!doctype html><html lang="es-PY"><head><meta charset="utf-8"><title>${labor} · ${farmName}</title>
+  return safeHtml`<!doctype html><html lang="es-PY"><head><meta charset="utf-8"><title>${labor}: ${farmName}</title>
 <style>
 body{font-family:system-ui,sans-serif;color:#1E2419;margin:24px;max-width:720px}
 h1{font-family:Georgia,serif;font-size:22px;margin:0}
@@ -55,7 +55,7 @@ td,th{padding:5px 8px 5px 0;border-bottom:1px solid #DAD6C8;text-align:left;vert
 @media print{@page{margin:14mm}}
 </style></head><body>
 <h1>${labor}</h1>
-<p>${farmName} · ${t("ui.order.due")}: ${fmtIsoDate(g.dueDate)}</p>
+<p>${farmName}, ${t("ui.order.due")}: ${fmtIsoDate(g.dueDate)}</p>
 <h2>${t("ui.order.plots")}</h2>
 <table><thead><tr><th>${t("ui.order.plot")}</th><th class="n">${t("ui.order.planned")}</th></tr></thead><tbody>${plots}</tbody>${footer}</table>
 ${productTable}

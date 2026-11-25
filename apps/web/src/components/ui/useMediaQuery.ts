@@ -5,7 +5,7 @@ import { useSyncExternalStore } from "react";
  * Valor actual de una media query y re-render cuando cambia.
  * @param fallback valor cuando no hay `matchMedia` (pruebas y render sin navegador): por defecto, pantalla ancha.
  */
-export function useMediaQuery(query: string, fallback = false) {
+function useMediaQuery(query: string, fallback = false) {
   return useSyncExternalStore(
     (cb) => {
       const m = window.matchMedia?.(query);

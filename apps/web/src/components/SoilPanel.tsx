@@ -30,6 +30,79 @@ const useSoilSamples = (farmId: string) =>
 
 const toNum = (v: string) => (v.trim() === "" ? null : Number(v.replace(",", ".")));
 
+/** Tabla de análisis con la fila de promedio; el nivel de cada valor va en una segunda línea chica. */
+function SoilTable({ rows, avg, onRemove }: { rows: SoilSample[]; avg: ReturnType<typeof soilAverage>; onRemove: (r: SoilSample) => void }) {
+  // El nivel va en una segunda línea chica: así la tabla entra en el panel angosto sin desbordar
+  const cell = (p: SoilParam, v: number | null) =>
+    v === null ? (
+      "—"
+    ) : (
+      <>
+        {fmtNum(v)}
+        <span className="block text-xs font-normal text-tinta-2">{t(`ui.soil.level_${soilLevel(p, v)}` as "ui.soil.level_low")}</span>
+      </>
+    );
+  return (
+    <div>
+      <ExportableTable name="suelo">
+        <table className="w-full text-sm">
+          <thead className="text-left text-tinta-2">
+            <tr>
+              <th className="py-2 pr-2 font-medium">{t("ui.soil.where")}</th>
+              <th className="py-2 pr-2 font-medium">{t("ui.soil.date")}</th>
+              {SOIL_PARAMS.map((p) => (
+                <th key={p} className="py-2 pr-2 font-medium">
+                  {t(`ui.soil.param_${p}` as "ui.soil.param_ph")}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-linea border-y border-linea">
+            {rows.map((r) => (
+              <tr key={r.id}>
+                <td
+                  className="py-2.5 pr-2"
+                  data-value={`${[r.plotName, r.pointLabel].filter(Boolean).join(", ") || t("ui.soil.farmWide")}, ${[`${r.depthCm} cm`, r.lab].filter(Boolean).join(", ")}`}
+                >
+                  {[r.plotName, r.pointLabel].filter(Boolean).join(", ") || t("ui.soil.farmWide")}
+                  <span className="block text-xs text-tinta-2">
+                    {[`${r.depthCm} cm`, r.lab].filter(Boolean).join(", ")}
+                  </span>
+                  <button
+                    className="mt-0.5 cursor-pointer text-xs text-tinta-2 underline-offset-4 hover:text-peligro hover:underline"
+                    onClick={() => onRemove(r)}
+                  >
+                    {t("ui.common.delete")}
+                  </button>
+                </td>
+                <td className="num py-2.5 pr-2" data-value={fmtIsoDate(r.sampledOn)}>
+                  {fmtDay(Date.parse(`${r.sampledOn}T12:00:00-03:00`))}
+                </td>
+                {SOIL_PARAMS.map((p) => (
+                  <td key={p} className="num py-2.5 pr-2" data-value={r[p] ?? ""}>
+                    {cell(p, r[p])}
+                  </td>
+                ))}
+              </tr>
+            ))}
+            {rows.length > 1 && (
+              <tr className="font-medium">
+                <td className="py-2.5 pr-3">{t("ui.soil.average")}</td>
+                <td />
+                {SOIL_PARAMS.map((p) => (
+                  <td key={p} className="num py-2.5 pr-2" data-value={avg[p] ?? ""}>
+                    {cell(p, avg[p])}
+                  </td>
+                ))}
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </ExportableTable>
+    </div>
+  );
+}
+
 /** Análisis de suelo de laboratorio por lote o punto de muestreo. */
 export function SoilPanel({ farmId, plots }: { farmId: string; plots: Plot[] }) {
   const q = useSoilSamples(farmId);
@@ -46,16 +119,6 @@ export function SoilPanel({ farmId, plots }: { farmId: string; plots: Plot[] }) 
   });
   const rows = q.data ?? [];
   const avg = soilAverage(rows);
-  // El nivel va en una segunda línea chica: así la tabla entra en el panel angosto sin desbordar
-  const cell = (p: SoilParam, v: number | null) =>
-    v === null ? (
-      "—"
-    ) : (
-      <>
-        {fmtNum(v)}
-        <span className="block text-xs font-normal text-tinta-2">{t(`ui.soil.level_${soilLevel(p, v)}` as "ui.soil.level_low")}</span>
-      </>
-    );
   return (
     <section aria-labelledby="soil-h" className="flex flex-col gap-3">
       <h3 id="soil-h" className="font-serif text-lg font-semibold">
@@ -71,63 +134,7 @@ export function SoilPanel({ farmId, plots }: { farmId: string; plots: Plot[] }) 
       {q.error && <ErrorBox error={q.error} />}
       {q.data && rows.length === 0 && <Empty title={t("ui.soil.title")}>{t("ui.soil.none")}</Empty>}
       {rows.length > 0 && (
-        <div>
-          <ExportableTable name="suelo">
-            <table className="w-full text-sm">
-              <thead className="text-left text-tinta-2">
-                <tr>
-                  <th className="py-2 pr-2 font-medium">{t("ui.soil.where")}</th>
-                  <th className="py-2 pr-2 font-medium">{t("ui.soil.date")}</th>
-                  {SOIL_PARAMS.map((p) => (
-                    <th key={p} className="py-2 pr-2 font-medium">
-                      {t(`ui.soil.param_${p}` as "ui.soil.param_ph")}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-linea border-y border-linea">
-                {rows.map((r) => (
-                  <tr key={r.id}>
-                    <td
-                      className="py-2.5 pr-2"
-                      data-value={`${[r.plotName, r.pointLabel].filter(Boolean).join(", ") || t("ui.soil.farmWide")}, ${[`${r.depthCm} cm`, r.lab].filter(Boolean).join(", ")}`}
-                    >
-                      {[r.plotName, r.pointLabel].filter(Boolean).join(", ") || t("ui.soil.farmWide")}
-                      <span className="block text-xs text-tinta-2">
-                        {[`${r.depthCm} cm`, r.lab].filter(Boolean).join(", ")}
-                      </span>
-                      <button
-                        className="mt-0.5 cursor-pointer text-xs text-tinta-2 underline-offset-4 hover:text-peligro hover:underline"
-                        onClick={() => setRemoving(r)}
-                      >
-                        {t("ui.common.delete")}
-                      </button>
-                    </td>
-                    <td className="num py-2.5 pr-2" data-value={fmtIsoDate(r.sampledOn)}>
-                      {fmtDay(Date.parse(`${r.sampledOn}T12:00:00-03:00`))}
-                    </td>
-                    {SOIL_PARAMS.map((p) => (
-                      <td key={p} className="num py-2.5 pr-2" data-value={r[p] ?? ""}>
-                        {cell(p, r[p])}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-                {rows.length > 1 && (
-                  <tr className="font-medium">
-                    <td className="py-2.5 pr-3">{t("ui.soil.average")}</td>
-                    <td />
-                    {SOIL_PARAMS.map((p) => (
-                      <td key={p} className="num py-2.5 pr-2" data-value={avg[p] ?? ""}>
-                        {cell(p, avg[p])}
-                      </td>
-                    ))}
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </ExportableTable>
-        </div>
+        <SoilTable rows={rows} avg={avg} onRemove={setRemoving} />
       )}
       <p className="text-xs text-tinta-2">{t("ui.soil.note")}</p>
       {adding && <SoilModal farmId={farmId} plots={plots} onClose={() => setAdding(false)} />}

@@ -11,13 +11,13 @@ import type { Farm } from "./types";
 /** Documento PDF del informe de auditoría para certificaciones. */
 export function AuditReport(d: AuditReportData & { farm: Farm; generatedAt: number }) {
   return (
-    <Document title={`${t("ui.audit.reportTitle")} · ${d.farm.name}`} author="Yvy" language="es-PY">
+    <Document title={`${t("ui.audit.reportTitle")}: ${d.farm.name}`} author="Yvy" language="es-PY">
       <Page size="A4" orientation="landscape" style={s.page}>
         <Text style={s.h1}>
-          {t("ui.audit.reportTitle")} · {d.farm.name}
+          {t("ui.audit.reportTitle")}: {d.farm.name}
         </Text>
         <Text style={s.muted}>
-          {fmtIsoDate(d.from)} – {fmtIsoDate(d.to)} · {t("ui.shared.generated", { date: fmtDate(d.generatedAt) })}
+          {fmtIsoDate(d.from)} – {fmtIsoDate(d.to)}, {t("ui.shared.generated", { date: fmtDate(d.generatedAt) })}
         </Text>
         <View style={s.kpis}>
           <Kpi label={t("ui.audit.applications")} value={String(d.applications.length)} />
@@ -54,8 +54,8 @@ export function AuditReport(d: AuditReportData & { farm: Farm; generatedAt: numb
               {a.products.map((p, i) => (
                 <Text key={i}>
                   {p.name}
-                  {p.activeIngredient ? ` (${p.activeIngredient}${p.toxClass ? `, ${p.toxClass}` : ""})` : ""} · {fmtNum(p.dose)}{" "}
-                  {tk(`fields.dose.unit_${p.unit}`)} ·{" "}
+                  {p.activeIngredient ? ` (${p.activeIngredient}${p.toxClass ? `, ${p.toxClass}` : ""})` : ""}: {fmtNum(p.dose)}{" "}
+                  {tk(`fields.dose.unit_${p.unit}`)},{" "}
                   {p.withdrawalDays === null ? t("ui.audit.noWithdrawal") : t("ui.audit.withdrawalDays", { n: p.withdrawalDays })}
                 </Text>
               ))}

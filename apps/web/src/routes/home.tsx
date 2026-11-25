@@ -34,66 +34,91 @@ function OnboardingEmpty({ canEdit }: { canEdit: boolean }) {
   );
 }
 
+/** Mapa con todas las estancias; un clic en una abre su pantalla. */
+function HomeMap({ list, tilesBaseUrl }: { list: ReturnType<typeof useFarms>["data"] & {}; tilesBaseUrl: string | undefined }) {
+  const navigate = useNavigate();
+  return (
+    <div className="relative h-72 lg:h-full">
+      <FarmMap
+        farms={list.map((f) => ({
+          id: f.id,
+          name: f.name,
+          geometry: f.geometry,
+          basemapPath: f.basemapPath,
+          alert: f.activeAlerts > 0,
+        }))}
+        tilesBaseUrl={tilesBaseUrl}
+        bounds={allFarmsBounds(list)}
+        onMapClick={() => {}}
+        onPointClick={(id) => navigate({ to: "/estancias/$farmId", params: { farmId: id } })}
+      />
+    </div>
+  );
+}
+
+/** Guía de primeros pasos, o el botón para volver a mostrarla si se descartó con pasos pendientes. */
+function GuideBlock({ g }: { g: ReturnType<typeof useHomeGuide> }) {
+  const { steps, guide, dismissed, setGuide } = g;
+  return (
+    <>
+      {guide && (
+        <FirstRunGuide
+          steps={guide}
+          onDismiss={() => {
+            savePrefs({ guideDismissed: true });
+            setGuide.mutate(true);
+          }}
+        />
+      )}
+      {steps && dismissed && steps.some((s) => !s.done) && (
+        <button
+          className="flex h-10 cursor-pointer items-center self-start text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
+          onClick={() => setGuide.mutate(false)}
+        >
+          {t("ui.guide.show")}
+        </button>
+      )}
+    </>
+  );
+}
+
+/** Lista de estancias y, debajo, el resumen del dueño o los totales según el rol. */
+function FarmsBlock({ list, summary }: { list: NonNullable<ReturnType<typeof useFarms>["data"]>; summary: boolean }) {
+  if (list.length === 0) return null;
+  return (
+    <>
+      <FarmList list={list} />
+      {summary ? list.length > 1 && <OwnerDashboard /> : <FarmTotals list={list} />}
+    </>
+  );
+}
+
 /** Inicio multi estancia. */
 export function HomePage() {
   const farms = useFarms();
   const me = useMe();
-  const navigate = useNavigate();
   const canEdit = !!me.data && !isFieldRole(me.data.role);
   const list = farms.data ?? [];
-  const { steps, guide, dismissed, setGuide } = useHomeGuide(list, !!farms.data, me.data, canEdit);
+  const g = useHomeGuide(list, !!farms.data, me.data, canEdit);
   // El resumen del dueño ya trae superficie por cultivo, avisos y registros: no se repiten arriba
   const summary = me.data?.role === "owner" || me.data?.role === "admin";
 
   return (
     <div className="grid h-full lg:grid-cols-[minmax(0,1fr)_440px]">
-      <div className="relative h-72 lg:h-full">
-        <FarmMap
-          farms={list.map((f) => ({
-            id: f.id,
-            name: f.name,
-            geometry: f.geometry,
-            basemapPath: f.basemapPath,
-            alert: f.activeAlerts > 0,
-          }))}
-          tilesBaseUrl={me.data?.tilesBaseUrl}
-          bounds={allFarmsBounds(list)}
-          onMapClick={() => {}}
-          onPointClick={(id) => navigate({ to: "/estancias/$farmId", params: { farmId: id } })}
-        />
-      </div>
+      <HomeMap list={list} tilesBaseUrl={me.data?.tilesBaseUrl} />
       <section className="flex flex-col gap-6 overflow-auto border-l border-linea p-4 sm:p-6 *:shrink-0">
         <PageHeader
           title={t("ui.common.homeTitle")}
           // sin estancias, el estado vacío ya lleva el mismo botón: una sola acción primaria
-          primary={canEdit && !(farms.data && list.length === 0 && !guide) ? <NewFarmButton /> : undefined}
+          primary={canEdit && !(farms.data && list.length === 0 && !g.guide) ? <NewFarmButton /> : undefined}
         />
 
         {farms.isLoading && <Spinner rows={3} h={72} />}
         {farms.error && <ErrorBox error={farms.error} />}
-        {guide && (
-          <FirstRunGuide
-            steps={guide}
-            onDismiss={() => {
-              savePrefs({ guideDismissed: true });
-              setGuide.mutate(true);
-            }}
-          />
-        )}
-        {steps && dismissed && steps.some((s) => !s.done) && (
-          <button
-            className="flex h-10 cursor-pointer items-center self-start text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline"
-            onClick={() => setGuide.mutate(false)}
-          >
-            {t("ui.guide.show")}
-          </button>
-        )}
-        {farms.data && list.length === 0 && !guide && <OnboardingEmpty canEdit={canEdit} />}
+        <GuideBlock g={g} />
+        {farms.data && list.length === 0 && !g.guide && <OnboardingEmpty canEdit={canEdit} />}
 
-        {list.length > 0 && <FarmList list={list} />}
-
-        {list.length > 1 && summary && <OwnerDashboard />}
-        {list.length > 0 && !summary && <FarmTotals list={list} />}
+        <FarmsBlock list={list} summary={summary} />
       </section>
     </div>
   );

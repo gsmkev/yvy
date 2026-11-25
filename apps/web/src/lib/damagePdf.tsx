@@ -69,25 +69,76 @@ const Footer = () => (
   </View>
 );
 
+/** Pasadas de vigor antes y después del evento, con su curva. */
+function SatelliteBlock({ sat, eventMs }: { sat: ReturnType<typeof damageSatellite>; eventMs: number }) {
+  const pass = (p: NdviPass | null) => (p ? `${fmtNdvi(p.mean)} (${fmtDate(p.acquiredAt)})` : "—");
+  return (
+    <>
+      <Text style={s.h2}>{t("ui.damage.satellite")}</Text>
+      <View style={{ flexDirection: "row", gap: 12 }}>
+        <View style={{ flex: 1, gap: 3 }}>
+          <Text>
+            {t("ui.damage.before")}: <Text style={{ fontFamily: "Helvetica-Bold" }}>{pass(sat.before)}</Text>
+          </Text>
+          <Text>
+            {t("ui.damage.after")}: <Text style={{ fontFamily: "Helvetica-Bold" }}>{pass(sat.after)}</Text>
+          </Text>
+          {(!sat.before || !sat.after) && <Text style={s.muted}>{t("ui.damage.noPass")}</Text>}
+          <Text style={s.muted}>{t("ui.damage.satelliteNote")}</Text>
+        </View>
+        <NdviLine series={sat.series} eventMs={eventMs} />
+      </View>
+      <Text style={[s.muted, { marginTop: 3 }]}>{t(ATTRIBUTION.copernicus)}.</Text>
+    </>
+  );
+}
+
+/** Registros de campo del período como evidencia. */
+function EvidenceRows({ records }: { records: DamageReportData["evidence"]["records"] }) {
+  return (
+    <>
+      <Text style={s.h2}>{t("ui.damage.records", { n: records.length })}</Text>
+      {records.length === 0 && <Text style={s.muted}>{t("ui.damage.noRecords")}</Text>}
+      {records.length > 0 && (
+        <View style={s.th}>
+          <Text style={{ width: 90 }}>{t("ui.damage.colWhen")}</Text>
+          <Text style={{ width: 90 }}>{t("ui.damage.colKind")}</Text>
+          <Text style={{ flex: 1 }}>{t("ui.damage.colDetail")}</Text>
+        </View>
+      )}
+      {records.map((r) => (
+        <View key={r.id} style={s.row} wrap={false}>
+          <Text style={{ width: 90 }}>{fmtDateTime(r.capturedAt)}</Text>
+          <Text style={{ width: 90 }}>{tk(`record-kinds.kind.${r.kind}`)}</Text>
+          <Text style={{ flex: 1 }}>{describeData(r.kind, r.data)}</Text>
+        </View>
+      ))}
+    </>
+  );
+}
+
 /** Documento PDF del informe de daños con vigor antes y después, registros y fotos. */
 export function DamageReport(d: DamageReportData) {
   const sat = damageSatellite(d.series, d.eventDay);
   const eventMs = Date.parse(`${d.eventDay}T12:00:00-03:00`);
   const gps = d.evidence.records.filter((r) => r.lon !== null && r.lat !== null).map((r) => ({ lon: r.lon!, lat: r.lat! }));
-  const pass = (p: NdviPass | null) => (p ? `${fmtNdvi(p.mean)} · ${fmtDate(p.acquiredAt)}` : "—");
   return (
-    <Document title={`${t("ui.damage.title")} · ${d.plot.name}`} author="Yvy" language="es-PY">
+    <Document title={`${t("ui.damage.title")}: ${d.plot.name}`} author="Yvy" language="es-PY">
       <Page size="A4" style={s.page}>
         <Text style={s.h1}>
-          {t("ui.damage.title")} · {d.plot.name}
+          {t("ui.damage.title")}: {d.plot.name}
         </Text>
         <Text style={s.muted}>
-          {d.farm.name}
-          {[d.farm.department, d.farm.district].filter(Boolean).length
-            ? ` · ${[d.farm.department, d.farm.district].filter(Boolean).join(", ")}`
-            : ""}{" "}
-          · {fmtHa(d.plot.areaHa)} · {d.plot.crop ? tk(`fields.crop.${d.plot.crop}`) : t("ui.common.crop")}
-          {d.plot.sowingDate ? " · " + t("ui.rotation.sown", { date: fmtIsoDate(d.plot.sowingDate) }) : ""}
+          {[
+            d.farm.name,
+            d.farm.department,
+            d.farm.district,
+            fmtHa(d.plot.areaHa),
+            d.plot.crop ? tk(`fields.crop.${d.plot.crop}`) : t("ui.common.crop"),
+            d.plot.sowingDate ? t("ui.rotation.sown", { date: fmtIsoDate(d.plot.sowingDate) }) : "",
+          ]
+            .filter(Boolean)
+            .join(", ")}
         </Text>
         <Text style={s.muted}>{t("ui.damage.generated", { date: fmtDateTime(d.generatedAt), by: d.author })}</Text>
 
@@ -103,42 +154,11 @@ export function DamageReport(d: DamageReportData) {
           </>
         )}
 
-        <Text style={s.h2}>{t("ui.damage.satellite")}</Text>
-        <View style={{ flexDirection: "row", gap: 12 }}>
-          <View style={{ flex: 1, gap: 3 }}>
-            <Text>
-              {t("ui.damage.before")}: <Text style={{ fontFamily: "Helvetica-Bold" }}>{pass(sat.before)}</Text>
-            </Text>
-            <Text>
-              {t("ui.damage.after")}: <Text style={{ fontFamily: "Helvetica-Bold" }}>{pass(sat.after)}</Text>
-            </Text>
-            {(!sat.before || !sat.after) && <Text style={s.muted}>{t("ui.damage.noPass")}</Text>}
-            <Text style={s.muted}>{t("ui.damage.satelliteNote")}</Text>
-          </View>
-          <NdviLine series={sat.series} eventMs={eventMs} />
-        </View>
-        <Text style={[s.muted, { marginTop: 3 }]}>{t(ATTRIBUTION.copernicus)}.</Text>
-
+        <SatelliteBlock sat={sat} eventMs={eventMs} />
         <Text style={s.h2}>{t("ui.damage.location")}</Text>
         <PlotMap farm={d.farm} plot={d.plot} points={gps} />
 
-        <Text style={s.h2}>{t("ui.damage.records", { n: d.evidence.records.length })}</Text>
-        {d.evidence.records.length === 0 && <Text style={s.muted}>{t("ui.damage.noRecords")}</Text>}
-        {d.evidence.records.length > 0 && (
-          <View style={s.th}>
-            <Text style={{ width: 90 }}>{t("ui.damage.colWhen")}</Text>
-            <Text style={{ width: 90 }}>{t("ui.damage.colKind")}</Text>
-            <Text style={{ flex: 1 }}>{t("ui.damage.colDetail")}</Text>
-          </View>
-        )}
-        {d.evidence.records.map((r) => (
-          <View key={r.id} style={s.row} wrap={false}>
-            <Text style={{ width: 90 }}>{fmtDateTime(r.capturedAt)}</Text>
-            <Text style={{ width: 90 }}>{tk(`record-kinds.kind.${r.kind}`)}</Text>
-            <Text style={{ flex: 1 }}>{describeData(r.kind, r.data)}</Text>
-          </View>
-        ))}
-
+        <EvidenceRows records={d.evidence.records} />
         {d.photoUrls.length > 0 && (
           <View wrap={false}>
             <Text style={s.h2}>{t("ui.common.photos")}</Text>

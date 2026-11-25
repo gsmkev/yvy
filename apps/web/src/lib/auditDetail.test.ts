@@ -10,12 +10,12 @@ describe("auditSummary", () => {
       values: { farmId: UUID, title: "Lote 3", crop: "maiz", plotCount: 4, assigneeId: UUID },
       fields: ["geometry"],
     });
-    expect(auditSummary(detail)).toBe("Título: Lote 3 · Cultivo: maiz · plot count: 4 · cambió: geometry");
+    expect(auditSummary(detail)).toBe("Título: Lote 3; Cultivo: maiz; plot count: 4; cambió: geometry");
   });
 
   it("muestra los campos sueltos que no están dentro de values", () => {
     expect(auditSummary(JSON.stringify({ id: UUID, name: "Juan", role: "admin", id2: UUID }))).toBe(
-      "Nombre: Juan · Rol: admin",
+      "Nombre: Juan; Rol: admin",
     );
   });
 

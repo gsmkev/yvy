@@ -42,6 +42,46 @@ function FileOptions({
   );
 }
 
+/** Botones del perímetro: dibujar (o agregar otra parte), empezar de nuevo e importar un archivo. */
+function PerimeterButtons({
+  drawing,
+  hasParts,
+  onToggleDraw,
+  onReset,
+  onFile,
+}: {
+  drawing: boolean;
+  hasParts: boolean;
+  onToggleDraw: () => void;
+  onReset: () => void;
+  onFile: (file: File) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Button icon={drawing ? X : PenLine} onClick={onToggleDraw}>
+        {drawing ? t("ui.common.cancel") : hasParts ? t("ui.add.part") : t("ui.common.draw")}
+      </Button>
+      {hasParts && !drawing && (
+        <Button variant="quiet" onClick={onReset}>
+          {t("ui.common.startOver")}
+        </Button>
+      )}
+      <label className="cursor-pointer">
+        <span className="inline-flex h-10 items-center gap-2 rounded-md border border-linea bg-papel px-3.5 text-sm font-medium hover:bg-lino">
+          <Upload size={16} aria-hidden />
+          {t("ui.import.short")}
+        </span>
+        <input
+          type="file"
+          accept=".kml,.kmz,.geojson,.json,.zip"
+          className="hidden"
+          onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
+        />
+      </label>
+    </div>
+  );
+}
+
 /** Pantalla para crear una estancia, con la opción de importar sus lotes en el mismo paso. */
 export function NewFarmPage() {
   const me = useMe();
@@ -93,31 +133,13 @@ export function NewFarmPage() {
           }}
         />
         <p className="text-sm text-tinta-2">{t("ui.draw.farm")}</p>
-        <div className="flex flex-wrap gap-2">
-          <Button icon={drawing ? X : PenLine} onClick={() => setDrawing(!drawing)}>
-            {drawing ? t("ui.common.cancel") : parts.length ? t("ui.add.part") : t("ui.common.draw")}
-          </Button>
-          {parts.length > 0 && !drawing && (
-            <Button
-              variant="quiet"
-              onClick={reset}
-            >
-              {t("ui.common.startOver")}
-            </Button>
-          )}
-          <label className="cursor-pointer">
-            <span className="inline-flex h-10 items-center gap-2 rounded-md border border-linea bg-papel px-3.5 text-sm font-medium hover:bg-lino">
-                <Upload size={16} aria-hidden />
-              {t("ui.import.short")}
-            </span>
-            <input
-              type="file"
-              accept=".kml,.kmz,.geojson,.json,.zip"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
-            />
-          </label>
-        </div>
+        <PerimeterButtons
+          drawing={drawing}
+          hasParts={parts.length > 0}
+          onToggleDraw={() => setDrawing(!drawing)}
+          onReset={reset}
+          onFile={onFile}
+        />
         {fileOptions && (
           <FileOptions
             fileOptions={fileOptions}

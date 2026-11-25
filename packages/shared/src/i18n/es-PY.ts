@@ -2890,13 +2890,10 @@ export const esPY = {
       countMany: "{{n}} tareas vencidas",
     },
     unvisited: {
-      one: "1 lote sin visitar hace más de {{days}} días",
-      many: "{{n}} lotes sin visitar hace más de {{days}} días",
+      label: "Sin visita hace más de",
+      only: "Solo sin visitar ({{n}})",
       showAll: "Ver todos los lotes",
-      oneLead: "1 lote sin visitar hace más de",
-      manyLead: "{{n}} lotes sin visitar hace más de",
-      noneLead: "Todos los lotes con visita en los últimos",
-      after: "Días sin visita para marcar un lote",
+      none: "Todos con visita reciente",
     },
     share: {
       whatsapp: "Compartir por WhatsApp",

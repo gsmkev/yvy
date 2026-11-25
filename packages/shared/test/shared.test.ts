@@ -71,12 +71,12 @@ describe("i18n", () => {
 import { describeRecord } from "../src";
 describe("describeRecord", () => {
   it("traduce valores", () => {
-    expect(describeRecord("scouting", { condition: "good", note: "Sin novedades" })).toBe("Bueno · Sin novedades");
-    expect(describeRecord("pest", { pest: "chinche", intensity: "medium" })).toBe("Chinche · intensidad media");
+    expect(describeRecord("scouting", { condition: "good", note: "Sin novedades" })).toBe("Bueno, Sin novedades");
+    expect(describeRecord("pest", { pest: "chinche", intensity: "medium" })).toBe("Chinche, intensidad media");
     expect(describeRecord("pasture_status", { heightCm: 18, cover: "medium", livestockPresent: true })).toBe(
-      "18 cm de altura · cobertura media · con hacienda",
+      "18 cm de altura, cobertura media, con hacienda",
     );
-    expect(describeRecord("crop_status", { stage: "vegetativo", condition: "good" })).toBe("Vegetativo · bueno");
+    expect(describeRecord("crop_status", { stage: "vegetativo", condition: "good" })).toBe("Vegetativo, bueno");
     expect(describeRecord("water", { level: "half" })).toBe("Medio");
     expect(describeRecord("rain", { mm: 12, readAt: 1 })).toBe("12 mm");
   });

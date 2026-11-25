@@ -155,7 +155,7 @@ export function describeRecord(kind: string, data: Record<string, unknown>): str
       break;
   }
   if (kind !== "note" && str("note")) parts.push(d.note as string);
-  const out = parts.join(" · ");
+  const out = parts.join(", ");
   return out ? out.charAt(0).toUpperCase() + out.slice(1) : tr(`record-kinds.kind.${kind}`, kind);
 }
 

@@ -85,7 +85,7 @@ function escapeArrayTypes(dir) {
         if (fenced || line.startsWith("```")) return line;
         return line
           .split("`")
-          .map((part, i) => (i % 2 === 0 ? part.replaceAll("[]", "\\[\\]") : part))
+          .map((part, i) => (i % 2 === 0 ? part.split("[]").join("\\[\\]") : part))
           .join("`");
       });
     writeFileSync(path, lines.join("\n"));

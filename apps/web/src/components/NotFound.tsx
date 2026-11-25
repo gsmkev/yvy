@@ -5,10 +5,16 @@ import { t } from "../lib/i18n";
 
 /**
  * Pantalla completa centrada con el nombre de la marca, un mensaje corto y el botón para volver al inicio.
- * @param title título (por defecto, el del 404 general).
- * @param message texto bajo el título (por defecto, el del 404 general).
  */
-export function NotFound({ title, message }: { title?: string; message?: ReactNode }) {
+export function NotFound({
+  title,
+  message,
+}: {
+  /** Título; por defecto, el del 404 general. */
+  title?: string;
+  /** Texto bajo el título; por defecto, el del 404 general. */
+  message?: ReactNode;
+}) {
   return (
     <main className="flex min-h-full flex-col items-center justify-center gap-6 bg-lino px-6 py-16 text-center">
       <Link to="/" className="font-serif text-2xl font-semibold text-surco" aria-label={t("ui.app.name")}>

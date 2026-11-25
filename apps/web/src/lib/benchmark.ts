@@ -14,3 +14,8 @@ export function compareToZone(own: number | null, median: number | null): Verdic
   const d = (own - median) / Math.abs(median);
   return Math.abs(d) < SAME_BAND ? "same" : d > 0 ? "above" : "below";
 }
+
+/** Clave i18n de la frase que resume la comparación de una métrica con la zona. */
+export function zoneVerdictKey(metric: "vigor" | "rain", verdict: Verdict): string {
+  return `ui.bench.${metric}${verdict[0]!.toUpperCase()}${verdict.slice(1)}`;
+}

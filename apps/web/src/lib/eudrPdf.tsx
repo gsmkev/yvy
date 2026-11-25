@@ -52,6 +52,29 @@ export function ChangeMap({ farm, plots, areas, width = 539, height = 260 }: { f
   );
 }
 
+/** Tabla de lotes con el bosque de referencia y el resultado de cada uno. */
+function PlotsTable({ plots, refYear }: { plots: EudrReportData["data"]["plots"]; refYear: number }) {
+  return (
+    <>
+      <Text style={s.h2}>{t("ui.eudr.plotsTitle")}</Text>
+      <View style={s.th}>
+        <Text style={{ width: 120 }}>{t("ui.eudr.colPlot")}</Text>
+        <Text style={{ width: 70 }}>{t("ui.eudr.colArea")}</Text>
+        <Text style={{ width: 90 }}>{t("ui.eudr.colForest", { year: refYear })}</Text>
+        <Text style={{ flex: 1 }}>{t("ui.eudr.colResult")}</Text>
+      </View>
+      {plots.map((p) => (
+        <View key={p.plotId} style={s.row} wrap={false}>
+          <Text style={{ width: 120 }}>{p.plotName}</Text>
+          <Text style={{ width: 70 }}>{fmtHa(p.plotAreaHa)}</Text>
+          <Text style={{ width: 90 }}>{p.status === "no_data" ? "—" : fmtHa(p.forestRefHa)}</Text>
+          <Text style={{ flex: 1 }}>{statusText(p.status, p.lossHa)}</Text>
+        </View>
+      ))}
+    </>
+  );
+}
+
 /** Documento PDF del indicador EUDR por lote. */
 export function EudrReport({ farm, data, plots, generatedAt }: EudrReportData) {
   const sum = summarize(data);
@@ -97,22 +120,7 @@ export function EudrReport({ farm, data, plots, generatedAt }: EudrReportData) {
         <ChangeMap farm={farm} plots={plots} areas={areas} />
         {areas.length === 0 && <Text style={s.muted}>{t("ui.eudr.mapNone")}</Text>}
 
-        <Text style={s.h2}>{t("ui.eudr.plotsTitle")}</Text>
-        <View style={s.th}>
-          <Text style={{ width: 120 }}>{t("ui.eudr.colPlot")}</Text>
-          <Text style={{ width: 70 }}>{t("ui.eudr.colArea")}</Text>
-          <Text style={{ width: 90 }}>{t("ui.eudr.colForest", { year: refYear })}</Text>
-          <Text style={{ flex: 1 }}>{t("ui.eudr.colResult")}</Text>
-        </View>
-        {data.plots.map((p) => (
-          <View key={p.plotId} style={s.row} wrap={false}>
-            <Text style={{ width: 120 }}>{p.plotName}</Text>
-            <Text style={{ width: 70 }}>{fmtHa(p.plotAreaHa)}</Text>
-            <Text style={{ width: 90 }}>{p.status === "no_data" ? "—" : fmtHa(p.forestRefHa)}</Text>
-            <Text style={{ flex: 1 }}>{statusText(p.status, p.lossHa)}</Text>
-          </View>
-        ))}
-
+        <PlotsTable plots={data.plots} refYear={refYear} />
         <View wrap={false}>
           <Text style={s.h2}>{t("ui.eudr.methodTitle")}</Text>
           <Text>{t("ui.eudr.methodSource")}</Text>

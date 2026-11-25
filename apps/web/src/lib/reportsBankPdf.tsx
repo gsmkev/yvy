@@ -24,14 +24,67 @@ interface BankReportData {
 const pct = (v: number | null, n: number | null) =>
   v !== null && n ? `${fmtNum(Math.round((v / n) * 100))} % ${t("ui.bank.ofNormal")}` : undefined;
 
-/** Documento PDF del informe para el banco. Recibe los datos ya calculados. */
-export function BankReport(d: BankReportData) {
+/** Vigor de cada lote en el último año: última pasada, mínimo, máximo y cantidad de escenas. */
+function VigorRows({ plots, vigor }: { plots: BankReportData["plots"]; vigor: BankReportData["vigor"] }) {
+  return (
+    <>
+      <Text style={s.h2}>{t("ui.bank.vigorTitle")}</Text>
+      <View style={s.th}>
+        <Text style={{ width: 110 }}>{t("ui.common.plot")}</Text>
+        <Text style={{ width: 70 }}>{t("ui.common.crop")}</Text>
+        <Text style={{ width: 55 }}>{t("ui.common.area")}</Text>
+        <Text style={{ width: 55 }}>{t("ui.bank.last")}</Text>
+        <Text style={{ width: 55 }}>{t("ui.bank.min")}</Text>
+        <Text style={{ width: 55 }}>{t("ui.bank.max")}</Text>
+        <Text style={{ flex: 1 }}>{t("ui.bank.scenes")}</Text>
+      </View>
+      {plots.map((p) => {
+        const v = vigor.get(p.id);
+        return (
+          <View key={p.id} style={s.row} wrap={false}>
+            <Text style={{ width: 110 }}>{p.name}</Text>
+            <Text style={{ width: 70 }}>{p.kind === "pasture" ? t("ui.common.pasture") : (p.crop ?? "—")}</Text>
+            <Text style={{ width: 55 }}>{fmtHa(p.areaHa)}</Text>
+            <Text style={{ width: 55 }}>{v?.last != null ? fmtNdvi(v.last) : "—"}</Text>
+            <Text style={{ width: 55 }}>{v?.min != null ? fmtNdvi(v.min) : "—"}</Text>
+            <Text style={{ width: 55 }}>{v?.max != null ? fmtNdvi(v.max) : "—"}</Text>
+            <Text style={{ flex: 1 }}>{v?.n ?? 0}</Text>
+          </View>
+        );
+      })}
+    </>
+  );
+}
+
+/** Cantidad de lotes y superficie por cultivo. */
+function CropsTable({ plots }: { plots: BankReportData["plots"] }) {
   const byCrop = new Map<string, { n: number; ha: number }>();
-  for (const p of d.plots) {
+  for (const p of plots) {
     const key = p.kind === "pasture" ? t("ui.common.pasture") : (p.crop ?? "—");
     const cur = byCrop.get(key) ?? { n: 0, ha: 0 };
     byCrop.set(key, { n: cur.n + 1, ha: cur.ha + p.areaHa });
   }
+  return (
+    <>
+      <Text style={s.h2}>{t("ui.bank.crops")}</Text>
+      <View style={s.th}>
+        <Text style={{ width: 150 }}>{t("ui.common.crop")}</Text>
+        <Text style={{ width: 60 }}>{t("ui.common.plots")}</Text>
+        <Text style={{ flex: 1 }}>{t("ui.common.area")}</Text>
+      </View>
+      {[...byCrop.entries()].map(([crop, v]) => (
+        <View key={crop} style={s.row} wrap={false}>
+          <Text style={{ width: 150 }}>{crop}</Text>
+          <Text style={{ width: 60 }}>{v.n}</Text>
+          <Text style={{ flex: 1 }}>{fmtHa(v.ha)}</Text>
+        </View>
+      ))}
+    </>
+  );
+}
+
+/** Documento PDF del informe para el banco. Recibe los datos ya calculados. */
+export function BankReport(d: BankReportData) {
   return (
     <Document title={`${t("ui.bank.reportTitle")}: ${d.farm.name}`} author="Yvy" language="es-PY">
       <Page size="A4" style={s.page}>
@@ -52,20 +105,7 @@ export function BankReport(d: BankReportData) {
           <MiniMap farm={d.farm} plots={d.plots} records={[]} height={170} />
         </View>
 
-        <Text style={s.h2}>{t("ui.bank.crops")}</Text>
-        <View style={s.th}>
-          <Text style={{ width: 150 }}>{t("ui.common.crop")}</Text>
-          <Text style={{ width: 60 }}>{t("ui.common.plots")}</Text>
-          <Text style={{ flex: 1 }}>{t("ui.common.area")}</Text>
-        </View>
-        {[...byCrop.entries()].map(([crop, v]) => (
-          <View key={crop} style={s.row} wrap={false}>
-            <Text style={{ width: 150 }}>{crop}</Text>
-            <Text style={{ width: 60 }}>{v.n}</Text>
-            <Text style={{ flex: 1 }}>{fmtHa(v.ha)}</Text>
-          </View>
-        ))}
-
+        <CropsTable plots={d.plots} />
         <Text style={s.h2}>{t("ui.bank.rainTitle")}</Text>
         <View style={s.kpis}>
           <Kpi
@@ -82,31 +122,7 @@ export function BankReport(d: BankReportData) {
           />
         </View>
 
-        <Text style={s.h2}>{t("ui.bank.vigorTitle")}</Text>
-        <View style={s.th}>
-          <Text style={{ width: 110 }}>{t("ui.common.plot")}</Text>
-          <Text style={{ width: 70 }}>{t("ui.common.crop")}</Text>
-          <Text style={{ width: 55 }}>{t("ui.common.area")}</Text>
-          <Text style={{ width: 55 }}>{t("ui.bank.last")}</Text>
-          <Text style={{ width: 55 }}>{t("ui.bank.min")}</Text>
-          <Text style={{ width: 55 }}>{t("ui.bank.max")}</Text>
-          <Text style={{ flex: 1 }}>{t("ui.bank.scenes")}</Text>
-        </View>
-        {d.plots.map((p) => {
-          const v = d.vigor.get(p.id);
-          return (
-            <View key={p.id} style={s.row} wrap={false}>
-              <Text style={{ width: 110 }}>{p.name}</Text>
-              <Text style={{ width: 70 }}>{p.kind === "pasture" ? t("ui.common.pasture") : (p.crop ?? "—")}</Text>
-              <Text style={{ width: 55 }}>{fmtHa(p.areaHa)}</Text>
-              <Text style={{ width: 55 }}>{v?.last != null ? fmtNdvi(v.last) : "—"}</Text>
-              <Text style={{ width: 55 }}>{v?.min != null ? fmtNdvi(v.min) : "—"}</Text>
-              <Text style={{ width: 55 }}>{v?.max != null ? fmtNdvi(v.max) : "—"}</Text>
-              <Text style={{ flex: 1 }}>{v?.n ?? 0}</Text>
-            </View>
-          );
-        })}
-
+        <VigorRows plots={d.plots} vigor={d.vigor} />
         <View wrap={false}>
           <Text style={s.h2}>{t("ui.alerts.title")}</Text>
           {d.alerts.length === 0 ? (

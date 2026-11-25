@@ -53,6 +53,57 @@ interface FarmMapPaneProps {
   onSelectPlot: (id: string) => void;
 }
 
+/** El mapa principal de la estancia con todas sus capas, el dibujo y la medición. */
+function MainMap({ p, mapApi }: { p: FarmMapPaneProps; mapApi: MutableRefObject<{ zoom: (dir: 1 | -1) => void } | null> }) {
+  const { d, me, scene, edit, task, measure, overlays } = p;
+  const { compare, pickedIds, kind, layer, shownIndex } = scene;
+  const { shapeEdit, mode } = edit;
+  return (
+    <FarmMap
+      snapshotRef={p.snapshotRef}
+      apiRef={mapApi}
+      navControl={false}
+      outline={d.farm.geometry}
+      plots={d.plots}
+      pois={d.pois}
+      heat={p.tracks.heat}
+      problemAreas={p.problemAreas}
+      flyTo={p.flyTo}
+      layers={d.layers}
+      boundaries={overlays.boundaryLevel ? overlays.boundaries.data : null}
+      customImages={overlays.customImages}
+      layerIds={compare ? { ...pickedIds, [kind]: compare.left } : pickedIds}
+      camera={compare ? scene.camera : null}
+      onCamera={compare ? scene.setCamera : undefined}
+      tilesBaseUrl={me?.tilesBaseUrl}
+      showNdvi={layer === "ndvi"}
+      indexKind={shownIndex}
+      selectedPlotId={task.picking ? null : p.selected}
+      pickedPlotIds={task.taskPlots}
+      stalePlotIds={p.unvisitedIds}
+      editPlot={shapeEdit}
+      onEditChange={edit.setShape}
+      bounds={p.bounds}
+      points={mapPoints(p.pests.show, p.pests.points, p.tab, p.records)}
+      measuring={measure.measuring}
+      measurePoints={measure.points}
+      measureClosed={measure.closed}
+      onMeasureClick={measure.addPoint}
+      onMeasureClose={measure.close}
+      drawing={mode === "draw"}
+      lines={p.lines}
+      drawingLine={(!!edit.splitting && !edit.splitLine) || (edit.lineDraw && !edit.newLine)}
+      onLineDrawn={(g) => (edit.splitting ? edit.setSplitLine(g) : edit.setNewLine(g))}
+      onDrawn={(g) => {
+        edit.setDrawn(g);
+        edit.setMode("none");
+      }}
+      onPlotClick={p.onPlotClick}
+      onMapClick={(lon, lat) => mode === "poi" && (edit.setPoiAt([lon, lat]), edit.setMode("none"))}
+    />
+  );
+}
+
 /** Columna del mapa: mapa, comparación, herramientas, medición, capas y avisos flotantes. */
 export function FarmMapPane(p: FarmMapPaneProps) {
   const { d, farmId, me, scene, edit, task, measure, overlays } = p;
@@ -62,51 +113,10 @@ export function FarmMapPane(p: FarmMapPaneProps) {
   // El panel de capas arranca cerrado: el mapa es lo primero que se ve
   const [layersOpen, setLayersOpen] = useState(false);
   const { compare, pickedIds, kind, layer, shownIndex } = scene;
-  const { shapeEdit, mode } = edit;
+  const { shapeEdit } = edit;
   return (
     <div ref={mapBox} className={`relative min-h-0 flex-1 bg-lino lg:h-full print:hidden ${p.hidden ? "max-lg:hidden" : ""}`}>
-      <FarmMap
-        snapshotRef={p.snapshotRef}
-        apiRef={mapApi}
-        navControl={false}
-        outline={d.farm.geometry}
-        plots={d.plots}
-        pois={d.pois}
-        heat={p.tracks.heat}
-        problemAreas={p.problemAreas}
-        flyTo={p.flyTo}
-        layers={d.layers}
-        boundaries={overlays.boundaryLevel ? overlays.boundaries.data : null}
-        customImages={overlays.customImages}
-        layerIds={compare ? { ...pickedIds, [kind]: compare.left } : pickedIds}
-        camera={compare ? scene.camera : null}
-        onCamera={compare ? scene.setCamera : undefined}
-        tilesBaseUrl={me?.tilesBaseUrl}
-        showNdvi={layer === "ndvi"}
-        indexKind={shownIndex}
-        selectedPlotId={task.picking ? null : p.selected}
-        pickedPlotIds={task.taskPlots}
-        stalePlotIds={p.unvisitedIds}
-        editPlot={shapeEdit}
-        onEditChange={edit.setShape}
-        bounds={p.bounds}
-        points={mapPoints(p.pests.show, p.pests.points, p.tab, p.records)}
-        measuring={measure.measuring}
-        measurePoints={measure.points}
-        measureClosed={measure.closed}
-        onMeasureClick={measure.addPoint}
-        onMeasureClose={measure.close}
-        drawing={mode === "draw"}
-        lines={p.lines}
-        drawingLine={(!!edit.splitting && !edit.splitLine) || (edit.lineDraw && !edit.newLine)}
-        onLineDrawn={(g) => (edit.splitting ? edit.setSplitLine(g) : edit.setNewLine(g))}
-        onDrawn={(g) => {
-          edit.setDrawn(g);
-          edit.setMode("none");
-        }}
-        onPlotClick={p.onPlotClick}
-        onMapClick={(lon, lat) => mode === "poi" && (edit.setPoiAt([lon, lat]), edit.setMode("none"))}
-      />
+      <MainMap p={p} mapApi={mapApi} />
       {compare && (
         <CompareOverlay
           pct={scene.curtain}

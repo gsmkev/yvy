@@ -25,6 +25,93 @@ const collator = new Intl.Collator("es-PY", { sensitivity: "base", numeric: true
 /** Sin dato cuenta como el menor: queda primero de menor a mayor y último de mayor a menor. */
 const byNum = (get: (p: Plot) => number | null) => (a: Plot, b: Plot) => (get(a) ?? -1) - (get(b) ?? -1);
 
+const dropText = (d: { pct: number; since: number }) => t("ui.vigor.drop", { pct: d.pct, date: fmtDay(d.since) });
+
+/** Columnas de la tabla; "Vigor" solo si algún lote tiene una pasada procesada. */
+function plotColumns(hasVigor: boolean): Column<Plot>[] {
+  return [
+      {
+        id: "name",
+        header: t("ui.common.plot"),
+        sort: (a, b) => collator.compare(a.name, b.name),
+        cell: (p) => {
+          const d = vigorDrop(p);
+          return (
+            <>
+              <button className="cursor-pointer text-left font-medium" aria-label={p.name}>
+                {p.name}
+              </button>
+              {d && <p className="num mt-0.5 text-xs font-normal text-peligro">{dropText(d)}</p>}
+            </>
+          );
+        },
+      },
+      {
+        id: "kind",
+        header: t("ui.common.kind"),
+        sort: (a, b) => collator.compare(kindOf(a), kindOf(b)),
+        cell: (p) => (
+          <span className="text-tinta-2">{p.kind === "pasture" ? t("ui.common.pasture") : (p.crop ? cropName(p.crop) : t("ui.common.crop"))}</span>
+        ),
+      },
+      { id: "area", header: areaUnitLabel(), align: "right", sort: (a, b) => a.areaHa - b.areaHa, cell: (p) => (
+          <>
+            {fmtAreaValue(p.areaHa)}
+            <span className="sm:hidden"> {areaUnitLabel()}</span>
+          </>
+        ),
+      },
+      ...(hasVigor
+        ? [
+            {
+              id: "vigor",
+              header: t("ui.common.vigor"),
+              align: "right" as const,
+              sort: byNum((p) => p.ndviMean),
+              cell: (p: Plot) => (
+                <>
+                  <span className="sm:hidden">{t("ui.common.vigor")} </span>
+                  <Vigor value={p.ndviMean} />
+                </>
+              ),
+            },
+          ]
+        : []),
+      {
+        id: "visit",
+        header: t("ui.last.visitShort"),
+        align: "right",
+        sort: byNum((p) => p.lastRecordAt),
+        cell: (p) => <span className="text-tinta-2">{p.lastRecordAt ? fmtDay(p.lastRecordAt) : "—"}</span>,
+      },
+  ];
+}
+
+type Worse = { plot: Plot; drop: { pct: number; since: number } | null };
+
+/** Lista de lotes cuyo vigor bajó, del que más bajó al que menos. */
+function WorsenedPlots({ worse, onSelect }: { worse: Worse[]; onSelect: (id: string) => void }) {
+  if (worse.length === 0) return null;
+  return (
+    <div className="mb-5">
+      <h3 className="eyebrow mb-1">{t("ui.common.worsenedPlots")}</h3>
+      <ul className="divide-y divide-linea border-y border-linea text-sm">
+        {worse.map(({ plot, drop }) => (
+          <li key={plot.id}>
+            <button
+              onClick={() => onSelect(plot.id)}
+              className="flex w-full cursor-pointer items-baseline justify-between gap-3 py-2 text-left hover:bg-surco/[0.03]"
+            >
+              <span className="font-medium">{plot.name}</span>
+              <span className="num text-peligro">{dropText(drop!)}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /**
  * Tabla de lotes con búsqueda y orden.
  * @param onSelect se llama con el id del lote elegido.
@@ -44,85 +131,12 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
         .sort((a, b) => b.drop!.pct - a.drop!.pct),
     [plots],
   );
-  const dropText = (d: { pct: number; since: number }) => t("ui.vigor.drop", { pct: d.pct, date: fmtDay(d.since) });
   // Sin ninguna pasada procesada la columna Vigor sería una fila de guiones
   const hasVigor = plots.some((p) => p.ndviMean !== null);
-  const columns: Column<Plot>[] = [
-    {
-      id: "name",
-      header: t("ui.common.plot"),
-      sort: (a, b) => collator.compare(a.name, b.name),
-      cell: (p) => {
-        const d = vigorDrop(p);
-        return (
-          <>
-            <button className="cursor-pointer text-left font-medium" aria-label={p.name}>
-              {p.name}
-            </button>
-            {d && <p className="num mt-0.5 text-xs font-normal text-peligro">{dropText(d)}</p>}
-          </>
-        );
-      },
-    },
-    {
-      id: "kind",
-      header: t("ui.common.kind"),
-      sort: (a, b) => collator.compare(kindOf(a), kindOf(b)),
-      cell: (p) => (
-        <span className="text-tinta-2">{p.kind === "pasture" ? t("ui.common.pasture") : (p.crop ? cropName(p.crop) : t("ui.common.crop"))}</span>
-      ),
-    },
-    { id: "area", header: areaUnitLabel(), align: "right", sort: (a, b) => a.areaHa - b.areaHa, cell: (p) => (
-        <>
-          {fmtAreaValue(p.areaHa)}
-          <span className="sm:hidden"> {areaUnitLabel()}</span>
-        </>
-      ),
-    },
-    ...(hasVigor
-      ? [
-          {
-            id: "vigor",
-            header: t("ui.common.vigor"),
-            align: "right" as const,
-            sort: byNum((p) => p.ndviMean),
-            cell: (p: Plot) => (
-              <>
-                <span className="sm:hidden">{t("ui.common.vigor")} </span>
-                <Vigor value={p.ndviMean} />
-              </>
-            ),
-          },
-        ]
-      : []),
-    {
-      id: "visit",
-      header: t("ui.last.visitShort"),
-      align: "right",
-      sort: byNum((p) => p.lastRecordAt),
-      cell: (p) => <span className="text-tinta-2">{p.lastRecordAt ? fmtDay(p.lastRecordAt) : "—"}</span>,
-    },
-  ];
+  const columns = plotColumns(hasVigor);
   return (
     <>
-      {worse.length > 0 && (
-        <div className="mb-5">
-          <h3 className="eyebrow mb-1">{t("ui.common.worsenedPlots")}</h3>
-          <ul className="divide-y divide-linea border-y border-linea text-sm">
-            {worse.map(({ plot, drop }) => (
-              <li key={plot.id}>
-                <button
-                  onClick={() => onSelect(plot.id)}
-                  className="flex w-full cursor-pointer items-baseline justify-between gap-3 py-2 text-left hover:bg-surco/[0.03]"
-                >
-                  <span className="font-medium">{plot.name}</span>
-                  <span className="num text-peligro">{dropText(drop!)}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <WorsenedPlots worse={worse} onSelect={onSelect} />
       <Input
         type="search"
         aria-label={t("ui.filter.plots")}

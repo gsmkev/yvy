@@ -108,9 +108,37 @@ interface ReportData {
   photoUrls: string[];
 }
 
+/** Registros, lluvia de la semana y avisos en tres indicadores. */
+function WeeklyKpis({ d }: { d: ReportData }) {
+  const authors = new Set(d.records.map((r) => r.authorId)).size;
+  return (
+    <>
+      <View style={s.kpis}>
+        <View style={s.kpi}>
+          <Text style={s.muted}>{t("ui.nav.records")}</Text>
+          <Text style={s.kpiValue}>{d.records.length}</Text>
+          <Text style={s.muted}>
+            {authors} {t("ui.common.workers").toLowerCase()}
+          </Text>
+        </View>
+        <View style={s.kpi}>
+          <Text style={s.muted}>{t("ui.rain.week")}</Text>
+          <Text style={s.kpiValue}>{d.rainMm === null ? "—" : `${Math.round(d.rainMm)} mm`}</Text>
+          <Text style={s.muted}>
+            {d.gaugeMm !== null ? `${t("ui.common.gauge")}: ${Math.round(d.gaugeMm)} mm` : t("ui.common.satelliteRain")}
+          </Text>
+        </View>
+        <View style={s.kpi}>
+          <Text style={s.muted}>{t("ui.alerts.title")}</Text>
+          <Text style={s.kpiValue}>{d.alerts.length}</Text>
+        </View>
+      </View>
+    </>
+  );
+}
+
 /** Documento PDF del parte semanal de una estancia. */
 export function WeeklyReport(d: ReportData) {
-  const authors = new Set(d.records.map((r) => r.authorId)).size;
   return (
     <Document title={`${t("ui.report.title")}: ${d.farm.name}`} author="Yvy" language="es-PY">
       <Page size="A4" style={s.page}>
@@ -121,26 +149,7 @@ export function WeeklyReport(d: ReportData) {
           {fmtIsoDate(d.from)} – {fmtIsoDate(d.to)}, {fmtHa(d.farm.areaHa)}, {d.plots.length}{" "}
           {t("ui.common.plots").toLowerCase()}
         </Text>
-        <View style={s.kpis}>
-          <View style={s.kpi}>
-            <Text style={s.muted}>{t("ui.nav.records")}</Text>
-            <Text style={s.kpiValue}>{d.records.length}</Text>
-            <Text style={s.muted}>
-              {authors} {t("ui.common.workers").toLowerCase()}
-            </Text>
-          </View>
-          <View style={s.kpi}>
-            <Text style={s.muted}>{t("ui.rain.week")}</Text>
-            <Text style={s.kpiValue}>{d.rainMm === null ? "—" : `${Math.round(d.rainMm)} mm`}</Text>
-            <Text style={s.muted}>
-              {d.gaugeMm !== null ? `${t("ui.common.gauge")}: ${Math.round(d.gaugeMm)} mm` : t("ui.common.satelliteRain")}
-            </Text>
-          </View>
-          <View style={s.kpi}>
-            <Text style={s.muted}>{t("ui.alerts.title")}</Text>
-            <Text style={s.kpiValue}>{d.alerts.length}</Text>
-          </View>
-        </View>
+        <WeeklyKpis d={d} />
         <Text style={s.h2}>{t("ui.nav.records")}</Text>
         <MiniMap farm={d.farm} plots={d.plots} records={d.records} />
         <View style={{ marginTop: 8 }}>

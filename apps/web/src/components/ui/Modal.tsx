@@ -1,7 +1,7 @@
 /** Diálogos modales accesibles: foco atrapado, cierre con Escape y confirmación. */
 import { Button } from "./Button";
 import { ErrorBox } from "./feedback";
-import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode, type RefObject } from "react";
 import { X } from "lucide-react";
 import { t } from "../../lib/i18n";
 
@@ -22,6 +22,40 @@ export const useInModal = () => useContext(ModalContext) !== null;
 
 /** Milisegundos de la animación de salida (igual a --dur-exit). */
 const EXIT_MS = 120;
+
+/** Foco inicial en el primer campo, Tab dentro del diálogo, Escape cierra y al salir el foco vuelve a lo que lo abrió. */
+function useDialogFocus(box: RefObject<HTMLDivElement | null>, requestClose: () => void) {
+  useEffect(() => {
+    const before = document.activeElement as HTMLElement | null;
+    const el = box.current;
+    // Primer campo del formulario; si no hay (confirmaciones), el propio diálogo, para no enfocar una acción destructiva
+    const field = el?.querySelector<HTMLElement>(".modal-body :is(input,select,textarea):not([disabled]):not([type=\"hidden\"])");
+    (field ?? el)?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        requestClose();
+      } else if (e.key === "Tab" && el) {
+        const items = Array.from(el.querySelectorAll<HTMLElement>(FOCUSABLE));
+        if (!items.length) return e.preventDefault();
+        const first = items[0]!;
+        const last = items[items.length - 1]!;
+        if (e.shiftKey && (document.activeElement === first || document.activeElement === el)) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      if (before && document.contains(before)) before.focus();
+    };
+  }, []);
+}
 
 /**
  * Diálogo accesible: al abrir pasa el foco al primer campo (o al diálogo), Tab queda dentro,
@@ -60,36 +94,7 @@ export function Modal({
     setClosing(true);
     setTimeout(() => close.current(), EXIT_MS);
   }).current;
-  useEffect(() => {
-    const before = document.activeElement as HTMLElement | null;
-    const el = box.current;
-    // Primer campo del formulario; si no hay (confirmaciones), el propio diálogo, para no enfocar una acción destructiva
-    const field = el?.querySelector<HTMLElement>(".modal-body :is(input,select,textarea):not([disabled]):not([type=\"hidden\"])");
-    (field ?? el)?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.stopPropagation();
-        requestClose();
-      } else if (e.key === "Tab" && el) {
-        const items = Array.from(el.querySelectorAll<HTMLElement>(FOCUSABLE));
-        if (!items.length) return e.preventDefault();
-        const first = items[0]!;
-        const last = items[items.length - 1]!;
-        if (e.shiftKey && (document.activeElement === first || document.activeElement === el)) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      if (before && document.contains(before)) before.focus();
-    };
-  }, []);
+  useDialogFocus(box, requestClose);
   return (
     <ModalContext.Provider value={{ close: requestClose, footerEl }}>
       <div

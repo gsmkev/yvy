@@ -40,10 +40,9 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-/** Selector de estancia junto al título; con una sola estancia no se muestra. */
+/** Selector de estancia junto al título. */
 function FarmSwitch({ farmId, name, farms }: { farmId: string; name: string; farms: { id: string; name: string }[] }) {
   const navigate = useNavigate();
-  if (farms.length <= 1) return undefined;
   return (
     <ActionMenu
       text={name}
@@ -208,10 +207,11 @@ export function FarmReportsPage() {
   const bankJob = () => run("bank", () => bankPdf(farmId, f, plots));
 
   const ctx: GroupsCtx = { farmId, busy, progress, plots, plot, isOwner: me.data?.role === "owner", jobs: { bankJob, auditJob, seasonJob, exportZip }, onShare: () => setSharing(true), onPlot: setPlotId };
+  const many = (farms.data?.length ?? 0) > 1;
   const canSchedule = ctx.isOwner || me.data?.role === "admin";
   return (
-    <Page width="data" title={t("ui.reports.title")} titleAction={<FarmSwitch farmId={farmId} name={f.name} farms={farms.data ?? []} />} className="gap-6">
-      {(farms.data?.length ?? 0) <= 1 && <p className="-mt-3 text-sm text-tinta-2">{f.name}</p>}
+    <Page width="data" title={t("ui.reports.title")} titleAction={many ? <FarmSwitch farmId={farmId} name={f.name} farms={farms.data ?? []} /> : undefined} className="gap-6">
+      {!many && <p className="-mt-3 text-sm text-tinta-2">{f.name}</p>}
       <div className={`grid items-start gap-10 ${canSchedule ? "lg:grid-cols-[minmax(0,1fr)_20rem]" : ""}`}>
         <ReportGroups c={ctx} />
         {canSchedule && (

@@ -56,6 +56,61 @@ const baseStyle = (): maplibregl.StyleSpecification => ({
   ],
 });
 
+/** Vuelve a dibujar el mapa cuando cambia cualquier dato que se muestra. */
+function useSyncOnChange(props: FarmMapProps, sync: () => void) {
+  useEffect(sync, [
+    props.outline,
+    props.farms,
+    props.plots,
+    props.pois,
+    props.lines,
+    props.problemAreas,
+    props.points,
+    props.heat,
+    props.selectedPlotId,
+    props.pickedPlotIds,
+    props.stalePlotIds,
+    props.editPlot?.id,
+    props.layers,
+    props.boundaries,
+    props.customImages,
+    props.showNdvi,
+    props.indexKind,
+    props.layerIds,
+    props.tilesBaseUrl,
+    props.measuring,
+    props.measurePoints,
+    props.measureClosed,
+  ]);
+}
+
+/** Encuadre, cámara guardada y vuelos del mapa según las props. */
+function useMapCamera(props: FarmMapProps, mapRef: { current: MlMap | null }) {
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map && props.bounds) map.fitBounds(props.bounds, { padding: 60, duration: 600, maxZoom: 16 });
+  }, [props.bounds?.join(",")]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const c = props.camera;
+    if (!map || !c) return;
+    const now: Camera = {
+      center: [map.getCenter().lng, map.getCenter().lat],
+      zoom: map.getZoom(),
+      bearing: map.getBearing(),
+      pitch: map.getPitch(),
+    };
+    if (cameraDiffers(now, c)) map.jumpTo(c);
+  }, [props.camera]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const f = props.flyTo;
+    if (map && f) map.flyTo({ center: [f.lon, f.lat], zoom: f.zoom ?? 14, duration: 800 });
+  }, [props.flyTo?.n]);
+}
+
 /** Mapa de la estancia con lotes, puntos, capas, dibujo y edición. */
 export function FarmMap(props: FarmMapProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -106,54 +161,8 @@ export function FarmMap(props: FarmMapProps) {
     };
   }, []);
 
-  useEffect(sync, [
-    props.outline,
-    props.farms,
-    props.plots,
-    props.pois,
-    props.lines,
-    props.problemAreas,
-    props.points,
-    props.heat,
-    props.selectedPlotId,
-    props.pickedPlotIds,
-    props.stalePlotIds,
-    props.editPlot?.id,
-    props.layers,
-    props.boundaries,
-    props.customImages,
-    props.showNdvi,
-    props.indexKind,
-    props.layerIds,
-    props.tilesBaseUrl,
-    props.measuring,
-    props.measurePoints,
-    props.measureClosed,
-  ]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (map && props.bounds) map.fitBounds(props.bounds, { padding: 60, duration: 600, maxZoom: 16 });
-  }, [props.bounds?.join(",")]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    const c = props.camera;
-    if (!map || !c) return;
-    const now: Camera = {
-      center: [map.getCenter().lng, map.getCenter().lat],
-      zoom: map.getZoom(),
-      bearing: map.getBearing(),
-      pitch: map.getPitch(),
-    };
-    if (cameraDiffers(now, c)) map.jumpTo(c);
-  }, [props.camera]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    const f = props.flyTo;
-    if (map && f) map.flyTo({ center: [f.lon, f.lat], zoom: f.zoom ?? 14, duration: 800 });
-  }, [props.flyTo?.n]);
+  useSyncOnChange(props, sync);
+  useMapCamera(props, mapRef);
 
   const draw = { props, mapRef, cb, drawRef, editRef };
   useDrawPolygon(draw);

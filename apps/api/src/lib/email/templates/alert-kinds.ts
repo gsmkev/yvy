@@ -171,20 +171,22 @@ function drought(e: Env): Composition | null {
 function fire(e: Env): Composition | null {
   const km = num(e.d.minDistanceKm);
   if (km === null) return null;
-  const n = num(e.d.hotspots) ?? 0;
-  const toward = e.d.windTowardsFarm === true;
   const perDay = e.ctx.hotspotsByDay ?? [];
+  // Con focos por día, la cifra es la barra de hoy (la última); sin ellos, el conteo del aviso.
+  const todayBar = perDay.find((d) => d.date === e.today);
+  const n = todayBar ? todayBar.n : (num(e.d.hotspots) ?? 0);
+  const toward = e.d.windTowardsFarm === true;
   const byDistance = e.ctx.plots.filter((p) => p.distKm !== undefined).sort((a, b) => a.distKm! - b.distKm!);
   const plots = byDistance.length
     ? [gap(24), h2(t("email.alert.plotsFire"), "0 0 4px"), plotRows(byDistance.slice(0, 6).map((p) => ({ name: p.name, detail: ha(p.areaHa), value: p.distKm! < 0.1 ? t("email.alert.fireInside") : `${fmtNum(p.distKm!, 1)} km` })))]
     : plotsBlock("plots", e.ctx.plots);
   return {
     headline: t("email.alert.headline_fire", { km: fmtNum(km, 1) }),
-    lead: t("email.alert.lead_fire", { n, wind: t(toward ? "email.alert.lead_fireWindToward" : "email.alert.lead_fireWindOther") }),
+    lead: t(todayBar ? "email.alert.lead_fireToday" : "email.alert.lead_fire", { n, wind: t(toward ? "email.alert.lead_fireWindToward" : "email.alert.lead_fireWindOther") }),
     hero: [
       gap(22),
       stats([
-        { label: t("email.alert.fireKpiCount"), value: String(n) },
+        { label: t(todayBar ? "email.alert.fireKpiToday" : "email.alert.fireKpiCount"), value: String(n) },
         { label: t("email.alert.fireKpiNearest"), value: `${fmtNum(km, 1)} km` },
       ]),
       ...(perDay.some((d) => d.n > 0)

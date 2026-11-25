@@ -133,6 +133,26 @@ describe("plantillas de correo", () => {
   });
 });
 
+describe("aviso de fuego", () => {
+  it("la cifra de focos y la barra de hoy salen del mismo dato", () => {
+    const today = "2026-11-25";
+    const now = Date.parse(`${today}T15:00:00Z`);
+    const days = [0, 1, 2, 3, 4, 5, 6].map((n) => ({ date: `2026-11-${String(19 + n)}`, n: n === 6 ? 3 : 1 }));
+    const m = alertEmail(
+      alertInput({
+        kind: "fire",
+        details: { minDistanceKm: 3.2, windTowardsFarm: true, hotspots: 9 },
+        context: { now, days: [], hours: [], plots: [], rainDaily: [], hotspotsByDay: days },
+      }),
+    );
+    expect(m.html).toContain("Focos hoy");
+    expect(m.html).not.toContain("Focos detectados");
+    expect(m.html).toMatch(/>Focos hoy<\/div><div[^>]*>3<\/div>/);
+    expect(m.html).toMatch(/font-weight:700;[^"]*">3<\/div>/); // la barra destacada de hoy dice 3
+    expect(m.html).not.toMatch(/>9<\/div>/);
+  });
+});
+
 describe("envío", () => {
   const capture = () => {
     const calls: { url: string; body: any }[] = [];

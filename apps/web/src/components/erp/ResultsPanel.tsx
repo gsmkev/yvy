@@ -7,7 +7,7 @@ import { t, tk, type MessageKey } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { useFarms } from "../../lib/queries";
 import { ExportableTable } from "../ExportableTable";
-import { Button, DataTable, EmptyState, ErrorBox, Field, FilterBar, Select, Spinner, Stat, type Column } from "../ui";
+import { Button, DataTable, EmptyState, ErrorBox, Field, FilterBar, Select, Spinner, Stat, type Column, StatRow } from "../ui";
 import { SectionButton } from "./SectionButton";
 import { useSeasonList } from "./CostsPanel";
 import type { ResultsFigures as Figures, ResultsResponse as Results } from "@yvy/shared";
@@ -144,7 +144,7 @@ export function ResultsPanel() {
   return (
     <div className="flex flex-col gap-5">
       {filters}
-      <div className="grid grid-cols-1 gap-x-10 gap-y-4 sm:grid-cols-3">
+      <StatRow>
         <Stat
           size="lg"
           label={t("ui.cost.totalCost")}
@@ -164,7 +164,7 @@ export function ResultsPanel() {
           tone={tt.marginPyg < 0 ? "danger" : undefined}
           note={tt.marginPerHa !== null ? t("ui.results.notePerHa", { n: fmtGs(tt.marginPerHa) }) : undefined}
         />
-      </div>
+      </StatRow>
       <Segmented value={view} onChange={setView} />
       {rowsInView > 0 ? <ExportableTable name={t(VIEWS.find((v) => v.id === view)!.label)}>{table}</ExportableTable> : table}
       {d.beef.costPerKgPyg !== null ? (

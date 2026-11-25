@@ -1,7 +1,7 @@
 /** Diálogo para asignar lotes a un miembro del equipo. */
 import { useState } from "react";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
-import { Button, ErrorBox, Modal, Spinner, toast } from "../../components/ui";
+import { Button, CancelButton, ErrorBox, Modal, Spinner, toast } from "../../components/ui";
 import { get, put } from "../../lib/api";
 import { fmtHa } from "../../lib/format";
 import { t } from "../../lib/i18n";
@@ -43,7 +43,18 @@ export function AssignPlots({ member, onClose }: { member: Member; onClose: () =
     setChosen(next);
   };
   return (
-    <Modal title={`${t("ui.common.assignPlots")} · ${member.fullName}`} onClose={onClose}>
+    <Modal
+      title={`${t("ui.common.assignPlots")} · ${member.fullName}`}
+      onClose={onClose}
+      footer={
+        <>
+          <CancelButton />
+          <Button variant="primary" onClick={() => save.mutate()} disabled={save.isPending}>
+            {t("ui.common.save")}
+          </Button>
+        </>
+      }
+    >
       {!loaded ? (
         <Spinner />
       ) : (
@@ -65,9 +76,6 @@ export function AssignPlots({ member, onClose }: { member: Member; onClose: () =
             </div>
           ))}
           {save.error && <ErrorBox error={save.error} />}
-          <Button onClick={() => save.mutate()} disabled={save.isPending}>
-            {t("ui.common.save")}
-          </Button>
         </div>
       )}
     </Modal>

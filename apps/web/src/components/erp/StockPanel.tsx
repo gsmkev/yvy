@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { del, get, withQs } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { useProducts } from "../../lib/products";
-import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, FilterBar, Select, Spinner, Tabs, toast } from "../ui";
+import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Select, Spinner, Tabs, toast } from "../ui";
 import { HeaderActions, useGoSection, useTableExport } from "./adminSlot";
 import { ActionMenu } from "../menus";
 import { useWarehouses } from "./WarehousesPanel";
@@ -95,13 +95,14 @@ export function StockPanel() {
         onChange={setTab}
       />
       {tab === "moves" && (
-        <FilterBar>
-          <Select
-            aria-label={t("ui.stock.product")}
-            value={productId}
-            onChange={(e) => setProductId(e.target.value)}
-            options={[{ value: "", label: t("ui.cost.all") }, ...(products.data ?? []).map((p) => ({ value: p.id, label: p.name }))]}
-          />
+        <FilterBar sheet={false}>
+          <Field label={t("ui.stock.product")}>
+            <Select
+              value={productId}
+              onChange={(e) => setProductId(e.target.value)}
+              options={[{ value: "", label: t("ui.cost.all") }, ...(products.data ?? []).map((p) => ({ value: p.id, label: p.name }))]}
+            />
+          </Field>
         </FilterBar>
       )}
       <div ref={exp.ref}>

@@ -5,7 +5,7 @@ import { plotsLabel } from "@yvy/shared";
 import { fmtIsoDate } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs, fmtMoney, fmtQty } from "../../lib/money";
-import { EmptyState, ErrorBox, SectionHead, Spinner, Stat } from "../ui";
+import { EmptyState, ErrorBox, SectionHead, Spinner, Stat, StatRow } from "../ui";
 import { SHOWN, useOverviewData, type OverviewData } from "./overview/useOverviewData";
 
 const link = "text-meta text-tinta-2 underline-offset-4 hover:text-surco hover:underline";
@@ -55,7 +55,7 @@ function OverviewStart({ d }: { d: OverviewData }) {
 function OverviewStats({ d }: { d: OverviewData }) {
   const { cash, pay, payOverdue, rec, recOverdue, margin } = d;
   return (
-    <div className="grid grid-cols-2 gap-x-6 gap-y-5 lg:grid-cols-4">
+    <StatRow>
       {cash && <Stat label={t("ui.ov.cash")} value={cash.value} note={cash.rest || undefined} />}
       {pay && <Stat label={t("ui.ov.payables")} value={pay.value} note={payOverdue ? t("ui.ov.overdue", { amount: payOverdue.value }) : t("ui.ov.noDue")} tone={payOverdue ? "danger" : undefined} />}
       {rec && <Stat label={t("ui.ov.receivables")} value={rec.value} note={recOverdue ? t("ui.ov.overdue", { amount: recOverdue.value }) : t("ui.ov.noDue")} />}
@@ -67,7 +67,7 @@ function OverviewStats({ d }: { d: OverviewData }) {
           note={t("ui.dash.marginNote", { income: fmtGs(margin.incomePyg), cost: fmtGs(margin.costPyg) })}
         />
       )}
-    </div>
+    </StatRow>
   );
 }
 

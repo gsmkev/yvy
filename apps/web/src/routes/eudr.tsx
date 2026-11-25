@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { boundsOf, FarmMap } from "../components/FarmMap";
 import { PageExport } from "../components/PageExport";
-import { Button, DataTable, EmptyState, ErrorBox, SectionHead, Spinner, Stat, Page, type Column } from "../components/ui";
+import { Button, DataTable, EmptyState, ErrorBox, SectionHead, Spinner, Stat, Page, type Column, StatRow } from "../components/ui";
 import { get } from "../lib/api";
 import { changeAreas, EUDR_METHOD, fmtRatio, statusText, summarize } from "../lib/eudrData";
 import { download } from "../lib/exports";
@@ -115,11 +115,11 @@ export function EudrPage() {
         <EmptyState title={data.plots.length === 0 && farm.data.plots.length === 0 ? t("ui.eudr.noPlots") : t("ui.eudr.pending")} />
       ) : (
         <div ref={body} className="flex flex-col gap-6">
-          <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-linea py-5 sm:grid-cols-3">
+          <StatRow className="border-y border-linea py-5">
             <Stat label={t("ui.eudr.forest", { year: refYear })} value={fmtHa(sum.forestRefHa)} />
             {sum.lossHa > 0 && <Stat label={t("ui.eudr.loss")} value={fmtHa(sum.lossHa)} tone="danger" />}
             <Stat label={t("ui.eudr.plotsWithLoss")} value={`${sum.withLoss} / ${sum.plots}`} />
-          </div>
+          </StatRow>
           <div className="flex flex-col gap-1 text-sm text-tinta-2">
             {(() => {
               const r = range(sum.refFromAt, sum.refToAt);

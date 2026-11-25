@@ -88,7 +88,7 @@ function PayModal({ row, onClose }: { row: Balance; onClose: () => void }) {
   });
   return (
     <Modal title={`${t("ui.bal.pay")}: ${row.name}`} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
+      <Form onSubmit={() => save.mutate()}>
         <Field label={t("ui.cost.category")}>
           <Select value={kind} onChange={(e) => setKind(e.target.value)} options={EMPLOYEE_PAYMENT_KINDS.map((k) => ({ value: k, label: tk(`ui.bal.kind_${k}`) }))} />
         </Field>

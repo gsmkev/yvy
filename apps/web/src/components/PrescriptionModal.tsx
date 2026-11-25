@@ -7,7 +7,7 @@ import { t, tk } from "../lib/i18n";
 import { useMembers, useSeasons } from "../lib/queries";
 import type { Plot } from "../lib/types";
 import { useProducts } from "../lib/products";
-import { Button, ErrorBox, Field, Form, Input, Modal, Select, toast } from "./ui";
+import { Button, Field, Form, Input, Modal, Select, toast, FormFooter } from "./ui";
 
 interface Line {
   productId: string;
@@ -166,11 +166,8 @@ export function PrescriptionModal({
           <Input value={f.note} onChange={set("note")} maxLength={2000} />
         </Field>
         <p className="text-xs text-tinta-2">{t("ui.prescription.hint")}</p>
-        {create.error && <ErrorBox error={create.error} />}
-        <Button type="submit" variant="primary" disabled={!ready || create.isPending}>
-          {t("ui.prescription.create")}
-        </Button>
-      </Form>
+        <FormFooter error={create.error} disabled={!ready || create.isPending} label={t("ui.prescription.create")} />
+</Form>
     </Modal>
   );
 }

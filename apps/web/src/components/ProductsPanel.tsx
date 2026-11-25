@@ -6,7 +6,7 @@ import { t, tk } from "../lib/i18n";
 import type { Plot, Product } from "../lib/types";
 import { useProducts } from "../lib/products";
 import { PrescriptionModal } from "./PrescriptionModal";
-import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, Input, Modal, Select, Spinner, toast } from "./ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, Input, Modal, Select, Spinner, toast, FormFooter } from "./ui";
 import { HeaderActions, RowMenu, useTableExport } from "./erp/adminSlot";
 
 interface DoseRange {
@@ -72,13 +72,14 @@ export function ProductsPanel({ canEdit, farmId, plots }: { canEdit: boolean; fa
       {all.length > 0 && (
         <>
           {list.length > 0 && exp.menu}
-          <FilterBar>
-            <Select
-              aria-label={t("ui.product.type")}
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              options={[{ value: "", label: t("ui.products.allTypes") }, ...PRODUCT_TYPES.map((x) => ({ value: x, label: tk(`fields.product.type_${x}`) }))]}
-            />
+          <FilterBar sheet={false}>
+            <Field label={t("ui.product.type")}>
+              <Select
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                options={[{ value: "", label: t("ui.products.allTypes") }, ...PRODUCT_TYPES.map((x) => ({ value: x, label: tk(`fields.product.type_${x}`) }))]}
+              />
+            </Field>
           </FilterBar>
         </>
       )}
@@ -207,11 +208,8 @@ function ProductModal({ product, range, onClose }: { product: Product | null; ra
             </Field>
           </div>
         </fieldset>
-        {save.error && <ErrorBox error={save.error} />}
-        <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.common.save")}
-        </Button>
-      </Form>
+        <FormFooter error={save.error} disabled={save.isPending} label={t("ui.common.save")} />
+</Form>
     </Modal>
   );
 }

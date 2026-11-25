@@ -27,7 +27,7 @@ export const MIN_TOUCH_TARGET_PX = 56;
 /** Colores de series de gráficos, validados (contraste y daltonismo) con la paleta de marca. */
 export const CHART = {
   primary: "#7A9A3F", // soja: el lote / la serie principal
-  comparison: "#3B78B8", // azul: promedio del campo, lluvia satelital, mínimas
+  comparison: "#8DB3C7", // cielo: promedio del campo, lluvia satelital, mínimas
   warm: "#B5562E", // máximas
   gauge: "#D9A93A", // trigo: pluviómetro
   grid: "#E4E0D3",

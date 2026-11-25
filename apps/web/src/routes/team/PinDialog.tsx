@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button, ErrorBox, Field, Form, Input, Modal, toast } from "../../components/ui";
+import { Button, ErrorBox, Field, Form, Input, Modal, toast, FormFooter } from "../../components/ui";
 import { del, put } from "../../lib/api";
 import { t } from "../../lib/i18n";
 import type { Member } from "../../lib/types";
@@ -63,10 +63,8 @@ export function PinDialog({ member, onClose }: { member: Member; onClose: () => 
           )}
           {!own && <p className="text-sm text-tinta-2">{t("app.team.pinGenerate")}</p>}
           {(save.error || clear.error) && <ErrorBox error={save.error ?? clear.error} />}
-          <Button type="submit" variant="primary" disabled={save.isPending || (own && pin.length !== 6)}>
-            {t("ui.common.save")}
-          </Button>
-          {member.hasPin && (
+          <FormFooter error={null} disabled={save.isPending || (own && pin.length !== 6)} label={t("ui.common.save")} />
+{member.hasPin && (
             <Button variant="danger" disabled={clear.isPending} onClick={() => clear.mutate()}>
               {t("app.team.pinRemove")}
             </Button>

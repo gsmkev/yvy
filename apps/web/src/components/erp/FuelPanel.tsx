@@ -7,7 +7,7 @@ import { fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtQty } from "../../lib/money";
 import { useFarms } from "../../lib/queries";
-import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, FormFooter, Input, Modal, Select, Spinner, toast } from "../ui";
+import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, FormFooter, Input, Modal, Select, Spinner, toast, DateRange } from "../ui";
 import { useMachines } from "./MachinesPanel";
 import { HeaderActions, useTableExport } from "./adminSlot";
 
@@ -61,16 +61,11 @@ export function FuelPanel() {
         <>
           <HeaderActions>{newButton}</HeaderActions>
           {rows.length > 0 && exp.menu}
-          <FilterBar>
+          <FilterBar active={Object.values(f).filter(Boolean).length} onClear={() => setF({ farmId: "", from: "", to: "" })}>
             <Field label={t("ui.cost.farm")}>
               <Select value={f.farmId} onChange={set("farmId")} options={[{ value: "", label: t("ui.cost.all") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
             </Field>
-            <Field label={t("ui.cost.from")}>
-              <Input type="date" value={f.from} onChange={set("from")} />
-            </Field>
-            <Field label={t("ui.cost.to")}>
-              <Input type="date" value={f.to} onChange={set("to")} />
-            </Field>
+            <DateRange from={f.from} to={f.to} onChange={(r) => setF({ ...f, ...r })} />
           </FilterBar>
         </>
       )}
@@ -154,7 +149,7 @@ function FuelLoadModal({ onClose }: { onClose: () => void }) {
   const noMachine = { value: "", label: t("ui.fuel.otherMachine") };
   return (
     <Modal title={t("ui.fuel.new")} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
+      <Form onSubmit={() => save.mutate()}>
         <Field label={t("ui.cost.farm")}>
           <Select value={f.farmId || (farms.data?.[0]?.id ?? "")} onChange={set("farmId")} options={(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))} />
         </Field>

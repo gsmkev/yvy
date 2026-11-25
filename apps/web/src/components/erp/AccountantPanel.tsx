@@ -5,7 +5,7 @@ import { COST_CATEGORIES, type CostCategory } from "@yvy/shared";
 import { del, get, put, withQs } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { tablesToExcel } from "../../lib/tableExport";
-import { Button, ErrorBox, Field, FilterBar, Input, SectionHead, Spinner, toast } from "../ui";
+import { Button, ErrorBox, FilterBar, Input, SectionHead, Spinner, toast, DateRange } from "../ui";
 import { HeaderActions } from "./adminSlot";
 
 interface MapRow {
@@ -112,13 +112,15 @@ export function AccountantPanel() {
       </HeaderActions>
       <section className="flex flex-col gap-3">
         <SectionHead title={t("ui.acct.periodTitle")} />
-        <FilterBar>
-          <Field label={t("ui.acct.from")}>
-            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-          </Field>
-          <Field label={t("ui.acct.to")}>
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-          </Field>
+        <FilterBar sheet={false} exportSlot={false}>
+          <DateRange
+            from={from}
+            to={to}
+            onChange={(r) => {
+              setFrom(r.from);
+              setTo(r.to);
+            }}
+          />
         </FilterBar>
         <p className="text-meta text-tinta-2">{t("ui.acct.periodHint")}</p>
         {error ? <ErrorBox error={error} /> : null}

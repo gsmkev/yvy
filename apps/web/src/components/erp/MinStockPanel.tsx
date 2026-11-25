@@ -158,8 +158,8 @@ function MinModal({ row, onClose }: { row: Minimum | null; onClose: () => void }
   });
   return (
     <Modal title={t("ui.min.stockNew")} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
-        <div className="col-span-2">
+      <Form onSubmit={() => save.mutate()}>
+        <div className="sm:col-span-2">
           <Field label={t("ui.stock.product")}>
             <Select value={productId} onChange={(e) => setProductId(e.target.value)} options={(products.data ?? []).map((p) => ({ value: p.id, label: p.name }))} />
           </Field>

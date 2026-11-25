@@ -5,7 +5,7 @@ import { get } from "../lib/api";
 import { fmtNum } from "../lib/format";
 import { fmtGs } from "../lib/money";
 import { t, tk } from "../lib/i18n";
-import { ErrorBox, SectionHead, Spinner, Stat } from "./ui";
+import { ErrorBox, SectionHead, Spinner, Stat, StatRow } from "./ui";
 
 interface Dashboard {
   /** Solo viene con el permiso de montos (dueño y administrador); null si no. */
@@ -41,7 +41,7 @@ export function OwnerDashboard() {
   return (
     <section className="flex flex-col gap-4">
       <SectionHead title={t("ui.dash.title")} />
-      <div className="flex flex-wrap gap-x-7 gap-y-4">
+      <StatRow>
         <Stat
           label={t("ui.dash.rainMonth")}
           value={d.rain.mm === null ? "—" : fmtNum(d.rain.mm)}
@@ -57,7 +57,7 @@ export function OwnerDashboard() {
             tone={d.margin.entries && d.margin.marginPyg < 0 ? "danger" : undefined}
           />
         )}
-      </div>
+      </StatRow>
       <div className="flex flex-col gap-0.5 text-xs text-tinta-2">
         {d.alerts.total > 0 && (
           <Link to="/avisos" className="underline underline-offset-4">

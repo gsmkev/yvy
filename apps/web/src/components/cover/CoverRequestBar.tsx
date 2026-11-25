@@ -22,7 +22,7 @@ export function CoverRequestBar({
   onCompute: () => void;
 }) {
   return (
-    <FilterBar>
+    <FilterBar sheet={false} exportSlot={false}>
       <Field label={t("ui.cover.from")}>
         <Input type="date" value={from} min="2017-01-01" onChange={(e) => onFrom(e.target.value)} />
       </Field>

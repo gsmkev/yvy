@@ -1,4 +1,5 @@
 /** Ordenamiento de la lista de lotes por nombre, tipo, superficie, vigor o última visita, con comparación es-PY. */
+import { cropName } from "./crops";
 import type { Plot } from "./types";
 
 type SortKey = "name" | "kind" | "area" | "vigor" | "visit";
@@ -7,7 +8,7 @@ type SortDir = "asc" | "desc";
 const collator = new Intl.Collator("es-PY", { sensitivity: "base", numeric: true });
 
 /** Tipo para ordenar: cultivos por nombre de cultivo y potreros al final. */
-export const kindOf = (p: Plot) => (p.kind === "pasture" ? "~potrero" : (p.crop ?? "~cultivo"));
+export const kindOf = (p: Plot) => (p.kind === "pasture" ? "~potrero" : (p.crop ? cropName(p.crop) : "~cultivo"));
 
 const value = (p: Plot, k: SortKey): string | number | null => {
   switch (k) {

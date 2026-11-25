@@ -165,7 +165,7 @@ function ProfileModal({ row, onClose }: { row: Profile | null; onClose: () => vo
   const hours = (machines.data ?? []).filter((m) => m.meterKind === "hours");
   return (
     <Modal title={t("ui.labor.new")} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
+      <Form onSubmit={() => save.mutate()}>
         <Field label={t("ui.labor.machine")} hint={t("ui.labor.hoursOnly")}>
           <Select value={f.machineId} onChange={set("machineId")} options={hours.map((m) => ({ value: m.id, label: m.name }))} />
         </Field>

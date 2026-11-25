@@ -3,6 +3,7 @@ import { createRootRoute, createRoute, createRouter, lazyRouteComponent, redirec
 import { parseReferralCode } from "@yvy/shared";
 import { getSession } from "./lib/api";
 import { RootGate } from "./routes/public/RootGate";
+import { NotFound } from "./components/NotFound";
 import { Spinner } from "./components/ui";
 
 const rootRoute = createRootRoute();
@@ -263,6 +264,7 @@ export const router = createRouter({
   routeTree,
   defaultPreload: "intent",
   defaultPendingMs: 150,
+  defaultNotFoundComponent: () => <NotFound />,
   defaultPendingComponent: () => (
     <div className="p-6">
       <Spinner />

@@ -112,14 +112,4 @@ export function Page({
   );
 }
 
-/** Fila de filtros que envuelve; lo que va en `actions` queda a la derecha. */
-export function FilterBar({ children, actions }: { children: ReactNode; actions?: ReactNode }) {
-  return (
-    <div className="flex flex-wrap items-end gap-2 print:hidden">
-      {children}
-      {actions && <div className="ml-auto flex items-center gap-2">{actions}</div>}
-    </div>
-  );
-}
-
 // ---------- Tabla de datos ----------

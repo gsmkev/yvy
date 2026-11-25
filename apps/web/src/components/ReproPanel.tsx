@@ -5,7 +5,7 @@ import type { ReproductionResponse } from "@yvy/shared";
 import { get } from "../lib/api";
 import { fmtDay } from "../lib/format";
 import { t, tk } from "../lib/i18n";
-import { Empty, ErrorBox, Field, Select, Spinner, Stat } from "./ui";
+import { Empty, ErrorBox, Field, Select, Spinner, Stat, StatRow } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
 const DAY = 86_400_000;
@@ -40,11 +40,11 @@ export function ReproPanel({ farmId }: { farmId: string }) {
         <Empty title={t("ui.repro.none")}>{t("ui.repro.noneHint")}</Empty>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <StatRow>
             <Stat label={t("ui.repro.pregnancy")} value={pctText(i.pregnancyPct)} note={t("ui.repro.pregnancyHint", { p: i.pregnant, c: i.checked })} />
             <Stat label={t("ui.repro.calving")} value={pctText(i.calvingPct)} note={t("ui.repro.calvingHint", { b: i.calvesBorn, s: i.services })} />
             <Stat label={t("ui.repro.weaning")} value={pctText(i.weaningPct)} note={t("ui.repro.weaningHint", { w: i.weaned, b: i.calvesBorn })} />
-          </div>
+          </StatRow>
           {d.truncated && <p className="text-sm text-tinta-2">{t("ui.herd.truncated")}</p>}
           <div className="overflow-x-auto">
             <ExportableTable name="reproduccion">

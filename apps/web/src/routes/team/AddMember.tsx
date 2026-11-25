@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isFieldRole, ROLES } from "@yvy/shared";
-import { Button, ErrorBox, Field, Form, Input, Modal, Select, toast } from "../../components/ui";
+import { Field, Form, Input, Modal, Select, toast, FormFooter } from "../../components/ui";
 import { post } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 
@@ -43,11 +43,8 @@ export function AddMember({ canAddAdmins, onClose }: { canAddAdmins: boolean; on
         <Field label={t("ui.common.phone")}>
           <Input type="tel" value={f.phone} onChange={set("phone")} />
         </Field>
-        {add.error && <ErrorBox error={add.error} />}
-        <Button type="submit" variant="primary" disabled={add.isPending}>
-          {t("ui.common.save")}
-        </Button>
-      </Form>
+        <FormFooter error={add.error} disabled={add.isPending} label={t("ui.common.save")} />
+</Form>
     </Modal>
   );
 }

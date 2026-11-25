@@ -101,13 +101,14 @@ export function PurchasesPanel() {
       ) : (
         <>
           {exp.menu}
-          <FilterBar>
-            <Select
-              aria-label={t("ui.purch.status")}
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              options={[{ value: "", label: t("ui.cost.all") }, ...(["ordered", "invoiced", "received", "complete"] as const).map((k) => ({ value: k, label: tk(`ui.purch.status_${k}`) }))]}
-            />
+          <FilterBar sheet={false}>
+            <Field label={t("ui.purch.status")}>
+              <Select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                options={[{ value: "", label: t("ui.cost.all") }, ...(["ordered", "invoiced", "received", "complete"] as const).map((k) => ({ value: k, label: tk(`ui.purch.status_${k}`) }))]}
+              />
+            </Field>
           </FilterBar>
           <div ref={exp.ref}>
             <DataTable columns={columns} rows={rows} rowKey={(p) => p.id} caption={t("ui.admin.section_purchases")} empty={<EmptyState compact title={t("ui.erp.empty")} />} />
@@ -164,7 +165,7 @@ function NewPurchase({ onClose }: { onClose: () => void }) {
   const total = lines.reduce((a, l) => a + lineAmount(Number(l.qty) || 0, toMinor(Number(l.unitPrice) || 0, currency)), 0);
   return (
     <Modal title={t("ui.purch.new")} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
+      <Form onSubmit={() => save.mutate()}>
         <Field label={t("ui.purch.supplier")}>
           <Select value={partyId} onChange={(e) => setPartyId(e.target.value)} options={[{ value: "", label: "—" }, ...(parties.data ?? []).map((p) => ({ value: p.id, label: p.name }))]} />
         </Field>
@@ -177,7 +178,7 @@ function NewPurchase({ onClose }: { onClose: () => void }) {
         <Field label={t("ui.common.currency")}>
           <Select value={currency} onChange={(e) => setCurrency(e.target.value as Currency)} options={CURRENCIES.map((c) => ({ value: c, label: c }))} />
         </Field>
-        <div className="col-span-2 flex flex-col gap-2">
+        <div className="sm:col-span-2 flex flex-col gap-2">
           {lines.map((l, i) => (
             <div key={i} className="grid grid-cols-6 items-end gap-2 border-b border-linea pb-2">
               <div className="col-span-3">
@@ -210,7 +211,7 @@ function NewPurchase({ onClose }: { onClose: () => void }) {
             </Button>
           </div>
         </div>
-        <div className="col-span-2 num text-right font-medium">{fmtMoney(total, currency)}</div>
+        <div className="sm:col-span-2 num text-right font-medium">{fmtMoney(total, currency)}</div>
         <FormFooter error={save.error} disabled={save.isPending} />
       </Form>
     </Modal>

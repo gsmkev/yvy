@@ -7,4 +7,6 @@ export * from "./feedback";
 export * from "./toast";
 export * from "./Tabs";
 export * from "./page";
+export * from "./filters";
+export * from "./useMediaQuery";
 export * from "./DataTable";

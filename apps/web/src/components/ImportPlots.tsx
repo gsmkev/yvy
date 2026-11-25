@@ -10,7 +10,7 @@ import { t } from "../lib/i18n";
 import { parseFile, type ImportedPolygon } from "../lib/importGeo";
 import type { Plot } from "../lib/types";
 import { FarmMap } from "./FarmMap";
-import { Button, ErrorBox, Input, Modal, Select } from "./ui";
+import { Button, CancelButton, ErrorBox, Input, Modal, Select } from "./ui";
 
 /** Vista previa de los polígonos del archivo: se eligen, se les pone nombre y se define su tipo. */
 export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () => void }) {
@@ -113,7 +113,18 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
     setItems(items!.map((x, k) => (k === i ? { ...x, ...patch } : x)));
 
   return (
-    <Modal title={t("ui.import.file")} onClose={onClose}>
+    <Modal
+      title={t("ui.import.file")}
+      onClose={onClose}
+      footer={
+        <>
+          <CancelButton />
+          <Button variant="primary" onClick={save} disabled={!selected.length || busy}>
+            {t("ui.import.selected", { count: selected.length })}
+          </Button>
+        </>
+      }
+    >
       {!items ? (
         <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-linea p-8 text-sm text-surco/70 hover:border-soja">
           <Upload size={22} aria-hidden />
@@ -192,9 +203,6 @@ export function ImportPlots({ farmId, onClose }: { farmId: string; onClose: () =
               </li>
             ))}
           </ul>
-          <Button onClick={save} disabled={!selected.length || busy}>
-            {t("ui.import.selected", { count: selected.length })}
-          </Button>
         </div>
       )}
       {error ? <ErrorBox error={error} /> : null}

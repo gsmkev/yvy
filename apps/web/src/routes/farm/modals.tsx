@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import type { MultiPolygon, Polygon } from "geojson";
 import { areaHa, validatePolygon } from "@yvy/geo";
 import { POI_KINDS } from "@yvy/shared";
-import { Button, ErrorBox, Field, Form, Input, Modal, Select, toast } from "../../components/ui";
+import { Field, Form, Input, Modal, Select, toast, FormFooter } from "../../components/ui";
 import { patch, post } from "../../lib/api";
 import { fmtHa } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
@@ -53,11 +53,8 @@ export function NewPlotModal({
             ]}
           />
         </Field>
-        {save.error && <ErrorBox error={save.error} />}
-        <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.common.save")}
-        </Button>
-      </Form>
+        <FormFooter error={save.error} disabled={save.isPending} label={t("ui.common.save")} />
+</Form>
     </Modal>
   );
 }
@@ -102,8 +99,8 @@ export function ShapeEditBar({
         {t("ui.common.area")}: <strong className="font-semibold">{fmtHa(area)}</strong>
         {shape && <span className="text-lino/70"> · {t("ui.plot.editWas", { area: fmtHa(areaHa(JSON.parse(original) as Polygon | MultiPolygon)) })}</span>}
       </p>
-      {problem && <p className="font-medium text-trigo">{tk(`ui.geom.error_${problem}`)}</p>}
-      {save.error && <p className="font-medium text-trigo">{save.error instanceof Error ? save.error.message : String(save.error)}</p>}
+      {problem && <p className="font-medium text-peligro">{tk(`ui.geom.error_${problem}`)}</p>}
+      {save.error && <p className="font-medium text-peligro">{save.error instanceof Error ? save.error.message : String(save.error)}</p>}
       <div className="flex gap-4 font-medium">
         <button
           className="cursor-pointer underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
@@ -159,11 +156,8 @@ onSaved: () => void;
         <Field label={t("ui.common.name")}>
           <Input required autoFocus value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
-        {save.error && <ErrorBox error={save.error} />}
-        <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.common.save")}
-        </Button>
-      </Form>
+        <FormFooter error={save.error} disabled={save.isPending} label={t("ui.common.save")} />
+</Form>
     </Modal>
   );
 }

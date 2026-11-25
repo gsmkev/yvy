@@ -3,8 +3,10 @@ import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { fmtDate, fmtHa, fmtMm, fmtNdvi } from "../lib/format";
-import { DataTable, SectionHead, Spinner, Stat, type Column } from "../components/ui";
+import { DataTable, SectionHead, Spinner, Stat, type Column, StatRow } from "../components/ui";
 import { t, tk } from "../lib/i18n";
+import { cropName } from "../lib/crops";
+import { NotFound } from "../components/NotFound";
 import { PageExport } from "../components/PageExport";
 import { ATTRIBUTION } from "@yvy/shared";
 
@@ -45,7 +47,7 @@ export function SharedPage() {
   const d = q.data;
   const cols: Column<SharedPlot>[] = [
     { id: "plot", header: t("ui.common.plot"), cell: (p) => p.name },
-    { id: "crop", header: t("ui.common.crop"), cell: (p) => <span className="capitalize">{p.kind === "pasture" ? t("ui.common.pasture") : (p.crop ?? "—")}</span>, hideBelow: "sm" },
+    { id: "crop", header: t("ui.common.crop"), cell: (p) => <span>{p.kind === "pasture" ? t("ui.common.pasture") : p.crop ? cropName(p.crop) : "—"}</span>, hideBelow: "sm" },
     { id: "area", header: t("ui.common.area"), align: "right", cell: (p) => fmtHa(p.areaHa) },
     {
       id: "ndvi",
@@ -62,19 +64,14 @@ export function SharedPage() {
         ),
     },
   ];
+  if (q.error) {
+    const reason = q.error instanceof SharedError ? q.error.reason : null;
+    return <NotFound message={reason === "expired" ? t("ui.shared.expiredMsg") : reason === "revoked" ? t("ui.shared.revokedMsg") : t("ui.notfound.sharedBody")} />;
+  }
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8 lg:px-10">
       <p className="font-serif text-2xl font-semibold">{t("ui.app.name")}</p>
       {q.isLoading && <Spinner rows={4} h={72} />}
-      {q.error && (
-        <p className="text-lg">
-          {q.error instanceof SharedError && q.error.reason === "expired"
-            ? t("ui.shared.expiredMsg")
-            : q.error instanceof SharedError && q.error.reason === "revoked"
-              ? t("ui.shared.revokedMsg")
-              : t("ui.shared.notFoundMsg")}
-        </p>
-      )}
       {d && (
         <>
           <header className="flex items-start justify-between gap-3">
@@ -87,7 +84,7 @@ export function SharedPage() {
             </div>
             {d.plots.length > 0 && <PageExport root={body} name={d.farm.name} />}
           </header>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-linea py-5 sm:grid-cols-4">
+          <StatRow className="border-y border-linea py-5">
             <Stat label={t("ui.common.area")} value={fmtHa(d.farm.areaHa)} />
             <Stat label={t("ui.common.plots")} value={d.farm.plotCount} />
             <Stat
@@ -96,7 +93,7 @@ export function SharedPage() {
               note={d.rain30.normalMm ? `${t("ui.shared.rainNormal")}: ${fmtMm(d.rain30.normalMm)}` : undefined}
             />
             {d.alerts.length > 0 && <Stat label={t("ui.alerts.title")} value={d.alerts.length} />}
-          </div>
+          </StatRow>
 
           <div className="grid items-start gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
             <section ref={body} className="flex min-w-0 flex-col gap-2">

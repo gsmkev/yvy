@@ -1786,6 +1786,17 @@ export const esPY = {
       extraTitle: "Datos propios",
       mentionTitle: "{{name}} te mencionó en un comentario",
       comments: "Comentarios",
+      filtersDone: "Listo",
+      filtersClear: "Limpiar filtros",
+      period: "Período",
+      periodFrom: "Desde",
+      periodTo: "Hasta",
+    },
+    notfound: {
+      title: "No encontramos esta página",
+      body: "El enlace puede estar mal escrito o la página ya no existe.",
+      home: "Volver al inicio",
+      sharedBody: "Este enlace no existe, venció o fue revocado. Pedile uno nuevo a quien te lo compartió.",
     },
     confirm: {
       delete: "¿Seguro que querés borrar {{name}}?",

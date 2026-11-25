@@ -7,7 +7,7 @@ import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
 import { useNavigate } from "@tanstack/react-router";
-import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, FormFooter, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
+import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, FormFooter, Input, Modal, Select, Spinner, Stat, toast, StatRow } from "../ui";
 import { useSeasonList } from "./CostsPanel";
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions, RowMenu } from "./adminSlot";
@@ -95,7 +95,7 @@ export function BudgetPanel() {
   return (
     <div className="flex flex-col gap-4">
       {rows.length > 0 && <HeaderActions>{newBtn}</HeaderActions>}
-      <FilterBar>
+      <FilterBar sheet={false}>
         <Field label={t("ui.cost.season")}>
           <Select value={season} onChange={(e) => setSeasonId(e.target.value)} options={(seasons.data ?? []).map((x) => ({ value: x.id, label: x.name }))} />
         </Field>
@@ -111,12 +111,12 @@ export function BudgetPanel() {
           </EmptyState>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-x-10 gap-y-4 sm:grid-cols-4">
+            <StatRow>
               <Stat label={t("ui.budget.costPlanned")} value={fmtGs(q.data.totals.costPlannedPyg)} />
               <Stat label={t("ui.budget.costActual")} value={fmtGs(q.data.totals.costActualPyg)} />
               <Stat label={t("ui.budget.incomePlanned")} value={fmtGs(q.data.totals.incomePlannedPyg)} />
               <Stat label={t("ui.budget.incomeActual")} value={fmtGs(q.data.totals.incomeActualPyg)} />
-            </div>
+            </StatRow>
             <ExportableTable name="presupuesto">
               <DataTable columns={cols} rows={rows} rowKey={(r) => r.id} caption={t("ui.admin.section_budget")} />
             </ExportableTable>
@@ -157,7 +157,7 @@ function LineModal({ seasonId, onClose }: { seasonId: string; onClose: () => voi
   });
   return (
     <Modal title={t("ui.budget.new")} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
+      <Form onSubmit={() => save.mutate()}>
         <Field label={t("ui.budget.scope")}>
           <Select
             value={scope}

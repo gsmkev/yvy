@@ -4,6 +4,7 @@ import { LinesPanel } from "../../components/LinesPanel";
 import { ExportMenu } from "../../components/menus";
 import { PlotsTable } from "../../components/PlotsTable";
 import { Select } from "../../components/ui";
+import { cropName } from "../../lib/crops";
 import { download, plotsToGeoJson, plotsToKml, plotsToShapefileZip } from "../../lib/exports";
 import { areaUnitLabel, fmtAreaValue, fmtDate } from "../../lib/format";
 import { t } from "../../lib/i18n";
@@ -17,7 +18,7 @@ const plotsTable = (plots: Plot[]) => ({
   rows: plots.map((p) => [
     p.name,
     p.kind === "pasture" ? t("ui.common.pasture") : t("ui.common.crop"),
-    p.crop ?? p.pastureType,
+    p.crop ? cropName(p.crop) : p.pastureType,
     p.season,
     p.sowingDate,
     Math.round(p.areaHa * 100) / 100,
@@ -58,7 +59,7 @@ function PrintPlots({ plots }: { plots: Plot[] }) {
         {plots.map((p) => (
           <tr key={p.id} className="border-b border-linea">
             <td className="py-1.5 font-medium">{p.name}</td>
-            <td className="py-1.5">{p.kind === "pasture" ? t("ui.common.pasture") : (p.crop ?? t("ui.common.crop"))}</td>
+            <td className="py-1.5">{p.kind === "pasture" ? t("ui.common.pasture") : (p.crop ? cropName(p.crop) : t("ui.common.crop"))}</td>
             <td className="num py-1.5 text-right">{fmtAreaValue(p.areaHa)}</td>
             <td className="num py-1.5 text-right">{p.lastRecordAt ? fmtDate(p.lastRecordAt) : "—"}</td>
           </tr>

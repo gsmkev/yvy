@@ -18,7 +18,7 @@ import { t, tk } from "../../lib/i18n";
 import { fmtGs, fmtMoney } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
 import type { Season } from "../../lib/types";
-import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, FormFooter, Input, Modal, Select, Spinner, Stat, toast } from "../ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, DateRange, Field, FilterBar, Form, FormFooter, Input, Modal, Select, Spinner, Stat, StatRow, toast } from "../ui";
 import { PhotoRowMenu } from "./InvoicePhoto";
 import { HeaderActions } from "./adminSlot";
 import { useParties } from "./PartiesPanel";
@@ -144,7 +144,7 @@ export function CostsPanel() {
     <div className="flex flex-col gap-4">
       {!blank && <HeaderActions>{newBtn}</HeaderActions>}
       {!blank && (
-        <FilterBar>
+        <FilterBar active={Object.values(f).filter(Boolean).length} onClear={() => setF({ farmId: "", seasonId: "", category: "", from: "", to: "" })}>
           <Field label={t("ui.cost.farm")}>
             <Select value={f.farmId} onChange={set("farmId")} options={[{ value: "", label: t("ui.cost.all") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
           </Field>
@@ -154,20 +154,15 @@ export function CostsPanel() {
           <Field label={t("ui.cost.category")}>
             <Select value={f.category} onChange={set("category")} options={[{ value: "", label: t("ui.cost.all") }, ...COST_CATEGORIES.map((x) => ({ value: x, label: tk(`ui.cost.category_${x}`) }))]} />
           </Field>
-          <Field label={t("ui.cost.from")}>
-            <Input type="date" value={f.from} onChange={set("from")} />
-          </Field>
-          <Field label={t("ui.cost.to")}>
-            <Input type="date" value={f.to} onChange={set("to")} />
-          </Field>
+          <DateRange from={f.from} to={f.to} onChange={(r) => setF({ ...f, ...r })} />
         </FilterBar>
       )}
       {totals && rows.length > 0 && (
-        <div className="flex flex-wrap gap-x-10 gap-y-3">
+        <StatRow>
           <Stat label={t("ui.cost.totalCost")} value={fmtGs(totals.costPyg)} />
           <Stat label={t("ui.cost.totalIncome")} value={fmtGs(totals.incomePyg)} />
           <Stat label={t("ui.cost.result")} value={fmtGs(totals.incomePyg - totals.costPyg)} tone={totals.incomePyg - totals.costPyg < 0 ? "danger" : undefined} />
-        </div>
+        </StatRow>
       )}
       {q.isLoading && <Spinner />}
       {q.error ? <ErrorBox error={q.error} /> : null}
@@ -252,7 +247,7 @@ function CostModal({ entry, onClose }: { entry: CostEntry | null; onClose: () =>
   const none = { value: "", label: t("ui.cost.none") };
   return (
     <Modal title={entry ? t("ui.cost.edit") : t("ui.cost.new")} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
+      <Form onSubmit={() => save.mutate()}>
         <Field label={t("ui.cost.date")}>
           <Input type="date" required value={f.date} onChange={set("date")} />
         </Field>
@@ -271,7 +266,7 @@ function CostModal({ entry, onClose }: { entry: CostEntry | null; onClose: () =>
         <Field label={t("ui.cost.plot")}>
           <Select value={f.plotId} onChange={set("plotId")} disabled={!f.farmId} options={[none, ...(farm.data?.plots ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
         </Field>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <Field label={t("ui.cost.description")}>
             <Input value={f.description} onChange={set("description")} maxLength={200} />
           </Field>

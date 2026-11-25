@@ -273,7 +273,7 @@ function IrrigationModal({ plot, onClose }: { plot: Plot; onClose: () => void })
   });
   return (
     <Modal title={t("ui.water.balIrrigate")} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
+      <Form onSubmit={() => save.mutate()}>
         <Field label={t("fields.irrigation.mm")}>
           <Input type="number" required min={0.1} max={LIMITS.irrigation.maxMm} step="any" value={f.mm} onChange={(e) => setF({ ...f, mm: e.target.value })} />
         </Field>

@@ -17,7 +17,7 @@ import { fmtDate, fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { useFarm, useFarms } from "../../lib/queries";
 import { useProducts } from "../../lib/products";
-import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, FormFooter, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, FormFooter, Input, Modal, Select, Spinner, Tabs, toast, DateRange } from "../ui";
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions, RowMenu } from "./adminSlot";
 
@@ -185,15 +185,8 @@ function RationModal({ ration, onClose }: { ration: Ration | null; onClose: () =
           <p className={`num text-sm ${Math.abs(total - 100) <= LIMITS.feedlot.pctTolerance ? "" : "text-peligro"}`}>{t("ui.feedlot.pctTotal", { n: fmtNum(total) })}</p>
         </div>
         <p className="text-xs text-tinta-2">{t("ui.feedlot.pctHint")}</p>
-        {save.error && <ErrorBox error={save.error} />}
-        <div className="flex gap-2">
-          <Button type="submit" variant="primary" disabled={save.isPending || items.length === 0}>
-            {t("ui.common.save")}
-          </Button>
-          <Button variant="quiet" onClick={onClose}>
-            {t("ui.common.cancel")}
-          </Button>
-        </div>
+        <FormFooter error={save.error} disabled={save.isPending || items.length === 0} label={t("ui.common.save")} />
+
       </Form>
     </Modal>
   );
@@ -255,7 +248,7 @@ function FeedModal({ rations, onClose }: { rations: Ration[]; onClose: () => voi
   });
   return (
     <Modal title={t("ui.feedlot.feed")} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
+      <Form onSubmit={() => save.mutate()}>
         <Field label={t("ui.cost.farm")}>
           <Select value={farmId} onChange={(e) => setF({ ...f, farmId: e.target.value, plotId: "" })} options={(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))} />
         </Field>
@@ -274,7 +267,7 @@ function FeedModal({ rations, onClose }: { rations: Ration[]; onClose: () => voi
         <Field label={t("ui.feedlot.head")}>
           <Input type="number" min={1} step={1} value={f.head} onChange={(e) => setF({ ...f, head: e.target.value })} />
         </Field>
-        {corrals.length === 0 && <p className="col-span-2 text-sm text-tinta-2">{t("ui.feedlot.noCorrals")}</p>}
+        {corrals.length === 0 && <p className="sm:col-span-2 text-sm text-tinta-2">{t("ui.feedlot.noCorrals")}</p>}
         {lines.length > 0 && (
           <ul className="num col-span-2 text-sm text-tinta-2">
             {lines.map((l) => (
@@ -324,16 +317,11 @@ function CorralReport({ canFeed, hasRations, onFeed, onNewRation }: { canFeed: b
   ];
   return (
     <div className="flex flex-col gap-4">
-      <FilterBar>
+      <FilterBar active={Object.values(f).filter(Boolean).length} onClear={() => setF({ farmId: "", from: "", to: "" })}>
         <Field label={t("ui.cost.farm")}>
           <Select value={f.farmId} onChange={(e) => setF({ ...f, farmId: e.target.value })} options={[{ value: "", label: t("ui.common.all") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
         </Field>
-        <Field label={t("ui.cost.from")}>
-          <Input type="date" value={f.from} onChange={(e) => setF({ ...f, from: e.target.value })} />
-        </Field>
-        <Field label={t("ui.cost.to")}>
-          <Input type="date" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} />
-        </Field>
+        <DateRange from={f.from} to={f.to} onChange={(r) => setF({ ...f, ...r })} />
       </FilterBar>
       {q.isLoading && <Spinner />}
       {q.error && <ErrorBox error={q.error} />}

@@ -10,7 +10,7 @@ import { t } from "../lib/i18n";
 import { LineChart, RainChart } from "./charts";
 import { CloudRain, CloudSun } from "lucide-react";
 import { SprayWindows } from "./SprayWindows";
-import { Empty, ErrorBox, Spinner, Stat } from "./ui";
+import { Empty, ErrorBox, Spinner, Stat, StatRow } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
 interface Climate {
@@ -76,7 +76,7 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
   const wd = new Intl.DateTimeFormat("es-PY", { weekday: "short", timeZone: "UTC" });
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-2 gap-4 border-b border-linea pb-5">
+      <StatRow className="border-b border-linea pb-5">
         <Stat
           label={t("ui.rain.30")}
           value={hasRain ? fmtRainValue(rain30) : "—"}
@@ -93,7 +93,7 @@ export function ClimatePanel({ farmId }: { farmId: string }) {
           unit={soil?.soilMoisture0_7 != null ? "%" : undefined}
           note={_t(ATTRIBUTION.nasaPower)}
         />
-      </div>
+      </StatRow>
       <div>
         <h3 className="eyebrow mb-2">{t("ui.rain.30")} · 60 días</h3>
         {hasRain ? (

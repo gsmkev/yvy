@@ -34,7 +34,7 @@ export function Button({
       type="button"
       // nosemgrep: react-props-spreading -- envoltorio que reenvía al elemento nativo todas sus props
       {...p}
-      className={`inline-flex cursor-pointer print:hidden items-center justify-center gap-2 rounded-md font-medium transition-[color,background-color,border-color,transform] duration-[120ms] ease-[var(--ease-out)] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 ${size === "sm" ? "h-8 px-2.5 text-meta" : "h-10 px-3.5 text-sm"} ${VARIANT[variant]} ${className}`}
+      className={`inline-flex cursor-pointer print:hidden items-center justify-center gap-2 rounded-md font-medium transition-[color,background-color,border-color,transform] duration-[var(--dur-press)] disabled:cursor-not-allowed disabled:opacity-45 ${size === "sm" ? "h-8 px-2.5 text-meta" : "h-10 px-3.5 text-sm"} ${VARIANT[variant]} ${className}`}
     >
       {/* Ícono solo en botones sin texto: con texto, el texto alcanza */}
       {Icon && !children && <Icon size={16} strokeWidth={2} aria-hidden />}

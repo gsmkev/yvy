@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { AuditList, type AuditEntryRow } from "../components/AuditList";
-import { Button, EmptyState, ErrorBox, FilterBar, Select, Spinner, Page } from "../components/ui";
+import { Button, EmptyState, ErrorBox, Field, FilterBar, Select, Spinner, Page } from "../components/ui";
 import { get, withQs } from "../lib/api";
 import { t, tk } from "../lib/i18n";
 import { useMe } from "../lib/queries";
@@ -27,16 +27,17 @@ export function AuditPage() {
   return (
     <Page width="data" title={t("ui.audit.title")} back={{ to: "/equipo", label: t("ui.team.title") }}>
       <p className="-mt-2 text-sm text-tinta-2">{t("ui.audit.intro")}</p>
-      {(entity || rows.length > 0) && <FilterBar>
-        <div className="w-56">
-          <Select
-            aria-label={t("ui.audit.filter")}
-            value={entity}
-            onChange={(e) => setEntity(e.target.value)}
-            options={ENTITIES.map((e) => ({ value: e, label: e ? tk(`ui.audit.entity_${e}`) : t("ui.audit.all") }))}
-          />
-        </div>
-      </FilterBar>}
+      {(entity || rows.length > 0) && (
+        <FilterBar sheet={false}>
+          <Field label={t("ui.audit.filter")}>
+            <Select
+              value={entity}
+              onChange={(e) => setEntity(e.target.value)}
+              options={ENTITIES.map((e) => ({ value: e, label: e ? tk(`ui.audit.entity_${e}`) : t("ui.audit.all") }))}
+            />
+          </Field>
+        </FilterBar>
+      )}
       {q.isPending && me.data?.role === "owner" && <Spinner />}
       {q.error && <ErrorBox error={q.error} />}
       {q.data && !rows.length ? <EmptyState title={t("ui.audit.empty")} /> : <AuditList rows={rows} />}

@@ -236,7 +236,7 @@ function LogModal({ planId, plans, onClose }: { planId: string | null; plans: Pl
   const ofMachine = plans.filter((p) => p.machineId === machineId);
   return (
     <Modal title={t("ui.maint.logNew")} onClose={onClose}>
-      <Form className="grid grid-cols-2 gap-3" onSubmit={() => save.mutate()}>
+      <Form onSubmit={() => save.mutate()}>
         <Field label={t("ui.maint.machine")}>
           <Select
             value={machineId}
@@ -250,7 +250,7 @@ function LogModal({ planId, plans, onClose }: { planId: string | null; plans: Pl
         <Field label={t("ui.maint.kind")}>
           <Select value={kind} onChange={(e) => setKind(e.target.value)} options={MAINTENANCE_KINDS.map((k) => ({ value: k, label: tk(`ui.maint.kind_${k}`) }))} />
         </Field>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <Field label={t("ui.maint.planName")}>
             <Select value={pid} onChange={(e) => setPid(e.target.value)} options={[{ value: "", label: t("ui.maint.noPlan") }, ...ofMachine.map((p) => ({ value: p.id, label: p.name }))]} />
           </Field>
@@ -261,12 +261,12 @@ function LogModal({ planId, plans, onClose }: { planId: string | null; plans: Pl
         <Field label={t("ui.maint.meter")}>
           <Input type="number" min={0} step="any" value={meter} onChange={(e) => setMeter(e.target.value)} />
         </Field>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <Field label={t("ui.maint.description")}>
             <Input maxLength={300} value={description} onChange={(e) => setDescription(e.target.value)} />
           </Field>
         </div>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <Field label={t("ui.maint.workshop")}>
             <Select value={partyId} onChange={(e) => setPartyId(e.target.value)} options={[{ value: "", label: "—" }, ...(parties.data ?? []).map((p) => ({ value: p.id, label: p.name }))]} />
           </Field>

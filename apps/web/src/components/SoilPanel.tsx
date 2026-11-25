@@ -5,7 +5,7 @@ import { del, get, post } from "../lib/api";
 import { fmtIsoDate, fmtNum, toIso } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import type { Plot } from "../lib/types";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Form, Input, Modal, Select, Spinner, toast } from "./ui";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, Form, Input, Modal, Select, Spinner, toast, FormFooter } from "./ui";
 import { ExportableTable } from "./ExportableTable";
 
 interface SoilSample {
@@ -212,15 +212,8 @@ function SoilModal({ farmId, plots, onClose }: { farmId: string; plots: Plot[]; 
           </Field>
         </div>
         <p className="text-xs text-tinta-2">{tk("ui.soil.formHint")}</p>
-        {save.error && <ErrorBox error={save.error} />}
-        <div className="flex gap-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.common.save")}
-          </Button>
-          <Button variant="quiet" onClick={onClose}>
-            {t("ui.common.cancel")}
-          </Button>
-        </div>
+        <FormFooter error={save.error} disabled={save.isPending} label={t("ui.common.save")} />
+
       </Form>
     </Modal>
   );

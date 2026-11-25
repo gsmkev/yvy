@@ -10,7 +10,7 @@ import { useFarms, useMe } from "../lib/queries";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SenacsaCampaigns } from "../components/SenacsaCampaigns";
 import { RowMenu } from "../components/menus";
-import { Button, DataTable, EmptyState, ErrorBox, Field, Form, Input, Modal, Page, PageHeader, Select, Spinner, toast } from "../components/ui";
+import { Button, DataTable, EmptyState, ErrorBox, Field, Form, Input, Modal, Page, PageHeader, Select, Spinner, toast, FormFooter } from "../components/ui";
 import type { SanitaryEventRow as EventRow } from "@yvy/shared";
 
 const shiftMonth = (month: string, by: number) => {
@@ -222,15 +222,8 @@ function NewEvent({
           <input type="checkbox" checked={f.createTasks} onChange={(e) => setF({ ...f, createTasks: e.target.checked })} />
           {t("ui.sanitary.createTasks")}
         </label>
-        {create.error && <ErrorBox error={create.error} />}
-        <div className="flex gap-2">
-          <Button type="submit" variant="primary" disabled={create.isPending}>
-            {t("ui.common.save")}
-          </Button>
-          <Button variant="quiet" onClick={onClose}>
-            {t("ui.common.cancel")}
-          </Button>
-        </div>
+        <FormFooter error={create.error} disabled={create.isPending} label={t("ui.common.save")} />
+
       </Form>
     </Modal>
   );

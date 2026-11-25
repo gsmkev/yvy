@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, EmptyState, ErrorBox, Field, Form, Input, Modal, Select, Spinner, toast } from "../../components/ui";
+import { EmptyState, ErrorBox, Field, Form, Input, Modal, Select, Spinner, toast, FormFooter } from "../../components/ui";
 import { get, post, withQs } from "../../lib/api";
 import { AuditList, type AuditEntryRow } from "../../components/AuditList";
 import { t } from "../../lib/i18n";
@@ -52,11 +52,8 @@ export function PlanModal({ org, onClose }: { org: OrgMetrics; onClose: () => vo
             <Input inputMode="numeric" value={f.maxUsers} onChange={(e) => setF({ ...f, maxUsers: e.target.value })} />
           </Field>
         </div>
-        {save.error && <ErrorBox error={save.error} />}
-        <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.common.save")}
-        </Button>
-      </Form>
+        <FormFooter error={save.error} disabled={save.isPending} label={t("ui.common.save")} />
+</Form>
     </Modal>
   );
 }

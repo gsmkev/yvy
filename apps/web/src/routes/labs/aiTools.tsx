@@ -16,7 +16,7 @@ export function Ask() {
       />
       <Flow drop={false}>
         <p className="text-sm text-tinta-2">
-          {t("ui.labs.askExampleLabel")} · {t("ui.labs.askFarm")}
+          {t("ui.labs.askExampleLabel")}. {t("ui.labs.askFarm")}
         </p>
         <ul>
           {pairs.map((n) => (
@@ -40,7 +40,7 @@ export function Summary() {
       </div>
       <Flow drop={false}>
         <p className="text-sm text-tinta-2">
-          {t("ui.labs.summaryDraft")} · {t("ui.labs.summaryWeek")}
+          {t("ui.labs.summaryDraft")}. {t("ui.labs.summaryWeek")}
         </p>
         <p className="border-b border-linea pb-4">{t("ui.labs.summaryText")}</p>
       </Flow>

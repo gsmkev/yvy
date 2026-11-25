@@ -47,23 +47,30 @@ const INITIAL: MoveForm = {
   expiresOn: "",
 };
 
-/** Cada tipo de movimiento tiene su ruta y su cuerpo. */
-const REQUESTS: Record<Mode, (f: MoveForm, common: { productId: string; date: string; note: string | null }, qty: number) => Promise<unknown>> = {
-  purchase: (f, common, qty) =>
-    post("/org/erp/stock/purchases", {
-      ...common,
-      warehouseId: f.warehouseId,
-      qty,
-      amount: toMinor(Number(f.amount), f.currency as Currency),
-      currency: f.currency,
-      partyId: f.partyId || null,
-      lot: f.lot.trim() || null,
-      expiresOn: f.expiresOn || null,
-    }),
-  consumption: (f, common, qty) => post("/org/erp/stock/consumptions", { ...common, warehouseId: f.warehouseId, qty, plotId: f.plotId || null }),
-  transfer: (f, common, qty) => post("/org/erp/stock/transfers", { ...common, fromWarehouseId: f.warehouseId, toWarehouseId: f.toWarehouseId, qty }),
-  adjustment: (f, common, qty) => post("/org/erp/stock/adjustments", { ...common, warehouseId: f.warehouseId, qty: qty * Number(f.sign) }),
-};
+type Common = { productId: string; date: string; note: string | null };
+
+/** Manda el movimiento a la ruta de su tipo. */
+function sendMove(mode: Mode, f: MoveForm, common: Common, qty: number): Promise<unknown> {
+  switch (mode) {
+    case "purchase":
+      return post("/org/erp/stock/purchases", {
+        ...common,
+        warehouseId: f.warehouseId,
+        qty,
+        amount: toMinor(Number(f.amount), f.currency as Currency),
+        currency: f.currency,
+        partyId: f.partyId || null,
+        lot: f.lot.trim() || null,
+        expiresOn: f.expiresOn || null,
+      });
+    case "consumption":
+      return post("/org/erp/stock/consumptions", { ...common, warehouseId: f.warehouseId, qty, plotId: f.plotId || null });
+    case "transfer":
+      return post("/org/erp/stock/transfers", { ...common, fromWarehouseId: f.warehouseId, toWarehouseId: f.toWarehouseId, qty });
+    case "adjustment":
+      return post("/org/erp/stock/adjustments", { ...common, warehouseId: f.warehouseId, qty: qty * Number(f.sign) });
+  }
+}
 
 function PurchaseFields({ f, set }: { f: MoveForm; set: Setter }) {
   const parties = useParties();
@@ -112,7 +119,7 @@ export function MoveModal({ mode, onClose }: { mode: Mode; onClose: () => void }
   const [f, setF] = useState<MoveForm>({ ...INITIAL, date: localDate(Date.now()) });
   const set: Setter = (k) => (e) => setF({ ...f, [k]: e.target.value, ...(k === "farmId" ? { plotId: "" } : {}) });
   const save = useMutation({
-    mutationFn: () => REQUESTS[mode](f, { productId: f.productId, date: f.date, note: f.note.trim() || null }, Number(f.qty)),
+    mutationFn: () => sendMove(mode, f, { productId: f.productId, date: f.date, note: f.note.trim() || null }, Number(f.qty)),
     onSuccess: () => {
       toast(t("ui.erp.saved"));
       qc.invalidateQueries({ queryKey: ["erp"] });

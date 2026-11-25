@@ -1,5 +1,4 @@
 /** Ingreso y registro con código por email, segundo factor y Google. */
-import { useSearch } from "@tanstack/react-router";
 import { ATTRIBUTION } from "@yvy/shared";
 import { t } from "../lib/i18n";
 import { LegalLinks } from "./public/PublicShell";
@@ -26,8 +25,7 @@ function SidePhoto() {
 
 /** Pantalla de ingreso y registro. Pasa por los pasos de email, código y segundo factor. */
 export function LoginPage() {
-  const search = useSearch({ from: "/ingresar" });
-  const login = useLogin(search);
+  const login = useLogin();
   const { mode, step, fields } = login;
   const StepForm = STEPS[step];
   return (
@@ -45,7 +43,7 @@ export function LoginPage() {
               login.submit();
             }}
           >
-            <StepForm login={login} googleError={search.google_error} />
+            <StepForm login={login} googleError={login.googleError} />
           </form>
           {login.googleEnabled && mode === "login" && step === "email" && (
             <a href="/auth/google/start" className="mt-4 flex h-11 items-center justify-center rounded-md border border-linea bg-papel text-sm font-medium hover:border-tinta-2/40">

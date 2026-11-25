@@ -36,7 +36,7 @@ export function ApiDocsPage() {
           {ENDPOINTS.map((e) => (
             <li key={e.path}>
               <code className="font-semibold">{t("ui.api.get")} {e.path}</code>
-              {e.params && <span className="text-sm text-tinta-2"> · {t("ui.api.docsParams")}: {e.params}</span>}
+              {e.params && <span className="text-sm text-tinta-2">, {t("ui.api.docsParams")}: {e.params}</span>}
               <p className="mt-1 text-sm">{t(e.text)}</p>
             </li>
           ))}

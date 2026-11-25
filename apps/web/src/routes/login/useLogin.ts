@@ -1,25 +1,18 @@
 /** Estado y pasos del ingreso: email, código, segundo factor y vuelta de Google. */
 import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ApiError, get, post, setSession, type Session } from "../../lib/api";
 
 /** Paso del ingreso. */
 export type Step = "email" | "code" | "totp";
 
-/** Parámetros de la URL que usa el ingreso. */
-export interface LoginSearch {
-  modo?: string;
-  ref?: string;
-  google?: string;
-  google_error?: string;
-}
-
 type Signed = Session | { mfaRequired: true; ticket: string };
 
-/** Manejo de los pasos del ingreso; `search` son los parámetros de la URL. */
-export function useLogin(search: LoginSearch) {
+/** Manejo de los pasos del ingreso a partir de los parámetros de la URL (modo, referido y vuelta de Google). */
+export function useLogin() {
   const navigate = useNavigate();
+  const search = useSearch({ from: "/ingresar" });
   const [mode, setMode] = useState<"login" | "signup">(search.modo === "registro" ? "signup" : "login");
   const [step, setStep] = useState<Step>("email");
   const [ticket, setTicket] = useState("");
@@ -93,7 +86,7 @@ export function useLogin(search: LoginSearch) {
 
   const submit = { email: sendCode, totp: verifyTotp, code: verify }[step];
   return {
-    mode, setMode, step, setStep, busy, error, googleEnabled: !!google.data?.enabled, submit,
+    mode, setMode, step, setStep, busy, error, googleEnabled: !!google.data?.enabled, googleError: search.google_error, submit,
     fields: { email, setEmail, code, setCode, orgName, setOrgName, fullName, setFullName, totpCode, setTotpCode },
   };
 }

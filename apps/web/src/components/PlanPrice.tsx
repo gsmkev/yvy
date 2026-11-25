@@ -84,12 +84,12 @@ function Quote({
         <Stat
           label={t("ui.plan.priceInstallment")}
           value={fmtGs(usdToGs(q.perInstallment, rate))}
-          note={`${usd(q.perInstallment)} · ${t(`ui.plan.priceInstallments_${billing}`)}`}
+          note={`${usd(q.perInstallment)}, ${t(`ui.plan.priceInstallments_${billing}`)}`}
         />
       </dl>
       <p className="mt-2 text-xs text-tinta-2">
         {t("ui.plan.pricePerHa", { n: new Intl.NumberFormat("es-PY", { maximumFractionDigits: 2 }).format(q.perHa) })}
-        {q.minApplied ? ` · ${t("ui.plan.priceMin")}` : ""}
+        {q.minApplied ? `. ${t("ui.plan.priceMin")}` : ""}
       </p>
     </>
   );

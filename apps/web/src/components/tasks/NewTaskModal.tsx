@@ -6,7 +6,7 @@ import { post } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { useFarms } from "../../lib/queries";
 import type { Plot } from "../../lib/types";
-import { Button, ErrorBox, Field, Form, Input, Modal, Select, toast } from "../ui";
+import { Button, Field, Form, Input, Modal, Select, toast, FormFooter } from "../ui";
 
 /** Selección de lotes en el mapa de la estancia; la maneja la pantalla que tiene el mapa. */
 export interface PlotPick {
@@ -181,11 +181,8 @@ members: { userId: string; fullName: string }[];
               placeholder={t("ui.task.checklistHint")}
             />
           </Field>
-          {create.error && <ErrorBox error={create.error} />}
-          <Button type="submit" variant="primary" disabled={create.isPending}>
-            {t("ui.common.save")}
-          </Button>
-        </Form>
+          <FormFooter error={create.error} disabled={create.isPending} label={t("ui.common.save")} />
+</Form>
       </Modal>
     </div>
   );

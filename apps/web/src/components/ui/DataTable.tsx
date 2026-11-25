@@ -1,5 +1,5 @@
 /** Tabla de datos genérica con columnas ordenables, estado vacío y, bajo 640 px, lista de tarjetas en lugar de tabla. */
-import { Fragment, useState, type ReactNode } from "react";
+import { Fragment, isValidElement, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { useIsPhone } from "./useMediaQuery";
 
@@ -17,7 +17,7 @@ export interface Column<T> {
   /**
    * Papel de la columna en la tarjeta del celular: "title" (la primera por defecto), "value" (el dato clave a la derecha;
    * por defecto la última columna alineada a la derecha), "hide" (no se muestra). El resto va en una línea secundaria.
-   * Las columnas con `hideBelow` ya se ocultan en la tarjeta, y la de acciones (id que empieza con "_") va al final.
+   * Las columnas con `hideBelow` ya se ocultan en la tarjeta, y la de acciones (encabezado `<span className="sr-only">`) va al final.
    */
   mobile?: "title" | "value" | "hide";
 }
@@ -110,7 +110,7 @@ empty?: ReactNode;
     </div>
   );
   if (!phone) return table;
-  const isAction = (c: Column<T>) => c.id.startsWith("_");
+  const isAction = (c: Column<T>) => isValidElement<{ className?: string }>(c.header) && c.header.props.className === "sr-only";
   const visible = columns.filter((c) => !c.hideBelow && c.mobile !== "hide");
   const body = visible.filter((c) => !isAction(c));
   const actions = visible.find(isAction);

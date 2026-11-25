@@ -15,14 +15,14 @@ export function NotFound({ title, message }: { title?: string; message?: ReactNo
         {t("ui.app.name")}
       </Link>
       <div className="flex max-w-sm flex-col gap-2">
-        <h1 className="text-title text-surco">{title ?? t("ui.notFound.title")}</h1>
-        <p className="text-body text-tinta-2">{message ?? t("ui.notFound.body")}</p>
+        <h1 className="text-title text-surco">{title ?? t("ui.notfound.title")}</h1>
+        <p className="text-body text-tinta-2">{message ?? t("ui.notfound.body")}</p>
       </div>
       <Link
         to="/"
         className="inline-flex h-10 items-center justify-center rounded-md border border-accion bg-accion px-4 text-sm font-medium text-sobre transition-colors hover:bg-accion-2"
       >
-        {t("ui.notFound.home")}
+        {t("ui.notfound.home")}
       </Link>
     </main>
   );

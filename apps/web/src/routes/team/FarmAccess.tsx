@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FarmAccessLevel } from "@yvy/shared";
-import { Button, ErrorBox, Modal, Select, Spinner, toast } from "../../components/ui";
+import { Button, CancelButton, ErrorBox, Modal, Select, Spinner, toast } from "../../components/ui";
 import { get, put } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { useFarms } from "../../lib/queries";
@@ -34,7 +34,18 @@ export function FarmAccess({ member, onClose }: { member: Member; onClose: () =>
     setChosen(next);
   };
   return (
-    <Modal title={`${t("ui.farm.access")} · ${member.fullName}`} onClose={onClose}>
+    <Modal
+      title={`${t("ui.farm.access")} · ${member.fullName}`}
+      onClose={onClose}
+      footer={
+        <>
+          <CancelButton />
+          <Button variant="primary" onClick={() => save.mutate()} disabled={save.isPending}>
+            {t("ui.common.save")}
+          </Button>
+        </>
+      }
+    >
       {!farms.data || !access.data ? (
         <Spinner />
       ) : (
@@ -63,9 +74,6 @@ export function FarmAccess({ member, onClose }: { member: Member; onClose: () =>
             ))}
           </ul>
           {save.error && <ErrorBox error={save.error} />}
-          <Button onClick={() => save.mutate()} disabled={save.isPending}>
-            {t("ui.common.save")}
-          </Button>
         </div>
       )}
     </Modal>

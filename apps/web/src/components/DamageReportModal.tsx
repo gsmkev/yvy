@@ -1,18 +1,11 @@
 import { useState } from "react";
 import { get } from "../lib/api";
-import {
-  DAMAGE_CAUSES,
-  damageEvidence,
-  recordsRange,
-  todayIso,
-  type DamageCause,
-  type NdviPass,
-} from "../lib/damageData";
+import { DAMAGE_CAUSES, damageEvidence, recordsRange, todayIso, type DamageCause, type NdviPass } from "../lib/damageData";
 import { download } from "../lib/exports";
 import { t, tk } from "../lib/i18n";
 import { fetchAllRecords, useFarm, useMe } from "../lib/queries";
 import type { Plot } from "../lib/types";
-import { Button, ErrorBox, Field, Form, Input, Modal, Select } from "./ui";
+import { Field, Form, Input, Modal, Select, FormFooter } from "./ui";
 
 /** Informe de daños para el seguro agrícola: fecha del evento, vigor antes y después, registros y fotos en un PDF. */
 export function DamageReportModal({ plot, onClose }: { plot: Plot; onClose: () => void }) {
@@ -90,15 +83,8 @@ export function DamageReportModal({ plot, onClose }: { plot: Plot; onClose: () =
             onChange={(e) => setDescription(e.target.value)}
           />
         </Field>
-        {error ? <ErrorBox error={error} /> : null}
-        <div className="flex gap-2">
-          <Button type="submit" variant="primary" disabled={busy || !farm.data}>
-            {busy ? t("ui.damage.busy") : t("ui.damage.generate")}
-          </Button>
-          <Button variant="quiet" onClick={onClose}>
-            {t("ui.common.cancel")}
-          </Button>
-        </div>
+        <FormFooter error={error} disabled={busy || !farm.data} label={busy ? t("ui.damage.busy") : t("ui.damage.generate")} />
+
       </Form>
     </Modal>
   );

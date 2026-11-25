@@ -6,7 +6,7 @@ import { fmtHa, fmtIsoDate, fmtNum } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { useSeasons } from "../lib/queries";
 import type { Plot, PlotSeason, Season } from "../lib/types";
-import { Button, ConfirmModal, Empty, ErrorBox, Field, Form, Input, Modal, Select, Spinner, toast } from "./ui";
+import { Button, ConfirmModal, Empty, ErrorBox, Field, Form, Input, Modal, Select, Spinner, toast, FormFooter } from "./ui";
 
 /** Campañas de la organización y plan de cultivo por lote. */
 export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots: Plot[]; canEdit: boolean }) {
@@ -207,11 +207,8 @@ function NewSeasonModal({ onClose, onSaved }: { onClose: () => void; onSaved: (i
             <Input type="date" value={f.endDate} min={f.startDate || undefined} onChange={set("endDate")} />
           </Field>
         </div>
-        {create.error && <ErrorBox error={create.error} />}
-        <Button type="submit" variant="primary" disabled={create.isPending}>
-          {t("ui.common.save")}
-        </Button>
-      </Form>
+        <FormFooter error={create.error} disabled={create.isPending} label={t("ui.common.save")} />
+</Form>
     </Modal>
   );
 }
@@ -308,16 +305,12 @@ function PlanModal({
           </Field>
         </div>
         {(save.error || clear.error) && <ErrorBox error={save.error ?? clear.error} />}
-        <div className="flex gap-2">
-          <Button type="submit" variant="primary" disabled={save.isPending}>
-            {t("ui.season.planSave")}
+        {plan && (
+          <Button variant="quiet" className="self-start" disabled={clear.isPending} onClick={() => clear.mutate()}>
+            {t("ui.season.planClear")}
           </Button>
-          {plan && (
-            <Button variant="quiet" disabled={clear.isPending} onClick={() => clear.mutate()}>
-              {t("ui.season.planClear")}
-            </Button>
-          )}
-        </div>
+        )}
+        <FormFooter error={null} disabled={save.isPending} label={t("ui.season.planSave")} />
       </Form>
     </Modal>
   );

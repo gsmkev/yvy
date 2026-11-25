@@ -5,7 +5,7 @@ import { LIMITS } from "@yvy/shared";
 import { apiFile, del, withQs } from "../lib/api";
 import { customFileMime, customMaxBytes, parseCornerInputs, type CustomLayer } from "../lib/customLayers";
 import { t, tk } from "../lib/i18n";
-import { Button, Field, Input, Modal, toast } from "./ui";
+import { ConfirmModal, Field, Input, Modal, toast, FormFooter } from "./ui";
 
 /** Capas propias visibles: id de la capa y su opacidad de 0 a 1. */
 export type ActiveLayers = Record<string, number>; // id → opacidad 0-1
@@ -110,15 +110,14 @@ farmBounds: [number, number, number, number] | null;
       )}
       {adding && <UploadModal farmId={farmId} farmBounds={farmBounds} onClose={() => setAdding(false)} />}
       {removing && (
-        <Modal title={t("ui.custom.layersDelete")} onClose={() => setRemoving(null)}>
-          <p className="text-sm">{t("ui.custom.layersDeleteAsk", { name: removing.name })}</p>
-          <div className="mt-4 flex justify-end gap-2">
-            <Button onClick={() => setRemoving(null)}>{t("ui.common.cancel")}</Button>
-            <Button variant="danger" disabled={remove.isPending} onClick={() => remove.mutate(removing.id)}>
-              {t("ui.custom.layersDelete")}
-            </Button>
-          </div>
-        </Modal>
+        <ConfirmModal
+          title={t("ui.custom.layersDelete")}
+          message={t("ui.custom.layersDeleteAsk", { name: removing.name })}
+          confirmLabel={t("ui.custom.layersDelete")}
+          pending={remove.isPending}
+          onConfirm={() => remove.mutate(removing.id)}
+          onClose={() => setRemoving(null)}
+        />
       )}
     </div>
   );
@@ -225,12 +224,7 @@ function UploadModal({
             {error}
           </p>
         )}
-        <div className="flex justify-end gap-2">
-          <Button onClick={onClose}>{t("ui.common.cancel")}</Button>
-          <Button type="submit" variant="primary" disabled={!file || upload.isPending}>
-            {upload.isPending ? t("ui.custom.layersUploading") : t("ui.custom.layersUpload")}
-          </Button>
-        </div>
+        <FormFooter error={null} disabled={!file || upload.isPending} label={upload.isPending ? t("ui.custom.layersUploading") : t("ui.custom.layersUpload")} />
       </form>
     </Modal>
   );

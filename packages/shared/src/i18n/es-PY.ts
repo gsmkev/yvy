@@ -1792,7 +1792,7 @@ export const esPY = {
       periodFrom: "Desde",
       periodTo: "Hasta",
     },
-    notFound: {
+    notfound: {
       title: "No encontramos esta página",
       body: "El enlace puede estar mal escrito o la página ya no existe.",
       home: "Volver al inicio",

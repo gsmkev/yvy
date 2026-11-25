@@ -4,7 +4,7 @@ import { download, polygonsToShapefileZip } from "../lib/exports";
 import { fmtHa, fmtNum } from "../lib/format";
 import { t } from "../lib/i18n";
 import type { Plot } from "../lib/types";
-import { Button, ErrorBox, Field, Input, Modal, Select } from "./ui";
+import { Button, CancelButton, ErrorBox, Field, Input, Modal, Select } from "./ui";
 import type { ManagementZone } from "../lib/managementZones";
 
 /** Prescripción de dosis variable: una dosis por zona de manejo, exportada en el navegador. */
@@ -55,7 +55,19 @@ export function RatePrescription({ plot, zones, onClose }: { plot: Plot; zones: 
   });
   const shown = zones.map((z) => ({ areaHa: z.areaHa, rate: num(z) || 0 }));
   return (
-    <Modal title={t("ui.rx.title")} onClose={onClose}>
+    <Modal
+      title={t("ui.rx.title")}
+      onClose={onClose}
+      footer={
+        <>
+          <CancelButton label={t("ui.common.close")} />
+          <Button onClick={iso}>{t("ui.rx.iso")}</Button>
+          <Button variant="primary" onClick={shp}>
+            {t("ui.rx.shp")}
+          </Button>
+        </>
+      }
+    >
       <div className="flex flex-col gap-3">
         <p className="text-sm text-tinta-2">{t("ui.rx.intro", { plot: plot.name })}</p>
         <div className="grid grid-cols-2 gap-3">
@@ -83,12 +95,6 @@ export function RatePrescription({ plot, zones, onClose }: { plot: Plot; zones: 
           </p>
         )}
         {error && <ErrorBox error={new Error(error)} />}
-        <div className="flex flex-wrap gap-2">
-          <Button variant="primary" onClick={shp}>
-            {t("ui.rx.shp")}
-          </Button>
-          <Button onClick={iso}>{t("ui.rx.iso")}</Button>
-        </div>
         <p className="text-xs text-tinta-2">{t("ui.rx.shpNote")}</p>
         <p className="text-xs text-tinta-2">{t("ui.rx.isoNote")}</p>
       </div>

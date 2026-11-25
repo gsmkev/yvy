@@ -185,15 +185,8 @@ function RationModal({ ration, onClose }: { ration: Ration | null; onClose: () =
           <p className={`num text-sm ${Math.abs(total - 100) <= LIMITS.feedlot.pctTolerance ? "" : "text-peligro"}`}>{t("ui.feedlot.pctTotal", { n: fmtNum(total) })}</p>
         </div>
         <p className="text-xs text-tinta-2">{t("ui.feedlot.pctHint")}</p>
-        {save.error && <ErrorBox error={save.error} />}
-        <div className="flex gap-2">
-          <Button type="submit" variant="primary" disabled={save.isPending || items.length === 0}>
-            {t("ui.common.save")}
-          </Button>
-          <Button variant="quiet" onClick={onClose}>
-            {t("ui.common.cancel")}
-          </Button>
-        </div>
+        <FormFooter error={save.error} disabled={save.isPending || items.length === 0} label={t("ui.common.save")} />
+
       </Form>
     </Modal>
   );

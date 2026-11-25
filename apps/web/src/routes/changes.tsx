@@ -5,7 +5,7 @@ import { useParams } from "@tanstack/react-router";
 import { CoverSection } from "../components/CoverSection";
 import { boundsOf, FarmMap } from "../components/FarmMap";
 import { PageExport } from "../components/PageExport";
-import { DataTable, EmptyState, ErrorBox, Field, Page, Select, Spinner, Stat, Tabs, type Column } from "../components/ui";
+import { DataTable, EmptyState, ErrorBox, Field, Page, Select, Spinner, Stat, Tabs, type Column, StatRow } from "../components/ui";
 import { get } from "../lib/api";
 import { analysisAreas, burnedEvents, ATTRIBUTION } from "@yvy/shared";
 import { fmtDate, fmtHa } from "../lib/format";
@@ -61,11 +61,11 @@ function BurnedSection({ farmId }: { farmId: string }) {
               </Field>
             </div>
           )}
-          <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-linea py-5 sm:grid-cols-3">
+          <StatRow className="border-y border-linea py-5">
             <Stat label={t("ui.burned.total")} value={fmtHa(ev.burnedHa)} tone={ev.burnedHa > 0 ? "danger" : undefined} />
             {ev.highHa > 0 && <Stat label={t("ui.burned.high")} value={fmtHa(ev.highHa)} />}
             <Stat label={t("ui.burned.plots")} value={String(ev.plots.length)} />
-          </div>
+          </StatRow>
           {ev.fromAt !== null && ev.toAt !== null && (
             <p className="text-sm text-tinta-2">{t("ui.burned.images", { from: fmtDate(ev.fromAt), to: fmtDate(ev.toAt) })}</p>
           )}

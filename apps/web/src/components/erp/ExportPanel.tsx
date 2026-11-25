@@ -23,7 +23,7 @@ import { fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { fmtGs } from "../../lib/money";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { Button, type Column, DataTable, ErrorBox, Field, Form, Input, Modal, SectionHead, Select, Spinner, toast } from "../ui";
+import { Button, type Column, DataTable, ErrorBox, Field, Form, Input, Modal, SectionHead, Select, Spinner, toast, FormFooter } from "../ui";
 import { HeaderActions } from "./adminSlot";
 
 interface Saved {
@@ -332,10 +332,8 @@ function TaxModal({ doc, onClose }: { doc: ExportDoc; onClose: () => void }) {
           </div>
         ) : null}
         <div className="sm:col-span-2 flex gap-2">
-          <Button type="submit" variant="primary" disabled={saveTax.isPending}>
-            {t("ui.common.save")}
-          </Button>
-          {(doc.gross10 !== null || doc.gross5 !== null || doc.exempt !== null) && (
+          <FormFooter error={null} disabled={saveTax.isPending} label={t("ui.common.save")} />
+{(doc.gross10 !== null || doc.gross5 !== null || doc.exempt !== null) && (
             <Button variant="quiet" onClick={() => clear.mutate()}>
               {t("ui.exp.taxClear")}
             </Button>

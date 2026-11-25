@@ -5,7 +5,7 @@ import { COST_CATEGORIES, type CostCategory } from "@yvy/shared";
 import { del, get, put, withQs } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { tablesToExcel } from "../../lib/tableExport";
-import { Button, ErrorBox, Field, FilterBar, Input, SectionHead, Spinner, toast, DateRange } from "../ui";
+import { Button, ErrorBox, FilterBar, Input, SectionHead, Spinner, toast, DateRange } from "../ui";
 import { HeaderActions } from "./adminSlot";
 
 interface MapRow {

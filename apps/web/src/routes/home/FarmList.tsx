@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Stat } from "../../components/ui";
+import { Stat, StatRow } from "../../components/ui";
 import { areaUnitLabel, fmtAreaValue, fmtDate, fmtHa } from "../../lib/format";
 import { t } from "../../lib/i18n";
 import type { FarmSummary } from "../../lib/types";
@@ -47,11 +47,11 @@ export function FarmTotals({ list }: { list: FarmSummary[] }) {
   const alerts = list.reduce((a, f) => a + f.activeAlerts, 0);
   const records = list.reduce((a, f) => a + f.records7d, 0);
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <StatRow>
       <Stat label={t("ui.common.area")} value={fmtAreaValue(totalHa)} unit={areaUnitLabel()} />
       <Stat label={t("ui.records.7d")} value={records} />
       <Stat label={t("ui.common.activeAlerts")} value={alerts} tone={alerts ? "danger" : undefined} />
-    </div>
+    </StatRow>
   );
 }
 

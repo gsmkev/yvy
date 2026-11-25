@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Button, PageHeader, Stat } from "../../components/ui";
+import { Button, PageHeader, Stat, StatRow } from "../../components/ui";
 import { ActionMenu } from "../../components/menus";
 import { areaUnitLabel, fmtAreaValue } from "../../lib/format";
 import { t } from "../../lib/i18n";
@@ -73,12 +73,12 @@ export function FarmHeader({
       {(d.farm.district || d.farm.department) && (
         <p className="mt-1 text-sm text-tinta-2">{[d.farm.district, d.farm.department].filter(Boolean).join(", ")}</p>
       )}
-      <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3">
+      <StatRow className="mt-4">
         <Stat label={t("ui.common.area")} value={fmtAreaValue(d.farm.areaHa)} unit={areaUnitLabel()} />
         <Stat label={t("ui.common.plots")} value={d.plots.length} />
         {cropHa > 0 && <Stat label={t("ui.common.crop")} value={fmtAreaValue(cropHa)} unit={areaUnitLabel()} />}
         {pastureHa > 0 && <Stat label={t("ui.common.pasture")} value={fmtAreaValue(pastureHa)} unit={areaUnitLabel()} />}
-      </div>
+      </StatRow>
     </div>
   );
 }

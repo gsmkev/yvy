@@ -6,7 +6,7 @@ import { fmtHa } from "../../lib/format";
 import { t } from "../../lib/i18n";
 import type { AnalysisPlot, CoverMetrics, FarmDetail, Me } from "../../lib/types";
 import { boundsOf, FarmMap } from "../FarmMap";
-import { Button, DataTable, ErrorBox, Field, Select, Stat, type Column } from "../ui";
+import { Button, DataTable, ErrorBox, Field, Select, Stat, type Column, StatRow } from "../ui";
 import { CLASSES, day } from "./util";
 
 /** Resultado de un cambio de cobertura: clases, conversiones, mapa y PDF. */
@@ -74,11 +74,11 @@ export function CoverResult({
         {busy ? t("ui.cover.pdfWorking") : t("ui.cover.pdf")}
       </Button>
     </div>
-    <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-linea py-5 sm:grid-cols-3">
+    <StatRow className="border-y border-linea py-5">
       <Stat label={t("ui.cover.forestFrom", { date: day(range.from) })} value={fmtHa(sum.from.forest)} />
       <Stat label={t("ui.cover.forestTo", { date: day(range.to) })} value={fmtHa(sum.to.forest)} />
       {sum.forestLostHa > 0 && <Stat label={t("ui.cover.forestLost")} value={fmtHa(sum.forestLostHa)} tone="danger" />}
-    </div>
+    </StatRow>
     <div className="grid items-start gap-x-10 gap-y-5 lg:grid-cols-2">
       <div className="flex flex-col gap-3">
         <DataTable columns={cols} rows={classRows} rowKey={(r) => r.c} caption={t("ui.cover.title")} />

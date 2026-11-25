@@ -6,7 +6,7 @@ import { t, tk } from "../lib/i18n";
 import type { Plot, Product } from "../lib/types";
 import { useProducts } from "../lib/products";
 import { PrescriptionModal } from "./PrescriptionModal";
-import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, Input, Modal, Select, Spinner, toast } from "./ui";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, Input, Modal, Select, Spinner, toast, FormFooter } from "./ui";
 import { HeaderActions, RowMenu, useTableExport } from "./erp/adminSlot";
 
 interface DoseRange {
@@ -208,11 +208,8 @@ function ProductModal({ product, range, onClose }: { product: Product | null; ra
             </Field>
           </div>
         </fieldset>
-        {save.error && <ErrorBox error={save.error} />}
-        <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.common.save")}
-        </Button>
-      </Form>
+        <FormFooter error={save.error} disabled={save.isPending} label={t("ui.common.save")} />
+</Form>
     </Modal>
   );
 }

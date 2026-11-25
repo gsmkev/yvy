@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import type { MultiPolygon, Polygon } from "geojson";
 import { areaHa, validatePolygon } from "@yvy/geo";
 import { POI_KINDS } from "@yvy/shared";
-import { Button, ErrorBox, Field, Form, Input, Modal, Select, toast } from "../../components/ui";
+import { Field, Form, Input, Modal, Select, toast, FormFooter } from "../../components/ui";
 import { patch, post } from "../../lib/api";
 import { fmtHa } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
@@ -53,11 +53,8 @@ export function NewPlotModal({
             ]}
           />
         </Field>
-        {save.error && <ErrorBox error={save.error} />}
-        <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.common.save")}
-        </Button>
-      </Form>
+        <FormFooter error={save.error} disabled={save.isPending} label={t("ui.common.save")} />
+</Form>
     </Modal>
   );
 }
@@ -159,11 +156,8 @@ onSaved: () => void;
         <Field label={t("ui.common.name")}>
           <Input required autoFocus value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
-        {save.error && <ErrorBox error={save.error} />}
-        <Button type="submit" variant="primary" disabled={save.isPending}>
-          {t("ui.common.save")}
-        </Button>
-      </Form>
+        <FormFooter error={save.error} disabled={save.isPending} label={t("ui.common.save")} />
+</Form>
     </Modal>
   );
 }

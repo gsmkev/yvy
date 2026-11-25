@@ -66,7 +66,8 @@ export default function Warehouses() {
               rows={rows}
               keyOf={(w) => w.id}
               title={(w) => w.name}
-              subtitle={(w) => [t(k(`ui.warehouse.type_${w.type}`)), farmName.get(w.farmId), w.isDefault ? t("office.adm.default") : null].filter(Boolean).join(" · ")}
+              subtitle={(w) => [t(k(`ui.warehouse.type_${w.type}`)), farmName.get(w.farmId)].filter(Boolean).join(", ")}
+              right={(w) => (w.isDefault ? t("office.adm.default") : "")}
               onPress={manage ? open : undefined}
               empty={{ title: t("ui.erp.empty") }}
             />

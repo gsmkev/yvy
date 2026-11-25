@@ -7,6 +7,8 @@ import type { ScrollViewInstance } from "react-native";
 import { Text, s as k } from "../../ui/kit";
 import { C, F, RADIUS } from "../../ui/theme";
 
+const ARROW_W = 52;
+
 /**
  * Chips de filtro en una fila desplazable. `count` opcional ("Pastura · 3"). Mientras queden chips fuera de
  * la pantalla, un botón con flecha al borde derecho avisa que se desplaza y avanza la fila al tocarlo.
@@ -14,7 +16,8 @@ import { C, F, RADIUS } from "../../ui/theme";
 export function FilterChips<V extends string>({ options, value, onChange }: { options: { value: V; label: string; count?: number }[]; value: V; onChange: (v: V) => void }) {
   const ref = useRef<ScrollViewInstance>(null);
   const [m, setM] = useState({ x: 0, w: 0, content: 0 });
-  const more = m.content - m.w - m.x > 8 && m.w > 0;
+  // El final de la fila deja libre el ancho de la flecha: así el último chip no queda tapado al llegar al borde.
+  const more = m.content - ARROW_W - m.w - m.x > 8 && m.w > 0;
   return (
     <View style={{ marginTop: 16, marginHorizontal: -20 }}>
     <ScrollView
@@ -25,7 +28,7 @@ export function FilterChips<V extends string>({ options, value, onChange }: { op
       onLayout={(e) => setM((p) => ({ ...p, w: e.nativeEvent.layout.width }))}
       onContentSizeChange={(content) => setM((p) => ({ ...p, content }))}
       onScroll={(e) => setM((p) => ({ ...p, x: e.nativeEvent.contentOffset.x }))}
-      contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+      contentContainerStyle={{ paddingLeft: 20, paddingRight: 20 + ARROW_W, gap: 8 }}
     >
       {options.map((o) => {
         const on = o.value === value;
@@ -52,7 +55,7 @@ export function FilterChips<V extends string>({ options, value, onChange }: { op
         accessibilityRole="button"
         accessibilityLabel={t("app.common.more")}
         onPress={() => ref.current?.scrollTo({ x: m.x + m.w * 0.7, animated: true })}
-        style={({ pressed }) => [{ position: "absolute", right: 0, top: 0, bottom: 0, width: 52, alignItems: "center", justifyContent: "center", backgroundColor: C.papel + "E6" }, pressed && k.pressed]}
+        style={({ pressed }) => [{ position: "absolute", right: 0, top: 0, bottom: 0, width: ARROW_W, alignItems: "center", justifyContent: "center", backgroundColor: C.papel + "E6" }, pressed && k.pressed]}
       >
         <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: C.blanco, borderWidth: 1, borderColor: C.lineaFuerte, alignItems: "center", justifyContent: "center" }}>
           <ChevronRight size={18} color={C.tinta} strokeWidth={2} />

@@ -1,52 +1,13 @@
 /** Exportación al contador: Excel con el libro de movimientos, cuentas a pagar y a cobrar, con el plan de cuentas configurable. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { COST_CATEGORIES, type CostCategory } from "@yvy/shared";
+import { COST_CATEGORIES } from "@yvy/shared";
 import { del, get, put, withQs } from "../../lib/api";
 import { t, tk } from "../../lib/i18n";
 import { tablesToExcel } from "../../lib/tableExport";
 import { Button, ErrorBox, FilterBar, Input, SectionHead, Spinner, toast, DateRange } from "../ui";
 import { HeaderActions } from "./adminSlot";
-
-interface MapRow {
-  key: CostCategory;
-  code: string;
-  name: string;
-  custom: boolean;
-}
-interface Ledger {
-  date: string;
-  type: "income" | "cost";
-  accountCode: string;
-  accountName: string;
-  description: string;
-  party: string;
-  ruc: string;
-  farm: string;
-  activity: string;
-  currency: string;
-  amount: number;
-  amountPyg: number;
-  origin: string;
-}
-interface Due {
-  label: string;
-  party: string;
-  ruc: string;
-  currency: string;
-  total: number;
-  pending: number;
-  dueDate: string | null;
-}
-interface Export {
-  truncated: boolean;
-  ledger: Ledger[];
-  payables: Due[];
-  receivables: Due[];
-}
-
-/** Monto en unidad menor a lo que se lee en una planilla: guaraníes enteros, dólares con dos decimales. */
-const major = (minor: number, currency: string) => (currency === "USD" ? minor / 100 : minor);
+import { accountantSheets, type Export, type MapRow } from "./accountant/accountantSheets";
 
 /** Exportación al contador con el plan de cuentas configurable. */
 export function AccountantPanel() {
@@ -62,38 +23,7 @@ export function AccountantPanel() {
       const d = await get<Export>(
         withQs("/org/erp/accountant/export", { from: from || undefined, to: to || undefined }),
       );
-      const dueTable = (name: string, rows: Due[]) => ({
-        name,
-        headers: [t("ui.acct.colParty"), t("ui.acct.colRuc"), t("ui.acct.colDoc"), t("ui.acct.colCurrency"), t("ui.acct.colTotal"), t("ui.acct.colPending"), t("ui.acct.colDue")],
-        rows: rows.map((r) => [r.party, r.ruc, r.label, r.currency, major(r.total, r.currency), major(r.pending, r.currency), r.dueDate ?? ""]),
-      });
-      await tablesToExcel("contador", [
-        {
-          name: t("ui.acct.sheetLedger"),
-          headers: [
-            t("ui.cost.date"),
-            t("ui.acct.colType"),
-            t("ui.acct.colCode"),
-            t("ui.acct.colAccount"),
-            t("ui.acct.colDescription"),
-            t("ui.acct.colParty"),
-            t("ui.acct.colRuc"),
-            t("ui.cost.farm"),
-            t("ui.cost.activity"),
-            t("ui.acct.colCurrency"),
-            t("ui.acct.colAmount"),
-            t("ui.acct.colAmountPyg"),
-          ],
-          rows: d.ledger.map((r) => [r.date, t(r.type === "income" ? "ui.acct.income" : "ui.acct.cost"), r.accountCode, r.accountName, r.description, r.party, r.ruc, r.farm, tk(`ui.activity.${r.activity}`), r.currency, major(r.amount, r.currency), r.amountPyg]),
-        },
-        dueTable(t("ui.acct.sheetPayables"), d.payables),
-        dueTable(t("ui.acct.sheetReceivables"), d.receivables),
-        {
-          name: t("ui.acct.sheetMap"),
-          headers: [t("ui.cost.category"), t("ui.acct.colCode"), t("ui.acct.colAccount")],
-          rows: (map.data ?? []).map((m) => [tk(`ui.cost.category_${m.key}`), m.code, m.name]),
-        },
-      ]);
+      await tablesToExcel("contador", accountantSheets(d, map.data ?? []));
       if (d.truncated) toast(t("ui.acct.truncated"));
     } catch (e) {
       setError(e);

@@ -154,7 +154,7 @@ function MoveModal({ account, onClose }: { account: Account; onClose: () => void
             <DataTable
               columns={[
                 { id: "date", header: t("ui.cost.date"), cell: (m: Move) => fmtIsoDate(m.date) },
-                { id: "desc", header: t("ui.bal.note"), hideBelow: "sm", cell: (m: Move) => <span className="text-tinta-2">{m.description}</span> },
+                { id: "desc", header: t("ui.bal.note"), mobile: "title", cell: (m: Move) => <span className="text-tinta-2">{m.description || fmtIsoDate(m.date)}</span> },
                 { id: "amount", header: t("ui.bal.amount"), align: "right", cell: (m: Move) => <span className={m.amount < 0 ? "text-peligro" : ""}>{fmtMoney(m.amount, account.currency)}</span> },
                 { id: "_a", header: <span className="sr-only">{t("ui.row.actionsHeader")}</span>, align: "right", width: "3rem", cell: (m: Move) => <RowMenu name={fmtIsoDate(m.date)} onDelete={() => remove.mutate(m.id)} /> },
               ]}
@@ -223,6 +223,7 @@ function DuesTab({ direction }: { direction: "payables" | "receivables" }) {
     {
       id: "label",
       header: t("ui.cash.doc"),
+      mobile: "title",
       cell: (r) => (
         <>
           {r.label}

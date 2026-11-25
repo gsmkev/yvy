@@ -128,6 +128,7 @@ function StatementModal({ row, onClose }: { row: Balance; onClose: () => void })
             {
               id: "kind",
               header: t("ui.cost.category"),
+              mobile: "title",
               cell: (l: Line) => (
                 <>
                   {tk(`ui.bal.kind_${l.kind}`)}

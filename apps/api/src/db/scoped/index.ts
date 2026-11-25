@@ -8,6 +8,7 @@ import { isFieldRole, LIMITS, type RejectReason, type Role } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import type { DB, Stmt } from "../client";
 import { auditStmts, type AuditEntry } from "../audit";
+import type { ScopedCtx } from "./ctx";
 import { type AuthCtx, ForbiddenError } from "./permissions";
 import * as visibility from "./visibility";
 import * as sync from "./sync";
@@ -19,10 +20,10 @@ import * as tasks from "./tasks";
 export { can, ForbiddenError, NotFoundError, PlanLimitError, type AuthCtx } from "./permissions";
 export { SYNCED_KEYS } from "./synced-tables";
 /** Argumentos de un método sin el primero (la fachada pasa `this`). */
-type Rest<F> = F extends (first: ScopedDb, ...a: infer R) => unknown ? R : never;
+type Rest<F> = F extends (first: ScopedCtx, ...a: infer R) => unknown ? R : never;
 
 /** Acceso a datos de una organización en nombre de una persona: toda consulta autenticada pasa por esta clase. */
-export class ScopedDb {
+export class ScopedDb implements ScopedCtx {
   constructor(
     readonly db: DB,
     readonly auth: AuthCtx,

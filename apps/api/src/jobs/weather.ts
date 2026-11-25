@@ -98,9 +98,31 @@ export function hourlyFromMet(met: MetResponse, fromMs: number, hours: number): 
   return out;
 }
 
+type MetInstant = MetResponse["properties"]["timeseries"][number]["data"]["instant"]["details"];
+type MetSix = NonNullable<MetResponse["properties"]["timeseries"][number]["data"]["next_6_hours"]>["details"];
+type DayAcc = DailyForecast & { windMs: number };
+
+/** Temperatura y viento del instante dentro del día: extremos de temperatura y el viento más fuerte con su dirección. */
+function foldInstant(d: DayAcc, inst: MetInstant) {
+  if (inst.air_temperature !== undefined) {
+    d.tminC = Math.min(d.tminC ?? Infinity, inst.air_temperature);
+    d.tmaxC = Math.max(d.tmaxC ?? -Infinity, inst.air_temperature);
+  }
+  if (inst.wind_speed !== undefined && inst.wind_speed > d.windMs) {
+    d.windMs = inst.wind_speed;
+    d.windDirDeg = inst.wind_from_direction ?? null;
+  }
+}
+
+/** Mínimas y máximas de 6 h: se asignan al día local del centro de la ventana (`mid`). */
+function foldSixHour(mid: DayAcc, six: NonNullable<MetSix>) {
+  if (six.air_temperature_min !== undefined) mid.tminC = Math.min(mid.tminC ?? Infinity, six.air_temperature_min);
+  if (six.air_temperature_max !== undefined) mid.tmaxC = Math.max(mid.tmaxC ?? -Infinity, six.air_temperature_max);
+}
+
 /** Agrega la serie de MET a días locales sin contar dos veces la lluvia. */
 export function dailyFromMet(met: MetResponse, tz: string): DailyForecast[] {
-  const days = new Map<string, DailyForecast & { windMs: number }>();
+  const days = new Map<string, DayAcc>();
   const day = (ms: number) => {
     const key = localDate(ms, tz);
     let d = days.get(key);
@@ -119,21 +141,9 @@ export function dailyFromMet(met: MetResponse, tz: string): DailyForecast[] {
     const next = steps[i + 1] ? Date.parse(steps[i + 1]!.time) : Infinity;
     const inst = st.data.instant.details;
     const d = day(t);
-    if (inst.air_temperature !== undefined) {
-      d.tminC = Math.min(d.tminC ?? Infinity, inst.air_temperature);
-      d.tmaxC = Math.max(d.tmaxC ?? -Infinity, inst.air_temperature);
-    }
-    if (inst.wind_speed !== undefined && inst.wind_speed > d.windMs) {
-      d.windMs = inst.wind_speed;
-      d.windDirDeg = inst.wind_from_direction ?? null;
-    }
+    foldInstant(d, inst);
     const six = st.data.next_6_hours?.details;
-    if (six) {
-      // mínimas/máximas de 6 h: se asignan al día local del centro de la ventana
-      const mid = day(t + 3 * 3_600_000);
-      if (six.air_temperature_min !== undefined) mid.tminC = Math.min(mid.tminC ?? Infinity, six.air_temperature_min);
-      if (six.air_temperature_max !== undefined) mid.tmaxC = Math.max(mid.tmaxC ?? -Infinity, six.air_temperature_max);
-    }
+    if (six) foldSixHour(day(t + 3 * 3_600_000), six);
     if (t < coveredUntil) continue;
     const hourly = st.data.next_1_hours?.details?.precipitation_amount;
     if (hourly !== undefined && next - t <= 3_600_000) {

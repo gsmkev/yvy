@@ -49,10 +49,10 @@ export default function SowingPlan() {
                 <DataList
                   rows={plan.rows}
                   keyOf={(r) => `${r.crop}-${r.variety ?? ""}`}
-                  title={(r) => `${t(`fields.crop.${r.crop}` as MessageKey)}${r.variety ? ` · ${r.variety}` : ""}`}
+                  title={(r) => `${t(`fields.crop.${r.crop}` as MessageKey)}${r.variety ? `, ${r.variety}` : ""}`}
                   subtitle={(r) =>
                     t(r.plots === 1 ? "ui.plots.countOne" : "ui.plots.countMany", { n: r.plots }) +
-                    " · " +
+                    ", " +
                     area(r.areaHa)
                   }
                   right={(r) => t("office.sow.planSeedKg", { kg: fmtNumber(r.seedKg, 0) })}

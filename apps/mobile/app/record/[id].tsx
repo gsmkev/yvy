@@ -78,7 +78,7 @@ export default function RecordDetail() {
 
   return (
     <ScrollView style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 60 }]}>
-      <Text style={T.small}>{[t(`record-kinds.kind.${record.kind}`), plot?.name].filter(Boolean).join(" · ")}</Text>
+      <Text style={T.small}>{[t(`record-kinds.kind.${record.kind}`), plot?.name].filter(Boolean).join(", ")}</Text>
       <Text style={[T.title, { marginTop: 4 }]}>{describeRecord(record.kind, data)}</Text>
       <Text style={[T.body, { marginTop: 16 }]}>{t("app.record.capturedAt", { when })}</Text>
       {isOwnerMode(session?.organization.role) && (

@@ -87,3 +87,18 @@ describe("lluvia de informes (casos de la web)", () => {
     expect(gaugeVsSat({ gaugeMm: 5, satMm: 0 })).toBeNull();
   });
 });
+
+describe("rainBetween con CHIRPS preliminar y final", () => {
+  it("el dato final reemplaza al preliminar del mismo día, venga antes o después", () => {
+    const daily = [
+      { date: "2026-11-01", source: "chirps", precipMm: 4 },
+      { date: "2026-11-01", source: "chirps_prelim", precipMm: 9 },
+      { date: "2026-11-02", source: "chirps_prelim", precipMm: 7 },
+      { date: "2026-11-03", source: "chirps_prelim", precipMm: 8 },
+      { date: "2026-11-03", source: "chirps", precipMm: 2 },
+    ];
+    expect(rainBetween(daily, "2026-11-01", "2026-11-01")).toBe(4);
+    expect(rainBetween(daily, "2026-11-02", "2026-11-02")).toBe(7);
+    expect(rainBetween(daily, "2026-11-01", "2026-11-03")).toBe(13);
+  });
+});

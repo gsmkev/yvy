@@ -93,7 +93,7 @@ export default function Deliveries() {
                     rows={d.byPlot}
                     keyOf={(p) => p.plotId}
                     title={(p) => p.plotName}
-                    subtitle={(p) => [t("ui.deliv.byPlot", { n: p.deliveries, net: `${tons(p.netKg)} t`, gross: `${tons(p.grossKg)} t` }), p.harvestTons !== null ? t("ui.deliv.harvested", { t: fmtNumber(p.harvestTons) }) : null].filter(Boolean).join(" · ")}
+                    subtitle={(p) => [t("ui.deliv.byPlot", { n: p.deliveries, net: `${tons(p.netKg)} t`, gross: `${tons(p.grossKg)} t` }), p.harvestTons !== null ? t("ui.deliv.harvested", { t: fmtNumber(p.harvestTons) }) : null].filter(Boolean).join(", ")}
                     empty={{ title: t("office.deliv.noneTitle") }}
                   />
                 </>
@@ -102,8 +102,8 @@ export default function Deliveries() {
               <DataList
                 rows={d.rows}
                 keyOf={(r) => r.id}
-                title={(r) => `${t("ui.deliv.ticket")} ${r.ticket} · ${r.silo}`}
-                subtitle={(r) => [dmy(r.deliveredOn), r.plotName, t(`fields.crop.${r.crop}` as MessageKey), `${t("ui.deliv.gross")} ${tons(r.grossKg)} t`, r.moisturePct === null ? null : `${fmtNumber(r.moisturePct)} %`].filter(Boolean).join(" · ")}
+                title={(r) => `${t("ui.deliv.ticket")} ${r.ticket}, ${r.silo}`}
+                subtitle={(r) => [dmy(r.deliveredOn), r.plotName, t(`fields.crop.${r.crop}` as MessageKey), `${t("ui.deliv.gross")} ${tons(r.grossKg)} t`, r.moisturePct === null ? null : `${fmtNumber(r.moisturePct)} %`].filter(Boolean).join(", ")}
                 right={(r) => t("office.deliv.netLine", { net: tons(r.netKg) })}
                 empty={{ title: t("office.deliv.noneTitle") }}
               />

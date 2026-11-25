@@ -133,7 +133,7 @@ export default function Climate() {
                   value:
                     s.spi === null
                       ? t(s.reason === "no_reference" ? "ui.spi.noReference" : "ui.spi.incomplete")
-                      : `${fmtNumber(s.spi, 2)} · ${t(`ui.spi.cat_${spiCategory(s.spi)}` as MessageKey)}`,
+                      : `${fmtNumber(s.spi, 2)}, ${t(`ui.spi.cat_${spiCategory(s.spi)}` as MessageKey)}`,
                 }))}
               />
               <Text style={[T.small, { marginTop: 8, color: C.tinta2 }]}>{t("ui.spi.note")}</Text>

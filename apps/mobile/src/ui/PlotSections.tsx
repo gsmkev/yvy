@@ -38,7 +38,7 @@ export function VigorSection({ history, farmMeans, plotName }: { history: VigorP
     trend.kind === "down" ? t("app.plot.sheetVigorDown", { pct: Math.round(trend.pct) }) : trend.kind === "up" ? t("app.plot.sheetVigorUp", { pct: Math.round(trend.pct) }) : trend.kind === "flat" ? t("app.plot.sheetVigorFlat") : null,
   ]
     .filter(Boolean)
-    .join(" · ");
+    .join(", ");
   return (
     <>
       <SectionHeader title={t("app.plot.sheetVigor")} />
@@ -100,7 +100,7 @@ export function RotationSection({ plotId, local }: { plotId: string; local: Rota
               ": " +
               fmtNumber(r.yieldTHa, 1) +
               " t/ha" +
-              (r.harvestTons !== null ? " · " + t("ui.rotation.harvest", { tons: fmtNumber(r.harvestTons, 1) }) : "")
+              (r.harvestTons !== null ? ", " + t("ui.rotation.harvest", { tons: fmtNumber(r.harvestTons, 1) }) : "")
             : null;
         const target =
           r.targetYieldTHa !== null
@@ -111,8 +111,8 @@ export function RotationSection({ plotId, local }: { plotId: string; local: Rota
         return (
           <Row
             key={r.seasonId}
-            title={`${r.seasonName} · ${r.crop ? t(k(`fields.crop.${r.crop}`)) : "—"}`}
-            subtitle={[yieldLine, target, r.variety, sown].filter(Boolean).join(" · ") || undefined}
+            title={`${r.seasonName}, ${r.crop ? t(k(`fields.crop.${r.crop}`)) : "—"}`}
+            subtitle={[yieldLine, target, r.variety, sown].filter(Boolean).join(", ") || undefined}
           />
         );
       })}
@@ -142,7 +142,7 @@ export function WithdrawalSection({ plot }: { plot: Plot }) {
           title={t("ui.withdrawal.until", { date: isoFull(r.safeFrom) })}
           subtitle={
             r.product +
-            " · " +
+            ", " +
             (r.daysLeft === 1 ? t("ui.withdrawal.dayOne") : t("ui.withdrawal.days", { n: r.daysLeft }))
           }
         />
@@ -180,7 +180,7 @@ export function PhenologySection({ plotId }: { plotId: string }) {
     );
   const rows = [
     { label: t("ui.pheno.estimated"), value: t(k(`fields.stage.${d.estimatedStage}`)) },
-    { label: t("ui.pheno.observed"), value: d.observed ? `${t(k(`fields.stage.${d.observed.stage}`))} · ${dayShort(d.observed.at)}` : t("ui.pheno.noObserved") },
+    { label: t("ui.pheno.observed"), value: d.observed ? `${t(k(`fields.stage.${d.observed.stage}`))}, ${dayShort(d.observed.at)}` : t("ui.pheno.noObserved") },
   ];
   return (
     <>
@@ -191,7 +191,7 @@ export function PhenologySection({ plotId }: { plotId: string }) {
       <Text style={[T.small, { marginTop: 8 }]}>
         {t("ui.pheno.since", { date: d.sowingDate ? isoFull(d.sowingDate) : "—", base: d.baseC ?? 0 })}
         {d.coverage && d.coverage.days < d.coverage.of * 0.8
-          ? " · " + t("ui.pheno.partial", { days: d.coverage.days, of: d.coverage.of })
+          ? ", " + t("ui.pheno.partial", { days: d.coverage.days, of: d.coverage.of })
           : ""}
       </Text>
       <Text style={[T.small, { marginTop: 4 }]}>{t(ATTRIBUTION.nasaPower)}</Text>
@@ -259,7 +259,7 @@ export function WaterBalanceSection({ plotId, units, onIrrigate }: { plotId: str
       {irrigate}
       <Text style={[T.small, { marginTop: 8 }]}>{t("ui.water.balNote")}</Text>
       <Text style={[T.small, { marginTop: 4 }]}>
-        {t(ATTRIBUTION.chirps)} · {t(ATTRIBUTION.nasaPower)}
+        {t(ATTRIBUTION.chirps)}, {t(ATTRIBUTION.nasaPower)}
       </Text>
     </>
   );
@@ -280,7 +280,7 @@ export function ForecastSection({ plot, units }: { plot: Plot; units: Units }) {
       <KeyValue
         rows={f.days.slice(0, 7).map((d) => ({
           label: isoShort(d.date),
-          value: [d.tminC !== null && d.tmaxC !== null ? `${fmtNumber(cToTemp(d.tminC, units.temp), 0)} / ${fmtTemp(d.tmaxC, units)}` : null, d.precipMm !== null ? fmtRain(d.precipMm, units) : null].filter(Boolean).join(" · ") || "—",
+          value: [d.tminC !== null && d.tmaxC !== null ? `${fmtNumber(cToTemp(d.tminC, units.temp), 0)} / ${fmtTemp(d.tmaxC, units)}` : null, d.precipMm !== null ? fmtRain(d.precipMm, units) : null].filter(Boolean).join(", ") || "—",
         }))}
       />
       <Text style={[T.small, { marginTop: 8 }]}>

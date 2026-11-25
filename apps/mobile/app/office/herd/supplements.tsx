@@ -35,13 +35,13 @@ export default function Supplements() {
                 rows={rows}
                 keyOf={(p) => p.plotId}
                 title={(p) => p.name}
-                subtitle={(p) => [p.head ? t("fields.herd.totalValue", { n: p.head }) : null, p.lastAt ? `${t("ui.supp.last")}: ${fmtDate(p.lastAt)}` : null].filter(Boolean).join(" · ") || undefined}
+                subtitle={(p) => [p.head ? t("fields.herd.totalValue", { n: p.head }) : null, p.lastAt ? `${t("ui.supp.last")}: ${fmtDate(p.lastAt)}` : null].filter(Boolean).join(", ") || undefined}
                 right={(p) => (
                   <>
                     <Text style={[T.bodyMedium, { textAlign: "right" }]}>{`${fmtNumber(p.totalKg)} kg`}</Text>
                     {p.saltGPerHeadDay !== null && (
                       <Text style={[T.smallMedium, { textAlign: "right", color: p.saltStatus === "low" || p.saltStatus === "high" ? C.peligro : C.tinta2 }]}>
-                        {`${fmtNumber(p.saltGPerHeadDay, 0)} g${p.saltStatus && p.saltStatus !== "ok" ? ` · ${t(`ui.supp.salt_${p.saltStatus}` as MessageKey)}` : ""}`}
+                        {`${fmtNumber(p.saltGPerHeadDay, 0)} g${p.saltStatus && p.saltStatus !== "ok" ? `, ${t(`ui.supp.salt_${p.saltStatus}` as MessageKey)}` : ""}`}
                       </Text>
                     )}
                   </>

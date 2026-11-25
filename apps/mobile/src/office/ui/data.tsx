@@ -27,7 +27,7 @@ export function StatSummary({ items, columns }: { items: StatItem[]; columns?: 1
     return (
       <View style={{ marginTop: 16, borderRadius: RADIUS, borderWidth: 1, borderColor: C.linea, backgroundColor: C.blanco, overflow: "hidden" }}>
         {items.map((i, n) => {
-          const label = i.unit ? `${i.label} · ${i.unit}` : i.label;
+          const label = i.unit ? `${i.label} (${i.unit})` : i.label;
           const danger = i.tone === "danger";
           return (
             <View key={i.label} accessible accessibilityLabel={`${i.value} ${label}`} style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderTopWidth: n ? 1 : 0, borderColor: C.linea, backgroundColor: danger ? C.peligroSuave : undefined }}>
@@ -42,7 +42,7 @@ export function StatSummary({ items, columns }: { items: StatItem[]; columns?: 1
   return (
     <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 16, borderRadius: RADIUS, borderWidth: 1, borderColor: C.linea, backgroundColor: C.blanco, overflow: "hidden" }}>
       {items.map((i, n) => {
-        const label = i.unit ? `${i.label} · ${i.unit}` : i.label;
+        const label = i.unit ? `${i.label} (${i.unit})` : i.label;
         const danger = i.tone === "danger";
         const cell = (
           <>

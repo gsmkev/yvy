@@ -14,7 +14,7 @@ export function SystemLine({ system, onChange }: { system: ProductionSystem | nu
       {!system && <Text style={T.bodyMedium}>{t("ui.herd.sysQuestion")}</Text>}
       {!system && <Text style={[T.small, { marginBottom: 8 }]}>{t("ui.herd.sysQuestionHint")}</Text>}
       <Text accessibilityRole="button" onPress={onChange} style={[T.bodyMedium, { color: C.accion, marginBottom: 8 }]}>
-        {system ? `${t("ui.herd.sysLabel")}: ${t(`ui.herd.sys_${system}` as MessageKey)} · ${t("ui.herd.sysChange")}` : t("ui.herd.sysChange")}
+        {system ? `${t("ui.herd.sysLabel")}: ${t(`ui.herd.sys_${system}` as MessageKey)}, ${t("ui.herd.sysChange")}` : t("ui.herd.sysChange")}
       </Text>
     </>
   );
@@ -95,7 +95,7 @@ export function SystemSheet({ sheet }: { sheet: ReturnType<typeof useSystemSheet
       <SelectField<ProductionSystem>
         label={t("ui.herd.sysLabel")}
         value={sheet.pick || undefined}
-        options={PRODUCTION_SYSTEMS.map((v) => ({ value: v, label: `${t(`ui.herd.sys_${v}` as MessageKey)} · ${t(`ui.herd.sysHint_${v}` as MessageKey)}` }))}
+        options={PRODUCTION_SYSTEMS.map((v) => ({ value: v, label: `${t(`ui.herd.sys_${v}` as MessageKey)}, ${t(`ui.herd.sysHint_${v}` as MessageKey)}` }))}
         onChange={sheet.setPick}
       />
     </FormSheet>

@@ -4,10 +4,10 @@ import { newId } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, currentVersion, runBatch } from "../client";
 import { funnelEvent } from "../events";
-import type { ScopedDb } from "./index";
+import type { ScopedCtx } from "./ctx";
 import { ForbiddenError, NotFoundError, can } from "./permissions";
 
-async function farmReadable(sdb: ScopedDb, farmId: string): Promise<boolean> {
+async function farmReadable(sdb: ScopedCtx, farmId: string): Promise<boolean> {
   const [f] = await sdb.db
     .select({ id: s.farms.id })
     .from(s.farms)
@@ -24,7 +24,7 @@ async function farmReadable(sdb: ScopedDb, farmId: string): Promise<boolean> {
 }
 
 /** Verifica que la estancia sea de la organización y devuelve su geometría (GeoJSON texto). */
-export async function requireFarm(sdb: ScopedDb, farmId: string, write = false): Promise<string> {
+export async function requireFarm(sdb: ScopedCtx, farmId: string, write = false): Promise<string> {
   const [f] = await sdb.db
     .select({ id: s.farms.id, geometry: s.farms.geometry })
     .from(s.farms)
@@ -47,7 +47,7 @@ export async function requireFarm(sdb: ScopedDb, farmId: string, write = false):
 }
 
 /** La estancia existe en la organización y, si es empleado, tiene lotes asignados en ella. */
-export async function requireFarmVisible(sdb: ScopedDb, farmId: string): Promise<void> {
+export async function requireFarmVisible(sdb: ScopedCtx, farmId: string): Promise<void> {
   const [f] = await sdb.db
     .select({ id: s.farms.id })
     .from(s.farms)
@@ -64,7 +64,7 @@ export async function requireFarmVisible(sdb: ScopedDb, farmId: string): Promise
 }
 
 /** Crea una estancia dentro del límite de hectáreas del plan. */
-export async function createFarm(sdb: ScopedDb, 
+export async function createFarm(sdb: ScopedCtx, 
   input: Omit<typeof s.farms.$inferInsert, "id" | "organizationId" | "createdAt" | "updatedAt" | "version">,
 ) {
   sdb.require(can.editField);
@@ -90,7 +90,7 @@ export async function createFarm(sdb: ScopedDb,
 }
 
 /** Lotes vivos de una estancia de la organización (1 query). */
-export async function countPlots(sdb: ScopedDb, farmId: string): Promise<number> {
+export async function countPlots(sdb: ScopedCtx, farmId: string): Promise<number> {
   const [r] = await sdb.db
     .select({ n: sql<number>`count(*)` })
     .from(s.plots)
@@ -99,7 +99,7 @@ export async function countPlots(sdb: ScopedDb, farmId: string): Promise<number>
 }
 
 /** Alta de varios lotes de una vez (importación KML). */
-export async function createPlots(sdb: ScopedDb, 
+export async function createPlots(sdb: ScopedCtx, 
   farmId: string,
   items: Omit<
     typeof s.plots.$inferInsert,
@@ -135,7 +135,7 @@ export async function createPlots(sdb: ScopedDb,
 }
 
 /** Crea un punto de interés en una estancia. */
-export async function createPoi(sdb: ScopedDb, input: {
+export async function createPoi(sdb: ScopedCtx, input: {
   farmId: string;
   kind: (typeof s.POI_KINDS)[number];
   name: string;

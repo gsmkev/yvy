@@ -3,11 +3,11 @@ import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { isFieldRole } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { runBatch } from "../client";
-import type { ScopedDb } from "./index";
+import type { ScopedCtx } from "./ctx";
 import { ForbiddenError, NotFoundError, can } from "./permissions";
 
 /** Estancias a las que cada persona está limitada, para la pantalla de Equipo (solo el dueño). */
-export async function listFarmAccess(sdb: ScopedDb) {
+export async function listFarmAccess(sdb: ScopedCtx) {
   sdb.require(can.manageFarmAccess, "Solo el dueño ve los permisos por estancia");
   return sdb.db
     .select({ userId: s.farmAccess.userId, farmId: s.farmAccess.farmId, level: s.farmAccess.level })
@@ -19,7 +19,7 @@ export async function listFarmAccess(sdb: ScopedDb) {
  * Reemplaza las estancias de una persona. Supervisor: sin filas no ve ninguna. Administrador y agrónomo: sin filas
  * ven todas; con filas, solo esas (`view` = solo lectura). Avisa al celular para que rehaga sus tablas.
  */
-export async function setFarmAccess(sdb: ScopedDb, userId: string, farms: { farmId: string; level: s.FarmAccessLevel }[]): Promise<void> {
+export async function setFarmAccess(sdb: ScopedCtx, userId: string, farms: { farmId: string; level: s.FarmAccessLevel }[]): Promise<void> {
   sdb.require(can.manageFarmAccess, "Solo el dueño limita el acceso a estancias");
   const role = await sdb.memberRole(userId);
   if (role === "owner" || isFieldRole(role))

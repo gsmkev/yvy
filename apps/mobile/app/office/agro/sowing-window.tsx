@@ -42,7 +42,7 @@ export default function SowingWindow() {
                     pct: `${fmtNumber(d.soil * 100, 0)} %`,
                     date: d.soilDate ? dmy(d.soilDate) : "—",
                   })}
-              {d.forecastRunAt ? " · " + t("ui.sow.winForecast", { date: fmtDate(d.forecastRunAt) }) : ""}
+              {d.forecastRunAt ? ", " + t("ui.sow.winForecast", { date: fmtDate(d.forecastRunAt) }) : ""}
             </Text>
             <DataList
               rows={d.days}
@@ -53,7 +53,7 @@ export default function SowingWindow() {
               empty={{ title: t("office.sow.winNoDays") }}
             />
             <Text style={[T.small, { marginTop: 16 }]}>
-              {t("ui.sow.winNote")} {t(ATTRIBUTION.nasaPower)} · {t(ATTRIBUTION.metNorway)}
+              {t("ui.sow.winNote")} {t(ATTRIBUTION.nasaPower)}, {t(ATTRIBUTION.metNorway)}
             </Text>
           </View>
         )}

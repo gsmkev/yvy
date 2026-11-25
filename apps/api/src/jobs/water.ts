@@ -25,6 +25,12 @@ interface WaterReading {
 const KIND_LABEL: Record<string, string> = { water: "Aguada", trough: "Bebedero", mill: "Molino" };
 const fmtLevel = (level: string) => (level === "dry" ? "seca" : "con nivel bajo");
 
+/** Nombre con el tipo delante ("Bebedero Norte"), salvo que el nombre ya empiece con ese tipo ("Aguada del Potrero Monte"). */
+function withKind(r: WaterReading): string {
+  const label = KIND_LABEL[r.kind ?? "water"] ?? "Aguada";
+  return r.name.toLowerCase().startsWith(label.toLowerCase()) ? r.name : `${label} ${r.name}`;
+}
+
 /** Función pura: arma el aviso (o null) a partir de la última lectura de cada aguada. */
 export function evaluateWater(readings: WaterReading[], plotIds: string[], today: string): AlertDraft | null {
   const low = readings
@@ -39,7 +45,7 @@ export function evaluateWater(readings: WaterReading[], plotIds: string[], today
     probability: null,
     validFrom: today,
     validTo: addDays(today, 3),
-    summary: `${KIND_LABEL[top.kind ?? "water"] ?? "Aguada"} ${top.name} ${fmtLevel(top.level)}${
+    summary: `${withKind(top)} ${fmtLevel(top.level)}${
       low.length > 1 ? ` (y ${low.length - 1} más)` : ""
     }`,
     details: {

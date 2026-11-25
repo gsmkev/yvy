@@ -59,7 +59,7 @@ export default function Repro() {
               <DataList
                 rows={d.rows}
                 keyOf={(r) => r.id}
-                title={(r) => `${t(`fields.repro.event_${r.event}` as MessageKey)}${r.plotName ? ` · ${r.plotName}` : ""}`}
+                title={(r) => `${t(`fields.repro.event_${r.event}` as MessageKey)}${r.plotName ? `, ${r.plotName}` : ""}`}
                 subtitle={(r) =>
                   [
                     fmtDate(r.capturedAt),
@@ -69,7 +69,7 @@ export default function Repro() {
                     r.tag ? t("fields.common.tagValue", { n: r.tag }) : null,
                   ]
                     .filter(Boolean)
-                    .join(" · ")
+                    .join(", ")
                 }
                 right={(r) => t("fields.herd.totalValue", { n: r.head })}
                 empty={{ title: t("ui.repro.none") }}

@@ -69,7 +69,7 @@ export function PlotBody({ data, office, canEdit, readOnly }: { data: Data; offi
       >
         <Text style={T.title}>{plot.name}</Text>
         <Text style={[T.small, { marginTop: 4 }]}>
-          {[crop ? (plot.crop ? t(`ui.crop.name_${plot.crop}` as MessageKey) : t("ui.common.crop")) : t("ui.common.pasture"), fmtArea(plot.areaHa, units), plot.season ? t(`office.plot.season_${plot.season}` as MessageKey) : null, visitText(lastVisit)].filter(Boolean).join(" · ")}
+          {[crop ? (plot.crop ? t(`ui.crop.name_${plot.crop}` as MessageKey) : t("ui.common.crop")) : t("ui.common.pasture"), fmtArea(plot.areaHa, units), plot.season ? t(`office.plot.season_${plot.season}` as MessageKey) : null, visitText(lastVisit)].filter(Boolean).join(", ")}
         </Text>
 
         <SectionHeader title={t("app.plot.sheetNow")} />

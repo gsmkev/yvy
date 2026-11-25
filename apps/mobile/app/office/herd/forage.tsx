@@ -27,12 +27,12 @@ export default function Forage() {
                 title={(p) => p.name}
                 subtitle={(p) =>
                   [
-                    p.heightCm !== null ? `${p.heightCm} cm · ${t(`fields.level.${p.cover}` as MessageKey).toLowerCase()}` : p.ndvi !== null ? `NDVI ${fmtNumber(p.ndvi, 2)}` : null,
+                    p.heightCm !== null ? `${p.heightCm} cm, ${t(`fields.level.${p.cover}` as MessageKey).toLowerCase()}` : p.ndvi !== null ? `NDVI ${fmtNumber(p.ndvi, 2)}` : null,
                     p.kgDmHa !== null ? `${fmtNumber(p.kgDmHa, 0)} kg MS/ha` : null,
                     p.stale ? t("ui.forage.stale") : null,
                   ]
                     .filter(Boolean)
-                    .join(" · ") || undefined
+                    .join(", ") || undefined
                 }
                 right={(p) =>
                   p.kgDmHa === null ? (

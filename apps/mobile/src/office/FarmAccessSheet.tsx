@@ -45,7 +45,7 @@ export function FarmAccessSheet({ m, visible, onClose }: { m: Member; visible: b
     }
   };
   return (
-    <Sheet visible={visible} title={`${t("office.team.farmsTitle")} · ${m.fullName}`} onClose={onClose}>
+    <Sheet visible={visible} title={`${t("office.team.farmsTitle")}, ${m.fullName}`} onClose={onClose}>
       {!chosen ? (
         <Text style={T.small}>{access.error ?? t("ui.common.loading")}</Text>
       ) : (

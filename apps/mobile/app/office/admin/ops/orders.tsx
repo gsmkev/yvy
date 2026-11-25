@@ -56,8 +56,8 @@ export default function Orders() {
             <View style={{ marginTop: 16 }}>
               <Segmented<Tab>
                 options={[
-                  { value: "open", label: `${t("office.orders.open")} · ${open.length}` },
-                  { value: "closed", label: `${t("office.orders.closed")} · ${closed.length}` },
+                  { value: "open", label: `${t("office.orders.open")}, ${open.length}` },
+                  { value: "closed", label: `${t("office.orders.closed")}, ${closed.length}` },
                 ]}
                 value={tab}
                 onChange={setTab}
@@ -66,8 +66,8 @@ export default function Orders() {
             <DataList
               rows={shown}
               keyOf={(g) => g.key}
-              title={(g) => `${t(key(`ui.order.labor_${g.labor}`))} · ${plotsLabel(g.plotNames)}`}
-              subtitle={(g) => [isoShort(g.dueDate), g.contractorName ?? g.assigneeName, farmName(g.farmId)].filter(Boolean).join(" · ")}
+              title={(g) => `${t(key(`ui.order.labor_${g.labor}`))}, ${plotsLabel(g.plotNames)}`}
+              subtitle={(g) => [isoShort(g.dueDate), g.contractorName ?? g.assigneeName, farmName(g.farmId)].filter(Boolean).join(", ")}
               right={(g) => <Text style={[T.smallMedium, { color: g.status === "open" && g.done > 0 ? C.accionOscuro : C.tinta2 }]}>{g.status === "open" ? (g.done > 0 ? t("ui.order.progress", { done: g.done, total: g.rows.length }) : t("ui.order.status_open")) : t(key(`ui.order.status_${g.status}`))}</Text>}
               onPress={(g) => setDetail(g.key)}
               empty={{ title: tab === "open" ? t("office.orders.noOpen") : t("office.orders.noClosed") }}

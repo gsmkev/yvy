@@ -7,7 +7,7 @@ import { runJob, scheduled, CRONS } from "../src/jobs";
 import { push, rec } from "./records-helpers";
 import { setupHerd } from "./herd-helpers";
 import { addMemberAndLogin, call, db } from "./helpers";
-import { senacsaNote } from "@yvy/shared";
+import { SENACSA_LEGACY_NOTE_PREFIX, SENACSA_NOTE_PREFIX, senacsaIdFromNote, senacsaNote } from "@yvy/shared";
 
 /** Mediodía de Paraguay del día dado. */
 const at = (iso: string) => Date.parse(`${iso}T12:00:00-03:00`);
@@ -97,5 +97,22 @@ describe("GET /org/senacsa", () => {
     const after = await call<any>("GET", "/org/senacsa?year=2026", { token: owner.token });
     expect(after.body.planned).toEqual([c.id]);
     expect((await call("GET", "/org/senacsa?year=2026", { token: (await addMemberAndLogin(owner.token, "worker")).token })).status).toBe(403);
+  });
+
+  it("reconoce como planificadas las notas nuevas y las escritas con la marca anterior", async () => {
+    const { owner } = await withHerd();
+    const r = await call<any>("GET", "/org/senacsa?year=2026", { token: owner.token });
+    const [a, b] = r.body.campaigns;
+    const note = senacsaNote(a);
+    expect(note.startsWith(SENACSA_NOTE_PREFIX)).toBe(true);
+    expect(senacsaIdFromNote(note)).toBe(a.id);
+    const legacy = `${SENACSA_LEGACY_NOTE_PREFIX} · ${b.id}`;
+    expect(senacsaIdFromNote(legacy)).toBe(b.id);
+    for (const [c, n] of [[a, note], [b, legacy]] as const) {
+      const post = await call("POST", "/org/sanitary-events", { token: owner.token, body: { reason: c.reason, plannedDate: c.from, categories: c.categories, note: n, createTasks: false } });
+      expect(post.status).toBe(201);
+    }
+    const after = await call<any>("GET", "/org/senacsa?year=2026", { token: owner.token });
+    expect([...after.body.planned].sort()).toEqual([a.id, b.id].sort());
   });
 });

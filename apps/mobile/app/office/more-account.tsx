@@ -60,7 +60,7 @@ function PlanSection() {
   const [billing, setBilling] = useState<Billing>("annual");
   const cancel = useOnlineMutation<void, unknown>("DELETE", "/org/plan-request", { invalidate: ["/org/plan"] });
   const p = q.data;
-  const requested = (r: PlanRequest) => [t(key(`ui.plan.name_${r.plan}`)), r.maxHa ? t("ui.plan.upToHa", { n: fmtNumber(r.maxHa, 0) }) : null, r.maxUsers ? t("ui.plan.upToUsers", { n: fmtNumber(r.maxUsers, 0) }) : null].filter(Boolean).join(" · ");
+  const requested = (r: PlanRequest) => [t(key(`ui.plan.name_${r.plan}`)), r.maxHa ? t("ui.plan.upToHa", { n: fmtNumber(r.maxHa, 0) }) : null, r.maxUsers ? t("ui.plan.upToUsers", { n: fmtNumber(r.maxUsers, 0) }) : null].filter(Boolean).join(", ");
   const over = (used: number, max: number | null) => max !== null && used >= max;
   const noSignal = useNoSignalReason();
   return (
@@ -73,7 +73,7 @@ function PlanSection() {
           <Text style={T.bodyMedium}>
             {t(key(`ui.plan.name_${p.plan}`)) +
               (p.plan === "trial" && p.trialEndsAt
-                ? " · " + t("ui.common.trialEnds", { date: fmtDate(p.trialEndsAt) })
+                ? ", " + t("ui.common.trialEnds", { date: fmtDate(p.trialEndsAt) })
                 : "")}
           </Text>
           <StatRow
@@ -140,8 +140,8 @@ function PriceSection({ billing, onBilling }: { billing: Billing; onBilling: (b:
     const q = priceFor(c, g, billing);
     return [
       { label: t("ui.plan.priceYear"), value: fmtGs(usdToGs(q.year, rate)) },
-      { label: `${t("ui.plan.priceInstallment")} · ${t(key(`ui.plan.priceInstallments_${billing}`))}`, value: fmtGs(usdToGs(q.perInstallment, rate)) },
-      { label: "US$", value: `${usd(q.year)} · ${usd(q.perInstallment)}` },
+      { label: `${t("ui.plan.priceInstallment")}, ${t(key(`ui.plan.priceInstallments_${billing}`))}`, value: fmtGs(usdToGs(q.perInstallment, rate)) },
+      { label: "US$", value: `${usd(q.year)}, ${usd(q.perInstallment)}` },
       { label: t("ui.plan.pricePerHa", { n: fmtNumber(q.perHa, 2) }), value: q.minApplied ? t("ui.plan.priceMin") : "" },
     ];
   };

@@ -41,12 +41,12 @@ export default function Weighings() {
             {d.truncated && <Text style={[T.small, { marginTop: 8 }]}>{t("ui.herd.truncated")}</Text>}
             {picked && (
               <View style={{ marginTop: 8 }}>
-                <SectionHeader title={`${picked.label ?? t("ui.weigh.noGroup")} · ${t("office.weigh.periodChart")}`} />
+                <SectionHeader title={`${picked.label ?? t("ui.weigh.noGroup")}, ${t("office.weigh.periodChart")}`} />
                 <LineChart yUnit="kg" series={[{ label: picked.label ?? t("ui.weigh.noGroup"), color: CHART.primary, points: picked.points.map((p) => ({ x: fmtDate(p.at), y: p.kg })) }]} />
                 <KeyValue
                   rows={[
-                    ...(picked.firstKg !== null ? [{ label: t("ui.weigh.first"), value: `${fmtNumber(picked.firstKg)} kg · ${fmtDate(picked.firstAt!)}` }] : []),
-                    ...(picked.lastKg !== null ? [{ label: t("ui.weigh.last"), value: `${fmtNumber(picked.lastKg)} kg · ${fmtDate(picked.lastAt!)}` }] : []),
+                    ...(picked.firstKg !== null ? [{ label: t("ui.weigh.first"), value: `${fmtNumber(picked.firstKg)} kg, ${fmtDate(picked.firstAt!)}` }] : []),
+                    ...(picked.lastKg !== null ? [{ label: t("ui.weigh.last"), value: `${fmtNumber(picked.lastKg)} kg, ${fmtDate(picked.lastAt!)}` }] : []),
                     ...(picked.days !== null ? [{ label: t("ui.weigh.days"), value: fmtNumber(picked.days, 0) }] : []),
                     { label: t("ui.weigh.adg"), value: adg(picked.adgKg) },
                     ...(picked.lastAdgKg !== null ? [{ label: t("ui.weigh.adgRecent"), value: adg(picked.lastAdgKg) }] : []),

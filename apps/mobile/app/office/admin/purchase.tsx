@@ -147,7 +147,7 @@ export default function PurchaseDetail() {
                   { label: t("ui.cost.date"), value: isoShort(d.orderDate) },
                   { label: t("ui.purch.total"), value: fmtMoney(d.totalAmount, d.currency) },
                   { label: t("ui.purch.status"), value: t(k(`ui.purch.status_${d.status}`)) },
-                  ...(d.invoiceNumber ? [{ label: t("ui.purch.invoice"), value: [d.invoiceNumber, d.invoiceDate ? isoShort(d.invoiceDate) : null].filter(Boolean).join(" · ") }] : []),
+                  ...(d.invoiceNumber ? [{ label: t("ui.purch.invoice"), value: [d.invoiceNumber, d.invoiceDate ? isoShort(d.invoiceDate) : null].filter(Boolean).join(", ") }] : []),
                   ...(d.dueDate ? [{ label: t("ui.purch.dueLabel"), value: isoShort(d.dueDate) }] : []),
                   { label: t("ui.purch.reception"), value: d.receivedAt ? t("ui.purch.receivedOn", { date: isoShort(d.receivedAt.slice(0, 10)) }) : t("office.adm.notReceived") },
                 ]}
@@ -164,7 +164,7 @@ export default function PurchaseDetail() {
                       fmtQty(qty, prod?.unit) +
                       " × " +
                       fmtMoney(l.unitPrice, d.currency) +
-                      (l.lot ? " · " + t("ui.expiring.lot", { lot: l.lot }) : "")
+                      (l.lot ? ", " + t("ui.expiring.lot", { lot: l.lot }) : "")
                     }
                     right={fmtMoney(lineAmount(qty, l.unitPrice), d.currency)}
                   />

@@ -64,7 +64,15 @@ describe("ganadería: conteo de hacienda", () => {
 
 describe("i18n", () => {
   it("interpola", () => {
-    expect(t("sync.common.offline", { count: 3 })).toBe("Sin señal · 3 anotaciones por mandar");
+    expect(t("sync.common.offline", { count: 3 })).toBe("Sin señal, 3 anotaciones por mandar");
+  });
+  it("elige singular o plural según el número", () => {
+    expect(t("fields.herd.totalValue", { n: 1 })).toBe("1 cabeza");
+    expect(t("fields.herd.totalValue", { n: 0 })).toBe("0 cabezas");
+    expect(t("fields.herd.totalValue", { n: 12 })).toBe("12 cabezas");
+    expect(t("fields.repro.pregnantValue", { n: 1 })).toBe("1 preñada");
+    expect(t("ui.common.daysN", { n: 1 })).toBe("1 día");
+    expect(t("ui.common.daysN", { n: 3 })).toBe("3 días");
   });
 });
 

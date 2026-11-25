@@ -74,7 +74,7 @@ export default function Buffer() {
               <DataList
                 rows={result.alerts}
                 keyOf={(a) => a.recordId}
-                title={(a) => `${a.plotName ?? t("ui.buffer.noPlot")} · ${fmtDate(a.capturedAt)}`}
+                title={(a) => `${a.plotName ?? t("ui.buffer.noPlot")}, ${fmtDate(a.capturedAt)}`}
                 subtitle={(a) => `${a.hits.map(hitText).join("; ")}. ${t(a.basis === "gps" ? "ui.buffer.basisGps" : "ui.buffer.basisPlot")}`}
                 empty={{ title: t("ui.buffer.noAlerts") }}
               />

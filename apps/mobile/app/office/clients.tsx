@@ -76,7 +76,7 @@ export default function ClientsScreen() {
                           f.lastRecordAt ? `${t("ui.last.record")} ${fmtDate(f.lastRecordAt)}` : t("ui.never.recorded"),
                         ]
                           .filter(Boolean)
-                          .join(" · ")}
+                          .join(", ")}
                         onPress={() => open(c.organization.id)}
                       />
                       {alerts.map((a) => (

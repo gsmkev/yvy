@@ -27,7 +27,7 @@ export default function Rotation() {
                   <Text style={T.smallMedium}>{t("office.rot.nextLabel")}</Text>
                   <Text style={T.heading}>{d.suggested.name}</Text>
                   <Text style={T.small}>
-                    {[d.suggested.restDays === null ? t("ui.rot.noHistory") : t("ui.rot.restedDays", { n: fmtNumber(d.suggested.restDays, 0) }), d.suggested.pastureReady === true ? t("ui.rot.pastureOk") : d.suggested.pastureReady === null ? t("ui.rot.pastureUnknown") : null].filter(Boolean).join(" · ")}
+                    {[d.suggested.restDays === null ? t("ui.rot.noHistory") : t("ui.rot.restedDays", { n: fmtNumber(d.suggested.restDays, 0) }), d.suggested.pastureReady === true ? t("ui.rot.pastureOk") : d.suggested.pastureReady === null ? t("ui.rot.pastureUnknown") : null].filter(Boolean).join(", ")}
                   </Text>
                 </>
               ) : (
@@ -38,7 +38,7 @@ export default function Rotation() {
             <DataList
               rows={d.plots}
               keyOf={(p) => p.plotId}
-              title={(p) => `${p.name}${d.suggested?.plotId === p.plotId ? ` · ${t("ui.rot.next")}` : ""}`}
+              title={(p) => `${p.name}${d.suggested?.plotId === p.plotId ? `, ${t("ui.rot.next")}` : ""}`}
               subtitle={(p) =>
                 [
                   t(`ui.rot.state_${p.state}` as MessageKey),
@@ -46,7 +46,7 @@ export default function Rotation() {
                   !p.occupied && p.restDays !== null ? t("office.rot.daysRest", { n: days(p.restDays) ?? "" }) : null,
                 ]
                   .filter(Boolean)
-                  .join(" · ") || undefined
+                  .join(", ") || undefined
               }
               right={(p) =>
                 p.state === "overdue" ? (

@@ -53,7 +53,7 @@ function Burned({ plots }: { plots: AnalysisPlot<BurnedMetrics>[] }) {
       </Text>
       <Text style={[T.small, { marginTop: 8 }]}>{t("ui.burned.method")}</Text>
       <Text style={T.small}>
-        {t(ATTRIBUTION.copernicus)} · {t(ATTRIBUTION.firms)}
+        {t(ATTRIBUTION.copernicus)}, {t(ATTRIBUTION.firms)}
       </Text>
     </>
   );

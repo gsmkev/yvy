@@ -57,7 +57,7 @@ export default function Plots() {
       p.visitDays === null ? t("app.no.visits") : p.visitDays === 0 ? t("app.last.visitToday") : p.visitDays === 1 ? t("app.last.visitYesterday") : t("app.last.visit", { days: p.visitDays }),
     ]
       .filter(Boolean)
-      .join(" · ");
+      .join(", ");
 
   return (
     <OfficeScreen title={t("office.plots.title")} subtitle={farm && farms.length > 1 ? undefined : farm?.name}>
@@ -108,7 +108,7 @@ export default function Plots() {
                 rows={crops.map((c) => ({
                   label:
                     cropLabel(c.key) +
-                    " · " +
+                    ", " +
                     t(c.plots === 1 ? "ui.plots.countOne" : "ui.plots.countMany", { n: c.plots }),
                   value: Math.round(haToArea(c.ha, units.area) * 10) / 10,
                 }))}

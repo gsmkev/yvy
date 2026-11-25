@@ -192,3 +192,19 @@ export function FormSheet({
     </Sheet>
   );
 }
+
+/** Hoja de confirmación para borrar algo: texto, error del intento y los botones Borrar y Cancelar. */
+export function ConfirmDeleteSheet({ visible, title, message, error, pending, onConfirm, onCancel }: { visible: boolean; title: string; message: string; error: string | null; pending: boolean; onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <Sheet visible={visible} title={title} onClose={onCancel}>
+      <Text style={T.body}>{message}</Text>
+      {error ? (
+        <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 12 }]}>
+          {error}
+        </Text>
+      ) : null}
+      <Button kind="danger" title={t("ui.common.delete")} loading={pending} onPress={onConfirm} style={{ marginTop: 16 }} />
+      <Button kind="text" title={t("ui.common.cancel")} onPress={onCancel} style={{ marginTop: 4 }} />
+    </Sheet>
+  );
+}

@@ -3,14 +3,14 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 import { newId } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, currentVersion, runBatch } from "../client";
-import type { ScopedDb } from "./index";
+import type { ScopedCtx } from "./ctx";
 import { NotFoundError, can } from "./permissions";
 
 /**
  * Receta → órdenes de trabajo: una tarea de aplicación por lote, para el mismo empleado, con la
  * receta adentro. 3 lecturas y un solo batch (una fila por lote, máx. 40).
  */
-export async function createPrescription(sdb: ScopedDb, input: {
+export async function createPrescription(sdb: ScopedCtx, input: {
   farmId: string;
   plotIds: string[];
   assigneeId: string;
@@ -67,7 +67,7 @@ export async function createPrescription(sdb: ScopedDb, input: {
 }
 
 /** Crea una tarea de un lote (o sin lote si `plotId` es null) asignada a una persona. */
-export async function createTask(sdb: ScopedDb, input: {
+export async function createTask(sdb: ScopedCtx, input: {
   farmId: string;
   plotId: string | null;
   assigneeId: string;
@@ -83,7 +83,7 @@ export async function createTask(sdb: ScopedDb, input: {
   lat?: number | null;
   prescription?: string | null;
 }) {
-  const { ids } = await sdb.createTasks({ ...input, plotIds: [input.plotId] });
+  const { ids } = await createTasks(sdb, { ...input, plotIds: [input.plotId] });
   return { id: ids[0]! };
 }
 
@@ -91,7 +91,7 @@ export async function createTask(sdb: ScopedDb, input: {
  * Una tarea por lote, todas en un mismo batch. `plotIds` con `null` crea una
  * tarea sin lote. Los lotes tienen que ser de la estancia y de la organización.
  */
-export async function createTasks(sdb: ScopedDb, input: {
+export async function createTasks(sdb: ScopedCtx, input: {
   farmId: string;
   plotIds: (string | null)[];
   assigneeId: string;

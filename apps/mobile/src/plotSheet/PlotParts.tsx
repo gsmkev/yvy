@@ -35,7 +35,7 @@ export function VigorRow({ vigor, trend, office }: { vigor: Data["vigor"]; trend
                     : null,
             ]
               .filter(Boolean)
-              .join(" · ")
+              .join(", ")
           : office
             ? t("app.plot.sheetVigorNone")
             : t("app.plot.sheetVigorOwnersOnly")
@@ -81,7 +81,7 @@ export function PlotLists({ tasks, records }: { tasks: Data["tasks"]; records: D
           key={r.id}
           icon={RECORD_ICON[r.kind]}
           title={describeRecord(r.kind, JSON.parse(r.data))}
-          subtitle={`${t(`record-kinds.kind.${r.kind}`)} · ${day(r.capturedAt)}`}
+          subtitle={`${t(`record-kinds.kind.${r.kind}`)}, ${day(r.capturedAt)}`}
           onPress={() => router.push({ pathname: "/record/[id]", params: { id: r.id } })}
         />
       ))}

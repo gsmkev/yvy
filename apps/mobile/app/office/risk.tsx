@@ -28,7 +28,7 @@ export default function Risk() {
       title={t("ui.risk.title")}
       subtitle={
         farm
-          ? farm.name + (q.data?.computedAt ? " · " + t("ui.risk.computed", { date: fmtDate(q.data.computedAt) }) : "")
+          ? farm.name + (q.data?.computedAt ? ", " + t("ui.risk.computed", { date: fmtDate(q.data.computedAt) }) : "")
           : undefined
       }
       query={q}
@@ -46,13 +46,13 @@ export default function Risk() {
             const frost: StatItem[] = [
               { label: t("ui.risk.frostMean"), value: fmtNumber(r.frost.meanPerYear), unit: t("office.common.unitDays") },
               { label: t("ui.risk.frostYears"), value: r.frost.yearsWithFrostPct, unit: "%" },
-              ...(r.frost.worst ? [{ label: t("ui.risk.frostWorst"), value: r.frost.worst.days, unit: `${t("office.common.unitDays")} · ${r.frost.worst.year}` }] : []),
+              ...(r.frost.worst ? [{ label: t("ui.risk.frostWorst"), value: r.frost.worst.days, unit: `${t("office.common.unitDays")}, ${r.frost.worst.year}` }] : []),
               ...(r.frost.typicalFirstFrost ? [{ label: t("ui.risk.frostFirst"), value: fmtMmDd(r.frost.typicalFirstFrost) }] : []),
             ];
             const dry: StatItem[] = [
               { label: t("ui.risk.dryMean"), value: fmtNumber(r.dry.meanLongestDays), unit: t("office.common.unitDays") },
               { label: t("ui.risk.drySummer"), value: fmtNumber(r.dry.summerMeanLongestDays), unit: t("office.common.unitDays") },
-              ...(r.dry.worst ? [{ label: t("ui.risk.dryWorst"), value: r.dry.worst.days, unit: `${t("office.common.unitDays")} · ${r.dry.worst.year}` }] : []),
+              ...(r.dry.worst ? [{ label: t("ui.risk.dryWorst"), value: r.dry.worst.days, unit: `${t("office.common.unitDays")}, ${r.dry.worst.year}` }] : []),
               { label: t("ui.risk.drySpells"), value: fmtNumber(r.dry.spells15PerYear) },
             ];
             const fireStats: StatItem[] = fire
@@ -109,7 +109,7 @@ export default function Risk() {
                   {t("ui.risk.intro", { from: r.normalFrom, to: r.normalTo })}
                 </Text>
                 <Text style={T.small}>
-                  {t(ATTRIBUTION.nasaPower)} · {t(ATTRIBUTION.firms)}
+                  {t(ATTRIBUTION.nasaPower)}, {t(ATTRIBUTION.firms)}
                 </Text>
                 {!owner && <Text style={[T.small, { marginTop: 8 }]}>{t("office.common.riskShareHint")}</Text>}
               </>

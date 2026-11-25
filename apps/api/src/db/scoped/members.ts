@@ -4,11 +4,11 @@ import { isFieldRole, isOverdue, localDate, localTime, newId, type Role } from "
 import * as s from "@yvy/shared/schema";
 import { bumpVersion, currentVersion, runBatch, type Stmt } from "../client";
 import { funnelEvent } from "../events";
-import type { ScopedDb } from "./index";
+import type { ScopedCtx } from "./ctx";
 import { ForbiddenError, NotFoundError, can } from "./permissions";
 
 /** Registra el pedido de baja (solo dueño). Idempotente: si ya hay uno pendiente, lo devuelve. */
-export async function requestDeletion(sdb: ScopedDb): Promise<{
+export async function requestDeletion(sdb: ScopedCtx): Promise<{
   id: string;
   created: boolean;
   organizationName: string;
@@ -44,7 +44,7 @@ export async function requestDeletion(sdb: ScopedDb): Promise<{
 }
 
 /** Miembros con su actividad de los últimos 7 días: tres consultas agrupadas, sin N+1. */
-export async function listMembers(sdb: ScopedDb) {
+export async function listMembers(sdb: ScopedCtx) {
   sdb.require(can.assign);
   const org = sdb.auth.orgId;
   const since = sdb.now() - 7 * 86_400_000;
@@ -117,7 +117,7 @@ export async function listMembers(sdb: ScopedDb) {
  * de la estancia. Las que vencieron hace 2 días o más lo están en cualquier huso (una consulta agrupada); solo las de
  * ayer a mañana se miran una por una con su huso.
  */
-async function overdueTasksByAssignee(sdb: ScopedDb): Promise<Map<string, number>> {
+async function overdueTasksByAssignee(sdb: ScopedCtx): Promise<Map<string, number>> {
   const now = sdb.now();
   const sure = localDate(now - 2 * 86_400_000);
   const edge = localDate(now + 86_400_000);
@@ -148,7 +148,7 @@ async function overdueTasksByAssignee(sdb: ScopedDb): Promise<Map<string, number
 }
 
 /** Agrega una persona al equipo con un rol, dentro del límite de usuarios del plan. */
-export async function addMember(sdb: ScopedDb, input: {
+export async function addMember(sdb: ScopedCtx, input: {
   fullName: string;
   email: string | null;
   phone: string | null;
@@ -202,7 +202,7 @@ export async function addMember(sdb: ScopedDb, input: {
 }
 
 /** Rol activo de una persona en la organización. Falla con NotFoundError si no es miembro. */
-export async function memberRole(sdb: ScopedDb, userId: string): Promise<Role> {
+export async function memberRole(sdb: ScopedCtx, userId: string): Promise<Role> {
   const [m] = await sdb.db
     .select({ role: s.memberships.role })
     .from(s.memberships)
@@ -222,7 +222,7 @@ export async function memberRole(sdb: ScopedDb, userId: string): Promise<Role> {
  * Fija o cambia el PIN de ingreso de un empleado (solo dueño o administrador). Guarda el teléfono en su
  * ficha y su clave normalizada. "phone_taken" si otra persona ya usa ese teléfono para ingresar.
  */
-export async function setMemberPin(sdb: ScopedDb, 
+export async function setMemberPin(sdb: ScopedCtx, 
   userId: string,
   input: { phone: string; phoneKey: string; salt: string; pinHash: string },
 ): Promise<"ok" | "phone_taken"> {
@@ -267,7 +267,7 @@ export async function setMemberPin(sdb: ScopedDb,
 }
 
 /** Quita el PIN (el empleado ya no puede ingresar con teléfono). */
-export async function clearMemberPin(sdb: ScopedDb, userId: string): Promise<void> {
+export async function clearMemberPin(sdb: ScopedCtx, userId: string): Promise<void> {
   sdb.require(can.manageWorkers, "Solo dueño o administrador gestionan el PIN de los empleados");
   await sdb.memberRole(userId);
   await sdb.db
@@ -276,14 +276,14 @@ export async function clearMemberPin(sdb: ScopedDb, userId: string): Promise<voi
 }
 
 /** Teléfono guardado en la ficha de un miembro de la organización. */
-export async function memberPhone(sdb: ScopedDb, userId: string): Promise<string | null> {
+export async function memberPhone(sdb: ScopedCtx, userId: string): Promise<string | null> {
   await sdb.memberRole(userId);
   const [u] = await sdb.db.select({ phone: s.users.phone }).from(s.users).where(eq(s.users.id, userId)).limit(1);
   return u?.phone ?? null;
 }
 
 /** Quiénes de la organización ya tienen PIN (para mostrarlo en Equipo). */
-export async function membersWithPin(sdb: ScopedDb): Promise<Set<string>> {
+export async function membersWithPin(sdb: ScopedCtx): Promise<Set<string>> {
   sdb.require(can.assign);
   const rows = await sdb.db
     .select({ userId: s.userPins.userId })
@@ -293,7 +293,7 @@ export async function membersWithPin(sdb: ScopedDb): Promise<Set<string>> {
 }
 
 /** Reemplaza los lotes asignados a un usuario y avisa al cliente que rehaga sus tablas. */
-export async function setAssignments(sdb: ScopedDb, userId: string, plotIds: string[]): Promise<void> {
+export async function setAssignments(sdb: ScopedCtx, userId: string, plotIds: string[]): Promise<void> {
   sdb.require(can.assign);
   await sdb.memberRole(userId);
   const wanted = [...new Set(plotIds)];

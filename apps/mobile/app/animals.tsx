@@ -110,7 +110,7 @@ export default function Animals() {
             key={a.id}
             choice="radio"
             title={a.tag}
-            subtitle={`${t(`fields.herd.${a.category}` as MessageKey)} · ${t(`fields.sex.${a.sex}` as MessageKey)}`}
+            subtitle={`${t(`fields.herd.${a.category}` as MessageKey)}, ${t(`fields.sex.${a.sex}` as MessageKey)}`}
             selected={selected === a.id}
             onPress={() => setSelected(a.id)}
           />
@@ -126,7 +126,7 @@ export default function Animals() {
               animal.birthDate ? t("app.animals.born", { date: animal.birthDate.split("-").reverse().join("/") }) : null,
             ]
               .filter(Boolean)
-              .join(" · ")}
+              .join(", ")}
           </Text>
           {animal.note ? <Text style={[T.body, { marginTop: 6 }]}>{animal.note}</Text> : null}
           {canEdit && <Button kind="secondary" title={t("ui.common.edit")} icon={Pencil} disabled={!online} onPress={openEdit} style={{ marginTop: 12, alignSelf: "flex-start" }} />}
@@ -138,7 +138,7 @@ export default function Animals() {
               key={r.id}
               icon={RECORD_ICON[r.kind]}
               title={t(`record-kinds.kind.${r.kind}` as MessageKey)}
-              subtitle={`${when(r.capturedAt)} · ${describeRecord(r.kind, JSON.parse(r.data))}`}
+              subtitle={`${when(r.capturedAt)}, ${describeRecord(r.kind, JSON.parse(r.data))}`}
             />
           ))}
           <Text style={[T.small, { marginTop: 12, color: C.tinta3 }]}>{t("app.animals.historyNote")}</Text>

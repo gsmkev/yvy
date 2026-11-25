@@ -2,13 +2,13 @@
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { planLimits as limitsFor, t } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
-import type { ScopedDb } from "./index";
+import type { ScopedCtx } from "./ctx";
 import { PlanLimitError } from "./permissions";
 
 const fmt = (n: number) => n.toLocaleString("es-PY");
 
 /** Topes efectivos de la organización. */
-export async function planLimits(sdb: ScopedDb) {
+export async function planLimits(sdb: ScopedCtx) {
   const [o] = await sdb.db
     .select({ plan: s.organizations.plan, maxHa: s.organizations.maxHa, maxUsers: s.organizations.maxUsers })
     .from(s.organizations)
@@ -18,7 +18,7 @@ export async function planLimits(sdb: ScopedDb) {
 }
 
 /** Falla con 402 y un mensaje claro si sumar `extraHa` hectáreas de estancias pasa el tope del plan. */
-export async function requireHaRoom(sdb: ScopedDb, extraHa: number, what: "farms" | "plots" = "farms"): Promise<void> {
+export async function requireHaRoom(sdb: ScopedCtx, extraHa: number, what: "farms" | "plots" = "farms"): Promise<void> {
   const { maxHa } = await sdb.planLimits();
   if (maxHa === null) return;
   const [r] = await sdb.db
@@ -38,7 +38,7 @@ export async function requireHaRoom(sdb: ScopedDb, extraHa: number, what: "farms
 }
 
 /** Falla con 402 si sumar una persona pasa el tope de usuarios (la que ya tiene acceso no cuenta de nuevo). */
-export async function requireUserRoom(sdb: ScopedDb, existingUserId: string | null): Promise<void> {
+export async function requireUserRoom(sdb: ScopedCtx, existingUserId: string | null): Promise<void> {
   const { maxUsers } = await sdb.planLimits();
   if (maxUsers === null) return;
   const rows = await sdb.db

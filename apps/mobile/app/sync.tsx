@@ -150,7 +150,7 @@ function Outbox({
         <Row
           key={i.id}
           title={label(i)}
-          subtitle={[plotName(i.plotId), when(i.at), i.photos > 0 ? t("app.outbox.photoSize", { n: i.photos, size: size(i.photoBytes) }) : null, i.photos > 0 && wifiOnly ? t("app.outbox.waitingWifi") : null].filter(Boolean).join(" · ")}
+          subtitle={[plotName(i.plotId), when(i.at), i.photos > 0 ? t("app.outbox.photoSize", { n: i.photos, size: size(i.photoBytes) }) : null, i.photos > 0 && wifiOnly ? t("app.outbox.waitingWifi") : null].filter(Boolean).join(", ")}
         />
       ))}
       {items.length > OUTBOX_SHOWN && <Text style={[T.small, { paddingVertical: 8 }]}>{t("app.outbox.more", { n: items.length - OUTBOX_SHOWN })}</Text>}
@@ -208,7 +208,7 @@ function Storage() {
   ].filter(Boolean);
   return (
     <>
-      <Row title={t("app.storage.title")} subtitle={parts.join(" · ")} />
+      <Row title={t("app.storage.title")} subtitle={parts.join(", ")} />
       {usage.reclaimable.n > 0 && <Button kind="secondary" title={t("app.storage.delete", { size: size(usage.reclaimable.bytes) })} disabled={busy} loading={busy} onPress={free} style={{ marginTop: 12 }} />}
     </>
   );

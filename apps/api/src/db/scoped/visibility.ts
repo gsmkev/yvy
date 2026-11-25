@@ -5,13 +5,13 @@
  */
 import { sql, type SQL } from "drizzle-orm";
 import type { PullTable } from "@yvy/shared";
-import type { ScopedDb } from "./index";
+import type { ScopedCtx } from "./ctx";
 
 /** Registros (o filas con `record_id`) que ve un rol de campo, para filtrar adjuntos y comentarios. */
-const viaVisibleRecords = (sdb: ScopedDb, col: string) =>
+const viaVisibleRecords = (sdb: ScopedCtx, col: string) =>
   sql`${sql.raw(col)} IN (SELECT id FROM records WHERE organization_id = ${sdb.auth.orgId} AND ${sdb.recordsVisibleSql()})`;
 
-type WorkerRule = (sdb: ScopedDb) => SQL | undefined;
+type WorkerRule = (sdb: ScopedCtx) => SQL | undefined;
 
 const WORKER_RULES: Record<PullTable, WorkerRule> = {
   farms: (sdb) => sql`farms.id IN ${sdb.workerFarmsSql()}`,
@@ -35,7 +35,7 @@ const WORKER_RULES: Record<PullTable, WorkerRule> = {
 };
 
 /** Tabla con la estancia en una columna propia, o a través de lotes o de registros. */
-type ScopeRule = (sdb: ScopedDb, write: boolean) => SQL | undefined;
+type ScopeRule = (sdb: ScopedCtx, write: boolean) => SQL | undefined;
 const byFarm =
   (col: string): ScopeRule =>
   (sdb, write) =>
@@ -77,6 +77,6 @@ const workerRules = new Map(Object.entries(WORKER_RULES) as [PullTable, WorkerRu
 const scopeRules = new Map(Object.entries(SCOPE_RULES) as [PullTable, ScopeRule][]);
 
 /** Condición de visibilidad por tabla: lotes asignados (roles de campo) o estancias permitidas (supervisor). */
-export function workerFilter(sdb: ScopedDb, table: PullTable, write = false): SQL | undefined {
+export function workerFilter(sdb: ScopedCtx, table: PullTable, write = false): SQL | undefined {
   return sdb.isWorker ? workerRules.get(table)!(sdb) : scopeRules.get(table)!(sdb, write);
 }

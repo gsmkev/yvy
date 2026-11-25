@@ -41,7 +41,7 @@ export default function Heat() {
                 {d.summary.dangerHours > 0
                   ? t("ui.heat.dangerHours", { n: d.summary.dangerHours }) +
                     (d.summary.firstDangerAt
-                      ? " · " + t("ui.heat.firstDanger", { date: fmtDateTime(d.summary.firstDangerAt) })
+                      ? ", " + t("ui.heat.firstDanger", { date: fmtDateTime(d.summary.firstDangerAt) })
                       : "")
                   : level === "alert"
                     ? t("ui.heat.max", { v: Math.round(d.summary.maxThi ?? 0), level: t(`ui.heat.level_${level}` as MessageKey) })

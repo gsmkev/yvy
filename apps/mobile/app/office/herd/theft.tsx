@@ -31,12 +31,12 @@ export default function Theft() {
               rows={d.rows}
               keyOf={(r) => r.id}
               title={(r) =>
-                t(`fields.herd.${r.category}` as MessageKey) + " · " + t("fields.herd.totalValue", { n: r.head })
+                t(`fields.herd.${r.category}` as MessageKey) + ", " + t("fields.herd.totalValue", { n: r.head })
               }
-              subtitle={(r) => [fmtDate(r.capturedAt), r.plotName].filter(Boolean).join(" · ")}
+              subtitle={(r) => [fmtDate(r.capturedAt), r.plotName].filter(Boolean).join(", ")}
               right={(r) =>
                 r.policeReport ? (
-                  <Text style={[T.smallMedium, { textAlign: "right" }]}>{`${r.policeReport}${r.reportedAt ? ` · ${fmtDate(r.reportedAt)}` : ""}`}</Text>
+                  <Text style={[T.smallMedium, { textAlign: "right" }]}>{`${r.policeReport}${r.reportedAt ? `, ${fmtDate(r.reportedAt)}` : ""}`}</Text>
                 ) : (
                   <Text style={[T.smallMedium, { textAlign: "right", color: C.peligro }]}>{t("ui.theft.noReport")}</Text>
                 )

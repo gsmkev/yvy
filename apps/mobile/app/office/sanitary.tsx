@@ -122,11 +122,11 @@ export default function Sanitary() {
             <View key={c.id} style={{ borderWidth: 1, borderColor: C.linea, borderRadius: RADIUS, padding: 12, gap: 4 }}>
               <Text style={[T.smallMedium, { color: C.accionOscuro }]}>{t("ui.senacsa.badge")}</Text>
               <Text style={T.bodyMedium}>
-                {t(`ui.senacsa.name_${c.reason}` as MessageKey) + " · " + t("ui.senacsa.period", { n: c.period })}
+                {t(`ui.senacsa.name_${c.reason}` as MessageKey) + ", " + t("ui.senacsa.period", { n: c.period })}
               </Text>
               <Text style={T.small}>
                 {t("ui.senacsa.dates", { from: dmy(c.from), to: dmy(c.to) }) +
-                  (c.registerUntil ? " · " + t("ui.senacsa.register", { date: dmy(c.registerUntil) }) : "")}
+                  (c.registerUntil ? ", " + t("ui.senacsa.register", { date: dmy(c.registerUntil) }) : "")}
               </Text>
               <Text style={T.small}>{c.appliesTo}</Text>
               {senacsa.data!.planned.includes(c.id) ? (
@@ -155,7 +155,7 @@ export default function Sanitary() {
             subtitle={(e) =>
               [dmy(e.plannedDate), farms.length > 1 ? farmName(e.farmId) : null, e.categories.map((c) => t(`fields.herd.${c}` as MessageKey).toLowerCase()).join(", "), e.tasksCreated > 0 ? t("ui.sanitary.tasks", { n: e.tasksCreated }) : null, e.note]
                 .filter(Boolean)
-                .join(" · ")
+                .join(", ")
             }
             right={(e) =>
               e.state === "overdue" ? (
@@ -190,7 +190,7 @@ export default function Sanitary() {
       <Sheet visible={!!removing} title={t("office.sanitary.deleteTitle")} onClose={() => setRemoving(null)}>
         {removing && (
           <>
-            <Text style={T.bodyMedium}>{`${reasonName(removing.reason)} · ${dmy(removing.plannedDate)}`}</Text>
+            <Text style={T.bodyMedium}>{`${reasonName(removing.reason)}, ${dmy(removing.plannedDate)}`}</Text>
             <Text style={[T.small, { marginTop: 4 }]}>{t("office.sanitary.deleteBody")}</Text>
             {remove.error ? (
               <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 16 }]}>

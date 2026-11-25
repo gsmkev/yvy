@@ -89,8 +89,8 @@ export default function Soil() {
               <DataList
                 rows={rows}
                 keyOf={(r) => r.id}
-                title={(r) => [r.plotName, r.pointLabel].filter(Boolean).join(" · ") || t("ui.soil.farmWide")}
-                subtitle={(r) => [`${dmy(r.sampledOn)} · ${r.depthCm} cm`, r.lab, SOIL_PARAMS.map((p) => cell(p, r[p])).filter(Boolean).join(" · ")].filter(Boolean).join("\n")}
+                title={(r) => [r.plotName, r.pointLabel].filter(Boolean).join(", ") || t("ui.soil.farmWide")}
+                subtitle={(r) => [`${dmy(r.sampledOn)}, ${r.depthCm} cm`, r.lab, SOIL_PARAMS.map((p) => cell(p, r[p])).filter(Boolean).join(", ")].filter(Boolean).join("\n")}
                 empty={{ title: t("office.soil.noneTitle") }}
               />
               <Text style={[T.small, { marginTop: 16 }]}>{t("ui.soil.note")}</Text>

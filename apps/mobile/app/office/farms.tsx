@@ -34,7 +34,7 @@ export default function Farms() {
           [
             t("office.farms.plotsLine", { plots: f.plots, records: f.records7d }),
             f.lastRecordAt ? t("office.farms.lastRecord", { date: fmtDate(f.lastRecordAt) }) : t("ui.never.recorded"),
-          ].join(" · ")
+          ].join(", ")
         }
         right={(f) => (
           <>

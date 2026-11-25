@@ -73,7 +73,7 @@ export default function Calendar() {
                       <View key={x.id} style={done ? { opacity: 0.55 } : undefined}>
                       <Row
                         title={`${x.dueTime ? `${x.dueTime}  ` : ""}${x.title}`}
-                        subtitle={[x.plotId ? plotName.get(x.plotId) : null, who].filter(Boolean).join(" · ") || (x.dueTime ? undefined : t("office.calendar.allDay"))}
+                        subtitle={[x.plotId ? plotName.get(x.plotId) : null, who].filter(Boolean).join(", ") || (x.dueTime ? undefined : t("office.calendar.allDay"))}
                         right={done ? <Text style={{ fontFamily: F.sansMedium, fontSize: 15, color: C.tinta3 }}>{t("ui.status.done")}</Text> : undefined}
                         onPress={() => router.push({ pathname: "/task/[id]", params: { id: x.id } })}
                       />

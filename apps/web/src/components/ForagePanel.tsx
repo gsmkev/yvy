@@ -35,7 +35,7 @@ export function ForagePanel({ farmId }: { farmId: string }) {
               align: "right",
               cell: (p) => (
                 <>
-                  {p.heightCm === null ? "—" : `${p.heightCm} cm · ${tk(`fields.level.${p.cover}`).toLowerCase()}`}
+                  {p.heightCm === null ? "—" : `${p.heightCm} cm, ${tk(`fields.level.${p.cover}`).toLowerCase()}`}
                   {p.heightAt ? <span className="block text-xs text-tinta-2">{fmtDay(p.heightAt)}</span> : null}
                 </>
               ),

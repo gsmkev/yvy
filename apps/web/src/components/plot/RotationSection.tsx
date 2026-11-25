@@ -29,9 +29,9 @@ export function RotationSection({ history }: { history: UseQueryResult<PlotHisto
                 <p className="num mt-0.5">
                   {t("ui.yield.perHa")}: <strong>{fmtNum(h.yieldTHa)} t/ha</strong>
                   <span className="text-xs text-tinta-2">
-                    {" "}
-                    · {t("ui.rotation.harvest", { tons: fmtNum(h.harvestTons ?? 0) })}
-                    {h.targetYieldTHa !== null ? " · " + t("ui.yield.vsTarget", { n: fmtNum(h.targetYieldTHa) }) : ""}
+                    {", "}
+                   {t("ui.rotation.harvest", { tons: fmtNum(h.harvestTons ?? 0) })}
+                    {h.targetYieldTHa !== null ? ", " + t("ui.yield.vsTarget", { n: fmtNum(h.targetYieldTHa) }) : ""}
                   </span>
                 </p>
               )}
@@ -47,7 +47,7 @@ export function RotationSection({ history }: { history: UseQueryResult<PlotHisto
                   h.targetYieldTHa !== null && h.yieldTHa === null ? `${t("ui.season.targetYield")}: ${fmtNum(h.targetYieldTHa)}` : null,
                 ]
                   .filter(Boolean)
-                  .join(" · ")}
+                  .join(", ")}
               </p>
             </li>
           ))}

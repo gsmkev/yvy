@@ -48,9 +48,9 @@ export function ReportSchedules({ farmId }: { farmId: string }) {
               <strong className="block truncate font-medium">{r.name}</strong>
               <span className="block truncate text-tinta-2">{r.email}</span>
               <span className="block text-meta text-tinta-2">
-                {tk(`ui.schedule.freq_${r.frequency}`)} ·{" "}
+                {tk(`ui.schedule.freq_${r.frequency}`)},{" "}
                 {r.farmId ? t("ui.schedule.thisFarm") : t("ui.schedule.allFarms")}
-                {r.lastSentAt ? " · " + t("ui.schedule.last", { date: fmtDate(r.lastSentAt) }) : ""}
+                {r.lastSentAt ? ", " + t("ui.schedule.last", { date: fmtDate(r.lastSentAt) }) : ""}
               </span>
             </span>
             <Button size="sm" variant="danger" onClick={() => remove.mutate(r.id)}>

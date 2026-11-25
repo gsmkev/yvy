@@ -36,7 +36,7 @@ export function PlotResults({ plot }: { plot: Plot }) {
       ) : !r ? (
         <p className="text-sm text-tinta-2">{t("ui.plot.resultsNone")}</p>
       ) : (
-        <StatRow>
+        <StatRow max={2}>
           {r.costPerHa !== null && <Stat label={t("ui.results.costPerHa")} value={fmtGs(r.costPerHa)} />}
           {r.incomePerHa !== null && <Stat label={t("ui.results.incomePerHa")} value={fmtGs(r.incomePerHa)} />}
           <Stat label={t("ui.results.margin")} value={fmtGs(r.marginPyg)} tone={r.marginPyg < 0 ? "danger" : undefined} />

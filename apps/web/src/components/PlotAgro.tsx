@@ -64,8 +64,8 @@ function PhenologySection({ plotId }: { plotId: string }) {
           <p>
             {t("ui.pheno.estimated")}: <strong>{tk(`fields.stage.${d.estimatedStage}`)}</strong>
             <span className="num text-tinta-2">
-              {" "}
-              · {fmtNum(d.gdd)} {t("ui.pheno.gdd")}
+              {", "}
+             {fmtNum(d.gdd)} {t("ui.pheno.gdd")}
             </span>
           </p>
           {d.next && (
@@ -78,7 +78,7 @@ function PhenologySection({ plotId }: { plotId: string }) {
             {d.observed ? (
               <>
                 <strong>{tk(`fields.stage.${d.observed.stage}`)}</strong>
-                <span className="text-tinta-2"> · {fmtDate(d.observed.at)}</span>
+                <span className="text-tinta-2">, {fmtDate(d.observed.at)}</span>
               </>
             ) : (
               <span className="text-tinta-2">{t("ui.pheno.noObserved")}</span>
@@ -92,7 +92,7 @@ function PhenologySection({ plotId }: { plotId: string }) {
           <p className="num text-xs text-tinta-2">
             {t("ui.pheno.since", { date: d.sowingDate ? fmtIsoDate(d.sowingDate) : "—", base: d.baseC ?? 0 })}
             {d.coverage && d.coverage.days < d.coverage.of * 0.8
-              ? " · " + t("ui.pheno.partial", { days: d.coverage.days, of: d.coverage.of })
+              ? ", " + t("ui.pheno.partial", { days: d.coverage.days, of: d.coverage.of })
               : ""}
           </p>
           <p className="text-xs text-tinta-2">{t("ui.pheno.note")}</p>
@@ -134,7 +134,7 @@ function WaterBalanceSection({ plot }: { plot: Plot }) {
           <p className="num">
             {t("ui.water.balBalance")}: <strong>{fmtMm(b.balanceMm)}</strong>
             {b.balance14Mm !== null && (
-              <span className="text-tinta-2"> · {t("ui.water.balLast14", { mm: fmtMm(b.balance14Mm) })}</span>
+              <span className="text-tinta-2">, {t("ui.water.balLast14", { mm: fmtMm(b.balance14Mm) })}</span>
             )}
           </p>
           {b.risk && (
@@ -166,7 +166,7 @@ function WaterBalanceSection({ plot }: { plot: Plot }) {
           />
           <p className="text-xs text-tinta-2">{t("ui.water.balNote")}</p>
           <p className="text-xs text-tinta-2">
-            {t(ATTRIBUTION.chirps)} · {t(ATTRIBUTION.nasaPower)}
+            {t(ATTRIBUTION.chirps)}, {t(ATTRIBUTION.nasaPower)}
           </p>
         </div>
       )}
@@ -209,7 +209,7 @@ function PlotForecastSection({ plot }: { plot: Plot }) {
             <span>{fmtIsoDate(d.date)}</span>
             <span className="text-tinta-2">
               {d.tminC !== null && d.tmaxC !== null ? `${fmtTemp(d.tminC)} / ${fmtTemp(d.tmaxC)}` : "—"}
-              {d.precipMm !== null ? ` · ${fmtMm(d.precipMm)}` : ""}
+              {d.precipMm !== null ? `, ${fmtMm(d.precipMm)}` : ""}
             </span>
           </li>
         ))}

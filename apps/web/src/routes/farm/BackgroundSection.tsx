@@ -29,7 +29,7 @@ function IndexLegend({ scene }: { scene: FarmScene }) {
             </span>
           </div>
           <p className="num mt-1 text-lino/70">
-            {t("ui.soil.level_low")} &lt; {fmtNum(SOIL_RANGES[FERT_LAYER_PARAM[shownIndex]][0])} · {t("ui.soil.level_high")} &gt;{" "}
+            {t("ui.soil.level_low")} &lt; {fmtNum(SOIL_RANGES[FERT_LAYER_PARAM[shownIndex]][0])}, {t("ui.soil.level_high")} &gt;{" "}
             {fmtNum(SOIL_RANGES[FERT_LAYER_PARAM[shownIndex]][1])}
           </p>
           <p className="mt-1 text-lino/60">{t("ui.fert.legendNote")}</p>
@@ -41,7 +41,7 @@ function IndexLegend({ scene }: { scene: FarmScene }) {
         </div>
       )}
       <p className="num mt-1.5 text-lino/70">
-        {t("ui.common.imageDate", { date: fmtDate((scene.pickedFor(shownIndex) ?? ndviLayer!).acquiredAt) })} · {isFert(shownIndex) ? t("ui.soil.title") : "Sentinel-2"}
+        {t("ui.common.imageDate", { date: fmtDate((scene.pickedFor(shownIndex) ?? ndviLayer!).acquiredAt) })}, {isFert(shownIndex) ? t("ui.soil.title") : "Sentinel-2"}
       </p>
     </div>
   );

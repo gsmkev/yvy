@@ -3,7 +3,7 @@ import { LIMITS, staleDaysOrDefault } from "@yvy/shared";
 import { LinesPanel } from "../../components/LinesPanel";
 import { ExportMenu } from "../../components/menus";
 import { PlotsTable } from "../../components/PlotsTable";
-import { Select } from "../../components/ui";
+import { Button, Field, FilterContext, Select } from "../../components/ui";
 import { cropName } from "../../lib/crops";
 import { download, plotsToGeoJson, plotsToKml, plotsToShapefileZip } from "../../lib/exports";
 import { areaUnitLabel, fmtAreaValue, fmtDate } from "../../lib/format";
@@ -109,38 +109,33 @@ staleDays: number;
     <>
       <PrintPlots plots={shownPlots} />
       <div className="print:hidden">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-tinta-2">
+        <FilterContext.Provider value>
+          <div className="mb-3 flex flex-wrap items-end gap-x-3 gap-y-2">
+            <Field label={t("ui.unvisited.label")}>
+              <Select
+                value={String(staleDays)}
+                onChange={(e) => onStaleDays(staleDaysOrDefault(Number(e.target.value)))}
+                options={LIMITS.visits.staleDayOptions.map((n) => ({ value: String(n), label: t("ui.common.daysN", { n }) }))}
+              />
+            </Field>
             {unvisitedCount > 0 ? (
-              <button
-                className="cursor-pointer text-left underline-offset-4 hover:text-surco hover:underline"
-                aria-pressed={onlyUnvisited}
-                onClick={onToggleUnvisited}
-              >
-                {onlyUnvisited
-                  ? t("ui.unvisited.showAll")
-                  : t(unvisitedCount === 1 ? "ui.unvisited.oneLead" : "ui.unvisited.manyLead", { n: unvisitedCount })}
-              </button>
+              <Button aria-pressed={onlyUnvisited} variant={onlyUnvisited ? "primary" : "secondary"} size="sm" onClick={onToggleUnvisited} className="h-9">
+                {onlyUnvisited ? t("ui.unvisited.showAll") : t("ui.unvisited.only", { n: unvisitedCount })}
+              </Button>
             ) : (
-              <span>{t("ui.unvisited.noneLead")}</span>
+              <span className="pb-2 text-sm text-tinta-2">{t("ui.unvisited.none")}</span>
             )}
-            <Select
-              aria-label={t("ui.unvisited.after")}
-              value={String(staleDays)}
-              onChange={(e) => onStaleDays(staleDaysOrDefault(Number(e.target.value)))}
-              options={LIMITS.visits.staleDayOptions.map((n) => ({ value: String(n), label: t("ui.common.daysN", { n }) }))}
-              className="[&_select]:h-8 [&_select]:text-sm"
+            <ExportMenu
+              quiet
+              className="ml-auto"
+              formats={[
+                { label: t("ui.export.formatExcel"), run: () => tableToExcel(plotsTable(shownPlots)) },
+                { label: t("ui.export.formatCsv"), run: () => tableToCsv(plotsTable(shownPlots)) },
+                ...(canEdit ? geoFormats(d) : []),
+              ]}
             />
           </div>
-          <ExportMenu
-            quiet
-            formats={[
-              { label: t("ui.export.formatExcel"), run: () => tableToExcel(plotsTable(shownPlots)) },
-              { label: t("ui.export.formatCsv"), run: () => tableToCsv(plotsTable(shownPlots)) },
-              ...(canEdit ? geoFormats(d) : []),
-            ]}
-          />
-        </div>
+        </FilterContext.Provider>
         <PlotsTable plots={shownPlots} onSelect={onSelect} />
         <div className="mt-5">
           <LinesPanel farmId={farmId} lines={lines ?? []} canEdit={canEdit} onDraw={onDrawLine} />

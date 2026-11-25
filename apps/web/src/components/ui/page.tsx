@@ -31,7 +31,7 @@ export function PageHeader({
   );
   return (
     <header className={`flex min-w-0 gap-3 ${stacked ? "flex-col items-stretch" : "items-center"} ${className}`}>
-      <div className="flex min-w-0 flex-1 items-center gap-1">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <h1 title={title} className="min-w-0 truncate text-title leading-8">
           {title}
         </h1>

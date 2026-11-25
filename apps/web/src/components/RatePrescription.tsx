@@ -78,7 +78,7 @@ export function RatePrescription({ plot, zones, onClose }: { plot: Plot; zones: 
             <Select value={unit} onChange={(e) => setUnit(e.target.value as RateUnit)} options={RX_RATE_UNITS.map((u) => ({ value: u, label: t(`ui.rx.unit_${u}`) }))} />
           </Field>
           {zones.map((z) => (
-            <Field key={z.zone} label={t("ui.rx.rate", { zone: z.zone, unit: t(`ui.rx.unit_${unit}`) })} hint={`${t(`ui.zones.level_${z.zone}` as "ui.zones.level_1")} · ${fmtHa(z.areaHa)}`}>
+            <Field key={z.zone} label={t("ui.rx.rate", { zone: z.zone, unit: t(`ui.rx.unit_${unit}`) })} hint={`${t(`ui.zones.level_${z.zone}` as "ui.zones.level_1")}, ${fmtHa(z.areaHa)}`}>
               <Input inputMode="decimal" className="num" value={rates[z.zone] ?? ""} onChange={(e) => setRates({ ...rates, [z.zone]: e.target.value })} />
             </Field>
           ))}

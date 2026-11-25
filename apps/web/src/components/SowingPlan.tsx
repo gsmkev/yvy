@@ -100,7 +100,7 @@ export function SowingPlan({ farmId, plots }: { farmId: string; plots: Plot[] })
             {t("ui.sow.planTotal", { area: fmtHa(plan.plannedHa) })}
             {plan.unplannedPlots > 0 && (
               <span className="text-tinta-2">
-                {" · "}
+                {", "}
                 {t("ui.sow.planUnplanned", { n: plan.unplannedPlots, area: fmtHa(plan.unplannedHa) })}
               </span>
             )}

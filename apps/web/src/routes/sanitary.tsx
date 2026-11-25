@@ -82,6 +82,7 @@ export function SanitaryPage() {
             { id: "date", header: t("ui.due.date"), width: "7rem", cell: (e) => <span className="num text-tinta-2">{fmtIsoDate(e.plannedDate)}</span> },
             {
               id: "event",
+              mobile: "title",
               header: t("fields.health.reason"),
               cell: (e) => (
                 <>
@@ -102,7 +103,7 @@ export function SanitaryPage() {
                   e.tasksCreated > 0 ? t("ui.sanitary.tasks", { n: e.tasksCreated }) : "",
                 ]
                   .filter(Boolean)
-                  .join(" · "),
+                  .join(", "),
             },
             {
               id: "state",

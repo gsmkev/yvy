@@ -89,7 +89,7 @@ function BurnedSection({ farmId }: { farmId: string }) {
           </p>
           <p className="text-sm text-tinta-2">{t("ui.burned.method")}</p>
           <p className="text-micro text-tinta-2">
-            {t(ATTRIBUTION.copernicus)} · {t(ATTRIBUTION.firms)}
+            {t(ATTRIBUTION.copernicus)}, {t(ATTRIBUTION.firms)}
           </p>
         </>
       )}

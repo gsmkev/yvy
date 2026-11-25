@@ -32,7 +32,7 @@ function ChecklistProgress({ task }: { task: Task }) {
       <span className="mt-1 block text-xs text-tinta-2">
         {list.map((i) => (
           <span key={i.id} className={`block ${i.done ? "line-through" : ""}`}>
-            {i.done ? "✓ " : "· "}
+            {i.done ? "✓ " : "○ "}
             {i.text}
           </span>
         ))}
@@ -64,7 +64,7 @@ export function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: strin
     ? t("ui.task.doneOn", { date: fmtDate(x.completedAt ?? Date.parse(`${x.dueDate}T12:00:00-03:00`)) })
     : [dueLabel(x.dueDate, today, overdue), x.dueTime ? t("ui.due.atTime", { time: x.dueTime }) : null]
         .filter(Boolean)
-        .join(" · ");
+        .join(", ");
   return (
     <li className="flex flex-col py-1.5 text-sm">
       <div className="flex min-h-10 items-start gap-2">
@@ -86,8 +86,8 @@ export function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: strin
           </p>
           <p className="text-xs leading-4 text-tinta-2">
             <span className={overdue ? "font-medium text-peligro" : ""}>{when}</span>
-            {x.recurrence !== "none" && ` · ${tk(`ui.recurrence.${x.recurrence}`)}`}
-            {x.plotName ? ` · ${x.plotName}` : ""}
+            {x.recurrence !== "none" && `, ${tk(`ui.recurrence.${x.recurrence}`)}`}
+            {x.plotName ? `, ${x.plotName}` : ""}
           </p>
           <ChecklistProgress task={x} />
         </div>

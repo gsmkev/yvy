@@ -41,7 +41,7 @@ export function SowingWindow({ farmId }: { farmId: string }) {
             {d.soil === null
               ? t("ui.sow.winNoSoil")
               : t("ui.sow.winSoil", { pct: fmtPct(d.soil * 100), date: d.soilDate ? fmtIsoDate(d.soilDate) : "—" })}
-            {d.forecastRunAt ? " · " + t("ui.sow.winForecast", { date: fmtDate(d.forecastRunAt) }) : ""}
+            {d.forecastRunAt ? ", " + t("ui.sow.winForecast", { date: fmtDate(d.forecastRunAt) }) : ""}
           </p>
           <ul className="divide-y divide-linea border-y border-linea text-sm">
             {d.days.map((day) => (
@@ -50,7 +50,7 @@ export function SowingWindow({ farmId }: { farmId: string }) {
                 {day.ok ? (
                   <span className="font-medium text-accion">
                     {t("ui.sow.winOk")}
-                    {day.rainAhead ? <span className="font-normal text-tinta-2"> · {t("ui.sow.winRainAhead")}</span> : null}
+                    {day.rainAhead ? <span className="font-normal text-tinta-2">, {t("ui.sow.winRainAhead")}</span> : null}
                   </span>
                 ) : (
                   <span className="text-tinta-2">
@@ -61,7 +61,7 @@ export function SowingWindow({ farmId }: { farmId: string }) {
             ))}
           </ul>
           <p className="text-xs text-tinta-2">
-            {t("ui.sow.winNote")} {t(ATTRIBUTION.nasaPower)} · {t(ATTRIBUTION.metNorway)}
+            {t("ui.sow.winNote")} {t(ATTRIBUTION.nasaPower)}, {t(ATTRIBUTION.metNorway)}
           </p>
         </>
       )}

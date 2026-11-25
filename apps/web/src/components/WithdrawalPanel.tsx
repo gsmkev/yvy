@@ -30,7 +30,7 @@ export function WithdrawalPanel({ farmId }: { farmId: string }) {
               </span>
               <span className="num font-medium text-peligro">
                 {t("ui.withdrawal.until", { date: fmtIsoDate(r.safeFrom) })}
-                <span className="font-normal text-tinta-2"> · {t(r.daysLeft === 1 ? "ui.withdrawal.dayOne" : "ui.withdrawal.days", { n: r.daysLeft })}</span>
+                <span className="font-normal text-tinta-2">, {t(r.daysLeft === 1 ? "ui.withdrawal.dayOne" : "ui.withdrawal.days", { n: r.daysLeft })}</span>
               </span>
             </li>
           ))}

@@ -20,6 +20,76 @@ import { PlotEditForm } from "./plot/PlotEditForm";
 import { ProblemAreasSection } from "./plot/ProblemAreasSection";
 import { RotationSection } from "./plot/RotationSection";
 import { usePlotForm, usePlotHistory, usePlotNdvi, useProblemTask } from "./plot/usePlotData";
+import { cropName } from "../lib/crops";
+
+/** Encabezado de la ficha: volver, nombre, cultivo y superficie, asignados y coordenadas. */
+function PlotHeader({ plot, workers, onClose }: { plot: Plot; workers: Member[]; onClose: () => void }) {
+  const centroid = centroidOf(JSON.parse(plot.geometry) as Area);
+  const heading = useRef<HTMLHeadingElement>(null);
+  // Al abrir la ficha el foco pasa al título, para que el lector de pantalla anuncie el lote
+  useEffect(() => heading.current?.focus(), []);
+  return (
+    <div>
+      <button
+        onClick={onClose}
+        className="cursor-pointer text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline print:hidden"
+      >
+        ← {t("ui.all.plots")}
+      </button>
+      <h2 ref={heading} tabIndex={-1} className="mt-3 font-serif text-[24px] leading-tight font-semibold outline-none">
+        {plot.name}
+      </h2>
+      <p className="num mt-1 text-sm text-tinta-2">
+        {plot.kind === "pasture" ? t("ui.common.pasture") : (plot.crop ? cropName(plot.crop) : t("ui.common.crop"))}, {fmtHa(plot.areaHa)}
+        {plot.season ? `, ${plot.season}` : ""}
+      </p>
+      <p className="mt-1 text-sm text-tinta-2">
+        {workers.length
+          ? `${t("ui.common.assignedTo")} ${workers.map((w) => w.fullName).join(", ")}`
+          : t("ui.common.nobodyAssigned")}
+      </p>
+      <CopyCoords className="mt-2" lon={centroid.lon} lat={centroid.lat} />
+    </div>
+  );
+}
+
+/** Acciones de edición de la ficha: editar, forma, dividir, unir y borrar. */
+function PlotActions({
+  plot,
+  onEdit,
+  onEditShape,
+  onSplit,
+  onMerge,
+  onDelete,
+}: {
+  plot: Plot;
+  onEdit: () => void;
+  onEditShape?: () => void;
+  onSplit?: () => void;
+  onMerge?: () => void;
+  onDelete: () => void;
+}) {
+  const polygon = JSON.parse(plot.geometry).type === "Polygon";
+  return (
+    <div className="flex flex-wrap gap-2 border-t border-linea pt-4">
+      <Button icon={Pencil} onClick={() => onEdit()}>
+        {t("ui.common.edit")}
+      </Button>
+      {onEditShape && (
+        <Button onClick={onEditShape}>{t("ui.plot.editShape")}</Button>
+      )}
+      {onSplit && polygon && (
+        <Button onClick={onSplit}>{t("ui.split.plot")}</Button>
+      )}
+      {onMerge && polygon && (
+        <Button onClick={onMerge}>{t("ui.merge.plots")}</Button>
+      )}
+      <Button variant="danger" icon={Trash2} onClick={() => onDelete()}>
+        {t("ui.common.delete")}
+      </Button>
+    </div>
+  );
+}
 
 /**
  * Panel lateral con la ficha de un lote.
@@ -56,10 +126,6 @@ onMerge?: () => void;
   farm?: Farm;
 }) {
   const qc = useQueryClient();
-  const centroid = centroidOf(JSON.parse(plot.geometry) as Area);
-  const heading = useRef<HTMLHeadingElement>(null);
-  // Al abrir la ficha el foco pasa al título, para que el lector de pantalla anuncie el lote
-  useEffect(() => heading.current?.focus(), []);
   const [editing, setEditing] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const plotForm = usePlotForm(plot, () => setEditing(false));
@@ -83,27 +149,7 @@ onMerge?: () => void;
   };
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <button
-          onClick={onClose}
-          className="cursor-pointer text-sm text-tinta-2 underline-offset-4 hover:text-surco hover:underline print:hidden"
-        >
-          ← {t("ui.all.plots")}
-        </button>
-        <h2 ref={heading} tabIndex={-1} className="mt-3 font-serif text-[24px] leading-tight font-semibold outline-none">
-          {plot.name}
-        </h2>
-        <p className="num mt-1 text-sm text-tinta-2">
-          {plot.kind === "pasture" ? t("ui.common.pasture") : (plot.crop ?? t("ui.common.crop"))} · {fmtHa(plot.areaHa)}
-          {plot.season ? ` · ${plot.season}` : ""}
-        </p>
-        <p className="mt-1 text-sm text-tinta-2">
-          {workers.length
-            ? `${t("ui.common.assignedTo")} ${workers.map((w) => w.fullName).join(", ")}`
-            : t("ui.common.nobodyAssigned")}
-        </p>
-        <CopyCoords className="mt-2" lon={centroid.lon} lat={centroid.lat} />
-      </div>
+      <PlotHeader plot={plot} workers={workers} onClose={onClose} />
 
       {canEdit && ndvi.isLoading && <Spinner />}
       {canEdit && ndvi.data && <NdviSection plot={plot} data={ndvi.data} />}
@@ -122,23 +168,14 @@ onMerge?: () => void;
       {canEdit && <PlotAgro plot={plot} />}
 
       {canEdit && !editing && (
-        <div className="flex flex-wrap gap-2 border-t border-linea pt-4">
-          <Button icon={Pencil} onClick={() => setEditing(true)}>
-            {t("ui.common.edit")}
-          </Button>
-          {onEditShape && (
-            <Button onClick={onEditShape}>{t("ui.plot.editShape")}</Button>
-          )}
-          {onSplit && JSON.parse(plot.geometry).type === "Polygon" && (
-            <Button onClick={onSplit}>{t("ui.split.plot")}</Button>
-          )}
-          {onMerge && JSON.parse(plot.geometry).type === "Polygon" && (
-            <Button onClick={onMerge}>{t("ui.merge.plots")}</Button>
-          )}
-          <Button variant="danger" icon={Trash2} onClick={() => setConfirming(true)}>
-            {t("ui.common.delete")}
-          </Button>
-        </div>
+        <PlotActions
+          plot={plot}
+          onEdit={() => setEditing(true)}
+          onEditShape={onEditShape}
+          onSplit={onSplit}
+          onMerge={onMerge}
+          onDelete={() => setConfirming(true)}
+        />
       )}
       {editing && <PlotEditForm f={plotForm} onCancel={() => setEditing(false)} />}
       {confirming && (

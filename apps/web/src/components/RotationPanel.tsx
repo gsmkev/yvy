@@ -28,8 +28,8 @@ export function RotationPanel({ farmId }: { farmId: string }) {
           <span className="font-normal text-tinta-2">
             {" "}
             {d.suggested.restDays === null ? t("ui.rot.noHistory") : t("ui.rot.restedDays", { n: days(d.suggested.restDays) })}
-            {d.suggested.pastureReady === true ? ` · ${t("ui.rot.pastureOk")}` : ""}
-            {d.suggested.pastureReady === null ? ` · ${t("ui.rot.pastureUnknown")}` : ""}
+            {d.suggested.pastureReady === true ? `, ${t("ui.rot.pastureOk")}` : ""}
+            {d.suggested.pastureReady === null ? `, ${t("ui.rot.pastureUnknown")}` : ""}
           </span>
         </p>
       ) : (
@@ -56,14 +56,14 @@ export function RotationPanel({ farmId }: { farmId: string }) {
                   <td className="py-2.5 font-medium">{p.name}</td>
                   <td className={`py-2.5 ${p.state === "overdue" ? "font-medium text-peligro" : ""}`}>
                     {tk(`ui.rot.state_${p.state}`)}
-                    {d.suggested?.plotId === p.plotId ? ` · ${t("ui.rot.next")}` : ""}
+                    {d.suggested?.plotId === p.plotId ? `, ${t("ui.rot.next")}` : ""}
                   </td>
                   <td className="num py-2.5 text-right">{p.head || "—"}</td>
                   <td className="num py-2.5 text-right">{days(p.stayDays)}</td>
                   <td className="num py-2.5 text-right">{days(p.restDays)}</td>
                   <td className="num py-2.5 text-right">{days(p.occupiedDays)}</td>
                   <td className="num py-2.5 text-right text-tinta-2">
-                    {p.pasture ? `${p.pasture.heightCm} cm · ${tk(`fields.level.${p.pasture.cover}`).toLowerCase()} · ${fmtDay(p.pasture.at)}` : "—"}
+                    {p.pasture ? `${p.pasture.heightCm} cm, ${tk(`fields.level.${p.pasture.cover}`).toLowerCase()}, ${fmtDay(p.pasture.at)}` : "—"}
                   </td>
                 </tr>
               ))}

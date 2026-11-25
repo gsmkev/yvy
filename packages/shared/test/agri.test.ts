@@ -14,7 +14,7 @@ describe("siembra (sowing)", () => {
   });
   it("se describe en es-PY", () => {
     expect(describeRecord("sowing", { crop: "soja", variety: "DM 6563", density: 14, densityUnit: "seeds_m", areaHa: 30 })).toBe(
-      "Soja · DM 6563 · 14 semillas por metro · 30 ha",
+      "Soja, DM 6563, 14 semillas por metro, 30 ha",
     );
   });
 });
@@ -56,7 +56,7 @@ describe("aplicación (application)", () => {
         areaHa: 30,
         deltaT: 4.2,
       }),
-    ).toBe("Glifosato 2 L/ha + Aceite 0,5 L/ha · 30 ha · Delta T 4,2");
+    ).toBe("Glifosato 2 L/ha + Aceite 0,5 L/ha, 30 ha, Delta T 4,2");
   });
 });
 
@@ -69,7 +69,7 @@ describe("fertilización", () => {
   });
   it("se describe en es-PY", () => {
     expect(describeRecord("fertilization", { products: [fert], method: "broadcast", areaHa: 40 })).toBe(
-      "Urea 150 kg/ha · al voleo · 40 ha",
+      "Urea 150 kg/ha, al voleo, 40 ha",
     );
   });
 });
@@ -92,7 +92,7 @@ describe("cosecha (harvest) y rinde", () => {
   });
   it("se describe en es-PY", () => {
     expect(describeRecord("harvest", { tons: 120.5, moisturePct: 13, destination: "silo" })).toBe(
-      "120,5 t · 13 % de humedad · silo propio",
+      "120,5 t, 13 % de humedad, silo propio",
     );
   });
 });

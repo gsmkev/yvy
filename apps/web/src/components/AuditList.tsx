@@ -19,7 +19,7 @@ export function AuditList({ rows }: { rows: AuditEntryRow[] }) {
   const columns: Column<AuditEntryRow>[] = [
     { id: "when", header: t("ui.audit.colWhen"), cell: (r) => <span className="num whitespace-nowrap text-tinta-2">{fmtDateTime(r.createdAt)}</span> },
     { id: "actor", header: t("ui.audit.colActor"), cell: (r) => r.actor ?? "—" },
-    { id: "action", header: t("ui.audit.colAction"), cell: (r) => <span className="font-normal">{tk(`ui.internal.audit_${r.action}`)}</span> },
+    { id: "action", mobile: "title", header: t("ui.audit.colAction"), cell: (r) => <span className="font-normal">{tk(`ui.internal.audit_${r.action}`)}</span> },
     {
       id: "detail",
       header: t("ui.audit.colDetail"),

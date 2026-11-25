@@ -26,7 +26,7 @@ export function FarmList({ list }: { list: FarmSummary[] }) {
                     : t("ui.never.recorded").toLowerCase(),
                 ]
                   .filter(Boolean)
-                  .join(" · ")}
+                  .join(", ")}
               </p>
             </div>
             {f.activeAlerts > 0 && (

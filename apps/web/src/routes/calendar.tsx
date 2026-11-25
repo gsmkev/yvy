@@ -96,7 +96,7 @@ export function CalendarPage() {
                         )}
                       </p>
                       <p className="text-xs leading-4 text-tinta-2">
-                        {[x.plotName, x.assigneeName].filter(Boolean).join(" · ")}
+                        {[x.plotName, x.assigneeName].filter(Boolean).join(", ")}
                       </p>
                     </li>
                   ))}

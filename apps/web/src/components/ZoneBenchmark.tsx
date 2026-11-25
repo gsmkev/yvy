@@ -1,7 +1,7 @@
 /** Vigor y lluvia de la estancia frente a la mediana anónima de las estancias vecinas de otras organizaciones. */
 import { useQuery } from "@tanstack/react-query";
 import { get } from "../lib/api";
-import { compareToZone } from "../lib/benchmark";
+import { compareToZone, zoneVerdictKey } from "../lib/benchmark";
 import { fmtDate, fmtMm, fmtNdvi } from "../lib/format";
 import { t, tk } from "../lib/i18n";
 import { ExportableTable } from "./ExportableTable";
@@ -64,7 +64,7 @@ export function ZoneBenchmark({ farmId }: { farmId: string }) {
       <ul className="flex flex-col gap-0.5 text-sm">
         {rows.map((r) => {
           const v = compareToZone(r.own, r.med);
-          return v ? <li key={r.key}>{tk(`ui.bench.${r.key}${v[0]!.toUpperCase()}${v.slice(1)}`)}</li> : null;
+          return v ? <li key={r.key}>{tk(zoneVerdictKey(r.key === "Vigor" ? "vigor" : "rain", v))}</li> : null;
         })}
       </ul>
       <p className="text-xs text-tinta-2">{t("ui.bench.date", { date: fmtDate(b.computedAt) })}</p>

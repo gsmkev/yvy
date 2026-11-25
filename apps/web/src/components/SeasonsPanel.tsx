@@ -55,7 +55,7 @@ export function SeasonsPanel({ farmId, plots, canEdit }: { farmId: string; plots
             onChange={(e) => setSelected(e.target.value)}
             options={seasons.map((s) => ({
               value: s.id,
-              label: `${s.name} · ${s.active ? t("ui.season.active") : t("ui.season.closed")}`,
+              label: `${s.name}, ${s.active ? t("ui.season.active") : t("ui.season.closed")}`,
             }))}
           />
         )}
@@ -166,7 +166,7 @@ function PlanSummary({ plan }: { plan: PlotSeason }) {
     plan.sowingDensity !== null && plan.densityUnit ? fmtDensity(plan.sowingDensity, plan.densityUnit) : null,
     plan.targetYieldTHa !== null ? `${fmtNum(plan.targetYieldTHa)} t/ha` : null,
   ].filter(Boolean);
-  return <span className="num">{parts.length ? parts.join(" · ") : t("ui.season.planEmpty")}</span>;
+  return <span className="num">{parts.length ? parts.join(", ") : t("ui.season.planEmpty")}</span>;
 }
 
 function NewSeasonModal({ onClose, onSaved }: { onClose: () => void; onSaved: (id: string) => void }) {
@@ -260,7 +260,7 @@ function PlanModal({
   });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   return (
-    <Modal title={`${plot.name} · ${season.name}`} onClose={onClose}>
+    <Modal title={`${plot.name}, ${season.name}`} onClose={onClose}>
       <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
         <div className="grid grid-cols-2 gap-3">
           <Field label={t("ui.common.crop")}>

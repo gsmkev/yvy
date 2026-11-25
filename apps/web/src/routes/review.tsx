@@ -98,7 +98,7 @@ export function ReviewPage() {
                 <p className="text-xs leading-4 text-tinta-2">
                   {[tk(`record-kinds.kind.${i.kind}`), i.farmName, i.plotName, i.authorName, fmtDateTime(i.capturedAt)]
                     .filter(Boolean)
-                    .join(" · ")}
+                    .join(", ")}
                 </p>
               </div>
               <div className="flex shrink-0 gap-2">

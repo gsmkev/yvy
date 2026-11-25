@@ -64,7 +64,7 @@ export function DeliveriesPanel({ farmId, plots }: { farmId: string; plots: Plot
               <span className="font-medium">{p.plotName}</span>
               <span className="num text-tinta-2">
                 {t("ui.deliv.byPlot", { n: p.deliveries, net: tons(p.netKg), gross: tons(p.grossKg) })}
-                {p.harvestTons !== null ? " · " + t("ui.deliv.harvested", { t: fmtNum(p.harvestTons) }) : ""}
+                {p.harvestTons !== null ? ", " + t("ui.deliv.harvested", { t: fmtNum(p.harvestTons) }) : ""}
               </span>
             </li>
           ))}

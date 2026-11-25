@@ -16,7 +16,7 @@ import { useReportData } from "./report/useReportData";
 
 const columns: Column<RecordRow>[] = [
   { id: "at", header: t("ui.common.capturedAt"), cell: (r) => fmtDateTime(r.capturedAt), width: "9rem" },
-  { id: "kind", header: t("ui.common.kind"), cell: (r) => tk(`record-kinds.kind.${r.kind}`) },
+  { id: "kind", mobile: "title", header: t("ui.common.kind"), cell: (r) => tk(`record-kinds.kind.${r.kind}`) },
   { id: "plot", header: t("ui.common.plot"), cell: (r) => r.plotName ?? "—", hideBelow: "sm" },
   { id: "author", header: t("ui.common.author"), cell: (r) => r.authorName ?? "—", hideBelow: "md" },
   { id: "data", header: "", cell: (r) => <span className="text-tinta-2">{describeData(r.kind, r.data)}</span>, hideBelow: "lg" },

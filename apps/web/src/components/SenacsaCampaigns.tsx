@@ -41,7 +41,7 @@ export function SenacsaCampaigns() {
               <div>
                 <span className="mb-1 inline-block rounded bg-accion/10 px-1.5 py-0.5 text-xs font-medium text-accion">{t("ui.senacsa.badge")}</span>
                 <p className="text-sm font-medium">
-                  {tk(`ui.senacsa.name_${c.reason}`)} · {t("ui.senacsa.period", { n: c.period })}
+                  {tk(`ui.senacsa.name_${c.reason}`)}, {t("ui.senacsa.period", { n: c.period })}
                 </p>
               </div>
               {q.data!.planned.includes(c.id) ? (
@@ -54,7 +54,7 @@ export function SenacsaCampaigns() {
             </div>
             <p className="num text-sm text-tinta-2">
               {t("ui.senacsa.dates", { from: fmtIsoDate(c.from), to: fmtIsoDate(c.to) })}
-              {c.registerUntil && " · " + t("ui.senacsa.register", { date: fmtIsoDate(c.registerUntil) })}
+              {c.registerUntil && ", " + t("ui.senacsa.register", { date: fmtIsoDate(c.registerUntil) })}
             </p>
             <p className="text-xs text-tinta-2">{c.appliesTo}</p>
             {c.note && <p className="text-xs text-tinta-2">{c.note}</p>}

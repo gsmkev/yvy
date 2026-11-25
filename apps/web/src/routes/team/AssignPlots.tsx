@@ -44,7 +44,7 @@ export function AssignPlots({ member, onClose }: { member: Member; onClose: () =
   };
   return (
     <Modal
-      title={`${t("ui.common.assignPlots")} · ${member.fullName}`}
+      title={`${t("ui.common.assignPlots")}: ${member.fullName}`}
       onClose={onClose}
       footer={
         <>

@@ -23,7 +23,7 @@ export function AuditLog() {
       <ul className="mt-2 flex flex-col gap-1 text-sm">
         {q.data.slice(0, 20).map((r) => (
           <li key={r.id} className="num">
-            {fmtDateTime(r.createdAt)} · {r.actor ?? "—"} · {tk(`ui.internal.audit_${r.action}`)} · {r.organizationId ?? ""}
+            {[fmtDateTime(r.createdAt), r.actor ?? "—", tk(`ui.internal.audit_${r.action}`), r.organizationId].filter(Boolean).join(", ")}
           </li>
         ))}
       </ul>

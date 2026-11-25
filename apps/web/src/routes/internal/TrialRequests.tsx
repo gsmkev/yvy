@@ -39,13 +39,13 @@ export function TrialRequests() {
             <div className="min-w-0 flex-1">
               <p className="font-medium">
                 {r.name}
-                {r.company ? ` · ${r.company}` : ""}
+                {r.company ? `, ${r.company}` : ""}
               </p>
               <p className="num text-tinta-2">
                 <a className="underline" href={`https://wa.me/${r.whatsapp}`} target="_blank" rel="noreferrer">
                   +{r.whatsapp}
                 </a>
-                {" · "}
+                {", "}
                 {[
                   r.crops.join(", "),
                   r.hectares !== null ? fmtHa(r.hectares) : null,
@@ -54,7 +54,7 @@ export function TrialRequests() {
                   fmtDateTime(r.createdAt),
                 ]
                   .filter(Boolean)
-                  .join(" · ")}
+                  .join(", ")}
               </p>
             </div>
             <Button disabled={done.isPending} onClick={() => done.mutate(r.id)}>

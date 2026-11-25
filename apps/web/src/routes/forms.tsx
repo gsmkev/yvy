@@ -1,55 +1,52 @@
 /** Formularios configurables: campos propios que cada tipo de registro pregunta después de las preguntas estándar. */
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FORM_FIELD_TYPES, FIELD_ID, LIMITS, RECORD_KINDS, formConfigSchema, type FormConfig, type FormField, type RecordKind } from "@yvy/shared";
-import { Button, EmptyState, ErrorBox, Field, Input, Select, Spinner, toast, Page } from "../components/ui";
+import { LIMITS, RECORD_KINDS, formConfigSchema, type FormConfig, type FormField, type RecordKind } from "@yvy/shared";
+import { Button, EmptyState, ErrorBox, Field, Page, Select, Spinner, toast } from "../components/ui";
 import { get, put } from "../lib/api";
 import { t, tk } from "../lib/i18n";
 import { useMe } from "../lib/queries";
+import { FieldCard } from "./forms/FieldCard";
+import { blankField, compactField, fieldIdFrom } from "./forms/fieldId";
 
-/** Id a partir de la etiqueta ("Altura de plantas" -> altura_de_plantas), único entre los campos del tipo. */
-export function fieldIdFrom(label: string, taken: string[]): string {
-  const base =
-    label
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "_")
-      .replace(/^_+|_+$/g, "")
-      .replace(/^(\d)/, "c_$1")
-      .slice(0, 28) || "campo";
-  let id = base;
-  for (let n = 2; taken.includes(id); n++) id = `${base}_${n}`;
-  return FIELD_ID.test(id) ? id : "campo";
-}
+export { fieldIdFrom };
 
-const blank = (taken: string[]): FormField => ({ id: fieldIdFrom("campo", taken), label: "", type: "text" });
-
-/** El campo sin las opciones (si no es de elección) ni la unidad vacía, y sin claves con `undefined`. */
-const compactField = (f: FormField): FormField => {
-  const kept = { ...f, options: f.type === "choice" ? f.options : undefined, unit: f.unit ? f.unit : undefined };
-  return Object.fromEntries(Object.entries(kept).filter(([, v]) => v !== undefined)) as FormField;
-};
-
-/** Campos propios que cada tipo de registro pregunta después de las preguntas estándar. */
-export function FormsPage() {
-  const me = useMe();
+/** Configuración guardada y cómo guardar una nueva; `onError` recibe el motivo si el servidor la rechaza. */
+function useFormConfig(onError: (message: string) => void) {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["form-config"], queryFn: () => get<{ config: FormConfig }>("/org/form-config") });
-  const [cfg, setCfg] = useState<FormConfig>({});
-  const [kind, setKind] = useState<RecordKind>("scouting");
-  const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
-    if (q.data) setCfg(q.data.config);
-  }, [q.data]);
   const save = useMutation({
     mutationFn: (c: FormConfig) => put("/org/form-config", c),
     onSuccess: () => {
       toast(t("ui.forms.saved"));
       void qc.invalidateQueries({ queryKey: ["form-config"] });
     },
-    onError: (e) => setError(e instanceof Error ? e.message : t("ui.forms.invalid")),
+    onError: (e) => onError(e instanceof Error ? e.message : t("ui.forms.invalid")),
   });
+  return { q, save };
+}
+
+/** Deja solo los campos con etiqueta y los valida; devuelve la configuración o el primer error. */
+function cleanConfig(cfg: FormConfig): { config: FormConfig } | { error: string } {
+  const clean: FormConfig = {};
+  for (const k of RECORD_KINDS) {
+    const list = (cfg[k] ?? []).filter((f) => f.label.trim());
+    if (list.length) clean[k] = list.map(compactField);
+  }
+  const ok = formConfigSchema.safeParse(clean);
+  return ok.success ? { config: ok.data } : { error: ok.error.issues[0]?.message ?? t("ui.forms.invalid") };
+}
+
+/** Campos propios que cada tipo de registro pregunta después de las preguntas estándar. */
+export function FormsPage() {
+  const me = useMe();
+  const [cfg, setCfg] = useState<FormConfig>({});
+  const [kind, setKind] = useState<RecordKind>("scouting");
+  const [error, setError] = useState<string | null>(null);
+  const { q, save } = useFormConfig(setError);
+  useEffect(() => {
+    if (q.data) setCfg(q.data.config);
+  }, [q.data]);
   if (q.isLoading || me.isLoading) return <Spinner />;
   if (q.error) return <ErrorBox error={q.error} />;
   const canEdit = me.data?.role === "owner" || me.data?.role === "admin";
@@ -61,80 +58,32 @@ export function FormsPage() {
   const patch = (i: number, p: Partial<FormField>) => setFields(fields.map((f, k) => (k === i ? { ...f, ...p } : f)));
   const trySave = () => {
     // Los ids se fijan al guardar a partir de la etiqueta de los campos nuevos; los ya guardados no cambian
-    const clean: FormConfig = {};
-    for (const k of RECORD_KINDS) {
-      const list = (cfg[k] ?? []).filter((f) => f.label.trim());
-      if (list.length) clean[k] = list.map(compactField);
-    }
-    const ok = formConfigSchema.safeParse(clean);
-    if (!ok.success) return setError(ok.error.issues[0]?.message ?? t("ui.forms.invalid"));
-    save.mutate(ok.data);
+    const r = cleanConfig(cfg);
+    if ("error" in r) return setError(r.error);
+    save.mutate(r.config);
   };
-
   return (
     <Page width="read" back={{ to: "/equipo", label: t("ui.forms.back") }} title={t("ui.forms.title")}>
       <p className="-mt-2 text-sm text-tinta-2">{t("ui.forms.intro", { max: LIMITS.forms.maxFieldsPerKind })}</p>
       <Field label={t("ui.forms.kind")}>
-        <Select
-          value={kind}
-          onChange={(e) => setKind(e.target.value as RecordKind)}
-          options={RECORD_KINDS.map((k) => ({ value: k, label: `${tk(`record-kinds.kind.${k}`)}${(cfg[k]?.length ?? 0) > 0 ? ` (${cfg[k]!.length})` : ""}` }))}
-        />
+        <Select value={kind} onChange={(e) => setKind(e.target.value as RecordKind)} options={RECORD_KINDS.map((k) => ({ value: k, label: `${tk(`record-kinds.kind.${k}`)}${(cfg[k]?.length ?? 0) > 0 ? ` (${cfg[k]!.length})` : ""}` }))} />
       </Field>
       {fields.length === 0 && <EmptyState compact title={t("ui.forms.none")} />}
       {fields.map((f, i) => (
-        <fieldset key={f.id} className="flex flex-col gap-3 rounded-lg border border-linea p-3">
-          <legend className="px-1 text-xs text-tinta-2">{t("ui.forms.fieldN", { n: i + 1 })}</legend>
-          <Field label={t("ui.forms.label")}>
-            <Input
-              value={f.label}
-              maxLength={LIMITS.forms.maxLabel}
-              disabled={!canEdit}
-              placeholder={t("ui.forms.labelPlaceholder")}
-              onChange={(e) => patch(i, { label: e.target.value, id: q.data?.config[kind]?.some((x) => x.id === f.id) ? f.id : fieldIdFrom(e.target.value, fields.filter((_, k) => k !== i).map((x) => x.id)) })}
-            />
-          </Field>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label={t("ui.forms.type")}>
-              <Select
-                value={f.type}
-                disabled={!canEdit}
-                onChange={(e) => patch(i, { type: e.target.value as FormField["type"] })}
-                options={FORM_FIELD_TYPES.map((ty) => ({ value: ty, label: t(`ui.forms.type_${ty}`) }))}
-              />
-            </Field>
-            {f.type === "number" && (
-              <Field label={t("ui.forms.unit")}>
-                <Input value={f.unit ?? ""} maxLength={12} disabled={!canEdit} onChange={(e) => patch(i, { unit: e.target.value })} />
-              </Field>
-            )}
-          </div>
-          {f.type === "choice" && (
-            <Field label={t("ui.forms.options")} hint={t("ui.forms.optionsHint", { max: LIMITS.forms.maxOptions })}>
-              <textarea
-                className="min-h-20 rounded-md border border-linea bg-papel px-3 py-2 text-body"
-                disabled={!canEdit}
-                value={(f.options ?? []).join("\n")}
-                onChange={(e) => patch(i, { options: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean).slice(0, LIMITS.forms.maxOptions) })}
-              />
-            </Field>
-          )}
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={!!f.required} disabled={!canEdit} onChange={(e) => patch(i, { required: e.target.checked })} />
-              {t("ui.forms.required")}
-            </label>
-            {canEdit && (
-              <button className="cursor-pointer text-sm text-peligro underline underline-offset-2" onClick={() => setFields(fields.filter((_, k) => k !== i))}>
-                {t("ui.forms.remove")}
-              </button>
-            )}
-          </div>
-        </fieldset>
+        <FieldCard
+          key={f.id}
+          field={f}
+          n={i + 1}
+          saved={!!q.data?.config[kind]?.some((x) => x.id === f.id)}
+          canEdit={canEdit}
+          idFor={(label) => fieldIdFrom(label, fields.filter((_, k) => k !== i).map((x) => x.id))}
+          onChange={(p) => patch(i, p)}
+          onRemove={() => setFields(fields.filter((_, k) => k !== i))}
+        />
       ))}
       {canEdit && (
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="secondary" disabled={fields.length >= LIMITS.forms.maxFieldsPerKind} onClick={() => setFields([...fields, blank(fields.map((f) => f.id))])}>
+          <Button variant="secondary" disabled={fields.length >= LIMITS.forms.maxFieldsPerKind} onClick={() => setFields([...fields, blankField(fields.map((f) => f.id))])}>
             {t("ui.forms.add")}
           </Button>
           <Button variant="primary" disabled={save.isPending} onClick={trySave}>

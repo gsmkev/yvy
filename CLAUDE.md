@@ -37,6 +37,7 @@ Mapa vivo del campo que funciona sin señal. PRD en docs/PRD.md; docs/PRD-cloudf
 - Esquemas de registros solo en packages/shared/src/records.ts. Límites solo en packages/shared/src/limits.ts.
 - Offline primero: toda escritura local va en una transacción con su mutación en el outbox.
 - Fuentes permitidas: Sentinel-2, CHIRPS, NASA POWER, NASA FIRMS, MET Norway (User-Agent "Yvy/1.0 koeti.com.py", coordenadas a 4 decimales, caché 3 h, atribución "Datos de MET Norway"). Prohibido Open-Meteo gratis y mosaicos con licencia no comercial.
+- Fuentes con licencia comercial confirmada que se pueden sumar, citando la atribución que pide cada una: Landsat 8/9 (dominio público, USGS), Sentinel-1 (Copernicus), Copernicus DEM GLO-30 (licencia propia de Copernicus; avisar si se modifica), ESA WorldCover y Dynamic World (CC BY 4.0), SoilGrids v2 (CC BY 4.0) y ERA5-Land (licencia Copernicus, CC BY). OpenStreetMap se puede usar respetando la ODbL (atribuir y compartir igual lo derivado). Antes de pedir permiso no usar MapBiomas (licencia contradictoria), ni APSIM, FAO con licencia no comercial ni datos de la OMSA (WAHIS) republicados; tampoco precios con licencia propia (CBOT, CME).
 - Textos en es-PY con voseo, siempre por i18n (packages/shared/src/i18n).
 - Paleta: lino #F1EEE4, surco #1E2419, soja #7A9A3F, trigo #D9A93A, cielo #8DB3C7, alerta #D2462B. Rampa NDVI: #B5562E #D9A93A #C9C46A #7A9A3F #3F6B35. Pendiente = borde punteado trigo; sincronizado = sólido soja.
 - Antes de terminar: lint, typecheck y tests del paquete tocado.

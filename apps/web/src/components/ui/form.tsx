@@ -110,8 +110,11 @@ export const Select = ({
   ...p
 }: SelectHTMLAttributes<HTMLSelectElement> & { options: { value: string; label: string }[] }) => (
   <SelectBox className={className}>
-    // nosemgrep: react-props-spreading -- envoltorio que reenvía al elemento nativo todas sus props
-    <select {...p} className={`${selectCls} w-full`}>
+    <select
+      // nosemgrep: react-props-spreading -- envoltorio que reenvía al elemento nativo todas sus props
+      {...p}
+      className={`${selectCls} w-full`}
+    >
       {options.map((o) => (
         <option key={o.value} value={o.value}>
           {o.label}

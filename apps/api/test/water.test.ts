@@ -36,6 +36,12 @@ describe("evaluateWater (puro)", () => {
     expect(evaluateWater([r("a", "Tajamar", "full"), r("b", "Molino", "half")], [], "2026-11-10")).toBeNull();
     expect(evaluateWater([], [], "2026-11-10")).toBeNull();
   });
+  it("no repite el tipo cuando el nombre ya lo incluye", () => {
+    const a = evaluateWater([{ poiId: "a", name: "Aguada del Potrero Monte", level: "low", capturedAt: 1, kind: "water" }], [], "2026-11-10")!;
+    expect(a.summary).toBe("Aguada del Potrero Monte con nivel bajo");
+    const b = evaluateWater([{ poiId: "b", name: "Norte", level: "dry", capturedAt: 1, kind: "trough" }], [], "2026-11-10")!;
+    expect(b.summary).toBe("Bebedero Norte seca");
+  });
   it("bajo es vigilancia y seco es advertencia, con la seca primero en el resumen", () => {
     const low = evaluateWater([r("a", "Tajamar Norte", "low")], ["p1"], "2026-11-10")!;
     expect(low).toMatchObject({ kind: "water_low", severity: "watch", validFrom: "2026-11-10", validTo: "2026-11-13" });
@@ -70,11 +76,11 @@ describe("aviso al registrar agua", () => {
     const b = await poi("Bebedero Sur", "trough");
     const m = await poi("Molino Viejo", "mill");
     await push(owner.token, [water(farmId, b, "low", Date.now() - 2000)]);
-    expect((await openAlerts(farmId))[0]!.summary).toBe("Bebedero Bebedero Sur con nivel bajo");
+    expect((await openAlerts(farmId))[0]!.summary).toBe("Bebedero Sur con nivel bajo");
     await push(owner.token, [water(farmId, m, "dry", Date.now() - 1000)]);
     const alerts = await openAlerts(farmId);
     expect(alerts).toHaveLength(1);
-    expect(alerts[0]!.summary).toBe("Molino Molino Viejo seca (y 1 más)");
+    expect(alerts[0]!.summary).toBe("Molino Viejo seca (y 1 más)");
     expect((JSON.parse(alerts[0]!.details as unknown as string) as { pois: { kind: string }[] }).pois.map((p) => p.kind).sort()).toEqual(["mill", "trough"]);
   });
 

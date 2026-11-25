@@ -8,10 +8,10 @@ import { t, tk } from "../../lib/i18n";
 import { fmtMoney } from "../../lib/money";
 import { useFarms } from "../../lib/queries";
 import { Button, DataTable, EmptyState, ErrorBox, Spinner, toast, type Column } from "../ui";
-import { useSeasonList } from "./CostsPanel";
+import { useSeasonList } from "./costs/useCosts";
 import { PhotoRowMenu } from "./InvoicePhoto";
 import { HeaderActions, useTableExport } from "./adminSlot";
-import { RowModal, type FieldDef } from "./MasterPanel";
+import { RowModal, type FieldDef } from "./RowModal";
 import { useParties } from "./PartiesPanel";
 
 interface Deal {

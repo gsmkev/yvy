@@ -28,7 +28,7 @@ export function stockColumns(lk: StockLookup, rows: Summary["rows"], list: Summa
           {rows
             .filter((r) => r.productId === p.productId && Math.abs(r.qty) > 1e-9)
             .map((r) => `${wh(r.warehouseId)}: ${fmtQty(r.qty)}`)
-            .join(" · ")}
+            .join(", ")}
         </span>
       ),
     },
@@ -60,6 +60,7 @@ export function moveColumns(lk: StockLookup, moveRows: StockMove[], onRemove: (m
     {
       id: "product",
       header: t("ui.stock.product"),
+      mobile: "title",
       cell: (m) => (
         <>
           {prod(m.productId)?.name}

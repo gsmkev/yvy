@@ -3,7 +3,7 @@ import { MACHINE_TYPES, METER_KINDS } from "@yvy/shared";
 import { fmtNum } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import { useFarms } from "../../lib/queries";
-import { useErpList, type FieldDef } from "./MasterPanel";
+import { useErpList, type FieldDef } from "./RowModal";
 import { RecordList } from "./RecordList";
 
 interface Machine {

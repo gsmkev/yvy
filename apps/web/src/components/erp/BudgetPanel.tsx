@@ -8,7 +8,7 @@ import { fmtGs } from "../../lib/money";
 import { useFarm, useFarms } from "../../lib/queries";
 import { useNavigate } from "@tanstack/react-router";
 import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, FormFooter, Input, Modal, Select, Spinner, Stat, toast, StatRow } from "../ui";
-import { useSeasonList } from "./CostsPanel";
+import { useSeasonList } from "./costs/useCosts";
 import { ExportableTable } from "../ExportableTable";
 import { HeaderActions, RowMenu } from "./adminSlot";
 

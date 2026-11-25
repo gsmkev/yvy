@@ -8,7 +8,7 @@ import { t, tk } from "../../lib/i18n";
 import { fmtMoney } from "../../lib/money";
 import { Button, type Column, DataTable, EmptyState, ErrorBox, Field, Form, FormFooter, Input, Modal, Select, Spinner, Stat, Tabs, toast } from "../ui";
 import { HeaderActions, RowMenu } from "./adminSlot";
-import { type FieldDef } from "./MasterPanel";
+import { type FieldDef } from "./RowModal";
 import { RecordList } from "./RecordList";
 import { SectionButton } from "./SectionButton";
 import { useParties } from "./PartiesPanel";

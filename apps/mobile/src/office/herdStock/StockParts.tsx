@@ -1,9 +1,10 @@
 /** Piezas de presentación de la pantalla de existencias de hacienda. */
-import { indicatorLabel, indicatorValueText, t, uaPerHa, type FarmStockResponse, type MessageKey, type ProductionResponse, type ProductionSystem } from "@yvy/shared";
+import { PRODUCTION_SYSTEMS, indicatorLabel, indicatorValueText, t, uaPerHa, type FarmStockResponse, type MessageKey, type ProductionResponse, type ProductionSystem } from "@yvy/shared";
 import { C, T } from "../../ui/theme";
 import { SectionHeader, Text } from "../../ui/kit";
 import { fmtNumber } from "../format";
-import { DataList, StatSummary } from "../ui";
+import { DataList, FormSheet, SelectField, StatSummary, TextField } from "../ui";
+import type { useLimitSheet, useSystemSheet } from "./useStockSettings";
 import { herdDetail, herdSubtitle, loadLine, type HerdRow } from "./model";
 
 /** Sistema de producción de la estancia con el enlace para cambiarlo (o la pregunta si todavía no se eligió). */
@@ -75,5 +76,28 @@ export function PlotList({ rows, maxUa, areaUnit, plots }: { rows: HerdRow[]; ma
       }}
       empty={{ title: t("office.herd.stockEmpty") }}
     />
+  );
+}
+
+/** Hoja para editar el límite de carga (UA/ha) de la estancia. */
+export function LimitSheet({ sheet }: { sheet: ReturnType<typeof useLimitSheet> }) {
+  return (
+    <FormSheet visible={sheet.open} title={t("ui.herd.limitLabel")} onClose={sheet.close} onSubmit={sheet.submit} submitLabel={t("ui.common.save")} pending={sheet.pending} error={sheet.error}>
+      <TextField label={t("ui.herd.limitLabel")} hint={t("ui.herd.limitHint")} value={sheet.text} onChangeText={sheet.setText} kind="decimal" />
+    </FormSheet>
+  );
+}
+
+/** Hoja para elegir el sistema de producción de la estancia. */
+export function SystemSheet({ sheet }: { sheet: ReturnType<typeof useSystemSheet> }) {
+  return (
+    <FormSheet visible={sheet.open} title={t("ui.herd.sysQuestion")} onClose={sheet.close} onSubmit={sheet.submit} submitLabel={t("ui.common.save")} pending={sheet.pending} error={sheet.error}>
+      <SelectField<ProductionSystem>
+        label={t("ui.herd.sysLabel")}
+        value={sheet.pick || undefined}
+        options={PRODUCTION_SYSTEMS.map((v) => ({ value: v, label: `${t(`ui.herd.sys_${v}` as MessageKey)} · ${t(`ui.herd.sysHint_${v}` as MessageKey)}` }))}
+        onChange={sheet.setPick}
+      />
+    </FormSheet>
   );
 }

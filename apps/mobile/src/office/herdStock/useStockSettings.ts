@@ -1,9 +1,12 @@
 /** Ajustes de la hacienda de una estancia: límite de carga (UA/ha) y sistema de producción, cada uno con su hoja. */
 import { useState } from "react";
-import { MAX_UA_PER_HA_LIMITS, t, type ProductionSystem } from "@yvy/shared";
+import { DEFAULT_MAX_UA_PER_HA, MAX_UA_PER_HA_LIMITS, t, type FarmStockResponse, type ProductionResponse, type ProductionSystem } from "@yvy/shared";
 import { showToast } from "../../lib/toast";
+import { useLocal } from "../../lib/useLocal";
 import { fmtNumber, parseDecimal } from "../format";
+import { useOnline } from "../useOnline";
 import { useOnlineMutation } from "../useOnlineMutation";
+import { herdRows, herdTotals } from "./model";
 
 /** Hoja del límite de carga: estado, apertura y guardado. `refresh` recarga las existencias al guardar. */
 export function useLimitSheet(farmId: string | undefined, maxUa: number, refresh: () => void) {
@@ -51,4 +54,14 @@ export function useSystemSheet(farmId: string | undefined, current: ProductionSy
     }
   };
   return { open, close: () => setOpen(false), show, pick, setPick, submit, pending: save.pending, error: save.error };
+}
+
+/** Datos de la pantalla de existencias: lo remoto de la estancia, los potreros calculados en el celular y sus totales. */
+export function useStockData(farmId: string | undefined) {
+  const remote = useOnline<FarmStockResponse>(farmId ? `/org/farms/${farmId}/stock` : null);
+  const system = remote.data?.system ?? null;
+  const prod = useOnline<ProductionResponse>(farmId && system ? `/org/farms/${farmId}/production` : null);
+  const rows = useLocal(() => (farmId ? herdRows(farmId) : null), [farmId]) ?? [];
+  const maxUa = remote.data?.maxUaPerHa ?? DEFAULT_MAX_UA_PER_HA;
+  return { remote, system, prod, rows, maxUa, totals: herdTotals(rows, maxUa) };
 }

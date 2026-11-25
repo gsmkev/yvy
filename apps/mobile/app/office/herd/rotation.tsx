@@ -2,7 +2,7 @@
 import { View } from "react-native";
 import { t, type MessageKey, type RotationResponse } from "@yvy/shared";
 import { useFarmPick } from "../../../src/office/farmPick";
-import { fmtDate, fmtNumber } from "../../../src/office/format";
+import { fmtNumber } from "../../../src/office/format";
 import { FarmFrame } from "../../../src/office/hub";
 import { OnlineState } from "../../../src/office/state";
 import { useOnline } from "../../../src/office/useOnline";
@@ -44,7 +44,6 @@ export default function Rotation() {
                   t(`ui.rot.state_${p.state}` as MessageKey),
                   p.occupied && p.stayDays !== null ? t("office.rot.daysStay", { n: days(p.stayDays) ?? "" }) : null,
                   !p.occupied && p.restDays !== null ? t("office.rot.daysRest", { n: days(p.restDays) ?? "" }) : null,
-                  p.pasture ? `${p.pasture.heightCm} cm · ${t(`fields.level.${p.pasture.cover}` as MessageKey).toLowerCase()} · ${fmtDate(p.pasture.at)}` : null,
                 ]
                   .filter(Boolean)
                   .join(" · ") || undefined

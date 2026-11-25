@@ -52,7 +52,7 @@ export function FilterChips<V extends string>({ options, value, onChange }: { op
         accessibilityRole="button"
         accessibilityLabel={t("app.common.more")}
         onPress={() => ref.current?.scrollTo({ x: m.x + m.w * 0.7, animated: true })}
-        style={({ pressed }) => [{ position: "absolute", right: 8, top: 0, bottom: 0, width: 44, alignItems: "center", justifyContent: "center" }, pressed && k.pressed]}
+        style={({ pressed }) => [{ position: "absolute", right: 0, top: 0, bottom: 0, width: 52, alignItems: "center", justifyContent: "center", backgroundColor: C.papel + "E6" }, pressed && k.pressed]}
       >
         <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: C.blanco, borderWidth: 1, borderColor: C.lineaFuerte, alignItems: "center", justifyContent: "center" }}>
           <ChevronRight size={18} color={C.tinta} strokeWidth={2} />

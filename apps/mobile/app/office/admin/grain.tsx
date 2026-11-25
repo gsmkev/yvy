@@ -120,6 +120,7 @@ export default function Grain() {
     }
   };
 
+  const d: Draft = draft ?? { kind: "delivery", contractId: "", date: "", tons: "", ticket: "", moisture: "", deductions: "", due: "", farmId: "" };
   const all = [contracts, deliveries, settlements];
   const err = formError ?? (draft?.kind === "delivery" ? delivery.error : settlement.error);
   const totals = list.reduce((a, c) => ({ toDeliver: a.toDeliver + c.toDeliverTons, toSettle: a.toSettle + c.toSettleTons }), { toDeliver: 0, toSettle: 0 });
@@ -195,28 +196,28 @@ export default function Grain() {
         </OnlineState>
         <FormSheet
           visible={!!draft}
-          title={draft?.kind === "delivery" ? t("ui.grain.addDelivery") : t("ui.grain.addSettlement")}
+          title={d.kind === "delivery" ? t("ui.grain.addDelivery") : t("ui.grain.addSettlement")}
           onClose={() => setDraft(null)}
           onSubmit={submit}
           submitLabel={t("ui.common.save")}
           pending={delivery.pending || settlement.pending}
           error={err}
         >
-          <SelectField label={t("ui.grain.contract")} value={draft?.contractId} options={list.map((c) => ({ value: c.id, label: label(c), hint: party(c.partyId) }))} onChange={pickContract} />
-          <DateField label={t("ui.cost.date")} value={draft?.date ?? ""} onChange={(v) => set({ date: v })} />
-          <TextField label={t("ui.grain.tons")} value={draft?.tons ?? ""} onChangeText={(v) => set({ tons: v })} kind="decimal" />
-          <TextField label={draft?.kind === "delivery" ? t("ui.grain.ticket") : t("ui.grain.number")} value={draft?.ticket ?? ""} onChangeText={(v) => set({ ticket: v })} maxLength={40} autoCapitalize="none" />
-          {draft?.kind === "delivery" ? (
+          <SelectField label={t("ui.grain.contract")} value={d.contractId} options={list.map((c) => ({ value: c.id, label: label(c), hint: party(c.partyId) }))} onChange={pickContract} />
+          <DateField label={t("ui.cost.date")} value={d.date} onChange={(v) => set({ date: v })} />
+          <TextField label={t("ui.grain.tons")} value={d.tons} onChangeText={(v) => set({ tons: v })} kind="decimal" />
+          <TextField label={d.kind === "delivery" ? t("ui.grain.ticket") : t("ui.grain.number")} value={d.ticket} onChangeText={(v) => set({ ticket: v })} maxLength={40} autoCapitalize="none" />
+          {d.kind === "delivery" ? (
             <>
-              <TextField label={t("ui.grain.moisture")} value={draft.moisture} onChangeText={(v) => set({ moisture: v })} kind="decimal" />
-              {farms.length > 1 ? <SelectField label={t("ui.common.farm")} value={draft.farmId} placeholder="—" options={farms.map((f) => ({ value: f.id, label: f.name }))} onChange={(v) => set({ farmId: v })} /> : null}
+              <TextField label={t("ui.grain.moisture")} value={d.moisture} onChangeText={(v) => set({ moisture: v })} kind="decimal" />
+              {farms.length > 1 ? <SelectField label={t("ui.common.farm")} value={d.farmId} placeholder="—" options={farms.map((f) => ({ value: f.id, label: f.name }))} onChange={(v) => set({ farmId: v })} /> : null}
             </>
-          ) : draft ? (
+          ) : (
             <>
-              <TextField label={t("ui.grain.deductions")} value={draft.deductions} onChangeText={(v) => set({ deductions: v })} kind="decimal" />
-              <DateField label={t("ui.purch.dueLabel")} value={draft.due} onChange={(v) => set({ due: v })} />
+              <TextField label={t("ui.grain.deductions")} value={d.deductions} onChangeText={(v) => set({ deductions: v })} kind="decimal" />
+              <DateField label={t("ui.purch.dueLabel")} value={d.due} onChange={(v) => set({ due: v })} />
             </>
-          ) : null}
+          )}
         </FormSheet>
       </OfficeScreen>
     </AdminGate>

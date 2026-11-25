@@ -90,6 +90,7 @@ export default function Cattle() {
   const rows = sorted.filter((d) => filter === "all" || d.kind === filter);
   const headsOf = (kind: Kind) => (q.data ?? []).filter((d) => d.kind === kind).reduce((a, d) => a + d.heads, 0);
 
+  const d = draft ?? blank();
   return (
     <AdminGate need="manage" title={t("ui.admin.section_cattle")}>
       <OfficeScreen
@@ -130,18 +131,18 @@ export default function Cattle() {
         </OnlineState>
         <FormSheet visible={!!draft} title={t("ui.cattle.new")} onClose={() => setDraft(null)} onSubmit={submit} submitLabel={t("ui.common.save")} pending={create.pending} error={formError ?? create.error}>
           <View style={{ marginTop: 16 }}>
-            <Segmented<Kind> value={draft?.kind ?? "sell"} onChange={(v) => set({ kind: v })} options={CATTLE_DEAL_KINDS.map((v) => ({ value: v, label: t(k(`ui.cattle.kind_${v}`)) }))} />
+            <Segmented<Kind> value={d.kind} onChange={(v) => set({ kind: v })} options={CATTLE_DEAL_KINDS.map((v) => ({ value: v, label: t(k(`ui.cattle.kind_${v}`)) }))} />
           </View>
-          <DateField label={t("ui.cost.date")} value={draft?.date ?? ""} onChange={(v) => set({ date: v })} />
-          <SelectField label={t("ui.cattle.party")} value={draft?.partyId ?? ""} placeholder="—" options={[{ value: "", label: "—" }, ...(parties.data ?? []).map((p) => ({ value: p.id, label: p.name }))]} onChange={(v) => set({ partyId: v })} />
-          <TextField label={t("ui.cattle.category")} value={draft?.category ?? ""} onChangeText={(v) => set({ category: v })} maxLength={60} />
-          <TextField label={t("ui.cattle.heads")} value={draft?.heads ?? ""} onChangeText={(v) => set({ heads: v })} kind="number" />
-          <TextField label={t("ui.cattle.kg")} value={draft?.totalKg ?? ""} onChangeText={(v) => set({ totalKg: v })} kind="decimal" />
+          <DateField label={t("ui.cost.date")} value={d.date} onChange={(v) => set({ date: v })} />
+          <SelectField label={t("ui.cattle.party")} value={d.partyId} placeholder="—" options={[{ value: "", label: "—" }, ...(parties.data ?? []).map((p) => ({ value: p.id, label: p.name }))]} onChange={(v) => set({ partyId: v })} />
+          <TextField label={t("ui.cattle.category")} value={d.category} onChangeText={(v) => set({ category: v })} maxLength={60} />
+          <TextField label={t("ui.cattle.heads")} value={d.heads} onChangeText={(v) => set({ heads: v })} kind="number" />
+          <TextField label={t("ui.cattle.kg")} value={d.totalKg} onChangeText={(v) => set({ totalKg: v })} kind="decimal" />
           <View style={{ marginTop: 16 }}>
-            <Segmented<Currency> value={draft?.currency ?? "PYG"} onChange={(v) => set({ currency: v })} options={CURRENCY_OPTIONS} />
+            <Segmented<Currency> value={d.currency} onChange={(v) => set({ currency: v })} options={CURRENCY_OPTIONS} />
           </View>
-          <TextField label={t("ui.cattle.amount")} value={draft?.amount ?? ""} onChangeText={(v) => set({ amount: v })} kind="decimal" />
-          <TextField label={t("ui.cattle.guide")} value={draft?.guide ?? ""} onChangeText={(v) => set({ guide: v })} maxLength={40} autoCapitalize="none" />
+          <TextField label={t("ui.cattle.amount")} value={d.amount} onChangeText={(v) => set({ amount: v })} kind="decimal" />
+          <TextField label={t("ui.cattle.guide")} value={d.guide} onChangeText={(v) => set({ guide: v })} maxLength={40} autoCapitalize="none" />
         </FormSheet>
       </OfficeScreen>
     </AdminGate>

@@ -2,7 +2,7 @@
 import { View } from "react-native";
 import { t, type ForageResponse, type MessageKey } from "@yvy/shared";
 import { useFarmPick } from "../../../src/office/farmPick";
-import { fmtDate, fmtNumber } from "../../../src/office/format";
+import { fmtNumber } from "../../../src/office/format";
 import { FarmFrame } from "../../../src/office/hub";
 import { OnlineState } from "../../../src/office/state";
 import { useOnline } from "../../../src/office/useOnline";
@@ -27,11 +27,9 @@ export default function Forage() {
                 title={(p) => p.name}
                 subtitle={(p) =>
                   [
-                    p.heightCm !== null ? `${p.heightCm} cm · ${t(`fields.level.${p.cover}` as MessageKey).toLowerCase()}${p.heightAt ? ` (${fmtDate(p.heightAt)})` : ""}` : null,
-                    p.ndvi !== null ? `NDVI ${fmtNumber(p.ndvi, 2)}${p.ndviAt ? ` (${fmtDate(p.ndviAt)})` : ""}` : null,
-                    p.method ? t(`ui.forage.method_${p.method}` as MessageKey) : null,
+                    p.heightCm !== null ? `${p.heightCm} cm · ${t(`fields.level.${p.cover}` as MessageKey).toLowerCase()}` : p.ndvi !== null ? `NDVI ${fmtNumber(p.ndvi, 2)}` : null,
+                    p.kgDmHa !== null ? `${fmtNumber(p.kgDmHa, 0)} kg MS/ha` : null,
                     p.stale ? t("ui.forage.stale") : null,
-                    p.kgDmHa !== null ? t("office.common.forageLine", { kg: fmtNumber(p.kgDmHa, 0), usable: p.usableKgDm === null ? "—" : fmtNumber(p.usableKgDm, 0) }) : null,
                   ]
                     .filter(Boolean)
                     .join(" · ") || undefined

@@ -5402,6 +5402,7 @@ export const esPY = {
       heatLegend: "Días con THI de peligro (79 o más)",
       rustLegend: "Días con {{h}} horas o más de hoja mojada",
       plotsFire: "Lotes, del más cercano al foco",
+      plotsHeat: "Potreros de la estancia",
       fireInside: "Adentro",
       plotSown: "Sembrado el {{date}}",
       fireLegend: "Hoy, en cielo; focos detectados por día",

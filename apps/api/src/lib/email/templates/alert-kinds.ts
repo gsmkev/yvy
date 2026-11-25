@@ -72,7 +72,7 @@ const daysBetween = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00
 const stats = (items: Stat[]): Markup => darkStats(items);
 
 /** Lotes alcanzados: nombre, cultivo y superficie, sin colores. */
-function plotsBlock(titleKey: "plots" | "plotsFrost" | "plotsRust" | "plotsPest", plots: PlotInfo[]): Markup[] {
+function plotsBlock(titleKey: "plots" | "plotsFrost" | "plotsRust" | "plotsPest" | "plotsHeat", plots: PlotInfo[]): Markup[] {
   if (!plots.length) return [];
   return [gap(24), h2(tk(`email.alert.${titleKey}`), "0 0 4px"), plotRows(plots.slice(0, 6).map((p) => ({ name: p.name, detail: p.sowingDate ? t("email.alert.plotSown", { date: dm(p.sowingDate) }) : undefined, value: ha(p.areaHa) })))];
 }
@@ -258,24 +258,26 @@ function waterLow(e: Env): Composition | null {
   };
 }
 
-/** Máximo de THI por día a partir del pronóstico horario, para los próximos días. */
-function thiByDay(e: Env): DarkBar[] {
+/** THI de cada hora del pronóstico, con su día (hora de la estancia). */
+const thiSeries = (e: Env) =>
+  e.ctx.hours.flatMap((h) => (h.tempC !== null && h.humidityPct !== null ? [{ day: localDate(h.at, e.tz), thi: thiOf(h.tempC, h.humidityPct) }] : []));
+
+/** Máximo de THI por día, para los próximos días. */
+function thiByDay(series: ReturnType<typeof thiSeries>): DarkBar[] {
   const byDay = new Map<string, number>();
-  for (const h of e.ctx.hours) {
-    if (h.tempC === null || h.humidityPct === null) continue;
-    const day = localDate(h.at, e.tz);
-    byDay.set(day, Math.max(byDay.get(day) ?? 0, Math.round(thiOf(h.tempC, h.humidityPct))));
-  }
+  for (const h of series) byDay.set(h.day, Math.max(byDay.get(h.day) ?? 0, Math.round(h.thi)));
   return [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(0, 4).map(([date, v]) => ({ label: weekdayShort(date), value: v - 60, display: String(v), strong: v >= 79 }));
 }
 
 function heatStress(e: Env): Composition | null {
-  const thi = num(e.d.maxThi);
+  // Con pronóstico horario, el titular, las cifras y las barras salen de la misma serie; si no hay, del detalle del aviso.
+  const series = thiSeries(e);
+  const thi = series.length ? Math.max(...series.map((h) => h.thi)) : num(e.d.maxThi);
   if (thi === null) return null;
   const level = thi >= 84 ? "emergency" : thi >= 79 ? "danger" : thi >= 75 ? "alert" : "normal";
-  const danger = num(e.d.dangerHours) ?? 0;
-  const emergency = num(e.d.emergencyHours) ?? 0;
-  const days = thiByDay(e);
+  const danger = series.length ? series.filter((h) => h.thi >= 79).length : (num(e.d.dangerHours) ?? 0);
+  const emergency = series.length ? series.filter((h) => h.thi >= 84).length : (num(e.d.emergencyHours) ?? 0);
+  const days = thiByDay(series);
   return {
     headline: t("email.alert.headline_heat_stress", { thi: Math.round(thi) }),
     lead: t("email.alert.lead_heat_stress", { danger, emergency }),
@@ -298,7 +300,7 @@ function heatStress(e: Env): Composition | null {
         caption: t("email.alert.heatCaption", { thi: Math.round(thi), level: t(`email.alert.heat_${level}`) }),
         ticks: t("email.alert.heatTicks"),
       }),
-      ...plotsBlock("plots", e.ctx.plots),
+      ...plotsBlock("plotsHeat", e.ctx.plots.filter((p) => p.kind === "pasture")),
     ],
   };
 }

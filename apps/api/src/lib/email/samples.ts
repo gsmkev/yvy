@@ -43,7 +43,7 @@ function sampleContext(now: number, hot = false): AlertContext {
     hours: Array.from({ length: 48 }, (_, h) => {
       const at = start + h * 3_600_000;
       const local = (new Date(at).getUTCHours() + 21) % 24;
-      return { at, tempC: Math.round(((hot ? 31 : 7) + 8 * Math.sin(((local - 9) / 24) * 2 * Math.PI)) * 10) / 10, humidityPct: 70 };
+      return { at, tempC: Math.round(((hot ? 25 : 7) + 8 * Math.sin(((local - 9) / 24) * 2 * Math.PI)) * 10) / 10, humidityPct: 70 };
     }),
     plots: PLOTS,
     rainDaily: Array.from({ length: 30 }, (_, i) => ({ date: iso(i - 30), mm: i % 7 === 2 ? 3 : i % 11 === 0 ? 5 : 0 })),
@@ -141,7 +141,7 @@ function alertSamples(appUrl: string, now: number): AlertEmailInput[] {
   const fireCtx: AlertContext = {
     ...base.context,
     plots: PLOTS.map((p, i) => ({ ...p, distKm: [3.2, 5.8, 9.1, 14.6][i] })),
-    hotspotsByDay: [0, 0, 1, 0, 2, 1, 4].map((n, i) => ({ date: day(i - 6), n })),
+    hotspotsByDay: [0, 0, 1, 0, 0, 1, 2].map((n, i) => ({ date: day(i - 6), n })),
   };
   return ALERT_KINDS.map((k) => ({ ...base, context: k === "heat_stress" ? hot : k === "fire" ? fireCtx : base.context, probability: k === "frost" ? "high" : k === "excess_rain" ? "medium" : null, ...by[k] }));
 }

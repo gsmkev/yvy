@@ -144,9 +144,11 @@ export function senacsaReminders(
 export const senacsaPlanDate = (c: SenacsaCampaign, today: string): string => (today > c.from ? today : c.from);
 
 /** Marca que lleva la nota del evento sanitario creado desde una campaña oficial (así se sabe cuáles ya se planificaron). */
-export const SENACSA_NOTE_PREFIX = "Oficial · SENACSA";
+export const SENACSA_NOTE_PREFIX = "Oficial: SENACSA";
+/** Marca de las notas escritas antes del cambio de formato; se sigue aceptando al leer. */
+export const SENACSA_LEGACY_NOTE_PREFIX = "Oficial · SENACSA";
 /** Nota que identifica un evento sanitario creado desde la campaña `c`. */
-export const senacsaNote = (c: SenacsaCampaign): string => `${SENACSA_NOTE_PREFIX} · ${c.id}`;
+export const senacsaNote = (c: SenacsaCampaign): string => `${SENACSA_NOTE_PREFIX}, ${c.id}`;
 /** Id de la campaña oficial que figura en la nota de un evento; null si no es de una campaña. */
 export const senacsaIdFromNote = (note: string | null | undefined): string | null => /senacsa-\d{4}-[12]-[a-z]+/.exec(note ?? "")?.[0] ?? null;
 

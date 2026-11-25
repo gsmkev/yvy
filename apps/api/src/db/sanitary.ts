@@ -3,13 +3,15 @@
  * tareas (kind "health") para los empleados asignados a algún potrero, que sí bajan al celular.
  * El estado hecho o vencido se calcula contra los registros `health` (sanitaryState en packages/shared).
  */
-import { and, asc, eq, getTableColumns, gte, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, eq, getTableColumns, gte, inArray, isNull, like, or, sql } from "drizzle-orm";
 import {
   HEALTH_REASONS,
   newId,
   sanitaryState,
   matchingHealth,
   officialCampaigns,
+  SENACSA_LEGACY_NOTE_PREFIX,
+  SENACSA_NOTE_PREFIX,
   senacsaIdFromNote,
   type SenacsaResponse,
   SANITARY_EARLY_DAYS,
@@ -210,7 +212,7 @@ export async function senacsaForOrg(sdb: ScopedDb, year: number): Promise<Senacs
         isNull(s.sanitaryEvents.deletedAt),
         gte(s.sanitaryEvents.plannedDate, `${year}-01-01`),
         sql`${s.sanitaryEvents.plannedDate} <= ${`${year}-12-31`}`,
-        sql`${s.sanitaryEvents.note} LIKE 'Oficial · SENACSA%'`,
+        or(like(s.sanitaryEvents.note, `${SENACSA_NOTE_PREFIX}%`), like(s.sanitaryEvents.note, `${SENACSA_LEGACY_NOTE_PREFIX}%`)),
       ),
     )
     .limit(100);

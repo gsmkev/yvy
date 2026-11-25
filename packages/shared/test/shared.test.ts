@@ -64,7 +64,7 @@ describe("ganadería: conteo de hacienda", () => {
 
 describe("i18n", () => {
   it("interpola", () => {
-    expect(t("sync.common.offline", { count: 3 })).toBe("Sin señal · 3 anotaciones por mandar");
+    expect(t("sync.common.offline", { count: 3 })).toBe("Sin señal, 3 anotaciones por mandar");
   });
 });
 

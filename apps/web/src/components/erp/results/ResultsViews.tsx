@@ -39,8 +39,8 @@ export function Segmented({ value, onChange }: { value: View; onChange: (v: View
 }
 
 const money = <T extends { costPyg: number; incomePyg: number; marginPyg: number }>(): Column<T>[] => [
-  { id: "cost", header: t("ui.cost.totalCost"), align: "right", cell: (r) => fmtGs(r.costPyg) },
-  { id: "income", header: t("ui.cost.totalIncome"), align: "right", cell: (r) => fmtGs(r.incomePyg) },
+  { id: "cost", header: t("ui.cost.totalCost"), align: "right", mobile: "hide", cell: (r) => fmtGs(r.costPyg) },
+  { id: "income", header: t("ui.cost.totalIncome"), align: "right", mobile: "hide", cell: (r) => fmtGs(r.incomePyg) },
   { id: "margin", header: t("ui.results.margin"), align: "right", cell: (r) => <span className={tone(r.marginPyg)}>{fmtGs(r.marginPyg)}</span> },
 ];
 

@@ -59,9 +59,9 @@ function ResultsTotals({ tt }: { tt: Results["totals"] } ) {
   const costNote = [perHa(tt.costPerHa), tt.costPerTon !== null ? t("ui.results.notePerTon", { n: fmtGs(tt.costPerTon) }) : undefined].filter(Boolean).join(", ");
   return (
     <StatRow>
-      <Stat size="lg" label={t("ui.cost.totalCost")} value={fmtGs(tt.costPyg)} note={costNote || undefined} />
-      <Stat size="lg" label={t("ui.cost.totalIncome")} value={fmtGs(tt.incomePyg)} note={perHa(tt.incomePerHa)} />
-      <Stat size="lg" label={t("ui.results.margin")} value={fmtGs(tt.marginPyg)} tone={tt.marginPyg < 0 ? "danger" : undefined} note={perHa(tt.marginPerHa)} />
+      <Stat label={t("ui.cost.totalCost")} value={fmtGs(tt.costPyg)} note={costNote || undefined} />
+      <Stat label={t("ui.cost.totalIncome")} value={fmtGs(tt.incomePyg)} note={perHa(tt.incomePerHa)} />
+      <Stat label={t("ui.results.margin")} value={fmtGs(tt.marginPyg)} tone={tt.marginPyg < 0 ? "danger" : undefined} note={perHa(tt.marginPerHa)} />
     </StatRow>
   );
 }

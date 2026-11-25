@@ -43,7 +43,7 @@ function auditValue(v: unknown): string | null {
   return null;
 }
 
-/** Resumen de una línea del detalle JSON de un cambio ("Título: Lote 3 · Cultivo: maíz · cambió: geometry"). */
+/** Resumen de una línea del detalle JSON de un cambio ("Título: Lote 3; Cultivo: maíz; cambió: geometry"). */
 export function auditSummary(detail: string): string {
   let d: Record<string, unknown>;
   try {
@@ -64,5 +64,5 @@ export function auditSummary(detail: string): string {
   if (Array.isArray(d.fields) && d.fields.length) {
     parts.push(`${t("ui.audit.changed")}: ${d.fields.map((f) => auditLabel(String(f))).join(", ")}`);
   }
-  return parts.join(" · ");
+  return parts.join("; ");
 }

@@ -112,13 +112,13 @@ interface ReportData {
 export function WeeklyReport(d: ReportData) {
   const authors = new Set(d.records.map((r) => r.authorId)).size;
   return (
-    <Document title={`${t("ui.report.title")} · ${d.farm.name}`} author="Yvy" language="es-PY">
+    <Document title={`${t("ui.report.title")}: ${d.farm.name}`} author="Yvy" language="es-PY">
       <Page size="A4" style={s.page}>
         <Text style={s.h1}>
-          {t("ui.report.title")} · {d.farm.name}
+          {t("ui.report.title")}: {d.farm.name}
         </Text>
         <Text style={s.muted}>
-          {fmtIsoDate(d.from)} – {fmtIsoDate(d.to)} · {fmtHa(d.farm.areaHa)} · {d.plots.length}{" "}
+          {fmtIsoDate(d.from)} – {fmtIsoDate(d.to)}, {fmtHa(d.farm.areaHa)}, {d.plots.length}{" "}
           {t("ui.common.plots").toLowerCase()}
         </Text>
         <View style={s.kpis}>

@@ -27,15 +27,21 @@ export function CoverReport({ farm, rows, from, to, plots, generatedAt }: CoverR
   const areas = analysisAreas(rows);
   const date = (iso: string) => fmtDate(Date.parse(`${iso}T12:00:00Z`));
   return (
-    <Document title={`${t("ui.cover.title")} · ${farm.name}`} author="Yvy" language="es-PY">
+    <Document title={`${t("ui.cover.title")}: ${farm.name}`} author="Yvy" language="es-PY">
       <Page size="A4" style={s.page}>
         <Text style={s.h1}>
-          {t("ui.cover.title")} · {farm.name}
+          {t("ui.cover.title")}: {farm.name}
         </Text>
         <Text style={s.muted}>
-          {[farm.department, farm.district].filter(Boolean).join(", ")}
-          {farm.department || farm.district ? " · " : ""}
-          {fmtHa(farm.areaHa)} · {t("ui.cover.range", { from: date(from), to: date(to) })} · {t("ui.shared.generated", { date: fmtDate(generatedAt) })}
+          {[
+            farm.department,
+            farm.district,
+            fmtHa(farm.areaHa),
+            t("ui.cover.range", { from: date(from), to: date(to) }),
+            t("ui.shared.generated", { date: fmtDate(generatedAt) }),
+          ]
+            .filter(Boolean)
+            .join(", ")}
         </Text>
 
         <View style={{ marginTop: 8, borderLeftWidth: 2, borderLeftColor: BRAND.trigo, paddingLeft: 6 }}>

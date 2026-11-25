@@ -74,20 +74,24 @@ export function DamageReport(d: DamageReportData) {
   const sat = damageSatellite(d.series, d.eventDay);
   const eventMs = Date.parse(`${d.eventDay}T12:00:00-03:00`);
   const gps = d.evidence.records.filter((r) => r.lon !== null && r.lat !== null).map((r) => ({ lon: r.lon!, lat: r.lat! }));
-  const pass = (p: NdviPass | null) => (p ? `${fmtNdvi(p.mean)} · ${fmtDate(p.acquiredAt)}` : "—");
+  const pass = (p: NdviPass | null) => (p ? `${fmtNdvi(p.mean)} (${fmtDate(p.acquiredAt)})` : "—");
   return (
-    <Document title={`${t("ui.damage.title")} · ${d.plot.name}`} author="Yvy" language="es-PY">
+    <Document title={`${t("ui.damage.title")}: ${d.plot.name}`} author="Yvy" language="es-PY">
       <Page size="A4" style={s.page}>
         <Text style={s.h1}>
-          {t("ui.damage.title")} · {d.plot.name}
+          {t("ui.damage.title")}: {d.plot.name}
         </Text>
         <Text style={s.muted}>
-          {d.farm.name}
-          {[d.farm.department, d.farm.district].filter(Boolean).length
-            ? ` · ${[d.farm.department, d.farm.district].filter(Boolean).join(", ")}`
-            : ""}{" "}
-          · {fmtHa(d.plot.areaHa)} · {d.plot.crop ? tk(`fields.crop.${d.plot.crop}`) : t("ui.common.crop")}
-          {d.plot.sowingDate ? " · " + t("ui.rotation.sown", { date: fmtIsoDate(d.plot.sowingDate) }) : ""}
+          {[
+            d.farm.name,
+            d.farm.department,
+            d.farm.district,
+            fmtHa(d.plot.areaHa),
+            d.plot.crop ? tk(`fields.crop.${d.plot.crop}`) : t("ui.common.crop"),
+            d.plot.sowingDate ? t("ui.rotation.sown", { date: fmtIsoDate(d.plot.sowingDate) }) : "",
+          ]
+            .filter(Boolean)
+            .join(", ")}
         </Text>
         <Text style={s.muted}>{t("ui.damage.generated", { date: fmtDateTime(d.generatedAt), by: d.author })}</Text>
 

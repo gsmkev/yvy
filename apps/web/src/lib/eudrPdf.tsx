@@ -63,16 +63,21 @@ export function EudrReport({ farm, data, plots, generatedAt }: EudrReportData) {
   const c = range(sum.curFromAt, sum.curToAt);
   const areas = changeAreas(data.plots);
   return (
-    <Document title={`${t("ui.eudr.title")} · ${farm.name}`} author="Yvy" language="es-PY">
+    <Document title={`${t("ui.eudr.title")}: ${farm.name}`} author="Yvy" language="es-PY">
       <Page size="A4" style={s.page}>
         <Text style={s.h1}>
-          {t("ui.eudr.title")} · {farm.name}
+          {t("ui.eudr.title")}: {farm.name}
         </Text>
         <Text style={s.muted}>
-          {[farm.department, farm.district].filter(Boolean).join(", ")}
-          {farm.department || farm.district ? " · " : ""}
-          {fmtHa(farm.areaHa)} · {t("ui.shared.generated", { date: fmtDate(generatedAt) })}
-          {data.computedAt !== null ? " · " + t("ui.eudr.computed", { date: fmtDate(data.computedAt) }) : ""}
+          {[
+            farm.department,
+            farm.district,
+            fmtHa(farm.areaHa),
+            t("ui.shared.generated", { date: fmtDate(generatedAt) }),
+            data.computedAt !== null ? t("ui.eudr.computed", { date: fmtDate(data.computedAt) }) : "",
+          ]
+            .filter(Boolean)
+            .join(", ")}
         </Text>
 
         <View style={{ marginTop: 8, borderLeftWidth: 2, borderLeftColor: BRAND.trigo, paddingLeft: 6 }}>

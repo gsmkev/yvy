@@ -41,16 +41,21 @@ export function RiskReport({ farm, risk, computedAt, generatedAt }: RiskReportDa
   const fireMonths = fire ? fireByMonth(fire.byMonth) : [];
   const fireMax = Math.max(1, ...fireMonths.map((m) => m.value));
   return (
-    <Document title={`${t("ui.risk.title")} · ${farm.name}`} author="Yvy" language="es-PY">
+    <Document title={`${t("ui.risk.title")}: ${farm.name}`} author="Yvy" language="es-PY">
       <Page size="A4" style={s.page}>
         <Text style={s.h1}>
-          {t("ui.risk.title")} · {farm.name}
+          {t("ui.risk.title")}: {farm.name}
         </Text>
         <Text style={s.muted}>
-          {[farm.department, farm.district].filter(Boolean).join(", ")}
-          {farm.department || farm.district ? " · " : ""}
-          {fmtHa(farm.areaHa)} · {t("ui.shared.generated", { date: fmtDate(generatedAt) })} ·{" "}
-          {t("ui.risk.computed", { date: fmtDate(computedAt) })}
+          {[
+            farm.department,
+            farm.district,
+            fmtHa(farm.areaHa),
+            t("ui.shared.generated", { date: fmtDate(generatedAt) }),
+            t("ui.risk.computed", { date: fmtDate(computedAt) }),
+          ]
+            .filter(Boolean)
+            .join(", ")}
         </Text>
         <Text style={[s.muted, { marginTop: 4 }]}>
           {t("ui.risk.intro", { from: risk.normalFrom, to: risk.normalTo })}

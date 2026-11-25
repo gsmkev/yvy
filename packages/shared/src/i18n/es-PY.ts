@@ -1776,7 +1776,7 @@ export const esPY = {
       languageLabel: "Idioma",
       skipToContent: "Saltar al contenido",
       print: "Imprimir",
-      printedOn: "Yvy · impreso el {{date}}",
+      printedOn: "Yvy, impreso el {{date}}",
       currency: "Moneda",
       extraTitle: "Datos propios",
       mentionTitle: "{{name}} te mencionó en un comentario",
@@ -1825,7 +1825,7 @@ export const esPY = {
     },
     login: {
       credit: "Itapúa · Sentinel-2 · {{source}}",
-      creditWeb: "Itapúa · Sentinel-2 L2A, compuesto de 90 días · {{source}}",
+      creditWeb: "Itapúa, Sentinel-2 L2A, compuesto de 90 días. {{source}}",
       title: "Ingresá",
       help: "Te mandamos un código de 6 dígitos a tu email. Sin contraseñas.",
       link: "Ya tengo cuenta",
@@ -2925,7 +2925,7 @@ export const esPY = {
       notFoundMsg: "Este enlace no existe.",
     },
     reports: {
-      footerCredit: "Yvy · {{copernicus}} · {{chirps}}",
+      footerCredit: "Yvy: {{copernicus}}, {{chirps}}",
       title: "Informes",
       pickPlot: "Lote",
       seasonPdf: "Descargar resumen de campaña (PDF)",
@@ -3205,7 +3205,7 @@ export const esPY = {
       pdfFile: "informe-riesgo",
       days: "{{n}} días",
       km: "{{n}} km",
-      footer: "Yvy · NASA POWER · NASA FIRMS · Orientativo",
+      footer: "Yvy: NASA POWER, NASA FIRMS. Orientativo",
     },
     leadLocateFailed: "No pudimos leer tu ubicación; escribí las coordenadas.",
     leadBadCoords: "No entendimos las coordenadas. Escribí latitud y longitud, por ejemplo -27,3 -55,9.",
@@ -3527,7 +3527,7 @@ export const esPY = {
       pdfWorking: "Armando el PDF…",
       pdfFile: "indicador-eudr",
       footer:
-        "Yvy · Sentinel-2 L2A · Análisis indicativo, no es una certificación ni una declaración de debida diligencia",
+        "Yvy: Sentinel-2 L2A. Análisis indicativo, no es una certificación ni una declaración de debida diligencia",
     },
     saved: {
       filters: "Filtros guardados",
@@ -4305,7 +4305,7 @@ export const esPY = {
         "Para cada fecha se toman todas las imágenes Sentinel-2 sin nubes de una ventana de 180 días y se calcula, por píxel de 10 m, la mediana del NDVI, la mediana del NDMI y cuánto varía el NDVI. Clases: suelo, agua u otro si el NDVI mediano es menor a 0,25; monte si el NDVI es de 0,60 o más, el NDMI de 0,10 o más y la variación menor a 0,20; cultivo si la variación es de 0,30 o más; pastura el resto con vegetación. El cambio de monte se cuenta en parches de al menos 0,5 ha.",
       methodLimits:
         "Los umbrales son indicativos y no están calibrados con datos de campo. Los lotes con menos de 60 % de píxeles válidos en alguna de las dos fechas figuran sin datos.",
-      footer: "Yvy · Cambio de cobertura · Análisis indicativo",
+      footer: "Yvy: cambio de cobertura. Análisis indicativo",
       pdf: "Descargar PDF",
       pdfWorking: "Armando el PDF…",
       pdfFile: "cobertura",
@@ -4323,7 +4323,7 @@ export const esPY = {
       colLat: "Latitud",
       colLon: "Longitud",
       colNote: "Anotaciones",
-      footer: "Yvy · Grilla de muestreo de suelo",
+      footer: "Yvy: grilla de muestreo de suelo",
       pdf: "Descargar PDF para imprimir",
       pdfWorking: "Armando el PDF…",
       csv: "Descargar CSV",

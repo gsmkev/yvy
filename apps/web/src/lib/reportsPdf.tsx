@@ -53,13 +53,13 @@ export function SeasonReport(d: SeasonReportData) {
     : null;
   const ndvi = [...d.ndvi].sort((a, b) => a.acquiredAt - b.acquiredAt);
   return (
-    <Document title={`${t("ui.season.reportTitle")} · ${d.plot.name}`} author="Yvy" language="es-PY">
+    <Document title={`${t("ui.season.reportTitle")}: ${d.plot.name}`} author="Yvy" language="es-PY">
       <Page size="A4" style={s.page}>
         <Text style={s.h1}>
-          {t("ui.season.reportTitle")} · {d.plot.name}
+          {t("ui.season.reportTitle")}: {d.plot.name}
         </Text>
         <Text style={s.muted}>
-          {d.farm.name} · {fmtIsoDate(d.from)} – {fmtIsoDate(d.to)}
+          {d.farm.name}, {fmtIsoDate(d.from)} – {fmtIsoDate(d.to)}
         </Text>
 
         <Text style={s.h2}>{t("ui.season.sowing")}</Text>

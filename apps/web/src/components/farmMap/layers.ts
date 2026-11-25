@@ -64,7 +64,7 @@ function addOutlineAndPlotLayers(map: MlMap) {
 }
 
 function addLineLayers(map: MlMap) {
-  // Alambrado: blanco punteado · camino: arena continuo · cañería: celeste con puntos · curso de agua: celeste continuo
+  // Alambrado: blanco punteado, camino: arena continuo, cañería: celeste con puntos, curso de agua: celeste continuo
   // (el trazo punteado no admite valores por elemento, por eso una capa por tipo)
   for (const [kind, color, width, dash] of [
     ["fence", "#ffffff", 2, [4, 3]],

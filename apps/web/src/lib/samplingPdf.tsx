@@ -47,14 +47,19 @@ export function SamplingReport({ farm, plot, haPerPoint, points, generatedAt }: 
   const H = 360;
   const { px, py } = projector(plot, W, H);
   return (
-    <Document title={`${t("ui.sampling.title")} · ${plot.name}`} author="Yvy" language="es-PY">
+    <Document title={`${t("ui.sampling.title")}: ${plot.name}`} author="Yvy" language="es-PY">
       <Page size="A4" style={s.page}>
         <Text style={s.h1}>
-          {t("ui.sampling.title")} · {plot.name}
+          {t("ui.sampling.title")}: {plot.name}
         </Text>
         <Text style={s.muted}>
-          {farm.name} · {fmtHa(plot.areaHa)} · {t("ui.sampling.perPoint", { ha: haPerPoint })} · {t("ui.sampling.count", { n: points.length })} ·{" "}
-          {t("ui.shared.generated", { date: fmtDate(generatedAt) })}
+          {[
+            farm.name,
+            fmtHa(plot.areaHa),
+            t("ui.sampling.perPoint", { ha: haPerPoint }),
+            t("ui.sampling.count", { n: points.length }),
+            t("ui.shared.generated", { date: fmtDate(generatedAt) }),
+          ].join(", ")}
         </Text>
         <View style={{ marginTop: 8 }}>
           <Svg width={W} height={H} style={{ backgroundColor: BRAND.lino, borderRadius: 4 }}>

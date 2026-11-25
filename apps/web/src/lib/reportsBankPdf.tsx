@@ -33,15 +33,15 @@ export function BankReport(d: BankReportData) {
     byCrop.set(key, { n: cur.n + 1, ha: cur.ha + p.areaHa });
   }
   return (
-    <Document title={`${t("ui.bank.reportTitle")} · ${d.farm.name}`} author="Yvy" language="es-PY">
+    <Document title={`${t("ui.bank.reportTitle")}: ${d.farm.name}`} author="Yvy" language="es-PY">
       <Page size="A4" style={s.page}>
         <Text style={s.h1}>
-          {t("ui.bank.reportTitle")} · {d.farm.name}
+          {t("ui.bank.reportTitle")}: {d.farm.name}
         </Text>
         <Text style={s.muted}>
-          {[d.farm.department, d.farm.district].filter(Boolean).join(", ")}
-          {d.farm.department || d.farm.district ? " · " : ""}
-          {t("ui.shared.generated", { date: fmtDate(d.generatedAt) })}
+          {[d.farm.department, d.farm.district, t("ui.shared.generated", { date: fmtDate(d.generatedAt) })]
+            .filter(Boolean)
+            .join(", ")}
         </Text>
         <View style={s.kpis}>
           <Kpi label={t("ui.common.area")} value={fmtHa(d.farm.areaHa)} />

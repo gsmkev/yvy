@@ -16,7 +16,7 @@ export function poiQrSheetHtml(farmName: string, pois: Pick<Poi, "id" | "name" |
     const qr = raw(renderToStaticMarkup(<QRCodeSVG value={poiQrPayload(p.id)} size={180} marginSize={2} />));
     return safeHtml`<figure>${qr}<figcaption><strong>${p.name}</strong><br>${tk(`ui.poi.kinds_${p.kind}`)}</figcaption></figure>`;
   });
-  return safeHtml`<!doctype html><html lang="es-PY"><head><meta charset="utf-8"><title>${t("app.poi.qrTitle")} · ${farmName}</title>
+  return safeHtml`<!doctype html><html lang="es-PY"><head><meta charset="utf-8"><title>${t("app.poi.qrTitle")}: ${farmName}</title>
 <style>
 body{font-family:system-ui,sans-serif;color:#1E2419;margin:16px}
 h1{font-size:16px;margin:0 0 12px}
@@ -54,7 +54,7 @@ export function PoiQrModal({ farmName, pois, onClose }: { farmName: string; pois
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {pois.map((p) => (
               <li key={p.id} className="flex flex-col items-center gap-1.5 rounded-md border border-linea bg-white p-3 text-center text-xs">
-                <QRCodeSVG value={poiQrPayload(p.id)} size={112} marginSize={1} aria-label={`${t("app.poi.qrOne")} · ${p.name}`} />
+                <QRCodeSVG value={poiQrPayload(p.id)} size={112} marginSize={1} aria-label={`${t("app.poi.qrOne")}: ${p.name}`} />
                 <span className="font-medium">{p.name}</span>
                 <span className="text-tinta-2">{tk(`ui.poi.kinds_${p.kind}`)}</span>
               </li>

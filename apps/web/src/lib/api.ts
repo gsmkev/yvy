@@ -160,7 +160,7 @@ async function refresh(): Promise<boolean> {
  * Llama a la API con el token de acceso (renovándolo si está por vencer) y reintenta una vez si la sesión venció.
  * @throws ApiError si la respuesta no es exitosa.
  */
-export async function api<T>(method: string, path: string, body?: unknown, retry = true): Promise<T> {
+async function api<T>(method: string, path: string, body?: unknown, retry = true): Promise<T> {
   if (session && session.accessTokenExpiresAt - Date.now() < 60_000) await refresh();
   const res = await netFetch(path, {
     method,
@@ -192,7 +192,7 @@ export const del = <T>(path: string) => api<T>("DELETE", path);
  * Arma una cadena de consulta omitiendo los valores vacíos.
  * @returns "" o "?a=1&b=2".
  */
-export const qs = (params: Record<string, string | number | undefined | null>) => {
+const qs = (params: Record<string, string | number | undefined | null>) => {
   const p = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== null && v !== "") p.set(k, String(v));
   const s = p.toString();

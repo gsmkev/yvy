@@ -11,7 +11,7 @@ export interface Series {
 }
 
 /** Dimensiones del lienzo SVG y sus márgenes interiores. */
-export interface Frame {
+interface Frame {
   width: number;
   height: number;
   pad: { l: number; r: number; t: number; b: number };

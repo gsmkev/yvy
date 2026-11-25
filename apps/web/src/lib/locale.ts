@@ -7,7 +7,7 @@ import { DEFAULT_LOCALE, getLocale, isLocale, setLocale, type Locale } from "@yv
 const KEY = "yvy.locale";
 
 /** Idioma guardado en este navegador, o el predeterminado. */
-export function readLocale(): Locale {
+function readLocale(): Locale {
   try {
     const v = localStorage.getItem(KEY);
     return isLocale(v) ? v : DEFAULT_LOCALE;

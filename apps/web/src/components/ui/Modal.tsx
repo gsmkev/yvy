@@ -12,7 +12,7 @@ const FOCUSABLE =
 const ModalContext = createContext<{ close: () => void; footerEl: HTMLElement | null } | null>(null);
 
 /** Cierra el diálogo actual con la animación de salida; `null` fuera de un `Modal`. */
-export const useModalClose = () => useContext(ModalContext)?.close ?? null;
+const useModalClose = () => useContext(ModalContext)?.close ?? null;
 
 /** Contenedor del pie fijo del `Modal` actual (`null` fuera de un diálogo o antes de montarse). */
 export const useModalFooter = () => useContext(ModalContext)?.footerEl ?? null;

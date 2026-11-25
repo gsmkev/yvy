@@ -21,8 +21,8 @@ import type { FarmMapProps } from "./farmMap/types";
 
 /** Caja envolvente de una geometría (reexportada de farmMap/geo). */
 export { boundsOf } from "./farmMap/geo";
-/** Propiedades del mapa de la estancia (tipo reexportado). */
-export type { FarmMapProps, MapPoint } from "./farmMap/types";
+/** Punto del mapa (tipo reexportado). */
+export type { MapPoint } from "./farmMap/types";
 
 let protocolAdded = false;
 function ensureProtocol() {

@@ -9,7 +9,7 @@ import { DataTable, Input, type Column } from "./ui";
 import { vigorDrop } from "../lib/vigor";
 
 /** Vigor del lote como número; sin pasadas procesadas, un guion. El color de la rampa queda para la capa del mapa. */
-export function Vigor({ value }: { value: number | null }) {
+function Vigor({ value }: { value: number | null }) {
   if (value === null) return <span className="text-tinta-2">—</span>;
   return <span className="num">{fmtNdvi(value)}</span>;
 }

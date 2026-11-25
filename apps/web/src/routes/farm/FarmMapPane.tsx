@@ -28,7 +28,7 @@ function mapPoints(showPests: boolean, pestPts: MapPoint[], tab: string, records
 }
 
 /** Props de `FarmMapPane`: el estado de la estancia, de las capas y de las herramientas que se dibujan sobre el mapa. */
-export interface FarmMapPaneProps {
+interface FarmMapPaneProps {
   d: FarmDetail;
   farmId: string;
   me: Me | undefined;

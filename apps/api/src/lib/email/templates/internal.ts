@@ -1,32 +1,30 @@
 /** Correos internos al equipo de operaciones: uso cerca del límite, pedido de prueba, pedido de baja y pedido de plan. */
 import { hasKey, t, tk } from "@yvy/shared";
-import { C, clip, renderLayout } from "../layout";
+import { P, clip, renderLayout } from "../layout";
 import { base, longDate, type EmailMessage } from "../message";
-import { keyValue, kpiRow, progress, sectionTitle, type Kpi } from "../widgets";
+import { button, chip, compare, darkStats, gap, h2, heroTitle, keyValue, type Stat } from "../widgets";
 
 interface InternalInput {
   subject: string;
   title: string;
   lead: string;
   rows: [string, string][];
-  kpis?: Kpi[];
-  extra?: ReturnType<typeof progress>[];
+  stats?: Stat[];
+  /** HTML extra de la tarjeta, sobre la tabla de datos. */
+  extra?: string;
   appUrl: string;
 }
 
-/** Plantilla sobria compartida: banda en surco, cifras si hay, tabla de datos y botón al panel interno. */
+/** Plantilla sobria compartida: panel con el titular del evento, tabla de datos y botón al panel interno. */
 function internalEmail(i: InternalInput): EmailMessage {
   const rows = i.rows.map(([k, v]): [string, string] => [k, clip(v, 500)]);
   const url = `${base(i.appUrl)}/interno`;
   const html = renderLayout({
     subject: i.subject,
     preheader: i.lead,
-    band: longDate(Date.now(), "America/Asuncion"),
-    strip: { color: C.furrow, text: t("email.common.bandInternal"), dark: true },
-    title: i.title,
-    lead: i.lead,
-    blocks: [...(i.kpis?.length ? [kpiRow(i.kpis)] : []), ...(i.extra ?? []), sectionTitle(i.title), keyValue(rows)],
-    cta: { label: t("email.internal.open"), url },
+    place: longDate(Date.now(), "America/Asuncion"),
+    hero: heroTitle(chip(t("email.common.bandInternal"), "neutral"), i.title, i.lead) + (i.stats?.length ? gap(22) + darkStats(i.stats) : ""),
+    body: `${i.extra ?? ""}${rows.length ? h2(t("email.internal.data")) + keyValue(rows) : ""}${button(url, t("email.internal.open"))}`,
     footer: t("email.common.footerInternal"),
   });
   const text = [i.title, i.lead, "", ...rows.map(([k, v]) => `${k}: ${v}`), "", `${t("email.internal.open")}: ${url}`].join("\n");
@@ -40,9 +38,9 @@ export function usageEmail(i: { rows: { metric: string; pct: number }[]; appUrl:
     subject: t("email.internal.usageSubject"),
     title: t("email.internal.usageTitle"),
     lead: t("email.internal.usageLead"),
-    rows: i.rows.map((r): [string, string] => [label(r.metric), t("email.internal.usageUsed", { pct: r.pct })]),
-    kpis: i.rows.map((r) => ({ label: label(r.metric), value: String(r.pct), unit: "%" })),
-    extra: i.rows.map((r) => progress({ label: label(r.metric), display: `${r.pct} %`, value: r.pct, max: 100, color: r.pct >= 90 ? C.alert : C.wheat })),
+    rows: [],
+    stats: i.rows.map((r) => ({ label: label(r.metric), value: `${r.pct} %` })),
+    extra: `${h2(t("email.internal.usageBars"))}${compare(i.rows.map((r) => ({ label: label(r.metric), value: r.pct, color: r.pct >= 90 ? P.alert : P.wheat, text: `${r.pct} %` })))}${gap(24)}`,
     appUrl: i.appUrl,
   });
 }
@@ -62,7 +60,7 @@ export function trialRequestEmail(i: {
     subject: t("trial-requests.ops.subject", { name: clip(i.name, 80) }),
     title: t("email.internal.trialTitle"),
     lead: t("email.internal.trialLead"),
-    kpis: [
+    stats: [
       { label: t("email.internal.hectares"), value: i.hectares },
       { label: t("email.internal.employees"), value: i.employees },
     ],
@@ -104,9 +102,9 @@ export function planRequestEmail(i: {
   note?: string | null;
   appUrl: string;
 }): EmailMessage {
-  const kpis: Kpi[] = [];
-  if (i.maxHa) kpis.push({ label: t("email.internal.maxHa"), value: String(i.maxHa), unit: "ha" });
-  if (i.maxUsers) kpis.push({ label: t("email.internal.maxUsers"), value: String(i.maxUsers) });
+  const stats: Stat[] = [];
+  if (i.maxHa) stats.push({ label: t("email.internal.maxHa"), value: `${i.maxHa} ha` });
+  if (i.maxUsers) stats.push({ label: t("email.internal.maxUsers"), value: String(i.maxUsers) });
   const rows: [string, string][] = [
     [t("email.internal.org"), i.orgName],
     [t("email.internal.orgId"), i.orgId],
@@ -119,7 +117,7 @@ export function planRequestEmail(i: {
     title: t("email.internal.planTitle"),
     lead: t("email.internal.planLead"),
     rows,
-    kpis,
+    stats,
     appUrl: i.appUrl,
   });
 }

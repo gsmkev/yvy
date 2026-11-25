@@ -76,7 +76,6 @@ export async function weeklyReportJob(db: DB, env: Bindings, deps: JobDeps, farm
     rainMm: rain?.mm != null ? Math.round(rain.mm) : null,
     alerts: alerts.map((a) => a.summary),
     prevRecords: null,
-    prevRainMm: null,
     rainDaily: [],
     tasksDone: 0,
     tasksTotal: 0,

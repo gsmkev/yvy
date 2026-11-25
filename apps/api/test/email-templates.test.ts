@@ -67,7 +67,7 @@ describe("plantillas de correo", () => {
     expect(m.html.startsWith("<!doctype html>")).toBe(true);
     expect(m.html).toContain('<html lang="es"');
     expect(m.html).toContain("<meta charset");
-    expect(m.html).toContain("prefers-color-scheme: dark");
+    expect(m.html).toContain("prefers-color-scheme:dark");
     expect(m.html).toContain(`<title>${m.subject.replace(/'/g, "&#39;")}</title>`);
     expect(m.text.length).toBeGreaterThan(20);
     expect(Buffer.byteLength(m.html)).toBeLessThan(100_000);

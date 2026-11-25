@@ -6,6 +6,7 @@ import { and, asc, eq, gte, inArray, isNotNull, sql } from "drizzle-orm";
 import { inQuietHours, localTime, parseNotificationPrefs, t } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import { chunkForParams, runBatch, type DB, type Stmt } from "../db/client";
+import { loadAlertContexts } from "./alert-context";
 import { alertEmail, mentionEmail, sendEmailBatch, type EmailMessage } from "../lib/email";
 import type { Bindings } from "../types";
 
@@ -181,7 +182,7 @@ async function emailAlerts<P extends AlertNotice>(
   fetchFn: typeof fetch,
   now: number,
   emails: P[],
-  build: (p: P) => EmailMessage,
+  build: (rows: P[]) => Promise<EmailMessage[]>,
   out: Outcome,
 ) {
   if (!emails.length) return;
@@ -190,7 +191,8 @@ async function emailAlerts<P extends AlertNotice>(
   out.sent.push(...emails.filter((e) => !e.email).map((e) => e.id));
   if (!toSend.length) return;
   try {
-    await sendEmailBatch(env, toSend.map((e) => ({ to: e.email!, message: build(e) })), fetchFn);
+    const messages = await build(toSend);
+    await sendEmailBatch(env, toSend.map((e, i) => ({ to: e.email!, message: messages[i]! })), fetchFn);
     out.sent.push(...toSend.map((e) => e.id));
   } catch {
     out.failed.push(...toSend.map((e) => e.id));
@@ -220,6 +222,9 @@ export async function sendPending(
       validTo: s.alerts.validTo,
       details: s.alerts.details,
       farmId: s.alerts.farmId,
+      plotIds: s.alerts.plotIds,
+      district: s.farms.district,
+      department: s.farms.department,
       farmName: s.farms.name,
       tz: s.farms.timezone,
       alertId: s.alerts.id,
@@ -243,23 +248,28 @@ export async function sendPending(
   const out: Outcome = { sent: [], failed: [], cleanup: [] };
   const text = { title, body };
   await pushAlerts(db, fetchFn, pending.filter((p) => p.channel === "push"), text, out);
-  const message = (p: (typeof pending)[number]) =>
-    alertEmail({
-      kind: p.kind,
-      severity: p.severity,
-      probability: p.probability,
-      summary: p.summary,
-      details: p.details,
-      validFrom: p.validFrom,
-      validTo: p.validTo,
-      farmId: p.farmId,
-      farmName: p.farmName,
-      tz: p.tz,
-      source: p.source,
-      appUrl: env.APP_URL,
-      context: { now, days: [], hours: [], plots: [], rainDaily: [] },
-    });
-  await emailAlerts(db, env, fetchFn, now, pending.filter((p) => p.channel === "email"), message, out);
+  const messages = async (rows: typeof pending) => {
+    const contexts = await loadAlertContexts(db, rows, now);
+    return rows.map((p) =>
+      alertEmail({
+        kind: p.kind,
+        severity: p.severity,
+        probability: p.probability,
+        summary: p.summary,
+        details: p.details,
+        validFrom: p.validFrom,
+        validTo: p.validTo,
+        farmId: p.farmId,
+        farmName: p.farmName,
+        place: p.district ?? p.department,
+        tz: p.tz,
+        source: p.source,
+        appUrl: env.APP_URL,
+        context: contexts.get(p.id),
+      }),
+    );
+  };
+  await emailAlerts(db, env, fetchFn, now, pending.filter((p) => p.channel === "email"), messages, out);
   return finish(db, pending, out.sent, out.failed, now, out.cleanup);
 }
 

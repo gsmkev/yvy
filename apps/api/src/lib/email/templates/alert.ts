@@ -1,9 +1,9 @@
-/** Correo de aviso agronómico: banda, franja de severidad, titular con el dato, cifras, gráficos del tipo y "qué hacer". */
+/** Correo de aviso agronómico: panel oscuro con el dato, widgets del tipo en la tarjeta, "qué hacer" y botón al mapa. */
 import { ATTRIBUTION, localDate, t, tk } from "@yvy/shared";
-import { C, clip, renderLayout } from "../layout";
-import { base, dm, longDate, settingsUrl, unsubscribe, type EmailMessage } from "../message";
-import { kpiRow } from "../widgets";
-import { KIND_COMPOSERS, todoBlock, type AlertContext, type Composition } from "./alert-kinds";
+import { clip, renderLayout } from "../layout";
+import { base, dm, settingsUrl, unsubscribe, type EmailMessage } from "../message";
+import { bullets, button, chip, gap, h2, heroTitle, type Tone } from "../widgets";
+import { KIND_COMPOSERS, type AlertContext, type Composition } from "./alert-kinds";
 import { obj } from "./data";
 
 export type { AlertContext, DayForecast, HourForecast, PlotInfo } from "./alert-kinds";
@@ -30,11 +30,7 @@ export interface AlertEmailInput {
   context?: AlertContext;
 }
 
-const STRIP = {
-  warning: { color: C.alert, dark: true },
-  watch: { color: C.wheat, dark: false },
-  info: { color: C.sky, dark: false },
-} as const;
+const TONE: Record<AlertEmailInput["severity"], Tone> = { warning: "bad", watch: "warn", info: "neutral" };
 const FORECAST_KINDS = new Set(["frost", "excess_rain", "heat_stress", "rust_risk"]);
 
 /** Crédito de los datos en el pie: una sola atribución por aviso. */
@@ -54,32 +50,30 @@ function compose(i: AlertEmailInput, ctx: AlertContext): Composition & { headlin
   return {
     headline: made?.headline ?? tk(`email.alert.title_${i.kind}`),
     lead: made?.lead ?? (clip(i.summary, 400) || range),
-    kpis: made?.kpis ?? [],
-    blocks: made?.blocks ?? [],
+    hero: made?.hero ?? [],
+    body: made?.body ?? [],
   };
 }
 
-/** Aviso agronómico completo: franja y acento por severidad, widgets por tipo y botón al mapa. */
+/** Aviso agronómico completo: pastilla de severidad, panel con el dato, widgets por tipo y botón al mapa. */
 export function alertEmail(i: AlertEmailInput): EmailMessage {
   const farm = clip(i.farmName, 120);
   const ctx = i.context ?? { now: Date.now(), days: [], hours: [], plots: [], rainDaily: [] };
   const c = compose(i, ctx);
   const subject = t("email.alert.subject", { headline: c.headline, farm });
-  const prob = i.probability ? tk(`email.alert.prob_${i.probability}`) : "";
-  const strip = [tk(`ui.severity.${i.severity}`), prob].filter(Boolean).join(", ");
+  const prob = i.probability ? `, ${tk(`email.alert.prob_${i.probability}`)}` : "";
+  const label = `${tk(`ui.severity.${i.severity}`)}: ${tk(`email.alert.title_${i.kind}`).toLowerCase()}${prob}`;
   const url = `${base(i.appUrl)}/estancias/${encodeURIComponent(i.farmId)}`;
   const todo = [1, 2, 3].map((n) => tk(`email.alert.todo_${i.kind}_${n}`));
+  const todoTitle = tk(`email.alert.todoTitle_${i.kind}`);
   const creditLine = credit(i);
+  if (c.body[0] === gap(24)) c.body.shift();
   const html = renderLayout({
     subject,
     preheader: todo[0]!,
-    band: t("email.common.bandAlert", { date: longDate(ctx.now, i.tz) }),
-    strip: { text: strip, ...STRIP[i.severity] },
-    context: i.place ? `${farm}, ${clip(i.place, 60)}` : farm,
-    title: c.headline,
-    lead: c.lead,
-    blocks: [...(c.kpis.length ? [kpiRow(c.kpis)] : []), ...c.blocks, todoBlock(i.kind)],
-    cta: { label: t("email.common.viewMap"), url },
+    place: i.place ? `${farm}, ${clip(i.place, 60)}` : farm,
+    hero: heroTitle(chip(label, TONE[i.severity]), c.headline, c.lead) + c.hero.join(""),
+    body: `${c.body.join("")}${c.body.length ? gap(24) : ""}${h2(todoTitle, "0 0 6px")}${bullets(todo)}${button(url, t("email.common.viewMap"))}`,
     footer: t("email.common.footerAlerts", { farm }),
     settings: { label: t("email.common.settings"), url: settingsUrl(i.appUrl) },
     credit: creditLine,
@@ -88,9 +82,7 @@ export function alertEmail(i: AlertEmailInput): EmailMessage {
     `${c.headline}: ${farm}`,
     "",
     ...(c.lead ? [c.lead, ""] : []),
-    ...c.kpis.map((k) => `${k.label}: ${k.value}${k.unit ? ` ${k.unit}` : ""}`),
-    "",
-    tk(`email.alert.todoTitle_${i.kind}`),
+    todoTitle,
     ...todo.map((l) => `- ${l}`),
     "",
     `${t("email.common.viewMap")}: ${url}`,

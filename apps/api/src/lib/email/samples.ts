@@ -31,7 +31,7 @@ const PLOTS = [
 ];
 
 /** Pronóstico, horas, lotes y lluvia observada de ejemplo, con una noche fría y un día de lluvia fuerte. */
-function sampleContext(now: number): AlertContext {
+function sampleContext(now: number, hot = false): AlertContext {
   const iso = (n: number) => localDate(now + n * DAY, TZ);
   const rain = [18, 38, 33, 6, 0, 2, 12];
   const tmax = [27, 24, 22, 25, 28, 30, 31];
@@ -43,7 +43,7 @@ function sampleContext(now: number): AlertContext {
     hours: Array.from({ length: 48 }, (_, h) => {
       const at = start + h * 3_600_000;
       const local = (new Date(at).getUTCHours() + 21) % 24;
-      return { at, tempC: Math.round((7 + 8 * Math.sin(((local - 9) / 24) * 2 * Math.PI)) * 10) / 10, humidityPct: 70 };
+      return { at, tempC: Math.round(((hot ? 31 : 7) + 8 * Math.sin(((local - 9) / 24) * 2 * Math.PI)) * 10) / 10, humidityPct: 70 };
     }),
     plots: PLOTS,
     rainDaily: Array.from({ length: 30 }, (_, i) => ({ date: iso(i - 30), mm: i % 7 === 2 ? 3 : i % 11 === 0 ? 5 : 0 })),
@@ -137,7 +137,8 @@ function alertSamples(appUrl: string, now: number): AlertEmailInput[] {
       details: { type: "open", from: day(-12), to: day(5) },
     },
   };
-  return ALERT_KINDS.map((k) => ({ ...base, probability: k === "frost" ? "high" : k === "excess_rain" ? "medium" : null, ...by[k] }));
+  const hot = sampleContext(now, true);
+  return ALERT_KINDS.map((k) => ({ ...base, context: k === "heat_stress" ? hot : base.context, probability: k === "frost" ? "high" : k === "excess_rain" ? "medium" : null, ...by[k] }));
 }
 
 /** Parte semanal de ejemplo. */
@@ -151,7 +152,6 @@ function weeklySample(appUrl: string, now: number): Omit<WeeklyEmailInput, "exte
     authors: 5,
     prevRecords: 104,
     rainMm: 34,
-    prevRainMm: 12,
     rainDaily: [0, 0, 22, 8, 0, 4, 0].map((mm, n) => ({ date: localDate(now - (7 - n) * DAY, TZ), mm })),
     alerts: ["Posible helada: mínima de -1,0 °C", "Exceso de lluvia: 89 mm pronosticados (72 h)"],
     overdueTasks: 3,
@@ -166,8 +166,8 @@ function weeklySample(appUrl: string, now: number): Omit<WeeklyEmailInput, "exte
       { kind: "note", n: 9 },
     ],
     worsened: [
-      { name: "Lote 4 Soja", crop: "Soja", kind: "crop", from: 0.72, to: 0.58 },
-      { name: "Lote 3 Trigo", crop: "Trigo", kind: "crop", from: 0.66, to: 0.59 },
+      { name: "Lote 4 Soja", from: 0.72, to: 0.58 },
+      { name: "Lote 3 Trigo", from: 0.66, to: 0.42 },
     ],
     hasPdf: true,
     appUrl,

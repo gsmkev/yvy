@@ -5,6 +5,7 @@ import { useParams } from "@tanstack/react-router";
 import { fmtDate, fmtHa, fmtMm, fmtNdvi } from "../lib/format";
 import { DataTable, SectionHead, Spinner, Stat, type Column, StatRow } from "../components/ui";
 import { t, tk } from "../lib/i18n";
+import { cropName } from "../lib/crops";
 import { NotFound } from "../components/NotFound";
 import { PageExport } from "../components/PageExport";
 import { ATTRIBUTION } from "@yvy/shared";
@@ -46,7 +47,7 @@ export function SharedPage() {
   const d = q.data;
   const cols: Column<SharedPlot>[] = [
     { id: "plot", header: t("ui.common.plot"), cell: (p) => p.name },
-    { id: "crop", header: t("ui.common.crop"), cell: (p) => <span className="capitalize">{p.kind === "pasture" ? t("ui.common.pasture") : (p.crop ?? "—")}</span>, hideBelow: "sm" },
+    { id: "crop", header: t("ui.common.crop"), cell: (p) => <span>{p.kind === "pasture" ? t("ui.common.pasture") : p.crop ? cropName(p.crop) : "—"}</span>, hideBelow: "sm" },
     { id: "area", header: t("ui.common.area"), align: "right", cell: (p) => fmtHa(p.areaHa) },
     {
       id: "ndvi",

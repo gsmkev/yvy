@@ -5,7 +5,6 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { get } from "../lib/api";
 import { describeData } from "../lib/exports";
 import { fmtDateTime } from "../lib/format";
-import { recordColor } from "../lib/recordColors";
 import { t, tk } from "../lib/i18n";
 import { isAudioMime, recordShareText } from "@yvy/shared";
 import { fetchRecordsPage, useFarms, useMe, type RecordFilters } from "../lib/queries";
@@ -55,11 +54,6 @@ export function RecordsList({ filters, onRows }: { filters: RecordFilters; /** S
                 </span>
                 <span className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-x-3 text-xs leading-4 text-tinta-2">
                   <span className="flex items-center gap-1.5 truncate text-surco">
-                    <span
-                      aria-hidden
-                      className="size-2 shrink-0 rounded-full border border-surco/40"
-                      style={{ background: recordColor(r.kind) }}
-                    />
                     <span className="truncate">{tk(`record-kinds.kind.${r.kind}`)}</span>
                   </span>
                   <span className="truncate">{r.authorName ?? "—"}</span>

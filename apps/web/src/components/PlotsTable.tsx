@@ -1,22 +1,17 @@
 /** Tabla de lotes con búsqueda, orden y vigor por lote. */
 import { useMemo, useState } from "react";
 import type { Plot } from "../lib/types";
-import { BRAND } from "@yvy/shared";
 import { areaUnitLabel, fmtAreaValue, fmtDay, fmtNdvi } from "../lib/format";
 import { t } from "../lib/i18n";
+import { cropName } from "../lib/crops";
 import { kindOf, sortPlots } from "../lib/plotsSort";
 import { DataTable, Input, type Column } from "./ui";
-import { ndviColor, vigorDrop } from "../lib/vigor";
+import { vigorDrop } from "../lib/vigor";
 
-/** Muestra del color de la rampa NDVI junto al valor; sin pasadas procesadas, un guion. */
+/** Vigor del lote como número; sin pasadas procesadas, un guion. El color de la rampa queda para la capa del mapa. */
 export function Vigor({ value }: { value: number | null }) {
   if (value === null) return <span className="text-tinta-2">—</span>;
-  return (
-    <span className="num inline-flex items-center justify-end gap-2">
-      <span className="h-3 w-3 shrink-0 rounded-sm" style={{ background: ndviColor(value) }} aria-hidden />
-      {fmtNdvi(value)}
-    </span>
-  );
+  return <span className="num">{fmtNdvi(value)}</span>;
 }
 
 /** Sin mayúsculas ni tildes, para que "soja" encuentre "Soja" y "Ñandú" a "nandu". */
@@ -61,14 +56,10 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
         const d = vigorDrop(p);
         return (
           <>
-            <button className="flex cursor-pointer items-center gap-2.5 text-left font-medium" aria-label={p.name}>
-              <span
-                className="h-3 w-3 shrink-0 rounded-sm"
-                style={{ background: p.color ?? (p.kind === "pasture" ? BRAND.trigo : BRAND.soja) }}
-              />
+            <button className="cursor-pointer text-left font-medium" aria-label={p.name}>
               {p.name}
             </button>
-            {d && <p className="num mt-0.5 pl-[22px] text-xs font-normal text-peligro">{dropText(d)}</p>}
+            {d && <p className="num mt-0.5 text-xs font-normal text-peligro">{dropText(d)}</p>}
           </>
         );
       },
@@ -78,7 +69,7 @@ export function PlotsTable({ plots, onSelect }: { plots: Plot[]; onSelect: (id: 
       header: t("ui.common.kind"),
       sort: (a, b) => collator.compare(kindOf(a), kindOf(b)),
       cell: (p) => (
-        <span className="text-tinta-2">{p.kind === "pasture" ? t("ui.common.pasture") : (p.crop ?? t("ui.common.crop"))}</span>
+        <span className="text-tinta-2">{p.kind === "pasture" ? t("ui.common.pasture") : (p.crop ? cropName(p.crop) : t("ui.common.crop"))}</span>
       ),
     },
     { id: "area", header: areaUnitLabel(), align: "right", sort: (a, b) => a.areaHa - b.areaHa, cell: (p) => fmtAreaValue(p.areaHa) },

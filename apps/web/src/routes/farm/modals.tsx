@@ -99,8 +99,8 @@ export function ShapeEditBar({
         {t("ui.common.area")}: <strong className="font-semibold">{fmtHa(area)}</strong>
         {shape && <span className="text-lino/70"> · {t("ui.plot.editWas", { area: fmtHa(areaHa(JSON.parse(original) as Polygon | MultiPolygon)) })}</span>}
       </p>
-      {problem && <p className="font-medium text-trigo">{tk(`ui.geom.error_${problem}`)}</p>}
-      {save.error && <p className="font-medium text-trigo">{save.error instanceof Error ? save.error.message : String(save.error)}</p>}
+      {problem && <p className="font-medium text-peligro">{tk(`ui.geom.error_${problem}`)}</p>}
+      {save.error && <p className="font-medium text-peligro">{save.error instanceof Error ? save.error.message : String(save.error)}</p>}
       <div className="flex gap-4 font-medium">
         <button
           className="cursor-pointer underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"

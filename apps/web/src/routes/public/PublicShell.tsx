@@ -29,7 +29,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
 /** Enlaces a términos y privacidad. */
 export function LegalLinks({ className = "" }: { className?: string }) {
   return (
-    <nav aria-label="Legal" className={`flex gap-x-5 gap-y-1 whitespace-nowrap ${className}`}>
+    <nav aria-label="Legal" className={`flex flex-wrap gap-x-5 gap-y-1 ${className}`}>
       <Link to="/terminos" className="underline-offset-4 hover:text-surco hover:underline">
         {t(PUBLIC_FOOTER.terms)}
       </Link>

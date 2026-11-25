@@ -1,5 +1,5 @@
 /** Tabla de datos genérica con columnas ordenables, estado vacío y, bajo 640 px, lista de tarjetas en lugar de tabla. */
-import { Fragment, isValidElement, useState, type ReactNode } from "react";
+import { isValidElement, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { useIsPhone } from "./useMediaQuery";
 
@@ -130,12 +130,11 @@ empty?: ReactNode;
             <div className="min-w-0 flex-1">
               {title && <div className="text-sm font-medium break-words">{title.cell(r)}</div>}
               {rest.length > 0 && (
-                <div className="mt-0.5 flex flex-wrap gap-x-1.5 text-meta text-tinta-2">
-                  {rest.map((c, i) => (
-                    <Fragment key={c.id}>
-                      {i > 0 && <span aria-hidden>·</span>}
-                      <span className="break-words">{c.cell(r)}</span>
-                    </Fragment>
+                <div className="mt-0.5 flex flex-wrap gap-x-3 text-meta text-tinta-2">
+                  {rest.map((c) => (
+                    <span key={c.id} className="break-words">
+                      {c.cell(r)}
+                    </span>
                   ))}
                 </div>
               )}

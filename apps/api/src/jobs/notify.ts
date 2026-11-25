@@ -7,7 +7,7 @@ import { inQuietHours, localTime, parseNotificationPrefs, t } from "@yvy/shared"
 import * as s from "@yvy/shared/schema";
 import { chunkForParams, runBatch, type DB, type Stmt } from "../db/client";
 import { loadAlertContexts } from "./alert-context";
-import { alertEmail, mentionEmail, sendEmailBatch, type EmailMessage } from "../lib/email";
+import { alertEmail, isDeliverable, mentionEmail, sendEmailBatch, type EmailMessage } from "../lib/email";
 import type { Bindings } from "../types";
 
 /** Tope diario de emails de notificaciones (Resend gratis: 100/día; el resto queda para códigos y partes). */
@@ -187,8 +187,8 @@ async function emailAlerts<P extends AlertNotice>(
 ) {
   if (!emails.length) return;
   const room = await emailRoom(db, now);
-  const toSend = emails.filter((e) => e.email).slice(0, room);
-  out.sent.push(...emails.filter((e) => !e.email).map((e) => e.id));
+  const toSend = emails.filter((e) => isDeliverable(e.email)).slice(0, room);
+  out.sent.push(...emails.filter((e) => !isDeliverable(e.email)).map((e) => e.id));
   if (!toSend.length) return;
   try {
     const messages = await build(toSend);
@@ -319,8 +319,8 @@ export async function sendMentions(
   const emails = pending.filter((p) => p.channel === "email");
   if (emails.length) {
     const room = await emailRoom(db, now);
-    sent.push(...emails.filter((e) => !e.email).map((e) => e.id));
-    const toSend = emails.filter((x) => x.email).slice(0, room);
+    sent.push(...emails.filter((e) => !isDeliverable(e.email)).map((e) => e.id));
+    const toSend = emails.filter((x) => isDeliverable(x.email)).slice(0, room);
     if (toSend.length) {
       try {
         await sendEmailBatch(

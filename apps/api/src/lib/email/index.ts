@@ -27,6 +27,15 @@ const payload = (env: Bindings, to: string, m: EmailMessage) => ({
   ...(m.headers ? { headers: m.headers } : {}),
 });
 
+/**
+ * Dominios reservados que nunca reciben correo (RFC 2606 y 6761), como los usuarios de la demo (`.invalid`).
+ * `.test` queda afuera: el seed local lo usa y en desarrollo el código se imprime en la consola.
+ */
+const RESERVED = /(\.(invalid|example|localhost)|@example\.(com|net|org))$/i;
+
+/** Si la dirección puede recibir correo; las de dominios reservados se descartan para no generar rebotes. */
+export const isDeliverable = (to: string | null | undefined): to is string => !!to && !RESERVED.test(to.trim());
+
 /** Sin clave de Resend (desarrollo) el correo se imprime; en producción nunca va a la consola porque puede llevar un código de ingreso. */
 const devPrint = (env: Bindings, to: string, m: EmailMessage, files = ""): boolean => {
   if (env.RESEND_API_KEY) return false;
@@ -38,6 +47,7 @@ const devPrint = (env: Bindings, to: string, m: EmailMessage, files = ""): boole
 export async function sendEmail(env: Bindings, to: string, message: EmailMessage, attachments: EmailAttachment[] = []): Promise<void> {
   const files = attachments.length ? `\n[adjuntos: ${attachments.map((a) => a.filename).join(", ")}]` : "";
   if (devPrint(env, to, message, files)) return;
+  if (!isDeliverable(to)) return;
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
@@ -52,6 +62,8 @@ export async function sendEmailBatch(
   items: { to: string; message: EmailMessage }[],
   fetchFn: typeof fetch = fetch,
 ): Promise<void> {
+  items = items.filter((it) => isDeliverable(it.to));
+  if (!items.length) return;
   if (!env.RESEND_API_KEY) {
     for (const it of items) devPrint(env, it.to, it.message);
     return;

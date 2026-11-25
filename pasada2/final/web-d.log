@@ -1,0 +1,115 @@
+d ok campo/inicio  
+d ok campo/inicio--menu-cuenta  
+d ok campo/estancia-nueva  
+d ok campo/registros (+full) 
+d ok campo/registros--filtros-guardados  
+d ok campo/registros--exportar  
+d ok campo/calendario  
+d ok campo/avisos  
+d ok campo/para-revisar  
+d ok campo/comparar  
+d ok campo/404  
+d ok estancia/estancia-plots (+full) 
+d ok estancia/estancia-plots--capas  
+d ok estancia/estancia-plots--mas-acciones  
+d ok estancia/estancia-plots--cambiar-estancia  
+d ok estancia/estancia-seasons (+full) 
+d ok estancia/estancia-seasons--dialogo-nueva-campana  
+d ok estancia/estancia-products (+full) 
+d ok estancia/estancia-products--dialogo-nuevo-producto  
+d ok estancia/estancia-products--dialogo-nueva-receta  
+d ok estancia/estancia-records (+full) 
+d ok estancia/estancia-tasks (+full) 
+d ok estancia/estancia-tasks--dialogo-nueva-tarea  
+d ok estancia/estancia-climate (+full) 
+d ok estancia/estancia-alerts  
+d ok estancia/estancia-herd (+full) 
+d ok estancia/estancia-agro (+full) 
+d ok estancia/estancia-agro--dialogo-cargar-un-analisis  
+d ok estancia/estancia-agro--dialogo-cargar-una-entrega  
+d ok estancia/estancia-lote-elegido (+full) 
+d ok estancia/estancia-lote-elegido--dialogo-anotar-riego  
+d ok estancia/estancia-2 (+full) 
+d ok estancia/pluviometros (+full) 
+d ok estancia/riesgo (+full) 
+d ok estancia/eudr (+full) 
+d ok estancia/cambios  
+d ok informes/parte (+full) 
+d ok informes/informes-estancia  
+d ok tareas/tareas (+full) 
+d ok tareas/tareas--dialogo-nueva-tarea  
+d ok sanidad/sanidad  
+d ok equipo/equipo  
+d ok equipo/equipo--dialogo-agregar-persona  
+d ok equipo/clientes  
+d ok cuenta/cuenta  
+d ok cuenta/formularios  
+d ok cuenta/ayuda (+full) 
+d ok cuenta/api-publica  
+d ok cuenta/auditoria-cambios  
+d ok laboratorio/laboratorio  
+d ok laboratorio/lab-animals  
+d ok laboratorio/lab-stand  
+d ok laboratorio/lab-weeds  
+d ok laboratorio/lab-ask  
+d ok laboratorio/lab-summary  
+d ok laboratorio/lab-rust  
+d ok laboratorio/lab-hail  
+d ok laboratorio/lab-infra  
+d ok laboratorio/lab-yield  
+d ok laboratorio/lab-advice  
+d ok interno/interno  !! HTTP 403 GET /admin/metrics ; console: Failed to load resource: the server responded with a status of 403 (Forbidden)
+d ok administracion/admin-overview  
+d ok administracion/admin-products (+full) 
+d ok administracion/admin-products--dialogo-nuevo-producto  
+d ok administracion/admin-parties  
+d ok administracion/admin-parties--dialogo-nuevo-proveedor-o-cliente  
+d ok administracion/admin-machines  
+d ok administracion/admin-machines--dialogo-nueva-maquina  
+d ok administracion/admin-warehouses  
+d ok administracion/admin-warehouses--dialogo-nuevo-deposito  
+d ok administracion/admin-purchases  
+d ok administracion/admin-purchases--dialogo-nueva-compra  
+d ok administracion/admin-grain  
+d ok administracion/admin-grain--dialogo-nuevo-contrato  
+d ok administracion/admin-grain--dialogo-cargar-entrega  
+d ok administracion/admin-cattle  
+d ok administracion/admin-cattle--dialogo-nueva-compra-o-venta  
+d ok administracion/admin-cash  
+d ok administracion/admin-cash--dialogo-nueva-cuenta  
+d ok administracion/admin-stock (+full) 
+d ok administracion/admin-stock--dialogo-registrar-compra  
+d ok administracion/admin-minstock  
+d ok administracion/admin-minstock--dialogo-cargar-minimo  
+d ok administracion/admin-maintenance  
+d ok administracion/admin-maintenance--dialogo-anotar-servicio-o-reparacion  
+d ok administracion/admin-maintenance--dialogo-anotar-servicio  
+d ok administracion/admin-labor  
+d ok administracion/admin-labor--dialogo-cargar-datos-de-una-maquina  
+d ok administracion/admin-staff (+full) 
+d ok administracion/admin-fuel  
+d ok administracion/admin-fuel--dialogo-cargar-combustible  
+d ok administracion/admin-feedlot  
+d ok administracion/admin-feedlot--dialogo-anotar-suministro  
+d ok administracion/admin-feedlot--dialogo-nueva-racion  
+d ok administracion/admin-orders  
+d ok administracion/admin-orders--dialogo-nueva-orden  
+d ok administracion/admin-budget (+full) 
+d ok administracion/admin-budget--dialogo-nueva-linea-de-presupuesto  
+d ok administracion/admin-results (+full) 
+d ok administracion/admin-contractors  
+d ok administracion/admin-contractors--dialogo-nuevo-contratista  
+d ok administracion/admin-accountant  
+d ok administracion/admin-export (+full) 
+d ok administracion/admin-export--dialogo-cargar-iva  
+d ok administracion/admin-rates (+full) 
+d ok administracion/admin-costs (+full) 
+d ok administracion/admin-costs--dialogo-nuevo-costo-o-venta  
+d ok publico/ingresar  
+d ok publico/ingresar-registro  
+d ok publico/terminos (+full) 
+d ok publico/privacidad (+full) 
+d ok publico/estado  
+d ok publico/api-docs (+full) 
+d ok publico/compartido-token-invalido  !! HTTP 404 GET /public/shared/token-de-prueba
+d ok publico/informe-lead-invalido  !! HTTP 404 GET /public/leads/0190d000-0000-7000-8000-000000000000/firma

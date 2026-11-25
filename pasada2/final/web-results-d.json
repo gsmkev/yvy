@@ -1,0 +1,1044 @@
+{
+ "campo/inicio": {
+  "mod": "campo",
+  "name": "inicio",
+  "file": "inicio",
+  "route": "/",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "campo/inicio--menu-cuenta": {
+  "mod": "campo",
+  "name": "inicio",
+  "file": "inicio--menu-cuenta",
+  "route": "/",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "campo/estancia-nueva": {
+  "mod": "campo",
+  "name": "estancia-nueva",
+  "file": "estancia-nueva",
+  "route": "/estancias/nueva",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "campo/registros": {
+  "mod": "campo",
+  "name": "registros",
+  "file": "registros",
+  "route": "/registros",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "campo/registros--filtros-guardados": {
+  "mod": "campo",
+  "name": "registros",
+  "file": "registros--filtros-guardados",
+  "route": "/registros",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "campo/registros--exportar": {
+  "mod": "campo",
+  "name": "registros",
+  "file": "registros--exportar",
+  "route": "/registros",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "campo/calendario": {
+  "mod": "campo",
+  "name": "calendario",
+  "file": "calendario",
+  "route": "/calendario",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "campo/avisos": {
+  "mod": "campo",
+  "name": "avisos",
+  "file": "avisos",
+  "route": "/avisos",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "campo/para-revisar": {
+  "mod": "campo",
+  "name": "para-revisar",
+  "file": "para-revisar",
+  "route": "/para-revisar",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "campo/comparar": {
+  "mod": "campo",
+  "name": "comparar",
+  "file": "comparar",
+  "route": "/comparar",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "campo/404": {
+  "mod": "campo",
+  "name": "404",
+  "file": "404",
+  "route": "/ruta-que-no-existe",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "estancia/estancia-plots": {
+  "mod": "estancia",
+  "name": "estancia-plots",
+  "file": "estancia-plots",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "estancia/estancia-plots--capas": {
+  "mod": "estancia",
+  "name": "estancia-plots",
+  "file": "estancia-plots--capas",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "estancia/estancia-plots--mas-acciones": {
+  "mod": "estancia",
+  "name": "estancia-plots",
+  "file": "estancia-plots--mas-acciones",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "estancia/estancia-plots--cambiar-estancia": {
+  "mod": "estancia",
+  "name": "estancia-plots",
+  "file": "estancia-plots--cambiar-estancia",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "estancia/estancia-seasons": {
+  "mod": "estancia",
+  "name": "estancia-seasons",
+  "file": "estancia-seasons",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "estancia/estancia-seasons--dialogo-nueva-campana": {
+  "mod": "estancia",
+  "name": "estancia-seasons",
+  "file": "estancia-seasons--dialogo-nueva-campana",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "estancia/estancia-products": {
+  "mod": "estancia",
+  "name": "estancia-products",
+  "file": "estancia-products",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "estancia/estancia-products--dialogo-nuevo-producto": {
+  "mod": "estancia",
+  "name": "estancia-products",
+  "file": "estancia-products--dialogo-nuevo-producto",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "estancia/estancia-products--dialogo-nueva-receta": {
+  "mod": "estancia",
+  "name": "estancia-products",
+  "file": "estancia-products--dialogo-nueva-receta",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "estancia/estancia-records": {
+  "mod": "estancia",
+  "name": "estancia-records",
+  "file": "estancia-records",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "estancia/estancia-tasks": {
+  "mod": "estancia",
+  "name": "estancia-tasks",
+  "file": "estancia-tasks",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "estancia/estancia-tasks--dialogo-nueva-tarea": {
+  "mod": "estancia",
+  "name": "estancia-tasks",
+  "file": "estancia-tasks--dialogo-nueva-tarea",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "estancia/estancia-climate": {
+  "mod": "estancia",
+  "name": "estancia-climate",
+  "file": "estancia-climate",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "estancia/estancia-alerts": {
+  "mod": "estancia",
+  "name": "estancia-alerts",
+  "file": "estancia-alerts",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "estancia/estancia-herd": {
+  "mod": "estancia",
+  "name": "estancia-herd",
+  "file": "estancia-herd",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "estancia/estancia-agro": {
+  "mod": "estancia",
+  "name": "estancia-agro",
+  "file": "estancia-agro",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "estancia/estancia-agro--dialogo-cargar-un-analisis": {
+  "mod": "estancia",
+  "name": "estancia-agro",
+  "file": "estancia-agro--dialogo-cargar-un-analisis",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "estancia/estancia-agro--dialogo-cargar-una-entrega": {
+  "mod": "estancia",
+  "name": "estancia-agro",
+  "file": "estancia-agro--dialogo-cargar-una-entrega",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "estancia/estancia-lote-elegido": {
+  "mod": "estancia",
+  "name": "estancia-lote-elegido",
+  "file": "estancia-lote-elegido",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001?lote=0190d000-0005-7000-8000-000000000001",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "estancia/estancia-lote-elegido--dialogo-anotar-riego": {
+  "mod": "estancia",
+  "name": "estancia-lote-elegido",
+  "file": "estancia-lote-elegido--dialogo-anotar-riego",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001?lote=0190d000-0005-7000-8000-000000000001",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "estancia/estancia-2": {
+  "mod": "estancia",
+  "name": "estancia-2",
+  "file": "estancia-2",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000002",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "estancia/pluviometros": {
+  "mod": "estancia",
+  "name": "pluviometros",
+  "file": "pluviometros",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001/pluviometros",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "estancia/riesgo": {
+  "mod": "estancia",
+  "name": "riesgo",
+  "file": "riesgo",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001/riesgo",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "estancia/eudr": {
+  "mod": "estancia",
+  "name": "eudr",
+  "file": "eudr",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001/eudr",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "estancia/cambios": {
+  "mod": "estancia",
+  "name": "cambios",
+  "file": "cambios",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001/cambios",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "informes/parte": {
+  "mod": "informes",
+  "name": "parte",
+  "file": "parte",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001/parte",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "informes/informes-estancia": {
+  "mod": "informes",
+  "name": "informes-estancia",
+  "file": "informes-estancia",
+  "route": "/estancias/0190d000-0004-7000-8000-000000000001/informes",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "tareas/tareas": {
+  "mod": "tareas",
+  "name": "tareas",
+  "file": "tareas",
+  "route": "/tareas",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "tareas/tareas--dialogo-nueva-tarea": {
+  "mod": "tareas",
+  "name": "tareas",
+  "file": "tareas--dialogo-nueva-tarea",
+  "route": "/tareas",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "sanidad/sanidad": {
+  "mod": "sanidad",
+  "name": "sanidad",
+  "file": "sanidad",
+  "route": "/sanidad",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "equipo/equipo": {
+  "mod": "equipo",
+  "name": "equipo",
+  "file": "equipo",
+  "route": "/equipo",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "equipo/equipo--dialogo-agregar-persona": {
+  "mod": "equipo",
+  "name": "equipo",
+  "file": "equipo--dialogo-agregar-persona",
+  "route": "/equipo",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "equipo/clientes": {
+  "mod": "equipo",
+  "name": "clientes",
+  "file": "clientes",
+  "route": "/clientes",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "cuenta/cuenta": {
+  "mod": "cuenta",
+  "name": "cuenta",
+  "file": "cuenta",
+  "route": "/cuenta",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "cuenta/formularios": {
+  "mod": "cuenta",
+  "name": "formularios",
+  "file": "formularios",
+  "route": "/formularios",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "cuenta/ayuda": {
+  "mod": "cuenta",
+  "name": "ayuda",
+  "file": "ayuda",
+  "route": "/ayuda",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "cuenta/api-publica": {
+  "mod": "cuenta",
+  "name": "api-publica",
+  "file": "api-publica",
+  "route": "/api-publica",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "cuenta/auditoria-cambios": {
+  "mod": "cuenta",
+  "name": "auditoria-cambios",
+  "file": "auditoria-cambios",
+  "route": "/cambios",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "laboratorio/laboratorio": {
+  "mod": "laboratorio",
+  "name": "laboratorio",
+  "file": "laboratorio",
+  "route": "/laboratorio",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "laboratorio/lab-animals": {
+  "mod": "laboratorio",
+  "name": "lab-animals",
+  "file": "lab-animals",
+  "route": "/laboratorio/animals",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "laboratorio/lab-stand": {
+  "mod": "laboratorio",
+  "name": "lab-stand",
+  "file": "lab-stand",
+  "route": "/laboratorio/stand",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "laboratorio/lab-weeds": {
+  "mod": "laboratorio",
+  "name": "lab-weeds",
+  "file": "lab-weeds",
+  "route": "/laboratorio/weeds",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "laboratorio/lab-ask": {
+  "mod": "laboratorio",
+  "name": "lab-ask",
+  "file": "lab-ask",
+  "route": "/laboratorio/ask",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "laboratorio/lab-summary": {
+  "mod": "laboratorio",
+  "name": "lab-summary",
+  "file": "lab-summary",
+  "route": "/laboratorio/summary",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "laboratorio/lab-rust": {
+  "mod": "laboratorio",
+  "name": "lab-rust",
+  "file": "lab-rust",
+  "route": "/laboratorio/rust",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "laboratorio/lab-hail": {
+  "mod": "laboratorio",
+  "name": "lab-hail",
+  "file": "lab-hail",
+  "route": "/laboratorio/hail",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "laboratorio/lab-infra": {
+  "mod": "laboratorio",
+  "name": "lab-infra",
+  "file": "lab-infra",
+  "route": "/laboratorio/infra",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "laboratorio/lab-yield": {
+  "mod": "laboratorio",
+  "name": "lab-yield",
+  "file": "lab-yield",
+  "route": "/laboratorio/yield",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "laboratorio/lab-advice": {
+  "mod": "laboratorio",
+  "name": "lab-advice",
+  "file": "lab-advice",
+  "route": "/laboratorio/advice",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "interno/interno": {
+  "mod": "interno",
+  "name": "interno",
+  "file": "interno",
+  "route": "/interno",
+  "tag": "d",
+  "full": false,
+  "issues": [
+   "HTTP 403 GET /admin/metrics",
+   "console: Failed to load resource: the server responded with a status of 403 (Forbidden)"
+  ]
+ },
+ "administracion/admin-overview": {
+  "mod": "administracion",
+  "name": "admin-overview",
+  "file": "admin-overview",
+  "route": "/administracion?s=overview",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-products": {
+  "mod": "administracion",
+  "name": "admin-products",
+  "file": "admin-products",
+  "route": "/administracion?s=products",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "administracion/admin-products--dialogo-nuevo-producto": {
+  "mod": "administracion",
+  "name": "admin-products",
+  "file": "admin-products--dialogo-nuevo-producto",
+  "route": "/administracion?s=products",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-parties": {
+  "mod": "administracion",
+  "name": "admin-parties",
+  "file": "admin-parties",
+  "route": "/administracion?s=parties",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-parties--dialogo-nuevo-proveedor-o-cliente": {
+  "mod": "administracion",
+  "name": "admin-parties",
+  "file": "admin-parties--dialogo-nuevo-proveedor-o-cliente",
+  "route": "/administracion?s=parties",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-machines": {
+  "mod": "administracion",
+  "name": "admin-machines",
+  "file": "admin-machines",
+  "route": "/administracion?s=machines",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-machines--dialogo-nueva-maquina": {
+  "mod": "administracion",
+  "name": "admin-machines",
+  "file": "admin-machines--dialogo-nueva-maquina",
+  "route": "/administracion?s=machines",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-warehouses": {
+  "mod": "administracion",
+  "name": "admin-warehouses",
+  "file": "admin-warehouses",
+  "route": "/administracion?s=warehouses",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-warehouses--dialogo-nuevo-deposito": {
+  "mod": "administracion",
+  "name": "admin-warehouses",
+  "file": "admin-warehouses--dialogo-nuevo-deposito",
+  "route": "/administracion?s=warehouses",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-purchases": {
+  "mod": "administracion",
+  "name": "admin-purchases",
+  "file": "admin-purchases",
+  "route": "/administracion?s=purchases",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-purchases--dialogo-nueva-compra": {
+  "mod": "administracion",
+  "name": "admin-purchases",
+  "file": "admin-purchases--dialogo-nueva-compra",
+  "route": "/administracion?s=purchases",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-grain": {
+  "mod": "administracion",
+  "name": "admin-grain",
+  "file": "admin-grain",
+  "route": "/administracion?s=grain",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-grain--dialogo-nuevo-contrato": {
+  "mod": "administracion",
+  "name": "admin-grain",
+  "file": "admin-grain--dialogo-nuevo-contrato",
+  "route": "/administracion?s=grain",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-grain--dialogo-cargar-entrega": {
+  "mod": "administracion",
+  "name": "admin-grain",
+  "file": "admin-grain--dialogo-cargar-entrega",
+  "route": "/administracion?s=grain",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-cattle": {
+  "mod": "administracion",
+  "name": "admin-cattle",
+  "file": "admin-cattle",
+  "route": "/administracion?s=cattle",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-cattle--dialogo-nueva-compra-o-venta": {
+  "mod": "administracion",
+  "name": "admin-cattle",
+  "file": "admin-cattle--dialogo-nueva-compra-o-venta",
+  "route": "/administracion?s=cattle",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-cash": {
+  "mod": "administracion",
+  "name": "admin-cash",
+  "file": "admin-cash",
+  "route": "/administracion?s=cash",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-cash--dialogo-nueva-cuenta": {
+  "mod": "administracion",
+  "name": "admin-cash",
+  "file": "admin-cash--dialogo-nueva-cuenta",
+  "route": "/administracion?s=cash",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-stock": {
+  "mod": "administracion",
+  "name": "admin-stock",
+  "file": "admin-stock",
+  "route": "/administracion?s=stock",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "administracion/admin-stock--dialogo-registrar-compra": {
+  "mod": "administracion",
+  "name": "admin-stock",
+  "file": "admin-stock--dialogo-registrar-compra",
+  "route": "/administracion?s=stock",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-minstock": {
+  "mod": "administracion",
+  "name": "admin-minstock",
+  "file": "admin-minstock",
+  "route": "/administracion?s=minstock",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-minstock--dialogo-cargar-minimo": {
+  "mod": "administracion",
+  "name": "admin-minstock",
+  "file": "admin-minstock--dialogo-cargar-minimo",
+  "route": "/administracion?s=minstock",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-maintenance": {
+  "mod": "administracion",
+  "name": "admin-maintenance",
+  "file": "admin-maintenance",
+  "route": "/administracion?s=maintenance",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-maintenance--dialogo-anotar-servicio-o-reparacion": {
+  "mod": "administracion",
+  "name": "admin-maintenance",
+  "file": "admin-maintenance--dialogo-anotar-servicio-o-reparacion",
+  "route": "/administracion?s=maintenance",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-maintenance--dialogo-anotar-servicio": {
+  "mod": "administracion",
+  "name": "admin-maintenance",
+  "file": "admin-maintenance--dialogo-anotar-servicio",
+  "route": "/administracion?s=maintenance",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-labor": {
+  "mod": "administracion",
+  "name": "admin-labor",
+  "file": "admin-labor",
+  "route": "/administracion?s=labor",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-labor--dialogo-cargar-datos-de-una-maquina": {
+  "mod": "administracion",
+  "name": "admin-labor",
+  "file": "admin-labor--dialogo-cargar-datos-de-una-maquina",
+  "route": "/administracion?s=labor",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-staff": {
+  "mod": "administracion",
+  "name": "admin-staff",
+  "file": "admin-staff",
+  "route": "/administracion?s=staff",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "administracion/admin-fuel": {
+  "mod": "administracion",
+  "name": "admin-fuel",
+  "file": "admin-fuel",
+  "route": "/administracion?s=fuel",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-fuel--dialogo-cargar-combustible": {
+  "mod": "administracion",
+  "name": "admin-fuel",
+  "file": "admin-fuel--dialogo-cargar-combustible",
+  "route": "/administracion?s=fuel",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-feedlot": {
+  "mod": "administracion",
+  "name": "admin-feedlot",
+  "file": "admin-feedlot",
+  "route": "/administracion?s=feedlot",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-feedlot--dialogo-anotar-suministro": {
+  "mod": "administracion",
+  "name": "admin-feedlot",
+  "file": "admin-feedlot--dialogo-anotar-suministro",
+  "route": "/administracion?s=feedlot",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-feedlot--dialogo-nueva-racion": {
+  "mod": "administracion",
+  "name": "admin-feedlot",
+  "file": "admin-feedlot--dialogo-nueva-racion",
+  "route": "/administracion?s=feedlot",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-orders": {
+  "mod": "administracion",
+  "name": "admin-orders",
+  "file": "admin-orders",
+  "route": "/administracion?s=orders",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-orders--dialogo-nueva-orden": {
+  "mod": "administracion",
+  "name": "admin-orders",
+  "file": "admin-orders--dialogo-nueva-orden",
+  "route": "/administracion?s=orders",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-budget": {
+  "mod": "administracion",
+  "name": "admin-budget",
+  "file": "admin-budget",
+  "route": "/administracion?s=budget",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "administracion/admin-budget--dialogo-nueva-linea-de-presupuesto": {
+  "mod": "administracion",
+  "name": "admin-budget",
+  "file": "admin-budget--dialogo-nueva-linea-de-presupuesto",
+  "route": "/administracion?s=budget",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-results": {
+  "mod": "administracion",
+  "name": "admin-results",
+  "file": "admin-results",
+  "route": "/administracion?s=results",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "administracion/admin-contractors": {
+  "mod": "administracion",
+  "name": "admin-contractors",
+  "file": "admin-contractors",
+  "route": "/administracion?s=contractors",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-contractors--dialogo-nuevo-contratista": {
+  "mod": "administracion",
+  "name": "admin-contractors",
+  "file": "admin-contractors--dialogo-nuevo-contratista",
+  "route": "/administracion?s=contractors",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-accountant": {
+  "mod": "administracion",
+  "name": "admin-accountant",
+  "file": "admin-accountant",
+  "route": "/administracion?s=accountant",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-export": {
+  "mod": "administracion",
+  "name": "admin-export",
+  "file": "admin-export",
+  "route": "/administracion?s=export",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "administracion/admin-export--dialogo-cargar-iva": {
+  "mod": "administracion",
+  "name": "admin-export",
+  "file": "admin-export--dialogo-cargar-iva",
+  "route": "/administracion?s=export",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "administracion/admin-rates": {
+  "mod": "administracion",
+  "name": "admin-rates",
+  "file": "admin-rates",
+  "route": "/administracion?s=rates",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "administracion/admin-costs": {
+  "mod": "administracion",
+  "name": "admin-costs",
+  "file": "admin-costs",
+  "route": "/administracion?s=costs",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "administracion/admin-costs--dialogo-nuevo-costo-o-venta": {
+  "mod": "administracion",
+  "name": "admin-costs",
+  "file": "admin-costs--dialogo-nuevo-costo-o-venta",
+  "route": "/administracion?s=costs",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "publico/ingresar": {
+  "mod": "publico",
+  "name": "ingresar",
+  "file": "ingresar",
+  "route": "/ingresar",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "publico/ingresar-registro": {
+  "mod": "publico",
+  "name": "ingresar-registro",
+  "file": "ingresar-registro",
+  "route": "/ingresar?modo=registro",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "publico/terminos": {
+  "mod": "publico",
+  "name": "terminos",
+  "file": "terminos",
+  "route": "/terminos",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "publico/privacidad": {
+  "mod": "publico",
+  "name": "privacidad",
+  "file": "privacidad",
+  "route": "/privacidad",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "publico/estado": {
+  "mod": "publico",
+  "name": "estado",
+  "file": "estado",
+  "route": "/estado",
+  "tag": "d",
+  "full": false,
+  "issues": []
+ },
+ "publico/api-docs": {
+  "mod": "publico",
+  "name": "api-docs",
+  "file": "api-docs",
+  "route": "/api-docs",
+  "tag": "d",
+  "full": true,
+  "issues": []
+ },
+ "publico/compartido-token-invalido": {
+  "mod": "publico",
+  "name": "compartido-token-invalido",
+  "file": "compartido-token-invalido",
+  "route": "/compartido/token-de-prueba",
+  "tag": "d",
+  "full": false,
+  "issues": [
+   "HTTP 404 GET /public/shared/token-de-prueba"
+  ]
+ },
+ "publico/informe-lead-invalido": {
+  "mod": "publico",
+  "name": "informe-lead-invalido",
+  "file": "informe-lead-invalido",
+  "route": "/informe/0190d000-0000-7000-8000-000000000000/firma",
+  "tag": "d",
+  "full": false,
+  "issues": [
+   "HTTP 404 GET /public/leads/0190d000-0000-7000-8000-000000000000/firma"
+  ]
+ }
+}

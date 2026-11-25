@@ -1,0 +1,94 @@
+solo lectura apagado
+ok hoy/hoy (+full) 
+ok mapa/mapa  !! console: Error: Worker failed to load. Check that the worker URL is correct.
+    at Worker.<anonymous> (http://localhost:8160/_expo/static/js/web/map-956c2e65b1a616e7550
+ok historial/historial (+full) 
+ok gestion/gestion (+full) 
+ok mas/mas (+full) 
+ok registro/anotar (+full) 
+ok registro/registro-detalle  
+ok registro/lote-detalle (+full) 
+ok registro/lote-dibujar  
+ok registro/lote-dibujar-nuevo  
+ok registro/tarea-detalle  
+ok registro/poi (+full) 
+ok registro/escanear  
+ok registro/escanear-poi  
+ok registro/recorrida  
+ok registro/conteo-stock  
+ok registro/ir-a  
+ok cuenta/cuenta (+full) 
+ok cuenta/notificaciones (+full) 
+ok cuenta/sync  
+ok cuenta/emergencia  
+ok cuenta/animales (+full) 
+ok laboratorio/lab-caravana  
+ok laboratorio/lab-chinches  
+ok laboratorio/lab-fenologia  
+ok laboratorio/lab-guarani  
+ok laboratorio/lab-malezas  
+ok laboratorio/lab-pasto  
+ok laboratorio/lab-roya  
+ok laboratorio/lab-vaca  
+ok laboratorio/lab-voz  
+ok oficina-admin/admin (+full) 
+ok oficina-admin/admin-cattle  
+ok oficina-admin/admin-fuel  
+ok oficina-admin/admin-grain  
+ok oficina-admin/admin-machines  
+ok oficina-admin/admin-min-stock  
+ok oficina-admin/admin-parties (+full) 
+ok oficina-admin/admin-purchases (+full) 
+ok oficina-admin/admin-stock (+full) 
+ok oficina-admin/admin-warehouses  
+ok oficina-admin/admin-purchase-new (+full) 
+ok oficina-admin/admin-purchase  
+ok oficina-admin/admin-finanzas-cash (+full) 
+ok oficina-admin/admin-finanzas-costs (+full) 
+ok oficina-admin/admin-finanzas-results (+full) 
+ok oficina-admin/admin-operacion-maintenance  
+ok oficina-admin/admin-operacion-orders  
+ok oficina-admin/admin-operacion-staff (+full) 
+ok oficina-agro/agro  
+ok oficina-agro/agro-buffer  
+ok oficina-agro/agro-deliveries (+full) 
+ok oficina-agro/agro-soil (+full) 
+ok oficina-agro/agro-sowing-plan  
+ok oficina-agro/agro-sowing-window (+full) 
+ok oficina-agro/agro-spray  
+ok oficina-agro/agro-withdrawal  
+ok oficina-hacienda/herd  
+ok oficina-hacienda/herd-forage  
+ok oficina-hacienda/herd-heat  
+ok oficina-hacienda/herd-plan (+full) 
+ok oficina-hacienda/herd-repro (+full) 
+ok oficina-hacienda/herd-rotation  
+ok oficina-hacienda/herd-stock (+full) 
+ok oficina-hacienda/herd-supplements  
+ok oficina-hacienda/herd-theft  
+ok oficina-hacienda/herd-weighings  
+ok oficina-otros/alert-settings  
+ok oficina-otros/alerts  
+ok oficina-otros/calendar (+full) 
+ok oficina-otros/changes  
+ok oficina-otros/clients  
+ok oficina-otros/climate (+full) 
+ok oficina-otros/compare  
+ok oficina-otros/dashboard  
+ok oficina-otros/farms  
+ok oficina-otros/more-account (+full) 
+ok oficina-otros/plots (+full) 
+ok oficina-otros/products (+full) 
+ok oficina-otros/rain-gauges (+full) 
+ok oficina-otros/report (+full) 
+ok oficina-otros/reports  
+ok oficina-otros/review  
+ok oficina-otros/risk (+full) 
+ok oficina-otros/sanitary  
+ok oficina-otros/search  
+ok oficina-otros/seasons (+full) 
+ok oficina-otros/share-links  
+ok oficina-otros/tasks (+full) 
+ok oficina-otros/team  
+ok oficina-otros/member-detalle  
+ok cuenta/login

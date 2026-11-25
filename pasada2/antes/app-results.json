@@ -1,0 +1,831 @@
+{
+ "hoy/hoy": {
+  "mod": "hoy",
+  "name": "hoy",
+  "file": "hoy",
+  "route": "/",
+  "full": true,
+  "final": "/",
+  "issues": []
+ },
+ "mapa/mapa": {
+  "mod": "mapa",
+  "name": "mapa",
+  "file": "mapa",
+  "route": "/map",
+  "full": false,
+  "final": "/map",
+  "issues": [
+   "console: Error: Worker failed to load. Check that the worker URL is correct.\n    at Worker.<anonymous> (http://localhost:8095/_expo/static/js/web/map-956c2e65b1a616e7550"
+  ]
+ },
+ "historial/historial": {
+  "mod": "historial",
+  "name": "historial",
+  "file": "historial",
+  "route": "/history",
+  "full": true,
+  "final": "/history",
+  "issues": []
+ },
+ "gestion/gestion": {
+  "mod": "gestion",
+  "name": "gestion",
+  "file": "gestion",
+  "route": "/office",
+  "full": true,
+  "final": "/office",
+  "issues": []
+ },
+ "mas/mas": {
+  "mod": "mas",
+  "name": "mas",
+  "file": "mas",
+  "route": "/more",
+  "full": true,
+  "final": "/more",
+  "issues": []
+ },
+ "registro/anotar": {
+  "mod": "registro",
+  "name": "anotar",
+  "file": "anotar",
+  "route": "/annotate",
+  "full": false,
+  "final": "/annotate",
+  "issues": []
+ },
+ "registro/registro-detalle": {
+  "mod": "registro",
+  "name": "registro-detalle",
+  "file": "registro-detalle",
+  "route": "/record/0190d000-000c-7000-8000-0000000000ae",
+  "full": false,
+  "final": "/record/0190d000-000c-7000-8000-0000000000ae",
+  "issues": []
+ },
+ "registro/lote-detalle": {
+  "mod": "registro",
+  "name": "lote-detalle",
+  "file": "lote-detalle",
+  "route": "/plot/0190d000-0005-7000-8000-000000000001",
+  "full": true,
+  "final": "/plot/0190d000-0005-7000-8000-000000000001",
+  "issues": []
+ },
+ "registro/lote-dibujar": {
+  "mod": "registro",
+  "name": "lote-dibujar",
+  "file": "lote-dibujar",
+  "route": "/plot-draw?plotId=0190d000-0005-7000-8000-000000000001",
+  "full": false,
+  "final": "/plot-draw",
+  "issues": []
+ },
+ "registro/lote-dibujar-nuevo": {
+  "mod": "registro",
+  "name": "lote-dibujar-nuevo",
+  "file": "lote-dibujar-nuevo",
+  "route": "/plot-draw",
+  "full": false,
+  "final": "/plot-draw",
+  "issues": []
+ },
+ "registro/tarea-detalle": {
+  "mod": "registro",
+  "name": "tarea-detalle",
+  "file": "tarea-detalle",
+  "route": "/task/0190d000-000b-7000-8000-00000000000a",
+  "full": false,
+  "final": "/task/0190d000-000b-7000-8000-00000000000a",
+  "issues": []
+ },
+ "registro/poi": {
+  "mod": "registro",
+  "name": "poi",
+  "file": "poi",
+  "route": "/poi",
+  "full": false,
+  "final": "/poi",
+  "issues": []
+ },
+ "registro/escanear": {
+  "mod": "registro",
+  "name": "escanear",
+  "file": "escanear",
+  "route": "/scan",
+  "full": false,
+  "final": "/scan",
+  "issues": []
+ },
+ "registro/escanear-poi": {
+  "mod": "registro",
+  "name": "escanear-poi",
+  "file": "escanear-poi",
+  "route": "/scan-poi",
+  "full": false,
+  "final": "/scan-poi",
+  "issues": []
+ },
+ "registro/recorrida": {
+  "mod": "registro",
+  "name": "recorrida",
+  "file": "recorrida",
+  "route": "/walk",
+  "full": false,
+  "final": "/walk",
+  "issues": []
+ },
+ "registro/conteo-stock": {
+  "mod": "registro",
+  "name": "conteo-stock",
+  "file": "conteo-stock",
+  "route": "/stock-count",
+  "full": false,
+  "final": "/stock-count",
+  "issues": []
+ },
+ "registro/ir-a": {
+  "mod": "registro",
+  "name": "ir-a",
+  "file": "ir-a",
+  "route": "/goto?lon=-55.9&lat=-27.16&name=Punto%20de%20prueba",
+  "full": false,
+  "final": "/goto",
+  "issues": []
+ },
+ "cuenta/cuenta": {
+  "mod": "cuenta",
+  "name": "cuenta",
+  "file": "cuenta",
+  "route": "/account",
+  "full": true,
+  "final": "/account",
+  "issues": []
+ },
+ "cuenta/notificaciones": {
+  "mod": "cuenta",
+  "name": "notificaciones",
+  "file": "notificaciones",
+  "route": "/notifications",
+  "full": true,
+  "final": "/notifications",
+  "issues": []
+ },
+ "cuenta/sync": {
+  "mod": "cuenta",
+  "name": "sync",
+  "file": "sync",
+  "route": "/sync",
+  "full": false,
+  "final": "/sync",
+  "issues": []
+ },
+ "cuenta/emergencia": {
+  "mod": "cuenta",
+  "name": "emergencia",
+  "file": "emergencia",
+  "route": "/emergency",
+  "full": false,
+  "final": "/emergency",
+  "issues": []
+ },
+ "cuenta/animales": {
+  "mod": "cuenta",
+  "name": "animales",
+  "file": "animales",
+  "route": "/animals",
+  "full": true,
+  "final": "/animals",
+  "issues": []
+ },
+ "laboratorio/lab-caravana": {
+  "mod": "laboratorio",
+  "name": "lab-caravana",
+  "file": "lab-caravana",
+  "route": "/labs/caravana",
+  "full": false,
+  "final": "/labs/caravana",
+  "issues": []
+ },
+ "laboratorio/lab-chinches": {
+  "mod": "laboratorio",
+  "name": "lab-chinches",
+  "file": "lab-chinches",
+  "route": "/labs/chinches",
+  "full": false,
+  "final": "/labs/chinches",
+  "issues": []
+ },
+ "laboratorio/lab-fenologia": {
+  "mod": "laboratorio",
+  "name": "lab-fenologia",
+  "file": "lab-fenologia",
+  "route": "/labs/fenologia",
+  "full": false,
+  "final": "/labs/fenologia",
+  "issues": []
+ },
+ "laboratorio/lab-guarani": {
+  "mod": "laboratorio",
+  "name": "lab-guarani",
+  "file": "lab-guarani",
+  "route": "/labs/guarani",
+  "full": false,
+  "final": "/labs/guarani",
+  "issues": []
+ },
+ "laboratorio/lab-malezas": {
+  "mod": "laboratorio",
+  "name": "lab-malezas",
+  "file": "lab-malezas",
+  "route": "/labs/malezas",
+  "full": false,
+  "final": "/labs/malezas",
+  "issues": []
+ },
+ "laboratorio/lab-pasto": {
+  "mod": "laboratorio",
+  "name": "lab-pasto",
+  "file": "lab-pasto",
+  "route": "/labs/pasto",
+  "full": false,
+  "final": "/labs/pasto",
+  "issues": []
+ },
+ "laboratorio/lab-roya": {
+  "mod": "laboratorio",
+  "name": "lab-roya",
+  "file": "lab-roya",
+  "route": "/labs/roya",
+  "full": false,
+  "final": "/labs/roya",
+  "issues": []
+ },
+ "laboratorio/lab-vaca": {
+  "mod": "laboratorio",
+  "name": "lab-vaca",
+  "file": "lab-vaca",
+  "route": "/labs/vaca",
+  "full": false,
+  "final": "/labs/vaca",
+  "issues": []
+ },
+ "laboratorio/lab-voz": {
+  "mod": "laboratorio",
+  "name": "lab-voz",
+  "file": "lab-voz",
+  "route": "/labs/voz",
+  "full": false,
+  "final": "/labs/voz",
+  "issues": []
+ },
+ "oficina-admin/admin": {
+  "mod": "oficina-admin",
+  "name": "admin",
+  "file": "admin",
+  "route": "/office/admin",
+  "full": true,
+  "final": "/office/admin",
+  "issues": []
+ },
+ "oficina-admin/admin-cattle": {
+  "mod": "oficina-admin",
+  "name": "admin-cattle",
+  "file": "admin-cattle",
+  "route": "/office/admin/cattle",
+  "full": false,
+  "final": "/office/admin/cattle",
+  "issues": []
+ },
+ "oficina-admin/admin-fuel": {
+  "mod": "oficina-admin",
+  "name": "admin-fuel",
+  "file": "admin-fuel",
+  "route": "/office/admin/fuel",
+  "full": false,
+  "final": "/office/admin/fuel",
+  "issues": []
+ },
+ "oficina-admin/admin-grain": {
+  "mod": "oficina-admin",
+  "name": "admin-grain",
+  "file": "admin-grain",
+  "route": "/office/admin/grain",
+  "full": false,
+  "final": "/office/admin/grain",
+  "issues": []
+ },
+ "oficina-admin/admin-machines": {
+  "mod": "oficina-admin",
+  "name": "admin-machines",
+  "file": "admin-machines",
+  "route": "/office/admin/machines",
+  "full": false,
+  "final": "/office/admin/machines",
+  "issues": []
+ },
+ "oficina-admin/admin-min-stock": {
+  "mod": "oficina-admin",
+  "name": "admin-min-stock",
+  "file": "admin-min-stock",
+  "route": "/office/admin/min-stock",
+  "full": false,
+  "final": "/office/admin/min-stock",
+  "issues": []
+ },
+ "oficina-admin/admin-parties": {
+  "mod": "oficina-admin",
+  "name": "admin-parties",
+  "file": "admin-parties",
+  "route": "/office/admin/parties",
+  "full": true,
+  "final": "/office/admin/parties",
+  "issues": []
+ },
+ "oficina-admin/admin-purchases": {
+  "mod": "oficina-admin",
+  "name": "admin-purchases",
+  "file": "admin-purchases",
+  "route": "/office/admin/purchases",
+  "full": true,
+  "final": "/office/admin/purchases",
+  "issues": []
+ },
+ "oficina-admin/admin-stock": {
+  "mod": "oficina-admin",
+  "name": "admin-stock",
+  "file": "admin-stock",
+  "route": "/office/admin/stock",
+  "full": true,
+  "final": "/office/admin/stock",
+  "issues": []
+ },
+ "oficina-admin/admin-warehouses": {
+  "mod": "oficina-admin",
+  "name": "admin-warehouses",
+  "file": "admin-warehouses",
+  "route": "/office/admin/warehouses",
+  "full": false,
+  "final": "/office/admin/warehouses",
+  "issues": []
+ },
+ "oficina-admin/admin-purchase-new": {
+  "mod": "oficina-admin",
+  "name": "admin-purchase-new",
+  "file": "admin-purchase-new",
+  "route": "/office/admin/purchase-new",
+  "full": true,
+  "final": "/office/admin/purchase-new",
+  "issues": []
+ },
+ "oficina-admin/admin-purchase": {
+  "mod": "oficina-admin",
+  "name": "admin-purchase",
+  "file": "admin-purchase",
+  "route": "/office/admin/purchase?id=0190d000-002e-7000-8000-000000000001",
+  "full": false,
+  "final": "/office/admin/purchase",
+  "issues": []
+ },
+ "oficina-admin/admin-finanzas-cash": {
+  "mod": "oficina-admin",
+  "name": "admin-finanzas-cash",
+  "file": "admin-finanzas-cash",
+  "route": "/office/admin/finance/cash",
+  "full": true,
+  "final": "/office/admin/finance/cash",
+  "issues": []
+ },
+ "oficina-admin/admin-finanzas-costs": {
+  "mod": "oficina-admin",
+  "name": "admin-finanzas-costs",
+  "file": "admin-finanzas-costs",
+  "route": "/office/admin/finance/costs",
+  "full": true,
+  "final": "/office/admin/finance/costs",
+  "issues": []
+ },
+ "oficina-admin/admin-finanzas-results": {
+  "mod": "oficina-admin",
+  "name": "admin-finanzas-results",
+  "file": "admin-finanzas-results",
+  "route": "/office/admin/finance/results",
+  "full": true,
+  "final": "/office/admin/finance/results",
+  "issues": []
+ },
+ "oficina-admin/admin-operacion-maintenance": {
+  "mod": "oficina-admin",
+  "name": "admin-operacion-maintenance",
+  "file": "admin-operacion-maintenance",
+  "route": "/office/admin/ops/maintenance",
+  "full": false,
+  "final": "/office/admin/ops/maintenance",
+  "issues": []
+ },
+ "oficina-admin/admin-operacion-orders": {
+  "mod": "oficina-admin",
+  "name": "admin-operacion-orders",
+  "file": "admin-operacion-orders",
+  "route": "/office/admin/ops/orders",
+  "full": false,
+  "final": "/office/admin/ops/orders",
+  "issues": []
+ },
+ "oficina-admin/admin-operacion-staff": {
+  "mod": "oficina-admin",
+  "name": "admin-operacion-staff",
+  "file": "admin-operacion-staff",
+  "route": "/office/admin/ops/staff",
+  "full": true,
+  "final": "/office/admin/ops/staff",
+  "issues": []
+ },
+ "oficina-agro/agro": {
+  "mod": "oficina-agro",
+  "name": "agro",
+  "file": "agro",
+  "route": "/office/agro",
+  "full": false,
+  "final": "/office/agro",
+  "issues": []
+ },
+ "oficina-agro/agro-buffer": {
+  "mod": "oficina-agro",
+  "name": "agro-buffer",
+  "file": "agro-buffer",
+  "route": "/office/agro/buffer",
+  "full": false,
+  "final": "/office/agro/buffer",
+  "issues": []
+ },
+ "oficina-agro/agro-deliveries": {
+  "mod": "oficina-agro",
+  "name": "agro-deliveries",
+  "file": "agro-deliveries",
+  "route": "/office/agro/deliveries",
+  "full": true,
+  "final": "/office/agro/deliveries",
+  "issues": []
+ },
+ "oficina-agro/agro-soil": {
+  "mod": "oficina-agro",
+  "name": "agro-soil",
+  "file": "agro-soil",
+  "route": "/office/agro/soil",
+  "full": true,
+  "final": "/office/agro/soil",
+  "issues": []
+ },
+ "oficina-agro/agro-sowing-plan": {
+  "mod": "oficina-agro",
+  "name": "agro-sowing-plan",
+  "file": "agro-sowing-plan",
+  "route": "/office/agro/sowing-plan",
+  "full": false,
+  "final": "/office/agro/sowing-plan",
+  "issues": []
+ },
+ "oficina-agro/agro-sowing-window": {
+  "mod": "oficina-agro",
+  "name": "agro-sowing-window",
+  "file": "agro-sowing-window",
+  "route": "/office/agro/sowing-window",
+  "full": true,
+  "final": "/office/agro/sowing-window",
+  "issues": []
+ },
+ "oficina-agro/agro-spray": {
+  "mod": "oficina-agro",
+  "name": "agro-spray",
+  "file": "agro-spray",
+  "route": "/office/agro/spray",
+  "full": false,
+  "final": "/office/agro/spray",
+  "issues": []
+ },
+ "oficina-agro/agro-withdrawal": {
+  "mod": "oficina-agro",
+  "name": "agro-withdrawal",
+  "file": "agro-withdrawal",
+  "route": "/office/agro/withdrawal",
+  "full": false,
+  "final": "/office/agro/withdrawal",
+  "issues": []
+ },
+ "oficina-hacienda/herd": {
+  "mod": "oficina-hacienda",
+  "name": "herd",
+  "file": "herd",
+  "route": "/office/herd",
+  "full": false,
+  "final": "/office/herd",
+  "issues": []
+ },
+ "oficina-hacienda/herd-forage": {
+  "mod": "oficina-hacienda",
+  "name": "herd-forage",
+  "file": "herd-forage",
+  "route": "/office/herd/forage",
+  "full": false,
+  "final": "/office/herd/forage",
+  "issues": []
+ },
+ "oficina-hacienda/herd-heat": {
+  "mod": "oficina-hacienda",
+  "name": "herd-heat",
+  "file": "herd-heat",
+  "route": "/office/herd/heat",
+  "full": true,
+  "final": "/office/herd/heat",
+  "issues": []
+ },
+ "oficina-hacienda/herd-plan": {
+  "mod": "oficina-hacienda",
+  "name": "herd-plan",
+  "file": "herd-plan",
+  "route": "/office/herd/plan",
+  "full": true,
+  "final": "/office/herd/plan",
+  "issues": []
+ },
+ "oficina-hacienda/herd-repro": {
+  "mod": "oficina-hacienda",
+  "name": "herd-repro",
+  "file": "herd-repro",
+  "route": "/office/herd/repro",
+  "full": true,
+  "final": "/office/herd/repro",
+  "issues": []
+ },
+ "oficina-hacienda/herd-rotation": {
+  "mod": "oficina-hacienda",
+  "name": "herd-rotation",
+  "file": "herd-rotation",
+  "route": "/office/herd/rotation",
+  "full": false,
+  "final": "/office/herd/rotation",
+  "issues": []
+ },
+ "oficina-hacienda/herd-stock": {
+  "mod": "oficina-hacienda",
+  "name": "herd-stock",
+  "file": "herd-stock",
+  "route": "/office/herd/stock",
+  "full": true,
+  "final": "/office/herd/stock",
+  "issues": []
+ },
+ "oficina-hacienda/herd-supplements": {
+  "mod": "oficina-hacienda",
+  "name": "herd-supplements",
+  "file": "herd-supplements",
+  "route": "/office/herd/supplements",
+  "full": false,
+  "final": "/office/herd/supplements",
+  "issues": []
+ },
+ "oficina-hacienda/herd-theft": {
+  "mod": "oficina-hacienda",
+  "name": "herd-theft",
+  "file": "herd-theft",
+  "route": "/office/herd/theft",
+  "full": false,
+  "final": "/office/herd/theft",
+  "issues": []
+ },
+ "oficina-hacienda/herd-weighings": {
+  "mod": "oficina-hacienda",
+  "name": "herd-weighings",
+  "file": "herd-weighings",
+  "route": "/office/herd/weighings",
+  "full": false,
+  "final": "/office/herd/weighings",
+  "issues": []
+ },
+ "oficina-otros/alert-settings": {
+  "mod": "oficina-otros",
+  "name": "alert-settings",
+  "file": "alert-settings",
+  "route": "/office/alert-settings",
+  "full": false,
+  "final": "/office/alert-settings",
+  "issues": []
+ },
+ "oficina-otros/alerts": {
+  "mod": "oficina-otros",
+  "name": "alerts",
+  "file": "alerts",
+  "route": "/office/alerts",
+  "full": false,
+  "final": "/office/alerts",
+  "issues": []
+ },
+ "oficina-otros/calendar": {
+  "mod": "oficina-otros",
+  "name": "calendar",
+  "file": "calendar",
+  "route": "/office/calendar",
+  "full": true,
+  "final": "/office/calendar",
+  "issues": []
+ },
+ "oficina-otros/changes": {
+  "mod": "oficina-otros",
+  "name": "changes",
+  "file": "changes",
+  "route": "/office/changes",
+  "full": true,
+  "final": "/office/changes",
+  "issues": []
+ },
+ "oficina-otros/clients": {
+  "mod": "oficina-otros",
+  "name": "clients",
+  "file": "clients",
+  "route": "/office/clients",
+  "full": false,
+  "final": "/office/clients",
+  "issues": []
+ },
+ "oficina-otros/climate": {
+  "mod": "oficina-otros",
+  "name": "climate",
+  "file": "climate",
+  "route": "/office/climate",
+  "full": true,
+  "final": "/office/climate",
+  "issues": []
+ },
+ "oficina-otros/compare": {
+  "mod": "oficina-otros",
+  "name": "compare",
+  "file": "compare",
+  "route": "/office/compare",
+  "full": false,
+  "final": "/office/compare",
+  "issues": []
+ },
+ "oficina-otros/dashboard": {
+  "mod": "oficina-otros",
+  "name": "dashboard",
+  "file": "dashboard",
+  "route": "/office/dashboard",
+  "full": true,
+  "final": "/office/dashboard",
+  "issues": []
+ },
+ "oficina-otros/farms": {
+  "mod": "oficina-otros",
+  "name": "farms",
+  "file": "farms",
+  "route": "/office/farms",
+  "full": false,
+  "final": "/office/farms",
+  "issues": []
+ },
+ "oficina-otros/more-account": {
+  "mod": "oficina-otros",
+  "name": "more-account",
+  "file": "more-account",
+  "route": "/office/more-account",
+  "full": true,
+  "final": "/office/more-account",
+  "issues": []
+ },
+ "oficina-otros/plots": {
+  "mod": "oficina-otros",
+  "name": "plots",
+  "file": "plots",
+  "route": "/office/plots",
+  "full": true,
+  "final": "/office/plots",
+  "issues": []
+ },
+ "oficina-otros/products": {
+  "mod": "oficina-otros",
+  "name": "products",
+  "file": "products",
+  "route": "/office/products",
+  "full": true,
+  "final": "/office/products",
+  "issues": []
+ },
+ "oficina-otros/rain-gauges": {
+  "mod": "oficina-otros",
+  "name": "rain-gauges",
+  "file": "rain-gauges",
+  "route": "/office/rain-gauges",
+  "full": true,
+  "final": "/office/rain-gauges",
+  "issues": []
+ },
+ "oficina-otros/report": {
+  "mod": "oficina-otros",
+  "name": "report",
+  "file": "report",
+  "route": "/office/report",
+  "full": true,
+  "final": "/office/report",
+  "issues": []
+ },
+ "oficina-otros/reports": {
+  "mod": "oficina-otros",
+  "name": "reports",
+  "file": "reports",
+  "route": "/office/reports",
+  "full": false,
+  "final": "/office/reports",
+  "issues": []
+ },
+ "oficina-otros/review": {
+  "mod": "oficina-otros",
+  "name": "review",
+  "file": "review",
+  "route": "/office/review",
+  "full": false,
+  "final": "/office/review",
+  "issues": []
+ },
+ "oficina-otros/risk": {
+  "mod": "oficina-otros",
+  "name": "risk",
+  "file": "risk",
+  "route": "/office/risk",
+  "full": true,
+  "final": "/office/risk",
+  "issues": []
+ },
+ "oficina-otros/sanitary": {
+  "mod": "oficina-otros",
+  "name": "sanitary",
+  "file": "sanitary",
+  "route": "/office/sanitary",
+  "full": false,
+  "final": "/office/sanitary",
+  "issues": []
+ },
+ "oficina-otros/search": {
+  "mod": "oficina-otros",
+  "name": "search",
+  "file": "search",
+  "route": "/office/search",
+  "full": false,
+  "final": "/office/search",
+  "issues": []
+ },
+ "oficina-otros/seasons": {
+  "mod": "oficina-otros",
+  "name": "seasons",
+  "file": "seasons",
+  "route": "/office/seasons",
+  "full": true,
+  "final": "/office/seasons",
+  "issues": []
+ },
+ "oficina-otros/share-links": {
+  "mod": "oficina-otros",
+  "name": "share-links",
+  "file": "share-links",
+  "route": "/office/share-links",
+  "full": false,
+  "final": "/office/share-links",
+  "issues": []
+ },
+ "oficina-otros/tasks": {
+  "mod": "oficina-otros",
+  "name": "tasks",
+  "file": "tasks",
+  "route": "/office/tasks",
+  "full": true,
+  "final": "/office/tasks",
+  "issues": []
+ },
+ "oficina-otros/team": {
+  "mod": "oficina-otros",
+  "name": "team",
+  "file": "team",
+  "route": "/office/team",
+  "full": false,
+  "final": "/office/team",
+  "issues": []
+ },
+ "oficina-otros/member-detalle": {
+  "mod": "oficina-otros",
+  "name": "member-detalle",
+  "file": "member-detalle",
+  "route": "/office/member/0190d000-0002-7000-8000-000000000002",
+  "full": false,
+  "final": "/office/member/0190d000-0002-7000-8000-000000000002",
+  "issues": []
+ },
+ "cuenta/login": {
+  "mod": "cuenta",
+  "name": "login",
+  "file": "login",
+  "route": "/login",
+  "full": false,
+  "issues": []
+ }
+}

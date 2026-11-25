@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import axe from "axe-core";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -51,7 +51,7 @@ describe("accesibilidad", () => {
     expect(await violations(document.body)).toEqual([]);
   });
 
-  it("el diálogo enfoca su primer campo, cierra con Escape y devuelve el foco", () => {
+  it("el diálogo enfoca su primer campo, cierra con Escape (tras la animación de salida) y devuelve el foco", async () => {
     render(<Demo />);
     const opener = screen.getByText("Abrir");
     opener.focus();
@@ -59,7 +59,7 @@ describe("accesibilidad", () => {
     expect(screen.getByRole("dialog", { name: "Nuevo lote" })).toBeTruthy();
     expect(document.activeElement).toBe(screen.getByLabelText("Nombre"));
     fireEvent.keyDown(document, { key: "Escape" });
-    expect(screen.queryByRole("dialog")).toBeNull();
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(document.activeElement).toBe(opener);
   });
 

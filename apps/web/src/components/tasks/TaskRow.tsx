@@ -46,7 +46,22 @@ function ChecklistProgress({ task }: { task: Task }) {
  * Una tarea de la lista.
  * @param today fecha de hoy (aaaa-mm-dd).
  */
-export function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: string; /** Si está vencida. */ overdue: boolean; /** Se llama al borrarla. */ onDelete: () => void }) {
+export function TaskRow({
+  x,
+  today,
+  overdue,
+  onEdit,
+  onDelete,
+}: {
+  x: Task;
+  today: string;
+  /** Si está vencida. */
+  overdue: boolean;
+  /** Se llama al elegir Editar; sin ella la acción no aparece (quien no puede asignar no edita). */
+  onEdit?: () => void;
+  /** Se llama al borrarla. */
+  onDelete: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const qc = useQueryClient();
@@ -107,6 +122,7 @@ export function TaskRow({ x, today, overdue, onDelete }: { x: Task; today: strin
         <ActionMenu
           label={t("ui.task.actions")}
           items={[
+            x.status === "open" && onEdit && { label: t("ui.common.edit"), onSelect: onEdit },
             { label: t("ui.task.commentSend"), onSelect: () => setOpen(true) },
             x.status === "open" && { label: t("ui.common.delete"), onSelect: onDelete, danger: true },
           ]}

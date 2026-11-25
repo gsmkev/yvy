@@ -1,33 +1,64 @@
-/** Diálogo de alta de una tarea. */
+/** Diálogo de alta y de edición de una tarea. */
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { closeRequirements, localDate, RECORD_KINDS, RECURRENCES, TASK_PRIORITIES } from "@yvy/shared";
-import { post } from "../../lib/api";
-import { t, tk } from "../../lib/i18n";
+import { localDate } from "@yvy/shared";
+import { patch, post } from "../../lib/api";
+import { t } from "../../lib/i18n";
 import { useFarms } from "../../lib/queries";
-import type { Plot } from "../../lib/types";
-import { Button, Field, Form, Input, Modal, Select, toast, FormFooter } from "../ui";
+import type { Plot, Task } from "../../lib/types";
+import { Field, Form, Input, Modal, Select, toast, FormFooter } from "../ui";
+import type { PlotPick, SetField, TaskDraft } from "./TaskFormParts";
+import { KindField, PickedPlots, ScheduleFields } from "./TaskFormParts";
 
-/** Selección de lotes en el mapa de la estancia; la maneja la pantalla que tiene el mapa. */
-export interface PlotPick {
-  ids: string[];
-  setIds: (ids: string[]) => void;
-  picking: boolean;
-  setPicking: (v: boolean) => void;
+export type { PlotPick } from "./TaskFormParts";
+
+/** Valores iniciales del formulario: los de la tarea que se edita o los de una tarea nueva. */
+export function initialDraft(task: Task | undefined, farmId: string | undefined, firstAssignee: string): TaskDraft {
+  return {
+    farmId: task?.farmId ?? farmId ?? "",
+    plotId: task?.plotId ?? "",
+    assigneeId: task?.assigneeId ?? firstAssignee,
+    title: task?.title ?? "",
+    kind: task?.kind ?? "",
+    dueDate: task?.dueDate ?? localDate(Date.now()),
+    dueTime: task?.dueTime ?? "",
+    priority: task?.priority ?? "normal",
+    recurrence: task?.recurrence ?? "none",
+    checklist: "",
+  };
 }
 
+/**
+ * Cuerpo del PATCH al editar. La lista de verificación no se toca y el lote solo se manda si el formulario
+ * lo mostró (`withPlot`), para no borrarlo cuando la pantalla no trae los lotes.
+ */
+export function editBody(f: TaskDraft, withPlot: boolean) {
+  return {
+    title: f.title,
+    assigneeId: f.assigneeId,
+    ...(withPlot ? { plotId: f.plotId || null } : {}),
+    kind: f.kind || null,
+    dueDate: f.dueDate,
+    dueTime: f.dueTime || null,
+    priority: f.priority,
+    recurrence: f.recurrence,
+  };
+}
 
 /**
- * Diálogo para crear una tarea.
+ * Diálogo para crear una tarea o, con `task`, para editarla.
  * @param farmId estancia fija; sin ella se elige.
  */
 export function NewTaskModal({
+  task,
   farmId,
   plots,
   pick,
   members,
   onClose,
 }: {
+  /** Si se pasa, el formulario edita esa tarea en lugar de crear una. */
+  task?: Task;
   farmId?: string;
   /** Lotes elegibles. */
 plots?: Plot[];
@@ -39,21 +70,11 @@ members: { userId: string; fullName: string }[];
 }) {
   const farms = useFarms();
   const qc = useQueryClient();
-  const [f, setF] = useState({
-    farmId: farmId ?? "",
-    plotId: "",
-    assigneeId: members[0]?.userId ?? "",
-    title: "",
-    kind: "",
-    dueDate: localDate(Date.now()),
-    dueTime: "",
-    priority: "normal",
-    recurrence: "none",
-    checklist: "",
-  });
+  const [f, setF] = useState(() => initialDraft(task, farmId, members[0]?.userId ?? ""));
   const picked = pick?.ids ?? [];
   const create = useMutation({
     mutationFn: () => {
+      if (task) return patch(`/org/tasks/${task.id}`, editBody(f, !!plots)).then(() => ({ ids: [task.id] }));
       const { checklist, ...rest } = f;
       const items = checklist
         .split("\n")
@@ -70,20 +91,20 @@ members: { userId: string; fullName: string }[];
     },
     onSuccess: ({ ids }) => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
-      toast(ids.length > 1 ? t("ui.toast.tasksSaved", { n: ids.length }) : t("ui.toast.taskSaved"));
+      toast(task ? t("office.task.savedEdit") : ids.length > 1 ? t("ui.toast.tasksSaved", { n: ids.length }) : t("ui.toast.taskSaved"));
       onClose();
     },
   });
-  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
+  const set: SetField = (k) => (e) => setF({ ...f, [k]: e.target.value });
   // Mientras se eligen lotes en el mapa el diálogo se esconde sin desmontarse: el borrador no se pierde.
   return (
     <div hidden={!!pick?.picking}>
-      <Modal title={t("ui.new.task")} onClose={onClose}>
+      <Modal title={task ? t("office.task.editTitle") : t("ui.new.task")} onClose={onClose}>
         <Form className="flex flex-col gap-3" onSubmit={() => create.mutate()}>
           <Field label={t("ui.task.title")}>
             <Input required value={f.title} onChange={set("title")} placeholder="Medir lluvia" />
           </Field>
-          {!farmId && (
+          {!farmId && !task && (
             <Field label={t("ui.common.farm")}>
               <Select
                 required
@@ -105,23 +126,7 @@ members: { userId: string; fullName: string }[];
               />
             </Field>
           )}
-          {plots && pick && (
-            <div className="flex flex-col items-start gap-1.5 text-sm">
-              {picked.length > 0 && (
-                <p>
-                  <span className="font-medium">{t("ui.task.pickedPlots", { n: picked.length })}</span>{" "}
-                  {picked
-                    .map((id) => plots.find((p) => p.id === id)?.name)
-                    .filter(Boolean)
-                    .join(", ")}
-                </p>
-              )}
-              <Button onClick={() => pick.setPicking(true)}>
-                {picked.length ? t("ui.task.pickChange") : t("ui.task.pickOnMap")}
-              </Button>
-              {picked.length > 1 && <p className="text-xs text-tinta-2">{t("ui.task.pickOneEach")}</p>}
-            </div>
-          )}
+          {plots && pick && !task && <PickedPlots plots={plots} pick={pick} />}
           <Field label={t("ui.common.assignee")}>
             <Select
               required
@@ -130,59 +135,20 @@ members: { userId: string; fullName: string }[];
               options={members.map((m) => ({ value: m.userId, label: m.fullName }))}
             />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label={t("ui.due.date")}>
-              <Input type="date" required value={f.dueDate} onChange={set("dueDate")} />
-            </Field>
-            <Field label={t("ui.due.time")} hint={t("ui.due.timeHint")}>
-              <Input type="time" value={f.dueTime} onChange={set("dueTime")} />
-            </Field>
-            <Field label={t("ui.task.priority")}>
-              <Select
-                value={f.priority}
-                onChange={set("priority")}
-                options={TASK_PRIORITIES.map((p) => ({ value: p, label: tk(`ui.task.priority_${p}`) }))}
+          <ScheduleFields f={f} set={set} />
+          <KindField kind={f.kind} onChange={set("kind")} />
+          {!task && (
+            <Field label={t("ui.task.checklist")}>
+              <textarea
+                className="min-h-20 w-full rounded-md border border-linea bg-papel px-3 py-2 text-sm"
+                value={f.checklist}
+                onChange={set("checklist")}
+                placeholder={t("ui.task.checklistHint")}
               />
             </Field>
-            <Field label={t("ui.common.recurrence")}>
-              <Select
-                value={f.recurrence}
-                onChange={set("recurrence")}
-                options={RECURRENCES.map((r) => ({ value: r, label: tk(`ui.recurrence.${r}`) }))}
-              />
-            </Field>
-          </div>
-          <Field label={t("ui.common.opensRecord")}>
-            <Select
-              value={f.kind}
-              onChange={set("kind")}
-              options={[
-                { value: "", label: t("ui.common.none") },
-                ...RECORD_KINDS.map((k) => ({ value: k, label: tk(`record-kinds.kind.${k}`) })),
-              ]}
-            />
-            {closeRequirements(f.kind) && (
-              <p className="mt-1 text-xs text-tinta-2">
-                {t(
-                  closeRequirements(f.kind)!.photo && closeRequirements(f.kind)!.location
-                    ? "ui.close.needsPhotoLocation"
-                    : closeRequirements(f.kind)!.photo
-                      ? "ui.close.needsPhoto"
-                      : "ui.close.needsLocation",
-                )}
-              </p>
-            )}
-          </Field>
-          <Field label={t("ui.task.checklist")}>
-            <textarea
-              className="min-h-20 w-full rounded-md border border-linea bg-papel px-3 py-2 text-sm"
-              value={f.checklist}
-              onChange={set("checklist")}
-              placeholder={t("ui.task.checklistHint")}
-            />
-          </Field>
+          )}
           <FormFooter error={create.error} disabled={create.isPending} label={t("ui.common.save")} />
-</Form>
+        </Form>
       </Modal>
     </div>
   );

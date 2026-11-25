@@ -2098,6 +2098,7 @@ export const esPY = {
       colRecords: "Registros 7 d",
       colPlots: "Lotes visitados",
       colLastSync: "Última conexión",
+      neverSyncedHint: "Todavía no abrió la app con su cuenta",
       colOverdue: "Tareas vencidas",
       daysAgo: "hace {{n}} {{n:día|días}}",
       hoursAgo: "hace {{n}} h",

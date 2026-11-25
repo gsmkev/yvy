@@ -25,8 +25,6 @@ interface TeamContext {
   meId: string | undefined;
   /** Estancias que ve cada persona con acceso por estancia. */
   farmsOf: (m: Member) => string;
-  /** Si algún miembro ya sincronizó, se muestra la columna de última sincronización. */
-  anySync: boolean;
   onAssign: (m: Member) => void;
   onScope: (m: Member) => void;
   onLink: (m: Member) => void;
@@ -72,7 +70,7 @@ function RowActions({ m, c }: { m: Member; c: TeamContext }) {
   );
 }
 
-/** Columnas del equipo; las de acceso por estancia y última sincronización aparecen solo si hay datos. */
+/** Columnas del equipo; la de acceso por estancia es solo para el dueño. */
 export function teamColumns(c: TeamContext): Column<Member>[] {
   const cols: Column<Member>[] = [
     { id: "person", header: t("ui.common.name"), mobile: "title", cell: (m) => <PersonCell m={m} canManage={c.canManage} /> },
@@ -93,18 +91,17 @@ export function teamColumns(c: TeamContext): Column<Member>[] {
     { id: "records", header: t("ui.team.colRecords"), align: "right", mobile: "hide", cell: (m) => m.records7d, sort: (a, b) => a.records7d - b.records7d },
     { id: "plots", header: t("ui.team.colPlots"), align: "right", hideBelow: "md", cell: (m) => m.plotsVisited7d },
   );
-  if (c.anySync) {
-    cols.push({
-      id: "last",
-      header: t("ui.team.colLastSync"),
-      hideBelow: "md",
-      cell: (m) => (
-        <span className="whitespace-nowrap text-tinta-2" title={m.lastSyncAt ? fmtDateTime(m.lastSyncAt) : undefined}>
-          {m.lastSyncAt ? since(m.lastSyncAt) : t("ui.never.visited")}
-        </span>
-      ),
-    });
-  }
+  cols.push({
+    id: "last",
+    header: t("ui.team.colLastSync"),
+    cell: (m) => (
+      <span className="whitespace-nowrap text-tinta-2" title={m.lastSyncAt ? fmtDateTime(m.lastSyncAt) : t("ui.team.neverSyncedHint")}>
+        <span className="sm:hidden">{t("ui.team.colLastSync")}: </span>
+        {m.lastSyncAt ? since(m.lastSyncAt) : t("ui.never.visited")}
+      </span>
+    ),
+    sort: (a, b) => (a.lastSyncAt ?? 0) - (b.lastSyncAt ?? 0),
+  });
   cols.push(
     { id: "overdue", header: t("ui.team.colOverdue"), align: "right", hideBelow: "sm", cell: (m) => (m.overdueTasks > 0 ? <span className="font-medium text-peligro">{m.overdueTasks}</span> : <span className="text-tinta-2">0</span>) },
     { id: "actions", header: <span className="sr-only">{t("ui.row.actionsHeader")}</span>, width: "3rem", cell: (m) => <RowActions m={m} c={c} /> },

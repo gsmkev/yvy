@@ -12,11 +12,14 @@ export function TaskList({
   org,
   filter,
   onFilter,
+  onEdit,
   onDelete,
 }: {
   org: Organized;
   filter: TaskFilter;
   onFilter: (f: TaskFilter) => void;
+  /** Sin ella las filas no ofrecen Editar. */
+  onEdit?: (x: Task) => void;
   onDelete: (x: Task) => void;
 }) {
   const { today, isOverdue, nOverdue, sorted, done, byAssignee } = org;
@@ -40,7 +43,7 @@ export function TaskList({
           </h3>
           <ul className="divide-y divide-linea border-y border-linea">
             {list.map((x) => (
-              <TaskRow key={x.id} x={x} today={today} overdue={isOverdue(x)} onDelete={() => onDelete(x)} />
+              <TaskRow key={x.id} x={x} today={today} overdue={isOverdue(x)} onEdit={onEdit && (() => onEdit(x))} onDelete={() => onDelete(x)} />
             ))}
           </ul>
         </section>
@@ -60,7 +63,7 @@ export function TaskList({
           {showDone && (
             <ul className="divide-y divide-linea border-y border-linea">
               {done.map((x) => (
-                <TaskRow key={x.id} x={x} today={today} overdue={false} onDelete={() => onDelete(x)} />
+                <TaskRow key={x.id} x={x} today={today} overdue={false} onEdit={onEdit && (() => onEdit(x))} onDelete={() => onDelete(x)} />
               ))}
             </ul>
           )}

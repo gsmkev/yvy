@@ -27,11 +27,7 @@ export function rainByDate(daily: ClimateData["daily"]): Map<string, number> {
 
 /** Lluvia por satélite entre dos fechas; null si no hay ningún dato. */
 export function rainBetween(daily: ClimateData["daily"], from: string, to: string): number | null {
-  const byDate = new Map<string, number>();
-  for (const d of daily) {
-    if (d.date < from || d.date > to || d.precipMm === null) continue;
-    if (d.source.startsWith("chirps") || !byDate.has(d.date)) byDate.set(d.date, d.precipMm);
-  }
+  const byDate = rainByDate(daily.filter((d) => d.date >= from && d.date <= to));
   return byDate.size ? [...byDate.values()].reduce((a, b) => a + b, 0) : null;
 }
 

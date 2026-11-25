@@ -78,7 +78,6 @@ export function TeamPage() {
     canManage,
     meId: me.data?.user.id,
     farmsOf,
-    anySync: list.some((m) => m.lastSyncAt),
     onAssign: setAssigning,
     onScope: setScoping,
     onLink: link.mutate,

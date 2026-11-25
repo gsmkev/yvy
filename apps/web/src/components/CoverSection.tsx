@@ -11,20 +11,28 @@ import { CoverResult } from "./cover/CoverResult";
 import { day, iso } from "./cover/util";
 import { EmptyState, ErrorBox, Spinner, toast } from "./ui";
 
-/** Sección del cambio de cobertura de una estancia: pedido, resultado y PDF. */
-export function CoverSection({ farmId }: { farmId: string }) {
+/** Rango de fechas válido para pedir el análisis: desde 2017, al menos 90 días y sin pasar de hoy. */
+const datesValid = (from: string, to: string) =>
+  from >= "2017-01-01" && Date.parse(to) - Date.parse(from) >= 90 * 86_400_000 && to <= iso(new Date());
+
+/** Referencia elegida (o la primera) con sus filas, su rango de fechas y su resumen. */
+function pickCover(plots: AnalysisPlot<CoverMetrics>[], keys: string[], picked: string | null) {
+  const key = picked && keys.includes(picked) ? picked : keys[0];
+  const rows = plots.filter((p) => p.refKey === key);
+  const range = key ? parseCoverKey(key) : null;
+  return { key, rows, range, sum: rows.length ? summarizeCover(rows) : null };
+}
+
+/** Consulta del último análisis de cobertura y pedido de uno nuevo con las fechas elegidas. */
+function useCoverRequest(farmId: string) {
   const qc = useQueryClient();
-  const farm = useFarm(farmId);
-  const me = useMe();
   const q = useQuery({
     queryKey: ["cover", farmId],
     queryFn: () => get<{ plots: AnalysisPlot<CoverMetrics>[]; job: AnalysisJob }>(`/org/farms/${farmId}/cover-change`),
     refetchInterval: (x) => (x.state.data?.job.status === "processing" ? 60_000 : false),
   });
-  const monthAgo = new Date(Date.now() - 30 * 86_400_000);
   const [from, setFrom] = useState("2020-12-31");
-  const [to, setTo] = useState(iso(monthAgo));
-  const [picked, setPicked] = useState<string | null>(null);
+  const [to, setTo] = useState(iso(new Date(Date.now() - 30 * 86_400_000)));
   const request = useMutation({
     mutationFn: () => post(`/org/farms/${farmId}/cover-change`, { from, to }),
     onSuccess: () => {
@@ -33,17 +41,22 @@ export function CoverSection({ farmId }: { farmId: string }) {
     },
     onError: (e) => toast(e instanceof Error ? e.message : t("ui.cover.failed")),
   });
+  return { q, from, to, setFrom, setTo, request, datesOk: datesValid(from, to) };
+}
+
+/** Sección del cambio de cobertura de una estancia: pedido, resultado y PDF. */
+export function CoverSection({ farmId }: { farmId: string }) {
+  const farm = useFarm(farmId);
+  const me = useMe();
+  const { q, from, to, setFrom, setTo, request, datesOk } = useCoverRequest(farmId);
+  const [picked, setPicked] = useState<string | null>(null);
   const keys = useMemo(() => coverKeys(q.data?.plots ?? []), [q.data]);
   if (q.isLoading || farm.isLoading) return <Spinner />;
   if (q.error) return <ErrorBox error={q.error} />;
   if (!q.data || !farm.data) return null;
-  const key = picked && keys.includes(picked) ? picked : keys[0];
-  const rows = q.data.plots.filter((p) => p.refKey === key);
-  const range = key ? parseCoverKey(key) : null;
-  const sum = rows.length ? summarizeCover(rows) : null;
+  const { key, rows, range, sum } = pickCover(q.data.plots, keys, picked);
   const canRequest = me.data?.role === "owner" || me.data?.role === "admin";
   const processing = q.data.job.status === "processing";
-  const datesOk = from >= "2017-01-01" && Date.parse(to) - Date.parse(from) >= 90 * 86_400_000 && to <= iso(new Date());
 
   return (
     <section className="flex flex-col gap-4">

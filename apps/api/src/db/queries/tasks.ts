@@ -34,10 +34,34 @@ export async function listTasks(
     .limit(500);
 }
 
-/** Edita una tarea; si cambia la persona asignada, debe ser miembro. */
+/** Comprueba que el lote sea de la organización y de la misma estancia que la tarea; si no, 404. */
+async function requireTaskPlot(sdb: ScopedDb, taskId: string, plotId: string) {
+  const [task] = await sdb.db
+    .select({ farmId: s.tasks.farmId })
+    .from(s.tasks)
+    .where(and(eq(s.tasks.id, taskId), eq(s.tasks.organizationId, sdb.auth.orgId), isNull(s.tasks.deletedAt)))
+    .limit(1);
+  if (!task) throw new NotFoundError("No existe");
+  const [plot] = await sdb.db
+    .select({ id: s.plots.id })
+    .from(s.plots)
+    .where(
+      and(
+        eq(s.plots.id, plotId),
+        eq(s.plots.organizationId, sdb.auth.orgId),
+        eq(s.plots.farmId, task.farmId),
+        isNull(s.plots.deletedAt),
+      ),
+    )
+    .limit(1);
+  if (!plot) throw new NotFoundError("Lote inexistente");
+}
+
+/** Edita una tarea; la persona asignada debe ser miembro y el lote, de la misma estancia de la tarea. */
 export async function updateTask(sdb: ScopedDb, id: string, patch: Partial<typeof s.tasks.$inferInsert>) {
   sdb.require(can.assign);
   if (patch.assigneeId) await sdb.memberRole(patch.assigneeId);
+  if (patch.plotId) await requireTaskPlot(sdb, id, patch.plotId);
   await updateSynced(sdb, s.tasks, id, patch);
 }
 

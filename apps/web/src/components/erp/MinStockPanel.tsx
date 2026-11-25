@@ -1,107 +1,69 @@
 /** Stock mínimo por producto y depósito, con la lista de lo que hay que reponer. */
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { del, get, put } from "../../lib/api";
-import { t, tk } from "../../lib/i18n";
-import { fmtQty } from "../../lib/money";
-import { useProducts } from "../../lib/products";
-import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, Form, FormFooter, Input, Modal, Select, Spinner, Tabs, toast } from "../ui";
-import { useWarehouses } from "./WarehousesPanel";
-import { HeaderActions, RowMenu, useGoSection, useTableExport } from "./adminSlot";
+import { t } from "../../lib/i18n";
+import { Button, ConfirmModal, DataTable, EmptyState, ErrorBox, Spinner, Tabs } from "../ui";
+import { HeaderActions, useTableExport } from "./adminSlot";
+import { NeedSetup } from "./NeedSetup";
+import { MinModal } from "./minstock/MinModal";
+import { lowColumns, minColumns } from "./minstock/minColumns";
+import { useMinStock, useRemoveMin, type Low, type MinNames, type Minimum } from "./minstock/useMinStock";
 
-interface Minimum {
-  id: string;
-  productId: string;
-  warehouseId: string;
-  minQty: number;
-}
-interface Low {
-  productId: string;
-  warehouseId: string;
-  qty: number;
-  minQty: number;
-  missing: number;
-}
+type Tab = "low" | "all";
 
-function lowColumns({ prod, wh, unit }: { prod: (id: string) => { name: string } | undefined; wh: (id: string) => string; unit: (id: string) => string }): Column<Low>[] {
-  return [
-    { id: "product", header: t("ui.stock.product"), cell: (l) => prod(l.productId)?.name },
-    { id: "where", header: t("ui.stock.where"), hideBelow: "sm", cell: (l) => <span className="text-tinta-2">{wh(l.warehouseId)}</span> },
-    { id: "qty", header: t("ui.stock.qty"), align: "right", hideBelow: "sm", cell: (l) => fmtQty(l.qty, unit(l.productId)) },
-    { id: "min", header: t("ui.min.stockMin"), align: "right", hideBelow: "md", cell: (l) => fmtQty(l.minQty, unit(l.productId)) },
-    { id: "missing", header: t("ui.min.stockMissingHead"), align: "right", cell: (l) => <span className="text-trigo-texto">{fmtQty(l.missing, unit(l.productId))}</span>, sort: (a, b) => a.missing - b.missing },
-  ];
+/** Confirmación de baja de un mínimo. */
+function RemoveMin({ row, name, onClose }: { row: Minimum; name: string; onClose: () => void }) {
+  const remove = useRemoveMin(onClose);
+  return (
+    <ConfirmModal
+      title={name}
+      message={t("ui.erp.deleteConfirm", { name })}
+      confirmLabel={t("ui.common.delete")}
+      pending={remove.isPending}
+      error={remove.error}
+      onConfirm={() => remove.mutate(row)}
+      onClose={onClose}
+    />
+  );
 }
 
-function minColumns({ prod, wh, unit }: { prod: (id: string) => { name: string } | undefined; wh: (id: string) => string; unit: (id: string) => string }, onEdit: (m: Minimum) => void, onRemove: (m: Minimum) => void): Column<Minimum>[] {
-  return [
-    { id: "product", header: t("ui.stock.product"), cell: (m) => prod(m.productId)?.name },
-    { id: "where", header: t("ui.stock.where"), cell: (m) => wh(m.warehouseId) },
-    { id: "min", header: t("ui.min.stockMin"), align: "right", cell: (m) => fmtQty(m.minQty, unit(m.productId)) },
-    {
-      id: "menu",
-      header: <span className="sr-only">{t("ui.row.actionsHeader")}</span>,
-      align: "right",
-      width: "3rem",
-      cell: (m) => <RowMenu name={prod(m.productId)?.name ?? ""} onEdit={() => onEdit(m)} onDelete={() => onRemove(m)} />,
-    },
-  ];
+interface MinTablesProps {
+  tab: Tab;
+  names: MinNames;
+  lowRows: Low[];
+  minRows: Minimum[];
+  onEdit: (m: Minimum) => void;
+  onRemove: (m: Minimum) => void;
+}
+
+/** Tabla de la pestaña elegida: lo que falta reponer o todos los mínimos. */
+function MinTables({ tab, names, lowRows, minRows, onEdit, onRemove }: MinTablesProps) {
+  if (tab === "all") return <DataTable columns={minColumns(names, onEdit, onRemove)} rows={minRows} rowKey={(m) => m.id} caption={t("ui.min.tabAll")} />;
+  const empty = <EmptyState compact title={t("ui.empty.lowTitle")}>{t("ui.empty.lowBody")}</EmptyState>;
+  return <DataTable columns={lowColumns(names)} rows={lowRows} rowKey={(l) => `${l.productId}-${l.warehouseId}`} caption={t("ui.min.tabLow")} empty={empty} />;
 }
 
 /** Stock mínimo por producto y depósito y lista de lo que hay que reponer. */
 export function MinStockPanel() {
-  const products = useProducts();
-  const warehouses = useWarehouses();
-  const mins = useQuery({ queryKey: ["erp", "stock-minimums"], queryFn: () => get<Minimum[]>("/org/erp/stock/minimums") });
-  const low = useQuery({ queryKey: ["erp", "stock-low"], queryFn: () => get<Low[]>("/org/erp/stock/low") });
   const [editing, setEditing] = useState<Minimum | "new" | null>(null);
   const [removing, setRemoving] = useState<Minimum | null>(null);
-  const [tab, setTab] = useState<"low" | "all">("low");
+  const [tab, setTab] = useState<Tab>("low");
   const exp = useTableExport(tab === "low" ? "stock-bajo" : "stock-minimo");
-  const goSection = useGoSection();
-  const qc = useQueryClient();
-  const remove = useMutation({
-    mutationFn: (m: Minimum) => del(`/org/erp/stock/minimums/${m.id}`),
-    onSuccess: () => {
-      toast(t("ui.erp.deleted"));
-      setRemoving(null);
-      qc.invalidateQueries({ queryKey: ["erp"] });
-    },
-  });
-  if (mins.isLoading || products.isLoading || warehouses.isLoading) return <Spinner />;
+  const { products, warehouses, mins, low, names, loading } = useMinStock();
+  if (loading) return <Spinner />;
   if (mins.error) return <ErrorBox error={mins.error} />;
-  const prod = (id: string) => products.data?.find((p) => p.id === id);
-  const wh = (id: string) => warehouses.data?.find((w) => w.id === id)?.name ?? "";
-  const unit = (id: string) => tk(`fields.product.unit_${prod(id)?.unit ?? "l"}`);
+  if ((products.data ?? []).length === 0) return <NeedSetup needed="product" />;
+  if ((warehouses.data ?? []).length === 0) return <NeedSetup needed="warehouse" />;
   const minRows = mins.data ?? [];
   const lowRows = low.data ?? [];
-  const needProduct = (products.data ?? []).length === 0;
-  const needWarehouse = (warehouses.data ?? []).length === 0;
-  if (needProduct || needWarehouse)
-    return (
-      <EmptyState
-        title={t(needProduct ? "ui.stock.needProductTitle" : "ui.stock.needWarehouseTitle")}
-        action={
-          <Button variant="primary" onClick={() => goSection(needProduct ? "products" : "warehouses")}>
-            {t(needProduct ? "ui.product.load" : "ui.warehouse.load")}
-          </Button>
-        }
-      >
-        {t(needProduct ? "ui.stock.needProductBody" : "ui.stock.needWarehouseBody")}
-      </EmptyState>
-    );
   const newButton = (
     <Button variant="primary" onClick={() => setEditing("new")}>
       {t("ui.min.stockNew")}
     </Button>
   );
-  const lowCols = lowColumns({ prod, wh, unit });
-  const minCols = minColumns({ prod, wh, unit }, setEditing, setRemoving);
-  const noMins = minRows.length === 0;
   return (
     <div className="flex flex-col gap-4">
-      {!noMins && <HeaderActions>{newButton}</HeaderActions>}
-      {noMins ? (
+      {minRows.length > 0 && <HeaderActions>{newButton}</HeaderActions>}
+      {minRows.length === 0 ? (
         <EmptyState title={t("ui.empty.minTitle")} action={newButton}>
           {t("ui.empty.minBody")}
         </EmptyState>
@@ -117,61 +79,12 @@ export function MinStockPanel() {
             onChange={setTab}
           />
           <div ref={exp.ref}>
-            {tab === "low" ? (
-              <DataTable columns={lowCols} rows={lowRows} rowKey={(l) => `${l.productId}-${l.warehouseId}`} caption={t("ui.min.tabLow")} empty={<EmptyState compact title={t("ui.empty.lowTitle")}>{t("ui.empty.lowBody")}</EmptyState>} />
-            ) : (
-              <DataTable columns={minCols} rows={minRows} rowKey={(m) => m.id} caption={t("ui.min.tabAll")} />
-            )}
+            <MinTables tab={tab} names={names} lowRows={lowRows} minRows={minRows} onEdit={setEditing} onRemove={setRemoving} />
           </div>
         </>
       )}
       {editing && <MinModal row={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
-      {removing && (
-        <ConfirmModal
-          title={prod(removing.productId)?.name ?? ""}
-          message={t("ui.erp.deleteConfirm", { name: prod(removing.productId)?.name ?? "" })}
-          confirmLabel={t("ui.common.delete")}
-          pending={remove.isPending}
-          error={remove.error}
-          onConfirm={() => remove.mutate(removing)}
-          onClose={() => setRemoving(null)}
-        />
-      )}
+      {removing && <RemoveMin row={removing} name={names.prod(removing.productId)?.name ?? ""} onClose={() => setRemoving(null)} />}
     </div>
-  );
-}
-
-function MinModal({ row, onClose }: { row: Minimum | null; onClose: () => void }) {
-  const products = useProducts();
-  const warehouses = useWarehouses();
-  const qc = useQueryClient();
-  const [productId, setProductId] = useState(row?.productId ?? products.data?.[0]?.id ?? "");
-  const [warehouseId, setWarehouseId] = useState(row?.warehouseId ?? warehouses.data?.[0]?.id ?? "");
-  const [minQty, setMinQty] = useState(row ? String(row.minQty) : "");
-  const save = useMutation({
-    mutationFn: () => put("/org/erp/stock/minimums", { productId, warehouseId, minQty: Number(minQty) }),
-    onSuccess: () => {
-      toast(t("ui.erp.saved"));
-      qc.invalidateQueries({ queryKey: ["erp"] });
-      onClose();
-    },
-  });
-  return (
-    <Modal title={t("ui.min.stockNew")} onClose={onClose}>
-      <Form onSubmit={() => save.mutate()}>
-        <div className="sm:col-span-2">
-          <Field label={t("ui.stock.product")}>
-            <Select value={productId} onChange={(e) => setProductId(e.target.value)} options={(products.data ?? []).map((p) => ({ value: p.id, label: p.name }))} />
-          </Field>
-        </div>
-        <Field label={t("ui.stock.where")}>
-          <Select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} options={(warehouses.data ?? []).map((w) => ({ value: w.id, label: w.name }))} />
-        </Field>
-        <Field label={t("ui.min.stockMin")}>
-          <Input required type="number" min={0} step="any" value={minQty} onChange={(e) => setMinQty(e.target.value)} />
-        </Field>
-        <FormFooter error={save.error} disabled={save.isPending} />
-      </Form>
-    </Modal>
   );
 }

@@ -1,7 +1,8 @@
 /** Proveedores y clientes con RUC. */
 import { PARTY_KINDS } from "@yvy/shared";
 import { t, tk } from "../../lib/i18n";
-import { MasterPanel, useErpList, type FieldDef } from "./MasterPanel";
+import { MasterPanel } from "./MasterPanel";
+import { useErpList, type FieldDef } from "./RowModal";
 
 interface Party {
   id: string;

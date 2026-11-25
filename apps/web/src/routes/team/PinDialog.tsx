@@ -31,7 +31,7 @@ export function PinDialog({ member, onClose }: { member: Member; onClose: () => 
     },
   });
   return (
-    <Modal title={`${t("app.team.pinTitle")} · ${member.fullName}`} onClose={onClose}>
+    <Modal title={`${t("app.team.pinTitle")}: ${member.fullName}`} onClose={onClose}>
       {shown ? (
         <div className="flex flex-col gap-4">
           <p className="num text-center text-4xl font-semibold tracking-[0.3em]">{shown}</p>

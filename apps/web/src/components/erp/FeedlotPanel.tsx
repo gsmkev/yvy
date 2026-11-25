@@ -1,49 +1,63 @@
 /** Feedlot: raciones, suministro por corral y conversión alimenticia. Solo dueño y administrador. */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  newId,
-  noonAsuncion,
-  rationLines,
-  rationPctTotal,
-  RECORD_SCHEMA_VERSION,
-  localDate,
-  LIMITS,
-  type PushResponse,
-  type RationItem,
-} from "@yvy/shared";
-import { del, get, post, put, withQs } from "../../lib/api";
-import { fmtDate, fmtNum } from "../../lib/format";
-import { t, tk } from "../../lib/i18n";
-import { useFarm, useFarms } from "../../lib/queries";
+import { del, get } from "../../lib/api";
+import { fmtNum } from "../../lib/format";
+import { t } from "../../lib/i18n";
+import { useFarms } from "../../lib/queries";
 import { useProducts } from "../../lib/products";
-import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Field, FilterBar, Form, FormFooter, Input, Modal, Select, Spinner, Tabs, toast, DateRange } from "../ui";
-import { ExportableTable } from "../ExportableTable";
+import { Button, type Column, ConfirmModal, DataTable, EmptyState, ErrorBox, Spinner, Tabs, toast } from "../ui";
 import { HeaderActions, RowMenu } from "./adminSlot";
-
-interface Ration {
-  id: string;
-  name: string;
-  note: string | null;
-  items: RationItem[];
-}
-interface Corral {
-  plotId: string;
-  plotName: string;
-  feedKgDm: number;
-  feedKgAsFed: number;
-  feeds: number;
-  status: "ok" | "no_weighings" | "no_head" | "no_gain";
-  firstAt: number | null;
-  lastAt: number | null;
-  head: number | null;
-  gainKg: number | null;
-  dailyGainKg: number | null;
-  windowKgDm: number | null;
-  conversion: number | null;
-}
+import { CorralReport } from "./feedlot/CorralReport";
+import { FeedModal } from "./feedlot/FeedModal";
+import { RationModal } from "./feedlot/RationModal";
+import type { Ration } from "./feedlot/types";
+import type { Product } from "../../lib/types";
 
 const useRations = () => useQuery({ queryKey: ["erp", "feedlot", "rations"], queryFn: () => get<Ration[]>("/org/erp/feedlot/rations") });
+
+interface RationsTabProps {
+  list: Ration[];
+  products: Product[];
+  onNew: () => void;
+  onEdit: (r: Ration) => void;
+  onRemove: (r: Ration) => void;
+}
+
+/** Raciones cargadas, o el vacío con la acción de crear la primera. */
+function RationsTab({ list, products, onNew, onEdit, onRemove }: RationsTabProps) {
+  const name = (id: string) => products.find((p) => p.id === id)?.name ?? "—";
+  const composition = (r: Ration) => r.items.map((i) => `${name(i.productId)} ${fmtNum(i.pctDm)} %`).join(", ");
+  const columns: Column<Ration>[] = [
+    {
+      id: "name",
+      header: t("ui.feedlot.rationName"),
+      cell: (r) => (
+        <>
+          {r.name}
+          <span className="num block text-meta font-normal text-tinta-2 md:hidden">{composition(r)}</span>
+        </>
+      ),
+    },
+    { id: "items", header: t("ui.feedlot.composition"), hideBelow: "md", cell: (r) => <span className="num text-tinta-2">{composition(r)}</span> },
+    { id: "_actions", header: <span className="sr-only">{t("ui.row.actionsHeader")}</span>, align: "right", width: "3rem", cell: (r) => <RowMenu name={r.name} onEdit={() => onEdit(r)} onDelete={() => onRemove(r)} /> },
+  ];
+  if (list.length === 0) {
+    return (
+      <EmptyState title={t("ui.feedlot.noRationsTitle")} action={<Button variant="primary" onClick={onNew}>{t("ui.feedlot.rationNew")}</Button>}>
+        {t("ui.feedlot.noRations")}
+      </EmptyState>
+    );
+  }
+  return (
+    <>
+      <div>
+        <Button onClick={onNew}>{t("ui.feedlot.rationNew")}</Button>
+      </div>
+      <DataTable columns={columns} rows={list} rowKey={(r) => r.id} caption={t("ui.feedlot.rations")} />
+    </>
+  );
+}
 
 /** Raciones, suministro por corral y conversión alimenticia. */
 export function FeedlotPanel() {
@@ -65,29 +79,8 @@ export function FeedlotPanel() {
   const [tab, setTab] = useState("rations");
   if (rations.isLoading || products.isLoading) return <Spinner />;
   if (rations.error) return <ErrorBox error={rations.error} />;
-  const name = (id: string) => products.data?.find((p) => p.id === id)?.name ?? "—";
   const list = rations.data ?? [];
   const canFeed = list.length > 0 && !!farms.data?.length;
-  const newRation = (
-    <Button variant="primary" onClick={() => setEditing("new")}>
-      {t("ui.feedlot.rationNew")}
-    </Button>
-  );
-  const composition = (r: Ration) => r.items.map((i) => `${name(i.productId)} ${fmtNum(i.pctDm)} %`).join(" · ");
-  const columns: Column<Ration>[] = [
-    {
-      id: "name",
-      header: t("ui.feedlot.rationName"),
-      cell: (r) => (
-        <>
-          {r.name}
-          <span className="num block text-meta font-normal text-tinta-2 md:hidden">{composition(r)}</span>
-        </>
-      ),
-    },
-    { id: "items", header: t("ui.feedlot.composition"), hideBelow: "md", cell: (r) => <span className="num text-tinta-2">{composition(r)}</span> },
-    { id: "_actions", header: <span className="sr-only">{t("ui.row.actionsHeader")}</span>, align: "right", width: "3rem", cell: (r) => <RowMenu name={r.name} onEdit={() => setEditing(r)} onDelete={() => setRemoving(r)} /> },
-  ];
   return (
     <div className="flex flex-col gap-4">
       {canFeed && (
@@ -105,19 +98,7 @@ export function FeedlotPanel() {
         value={tab}
         onChange={setTab}
       />
-      {tab === "rations" &&
-        (list.length === 0 ? (
-          <EmptyState title={t("ui.feedlot.noRationsTitle")} action={newRation}>
-            {t("ui.feedlot.noRations")}
-          </EmptyState>
-        ) : (
-          <>
-            <div>
-              <Button onClick={() => setEditing("new")}>{t("ui.feedlot.rationNew")}</Button>
-            </div>
-            <DataTable columns={columns} rows={list} rowKey={(r) => r.id} caption={t("ui.feedlot.rations")} />
-          </>
-        ))}
+      {tab === "rations" && <RationsTab list={list} products={products.data ?? []} onNew={() => setEditing("new")} onEdit={setEditing} onRemove={setRemoving} />}
       {tab === "report" && <CorralReport canFeed={canFeed} hasRations={list.length > 0} onFeed={() => setFeeding(true)} onNewRation={() => setEditing("new")} />}
       {editing && <RationModal ration={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
       {feeding && <FeedModal rations={list} onClose={() => setFeeding(false)} />}
@@ -130,228 +111,6 @@ export function FeedlotPanel() {
           onClose={() => setRemoving(null)}
         />
       )}
-    </div>
-  );
-}
-
-function RationModal({ ration, onClose }: { ration: Ration | null; onClose: () => void }) {
-  const products = useProducts();
-  const qc = useQueryClient();
-  const kgProducts = (products.data ?? []).filter((p) => p.unit === "kg");
-  const [name, setName] = useState(ration?.name ?? "");
-  const [rows, setRows] = useState<{ productId: string; pctDm: string; dmPct: string }[]>(
-    ration?.items.map((i) => ({ productId: i.productId, pctDm: String(i.pctDm), dmPct: String(i.dmPct) })) ?? [{ productId: "", pctDm: "", dmPct: "100" }],
-  );
-  const n = (v: string) => Number(v.replace(",", "."));
-  const items = rows.filter((r) => r.productId).map((r) => ({ productId: r.productId, pctDm: n(r.pctDm), dmPct: n(r.dmPct) || 100 }));
-  const total = rationPctTotal(items.map((i) => ({ pctDm: Number.isFinite(i.pctDm) ? i.pctDm : 0 })));
-  const save = useMutation({
-    mutationFn: () => (ration ? put(`/org/erp/feedlot/rations/${ration.id}`, { name, items }) : post("/org/erp/feedlot/rations", { name, items })),
-    onSuccess: () => {
-      toast(t("ui.erp.saved"));
-      qc.invalidateQueries({ queryKey: ["erp", "feedlot"] });
-      onClose();
-    },
-  });
-  const set = (i: number, k: "productId" | "pctDm" | "dmPct", v: string) => setRows(rows.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
-  return (
-    <Modal title={ration ? t("ui.feedlot.rationEdit") : t("ui.feedlot.rationNew")} onClose={onClose}>
-      <Form className="flex flex-col gap-3" onSubmit={() => save.mutate()}>
-        <Field label={t("ui.feedlot.rationName")}>
-          <Input required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} />
-        </Field>
-        {kgProducts.length === 0 && <p className="text-sm text-peligro">{t("ui.feedlot.noKgProducts")}</p>}
-        {rows.map((r, i) => (
-          <div key={i} className="grid grid-cols-[1fr_5.5rem_5.5rem] items-end gap-2">
-            <Field label={i === 0 ? t("ui.feedlot.ingredient") : ""}>
-              <Select
-                value={r.productId}
-                onChange={(e) => set(i, "productId", e.target.value)}
-                options={[{ value: "", label: "—" }, ...kgProducts.map((p) => ({ value: p.id, label: p.name }))]}
-              />
-            </Field>
-            <Field label={i === 0 ? t("ui.feedlot.pctDm") : ""}>
-              <Input inputMode="decimal" className="num" value={r.pctDm} onChange={(e) => set(i, "pctDm", e.target.value)} />
-            </Field>
-            <Field label={i === 0 ? t("ui.feedlot.productDm") : ""}>
-              <Input inputMode="decimal" className="num" value={r.dmPct} onChange={(e) => set(i, "dmPct", e.target.value)} />
-            </Field>
-          </div>
-        ))}
-        <div className="flex items-center justify-between">
-          <Button variant="quiet" disabled={rows.length >= LIMITS.feedlot.maxRationItems} onClick={() => setRows([...rows, { productId: "", pctDm: "", dmPct: "100" }])}>
-            {t("ui.feedlot.addIngredient")}
-          </Button>
-          <p className={`num text-sm ${Math.abs(total - 100) <= LIMITS.feedlot.pctTolerance ? "" : "text-peligro"}`}>{t("ui.feedlot.pctTotal", { n: fmtNum(total) })}</p>
-        </div>
-        <p className="text-xs text-tinta-2">{t("ui.feedlot.pctHint")}</p>
-        <FormFooter error={save.error} disabled={save.isPending || items.length === 0} label={t("ui.common.save")} />
-
-      </Form>
-    </Modal>
-  );
-}
-
-function FeedModal({ rations, onClose }: { rations: Ration[]; onClose: () => void }) {
-  const farms = useFarms();
-  const products = useProducts();
-  const qc = useQueryClient();
-  const [f, setF] = useState({ farmId: "", plotId: "", rationId: rations[0]?.id ?? "", kgDm: "", head: "", date: localDate(Date.now()) });
-  const farmId = f.farmId || farms.data?.[0]?.id || "";
-  const farm = useFarm(farmId, !!farmId);
-  const corrals = (farm.data?.plots ?? []).filter((p) => p.kind === "pasture");
-  const plotId = f.plotId || corrals[0]?.id || "";
-  const ration = rations.find((r) => r.id === f.rationId);
-  const kgDm = Number(f.kgDm.replace(",", "."));
-  const lines = ration && kgDm > 0 ? rationLines(ration.items, kgDm) : [];
-  const nameOf = (id: string) => products.data?.find((p) => p.id === id)?.name ?? "—";
-  const save = useMutation({
-    mutationFn: async () => {
-      if (!ration) return;
-      const at = Math.min(noonAsuncion(f.date), Date.now() - 1000);
-      const res = await post<PushResponse>("/sync/push", {
-        deviceId: "web",
-        mutations: [
-          {
-            mutationId: newId(),
-            kind: "records.upsert",
-            row: {
-              id: newId(),
-              farmId,
-              plotId,
-              poiId: null,
-              kind: "feed",
-              data: {
-                rationId: ration.id,
-                ration: ration.name,
-                kgDm,
-                ...(f.head ? { head: Number(f.head) } : {}),
-                items: lines.map((l) => ({ productId: l.productId, name: nameOf(l.productId), kg: l.kg })),
-              },
-              schemaVersion: RECORD_SCHEMA_VERSION,
-              lon: null,
-              lat: null,
-              gpsAccuracyM: null,
-              capturedAt: at,
-            },
-          },
-        ],
-      });
-      const r = res.results[0];
-      if (r?.status === "rejected") throw new Error(r.detail ?? t("ui.fuel.rejected"));
-    },
-    onSuccess: () => {
-      toast(t("ui.erp.saved"));
-      qc.invalidateQueries({ queryKey: ["erp"] });
-      onClose();
-    },
-  });
-  return (
-    <Modal title={t("ui.feedlot.feed")} onClose={onClose}>
-      <Form onSubmit={() => save.mutate()}>
-        <Field label={t("ui.cost.farm")}>
-          <Select value={farmId} onChange={(e) => setF({ ...f, farmId: e.target.value, plotId: "" })} options={(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))} />
-        </Field>
-        <Field label={t("ui.feedlot.corral")}>
-          <Select value={plotId} onChange={(e) => setF({ ...f, plotId: e.target.value })} options={corrals.map((p) => ({ value: p.id, label: p.name }))} />
-        </Field>
-        <Field label={t("ui.feedlot.ration")}>
-          <Select value={f.rationId} onChange={(e) => setF({ ...f, rationId: e.target.value })} options={rations.map((r) => ({ value: r.id, label: r.name }))} />
-        </Field>
-        <Field label={t("ui.cost.date")}>
-          <Input type="date" required value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} />
-        </Field>
-        <Field label={t("ui.feedlot.kgDm")}>
-          <Input type="number" required min={0} step="any" value={f.kgDm} onChange={(e) => setF({ ...f, kgDm: e.target.value })} />
-        </Field>
-        <Field label={t("ui.feedlot.head")}>
-          <Input type="number" min={1} step={1} value={f.head} onChange={(e) => setF({ ...f, head: e.target.value })} />
-        </Field>
-        {corrals.length === 0 && <p className="sm:col-span-2 text-sm text-tinta-2">{t("ui.feedlot.noCorrals")}</p>}
-        {lines.length > 0 && (
-          <ul className="num col-span-2 text-sm text-tinta-2">
-            {lines.map((l) => (
-              <li key={l.productId}>
-                {nameOf(l.productId)}: {fmtNum(l.kg)} kg
-              </li>
-            ))}
-          </ul>
-        )}
-        <FormFooter error={save.error} disabled={save.isPending || !plotId || !ration || lines.length === 0} />
-      </Form>
-    </Modal>
-  );
-}
-
-function CorralReport({ canFeed, hasRations, onFeed, onNewRation }: { canFeed: boolean; hasRations: boolean; onFeed: () => void; onNewRation: () => void }) {
-  const farms = useFarms();
-  const today = localDate(Date.now());
-  const [f, setF] = useState({ farmId: "", from: localDate(Date.now() - 60 * 86_400_000), to: today });
-  const q = useQuery({
-    queryKey: ["erp", "feedlot", "report", f],
-    queryFn: () =>
-      get<{ truncated: boolean; corrals: Corral[] }>(
-        withQs("/org/erp/feedlot/report", { farmId: f.farmId || undefined, from: f.from, to: f.to }),
-      ),
-  });
-  const rows = q.data?.corrals ?? [];
-  const columns: Column<Corral>[] = [
-    { id: "corral", header: t("ui.feedlot.corral"), cell: (c) => c.plotName },
-    { id: "dm", header: t("ui.feedlot.colDm"), align: "right", hideBelow: "sm", cell: (c) => fmtNum(c.feedKgDm) },
-    { id: "asfed", header: t("ui.feedlot.colAsFed"), align: "right", hideBelow: "md", cell: (c) => fmtNum(c.feedKgAsFed) },
-    { id: "gain", header: t("ui.feedlot.colGain"), align: "right", hideBelow: "sm", cell: (c) => (c.gainKg !== null ? `${fmtNum(c.gainKg)} kg` : "—") },
-    {
-      id: "conv",
-      header: t("ui.feedlot.colConversion"),
-      align: "right",
-      cell: (c) =>
-        c.conversion !== null ? (
-          <>
-            {fmtNum(c.conversion)}
-            <span className="block text-meta text-tinta-2">{t("ui.feedlot.window", { from: fmtDate(c.firstAt!), to: fmtDate(c.lastAt!), head: c.head ?? 0 })}</span>
-          </>
-        ) : (
-          <span className="text-tinta-2">{tk(`ui.feedlot.status_${c.status}`)}</span>
-        ),
-    },
-  ];
-  return (
-    <div className="flex flex-col gap-4">
-      <FilterBar active={Object.values(f).filter(Boolean).length} onClear={() => setF({ farmId: "", from: "", to: "" })}>
-        <Field label={t("ui.cost.farm")}>
-          <Select value={f.farmId} onChange={(e) => setF({ ...f, farmId: e.target.value })} options={[{ value: "", label: t("ui.common.all") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
-        </Field>
-        <DateRange from={f.from} to={f.to} onChange={(r) => setF({ ...f, ...r })} />
-      </FilterBar>
-      {q.isLoading && <Spinner />}
-      {q.error && <ErrorBox error={q.error} />}
-      {q.data && rows.length === 0 && (
-        <EmptyState
-          title={t("ui.feedlot.noFeedsTitle")}
-          action={
-            hasRations ? (
-              canFeed ? (
-                <Button variant="primary" onClick={onFeed}>
-                  {t("ui.feedlot.feed")}
-                </Button>
-              ) : undefined
-            ) : (
-              <Button variant="primary" onClick={onNewRation}>
-                {t("ui.feedlot.rationNew")}
-              </Button>
-            )
-          }
-        >
-          {hasRations ? t("ui.feedlot.noFeeds") : t("ui.feedlot.noFeedsNoRations")}
-        </EmptyState>
-      )}
-      {rows.length > 0 && (
-        <ExportableTable name="feedlot">
-          <DataTable columns={columns} rows={rows} rowKey={(c) => c.plotId} caption={t("ui.feedlot.report")} />
-        </ExportableTable>
-      )}
-      {q.data?.truncated && <p className="text-meta text-tinta-2">{t("ui.feedlot.truncated")}</p>}
-      {rows.length > 0 && <p className="text-meta text-tinta-2">{t("ui.feedlot.reportHint")}</p>}
     </div>
   );
 }

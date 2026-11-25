@@ -31,7 +31,7 @@ export function Funnel() {
           <ul className="mt-1 flex flex-col gap-0.5 text-sm">
             {q.data.views.map((v) => (
               <li key={v.name} className="num">
-                {v.name.replace("view:", "")} · {fmtNum(v.n)}
+                {v.name.replace("view:", "")}: {fmtNum(v.n)}
               </li>
             ))}
           </ul>
@@ -43,7 +43,7 @@ export function Funnel() {
           <ul className="mt-1 flex flex-wrap gap-x-5 gap-y-0.5 text-sm">
             {q.data.daily.map((d) => (
               <li key={d.day} className="num">
-                {d.day.slice(5)} · {fmtNum(d.n)}
+                {d.day.slice(5)}: {fmtNum(d.n)}
               </li>
             ))}
           </ul>

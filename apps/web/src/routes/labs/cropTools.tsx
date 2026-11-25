@@ -19,7 +19,7 @@ export function Yield() {
       </div>
       <Flow drop={false}>
         <p className="text-sm text-tinta-2">
-          {t("ui.labs.yieldCampaign")} · {t("ui.labs.askFarm")}
+          {t("ui.labs.yieldCampaign")}. {t("ui.labs.askFarm")}
         </p>
         <Figure
           value={t("ui.labs.yieldTotalValue", { low: nf(sum("low")), high: nf(sum("high")) })}
@@ -61,7 +61,7 @@ export function Advice() {
       </div>
       <Flow drop={false}>
         <p className="text-sm text-tinta-2">
-          {t("ui.labs.summaryDraft")} · {t("ui.labs.adviceWalk")}
+          {t("ui.labs.summaryDraft")}. {t("ui.labs.adviceWalk")}
         </p>
         <div>
           <h3 className="font-semibold">{t("ui.labs.adviceSource")}</h3>

@@ -2,7 +2,8 @@
 import { WAREHOUSE_TYPES } from "@yvy/shared";
 import { t, tk } from "../../lib/i18n";
 import { useFarms } from "../../lib/queries";
-import { MasterPanel, useErpList, type FieldDef } from "./MasterPanel";
+import { MasterPanel } from "./MasterPanel";
+import { useErpList, type FieldDef } from "./RowModal";
 
 interface Warehouse {
   id: string;

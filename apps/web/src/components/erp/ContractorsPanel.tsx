@@ -2,7 +2,7 @@
 import { CONTRACTOR_SERVICES, CURRENCIES, RATE_UNITS, type Currency } from "@yvy/shared";
 import { t, tk } from "../../lib/i18n";
 import { fmtMoney } from "../../lib/money";
-import { useErpList, type FieldDef } from "./MasterPanel";
+import { useErpList, type FieldDef } from "./RowModal";
 import { RecordList } from "./RecordList";
 import { useParties } from "./PartiesPanel";
 

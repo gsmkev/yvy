@@ -2251,7 +2251,7 @@ export const esPY = {
       audit_plan_request_rejected: "Rechazó un pedido de plan",
       audit_plan_request: "Pidió un cambio de plan",
       audit_plan_request_cancel: "Canceló el pedido de plan",
-      limits: "Tope (ha · personas)",
+      limits: "Tope (ha y personas)",
       actions: "Acciones",
       editPlan: "Plan y topes",
       planSaved: "Plan guardado",
@@ -2613,7 +2613,7 @@ export const esPY = {
       referralTitleProducer: "Tu código de referido",
       referralTextProducer:
         "Compartí este enlace con otros productores. Cuando crean su cuenta con él, queda anotado que llegaron por vos y el equipo de Yvy te lo reconoce.",
-      referralCount: "Llegaron con tu código: {{n}} · crédito anotado en {{c}}",
+      referralCount: "Llegaron con tu código: {{n}}, crédito anotado en {{c}}",
     },
     review: {
       title: "Para revisar",

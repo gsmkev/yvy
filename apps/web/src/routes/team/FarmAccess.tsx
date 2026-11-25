@@ -35,7 +35,7 @@ export function FarmAccess({ member, onClose }: { member: Member; onClose: () =>
   };
   return (
     <Modal
-      title={`${t("ui.farm.access")} · ${member.fullName}`}
+      title={`${t("ui.farm.access")}: ${member.fullName}`}
       onClose={onClose}
       footer={
         <>

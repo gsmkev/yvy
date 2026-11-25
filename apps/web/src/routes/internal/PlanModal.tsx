@@ -65,7 +65,7 @@ export function OrgChanges({ org, onClose }: { org: OrgMetrics; onClose: () => v
     queryFn: () => get<AuditEntryRow[]>(withQs("/admin/audit", { orgId: org.id, scope: "org" })),
   });
   return (
-    <Modal title={`${t("ui.internal.changes")} · ${org.name}`} onClose={onClose}>
+    <Modal title={`${t("ui.internal.changes")}: ${org.name}`} onClose={onClose}>
       {q.isPending && <Spinner />}
       {q.error && <ErrorBox error={q.error} />}
       {q.data && !q.data.length && <EmptyState compact title={t("ui.audit.empty")} />}

@@ -29,7 +29,7 @@ function byCurrency(totals: Record<string, number> | undefined): { value: string
     .filter(([, v]) => v !== 0)
     .sort(([a], [b]) => (a === "PYG" ? -1 : b === "PYG" ? 1 : a.localeCompare(b)))
     .map(([cur, v]) => fmtMoney(v, cur as Currency));
-  return lines.length ? { value: lines[0]!, rest: lines.slice(1).join(" · ") } : null;
+  return lines.length ? { value: lines[0]!, rest: lines.slice(1).join(", ") } : null;
 }
 
 const pick = (totals: Dues["totals"] | undefined, key: "pending" | "overdue") =>

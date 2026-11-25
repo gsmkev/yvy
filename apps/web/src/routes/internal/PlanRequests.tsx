@@ -47,7 +47,7 @@ export function PlanRequests() {
           <li key={r.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-3 text-sm">
             <div className="min-w-0 flex-1">
               <p className="font-medium">
-                {r.organization} · {t("ui.internal.planAsks", { from: r.currentPlan, plan: r.plan })}
+                {r.organization}: {t("ui.internal.planAsks", { from: r.currentPlan, plan: r.plan })}
               </p>
               <p className="num text-tinta-2">
                 {[
@@ -57,7 +57,7 @@ export function PlanRequests() {
                   fmtDateTime(r.createdAt),
                 ]
                   .filter(Boolean)
-                  .join(" · ")}
+                  .join(", ")}
               </p>
               {r.note && <p className="text-tinta-2">“{r.note}”</p>}
             </div>

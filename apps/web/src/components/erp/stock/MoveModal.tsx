@@ -11,56 +11,115 @@ import { useParties } from "../PartiesPanel";
 import { useWarehouses } from "../WarehousesPanel";
 import type { Mode } from "./types";
 
-/**
- * Alta de un movimiento.
- * @param mode tipo de movimiento.
- */
+type MoveForm = {
+  productId: string;
+  warehouseId: string;
+  toWarehouseId: string;
+  date: string;
+  qty: string;
+  amount: string;
+  currency: string;
+  partyId: string;
+  farmId: string;
+  plotId: string;
+  note: string;
+  sign: string;
+  lot: string;
+  expiresOn: string;
+};
+
+type Setter = (k: keyof MoveForm) => (e: { target: { value: string } }) => void;
+
+const INITIAL: MoveForm = {
+  productId: "",
+  warehouseId: "",
+  toWarehouseId: "",
+  date: "",
+  qty: "",
+  amount: "",
+  currency: "PYG",
+  partyId: "",
+  farmId: "",
+  plotId: "",
+  note: "",
+  sign: "1",
+  lot: "",
+  expiresOn: "",
+};
+
+type Common = { productId: string; date: string; note: string | null };
+
+/** Manda el movimiento a la ruta de su tipo. */
+function sendMove(mode: Mode, f: MoveForm, common: Common, qty: number): Promise<unknown> {
+  switch (mode) {
+    case "purchase":
+      return post("/org/erp/stock/purchases", {
+        ...common,
+        warehouseId: f.warehouseId,
+        qty,
+        amount: toMinor(Number(f.amount), f.currency as Currency),
+        currency: f.currency,
+        partyId: f.partyId || null,
+        lot: f.lot.trim() || null,
+        expiresOn: f.expiresOn || null,
+      });
+    case "consumption":
+      return post("/org/erp/stock/consumptions", { ...common, warehouseId: f.warehouseId, qty, plotId: f.plotId || null });
+    case "transfer":
+      return post("/org/erp/stock/transfers", { ...common, fromWarehouseId: f.warehouseId, toWarehouseId: f.toWarehouseId, qty });
+    case "adjustment":
+      return post("/org/erp/stock/adjustments", { ...common, warehouseId: f.warehouseId, qty: qty * Number(f.sign) });
+  }
+}
+
+function PurchaseFields({ f, set }: { f: MoveForm; set: Setter }) {
+  const parties = useParties();
+  return (
+    <>
+      <Field label={t("ui.common.currency")}>
+        <Select value={f.currency} onChange={set("currency")} options={CURRENCIES.map((x) => ({ value: x, label: x }))} />
+      </Field>
+      <Field label={t("ui.stock.totalAmount")}>
+        <Input type="number" required min={0} step="any" value={f.amount} onChange={set("amount")} />
+      </Field>
+      <Field label={t("ui.stock.lot")}>
+        <Input value={f.lot} onChange={set("lot")} maxLength={40} />
+      </Field>
+      <Field label={t("ui.stock.expires")}>
+        <Input type="date" value={f.expiresOn} onChange={set("expiresOn")} />
+      </Field>
+      <Field label={t("ui.stock.supplier")} wide>
+        <Select value={f.partyId} onChange={set("partyId")} options={[{ value: "", label: t("ui.cost.none") }, ...(parties.data ?? []).map((p) => ({ value: p.id, label: p.name }))]} />
+      </Field>
+    </>
+  );
+}
+
+function ConsumptionFields({ f, set }: { f: MoveForm; set: Setter }) {
+  const farms = useFarms();
+  const farm = useFarm(f.farmId, !!f.farmId);
+  const none = { value: "", label: t("ui.cost.none") };
+  return (
+    <>
+      <Field label={t("ui.cost.farm")}>
+        <Select value={f.farmId} onChange={set("farmId")} options={[none, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
+      </Field>
+      <Field label={t("ui.stock.chargePlot")}>
+        <Select value={f.plotId} onChange={set("plotId")} disabled={!f.farmId} options={[none, ...(farm.data?.plots ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
+      </Field>
+    </>
+  );
+}
+
+/** Alta de un movimiento; `mode` es el tipo (compra, consumo, transferencia o ajuste). */
 export function MoveModal({ mode, onClose }: { mode: Mode; onClose: () => void }) {
   const qc = useQueryClient();
   const products = useProducts();
   const warehouses = useWarehouses();
-  const parties = useParties();
-  const farms = useFarms();
-  const [f, setF] = useState({
-    productId: "",
-    warehouseId: "",
-    toWarehouseId: "",
-    date: localDate(Date.now()),
-    qty: "",
-    amount: "",
-    currency: "PYG",
-    partyId: "",
-    farmId: "",
-    plotId: "",
-    note: "",
-    sign: "1",
-    lot: "",
-    expiresOn: "",
-  });
-  const farm = useFarm(f.farmId, mode === "consumption" && !!f.farmId);
-  const set = (k: keyof typeof f) => (e: { target: { value: string } }) =>
-    setF({ ...f, [k]: e.target.value, ...(k === "farmId" ? { plotId: "" } : {}) });
+  const [f, setF] = useState<MoveForm>({ ...INITIAL, date: localDate(Date.now()) });
+  const set: Setter = (k) => (e) => setF({ ...f, [k]: e.target.value, ...(k === "farmId" ? { plotId: "" } : {}) });
   const save = useMutation({
-    mutationFn: () => {
-      const common = { productId: f.productId, date: f.date, note: f.note.trim() || null };
-      const qty = Number(f.qty);
-      if (mode === "purchase")
-        return post("/org/erp/stock/purchases", {
-          ...common,
-          warehouseId: f.warehouseId,
-          qty,
-          amount: toMinor(Number(f.amount), f.currency as Currency),
-          currency: f.currency,
-          partyId: f.partyId || null,
-          lot: f.lot.trim() || null,
-          expiresOn: f.expiresOn || null,
-        });
-      if (mode === "consumption")
-        return post("/org/erp/stock/consumptions", { ...common, warehouseId: f.warehouseId, qty, plotId: f.plotId || null });
-      if (mode === "transfer")
-        return post("/org/erp/stock/transfers", { ...common, fromWarehouseId: f.warehouseId, toWarehouseId: f.toWarehouseId, qty });
-      return post("/org/erp/stock/adjustments", { ...common, warehouseId: f.warehouseId, qty: qty * Number(f.sign) });
-    },
+    mutationFn: () => sendMove(mode, f, { productId: f.productId, date: f.date, note: f.note.trim() || null }, Number(f.qty)),
     onSuccess: () => {
       toast(t("ui.erp.saved"));
       qc.invalidateQueries({ queryKey: ["erp"] });
@@ -72,28 +131,20 @@ export function MoveModal({ mode, onClose }: { mode: Mode; onClose: () => void }
   return (
     <Modal title={t(`ui.stock.mode_${mode}`)} onClose={onClose}>
       <Form onSubmit={() => save.mutate()}>
-        <div className="sm:col-span-2">
-          <Field label={t("ui.stock.product")}>
-            <Select required value={f.productId} onChange={set("productId")} options={[pick, ...(products.data ?? []).map((p) => ({ value: p.id, label: `${p.name} (${tk(`fields.product.unit_${p.unit}`)})` }))]} />
-          </Field>
-        </div>
+        <Field label={t("ui.stock.product")} wide>
+          <Select required value={f.productId} onChange={set("productId")} options={[pick, ...(products.data ?? []).map((p) => ({ value: p.id, label: `${p.name} (${tk(`fields.product.unit_${p.unit}`)})` }))]} />
+        </Field>
         <Field label={mode === "transfer" ? t("ui.stock.from") : t("ui.stock.warehouse")}>
           <Select required value={f.warehouseId} onChange={set("warehouseId")} options={[pick, ...whOptions]} />
         </Field>
-        {mode === "transfer" ? (
+        {mode === "transfer" && (
           <Field label={t("ui.stock.to")}>
             <Select required value={f.toWarehouseId} onChange={set("toWarehouseId")} options={[pick, ...whOptions]} />
           </Field>
-        ) : (
-          <Field label={t("ui.cost.date")}>
-            <Input type="date" required value={f.date} onChange={set("date")} />
-          </Field>
         )}
-        {mode === "transfer" && (
-          <Field label={t("ui.cost.date")}>
-            <Input type="date" required value={f.date} onChange={set("date")} />
-          </Field>
-        )}
+        <Field label={t("ui.cost.date")}>
+          <Input type="date" required value={f.date} onChange={set("date")} />
+        </Field>
         {mode === "adjustment" && (
           <Field label={t("ui.stock.adjustSign")}>
             <Select value={f.sign} onChange={set("sign")} options={[{ value: "1", label: t("ui.stock.adjustPlus") }, { value: "-1", label: t("ui.stock.adjustMinus") }]} />
@@ -102,42 +153,11 @@ export function MoveModal({ mode, onClose }: { mode: Mode; onClose: () => void }
         <Field label={t("ui.stock.qty")}>
           <Input type="number" required min={0} step="any" value={f.qty} onChange={set("qty")} />
         </Field>
-        {mode === "purchase" && (
-          <>
-            <Field label={t("ui.common.currency")}>
-              <Select value={f.currency} onChange={set("currency")} options={CURRENCIES.map((x) => ({ value: x, label: x }))} />
-            </Field>
-            <Field label={t("ui.stock.totalAmount")}>
-              <Input type="number" required min={0} step="any" value={f.amount} onChange={set("amount")} />
-            </Field>
-            <Field label={t("ui.stock.lot")}>
-              <Input value={f.lot} onChange={set("lot")} maxLength={40} />
-            </Field>
-            <Field label={t("ui.stock.expires")}>
-              <Input type="date" value={f.expiresOn} onChange={set("expiresOn")} />
-            </Field>
-            <div className="sm:col-span-2">
-              <Field label={t("ui.stock.supplier")}>
-                <Select value={f.partyId} onChange={set("partyId")} options={[{ value: "", label: t("ui.cost.none") }, ...(parties.data ?? []).map((p) => ({ value: p.id, label: p.name }))]} />
-              </Field>
-            </div>
-          </>
-        )}
-        {mode === "consumption" && (
-          <>
-            <Field label={t("ui.cost.farm")}>
-              <Select value={f.farmId} onChange={set("farmId")} options={[{ value: "", label: t("ui.cost.none") }, ...(farms.data ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
-            </Field>
-            <Field label={t("ui.stock.chargePlot")}>
-              <Select value={f.plotId} onChange={set("plotId")} disabled={!f.farmId} options={[{ value: "", label: t("ui.cost.none") }, ...(farm.data?.plots ?? []).map((x) => ({ value: x.id, label: x.name }))]} />
-            </Field>
-          </>
-        )}
-        <div className="sm:col-span-2">
-          <Field label={t("ui.stock.note")}>
-            <Input value={f.note} onChange={set("note")} maxLength={200} />
-          </Field>
-        </div>
+        {mode === "purchase" && <PurchaseFields f={f} set={set} />}
+        {mode === "consumption" && <ConsumptionFields f={f} set={set} />}
+        <Field label={t("ui.stock.note")} wide>
+          <Input value={f.note} onChange={set("note")} maxLength={200} />
+        </Field>
         <FormFooter error={save.error} disabled={save.isPending} />
       </Form>
     </Modal>

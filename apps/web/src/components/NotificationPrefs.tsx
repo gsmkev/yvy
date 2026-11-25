@@ -1,3 +1,4 @@
+/** Preferencias de avisos: qué llega por celular y por email, y el horario de silencio. */
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DEFAULT_NOTIFICATION_PREFS, type NotificationPrefs as Prefs, type NotifyKind } from "@yvy/shared";
@@ -9,6 +10,33 @@ interface Resp {
   prefs: Prefs;
   kinds: NotifyKind[];
   email: boolean;
+}
+
+/** Horario de silencio del push: interruptor y desde cuándo hasta cuándo. */
+function QuietHours({ quiet, onChange }: { quiet: Prefs["quiet"]; onChange: (patch: Partial<Prefs["quiet"]>) => void }) {
+  return (
+    <>
+      <div className="mt-8">
+        <SectionHead title={t("ui.notif.quietTitle")} />
+      </div>
+      <label className="mt-3 flex items-center gap-2 text-sm">
+        <input type="checkbox" className="size-4 cursor-pointer accent-[#7A9A3F]" checked={quiet.enabled} onChange={(e) => onChange({ enabled: e.target.checked })} />
+        {t("ui.notif.quietSwitch")}
+      </label>
+      {quiet.enabled && (
+        <div className="mt-3 flex items-end gap-3 text-sm">
+          <label className="flex flex-col gap-1.5">
+            <span className="font-medium">{t("ui.notif.quietFrom")}</span>
+            <Input type="time" required value={quiet.start} onChange={(e) => onChange({ start: e.target.value })} />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="font-medium">{t("ui.notif.quietTo")}</span>
+            <Input type="time" required value={quiet.end} onChange={(e) => onChange({ end: e.target.value })} />
+          </label>
+        </div>
+      )}
+    </>
+  );
 }
 
 /** Qué avisos llegan por celular y por email, y el horario de silencio del push. */
@@ -64,28 +92,7 @@ export function NotificationPrefs() {
         />
       </div>
 
-      <div className="mt-8"><SectionHead title={t("ui.notif.quietTitle")} /></div>
-      <label className="mt-3 flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          className="size-4 cursor-pointer accent-[#7A9A3F]"
-          checked={prefs.quiet.enabled}
-          onChange={(e) => setQuiet({ enabled: e.target.checked })}
-        />
-        {t("ui.notif.quietSwitch")}
-      </label>
-      {prefs.quiet.enabled && (
-        <div className="mt-3 flex items-end gap-3 text-sm">
-          <label className="flex flex-col gap-1.5">
-            <span className="font-medium">{t("ui.notif.quietFrom")}</span>
-            <Input type="time" required value={prefs.quiet.start} onChange={(e) => setQuiet({ start: e.target.value })} />
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className="font-medium">{t("ui.notif.quietTo")}</span>
-            <Input type="time" required value={prefs.quiet.end} onChange={(e) => setQuiet({ end: e.target.value })} />
-          </label>
-        </div>
-      )}
+      <QuietHours quiet={prefs.quiet} onChange={setQuiet} />
       <p className="mt-2 text-xs text-tinta-2">{t("ui.notif.quietHint")}</p>
       {save.error && (
         <div className="mt-3">

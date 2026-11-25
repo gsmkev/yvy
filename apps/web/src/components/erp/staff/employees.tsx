@@ -2,7 +2,7 @@
 import { t } from "../../../lib/i18n";
 import { fmtGs } from "../../../lib/money";
 import { Button, EmptyState } from "../../ui";
-import { useErpList, type FieldDef } from "../MasterPanel";
+import { useErpList, type FieldDef } from "../RowModal";
 import { RecordList } from "../RecordList";
 
 /** Empleado con su jornal. */

@@ -63,7 +63,7 @@ export default function Maintenance() {
                   rows={dueRows}
                   keyOf={(d) => d.planId}
                   title={(d) => d.machine}
-                  subtitle={(d) => `${d.name} · ${fmtNumber(d.meter)} / ${fmtNumber(d.dueAt)} ${unitOf(d.meterKind)}`}
+                  subtitle={(d) => d.name}
                   right={(d) => (
                     <Text style={[T.smallMedium, { color: d.status === "overdue" ? C.peligro : C.atencion }]}>
                       {d.status === "overdue" ? t("ui.maint.overdue", { n: `${fmtNumber(-d.remaining)} ${unitOf(d.meterKind)}` }) : t("ui.maint.soon", { n: `${fmtNumber(d.remaining)} ${unitOf(d.meterKind)}` })}
@@ -89,7 +89,13 @@ export default function Maintenance() {
                 rows={logs.data ?? []}
                 keyOf={(l) => l.id}
                 title={(l) => machine(l.machineId)?.name ?? ""}
-                subtitle={(l) => [isoShort(localDate(l.occurredAt)), t(key(`ui.maint.kind_${l.kind}`)), l.description, l.meterValue !== null ? `${fmtNumber(l.meterValue)} ${unit(l.machineId)}` : null].filter(Boolean).join(" · ")}
+                subtitle={(l) => `${isoShort(localDate(l.occurredAt))} · ${t(key(`ui.maint.kind_${l.kind}`))}`}
+                detail={(l) => [
+                  { label: t("ui.cost.date"), value: isoShort(localDate(l.occurredAt)) },
+                  { label: t("ui.maint.kind"), value: t(key(`ui.maint.kind_${l.kind}`)) },
+                  ...(l.description ? [{ label: t("ui.maint.description"), value: l.description }] : []),
+                  ...(l.meterValue !== null ? [{ label: t("ui.maint.meter"), value: `${fmtNumber(l.meterValue)} ${unit(l.machineId)}` }] : []),
+                ]}
                 right={(l) => (l.amountPyg ? fmtGs(l.amountPyg) : "")}
                 empty={{ title: t("ui.maint.historyEmptyTitle"), hint: t("ui.maint.historyEmptyHint") }}
               />
@@ -98,7 +104,7 @@ export default function Maintenance() {
                 rows={plans.data ?? []}
                 keyOf={(p) => p.id}
                 title={(p) => p.name}
-                subtitle={(p) => `${machine(p.machineId)?.name ?? ""} · ${t("ui.maint.every")} ${fmtNumber(p.everyUnits)} ${unit(p.machineId)} · ${t("ui.maint.lastDone")} ${fmtNumber(p.lastDoneMeter)} ${unit(p.machineId)}`}
+                subtitle={(p) => `${machine(p.machineId)?.name ?? ""} · ${t("ui.maint.every")} ${fmtNumber(p.everyUnits)} ${unit(p.machineId)}`}
                 onPress={(p) => setLogging({ planId: p.id })}
                 empty={{ title: t("ui.maint.plansEmptyTitle"), hint: t("ui.maint.plansEmptyHint") }}
               />

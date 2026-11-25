@@ -8,7 +8,6 @@ import { Pressable, View } from "react-native";
 import { Check, Plus } from "lucide-react-native";
 import { localDate, t, type MessageKey } from "@yvy/shared";
 import { getDb } from "../../../../src/lib/db";
-import { tap } from "../../../../src/lib/haptics";
 import { showToast } from "../../../../src/lib/toast";
 import { useLocal } from "../../../../src/lib/useLocal";
 import { isoShort, NoAdminAccess, NoSignalNote, useErp, useManageErp, useNoSignalReason } from "../../../../src/office/erpCommon";
@@ -58,33 +57,20 @@ type Tab = "attendance" | "balances" | "employees";
 type Mark = "full" | "half" | "absent";
 const key = (k: string) => k as MessageKey;
 
-/** Personal: empleados y sus datos. */
-export default function Staff() {
-  const allowed = useManageErp();
-  const [tab, setTab] = useState<Tab>("attendance");
+/** Asistencia del día: fecha, estancia, marcas por empleado y lo ya cargado; `save` envía solo lo marcado y sin cargar. */
+function useAttendance(allowed: boolean, tab: Tab, list: Employee[]) {
   const [date, setDate] = useState(localDate(Date.now()));
   const [farmId, setFarmId] = useState("");
   const [marks, setMarks] = useState<Record<string, Mark>>({});
-  const [adding, setAdding] = useState(false);
-  const [statement, setStatement] = useState<Balance | null>(null);
-  const noSignal = useNoSignalReason();
-  const farms = useLocal(() => getDb().farms());
-  const staff = useErp<Employee[]>(allowed ? "/org/erp/employees" : null);
   const day = useErp<Attendance[]>(allowed && date ? `/org/erp/attendance?from=${date}&to=${date}` : null);
   const recent = useErp<Attendance[]>(allowed && tab === "attendance" ? "/org/erp/attendance" : null);
-  const balances = useErp<Balance[]>(allowed && tab === "balances" ? "/org/erp/employees/balance" : null);
-  const saveDay = useOnlineMutation<Record<string, unknown>, unknown>("POST", "/org/erp/attendance", { invalidate: ["/org/erp/attendance", "/org/erp/employees"] });
-  if (!allowed) return <NoAdminAccess title={t("ui.admin.section_staff")} />;
-
-  const list = staff.data ?? [];
+  const mutation = useOnlineMutation<Record<string, unknown>, unknown>("POST", "/org/erp/attendance", { invalidate: ["/org/erp/attendance", "/org/erp/employees"] });
   const loaded = new Map<string, number>();
   for (const a of day.data ?? []) loaded.set(a.employeeId, (loaded.get(a.employeeId) ?? 0) + a.days);
   const marked = list.filter((e) => marks[e.id] && marks[e.id] !== "absent" && (loaded.get(e.id) ?? 0) < 1);
-  const nameOf = (id: string) => list.find((e) => e.id === id)?.name ?? "?";
-
   const save = async () => {
     const entries = marked.map((e) => ({ employeeId: e.id, days: marks[e.id] === "full" ? 1 : 0.5, farmId: farmId || undefined }));
-    const r = await saveDay.mutate({ date, entries });
+    const r = await mutation.mutate({ date, entries });
     if (r.ok) {
       showToast(t("ui.erp.saved"));
       setMarks({});
@@ -92,20 +78,42 @@ export default function Staff() {
       void recent.refresh();
     }
   };
+  const pickDate = (v: string) => {
+    setDate(v);
+    setMarks({});
+  };
+  return { date, pickDate, farmId, setFarmId, marks, mark: (id: string, m: Mark) => setMarks((x) => ({ ...x, [id]: m })), loaded, marked, save, day, recent, mutation };
+}
 
-  const action =
-    tab === "attendance" && list.length > 0
-      ? { label: t("ui.att.save", { n: marked.length }), icon: Check, onPress: () => void save(), disabled: marked.length === 0 || !date || !!noSignal, loading: saveDay.pending }
-      : tab === "employees"
-        ? { label: t("ui.staff.add"), icon: Plus, onPress: () => setAdding(true), disabled: !!noSignal }
-        : undefined;
+/** Botón fijo de cada pestaña: guardar la asistencia o dar de alta un empleado. */
+function tabAction(tab: Tab, o: { att: ReturnType<typeof useAttendance>; hasStaff: boolean; blocked: boolean; add: () => void }) {
+  if (tab === "attendance" && o.hasStaff) {
+    const { marked, date, mutation, save } = o.att;
+    return { label: t("ui.att.save", { n: marked.length }), icon: Check, onPress: () => void save(), disabled: marked.length === 0 || !date || o.blocked, loading: mutation.pending };
+  }
+  return tab === "employees" ? { label: t("ui.staff.add"), icon: Plus, onPress: o.add, disabled: o.blocked } : undefined;
+}
+
+/** Personal: asistencia, saldos y empleados. */
+export default function Staff() {
+  const allowed = useManageErp();
+  const [tab, setTab] = useState<Tab>("attendance");
+  const [adding, setAdding] = useState(false);
+  const [statement, setStatement] = useState<Balance | null>(null);
+  const noSignal = useNoSignalReason();
+  const staff = useErp<Employee[]>(allowed ? "/org/erp/employees" : null);
+  const balances = useErp<Balance[]>(allowed && tab === "balances" ? "/org/erp/employees/balance" : null);
+  const list = staff.data ?? [];
+  const att = useAttendance(allowed, tab, list);
+  if (!allowed) return <NoAdminAccess title={t("ui.admin.section_staff")} />;
+  const emptyStaff = { title: t("ui.staff.emptyTitle"), hint: t("ui.staff.emptyHint"), action: t("ui.staff.add"), onAction: () => setTab("employees") };
 
   return (
     <OfficeScreen
       title={t("ui.admin.section_staff")}
       query={staff}
-      onRefresh={async () => void (await Promise.all([staff.refresh(), day.refresh(), tab === "balances" ? balances.refresh() : undefined]))}
-      action={action}
+      onRefresh={async () => void (await Promise.all([staff.refresh(), att.day.refresh(), tab === "balances" ? balances.refresh() : undefined]))}
+      action={tabAction(tab, { att, hasStaff: list.length > 0, blocked: !!noSignal, add: () => setAdding(true) })}
       footer={<NoSignalNote />}
     >
       <View style={{ marginTop: 16 }}>
@@ -119,77 +127,63 @@ export default function Staff() {
           onChange={setTab}
         />
       </View>
-
       {tab === "attendance" ? (
-        <OnlineState query={staff} isEmpty={(d) => d.length === 0} empty={{ title: t("ui.staff.emptyTitle"), hint: t("ui.staff.emptyHint"), action: t("ui.staff.add"), onAction: () => setTab("employees") }}>
-          {(rows) => (
-            <>
-              <View style={{ flexDirection: "row", gap: 12 }}>
-                <View style={{ flex: 1 }}>
-                  <DateField label={t("ui.cost.date")} hint="" value={date} onChange={(v) => (setDate(v), setMarks({}))} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <SelectField label={t("ui.cost.farm")} value={farmId} options={[{ value: "", label: t("ui.cost.none") }, ...farms.map((f) => ({ value: f.id, label: f.name }))]} onChange={setFarmId} />
-                </View>
-              </View>
-              {rows.map((e) => (
-                <AttendanceRow key={e.id} employee={e} already={loaded.get(e.id) ?? 0} mark={marks[e.id] ?? "absent"} onMark={(m) => setMarks((x) => ({ ...x, [e.id]: m }))} />
-              ))}
-              {saveDay.error ? <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 16 }]}>{saveDay.error}</Text> : null}
-              {(recent.data ?? []).length > 0 ? (
-                <>
-                  <SectionHeader title={t("ui.att.recent")} />
-                  <DataList
-                    rows={(recent.data ?? []).slice(0, 8)}
-                    keyOf={(a) => a.id}
-                    title={(a) => nameOf(a.employeeId)}
-                    subtitle={(a) => [isoShort(a.date), a.labor].filter(Boolean).join(" · ")}
-                    right={(a) => (a.days === 1 ? t("ui.att.full") : t("ui.att.half"))}
-                    empty={{ title: t("ui.erp.empty") }}
-                  />
-                </>
-              ) : null}
-            </>
-          )}
+        <OnlineState query={staff} isEmpty={(d) => d.length === 0} empty={emptyStaff}>
+          {(rows) => <AttendanceTab rows={rows} att={att} />}
         </OnlineState>
       ) : null}
-
       {tab === "balances" ? (
-        <OnlineState query={balances} isEmpty={(d) => d.length === 0} empty={{ title: t("ui.staff.emptyTitle"), hint: t("ui.staff.emptyHint") }}>
+        <OnlineState query={balances} isEmpty={(d) => d.length === 0} empty={emptyStaff}>
           {(rows) => (
             <>
-              <DataList
-                rows={rows}
-                keyOf={(r) => r.employeeId}
-                title={(r) => r.name}
-                subtitle={(r) => `${r.days} ${t("ui.bal.days").toLowerCase()} · ${t("ui.bal.accrued")} ${fmtGs(r.accruedPyg)}`}
-                right={(r) => <Text style={[T.bodyMedium, r.balancePyg < 0 && { color: C.peligro }]}>{fmtGs(r.balancePyg)}</Text>}
-                onPress={setStatement}
-                empty={{ title: t("ui.erp.empty") }}
-              />
-              <Text style={[T.small, { marginTop: 16 }]}>{t("ui.bal.intro")}</Text>
-              <Text style={[T.small, { marginTop: 8 }]}>{t("office.staff.webNote")}</Text>
+              <DataList rows={rows} keyOf={(r) => r.employeeId} title={(r) => r.name} subtitle={(r) => `${r.days} ${t("ui.bal.days").toLowerCase()} · ${t("ui.bal.accrued")} ${fmtGs(r.accruedPyg)}`} right={(r) => <Text style={[T.bodyMedium, r.balancePyg < 0 && { color: C.peligro }]}>{fmtGs(r.balancePyg)}</Text>} onPress={setStatement} empty={{ title: t("ui.erp.empty") }} />
+              <Text style={[T.small, { marginTop: 16 }]}>{t("office.staff.webNote")}</Text>
             </>
           )}
         </OnlineState>
       ) : null}
-
       {tab === "employees" ? (
-        <OnlineState query={staff} isEmpty={(d) => d.length === 0} empty={{ title: t("ui.staff.emptyTitle"), hint: t("ui.staff.emptyHint") }}>
-          {(rows) => (
-            <DataList rows={rows} keyOf={(e) => e.id} title={(e) => e.name} subtitle={(e) => [e.ci, e.phone].filter(Boolean).join(" · ") || undefined} right={(e) => `${fmtGs(e.dailyWagePyg)}${t("office.staff.perDay")}`} empty={{ title: t("ui.staff.emptyTitle") }} />
-          )}
+        <OnlineState query={staff} isEmpty={(d) => d.length === 0} empty={{ ...emptyStaff, onAction: () => setAdding(true) }}>
+          {(rows) => <DataList rows={rows} keyOf={(e) => e.id} title={(e) => e.name} subtitle={(e) => [e.ci, e.phone].filter(Boolean).join(" · ") || undefined} right={(e) => `${fmtGs(e.dailyWagePyg)}${t("office.staff.perDay")}`} empty={emptyStaff} />}
         </OnlineState>
       ) : null}
-
       {adding ? <EmployeeSheet onClose={() => setAdding(false)} onSaved={() => void staff.refresh()} /> : null}
       {statement ? <StatementSheet row={statement} onClose={() => setStatement(null)} /> : null}
     </OfficeScreen>
   );
 }
 
+/** Pestaña de asistencia: filtros del día, una tarjeta por empleado y las últimas cargas. */
+function AttendanceTab({ rows, att }: { rows: Employee[]; att: ReturnType<typeof useAttendance> }) {
+  const farms = useLocal(() => getDb().farms());
+  const recent = (att.recent.data ?? []).slice(0, 8);
+  const nameOf = (id: string) => rows.find((e) => e.id === id)?.name ?? "?";
+  return (
+    <>
+      <View style={{ flexDirection: "row", gap: 12 }}>
+        <View style={{ flex: 1 }}>
+          <DateField label={t("ui.cost.date")} hint="" value={att.date} onChange={att.pickDate} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <SelectField label={t("ui.cost.farm")} value={att.farmId} options={[{ value: "", label: t("ui.cost.none") }, ...farms.map((f) => ({ value: f.id, label: f.name }))]} onChange={att.setFarmId} />
+        </View>
+      </View>
+      {rows.map((e) => (
+        <AttendanceRow key={e.id} employee={e} already={att.loaded.get(e.id) ?? 0} mark={att.marks[e.id]} onMark={(m) => att.mark(e.id, m)} />
+      ))}
+      {att.mutation.error ? <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 16 }]}>{att.mutation.error}</Text> : null}
+      {recent.length > 0 ? (
+        <>
+          <SectionHeader title={t("ui.att.recent")} />
+          <DataList rows={recent} keyOf={(a) => a.id} title={(a) => nameOf(a.employeeId)} subtitle={(a) => [isoShort(a.date), a.labor].filter(Boolean).join(" · ")} right={(a) => (a.days === 1 ? t("ui.att.full") : t("ui.att.half"))} empty={{ title: t("ui.erp.empty") }} />
+        </>
+      ) : null}
+    </>
+  );
+}
+
 /** Un empleado y sus tres opciones del día: presente, medio día o ausente. */
-function AttendanceRow({ employee: e, already, mark, onMark }: { employee: Employee; already: number; mark: Mark; onMark: (m: Mark) => void }) {
+function AttendanceRow({ employee: e, already, mark, onMark }: { employee: Employee; already: number; mark?: Mark; onMark: (m: Mark) => void }) {
   const opts: { value: Mark; label: string }[] = [
     { value: "full", label: t("office.att.present") },
     { value: "half", label: t("office.att.halfShort") },
@@ -210,7 +204,7 @@ function AttendanceRow({ employee: e, already, mark, onMark }: { employee: Emplo
                 accessibilityRole="radio"
                 accessibilityState={{ checked: on }}
                 accessibilityLabel={`${e.name}: ${o.label}`}
-                onPress={() => (tap(), onMark(o.value))}
+                onPress={() => onMark(o.value)}
                 style={{ flex: 1, minHeight: 48, borderRadius: RADIUS, borderWidth: 1.5, alignItems: "center", justifyContent: "center", backgroundColor: on ? (o.value === "absent" ? C.tinta2 : C.accion) : C.blanco, borderColor: on ? (o.value === "absent" ? C.tinta2 : C.accion) : C.lineaFuerte }}
               >
                 <Text numberOfLines={1} style={{ fontFamily: F.sansMedium, fontSize: 16, color: on ? C.blanco : C.tinta }}>

@@ -28,7 +28,9 @@ export const s = StyleSheet.create({
     borderBottomColor: C.linea,
   },
   rowSelected: { backgroundColor: C.accionSuave, marginHorizontal: -GUTTER, paddingHorizontal: GUTTER, borderBottomColor: "transparent", borderRadius: RADIUS },
-  rowPressed: { backgroundColor: "rgba(30,36,25,0.04)" },
+  rowPressed: { backgroundColor: "rgba(30,36,25,0.04)", opacity: 0.8, transform: [{ scale: 0.985 }] },
+  /** Presión de cualquier botón o chip: se hunde un poco y baja la opacidad. Se aplica con `pressed && s.pressed`. */
+  pressed: { opacity: 0.85, transform: [{ scale: 0.97 }] },
   rowIcon: { width: 40, height: 40, borderRadius: 10, backgroundColor: C.accionSuave, alignItems: "center", justifyContent: "center" },
   btnInner: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
   edge: { width: 3, alignSelf: "stretch", overflow: "hidden", gap: 4, borderRadius: 2, marginRight: -4 },

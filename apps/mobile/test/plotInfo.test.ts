@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activeFilterCount, areaByCrop, decimalCoords, degMinCoords, deltaVsFarm, filterRecords, matchesQuery, ndviColor, NO_RECORD_FILTER, sortPlotLines, unvisitedOver, type PlotLine } from "../src/lib/plotInfo";
+import { activeFilterCount, areaByCrop, decimalCoords, degMinCoords, deltaVsFarm, filterRecords, matchesQuery, NO_RECORD_FILTER, sortPlotLines, unvisitedOver, type PlotLine } from "../src/lib/plotInfo";
 
 const line = (p: Partial<PlotLine>): PlotLine => ({ id: "x", name: "A", farmId: "f", kind: "crop", crop: "soja", areaHa: 10, vigor: null, visitDays: 0, ...p });
 
@@ -8,9 +8,7 @@ describe("plotInfo", () => {
     expect(decimalCoords(-57.6345, -25.2812)).toBe("-25.28120, -57.63450");
     expect(degMinCoords(-57.5, -25.25)).toBe("25°15.000′ S, 57°30.000′ O");
   });
-  it("color de la rampa y comparación con la estancia", () => {
-    expect(ndviColor(0.1)).toBe("#B5562E");
-    expect(ndviColor(0.9)).toBe("#3F6B35");
+  it("comparación con la estancia", () => {
     expect(deltaVsFarm(0.6, [0.5])).toBeNull();
     expect(deltaVsFarm(0.6, [0.5, 0.7])).toBeCloseTo(0);
   });

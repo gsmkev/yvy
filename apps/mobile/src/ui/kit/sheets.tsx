@@ -4,8 +4,8 @@ import { KeyboardAvoidingView, Pressable, ScrollView, Modal, View } from "react-
 import { Check } from "lucide-react-native";
 import { t } from "@yvy/shared";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { tap } from "../../lib/haptics";
 import { C, T } from "../theme";
+import { useReduceMotion } from "./motion";
 import { RadioGroup } from "./layout";
 import { Row, Text } from "./controls";
 import { s } from "./styles";
@@ -26,8 +26,9 @@ export function Sheet({
   avoidKeyboard?: boolean;
 }) {
   const insets = useSafeAreaInsets();
+  const reduce = useReduceMotion();
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible={visible} transparent animationType={reduce ? "fade" : "slide"} onRequestClose={onClose} statusBarTranslucent>
       <KeyboardAvoidingView style={s.sheetRoot} behavior={avoidKeyboard ? "padding" : undefined} enabled={!!avoidKeyboard}>
         <Pressable accessibilityRole="button" accessibilityLabel={t("ui.common.cancel")} style={s.sheetBackdrop} onPress={onClose} />
         <View accessibilityViewIsModal style={[s.sheet, { paddingBottom: Math.max(16, insets.bottom) }]}>
@@ -71,7 +72,6 @@ export function ChoiceSheet<V extends string>({
             subtitle={o.hint}
             selected={o.value === value}
             onPress={() => {
-              tap();
               onSelect(o.value);
             }}
             right={o.value === value ? <Check size={22} color={C.accionOscuro} strokeWidth={2.5} /> : undefined}

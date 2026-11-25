@@ -10,7 +10,7 @@ import { useOnline } from "../office/useOnline";
 import { DateField, FormSheet, KeyValue, LineChart, SelectField, Segmented, StatRow, TextField } from "../office/ui";
 import { cToTemp, mmToRain, rainLabel, type Units } from "@yvy/shared";
 import { daysSince, vigorTrend } from "../lib/plotSheet";
-import { deltaVsFarm, fmtRain, fmtTemp, ndviColor, type RotationRow, type VigorPoint } from "../lib/plotInfo";
+import { deltaVsFarm, fmtRain, fmtTemp, type RotationRow, type VigorPoint } from "../lib/plotInfo";
 import { Button, Row, SectionHeader, Text } from "./kit";
 import { C, T } from "./theme";
 
@@ -60,7 +60,7 @@ export function VigorSection({ history, farmMeans, plotName }: { history: VigorP
             series={[
               {
                 label: plotName,
-                color: ndviColor(cur.mean),
+                color: CHART.primary,
                 points: history.map((p) => ({ x: dayShort(p.acquiredAt), y: p.mean })),
               },
             ]}

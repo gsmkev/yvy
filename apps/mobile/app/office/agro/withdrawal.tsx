@@ -37,13 +37,12 @@ export default function Withdrawal() {
                 rows={d.restrictions}
                 keyOf={(r) => `${r.plotId}${r.product}${r.appliedOn}`}
                 title={(r) => r.plotName}
-                subtitle={(r) => String(t("ui.withdrawal.applied", { product: r.product, date: dmy(r.appliedOn) }))}
-                right={(r) => (
-                  <>
-                    <Text style={[T.smallMedium, { textAlign: "right", color: C.peligro }]}>{t("ui.withdrawal.until", { date: dmy(r.safeFrom) })}</Text>
-                    <Text style={[T.small, { textAlign: "right" }]}>{t(r.daysLeft === 1 ? "ui.withdrawal.dayOne" : "ui.withdrawal.days", { n: r.daysLeft })}</Text>
-                  </>
-                )}
+                subtitle={(r) => String(t("ui.withdrawal.until", { date: dmy(r.safeFrom) }))}
+                detail={(r) => [
+                  { label: t("ui.stock.product"), value: r.product },
+                  { label: t("ui.cost.date"), value: dmy(r.appliedOn) },
+                ]}
+                right={(r) => <Text style={[T.smallMedium, { textAlign: "right", color: C.peligro }]}>{t(r.daysLeft === 1 ? "ui.withdrawal.dayOne" : "ui.withdrawal.days", { n: r.daysLeft })}</Text>}
                 empty={{ title: t("office.withdrawal.empty") }}
               />
             )}

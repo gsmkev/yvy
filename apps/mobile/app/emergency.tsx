@@ -70,7 +70,7 @@ export default function Emergency() {
           </>
         }
       >
-        <Text style={T.display}>{t("app.emergency.title")}</Text>
+        <Text style={T.title}>{t("app.emergency.title")}</Text>
         <Text style={[T.small, { marginTop: 4 }]}>{t("app.emergency.intro")}</Text>
 
         <SectionHeader title={t("app.emergency.contacts")} />

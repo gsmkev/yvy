@@ -81,7 +81,7 @@ export default function ClientsScreen() {
                       />
                       {alerts.map((a) => (
                         <Text key={a.id} style={[T.smallMedium, { color: C.peligro, marginLeft: 4, marginBottom: 4 }]}>
-                          {t(`ui.alert.kind_${a.kind}` as MessageKey)}: {a.summary}
+                          {a.summary}
                         </Text>
                       ))}
                     </View>

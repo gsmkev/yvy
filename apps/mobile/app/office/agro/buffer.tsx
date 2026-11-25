@@ -18,7 +18,12 @@ import { C, T } from "../../../src/ui/theme";
 
 const DAY = 86_400_000;
 const kindName = (k: BufferKind) => t((k === "stream" ? "ui.line.kind_stream" : `ui.poi.kinds_${k}`) as MessageKey);
-const hitText = (h: BufferHit) => t("ui.buffer.hit", { kind: kindName(h.kind), name: h.name, m: fmtNumber(h.distanceM, 0) });
+const hitText = (h: BufferHit) => {
+  const kind = kindName(h.kind);
+  // Si el nombre ya empieza con el tipo ("Casa principal"), no se repite el tipo
+  const same = h.name.toLowerCase().startsWith(kind.toLowerCase());
+  return t("ui.buffer.hit", { kind: same ? "" : kind, name: h.name, m: fmtNumber(h.distanceM, 0) }).replace(/^\s+/, "");
+};
 
 /** Franjas de resguardo para aplicaciones. */
 export default function Buffer() {

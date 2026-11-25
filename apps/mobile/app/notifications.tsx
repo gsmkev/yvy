@@ -67,12 +67,12 @@ export default function Notifications() {
               <Text style={[T.body, { flex: 1 }]}>{t(`ui.notif.kind_${kind}` as MessageKey)}</Text>
               <View style={st.switchCol}>
                 <Text style={T.small}>{t("ui.notif.push")}</Text>
-                <Switch value={prefs.kinds[kind].push} onValueChange={(v) => set(kind, "push", v)} trackColor={{ true: C.accion }} />
+                <Switch value={prefs.kinds[kind].push} onValueChange={(v) => set(kind, "push", v)} trackColor={{ false: C.lineaFuerte, true: C.accion }} thumbColor={C.blanco} />
               </View>
               {data.email && (
                 <View style={st.switchCol}>
                   <Text style={T.small}>{t("ui.notif.email")}</Text>
-                  <Switch value={prefs.kinds[kind].email} onValueChange={(v) => set(kind, "email", v)} trackColor={{ true: C.accion }} />
+                  <Switch value={prefs.kinds[kind].email} onValueChange={(v) => set(kind, "email", v)} trackColor={{ false: C.lineaFuerte, true: C.accion }} thumbColor={C.blanco} />
                 </View>
               )}
             </View>
@@ -80,7 +80,7 @@ export default function Notifications() {
           <Text style={[T.heading, { marginTop: 24 }]}>{t("ui.notif.quietTitle")}</Text>
           <View style={st.row}>
             <Text style={[T.body, { flex: 1 }]}>{t("ui.notif.quietSwitch")}</Text>
-            <Switch value={prefs.quiet.enabled} onValueChange={(v) => setPrefs({ ...prefs, quiet: { ...prefs.quiet, enabled: v } })} trackColor={{ true: C.accion }} />
+            <Switch value={prefs.quiet.enabled} onValueChange={(v) => setPrefs({ ...prefs, quiet: { ...prefs.quiet, enabled: v } })} trackColor={{ false: C.lineaFuerte, true: C.accion }} thumbColor={C.blanco} />
           </View>
           {prefs.quiet.enabled && (
             <View style={{ flexDirection: "row", gap: 12, marginTop: 12 }}>

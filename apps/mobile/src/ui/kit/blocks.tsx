@@ -1,6 +1,5 @@
 /** Encabezados, estados vacíos, interruptores y cifras. */
 import { Pressable, Switch, View, type StyleProp, type ViewStyle } from "react-native";
-import { tap } from "../../lib/haptics";
 import { C, T } from "../theme";
 import { Text, Button } from "./controls";
 import { s } from "./styles";
@@ -41,7 +40,7 @@ export function SwitchRow({ title, hint, value, onValueChange, disabled }: { tit
         {hint ? <Text style={T.small}>{hint}</Text> : null}
       </View>
       {/* nosemgrep: react-props-spreading -- `activeThumbColor` no está en los tipos de Switch pero lo lee react-native-web */}
-      <Switch value={value} disabled={disabled} accessibilityLabel={title} onValueChange={(v) => (tap(), onValueChange(v))} trackColor={{ false: C.lineaFuerte, true: C.accion }} thumbColor={C.blanco} {...({ activeThumbColor: C.blanco } as object)} />
+      <Switch value={value} disabled={disabled} accessibilityLabel={title} onValueChange={onValueChange} trackColor={{ false: C.lineaFuerte, true: C.accion }} thumbColor={C.blanco} {...({ activeThumbColor: C.blanco } as object)} />
     </View>
   );
 }

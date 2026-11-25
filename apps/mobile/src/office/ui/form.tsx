@@ -3,7 +3,6 @@ import { useEffect, useState, type ComponentProps, type ReactNode } from "react"
 import { Pressable, View } from "react-native";
 import { ChevronDown } from "lucide-react-native";
 import { t, displayToIso, isoToDisplay, maskDate } from "@yvy/shared";
-import { tap } from "../../lib/haptics";
 import { Button, ChoiceSheet, Sheet, Text, TextInput } from "../../ui/kit";
 import { C, F, RADIUS, T, TOUCH } from "../../ui/theme";
 
@@ -103,10 +102,9 @@ export function SelectField<V extends string>({
         accessibilityRole="button"
         accessibilityLabel={`${label}: ${current?.label ?? placeholder ?? t("office.common.selectPlaceholder")}`}
         onPress={() => {
-          tap();
           setOpen(true);
         }}
-        style={inputBox(error)}
+        style={({ pressed }) => [inputBox(error), pressed && { opacity: 0.85 }]}
       >
         <Text style={[inputText, !current && { color: C.tinta3 }]} numberOfLines={1}>
           {current?.label ?? placeholder ?? t("office.common.selectPlaceholder")}

@@ -5,3 +5,4 @@ export * from "./controls";
 export * from "./layout";
 export * from "./sheets";
 export { s } from "./styles";
+export * from "./motion";

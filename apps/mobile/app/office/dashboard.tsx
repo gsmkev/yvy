@@ -42,25 +42,14 @@ export default function DashboardScreen() {
               ? [{ label: t("ui.dash.margin"), value: gs(d.margin.marginPyg), tone: d.margin.marginPyg < 0 ? ("danger" as const) : undefined }]
               : []),
           ];
-          const notes = [
+          const rainNote =
             d.rain.normalMm === null
               ? t("ui.dash.rainNoData")
-              : t("ui.dash.rainNormal", { normal: fmtNumber(mmToRain(d.rain.normalMm, units.rain)), pct: d.rain.pctOfNormal ?? 0 }).replace(" mm ", ` ${rainLabel(units.rain)} `),
-            d.alerts.total > 0 ? d.alerts.byKind.map((a) => `${a.n} ${t(`ui.alert.kind_${a.kind}` as MessageKey).toLowerCase()}`).join(", ") : null,
-            d.margin && d.margin.entries > 0 ? t("ui.dash.marginNote", { income: gs(d.margin.incomePyg), cost: gs(d.margin.costPyg) }) : null,
-            d.activity.staff > 0 ? t("ui.dash.activityNote", { staff: d.activity.activeStaff7d, total: d.activity.staff }) : null,
-            d.records7d.byWorkers > 0 ? t("office.dashboard.recordsNote", { n: d.records7d.byWorkers }) : null,
-          ].filter(Boolean) as string[];
+              : t("ui.dash.rainNormal", { normal: fmtNumber(mmToRain(d.rain.normalMm, units.rain)), pct: d.rain.pctOfNormal ?? 0 }).replace(" mm ", ` ${rainLabel(units.rain)} `);
           return (
             <View>
               {stats.length > 0 && <StatRow items={stats} />}
-              <View style={{ marginTop: 12, gap: 2 }}>
-                {notes.map((n) => (
-                  <Text key={n} style={T.small}>
-                    {n}
-                  </Text>
-                ))}
-              </View>
+              <Text style={[T.small, { marginTop: 12 }]}>{rainNote}</Text>
               {d.areaByCrop.length > 0 && (
                 <>
                   <SectionHeader title={t("ui.dash.areaByCrop")} />

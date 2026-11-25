@@ -59,6 +59,23 @@ interface Draft {
   farmId: string;
 }
 
+/** Valida el formulario y arma el cuerpo del pedido de entrega o liquidación; devuelve el error si algo no cierra. */
+function grainBody(draft: Draft, c: Contract | undefined, farmCount: number): { body: Record<string, unknown> } | { error: string } {
+  const tons = parseDecimal(draft.tons);
+  if (!c) return { error: t("office.adm.needsContract") };
+  if (tons === null || tons <= 0) return { error: t("office.adm.badTons") };
+  if (!draft.date) return { error: t("office.adm.needsDate") };
+  if (draft.kind === "delivery") {
+    const moisture = draft.moisture.trim() ? parseDecimal(draft.moisture) : null;
+    if (moisture !== null && (moisture < 0 || moisture > 100)) return { error: t("office.adm.badMoisture") };
+    if (farmCount > 1 && !draft.farmId) return { error: t("office.adm.needsFarm") };
+    return { body: { contractId: c.id, date: draft.date, tons, farmId: draft.farmId || null, ticket: draft.ticket.trim() || null, moisturePct: moisture } };
+  }
+  const ded = draft.deductions.trim() ? parseMinor(draft.deductions, c.currency) : null;
+  if (draft.deductions.trim() && ded === null) return { error: t("office.adm.badAmount") };
+  return { body: { contractId: c.id, date: draft.date, tons, number: draft.ticket.trim() || null, deductionsMinor: ded, dueDate: draft.due || null } };
+}
+
 /** Contratos de granos y su resumen. */
 export default function Grain() {
   const contracts = useOnline<Contract[]>("/org/erp/grain-contracts/summary");
@@ -93,29 +110,17 @@ export default function Grain() {
 
   const submit = async () => {
     if (!draft) return;
-    const c = list.find((x) => x.id === draft.contractId);
-    const tons = parseDecimal(draft.tons);
-    if (!c) return setFormError(t("office.adm.needsContract"));
-    if (tons === null || tons <= 0) return setFormError(t("office.adm.badTons"));
-    if (!draft.date) return setFormError(t("office.adm.needsDate"));
+    const built = grainBody(draft, list.find((x) => x.id === draft.contractId), farms.length);
+    if ("error" in built) return setFormError(built.error);
     setFormError(null);
-    let r;
-    if (draft.kind === "delivery") {
-      const moisture = draft.moisture.trim() ? parseDecimal(draft.moisture) : null;
-      if (moisture !== null && (moisture < 0 || moisture > 100)) return setFormError(t("office.adm.badMoisture"));
-      if (farms.length > 1 && !draft.farmId) return setFormError(t("office.adm.needsFarm"));
-      r = await delivery.mutate({ contractId: c.id, date: draft.date, tons, farmId: draft.farmId || null, ticket: draft.ticket.trim() || null, moisturePct: moisture });
-    } else {
-      const ded = draft.deductions.trim() ? parseMinor(draft.deductions, c.currency) : null;
-      if (draft.deductions.trim() && ded === null) return setFormError(t("office.adm.badAmount"));
-      r = await settlement.mutate({ contractId: c.id, date: draft.date, tons, number: draft.ticket.trim() || null, deductionsMinor: ded, dueDate: draft.due || null });
-    }
+    const r = await (draft.kind === "delivery" ? delivery : settlement).mutate(built.body);
     if (r.ok) {
       setDraft(null);
       showToast(t("ui.erp.saved"));
     }
   };
 
+  const d: Draft = draft ?? { kind: "delivery", contractId: "", date: "", tons: "", ticket: "", moisture: "", deductions: "", due: "", farmId: "" };
   const all = [contracts, deliveries, settlements];
   const err = formError ?? (draft?.kind === "delivery" ? delivery.error : settlement.error);
   const totals = list.reduce((a, c) => ({ toDeliver: a.toDeliver + c.toDeliverTons, toSettle: a.toSettle + c.toSettleTons }), { toDeliver: 0, toSettle: 0 });
@@ -148,8 +153,8 @@ export default function Grain() {
                   rows={list}
                   keyOf={(c) => c.id}
                   title={label}
-                  subtitle={(c) => [party(c.partyId), t("office.adm.grainProgress", { d: fmtNumber(c.deliveredTons), t: fmtNumber(c.tons), s: fmtNumber(c.settledTons) })].filter(Boolean).join(" · ")}
-                  right={(c) => `${fmtNumber(c.tons)} t`}
+                  subtitle={(c) => party(c.partyId) ?? undefined}
+                  right={(c) => `${fmtNumber(c.deliveredTons)} / ${fmtNumber(c.tons)} t`}
                   onPress={(c) => open("delivery", c)}
                   empty={{ title: t("ui.erp.empty") }}
                 />
@@ -173,7 +178,13 @@ export default function Grain() {
                       rows={[...rows].sort((a, b) => b.date.localeCompare(a.date))}
                       keyOf={(l) => l.id}
                       title={(l) => labelOf(l.contractId)}
-                      subtitle={(l) => [isoShort(l.date), `${fmtNumber(l.tons)} t`, l.currency === "USD" ? fmtGs(l.netPyg) : null, l.dueDate ? t("ui.purch.due", { date: isoShort(l.dueDate) }) : null].filter(Boolean).join(" · ")}
+                      subtitle={(l) => [isoShort(l.date), `${fmtNumber(l.tons)} t`].join(" · ")}
+                      detail={(l) => [
+                        { label: t("ui.cost.date"), value: isoShort(l.date) },
+                        { label: t("ui.grain.tons"), value: `${fmtNumber(l.tons)} t` },
+                        ...(l.currency === "USD" ? [{ label: t("ui.cost.amount"), value: fmtGs(l.netPyg) }] : []),
+                        ...(l.dueDate ? [{ label: t("ui.purch.dueLabel"), value: isoShort(l.dueDate) }] : []),
+                      ]}
                       right={(l) => fmtMoney(l.netAmount, l.currency)}
                       empty={{ title: t("ui.erp.empty") }}
                     />
@@ -185,28 +196,28 @@ export default function Grain() {
         </OnlineState>
         <FormSheet
           visible={!!draft}
-          title={draft?.kind === "delivery" ? t("ui.grain.addDelivery") : t("ui.grain.addSettlement")}
+          title={d.kind === "delivery" ? t("ui.grain.addDelivery") : t("ui.grain.addSettlement")}
           onClose={() => setDraft(null)}
           onSubmit={submit}
           submitLabel={t("ui.common.save")}
           pending={delivery.pending || settlement.pending}
           error={err}
         >
-          <SelectField label={t("ui.grain.contract")} value={draft?.contractId} options={list.map((c) => ({ value: c.id, label: label(c), hint: party(c.partyId) }))} onChange={pickContract} />
-          <DateField label={t("ui.cost.date")} value={draft?.date ?? ""} onChange={(v) => set({ date: v })} />
-          <TextField label={t("ui.grain.tons")} value={draft?.tons ?? ""} onChangeText={(v) => set({ tons: v })} kind="decimal" />
-          <TextField label={draft?.kind === "delivery" ? t("ui.grain.ticket") : t("ui.grain.number")} value={draft?.ticket ?? ""} onChangeText={(v) => set({ ticket: v })} maxLength={40} autoCapitalize="none" />
-          {draft?.kind === "delivery" ? (
+          <SelectField label={t("ui.grain.contract")} value={d.contractId} options={list.map((c) => ({ value: c.id, label: label(c), hint: party(c.partyId) }))} onChange={pickContract} />
+          <DateField label={t("ui.cost.date")} value={d.date} onChange={(v) => set({ date: v })} />
+          <TextField label={t("ui.grain.tons")} value={d.tons} onChangeText={(v) => set({ tons: v })} kind="decimal" />
+          <TextField label={d.kind === "delivery" ? t("ui.grain.ticket") : t("ui.grain.number")} value={d.ticket} onChangeText={(v) => set({ ticket: v })} maxLength={40} autoCapitalize="none" />
+          {d.kind === "delivery" ? (
             <>
-              <TextField label={t("ui.grain.moisture")} value={draft.moisture} onChangeText={(v) => set({ moisture: v })} kind="decimal" />
-              {farms.length > 1 ? <SelectField label={t("ui.common.farm")} value={draft.farmId} placeholder="—" options={farms.map((f) => ({ value: f.id, label: f.name }))} onChange={(v) => set({ farmId: v })} /> : null}
+              <TextField label={t("ui.grain.moisture")} value={d.moisture} onChangeText={(v) => set({ moisture: v })} kind="decimal" />
+              {farms.length > 1 ? <SelectField label={t("ui.common.farm")} value={d.farmId} placeholder="—" options={farms.map((f) => ({ value: f.id, label: f.name }))} onChange={(v) => set({ farmId: v })} /> : null}
             </>
-          ) : draft ? (
+          ) : (
             <>
-              <TextField label={t("ui.grain.deductions")} value={draft.deductions} onChangeText={(v) => set({ deductions: v })} kind="decimal" />
-              <DateField label={t("ui.purch.dueLabel")} value={draft.due} onChange={(v) => set({ due: v })} />
+              <TextField label={t("ui.grain.deductions")} value={d.deductions} onChangeText={(v) => set({ deductions: v })} kind="decimal" />
+              <DateField label={t("ui.purch.dueLabel")} value={d.due} onChange={(v) => set({ due: v })} />
             </>
-          ) : null}
+          )}
         </FormSheet>
       </OfficeScreen>
     </AdminGate>

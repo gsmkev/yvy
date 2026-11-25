@@ -9,6 +9,15 @@ import { Text } from "../ui/kit";
 import { C, T } from "../ui/theme";
 import { st } from "./styles";
 
+/** Quita del resumen el "Tipo:" inicial cuando repite el título del aviso ("Exceso de lluvia: 89 mm" bajo "Exceso de lluvia"). */
+function withoutKindPrefix(summary: string, kind: string): string {
+  const i = summary.indexOf(": ");
+  const first = (x: string) => x.trim().split(/\s+/)[0]?.toLowerCase();
+  if (i < 0 || i > 40 || first(summary) !== first(kind)) return summary;
+  const rest = summary.slice(i + 2);
+  return rest.charAt(0).toUpperCase() + rest.slice(1);
+}
+
 type AlertRow = ReturnType<ReturnType<typeof getDb>["activeAlerts"]>[number];
 
 /** Aviso compacto: tipo + probabilidad y el resumen en 2 líneas; la fuente y "¿Te sirvió?" aparecen al tocar. */
@@ -17,18 +26,19 @@ export function AlertCard({ a, voted, picked, onLayout }: { a: AlertRow; voted: 
   const strong = a.severity === "warning";
   const fg = strong ? C.blanco : C.tinta;
   const soft = strong ? "rgba(255,255,255,0.85)" : C.tinta2;
+  const body = withoutKindPrefix(a.summary, tk(`ui.alert.kind_${a.kind}`));
   const title = `${tk(`ui.alert.kind_${a.kind}`)}${a.probability ? ` · ${tk(`ui.probability.${a.probability}`).toLowerCase()}` : ""}`;
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ expanded: open }}
-      accessibilityLabel={`${title}. ${a.summary}`}
+      accessibilityLabel={`${title}. ${body}`}
       onPress={() => setOpen((v) => !v)}
       onLayout={(e) => onLayout(e.nativeEvent.layout.y)}
       style={[st.alert, strong ? st.alertStrong : st.alertSoft, picked && st.alertPicked]}
     >
       <Text style={[T.bodyMedium, { color: strong ? C.blanco : C.atencion, fontWeight: "700" }]} numberOfLines={1}>{title}</Text>
-      <Text style={[T.small, { color: fg, marginTop: 2 }]} numberOfLines={open ? undefined : 2}>{a.summary}</Text>
+      <Text style={[T.small, { color: fg, marginTop: 2 }]} numberOfLines={open ? undefined : 2}>{body}</Text>
       {open && (
         <>
           <Text style={[T.small, { color: soft, marginTop: 6 }]}>{t("ui.common.orientative", { source: a.source })}</Text>

@@ -59,7 +59,16 @@ const COLS = ["", "sm:grid-cols-1", "sm:grid-cols-2", "sm:grid-cols-3", "sm:grid
  * Fila de cifras (`Stat`): máximo 4 por fila, dos por línea en el celular, una línea de contexto como mucho en cada una.
  * Con más de 4 hijos pasa a la fila siguiente.
  */
-export function StatRow({ children, className = "" }: { children: ReactNode; className?: string }) {
-  const n = Math.min(4, Math.max(1, Children.toArray(children).filter(Boolean).length));
+export function StatRow({
+  children,
+  className = "",
+  max = 4,
+}: {
+  children: ReactNode;
+  className?: string;
+  /** Cifras por fila en pantallas anchas (de 1 a 4); 2 para paneles angostos. */
+  max?: 1 | 2 | 3 | 4;
+}) {
+  const n = Math.min(max, Math.max(1, Children.toArray(children).filter(Boolean).length));
   return <div className={`grid grid-cols-2 gap-x-6 gap-y-4 ${COLS[n]} ${className}`}>{children}</div>;
 }

@@ -39,7 +39,7 @@ export function TheftPanel({ farmId }: { farmId: string }) {
           rowKey={(r) => r.id}
           columns={[
             { id: "date", header: t("ui.theft.date"), cell: (r) => <span className="num">{fmtDay(r.capturedAt)}</span> },
-            { id: "plot", header: t("ui.common.plot"), cell: (r) => <span className="font-medium">{r.plotName ?? "—"}</span> },
+            { id: "plot", mobile: "title", header: t("ui.common.plot"), cell: (r) => <span className="font-medium">{r.plotName ?? "—"}</span> },
             { id: "cat", header: t("fields.herd.category"), cell: (r) => tk(`fields.herd.${r.category}`) },
             { id: "head", header: t("fields.common.head"), align: "right", cell: (r) => r.head },
             {

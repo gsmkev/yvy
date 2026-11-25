@@ -11,7 +11,13 @@ interface Dashboard {
   /** Solo viene con el permiso de montos (dueño y administrador); null si no. */
   margin: { incomePyg: number; costPyg: number; marginPyg: number; entries: number } | null;
   areaByCrop: { crop: string | null; kind: "crop" | "pasture"; ha: number; plots: number }[];
-  rain: { month: string; farmsWithData: number; mm: number | null; normalMm: number | null; pctOfNormal: number | null };
+  rain: {
+    month: string;
+    farmsWithData: number;
+    mm: number | null;
+    normalMm: number | null;
+    pctOfNormal: number | null;
+  };
   alerts: { total: number; byKind: { kind: string; severity: string; n: number }[] };
   activity: { workers: number; activeWorkers7d: number; staff: number; activeStaff7d: number };
   records7d: { total: number; byWorkers: number; byKind: { kind: string; n: number }[] };
@@ -23,17 +29,24 @@ function MarginRows({ margin }: { margin: NonNullable<Dashboard["margin"]> }) {
   const rows: [string, number, boolean][] = [
     [t("ui.dash.sales"), margin.incomePyg, false],
     [t("ui.dash.costs"), margin.costPyg, false],
-    [t("ui.dash.margin"), margin.marginPyg, true],
+    [t("ui.dash.marginTotal"), margin.marginPyg, true],
   ];
   return (
-    <dl className="num divide-y divide-linea border-y border-linea text-sm">
-      {rows.map(([label, value, total]) => (
-        <div key={label} className="flex items-baseline justify-between gap-3 py-2">
-          <dt className={total ? "font-semibold" : "text-tinta-2"}>{label}</dt>
-          <dd className={total ? `font-serif text-lg font-semibold ${value < 0 ? "text-peligro" : ""}` : ""}>{fmtGs(value)}</dd>
-        </div>
-      ))}
-    </dl>
+    <div>
+      <h3 className="eyebrow mb-2">{t("ui.dash.margin")}</h3>
+      <dl className="num divide-y divide-linea border-y border-linea text-sm">
+        {rows.map(([label, value, total]) => (
+          <div key={label} className="flex items-baseline justify-between gap-3 py-2">
+            <dt className={total ? "font-semibold" : "text-tinta-2"}>{label}</dt>
+            <dd
+              className={`whitespace-nowrap ${total ? `font-serif text-lg font-semibold ${value < 0 ? "text-peligro" : ""}` : ""}`}
+            >
+              {fmtGs(value)}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   );
 }
 
@@ -49,7 +62,7 @@ export function OwnerDashboard() {
   return (
     <section className="flex flex-col gap-4 border-t border-linea pt-5">
       <h2 className="font-serif text-lg font-semibold">{t("ui.dash.title")}</h2>
-      <StatRow>
+      <StatRow max={2}>
         <Stat
           label={t("ui.dash.rainMonth")}
           value={d.rain.mm === null ? "—" : fmtNum(d.rain.mm)}

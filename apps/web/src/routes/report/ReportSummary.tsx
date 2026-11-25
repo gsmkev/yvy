@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { BarList } from "../../components/BarList";
 import { RainChart } from "../../components/charts";
-import { DataTable, SectionHead, Stat, type Column } from "../../components/ui";
-import { fmtIsoDate, fmtMm } from "../../lib/format";
+import { DataTable, SectionHead, Stat, StatRow, type Column } from "../../components/ui";
+import { fmtIsoDate, fmtMm, fmtRainValue, rainUnitLabel } from "../../lib/format";
 import { t, tk } from "../../lib/i18n";
 import type { RecordRow } from "../../lib/types";
 import type { ReportData } from "./useReportData";
@@ -16,26 +16,44 @@ function Block({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-/** Cifras del período: registros, lluvia, alertas y tareas. */
+/** Cifras del período: registros, lluvia, avisos y tareas (las vencidas, como nota de las hechas). */
 export function ReportStats({ d }: { d: ReportData }) {
   const { rows, workers, weekRain, gaugeTotal, periodAlerts, tasksDone, tasksLate } = d;
   return (
-    <div className="grid grid-cols-2 gap-x-6 gap-y-5 border-y border-linea py-5 sm:grid-cols-3 lg:grid-cols-5">
+    <StatRow className="border-y border-linea py-5">
       {rows.length > 0 && (
         <Stat label={t("ui.nav.records")} value={rows.length} note={`${workers} ${t("ui.common.workers").toLowerCase()}`} />
       )}
       {weekRain !== null && (
         <Stat
           label={t("ui.rain.week")}
-          value={fmtMm(weekRain)}
+          value={fmtRainValue(weekRain)}
+          unit={rainUnitLabel()}
           note={gaugeTotal !== null ? `${t("ui.common.gauge")}: ${fmtMm(gaugeTotal)}` : t("ui.common.satelliteRain")}
         />
       )}
       {periodAlerts.length > 0 && <Stat label={t("ui.alerts.title")} value={periodAlerts.length} />}
-      {tasksDone > 0 && <Stat label={t("ui.report.tasksDone")} value={tasksDone} />}
-      {tasksLate > 0 && <Stat label={t("ui.report.tasksOverdue")} value={tasksLate} tone="danger" />}
-    </div>
+      {tasksDone + tasksLate > 0 && (
+        <Stat
+          label={t("ui.report.tasksDone")}
+          value={tasksDone}
+          note={tasksLate > 0 && <span className="text-peligro">{t("ui.report.tasksLateNote", { n: tasksLate })}</span>}
+        />
+      )}
+    </StatRow>
   );
+}
+
+const TOP_KINDS = 7;
+
+/** Los tipos más frecuentes y el resto sumado en una sola fila, para que la lista no se alargue. */
+function topKinds(items: { label: string; value: number }[]) {
+  if (items.length <= TOP_KINDS + 1) return items;
+  const rest = items.slice(TOP_KINDS);
+  return [
+    ...items.slice(0, TOP_KINDS),
+    { label: t("ui.report.otherKinds", { n: rest.length }), value: rest.reduce((a, i) => a + i.value, 0) },
+  ];
 }
 
 /** Registros por tipo y autor, lluvia diaria y alertas del período. */
@@ -46,7 +64,7 @@ export function ReportCharts({ d }: { d: ReportData }) {
       <div className="flex min-w-0 flex-col gap-8">
         {byKind.length > 0 && (
           <Block title={t("ui.report.byKind")}>
-            <BarList items={byKind} ariaLabel={t("ui.report.byKind")} />
+            <BarList items={topKinds(byKind)} ariaLabel={t("ui.report.byKind")} />
           </Block>
         )}
         {byAuthor.length > 1 && (
@@ -71,8 +89,10 @@ export function ReportCharts({ d }: { d: ReportData }) {
             <ul className="flex flex-col text-sm">
               {periodAlerts.map((a) => (
                 <li key={a.id} className="border-b border-linea py-2.5">
-                  <span className="font-medium">{tk(`ui.alert.kind_${a.kind}`)}</span>
-                  <span className="text-tinta-2">, {tk(`ui.severity.${a.severity}`)}</span>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="font-medium">{tk(`ui.alert.kind_${a.kind}`)}</span>
+                    <span className="text-meta text-tinta-2">{tk(`ui.severity.${a.severity}`)}</span>
+                  </div>
                   <p className="text-tinta-2">{a.summary}</p>
                 </li>
               ))}

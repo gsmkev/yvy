@@ -92,7 +92,14 @@ export default function Costs() {
                 rows={d.rows}
                 keyOf={(c) => c.id}
                 title={(c) => c.description || t(key(`ui.cost.category_${c.category}`))}
-                subtitle={(c) => [isoShort(dayOf(c.occurredAt)), t(key(`ui.cost.category_${c.category}`)), c.farmId ? farmName.get(c.farmId) : null, c.origin !== "manual" ? t("ui.cost.fromRecord") : null].filter(Boolean).join(" · ")}
+                subtitle={(c) => `${isoShort(dayOf(c.occurredAt))} · ${t(key(`ui.cost.category_${c.category}`))}`}
+                detail={(c) => [
+                  { label: t("ui.cost.date"), value: isoShort(dayOf(c.occurredAt)) },
+                  { label: t("ui.cost.category"), value: t(key(`ui.cost.category_${c.category}`)) },
+                  ...(c.farmId && farmName.get(c.farmId) ? [{ label: t("ui.cost.farm"), value: farmName.get(c.farmId)! }] : []),
+                  { label: t("ui.cost.amount"), value: fmtMoney(c.amount, c.currency) },
+                  ...(c.origin !== "manual" ? [{ label: t("ui.cost.from"), value: t("ui.cost.fromRecord") }] : []),
+                ]}
                 right={(c) => (
                   <View style={{ alignItems: "flex-end" }}>
                     <Text style={[T.bodyMedium, c.category === "sale" && { color: C.accionOscuro }]}>{`${c.category === "sale" ? "" : "-"}${fmtMoney(c.amount, c.currency)}`}</Text>

@@ -32,13 +32,14 @@ export function herdTotals(rows: HerdRow[], maxUa: number) {
   return { head, ua, farmUaHa, over };
 }
 
-/** Categorías con cabezas, superficie y último conteo de un potrero. */
+/** Superficie y último conteo de un potrero (una línea; las categorías van en `herdDetail`). */
 export function herdSubtitle(r: HerdRow, areaUnit: Parameters<typeof haToArea>[1]): string {
-  return [
-    HERD_CATEGORIES.filter((c) => r.st!.counts[c] > 0).map((c) => t(`fields.herd.count_${c}` as MessageKey, { n: r.st!.counts[c] })).join(", "),
-    `${fmtNumber(haToArea(r.plot.areaHa, areaUnit))} ${areaLabel(areaUnit)}`,
-    r.st!.lastCountAt ? t("office.farms.lastRecord", { date: fmtDate(r.st!.lastCountAt) }) : t("ui.herd.neverCounted"),
-  ].join(" · ");
+  return [`${fmtNumber(haToArea(r.plot.areaHa, areaUnit))} ${areaLabel(areaUnit)}`, r.st!.lastCountAt ? t("office.farms.lastRecord", { date: fmtDate(r.st!.lastCountAt) }) : t("ui.herd.neverCounted")].join(" · ");
+}
+
+/** Ficha de un potrero: una fila por categoría con cabezas. */
+export function herdDetail(r: HerdRow): { label: string; value: string }[] {
+  return HERD_CATEGORIES.filter((c) => r.st!.counts[c] > 0).map((c) => ({ label: t(`fields.herd.${c}` as MessageKey), value: String(r.st!.counts[c]) }));
 }
 
 /** Carga recomendada contra la actual: "al día", cuántas UA sobran o cuántas faltan. */

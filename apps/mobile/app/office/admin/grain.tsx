@@ -59,6 +59,23 @@ interface Draft {
   farmId: string;
 }
 
+/** Valida el formulario y arma el cuerpo del pedido de entrega o liquidación; devuelve el error si algo no cierra. */
+function grainBody(draft: Draft, c: Contract | undefined, farmCount: number): { body: Record<string, unknown> } | { error: string } {
+  const tons = parseDecimal(draft.tons);
+  if (!c) return { error: t("office.adm.needsContract") };
+  if (tons === null || tons <= 0) return { error: t("office.adm.badTons") };
+  if (!draft.date) return { error: t("office.adm.needsDate") };
+  if (draft.kind === "delivery") {
+    const moisture = draft.moisture.trim() ? parseDecimal(draft.moisture) : null;
+    if (moisture !== null && (moisture < 0 || moisture > 100)) return { error: t("office.adm.badMoisture") };
+    if (farmCount > 1 && !draft.farmId) return { error: t("office.adm.needsFarm") };
+    return { body: { contractId: c.id, date: draft.date, tons, farmId: draft.farmId || null, ticket: draft.ticket.trim() || null, moisturePct: moisture } };
+  }
+  const ded = draft.deductions.trim() ? parseMinor(draft.deductions, c.currency) : null;
+  if (draft.deductions.trim() && ded === null) return { error: t("office.adm.badAmount") };
+  return { body: { contractId: c.id, date: draft.date, tons, number: draft.ticket.trim() || null, deductionsMinor: ded, dueDate: draft.due || null } };
+}
+
 /** Contratos de granos y su resumen. */
 export default function Grain() {
   const contracts = useOnline<Contract[]>("/org/erp/grain-contracts/summary");
@@ -93,23 +110,10 @@ export default function Grain() {
 
   const submit = async () => {
     if (!draft) return;
-    const c = list.find((x) => x.id === draft.contractId);
-    const tons = parseDecimal(draft.tons);
-    if (!c) return setFormError(t("office.adm.needsContract"));
-    if (tons === null || tons <= 0) return setFormError(t("office.adm.badTons"));
-    if (!draft.date) return setFormError(t("office.adm.needsDate"));
+    const built = grainBody(draft, list.find((x) => x.id === draft.contractId), farms.length);
+    if ("error" in built) return setFormError(built.error);
     setFormError(null);
-    let r;
-    if (draft.kind === "delivery") {
-      const moisture = draft.moisture.trim() ? parseDecimal(draft.moisture) : null;
-      if (moisture !== null && (moisture < 0 || moisture > 100)) return setFormError(t("office.adm.badMoisture"));
-      if (farms.length > 1 && !draft.farmId) return setFormError(t("office.adm.needsFarm"));
-      r = await delivery.mutate({ contractId: c.id, date: draft.date, tons, farmId: draft.farmId || null, ticket: draft.ticket.trim() || null, moisturePct: moisture });
-    } else {
-      const ded = draft.deductions.trim() ? parseMinor(draft.deductions, c.currency) : null;
-      if (draft.deductions.trim() && ded === null) return setFormError(t("office.adm.badAmount"));
-      r = await settlement.mutate({ contractId: c.id, date: draft.date, tons, number: draft.ticket.trim() || null, deductionsMinor: ded, dueDate: draft.due || null });
-    }
+    const r = await (draft.kind === "delivery" ? delivery : settlement).mutate(built.body);
     if (r.ok) {
       setDraft(null);
       showToast(t("ui.erp.saved"));
@@ -148,8 +152,8 @@ export default function Grain() {
                   rows={list}
                   keyOf={(c) => c.id}
                   title={label}
-                  subtitle={(c) => [party(c.partyId), t("office.adm.grainProgress", { d: fmtNumber(c.deliveredTons), t: fmtNumber(c.tons), s: fmtNumber(c.settledTons) })].filter(Boolean).join(" · ")}
-                  right={(c) => `${fmtNumber(c.tons)} t`}
+                  subtitle={(c) => party(c.partyId) ?? undefined}
+                  right={(c) => `${fmtNumber(c.deliveredTons)} / ${fmtNumber(c.tons)} t`}
                   onPress={(c) => open("delivery", c)}
                   empty={{ title: t("ui.erp.empty") }}
                 />
@@ -173,7 +177,13 @@ export default function Grain() {
                       rows={[...rows].sort((a, b) => b.date.localeCompare(a.date))}
                       keyOf={(l) => l.id}
                       title={(l) => labelOf(l.contractId)}
-                      subtitle={(l) => [isoShort(l.date), `${fmtNumber(l.tons)} t`, l.currency === "USD" ? fmtGs(l.netPyg) : null, l.dueDate ? t("ui.purch.due", { date: isoShort(l.dueDate) }) : null].filter(Boolean).join(" · ")}
+                      subtitle={(l) => [isoShort(l.date), `${fmtNumber(l.tons)} t`].join(" · ")}
+                      detail={(l) => [
+                        { label: t("ui.cost.date"), value: isoShort(l.date) },
+                        { label: t("ui.grain.tons"), value: `${fmtNumber(l.tons)} t` },
+                        ...(l.currency === "USD" ? [{ label: t("ui.cost.amount"), value: fmtGs(l.netPyg) }] : []),
+                        ...(l.dueDate ? [{ label: t("ui.purch.dueLabel"), value: isoShort(l.dueDate) }] : []),
+                      ]}
                       right={(l) => fmtMoney(l.netAmount, l.currency)}
                       empty={{ title: t("ui.erp.empty") }}
                     />

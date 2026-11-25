@@ -109,7 +109,7 @@ export function LineChart({ series, height = 200, yUnit }: LineChartProps) {
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 16, marginTop: 8 }}>
         {series.map((s) => (
           <View key={s.label} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: s.color }} />
+            {series.length > 1 ? <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: s.color }} /> : null}
             <Text style={T.small}>{s.label}</Text>
           </View>
         ))}

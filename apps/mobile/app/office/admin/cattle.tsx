@@ -44,6 +44,19 @@ interface Draft {
 }
 const blank = (): Draft => ({ kind: "sell", date: today(), partyId: "", category: "", heads: "", totalKg: "", currency: "PYG", amount: "", guide: "" });
 
+/** Valida el formulario y arma el cuerpo del pedido; devuelve el texto del error si algo no cierra. */
+function dealBody(draft: Draft): { body: Record<string, unknown> } | { error: string } {
+  const heads = parseDecimal(draft.heads);
+  const kg = parseDecimal(draft.totalKg);
+  const amount = parseMinor(draft.amount, draft.currency);
+  if (heads === null || !Number.isInteger(heads) || heads < 1) return { error: t("office.adm.badHeads") };
+  if (kg === null || kg <= 0) return { error: t("office.adm.badKg") };
+  if (amount === null) return { error: t("office.adm.badAmount") };
+  if (!draft.date) return { error: t("office.adm.needsDate") };
+  const body = { kind: draft.kind, date: draft.date, partyId: draft.partyId || null, category: draft.category.trim() || null, heads, totalKg: kg, amount, currency: draft.currency, guideNumber: draft.guide.trim() || null };
+  return cattleDealInput.safeParse(body).success ? { body } : { error: t("office.adm.checkFields") };
+}
+
 /** Compra y venta de hacienda. */
 export default function Cattle() {
   const q = useOnline<Deal[]>("/org/erp/cattle-deals");
@@ -63,18 +76,10 @@ export default function Cattle() {
   };
   const submit = async () => {
     if (!draft) return;
-    const heads = parseDecimal(draft.heads);
-    const kg = parseDecimal(draft.totalKg);
-    const amount = parseMinor(draft.amount, draft.currency);
-    if (heads === null || !Number.isInteger(heads) || heads < 1) return setFormError(t("office.adm.badHeads"));
-    if (kg === null || kg <= 0) return setFormError(t("office.adm.badKg"));
-    if (amount === null) return setFormError(t("office.adm.badAmount"));
-    if (!draft.date) return setFormError(t("office.adm.needsDate"));
-    const body = { kind: draft.kind, date: draft.date, partyId: draft.partyId || null, category: draft.category.trim() || null, heads, totalKg: kg, amount, currency: draft.currency, guideNumber: draft.guide.trim() || null };
-    const check = cattleDealInput.safeParse(body);
-    if (!check.success) return setFormError(t("office.adm.checkFields"));
+    const built = dealBody(draft);
+    if ("error" in built) return setFormError(built.error);
     setFormError(null);
-    const r = await create.mutate(body);
+    const r = await create.mutate(built.body);
     if (r.ok) {
       setDraft(null);
       showToast(t("ui.erp.saved"));
@@ -105,7 +110,13 @@ export default function Cattle() {
                 rows={rows}
                 keyOf={(d) => d.id}
                 title={(d) => [t(k(`ui.cattle.kind_${d.kind}`)), d.category].filter(Boolean).join(" · ")}
-                subtitle={(d) => [isoShort(d.date), party(d.partyId), d.pricePerKg !== null ? `${fmtMoney(Math.round(d.pricePerKg), d.currency)}/kg` : null, d.guideNumber ? `${t("ui.cattle.guide")} ${d.guideNumber}` : null].filter(Boolean).join(" · ")}
+                subtitle={(d) => [isoShort(d.date), party(d.partyId)].filter(Boolean).join(" · ")}
+                detail={(d) => [
+                  { label: t("ui.cost.date"), value: isoShort(d.date) },
+                  ...(party(d.partyId) ? [{ label: t("ui.cattle.party"), value: party(d.partyId)! }] : []),
+                  ...(d.pricePerKg !== null ? [{ label: t("ui.cattle.pricePerKg"), value: `${fmtMoney(Math.round(d.pricePerKg), d.currency)}/kg` }] : []),
+                  ...(d.guideNumber ? [{ label: t("ui.cattle.guide"), value: d.guideNumber }] : []),
+                ]}
                 right={(d) => (
                   <View style={{ alignItems: "flex-end" }}>
                     <RightText>{fmtMoney(d.amount, d.currency)}</RightText>

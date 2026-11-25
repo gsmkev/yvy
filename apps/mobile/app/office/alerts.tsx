@@ -21,7 +21,7 @@ import { Button, EmptyState, Text } from "../../src/ui/kit";
 import { C, F, RADIUS, T } from "../../src/ui/theme";
 
 const RANK: Record<string, number> = { warning: 0, watch: 1, info: 2 };
-const EDGE: Record<string, string> = { warning: C.peligro, watch: C.trigo, info: C.soja };
+const EDGE: Record<string, string> = { warning: C.peligro, watch: C.trigo, info: C.lineaFuerte };
 
 /** Avisos activos de la organización, con acceso a su configuración. */
 export default function Alerts() {
@@ -88,7 +88,7 @@ export default function Alerts() {
       )}
       {shown.length === 0 && <EmptyState title={t("office.alerts.empty")} hint={t("office.alerts.emptyHint")} />}
       {shown.map((a) => (
-        <View key={a.id} style={{ marginTop: 16, padding: 16, borderRadius: RADIUS, backgroundColor: C.blanco, borderWidth: 1, borderColor: C.linea, borderLeftWidth: 4, borderLeftColor: EDGE[a.severity] ?? C.soja }}>
+        <View key={a.id} style={{ marginTop: 16, padding: 16, borderRadius: RADIUS, backgroundColor: C.blanco, borderWidth: 1, borderColor: C.linea, borderLeftWidth: 4, borderLeftColor: EDGE[a.severity] ?? C.lineaFuerte }}>
           <Text style={[T.heading, a.severity === "warning" && { color: C.peligro }]}>
             {t(`ui.alert.kind_${a.kind}` as MessageKey)}
             {a.probability ? ` · ${t(`ui.probability.${a.probability}` as MessageKey).toLowerCase()}` : ""}

@@ -1,8 +1,8 @@
 /** Cifras, ficha y lista de las pantallas de oficina. */
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { FlatList, Pressable, View } from "react-native";
 import { type LucideIcon } from "lucide-react-native";
-import { EmptyState, Row, Text } from "../../ui/kit";
+import { EmptyState, Row, Sheet, Text } from "../../ui/kit";
 import { C, F, RADIUS, T } from "../../ui/theme";
 
 /** Cifra destacada con su etiqueta y unidad. */
@@ -99,7 +99,8 @@ const VIRTUALIZE_OVER = 30;
 
 /**
  * La "tabla" del teléfono: una fila `Row` por elemento. Con más de 30 usa FlatList (sin scroll propio: la pantalla
- * ya se desplaza; renderiza por tandas). Con `rows` vacío muestra `empty`.
+ * ya se desplaza; renderiza por tandas). Con `rows` vacío muestra `empty`. La fila lleva una sola línea secundaria;
+ * con `detail`, tocarla abre una hoja con la ficha completa (si no hay `onPress`).
  */
 export function DataList<R>({
   rows,
@@ -109,6 +110,7 @@ export function DataList<R>({
   right,
   icon,
   onPress,
+  detail,
   empty,
 }: {
   rows: R[];
@@ -118,8 +120,11 @@ export function DataList<R>({
   right?: (r: R) => string | ReactNode;
   icon?: LucideIcon;
   onPress?: (r: R) => void;
+  /** Ficha completa de la fila (rótulo–valor) que se abre al tocarla; el título de la hoja es el de la fila. */
+  detail?: (r: R) => { label: string; value: string }[];
   empty: { title: string; hint?: string; action?: string; onAction?: () => void };
 }) {
+  const [open, setOpen] = useState<R | null>(null);
   if (rows.length === 0) return <EmptyState title={empty.title} hint={empty.hint} action={empty.action} onAction={empty.onAction} />;
   const render = (r: R) => {
     const rt = right?.(r);
@@ -128,11 +133,25 @@ export function DataList<R>({
         title={title(r)}
         subtitle={subtitle?.(r)}
         icon={icon}
-        onPress={onPress ? () => onPress(r) : undefined}
+        onPress={onPress ? () => onPress(r) : detail ? () => setOpen(r) : undefined}
         right={typeof rt === "string" ? <Text style={{ fontFamily: F.sansMedium, fontSize: 17, color: C.tinta }}>{rt}</Text> : rt}
       />
     );
   };
-  if (rows.length <= VIRTUALIZE_OVER) return <View style={{ marginTop: 8 }}>{rows.map((r) => <View key={keyOf(r)}>{render(r)}</View>)}</View>;
-  return <FlatList data={rows} keyExtractor={keyOf} renderItem={({ item }) => render(item)} scrollEnabled={false} initialNumToRender={VIRTUALIZE_OVER} windowSize={7} style={{ marginTop: 8 }} />;
+  const list =
+    rows.length <= VIRTUALIZE_OVER ? (
+      <View style={{ marginTop: 8 }}>{rows.map((r) => <View key={keyOf(r)}>{render(r)}</View>)}</View>
+    ) : (
+      <FlatList data={rows} keyExtractor={keyOf} renderItem={({ item }) => render(item)} scrollEnabled={false} initialNumToRender={VIRTUALIZE_OVER} windowSize={7} style={{ marginTop: 8 }} />
+    );
+  return (
+    <>
+      {list}
+      {open && detail ? (
+        <Sheet visible title={title(open)} onClose={() => setOpen(null)}>
+          <KeyValue rows={detail(open)} />
+        </Sheet>
+      ) : null}
+    </>
+  );
 }

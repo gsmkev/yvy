@@ -2,7 +2,6 @@
  * Datos y cálculos de la ficha del lote y de las pantallas de Lotes, Campañas, Productos y Buscador (ola 2).
  * Todo sale de la base local (anda sin señal); lo puro está aparte de las consultas para poder probarlo.
  */
-import { NDVI_RAMP } from "@yvy/shared";
 import type { LocalDb } from "../db/store";
 import { fmtNumber } from "../office/format";
 import { areaLabel, cToTemp, haToArea, mmToRain, rainLabel, tempLabel, type Units } from "@yvy/shared";
@@ -41,13 +40,6 @@ export const degMinCoords = (lon: number, lat: number): string => `${dm(lat)} ${
 export const mapsLink = (lon: number, lat: number): string => `https://www.google.com/maps?q=${lat.toFixed(5)},${lon.toFixed(5)}`;
 
 // ---------- Vigor ----------
-
-/** Color de la rampa NDVI (marrón a verde) para un valor de 0 a 1. */
-export function ndviColor(v: number): string {
-  const cuts = [0.2, 0.4, 0.55, 0.7];
-  const i = cuts.findIndex((c) => v < c);
-  return NDVI_RAMP[i === -1 ? NDVI_RAMP.length - 1 : i]!;
-}
 
 /** Un valor de vigor (NDVI) en una fecha de imagen. */
 export interface VigorPoint {

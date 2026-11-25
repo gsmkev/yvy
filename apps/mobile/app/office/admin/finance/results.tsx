@@ -23,7 +23,9 @@ const key = (k: string) => k as MessageKey;
 interface Line {
   id: string;
   name: string;
-  detail?: string;
+  areaHa?: number | null;
+  costPyg: number;
+  incomePyg: number;
   margin: number;
   marginPerHa?: number | null;
 }
@@ -31,15 +33,22 @@ interface Line {
 const rowsOf = (d: Results, view: View_): Line[] => {
   switch (view) {
     case "plot":
-      return d.byPlot.map((r) => ({ id: r.plotId ?? "none", name: r.name ?? t("ui.results.noPlot"), detail: [r.areaHa ? `${fmtNumber(r.areaHa)} ha` : null, `${t("ui.cost.totalCost")} ${fmtGs(r.costPyg)}`, `${t("ui.cost.totalIncome")} ${fmtGs(r.incomePyg)}`].filter(Boolean).join(" · "), margin: r.marginPyg, marginPerHa: r.marginPerHa }));
+      return d.byPlot.map((r) => ({ id: r.plotId ?? "none", name: r.name ?? t("ui.results.noPlot"), areaHa: r.areaHa, costPyg: r.costPyg, incomePyg: r.incomePyg, margin: r.marginPyg, marginPerHa: r.marginPerHa }));
     case "crop":
-      return d.byCrop.map((r) => ({ id: r.crop ?? "none", name: r.crop ? t(key(`ui.crop.name_${r.crop}`)) : t("ui.dash.noCrop"), detail: [r.areaHa ? `${fmtNumber(r.areaHa)} ha` : null, `${t("ui.cost.totalCost")} ${fmtGs(r.costPyg)}`, `${t("ui.cost.totalIncome")} ${fmtGs(r.incomePyg)}`].filter(Boolean).join(" · "), margin: r.marginPyg, marginPerHa: r.marginPerHa }));
+      return d.byCrop.map((r) => ({ id: r.crop ?? "none", name: r.crop ? t(key(`ui.crop.name_${r.crop}`)) : t("ui.dash.noCrop"), areaHa: r.areaHa, costPyg: r.costPyg, incomePyg: r.incomePyg, margin: r.marginPyg, marginPerHa: r.marginPerHa }));
     case "season":
-      return d.bySeason.map((r) => ({ id: r.seasonId ?? "none", name: r.name ?? t("ui.results.noSeason"), detail: `${t("ui.cost.totalCost")} ${fmtGs(r.costPyg)} · ${t("ui.cost.totalIncome")} ${fmtGs(r.incomePyg)}`, margin: r.marginPyg }));
+      return d.bySeason.map((r) => ({ id: r.seasonId ?? "none", name: r.name ?? t("ui.results.noSeason"), costPyg: r.costPyg, incomePyg: r.incomePyg, margin: r.marginPyg }));
     case "activity":
-      return d.byActivity.map((r) => ({ id: r.activity, name: t(key(`ui.activity.${r.activity}`)), detail: `${t("ui.cost.totalCost")} ${fmtGs(r.costPyg)} · ${t("ui.cost.totalIncome")} ${fmtGs(r.incomePyg)}`, margin: r.marginPyg }));
+      return d.byActivity.map((r) => ({ id: r.activity, name: t(key(`ui.activity.${r.activity}`)), costPyg: r.costPyg, incomePyg: r.incomePyg, margin: r.marginPyg }));
   }
 };
+
+/** Costos y ventas de una fila, más su superficie si la tiene. */
+const lineDetail = (r: Line) => [
+  ...(r.areaHa ? [{ label: t("ui.results.area"), value: `${fmtNumber(r.areaHa)} ha` }] : []),
+  { label: t("ui.cost.totalCost"), value: fmtGs(r.costPyg) },
+  { label: t("ui.cost.totalIncome"), value: fmtGs(r.incomePyg) },
+];
 
 /** Resultado económico por estancia y campaña. */
 export default function ResultsScreen() {
@@ -100,7 +109,8 @@ export default function ResultsScreen() {
                 rows={rows}
                 keyOf={(r) => r.id}
                 title={(r) => r.name}
-                subtitle={(r) => r.detail}
+                subtitle={(r) => (r.areaHa ? `${fmtNumber(r.areaHa)} ha` : undefined)}
+                detail={lineDetail}
                 right={(r) => <Text style={[T.bodyMedium, r.margin < 0 && { color: C.peligro }]}>{fmtGs(r.margin)}</Text>}
                 empty={{ title: t("ui.results.emptyView") }}
               />

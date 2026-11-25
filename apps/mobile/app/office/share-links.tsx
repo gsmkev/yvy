@@ -62,7 +62,7 @@ export default function ShareLinks() {
       <Text style={[T.small, { marginTop: 12 }]}>{t("ui.share.linkIntro")}</Text>
       {create.error ? <Text accessibilityRole="alert" style={[T.bodyMedium, { color: C.peligro, marginTop: 12 }]}>{create.error}</Text> : null}
       {fresh && (
-        <View style={{ marginTop: 16, padding: 16, borderRadius: RADIUS, backgroundColor: C.blanco, borderWidth: 1, borderColor: C.linea, borderLeftWidth: 4, borderLeftColor: C.soja }}>
+        <View style={{ marginTop: 16, padding: 16, borderRadius: RADIUS, backgroundColor: C.blanco, borderWidth: 1, borderColor: C.linea, borderLeftWidth: 4, borderLeftColor: C.lineaFuerte }}>
           <Text style={T.heading}>{t("office.share.linksNewTitle")}</Text>
           <Text selectable style={[T.small, { marginTop: 4 }]}>{fresh.url}</Text>
           <Text style={[T.small, { marginTop: 8 }]}>{t("ui.share.linkNewNote")}</Text>

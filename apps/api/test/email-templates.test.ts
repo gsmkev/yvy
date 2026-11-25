@@ -4,6 +4,7 @@ import { app } from "../src/app";
 import {
   alertEmail,
   emailSamples,
+  isDeliverable,
   leadEmail,
   loginCodeEmail,
   mentionEmail,
@@ -182,6 +183,20 @@ describe("envío", () => {
     expect(calls.map((c) => c.body.length)).toEqual([100, 50]);
     expect(calls[0]!.body[0].headers["List-Unsubscribe"]).toBe(`<${APP}/cuenta>`);
     expect(calls[0]!.body[0].html).toBeTruthy();
+  });
+
+  it("no manda a dominios reservados (usuarios de la demo y de pruebas) para no generar rebotes", async () => {
+    for (const to of ["demo@yvy.invalid", "b@host.localhost", "c@foo.example"]) expect(isDeliverable(to)).toBe(false);
+    for (const to of ["kevin@koeti.com.py", "ana@gmail.com", "x@invalid.com.py", "dueno@yvy.test"]) expect(isDeliverable(to)).toBe(true);
+    const calls = capture();
+    const message = loginCodeEmail({ code: "1", minutes: 1 });
+    await sendEmail(mailEnv as never, "demo@yvy.invalid", message);
+    await sendEmailBatch(mailEnv as never, [
+      { to: "maria@yvy.invalid", message },
+      { to: "ana@b.py", message },
+    ]);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]!.body.map((m: { to: string }) => m.to)).toEqual(["ana@b.py"]);
   });
 
   it("sendEmailBatch lanza si Resend rechaza", async () => {

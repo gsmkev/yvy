@@ -38,12 +38,12 @@ function TaskRow({ x, clock, farmName, plotName, onMenu }: Omit<Props, "groups" 
 }
 
 /** Una sección por persona con sus tareas. */
-export function TaskGroups({ groups, nameOf, ...rest }: Props) {
+export function TaskGroups({ groups, nameOf, clock, farmName, plotName, onMenu }: Props) {
   return [...groups.entries()].map(([id, list], i) => (
     <View key={id}>
       <SectionHeader title={`${nameOf(id)}, ${list.length}`} first={i === 0} />
       {list.map((x) => (
-        <TaskRow key={x.id} x={x} {...rest} />
+        <TaskRow key={x.id} x={x} clock={clock} farmName={farmName} plotName={plotName} onMenu={onMenu} />
       ))}
     </View>
   ));

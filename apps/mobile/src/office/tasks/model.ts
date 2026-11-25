@@ -38,18 +38,18 @@ export function taskCounts(tasks: Task[], c: Clock): Record<Filter, number> {
   };
 }
 
-const matchers: Record<Filter, (x: Task, c: Clock) => boolean> = {
-  all: (x) => x.status === "open",
-  overdue: (x, c) => isOverdue(x, c.today, c.nowTime),
-  today: (x, c) => x.status === "open" && x.dueDate === c.today,
-  done: (x) => x.status === "done",
-};
+const matchers = new Map<Filter, (x: Task, c: Clock) => boolean>([
+  ["all", (x) => x.status === "open"],
+  ["overdue", (x, c) => isOverdue(x, c.today, c.nowTime)],
+  ["today", (x, c) => x.status === "open" && x.dueDate === c.today],
+  ["done", (x) => x.status === "done"],
+]);
 
 const byDue = (a: Task, b: Task) => a.dueDate.localeCompare(b.dueDate) || (a.dueTime ?? "24:00").localeCompare(b.dueTime ?? "24:00") || (PRIO_RANK[a.priority] ?? 1) - (PRIO_RANK[b.priority] ?? 1);
 
 /** Tareas del filtro: las hechas, de la más reciente; el resto, por fecha, hora y prioridad. */
 export function tasksFor(filter: Filter, tasks: Task[], c: Clock): Task[] {
-  const sorted = tasks.filter((x) => matchers[filter](x, c));
+  const sorted = tasks.filter((x) => matchers.get(filter)!(x, c));
   return sorted.sort(filter === "done" ? (a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0) : byDue);
 }
 

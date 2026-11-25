@@ -95,7 +95,11 @@ export function evaluateExcessRain(
     validFrom: best.from,
     validTo: best.to,
     summary: `Exceso de lluvia: ${Math.round(best.mm)} mm pronosticados (${best.window === "7d" ? "7 días" : best.window === "72h" ? "72 h" : "24 h"})`,
-    details: { mm: Math.round(best.mm), window: best.window },
+    details: {
+      mm: Math.round(best.mm),
+      window: best.window,
+      days: days.filter((d) => d.date >= best.from && d.date <= best.to).map((d) => ({ date: d.date, mm: Math.round(d.precipMm) })),
+    },
   };
 }
 

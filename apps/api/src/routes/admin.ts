@@ -10,6 +10,8 @@ import { FUNNEL_EVENTS, LIMITS, localDate, newId, planLimits } from "@yvy/shared
 import * as s from "@yvy/shared/schema";
 import { getDb } from "../db/client";
 import { signJwt } from "../lib/crypto";
+import { emailSamples, sendEmailBatch } from "../lib/email";
+import { emailRoom } from "../jobs/notify";
 import { parse, readJson } from "../lib/http";
 import type { AppEnv } from "../types";
 
@@ -46,6 +48,19 @@ const audit = (c: { env: AppEnv["Bindings"]; var: AppEnv["Variables"] }, action:
 /** Duración de la sesión de soporte. No se renueva: pasado este tiempo hay que volver a pedirla (y queda otra entrada en la auditoría). */
 const SUPPORT_TTL_SECONDS = 30 * 60;
 const like = (q: string) => `%${q.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
+
+/** Manda una muestra de cada plantilla de correo al email de quien lo pide (nunca a otra dirección), para ver cómo llegan. */
+admin.post("/email-samples", async (c) => {
+  const db = getDb(c.env.DB);
+  const [me] = await db.select({ email: s.users.email }).from(s.users).where(eq(s.users.id, c.var.auth.userId)).limit(1);
+  if (!me?.email) throw new HTTPException(400, { message: "Tu usuario no tiene email" });
+  const samples = emailSamples(c.env.APP_URL);
+  if ((await emailRoom(db, Date.now())) < samples.length)
+    throw new HTTPException(429, { message: "Hoy ya salieron demasiados correos; probá mañana" });
+  await sendEmailBatch(c.env, samples.map((message) => ({ to: me.email!, message })));
+  await audit(c, "email_samples", null, { count: samples.length });
+  return c.json({ sent: samples.length });
+});
 
 admin.get("/metrics", async (c) => {
   const db = getDb(c.env.DB);

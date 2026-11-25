@@ -10,7 +10,7 @@ import * as s from "@yvy/shared/schema";
 import { issueSession } from "../../auth/session";
 import { getDb, runBatch } from "../../db/client";
 import { randomDigits, sha256Hex } from "../../lib/crypto";
-import { sendEmail } from "../../lib/email";
+import { loginCodeEmail, sendEmail } from "../../lib/email";
 import { parse, readJson } from "../../lib/http";
 import type { AppEnv } from "../../types";
 import { MAX_CODES_PER_WINDOW, deviceId, email, findReferrer, sessionOrChallenge } from "./shared";
@@ -118,7 +118,7 @@ routes.post("/email/start", async (c) => {
     expiresAt: now + LIMITS.auth.emailCodeTtlMs,
     createdAt: now,
   });
-  await sendEmail(c.env, body.email, t("auth.email.subject", { code }), t("auth.email.body", { code }));
+  await sendEmail(c.env, body.email, loginCodeEmail({ code, minutes: Math.round(LIMITS.auth.emailCodeTtlMs / 60_000) }));
   return c.json({ ok: true });
 });
 

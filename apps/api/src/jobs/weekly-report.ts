@@ -2,13 +2,14 @@
  * Parte semanal por email: resumen de la semana de cada estancia con el PDF adjunto cuando está disponible,
  * y envío a destinatarios externos programados.
  */
-import { and, eq, gte, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
 import { localDate } from "@yvy/shared";
 import * as s from "@yvy/shared/schema";
 import type { DB } from "../db/client";
 import { SystemDb } from "../db/system";
-import { sendEmail, type EmailAttachment } from "../lib/email";
+import { sendEmail, weeklyEmail, type EmailAttachment, type WeeklyEmailInput } from "../lib/email";
 import { presign } from "../lib/r2";
+import { loadWeeklyExtras } from "./weekly-extras";
 import type { Bindings } from "../types";
 import type { Farm, JobDeps } from "./farm";
 
@@ -31,6 +32,24 @@ export async function weeklyReportJob(db: DB, env: Bindings, deps: JobDeps, farm
         gte(s.climateDaily.date, localDate(since, farm.tz)),
       ),
     );
+  const byKind = await db
+    .select({ kind: s.records.kind, n: sql<number>`count(*)` })
+    .from(s.records)
+    .where(and(eq(s.records.farmId, farm.id), isNull(s.records.deletedAt), gte(s.records.capturedAt, since)))
+    .groupBy(s.records.kind)
+    .orderBy(sql`count(*) DESC`)
+    .limit(5);
+  const [overdue] = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(s.tasks)
+    .where(
+      and(
+        eq(s.tasks.farmId, farm.id),
+        eq(s.tasks.status, "open"),
+        isNull(s.tasks.deletedAt),
+        lt(s.tasks.dueDate, localDate(now, farm.tz)),
+      ),
+    );
   const alerts = await db
     .select({ summary: s.alerts.summary })
     .from(s.alerts)
@@ -48,33 +67,39 @@ export async function weeklyReportJob(db: DB, env: Bindings, deps: JobDeps, farm
     );
   const from = localDate(since, farm.tz);
   const to = localDate(now, farm.tz);
-  const text = [
-    `Parte semanal de ${farm.name} (${from} al ${to})`,
-    "",
-    `Registros: ${stats?.n ?? 0} de ${stats?.authors ?? 0} personas`,
-    `Lluvia estimada (CHIRPS): ${rain?.mm != null ? `${Math.round(rain.mm)} mm` : "sin datos"}`,
-    `Avisos: ${alerts.length ? alerts.map((a) => a.summary).join("; ") : "ninguno"}`,
-    "",
-    `PDF con mapa, tabla y fotos: ${env.APP_URL}/estancias/${farm.id}/parte?desde=${from}&hasta=${to}`,
-  ].join("\n");
+  const data: Omit<WeeklyEmailInput, "hasPdf" | "pdfUrl" | "externalOrg"> = {
+    farmId: farm.id,
+    farmName: farm.name,
+    from,
+    to,
+    records: stats?.n ?? 0,
+    authors: stats?.authors ?? 0,
+    rainMm: rain?.mm != null ? Math.round(rain.mm) : null,
+    alerts: alerts.map((a) => a.summary),
+    ...(await loadWeeklyExtras(db, farm, now)),
+    overdueTasks: overdue?.n ?? 0,
+    byKind: byKind.map((k) => ({ kind: k.kind, n: k.n })),
+    appUrl: env.APP_URL,
+  };
   // Si workers-py ya armó el PDF de la semana, va adjunto y con enlace (válido 7 días). Resend lo baja
   // desde la URL firmada de R2, así que el Worker no carga el archivo. Sin PDF (o sin credenciales) sale el texto.
   let attachments: EmailAttachment[] = [];
-  let body = text;
+  let pdfUrl: string | undefined;
   const pdf = await new SystemDb(db).latestWeeklyReport(farm.id, now, 3 * 86_400_000);
   if (pdf) {
     try {
       const url = await presign(env, "GET", pdf.storagePath, 7 * 86_400_000 / 1000);
       attachments = [{ filename: `parte-${farm.name}-${pdf.periodEnd}.pdf`.replace(/[^\w.-]+/g, "-"), path: url }];
-      body = `${text}\n\nPDF del parte (el enlace vale 7 días): ${url}`;
+      pdfUrl = url;
     } catch (e) {
       console.error("no se pudo firmar el PDF semanal", e);
     }
   }
+  const report = { ...data, hasPdf: attachments.length > 0, pdfUrl };
   for (const r of recipients) {
-    if (r.email) await sendEmail(env, r.email, `Yvy · Parte semanal · ${farm.name}`, body, attachments);
+    if (r.email) await sendEmail(env, r.email, weeklyEmail(report), attachments);
   }
-  await sendToExternalRecipients(db, env, farm, now, body, attachments);
+  await sendToExternalRecipients(db, env, farm, now, report, attachments);
 }
 
 /** Primer lunes del mes (hora de la estancia): el día del mes es ≤ 7. */
@@ -89,7 +114,7 @@ async function sendToExternalRecipients(
   env: Bindings,
   farm: Farm,
   now: number,
-  body: string,
+  report: Omit<WeeklyEmailInput, "externalOrg">,
   attachments: EmailAttachment[],
 ): Promise<void> {
   const rows = await db
@@ -109,10 +134,10 @@ async function sendToExternalRecipients(
     .from(s.organizations)
     .where(eq(s.organizations.id, farm.organizationId))
     .limit(1);
-  const text = `${org?.name ?? "Una organización"} te comparte este informe de ${farm.name} desde Yvy.\n\n${body}\n\nSi no querés seguir recibiéndolo, pedile a quien te lo programó que te quite de la lista.`;
+  const message = weeklyEmail({ ...report, externalOrg: org?.name ?? "Una organización" });
   for (const r of due) {
     try {
-      await sendEmail(env, r.email, `Yvy · Parte de ${farm.name} · ${org?.name ?? ""}`, text, attachments);
+      await sendEmail(env, r.email, message, attachments);
       await db.update(s.reportSchedules).set({ lastSentAt: now }).where(eq(s.reportSchedules.id, r.id));
     } catch (e) {
       console.error("informe programado", r.id, e);

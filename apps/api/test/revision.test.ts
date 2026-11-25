@@ -219,9 +219,10 @@ describe("auth: límite por IP y código en producción", () => {
   it("en producción sin RESEND_API_KEY no imprime el código", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     const prod = { ...env, APP_ENV: "production", RESEND_API_KEY: undefined } as unknown as typeof env;
-    await sendEmail(prod, "a@b.py", "Código 123456", "Tu código es 123456");
+    const msg = { subject: "Código 123456", html: "<p>123456</p>", text: "Tu código es 123456" };
+    await sendEmail(prod, "a@b.py", msg);
     expect(log).not.toHaveBeenCalled();
-    await sendEmail({ ...prod, APP_ENV: "development" } as never, "a@b.py", "x", "Tu código es 123456");
+    await sendEmail({ ...prod, APP_ENV: "development" } as never, "a@b.py", msg);
     expect(log).toHaveBeenCalled();
     log.mockRestore();
   });

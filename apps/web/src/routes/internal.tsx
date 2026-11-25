@@ -6,6 +6,7 @@ import { t } from "../lib/i18n";
 import type { OrgMetrics } from "./internal/types";
 import { TrialRequests } from "./internal/TrialRequests";
 import { PlanRequests } from "./internal/PlanRequests";
+import { EmailSamples } from "./internal/EmailSamples";
 import { Funnel } from "./internal/Funnel";
 import { AuditLog } from "./internal/AuditLog";
 import { OrgChanges, PlanModal } from "./internal/PlanModal";
@@ -57,6 +58,7 @@ export function InternalPage() {
       <PlanRequests />
       <Funnel />
       <AuditLog />
+      <EmailSamples />
     </Page>
   );
 }

@@ -14,7 +14,7 @@ import { getSecurity, setRequireAdminTotp } from "../db/security";
 import { createSchedule, deleteSchedule, listSchedules } from "../db/schedules";
 import { dispatchNewFarm, inBackground } from "../lib/dispatch";
 import { hashPin } from "../lib/pin";
-import { sendEmail } from "../lib/email";
+import { deleteRequestEmail, planRequestEmail, sendEmail } from "../lib/email";
 import { parse, readJson, timeOfDay } from "../lib/http";
 import type { AppEnv } from "../types";
 import { isoDate, uuid } from "./schemas";
@@ -69,8 +69,13 @@ org.post("/delete-request", async (c) => {
     await sendEmail(
       c.env,
       c.env.OPS_EMAIL,
-      `Pedido de baja: ${res.organizationName}`,
-      `${res.requester} pidió la baja de la organización "${res.organizationName}" (${c.var.auth.orgId}). Pedido ${res.id}.`,
+      deleteRequestEmail({
+        orgName: res.organizationName,
+        orgId: c.var.auth.orgId,
+        requester: res.requester,
+        requestId: res.id,
+        appUrl: c.env.APP_URL,
+      }),
     ).catch((e) => console.error("delete-request email", e));
   }
   return c.json({ ok: true, requestId: res.id }, res.created ? 201 : 200);
@@ -98,8 +103,16 @@ org.post("/plan-request", async (c) => {
     await sendEmail(
       c.env,
       c.env.OPS_EMAIL,
-      `Pedido de plan: ${res.orgName}`,
-      `La organización "${res.orgName}" (${c.var.auth.orgId}) pidió el plan ${b.plan}${b.maxHa ? `, hasta ${b.maxHa} ha` : ""}${b.maxUsers ? `, hasta ${b.maxUsers} personas` : ""}.${b.billing ? ` Forma de pago: ${t(`ui.plan.billing_${b.billing}`)}.` : ""}${b.note ? ` Nota: ${b.note}` : ""} Se aprueba en el panel interno.`,
+      planRequestEmail({
+        orgName: res.orgName,
+        orgId: c.var.auth.orgId,
+        plan: b.plan,
+        maxHa: b.maxHa,
+        maxUsers: b.maxUsers,
+        billing: b.billing ? t(`ui.plan.billing_${b.billing}`) : null,
+        note: b.note,
+        appUrl: c.env.APP_URL,
+      }),
     ).catch((e) => console.error("plan-request email", e));
   }
   return c.json({ id: res.id }, 201);

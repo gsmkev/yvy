@@ -53,10 +53,19 @@ const find = (tree: Tree, key: string): string | undefined => {
   return typeof node === "string" ? node : undefined;
 };
 
-/** Texto de `key` en el idioma activo; si ese idioma no lo tiene, el de es-PY. */
+const PLACEHOLDER = /\{\{(\w+)(?::([^|}]*)\|([^}]*))?\}\}/g;
+
+/**
+ * Texto de `key` en el idioma activo; si ese idioma no lo tiene, el de es-PY.
+ * `{{n}}` pone el valor; `{{n:cabeza|cabezas}}` elige la forma según `n` (1 usa la primera, cualquier otro número la segunda).
+ */
 export const t = (key: MessageKey, vars: Record<string, string | number> = {}, locale: Locale = current): string => {
   const text = find(locales[locale], key) ?? find(locales[DEFAULT_LOCALE], key);
-  return String(text).replace(/\{\{(\w+)\}\}/g, (_, k: string) => String(vars[k] ?? `{{${k}}}`));
+  return String(text).replace(PLACEHOLDER, (_, k: string, one?: string, other?: string) => {
+    const v = vars[k];
+    if (one === undefined) return String(v ?? `{{${k}}}`);
+    return v === undefined ? `{{${k}}}` : Number(v) === 1 ? one : (other ?? one);
+  });
 };
 
 /** `t` para claves armadas en tiempo de ejecución (`ui.alert.kind_${kind}`): único punto donde un `string` pasa a `MessageKey`. */

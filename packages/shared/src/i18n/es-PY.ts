@@ -5299,8 +5299,6 @@ export const esPY = {
       bandInternal: "Equipo de Yvy",
       credit: "{{credit}}. Es orientativo.",
       creditForecast: "{{credit}}. Pronóstico orientativo.",
-      yes: "Sí",
-      no: "No",
     },
     login: {
       subject: "Tu código de ingreso a Yvy: {{code}}",
@@ -5309,6 +5307,7 @@ export const esPY = {
       preheader: "Vence a las {{time}}. No lo compartas con nadie.",
       strip: "Vence en {{minutes}} minutos",
       details: "Cuándo",
+      textCode: "Tu código es {{code}}. Vence en {{minutes}} minutos.",
       kpiExpires: "Vence a las",
       kpiRequested: "Pedido a las",
       securityTitle: "Cuidá tu cuenta",

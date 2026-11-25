@@ -1,5 +1,5 @@
 /** Correos internos al equipo de operaciones: uso cerca del límite, pedido de prueba, pedido de baja y pedido de plan. */
-import { hasKey, t, tk } from "@yvy/shared";
+import { hasKey, raw, safeHtml, t, tk, type Markup } from "@yvy/shared";
 import { P, clip, renderLayout } from "../layout";
 import { base, longDate, type EmailMessage } from "../message";
 import { button, chip, compare, darkStats, gap, h2, heroTitle, keyValue, type Stat } from "../widgets";
@@ -10,8 +10,8 @@ interface InternalInput {
   lead: string;
   rows: [string, string][];
   stats?: Stat[];
-  /** HTML extra de la tarjeta, sobre la tabla de datos. */
-  extra?: string;
+  /** Marcado extra de la tarjeta, sobre la tabla de datos. */
+  extra?: Markup;
   appUrl: string;
 }
 
@@ -23,8 +23,8 @@ function internalEmail(i: InternalInput): EmailMessage {
     subject: i.subject,
     preheader: i.lead,
     place: longDate(Date.now(), "America/Asuncion"),
-    hero: heroTitle(chip(t("email.common.bandInternal"), "neutral"), i.title, i.lead) + (i.stats?.length ? gap(22) + darkStats(i.stats) : ""),
-    body: `${i.extra ?? ""}${rows.length ? h2(t("email.internal.data")) + keyValue(rows) : ""}${button(url, t("email.internal.open"))}`,
+    hero: safeHtml`${heroTitle(chip(t("email.common.bandInternal"), "neutral"), i.title, i.lead)}${i.stats?.length ? safeHtml`${gap(22)}${darkStats(i.stats)}` : ""}`,
+    body: safeHtml`${i.extra ?? raw("")}${rows.length ? safeHtml`${h2(t("email.internal.data"))}${keyValue(rows)}` : ""}${button(url, t("email.internal.open"))}`,
     footer: t("email.common.footerInternal"),
   });
   const text = [i.title, i.lead, "", ...rows.map(([k, v]) => `${k}: ${v}`), "", `${t("email.internal.open")}: ${url}`].join("\n");
@@ -40,7 +40,7 @@ export function usageEmail(i: { rows: { metric: string; pct: number }[]; appUrl:
     lead: t("email.internal.usageLead"),
     rows: [],
     stats: i.rows.map((r) => ({ label: label(r.metric), value: `${r.pct} %` })),
-    extra: `${h2(t("email.internal.usageBars"))}${compare(i.rows.map((r) => ({ label: label(r.metric), value: r.pct, color: r.pct >= 90 ? P.alert : P.wheat, text: `${r.pct} %` })))}${gap(24)}`,
+    extra: safeHtml`${h2(t("email.internal.usageBars"))}${compare(i.rows.map((r) => ({ label: label(r.metric), value: r.pct, color: r.pct >= 90 ? P.alert : P.wheat, text: `${r.pct} %` })))}${gap(24)}`,
     appUrl: i.appUrl,
   });
 }

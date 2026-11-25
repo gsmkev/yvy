@@ -2,7 +2,7 @@
  * Una muestra de cada plantilla con datos de ejemplo completos. Salen de las mismas funciones que arman el envío
  * real, así que lo que se prueba es lo que se manda. Las usan la vista previa local y la prueba del panel interno.
  */
-import { ALERT_KINDS, localDate, t, type FarmRisk } from "@yvy/shared";
+import { ALERT_KINDS, localDate, safeHtml, t, type FarmRisk } from "@yvy/shared";
 import {
   alertEmail,
   deleteRequestEmail,
@@ -24,9 +24,9 @@ const TZ = "America/Asuncion";
 const FARM_ID = "00000000-0000-7000-8000-000000000001";
 
 const PLOTS = [
-  { id: "p4", name: "Lote 4 Soja", crop: "Soja", kind: "crop", areaHa: 57.8 },
-  { id: "p2", name: "Lote 2 Maíz", crop: "Maíz", kind: "crop", areaHa: 15.4 },
-  { id: "p3", name: "Lote 3 Trigo", crop: "Trigo", kind: "crop", areaHa: 29.9 },
+  { id: "p4", name: "Lote 4 Soja", crop: "Soja", kind: "crop", areaHa: 57.8, sowingDate: "2026-10-04" },
+  { id: "p2", name: "Lote 2 Maíz", crop: "Maíz", kind: "crop", areaHa: 15.4, sowingDate: "2026-09-20" },
+  { id: "p3", name: "Lote 3 Trigo", crop: "Trigo", kind: "crop", areaHa: 29.9, sowingDate: "2026-06-10" },
   { id: "pn", name: "Potrero Norte", crop: null, kind: "pasture", areaHa: 120 },
 ];
 
@@ -138,7 +138,12 @@ function alertSamples(appUrl: string, now: number): AlertEmailInput[] {
     },
   };
   const hot = sampleContext(now, true);
-  return ALERT_KINDS.map((k) => ({ ...base, context: k === "heat_stress" ? hot : base.context, probability: k === "frost" ? "high" : k === "excess_rain" ? "medium" : null, ...by[k] }));
+  const fireCtx: AlertContext = {
+    ...base.context,
+    plots: PLOTS.map((p, i) => ({ ...p, distKm: [3.2, 5.8, 9.1, 14.6][i] })),
+    hotspotsByDay: [0, 0, 1, 0, 2, 1, 4].map((n, i) => ({ date: day(i - 6), n })),
+  };
+  return ALERT_KINDS.map((k) => ({ ...base, context: k === "heat_stress" ? hot : k === "fire" ? fireCtx : base.context, probability: k === "frost" ? "high" : k === "excess_rain" ? "medium" : null, ...by[k] }));
 }
 
 /** Parte semanal de ejemplo. */
@@ -166,8 +171,8 @@ function weeklySample(appUrl: string, now: number): Omit<WeeklyEmailInput, "exte
       { kind: "note", n: 9 },
     ],
     worsened: [
-      { name: "Lote 4 Soja", from: 0.72, to: 0.58 },
-      { name: "Lote 3 Trigo", from: 0.66, to: 0.42 },
+      { name: "Lote 4 Soja", from: 0.72, to: 0.58, series: [0.7, 0.74, 0.76, 0.75, 0.72, 0.58] },
+      { name: "Lote 3 Trigo", from: 0.66, to: 0.42, series: [0.6, 0.64, 0.66, 0.66, 0.62, 0.42] },
     ],
     hasPdf: true,
     appUrl,
@@ -245,7 +250,6 @@ export function emailSamples(appUrl: string, now = Date.now()): EmailMessage[] {
   ];
   return all.map((m) => {
     const subject = t("email.common.sample", { subject: m.subject });
-    const title = subject.replace(/[<>&"']/g, (c) => `&#${c.charCodeAt(0)};`);
-    return { ...m, subject, html: m.html.replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`) };
+    return { ...m, subject, html: m.html.replace(/<title>[^<]*<\/title>/, safeHtml`<title>${subject}</title>`.text) };
   });
 }

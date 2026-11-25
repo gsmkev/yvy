@@ -1,5 +1,5 @@
 /** Correo de aviso agronómico: panel oscuro con el dato, widgets del tipo en la tarjeta, "qué hacer" y botón al mapa. */
-import { ATTRIBUTION, localDate, t, tk } from "@yvy/shared";
+import { ATTRIBUTION, localDate, safeHtml, t, tk } from "@yvy/shared";
 import { clip, renderLayout } from "../layout";
 import { base, dm, settingsUrl, unsubscribe, type EmailMessage } from "../message";
 import { bullets, button, chip, gap, h2, heroTitle, type Tone } from "../widgets";
@@ -42,7 +42,7 @@ function credit(i: AlertEmailInput): string {
 /** Compone el aviso; si faltan datos del tipo cae a titular y frase genéricos con la vigencia. */
 function compose(i: AlertEmailInput, ctx: AlertContext): Composition & { headline: string } {
   const today = localDate(ctx.now, i.tz);
-  const made = KIND_COMPOSERS[i.kind]?.({ d: obj(i.details), ctx, tz: i.tz, summary: clip(i.summary, 400), today });
+  const made = KIND_COMPOSERS.get(i.kind)?.({ d: obj(i.details), ctx, tz: i.tz, summary: clip(i.summary, 400), today });
   const range =
     i.validFrom !== null && i.validTo !== null
       ? t("email.alert.lead_validity", { from: dm(localDate(i.validFrom, i.tz)), to: dm(localDate(i.validTo, i.tz)) })
@@ -67,13 +67,13 @@ export function alertEmail(i: AlertEmailInput): EmailMessage {
   const todo = [1, 2, 3].map((n) => tk(`email.alert.todo_${i.kind}_${n}`));
   const todoTitle = tk(`email.alert.todoTitle_${i.kind}`);
   const creditLine = credit(i);
-  if (c.body[0] === gap(24)) c.body.shift();
+  if (c.body[0]?.text === gap(24).text) c.body.shift();
   const html = renderLayout({
     subject,
     preheader: todo[0]!,
     place: i.place ? `${farm}, ${clip(i.place, 60)}` : farm,
-    hero: heroTitle(chip(label, TONE[i.severity]), c.headline, c.lead) + c.hero.join(""),
-    body: `${c.body.join("")}${c.body.length ? gap(24) : ""}${h2(todoTitle, "0 0 6px")}${bullets(todo)}${button(url, t("email.common.viewMap"))}`,
+    hero: safeHtml`${heroTitle(chip(label, TONE[i.severity]), c.headline, c.lead)}${c.hero}`,
+    body: safeHtml`${c.body}${c.body.length ? gap(24) : ""}${h2(todoTitle, "0 0 6px")}${bullets(todo)}${button(url, t("email.common.viewMap"))}`,
     footer: t("email.common.footerAlerts", { farm }),
     settings: { label: t("email.common.settings"), url: settingsUrl(i.appUrl) },
     credit: creditLine,

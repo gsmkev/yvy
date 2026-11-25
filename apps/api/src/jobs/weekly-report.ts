@@ -9,6 +9,7 @@ import type { DB } from "../db/client";
 import { SystemDb } from "../db/system";
 import { sendEmail, weeklyEmail, type EmailAttachment, type WeeklyEmailInput } from "../lib/email";
 import { presign } from "../lib/r2";
+import { loadWeeklyExtras } from "./weekly-extras";
 import type { Bindings } from "../types";
 import type { Farm, JobDeps } from "./farm";
 
@@ -75,11 +76,7 @@ export async function weeklyReportJob(db: DB, env: Bindings, deps: JobDeps, farm
     authors: stats?.authors ?? 0,
     rainMm: rain?.mm != null ? Math.round(rain.mm) : null,
     alerts: alerts.map((a) => a.summary),
-    prevRecords: null,
-    rainDaily: [],
-    tasksDone: 0,
-    tasksTotal: 0,
-    worsened: [],
+    ...(await loadWeeklyExtras(db, farm, now)),
     overdueTasks: overdue?.n ?? 0,
     byKind: byKind.map((k) => ({ kind: k.kind, n: k.n })),
     appUrl: env.APP_URL,

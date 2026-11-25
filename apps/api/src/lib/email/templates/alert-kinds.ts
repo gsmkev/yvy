@@ -3,7 +3,7 @@
  * tarjeta, armados solo con lo que trae el aviso (`details`) y los datos de contexto leídos al enviar.
  * Si falta un dato, ese widget se omite. El color solo aparece donde significa algo.
  */
-import { localDate, localTime, t, tk, thi as thiOf } from "@yvy/shared";
+import { localDate, localTime, t, tk, thi as thiOf, type Markup } from "@yvy/shared";
 import { P } from "../layout";
 import { dm, weekdayLong, weekdayShort } from "../message";
 import { compare, darkBars, darkStats, fmtNum, gap, gauge, h2, plotRows, progressBar, trend, type DarkBar, type Stat } from "../widgets";
@@ -62,17 +62,17 @@ export interface Composition {
   headline?: string;
   lead?: string;
   /** Panel oscuro bajo el titular: cifras y gráfico protagonista. */
-  hero: string[];
+  hero: Markup[];
   /** Widgets de la tarjeta blanca. */
-  body: string[];
+  body: Markup[];
 }
 
 const ha = (n: number) => t("email.alert.plotArea", { ha: fmtNum(n, 1) });
 const daysBetween = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000);
-const stats = (items: Stat[]) => darkStats(items);
+const stats = (items: Stat[]): Markup => darkStats(items);
 
 /** Lotes alcanzados: nombre, cultivo y superficie, sin colores. */
-function plotsBlock(titleKey: "plots" | "plotsFrost" | "plotsRust" | "plotsPest", plots: PlotInfo[]): string[] {
+function plotsBlock(titleKey: "plots" | "plotsFrost" | "plotsRust" | "plotsPest", plots: PlotInfo[]): Markup[] {
   if (!plots.length) return [];
   return [gap(24), h2(tk(`email.alert.${titleKey}`), "0 0 4px"), plotRows(plots.slice(0, 6).map((p) => ({ name: p.name, detail: p.sowingDate ? t("email.alert.plotSown", { date: dm(p.sowingDate) }) : undefined, value: ha(p.areaHa) })))];
 }
@@ -351,14 +351,14 @@ function senacsa(e: Env): Composition | null {
 }
 
 /** Compositor de cada tipo de aviso. */
-export const KIND_COMPOSERS: Record<string, (e: Env) => Composition | null> = {
-  frost,
-  excess_rain: excessRain,
-  drought,
-  fire,
-  pest_threshold: pest,
-  water_low: waterLow,
-  heat_stress: heatStress,
-  rust_risk: rustRisk,
-  senacsa,
-};
+export const KIND_COMPOSERS: ReadonlyMap<string, (e: Env) => Composition | null> = new Map([
+  ["frost", frost],
+  ["excess_rain", excessRain],
+  ["drought", drought],
+  ["fire", fire],
+  ["pest_threshold", pest],
+  ["water_low", waterLow],
+  ["heat_stress", heatStress],
+  ["rust_risk", rustRisk],
+  ["senacsa", senacsa],
+]);

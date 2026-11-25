@@ -1,6 +1,6 @@
 /** Parte semanal de una estancia: cifras con variación, lluvia por día, registros por tipo, tareas y lotes que perdieron vigor. */
-import { t, tk } from "@yvy/shared";
-import { P, clip, esc, font, renderLayout } from "../layout";
+import { raw, safeHtml, t, tk, type Markup } from "@yvy/shared";
+import { P, clip, font, renderLayout } from "../layout";
 import { base, dm, settingsUrl, unsubscribe, weekdayShort, type EmailMessage } from "../message";
 import { bullets, button, chip, compare, darkBars, darkStats, fmtNum, gap, h2, heroTitle, note, plotRows, type Stat } from "../widgets";
 
@@ -61,21 +61,23 @@ function stats(i: WeeklyEmailInput): Stat[] {
   ];
 }
 
-function tasksBlock(i: WeeklyEmailInput): string {
+function tasksBlock(i: WeeklyEmailInput): Markup {
   const total = i.tasksTotal ?? 0;
-  if (total <= 0) return "";
+  if (total <= 0) return raw("");
   const done = i.tasksDone ?? 0;
   const late = Math.min(i.overdueTasks, total - done);
   const open = Math.max(0, total - done - late);
-  const part = (n: number, color: string, first: boolean, last: boolean) =>
-    n > 0 ? `<td width="${Math.round((n / total) * 100)}%" height="10" style="height:10px;background:${color};${first ? "border-radius:5px 0 0 5px;" : ""}${last ? "border-radius:0 5px 5px 0;" : ""}font-size:0;line-height:0;">&nbsp;</td>` : "";
-  const bar = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${part(done, P.soy, true, open + late === 0)}${part(open, P.neutralBar, done === 0, late === 0)}${part(late, P.alert, done + open === 0, true)}</tr></table>`;
-  const strong = (n: number, color?: string) => `<span style="font-weight:600;${color ? `color:${color};` : ""}" class="${color ? "" : "t1"}">${n}</span>`;
-  const caption = `${strong(done)} ${esc(t("email.weekly.done"))} <span style="padding-left:12px;">${strong(open)} ${esc(t("email.weekly.open"))}</span> <span style="padding-left:12px;">${strong(late, P.alert)} ${esc(t("email.weekly.late"))}</span>`;
-  return `${gap(26)}${h2(t("email.weekly.tasks"))}${bar}<div style="padding-top:8px;${font(13, P.ink2)}" class="t2">${caption}</div>`;
+  const part = (n: number, color: string, first: boolean, last: boolean) => {
+    const radius = `${first ? "border-radius:5px 0 0 5px;" : ""}${last ? "border-radius:0 5px 5px 0;" : ""}`;
+    return n > 0 ? safeHtml`<td width="${Math.round((n / total) * 100)}%" height="10" style="height:10px;background:${color};${radius}font-size:0;line-height:0;">&nbsp;</td>` : "";
+  };
+  const bar = safeHtml`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${part(done, P.soy, true, open + late === 0)}${part(open, P.neutralBar, done === 0, late === 0)}${part(late, P.alert, done + open === 0, true)}</tr></table>`;
+  const strong = (n: number, color?: string) => safeHtml`<span style="font-weight:600;${color ? `color:${color};` : ""}" class="${color ? "" : "t1"}">${n}</span>`;
+  const caption = safeHtml`${strong(done)} ${t("email.weekly.done")} <span style="padding-left:12px;">${strong(open)} ${t("email.weekly.open")}</span> <span style="padding-left:12px;">${strong(late, P.alert)} ${t("email.weekly.late")}</span>`;
+  return safeHtml`${gap(26)}${h2(t("email.weekly.tasks"))}${bar}<div style="padding-top:8px;${font(13, P.ink2)}" class="t2">${caption}</div>`;
 }
 
-function worsenedBlock(i: WeeklyEmailInput): string {
+function worsenedBlock(i: WeeklyEmailInput): Markup {
   const rows = (i.worsened ?? []).slice(0, 5).map((w) => {
     const change = w.from > 0 ? Math.round(((w.to - w.from) / w.from) * 100) : 0;
     return {
@@ -87,28 +89,25 @@ function worsenedBlock(i: WeeklyEmailInput): string {
       sub: t("email.weekly.worseSub"),
     };
   });
-  return rows.length ? `${gap(26)}${h2(t("email.weekly.worse"), "0 0 4px")}${plotRows(rows)}` : "";
+  return rows.length ? safeHtml`${gap(26)}${h2(t("email.weekly.worse"), "0 0 4px")}${plotRows(rows)}` : raw("");
 }
 
 /** Panel oscuro del parte: titular, cifras y lluvia por día. */
-function weeklyHero(i: WeeklyEmailInput, org: string, lead: string): string {
+function weeklyHero(i: WeeklyEmailInput, org: string, lead: string): Markup {
   const days = Array.from({ length: 7 }, (_, n) => addDays(i.from, n)).filter((d) => d <= i.to);
   const rainByDay = new Map((i.rainDaily ?? []).map((r) => [r.date, Math.round(r.mm)]));
   const bars = days.map((d) => ({ label: weekdayShort(d), value: rainByDay.get(d) ?? 0, strong: (rainByDay.get(d) ?? 0) >= 10 }));
-  return (
-    heroTitle(chip(org ? t("email.weekly.fromOrg", { org }) : t("email.weekly.strip"), "neutral"), clip(i.farmName, 120), lead) +
-    gap(22) +
-    darkStats(stats(i)) +
-    ((i.rainDaily?.length ?? 0) > 0 ? gap(22) + darkBars(bars, t("email.weekly.rainLegend", { mm: 10 }), 64) : "")
-  );
+  const rain = (i.rainDaily?.length ?? 0) > 0 ? safeHtml`${gap(22)}${darkBars(bars, t("email.weekly.rainLegend", { mm: 10 }), 64)}` : "";
+  return safeHtml`${heroTitle(chip(org ? t("email.weekly.fromOrg", { org }) : t("email.weekly.strip"), "neutral"), clip(i.farmName, 120), lead)}${gap(22)}${darkStats(stats(i))}${rain}`;
 }
 
 /** Tarjeta del parte; sin `webUrl` (variante externa) no lleva botón. */
-function weeklyBody(i: WeeklyEmailInput, webUrl: string): string {
+function weeklyBody(i: WeeklyEmailInput, webUrl: string): Markup {
   const top = [...i.byKind].sort((a, b) => b.n - a.n).slice(0, 6);
-  const kinds = top.length ? h2(t("email.weekly.byKind")) + compare(top.map((k) => ({ label: clip(tk(`record-kinds.kind.${k.kind}`), 24), value: k.n, color: P.soy, text: String(k.n) }))) : "";
-  const alerts = i.alerts.length ? gap(26) + h2(t("email.weekly.alertsTitle"), "0 0 6px") + bullets(i.alerts.slice(0, 4).map((a) => clip(a, 160))) : "";
-  return `${kinds}${tasksBlock(i)}${worsenedBlock(i)}${alerts}${note(i.hasPdf ? t("email.weekly.pdfAttached") : t("email.weekly.pdfLater"))}${webUrl ? button(webUrl, t("email.weekly.openReport")) : ""}`;
+  const kinds = top.length ? safeHtml`${h2(t("email.weekly.byKind"))}${compare(top.map((k) => ({ label: clip(tk(`record-kinds.kind.${k.kind}`), 24), value: k.n, color: P.soy, text: String(k.n) })))}` : "";
+  const alerts = i.alerts.length ? safeHtml`${gap(26)}${h2(t("email.weekly.alertsTitle"), "0 0 6px")}${bullets(i.alerts.slice(0, 4).map((a) => clip(a, 160)))}` : "";
+  const open = webUrl ? button(webUrl, t("email.weekly.openReport")) : "";
+  return safeHtml`${kinds}${tasksBlock(i)}${worsenedBlock(i)}${alerts}${note(i.hasPdf ? t("email.weekly.pdfAttached") : t("email.weekly.pdfLater"))}${open}`;
 }
 
 /** Parte semanal; la variante externa no lleva enlaces que pidan sesión ni ajustes de avisos. */

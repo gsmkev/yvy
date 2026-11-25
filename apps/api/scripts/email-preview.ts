@@ -17,9 +17,13 @@ const files = samples.map((m, i) => {
   return { name, subject: m.subject };
 });
 
-const index = `<!doctype html><html lang="es"><meta charset="utf-8"><title>Correos de Yvy</title>
-<body style="font-family:sans-serif;margin:24px;background:#f4f4f0"><h1>Correos de Yvy</h1>
-${files.map((f) => `<h2 style="font-size:14px;margin:24px 0 6px">${esc(f.subject)}</h2><iframe src="${f.name}" style="width:640px;height:760px;border:1px solid #ccc;background:#fff" title="${esc(f.subject)}"></iframe>`).join("\n")}
-</body></html>`;
+const frame = (f: { name: string; subject: string }) =>
+  ["<h2 style=\"font-size:14px;margin:24px 0 6px\">", esc(f.subject), "</h2><iframe src=\"", f.name, "\" style=\"width:640px;height:760px;border:1px solid #ccc;background:#fff\" title=\"", esc(f.subject), "\"></iframe>"].join("");
+const index = [
+  "<!doctype html><html lang=\"es\"><meta charset=\"utf-8\"><title>Correos de Yvy</title>",
+  "<body style=\"font-family:sans-serif;margin:24px;background:#f4f4f0\"><h1>Correos de Yvy</h1>",
+  ...files.map(frame),
+  "</body></html>",
+].join("\n");
 writeFileSync(join(out, "index.html"), index);
 console.log(`${files.length} correos en ${out}`);

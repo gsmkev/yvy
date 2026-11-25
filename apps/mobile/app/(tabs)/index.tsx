@@ -41,7 +41,7 @@ export default function Today() {
     <ScrollView ref={scroller} style={k.screen} contentContainerStyle={[k.pad, { paddingBottom: 120 }]}>
       <FarmLine />
       <Text style={T.small}>{dayLabel()}</Text>
-      <Text style={[T.display, { marginTop: 2 }]}>{firstName(session?.user.fullName ?? "")}</Text>
+      <Text style={[T.display, { marginTop: 2 }]}>{t("app.common.greeting", { name: firstName(session?.user.fullName ?? "") })}</Text>
 
       <ForecastStrip farmId={farmId ?? plots[0]?.farmId ?? null} />
 

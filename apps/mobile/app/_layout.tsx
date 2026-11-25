@@ -14,7 +14,7 @@ import { initMonitoring } from "../src/lib/monitoring";
 import { useNotificationTap } from "../src/lib/push";
 import { loadSession } from "../src/lib/session";
 import { Toast } from "../src/ui/kit";
-import { STACK_SCREEN_OPTIONS } from "../src/ui/stackOptions";
+import { stackScreenOptions } from "../src/ui/stackOptions";
 import { C } from "../src/ui/theme";
 
 initMonitoring();
@@ -46,7 +46,7 @@ export default function RootLayout() {
     <SafeAreaProvider key={locale}>
       <StatusBar style="dark" />
       <NotificationTap />
-      <Stack screenOptions={STACK_SCREEN_OPTIONS}>
+      <Stack screenOptions={stackScreenOptions}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="scan" options={{ title: "" }} />

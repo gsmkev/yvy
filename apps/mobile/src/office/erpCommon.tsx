@@ -1,9 +1,9 @@
 /** Piezas comunes de las pantallas de administración (ERP): acceso, lecturas sin caché y montos. Solo dueño y administrador (`can.manageErp`). */
-import { View } from "react-native";
 import { t, toMinor, type Currency } from "@yvy/shared";
 import { getSession } from "../lib/session";
 import { useSyncStatus } from "../lib/sync";
-import { EmptyState, StatTile, Text } from "../ui/kit";
+import { EmptyState, Text } from "../ui/kit";
+import { StatSummary } from "./ui";
 import { T } from "../ui/theme";
 import { OfficeScreen } from "./OfficeScreen";
 import { parseDecimal } from "./format";
@@ -70,14 +70,8 @@ interface SeasonLite {
 /** Campañas de la organización (GET /org/seasons, no es del ERP). */
 export const useSeasonList = () => useOnline<{ seasons: SeasonLite[] }>("/org/seasons");
 
-/** Cifras de dinero: en dos columnas si caben; si un monto es largo (Gs. 2.423.524.012) cada una ocupa todo el ancho. */
+/** Cifras de dinero en una tarjeta: en fila si los montos son cortos; si alguno es largo (Gs. 2.423.524.012), en 2 columnas. */
 export function MoneyStats({ items }: { items: { label: string; value: string; tone?: "danger" }[] }) {
-  const wide = items.some((i) => i.value.length > 12);
-  return (
-    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 16 }}>
-      {items.map((i) => (
-        <StatTile key={i.label} value={i.value} label={i.label} tone={i.tone} style={{ flexBasis: wide ? "100%" : "47%", flexGrow: 1 }} />
-      ))}
-    </View>
-  );
+  const long = items.some((i) => i.value.length > 9);
+  return <StatSummary items={items} columns={long ? 2 : undefined} />;
 }

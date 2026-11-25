@@ -1,9 +1,7 @@
 /** Filtros y selectores segmentados. */
 import { Pressable, ScrollView, View } from "react-native";
-import { tap } from "../../lib/haptics";
-import { Text } from "../../ui/kit";
+import { Text, s as k } from "../../ui/kit";
 import { C, F, RADIUS } from "../../ui/theme";
-
 
 /** Chips de filtro en una fila desplazable. `count` opcional ("Pastura · 3"). */
 export function FilterChips<V extends string>({ options, value, onChange }: { options: { value: V; label: string; count?: number }[]; value: V; onChange: (v: V) => void }) {
@@ -20,10 +18,9 @@ export function FilterChips<V extends string>({ options, value, onChange }: { op
             accessibilityLabel={label}
             hitSlop={{ top: 4, bottom: 4 }}
             onPress={() => {
-              tap();
               onChange(o.value);
             }}
-            style={{ minHeight: 48, paddingHorizontal: 18, borderRadius: 24, borderWidth: 1.5, alignItems: "center", justifyContent: "center", backgroundColor: on ? C.accion : C.blanco, borderColor: on ? C.accion : C.lineaFuerte }}
+            style={({ pressed }) => [{ minHeight: 48, paddingHorizontal: 18, borderRadius: 24, borderWidth: 1.5, alignItems: "center", justifyContent: "center", backgroundColor: on ? C.accion : C.blanco, borderColor: on ? C.accion : C.lineaFuerte }, pressed && k.pressed]}
           >
             <Text style={{ fontFamily: F.sansMedium, fontSize: 16, color: on ? C.blanco : C.tinta }}>{label}</Text>
           </Pressable>
@@ -46,7 +43,6 @@ export function Segmented<V extends string>({ options, value, onChange }: { opti
             accessibilityState={{ checked: on }}
             accessibilityLabel={o.label}
             onPress={() => {
-              tap();
               onChange(o.value);
             }}
             style={{ flex: 1, minHeight: 48, paddingHorizontal: 6, alignItems: "center", justifyContent: "center", backgroundColor: on ? C.accion : "transparent", borderLeftWidth: i ? 1 : 0, borderLeftColor: C.lineaFuerte }}
